@@ -7,6 +7,7 @@ Classes for importing data from other Bluemira modules.
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.base import PowerCycleImporterABC
 from bluemira.power_cycle.errors import EquilibriaImporterError, PumpingImporterError
+from bluemira.power_cycle.tools import build_dict_from_format
 
 
 class EquilibriaImporter(PowerCycleImporterABC):
@@ -39,6 +40,39 @@ class EquilibriaImporter(PowerCycleImporterABC):
             )
         return duration
 
+    @staticmethod
+    def phaseload_inputs(variables_map):
+        """
+        Mock of method to import loads from 'equilibria' module.
+        """
+        allowed_format = PowerCycleImporterABC._phaseload_inputs
+        phaseload_inputs = build_dict_from_format(allowed_format)
+
+        request = variables_map["desired_data"]
+        if request == "CS-coils":
+            phaseload_inputs["phase_list"] = []
+            phaseload_inputs["normalize_list"] = []
+            phaseload_inputs["powerload_list"] = []
+
+        elif request == "TF-coils":
+            phaseload_inputs["phase_list"] = []
+            phaseload_inputs["normalize_list"] = []
+            phaseload_inputs["powerload_list"] = []
+
+        elif request == "PF-coils":
+            phaseload_inputs["phase_list"] = []
+            phaseload_inputs["normalize_list"] = []
+            phaseload_inputs["powerload_list"] = []
+
+        else:
+            raise EquilibriaImporterError(
+                "phaseload_inputs",
+                "The 'phaseload_inputs' method has no implementation "
+                f"for the value {request!r} passed as the parameter "
+                "'desired_data'.",
+            )
+        return phaseload_inputs
+
 
 class PumpingImporter(PowerCycleImporterABC):
     """
@@ -62,3 +96,10 @@ class PumpingImporter(PowerCycleImporterABC):
                 "'desired_data'.",
             )
         return duration
+
+    @staticmethod
+    def phaseload_inputs(variables_map):
+        """
+        Mock of method to import loads from 'pumping' module (TBD).
+        """
+        raise NotImplementedError()

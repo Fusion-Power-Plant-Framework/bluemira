@@ -447,6 +447,17 @@ class NetImportersTestKit:
         return possible_inputs
 
     @staticmethod
+    def equilibria_phaseload_inputs():
+        possible_inputs = {
+            "desired_data": [
+                "CS-coils",
+                "TF-coils",
+                "PF-coils",
+            ]
+        }
+        return possible_inputs
+
+    @staticmethod
     def pumping_duration_inputs():
         possible_inputs = {
             "desired_data": [
@@ -514,3 +525,32 @@ class NetManagerTestKit:
                 **current_systems_config,
             }
         return all_system_inputs
+
+    @staticmethod
+    def _copy_dictionary_with_preceding_str_in_all_keys(dictionary, string):
+        d = copy.deepcopy(dictionary)
+        new_dictionary = {f"{string}{k}": v for k, v in d.items()}
+        return new_dictionary
+
+    def inputs_for_loads(self):
+        all_system_inputs = self.inputs_for_systems()
+
+        all_load_types = ["production", "reactive", "active"]
+
+        all_load_inputs = dict()
+        all_system_labels = all_system_inputs.keys()
+        for system_label in all_system_labels:
+            system_config = all_system_inputs[system_label]
+
+            for load_type in all_load_types:
+                config_for_type = system_config[load_type]
+                preeceding_string = load_type + "-"
+
+                inputs = self._copy_dictionary_with_preceding_str_in_all_keys(
+                    config_for_type,
+                    preeceding_string,
+                )
+
+                all_load_inputs = {**all_load_inputs, **inputs}
+
+        return all_load_inputs

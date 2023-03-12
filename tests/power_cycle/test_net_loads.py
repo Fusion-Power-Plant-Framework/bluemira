@@ -5,11 +5,14 @@ import copy
 import matplotlib.pyplot as plt
 import pytest
 
+from bluemira.power_cycle.base import PowerCycleLoadABC
 from bluemira.power_cycle.errors import (
     LoadDataError,
     PhaseLoadError,
     PowerCycleABCError,
+    PowerCycleLoadABCError,
     PowerLoadError,
+    PowerLoadModelError,
     PulseLoadError,
 )
 from bluemira.power_cycle.net.loads import (
@@ -29,7 +32,14 @@ netloads_testkit = NetLoadsTestKit()
 
 
 class TestLoadData:
+    tested_class_super = PowerCycleLoadABC
+    tested_class_super_error = PowerCycleLoadABCError
+    tested_class = LoadData
+    tested_class_error = LoadDataError
+
     def setup_method(self):
+        tested_class = self.tested_class
+
         (
             n_samples,
             sample_names,
@@ -42,7 +52,7 @@ class TestLoadData:
             time = sample_times[s]
             data = sample_datas[s]
             name = sample_names[s]
-            sample = LoadData(name, time, data)
+            sample = tested_class(name, time, data)
             all_samples.append(sample)
         self.all_samples = all_samples
 
@@ -52,6 +62,8 @@ class TestLoadData:
 
     @pytest.mark.parametrize("test_attr", ["time", "data"])
     def test_is_increasing(self, test_attr):
+        tested_class_error = self.tested_class_error
+
         all_samples = self.all_samples
         n_samples = len(all_samples)
 
@@ -68,10 +80,13 @@ class TestLoadData:
             if list_is_increasing:
                 assert sample._is_increasing(example_list)
             else:
-                with pytest.raises(LoadDataError):
+                with pytest.raises(tested_class_error):
                     sample._is_increasing(example_list)
 
     def test_sanity(self):
+        tested_class = self.tested_class
+        tested_class_error = self.tested_class_error
+
         all_samples = self.all_samples
         n_samples = len(all_samples)
         for s in range(n_samples):
@@ -90,11 +105,11 @@ class TestLoadData:
                     length_time = len(time)
                     length_data = len(data)
                     if length_time == length_data:
-                        test_instance = LoadData(name, time, data)
-                        assert isinstance(test_instance, LoadData)
+                        test_instance = tested_class(name, time, data)
+                        assert isinstance(test_instance, tested_class)
                     else:
-                        with pytest.raises(LoadDataError):
-                            test_instance = LoadData(name, time, data)
+                        with pytest.raises(tested_class_error):
+                            test_instance = tested_class(name, time, data)
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -195,9 +210,14 @@ class TestLoadData:
 
 
 class TestPowerLoadModel:
+    tested_class = PowerLoadModel
+    tested_class_error = PowerLoadModelError
+
     def test_members(self):
-        all_names = [member.name for member in PowerLoadModel]
-        all_values = [member.value for member in PowerLoadModel]
+        tested_class = self.tested_class
+
+        all_names = [member.name for member in tested_class]
+        all_values = [member.value for member in tested_class]
 
         for (name, value) in zip(all_names, all_values):
             assert isinstance(name, str)
@@ -205,7 +225,14 @@ class TestPowerLoadModel:
 
 
 class TestPowerLoad:
+    tested_class_super = PowerCycleLoadABC
+    tested_class_super_error = PowerCycleLoadABCError
+    tested_class = PowerLoad
+    tested_class_error = PowerLoadError
+
     def setup_method(self):
+        tested_class = self.tested_class
+
         (
             n_samples,
             sample_names,
@@ -218,7 +245,7 @@ class TestPowerLoad:
             name = sample_names[s]
             loaddata = sample_loaddatas[s]
             model = sample_models[s]
-            sample = PowerLoad(name, loaddata, model)
+            sample = tested_class(name, loaddata, model)
             all_samples.append(sample)
         self.sample_loaddatas = sample_loaddatas
         self.sample_models = sample_models
@@ -249,9 +276,12 @@ class TestPowerLoad:
         test_loaddata,
         test_model,
     ):
-        constructor_exceptions = (PowerCycleABCError, PowerLoadError)
+        tested_class = self.tested_class
+        tested_class_error = self.tested_class_error
+
+        constructor_exceptions = (PowerCycleABCError, tested_class_error)
         with pytest.raises(constructor_exceptions):
-            wrong_sample = PowerLoad(
+            wrong_sample = tested_class(
                 test_name,
                 test_loaddata,
                 test_model,
@@ -330,6 +360,8 @@ class TestPowerLoad:
     # ------------------------------------------------------------------
 
     def test_single_curve(self):
+        tested_class = self.tested_class
+
         sample_loaddatas = self.sample_loaddatas
         sample_models = self.sample_models
 
@@ -340,7 +372,7 @@ class TestPowerLoad:
             power_points = loaddata.data
 
             for powerloadmodel in sample_models:
-                curve = PowerLoad._single_curve(
+                curve = tested_class._single_curve(
                     loaddata,
                     powerloadmodel,
                     test_time,
@@ -350,6 +382,9 @@ class TestPowerLoad:
                 netloads_testkit.assert_is_interpolation(power_points, curve)
 
     def test_validate_curve_input(self):
+        tested_class = self.tested_class
+        tested_class_error = self.tested_class_error
+
         test_arguments = [
             None,
             1.2,
@@ -364,13 +399,15 @@ class TestPowerLoad:
 
         for argument in test_arguments:
             if isinstance(argument, (int, float, list)):
-                time = PowerLoad._validate_curve_input(argument)
+                time = tested_class._validate_curve_input(argument)
                 assert isinstance(time, list)
             else:
-                with pytest.raises(PowerLoadError):
-                    time = PowerLoad._validate_curve_input(argument)
+                with pytest.raises(tested_class_error):
+                    time = tested_class._validate_curve_input(argument)
 
     def test_curve(self):
+        tested_class = self.tested_class
+
         all_samples = self.all_samples
         test_time = netloads_testkit.inputs_for_time_interpolation()
         time_length = len(test_time)
@@ -386,7 +423,7 @@ class TestPowerLoad:
             all_data.append(sample.loaddata_set[0].data)
             all_sets.append(sample.loaddata_set[0])
             all_models.append(sample.model[0])
-        multiset_load = PowerLoad("Multi Load", all_sets, all_models)
+        multiset_load = tested_class("Multi Load", all_sets, all_models)
         multiset_curve = multiset_load.curve(test_time)
 
         data_maxima = [max(data) for data in all_data]
@@ -395,6 +432,20 @@ class TestPowerLoad:
         sum_of_minima = sum(data_minima)
         extreme_points = [sum_of_minima, sum_of_maxima]
         netloads_testkit.assert_is_interpolation(extreme_points, multiset_curve)
+
+    @staticmethod
+    def assert_length_and_data_have_not_changed(old_set, new_set):
+        correct_number_of_elements = len(old_set)
+        wanted_lenght = correct_number_of_elements
+        new_set_lenght = len(new_set)
+        length_has_not_changed = new_set_lenght == wanted_lenght
+        assert length_has_not_changed
+
+        for p in range(correct_number_of_elements):
+            old_data = old_set[p]
+            new_data = new_set[p]
+            data_has_not_changed = old_data == new_data
+            assert data_has_not_changed
 
     @pytest.mark.parametrize(
         "new_end_time",
@@ -409,15 +460,10 @@ class TestPowerLoad:
             sample._normalize_time(new_end_time)
             new_loaddata_set = sample.loaddata_set
 
-            # Assert length of 'loaddata_set' has not changed
-            correct_number_of_loaddatas = len(old_loaddata_set)
-            assert len(new_loaddata_set) == correct_number_of_loaddatas
-
-            # Assert 'data' has not changed
-            for p in range(correct_number_of_loaddatas):
-                old_data = old_loaddata_set[p]
-                new_data = new_loaddata_set[p]
-                assert old_data == new_data
+            self.assert_length_and_data_have_not_changed(
+                old_loaddata_set,
+                new_loaddata_set,
+            )
 
     @pytest.mark.parametrize(
         "time_shift",
@@ -432,21 +478,18 @@ class TestPowerLoad:
             sample._shift_time(time_shift)
             new_loaddata_set = sample.loaddata_set
 
-            # Assert length of 'loaddata_set' has not changed
-            correct_number_of_loaddatas = len(old_loaddata_set)
-            assert len(new_loaddata_set) == correct_number_of_loaddatas
-
-            # Assert 'data' has not changed
-            for p in range(correct_number_of_loaddatas):
-                old_data = old_loaddata_set[p]
-                new_data = new_loaddata_set[p]
-                assert old_data == new_data
+            self.assert_length_and_data_have_not_changed(
+                old_loaddata_set,
+                new_loaddata_set,
+            )
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
 
     def test_intrinsic_time(self):
+        tested_class_error = self.tested_class_error
+
         multisample = self.construct_multisample()
         loaddata_set = multisample.loaddata_set
 
@@ -456,7 +499,7 @@ class TestPowerLoad:
             for t in loaddata_time:
                 assert t in intrinsic_time
 
-        setter_errors = (AttributeError, PowerLoadError)
+        setter_errors = (AttributeError, tested_class_error)
         with pytest.raises(setter_errors):
             multisample.intrinsic_time = 0
 
@@ -490,6 +533,8 @@ class TestPowerLoad:
         """
         Tests both '__add__' and '__radd__'.
         """
+        tested_class = self.tested_class
+
         figure_title = "PowerLoad Addition"
         ax = tools_testkit.prepare_figure(figure_title)
 
@@ -498,7 +543,7 @@ class TestPowerLoad:
         sample_models = self.sample_models
 
         result = sum(all_samples)  # requires both __add__ and __radd__
-        assert isinstance(result, PowerLoad)
+        assert isinstance(result, tested_class)
 
         result_loaddata = result.loaddata_set
         assert result_loaddata == sample_loaddatas
@@ -519,6 +564,8 @@ class TestPowerLoad:
         """
         Tests both '__mul__' and '__truediv__'.
         """
+        tested_class = self.tested_class
+
         rel_tol = None
         abs_tol = None
 
@@ -564,7 +611,7 @@ class TestPowerLoad:
         list_of_plot_objects = []
         for s in range(n_samples):
             sample = samples_to_plot[s]
-            assert isinstance(sample, PowerLoad)
+            assert isinstance(sample, tested_class)
 
             sample_color = next(colors)
             ax, sample_plot_list = sample.plot(
@@ -578,7 +625,14 @@ class TestPowerLoad:
 
 
 class TestPhaseLoad:
+    tested_class_super = PowerCycleLoadABC
+    tested_class_super_error = PowerCycleLoadABCError
+    tested_class = PhaseLoad
+    tested_class_error = PhaseLoadError
+
     def setup_method(self):
+        tested_class = self.tested_class
+
         (
             n_samples,
             sample_names,
@@ -593,7 +647,7 @@ class TestPhaseLoad:
             phase = sample_phases[s]
             powerload = sample_powerloads[s]
             normalflag = sample_normalflags[s]
-            sample = PhaseLoad(name, phase, powerload, normalflag)
+            sample = tested_class(name, phase, powerload, normalflag)
             all_samples.append(sample)
         self.sample_phases = sample_phases
         self.sample_powerloads = sample_powerloads
@@ -605,13 +659,15 @@ class TestPhaseLoad:
     # ------------------------------------------------------------------
 
     def construct_multisample(self):
+        tested_class = self.tested_class
+
         sample_phases = self.sample_phases
         sample_powerloads = self.sample_powerloads
         sample_normalflags = self.sample_normalflags
 
         name = "PhaseLoad with multiple powerload & flag arguments"
         example_phase = sample_phases[0]
-        multisample = PhaseLoad(
+        multisample = tested_class(
             name,
             example_phase,
             sample_powerloads,
@@ -620,8 +676,10 @@ class TestPhaseLoad:
         return multisample
 
     def test_constructor_with_multiple_arguments(self):
+        tested_class = self.tested_class
+
         multisample = self.construct_multisample()
-        assert isinstance(multisample, PhaseLoad)
+        assert isinstance(multisample, tested_class)
 
         multisample_phase = multisample.phase
         assert isinstance(multisample_phase, PowerCyclePhase)
@@ -633,9 +691,12 @@ class TestPhaseLoad:
         test_powerloads,
         test_normalflags,
     ):
-        constructor_exceptions = (PowerCycleABCError, PhaseLoadError)
+        tested_class = self.tested_class
+        tested_class_error = self.tested_class_error
+
+        constructor_exceptions = (PowerCycleABCError, tested_class_error)
         with pytest.raises(constructor_exceptions):
-            wrong_sample = PhaseLoad(
+            wrong_sample = tested_class(
                 test_name,
                 test_phase,
                 test_powerloads,
@@ -747,6 +808,8 @@ class TestPhaseLoad:
     # ------------------------------------------------------------------
 
     def test_normalized_set(self):
+        tested_class_error = self.tested_class_error
+
         multisample = self.construct_multisample()
         normalized_set = multisample._normalized_set
 
@@ -765,7 +828,7 @@ class TestPhaseLoad:
                     assert len(norm) == 0
 
         powerload_set = multisample.powerload_set
-        setter_errors = (AttributeError, PhaseLoadError)
+        setter_errors = (AttributeError, tested_class_error)
         with pytest.raises(setter_errors):
             multisample._normalized_set = powerload_set
 
@@ -785,6 +848,8 @@ class TestPhaseLoad:
     # VISUALIZATION
     # ------------------------------------------------------------------
     def test_intrinsic_time(self):
+        tested_class_error = self.tested_class_error
+
         multisample = self.construct_multisample()
         powerload_set = multisample.powerload_set
 
@@ -794,11 +859,13 @@ class TestPhaseLoad:
             for t in powerload_time:
                 assert t in intrinsic_time
 
-        setter_errors = (AttributeError, PhaseLoadError)
+        setter_errors = (AttributeError, tested_class_error)
         with pytest.raises(setter_errors):
             multisample.intrinsic_time = 0
 
     def test_normalized_time(self):
+        tested_class_error = self.tested_class_error
+
         multisample = self.construct_multisample()
         normalized_set = multisample._normalized_set
 
@@ -808,7 +875,7 @@ class TestPhaseLoad:
             for t in normal_load_time:
                 assert t in normalized_time
 
-        setter_errors = (AttributeError, PhaseLoadError)
+        setter_errors = (AttributeError, tested_class_error)
         with pytest.raises(setter_errors):
             multisample.normalized_time = 0
 
@@ -840,7 +907,14 @@ class TestPhaseLoad:
 
 
 class TestPulseLoad:
+    tested_class_super = PowerCycleLoadABC
+    tested_class_super_error = PowerCycleLoadABCError
+    tested_class = PulseLoad
+    tested_class_error = PulseLoadError
+
     def setup_method(self):
+        tested_class = self.tested_class
+
         (
             n_samples,
             sample_names,
@@ -851,7 +925,7 @@ class TestPulseLoad:
         for s in range(n_samples):
             name = sample_names[s]
             phaseload = sample_phaseloads[s]
-            sample = PulseLoad(name, phaseload)
+            sample = tested_class(name, phaseload)
             all_samples.append(sample)
         self.sample_phaseloads = sample_phaseloads
         self.all_samples = all_samples
@@ -861,27 +935,33 @@ class TestPulseLoad:
     # ------------------------------------------------------------------
 
     def construct_multisample(self):
+        tested_class = self.tested_class
+
         sample_phaseloads = self.sample_phaseloads
 
         name = "PulseLoad with multiple phaseload arguments"
-        multisample = PulseLoad(
+        multisample = tested_class(
             name,
             sample_phaseloads,
         )
         return multisample
 
     def test_constructor_with_multiple_arguments(self):
+        tested_class = self.tested_class
+
         multisample = self.construct_multisample()
-        assert isinstance(multisample, PulseLoad)
+        assert isinstance(multisample, tested_class)
 
     def assert_constructor_fails(
         self,
         test_name,
         test_phaseloads,
     ):
+        tested_class = self.tested_class
+
         constructor_exceptions = PowerCycleABCError
         with pytest.raises(constructor_exceptions):
-            wrong_sample = PulseLoad(
+            wrong_sample = tested_class(
                 test_name,
                 test_phaseloads,
             )
@@ -925,6 +1005,8 @@ class TestPulseLoad:
     # ------------------------------------------------------------------
 
     def test_shifted_set(self):
+        tested_class_error = self.tested_class_error
+
         rel_tol = None
         abs_tol = None
 
@@ -949,7 +1031,7 @@ class TestPulseLoad:
             assert spn == pytest.approx(dur, rel=rel_tol, abs=abs_tol)
 
         normalized_set = multisample.phaseload_set[0]._normalized_set
-        setter_errors = (AttributeError, PulseLoadError)
+        setter_errors = (AttributeError, tested_class_error)
         with pytest.raises(setter_errors):
             multisample._shifted_set = normalized_set
 
@@ -984,6 +1066,8 @@ class TestPulseLoad:
     # ------------------------------------------------------------------
 
     def test_intrinsic_time(self):
+        tested_class_error = self.tested_class_error
+
         multisample = self.construct_multisample()
         phaseload_set = multisample.phaseload_set
 
@@ -993,11 +1077,13 @@ class TestPulseLoad:
             for t in phaseload_time:
                 assert t in intrinsic_time
 
-        setter_errors = (AttributeError, PulseLoadError)
+        setter_errors = (AttributeError, tested_class_error)
         with pytest.raises(setter_errors):
             multisample.intrinsic_time = 0
 
     def test_shifted_time(self):
+        tested_class_error = self.tested_class_error
+
         multisample = self.construct_multisample()
         shifted_set = multisample._shifted_set
 
@@ -1007,7 +1093,7 @@ class TestPulseLoad:
             for t in shifted_load_time:
                 assert t in shifted_time
 
-        setter_errors = (AttributeError, PulseLoadError)
+        setter_errors = (AttributeError, tested_class_error)
         with pytest.raises(setter_errors):
             multisample.intrinsic_time = 0
 

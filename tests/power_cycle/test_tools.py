@@ -1,12 +1,15 @@
 # COPYRIGHT PLACEHOLDER
 
 import os
+from itertools import combinations
 
 import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.power_cycle.tools import (
     adjust_2d_graph_ranges,
+    build_dict_from_format,
+    convert_string_into_numeric_list,
     read_json,
     remove_characters,
     unique_and_sorted_vector,
@@ -15,6 +18,7 @@ from bluemira.power_cycle.tools import (
     validate_dict,
     validate_file,
     validate_list,
+    validate_lists_to_have_same_length,
     validate_nonnegative,
     validate_numerical,
     validate_subdict,
@@ -145,73 +149,37 @@ class TestValidationTools:
                 format_example,
             )
 
-        """
-        all_class_attr = self.all_class_attr
-        scenario_json_contents = self.scenario_json_contents
-        valid_highest_level_json_keys = self.highest_level_json_keys
-
-        possible_errors = (TypeError, KeyError)
-
-        tested_class = self.tested_class
-        for valid_key in valid_highest_level_json_keys:
-            key_contents = scenario_json_contents[valid_key]
-
-            necessary_dict = None
-            text_before_hiphen = valid_key.split("-", 1)[0]
-            for class_attr in all_class_attr:
-                if text_before_hiphen in class_attr:
-                    necessary_dict = getattr(tested_class, class_attr)
-
-            wrong_necessary_dict = copy_dict_with_wrong_key(
-                necessary_dict,
-                "name",
-            )
-
-            recursion_is_needed = text_before_hiphen != "scenario"
-            if recursion_is_needed:
-
-                validated_contents = tested_class._validate_subdict(
-                    key_contents,
-                    necessary_dict,
-                )
-                with pytest.raises(possible_errors):
-                    validated_contents = tested_class._validate_subdict(
-                        key_contents,
-                        wrong_necessary_dict,
-                    )
-
-            else:
-
-                validated_contents = tested_class._validate_dict(
-                    key_contents,
-                    necessary_dict,
-                )
-                with pytest.raises(possible_errors):
-                    validated_contents = tested_class._validate_dict(
-                        key_contents,
-                        wrong_necessary_dict,
-                    )
-
-                wrong_contents = copy_dict_with_wrong_value(
-                    key_contents,
-                    "name",
-                    ["not", "a", "string"],
-                )
-                with pytest.raises(possible_errors):
-                    validated_contents = tested_class._validate_dict(
-                        wrong_contents,
-                        necessary_dict,
-                    )
-
-            validated_contents_is_dict = isinstance(validated_contents, dict)
-            assert validated_contents_is_dict
-    """
-
     def test_validate_subdict(self):
         """
         No new functionality to be tested.
         """
         assert callable(validate_subdict)
+
+    @pytest.mark.parametrize("max_n_arguments", [10])
+    def test_validate_lists_to_have_same_length(self, max_n_arguments):
+        test_arguments = self.test_arguments
+        test_arguments = test_arguments[0:max_n_arguments]
+        n_arguments = len(test_arguments)
+        for n in range(n_arguments):
+            all_subsets_of_arguments = combinations(test_arguments, n + 1)
+            for subset in all_subsets_of_arguments:
+
+                subset_as_lists = []
+                for argument in subset:
+                    if type(argument) == list:
+                        subset_as_lists.append(argument)
+                    else:
+                        subset_as_lists.append([argument])
+
+                all_lengths = [len(a) for a in subset_as_lists]
+                first_length = all_lengths[0]
+
+                if all(length == first_length for length in all_lengths):
+                    out = validate_lists_to_have_same_length(*subset)
+                    assert out == first_length
+                else:
+                    with pytest.raises(ValueError):
+                        out = validate_lists_to_have_same_length(*subset)
 
 
 class TestManipulationTools:
@@ -221,6 +189,14 @@ class TestManipulationTools:
 
         scenario_json_path = time_testkit.scenario_json_path
         self.scenario_json_path = scenario_json_path
+
+        (
+            format_example,
+            dictionary_example,
+            _,
+        ) = tools_testkit.build_dictionary_examples()
+        self.format_example = format_example
+        self.dictionary_example = dictionary_example
 
     def test_unnest_list(self):
         list_of_lists = [
@@ -245,6 +221,13 @@ class TestManipulationTools:
         result_string = remove_characters(example_string, character_list)
         assert result_string == desired_string
 
+    def test_convert_string_into_numeric_list(self):
+        example_string = "[1, 2.5, 3]"
+        desired_list = [1, 2.5, 3]
+
+        result_list = convert_string_into_numeric_list(example_string)
+        assert result_list == desired_list
+
     def test_read_json(self):
         right_path = self.scenario_json_path
         contents = read_json(right_path)
@@ -254,6 +237,20 @@ class TestManipulationTools:
         wrong_path = self.test_file_path
         with pytest.raises(TypeError):
             contents = read_json(wrong_path)
+
+    def test_build_dict_from_format(self):
+        format_example = self.format_example
+        dictionary_example = self.dictionary_example
+
+        dictionary_with_empty_values = dict()
+        for (key, value) in dictionary_example.items():
+            value_type = type(value)
+            empty_value_of_same_type = value_type()
+            dictionary_with_empty_values[key] = empty_value_of_same_type
+
+        built_dictionary = build_dict_from_format(format_example)
+
+        assert built_dictionary == dictionary_with_empty_values
 
 
 class TestPlottingTools:
