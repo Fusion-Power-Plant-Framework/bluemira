@@ -6,7 +6,7 @@
         "active": {
             "upk": {
                 "name": "NBI consumption due to upkeep",
-                "model_class": "PowerLoad",
+                "module": null,
                 "variables_map": {
                     "phases": [
                         "dwl",
@@ -14,10 +14,16 @@
                         "ftt",
                         "f2d"
                     ],
+                    "normalize": [
+                        true,
+                        false,
+                        true,
+                        true
+                    ],
+                    "unit": "kW",
                     "efficiencies": {
                         "wall-plug": 0.5
                     },
-                    "unit": "kW",
                     "loads": {
                         "description": [
                             "main",
@@ -29,31 +35,30 @@
                         ],
                         "data": [
                             "[1, 1]",
-                            "[1, 2, 1]"
+                            "[1, 2.5, 1]"
                         ],
                         "model": [
                             "STEP",
                             "RAMP"
-                        ],
-                        "normalize": [
-                            true,
-                            false
                         ]
                     }
                 }
             },
             "inj": {
                 "name": "NBI consumption due to injection during burn",
-                "model_class": "PowerLoad",
+                "module": null,
                 "variables_map": {
                     "phases": [
                         "ftt"
                     ],
+                    "normalize": [
+                        true
+                    ],
+                    "unit": "MW",
                     "efficiencies": {
                         "cooling": 0.7,
                         "gyrotron": 0.7
                     },
-                    "unit": "MW",
                     "loads": {
                         "description": [
                             "injection"
@@ -66,9 +71,6 @@
                         ],
                         "model": [
                             "RAMP"
-                        ],
-                        "normalize": [
-                            true
                         ]
                     }
                 }

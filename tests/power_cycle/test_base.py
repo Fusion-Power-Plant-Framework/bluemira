@@ -8,7 +8,12 @@ from bluemira.power_cycle.base import (
     PowerCycleLoadABC,
     PowerCycleTimeABC,
 )
-from bluemira.power_cycle.errors import PowerCycleABCError, PowerCycleLoadABCError
+from bluemira.power_cycle.errors import (
+    PowerCycleABCError,
+    PowerCycleImporterABCError,
+    PowerCycleLoadABCError,
+    PowerCycleTimeABCError,
+)
 from bluemira.power_cycle.tools import (
     validate_list,
     validate_nonnegative,
@@ -20,7 +25,12 @@ tools_testkit = ToolsTestKit()
 
 
 class TestPowerCycleABC:
-    class SampleConcreteClass(PowerCycleABC):
+    tested_class_super = None
+    tested_class_super_error = None
+    tested_class = PowerCycleABC
+    tested_class_error = PowerCycleABCError
+
+    class SampleConcreteClass(tested_class):
         """
         Inner class that is a dummy concrete class for testing the main
         abstract class of the test.
@@ -39,7 +49,13 @@ class TestPowerCycleABC:
         self.sample = sample
         self.test_arguments = test_arguments
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     def test_validate_name(self):
+        tested_class_error = self.tested_class_error
+
         sample = self.sample
         all_arguments = self.test_arguments
         for argument in all_arguments:
@@ -47,10 +63,12 @@ class TestPowerCycleABC:
                 validated_argument = sample._validate_name(argument)
                 assert validated_argument == argument
             else:
-                with pytest.raises(PowerCycleABCError):
+                with pytest.raises(tested_class_error):
                     validated_argument = sample._validate_name(argument)
 
     def test_validate_class(self):
+        tested_class_error = self.tested_class_error
+
         sample = self.sample
         all_arguments = self.test_arguments
         for argument in all_arguments:
@@ -58,12 +76,17 @@ class TestPowerCycleABC:
                 validated_argument = sample.validate_class(argument)
                 assert validated_argument == argument
             else:
-                with pytest.raises(PowerCycleABCError):
+                with pytest.raises(tested_class_error):
                     validated_argument = sample.validate_class(argument)
 
 
 class TestPowerCycleTimeABC:
-    class SampleConcreteClass(PowerCycleTimeABC):
+    tested_class_super = PowerCycleABC
+    tested_class_super_error = PowerCycleABCError
+    tested_class = PowerCycleTimeABC
+    tested_class_error = PowerCycleTimeABCError
+
+    class SampleConcreteClass(tested_class):
         """
         Inner class that is a dummy concrete class for testing the main
         abstract class of the test.
@@ -123,7 +146,12 @@ class TestPowerCycleTimeABC:
 
 
 class TestPowerCycleLoadABC:
-    class SampleConcreteClass(PowerCycleLoadABC):
+    tested_class_super = PowerCycleABC
+    tested_class_super_error = PowerCycleABCError
+    tested_class = PowerCycleLoadABC
+    tested_class_error = PowerCycleLoadABCError
+
+    class SampleConcreteClass(tested_class):
         """
         Inner class that is a dummy concrete class for testing the main
         abstract class of the test.
@@ -156,6 +184,8 @@ class TestPowerCycleLoadABC:
         assert hasattr(sample, "intrinsic_time")
 
     def test_validate_n_points(self):
+        tested_class_error = self.tested_class_error
+
         sample = self.sample
         all_arguments = self.test_arguments
         for argument in all_arguments:
@@ -176,7 +206,7 @@ class TestPowerCycleLoadABC:
                 validated_arg = sample._validate_n_points(argument)
                 assert isinstance(validated_arg, int)
             else:
-                with pytest.raises(PowerCycleLoadABCError):
+                with pytest.raises(tested_class_error):
                     validated_arg = sample._validate_n_points(argument)
 
     @pytest.mark.parametrize("refinement_order", range(10))
@@ -184,9 +214,8 @@ class TestPowerCycleLoadABC:
         sample = self.sample
         test_arguments = self.test_arguments
 
+        possible_errors = (TypeError, ValueError)
         for argument in test_arguments:
-
-            possible_errors = (TypeError, ValueError)
             try:
                 argument = validate_vector(argument)
             except possible_errors:
@@ -234,10 +263,45 @@ class TestPowerCycleLoadABC:
 
 
 class TestPowerCycleImporterABC:
-    class SampleConcreteClass(PowerCycleImporterABC):
+    tested_class_super = None
+    tested_class_super_error = None
+    tested_class = PowerCycleImporterABC
+    tested_class_error = PowerCycleImporterABCError
+
+    class SampleConcreteClass(tested_class):
         """
         Inner class that is a dummy concrete class for testing the main
         abstract class of the test.
         """
 
-        pass
+        @staticmethod
+        def duration(variables_map):
+            """
+            Define concrete version of abstract static method.
+            """
+            pass
+
+        @staticmethod
+        def phaseload_inputs(variables_map):
+            """
+            Define concrete version of abstract static method.
+            """
+            pass
+
+    def setup_method(self):
+        sample = self.SampleConcreteClass()
+        self.sample = sample
+
+    def test_duration(self):
+        """
+        No new functionality to be tested.
+        """
+        sample = self.sample
+        assert callable(sample.duration)
+
+    def test_phaseload_inputs(self):
+        """
+        No new functionality to be tested.
+        """
+        sample = self.sample
+        assert callable(sample.phaseload_inputs)

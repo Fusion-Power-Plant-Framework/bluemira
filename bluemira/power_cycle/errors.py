@@ -96,6 +96,17 @@ class PowerCycleLoadABCError(PowerCycleError):
         return errors
 
 
+class PowerCycleImporterABCError(PowerCycleError):
+    """
+    Exception class for 'PowerCycleImporterABC' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {}
+        return errors
+
+
 # ######################################################################
 # TIME
 # ######################################################################
@@ -144,6 +155,27 @@ class PowerCycleScenarioError(PowerCycleError):
         return errors
 
 
+class ScenarioBuilderError(PowerCycleError):
+    """
+    Exception class for 'ScenarioBuilder' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {
+            "config": (
+                "An incorrect file has been passed as 'config'. It "
+                "must be a JSON file with a structure that matches "
+                f"the 'struct' class attributes of the {self._source} "
+                "class."
+            ),
+            "import": ("Bluemira data import failed."),
+            "library": ("Requested element is not present in library."),
+            "operator": ("Breakdown for phase could not be built."),
+        }
+        return errors
+
+
 # ######################################################################
 # NET LOADS
 # ######################################################################
@@ -169,6 +201,17 @@ class LoadDataError(PowerCycleError):
                 f"{self._source} class cannot be set.",
             ),
         }
+        return errors
+
+
+class PowerLoadModelError(PowerCycleError):
+    """
+    Exception class for 'PowerLoadModel' class of the Power Cycle
+    module.
+    """
+
+    def _errors(self):
+        errors = {}
         return errors
 
 
@@ -285,6 +328,7 @@ class EquilibriaImporterError(PowerCycleError):
     def _errors(self):
         errors = {
             "duration": ("Unable to import duration from 'equilibria' module."),
+            "load": ("Unable to import load from 'equilibria' module."),
         }
         return errors
 
@@ -307,27 +351,6 @@ class PumpingImporterError(PowerCycleError):
 # ######################################################################
 
 
-class ScenarioBuilderError(PowerCycleError):
-    """
-    Exception class for 'ScenarioBuilder' class of the Power Cycle
-    module.
-    """
-
-    def _errors(self):
-        errors = {
-            "config": (
-                "An incorrect file has been passed as 'config'. It "
-                "must be a JSON file with a structure that matches "
-                f"the 'struct' class attributes of the {self._source} "
-                "class."
-            ),
-            "import": ("Bluemira data import failed."),
-            "library": ("Requested element is not present in library."),
-            "operator": ("Breakdown for phase could not be built."),
-        }
-        return errors
-
-
 class PowerCycleSystemError(PowerCycleError):
     """
     Exception class for 'PowerCycleSystem' class of the Power Cycle
@@ -335,7 +358,9 @@ class PowerCycleSystemError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {}
+        errors = {
+            "import": ("Bluemira data import failed."),
+        }
         return errors
 
 

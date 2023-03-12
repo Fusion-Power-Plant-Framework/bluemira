@@ -3,7 +3,7 @@
 """
 Base classes for the power cycle model.
 """
-from abc import ABC, ABCMeta, abstractproperty
+from abc import ABC, ABCMeta, abstractmethod, abstractproperty
 from typing import Union
 
 import numpy as np
@@ -267,11 +267,25 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
         return plot_object
 
 
-class PowerCycleImporterABC(PowerCycleABC, metaclass=ABCMeta):
+class PowerCycleImporterABC(metaclass=ABCMeta):
     """
     Abstract base class for classes in the NET submodule of the Power
     Cycle module that are used to import data from other Bluemira
     modules into the Power Cycle module.
     """
 
-    pass
+    _phaseload_inputs = {
+        "phase_list": list,
+        "normalize_list": list,
+        "powerload_list": list,
+    }
+
+    @staticmethod
+    @abstractmethod
+    def duration(variables_map):
+        pass
+
+    @staticmethod
+    @abstractmethod
+    def phaseload_inputs(variables_map):
+        pass

@@ -2,13 +2,21 @@
 
 import pytest
 
-from bluemira.power_cycle.errors import PowerCyclePhaseError, ScenarioBuilderError
+from bluemira.power_cycle.base import PowerCycleTimeABC
+from bluemira.power_cycle.errors import (
+    PowerCyclePhaseError,
+    PowerCyclePulseError,
+    PowerCycleScenarioError,
+    PowerCycleTimeABCError,
+    ScenarioBuilderError,
+)
 from bluemira.power_cycle.time import (
     PowerCyclePhase,
     PowerCyclePulse,
     PowerCycleScenario,
     ScenarioBuilder,
 )
+from bluemira.power_cycle.tools import validate_list
 from tests.power_cycle.kits_for_tests import (
     TimeTestKit,
     assert_value_is_nonnegative,
@@ -19,7 +27,14 @@ time_testkit = TimeTestKit()
 
 
 class TestPowerCyclePhase:
+    tested_class_super = PowerCycleTimeABC
+    tested_class_super_error = PowerCycleTimeABCError
+    tested_class = PowerCyclePhase
+    tested_class_error = PowerCyclePhaseError
+
     def setup_method(self):
+        tested_class = self.tested_class
+
         (
             n_samples,
             sample_names,
@@ -30,12 +45,12 @@ class TestPowerCyclePhase:
         for s in range(n_samples):
             name = sample_names[s]
             breakdown = sample_breakdowns[s]
-            sample = PowerCyclePhase(name, breakdown)
+            sample = tested_class(name, breakdown)
             all_samples.append(sample)
         self.sample_breakdowns = sample_breakdowns
         self.all_samples = all_samples
 
-    breakdown_arguments = [
+    breakdown_argument_examples = [
         [None, None, None, None],
         [1, 2, 3, 4],
         [-1, -2, -3, -4],
@@ -43,30 +58,40 @@ class TestPowerCyclePhase:
         ["1", "2", "3", "4"],
     ]
 
-    @pytest.mark.parametrize("test_keys", breakdown_arguments)
-    @pytest.mark.parametrize("test_values", breakdown_arguments)
+    @pytest.mark.parametrize("test_keys", breakdown_argument_examples)
+    @pytest.mark.parametrize("test_values", breakdown_argument_examples)
     def test_validate_breakdown(self, test_keys, test_values):
+        tested_class = self.tested_class
+        tested_class_error = self.tested_class_error
+
         name = "Name for dummy sample"
         breakdown = dict(zip(test_keys, test_values))
-        possible_errors = (TypeError, ValueError, PowerCyclePhaseError)
+        possible_errors = (TypeError, ValueError, tested_class_error)
         try:
-            sample = PowerCyclePhase(name, breakdown)
+            sample = tested_class(name, breakdown)
         except possible_errors:
 
             str_keys = [isinstance(k, str) for k in test_keys]
             all_keys_are_str = all(str_keys)
             nonnegative_errors = (TypeError, ValueError)
-            nonstr_keys_errors = PowerCyclePhaseError
+            nonstr_keys_errors = tested_class_error
             if all_keys_are_str:
                 with pytest.raises(nonnegative_errors):
-                    sample = PowerCyclePhase(name, breakdown)
+                    sample = tested_class(name, breakdown)
             else:
                 with pytest.raises(nonstr_keys_errors):
-                    sample = PowerCyclePhase(name, breakdown)
+                    sample = tested_class(name, breakdown)
 
 
 class TestPowerCyclePulse:
+    tested_class_super = PowerCycleTimeABC
+    tested_class_super_error = PowerCycleTimeABCError
+    tested_class = PowerCyclePulse
+    tested_class_error = PowerCyclePulseError
+
     def setup_method(self):
+        tested_class = self.tested_class
+
         (
             _,
             sample_phases,
@@ -74,23 +99,32 @@ class TestPowerCyclePulse:
 
         name = "Pulse example"
         phase_set = sample_phases
-        pulse = PowerCyclePulse(name, phase_set)
+        pulse = tested_class(name, phase_set)
         self.sample_phases = sample_phases
         self.sample = pulse
 
     def test_validate_phase_set(self):
+        tested_class = self.tested_class
+
         sample_phases = self.sample_phases
         for phase in sample_phases:
-            phase_set = PowerCyclePulse._validate_phase_set(phase)
+            phase_set = tested_class._validate_phase_set(phase)
             individual_phase_becomes_list = isinstance(phase_set, list)
             assert individual_phase_becomes_list
-        phase_set = PowerCyclePulse._validate_phase_set(sample_phases)
+        phase_set = tested_class._validate_phase_set(sample_phases)
         phase_set_becomes_list = isinstance(phase_set, list)
         assert phase_set_becomes_list
 
 
 class TestPowerCycleScenario:
+    tested_class_super = PowerCycleTimeABC
+    tested_class_super_error = PowerCycleTimeABCError
+    tested_class = PowerCycleScenario
+    tested_class_error = PowerCycleScenarioError
+
     def setup_method(self):
+        tested_class = self.tested_class
+
         (
             _,
             sample_pulses,
@@ -98,26 +132,30 @@ class TestPowerCycleScenario:
 
         name = "Scenario example"
         pulse_set = sample_pulses
-        timeline = PowerCycleScenario(name, pulse_set)
+        timeline = tested_class(name, pulse_set)
         self.sample_pulses = pulse_set
         self.sample = timeline
 
     def test_validate_pulse_set(self):
+        tested_class = self.tested_class
+
         sample_pulses = self.sample_pulses
         for pulse in sample_pulses:
-            pulse_set = PowerCycleScenario._validate_pulse_set(pulse)
+            pulse_set = tested_class._validate_pulse_set(pulse)
             individual_pulse_becomes_list = isinstance(pulse_set, list)
             assert individual_pulse_becomes_list
-        pulse_set = PowerCycleScenario._validate_pulse_set(sample_pulses)
+        pulse_set = tested_class._validate_pulse_set(sample_pulses)
         pulse_set_becomes_list = isinstance(pulse_set, list)
         assert pulse_set_becomes_list
 
 
 class TestScenarioBuilder:
-    def setup_method(self):
-        tested_class = ScenarioBuilder
-        self.tested_class = tested_class
+    tested_class_super = None
+    tested_class_super_error = None
+    tested_class = ScenarioBuilder
+    tested_class_error = ScenarioBuilderError
 
+    def setup_method(self):
         scenario_json_path = time_testkit.scenario_json_path
         self.scenario_json_path = scenario_json_path
 
@@ -143,6 +181,7 @@ class TestScenarioBuilder:
 
     def run_validate_config(self):
         tested_class = self.tested_class
+
         scenario_json_contents = self.scenario_json_contents
         (
             scenario_config,
@@ -160,6 +199,7 @@ class TestScenarioBuilder:
 
     def run_build_breakdown_library(self):
         tested_class = self.tested_class
+
         (
             scenario_config,
             pulse_config,
@@ -179,6 +219,7 @@ class TestScenarioBuilder:
 
     def run_build_phase_library(self):
         tested_class = self.tested_class
+
         (
             breakdown_library,
             phase_config,
@@ -198,6 +239,7 @@ class TestScenarioBuilder:
 
     def run_build_pulse_library(self):
         tested_class = self.tested_class
+
         (
             phase_library,
             pulse_config,
@@ -215,6 +257,7 @@ class TestScenarioBuilder:
 
     def run_build_scenario(self):
         tested_class = self.tested_class
+
         (
             pulse_library,
             scenario_config,
@@ -231,14 +274,17 @@ class TestScenarioBuilder:
     # ------------------------------------------------------------------
 
     def test_class_attributes(self):
+        tested_class = self.tested_class
+
         all_class_attr = self.all_class_attr
         valid_highest_level_json_keys = self.highest_level_json_keys
         valid_config_json_values = [
+            type(None),
             dict,
             str,
             list,
         ]
-        tested_class = self.tested_class
+
         for attr in all_class_attr:
             assert hasattr(tested_class, attr)
 
@@ -249,7 +295,11 @@ class TestScenarioBuilder:
             keys_in_attr = attr_in_tested_class.keys()
             for key in keys_in_attr:
                 value = attr_in_tested_class[key]
-                assert value in valid_config_json_values
+                value_as_list = validate_list(value)
+                valid_values_in_valid_config_json_values = [
+                    v in valid_config_json_values for v in value_as_list
+                ]
+                assert all(valid_values_in_valid_config_json_values)
 
         for high_key in valid_highest_level_json_keys:
             text_before_hiphen = high_key.split("-", 1)[0]
@@ -259,8 +309,10 @@ class TestScenarioBuilder:
             assert format_exists_for_high_key
 
     def test_constructor(self):
+        tested_class = self.tested_class
+
         scenario_json_path = self.scenario_json_path
-        sample = ScenarioBuilder(scenario_json_path)
+        sample = tested_class(scenario_json_path)
         assert isinstance(sample, ScenarioBuilder)
 
         scenario = sample.scenario
@@ -277,11 +329,13 @@ class TestScenarioBuilder:
 
     def test_validate_config(self):
         tested_class = self.tested_class
+        tested_class_error = self.tested_class_error
+
         scenario_json_contents = self.scenario_json_contents
         valid_highest_level_json_keys = self.highest_level_json_keys
         all_configs = self.run_validate_config()
 
-        possible_errors = (KeyError, TypeError, ScenarioBuilderError)
+        possible_errors = (KeyError, TypeError, tested_class_error)
         for config in all_configs:
             config_is_dict = isinstance(config, dict)
             assert config_is_dict
@@ -297,7 +351,7 @@ class TestScenarioBuilder:
     @pytest.mark.parametrize(
         "test_module",
         [
-            "None",
+            None,
             "equilibria",
             "pumping",
             "not-implemented_importer",
@@ -305,6 +359,8 @@ class TestScenarioBuilder:
     )
     def test_import_duration(self, test_module):
         tested_class = self.tested_class
+        tested_class_error = self.tested_class_error
+
         (_, _, _, breakdown_config) = self.run_validate_config()
 
         element_with_module_none = "plb"
@@ -319,7 +375,7 @@ class TestScenarioBuilder:
 
         elif test_module == "not-implemented_importer":
             variable_map = None
-            with pytest.raises(ScenarioBuilderError):
+            with pytest.raises(tested_class_error):
                 duration = tested_class.import_duration(
                     test_module,
                     variable_map,
@@ -347,6 +403,7 @@ class TestScenarioBuilder:
 
     def test_build_phase_breakdown(self):
         tested_class = self.tested_class
+
         (breakdown_library, _, _, _) = self.run_build_breakdown_library()
         breakdown_list = breakdown_library.keys()
 
@@ -367,12 +424,12 @@ class TestScenarioBuilder:
 
     def test_build_phase_library(self):
         (phase_library, _, _) = self.run_build_phase_library()
-        assert type(phase_library) is dict
+        assert type(phase_library) == dict
 
         library_items = phase_library.items()
         for (key, value) in library_items:
-            assert type(key) is str
-            assert type(value) is PowerCyclePhase
+            assert type(key) == str
+            assert type(value) == PowerCyclePhase
 
     def test_build_time_set(self):
         """
@@ -383,13 +440,13 @@ class TestScenarioBuilder:
 
     def test_build_pulse_library(self):
         (pulse_library, _) = self.run_build_pulse_library()
-        assert type(pulse_library) is dict
+        assert type(pulse_library) == dict
 
         library_items = pulse_library.items()
         for (key, value) in library_items:
-            assert type(key) is str
-            assert type(value) is PowerCyclePulse
+            assert type(key) == str
+            assert type(value) == PowerCyclePulse
 
     def test_build_scenario(self):
         scenario = self.run_build_scenario()
-        assert type(scenario) is PowerCycleScenario
+        assert type(scenario) == PowerCycleScenario

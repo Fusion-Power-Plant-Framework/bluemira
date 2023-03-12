@@ -172,7 +172,7 @@ class ScenarioBuilder:
 
     _breakdown_format = {
         "name": str,
-        "module": str,
+        "module": [type(None), str],
         "variables_map": dict,
     }
 
@@ -264,7 +264,7 @@ class ScenarioBuilder:
 
     @staticmethod
     def import_duration(module, variables_map):
-        if module == "None":
+        if module is None:
             duration = variables_map["duration"]
             unit = variables_map["unit"]
             duration = raw_uc(duration, unit, "second")
@@ -289,12 +289,12 @@ class ScenarioBuilder:
         breakdown_library = dict()
         for element_label in all_elements:
             element_specs = breakdown_config[element_label]
-            element_name = element_specs["name"]
 
+            element_name = element_specs["name"]
             module = element_specs["module"]
             variables_map = element_specs["variables_map"]
-            duration = cls.import_duration(module, variables_map)
 
+            duration = cls.import_duration(module, variables_map)
             breakdown_library[element_label] = {element_name: duration}
         return breakdown_library
 
