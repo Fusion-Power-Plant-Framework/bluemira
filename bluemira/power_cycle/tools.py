@@ -3,6 +3,7 @@
 """
 Utility functions for the power cycle model.
 """
+import copy
 import json
 import os
 
@@ -103,12 +104,14 @@ def validate_dict(dictionary, allowed_format):
         if key_is_allowed:
             value = dictionary[key]
             type_of_value = type(value)
-            necessary_type = allowed_format[key]
-            type_is_incorrect = type_of_value is not necessary_type
+
+            necessary_types = validate_list(allowed_format[key])
+            type_is_incorrect = type_of_value not in necessary_types
             if type_is_incorrect:
                 raise TypeError(
                     f"The value in key {key!r} is not of "
-                    f"the {necessary_type!r} class.",
+                    "one of the following classes: "
+                    f"{necessary_types!r}.",
                 )
         else:
             raise KeyError(
@@ -134,6 +137,29 @@ def validate_subdict(dictionary, allowed_format):
                 "Values stored in 'dictionary' must be of the " "'dict' class.",
             )
     return dictionary
+
+
+def validate_lists_to_have_same_length(*args):
+    """
+    Validate an arbitrary number of arguments to be lists of the same
+    length. Arguments that are not lists are considered lists of one
+    element.
+    If all equal, returns the length of those lists.
+    """
+    all_lengths = []
+    for argument in args:
+        argument = validate_list(argument)
+        argument_length = len(argument)
+        all_lengths.append(argument_length)
+    unique_lengths = unique_and_sorted_vector(all_lengths)
+
+    all_lenghts_are_not_equal = len(unique_lengths) != 1
+    if all_lenghts_are_not_equal:
+        raise ValueError(
+            "At least one of the lists does not have " "the same length as the others."
+        )
+    else:
+        return argument_length
 
 
 # ######################################################################
@@ -168,6 +194,19 @@ def remove_characters(string, character_list):
     return string
 
 
+def convert_string_into_numeric_list(string):
+    """
+    Converts a string in the format '[x, y, z]' imported from a json
+    into a list on numbers.
+    """
+    string = copy.deepcopy(string)
+    unwanted_characters = [" ", "[", "]"]
+    clean_string = remove_characters(string, unwanted_characters)
+    list_from_string = list(clean_string.split(","))
+    numbers_list = [float(n) for n in list_from_string]
+    return numbers_list
+
+
 def read_json(file_path):
     """
     Returns the contents of a 'json' file in 'dict' format.
@@ -178,6 +217,21 @@ def read_json(file_path):
     except json.decoder.JSONDecodeError:
         raise TypeError("The file could not be read as a 'json' file.")
     return contents_dict
+
+
+def build_dict_from_format(allowed_format):
+    """
+    Build a 'dict' based on an 'allowed_format' dictionary. Keys are
+    the same as in the format, and values are empty instances of the
+    allowed type for that key.
+    When multiple types are allowed, the first one is used.
+    """
+    dictionary = dict()
+    for (allowed_key, allowed_types) in allowed_format.items():
+        allowed_types = validate_list(allowed_types)
+        first_allowed_type = allowed_types[0]
+        dictionary[allowed_key] = first_allowed_type()
+    return dictionary
 
 
 # ######################################################################
@@ -222,7 +276,6 @@ def adjust_2d_graph_ranges(x_frac=0.1, y_frac=0.1, ax=None):
         Instance of the 'matplotlib.axes.Axes' class. By default,
         the currently selected axes are used.
     """
-
     ax = validate_axes(ax)
     ax.axis("tight")
 
