@@ -56,6 +56,9 @@ class PowerCycleABCError(PowerCycleError):
                 f"instances of the {self._source} class must be of "
                 "the 'str' class."
             ),
+            "label": (
+                "Invalid 'label' parameter for an instance of the " f"{self._source}."
+            ),
             "class": (
                 "Invalid instance. The tested object is not an "
                 f"instance of the {self._source} class."
