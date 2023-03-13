@@ -49,6 +49,7 @@ from bluemira.equilibria.solve import DudsonConvergence
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.tools import get_class_from_module
 from eudemo.pf_coils.tools import (
     make_coil_mapper,
     make_coilset,
@@ -131,14 +132,23 @@ class PFCoilsDesigner(Designer[CoilSet]):
         """
         coilset = self._make_coilset()
         coil_mapper = self._make_coil_mapper(coilset)
+        defaults = {
+            "grid_scale_x": 2.0,
+            "grid_scale_z": 2.0,
+            "nx": 65,
+            "nz": 65,
+        }
+        grid_settings = self.build_config["grid_settings"]
+        grid_settings = {**defaults, **grid_settings}
+
         grid = make_grid(
             self.params.R_0.value,
             self.params.A.value,
             self.params.kappa.value,
-            scale_x=2.0,
-            scale_z=2.0,
-            nx=65,
-            nz=65,
+            scale_x=grid_settings["grid_scale_x"],
+            scale_z=grid_settings["grid_scale_z"],
+            nx=grid_settings["nx"],
+            nz=grid_settings["nz"],
         )
         # TODO: Make a CustomProfile from flux functions coming from PLASMOD and fixed
         # boundary optimisation
@@ -153,11 +163,34 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coilset, grid, profiles, coil_mapper, constraints
         )
         bluemira_print(f"Solving design problem: {opt_problem.__class__.__name__}")
-        return opt_problem.optimise(verbose=True)
+        return opt_problem.optimise(verbose=self.build_config.get("verbose", False))
 
     def _make_pulsed_coilset_opt_problem(
         self, coilset, grid, profiles, position_mapper, constraints
     ):
+        defaults = {
+            "param_class": "OutboardBreakdownZoneStrategy",
+            "problem_class": "BreakdownCOP",
+            "optimisation_settings": {
+                "algorithm_name": "COBYLA",
+                "conditions": {
+                    "max_eval": 5000,
+                    "ftol_rel": 1e-10,
+                },
+            },
+        }
+        breakdown_settings = self.build_config["breakdown_settings"]
+        breakdown_settings = {**defaults, **breakdown_settings}
+        breakdown_strategy = get_class_from_module(
+            breakdown_settings["param_class"], default_module="equilibria.opt_problems"
+        )
+        breakdown_problem = get_class_from_module(
+            breakdown_settings["problem_class"], default_module="equilibria.opt_problems"
+        )
+        breakdown_optimiser = Optimiser(
+            breakdown_settings["optimisation_settings"]["algorithm_name"],
+            opt_conditions=breakdown_settings["optimisation_settings"]["conditions"],
+        )
         return OptimisedPulsedCoilsetDesign(
             self.params,
             coilset,
@@ -167,11 +200,9 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coil_constraints=constraints["coil_field"],
             equilibrium_constraints=[constraints["isoflux"], constraints["x_point"]],
             profiles=profiles,
-            breakdown_strategy_cls=OutboardBreakdownZoneStrategy,
-            breakdown_problem_cls=BreakdownCOP,
-            breakdown_optimiser=Optimiser(
-                "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
-            ),
+            breakdown_strategy_cls=breakdown_strategy,
+            breakdown_problem_cls=breakdown_problem,
+            breakdown_optimiser=breakdown_optimiser,
             breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
             equilibrium_problem_cls=TikhonovCurrentCOP,
             equilibrium_optimiser=Optimiser(

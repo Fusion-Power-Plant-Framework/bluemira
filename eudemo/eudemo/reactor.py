@@ -185,11 +185,15 @@ def build_pf_coils(
     builders = []
     for designer, coil_type in wires:
         tk_ins = (
-            params.tk_pf_insulation
+            params.tk_pf_insulation.value
             if coil_type.name == "PF"
-            else params.tk_cs_insulation
+            else params.tk_cs_insulation.value
         )
-        tk_case = params.tk_pf_casing if coil_type.name == "PF" else params.tk_cs_casing
+        tk_case = (
+            params.tk_pf_casing.value
+            if coil_type.name == "PF"
+            else params.tk_cs_casing.value
+        )
         builders.append(
             PFCoilBuilder(
                 {

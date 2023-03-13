@@ -103,5 +103,34 @@
                 "ftol_rel": 1e-6
             }
         }
+    },
+    "PF coils": {
+        "run_mode": "run",
+        "verbose": true,
+        "grid_settings": {
+            "nx": 127,
+            "nz": 127,
+            "grid_scale_x": 2.0,
+            "grid_scale_z": 2.0
+        },
+        "breakdown_settings": {
+            "param_class": "OutboardBreakdownZoneStrategy",
+            "problem_class": "BreakdownCOP",
+            "B_stray_con_tol": 1e-6,
+            "n_B_stray_points": 10,
+            "optimisation_settings": {
+                "algorithm_name": "COBYLA",
+                "conditions": {
+                    "max_eval": 5000,
+                    "ftol_rel": 1e-10
+                }
+            }
+        },
+        "equilibrium_settings": {
+
+        },
+        "position_settings": {
+
+        }
     }
 }
