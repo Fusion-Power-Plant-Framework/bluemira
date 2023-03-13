@@ -261,32 +261,15 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
                 return np.inf
             return (z1 - z2) / (x1 - x2)
 
-        def intersection(l1: Tuple[float], l2: Tuple[float]):
-            D = l1[0] * l2[1] - l1[1] * l2[0]
-            Dx = l1[2] * l2[1] - l1[1] * l2[2]
-            Dz = l1[0] * l2[2] - l1[2] * l2[0]
-            if D != 0:
-                x = Dx / D
-                z = Dz / D
-                return x, z
-            else:
-                return False
-
         def solve(l1: Tuple[float], l2: Tuple[float]):
-            A = np.array([[l1[0], l2[0]], [l1[1], l2[1]]])
+            A = np.array([[l1[0], l1[1]], [l2[0], l2[1]]])
             b = np.array([l1[2], l2[2]])
-            r = np.linalg.solve(A, b)
-            return r
+            return np.linalg.solve(A, b)
 
         bx = blanket_join_point[0]
         bz = blanket_join_point[1]
         tx = target_join_point[0]
         tz = target_join_point[1]
-
-        # To find the center of the arc, you need to find where
-        # the line perp. to the target intercepts and the line
-        # perp. to the line connecting the target and blanket join points
-        # that passes half way through that line.
 
         # grad of the target
         mt = grad_xz(
@@ -295,68 +278,52 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
             target_xz_start[1],
             target_xz_end[1],
         )
-        # grad of the line perp to the target
-        mt_perp = 0 if mt == np.inf else -1 / mt
-
-        # grad line of intersection between target and blanket points
-        mi = grad_xz(tx, bx, tz, bz)
-        mi_perp = -1 / mi
-
-        # xz of point half way between target and blanket join points
-        hx = (tx + bx) / 2
-        hz = (tz + bz) / 2
 
         # Solve the two linear equations in the form Ax + Bz = C
-        arc_center_point = intersection(
-            #   A     B          C
-            (mt_perp, 1, mt_perp * tx + tz),
-            (mi_perp, 1, mi_perp * hx + hz),
+
+        # This comes from solving for where a circle centered at O
+        # will intersect both the target and blanket join points
+        l1 = (
+            2 * bx - 2 * tx,  # A
+            2 * bz - 2 * tz,  # B
+            (bx**2) + bz**2 - (tx**2 + tz**2),  # C
         )
-        arc_center_point = np.array([arc_center_point[0], arc_center_point[1]])
-        s = solve(
-            (mt_perp, 1, mt_perp * tx + tz),
-            (mi_perp, 1, mi_perp * hx + hz),
+        # This comes from solving for where the circle center
+        # lines on the line perpendicular to the target
+        l2 = (
+            0 if mt == np.inf else 1,  # A
+            1 if mt == np.inf else mt,  # B
+            tz if mt == np.inf else tx + mt * tz,  # C
         )
+        arc_center_point = solve(l1, l2)
+
+        ox = arc_center_point[0]
+        oz = arc_center_point[1]
+
+        deg_t = np.rad2deg(np.arctan2(tz - oz, tx - ox))
+        deg_b = np.rad2deg(np.arctan2(bz - oz, bx - ox))
+
+        start_angle = deg_t
+        end_angle = deg_b
+        if deg_t > deg_b:
+            start_angle = deg_b
+            end_angle = deg_t
 
         targ = np.array([tx, tz])
         blnk = np.array([bx, bz])
 
-        print(arc_center_point)
-
         radius_t = np.linalg.norm(targ - arc_center_point)
         radius_b = np.linalg.norm(blnk - arc_center_point)
 
-        a = 1
-        # axis_to_blanket = (0, 0, 1)
-        # axis_to_target = (1, 0, 0)
+        assert np.isclose(radius_b, radius_t), "radi must be equal"
 
-        # target_on_left = tx < bx
-        # if target_on_left:
-        #     axis_to_target = (-1, 0, 0)
-
-        # if radius_to_blanket < radius_to_target:
-        #     major_radius = radius_to_target
-        #     major_axis = axis_to_target
-
-        #     minor_radius = radius_to_blanket
-        #     minor_axis = axis_to_blanket
-        # else:
-        #     major_radius = radius_to_blanket
-        #     major_axis = axis_to_blanket
-
-        #     minor_radius = radius_to_target
-        #     minor_axis = axis_to_target
-
-        # return make_ellipse(
-        #     center=center_point,
-        #     major_radius=major_radius,
-        #     minor_radius=minor_radius,
-        #     major_axis=major_axis,
-        #     minor_axis=minor_axis,
-        #     start_angle=0,
-        #     end_angle=90,
-        #     label=label,
-        # )
+        return make_circle(
+            radius=radius_t,
+            center=(ox, 0, oz),
+            axis=(0, -1, 0),
+            start_angle=start_angle,
+            end_angle=end_angle,
+        )
 
     def make_inner_baffle(
         self,
