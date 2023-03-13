@@ -1137,7 +1137,20 @@ class PolySpline(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def _get_variable_values(self):
+    def create_shape(self, label=""):
+        """
+        Make a CAD representation of the poly spline.
+
+        Parameters
+        ----------
+        label: str, default = ""
+            Label to give the wire
+
+        Returns
+        -------
+        shape: BluemiraWire
+            CAD Wire of the geometry
+        """
         variables = self.variables.values
         (
             x1,
@@ -1154,51 +1167,6 @@ class PolySpline(GeometryParameterisation):
         ) = variables[:11]
         l_start = variables[11:15]
         l_end = variables[15:]
-        return (
-            x1,
-            x2,
-            z2,
-            height,
-            top,
-            upper,
-            dz,
-            flat,
-            tilt,
-            bottom,
-            lower,
-            l_start,
-            l_end,
-        )
-
-    def create_shape(self, label=""):
-        """
-        Make a CAD representation of the poly spline.
-
-        Parameters
-        ----------
-        label: str, default = ""
-            Label to give the wire
-
-        Returns
-        -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
-        """
-        (
-            x1,
-            x2,
-            z2,
-            height,
-            top,
-            upper,
-            dz,
-            flat,
-            tilt,
-            bottom,
-            lower,
-            l_start,
-            l_end,
-        ) = self._get_variable_values()
 
         tilt = np.deg2rad(tilt)
         height = 0.5 * height
@@ -1235,7 +1203,6 @@ class PolySpline(GeometryParameterisation):
             wires.append(make_bezier([p0, p1, p2, p3], label=f"segment_{i}"))
 
         if flat != 0:
-            print([[x[2], 0, z[2]], [x[3], 0, z[3]]])
             outer_straight = make_polygon(
                 [[x[2], 0, z[2]], [x[3], 0, z[3]]], label="outer_straight"
             )
