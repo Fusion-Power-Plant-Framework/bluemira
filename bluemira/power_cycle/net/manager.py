@@ -13,11 +13,10 @@ from bluemira.power_cycle.errors import (
 )
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
 from bluemira.power_cycle.net.loads import LoadData, PhaseLoad, PowerLoad, PowerLoadModel
-from bluemira.power_cycle.time import PowerCycleScenario
+from bluemira.power_cycle.time import PowerCycleScenario, ScenarioBuilder
 from bluemira.power_cycle.tools import (
     convert_string_into_numeric_list,
     read_json,
-    unique_and_sorted_vector,
     validate_dict,
     validate_file,
     validate_lists_to_have_same_length,
@@ -36,14 +35,20 @@ class PowerCycleSystem(PowerCycleABC):
     ----------
     name: str
         Description of the 'PowerCycleSystem' instance.
+    scenario: PowerCycleScenario
+        Scenario with a set of phases that matches every phase specified
+        in the 'system_config' parameter.
     system_config: dict
-        Dictionary that contains the necessary inputsto define
+        Dictionary that contains the necessary inputs to define
         objects of the PowerLoad class that characterize the power
-        production and consumption of time-dependent power balance of the
-        Power Cycle module.
+        production and consumption of time-dependent power balance of
+        the Power Cycle module.
 
-    Attributes
+    Properties
     ----------
+    active_loads: dict
+    reactive_loads: dict
+    production_loads: dict
 
     """
 
@@ -63,7 +68,7 @@ class PowerCycleSystem(PowerCycleABC):
         "variables_map": dict,
     }
 
-    def __init__(self, scenario: PowerCycleScenario, system_config: dict):
+    def __init__(self, scenario: PowerCycleScenario, system_config: dict, label=None):
 
         scenario = self._validate_scenario(scenario)
 
@@ -82,7 +87,7 @@ class PowerCycleSystem(PowerCycleABC):
         reactive_config = validate_subdict(reactive_config, load_format)
         production_config = validate_subdict(production_config, load_format)
 
-        super().__init__(name)
+        super().__init__(name, label=label)
         self.scenario = scenario
         self._system_config = system_config
         self._active_config = active_config
@@ -253,23 +258,103 @@ class PowerCycleSystem(PowerCycleABC):
 
 
 class PowerCycleGroup(PowerCycleABC):
+    """ """
+
     # Build Power Cycle representations of each Plant System in the group
-    pass
-
-
-class PowerCycleManager:
-    # Call ScenarioBuilder
-    # Read load inputs JSON files (inputs for each Plant System)
-    # Build all Plant Systems
-    # Build PhaseLoads and PulseLoad
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
+    def __init__(
+        self, name, scenario: PowerCycleScenario, group_config: dict, label=None
+    ):
+        super().__init__(name, label=label)
+
+        self.group_config = group_config
+
+        system_library = self._build_system_library(scenario, group_config)
+        self.system_library = system_library
+
+    @staticmethod
+    def _build_system_library(scenario, group_config):
+        system_library = dict()
+        for (system_label, system_config) in group_config.items():
+            system = PowerCycleSystem(
+                scenario,
+                system_config,
+                label=system_label,
+            )
+            system_library[system_label] = system
+        return system_library
+
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
+
+    def _some_function(self):
+        raise PowerCycleGroupError()
+
+
+class PowerCycleManager:
+    """ """
+
+    # Call ScenarioBuilder
+    # Read load inputs JSON files (inputs for each Plant Group)
+    # Build all Plant Groups
+    # Make active loads negative
+    # Merge PhaseLoads and build PulseLoad
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    _manager_format = {"name": str, "config_path": str, "systems": list}
+
+    def __init__(self, scenario_config_path: str, manager_config_path: str):
+
+        scenario_builder = ScenarioBuilder(scenario_config_path)
+        scenario = scenario_builder.scenario
+        self.scenario = scenario
+
+        validated_path = validate_file(manager_config_path)
+        json_contents = read_json(validated_path)
+
+        manager_format = self._manager_format
+        manager_config = validate_subdict(json_contents, manager_format)
+        self._manager_config = manager_config
+
+        group_library = self._build_group_library(scenario, json_contents)
+        self.group_library = group_library
+
+    @staticmethod
+    def _build_group_library(scenario, manager_config):
+        group_library = dict()
+        for (group_label, group_inputs) in manager_config.items():
+            group_name = group_inputs["name"]
+            group_config_path = group_inputs["config_path"]
+            group_systems = group_inputs["systems"]
+
+            validated_path = validate_file(group_config_path)
+            json_contents = read_json(validated_path)
+
+            group_config = {key: json_contents[key] for key in group_systems}
+
+            group = PowerCycleGroup(
+                group_name,
+                scenario,
+                group_config,
+                label=group_label,
+            )
+            group_library[group_label] = group
+        return group_library
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    def _make_consumption_load_explicit():
+        raise PowerCycleManagerError()
 
     # ------------------------------------------------------------------
     # VISUALIZATION
@@ -278,5 +363,3 @@ class PowerCycleManager:
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------
-    def _make_consumption_load_explicit():
-        pass

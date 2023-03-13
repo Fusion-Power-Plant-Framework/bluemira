@@ -174,9 +174,6 @@ class TestPowerCycleSystem:
             all_phaseload_inputs.append(phaseload_inputs)
         return all_phaseload_inputs
 
-    def list_all_phaseloads(self):
-        pass
-
     def test_import_phaseload_inputs(self):
         tested_class = self.tested_class
         tested_class_error = self.tested_class_error
@@ -239,20 +236,25 @@ class TestPowerCycleSystem:
                     assert phase in valid_phases
 
     def test_make_phaseloads_from_config(self):
-        pass
+        all_instance_properties = self.all_instance_properties
 
-    """
-        # import pprint
-        # assert 0
-    """
+        all_system_inputs = self.all_system_inputs
+        all_sample_inputs = list(all_system_inputs.values())
 
-    # ------------------------------------------------------------------
-    # VISUALIZATION
-    # ------------------------------------------------------------------
+        all_samples = self.construct_multiple_samples()
 
-    # ------------------------------------------------------------------
-    # ARITHMETICS
-    # ------------------------------------------------------------------
+        n_samples = len(all_samples)
+        for s in range(n_samples):
+
+            sample = all_samples[s]
+            sample_inputs = all_sample_inputs[s]
+            for load_type in all_instance_properties:
+                system_loads = getattr(sample, load_type)
+                number_of_loads = len(system_loads)
+
+                type_label = load_type.split("_")[0]
+                type_config = sample_inputs[type_label]
+                assert number_of_loads == len(type_config)
 
 
 class TestPowerCycleGroup:
@@ -264,6 +266,14 @@ class TestPowerCycleGroup:
     def setup_method(self):
         pass
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
 
 class TestPowerCycleManager:
     tested_class_super = None
@@ -272,4 +282,56 @@ class TestPowerCycleManager:
     tested_class_error = PowerCycleManagerError
 
     def setup_method(self):
-        pass
+        self.scenario_json_path = manager_testkit.scenario_json_path
+        self.manager_json_path = manager_testkit.manager_json_path
+
+        scenario = manager_testkit.scenario
+        self.scenario = scenario
+
+        manager_json_contents = manager_testkit.inputs_for_manager()
+        self.manager_json_contents = manager_json_contents
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    def test_constructor(self):
+        tested_class = self.tested_class
+
+        scenario_json_path = self.scenario_json_path
+        manager_json_path = self.manager_json_path
+
+        sample = tested_class(scenario_json_path, manager_json_path)
+        assert isinstance(sample, PowerCycleManager)
+
+    def test_build_group_library(self):
+        tested_class = self.tested_class
+
+        scenario = self.scenario
+        manager_json_contents = self.manager_json_contents
+
+        all_group_labels = manager_json_contents.keys()
+
+        contents = manager_json_contents
+        all_keys = all_group_labels
+        all_systems = [contents[key]["systems"] for key in all_keys]
+
+        all_system_labels = unnest_list(all_systems)
+
+        group_library = tested_class._build_group_library(
+            scenario,
+            manager_json_contents,
+        )
+
+        for group_label in all_group_labels:
+            group = group_library[group_label]
+            assert type(group) == PowerCycleGroup
+
+            system_library = group.system_library
+            keys_in_library = system_library.keys()
+            for key in keys_in_library:
+                assert key in all_system_labels
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
