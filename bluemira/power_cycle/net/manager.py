@@ -313,7 +313,11 @@ class PowerCycleManager:
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
-    _manager_format = {"name": str, "config_path": str, "systems": list}
+    _manager_format = {
+        "name": str,
+        "config_path": str,
+        "systems": list,
+    }
 
     def __init__(self, scenario_config_path: str, manager_config_path: str):
 
@@ -359,6 +363,13 @@ class PowerCycleManager:
 
     def _make_consumption_load_explicit():
         raise PowerCycleManagerError()
+
+    def _build_pulseload(self):
+        group_library = self.group_library
+
+        pulseload = group_library
+
+        return pulseload
 
     # ------------------------------------------------------------------
     # VISUALIZATION

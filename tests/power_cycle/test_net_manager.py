@@ -274,6 +274,7 @@ class TestPowerCycleGroup:
             "group_config",
             "system_library",
         ]
+        self.all_instance_attr = all_instance_attr
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
@@ -288,8 +289,16 @@ class TestPowerCycleGroup:
         all_samples = []
         all_group_labels = all_group_inputs.keys()
         for group_label in all_group_labels:
-            group_config = all_group_inputs[group_label]
-            sample = tested_class(scenario, group_config)
+            group_inputs = all_group_inputs[group_label]
+
+            group_name = group_inputs["name"]
+            group_config = group_inputs["systems_config"]
+
+            sample = tested_class(
+                group_name,
+                scenario,
+                group_config,
+            )
             all_samples.append(sample)
         return all_samples
 
@@ -334,13 +343,17 @@ class TestPowerCycleManager:
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
-    def test_constructor(self):
+    def construct_sample(self):
         tested_class = self.tested_class
 
         scenario_json_path = self.scenario_json_path
         manager_json_path = self.manager_json_path
 
         sample = tested_class(scenario_json_path, manager_json_path)
+        return sample
+
+    def test_constructor(self):
+        sample = self.construct_sample()
         assert isinstance(sample, PowerCycleManager)
 
     def test_build_group_library(self):
@@ -373,4 +386,16 @@ class TestPowerCycleManager:
 
     # ------------------------------------------------------------------
     # OPERATIONS
+    # ------------------------------------------------------------------
+
+    def test_build_pulseload(self):
+        sample = self.construct_sample()
+        pulseload = sample._build_pulseload()
+
+        # import pprint
+        # assert 0
+        pass
+
+    # ------------------------------------------------------------------
+    # VISUALIZATION
     # ------------------------------------------------------------------
