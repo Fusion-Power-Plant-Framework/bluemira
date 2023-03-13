@@ -69,6 +69,10 @@ class PowerCyclePulse(PowerCycleTimeABC):
         List of phases that compose the pulse, in chronological order.
     """
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     def __init__(
         self,
         name,
@@ -90,6 +94,18 @@ class PowerCyclePulse(PowerCycleTimeABC):
             PowerCyclePhase.validate_class(element)
         return phase_set
 
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
+
+    def build_phase_library(self):
+        phase_set = self.phase_set
+        phase_library = dict()
+        for phase in phase_set:
+            phase_label = phase.label
+            phase_library[phase_label] = phase
+        return phase_library
+
 
 class PowerCycleScenario(PowerCycleTimeABC):
     """
@@ -103,6 +119,10 @@ class PowerCycleScenario(PowerCycleTimeABC):
         List of pulses that compose the scenario, in chronological
         order.
     """
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
 
     def __init__(
         self,
@@ -124,6 +144,18 @@ class PowerCycleScenario(PowerCycleTimeABC):
         for element in pulse_set:
             PowerCyclePulse.validate_class(element)
         return pulse_set
+
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
+
+    def build_phase_library(self):
+        pulse_set = self.pulse_set
+        phase_library = dict()
+        for pulse in pulse_set:
+            phase_library_for_pulse = pulse.build_phase_library()
+            phase_library = {**phase_library, **phase_library_for_pulse}
+        return phase_library
 
 
 class ScenarioBuilder:
