@@ -37,7 +37,7 @@ from bluemira.equilibria.opt_constraints import (
     MagneticConstraintSet,
 )
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
-from bluemira.equilibria.physics import calc_beta_p, calc_li3
+from bluemira.equilibria.physics import calc_li3
 from bluemira.equilibria.profiles import (
     BetaIpProfile,
     BetaLiIpProfile,
@@ -296,6 +296,7 @@ class TestSolveEquilibrium:
             gif=False,
         )
         program()
+        assert program.check_converged()
 
     @pytest.mark.parametrize("shape", shape_funcs)
     def test_betaip_profile(self, shape):
@@ -314,6 +315,7 @@ class TestSolveEquilibrium:
             gif=False,
         )
         program()
+        assert program.check_converged()
 
     @pytest.mark.parametrize("shape", shape_funcs)
     def test_betapliip_profile(self, shape):
@@ -343,6 +345,7 @@ class TestSolveEquilibrium:
         )
         program()
         assert abs_rel_difference(calc_li3(eq), self.l_i) <= rel_tol
+        assert program.check_converged()
 
 
 class TestEquilibrium:
