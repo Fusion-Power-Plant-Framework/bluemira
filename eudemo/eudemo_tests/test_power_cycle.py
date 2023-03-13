@@ -51,8 +51,15 @@ class TestEUDEMOPowerCycle:
         Parameter("div_pump_eta_el", 0.98, "", source="test"),
     )
 
-    def test_solver(self):
-        sspc_solver = SteadyStatePowerCycleSolver(self.params)
-        sspc_result = sspc_solver.execute()
-        sspc_solver.model.plot()
+    @classmethod
+    def setup_class(cls):
+        cls.sspc_solver = SteadyStatePowerCycleSolver(cls.params)
+        cls.sspc_result = cls.sspc_solver.execute()
+
+    def test_plotting(self):
+        self.sspc_solver.model.plot()
         plt.show()
+
+    def test_values(self):
+        assert self.sspc_result["P_el_net"] > 0
+        assert self.sspc_result["P_el_net"] / 1e6 > 1
