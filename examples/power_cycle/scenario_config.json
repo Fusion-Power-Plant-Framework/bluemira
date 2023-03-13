@@ -1,0 +1,112 @@
+{
+    "scenario": {
+        "name": "Standard scenario",
+        "pulses": [
+            "std"
+        ],
+        "repetition": [
+            1
+        ]
+    },
+    "pulse-library": {
+        "std": {
+            "name": "Standard pulse",
+            "phases": [
+                "dwl",
+                "d2f",
+                "ftt",
+                "f2d"
+            ]
+        }
+    },
+    "phase-library": {
+        "dwl": {
+            "name": "Dwell",
+            "logical": "|",
+            "breakdown": [
+                "csr",
+                "pmp"
+            ]
+        },
+        "d2f": {
+            "name": "Transition between dwell and flat-top",
+            "logical": "&",
+            "breakdown": [
+                "cru",
+                "bri"
+            ]
+        },
+        "ftt": {
+            "name": "Flat-top",
+            "logical": "&",
+            "breakdown": [
+                "plb"
+            ]
+        },
+        "f2d": {
+            "name": "Transition between flat-top and dwell",
+            "logical": "&",
+            "breakdown": [
+                "brt",
+                "crd"
+            ]
+        }
+    },
+    "breakdown-library": {
+        "csr": {
+            "name": "Central Solenoid recharge",
+            "module": "equilibria",
+            "variables_map": {
+                "desired_data": "CS-recharge-time"
+            }
+        },
+        "pmp": {
+            "name": "Reactor pump-down",
+            "module": "pumping",
+            "variables_map": {
+                "desired_data": "pumpdown-time"
+            }
+        },
+        "cru": {
+            "name": "Current ramp-up",
+            "module": "equilibria",
+            "variables_map": {
+                "desired_data": "ramp-up-time"
+            }
+        },
+        "crd": {
+            "name": "Current ramp-down",
+            "module": "equilibria",
+            "variables_map": {
+                "desired_data": "ramp-down-time"
+            }
+        },
+        "bri": {
+            "name": "Burn initiation (heat up plasma)",
+            "module": null,
+            "variables_map": {
+                "duration": 19,
+                "unit": "second",
+                "reference": "?"
+            }
+        },
+        "brt": {
+            "name": "Burn termination (cool down plasma)",
+            "module": null,
+            "variables_map": {
+                "duration": 123,
+                "unit": "second",
+                "reference": "?"
+            }
+        },
+        "plb": {
+            "name": "Plasma burn",
+            "module": null,
+            "variables_map": {
+                "duration": 2,
+                "unit": "hour",
+                "reference": "?"
+            }
+        }
+    }
+}

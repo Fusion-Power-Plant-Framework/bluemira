@@ -472,6 +472,8 @@ class NetManagerTestKit:
     def __init__(self):
         time_testkit = self.time_testkit
         scenario_json_path = time_testkit.scenario_json_path
+        self.scenario_json_path = scenario_json_path
+
         scenario_builder = ScenarioBuilder(scenario_json_path)
         scenario = scenario_builder.scenario
         self.scenario = scenario
