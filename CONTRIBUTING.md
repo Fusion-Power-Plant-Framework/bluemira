@@ -40,6 +40,7 @@ request is as follows:
 
 * Discuss the feature with the developers first
 * Submit an issue documenting the intent of the feature you wish to develop
+* Fork our repository (see the [GitHub documentation on forking](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/working-with-forks))
 * Make a branch of the `develop` branch which bears a similar name as your issue (e.g.
   `new_feature`)
 * Develop your feature(s) in your `new_feature` branch
@@ -194,43 +195,44 @@ Please write all Python docstrings in `numpydoc` style, see details [here](
 https://numpydoc.readthedocs.io/en/latest/format.html). An example is shown below:
 
 ```python
-def IPB98y2(I_p, B_t, P_sep, n19, R_0, A, kappa):
-	"""
-	ITER IPB98(y, 2) Confinement time scaling [2]
+def IPB98y2(
+    I_p: float, B_t: float, P_sep: float, n19: float, R_0: float, A: float, kappa: float
+) -> float:
+  """
+  ITER IPB98(y, 2) Confinement time scaling [2]
 
-	Parameters
-	----------
-	I_p: float
-		Plasma current [MA]
-	B_t: float
-		Toroidal field at R_0 [T]
-	P_sep: float
-		Separatrix power [MW]
-	n19: float
-		Line average plasma density [10^19 1/m^3]
-	R_0: float
-		Major radius [m]
-	A: float
-		Aspect ratio
-	kappa: float
-		Plasma elongation
+  Parameters
+  ----------
+  I_p
+      Plasma current [A]
+  B_t
+      Toroidal field at R_0 [T]
+  P_sep
+      Separatrix power [W]
+  n
+      Line average plasma density [1/m^3]
+  R_0
+      Major radius [m]
+  A
+      Aspect ratio
+  kappa
+      Plasma elongation
 
-	Returns
-	-------
-	tau_E: float
-		The energy confinement time [s]
+  Returns
+  -------
+  tau_E, the energy confinement time [s]
 
 
-	Notes
-	-----
-	[2] ITER Physics Expert Group, Nucl. Fus. 39, 12, <https://iopscience.iop.org/article/10.1088/0029-5515/39/12/302/pdf>
+  Notes
+  -----
+  [2] ITER Physics Expert Group, Nucl. Fus. 39, 12, <https://iopscience.iop.org/article/10.1088/0029-5515/39/12/302/pdf>
 
-	\t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.57}\\kappa^{0.78}`
-	"""
+  \t:math:`\\tau_{E}=0.0562I_p^{0.93}B_t^{0.15}P_{sep}^{-0.69}n^{0.41}M^{0.19}R_0^{1.97}A^{-0.58}\\kappa^{0.78}`
+  """
 ```
 
-The API documentation is built automatically using `sphinx` which reads docstrings and
-processes them accordingly.
+The API documentation is built automatically using `sphinx` which reads docstrings and argument types
+and processes them accordingly.
 
 ## Releases and Packaging
 
@@ -241,6 +243,5 @@ tag is dynamically pulled into the ``bluemira`` itself to set `__version__` corr
 https://github.com/python-versioneer/python-versioneer/blob/master/INSTALL.md#post-installation-usage)
 is quite straightforward, and that link also gives details on how ``versioneer`` is
 installed, should it be necessary to do that again. If this fails and you haven't
-touched `versioneer.py` or `bluemira/_version.py`, then it is possible
-that ``versioneer`` needs to be updated:
-<https://github.com/python-versioneer/python-versioneer#updating-versioneer>
+touched `bluemira/_version.py`, then it is possible
+that ``versioneer`` needs to be updated (see [their README](https://github.com/python-versioneer/python-versioneer#updating-versioneer)).

@@ -120,28 +120,11 @@ pre-commit install -f
 
 Please see the [guidelines for contributing to bluemira](CONTRIBUTING.md).
 
-In addition to the dependencies for installation, the following tools are useful for
-developing ``bluemira``:
-
-* Sphinx
-* Black
-
-Tests are run with `pytest`. To run the unit tests:
+Tests are run with `pytest`. To run the main tests:
 
 ```shell
 pytest
 ```
-
----
-
-If you don't have ``PROCESS`` installed then you'll need to edit
-`tests/test_reactor.py`.
-
-Change the line `"process_mode": "read"` to `"process_mode": "mock"`.
-
-For more information on PROCESS please see [here](https://ccfe.ukaea.uk/resources/process/)
-
----
 
 To run all the tests:
 
