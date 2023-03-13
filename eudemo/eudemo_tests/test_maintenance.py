@@ -29,7 +29,7 @@ import pytest
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.equatorial_port import EquatorialPortDesigner
+from eudemo.equatorial_port import EquatorialPortDesigner, EquatorialPortBuilder
 from eudemo.maintenance.upper_port import UpperPortOP
 
 
@@ -66,7 +66,7 @@ class TestUpperPortOP:
 
 
 class TestEquatorialPortDesigner:
-    """Test Equatorial Port"""
+    """Tests the Equatorial Port Designer"""
 
     def setup_method(self) -> None:
         """Set-up Equatorial Port Designer"""
@@ -100,3 +100,50 @@ class TestEquatorialPortDesigner:
 
         assert math.isclose(output.length, 2 * (x_len + z_len))
         assert math.isclose(output.area, x_len * z_len)
+
+
+class TestEquatorialPortBuilder:
+    """Tests the Equatorial Port Builder"""
+
+    def setup_method(self) -> None:
+        """Set-up Equatorial Port Designer"""
+        params = {
+            "n_ep": {"value": 10, "unit": ""},
+            "ep_r_corner": {"value": 0, "unit": "m"},
+        }
+        x = (0, 1, 1, 0)
+        z = (-1, -1, 1, 1)
+        xz = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+        y_ib = 1
+        x_offs = [0]
+        c_offs = [0]
+
+        self.builder = EquatorialPortBuilder(params, {}, xz, y_ib, x_offs, c_offs)
+
+    @pytest.mark.parametrize(
+        "xi, xo, zh, y, x_offset, c_off, exp_v",
+        zip(
+            [2.0, 3.0, 1.0],  # x_inboard
+            [9.0, 9.0, 4.0],  # x_outboard
+            [5.0, 4.0, 2.0],  # z_height
+            [3.0, 2.0, 1.0],  # y_width
+            [[5.0], [5.0, 7.0], [3.0]],  # x castellation_positions
+            [[1.0], [1.0, 2.0], [0.5]],  # y/z castellation_offsets
+            [185.0, 160.0, 10.0],  # volume check value of Eq. Ports
+        ),
+    )
+    def test_ep_builder(self, xi, xo, zh, y, x_offset, c_off, exp_v):
+        """Test Equatorial Port Builder"""
+        x = (xi, xo, xo, xi)
+        z = (-zh / 2, -zh / 2, zh / 2, zh / 2)
+        xz_profile = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+
+        self.builder.xz_profile = xz_profile
+        self.builder.y_width = y
+        self.builder.x_off = x_offset
+        self.builder.cst = c_off
+        output = self.builder.build()
+        out_eq_port = output.get_component("Equatorial Ports xyz 1")
+        print(out_eq_port)
+        print(out_eq_port.shape)
+        assert math.isclose(out_eq_port.shape.volume, exp_v)
