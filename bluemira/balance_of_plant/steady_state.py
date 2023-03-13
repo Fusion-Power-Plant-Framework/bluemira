@@ -37,7 +37,7 @@ from bluemira.balance_of_plant.error import BalanceOfPlantError
 from bluemira.balance_of_plant.plotting import BalanceOfPlantPlotter
 from bluemira.base.constants import HE3_MOLAR_MASS, HE_MOLAR_MASS, NEUTRON_MOLAR_MASS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 
 
 class CoolantPumping(abc.ABC):
@@ -450,15 +450,7 @@ class BalanceOfPlantModel:
         bop_cycle_strat,
         parasitic_load_strat,
     ):
-        if isinstance(params, dict):
-            self.params = BoPModelParams(**params)
-        elif isinstance(params, BoPModelParams):
-            self.params = params
-        else:
-            raise TypeError(
-                f"Unsupported type '{type(params).__name__}' for params. "
-                "Must be 'dict' or 'BoPModelParams'."
-            )
+        self.params = make_parameter_frame(params, BoPModelParams)
         self.rad_sep_strat = rad_sep_strat
         self.neutron_strat = neutron_strat
         self.blanket_pump_strat = blanket_pump_strat

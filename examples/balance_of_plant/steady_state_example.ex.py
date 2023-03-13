@@ -44,6 +44,7 @@ import matplotlib.pyplot as plt
 
 from bluemira.balance_of_plant.steady_state import (
     BalanceOfPlantModel,
+    BoPModelParams,
     H2OPumping,
     HePumping,
     NeutronPowerStrategy,
@@ -61,15 +62,15 @@ from bluemira.balance_of_plant.steady_state import (
 # want to use.
 
 # %%
-# fmt: off
-default_params = {
-    'P_fus_DT': 1995,
-    'P_fus_DD': 5,
-    'P_rad': 400,
-    'P_hcd_ss': 50,
-    'P_hcd_ss_el': 150,
-}
-# fmt: on
+default_params = BoPModelParams.from_dict(
+    {
+        "P_fus_DT": {"value": 1995e6, "unit": "W", "source": "example"},
+        "P_fus_DD": {"value": 5e6, "unit": "W", "source": "example"},
+        "P_rad": {"value": 400e6, "unit": "W", "source": "example"},
+        "P_hcd_ss": {"value": 50e6, "unit": "W", "source": "example"},
+        "P_hcd_ss_el": {"value": 150e6, "unit": "W", "source": "example"},
+    }
+)
 
 # %% [markdown]
 #
@@ -100,9 +101,9 @@ rad_sep_strat = RadChargedPowerStrategy(
 
 # %%
 blanket_pump_strat = HePumping(
-    8e6, 7.5e6, 300, 500, eta_isentropic=0.9, eta_electric=0.87
+    8e6, 7.5e6, 573.15, 773.15, eta_isentropic=0.9, eta_electric=0.87
 )
-bop_cycle = SuperheatedRankine(bb_t_out=500 + 273.15, delta_t_turbine=20)
+bop_cycle = SuperheatedRankine(bb_t_out=773.15, delta_t_turbine=20)
 divertor_pump_strat = H2OPumping(f_pump=0.05, eta_isentropic=0.99, eta_electric=0.87)
 
 
