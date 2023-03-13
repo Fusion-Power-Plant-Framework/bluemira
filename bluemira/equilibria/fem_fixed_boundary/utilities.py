@@ -31,7 +31,6 @@ from matplotlib.axes._axes import Axes
 from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
