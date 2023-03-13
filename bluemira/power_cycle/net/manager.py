@@ -267,7 +267,11 @@ class PowerCycleGroup(PowerCycleABC):
     # ------------------------------------------------------------------
 
     def __init__(
-        self, name, scenario: PowerCycleScenario, group_config: dict, label=None
+        self,
+        name,
+        scenario: PowerCycleScenario,
+        group_config: dict,
+        label=None,
     ):
         super().__init__(name, label=label)
 

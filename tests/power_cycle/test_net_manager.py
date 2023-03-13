@@ -264,11 +264,50 @@ class TestPowerCycleGroup:
     tested_class_error = PowerCycleGroupError
 
     def setup_method(self):
-        pass
+        scenario = manager_testkit.scenario
+        self.scenario = scenario
+
+        all_group_inputs = manager_testkit.inputs_for_groups()
+        self.all_group_inputs = all_group_inputs
+
+        all_instance_attr = [
+            "group_config",
+            "system_library",
+        ]
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
+
+    def construct_multiple_samples(self):
+        tested_class = self.tested_class
+
+        scenario = self.scenario
+        all_group_inputs = self.all_group_inputs
+
+        all_samples = []
+        all_group_labels = all_group_inputs.keys()
+        for group_label in all_group_labels:
+            group_config = all_group_inputs[group_label]
+            sample = tested_class(scenario, group_config)
+            all_samples.append(sample)
+        return all_samples
+
+    def test_constructor(self):
+        all_instance_attr = self.all_instance_attr
+
+        all_samples = self.construct_multiple_samples()
+        for sample in all_samples:
+            for instance_attr in all_instance_attr:
+                attr_was_created = hasattr(sample, instance_attr)
+                assert attr_was_created
+
+    def test_build_system_library(self):
+        """
+        No new functionality to be tested.
+        """
+        tested_class = self.tested_class
+        assert callable(tested_class._build_system_library)
 
     # ------------------------------------------------------------------
     # OPERATIONS
