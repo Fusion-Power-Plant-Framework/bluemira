@@ -199,6 +199,14 @@ class PowerCycleSystem(PowerCycleABC):
 
     def _build_phaseloads(self, load_name, phaseload_inputs):
         scenario = self.scenario
+        phase_list = phaseload_inputs["phase_list"]
+        normalize_list = phaseload_inputs["normalize_list"]
+        powerload_list = phaseload_inputs["powerload_list"]
+
+        n_phases = len(phase_list)
+        for p in range(n_phases):
+            phase = []
+
         phaseload_list = []
         return phaseload_list
 
