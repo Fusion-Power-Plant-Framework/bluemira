@@ -105,8 +105,8 @@
         }
     },
     "PF coils": {
-        "run_mode": "run",
-        "file_path": "config/PFCoilDesign",
+        "run_mode": "read",
+        "file_path": "config/PFCoilDesign.json",
         "verbose": false,
         "plot": true,
         "grid_settings": {

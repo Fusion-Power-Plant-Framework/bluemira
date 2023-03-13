@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Designer for PF coils and its parameters."""
 
-import os
+import json
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, Iterable, Union
@@ -31,6 +31,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
@@ -45,7 +46,7 @@ from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
-from bluemira.utilities.tools import get_class_from_module
+from bluemira.utilities.tools import get_class_from_module, json_writer
 from eudemo.pf_coils.tools import (
     make_coil_mapper,
     make_coilset,
@@ -120,6 +121,19 @@ class PFCoilsDesigner(Designer[CoilSet]):
         self.keep_out_zones = keep_out_zones
         self.file_path = self.build_config.get("file_path", None)
 
+    def read(self) -> CoilSet:
+        """
+        Read in a coilset
+        """
+        if self.file_path is None:
+            raise ValueError("No file path to read from!")
+
+        with open(self.file_path, "r") as file:
+            data = json.load(file)
+
+        eqdsk = EQDSKInterface(**data[next(iter(data))])
+        return CoilSet.from_group_vecs(eqdsk)
+
     def run(self) -> CoilSet:
         """
         Create and run the design optimisation problem.
@@ -161,20 +175,21 @@ class PFCoilsDesigner(Designer[CoilSet]):
         )
         bluemira_print(f"Solving design problem: {opt_problem.__class__.__name__}")
         result = opt_problem.optimise(verbose=self.build_config.get("verbose", False))
-
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        for k, v in opt_problem.snapshots.items():
-            if k in [opt_problem.SOF, opt_problem.EOF]:
-                v.eq.to_eqdsk(
-                    k,
-                    header=f"bluemira {timestamp}",
-                    directory=self.file_path,
-                    filetype="json",
-                )
+        self._save_equilibria(opt_problem)
         if self.build_config.get("plot", False):
             opt_problem.plot()
 
         return result
+
+    def _save_equilibria(self, opt_problem):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        result_dict = {}
+        for k, v in opt_problem.snapshots.items():
+            if k in [opt_problem.SOF, opt_problem.EOF]:
+                result_dict[k] = v.eq.to_dict()
+                result_dict[k]["name"] = f"bluemira {timestamp} {k}"
+
+        json_writer(result_dict, self.file_path)
 
     def _make_pulsed_coilset_opt_problem(
         self, coilset, grid, profiles, position_mapper, constraints
