@@ -144,6 +144,4 @@ class TestEquatorialPortBuilder:
         self.builder.cst = c_off
         output = self.builder.build()
         out_eq_port = output.get_component("Equatorial Ports xyz 1")
-        print(out_eq_port)
-        print(out_eq_port.shape)
         assert math.isclose(out_eq_port.shape.volume, exp_v)
