@@ -36,12 +36,7 @@ from bluemira.equilibria.opt_constraints import (
     IsofluxConstraint,
     PsiConstraint,
 )
-from bluemira.equilibria.opt_problems import (
-    BreakdownCOP,
-    OutboardBreakdownZoneStrategy,
-    PulsedNestedPositionCOP,
-    TikhonovCurrentCOP,
-)
+from bluemira.equilibria.opt_problems import PulsedNestedPositionCOP, TikhonovCurrentCOP
 from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.run import OptimisedPulsedCoilsetDesign
 from bluemira.equilibria.shapes import JohnerLCFS
