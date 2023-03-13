@@ -20,7 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Designer for PF coils and its parameters."""
 
+import os
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict, Iterable, Union
 
 import numpy as np
@@ -116,6 +118,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         super().__init__(params, build_config)
         self.tf_coil_boundary = tf_coil_boundary
         self.keep_out_zones = keep_out_zones
+        self.file_path = self.build_config.get("file_path", None)
 
     def run(self) -> CoilSet:
         """
@@ -157,7 +160,21 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coilset, grid, profiles, coil_mapper, constraints
         )
         bluemira_print(f"Solving design problem: {opt_problem.__class__.__name__}")
-        return opt_problem.optimise(verbose=self.build_config.get("verbose", False))
+        result = opt_problem.optimise(verbose=self.build_config.get("verbose", False))
+
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        for k, v in opt_problem.snapshots.items():
+            if k in [opt_problem.SOF, opt_problem.EOF]:
+                v.eq.to_eqdsk(
+                    k,
+                    header=f"bluemira {timestamp}",
+                    directory=self.file_path,
+                    filetype="json",
+                )
+        if self.build_config.get("plot", False):
+            opt_problem.plot()
+
+        return result
 
     def _make_pulsed_coilset_opt_problem(
         self, coilset, grid, profiles, position_mapper, constraints
