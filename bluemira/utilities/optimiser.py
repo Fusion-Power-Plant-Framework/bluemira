@@ -233,9 +233,16 @@ class Optimiser(NLOPTOptimiser):
         tolerances = np.array(tolerances)
 
         if not np.all(c_values < tolerances):
+            indices = np.where(c_values > tolerances)[0]
+
+            message = "\n".join(
+                [
+                    f"constraint number {i}: {pformat(c_values[i])} !< {pformat(tolerances[i])}"
+                    for i in indices
+                ]
+            )
             bluemira_warn(
-                "Some constraints have not been adequately satisfied.\n"
-                f"{pformat(c_values)} !< {pformat(tolerances)}"
+                "Some constraints have not been adequately satisfied.\n" f"{message}"
             )
             return False
         return True
