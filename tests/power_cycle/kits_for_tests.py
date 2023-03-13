@@ -8,7 +8,7 @@ import numpy as np
 
 import bluemira.base.constants as constants
 from bluemira.power_cycle.net.loads import LoadData, PhaseLoad, PowerLoad, PowerLoadModel
-from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
+from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse, ScenarioBuilder
 from bluemira.power_cycle.tools import (
     read_json,
     unnest_list,
@@ -217,10 +217,9 @@ class TimeTestKit:
 
 
 class NetLoadsTestKit:
+    time_testkit = TimeTestKit()
+
     def __init__(self):
-
-        self.time_testkit = TimeTestKit()
-
         all_colors = [
             "r",
             "b",
@@ -468,8 +467,14 @@ class NetImportersTestKit:
 
 
 class NetManagerTestKit:
+    time_testkit = TimeTestKit()
+
     def __init__(self):
-        # self.time_testkit = TimeTestKit()
+        time_testkit = self.time_testkit
+        scenario_json_path = time_testkit.scenario_json_path
+        scenario_builder = ScenarioBuilder(scenario_json_path)
+        scenario = scenario_builder.scenario
+        self.scenario = scenario
 
         manager_json_name = tuple(["manager_config.json"])
         manager_json_path = test_data_folder_path + manager_json_name

@@ -11,8 +11,9 @@ from bluemira.power_cycle.errors import (
     PowerCycleManagerError,
     PowerCycleSystemError,
 )
-from bluemira.power_cycle.net.importers import EquilibriaImporter
-from bluemira.power_cycle.net.loads import LoadData, PowerLoad
+from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
+from bluemira.power_cycle.net.loads import LoadData, PowerLoad, PowerLoadModel
+from bluemira.power_cycle.time import PowerCycleScenario
 from bluemira.power_cycle.tools import (
     convert_string_into_numeric_list,
     read_json,
@@ -20,6 +21,7 @@ from bluemira.power_cycle.tools import (
     validate_dict,
     validate_file,
     validate_lists_to_have_same_length,
+    validate_subdict,
 )
 
 
@@ -59,40 +61,73 @@ class PowerCycleSystem(PowerCycleABC):
     }
     _load_format = {
         "name": str,
-        "module": [None, str],
+        "module": [type(None), str],
         "variables_map": dict,
     }
 
-    def __init__(self, system_config: dict):
+    def __init__(self, scenario: PowerCycleScenario, system_config: dict):
+
+        scenario = self._validate_scenario(scenario)
+
+        system_format = self._system_format
+        system_config = validate_dict(system_config, system_format)
+
         (
             name,
             production_config,
             reactive_config,
             active_config,
-        ) = self._validate_config(system_config)
-        self._system_config = system_config
+        ) = self._unpack_system_config(system_config)
+
+        load_format = self._load_format
+        active_config = validate_subdict(active_config, load_format)
+        reactive_config = validate_subdict(reactive_config, load_format)
+        production_config = validate_subdict(production_config, load_format)
 
         super().__init__(name)
+        self.scenario = scenario
+        self._system_config = system_config
+        self._active_config = active_config
+        self._reactive_config = reactive_config
+        self._production_config = production_config
 
-        active_loads = self._build_loads_from_config(active_config)
-        reactive_loads = self._build_loads_from_config(reactive_config)
-        production_loads = self._build_loads_from_config(production_config)
+    @staticmethod
+    def _validate_scenario(scenario):
+        scenario_is_incorrect = type(scenario) != PowerCycleScenario
+        if scenario_is_incorrect:
+            raise PowerCycleSystemError("scenario")
+        return scenario
 
-        self.active_loads = active_loads
-        self.reactive_loads = reactive_loads
-        self.production_loads = production_loads
-
-    @classmethod
-    def _validate_config(cls, system_config):
-        system_format = cls._system_format
-        system_config = validate_dict(system_config, system_format)
-
+    @staticmethod
+    def _unpack_system_config(system_config):
         name = system_config["name"]
         production_config = system_config["production"]
         reactive_config = system_config["reactive"]
         active_config = system_config["active"]
 
         return name, production_config, reactive_config, active_config
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    @property
+    def active_loads(self):
+        active_config = self._active_config
+        active_loads = self._make_phaseloads_from_config(active_config)
+        return active_loads
+
+    @property
+    def reactive_loads(self):
+        reactive_config = self._reactive_config
+        reactive_loads = self._make_phaseloads_from_config(reactive_config)
+        return reactive_loads
+
+    @property
+    def production_loads(self):
+        production_config = self._production_config
+        production_loads = self._make_phaseloads_from_config(production_config)
+        return production_loads
 
     @staticmethod
     def import_phaseload_inputs(module, variables_map):
@@ -131,6 +166,8 @@ class PowerCycleSystem(PowerCycleABC):
                 time = convert_string_into_numeric_list(time)
                 data = convert_string_into_numeric_list(data)
 
+                model = PowerLoadModel[model]
+
                 data = raw_uc(data, unit, "W")
                 for efficiency in all_efficiencies:
                     data = data / efficiency
@@ -141,38 +178,47 @@ class PowerCycleSystem(PowerCycleABC):
 
                 powerload_list.append(powerload)
 
-            load_inputs = dict()
-            load_inputs["phase_list"] = phase_list
-            load_inputs["normalize_list"] = normalize_list
-            load_inputs["powerload_list"] = powerload_list
+            phaseload_inputs = dict()
+            phaseload_inputs["phase_list"] = phase_list
+            phaseload_inputs["normalize_list"] = normalize_list
+            phaseload_inputs["powerload_list"] = powerload_list
 
         elif module == "equilibria":
-            load_inputs = EquilibriaImporter.phaseload_inputs(variables_map)
+            phaseload_inputs = EquilibriaImporter.phaseload_inputs(variables_map)
 
         elif module == "pumping":
-            raise NotImplementedError()
+            phaseload_inputs = PumpingImporter.phaseload_inputs(variables_map)
 
         else:
             raise PowerCycleSystem(
                 "import",
-                "Unknown routine for importing a load from " f"the {module!r} module.",
+                "Unknown routine for importing a phase load from "
+                f"the {module!r} module.",
             )
-        return load_inputs
+        return phaseload_inputs
 
-    @classmethod
-    def _build_loads_from_config(cls, load_config):
-        load_format = cls._load_format
-        load_dict = dict()
-        for (label, specs) in load_config.items():
-            load_specs = validate_dict(specs, load_format)
+    def _build_phaseloads(self, load_name, phaseload_inputs):
+        scenario = self.scenario
+        phaseload_list = []
+        return phaseload_list
 
-            load_name = load_specs["name"]
-            module = load_specs["module"]
-            variables_map = load_specs["variables_map"]
+    def _make_phaseloads_from_config(self, type_config):
+        system_loads = dict()
+        for (label, load_config) in type_config.items():
+            load_name = load_config["name"]
+            module = load_config["module"]
+            variables_map = load_config["variables_map"]
 
-            load_inputs = cls.import_load_inputs(module, variables_map)
-
-        return load_name, load_inputs
+            phaseload_inputs = self.import_phaseload_inputs(
+                module,
+                variables_map,
+            )
+            phaseload_list = self._build_phaseloads(
+                load_name,
+                phaseload_inputs,
+            )
+            system_loads[label] = phaseload_list
+        return system_loads
 
 
 class PowerCycleGroup(PowerCycleABC):
@@ -201,4 +247,5 @@ class PowerCycleManager:
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------
-    pass
+    def _make_consumption_load_explicit():
+        pass
