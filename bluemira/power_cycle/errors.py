@@ -359,6 +359,7 @@ class PowerCycleSystemError(PowerCycleError):
 
     def _errors(self):
         errors = {
+            "scenario": ("Scenario parameter is incorrect."),
             "import": ("Bluemira data import failed."),
         }
         return errors
