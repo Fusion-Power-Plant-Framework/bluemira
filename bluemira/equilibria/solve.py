@@ -601,7 +601,10 @@ class PicardIterator:
         """
         Solve for this iteration.
         """
-        self.eq.solve(psi=self.psi)
+        if self.eq._li_flag and self.i > self.eq.profiles._l_i_min_iter:
+            self.eq.solve_li(psi=self.psi)
+        else:
+            self.eq.solve(psi=self.psi)
 
     def _initial_optimise_coilset(self, **kwargs):
         self._optimise_coilset(**kwargs)

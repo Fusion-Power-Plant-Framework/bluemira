@@ -54,11 +54,6 @@ I_MIN = 1e-20
 # Minimum current density in toroidal current density array
 J_TOR_MIN = 1e-36
 
-# Relative tolerance on normalised internal inductance constraint
-#       Used when optimising flux function shape parameters and StopIteration
-#       condition for the SLSQP optimiser.
-LI_REL_TOL = 0.015
-
 # Breakdown field limit [T]
 #       Used when calculating plasma breakdowns
 B_BREAKDOWN = 3e-3

@@ -72,8 +72,13 @@ from bluemira.equilibria.opt_problems import (
     OutboardBreakdownZoneStrategy,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.physics import calc_psib
-from bluemira.equilibria.profiles import CustomProfile
+from bluemira.equilibria.physics import calc_beta_p, calc_li3, calc_psib
+from bluemira.equilibria.profiles import (
+    BetaIpProfile,
+    BetaLiIpProfile,
+    CustomProfile,
+    DoublePowerFunc,
+)
 from bluemira.equilibria.solve import PicardIterator
 from bluemira.utilities.optimiser import Optimiser
 
@@ -221,7 +226,15 @@ psi_eof -= 10
 # %% [markdown]
 #
 # Set up a parameterised profile
+# Here you can use a CustomProfile, by feeding in arrays describing
+# your p' and FF' flux functions which are linearly interpolated.
 
+# Or you can use either BetaIpProfile or BetaLiIpProfile to constrain
+# the plasma integrals, optimising the shape of the flux functions
+# to match these.
+
+# Comment out the relevant lines below to explore the different
+# behaviour.
 # %%
 profiles = CustomProfile(
     np.array([86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]),
@@ -232,7 +245,12 @@ profiles = CustomProfile(
     B_0=B_0,
     I_p=I_p,
 )
-# profile = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
+
+shape = DoublePowerFunc([2, 1])
+profiles = BetaIpProfile(beta_p, I_p, R_0, B_0, shape=shape)
+profiles = BetaLiIpProfile(
+    beta_p, l_i, I_p, R_0, B_0, shape=shape, li_min_iter=0, li_rel_tol=0.001
+)
 
 
 # %% [markdown]
@@ -251,9 +269,12 @@ reference_eq = Equilibrium(
 #   * Field null at lower X-point
 #   * divertor legs are not treated, but could easily be added
 
+sof_xbdry = np.array(sof_xbdry)[::15]
+sof_zbdry = np.array(sof_zbdry)[::15]
+
 isoflux = IsofluxConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
+    sof_xbdry,
+    sof_zbdry,
     sof_xbdry[0],
     sof_zbdry[0],
     tolerance=1e-3,
@@ -278,10 +299,10 @@ program()
 
 
 sof_psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
+    sof_xbdry,
+    sof_zbdry,
     psi_sof / (2 * np.pi),
-    tolerance=1.0,
+    tolerance=0.5,
 )
 
 optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
@@ -302,10 +323,10 @@ iterator()
 
 
 eof_psi_boundary = PsiBoundaryConstraint(
-    np.array(sof_xbdry)[::10],
-    np.array(sof_zbdry)[::10],
+    sof_xbdry,
+    sof_zbdry,
     psi_eof / (2 * np.pi),
-    tolerance=1.0,
+    tolerance=0.5,
 )
 
 eof = deepcopy(reference_eq)
@@ -340,11 +361,8 @@ eof_psi = 2 * np.pi * eof.psi(*eof._x_points[0][:2])
 ax[1].set_title("$\\psi_{b}$ = " + f"{sof_psi:.2f} V.s")
 ax[2].set_title("$\\psi_{b}$ = " + f"{eof_psi:.2f} V.s")
 
+
+bluemira_print(f"SOF: beta_p: {calc_beta_p(sof):.2f} l_i: {calc_li3(sof):.2f}")
+bluemira_print(f"EOF: beta_p: {calc_beta_p(eof):.2f} l_i: {calc_li3(eof):.2f}")
+
 plt.show()
-
-# TODO: Fix this example...
-# bluemira_print(
-#     "SOF:\n" f"beta_p: {calc_beta_p_approx(sof):.2f}\n" f"l_i: {calc_li(sof):.2f}"
-# )
-
-# bluemira_print("EOF:\n" f"beta_p: {calc_beta_p(eof):.2f}\n" f"l_i: {calc_li(sof):.2f}")

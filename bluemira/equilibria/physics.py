@@ -287,7 +287,7 @@ def calc_li3(eq):
     mask = in_plasma(eq.x, eq.z, eq.psi())
     Bp = eq.Bp()
     bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
-    return 2 * bpavg / (eq._R_0 * (MU_0 * eq._I_p) ** 2)
+    return 2 * bpavg / (eq.profiles.R_0 * (MU_0 * eq.profiles.I_p) ** 2)
 
 
 def calc_li3minargs(
