@@ -36,7 +36,6 @@ import numpy as np
 from scipy.special import iv as bessel
 
 from bluemira.display.plotter import plot_2d
-from bluemira.geometry.constants import MINIMUM_LENGTH
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
     interpolate_bspline,
