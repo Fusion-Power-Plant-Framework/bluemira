@@ -12,11 +12,18 @@ from bluemira.power_cycle.errors import (
     PowerCycleSystemError,
 )
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
-from bluemira.power_cycle.net.loads import LoadData, PhaseLoad, PowerLoad, PowerLoadModel
+from bluemira.power_cycle.net.loads import (
+    LoadData,
+    PhaseLoad,
+    PowerLoad,
+    PowerLoadModel,
+    PulseLoad,
+)
 from bluemira.power_cycle.time import PowerCycleScenario, ScenarioBuilder
 from bluemira.power_cycle.tools import (
     convert_string_into_numeric_list,
     read_json,
+    unnest_list,
     validate_dict,
     validate_file,
     validate_lists_to_have_same_length,
@@ -364,11 +371,27 @@ class PowerCycleManager:
     def _make_consumption_load_explicit():
         raise PowerCycleManagerError()
 
-    def _build_pulseload(self):
+    def _build_pulseload(self, load_type):
+        """
+        load_type = 'active', 'reactive' or 'production'
+        """
         group_library = self.group_library
+        all_phaseloads = []
+        all_group_labels = group_library.keys()
+        for group_label in all_group_labels:
+            group = group_library[group_label]
+            system_library = group.system_library
+            all_system_labels = system_library.keys()
+            for system_label in all_system_labels:
+                system = system_library[system_label]
+                loads_property = load_type + "_loads"
+                loads_of_type = getattr(system, loads_property)
+                system_phaseloads = [v for v in loads_of_type.values()]
+                system_phaseloads = unnest_list(system_phaseloads)
+                all_phaseloads.append(system_phaseloads)
+        all_phaseloads = unnest_list(all_phaseloads)
 
-        pulseload = group_library
-
+        pulseload = PulseLoad(load_type, all_phaseloads)
         return pulseload
 
     # ------------------------------------------------------------------

@@ -16,7 +16,7 @@
                     ],
                     "normalize": [
                         true,
-                        false,
+                        true,
                         true,
                         true
                     ],
