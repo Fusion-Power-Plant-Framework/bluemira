@@ -2,6 +2,7 @@
 
 import copy
 
+import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.power_cycle.base import PowerCycleABC
@@ -18,18 +19,10 @@ from bluemira.power_cycle.net.manager import (
     PowerCycleSystem,
 )
 from bluemira.power_cycle.time import PowerCycleScenario
-from bluemira.power_cycle.tools import unnest_list, validate_dict
-from tests.power_cycle.kits_for_tests import (  # NetLoadsTestKit,; TimeTestKit,; ToolsTestKit,
-    NetManagerTestKit,
-)
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list, validate_dict
+from tests.power_cycle.kits_for_tests import NetManagerTestKit, ToolsTestKit
 
-#
-# import os
-# import matplotlib.pyplot as plt
-
-# from bluemira.power_cycle.tools import adjust_2d_graph_ranges
-
-# tools_testkit = ToolsTestKit()
+tools_testkit = ToolsTestKit()
 # time_testkit = TimeTestKit()
 # netloads_testkit = NetLoadsTestKit()
 manager_testkit = NetManagerTestKit()
@@ -388,13 +381,18 @@ class TestPowerCycleManager:
     # OPERATIONS
     # ------------------------------------------------------------------
 
-    def test_build_pulseload(self):
-        sample = self.construct_sample()
-        pulseload = sample._build_pulseload()
+    @pytest.mark.parametrize(
+        "load_type",
+        ["active"],  # ["active", "reactive", "production"],
+    )
+    def test_build_pulseload(self, load_type):
+        ax = tools_testkit.prepare_figure(load_type)
 
-        # import pprint
-        # assert 0
-        pass
+        sample = self.construct_sample()
+        pulseload = sample._build_pulseload(load_type)
+        ax, _ = pulseload.plot(ax=ax, detailed=True)
+        adjust_2d_graph_ranges(ax=ax)
+        plt.show()
 
     # ------------------------------------------------------------------
     # VISUALIZATION
