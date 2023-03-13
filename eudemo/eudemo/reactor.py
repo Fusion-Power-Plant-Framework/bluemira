@@ -270,6 +270,9 @@ if __name__ == "__main__":
     blanket_face, divertor_face, ivc_boundary = design_ivc(
         params, build_config["IVC"], equilibrium=free_boundary_eq
     )
+    from bluemira.display import show_cad
+
+    show_cad([blanket_face, divertor_face, ivc_boundary])
     t1 = time.time()
     upper_port_designer = UpperPortDesigner(
         params, build_config.get("Upper Port", {}), blanket_face
