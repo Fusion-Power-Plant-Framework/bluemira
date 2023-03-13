@@ -4,13 +4,13 @@ Frequently Asked Questions
 ==========================
 
 Conda warns of ``WARNING: overwriting environment variables set in the machine; overwriting variable {'LANG'}``
-    The warning is printed every time bluemira is activated, and may stop my VSCode's pytest test discoverer from working properly.
+    The warning is printed every time bluemira is activated, and may stop VSCode's pytest test discoverer from working properly.
 
     This can be fixed by::
 
         # This makes sure you're already in the bluemira environment
         conda activate bluemira
-        # Run this to stop your bluemira environment to stop the overwriting.
+        # Run this to stop your bluemira environment overwriting the 'LANG' variable.
         conda env config vars unset LANG
 
 My github ssh connection doesnt connect
