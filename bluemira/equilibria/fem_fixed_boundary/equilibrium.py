@@ -33,6 +33,7 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from tabulate import tabulate
 
+import bluemira.equilibria.fem_fixed_boundary.utilities as utilities
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
@@ -53,7 +54,6 @@ from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.utilities.plot_tools import make_gif, save_figure
-import bluemira.equilibria.fem_fixed_boundary.utilities as utilities
 
 __all__ = ["solve_transport_fixed_boundary"]
 
@@ -519,6 +519,9 @@ def solve_transport_fixed_boundary(
         f_pprime = interp1d(x, pprime, fill_value="extrapolate")
         f_ffprime = interp1d(x, ffprime, fill_value="extrapolate")
 
+        psi_plasmod = transport_solver.get_profile("psi")
+        xPsiPlasmod = np.sqrt(psi_plasmod / psi_plasmod[-1])
+
         q = transport_solver.get_profile("q")
         press = transport_solver.get_profile("pressure")
         q_func = interp1d(x, q, fill_value="extrapolate")
@@ -565,8 +568,6 @@ def solve_transport_fixed_boundary(
 
         for n_iter_inner in range(max_iter_inner):
 
-            prev_psi = gs_solver.psi.vector()[:]
-
             gs_solver.set_profiles(
                 f_pprime,
                 f_ffprime,
@@ -590,7 +591,7 @@ def solve_transport_fixed_boundary(
             Psi_b = gs_solver.psi_b
 
             x1d, flux_surfaces = utilities.get_flux_surfaces_from_mesh(
-                mesh, gs_solver.psi_norm_2d, nx=50
+                mesh, gs_solver.psi_norm_2d, x_1d=xPsiPlasmod
             )
 
             import bluemira.equilibria.fem_fixed_boundary as fem_fixed_boundary
@@ -637,7 +638,6 @@ def solve_transport_fixed_boundary(
                 break
             else:
                 x2d_0 = np.array([gs_solver.psi_norm_2d(p) for p in points])
-
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
             gs_solver.psi_norm_2d,

@@ -50,8 +50,8 @@ from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.codes import transport_code_solver
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
-    solve_transport_fixed_boundary_old,
     solve_transport_fixed_boundary,
+    solve_transport_fixed_boundary_old,
 )
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
@@ -158,7 +158,7 @@ fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
     p_order=2,
     max_iter=30,
     iter_err_max=1e-4,
-    relaxation=0.05,
+    relaxation=0,
 )
 
 # %% [markdown]
@@ -171,9 +171,9 @@ equilibrium = solve_transport_fixed_boundary(
     fem_GS_fixed_boundary,
     kappa95_t=1.652,  # Target kappa_95
     delta95_t=0.333,  # Target delta_95
-    lcar_mesh=0.1,
+    lcar_mesh=0.2,
     max_iter=15,
-    iter_err_max=1e-4,
+    iter_err_max=1e-3,
     relaxation=0.0,
     plot=True,
     debug=False,

@@ -134,6 +134,9 @@ class FemMagnetostatic2d:
         self.psi = dolfin.Function(self.V)
         self.psi.set_allow_extrapolation(True)
 
+        # initialize g to zero
+        self.g = dolfin.Function(self.V)
+
     def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):
         """
         Define g, the right hand side function of the Poisson problem
@@ -290,7 +293,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         relaxation: float = 0.0,
     ):
         super().__init__(p_order)
-        self._process_profiles(p_prime, ff_prime)
+        if (p_prime is not None) and (ff_prime is not None):
+            self._process_profiles(p_prime, ff_prime)
         self._curr_target = I_p
         self._R_0 = R_0
         self._B_0 = B_0
@@ -301,19 +305,24 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._psi_ax = None
         self._psi_b = None
 
-    def _process_profiles(self, p_prime, ff_prime):
+    def _process_profiles(self, p_prime: Callable, ff_prime: Callable):
+        # Note: pprime and ffprime have been limited to a Callable,
+        # because otherwise it is necessary to provide also psi_norm_1D
+        # to which they refer.
         if callable(p_prime):
             self._pprime = p_prime
             self._pprime_data = p_prime(np.linspace(0, 1, 50))
         else:
-            self._pprime_data = p_prime
-            self._pprime = _parse_to_callable(p_prime)
+            # self._pprime_data = p_prime
+            # self._pprime = _parse_to_callable(p_prime)
+            raise ValueError("p_prime must be a function")
         if callable(ff_prime):
             self._ffprime = ff_prime
             self._ffprime_data = ff_prime(np.linspace(0, 1, 50))
         else:
-            self._ffprime_data = ff_prime
-            self._ffprime = _parse_to_callable(ff_prime)
+            # self._ffprime_data = ff_prime
+            # self._ffprime = _parse_to_callable(ff_prime)
+            raise ValueError("ff_prime must be a function")
 
     @property
     def psi_ax(self) -> float:
@@ -404,7 +413,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._g_func = self._create_g_func(
             self._pprime, self._ffprime, self._curr_target
         )
-        super().define_g(ScalarSubFunc(self._g_func))
+
+        # # This instruction seems to slow the calculation
+        # super().define_g(ScalarSubFunc(self._g_func))
+
+        # it has been replaced by this code
+        dof_points = self.V.tabulate_dof_coordinates()
+        self.g.vector()[:] = np.array([self._g_func(p) for p in dof_points])
 
     def set_profiles(
         self,
@@ -444,6 +459,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _update_curr(self):
         self.k = 1
+
+        self.define_g()
+
         if self._curr_target:
             self.k = self._curr_target / self._calculate_curr_tot()
 
@@ -648,3 +666,40 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         fig.colorbar(cm, cax=cax)
         cax.set_title(title)
         plt.sca(last_axes)
+
+
+def refine_cell(cell, refine_point, distance):
+    # Get the center of the cell
+    cell_center = cell.midpoint()[:]
+
+    # Calculate the distance between the cell center and the refinement point
+    d = np.linalg.norm(cell_center - np.array(refine_point))
+
+    # Refine the cell if it is close to the refinement point
+    if d < distance:
+        return True
+    else:
+        return False
+
+
+def refine_mesh(mesh, refine_point, distance, num_levels=1, refinement_factor=0.5):
+    for level in range(num_levels):
+        cell_markers = dolfin.MeshFunction("bool", mesh, mesh.topology().dim())
+        cell_markers.set_all(False)
+        for cell in dolfin.cells(mesh):
+            if refine_cell(cell, refine_point, distance):
+                cell_markers[cell.index()] = True
+        mesh = dolfin.refine(mesh, cell_markers)
+
+        # Smooth the mesh transition by scaling the distance to the refinement point
+        for vertex in dolfin.vertices(mesh):
+            vertex_point = vertex.point().array()
+            distance = np.linalg.norm(vertex_point - refine_point)
+            if distance < refinement_factor ** (num_levels - level):
+                scaling_factor = (
+                    distance / refinement_factor ** (num_levels - level)
+                ) ** 2
+                vertex_point[:] = (
+                    1 - scaling_factor
+                ) * vertex_point + scaling_factor * refine_point
+    return mesh

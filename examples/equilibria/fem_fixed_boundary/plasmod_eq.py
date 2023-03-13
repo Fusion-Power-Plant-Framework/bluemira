@@ -105,7 +105,7 @@ from bluemira.base.components import PhysicalComponent
 
 plasma = PhysicalComponent("Plasma", shape=Plasmod_sep_surf)
 
-plasma.shape.mesh_options = {"lcar": 0.1, "physical_group": "plasma"}
+plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
 from bluemira.mesh import meshing
@@ -124,24 +124,52 @@ mesh, boundaries, subdomains, labels = import_mesh(
     subdomains=True,
 )
 
+# check mesh refinement
+if True:
+    coarse_mesh = mesh
+
+    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import refine_mesh
+
+    refined_mesh = refine_mesh(mesh, np.array((9, 0, 0)), num_levels=2, distance=1.5)
+
+    import meshio
+
+    # Convert the mesh to a meshio.Mesh object
+    points = refined_mesh.coordinates()
+    cells = {"triangle": refined_mesh.cells()}
+    meshio_mesh = meshio.Mesh(points, cells)
+
+    # Save the refined mesh in .msh format using meshio
+    meshio.write("refined_mesh.msh", meshio_mesh, file_format="gmsh22")
+
+    mesh = refined_mesh
+
+
 from scipy.interpolate import interp1d
 
 f_pprime = interp1d(xPsiPlasmod, pprime, fill_value="extrapolate")
 f_ffprime = interp1d(xPsiPlasmod, ffprime, fill_value="extrapolate")
 
+from datetime import datetime
+
+start_time = datetime.now()
+print("\n Solving GSE for a give pprime and ffprime")
 gs_solver = FemGradShafranovFixedBoundary(
     f_pprime,
     f_ffprime,
     I_p,
     R_0,
     B_0,
-    max_iter=20,
+    max_iter=30,
     iter_err_max=1e-3,
+    p_order=2,
+    relaxation=0,
 )
 gs_solver.set_mesh(mesh)
 gs_solver.set_profiles(f_pprime, f_ffprime, I_p, R_0, B_0)
 
 gs_solver.solve(plot=False)
+print(f"\n GSE solving time = {datetime.now() - start_time}")
 
 mesh_points = mesh.coordinates()
 c_psi = np.array([gs_solver.psi(p) for p in mesh_points])
@@ -153,10 +181,18 @@ utilities.plot_scalar_field(mesh_points[:, 0], mesh_points[:, 1], c_psi)
 import bluemira.equilibria.fem_fixed_boundary.equilibrium as equilibrium
 
 x1D, flux_surfaces = utilities.get_flux_surfaces_from_mesh(
-    mesh, gs_solver.psi_norm_2d, nx=50
+    mesh, gs_solver.psi_norm_2d, x_1d=xPsiPlasmod
 )
+
+
+start_time = datetime.now()
+print(f"\n Start equilibrium.calc_metric_coefficients")
+
 x1D, V, g1, g2, g3 = equilibrium.calc_metric_coefficients(
     flux_surfaces, gs_solver.psi, gs_solver.psi_norm_2d, x1D
+)
+print(
+    f"\n equilibrium.calc_metric_coefficients solving time = {datetime.now() - start_time}"
 )
 
 q = interp1d(xPsiPlasmod, outputs.qprof, fill_value="extrapolate")
