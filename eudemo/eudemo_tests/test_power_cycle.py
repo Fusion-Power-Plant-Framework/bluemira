@@ -27,11 +27,11 @@ from eudemo.power_cycle import SteadyStatePowerCycleParams, SteadyStatePowerCycl
 
 class TestEUDEMOPowerCycle:
     params = SteadyStatePowerCycleParams(
-        Parameter("P_fus_DT", 2000e6, "W", source="test"),
-        Parameter("P_fus_DD", 4e6, "W", source="test"),
-        Parameter("P_rad", 400e6, "W", source="test"),
-        Parameter("P_hcd_ss", 50e6, "W", source="test"),
-        Parameter("P_hcd_ss_el", 150e6, "W", source="test"),
+        Parameter("P_fus_DT", 2000, "W", source="test"),
+        Parameter("P_fus_DD", 4, "W", source="test"),
+        Parameter("P_rad", 400, "W", source="test"),
+        Parameter("P_hcd_ss", 50, "W", source="test"),
+        Parameter("P_hcd_ss_el", 150, "W", source="test"),
         Parameter("vvpfrac", 0.04, "", source="test"),
         Parameter("e_mult", 1.35, "", source="test"),
         Parameter("e_decay_mult", 1.015, "", source="test"),

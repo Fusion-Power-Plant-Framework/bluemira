@@ -30,6 +30,7 @@ import numpy as np
 from matplotlib.sankey import Sankey
 from scipy.optimize import minimize
 
+from bluemira.base.constants import raw_uc
 from bluemira.display.palettes import BLUEMIRA_PALETTE
 
 
@@ -245,6 +246,14 @@ class BalanceOfPlantPlotter:
         self.fig = None
         self.sankey = None
 
+    def _scale_flows(self, flow_dict):
+        plot_unit = self.plot_options.get("unit", "MW")
+        flow_unit = "W"
+
+        for k, v in flow_dict.items():
+            flow_dict[k] = [raw_uc(vi, flow_unit, plot_unit) for vi in v]
+        return flow_dict
+
     def plot(self, flow_dict, title=None):
         """
         Plots the BalanceOfPlant system, based on the inputs and flows.
@@ -258,6 +267,7 @@ class BalanceOfPlantPlotter:
         flow_dict: dict
             The dictionary of flows for each of the Sankey diagrams.
         """
+        flow_dict = self._scale_flows(flow_dict)
         # Build the base figure object
         self.fig = plt.figure(
             figsize=self.plot_options["figsize"],
