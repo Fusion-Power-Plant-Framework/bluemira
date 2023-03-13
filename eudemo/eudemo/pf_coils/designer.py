@@ -172,6 +172,8 @@ class PFCoilsDesigner(Designer[CoilSet]):
                     "max_eval": 5000,
                     "ftol_rel": 1e-10,
                 },
+                "B_stray_con_tol": 1e-6,
+                "n_B_stray_points": 10,
             },
         }
         breakdown_settings = self.build_config["breakdown_settings"]
@@ -182,6 +184,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             breakdown_settings["optimisation_settings"]["algorithm_name"],
             opt_conditions=breakdown_settings["optimisation_settings"]["conditions"],
         )
+
         return OptimisedPulsedCoilsetDesign(
             self.params,
             coilset,
@@ -194,7 +197,10 @@ class PFCoilsDesigner(Designer[CoilSet]):
             breakdown_strategy_cls=breakdown_strategy,
             breakdown_problem_cls=breakdown_problem,
             breakdown_optimiser=breakdown_optimiser,
-            breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
+            breakdown_settings={
+                "B_stray_con_tol": breakdown_settings["B_stray_con_tol"],
+                "n_B_stray_points": breakdown_settings["n_B_stray_points"],
+            },
             equilibrium_problem_cls=TikhonovCurrentCOP,
             equilibrium_optimiser=Optimiser(
                 "SLSQP",

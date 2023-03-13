@@ -52,7 +52,14 @@ def build_pf_coils_component(params, build_config, coilset):
             params.r_pf_corner.value if coil_type == "PF" else params.r_cs_corner.value
         )
         if not (coil.dx == 0 or coil.dz == 0):
-            wires.append((PFCoilPictureFrame({"r_corner": r_corner}, coil), coil_type))
+            wires.append(
+                (
+                    PFCoilPictureFrame(
+                        {"r_corner": {"value": r_corner, "unit": "m"}}, coil
+                    ),
+                    coil_type,
+                )
+            )
         else:
             bluemira_warn(f"Coil {name} has no size")
 
@@ -71,8 +78,8 @@ def build_pf_coils_component(params, build_config, coilset):
         builders.append(
             PFCoilBuilder(
                 {
-                    "tk_insulation": {"value": tk_ins.value, "unit": "m"},
-                    "tk_casing": {"value": tk_case.value, "unit": "m"},
+                    "tk_insulation": {"value": tk_ins, "unit": "m"},
+                    "tk_casing": {"value": tk_case, "unit": "m"},
                     "ctype": {"value": coil_type.name, "unit": ""},
                 },
                 build_config,
