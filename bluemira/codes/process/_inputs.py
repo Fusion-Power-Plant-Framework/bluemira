@@ -84,7 +84,6 @@ class ProcessInputs:
     bore: float = 2.3322
     bscfmax: float = 0.99
     bt: float = 5.3292
-    casthi: float = 0.06
     casths: float = 0.05
     cfactr: float = 0.75
     coheof: float = 20726000.0
@@ -107,6 +106,8 @@ class ProcessInputs:
     divdum: int = 1
     divfix: float = 0.621
     dnbeta: float = 3.0
+    dr_tf_case_in: float = 0.52465
+    dr_tf_case_out: float = 0.06
     emult: float = 1.35
     enbeam: float = 1e3
     epsvmc: float = 1e-08
@@ -245,7 +246,6 @@ class ProcessInputs:
     tftmp: float = 4.75
     tftsgap: float = 0.05
     thicndut: float = 0.002
-    thkcas: float = 0.52465
     thshield: float = 0
     thwcndut: float = 0.008
     tinstf: float = 0.008
