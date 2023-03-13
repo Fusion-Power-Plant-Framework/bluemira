@@ -127,7 +127,19 @@
             }
         },
         "equilibrium_settings": {
-
+            "problem_class": "bluemira.equilibria.opt_problems::TikhonovCurrentCOP",
+            "convergence_class": "bluemira.equilibria.solve::DudsonConvergence",
+            "conv_limit": 1e-4,
+            "gamma": 1e-12,
+            "relaxation": 0.2,
+            "peak_PF_current_factor": 1.5,
+            "optimisation_settings": {
+                "algorithm_name": "SLSQP",
+                "conditions": {
+                    "max_eval": 5000,
+                    "ftol_rel": 1e-6
+                }
+            }
         },
         "position_settings": {
 
