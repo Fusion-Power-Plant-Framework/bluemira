@@ -12,7 +12,7 @@ from bluemira.power_cycle.errors import (
     PowerCycleSystemError,
 )
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
-from bluemira.power_cycle.net.loads import LoadData, PowerLoad, PowerLoadModel
+from bluemira.power_cycle.net.loads import LoadData, PhaseLoad, PowerLoad, PowerLoadModel
 from bluemira.power_cycle.time import PowerCycleScenario
 from bluemira.power_cycle.tools import (
     convert_string_into_numeric_list,
@@ -46,8 +46,6 @@ class PowerCycleSystem(PowerCycleABC):
     ----------
 
     """
-
-    # Build active & reactive PowerLoads for a Plant System
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
@@ -199,15 +197,40 @@ class PowerCycleSystem(PowerCycleABC):
 
     def _build_phaseloads(self, load_name, phaseload_inputs):
         scenario = self.scenario
+        valid_phases = scenario.build_phase_library()
+
         phase_list = phaseload_inputs["phase_list"]
         normalize_list = phaseload_inputs["normalize_list"]
         powerload_list = phaseload_inputs["powerload_list"]
 
         n_phases = len(phase_list)
-        for p in range(n_phases):
-            phase = []
+        n_powerloads = len(powerload_list)
 
         phaseload_list = []
+        for p in range(n_phases):
+            phase_label = phase_list[p]
+            normalization_choice = normalize_list[p]
+
+            try:
+                phase = valid_phases[phase_label]
+            except KeyError:
+                raise PowerCycleSystem(
+                    "scenario",
+                    "It is not possible to build objects of the "
+                    "'PhaseLoad' class for phases that are not "
+                    "present in the 'scenario' attribute.",
+                )
+
+            normalization_flags = [normalization_choice] * n_powerloads
+
+            phaseload = PhaseLoad(
+                load_name,
+                phase,
+                powerload_list,
+                normalization_flags,
+            )
+            phaseload_list.append(phaseload)
+
         return phaseload_list
 
     def _make_phaseloads_from_config(self, type_config):

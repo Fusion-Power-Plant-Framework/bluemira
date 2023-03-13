@@ -115,6 +115,13 @@ class TestPowerCyclePulse:
         phase_set_becomes_list = isinstance(phase_set, list)
         assert phase_set_becomes_list
 
+    def test_list_all_phase_labels(self):
+        """
+        No new functionality to be tested.
+        """
+        sample = self.sample
+        assert callable(sample.list_all_phase_labels)
+
 
 class TestPowerCycleScenario:
     tested_class_super = PowerCycleTimeABC
@@ -132,9 +139,9 @@ class TestPowerCycleScenario:
 
         name = "Scenario example"
         pulse_set = sample_pulses
-        timeline = tested_class(name, pulse_set)
+        scenario = tested_class(name, pulse_set)
         self.sample_pulses = pulse_set
-        self.sample = timeline
+        self.sample = scenario
 
     def test_validate_pulse_set(self):
         tested_class = self.tested_class
@@ -147,6 +154,13 @@ class TestPowerCycleScenario:
         pulse_set = tested_class._validate_pulse_set(sample_pulses)
         pulse_set_becomes_list = isinstance(pulse_set, list)
         assert pulse_set_becomes_list
+
+    def test_list_all_phase_labels(self):
+        """
+        No new functionality to be tested.
+        """
+        sample = self.sample
+        assert callable(sample.list_all_phase_labels)
 
 
 class TestScenarioBuilder:

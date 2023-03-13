@@ -18,7 +18,7 @@ from bluemira.power_cycle.net.manager import (
     PowerCycleSystem,
 )
 from bluemira.power_cycle.time import PowerCycleScenario
-from bluemira.power_cycle.tools import validate_dict
+from bluemira.power_cycle.tools import unnest_list, validate_dict
 from tests.power_cycle.kits_for_tests import (  # NetLoadsTestKit,; TimeTestKit,; ToolsTestKit,
     NetManagerTestKit,
 )
@@ -174,6 +174,9 @@ class TestPowerCycleSystem:
             all_phaseload_inputs.append(phaseload_inputs)
         return all_phaseload_inputs
 
+    def list_all_phaseloads(self):
+        pass
+
     def test_import_phaseload_inputs(self):
         tested_class = self.tested_class
         tested_class_error = self.tested_class_error
@@ -219,6 +222,7 @@ class TestPowerCycleSystem:
             pulse_set = sample_scenario.pulse_set
 
             all_phases = [pulse.phase_set for pulse in pulse_set]
+            all_phases = unnest_list(all_phases)
             valid_phases = list(set(all_phases))
 
             for phaseload_inputs in all_phaseload_inputs:
@@ -238,35 +242,6 @@ class TestPowerCycleSystem:
         pass
 
     """
-    def test_validate_config(self):
-        tested_class = self.tested_class
-        all_system_inputs = self.all_system_inputs
-        highest_level_json_keys = self.highest_level_json_keys
-
-        all_system_labels = all_system_inputs.keys()
-        for system_label in all_system_labels:
-            system_inputs = all_system_inputs[system_label]
-            outputs = tested_class._validate_config(system_inputs)
-
-            n_valid_keys = len(highest_level_json_keys)
-            for k in range(n_valid_keys):
-                valid_key = highest_level_json_keys[k]
-
-                k_out = outputs[k]
-                key_config = system_inputs[valid_key]
-                assert k_out == key_config
-    """
-
-    """
-    def test_make_phaseloads_from_config(self):
-        tested_class = self.tested_class
-        all_load_inputs = self.all_load_inputs
-
-        load_list = tested_class._build_loads_from_config(all_load_inputs)
-        for load in load_list:
-            load_is_correct_class = type(load) == PowerLoad
-            assert load_is_correct_class
-
         # import pprint
         # assert 0
     """
