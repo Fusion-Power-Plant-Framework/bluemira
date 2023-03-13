@@ -42,14 +42,11 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 
-from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.reactor import Reactor
 from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
 from bluemira.builders.divertor import DivertorBuilder
-from bluemira.builders.pf_coil import PFCoilBuilder, PFCoilPictureFrame
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
