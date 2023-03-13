@@ -22,18 +22,62 @@
 
 from dataclasses import dataclass
 
-from bluemira.base.builder import Builder
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.components import Component
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.builders.pf_coil import PFCoilBuilder, PFCoilPictureFrame
 
 
 @dataclass
 class PFCoilsBuilderParams(ParameterFrame):
-    """Parameters for :class:`PFCoilsBuilder`."""
+    """
+    Parameters for the `PFCoilsBuilder` class.
+    """
 
-    pass
+    tk_pf_insulation: Parameter[float]
+    tk_cs_insulation: Parameter[float]
+    r_pf_corner: Parameter[float]
+    r_cs_corner: Parameter[float]
 
 
-class PFCoilsBuilder(Builder):
-    """Builder for EUDEMO PF coils."""
+def build_pf_coils_component(params, build_config, coilset):
+    """
+    Build the PF coils component
+    """
+    wires = []
+    for name in coilset.name:
+        coil = coilset[name]
+        coil_type = coil.ctype
+        r_corner = (
+            params.r_pf_corner.value if coil_type == "PF" else params.r_cs_corner.value
+        )
+        if not (coil.dx == 0 or coil.dz == 0):
+            wires.append((PFCoilPictureFrame({"r_corner": r_corner}, coil), coil_type))
+        else:
+            bluemira_warn(f"Coil {name} has no size")
 
-    pass
+    builders = []
+    for (designer, coil_type) in wires:
+        tk_ins = (
+            params.tk_pf_insulation.value
+            if coil_type.name == "PF"
+            else params.tk_cs_insulation.value
+        )
+        tk_case = (
+            params.tk_pf_casing.value
+            if coil_type.name == "PF"
+            else params.tk_cs_casing.value
+        )
+        builders.append(
+            PFCoilBuilder(
+                {
+                    "tk_insulation": {"value": tk_ins.value, "unit": "m"},
+                    "tk_casing": {"value": tk_case.value, "unit": "m"},
+                    "ctype": {"value": coil_type.name, "unit": ""},
+                },
+                build_config,
+                designer.execute(),
+            )
+        )
+
+    return Component("PF Coils", children=[builder.build() for builder in builders])

@@ -71,7 +71,7 @@ from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.upper_port import UpperPortDesigner
 from eudemo.params import EUDEMOReactorParams
-from eudemo.pf_coils import PFCoil, PFCoilsDesigner
+from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
 from eudemo.radial_build import radial_build
 from eudemo.tf_coils.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
@@ -172,44 +172,8 @@ def build_pf_coils(
         pf_coil_keep_out_zones,
     )
     coilset = pf_designer.execute()
-
-    wires = []
-    for name in coilset.name:
-        if not (coilset[name].dx == 0 or coilset[name].dz == 0):
-            wires.append(
-                (PFCoilPictureFrame(params, coilset[name]), coilset[name].ctype)
-            )
-        else:
-            bluemira_warn(f"Coil {name} has no size")
-
-    builders = []
-    for designer, coil_type in wires:
-        tk_ins = (
-            params.tk_pf_insulation.value
-            if coil_type.name == "PF"
-            else params.tk_cs_insulation.value
-        )
-        tk_case = (
-            params.tk_pf_casing.value
-            if coil_type.name == "PF"
-            else params.tk_cs_casing.value
-        )
-        builders.append(
-            PFCoilBuilder(
-                {
-                    "tk_insulation": {"value": tk_ins.value, "unit": "m"},
-                    "tk_casing": {"value": tk_case.value, "unit": "m"},
-                    "ctype": {"value": coil_type.name, "unit": ""},
-                },
-                build_config,
-                designer.execute(),
-            )
-        )
-
-    return PFCoil(
-        Component("PF Coils", children=[builder.build() for builder in builders]),
-        coilset,
-    )
+    component = build_pf_coils_component(params, build_config, coilset)
+    return PFCoil(component, coilset)
 
 
 def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
@@ -274,9 +238,7 @@ if __name__ == "__main__":
     blanket_face, divertor_face, ivc_boundary = design_ivc(
         params, build_config["IVC"], equilibrium=free_boundary_eq
     )
-    from bluemira.display import show_cad
 
-    show_cad([blanket_face, divertor_face, ivc_boundary])
     t1 = time.time()
     upper_port_designer = UpperPortDesigner(
         params, build_config.get("Upper Port", {}), blanket_face

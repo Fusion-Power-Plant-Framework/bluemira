@@ -20,6 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """PF Coil designer/builder for EUDEMO"""
 
-from eudemo.pf_coils.builder import PFCoilsBuilder
+from eudemo.pf_coils.builder import build_pf_coils_component
 from eudemo.pf_coils.component_manager import PFCoil
 from eudemo.pf_coils.designer import PFCoilsDesigner

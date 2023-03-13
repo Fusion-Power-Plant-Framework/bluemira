@@ -114,8 +114,8 @@
             "grid_scale_z": 2.0
         },
         "breakdown_settings": {
-            "param_class": "OutboardBreakdownZoneStrategy",
-            "problem_class": "BreakdownCOP",
+            "param_class": "bluemira.equilibria.opt_problems::OutboardBreakdownZoneStrategy",
+            "problem_class": "bluemira.equilibria.opt_problems::BreakdownCOP",
             "B_stray_con_tol": 1e-6,
             "n_B_stray_points": 10,
             "optimisation_settings": {

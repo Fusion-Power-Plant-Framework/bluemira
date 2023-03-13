@@ -98,7 +98,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         `ParameterFrame` that can be converted to a
         `PFCoilDesignerParams` instance.
     build_config: Dict[str, Any]
-        TODO(hsaunders1904): what goes in this dict?
+        Build configuration dictionary for the PFCoilsDesigner
     tf_coil_boundary: BluemiraWire
         Wire giving the outline of outer edge of the reactor's TF coils.
     keep_out_zones: Iterable[BluemiraFace]
@@ -164,8 +164,8 @@ class PFCoilsDesigner(Designer[CoilSet]):
         self, coilset, grid, profiles, position_mapper, constraints
     ):
         defaults = {
-            "param_class": "OutboardBreakdownZoneStrategy",
-            "problem_class": "BreakdownCOP",
+            "param_class": "bluemira.equilibria.opt_problems::OutboardBreakdownZoneStrategy",
+            "problem_class": "bluemira.equilibria.opt_problems::BreakdownCOP",
             "optimisation_settings": {
                 "algorithm_name": "COBYLA",
                 "conditions": {
@@ -176,12 +176,8 @@ class PFCoilsDesigner(Designer[CoilSet]):
         }
         breakdown_settings = self.build_config["breakdown_settings"]
         breakdown_settings = {**defaults, **breakdown_settings}
-        breakdown_strategy = get_class_from_module(
-            breakdown_settings["param_class"], default_module="equilibria.opt_problems"
-        )
-        breakdown_problem = get_class_from_module(
-            breakdown_settings["problem_class"], default_module="equilibria.opt_problems"
-        )
+        breakdown_strategy = get_class_from_module(breakdown_settings["param_class"])
+        breakdown_problem = get_class_from_module(breakdown_settings["problem_class"])
         breakdown_optimiser = Optimiser(
             breakdown_settings["optimisation_settings"]["algorithm_name"],
             opt_conditions=breakdown_settings["optimisation_settings"]["conditions"],
