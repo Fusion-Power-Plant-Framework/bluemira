@@ -82,11 +82,11 @@ class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
     """
 
     def __init__(self):
-        self.p_fusion_ref = 2037
-        self.p_cryo = 44
-        self.p_mag = 44
-        self.p_t_plant = 15.5
-        self.p_other = 31
+        self.p_fusion_ref = 2037e6
+        self.p_cryo = 44e6
+        self.p_mag = 44e6
+        self.p_t_plant = 15.5e6
+        self.p_other = 31e6
 
     def calculate(self, p_fusion):
         """
