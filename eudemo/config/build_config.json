@@ -6,12 +6,12 @@
         "plot": false
     },
     "Fixed boundary equilibrium":{
-        "run_mode": "read",
+        "run_mode": "run",
         "file_path": "config/fixed_boundary_eqdsk.json",
         "param_class": "JohnerLCFS",
         "shape_config": {
-            "f_delta_l": 1.25,
-            "f_kappa_l": 1.15,
+            "f_delta_l": 1.95,
+            "f_kappa_l": 1.95,
             "phi_l_neg": -130.0,
             "phi_l_pos": 30.0,
             "phi_u_neg": 0.0,
