@@ -35,7 +35,7 @@ from bluemira.builders.tools import get_n_sectors
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.solid import BluemiraSolid
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import extrude_shape, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -52,21 +52,22 @@ class DuctBuilder(Builder):
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
         build_config: Dict,
-        vacuum_vessel: BluemiraSolid,
-        cryostat: BluemiraSolid,
         port_koz: BluemiraFace,
+        port_wall_thickness: float,  # eg for vv = vv_wall_thick + vvts_wall
         tf_coil_casing1: BluemiraSolid,
         tf_coil_casing2: BluemiraSolid,
     ):
         super().__init__(params, build_config)
         self.port_koz = port_koz.deepcopy()
         self.tf_coil_casing = tf_coil_casing1
+        self.port_wall_thickness = port_wall_thickness
 
     def build(self) -> Component:
-        xy_wire = _single_xy_wire()
+        half_tf_coil_width = 0
+        xy_face = self._single_xy_face(half_tf_coil_width)
 
         return self.component_tree(
-            [self.build_xz()], [self.build_xy(xy_wire)], [self.build_xyz(xy_wire)]
+            [self.build_xz()], [self.build_xy(xy_face)], [self.build_xyz(xy_face)]
         )
 
     def build_xz(self) -> PhysicalComponent:
@@ -74,10 +75,11 @@ class DuctBuilder(Builder):
 
         return component
 
-    def build_xy(self, xy_wire: BluemiraWire) -> PhysicalComponent:
+    def build_xy(self, xy_face: BluemiraFace) -> PhysicalComponent:
         pass
 
-    def build_xyz(self, xy_wire: BluemiraWire) -> PhysicalComponent:
+    def build_xyz(self, xy_face: BluemiraFace) -> PhysicalComponent:
+        port = extrude_shape(xy_face, (0, 0, extrude_length))
         # xin = max(xin) if len(xin) != 0 else 0
 
         # xout = (
@@ -102,7 +104,7 @@ class DuctBuilder(Builder):
 
         pass
 
-    def _single_xy_wire(self, width: float) -> BluemiraWire:
+    def _single_xy_face(self, width: float) -> BluemiraFace:
         """
         Creates a xy cross section of the port
 
@@ -112,34 +114,56 @@ class DuctBuilder(Builder):
         Parameters
         ----------
         width
-            the width of half the tf coil and the vacuum vessel and shield
+            the width of half the tf coil
+
+        Notes
+        -----
+        the port koz is slightly trimmed to allow for square ends to the port
 
         """
         sector_degree, _ = get_n_sectors(self.params.n_TF.value)
-
-        x_orig = self.port_koz.bounding_box.x_min
+        beta = np.deg2rad(sector_degree)
+        double_skin = 2 * self.port_wall_thickness
 
         # build at origin
-        self.port_koz.translate((-x_orig, 0, 0))
+        x_orig = self.port_koz.bounding_box.x_min
+        y_orig = self.port_koz.bounding_box.y_min
+        z_orig = self.port_koz.bounding_box.z_min
+
+        self.port_koz.translate((-x_orig, -y_orig, -z_orig))
+
         # Inner point
         x_min = self.port_koz.bounding_box.x_min
         y_min = self.port_koz.bounding_box.y_max
 
         # lower outer point (xy_plane)
-        x_a = self.port_koz.bounding_box.x_max
+        port_trim = self.port_wall_thickness / np.sin(0.5 * beta)
+        x_a = self.port_koz.bounding_box.x_max - port_trim
         y_a = self.port_koz.bounding_box.y_max
 
         rotated_koz = self.port_koz.deepcopy()
         rotated_koz.rotate(degree=sector_degree)
 
         # upper outer point (xy plane)
-        x_b = rotated_koz.bounding_box.x_max
+        port_trim2 = port_trim * np.cos(beta)
+        x_b = rotated_koz.bounding_box.x_max - port_trim2
         y_b = rotated_koz.bounding_box.y_max
 
-        port_xy_wire = make_polygon(
-            {"x": [x_min, x_a, x_b], "y": [y_min, y_a, y_b]}, closed=True
-        )
+        # Inner Wire
+        x_iw = np.array([x_min, x_a, x_b])
+        x_iw[0] += double_skin
+        x_iw[1:] -= double_skin
+        y_iw = np.array([y_min, y_a, y_b])
+        y_iw[0] += self.port_wall_thickness
+        y_iw[1:] -= self.port_wall_thickness
+        xy_inner_wire = make_polygon({"x": x_iw, "y": y_iw}, closed=True)
 
-        port_xy_wire.translate((x_orig, width, 0))
+        # Outer wire
+        x_ow = np.array([x_min, x_a, x_b, x_min])
+        y_ow = np.array([y_min, y_a, y_b, y_min + double_skin])
+        xy_outer_wire = make_polygon({"x": x_ow, "y": y_ow}, closed=True)
 
-        return port_xy_wire
+        xy_face = BluemiraFace((xy_inner_wire, xy_outer_wire))
+        xy_face.translate((x_orig + port_trim, y_orig + width, 0))
+
+        return xy_face
