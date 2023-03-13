@@ -36,11 +36,10 @@ from bluemira.equilibria.opt_constraints import (
     IsofluxConstraint,
     PsiConstraint,
 )
-from bluemira.equilibria.opt_problems import PulsedNestedPositionCOP, TikhonovCurrentCOP
+from bluemira.equilibria.opt_problems import PulsedNestedPositionCOP
 from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.run import OptimisedPulsedCoilsetDesign
 from bluemira.equilibria.shapes import JohnerLCFS
-from bluemira.equilibria.solve import DudsonConvergence
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
@@ -210,6 +209,23 @@ class PFCoilsDesigner(Designer[CoilSet]):
         eq_converger = get_class_from_module(eq_settings["convergence_class"])
         eq_convergence = eq_converger(eq_settings["conv_limit"])
 
+        pos_defaults = {
+            "optimisation_settings": {
+                "algorithm_name": "COBYLA",
+                "conditions": {
+                    "max_eval": 200,
+                    "ftol_rel": 1e-6,
+                    "xtol_rel": 1e-6,
+                },
+            },
+        }
+        pos_settings = self.build_config.get("position_settings", {})
+        pos_settings = {**pos_defaults, **pos_settings}
+        pos_optimiser = Optimiser(
+            pos_settings["optimisation_settings"]["algorithm_name"],
+            opt_conditions=pos_settings["optimisation_settings"]["conditions"],
+        )
+
         return OptimisedPulsedCoilsetDesign(
             self.params,
             coilset,
@@ -235,10 +251,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
                 "peak_PF_current_factor": eq_settings["peak_PF_current_factor"],
             },
             position_problem_cls=PulsedNestedPositionCOP,
-            position_optimiser=Optimiser(
-                "COBYLA",
-                opt_conditions={"max_eval": 200, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
-            ),
+            position_optimiser=pos_optimiser,
             limiter=None,
         )
 
@@ -311,8 +324,8 @@ class PFCoilsDesigner(Designer[CoilSet]):
             R_0=self.params.R_0.value,
             kappa=self.params.kappa.value,
             delta=self.params.delta.value,
-            r_cs=self.params.r_cs_in.value + self.params.tk_cs.value / 2,
-            tk_cs=self.params.tk_cs.value / 2,
+            r_cs=self.params.r_cs_in.value + 0.5 * self.params.tk_cs.value,
+            tk_cs=0.5 * self.params.tk_cs.value,
             g_cs=self.params.g_cs_mod.value,
             tk_cs_ins=self.params.tk_cs_insulation.value,
             tk_cs_cas=self.params.tk_cs_casing.value,
