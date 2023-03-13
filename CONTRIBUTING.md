@@ -204,19 +204,19 @@ def IPB98y2(
   Parameters
   ----------
   I_p
-  Plasma current [A]
+      Plasma current [A]
   B_t
-  Toroidal field at R_0 [T]
+      Toroidal field at R_0 [T]
   P_sep
-  Separatrix power [W]
+      Separatrix power [W]
   n
-  Line average plasma density [1/m^3]
+      Line average plasma density [1/m^3]
   R_0
-  Major radius [m]
+      Major radius [m]
   A
-  Aspect ratio
+      Aspect ratio
   kappa
-  Plasma elongation
+      Plasma elongation
 
   Returns
   -------
