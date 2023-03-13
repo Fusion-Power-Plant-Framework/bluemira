@@ -181,12 +181,7 @@ class SteadyStatePowerCycleRun(Task):
         """
         Run the run task. (o.O)
         """
-        params = BoPModelParams(
-            **{
-                name: getattr(self.params, name).value
-                for name in ("P_fus_DT", "P_fus_DD", "P_rad", "P_hcd_ss", "P_hcd_ss_el")
-            }
-        )
+        params = make_parameter_frame(self.params, BoPModelParams)
         bop = BalanceOfPlantModel(params, *setup_result)
         bop.build()
         return bop

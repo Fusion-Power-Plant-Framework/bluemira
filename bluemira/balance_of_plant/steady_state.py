@@ -386,7 +386,7 @@ class ParasiticLoadStrategy(abc.ABC):
 
 @dataclass
 class BoPModelParams(ParameterFrame):
-    """Parmeters required to run :class:`BalanceOfPlantModel`."""
+    """Parameters required to run :class:`BalanceOfPlantModel`."""
 
     P_fus_DT: Parameter[float]
     P_fus_DD: Parameter[float]
