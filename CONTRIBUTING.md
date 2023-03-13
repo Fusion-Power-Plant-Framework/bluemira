@@ -244,4 +244,4 @@ https://github.com/python-versioneer/python-versioneer/blob/master/INSTALL.md#po
 is quite straightforward, and that link also gives details on how ``versioneer`` is
 installed, should it be necessary to do that again. If this fails and you haven't
 touched `bluemira/_version.py`, then it is possible
-that ``versioneer`` needs to be updated (see [their README](https://github.com/python-versioneer/python-versioneer#updating-versioneer)
+that ``versioneer`` needs to be updated (see [their README](https://github.com/python-versioneer/python-versioneer#updating-versioneer)).
