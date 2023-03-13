@@ -23,6 +23,7 @@
 Simple steady-state EU-DEMO balance of plant model
 """
 import enum
+from dataclasses import dataclass
 
 import numpy as np
 
@@ -37,11 +38,42 @@ from bluemira.balance_of_plant.steady_state import (
     RadChargedPowerStrategy,
     SuperheatedRankine,
 )
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.codes.interface import CodesSolver
 from bluemira.codes.interface import CodesTask as Task
 from bluemira.codes.interface import RunMode
 
 __all__ = ["SteadyStatePowerCycleSolver"]
+
+
+@dataclass
+class SteadyStatePowerCycleParams(ParameterFrame):
+    """
+    Steady-state power cycle solver parameter frame
+    """
+
+    P_fus_DT: Parameter[float]
+    P_fus_DD: Parameter[float]
+    P_rad: Parameter[float]
+    P_hcd_ss: Parameter[float]
+    P_hcd_ss_el: Parameter[float]
+    vvpfrac: Parameter[float]
+    e_mult: Parameter[float]
+    e_decay_mult: Parameter[float]
+    f_core_rad_fw: Parameter[float]
+    f_sol_rad: Parameter[float]
+    f_sol_rad_fw: Parameter[float]
+    f_sol_ch_fw: Parameter[float]
+    f_fw_aux: Parameter[float]
+    blanket_type: Parameter[str]
+    bb_p_inlet: Parameter[float]
+    bb_p_outlet: Parameter[float]
+    bb_t_inlet: Parameter[float]
+    bb_t_outlet: Parameter[float]
+    bb_pump_eta_isen: Parameter[float]
+    bb_pump_eta_el: Parameter[float]
+    div_pump_eta_isen: Parameter[float]
+    div_pump_eta_el: Parameter[float]
 
 
 class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
@@ -50,11 +82,11 @@ class EUDEMOReferenceParasiticLoadStrategy(ParasiticLoadStrategy):
     """
 
     def __init__(self):
-        self.p_fusion_ref = 2037
-        self.p_cryo = 44
-        self.p_mag = 44
-        self.p_t_plant = 15.5
-        self.p_other = 31
+        self.p_fusion_ref = 2037e6
+        self.p_cryo = 44e6
+        self.p_mag = 44e6
+        self.p_t_plant = 15.5e6
+        self.p_other = 31e6
 
     def calculate(self, p_fusion):
         """
@@ -83,6 +115,7 @@ class SteadyStatePowerCycleSetup(Task):
         """
         Run the setup task.
         """
+        self.params = make_parameter_frame(self.params, SteadyStatePowerCycleParams)
         params = self.params  # avoid constant 'self' lookup
         # TODO: Get remaining hard-coded values hooked up
         neutron_power_strat = NeutronPowerStrategy(
@@ -148,12 +181,7 @@ class SteadyStatePowerCycleRun(Task):
         """
         Run the run task. (o.O)
         """
-        params = BoPModelParams(
-            **{
-                name: getattr(self.params, name).value
-                for name in ("P_fus_DT", "P_fus_DD", "P_rad", "P_hcd_ss", "P_hcd_ss_el")
-            }
-        )
+        params = make_parameter_frame(self.params, BoPModelParams)
         bop = BalanceOfPlantModel(params, *setup_result)
         bop.build()
         return bop

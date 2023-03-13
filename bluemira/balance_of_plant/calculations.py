@@ -23,6 +23,8 @@
 Simple relations for power.
 """
 
+from typing import Tuple
+
 import numpy as np
 
 from bluemira.base.constants import raw_uc
@@ -73,34 +75,40 @@ def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
 
 
 def He_pumping(  # noqa :N802
-    pressure_in, pressure_out, t_in, t_out, blanket_power, eta_isen, eta_el
-):
+    pressure_in: float,
+    pressure_out: float,
+    t_in: float,
+    t_out: float,
+    blanket_power: float,
+    eta_isen: float,
+    eta_el: float,
+) -> Tuple[float, float]:
     """
     Calculate the pumping power for helium-cooled blankets.
 
     Parameters
     ----------
-    pressure_in: float
+    pressure_in:
         Inlet pressure [Pa]
-    pressure_out: float
+    pressure_out:
         Pressure drop [Pa]
-    t_in: float
+    t_in:
         Inlet temperature [K]
-    t_out: float
+    t_out:
         Outlet temperature [K]
-    blanket_power: float
+    blanket_power:
         Total blanket power excluding pumping power [W]
-    eta_isen: float
+    eta_isen:
         Isentropic efficiency of the He compressors
-    eta_el: float
+    eta_el:
         Electrical efficiency of the He compressors
 
     Returns
     -------
-    P_pump_is: float
-        The isentropic pumping power (added to the working fluid)
-    P_pump_el: float
-        The eletrical pumping power (parasitic load)
+    P_pump_is:
+        The isentropic pumping power (added to the working fluid) [W]
+    P_pump_el:
+        The eletrical pumping power (parasitic load) [W]
 
     \t:math:`T_{in_{comp}} = \\dfrac{T_{in_{BB}}}{\\dfrac{P}{P-dP}^{\\dfrac{\\gamma-1}{\\gamma}}}`\n
     \t:math:`f_{p} = \\dfrac{T_{in_{comp}}}{\\eta_{is}dT}\\Bigg(\\dfrac{P}{P-dP}^{\\dfrac{\\gamma-1}{\\gamma}}-1\\Bigg)`
@@ -109,8 +117,8 @@ def He_pumping(  # noqa :N802
     -----
     \t:math:`f_{p} = \\dfrac{T_{in_{BB}}}{\\eta_{is}dT}\\Bigg(1-\\dfrac{P-dP}{P}^{\\dfrac{\\gamma-1}{\\gamma}}\\Bigg)`
     **Outputs:**\n
-    \t:math:`P_{pump} = \\dfrac{f_{p}P_{plasma}}{1-f_p}` [MW]\n
-    \t:math:`P_{pump,el} = \\dfrac{P_{pump}}{\\eta_{el}}` [MW]\n
+    \t:math:`P_{pump} = \\dfrac{f_{p}P_{plasma}}{1-f_p}` [W]\n
+    \t:math:`P_{pump,el} = \\dfrac{P_{pump}}{\\eta_{el}}` [W]\n
     **No longer in use:**
     \t:math:`f_{pump}=\\dfrac{dP}{dTc_P\\rho_{av}}`
     """  # noqa :W505
