@@ -37,11 +37,13 @@ class PowerCyclePhase(PowerCycleTimeABC):
         self,
         name,
         duration_breakdown: Dict[str, Union[int, float]],
+        label=None,
     ):
         breakdown = self._validate_breakdown(duration_breakdown)
-        self.duration_breakdown = breakdown
         durations_list = list(breakdown.values())
-        super().__init__(name, durations_list)
+
+        super().__init__(name, durations_list, label=label)
+        self.duration_breakdown = breakdown
 
     @staticmethod
     def _validate_breakdown(duration_breakdown):
@@ -71,10 +73,11 @@ class PowerCyclePulse(PowerCycleTimeABC):
         self,
         name,
         phase_set: Union[PowerCyclePhase, List[PowerCyclePhase]],
+        label=None,
     ):
         self.phase_set = self._validate_phase_set(phase_set)
         durations_list = self._build_durations_list(self.phase_set)
-        super().__init__(name, durations_list)
+        super().__init__(name, durations_list, label=label)
 
     @staticmethod
     def _validate_phase_set(phase_set):
@@ -105,10 +108,11 @@ class PowerCycleScenario(PowerCycleTimeABC):
         self,
         name,
         pulse_set: Union[PowerCyclePulse, List[PowerCyclePulse]],
+        label=None,
     ):
         self.pulse_set = self._validate_pulse_set(pulse_set)
         durations_list = self._build_durations_list(self.pulse_set)
-        super().__init__(name, durations_list)
+        super().__init__(name, durations_list, label=label)
 
     @staticmethod
     def _validate_pulse_set(pulse_set):
@@ -344,7 +348,11 @@ class ScenarioBuilder:
                 breakdown_library, breakdown_list, breakdown_operator
             )
 
-            phase = PowerCyclePhase(phase_name, phase_breakdown)
+            phase = PowerCyclePhase(
+                phase_name,
+                phase_breakdown,
+                label=phase_label,
+            )
             phase_library[phase_label] = phase
         return phase_library
 
@@ -367,7 +375,11 @@ class ScenarioBuilder:
             phase_list = pulse_specs["phases"]
             phase_set = cls._build_time_set(phase_library, phase_list)
 
-            pulse = PowerCyclePulse(pulse_name, phase_set)
+            pulse = PowerCyclePulse(
+                pulse_name,
+                phase_set,
+                label=pulse_label,
+            )
             pulse_library[pulse_label] = pulse
         return pulse_library
 

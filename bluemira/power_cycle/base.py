@@ -28,12 +28,20 @@ class PowerCycleABC(ABC):
         Description of the instance.
     """
 
-    def __init__(self, name: str):
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+    _label_length = 3
+
+    def __init__(self, name: str, label=None):
         self.name = self._validate_name(name)
 
-    # ------------------------------------------------------------------
-    #  METHODS
-    # ------------------------------------------------------------------
+        label_length = self._label_length
+        if label is None:
+            label = name[0 : label_length - 1]
+        else:
+            label = self._validate_label(label, label_length)
+        self.label = label
 
     @staticmethod
     def _validate_name(argument):
@@ -45,6 +53,29 @@ class PowerCycleABC(ABC):
         if not isinstance(argument, str):
             raise PowerCycleABCError("name")
         return argument
+
+    @staticmethod
+    def _validate_label(argument, label_length):
+        """
+        Validate an argument to be an instance of the 'str' class, with
+        a maximum length defined by 'label_length', to be considered a
+        valid label for an instance of a child class of the
+        PowerCycleABC class.
+        """
+        argument_type_is_incorrect = type(argument) != str
+        argument_length_is_incorrect = len(argument) != label_length
+        if argument_type_is_incorrect or argument_length_is_incorrect:
+            raise PowerCycleABCError(
+                "label",
+                f"The argument {argument!r} cannot be applied because "
+                "labels for this class must be objects of the 'str' "
+                f"class with an exact length of {label_length!r}.",
+            )
+        return argument
+
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
 
     @classmethod
     def validate_class(cls, instance):
@@ -78,9 +109,10 @@ class PowerCycleTimeABC(PowerCycleABC):
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
-    def __init__(self, name, durations_list):
+    def __init__(self, name, durations_list, label=None):
 
-        super().__init__(name)
+        super().__init__(name, label=label)
+
         self.durations_list = self._validate_durations(durations_list)
         self.duration = sum(self.durations_list)
 
@@ -94,6 +126,10 @@ class PowerCycleTimeABC(PowerCycleABC):
         for value in durations_list:
             value = validate_nonnegative(value)
         return durations_list
+
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
 
     @staticmethod
     def _build_durations_list(power_set):
@@ -114,7 +150,7 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
     """
 
     # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES
+    # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
     # Default number of points (for any plotting method)
@@ -141,7 +177,7 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
     }
 
     # ------------------------------------------------------------------
-    # METHODS
+    #  OPERATIONS
     # ------------------------------------------------------------------
 
     @abstractproperty
@@ -274,11 +310,19 @@ class PowerCycleImporterABC(metaclass=ABCMeta):
     modules into the Power Cycle module.
     """
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     _phaseload_inputs = {
         "phase_list": list,
         "normalize_list": list,
         "powerload_list": list,
     }
+
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
 
     @staticmethod
     @abstractmethod

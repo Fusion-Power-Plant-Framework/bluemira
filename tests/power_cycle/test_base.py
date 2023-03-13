@@ -54,17 +54,50 @@ class TestPowerCycleABC:
     # ------------------------------------------------------------------
 
     def test_validate_name(self):
+        tested_class = self.tested_class
         tested_class_error = self.tested_class_error
 
-        sample = self.sample
         all_arguments = self.test_arguments
         for argument in all_arguments:
             if isinstance(argument, str):
-                validated_argument = sample._validate_name(argument)
+                validated_argument = tested_class._validate_name(argument)
                 assert validated_argument == argument
             else:
                 with pytest.raises(tested_class_error):
-                    validated_argument = sample._validate_name(argument)
+                    validated_argument = tested_class._validate_name(argument)
+
+    def test_validate_label(self):
+        tested_class = self.tested_class
+        tested_class_error = self.tested_class_error
+
+        example_name = "a_long_string_that_should_be_cut"
+        label_length = tested_class._label_length
+        example_correct_label = example_name[0 : label_length - 1]
+
+        all_arguments = self.test_arguments
+        all_arguments.append(example_correct_label)
+        for argument in all_arguments:
+            type_is_correct = isinstance(argument, str)
+
+            if type_is_correct:
+                length_is_incorrect = len(argument) != label_length
+
+                if length_is_incorrect:
+                    with pytest.raises(tested_class_error):
+                        validated_argument = tested_class._validate_label(
+                            argument,
+                            label_length,
+                        )
+                else:
+                    validated_argument = tested_class._validate_label(
+                        argument,
+                        label_length,
+                    )
+                    assert validated_argument == argument
+
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
 
     def test_validate_class(self):
         tested_class_error = self.tested_class_error

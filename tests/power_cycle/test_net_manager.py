@@ -11,7 +11,7 @@ from bluemira.power_cycle.errors import (
     PowerCycleManagerError,
     PowerCycleSystemError,
 )
-from bluemira.power_cycle.net.loads import PowerLoad
+from bluemira.power_cycle.net.loads import PhaseLoad, PowerLoad
 from bluemira.power_cycle.net.manager import (
     PowerCycleGroup,
     PowerCycleManager,
@@ -156,6 +156,24 @@ class TestPowerCycleSystem:
 
         return all_load_configs
 
+    def list_all_phaseload_inputs(self):
+        tested_class = self.tested_class
+
+        all_load_configs = self.list_all_load_configs()
+        all_phaseload_inputs = []
+        for load_config in all_load_configs:
+            load_name = load_config["name"]
+
+            module = load_config["module"]
+            variables_map = load_config["variables_map"]
+
+            phaseload_inputs = tested_class.import_phaseload_inputs(
+                module,
+                variables_map,
+            )
+            all_phaseload_inputs.append(phaseload_inputs)
+        return all_phaseload_inputs
+
     def test_import_phaseload_inputs(self):
         tested_class = self.tested_class
         tested_class_error = self.tested_class_error
@@ -166,17 +184,9 @@ class TestPowerCycleSystem:
             "powerload_list": list,
         }
 
-        all_load_configs = self.list_all_load_configs()
-        for load_config in all_load_configs:
-            load_name = load_config["name"]
-            module = load_config["module"]
-            variables_map = load_config["variables_map"]
+        all_phaseload_inputs = self.list_all_phaseload_inputs()
+        for phaseload_inputs in all_phaseload_inputs:
 
-            assert type(load_name) == str
-            phaseload_inputs = tested_class.import_phaseload_inputs(
-                module,
-                variables_map,
-            )
             assert validate_dict(phaseload_inputs, phaseload_inputs_format)
 
             valid_keys = phaseload_inputs_format.keys()
@@ -194,14 +204,35 @@ class TestPowerCycleSystem:
                 assert all(types_are_right)
 
         inexistent_module = "inexistent_module"
+        example_variables_map = dict()
         with pytest.raises(tested_class_error):
             phaseload_inputs = tested_class.import_phaseload_inputs(
                 inexistent_module,
-                variables_map,
+                example_variables_map,
             )
 
     def test_build_phaseloads(self):
-        pass
+        all_samples = self.construct_multiple_samples()
+        all_phaseload_inputs = self.list_all_phaseload_inputs()
+        for sample in all_samples:
+            sample_scenario = sample.scenario
+            pulse_set = sample_scenario.pulse_set
+
+            all_phases = [pulse.phase_set for pulse in pulse_set]
+            valid_phases = list(set(all_phases))
+
+            for phaseload_inputs in all_phaseload_inputs:
+
+                example_load_name = sample.name + " load"
+                phaseload_list = sample._build_phaseloads(
+                    example_load_name, phaseload_inputs
+                )
+
+                for phaseload in phaseload_list:
+                    assert type(phaseload) == PhaseLoad
+
+                    phase = phaseload.phase
+                    assert phase in valid_phases
 
     def test_make_phaseloads_from_config(self):
         pass
