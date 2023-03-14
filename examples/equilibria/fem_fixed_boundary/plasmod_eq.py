@@ -175,29 +175,22 @@ x1D, flux_surfaces = utilities.get_flux_surfaces_from_mesh(
 )
 
 
+import dolfin
+
 start_time = datetime.now()
 print(f"\n Start equilibrium.calc_metric_coefficients")
 
-
 dpsi_dx = gs_solver.psi.dx(0)
 dpsi_dz = gs_solver.psi.dx(1)
-import dolfin
 
 w = dolfin.VectorFunctionSpace(gs_solver.mesh, "CG", 1)
-grad_psi_func = dolfin.project(dolfin.as_vector((dpsi_dx, dpsi_dz)), w)
-
-
-def grad_psi(x):
-    return grad_psi_func(x)
-
+grad_psi_2D_func = dolfin.project(dolfin.as_vector((dpsi_dx, dpsi_dz)), w)
 
 x1D, V, g1, g2, g3 = equilibrium.calc_metric_coefficients(
     flux_surfaces,
-    gs_solver.psi,
-    gs_solver.psi_norm_2d,
+    grad_psi_2D_func,
     x1D,
     gs_solver.psi_ax,
-    grad_psi,
 )
 print(
     f"\n equilibrium.calc_metric_coefficients solving time = {datetime.now() - start_time}"

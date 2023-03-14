@@ -690,11 +690,9 @@ def solve_transport_fixed_boundary(
 
 def calc_metric_coefficients(
     flux_surfaces,
-    psi_2D_func: callable,
-    psi_norm_2D_func: callable,
+    grad_psi_2D_func: callable,
     psi_norm_1D: np.ndarray,
     psi_ax: float,
-    grad_psi_2D: callable,
 ):
     """
     Calculate metric coefficients of a set of flux surfaces.
@@ -737,13 +735,8 @@ def calc_metric_coefficients(
     volume_func = interp1d(psi_norm_1D, volume, fill_value="extrapolate")
     grad_vol_1D_array = np.gradient(volume_func(psi_norm_1D), psi_norm_1D, edge_order=1)
 
-    # grad_psi_2D = nd.Gradient(psi_2D_func)
-    # grad_psinorm_2D = nd.Gradient(psi_norm_2D_func)
-    # def grad_psi_norm_norm(x):
-    #     return np.hypot(*grad_psinorm_2D(x))
-
     def grad_psi_norm(x):
-        return np.hypot(*grad_psi_2D(x))
+        return np.hypot(*grad_psi_2D_func(x))
 
     for i, fs in enumerate(flux_surfaces):
         points = fs.coords.xz.T
