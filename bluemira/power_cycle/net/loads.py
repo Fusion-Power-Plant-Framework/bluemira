@@ -977,6 +977,68 @@ class PhaseLoad(PowerCycleLoadABC):
 
         return ax, list_of_plot_objects
 
+    # ------------------------------------------------------------------
+    # ARITHMETICS
+    # ------------------------------------------------------------------
+    def __add__(self, other):
+        """
+        The addition of 'PhaseLoad' instances creates a new 'PhaseLoad'
+        instance with joined 'powerload_set' and 'normalize' attributes,
+        but only if its phases are the same.
+
+            phase: PowerCyclePhase
+            Pulse phase specification, that determines in which phase the
+            load happens.
+        powerload_set: PowerLoad | list[PowerLoad]
+            Collection of instances of the 'PowerLoad' class that define
+            the 'PhaseLoad' object.
+        normalize: bool | list[bool]
+            List of boolean values that defines which elements of
+            'powerload_set' have their time-dependence normalized in respect
+            to the phase duration. A value of 'True' forces a normalization,
+            while a value of 'False' does not and time values beyond the
+            phase duration are ignored.
+
+        """
+        this_phase = self.phase
+        other_phase = other.phase
+        if this_phase != other_phase:
+            raise PhaseLoadError(
+                "addition",
+                "The phases of this PhaseLoad addition represent "
+                f"{this_phase.name!r} and {other_phase.name!r} "
+                "respectively.",
+            )
+        else:
+            another_phase = this_phase
+
+        this_set = self.powerload_set
+        this_normalize = self.normalize
+
+        other_set = other.powerload_set
+        other_normalize = other.normalize
+
+        another_set = this_set + other_set
+        another_normalize = this_normalize + other_normalize
+        another_name = "Resulting PhaseLoad"
+        another = PhaseLoad(
+            another_name,
+            another_phase,
+            another_set,
+            another_normalize,
+        )
+        return another
+
+    def __radd__(self, other):
+        """
+        The reverse addition operator, to enable the 'sum' method for
+        'PowerLoad' instances.
+        """
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
+
 
 class PulseLoad(PowerCycleLoadABC):
     """
