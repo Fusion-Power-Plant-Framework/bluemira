@@ -125,7 +125,7 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
             return np.sqrt((self.psi_ax - f_psi(x)) / (self.psi_ax - self.psi_b))
 
         x1D, volume, g1, g2, g3 = calc_metric_coefficients(
-            self.flux_surfaces[1:], f_psi, f_psi_norm, self.rho
+            self.flux_surfaces[1:], f_psi, f_psi_norm, self.rho, self.psi_ax
         )
         self.results = {
             "x_1d": x1D,

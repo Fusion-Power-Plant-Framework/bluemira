@@ -693,6 +693,7 @@ def calc_metric_coefficients(
     psi_2D_func: callable,
     psi_norm_2D_func: callable,
     psi_norm_1D: np.ndarray,
+    psi_ax: float,
 ):
     """
     Calculate metric coefficients of a set of flux surfaces.
@@ -733,29 +734,47 @@ def calc_metric_coefficients(
     volume[1:] = [fs.volume for fs in flux_surfaces]
 
     volume_func = interp1d(psi_norm_1D, volume, fill_value="extrapolate")
-    grad_vol_1D = nd.Gradient(volume_func)
-    grad_psinorm_2D = nd.Gradient(psi_norm_2D_func)
+    # grad_vol_1D = nd.Gradient(volume_func)
+    grad_vol_1D_array = np.gradient(volume, psi_norm_1D, edge_order=1)
+    # grad_psinorm_2D = nd.Gradient(psi_norm_2D_func)
     grad_psi_2D = nd.Gradient(psi_2D_func)
 
-    def grad_psi_norm_norm(x):
-        return np.hypot(*grad_psinorm_2D(x))
+    # def grad_psi_norm_norm(x):
+    #     return np.hypot(*grad_psinorm_2D(x))
 
     def grad_psi_norm(x):
         return np.hypot(*grad_psi_2D(x))
 
-    def grad_vol_norm(x):
-        return grad_psi_norm_norm(x) * grad_vol_1D(psi_norm_2D_func(x))
+    def grad_psi_norm_norm_new(x, psi_norm_fs):
+        """
+        Taking advantage of the fact that psi_norm_2D gradients
+        can be scaled from psi_2D gradients
+        """
+        psi_fs = psi_ax * (1 - psi_norm_fs**2)
+        factor = 1 / (2 * psi_ax * np.sqrt(1 - psi_fs / psi_ax))
+        return factor * np.hypot(*grad_psi_2D(x))
+
+    # def grad_vol_norm(x):
+    #     return grad_psi_norm_norm(x) * grad_vol_1D(psi_norm_2D_func(x))
 
     for i, fs in enumerate(flux_surfaces):
+        grad_vol_1D_fs = grad_vol_1D_array[i + 1]
         points = fs.coords.xz.T
         dx = np.diff(fs.coords.x)
         dz = np.diff(fs.coords.z)
         dl = np.hypot(dx, dz)
         x_data = np.concatenate([np.array([0.0]), np.cumsum(dl)])
-        # Poloidal field
-        bp = np.array([grad_psi_norm(p) for p in points]) / (2 * np.pi * fs.coords.x)
 
-        grad_vol_norm_2 = np.array([grad_vol_norm(p) ** 2 for p in points])
+        grad_psi_norm_points = np.array([grad_psi_norm(p) for p in points])
+        # scale to get the grad_psi_norm_norm
+        psi_fs = psi_ax * (1 - psi_norm_1D[i + 1] ** 2)
+        factor = 1 / (2 * psi_ax * np.sqrt(1 - psi_fs / psi_ax))
+        grad_psi_norm_norm_points = factor * grad_psi_norm_points
+
+        # Poloidal field
+        bp = grad_psi_norm_points / (2 * np.pi * fs.coords.x)
+        grad_vol_norm_2 = (grad_psi_norm_norm_points * grad_vol_1D_fs) ** 2
+
         y0_data = 1 / bp
         y1_data = grad_vol_norm_2 * y0_data
         y3_data = 1 / (fs.coords.x**2 * bp)

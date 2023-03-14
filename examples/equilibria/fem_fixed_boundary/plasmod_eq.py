@@ -179,7 +179,11 @@ start_time = datetime.now()
 print(f"\n Start equilibrium.calc_metric_coefficients")
 
 x1D, V, g1, g2, g3 = equilibrium.calc_metric_coefficients(
-    flux_surfaces, gs_solver.psi, gs_solver.psi_norm_2d, x1D
+    flux_surfaces,
+    gs_solver.psi,
+    gs_solver.psi_norm_2d,
+    x1D,
+    gs_solver.psi_ax,
 )
 print(
     f"\n equilibrium.calc_metric_coefficients solving time = {datetime.now() - start_time}"
