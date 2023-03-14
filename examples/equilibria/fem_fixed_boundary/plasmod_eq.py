@@ -1,10 +1,17 @@
 import os
 import shutil
+from datetime import datetime
 
 import matplotlib.pyplot as plt
 import numpy as np
 import scipy.integrate
+from scipy.interpolate import interp1d
 
+import bluemira.equilibria.fem_fixed_boundary.equilibrium as equilibrium
+import bluemira.equilibria.fem_fixed_boundary.utilities as utilities
+import bluemira.geometry.tools as geotools
+from bluemira.base.components import PhysicalComponent
+from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.codes import transport_code_solver
@@ -13,9 +20,13 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
 )
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
+    refine_mesh,
 )
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.mesh import meshing
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 set_log_level("NOTSET")
 
@@ -70,8 +81,6 @@ theta = np.linspace(0, 2 * np.pi, 201)
 rPLASMOD_sep = R_0 + shif[-1] + amin * (np.cos(theta) - dprof[-1] * np.sin(theta) ** 2)
 zPLASMOD_sep = amin * kprof[-1] * np.sin(theta)
 
-import bluemira.geometry.tools as geotools
-from bluemira.geometry.coordinates import Coordinates
 
 points = Coordinates({"x": rPLASMOD_sep, "z": zPLASMOD_sep})
 Plasmod_sep = geotools.interpolate_bspline(points)
@@ -92,29 +101,18 @@ except AssertionError as e:
     bluemira_error(f"Assertion error: {e}")
 
 
-from bluemira.base.constants import MU_0
-from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-    FemGradShafranovFixedBoundary,
-)
-
 _pprime = -pprime / (-2 * np.pi * R_0 * 1e-6)
 _ffprime = -ffprime / (-2 * np.pi / MU_0 / R_0 * 1e-6)
-
-
-from bluemira.base.components import PhysicalComponent
 
 plasma = PhysicalComponent("Plasma", shape=Plasmod_sep_surf)
 
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
-from bluemira.mesh import meshing
-
 directory = get_bluemira_path("", subfolder="generated_data")
 meshfiles = [os.path.join(directory, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 meshing.Mesh(meshfile=meshfiles)(plasma)
 
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=directory)
 
@@ -127,8 +125,6 @@ mesh, boundaries, subdomains, labels = import_mesh(
 # check mesh refinement
 if True:
     coarse_mesh = mesh
-
-    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import refine_mesh
 
     refined_mesh = refine_mesh(mesh, np.array((9, 0, 0)), num_levels=2, distance=1.5)
 
@@ -145,12 +141,9 @@ if True:
     mesh = refined_mesh
 
 
-from scipy.interpolate import interp1d
-
 f_pprime = interp1d(xPsiPlasmod, pprime, fill_value="extrapolate")
 f_ffprime = interp1d(xPsiPlasmod, ffprime, fill_value="extrapolate")
 
-from datetime import datetime
 
 start_time = datetime.now()
 print("\n Solving GSE for a give pprime and ffprime")
@@ -174,11 +167,8 @@ print(f"\n GSE solving time = {datetime.now() - start_time}")
 mesh_points = mesh.coordinates()
 c_psi = np.array([gs_solver.psi(p) for p in mesh_points])
 
-import bluemira.equilibria.fem_fixed_boundary.utilities as utilities
-
 utilities.plot_scalar_field(mesh_points[:, 0], mesh_points[:, 1], c_psi)
 
-import bluemira.equilibria.fem_fixed_boundary.equilibrium as equilibrium
 
 x1D, flux_surfaces = utilities.get_flux_surfaces_from_mesh(
     mesh, gs_solver.psi_norm_2d, x_1d=xPsiPlasmod
@@ -235,9 +225,6 @@ axs[2, 1].plot(xPsiPlasmod, outputs.phi)
 axs[2, 1].plot(x1D, Phi1D)
 axs[2, 1].set_title("Phi1D")
 plt.show()
-
-
-import bluemira.equilibria.fem_fixed_boundary.utilities as utilities
 
 x_axis, z_axis = utilities.find_magnetic_axis(gs_solver.psi, mesh=mesh)
 
