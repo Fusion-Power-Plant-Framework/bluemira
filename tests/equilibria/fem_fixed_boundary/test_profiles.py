@@ -113,7 +113,7 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         z2d = np.concatenate(z)
         psi2d = np.concatenate(psi)
 
-        # Make some callables for grad_psi, mimicking a G-S solver.
+        # Make a callable for grad_psi, mimicking a G-S solver.
         _psi_func = LinearNDInterpolator(
             list(zip(x2d, z2d)), psi2d, fill_value=self.psi_b
         )

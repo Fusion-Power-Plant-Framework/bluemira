@@ -78,6 +78,18 @@ class FemMagnetostatic2d:
 
     def __init__(self, p_order: int = 3):
         self.p_order = p_order
+        self.mesh = None
+        self.a = None
+        self.u = None
+        self.v = None
+        self.V = None
+        self.g = None
+        self.L = None
+        self.boundaries = None
+        self.bcs = None
+
+        self.psi = None
+        self.B = None
 
     def set_mesh(
         self, mesh: Union[dolfin.Mesh, str], boundaries: Union[dolfin.Mesh, str] = None
@@ -304,6 +316,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self.k = 1
         self._psi_ax = None
         self._psi_b = None
+        self._grad_psi = None
 
     def _process_profiles(self, p_prime: Callable, ff_prime: Callable):
         # Note: pprime and ffprime have been limited to a Callable,
@@ -337,6 +350,17 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         if self._psi_b is None:
             self._psi_b = 0.0
         return self._psi_b
+
+    def grad_psi(self, point):
+        """
+        Calculate the gradients of psi at a point
+        """
+        if self._grad_psi is None:
+            w = dolfin.VectorFunctionSpace(self.mesh, "CG", 1)
+            dpsi_dx = self.psi.dx(0)
+            dpsi_dz = self.psi.dx(1)
+            self._grad_psi = dolfin.project(dolfin.as_vector((dpsi_dx, dpsi_dz)), w)
+        return self._grad_psi(point)
 
     @property
     def psi_norm_2d(self) -> Callable[[np.ndarray], float]:
@@ -471,6 +495,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         """
         self._psi_b = None
         self._psi_ax = None
+        self._grad_psi = None
 
     def solve(
         self,
