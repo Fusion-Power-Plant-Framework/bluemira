@@ -116,9 +116,7 @@ class EquatorialPortBuilder(Builder):
     Equatorial Port Builder
     """
 
-    NAME_XY = "Equatorial Ports xy"
-    NAME_XYZ = "Equatorial Ports xyz"
-    KOZ = "koz"
+    NAME = "Equatorial Port"
     param_cls: Type[EquatorialPortBuilderParams] = EquatorialPortBuilderParams
 
     def __init__(
@@ -167,7 +165,7 @@ class EquatorialPortBuilder(Builder):
         Build the xz components of the equatorial port
         """
         xz_profile = BluemiraWire(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
-        body = PhysicalComponent(self.KOZ, xz_profile)
+        body = PhysicalComponent("koz", xz_profile)
         body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
         return body
 
@@ -176,7 +174,7 @@ class EquatorialPortBuilder(Builder):
         Build the xy components of the equatorial port
         """
         ep_xy_profile = BluemiraWire(make_polygon({"x": x, "y": y, "z": 0}, closed=True))
-        body = PhysicalComponent(self.NAME_XY, BluemiraFace(ep_xy_profile))
+        body = PhysicalComponent(self.NAME, BluemiraFace(ep_xy_profile))
         body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
         return circular_pattern_component(body, n_children=n_ep)
 
@@ -195,11 +193,11 @@ class EquatorialPortBuilder(Builder):
             section = BluemiraFace(make_polygon({"x": x, "y": y, "z": z}, closed=True))
             sections.append(extrude_shape(section, ext_vec))
 
-        ep_shape = PhysicalComponent(self.NAME_XYZ, boolean_fuse(sections))
-        ep_shape.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
+        ep_shape = PhysicalComponent(self.NAME, boolean_fuse(sections))
+        ep_shape.display_cad_options.color = BLUE_PALETTE["VV"][0]
         return circular_pattern_component(ep_shape, n_children=n_ep)
 
-    def build_coordinates(self, x_pos: list, castellation_offsets: list):
+    def build_coordinates(self, x_offs: list, c_offs: list):
         """
         Returns coordinate lists for building the Eq. Port Bluemira geometry
 
@@ -210,9 +208,12 @@ class EquatorialPortBuilder(Builder):
         castellation_offsets: list
             list of castellations offsets
         """
-        offsets = [0] + castellation_offsets + [castellation_offsets[-1]]
+        offsets = [0, 0] + [z for i in zip(c_offs, c_offs) for z in i]
+        x_offsets = [x for i in zip(x_offs, x_offs) for x in i]
 
-        x_outwards = [self.x_ib] + x_pos + [self.x_ob]
+        x_outwards = (
+            [self.x_ib] + [self.x_ib + x_offset for x_offset in x_offsets] + [self.x_ob]
+        )
         x_points = x_outwards + list(reversed(x_outwards))
 
         y_pos_half = [self.y_width / 2 + offset for offset in offsets]

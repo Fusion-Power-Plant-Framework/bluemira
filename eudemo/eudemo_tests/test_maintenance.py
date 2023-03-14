@@ -22,8 +22,6 @@
 """
 Tests for EU-DEMO Maintenance
 """
-import math
-
 import pytest
 
 from bluemira.geometry.face import BluemiraFace
@@ -98,8 +96,8 @@ class TestEquatorialPortDesigner:
         x_len = xo - xi
         z_len = zh
 
-        assert math.isclose(output.length, 2 * (x_len + z_len))
-        assert math.isclose(output.area, x_len * z_len)
+        assert output.length == 2 * (x_len + z_len)
+        assert output.area == x_len * z_len
 
 
 class TestEquatorialPortBuilder:
@@ -127,9 +125,9 @@ class TestEquatorialPortBuilder:
             [9.0, 9.0, 4.0],  # x_outboard
             [5.0, 4.0, 2.0],  # z_height
             [3.0, 2.0, 1.0],  # y_width
-            [[5.0], [5.0, 7.0], [3.0]],  # x castellation_positions
+            [[3.0], [2.0, 4.0], [1.0]],  # x castellation_positions
             [[1.0], [1.0, 2.0], [0.5]],  # y/z castellation_offsets
-            [185.0, 160.0, 10.0],  # volume check value of Eq. Ports
+            [185.0, 160.0, 14.0],  # volume check value of Eq. Ports
         ),
     )
     def test_ep_builder(self, xi, xo, zh, y, x_offset, c_off, exp_v):
@@ -143,5 +141,7 @@ class TestEquatorialPortBuilder:
         self.builder.x_off = x_offset
         self.builder.cst = c_off
         output = self.builder.build()
-        out_eq_port = output.get_component("Equatorial Ports xyz 1")
-        assert math.isclose(out_eq_port.shape.volume, exp_v)
+        out_eq_port = output.get_component("xyz").get_component("Equatorial Port 1")
+        if out_eq_port is None:
+            out_eq_port = output.get_component("xyz").get_component("Equatorial Port")
+        assert out_eq_port.shape.volume == exp_v
