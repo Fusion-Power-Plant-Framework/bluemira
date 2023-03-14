@@ -99,6 +99,17 @@ class LoadData(PowerCycleLoadABC):
         if length_data != length_time:
             raise LoadDataError("sanity")
 
+    @classmethod
+    def null(cls):
+        """
+        Instantiates an null version of the class.
+        """
+        name = "Null LoadData"
+        time = [0, 1]
+        data = [0, 0]
+        null_instance = cls(name, time, data)
+        return null_instance
+
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
@@ -307,6 +318,19 @@ class PowerLoad(PowerCycleLoadABC):
         """
         if len(self.loaddata_set) != len(self.model):
             raise PowerLoadError("sanity")
+
+    @classmethod
+    def null(cls):
+        """
+        Instantiates an null version of the class.
+        """
+        null_loaddata = LoadData.null()
+
+        name = "Null PowerLoad"
+        loaddata_set = [null_loaddata]
+        model = PowerLoadModel["RAMP"]
+        null_instance = cls(name, loaddata_set, model)
+        return null_instance
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -741,6 +765,19 @@ class PhaseLoad(PowerCycleLoadABC):
         if len(self.powerload_set) != len(self.normalize):
             raise PhaseLoadError("sanity")
 
+    @classmethod
+    def null(cls, phase):
+        """
+        Instantiates an null version of the class.
+        """
+        null_powerload = PowerLoad.null()
+
+        name = "Null PhaseLoad for phase " + phase.name
+        powerload_set = [null_powerload]
+        normalize = True
+        null_instance = cls(name, phase, powerload_set, normalize)
+        return null_instance
+
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
@@ -985,20 +1022,6 @@ class PhaseLoad(PowerCycleLoadABC):
         The addition of 'PhaseLoad' instances creates a new 'PhaseLoad'
         instance with joined 'powerload_set' and 'normalize' attributes,
         but only if its phases are the same.
-
-            phase: PowerCyclePhase
-            Pulse phase specification, that determines in which phase the
-            load happens.
-        powerload_set: PowerLoad | list[PowerLoad]
-            Collection of instances of the 'PowerLoad' class that define
-            the 'PhaseLoad' object.
-        normalize: bool | list[bool]
-            List of boolean values that defines which elements of
-            'powerload_set' have their time-dependence normalized in respect
-            to the phase duration. A value of 'True' forces a normalization,
-            while a value of 'False' does not and time values beyond the
-            phase duration are ignored.
-
         """
         this_phase = self.phase
         other_phase = other.phase
@@ -1067,15 +1090,15 @@ class PulseLoad(PowerCycleLoadABC):
     ----------
     name: str
         Description of the 'PulseLoad' instance.
-    phaseload_set: PhaseLoad | list[PhaseLoad]
-        Ordered collection of instances of the 'PhaseLoad' class that
-        define the 'PulseLoad' object.
-
-    Attributes
-    ----------
     pulse: PowerCyclePulse
-        Pulse specification, determined by the 'phase' attributes of the
-        'PhaseLoad' instances used to define the 'PulseLoad'.
+        Pulse specification, that determines the necessary phases to
+        be characterized by 'PhaseLoad' objects.
+    phaseload_set: PhaseLoad | list[PhaseLoad]
+        Collection of 'PhaseLoad' objects that define the 'PulseLoad'
+        instance. Upon initialization, phase loads are permuted to have
+        the same order as the phases in the 'phase_set' attribute of
+        the 'pulse' parameter. Missing cases are treated with the
+        creation of an null phase load.
 
     Properties
     ----------
@@ -1118,29 +1141,82 @@ class PulseLoad(PowerCycleLoadABC):
     # Minimal shift for time correction in 'curve' method
     epsilon = 1e6 * sys.float_info.epsilon
 
-    def __init__(self, name, phaseload_set):
+    def __init__(self, name, pulse, phaseload_set):
 
         super().__init__(name)
 
-        self.phaseload_set = self._validate_phaseload_set(phaseload_set)
-        self.pulse = self._build_pulse()
+        pulse = self._validate_pulse(pulse)
+        phaseload_set = self._validate_phaseload_set(phaseload_set, pulse)
+
+        self.pulse = pulse
+        self.phaseload_set = phaseload_set
 
     @staticmethod
-    def _validate_phaseload_set(phaseload_set):
+    def _validate_pulse(pulse):
+        PowerCyclePulse.validate_class(pulse)
+        return pulse
+
+    @staticmethod
+    def _validate_phaseload_set(phaseload_set, pulse):
         """
         Validate 'phaseload_set' input to be a list of 'PhaseLoad'
-        instances.
+        instances. Multiple phase loads for the same phase are added.
+        Mssing phase loads are filled with a null instance.
         """
         phaseload_set = validate_list(phaseload_set)
-        for element in phaseload_set:
-            PhaseLoad.validate_class(element)
+
+        phaseload_set = []
+        phase_library = pulse.build_phase_library()
+        for (_, phase_in_pulse) in phase_library.items():
+
+            phaseloads_for_phase = []
+            for phaseload in phaseload_set:
+
+                PhaseLoad.validate_class(phaseload)
+
+                phase_of_phaseload = phaseload.phase
+                check = phase_of_phaseload.is_equivalent(phase_in_pulse)
+                phaseload_phase_is_the_same_as_phase_in_pulse = check
+                if phaseload_phase_is_the_same_as_phase_in_pulse:
+                    phaseloads_for_phase.append(phaseload)
+
+            no_phaseloads_were_added = len(phaseloads_for_phase) == 0
+            if no_phaseloads_were_added:
+                null_phaseload = PhaseLoad.null(phase_in_pulse)
+                phaseloads_for_phase = null_phaseload
+
+            phaseloads_for_phase = validate_list(phaseloads_for_phase)
+
+            single_phaseload = sum(phaseloads_for_phase)
+            phaseload_set.append(single_phaseload)
+
         return phaseload_set
 
-    def _build_pulse(self):
+    @classmethod
+    def null(cls, pulse):
         """
-        Build pulse from 'PowerCyclePhase' instances stored in the
+        Instantiates an null version of the class.
+        """
+        name = "Null PhaseLoad for pulse " + pulse.name
+
+        phaseload_set = []
+        phase_library = pulse.build_phase_library()
+        for (_, phase) in phase_library.items():
+            null_phaseload = PhaseLoad.null(phase)
+            phaseload_set.append(null_phaseload)
+
+        null_instance = cls(name, pulse, phaseload_set)
+        return null_instance
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    def _build_pulse_from_phaseload_set(self):
+        """
+        Build pulse from 'PowerCyclePhase' objects stored in the
         'phase' attributes of each 'PhaseLoad' instance in the
-        'phaseload_set' ordered list.
+        'phaseload_set' list.
         """
         name = self.name
         phaseload_set = self.phaseload_set
@@ -1151,10 +1227,6 @@ class PulseLoad(PowerCycleLoadABC):
         name = "Pulse for " + name
         pulse = PowerCyclePulse(name, phase_set)
         return pulse
-
-    # ------------------------------------------------------------------
-    # OPERATIONS
-    # ------------------------------------------------------------------
 
     @property
     def _shifted_set(self):
