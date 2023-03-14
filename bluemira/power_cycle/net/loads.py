@@ -1165,7 +1165,7 @@ class PulseLoad(PowerCycleLoadABC):
         """
         phaseload_set = validate_list(phaseload_set)
 
-        phaseload_set = []
+        validated_phaseload_set = []
         phase_library = pulse.build_phase_library()
         for (_, phase_in_pulse) in phase_library.items():
 
@@ -1188,9 +1188,9 @@ class PulseLoad(PowerCycleLoadABC):
             phaseloads_for_phase = validate_list(phaseloads_for_phase)
 
             single_phaseload = sum(phaseloads_for_phase)
-            phaseload_set.append(single_phaseload)
+            validated_phaseload_set.append(single_phaseload)
 
-        return phaseload_set
+        return validated_phaseload_set
 
     @classmethod
     def null(cls, pulse):
