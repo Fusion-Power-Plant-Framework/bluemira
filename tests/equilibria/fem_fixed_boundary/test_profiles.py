@@ -113,7 +113,7 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         z2d = np.concatenate(z)
         psi2d = np.concatenate(psi)
 
-        # Make some callables for psi and psi_norm, mimicking a G-S solver.
+        # Make some callables for grad_psi, mimicking a G-S solver.
         _psi_func = LinearNDInterpolator(
             list(zip(x2d, z2d)), psi2d, fill_value=self.psi_b
         )
@@ -121,11 +121,10 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         def f_psi(x):
             return _psi_func(x[0], x[1])
 
-        def f_psi_norm(x):
-            return np.sqrt((self.psi_ax - f_psi(x)) / (self.psi_ax - self.psi_b))
+        f_grad_psi = nd.Gradient(f_psi)
 
         x1D, volume, g1, g2, g3 = calc_metric_coefficients(
-            self.flux_surfaces[1:], f_psi, f_psi_norm, self.rho, self.psi_ax
+            self.flux_surfaces[1:], f_grad_psi, self.rho, self.psi_ax
         )
         self.results = {
             "x_1d": x1D,
