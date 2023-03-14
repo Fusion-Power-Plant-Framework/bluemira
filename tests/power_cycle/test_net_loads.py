@@ -905,6 +905,68 @@ class TestPhaseLoad:
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
 
+    # ------------------------------------------------------------------
+    # ARITHMETICS
+    # ------------------------------------------------------------------
+    def test_addition(self):
+        """
+        Tests both '__add__' and '__radd__'.
+        """
+        tested_class = self.tested_class
+        tested_class_error = self.tested_class_error
+
+        figure_title = "PhaseLoad Addition"
+        ax = tools_testkit.prepare_figure(figure_title)
+
+        all_samples = self.all_samples
+        colors = netloads_testkit.color_order_for_plotting
+        colors = iter(colors)
+
+        count = 0
+        all_results = []
+        list_of_plot_objects = []
+        for sample in all_samples:
+
+            ax, sample_plot_objects = sample.plot(
+                ax=ax,
+                detailed=False,
+                c="k",
+            )
+            list_of_plot_objects.append(sample_plot_objects)
+
+            this_phase = sample.phase
+            this_set = sample.powerload_set
+            this_normalize = sample.normalize
+
+            result = sample + sample
+            assert isinstance(result, tested_class)
+
+            result_phase = result.phase
+            assert result_phase == this_phase
+
+            result_set = result.powerload_set
+            assert result_set == this_set + this_set
+
+            result_normalize = result.normalize
+            assert result_normalize == this_normalize + this_normalize
+
+            result.name = "2x " + sample.name + " (added to itself)"
+            result_color = next(colors)
+            ax, result_plot_objects = result.plot(
+                ax=ax,
+                detailed=False,
+                c=result_color,
+            )
+
+            all_results.append(result)
+            list_of_plot_objects.append(result_plot_objects)
+
+        adjust_2d_graph_ranges(ax=ax)
+        plt.show()
+
+        with pytest.raises(tested_class_error):
+            added_phaseloads_with_different_phases = sum(all_results)
+
 
 class TestPulseLoad:
     tested_class_super = PowerCycleLoadABC

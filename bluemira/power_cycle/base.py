@@ -38,7 +38,7 @@ class PowerCycleABC(ABC):
 
         label_length = self._label_length
         if label is None:
-            label = name[0 : label_length - 1]
+            label = name[0:label_length]
         else:
             label = self._validate_label(label, label_length)
         self.label = label

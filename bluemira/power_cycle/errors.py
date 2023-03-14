@@ -283,6 +283,11 @@ class PhaseLoadError(PowerCycleError):
                 "The time properties of an instance of the "
                 f"{self._source} class cannot be set."
             ),
+            "addition": (
+                f"Instances of the {self._source} class can only be "
+                "added if their 'phase' attributes represent the same "
+                "pulse phase."
+            ),
         }
         return errors
 
