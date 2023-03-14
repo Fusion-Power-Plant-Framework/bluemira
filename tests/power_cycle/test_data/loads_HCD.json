@@ -20,7 +20,7 @@
                         true,
                         true
                     ],
-                    "unit": "kW",
+                    "unit": "MW",
                     "efficiencies": {
                         "wall-plug": 0.5
                     },

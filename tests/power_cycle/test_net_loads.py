@@ -1089,16 +1089,12 @@ class TestPulseLoad:
             )
 
     def test_validate_phaseload_set(self):
-        tested_class = self.tested_class
         """
+        import pprint
+
+        tested_class = self.tested_class
+
         sample_phaseloads = self.sample_phaseloads
-        for phaseload in sample_phaseloads:
-
-
-
-
-
-
 
         pulse = self.example_pulse
         phase_library = pulse.build_phase_library()
@@ -1111,6 +1107,8 @@ class TestPulseLoad:
         )
         n_phaseloads = len(phaseload_set)
         assert n_phaseloads == len(phase_library)
+
+        assert 0
 
         for p in range(n_phaseloads):
             phaseload = phaseload_set[p]
@@ -1125,6 +1123,7 @@ class TestPulseLoad:
             else:
                 phaseload_is_null = True
                 assert phaseload_is_null
+
         """
 
         """
@@ -1144,6 +1143,7 @@ class TestPulseLoad:
             wrong_phaseloads,
         )
         """
+
         pass
 
     def test_null_constructor(self):
