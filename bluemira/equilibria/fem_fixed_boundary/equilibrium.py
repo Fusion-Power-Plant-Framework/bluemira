@@ -737,7 +737,7 @@ def calc_metric_coefficients(
     volume_func = interp1d(psi_norm_1D, volume, fill_value="extrapolate")
     grad_vol_1D = nd.Gradient(volume_func)
     grad_vol_1D_array = np.gradient(volume, psi_norm_1D, edge_order=1)
-    grad_psi_2D = nd.Gradient(psi_2D_func)
+    # grad_psi_2D = nd.Gradient(psi_2D_func)
     grad_psi_2D = grad_psi
 
     # grad_psinorm_2D = nd.Gradient(psi_norm_2D_func)
