@@ -395,9 +395,11 @@ class TestPowerCycleManager:
         # import pprint
         # assert 0
 
+        pulseload_name = f"PulseLoad for {load_type!r} loads"
+        pulseload.name = pulseload_name
         ax, _ = pulseload.plot(
             ax=ax,
-            detailed=False,
+            detailed=True,
         )
         adjust_2d_graph_ranges(ax=ax)
         plt.show()

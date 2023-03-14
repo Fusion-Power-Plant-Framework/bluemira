@@ -1,6 +1,6 @@
 {
     "scenario": {
-        "name": "Standard scenario",
+        "name": "standard scenario",
         "pulses": [
             "std"
         ],
@@ -10,7 +10,7 @@
     },
     "pulse-library": {
         "std": {
-            "name": "Standard pulse",
+            "name": "standard pulse",
             "phases": [
                 "dwl",
                 "d2f",
@@ -19,7 +19,7 @@
             ]
         },
         "wrd": {
-            "name": "Weird pulse (for testing purposes only)",
+            "name": "weird pulse (for testing purposes only)",
             "phases": [
                 "dwl",
                 "dwl",
@@ -31,7 +31,7 @@
     },
     "phase-library": {
         "dwl": {
-            "name": "Dwell",
+            "name": "dwell",
             "logical": "|",
             "breakdown": [
                 "csr",
@@ -39,7 +39,7 @@
             ]
         },
         "d2f": {
-            "name": "Transition between dwell and flat-top",
+            "name": "transition between dwell and flat-top",
             "logical": "&",
             "breakdown": [
                 "cru",
@@ -47,14 +47,14 @@
             ]
         },
         "ftt": {
-            "name": "Flat-top",
+            "name": "flat-top",
             "logical": "&",
             "breakdown": [
                 "plb"
             ]
         },
         "f2d": {
-            "name": "Transition between flat-top and dwell",
+            "name": "transition between flat-top and dwell",
             "logical": "&",
             "breakdown": [
                 "brt",
@@ -71,28 +71,28 @@
             }
         },
         "pmp": {
-            "name": "Reactor pump-down",
+            "name": "reactor pump-down",
             "module": "pumping",
             "variables_map": {
                 "desired_data": "pumpdown-time"
             }
         },
         "cru": {
-            "name": "Current ramp-up",
+            "name": "current ramp-up",
             "module": "equilibria",
             "variables_map": {
                 "desired_data": "ramp-up-time"
             }
         },
         "crd": {
-            "name": "Current ramp-down",
+            "name": "current ramp-down",
             "module": "equilibria",
             "variables_map": {
                 "desired_data": "ramp-down-time"
             }
         },
         "bri": {
-            "name": "Burn initiation (heat up plasma)",
+            "name": "burn initiation (heat up plasma)",
             "module": null,
             "variables_map": {
                 "duration": 19,
@@ -101,7 +101,7 @@
             }
         },
         "brt": {
-            "name": "Burn termination (cool down plasma)",
+            "name": "burn termination (cool down plasma)",
             "module": null,
             "variables_map": {
                 "duration": 123,
@@ -110,7 +110,7 @@
             }
         },
         "plb": {
-            "name": "Plasma burn",
+            "name": "plasma burn",
             "module": null,
             "variables_map": {
                 "duration": 2,
