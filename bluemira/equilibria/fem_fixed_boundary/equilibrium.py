@@ -597,7 +597,7 @@ def solve_transport_fixed_boundary(
             import bluemira.equilibria.fem_fixed_boundary as fem_fixed_boundary
 
             x1d, V, g1, g2, g3 = fem_fixed_boundary.equilibrium.calc_metric_coefficients(
-                flux_surfaces, gs_solver.psi, gs_solver.psi_norm_2d, x1d
+                flux_surfaces, gs_solver.grad_psi, x1d, gs_solver.psi_ax
             )
             (
                 Ip,

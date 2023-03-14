@@ -42,9 +42,11 @@ An example that shows how to set up the problem for the fixed boundary equilibri
 # %%
 import os
 import shutil
+from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes._axes import Axes
 
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
@@ -58,11 +60,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.shapes import JohnerLCFS
 
-from typing import Union, Tuple, Optional
-from matplotlib.axes._axes import Axes
-
 set_log_level("NOTSET")
-
 
 
 class ScalarField:
@@ -213,8 +211,6 @@ class ScalarField2D(ScalarField):
         return ax, cntr, cntrf
 
 
-
-
 # %% [markdown]
 #
 # # Fixed Boundary Equilibrium
@@ -324,13 +320,14 @@ mesh_filename = "coupling_MHD_GSE"
 directory = get_bluemira_path("", subfolder="generated_data")
 mesh_name_msh = mesh_filename + ".msh"
 
+from copy import deepcopy
+
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     PlasmaFixedBoundaryParams,
     TransportSolverParams,
+    create_mesh,
     create_plasma_xz_cross_section,
-    create_mesh
 )
-from copy import deepcopy
 
 parameterisation = johner_parameterisation
 transport_solver = plasmod_solver
@@ -433,7 +430,7 @@ x1d, flux_surfaces = utilities.get_flux_surfaces_from_mesh(
     mesh, gs_solver.psi_norm_2d, nx=50
 )
 x1d, V_0, g1_0, g2_0, g3_0 = equilibrium.calc_metric_coefficients(
-    flux_surfaces, gs_solver.psi, gs_solver.psi_norm_2d, x1d
+    flux_surfaces, gs_solver.grad_psi, x1d, gs_solver.psi_ax
 )
 
 g2_0_fun = interp1d(x1d, g2_0, fill_value="extrapolate")
@@ -446,9 +443,25 @@ theta = 0.5
 
 for n_iter in range(n_iter_max):
 
-    Ip, Phi1D, Psi1D, pprime_psi1D_data, F, FFprime = equilibrium.calc_curr_dens_profiles(
-        x1d, p_func(x1d), q_func(x1d), g2_0, g3_0, V_0, 0,
-        transp_out_params.B_0.value, transp_out_params.R_0.value, Psi_ax_0, Psi_b_0
+    (
+        Ip,
+        Phi1D,
+        Psi1D,
+        pprime_psi1D_data,
+        F,
+        FFprime,
+    ) = equilibrium.calc_curr_dens_profiles(
+        x1d,
+        p_func(x1d),
+        q_func(x1d),
+        g2_0,
+        g3_0,
+        V_0,
+        0,
+        transp_out_params.B_0.value,
+        transp_out_params.R_0.value,
+        Psi_ax_0,
+        Psi_b_0,
     )
 
     f_pprime = interp1d(x, pprime, fill_value="extrapolate")
@@ -470,7 +483,7 @@ for n_iter in range(n_iter_max):
         mesh, gs_solver.psi_norm_2d, nx=50
     )
     x1d, V, g1, g2, g3 = equilibrium.calc_metric_coefficients(
-        flux_surfaces, gs_solver.psi, gs_solver.psi_norm_2d, x1d
+        flux_surfaces, gs_solver.grad_psi, x1d, gs_solver.psi_ax
     )
 
     Psi_ax = gs_solver.psi_ax
@@ -479,7 +492,6 @@ for n_iter in range(n_iter_max):
     x2d = np.array([gs_solver.psi_norm_2d(p) for p in points])
 
     eps_x2d = np.linalg.norm(x2d - x2d_0, ord=2) / np.linalg.norm(x2d, ord=2)
-
 
     g2_fun = interp1d(x1d, g2, fill_value="extrapolate")
     g3_fun = interp1d(x1d, g3, fill_value="extrapolate")
@@ -515,4 +527,3 @@ psi_x2d.plot()
 gs_j = np.array([gs_solver._g_func(p) for p in points])
 j_x2d = ScalarField2D(points, gs_j, "Psi GSE")
 j_x2d.plot()
-
