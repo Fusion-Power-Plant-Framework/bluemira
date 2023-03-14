@@ -1043,7 +1043,7 @@ class PhaseLoad(PowerCycleLoadABC):
 
         another_set = this_set + other_set
         another_normalize = this_normalize + other_normalize
-        another_name = "Resulting PhaseLoad"
+        another_name = f"Resulting PhaseLoad for phase {another_phase.name!r}"
         another = PhaseLoad(
             another_name,
             another_phase,
