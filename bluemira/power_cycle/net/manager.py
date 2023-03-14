@@ -303,7 +303,7 @@ class PowerCycleGroup(PowerCycleABC):
     # OPERATIONS
     # ------------------------------------------------------------------
 
-    def _some_function(self):
+    def _call_error(self):
         raise PowerCycleGroupError()
 
 
