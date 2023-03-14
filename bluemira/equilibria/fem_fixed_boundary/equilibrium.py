@@ -694,7 +694,7 @@ def calc_metric_coefficients(
     psi_norm_2D_func: callable,
     psi_norm_1D: np.ndarray,
     psi_ax: float,
-    grad_psi: callable,
+    grad_psi_2D: callable,
 ):
     """
     Calculate metric coefficients of a set of flux surfaces.
@@ -736,9 +736,8 @@ def calc_metric_coefficients(
 
     volume_func = interp1d(psi_norm_1D, volume, fill_value="extrapolate")
     grad_vol_1D_array = np.gradient(volume_func(psi_norm_1D), psi_norm_1D, edge_order=1)
-    # grad_psi_2D = nd.Gradient(psi_2D_func)
-    grad_psi_2D = grad_psi
 
+    # grad_psi_2D = nd.Gradient(psi_2D_func)
     # grad_psinorm_2D = nd.Gradient(psi_norm_2D_func)
     # def grad_psi_norm_norm(x):
     #     return np.hypot(*grad_psinorm_2D(x))
@@ -747,10 +746,6 @@ def calc_metric_coefficients(
         return np.hypot(*grad_psi_2D(x))
 
     for i, fs in enumerate(flux_surfaces):
-        # The former is slighty faster and gets closer to removing numdifftools
-        # The latter is slightly slower but does better in the tests
-        grad_vol_1D_fs = grad_vol_1D_array[i + 1]
-
         points = fs.coords.xz.T
         dx = np.diff(fs.coords.x)
         dz = np.diff(fs.coords.z)
@@ -765,6 +760,8 @@ def calc_metric_coefficients(
 
         # Poloidal field
         bp = grad_psi_norm_points / (2 * np.pi * fs.coords.x)
+
+        grad_vol_1D_fs = grad_vol_1D_array[i + 1]
         grad_vol_norm_2 = (grad_psi_norm_norm_points * grad_vol_1D_fs) ** 2
 
         y0_data = 1 / bp
