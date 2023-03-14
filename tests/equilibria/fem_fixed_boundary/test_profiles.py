@@ -154,13 +154,8 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         this run) is by radius, with a constant minor radius division.
         """
         volume = np.array([fs.volume for fs in self.flux_surfaces])
-
-        def gradV(volume, x1d):
-            f_volume = interp1d(x1d, volume, fill_value="extrapolate")
-            return nd.Gradient(f_volume)
-
-        grad_vol = gradV(volume, self.a)
-        grad_vol = [grad_vol(x) for x in self.a]
+        f_volume = interp1d(self.a, volume, fill_value="extrapolate")
+        grad_vol = np.gradient(f_volume(self.a), self.a)
 
         f, ax = plt.subplots()
         ax.plot(self.rho, grad_vol, label="$V^'$ calculated")
