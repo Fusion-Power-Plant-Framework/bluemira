@@ -391,12 +391,14 @@ class TestPowerCycleManager:
         sample = self.construct_sample()
         pulseload = sample._build_pulseload(load_type)
 
-        all_phaseloads = pulseload.phaseload_set
-        import pprint
+        # all_phaseloads = pulseload.phaseload_set
+        # import pprint
+        # assert 0
 
-        assert 0
-
-        ax, _ = pulseload.plot(ax=ax, detailed=True)
+        ax, _ = pulseload.plot(
+            ax=ax,
+            detailed=False,
+        )
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
 

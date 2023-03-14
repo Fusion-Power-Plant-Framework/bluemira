@@ -139,6 +139,12 @@ class TimeTestKit:
             "Flat-top",
             "Transition between flat-top and dwell",
         ]
+        input_labels = [
+            "dwl",
+            "d2f",
+            "ftt",
+            "f2d",
+        ]
         input_breakdowns = [
             {
                 "CS-recharge + pumping": constants.raw_uc(10, "minute", "second"),
@@ -162,6 +168,7 @@ class TimeTestKit:
             n_inputs,
             input_names,
             input_breakdowns,
+            input_labels,
         )
 
     def inputs_for_pulse(self):
@@ -172,13 +179,15 @@ class TimeTestKit:
             n_inputs,
             input_names,
             input_breakdowns,
+            input_labels,
         ) = self.inputs_for_phase()
 
         input_phases = []
         for i in range(n_inputs):
             name = input_names[i]
             breakdown = input_breakdowns[i]
-            phase = PowerCyclePhase(name, breakdown)
+            label = input_labels[i]
+            phase = PowerCyclePhase(name, breakdown, label=label)
             input_phases.append(phase)
 
         return (

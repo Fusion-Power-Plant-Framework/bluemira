@@ -33,6 +33,10 @@ class PowerCyclePhase(PowerCycleTimeABC):
         compose the duration of a pulse phase.
     """
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     def __init__(
         self,
         name,
@@ -55,6 +59,37 @@ class PowerCyclePhase(PowerCycleTimeABC):
             if not isinstance(key, str):
                 raise PowerCyclePhaseError("breakdown")
         return duration_breakdown
+
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
+
+    def is_equivalent(self, other):
+        """
+        Returns a 'bool' in case both 'duration_breakdown' attributes
+        have all the same elements.
+        """
+        this_breakdown = self.duration_breakdown
+        other_breakdown = other.duration_breakdown
+
+        check = True
+
+        this_length = len(this_breakdown)
+        other_length = len(other_breakdown)
+        if this_length != other_length:
+            check = False
+            return check
+
+        for (this_key, this_value) in this_breakdown.items():
+            try:
+                other_value = other_breakdown[this_key]
+                values_are_the_same = this_value == other_value
+                check = check and values_are_the_same
+            except KeyError:
+                check = False
+                return check
+
+        return check
 
 
 class PowerCyclePulse(PowerCycleTimeABC):
@@ -99,6 +134,10 @@ class PowerCyclePulse(PowerCycleTimeABC):
     # ------------------------------------------------------------------
 
     def build_phase_library(self):
+        """
+        Returns a 'dict' with phase labels as keys and the phases
+        themselves as values.
+        """
         phase_set = self.phase_set
         phase_library = dict()
         for phase in phase_set:

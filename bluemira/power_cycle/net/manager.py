@@ -375,6 +375,7 @@ class PowerCycleManager:
         """
         load_type = 'active', 'reactive' or 'production'
         """
+        pulse = self.scenario.pulse_set[0]
         group_library = self.group_library
         all_phaseloads = []
         all_group_labels = group_library.keys()
@@ -391,7 +392,7 @@ class PowerCycleManager:
                 all_phaseloads.append(system_phaseloads)
         all_phaseloads = unnest_list(all_phaseloads)
 
-        pulseload = PulseLoad(load_type, all_phaseloads)
+        pulseload = PulseLoad(load_type, pulse, all_phaseloads)
         return pulseload
 
     # ------------------------------------------------------------------

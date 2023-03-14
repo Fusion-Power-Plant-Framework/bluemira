@@ -1,5 +1,7 @@
 # COPYRIGHT PLACEHOLDER
 
+import copy
+
 import pytest
 
 from bluemira.power_cycle.base import PowerCycleTimeABC
@@ -39,13 +41,15 @@ class TestPowerCyclePhase:
             n_samples,
             sample_names,
             sample_breakdowns,
+            sample_labels,
         ) = time_testkit.inputs_for_phase()
 
         all_samples = []
         for s in range(n_samples):
             name = sample_names[s]
             breakdown = sample_breakdowns[s]
-            sample = tested_class(name, breakdown)
+            label = sample_labels[s]
+            sample = tested_class(name, breakdown, label=label)
             all_samples.append(sample)
         self.sample_breakdowns = sample_breakdowns
         self.all_samples = all_samples
@@ -82,6 +86,23 @@ class TestPowerCyclePhase:
                 with pytest.raises(nonstr_keys_errors):
                     sample = tested_class(name, breakdown)
 
+    def test_is_equivalent(self):
+        all_samples = self.all_samples
+        for sample in all_samples:
+            for another_sample in all_samples:
+
+                check_another = sample.is_equivalent(another_sample)
+
+                if another_sample == sample:
+                    assert check_another
+
+                    sample_copy = copy.deepcopy(sample)
+                    check_copy = sample.is_equivalent(sample_copy)
+                    assert check_copy
+
+                else:
+                    assert not check_another
+
 
 class TestPowerCyclePulse:
     tested_class_super = PowerCycleTimeABC
@@ -115,12 +136,12 @@ class TestPowerCyclePulse:
         phase_set_becomes_list = isinstance(phase_set, list)
         assert phase_set_becomes_list
 
-    def test_list_all_phase_labels(self):
+    def test_build_phase_library(self):
         """
         No new functionality to be tested.
         """
         sample = self.sample
-        assert callable(sample.list_all_phase_labels)
+        assert callable(sample.build_phase_library)
 
 
 class TestPowerCycleScenario:
@@ -155,12 +176,12 @@ class TestPowerCycleScenario:
         pulse_set_becomes_list = isinstance(pulse_set, list)
         assert pulse_set_becomes_list
 
-    def test_list_all_phase_labels(self):
+    def test_phase_library(self):
         """
         No new functionality to be tested.
         """
         sample = self.sample
-        assert callable(sample.list_all_phase_labels)
+        assert callable(sample.build_phase_library)
 
 
 class TestScenarioBuilder:
