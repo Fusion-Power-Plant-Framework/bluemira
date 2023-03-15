@@ -20,9 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import matplotlib.pyplot as plt
-import numdifftools as nd
 import numpy as np
-from scipy.interpolate import LinearNDInterpolator, interp1d
+from matplotlib.tri import LinearTriInterpolator, Triangulation
+from scipy.interpolate import interp1d
 
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     calc_curr_dens_profiles,
@@ -114,14 +114,12 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         psi2d = np.concatenate(psi)
 
         # Make a callable for grad_psi, mimicking a G-S solver.
-        _psi_func = LinearNDInterpolator(
-            list(zip(x2d, z2d)), psi2d, fill_value=self.psi_b
-        )
+        # Thank you matplotlib, again..
+        tri = Triangulation(x2d, z2d)
+        lti = LinearTriInterpolator(tri, psi2d)
 
-        def f_psi(x):
-            return _psi_func(x[0], x[1])
-
-        f_grad_psi = nd.Gradient(f_psi)
+        def f_grad_psi(x):
+            return lti.gradient(x[0], x[1])
 
         x1D, volume, g1, g2, g3 = calc_metric_coefficients(
             self.flux_surfaces[1:], f_grad_psi, self.rho, self.psi_ax
