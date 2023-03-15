@@ -519,7 +519,7 @@ def solve_transport_fixed_boundary(
         f_ffprime = interp1d(x, ffprime, fill_value="extrapolate")
 
         psi_plasmod = transport_solver.get_profile("psi")
-        xPsiPlasmod = np.sqrt(psi_plasmod / psi_plasmod[-1])
+        x_psi_plasmod = np.sqrt(psi_plasmod / psi_plasmod[-1])
 
         q = transport_solver.get_profile("q")
         press = transport_solver.get_profile("pressure")
@@ -587,7 +587,7 @@ def solve_transport_fixed_boundary(
             )
 
             x1d, flux_surfaces = get_flux_surfaces_from_mesh(
-                mesh, gs_solver.psi_norm_2d, x_1d=xPsiPlasmod
+                mesh, gs_solver.psi_norm_2d, x_1d=x_psi_plasmod
             )
 
             x1d, volume, _, g2, g3 = calc_metric_coefficients(
