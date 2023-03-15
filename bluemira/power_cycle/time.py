@@ -64,33 +64,6 @@ class PowerCyclePhase(PowerCycleTimeABC):
     #  OPERATIONS
     # ------------------------------------------------------------------
 
-    def is_equivalent(self, other):
-        """
-        Returns a 'bool' in case both 'duration_breakdown' attributes
-        have all the same elements.
-        """
-        this_breakdown = self.duration_breakdown
-        other_breakdown = other.duration_breakdown
-
-        check = True
-
-        this_length = len(this_breakdown)
-        other_length = len(other_breakdown)
-        if this_length != other_length:
-            check = False
-            return check
-
-        for (this_key, this_value) in this_breakdown.items():
-            try:
-                other_value = other_breakdown[this_key]
-                values_are_the_same = this_value == other_value
-                check = check and values_are_the_same
-            except KeyError:
-                check = False
-                return check
-
-        return check
-
 
 class PowerCyclePulse(PowerCycleTimeABC):
     """

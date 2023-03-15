@@ -1,7 +1,5 @@
 # COPYRIGHT PLACEHOLDER
 
-import copy
-
 import pytest
 
 from bluemira.power_cycle.base import PowerCycleTimeABC
@@ -62,6 +60,10 @@ class TestPowerCyclePhase:
         ["1", "2", "3", "4"],
     ]
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     @pytest.mark.parametrize("test_keys", breakdown_argument_examples)
     @pytest.mark.parametrize("test_values", breakdown_argument_examples)
     def test_validate_breakdown(self, test_keys, test_values):
@@ -86,22 +88,9 @@ class TestPowerCyclePhase:
                 with pytest.raises(nonstr_keys_errors):
                     sample = tested_class(name, breakdown)
 
-    def test_is_equivalent(self):
-        all_samples = self.all_samples
-        for sample in all_samples:
-            for another_sample in all_samples:
-
-                check_another = sample.is_equivalent(another_sample)
-
-                if another_sample == sample:
-                    assert check_another
-
-                    sample_copy = copy.deepcopy(sample)
-                    check_copy = sample.is_equivalent(sample_copy)
-                    assert check_copy
-
-                else:
-                    assert not check_another
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
 
 
 class TestPowerCyclePulse:
@@ -124,6 +113,10 @@ class TestPowerCyclePulse:
         self.sample_phases = sample_phases
         self.sample = pulse
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     def test_validate_phase_set(self):
         tested_class = self.tested_class
 
@@ -135,6 +128,10 @@ class TestPowerCyclePulse:
         phase_set = tested_class._validate_phase_set(sample_phases)
         phase_set_becomes_list = isinstance(phase_set, list)
         assert phase_set_becomes_list
+
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
 
     def test_build_phase_library(self):
         """
@@ -164,6 +161,10 @@ class TestPowerCycleScenario:
         self.sample_pulses = pulse_set
         self.sample = scenario
 
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     def test_validate_pulse_set(self):
         tested_class = self.tested_class
 
@@ -176,7 +177,11 @@ class TestPowerCycleScenario:
         pulse_set_becomes_list = isinstance(pulse_set, list)
         assert pulse_set_becomes_list
 
-    def test_phase_library(self):
+    # ------------------------------------------------------------------
+    #  OPERATIONS
+    # ------------------------------------------------------------------
+
+    def test_build_phase_library(self):
         """
         No new functionality to be tested.
         """

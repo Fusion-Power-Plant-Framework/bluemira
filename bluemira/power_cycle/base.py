@@ -10,6 +10,7 @@ import numpy as np
 
 from bluemira.power_cycle.errors import PowerCycleABCError, PowerCycleLoadABCError
 from bluemira.power_cycle.tools import (
+    copy_dict_without_key,
     unique_and_sorted_vector,
     unnest_list,
     validate_list,
@@ -86,6 +87,27 @@ class PowerCycleABC(ABC):
         if not isinstance(instance, cls):
             raise PowerCycleABCError("class")
         return instance
+
+    def __eq__(self, other):
+        """
+        Power Cycle objects should be considered equal even if their
+        'name' and 'label' attributes are different.
+        """
+        this_class = self.__class__
+        other_class = other.__class__
+        if this_class != other_class:
+            return False
+
+        attr_to_ignore = ["name", "label"]
+
+        this_attributes = self.__dict__
+        other_attributes = other.__dict__
+
+        for attr in attr_to_ignore:
+            this_attributes = copy_dict_without_key(this_attributes, attr)
+            other_attributes = copy_dict_without_key(other_attributes, attr)
+
+        return this_attributes == other_attributes
 
 
 class PowerCycleTimeABC(PowerCycleABC):
@@ -178,6 +200,15 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
 
     # ------------------------------------------------------------------
     #  OPERATIONS
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _recursive_make_consumption_explicit(power_set):
+        for element in power_set:
+            element.make_consumption_explicit()
+
+    # ------------------------------------------------------------------
+    # VISUALIZATION
     # ------------------------------------------------------------------
 
     @abstractproperty
@@ -301,6 +332,19 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
             **final_kwargs,
         )
         return plot_object
+
+    # ------------------------------------------------------------------
+    # ARITHMETICS
+    # ------------------------------------------------------------------
+    def __radd__(self, other):
+        """
+        The reverse addition operator, to enable the 'sum' method for
+        children classes that define the '__add__' method.
+        """
+        if other == 0:
+            return self
+        else:
+            return self.__add__(other)
 
 
 class PowerCycleImporterABC(metaclass=ABCMeta):

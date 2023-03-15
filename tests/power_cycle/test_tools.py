@@ -10,6 +10,7 @@ from bluemira.power_cycle.tools import (
     adjust_2d_graph_ranges,
     build_dict_from_format,
     convert_string_into_numeric_list,
+    copy_dict_without_key,
     read_json,
     remove_characters,
     unique_and_sorted_vector,
@@ -184,6 +185,9 @@ class TestValidationTools:
 
 class TestManipulationTools:
     def setup_method(self):
+        test_arguments = tools_testkit.build_list_of_example_arguments()
+        self.test_arguments = test_arguments
+
         test_file_path = tools_testkit.test_file_path
         self.test_file_path = test_file_path
 
@@ -197,6 +201,34 @@ class TestManipulationTools:
         ) = tools_testkit.build_dictionary_examples()
         self.format_example = format_example
         self.dictionary_example = dictionary_example
+
+    @pytest.mark.parametrize("index_to_remove", [1, 2, 5, 10])
+    def test_copy_dict_without_key(self, index_to_remove):
+        all_values = self.test_arguments
+
+        dictionary_1 = dict()
+        dictionary_2 = dict()
+
+        count = 0
+        for value in all_values:
+            count += 1
+            key = f"key {str(count)}"
+            dictionary_1[key] = value
+            dictionary_2[key] = value
+        assert dictionary_1 == dictionary_2
+
+        key_to_remove = f"key {str(index_to_remove)}"
+
+        new_dictionary_1 = copy_dict_without_key(dictionary_1, key_to_remove)
+        new_dictionary_2 = copy_dict_without_key(dictionary_2, key_to_remove)
+        assert new_dictionary_1 != dictionary_1
+        assert new_dictionary_2 != dictionary_2
+        assert new_dictionary_1 == new_dictionary_2
+
+        new_keys_1 = list(new_dictionary_1.keys())
+        new_keys_2 = list(new_dictionary_2.keys())
+        assert key_to_remove not in new_keys_1
+        assert key_to_remove not in new_keys_2
 
     def test_unnest_list(self):
         list_of_lists = [

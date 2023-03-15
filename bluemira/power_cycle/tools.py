@@ -156,7 +156,10 @@ def validate_lists_to_have_same_length(*args):
     all_lenghts_are_not_equal = len(unique_lengths) != 1
     if all_lenghts_are_not_equal:
         raise ValueError(
-            "At least one of the lists does not have " "the same length as the others."
+            (
+                "At least one of the lists does not have ",
+                "the same length as the others.",
+            )
         )
     else:
         return argument_length
@@ -165,6 +168,16 @@ def validate_lists_to_have_same_length(*args):
 # ######################################################################
 # MANIPULATION
 # ######################################################################
+
+
+def copy_dict_without_key(dictionary, key_to_remove):
+    """
+    Returns a dictionary that is a copy of the parameter 'dictionary',
+    but without the 'key_to_remove' key.
+    """
+    d = dictionary
+    dictionary_without_key = {k: d[k] for k in d if k != key_to_remove}
+    return dictionary_without_key
 
 
 def unnest_list(list_of_lists):
