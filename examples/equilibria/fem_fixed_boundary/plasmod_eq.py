@@ -30,12 +30,6 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 set_log_level("NOTSET")
 
-SOLVER_MODULE_REF = "bluemira.codes.plasmod.api"
-RUN_SUBPROCESS_REF = "bluemira.codes.interface.run_subprocess"
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
-PARAMS_FILE = os.path.join(DATA_DIR, "params.json")
-
-
 johner_parameterisation = JohnerLCFS(
     {
         "r_0": {"value": 8.9830e00},
