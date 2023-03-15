@@ -45,7 +45,6 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
-    derivcc,
     get_flux_surfaces_from_mesh,
 )
 from bluemira.geometry.face import BluemiraFace
