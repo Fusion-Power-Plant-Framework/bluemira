@@ -141,6 +141,20 @@ class LoadData(PowerCycleLoadABC):
         self.time = shifted_time
         self._shift.append(time_shift)
 
+    def make_consumption_explicit(self):
+        """
+        Modifies the instance by turning every non-positive value stored
+        in 'data' into its opposite.
+        """
+        data = self.data
+        data_length = len(data)
+        for i in range(data_length):
+            value = data[i]
+            if value > 0:
+                value = -value
+            data[i] = value
+        self.data = data
+
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
@@ -215,6 +229,12 @@ class LoadData(PowerCycleLoadABC):
         list_of_plot_objects.append(plot_object)
 
         return ax, list_of_plot_objects
+
+    # ------------------------------------------------------------------
+    # ARITHMETICS
+    # ------------------------------------------------------------------
+    def __add__(self, other):
+        raise LoadDataError("add")
 
 
 class PowerLoadModel(Enum):
@@ -449,6 +469,13 @@ class PowerLoad(PowerCycleLoadABC):
             new_loaddata_set.append(loaddata)
         self.loaddata_set = new_loaddata_set
 
+    def make_consumption_explicit(self):
+        """
+        Calls 'make_consumption_explicit' on every element of the
+        'loaddata_set' attribute.
+        """
+        self._recursive_make_consumption_explicit(self.loaddata_set)
+
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
@@ -604,16 +631,6 @@ class PowerLoad(PowerCycleLoadABC):
         another_name = "Resulting PowerLoad"
         another = PowerLoad(another_name, another_set, another_model)
         return another
-
-    def __radd__(self, other):
-        """
-        The reverse addition operator, to enable the 'sum' method for
-        'PowerLoad' instances.
-        """
-        if other == 0:
-            return self
-        else:
-            return self.__add__(other)
 
     def __mul__(self, number):
         """
@@ -849,6 +866,13 @@ class PhaseLoad(PowerCycleLoadABC):
         )
         return curve
 
+    def make_consumption_explicit(self):
+        """
+        Calls 'make_consumption_explicit' on every element of the
+        'powerload_set' attribute.
+        """
+        self._recursive_make_consumption_explicit(self.powerload_set)
+
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
@@ -1052,16 +1076,6 @@ class PhaseLoad(PowerCycleLoadABC):
         )
         return another
 
-    def __radd__(self, other):
-        """
-        The reverse addition operator, to enable the 'sum' method for
-        'PowerLoad' instances.
-        """
-        if other == 0:
-            return self
-        else:
-            return self.__add__(other)
-
 
 class PulseLoad(PowerCycleLoadABC):
     """
@@ -1175,7 +1189,7 @@ class PulseLoad(PowerCycleLoadABC):
                 PhaseLoad.validate_class(phaseload)
 
                 phase_of_phaseload = phaseload.phase
-                check = phase_of_phaseload.is_equivalent(phase_in_pulse)
+                check = phase_of_phaseload == phase_in_pulse
                 phaseload_phase_is_the_same_as_phase_in_pulse = check
                 if phaseload_phase_is_the_same_as_phase_in_pulse:
                     phaseloads_for_phase.append(phaseload)
@@ -1303,6 +1317,13 @@ class PulseLoad(PowerCycleLoadABC):
         curve = unnest_list(curve)
 
         return modified_time, curve
+
+    def make_consumption_explicit(self):
+        """
+        Calls 'make_consumption_explicit' on every element of the
+        'phaseload_set' attribute.
+        """
+        self._recursive_make_consumption_explicit(self.phaseload_set)
 
     # ------------------------------------------------------------------
     # VISUALIZATION
@@ -1495,6 +1516,48 @@ class PulseLoad(PowerCycleLoadABC):
 
         return ax, list_of_plot_objects
 
+    # ------------------------------------------------------------------
+    # ARITHMETICS
+    # ------------------------------------------------------------------
+    def __add__(self, other):
+        """
+        The addition of 'PulseLoad' instances can only be performed if
+        their pulses are equal. It returns a new 'PulseLoad' instance
+        with a 'phaseload_set' that contains the addition of the
+        respective 'PhaseLoad' objects in each original instance.
+        """
+        this_pulse = self.pulse
+        other_pulse = other.pulse
+        if this_pulse != other_pulse:
+            raise PhaseLoadError(
+                "addition",
+                "The pulses of this PulseLoad addition represent "
+                f"{this_pulse.name!r} and {other_pulse.name!r} "
+                "respectively.",
+            )
+        else:
+            another_pulse = this_pulse
+
+        this_set = self.phaseload_set
+        other_set = other.phaseload_set
+
+        """
+        another_set = []
+        set_zip = zip(this_set, other_set)
+        for (this_phaseload, other_phaseload) in set_zip:
+            another_phaseload = this_phaseload + other_phaseload
+            another_set.append(another_phaseload)
+        """
+
+        another_set = this_set + other_set
+        another_name = f"Resulting PulseLoad for pulse {another_pulse.name!r}"
+        another = PulseLoad(
+            another_name,
+            another_pulse,
+            another_set,
+        )
+        return another
+
 
 class ScenarioLoad(PowerCycleLoadABC):
     """
@@ -1546,6 +1609,10 @@ class ScenarioLoad(PowerCycleLoadABC):
 
     # ------------------------------------------------------------------
     # VISUALIZATION
+    # ------------------------------------------------------------------
+
+    # ------------------------------------------------------------------
+    # ARITHMETICS
     # ------------------------------------------------------------------
 
     pass

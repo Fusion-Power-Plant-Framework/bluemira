@@ -75,7 +75,12 @@ class PowerCycleSystem(PowerCycleABC):
         "variables_map": dict,
     }
 
-    def __init__(self, scenario: PowerCycleScenario, system_config: dict, label=None):
+    def __init__(
+        self,
+        scenario: PowerCycleScenario,
+        system_config: dict,
+        label=None,
+    ):
 
         scenario = self._validate_scenario(scenario)
 
@@ -120,6 +125,13 @@ class PowerCycleSystem(PowerCycleABC):
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
+
+    @property
+    def load_types(self):
+        system_format = self._system_format
+        load_types = list(system_format.keys())
+        load_types.remove("name")
+        return load_types
 
     @property
     def active_loads(self):
@@ -320,6 +332,8 @@ class PowerCycleManager:
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
+    _load_types = PowerCycleGroup.load_types
+
     _manager_format = {
         "name": str,
         "config_path": str,
@@ -368,13 +382,14 @@ class PowerCycleManager:
     # OPERATIONS
     # ------------------------------------------------------------------
 
-    def _make_consumption_load_explicit():
-        raise PowerCycleManagerError()
+    def _build_pulseload_of_type(self, load_type):
+        valid_types = self._load_types
+        if load_type not in valid_types:
+            raise PowerCycleManagerError(
+                "load-type",
+                f"The value {load_type!r} does not match the valid " "load types.",
+            )
 
-    def _build_pulseload(self, load_type):
-        """
-        load_type = 'active', 'reactive' or 'production'
-        """
         pulse = self.scenario.pulse_set[0]
         group_library = self.group_library
         all_phaseloads = []
@@ -395,10 +410,47 @@ class PowerCycleManager:
         pulseload = PulseLoad(load_type, pulse, all_phaseloads)
         return pulseload
 
+    def _build_net_loads(self):
+        valid_types = self._load_types
+
+        all_loads = dict()
+        for load_type in valid_types:
+            pulseload_for_type = self._build_pulseload_of_type(load_type)
+
+            if load_type == "active":
+                pulseload_for_type.make_consumption_explicit()
+            elif load_type == ("reactive", "production"):
+                pass
+            else:
+                raise NotImplementedError()
+
+            all_loads[load_type] = pulseload_for_type
+
+        net_active = all_loads["production"] + all_loads["active"]
+        net_reactive = all_loads["reactive"]
+        return net_active, net_reactive
+
+    @property
+    def net_active(self):
+        """
+        Net active power from the power plant, represented as a
+        PulseLoad object.
+        """
+        net_active, _ = self._build_net_loads()
+        return net_active
+
+    @property
+    def net_reactive(self):
+        """
+        Net reactive power from the power plant, represented as a
+        PulseLoad object.
+        """
+        _, net_reactive = self._build_net_loads()
+        return net_reactive
+
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
 
-    # ------------------------------------------------------------------
-    # ARITHMETICS
-    # ------------------------------------------------------------------
+    def plot(self):
+        pass

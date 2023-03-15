@@ -203,6 +203,10 @@ class LoadDataError(PowerCycleError):
                 "The 'intrinsic_time' property of an instance of the "
                 f"{self._source} class cannot be set.",
             ),
+            "add": (
+                "Addition is not defined and should not be called for "
+                f"instances of the {self._source} class.",
+            ),
         }
         return errors
 
@@ -308,6 +312,11 @@ class PulseLoadError(PowerCycleError):
                 "The time properties of an instance of the "
                 f"{self._source} class cannot be set."
             ),
+            "addition": (
+                f"Instances of the {self._source} class can only be "
+                "added if their 'pulse' attributes represent the same "
+                "pulse."
+            ),
         }
         return errors
 
@@ -391,7 +400,9 @@ class PowerCycleManagerError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {}
+        errors = {
+            "load-type": ("The argument passed as 'load_type' is incorrect."),
+        }
         return errors
 
 
