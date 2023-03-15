@@ -735,28 +735,9 @@ def calc_metric_coefficients(
         dl = np.hypot(dx, dz)
         x_data = np.concatenate([np.array([0.0]), np.cumsum(dl)])
 
-        #  Hmmm... fuck
-        flag = False
         psi_norm_fs = psi_norm_1D[i + 1]
-        # if np.isclose(psi_norm_fs, 1.0, rtol=0, atol=1e-7):
-        #     flag = True
-        #     psi_norm_fs = 1-1e-9
-        #     from bluemira.geometry._private_tools import offset
-        #     coords = deepcopy(fs.coords)
-
-        #     new_points = offset(*coords.xz, -1e-9)
-        #     f, ax = plt.subplots()
-        #     ax.plot(*coords.xz, label="psi_norm = 1.0")
-        #     ax.plot(*new_points, label=f"shh psi_norm = {psi_norm_fs}")
-        #     ax.set_aspect("equal")
-        #     ax.legend()
-        #     plt.show()
-
-        #     points= new_points.T
 
         grad_psi_norm_points = np.array([grad_psi_norm(p) for p in points])
-        if np.any(np.isnan(grad_psi_norm_points)):
-            pass  # raise ValueError(psi_norm_fs)
         # Scale from grad_psi_norm to get the grad_psi_norm_norm
         psi_fs = psi_ax * (1 - psi_norm_fs**2)
         factor = 1 / (2 * psi_ax * np.sqrt(1 - psi_fs / psi_ax))
@@ -772,12 +753,6 @@ def calc_metric_coefficients(
         y1_data = grad_vol_norm_2 * y0_data
         y3_data = 1 / (fs.coords.x**2 * bp)
         y2_data = grad_vol_norm_2 * y3_data
-        if flag:
-            f, ax = plt.subplots(1, 3)
-            ax[0].plot(y0_data[-4:])
-            ax[1].plot(y2_data[-4:])
-            ax[2].plot(y3_data[-4:])
-            plt.show()
 
         denom = np.trapz(y0_data, x_data)
         g1[i + 1] = np.trapz(y1_data, x_data) / denom
@@ -789,7 +764,6 @@ def calc_metric_coefficients(
     g2_temp = interp1d(
         psi_norm_1D[1:-1], g2[1:-1], "quadratic", fill_value="extrapolate"
     )
-    # raise ValueError(np.where(np.isnan(g2))[0])
     g2[-1] = g2_temp(psi_norm_1D[-1])
 
     g3_temp = interp1d(psi_norm_1D[1:-1], g3[1:-1], fill_value="extrapolate")
@@ -872,7 +846,7 @@ def calc_curr_dens_profiles(
         p_fun_psi1D = interp1d(psi_1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Derivative(p_fun_psi1D)
         pprime = pprime_psi1D(psi_1D)  # <0.25% rel diff
-        pprime = derivcc(len(psi_1D), psi_1D, p, gga=2)  # 0.3568% rel diff
+        # pprime = derivcc(len(psi_1D), psi_1D, p, gga=2)  # 0.3568% rel diff
         # pprime = np.gradient(p_fun_psi1D(psi_1D), psi_1D, edge_order=1)  # 0.68 % rel diff
 
         # Here we preserve some PLASMOD notation, for future sanity
@@ -889,8 +863,8 @@ def calc_curr_dens_profiles(
         dum1 = dum1 / dum1[-1]
         dum3 = cumulative_trapezoid(C / dum1, psi_norm_1D, initial=0)
         dum3 = dum3 - dum3[-1]
-        C1 = yb  # noqa: N806
-        y = dum1 * (dum3 + C1)
+
+        y = dum1 * (dum3 + yb)
         dum2 = g2 / q3
         dum3 = np.gradient(dum2, psi_1D)
         betahat = dum3 / q3 / AA
@@ -901,7 +875,7 @@ def calc_curr_dens_profiles(
         phi_1D = -cumulative_trapezoid(q, psi_1D, initial=0)
 
         F = 2 * np.pi * FF
-        d_psi_dv = -F / q * g3 / (2.0 * np.pi)
+        d_psi_dv = -FF / q * g3
         psi_1D = np.flip(
             cumulative_trapezoid(np.flip(d_psi_dv), np.flip(volume), initial=0)
         )
