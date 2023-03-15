@@ -241,7 +241,7 @@ def get_tricontours(
     results = []
     for val in value:
         contour = tcg.create_contour(val)[0]
-        if len(contour) > 0 and len(contour[0]) > 2:
+        if len(contour) > 0:
             results.append(contour[0])
         else:
             bluemira_warn(f"No tricontour found for {val=}")
