@@ -84,7 +84,7 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         f, ax = plt.subplots()
         for i in range(cls.n):
             fs = flux_surface_zakharov(
-                cls.R_0 + cls.shif[i], 0, cls.a[i], cls.kprof[i], cls.dprof[i], n=100
+                cls.R_0 + cls.shif[i], 0, cls.a[i], cls.kprof[i], cls.dprof[i], n=1000
             )
             fs.close()
             flux_surfaces.append(ClosedFluxSurface(fs))

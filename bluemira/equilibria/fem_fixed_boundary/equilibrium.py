@@ -716,6 +716,13 @@ def calc_metric_coefficients(
     volume[1:] = [fs.volume for fs in flux_surfaces]
 
     volume_func = interp1d(psi_norm_1D, volume, fill_value="extrapolate")
+
+    # grad_vol = nd.Derivative(volume_func)
+    # grad_vol_1D_array = grad_vol(psi_norm_1D)
+
+    # grad_vol = nd.Gradient(volume_func)
+    # grad_vol_1D_array = np.array([grad_vol(pn) for pn in psi_norm_1D])
+
     grad_vol_1D_array = np.gradient(volume_func(psi_norm_1D), psi_norm_1D, edge_order=1)
 
     def grad_psi_norm(x):
@@ -834,9 +841,9 @@ def calc_curr_dens_profiles(
 
         p_fun_psi1D = interp1d(psi_1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Derivative(p_fun_psi1D)
-        pprime = pprime_psi1D(psi_1D)
-        # pprime = derivcc(len(psi_1D), psi_1D, p, gga=2)
-        # pprime = np.gradient(p_fun_psi1D(psi_1D), psi_1D, edge_order=1)
+        pprime = pprime_psi1D(psi_1D)  # <0.25% rel diff
+        pprime = derivcc(len(psi_1D), psi_1D, p, gga=2)  # 0.3568% rel diff
+        # pprime = np.gradient(p_fun_psi1D(psi_1D), psi_1D, edge_order=1)  # 0.68 % rel diff
 
         # Here we preserve some PLASMOD notation, for future sanity
         q3 = q / g3
