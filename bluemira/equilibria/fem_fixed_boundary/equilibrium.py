@@ -33,7 +33,6 @@ from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from tabulate import tabulate
 
-import bluemira.equilibria.fem_fixed_boundary.utilities as utilities
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
@@ -591,10 +590,10 @@ def solve_transport_fixed_boundary(
                 mesh, gs_solver.psi_norm_2d, x_1d=xPsiPlasmod
             )
 
-            (x1d, volume, _, g2, g3,) = calc_metric_coefficients(
+            x1d, volume, _, g2, g3 = calc_metric_coefficients(
                 flux_surfaces, gs_solver.grad_psi, x1d, gs_solver.psi_ax
             )
-            (_, _, _, pprime, _, ffprime,) = calc_curr_dens_profiles(
+            _, _, _, pprime, _, ffprime = calc_curr_dens_profiles(
                 x1d,
                 p_func(x1d),
                 q_func(x1d),
