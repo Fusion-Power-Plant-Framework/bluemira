@@ -37,7 +37,6 @@ from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.display import plot_defaults
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    ScalarSubFunc,
     _interpolate_profile,
     find_magnetic_axis,
 )

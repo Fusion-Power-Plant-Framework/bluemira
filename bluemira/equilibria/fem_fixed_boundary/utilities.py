@@ -706,10 +706,10 @@ def integrcc(nx, x, y):
     return sy
 
 
-def derivcc(nx, x, y, gga):
+def _derivcc(nx, x, y, gga):
     """1D derivate with interpolation at extrema as made in Plasmod"""
     dy = np.zeros(nx)
-    for i in range(1, nx):
+    for i in range(1, nx - 1):
         dy[i] = (y[i + 1] - y[i - 1]) / (x[i + 1] - x[i - 1])
     if gga == 1:
         dy[0] = 0
@@ -719,4 +719,35 @@ def derivcc(nx, x, y, gga):
     f_dy = interp1d(x[-2:], y[-2:], "quadratic")
     dy[-1] = f_dy(x[-1])
 
+    return dy
+
+
+def polyfitcc(x, y):
+    y32 = y[2] - y[1]
+    y21 = y[1] - y[0]
+    x32 = x[2] - x[1]
+    x21 = x[1] - x[0]
+    h32 = x[2] + x[1]
+    h21 = x[1] + x[0]
+
+    P = np.zeros(3)
+    P[0] = (x21 * y32 - x32 * y21) / (x21 * x32 * (h32 - h21))
+    P[1] = y21 / x21 - P[0] * h21
+    P[2] = y[2] - P[0] * x[2] ** 2 - P[1] * x[2]
+    return P
+
+
+def derivcc(nx, x, y, gga):
+
+    dy = np.zeros(nx)
+    for i in range(1, nx - 1):
+        dy[i] = (y[i + 1] - y[i - 1]) / (x[i + 1] - x[i - 1])
+
+    if gga == 1:
+        dy[0] = 0.0
+    elif gga == 2:
+        dy[0] = (y[1] - y[0]) / (x[1] - x[0])
+
+    P = polyfitcc(x[-3:], y[-3:])
+    dy[nx - 1] = 2 * P[0] * x[-1] + P[1]
     return dy

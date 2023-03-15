@@ -46,6 +46,7 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
+    derivcc,
     get_flux_surfaces_from_mesh,
 )
 from bluemira.geometry.face import BluemiraFace
@@ -830,9 +831,12 @@ def calc_curr_dens_profiles(
     psi_1D_0 = psi_1D
     for i in range(50):
         # calculate pprime profile from p
+
         p_fun_psi1D = interp1d(psi_1D, p, fill_value="extrapolate")
         pprime_psi1D = nd.Derivative(p_fun_psi1D)
         pprime = pprime_psi1D(psi_1D)
+        # pprime = derivcc(len(psi_1D), psi_1D, p, gga=2)
+        # pprime = np.gradient(p_fun_psi1D(psi_1D), psi_1D, edge_order=1)
 
         # Here we preserve some PLASMOD notation, for future sanity
         q3 = q / g3
