@@ -385,11 +385,11 @@ class TestPowerCycleManager:
         "load_type",
         ["active"],  # ["active", "reactive", "production"],
     )
-    def test_build_pulseload(self, load_type):
+    def test_build_pulseload_of_type(self, load_type):
         ax = tools_testkit.prepare_figure(load_type)
 
         sample = self.construct_sample()
-        pulseload = sample._build_pulseload(load_type)
+        pulseload = sample._build_pulseload_of_type(load_type)
 
         # all_phaseloads = pulseload.phaseload_set
         # import pprint

@@ -36,7 +36,15 @@ class TestPowerCycleABC:
         abstract class of the test.
         """
 
-        pass
+        class_str = "a string"
+        class_num = 10
+        class_dict = {"key_0": None, "key_1": 1, "key_2": "2"}
+
+        def __init__(self, name: str, label=None):
+            super().__init__(name, label=label)
+            self.instance_str = "another string"
+            self.instance_num = 11
+            self.instance_dict = self.class_dict["key_0"]
 
     def setup_method(self):
         sample = self.SampleConcreteClass("A sample instance name")
@@ -47,6 +55,7 @@ class TestPowerCycleABC:
         test_arguments.append(another_sample)
 
         self.sample = sample
+        self.another_sample = another_sample
         self.test_arguments = test_arguments
 
     # ------------------------------------------------------------------
@@ -111,6 +120,16 @@ class TestPowerCycleABC:
             else:
                 with pytest.raises(tested_class_error):
                     validated_argument = sample.validate_class(argument)
+
+    def test_equality(self):
+        sample = self.sample
+        another_sample = self.another_sample
+
+        equal_even_with_different_names_and_labels = sample == another_sample
+        assert equal_even_with_different_names_and_labels
+
+        sample.instance_str = 100000
+        assert sample != another_sample
 
 
 class TestPowerCycleTimeABC:
