@@ -26,7 +26,6 @@ from dataclasses import asdict, dataclass, fields
 from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
-import numdifftools as nd
 import numpy as np
 from dolfin import Mesh
 from scipy.integrate import cumulative_trapezoid
@@ -53,6 +52,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+from bluemira.utilities.optimiser import approx_derivative
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
 __all__ = ["solve_transport_fixed_boundary"]
@@ -716,14 +716,7 @@ def calc_metric_coefficients(
     volume[1:] = [fs.volume for fs in flux_surfaces]
 
     volume_func = interp1d(psi_norm_1D, volume, fill_value="extrapolate")
-
-    # grad_vol = nd.Derivative(volume_func)
-    # grad_vol_1D_array = grad_vol(psi_norm_1D)
-
-    # grad_vol = nd.Gradient(volume_func)
-    # grad_vol_1D_array = np.array([grad_vol(pn) for pn in psi_norm_1D])
-
-    grad_vol_1D_array = np.gradient(volume_func(psi_norm_1D), psi_norm_1D, edge_order=1)
+    grad_vol_1D_array = approx_derivative(volume_func, psi_norm_1D).diagonal()
 
     def grad_psi_norm(x):
         return np.hypot(*grad_psi_2D_func(x))
@@ -768,7 +761,7 @@ def calc_metric_coefficients(
 
     g3_temp = interp1d(psi_norm_1D[1:-1], g3[1:-1], fill_value="extrapolate")
     g3[0] = g3_temp(psi_norm_1D[0])
-    # g3[-1] = g3_temp(psi_norm_1D[-1])
+    g3[-1] = g3_temp(psi_norm_1D[-1])
 
     return psi_norm_1D, volume, g1, g2, g3
 
@@ -842,12 +835,11 @@ def calc_curr_dens_profiles(
     psi_1D_0 = psi_1D
     for i in range(50):
         # calculate pprime profile from p
+        p_fun_psi1D = interp1d(psi_1D, p, "linear", fill_value="extrapolate")
+        pprime = approx_derivative(p_fun_psi1D, psi_1D).diagonal()
 
-        p_fun_psi1D = interp1d(psi_1D, p, fill_value="extrapolate")
-        pprime_psi1D = nd.Derivative(p_fun_psi1D)
-        pprime = pprime_psi1D(psi_1D)  # <0.25% rel diff
-        # pprime = derivcc(len(psi_1D), psi_1D, p, gga=2)  # 0.3568% rel diff
-        # pprime = np.gradient(p_fun_psi1D(psi_1D), psi_1D, edge_order=1)  # 0.68 % rel diff
+        # pprime_psi1D = nd.Derivative(p_fun_psi1D)
+        # pprime = pprime_psi1D(psi_1D)  # <0.25% rel diff
 
         # Here we preserve some PLASMOD notation, for future sanity
         q3 = q / g3

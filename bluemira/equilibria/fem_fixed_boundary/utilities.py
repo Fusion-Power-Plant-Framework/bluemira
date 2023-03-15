@@ -749,5 +749,5 @@ def derivcc(nx, x, y, gga):
         dy[0] = (y[1] - y[0]) / (x[1] - x[0])
 
     P = polyfitcc(x[-3:], y[-3:])
-    dy[nx - 1] = 2 * P[0] * x[-1] + P[1]
+    dy[-1] = 2 * P[0] * x[-1] + P[1]
     return dy
