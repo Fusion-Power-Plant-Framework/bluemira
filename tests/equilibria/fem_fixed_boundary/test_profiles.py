@@ -57,9 +57,10 @@ class PLASMODVerificationRawData:
     psi_ax = psi[0]
     psi_b = psi[-1]
 
-    R_0 = 8.98300000
-    B_0 = 5.31000000
-    amin = 2.9075846464
+    R_0 = 8.98300000  # [m]
+    B_0 = 5.31000000  # [T]
+    I_p = 20.501396465e6  # [A]
+    amin = 2.9075846464  # [m]
     n = len(rho)
     a = np.linspace(0, amin, n)
 
@@ -228,6 +229,9 @@ class TestPLASMODVerificationCurrentProfiles(PLASMODVerificationRawData):
                 a.set_xlabel("x")
         cls.ax[1, 0].set_ylabel("PLASMOD-bluemira")
         plt.show()
+
+    def test_plasma_current(self):
+        np.testing.assert_allclose(self.results["I_p"], self.I_p, rtol=1e-5)
 
     def test_psi(self):
         self.ax[0, 0].plot(self.rho, self.psi, label="PLASMOD")
