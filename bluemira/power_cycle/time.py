@@ -355,7 +355,7 @@ class ScenarioBuilder:
             try:
                 element = breakdown_library[label]
             except KeyError:
-                raise ScenarioBuilder(
+                raise ScenarioBuilderError(
                     "library",
                     f"Breakdown element {label!r} has not been defined.",
                 )
@@ -370,7 +370,7 @@ class ScenarioBuilder:
                     phase_breakdown = dict()
                     last_value = element_value
             else:
-                raise ScenarioBuilder(
+                raise ScenarioBuilderError(
                     "operator",
                     f"Unknown routine for {operator!r} operator.",
                 )
