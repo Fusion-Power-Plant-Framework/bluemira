@@ -154,13 +154,13 @@ class PowerCycleTimeABC(PowerCycleABC):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _build_durations_list(power_set):
+    def _build_durations_list(load_set):
         """
         Build a list with the 'duration' attribute of each element in
-        the 'power_set' list.
+        the 'load_set' list.
         """
         durations_list = []
-        for element in power_set:
+        for element in load_set:
             durations_list.append(element.duration)
         return durations_list
 
@@ -203,8 +203,8 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _recursive_make_consumption_explicit(power_set):
-        for element in power_set:
+    def _recursive_make_consumption_explicit(load_set):
+        for element in load_set:
             element.make_consumption_explicit()
 
     # ------------------------------------------------------------------
@@ -273,8 +273,8 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
         return refined_vector
 
     @staticmethod
-    def _build_time_from_power_set(power_set):
-        all_times = [power_object.intrinsic_time for power_object in power_set]
+    def _build_time_from_load_set(load_set):
+        all_times = [load_object.intrinsic_time for load_object in load_set]
         unnested_times = unnest_list(all_times)
         time = unique_and_sorted_vector(unnested_times)
         return time
@@ -321,16 +321,24 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
         default_text_kwargs = self._text_kwargs
         final_kwargs = {**default_text_kwargs, **kwargs}
 
-        # Filter kwargs
-
+        # Fall back on default kwargs if wrong keys are passed
         index_for_text_placement = self._text_index
-        plot_object = axes.text(
-            x_list[index_for_text_placement],
-            y_list[index_for_text_placement],
-            text_to_be_added,
-            label=label_of_text_object,
-            **final_kwargs,
-        )
+        try:
+            plot_object = axes.text(
+                x_list[index_for_text_placement],
+                y_list[index_for_text_placement],
+                text_to_be_added,
+                label=label_of_text_object,
+                **final_kwargs,
+            )
+        except AttributeError:
+            plot_object = axes.text(
+                x_list[index_for_text_placement],
+                y_list[index_for_text_placement],
+                text_to_be_added,
+                label=label_of_text_object,
+                **default_text_kwargs,
+            )
         return plot_object
 
     # ------------------------------------------------------------------

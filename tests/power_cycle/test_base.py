@@ -289,12 +289,12 @@ class TestPowerCycleLoadABC:
             refined_list_length = len(refined_list)
             assert points_in_refined == refined_list_length
 
-    def test_build_time_from_power_set(self):
+    def test_build_time_from_load_set(self):
         """
         No new functionality to be tested.
         """
         sample = self.sample
-        assert callable(sample._build_time_from_power_set)
+        assert callable(sample._build_time_from_load_set)
 
     @pytest.mark.parametrize(
         "attribute",

@@ -1233,7 +1233,7 @@ class TestPulseLoad:
             current_phase_duration = current_phase.duration
 
             powerload_set = shifted_load.powerload_set
-            current_time = shifted_load._build_time_from_power_set(powerload_set)
+            current_time = shifted_load._build_time_from_load_set(powerload_set)
             time_memory.append(current_time)
 
             first_time = current_time[0]
@@ -1346,112 +1346,60 @@ class TestPulseLoad:
     # ARITHMETICS
     # ------------------------------------------------------------------
 
-    def test_addition(self):
+    @pytest.mark.parametrize("humor", [False, True])
+    def test_addition(self, humor):
         """
         Tests both '__add__' and '__radd__'.
         """
-        """
-        tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
-
         figure_title = "PulseLoad Addition"
-        ax = tools_testkit.prepare_figure(figure_title)
+        ax = tools_testkit.prepare_figure(figure_title, humor)
 
-        multisample = self.construct_multisample()
-        result = multisample + multisample
+        original = self.construct_multisample()
+        result = original + original
 
-        original_pulse = multisample.pulse
+        original_shifted_time = original.shifted_time
+        result_shifted_time = result.shifted_time
+        assert result_shifted_time == original_shifted_time
+
+        original_pulse = original.pulse
         result_pulse = result.pulse
         assert result_pulse == original_pulse
 
-        original_set = multisample.phaseload_set
+        original_set = original.phaseload_set
         result_set = result.phaseload_set
         set_zip = zip(original_set, result_set)
 
         for (original_phaseload, result_phaseload) in set_zip:
+            sum_of_originals = original_phaseload + original_phaseload
+            assert result_phaseload == sum_of_originals
 
-            ax, _ = original_phaseload.plot(
-                ax=ax,
-                detailed=False,
-                c="k",
-            )
+            original_intrinsic_time = original_phaseload.intrinsic_time
+            result_intrinsic_time = result_phaseload.intrinsic_time
+            assert result_intrinsic_time == original_intrinsic_time
 
-            ax, _ = result_phaseload.plot(
-                ax=ax,
-                detailed=False,
-                c="b",
-            )
+        negative_original = copy.deepcopy(original)
+        negative_original.make_consumption_explicit()
+        result_minus_original = result + negative_original
 
-            plt.show()
-
-            # sum_of_originals = original_phaseload + original_phaseload
-            # assert result_phaseload == sum_of_originals
-
-        ax, multisample_plot_objects = multisample.plot(
+        ax, result_plot_objects = result.plot(
+            ax=ax,
+            detailed=False,
+            c="y",
+        )
+        ax, original_plot_objects = original.plot(
             ax=ax,
             detailed=False,
             c="k",
         )
-        ax, result_plot_objects = result.plot(
+        ax, subtraction_plot_objects = result_minus_original.plot(
             ax=ax,
             detailed=False,
-            c="b",
+            c="c",
+            ls="--",
         )
+
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
-
-        import pprint
-        assert 0
-        """
-
-        """
-        all_samples = self.all_samples
-        colors = netloads_testkit.color_order_for_plotting
-        colors = iter(colors)
-
-        count = 0
-        all_results = []
-        list_of_plot_objects = []
-        for sample in all_samples:
-
-            ax, sample_plot_objects = sample.plot(
-                ax=ax,
-                detailed=False,
-                c="k",
-            )
-            list_of_plot_objects.append(sample_plot_objects)
-
-            this_phase = sample.phase
-            this_set = sample.powerload_set
-            this_normalize = sample.normalize
-
-            result = sample + sample
-            assert isinstance(result, tested_class)
-
-            result_phase = result.phase
-            assert result_phase == this_phase
-
-            result_set = result.powerload_set
-            assert result_set == this_set + this_set
-
-            result_normalize = result.normalize
-            assert result_normalize == this_normalize + this_normalize
-
-            result.name = "2x " + sample.name + " (added to itself)"
-            result_color = next(colors)
-            ax, result_plot_objects = result.plot(
-                ax=ax,
-                detailed=False,
-                c=result_color,
-            )
-
-            all_results.append(result)
-            list_of_plot_objects.append(result_plot_objects)
-
-        with pytest.raises(tested_class_error):
-            adding_phaseloads_with_different_pulses = sum(all_results)
-        """
-        pass
 
 
 class TestScenarioLoad:

@@ -87,12 +87,17 @@ class ToolsTestKit:
         return example_arguments
 
     @staticmethod
-    def prepare_figure(figure_title):
+    def prepare_figure(figure_title, humor=False):
         """
         Create figure for plot testing. Use 'plt.show()' to display it.
         Run test file with with `pytest --plotting-on` to visualize it.
+        Switch 'humor' on for 'xkcd' style plots.
         """
-        ax = validate_axes()
+        if humor:
+            with plt.xkcd():
+                ax = validate_axes()
+        else:
+            ax = validate_axes()
         plt.grid()
         plt.title(figure_title)
         return ax
