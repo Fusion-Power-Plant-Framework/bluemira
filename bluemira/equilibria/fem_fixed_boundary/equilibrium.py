@@ -735,9 +735,30 @@ def calc_metric_coefficients(
         dl = np.hypot(dx, dz)
         x_data = np.concatenate([np.array([0.0]), np.cumsum(dl)])
 
+        #  Hmmm... fuck
+        flag = False
+        psi_norm_fs = psi_norm_1D[i + 1]
+        # if np.isclose(psi_norm_fs, 1.0, rtol=0, atol=1e-7):
+        #     flag = True
+        #     psi_norm_fs = 1-1e-9
+        #     from bluemira.geometry._private_tools import offset
+        #     coords = deepcopy(fs.coords)
+
+        #     new_points = offset(*coords.xz, -1e-9)
+        #     f, ax = plt.subplots()
+        #     ax.plot(*coords.xz, label="psi_norm = 1.0")
+        #     ax.plot(*new_points, label=f"shh psi_norm = {psi_norm_fs}")
+        #     ax.set_aspect("equal")
+        #     ax.legend()
+        #     plt.show()
+
+        #     points= new_points.T
+
         grad_psi_norm_points = np.array([grad_psi_norm(p) for p in points])
+        if np.any(np.isnan(grad_psi_norm_points)):
+            raise ValueError(psi_norm_fs)
         # Scale from grad_psi_norm to get the grad_psi_norm_norm
-        psi_fs = psi_ax * (1 - psi_norm_1D[i + 1] ** 2)
+        psi_fs = psi_ax * (1 - psi_norm_fs**2)
         factor = 1 / (2 * psi_ax * np.sqrt(1 - psi_fs / psi_ax))
         grad_psi_norm_norm_points = factor * grad_psi_norm_points
 
@@ -751,6 +772,12 @@ def calc_metric_coefficients(
         y1_data = grad_vol_norm_2 * y0_data
         y3_data = 1 / (fs.coords.x**2 * bp)
         y2_data = grad_vol_norm_2 * y3_data
+        if flag:
+            f, ax = plt.subplots(1, 3)
+            ax[0].plot(y0_data[-4:])
+            ax[1].plot(y2_data[-4:])
+            ax[2].plot(y3_data[-4:])
+            plt.show()
 
         denom = np.trapz(y0_data, x_data)
         g1[i + 1] = np.trapz(y1_data, x_data) / denom
@@ -759,12 +786,15 @@ def calc_metric_coefficients(
         # NOTE: To future self, g1 is not used (right now), and the calculation could
         # be removed to speed things up.
 
-    g2_temp = interp1d(psi_norm_1D[1:-1], g2[1:-1], fill_value="extrapolate")
+    g2_temp = interp1d(
+        psi_norm_1D[1:-1], g2[1:-1], "quadratic", fill_value="extrapolate"
+    )
+    # raise ValueError(np.where(np.isnan(g2))[0])
     g2[-1] = g2_temp(psi_norm_1D[-1])
 
     g3_temp = interp1d(psi_norm_1D[1:-1], g3[1:-1], fill_value="extrapolate")
     g3[0] = g3_temp(psi_norm_1D[0])
-    g3[-1] = g3_temp(psi_norm_1D[-1])
+    # g3[-1] = g3_temp(psi_norm_1D[-1])
 
     return psi_norm_1D, volume, g1, g2, g3
 

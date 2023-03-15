@@ -152,7 +152,7 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         For reasons not yet understood, the vprime in PLASMOD (or at least in
         this run) is by radius, with a constant minor radius division.
         """
-        volume = np.array([fs.volume for fs in self.flux_surfaces])
+        volume = self.results["V"]
         f_volume = interp1d(self.a, volume, fill_value="extrapolate")
         grad_vol = np.gradient(f_volume(self.a), self.a)
 

@@ -359,6 +359,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             dpsi_dx = self.psi.dx(0)
             dpsi_dz = self.psi.dx(1)
             self._grad_psi = dolfin.project(dolfin.as_vector((dpsi_dx, dpsi_dz)), w)
+            self._grad_psi.set_allow_extrapolation(True)
         return self._grad_psi(point)
 
     @property
