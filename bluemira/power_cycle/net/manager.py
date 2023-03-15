@@ -24,6 +24,7 @@ from bluemira.power_cycle.tools import (
     convert_string_into_numeric_list,
     read_json,
     unnest_list,
+    validate_axes,
     validate_dict,
     validate_file,
     validate_lists_to_have_same_length,
@@ -55,8 +56,6 @@ class PowerCycleSystem(PowerCycleABC):
     ----------
     active_loads: dict
     reactive_loads: dict
-    production_loads: dict
-
     """
 
     # ------------------------------------------------------------------
@@ -65,7 +64,6 @@ class PowerCycleSystem(PowerCycleABC):
 
     _system_format = {
         "name": str,
-        "production": dict,
         "reactive": dict,
         "active": dict,
     }
@@ -89,7 +87,6 @@ class PowerCycleSystem(PowerCycleABC):
 
         (
             name,
-            production_config,
             reactive_config,
             active_config,
         ) = self._unpack_system_config(system_config)
@@ -97,14 +94,12 @@ class PowerCycleSystem(PowerCycleABC):
         load_format = self._load_format
         active_config = validate_subdict(active_config, load_format)
         reactive_config = validate_subdict(reactive_config, load_format)
-        production_config = validate_subdict(production_config, load_format)
 
         super().__init__(name, label=label)
         self.scenario = scenario
         self._system_config = system_config
         self._active_config = active_config
         self._reactive_config = reactive_config
-        self._production_config = production_config
 
     @staticmethod
     def _validate_scenario(scenario):
@@ -116,22 +111,14 @@ class PowerCycleSystem(PowerCycleABC):
     @staticmethod
     def _unpack_system_config(system_config):
         name = system_config["name"]
-        production_config = system_config["production"]
         reactive_config = system_config["reactive"]
         active_config = system_config["active"]
 
-        return name, production_config, reactive_config, active_config
+        return name, reactive_config, active_config
 
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
-
-    @property
-    def load_types(self):
-        system_format = self._system_format
-        load_types = list(system_format.keys())
-        load_types.remove("name")
-        return load_types
 
     @property
     def active_loads(self):
@@ -145,11 +132,12 @@ class PowerCycleSystem(PowerCycleABC):
         reactive_loads = self._make_phaseloads_from_config(reactive_config)
         return reactive_loads
 
-    @property
-    def production_loads(self):
-        production_config = self._production_config
-        production_loads = self._make_phaseloads_from_config(production_config)
-        return production_loads
+    @classmethod
+    def list_all_load_types(self):
+        system_format = self._system_format
+        load_types = list(system_format.keys())
+        load_types.remove("name")
+        return load_types
 
     @staticmethod
     def import_phaseload_inputs(module, variables_map):
@@ -163,6 +151,7 @@ class PowerCycleSystem(PowerCycleABC):
             )
 
             unit = variables_map["unit"]
+            consumption = variables_map["consumption"]
             efficiency_dict = variables_map["efficiencies"]
             all_efficiencies = efficiency_dict.values()
 
@@ -202,6 +191,7 @@ class PowerCycleSystem(PowerCycleABC):
 
             phaseload_inputs = dict()
             phaseload_inputs["phase_list"] = phase_list
+            phaseload_inputs["consumption"] = consumption
             phaseload_inputs["normalize_list"] = normalize_list
             phaseload_inputs["powerload_list"] = powerload_list
 
@@ -224,6 +214,7 @@ class PowerCycleSystem(PowerCycleABC):
         valid_phases = scenario.build_phase_library()
 
         phase_list = phaseload_inputs["phase_list"]
+        consumption = phaseload_inputs["consumption"]
         normalize_list = phaseload_inputs["normalize_list"]
         powerload_list = phaseload_inputs["powerload_list"]
 
@@ -253,6 +244,10 @@ class PowerCycleSystem(PowerCycleABC):
                 powerload_list,
                 normalization_flags,
             )
+
+            if consumption:
+                phaseload.make_consumption_explicit()
+
             phaseload_list.append(phaseload)
 
         return phaseload_list
@@ -277,9 +272,22 @@ class PowerCycleSystem(PowerCycleABC):
 
 
 class PowerCycleGroup(PowerCycleABC):
-    """ """
+    """
+    Class to build a collection of 'PowerCycleSystem' objects that
+    represent a particular classification of power loads in a power
+    planto.
 
-    # Build Power Cycle representations of each Plant System in the group
+    Parameters
+    ----------
+    name: str
+        Description of the 'PowerCycleSystem' instance.
+    scenario: PowerCycleScenario
+        Scenario with a set of phases that matches every phase specified
+        in configuration parameters for systems to be created.
+    group_config: dict
+        Dictionary that contains the necessary inputs to define
+        'PowerCycleSystem' objects.
+    """
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
@@ -320,19 +328,31 @@ class PowerCycleGroup(PowerCycleABC):
 
 
 class PowerCycleManager:
-    """ """
+    """
+    Class to collect all inputs of the Power Cycle module and build
+    net active and reactive loads to represent a the power production
+    during a pulse.
 
-    # Call ScenarioBuilder
-    # Read load inputs JSON files (inputs for each Plant Group)
-    # Build all Plant Groups
-    # Make active loads negative
-    # Merge PhaseLoads and build PulseLoad
+    To be described:
+        - Call ScenarioBuilder
+        - Read load inputs JSON files (inputs for each Plant Group)
+        - Build all Plant Groups
+        - Merge all PulseLoad objects for active and reactive load types
+
+    Parameters
+    ----------
+    scenario_config_path: str
+        Path to the JSON file that defines the scenario.
+    manager_config_path: str
+        Path to the JSON file that lists configuration parameters to
+        each Power Cycle load group.
+    """
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
-    _load_types = PowerCycleGroup.load_types
+    _load_types = PowerCycleSystem.list_all_load_types()
 
     _manager_format = {
         "name": str,
@@ -387,24 +407,29 @@ class PowerCycleManager:
         if load_type not in valid_types:
             raise PowerCycleManagerError(
                 "load-type",
-                f"The value {load_type!r} does not match the valid " "load types.",
+                f"The value {load_type!r} is not a valid load type.",
             )
 
         pulse = self.scenario.pulse_set[0]
         group_library = self.group_library
+
         all_phaseloads = []
         all_group_labels = group_library.keys()
         for group_label in all_group_labels:
             group = group_library[group_label]
             system_library = group.system_library
+
             all_system_labels = system_library.keys()
             for system_label in all_system_labels:
                 system = system_library[system_label]
+
                 loads_property = load_type + "_loads"
                 loads_of_type = getattr(system, loads_property)
                 system_phaseloads = [v for v in loads_of_type.values()]
+
                 system_phaseloads = unnest_list(system_phaseloads)
                 all_phaseloads.append(system_phaseloads)
+
         all_phaseloads = unnest_list(all_phaseloads)
 
         pulseload = PulseLoad(load_type, pulse, all_phaseloads)
@@ -415,18 +440,9 @@ class PowerCycleManager:
 
         all_loads = dict()
         for load_type in valid_types:
-            pulseload_for_type = self._build_pulseload_of_type(load_type)
+            all_loads[load_type] = self._build_pulseload_of_type(load_type)
 
-            if load_type == "active":
-                pulseload_for_type.make_consumption_explicit()
-            elif load_type == ("reactive", "production"):
-                pass
-            else:
-                raise NotImplementedError()
-
-            all_loads[load_type] = pulseload_for_type
-
-        net_active = all_loads["production"] + all_loads["active"]
+        net_active = all_loads["active"]
         net_reactive = all_loads["reactive"]
         return net_active, net_reactive
 
@@ -452,5 +468,41 @@ class PowerCycleManager:
     # VISUALIZATION
     # ------------------------------------------------------------------
 
-    def plot(self):
-        pass
+    def plot(self, ax=None, n_points=None, **kwargs):
+        """
+        Plot a 'PulseLoad' curve for each load type and plot them in
+        the same figure.
+
+        Parameters
+        ----------
+        ax: Axes
+            Instance of the 'matplotlib.axes.Axes' class, in which to
+            plot. If 'None' is given, a new instance of axes is created.
+        n_points: int
+            Parameter 'n_points' passed to the 'plot' method of each
+            'PulseLoad' to be plotted.
+        **kwargs: dict
+            Options for the 'plot' method.
+
+        Returns
+        -------
+        ax: Axes
+            Instance of the 'matplotlib.axes.Axes' class.
+        """
+        ax = validate_axes(ax)
+        net_active, net_reactive = self._build_net_loads()
+
+        ax, active_plot_objects = net_active.plot(
+            ax=ax,
+            n_points=n_points,
+            detailed=False,
+            c="r",
+            **kwargs,
+        )
+        ax, reactive_plot_objects = net_reactive.plot(
+            ax=ax, n_points=n_points, detailed=False, c="b", **kwargs
+        )
+
+        tuple_of_plot_objects = (active_plot_objects, reactive_plot_objects)
+
+        return ax, tuple_of_plot_objects

@@ -1,30 +1,30 @@
 {
     "PHT": {
         "name": "Primary Heat Transfer System",
-        "production": {},
         "reactive": {},
         "active": {}
     },
     "IHT": {
         "name": "Intermediate Heat Transfer System",
-        "production": {},
         "reactive": {},
         "active": {}
     },
     "PCS": {
         "name": "Power Conversion System",
-        "production": {
-            "trb": {
-                "name": "power produced in the turbines",
+        "reactive": {},
+        "active": {
+            "ton": {
+                "name": "plasma-on power from turbines",
                 "module": null,
                 "variables_map": {
                     "phases": [
-                        "dwl"
+                        "ftt"
                     ],
                     "normalize": [
                         true
                     ],
                     "unit": "MW",
+                    "consumption": false,
                     "efficiencies": {},
                     "loads": {
                         "description": [
@@ -36,8 +36,45 @@
                             "[0, 1]"
                         ],
                         "data": [
-                            "[0, 500]",
-                            "[0, 400]"
+                            "[500, 500]",
+                            "[400, 400]"
+                        ],
+                        "model": [
+                            "RAMP",
+                            "RAMP"
+                        ]
+                    }
+                }
+            },
+            "tof": {
+                "name": "plasma-off power from turbines",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": false,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "turbine 1",
+                            "turbine 2"
+                        ],
+                        "time": [
+                            "[0, 1]",
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[400, 400]",
+                            "[400, 400]"
                         ],
                         "model": [
                             "RAMP",
@@ -46,8 +83,6 @@
                     }
                 }
             }
-        },
-        "reactive": {},
-        "active": {}
+        }
     }
 }
