@@ -623,21 +623,18 @@ def solve_transport_fixed_boundary(
             f_pprime = interp1d(x1d, pprime, fill_value="extrapolate")
             f_ffprime = interp1d(x1d, ffprime, fill_value="extrapolate")
 
-            f, (ax1, ax2) = plt.subplots(1, 2, figsize=(18, 10))
-            ax1.plot(x1d, pprime)
-            ax2.plot(x1d, ffprime)
-            plt.show()
+            psi2d = np.array([gs_solver.psi(p) for p in points])
 
-            x2d = np.array([gs_solver.psi_norm_2d(p) for p in points])
+            eps_psi2d = np.linalg.norm(psi2d - x2d_0, ord=2) / np.linalg.norm(
+                psi2d, ord=2
+            )
 
-            eps_x2d = np.linalg.norm(x2d - x2d_0, ord=2) / np.linalg.norm(x2d, ord=2)
+            print(f"eps={eps_psi2d}")
 
-            print(f"eps={eps_x2d}")
-
-            if eps_x2d < 1e-4:
+            if eps_psi2d < 1e-4:
                 break
             else:
-                x2d_0 = np.array([gs_solver.psi_norm_2d(p) for p in points])
+                x2d_0 = np.array([gs_solver.psi(p) for p in points])
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
             gs_solver.psi_norm_2d,
