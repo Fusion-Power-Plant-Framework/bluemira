@@ -30,6 +30,7 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
 )
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.shapes import flux_surface_zakharov
+from bluemira.geometry._private_tools import offset
 
 
 class PLASMODVerificationRawData:
@@ -110,6 +111,15 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
             x.append(fs.coords.x[:-1])
             z.append(fs.coords.z[:-1])
             psi.append(self.psi[i] * np.ones(len(fs.coords.x) - 1))
+        # Now, add a fictitious flux surface to enable gradient calculation at
+        # boundary
+        delta = 1e-8
+        delta_psi = (self.psi[-1] - self.psi[-2]) / (self.rho[-1] - self.rho[-2])
+        x_off, z_off = offset(x[-1], z[-1], delta)
+
+        x.append(x_off)
+        z.append(z_off)
+        psi.append((self.psi[-1] - abs(delta_psi) * delta) * np.ones(len(x_off)))
         x2d = np.concatenate(x)
         z2d = np.concatenate(z)
         psi2d = np.concatenate(psi)
@@ -178,7 +188,7 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         f, ax = plt.subplots()
         ax.plot(self.results["x_1d"], self.results["g3"], label="$g_3$ calculated")
         ax.plot(self.rho, self.g3, label="$g_3$ PLASMOD")
-        ax.set_xlabel("$g_{2}$")
+        ax.set_xlabel("$g_{3}$")
         ax.set_xlabel("$\\rho$")
         ax.legend()
         plt.show()

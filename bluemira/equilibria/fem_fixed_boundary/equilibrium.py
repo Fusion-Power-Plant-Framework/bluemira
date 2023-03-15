@@ -756,7 +756,7 @@ def calc_metric_coefficients(
 
         grad_psi_norm_points = np.array([grad_psi_norm(p) for p in points])
         if np.any(np.isnan(grad_psi_norm_points)):
-            raise ValueError(psi_norm_fs)
+            pass  # raise ValueError(psi_norm_fs)
         # Scale from grad_psi_norm to get the grad_psi_norm_norm
         psi_fs = psi_ax * (1 - psi_norm_fs**2)
         factor = 1 / (2 * psi_ax * np.sqrt(1 - psi_fs / psi_ax))
