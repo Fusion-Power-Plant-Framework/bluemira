@@ -26,6 +26,8 @@ from bluemira.power_cycle.tools import (
     validate_numerical,
 )
 
+CURVE_TEXT_IN_LABEL = " (curve)"
+
 
 class LoadData(PowerCycleLoadABC):
     """
@@ -487,7 +489,7 @@ class PowerLoad(PowerCycleLoadABC):
         different 'LoadData' objects contained in the 'loaddata_set'
         attribute, ordered and with no repetitions.
         """
-        time = self._build_time_from_power_set(self.loaddata_set)
+        time = self._build_time_from_load_set(self.loaddata_set)
         return time
 
     @intrinsic_time.setter
@@ -560,7 +562,7 @@ class PowerLoad(PowerCycleLoadABC):
         list_of_plot_objects = []
 
         # Plot curve as line
-        label = name + " (curve)"
+        label = name + CURVE_TEXT_IN_LABEL
         plot_object = ax.plot(
             computed_time,
             computed_curve,
@@ -620,8 +622,11 @@ class PowerLoad(PowerCycleLoadABC):
         The addition of 'PowerLoad' instances creates a new 'PowerLoad'
         instance with joined 'load' and 'model' attributes.
         """
-        this_set = self.loaddata_set
-        this_model = self.model
+        this = copy.deepcopy(self)
+        other = copy.deepcopy(other)
+
+        this_set = this.loaddata_set
+        this_model = this.model
 
         other_set = other.loaddata_set
         other_model = other.model
@@ -884,7 +889,7 @@ class PhaseLoad(PowerCycleLoadABC):
         different 'PowerLoad' objects contained in the 'powerload_set'
         attribute (i.e. all times are their original values).
         """
-        time = self._build_time_from_power_set(self.powerload_set)
+        time = self._build_time_from_load_set(self.powerload_set)
         return time
 
     @intrinsic_time.setter
@@ -906,7 +911,7 @@ class PhaseLoad(PowerCycleLoadABC):
         attribute (i.e. all times are normalized in respect to the phase
         duration).
         """
-        time = self._build_time_from_power_set(self._normalized_set)
+        time = self._build_time_from_load_set(self._normalized_set)
         return time
 
     @normalized_time.setter
@@ -949,7 +954,7 @@ class PhaseLoad(PowerCycleLoadABC):
         list_of_plot_objects = []
 
         # Plot curve as line
-        label = name + " (curve)"
+        label = name + CURVE_TEXT_IN_LABEL
         plot_object = ax.plot(
             computed_time,
             computed_curve,
@@ -1047,7 +1052,10 @@ class PhaseLoad(PowerCycleLoadABC):
         instance with joined 'powerload_set' and 'normalize' attributes,
         but only if its phases are the same.
         """
-        this_phase = self.phase
+        this = copy.deepcopy(self)
+        other = copy.deepcopy(other)
+
+        this_phase = this.phase
         other_phase = other.phase
         if this_phase != other_phase:
             raise PhaseLoadError(
@@ -1059,8 +1067,8 @@ class PhaseLoad(PowerCycleLoadABC):
         else:
             another_phase = this_phase
 
-        this_set = self.powerload_set
-        this_normalize = self.normalize
+        this_set = this.powerload_set
+        this_normalize = this.normalize
 
         other_set = other.powerload_set
         other_normalize = other.normalize
@@ -1189,9 +1197,7 @@ class PulseLoad(PowerCycleLoadABC):
                 PhaseLoad.validate_class(phaseload)
 
                 phase_of_phaseload = phaseload.phase
-                check = phase_of_phaseload == phase_in_pulse
-                phaseload_phase_is_the_same_as_phase_in_pulse = check
-                if phaseload_phase_is_the_same_as_phase_in_pulse:
+                if phase_of_phaseload == phase_in_pulse:
                     phaseloads_for_phase.append(phaseload)
 
             no_phaseloads_were_added = len(phaseloads_for_phase) == 0
@@ -1336,7 +1342,7 @@ class PulseLoad(PowerCycleLoadABC):
         different 'PhaseLoad' objects contained in the 'phaseload_set'
         attribute (i.e. all times are their original values).
         """
-        time = self._build_time_from_power_set(self.phaseload_set)
+        time = self._build_time_from_load_set(self.phaseload_set)
         return time
 
     @intrinsic_time.setter
@@ -1358,7 +1364,7 @@ class PulseLoad(PowerCycleLoadABC):
         attribute (i.e. all times are shifted in respect to the
         duration of previous phases).
         """
-        time = self._build_time_from_power_set(self._shifted_set)
+        time = self._build_time_from_load_set(self._shifted_set)
         return time
 
     @shifted_time.setter
@@ -1484,7 +1490,7 @@ class PulseLoad(PowerCycleLoadABC):
         list_of_plot_objects = []
 
         # Plot curve as line
-        label = name + " (curve)"
+        label = name + CURVE_TEXT_IN_LABEL
         plot_object = ax.plot(
             modified_time,
             computed_curve,
@@ -1526,7 +1532,10 @@ class PulseLoad(PowerCycleLoadABC):
         with a 'phaseload_set' that contains the addition of the
         respective 'PhaseLoad' objects in each original instance.
         """
-        this_pulse = self.pulse
+        this = copy.deepcopy(self)
+        other = copy.deepcopy(other)
+
+        this_pulse = this.pulse
         other_pulse = other.pulse
         if this_pulse != other_pulse:
             raise PhaseLoadError(
@@ -1538,7 +1547,7 @@ class PulseLoad(PowerCycleLoadABC):
         else:
             another_pulse = this_pulse
 
-        this_set = self.phaseload_set
+        this_set = this.phaseload_set
         other_set = other.phaseload_set
 
         """
