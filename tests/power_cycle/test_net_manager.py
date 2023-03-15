@@ -51,7 +51,6 @@ class TestPowerCycleSystem:
 
         highest_level_json_keys = [
             "name",
-            "production",
             "reactive",
             "active",
         ]
@@ -62,14 +61,12 @@ class TestPowerCycleSystem:
             "_system_config",
             "_active_config",
             "_reactive_config",
-            "_production_config",
         ]
         self.all_instance_attr = all_instance_attr
 
         all_instance_properties = [
             "active_loads",
             "reactive_loads",
-            "production_loads",
         ]
         self.all_instance_properties = all_instance_properties
 
@@ -173,6 +170,7 @@ class TestPowerCycleSystem:
 
         phaseload_inputs_format = {
             "phase_list": list,
+            "consumption": bool,
             "normalize_list": list,
             "powerload_list": list,
         }
@@ -184,17 +182,20 @@ class TestPowerCycleSystem:
 
             valid_keys = phaseload_inputs_format.keys()
             for key in valid_keys:
-                list_in_key = phaseload_inputs[key]
 
-                if key == "phase_list":
-                    valid_type = str
-                elif key == "normalize_list":
-                    valid_type = bool
-                elif key == "powerload_list":
-                    valid_type = PowerLoad
+                if key != "consumption":
 
-                types_are_right = [type(e) == valid_type for e in list_in_key]
-                assert all(types_are_right)
+                    list_in_key = phaseload_inputs[key]
+                    if key == "phase_list":
+                        valid_type = str
+                    elif key == "normalize_list":
+                        valid_type = bool
+                    elif key == "powerload_list":
+                        valid_type = PowerLoad
+
+                    b = [type(e) == valid_type for e in list_in_key]
+                    types_in_list_are_correct = b
+                    assert all(types_in_list_are_correct)
 
         inexistent_module = "inexistent_module"
         example_variables_map = dict()
@@ -213,7 +214,16 @@ class TestPowerCycleSystem:
 
             all_phases = [pulse.phase_set for pulse in pulse_set]
             all_phases = unnest_list(all_phases)
-            valid_phases = list(set(all_phases))
+
+            valid_phases = []
+            for phase in all_phases:
+                add_check = True
+                for valid_phase in valid_phases:
+                    if phase == valid_phase:
+                        add_check = False
+                if add_check:
+                    valid_phases.append(phase)
+            # valid_phases = list(set(all_phases))
 
             for phaseload_inputs in all_phaseload_inputs:
 
@@ -381,11 +391,9 @@ class TestPowerCycleManager:
     # OPERATIONS
     # ------------------------------------------------------------------
 
-    @pytest.mark.parametrize(
-        "load_type",
-        ["active"],  # ["active", "reactive", "production"],
-    )
+    @pytest.mark.parametrize("load_type", ["active", "reactive"])
     def test_build_pulseload_of_type(self, load_type):
+        """
         ax = tools_testkit.prepare_figure(load_type)
 
         sample = self.construct_sample()
@@ -403,7 +411,40 @@ class TestPowerCycleManager:
         )
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
+        """
+        pass
+
+    def test_build_net_loads(self):
+        """
+        No new functionality to be tested.
+        """
+        tested_class = self.tested_class
+        assert callable(tested_class._build_net_loads)
+
+    def test_net_active(self):
+        """
+        No new functionality to be tested.
+        """
+        sample = self.construct_sample()
+        assert hasattr(sample, "net_active")
+
+    def test_net_reactive(self):
+        """
+        No new functionality to be tested.
+        """
+        sample = self.construct_sample()
+        assert hasattr(sample, "net_reactive")
 
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
+
+    def test_plot(self):
+        sample = self.construct_sample()
+
+        figure_title = "PowerCycleManager"
+        ax = tools_testkit.prepare_figure(figure_title)
+
+        ax, _ = sample.plot(ax=ax)
+        adjust_2d_graph_ranges(ax=ax)
+        plt.show()

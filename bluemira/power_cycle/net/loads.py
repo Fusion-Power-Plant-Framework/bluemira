@@ -1550,14 +1550,6 @@ class PulseLoad(PowerCycleLoadABC):
         this_set = this.phaseload_set
         other_set = other.phaseload_set
 
-        """
-        another_set = []
-        set_zip = zip(this_set, other_set)
-        for (this_phaseload, other_phaseload) in set_zip:
-            another_phaseload = this_phaseload + other_phaseload
-            another_set.append(another_phaseload)
-        """
-
         another_set = this_set + other_set
         another_name = f"Resulting PulseLoad for pulse {another_pulse.name!r}"
         another = PulseLoad(

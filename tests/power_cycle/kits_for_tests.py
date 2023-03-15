@@ -556,7 +556,7 @@ class NetManagerTestKit:
     def inputs_for_loads(self):
         all_system_inputs = self.inputs_for_systems()
 
-        all_load_types = ["production", "reactive", "active"]
+        all_load_types = ["reactive", "active"]
 
         all_load_inputs = dict()
         all_system_labels = all_system_inputs.keys()
