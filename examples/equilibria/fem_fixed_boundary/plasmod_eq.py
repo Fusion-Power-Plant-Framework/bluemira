@@ -35,26 +35,88 @@ RUN_SUBPROCESS_REF = "bluemira.codes.interface.run_subprocess"
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 PARAMS_FILE = os.path.join(DATA_DIR, "params.json")
 
+
+johner_parameterisation = JohnerLCFS(
+    {
+        "r_0": {"value": 8.9830e00},
+        "a": {"value": 3.1},
+        "kappa_u": {"value": 1.6},
+        "kappa_l": {"value": 1.75},
+        "delta_u": {"value": 0.33},
+        "delta_l": {"value": 0.45},
+    }
+)
+
 if plasmod_binary := shutil.which("plasmod"):
     PLASMOD_PATH = os.path.dirname(plasmod_binary)
 else:
     PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod/bin")
 binary = os.path.join(PLASMOD_PATH, "plasmod")
 
+
+source = "Plasmod Example: coupling 1.5 MHD and GSE"
+plasmod_params = {
+    # NOTE: Ivan, Johner takes in minor radius, not aspect ratio
+    "A": {"value": johner_parameterisation.variables.a, "unit": "", "source": source},
+    "R_0": {
+        "value": johner_parameterisation.variables.r_0,
+        "unit": "m",
+        "source": source,
+    },
+    "I_p": {"value": 19e6, "unit": "A", "source": source},
+    "B_0": {"value": 5.31, "unit": "T", "source": source},
+    "V_p": {"value": -2500, "unit": "m^3", "source": source},
+    "v_burn": {"value": -1.0e6, "unit": "V", "source": source},
+    "kappa_95": {"value": 1.652, "unit": "", "source": source},
+    "delta_95": {"value": 0.333, "unit": "", "source": source},
+    "delta": {
+        "value": (
+            johner_parameterisation.variables.delta_l
+            + johner_parameterisation.variables.delta_u
+        )
+        / 2,
+        "unit": "",
+        "source": source,
+    },
+    "kappa": {
+        "value": (
+            johner_parameterisation.variables.kappa_l
+            + johner_parameterisation.variables.kappa_u
+        )
+        / 2,
+        "unit": "",
+        "source": source,
+    },
+    "q_95": {"value": 3.25, "unit": "", "source": source},
+    "f_ni": {"value": 0, "unit": "", "source": source},
+}
+
+problem_settings = {
+    "amin": plasmod_params["R_0"]["value"] / plasmod_params["A"]["value"],
+    "pfus_req": 2000.0,
+    "pheat_max": 100.0,
+    "q_control": 50.0,
+    "i_impmodel": "PED_FIXED",
+    "i_modeltype": "GYROBOHM_2",
+    "i_equiltype": "q95_sawtooth",
+    "i_pedestal": "SAARELMA",
+    "isawt": "FULLY_RELAXED",
+}
+
 plasmod_build_config = {
-    "problem_settings": {},
-    "mode": "read",
+    "problem_settings": problem_settings,
+    "mode": "run",
     "binary": binary,
     "directory": get_bluemira_path("", subfolder="generated_data"),
 }
 
 plasmod_solver = transport_code_solver(
-    params={},
+    params=plasmod_params,
     build_config=plasmod_build_config,
     module="PLASMOD",
 )
 
-plasmod_solver.execute("read")
+plasmod_solver.execute("run")
 
 outputs = plasmod_solver.plasmod_outputs()
 
