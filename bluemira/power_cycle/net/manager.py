@@ -202,7 +202,7 @@ class PowerCycleSystem(PowerCycleABC):
             phaseload_inputs = PumpingImporter.phaseload_inputs(variables_map)
 
         else:
-            raise PowerCycleSystem(
+            raise PowerCycleSystemError(
                 "import",
                 "Unknown routine for importing a phase load from "
                 f"the {module!r} module.",
@@ -229,7 +229,7 @@ class PowerCycleSystem(PowerCycleABC):
             try:
                 phase = valid_phases[phase_label]
             except KeyError:
-                raise PowerCycleSystem(
+                raise PowerCycleSystemError(
                     "scenario",
                     "It is not possible to build objects of the "
                     "'PhaseLoad' class for phases that are not "
