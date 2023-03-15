@@ -563,7 +563,7 @@ def solve_transport_fixed_boundary(
         gs_solver.set_mesh(mesh)
 
         points = gs_solver.mesh.coordinates()
-        x2d_0 = np.array([0 for p in points])
+        psi2d_0 = np.array([0 for p in points])
 
         for n_iter_inner in range(max_iter_inner):
 
@@ -600,7 +600,7 @@ def solve_transport_fixed_boundary(
                 g2,
                 g3,
                 volume,
-                0,
+                transp_out_params.I_p.value,
                 transp_out_params.B_0.value,
                 transp_out_params.R_0.value,
                 gs_solver.psi_ax,
@@ -612,16 +612,14 @@ def solve_transport_fixed_boundary(
 
             psi2d = np.array([gs_solver.psi(p) for p in points])
 
-            eps_psi2d = np.linalg.norm(psi2d - x2d_0, ord=2) / np.linalg.norm(
+            eps_psi2d = np.linalg.norm(psi2d - psi2d_0, ord=2) / np.linalg.norm(
                 psi2d, ord=2
             )
-
-            print(f"eps={eps_psi2d}")
 
             if eps_psi2d < 1e-4:
                 break
             else:
-                x2d_0 = np.array([gs_solver.psi(p) for p in points])
+                psi2d_0 = psi2d
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
             gs_solver.psi_norm_2d,
