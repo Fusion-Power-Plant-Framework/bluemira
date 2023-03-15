@@ -273,6 +273,7 @@ def solve_transport_fixed_boundary_old(
         Final fixed boundary equilibrium result from the transport <-> fixed boundary
         equilibrium solve
     """
+    # TODO: Remove this function!
     kappa_95 = kappa95_t
     delta_95 = delta95_t
 
@@ -431,6 +432,7 @@ def solve_transport_fixed_boundary(
     lcar_mesh: float = 0.15,
     max_iter: int = 30,
     iter_err_max: float = 1e-5,
+    inner_iter_err_max: float = 1e-4,
     relaxation: float = 0.2,
     transport_run_mode: Union[str, RunMode] = "run",
     mesh_filename: str = "FixedBoundaryEquilibriumMesh",
@@ -445,26 +447,28 @@ def solve_transport_fixed_boundary(
 
     Parameters
     ----------
-    parameterisation: Type[GeometryParameterisation]
+    parameterisation:
         Geometry parameterisation class for the plasma
-    transport_solver: CodesSolver
+    transport_solver:
         Transport Solver to call
-    gs_solver: FemGradShafranovFixedBoundary
+    gs_solver:
         Grad-Shafranov Solver instance
-    kappa95_t: float
+    kappa95_t:
         Target value for kappa at 95%
-    delta95_t: float
+    delta95_t:
         Target value for delta at 95%
-    lcar_mesh: float
+    lcar_mesh:
         Value of the characteristic length used to generate the mesh to solve the
         Grad-Shafranov problem
-    max_iter: int
+    max_iter:
         Maximum number of iteration between Grad-Shafranov and the transport solver
-    iter_err_max: float
+    iter_err_max:
         Convergence maximum error to stop the iteration
-    relaxation: float
+    inner_iter_err_max:
+        Inner convergence error on when iterating flux functions
+    relaxation:
         Iteration relaxing factor
-    transport_run_mode: str
+    transport_run_mode:
         Run mode for transport solver
     mesh_filename: str
         filename for mesh output file
@@ -616,7 +620,7 @@ def solve_transport_fixed_boundary(
                 psi2d, ord=2
             )
 
-            if eps_psi2d < 1e-4:
+            if eps_psi2d < inner_iter_err_max:
                 break
             else:
                 psi2d_0 = psi2d
