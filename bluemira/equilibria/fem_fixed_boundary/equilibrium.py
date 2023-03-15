@@ -587,29 +587,14 @@ def solve_transport_fixed_boundary(
                 figname=f"{n_iter} Fixed boundary equilibrium iteration ",
             )
 
-            x1d, flux_surfaces = utilities.get_flux_surfaces_from_mesh(
+            x1d, flux_surfaces = get_flux_surfaces_from_mesh(
                 mesh, gs_solver.psi_norm_2d, x_1d=xPsiPlasmod
             )
 
-            import bluemira.equilibria.fem_fixed_boundary as fem_fixed_boundary
-
-            (
-                x1d,
-                volume,
-                _,
-                g2,
-                g3,
-            ) = fem_fixed_boundary.equilibrium.calc_metric_coefficients(
+            (x1d, volume, _, g2, g3,) = calc_metric_coefficients(
                 flux_surfaces, gs_solver.grad_psi, x1d, gs_solver.psi_ax
             )
-            (
-                _,
-                _,
-                _,
-                pprime,
-                _,
-                ffprime,
-            ) = fem_fixed_boundary.equilibrium.calc_curr_dens_profiles(
+            (_, _, _, pprime, _, ffprime,) = calc_curr_dens_profiles(
                 x1d,
                 p_func(x1d),
                 q_func(x1d),
