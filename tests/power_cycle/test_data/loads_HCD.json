@@ -1,11 +1,10 @@
 {
     "NBI": {
         "name": "Neutral Beam Injection",
-        "production": {},
         "reactive": {},
         "active": {
             "upk": {
-                "name": "NBI consumption due to upkeep",
+                "name": "NBI upkeep",
                 "module": null,
                 "variables_map": {
                     "phases": [
@@ -21,21 +20,22 @@
                         true
                     ],
                     "unit": "MW",
+                    "consumption": true,
                     "efficiencies": {
                         "wall-plug": 0.5
                     },
                     "loads": {
                         "description": [
                             "main",
-                            "peak"
+                            "auxiliary"
                         ],
                         "time": [
                             "[0, 1]",
-                            "[0, 1, 2]"
+                            "[0, 1]"
                         ],
                         "data": [
-                            "[1, 1]",
-                            "[1, 2.5, 1]"
+                            "[2, 2]",
+                            "[1, 1]"
                         ],
                         "model": [
                             "STEP",
@@ -45,7 +45,7 @@
                 }
             },
             "inj": {
-                "name": "NBI consumption due to injection during burn",
+                "name": "NBI injection during burn",
                 "module": null,
                 "variables_map": {
                     "phases": [
@@ -55,6 +55,7 @@
                         true
                     ],
                     "unit": "MW",
+                    "consumption": true,
                     "efficiencies": {
                         "cooling": 0.7,
                         "accelerator": 0.7
@@ -67,7 +68,7 @@
                             "[0, 1, 2, 3, 4]"
                         ],
                         "data": [
-                            "[0, 0, 25, 0, 0]"
+                            "[1, 30, 25, 30, 1]"
                         ],
                         "model": [
                             "RAMP"
@@ -79,7 +80,6 @@
     },
     "ECH": {
         "name": "Neutral Beam Injection",
-        "production": {},
         "reactive": {},
         "active": {
             "inj": {
@@ -93,6 +93,7 @@
                         true
                     ],
                     "unit": "MW",
+                    "consumption": true,
                     "efficiencies": {
                         "cooling": 0.7,
                         "gyrotron": 0.7

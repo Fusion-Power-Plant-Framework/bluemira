@@ -1,7 +1,6 @@
 {
     "CSC": {
         "name": "Central Solenoid Coils",
-        "production": {},
         "reactive": {},
         "active": {
             "rcg": {
@@ -15,6 +14,7 @@
                         false
                     ],
                     "unit": "kW",
+                    "consumption": true,
                     "efficiencies": {
                         "wall-plug": 0.5
                     },
