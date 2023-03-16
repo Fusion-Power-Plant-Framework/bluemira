@@ -1,6 +1,6 @@
 {
     "Radial build": {
-        "run_mode": "read",
+        "run_mode": "run",
         "read_dir": "config/",
         "run_dir": "config/",
         "plot": false
