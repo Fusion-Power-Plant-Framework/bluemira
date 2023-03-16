@@ -34,7 +34,7 @@ from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
 from bluemira.geometry.parameterisations import PrincetonD, TripleArc
 from bluemira.geometry.tools import make_circle, make_polygon
-from eudemo.eudemo.tf_coils import TFCoilBuilder, TFCoilDesigner
+from eudemo.tf_coils import TFCoilBuilder, TFCoilDesigner
 
 EQDATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 DATA = str(Path(__file__).parent / "test_data")
