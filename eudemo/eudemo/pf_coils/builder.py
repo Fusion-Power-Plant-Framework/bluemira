@@ -87,7 +87,7 @@ def build_pf_coils_component(params, build_config, coilset):
                     "tk_casing": {"value": tk_case, "unit": "m"},
                     "ctype": {"value": coil_type.name, "unit": ""},
                 },
-                build_config,
+                bc,
                 designer.execute(),
             )
         )
