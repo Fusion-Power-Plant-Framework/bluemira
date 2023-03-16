@@ -86,26 +86,11 @@ class TestEquatorialPortDesigner:
         self.designer.x_ib = xi
         self.designer.x_ob = xo
         output = self.designer.execute()
-
-        # x = (xi, xo, xo, xi)
-        # z = (-zh / 2, -zh / 2, zh / 2, zh / 2)
-        # expectation = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
-
-        # assert math.isclose(output.length, expectation.length)
-        # assert math.isclose(output.area, expectation.area)
-        # assert math.isclose(output.volume, expectation.volume)
-
         x_len = xo - xi
         z_len = zh
 
-        try:
-            assert output.length == 2 * (x_len + z_len)
-        except AssertionError:
-            assert math.isclose(output.length, 2 * (x_len + z_len))
-        try:
-            assert output.area == x_len * z_len
-        except AssertionError:
-            math.isclose(output.area, x_len * z_len)
+        assert math.isclose(output.length, 2 * (x_len + z_len))
+        assert math.isclose(output.area, x_len * z_len)
 
 
 class TestEquatorialPortBuilder:
@@ -152,7 +137,4 @@ class TestEquatorialPortBuilder:
         out_eq_port = output.get_component("xyz").get_component("Equatorial Port 1")
         if out_eq_port is None:
             out_eq_port = output.get_component("xyz").get_component("Equatorial Port")
-        try:
-            assert out_eq_port.shape.volume == exp_v
-        except AssertionError:
-            assert math.isclose(out_eq_port.shape.volume, exp_v)
+        assert math.isclose(out_eq_port.shape.volume, exp_v)
