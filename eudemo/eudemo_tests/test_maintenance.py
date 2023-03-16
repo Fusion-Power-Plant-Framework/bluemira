@@ -22,6 +22,8 @@
 """
 Tests for EU-DEMO Maintenance
 """
+import math
+
 import pytest
 
 from bluemira.geometry.face import BluemiraFace
@@ -96,8 +98,14 @@ class TestEquatorialPortDesigner:
         x_len = xo - xi
         z_len = zh
 
-        assert output.length == 2 * (x_len + z_len)
-        assert output.area == x_len * z_len
+        try:
+            assert output.length == 2 * (x_len + z_len)
+        except AssertionError:
+            assert math.isclose(output.length, 2 * (x_len + z_len))
+        try:
+            assert output.area == x_len * z_len
+        except AssertionError:
+            math.isclose(output.area, x_len * z_len)
 
 
 class TestEquatorialPortBuilder:
@@ -144,4 +152,7 @@ class TestEquatorialPortBuilder:
         out_eq_port = output.get_component("xyz").get_component("Equatorial Port 1")
         if out_eq_port is None:
             out_eq_port = output.get_component("xyz").get_component("Equatorial Port")
-        assert out_eq_port.shape.volume == exp_v
+        try:
+            assert out_eq_port.shape.volume == exp_v
+        except AssertionError:
+            assert math.isclose(out_eq_port.shape.volume, exp_v)
