@@ -94,7 +94,8 @@ class TestNormalAt:
         circle = BluemiraFace(make_circle(axis=normal))
         np.testing.assert_allclose(circle.normal_at(0, 0), normal)
 
-    def test_xy_polygon_normal(self):
+    @pytest.mark.parametrize("alphas", [np.random.rand(2) for _ in range(5)])
+    def test_xy_polygon_normal(self, alphas):
         xy_polygon = BluemiraFace(
             make_polygon(
                 [[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]],
@@ -102,4 +103,4 @@ class TestNormalAt:
             )
         )
 
-        np.testing.assert_allclose(xy_polygon.normal_at(0, 0), (0, 0, 1))
+        np.testing.assert_allclose(xy_polygon.normal_at(*alphas), (0, 0, 1))
