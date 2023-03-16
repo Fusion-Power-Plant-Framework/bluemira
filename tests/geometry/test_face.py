@@ -29,7 +29,14 @@ from bluemira.geometry.parameterisations import (
     SextupleArc,
     TripleArc,
 )
-from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
+from bluemira.geometry.tools import (
+    extrude_shape,
+    make_circle,
+    make_polygon,
+    offset_wire,
+    wire_closure,
+)
+from bluemira.geometry.wire import BluemiraWire
 
 
 class TestBluemiraFace:
@@ -92,7 +99,7 @@ class TestNormalAt:
     def test_circle_normal(self, normal):
         normal = normal / np.linalg.norm(normal)
         circle = BluemiraFace(make_circle(axis=normal))
-        np.testing.assert_allclose(circle.normal_at(0, 0), normal)
+        np.testing.assert_allclose(circle.normal_at(), normal)
 
     @pytest.mark.parametrize("alphas", [np.random.rand(2) for _ in range(5)])
     def test_xy_polygon_normal(self, alphas):
