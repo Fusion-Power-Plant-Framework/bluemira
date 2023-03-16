@@ -47,7 +47,6 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
-from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
