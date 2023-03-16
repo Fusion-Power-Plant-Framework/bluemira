@@ -29,7 +29,7 @@ from bluemira.geometry.parameterisations import (
     SextupleArc,
     TripleArc,
 )
-from bluemira.geometry.tools import make_polygon, offset_wire
+from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
 
 
 class TestBluemiraFace:
@@ -74,3 +74,32 @@ class TestBluemiraFace:
             assert not face.is_null()
             assert face.is_valid()
             assert face.area > 0.0
+
+
+class TestNormalAt:
+    normals = [
+        (0, 1, 0),
+        (1, 0, 0),
+        (0, 0, 1),
+        (0, -1, 0),
+        (-1, 0, 0),
+        (0, 0, -1),
+        (1, 3, -4),
+        (-10, -135.2, 234.5),
+    ]
+
+    @pytest.mark.parametrize("normal", normals)
+    def test_circle_normal(self, normal):
+        normal = normal / np.linalg.norm(normal)
+        circle = BluemiraFace(make_circle(axis=normal))
+        np.testing.assert_allclose(circle.normal_at(0, 0), normal)
+
+    def test_xy_polygon_normal(self):
+        xy_polygon = BluemiraFace(
+            make_polygon(
+                [[4, -2, 0], [6, -2, 0], [6, 2, 0], [4, 2, 0]],
+                closed=True,
+            )
+        )
+
+        np.testing.assert_allclose(xy_polygon.normal_at(0, 0), (0, 0, 1))

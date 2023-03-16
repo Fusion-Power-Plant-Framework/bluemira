@@ -167,6 +167,13 @@ class BluemiraFace(BluemiraGeo):
                 points.append(cadapi.discretize(w, ndiscr=ndiscr, dl=dl))
         return points
 
+    def normal_at(self, alpha_1=0.0, alpha_2=0.0):
+        """
+        Get the normal vector of the face at a parameterised point in space. For
+        planar faces, the normal is the same everywhere.
+        """
+        return np.array(self.shape.normalAt(alpha_1, alpha_2))
+
     @property
     def vertexes(self) -> Coordinates:
         """
