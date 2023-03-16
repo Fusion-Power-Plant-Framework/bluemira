@@ -71,7 +71,7 @@ from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
 from eudemo.radial_build import radial_build
-from eudemo.tf_coils.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
+from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
