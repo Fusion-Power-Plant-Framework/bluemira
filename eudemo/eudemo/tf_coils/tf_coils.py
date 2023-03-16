@@ -658,8 +658,13 @@ class TFCoilBuilder(Builder):
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
 
-        case_solid = boolean_fuse([solid, inboard_casing])
+        # This cut operation will hopefully protect against degenerate faces
+        # when doing the subsequent boolean_fuse operation
+        # Note to future self: this is likely due to some accuracy differences
+        # around the usually flat inner plasma-facing edge of the TF.
+        solid = boolean_cut(solid, inboard_casing)[0]
 
+        case_solid = boolean_fuse([solid, inboard_casing])
         case_solid_hollow = boolean_cut(
             case_solid, BluemiraSolid(ins_solid.boundary[0])
         )[0]
