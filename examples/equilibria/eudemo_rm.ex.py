@@ -495,25 +495,7 @@ for eq, problem in zip(eqs, opt_problems):
     PicardIterator(eq, problem, plot=True, relaxation=0.2, fixed_coils=True)()
 
 # %%
-
 max_currents = eqs[0].coilset.get_max_current(0)
-breakdown = Breakdown(deepcopy(eqs[0].coilset), grid)
-
-bd_opt_problem = BreakdownCOP(
-    breakdown.coilset,
-    breakdown,
-    OutboardBreakdownZoneStrategy(R_0, A, 0.225),
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 3000, "ftol_rel": 1e-6}),
-    max_currents=max_currents,
-    B_stray_max=1e-3,
-    B_stray_con_tol=1e-6,
-    n_B_stray_points=10,
-    constraints=[
-        deepcopy(field_constraints),
-        deepcopy(force_constraints),
-    ],
-)
-
 
 # cs coils to max current pf to 0
 # alternate PF
@@ -524,9 +506,32 @@ pfs[
 pfs[
     (1, 3, 5),
 ] = -5e6
+
+
 new_currents = np.concatenate(
     [pfs, eqs[0].coilset.get_coiltype("CS").get_max_current(0)]
 )
+
+# for name in eqs[0].coilset.get_coiltype("CS").name:
+#     eqs[0].coilset[name]._flag_sizefix = False
+
+breakdown = Breakdown(deepcopy(eqs[0].coilset), grid)
+
+bd_opt_problem = BreakdownCOP(
+    breakdown.coilset,
+    breakdown,
+    OutboardBreakdownZoneStrategy(R_0, A, 0.225),
+    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-10}),
+    max_currents=max_currents,
+    B_stray_max=1e-3,
+    B_stray_con_tol=1e-6,
+    n_B_stray_points=10,
+    constraints=[
+        deepcopy(field_constraints),
+        deepcopy(force_constraints),
+    ],
+)
+
 # new_currents = np.concatenate([np.zeros(eqs[0].coilset.n_coils("CS")), eqs[0].coilset.get_coiltype("PF").get_max_current(0), ])
 
 optimised_coilset = bd_opt_problem.optimise(x0=new_currents)
