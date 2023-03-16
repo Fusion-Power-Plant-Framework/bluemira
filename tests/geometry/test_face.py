@@ -29,14 +29,7 @@ from bluemira.geometry.parameterisations import (
     SextupleArc,
     TripleArc,
 )
-from bluemira.geometry.tools import (
-    extrude_shape,
-    make_circle,
-    make_polygon,
-    offset_wire,
-    wire_closure,
-)
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
 
 
 class TestBluemiraFace:
