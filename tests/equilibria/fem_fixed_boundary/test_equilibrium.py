@@ -210,4 +210,4 @@ class TestSolveTransportFixedBoundary:
             max_iter=max_iter,
             lcar_mesh=0.3,
         )
-        assert message in caplog.records[-1].getMessage()
+        assert self.transport_solver.i == max_iter
