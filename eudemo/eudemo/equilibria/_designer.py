@@ -26,13 +26,14 @@ gradient coil-set optimisation problem.
 import os
 import shutil
 from dataclasses import dataclass
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.designer import Designer
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.wrapper import transport_code_solver
 from bluemira.equilibria import Equilibrium
@@ -46,11 +47,11 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
-from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
-from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.tools import get_class_from_module
 from eudemo.equilibria._equilibrium import (
     EquilibriumParams,
     ReferenceEquilibriumParams,
@@ -369,27 +370,48 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         pass
 
     def _get_geometry_parameterisation(self):
-        kappa_u, kappa_l, delta_u, delta_l = self._derive_shape_params()
-        return JohnerLCFS(
-            {
-                "r_0": {"value": self.params.R_0.value},
-                "a": {"value": self.params.A.value},
-                "kappa_u": {"value": kappa_u},
-                "kappa_l": {"value": kappa_l},
-                "delta_u": {"value": delta_u},
-                "delta_l": {"value": delta_l},
-            }
+        param_cls: Type[GeometryParameterisation] = get_class_from_module(
+            self.build_config["param_class"], default_module="bluemira.equilibria.shapes"
         )
+        input_dict = self._derive_shape_params(param_cls)
+        return param_cls(input_dict)
 
-    def _derive_shape_params(self):
+    def _derive_shape_params(self, param_cls):
+        defaults = {
+            "f_kappa_l": 1.0,
+            "f_delta_l": 1.0,
+        }
         shape_config = self.build_config.get("shape_config", {})
+        shape_config = {**defaults, **shape_config}
         kappa_95 = self.params.kappa_95.value
         delta_95 = self.params.delta_95.value
-        kappa_l = shape_config["f_kappa_l"] * kappa_95
-        kappa_u = shape_config["f_kappa_l"] ** 0.5 * kappa_95
-        delta_l = shape_config["f_delta_l"] * delta_95
-        delta_u = delta_95
-        return kappa_u, kappa_l, delta_u, delta_l
+
+        kappa_factor = shape_config.pop("f_kappa_l")
+        delta_factor = shape_config.pop("f_delta_l")
+        if "kappa_l" not in shape_config:
+            shape_config["kappa_l"] = kappa_factor * kappa_95
+        if "kappa_u" not in shape_config:
+            shape_config["kappa_u"] = kappa_factor**0.5 * kappa_95
+        if "delta_l" not in shape_config:
+            shape_config["delta_l"] = delta_factor * delta_95
+        if "delta_u" not in shape_config:
+            shape_config["delta_u"] = delta_95
+
+        input_dict = {
+            "r_0": {"value": self.params.R_0.value},
+            "a": {"value": self.params.R_0.value / self.params.A.value},
+        }
+
+        param_cls_instance = param_cls()
+
+        for k, v in shape_config.items():
+            if k in param_cls_instance.variables.names:
+                input_dict[k] = {"value": v}
+            else:
+                bluemira_warn(
+                    f"Unknown shape parameter {k} for GeometryParameterisation: {param_cls_instance.name}"
+                )
+        return input_dict
 
     def _get_transport_solver(self):
         defaults = {

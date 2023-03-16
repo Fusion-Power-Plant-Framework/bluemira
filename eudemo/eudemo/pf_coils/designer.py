@@ -20,7 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Designer for PF coils and its parameters."""
 
+import json
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict, Iterable, Union
 
 import numpy as np
@@ -29,6 +31,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
@@ -36,19 +39,14 @@ from bluemira.equilibria.opt_constraints import (
     IsofluxConstraint,
     PsiConstraint,
 )
-from bluemira.equilibria.opt_problems import (
-    BreakdownCOP,
-    OutboardBreakdownZoneStrategy,
-    PulsedNestedPositionCOP,
-    TikhonovCurrentCOP,
-)
+from bluemira.equilibria.opt_problems import PulsedNestedPositionCOP
 from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.run import OptimisedPulsedCoilsetDesign
 from bluemira.equilibria.shapes import JohnerLCFS
-from bluemira.equilibria.solve import DudsonConvergence
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
+from bluemira.utilities.tools import get_class_from_module, json_writer
 from eudemo.pf_coils.tools import (
     make_coil_mapper,
     make_coilset,
@@ -102,7 +100,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         `ParameterFrame` that can be converted to a
         `PFCoilDesignerParams` instance.
     build_config: Dict[str, Any]
-        TODO(hsaunders1904): what goes in this dict?
+        Build configuration dictionary for the PFCoilsDesigner
     tf_coil_boundary: BluemiraWire
         Wire giving the outline of outer edge of the reactor's TF coils.
     keep_out_zones: Iterable[BluemiraFace]
@@ -121,6 +119,20 @@ class PFCoilsDesigner(Designer[CoilSet]):
         super().__init__(params, build_config)
         self.tf_coil_boundary = tf_coil_boundary
         self.keep_out_zones = keep_out_zones
+        self.file_path = self.build_config.get("file_path", None)
+
+    def read(self) -> CoilSet:
+        """
+        Read in a coilset
+        """
+        if self.file_path is None:
+            raise ValueError("No file path to read from!")
+
+        with open(self.file_path, "r") as file:
+            data = json.load(file)
+
+        eqdsk = EQDSKInterface(**data[next(iter(data))])
+        return CoilSet.from_group_vecs(eqdsk)
 
     def run(self) -> CoilSet:
         """
@@ -131,14 +143,23 @@ class PFCoilsDesigner(Designer[CoilSet]):
         """
         coilset = self._make_coilset()
         coil_mapper = self._make_coil_mapper(coilset)
+        defaults = {
+            "grid_scale_x": 2.0,
+            "grid_scale_z": 2.0,
+            "nx": 65,
+            "nz": 65,
+        }
+        grid_settings = self.build_config["grid_settings"]
+        grid_settings = {**defaults, **grid_settings}
+
         grid = make_grid(
             self.params.R_0.value,
             self.params.A.value,
             self.params.kappa.value,
-            scale_x=2.0,
-            scale_z=2.0,
-            nx=65,
-            nz=65,
+            scale_x=grid_settings["grid_scale_x"],
+            scale_z=grid_settings["grid_scale_z"],
+            nx=grid_settings["nx"],
+            nz=grid_settings["nz"],
         )
         # TODO: Make a CustomProfile from flux functions coming from PLASMOD and fixed
         # boundary optimisation
@@ -153,11 +174,90 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coilset, grid, profiles, coil_mapper, constraints
         )
         bluemira_print(f"Solving design problem: {opt_problem.__class__.__name__}")
-        return opt_problem.optimise(verbose=True)
+        result = opt_problem.optimise(verbose=self.build_config.get("verbose", False))
+        self._save_equilibria(opt_problem)
+        if self.build_config.get("plot", False):
+            opt_problem.plot()
+
+        return result
+
+    def _save_equilibria(self, opt_problem):
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        result_dict = {}
+        for k, v in opt_problem.snapshots.items():
+            if k in [opt_problem.SOF, opt_problem.EOF]:
+                result_dict[k] = v.eq.to_dict()
+                result_dict[k]["name"] = f"bluemira {timestamp} {k}"
+
+        json_writer(result_dict, self.file_path)
 
     def _make_pulsed_coilset_opt_problem(
         self, coilset, grid, profiles, position_mapper, constraints
     ):
+        breakdown_defaults = {
+            "param_class": "bluemira.equilibria.opt_problems::OutboardBreakdownZoneStrategy",
+            "problem_class": "bluemira.equilibria.opt_problems::BreakdownCOP",
+            "optimisation_settings": {
+                "algorithm_name": "COBYLA",
+                "conditions": {
+                    "max_eval": 5000,
+                    "ftol_rel": 1e-10,
+                },
+            },
+            "B_stray_con_tol": 1e-6,
+            "n_B_stray_points": 10,
+        }
+        breakdown_settings = self.build_config.get("breakdown_settings", {})
+        breakdown_settings = {**breakdown_defaults, **breakdown_settings}
+        breakdown_strategy = get_class_from_module(breakdown_settings["param_class"])
+        breakdown_problem = get_class_from_module(breakdown_settings["problem_class"])
+        breakdown_optimiser = Optimiser(
+            breakdown_settings["optimisation_settings"]["algorithm_name"],
+            opt_conditions=breakdown_settings["optimisation_settings"]["conditions"],
+        )
+
+        eq_defaults = {
+            "problem_class": "bluemira.equilibria.opt_problems::TikhonovCurrentCOP",
+            "convergence_class": "bluemira.equilibria.solve::DudsonConvergence",
+            "conv_limit": 1e-4,
+            "gamma": 1e-12,
+            "relaxation": 0.2,
+            "peak_PF_current_factor": 1.5,
+            "optimisation_settings": {
+                "algorithm_name": "SLSQP",
+                "conditions": {
+                    "max_eval": 5000,
+                    "ftol_rel": 1e-6,
+                },
+            },
+        }
+        eq_settings = self.build_config.get("equilibrium_settings", {})
+        eq_settings = {**eq_defaults, **eq_settings}
+        eq_problem = get_class_from_module(eq_settings["problem_class"])
+        eq_optimiser = Optimiser(
+            eq_settings["optimisation_settings"]["algorithm_name"],
+            opt_conditions=eq_settings["optimisation_settings"]["conditions"],
+        )
+        eq_converger = get_class_from_module(eq_settings["convergence_class"])
+        eq_convergence = eq_converger(eq_settings["conv_limit"])
+
+        pos_defaults = {
+            "optimisation_settings": {
+                "algorithm_name": "COBYLA",
+                "conditions": {
+                    "max_eval": 200,
+                    "ftol_rel": 1e-6,
+                    "xtol_rel": 1e-6,
+                },
+            },
+        }
+        pos_settings = self.build_config.get("position_settings", {})
+        pos_settings = {**pos_defaults, **pos_settings}
+        pos_optimiser = Optimiser(
+            pos_settings["optimisation_settings"]["algorithm_name"],
+            opt_conditions=pos_settings["optimisation_settings"]["conditions"],
+        )
+
         return OptimisedPulsedCoilsetDesign(
             self.params,
             coilset,
@@ -167,28 +267,23 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coil_constraints=constraints["coil_field"],
             equilibrium_constraints=[constraints["isoflux"], constraints["x_point"]],
             profiles=profiles,
-            breakdown_strategy_cls=OutboardBreakdownZoneStrategy,
-            breakdown_problem_cls=BreakdownCOP,
-            breakdown_optimiser=Optimiser(
-                "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-10}
-            ),
-            breakdown_settings={"B_stray_con_tol": 1e-6, "n_B_stray_points": 10},
-            equilibrium_problem_cls=TikhonovCurrentCOP,
-            equilibrium_optimiser=Optimiser(
-                "SLSQP",
-                opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
-            ),
-            equilibrium_convergence=DudsonConvergence(1e-4),
+            breakdown_strategy_cls=breakdown_strategy,
+            breakdown_problem_cls=breakdown_problem,
+            breakdown_optimiser=breakdown_optimiser,
+            breakdown_settings={
+                "B_stray_con_tol": breakdown_settings["B_stray_con_tol"],
+                "n_B_stray_points": breakdown_settings["n_B_stray_points"],
+            },
+            equilibrium_problem_cls=eq_problem,
+            equilibrium_optimiser=eq_optimiser,
+            equilibrium_convergence=eq_convergence,
             equilibrium_settings={
-                "gamma": 1e-12,
-                "relaxation": 0.2,
-                "peak_PF_current_factor": 1.5,
+                "gamma": eq_settings["gamma"],
+                "relaxation": eq_settings["relaxation"],
+                "peak_PF_current_factor": eq_settings["peak_PF_current_factor"],
             },
             position_problem_cls=PulsedNestedPositionCOP,
-            position_optimiser=Optimiser(
-                "COBYLA",
-                opt_conditions={"max_eval": 200, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
-            ),
+            position_optimiser=pos_optimiser,
             limiter=None,
         )
 
@@ -261,8 +356,8 @@ class PFCoilsDesigner(Designer[CoilSet]):
             R_0=self.params.R_0.value,
             kappa=self.params.kappa.value,
             delta=self.params.delta.value,
-            r_cs=self.params.r_cs_in.value + self.params.tk_cs.value / 2,
-            tk_cs=self.params.tk_cs.value / 2,
+            r_cs=self.params.r_cs_in.value + 0.5 * self.params.tk_cs.value,
+            tk_cs=0.5 * self.params.tk_cs.value,
             g_cs=self.params.g_cs_mod.value,
             tk_cs_ins=self.params.tk_cs_insulation.value,
             tk_cs_cas=self.params.tk_cs_casing.value,

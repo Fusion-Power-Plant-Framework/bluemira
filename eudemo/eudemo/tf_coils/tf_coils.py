@@ -355,7 +355,9 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             bluemira_debug("Applying shape constraints")
             design_problem.apply_shape_constraints()
 
-        return design_problem.optimise(), wp_cross_section
+        result = design_problem.optimise()
+        result.to_json(self.file_path)
+        return result, wp_cross_section
 
     def read(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
         """
@@ -639,32 +641,30 @@ class TFCoilBuilder(Builder):
         """
         # Normally I'd do lots more here to get to a proper casing
         # This is just a proof-of-principle
-
         centreline_points = self.centreline.discretize(byedges=True, ndiscr=2000)
 
-        solid = self._make_inner_cas_xsec(y_in, inner_xs, outer_xs, centreline_points)
-
-        cut_wires = slice_shape(
-            solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+        solid = self._make_casing_sweep_shape(
+            y_in, inner_xs, outer_xs, centreline_points
         )
-        cut_wires.sort(key=lambda wire: wire.length)
-        bb = cut_wires[-1].bounding_box
-        z_min = bb.z_min
-        z_max = bb.z_max
+
+        casing_xz_face, z_min, z_max = self._make_casing_xz_face(solid)
+
+        casing_half_tk = 0.5 * (
+            self.params.tf_wp_depth.value + self.params.tk_tf_side.value
+        )
+        casing_xz_face.translate((0, -casing_half_tk, 0))
+        solid = extrude_shape(casing_xz_face, (0, 2 * casing_half_tk, 0))
 
         inner_xs.translate((0, 0, z_min - inner_xs.center_of_mass[2]))
         inboard_casing = extrude_shape(BluemiraFace(inner_xs), (0, 0, z_max - z_min))
 
-        joiner_top, joiner_bottom = self._make_joining_sections(
-            z_min, z_max, centreline_points
-        )
+        # This cut operation will hopefully protect against degenerate faces
+        # when doing the subsequent boolean_fuse operation
+        # Note to future self: this is likely due to some accuracy differences
+        # around the usually flat inner plasma-facing edge of the TF.
+        solid = boolean_cut(solid, inboard_casing)[0]
 
-        # Cut away straight sweep before fusing to protect against degenerate faces
-        # Keep the largest piece
-        pieces = boolean_cut(solid, inboard_casing)
-        solid = max(pieces, key=lambda x: x.volume)
-
-        case_solid = boolean_fuse([solid, inboard_casing, joiner_top, joiner_bottom])
+        case_solid = boolean_fuse([solid, inboard_casing])
         case_solid_hollow = boolean_cut(
             case_solid, BluemiraSolid(ins_solid.boundary[0])
         )[0]
@@ -755,7 +755,7 @@ class TFCoilBuilder(Builder):
 
         return BluemiraFace([wires[1], wires[0]]), BluemiraFace([wires[3], wires[2]])
 
-    def _make_inner_cas_xsec(
+    def _make_casing_sweep_shape(
         self,
         y_in: float,
         inner_xs: BluemiraWire,
@@ -789,45 +789,61 @@ class TFCoilBuilder(Builder):
             [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self.centreline
         )
 
-    def _make_joining_sections(
-        self, z_min: float, z_max: float, centreline_points: np.ndarray
-    ) -> List[BluemiraSolid]:
-        # Join the straight leg to the curvy bits
-
-        y_in_join = np.full(
-            4, 0.5 * (self.params.tf_wp_depth.value + self.params.tk_tf_side.value)
-        )
-        y_in_join[:2] = -y_in_join[:2]
-        x_min = np.min(centreline_points.x)
-
-        idx = np.where(np.isclose(centreline_points.z, np.max(centreline_points.z)))[0]
-        x_turn_top = np.min(centreline_points.x[idx])
-        idx = np.where(np.isclose(centreline_points.z, np.min(centreline_points.z)))[0]
-        x_turn_bot = np.min(centreline_points.x[idx])
-
-        # Need to cut away the excess joiner extrusions
-        cl = deepcopy(self.centreline)
-        cl.translate((0, -2 * self.params.tf_wp_depth.value, 0))
-        cutter = extrude_shape(
-            BluemiraFace(cl), (0, 4 * self.params.tf_wp_depth.value, 0)
-        )
-
-        joiners = []
-        for z, x_turn in [[z_max, x_turn_top], [z_min, x_turn_bot]]:
-            z_arr = np.full(4, z)
-            j_face = BluemiraFace(
-                make_polygon(
-                    [
-                        [x_min, x_turn, x_turn, x_min],
-                        y_in_join,
-                        z_arr,
-                    ],
-                    closed=True,
-                )
+    def _make_casing_xz_face(self, casing_solid):
+        # Get the outer casing wire
+        xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
+        cut_wires = slice_shape(casing_solid, xz_plane)
+        cut_wires.sort(key=lambda wire: wire.length)
+        if len(cut_wires) != 2:
+            raise BuilderError(
+                f"Expecting 2 wires here but there are: {len(cut_wires)} of them"
             )
-            joiners.append(boolean_cut(extrude_shape(j_face, (0, 0, -z)), cutter)[0])
+        inner_wire = cut_wires[0]
+        outer_wire = cut_wires[1]
 
-        return joiners
+        # Get the outboard half of this wire
+
+        z_max = outer_wire.bounding_box.z_max
+        # Should do this by optimisation, but parameter_at is fragile for circle arcs
+        # Also cannot trust bounding boxes, ffs.
+        points = outer_wire.discretize(ndiscr=1000, byedges=True)
+        idx_max = np.argmax(points.z)
+        idx_min = np.argmin(points.z)
+        x_max, z_max = points.x[idx_max], points.z[idx_max]
+        x_min, z_min = points.x[idx_min], points.z[idx_min]
+
+        offset = 1.0
+        x = [0, x_max, x_max, x_min, x_min, 0]
+        z = [
+            z_max + offset,
+            z_max + offset,
+            z_max,
+            z_min,
+            z_min - offset,
+            z_min - offset,
+        ]
+        cut_face = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+        cut_result = boolean_cut(outer_wire, cut_face)
+        cut_result.sort(key=lambda wire: wire.center_of_mass[0])
+        outboard_outer_wire = cut_result[-1]
+
+        x_inboard = np.min(points.x)
+        # Make the "joining" corners to the inboard
+        start_point = outboard_outer_wire.start_point()
+        end_point = outboard_outer_wire.end_point()
+        if start_point.z[0] > end_point.z[0]:
+            start_point, end_point = end_point, start_point
+
+        x1, z1 = start_point.x[0], start_point.z[0]
+        x2, z2 = end_point.x[0], end_point.z[0]
+
+        joiner_wire = make_polygon(
+            {"x": [x2, x_inboard, x_inboard, x1], "y": 0, "z": [z2, z2, z1, z1]}
+        )
+
+        # Make the final casing xz face
+        outer_wire = BluemiraWire([outboard_outer_wire, joiner_wire])
+        return BluemiraFace([outer_wire, inner_wire]), min(z1, z2), max(z1, z2)
 
     def _make_field_solver(self) -> HelmholtzCage:
         """

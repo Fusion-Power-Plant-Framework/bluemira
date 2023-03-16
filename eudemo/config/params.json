@@ -374,11 +374,17 @@
         "source": "Input",
         "long_name": "Plasma safety factor"
     },
-    "r_corner": {
+    "r_cs_corner": {
         "value": 0,
         "unit": "meter",
         "source": "Input",
-        "long_name": "PF Coil corner radius"
+        "long_name": "CS coil corner radius"
+    },
+    "r_pf_corner": {
+        "value": 0,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "PF coil corner radius"
     },
     "r_cp_top": {
         "value": 0.8934,

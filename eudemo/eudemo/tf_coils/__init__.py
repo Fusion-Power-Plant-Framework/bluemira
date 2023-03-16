@@ -18,8 +18,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""PF Coil designer/builder for EUDEMO"""
+"""
+Module containing builders for the EUDEMO TF coil components
+"""
 
-from eudemo.pf_coils.builder import build_pf_coils_component
-from eudemo.pf_coils.component_manager import PFCoil
-from eudemo.pf_coils.designer import PFCoilsDesigner
+from eudemo.tf_coils.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
