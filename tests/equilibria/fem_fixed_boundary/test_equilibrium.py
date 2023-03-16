@@ -31,10 +31,14 @@ from bluemira.base.components import PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     PlasmaFixedBoundaryParams,
+    TransportSolverParams,
     _update_delta_kappa,
     create_mesh,
     create_plasma_xz_cross_section,
     solve_transport_fixed_boundary,
+)
+from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
@@ -50,7 +54,7 @@ def test_update_delta_kappa_it_err():
 
 
 @dataclass
-class TransportSolverParams(ParameterFrame):
+class DummyTransportSolverParams(ParameterFrame):
     """Transport Solver ParameterFrame"""
 
     V_p: Parameter[float]
@@ -78,7 +82,7 @@ class DummyCircle:
 
 def test_plasma_xz_cross_section():
     pp = Params(1, 1, 1, 1)
-    transport_params = TransportSolverParams.from_dict(
+    transport_params = DummyTransportSolverParams.from_dict(
         {
             "V_p": {"value": -2500, "unit": "m^3"},
             "kappa_95": {"value": 1, "unit": ""},
@@ -127,19 +131,83 @@ class TranspOutParams(ParameterFrame):
 
 class DummyTransportSolver:
     name = "DUMMY"
+    params = TransportSolverParams.from_dict(
+        {
+            "I_p": {"value": 15e6, "unit": "A"},
+            "B_0": {"value": 5, "unit": "T"},
+            "R_0": {"value": 9, "unit": "m"},
+            "A": {"value": 3.1, "unit": "m"},
+            "V_p": {"value": 2000, "unit": "m^3"},
+            "v_burn": {"value": 0.02, "unit": "V"},
+            "kappa_95": {"value": 1.5, "unit": ""},
+            "delta_95": {"value": 0.4, "unit": ""},
+            "delta": {"value": 0.33, "unit": ""},
+            "kappa": {"value": 1.6, "unit": ""},
+            "q_95": {"value": 3.25, "unit": ""},
+            "f_ni": {"value": 0.1, "unit": ""},
+        }
+    )
 
     def __init__(self):
         self.i = 0
+        self.n = 50
+        self.x = np.linspace(0, 1, self.n)
 
     def execute(self, mode):
-        return TranspOutParams.from_dict(
-            {
-                "I_p": {"value": 5, "unit": "A"},
-                "B_0": {"value": 5, "unit": "T"},
-                "R_0": {"value": 9, "unit": "m"},
-            }
-        )
+        return self.params
 
     def get_profile(self, prof):
         self.i += 1
-        return np.linspace(0, self.i, num=10)
+        if prof == "x":
+            return self.x
+        if prof == "pprime":
+            return np.gradient(self.get_profile("psi"))
+        if prof == "ffprime":
+            return 10 * self.x[::-1]
+        if prof == "psi":
+            return 5 * self.x
+        if prof == "q":
+            return 1 + np.linspace(0, np.sqrt(2.25), self.n) ** 2
+        if prof == "pressure":
+            return 1e6 * self.x[::-1]
+        raise ValueError(f"unknown profile {prof}")
+
+
+class TestSolveTransportFixedBoundary:
+    johner_parameterisation = JohnerLCFS(
+        {
+            "r_0": {"value": 8.9830e00},
+            "a": {"value": 8.983 / 3.1},
+            "kappa_u": {"value": 1.6},
+            "kappa_l": {"value": 1.75},
+            "delta_u": {"value": 0.33},
+            "delta_l": {"value": 0.45},
+        }
+    )
+    transport_solver = DummyTransportSolver()
+    gs_solver = FemGradShafranovFixedBoundary(
+        p_order=2,
+        max_iter=30,
+        iter_err_max=1.0,
+        relaxation=0,
+    )
+
+    @pytest.mark.parametrize(
+        "max_iter,message",
+        [
+            [1, "did not"],
+        ],
+    )
+    def test_full_run_through(self, max_iter, message, caplog):
+        solve_transport_fixed_boundary(
+            self.johner_parameterisation,
+            self.transport_solver,
+            self.gs_solver,
+            1.5,
+            0.4,
+            iter_err_max=1,
+            inner_iter_err_max=1,
+            max_iter=max_iter,
+            lcar_mesh=0.3,
+        )
+        assert message in caplog.records[-1].getMessage()
