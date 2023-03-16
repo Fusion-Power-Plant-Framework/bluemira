@@ -58,13 +58,14 @@ def build_pf_coils_component(params, build_config, coilset):
                         {"r_corner": {"value": r_corner, "unit": "m"}}, coil
                     ),
                     coil_type,
+                    name,
                 )
             )
         else:
             bluemira_warn(f"Coil {name} has no size")
 
     builders = []
-    for designer, coil_type in wires:
+    for designer, coil_type, coil_name in wires:
         tk_ins = (
             params.tk_pf_insulation.value
             if coil_type.name == "PF"
@@ -75,6 +76,10 @@ def build_pf_coils_component(params, build_config, coilset):
             if coil_type.name == "PF"
             else params.tk_cs_casing.value
         )
+        bc = {
+            **build_config,
+            "name": coil_name,
+        }
         builders.append(
             PFCoilBuilder(
                 {
