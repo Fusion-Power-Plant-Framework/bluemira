@@ -26,7 +26,7 @@ gradient coil-set optimisation problem.
 import os
 import shutil
 from dataclasses import dataclass
-from typing import Dict, Optional, Type, Union
+from typing import Dict, Optional, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,10 +44,13 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FixedBoundaryEquilibrium,
 )
-from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
+from bluemira.equilibria.fem_fixed_boundary.file import (
+    _get_mesh_boundary,
+    save_fixed_boundary_to_file,
+)
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
-from bluemira.equilibria.profiles import Profile
+from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
@@ -293,7 +296,7 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     T_e_ped: Parameter[float]
 
 
-class FixedEquilibriumDesigner(Designer[Equilibrium]):
+class FixedEquilibriumDesigner(Designer[Tuple[Coordinates, CustomProfile]]):
     """
     Solves a transport <-> fixed boundary equilibrium problem to convergence,
     returning a `FixedBoundaryEquilibrium`.
@@ -322,7 +325,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
                 "'file_path' missing from build config."
             )
 
-    def run(self) -> FixedBoundaryEquilibrium:
+    def run(self) -> Tuple[Coordinates, CustomProfile]:
         """
         Run the FixedEquilibriumDesigner.
         """
@@ -345,7 +348,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         }
         settings = self.build_config.get("transport_eq_settings", {})
         settings = {**defaults, **settings}
-        fixed_equilibrium = solve_transport_fixed_boundary(
+        fixed_equilibrium: FixedBoundaryEquilibrium = solve_transport_fixed_boundary(
             geom_parameterisation,
             transport_solver,
             fem_fixed_be_solver,
@@ -361,15 +364,35 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
                 65,
                 127,
             )
-        return fixed_equilibrium
 
-    def read(self):
+        xbdry, zbdry = _get_mesh_boundary(fixed_equilibrium.mesh)
+        lcfs_coords = Coordinates({"x": xbdry, "y": 0, "z": zbdry})
+        lcfs_coords.close()
+        profiles = CustomProfile(
+            fixed_equilibrium.pprime,
+            fixed_equilibrium.ffprime,
+            R_0=fixed_equilibrium.R_0,
+            B_0=fixed_equilibrium.B_0,
+            I_p=fixed_equilibrium.I_p,
+        )
+        return lcfs_coords, profiles
+
+    def read(self) -> Tuple[Coordinates, CustomProfile]:
         """
         Read in a fixed boundary equilibrium
         """
-        # TODO: Load a FixedBoundaryEquilibrium (need mesh and solver probably...)
-        # Cannot do this from just an EQDSK without loss of information.
-        pass
+        data = EQDSKInterface.from_file(self.file_path)
+        lcfs_coords = Coordinates({"x": data.xbdry, "y": 0, "z": data.zbdry})
+        lcfs_coords.close()
+
+        profiles = CustomProfile(
+            data.pprime,
+            data.ffprime,
+            R_0=data.xcentre,
+            B_0=data.bcentre,
+            I_p=data.cplasma,
+        )
+        return lcfs_coords, profiles
 
     def _get_geometry_parameterisation(self):
         param_cls: Type[GeometryParameterisation] = get_class_from_module(
@@ -455,6 +478,57 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         }
         eq_settings = {**defaults, **eq_settings}
         return FemGradShafranovFixedBoundary(**eq_settings)
+
+
+@dataclass
+class DummyFixedEquilibriumDesignerParams(ParameterFrame):
+    """
+    Parameter frame for the dummy equilibrium designer
+    """
+
+    R_0: Parameter[float]
+    B_0: Parameter[float]
+    I_p: Parameter[float]
+    l_i: Parameter[float]
+    beta_p: Parameter[float]
+    A: Parameter[float]
+    delta: Parameter[float]
+    delta_95: Parameter[float]
+    kappa: Parameter[float]
+    kappa_95: Parameter[float]
+
+
+class DummyFixedEquilibriumDesigner(Designer[Tuple[Coordinates, Profile]]):
+    """
+    Dummy equilibrium designer that produces a LCFS shape and a profile
+    object to be used in later reference free boundary equilibrium
+    designers.
+    """
+
+    params: DummyFixedEquilibriumDesignerParams
+    param_cls = DummyFixedEquilibriumDesignerParams
+
+    def __init__(self, params, build_config):
+        super().__init__(params, build_config)
+        if self.build_config["run_mode"] != "run":
+            bluemira_warn(
+                f"This designer {type(self).__name__} can only be run in run mode."
+            )
+            self.build_config["run_mode"] = "run"
+
+    def run(self) -> Tuple[Coordinates, Profile]:
+        """
+        Run the DummyFixedEquilibriumDesigner.
+        """
+        lcfs_coords = None
+        profiles = BetaLiIpProfile(
+            self.params.beta_p.value,
+            self.params.l_i.value,
+            self.params.I_p.value,
+            R_0=self.params.R_0.value,
+            B_0=self.params.B_0.value,
+        )
+        return lcfs_coords, profiles
 
 
 @dataclass

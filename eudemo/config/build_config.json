@@ -41,8 +41,15 @@
             "plot": false
         }
     },
+    "Dummy fixed boundary equilibrium": {
+        "run_mode": "run",
+        "settings": {
+            "li_rel_tol": 0.01,
+            "li_min_iter": 2
+        }
+    },
     "Free boundary equilibrium":{
-            "run_mode": "read",
+            "run_mode": "run",
             "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
             "file_path": "config/equilibrium_eqdsk.json",
             "settings": {

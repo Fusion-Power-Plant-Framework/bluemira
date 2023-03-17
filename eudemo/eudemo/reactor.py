@@ -220,14 +220,22 @@ if __name__ == "__main__":
     build_config = _read_json(os.path.join(CONFIG_DIR, "build_config.json"))
 
     params = radial_build(params, build_config["Radial build"])
-    fixed_boundary_eq = run_designer(
+    lcfs_coords, profiles = run_designer(
         FixedEquilibriumDesigner, params, build_config["Fixed boundary equilibrium"]
+    )
+
+    lcfs_coords, profiles = run_designer(
+        DummyFixedEquilibriumDesigner,
+        params,
+        build_config["Dummy fixed boundary equilibrium"],
     )
 
     free_boundary_eq = run_designer(
         ReferenceFreeBoundaryEquilibriumDesigner,
         params,
         build_config["Free boundary equilibrium"],
+        lcfs_coords=lcfs_coords,
+        profiles=profiles,
     )
 
     reactor.plasma = build_plasma(build_config.get("Plasma", {}), free_boundary_eq)
