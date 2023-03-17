@@ -26,6 +26,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Type, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.builder import Builder, ComponentManager
@@ -359,6 +360,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         result.to_json(self.file_path)
         if self.build_config.get("plot", False):
             design_problem.plot()
+            plt.slow()
         return result, wp_cross_section
 
     def read(self) -> Tuple[GeometryParameterisation, BluemiraWire]:
