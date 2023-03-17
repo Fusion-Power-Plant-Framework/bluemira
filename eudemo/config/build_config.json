@@ -46,11 +46,7 @@
         "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
         "shape_config": {
             "f_delta_l": 1.25,
-            "f_kappa_l": 1.15,
-            "phi_l_neg": -130.0,
-            "phi_l_pos": 30.0,
-            "phi_u_neg": 0.0,
-            "phi_u_pos": 0.0
+            "f_kappa_l": 1.15
         },
         "settings": {
             "n_points": 200,
@@ -84,7 +80,7 @@
                     "value": "r_fw_ob_in"
                 }
             },
-            "run_mode": "read",
+            "run_mode": "run",
             "name": "First Wall",
             "file_path": "config/FirstWallDesign.json",
             "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
@@ -102,7 +98,7 @@
         "Divertor silhouette": {}
     },
     "TF coils": {
-        "run_mode": "read",
+        "run_mode": "run",
         "file_path": "config/TFCoilDesign.json",
         "param_class": "TripleArc",
         "variables_map": {},
@@ -122,7 +118,7 @@
         }
     },
     "PF coils": {
-        "run_mode": "read",
+        "run_mode": "run",
         "file_path": "config/PFCoilDesign.json",
         "verbose": false,
         "plot": true,

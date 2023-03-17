@@ -599,7 +599,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         """
         Run the FreeBoundaryEquilibriumFromFixedDesigner.
         """
-        lcfs_shape = make_polygon(self.lcfs_coords)
+        lcfs_shape = make_polygon(self.lcfs_coords, closed=True)
 
         # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
 
