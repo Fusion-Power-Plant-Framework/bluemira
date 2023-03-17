@@ -236,6 +236,9 @@ class LoadData(PowerCycleLoadABC):
     # ARITHMETICS
     # ------------------------------------------------------------------
     def __add__(self, other):
+        """
+        Addition is not defined for 'LoadData' instances.
+        """
         raise LoadDataError("add")
 
 
@@ -298,7 +301,6 @@ class PowerLoad(PowerCycleLoadABC):
         loaddata_set,
         model: Union[PowerLoadModel, List[PowerLoadModel]],
     ):
-
         super().__init__(name)
 
         self.loaddata_set = self._validate_loaddata_set(loaddata_set)
@@ -369,7 +371,7 @@ class PowerLoad(PowerCycleLoadABC):
         """
         try:
             interpolation_kind = model.value
-        except (AttributeError):
+        except AttributeError:
             raise PowerLoadError("model")
 
         x = loaddata.time
@@ -430,7 +432,6 @@ class PowerLoad(PowerCycleLoadABC):
         model = self.model
 
         for d in range(loaddata_set_length):
-
             current_loaddata = loaddata_set[d]
             current_model = model[d]
 
@@ -493,7 +494,7 @@ class PowerLoad(PowerCycleLoadABC):
         return time
 
     @intrinsic_time.setter
-    def time(self, value) -> None:
+    def intrinsic_time(self, value) -> None:
         raise PowerLoadError("time")
 
     def plot(self, ax=None, n_points=None, detailed=False, **kwargs):
@@ -582,7 +583,6 @@ class PowerLoad(PowerCycleLoadABC):
         list_of_plot_objects.append(plot_object)
 
         if detailed:
-
             loaddata_set = self.loaddata_set
             model = self.model
             number_of_data_elements = len(loaddata_set)
@@ -736,7 +736,6 @@ class PhaseLoad(PowerCycleLoadABC):
     }
 
     def __init__(self, name, phase, powerload_set, normalize):
-
         super().__init__(name)
 
         self.phase = self._validate_phase(phase)
@@ -1164,7 +1163,6 @@ class PulseLoad(PowerCycleLoadABC):
     epsilon = 1e6 * sys.float_info.epsilon
 
     def __init__(self, name, pulse, phaseload_set):
-
         super().__init__(name)
 
         pulse = self._validate_pulse(pulse)
@@ -1189,11 +1187,9 @@ class PulseLoad(PowerCycleLoadABC):
 
         validated_phaseload_set = []
         phase_library = pulse.build_phase_library()
-        for (_, phase_in_pulse) in phase_library.items():
-
+        for _, phase_in_pulse in phase_library.items():
             phaseloads_for_phase = []
             for phaseload in phaseload_set:
-
                 PhaseLoad.validate_class(phaseload)
 
                 phase_of_phaseload = phaseload.phase
@@ -1221,7 +1217,7 @@ class PulseLoad(PowerCycleLoadABC):
 
         phaseload_set = []
         phase_library = pulse.build_phase_library()
-        for (_, phase) in phase_library.items():
+        for _, phase in phase_library.items():
             null_phaseload = PhaseLoad.null(phase)
             phaseload_set.append(null_phaseload)
 

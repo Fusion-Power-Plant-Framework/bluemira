@@ -32,7 +32,7 @@ class BOPPhaseDependency(Enum):
 
 class BOPPhase(PowerCyclePhase):
     """
-    Class to define pulses for a Power Cycle timeline, to be used by
+    Class to define pulses for a Power Cycle scenario, to be used by
     the BOP submodule.
 
     This class is a child of the 'PowerCyclePhase' class and uses that
@@ -70,8 +70,16 @@ class BOPPhase(PowerCyclePhase):
 
 
 class BOPPulse(PowerCyclePulse):
+    """
+    TBD
+    """
+
     pass
 
 
-class BOPTimeline(PowerCycleTimeline):
+class BOPScenario(PowerCycleTimeline):
+    """
+    TBD
+    """
+
     pass

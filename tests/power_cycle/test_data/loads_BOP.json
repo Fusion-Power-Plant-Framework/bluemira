@@ -25,7 +25,9 @@
                     ],
                     "unit": "MW",
                     "consumption": false,
-                    "efficiencies": {},
+                    "efficiencies": {
+                        "isentropic": 0.98
+                    },
                     "loads": {
                         "description": [
                             "turbine 1",

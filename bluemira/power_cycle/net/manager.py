@@ -79,7 +79,6 @@ class PowerCycleSystem(PowerCycleABC):
         system_config: dict,
         label=None,
     ):
-
         scenario = self._validate_scenario(scenario)
 
         system_format = self._system_format
@@ -122,25 +121,40 @@ class PowerCycleSystem(PowerCycleABC):
 
     @property
     def active_loads(self):
+        """
+        Dictionary of 'PhaseLoad' objects created from the 'active'
+        (load type) fields of the JSON input file.
+        """
         active_config = self._active_config
         active_loads = self._make_phaseloads_from_config(active_config)
         return active_loads
 
     @property
     def reactive_loads(self):
+        """
+        Dictionary of 'PhaseLoad' objects created from the 'reactive'
+        (load type) fields of the JSON input file.
+        """
         reactive_config = self._reactive_config
         reactive_loads = self._make_phaseloads_from_config(reactive_config)
         return reactive_loads
 
     @classmethod
-    def list_all_load_types(self):
-        system_format = self._system_format
+    def list_all_load_types(cls):
+        """
+        List with all valid load types.
+        """
+        system_format = cls._system_format
         load_types = list(system_format.keys())
         load_types.remove("name")
         return load_types
 
     @staticmethod
     def import_phaseload_inputs(module, variables_map):
+        """
+        Method that unpacks the 'variables_map' field of a JSON input
+        file.
+        """
         if module is None:
             phase_list = variables_map["phases"]
             normalize_list = variables_map["normalize"]
@@ -181,7 +195,10 @@ class PowerCycleSystem(PowerCycleABC):
 
                 data = raw_uc(data, unit, "W")
                 for efficiency in all_efficiencies:
-                    data = data / efficiency
+                    if consumption:
+                        data = data / efficiency
+                    else:
+                        data = data * efficiency
                 data = list(data)
 
                 loaddata = LoadData(description, time, data)
@@ -254,7 +271,7 @@ class PowerCycleSystem(PowerCycleABC):
 
     def _make_phaseloads_from_config(self, type_config):
         system_loads = dict()
-        for (label, load_config) in type_config.items():
+        for label, load_config in type_config.items():
             load_name = load_config["name"]
             module = load_config["module"]
             variables_map = load_config["variables_map"]
@@ -310,7 +327,7 @@ class PowerCycleGroup(PowerCycleABC):
     @staticmethod
     def _build_system_library(scenario, group_config):
         system_library = dict()
-        for (system_label, system_config) in group_config.items():
+        for system_label, system_config in group_config.items():
             system = PowerCycleSystem(
                 scenario,
                 system_config,
@@ -361,7 +378,6 @@ class PowerCycleManager:
     }
 
     def __init__(self, scenario_config_path: str, manager_config_path: str):
-
         scenario_builder = ScenarioBuilder(scenario_config_path)
         scenario = scenario_builder.scenario
         self.scenario = scenario
@@ -379,7 +395,7 @@ class PowerCycleManager:
     @staticmethod
     def _build_group_library(scenario, manager_config):
         group_library = dict()
-        for (group_label, group_inputs) in manager_config.items():
+        for group_label, group_inputs in manager_config.items():
             group_name = group_inputs["name"]
             group_config_path = group_inputs["config_path"]
             group_systems = group_inputs["systems"]
