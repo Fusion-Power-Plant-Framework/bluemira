@@ -114,11 +114,6 @@ exclude =
     # versioneer is 3rd-party and we aren't liable for their code
     versioneer.py,
     bluemira/_version.py,
-    # Ignore mirapy for now
-    mirapy,
-    examples/meshing,
-    tests/test_emag.py,
-    tests/test_algebra.py
 
 max-complexity = 20
 max-doc-length = 89
