@@ -56,7 +56,9 @@ class EquilibriumParams(ParameterFrame):
 
 
 def make_equilibrium(
-    _params: Union[EquilibriumParams, Dict], tf_coil_boundary: BluemiraWire
+    _params: Union[EquilibriumParams, Dict],
+    tf_coil_boundary: BluemiraWire,
+    grid_settings: dict,
 ):
     """
     Build an equilibrium using a coilset and a `BetaIpProfile` profile.
@@ -90,9 +92,7 @@ def make_equilibrium(
         params.R_0.value,
         params.B_0.value,
     )
-    grid = make_grid(
-        params.R_0.value, params.A.value, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65
-    )
+    grid = make_grid(params.R_0.value, params.A.value, kappa, grid_settings)
 
     return Equilibrium(coilset, grid, profiles)
 
