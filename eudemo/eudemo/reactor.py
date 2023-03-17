@@ -323,4 +323,5 @@ if __name__ == "__main__":
     sspc_solver.model.plot()
     plt.show()
 
+    reactor.show_cad("xz")
     reactor.show_cad()

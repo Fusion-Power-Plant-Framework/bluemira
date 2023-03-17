@@ -515,7 +515,7 @@
         "long_name": "Cryostat VV thickness"
     },
     "tk_rs": {
-        "value": 0.02,
+        "value": 2.0,
         "unit": "meter",
         "source": "Input",
         "long_name": "thickness of the radiation shield"
@@ -539,13 +539,13 @@
         "long_name": "Outboard first wall thickness"
     },
     "tk_pf_insulation":{
-        "value": 0.1,
+        "value": 0.01,
         "unit": "meter",
         "source": "Input",
         "long_name": "PF coil insulation thickness"
     },
     "tk_pf_casing":{
-        "value": 0.1,
+        "value": 0.05,
         "unit": "meter",
         "source": "Input",
         "long_name": "PF coil casing thickness"
