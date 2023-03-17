@@ -609,7 +609,6 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         tf_coil_boundary = self._make_tf_boundary(lcfs_shape)
 
         defaults = {
-            "plot": False,
             "relaxation": 0.02,
             "coil_discretisation": 0.3,
             "gamma": 1e-8,
@@ -642,6 +641,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             eq,
             opt_problem,
             convergence=DudsonConvergence(iter_err_max),
+            plot=self.build_config.get("plot", False),
             fixed_coils=True,
             **settings,
         )
