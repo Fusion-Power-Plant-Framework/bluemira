@@ -158,7 +158,11 @@ def build_tf_coils(
 
 
 def build_pf_coils(
-    params, build_config, tf_coil_boundary, pf_coil_keep_out_zones=()
+    params,
+    build_config,
+    reference_equilibrium,
+    tf_coil_boundary,
+    pf_coil_keep_out_zones=(),
 ) -> PFCoil:
     """
     Design and build the PF coils for the reactor.
@@ -166,6 +170,7 @@ def build_pf_coils(
     pf_designer = PFCoilsDesigner(
         params,
         build_config,
+        reference_equilibrium,
         tf_coil_boundary,
         pf_coil_keep_out_zones,
     )
@@ -293,6 +298,7 @@ if __name__ == "__main__":
     reactor.pf_coils = build_pf_coils(
         params,
         build_config.get("PF coils", {}),
+        reference_eq,
         reactor.tf_coils.boundary(),
         pf_coil_keep_out_zones=[],
     )

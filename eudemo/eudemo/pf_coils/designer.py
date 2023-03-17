@@ -21,6 +21,7 @@
 """Designer for PF coils and its parameters."""
 
 import json
+from copy import deepcopy
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, Iterable, Union
@@ -31,6 +32,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_constraints import (
     CoilFieldConstraints,
@@ -91,15 +93,17 @@ class PFCoilsDesigner(Designer[CoilSet]):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params:
         A `PFCoilsDesignerParams` instance, or a dictionary or other
         `ParameterFrame` that can be converted to a
         `PFCoilDesignerParams` instance.
-    build_config: Dict[str, Any]
+    reference_equilibrium:
+        Reference equilibrium to attempt to match during the design
+    build_config:
         Build configuration dictionary for the PFCoilsDesigner
-    tf_coil_boundary: BluemiraWire
+    tf_coil_boundary:
         Wire giving the outline of outer edge of the reactor's TF coils.
-    keep_out_zones: Iterable[BluemiraFace]
+    keep_out_zones:
         Faces representing keep-out-zones for the PF coil geometry.
     """
 
@@ -109,10 +113,12 @@ class PFCoilsDesigner(Designer[CoilSet]):
         self,
         params: Union[Dict, ParameterFrame],
         build_config: Dict,
+        reference_equilibrium: Equilibrium,
         tf_coil_boundary: BluemiraWire,
         keep_out_zones: Iterable[BluemiraFace],
     ):
         super().__init__(params, build_config)
+        self.ref_eq = reference_equilibrium
         self.tf_coil_boundary = tf_coil_boundary
         self.keep_out_zones = keep_out_zones
         self.file_path = self.build_config.get("file_path", None)
@@ -146,14 +152,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             self.params.kappa.value,
             self.build_config.get("grid_settings", {}),
         )
-        # TODO: Make a CustomProfile from flux functions coming from PLASMOD and fixed
-        # boundary optimisation
-        profiles = BetaIpProfile(
-            self.params.beta_p.value,
-            self.params.I_p.value,
-            self.params.R_0.value,
-            self.params.B_0.value,
-        )
+        profiles = deepcopy(self.ref_eq.profiles)
         constraints = self._make_opt_constraints(coilset)
         opt_problem = self._make_pulsed_coilset_opt_problem(
             coilset, grid, profiles, coil_mapper, constraints
