@@ -22,3 +22,14 @@
 """
 Coil structure stuff
 """
+
+from bluemira.builders.coil_supports import (
+    ITERGravitySupportBuilder,
+    ITERGravitySupportBuilderParams,
+    OISBuilder,
+    OISBuilderParams,
+    PFCoilSupportBuilder,
+    PFCoilSupportBuilderParams,
+    StraightOISDesigner,
+    StraightOISDesignerParams,
+)

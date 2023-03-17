@@ -181,6 +181,18 @@ def build_pf_coils(
     return PFCoil(component, coilset)
 
 
+def build_coil_structures(
+    params,
+    build_config,
+) -> CoilStructures:
+    """
+    Design and build the coil structures for the reactor.
+    """
+
+    component = None
+    return CoilStructures(component)
+
+
 def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
     """
     Build the Cryostat thermal shield for the reactor.
@@ -310,6 +322,11 @@ if __name__ == "__main__":
         build_config.get("Thermal shield", {}),
         reactor.pf_coils.xz_boundary(),
         reactor.tf_coils.boundary(),
+    )
+
+    reactor.coil_structures = build_coil_structures(
+        params,
+        build_config.get("Coil structures", {}),
     )
 
     reactor.cryostat = build_cryostat(
