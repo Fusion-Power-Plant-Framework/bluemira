@@ -152,7 +152,7 @@ class TestLoadData:
                 norm_list = [norm] * len(ratios)
 
                 each_ratio_is_norm = []
-                for (r, n) in zip(ratios, norm_list):
+                for r, n in zip(ratios, norm_list):
                     check = r == pytest.approx(n, rel=rel_tol, abs=abs_tol)
                     each_ratio_is_norm.append(check)
 
@@ -248,7 +248,7 @@ class TestPowerLoadModel:
         all_names = [member.name for member in tested_class]
         all_values = [member.value for member in tested_class]
 
-        for (name, value) in zip(all_names, all_values):
+        for name, value in zip(all_names, all_values):
             assert isinstance(name, str)
             assert isinstance(value, str)
 
@@ -866,7 +866,6 @@ class TestPhaseLoad:
 
         null_powerload = PowerLoad.null()
         for phase in sample_phases:
-
             null_instance = tested_class.null(phase)
 
             powerload_set = null_instance.powerload_set
@@ -975,7 +974,6 @@ class TestPhaseLoad:
     @pytest.mark.parametrize("color_index", [2])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_public_plot(self, color_index, detailed_plot_flag):
-
         figure_title = "'detailed' flag = " + str(detailed_plot_flag)
         figure_title = "PhaseLoad Plotting (" + figure_title + ")"
         ax = tools_testkit.prepare_figure(figure_title)
@@ -1013,7 +1011,6 @@ class TestPhaseLoad:
         all_results = []
         list_of_plot_objects = []
         for sample in all_samples:
-
             ax, sample_plot_objects = sample.plot(
                 ax=ax,
                 detailed=False,
@@ -1126,17 +1123,12 @@ class TestPulseLoad:
             )
 
     def test_validate_phaseload_set(self):
-        """
-        import pprint
-
         tested_class = self.tested_class
 
         sample_phaseloads = self.sample_phaseloads
 
         pulse = self.example_pulse
         phase_library = pulse.build_phase_library()
-        phase_library_keys = list(phase_library.keys())
-        phase_library_values = list(phase_library.values())
 
         phaseload_set = tested_class._validate_phaseload_set(
             sample_phaseloads,
@@ -1145,43 +1137,23 @@ class TestPulseLoad:
         n_phaseloads = len(phaseload_set)
         assert n_phaseloads == len(phase_library)
 
-        assert 0
-
+        phase_library_values = list(phase_library.values())
         for p in range(n_phaseloads):
-            phaseload = phaseload_set[p]
+            phaseload_in_set = phaseload_set[p]
 
-            phase_label = phase_library_keys[p]
-            phase_in_library = phase_library_values[p]
+            phase_in_pulse = phase_library_values[p]
 
-            check = phaseload.phase.is_equivalent(phase_in_library)
-            if check:
-                phaseload_is_sum_of_phaseloads_for_phase = True
-                assert phaseload_is_sum_of_phaseloads_for_phase
+            all_phaseloads_for_phase = []
+            for phaseload in sample_phaseloads:
+                if phaseload.phase == phase_in_pulse:
+                    all_phaseloads_for_phase.append(phaseload)
+
+            if len(all_phaseloads_for_phase) == 0:
+                final_phaseload_made_for_phase = PhaseLoad.null(phase_in_pulse)
             else:
-                phaseload_is_null = True
-                assert phaseload_is_null
+                final_phaseload_made_for_phase = sum(all_phaseloads_for_phase)
 
-        """
-
-        """
-        sample_phaseloads = self.sample_phaseloads
-
-        right_name = [
-            "PulseLoad with a non-PhaseLoad",
-            "element in its 'phaseload_set' list argument",
-        ]
-        right_name = " ".join(right_name)
-        right_phaseloads = sample_phaseloads
-
-        wrong_phaseloads = copy.deepcopy(right_phaseloads)
-        wrong_phaseloads[0] = "non-PhaseLoad"
-        self.assert_constructor_fails(
-            right_name,
-            wrong_phaseloads,
-        )
-        """
-        # raise NotImplementedError()
-        pass
+            assert phaseload_in_set == final_phaseload_made_for_phase
 
     def test_null_constructor(self):
         tested_class = self.tested_class
@@ -1266,7 +1238,6 @@ class TestPulseLoad:
         n_modified = len(modified_time)
         presence_list = []
         for i in range(n_modified):
-
             mt = modified_time[i]
             present_in_original = mt in modified_time
             presence_list.append(present_in_original)
@@ -1369,7 +1340,7 @@ class TestPulseLoad:
         result_set = result.phaseload_set
         set_zip = zip(original_set, result_set)
 
-        for (original_phaseload, result_phaseload) in set_zip:
+        for original_phaseload, result_phaseload in set_zip:
             sum_of_originals = original_phaseload + original_phaseload
             assert result_phaseload == sum_of_originals
 

@@ -162,6 +162,10 @@ class PowerCycleScenario(PowerCycleTimeABC):
     # ------------------------------------------------------------------
 
     def build_phase_library(self):
+        """
+        Returns a 'dict' with phase labels as keys and the phases
+        themselves as values.
+        """
         pulse_set = self.pulse_set
         phase_library = dict()
         for pulse in pulse_set:
@@ -225,7 +229,6 @@ class ScenarioBuilder:
     }
 
     def __init__(self, config_path: str):
-
         validated_path = validate_file(config_path)
         json_contents = read_json(validated_path)
         (
@@ -312,6 +315,10 @@ class ScenarioBuilder:
 
     @staticmethod
     def import_duration(module, variables_map):
+        """
+        Method that unpacks the 'variables_map' field of a JSON input
+        file.
+        """
         if module is None:
             duration = variables_map["duration"]
             unit = variables_map["unit"]
@@ -351,7 +358,6 @@ class ScenarioBuilder:
         phase_breakdown = dict()
         last_value = 0
         for label in breakdown_list:
-
             try:
                 element = breakdown_library[label]
             except KeyError:
