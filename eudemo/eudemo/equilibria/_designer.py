@@ -560,10 +560,14 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params:
         The parameters for the solver
-    build_config: Optional[Dict]
+    build_config:
         The config for the solver.
+    lcfs_coords:
+        Coordinates for the desired LCFS shape
+    profiles:
+        Profile object describing the equilibrium profiles
     """
 
     params: ReferenceFreeBoundaryEquilibriumDesignerParams
@@ -600,8 +604,6 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         Run the FreeBoundaryEquilibriumFromFixedDesigner.
         """
         lcfs_shape = make_polygon(self.lcfs_coords, closed=True)
-
-        # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
 
         # Make dummy tf coil boundary
         tf_coil_boundary = self._make_tf_boundary(lcfs_shape)
