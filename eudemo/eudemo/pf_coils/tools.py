@@ -26,7 +26,6 @@ from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils import Coil, CoilSet
-from bluemira.equilibria.grid import Grid
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -274,36 +273,6 @@ def make_reference_coilset(
         )
         pf_coils.append(coil)
     return CoilSet(*pf_coils + solenoid, control_names=True)
-
-
-def make_grid(R_0, A, kappa, scale_x=1.6, scale_z=1.7, nx=65, nz=65):
-    """
-    Make a finite difference Grid for an Equilibrium.
-
-    Parameters
-    ----------
-    R_0: float
-        Major radius
-    A: float
-        Aspect ratio
-    kappa: float
-        Elongation
-    scale_x: float
-        Scaling factor to "grow" the grid away from the plasma in the x direction
-    scale_z: float
-        Scaling factor to "grow" the grid away from the plasma in the z direction
-    nx: int
-        Grid discretisation in the x direction
-    nz: int
-        Grid discretisation in the z direction
-    Returns
-    -------
-    grid: Grid
-        Finite difference grid for an Equilibrium
-    """
-    x_min, x_max = R_0 - scale_x * (R_0 / A), R_0 + scale_x * (R_0 / A)
-    z_min, z_max = -scale_z * (kappa * R_0 / A), scale_z * (kappa * R_0 / A)
-    return Grid(x_min, x_max, z_min, z_max, nx, nz)
 
 
 def make_coil_mapper(track, exclusion_zones, coils):

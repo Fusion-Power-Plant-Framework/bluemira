@@ -24,6 +24,7 @@
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
     FieldNullConstraint,
     IsofluxConstraint,
@@ -156,6 +157,43 @@ def handle_lcfs_shape_input(param_cls, params, shape_config):
                 f"Unknown shape parameter {k} for GeometryParameterisation: {param_cls_instance.name}"
             )
     return input_dict
+
+
+def make_grid(R_0, A, kappa, grid_settings):
+    """
+    Make a finite difference Grid for an Equilibrium.
+
+    Parameters
+    ----------
+    R_0: float
+        Major radius
+    A: float
+        Aspect ratio
+    kappa: float
+        Elongation
+    grid_settings: dict
+        Dictionary of grid settings
+
+    Returns
+    -------
+    grid: Grid
+        Finite difference grid for an Equilibrium
+    """
+    defaults = {
+        "grid_scale_x": 2.0,
+        "grid_scale_z": 2.0,
+        "nx": 65,
+        "nz": 65,
+    }
+    grid_settings = {**defaults, **grid_settings}
+    scale_x = grid_settings["grid_scale_x"]
+    scale_z = grid_settings["grid_scale_z"]
+    nx = grid_settings["nx"]
+    nz = grid_settings["nz"]
+
+    x_min, x_max = R_0 - scale_x * (R_0 / A), R_0 + scale_x * (R_0 / A)
+    z_min, z_max = -scale_z * (kappa * R_0 / A), scale_z * (kappa * R_0 / A)
+    return Grid(x_min, x_max, z_min, z_max, nx, nz)
 
 
 class DivertorLegCalculator:

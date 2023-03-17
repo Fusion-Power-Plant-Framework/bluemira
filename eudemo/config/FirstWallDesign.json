@@ -1,42 +1,42 @@
 {
     "x1": {
-        "value": 6.074567308032209,
-        "lower_bound": 4.050023999999998,
-        "upper_bound": 6.655026399999998,
+        "value": 6.038571396055962,
+        "lower_bound": 4.013651999999998,
+        "upper_bound": 6.615017199999998,
         "fixed": false
     },
     "x2": {
-        "value": 12.203464758663088,
-        "lower_bound": 11.228601599999998,
-        "upper_bound": 14.476223999999997,
+        "value": 12.056870965542245,
+        "lower_bound": 11.164726799999999,
+        "upper_bound": 14.405251999999997,
         "fixed": false
     },
     "z2": {
-        "value": -0.16066891168399866,
+        "value": -0.1952171427741044,
         "lower_bound": -0.9,
         "upper_bound": 0.9,
         "fixed": false
     },
     "height": {
-        "value": 12.244410639896127,
-        "lower_bound": 9.595005304437942,
+        "value": 12.179404033856557,
+        "lower_bound": 9.539453371458363,
         "upper_bound": 50,
         "fixed": false
     },
     "top": {
-        "value": 0.2858595155358626,
+        "value": 0.29089229085451107,
         "lower_bound": 0.05,
         "upper_bound": 0.75,
         "fixed": false
     },
     "upper": {
-        "value": 0.33331133708937005,
+        "value": 0.33243023822256634,
         "lower_bound": 0.2,
         "upper_bound": 0.7,
         "fixed": false
     },
     "dz": {
-        "value": -0.4919571386821424,
+        "value": -0.49607054424834285,
         "lower_bound": -5,
         "upper_bound": 5,
         "fixed": false
@@ -48,67 +48,67 @@
         "fixed": true
     },
     "tilt": {
-        "value": 15.314902469992134,
+        "value": 18.11928877463272,
         "lower_bound": -25,
         "upper_bound": 25,
         "fixed": false
     },
     "bottom": {
-        "value": 0.4477945301331297,
+        "value": 0.45536495920817943,
         "lower_bound": 0.05,
         "upper_bound": 0.75,
         "fixed": false
     },
     "lower": {
-        "value": 0.20004297688996747,
+        "value": 0.20000191245361768,
         "lower_bound": 0.2,
         "upper_bound": 0.7,
         "fixed": false
     },
     "l0s": {
-        "value": 0.10009769430958673,
+        "value": 0.10000536065735452,
         "lower_bound": 0.1,
         "upper_bound": 1.9,
         "fixed": false
     },
     "l1s": {
-        "value": 0.5007647013410069,
+        "value": 0.516475835367425,
         "lower_bound": 0.1,
         "upper_bound": 1.9,
         "fixed": false
     },
     "l2s": {
-        "value": 0.2973800387645039,
+        "value": 0.22134249840185855,
         "lower_bound": 0.1,
         "upper_bound": 1.9,
         "fixed": false
     },
     "l3s": {
-        "value": 0.5458065152577903,
+        "value": 0.607861108018916,
         "lower_bound": 0.1,
         "upper_bound": 1.9,
         "fixed": false
     },
     "l0e": {
-        "value": 0.691867185423924,
+        "value": 0.6980295680713737,
         "lower_bound": 0.1,
         "upper_bound": 1.9,
         "fixed": false
     },
     "l1e": {
-        "value": 1.0126976392421974,
+        "value": 1.009866154465889,
         "lower_bound": 0.1,
         "upper_bound": 1.9,
         "fixed": false
     },
     "l2e": {
-        "value": 0.10003481915107716,
+        "value": 0.1001670066638537,
         "lower_bound": 0.1,
         "upper_bound": 1.9,
         "fixed": false
     },
     "l3e": {
-        "value": 1.5829228380409535,
+        "value": 1.517723327626687,
         "lower_bound": 0.1,
         "upper_bound": 1.9,
         "fixed": false
