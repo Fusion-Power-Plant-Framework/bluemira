@@ -21,11 +21,9 @@
 from dataclasses import dataclass
 from typing import Dict, Union
 
-import numpy as np
-
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile, Profile
+from bluemira.equilibria.profiles import BetaIpProfile, Profile
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.pf_coils.tools import make_coilset, make_grid, make_reference_coilset
 
