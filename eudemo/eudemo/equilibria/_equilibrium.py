@@ -165,10 +165,4 @@ def make_reference_equilibrium(
         B_0=params.B_0.value,
         I_p=params.I_p.value,
     )
-    # profiles = BetaIpProfile(
-    #     betap=params.beta_p.value,
-    #     R_0=params.R_0.value,
-    #     B_0=params.B_0.value,
-    #     I_p=params.I_p.value,
-    # )
     return Equilibrium(coilset, grid, profiles)

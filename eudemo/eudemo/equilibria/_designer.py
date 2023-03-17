@@ -456,7 +456,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
 
 
 @dataclass
-class FreeBoundaryEquilibriumFromFixedDesignerParams(ParameterFrame):
+class ReferenceFreeBoundaryEquilibriumDesignerParams(ParameterFrame):
     """Parameters for running the fixed boundary equilibrium solver."""
 
     A: Parameter[float]
@@ -486,7 +486,7 @@ class FreeBoundaryEquilibriumFromFixedDesignerParams(ParameterFrame):
     shaf_shift: Parameter[float]
 
 
-class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
+class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
     """
     Solves a free boundary equilibrium from a fixed boundary equilibrium.
 
@@ -502,8 +502,8 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         The config for the solver.
     """
 
-    params: FreeBoundaryEquilibriumFromFixedDesignerParams
-    param_cls = FreeBoundaryEquilibriumFromFixedDesignerParams
+    params: ReferenceFreeBoundaryEquilibriumDesignerParams
+    param_cls = ReferenceFreeBoundaryEquilibriumDesignerParams
 
     def __init__(
         self,

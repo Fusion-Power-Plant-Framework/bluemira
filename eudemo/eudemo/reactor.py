@@ -62,7 +62,7 @@ from eudemo.comp_managers import (
 )
 from eudemo.equilibria import (
     FixedEquilibriumDesigner,
-    FreeBoundaryEquilibriumFromFixedDesigner,
+    ReferenceFreeBoundaryEquilibriumDesigner,
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
@@ -225,7 +225,7 @@ if __name__ == "__main__":
     )
 
     free_boundary_eq = run_designer(
-        FreeBoundaryEquilibriumFromFixedDesigner,
+        ReferenceFreeBoundaryEquilibriumDesigner,
         params,
         build_config["Free boundary equilibrium"],
     )
