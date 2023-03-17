@@ -188,6 +188,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
                 self.params.r_tf_in_centre.value,
                 self.params.r_tf_out_centre.value,
                 self.params.delta_95.value,
+                self.build_config.get("grid_settings", {}),
             ),
         )
 
