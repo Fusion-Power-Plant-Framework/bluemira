@@ -1,0 +1,31 @@
+{
+    "STEP": {},
+    "EU-DEMO": {
+        "2017-Baseline": {
+            "WCLL": {
+                "direct-coupling": {
+                    "path": {},
+                    "input-file": {}
+                },
+                "indirect-coupling": {
+                    "path": {},
+                    "input-file": {}
+                }
+            },
+            "HCPB": {
+                "direct-coupling": {
+                    "path": {},
+                    "input-file": {}
+                },
+                "indirect-coupling": {
+                    "path": "data/power_cycle",
+                    "input-file": "EUDEMO2017-HCPB-indirect.json",
+                    "reference": {
+                        "name": "Minucci2020",
+                        "DOI": "10.3390/en13092269"
+                    }
+                }
+            }
+        }
+    }
+}
