@@ -55,6 +55,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
 from eudemo.comp_managers import (
+    CoilStructures,
     Cryostat,
     CryostatThermalShield,
     RadiationShield,
