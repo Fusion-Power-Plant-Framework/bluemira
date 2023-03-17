@@ -104,6 +104,7 @@
     "TF coils": {
         "run_mode": "run",
         "file_path": "config/TFCoilDesign.json",
+        "plot": true,
         "param_class": "TripleArc",
         "variables_map": {},
         "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",

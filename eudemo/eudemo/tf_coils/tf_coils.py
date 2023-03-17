@@ -357,6 +357,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         result = design_problem.optimise()
         result.to_json(self.file_path)
+        if self.build_config.get("plot", False):
+            design_problem.plot()
         return result, wp_cross_section
 
     def read(self) -> Tuple[GeometryParameterisation, BluemiraWire]:

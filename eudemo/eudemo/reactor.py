@@ -231,7 +231,7 @@ if __name__ == "__main__":
         build_config["Dummy fixed boundary equilibrium"],
     )
 
-    free_boundary_eq = run_designer(
+    reference_eq = run_designer(
         ReferenceFreeBoundaryEquilibriumDesigner,
         params,
         build_config["Free boundary equilibrium"],
@@ -239,10 +239,10 @@ if __name__ == "__main__":
         profiles=profiles,
     )
 
-    reactor.plasma = build_plasma(build_config.get("Plasma", {}), free_boundary_eq)
+    reactor.plasma = build_plasma(build_config.get("Plasma", {}), reference_eq)
 
     blanket_face, divertor_face, ivc_boundary = design_ivc(
-        params, build_config["IVC"], equilibrium=free_boundary_eq
+        params, build_config["IVC"], equilibrium=reference_eq
     )
 
     t1 = time.time()
