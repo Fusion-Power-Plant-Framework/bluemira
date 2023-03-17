@@ -504,7 +504,7 @@ class DummyFixedEquilibriumDesigner(Designer[Tuple[Coordinates, Profile]]):
         settings = self.build_config.get("settings", {})
         settings = {**default_settings, **settings}
         lcfs_coords = lcfs_parameterisation.create_shape().discretize(
-            byedges=True, ndiscr=settings["n_poitns"]
+            byedges=True, ndiscr=settings["n_points"]
         )
 
         profiles = BetaLiIpProfile(
