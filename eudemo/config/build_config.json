@@ -64,9 +64,13 @@
                 "relaxation": 0.15,
                 "coil_discretisation": 0.3,
                 "plot": true,
+                "gamma": 1e-7
+            },
+            "grid_settings": {
                 "nx": 127,
                 "nz": 127,
-                "gamma": 1e-7
+                "grid_scale_x": 1.6,
+                "grid_scale_z": 1.7
             }
     },
     "IVC": {

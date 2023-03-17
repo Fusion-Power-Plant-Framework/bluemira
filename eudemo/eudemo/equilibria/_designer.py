@@ -610,8 +610,6 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             "plot": False,
             "relaxation": 0.02,
             "coil_discretisation": 0.3,
-            "nx": 65,
-            "nz": 65,
             "gamma": 1e-8,
             "iter_err_max": 1e-2,
             "max_iter": 30,
@@ -624,8 +622,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             tf_coil_boundary,
             lcfs_shape,
             self.profiles,
-            nx=settings.pop("nx"),
-            nz=settings.pop("nz"),
+            self.build_config.get("grid_settings", {}),
         )
         # TODO: Check coil discretisation is sensible when size not set...
         discretisation = settings.pop("coil_discretisation")

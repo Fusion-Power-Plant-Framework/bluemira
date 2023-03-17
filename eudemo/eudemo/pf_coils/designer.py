@@ -47,12 +47,8 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import get_class_from_module, json_writer
-from eudemo.pf_coils.tools import (
-    make_coil_mapper,
-    make_coilset,
-    make_grid,
-    make_pf_coil_path,
-)
+from eudemo.equilibria.tools import make_grid
+from eudemo.pf_coils.tools import make_coil_mapper, make_coilset, make_pf_coil_path
 
 
 @dataclass
@@ -143,23 +139,12 @@ class PFCoilsDesigner(Designer[CoilSet]):
         """
         coilset = self._make_coilset()
         coil_mapper = self._make_coil_mapper(coilset)
-        defaults = {
-            "grid_scale_x": 2.0,
-            "grid_scale_z": 2.0,
-            "nx": 65,
-            "nz": 65,
-        }
-        grid_settings = self.build_config["grid_settings"]
-        grid_settings = {**defaults, **grid_settings}
 
         grid = make_grid(
             self.params.R_0.value,
             self.params.A.value,
             self.params.kappa.value,
-            scale_x=grid_settings["grid_scale_x"],
-            scale_z=grid_settings["grid_scale_z"],
-            nx=grid_settings["nx"],
-            nz=grid_settings["nz"],
+            self.build_config.get("grid_settings", {}),
         )
         # TODO: Make a CustomProfile from flux functions coming from PLASMOD and fixed
         # boundary optimisation
