@@ -164,7 +164,6 @@ class TestValidationTools:
         for n in range(n_arguments):
             all_subsets_of_arguments = combinations(test_arguments, n + 1)
             for subset in all_subsets_of_arguments:
-
                 subset_as_lists = []
                 for argument in subset:
                     if type(argument) == list:
@@ -275,7 +274,7 @@ class TestManipulationTools:
         dictionary_example = self.dictionary_example
 
         dictionary_with_empty_values = dict()
-        for (key, value) in dictionary_example.items():
+        for key, value in dictionary_example.items():
             value_type = type(value)
             empty_value_of_same_type = value_type()
             dictionary_with_empty_values[key] = empty_value_of_same_type
@@ -309,7 +308,6 @@ class TestPlottingTools:
     #  TESTS
     # ------------------------------------------------------------------
     def test_validate_axes(self):
-
         _, sample_ax = plt.subplots()
         sample_ax = sample_ax.plot(self.sample_x, self.sample_y)
         not_an_ax = self.sample_x
@@ -329,7 +327,6 @@ class TestPlottingTools:
 
     @pytest.mark.parametrize("scale", ("linear", "log"))
     def test_adjust_2d_graph_ranges(self, scale):
-
         ax_title = "Test 2D Graph Ranges Adjustment"
         test_ax = tools_testkit.prepare_figure(ax_title)
 
@@ -339,8 +336,8 @@ class TestPlottingTools:
         old_limits = self._query_axes_limits(test_ax)
         adjust_2d_graph_ranges(ax=test_ax)
         new_limits = self._query_axes_limits(test_ax)
-        adjusted_ax_is_still_Axes_object = isinstance(test_ax, plt.Axes)
-        assert adjusted_ax_is_still_Axes_object
+        adjusted_ax_is_still_plt_axes_object = isinstance(test_ax, plt.Axes)
+        assert adjusted_ax_is_still_plt_axes_object
 
         n_axes = len(old_limits)
         for axis_index in range(n_axes):
