@@ -43,6 +43,15 @@
     },
     "Dummy fixed boundary equilibrium": {
         "run_mode": "run",
+        "param_class": "equilibria.shapes::KuiroukidisLCFS",
+        "shape_config": {
+            "f_delta_l": 1.25,
+            "f_kappa_l": 1.15,
+            "phi_l_neg": -130.0,
+            "phi_l_pos": 30.0,
+            "phi_u_neg": 0.0,
+            "phi_u_pos": 0.0
+        },
         "settings": {
             "li_rel_tol": 0.01,
             "li_min_iter": 2

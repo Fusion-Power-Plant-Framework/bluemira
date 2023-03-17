@@ -63,7 +63,11 @@ from eudemo.equilibria._equilibrium import (
     make_equilibrium,
     make_reference_equilibrium,
 )
-from eudemo.equilibria.tools import EUDEMOSingleNullConstraints, ReferenceConstraints
+from eudemo.equilibria.tools import (
+    EUDEMOSingleNullConstraints,
+    ReferenceConstraints,
+    handle_lcfs_shape_input,
+)
 
 
 @dataclass
@@ -398,45 +402,9 @@ class FixedEquilibriumDesigner(Designer[Tuple[Coordinates, CustomProfile]]):
         param_cls: Type[GeometryParameterisation] = get_class_from_module(
             self.build_config["param_class"], default_module="bluemira.equilibria.shapes"
         )
-        input_dict = self._derive_shape_params(param_cls)
-        return param_cls(input_dict)
-
-    def _derive_shape_params(self, param_cls):
-        defaults = {
-            "f_kappa_l": 1.0,
-            "f_delta_l": 1.0,
-        }
         shape_config = self.build_config.get("shape_config", {})
-        shape_config = {**defaults, **shape_config}
-        kappa_95 = self.params.kappa_95.value
-        delta_95 = self.params.delta_95.value
-
-        kappa_factor = shape_config.pop("f_kappa_l")
-        delta_factor = shape_config.pop("f_delta_l")
-        if "kappa_l" not in shape_config:
-            shape_config["kappa_l"] = kappa_factor * kappa_95
-        if "kappa_u" not in shape_config:
-            shape_config["kappa_u"] = kappa_factor**0.5 * kappa_95
-        if "delta_l" not in shape_config:
-            shape_config["delta_l"] = delta_factor * delta_95
-        if "delta_u" not in shape_config:
-            shape_config["delta_u"] = delta_95
-
-        input_dict = {
-            "r_0": {"value": self.params.R_0.value},
-            "a": {"value": self.params.R_0.value / self.params.A.value},
-        }
-
-        param_cls_instance = param_cls()
-
-        for k, v in shape_config.items():
-            if k in param_cls_instance.variables.names:
-                input_dict[k] = {"value": v}
-            else:
-                bluemira_warn(
-                    f"Unknown shape parameter {k} for GeometryParameterisation: {param_cls_instance.name}"
-                )
-        return input_dict
+        input_dict = handle_lcfs_shape_input(param_cls, self.params, shape_config)
+        return param_cls(input_dict)
 
     def _get_transport_solver(self):
         defaults = {
@@ -520,6 +488,9 @@ class DummyFixedEquilibriumDesigner(Designer[Tuple[Coordinates, Profile]]):
         """
         Run the DummyFixedEquilibriumDesigner.
         """
+        param_cls = self.build_config.get("param_class", "equilibria.shapes.JohnerLCFS")
+        param_cls = get_class_from_module(param_cls)
+
         lcfs_coords = None
         profiles = BetaLiIpProfile(
             self.params.beta_p.value,

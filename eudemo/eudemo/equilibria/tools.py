@@ -101,6 +101,63 @@ def estimate_kappa95(A, m_s_limit):
     return kappa_95
 
 
+def handle_lcfs_shape_input(param_cls, params, shape_config):
+    """
+    Process the LCFS shape parameterisation inputs based on a parameterisation
+    and a shape configuration.
+
+    Parameters
+    ----------
+    param_cls: GeometryParameterisation
+        LCFS geometry parameterisation
+    params: ParameterFrame
+        Parameters of the reactor
+    shape_config: dict
+        Dictionary with the various shape configuration keys, which can be specific
+        to the geometry parameterisation
+
+    Returns
+    -------
+    input_dict: dict
+        Input dictionary for the initialisation of the specified
+        GeometryParameterisation
+    """
+    defaults = {
+        "f_kappa_l": 1.0,
+        "f_delta_l": 1.0,
+    }
+    shape_config = {**defaults, **shape_config}
+    kappa_95 = params.kappa_95.value
+    delta_95 = params.delta_95.value
+
+    kappa_factor = shape_config.pop("f_kappa_l")
+    delta_factor = shape_config.pop("f_delta_l")
+    if "kappa_l" not in shape_config:
+        shape_config["kappa_l"] = kappa_factor * kappa_95
+    if "kappa_u" not in shape_config:
+        shape_config["kappa_u"] = kappa_factor**0.5 * kappa_95
+    if "delta_l" not in shape_config:
+        shape_config["delta_l"] = delta_factor * delta_95
+    if "delta_u" not in shape_config:
+        shape_config["delta_u"] = delta_95
+
+    input_dict = {
+        "r_0": {"value": params.R_0.value},
+        "a": {"value": params.R_0.value / params.A.value},
+    }
+
+    param_cls_instance = param_cls()
+
+    for k, v in shape_config.items():
+        if k in param_cls_instance.variables.names:
+            input_dict[k] = {"value": v}
+        else:
+            bluemira_warn(
+                f"Unknown shape parameter {k} for GeometryParameterisation: {param_cls_instance.name}"
+            )
+    return input_dict
+
+
 class DivertorLegCalculator:
     """
     Straight line divertor leg mixin claculator.
