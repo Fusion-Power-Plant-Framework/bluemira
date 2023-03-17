@@ -53,6 +53,7 @@
             "phi_u_pos": 0.0
         },
         "settings": {
+            "n_points": 200,
             "li_rel_tol": 0.01,
             "li_min_iter": 2
         }

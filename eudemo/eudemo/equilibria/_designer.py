@@ -490,14 +490,29 @@ class DummyFixedEquilibriumDesigner(Designer[Tuple[Coordinates, Profile]]):
         """
         param_cls = self.build_config.get("param_class", "equilibria.shapes.JohnerLCFS")
         param_cls = get_class_from_module(param_cls)
+        shape_config = self.build_config.get("shape_config", {})
+        input_dict = handle_lcfs_shape_input(param_cls, self.params, shape_config)
+        lcfs_parameterisation = param_cls(input_dict)
 
-        lcfs_coords = None
+        default_settings = {
+            "n_points": 200,
+            "li_rel_tol": 0.01,
+            "li_min_iter": 2,
+        }
+        settings = self.build_config.get("settings", {})
+        settings = {**default_settings, **settings}
+        lcfs_coords = lcfs_parameterisation.create_shape().discretize(
+            byedges=True, ndiscr=settings["n_poitns"]
+        )
+
         profiles = BetaLiIpProfile(
             self.params.beta_p.value,
             self.params.l_i.value,
             self.params.I_p.value,
             R_0=self.params.R_0.value,
             B_0=self.params.B_0.value,
+            li_rel_tol=settings["li_rel_tol"],
+            li_min_iter=settings["li_min_iter"],
         )
         return lcfs_coords, profiles
 
