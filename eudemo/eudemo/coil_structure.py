@@ -36,6 +36,10 @@ from bluemira.builders.coil_supports import (
 
 
 class CoilStructuresBuilder(Builder):
+    """
+    Mega builder for all coil structures
+    """
+
     def __init__(
         self,
         params,
@@ -49,5 +53,8 @@ class CoilStructuresBuilder(Builder):
         self.pf_coil_xz_faces = pf_coil_xz_faces
         self.pf_coil_kozs = pf_coil_keep_out_zones
 
-    def run(self):
+    def build(self):
+        """
+        Run the CoilStructuresBuilder.
+        """
         pass
