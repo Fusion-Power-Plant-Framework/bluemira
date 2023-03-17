@@ -61,6 +61,7 @@ from eudemo.comp_managers import (
     VacuumVesselThermalShield,
 )
 from eudemo.equilibria import (
+    DummyFixedEquilibriumDesigner,
     FixedEquilibriumDesigner,
     ReferenceFreeBoundaryEquilibriumDesigner,
 )
