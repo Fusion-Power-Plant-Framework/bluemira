@@ -247,7 +247,7 @@ class BluemiraWire(BluemiraGeo):
         """
         The wires of the wire. By definition a list of itself.
         """
-        return tuple(self)
+        return tuple([self])
 
     @property
     def faces(self) -> tuple:

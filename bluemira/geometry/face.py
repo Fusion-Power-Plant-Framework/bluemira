@@ -193,7 +193,7 @@ class BluemiraFace(BluemiraGeo):
         """
         The faces of the wire. By definition an empty list.
         """
-        return tuple(self)
+        return tuple([self])
 
     @property
     def shells(self) -> tuple:

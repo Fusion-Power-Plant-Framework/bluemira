@@ -110,7 +110,7 @@ class BluemiraShell(BluemiraGeo):
         """
         The shells of the shell. By definition a list of itself.
         """
-        return tuple(self)
+        return tuple([self])
 
     @property
     def solids(self) -> tuple:

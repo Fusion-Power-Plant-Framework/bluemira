@@ -136,4 +136,4 @@ class BluemiraSolid(BluemiraGeo):
         """
         The solids of the solid. By definition a list of itself.
         """
-        return tuple(self)
+        return tuple([self])
