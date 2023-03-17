@@ -22,7 +22,7 @@
 """
 Coil structure stuff
 """
-
+from bluemira.base.builder import Builder
 from bluemira.builders.coil_supports import (
     ITERGravitySupportBuilder,
     ITERGravitySupportBuilderParams,
@@ -33,3 +33,21 @@ from bluemira.builders.coil_supports import (
     StraightOISDesigner,
     StraightOISDesignerParams,
 )
+
+
+class CoilStructuresBuilder(Builder):
+    def __init__(
+        self,
+        params,
+        build_config,
+        tf_coil_xz_face,
+        pf_coil_xz_faces,
+        pf_coil_keep_out_zones,
+    ):
+        super().__init__(params, build_config)
+        self.tf_coil_xz_face = tf_coil_xz_face
+        self.pf_coil_xz_faces = pf_coil_xz_faces
+        self.pf_coil_kozs = pf_coil_keep_out_zones
+
+    def run(self):
+        pass
