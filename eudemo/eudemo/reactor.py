@@ -84,11 +84,12 @@ class EUDEMO(Reactor):
 
     plasma: Plasma
     vacuum_vessel: VacuumVessel
+    vv_thermal: VacuumVesselThermalShield
     divertor: Divertor
     blanket: Blanket
     tf_coils: TFCoil
-    vv_thermal: VacuumVesselThermalShield
     pf_coils: PFCoil
+    coil_structures: CoilStructures
     cryostat: Cryostat
     cryostat_thermal: CryostatThermalShield
     radiation_shield: RadiationShield
