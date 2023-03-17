@@ -25,7 +25,7 @@ import numpy as np
 
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
+from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile, Profile
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.pf_coils.tools import make_coilset, make_grid, make_reference_coilset
 
@@ -122,8 +122,7 @@ def make_reference_equilibrium(
     _params: Union[ReferenceEquilibriumParams, Dict],
     tf_track: BluemiraWire,
     lcfs_shape: BluemiraWire,
-    p_prime: np.ndarray,
-    ff_prime: np.ndarray,
+    profiles: Profile,
     nx: int = 65,
     nz: int = 65,
 ):
@@ -158,11 +157,4 @@ def make_reference_equilibrium(
         nz=nz,
     )
 
-    profiles = CustomProfile(
-        p_prime,
-        ff_prime,
-        R_0=params.R_0.value,
-        B_0=params.B_0.value,
-        I_p=params.I_p.value,
-    )
     return Equilibrium(coilset, grid, profiles)

@@ -47,7 +47,9 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
@@ -488,7 +490,7 @@ class ReferenceFreeBoundaryEquilibriumDesignerParams(ParameterFrame):
 
 class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
     """
-    Solves a free boundary equilibrium from a fixed boundary equilibrium.
+    Solves a free boundary equilibrium from a LCFS shape and profiles.
 
     Some coils are positioned at sensible locations to try and get an initial
     free boundary equilibrium in order to be able to draw an initial first wall
@@ -509,31 +511,33 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         self,
         params: Union[Dict, ParameterFrame],
         build_config: Optional[Dict] = None,
+        lcfs_coords: Optional[Coordinates] = None,
+        profiles: Optional[Profile] = None,
     ):
         super().__init__(params, build_config)
         self.file_path = self.build_config.get("file_path", None)
-        self.fixed_eq_file_path = self.build_config.get("fixed_eq_file_path", None)
+        self.lcfs_coords = lcfs_coords
+        self.profiles = profiles
+
         if self.run_mode == "read" and self.file_path is None:
             raise ValueError(
                 f"Cannot execute {type(self).__name__} in 'read' mode: "
                 "'file_path' missing from build config."
             )
 
-        if self.run_mode == "run" and self.fixed_eq_file_path is None:
+        if self.run_mode == "run" and (
+            (self.lcfs_coords is None) or (self.profiles is None)
+        ):
             raise ValueError(
-                f"Cannot execute {type(self).__name__} in 'run' mode: "
-                "'fixed_eq_file_path' missing from build config."
+                f"Cannot execute {type(self).__name__} in 'run' mode without "
+                "input LCFS shape or profiles."
             )
 
     def run(self) -> Equilibrium:
         """
         Run the FreeBoundaryEquilibriumFromFixedDesigner.
         """
-        # Retrieve infromation from end state
-        data = EQDSKInterface.from_file(self.fixed_eq_file_path)
-        p_prime = data.pprime
-        ff_prime = data.ffprime
-        lcfs_shape = make_polygon({"x": data.xbdry, "y": 0, "z": data.zbdry})
+        lcfs_shape = make_polygon(self.lcfs_coords)
 
         # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
 
@@ -557,8 +561,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             ReferenceEquilibriumParams.from_frame(self.params),
             tf_coil_boundary,
             lcfs_shape,
-            p_prime,
-            ff_prime,
+            self.profiles,
             nx=settings.pop("nx"),
             nz=settings.pop("nz"),
         )
@@ -568,7 +571,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         eq.coilset.get_coiltype("CS").discretisation = discretisation
 
         opt_problem = self._make_fbe_opt_problem(
-            eq, lcfs_shape, len(data.xbdry), settings.pop("gamma")
+            eq, lcfs_shape, len(self.lcfs_coords.x), settings.pop("gamma")
         )
 
         iter_err_max = settings.pop("iter_err_max")
@@ -587,7 +590,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             _, ax = plt.subplots()
             eq.plot(ax=ax)
             eq.coilset.plot(ax=ax, label=True)
-            ax.plot(data.xbdry, data.zbdry, "", marker="o")
+            ax.plot(self.lcfs_coords.x, self.lcfs_coords.z, "", marker="o")
             opt_problem.targets.plot(ax=ax)
             plt.show()
 
