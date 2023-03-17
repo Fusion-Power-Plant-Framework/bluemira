@@ -38,8 +38,6 @@ class PanellingDesignerParams(ParameterFrame):
     """The maximum angle of rotation between adjacent panels [degrees]."""
     fw_dL_min: Parameter[float]
     """The minimum length for an individual panel [m]."""
-    fw_dL_max: Parameter[float]
-    """The maximum length for an individual panel [m]."""
 
 
 class PanellingDesigner(Designer[np.ndarray]):
@@ -84,8 +82,7 @@ class PanellingDesigner(Designer[np.ndarray]):
     def run(self) -> np.ndarray:
         paneller = self._make_paneller()
         optimiser = Optimiser(
-            self.build_config.get("algorithm", "COBYLA"),
-            n_variables=paneller.n_opt,
+            self.build_config.get("algorithm", "SLSQP"),
             opt_conditions=self.build_config.get(
                 "opt_conditions", {"max_eval": 1000, "ftol_rel": 1e-6}
             ),
@@ -93,19 +90,18 @@ class PanellingDesigner(Designer[np.ndarray]):
         # change this opt problem to constrain angle and min length
         opt_problem = PanellingOptProblem(paneller, optimiser)
         x_opt = opt_problem.optimise()
-        return paneller.corners(x_opt)[0].T
+        print(f"paneller.angles(x_opt) {paneller.angles(x_opt)}")
+        return paneller.joints(x_opt)
 
     def mock(self) -> np.ndarray:
         paneller = self._make_paneller()
-        return paneller.corners(paneller.x_opt)[0].T
+        return paneller.joints(paneller.x0)
 
     def _make_paneller(self) -> Paneller:
         """Make a :class:`~.Paneller` with this designer's params."""
         boundary = self.wall_boundary.discretize(byedges=True)
         return Paneller(
-            boundary.x,
-            boundary.z,
+            boundary.xyz[[0, 2], :],
             self.params.fw_a_max.value,
             self.params.fw_dL_min.value,
-            self.params.fw_dL_max.value,
         )

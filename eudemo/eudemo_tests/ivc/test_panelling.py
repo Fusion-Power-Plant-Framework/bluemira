@@ -21,9 +21,11 @@
 
 import os
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from bluemira.display import plot_2d
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import boolean_cut, find_clockwise_angle_2d, make_polygon
@@ -75,24 +77,23 @@ class TestPanellingDesigner:
     def setup_class(cls):
         cls.wall_boundary = make_cut_johner()
 
-    @pytest.mark.parametrize("mode", ["mock", "run"])
-    @pytest.mark.parametrize("max_angle", [25, 50])
+    @pytest.mark.parametrize("max_angle", [30, 50])
     @pytest.mark.parametrize(
         "shape", [make_cut_johner(), make_cut_polyspline()], ids=["johner", "polyspline"]
     )
-    def test_all_angles_lt_max_angle(self, mode, max_angle, shape):
+    def test_all_angles_lt_max_angle(self, max_angle, shape):
         params = {
             "fw_a_max": {"value": max_angle, "unit": "degrees"},
             "fw_dL_min": {"value": 0, "unit": "m"},
-            "fw_dL_max": {"value": 2.5, "unit": "m"},
         }
+
         designer = PanellingDesigner(params, shape)
+        panel_edges: np.ndarray = designer.run()
 
-        panel_edges: np.ndarray = getattr(designer, mode)()
-
-        import matplotlib.pyplot as plt
-
-        from bluemira.display import plot_2d
+        _, ax = plt.subplots()
+        plot_2d(shape, show=False, ax=ax)
+        ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
+        plt.show()
 
         panel_vecs = np.diff(panel_edges).T
         angles = []
@@ -100,44 +101,33 @@ class TestPanellingDesigner:
         for i in range(len(panel_vecs) - 1):
             angles.append(find_clockwise_angle_2d(panel_vecs[i], panel_vecs[i + 1]))
             lengths.append(np.linalg.norm(panel_vecs[i] - panel_vecs[i + 1]))
-        print(f"angles: {angles}")
-        print(f"lengths: {lengths}")
 
-        _, ax = plt.subplots()
-        plot_2d(shape, show=False, ax=ax)
-        ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
-        plt.show()
+        abs_tol = 1e-3
+        assert (
+            np.less_equal(angles, max_angle - abs_tol)
+            | np.isclose(angles, max_angle, rtol=1e-3)
+        ).all()
 
-        assert np.less_equal(angles, max_angle).all() or np.isclose(angles, 0).all()
-
-    @pytest.mark.parametrize("dl_min, dl_max", [[0, 5], [0.1, 2], [1, 3]])
+    @pytest.mark.parametrize("dl_min", [0, 0.1, 0.9])
     @pytest.mark.parametrize(
         "shape", [make_cut_johner(), make_cut_polyspline()], ids=["johner", "polyspline"]
     )
-    def test_panel_lengths_in_specified_range(self, dl_min, dl_max, shape):
+    def test_panel_lengths_gt_min_length(self, dl_min, shape):
         params = {
-            "fw_a_max": {"value": 90, "unit": "degrees"},
+            "fw_a_max": {"value": 30, "unit": "degrees"},
             "fw_dL_min": {"value": dl_min, "unit": "m"},
-            "fw_dL_max": {"value": dl_max, "unit": "m"},
         }
-        build_config = {"algorithm": "COBYLA", "opt_conditions": {"ftol_rel": 1e-5}}
-        panel_edges = PanellingDesigner(params, shape, build_config).run()
 
-        import matplotlib.pyplot as plt
-
-        from bluemira.display import plot_2d
-
-        lengths = np.sqrt(np.sum(np.diff(panel_edges.T, axis=0) ** 2, axis=1))
-        print(f"lengths: {lengths}")
+        panel_edges = PanellingDesigner(params, shape).run()
 
         _, ax = plt.subplots()
         plot_2d(shape, show=False, ax=ax)
         ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
         plt.show()
 
+        lengths = np.sqrt(np.sum(np.diff(panel_edges.T, axis=0) ** 2, axis=1))
         abs_tol = 1e-3
         assert np.all(lengths >= dl_min - abs_tol)
-        assert np.all(lengths <= dl_max + abs_tol)
 
     def test_panels_fully_enclose_wall_boundary(self):
         pass

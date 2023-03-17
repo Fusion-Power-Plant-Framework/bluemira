@@ -1,165 +1,288 @@
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                         J. Morris, D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from itertools import count
-from typing import List, Tuple
+from typing import Tuple, Union
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_problems import (
-    OptimisationConstraint,
-    OptimisationObjective,
-    OptimisationProblem,
-)
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.utilities.optimiser import approx_derivative
 
 DEG_TO_RAD = np.pi / 180
 
 
 class Paneller:
-    def __init__(
-        self, x: np.ndarray, z: np.ndarray, angle: float, dx_min: float, dx_max: float
-    ):
-        self.x = x
-        self.z = z
+    """
+    Provides functions for generating panelling along the outside of a boundary
 
-        tx, tz = tangent(self.x, self.z)
-        length_norm = lengthnorm(self.x, self.z)
+    Parameters
+    ----------
+    boundary_points
+        The points defining the boundary along which to build the panels.
+        This should have shape (2, N), where N is the number of points.
+    """
 
-        self.loop = {
-            "x": InterpolatedUnivariateSpline(length_norm, x),
-            "z": InterpolatedUnivariateSpline(length_norm, z),
-        }
-        self.tangent = {
-            "x": InterpolatedUnivariateSpline(length_norm, tx),
-            "z": InterpolatedUnivariateSpline(length_norm, tz),
-        }
-        points = np.array([x, z]).T
-        string, index = make_pivoted_string(
-            points, max_angle=angle, dx_min=dx_min, dx_max=dx_max
+    def __init__(self, boundary_points: np.ndarray, max_angle: float, dx_min: float):
+        self.max_angle = max_angle
+        self.dx_min = dx_min
+
+        length_norm = norm_lengths(boundary_points)
+        self._x_boundary_spline = InterpolatedUnivariateSpline(
+            length_norm, boundary_points[0]
+        )
+        self._z_boundary_spline = InterpolatedUnivariateSpline(
+            length_norm, boundary_points[1]
         )
 
-        self.n_opt = string.shape[0] - 2
-        self.n_constraints = self.n_opt - 1 + 2 * (self.n_opt + 2)
-        self.x_opt = length_norm[index][1:-1]
-        self.dl_limit = {"min": dx_min, "max": dx_max}
-        self.d2 = None
-        self.bounds = np.vstack([np.zeros(self.n_opt), np.ones(self.n_opt)])
+        tangent_norm = norm_tangents(boundary_points)
+        self._x_tangent_spline = InterpolatedUnivariateSpline(
+            length_norm, tangent_norm[0]
+        )
+        self._z_tangent_spline = InterpolatedUnivariateSpline(
+            length_norm, tangent_norm[1]
+        )
 
-        self.it = 1
+        # Build the initial guess of our panels, these points are the
+        # coordinates of where the panels tangent the boundary
+        _, idx = make_pivoted_string(
+            boundary_points.T,
+            max_angle=max_angle,
+            dx_min=dx_min,
+        )
+        self.n_points = len(idx)
+        self.x0: np.ndarray = length_norm[idx][1:-1]
 
-    def length(self, x: np.ndarray, index: int) -> float:
-        p_corner = self.corners(x)[0]
-        d_l = np.sqrt(np.diff(p_corner[:, 0]) ** 2 + np.diff(p_corner[:, 1]) ** 2)
-        length = np.sum(d_l)
-        data = [length, d_l]
-        return data[index]
+    def x_boundary(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+        """Find the x-coordinate at a given normalised distance along the boundary."""
+        return self._x_boundary_spline(dist)
 
-    def corners(self, x: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+    def z_boundary(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+        """Find the z-coordinate at a given normalised distance along the boundary."""
+        return self._z_boundary_spline(dist)
+
+    def x_boundary_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+        """Find the x-coordinate of the tangent vector at the given distance along the boundary."""
+        return self._x_tangent_spline(dist)
+
+    def z_boundary_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+        """Find the z-coordinate of the tangent vector at the given distance along the boundary."""
+        return self._z_tangent_spline(dist)
+
+    @property
+    def n_opts(self) -> int:
         """
-        Get the corner points and indices
+        The number of optimisation parameters.
+
+        The optimisation parameters are how far along the boundary's
+        length each panel tangents the boundary. We exclude the start
+        and end points which are fixed.
         """
-        x = np.sort(x)
-        x = np.append(np.append(0, x), 1)
-        p_corner = np.zeros((len(x) - 1, 2))  # corner points
-        p_o = np.array([self.loop["x"](x), self.loop["z"](x)]).T
-        t_o = np.array([self.tangent["x"](x), self.tangent["z"](x)]).T
-        for i in range(self.n_opt + 1):
-            p_corner[i] = vector_intersect(
-                p_o[i], p_o[i] + t_o[i], p_o[i + 1], p_o[i + 1] + t_o[i + 1]
+        # exclude start and end points; hence 'N - 2'
+        return self.n_points - 2
+
+    @property
+    def n_constraints(self) -> int:
+        """
+        The number of optimisation constraints.
+
+        We constrain:
+
+            - the minimum length of each panel
+              (no. of panels = no. of touch points + 2)
+            - the angle between each panel
+              (no. of angles = no. of touch points + 1)
+        """
+        return 2 * self.n_opts + 4
+
+    def joints(self, dists: np.ndarray) -> np.ndarray:
+        """
+        Calculate panel joint coordinates from panel-boundary tangent points.
+
+        Parameters
+        ----------
+        dists
+            The normalised distances along the boundary at which there
+            are panel-boundary tangent points.
+        """
+        # Add the start and end panel joints at distances 0 & 1
+        dists = np.sort(np.hstack((0, dists, 1)))
+        points = np.vstack((self.x_boundary(dists), self.z_boundary(dists)))
+        tangents = np.vstack(
+            (self.x_boundary_tangent(dists), self.z_boundary_tangent(dists))
+        )
+        # TODO(hsaunders1904): vectorize
+        #  https://stackoverflow.com/a/40637858
+        joints = np.zeros((2, len(dists) + 1))
+        joints[:, 0] = points[:, 0]
+        joints[:, -1] = points[:, -1]
+        for i in range(joints.shape[1] - 2):
+            joints[:, i + 1] = vector_intersect(
+                points[:, i],
+                points[:, i] + tangents[:, i],
+                points[:, i + 1],
+                points[:, i + 1] + tangents[:, i + 1],
             )
-        p_corner = np.append(p_o[0].reshape(1, 2), p_corner, axis=0)
-        p_corner = np.append(p_corner, p_o[-1].reshape(1, 2), axis=0)
-        return p_corner, p_o
+        return joints
 
-    def f_objective(self, x: np.ndarray, grad: np.ndarray) -> float:
-        length = self.length(x, 0)
-        if grad.size > 0:
-            grad[:] = approx_derivative(self.length, x, bounds=self.bounds, args=(0,))
-        self.it += 1
-        return length
+    # TODO(hsaunders1904): sort out caching of the joints so we're not
+    #  calculating them 3 times for every opt loop
+    def length(self, dists: np.ndarray) -> float:
+        return self.panel_lengths(dists).sum()
 
-    def constrain_length(self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray):
-        d_l_space = 1e-5  # minimum inter-point spacing
-        if grad.size > 0:
-            grad[:] = np.zeros((self.n_constraints, self.n_opt))  # initalise
-            for i in range(self.n_opt - 1):  # order points
-                grad[i, i] = -1
-                grad[i, i + 1] = 1
+    def angles(self, dists: np.ndarray) -> np.ndarray:
+        joints = self.joints(dists)
+        line_vectors: np.ndarray = joints[:, 1:] - joints[:, :-1]
+        dots = (line_vectors[:, :-1] * line_vectors[:, 1:]).sum(axis=0)
+        magnitudes = np.linalg.norm(line_vectors, axis=0)
+        dots /= magnitudes[:-1] * magnitudes[1:]
+        return np.degrees(np.arccos(np.clip(dots, -1.0, 1.0)), out=dots)
 
-            for i in range(2 * self.n_opt + 4):
-                grad[self.n_opt - 1 + i, :] = approx_derivative(
-                    self.set_min_max_constraints,
-                    x,
-                    bounds=self.bounds,
-                    args=(np.zeros(2 * self.n_opt + 4), i),
-                )
-
-        # Where is the constraint on the angles?
-        constraint[: self.n_opt - 1] = (
-            x[: self.n_opt - 1] - x[1 : self.n_opt]  # + d_l_space
-        )
-        self.set_min_max_constraints(x, constraint[self.n_opt - 1 :], 0)
-        return constraint
-
-    def set_min_max_constraints(
-        self, x: np.ndarray, cmm: np.ndarray, index: int
-    ) -> float:
-        d_l = self.length(x, 1)
-        cmm[: self.n_opt + 2] = self.dl_limit["min"] - d_l
-        cmm[self.n_opt + 2 :] = d_l - self.dl_limit["max"]
-        return cmm[index]
+    def panel_lengths(self, dists: np.ndarray) -> np.ndarray:
+        joints = self.joints(dists)
+        return np.hypot(joints[0], joints[1])
 
 
-def tangent(x, z):
+def norm_lengths(points: np.ndarray) -> np.ndarray:
     """
-    Returns tangent vectors along an anticlockwise X, Z loop
-    """
-    d_x, d_z = np.gradient(x), np.gradient(z)
-    mag = np.sqrt(d_x**2 + d_z**2)
-    index = mag > 0
-    d_x, d_z, mag = d_x[index], d_z[index], mag[index]  # clear duplicates
-    t_x, t_z = d_x / mag, d_z / mag
-    return t_x, t_z
-
-
-def lengthnorm(x, z):
-    """
-    Return a normalised 1-D parameterisation of an X, Z loop.
+    Calculate the cumulative normalized lengths between each 2D point.
 
     Parameters
     ----------
-    x: array_like
-        x coordinates of the loop [m]
-    z: array_like
-        z coordinates of the loop [m]
-
-    Returns
-    -------
-    total_length: np.array(N)
-        The cumulative normalised length of each individual segment in the loop
+    points
+        A numpy array of points, shape should be (2, N).
     """
-    total_length = length(x, z)
-    return total_length / total_length[-1]
+    dists = np.diff(points, axis=1)
+    sq_dists = np.square(dists, out=dists)
+    summed_dists = np.sum(sq_dists, axis=0)
+    sqrt_dists = np.sqrt(summed_dists, out=summed_dists)
+    cumulative_sum = np.cumsum(summed_dists, out=sqrt_dists)
+    return np.hstack((0, cumulative_sum / cumulative_sum[-1]))
 
 
-def length(x, z):
+def norm_tangents(points: np.ndarray) -> np.ndarray:
     """
-    Return a 1-D parameterisation of an X, Z loop.
+    Calculate the normalised tangent vector at each of the given points.
 
     Parameters
     ----------
-    x: array_like
-        x coordinates of the loop [m]
-    z: array_like
-        z coordinates of the loop [m]
+    points
+        Array of coordinates. This must have shape (2, N), where N is
+        the number of points.
 
     Returns
     -------
-    lengt: np.array(N)
-        The cumulative length of each individual segment in the loop
+    tangents
+        The normalised vector of tangents.
     """
-    lengt = np.append(0, np.cumsum(np.sqrt(np.diff(x) ** 2 + np.diff(z) ** 2)))
-    return lengt
+    grad = np.gradient(points, axis=1)
+    magnitudes = np.hypot(grad[0], grad[1])
+    return np.divide(grad, magnitudes, out=grad)
+
+
+def test_norm_lengths_gives_expected_lengths():
+    points = np.array([[0, 0], [2, 1], [3, 3], [5, 1], [3, 0]], dtype=float)
+
+    lengths = norm_lengths(points)
+
+    expected = np.array(
+        [
+            np.sqrt(5),
+            np.sqrt(5) + np.sqrt(5),
+            np.sqrt(5) + np.sqrt(5) + np.sqrt(8),
+            np.sqrt(5) + np.sqrt(5) + np.sqrt(8) + np.sqrt(5),
+        ]
+    )
+    expected /= expected[-1]
+    np.testing.assert_allclose(lengths, expected)
+
+
+def test_tangent_returns_tanget_vectors():
+    xz = np.array(
+        [
+            [
+                0.34558419,
+                0.82161814,
+                0.33043708,
+                -1.30315723,
+                0.90535587,
+                0.44637457,
+                -0.53695324,
+                0.5811181,
+                0.3645724,
+                0.2941325,
+                0.02842224,
+                0.54671299,
+            ],
+            [
+                -0.73645409,
+                -0.16290995,
+                -0.48211931,
+                0.59884621,
+                0.03972211,
+                -0.29245675,
+                -0.78190846,
+                -0.25719224,
+                0.00814218,
+                -0.27560291,
+                1.29406381,
+                1.00672432,
+            ],
+        ]
+    )
+
+    tngnt = tangent(xz)
+
+    expected = np.array(
+        [
+            [
+                0.63866332,
+                -0.05945048,
+                -0.94133318,
+                0.74046041,
+                0.8910329,
+                -0.86890311,
+                0.96741701,
+                0.75207387,
+                -0.9979486,
+                -0.25290957,
+                0.19325713,
+                0.87458661,
+            ],
+            [
+                0.7694863,
+                0.99823126,
+                0.33747866,
+                0.67209998,
+                -0.45393874,
+                -0.49498221,
+                0.25318831,
+                0.65907882,
+                -0.06402027,
+                0.96748992,
+                0.98114814,
+                -0.48486932,
+            ],
+        ]
+    )
+    np.testing.assert_allclose(tngnt, expected)
 
 
 def vector_intersect(p1, p2, p3, p4):
@@ -215,26 +338,6 @@ def normal_vector(side_vectors):
     )
     a[np.isnan(a)] = 0
     return a
-
-
-class PanellingOptProblem(OptimisationProblem):
-    def __init__(self, paneller: Paneller, optimiser: Optimiser):
-        self.paneller = paneller
-        objective = OptimisationObjective(self.paneller.f_objective)
-        constraint = OptimisationConstraint(
-            self.paneller.constrain_length,
-            f_constraint_args={},
-            tolerance=np.full(self.paneller.n_constraints, 1e-8),
-        )
-
-        super().__init__(self.paneller.x_opt, optimiser, objective, [constraint])
-
-        n_variables = self.paneller.n_opt
-        self.set_up_optimiser(n_variables, bounds=paneller.bounds)
-
-    def optimise(self):
-        self.paneller.x_opt = self.opt.optimise(self.paneller.x_opt)
-        return self.paneller.x_opt
 
 
 def make_pivoted_string(
@@ -318,3 +421,148 @@ def make_pivoted_string(
     index = index[: j + 1]  # trim
     delta_x = delta_x[:j]  # trim
     return new_points, index
+
+
+from bluemira.utilities.opt_problems import (
+    OptimisationConstraint,
+    OptimisationObjective,
+    OptimisationProblem,
+    Optimiser,
+)
+
+
+class PanellingOptProblem(OptimisationProblem):
+    def __init__(self, paneller: Paneller, optimiser: Optimiser):
+        self.paneller = paneller
+        self.bounds = (np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0))
+        objective = OptimisationObjective(self.objective)
+        constraint = OptimisationConstraint(
+            self.constrain_min_length_and_angles,
+            f_constraint_args={},
+            tolerance=np.full(self.paneller.n_constraints, 1e-5),
+        )
+        super().__init__(self.paneller.x0, optimiser, objective, [constraint])
+        self.set_up_optimiser(self.paneller.n_opts, bounds=self.bounds)
+
+    def optimise(self):
+        self.paneller.x0 = self.opt.optimise(self.paneller.x0)
+        return self.paneller.x0
+
+    def objective(self, x: np.ndarray, grad: np.ndarray) -> float:
+        length = self.paneller.length(x)
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                self.paneller.length, x, bounds=self.bounds, f0=length
+            )
+        return length
+
+    def constrain_min_length_and_angles(
+        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
+    ) -> np.ndarray:
+        # Constrain minimum length
+        lengths = self.paneller.panel_lengths(x)
+        constraint[: len(lengths)] = self.paneller.dx_min - lengths
+        if grad.size > 0:
+            # TODO(hsaunders1904): work out what BLUEPRINT was doing to
+            #  get this gradient
+            grad[: len(lengths)] = approx_derivative(
+                lambda x_opt: -self.paneller.panel_lengths(x_opt),
+                x0=x,
+                f0=constraint[: len(lengths)],
+                bounds=self.bounds,
+            )
+
+        # Constrain joint angles
+        constraint[len(lengths) :] = self.paneller.angles(x) - self.paneller.max_angle
+        if grad.size > 0:
+            # TODO(hsaunders): I'm sure we can be smarter about this gradient
+            grad[len(lengths) :, :] = approx_derivative(
+                lambda x_opt: self.paneller.angles(x_opt),
+                x0=x,
+                f0=constraint[len(lengths) :],
+                bounds=self.bounds,
+            )
+        return constraint
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+
+    from bluemira.equilibria.shapes import JohnerLCFS
+    from bluemira.geometry.tools import (
+        boolean_cut,
+        find_clockwise_angle_2d,
+        make_polygon,
+    )
+    from bluemira.geometry.wire import BluemiraWire
+
+    theta = np.linspace(0, np.pi, 100)
+    x = np.cos(theta)
+    z = np.sin(theta)
+
+    def cut_wire_below_z(wire: BluemiraWire, proportion: float) -> BluemiraWire:
+        """Cut a wire below the z-coordinate that is 'proportion' of the height of the wire."""
+        bbox = wire.bounding_box
+        z_cut_coord = proportion * (bbox.z_max - bbox.z_min) + bbox.z_min
+        cutting_box = np.array(
+            [
+                [bbox.x_min - 1, 0, bbox.z_min - 1],
+                [bbox.x_min - 1, 0, z_cut_coord],
+                [bbox.x_max + 1, 0, z_cut_coord],
+                [bbox.x_max + 1, 0, bbox.z_min - 1],
+                [bbox.x_min - 1, 0, bbox.z_min - 1],
+            ]
+        )
+        pieces = boolean_cut(wire, [make_polygon(cutting_box, closed=True)])
+        return pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
+
+    def make_cut_johner():
+        """
+        Make a wall shape and cut it below a (fictional) x-point.
+
+        As this is for testing, we just use a JohnerLCFS with a slightly
+        larger radius than default, then cut it below a z-coordinate that
+        might be the x-point in an equilibrium.
+        """
+        johner_wire = JohnerLCFS(var_dict={"r_0": {"value": 10.5}}).create_shape()
+        return cut_wire_below_z(johner_wire, 1 / 4)
+
+    shape = make_cut_johner()
+    coords = shape.discretize(byedges=True)
+    x, z = coords.x, coords.z
+
+    paneller = Paneller(np.array([x, z]), 30, 0.05)
+    initial_joints = paneller.joints(paneller.x0)
+
+    print("Initial:")
+    # print(f"joints: {initial_joints}")
+    print(f"length: {paneller.length(paneller.x0)}")
+    print(f"angles: {paneller.angles(paneller.x0)}")
+
+    optimiser = Optimiser(
+        "SLSQP",
+        n_variables=paneller.n_opts,
+        opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
+    )
+    opt = PanellingOptProblem(paneller, optimiser)
+
+    import time
+
+    start = time.time()
+    x_opt = opt.optimise()
+    print(f"optimisation took {time.time() - start} seconds")
+
+    opt_joints = paneller.joints(x_opt)
+
+    print("\nOptimised:")
+    # print(f"joints: {opt_joints}")
+    print(f"length: {paneller.length(x_opt)}")
+    print(f"angles: {paneller.angles(x_opt)}")
+
+    _, ax = plt.subplots()
+    ax.plot(x, z, linewidth=0.1)
+    ax.plot(initial_joints[0], initial_joints[1], "--x", label="initial", linewidth=0.65)
+    ax.plot(opt_joints[0], opt_joints[1], "-x", label="optimised", linewidth=0.75)
+    ax.set_aspect("equal")
+    ax.legend()
+    plt.show()
