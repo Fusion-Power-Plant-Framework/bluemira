@@ -42,7 +42,6 @@ from bluemira.equilibria.opt_constraints import (
     PsiConstraint,
 )
 from bluemira.equilibria.opt_problems import PulsedNestedPositionCOP
-from bluemira.equilibria.profiles import BetaIpProfile
 from bluemira.equilibria.run import OptimisedPulsedCoilsetDesign
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
