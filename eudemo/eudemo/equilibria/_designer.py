@@ -488,7 +488,9 @@ class DummyFixedEquilibriumDesigner(Designer[Tuple[Coordinates, Profile]]):
         """
         Run the DummyFixedEquilibriumDesigner.
         """
-        param_cls = self.build_config.get("param_class", "equilibria.shapes.JohnerLCFS")
+        param_cls = self.build_config.get(
+            "param_class", "bluemira.equilibria.shapes.JohnerLCFS"
+        )
         param_cls = get_class_from_module(param_cls)
         shape_config = self.build_config.get("shape_config", {})
         input_dict = handle_lcfs_shape_input(param_cls, self.params, shape_config)

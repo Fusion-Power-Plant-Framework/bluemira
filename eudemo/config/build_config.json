@@ -43,7 +43,7 @@
     },
     "Dummy fixed boundary equilibrium": {
         "run_mode": "run",
-        "param_class": "equilibria.shapes::KuiroukidisLCFS",
+        "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
         "shape_config": {
             "f_delta_l": 1.25,
             "f_kappa_l": 1.15,
