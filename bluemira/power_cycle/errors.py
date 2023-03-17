@@ -57,7 +57,7 @@ class PowerCycleABCError(PowerCycleError):
                 "the 'str' class."
             ),
             "label": (
-                "Invalid 'label' parameter for an instance of the " f"{self._source}."
+                f"Invalid 'label' parameter for an instance of the {self._source}."
             ),
             "class": (
                 "Invalid instance. The tested object is not an "
@@ -428,8 +428,20 @@ class BOPPhaseError(PowerCycleError):
 
 
 class BOPPulseError(PowerCycleError):
-    pass
+    """
+    Exception class for 'BOPPulse' class of the Power Cycle module.
+    """
+
+    def _errors(self):
+        errors = {}
+        return errors
 
 
-class BOPTimelineError(PowerCycleError):
-    pass
+class BOPScenarioError(PowerCycleError):
+    """
+    Exception class for 'BOPScenario' class of the Power Cycle module.
+    """
+
+    def _errors(self):
+        errors = {}
+        return errors

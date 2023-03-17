@@ -132,7 +132,6 @@ class PowerCycleTimeABC(PowerCycleABC):
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
     def __init__(self, name, durations_list, label=None):
-
         super().__init__(name, label=label)
 
         self.durations_list = self._validate_durations(durations_list)
@@ -213,7 +212,19 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
 
     @abstractproperty
     def intrinsic_time(self):
+        """
+        Every child of 'PowerCycleLoadABC' must define the
+        'intrisic_time' property, that collects all of its time-related
+        data in a single list.
+        """
         pass
+
+    @staticmethod
+    def _build_time_from_load_set(load_set):
+        all_times = [load_object.intrinsic_time for load_object in load_set]
+        unnested_times = unnest_list(all_times)
+        time = unique_and_sorted_vector(unnested_times)
+        return time
 
     def _validate_n_points(self, n_points: Union[int, float, bool, None]):
         """
@@ -271,13 +282,6 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
             refined_vector.append(vector[-1])
 
         return refined_vector
-
-    @staticmethod
-    def _build_time_from_load_set(load_set):
-        all_times = [load_object.intrinsic_time for load_object in load_set]
-        unnested_times = unnest_list(all_times)
-        time = unique_and_sorted_vector(unnested_times)
-        return time
 
     def _make_secondary_in_plot(self):
         """
@@ -379,9 +383,38 @@ class PowerCycleImporterABC(metaclass=ABCMeta):
     @staticmethod
     @abstractmethod
     def duration(variables_map):
+        """
+        Every child of 'PowerCycleImporterABC' must define the
+        'duration' method, that returns single time-related values
+        from other BLUEMIRA modules to be used in the
+        'duration_breakdown' parameter of 'PowerCyclePhase' objects.
+        """
         pass
 
     @staticmethod
     @abstractmethod
     def phaseload_inputs(variables_map):
+        """
+        Every child of 'PowerCycleImporterABC' must define the
+        'phaseload_inputs' method, that returns a 'dict' with the
+        following keys and values:
+            - "phase_list": 'list' of 'str',
+            - "consumption: 'bool',
+            - "normalize_list": 'list' of 'bool',
+            - "powerload_list": 'list' of ''PowerLoad' objects.
+
+        Strings in "phase_list" indicate the phase labels in which the
+        phase load is applied.
+        The boolean in "consumption" indicate whether these loads are of
+        power consumption or production (and thus positive or negative
+        contributions in the net power balance).
+        The booleans in "normalize_list" enforce time normalization to
+        each "PowerLoad" in the "powerload_list", when each 'PhaseLoad'
+        is instantiated.
+
+
+        The dictionary should be constructed with data from other
+        BLUEMIRA modules to be used in the '_build_phaseloads' method
+        of a 'PowerCycleManager' object.
+        """
         pass
