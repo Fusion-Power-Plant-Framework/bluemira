@@ -170,41 +170,41 @@ class BluemiraFace(BluemiraGeo):
     @property
     def vertexes(self) -> Coordinates:
         """
-        The vertexes of the wire.
+        The vertexes of the face.
         """
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
     def edges(self) -> Tuple[BluemiraWire]:
         """
-        The edges of the wire.
+        The edges of the face.
         """
         return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
     def wires(self) -> Tuple[BluemiraWire]:
         """
-        The wires of the wire. By definition a list of itself.
+        The wires of the face.
         """
         return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
 
     @property
     def faces(self) -> Tuple[BluemiraFace]:
         """
-        The faces of the wire. By definition an empty list.
+        The faces of the face. By definition a tuple of itself.
         """
         return tuple([self])
 
     @property
     def shells(self) -> tuple:
         """
-        The shells of the wire. By definition an empty list.
+        The shells of the face. By definition an empty tuple.
         """
         return ()
 
     @property
     def solids(self) -> tuple:
         """
-        The solids of the wire. By definition an empty list.
+        The solids of the face. By definition an empty tuple.
         """
         return ()
