@@ -37,6 +37,8 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
 
+from warnings import warn
+
 import freecad  # noqa: F401
 import FreeCAD
 import BOPTools
@@ -56,7 +58,7 @@ from FreeCAD import Base
 from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
-from bluemira.base.constants import EPS
+from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
@@ -1181,6 +1183,7 @@ def _freecad_save_config(
     """
     unit_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units")
     # Seems to have little effect on anything but its an option to set
+    # does effect the GUI be apparently not the base unit of the built part...
     unit_prefs.SetInt("UserSchema", _Unit[unit].value)
     unit_prefs.SetInt("Decimals", no_dp)  # 100th mm
 
@@ -1322,7 +1325,7 @@ class CADFileType(enum.Enum):
             return FreeCADwriter
 
 
-def save_as_STP(shapes: List[apiShape], filename: str = "test", scale: float = 1.0):
+def save_as_STP(shapes: List[apiShape], filename: str = "test", unit_scale: str = "metre", **kwargs):
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -1332,15 +1335,15 @@ def save_as_STP(shapes: List[apiShape], filename: str = "test", scale: float = 1
         Iterable of shape objects to be saved
     filename:
         Full path filename of the STP assembly
-    scale:
+    unit_scale:
         The scale in which to save the Shape objects
 
     Notes
     -----
     This uses the legacy method to save to STP files.
-    It doesnt require freecad documents but also doesnt allow much customisation
-    The scale of Part is in mm by default therefore we scale by 1000 to convert
-    to metres.
+    It doesnt require freecad documents but also doesnt allow much customisation.
+    Part builds in millimetres therefore we need to scale to metres to be
+    consistent with our units.
 
     """
     filename = force_file_extension(filename, [".stp", ".step"])
@@ -1354,7 +1357,16 @@ def save_as_STP(shapes: List[apiShape], filename: str = "test", scale: float = 1
 
     compound = make_compound(shapes)
 
-    if scale != 1.0:
+    if "scale" in kwargs:
+        scale = kwargs["scale"]
+        warn(
+            "Using kwarg 'scale' is no longer supported. Please use 'unit_scale'",
+            category=DeprecationWarning,
+        )
+    else:
+        scale = raw_uc(1, "mm", unit_scale)
+
+    if scale != 1:
         # scale the compound. Since the scale function modifies directly the shape,
         # a copy of the compound is made to avoid modification of the original shapes.
         compound = scale_shape(compound.copy(), scale)
@@ -1372,7 +1384,7 @@ def _feature_labeller(objs, labels):
             ob.Label = lab
 
 
-def _scale_obj(objs, scale=1000):
+def _scale_obj(objs, scale: float = 1000):
     """
     Scale objects
 
@@ -1393,7 +1405,7 @@ def save_cad(
     filename: str,
     formatt: Union[str, CADFileType] = "stp",
     labels: Iterable[str] = None,
-    scale: int = 1000,
+    unit_scale: str = "metre",
     **kwargs,
 ):
     """
@@ -1409,14 +1421,15 @@ def save_cad(
         file formatt
     labels
         shape labels
-    scale
-        value to scale shape by.
+    unit_scale
+        unit to save the objects as.
     kwargs
         passed to freecad preferences configuration
 
     Notes
     -----
-    ApiShape is in millimetres therefore scale=1000 to be consistent with our units
+    Part builds in millimetres therefore we need to scale to metres to be
+    consistent with our units
     """
     formatt = CADFileType(formatt)
     filename = force_file_extension(filename, f".{formatt.value}")
@@ -1427,7 +1440,8 @@ def save_cad(
 
     _feature_labeller(objs, labels)
 
-    _scale_obj(objs, scale=scale)
+    # Part is always built in mm
+    _scale_obj(objs, scale=raw_uc(1, "mm", unit_scale))
 
     # Some exporters need FreeCADGui to be setup before their import,
     # this is achieved in _setup_document
