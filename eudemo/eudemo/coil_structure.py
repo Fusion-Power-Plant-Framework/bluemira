@@ -30,12 +30,11 @@ from bluemira.builders.coil_supports import (
     ITERGravitySupportBuilder,
     OISBuilder,
     PFCoilSupportBuilder,
-    PFCoilSupportBuilderParams,
     StraightOISDesigner,
-    StraightOISDesignerParams,
 )
 
 
+@dataclass
 class CoilStructuresParameters(ParameterFrame):
     """
     Parameters for the coil structures
