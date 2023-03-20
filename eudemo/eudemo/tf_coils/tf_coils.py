@@ -99,6 +99,18 @@ class TFCoil(ComponentManager):
             .shape.boundary[0]
         )
 
+    def xz_face(self) -> BluemiraFace:
+        """Return the x-z face of the TF Coils."""
+        outer = self.boundary()
+        inner = (
+            self.component()
+            .get_component("xz")
+            .get_component("Casing")
+            .get_component("inner")
+            .shape.boundary[1]
+        )
+        return BluemiraFace([outer, inner])
+
 
 @dataclass
 class TFCoilDesignerParams(ParameterFrame):
