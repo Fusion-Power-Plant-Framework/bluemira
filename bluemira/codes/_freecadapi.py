@@ -60,6 +60,7 @@ from PySide2.QtWidgets import QApplication
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes._freecadconfig import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import MINIMUM_LENGTH
 
@@ -1352,6 +1353,7 @@ def save_cad(
     formatt: Union[str, CADFileType] = "stp",
     labels: Iterable[str] = None,
     unit_scale: str = "metre",
+    **kwargs,
 ):
     """
     Save CAD in a given file format
@@ -1368,6 +1370,8 @@ def save_cad(
         shape labels
     unit_scale
         unit to save the objects as.
+    kwargs
+        passed to freecad preferences configuration
 
     Notes
     -----
@@ -1376,6 +1380,8 @@ def save_cad(
     """
     formatt = CADFileType(formatt)
     filename = force_file_extension(filename, f".{formatt.value}")
+
+    _freecad_save_config(**kwargs)
 
     objs = list(_setup_document(shapes))
 
