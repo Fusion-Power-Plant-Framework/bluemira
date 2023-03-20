@@ -310,7 +310,6 @@ class PFCoilSupportBuilder(Builder):
     PF coil support builder
     """
 
-    SUPPORT = "PF coil support"
     param_cls: Type[PFCoilSupportBuilderParams] = PFCoilSupportBuilderParams
 
     def __init__(
@@ -323,7 +322,7 @@ class PFCoilSupportBuilder(Builder):
         super().__init__(params, build_config)
         self.tf_xz_keep_out_zone = tf_xz_keep_out_zone
         self.pf_coil_xz = pf_coil_xz
-        self.name = f"{self.SUPPORT} {self.build_config.get('name', '0')}"
+        self.name = f"{self.name} {self.build_config.get('support_number', 0)}"
 
     def build(self) -> Component:
         """
