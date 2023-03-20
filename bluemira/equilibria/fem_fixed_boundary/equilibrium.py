@@ -503,12 +503,12 @@ def calc_metric_coefficients(
     ----------
     flux_surfaces: List[ClosedFluxSurface]
         List of closed flux surfaces on which to calculate the coefficients
-    psi_2D_func:
-        Callable which calculates psi of the form f(p: Iterable[2]) = float
-    psi_norm_2D_func:
-        Callable which calculates psi norm of the form f(p: Iterable[2]) = float
+    grad_psi_2D_func:
+        Callable which calculates grad psi of the form f(p: Iterable[2]) = float
     psi_norm_1D:
         Array of 1-D normalised psi values
+    psi_ax:
+        Poloidal magnetic flux at the magnetic axis
 
     Returns
     -------
