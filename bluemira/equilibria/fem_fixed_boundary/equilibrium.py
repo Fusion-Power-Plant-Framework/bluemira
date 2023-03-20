@@ -376,7 +376,7 @@ def solve_transport_fixed_boundary(
         gs_solver.set_mesh(mesh)
 
         points = gs_solver.mesh.coordinates()
-        psi2d_0 = np.array([0 for p in points])
+        psi2d_0 = np.zeros(len(points))
 
         for n_iter_inner in range(max_iter_inner):
 
