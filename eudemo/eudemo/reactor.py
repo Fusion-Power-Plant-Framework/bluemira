@@ -54,7 +54,9 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
+from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
+    CoilStructures,
     Cryostat,
     CryostatThermalShield,
     RadiationShield,
@@ -84,11 +86,12 @@ class EUDEMO(Reactor):
 
     plasma: Plasma
     vacuum_vessel: VacuumVessel
+    vv_thermal: VacuumVesselThermalShield
     divertor: Divertor
     blanket: Blanket
     tf_coils: TFCoil
-    vv_thermal: VacuumVesselThermalShield
     pf_coils: PFCoil
+    coil_structures: CoilStructures
     cryostat: Cryostat
     cryostat_thermal: CryostatThermalShield
     radiation_shield: RadiationShield
@@ -177,6 +180,22 @@ def build_pf_coils(
     coilset = pf_designer.execute()
     component = build_pf_coils_component(params, build_config, coilset)
     return PFCoil(component, coilset)
+
+
+def build_coil_structures(
+    params,
+    build_config,
+    tf_coil_xz_face,
+    pf_coil_xz_wires,
+    pf_coil_keep_out_zones,
+) -> CoilStructures:
+    """
+    Design and build the coil structures for the reactor.
+    """
+    component = build_coil_structures_component(
+        params, build_config, tf_coil_xz_face, pf_coil_xz_wires, pf_coil_keep_out_zones
+    )
+    return CoilStructures(component)
 
 
 def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
@@ -308,6 +327,14 @@ if __name__ == "__main__":
         build_config.get("Thermal shield", {}),
         reactor.pf_coils.xz_boundary(),
         reactor.tf_coils.boundary(),
+    )
+
+    reactor.coil_structures = build_coil_structures(
+        params,
+        build_config.get("Coil structures", {}),
+        tf_coil_xz_face=reactor.tf_coils.xz_face(),
+        pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
+        pf_coil_keep_out_zones=[upper_port_xz],
     )
 
     reactor.cryostat = build_cryostat(

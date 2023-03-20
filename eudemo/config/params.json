@@ -550,6 +550,60 @@
         "source": "Input",
         "long_name": "PF coil casing thickness"
     },
+    "tk_ois": {
+        "value": 0.3,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Outer inter-coil casing thickness"
+    },
+    "g_ois_tf_edge": {
+        "value": 0.2,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Gap betweeen outer inter-coil casing and TF edge"
+    },
+    "min_OIS_length": {
+        "value": 1.0,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Minimum outer inter-coil casing length"
+    },
+    "pf_s_tk_plate": {
+        "value": 0.15,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "PF support rib plate thickness"
+    },
+    "pf_s_n_plate": {
+        "value": 5,
+        "unit": "",
+        "source": "Input",
+        "long_name": "Number of PF support rib plates"
+    },
+    "pf_s_g": {
+        "value": 0.1,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Gap between PF and PF support"
+    },
+    "tf_gs_tk_plate": {
+        "value": 0.15,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "TF gravity support rib plate thickness"
+    },
+    "tf_gs_g_plate": {
+        "value": 0.05,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Gap between ITER-like TF gravity support rib plates"
+    },
+    "tf_gs_base_depth": {
+        "value": 0.3,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "ITER-like TF gravity support base plate depth"
+    },
     "tk_sh_bot": {
         "value": 1e-06,
         "unit": "meter",

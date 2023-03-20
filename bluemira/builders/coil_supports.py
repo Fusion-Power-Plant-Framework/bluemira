@@ -310,7 +310,6 @@ class PFCoilSupportBuilder(Builder):
     PF coil support builder
     """
 
-    SUPPORT = "PF coil support"
     param_cls: Type[PFCoilSupportBuilderParams] = PFCoilSupportBuilderParams
 
     def __init__(
@@ -323,6 +322,7 @@ class PFCoilSupportBuilder(Builder):
         super().__init__(params, build_config)
         self.tf_xz_keep_out_zone = tf_xz_keep_out_zone
         self.pf_coil_xz = pf_coil_xz
+        self.name = f"{self.name} {self.build_config.get('support_number', 0)}"
 
     def build(self) -> Component:
         """
@@ -528,7 +528,7 @@ class PFCoilSupportBuilder(Builder):
 
         shape = boolean_fuse(shape_list)
         shape.translate(vector=(0, -0.5 * width, 0))
-        component = PhysicalComponent(self.SUPPORT, shape)
+        component = PhysicalComponent(self.name, shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
 
@@ -693,7 +693,7 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
     tf_coil_xz_face:
         x-z face of the TF coil on the y=0 plane
     keep_out_zones:
-        List of x-z keep_out_zone wires on the y=0 plane
+        List of x-z keep_out_zone faces on the y=0 plane
     """
 
     param_cls = StraightOISDesignerParams
@@ -718,11 +718,18 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
         ois_wires:
             A list of outer inter-coil structure wires on the y=0 plane.
         """
+        inner_tf_wire = self.tf_face.boundary[1]
         koz_centreline = offset_wire(
-            self.tf_face.boundary[1], self.params.g_ois_tf_edge.value
+            inner_tf_wire,
+            self.params.g_ois_tf_edge.value,
+            open_wire=False,
+            join="arc",
         )
         ois_centreline = offset_wire(
-            self.tf_face.boundary[1], 2 * self.params.g_ois_tf_edge.value
+            inner_tf_wire,
+            2 * self.params.g_ois_tf_edge.value,
+            open_wire=False,
+            join="arc",
         )
         ois_regions = self._make_ois_regions(ois_centreline, koz_centreline)
         koz = self._make_ois_koz(koz_centreline)
@@ -757,7 +764,7 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
         # Note we use the same offset to the exclusion zones as for the OIS
         # to the TF.
         koz_wires = [
-            offset_wire(koz, self.params.g_ois_tf_edge.value)
+            offset_wire(koz.boundary[0], self.params.g_ois_tf_edge.value)
             for koz in self.keep_out_zones
         ]
         koz_faces = [BluemiraFace(koz) for koz in koz_wires]
@@ -782,8 +789,7 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
             )
         )
         cutter = BluemiraFace(koz_centreline)
-        koz_faces = [BluemiraFace(koz) for koz in self.keep_out_zones]
-        cutter = boolean_fuse([cutter, inboard_cutter] + koz_faces)
+        cutter = boolean_fuse([cutter, inboard_cutter] + self.keep_out_zones)
 
         ois_regions = boolean_cut(ois_centreline, cutter)
 

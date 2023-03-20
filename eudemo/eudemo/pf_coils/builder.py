@@ -64,7 +64,8 @@ def build_pf_coils_component(params, build_config, coilset):
         else:
             bluemira_warn(f"Coil {name} has no size")
 
-    builders = []
+    pf_builders = []
+    cs_builders = []
     for designer, coil_type, coil_name in wires:
         tk_ins = (
             params.tk_pf_insulation.value
@@ -80,16 +81,25 @@ def build_pf_coils_component(params, build_config, coilset):
             **build_config,
             "name": coil_name,
         }
-        builders.append(
-            PFCoilBuilder(
-                {
-                    "tk_insulation": {"value": tk_ins, "unit": "m"},
-                    "tk_casing": {"value": tk_case, "unit": "m"},
-                    "ctype": {"value": coil_type.name, "unit": ""},
-                },
-                bc,
-                designer.execute(),
-            )
+        builder = PFCoilBuilder(
+            {
+                "tk_insulation": {"value": tk_ins, "unit": "m"},
+                "tk_casing": {"value": tk_case, "unit": "m"},
+                "ctype": {"value": coil_type.name, "unit": ""},
+            },
+            bc,
+            designer.execute(),
         )
+        if coil_type.name == "PF":
+            pf_builders.append(builder)
+        else:
+            cs_builders.append(builder)
 
-    return Component("PF Coils", children=[builder.build() for builder in builders])
+    pf_coils = Component(
+        "PF coils", children=[builder.build() for builder in pf_builders]
+    )
+    cs_coils = Component(
+        "CS coils", children=[builder.build() for builder in cs_builders]
+    )
+
+    return Component("Poloidal Coils", children=[pf_coils, cs_coils])

@@ -80,3 +80,11 @@ class RadiationShield(ComponentManager):
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the VVTS poloidal silhouette."""
         return self.component().get_component("xz").shape.boundary[0]
+
+
+class CoilStructures(ComponentManager):
+    """
+    Wrapper around the coil structures component tree
+    """
+
+    pass

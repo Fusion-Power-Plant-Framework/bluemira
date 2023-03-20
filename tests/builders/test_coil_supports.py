@@ -165,18 +165,14 @@ class TestPFCoilSupportBuilder:
             self.my_test_params, {}, self.tf_xz_koz, pf_xz_upper
         )
         upper_support = (
-            upper_builder.build()
-            .get_component("xyz")
-            .get_component(upper_builder.SUPPORT)
+            upper_builder.build().get_component("xyz").get_component(upper_builder.name)
         )
 
         lower_builder = PFCoilSupportBuilder(
             self.my_test_params, {}, self.tf_xz_koz, pf_xz_lower
         )
         lower_support = (
-            lower_builder.build()
-            .get_component("xyz")
-            .get_component(lower_builder.SUPPORT)
+            lower_builder.build().get_component("xyz").get_component(upper_builder.name)
         )
         np.testing.assert_almost_equal(
             lower_support.shape.volume, upper_support.shape.volume
@@ -284,12 +280,20 @@ class TestStraightOISDesigner:
     pd2 = offset_wire(pd, 1.0)
     tf_xz_face = BluemiraFace([pd2, pd])
     keep_out_zones = [
-        make_polygon({"x": [6, 12, 12, 6], "z": [0, 0, 15, 15]}, closed=True),
-        make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True),
+        BluemiraFace(
+            make_polygon({"x": [6, 12, 12, 6], "z": [0, 0, 15, 15]}, closed=True)
+        ),
+        BluemiraFace(
+            make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True)
+        ),
     ]
     keep_out_zones2 = [
-        make_polygon({"x": [4, 12, 12, 4], "z": [0, 0, 15, 15]}, closed=True),
-        make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True),
+        BluemiraFace(
+            make_polygon({"x": [4, 12, 12, 4], "z": [0, 0, 15, 15]}, closed=True)
+        ),
+        BluemiraFace(
+            make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True)
+        ),
     ]
 
     params = StraightOISDesignerParams(

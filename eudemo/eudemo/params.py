@@ -124,9 +124,6 @@ class EUDEMOReactorParams(ParameterFrame):
     v_burn: Parameter[float]
     V_p: Parameter[float]
     well_depth: Parameter[float]
-    x_g_support: Parameter[float]
-    x_gs_kink_diff: Parameter[float]
-    z_gs: Parameter[float]
     Z_eff: Parameter[float]
 
     # PLASMOD
@@ -168,10 +165,28 @@ class EUDEMOReactorParams(ParameterFrame):
     tk_tf_wp: Parameter[float]
     z_0: Parameter[float]
 
+    # OIS
+    tk_ois: Parameter[float]
+    g_ois_tf_edge: Parameter[float]
+    min_OIS_length: Parameter[float]
+
     # PF Coils
     F_cs_sepmax: Parameter[float]
     F_cs_ztotmax: Parameter[float]
     F_pf_zmax: Parameter[float]
+
+    # PF supports
+    pf_s_tk_plate: Parameter[float]
+    pf_s_n_plate: Parameter[int]
+    pf_s_g: Parameter[float]
+
+    # Gravity supports
+    x_g_support: Parameter[float]
+    x_gs_kink_diff: Parameter[float]
+    z_gs: Parameter[float]
+    tf_gs_tk_plate: Parameter[float]
+    tf_gs_g_plate: Parameter[float]
+    tf_gs_base_depth: Parameter[float]
 
     # Powercycle
     bb_p_inlet: Parameter[float]
