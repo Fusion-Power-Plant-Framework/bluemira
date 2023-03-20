@@ -165,18 +165,14 @@ class TestPFCoilSupportBuilder:
             self.my_test_params, {}, self.tf_xz_koz, pf_xz_upper
         )
         upper_support = (
-            upper_builder.build()
-            .get_component("xyz")
-            .get_component(upper_builder._make_name())
+            upper_builder.build().get_component("xyz").get_component(upper_builder.name)
         )
 
         lower_builder = PFCoilSupportBuilder(
             self.my_test_params, {}, self.tf_xz_koz, pf_xz_lower
         )
         lower_support = (
-            lower_builder.build()
-            .get_component("xyz")
-            .get_component(upper_builder._make_name())
+            lower_builder.build().get_component("xyz").get_component(upper_builder.name)
         )
         np.testing.assert_almost_equal(
             lower_support.shape.volume, upper_support.shape.volume
