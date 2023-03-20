@@ -529,7 +529,7 @@ class PFCoilSupportBuilder(Builder):
 
         shape = boolean_fuse(shape_list)
         shape.translate(vector=(0, -0.5 * width, 0))
-        component = PhysicalComponent(self._make_name(), shape)
+        component = PhysicalComponent(self.name, shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
 
