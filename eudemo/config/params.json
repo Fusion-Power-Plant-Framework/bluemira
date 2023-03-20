@@ -556,6 +556,18 @@
         "source": "Input",
         "long_name": "Outer inter-coil casing thickness"
     },
+    "g_ois_tf_edge": {
+        "value": 0.2,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Gap betweeen outer inter-coil casing and TF edge"
+    },
+    "min_OIS_length": {
+        "value": 1.0,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Minimum outer inter-coil casing length"
+    },
     "tk_sh_bot": {
         "value": 1e-06,
         "unit": "meter",
