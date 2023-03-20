@@ -192,10 +192,9 @@ def build_coil_structures(
     """
     Design and build the coil structures for the reactor.
     """
-    builder = build_coil_structures_component(
+    component = build_coil_structures_component(
         params, build_config, tf_coil_xz_face, pf_coil_xz_wires, pf_coil_keep_out_zones
     )
-    component = builder.build()
     return CoilStructures(component)
 
 

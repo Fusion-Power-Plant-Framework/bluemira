@@ -78,10 +78,13 @@ def build_coil_structures_component(
     ois_component = ois_builder.build()
 
     tf_koz = tf_coil_xz_face.boundary[0]
-    pf_support_builder = PFCoilSupportBuilder(
-        params, build_config, tf_koz, pf_coil_xz_wires
-    )
-    pf_support_component = pf_support_builder.build()
+    support_components = []
+    for i, pf_coil in enumerate(pf_coil_xz_wires):
+        bc = {**build_config, "name": str(i)}
+        pf_support_builder = PFCoilSupportBuilder(params, bc, tf_koz, pf_coil)
+        support_components.append(pf_support_builder.build())
+
+    pf_support_component = Component("PF supports", children=support_components)
 
     gs_builder = ITERGravitySupportBuilder(params, build_config, tf_koz)
     gs_component = gs_builder.build()
