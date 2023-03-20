@@ -78,15 +78,15 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         super().__init__()
         self.name = name
 
-        if parent is not None and name in (ch.name for ch in parent.children):
-            raise ComponentError(f"Component {name} is already a child of {parent}")
+        # if parent is not None and name in (ch.name for ch in parent.children):
+        #     raise ComponentError(f"Component {name} is already a child of {parent}")
 
-        if children is not None:
-            ch_names = [ch.name for ch in children]
-            if len(ch_names) != len(set(ch_names)):
-                raise ComponentError(
-                    f"Children have duplicate names for Component {name}",
-                )
+        # if children is not None:
+        #     ch_names = [ch.name for ch in children]
+        #     if len(ch_names) != len(set(ch_names)):
+        #         raise ComponentError(
+        #             f"Children have duplicate names for Component {name}",
+        #         )
 
         self.parent = parent
 
@@ -129,6 +129,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             if not isinstance(descendent_comps, Iterable):
                 descendent_comps = [descendent_comps]
 
+            # Filter out all siblings that are not in names
             for c in descendent_comps:
                 for c_sib in c.siblings:
                     if c_sib.name not in names:

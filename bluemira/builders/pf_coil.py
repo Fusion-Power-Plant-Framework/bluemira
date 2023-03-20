@@ -29,6 +29,7 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.builders.tools import get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.coils import Coil
 from bluemira.geometry.face import BluemiraFace
@@ -42,6 +43,8 @@ class PFCoilBuilderParams(ParameterFrame):
     """
     Parameters for the `PFCoilBuilder` class.
     """
+
+    n_TF: Parameter[int]
 
     tk_insulation: Parameter[float]
     tk_casing: Parameter[float]
@@ -77,7 +80,7 @@ class PFCoilBuilder(Builder):
         return self.component_tree(
             xz=self.build_xz(self.xz_cross_section),
             xy=self.build_xy(self.xz_cross_section),
-            xyz=self.build_xyz(self.xz_cross_section),
+            xyz=self.build_xyz(self.xz_cross_section, degree=0),
         )
 
     def build_xy(self, shape: BluemiraWire) -> List[PhysicalComponent]:
@@ -153,11 +156,14 @@ class PFCoilBuilder(Builder):
         component: Component
             The component grouping the results in 3D (xyz).
         """
+
+        sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
+
         # I doubt this is floating-point safe to collisions...
         xz_components = self.build_xz(shape)
         components = []
         for c in xz_components:
-            shape = revolve_shape(c.shape, degree=degree)
+            shape = revolve_shape(c.shape, degree=sector_degree * n_sectors)
             c_xyz = PhysicalComponent(c.name, shape)
             c_xyz.display_cad_options.color = c.plot_options.face_options["color"]
             components.append(c_xyz)

@@ -20,12 +20,13 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Base class for a Bluemira reactor."""
 
-from typing import Type
+from typing import List, Optional, Type
 from warnings import warn
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
 from bluemira.base.error import ReactorError
+from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 
 _PLOT_DIMS = ["xy", "xz", "xyz"]
@@ -77,14 +78,21 @@ class Reactor:
 
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, n_sectors: int):
         self.name = name
+        self.n_sectors = n_sectors
 
-    def component(self) -> Component:
+    def component(
+        self,
+        with_components: Optional[List[ComponentManager]] = None,
+    ) -> Component:
         """Return the component tree."""
-        return self._build_component_tree()
+        return self._build_component_tree(with_components)
 
-    def _build_component_tree(self) -> Component:
+    def _build_component_tree(
+        self,
+        with_components: Optional[List[ComponentManager]] = None,
+    ) -> Component:
         """Build the component tree from this class's annotations."""
         component = Component(self.name)
         comp_type: Type
@@ -93,6 +101,11 @@ class Reactor:
                 continue
             try:
                 component_manager = getattr(self, comp_name)
+                if (
+                    with_components is not None
+                    and component_manager not in with_components
+                ):
+                    continue
             except AttributeError:
                 # We don't mind if a reactor component is not set, it
                 # just won't be part of the tree
@@ -101,7 +114,13 @@ class Reactor:
             component.add_child(component_manager.component())
         return component
 
-    def show_cad(self, *dims, **kwargs):
+    def show_cad(
+        self,
+        *dims,
+        with_components: Optional[List[ComponentManager]] = None,
+        with_n_sectors: Optional[int] = None,
+        **kwargs,
+    ):
         """
         Show the CAD build of the reactor.
 
@@ -129,12 +148,45 @@ class Reactor:
                     f"Must be one of {str(_PLOT_DIMS)}"
                 )
 
-        comp = self.component()
+        comp = self.component(with_components)
 
-        # Filtering mutates the underlying components,
-        # which exist in memory regardless of calling self.component() on the reactor.
-        # Thus a copy must be made
+        # A copy of the component tree must be made
+        # as filtering would mutate the underlying component tree,
+        # that exists statically in memory.
+        # self.component (above) only creates a new root node for this reactor,
+        # not a new component tree.
         comp_copy = comp.copy()
         comp_copy.filter_components(dims_to_show)
+
+        if "xyz" in dims_to_show:
+
+            def create_patterned_component(c: Component):
+                print(f" --> {c.name}")
+                return Component(
+                    c.name,
+                    children=circular_pattern_component(
+                        c,
+                        with_n_sectors,
+                        degree=(360 / self.n_sectors) * with_n_sectors,
+                    ),
+                )
+
+            xyzs = comp_copy.get_component(
+                "xyz",
+                first=False,
+            )
+            print("Building xyz CAD")
+            if isinstance(xyzs, Component):
+                patterned_children = [
+                    create_patterned_component(c) for c in xyzs.children
+                ]
+                xyzs.children = patterned_children
+            else:
+                for i, xyz in enumerate(xyzs):
+                    print(f"{i+1}/{len(xyzs)}:")
+                    patterned_children = [
+                        create_patterned_component(c) for c in xyz.children
+                    ]
+                    xyz.children = patterned_children
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)

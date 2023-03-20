@@ -132,7 +132,7 @@ def circular_pattern_component(
         if shape is not None and not shape.label:
             shape.label = f"{comp.name} {idx}"
 
-        comp = copy.deepcopy(comp)
+        comp = comp.copy()
         comp.name = f"{comp.name} {idx}"
 
         comp.children = []

@@ -22,10 +22,13 @@
 Plasma builder.
 """
 
-from typing import Dict
+from dataclasses import dataclass
+from typing import Dict, Type, Union
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.builders.tools import get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, revolve_shape
@@ -47,6 +50,15 @@ class Plasma(ComponentManager):
         )
 
 
+@dataclass
+class PlasmaBuilderParams(ParameterFrame):
+    """
+    Plasma builder parameters
+    """
+
+    n_TF: Parameter[int]
+
+
 class PlasmaBuilder(Builder):
     """
     Builder for a poloidally symmetric plasma.
@@ -54,15 +66,15 @@ class PlasmaBuilder(Builder):
 
     LCFS = "LCFS"
 
-    # This builder has no parameters
-    param_cls = None
+    param_cls: Type[PlasmaBuilderParams] = PlasmaBuilderParams
 
     def __init__(
         self,
+        params: Union[ParameterFrame, Dict],
         build_config: Dict,
         xz_lcfs: BluemiraWire,
     ):
-        super().__init__(None, build_config)
+        super().__init__(params, build_config)
         self.xz_lcfs = xz_lcfs
 
     def build(self) -> Component:
@@ -72,7 +84,7 @@ class PlasmaBuilder(Builder):
         return self.component_tree(
             xz=[self.build_xz(self.xz_lcfs)],
             xy=[self.build_xy(self.xz_lcfs)],
-            xyz=[self.build_xyz(self.xz_lcfs)],
+            xyz=[self.build_xyz(self.xz_lcfs, degree=0)],
         )
 
     def build_xz(self, lcfs: BluemiraWire) -> PhysicalComponent:
@@ -116,7 +128,14 @@ class PlasmaBuilder(Builder):
         degree: float
             degrees to sweep the shape
         """
-        shell = revolve_shape(lcfs, direction=(0, 0, 1), degree=degree, label=self.LCFS)
+        sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
+
+        shell = revolve_shape(
+            lcfs,
+            direction=(0, 0, 1),
+            degree=sector_degree * n_sectors,
+            label=self.LCFS,
+        )
         component = PhysicalComponent(self.LCFS, shell)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
         return component

@@ -119,7 +119,7 @@ class CryostatBuilder(Builder):
         return self.component_tree(
             xz=[xz_cryostat],
             xy=[self.build_xy(self.x_out)],
-            xyz=self.build_xyz(xz_cross_section),
+            xyz=self.build_xyz(xz_cross_section, degree=0),
         )
 
     def build_xz(self, x_out: float, z_top: float) -> PhysicalComponent:

@@ -109,7 +109,7 @@ class BlanketBuilder(Builder):
         return self.component_tree(
             xz=[self.build_xz(ibs_silhouette, obs_silhouette)],
             xy=self.build_xy(segments),
-            xyz=self.build_xyz(segments),
+            xyz=self.build_xyz(segments, degree=0),
         )
 
     def build_xz(self, ibs_silhouette: BluemiraFace, obs_silhouette: BluemiraFace):

@@ -75,7 +75,7 @@ class DivertorBuilder(Builder):
         return self.component_tree(
             xz=[self.build_xz()],
             xy=[],
-            xyz=self.build_xyz(),
+            xyz=self.build_xyz(degree=0),
         )
 
     def build_xz(self) -> PhysicalComponent:

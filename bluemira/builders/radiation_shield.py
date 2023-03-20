@@ -75,7 +75,7 @@ class RadiationShieldBuilder(Builder):
         return self.component_tree(
             xz=[rs_xz],
             xy=[self.build_xy()],
-            xyz=self.build_xyz(rs_face),
+            xyz=self.build_xyz(rs_face, degree=0),
         )
 
     def build_xz(self) -> PhysicalComponent:

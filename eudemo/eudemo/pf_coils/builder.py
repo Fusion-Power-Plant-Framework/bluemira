@@ -24,7 +24,7 @@ from dataclasses import dataclass
 
 from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.builders.pf_coil import PFCoilBuilder, PFCoilPictureFrame
 
 
@@ -34,8 +34,11 @@ class PFCoilsBuilderParams(ParameterFrame):
     Parameters for the `PFCoilsBuilder` class.
     """
 
+    n_TF: Parameter[int]
     tk_pf_insulation: Parameter[float]
+    tk_pf_casing: Parameter[float]
     tk_cs_insulation: Parameter[float]
+    tk_cs_casing: Parameter[float]
     r_pf_corner: Parameter[float]
     r_cs_corner: Parameter[float]
 
@@ -44,6 +47,8 @@ def build_pf_coils_component(params, build_config, coilset):
     """
     Build the PF coils component
     """
+    params = make_parameter_frame(params, PFCoilsBuilderParams)
+
     wires = []
     for name in coilset.name:
         coil = coilset[name]
@@ -83,6 +88,7 @@ def build_pf_coils_component(params, build_config, coilset):
         }
         builder = PFCoilBuilder(
             {
+                "n_TF": {"value": params.n_TF.value, "unit": params.n_TF.unit},
                 "tk_insulation": {"value": tk_ins, "unit": "m"},
                 "tk_casing": {"value": tk_case, "unit": "m"},
                 "ctype": {"value": coil_type.name, "unit": ""},
