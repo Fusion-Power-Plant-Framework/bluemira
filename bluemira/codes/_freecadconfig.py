@@ -59,9 +59,9 @@ def _freecad_save_config(
     stp_file_scheme: str = "AP242DIS",
 ):
     """
-    Attempts to configures FreeCAD with units file schemes and attributions
+    Attempts to configure FreeCAD with units file schemes and attributions
 
-    This must be run before Part is imported to have any effect
+    This must be run before Part is imported for legacy exporters
     """
     unit_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units")
     # Seems to have little effect on anything but its an option to set
