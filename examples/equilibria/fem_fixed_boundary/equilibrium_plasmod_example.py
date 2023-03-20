@@ -63,15 +63,29 @@ set_log_level("NOTSET")
 # %% [markdown]
 # In this example a fixed boundary equilibrium problem is solved using PLASMOD as
 # the transport solver.
-#
+
+# We're going to use the following parameters
+
+# %%
+
+A = 3.1  # Aspect ratio
+R_0 = 8.983  # Major radius
+a_minor = R_0 / A  # Minor radius
+I_p = 19e6  # Plasma current
+B_0 = 5.31  # Toroidal field at major radius
+kappa_95 = 1.652  # 95th percentile flux surface elongation
+delta_95 = 0.333  # 95th percentile flux surface triangularity
+q_95 = 3.25  # 95th percentile flux surface safety factor
+
+
 # # Fixed Boundary Equilibrium
 # Setup the Plasma shape parameterisation variables. A Johner parameterisation is used.
 
 # %%
 johner_parameterisation = JohnerLCFS(
     {
-        "r_0": {"value": 8.9830e00},
-        "a": {"value": 3.1},
+        "r_0": {"value": R_0},
+        "a": {"value": a_minor},
         "kappa_u": {"value": 1.6},
         "kappa_l": {"value": 1.75},
         "delta_u": {"value": 0.33},
@@ -96,18 +110,18 @@ binary = os.path.join(PLASMOD_PATH, "plasmod")
 
 source = "Plasmod Example"
 plasmod_params = {
-    "A": {"value": johner_parameterisation.variables.a, "unit": "", "source": source},
+    "A": {"value": A, "unit": "", "source": source},
     "R_0": {
-        "value": johner_parameterisation.variables.r_0,
+        "value": R_0,
         "unit": "m",
         "source": source,
     },
-    "I_p": {"value": 19e6, "unit": "A", "source": source},
-    "B_0": {"value": 5.31, "unit": "T", "source": source},
+    "I_p": {"value": I_p, "unit": "A", "source": source},
+    "B_0": {"value": B_0, "unit": "T", "source": source},
     "V_p": {"value": -2500, "unit": "m^3", "source": source},
     "v_burn": {"value": -1.0e6, "unit": "V", "source": source},
-    "kappa_95": {"value": 1.652, "unit": "", "source": source},
-    "delta_95": {"value": 0.333, "unit": "", "source": source},
+    "kappa_95": {"value": kappa_95, "unit": "", "source": source},
+    "delta_95": {"value": delta_95, "unit": "", "source": source},
     "delta": {
         "value": (
             johner_parameterisation.variables.delta_l
@@ -126,12 +140,12 @@ plasmod_params = {
         "unit": "",
         "source": source,
     },
-    "q_95": {"value": 3.25, "unit": "", "source": source},
+    "q_95": {"value": q_95, "unit": "", "source": source},
     "f_ni": {"value": 0, "unit": "", "source": source},
 }
 
 problem_settings = {
-    "amin": plasmod_params["R_0"]["value"] / plasmod_params["A"]["value"],
+    "amin": a_minor,
     "pfus_req": 2000.0,
     "pheat_max": 100.0,
     "q_control": 50.0,
@@ -174,8 +188,8 @@ equilibrium = solve_transport_fixed_boundary(
     johner_parameterisation,
     plasmod_solver,
     fem_GS_fixed_boundary,
-    kappa95_t=1.652,  # Target kappa_95
-    delta95_t=0.333,  # Target delta_95
+    kappa95_t=kappa_95,  # Target kappa_95
+    delta95_t=delta_95,  # Target delta_95
     lcar_mesh=0.2,
     max_iter=15,
     iter_err_max=1e-3,
