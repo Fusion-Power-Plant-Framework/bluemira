@@ -764,7 +764,7 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
         # Note we use the same offset to the exclusion zones as for the OIS
         # to the TF.
         koz_wires = [
-            offset_wire(koz, self.params.g_ois_tf_edge.value)
+            offset_wire(koz.boundary[0], self.params.g_ois_tf_edge.value)
             for koz in self.keep_out_zones
         ]
         koz_faces = [BluemiraFace(koz) for koz in koz_wires]

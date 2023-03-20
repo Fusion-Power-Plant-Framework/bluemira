@@ -335,7 +335,7 @@ if __name__ == "__main__":
         build_config.get("Coil structures", {}),
         tf_coil_xz_face=reactor.tf_coils.xz_face(),
         pf_coil_xz_wires=reactor.pf_coils.xz_boundary(),
-        pf_coil_keep_out_zones=[],
+        pf_coil_keep_out_zones=[upper_port_xz],
     )
 
     reactor.cryostat = build_cryostat(
