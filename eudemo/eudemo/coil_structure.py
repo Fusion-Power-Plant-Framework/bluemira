@@ -80,7 +80,7 @@ def build_coil_structures_component(
     tf_koz = tf_coil_xz_face.boundary[0]
     support_components = []
     for i, pf_coil in enumerate(pf_coil_xz_wires):
-        bc = {**build_config, "name": str(i)}
+        bc = {**build_config, "support_number": str(i)}
         pf_support_builder = PFCoilSupportBuilder(params, bc, tf_koz, pf_coil)
         support_components.append(pf_support_builder.build())
 
