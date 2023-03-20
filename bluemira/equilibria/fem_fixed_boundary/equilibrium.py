@@ -657,9 +657,6 @@ def calc_curr_dens_profiles(
         p_fun_psi1D = interp1d(psi_1D, p, "linear", fill_value="extrapolate")
         pprime = approx_derivative(p_fun_psi1D, psi_1D).diagonal()
 
-        # pprime_psi1D = nd.Derivative(p_fun_psi1D)
-        # pprime = pprime_psi1D(psi_1D)  # <0.25% rel diff
-
         # Here we preserve some PLASMOD notation, for future sanity
         q3 = q / g3
         AA = g2 / q3**2 + (16 * np.pi**4) * g3  # noqa: N806
