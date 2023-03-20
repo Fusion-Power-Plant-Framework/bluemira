@@ -14,9 +14,9 @@ from bluemira.power_cycle.errors import (
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
 from bluemira.power_cycle.net.loads import (
     LoadData,
+    LoadModel,
     PhaseLoad,
     PowerLoad,
-    PowerLoadModel,
     PulseLoad,
 )
 from bluemira.power_cycle.time import PowerCycleScenario, ScenarioBuilder
@@ -191,7 +191,7 @@ class PowerCycleSystem(PowerCycleABC):
                 time = convert_string_into_numeric_list(time)
                 data = convert_string_into_numeric_list(data)
 
-                model = PowerLoadModel[model]
+                model = LoadModel[model]
 
                 data = raw_uc(data, unit, "W")
                 for efficiency in all_efficiencies:

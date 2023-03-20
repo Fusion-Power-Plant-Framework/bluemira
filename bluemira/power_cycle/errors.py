@@ -211,10 +211,9 @@ class LoadDataError(PowerCycleError):
         return errors
 
 
-class PowerLoadModelError(PowerCycleError):
+class LoadModelError(PowerCycleError):
     """
-    Exception class for 'PowerLoadModel' class of the Power Cycle
-    module.
+    Exception class for 'LoadModel' class of the Power Cycle module.
     """
 
     def _errors(self):
@@ -229,7 +228,7 @@ class PowerLoadError(PowerCycleError):
 
     def _errors(self):
         errors = {
-            "model": (
+            "loadmodel": (
                 "The argument given for the attribute 'model' is not "
                 "a valid value. A model must be specified with an "
                 "instance of the 'PowerLoadModel' 'Enum' class."
