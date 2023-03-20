@@ -153,7 +153,8 @@ problem_settings = {
     "i_modeltype": "GYROBOHM_2",
     "i_equiltype": "q95_sawtooth",
     "i_pedestal": "SAARELMA",
-    "isawt": "FULLY_RELAXED",
+    "isiccir": "EICH_FIT",
+    "isawt": "SAWTEETH",
 }
 
 plasmod_build_config = {
@@ -197,9 +198,9 @@ equilibrium = solve_transport_fixed_boundary(
     plot=False,
     debug=False,
     gif=True,
-    refine=False,
-    num_levels=1,
-    distance=1,
+    refine=True,
+    num_levels=2,
+    distance=1.0,
 )
 
 # %% [markdown]
