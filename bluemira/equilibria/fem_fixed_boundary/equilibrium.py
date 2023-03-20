@@ -668,14 +668,14 @@ def calc_curr_dens_profiles(
         dum2 = np.gradient(dum3, psi_norm_1D)
         B = -dum2 / q3 / AA  # noqa: N806
         Fb = -R_0 * B_0 / (2 * np.pi)  # noqa: N806
-        yb = 0.5 * Fb**2
+
         dum2 = cumulative_trapezoid(B, psi_norm_1D, initial=0)
         dum1 = np.exp(2.0 * dum2)
         dum1 = dum1 / dum1[-1]
         dum3 = cumulative_trapezoid(C / dum1, psi_norm_1D, initial=0)
         dum3 = dum3 - dum3[-1]
 
-        y = dum1 * (dum3 + yb)
+        y = dum1 * (dum3 + 0.5 * Fb**2)
         dum2 = g2 / q3
         dum3 = np.gradient(dum2, psi_1D)
         betahat = dum3 / q3 / AA
