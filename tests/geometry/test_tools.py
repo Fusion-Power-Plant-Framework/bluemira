@@ -650,14 +650,14 @@ class TestMakeCircle:
 class TestSavingCAD:
     STP_VERSION_RE = r"(processor)|(translator) [0-9]+\.[0-9]+"
 
-    def test_save_as_STP(self):
+    def test_save_as_STP(self, tmpdir):
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
         test_file = os.path.join(fp, "test_circ.stp")
-        generated_file = "test_generated_circ.stp"
+        generated_file = tmpdir.join("test_generated_circ.stp")
 
         # Can't mock out as written by freecad not python
         circ = make_circle(5)
-        save_as_STP(circ, filename=generated_file.split(".")[0])
+        save_as_STP(circ, filename=str(generated_file).split(".")[0])
 
         with open(test_file, "r") as tf:
             lines1 = tf.readlines()
