@@ -54,7 +54,7 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder
-from eudemo.coil_structure import CoilStructuresBuilder
+from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
     CoilStructures,
     Cryostat,
@@ -186,14 +186,14 @@ def build_coil_structures(
     params,
     build_config,
     tf_coil_xz_face,
-    pf_coil_xz_faces,
+    pf_coil_xz_wires,
     pf_coil_keep_out_zones,
 ) -> CoilStructures:
     """
     Design and build the coil structures for the reactor.
     """
-    builder = CoilStructuresBuilder(
-        params, build_config, tf_coil_xz_face, pf_coil_xz_faces, pf_coil_keep_out_zones
+    builder = build_coil_structures_component(
+        params, build_config, tf_coil_xz_face, pf_coil_xz_wires, pf_coil_keep_out_zones
     )
     component = builder.build()
     return CoilStructures(component)
@@ -333,6 +333,8 @@ if __name__ == "__main__":
     reactor.coil_structures = build_coil_structures(
         params,
         build_config.get("Coil structures", {}),
+        tf_coil_xz_face=BluemiraFace(reactor.tf_coils.boundary),
+        pf_coil_xz_wires=reactor.pf_coils.xz_boundary,
         pf_coil_keep_out_zones=[],
     )
 

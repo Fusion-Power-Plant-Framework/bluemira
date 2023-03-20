@@ -22,12 +22,13 @@
 """
 Coil structure stuff
 """
-from bluemira.base.builder import Builder
+from dataclasses import dataclass
+
+from bluemira.base.components import Component
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.coil_supports import (
     ITERGravitySupportBuilder,
-    ITERGravitySupportBuilderParams,
     OISBuilder,
-    OISBuilderParams,
     PFCoilSupportBuilder,
     PFCoilSupportBuilderParams,
     StraightOISDesigner,
@@ -35,26 +36,57 @@ from bluemira.builders.coil_supports import (
 )
 
 
-class CoilStructuresBuilder(Builder):
+class CoilStructuresParameters(ParameterFrame):
     """
-    Mega builder for all coil structures
+    Parameters for the coil structures
     """
 
-    def __init__(
-        self,
-        params,
-        build_config,
-        tf_coil_xz_face,
-        pf_coil_xz_faces,
-        pf_coil_keep_out_zones,
-    ):
-        super().__init__(params, build_config)
-        self.tf_coil_xz_face = tf_coil_xz_face
-        self.pf_coil_xz_faces = pf_coil_xz_faces
-        self.pf_coil_kozs = pf_coil_keep_out_zones
+    n_TF: Parameter[int]
+    tf_wp_depth: Parameter[float]
+    tk_tf_side: Parameter[float]
+    tf_wp_width: Parameter[float]
 
-    def build(self):
-        """
-        Run the CoilStructuresBuilder.
-        """
-        pass
+    # OIS
+    tk_ois: Parameter[float]
+    g_ois_tf_edge: Parameter[float]
+    min_OIS_length: Parameter[float]
+
+    # PF
+    pf_s_tk_plate: Parameter[float]
+    pf_s_n_plate: Parameter[int]
+    pf_s_g: Parameter[float]
+
+    # GS
+    x_g_support: Parameter[float]
+    z_gs: Parameter[float]
+    tf_gs_tk_plate: Parameter[float]
+    tf_gs_g_plate: Parameter[float]
+    tf_gs_base_depth: Parameter[float]
+
+
+def build_coil_structures_component(
+    params, build_config, tf_coil_xz_face, pf_coil_xz_wires, pf_coil_keep_out_zones
+):
+    """
+    Build the coil structures super-component.
+    """
+    ois_designer = StraightOISDesigner(
+        params, build_config, tf_coil_xz_face, pf_coil_keep_out_zones
+    )
+    ois_xz_profiles = ois_designer.run()
+    ois_builder = OISBuilder(params, build_config, ois_xz_profiles)
+    ois_component = ois_builder.build()
+
+    tf_koz = tf_coil_xz_face.boundary[0]
+    pf_support_builder = PFCoilSupportBuilder(
+        params, build_config, tf_koz, pf_coil_xz_wires
+    )
+    pf_support_component = pf_support_builder.build()
+
+    gs_builder = ITERGravitySupportBuilder(params, build_config, tf_koz)
+    gs_component = gs_builder.build()
+
+    component = Component(
+        "Coil Structures", children=[ois_component, pf_support_component, gs_component]
+    )
+    return component
