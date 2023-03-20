@@ -8,18 +8,18 @@ import pytest
 from bluemira.power_cycle.base import PowerCycleLoadABC
 from bluemira.power_cycle.errors import (
     LoadDataError,
+    LoadModelError,
     PhaseLoadError,
     PowerCycleABCError,
     PowerCycleLoadABCError,
     PowerLoadError,
-    PowerLoadModelError,
     PulseLoadError,
 )
 from bluemira.power_cycle.net.loads import (
     LoadData,
+    LoadModel,
     PhaseLoad,
     PowerLoad,
-    PowerLoadModel,
     PulseLoad,
 )
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
@@ -238,9 +238,9 @@ class TestLoadData:
             result = sum(all_samples)
 
 
-class TestPowerLoadModel:
-    tested_class = PowerLoadModel
-    tested_class_error = PowerLoadModelError
+class TestLoadModel:
+    tested_class = LoadModel
+    tested_class_error = LoadModelError
 
     def test_members(self):
         tested_class = self.tested_class
@@ -266,18 +266,18 @@ class TestPowerLoad:
             n_samples,
             sample_names,
             sample_loaddatas,
-            sample_models,
+            sample_loadmodels,
         ) = netloads_testkit.inputs_for_powerload()
 
         all_samples = []
         for s in range(n_samples):
             name = sample_names[s]
             loaddata = sample_loaddatas[s]
-            model = sample_models[s]
-            sample = tested_class(name, loaddata, model)
+            loadmodel = sample_loadmodels[s]
+            sample = tested_class(name, loaddata, loadmodel)
             all_samples.append(sample)
         self.sample_loaddatas = sample_loaddatas
-        self.sample_models = sample_models
+        self.sample_loadmodels = sample_loadmodels
         self.all_samples = all_samples
 
     # ------------------------------------------------------------------
@@ -286,12 +286,12 @@ class TestPowerLoad:
 
     def construct_multisample(self):
         sample_loaddatas = self.sample_loaddatas
-        sample_models = self.sample_models
+        sample_loadmodels = self.sample_loadmodels
 
         multisample = PowerLoad(
-            "PowerLoad with multiple loaddata & model arguments",
+            "PowerLoad with multiple loaddata & loadmodel arguments",
             sample_loaddatas,
-            sample_models,
+            sample_loadmodels,
         )
         return multisample
 
@@ -303,7 +303,7 @@ class TestPowerLoad:
         self,
         test_name,
         test_loaddata,
-        test_model,
+        test_loadmodel,
     ):
         tested_class = self.tested_class
         tested_class_error = self.tested_class_error
@@ -313,12 +313,12 @@ class TestPowerLoad:
             wrong_sample = tested_class(
                 test_name,
                 test_loaddata,
-                test_model,
+                test_loadmodel,
             )
 
     def test_validate_loaddata_set(self):
         sample_loaddatas = self.sample_loaddatas
-        sample_models = self.sample_models
+        sample_loadmodels = self.sample_loadmodels
 
         right_name = [
             "PowerLoad with a non-LoadData",
@@ -326,62 +326,62 @@ class TestPowerLoad:
         ]
         right_name = " ".join(right_name)
         right_loaddatas = sample_loaddatas
-        right_models = sample_models
+        right_loadmodels = sample_loadmodels
 
         wrong_loaddatas = copy.deepcopy(right_loaddatas)
         wrong_loaddatas[0] = "non-LoadData"
         self.assert_constructor_fails(
             right_name,
             wrong_loaddatas,
-            right_models,
+            right_loadmodels,
         )
 
-    def test_validate_model(self):
+    def test_validate_loadmodel_set(self):
         sample_loaddatas = self.sample_loaddatas
-        sample_models = self.sample_models
+        sample_loadmodels = self.sample_loadmodels
 
         right_name = [
-            "PowerLoad with a non-PowerLoadModel",
-            "element in its 'model' list argument",
+            "PowerLoad with a non-LoadModel",
+            "element in its 'loadmodel_set' list argument",
         ]
         right_name = " ".join(right_name)
         right_loaddatas = sample_loaddatas
-        right_models = sample_models
+        right_loadmodels = sample_loadmodels
 
-        wrong_models = copy.deepcopy(right_models)
-        wrong_models[0] = "non-PowerLoadModel"
+        wrong_loadmodels = copy.deepcopy(right_loadmodels)
+        wrong_loadmodels[0] = "non-LoadModel"
         self.assert_constructor_fails(
             right_name,
             right_loaddatas,
-            wrong_models,
+            wrong_loadmodels,
         )
 
     def test_sanity(self):
         sample_loaddatas = self.sample_loaddatas
-        sample_models = self.sample_models
+        sample_loadmodels = self.sample_loadmodels
 
         right_name = [
             "PowerLoad with different lengths",
-            "of 'loaddata_set' & 'model' arguments",
+            "of 'loaddata_set' & 'loadmodel' arguments",
         ]
         right_name = " ".join(right_name)
         right_loaddatas = sample_loaddatas
-        right_models = sample_models
+        right_loadmodels = sample_loadmodels
 
         wrong_loaddatas = copy.deepcopy(right_loaddatas)
         wrong_loaddatas.pop()
         self.assert_constructor_fails(
             right_name,
             wrong_loaddatas,
-            right_models,
+            right_loadmodels,
         )
 
-        wrong_models = copy.deepcopy(right_models)
-        wrong_models.pop()
+        wrong_loadmodels = copy.deepcopy(right_loadmodels)
+        wrong_loadmodels.pop()
         self.assert_constructor_fails(
             right_name,
             right_loaddatas,
-            wrong_models,
+            wrong_loadmodels,
         )
 
     def test_null_constructor(self):
@@ -395,10 +395,10 @@ class TestPowerLoad:
             assert loaddata.time == null_loaddata.time
             assert loaddata.data == null_loaddata.data
 
-        null_model = PowerLoadModel["RAMP"]
-        model = null_instance.model
-        for element in model:
-            assert element == null_model
+        null_loadmodel = LoadModel["RAMP"]
+        loadmodel_set = null_instance.loadmodel_set
+        for element in loadmodel_set:
+            assert element == null_loadmodel
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -408,7 +408,7 @@ class TestPowerLoad:
         tested_class = self.tested_class
 
         sample_loaddatas = self.sample_loaddatas
-        sample_models = self.sample_models
+        sample_loadmodels = self.sample_loadmodels
 
         test_time = netloads_testkit.inputs_for_time_interpolation()
         time_length = len(test_time)
@@ -416,10 +416,10 @@ class TestPowerLoad:
         for loaddata in sample_loaddatas:
             power_points = loaddata.data
 
-            for powerloadmodel in sample_models:
+            for loadmodel in sample_loadmodels:
                 curve = tested_class._single_curve(
                     loaddata,
-                    powerloadmodel,
+                    loadmodel,
                     test_time,
                 )
                 curve_length = len(curve)
@@ -467,7 +467,7 @@ class TestPowerLoad:
 
             all_data.append(sample.loaddata_set[0].data)
             all_sets.append(sample.loaddata_set[0])
-            all_models.append(sample.model[0])
+            all_models.append(sample.loadmodel_set[0])
         multiset_load = tested_class("Multi Load", all_sets, all_models)
         multiset_curve = multiset_load.curve(test_time)
 
@@ -596,7 +596,7 @@ class TestPowerLoad:
 
         all_samples = self.all_samples
         sample_loaddatas = self.sample_loaddatas
-        sample_models = self.sample_models
+        sample_loadmodels = self.sample_loadmodels
 
         result = sum(all_samples)  # requires both __add__ and __radd__
         assert isinstance(result, tested_class)
@@ -604,8 +604,8 @@ class TestPowerLoad:
         result_loaddata = result.loaddata_set
         assert result_loaddata == sample_loaddatas
 
-        result_powerloadmodel = result.model
-        assert result_powerloadmodel == sample_models
+        result_loadmodel = result.loadmodel_set
+        assert result_loadmodel == sample_loadmodels
 
         ax, list_of_plot_objects = result.plot(
             ax=ax,
@@ -633,7 +633,7 @@ class TestPowerLoad:
         colors = iter(colors)
 
         multisample = self.construct_multisample()
-        test_time = multisample.time
+        test_time = multisample.intrinsic_time
         curve = multisample.curve(test_time)
 
         lesser_multisample = multisample / number

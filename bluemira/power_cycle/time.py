@@ -15,6 +15,7 @@ from bluemira.power_cycle.tools import (
     validate_dict,
     validate_file,
     validate_list,
+    validate_nonnegative,
     validate_subdict,
 )
 
@@ -53,11 +54,12 @@ class PowerCyclePhase(PowerCycleTimeABC):
     def _validate_breakdown(duration_breakdown):
         """
         Validate 'duration_breakdown' input to be a dictionary with
-        keys of the 'str' class.
+        keys of the 'str' class and non-negative numbers as values.
         """
-        for key in duration_breakdown:
+        for key, value in duration_breakdown.items():
             if not isinstance(key, str):
                 raise PowerCyclePhaseError("breakdown")
+            validate_nonnegative(value)
         return duration_breakdown
 
     # ------------------------------------------------------------------
@@ -88,7 +90,7 @@ class PowerCyclePulse(PowerCycleTimeABC):
         label=None,
     ):
         self.phase_set = self._validate_phase_set(phase_set)
-        durations_list = self._build_durations_list(self.phase_set)
+        durations_list = self._build_durations_list(phase_set)
         super().__init__(name, durations_list, label=label)
 
     @staticmethod
@@ -130,6 +132,9 @@ class PowerCycleScenario(PowerCycleTimeABC):
     pulse_set: PowerCyclePulse | list[PowerCyclePulse]
         List of pulses that compose the scenario, in chronological
         order.
+    TBD - repetition: int | list[int]
+        List of integer values that defines how many repetitions occur
+        for each element of 'pulse_set' when building the scenario.
     """
 
     # ------------------------------------------------------------------

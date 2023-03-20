@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.base.constants as constants
-from bluemira.power_cycle.net.loads import LoadData, PhaseLoad, PowerLoad, PowerLoadModel
+from bluemira.power_cycle.net.loads import LoadData, LoadModel, PhaseLoad, PowerLoad
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse, ScenarioBuilder
 from bluemira.power_cycle.tools import (
     read_json,
@@ -56,7 +56,6 @@ def copy_dict_with_wrong_value(right_dict, key, value_to_substitute):
 
 class ToolsTestKit:
     def __init__(self):
-
         test_file_name = tuple(["test_file.txt"])
         test_file_path = test_data_folder_path + test_file_name
         self.test_file_path = os.path.join(*test_file_path)
@@ -127,7 +126,6 @@ class ToolsTestKit:
 
 class TimeTestKit:
     def __init__(self):
-
         scenario_json_name = tuple(["scenario_config.json"])
         scenario_json_path = test_data_folder_path + scenario_json_name
         self.scenario_json_path = os.path.join(*scenario_json_path)
@@ -335,17 +333,16 @@ class NetLoadsTestKit:
             input_datas,
         ) = self.inputs_for_loaddata()
 
-        all_models = [member.name for member in PowerLoadModel]
-        n_models = len(all_models)
+        all_loadmodels = [member.name for member in LoadModel]
+        n_loadmodels = len(all_loadmodels)
 
-        input_models = []
+        input_loadmodels = []
         input_loaddatas = []
         for i in range(n_inputs):
-
-            # Cycle through available models to create a model example
-            model = all_models[i % n_models]
-            model = PowerLoadModel[model]
-            input_models.append(model)
+            # Cycle through available loadmodels to create an example
+            loadmodel = all_loadmodels[i % n_loadmodels]
+            loadmodel = LoadModel[loadmodel]
+            input_loadmodels.append(loadmodel)
 
             name = input_names[i]
             time = input_times[i]
@@ -361,7 +358,7 @@ class NetLoadsTestKit:
             n_inputs,
             input_names,
             input_loaddatas,
-            input_models,
+            input_loadmodels,
         )
 
     def inputs_for_phaseload(self):
@@ -373,7 +370,7 @@ class NetLoadsTestKit:
             n_inputs,
             input_names,
             input_loaddatas,
-            input_models,
+            input_loadmodels,
         ) = self.inputs_for_powerload()
 
         (
@@ -385,15 +382,14 @@ class NetLoadsTestKit:
         input_powerloads = []
         input_normalflags = []
         for i in range(n_inputs):
-
             # Cycle through phases to pick a phase example
             phase = all_phases[i % n_phases]
             input_phases.append(phase)
 
             name = input_names[i]
             loaddata = input_loaddatas[i]
-            model = input_models[i]
-            powerload = PowerLoad(name, loaddata, model)
+            loadmodel = input_loadmodels[i]
+            powerload = PowerLoad(name, loaddata, loadmodel)
             input_powerloads.append(powerload)
 
             # Cycle through True/False to create a flag example

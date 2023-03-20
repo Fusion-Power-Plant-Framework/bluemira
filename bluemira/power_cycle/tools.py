@@ -189,8 +189,8 @@ def unnest_list(list_of_lists):
 
 def unique_and_sorted_vector(vector):
     """
-    Create a set from a vector to eliminate redundant entries, and sort
-    it in ascending order.
+    Returns a sorted list, in ascending order, created from the set
+    created from a vector, as a way to eliminate redundant entries.
     """
     vector = validate_vector(vector)
     unique_vector = list(set(vector))
@@ -200,7 +200,7 @@ def unique_and_sorted_vector(vector):
 
 def remove_characters(string, character_list):
     """
-    Remove all 'str' in a list from a main string parameter.
+    Remove all 'str' in a list from a main 'string' parameter.
     """
     for character in character_list:
         string = string.replace(character, "")
@@ -232,17 +232,19 @@ def read_json(file_path):
     return contents_dict
 
 
-def build_dict_from_format(allowed_format):
+def build_dict_from_format(allowed_format, format_index=0):
     """
     Build a 'dict' based on an 'allowed_format' dictionary. Keys are
     the same as in the format, and values are empty instances of the
     allowed type for that key.
-    When multiple types are allowed, the first one is used.
+    When multiple types are allowed, the type in the position specified
+    by the 'format_index' parameter is used; as default, the first
+    element is used.
     """
     dictionary = dict()
-    for (allowed_key, allowed_types) in allowed_format.items():
+    for allowed_key, allowed_types in allowed_format.items():
         allowed_types = validate_list(allowed_types)
-        first_allowed_type = allowed_types[0]
+        first_allowed_type = allowed_types[format_index]
         dictionary[allowed_key] = first_allowed_type()
     return dictionary
 
@@ -294,8 +296,6 @@ def adjust_2d_graph_ranges(x_frac=0.1, y_frac=0.1, ax=None):
 
     all_axes = ["x", "y"]
     for axis in all_axes:
-
-        # Data for current axis
         if axis == "x":
             axis_type = ax.get_xscale()
             axis_lim = ax.get_xlim()
@@ -307,24 +307,19 @@ def adjust_2d_graph_ranges(x_frac=0.1, y_frac=0.1, ax=None):
         lim_lower = axis_lim[0]
         lim_upper = axis_lim[1]
 
-        # Validate current axis type
         if axis_type == "linear":
-
-            # Compute linear range
             lin_range = lim_upper - lim_lower
+            lin_shift = fraction * lin_range
 
-            # Compute new limits
-            lim_lower = lim_lower - fraction * lin_range
-            lim_upper = lim_upper + fraction * lin_range
+            lim_lower = lim_lower - lin_shift
+            lim_upper = lim_upper + lin_shift
 
         elif axis_type == "log":
-
-            # Compute logarithmic range
             log_range = np.log10(lim_upper / lim_lower)
+            log_shift = 10 ** (fraction * log_range)
 
-            # Compute new limits
-            lim_lower = lim_lower / 10 ** (fraction * log_range)
-            lim_upper = lim_upper * 10 ** (fraction * log_range)
+            lim_lower = lim_lower / log_shift
+            lim_upper = lim_upper * log_shift
 
         else:
             raise ValueError(
@@ -332,12 +327,10 @@ def adjust_2d_graph_ranges(x_frac=0.1, y_frac=0.1, ax=None):
                 "implemented for this type of scale."
             )
 
-        # Store new limits for current axis
         if axis == "x":
             x_lim = (lim_lower, lim_upper)
         elif axis == "y":
             y_lim = (lim_lower, lim_upper)
 
-    # Apply new limits
     ax.set_xlim(x_lim)
     ax.set_ylim(y_lim)

@@ -27,6 +27,13 @@ class PowerCycleABC(ABC):
     ----------
     name: str
         Description of the instance.
+    label: str
+        Shorthand string to refer to instance in dictionaries or lists.
+        An X number of characters is considered the maximum length for
+        labels, and this limitation is defined by the class attribute
+        '_label_length'. If 'None' is given, the first X characters of
+        the 'name' parameter are used as a label.
+
     """
 
     # ------------------------------------------------------------------
