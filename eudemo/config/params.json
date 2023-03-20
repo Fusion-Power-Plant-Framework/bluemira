@@ -568,6 +568,24 @@
         "source": "Input",
         "long_name": "Minimum outer inter-coil casing length"
     },
+    "pf_s_tk_plate": {
+        "value": 0.15,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "PF support rib plate thickness"
+    },
+    "pf_s_n_plate": {
+        "value": 5,
+        "unit": "",
+        "source": "Input",
+        "long_name": "Number of PF support rib plates"
+    },
+    "pf_s_g": {
+        "value": 0.1,
+        "unit": "meter",
+        "source": "Input",
+        "long_name": "Gap between PF and PF support"
+    },
     "tk_sh_bot": {
         "value": 1e-06,
         "unit": "meter",

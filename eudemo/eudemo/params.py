@@ -100,9 +100,6 @@ class EUDEMOReactorParams(ParameterFrame):
     tk_cs: Parameter[float]
     tk_pf_casing: Parameter[float]
     tk_pf_insulation: Parameter[float]
-    tk_ois: Parameter[float]
-    g_ois_tf_edge: Parameter[float]
-    min_OIS_length: Parameter[float]
     tk_fw_in: Parameter[float]
     tk_fw_out: Parameter[float]
     tk_rs: Parameter[float]
@@ -171,10 +168,20 @@ class EUDEMOReactorParams(ParameterFrame):
     tk_tf_wp: Parameter[float]
     z_0: Parameter[float]
 
+    # OIS
+    tk_ois: Parameter[float]
+    g_ois_tf_edge: Parameter[float]
+    min_OIS_length: Parameter[float]
+
     # PF Coils
     F_cs_sepmax: Parameter[float]
     F_cs_ztotmax: Parameter[float]
     F_pf_zmax: Parameter[float]
+
+    # PF supports
+    pf_s_tk_plate: Parameter[float]
+    pf_s_n_plate: Parameter[int]
+    pf_s_g: Parameter[float]
 
     # Powercycle
     bb_p_inlet: Parameter[float]
