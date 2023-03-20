@@ -42,7 +42,26 @@ class PFCoil(ComponentManager):
         """
         Boundaries of the coils in xz
         """
+        return self.PF_xz_boundary() + self.CS_xz_boundary()
+
+    def PF_xz_boundary(self):
+        """
+        Boundaries of the PF coils in xz
+        """
         return [
             pf.get_component("Casing").shape.boundary[0]
-            for pf in self.component().get_component("xz", first=False)
+            for pf in self.component()
+            .get_component("PF coils")
+            .get_component("xz", first=False)
+        ]
+
+    def CS_xz_boundary(self):
+        """
+        Boundaries of the CS coils in xz
+        """
+        return [
+            pf.get_component("Casing").shape.boundary[0]
+            for pf in self.component()
+            .get_component("CS coils")
+            .get_component("xz", first=False)
         ]
