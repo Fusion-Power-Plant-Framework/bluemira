@@ -45,7 +45,9 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
+    find_magnetic_axis,
     get_flux_surfaces_from_mesh,
+    refine_mesh,
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -218,211 +220,6 @@ def _update_delta_kappa(
     return iter_err
 
 
-def solve_transport_fixed_boundary_old(
-    parameterisation: GeometryParameterisation,
-    transport_solver: CodesSolver,
-    gs_solver: FemGradShafranovFixedBoundary,
-    kappa95_t: float,
-    delta95_t: float,
-    lcar_mesh: float = 0.15,
-    max_iter: int = 30,
-    iter_err_max: float = 1e-5,
-    relaxation: float = 0.2,
-    transport_run_mode: Union[str, RunMode] = "run",
-    mesh_filename: str = "FixedBoundaryEquilibriumMesh",
-    plot: bool = False,
-    debug: bool = False,
-    gif: bool = False,
-):
-    """
-    Solve the plasma fixed boundary problem using delta95 and kappa95 as target
-    values and iterating on a transport solver to have consistency with pprime
-    and ffprime.
-
-    Parameters
-    ----------
-    parameterisation: Type[GeometryParameterisation]
-        Geometry parameterisation class for the plasma
-    transport_solver: CodesSolver
-        Transport Solver to call
-    gs_solver: FemGradShafranovFixedBoundary
-        Grad-Shafranov Solver instance
-    kappa95_t: float
-        Target value for kappa at 95%
-    delta95_t: float
-        Target value for delta at 95%
-    lcar_mesh: float
-        Value of the characteristic length used to generate the mesh to solve the
-        Grad-Shafranov problem
-    max_iter: int
-        Maximum number of iteration between Grad-Shafranov and the transport solver
-    iter_err_max: float
-        Convergence maximum error to stop the iteration
-    relaxation: float
-        Iteration relaxing factor
-    transport_run_mode: str
-        Run mode for transport solver
-    mesh_filename: str
-        filename for mesh output file
-    plot: bool
-        Whether or not to plot
-
-    Returns
-    -------
-    equilibrium: FixedBoundaryEquilibrium
-        Final fixed boundary equilibrium result from the transport <-> fixed boundary
-        equilibrium solve
-    """
-    # TODO: Remove this function!
-    kappa_95 = kappa95_t
-    delta_95 = delta95_t
-
-    directory = get_bluemira_path("", subfolder="generated_data")
-    mesh_name_msh = mesh_filename + ".msh"
-
-    paramet_params = PlasmaFixedBoundaryParams(
-        **{
-            k: v
-            for k, v in zip(
-                parameterisation.variables.names, parameterisation.variables.values
-            )
-            if k in PlasmaFixedBoundaryParams.fields()
-        }
-    )
-
-    transport_params = TransportSolverParams.from_frame(
-        deepcopy(transport_solver.params)
-    )
-
-    lcfs_options = {
-        "face": {"lcar": lcar_mesh, "physical_group": "plasma_face"},
-        "lcfs": {"lcar": lcar_mesh, "physical_group": "lcfs"},
-    }
-
-    plot = any((plot, debug, gif))
-    folder = try_get_bluemira_path("", subfolder="generated_data", allow_missing=False)
-    figname = "Transport iteration "
-    f, ax = None, None
-
-    for n_iter in range(max_iter):
-        plasma = create_plasma_xz_cross_section(
-            parameterisation,
-            transport_params,
-            paramet_params,
-            kappa_95,
-            delta_95,
-            lcfs_options,
-            f"from equilibrium iteration {n_iter}",
-        )
-
-        transp_out_params, x, pprime, ffprime = _run_transport_solver(
-            transport_solver, transport_params, transport_run_mode
-        )
-
-        f_pprime = interp1d(x, pprime, fill_value="extrapolate")
-        f_ffprime = interp1d(x, ffprime, fill_value="extrapolate")
-
-        if plot:
-            if ax is not None:
-                for axis in ax.flat:
-                    axis.clear()
-            f, ax = plot_default_profiles(transport_solver, show=False, f=f, ax=ax)
-            f.suptitle(figname + str(n_iter))
-            plt.pause(PLT_PAUSE)
-            if debug or gif:
-                save_figure(
-                    f,
-                    figname + str(n_iter),
-                    save=True,
-                    folder=folder,
-                    dpi=DPI_GIF,
-                )
-
-        plasma = create_plasma_xz_cross_section(
-            parameterisation,
-            transport_params,
-            paramet_params,
-            kappa_95,
-            delta_95,
-            lcfs_options,
-            f"from equilibrium iteration {n_iter}",
-        )
-
-        mesh = create_mesh(
-            plasma,
-            directory,
-            mesh_filename,
-            mesh_name_msh,
-        )
-
-        gs_solver.set_mesh(mesh)
-
-        gs_solver.set_profiles(
-            f_pprime,
-            f_ffprime,
-            transp_out_params.I_p.value,
-            transp_out_params.B_0.value,
-            transp_out_params.R_0.value,
-        )
-
-        bluemira_print("Solving fixed boundary Grad-Shafranov...")
-
-        equilibrium = gs_solver.solve(
-            plot=plot,
-            debug=debug,
-            gif=gif,
-            figname=f"{n_iter} Fixed boundary equilibrium iteration ",
-        )
-
-        _, kappa_95, delta_95 = calculate_plasma_shape_params(
-            gs_solver.psi_norm_2d,
-            mesh,
-            np.sqrt(0.95),
-        )
-
-        iter_err = _update_delta_kappa(
-            paramet_params,
-            kappa_95,
-            kappa95_t,
-            delta_95,
-            delta95_t,
-            relaxation,
-        )
-
-        bluemira_print(
-            f"{transport_solver.name} <-> Fixed boundary G-S iter {n_iter} : {iter_err:.3E}"
-        )
-
-        if iter_err <= iter_err_max:
-            message = bluemira_print
-            line_1 = f"successfully converged in {n_iter} iterations"
-            ltgt = "<"
-            break
-
-        # update parameters
-        for name, value in asdict(paramet_params).items():
-            parameterisation.adjust_variable(name, value)
-
-    else:
-        # If we don't break we didn't converge
-        message = bluemira_warn
-        line_1 = f"did not converge within {max_iter} iterations"
-        ltgt = ">"
-
-    message(
-        f"{transport_solver.name} <-> Fixed boundary G-S {line_1}:\n\t"
-        f"Target kappa_95: {kappa95_t:.3f}\n\t"
-        f"Actual kappa_95: {kappa_95:.3f}\n\t"
-        f"Target delta_95: {delta95_t:.3f}\n\t"
-        f"Actual delta_95: {delta_95:.3f}\n\t"
-        f"Error: {iter_err:.3E} {ltgt} {iter_err_max:.3E}\n"
-    )
-
-    if gif:
-        make_gif(folder, figname, clean=not debug)
-    return equilibrium
-
-
 def solve_transport_fixed_boundary(
     parameterisation: GeometryParameterisation,
     transport_solver: CodesSolver,
@@ -439,6 +236,9 @@ def solve_transport_fixed_boundary(
     plot: bool = False,
     debug: bool = False,
     gif: bool = False,
+    refine: bool = False,
+    num_levels: int = 2,
+    distance: float = 1.0,
 ):
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
@@ -474,6 +274,12 @@ def solve_transport_fixed_boundary(
         filename for mesh output file
     plot: bool
         Whether or not to plot
+    refine: bool
+        Whether or not the mesh should be refined around the magnetic axis
+    num_levels: int
+        number of refinement levels
+    distance: float
+        maximum distance from the magnetic axis to which the refinement will be applied
 
     Returns
     -------
@@ -564,6 +370,9 @@ def solve_transport_fixed_boundary(
             mesh_name_msh,
         )
 
+        # store the created mesh as coarse mesh
+        coarse_mesh = mesh
+
         gs_solver.set_mesh(mesh)
 
         points = gs_solver.mesh.coordinates()
@@ -623,7 +432,14 @@ def solve_transport_fixed_boundary(
             if eps_psi2d < inner_iter_err_max:
                 break
             else:
+                print(f"error on psi2d = {eps_psi2d} > {inner_iter_err_max}")
                 psi2d_0 = psi2d
+                if refine:
+                    magnetic_axis = find_magnetic_axis(gs_solver.psi, gs_solver.mesh)
+                    magnetic_axis = np.array([magnetic_axis[0], magnetic_axis[1], 0])
+                    mesh = refine_mesh(coarse_mesh, magnetic_axis, distance, num_levels)
+                    print(f"mesh refined on magnetic axis {magnetic_axis}")
+                    gs_solver.set_mesh(mesh)
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
             gs_solver.psi_norm_2d,

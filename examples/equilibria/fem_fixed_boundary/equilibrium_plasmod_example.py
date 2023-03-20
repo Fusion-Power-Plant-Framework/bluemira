@@ -161,7 +161,7 @@ plasmod_solver = transport_code_solver(
 fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
     p_order=2,
     max_iter=30,
-    iter_err_max=1e-4,
+    iter_err_max=1e-3,
 )
 
 # %% [markdown]
@@ -176,11 +176,14 @@ equilibrium = solve_transport_fixed_boundary(
     delta95_t=0.333,  # Target delta_95
     lcar_mesh=0.2,
     max_iter=15,
-    iter_err_max=1e-4,
+    iter_err_max=1e-3,
     relaxation=0.0,
     plot=False,
     debug=False,
     gif=True,
+    refine=False,
+    num_levels=1,
+    distance=1,
 )
 
 # %% [markdown]

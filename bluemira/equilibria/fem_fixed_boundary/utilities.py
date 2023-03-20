@@ -694,3 +694,31 @@ def _interpolate_profile(
 ) -> Callable[[np.ndarray], np.ndarray]:
     """Interpolate profile data"""
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
+
+
+def cell_distance(cell, refine_point, distance):
+    """Find the cells that are located in the vicinity of a point"""
+    # Get the center of the cell
+    cell_center = cell.midpoint()[:]
+
+    # Calculate the distance between the cell center and the refinement point
+    d = np.linalg.norm(cell_center - np.array(refine_point))
+
+    # Refine the cell if it is close to the refinement point
+    if d < distance:
+        return True
+    else:
+        return False
+
+
+def refine_mesh(mesh, refine_point, distance, num_levels=1):
+    """Refine the mesh around a reference point"""
+    for level in range(num_levels):
+        cell_markers = dolfin.MeshFunction("bool", mesh, mesh.topology().dim())
+        cell_markers.set_all(False)
+        for cell in dolfin.cells(mesh):
+            if cell_distance(cell, refine_point, distance):
+                cell_markers[cell.index()] = True
+        mesh = dolfin.refine(mesh, cell_markers)
+
+    return mesh
