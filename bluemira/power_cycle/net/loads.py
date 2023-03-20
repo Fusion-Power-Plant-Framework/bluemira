@@ -242,7 +242,7 @@ class LoadData(PowerCycleLoadABC):
         raise LoadDataError("add")
 
 
-class PowerLoadModel(Enum):
+class LoadModel(Enum):
     """
     Members define possible models used by the methods defined in the
     'PowerLoad' class to compute values between load definition points.
@@ -262,25 +262,24 @@ class PowerLoad(PowerCycleLoadABC):
     Generic representation of a power load.
 
     Defines a power load with a set of 'LoadData' instances. Each
-    instance must be accompanied by a 'model' specification, used to
+    instance must be accompanied by a 'LoadModel' specification, used to
     compute additional values between data points. This enables the
     instance to compute time-dependent curves.
 
     Instances of the 'PowerLoad' class can be added to each other, and
-    a list of them can be summed.
-    Instances can also be multiplied/divided by scalar numerical
-    values.
+    a list of them can be summed. Instances can also be multiplied and
+    divided by scalar numerical values.
 
     Parameters
     ----------
     name: str
         Description of the 'PowerLoad' instance.
-    LoadData_set: LoadData | list[LoadData]
+    loaddata_set: LoadData | list[LoadData]
         Collection of instances of the 'LoadData' class that define
         the 'PowerLoad' object.
-    model: PowerLoadModel | list[PowerLoadModel]
-        Mathematical model used to compute values between
-        'LoadData_set' definition points.
+    loadmodel_set: LoadModel | list[LoadModel]
+        Mathematical loadmodel used to compute values between
+        'loaddata_set' definition points.
 
     Properties
     ----------
@@ -298,13 +297,13 @@ class PowerLoad(PowerCycleLoadABC):
     def __init__(
         self,
         name,
-        loaddata_set,
-        model: Union[PowerLoadModel, List[PowerLoadModel]],
+        loaddata_set: Union[LoadData, List[LoadData]],
+        loadmodel_set: Union[LoadModel, List[LoadModel]],
     ):
         super().__init__(name)
 
         self.loaddata_set = self._validate_loaddata_set(loaddata_set)
-        self.model = self._validate_model(model)
+        self.loadmodel_set = self._validate_loadmodel_set(loadmodel_set)
 
         self._sanity()
 
@@ -312,7 +311,7 @@ class PowerLoad(PowerCycleLoadABC):
     def _validate_loaddata_set(loaddata_set):
         """
         Validate 'loaddata_set' input to be a list of 'LoadData'
-        instances.
+        objects.
         """
         loaddata_set = validate_list(loaddata_set)
         for element in loaddata_set:
@@ -320,27 +319,28 @@ class PowerLoad(PowerCycleLoadABC):
         return loaddata_set
 
     @staticmethod
-    def _validate_model(model):
+    def _validate_loadmodel_set(loadmodel_set):
         """
-        Validate 'model' input to be a list of valid models options.
+        Validate 'loadmodel_set' input to be a list of 'LoadModel'
+        objects.
         """
-        model = validate_list(model)
-        for element in model:
-            if type(element) != PowerLoadModel:
+        loadmodel_set = validate_list(loadmodel_set)
+        for element in loadmodel_set:
+            if type(element) != LoadModel:
                 element_class = type(element)
                 raise PowerLoadError(
-                    "model",
+                    "loadmodel",
                     "One of the arguments provided is an instance of "
                     f"the '{element_class}' class instead.",
                 )
-        return model
+        return loadmodel_set
 
     def _sanity(self):
         """
-        Validate instance to have 'loaddata_set' and 'model' attributes
-        of same length.
+        Validate instance to have 'loaddata_set' and 'loadmodel_set'
+        attributes of same length.
         """
-        if len(self.loaddata_set) != len(self.model):
+        if len(self.loaddata_set) != len(self.loadmodel_set):
             raise PowerLoadError("sanity")
 
     @classmethod
@@ -351,9 +351,9 @@ class PowerLoad(PowerCycleLoadABC):
         null_loaddata = LoadData.null()
 
         name = "Null PowerLoad"
-        loaddata_set = [null_loaddata]
-        model = PowerLoadModel["RAMP"]
-        null_instance = cls(name, loaddata_set, model)
+        loaddata_set = null_loaddata
+        loadmodel_set = LoadModel["RAMP"]
+        null_instance = cls(name, loaddata_set, loadmodel_set)
         return null_instance
 
     # ------------------------------------------------------------------
@@ -361,18 +361,18 @@ class PowerLoad(PowerCycleLoadABC):
     # ------------------------------------------------------------------
 
     @staticmethod
-    def _single_curve(loaddata, model, time):
+    def _single_curve(loaddata, loadmodel, time):
         """
         Method that applies the 'scipy.interpolate.interp1d' imported
         method to a single instance of the 'LoadData' class. The kind
-        of interpolation is determined by the 'model' input. Values are
-        returned at the times specified in the 'time' input, with any
-        out-of-bound values set to zero.
+        of interpolation is determined by the 'loadmodel' input. Values
+        are returned at the times specified in the 'time' input, with
+        any out-of-bound values set to zero.
         """
         try:
-            interpolation_kind = model.value
+            interpolation_kind = loadmodel.value
         except AttributeError:
-            raise PowerLoadError("model")
+            raise PowerLoadError("loadmodel")
 
         x = loaddata.time
         y = loaddata.data
@@ -409,8 +409,8 @@ class PowerLoad(PowerCycleLoadABC):
         This method applies the 'scipy.interpolate.interp1d' imported
         method to each 'LoadData' object stored in the 'loaddata_set'
         attribute and sums the results. The kind of interpolation is
-        determined by each respective value in the 'model' attribute.
-        Any out-of-bound values are set to zero.
+        determined by each respective value in the 'loadmodel_set'
+        attribute. Any out-of-bound values are set to zero.
 
         Parameters
         ----------
@@ -429,15 +429,15 @@ class PowerLoad(PowerCycleLoadABC):
         loaddata_set = self.loaddata_set
         loaddata_set_length = len(loaddata_set)
 
-        model = self.model
+        loadmodel_set = self.loadmodel_set
 
         for d in range(loaddata_set_length):
             current_loaddata = loaddata_set[d]
-            current_model = model[d]
+            current_loadmodel = loadmodel_set[d]
 
             current_curve = self._single_curve(
                 current_loaddata,
-                current_model,
+                current_loadmodel,
                 time,
             )
             current_curve = np.array(current_curve)
@@ -525,10 +525,10 @@ class PowerLoad(PowerCycleLoadABC):
         detailed: bool
             Determines whether the plot will include all individual
             'LoadData' objects (computed with their respective
-            'model' entries), that summed result in the normal plotted
-            curve. These objects are plotted as secondary plots, as
-            defined in 'PowerCycleABC' class. By default this input is
-            set to 'False'.
+            'loadmodel_set' entries), that summed result in the normal
+            plotted curve. These objects are plotted as secondary plots,
+            as defined in 'PowerCycleABC' class. By default this input
+            is set to 'False'.
         **kwargs: dict
             Options for the 'plot' method.
 
@@ -556,7 +556,7 @@ class PowerLoad(PowerCycleLoadABC):
 
         name = self.name
 
-        intrinsic_time = self.time
+        intrinsic_time = self.intrinsic_time
         computed_time = self._refine_vector(intrinsic_time, n_points)
         computed_curve = self.curve(computed_time)
 
@@ -584,16 +584,16 @@ class PowerLoad(PowerCycleLoadABC):
 
         if detailed:
             loaddata_set = self.loaddata_set
-            model = self.model
+            loadmodel_set = self.loadmodel_set
             number_of_data_elements = len(loaddata_set)
 
             for e in range(number_of_data_elements):
                 current_loaddata = loaddata_set[e]
-                current_model = model[e]
+                current_loadmodel = loadmodel_set[e]
 
                 current_curve = self._single_curve(
                     current_loaddata,
-                    current_model,
+                    current_loadmodel,
                     computed_time,
                 )
 
@@ -620,21 +620,26 @@ class PowerLoad(PowerCycleLoadABC):
     def __add__(self, other):
         """
         The addition of 'PowerLoad' instances creates a new 'PowerLoad'
-        instance with joined 'load' and 'model' attributes.
+        instance with joined 'loaddata_set' and 'loadmodel_set'
+        attributes.
         """
         this = copy.deepcopy(self)
         other = copy.deepcopy(other)
 
-        this_set = this.loaddata_set
-        this_model = this.model
+        this_loaddata_set = this.loaddata_set
+        this_loadmodel_set = this.loadmodel_set
 
-        other_set = other.loaddata_set
-        other_model = other.model
+        other_loaddata_set = other.loaddata_set
+        other_loadmodel_set = other.loadmodel_set
 
-        another_set = this_set + other_set
-        another_model = this_model + other_model
+        another_loaddata_set = this_loaddata_set + other_loaddata_set
+        another_loadmodel_set = this_loadmodel_set + other_loadmodel_set
         another_name = "Resulting PowerLoad"
-        another = PowerLoad(another_name, another_set, another_model)
+        another = PowerLoad(
+            another_name,
+            another_loaddata_set,
+            another_loadmodel_set,
+        )
         return another
 
     def __mul__(self, number):
@@ -1004,11 +1009,10 @@ class PhaseLoad(PowerCycleLoadABC):
             attribute.
         detailed: bool
             Determines whether the plot will include all individual
-            'PowerLoad' objects (computed with their respective
-            'model' entries), that summed result in the normal plotted
-            curve. These objects are plotted as secondary plots, as
-            defined in 'PowerCycleABC' class. By default this input is
-            set to 'False'.
+            'PowerLoad' objects, that summed result in the normal
+            plotted curve. These objects are plotted as secondary plots,
+            as defined in 'PowerCycleABC' class. By default this input
+            is set to 'False'.
         **kwargs: dict
             Options for the 'plot' method.
 
@@ -1447,9 +1451,8 @@ class PulseLoad(PowerCycleLoadABC):
             attribute.
         detailed: bool
             Determines whether the plot will include all individual
-            'PowerLoad' instances (computed with their respective
-            'model' entries), that summed result in the normal plotted
-            curve. Plotted as secondary plots, as defined in
+            'PhaseLoad' instances, that summed result in the normal
+            plotted curve. Plotted as secondary plots, as defined in
             'PowerCycleABC' class. By default this input is set to
             'False'.
         **kwargs: dict
@@ -1571,12 +1574,12 @@ class ScenarioLoad(PowerCycleLoadABC):
     ----------
     name: str
         Description of the 'ScenarioLoad' instance.
+    scenario: 'PowerCycleScenario'
+        Scenario specification, that determines the necessary pulses to
+        be characterized by 'PulseLoad' objects.
     pulseload_set: PulseLoad | list[PulseLoad]
         Collection of instances of the 'PulseLoad' class that define
         the 'ScenarioLoad' object.
-    repetition: int | list[int]
-        List of integer values that defines how many repetitions occur
-        for each element of 'pulseload_set' when building the scenario.
 
     Attributes
     ----------
@@ -1607,6 +1610,37 @@ class ScenarioLoad(PowerCycleLoadABC):
     # ------------------------------------------------------------------
     # VISUALIZATION
     # ------------------------------------------------------------------
+
+    @property
+    def intrinsic_time(self):
+        """
+        Single time vector that contains all values used to define the
+        different 'PulseLoad' objects contained in the 'pulseload_set'
+        attribute (i.e. all times are their original values).
+        """
+        """
+        time = self._build_time_from_load_set(self.pulseload_set)
+        return time
+        """
+        pass
+
+    @intrinsic_time.setter
+    def intrinsic_time(self, value) -> None:
+        pass
+
+    @property
+    def timeline_time(self):
+        """
+        Single time vector that contains all values used to define the
+        different 'PowerLoad' objects contained in the '_timeline_set'
+        attribute (i.e. all times are shifted in respect to the
+        duration of previous pulses).
+        """
+        """
+        time = self._build_time_from_load_set(self._timeline_set)
+        return time
+        """
+        pass
 
     # ------------------------------------------------------------------
     # ARITHMETICS
