@@ -693,7 +693,7 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
     tf_coil_xz_face:
         x-z face of the TF coil on the y=0 plane
     keep_out_zones:
-        List of x-z keep_out_zone wires on the y=0 plane
+        List of x-z keep_out_zone faces on the y=0 plane
     """
 
     param_cls = StraightOISDesignerParams
@@ -789,8 +789,7 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
             )
         )
         cutter = BluemiraFace(koz_centreline)
-        koz_faces = [BluemiraFace(koz) for koz in self.keep_out_zones]
-        cutter = boolean_fuse([cutter, inboard_cutter] + koz_faces)
+        cutter = boolean_fuse([cutter, inboard_cutter] + self.keep_out_zones)
 
         ois_regions = boolean_cut(ois_centreline, cutter)
 

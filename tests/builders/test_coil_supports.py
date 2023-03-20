@@ -284,12 +284,20 @@ class TestStraightOISDesigner:
     pd2 = offset_wire(pd, 1.0)
     tf_xz_face = BluemiraFace([pd2, pd])
     keep_out_zones = [
-        make_polygon({"x": [6, 12, 12, 6], "z": [0, 0, 15, 15]}, closed=True),
-        make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True),
+        BluemiraFace(
+            make_polygon({"x": [6, 12, 12, 6], "z": [0, 0, 15, 15]}, closed=True)
+        ),
+        BluemiraFace(
+            make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True)
+        ),
     ]
     keep_out_zones2 = [
-        make_polygon({"x": [4, 12, 12, 4], "z": [0, 0, 15, 15]}, closed=True),
-        make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True),
+        BluemiraFace(
+            make_polygon({"x": [4, 12, 12, 4], "z": [0, 0, 15, 15]}, closed=True)
+        ),
+        BluemiraFace(
+            make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True)
+        ),
     ]
 
     params = StraightOISDesignerParams(
