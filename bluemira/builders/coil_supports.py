@@ -324,6 +324,9 @@ class PFCoilSupportBuilder(Builder):
         self.tf_xz_keep_out_zone = tf_xz_keep_out_zone
         self.pf_coil_xz = pf_coil_xz
 
+    def _make_name(self):
+        return f"{self.SUPPORT} {self.build_config.get('name', '0')}"
+
     def build(self) -> Component:
         """
         Build the PF coil support component.
@@ -528,7 +531,7 @@ class PFCoilSupportBuilder(Builder):
 
         shape = boolean_fuse(shape_list)
         shape.translate(vector=(0, -0.5 * width, 0))
-        component = PhysicalComponent(self.SUPPORT, shape)
+        component = PhysicalComponent(self._make_name(), shape)
         component.display_cad_options.color = BLUE_PALETTE["TF"][2]
         return component
 
