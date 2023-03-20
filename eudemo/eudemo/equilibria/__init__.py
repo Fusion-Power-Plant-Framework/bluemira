@@ -23,13 +23,15 @@
 Equilibrium objects for EU-DEMO design
 """
 from eudemo.equilibria._designer import (
+    DummyFixedEquilibriumDesigner,
     EquilibriumDesigner,
     FixedEquilibriumDesigner,
-    FreeBoundaryEquilibriumFromFixedDesigner,
+    ReferenceFreeBoundaryEquilibriumDesigner,
 )
 
 __all__ = [
     "EquilibriumDesigner",
     "FixedEquilibriumDesigner",
-    "FreeBoundaryEquilibriumFromFixedDesigner",
+    "DummyFixedEquilibriumDesigner",
+    "ReferenceFreeBoundaryEquilibriumDesigner",
 ]

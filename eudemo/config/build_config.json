@@ -1,9 +1,9 @@
 {
     "Radial build": {
-        "run_mode": "run",
+        "run_mode": "read",
         "read_dir": "config/",
         "run_dir": "config/",
-        "plot": false
+        "plot": true
     },
     "Fixed boundary equilibrium":{
         "run_mode": "read",
@@ -41,8 +41,22 @@
             "plot": false
         }
     },
+    "Dummy fixed boundary equilibrium": {
+        "run_mode": "run",
+        "param_class": "bluemira.equilibria.shapes::KuiroukidisLCFS",
+        "shape_config": {
+            "f_delta_l": 1.25,
+            "f_kappa_l": 1.15
+        },
+        "settings": {
+            "n_points": 200,
+            "li_rel_tol": 0.01,
+            "li_min_iter": 2
+        }
+    },
     "Free boundary equilibrium":{
             "run_mode": "read",
+            "plot": true,
             "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
             "file_path": "config/equilibrium_eqdsk.json",
             "settings": {
@@ -50,10 +64,13 @@
                 "max_iter": 50,
                 "relaxation": 0.15,
                 "coil_discretisation": 0.3,
-                "plot": true,
+                "gamma": 1e-7
+            },
+            "grid_settings": {
                 "nx": 127,
                 "nz": 127,
-                "gamma": 1e-7
+                "grid_scale_x": 1.6,
+                "grid_scale_z": 1.7
             }
     },
     "IVC": {
@@ -87,6 +104,7 @@
     "TF coils": {
         "run_mode": "read",
         "file_path": "config/TFCoilDesign.json",
+        "plot": true,
         "param_class": "TripleArc",
         "variables_map": {},
         "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",

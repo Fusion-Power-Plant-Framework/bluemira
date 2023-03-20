@@ -26,7 +26,7 @@ gradient coil-set optimisation problem.
 import os
 import shutil
 from dataclasses import dataclass
-from typing import Dict, Optional, Type, Union
+from typing import Dict, Optional, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,10 +44,15 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FixedBoundaryEquilibrium,
 )
-from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
+from bluemira.equilibria.fem_fixed_boundary.file import (
+    _get_mesh_boundary,
+    save_fixed_boundary_to_file,
+)
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
@@ -58,7 +63,11 @@ from eudemo.equilibria._equilibrium import (
     make_equilibrium,
     make_reference_equilibrium,
 )
-from eudemo.equilibria.tools import EUDEMOSingleNullConstraints, ReferenceConstraints
+from eudemo.equilibria.tools import (
+    EUDEMOSingleNullConstraints,
+    ReferenceConstraints,
+    handle_lcfs_shape_input,
+)
 
 
 @dataclass
@@ -180,6 +189,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
                 self.params.r_tf_out_centre.value,
                 self.params.delta_95.value,
             ),
+            self.build_config.get("grid_settings", {}),
         )
 
     def _make_opt_problem(self, eq: Equilibrium):
@@ -291,7 +301,7 @@ class FixedEquilibriumDesignerParams(ParameterFrame):
     T_e_ped: Parameter[float]
 
 
-class FixedEquilibriumDesigner(Designer[Equilibrium]):
+class FixedEquilibriumDesigner(Designer[Tuple[Coordinates, CustomProfile]]):
     """
     Solves a transport <-> fixed boundary equilibrium problem to convergence,
     returning a `FixedBoundaryEquilibrium`.
@@ -320,7 +330,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
                 "'file_path' missing from build config."
             )
 
-    def run(self) -> FixedBoundaryEquilibrium:
+    def run(self) -> Tuple[Coordinates, CustomProfile]:
         """
         Run the FixedEquilibriumDesigner.
         """
@@ -343,7 +353,7 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
         }
         settings = self.build_config.get("transport_eq_settings", {})
         settings = {**defaults, **settings}
-        fixed_equilibrium = solve_transport_fixed_boundary(
+        fixed_equilibrium: FixedBoundaryEquilibrium = solve_transport_fixed_boundary(
             geom_parameterisation,
             transport_solver,
             fem_fixed_be_solver,
@@ -359,59 +369,43 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
                 65,
                 127,
             )
-        return fixed_equilibrium
 
-    def read(self):
+        xbdry, zbdry = _get_mesh_boundary(fixed_equilibrium.mesh)
+        lcfs_coords = Coordinates({"x": xbdry, "y": 0, "z": zbdry})
+        lcfs_coords.close()
+        profiles = CustomProfile(
+            fixed_equilibrium.pprime,
+            fixed_equilibrium.ffprime,
+            R_0=fixed_equilibrium.R_0,
+            B_0=fixed_equilibrium.B_0,
+            I_p=fixed_equilibrium.I_p,
+        )
+        return lcfs_coords, profiles
+
+    def read(self) -> Tuple[Coordinates, CustomProfile]:
         """
         Read in a fixed boundary equilibrium
         """
-        # TODO: Load a FixedBoundaryEquilibrium (need mesh and solver probably...)
-        # Cannot do this from just an EQDSK without loss of information.
-        pass
+        data = EQDSKInterface.from_file(self.file_path)
+        lcfs_coords = Coordinates({"x": data.xbdry, "y": 0, "z": data.zbdry})
+        lcfs_coords.close()
+
+        profiles = CustomProfile(
+            data.pprime,
+            data.ffprime,
+            R_0=data.xcentre,
+            B_0=data.bcentre,
+            I_p=data.cplasma,
+        )
+        return lcfs_coords, profiles
 
     def _get_geometry_parameterisation(self):
         param_cls: Type[GeometryParameterisation] = get_class_from_module(
             self.build_config["param_class"], default_module="bluemira.equilibria.shapes"
         )
-        input_dict = self._derive_shape_params(param_cls)
-        return param_cls(input_dict)
-
-    def _derive_shape_params(self, param_cls):
-        defaults = {
-            "f_kappa_l": 1.0,
-            "f_delta_l": 1.0,
-        }
         shape_config = self.build_config.get("shape_config", {})
-        shape_config = {**defaults, **shape_config}
-        kappa_95 = self.params.kappa_95.value
-        delta_95 = self.params.delta_95.value
-
-        kappa_factor = shape_config.pop("f_kappa_l")
-        delta_factor = shape_config.pop("f_delta_l")
-        if "kappa_l" not in shape_config:
-            shape_config["kappa_l"] = kappa_factor * kappa_95
-        if "kappa_u" not in shape_config:
-            shape_config["kappa_u"] = kappa_factor**0.5 * kappa_95
-        if "delta_l" not in shape_config:
-            shape_config["delta_l"] = delta_factor * delta_95
-        if "delta_u" not in shape_config:
-            shape_config["delta_u"] = delta_95
-
-        input_dict = {
-            "r_0": {"value": self.params.R_0.value},
-            "a": {"value": self.params.R_0.value / self.params.A.value},
-        }
-
-        param_cls_instance = param_cls()
-
-        for k, v in shape_config.items():
-            if k in param_cls_instance.variables.names:
-                input_dict[k] = {"value": v}
-            else:
-                bluemira_warn(
-                    f"Unknown shape parameter {k} for GeometryParameterisation: {param_cls_instance.name}"
-                )
-        return input_dict
+        input_dict = handle_lcfs_shape_input(param_cls, self.params, shape_config)
+        return param_cls(input_dict)
 
     def _get_transport_solver(self):
         defaults = {
@@ -456,7 +450,78 @@ class FixedEquilibriumDesigner(Designer[Equilibrium]):
 
 
 @dataclass
-class FreeBoundaryEquilibriumFromFixedDesignerParams(ParameterFrame):
+class DummyFixedEquilibriumDesignerParams(ParameterFrame):
+    """
+    Parameter frame for the dummy equilibrium designer
+    """
+
+    R_0: Parameter[float]
+    B_0: Parameter[float]
+    I_p: Parameter[float]
+    l_i: Parameter[float]
+    beta_p: Parameter[float]
+    A: Parameter[float]
+    delta: Parameter[float]
+    delta_95: Parameter[float]
+    kappa: Parameter[float]
+    kappa_95: Parameter[float]
+
+
+class DummyFixedEquilibriumDesigner(Designer[Tuple[Coordinates, Profile]]):
+    """
+    Dummy equilibrium designer that produces a LCFS shape and a profile
+    object to be used in later reference free boundary equilibrium
+    designers.
+    """
+
+    params: DummyFixedEquilibriumDesignerParams
+    param_cls = DummyFixedEquilibriumDesignerParams
+
+    def __init__(self, params, build_config):
+        super().__init__(params, build_config)
+        if self.build_config["run_mode"] != "run":
+            bluemira_warn(
+                f"This designer {type(self).__name__} can only be run in run mode."
+            )
+            self.build_config["run_mode"] = "run"
+
+    def run(self) -> Tuple[Coordinates, Profile]:
+        """
+        Run the DummyFixedEquilibriumDesigner.
+        """
+        param_cls = self.build_config.get(
+            "param_class", "bluemira.equilibria.shapes.JohnerLCFS"
+        )
+        param_cls = get_class_from_module(param_cls)
+        shape_config = self.build_config.get("shape_config", {})
+        input_dict = handle_lcfs_shape_input(param_cls, self.params, shape_config)
+        lcfs_parameterisation = param_cls(input_dict)
+
+        default_settings = {
+            "n_points": 200,
+            "li_rel_tol": 0.01,
+            "li_min_iter": 2,
+        }
+        settings = self.build_config.get("settings", {})
+        settings = {**default_settings, **settings}
+        lcfs_coords = lcfs_parameterisation.create_shape().discretize(
+            byedges=True, ndiscr=settings["n_points"]
+        )
+
+        profiles = BetaLiIpProfile(
+            self.params.beta_p.value,
+            self.params.l_i.value,
+            self.params.I_p.value,
+            R_0=self.params.R_0.value,
+            B_0=self.params.B_0.value,
+            li_rel_tol=settings["li_rel_tol"],
+            li_min_iter=settings["li_min_iter"],
+        )
+        return lcfs_coords, profiles
+
+
+@dataclass
+class ReferenceFreeBoundaryEquilibriumDesignerParams(ParameterFrame):
     """Parameters for running the fixed boundary equilibrium solver."""
 
     A: Parameter[float]
@@ -486,9 +551,9 @@ class FreeBoundaryEquilibriumFromFixedDesignerParams(ParameterFrame):
     shaf_shift: Parameter[float]
 
 
-class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
+class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
     """
-    Solves a free boundary equilibrium from a fixed boundary equilibrium.
+    Solves a free boundary equilibrium from a LCFS shape and profiles.
 
     Some coils are positioned at sensible locations to try and get an initial
     free boundary equilibrium in order to be able to draw an initial first wall
@@ -496,56 +561,57 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params:
         The parameters for the solver
-    build_config: Optional[Dict]
+    build_config:
         The config for the solver.
+    lcfs_coords:
+        Coordinates for the desired LCFS shape
+    profiles:
+        Profile object describing the equilibrium profiles
     """
 
-    params: FreeBoundaryEquilibriumFromFixedDesignerParams
-    param_cls = FreeBoundaryEquilibriumFromFixedDesignerParams
+    params: ReferenceFreeBoundaryEquilibriumDesignerParams
+    param_cls = ReferenceFreeBoundaryEquilibriumDesignerParams
 
     def __init__(
         self,
         params: Union[Dict, ParameterFrame],
         build_config: Optional[Dict] = None,
+        lcfs_coords: Optional[Coordinates] = None,
+        profiles: Optional[Profile] = None,
     ):
         super().__init__(params, build_config)
         self.file_path = self.build_config.get("file_path", None)
-        self.fixed_eq_file_path = self.build_config.get("fixed_eq_file_path", None)
+        self.lcfs_coords = lcfs_coords
+        self.profiles = profiles
+
         if self.run_mode == "read" and self.file_path is None:
             raise ValueError(
                 f"Cannot execute {type(self).__name__} in 'read' mode: "
                 "'file_path' missing from build config."
             )
 
-        if self.run_mode == "run" and self.fixed_eq_file_path is None:
+        if self.run_mode == "run" and (
+            (self.lcfs_coords is None) or (self.profiles is None)
+        ):
             raise ValueError(
-                f"Cannot execute {type(self).__name__} in 'run' mode: "
-                "'fixed_eq_file_path' missing from build config."
+                f"Cannot execute {type(self).__name__} in 'run' mode without "
+                "input LCFS shape or profiles."
             )
 
     def run(self) -> Equilibrium:
         """
         Run the FreeBoundaryEquilibriumFromFixedDesigner.
         """
-        # Retrieve infromation from end state
-        data = EQDSKInterface.from_file(self.fixed_eq_file_path)
-        p_prime = data.pprime
-        ff_prime = data.ffprime
-        lcfs_shape = make_polygon({"x": data.xbdry, "y": 0, "z": data.zbdry})
-
-        # Make free boundary equilibrium (with coils) from fixed boundary equilibrium
+        lcfs_shape = make_polygon(self.lcfs_coords, closed=True)
 
         # Make dummy tf coil boundary
         tf_coil_boundary = self._make_tf_boundary(lcfs_shape)
 
         defaults = {
-            "plot": False,
             "relaxation": 0.02,
             "coil_discretisation": 0.3,
-            "nx": 65,
-            "nz": 65,
             "gamma": 1e-8,
             "iter_err_max": 1e-2,
             "max_iter": 30,
@@ -557,10 +623,8 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
             ReferenceEquilibriumParams.from_frame(self.params),
             tf_coil_boundary,
             lcfs_shape,
-            p_prime,
-            ff_prime,
-            nx=settings.pop("nx"),
-            nz=settings.pop("nz"),
+            self.profiles,
+            self.build_config.get("grid_settings", {}),
         )
         # TODO: Check coil discretisation is sensible when size not set...
         discretisation = settings.pop("coil_discretisation")
@@ -568,7 +632,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
         eq.coilset.get_coiltype("CS").discretisation = discretisation
 
         opt_problem = self._make_fbe_opt_problem(
-            eq, lcfs_shape, len(data.xbdry), settings.pop("gamma")
+            eq, lcfs_shape, len(self.lcfs_coords.x), settings.pop("gamma")
         )
 
         iter_err_max = settings.pop("iter_err_max")
@@ -578,6 +642,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
             eq,
             opt_problem,
             convergence=DudsonConvergence(iter_err_max),
+            plot=self.build_config.get("plot", False),
             fixed_coils=True,
             **settings,
         )
@@ -587,7 +652,7 @@ class FreeBoundaryEquilibriumFromFixedDesigner(Designer[Equilibrium]):
             _, ax = plt.subplots()
             eq.plot(ax=ax)
             eq.coilset.plot(ax=ax, label=True)
-            ax.plot(data.xbdry, data.zbdry, "", marker="o")
+            ax.plot(self.lcfs_coords.x, self.lcfs_coords.z, "", marker="o")
             opt_problem.targets.plot(ax=ax)
             plt.show()
 

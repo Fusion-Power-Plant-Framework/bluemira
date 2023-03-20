@@ -61,8 +61,9 @@ from eudemo.comp_managers import (
     VacuumVesselThermalShield,
 )
 from eudemo.equilibria import (
+    DummyFixedEquilibriumDesigner,
     FixedEquilibriumDesigner,
-    FreeBoundaryEquilibriumFromFixedDesigner,
+    ReferenceFreeBoundaryEquilibriumDesigner,
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
@@ -157,7 +158,11 @@ def build_tf_coils(
 
 
 def build_pf_coils(
-    params, build_config, tf_coil_boundary, pf_coil_keep_out_zones=()
+    params,
+    build_config,
+    reference_equilibrium,
+    tf_coil_boundary,
+    pf_coil_keep_out_zones=(),
 ) -> PFCoil:
     """
     Design and build the PF coils for the reactor.
@@ -165,6 +170,7 @@ def build_pf_coils(
     pf_designer = PFCoilsDesigner(
         params,
         build_config,
+        reference_equilibrium,
         tf_coil_boundary,
         pf_coil_keep_out_zones,
     )
@@ -220,20 +226,28 @@ if __name__ == "__main__":
     build_config = _read_json(os.path.join(CONFIG_DIR, "build_config.json"))
 
     params = radial_build(params, build_config["Radial build"])
-    fixed_boundary_eq = run_designer(
+    lcfs_coords, profiles = run_designer(
         FixedEquilibriumDesigner, params, build_config["Fixed boundary equilibrium"]
     )
 
-    free_boundary_eq = run_designer(
-        FreeBoundaryEquilibriumFromFixedDesigner,
+    lcfs_coords, profiles = run_designer(
+        DummyFixedEquilibriumDesigner,
         params,
-        build_config["Free boundary equilibrium"],
+        build_config["Dummy fixed boundary equilibrium"],
     )
 
-    reactor.plasma = build_plasma(build_config.get("Plasma", {}), free_boundary_eq)
+    reference_eq = run_designer(
+        ReferenceFreeBoundaryEquilibriumDesigner,
+        params,
+        build_config["Free boundary equilibrium"],
+        lcfs_coords=lcfs_coords,
+        profiles=profiles,
+    )
+
+    reactor.plasma = build_plasma(build_config.get("Plasma", {}), reference_eq)
 
     blanket_face, divertor_face, ivc_boundary = design_ivc(
-        params, build_config["IVC"], equilibrium=free_boundary_eq
+        params, build_config["IVC"], equilibrium=reference_eq
     )
 
     t1 = time.time()
@@ -284,6 +298,7 @@ if __name__ == "__main__":
     reactor.pf_coils = build_pf_coils(
         params,
         build_config.get("PF coils", {}),
+        reference_eq,
         reactor.tf_coils.boundary(),
         pf_coil_keep_out_zones=[],
     )
@@ -308,4 +323,5 @@ if __name__ == "__main__":
     sspc_solver.model.plot()
     plt.show()
 
+    reactor.show_cad("xz")
     reactor.show_cad()
