@@ -146,7 +146,7 @@ plasmod_params = {
 
 problem_settings = {
     "amin": a_minor,
-    "pfus_req": 2000.0,
+    "pfus_req": 1800.0,
     "pheat_max": 100.0,
     "q_control": 50.0,
     "i_impmodel": "PED_FIXED",
