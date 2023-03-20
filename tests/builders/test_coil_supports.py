@@ -167,7 +167,7 @@ class TestPFCoilSupportBuilder:
         upper_support = (
             upper_builder.build()
             .get_component("xyz")
-            .get_component(upper_builder.SUPPORT)
+            .get_component(upper_builder._make_name())
         )
 
         lower_builder = PFCoilSupportBuilder(
@@ -176,7 +176,7 @@ class TestPFCoilSupportBuilder:
         lower_support = (
             lower_builder.build()
             .get_component("xyz")
-            .get_component(lower_builder.SUPPORT)
+            .get_component(upper_builder._make_name())
         )
         np.testing.assert_almost_equal(
             lower_support.shape.volume, upper_support.shape.volume
