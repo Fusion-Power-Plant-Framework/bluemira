@@ -1063,8 +1063,14 @@ def save_cad(
     kwargs:
         arguments passed to cadapi save function
     """
-    shapes, names = zip(*get_properties_from_components(components, ("shape", "name")))
-    cadapi.save_cad(shapes, filename, formatt=formatt, labels=names, **kwargs)
+    shape_name = get_properties_from_components(components, ("shape", "name"))
+    if isinstance(shape_name[0], BluemiraGeo):
+        shapes, names = [shape_name[0]], [shape_name[1]]
+    else:
+        shapes, names = zip(*shape_name)
+    cadapi.save_cad(
+        [s.shape for s in shapes], filename, formatt=formatt, labels=names, **kwargs
+    )
 
 
 # ======================================================================================
