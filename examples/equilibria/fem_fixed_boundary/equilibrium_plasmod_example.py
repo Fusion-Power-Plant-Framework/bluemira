@@ -61,7 +61,8 @@ from bluemira.equilibria.shapes import JohnerLCFS
 set_log_level("NOTSET")
 
 # %% [markdown]
-# In this example a fixed boundary equilibrium problem is solved using PLASMOD as transport solver.
+# In this example a fixed boundary equilibrium problem is solved using PLASMOD as
+# the transport solver.
 #
 # # Fixed Boundary Equilibrium
 # Setup the Plasma shape parameterisation variables. A Johner parameterisation is used.
@@ -165,7 +166,8 @@ fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
 )
 
 # %% [markdown]
-# Solve the fixed boundary problem. Set plot = True if you want to check the solution at each iteration.
+# Solve the fixed boundary problem. Set plot = True if you want to check the
+# solution at each iteration.
 
 # %%
 equilibrium = solve_transport_fixed_boundary(

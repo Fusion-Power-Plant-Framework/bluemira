@@ -21,7 +21,6 @@
 
 import tempfile
 from dataclasses import dataclass
-from unittest import mock
 
 import numpy as np
 import pytest
