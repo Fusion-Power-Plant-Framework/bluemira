@@ -36,7 +36,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-An example that shows how to set up the problem for the fixed boundary equilibrium.
+An example that shows how to set up a fixed boundary equilibrium problem.
 """
 
 # %%
@@ -51,7 +51,6 @@ from bluemira.base.logs import set_log_level
 from bluemira.codes import transport_code_solver
 from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
     solve_transport_fixed_boundary,
-    solve_transport_fixed_boundary_old,
 )
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
@@ -62,9 +61,10 @@ from bluemira.equilibria.shapes import JohnerLCFS
 set_log_level("NOTSET")
 
 # %% [markdown]
+# In this example a fixed boundary equilibrium problem is solved using PLASMOD as transport solver.
 #
 # # Fixed Boundary Equilibrium
-# Setup the Plasma shape parameterisation variables
+# Setup the Plasma shape parameterisation variables. A Johner parameterisation is used.
 
 # %%
 johner_parameterisation = JohnerLCFS(
@@ -79,7 +79,11 @@ johner_parameterisation = JohnerLCFS(
 )
 
 # %% [markdown]
-# Initialise the transport solver in this case PLASMOD is used
+# Initialise the transport solver (in this case PLASMOD is used)
+# Note: it is necessary to manually ensure consistency between transport solver
+# and plasma parameters (as for R_0, A, etc.). In particular, since PLASMOD
+# is using a symmetric plasma, delta and kappa are set up as the average of
+# plasma's kappa_u and kappa_l and delta_u and delta_l, respectively.
 
 # %%
 if plasmod_binary := shutil.which("plasmod"):
@@ -158,11 +162,10 @@ fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
     p_order=2,
     max_iter=30,
     iter_err_max=1e-4,
-    relaxation=0,
 )
 
 # %% [markdown]
-# Solve
+# Solve the fixed boundary problem. Set plot = True if you want to check the solution at each iteration.
 
 # %%
 equilibrium = solve_transport_fixed_boundary(
@@ -173,9 +176,9 @@ equilibrium = solve_transport_fixed_boundary(
     delta95_t=0.333,  # Target delta_95
     lcar_mesh=0.2,
     max_iter=15,
-    iter_err_max=1e-3,
+    iter_err_max=1e-4,
     relaxation=0.0,
-    plot=True,
+    plot=False,
     debug=False,
     gif=True,
 )
@@ -188,7 +191,7 @@ data = save_fixed_boundary_to_file(
     os.sep.join(
         [get_bluemira_path("", subfolder="generated_data"), "fixed_boundary_data.json"]
     ),
-    "something",
+    "equilibrium_example",
     equilibrium,
     100,
     110,
