@@ -333,8 +333,8 @@ if __name__ == "__main__":
     reactor.coil_structures = build_coil_structures(
         params,
         build_config.get("Coil structures", {}),
-        tf_coil_xz_face=BluemiraFace(reactor.tf_coils.boundary),
-        pf_coil_xz_wires=reactor.pf_coils.xz_boundary,
+        tf_coil_xz_face=BluemiraFace(reactor.tf_coils.boundary()),
+        pf_coil_xz_wires=reactor.pf_coils.xz_boundary(),
         pf_coil_keep_out_zones=[],
     )
 

@@ -100,6 +100,7 @@ class EUDEMOReactorParams(ParameterFrame):
     tk_cs: Parameter[float]
     tk_pf_casing: Parameter[float]
     tk_pf_insulation: Parameter[float]
+    tk_ois: Parameter[float]
     tk_fw_in: Parameter[float]
     tk_fw_out: Parameter[float]
     tk_rs: Parameter[float]
