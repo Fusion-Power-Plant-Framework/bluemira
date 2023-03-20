@@ -35,7 +35,7 @@ myst-nb==0.17.1
 myst-parser==0.18.1
 nbclient==0.5.13
 nodeenv==1.7.0
-pathspec==0.11.0
+pathspec==0.11.1
 pbr==5.11.1
 pep8-naming==0.13.3
 platformdirs==3.1.1
