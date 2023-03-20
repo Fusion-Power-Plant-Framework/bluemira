@@ -39,7 +39,6 @@ if TYPE_CHECKING:
 
 from warnings import warn
 
-import freecad  # noqa: F401
 import FreeCAD
 import BOPTools
 import BOPTools.GeneralFuseResult
@@ -1148,58 +1147,6 @@ def _slice_solid(obj, normal_plane, shift):
 # ======================================================================================
 # FreeCAD Configuration
 # ======================================================================================
-class _Unit(enum.IntEnum):
-    """Available units in FreeCAD"""
-
-    MM = 0  # mmKS
-    SI = 1  # MKS
-    US = 2  # in/lb
-    IMP_DEC = 3  # imperial_decimal
-    BUILD_EURO = 4  # cm/m2/m3
-    BUILD_US = 5  # ft-in/sqft/cft
-    CNC = 6  # mm, mm/min
-    IMP_CIV = 7  # ft, ft/sec
-    FEM = 8  # mm/N/s
-
-
-class _StpFileScheme(enum.Enum):
-    """Available STEP file schemes in FreeCAD"""
-
-    AP203 = enum.auto()
-    AP214CD = enum.auto()
-    AP214DIS = enum.auto()
-    AP214IS = enum.auto()
-    AP242DIS = enum.auto()
-
-
-def _freecad_save_config(
-    unit: str = "SI",
-    no_dp: int = 5,
-    author: str = "Bluemira",
-    stp_file_scheme: str = "AP242DIS",
-):
-    """
-    Attempts to configures FreeCAD with units file schemes and attributions
-    """
-    unit_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Units")
-    # Seems to have little effect on anything but its an option to set
-    # does effect the GUI be apparently not the base unit of the built part...
-    unit_prefs.SetInt("UserSchema", _Unit[unit].value)
-    unit_prefs.SetInt("Decimals", no_dp)  # 100th mm
-
-    part_step_prefs = FreeCAD.ParamGet(
-        "User parameter:BaseApp/Preferences/Mod/Part/STEP"
-    )
-    part_step_prefs.SetString("Scheme", _StpFileScheme[stp_file_scheme].name)
-    part_step_prefs.SetString("Author", author)
-    part_step_prefs.SetString("Company", "Bluemira")
-    # Seems to have little effect on anything but its an option to set
-    part_step_prefs.SetInt("Unit", _Unit[unit].value)
-
-    import_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
-    import_prefs.SetInt("ImportMode", 0)
-
-
 def _setup_document(parts: Iterable[apiShape]) -> Iterable[Part.Feature]:
     """
     Setup FreeCAD document.
@@ -1347,7 +1294,6 @@ def save_as_STP(shapes: List[apiShape], filename: str = "test", unit_scale: str 
 
     """
     filename = force_file_extension(filename, [".stp", ".step"])
-    _freecad_save_config()
 
     if not isinstance(shapes, list):
         shapes = [shapes]
@@ -1406,7 +1352,6 @@ def save_cad(
     formatt: Union[str, CADFileType] = "stp",
     labels: Iterable[str] = None,
     unit_scale: str = "metre",
-    **kwargs,
 ):
     """
     Save CAD in a given file format
@@ -1423,8 +1368,6 @@ def save_cad(
         shape labels
     unit_scale
         unit to save the objects as.
-    kwargs
-        passed to freecad preferences configuration
 
     Notes
     -----
@@ -1433,8 +1376,6 @@ def save_cad(
     """
     formatt = CADFileType(formatt)
     filename = force_file_extension(filename, f".{formatt.value}")
-
-    _freecad_save_config(**kwargs)
 
     objs = list(_setup_document(shapes))
 

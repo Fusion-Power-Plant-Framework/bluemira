@@ -47,6 +47,11 @@ def freecad_message_removal():
 
 freecad_default_path = freecad_message_removal()
 
+from bluemira.codes._freecadconfig import _freecad_save_config
+
+_freecad_save_config()
+
+
 # External codes wrapper imports
 from bluemira.codes.wrapper import (
     plot_radial_build,
