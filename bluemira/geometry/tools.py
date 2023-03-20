@@ -1021,7 +1021,10 @@ def mirror_shape(
 # # Save functions
 # # =============================================================================
 def save_as_STP(
-    shapes: Union[BluemiraGeo, Iterable[BluemiraGeo]], filename: str, scale: float = 1
+    shapes: Union[BluemiraGeo, Iterable[BluemiraGeo]],
+    filename: str,
+    unit_scale: str = "metre",
+    **kwargs,
 ):
     """
     Saves a series of Shape objects as a STEP assembly
@@ -1032,7 +1035,7 @@ def save_as_STP(
         List of shape objects to be saved
     filename:
         Full path filename of the STP assembly
-    scale:
+    unit_scale:
         The scale in which to save the Shape objects
     """
     filename = force_file_extension(filename, [".stp", ".step"])
@@ -1040,8 +1043,7 @@ def save_as_STP(
     if not isinstance(shapes, list):
         shapes = [shapes]
 
-    freecad_shapes = [s.shape for s in shapes]
-    cadapi.save_as_STP(freecad_shapes, filename, scale)
+    cadapi.save_as_STP([s.shape for s in shapes], filename, unit_scale, **kwargs)
 
 
 def save_cad(
