@@ -719,10 +719,16 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
             A list of outer inter-coil structure wires on the y=0 plane.
         """
         koz_centreline = offset_wire(
-            self.tf_face.boundary[1], self.params.g_ois_tf_edge.value
+            self.tf_face.boundary[1],
+            self.params.g_ois_tf_edge.value,
+            open_wire=False,
+            join="arc",
         )
         ois_centreline = offset_wire(
-            self.tf_face.boundary[1], 2 * self.params.g_ois_tf_edge.value
+            self.tf_face.boundary[1],
+            2 * self.params.g_ois_tf_edge.value,
+            open_wire=False,
+            join="arc",
         )
         ois_regions = self._make_ois_regions(ois_centreline, koz_centreline)
         koz = self._make_ois_koz(koz_centreline)
