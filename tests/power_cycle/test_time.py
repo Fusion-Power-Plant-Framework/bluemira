@@ -76,7 +76,6 @@ class TestPowerCyclePhase:
         try:
             sample = tested_class(name, breakdown)
         except possible_errors:
-
             str_keys = [isinstance(k, str) for k in test_keys]
             all_keys_are_str = all(str_keys)
             nonnegative_errors = (TypeError, ValueError)
@@ -187,6 +186,13 @@ class TestPowerCycleScenario:
         """
         sample = self.sample
         assert callable(sample.build_phase_library)
+
+    def test_build_pulse_library(self):
+        """
+        No new functionality to be tested.
+        """
+        sample = self.sample
+        assert callable(sample.build_pulse_library)
 
 
 class TestScenarioBuilder:
@@ -430,14 +436,14 @@ class TestScenarioBuilder:
         assert type(breakdown_library) is dict
 
         library_items = breakdown_library.items()
-        for (element, value) in library_items:
+        for element, value in library_items:
             assert type(element) is str
 
             assert len(value) == 1
             assert type(value) is dict
 
             value_items = value.items()
-            for (key, duration) in value_items:
+            for key, duration in value_items:
                 assert type(key) is str
                 assert_value_is_nonnegative(duration)
 
@@ -467,7 +473,7 @@ class TestScenarioBuilder:
         assert type(phase_library) == dict
 
         library_items = phase_library.items()
-        for (key, value) in library_items:
+        for key, value in library_items:
             assert type(key) == str
             assert type(value) == PowerCyclePhase
 
@@ -483,7 +489,7 @@ class TestScenarioBuilder:
         assert type(pulse_library) == dict
 
         library_items = pulse_library.items()
-        for (key, value) in library_items:
+        for key, value in library_items:
             assert type(key) == str
             assert type(value) == PowerCyclePulse
 

@@ -1,0 +1,77 @@
+{
+    "ECH": {
+        "name": "Electron Cyclotron Heating",
+        "reactive": {},
+        "active": {
+            "upk": {
+                "name": "ECH upkeep",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {
+                        "wall-plug": 0.5
+                    },
+                    "loads": {
+                        "description": [
+                            "minimal maintenance power"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[1, 1]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            },
+            "inj": {
+                "name": "ECH injection during burn",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "ftt"
+                    ],
+                    "normalize": [
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {
+                        "cooling": 0.7,
+                        "gyrotron efficiency": 0.7
+                    },
+                    "loads": {
+                        "description": [
+                            "island control"
+                        ],
+                        "time": [
+                            "[0, 1, 2, 3, 4]"
+                        ],
+                        "data": [
+                            "[1, 30, 25, 30, 1]"
+                        ],
+                        "model": [
+                            "STEP"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
