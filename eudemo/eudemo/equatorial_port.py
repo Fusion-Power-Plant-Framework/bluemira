@@ -34,13 +34,14 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.plane import BluemiraFace, BluemiraPlane
+from bluemira.geometry.solid import BluemiraSolid, BluemiraWire
 from bluemira.geometry.tools import (
     boolean_fuse,
     extrude_shape,
     make_polygon,
+    offset_wire,
     slice_shape,
 )
-from bluemira.geometry.wire import BluemiraWire
 
 
 class EquatorialPort(ComponentManager):
@@ -52,7 +53,7 @@ class EquatorialPort(ComponentManager):
         """Returns a wire defining the x-z boundary of the Equatorial Port"""
         return (
             self.component.get_component("xz")
-            .get_component(EquatorialPortBuilder.KOZ)
+            .get_component(EquatorialPortBuilder.NAME)
             .shape.boundary[0]
         )
 
@@ -87,10 +88,12 @@ class EquatorialPortDesigner(Designer):
         self,
         params: Union[Dict, ParameterFrame, EquatorialPortDesignerParams],
         build_config: Union[Dict, None],
+        koz_z_offset: float,
         x_ib: float,
         x_ob: float,
     ):
         super().__init__(params, build_config)
+        self.koz_offset = koz_z_offset
         self.x_ib = x_ib
         self.x_ob = x_ob
 
@@ -100,7 +103,7 @@ class EquatorialPortDesigner(Designer):
         """
         x_ib = self.x_ib
         x_ob = self.x_ob
-        z_h = self.params.ep_height.value
+        z_h = self.params.ep_height.value + (2 * self.koz_offset)
 
         x = (x_ib, x_ob, x_ob, x_ib)
         z = (-z_h / 2, -z_h / 2, z_h / 2, z_h / 2)
@@ -123,14 +126,18 @@ class EquatorialPortBuilder(Builder):
         self,
         params: Union[Dict, ParameterFrame, EquatorialPortBuilderParams],
         build_config: Union[Dict, None],
-        xz_profile: BluemiraFace,
-        y_width: float,
+        x_ib: float,
+        x_ob: float,
+        yz_profile: BluemiraWire,
+        extrude_vec: tuple,
         x_offsets: list,
         castellation_offsets: list,
     ):
         super().__init__(params, build_config)
-        self.xz_profile = xz_profile
-        self.y_width = y_width
+        self.x_ib = x_ib
+        self.x_ob = x_ob
+        self.yz_profile = yz_profile
+        self.vec = extrude_vec
         self.x_off = x_offsets
         self.cst = castellation_offsets
 
@@ -138,93 +145,95 @@ class EquatorialPortBuilder(Builder):
         """
         Build the equatorial port component.
         """
-        # TODO: Implement corner radii
+        # TODO: Implement corner radii using PR #1992
         self.r_rad = self.params.ep_r_corner.value
         self.n_ep = self.params.n_ep.value
 
-        # Set-up coordinates for geometry building
-        xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
-        intersections = slice_shape(self.xz_profile.boundary[0], xz_plane)
-        self.x_ib = min(intersections[:, 0])
-        self.x_ob = max(intersections[:, 0])
-        self.z_lo = min(intersections[:, 2])
-        self.z_hi = max(intersections[:, 2])
-
-        x_points, y_points, z_points, xyz_coords = self.build_coordinates(
-            self.x_off, self.cst
+        xyz_solid = self.build_castellations(
+            self.yz_profile, self.vec, self.x_ob - self.x_ib, self.x_off, self.cst
         )
+        xz_plane = BluemiraPlane(axis=(0, 1, 0))
+        xy_plane = BluemiraPlane(axis=(0, 0, 1))
+        xz_slice = BluemiraFace(slice_shape(xyz_solid, xz_plane))
+        xy_slice = BluemiraFace(slice_shape(xyz_solid, xy_plane))
 
         return self.component_tree(
-            xz=[self.build_xz(x_points, z_points)],
-            xy=self.build_xy(x_points, y_points),
-            xyz=self.build_xyz(xyz_coords, n_ep=10),
+            xz=[self.build_xz(xz_slice)],
+            xy=self.build_xy(xy_slice),
+            xyz=self.build_xyz(xyz_solid, n_ep=10),
         )
 
-    def build_xz(self, x: list, z: list) -> PhysicalComponent:
+    def build_xz(self, xz: BluemiraFace) -> PhysicalComponent:
         """
         Build the xz components of the equatorial port
         """
-        xz_profile = BluemiraWire(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
-        body = PhysicalComponent("koz", xz_profile)
+        body = PhysicalComponent(self.NAME, xz)
         body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
         return body
 
-    def build_xy(self, x: list, y: list, n_ep: int = 10) -> List[PhysicalComponent]:
+    def build_xy(self, xy: BluemiraFace, n_ep: int = 10) -> List[PhysicalComponent]:
         """
         Build the xy components of the equatorial port
         """
-        ep_xy_profile = BluemiraWire(make_polygon({"x": x, "y": y, "z": 0}, closed=True))
-        body = PhysicalComponent(self.NAME, BluemiraFace(ep_xy_profile))
+        body = PhysicalComponent(self.NAME, xy)
         body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
         return circular_pattern_component(body, n_children=n_ep)
 
-    def build_xyz(self, coords: ndarray, n_ep: int = 10) -> List[PhysicalComponent]:
+    def build_xyz(self, xyz: BluemiraSolid, n_ep: int = 10) -> List[PhysicalComponent]:
         """
-        Build the xyz components of the equatorial port
+        Build the xyz representation of the equatorial port
         """
-        sections = []
-        coords = coords.transpose()[:-1]
-
-        for r in coords:
-            x = r[0]
-            y = [r[1], r[1], r[2], r[2]]
-            z = [r[3], r[4], r[4], r[3]]
-            ext_vec = (self.x_ob - x, 0, 0)
-            section = BluemiraFace(make_polygon({"x": x, "y": y, "z": z}, closed=True))
-            sections.append(extrude_shape(section, ext_vec))
-
-        ep_shape = PhysicalComponent(self.NAME, boolean_fuse(sections))
+        ep_shape = PhysicalComponent(self.NAME, xyz)
         ep_shape.display_cad_options.color = BLUE_PALETTE["VV"][0]
         return circular_pattern_component(ep_shape, n_children=n_ep)
 
-    def build_coordinates(self, x_offs: list, c_offs: list):
+    def build_castellations(
+        self,
+        wire: BluemiraFace,
+        vec: tuple,
+        length: float,
+        distances: List[float],
+        offsets: List[float],
+    ) -> BluemiraSolid:
         """
-        Returns coordinate lists for building the Eq. Port Bluemira geometry
+        Returns BluemiraSolid that is a BluemiraFace castellated along a given vector
 
         Parameters
         ----------
-        x_offsets: list
-            list of x positions of castellations
-        castellation_offsets: list
-            list of castellations offsets
+        wire: BluemiraWire
+            profile boundary to be castellated
+        vec: tuple (x,y,z)
+            unit vector along which to extrude
+        length: float
+            total length of castellated BluemiraSolid in vec direction
+        distances: List[float]
+            list of distances along vec describing castellation positions (relative to starting wire)
+        offsets: List[float]
+            list of castellations offsets corresponding to each position in 'distances' parameter
         """
-        offsets = [0, 0] + [z for i in zip(c_offs, c_offs) for z in i]
-        x_offsets = [x for i in zip(x_offs, x_offs) for x in i]
+        base = wire
+        sections = []
 
-        x_outwards = (
-            [self.x_ib] + [self.x_ib + x_offset for x_offset in x_offsets] + [self.x_ob]
-        )
-        x_points = x_outwards + list(reversed(x_outwards))
+        # Normalise and Scale vec
+        vec_mag = (vec[0] ** 2 + vec[1] ** 2 + vec[2] ** 2) ** 0.5
+        if vec_mag != 1.0:
+            vec = (vec[0] / vec_mag, vec[1] / vec_mag, vec[2] / vec_mag)
+        print("Extrude by ", vec)
+        make_vec = lambda scale: (vec[0] * scale, vec[1] * scale, vec[2] * scale)
 
-        y_pos_half = [self.y_width / 2 + offset for offset in offsets]
-        y_neg_half = [-y for y in y_pos_half]
-        y_points = y_pos_half + list(reversed(y_neg_half))
-
-        z_upper_half = [self.z_hi + offset for offset in offsets]
-        z_lower_half = [self.z_lo - offset for offset in offsets]
-        z_points = z_upper_half + list(reversed(z_lower_half))
-
-        xyz_coords = array(
-            [x_outwards, y_pos_half, y_neg_half, z_upper_half, z_lower_half], float
-        )
-        return x_points, y_points, z_points, xyz_coords
+        parameter_array = list(zip(distances, offsets))
+        parameter_array.append((length, 1.0))
+        _prev_dist = 0
+        for dist_off in parameter_array:
+            dist = dist_off[0] - _prev_dist
+            ext = make_vec(dist)
+            part = extrude_shape(base, ext)
+            sections.append(part)
+            _prev_dist = dist_off[0]
+            x = [i + ext[0] for i in base.vertexes.x]
+            y = [i + ext[1] for i in base.vertexes.y]
+            z = [i + ext[2] for i in base.vertexes.z]
+            base = BluemiraWire(make_polygon([x, y, z], closed=True))
+            base = offset_wire(base, dist_off[1])
+            base = BluemiraFace(base)
+        return boolean_fuse(sections)

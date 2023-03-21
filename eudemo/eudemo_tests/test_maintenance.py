@@ -74,7 +74,7 @@ class TestEquatorialPortDesigner:
             "ep_height": {"value": 0, "unit": "m"},
         }
 
-        self.designer = EquatorialPortDesigner(params, None, 0, 0)
+        self.designer = EquatorialPortDesigner(params, None, 0, 0, 0)
 
     @pytest.mark.parametrize(
         "xi, xo, zh", zip([2.0, 3.0, 1.0], [9.0, 9.0, 4.0], [5.0, 4.0, 2.0])
@@ -102,39 +102,47 @@ class TestEquatorialPortBuilder:
             "n_ep": {"value": 10, "unit": ""},
             "ep_r_corner": {"value": 0, "unit": "m"},
         }
-        x = (0, 1, 1, 0)
+        x_ib = 1
+        x_ob = 2
+        y = (0, 1, 1, 0)
         z = (-1, -1, 1, 1)
-        xz = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
-        y_ib = 1
+        yz = BluemiraFace(make_polygon({"x": 0, "y": y, "z": z}, closed=True))
+        vector = (1, 0, 0)
         x_offs = [0]
         c_offs = [0]
 
-        self.builder = EquatorialPortBuilder(params, {}, xz, y_ib, x_offs, c_offs)
+        self.builder = EquatorialPortBuilder(
+            params, {}, x_ib, x_ob, yz, vector, x_offs, c_offs
+        )
 
     @pytest.mark.parametrize(
-        "xi, xo, zh, y, x_offset, c_off, exp_v",
+        "xi, xo, zh, yw, vec, x_offsets, c_offsets, exp_v",
         zip(
             [2.0, 3.0, 1.0],  # x_inboard
             [9.0, 9.0, 4.0],  # x_outboard
             [5.0, 4.0, 2.0],  # z_height
-            [3.0, 2.0, 1.0],  # y_width
+            [3.0, 2.0, 1.0],  # y_widths
+            [(1, 0, 0), (1, 0, 0), (1, 0, 0.5)],  # extrusion vectors
             [[3.0], [2.0, 4.0], [1.0]],  # x castellation_positions
-            [[1.0], [1.0, 2.0], [0.5]],  # y/z castellation_offsets
-            [185.0, 160.0, 14.0],  # volume check value of Eq. Ports
+            [[1.0], [1.0, 1.0], [0.5]],  # y/z castellation_offsets
+            [185.0, 160.0, 12.521980674],  # volume check value of Eq. Ports
         ),
     )
-    def test_ep_builder(self, xi, xo, zh, y, x_offset, c_off, exp_v):
+    def test_ep_builder(self, xi, xo, zh, yw, vec, x_offsets, c_offsets, exp_v):
         """Test Equatorial Port Builder"""
-        x = (xi, xo, xo, xi)
+        y = (yw / 2, -yw / 2, -yw / 2, yw / 2)
         z = (-zh / 2, -zh / 2, zh / 2, zh / 2)
-        xz_profile = BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
+        yz_profile = BluemiraFace(make_polygon({"x": xi, "y": y, "z": z}, closed=True))
 
-        self.builder.xz_profile = xz_profile
-        self.builder.y_width = y
-        self.builder.x_off = x_offset
-        self.builder.cst = c_off
+        self.builder.x_ib = xi
+        self.builder.x_ob = xo
+        self.builder.yz_profile = yz_profile
+        self.builder.vec = vec
+        self.builder.x_off = x_offsets
+        self.builder.cst = c_offsets
         output = self.builder.build()
         out_eq_port = output.get_component("xyz").get_component("Equatorial Port 1")
         if out_eq_port is None:
             out_eq_port = output.get_component("xyz").get_component("Equatorial Port")
+        output.show_cad()
         assert math.isclose(out_eq_port.shape.volume, exp_v)
