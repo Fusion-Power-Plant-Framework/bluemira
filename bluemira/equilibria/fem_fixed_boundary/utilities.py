@@ -31,6 +31,8 @@ from matplotlib.axes._axes import Axes
 from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.error import ExternalOptError
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
@@ -459,7 +461,14 @@ def calculate_plasma_shape_params(
         )
 
         optimiser.add_eq_constraints(f_constraint, tolerance=1e-10)
-        return optimiser.optimise(x0)
+        try:
+            x_star = optimiser.optimise(x0)
+        except ExternalOptError as e:
+            bluemira_warn(
+                f"calculate_plasma_shape_params::find_extremum failing at {x0}, defaulting to mesh value: {e}"
+            )
+            x_star = x0
+        return x_star
 
     pi_opt = find_extremum(_f_min_radius, pi)
     pl_opt = find_extremum(_f_min_vert, pl)
