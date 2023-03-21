@@ -100,9 +100,9 @@ class Paneller:
         not the head-tail angles.
         """
         joints = self.joints(dists)
-        line_vectors: np.ndarray = joints[:, 1:] - joints[:, :-1]
-        dots = (line_vectors[:, :-1] * line_vectors[:, 1:]).sum(axis=0)
+        line_vectors = np.diff(joints, axis=1)
         magnitudes = np.linalg.norm(line_vectors, axis=0)
+        dots = (line_vectors[:, :-1] * line_vectors[:, 1:]).sum(axis=0)
         dots /= magnitudes[:-1] * magnitudes[1:]
         return np.degrees(np.arccos(np.clip(dots, -1.0, 1.0)), out=dots)
 
