@@ -39,7 +39,7 @@ class PanellingDesignerParams(ParameterFrame):
 
     fw_a_max: Parameter[float]
     """The maximum angle of rotation between adjacent panels [degrees]."""
-    fw_dL_min: Parameter[float]
+    fw_dL_min: Parameter[float]  # noqa: N815
     """The minimum length for an individual panel [m]."""
 
 
@@ -74,6 +74,10 @@ class PanellingDesigner(Designer[np.ndarray]):
 
     param_cls = PanellingDesignerParams
     params: PanellingDesignerParams
+    _defaults = {
+        "algorithm": "SLSQP",
+        "opt_conditions": {"max_eval": 400, "ftol_rel": 1e-4},
+    }
 
     def __init__(
         self,
@@ -85,11 +89,12 @@ class PanellingDesigner(Designer[np.ndarray]):
         self.wall_boundary = wall_boundary
 
     def run(self) -> np.ndarray:
+        """Run the design problem, performing the optimisation."""
         paneller = self._make_paneller()
         optimiser = Optimiser(
-            self.build_config.get("algorithm", "SLSQP"),
+            self.build_config.get("algorithm", self._defaults["algorithm"]),
             opt_conditions=self.build_config.get(
-                "opt_conditions", {"max_eval": 400, "ftol_rel": 1e-4}
+                "opt_conditions", self._defaults["opt_conditions"]
             ),
         )
         opt_problem = PanellingOptProblem(paneller, optimiser)
@@ -97,6 +102,13 @@ class PanellingDesigner(Designer[np.ndarray]):
         return paneller.joints(x_opt)
 
     def mock(self) -> np.ndarray:
+        """
+        Mock the design problem, returning the initial guess for panel placement.
+
+        This guarantees that panels will always fully contain the given
+        boundary, but does not guarantee the maximum angle and minimum
+        length constraints are honoured.
+        """
         paneller = self._make_paneller()
         return paneller.joints(paneller.x0)
 

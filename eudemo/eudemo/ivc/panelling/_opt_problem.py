@@ -31,6 +31,27 @@ from eudemo.ivc.panelling._paneller import Paneller
 
 
 class PanellingOptProblem(OptimisationProblem):
+    """
+    Optimisation problem to minimise the cumulative panel length.
+
+    The optimisation parameters are the normalised lengths along the
+    panelling boundary at which the panels and boundary touch.
+
+    The objective is to minimise the cumulative length of the panels,
+    subject to a maximum angle between panel joints and a minimum panel
+    length. Note that the parameters for these constraints are
+    properties of the ``paneller``.
+
+    Parameters
+    ----------
+    paneller
+        The :class:`.Paneller` to optimise the parameters of. Note that
+        these parameters are the normalised length along the paneller's
+        boundary, where the panels and boundary meet.
+    optimiser
+        The :class:`.Optimiser` to perform the optimisation with.
+    """
+
     def __init__(self, paneller: Paneller, optimiser: Optimiser):
         self.paneller = paneller
         self.bounds = (np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0))
@@ -44,10 +65,12 @@ class PanellingOptProblem(OptimisationProblem):
         self.set_up_optimiser(self.paneller.n_opts, bounds=self.bounds)
 
     def optimise(self):
+        """Perform the optimisation."""
         self.paneller.x0 = self.opt.optimise(self.paneller.x0)
         return self.paneller.x0
 
     def objective(self, x: np.ndarray, grad: np.ndarray) -> float:
+        """Objective function to pass to ``nlopt``."""
         length = self.paneller.length(x)
         if grad.size > 0:
             grad[:] = approx_derivative(
@@ -58,6 +81,7 @@ class PanellingOptProblem(OptimisationProblem):
     def constrain_min_length_and_angles(
         self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
     ) -> np.ndarray:
+        """Constraint function to pass to ``nlopt``."""
         # Constrain minimum length
         lengths = self.paneller.panel_lengths(x)
         constraint[: len(lengths)] = self.paneller.dx_min - lengths

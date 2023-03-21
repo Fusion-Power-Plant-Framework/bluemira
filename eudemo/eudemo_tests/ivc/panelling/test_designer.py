@@ -18,8 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-
-import os
 from functools import lru_cache
 
 import matplotlib.pyplot as plt
@@ -40,7 +38,7 @@ from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
 
 
 def cut_wire_below_z(wire: BluemiraWire, proportion: float) -> BluemiraWire:
-    """Cut a wire below the z-coordinate that is 'proportion' of the height of the wire."""
+    """Cut a wire below z that is 'proportion' of the height of the wire."""
     bbox = wire.bounding_box
     z_cut_coord = proportion * (bbox.z_max - bbox.z_min) + bbox.z_min
     cutting_box = np.array(

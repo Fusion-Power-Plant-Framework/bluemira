@@ -68,19 +68,19 @@ class Paneller:
         self.x0: np.ndarray = length_norm[idx][1:-1]
 
     def x_boundary(self, dist: Union[float, np.ndarray]) -> np.ndarray:
-        """Find the x-coordinate at a given normalised distance along the boundary."""
+        """Find the x at the given normalised distance along the boundary."""
         return self._x_boundary_spline(dist)
 
     def z_boundary(self, dist: Union[float, np.ndarray]) -> np.ndarray:
-        """Find the z-coordinate at a given normalised distance along the boundary."""
+        """Find the z at the given normalised distance along the boundary."""
         return self._z_boundary_spline(dist)
 
     def x_boundary_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
-        """Find the x-coordinate of the tangent vector at the given distance along the boundary."""
+        """Find x at the tangent vector a given distance along the boundary."""
         return self._x_tangent_spline(dist)
 
     def z_boundary_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
-        """Find the z-coordinate of the tangent vector at the given distance along the boundary."""
+        """Find the z at the tangent vector a given distance along the boundary."""
         return self._z_tangent_spline(dist)
 
     @property
@@ -142,9 +142,16 @@ class Paneller:
     # TODO(hsaunders1904): sort out caching of the joints so we're not
     #  calculating them 3 times for every opt loop
     def length(self, dists: np.ndarray) -> float:
+        """The cumulative length of the panels."""
         return self.panel_lengths(dists).sum()
 
     def angles(self, dists: np.ndarray) -> np.ndarray:
+        """
+        Return the angles of rotation between each set of adjacent panels.
+
+        Note that this is the tail-tail angle between the panel vectors,
+        not the head-tail angles.
+        """
         joints = self.joints(dists)
         line_vectors: np.ndarray = joints[:, 1:] - joints[:, :-1]
         dots = (line_vectors[:, :-1] * line_vectors[:, 1:]).sum(axis=0)
@@ -153,6 +160,7 @@ class Paneller:
         return np.degrees(np.arccos(np.clip(dots, -1.0, 1.0)), out=dots)
 
     def panel_lengths(self, dists: np.ndarray) -> np.ndarray:
+        """Return the lengths of each panel."""
         joints = self.joints(dists)
         return np.hypot(joints[0], joints[1])
 
@@ -192,94 +200,6 @@ def norm_tangents(points: np.ndarray) -> np.ndarray:
     grad = np.gradient(points, axis=1)
     magnitudes = np.hypot(grad[0], grad[1])
     return np.divide(grad, magnitudes, out=grad)
-
-
-def test_norm_lengths_gives_expected_lengths():
-    points = np.array([[0, 0], [2, 1], [3, 3], [5, 1], [3, 0]], dtype=float)
-
-    lengths = norm_lengths(points)
-
-    expected = np.array(
-        [
-            np.sqrt(5),
-            np.sqrt(5) + np.sqrt(5),
-            np.sqrt(5) + np.sqrt(5) + np.sqrt(8),
-            np.sqrt(5) + np.sqrt(5) + np.sqrt(8) + np.sqrt(5),
-        ]
-    )
-    expected /= expected[-1]
-    np.testing.assert_allclose(lengths, expected)
-
-
-def test_tangent_returns_tangent_vectors():
-    xz = np.array(
-        [
-            [
-                0.34558419,
-                0.82161814,
-                0.33043708,
-                -1.30315723,
-                0.90535587,
-                0.44637457,
-                -0.53695324,
-                0.5811181,
-                0.3645724,
-                0.2941325,
-                0.02842224,
-                0.54671299,
-            ],
-            [
-                -0.73645409,
-                -0.16290995,
-                -0.48211931,
-                0.59884621,
-                0.03972211,
-                -0.29245675,
-                -0.78190846,
-                -0.25719224,
-                0.00814218,
-                -0.27560291,
-                1.29406381,
-                1.00672432,
-            ],
-        ]
-    )
-
-    tngnt = tangent(xz)
-
-    expected = np.array(
-        [
-            [
-                0.63866332,
-                -0.05945048,
-                -0.94133318,
-                0.74046041,
-                0.8910329,
-                -0.86890311,
-                0.96741701,
-                0.75207387,
-                -0.9979486,
-                -0.25290957,
-                0.19325713,
-                0.87458661,
-            ],
-            [
-                0.7694863,
-                0.99823126,
-                0.33747866,
-                0.67209998,
-                -0.45393874,
-                -0.49498221,
-                0.25318831,
-                0.65907882,
-                -0.06402027,
-                0.96748992,
-                0.98114814,
-                -0.48486932,
-            ],
-        ]
-    )
-    np.testing.assert_allclose(tngnt, expected)
 
 
 def vector_intersect(p1, p2, p3, p4):
