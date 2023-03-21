@@ -59,10 +59,10 @@ class PanellingOptProblem(OptimisationProblem):
         constraint = OptimisationConstraint(
             self.constrain_min_length_and_angles,
             f_constraint_args={},
-            tolerance=np.full(self.paneller.n_constraints, 1e-5),
+            tolerance=np.full(self.n_constraints, 1e-5),
         )
         super().__init__(self.paneller.x0, optimiser, objective, [constraint])
-        self.set_up_optimiser(self.paneller.n_opts, bounds=self.bounds)
+        self.set_up_optimiser(self.n_opts, bounds=self.bounds)
 
     def optimise(self):
         """Perform the optimisation."""
@@ -106,3 +106,32 @@ class PanellingOptProblem(OptimisationProblem):
                 bounds=self.bounds,
             )
         return constraint
+
+    @property
+    def n_opts(self) -> int:
+        """
+        The number of optimisation parameters.
+
+        The optimisation parameters are how far along the boundary's
+        length each panel tangents the boundary. We exclude the start
+        and end points which are fixed.
+        """
+        # exclude start and end points; hence 'N - 2'
+        return self.paneller.n_points - 2
+
+    @property
+    def n_constraints(self) -> int:
+        """
+        The number of optimisation constraints.
+
+        We constrain:
+
+            - the minimum length of each panel
+              (no. of panels = no. of touch points + 2)
+            - the angle between each panel
+              (no. of angles = no. of touch points + 1)
+
+        Note that we exclude the start and end touch points which are
+        fixed.
+        """
+        return 2 * self.paneller.n_points

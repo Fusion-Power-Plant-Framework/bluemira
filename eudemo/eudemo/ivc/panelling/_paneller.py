@@ -28,7 +28,7 @@ from eudemo.ivc.panelling._pivot_string import make_pivoted_string
 
 class Paneller:
     """
-    Provides functions for generating panelling along the outside of a boundary
+    Provides functions for generating panelling along the outside of a boundary.
 
     Parameters
     ----------
@@ -82,32 +82,6 @@ class Paneller:
     def z_boundary_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
         """Find the z at the tangent vector a given distance along the boundary."""
         return self._z_tangent_spline(dist)
-
-    @property
-    def n_opts(self) -> int:
-        """
-        The number of optimisation parameters.
-
-        The optimisation parameters are how far along the boundary's
-        length each panel tangents the boundary. We exclude the start
-        and end points which are fixed.
-        """
-        # exclude start and end points; hence 'N - 2'
-        return self.n_points - 2
-
-    @property
-    def n_constraints(self) -> int:
-        """
-        The number of optimisation constraints.
-
-        We constrain:
-
-            - the minimum length of each panel
-              (no. of panels = no. of touch points + 2)
-            - the angle between each panel
-              (no. of angles = no. of touch points + 1)
-        """
-        return 2 * self.n_opts + 4
 
     def joints(self, dists: np.ndarray) -> np.ndarray:
         """
