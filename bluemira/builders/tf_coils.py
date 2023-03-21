@@ -366,6 +366,7 @@ class MaximiseSelector(RipplePointSelector):
                 "solver": solver,
                 "TF_ripple_limit": TF_ripple_limit,
                 "lcfs_wire": self.wire,
+                "alpha_0": self._alpha_0,
             },
             tolerance=rip_con_tol,
         )
@@ -378,6 +379,7 @@ class MaximiseSelector(RipplePointSelector):
         parameterisation,
         solver,
         lcfs_wire: BluemiraWire,
+        alpha_0: float,
         TF_ripple_limit: float,
         ad_args=None,
     ):
@@ -417,7 +419,12 @@ class MaximiseSelector(RipplePointSelector):
 
     @staticmethod
     def calculate_max_ripple(
-        vector, parameterisation, solver, lcfs_wire: BluemiraWire, TF_ripple_limit: float
+        vector,
+        parameterisation,
+        solver,
+        lcfs_wire: BluemiraWire,
+        alpha_0: float,
+        TF_ripple_limit: float,
     ):
         """
         Calculate ripple constraint
@@ -441,15 +448,13 @@ class MaximiseSelector(RipplePointSelector):
         parameterisation.variables.set_values_from_norm(vector)
         tf_wire = parameterisation.create_shape()
         solver.update_cage(tf_wire)
-        from scipy.optimize import minimize_scalar
+        from scipy.optimize import minimize
 
         def f_max_ripple(alpha):
             point = lcfs_wire.value_at(alpha)
             return -solver.ripple(*point)
 
-        result = minimize_scalar(
-            f_max_ripple,
-        )
+        result = minimize(f_max_ripple, x0=alpha_0, bounds=(0, 1), method="SLSQP")
         max_ripple_point = lcfs_wire.value_at(result.x)
         ripple = solver.ripple(*max_ripple_point)
         return ripple - TF_ripple_limit
