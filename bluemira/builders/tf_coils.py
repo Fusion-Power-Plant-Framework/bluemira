@@ -182,7 +182,7 @@ class RipplePointSelector(ABC):
             f_constraint_args={
                 "parameterisation": parameterisation,
                 "solver": solver,
-                "points": self.get_ripple_points(),
+                "points": self.points,
                 "TF_ripple_limit": TF_ripple_limit,
             },
             tolerance=rip_con_tol * np.ones(len(self.points)),
