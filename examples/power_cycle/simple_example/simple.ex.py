@@ -36,6 +36,7 @@ simple_example_crumbs = examples_crumbs + tuple(["simple_example"])
 
 
 def prepare_plot(figure_title):
+    """Prepare axes for an example plot."""
     ax = validate_axes()
     plt.grid()
     plt.title(figure_title)
@@ -43,6 +44,7 @@ def prepare_plot(figure_title):
 
 
 def finalize_plot(ax):
+    """Finalize axes and display example plot."""
     adjust_2d_graph_ranges(ax=ax)
     plt.show()
     return ax
