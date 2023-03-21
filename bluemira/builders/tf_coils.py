@@ -26,13 +26,15 @@ Built-in build steps for making parameterised TF coils.
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass
+from typing import Optional
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 
+from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError
-from bluemira.base.look_and_feel import bluemira_debug_flush
+from bluemira.base.look_and_feel import bluemira_debug_flush, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.display import plot_2d
 from bluemira.geometry.coordinates import Coordinates
@@ -42,7 +44,7 @@ from bluemira.geometry.optimisation import (
     constrain_koz,
     minimise_length,
 )
-from bluemira.geometry.tools import offset_wire
+from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
@@ -162,19 +164,26 @@ class ParameterisedRippleSolver:
 
 
 class RipplePointSelector(ABC):
+    """
+    ABC for ripple point selection strategies.
+    """
+
     @abstractmethod
-    def make_ripple_points(self) -> Coordinates:
-        pass
+    def __init__(self):
+        self.points: Coordinates = None
 
     def make_ripple_constraint(
         self, parameterisation, solver, TF_ripple_limit, rip_con_tol
     ) -> OptimisationConstraint:
+        """
+        Make the ripple OptimisationConstraint
+        """
         return OptimisationConstraint(
             self.constrain_ripple,
             f_constraint_args={
                 "parameterisation": parameterisation,
                 "solver": solver,
-                "points": self.points,
+                "points": self.get_ripple_points(),
                 "TF_ripple_limit": TF_ripple_limit,
             },
             tolerance=rip_con_tol * np.ones(len(self.points)),
@@ -256,34 +265,195 @@ class RipplePointSelector(ABC):
 
 
 class EquispacedSelector(RipplePointSelector):
-    def __init__(self, wire: BluemiraWire, n_rip_points: int):
-        points = wire.discretize(byedges=True, ndiscr=n_rip_points)
-        self.points = points
+    """
+    Equispaced ripple points along a wire for a given number of points.
 
-    def make_ripple_points(self) -> Coordinates:
-        return self.points
+    Parameters
+    ----------
+    wire:
+        Wire along which the points should be calculated to constrain the
+        ripple
+    n_rip_points:
+        Number of points along the wire constrain the ripple
+    """
+
+    def __init__(self, wire: BluemiraWire, n_rip_points: int):
+        self.points = wire.discretize(byedges=True, ndiscr=n_rip_points)
 
 
 class OutboardEquispacedSelector(RipplePointSelector):
-    def __init__(self, wire: BluemiraWire, n_rip_points: int):
-        points = wire.discretize(byedges=True, ndiscr=n_rip_points)
-        self.points = points
+    """
+    Equispaced ripple points along the radially outboard half of a wire
+    for a given number of points.
 
-    def make_ripple_points(self) -> Coordinates:
-        return self.points
+    Parameters
+    ----------
+    wire:
+        Wire along which the points should be calculated to constrain the
+        ripple
+    n_rip_points:
+        Number of points along the wire constrain the ripple
+    x_min:
+        If specified, the radius above which the points will be selected.
+        If unspecified, defaults to the middle of the radial extrema of
+        the wire.
+    """
+
+    def __init__(
+        self, wire: BluemiraWire, n_rip_points: int, x_min: Optional[float] = None
+    ):
+        bb = wire.bounding_box
+        if x_min is None:
+            x_min = bb.x_min + 0.5 * (bb.x_max - bb.x_min)
+
+        if (x_min < bb.x_min) or (x_min > bb.x_max):
+            raise ValueError(f"{x_min=} is not within the bounds of the geometry.")
+
+        z_min, z_max = bb.z_min - 10, bb.z_max + 10
+        cut_face = BluemiraFace(
+            make_polygon(
+                {"x": [0, x_min, x_min, 0], "y": 0, "z": [z_min, z_min, z_max, z_max]},
+                closed=True,
+            )
+        )
+        part_wire = boolean_cut(wire, cut_face)[0]
+
+        self.points = part_wire.discretize(byedges=True, ndiscr=n_rip_points)
 
 
 class FixedSelector(RipplePointSelector):
+    """
+    Specified points at which to constrain the ripple, overrides any information
+    relating directly to the separatrix.
+
+    Parameters
+    ----------
+    points:
+        Points at which the ripple should be constrained.
+    """
+
     def __init__(self, points: Coordinates):
         self.points = points
 
-    def make_ripple_points(self) -> Coordinates:
-        return self.points
-
 
 class MaximiseSelector(RipplePointSelector):
+    """
+    Finds and constrains the maximum ripple along the specified wire during
+    each minimisation function call.
+
+    Parameters
+    ----------
+    wire:
+        Wire along which to constrain the ripple
+    """
+
     def __init__(self, wire: BluemiraWire):
         self.wire = wire
+        points = wire.discretize(byedges=True, ndiscr=200)
+        arg_x_max = np.argmax(points.x)
+        x_max_point = points[:, arg_x_max]
+        self._alpha_0 = wire.parameter_at(x_max_point, tolerance=10 * EPS)
+
+    def make_ripple_constraint(
+        self, parameterisation, solver, TF_ripple_limit, rip_con_tol
+    ) -> OptimisationConstraint:
+        """
+        Make the ripple OptimisationConstraint
+        """
+        return OptimisationConstraint(
+            self.constrain_max_ripple,
+            f_constraint_args={
+                "parameterisation": parameterisation,
+                "solver": solver,
+                "TF_ripple_limit": TF_ripple_limit,
+                "lcfs_wire": self.wire,
+            },
+            tolerance=rip_con_tol,
+        )
+
+    @staticmethod
+    def constrain_max_ripple(
+        constraint,
+        vector,
+        grad,
+        parameterisation,
+        solver,
+        lcfs_wire: BluemiraWire,
+        TF_ripple_limit: float,
+        ad_args=None,
+    ):
+        """
+        Ripple constraint function
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Constraint vector (updated in place)
+        vector: np.ndarray
+            Variable vector
+        grad: np.ndarray
+            Jacobian matrix of the constraint (updated in place)
+        parameterisation: GeometryParameterisation
+            Geometry parameterisation
+        solver: ParameterisedHelmholtzSolver
+            TF ripple solver
+        TF_ripple_limit: float
+            Maximum allowable TF ripple
+        """
+        func = MaximiseSelector.calculate_max_ripple
+        constraint[:] = func(
+            vector, parameterisation, solver, lcfs_wire, TF_ripple_limit
+        )
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                func,
+                vector,
+                f0=constraint,
+                args=(parameterisation, solver, TF_ripple_limit),
+                **ad_args,
+            )
+
+        bluemira_debug_flush(f"Max ripple: {max(constraint+TF_ripple_limit)}")
+        return constraint
+
+    @staticmethod
+    def calculate_max_ripple(
+        vector, parameterisation, solver, lcfs_wire: BluemiraWire, TF_ripple_limit: float
+    ):
+        """
+        Calculate ripple constraint
+
+        Parameters
+        ----------
+        vector: np.ndarray
+            Variable vector
+        parameterisation: GeometryParameterisation
+            Geometry parameterisation
+        solver: ParameterisedHelmholtzSolver
+            TF ripple solver
+        TF_ripple_limit: float
+            Maximum allowable TF ripple
+
+        Returns
+        -------
+        c_values: np.ndarray
+            Ripple constraint values
+        """
+        parameterisation.variables.set_values_from_norm(vector)
+        tf_wire = parameterisation.create_shape()
+        solver.update_cage(tf_wire)
+        from scipy.optimize import minimize_scalar
+
+        def f_max_ripple(alpha):
+            point = lcfs_wire.value_at(alpha)
+            return -solver.ripple(*point)
+
+        result = minimize_scalar(
+            f_max_ripple,
+        )
+        max_ripple_point = lcfs_wire.value_at(result.x)
+        ripple = solver.ripple(*max_ripple_point)
+        return ripple - TF_ripple_limit
 
 
 class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
@@ -362,6 +532,11 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         )
 
         if ripple_selector is None:
+            bluemira_warn(
+                "RippleConstrainedLengthGOP API has changed, please specify how you want "
+                "to constrain TF ripple by using one of the available RipplePointSelector "
+                f"classes. Defaulting to an EquispacedSelector with {n_rip_points} for now."
+            )
             ripple_selector = EquispacedSelector(separatrix, n_rip_points)
 
         self.ripple_values = None
