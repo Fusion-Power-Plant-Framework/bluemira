@@ -59,10 +59,38 @@ class PanellingOptProblem(OptimisationProblem):
         constraint = OptimisationConstraint(
             self.constrain_min_length_and_angles,
             f_constraint_args={},
-            tolerance=np.full(self.n_constraints, 1e-5),
+            tolerance=np.full(self.n_constraints, 1e-3),
         )
         super().__init__(self.paneller.x0, optimiser, objective, [constraint])
         self.set_up_optimiser(self.n_opts, bounds=self.bounds)
+
+    @property
+    def n_opts(self) -> int:
+        """
+        The number of optimisation parameters.
+
+        The optimisation parameters are how far along the boundary's
+        length each panel tangents the boundary. We exclude the start
+        and end points which are fixed.
+        """
+        # exclude start and end points; hence 'N - 2'
+        return self.paneller.n_panels - 2
+
+    @property
+    def n_constraints(self) -> int:
+        """
+        The number of optimisation constraints.
+
+        We constrain:
+
+            - the minimum length of each panel
+            - the angle between each panel
+              (no. of angles = no. of panels - 1)
+
+        Note that we exclude the start and end touch points which are
+        fixed.
+        """
+        return 2 * self.paneller.n_panels - 1
 
     def optimise(self):
         """Perform the optimisation."""
@@ -82,56 +110,35 @@ class PanellingOptProblem(OptimisationProblem):
         self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
     ) -> np.ndarray:
         """Constraint function to pass to ``nlopt``."""
-        # Constrain minimum length
+        n_panels = self.paneller.n_panels
+        self._constrain_min_length(constraint[:n_panels], x, grad[:n_panels])
+        self._constrain_max_angle(constraint[n_panels:], x, grad[n_panels:])
+        return constraint
+
+    def _constrain_min_length(
+        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
+    ) -> None:
         lengths = self.paneller.panel_lengths(x)
-        constraint[: len(lengths)] = self.paneller.dx_min - lengths
+        constraint[:] = self.paneller.dx_min - lengths
         if grad.size > 0:
             # TODO(hsaunders1904): work out what BLUEPRINT was doing to
             #  get this gradient
-            grad[: len(lengths)] = approx_derivative(
+            grad[:] = approx_derivative(
                 lambda x_opt: -self.paneller.panel_lengths(x_opt),
                 x0=x,
-                f0=constraint[: len(lengths)],
+                f0=constraint,
                 bounds=self.bounds,
             )
 
-        # Constrain joint angles
-        constraint[len(lengths) :] = self.paneller.angles(x) - self.paneller.max_angle
+    def _constrain_max_angle(
+        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
+    ) -> None:
+        constraint[:] = self.paneller.angles(x) - self.paneller.max_angle
         if grad.size > 0:
             # TODO(hsaunders): I'm sure we can be smarter about this gradient
-            grad[len(lengths) :, :] = approx_derivative(
-                lambda x_opt: self.paneller.angles(x_opt),
+            grad[:] = approx_derivative(
+                self.paneller.angles,
                 x0=x,
-                f0=constraint[len(lengths) :],
+                f0=constraint,
                 bounds=self.bounds,
             )
-        return constraint
-
-    @property
-    def n_opts(self) -> int:
-        """
-        The number of optimisation parameters.
-
-        The optimisation parameters are how far along the boundary's
-        length each panel tangents the boundary. We exclude the start
-        and end points which are fixed.
-        """
-        # exclude start and end points; hence 'N - 2'
-        return self.paneller.n_points - 2
-
-    @property
-    def n_constraints(self) -> int:
-        """
-        The number of optimisation constraints.
-
-        We constrain:
-
-            - the minimum length of each panel
-              (no. of panels = no. of touch points + 2)
-            - the angle between each panel
-              (no. of angles = no. of touch points + 1)
-
-        Note that we exclude the start and end touch points which are
-        fixed.
-        """
-        return 2 * self.paneller.n_points

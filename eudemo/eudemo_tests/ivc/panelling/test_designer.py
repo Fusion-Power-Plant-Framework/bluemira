@@ -123,10 +123,8 @@ class TestPanellingDesigner:
         angles = []
         for i in range(len(panel_vecs) - 1):
             angles.append(find_clockwise_angle_2d(panel_vecs[i], panel_vecs[i + 1]))
-        abs_tol = 1e-3
         assert (
-            np.less_equal(angles, max_angle - abs_tol)
-            | np.isclose(angles, max_angle, rtol=1e-3)
+            np.less_equal(angles, max_angle) | np.isclose(angles, max_angle, rtol=1e-3)
         ).all()
 
     @pytest.mark.parametrize("dl_min", [0, 0.1, 0.9])

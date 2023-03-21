@@ -76,7 +76,7 @@ class PanellingDesigner(Designer[np.ndarray]):
     params: PanellingDesignerParams
     _defaults = {
         "algorithm": "SLSQP",
-        "opt_conditions": {"max_eval": 400, "ftol_rel": 1e-4},
+        "opt_conditions": {"max_eval": 400, "ftol_rel": 1e-6},
     }
 
     def __init__(

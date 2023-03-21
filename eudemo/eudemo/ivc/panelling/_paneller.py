@@ -49,8 +49,12 @@ class Paneller:
             max_angle=max_angle,
             dx_min=dx_min,
         )
-        self.n_points = len(idx)
         self.x0: np.ndarray = self.boundary.length_norm[idx][1:-1]
+
+    @property
+    def n_panels(self) -> int:
+        """The number of panels defined by this paneller."""
+        return len(self.x0) + 2
 
     def joints(self, dists: np.ndarray) -> np.ndarray:
         """
@@ -104,8 +108,8 @@ class Paneller:
 
     def panel_lengths(self, dists: np.ndarray) -> np.ndarray:
         """Return the lengths of each panel."""
-        joints = self.joints(dists)
-        return np.hypot(joints[0], joints[1])
+        panel_vecs = np.diff(self.joints(dists))
+        return np.hypot(panel_vecs[0], panel_vecs[1])
 
 
 class LengthNormBoundary:
