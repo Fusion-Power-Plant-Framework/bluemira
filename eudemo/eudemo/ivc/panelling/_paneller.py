@@ -40,22 +40,7 @@ class Paneller:
     def __init__(self, boundary_points: np.ndarray, max_angle: float, dx_min: float):
         self.max_angle = max_angle
         self.dx_min = dx_min
-
-        length_norm = norm_lengths(boundary_points)
-        self._x_boundary_spline = InterpolatedUnivariateSpline(
-            length_norm, boundary_points[0]
-        )
-        self._z_boundary_spline = InterpolatedUnivariateSpline(
-            length_norm, boundary_points[1]
-        )
-
-        tangent_norm = norm_tangents(boundary_points)
-        self._x_tangent_spline = InterpolatedUnivariateSpline(
-            length_norm, tangent_norm[0]
-        )
-        self._z_tangent_spline = InterpolatedUnivariateSpline(
-            length_norm, tangent_norm[1]
-        )
+        self.boundary = LengthNormBoundary(boundary_points)
 
         # Build the initial guess of our panels, these points are the
         # coordinates of where the panels tangent the boundary
@@ -65,23 +50,7 @@ class Paneller:
             dx_min=dx_min,
         )
         self.n_points = len(idx)
-        self.x0: np.ndarray = length_norm[idx][1:-1]
-
-    def x_boundary(self, dist: Union[float, np.ndarray]) -> np.ndarray:
-        """Find the x at the given normalised distance along the boundary."""
-        return self._x_boundary_spline(dist)
-
-    def z_boundary(self, dist: Union[float, np.ndarray]) -> np.ndarray:
-        """Find the z at the given normalised distance along the boundary."""
-        return self._z_boundary_spline(dist)
-
-    def x_boundary_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
-        """Find x at the tangent vector a given distance along the boundary."""
-        return self._x_tangent_spline(dist)
-
-    def z_boundary_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
-        """Find the z at the tangent vector a given distance along the boundary."""
-        return self._z_tangent_spline(dist)
+        self.x0: np.ndarray = self.boundary.length_norm[idx][1:-1]
 
     def joints(self, dists: np.ndarray) -> np.ndarray:
         """
@@ -95,9 +64,9 @@ class Paneller:
         """
         # Add the start and end panel joints at distances 0 & 1
         dists = np.sort(np.hstack((0, dists, 1)))
-        points = np.vstack((self.x_boundary(dists), self.z_boundary(dists)))
+        points = np.vstack((self.boundary.x(dists), self.boundary.z(dists)))
         tangents = np.vstack(
-            (self.x_boundary_tangent(dists), self.z_boundary_tangent(dists))
+            (self.boundary.x_tangent(dists), self.boundary.z_tangent(dists))
         )
         # TODO(hsaunders1904): vectorize
         #  https://stackoverflow.com/a/40637858
@@ -137,6 +106,43 @@ class Paneller:
         """Return the lengths of each panel."""
         joints = self.joints(dists)
         return np.hypot(joints[0], joints[1])
+
+
+class LengthNormBoundary:
+    """Class to represent a wire interpolated over the normalised distance along it."""
+
+    def __init__(self, boundary_points: np.ndarray):
+        self.length_norm = norm_lengths(boundary_points)
+        self._x_spline = InterpolatedUnivariateSpline(
+            self.length_norm, boundary_points[0]
+        )
+        self._z_spline = InterpolatedUnivariateSpline(
+            self.length_norm, boundary_points[1]
+        )
+
+        self.tangent_norm = norm_tangents(boundary_points)
+        self._x_tangent_spline = InterpolatedUnivariateSpline(
+            self.length_norm, self.tangent_norm[0]
+        )
+        self._z_tangent_spline = InterpolatedUnivariateSpline(
+            self.length_norm, self.tangent_norm[1]
+        )
+
+    def x(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+        """Find x at the given normalised distance along the boundary."""
+        return self._x_spline(dist)
+
+    def z(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+        """Find z at the given normalised distance along the boundary."""
+        return self._z_spline(dist)
+
+    def x_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+        """Find x at the tangent vector a given distance along the boundary."""
+        return self._x_tangent_spline(dist)
+
+    def z_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
+        """Find z at the tangent vector a given distance along the boundary."""
+        return self._z_tangent_spline(dist)
 
 
 def norm_lengths(points: np.ndarray) -> np.ndarray:
