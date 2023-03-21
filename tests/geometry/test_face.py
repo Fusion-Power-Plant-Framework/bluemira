@@ -29,7 +29,14 @@ from bluemira.geometry.parameterisations import (
     SextupleArc,
     TripleArc,
 )
-from bluemira.geometry.tools import make_circle, make_polygon, offset_wire
+from bluemira.geometry.tools import (
+    extrude_shape,
+    make_bezier,
+    make_circle,
+    make_ellipse,
+    make_polygon,
+    offset_wire,
+)
 
 
 class TestBluemiraFace:
@@ -104,3 +111,19 @@ class TestNormalAt:
         )
 
         np.testing.assert_allclose(xy_polygon.normal_at(*alphas), (0, 0, 1))
+
+    @pytest.mark.parametrize(
+        "wire",
+        [
+            make_circle(axis=(1, 0, 0)),
+            make_ellipse(major_axis=(0, 0, 1), minor_axis=(0, 1, 0)),
+            make_bezier([[0, 0, 0], [1, 0, 0], [1, 1, 0]], closed=True),
+        ],
+    )
+    def test_curved_face_normals(self, wire):
+        face = BluemiraFace(wire)
+        solid = extrude_shape(face, (10, 1, 1))
+        biggest_face = sorted(solid.faces, key=lambda face: face.area)[-1]
+        normal_1 = biggest_face.normal_at(0, 0)
+        normal_2 = biggest_face.normal_at(0.5, 0.5)
+        assert not np.allclose(normal_1, normal_2)
