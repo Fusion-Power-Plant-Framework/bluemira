@@ -24,7 +24,7 @@
                     "efficiencies": {},
                     "loads": {
                         "description": [
-                            "toroild, poloidal, central"
+                            "toroidal, poloidal, central"
                         ],
                         "time": [
                             "[0, 1]"
