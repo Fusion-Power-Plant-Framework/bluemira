@@ -33,7 +33,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import EPS
-from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug_flush, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.display import plot_2d
