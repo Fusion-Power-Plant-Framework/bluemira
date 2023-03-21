@@ -225,28 +225,36 @@ for phaseload in active_phaseloads:
 # load that composes the resulting load can plotted in dashed lines in
 # the same graph by using the `detailed` parameter.
 #
-# The same can be applied to an individual `PowerLoad` object, to study
-# that particular input.
+# The same can be done to an individual `PowerLoad` object, to verify
+# that particular input without time normalization due to the phase
+# length or time shift due to phase ordering in the pulse.
+# In this example, all individual `PowerLoad` objects have a single
+# `LoadData` object as parameter, so data points coincide with the
+# `PowerLoad` curve, as can be seen by the different colors in the
+# "island control" plot.
 #
 
 # %%
-# Retrieve load for flat-top phase
+# Chose flat-top phase by its label
 label = "ftt"
+
+# Retrieve `PhaseLoad` for flat-top phase
 ftt_load = [load for load in active_phaseloads if load.phase.label == label]
 ftt_load = ftt_load[0]
 
-# Plot detailed load during flat-top
-ax = prepare_plot("Detailed plot of flat-top load")
+# Plot detailed `PhaseLoad` for flat-top
+phase_name = ftt_load.phase.name
+ax = prepare_plot(f"Detailed plot of {phase_name!r} load")
 ax, _ = ftt_load.plot(ax=ax, detailed=True)
 ax = finalize_plot(ax)
 
-# Retrieve ECH powerload for "island control"
+# Retrieve ECH `PowerLoad` that characterizes "island control"
 load_name = "island control"
 ftt_powerloads = ftt_load.powerload_set
-ech_control_load = [load for load in ftt_powerloads if load.name == load_name]
-ech_control_load = ech_control_load[0]
+control_load = [load for load in ftt_powerloads if load.name == load_name]
+control_load = control_load[0]
 
-# Plot detailed ECH control load during flat-top
-ax = prepare_plot("Detailed plot of flat-top island control load")
-ax, _ = ech_control_load.plot(ax=ax, detailed=True)
+# Plot detailed "island control" load during flat-top
+ax = prepare_plot(f"Detailed plot of {phase_name!r} load for {load_name!r}")
+ax, _ = control_load.plot(ax=ax, c="m", detailed=True)
 ax = finalize_plot(ax)
