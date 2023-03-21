@@ -1,0 +1,84 @@
+{
+    "AFC": {
+        "name": "All Field Coils",
+        "reactive": {},
+        "active": {
+            "tfu": {
+                "name": "superconducting coils",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "toroild, poloidal, central"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[5, 5]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "CSC": {
+        "name": "Central Solenoid Coils",
+        "reactive": {},
+        "active": {
+            "rcg": {
+                "name": "CS recharge",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl"
+                    ],
+                    "normalize": [
+                        false
+                    ],
+                    "unit": "kW",
+                    "consumption": true,
+                    "efficiencies": {
+                        "wall-plug": 0.5
+                    },
+                    "loads": {
+                        "description": [
+                            "upper_set",
+                            "lower_set"
+                        ],
+                        "time": [
+                            "[0, 500]",
+                            "[0, 500]"
+                        ],
+                        "data": [
+                            "[0, 10]",
+                            "[0, 10]"
+                        ],
+                        "model": [
+                            "RAMP",
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

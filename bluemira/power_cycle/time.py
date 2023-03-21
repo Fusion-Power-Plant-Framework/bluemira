@@ -178,6 +178,18 @@ class PowerCycleScenario(PowerCycleTimeABC):
             phase_library = {**phase_library, **phase_library_for_pulse}
         return phase_library
 
+    def build_pulse_library(self):
+        """
+        Returns a 'dict' with pulse labels as keys and the pulses
+        themselves as values.
+        """
+        pulse_set = self.pulse_set
+        pulse_library = dict()
+        for pulse in pulse_set:
+            pulse_label = pulse.label
+            pulse_library[pulse_label] = pulse
+        return pulse_library
+
 
 class ScenarioBuilder:
     """
