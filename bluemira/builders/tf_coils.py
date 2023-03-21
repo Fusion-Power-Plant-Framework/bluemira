@@ -236,6 +236,9 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         Number of toroidal Biot-Savart filaments to use
     n_koz_points: int
         Number of discretised points to use when enforcing the keep-out-zone constraint
+    ripple_selector: Optional[RipplePointSelector]
+        Selection strategy for the poitns at which to calculate ripple. Defaults to
+        an equi-spaced set of points along the separatrix
 
     Notes
     -----
@@ -283,7 +286,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         if ripple_selector is None:
             ripple_selector = EquispacedSelector(separatrix, n_rip_points)
 
-        self.ripple_points = ripple_selector.make_ripple_points(separatrix, n_rip_points)
+        self.ripple_points = ripple_selector.make_ripple_points()
         self.ripple_values = None
         self.solver = ParameterisedRippleSolver(
             wp_cross_section,
@@ -302,7 +305,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
                 "points": self.ripple_points,
                 "TF_ripple_limit": params.TF_ripple_limit.value,
             },
-            tolerance=rip_con_tol * np.ones(n_rip_points),
+            tolerance=rip_con_tol * np.ones(len(self.ripple_points)),
         )
         constraints = [ripple_constraint]
         if keep_out_zone is not None:
@@ -325,31 +328,6 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         Make a set of points at which to evaluate the KOZ constraint
         """
         return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200).xz
-
-    def _make_ripple_points(self, separatrix, n_rip_points):
-        """
-        Make a set of points at which to check the ripple
-
-        Parameters
-        ----------
-        separatrix: BluemiraWire
-            The geometry on which to check the ripple
-        """
-        # TODO: Handle case where the face is made up of multiple wires
-        if not isinstance(separatrix, BluemiraWire):
-            raise BuilderError(
-                "Ripple points on faces made from multiple wires not yet supported."
-            )
-        points = separatrix.discretize(ndiscr=n_rip_points)
-        points.set_ccw((0, 1, 0))
-        # Real argument to making the points the inputs... but then the plot would look
-        # sad! :D
-        # Can speed this up a lot if you know about your problem... I.e. with a princeton
-        # D I could only check one point and get it right faster.
-
-        # idx = np.where(points[0] > self.params.R_0.value)[0]
-        # points = points[:, idx]
-        return points
 
     @staticmethod
     def constrain_ripple(
