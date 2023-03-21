@@ -51,7 +51,7 @@ class PanellingDesigner(Designer[np.ndarray]):
     ----------
     params
         The parameters for the panelling design problem. See
-        :class:`~.PanellingDesignerParams` for the required parameters.
+        :class:`.PanellingDesignerParams` for the required parameters.
     wall_boundary
         The boundary of the first wall to build the panels around. Note
         that this designer constructs panels around the *outside* of the
@@ -60,7 +60,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         Configuration options for the designer:
 
         * algorithm: str
-            The optimisation algorithm to use (default: ``'COBYLA'``\).
+            The optimisation algorithm to use (default: ``'SLSQP'``\).
         * opt_conditions: Dict[str, Union[float, int]]
             The stopping conditions for the optimiser
             (default: ``{"max_eval": 400, "ftol_rel": 1e-4}``\).
@@ -84,13 +84,11 @@ class PanellingDesigner(Designer[np.ndarray]):
         optimiser = Optimiser(
             self.build_config.get("algorithm", "SLSQP"),
             opt_conditions=self.build_config.get(
-                "opt_conditions", {"max_eval": 1000, "ftol_rel": 1e-6}
+                "opt_conditions", {"max_eval": 400, "ftol_rel": 1e-4}
             ),
         )
-        # change this opt problem to constrain angle and min length
         opt_problem = PanellingOptProblem(paneller, optimiser)
         x_opt = opt_problem.optimise()
-        print(f"paneller.angles(x_opt) {paneller.angles(x_opt)}")
         return paneller.joints(x_opt)
 
     def mock(self) -> np.ndarray:
@@ -98,7 +96,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         return paneller.joints(paneller.x0)
 
     def _make_paneller(self) -> Paneller:
-        """Make a :class:`~.Paneller` with this designer's params."""
+        """Make a :class:`.Paneller` with this designer's params."""
         boundary = self.wall_boundary.discretize(byedges=True)
         return Paneller(
             boundary.xyz[[0, 2], :],

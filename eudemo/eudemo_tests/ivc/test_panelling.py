@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
+from functools import lru_cache
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -28,10 +29,16 @@ import pytest
 from bluemira.display import plot_2d
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.geometry.tools import boolean_cut, find_clockwise_angle_2d, make_polygon
+from bluemira.geometry.tools import (
+    boolean_cut,
+    find_clockwise_angle_2d,
+    make_polygon,
+    signed_distance_2D_polygon,
+)
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.ivc._paneller import make_pivoted_string
 from eudemo.ivc.panelling import PanellingDesigner
+from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
@@ -53,6 +60,7 @@ def cut_wire_below_z(wire: BluemiraWire, proportion: float) -> BluemiraWire:
     return pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
 
 
+@lru_cache(maxsize=None)
 def make_cut_johner():
     """
     Make a wall shape and cut it below a (fictional) x-point.
@@ -65,17 +73,41 @@ def make_cut_johner():
     return cut_wire_below_z(johner_wire, 1 / 4)
 
 
+@lru_cache(maxsize=None)
 def make_cut_polyspline():
-    from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
-
     wall_wire = WallPolySpline().create_shape()
     return cut_wire_below_z(wall_wire, 1 / 4)
 
 
+@lru_cache(maxsize=None)
+def make_mock_panels_johner():
+    params = {
+        "fw_a_max": {"value": 30, "unit": "degrees"},
+        "fw_dL_min": {"value": 0.1, "unit": "m"},
+    }
+    boundary = make_cut_johner()
+    return PanellingDesigner(params, wall_boundary=boundary).mock()
+
+
+@lru_cache(maxsize=None)
+def make_panels_johner():
+    params = {
+        "fw_a_max": {"value": 30, "unit": "degrees"},
+        "fw_dL_min": {"value": 0.1, "unit": "m"},
+    }
+    boundary = make_cut_johner()
+    return PanellingDesigner(params, wall_boundary=boundary).mock()
+
+
+def coords_xz_to_polygon(coords: np.ndarray) -> BluemiraWire:
+    coords_3d = np.zeros((3, coords.shape[1]))
+    coords_3d[0] = coords[0]
+    coords_3d[2] = coords[1]
+    return make_polygon(coords_3d)
+
+
 class TestPanellingDesigner:
-    @classmethod
-    def setup_class(cls):
-        cls.wall_boundary = make_cut_johner()
+    wall_boundary = make_cut_johner()
 
     @pytest.mark.parametrize("max_angle", [30, 50])
     @pytest.mark.parametrize(
@@ -97,11 +129,8 @@ class TestPanellingDesigner:
 
         panel_vecs = np.diff(panel_edges).T
         angles = []
-        lengths = []
         for i in range(len(panel_vecs) - 1):
             angles.append(find_clockwise_angle_2d(panel_vecs[i], panel_vecs[i + 1]))
-            lengths.append(np.linalg.norm(panel_vecs[i] - panel_vecs[i + 1]))
-
         abs_tol = 1e-3
         assert (
             np.less_equal(angles, max_angle - abs_tol)
@@ -129,11 +158,29 @@ class TestPanellingDesigner:
         abs_tol = 1e-3
         assert np.all(lengths >= dl_min - abs_tol)
 
-    def test_panels_fully_enclose_wall_boundary(self):
-        pass
+    @pytest.mark.parametrize(
+        "panel_edges",
+        [make_mock_panels_johner(), make_panels_johner()],
+        ids=["mock", "run"],
+    )
+    def test_panels_fully_enclose_wall_boundary(self, panel_edges):
+        poly_panels = coords_xz_to_polygon(panel_edges).discretize()
+        boundary = make_cut_johner()
+        signed_dists = signed_distance_2D_polygon(
+            poly_panels.xz.T, boundary.discretize().xz.T
+        )
+        np.testing.assert_array_less(signed_dists, 0 + 1e-6)
 
-    def test_end_of_panels_at_end_of_boundary(self):
-        pass
+    @pytest.mark.parametrize(
+        "panel_edges",
+        [make_mock_panels_johner(), make_panels_johner()],
+        ids=["mock", "run"],
+    )
+    def test_end_of_panels_at_end_of_boundary(self, panel_edges):
+        poly_panels = coords_xz_to_polygon(panel_edges)
+        boundary = make_cut_johner()
+        np.testing.assert_allclose(poly_panels.start_point(), boundary.start_point())
+        np.testing.assert_allclose(poly_panels.end_point(), boundary.end_point())
 
 
 class TestMakePivotedString:

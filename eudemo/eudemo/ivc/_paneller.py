@@ -214,7 +214,7 @@ def test_norm_lengths_gives_expected_lengths():
     np.testing.assert_allclose(lengths, expected)
 
 
-def test_tangent_returns_tanget_vectors():
+def test_tangent_returns_tangent_vectors():
     xz = np.array(
         [
             [
@@ -287,21 +287,22 @@ def test_tangent_returns_tanget_vectors():
 
 def vector_intersect(p1, p2, p3, p4):
     """
+    Find the point of intersection between two vectors defined by the given points.
 
     Parameters
     ----------
-    p1: np.array(2)
+    p1: np.ndarray(2)
         The first point on the first vector
-    p2: np.array(2)
+    p2: np.ndarray(2)
         The second point on the first vector
-    p3: np.array(2)
+    p3: np.ndarray(2)
         The first point on the second vector
-    p4: np.array(2)
+    p4: np.ndarray(2)
         The second point on the second vector
 
     Returns
     -------
-    p_inter: np.array(2)
+    p_inter: np.ndarray(2)
         The point of the intersection between the two vectors
     """
     da = p2 - p1
@@ -483,86 +484,3 @@ class PanellingOptProblem(OptimisationProblem):
                 bounds=self.bounds,
             )
         return constraint
-
-
-if __name__ == "__main__":
-    import matplotlib.pyplot as plt
-
-    from bluemira.equilibria.shapes import JohnerLCFS
-    from bluemira.geometry.tools import (
-        boolean_cut,
-        find_clockwise_angle_2d,
-        make_polygon,
-    )
-    from bluemira.geometry.wire import BluemiraWire
-
-    theta = np.linspace(0, np.pi, 100)
-    x = np.cos(theta)
-    z = np.sin(theta)
-
-    def cut_wire_below_z(wire: BluemiraWire, proportion: float) -> BluemiraWire:
-        """Cut a wire below the z-coordinate that is 'proportion' of the height of the wire."""
-        bbox = wire.bounding_box
-        z_cut_coord = proportion * (bbox.z_max - bbox.z_min) + bbox.z_min
-        cutting_box = np.array(
-            [
-                [bbox.x_min - 1, 0, bbox.z_min - 1],
-                [bbox.x_min - 1, 0, z_cut_coord],
-                [bbox.x_max + 1, 0, z_cut_coord],
-                [bbox.x_max + 1, 0, bbox.z_min - 1],
-                [bbox.x_min - 1, 0, bbox.z_min - 1],
-            ]
-        )
-        pieces = boolean_cut(wire, [make_polygon(cutting_box, closed=True)])
-        return pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
-
-    def make_cut_johner():
-        """
-        Make a wall shape and cut it below a (fictional) x-point.
-
-        As this is for testing, we just use a JohnerLCFS with a slightly
-        larger radius than default, then cut it below a z-coordinate that
-        might be the x-point in an equilibrium.
-        """
-        johner_wire = JohnerLCFS(var_dict={"r_0": {"value": 10.5}}).create_shape()
-        return cut_wire_below_z(johner_wire, 1 / 4)
-
-    shape = make_cut_johner()
-    coords = shape.discretize(byedges=True)
-    x, z = coords.x, coords.z
-
-    paneller = Paneller(np.array([x, z]), 30, 0.05)
-    initial_joints = paneller.joints(paneller.x0)
-
-    print("Initial:")
-    # print(f"joints: {initial_joints}")
-    print(f"length: {paneller.length(paneller.x0)}")
-    print(f"angles: {paneller.angles(paneller.x0)}")
-
-    optimiser = Optimiser(
-        "SLSQP",
-        n_variables=paneller.n_opts,
-        opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
-    )
-    opt = PanellingOptProblem(paneller, optimiser)
-
-    import time
-
-    start = time.time()
-    x_opt = opt.optimise()
-    print(f"optimisation took {time.time() - start} seconds")
-
-    opt_joints = paneller.joints(x_opt)
-
-    print("\nOptimised:")
-    # print(f"joints: {opt_joints}")
-    print(f"length: {paneller.length(x_opt)}")
-    print(f"angles: {paneller.angles(x_opt)}")
-
-    _, ax = plt.subplots()
-    ax.plot(x, z, linewidth=0.1)
-    ax.plot(initial_joints[0], initial_joints[1], "--x", label="initial", linewidth=0.65)
-    ax.plot(opt_joints[0], opt_joints[1], "-x", label="optimised", linewidth=0.75)
-    ax.set_aspect("equal")
-    ax.legend()
-    plt.show()
