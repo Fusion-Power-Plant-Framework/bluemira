@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""Designer, builder, and tools for wall panelling."""
+"""Designer for wall panelling."""
 
 from dataclasses import dataclass
 from typing import Dict, Optional, Union
@@ -29,11 +29,14 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.ivc._paneller import Paneller, PanellingOptProblem
+from eudemo.ivc.panelling._opt_problem import PanellingOptProblem
+from eudemo.ivc.panelling._paneller import Paneller
 
 
 @dataclass
 class PanellingDesignerParams(ParameterFrame):
+    """Parameters for :class:`.PanellingDesigner`."""
+
     fw_a_max: Parameter[float]
     """The maximum angle of rotation between adjacent panels [degrees]."""
     fw_dL_min: Parameter[float]
@@ -45,7 +48,9 @@ class PanellingDesigner(Designer[np.ndarray]):
     Design the shape for panels of the first wall.
 
     The panel design's objective is to minimise the cumulative panel
-    length (minimising the amount of material required).
+    length (minimising the amount of material required), whilst
+    constraining the maximum angle of rotation between adjacent panels,
+    and the minimum length of a panel.
 
     Parameters
     ----------

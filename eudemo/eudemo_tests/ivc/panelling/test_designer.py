@@ -28,7 +28,6 @@ import pytest
 
 from bluemira.display import plot_2d
 from bluemira.equilibria.shapes import JohnerLCFS
-from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import (
     boolean_cut,
     find_clockwise_angle_2d,
@@ -36,11 +35,8 @@ from bluemira.geometry.tools import (
     signed_distance_2D_polygon,
 )
 from bluemira.geometry.wire import BluemiraWire
-from eudemo.ivc._paneller import make_pivoted_string
 from eudemo.ivc.panelling import PanellingDesigner
 from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
-
-DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 
 
 def cut_wire_below_z(wire: BluemiraWire, proportion: float) -> BluemiraWire:
@@ -107,8 +103,6 @@ def coords_xz_to_polygon(coords: np.ndarray) -> BluemiraWire:
 
 
 class TestPanellingDesigner:
-    wall_boundary = make_cut_johner()
-
     @pytest.mark.parametrize("max_angle", [30, 50])
     @pytest.mark.parametrize(
         "shape", [make_cut_johner(), make_cut_polyspline()], ids=["johner", "polyspline"]
@@ -181,50 +175,3 @@ class TestPanellingDesigner:
         boundary = make_cut_johner()
         np.testing.assert_allclose(poly_panels.start_point(), boundary.start_point())
         np.testing.assert_allclose(poly_panels.end_point(), boundary.end_point())
-
-
-class TestMakePivotedString:
-    def test_returns_points_matching_snapshot(self):
-        """
-        This tests that the function returns the same thing as the
-        equivalent class method in BLUEPRINT.
-
-        The data for this test was generated using the
-        BLUEPRINT.geometry.stringgeom.String class from BLUEPRINT.
-
-        The code used to generate the test data:
-
-        .. code-block:: python
-
-            from BLUEPRINT.geometry.stringgeom import String
-            from bluemira.geometry.parameterisations import PrincetonD
-
-            shape = PrincetonD().create_shape()
-            points = shape.discretize()
-            s = String(points, angle=20, dx_min=0.5, dx_max=2.5)
-
-            np.save("panelling_ref_data.npy", s.new_points)
-
-        Using bluemira 437a1c10, and BLUEPRINT e3fb8d1c.
-        """
-        boundary = PrincetonD(
-            {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
-        ).create_shape()
-        boundary_points = boundary.discretize().T
-
-        new_points = make_pivoted_string(
-            boundary_points, max_angle=20, dx_min=0.5, dx_max=2.5
-        )
-
-        ref_data = np.load(os.path.join(DATA_DIR, "panelling_ref_data.npy"))
-        np.testing.assert_almost_equal(new_points, ref_data)
-
-    @pytest.mark.parametrize("dx_max", [0, 0.5, 0.9999])
-    def test_ValueError_given_dx_min_gt_dx_max(self, dx_max):
-        boundary = PrincetonD(
-            {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
-        ).create_shape()
-        boundary_points = boundary.discretize().T
-
-        with pytest.raises(ValueError):
-            make_pivoted_string(boundary_points, max_angle=20, dx_min=1, dx_max=dx_max)

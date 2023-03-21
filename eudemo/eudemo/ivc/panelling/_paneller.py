@@ -18,15 +18,12 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from itertools import count
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
-from bluemira.utilities.optimiser import approx_derivative
-
-DEG_TO_RAD = np.pi / 180
+from eudemo.ivc.panelling._pivot_string import make_pivoted_string
 
 
 class Paneller:
@@ -339,148 +336,3 @@ def normal_vector(side_vectors):
     )
     a[np.isnan(a)] = 0
     return a
-
-
-def make_pivoted_string(
-    boundary_points: np.ndarray,
-    max_angle: float = 10,
-    dx_min: float = 0,
-    dx_max: float = np.inf,
-) -> Tuple[np.ndarray, np.ndarray]:
-    """
-    Generate a set of pivot points along the given boundary.
-
-    Given a set of boundary points, some maximum angle, and minimum and
-    maximum segment length, this function derives a set of pivot points
-    along the boundary, that define a 'string'. You might picture a
-    'string' as a thread wrapped around some nails (pivot points) on a
-    board.
-
-    Parameters
-    ----------
-    points
-        The coordinates (in 3D) of the pivot points. Must have shape
-        (N, 3) where N is the number of boundary points.
-    max_angle
-        The maximum angle between neighbouring pivot points.
-    dx_min
-        The minimum distance between pivot points.
-    dx_max
-        The maximum distance between pivot points.
-
-    Returns
-    -------
-    new_points
-        The pivot points' coordinates. Has shape (M, 3), where M is the
-        number of pivot points.
-    index
-        The indices of the pivot points into the input points.
-    """
-    if dx_min > dx_max:
-        raise ValueError(
-            f"'dx_min' cannot be greater than 'dx_max': '{dx_min} > {dx_max}'"
-        )
-    tangent_vec = boundary_points[1:] - boundary_points[:-1]
-    tangent_vec_norm = np.linalg.norm(tangent_vec, axis=1)
-    # Protect against dividing by zero
-    tangent_vec_norm[tangent_vec_norm == 0] = 1e-32
-    average_step_length = np.median(tangent_vec_norm)
-    tangent_vec /= tangent_vec_norm.reshape(-1, 1) * np.ones(
-        (1, np.shape(tangent_vec)[1])
-    )
-
-    new_points = np.zeros_like(boundary_points)
-    index = np.zeros(boundary_points.shape[0], dtype=int)
-    delta_x = np.zeros_like(boundary_points)
-    delta_turn = np.zeros_like(boundary_points)
-
-    new_points[0] = boundary_points[0]
-    to, po = tangent_vec[0], boundary_points[0]
-
-    k = count(1)
-    for i, (p, t) in enumerate(zip(boundary_points[1:], tangent_vec)):
-        c = np.cross(to, t)
-        c_mag = np.linalg.norm(c)
-        dx = np.linalg.norm(p - po)  # segment length
-        if (
-            c_mag > np.sin(max_angle * DEG_TO_RAD) and dx > dx_min
-        ) or dx + average_step_length > dx_max:
-            j = next(k)
-            new_points[j] = boundary_points[i]  # pivot point
-            index[j] = i + 1  # pivot index
-            delta_x[j - 1] = dx  # panel length
-            delta_turn[j - 1] = np.arcsin(c_mag) / DEG_TO_RAD
-            to, po = t, p  # update
-    if dx > dx_min:
-        j = next(k)
-        delta_x[j - 1] = dx  # last segment length
-    else:
-        delta_x[j - 1] += dx  # last segment length
-    new_points[j] = p  # replace/append last point
-    index[j] = i + 1  # replace/append last point index
-    new_points = new_points[: j + 1]  # trim
-    index = index[: j + 1]  # trim
-    delta_x = delta_x[:j]  # trim
-    return new_points, index
-
-
-from bluemira.utilities.opt_problems import (
-    OptimisationConstraint,
-    OptimisationObjective,
-    OptimisationProblem,
-    Optimiser,
-)
-
-
-class PanellingOptProblem(OptimisationProblem):
-    def __init__(self, paneller: Paneller, optimiser: Optimiser):
-        self.paneller = paneller
-        self.bounds = (np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0))
-        objective = OptimisationObjective(self.objective)
-        constraint = OptimisationConstraint(
-            self.constrain_min_length_and_angles,
-            f_constraint_args={},
-            tolerance=np.full(self.paneller.n_constraints, 1e-5),
-        )
-        super().__init__(self.paneller.x0, optimiser, objective, [constraint])
-        self.set_up_optimiser(self.paneller.n_opts, bounds=self.bounds)
-
-    def optimise(self):
-        self.paneller.x0 = self.opt.optimise(self.paneller.x0)
-        return self.paneller.x0
-
-    def objective(self, x: np.ndarray, grad: np.ndarray) -> float:
-        length = self.paneller.length(x)
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                self.paneller.length, x, bounds=self.bounds, f0=length
-            )
-        return length
-
-    def constrain_min_length_and_angles(
-        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
-    ) -> np.ndarray:
-        # Constrain minimum length
-        lengths = self.paneller.panel_lengths(x)
-        constraint[: len(lengths)] = self.paneller.dx_min - lengths
-        if grad.size > 0:
-            # TODO(hsaunders1904): work out what BLUEPRINT was doing to
-            #  get this gradient
-            grad[: len(lengths)] = approx_derivative(
-                lambda x_opt: -self.paneller.panel_lengths(x_opt),
-                x0=x,
-                f0=constraint[: len(lengths)],
-                bounds=self.bounds,
-            )
-
-        # Constrain joint angles
-        constraint[len(lengths) :] = self.paneller.angles(x) - self.paneller.max_angle
-        if grad.size > 0:
-            # TODO(hsaunders): I'm sure we can be smarter about this gradient
-            grad[len(lengths) :, :] = approx_derivative(
-                lambda x_opt: self.paneller.angles(x_opt),
-                x0=x,
-                f0=constraint[len(lengths) :],
-                bounds=self.bounds,
-            )
-        return constraint
