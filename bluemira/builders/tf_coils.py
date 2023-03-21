@@ -410,7 +410,7 @@ class MaximiseSelector(RipplePointSelector):
                 func,
                 vector,
                 f0=constraint,
-                args=(parameterisation, solver, TF_ripple_limit),
+                args=(parameterisation, solver, lcfs_wire, alpha_0, TF_ripple_limit),
                 **ad_args,
             )
 
