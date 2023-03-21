@@ -74,7 +74,7 @@ class ParameterisedRippleSolver:
         Points at which to calculate TF ripple
     """
 
-    def __init__(self, wp_xs, nx, ny, n_TF, R_0, z_0, B_0, ripple_points):
+    def __init__(self, wp_xs, nx, ny, n_TF, R_0, z_0, B_0):
         self.wp_xs = wp_xs
         self.nx = nx
         self.ny = ny
@@ -82,7 +82,6 @@ class ParameterisedRippleSolver:
         self.R_0 = R_0
         self.z_0 = z_0
         self.B_0 = B_0
-        self.ripple_points = ripple_points
         self.cage = None
 
     def update_cage(self, wire):
@@ -265,7 +264,6 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
             params.R_0.value,
             params.z_0.value,
             params.B_0.value,
-            self.ripple_points,
         )
         ripple_constraint = OptimisationConstraint(
             self.constrain_ripple,
@@ -404,7 +402,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         """
         parameterisation = super().optimise(x0=x0)
         self.solver.update_cage(parameterisation.create_shape())
-        self.ripple_values = self.solver.ripple()
+        self.ripple_values = self.solver.ripple(*self.ripple_points)
         return parameterisation
 
     def plot(self, ax=None):
