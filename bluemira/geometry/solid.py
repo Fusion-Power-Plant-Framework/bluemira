@@ -122,14 +122,14 @@ class BluemiraSolid(BluemiraGeo):
         """
         The faces of the solid.
         """
-        return tuple([BluemiraFace(o) for o in cadapi.faces(self.shape)])
+        return tuple([BluemiraFace._create(o) for o in cadapi.faces(self.shape)])
 
     @property
     def shells(self) -> Tuple[BluemiraShell]:
         """
         The shells of the solid.
         """
-        return tuple([BluemiraShell(o) for o in cadapi.shells(self.shape)])
+        return tuple([BluemiraShell._create(o) for o in cadapi.shells(self.shape)])
 
     @property
     def solids(self) -> Tuple[BluemiraSolid]:
