@@ -161,7 +161,7 @@ class ParameterisedRippleSolver:
         return self.cage.ripple(x, y, z)
 
 
-class RipplePointConstraintStrategy(ABC):
+class RipplePointSelector(ABC):
     @abstractmethod
     def make_ripple_points(self) -> Coordinates:
         pass
@@ -171,7 +171,7 @@ class RipplePointConstraintStrategy(ABC):
         pass
 
 
-class EquispacedRipplePointConstraintStrategy(RipplePointConstraintStrategy):
+class EquispacedSelector(RipplePointSelector):
     def __init__(self, wire: BluemiraWire, n_rip_points: int):
         points = wire.discretize(byedges=True, ndiscr=n_rip_points)
         self.points = points
@@ -181,6 +181,31 @@ class EquispacedRipplePointConstraintStrategy(RipplePointConstraintStrategy):
 
     def make_calc_ripple_func(self) -> callable:
         return ParameterisedRippleSolver.ripple
+
+
+class OutboardEquispacedSelector(RipplePointSelector):
+    def __init__(self, wire: BluemiraWire, n_rip_points: int):
+        points = wire.discretize(byedges=True, ndiscr=n_rip_points)
+        self.points = points
+
+    def make_ripple_points(self) -> Coordinates:
+        return self.points
+
+    def make_calc_ripple_func(self) -> callable:
+        return ParameterisedRippleSolver.ripple
+
+
+class FixedSelector(RipplePointSelector):
+    def __init__(self, points: Coordinates):
+        self.points = points
+
+    def make_ripple_points(self) -> Coordinates:
+        return self.points
+
+
+class MaximiseSelector(RipplePointSelector):
+    def __init__(self, wire: BluemiraWire):
+        self.wire = wire
 
 
 class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
@@ -244,6 +269,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         ny=1,
         n_rip_points=100,
         n_koz_points=100,
+        ripple_selector=None,
     ):
         self.params = make_parameter_frame(params, self._Params)
         self.separatrix = separatrix
@@ -254,7 +280,10 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
             minimise_length, f_objective_args={"parameterisation": parameterisation}
         )
 
-        self.ripple_points = self._make_ripple_points(separatrix, n_rip_points)
+        if ripple_selector is None:
+            ripple_selector = EquispacedSelector(separatrix, n_rip_points)
+
+        self.ripple_points = ripple_selector.make_ripple_points(separatrix, n_rip_points)
         self.ripple_values = None
         self.solver = ParameterisedRippleSolver(
             wp_cross_section,
