@@ -95,6 +95,12 @@ class TestNormalAt:
         (-10, -135.2, 234.5),
     ]
 
+    wires = [
+        make_circle(axis=(1, 0, 0)),
+        make_ellipse(major_axis=(0, 0, 1), minor_axis=(0, 1, 0)),
+        make_bezier([[0, 0, 0], [1, 0, 0], [1, 1, 0]], closed=True),
+    ]
+
     @pytest.mark.parametrize("normal", normals)
     def test_circle_normal(self, normal):
         normal = normal / np.linalg.norm(normal)
@@ -112,18 +118,19 @@ class TestNormalAt:
 
         np.testing.assert_allclose(xy_polygon.normal_at(*alphas), (0, 0, 1))
 
-    @pytest.mark.parametrize(
-        "wire",
-        [
-            make_circle(axis=(1, 0, 0)),
-            make_ellipse(major_axis=(0, 0, 1), minor_axis=(0, 1, 0)),
-            make_bezier([[0, 0, 0], [1, 0, 0], [1, 1, 0]], closed=True),
-        ],
-    )
-    def test_curved_face_normals(self, wire):
+    @pytest.mark.parametrize("wire", wires)
+    def test_curved_solid_face_normals(self, wire):
         face = BluemiraFace(wire)
         solid = extrude_shape(face, (10, 1, 1))
         biggest_face = sorted(solid.faces, key=lambda face: face.area)[-1]
+        normal_1 = biggest_face.normal_at(0, 0)
+        normal_2 = biggest_face.normal_at(0.5, 0.5)
+        assert not np.allclose(normal_1, normal_2)
+
+    @pytest.mark.parametrize("wire", wires)
+    def test_curved_shell_face_normals(self, wire):
+        shell = extrude_shape(wire, (10, 1, 1))
+        biggest_face = sorted(shell.faces, key=lambda face: face.area)[-1]
         normal_1 = biggest_face.normal_at(0, 0)
         normal_2 = biggest_face.normal_at(0.5, 0.5)
         assert not np.allclose(normal_1, normal_2)
