@@ -166,9 +166,93 @@ class RipplePointSelector(ABC):
     def make_ripple_points(self) -> Coordinates:
         pass
 
-    @abstractmethod
-    def make_calc_ripple_func(self) -> callable:
-        pass
+    def make_ripple_constraint(
+        self, parameterisation, solver, TF_ripple_limit, rip_con_tol
+    ) -> OptimisationConstraint:
+        return OptimisationConstraint(
+            self.constrain_ripple,
+            f_constraint_args={
+                "parameterisation": parameterisation,
+                "solver": solver,
+                "points": self.points,
+                "TF_ripple_limit": TF_ripple_limit,
+            },
+            tolerance=rip_con_tol * np.ones(len(self.points)),
+        )
+
+    @staticmethod
+    def constrain_ripple(
+        constraint,
+        vector,
+        grad,
+        parameterisation,
+        solver,
+        points,
+        TF_ripple_limit,
+        ad_args=None,
+    ):
+        """
+        Ripple constraint function
+
+        Parameters
+        ----------
+        constraint: np.ndarray
+            Constraint vector (updated in place)
+        vector: np.ndarray
+            Variable vector
+        grad: np.ndarray
+            Jacobian matrix of the constraint (updated in place)
+        parameterisation: GeometryParameterisation
+            Geometry parameterisation
+        solver: ParameterisedHelmholtzSolver
+            TF ripple solver
+        points: Coordinates
+            Coordinates at which to calculate the ripple
+        TF_ripple_limit: float
+            Maximum allowable TF ripple
+        """
+        func = RipplePointSelector.calculate_ripple
+        constraint[:] = func(vector, parameterisation, solver, points, TF_ripple_limit)
+        if grad.size > 0:
+            grad[:] = approx_derivative(
+                func,
+                vector,
+                f0=constraint,
+                args=(parameterisation, solver, TF_ripple_limit),
+                **ad_args,
+            )
+
+        bluemira_debug_flush(f"Max ripple: {max(constraint+TF_ripple_limit)}")
+        return constraint
+
+    @staticmethod
+    def calculate_ripple(vector, parameterisation, solver, points, TF_ripple_limit):
+        """
+        Calculate ripple constraint
+
+        Parameters
+        ----------
+        vector: np.ndarray
+            Variable vector
+        parameterisation: GeometryParameterisation
+            Geometry parameterisation
+        solver: ParameterisedHelmholtzSolver
+            TF ripple solver
+        points: Coordinates
+            Coordinates at which to calculate the ripple
+        TF_ripple_limit: float
+            Maximum allowable TF ripple
+
+        Returns
+        -------
+        c_values: np.ndarray
+            Ripple constraint values
+        """
+        parameterisation.variables.set_values_from_norm(vector)
+        wire = parameterisation.create_shape()
+        solver.update_cage(wire)
+        ripple = solver.ripple(*points)
+        return ripple - TF_ripple_limit
 
 
 class EquispacedSelector(RipplePointSelector):
@@ -179,9 +263,6 @@ class EquispacedSelector(RipplePointSelector):
     def make_ripple_points(self) -> Coordinates:
         return self.points
 
-    def make_calc_ripple_func(self) -> callable:
-        return ParameterisedRippleSolver.ripple
-
 
 class OutboardEquispacedSelector(RipplePointSelector):
     def __init__(self, wire: BluemiraWire, n_rip_points: int):
@@ -190,9 +271,6 @@ class OutboardEquispacedSelector(RipplePointSelector):
 
     def make_ripple_points(self) -> Coordinates:
         return self.points
-
-    def make_calc_ripple_func(self) -> callable:
-        return ParameterisedRippleSolver.ripple
 
 
 class FixedSelector(RipplePointSelector):
@@ -286,7 +364,6 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         if ripple_selector is None:
             ripple_selector = EquispacedSelector(separatrix, n_rip_points)
 
-        self.ripple_points = ripple_selector.make_ripple_points()
         self.ripple_values = None
         self.solver = ParameterisedRippleSolver(
             wp_cross_section,
@@ -297,17 +374,11 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
             params.z_0.value,
             params.B_0.value,
         )
-        ripple_constraint = OptimisationConstraint(
-            self.constrain_ripple,
-            f_constraint_args={
-                "parameterisation": parameterisation,
-                "solver": self.solver,
-                "points": self.ripple_points,
-                "TF_ripple_limit": params.TF_ripple_limit.value,
-            },
-            tolerance=rip_con_tol * np.ones(len(self.ripple_points)),
+        ripple_constraint = ripple_selector.make_ripple_constraint(
+            parameterisation, self.solver, params.TF_ripple_limit.value, rip_con_tol
         )
-        constraints = [ripple_constraint]
+        self.ripple_selector = ripple_selector
+
         if keep_out_zone is not None:
             koz_points = self._make_koz_points(keep_out_zone)
             koz_constraint = OptimisationConstraint(
@@ -319,9 +390,10 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
                 },
                 tolerance=koz_con_tol * np.ones(n_koz_points),
             )
-            constraints.append(koz_constraint)
 
-        super().__init__(parameterisation, optimiser, objective, constraints)
+        super().__init__(
+            parameterisation, optimiser, objective, [ripple_constraint, koz_constraint]
+        )
 
     def _make_koz_points(self, keep_out_zone):
         """
@@ -329,87 +401,13 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         """
         return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200).xz
 
-    @staticmethod
-    def constrain_ripple(
-        constraint,
-        vector,
-        grad,
-        parameterisation,
-        solver,
-        points,
-        TF_ripple_limit,
-        ad_args=None,
-    ):
-        """
-        Ripple constraint function
-
-        Parameters
-        ----------
-        constraint: np.ndarray
-            Constraint vector (updated in place)
-        vector: np.ndarray
-            Variable vector
-        grad: np.ndarray
-            Jacobian matrix of the constraint (updated in place)
-        parameterisation: GeometryParameterisation
-            Geometry parameterisation
-        solver: ParameterisedHelmholtzSolver
-            TF ripple solver
-        points: Coordinates
-            Coordinates at which to calculate the ripple
-        TF_ripple_limit: float
-            Maximum allowable TF ripple
-        """
-        func = RippleConstrainedLengthGOP.calculate_ripple
-        constraint[:] = func(vector, parameterisation, solver, points, TF_ripple_limit)
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                func,
-                vector,
-                f0=constraint,
-                args=(parameterisation, solver, TF_ripple_limit),
-                **ad_args,
-            )
-
-        bluemira_debug_flush(f"Max ripple: {max(constraint+TF_ripple_limit)}")
-        return constraint
-
-    @staticmethod
-    def calculate_ripple(vector, parameterisation, solver, points, TF_ripple_limit):
-        """
-        Calculate ripple constraint
-
-        Parameters
-        ----------
-        vector: np.ndarray
-            Variable vector
-        parameterisation: GeometryParameterisation
-            Geometry parameterisation
-        solver: ParameterisedHelmholtzSolver
-            TF ripple solver
-        points: Coordinates
-            Coordinates at which to calculate the ripple
-        TF_ripple_limit: float
-            Maximum allowable TF ripple
-
-        Returns
-        -------
-        c_values: np.ndarray
-            Ripple constraint values
-        """
-        parameterisation.variables.set_values_from_norm(vector)
-        wire = parameterisation.create_shape()
-        solver.update_cage(wire)
-        ripple = solver.ripple(*points)
-        return ripple - TF_ripple_limit
-
     def optimise(self, x0=None):
         """
         Solve the GeometryOptimisationProblem.
         """
         parameterisation = super().optimise(x0=x0)
         self.solver.update_cage(parameterisation.create_shape())
-        self.ripple_values = self.solver.ripple(*self.ripple_points)
+        self.ripple_values = self.solver.ripple(*self.ripple_selector.points)
         return parameterisation
 
     def plot(self, ax=None):
@@ -453,8 +451,8 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         sm = matplotlib.cm.ScalarMappable(cmap=cm, norm=norm)
         sm.set_array([])
         ax.scatter(
-            self.ripple_points.x,
-            self.ripple_points.z,
+            self.ripple_selector.points.x,
+            self.ripple_selector.points.z,
             color=cm(norm(rv)),
         )
         color_bar = plt.gcf().colorbar(sm)
