@@ -65,6 +65,8 @@ class TestDivertorBuilder:
 
         xyz = blanket.get_component("xyz")
         assert xyz
-        assert len(xyz.leaves) == self.params["n_TF"]["value"] * (
-            self.params["n_bb_inboard"]["value"] + self.params["n_bb_outboard"]["value"]
+        assert (
+            len(xyz.leaves)
+            == self.params["n_bb_inboard"]["value"]
+            + self.params["n_bb_outboard"]["value"]
         )

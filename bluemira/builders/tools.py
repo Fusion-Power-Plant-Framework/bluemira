@@ -119,15 +119,18 @@ def circular_pattern_component(
         The angular extent of the patterning in degrees, by default 360.
     """
     component = [component] if isinstance(component, bm_comp.Component) else component
-    sectors = [
-        bm_comp.Component(f"{parent_prefix} {idx+1}") for idx in range(n_children)
-    ]
+    sectors = [bm_comp.Component(f"{parent_prefix}") for _ in range(n_children)]
     # build sector trees by assigning copies of each component to sec. parents
     for c in component:
         for parent_sc in sectors:
             c.copy(parent_sc)
 
     sector_tree_indexs = [list(PreOrderIter(sc)) for sc in sectors]
+
+    # to keep naming convention
+    for sec_i, sector_index in enumerate(sector_tree_indexs):
+        for comp in sector_index:
+            comp.name = f"{comp.name} {sec_i + 1}"
 
     faux_sec_comp = bm_comp.Component(f"{parent_prefix} X")
     faux_sec_comp.children = component
