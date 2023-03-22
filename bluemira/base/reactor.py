@@ -130,6 +130,9 @@ class Reactor:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         """
+        if with_n_sectors is None:
+            with_n_sectors = self.n_sectors
+
         # give dims_to_show a default value
         dims_to_show = ("xyz",) if len(dims) == 0 else dims
 

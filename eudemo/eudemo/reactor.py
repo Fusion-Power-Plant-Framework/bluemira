@@ -348,16 +348,6 @@ if __name__ == "__main__":
     reactor.show_cad(
         with_n_sectors=3,
     )
-
-    reactor.show_cad(
-        with_components=[
-            reactor.plasma,
-            reactor.pf_coils,
-            reactor.divertor,
-        ],
-        with_n_sectors=3,
-    )
-
     raise
 
     sspc_solver = SteadyStatePowerCycleSolver(params)
