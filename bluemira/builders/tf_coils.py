@@ -555,9 +555,9 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
             bluemira_warn(
                 "RippleConstrainedLengthGOP API has changed, please specify how you want "
                 "to constrain TF ripple by using one of the available RipplePointSelector "
-                f"classes. Defaulting to an EquispacedSelector with {n_rip_points} for now."
+                f"classes. Defaulting to an EquispacedSelector with {n_rip_points=} for now."
             )
-            ripple_selector = EquispacedSelector(separatrix, n_rip_points)
+            ripple_selector = EquispacedSelector(n_rip_points)
 
         ripple_selector.set_wire(self.separatrix)
         self.ripple_values = None
