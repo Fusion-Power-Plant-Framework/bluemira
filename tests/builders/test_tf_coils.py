@@ -19,16 +19,90 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
+import numpy as np
+import pytest
+
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.builders.tf_coils import (
     EquispacedSelector,
     FixedSelector,
     MaximiseSelector,
     OutboardEquispacedSelector,
     RippleConstrainedLengthGOP,
+    RippleConstrainedLengthGOPParams,
 )
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_polygon
+from bluemira.utilities.optimiser import Optimiser
 
 
 class TestRippleConstrainedLengthGOP:
-    pass
+    princeton = PrincetonD(
+        {
+            "x1": {"value": 4, "fixed": True},
+            "dz": {"value": 0, "fixed": True},
+            "x2": {"value": 15, "lower_bound": 13, "upper_bound": 20},
+        }
+    )
+    lcfs = make_polygon({"x": [6, 12, 6], "z": [-4, 0, 4]}, closed=True)
+    wp_xs = make_polygon(
+        {"x": [3.5, 4.5, 4.5, 3.5], "y": [-0.5, -0.5, 0.5, 0.5], "z": 0}, closed=True
+    )
+    params = make_parameter_frame(
+        {
+            "n_TF": {"value": 16, "unit": "", "source": "test"},
+            "R_0": {"value": 9, "unit": "m", "source": "test"},
+            "z_0": {"value": 0, "unit": "m", "source": "test"},
+            "B_0": {"value": 6, "unit": "T", "source": "test"},
+            "TF_ripple_limit": {"value": 0.6, "unit": "%", "source": "test"},
+        },
+        RippleConstrainedLengthGOPParams,
+    )
+
+    @classmethod
+    def teardown_method(cls):
+        plt.show()
+
+    def _make_optimiser(self):
+        return Optimiser("SLSQP", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6})
+
+    def test_default_setup(self):
+        optimiser = self._make_optimiser()
+        problem = RippleConstrainedLengthGOP(
+            self.princeton,
+            optimiser,
+            self.params,
+            self.wp_xs,
+            self.lcfs,
+            keep_out_zone=None,
+            rip_con_tol=1e-3,
+            n_rip_points=10,
+        )
+        problem.optimise()
+        problem.plot()
+        assert np.all(problem.ripple_values < self.params.TF_ripple_limit.value + 1e-3)
+
+    @pytest.mark.parametrize(
+        "selector",
+        [
+            OutboardEquispacedSelector(5, x_min=9),
+            FixedSelector(Coordinates({"x": [12, 6, 6], "z": [0, -4, 4]})),
+        ],
+    )
+    def test_outboard_equispaced(self, selector):
+        optimiser = self._make_optimiser()
+        problem = RippleConstrainedLengthGOP(
+            self.princeton,
+            optimiser,
+            self.params,
+            self.wp_xs,
+            self.lcfs,
+            keep_out_zone=None,
+            rip_con_tol=1e-3,
+            ripple_selector=selector,
+        )
+        problem.optimise()
+        problem.plot()
+        assert np.all(problem.ripple_values < self.params.TF_ripple_limit.value + 1e-3)

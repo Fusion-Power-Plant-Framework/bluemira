@@ -238,7 +238,7 @@ class RipplePointSelector(ABC):
                 func,
                 vector,
                 f0=constraint,
-                args=(parameterisation, solver, TF_ripple_limit),
+                args=(parameterisation, solver, points, TF_ripple_limit),
                 **ad_args,
             )
 
@@ -505,6 +505,15 @@ class MaximiseSelector(RipplePointSelector):
         return ripple - TF_ripple_limit
 
 
+@dataclass
+class RippleConstrainedLengthGOPParams(ParameterFrame):
+    n_TF: Parameter[int]
+    R_0: Parameter[float]
+    z_0: Parameter[float]
+    B_0: Parameter[float]
+    TF_ripple_limit: Parameter[float]
+
+
 class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
     """
     Toroidal field coil winding pack shape optimisation problem.
@@ -547,14 +556,6 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
     The geometry parameterisation is updated in place
     """
 
-    @dataclass
-    class _Params(ParameterFrame):
-        n_TF: Parameter[int]
-        R_0: Parameter[float]
-        z_0: Parameter[float]
-        B_0: Parameter[float]
-        TF_ripple_limit: Parameter[float]
-
     def __init__(
         self,
         parameterisation,
@@ -571,7 +572,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         n_koz_points=100,
         ripple_selector=None,
     ):
-        self.params = make_parameter_frame(params, self._Params)
+        self.params = make_parameter_frame(params, RippleConstrainedLengthGOPParams)
         self.separatrix = separatrix
         self.wp_cross_section = wp_cross_section
         self.keep_out_zone = keep_out_zone
@@ -605,6 +606,8 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         )
         self.ripple_selector = ripple_selector
 
+        constraints = [ripple_constraint]
+
         if keep_out_zone is not None:
             koz_points = self._make_koz_points(keep_out_zone)
             koz_constraint = OptimisationConstraint(
@@ -616,10 +619,9 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
                 },
                 tolerance=koz_con_tol * np.ones(n_koz_points),
             )
+            constraints.append(koz_constraint)
 
-        super().__init__(
-            parameterisation, optimiser, objective, [ripple_constraint, koz_constraint]
-        )
+        super().__init__(parameterisation, optimiser, objective, constraints)
 
     def _make_koz_points(self, keep_out_zone):
         """
