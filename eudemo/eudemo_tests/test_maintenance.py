@@ -33,6 +33,11 @@ from eudemo.maintenance.equatorial_port import (
     EquatorialPortDuctBuilder,
     EquatorialPortKOZDesigner,
 )
+from bluemira.base.parameter_frame import Parameter
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import make_polygon
+from bluemira.utilities.optimiser import Optimiser
+from eudemo.maintenance.duct_connection import DuctBuilder, DuctBuilderParams
 from eudemo.maintenance.upper_port import UpperPortOP
 
 
@@ -69,11 +74,21 @@ class TestUpperPortOP:
 
 
 class TestDuctConnection:
+    def setup_method(self):
+        self.params = DuctBuilderParams(Parameter("n_TF", 12, ""))
+
+        self.port_koz = make_polygon({"x": [5, 10, 10, 5], "z": [4, 4, 10, 10]})
+
     def test_single_wire(self):
         port_xy_wire = db._single_xy_wire(width)
         assert self.port_xy_wire.boundingbox.x_min == self.x_min
         assert port_xy_wire.boundingbox.xmin == self.port_koz.boundingbox.x_min
         assert port_xy_wire.boundingbox.xmax == self.port_koz.boundingbox.x_max
+        builder = DuctBuilder(self.params, {}, self.port_koz, 0.2, 0.2)
+        port = builder.build()
+        shape = port.get_component_properties("shape")
+        assert shape.bounding_box.x_min >= self.port_koz.bounding_box.x_min
+        assert shape.bounding_box.x_max <= self.port_koz.bounding_box.x_max
 
 
 class TestEquatorialPortKOZDesigner:

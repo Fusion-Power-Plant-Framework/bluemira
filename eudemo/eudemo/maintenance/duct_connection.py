@@ -23,7 +23,7 @@
 Creating ducts for the port
 """
 from dataclasses import dataclass
-from typing import Dict, Union
+from typing import Dict, Tuple, Union
 
 import numpy as np
 
@@ -32,138 +32,131 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor_config import ConfigParams
 from bluemira.builders.tools import get_n_sectors
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.solid import BluemiraSolid
-from bluemira.geometry.tools import extrude_shape, make_polygon
+from bluemira.geometry.tools import extrude_shape, make_polygon, mirror_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
 class DuctBuilderParams(ParameterFrame):
+    """Duct Builder Parameter Frame"""
+
     n_TF: Parameter[int]
-    port_wall_thickness: Parameter[float]
 
 
 class DuctBuilder(Builder):
+    """Duct Builder"""
+
     param_cls = DuctBuilderParams
+
+    NAME = "Upper Port Duct"
 
     def __init__(
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
         build_config: Dict,
         port_koz: BluemiraFace,
-        port_wall_thickness: float,  # eg for vv = vv_wall_thick + vvts_wall
-        tf_coil_casing1: BluemiraSolid,
-        tf_coil_casing2: BluemiraSolid,
+        port_wall_thickness: float,
+        tf_coil_thickness: float,
     ):
         super().__init__(params, build_config)
         self.port_koz = port_koz.deepcopy()
-        self.tf_coil_casing = tf_coil_casing1
         self.port_wall_thickness = port_wall_thickness
+        self.tf_coil_thickness = tf_coil_thickness
 
     def build(self) -> Component:
-        half_tf_coil_width = 0
-        xy_face = self._single_xy_face(half_tf_coil_width)
+        """Build upper port"""
+        xy_face = self._single_xy_face()
 
-        return self.component_tree(
-            [self.build_xz()], [self.build_xy(xy_face)], [self.build_xyz(xy_face)]
-        )
-
-    def build_xz(self) -> PhysicalComponent:
-        component = PhysicalComponent(name="Duct", shape=None)
-
-        return component
-
-    def build_xy(self, xy_face: BluemiraFace) -> PhysicalComponent:
-        pass
+        return self.component_tree(None, None, [self.build_xyz(xy_face)])
 
     def build_xyz(self, xy_face: BluemiraFace) -> PhysicalComponent:
-        port = extrude_shape(xy_face, (0, 0, extrude_length))
-        # xin = max(xin) if len(xin) != 0 else 0
+        """Build upper port xyz"""
+        port = extrude_shape(xy_face, (0, 0, self.port_koz.bounding_box.z_max))
+        comp = PhysicalComponent(self.NAME, port)
+        comp.display_cad_options.color = BLUE_PALETTE["VV"][0]
 
-        # xout = (
-        #     max(xout) + self.params.R_0 if len(xout) != 0 else 10 * self.params.R_0
-        # )  # big
-        # ztop = max(ztop) + self.params.pf_off
-        # pf1_ro = max(xin, xmin)
-        # pf2_ri = min(xout, xmax)
-        # tf_w = (
-        #     inputs["TFsection"]["case"]["side"] * 2
-        #     + inputs["TFsection"]["winding_pack"]["depth"]
-        # )
-        # x_b, y_b = 0.5 * tf_w / np.tan(beta), 0.5 * tf_w
-        # x_bp = np.sqrt(y_b**2 + x_b**2)
-        # x_oi = x_bp + self.params.g_ts_tf / np.sin(beta)
-        # x_inner = pf1_ro + self.params.g_ts_pf
-        # y_inner = np.tan(beta) * (x_inner - x_oi)
-        # x_outer = np.cos(beta) * ((pf2_ri - self.params.g_ts_pf)) + np.sin(beta) * (
-        #     tf_w / 2 + self.params.g_ts_tf
-        # )  # trimmed
-        # y_outer = np.tan(beta) * (x_outer - x_oi)
+        return comp
 
-        pass
-
-    def _single_xy_face(self, width: float) -> BluemiraFace:
+    def _single_xy_face(self) -> BluemiraFace:
         """
         Creates a xy cross section of the port
 
         translates the port koz to the origin,
         builds the port at the origin and moves it back
 
-        Parameters
-        ----------
-        width
-            the width of half the tf coil
-
         Notes
         -----
         the port koz is slightly trimmed to allow for square ends to the port
 
         """
-        sector_degree, _ = get_n_sectors(self.params.n_TF.value)
-        beta = np.deg2rad(sector_degree)
-        double_skin = 2 * self.port_wall_thickness
-
-        # build at origin
-        x_orig = self.port_koz.bounding_box.x_min
-        y_orig = self.port_koz.bounding_box.y_min
-        z_orig = self.port_koz.bounding_box.z_min
-
-        self.port_koz.translate((-x_orig, -y_orig, -z_orig))
+        half_sector_degree = 0.5 * get_n_sectors(self.params.n_TF.value)[0]
+        half_beta = np.deg2rad(half_sector_degree)
+        x_double_thick = np.sqrt(3 * self.port_wall_thickness**2)
 
         # Inner point
-        x_min = self.port_koz.bounding_box.x_min
-        y_min = self.port_koz.bounding_box.y_max
+        y_min = self.tf_coil_thickness
+        x_min = max(self.port_koz.bounding_box.x_min, y_min / np.cos(half_beta))
 
-        # lower outer point (xy_plane)
-        port_trim = self.port_wall_thickness / np.sin(0.5 * beta)
-        x_a = self.port_koz.bounding_box.x_max - port_trim
-        y_a = self.port_koz.bounding_box.y_max
+        # Outer point
+        o_a = y_min / self.port_koz.bounding_box.x_max
+        x_a = self.port_koz.bounding_box.x_max * np.cos(np.arcsin(o_a))
 
-        rotated_koz = self.port_koz.deepcopy()
-        rotated_koz.rotate(degree=sector_degree)
+        outer_line = make_polygon({"x": [x_min, x_a], "y": [y_min, y_min]})
+        inner_line = make_polygon(
+            {
+                "x": [x_min + x_double_thick, x_a - x_double_thick],
+                "y": np.full(2, y_min + self.port_wall_thickness),
+            }
+        )
 
-        # upper outer point (xy plane)
-        port_trim2 = port_trim * np.cos(beta)
-        x_b = rotated_koz.bounding_box.x_max - port_trim2
-        y_b = rotated_koz.bounding_box.y_max
+        mirror_line = outer_line.deepcopy()
+        mirror_line.rotate(degree=half_sector_degree)
+        mirror_point = (
+            mirror_line.bounding_box.x_max,
+            mirror_line.bounding_box.y_max,
+            0,
+        )
 
-        # Inner Wire
-        x_iw = np.array([x_min, x_a, x_b])
-        x_iw[0] += double_skin
-        x_iw[1:] -= double_skin
-        y_iw = np.array([y_min, y_a, y_b])
-        y_iw[0] += self.port_wall_thickness
-        y_iw[1:] -= self.port_wall_thickness
-        xy_inner_wire = make_polygon({"x": x_iw, "y": y_iw}, closed=True)
+        inner_bb, inner_top_bb = _mirror_line(inner_line, mirror_point)
+        outer_bb, outer_top_bb = _mirror_line(outer_line, mirror_point)
 
         # Outer wire
-        x_ow = np.array([x_min, x_a, x_b, x_min])
-        y_ow = np.array([y_min, y_a, y_b, y_min + double_skin])
+        x_ow = np.array(
+            [outer_bb.x_min, outer_bb.x_max, outer_top_bb.x_max, outer_top_bb.x_min]
+        )
+        y_ow = np.array(
+            [outer_bb.y_min, outer_bb.y_max, outer_top_bb.y_max, outer_top_bb.y_min]
+        )
+
+        mirror_bug(x_ow)
+        mirror_bug(y_ow)
+
         xy_outer_wire = make_polygon({"x": x_ow, "y": y_ow}, closed=True)
 
-        xy_face = BluemiraFace((xy_inner_wire, xy_outer_wire))
-        xy_face.translate((x_orig + port_trim, y_orig + width, 0))
+        # Inner Wire
+        x_iw = np.array(
+            [inner_bb.x_min, inner_bb.x_max, inner_top_bb.x_max, inner_top_bb.x_min]
+        )
+        y_iw = np.array(
+            [inner_bb.y_min, inner_bb.y_max, inner_top_bb.y_max, inner_top_bb.y_min]
+        )
+
+        mirror_bug(x_iw)
+        mirror_bug(y_iw)
+
+        xy_inner_wire = make_polygon({"x": x_iw, "y": y_iw}, closed=True)
+
+        xy_face = BluemiraFace((xy_outer_wire, xy_inner_wire))
 
         return xy_face
+
+
+def _mirror_line(line: BluemiraWire, mirror_point: Tuple[float, ...]):
+    new_line = mirror_shape(line, (0, 0, 0), mirror_point)
+    return line.bounding_box, new_line.bounding_box
+
+
+def mirror_bug(arr):
+    arr[2:] = abs(arr[2:][::-1])
