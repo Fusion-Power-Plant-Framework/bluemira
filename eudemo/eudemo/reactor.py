@@ -264,7 +264,7 @@ if __name__ == "__main__":
         profiles=profiles,
     )
 
-    reactor.plasma = build_plasma(build_config.get("Plasma", {}), reference_eq)
+    reactor.plasma = build_plasma(params, build_config.get("Plasma", {}), reference_eq)
 
     blanket_face, divertor_face, ivc_boundary = design_ivc(
         params, build_config["IVC"], equilibrium=reference_eq
@@ -347,12 +347,13 @@ if __name__ == "__main__":
 
     reactor.show_cad(
         with_n_sectors=3,
+        # with_components=[
+        #     reactor.pf_coils,
+        #     reactor.plasma,
+        # ],
     )
 
     sspc_solver = SteadyStatePowerCycleSolver(params)
     sspc_result = sspc_solver.execute()
     sspc_solver.model.plot()
     plt.show()
-
-    reactor.show_cad("xz")
-    reactor.show_cad()

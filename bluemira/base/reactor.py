@@ -170,10 +170,15 @@ class Reactor:
             )
             xyzs = [xyzs] if isinstance(xyzs, Component) else xyzs
 
-            print("Building xyz CAD")
+            comp_names = (
+                "all components"
+                if not with_components
+                else ", ".join([cm.component().name for cm in with_components])
+            )
+            print(f"Building xyz CAD with {with_n_sectors} sectors for {comp_names}")
             for xyz in track(xyzs):
                 xyz.children = circular_pattern_component(
-                    xyz.children,
+                    list(xyz.children),
                     with_n_sectors,
                     degree=(360 / self.n_sectors) * with_n_sectors,
                 )

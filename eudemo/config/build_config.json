@@ -3,7 +3,7 @@
     "run_mode": "read",
     "read_dir": "config/",
     "run_dir": "config/",
-    "plot": true
+    "plot": false
   },
   "Fixed boundary equilibrium": {
     "run_mode": "read",
