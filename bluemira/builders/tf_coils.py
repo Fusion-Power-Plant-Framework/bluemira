@@ -507,6 +507,10 @@ class MaximiseSelector(RipplePointSelector):
 
 @dataclass
 class RippleConstrainedLengthGOPParams(ParameterFrame):
+    """
+    Parameters for the RippleConstrainedLengthGOP
+    """
+
     n_TF: Parameter[int]
     R_0: Parameter[float]
     z_0: Parameter[float]
