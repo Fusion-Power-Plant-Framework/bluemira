@@ -139,7 +139,9 @@ class PFCoilBuilder(Builder):
         return [wp, ins, casing]
 
     def build_xyz(
-        self, shape: BluemiraWire, degree: float = 360.0
+        self,
+        shape: BluemiraWire,
+        degree: float = 360.0,
     ) -> List[PhysicalComponent]:
         """
         Build the xyz representation of the PF coil.
@@ -156,7 +158,6 @@ class PFCoilBuilder(Builder):
         component: Component
             The component grouping the results in 3D (xyz).
         """
-
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 
         # I doubt this is floating-point safe to collisions...
