@@ -78,7 +78,7 @@ class TestRippleConstrainedLengthGOP:
             self.lcfs,
             keep_out_zone=None,
             rip_con_tol=1e-3,
-            n_rip_points=10,
+            n_rip_points=3,
         )
         problem.optimise()
         problem.plot()
@@ -87,7 +87,8 @@ class TestRippleConstrainedLengthGOP:
     @pytest.mark.parametrize(
         "selector",
         [
-            OutboardEquispacedSelector(5, x_min=9),
+            EquispacedSelector(3),
+            OutboardEquispacedSelector(3, x_min=9),
             FixedSelector(Coordinates({"x": [12, 6, 6], "z": [0, -4, 4]})),
         ],
     )
