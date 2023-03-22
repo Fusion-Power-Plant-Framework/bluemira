@@ -26,6 +26,7 @@ A collection of tools used in the EU-DEMO design.
 from typing import List, Tuple, Union
 
 import numpy as np
+from anytree import PreOrderIter
 
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
@@ -117,62 +118,36 @@ def circular_pattern_component(
     degree: float
         The angular extent of the patterning in degrees, by default 360.
     """
+    component = [component] if isinstance(component, bm_comp.Component) else component
     sectors = [
         bm_comp.Component(f"{parent_prefix} {idx+1}") for idx in range(n_children)
     ]
+    # build sector trees by assigning copies of each component to sec. parents
+    for c in component:
+        for parent_sc in sectors:
+            c.copy(parent_sc)
 
-    def assign_component_to_sector(
-        comp: bm_comp.Component,
-        sector: bm_comp.Component,
-        shape: bm_geo.base.BluemiraGeo = None,
-    ):
-        idx = int(sector.name.replace(f"{parent_prefix} ", ""))
+    sector_tree_indexs = [list(PreOrderIter(sc)) for sc in sectors]
 
-        if shape is not None and not shape.label:
-            shape.label = f"{comp.name} {idx}"
+    faux_sec_comp = bm_comp.Component(f"{parent_prefix} X")
+    faux_sec_comp.children = component
 
-        orig_parent: bm_comp.Component = comp.parent
-        comp = comp.copy()
-        comp.name = f"{comp.name} {idx}"
-
-        comp.children = []
-        if orig_parent is not None:
-            comp.parent = sector.get_component(f"{orig_parent.name} {idx}")
-        if comp.parent is None:
-            comp.parent = sector
-
+    for search_index_i, comp in enumerate(PreOrderIter(faux_sec_comp)):
         if isinstance(comp, bm_comp.PhysicalComponent):
-            comp.shape = shape
-
-    def assign_or_pattern(comps: Union[bm_comp.Component, List[bm_comp.Component]]):
-        if not isinstance(comps, list):
-            comps = [comps]
-
-        for comp in comps:
-            if isinstance(comp, bm_comp.PhysicalComponent):
-                shapes = bm_geo.tools.circular_pattern(
-                    comp.shape,
-                    n_shapes=n_children,
-                    origin=origin,
-                    direction=direction,
-                    degree=degree,
-                )
-                for sector, shape in zip(sectors, shapes):
-                    assign_component_to_sector(comp, sector, shape)
-            else:
-                for sector in sectors:
-                    assign_component_to_sector(comp, sector)
-
-    def process_children(comps: Union[bm_comp.Component, List[bm_comp.Component]]):
-        if not isinstance(comps, list):
-            comps = [comps]
-        for comp in comps:
-            for child in comp.children:
-                assign_or_pattern(child)
-                process_children(child)
-
-    assign_or_pattern(component)
-    process_children(component)
+            shapes = bm_geo.tools.circular_pattern(
+                comp.shape,
+                n_shapes=n_children,
+                origin=origin,
+                direction=direction,
+                degree=degree,
+            )
+            # assign each shape to each sector at index search_index_i
+            # which should be the copy of the PhysicalComponent
+            for sector_index, shape in zip(sector_tree_indexs, shapes):
+                phy_comp = sector_index[search_index_i]
+                if not isinstance(phy_comp, bm_comp.PhysicalComponent):
+                    raise Exception("Something has gone wrong :/")
+                phy_comp.shape = shape
 
     return sectors
 

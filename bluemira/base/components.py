@@ -201,7 +201,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component(
         self, name: str, first: bool = True, full_tree: bool = False
-    ) -> Union["Component", List[Component], None]:
+    ) -> Union["Component", Tuple[Component], None]:
         """
         Find the components with the specified name.
 

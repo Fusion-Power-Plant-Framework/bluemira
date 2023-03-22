@@ -23,6 +23,8 @@
 from typing import List, Optional, Type
 from warnings import warn
 
+from rich.progress import track
+
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
 from bluemira.base.error import ReactorError
@@ -162,34 +164,18 @@ class Reactor:
         comp_copy.filter_components(dims_to_show)
 
         if "xyz" in dims_to_show:
-
-            def create_patterned_component(c: Component):
-                print(f" --> {c.name}")
-                return Component(
-                    c.name,
-                    children=circular_pattern_component(
-                        c,
-                        with_n_sectors,
-                        degree=(360 / self.n_sectors) * with_n_sectors,
-                    ),
-                )
-
             xyzs = comp_copy.get_component(
                 "xyz",
                 first=False,
             )
+            xyzs = [xyzs] if isinstance(xyzs, Component) else xyzs
+
             print("Building xyz CAD")
-            if isinstance(xyzs, Component):
-                patterned_children = [
-                    create_patterned_component(c) for c in xyzs.children
-                ]
-                xyzs.children = patterned_children
-            else:
-                for i, xyz in enumerate(xyzs):
-                    print(f"{i+1}/{len(xyzs)}:")
-                    patterned_children = [
-                        create_patterned_component(c) for c in xyz.children
-                    ]
-                    xyz.children = patterned_children
+            for xyz in track(xyzs):
+                xyz.children = circular_pattern_component(
+                    xyz.children,
+                    with_n_sectors,
+                    degree=(360 / self.n_sectors) * with_n_sectors,
+                )
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)
