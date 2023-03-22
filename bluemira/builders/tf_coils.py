@@ -169,7 +169,14 @@ class RipplePointSelector(ABC):
 
     @abstractmethod
     def __init__(self):
+        self.wire: BluemiraWire = None
         self.points: Coordinates = None
+
+    def set_wire(self, wire):
+        """
+        Set the wire along which the points will be selected
+        """
+        self.wire = wire
 
     def make_ripple_constraint(
         self, parameterisation, solver, TF_ripple_limit, rip_con_tol
@@ -269,15 +276,16 @@ class EquispacedSelector(RipplePointSelector):
 
     Parameters
     ----------
-    wire:
-        Wire along which the points should be calculated to constrain the
-        ripple
     n_rip_points:
         Number of points along the wire constrain the ripple
     """
 
-    def __init__(self, wire: BluemiraWire, n_rip_points: int):
-        self.points = wire.discretize(byedges=True, ndiscr=n_rip_points)
+    def __init__(self, n_rip_points: int):
+        self.n_rip_points = n_rip_points
+
+    def set_wire(self, wire):
+        super().set_wire(wire)
+        self.points = wire.discretize(byedges=True, ndiscr=self.n_rip_points)
 
 
 class OutboardEquispacedSelector(RipplePointSelector):
@@ -287,9 +295,6 @@ class OutboardEquispacedSelector(RipplePointSelector):
 
     Parameters
     ----------
-    wire:
-        Wire along which the points should be calculated to constrain the
-        ripple
     n_rip_points:
         Number of points along the wire constrain the ripple
     x_min:
@@ -298,26 +303,33 @@ class OutboardEquispacedSelector(RipplePointSelector):
         the wire.
     """
 
-    def __init__(
-        self, wire: BluemiraWire, n_rip_points: int, x_min: Optional[float] = None
-    ):
-        bb = wire.bounding_box
-        if x_min is None:
-            x_min = bb.x_min + 0.5 * (bb.x_max - bb.x_min)
+    def __init__(self, n_rip_points: int, x_min: Optional[float] = None):
+        self.n_rip_points = n_rip_points
+        self.x_min = x_min
 
-        if (x_min < bb.x_min) or (x_min > bb.x_max):
-            raise ValueError(f"{x_min=} is not within the bounds of the geometry.")
+    def set_wire(self, wire):
+        super().set_wire(wire)
+        bb = wire.bounding_box
+        if self.x_min is None:
+            self.x_min = bb.x_min + 0.5 * (bb.x_max - bb.x_min)
+
+        if (self.x_min < bb.x_min) or (self.x_min > bb.x_max):
+            raise ValueError(f"{self.x_min=} is not within the bounds of the geometry.")
 
         z_min, z_max = bb.z_min - 10, bb.z_max + 10
         cut_face = BluemiraFace(
             make_polygon(
-                {"x": [0, x_min, x_min, 0], "y": 0, "z": [z_min, z_min, z_max, z_max]},
+                {
+                    "x": [0, self.x_min, self.x_min, 0],
+                    "y": 0,
+                    "z": [z_min, z_min, z_max, z_max],
+                },
                 closed=True,
             )
         )
         part_wire = boolean_cut(wire, cut_face)[0]
 
-        self.points = part_wire.discretize(byedges=True, ndiscr=n_rip_points)
+        self.points = part_wire.discretize(byedges=True, ndiscr=self.n_rip_points)
 
 
 class FixedSelector(RipplePointSelector):
@@ -346,8 +358,11 @@ class MaximiseSelector(RipplePointSelector):
         Wire along which to constrain the ripple
     """
 
-    def __init__(self, wire: BluemiraWire):
-        self.wire = wire
+    def __init__(self):
+        self.points = None
+
+    def set_wire(self, wire):
+        super().set_wire(wire)
         points = wire.discretize(byedges=True, ndiscr=200)
         arg_x_max = np.argmax(points.x)
         x_max_point = points[:, arg_x_max]
@@ -456,6 +471,7 @@ class MaximiseSelector(RipplePointSelector):
 
         result = minimize(f_max_ripple, x0=alpha_0, bounds=(0, 1), method="SLSQP")
         max_ripple_point = lcfs_wire.value_at(result.x)
+        MaximiseSelector.points = Coordinates(max_ripple_point)
         ripple = solver.ripple(*max_ripple_point)
         return ripple - TF_ripple_limit
 
@@ -543,7 +559,9 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
             )
             ripple_selector = EquispacedSelector(separatrix, n_rip_points)
 
+        ripple_selector.set_wire(self.separatrix)
         self.ripple_values = None
+
         self.solver = ParameterisedRippleSolver(
             wp_cross_section,
             nx,
