@@ -447,7 +447,7 @@ class MaximiseSelector(RipplePointSelector):
         """
         func = MaximiseSelector.calculate_max_ripple
         constraint[:] = func(
-            vector, parameterisation, solver, lcfs_wire, TF_ripple_limit
+            vector, parameterisation, solver, lcfs_wire, alpha_0, TF_ripple_limit
         )
         if grad.size > 0:
             grad[:] = approx_derivative(

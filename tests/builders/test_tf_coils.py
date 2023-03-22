@@ -23,7 +23,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.builders.tf_coils import (
     EquispacedSelector,
     FixedSelector,
@@ -90,6 +90,7 @@ class TestRippleConstrainedLengthGOP:
             EquispacedSelector(3),
             OutboardEquispacedSelector(3, x_min=9),
             FixedSelector(Coordinates({"x": [12, 6, 6], "z": [0, -4, 4]})),
+            MaximiseSelector(),
         ],
     )
     def test_outboard_equispaced(self, selector):
