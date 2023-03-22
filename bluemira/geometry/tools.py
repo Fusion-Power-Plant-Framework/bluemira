@@ -28,7 +28,7 @@ import inspect
 import json
 import os
 from copy import deepcopy
-from typing import Iterable, List, Optional, Sequence, Type, Union
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Type, Union
 
 import numba as nb
 import numpy as np
@@ -203,13 +203,15 @@ def _make_vertex(point):
     return cadapi.apiVertex(*point)
 
 
-def closed_wire_wrapper(drop_closure_point):
+def closed_wire_wrapper(drop_closure_point: bool):
     """
     Decorator for checking / enforcing closures on wire creation functions.
     """
 
-    def decorator(func):
-        def wrapper(points, label="", closed=False):
+    def decorator(func: Callable):
+        def wrapper(
+            points: Union[list, np.ndarray, Dict], label: str = "", closed: bool = False
+        ):
             points = Coordinates(points)
             if points.closed:
                 if closed is False:
@@ -225,6 +227,7 @@ def closed_wire_wrapper(drop_closure_point):
             return BluemiraWire(wire, label=label)
 
         return wrapper
+        wrapper.__doc__ = func.__doc__
 
     return decorator
 
@@ -238,18 +241,17 @@ def make_polygon(
 
     Parameters
     ----------
-    points: Union[list, np.ndarray]
+    points
         list of points. It can be given as a list of 3D tuples, a 3D numpy array,
         or similar.
-    label: str, default = ""
+    label
         Object's label
-    closed: bool, default = False
+    closed
         if True, the first and last points will be connected in order to form a
         closed polygon. Defaults to False.
 
     Returns
     -------
-    wire: BluemiraWire
         a bluemira wire that contains the polygon
 
     Notes

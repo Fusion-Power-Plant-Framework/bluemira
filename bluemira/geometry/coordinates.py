@@ -24,7 +24,7 @@ Utility for sets of coordinates
 """
 import json
 import os
-from typing import Iterable, Optional, Tuple
+from typing import Dict, Iterable, Optional, Tuple, Union
 
 import numba as nb
 import numpy as np
@@ -1279,10 +1279,6 @@ class Coordinates:
 
     Counter-clockwise direction can be set relative to a normal vector.
 
-    Parameters
-    ----------
-    xyz_array: Union[np.ndarray, dict, Iterable[Iterable]]
-
     Notes
     -----
     This is a utility class for dealing with sets of coordinates in a number of different
@@ -1294,7 +1290,7 @@ class Coordinates:
     # Instantiation
     # =============================================================================
 
-    def __init__(self, xyz_array):
+    def __init__(self, xyz_array: Union[np.ndarray, Dict, Iterable[Iterable]]):
         self._array = _parse_to_xyz_array(xyz_array)
         self._is_planar = None
         self._normal_vector = None
