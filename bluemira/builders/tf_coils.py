@@ -172,9 +172,14 @@ class RipplePointSelector(ABC):
         self.wire: BluemiraWire = None
         self.points: Coordinates = None
 
-    def set_wire(self, wire):
+    def set_wire(self, wire: BluemiraWire):
         """
         Set the wire along which the points will be selected
+
+        Parameters
+        ----------
+        wire
+            Wire along which the points will be selected
         """
         self.wire = wire
 
@@ -284,6 +289,14 @@ class EquispacedSelector(RipplePointSelector):
         self.n_rip_points = n_rip_points
 
     def set_wire(self, wire):
+        """
+        Set the wire along which the points will be selected
+
+        Parameters
+        ----------
+        wire
+            Wire along which the points will be selected
+        """
         super().set_wire(wire)
         self.points = wire.discretize(byedges=True, ndiscr=self.n_rip_points)
 
@@ -308,6 +321,14 @@ class OutboardEquispacedSelector(RipplePointSelector):
         self.x_min = x_min
 
     def set_wire(self, wire):
+        """
+        Set the wire along which the points will be selected
+
+        Parameters
+        ----------
+        wire
+            Wire along which the points will be selected
+        """
         super().set_wire(wire)
         bb = wire.bounding_box
         if self.x_min is None:
@@ -362,6 +383,14 @@ class MaximiseSelector(RipplePointSelector):
         self.points = None
 
     def set_wire(self, wire):
+        """
+        Set the wire along which the points will be selected
+
+        Parameters
+        ----------
+        wire
+            Wire along which the points will be selected
+        """
         super().set_wire(wire)
         points = wire.discretize(byedges=True, ndiscr=200)
         arg_x_max = np.argmax(points.x)
