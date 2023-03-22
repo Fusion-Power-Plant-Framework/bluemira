@@ -32,7 +32,7 @@ import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS
-from bluemira.base.error import BuilderError
+from bluemira.base.error import BuilderError, ComponentError
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
@@ -146,7 +146,7 @@ def circular_pattern_component(
             for sector_index, shape in zip(sector_tree_indexs, shapes):
                 phy_comp = sector_index[search_index_i]
                 if not isinstance(phy_comp, bm_comp.PhysicalComponent):
-                    raise Exception("Something has gone wrong :/")
+                    raise ComponentError("Something has gone wrong :/")
                 phy_comp.shape = shape
 
     return sectors

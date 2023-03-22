@@ -346,7 +346,7 @@ if __name__ == "__main__":
     )
 
     reactor.show_cad(
-        with_n_sectors=3,
+        n_sectors=3,
         # with_components=[
         #     reactor.pf_coils,
         #     reactor.plasma,

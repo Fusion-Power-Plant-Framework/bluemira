@@ -36,6 +36,7 @@ dependencies = [
     "pyclipper",
     "pypet",
     "pyquaternion",
+    "rich",
     "scikit-learn",
     "seaborn",
     "tables",

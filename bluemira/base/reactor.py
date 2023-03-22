@@ -28,6 +28,7 @@ from rich.progress import track
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
 from bluemira.base.error import ReactorError
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 
@@ -120,7 +121,7 @@ class Reactor:
         self,
         *dims,
         with_components: Optional[List[ComponentManager]] = None,
-        with_n_sectors: Optional[int] = None,
+        n_sectors: Optional[int] = None,
         **kwargs,
     ):
         """
@@ -132,8 +133,8 @@ class Reactor:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         """
-        if with_n_sectors is None:
-            with_n_sectors = self.n_sectors
+        if n_sectors is None:
+            n_sectors = self.n_sectors
 
         # give dims_to_show a default value
         dims_to_show = ("xyz",) if len(dims) == 0 else dims
@@ -175,12 +176,12 @@ class Reactor:
                 if not with_components
                 else ", ".join([cm.component().name for cm in with_components])
             )
-            print(f"Building xyz CAD with {with_n_sectors} sectors for {comp_names}")
+            bluemira_print(f"Building xyz CAD with {n_sectors} sectors for {comp_names}")
             for xyz in track(xyzs):
                 xyz.children = circular_pattern_component(
                     list(xyz.children),
-                    with_n_sectors,
-                    degree=(360 / self.n_sectors) * with_n_sectors,
+                    n_sectors,
+                    degree=(360 / self.n_sectors) * n_sectors,
                 )
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)
