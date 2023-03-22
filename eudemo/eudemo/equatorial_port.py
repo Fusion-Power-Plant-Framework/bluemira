@@ -25,8 +25,6 @@ EU-DEMO Equatorial Port
 from dataclasses import dataclass
 from typing import Dict, List, Type, Union
 
-from numpy import array, ndarray
-
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
@@ -189,14 +187,14 @@ class EquatorialPortBuilder(Builder):
 
     def build_castellations(
         self,
-        wire: BluemiraFace,
+        face: BluemiraFace,
         vec: tuple,
         length: float,
         distances: List[float],
         offsets: List[float],
     ) -> BluemiraSolid:
         """
-        Returns BluemiraSolid that is a BluemiraFace castellated along a given vector
+        Returns BluemiraSolid for a BluemiraFace castellated along a given vector
 
         Parameters
         ----------
@@ -207,26 +205,24 @@ class EquatorialPortBuilder(Builder):
         length: float
             total length of castellated BluemiraSolid in vec direction
         distances: List[float]
-            list of distances along vec describing castellation positions (relative to starting wire)
+            castellation positions along vec (relative to starting wire)
         offsets: List[float]
-            list of castellations offsets corresponding to each position in 'distances' parameter
+            castellations offsets for each position
         """
-        base = wire
+        base = face
         sections = []
 
-        # Normalise and Scale vec
+        # Normalise vec
         vec_mag = (vec[0] ** 2 + vec[1] ** 2 + vec[2] ** 2) ** 0.5
         if vec_mag != 1.0:
             vec = (vec[0] / vec_mag, vec[1] / vec_mag, vec[2] / vec_mag)
-        print("Extrude by ", vec)
-        make_vec = lambda scale: (vec[0] * scale, vec[1] * scale, vec[2] * scale)
 
         parameter_array = list(zip(distances, offsets))
         parameter_array.append((length, 1.0))
         _prev_dist = 0
         for dist_off in parameter_array:
             dist = dist_off[0] - _prev_dist
-            ext = make_vec(dist)
+            ext = (vec[0] * dist, vec[1] * dist, vec[2] * dist)
             part = extrude_shape(base, ext)
             sections.append(part)
             _prev_dist = dist_off[0]
