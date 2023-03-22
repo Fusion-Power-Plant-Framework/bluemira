@@ -44,4 +44,4 @@ class TestDivertorBuilder:
 
         xyz = cryostat_ts.get_component("xyz")
         assert xyz
-        assert len(xyz.leaves) == 1 * self.params["n_div_cassettes"]["value"]
+        assert len(xyz.leaves) == self.params["n_div_cassettes"]["value"]
