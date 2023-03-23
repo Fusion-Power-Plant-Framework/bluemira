@@ -31,6 +31,7 @@ from typing import Optional
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import minimize
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_debug_flush, bluemira_warn
@@ -503,7 +504,6 @@ class MaximiseSelector(RipplePointSelector):
         parameterisation.variables.set_values_from_norm(vector)
         tf_wire = parameterisation.create_shape()
         solver.update_cage(tf_wire)
-        from scipy.optimize import minimize
 
         def f_max_ripple(alpha):
             point = lcfs_wire.value_at(alpha)
