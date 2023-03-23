@@ -378,10 +378,11 @@ class TestShortCoordinates:
     line = Coordinates({"x": [0, 1], "y": [0, 1], "z": [0, 1]})
 
     def test_point_instantiation(self):
-        point = Coordinates({"x": [0], "y": [0], "z": [0]})
-        point2 = Coordinates([[0], [0], [0]])
-        point3 = Coordinates({"x": 0, "y": 0, "z": 0})
-        assert point == point2 == point3
+        point = Coordinates({"x": [1], "y": [1], "z": [1]})
+        point2 = Coordinates([[1], [1], [1]])
+        point3 = Coordinates({"x": 1, "y": 1, "z": 1})
+        point4 = Coordinates([1, 1, 1])
+        assert point == point2 == point3 == point4
 
     def test_line_instantiation(self):
         line = Coordinates({"x": [0, 1], "y": [0, 1], "z": [0, 1]})
