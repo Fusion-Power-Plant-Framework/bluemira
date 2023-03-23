@@ -395,11 +395,13 @@ class TestShortCoordinates:
         np.testing.assert_almost_equal(measured, length)
 
     @pytest.mark.parametrize("c", [point, line])
-    def test_normal_vector(self, c):
+    def test_normal_vector(self, c, caplog):
         assert c.normal_vector is None
+        assert len(caplog.messages) == 1
+        assert "Cannot set planar properties" in caplog.messages[0]
 
     @pytest.mark.parametrize("c", [point, line])
-    def test_is_planar(self, c):
+    def test_is_planar(self, c, caplog):
         assert not c.is_planar
 
     @pytest.mark.parametrize(
