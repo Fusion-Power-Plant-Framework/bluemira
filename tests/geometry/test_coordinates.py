@@ -416,6 +416,10 @@ class TestShortCoordinates:
     def test_open(self):
         pass
 
+    @pytest.mark.parametrize("c", [point, line])
+    def test_check_ccw(self, c):
+        assert not c.check_ccw()
+
     @pytest.mark.parametrize("c, lenn", [(point, 1), (line, 2)])
     def test_len(self, c, lenn):
         assert len(c) == lenn

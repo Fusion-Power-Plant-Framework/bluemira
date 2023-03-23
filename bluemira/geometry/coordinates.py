@@ -1188,6 +1188,9 @@ def _parse_dict(xyz_dict):
         )
 
     lengths = [len(c) for c in [x, y, z]]
+    if np.all(np.array(lengths) <= 1):
+        # Vertex detected
+        return np.array([x, y, z])
 
     usable_lengths = []
     for length in lengths:
@@ -1481,6 +1484,12 @@ class Coordinates:
         """
         # [sic] coordinates do not have a "mass", but named such for consistency with
         # other geometry objects.
+        if len(self) == 1:
+            return self.xyz.T[0]
+
+        elif len(self) == 2:
+            return np.average(self.xyz.T)
+
         return tuple(get_centroid_3d(*self._array))
 
     # =============================================================================
