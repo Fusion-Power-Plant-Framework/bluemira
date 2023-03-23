@@ -26,11 +26,13 @@
 from __future__ import annotations
 from typing import TYPE_CHECKING
 
+from dataclasses import dataclass, fields
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 import shapely.geometry as shp
 
+from typing import Dict, List, Type, Union
 from bluemira.base import constants
 from bluemira.base.constants import ureg
 from bluemira.base.error import BuilderError
@@ -1128,11 +1130,10 @@ class Radiation:
         self,
         eq: Equilibrium,
         flux_surf_solver: TempFsSolver,
-        params: ParameterFrame,
+        params: Union[Dict, ParameterFrame],
     ):
-        self.params = ParameterFrame(self.default_params)
-        self.params.update_kw_parameters(params, f"{self.__class__.__name__} input")
-
+        self.params = params
+        
         self.flux_surf_solver = flux_surf_solver
         self.eq = eq
 
@@ -1446,7 +1447,7 @@ class CoreRadiation(Radiation):
         """
         # The plasma bulk is divided into plasma core and plasma mantle according to rho
         # rho is a nondimensional radial coordinate: rho = r/a (r varies from 0 to a)
-        self.rho_ped = (self.params["rho_ped_n"] + self.params.rho_ped_t) / 2.0
+        self.rho_ped = (self.params.rho_ped_n + self.params.rho_ped_t) / 2.0
 
         # Plasma core for rho < rho_core
         rho_core1 = np.linspace(0, 0.95 * self.rho_ped, 30)
@@ -2675,7 +2676,7 @@ class RadiationSolver:
 
         self.eq = eq
         self.flux_surf_solver = flux_surf_solver
-        self.params = params
+        self.params = self._make_params(params)
         self.imp_content_core = impurity_content_core
         self.imp_data_core = impurity_data_core
         self.imp_content_sol = impurity_content_sol
@@ -2909,3 +2910,103 @@ class RadiationSolver:
         fig.colorbar(cm, label=r"$[MW.m^{-3}]$")
 
         return ax
+    
+    def _make_params(self, config):
+        """Convert the given params to ``RadiationSolverParams``"""
+        if isinstance(config, dict):
+            try:
+                return RadiationSolverParams(**config)
+            except TypeError:
+                unknown = [
+                    k for k in config if k not in fields(RadiationSolverParams)
+                ]
+                raise TypeError(f"Unknown config parameter(s) {str(unknown)[1:-1]}")
+        elif isinstance(config, RadiationSolverParams):
+            return config
+        else:
+            raise TypeError(
+                "Unsupported type: 'config' must be a 'dict', or "
+                "'ChargedParticleSolverParams' instance; found "
+                f"'{type(config).__name__}'."
+            )
+        
+@dataclass
+class RadiationSolverParams:
+    rho_ped_n: float = 0.94
+    """???"""
+
+    n_e_0: float = 21.93e19
+    """???"""
+
+    n_e_ped: float = 8.117e19
+    """???"""
+
+    n_e_sep: float = 1.623e19
+    """???"""
+
+    alpha_n: float = 1.15
+    """???"""
+
+    rho_ped_t: float = 0.976
+    """???"""
+
+    T_e_0: float = 21.442
+    """???"""
+
+    T_e_ped: float = 5.059
+    """???"""
+
+    T_e_sep: float = 0.16
+    """???"""
+
+    alpha_t: float = 1.905
+    """???"""
+
+    t_beta: float = 2.0
+    """???"""
+
+    P_sep: float = 150
+    """???"""
+
+    k_0: float = 2000.0
+    """???"""
+
+    gamma_sheath: float = 7.0
+    """???"""
+
+    eps_cool: float = 25.0
+    """???"""
+
+    f_ion_t: float = 0.01
+    """???"""
+
+    det_t: float = 0.0015
+    """???"""
+
+    lfs_p_fraction: float = 0.9
+    """???"""
+
+    div_p_sharing: float = 0.5
+    """???"""
+
+    theta_outer_target: float = 5.0
+    """???"""
+
+    theta_inner_target: float = 5.0
+    """???"""
+
+    f_p_sol_near: float = 0.65
+    """???"""
+
+    fw_lambda_q_near_omp: float = 0.003
+    """???"""
+
+    fw_lambda_q_far_omp: float = 0.1
+    """???"""
+
+    fw_lambda_q_near_imp: float = 0.003
+    """???"""
+
+    fw_lambda_q_far_imp: float = 0.1
+    """???"""
+

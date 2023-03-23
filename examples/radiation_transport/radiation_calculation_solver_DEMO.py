@@ -28,10 +28,13 @@ import os
 
 import matplotlib.pyplot as plt
 
+import bluemira.codes.process as process
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
+from bluemira.radiation_transport.radiation_profile import RadiationSolver
 from bluemira.radiation_transport.flux_surfaces_maker import FluxSuraceSolver
 
 # %% [markdown]
@@ -64,14 +67,14 @@ fw_shape = Coordinates.from_json(fw_name)
 # %%
 params = {
     "rho_ped_n": 0.94,
-    "n_el_0": 21.93e19,
-    "n_el_ped": 8.117e19,
+    "n_e_0": 21.93e19,
+    "n_e_ped": 8.117e19,
     "n_e_sep": 1.623e19,
     "alpha_n": 1.15,
     "rho_ped_t": 0.976,
-    "T_el_0": 21.442,
+    "T_e_0": 21.442,
     "T_e_ped": 5.059,
-    "T_el_sep": 0.16,
+    "T_e_sep": 0.16,
     "alpha_t": 1.905,
     "t_beta": 2.0,
     "P_sep": 150,
@@ -93,20 +96,18 @@ params = {
 
 # %%
 config = {
-            "core plasma" : {
-                "f_imp_core" : {
-                    "H": 0.7,
-                    "He": 0.05,
-                    "Xe": 0.25e-3,
-                    "W": 0.1e-3
-                },
-                "f_imp_sol" : {
-                    "H": 0,
-                    "He": 0,
-                    "Ar": 0.1e-2,
-                    "Xe": 0,
-                    "W": 0
-                }
+            "f_imp_core" : {
+                "H": 0.7,
+                "He": 0.05,
+                "Xe": 0.25e-3,
+                "W": 0.1e-3
+            },
+            "f_imp_sol" : {
+                "H": 0,
+                "He": 0,
+                "Ar": 0.1e-2,
+                "Xe": 0,
+                "W": 0
             }
         }
 
@@ -117,3 +118,74 @@ config = {
 # %%
 flux_surface_solver = FluxSuraceSolver(equilibrium=eq, dx_mp=0.001)
 flux_surface_solver.analyse(first_wall=fw_shape)
+
+# %% [markdown]
+#
+# Getting impurity data.
+
+# %%
+
+def get_impurity_data(impurities_list: list = ["H", "He"]):
+    """
+    Function getting the PROCESS impurity data
+    """
+    # This is a function
+    imp_data_getter = process.Solver.get_species_data
+
+    impurity_data = {}
+    for imp in impurities_list:
+        impurity_data[imp] = {
+            "T_ref": imp_data_getter(imp)[0],
+            "L_ref": imp_data_getter(imp)[1],
+        }
+
+    return impurity_data
+
+def create_radiation_source(
+    eq: Equilibrium,
+    params: ParameterFrame,
+    impurity_content_core: dict,
+    impurity_data_core: dict,
+    impurity_content_sol: dict,
+    impurity_data_sol: dict,
+    only_source=True,
+):
+
+    # Make the radiation source
+    rad_solver = RadiationSolver(
+        eq=eq,
+        flux_surf_solver=flux_surface_solver,
+        params=params,
+        impurity_content_core=impurity_content_core,
+        impurity_data_core=impurity_data_core,
+        impurity_content_sol=impurity_content_sol,
+        impurity_data_sol=impurity_data_sol,
+    )
+
+    rad_solver.analyse(fw_shape)
+
+def main(only_source=True):
+
+    # Get the core impurity fractions
+    f_impurities_core = config["f_imp_core"]
+    f_impurities_sol = config["f_imp_sol"]
+    impurities_list_core = [imp for imp in f_impurities_core]
+    impurities_list_sol = [imp for imp in f_impurities_sol]
+
+    # Get the impurities data
+    impurity_data_core = get_impurity_data(impurities_list=impurities_list_core)
+    impurity_data_sol = get_impurity_data(impurities_list=impurities_list_sol)
+
+    # Make the radiation sources
+    rad_source_func = create_radiation_source(
+        eq=eq,
+        params=params,
+        impurity_content_core=f_impurities_core,
+        impurity_data_core=impurity_data_core,
+        impurity_content_sol=f_impurities_sol,
+        impurity_data_sol=impurity_data_sol,
+        only_source=only_source,
+    )
+
+if __name__ == "__main__":
+    main()
