@@ -431,6 +431,14 @@ class TestShortCoordinates:
     def test_len(self, c, lenn):
         assert len(c) == lenn
 
+    @pytest.mark.parametrize("c", [point, line])
+    def test_T(self, c):
+        np.testing.assert_allclose(c.T[0], np.array([0, 0, 0]))
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_points(self, c):
+        np.testing.assert_allclose(c.points[0], np.array([0, 0, 0]))
+
 
 class TestCheckLineSegment:
     def test_true(self):
