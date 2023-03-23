@@ -411,6 +411,7 @@ class MaximiseSelector(RipplePointSelector):
                 "TF_ripple_limit": TF_ripple_limit,
                 "lcfs_wire": self.wire,
                 "alpha_0": self._alpha_0,
+                # I'm sorry...
                 "this": self,
             },
             tolerance=rip_con_tol * np.ones(2),
