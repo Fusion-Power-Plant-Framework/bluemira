@@ -34,6 +34,7 @@ from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.plotter import DisplayOptions
+from bluemira.geometry.base import BluemiraGeo
 from bluemira.utilities.tools import get_module
 
 
@@ -142,6 +143,7 @@ def _validate_display_inputs(parts, options):
 
 
 def show_cad(
+    labels: Optional[Union[str, List[str]]] = None,
     parts: Optional[
         Union[BluemiraGeo, List[BluemiraGeo]]  # noqa: F821
     ] = None,  # avoiding circular deps
@@ -179,7 +181,7 @@ def show_cad(
 
     part_options = [o.as_dict() for o in new_options]
 
-    backend.get_module().show_cad(parts, part_options, **kwargs)
+    backend.get_module().show_cad(labels, parts, part_options, **kwargs)
 
 
 class BaseDisplayer(ABC):
@@ -286,7 +288,7 @@ class ComponentDisplayer(BaseDisplayer):
 
         show_cad(
             *bm_comp.get_properties_from_components(
-                comps, ("shape", "display_cad_options")
+                comps, ("name", "shape", "display_cad_options")
             ),
             **kwargs,
         )

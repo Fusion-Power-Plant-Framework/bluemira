@@ -1929,6 +1929,7 @@ class DefaultDisplayOptions:
 
 
 def show_cad(
+    labels: Union[str, List[str]],
     parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
     options: Optional[Union[Dict, List[Dict]]] = None,
     **kwargs,
@@ -1963,10 +1964,10 @@ def show_cad(
 
     root = coin.SoSeparator()
 
-    for part, option in zip(parts, options):
+    for label, part, option in zip(labels, parts, options):
         new_part = part.shape.copy()
         new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
-        obj = doc.addObject("Part::Feature")
+        obj = doc.addObject("Part::Feature", label)
         obj.Shape = new_part
         doc.recompute()
         subgraph = FreeCADGui.subgraphFromObject(obj)

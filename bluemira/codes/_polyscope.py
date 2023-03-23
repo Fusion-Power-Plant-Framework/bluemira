@@ -49,7 +49,12 @@ class DefaultDisplayOptions:
         self.colour = value
 
 
-def show_cad(parts, part_options, **kwargs):
+def show_cad(
+    labels: Union[str, List[str]],
+    parts,
+    part_options,
+    **kwargs,
+):
     """
     The implementation of the display API for FreeCAD parts.
 
@@ -82,7 +87,7 @@ def show_cad(parts, part_options, **kwargs):
         gplane=kwargs.get("gplane", "none"),
     )
 
-    add_features(parts, part_options)
+    add_features(labels, parts, part_options)
 
     ps.show()
 
@@ -145,6 +150,7 @@ def _init_polyscope():
 
 
 def add_features(
+    labels: Union[str, List[str]],
     parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
     options: Optional[Union[Dict, List[Dict]]] = None,
 ) -> Tuple[List[ps.SurfaceMesh]]:
@@ -167,12 +173,14 @@ def add_features(
     curves = []
 
     # loop over every face adding their meshes to polyscope
-    for shape_i, (part, option) in enumerate(zip(parts, options)):
+    for shape_i, (label, part, option) in enumerate(
+        zip(labels, parts, options),
+    ):
         verts, faces = cadapi.collect_verts_faces(part._shape, option["tesselation"])
 
         if not (verts is None or faces is None):
             m = ps.register_surface_mesh(
-                clean_name(part.label, shape_i),
+                clean_name(label, str(shape_i)),
                 verts,
                 faces,
                 smooth_shade=option["smooth"],
@@ -185,7 +193,7 @@ def add_features(
         if option["wires_on"] or (verts is None or faces is None):
             verts, edges = cadapi.collect_wires(part._shape, Deflection=0.01)
             c = ps.register_curve_network(
-                clean_name(part.label, f"{shape_i}_wire"),
+                clean_name(label, f"{shape_i}_wire"),
                 verts,
                 edges,
                 radius=option["wire_radius"],
@@ -198,7 +206,7 @@ def add_features(
     return meshes, curves
 
 
-def clean_name(name: str, number: int) -> str:
+def clean_name(label: str, index_label: str) -> str:
     """
     Cleans or creates name.
     Polyscope doesn't like hashes in names,
@@ -206,18 +214,19 @@ def clean_name(name: str, number: int) -> str:
 
     Parameters
     ----------
-    name
+    label: str
         name to be cleaned
-    number
-        if name is empty <NO LABEL num >
+    index_label: str
+        if name is empty -> {index_label}: NO LABEL
 
     Returns
     -------
     name
 
     """
-    name = name.replace("#", "_")
-    if len(name) == 0 or name == "_":
-        return f"<NO LABEL {number}>"
+    label = label.replace("#", "_")
+    index_label = index_label.replace("#", "_")
+    if len(label) == 0 or label == "_":
+        return f"{index_label}: NO LABEL"
     else:
-        return name
+        return f"{index_label}: {label}"
