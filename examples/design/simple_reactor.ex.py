@@ -586,10 +586,10 @@ tf_coil = TFCoil(tf_coil_builder.build())
 # Finally we add the components to the reactor and show the CAD
 
 # %%
-reactor = MyReactor("Simple Example")
+reactor = MyReactor("Simple Example", n_sectors=1)
 
 reactor.plasma = plasma
 reactor.tf_coil = tf_coil
 
-reactor.show_cad()
+reactor.show_cad(n_sectors=1)
 reactor.show_cad("xz")
