@@ -392,8 +392,9 @@ class TestShortCoordinates:
         measured = c.length
         np.testing.assert_almost_equal(measured, length)
 
-    def test_normal_vector(self):
-        pass
+    @pytest.mark.parametrize("c", [point, line])
+    def test_normal_vector(self, c):
+        assert c.normal_vector is None
 
     @pytest.mark.parametrize("c", [point, line])
     def test_is_planar(self, c):
@@ -410,11 +411,17 @@ class TestShortCoordinates:
     def test_closed(self, c):
         assert not c.closed
 
-    def test_close(self):
-        pass
+    @pytest.mark.parametrize("c", [point, line])
+    def test_close(self, c, caplog):
+        c.close()
+        assert len(caplog.messages) == 1
+        assert "Cannot close Coordinates" in caplog.messages[0]
 
-    def test_open(self):
-        pass
+    @pytest.mark.parametrize("c", [point, line])
+    def test_open(self, c, caplog):
+        c.open()
+        assert len(caplog.messages) == 1
+        assert "Cannot open Coordinates" in caplog.messages[0]
 
     @pytest.mark.parametrize("c", [point, line])
     def test_check_ccw(self, c):

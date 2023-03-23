@@ -1523,6 +1523,10 @@ class Coordinates:
         """
         Open the Coordinates (if they are closed)
         """
+        if len(self) < 3:
+            bluemira_warn(f"Cannot open Coordinates of length {len(self)}")
+            return
+
         if self.closed:
             self._array = self._array[:, :-1]
 
@@ -1555,6 +1559,10 @@ class Coordinates:
         """
         Close the Coordinates (if they are open)
         """
+        if len(self) < 3:
+            bluemira_warn(f"Cannot close Coordinates of length {len(self)}")
+            return
+
         if not self.closed:
             self._array = np.vstack((self._array.T, self._array[:, 0])).T
 
