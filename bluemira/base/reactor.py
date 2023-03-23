@@ -20,12 +20,16 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Base class for a Bluemira reactor."""
 
-from typing import Type
+from typing import List, Optional, Type
 from warnings import warn
+
+from rich.progress import track
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
 from bluemira.base.error import ReactorError
+from bluemira.base.look_and_feel import bluemira_print
+from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 
 _PLOT_DIMS = ["xy", "xz", "xyz"]
@@ -77,14 +81,21 @@ class Reactor:
 
     """
 
-    def __init__(self, name: str):
+    def __init__(self, name: str, n_sectors: int):
         self.name = name
+        self.n_sectors = n_sectors
 
-    def component(self) -> Component:
+    def component(
+        self,
+        with_components: Optional[List[ComponentManager]] = None,
+    ) -> Component:
         """Return the component tree."""
-        return self._build_component_tree()
+        return self._build_component_tree(with_components)
 
-    def _build_component_tree(self) -> Component:
+    def _build_component_tree(
+        self,
+        with_components: Optional[List[ComponentManager]] = None,
+    ) -> Component:
         """Build the component tree from this class's annotations."""
         component = Component(self.name)
         comp_type: Type
@@ -93,6 +104,11 @@ class Reactor:
                 continue
             try:
                 component_manager = getattr(self, comp_name)
+                if (
+                    with_components is not None
+                    and component_manager not in with_components
+                ):
+                    continue
             except AttributeError:
                 # We don't mind if a reactor component is not set, it
                 # just won't be part of the tree
@@ -101,16 +117,58 @@ class Reactor:
             component.add_child(component_manager.component())
         return component
 
-    def show_cad(self, *dims, **kwargs):
+    def _construct_xyz_cad(
+        self,
+        reactor_component: Component,
+        with_components: Optional[List[ComponentManager]] = None,
+        n_sectors: Optional[int] = None,
+    ):
+        xyzs = reactor_component.get_component(
+            "xyz",
+            first=False,
+        )
+        xyzs = [xyzs] if isinstance(xyzs, Component) else xyzs
+
+        comp_names = (
+            "all"
+            if not with_components
+            else ", ".join([cm.component().name for cm in with_components])
+        )
+        bluemira_print(
+            f"Constructing xyz CAD for display with {n_sectors} sectors and components: {comp_names}"
+        )
+        for xyz in track(xyzs):
+            xyz.children = circular_pattern_component(
+                list(xyz.children),
+                n_sectors,
+                degree=(360 / self.n_sectors) * n_sectors,
+            )
+
+    def show_cad(
+        self,
+        *dims,
+        with_components: Optional[List[ComponentManager]] = None,
+        n_sectors: Optional[int] = None,
+        **kwargs,
+    ):
         """
         Show the CAD build of the reactor.
 
         Parameters
         ----------
-        dim: str
+        *dims: str
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
+        with_components: List
+            The components to construct when displaying CAD for xyz.
+            Defaults to None, which means show "all" components.
+        n_sectors: Optional[int]
+            The number of sectors to construct when displaying CAD for xyz
+            Defaults to None, which means show "all" sectors.
         """
+        if n_sectors is None:
+            n_sectors = self.n_sectors
+
         # give dims_to_show a default value
         dims_to_show = ("xyz",) if len(dims) == 0 else dims
 
@@ -129,12 +187,20 @@ class Reactor:
                     f"Must be one of {str(_PLOT_DIMS)}"
                 )
 
-        comp = self.component()
+        comp = self.component(with_components)
 
-        # Filtering mutates the underlying components,
-        # which exist in memory regardless of calling self.component() on the reactor.
-        # Thus a copy must be made
+        # A copy of the component tree must be made
+        # as filtering would mutate the ComponentMangers' underlying component trees
+        # self.component (above) only creates a new root node for this reactor,
+        # not a new component tree.
         comp_copy = comp.copy()
         comp_copy.filter_components(dims_to_show)
+
+        # if "xyz" is requested, construct the 3d cad
+        # from each xyz component in the tree,
+        # as it's assumed that the cad is only built for 1 sector
+        # and is sector symmetric, therefore can be patterned
+        if "xyz" in dims_to_show:
+            self._construct_xyz_cad(comp_copy, with_components, n_sectors)
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)

@@ -44,6 +44,6 @@ class TestRadiationShieldBuilder:
 
         xyz = rad_shield.get_component("xyz")
         assert xyz
-        assert len(xyz.leaves) == self.params["n_TF"]["value"]
+        assert len(xyz.leaves) == 1
 
         xyz.show_cad()

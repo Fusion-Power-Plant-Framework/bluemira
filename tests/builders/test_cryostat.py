@@ -51,7 +51,7 @@ class TestCryostatBuilder:
 
         xyz = cryostat.get_component("xyz")
         assert xyz
-        assert len(xyz.leaves) == self.params["n_TF"]["value"]
+        assert len(xyz.leaves) == 1
 
     def test_outward_kink_raises_ValueError(self):
         builder = CryostatBuilder(self.params, {}, 8, 10)

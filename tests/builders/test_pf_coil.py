@@ -32,6 +32,7 @@ class TestPFCoilBuilder:
             [(1, 0, 1), (3, 0, 1), (3, 0, -1), (1, 0, -1)], closed=True
         )
         cls.params = {
+            "n_TF": {"value": 1, "unit": "dimensionless"},
             "tk_insulation": {"value": 0.1, "unit": "m"},
             "tk_casing": {"value": 0.2, "unit": "m"},
             "ctype": {"value": "PF", "unit": "dimensionless"},

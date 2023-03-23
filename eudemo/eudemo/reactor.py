@@ -97,11 +97,11 @@ class EUDEMO(Reactor):
     radiation_shield: RadiationShield
 
 
-def build_plasma(build_config: Dict, eq: Equilibrium) -> Plasma:
+def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
     """Build EUDEMO plasma from an equilibrium."""
     lcfs_loop = eq.get_LCFS()
     lcfs_wire = make_polygon({"x": lcfs_loop.x, "z": lcfs_loop.z}, closed=True)
-    builder = PlasmaBuilder(build_config, lcfs_wire)
+    builder = PlasmaBuilder(params, build_config, lcfs_wire)
     return Plasma(builder.build())
 
 
@@ -238,11 +238,12 @@ def _read_json(file_path: str) -> Dict:
 if __name__ == "__main__":
     import time
 
-    reactor = EUDEMO("EUDEMO")
     params = make_parameter_frame(PARAMS_FILE, EUDEMOReactorParams)
     if params is None:
         raise ValueError("Params cannot be None")
     build_config = _read_json(os.path.join(CONFIG_DIR, "build_config.json"))
+
+    reactor = EUDEMO("EUDEMO", n_sectors=params.n_TF.value)
 
     params = radial_build(params, build_config["Radial build"])
     lcfs_coords, profiles = run_designer(
@@ -263,7 +264,7 @@ if __name__ == "__main__":
         profiles=profiles,
     )
 
-    reactor.plasma = build_plasma(build_config.get("Plasma", {}), reference_eq)
+    reactor.plasma = build_plasma(params, build_config.get("Plasma", {}), reference_eq)
 
     blanket_face, divertor_face, ivc_boundary = design_ivc(
         params, build_config["IVC"], equilibrium=reference_eq
@@ -295,7 +296,6 @@ if __name__ == "__main__":
     )
     t6 = time.time()
     print(f"{t6-t5}")
-
     thermal_shield_config = build_config.get("Thermal shield", {})
     reactor.vv_thermal = build_vacuum_vessel_thermal_shield(
         params,
@@ -329,13 +329,13 @@ if __name__ == "__main__":
         reactor.tf_coils.boundary(),
     )
 
-    reactor.coil_structures = build_coil_structures(
-        params,
-        build_config.get("Coil structures", {}),
-        tf_coil_xz_face=reactor.tf_coils.xz_face(),
-        pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
-        pf_coil_keep_out_zones=[upper_port_xz],
-    )
+    # reactor.coil_structures = build_coil_structures(
+    #     params,
+    #     build_config.get("Coil structures", {}),
+    #     tf_coil_xz_face=reactor.tf_coils.xz_face(),
+    #     pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
+    #     pf_coil_keep_out_zones=[upper_port_xz],
+    # )
 
     reactor.cryostat = build_cryostat(
         params, build_config.get("Cryostat", {}), reactor.cryostat_thermal.xz_boundary()
@@ -345,10 +345,9 @@ if __name__ == "__main__":
         params, build_config.get("RadiationShield", {}), reactor.cryostat.xz_boundary()
     )
 
+    reactor.show_cad(n_sectors=3)
+
     sspc_solver = SteadyStatePowerCycleSolver(params)
     sspc_result = sspc_solver.execute()
     sspc_solver.model.plot()
     plt.show()
-
-    reactor.show_cad("xz")
-    reactor.show_cad()

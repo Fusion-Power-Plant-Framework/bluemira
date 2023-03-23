@@ -442,7 +442,13 @@ class TFCoilBuilder(Builder):
         ins_inner_face, ins_outer_face = self._make_ins_xsec()
         y_in, ib_cas_wire, ob_cas_wire = self._make_cas_xsec()
 
-        xyz_case, xyz = self.build_xyz(y_in, ins_inner_face, ib_cas_wire, ob_cas_wire)
+        xyz_case, xyz = self.build_xyz(
+            y_in,
+            ins_inner_face,
+            ib_cas_wire,
+            ob_cas_wire,
+            degree=0,
+        )
         return self.component_tree(
             xz=self.build_xz(xyz_case),
             xy=self.build_xy(ins_inner_face, ins_outer_face, ib_cas_wire, ob_cas_wire),

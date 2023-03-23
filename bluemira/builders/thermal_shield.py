@@ -90,7 +90,7 @@ class VVTSBuilder(Builder):
         return self.component_tree(
             xz=[xz_vvts],
             xy=self.build_xy(vvts_face),
-            xyz=self.build_xyz(vvts_face),
+            xyz=self.build_xyz(vvts_face, degree=0),
         )
 
     def build_xz(self, koz: BluemiraWire) -> PhysicalComponent:
@@ -152,7 +152,6 @@ class VVTSBuilder(Builder):
             self.params.n_TF.value,
             BLUE_PALETTE["TS"][0],
             degree,
-            enable_sectioning=False,
         )
 
 
@@ -198,7 +197,7 @@ class CryostatTSBuilder(Builder):
         return self.component_tree(
             xz=[xz_cts],
             xy=[self.build_xy(cts_face)],
-            xyz=self.build_xyz(cts_face),
+            xyz=self.build_xyz(cts_face, degree=0),
         )
 
     def build_xz(

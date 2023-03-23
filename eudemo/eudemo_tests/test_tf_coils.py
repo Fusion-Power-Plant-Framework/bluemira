@@ -228,7 +228,7 @@ class TestTFCoilBuilder:
         xyz.show_cad()
 
         # Casing, Insulation, Winding pack
-        assert len(xyz.leaves) == self.params["n_TF"]["value"] * 3
+        assert len(xyz.leaves) == 3
         # inboard and outboard
         assert len(xy.leaves) == self.params["n_TF"]["value"] * 3 * 2
 

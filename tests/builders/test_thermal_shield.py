@@ -89,4 +89,4 @@ class TestCryostatTSBuilder:
 
         xyz = cryostat_ts.get_component("xyz")
         assert xyz
-        assert len(xyz.leaves) == self.params["n_TF"]["value"]
+        assert len(xyz.leaves) == 1

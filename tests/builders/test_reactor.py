@@ -22,8 +22,9 @@
 import pytest
 
 from bluemira.base.builder import ComponentManager
+from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.base.reactor import Reactor, ReactorError
-from bluemira.builders.plasma import Plasma, PlasmaBuilder
+from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
 from bluemira.geometry.tools import make_polygon
 
 REACTOR_NAME = "My Reactor"
@@ -69,8 +70,14 @@ class TestReactor:
 
     @staticmethod
     def _make_reactor() -> MyReactor:
-        reactor = MyReactor(REACTOR_NAME)
+        reactor = MyReactor(REACTOR_NAME, n_sectors=1)
         # use a square plasma, as circle causes topological naming issue
         lcfs = make_polygon({"x": [1, 1, 5, 5], "z": [-2, 2, 2, -2]}, closed=True)
-        reactor.plasma = Plasma(PlasmaBuilder({}, lcfs).build())
+        reactor.plasma = Plasma(
+            PlasmaBuilder(
+                PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)),
+                {},
+                lcfs,
+            ).build()
+        )
         return reactor
