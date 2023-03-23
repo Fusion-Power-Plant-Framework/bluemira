@@ -149,7 +149,11 @@ def circular_pattern_component(
             for sector_index, shape in zip(sector_tree_indexs, shapes):
                 phy_comp = sector_index[search_index_i]
                 if not isinstance(phy_comp, bm_comp.PhysicalComponent):
-                    raise ComponentError("Something has gone wrong :/")
+                    raise ComponentError(
+                        "Could not find corresponding PhysicalComponent in "
+                        f"sector index: {sector_index}, "
+                        f"with search index: {search_index_i}"
+                    )
                 phy_comp.shape = shape
 
     return sectors

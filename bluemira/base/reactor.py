@@ -117,6 +117,33 @@ class Reactor:
             component.add_child(component_manager.component())
         return component
 
+    def _construct_xyz_cad(
+        self,
+        reactor_component: Component,
+        with_components: Optional[List[ComponentManager]] = None,
+        n_sectors: Optional[int] = None,
+    ):
+        xyzs = reactor_component.get_component(
+            "xyz",
+            first=False,
+        )
+        xyzs = [xyzs] if isinstance(xyzs, Component) else xyzs
+
+        comp_names = (
+            "all"
+            if not with_components
+            else ", ".join([cm.component().name for cm in with_components])
+        )
+        bluemira_print(
+            f"Constructing xyz CAD for display with {n_sectors} sectors and components: {comp_names}"
+        )
+        for xyz in track(xyzs):
+            xyz.children = circular_pattern_component(
+                list(xyz.children),
+                n_sectors,
+                degree=(360 / self.n_sectors) * n_sectors,
+            )
+
     def show_cad(
         self,
         *dims,
@@ -129,9 +156,15 @@ class Reactor:
 
         Parameters
         ----------
-        dim: str
+        *dims: str
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
+        with_components: List
+            The components to construct when displaying CAD for xyz.
+            Defaults to None, which means show "all" components.
+        n_sectors: Optional[int]
+            The number of sectors to construct when displaying CAD for xyz
+            Defaults to None, which means show "all" sectors.
         """
         if n_sectors is None:
             n_sectors = self.n_sectors
@@ -157,31 +190,17 @@ class Reactor:
         comp = self.component(with_components)
 
         # A copy of the component tree must be made
-        # as filtering would mutate the underlying component tree,
-        # that exists statically in memory.
+        # as filtering would mutate the ComponentMangers' underlying component trees
         # self.component (above) only creates a new root node for this reactor,
         # not a new component tree.
         comp_copy = comp.copy()
         comp_copy.filter_components(dims_to_show)
 
+        # if "xyz" is requested, construct the 3d cad
+        # from each xyz component in the tree,
+        # as it's assumed that the cad is only built for 1 sector
+        # and is sector symmetric, therefore can be patterned
         if "xyz" in dims_to_show:
-            xyzs = comp_copy.get_component(
-                "xyz",
-                first=False,
-            )
-            xyzs = [xyzs] if isinstance(xyzs, Component) else xyzs
-
-            comp_names = (
-                "all components"
-                if not with_components
-                else ", ".join([cm.component().name for cm in with_components])
-            )
-            bluemira_print(f"Building xyz CAD with {n_sectors} sectors for {comp_names}")
-            for xyz in track(xyzs):
-                xyz.children = circular_pattern_component(
-                    list(xyz.children),
-                    n_sectors,
-                    degree=(360 / self.n_sectors) * n_sectors,
-                )
+            self._construct_xyz_cad()
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)
