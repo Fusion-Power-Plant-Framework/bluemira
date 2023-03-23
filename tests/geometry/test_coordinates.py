@@ -377,11 +377,15 @@ class TestShortCoordinates:
     point = Coordinates({"x": [0], "y": [0], "z": [0]})
     line = Coordinates({"x": [0, 1], "y": [0, 1], "z": [0, 1]})
 
-    def test_dict_instantiation(self):
-        pass
+    def test_point_instantiation(self):
+        point = Coordinates({"x": [0], "y": [0], "z": [0]})
+        point2 = Coordinates([[0], [0], [0]])
+        assert point == point2
 
-    def test_array_instantiation(self):
-        pass
+    def test_line_instantiation(self):
+        line = Coordinates({"x": [0, 1], "y": [0, 1], "z": [0, 1]})
+        line2 = Coordinates([[0, 1], [0, 1], [0, 1]])
+        assert line == line2
 
     @pytest.mark.parametrize("c, length", [(point, 0.0), (line, np.sqrt(3))])
     def test_length(self, c, length):
