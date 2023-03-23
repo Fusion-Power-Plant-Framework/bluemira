@@ -82,7 +82,12 @@ class TestRippleConstrainedLengthGOP:
         )
         problem.optimise()
         problem.plot()
-        assert np.all(problem.ripple_values < self.params.TF_ripple_limit.value + 1e-3)
+        assert np.isclose(
+            max(problem.ripple_values),
+            self.params.TF_ripple_limit.value,
+            rtol=0,
+            atol=1e-3,
+        )
 
     @pytest.mark.parametrize(
         "selector",
