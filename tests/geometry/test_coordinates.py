@@ -373,6 +373,50 @@ class TestCoordinates:
         assert len(c) == 8
 
 
+class TestShortCoordinates:
+    point = Coordinates({"x": [0], "y": [0], "z": [0]})
+    line = Coordinates({"x": [0, 1], "y": [0, 1], "z": [0, 1]})
+
+    def test_dict_instantiation(self):
+        pass
+
+    def test_array_instantiation(self):
+        pass
+
+    @pytest.mark.parametrize("c, length", [(point, 0.0), (line, np.sqrt(3))])
+    def test_length(self, c, length):
+        measured = c.length
+        np.testing.assert_almost_equal(measured, length)
+
+    def test_normal_vector(self):
+        pass
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_is_planar(self, c):
+        assert not c.is_planar
+
+    @pytest.mark.parametrize(
+        "c, com", [(point, np.array([0, 0, 0])), (line, np.array([0.5, 0.5, 0.5]))]
+    )
+    def test_center_of_mass(self, c, com):
+        measured = c.center_of_mass
+        np.testing.assert_allclose(measured, com)
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_closed(self, c):
+        assert not c.closed
+
+    def test_close(self):
+        pass
+
+    def test_open(self):
+        pass
+
+    @pytest.mark.parametrize("c, lenn", [(point, 1), (line, 2)])
+    def test_len(self, c, lenn):
+        assert len(c) == lenn
+
+
 class TestCheckLineSegment:
     def test_true(self):
         a = [0, 0]
