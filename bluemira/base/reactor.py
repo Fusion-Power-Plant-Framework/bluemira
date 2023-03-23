@@ -201,6 +201,6 @@ class Reactor:
         # as it's assumed that the cad is only built for 1 sector
         # and is sector symmetric, therefore can be patterned
         if "xyz" in dims_to_show:
-            self._construct_xyz_cad()
+            self._construct_xyz_cad(comp_copy, with_components, n_sectors)
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)
