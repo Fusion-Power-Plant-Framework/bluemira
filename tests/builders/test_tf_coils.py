@@ -93,7 +93,7 @@ class TestRippleConstrainedLengthGOP:
             MaximiseSelector(),
         ],
     )
-    def test_outboard_equispaced(self, selector):
+    def test_selector_setup(self, selector):
         optimiser = self._make_optimiser()
         problem = RippleConstrainedLengthGOP(
             self.princeton,
@@ -107,4 +107,9 @@ class TestRippleConstrainedLengthGOP:
         )
         problem.optimise()
         problem.plot()
-        assert np.all(problem.ripple_values < self.params.TF_ripple_limit.value + 1e-3)
+        assert np.isclose(
+            max(problem.ripple_values),
+            self.params.TF_ripple_limit.value,
+            rtol=0,
+            atol=1e-3,
+        )

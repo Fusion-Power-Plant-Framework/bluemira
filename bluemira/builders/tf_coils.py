@@ -411,8 +411,9 @@ class MaximiseSelector(RipplePointSelector):
                 "TF_ripple_limit": TF_ripple_limit,
                 "lcfs_wire": self.wire,
                 "alpha_0": self._alpha_0,
+                "this": self,
             },
-            tolerance=rip_con_tol,
+            tolerance=rip_con_tol * np.ones(2),
         )
 
     @staticmethod
@@ -425,6 +426,7 @@ class MaximiseSelector(RipplePointSelector):
         lcfs_wire: BluemiraWire,
         alpha_0: float,
         TF_ripple_limit: float,
+        this,
         ad_args=None,
     ):
         """
@@ -447,14 +449,21 @@ class MaximiseSelector(RipplePointSelector):
         """
         func = MaximiseSelector.calculate_max_ripple
         constraint[:] = func(
-            vector, parameterisation, solver, lcfs_wire, alpha_0, TF_ripple_limit
+            vector, parameterisation, solver, lcfs_wire, alpha_0, TF_ripple_limit, this
         )
         if grad.size > 0:
             grad[:] = approx_derivative(
                 func,
                 vector,
                 f0=constraint,
-                args=(parameterisation, solver, lcfs_wire, alpha_0, TF_ripple_limit),
+                args=(
+                    parameterisation,
+                    solver,
+                    lcfs_wire,
+                    alpha_0,
+                    TF_ripple_limit,
+                    this,
+                ),
                 **ad_args,
             )
 
@@ -469,6 +478,7 @@ class MaximiseSelector(RipplePointSelector):
         lcfs_wire: BluemiraWire,
         alpha_0: float,
         TF_ripple_limit: float,
+        this,
     ):
         """
         Calculate ripple constraint
@@ -498,10 +508,13 @@ class MaximiseSelector(RipplePointSelector):
             point = lcfs_wire.value_at(alpha)
             return -solver.ripple(*point)
 
-        result = minimize(f_max_ripple, x0=alpha_0, bounds=(0, 1), method="SLSQP")
+        result = minimize(f_max_ripple, x0=alpha_0, bounds=[(0, 1)], method="SLSQP")
+
         max_ripple_point = lcfs_wire.value_at(result.x)
-        MaximiseSelector.points = Coordinates(max_ripple_point)
-        ripple = solver.ripple(*max_ripple_point)
+
+        points = Coordinates(max_ripple_point.reshape(3, -1))
+        this.points = points
+        ripple = solver.ripple(*points)
         return ripple - TF_ripple_limit
 
 
@@ -640,6 +653,8 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         parameterisation = super().optimise(x0=x0)
         self.solver.update_cage(parameterisation.create_shape())
         self.ripple_values = self.solver.ripple(*self.ripple_selector.points)
+        if isinstance(self.ripple_values, float):
+            self.ripple_values = np.array([self.ripple_values])
         return parameterisation
 
     def plot(self, ax=None):
@@ -681,7 +696,8 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         norm.autoscale(rv)
         cm = matplotlib.cm.viridis
         sm = matplotlib.cm.ScalarMappable(cmap=cm, norm=norm)
-        sm.set_array([])
+        vmin, vmax = np.min(rv) - 1e-6, np.max(rv) + 1e-6
+        sm.set_clim(vmin, vmax)
         ax.scatter(
             self.ripple_selector.points.x,
             self.ripple_selector.points.z,
