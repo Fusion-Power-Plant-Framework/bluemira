@@ -30,7 +30,11 @@ import numpy as np
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
+from bluemira.builders.tools import (
+    apply_component_display_options,
+    build_sectioned_xyz,
+    make_circular_xy_ring,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
@@ -106,7 +110,7 @@ class RadiationShieldBuilder(Builder):
         shield_body = PhysicalComponent(
             self.BODY, boolean_cut(BluemiraFace([rs_outer, rs_inner]), cutter)[0]
         )
-        shield_body.plot_options.face_options["color"] = BLUE_PALETTE[self.RS][0]
+        apply_component_display_options(shield_body, color=BLUE_PALETTE[self.RS][0])
         return shield_body
 
     def build_xy(self) -> PhysicalComponent:
@@ -117,7 +121,7 @@ class RadiationShieldBuilder(Builder):
         r_out = r_in + self.params.tk_rs.value
 
         shield_body = PhysicalComponent(self.BODY, make_circular_xy_ring(r_in, r_out))
-        shield_body.plot_options.face_options["color"] = BLUE_PALETTE[self.RS][0]
+        apply_component_display_options(shield_body, color=BLUE_PALETTE[self.RS][0])
 
         return shield_body
 
