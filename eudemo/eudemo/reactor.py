@@ -345,6 +345,7 @@ if __name__ == "__main__":
         params, build_config.get("RadiationShield", {}), reactor.cryostat.xz_boundary()
     )
 
+    reactor.show_cad("xz")
     reactor.show_cad(n_sectors=3)
 
     sspc_solver = SteadyStatePowerCycleSolver(params)
