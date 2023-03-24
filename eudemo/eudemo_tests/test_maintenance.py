@@ -29,7 +29,10 @@ import pytest
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.maintenance.equatorial_port import CastellationBuilder, EquatorialPortDesigner
+from eudemo.maintenance.equatorial_port import (
+    CastellationBuilder,
+    EquatorialPortDesigner,
+)
 from eudemo.maintenance.upper_port import UpperPortOP
 
 

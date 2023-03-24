@@ -23,8 +23,9 @@
 EU-DEMO Equatorial Port
 """
 from dataclasses import dataclass
-import numpy as np
 from typing import Dict, List, Type, Union
+
+import numpy as np
 
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
@@ -32,7 +33,6 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.plane import BluemiraFace, BluemiraPlane
 from bluemira.geometry.solid import BluemiraSolid, BluemiraWire
 from bluemira.geometry.tools import (
