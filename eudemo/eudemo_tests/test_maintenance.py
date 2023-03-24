@@ -29,7 +29,7 @@ import pytest
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.equatorial_port import EquatorialPortBuilder, EquatorialPortDesigner
+from eudemo.maintenance.equatorial_port import CastellationBuilder, EquatorialPortDesigner
 from eudemo.maintenance.upper_port import UpperPortOP
 
 
@@ -93,26 +93,25 @@ class TestEquatorialPortDesigner:
         assert math.isclose(output.area, x_len * z_len)
 
 
-class TestEquatorialPortBuilder:
-    """Tests the Equatorial Port Builder"""
+class TestCastellationBuilder:
+    """Tests the Castellation Builder"""
 
     def setup_method(self) -> None:
-        """Set-up Equatorial Port Designer"""
+        """Set-up Castellation Builder"""
         params = {
-            "n_ep": {"value": 10, "unit": ""},
-            "ep_r_corner": {"value": 0, "unit": "m"},
+            "n_components": {"value": 10, "unit": ""},
+            "cst_r_corner": {"value": 0, "unit": "m"},
         }
-        x_ib = 1
-        x_ob = 2
+        length = 1
         y = (0, 1, 1, 0)
         z = (-1, -1, 1, 1)
-        yz = BluemiraFace(make_polygon({"x": 0, "y": y, "z": z}, closed=True))
+        face = BluemiraFace(make_polygon({"x": 0, "y": y, "z": z}, closed=True))
         vector = (1, 0, 0)
         x_offs = [0]
         c_offs = [0]
 
-        self.builder = EquatorialPortBuilder(
-            params, {}, x_ib, x_ob, yz, vector, x_offs, c_offs
+        self.builder = CastellationBuilder(
+            params, {}, length, face, vector, x_offs, c_offs
         )
 
     @pytest.mark.parametrize(
@@ -128,21 +127,19 @@ class TestEquatorialPortBuilder:
             [185.0, 160.0, 12.521980674],  # volume check value of Eq. Ports
         ),
     )
-    def test_ep_builder(self, xi, xo, zh, yw, vec, x_offsets, c_offsets, exp_v):
-        """Test Equatorial Port Builder"""
+    def test_cst_builder(self, xi, xo, zh, yw, vec, x_offsets, c_offsets, exp_v):
+        """Test Castellation Builder"""
         y = (yw / 2, -yw / 2, -yw / 2, yw / 2)
         z = (-zh / 2, -zh / 2, zh / 2, zh / 2)
         yz_profile = BluemiraFace(make_polygon({"x": xi, "y": y, "z": z}, closed=True))
 
-        self.builder.x_ib = xi
-        self.builder.x_ob = xo
-        self.builder.yz_profile = yz_profile
+        self.builder.length = xo - xi
+        self.builder.face = yz_profile
         self.builder.vec = vec
-        self.builder.x_off = x_offsets
+        self.builder.off = x_offsets
         self.builder.cst = c_offsets
         output = self.builder.build()
-        out_eq_port = output.get_component("xyz").get_component("Equatorial Port 1")
-        if out_eq_port is None:
-            out_eq_port = output.get_component("xyz").get_component("Equatorial Port")
-        output.show_cad()
-        assert math.isclose(out_eq_port.shape.volume, exp_v)
+        out_cst = output.get_component("xyz").get_component("Castellation 1")
+        if out_cst is None:
+            out_cst = output.get_component("xyz").get_component("Castellation")
+        assert math.isclose(out_cst.shape.volume, exp_v)
