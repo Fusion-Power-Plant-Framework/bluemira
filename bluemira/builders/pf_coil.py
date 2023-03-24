@@ -29,7 +29,7 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.builders.tools import get_n_sectors
+from bluemira.builders.tools import apply_component_display_options, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.coils import Coil
 from bluemira.geometry.face import BluemiraFace
@@ -94,29 +94,30 @@ class PFCoilBuilder(Builder):
 
         wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace([c1, c2]))
         idx = 0 if self.params.ctype.value == "CS" else 1
-        wp.plot_options.face_options["color"] = BLUE_PALETTE["PF"][idx]
+        apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
 
         r_in -= self.params.tk_insulation.value
         c3 = make_circle(r_in)
         inner_ins = PhysicalComponent(self.INNER, BluemiraFace([c2, c3]))
-        inner_ins.plot_options.face_options["color"] = BLUE_PALETTE["PF"][3]
+        apply_component_display_options(inner_ins, color=BLUE_PALETTE["PF"][3])
 
         r_out += self.params.tk_insulation.value
         c4 = make_circle(r_out)
         outer_ins = PhysicalComponent(self.OUTER_INS, BluemiraFace([c4, c1]))
-        outer_ins.plot_options.face_options["color"] = BLUE_PALETTE["PF"][3]
+        apply_component_display_options(outer_ins, color=BLUE_PALETTE["PF"][3])
 
         ins = Component(name=self.GROUND_INSULATION, children=[inner_ins, outer_ins])
 
         r_in -= self.params.tk_casing.value
         c5 = make_circle(r_in)
         inner_cas = PhysicalComponent(self.INNER, BluemiraFace([c3, c5]))
-        inner_cas.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
+        apply_component_display_options(inner_cas, color=BLUE_PALETTE["PF"][2])
 
         r_out += self.params.tk_casing.value
         c6 = make_circle(r_out)
         outer_cas = PhysicalComponent(self.OUTER_INS, BluemiraFace([c6, c4]))
-        outer_cas.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
+        apply_component_display_options(outer_cas, color=BLUE_PALETTE["PF"][2])
+
         casing = Component(self.CASING, children=[inner_cas, outer_cas])
 
         return [wp, ins, casing]
@@ -127,15 +128,15 @@ class PFCoilBuilder(Builder):
         """
         wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace(shape))
         idx = 0 if self.params.ctype.value == "CS" else 1
-        wp.plot_options.face_options["color"] = BLUE_PALETTE["PF"][idx]
+        apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
 
         ins_shape = offset_wire(shape, self.params.tk_insulation.value)
         ins = PhysicalComponent(self.GROUND_INSULATION, BluemiraFace([ins_shape, shape]))
-        ins.plot_options.face_options["color"] = BLUE_PALETTE["PF"][3]
-        cas_shape = offset_wire(ins_shape, self.params.tk_casing.value)
+        apply_component_display_options(ins, color=BLUE_PALETTE["PF"][3])
 
+        cas_shape = offset_wire(ins_shape, self.params.tk_casing.value)
         casing = PhysicalComponent(self.CASING, BluemiraFace([cas_shape, ins_shape]))
-        casing.plot_options.face_options["color"] = BLUE_PALETTE["PF"][2]
+        apply_component_display_options(casing, color=BLUE_PALETTE["PF"][2])
         return [wp, ins, casing]
 
     def build_xyz(
@@ -166,7 +167,9 @@ class PFCoilBuilder(Builder):
         for c in xz_components:
             shape = revolve_shape(c.shape, degree=sector_degree * n_sectors)
             c_xyz = PhysicalComponent(c.name, shape)
-            c_xyz.display_cad_options.color = c.plot_options.face_options["color"]
+            apply_component_display_options(
+                c_xyz, color=c.plot_options.face_options["color"]
+            )
             components.append(c_xyz)
 
         return components
