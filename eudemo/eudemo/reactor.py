@@ -52,7 +52,7 @@ from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import interpolate_bspline
 from eudemo.blanket import Blanket, BlanketBuilder
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -100,7 +100,7 @@ class EUDEMO(Reactor):
 def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
     """Build EUDEMO plasma from an equilibrium."""
     lcfs_loop = eq.get_LCFS()
-    lcfs_wire = make_polygon({"x": lcfs_loop.x, "z": lcfs_loop.z}, closed=True)
+    lcfs_wire = interpolate_bspline({"x": lcfs_loop.x, "z": lcfs_loop.z}, closed=True)
     builder = PlasmaBuilder(params, build_config, lcfs_wire)
     return Plasma(builder.build())
 
