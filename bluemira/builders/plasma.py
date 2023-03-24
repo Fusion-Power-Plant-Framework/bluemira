@@ -28,7 +28,7 @@ from typing import Dict, Type, Union
 from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.builders.tools import get_n_sectors
+from bluemira.builders.tools import apply_component_display_options, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, revolve_shape
@@ -98,7 +98,9 @@ class PlasmaBuilder(Builder):
         """
         face = BluemiraFace(lcfs, self.name)
         component = PhysicalComponent(self.LCFS, face)
-        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
+        apply_component_display_options(
+            component, color=BLUE_PALETTE["PL"], transparency=0.3
+        )
         return component
 
     def build_xy(self, lcfs: BluemiraWire) -> PhysicalComponent:
@@ -114,7 +116,9 @@ class PlasmaBuilder(Builder):
         outer = make_circle(lcfs.bounding_box.x_max)
         face = BluemiraFace([outer, inner], self.name)
         component = PhysicalComponent(self.LCFS, face)
-        component.plot_options.face_options["color"] = BLUE_PALETTE["PL"]
+        apply_component_display_options(
+            component, color=BLUE_PALETTE["PL"], transparency=0.3
+        )
         return component
 
     def build_xyz(self, lcfs: BluemiraWire, degree: float = 360.0) -> PhysicalComponent:
@@ -137,6 +141,7 @@ class PlasmaBuilder(Builder):
             label=self.LCFS,
         )
         component = PhysicalComponent(self.LCFS, solid)
-        component.display_cad_options.color = BLUE_PALETTE["PL"]
-        component.display_cad_options.transparency = 0.3
+        apply_component_display_options(
+            component, color=BLUE_PALETTE["PL"], transparency=0.3
+        )
         return component
