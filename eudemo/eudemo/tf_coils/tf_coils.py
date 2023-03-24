@@ -720,11 +720,7 @@ class TFCoilBuilder(Builder):
 
         """
         tf_centreline_min = self.centreline.bounding_box.x_min
-        tf_thick = (
-            self.params.tk_tf_nose.value
-            + self.params.tf_wp_width.value
-            + self.params.tk_tf_front_ib.value
-        )
+
         x_in = (
             tf_centreline_min
             - self.params.tk_tf_nose.value
