@@ -245,27 +245,27 @@ class BluemiraWire(BluemiraGeo):
     @property
     def wires(self) -> Tuple[BluemiraWire]:
         """
-        The wires of the wire. By definition a list of itself.
+        The wires of the wire. By definition a tuple of itself.
         """
-        return tuple(self)
+        return tuple([self])
 
     @property
     def faces(self) -> tuple:
         """
-        The faces of the wire. By definition an empty list.
+        The faces of the wire. By definition an empty tuple.
         """
         return ()
 
     @property
     def shells(self) -> tuple:
         """
-        The shells of the wire. By definition an empty list.
+        The shells of the wire. By definition an empty tuple.
         """
         return ()
 
     @property
     def solids(self) -> tuple:
         """
-        The solids of the wire. By definition an empty list.
+        The solids of the wire. By definition an empty tuple.
         """
         return ()

@@ -134,6 +134,6 @@ class BluemiraSolid(BluemiraGeo):
     @property
     def solids(self) -> Tuple[BluemiraSolid]:
         """
-        The solids of the solid. By definition a list of itself.
+        The solids of the solid. By definition a tuple of itself.
         """
-        return tuple(self)
+        return tuple([self])
