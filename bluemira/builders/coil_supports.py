@@ -34,6 +34,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.coordinates import Coordinates, get_intersect
@@ -122,8 +123,7 @@ class ITERGravitySupportBuilder(Builder):
         shape = BluemiraFace(wire_list)
 
         component = PhysicalComponent("ITER-like gravity support", shape)
-        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-        component.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
+        apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
 
     def build_xy(self):
@@ -287,7 +287,7 @@ class ITERGravitySupportBuilder(Builder):
         shape_list.append(self._make_floor_block(float(v1.x), float(v4.x)))
         shape = boolean_fuse(shape_list)
         component = PhysicalComponent("ITER-like gravity support", shape)
-        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+        apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
 
 
@@ -529,7 +529,7 @@ class PFCoilSupportBuilder(Builder):
         shape = boolean_fuse(shape_list)
         shape.translate(vector=(0, -0.5 * width, 0))
         component = PhysicalComponent(self.name, shape)
-        component.display_cad_options.color = BLUE_PALETTE["TF"][2]
+        apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
 
 
@@ -856,8 +856,7 @@ class OISBuilder(Builder):
         for i, ois_profile in enumerate(self.ois_xz_profiles):
             face = BluemiraFace(ois_profile)
             component = PhysicalComponent(f"{self.OIS_XZ} {i}", face)
-            component.display_cad_options.color = BLUE_PALETTE["TF"][2]
-            component.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
+            apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
             components.append(component)
         return components
 
@@ -898,9 +897,10 @@ class OISBuilder(Builder):
             ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
 
             right_component = PhysicalComponent(f"{self.RIGHT_OIS} {i+1}", ois_right)
-            right_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
             left_component = PhysicalComponent(f"{self.LEFT_OIS} {i+1}", ois_left)
-            left_component.display_cad_options.color = BLUE_PALETTE["TF"][2]
             components.extend([left_component, right_component])
+
+        for component in components:
+            apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
 
         return components

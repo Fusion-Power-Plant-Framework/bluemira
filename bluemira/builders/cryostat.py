@@ -31,7 +31,11 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.builders.tools import build_sectioned_xyz, make_circular_xy_ring
+from bluemira.builders.tools import (
+    apply_component_display_options,
+    build_sectioned_xyz,
+    make_circular_xy_ring,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
@@ -163,7 +167,7 @@ class CryostatBuilder(Builder):
         cryostat_vv = PhysicalComponent(
             self.CRYO, BluemiraFace(make_polygon({"x": x, "y": 0, "z": z}, closed=True))
         )
-        cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
+        apply_component_display_options(cryostat_vv, color=BLUE_PALETTE["CR"][0])
         return cryostat_vv
 
     def build_xy(self, x_out: float) -> PhysicalComponent:
@@ -178,7 +182,7 @@ class CryostatBuilder(Builder):
         cryostat_vv = PhysicalComponent(
             self.CRYO, make_circular_xy_ring(x_out, x_out + self.params.tk_cr_vv.value)
         )
-        cryostat_vv.plot_options.face_options["color"] = BLUE_PALETTE["CR"][0]
+        apply_component_display_options(cryostat_vv, color=BLUE_PALETTE["CR"][0])
         return cryostat_vv
 
     def build_xyz(

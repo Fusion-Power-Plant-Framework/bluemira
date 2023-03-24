@@ -36,7 +36,11 @@ from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.builders.tools import circular_pattern_component, get_n_sectors
+from bluemira.builders.tools import (
+    apply_component_display_options,
+    circular_pattern_component,
+    get_n_sectors,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -134,25 +138,6 @@ class TFCoilDesignerParams(ParameterFrame):
     tk_tf_insgap: Parameter[float]
     tk_tf_nose: Parameter[float]
     r_tf_in: Parameter[float]
-
-
-@dataclass
-class TFCoilBuilderParams(ParameterFrame):
-    """
-    TF Coil builder parameters
-    """
-
-    R_0: Parameter[float]
-    z_0: Parameter[float]
-    B_0: Parameter[float]
-    n_TF: Parameter[int]
-    tf_wp_depth: Parameter[float]
-    tf_wp_width: Parameter[float]
-    tk_tf_front_ib: Parameter[float]
-    tk_tf_ins: Parameter[float]
-    tk_tf_insgap: Parameter[float]
-    tk_tf_nose: Parameter[float]
-    tk_tf_side: Parameter[float]
 
 
 class TFCoilDesigner(Designer[GeometryParameterisation]):
@@ -402,6 +387,25 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         )
 
 
+@dataclass
+class TFCoilBuilderParams(ParameterFrame):
+    """
+    TF Coil builder parameters
+    """
+
+    R_0: Parameter[float]
+    z_0: Parameter[float]
+    B_0: Parameter[float]
+    n_TF: Parameter[int]
+    tf_wp_depth: Parameter[float]
+    tf_wp_width: Parameter[float]
+    tk_tf_front_ib: Parameter[float]
+    tk_tf_ins: Parameter[float]
+    tk_tf_insgap: Parameter[float]
+    tk_tf_nose: Parameter[float]
+    tk_tf_side: Parameter[float]
+
+
 class TFCoilBuilder(Builder):
     """
     TFCoil Builder
@@ -533,7 +537,7 @@ class TFCoilBuilder(Builder):
         wp_inner = offset_wire(self.centreline, -0.5 * self.wp_x_size, join="arc")
 
         winding_pack = PhysicalComponent(self.WP, BluemiraFace([wp_outer, wp_inner]))
-        winding_pack.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
+        apply_component_display_options(winding_pack, color=BLUE_PALETTE["TF"][1])
 
         return wp_inner, wp_outer, winding_pack
 
@@ -545,11 +549,12 @@ class TFCoilBuilder(Builder):
 
         ins_o_outer = offset_wire(wp_outer, offset_tk, join="arc")
         ins_outer = PhysicalComponent(self.OUT, BluemiraFace([ins_o_outer, wp_outer]))
-        ins_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
 
         ins_i_inner = offset_wire(wp_inner, -offset_tk, join="arc")
         ins_inner = PhysicalComponent(self.IN, BluemiraFace([wp_inner, ins_i_inner]))
-        ins_inner.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
+
+        apply_component_display_options(ins_outer, color=BLUE_PALETTE["TF"][2])
+        apply_component_display_options(ins_inner, color=BLUE_PALETTE["TF"][2])
 
         return Component(self.INS, children=[ins_outer, ins_inner])
 
@@ -560,10 +565,10 @@ class TFCoilBuilder(Builder):
         cas_inner, cas_outer = self._make_cas_xz(xyz_shape)
 
         cas_inner = PhysicalComponent(self.IN, cas_inner)
-        cas_inner.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
-
         cas_outer = PhysicalComponent(self.OUT, cas_outer)
-        cas_outer.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
+
+        apply_component_display_options(cas_inner, color=BLUE_PALETTE["TF"][0])
+        apply_component_display_options(cas_outer, color=BLUE_PALETTE["TF"][0])
 
         return Component(self.CASING, children=[cas_inner, cas_outer])
 
@@ -579,9 +584,11 @@ class TFCoilBuilder(Builder):
         xs2.translate((x_out - xs2.center_of_mass[0], 0, 0))
 
         ib_wp_comp = PhysicalComponent(self.INB, xs)
-        ib_wp_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
         ob_wp_comp = PhysicalComponent(self.OUTB, xs2)
-        ob_wp_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][1]
+
+        apply_component_display_options(ib_wp_comp, color=BLUE_PALETTE["TF"][1])
+        apply_component_display_options(ob_wp_comp, color=BLUE_PALETTE["TF"][1])
+
         return Component(self.WP, children=[ib_wp_comp, ob_wp_comp])
 
     def _build_xy_ins(
@@ -591,9 +598,11 @@ class TFCoilBuilder(Builder):
         Insulation x-y
         """
         ib_ins_comp = PhysicalComponent(self.INB, ins_inner_face)
-        ib_ins_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
         ob_ins_comp = PhysicalComponent(self.OUTB, ins_outer_face)
-        ob_ins_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][2]
+
+        apply_component_display_options(ib_ins_comp, color=BLUE_PALETTE["TF"][2])
+        apply_component_display_options(ob_ins_comp, color=BLUE_PALETTE["TF"][2])
+
         return Component(self.INS, children=[ib_ins_comp, ob_ins_comp])
 
     def _build_xy_case(
@@ -614,9 +623,11 @@ class TFCoilBuilder(Builder):
         )
 
         ib_cas_comp = PhysicalComponent(self.INB, cas_inner_face)
-        ib_cas_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
         ob_cas_comp = PhysicalComponent(self.OUTB, cas_outer_face)
-        ob_cas_comp.plot_options.face_options["color"] = BLUE_PALETTE["TF"][0]
+
+        apply_component_display_options(ib_cas_comp, color=BLUE_PALETTE["TF"][0])
+        apply_component_display_options(ob_cas_comp, color=BLUE_PALETTE["TF"][0])
+
         return Component(
             self.CASING,
             children=[ib_cas_comp, ob_cas_comp],
@@ -628,7 +639,8 @@ class TFCoilBuilder(Builder):
         """
         wp_solid = sweep_shape(self.wp_cross_section, self.centreline)
         winding_pack = PhysicalComponent(self.WP, wp_solid)
-        winding_pack.display_cad_options.color = BLUE_PALETTE["TF"][1]
+
+        apply_component_display_options(winding_pack, color=BLUE_PALETTE["TF"][1])
 
         return wp_solid, winding_pack
 
@@ -647,7 +659,8 @@ class TFCoilBuilder(Builder):
             self.INS,
             ins_solid,
         )
-        insulation.display_cad_options.color = BLUE_PALETTE["TF"][2]
+
+        apply_component_display_options(insulation, color=BLUE_PALETTE["TF"][2])
 
         return ins_solid, insulation
 
@@ -692,7 +705,9 @@ class TFCoilBuilder(Builder):
         )[0]
 
         casing = PhysicalComponent(self.CASING, case_solid_hollow)
-        casing.display_cad_options.color = BLUE_PALETTE["TF"][0]
+
+        apply_component_display_options(casing, color=BLUE_PALETTE["TF"][0])
+
         return case_solid_hollow, casing
 
     def _make_ins_xsec(self) -> Tuple[BluemiraFace, BluemiraFace]:

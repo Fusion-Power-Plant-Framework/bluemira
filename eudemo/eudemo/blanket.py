@@ -32,6 +32,7 @@ from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
+    apply_component_display_options,
     circular_pattern_component,
     get_n_sectors,
     pattern_revolved_silhouette,
@@ -117,9 +118,9 @@ class BlanketBuilder(Builder):
         Build the x-z components of the blanket.
         """
         ibs = PhysicalComponent(self.IBS, ibs_silhouette)
-        ibs.plot_options.face_options["color"] = BLUE_PALETTE[self.BB][0]
         obs = PhysicalComponent(self.OBS, obs_silhouette)
-        obs.plot_options.face_options["color"] = BLUE_PALETTE[self.BB][1]
+        apply_component_display_options(ibs, color=BLUE_PALETTE[self.BB][0])
+        apply_component_display_options(obs, color=BLUE_PALETTE[self.BB][1])
         return Component(self.BB, children=[ibs, obs])
 
     def build_xy(self, segments: List[PhysicalComponent]):
@@ -133,7 +134,7 @@ class BlanketBuilder(Builder):
             single_slice = PhysicalComponent(
                 segment.name, BluemiraFace(slice_shape(segment.shape, xy_plane)[0])
             )
-            single_slice.plot_options.face_options["color"] = BLUE_PALETTE[self.BB][i]
+            apply_component_display_options(single_slice, color=BLUE_PALETTE[self.BB][i])
             slices.append(single_slice)
 
         return circular_pattern_component(
@@ -178,7 +179,9 @@ class BlanketBuilder(Builder):
         ]:
             for no, shape in enumerate(bs_shape):
                 segment = PhysicalComponent(f"{name}_{no}", shape)
-                segment.display_cad_options.color = BLUE_PALETTE[self.BB][base_no + no]
+                apply_component_display_options(
+                    segment, color=BLUE_PALETTE[self.BB][base_no + no]
+                )
                 segments.append(segment)
         return segments
 

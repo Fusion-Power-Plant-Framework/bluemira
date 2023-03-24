@@ -29,6 +29,7 @@ from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
+    apply_component_display_options,
     build_sectioned_xy,
     build_sectioned_xyz,
     varied_offset,
@@ -126,7 +127,7 @@ class VacuumVesselBuilder(Builder):
         face = BluemiraFace([outer_vv, inner_vv])
 
         body = PhysicalComponent(self.BODY, face)
-        body.plot_options.face_options["color"] = BLUE_PALETTE[self.VV][0]
+        apply_component_display_options(body, color=BLUE_PALETTE[self.VV][0])
 
         return body
 
