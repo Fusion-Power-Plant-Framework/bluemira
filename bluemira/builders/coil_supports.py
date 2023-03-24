@@ -329,7 +329,7 @@ class PFCoilSupportBuilder(Builder):
         Build the PF coil support component.
         """
         xyz = self.build_xyz()
-        return self.component_tree(self.build_xz(xyz), self.build_xy(), [xyz])
+        return self.component_tree([self.build_xz(xyz)], self.build_xy(), [xyz])
 
     def build_xy(self):
         """
@@ -341,7 +341,12 @@ class PFCoilSupportBuilder(Builder):
         """
         Build the x-z components of the PF coil support.
         """
-        pass
+        result = slice_shape(xyz.shape, BluemiraPlane(axis=(0, 1, 0)))
+        result.sort(key=lambda wire: -wire.length)
+        face = BluemiraFace(result)
+        component = PhysicalComponent(self.name, face)
+        apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
+        return component
 
     def _build_support_xs(self):
         bb = self.pf_coil_xz.bounding_box
