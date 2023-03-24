@@ -328,7 +328,11 @@ class PFCoilsDesigner(Designer[CoilSet]):
     def _make_coil_mapper(self, coilset):
         # Get an offset from the TF that corresponds to a PF coil half-width of a
         # current equal to Ip
-        offset_value = 0.5 * np.sqrt(self.params.I_p.value / self.params.PF_jmax.value)
+        # TODO may need to thread this better!
+        peak_PF_current_factor = 1.5
+        offset_value = 0.5 * np.sqrt(
+            peak_PF_current_factor * self.params.I_p.value / self.params.PF_jmax.value
+        )
         pf_coil_path = make_pf_coil_path(self.tf_coil_boundary, offset_value)
         pf_coils = coilset.get_coiltype("PF")._coils
         return make_coil_mapper(pf_coil_path, self.keep_out_zones, pf_coils)
