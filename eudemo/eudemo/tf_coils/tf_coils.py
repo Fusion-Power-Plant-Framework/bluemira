@@ -763,10 +763,6 @@ class TFCoilBuilder(Builder):
         outboard_wire = make_polygon([dx_out, dy_out, np.zeros(4)], closed=True)
         outboard_wire.translate((self.centreline.bounding_box.x_max, 0, 0))
 
-        from bluemira.display import show_cad
-
-        show_cad([inboard_wire, outboard_wire, self.centreline])
-
         return y_in, inboard_wire, outboard_wire
 
     def _make_cas_xz(self, solid: BluemiraSolid) -> Tuple[BluemiraFace, BluemiraFace]:
