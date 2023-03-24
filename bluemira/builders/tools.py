@@ -379,7 +379,7 @@ def build_sectioned_xy(
     ]:
         board = make_circular_xy_ring(r_in, r_out)
         section = PhysicalComponent(name, board)
-        section.plot_options.face_options["color"] = plot_colour
+        apply_component_display_options(section, color=plot_colour)
         sections.append(section)
 
     return sections
@@ -430,7 +430,7 @@ def build_sectioned_xyz(
         degree=sector_degree if enable_sectioning else min(359, degree),
     )
     body = PhysicalComponent(name, shape)
-    body.display_cad_options.color = plot_colour
+    apply_component_display_options(body, color=plot_colour)
 
     # this is currently broken in some situations
     # because of #1319 and related Topological naming issues

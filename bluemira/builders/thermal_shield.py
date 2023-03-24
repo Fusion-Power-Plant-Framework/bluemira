@@ -33,6 +33,7 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
+    apply_component_display_options,
     build_sectioned_xy,
     build_sectioned_xyz,
     find_xy_plane_radii,
@@ -121,7 +122,7 @@ class VVTSBuilder(Builder):
         self.vvts_face = vvts_face
 
         vvts = PhysicalComponent(self.VVTS, vvts_face)
-        vvts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+        apply_component_display_options(vvts, color=BLUE_PALETTE["TS"][0])
         return vvts
 
     def build_xy(self, vvts_face: BluemiraFace) -> List[PhysicalComponent]:
@@ -259,7 +260,7 @@ class CryostatTSBuilder(Builder):
 
         cts = boolean_cut(cts_face, cutter)[0]
         cryostat_ts = PhysicalComponent(self.CRYO_TS, cts)
-        cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+        apply_component_display_options(cryostat_ts, color=BLUE_PALETTE["TS"][0])
         return cryostat_ts
 
     def build_xy(self, cts_face: BluemiraFace) -> PhysicalComponent:
@@ -270,7 +271,7 @@ class CryostatTSBuilder(Builder):
         r_in, r_out = find_xy_plane_radii(cts_face.boundary[0], mid_plane)
 
         cryostat_ts = PhysicalComponent(self.CRYO_TS, make_circular_xy_ring(r_in, r_out))
-        cryostat_ts.plot_options.face_options["color"] = BLUE_PALETTE["TS"][0]
+        apply_component_display_options(cryostat_ts, color=BLUE_PALETTE["TS"][0])
 
         return cryostat_ts
 
