@@ -176,7 +176,11 @@ def show_cad(
         Passed on to modifications to the plotting style options and backend
     """
     if isinstance(backend, str):
-        backend = ViewerBackend[backend.upper()]
+        try:
+            backend = ViewerBackend[backend.upper()]
+        except KeyError:
+            bluemira_warn("Unknown viewer backend {backend} defaulting to FreeCAD")
+            backend = ViewerBackend.FREECAD
 
     if isinstance(labels, str):
         labels = [labels]

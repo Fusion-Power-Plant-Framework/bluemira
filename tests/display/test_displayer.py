@@ -142,6 +142,9 @@ class TestGeometryDisplayer:
         (0.0, 1.0, 0.0),
     ]
 
+    def setup_method(self):
+        displayer.ViewerBackend.get_module.cache_clear()
+
     @pytest.mark.parametrize(
         "viewer",
         [
@@ -224,10 +227,13 @@ class TestGeometryDisplayer:
         ],
     )
     def test_no_displayer(self, mock, caplog):
-        displayer.ViewerBackend.get_module.cache_clear()
         with patch("bluemira.display.displayer.get_module", mock):
             displayer.show_cad("name", self._make_shape(), backend="polyscope")
         assert len(caplog.messages) == 1
         with patch("bluemira.display.displayer.get_module", mock):
             displayer.show_cad("name", self._make_shape(), backend="polyscope")
+        assert len(caplog.messages) == 1
+
+    def test_unknown_displayer(self, caplog):
+        displayer.show_cad("name", self._make_shape(), backend="mybackend")
         assert len(caplog.messages) == 1
