@@ -204,8 +204,8 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
         CryostatTSBuilder(
             params,
             build_config.get("Cryostat", {}),
-            reactor.pf_coils.xz_boundary(),
-            reactor.tf_coils.boundary(),
+            pf_kozs,
+            tf_koz,
         ).build()
     )
 
