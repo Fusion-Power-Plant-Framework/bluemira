@@ -102,7 +102,7 @@
         "Divertor silhouette": {}
     },
     "TF coils": {
-        "run_mode": "read",
+        "run_mode": "run",
         "file_path": "config/TFCoilDesign.json",
         "plot": true,
         "param_class": "TripleArc",

@@ -52,7 +52,7 @@ from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import interpolate_bspline
+from bluemira.geometry.tools import interpolate_bspline, offset_wire
 from eudemo.blanket import Blanket, BlanketBuilder
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -143,16 +143,15 @@ def build_vvts(params, build_config, vv_boundary) -> VacuumVesselThermalShield:
     return VacuumVesselThermalShield(vv_thermal_shield.build())
 
 
-def build_tf_coils(
-    params, build_config, separatrix, vacuum_vessel_cross_section
-) -> TFCoil:
+def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCoil:
     """Design and build the TF coils for the reactor."""
+    keep_out_zone = offset_wire(vvts_cross_section, params.g_ts_tf.value)
     centreline, wp_cross_section = run_designer(
         TFCoilDesigner,
         params,
         build_config,
         separatrix=separatrix,
-        keep_out_zone=vacuum_vessel_cross_section,
+        keep_out_zone=keep_out_zone,
     )
     builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section
