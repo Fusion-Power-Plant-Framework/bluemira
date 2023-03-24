@@ -108,28 +108,30 @@ class ColorPalette:
             )
 
     def _repr_html(self) -> str:
-        def html_rect(x: int, y: int, size: int, fill: str) -> str:
-            return (
-                f'<rect x="{x}" y="{y}" width="{size}" height="{size}" style="fill:{fill};'
-                'stroke-width:2;stroke:rgb(255,255,255)"/>'
-            )
+        def html_str(
+            _hex: List[str], i: int = 0, first: bool = False
+        ) -> Tuple[int, str]:
+            string = ""
+            if first := _hex is None:
+                _hex = self.as_hex()
+            for j, col in enumerate(_hex):
+                if isinstance(col, list):
+                    i, str_ = html_str(_hex=col, i=i)
+                    string += str_
+                else:
+                    string += (
+                        f'<rect x="{i*s}" y="{0 if first else j * s}"'
+                        f' width="{s}" height="{s}" style="fill:{col};'
+                        'stroke-width:2;stroke:rgb(255,255,255)"/>'
+                    )
+            return i + 1, string
 
         s = 55
-        n = len(self)
-        sub_pals = [v for v in self._dict.values() if isinstance(v, type(self))]
-        m = max([len(sp) for sp in sub_pals]) if sub_pals else 1
+        hex_str = self.as_hex()
+        m = max([len(sp) if isinstance(sp, list) else 1 for sp in hex_str])
+        colours = html_str(hex_str, first=True)[1]
 
-        html = f'<svg  width="{n * s}" height="{m * s}">'
-
-        for i, c in enumerate(self._palette):
-            if isinstance(c, type(self)):
-                for j, sc in enumerate(c):
-                    html += html_rect(i * s, j * s, s, colors.to_hex(sc))
-            else:
-                html += html_rect(i * s, 0, s, colors.to_hex(c))
-
-        html += "</svg>"
-        return html
+        return f'<svg  width="{len(self) * s}" height="{m * s}">{colours}</svg>'
 
     def __repr__(self) -> str:
         """
