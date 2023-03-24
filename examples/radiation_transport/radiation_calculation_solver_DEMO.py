@@ -27,6 +27,8 @@ Example core and scraper-off layer radiation source calculation
 import os
 
 import matplotlib.pyplot as plt
+import numpy as np
+import shapely.geometry as shp
 
 import bluemira.codes.process as process
 from bluemira.base.file import get_bluemira_path
@@ -34,8 +36,26 @@ from bluemira.equilibria import Equilibrium
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
-from bluemira.radiation_transport.radiation_profile import RadiationSolver
+from bluemira.radiation_transport.radiation_profile import (
+    RadiationSolver, 
+    linear_interpolator, 
+    interpolated_field_values, 
+    filtering_in_or_out, 
+    pfr_filter,
+    grid_interpolator,
+    build_wall_detectors,
+    detect_radiation,
+    plot_radiation_loads,
+)
 from bluemira.radiation_transport.flux_surfaces_maker import FluxSuraceSolver
+
+# CHERAB imports
+from cherab.core.math import AxisymmetricMapper
+from cherab.tools.emitters import RadiationFunction
+from raysect.core import translate
+from raysect.optical import World
+from raysect.optical.material import VolumeTransform
+from raysect.primitive import Cylinder
 
 # %% [markdown]
 # # Double Null radiation
@@ -162,9 +182,145 @@ def create_radiation_source(
         impurity_data_sol=impurity_data_sol,
     )
 
-    rad_solver.analyse(fw_shape)
+    if only_source:
 
-def main(only_source=True):
+        rad_solver.analyse(fw_shape)
+        rad_solver.rad_map(fw_shape)
+        # Call plot from the Solver
+        rad_solver.plot()
+        # Core Radiation distribution
+        rad_solver.core_rad.plot_radiation_distribution()
+        # Core Radiation profile at the midplane
+        rad_solver.core_rad.build_mp_radiation_profile()
+        rad_solver.core_rad.plot_mp_radiation_profile()
+        # Plot Radiative loss function
+        rad_solver.core_rad.plot_lz_vs_tref()
+
+        # SOL Radiation Distribution
+        rad_solver.sol_rad.plot_poloidal_radiation_distribution(fw_shape)
+        # Individual plots for temperature and density from the mid-plane to the target
+        # LFS
+        rad_solver.sol_rad.poloidal_distribution_plot(
+            rad_solver.sol_rad.flux_tubes_lfs_low,
+            rad_solver.sol_rad.t_and_n_pol["lfs_low"][0],
+        )
+        rad_solver.sol_rad.poloidal_distribution_plot(
+            rad_solver.sol_rad.flux_tubes_lfs_low,
+            rad_solver.sol_rad.t_and_n_pol["lfs_low"][1],
+            temperature=False,
+        )
+        # HFS
+        rad_solver.sol_rad.poloidal_distribution_plot(
+            rad_solver.sol_rad.flux_tubes_hfs_low,
+            rad_solver.sol_rad.t_and_n_pol["hfs_low"][0],
+        )
+        rad_solver.sol_rad.poloidal_distribution_plot(
+            rad_solver.sol_rad.flux_tubes_hfs_low,
+            rad_solver.sol_rad.t_and_n_pol["hfs_low"][1],
+            temperature=False,
+        )
+
+        # Temperature VS Density for the first open flux surface
+        first_sol_fs_lfs = rad_solver.sol_rad.flux_tubes_lfs_low[0]
+        t_distribution = rad_solver.sol_rad.t_and_n_pol["lfs_low"][0][0]
+        n_distribution = rad_solver.sol_rad.t_and_n_pol["lfs_low"][1][0]
+        rad_solver.sol_rad.plot_t_vs_n(first_sol_fs_lfs, t_distribution, n_distribution)
+
+        first_sol_fs_hfs = rad_solver.sol_rad.flux_tubes_hfs_low[0]
+        t_distribution = rad_solver.sol_rad.t_and_n_pol["hfs_low"][0][0]
+        n_distribution = rad_solver.sol_rad.t_and_n_pol["hfs_low"][1][0]
+        rad_solver.sol_rad.plot_t_vs_n(first_sol_fs_hfs, t_distribution, n_distribution)
+
+        plt.show()
+
+    else:
+        rad_solver.analyse(firstwall_geom=fw_shape)
+        rad_solver.rad_map(fw_shape)
+        # Core and SOL source: coordinates and radiation values
+        x_core = rad_solver.core_rad.x_tot
+        z_core = rad_solver.core_rad.z_tot
+        rad_core = rad_solver.core_rad.rad_tot
+        x_sol = rad_solver.sol_rad.x_tot
+        z_sol = rad_solver.sol_rad.z_tot
+        rad_sol = rad_solver.sol_rad.rad_tot
+
+        # Coversion required for CHERAB
+        rad_core = rad_core * 1.0e6
+        rad_sol = rad_sol * 1.0e6
+
+        # Core and SOL interpolating function
+        f_core = linear_interpolator(x_core, z_core, rad_core)
+        f_sol = linear_interpolator(x_sol, z_sol, rad_sol)
+
+        # SOL radiation grid
+        x_sol = np.linspace(min(fw_shape.x), max(fw_shape.x), 1000)
+        z_sol = np.linspace(min(fw_shape.z), max(fw_shape.z), 1500)
+        rad_sol_grid = interpolated_field_values(x_sol, z_sol, f_sol)
+
+        # Filter in/out zones
+        wall_filter = filtering_in_or_out(fw_shape.x, fw_shape.z)
+        pfr_x_down, pfr_z_down = pfr_filter(
+            rad_solver.sol_rad.separatrix, rad_solver.sol_rad.points["x_point"]["z_low"]
+        )
+        pfr_x_up, pfr_z_up = pfr_filter(
+            rad_solver.sol_rad.separatrix, rad_solver.sol_rad.points["x_point"]["z_up"]
+        )
+        pfr_down_filter = filtering_in_or_out(pfr_x_down, pfr_z_down, False)
+        pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, False)
+
+        # Fetch lcfs
+        lcfs = rad_solver.lcfs
+        core_filter_in = filtering_in_or_out(lcfs.x, lcfs.z)
+        core_filter_out = filtering_in_or_out(lcfs.x, lcfs.z, False)
+
+        for i in range(len(x_sol)):
+            for j in range(len(z_sol)):
+                if core_filter_in(shp.Point(x_sol[i], z_sol[j])):
+                    rad_sol_grid[j, i] = interpolated_field_values(
+                        x_sol[i], z_sol[j], f_core
+                    )
+                else:
+                    rad_sol_grid[j, i] = (
+                        rad_sol_grid[j, i]
+                        * (wall_filter(shp.Point(x_sol[i], z_sol[j])) * 1.0)
+                        * ((pfr_down_filter(shp.Point(x_sol[i], z_sol[j]))) * 1.0)
+                        * ((pfr_up_filter(shp.Point(x_sol[i], z_sol[j]))) * 1.0)
+                        * ((core_filter_out(shp.Point(x_sol[i], z_sol[j]))) * 1.0)
+                    )
+
+        func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
+
+        return func
+    
+def fw_radiation(rad_source, plot=True):
+
+    rad_3d = AxisymmetricMapper(rad_source)
+    ray_stepsize = 1.0  # 2.0e-4
+    emitter = VolumeTransform(
+        RadiationFunction(rad_3d, step=ray_stepsize * 0.1),
+        translate(0, 0, np.max(fw_shape.z)),
+    )
+    world = World()
+    Cylinder(
+        np.max(fw_shape.x),
+        2.0 * np.max(fw_shape.z),
+        transform=translate(0, 0, -np.max(fw_shape.z)),
+        parent=world,
+        material=emitter,
+    )
+    max_wall_len = 10.0e-2
+    X_WIDTH = 0.01
+    wall_detectors = build_wall_detectors(fw_shape.x, fw_shape.z, max_wall_len, X_WIDTH)
+    wall_loads = detect_radiation(wall_detectors, 500, world)
+
+    if plot:
+        plot_radiation_loads(
+            rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads"
+        )
+
+    return wall_loads
+
+def main(only_source=False):
 
     # Get the core impurity fractions
     f_impurities_core = config["f_imp_core"]
@@ -186,6 +342,10 @@ def main(only_source=True):
         impurity_data_sol=impurity_data_sol,
         only_source=only_source,
     )
+
+    if only_source is False:
+        # Calculate radiation of FW points
+        fw_radiation(rad_source=rad_source_func)
 
 if __name__ == "__main__":
     main()
