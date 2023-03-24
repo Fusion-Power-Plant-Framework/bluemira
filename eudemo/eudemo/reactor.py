@@ -145,13 +145,12 @@ def build_vvts(params, build_config, vv_boundary) -> VacuumVesselThermalShield:
 
 def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCoil:
     """Design and build the TF coils for the reactor."""
-    keep_out_zone = offset_wire(vvts_cross_section, params.g_ts_tf.value)
     centreline, wp_cross_section = run_designer(
         TFCoilDesigner,
         params,
         build_config,
         separatrix=separatrix,
-        keep_out_zone=keep_out_zone,
+        keep_out_zone=vvts_cross_section,
     )
     builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section

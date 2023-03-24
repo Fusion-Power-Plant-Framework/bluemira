@@ -725,9 +725,17 @@ class TFCoilBuilder(Builder):
             + self.params.tf_wp_width.value
             + self.params.tk_tf_front_ib.value
         )
-        x_in = tf_centreline_min - 0.5 * tf_thick
+        x_in = (
+            tf_centreline_min
+            - self.params.tk_tf_nose.value
+            - 0.5 * self.params.tf_wp_width.value
+        )
         # Insulation and insertion gap included in WP width
-        x_out = x_in + tf_thick
+        x_out = (
+            tf_centreline_min
+            + 0.5 * self.params.tf_wp_width.value
+            + self.params.tk_tf_front_ib.value
+        )
 
         tan_half_angle = np.tan(np.pi / self.params.n_TF.value)
         y_in = x_in * tan_half_angle
@@ -758,6 +766,10 @@ class TFCoilBuilder(Builder):
 
         outboard_wire = make_polygon([dx_out, dy_out, np.zeros(4)], closed=True)
         outboard_wire.translate((self.centreline.bounding_box.x_max, 0, 0))
+
+        from bluemira.display import show_cad
+
+        show_cad([inboard_wire, outboard_wire, self.centreline])
 
         return y_in, inboard_wire, outboard_wire
 
