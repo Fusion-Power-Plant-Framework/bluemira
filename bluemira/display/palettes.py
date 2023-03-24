@@ -24,7 +24,7 @@ Colour palettes
 """
 
 from itertools import cycle
-from typing import Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import matplotlib.colors as colors
 import numpy as np
@@ -147,25 +147,38 @@ class ColorPalette:
         display(HTML(self._repr_html()))
         return ""
 
-    def _repr_colour_str(self) -> str:
+    def _repr_colour_str(self, *, _hex: Optional[Union[str, List[str]]] = None) -> str:
         """Create colourful representation in terminal"""
-        if isinstance(self._palette, list):
-            string = ""
-            for en, pp in enumerate(self._palette):
-                if isinstance(pp, tuple):
-                    string += background_colour_string(colors.to_hex(pp))
-                elif isinstance(pp, type(self)):
-                    string += f"{pp._repr_colour_str()}\n"
-        elif isinstance(self._palette, tuple):
-            string = background_colour_string(colors.to_hex(self._palette))
-        else:
-            string = background_colour_string(self._palette)
-
-        return string
+        string = ""
+        if _hex is None:
+            _hex = self.as_hex()
+        for col in _hex:
+            if isinstance(col, list):
+                string += self._repr_colour_str(_hex=col)
+            else:
+                string += background_colour_string(col)
+        return f"{string}\n"
 
     def __len__(self) -> int:
         """Get the length of the ColorPalette"""
         return len(self._dict)
+
+    def as_hex(self) -> list:
+        """
+        Get the hex representation of the palette
+        """
+        hex_list = []
+        if isinstance(self._palette, list):
+            for pp in self._palette:
+                if isinstance(pp, tuple):
+                    hex_list.append(colors.to_hex(pp))
+                elif isinstance(pp, type(self)):
+                    hex_list.append(pp.as_hex())
+        elif isinstance(self._palette, tuple):
+            hex_list.append(colors.to_hex(self._palette))
+        else:
+            hex_list.append(self._palette)
+        return hex_list
 
 
 def background_colour_string(hexstring: str) -> str:
