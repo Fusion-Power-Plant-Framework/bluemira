@@ -50,7 +50,7 @@ class DefaultDisplayOptions:
 
 
 def show_cad(
-    labels: Union[str, List[str]],
+    labels: List[str],
     parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
     part_options: Optional[Union[Dict, List[Dict]]] = None,
     **kwargs,
@@ -153,7 +153,7 @@ def _init_polyscope():
 
 
 def add_features(
-    labels: Union[str, List[str]],
+    labels: List[str],
     parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
     options: Union[Dict, List[Dict]],
 ) -> Tuple[List[ps.SurfaceMesh], List[ps.CurveNetwork]]:

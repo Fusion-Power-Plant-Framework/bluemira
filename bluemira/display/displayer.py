@@ -168,6 +168,9 @@ def show_cad(
     if isinstance(backend, str):
         backend = ViewerBackend[backend.upper()]
 
+    if isinstance(labels, str):
+        labels = [labels]
+
     parts, options = _validate_display_inputs(parts, options)
 
     new_options = []

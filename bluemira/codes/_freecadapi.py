@@ -1929,7 +1929,7 @@ class DefaultDisplayOptions:
 
 
 def show_cad(
-    labels: Union[str, List[str]],
+    labels: List[str],
     parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
     options: Optional[Union[Dict, List[Dict]]] = None,
     **kwargs,
