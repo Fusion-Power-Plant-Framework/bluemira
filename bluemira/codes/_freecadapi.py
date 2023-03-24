@@ -1832,7 +1832,7 @@ def _colourise(node: coin.SoNode, options: Dict):
 
 def collect_verts_faces(
     solid: Part.Shape, tesselation: float = 0.1
-) -> Tuple[np.ndarray]:
+) -> Tuple[Optional[np.ndarray], ...]:
     """
     Collects verticies and faces of parts and tessellates them
     for the CAD viewer
@@ -1944,6 +1944,9 @@ def show_cad(
     options
         The options to use to display the parts.
     """
+    if options is None:
+        options = [None]
+
     if None in options:
         options = [DefaultDisplayOptions() if o is None else o for o in options]
 

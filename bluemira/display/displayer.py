@@ -30,7 +30,7 @@ from enum import Enum
 from functools import lru_cache
 from typing import List, Optional, Union
 
-from bluemira.base.look_and_feel import bluemira_debug
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.plotter import DisplayOptions

@@ -51,8 +51,8 @@ class DefaultDisplayOptions:
 
 def show_cad(
     labels: Union[str, List[str]],
-    parts,
-    part_options,
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
+    part_options: Optional[Union[Dict, List[Dict]]] = None,
     **kwargs,
 ):
     """
@@ -67,6 +67,9 @@ def show_cad(
     **kwargs
         options passed to polyscope
     """
+    if part_options is None:
+        part_options = [None]
+
     if None in part_options:
         part_options = [
             DefaultDisplayOptions() if o is None else o for o in part_options
@@ -152,8 +155,8 @@ def _init_polyscope():
 def add_features(
     labels: Union[str, List[str]],
     parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
-    options: Optional[Union[Dict, List[Dict]]] = None,
-) -> Tuple[List[ps.SurfaceMesh]]:
+    options: Union[Dict, List[Dict]],
+) -> Tuple[List[ps.SurfaceMesh], List[ps.CurveNetwork]]:
     """
     Grab meshes of all parts to be displayed by Polyscope
 

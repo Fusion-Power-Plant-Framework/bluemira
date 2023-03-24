@@ -107,7 +107,7 @@ class TestComponentDisplayer:
         group.show_cad(backend=viewer)
         group.show_cad(colour=(0.0, 0.0, 1.0), backend=viewer)
         displayer.ComponentDisplayer().show_cad(
-            group, color=(1.0, 0.0, 0.0), backend=viewer
+            "name", group, color=(1.0, 0.0, 0.0), backend=viewer
         )
 
         with pytest.raises(DisplayError):
@@ -122,22 +122,35 @@ class TestGeometryDisplayer:
         (0.0, 1.0, 0.0),
     ]
 
-    @pytest.mark.parametrize("viewer", ["freecad", "polyscope"])
+    @pytest.mark.parametrize(
+        "viewer",
+        [
+            "freecad",
+            pytest.param(
+                "polyscope", marks=pytest.mark.skipif(pytest.importorskip("polyscope"))
+            ),
+        ],
+    )
     def test_display(self, viewer):
         wire1 = make_polygon(self.square_points, label="wire1", closed=False)
         box1 = extrude_shape(wire1, vec=(0.0, 0.0, 1.0), label="box1")
 
-        displayer.show_cad(wire1, backend=viewer)
+        displayer.show_cad("name", wire1, backend=viewer)
         displayer.show_cad(
-            box1, displayer.DisplayCADOptions(colour=(1.0, 0.0, 1.0)), backend=viewer
+            "name",
+            box1,
+            displayer.DisplayCADOptions(colour=(1.0, 0.0, 1.0)),
+            backend=viewer,
         )
-        displayer.show_cad([wire1, box1], backend=viewer)
+        displayer.show_cad("name", [wire1, box1], backend=viewer)
         displayer.show_cad(
+            "name",
             [wire1, box1],
             displayer.DisplayCADOptions(colour=(1.0, 0.0, 1.0)),
             backend=viewer,
         )
         displayer.show_cad(
+            "name",
             [wire1, box1],
             [
                 displayer.DisplayCADOptions(colour=(1.0, 0.0, 0.0)),
@@ -146,11 +159,16 @@ class TestGeometryDisplayer:
             backend=viewer,
         )
         displayer.show_cad(
-            [wire1, box1], color=(1.0, 0.0, 0.0), transparency=0.2, backend=viewer
+            "name",
+            [wire1, box1],
+            color=(1.0, 0.0, 0.0),
+            transparency=0.2,
+            backend=viewer,
         )
 
         with pytest.raises(DisplayError):
             displayer.show_cad(
+                "name",
                 wire1,
                 [
                     displayer.DisplayCADOptions(colour=(1.0, 0.0, 0.0)),
