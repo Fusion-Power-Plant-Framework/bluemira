@@ -64,7 +64,9 @@ __all__ = [
 
 
 def apply_component_display_options(
-    phys_component: PhysicalComponent, color: Iterable, transparency: Optional[float]
+    phys_component: PhysicalComponent,
+    color: Iterable,
+    transparency: Optional[float] = None,
 ):
     """
     Apply color and transparency to a PhysicalComponent for both plotting and CAD.
