@@ -47,7 +47,17 @@ class ViewerBackend(Enum):
     @lru_cache(2)
     def get_module(self):
         """Load viewer module"""
-        return get_module(self.value)
+        try:
+            return get_module(self.value)
+        except (ModuleNotFoundError, FileNotFoundError):
+            if self.name != "FREECAD":
+                name = self.name.lower()
+                bluemira_warn(
+                    f"Unable to import {name.capitalize()} viewer\n"
+                    f"Please 'pip install {name}' to use, falling back to FreeCAD."
+                )
+                return get_module(type(self).FREECAD.value)
+            raise
 
 
 def get_default_options(backend=ViewerBackend.FREECAD):
