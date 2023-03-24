@@ -50,7 +50,7 @@ class TestColorPalette:
         assert colors.to_hex(self.pal["C1"][0]) == "#aaaaaa"
 
         self.pal["C1"] = "#000000"
-        assert self.pal["C1"][0] == "#000000"
+        assert colors.to_hex(self.pal["C1"][0]) == "#000000"
 
     def test_repr_term(self):
         assert (
@@ -79,7 +79,7 @@ def test_make_rgb_alpha():
     assert make_rgb_alpha((1, 2, 3), 0.5, (0.5, 0.5, 0.5)) == (0.75, 1.25, 1.75)
 
 
-@pytest.mark.parametrize("color", [ColorPalette({"C1": "#000000"}), "#000000"])
+@pytest.mark.parametrize("pal", [ColorPalette({"C1": "#000000"}), "#000000"])
 def test_make_alpha_palette(pal):
     new_pal = make_alpha_palette(pal, 3)
     assert [colors.to_hex(p) for p in new_pal._palette] == [
