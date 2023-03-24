@@ -179,7 +179,7 @@ def show_cad(
         try:
             backend = ViewerBackend[backend.upper()]
         except KeyError:
-            bluemira_warn("Unknown viewer backend {backend} defaulting to FreeCAD")
+            bluemira_warn(f"Unknown viewer backend {backend} defaulting to FreeCAD")
             backend = ViewerBackend.FREECAD
 
     if isinstance(labels, str):
