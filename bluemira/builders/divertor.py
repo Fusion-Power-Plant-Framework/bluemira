@@ -29,6 +29,7 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
+    apply_component_display_options,
     circular_pattern_component,
     get_n_sectors,
     pattern_revolved_silhouette,
@@ -83,7 +84,7 @@ class DivertorBuilder(Builder):
         Build the x-z components of the divertor.
         """
         body = PhysicalComponent(self.BODY, self.div_koz)
-        body.plot_options.face_options["color"] = BLUE_PALETTE[self.DIV][0]
+        apply_component_display_options(body, color=BLUE_PALETTE[self.DIV][0])
 
         return body
 
@@ -102,7 +103,7 @@ class DivertorBuilder(Builder):
         segments = []
         for no, shape in enumerate(shapes):
             segment = PhysicalComponent(f"{self.SEGMENT_PREFIX}_{no}", shape)
-            segment.display_cad_options.color = BLUE_PALETTE[self.DIV][no]
+            apply_component_display_options(segment, BLUE_PALETTE[self.DIV][no])
             segments.append(segment)
 
         return circular_pattern_component(
