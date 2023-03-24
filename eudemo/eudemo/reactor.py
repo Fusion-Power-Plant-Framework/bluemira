@@ -344,7 +344,7 @@ if __name__ == "__main__":
     )
 
     reactor.show_cad("xz")
-    reactor.show_cad(n_sectors=3)
+    reactor.show_cad(n_sectors=2)
 
     sspc_solver = SteadyStatePowerCycleSolver(params)
     sspc_result = sspc_solver.execute()
