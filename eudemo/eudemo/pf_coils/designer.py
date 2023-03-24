@@ -84,6 +84,8 @@ class PFCoilsDesignerParams(ParameterFrame):
     tk_cs_insulation: Parameter[float]
     tk_pf_casing: Parameter[float]
     tk_pf_insulation: Parameter[float]
+    pf_s_tk_plate: Parameter[float]
+    pf_s_g: Parameter[float]
     tk_cs: Parameter[float]
     tk_sol_ib: Parameter[float]
     v_burn: Parameter[float]
@@ -336,8 +338,12 @@ class PFCoilsDesigner(Designer[CoilSet]):
         peak_PF_current_factor = 1.5
         offset_value = 0.5 * np.sqrt(
             peak_PF_current_factor * self.params.I_p.value / self.params.PF_jmax.value
-            + self.params.tk_pf_casing.value
+        )
+        offset_value += np.sqrt(2) * (
+            self.params.tk_pf_casing.value
             + self.params.tk_pf_insulation.value
+            + self.params.pf_s_g.value
+            + self.params.pf_s_tk_plate.value
         )
         pf_coil_path = make_pf_coil_path(self.tf_coil_boundary, offset_value)
         pf_coils = coilset.get_coiltype("PF")._coils
