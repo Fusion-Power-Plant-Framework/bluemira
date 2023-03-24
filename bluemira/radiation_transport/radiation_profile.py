@@ -41,6 +41,7 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.physics import calc_psi_norm
+from bluemira.display.plotter import plot_coordinates
 from cherab.core.math import sample3d
 from matplotlib.collections import LineCollection
 from raysect.core import Point3D, Vector3D, rotate_basis, translate
@@ -1621,7 +1622,7 @@ class CoreRadiation(Radiation):
 
         separatrix = self.eq.get_separatrix()
         for sep in separatrix:
-            sep.plot(ax, linewidth=2)
+            plot_coordinates(sep, ax=ax, linewidth=2)
         for flux_tube, p in zip(flux_tubes, power_density):
             cm = ax.scatter(
                 flux_tube.x,
@@ -2063,7 +2064,7 @@ class ScrapeOffLayerRadiation(Radiation):
         in_x, in_z, out_x, out_z = self.radiation_region_ends(z_main, z_pfr, lfs)
 
         reg_i = [
-            self.radiation_region_points(f.loop, z_main, z_pfr, low_div)
+            self.radiation_region_points(f.coords, z_main, z_pfr, low_div)
             for f in flux_tubes
         ]
 
@@ -2169,7 +2170,7 @@ class ScrapeOffLayerRadiation(Radiation):
         # temperature poloidal distribution
         t_pol = [
             self.flux_tube_pol_t(
-                f.loop,
+                f.coords,
                 t,
                 t_rad_in=t_in,
                 t_rad_out=t_out,
@@ -2192,7 +2193,7 @@ class ScrapeOffLayerRadiation(Radiation):
         # density poloidal distribution
         n_pol = [
             self.flux_tube_pol_n(
-                f.loop,
+                f.coords,
                 n,
                 n_rad_in=n_in,
                 n_rad_out=n_out,
@@ -2242,15 +2243,15 @@ class ScrapeOffLayerRadiation(Radiation):
 
         p_min = min([min(p) for p in power])
         p_max = max([max(p) for p in power])
-
-        firstwall.plot(ax, linewidth=0.5, fill=False)
+        
+        plot_coordinates(firstwall, ax=ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()
         for sep in separatrix:
-            sep.plot(ax, linewidth=2)
+            plot_coordinates(sep, ax=ax, linewidth=2)
         for flux_tube, p in zip(tubes, power):
             cm = ax.scatter(
-                flux_tube.loop.x,
-                flux_tube.loop.z,
+                flux_tube.coords.x,
+                flux_tube.coords.z,
                 c=p,
                 s=10,
                 marker=".",
@@ -2292,7 +2293,7 @@ class ScrapeOffLayerRadiation(Radiation):
             plt.ylabel(r"$n_e~[m^{-3}]$")
 
         [
-            ax.plot(np.linspace(0, len(flux_tube.loop.x), len(flux_tube.loop.x)), val)
+            ax.plot(np.linspace(0, len(flux_tube.coords.x), len(flux_tube.coords.x)), val)
             for flux_tube, val in zip(flux_tubes, property)
         ]
 
@@ -2321,7 +2322,7 @@ class ScrapeOffLayerRadiation(Radiation):
             _ = ax1.figure
 
         ax2 = ax1.twinx()
-        x = np.linspace(0, len(flux_tube.loop.x), len(flux_tube.loop.x))
+        x = np.linspace(0, len(flux_tube.coords.x), len(flux_tube.coords.x))
         y1 = t_distribution
         y2 = n_distribution
         ax1.plot(x, y1, "g-")
@@ -2377,16 +2378,16 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.flux_tubes_hfs_up = self.flux_surf_solver.flux_surfaces_ib_hfs
 
         # strike points from the first open flux tube
-        self.x_strike_lfs = self.flux_tubes_lfs_low[0].loop.x[-1]
-        self.z_strike_lfs = self.flux_tubes_lfs_low[0].loop.z[-1]
+        self.x_strike_lfs = self.flux_tubes_lfs_low[0].coords.x[-1]
+        self.z_strike_lfs = self.flux_tubes_lfs_low[0].coords.z[-1]
         self.alpha_lfs = self.flux_tubes_lfs_low[0].alpha
         # print(self.alpha_lfs)
         self.b_pol_out_tar = self.eq.Bp(self.x_strike_lfs, self.z_strike_lfs)
         self.b_tor_out_tar = self.eq.Bt(self.x_strike_lfs)
         self.b_tot_out_tar = np.hypot(self.b_pol_out_tar, self.b_tor_out_tar)
 
-        self.x_strike_hfs = self.flux_tubes_hfs_low[0].loop.x[-1]
-        self.z_strike_hfs = self.flux_tubes_hfs_low[0].loop.z[-1]
+        self.x_strike_hfs = self.flux_tubes_hfs_low[0].coords.x[-1]
+        self.z_strike_hfs = self.flux_tubes_hfs_low[0].coords.z[-1]
         self.alpha_hfs = self.flux_tubes_hfs_low[0].alpha
         # print(self.alpha_hfs)
         self.b_pol_inn_tar = self.eq.Bp(self.x_strike_hfs, self.z_strike_hfs)
@@ -2399,13 +2400,13 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.t_omp = upstream_temperature(
             b_pol=self.b_pol_sep_omp,
             b_tot=self.b_tot_sep_omp,
-            lfs_p_fraction=self.params.lfs_p_fraction.value,
-            lambda_q_near=self.params.fw_lambda_q_near_omp.value,
+            lfs_p_fraction=self.params.lfs_p_fraction,
+            lambda_q_near=self.params.fw_lambda_q_near_omp,
             p_sol=p_sol,
             eq=self.eq,
             r_sep_mp=self.r_sep_omp,
             z_mp=self.z_mp,
-            k_0=self.params.k_0.value,
+            k_0=self.params.k_0,
             firstwall_geom=firstwall_geom,
             lfs=True,
         )
@@ -2413,13 +2414,13 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.t_imp = upstream_temperature(
             b_pol=self.b_pol_sep_imp,
             b_tot=self.b_tot_sep_imp,
-            lfs_p_fraction=self.params.lfs_p_fraction.value,
-            lambda_q_near=self.params.fw_lambda_q_near_imp.value,
+            lfs_p_fraction=self.params.lfs_p_fraction,
+            lambda_q_near=self.params.fw_lambda_q_near_imp,
             p_sol=p_sol,
             eq=self.eq,
             r_sep_mp=self.r_sep_imp,
             z_mp=self.z_mp,
-            k_0=self.params.k_0.value,
+            k_0=self.params.k_0,
             firstwall_geom=firstwall_geom,
             lfs=False,
         )
@@ -2608,7 +2609,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         all_b_tot = []
         phi_all = []
         for flux_tube in flux_tubes:
-            for x, z in zip(flux_tube.loop.x, flux_tube.loop.z):
+            for x, z in zip(flux_tube.coords.x, flux_tube.coords.z):
                 
                 b_pol = self.eq.Bp(x, z)
                 b_tor = self.eq.Bt(x)
@@ -2623,8 +2624,8 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         all_b_tor = np.array([all_b_tor])
         all_b_tot = np.array([all_b_tot])
         phi_all = np.array([phi_all])
-        self.x_tot = np.concatenate([flux_tube.loop.x for flux_tube in flux_tubes])
-        self.z_tot = np.concatenate([flux_tube.loop.z for flux_tube in flux_tubes])
+        self.x_tot = np.concatenate([flux_tube.coords.x for flux_tube in flux_tubes])
+        self.z_tot = np.concatenate([flux_tube.coords.z for flux_tube in flux_tubes])
         self.rad_tot = np.concatenate(power)
         test1 = np.array([2,3,4])
         test2 = np.array([10,20,30])
@@ -2895,7 +2896,7 @@ class RadiationSolver:
 
         separatrix = self.eq.get_separatrix()
         for sep in separatrix:
-            sep.plot(ax, linewidth=2)
+            plot_coordinates(sep, ax=ax, linewidth=2)
         cm = ax.scatter(
             self.x_tot,
             self.z_tot,
