@@ -26,6 +26,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, Iterable, Union
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.designer import Designer
@@ -81,6 +82,10 @@ class PFCoilsDesignerParams(ParameterFrame):
     tau_flattop: Parameter[float]
     tk_cs_casing: Parameter[float]
     tk_cs_insulation: Parameter[float]
+    tk_pf_casing: Parameter[float]
+    tk_pf_insulation: Parameter[float]
+    pf_s_tk_plate: Parameter[float]
+    pf_s_g: Parameter[float]
     tk_cs: Parameter[float]
     tk_sol_ib: Parameter[float]
     v_burn: Parameter[float]
@@ -161,6 +166,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         self._save_equilibria(opt_problem)
         if self.build_config.get("plot", False):
             opt_problem.plot()
+            plt.show()
 
         return result
 
@@ -328,7 +334,17 @@ class PFCoilsDesigner(Designer[CoilSet]):
     def _make_coil_mapper(self, coilset):
         # Get an offset from the TF that corresponds to a PF coil half-width of a
         # current equal to Ip
-        offset_value = 0.5 * np.sqrt(self.params.I_p.value / self.params.PF_jmax.value)
+        # TODO may need to thread this better!
+        peak_PF_current_factor = 1.5
+        offset_value = 0.5 * np.sqrt(
+            peak_PF_current_factor * self.params.I_p.value / self.params.PF_jmax.value
+        )
+        offset_value += np.sqrt(2) * (
+            self.params.tk_pf_casing.value
+            + self.params.tk_pf_insulation.value
+            + self.params.pf_s_g.value
+            + self.params.pf_s_tk_plate.value
+        )
         pf_coil_path = make_pf_coil_path(self.tf_coil_boundary, offset_value)
         pf_coils = coilset.get_coiltype("PF")._coils
         return make_coil_mapper(pf_coil_path, self.keep_out_zones, pf_coils)

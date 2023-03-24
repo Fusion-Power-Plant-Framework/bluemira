@@ -260,8 +260,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         tk_offset = 0.5 * self.params.tf_wp_width.value
         # Variable thickness of the casing is problematic...
         # TODO: Improve this estimate (or use variable offset here too..)
-        tk_offset += 1.5 * self.params.tk_tf_front_ib.value
-        tk_offset += self.params.g_ts_tf.value
+        tk_offset += 2 * np.sqrt(2) * self.params.tk_tf_front_ib.value
+        tk_offset += np.sqrt(2) * self.params.g_ts_tf.value
         return offset_wire(keep_out_zone, tk_offset, open_wire=False, join="arc")
 
     def _derive_shape_params(self, variables_map: Dict[str, str]) -> Dict:
@@ -720,14 +720,18 @@ class TFCoilBuilder(Builder):
 
         """
         tf_centreline_min = self.centreline.bounding_box.x_min
-        tf_thick = (
-            self.params.tk_tf_nose.value
-            + self.params.tf_wp_width.value
+
+        x_in = (
+            tf_centreline_min
+            - self.params.tk_tf_nose.value
+            - 0.5 * self.params.tf_wp_width.value
+        )
+        # Insulation and insertion gap included in WP width
+        x_out = (
+            tf_centreline_min
+            + 0.5 * self.params.tf_wp_width.value
             + self.params.tk_tf_front_ib.value
         )
-        x_in = tf_centreline_min - 0.5 * tf_thick
-        # Insulation and insertion gap included in WP width
-        x_out = x_in + tf_thick
 
         tan_half_angle = np.tan(np.pi / self.params.n_TF.value)
         y_in = x_in * tan_half_angle

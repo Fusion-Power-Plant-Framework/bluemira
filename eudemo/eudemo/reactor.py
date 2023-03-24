@@ -52,7 +52,7 @@ from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import interpolate_bspline
 from eudemo.blanket import Blanket, BlanketBuilder
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -100,7 +100,7 @@ class EUDEMO(Reactor):
 def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
     """Build EUDEMO plasma from an equilibrium."""
     lcfs_loop = eq.get_LCFS()
-    lcfs_wire = make_polygon({"x": lcfs_loop.x, "z": lcfs_loop.z}, closed=True)
+    lcfs_wire = interpolate_bspline({"x": lcfs_loop.x, "z": lcfs_loop.z}, closed=True)
     builder = PlasmaBuilder(params, build_config, lcfs_wire)
     return Plasma(builder.build())
 
@@ -143,16 +143,14 @@ def build_vvts(params, build_config, vv_boundary) -> VacuumVesselThermalShield:
     return VacuumVesselThermalShield(vv_thermal_shield.build())
 
 
-def build_tf_coils(
-    params, build_config, separatrix, vacuum_vessel_cross_section
-) -> TFCoil:
+def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCoil:
     """Design and build the TF coils for the reactor."""
     centreline, wp_cross_section = run_designer(
         TFCoilDesigner,
         params,
         build_config,
         separatrix=separatrix,
-        keep_out_zone=vacuum_vessel_cross_section,
+        keep_out_zone=vvts_cross_section,
     )
     builder = TFCoilBuilder(
         params, build_config, centreline.create_shape(), wp_cross_section
@@ -206,8 +204,8 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
         CryostatTSBuilder(
             params,
             build_config.get("Cryostat", {}),
-            reactor.pf_coils.xz_boundary(),
-            reactor.tf_coils.boundary(),
+            pf_kozs,
+            tf_koz,
         ).build()
     )
 
@@ -329,13 +327,13 @@ if __name__ == "__main__":
         reactor.tf_coils.boundary(),
     )
 
-    # reactor.coil_structures = build_coil_structures(
-    #     params,
-    #     build_config.get("Coil structures", {}),
-    #     tf_coil_xz_face=reactor.tf_coils.xz_face(),
-    #     pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
-    #     pf_coil_keep_out_zones=[upper_port_xz],
-    # )
+    reactor.coil_structures = build_coil_structures(
+        params,
+        build_config.get("Coil structures", {}),
+        tf_coil_xz_face=reactor.tf_coils.xz_face(),
+        pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
+        pf_coil_keep_out_zones=[upper_port_xz],
+    )
 
     reactor.cryostat = build_cryostat(
         params, build_config.get("Cryostat", {}), reactor.cryostat_thermal.xz_boundary()
@@ -345,7 +343,8 @@ if __name__ == "__main__":
         params, build_config.get("RadiationShield", {}), reactor.cryostat.xz_boundary()
     )
 
-    reactor.show_cad(n_sectors=3)
+    reactor.show_cad("xz")
+    reactor.show_cad(n_sectors=2)
 
     sspc_solver = SteadyStatePowerCycleSolver(params)
     sspc_result = sspc_solver.execute()

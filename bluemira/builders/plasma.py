@@ -130,12 +130,13 @@ class PlasmaBuilder(Builder):
         """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 
-        shell = revolve_shape(
-            lcfs,
+        solid = revolve_shape(
+            BluemiraFace(lcfs),
             direction=(0, 0, 1),
             degree=sector_degree * n_sectors,
             label=self.LCFS,
         )
-        component = PhysicalComponent(self.LCFS, shell)
+        component = PhysicalComponent(self.LCFS, solid)
         component.display_cad_options.color = BLUE_PALETTE["PL"]
+        component.display_cad_options.transparency = 0.3
         return component
