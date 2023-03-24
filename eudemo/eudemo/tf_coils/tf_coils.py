@@ -136,25 +136,6 @@ class TFCoilDesignerParams(ParameterFrame):
     r_tf_in: Parameter[float]
 
 
-@dataclass
-class TFCoilBuilderParams(ParameterFrame):
-    """
-    TF Coil builder parameters
-    """
-
-    R_0: Parameter[float]
-    z_0: Parameter[float]
-    B_0: Parameter[float]
-    n_TF: Parameter[int]
-    tf_wp_depth: Parameter[float]
-    tf_wp_width: Parameter[float]
-    tk_tf_front_ib: Parameter[float]
-    tk_tf_ins: Parameter[float]
-    tk_tf_insgap: Parameter[float]
-    tk_tf_nose: Parameter[float]
-    tk_tf_side: Parameter[float]
-
-
 class TFCoilDesigner(Designer[GeometryParameterisation]):
     """
     TF Coil Designer
@@ -400,6 +381,25 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         return parameterisation, self._make_wp_xs(
             parameterisation.create_shape().bounding_box.x_min
         )
+
+
+@dataclass
+class TFCoilBuilderParams(ParameterFrame):
+    """
+    TF Coil builder parameters
+    """
+
+    R_0: Parameter[float]
+    z_0: Parameter[float]
+    B_0: Parameter[float]
+    n_TF: Parameter[int]
+    tf_wp_depth: Parameter[float]
+    tf_wp_width: Parameter[float]
+    tk_tf_front_ib: Parameter[float]
+    tk_tf_ins: Parameter[float]
+    tk_tf_insgap: Parameter[float]
+    tk_tf_nose: Parameter[float]
+    tk_tf_side: Parameter[float]
 
 
 class TFCoilBuilder(Builder):
