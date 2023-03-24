@@ -22,10 +22,7 @@
 """
 A collection of tools used in the EU-DEMO design.
 """
-from collections.abc import Iterable
-from typing import Optional
 
-from bluemira.base.components import PhysicalComponent
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import slice_shape
 
@@ -42,16 +39,3 @@ def get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
     intersections = intersections[intersections[:, -1] > 0.0]
     intersection = sorted(intersections, key=lambda x: x[-1])[0]
     return intersection
-
-
-def apply_component_display_options(
-    phys_component: PhysicalComponent, color: Iterable, transparency: Optional[float]
-):
-    """
-    Apply color and transparency to a PhysicalComponent for both plotting and CAD.
-    """
-    phys_component.plot_options.face_options["color"] = color
-    phys_component.display_cad_options.color = color
-    if transparency:
-        phys_component.plot_options.face_options["alpha"] = transparency
-        phys_component.display_cad_options.transparency = transparency

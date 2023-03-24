@@ -23,7 +23,8 @@
 A collection of tools used in the EU-DEMO design.
 """
 
-from typing import List, Tuple, Union
+from collections.abc import Iterable
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 from anytree import PreOrderIter
@@ -49,6 +50,7 @@ from bluemira.geometry.tools import (
 )
 
 __all__ = [
+    "apply_component_display_options",
     "get_n_sectors",
     "circular_pattern_component",
     "pattern_revolved_silhouette",
@@ -59,6 +61,19 @@ __all__ = [
     "build_sectioned_xy",
     "build_sectioned_xyz",
 ]
+
+
+def apply_component_display_options(
+    phys_component: PhysicalComponent, color: Iterable, transparency: Optional[float]
+):
+    """
+    Apply color and transparency to a PhysicalComponent for both plotting and CAD.
+    """
+    phys_component.plot_options.face_options["color"] = color
+    phys_component.display_cad_options.color = color
+    if transparency:
+        phys_component.plot_options.face_options["alpha"] = transparency
+        phys_component.display_cad_options.transparency = transparency
 
 
 def get_n_sectors(no_obj, degree=360):

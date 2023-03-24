@@ -36,7 +36,11 @@ from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.builders.tools import circular_pattern_component, get_n_sectors
+from bluemira.builders.tools import (
+    apply_component_display_options,
+    circular_pattern_component,
+    get_n_sectors,
+)
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
@@ -58,7 +62,6 @@ from bluemira.magnetostatics.circuits import (
 )
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import get_class_from_module
-from eudemo.tools import apply_component_display_options
 
 
 class TFCoil(ComponentManager):
