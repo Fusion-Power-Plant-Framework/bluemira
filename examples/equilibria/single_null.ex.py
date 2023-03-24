@@ -474,7 +474,7 @@ position_opt_problem = PulsedNestedPositionCOP(
     position_mapper,
     sub_opt_problems=[current_opt_problem_sof, current_opt_problem_eof],
     optimiser=Optimiser(
-        "COBYLA", opt_conditions={"max_eval": 50, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
+        "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
     ),
     debug=False,
 )
