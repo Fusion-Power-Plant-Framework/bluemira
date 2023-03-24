@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import math
 from copy import deepcopy
+from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
 import freecad  # noqa: F401
@@ -40,6 +41,7 @@ import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
 import BOPTools.Utils
 import FreeCADGui
+import matplotlib.colors as colors
 import numpy as np
 import Part
 from FreeCAD import Base
@@ -1815,12 +1817,11 @@ def placement_from_plane(plane):
 # ======================================================================================
 # Geometry visualisation
 # ======================================================================================
-def _colourise(
-    node: coin.SoNode,
-    options: Dict,
-):
+
+
+def _colourise(node: coin.SoNode, options: Dict):
     if isinstance(node, coin.SoMaterial):
-        rgb = options["color"]
+        rgb = colors.to_rgb(options["colour"])
         transparency = options["transparency"]
         node.ambientColor.setValue(coin.SbColor(*rgb))
         node.diffuseColor.setValue(coin.SbColor(*rgb))
@@ -1829,31 +1830,125 @@ def _colourise(
         _colourise(child, options)
 
 
+def collect_verts_faces(
+    solid: Part.Shape, tesselation: float = 0.1
+) -> Tuple[Optional[np.ndarray], ...]:
+    """
+    Collects verticies and faces of parts and tessellates them
+    for the CAD viewer
+
+    Parameters
+    ----------
+    solid: Part.Shape
+        FreeCAD Part
+    tesselation: float
+        amount of tesselation for the mesh
+
+    Returns
+    -------
+    vertices, faces
+
+    """
+    verts = []
+    faces = []
+    voffset = 0
+
+    # collect
+    for face in solid.Faces:
+        # tesselation is likely to be the most expensive part of this
+        v, f = face.tessellate(tesselation)
+
+        if v != []:
+            verts.append(np.array(v))
+            faces.append(np.array(f) + voffset)
+            voffset += len(v)
+
+    if len(solid.Faces) > 0:
+        return np.vstack(verts), np.vstack(faces)
+    else:
+        return None, None
+
+
+def collect_wires(solid: Part.Shape, **kwds) -> Tuple[np.ndarray]:
+    """
+    Collects verticies and edges of parts and discretizes them
+    for the CAD viewer
+
+    Parameters
+    ----------
+    solid: Part.Shape
+        FreeCAD Part
+
+    Returns
+    -------
+    vertices, edges
+
+    """
+    verts = []
+    edges = []
+    voffset = 0
+    for wire in solid.Wires:
+        v = wire.discretize(**kwds)
+        verts.append(np.array(v))
+        edges.append(np.arange(voffset, voffset + len(v) - 1))
+        voffset += len(v)
+    edges = np.concatenate(edges)[:, None]
+    return np.vstack(verts), np.hstack([edges, edges + 1])
+
+
+@dataclass
+class DefaultDisplayOptions:
+    """Freecad default display options"""
+
+    colour: Union[Tuple, str]
+    transparency: float = 0.0
+
+    _colour: Union[Tuple, str] = field(
+        init=False, repr=False, default_factory=lambda: colors.to_hex((0.5, 0.5, 0.5))
+    )
+
+    @property
+    def colour(self) -> str:
+        """Colour as rbg"""
+        return colors.to_hex(self._colour)
+
+    @colour.setter
+    def colour(self, value):
+        """Set colour"""
+        self._colour = value
+
+    @property
+    def color(self) -> str:
+        """See colour"""
+        return self.colour
+
+    @color.setter
+    def color(self, value):
+        """See colour"""
+        self.colour = value
+
+
 def show_cad(
-    parts: Union[Part.Shape, List[Part.Shape]],
-    options: Optional[Union[Dict, List[Dict]]] = None,
+    labels: List[str],
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
+    options: Optional[Union[Dict, List[Optional[Dict]]]] = None,
+    **kwargs,
 ):
     """
     The implementation of the display API for FreeCAD parts.
 
     Parameters
     ----------
-    parts: Union[Part.Shape, List[Part.Shape]]
+    parts
         The parts to display.
-    options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
+    options
         The options to use to display the parts.
     """
-    if not isinstance(parts, list):
-        parts = [parts]
-
     if options is None:
-        from bluemira.display.displayer import get_default_options
+        options = [None]
 
-        dict_options = get_default_options()
-        options = [dict_options] * len(parts)
-
-    elif not isinstance(options, list):
-        options = [options] * len(parts)
+    if None in options:
+        options = [DefaultDisplayOptions() if o is None else o for o in options]
 
     if len(options) != len(parts):
         raise FreeCADError(
@@ -1872,10 +1967,10 @@ def show_cad(
 
     root = coin.SoSeparator()
 
-    for part, option in zip(parts, options):
-        new_part = part.copy()
+    for label, part, option in zip(labels, parts, options):
+        new_part = part.shape.copy()
         new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
-        obj = doc.addObject("Part::Feature")
+        obj = doc.addObject("Part::Feature", label)
         obj.Shape = new_part
         doc.recompute()
         subgraph = FreeCADGui.subgraphFromObject(obj)

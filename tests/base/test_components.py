@@ -214,6 +214,9 @@ class TestComponentClass:
                     assert c.name in comp_children_names
 
             # test properties
+            assert cpy._plot_options is comp._plot_options
+            assert cpy._display_cad_options is comp._display_cad_options
+
             if isinstance(comp, PhysicalComponent):
                 assert isinstance(cpy, PhysicalComponent)
                 # assert they are the same instance

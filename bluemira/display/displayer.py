@@ -20,35 +20,51 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-api for plotting using freecad
+api for plotting using CAD backend
 """
 from __future__ import annotations
 
-import copy
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from dataclasses import asdict
+from enum import Enum
+from functools import lru_cache
+from typing import List, Optional, Union
 
-import matplotlib.colors as colors
-
-from bluemira.codes import _freecadapi as cadapi
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.plotter import DisplayOptions
-
-if TYPE_CHECKING:
-    from bluemira.geometry.base import BluemiraGeo
-
-DEFAULT_DISPLAY_OPTIONS = {
-    "color": (0.5, 0.5, 0.5),
-    "transparency": 0.0,
-}
+from bluemira.geometry.base import BluemiraGeo
+from bluemira.utilities.tools import get_module
 
 
-def get_default_options():
+class ViewerBackend(Enum):
+    """CAD viewer backends."""
+
+    FREECAD = "bluemira.codes._freecadapi"
+    POLYSCOPE = "bluemira.codes._polyscope"
+
+    @lru_cache(2)
+    def get_module(self):
+        """Load viewer module"""
+        try:
+            return get_module(self.value)
+        except (ModuleNotFoundError, FileNotFoundError):
+            if self.name != "FREECAD":
+                name = self.name.lower()
+                bluemira_warn(
+                    f"Unable to import {name.capitalize()} viewer\n"
+                    f"Please 'pip install {name}' to use, falling back to FreeCAD."
+                )
+                return get_module(type(self).FREECAD.value)
+            raise
+
+
+def get_default_options(backend=ViewerBackend.FREECAD):
     """
     Returns the default display options.
     """
-    return copy.deepcopy(DEFAULT_DISPLAY_OPTIONS)
+    return backend.get_module().DefaultDisplayOptions()
 
 
 class DisplayCADOptions(DisplayOptions):
@@ -57,72 +73,69 @@ class DisplayCADOptions(DisplayOptions):
 
     Parameters
     ----------
-    color: Union[str, Tuple[float, float, float]]
-        The colour to display the object, by default (0.5, 0.5, 0.5).
-    transparency: float
-        The transparency to display the object, by default 0.0.
+    backend
+        the backend viewer being used
     """
 
-    def __init__(self, **kwargs):
-        self._options = get_default_options()
+    __slots__ = ("_options",)
+
+    def __init__(self, backend=ViewerBackend.FREECAD, **kwargs):
+        self._options = get_default_options(backend)
         self.modify(**kwargs)
+
+    def __setattr__(self, attr, val):
+        """
+        Set attributes in options dictionary
+        """
+        if (
+            hasattr(self, "_options")
+            and self._options is not None
+            and (attr in self._options.__annotations__ or hasattr(self._options, attr))
+        ):
+            setattr(self._options, attr, val)
+        else:
+            super().__setattr__(attr, val)
+
+    def __getattribute__(self, attr):
+        """
+        Get attributes or from "_options" dict
+        """
+        try:
+            return super().__getattribute__(attr)
+        except AttributeError as ae:
+            if attr != "_options":
+                try:
+                    return getattr(self._options, attr)
+                except AttributeError:
+                    raise ae
+            else:
+                raise ae
+
+    def modify(self, **kwargs):
+        """Modify options"""
+        for k, v in kwargs.items():
+            setattr(self, k, v)
 
     def as_dict(self):
         """
         Returns the instance as a dictionary.
         """
-        dict_ = super().as_dict()
-        if "color" in dict_:
-            dict_["color"] = self.color
-        return dict_
-
-    @property
-    def color(self) -> Tuple[float, float, float]:
-        """
-        The RBG colour to display the object.
-        """
-        # NOTE: We only convert to (R,G,B) at the last minute, so that the reprs are
-        # legible.
-        return colors.to_rgb(self._options["color"])
-
-    @color.setter
-    def color(self, val: Union[str, Tuple[float, float, float]]):
-        self._options["color"] = val
-
-    @property
-    def transparency(self) -> float:
-        """
-        The transparency to display the object.
-        """
-        return self._options["transparency"]
-
-    @transparency.setter
-    def transparency(self, val: float):
-        self._options["transparency"] = val
+        return asdict(super().as_dict())
 
 
 # =======================================================================================
 # Visualisation
 # =======================================================================================
-def _get_displayer_class(part):
-    """
-    Get the displayer class for an object.
-    """
-    import bluemira.base.components
-
-    if isinstance(part, bluemira.base.components.Component):
-        plot_class = ComponentDisplayer
-    else:
-        raise DisplayError(
-            f"{part} object cannot be displayed. No Displayer available for {type(part)}"
-        )
-    return plot_class
 
 
 def _validate_display_inputs(parts, options):
     """
     Validate the lists of parts and options, applying some default options.
     """
+    if parts is None:
+        bluemira_debug("No new parts to display")
+        return [], []
+
     if not isinstance(parts, list):
         parts = [parts]
 
@@ -140,36 +153,52 @@ def _validate_display_inputs(parts, options):
 
 
 def show_cad(
-    parts: Union[BluemiraGeo, List[BluemiraGeo]],
+    labels: Optional[Union[str, List[str]]] = None,
+    parts: Optional[
+        Union[BluemiraGeo, List[BluemiraGeo]]  # noqa: F821
+    ] = None,  # avoiding circular deps
     options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
+    backend: Union[str, ViewerBackend] = ViewerBackend.FREECAD,
     **kwargs,
 ):
     """
-    The implementation of the display API for FreeCAD parts.
+    The CAD display API.
 
     Parameters
     ----------
-    parts: Union[BluemiraGeo, List[BluemiraGeo]]
+    parts
         The parts to display.
-    options: Optional[Union[_PlotCADOptions, List[_PlotCADOptions]]]
+    options
         The options to use to display the parts.
+    backend
+        Viewer backend
+    kwargs
+        Passed on to modifications to the plotting style options and backend
     """
+    if isinstance(backend, str):
+        try:
+            backend = ViewerBackend[backend.upper()]
+        except KeyError:
+            bluemira_warn(f"Unknown viewer backend '{backend}' defaulting to FreeCAD")
+            backend = ViewerBackend.FREECAD
+
+    if isinstance(labels, str):
+        labels = [labels]
+
     parts, options = _validate_display_inputs(parts, options)
 
     new_options = []
     for o in options:
         if isinstance(o, DisplayCADOptions):
-            temp = DisplayCADOptions(**o.as_dict())
+            temp = DisplayCADOptions(**o.as_dict(), backend=backend)
             temp.modify(**kwargs)
             new_options.append(temp)
         else:
-            temp = DisplayCADOptions(**kwargs)
-            new_options.append(temp)
+            new_options.append(DisplayCADOptions(**kwargs, backend=backend))
 
-    shapes = [part.shape for part in parts]
-    freecad_options = [o.as_dict() for o in new_options]
+    part_options = [o.as_dict() for o in new_options]
 
-    cadapi.show_cad(shapes, freecad_options)
+    backend.get_module().show_cad(labels, parts, part_options, **kwargs)
 
 
 class BaseDisplayer(ABC):
@@ -195,6 +224,65 @@ class BaseDisplayer(ABC):
         pass
 
 
+def _get_displayer_class(part):
+    """
+    Get the displayer class for an object.
+    """
+    import bluemira.base.components
+
+    if isinstance(part, bluemira.base.components.Component):
+        plot_class = ComponentDisplayer
+    else:
+        raise DisplayError(
+            f"{part} object cannot be displayed. No Displayer available for {type(part)}"
+        )
+    return plot_class
+
+
+class DisplayableCAD:
+    """
+    Mixin class to make a class displayable by imparting a show_cad method and options.
+    """
+
+    def __init__(self):
+        self._display_cad_options: DisplayCADOptions = DisplayCADOptions()
+        self._display_cad_options.colour = next(BLUE_PALETTE)
+
+    @property
+    def display_cad_options(self) -> DisplayCADOptions:
+        """
+        The options that will be used to display the object.
+        """
+        return self._display_cad_options
+
+    @display_cad_options.setter
+    def display_cad_options(self, value: DisplayCADOptions):
+        if not isinstance(value, DisplayCADOptions):
+            raise DisplayError(
+                "Display options must be set to a DisplayCADOptions instance."
+            )
+        self._display_cad_options = value
+
+    @property
+    def _displayer(self) -> BaseDisplayer:
+        """
+        The options that will be used to display the object.
+        """
+        return _get_displayer_class(self)(self.display_cad_options)
+
+    def show_cad(self, **kwargs) -> None:
+        """
+        Default method to call display the object by calling into the Displayer's display
+        method.
+
+        Returns
+        -------
+        axes
+            The axes that the plot has been displayed onto.
+        """
+        return self._displayer.show_cad(self, **kwargs)
+
+
 class ComponentDisplayer(BaseDisplayer):
     """
     CAD displayer for Components
@@ -217,52 +305,7 @@ class ComponentDisplayer(BaseDisplayer):
 
         show_cad(
             *bm_comp.get_properties_from_components(
-                comps, ("shape", "display_cad_options")
+                comps, ("name", "shape", "display_cad_options")
             ),
             **kwargs,
         )
-
-
-class DisplayableCAD:
-    """
-    Mixin class to make a class displayable by imparting a show_cad method and options.
-    """
-
-    def __init__(self):
-        super().__init__()
-        self._display_cad_options: DisplayCADOptions = DisplayCADOptions()
-        self._display_cad_options.color = next(BLUE_PALETTE)
-
-    @property
-    def display_cad_options(self) -> DisplayCADOptions:
-        """
-        The options that will be used to display the object.
-        """
-        return self._display_cad_options
-
-    @display_cad_options.setter
-    def display_cad_options(self, value: DisplayCADOptions):
-        if not isinstance(value, DisplayCADOptions):
-            raise DisplayError(
-                "Display options must be set to a DisplayCADOptions instance."
-            )
-        self._display_cad_options = value
-
-    @property
-    def _displayer(self) -> BaseDisplayer:
-        """
-        The options that will be used to display the object.
-        """
-        return _get_displayer_class(self)(self._display_cad_options)
-
-    def show_cad(self, **kwargs) -> None:
-        """
-        Default method to call display the object by calling into the Displayer's display
-        method.
-
-        Returns
-        -------
-        axes
-            The axes that the plot has been displayed onto.
-        """
-        return self._displayer.show_cad(self, **kwargs)

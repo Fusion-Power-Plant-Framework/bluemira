@@ -95,6 +95,7 @@ openmc = [
 process = [
     "cmake>=3.13.0",
 ]
+polyscope = ["polyscope"]
 
 [build-system]
 requires = ["setuptools", "versioneer[toml]>=0.26"]

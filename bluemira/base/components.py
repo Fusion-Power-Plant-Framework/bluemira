@@ -171,6 +171,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             parent=parent,
             children=None,
         )
+        self_copy._plot_options = self._plot_options
+        self_copy._display_cad_options = self._display_cad_options
         # Attaches children to parent
         self.copy_children(parent=self_copy)
 
@@ -403,6 +405,8 @@ class PhysicalComponent(Component):
             shape=self.shape,
             material=self.material,
         )
+        self_copy._plot_options = self._plot_options
+        self_copy._display_cad_options = self._display_cad_options
         # Attaches children to parent
         self.copy_children(parent=self_copy)
 
@@ -468,6 +472,9 @@ class MagneticComponent(PhysicalComponent):
             material=self.material,
             conductor=self.conductor,
         )
+        self_copy._plot_options = self._plot_options
+        self_copy._display_cad_options = self._display_cad_options
+
         # Attaches children to parent
         self.copy_children(parent=self_copy)
 

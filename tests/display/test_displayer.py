@@ -22,20 +22,29 @@
 """
 Tests for the displayer module.
 """
-
-from unittest.mock import patch
+from dataclasses import asdict
+from unittest.mock import Mock, patch
 
 import numpy as np
 import pytest
 
+import bluemira.codes._freecadapi as cadapi
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import displayer
 from bluemira.display.error import DisplayError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_circle, make_polygon
-from tests.display.helpers import PatchQApp, PatchQuarterWidget
 
 _FREECAD_REF = "bluemira.codes._freecadapi"
+
+
+def _skip_polyscope():
+    try:
+        import polyscope  # noqa: F401
+
+        return False
+    except ImportError:
+        return True
 
 
 class TestDisplayCADOptions:
@@ -44,8 +53,8 @@ class TestDisplayCADOptions:
         Check the values of the default options correspond to the global defaults.
         """
         the_options = displayer.DisplayCADOptions()
-        assert the_options.as_dict() == displayer.DEFAULT_DISPLAY_OPTIONS
-        assert the_options.as_dict() is not displayer.DEFAULT_DISPLAY_OPTIONS
+        assert the_options.as_dict() == asdict(displayer.get_default_options())
+        assert the_options.as_dict() is not displayer.get_default_options()
 
     def test_options(self):
         """
@@ -54,10 +63,7 @@ class TestDisplayCADOptions:
         the_options = displayer.DisplayCADOptions(color=(1.0, 0.0, 0.0))
         options_dict = the_options.as_dict()
         for key, val in options_dict.items():
-            if key == "color":
-                assert val != displayer.DEFAULT_DISPLAY_OPTIONS[key]
-            else:
-                assert val == displayer.DEFAULT_DISPLAY_OPTIONS[key]
+            assert val == getattr(the_options, key)
 
     def test_modify_options(self):
         """
@@ -67,34 +73,37 @@ class TestDisplayCADOptions:
         the_options.modify(color=(1.0, 0.0, 0.0))
         options_dict = the_options.as_dict()
         for key, val in options_dict.items():
-            if key == "color":
-                assert val != displayer.DEFAULT_DISPLAY_OPTIONS[key]
-            else:
-                assert val == displayer.DEFAULT_DISPLAY_OPTIONS[key]
+            assert val == getattr(the_options, key)
 
     def test_properties(self):
         """
         Check the display option properties can be accessed
         """
         the_options = displayer.DisplayCADOptions()
-        for key, val in displayer.DEFAULT_DISPLAY_OPTIONS.items():
+        for key, val in asdict(displayer.get_default_options()).items():
             assert getattr(the_options, key) == val
 
-        the_options.color = (1.0, 0.0, 0.0)
-        assert the_options.color != displayer.DEFAULT_DISPLAY_OPTIONS["color"]
-        assert (
-            the_options.transparency == displayer.DEFAULT_DISPLAY_OPTIONS["transparency"]
-        )
+        the_options.colour = (1.0, 0.0, 0.0)
+        assert the_options.colour != displayer.get_default_options().colour
+        assert the_options.transparency == displayer.get_default_options().transparency
 
-        the_options.transparency = 1.0
-        assert the_options.color != displayer.DEFAULT_DISPLAY_OPTIONS["color"]
-        assert (
-            the_options.transparency != displayer.DEFAULT_DISPLAY_OPTIONS["transparency"]
-        )
+        the_options.transparency = 0.1
+        assert the_options.colour != displayer.get_default_options().colour
+        assert the_options.transparency != displayer.get_default_options().transparency
 
 
 class TestComponentDisplayer:
-    def test_display(self):
+    @pytest.mark.parametrize(
+        "viewer",
+        [
+            "freecad",
+            pytest.param(
+                "polyscope",
+                marks=pytest.mark.skipif(_skip_polyscope(), reason="Not installed"),
+            ),
+        ],
+    )
+    def test_display(self, viewer):
         square_points = np.array(
             [
                 (0.0, 0.0, 0.0),
@@ -109,19 +118,17 @@ class TestComponentDisplayer:
 
         group = Component("Parent")
         child1 = PhysicalComponent("Child1", shape=wire1, parent=group)
-        child1.display_cad_options.color = (0.0, 1.0, 0.0)
+        child1.display_cad_options.colour = (0.0, 1.0, 0.0)
         child2 = PhysicalComponent("Child2", shape=wire2, parent=group)
 
-        with patch(f"{_FREECAD_REF}.QApplication", PatchQApp):
-            with patch(f"{_FREECAD_REF}.quarter.QuarterWidget", PatchQuarterWidget):
-                child1.show_cad()
-                group.show_cad()
-                child2.display_cad_options = displayer.DisplayCADOptions(
-                    color=(1.0, 0.0, 0.0)
-                )
-                group.show_cad()
-                group.show_cad(color=(0.0, 0.0, 1.0))
-                displayer.ComponentDisplayer().show_cad(group, color=(1.0, 0.0, 0.0))
+        child1.show_cad(backend=viewer)
+        group.show_cad(backend=viewer)
+        child2.display_cad_options = displayer.DisplayCADOptions(colour=(1.0, 0.0, 0.0))
+        group.show_cad(backend=viewer)
+        group.show_cad(colour=(0.0, 0.0, 1.0), backend=viewer)
+        displayer.ComponentDisplayer().show_cad(
+            group, color=(1.0, 0.0, 0.0), backend=viewer
+        )
 
         with pytest.raises(DisplayError):
             child2.display_cad_options = (0.0, 0.0, 1.0)
@@ -135,45 +142,98 @@ class TestGeometryDisplayer:
         (0.0, 1.0, 0.0),
     ]
 
-    def test_display(self):
+    def setup_method(self):
+        displayer.ViewerBackend.get_module.cache_clear()
+
+    @pytest.mark.parametrize(
+        "viewer",
+        [
+            "freecad",
+            pytest.param(
+                "polyscope",
+                marks=pytest.mark.skipif(_skip_polyscope(), reason="Not installed"),
+            ),
+        ],
+    )
+    def test_display(self, viewer):
         wire1 = make_polygon(self.square_points, label="wire1", closed=False)
         box1 = extrude_shape(wire1, vec=(0.0, 0.0, 1.0), label="box1")
 
-        with patch(f"{_FREECAD_REF}.QApplication", PatchQApp):
-            with patch(f"{_FREECAD_REF}.quarter.QuarterWidget", PatchQuarterWidget):
-                displayer.show_cad(wire1)
-                displayer.show_cad(
-                    box1, displayer.DisplayCADOptions(color=(1.0, 0.0, 1.0))
-                )
-                displayer.show_cad([wire1, box1])
-                displayer.show_cad(
-                    [wire1, box1], displayer.DisplayCADOptions(color=(1.0, 0.0, 1.0))
-                )
-                displayer.show_cad(
-                    [wire1, box1],
-                    [
-                        displayer.DisplayCADOptions(color=(1.0, 0.0, 0.0)),
-                        displayer.DisplayCADOptions(
-                            color=(0.0, 1.0, 0.0), transparency=0.2
-                        ),
-                    ],
-                )
-                displayer.show_cad(
-                    [wire1, box1], color=(1.0, 0.0, 0.0), transparency=0.2
-                )
+        displayer.show_cad("name", wire1, backend=viewer)
+        displayer.show_cad(
+            "name",
+            box1,
+            displayer.DisplayCADOptions(colour=(1.0, 0.0, 1.0)),
+            backend=viewer,
+        )
+        displayer.show_cad("name", [wire1, box1], backend=viewer)
+        displayer.show_cad(
+            "name",
+            [wire1, box1],
+            displayer.DisplayCADOptions(colour=(1.0, 0.0, 1.0)),
+            backend=viewer,
+        )
+        displayer.show_cad(
+            "name",
+            [wire1, box1],
+            [
+                displayer.DisplayCADOptions(colour=(1.0, 0.0, 0.0)),
+                displayer.DisplayCADOptions(colour=(0.0, 1.0, 0.0), transparency=0.2),
+            ],
+            backend=viewer,
+        )
+        displayer.show_cad(
+            "name",
+            [wire1, box1],
+            color=(1.0, 0.0, 0.0),
+            transparency=0.2,
+            backend=viewer,
+        )
 
-                with pytest.raises(DisplayError):
-                    displayer.show_cad(
-                        wire1,
-                        [
-                            displayer.DisplayCADOptions(color=(1.0, 0.0, 0.0)),
-                            displayer.DisplayCADOptions(color=(0.0, 1.0, 0.0)),
-                        ],
-                    )
+        with pytest.raises(DisplayError):
+            displayer.show_cad(
+                "name",
+                wire1,
+                [
+                    displayer.DisplayCADOptions(colour=(1.0, 0.0, 0.0)),
+                    displayer.DisplayCADOptions(colour=(0.0, 1.0, 0.0)),
+                ],
+                backend=viewer,
+            )
 
-    def test_3d_cad_displays_shape(self):
+    def _make_shape(self):
         circle_wire = make_circle(radius=5, axis=(0, 0, 1), label="my_wire")
         circle_face = BluemiraFace(circle_wire, label="my_face")
-        cylinder = extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
+        return extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
 
-        displayer.show_cad(cylinder)
+    @pytest.mark.parametrize(
+        "viewer",
+        [
+            "freecad",
+            pytest.param(
+                "polyscope",
+                marks=pytest.mark.skipif(_skip_polyscope(), reason="Not installed"),
+            ),
+        ],
+    )
+    def test_3d_cad_displays_shape(self, viewer):
+        displayer.show_cad("name", self._make_shape(), backend=viewer)
+
+    @pytest.mark.parametrize(
+        "mock",
+        [
+            Mock(side_effect=[FileNotFoundError(), cadapi]),
+            Mock(side_effect=[ModuleNotFoundError(), cadapi]),
+        ],
+    )
+    def test_no_displayer(self, mock, caplog):
+        with patch("bluemira.display.displayer.get_module", mock):
+            displayer.show_cad("name", self._make_shape(), backend="polyscope")
+        assert len(caplog.messages) == 1
+        with patch("bluemira.display.displayer.get_module", mock):
+            displayer.show_cad("name", self._make_shape(), backend="polyscope")
+        assert len(caplog.messages) == 1
+
+    def test_unknown_displayer(self, caplog):
+        displayer.show_cad("name", self._make_shape(), backend="mybackend")
+        assert len(caplog.messages) == 1
