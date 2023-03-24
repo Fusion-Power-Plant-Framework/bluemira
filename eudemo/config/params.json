@@ -587,7 +587,7 @@
         "long_name": "Gap between PF and PF support"
     },
     "tf_gs_tk_plate": {
-        "value": 0.15,
+        "value": 0.075,
         "unit": "meter",
         "source": "Input",
         "long_name": "TF gravity support rib plate thickness"
@@ -599,7 +599,7 @@
         "long_name": "Gap between ITER-like TF gravity support rib plates"
     },
     "tf_gs_base_depth": {
-        "value": 0.3,
+        "value": 1.3,
         "unit": "meter",
         "source": "Input",
         "long_name": "ITER-like TF gravity support base plate depth"
