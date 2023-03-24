@@ -55,7 +55,7 @@ class TestColorPalette:
     def test_repr_term(self):
         assert (
             self.pal._repr_colour_str()
-            == "\x1b[48:2::0:0:0m \x1b[49m\x1b[48:2::255:255:255m \x1b[49m"
+            == "\x1b[48:2::0:0:0m \x1b[49m\x1b[48:2::255:255:255m \x1b[49m\n"
         )
 
     def test_repr_html(self):
@@ -63,7 +63,7 @@ class TestColorPalette:
             '<svg  width="110" height="55">'
             '<rect x="0" y="0" width="55" height="55"'
             ' style="fill:#000000;stroke-width:2;stroke:rgb(255,255,255)"/>'
-            '<rect x="55" y="0" width="55" height="55"'
+            '<rect x="0" y="55" width="55" height="55"'
             ' style="fill:#ffffff;stroke-width:2;stroke:rgb(255,255,255)"/>'
             "</svg>"
         )
