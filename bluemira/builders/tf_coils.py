@@ -325,6 +325,31 @@ class EquispacedSelector(RipplePointSelector):
         self.points = wire.discretize(byedges=True, ndiscr=self.n_rip_points)
 
 
+class ExtremaSelector(RipplePointSelector):
+    """
+    Select the extrema of the wire and constrain ripple there.
+    """
+
+    def __init__(self):
+        super().__init__()
+
+    def set_wire(self, wire: BluemiraWire):
+        super().set_wire(wire)
+        coords = wire.discretize(byedges=True, ndiscr=2000)
+        arg_x_min = np.argmin(coords.x)
+        arg_x_max = np.argmax(coords.x)
+        arg_z_min = np.argmin(coords.z)
+        arg_z_max = np.argmax(coords.z)
+        self.points = Coordinates(
+            [
+                coords.points[arg_x_min],
+                coords.points[arg_x_max],
+                coords.points[arg_z_min],
+                coords.points[arg_z_max],
+            ]
+        )
+
+
 class FixedSelector(RipplePointSelector):
     """
     Specified points at which to constrain the ripple, overrides any information

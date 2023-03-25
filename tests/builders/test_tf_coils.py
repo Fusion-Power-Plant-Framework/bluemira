@@ -26,6 +26,7 @@ import pytest
 from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.builders.tf_coils import (
     EquispacedSelector,
+    ExtremaSelector,
     FixedSelector,
     MaximiseSelector,
     RippleConstrainedLengthGOP,
@@ -94,6 +95,7 @@ class TestRippleConstrainedLengthGOP:
             EquispacedSelector(3),
             EquispacedSelector(3, x_frac=0.5),
             EquispacedSelector(3, x_frac=1.0),
+            ExtremaSelector(),
             FixedSelector(Coordinates({"x": [12, 6, 6], "z": [0, -4, 4]})),
             MaximiseSelector(),
         ],
