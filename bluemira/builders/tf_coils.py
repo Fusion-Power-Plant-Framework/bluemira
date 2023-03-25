@@ -334,6 +334,14 @@ class ExtremaSelector(RipplePointSelector):
         super().__init__()
 
     def set_wire(self, wire: BluemiraWire):
+        """
+        Set the wire along which the points will be selected
+
+        Parameters
+        ----------
+        wire
+            Wire along which the points will be selected
+        """
         super().set_wire(wire)
         coords = wire.discretize(byedges=True, ndiscr=2000)
         arg_x_min = np.argmin(coords.x)
