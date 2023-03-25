@@ -47,6 +47,7 @@ from bluemira.geometry.tools import (
     make_polygon,
     mirror_shape,
     offset_wire,
+    point_inside_shape,
     signed_distance_2D_polygon,
     slice_shape,
     sweep_shape,
@@ -464,7 +465,55 @@ class PFCoilSupportBuilder(Builder):
         )[0]
         return intersection_wire
 
+    def _get_corners(self, support_face: BluemiraFace):
+        bb = support_face.bounding_box()
+        bottom_left = [bb.x_min, 0, bb.z_min]
+        bottom_right = [bb.x_max, 0, bb.z_min]
+        top_right = [bb.x_max, 0, bb.z_max]
+        top_left = [bb.x_min, 0, bb.z_max]
+        return [bottom_left, bottom_right, top_right, top_left]
+
+    def _check_encroaching_corners(self, support_face: BluemiraFace):
+        collisions = []
+        for corner in self._get_corners(support_face):
+            if point_inside_shape(corner, self.tf_xz_keep_out_zone):
+                collisions.append(True)
+            else:
+                collisions.append(False)
+        return collisions
+
+    def _make_overlapping_rib_profile(self, support_face, collisions):
+        corners = self._get_corners(support_face)
+        corner_idx = np.where(collisions)[0]
+        if len(corner_idx) == 1:
+            idx = corner_idx[0]
+            if idx == 0:
+                angle = -0.5 * np.pi
+                p_inter = self._get_first_intersection(
+                    corners[idx + 1], angle, self.tf_xz_keep_out_zone
+                )
+                if p_inter is None:
+                    angle = -2 / 3 * np.pi
+                    p_inter = self._get_first_intersection(
+                        corners[idx + 1], angle, self.tf_xz_keep_out_zone
+                    )
+
+            elif idx == 1:
+                pass
+            elif idx == 2:
+                pass
+            elif idx == 3:
+                pass
+
+        elif len(corner_idx) == 2:
+            return boolean_cut(support_face, BluemiraFace(self.tf_xz_keep_out_zone))[0]
+
     def _make_rib_profile(self, support_face):
+        # First check if the support face is encroaching on the keep out zone
+        collisions = self._check_encroaching_corners(support_face)
+        if any(collisions):
+            return self._make_overlapping_rib_profile(support_face, collisions)
+
         # Then, project sideways to find the minimum distance from a support point
         # to the TF coil
         v1, v2, v3, v4, angle = self._get_support_point_angle(support_face)
