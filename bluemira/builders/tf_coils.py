@@ -284,10 +284,15 @@ class EquispacedSelector(RipplePointSelector):
     ----------
     n_rip_points:
         Number of points along the wire constrain the ripple
+    x_frac:
+        If specified, the fraction of radius above which the points will
+        be selected.
+        If unspecified, the points will be selected on the full wire
     """
 
-    def __init__(self, n_rip_points: int):
+    def __init__(self, n_rip_points: int, x_frac: Optional[float] = None):
         self.n_rip_points = n_rip_points
+        self.x_frac = x_frac
 
     def set_wire(self, wire):
         """
@@ -299,59 +304,25 @@ class EquispacedSelector(RipplePointSelector):
             Wire along which the points will be selected
         """
         super().set_wire(wire)
-        self.points = wire.discretize(byedges=True, ndiscr=self.n_rip_points)
+        if self.x_frac is not None and not np.isclose(self.x_frac, 0.0):
+            self.x_frac = np.clip(self.x_frac, 0.005, 0.995)
+            bb = wire.bounding_box
 
+            x_min = bb.x_min + self.x_frac * (bb.x_max - bb.x_min)
 
-class OutboardEquispacedSelector(RipplePointSelector):
-    """
-    Equispaced ripple points along the radially outboard half of a wire
-    for a given number of points.
-
-    Parameters
-    ----------
-    n_rip_points:
-        Number of points along the wire constrain the ripple
-    x_min:
-        If specified, the radius above which the points will be selected.
-        If unspecified, defaults to the middle of the radial extrema of
-        the wire.
-    """
-
-    def __init__(self, n_rip_points: int, x_min: Optional[float] = None):
-        self.n_rip_points = n_rip_points
-        self.x_min = x_min
-
-    def set_wire(self, wire):
-        """
-        Set the wire along which the points will be selected
-
-        Parameters
-        ----------
-        wire
-            Wire along which the points will be selected
-        """
-        super().set_wire(wire)
-        bb = wire.bounding_box
-        if self.x_min is None:
-            self.x_min = bb.x_min + 0.5 * (bb.x_max - bb.x_min)
-
-        if (self.x_min < bb.x_min) or (self.x_min > bb.x_max):
-            raise ValueError(f"{self.x_min=} is not within the bounds of the geometry.")
-
-        z_min, z_max = bb.z_min - 10, bb.z_max + 10
-        cut_face = BluemiraFace(
-            make_polygon(
-                {
-                    "x": [0, self.x_min, self.x_min, 0],
-                    "y": 0,
-                    "z": [z_min, z_min, z_max, z_max],
-                },
-                closed=True,
+            z_min, z_max = bb.z_min - 10, bb.z_max + 10
+            cut_face = BluemiraFace(
+                make_polygon(
+                    {
+                        "x": [0, x_min, x_min, 0],
+                        "y": 0,
+                        "z": [z_min, z_min, z_max, z_max],
+                    },
+                    closed=True,
+                )
             )
-        )
-        part_wire = boolean_cut(wire, cut_face)[0]
-
-        self.points = part_wire.discretize(byedges=True, ndiscr=self.n_rip_points)
+            wire = boolean_cut(wire, cut_face)[0]
+        self.points = wire.discretize(byedges=True, ndiscr=self.n_rip_points)
 
 
 class FixedSelector(RipplePointSelector):

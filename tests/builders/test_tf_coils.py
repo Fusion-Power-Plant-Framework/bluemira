@@ -28,7 +28,6 @@ from bluemira.builders.tf_coils import (
     EquispacedSelector,
     FixedSelector,
     MaximiseSelector,
-    OutboardEquispacedSelector,
     RippleConstrainedLengthGOP,
     RippleConstrainedLengthGOPParams,
 )
@@ -93,7 +92,8 @@ class TestRippleConstrainedLengthGOP:
         "selector",
         [
             EquispacedSelector(3),
-            OutboardEquispacedSelector(3, x_min=9),
+            EquispacedSelector(3, x_frac=0.5),
+            EquispacedSelector(3, x_frac=1.0),
             FixedSelector(Coordinates({"x": [12, 6, 6], "z": [0, -4, 4]})),
             MaximiseSelector(),
         ],
