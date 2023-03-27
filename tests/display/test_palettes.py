@@ -28,7 +28,6 @@ import matplotlib.colors as colors
 import pytest
 
 from bluemira.display.palettes import (
-    BLUE_PALETTE,
     ColorPalette,
     background_colour_string,
     make_alpha_palette,
@@ -37,6 +36,11 @@ from bluemira.display.palettes import (
 
 
 class TestColorPalette:
+    rect_str = (
+        '<rect x="{}" y="{}" width="55" height="55"'
+        ' style="fill:{};stroke-width:2;stroke:rgb(255,255,255)"/>'
+    )
+
     def setup_method(self):
         self.pal = ColorPalette({"C1": "#000000", "C2": "#ffffff"})
 
@@ -64,18 +68,31 @@ class TestColorPalette:
     def test_repr_html(self):
         assert self.pal._repr_html() == (
             '<svg  width="110" height="55">'
-            '<rect x="0" y="0" width="55" height="55"'
-            ' style="fill:#000000;stroke-width:2;stroke:rgb(255,255,255)"/>'
-            '<rect x="55" y="0" width="55" height="55"'
-            ' style="fill:#ffffff;stroke-width:2;stroke:rgb(255,255,255)"/>'
-            "</svg>"
+            + self.rect_str.format(0, 0, "#000000")
+            + self.rect_str.format(55, 0, "#ffffff")
+            + "</svg>"
         )
 
-    def test_repr_html_BP(self):
+    def test_repr_html_with_alpha(self):
         pal = copy(self.pal)
         pal["C1"] = make_alpha_palette(pal["C1"], 8)
         pal["C2"] = make_alpha_palette(pal["C2"], 3)
-        assert pal._repr_html() == ""
+
+        assert pal._repr_html() == (
+            '<svg  width="110" height="440">'
+            + self.rect_str.format(0, 0, "#000000")
+            + self.rect_str.format(0, 55, "#202020")
+            + self.rect_str.format(0, 110, "#404040")
+            + self.rect_str.format(0, 165, "#606060")
+            + self.rect_str.format(0, 220, "#808080")
+            + self.rect_str.format(0, 275, "#9f9f9f")
+            + self.rect_str.format(0, 330, "#bfbfbf")
+            + self.rect_str.format(0, 385, "#dfdfdf")
+            + self.rect_str.format(55, 0, "#ffffff")
+            + self.rect_str.format(55, 55, "#ffffff")
+            + self.rect_str.format(55, 110, "#ffffff")
+            + "</svg>"
+        )
 
 
 def test_background_colour_string():
