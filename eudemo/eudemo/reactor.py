@@ -43,8 +43,8 @@ from typing import Dict
 import matplotlib.pyplot as plt
 
 from bluemira.base.designer import run_designer
-from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.base.reactor import Reactor
+from bluemira.base.reactor_config import ReactorConfig
 from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
@@ -78,7 +78,8 @@ from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
-PARAMS_FILE = os.path.join(CONFIG_DIR, "params.json")
+PARAMS_FILE_PATH = os.path.join(CONFIG_DIR, "params.json")
+BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json")
 
 
 class EUDEMO(Reactor):
@@ -131,16 +132,6 @@ def build_blanket(
     """Build the blanket given a silhouette of a sector."""
     builder = BlanketBuilder(params, build_config, blanket_face, r_inner_cut, cut_angle)
     return Blanket(builder.build())
-
-
-def build_vvts(params, build_config, vv_boundary) -> VacuumVesselThermalShield:
-    """Build the vacuum vessel thermal shield"""
-    vv_thermal_shield = VVTSBuilder(
-        params,
-        build_config.get("Vacuum vessel", {}),
-        keep_out_zone=vv_boundary,
-    )
-    return VacuumVesselThermalShield(vv_thermal_shield.build())
 
 
 def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCoil:
@@ -203,7 +194,7 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
     return CryostatThermalShield(
         CryostatTSBuilder(
             params,
-            build_config.get("Cryostat", {}),
+            build_config,
             pf_kozs,
             tf_koz,
         ).build()
@@ -236,41 +227,59 @@ def _read_json(file_path: str) -> Dict:
 if __name__ == "__main__":
     import time
 
-    params = make_parameter_frame(PARAMS_FILE, EUDEMOReactorParams)
-    if params is None:
-        raise ValueError("Params cannot be None")
-    build_config = _read_json(os.path.join(CONFIG_DIR, "build_config.json"))
+    reactor_config = ReactorConfig(
+        BUILD_CONFIG_FILE_PATH,
+        EUDEMOReactorParams,
+        global_params_path=PARAMS_FILE_PATH,
+        warn_on_empty_config=False,
+        warn_on_empty_local_params=False,
+    )
+    reactor = EUDEMO(
+        "EUDEMO",
+        n_sectors=reactor_config.global_params.n_TF.value,
+    )
 
-    reactor = EUDEMO("EUDEMO", n_sectors=params.n_TF.value)
-
-    params = radial_build(params, build_config["Radial build"])
+    radial_build(
+        reactor_config.params_for("Radial build").global_params,
+        reactor_config.config_for("Radial build"),
+    )
     lcfs_coords, profiles = run_designer(
-        FixedEquilibriumDesigner, params, build_config["Fixed boundary equilibrium"]
+        FixedEquilibriumDesigner,
+        reactor_config.params_for("Fixed boundary equilibrium"),
+        reactor_config.config_for("Fixed boundary equilibrium"),
     )
 
     lcfs_coords, profiles = run_designer(
         DummyFixedEquilibriumDesigner,
-        params,
-        build_config["Dummy fixed boundary equilibrium"],
+        reactor_config.params_for("Dummy fixed boundary equilibrium"),
+        reactor_config.config_for("Dummy fixed boundary equilibrium"),
     )
 
     reference_eq = run_designer(
         ReferenceFreeBoundaryEquilibriumDesigner,
-        params,
-        build_config["Free boundary equilibrium"],
+        reactor_config.params_for("Free boundary equilibrium"),
+        reactor_config.config_for("Free boundary equilibrium"),
         lcfs_coords=lcfs_coords,
         profiles=profiles,
     )
 
-    reactor.plasma = build_plasma(params, build_config.get("Plasma", {}), reference_eq)
+    reactor.plasma = build_plasma(
+        reactor_config.params_for("Plasma").global_params,
+        reactor_config.config_for("Plasma"),
+        reference_eq,
+    )
 
     blanket_face, divertor_face, ivc_boundary = design_ivc(
-        params, build_config["IVC"], equilibrium=reference_eq
+        reactor_config.params_for("IVC").global_params,
+        reactor_config.config_for("IVC"),
+        equilibrium=reference_eq,
     )
 
     t1 = time.time()
     upper_port_designer = UpperPortDesigner(
-        params, build_config.get("Upper Port", {}), blanket_face
+        reactor_config.params_for("Upper Port"),
+        reactor_config.config_for("Upper Port"),
+        blanket_face,
     )
     t2 = time.time()
     print(f"{t2-t1}")
@@ -278,34 +287,41 @@ if __name__ == "__main__":
     t3 = time.time()
     print(f"{t3-t2}")
     reactor.vacuum_vessel = build_vacuum_vessel(
-        params, build_config.get("Vacuum vessel", {}), ivc_boundary
+        reactor_config.params_for("Vacuum vessel"),
+        reactor_config.config_for("Vacuum vessel"),
+        ivc_boundary,
     )
     t4 = time.time()
     print(f"{t4-t3}")
 
     reactor.divertor = build_divertor(
-        params, build_config.get("Divertor", {}), divertor_face
+        reactor_config.params_for("Divertor"),
+        reactor_config.config_for("Divertor"),
+        divertor_face,
     )
     t5 = time.time()
     print(f"{t5-t4}")
 
     reactor.blanket = build_blanket(
-        params, build_config.get("Blanket", {}), blanket_face, r_inner_cut, cut_angle
+        reactor_config.params_for("Blanket"),
+        reactor_config.config_for("Blanket"),
+        blanket_face,
+        r_inner_cut,
+        cut_angle,
     )
     t6 = time.time()
     print(f"{t6-t5}")
-    thermal_shield_config = build_config.get("Thermal shield", {})
     reactor.vv_thermal = build_vacuum_vessel_thermal_shield(
-        params,
-        thermal_shield_config.get("VVTS", {}),
+        reactor_config.params_for("Thermal shield"),
+        reactor_config.config_for("Thermal shield", "VVTS"),
         reactor.vacuum_vessel.xz_boundary(),
     )
     t7 = time.time()
     print(f"{t7-t6}")
 
     reactor.tf_coils = build_tf_coils(
-        params,
-        build_config.get("TF coils", {}),
+        reactor_config.params_for("TF coils"),
+        reactor_config.config_for("TF coils"),
         reactor.plasma.lcfs(),
         reactor.vv_thermal.xz_boundary(),
     )
@@ -313,40 +329,44 @@ if __name__ == "__main__":
     print(f"{t8-t7}")
 
     reactor.pf_coils = build_pf_coils(
-        params,
-        build_config.get("PF coils", {}),
+        reactor_config.params_for("PF coils"),
+        reactor_config.config_for("PF coils"),
         reference_eq,
         reactor.tf_coils.boundary(),
         pf_coil_keep_out_zones=[],
     )
 
     reactor.cryostat_thermal = build_cryots(
-        params,
-        build_config.get("Thermal shield", {}),
+        reactor_config.params_for("Thermal shield"),
+        reactor_config.config_for("Thermal shield", "Cryostat"),
         reactor.pf_coils.xz_boundary(),
         reactor.tf_coils.boundary(),
     )
 
     reactor.coil_structures = build_coil_structures(
-        params,
-        build_config.get("Coil structures", {}),
+        reactor_config.params_for("Coil structures"),
+        reactor_config.config_for("Coil structures"),
         tf_coil_xz_face=reactor.tf_coils.xz_face(),
         pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
         pf_coil_keep_out_zones=[upper_port_xz],
     )
 
     reactor.cryostat = build_cryostat(
-        params, build_config.get("Cryostat", {}), reactor.cryostat_thermal.xz_boundary()
+        reactor_config.params_for("Cryostat"),
+        reactor_config.config_for("Cryostat"),
+        reactor.cryostat_thermal.xz_boundary(),
     )
 
     reactor.radiation_shield = build_radiation_shield(
-        params, build_config.get("RadiationShield", {}), reactor.cryostat.xz_boundary()
+        reactor_config.params_for("RadiationShield"),
+        reactor_config.config_for("RadiationShield"),
+        reactor.cryostat.xz_boundary(),
     )
 
     reactor.show_cad("xz")
     reactor.show_cad(n_sectors=2)
 
-    sspc_solver = SteadyStatePowerCycleSolver(params)
+    sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
     sspc_result = sspc_solver.execute()
     sspc_solver.model.plot()
     plt.show()

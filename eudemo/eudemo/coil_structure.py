@@ -25,7 +25,7 @@ Coil structure stuff
 from dataclasses import dataclass
 
 from bluemira.base.components import Component
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.builders.coil_supports import (
     ITERGravitySupportBuilder,
     OISBuilder,
@@ -69,7 +69,7 @@ def build_coil_structures_component(
     """
     Build the coil structures super-component.
     """
-    params = CoilStructuresParameters.from_frame(params)
+    params = make_parameter_frame(params, CoilStructuresParameters)
     ois_designer = StraightOISDesigner(
         params, build_config, tf_coil_xz_face, pf_coil_keep_out_zones
     )

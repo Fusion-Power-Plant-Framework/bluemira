@@ -3,7 +3,7 @@
 import json
 import pprint
 from dataclasses import dataclass
-from typing import Dict, Tuple, Type, TypeVar, Union
+from typing import Dict, Optional, Tuple, Type, TypeVar, Union
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_warn
@@ -75,18 +75,32 @@ class ReactorConfig:
         self,
         config_path: Union[str, dict],
         global_params_type: Type[_PfT],
+        global_params_path: Optional[Union[str, dict]] = None,
+        warn_on_duplicate_keys=True,
+        warn_on_empty_local_params=True,
+        warn_on_empty_config=True,
     ):
-        if isinstance(config_path, str):
-            self.config_data = ReactorConfig._read_json_file(config_path)
-        elif isinstance(config_path, dict):
-            self.config_data = config_path
-        else:
-            raise ReactorConfigError("Invalid config_path")
+        self.warn_on_duplicate_keys = warn_on_duplicate_keys
+        self.warn_on_empty_local_params = warn_on_empty_local_params
+        self.warn_on_empty_config = warn_on_empty_config
 
-        self.global_params: _PfT = make_parameter_frame(
-            self.config_data.get(_PARAMETERS_KEY, {}),
-            global_params_type,
-        )
+        self.config_data = ReactorConfig._read_or_return(config_path)
+
+        if global_params_path is None:
+            self.global_params = make_parameter_frame(
+                self.config_data.get(_PARAMETERS_KEY, {}),
+                global_params_type,
+            )
+        else:
+            self.global_params: _PfT = make_parameter_frame(
+                ReactorConfig._read_or_return(
+                    global_params_path,
+                ),
+                global_params_type,
+            )
+
+        if not self.global_params:
+            bluemira_warn("Empty global params")
 
     def __str__(self) -> str:
         """Returns config_data as a nicely pretty formatted string"""
@@ -128,9 +142,13 @@ class ReactorConfig:
         args = (component_name,) + args
         self._check_args_are_strings(args)
 
+        local_params = self._extract(args, is_config=False)
+        if not local_params and self.warn_on_empty_local_params:
+            bluemira_warn(f"Empty local params for args: {args}")
+
         return ConfigParams(
             global_params=self.global_params,
-            local_params=self._extract(args, is_config=False),
+            local_params=local_params,
         )
 
     def config_for(self, component_name: str, *args: str) -> dict:
@@ -164,10 +182,19 @@ class ReactorConfig:
         self._check_args_are_strings(args)
 
         _return = self._extract(args, is_config=True)
-        if not _return:
-            bluemira_warn(f"No config for '{component_name}'")
+        if not _return and self.warn_on_empty_config:
+            bluemira_warn(f"Empty config for args: {args}")
 
         return _return
+
+    @staticmethod
+    def _read_or_return(dict_or_str_path: Union[str, dict]) -> Dict:
+        if isinstance(dict_or_str_path, str):
+            return ReactorConfig._read_json_file(dict_or_str_path)
+        elif isinstance(dict_or_str_path, dict):
+            return dict_or_str_path
+        else:
+            raise ReactorConfigError("Invalid config_path")
 
     @staticmethod
     def _read_json_file(path: str) -> dict:
@@ -183,21 +210,16 @@ class ReactorConfig:
         arg: str,
         existing_value,
     ):
-        bluemira_warn(
-            "duplicate config key: "
-            f"'{shared_key}' in {arg} wil be overwritten with {existing_value}"
-        )
-
-    def _check_key_in(self, key: str, config_layer: dict):
-        if key not in config_layer:
-            raise KeyError(
-                f"'{key}' not present in config:\n{self._pprint_dict(config_layer)}",
+        if self.warn_on_duplicate_keys:
+            bluemira_warn(
+                "duplicate config key: "
+                f"'{shared_key}' in {arg} wil be overwritten with {existing_value}"
             )
 
     def _check_args_are_strings(self, args):
         for a in args:
             if not isinstance(a, str):
-                raise ReactorConfigError("args must strings")
+                raise ReactorConfigError("args must be strings")
 
     def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
         extracted = {}
@@ -206,22 +228,14 @@ class ReactorConfig:
 
         current_layer = self.config_data
         for next_idx, current_arg_key in enumerate(arg_keys, start=1):
-            self._check_key_in(current_arg_key, current_layer)
-            current_layer: dict = current_layer[current_arg_key]
-
+            current_layer = current_layer.get(current_arg_key, {})
             next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
 
             to_extract = current_layer
             if not is_config:
                 # if doing a params extraction,
                 # get the values from the _PARAMETERS_KEY
-                try:
-                    to_extract = current_layer[_PARAMETERS_KEY]
-                except KeyError:
-                    if next_arg_key is None:
-                        # only warn if it's the final arg
-                        bluemira_warn(f"'{_PARAMETERS_KEY}' not in {current_arg_key}")
-                    continue
+                to_extract = current_layer.get(_PARAMETERS_KEY, {})
 
             # add all keys not in extracted already
             # if doing a config, ignore the "params" (_PARAMETERS_KEY)

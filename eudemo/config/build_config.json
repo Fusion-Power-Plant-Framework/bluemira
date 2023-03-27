@@ -55,7 +55,7 @@
         }
     },
     "Free boundary equilibrium": {
-        "run_mode": "run",
+        "run_mode": "read",
         "plot": true,
         "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
         "file_path": "config/equilibrium_eqdsk.json",
@@ -84,7 +84,7 @@
                     "value": "r_fw_ob_in"
                 }
             },
-            "run_mode": "run",
+            "run_mode": "read",
             "name": "First Wall",
             "file_path": "config/FirstWallDesign.json",
             "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
@@ -102,7 +102,7 @@
         "Divertor silhouette": {}
     },
     "TF coils": {
-        "run_mode": "run",
+        "run_mode": "read",
         "file_path": "config/TFCoilDesign.json",
         "plot": true,
         "param_class": "TripleArc",
@@ -123,7 +123,7 @@
         }
     },
     "PF coils": {
-        "run_mode": "run",
+        "run_mode": "read",
         "file_path": "config/PFCoilDesign.json",
         "verbose": false,
         "plot": true,
