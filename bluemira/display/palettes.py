@@ -166,7 +166,7 @@ class ColorPalette:
         """Get the length of the ColorPalette"""
         return len(self._palette)
 
-    def as_hex(self) -> list:
+    def as_hex(self) -> Union[List[str], str]:
         """
         Get the hex representation of the palette
         """
@@ -181,7 +181,7 @@ class ColorPalette:
             hex_list.append(colors.to_hex(self._palette))
         else:
             hex_list.append(self._palette)
-        return hex_list
+        return hex_list[0] if len(hex_list) == 1 else hex_list
 
 
 def background_colour_string(hexstring: str) -> str:
