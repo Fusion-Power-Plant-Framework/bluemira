@@ -134,7 +134,7 @@ def _validate_display_inputs(parts, options, labels):
     """
     if parts is None:
         bluemira_debug("No new parts to display")
-        return [], []
+        return [], [], []
 
     if not isinstance(parts, list):
         parts = [parts]
