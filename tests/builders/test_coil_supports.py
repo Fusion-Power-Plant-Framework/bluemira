@@ -179,10 +179,6 @@ class TestPFCoilSupportBuilder:
             lower_support.shape.volume, upper_support.shape.volume
         )
 
-        from bluemira.display import show_cad
-
-        show_cad(["wtf", "wtf"], parts=[upper_support.shape, lower_support.shape])
-
     @pytest.mark.parametrize(
         "x, z, dx, dz",
         [
