@@ -95,9 +95,9 @@ class ReactorConfig:
         config_path: Union[str, dict],
         global_params_type: Type[_PfT],
         global_params_path: Optional[Union[str, dict]] = None,
-        warn_on_duplicate_keys=True,
-        warn_on_empty_local_params=True,
-        warn_on_empty_config=True,
+        warn_on_duplicate_keys: bool = True,
+        warn_on_empty_local_params: bool = True,
+        warn_on_empty_config: bool = True,
     ):
         self.warn_on_duplicate_keys = warn_on_duplicate_keys
         self.warn_on_empty_local_params = warn_on_empty_local_params
