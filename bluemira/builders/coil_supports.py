@@ -47,7 +47,6 @@ from bluemira.geometry.tools import (
     make_polygon,
     mirror_shape,
     offset_wire,
-    point_inside_shape,
     signed_distance_2D_polygon,
     slice_shape,
     sweep_shape,
