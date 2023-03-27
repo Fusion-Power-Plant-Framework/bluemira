@@ -22,6 +22,7 @@
 """
 Tests for the displayer module.
 """
+import logging
 from dataclasses import asdict
 from unittest.mock import Mock, patch
 
@@ -203,6 +204,21 @@ class TestGeometryDisplayer:
         return extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
 
     @pytest.mark.parametrize(
+        "labels, result",
+        [
+            ("name", ["name", "name"]),
+            (["name", "name"], ["name", "name"]),
+            ("", ["", ""]),
+            (None, ["", ""]),
+        ],
+    )
+    def test_labels_passed_in_correctly(self, labels, result):
+        with patch(f"{_FREECAD_REF}.show_cad") as show_cad_mock:
+            displayer.show_cad([self._make_shape(), self._make_shape()], labels=labels)
+
+        assert show_cad_mock.call_args_list[0][0][2] == result
+
+    @pytest.mark.parametrize(
         "viewer",
         [
             "freecad",
@@ -231,5 +247,7 @@ class TestGeometryDisplayer:
         assert len(caplog.messages) == 1
 
     def test_unknown_displayer(self, caplog):
+        caplog.set_level(logging.WARNING)
         displayer.show_cad(self._make_shape(), backend="mybackend")
+
         assert len(caplog.messages) == 1

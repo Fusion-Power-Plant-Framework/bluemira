@@ -153,7 +153,7 @@ def _validate_display_inputs(parts, options, labels):
             "If options for plot are provided then there must be as many options as "
             "there are parts to plot."
         )
-    return parts, options
+    return parts, options, labels
 
 
 def show_cad(
@@ -186,7 +186,7 @@ def show_cad(
             bluemira_warn(f"Unknown viewer backend '{backend}' defaulting to FreeCAD")
             backend = ViewerBackend.FREECAD
 
-    parts, options = _validate_display_inputs(parts, options, labels)
+    parts, options, labels = _validate_display_inputs(parts, options, labels)
 
     new_options = []
     for o in options:
