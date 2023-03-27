@@ -325,15 +325,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self._pprime = p_prime
             self._pprime_data = p_prime(np.linspace(0, 1, 50))
         else:
-            # self._pprime_data = p_prime
-            # self._pprime = _parse_to_callable(p_prime)
             raise ValueError("p_prime must be a function")
         if callable(ff_prime):
             self._ffprime = ff_prime
             self._ffprime_data = ff_prime(np.linspace(0, 1, 50))
         else:
-            # self._ffprime_data = ff_prime
-            # self._ffprime = _parse_to_callable(ff_prime)
             raise ValueError("ff_prime must be a function")
 
     @property
