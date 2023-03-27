@@ -174,6 +174,8 @@ def show_cad(
         The parts to display.
     options
         The options to use to display the parts.
+    labels
+        Labels to use for each part object
     backend
         Viewer backend
     kwargs

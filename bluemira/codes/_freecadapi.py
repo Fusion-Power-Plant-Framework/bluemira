@@ -1943,6 +1943,8 @@ def show_cad(
         The parts to display.
     options
         The options to use to display the parts.
+    labels
+        labels to use for each part object
     """
     if options is None:
         options = [None]

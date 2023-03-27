@@ -64,6 +64,8 @@ def show_cad(
         The parts to display.
     part_options
         The options to use to display the parts.
+    labels
+        Labels to use for each part object
     **kwargs
         options passed to polyscope
     """
