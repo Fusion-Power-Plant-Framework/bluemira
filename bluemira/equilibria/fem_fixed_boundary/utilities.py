@@ -34,9 +34,9 @@ from scipy.interpolate import interp1d
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.error import ExternalOptError
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.utilities.error import ExternalOptError
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
