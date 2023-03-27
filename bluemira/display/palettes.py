@@ -108,30 +108,31 @@ class ColorPalette:
             )
 
     def _repr_html(self) -> str:
-        def html_str(
-            _hex: List[str], i: int = 0, first: bool = False
-        ) -> Tuple[int, str]:
+        def html_str(_hex: List[str], c_no: int = 0, column=False) -> str:
             string = ""
-            if first := _hex is None:
-                _hex = self.as_hex()
-            for j, col in enumerate(_hex):
+            for no, col in enumerate(_hex):
                 if isinstance(col, list):
-                    i, str_ = html_str(_hex=col, i=i)
-                    string += str_
+                    string += html_str(_hex=col, c_no=no, column=True)
                 else:
+                    if column:
+                        x = c_no * s
+                        y = no * s
+                    else:
+                        x = no * s
+                        y = c_no * s
                     string += (
-                        f'<rect x="{i*s}" y="{0 if first else j * s}"'
+                        f'<rect x="{x}" y="{y}"'
                         f' width="{s}" height="{s}" style="fill:{col};'
                         'stroke-width:2;stroke:rgb(255,255,255)"/>'
                     )
-            return i + 1, string
+
+            return string
 
         s = 55
         hex_str = self.as_hex()
         m = max([len(sp) if isinstance(sp, list) else 1 for sp in hex_str])
-        colours = html_str(hex_str, first=True)[1]
-
-        return f'<svg  width="{len(self) * s}" height="{m * s}">{colours}</svg>'
+        colours = html_str(hex_str)
+        return f'<svg  width="{(len(self))* s}" height="{m * s}">{colours}</svg>'
 
     def __repr__(self) -> str:
         """
@@ -163,7 +164,7 @@ class ColorPalette:
 
     def __len__(self) -> int:
         """Get the length of the ColorPalette"""
-        return len(self._dict)
+        return len(self._palette)
 
     def as_hex(self) -> list:
         """

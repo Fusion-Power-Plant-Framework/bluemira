@@ -22,10 +22,13 @@
 """
 Tests for palettes module
 """
+from copy import copy
+
 import matplotlib.colors as colors
 import pytest
 
 from bluemira.display.palettes import (
+    BLUE_PALETTE,
     ColorPalette,
     background_colour_string,
     make_alpha_palette,
@@ -63,10 +66,16 @@ class TestColorPalette:
             '<svg  width="110" height="55">'
             '<rect x="0" y="0" width="55" height="55"'
             ' style="fill:#000000;stroke-width:2;stroke:rgb(255,255,255)"/>'
-            '<rect x="0" y="55" width="55" height="55"'
+            '<rect x="55" y="0" width="55" height="55"'
             ' style="fill:#ffffff;stroke-width:2;stroke:rgb(255,255,255)"/>'
             "</svg>"
         )
+
+    def test_repr_html_BP(self):
+        pal = copy(self.pal)
+        pal["C1"] = make_alpha_palette(pal["C1"], 8)
+        pal["C2"] = make_alpha_palette(pal["C2"], 3)
+        assert pal._repr_html() == ""
 
 
 def test_background_colour_string():
