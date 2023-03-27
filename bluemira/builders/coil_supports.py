@@ -560,11 +560,6 @@ class PFCoilSupportBuilder(Builder):
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
         return component
 
-    def _trim_support(self, shape):
-        shape = boolean_cut(shape, BluemiraFace(self.tf_xz_keep_out_zone))[0]
-
-        return shape
-
 
 class StraightOISOptimisationProblem(OptimisationProblem):
     """
