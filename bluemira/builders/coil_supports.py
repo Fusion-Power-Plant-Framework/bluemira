@@ -465,52 +465,6 @@ class PFCoilSupportBuilder(Builder):
         )[0]
         return intersection_wire
 
-    def _get_corners(self, support_face: BluemiraFace):
-        bb = support_face.bounding_box()
-        bottom_left = [bb.x_min, 0, bb.z_min]
-        bottom_right = [bb.x_max, 0, bb.z_min]
-        top_right = [bb.x_max, 0, bb.z_max]
-        top_left = [bb.x_min, 0, bb.z_max]
-        return [bottom_left, bottom_right, top_right, top_left]
-
-    def _check_encroaching_corners(self, support_face: BluemiraFace):
-        collisions = []
-        for corner in self._get_corners(support_face):
-            if point_inside_shape(corner, self.tf_xz_keep_out_zone):
-                return True
-                collisions.append(True)
-            else:
-                collisions.append(False)
-
-        return False
-        return collisions
-
-    # def _make_overlapping_rib_profile(self, support_face, collisions):
-    #     corners = self._get_corners(support_face)
-    #     corner_idx = np.where(collisions)[0]
-    #     if len(corner_idx) == 1:
-    #         idx = corner_idx[0]
-    #         if idx == 0:
-    #             angle = -0.5 * np.pi
-    #             p_inter = self._get_first_intersection(
-    #                 corners[idx + 1], angle, self.tf_xz_keep_out_zone
-    #             )
-    #             if p_inter is None:
-    #                 angle = -2 / 3 * np.pi
-    #                 p_inter = self._get_first_intersection(
-    #                     corners[idx + 1], angle, self.tf_xz_keep_out_zone
-    #                 )
-
-    #         elif idx == 1:
-    #             pass
-    #         elif idx == 2:
-    #             pass
-    #         elif idx == 3:
-    #             pass
-
-    #     elif len(corner_idx) == 2:
-    #         return boolean_cut(support_face, BluemiraFace(self.tf_xz_keep_out_zone))[0]
-
     def _make_rib_profile(self, support_face):
         # Then, project sideways to find the minimum distance from a support point
         # to the TF coil
@@ -540,6 +494,7 @@ class PFCoilSupportBuilder(Builder):
         )
         rib_face = BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
 
+        # Trim rib face is there is a collision
         result = boolean_cut(rib_face, BluemiraFace(self.tf_xz_keep_out_zone))
         result.sort(
             key=lambda face: np.sqrt(
@@ -580,6 +535,7 @@ class PFCoilSupportBuilder(Builder):
         shape_list = []
         # First build the support block around the PF coil
         support_face = self._build_support_xs()
+        # Trim support face is there is a collision
         support_face = boolean_cut(support_face, BluemiraFace(self.tf_xz_keep_out_zone))[
             0
         ]
@@ -591,10 +547,6 @@ class PFCoilSupportBuilder(Builder):
         shape_list.extend(self._make_ribs(width, support_face))
 
         shape = boolean_fuse(shape_list)
-
-        # Trim if there are overshoots
-        if self._check_encroaching_corners(support_face):
-            shape = self._trim_support(shape)
 
         shape.translate(vector=(0, -0.5 * width, 0))
         component = PhysicalComponent(self.name, shape)
