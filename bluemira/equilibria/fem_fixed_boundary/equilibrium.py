@@ -320,7 +320,6 @@ def solve_transport_fixed_boundary(
     max_iter_inner = 20
 
     for n_iter in range(max_iter):
-
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
             transport_solver, transport_params, transport_run_mode
         )
@@ -379,7 +378,6 @@ def solve_transport_fixed_boundary(
         psi2d_0 = np.zeros(len(points))
 
         for n_iter_inner in range(max_iter_inner):
-
             gs_solver.set_profiles(
                 f_pprime,
                 f_ffprime,
