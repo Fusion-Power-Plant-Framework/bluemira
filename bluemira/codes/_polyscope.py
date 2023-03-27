@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import functools
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import matplotlib.colors as colors
 import numpy as np
@@ -50,9 +50,9 @@ class DefaultDisplayOptions:
 
 
 def show_cad(
-    labels: List[str],
     parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
-    part_options: Optional[Union[Dict, List[Dict]]] = None,
+    part_options: List[Dict],
+    labels: List[str],
     **kwargs,
 ):
     """
@@ -64,6 +64,8 @@ def show_cad(
         The parts to display.
     part_options
         The options to use to display the parts.
+    labels
+        Labels to use for each part object
     **kwargs
         options passed to polyscope
     """

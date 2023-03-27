@@ -128,36 +128,40 @@ class DisplayCADOptions(DisplayOptions):
 # =======================================================================================
 
 
-def _validate_display_inputs(parts, options):
+def _validate_display_inputs(parts, options, labels):
     """
     Validate the lists of parts and options, applying some default options.
     """
     if parts is None:
         bluemira_debug("No new parts to display")
-        return [], []
+        return [], [], []
 
     if not isinstance(parts, list):
         parts = [parts]
 
-    if options is None:
-        options = [None] * len(parts)
-    elif not isinstance(options, list):
+    if not isinstance(options, list) or options is None:
         options = [options] * len(parts)
+
+    if labels is None:
+        labels = ""
+
+    if isinstance(labels, str):
+        labels = [labels] * len(parts)
 
     if len(options) != len(parts):
         raise DisplayError(
             "If options for plot are provided then there must be as many options as "
             "there are parts to plot."
         )
-    return parts, options
+    return parts, options, labels
 
 
 def show_cad(
-    labels: Optional[Union[str, List[str]]] = None,
     parts: Optional[
         Union[BluemiraGeo, List[BluemiraGeo]]  # noqa: F821
     ] = None,  # avoiding circular deps
     options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
+    labels: Optional[Union[str, List[str]]] = None,
     backend: Union[str, ViewerBackend] = ViewerBackend.FREECAD,
     **kwargs,
 ):
@@ -170,6 +174,8 @@ def show_cad(
         The parts to display.
     options
         The options to use to display the parts.
+    labels
+        Labels to use for each part object
     backend
         Viewer backend
     kwargs
@@ -182,10 +188,7 @@ def show_cad(
             bluemira_warn(f"Unknown viewer backend '{backend}' defaulting to FreeCAD")
             backend = ViewerBackend.FREECAD
 
-    if isinstance(labels, str):
-        labels = [labels]
-
-    parts, options = _validate_display_inputs(parts, options)
+    parts, options, labels = _validate_display_inputs(parts, options, labels)
 
     new_options = []
     for o in options:
@@ -198,7 +201,7 @@ def show_cad(
 
     part_options = [o.as_dict() for o in new_options]
 
-    backend.get_module().show_cad(labels, parts, part_options, **kwargs)
+    backend.get_module().show_cad(parts, part_options, labels, **kwargs)
 
 
 class BaseDisplayer(ABC):
@@ -305,7 +308,7 @@ class ComponentDisplayer(BaseDisplayer):
 
         show_cad(
             *bm_comp.get_properties_from_components(
-                comps, ("name", "shape", "display_cad_options")
+                comps, ("shape", "display_cad_options", "name")
             ),
             **kwargs,
         )

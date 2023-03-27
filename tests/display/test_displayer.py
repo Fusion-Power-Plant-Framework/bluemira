@@ -22,6 +22,7 @@
 """
 Tests for the displayer module.
 """
+import logging
 from dataclasses import asdict
 from unittest.mock import Mock, patch
 
@@ -159,22 +160,20 @@ class TestGeometryDisplayer:
         wire1 = make_polygon(self.square_points, label="wire1", closed=False)
         box1 = extrude_shape(wire1, vec=(0.0, 0.0, 1.0), label="box1")
 
-        displayer.show_cad("name", wire1, backend=viewer)
+        displayer.show_cad(wire1, backend=viewer)
         displayer.show_cad(
-            "name",
             box1,
             displayer.DisplayCADOptions(colour=(1.0, 0.0, 1.0)),
             backend=viewer,
         )
-        displayer.show_cad("name", [wire1, box1], backend=viewer)
+        displayer.show_cad([wire1, box1], backend=viewer)
         displayer.show_cad(
-            "name",
             [wire1, box1],
             displayer.DisplayCADOptions(colour=(1.0, 0.0, 1.0)),
+            ["name", "name2"],
             backend=viewer,
         )
         displayer.show_cad(
-            "name",
             [wire1, box1],
             [
                 displayer.DisplayCADOptions(colour=(1.0, 0.0, 0.0)),
@@ -183,7 +182,6 @@ class TestGeometryDisplayer:
             backend=viewer,
         )
         displayer.show_cad(
-            "name",
             [wire1, box1],
             color=(1.0, 0.0, 0.0),
             transparency=0.2,
@@ -192,7 +190,6 @@ class TestGeometryDisplayer:
 
         with pytest.raises(DisplayError):
             displayer.show_cad(
-                "name",
                 wire1,
                 [
                     displayer.DisplayCADOptions(colour=(1.0, 0.0, 0.0)),
@@ -207,6 +204,21 @@ class TestGeometryDisplayer:
         return extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
 
     @pytest.mark.parametrize(
+        "labels, result",
+        [
+            ("name", ["name", "name"]),
+            (["name", "name"], ["name", "name"]),
+            ("", ["", ""]),
+            (None, ["", ""]),
+        ],
+    )
+    def test_labels_passed_in_correctly(self, labels, result):
+        with patch(f"{_FREECAD_REF}.show_cad") as show_cad_mock:
+            displayer.show_cad([self._make_shape(), self._make_shape()], labels=labels)
+
+        assert show_cad_mock.call_args_list[0][0][2] == result
+
+    @pytest.mark.parametrize(
         "viewer",
         [
             "freecad",
@@ -217,7 +229,7 @@ class TestGeometryDisplayer:
         ],
     )
     def test_3d_cad_displays_shape(self, viewer):
-        displayer.show_cad("name", self._make_shape(), backend=viewer)
+        displayer.show_cad(self._make_shape(), backend=viewer)
 
     @pytest.mark.parametrize(
         "mock",
@@ -228,12 +240,14 @@ class TestGeometryDisplayer:
     )
     def test_no_displayer(self, mock, caplog):
         with patch("bluemira.display.displayer.get_module", mock):
-            displayer.show_cad("name", self._make_shape(), backend="polyscope")
+            displayer.show_cad(self._make_shape(), backend="polyscope")
         assert len(caplog.messages) == 1
         with patch("bluemira.display.displayer.get_module", mock):
-            displayer.show_cad("name", self._make_shape(), backend="polyscope")
+            displayer.show_cad(self._make_shape(), backend="polyscope")
         assert len(caplog.messages) == 1
 
     def test_unknown_displayer(self, caplog):
-        displayer.show_cad("name", self._make_shape(), backend="mybackend")
+        caplog.set_level(logging.WARNING)
+        displayer.show_cad(self._make_shape(), backend="mybackend")
+
         assert len(caplog.messages) == 1

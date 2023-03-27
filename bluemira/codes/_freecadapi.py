@@ -1929,9 +1929,9 @@ class DefaultDisplayOptions:
 
 
 def show_cad(
-    labels: List[str],
     parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
-    options: Optional[Union[Dict, List[Optional[Dict]]]] = None,
+    options: Union[Dict, List[Optional[Dict]]],
+    labels: List[str],
     **kwargs,
 ):
     """
@@ -1943,6 +1943,8 @@ def show_cad(
         The parts to display.
     options
         The options to use to display the parts.
+    labels
+        labels to use for each part object
     """
     if options is None:
         options = [None]
