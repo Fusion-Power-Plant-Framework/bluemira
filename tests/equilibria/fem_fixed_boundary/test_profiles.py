@@ -149,13 +149,11 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         ax.plot(
             self.rho,
             self.volprof,
-            marker="o",
             label="$V_{PLASMOD}$",
         )
         ax.plot(
             self.rho,
             self.results["V"],
-            marker="o",
             label="$V_{Zakharov}$",
         )
         ax.set_ylabel("[$m^3$]")
