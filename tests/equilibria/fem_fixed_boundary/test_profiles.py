@@ -31,6 +31,7 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.shapes import flux_surface_zakharov
 from bluemira.geometry._private_tools import offset
+from bluemira.utilities.optimiser import approx_derivative
 
 
 class PLASMODVerificationRawData:
@@ -147,9 +148,15 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         f, ax = plt.subplots()
         ax.plot(
             self.rho,
-            self.results["V"] - self.volprof,
+            self.volprof,
             marker="o",
-            label="$V_{Zakharov}$ - $V_{PLASMOD}$",
+            label="$V_{PLASMOD}$",
+        )
+        ax.plot(
+            self.rho,
+            self.results["V"],
+            marker="o",
+            label="$V_{Zakharov}$",
         )
         ax.set_ylabel("[$m^3$]")
         ax.set_xlabel("$\\rho$")
@@ -162,9 +169,9 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         For reasons not yet understood, the vprime in PLASMOD (or at least in
         this run) is by radius, with a constant minor radius division.
         """
-        volume = self.results["V"]
+        volume = self.volprof
         f_volume = interp1d(self.a, volume, fill_value="extrapolate")
-        grad_vol = np.gradient(f_volume(self.a), self.a)
+        grad_vol = approx_derivative(f_volume, self.a).diagonal()
 
         f, ax = plt.subplots()
         ax.plot(self.rho, grad_vol, label="$V^'$ calculated")
