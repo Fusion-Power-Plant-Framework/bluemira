@@ -497,7 +497,6 @@ class PFCoilSupportBuilder(Builder):
 
         # Trim rib face if there is a collision
         result = boolean_cut(rib_face, BluemiraFace(self.tf_xz_keep_out_zone))
-        from bluemira.display import show_cad
 
         if result:
             result.sort(key=lambda face: -face.area)
@@ -547,10 +546,6 @@ class PFCoilSupportBuilder(Builder):
 
         # Make the rib x-z profile and ribs
         shape_list.extend(self._make_ribs(width, support_face))
-
-        from bluemira.display import show_cad
-
-        show_cad(["" for _ in shape_list], shape_list)
 
         try:
             shape = boolean_fuse(shape_list)
