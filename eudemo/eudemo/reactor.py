@@ -264,7 +264,7 @@ if __name__ == "__main__":
     )
 
     reactor.plasma = build_plasma(
-        reactor_config.params_for("Plasma").global_params,
+        reactor_config.params_for("Plasma"),
         reactor_config.config_for("Plasma"),
         reference_eq,
     )

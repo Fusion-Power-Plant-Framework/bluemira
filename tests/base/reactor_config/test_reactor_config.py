@@ -37,6 +37,7 @@ class TestCompADesignerParams(ParameterFrame):
 
 test_config_path = Path(__file__).parent / "data" / "reactor_config.test.json"
 empty_config_path = Path(__file__).parent / "data" / "reactor_config.empty.json"
+global_params_path = Path(__file__).parent / "data" / "reactor_params.global.json"
 
 
 class TestReactorConfigClass:
@@ -44,14 +45,24 @@ class TestReactorConfigClass:
     Tests for the Reactor Config class functionality.
     """
 
-    def test_file_loading_with_empty_config(self):
+    def test_file_loading_with_empty_config(
+        self,
+        caplog,
+    ):
         reactor_config = ReactorConfig(empty_config_path.as_posix(), EmptyFrame)
 
         # want to know explicitly if it is an EmptyFrame
         assert type(reactor_config.global_params) is EmptyFrame
-        with pytest.raises(KeyError):
-            reactor_config.params_for("dne")
-            reactor_config.config_for("dne")
+
+        p_dne = reactor_config.params_for("dne")
+        c_dne = reactor_config.config_for("dne")
+
+        assert len(caplog.records) == 2
+        for record in caplog.records:
+            assert record.levelname == "WARNING"
+
+        assert len(p_dne.local_params) == 0
+        assert len(c_dne) == 0
 
     def test_incorrect_global_config_type_empty_config(self):
         with pytest.raises(ValueError):
@@ -60,6 +71,36 @@ class TestReactorConfigClass:
     def test_incorrect_global_config_type_non_empty_config(self):
         with pytest.raises(ValueError):
             ReactorConfig(test_config_path.as_posix(), EmptyFrame)
+
+    def test_set_global_params(
+        self,
+        caplog,
+    ):
+        reactor_config = ReactorConfig(
+            test_config_path.as_posix(),
+            TestGlobalParams,
+            global_params_path=global_params_path.as_posix(),
+        )
+
+        cp = reactor_config.params_for("comp A", "designer")
+
+        assert len(caplog.records) == 1
+        for record in caplog.records:
+            assert record.levelname == "WARNING"
+
+        cpf = make_parameter_frame(cp, TestCompADesignerParams)
+
+        # value checks
+        assert cpf.only_global.value == raw_uc(1, "years", "s")
+        assert cpf.height.value == 1.8
+        assert cpf.age.value == raw_uc(30, "years", "s")
+        assert cpf.name.value == "Comp A"
+        assert cpf.location.value == "here"
+
+        # instance checks
+        assert cpf.only_global is reactor_config.global_params.only_global
+        assert cpf.height is reactor_config.global_params.height
+        assert cpf.age is reactor_config.global_params.age
 
     def test_params_for_warnings_make_param_frame_type_value_overrides(
         self,
@@ -110,21 +151,6 @@ class TestReactorConfigClass:
         assert cf_comp_a["config_b"] == cf_comp_a_des["config_b"]
         assert cf_comp_a_des["config_c"]["c_value"] == "c_value"
 
-    def test_no_arg_in_config_error(self):
-        reactor_config = ReactorConfig(
-            {
-                "comp A": {
-                    "designer": {},
-                },
-            },
-            EmptyFrame,
-        )
-
-        with pytest.raises(KeyError):
-            reactor_config.params_for("comp A", "dne")
-        with pytest.raises(KeyError):
-            reactor_config.config_for("comp A", "dne")
-
     def test_no_params_warning(self, caplog):
         reactor_config = ReactorConfig(
             {
@@ -136,12 +162,14 @@ class TestReactorConfigClass:
         )
 
         cp = reactor_config.params_for("comp A", "designer")
+        cp_dne = reactor_config.params_for("comp A", "designer", "dne")
 
-        assert len(caplog.records) == 1
+        assert len(caplog.records) == 2
         for record in caplog.records:
             assert record.levelname == "WARNING"
 
         assert len(cp.local_params) == 0
+        assert len(cp_dne.local_params) == 0
 
     def test_no_config_warning(self, caplog):
         reactor_config = ReactorConfig(
@@ -155,13 +183,15 @@ class TestReactorConfigClass:
 
         cf_comp_a = reactor_config.config_for("comp A")
         cf_comp_a_des = reactor_config.config_for("comp A", "designer")
+        cf_comp_a_des_dne = reactor_config.config_for("comp A", "designer", "dne")
 
-        assert len(caplog.records) == 1
+        assert len(caplog.records) == 2
         for record in caplog.records:
             assert record.levelname == "WARNING"
 
         assert len(cf_comp_a) == 1
         assert len(cf_comp_a_des) == 0
+        assert len(cf_comp_a_des_dne) == 0
 
     def test_invalid_rc_initialization(
         self,

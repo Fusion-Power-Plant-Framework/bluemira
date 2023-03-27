@@ -35,6 +35,25 @@ class ReactorConfig:
     config_path: str | dict
         The path to the config JSON file or a dict of the data.
 
+    global_params_type: Type
+        The ParameterFrame type for the global params.
+
+    global_params_path: Optional[str | dict]
+        A path to a JSON file
+        holding the global params or a dict of the params.
+
+    warn_on_duplicate_keys: bool
+        Print a warning when duplicate keys are found,
+        whose value will be overwritten.
+
+    warn_on_empty_local_params: bool
+        Print a warning when the local params for some args are empty,
+        when calling params_for(*args)
+
+    warn_on_empty_config: bool
+        Print a warning when the config for some args are empty,
+        when calling config_for(*args)
+
     Example
     -------
 
