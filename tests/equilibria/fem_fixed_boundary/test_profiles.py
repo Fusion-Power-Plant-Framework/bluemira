@@ -169,7 +169,7 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         For reasons not yet understood, the vprime in PLASMOD (or at least in
         this run) is by radius, with a constant minor radius division.
         """
-        volume = self.volprof
+        volume = self.results["V"]
         f_volume = interp1d(self.a, volume, fill_value="extrapolate")
         grad_vol = approx_derivative(f_volume, self.a).diagonal()
 
