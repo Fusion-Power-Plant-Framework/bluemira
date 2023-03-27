@@ -430,13 +430,13 @@ def solve_transport_fixed_boundary(
             if eps_psi2d < inner_iter_err_max:
                 break
             else:
-                print(f"error on psi2d = {eps_psi2d} > {inner_iter_err_max}")
+                bluemira_print(f"Error on psi2d = {eps_psi2d} > {inner_iter_err_max}")
                 psi2d_0 = psi2d
                 if refine:
                     magnetic_axis = find_magnetic_axis(gs_solver.psi, gs_solver.mesh)
                     magnetic_axis = np.array([magnetic_axis[0], magnetic_axis[1], 0])
                     mesh = refine_mesh(coarse_mesh, magnetic_axis, distance, num_levels)
-                    print(f"mesh refined on magnetic axis {magnetic_axis}")
+                    bluemira_print(f"Mesh refined on magnetic axis {magnetic_axis}")
                     gs_solver.set_mesh(mesh)
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
