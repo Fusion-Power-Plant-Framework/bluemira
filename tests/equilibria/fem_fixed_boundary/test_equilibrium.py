@@ -204,9 +204,9 @@ class TestSolveTransportFixedBoundary:
             self.gs_solver,
             1.5,
             0.4,
-            iter_err_max=1,
+            iter_err_max=1e-3,
             inner_iter_err_max=1,
             max_iter=max_iter,
             lcar_mesh=0.3,
         )
-        assert self.transport_solver.i == max_iter
+        assert message in caplog.messages[-1]
