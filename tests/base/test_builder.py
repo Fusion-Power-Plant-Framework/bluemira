@@ -51,6 +51,11 @@ class TestBuilder:
 
         assert builder.name == "Stub"
 
+    def test_default_name_is_class_name_sans_build_config(self):
+        builder = StubBuilder(self._params, None)
+
+        assert builder.name == "Stub"
+
     def test_component_tree(self):
         builder = StubBuilder(self._params, {})
         component = builder.component_tree(
