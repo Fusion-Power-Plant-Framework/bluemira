@@ -20,11 +20,8 @@ Equilibria Examples
 .. toctree::
     :maxdepth: 1
 
-    examples/equilibria/eudemo_2017
-    examples/equilibria/fem_fixed_boundary/equilibrium_example
-    examples/equilibria/fem_fixed_boundary/fem_GS_Johner
+    examples/equilibria/fem_fixed_boundary/equilibrium_plasmod_example
     examples/equilibria/fem_fixed_boundary/fem_magnetostatic_2D_single_coil
-    examples/equilibria/single_null
 
 Geometry Examples
 ^^^^^^^^^^^^^^^^^
