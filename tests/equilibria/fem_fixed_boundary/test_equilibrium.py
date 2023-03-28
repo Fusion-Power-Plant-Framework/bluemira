@@ -173,16 +173,6 @@ class DummyTransportSolver:
 
 
 class TestSolveTransportFixedBoundary:
-    johner_parameterisation = JohnerLCFS(
-        {
-            "r_0": {"value": 8.9830e00},
-            "a": {"value": 8.983 / 3.1},
-            "kappa_u": {"value": 1.6},
-            "kappa_l": {"value": 1.75},
-            "delta_u": {"value": 0.33},
-            "delta_l": {"value": 0.45},
-        }
-    )
     transport_solver = DummyTransportSolver()
     gs_solver = FemGradShafranovFixedBoundary(
         p_order=2,
@@ -198,8 +188,18 @@ class TestSolveTransportFixedBoundary:
         ],
     )
     def test_full_run_through(self, max_iter, message, caplog):
+        johner_parameterisation = JohnerLCFS(
+            {
+                "r_0": {"value": 8.9830e00},
+                "a": {"value": 8.983 / 3.1},
+                "kappa_u": {"value": 1.6},
+                "kappa_l": {"value": 1.75},
+                "delta_u": {"value": 0.33},
+                "delta_l": {"value": 0.45},
+            }
+        )
         solve_transport_fixed_boundary(
-            self.johner_parameterisation,
+            johner_parameterisation,
             self.transport_solver,
             self.gs_solver,
             1.5,
