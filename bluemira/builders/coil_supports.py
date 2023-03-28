@@ -36,8 +36,10 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.coordinates import Coordinates, get_intersect
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -329,7 +331,7 @@ class PFCoilSupportBuilder(Builder):
         Build the PF coil support component.
         """
         xyz = self.build_xyz()
-        return self.component_tree(self.build_xz(xyz), self.build_xy(), [xyz])
+        return self.component_tree([self.build_xz(xyz)], self.build_xy(), [xyz])
 
     def build_xy(self):
         """
@@ -341,7 +343,12 @@ class PFCoilSupportBuilder(Builder):
         """
         Build the x-z components of the PF coil support.
         """
-        pass
+        result = slice_shape(xyz.shape, BluemiraPlane(axis=(0, 1, 0)))
+        result.sort(key=lambda wire: -wire.length)
+        face = BluemiraFace(result)
+        component = PhysicalComponent(self.name, face)
+        apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
+        return component
 
     def _build_support_xs(self):
         bb = self.pf_coil_xz.bounding_box
@@ -486,7 +493,16 @@ class PFCoilSupportBuilder(Builder):
             },
             closed=False,
         )
-        return BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
+        rib_face = BluemiraFace(BluemiraWire([intersection_wire, closing_wire]))
+
+        # Trim rib face if there is a collision
+        result = boolean_cut(rib_face, BluemiraFace(self.tf_xz_keep_out_zone))
+
+        if result:
+            result.sort(key=lambda face: -face.area)
+            rib_face = result[0]
+
+        return rib_face
 
     def _make_ribs(self, width, support_face):
         xz_profile = self._make_rib_profile(support_face)
@@ -519,6 +535,11 @@ class PFCoilSupportBuilder(Builder):
         shape_list = []
         # First build the support block around the PF coil
         support_face = self._build_support_xs()
+        # Trim support face is there is a collision
+        support_face = boolean_cut(support_face, BluemiraFace(self.tf_xz_keep_out_zone))[
+            0
+        ]
+
         width = self.params.tf_wp_depth.value + 2 * self.params.tk_tf_side.value
         support_block = extrude_shape(support_face, vec=(0, width, 0))
         shape_list.append(support_block)
@@ -526,7 +547,14 @@ class PFCoilSupportBuilder(Builder):
         # Make the rib x-z profile and ribs
         shape_list.extend(self._make_ribs(width, support_face))
 
-        shape = boolean_fuse(shape_list)
+        try:
+            shape = boolean_fuse(shape_list)
+        except GeometryError:
+            bluemira_warn(
+                "PFCoilSupportBuilder boolean_fuse failed, getting a BluemiraCompound instead of a BluemiraSolid, please check!"
+            )
+            shape = BluemiraCompound(shape_list)
+
         shape.translate(vector=(0, -0.5 * width, 0))
         component = PhysicalComponent(self.name, shape)
         apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
