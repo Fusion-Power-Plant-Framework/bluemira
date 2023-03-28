@@ -103,7 +103,7 @@ class BluemiraShell(BluemiraGeo):
         """
         The faces of the shell.
         """
-        return tuple([BluemiraFace(o) for o in cadapi.faces(self.shape)])
+        return tuple([BluemiraFace._create(o) for o in cadapi.faces(self.shape)])
 
     @property
     def shells(self) -> tuple:

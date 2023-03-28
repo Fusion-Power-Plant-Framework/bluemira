@@ -723,6 +723,14 @@ def solids(obj) -> list[apiSolid]:
     return _get_api_attr(obj, "Solids")
 
 
+def normal_at(face, alpha_1=0.0, alpha_2=0.0) -> np.ndarray:
+    """
+    Get the normal vector of the face at a parameterised point in space. For
+    planar faces, the normal is the same everywhere.
+    """
+    return np.array(face.normalAt(alpha_1, alpha_2))
+
+
 # ======================================================================================
 # Wire manipulation
 # ======================================================================================
