@@ -108,7 +108,7 @@ class Builder(abc.ABC):
         super().__init__()
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config if build_config is not None else {}
-        self.name = build_config.get(
+        self.name = self.build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
         )
 
