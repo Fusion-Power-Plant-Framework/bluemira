@@ -40,8 +40,7 @@ An example that shows how to set up a fixed boundary equilibrium problem.
 """
 
 # %% [markdown]
-# # 1.5-D transport and symmetric fixed boundary equilibrium coupling to
-# a 2-D asymmetric fixed boundary equilibrium
+# # 1.5-D transport + fixed boundary equilibrium <-> a 2-D fixed boundary equilibrium
 #
 # ## Introduction
 #
