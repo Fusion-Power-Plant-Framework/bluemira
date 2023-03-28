@@ -34,6 +34,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.ivc.panelling import PanellingDesigner
+from eudemo.ivc.panelling.exceptions import PanellingError
 from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
 
 
@@ -171,3 +172,14 @@ class TestPanellingDesigner:
         boundary = make_cut_johner()
         np.testing.assert_allclose(poly_panels.start_point(), boundary.start_point())
         np.testing.assert_allclose(poly_panels.end_point(), boundary.end_point())
+
+    def test_PanellingError_given_infeasible_problem(self):
+        params = {
+            "fw_a_max": {"value": 35, "unit": "degrees"},
+            # this minimum panel length is way too high
+            "fw_dL_min": {"value": 10, "unit": "m"},
+        }
+        shape = make_cut_johner()
+
+        with pytest.raises(PanellingError):
+            PanellingDesigner(params, shape).run()

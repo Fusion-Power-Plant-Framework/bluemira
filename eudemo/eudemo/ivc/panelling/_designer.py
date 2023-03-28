@@ -32,6 +32,7 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.ivc.panelling._opt_problem import PanellingOptProblem
 from eudemo.ivc.panelling._paneller import Paneller
+from eudemo.ivc.panelling.exceptions import PanellingError
 
 
 @dataclass
@@ -125,8 +126,19 @@ class PanellingDesigner(Designer[np.ndarray]):
             x_opt = opt_problem.optimise(check_constraints=False)
             iter_num += 1
         if iter_num == max_iter:
-            # make sure we warn about broken tolerances this time
+            # Make sure we warn about broken tolerances this time.
             opt_problem.opt.check_constraints(x_opt, warn=True)
+            # We may be happy with a warning in cases where we're close
+            # to satisfying constraints, but if we're too far off, it's
+            # probably an issue with input parameters, so an error is
+            # best.
+            if opt_problem.constraint_violations(x_opt, 1):
+                raise PanellingError(
+                    "Could not solve panelling optimisation problem, no feasible "
+                    "solution found. Try reducing the minimum length and/or increasing "
+                    "the maximum allowed angle."
+                )
+
         return opt_problem.paneller.joints(x_opt)
 
     def mock(self) -> np.ndarray:
