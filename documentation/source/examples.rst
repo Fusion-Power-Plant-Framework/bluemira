@@ -33,14 +33,14 @@ Geometry Examples
     examples/geometry/optimisation_tutorial
     examples/geometry/plane_placement_tutorial
 
- Magnetostatics Examples
- ^^^^^^^^^^^^^^^^^^^^^^^
+Magnetostatics Examples
+^^^^^^^^^^^^^^^^^^^^^^^
 
- .. toctree::
-     :maxdepth: 1
+.. toctree::
+    :maxdepth: 1
 
     examples/magnetostatics/helmholtz_example
-    examples/magnetostatics/finite_element_2d_single_coil
+    examples/magnetostatics/finite_element_2D_single_coil
 
 External Code Examples
 ^^^^^^^^^^^^^^^^^^^^^^
