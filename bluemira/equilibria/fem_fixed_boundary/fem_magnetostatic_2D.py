@@ -75,7 +75,7 @@ class FemMagnetostatic2d:
         Order of the approximating polynomial basis functions
     """
 
-    def __init__(self, p_order: int = 3):
+    def __init__(self, p_order: int = 2):
         self.p_order = p_order
         self.mesh = None
         self.a = None
