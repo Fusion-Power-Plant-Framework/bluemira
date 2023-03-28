@@ -39,6 +39,22 @@
 An example that shows how to set up a fixed boundary equilibrium problem.
 """
 
+# %% [markdown]
+# # 1.5-D transport and symmetric fixed boundary equilibrium coupling to
+# a 2-D asymmetric fixed boundary equilibrium
+#
+# ## Introduction
+#
+# In this example, we will show how to couple PLASMOD (1.5-D current diffusion
+# and fixed boundary equilibrium solver) to our 2-D finite element fixed
+# boudary equilibrium solver.
+
+# This procedure is known to not be particularly robust, please use with caution.
+#
+# ## Imports
+#
+# Import necessary module definitions.
+
 # %%
 import os
 import shutil
