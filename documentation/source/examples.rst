@@ -22,7 +22,6 @@ Equilibria Examples
 
     examples/equilibria/single_null
     examples/equilibria/eudemo_2017
-    examples/equilibria/fem_fixed_boundary/equilibrium_plasmod_example
 
 Geometry Examples
 ^^^^^^^^^^^^^^^^^
@@ -50,6 +49,7 @@ External Code Examples
 
     examples/codes/external_code
     examples/codes/run_plasmod_example
+    examples/codes/equilibrium_plasmod_example
     examples/codes/solver_example
 
 Other Examples
