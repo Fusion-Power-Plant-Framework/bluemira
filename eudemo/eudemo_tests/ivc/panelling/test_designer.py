@@ -90,7 +90,7 @@ def make_panels_johner():
         "fw_dL_min": {"value": 0.1, "unit": "m"},
     }
     boundary = make_cut_johner()
-    return PanellingDesigner(params, wall_boundary=boundary).mock()
+    return PanellingDesigner(params, wall_boundary=boundary).run()
 
 
 def coords_xz_to_polygon(coords: np.ndarray) -> BluemiraWire:
