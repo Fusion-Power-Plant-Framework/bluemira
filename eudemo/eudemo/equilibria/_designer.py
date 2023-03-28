@@ -44,10 +44,8 @@ from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FixedBoundaryEquilibrium,
 )
-from bluemira.equilibria.fem_fixed_boundary.file import (
-    _get_mesh_boundary,
-    save_fixed_boundary_to_file,
-)
+from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
+from bluemira.equilibria.fem_fixed_boundary.utilities import get_mesh_boundary
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
 from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
@@ -370,7 +368,7 @@ class FixedEquilibriumDesigner(Designer[Tuple[Coordinates, CustomProfile]]):
                 127,
             )
 
-        xbdry, zbdry = _get_mesh_boundary(fixed_equilibrium.mesh)
+        xbdry, zbdry = get_mesh_boundary(fixed_equilibrium.mesh)
         lcfs_coords = Coordinates({"x": xbdry, "y": 0, "z": zbdry})
         lcfs_coords.close()
         profiles = CustomProfile(
