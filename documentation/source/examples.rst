@@ -61,7 +61,6 @@ Other Examples
     examples/base/units
     examples/balance_of_plant/steady_state_example
     examples/fuel_cycle/EUDEMO_fuelcycle
-    examples/magnetostatics/helmholtz_example
     examples/materials/material_definitions
     examples/mesh/mesh_tutorial
     examples/plasma_physics/fusion_reactions
