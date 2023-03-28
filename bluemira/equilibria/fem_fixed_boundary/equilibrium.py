@@ -211,8 +211,8 @@ def _update_delta_kappa(
         f"{kappa_u_0=:.3e}, {delta_u_0=:.3e}\n"
         "Recalculated shape parameters:\n\t"
         f"{kappa_u=:.3e}, {delta_u=:.3e}\n\n"
-        f"|Target - Actual|/Target = {err_delta:.3e}\n"
-        f"|Target - bluemira|/Target = {err_kappa:.3e}\n"
+        f"Target kappa 95, actual kappa 95 = {kappa95_t:.3e}, {kappa_95:.3e}\n"
+        f"Target delta 95, actual delta 95 = {delta95_t:.3e}, {delta_95:.3e}\n"
     )
     params.kappa_u = kappa_u
     params.delta_u = delta_u
