@@ -21,21 +21,25 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
+import os
 from typing import Callable, Iterable, List, Optional, Tuple, Union
 
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
-from dolfin import BoundaryMesh, Vertex
+from dolfin import BoundaryMesh, Mesh, Vertex
 from matplotlib._tri import TriContourGenerator
 from matplotlib.axes._axes import Axes
 from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.mesh import meshing
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.utilities.error import ExternalOptError
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
@@ -634,3 +638,17 @@ def refine_mesh(mesh, refine_point, distance, num_levels=1):
         mesh = dolfin.refine(mesh, cell_markers)
 
     return mesh
+
+
+def create_mesh(
+    plasma: PhysicalComponent,
+    directory: str,
+    mesh_filename: str,
+    mesh_name_msh: str,
+) -> Mesh:
+    """
+    Create mesh
+    """
+    meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma)
+    msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
+    return import_mesh(mesh_filename, directory=directory, subdomains=True)[0]

@@ -26,14 +26,12 @@ NOTE: This procedure is known to be sensitive to inputs, exercise
 caution.
 """
 
-import os
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
 from typing import Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
-from dolfin import Mesh
 from scipy.integrate import cumulative_trapezoid
 from scipy.interpolate import interp1d
 from tabulate import tabulate
@@ -51,14 +49,13 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
+    create_mesh,
     find_magnetic_axis,
     get_flux_surfaces_from_mesh,
     refine_mesh,
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.mesh import meshing
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.utilities.optimiser import approx_derivative
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
@@ -170,20 +167,6 @@ def _run_transport_solver(
         transport_solver.get_profile("pprime"),
         transport_solver.get_profile("ffprime"),
     )
-
-
-def create_mesh(
-    plasma: PhysicalComponent,
-    directory: str,
-    mesh_filename: str,
-    mesh_name_msh: str,
-) -> Mesh:
-    """
-    Create mesh
-    """
-    meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma)
-    msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
-    return import_mesh(mesh_filename, directory=directory, subdomains=True)[0]
 
 
 def _update_delta_kappa(

@@ -43,6 +43,64 @@ Fixed boundary equilibrium example
 #
 # # Fixed boundary equilibrium example
 #
+# Imports
 
 # %%
-from copy import deepcopy
+from bluemira.base.components import PhysicalComponent
+from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FemGradShafranovFixedBoundary,
+)
+from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
+from bluemira.equilibria.profiles import DoublePowerFunc
+from bluemira.equilibria.shapes import KuiroukidisLCFS
+from bluemira.geometry.face import BluemiraFace
+
+# %% [markdown]
+# Define some important values
+
+# %%
+R_0 = 9  # [m]
+I_p = 17e6  # [A]
+B_0 = 5  # [T]
+
+# %% [markdown]
+# Let's define a boundary shape for the fixed boundary equilibrium
+
+# %%
+
+parameterisation = KuiroukidisLCFS(
+    {
+        "kappa_u": {"value": 1.7},
+        "kappa_l": {"value": 1.8},
+        "delta_u": {"value": 0.33},
+        "delta_l": {"value": 0.4},
+    }
+)
+
+lcfs_shape = parameterisation.create_shape("LCFS", n_points=100)
+lcfs_face = BluemiraFace(lcfs_shape)
+
+plasma = PhysicalComponent("plasma", lcfs_face)
+plasma.shape.mesh_options[""]
+
+# %% [markdown]
+# Now we define some profile functions for p' and FF'
+
+# %%
+
+p_prime = DoublePowerFunc([2, 1])
+
+ff_prime = DoublePowerFunc([1.5, 0.8])
+
+
+# %% [markdown]
+# Set up the equilibrium
+
+# %%
+
+solver = FemGradShafranovFixedBoundary(
+    I_p=I_p, R_0=R_0, B_0=B_0, p_order=2, max_iter=30, iter_err_max=1e-4, relaxation=0.05
+)
+solver.set_profiles(p_prime, ff_prime)
+solver.set_mesh()
+solver.solve()

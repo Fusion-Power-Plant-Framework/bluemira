@@ -32,13 +32,13 @@ from bluemira.codes.plasmod.equilibrium_2d_coupling import (
     PlasmaFixedBoundaryParams,
     TransportSolverParams,
     _update_delta_kappa,
-    create_mesh,
     create_plasma_xz_cross_section,
     solve_transport_fixed_boundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
+from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle
