@@ -42,17 +42,6 @@ from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
 
 
-def b_coil_axis(r, z, pz, curr):
-    """
-    Return the module of the magnetic field of a coil (of radius r and centered in
-    (0, z)) calculated on a point on the coil axis at a distance pz from the
-    axis origin.
-
-    TODO: add equation
-    """
-    return 4 * np.pi * 1e-7 * curr * r**2 / (r**2 + (pz - z) ** 2) ** 1.5 / 2.0
-
-
 def plot_scalar_field(
     x: np.ndarray,
     y: np.ndarray,
