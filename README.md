@@ -1,4 +1,4 @@
-[![docs](https://readthedocs.org/projects/bluemira/badge/?version=latest)](https://bluemira.readthedocs.io/en/latest) [![codecov](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira/branch/develop/graph/badge.svg?token=BYTJ4CZ8BI)](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira)
+[![DOI](https://zenodo.org/badge/355588311.svg)](https://zenodo.org/badge/latestdoi/355588311) [![docs](https://readthedocs.org/projects/bluemira/badge/?version=latest)](https://bluemira.readthedocs.io/en/latest) [![codecov](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira/branch/develop/graph/badge.svg?token=BYTJ4CZ8BI)](https://codecov.io/gh/Fusion-Power-Plant-Framework/bluemira)
 
 
 # Bluemira
