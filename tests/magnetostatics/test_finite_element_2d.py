@@ -80,8 +80,6 @@ class TestGetNormal:
         enclosure.mesh_options = {"lcar": lcar_enclo, "physical_group": "enclo"}
 
         c_universe = Component(name="universe")
-        c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
-        c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
         meshfiles = [
             os.path.join(DATA_DIR, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]
