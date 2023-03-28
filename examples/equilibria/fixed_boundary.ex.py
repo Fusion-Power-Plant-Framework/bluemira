@@ -45,6 +45,8 @@ Fixed boundary equilibrium example
 #
 # Imports
 
+from datetime import datetime
+
 # %%
 from bluemira.base.components import PhysicalComponent
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
@@ -112,3 +114,15 @@ equilibrium = solver.solve(plot=True)
 
 # %% [markdown]
 # Let's inspect the result
+
+
+# %% [markdown]
+# Save the result to a file
+
+save_fixed_boundary_to_file(
+    "my_fixed_boundary eqdsk.json",
+    f"{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}",
+    equilibrium,
+    nx=100,
+    nz=150,
+)
