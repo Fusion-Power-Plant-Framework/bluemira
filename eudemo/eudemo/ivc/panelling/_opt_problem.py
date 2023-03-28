@@ -18,6 +18,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""Definition of panelling optimisation problem for EUDEMO."""
+
 import numpy as np
 
 from bluemira.utilities.opt_problems import (
@@ -32,14 +34,14 @@ from eudemo.ivc.panelling._paneller import Paneller
 
 class PanellingOptProblem(OptimisationProblem):
     """
-    Optimisation problem to minimise the cumulative panel length.
+    Optimisation problem to minimise the cumulative length of first wall panels.
 
     The optimisation parameters are the normalised lengths along the
     panelling boundary at which the panels and boundary touch.
 
     The objective is to minimise the cumulative length of the panels,
-    subject to a maximum angle between panel joints and a minimum panel
-    length. Note that the parameters for these constraints are
+    subject to a maximum tail-to-tail angle between panels and a minimum
+    panel length. Note that the parameters for these constraints are
     properties of the ``paneller``.
 
     Parameters
@@ -144,6 +146,7 @@ class PanellingOptProblem(OptimisationProblem):
             )
 
     def constraint_violations(self, x: np.ndarray, atol: float) -> bool:
+        """Return True if any constraints are violated by more that ``atol``."""
         constraint = np.empty(self.n_constraints)
         self.constrain_min_length_and_angles(constraint, x, np.empty(0))
         return np.any(constraint > atol)

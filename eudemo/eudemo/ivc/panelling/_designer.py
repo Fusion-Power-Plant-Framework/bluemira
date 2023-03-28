@@ -21,18 +21,17 @@
 """Designer for wall panelling."""
 
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Union
 
 import numpy as np
 
 from bluemira.base.designer import Designer
-from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.ivc.panelling._opt_problem import PanellingOptProblem
 from eudemo.ivc.panelling._paneller import Paneller
-from eudemo.ivc.panelling.exceptions import PanellingError
+from eudemo.ivc.panelling.error import PanellingError
 
 
 @dataclass

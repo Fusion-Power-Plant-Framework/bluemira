@@ -34,7 +34,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.ivc.panelling import PanellingDesigner
-from eudemo.ivc.panelling.exceptions import PanellingError
+from eudemo.ivc.panelling.error import PanellingError
 from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
 
 
