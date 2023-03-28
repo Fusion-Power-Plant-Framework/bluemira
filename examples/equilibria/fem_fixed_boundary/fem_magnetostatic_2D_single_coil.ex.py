@@ -40,7 +40,7 @@ Application of the dolfin fem 2D magnetostatic to a single coil problem
 """
 
 # %% [markdown]
-# # 2D FEM magnetostatic single coil
+# # 2-D FEM magnetostatic single coil
 # ## Introduction
 #
 # In this example, we will show how to use the fem_magnetostatic_2D solver to find the

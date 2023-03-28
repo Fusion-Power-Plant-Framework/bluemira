@@ -45,8 +45,9 @@ An example that shows how to set up a fixed boundary equilibrium problem.
 # ## Introduction
 #
 # In this example, we will show how to couple PLASMOD (1.5-D current diffusion
-# and fixed boundary equilibrium solver) to our 2-D finite element fixed
-# boudary equilibrium solver.
+# and fixed boundary equilibrium solver with an up-down symmetric plasma boundary)
+# to our 2-D finite element fixed boudary equilibrium solver with an up-down
+# asymmetric boundary and X-point.
 
 # This procedure is known to not be particularly robust, please use with caution.
 #
