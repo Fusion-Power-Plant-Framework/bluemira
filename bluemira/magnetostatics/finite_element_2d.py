@@ -31,7 +31,7 @@ import numpy as np
 from bluemira.base.constants import MU_0
 
 
-def b_coil_axis(r: float, z: float, pz: float, curr: float) -> float:
+def Bz_coil_axis(x: float, z: float, pz: float, current: float) -> float:
     """
     Return the module of the magnetic field of a coil (of radius r and centered in
     (0, z)) calculated on a point on the coil axis at a distance pz from the
@@ -40,16 +40,24 @@ def b_coil_axis(r: float, z: float, pz: float, curr: float) -> float:
     Parameters
     ----------
     x:
+        Radial position of the coil centroid [m]
+    z:
+        Vertical position of the coil centroid [m]
+    pz:
+        Distance of the coil from the axis (z=0) [m]
+    current:
+        Current of the coil [A]
 
     Returns
     -------
     field: float
+        Vertical magnetic field on the axis [T]
 
     Notes
     -----
     \t:math:`\\dfrac{1}{2}\\dfrac{\\mu_{0}Ir^2}{(r^{2}+(pz-z)^{2})^{3/2}}`
     """
-    return 0.5 * MU_0 * curr * r**2 / (r**2 + (pz - z) ** 2) ** 1.5
+    return MU_0 * current * x**2 / (x**2 + (pz - z) ** 2) ** 1.5 / 2
 
 
 def _convert_const_to_dolfin(value: float):

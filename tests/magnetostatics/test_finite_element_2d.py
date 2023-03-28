@@ -29,9 +29,9 @@ import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry.face import BluemiraFace
 from bluemira.magnetostatics.finite_element_2d import (
+    Bz_coil_axis,
     FemMagnetostatic2d,
     ScalarSubFunc,
-    b_coil_axis,
 )
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
@@ -123,7 +123,7 @@ class TestGetNormal:
             [em_solver.B(x) for x in np.array([r_points_axis, z_points_axis]).T]
         ).T[1]
 
-        B_teo = np.array([b_coil_axis(rc, 0, z, current) for z in z_points_axis])
+        B_teo = np.array([Bz_coil_axis(rc, 0, z, current) for z in z_points_axis])
 
         # I just set an absolute tolerance for the comparison (since the magnetic field
         # goes to zero, the comparison cannot be made on the basis of a relative
