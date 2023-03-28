@@ -33,7 +33,7 @@ from bluemira.base.constants import MU_0
 
 def Bz_coil_axis(x: float, z: float, pz: float, current: float) -> float:
     """
-    Return the module of the magnetic field of a coil (of radius r and centered in
+    Calculate the vertical magnetic field of a coil (of radius r and centered in
     (0, z)) calculated on a point on the coil axis at a distance pz from the
     axis origin.
 
