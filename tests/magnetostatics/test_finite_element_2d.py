@@ -26,7 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.geometry.tools as tools
-from bluemira.base.components import Component
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_coil_axis
 from bluemira.geometry.face import BluemiraFace
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
@@ -80,6 +80,8 @@ class TestGetNormal:
         enclosure.mesh_options = {"lcar": lcar_enclo, "physical_group": "enclo"}
 
         c_universe = Component(name="universe")
+        c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
+        c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
         meshfiles = [
             os.path.join(DATA_DIR, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]
