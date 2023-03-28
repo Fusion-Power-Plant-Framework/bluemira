@@ -23,7 +23,6 @@ Equilibria Examples
     examples/equilibria/single_null
     examples/equilibria/eudemo_2017
     examples/equilibria/fem_fixed_boundary/equilibrium_plasmod_example
-    examples/equilibria/fem_fixed_boundary/fem_magnetostatic_2D_single_coil
 
 Geometry Examples
 ^^^^^^^^^^^^^^^^^
@@ -33,6 +32,15 @@ Geometry Examples
 
     examples/geometry/optimisation_tutorial
     examples/geometry/plane_placement_tutorial
+
+ Magnetostatics Examples
+ ^^^^^^^^^^^^^^^^^^^^^^^
+
+ .. toctree::
+     :maxdepth: 1
+
+    examples/magnetostatics/helmholtz_example
+    examples/magnetostatics/finite_element_2d_single_coil
 
 External Code Examples
 ^^^^^^^^^^^^^^^^^^^^^^
