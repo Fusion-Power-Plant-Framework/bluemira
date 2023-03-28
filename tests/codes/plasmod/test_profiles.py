@@ -24,7 +24,7 @@ import numpy as np
 from matplotlib.tri import LinearTriInterpolator, Triangulation
 from scipy.interpolate import interp1d
 
-from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
+from bluemira.codes.plasmod.equilibrium_2d_coupling import (
     calc_curr_dens_profiles,
     calc_metric_coefficients,
 )

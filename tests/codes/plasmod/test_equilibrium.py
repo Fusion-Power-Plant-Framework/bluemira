@@ -28,7 +28,7 @@ from dolfin import Mesh
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
+from bluemira.codes.plasmod.equilibrium_2d_coupling import (
     PlasmaFixedBoundaryParams,
     TransportSolverParams,
     _update_delta_kappa,
