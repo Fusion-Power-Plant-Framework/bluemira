@@ -65,9 +65,7 @@ import numpy as np
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.codes import transport_code_solver
-from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
-    solve_transport_fixed_boundary,
-)
+from bluemira.codes.plasmod.equilibrium_2d_coupling import solve_transport_fixed_boundary
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
