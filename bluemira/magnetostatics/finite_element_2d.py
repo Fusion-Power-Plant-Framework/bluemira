@@ -57,7 +57,7 @@ def Bz_coil_axis(x: float, z: float, pz: float, current: float) -> float:
     -----
     \t:math:`\\dfrac{1}{2}\\dfrac{\\mu_{0}Ir^2}{(r^{2}+(pz-z)^{2})^{3/2}}`
     """
-    return MU_0 * current * x**2 / (x**2 + (pz - z) ** 2) ** 1.5 / 2
+    return 0.5 * MU_0 * current * x**2 / (x**2 + (pz - z) ** 2) ** 1.5
 
 
 def _convert_const_to_dolfin(value: float):
