@@ -23,11 +23,89 @@
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
 
-from typing import Union
+from typing import Callable, Iterable, List, Optional, Tuple, Union
 
 import dolfin
+import numpy as np
 
 from bluemira.base.constants import MU_0
+
+
+def _convert_const_to_dolfin(value: float):
+    """Convert a constant value to a dolfin function"""
+    if not isinstance(value, (int, float)):
+        raise ValueError("Value must be integer or float.")
+
+    return dolfin.Constant(value)
+
+
+class ScalarSubFunc(dolfin.UserExpression):
+    """
+    Create a dolfin UserExpression from a set of functions defined in the subdomains
+
+    Parameters
+    ----------
+    func_list: Union[Iterable[Union[float, Callable]], float, Callable]
+        list of functions to be interpolated into the subdomains. Int and float values
+        are considered as constant functions. Any other callable function must return
+        a single value.
+    mark_list: Iterable[int]
+        list of markers that identify the subdomain in which the respective functions
+        of func_list must to be applied.
+    subdomains: dolfin.cpp.mesh.MeshFunctionSizet
+        the whole subdomains mesh function
+    """
+
+    def __init__(
+        self,
+        func_list: Union[Iterable[Union[float, Callable]], float, Callable],
+        mark_list: Optional[Iterable[int]] = None,
+        subdomains: Optional[dolfin.cpp.mesh.MeshFunctionSizet] = None,
+        **kwargs,
+    ):
+        super().__init__(**kwargs)
+        self.functions = self.check_functions(func_list)
+        self.markers = mark_list
+        self.subdomains = subdomains
+
+    def check_functions(
+        self,
+        functions: Union[Iterable[Union[float, Callable]], float, Callable],
+    ) -> Iterable[Union[float, Callable]]:
+        """Check if the argument is a function or a list of fuctions"""
+        if not isinstance(functions, Iterable):
+            functions = [functions]
+        if all(isinstance(f, (float, Callable)) for f in functions):
+            return functions
+        raise ValueError(
+            "Accepted functions are instance of (int, float, Callable)"
+            "or a list of them."
+        )
+
+    def eval_cell(self, values: List, x: float, cell):
+        """Evaluate the value on each cell"""
+        if self.markers is None or self.subdomains is None:
+            func = self.functions[0]
+        else:
+            m = self.subdomains[cell.index]
+            func = (
+                self.functions[np.where(np.array(self.markers) == m)[0][0]]
+                if m in self.markers
+                else 0
+            )
+        if callable(func):
+            values[0] = func(x)
+        elif isinstance(func, (int, float)):
+            values[0] = func
+        else:
+            raise ValueError(f"{func} is not callable or is not a constant")
+
+    def value_shape(self) -> Tuple:
+        """
+        Value_shape function (necessary for a UserExpression)
+        https://fenicsproject.discourse.group/t/problems-interpolating-a-userexpression-and-plotting-it/1303
+        """
+        return ()
 
 
 class FemMagnetostatic2d:

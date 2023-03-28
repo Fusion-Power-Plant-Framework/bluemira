@@ -27,9 +27,9 @@ import numpy as np
 
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_coil_axis
+from bluemira.equilibria.fem_fixed_boundary.utilities import b_coil_axis
 from bluemira.geometry.face import BluemiraFace
-from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
+from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d, ScalarSubFunc
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
