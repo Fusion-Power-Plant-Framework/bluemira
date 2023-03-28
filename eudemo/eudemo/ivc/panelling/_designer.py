@@ -21,11 +21,12 @@
 """Designer for wall panelling."""
 
 from dataclasses import dataclass
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
 from bluemira.base.designer import Designer
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
@@ -52,6 +53,17 @@ class PanellingDesigner(Designer[np.ndarray]):
     constraining the maximum angle of rotation between adjacent panels,
     and the minimum length of a panel.
 
+    A best first guess will be made for the number of panels and their
+    positions and then an optimiser will be run to minimise the
+    cumulative length of the panels, whilst satisfying the minimum length
+    and maximum angle constraints.
+
+    Sometimes the initial guess will not enable the optimiser to find a
+    solution that satisfies the constraints. In these cases an extra
+    panel is added and the optimiser run again, until the constraints
+    are satisfied, or the number of panels added exceeds the
+    ``n_panel_increment_attempts`` build config parameter.
+
     Parameters
     ----------
     params
@@ -69,6 +81,9 @@ class PanellingDesigner(Designer[np.ndarray]):
         * opt_conditions: Dict[str, Union[float, int]]
             The stopping conditions for the optimiser
             (default: ``{"max_eval": 400, "ftol_rel": 1e-4}``\).
+        * n_panel_increment_attempts: int
+            The number of times to try incrementing the number of panels
+            in order to satisfy the given constraints (default: 3).
 
     """
 
@@ -76,7 +91,8 @@ class PanellingDesigner(Designer[np.ndarray]):
     params: PanellingDesignerParams
     _defaults = {
         "algorithm": "SLSQP",
-        "opt_conditions": {"max_eval": 400, "ftol_rel": 1e-6},
+        "opt_conditions": {"max_eval": 500, "ftol_rel": 1e-8},
+        "n_panel_increment_attempts": 3,
     }
 
     def __init__(
@@ -90,16 +106,28 @@ class PanellingDesigner(Designer[np.ndarray]):
 
     def run(self) -> np.ndarray:
         """Run the design problem, performing the optimisation."""
-        paneller = self._make_paneller()
-        optimiser = Optimiser(
-            self.build_config.get("algorithm", self._defaults["algorithm"]),
-            opt_conditions=self.build_config.get(
-                "opt_conditions", self._defaults["opt_conditions"]
-            ),
-        )
-        opt_problem = PanellingOptProblem(paneller, optimiser)
+        boundary = self.wall_boundary.discretize(byedges=True).xyz[[0, 2], :]
+        opt_problem = self._set_up_opt_problem(boundary)
         x_opt = opt_problem.optimise()
-        return paneller.joints(x_opt)
+        max_iter = int(self._get_config_or_default("n_panel_increment_attempts"))
+        iter_num = 0
+        while (
+            not opt_problem.opt.check_constraints(x_opt, warn=False)
+            and iter_num < max_iter
+        ):
+            # We couldn't satisfy the constraints on our last attempt,
+            # so try increasing the number of panels.
+            # Note we're actually increasing the number of panels by 1
+            # by adding 3 below, as there are two more panels than
+            # optimisation parameters.
+            n_panels = len(x_opt) + 3
+            opt_problem = self._set_up_opt_problem(boundary, n_panels)
+            x_opt = opt_problem.optimise(check_constraints=False)
+            iter_num += 1
+        if iter_num == max_iter:
+            # make sure we warn about broken tolerances this time
+            opt_problem.opt.check_constraints(x_opt, warn=True)
+        return opt_problem.paneller.joints(x_opt)
 
     def mock(self) -> np.ndarray:
         """
@@ -109,14 +137,27 @@ class PanellingDesigner(Designer[np.ndarray]):
         boundary, but does not guarantee the maximum angle and minimum
         length constraints are honoured.
         """
-        paneller = self._make_paneller()
+        boundary = self.wall_boundary.discretize(byedges=True).xyz[[0, 2], :]
+        paneller = Paneller(
+            boundary, self.params.fw_a_max.value, self.params.fw_dL_min.value
+        )
         return paneller.joints(paneller.x0)
 
-    def _make_paneller(self) -> Paneller:
-        """Make a :class:`.Paneller` with this designer's params."""
-        boundary = self.wall_boundary.discretize(byedges=True)
-        return Paneller(
-            boundary.xyz[[0, 2], :],
+    def _set_up_opt_problem(
+        self, boundary: np.ndarray, fix_num_panels: Optional[int] = None
+    ) -> PanellingOptProblem:
+        """Set up an instance of the minimise panel length optimisation problem."""
+        paneller = Paneller(
+            boundary,
             self.params.fw_a_max.value,
             self.params.fw_dL_min.value,
+            fix_num_panels=fix_num_panels,
         )
+        optimiser = Optimiser(
+            self._get_config_or_default("algorithm"),
+            opt_conditions=self._get_config_or_default("opt_conditions"),
+        )
+        return PanellingOptProblem(paneller, optimiser)
+
+    def _get_config_or_default(self, config_key: str) -> Union[str, int]:
+        return self.build_config.get(config_key, self._defaults[config_key])

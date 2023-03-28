@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
@@ -37,19 +37,28 @@ class Paneller:
         This should have shape (2, N), where N is the number of points.
     """
 
-    def __init__(self, boundary_points: np.ndarray, max_angle: float, dx_min: float):
+    def __init__(
+        self,
+        boundary_points: np.ndarray,
+        max_angle: float,
+        dx_min: float,
+        fix_num_panels: Optional[int] = None,
+    ):
         self.max_angle = max_angle
         self.dx_min = dx_min
         self.boundary = LengthNormBoundary(boundary_points)
 
-        # Build the initial guess of our panels, these points are the
-        # coordinates of where the panels tangent the boundary
-        _, idx = make_pivoted_string(
-            boundary_points.T,
-            max_angle=max_angle,
-            dx_min=dx_min,
-        )
-        self.x0: np.ndarray = self.boundary.length_norm[idx][1:-1]
+        if fix_num_panels:
+            self.x0 = np.linspace(0, 1, fix_num_panels)[1:-1]
+        else:
+            # Build the initial guess of our panels, these points are the
+            # coordinates of where the panels tangent the boundary
+            _, idx = make_pivoted_string(
+                boundary_points.T,
+                max_angle=max_angle,
+                dx_min=dx_min,
+            )
+            self.x0: np.ndarray = self.boundary.length_norm[idx][1:-1]
 
     @property
     def n_panels(self) -> int:
@@ -67,7 +76,8 @@ class Paneller:
             are panel-boundary tangent points.
         """
         # Add the start and end panel joints at distances 0 & 1
-        dists = np.sort(np.hstack((0, dists, 1)))
+        # dists = np.sort(np.hstack((0, dists, 1)))
+        dists = np.hstack((0, dists, 1))
         points = np.vstack((self.boundary.x(dists), self.boundary.z(dists)))
         tangents = np.vstack(
             (self.boundary.x_tangent(dists), self.boundary.z_tangent(dists))

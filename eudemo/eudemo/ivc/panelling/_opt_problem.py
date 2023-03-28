@@ -59,7 +59,7 @@ class PanellingOptProblem(OptimisationProblem):
         constraint = OptimisationConstraint(
             self.constrain_min_length_and_angles,
             f_constraint_args={},
-            tolerance=np.full(self.n_constraints, 1e-3),
+            tolerance=np.full(self.n_constraints, 1e-8),
         )
         super().__init__(self.paneller.x0, optimiser, objective, [constraint])
         self.set_up_optimiser(self.n_opts, bounds=self.bounds)
@@ -92,9 +92,9 @@ class PanellingOptProblem(OptimisationProblem):
         """
         return 2 * self.paneller.n_panels - 1
 
-    def optimise(self):
+    def optimise(self, check_constraints: bool = False):
         """Perform the optimisation."""
-        self.paneller.x0 = self.opt.optimise(self.paneller.x0)
+        self.paneller.x0 = self.opt.optimise(self.paneller.x0, check_constraints)
         return self.paneller.x0
 
     def objective(self, x: np.ndarray, grad: np.ndarray) -> float:
