@@ -280,9 +280,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             Major radius [m]. Used when saving to file.
         """
         self._process_profiles(p_prime, ff_prime)
-        self._curr_target = I_p
-        self._B_0 = B_0
-        self._R_0 = R_0
+        if I_p is not None:
+            self._curr_target = I_p
+        if B_0 is not None:
+            self._B_0 = B_0
+        if R_0 is not None:
+            self._R_0 = R_0
         self.define_g()
 
     def _calculate_curr_tot(self) -> float:
