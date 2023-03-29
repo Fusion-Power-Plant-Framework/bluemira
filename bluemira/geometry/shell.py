@@ -80,16 +80,18 @@ class BluemiraShell(BluemiraGeo):
     @property
     def vertexes(self) -> Coordinates:
         """
-        The vertexes of the shell.
+        The ordered vertexes of the shell.
         """
-        return Coordinates(cadapi.vertexes(self.shape))
+        return Coordinates(cadapi.ordered_vertexes(self.shape))
 
     @property
     def edges(self) -> Tuple[BluemiraWire]:
         """
-        The edges of the shell.
+        The ordered edges of the shell.
         """
-        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
+        return tuple(
+            [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.ordered_edges(self.shape)]
+        )
 
     @property
     def wires(self) -> Tuple[BluemiraWire]:

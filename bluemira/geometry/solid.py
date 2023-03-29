@@ -99,16 +99,18 @@ class BluemiraSolid(BluemiraGeo):
     @property
     def vertexes(self) -> Coordinates:
         """
-        The vertexes of the solid.
+        The ordered vertexes of the solid.
         """
-        return Coordinates(cadapi.vertexes(self.shape))
+        return Coordinates(cadapi.ordered_vertexes(self.shape))
 
     @property
     def edges(self) -> Tuple[BluemiraWire]:
         """
-        The edges of the solid.
+        The ordered edges of the solid.
         """
-        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
+        return tuple(
+            [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.ordered_edges(self.shape)]
+        )
 
     @property
     def wires(self) -> Tuple[BluemiraWire]:

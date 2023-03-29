@@ -381,7 +381,7 @@ class BluemiraGeo(ABC, GeoMeshable):
     @abstractmethod
     def vertexes(self) -> Coordinates:
         """
-        The vertexes of the BluemiraGeo.
+        The ordered vertexes of the BluemiraGeo.
         """
         pass
 
@@ -389,7 +389,7 @@ class BluemiraGeo(ABC, GeoMeshable):
     @abstractmethod
     def edges(self) -> tuple:
         """
-        The edges of the BluemiraGeo.
+        The ordered edges of the BluemiraGeo.
         """
         pass
 
