@@ -177,7 +177,8 @@ class TestPanellingDesigner:
     def test_returns_guess_and_warning_given_infeasible_problem(self, warn_mock):
         params = {
             "fw_a_max": {"value": 35, "unit": "degrees"},
-            # this minimum panel length is way too high
+            # this minimum panel length is way too high for us to get a
+            # feasible solution
             "fw_dL_min": {"value": 10, "unit": "m"},
         }
         shape = make_cut_johner()
@@ -195,7 +196,7 @@ class TestPanellingDesigner:
             poly_panels.xz.T, shape.discretize().xz.T
         )
         np.testing.assert_array_less(signed_dists, 0 + 1e-6)
-        # at least one call warning that the problem was not solvable
+        # expect at least one warning that the problem was not solvable
         assert warn_mock.call_count >= 1
         assert any(
             "no feasible solution found" in args[0] for args in warn_mock.call_args

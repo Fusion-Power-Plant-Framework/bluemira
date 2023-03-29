@@ -29,6 +29,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.utilities.error import ExternalOptError
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.ivc.panelling._opt_problem import PanellingOptProblem
 from eudemo.ivc.panelling._paneller import Paneller
@@ -109,7 +110,13 @@ class PanellingDesigner(Designer[np.ndarray]):
         boundary = self.wall_boundary.discretize(byedges=True).xyz[[0, 2], :]
         opt_problem = self._set_up_opt_problem(boundary)
         initial_guess = opt_problem.paneller.x0
-        x_opt = opt_problem.optimise()
+        try:
+            x_opt = opt_problem.optimise()
+        except ExternalOptError:
+            # Passing here is OK, as the optimiser prints a warning and
+            # we either try again with more panels, or return our initial
+            # guess as a fall back
+            pass
         max_iter = int(self._get_config_or_default("n_panel_increment_attempts"))
         iter_num = 0
         while (
@@ -123,7 +130,10 @@ class PanellingDesigner(Designer[np.ndarray]):
             # optimisation parameters.
             n_panels = len(x_opt) + 3
             opt_problem = self._set_up_opt_problem(boundary, n_panels)
-            x_opt = opt_problem.optimise(check_constraints=False)
+            try:
+                x_opt = opt_problem.optimise(check_constraints=False)
+            except ExternalOptError:
+                pass
             iter_num += 1
         if iter_num == max_iter:
             # Make sure we warn about broken tolerances this time.
