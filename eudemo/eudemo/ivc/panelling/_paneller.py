@@ -219,7 +219,6 @@ def vector_intersect(p1, p2, p3, p4):
     db = p4 - p3
 
     if np.isclose(np.cross(da, db), 0):  # vectors parallel
-        # NOTE: careful modifying this, different behaviour required...
         point = p2
     else:
         dp = p1 - p3
