@@ -237,7 +237,8 @@ class Optimiser(NLOPTOptimiser):
                 indices = np.where(c_values > tolerances)[0]
                 message = "\n".join(
                     [
-                        f"constraint number {i}: {pformat(c_values[i])} !< {pformat(tolerances[i])}"
+                        f"constraint number {i}: {pformat(c_values[i])} !< "
+                        f"{pformat(tolerances[i])}"
                         for i in indices
                     ]
                 )
