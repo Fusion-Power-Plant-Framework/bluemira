@@ -64,6 +64,7 @@ class TestRippleConstrainedLengthGOP:
     @classmethod
     def teardown_method(cls):
         plt.show()
+        plt.close()
 
     def _make_optimiser(self):
         return Optimiser("SLSQP", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6})
