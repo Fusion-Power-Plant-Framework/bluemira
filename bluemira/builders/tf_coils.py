@@ -442,6 +442,11 @@ class MaximiseSelector(RipplePointSelector):
             TF ripple solver
         TF_ripple_limit: float
             Maximum allowable TF ripple
+        this: MaximiseSelector
+            Need to pass this in sadly as need to set the points property
+            dynamically because it is not know a priori
+        ad_args: Optional[dict]
+            Automatic differentiation arguments
         """
         func = MaximiseSelector._calculate_max_ripple
         constraint[:] = func(
@@ -489,6 +494,9 @@ class MaximiseSelector(RipplePointSelector):
             TF ripple solver
         TF_ripple_limit: float
             Maximum allowable TF ripple
+        this: MaximiseSelector
+            Need to pass this in sadly as need to set the points property
+            dynamically because it is not know a priori
 
         Returns
         -------
