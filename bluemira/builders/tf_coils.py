@@ -168,7 +168,6 @@ class RipplePointSelector(ABC):
     ABC for ripple point selection strategies.
     """
 
-    @abstractmethod
     def __init__(self):
         self.wire: BluemiraWire = None
         self.points: Coordinates = None
@@ -329,9 +328,6 @@ class ExtremaSelector(RipplePointSelector):
     """
     Select the extrema of the wire and constrain ripple there.
     """
-
-    def __init__(self):
-        super().__init__()
 
     def set_wire(self, wire: BluemiraWire):
         """
