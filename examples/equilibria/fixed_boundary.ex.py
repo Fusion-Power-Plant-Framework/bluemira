@@ -56,7 +56,10 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
-from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh
+from bluemira.equilibria.fem_fixed_boundary.utilities import (
+    calculate_plasma_shape_params,
+    create_mesh,
+)
 from bluemira.equilibria.profiles import DoublePowerFunc, LaoPolynomialFunc
 from bluemira.equilibria.shapes import KuiroukidisLCFS
 from bluemira.geometry.face import BluemiraFace

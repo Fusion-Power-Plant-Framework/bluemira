@@ -319,7 +319,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         debug: bool = False,
         gif: bool = False,
         figname: Optional[str] = None,
-    ) -> dolfin.Function:
+    ) -> FixedBoundaryEquilibrium:
         """
         Solve the G-S problem.
 
