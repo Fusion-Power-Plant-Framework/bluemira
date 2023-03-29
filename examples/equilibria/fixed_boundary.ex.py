@@ -45,16 +45,19 @@ Fixed boundary equilibrium example
 #
 # Imports
 
+# %%
 from datetime import datetime
 
-# %%
+import dolfin
+import matplotlib.pyplot as plt
+
 from bluemira.base.components import PhysicalComponent
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh
-from bluemira.equilibria.profiles import DoublePowerFunc
+from bluemira.equilibria.profiles import DoublePowerFunc, LaoPolynomialFunc
 from bluemira.equilibria.shapes import KuiroukidisLCFS
 from bluemira.geometry.face import BluemiraFace
 
@@ -67,10 +70,9 @@ I_p = 17e6  # [A]
 B_0 = 5  # [T]
 
 # %% [markdown]
-# Let's define a boundary shape for the fixed boundary equilibrium and mesh it
+# Let's define a boundary shape for the fixed boundary equilibrium
 
 # %%
-
 parameterisation = KuiroukidisLCFS(
     {
         "kappa_u": {"value": 1.7},
@@ -83,20 +85,27 @@ parameterisation = KuiroukidisLCFS(
 lcfs_shape = parameterisation.create_shape("LCFS", n_points=100)
 lcfs_face = BluemiraFace(lcfs_shape)
 
+# %% [markdown]
+# Next we need to mesh this geometry
+
+# %%
 plasma = PhysicalComponent("plasma", lcfs_face)
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
 mesh = create_mesh(plasma, ".", "fixed_boundary_example", "fixed_boundary_example.msh")
 
+dolfin.plot(mesh)
+plt.show()
 # %% [markdown]
-# Now we define some profile functions for p' and FF'
+# Now we define some profile functions for p' and FF'.
+# We'll use some typical functional forms for this, but you are free to specify
+# the flux functions using whichever callable you like.
 
 # %%
 
-p_prime = DoublePowerFunc([2, 1])
-
-ff_prime = DoublePowerFunc([1.5, 0.8])
+p_prime = LaoPolynomialFunc([2, 3, 1])
+ff_prime = DoublePowerFunc([1.5, 2])
 
 
 # %% [markdown]

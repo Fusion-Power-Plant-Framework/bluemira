@@ -257,7 +257,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         p_prime: Union[np.ndarray, Callable[[float], float]],
         ff_prime: Union[np.ndarray, Callable[[float], float]],
-        curr_target: Optional[float] = None,
+        I_p: Optional[float] = None,
         B_0: Optional[float] = None,
         R_0: Optional[float] = None,
     ):
@@ -270,7 +270,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             pprime as function of psi_norm (1-D function)
         ffprime: Union[Callable[[np.ndarray], np.ndarray]
             ffprime as function of psi_norm (1-D function)
-        curr_target: Optional[float]
+        I_p: Optional[float]
             Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined).
             If None, plasma current is calculated and not constrained
@@ -280,7 +280,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             Major radius [m]. Used when saving to file.
         """
         self._process_profiles(p_prime, ff_prime)
-        self._curr_target = curr_target
+        self._curr_target = I_p
         self._B_0 = B_0
         self._R_0 = R_0
         self.define_g()
