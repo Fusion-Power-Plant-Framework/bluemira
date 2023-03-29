@@ -123,8 +123,6 @@ class PanellingOptProblem(OptimisationProblem):
         lengths = self.paneller.panel_lengths(x)
         constraint[:] = self.paneller.dx_min - lengths
         if grad.size > 0:
-            # TODO(hsaunders1904): work out what BLUEPRINT was doing to
-            #  get this gradient
             grad[:] = approx_derivative(
                 lambda x_opt: -self.paneller.panel_lengths(x_opt),
                 x0=x,
@@ -137,7 +135,6 @@ class PanellingOptProblem(OptimisationProblem):
     ) -> None:
         constraint[:] = self.paneller.angles(x) - self.paneller.max_angle
         if grad.size > 0:
-            # TODO(hsaunders): I'm sure we can be smarter about this gradient
             grad[:] = approx_derivative(
                 self.paneller.angles,
                 x0=x,
