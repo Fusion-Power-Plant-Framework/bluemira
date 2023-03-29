@@ -177,18 +177,16 @@ class BluemiraFace(BluemiraGeo):
     @property
     def vertexes(self) -> Coordinates:
         """
-        The ordered vertexes of the face.
+        The vertexes of the face.
         """
-        return Coordinates(cadapi.ordered_vertexes(self.shape))
+        return Coordinates(cadapi.vertexes(self.shape))
 
     @property
     def edges(self) -> Tuple[BluemiraWire]:
         """
-        The ordered edges of the face.
+        The edges of the face.
         """
-        return tuple(
-            [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.ordered_edges(self.shape)]
-        )
+        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
     def wires(self) -> Tuple[BluemiraWire]:

@@ -87,11 +87,9 @@ class BluemiraShell(BluemiraGeo):
     @property
     def edges(self) -> Tuple[BluemiraWire]:
         """
-        The ordered edges of the shell.
+        The edges of the shell.
         """
-        return tuple(
-            [BluemiraWire(cadapi.apiWire(o)) for o in cadapi.ordered_edges(self.shape)]
-        )
+        return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
     def wires(self) -> Tuple[BluemiraWire]:
