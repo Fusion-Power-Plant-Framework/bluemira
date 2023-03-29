@@ -76,7 +76,6 @@ def make_pivoted_string(
 
     new_points = np.zeros_like(boundary_points)
     index = np.zeros(boundary_points.shape[0], dtype=int)
-    delta_x = np.zeros_like(boundary_points)
     delta_turn = np.zeros_like(boundary_points)
 
     new_points[0] = boundary_points[0]
@@ -93,17 +92,12 @@ def make_pivoted_string(
             j = next(k)
             new_points[j] = boundary_points[i]  # pivot point
             index[j] = i + 1  # pivot index
-            delta_x[j - 1] = dx  # panel length
             delta_turn[j - 1] = np.arcsin(c_mag) / DEG_TO_RAD
             to, po = t, p  # update
     if dx > dx_min:
         j = next(k)
-        delta_x[j - 1] = dx  # last segment length
-    else:
-        delta_x[j - 1] += dx  # last segment length
     new_points[j] = p  # replace/append last point
     index[j] = i + 1  # replace/append last point index
     new_points = new_points[: j + 1]  # trim
     index = index[: j + 1]  # trim
-    delta_x = delta_x[:j]  # trim
     return new_points, index
