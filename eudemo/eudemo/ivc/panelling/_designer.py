@@ -113,16 +113,15 @@ class PanellingDesigner(Designer[np.ndarray]):
         try:
             x_opt = opt_problem.optimise()
         except ExternalOptError:
-            # Passing here is OK, as the optimiser prints a warning and
-            # we either try again with more panels, or return our initial
-            # guess as a fall back
-            pass
+            # Ignoring the error here is OK, as the optimiser prints a
+            # warning and we either try again with more panels, or
+            # return our initial guess as a fall back.
+            x_opt = None
         max_iter = int(self._get_config_or_default("n_panel_increment_attempts"))
         iter_num = 0
         while (
-            not opt_problem.opt.check_constraints(x_opt, warn=False)
-            and iter_num < max_iter
-        ):
+            x_opt is None or not opt_problem.opt.check_constraints(x_opt, warn=False)
+        ) and iter_num < max_iter:
             # We couldn't satisfy the constraints on our last attempt,
             # so try increasing the number of panels.
             # Note we're actually increasing the number of panels by 1
@@ -133,8 +132,9 @@ class PanellingDesigner(Designer[np.ndarray]):
             try:
                 x_opt = opt_problem.optimise(check_constraints=False)
             except ExternalOptError:
-                pass
+                x_opt = None
             iter_num += 1
+
         if iter_num == max_iter:
             # Make sure we warn about broken tolerances this time.
             opt_problem.opt.check_constraints(x_opt, warn=True)
