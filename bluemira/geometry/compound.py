@@ -55,14 +55,14 @@ class BluemiraCompound(BluemiraGeo):
     @property
     def vertexes(self) -> Coordinates:
         """
-        The ordered vertexes of the compound.
+        The vertexes of the compound.
         """
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
     def edges(self) -> Tuple[BluemiraWire]:
         """
-        The ordered edges of the compound.
+        The edges of the compound.
         """
         return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
