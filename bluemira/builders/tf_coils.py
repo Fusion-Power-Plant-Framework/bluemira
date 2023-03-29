@@ -23,7 +23,7 @@
 Built-in build steps for making parameterised TF coils.
 """
 
-from abc import ABC, abstractmethod
+from abc import ABC
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Optional
