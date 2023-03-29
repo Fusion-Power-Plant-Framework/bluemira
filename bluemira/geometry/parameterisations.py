@@ -917,8 +917,8 @@ class SextupleArc(GeometryParameterisation):
             arc = make_circle(
                 ri,
                 center=[xc, 0, zc],
-                start_angle=start_angle,
-                end_angle=end_angle,
+                start_angle=end_angle,
+                end_angle=start_angle,
                 axis=[0, -1, 0],
                 label=f"arc_{i+1}",
             )
@@ -937,8 +937,8 @@ class SextupleArc(GeometryParameterisation):
         closing_arc = make_circle(
             r6,
             center=[xc6, 0, zc6],
-            start_angle=np.rad2deg(np.pi - a_start),
-            end_angle=180,
+            start_angle=180,
+            end_angle=np.rad2deg(np.pi - a_start),
             axis=[0, -1, 0],
             label="arc_6",
         )
