@@ -76,14 +76,12 @@ class Paneller:
             are panel-boundary tangent points.
         """
         # Add the start and end panel joints at distances 0 & 1
-        # dists = np.sort(np.hstack((0, dists, 1)))
         dists = np.hstack((0, dists, 1))
         points = np.vstack((self.boundary.x(dists), self.boundary.z(dists)))
         tangents = np.vstack(
             (self.boundary.x_tangent(dists), self.boundary.z_tangent(dists))
         )
-        # TODO(hsaunders1904): vectorize
-        #  https://stackoverflow.com/a/40637858
+        # This could potentially be vectorized, if we need a speed up.
         joints = np.zeros((2, len(dists) + 1))
         joints[:, 0] = points[:, 0]
         joints[:, -1] = points[:, -1]
@@ -96,8 +94,9 @@ class Paneller:
             )
         return joints
 
-    # TODO(hsaunders1904): sort out caching of the joints so we're not
-    #  calculating them 3 times for every opt loop
+    # Typically, in a panelling optimisation loop, we'll call, at least,
+    # 'length' and 'angles', which both call out to 'joints'.
+    # For a potential optimisation we could cache the result of 'joints'.
     def length(self, dists: np.ndarray) -> float:
         """The cumulative length of the panels."""
         return self.panel_lengths(dists).sum()
