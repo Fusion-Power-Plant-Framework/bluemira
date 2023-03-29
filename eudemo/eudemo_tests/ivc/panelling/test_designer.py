@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from functools import lru_cache
+from unittest import mock
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,7 +35,6 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.ivc.panelling import PanellingDesigner
-from eudemo.ivc.panelling.error import PanellingError
 from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
 
 
@@ -173,7 +173,8 @@ class TestPanellingDesigner:
         np.testing.assert_allclose(poly_panels.start_point(), boundary.start_point())
         np.testing.assert_allclose(poly_panels.end_point(), boundary.end_point())
 
-    def test_PanellingError_given_infeasible_problem(self):
+    @mock.patch("eudemo.ivc.panelling._designer.bluemira_warn")
+    def test_returns_guess_and_warning_given_infeasible_problem(self, warn_mock):
         params = {
             "fw_a_max": {"value": 35, "unit": "degrees"},
             # this minimum panel length is way too high
@@ -181,5 +182,21 @@ class TestPanellingDesigner:
         }
         shape = make_cut_johner()
 
-        with pytest.raises(PanellingError):
-            PanellingDesigner(params, shape).run()
+        panel_edges = PanellingDesigner(params, shape).run()
+
+        _, ax = plt.subplots()
+        plot_2d(shape, show=False, ax=ax)
+        ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
+        plt.show()
+
+        # test that we at least get a solution that encloses the boundary
+        poly_panels = coords_xz_to_polygon(panel_edges).discretize()
+        signed_dists = signed_distance_2D_polygon(
+            poly_panels.xz.T, shape.discretize().xz.T
+        )
+        np.testing.assert_array_less(signed_dists, 0 + 1e-6)
+        # at least one call warning that the problem was not solvable
+        assert warn_mock.call_count >= 1
+        assert any(
+            "no feasible solution found" in args[0] for args in warn_mock.call_args
+        )

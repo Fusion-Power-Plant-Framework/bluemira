@@ -26,12 +26,12 @@ from typing import Dict, Optional, Union
 import numpy as np
 
 from bluemira.base.designer import Designer
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.ivc.panelling._opt_problem import PanellingOptProblem
 from eudemo.ivc.panelling._paneller import Paneller
-from eudemo.ivc.panelling.error import PanellingError
 
 
 @dataclass
@@ -108,6 +108,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         """Run the design problem, performing the optimisation."""
         boundary = self.wall_boundary.discretize(byedges=True).xyz[[0, 2], :]
         opt_problem = self._set_up_opt_problem(boundary)
+        initial_guess = opt_problem.paneller.x0
         x_opt = opt_problem.optimise()
         max_iter = int(self._get_config_or_default("n_panel_increment_attempts"))
         iter_num = 0
@@ -132,11 +133,12 @@ class PanellingDesigner(Designer[np.ndarray]):
             # probably an issue with input parameters, so an error is
             # best.
             if opt_problem.constraint_violations(x_opt, 1):
-                raise PanellingError(
-                    "Could not solve panelling optimisation problem, no feasible "
+                bluemira_warn(
+                    "Could not solve panelling optimisation problem: no feasible "
                     "solution found. Try reducing the minimum length and/or increasing "
                     "the maximum allowed angle."
                 )
+                return opt_problem.paneller.joints(initial_guess)
 
         return opt_problem.paneller.joints(x_opt)
 
