@@ -167,7 +167,7 @@ class RipplePointSelector(ABC):
     """
 
     def __init__(self):
-        self.wire: BluemiraWire = None
+        self._wire: BluemiraWire = None
         self.points: Coordinates = None
 
     def set_wire(self, wire: BluemiraWire):
@@ -179,7 +179,7 @@ class RipplePointSelector(ABC):
         wire
             Wire along which the points will be selected
         """
-        self.wire = wire
+        self._wire = wire
 
     def make_ripple_constraint(
         self, parameterisation, solver, TF_ripple_limit, rip_con_tol
@@ -404,7 +404,7 @@ class MaximiseSelector(RipplePointSelector):
                 "parameterisation": parameterisation,
                 "solver": solver,
                 "TF_ripple_limit": TF_ripple_limit,
-                "lcfs_wire": self.wire,
+                "lcfs_wire": self._wire,
                 "alpha_0": self._alpha_0,
                 # I'm sorry...
                 "this": self,
