@@ -1867,37 +1867,3 @@ class PictureFrame(
 
         xmin, xmax = ax.get_xlim()
         ax.set_xlim(xmin, xmax * 1.1)
-
-
-if __name__ == "__main__":
-    from typing import Iterable
-
-    import matplotlib.pyplot as plt
-
-    import bluemira.display as display
-    from bluemira.codes._freecadapi import ordered_vertexes, vertexes
-    from bluemira.geometry.parameterisations import SextupleArc
-
-    def plot_2d_labelled(wire, ax=None):
-        if ax is None:
-            _, ax = plt.subplots()
-
-        if isinstance(wire, Iterable):
-            for w in wire:
-                plot_2d_labelled(w, ax)
-            return
-
-        display.plot_2d(wire, ax=ax, show=False)
-        verts = ordered_vertexes(wire.shape).T
-        for idx in range(0, verts.shape[1]):
-            x = verts[0, idx]
-            z = verts[2, idx]
-            ax.plot(x, z, "bx")
-            ax.text(x + 0.1, z + 0.1, idx, fontsize=10)
-
-    p = SextupleArc()
-
-    wire = p.create_shape()
-
-    plot_2d_labelled(wire)
-    plt.show(block=True)
