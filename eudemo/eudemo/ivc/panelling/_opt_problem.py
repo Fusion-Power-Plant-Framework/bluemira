@@ -72,8 +72,9 @@ class PanellingOptProblem(OptimisationProblem):
         The number of optimisation parameters.
 
         The optimisation parameters are how far along the boundary's
-        length each panel tangents the boundary. We exclude the start
-        and end points which are fixed.
+        length each panel tangents the boundary (normalized to between
+        0 and 1). We exclude the panel's start and end points, which are
+        fixed.
         """
         # exclude start and end points; hence 'N - 2'
         return self.paneller.n_panels - 2
