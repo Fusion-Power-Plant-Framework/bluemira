@@ -34,10 +34,20 @@ from eudemo.maintenance.equatorial_port import (
     EquatorialPortKOZDesigner,
 )
 from bluemira.base.parameter_frame import Parameter
+from bluemira.display.displayer import show_cad
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import (
+    boolean_fuse,
+    extrude_shape,
+    make_circle,
+    make_polygon,
+)
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.maintenance.duct_connection import DuctBuilder, DuctBuilderParams
+from eudemo.maintenance.duct_connection import (
+    UpperPortDuctBuilder,
+    UpperPortDuctBuilderParams,
+)
 from eudemo.maintenance.upper_port import UpperPortOP
 
 
@@ -75,20 +85,54 @@ class TestUpperPortOP:
 
 class TestDuctConnection:
     def setup_method(self):
-        self.params = DuctBuilderParams(Parameter("n_TF", 12, ""))
+        self.params = UpperPortDuctBuilderParams(Parameter("n_TF", 12, ""))
+        self.angle = 30
 
-        self.port_koz = make_polygon({"x": [5, 10, 10, 5], "z": [4, 4, 10, 10]})
+        self.port_koz = BluemiraFace(
+            make_polygon({"x": [5, 10, 10, 5], "z": [4, 4, 10, 10]}, closed=True)
+        )
 
-    def test_single_wire(self):
-        port_xy_wire = db._single_xy_wire(width)
-        assert self.port_xy_wire.boundingbox.x_min == self.x_min
-        assert port_xy_wire.boundingbox.xmin == self.port_koz.boundingbox.x_min
-        assert port_xy_wire.boundingbox.xmax == self.port_koz.boundingbox.x_max
-        builder = DuctBuilder(self.params, {}, self.port_koz, 0.2, 0.2)
+    def _wires(self, arc: BluemiraWire):
+        return [
+            make_polygon(
+                {
+                    "x": np.array([0, point[0][0]]),
+                    "y": np.array([0, point[1][0]]),
+                    "z": point[2],
+                }
+            )
+            for point in (arc.start_point(), arc.end_point())
+        ]
+
+    @pytest.mark.parametrize("port_wall", np.linspace(0.1, 0.5, num=3))
+    @pytest.mark.parametrize("tf_thick", np.linspace(0, 2, num=5))
+    def test_extrusion_shape(self, tf_thick, port_wall):
+        builder = UpperPortDuctBuilder(
+            self.params, {}, self.port_koz, port_wall, tf_thick
+        )
         port = builder.build()
-        shape = port.get_component_properties("shape")
-        assert shape.bounding_box.x_min >= self.port_koz.bounding_box.x_min
-        assert shape.bounding_box.x_max <= self.port_koz.bounding_box.x_max
+        xy = port.get_component("xyz").get_component_properties("shape")
+        assert xy.wires[0].length > xy.wires[1].length
+
+        xyz = port.get_component("xyz").get_component_properties("shape")
+        c_centre = (
+            0,
+            0,
+            self.port_koz.bounding_box.z_min,
+        )
+        o_c = make_circle(self.port_koz.bounding_box.x_max, end_angle=self.angle)
+        i_c = make_circle(self.port_koz.bounding_box.x_min, end_angle=self.angle)
+        o_wires = self._wires(o_c)
+        o_sector = BluemiraWire((o_wires[0], o_c, o_wires[1]))
+        i_wires = self._wires(i_c)
+        i_sector = BluemiraWire((i_wires[0], i_c, i_wires[1]))
+        cylinder = extrude_shape(
+            BluemiraFace((o_sector, i_sector)),
+            (0, 0, self.port_koz.bounding_box.z_max),
+        )
+        show_cad([cylinder, xyz])
+        finalshape = boolean_fuse([cylinder, xyz])
+        assert np.allclose(finalshape.volume, cylinder.volume)
 
 
 class TestEquatorialPortKOZDesigner:

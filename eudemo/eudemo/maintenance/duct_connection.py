@@ -31,26 +31,27 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor_config import ConfigParams
-from bluemira.builders.tools import get_n_sectors
+from bluemira.builders.tools import apply_component_display_options, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
+from bluemira.geometry.coordinates import Coordinates, get_intersect
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_polygon, mirror_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
-class DuctBuilderParams(ParameterFrame):
+class UpperPortDuctBuilderParams(ParameterFrame):
     """Duct Builder Parameter Frame"""
 
     n_TF: Parameter[int]
 
 
-class DuctBuilder(Builder):
+class UpperPortDuctBuilder(Builder):
     """Duct Builder"""
 
-    param_cls = DuctBuilderParams
-
-    NAME = "Upper Port Duct"
+    params: UpperPortDuctBuilderParams
+    param_cls = UpperPortDuctBuilderParams
 
     def __init__(
         self,
@@ -69,14 +70,20 @@ class DuctBuilder(Builder):
         """Build upper port"""
         xy_face = self._single_xy_face()
 
-        return self.component_tree(None, None, [self.build_xyz(xy_face)])
+        return self.component_tree(
+            None, [self.build_xy(xy_face)], [self.build_xyz(xy_face)]
+        )
 
     def build_xyz(self, xy_face: BluemiraFace) -> PhysicalComponent:
         """Build upper port xyz"""
         port = extrude_shape(xy_face, (0, 0, self.port_koz.bounding_box.z_max))
-        comp = PhysicalComponent(self.NAME, port)
-        comp.display_cad_options.color = BLUE_PALETTE["VV"][0]
+        comp = PhysicalComponent(self.name, port)
+        apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
+        return comp
 
+    def build_xy(self, face):
+        comp = PhysicalComponent(self.name, face)
+        apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         return comp
 
     def _single_xy_face(self) -> BluemiraFace:
@@ -91,32 +98,43 @@ class DuctBuilder(Builder):
         the port koz is slightly trimmed to allow for square ends to the port
 
         """
+        curved = False
         half_sector_degree = 0.5 * get_n_sectors(self.params.n_TF.value)[0]
         half_beta = np.deg2rad(half_sector_degree)
         x_double_thick = np.sqrt(3 * self.port_wall_thickness**2)
+        koz_bb = self.port_koz.bounding_box
 
-        # Inner point
-        y_min = self.tf_coil_thickness
-        x_min = max(self.port_koz.bounding_box.x_min, y_min / np.cos(half_beta))
-
-        # Outer point
-        o_a = y_min / self.port_koz.bounding_box.x_max
-        x_a = self.port_koz.bounding_box.x_max * np.cos(np.arcsin(o_a))
-
-        outer_line = make_polygon({"x": [x_min, x_a], "y": [y_min, y_min]})
-        inner_line = make_polygon(
-            {
-                "x": [x_min + x_double_thick, x_a - x_double_thick],
-                "y": np.full(2, y_min + self.port_wall_thickness),
-            }
-        )
-
-        mirror_line = outer_line.deepcopy()
+        mirror_line = make_polygon({"x": [koz_bb.x_min, koz_bb.x_max], "y": 0})
         mirror_line.rotate(degree=half_sector_degree)
         mirror_point = (
             mirror_line.bounding_box.x_max,
             mirror_line.bounding_box.y_max,
             0,
+        )
+
+        # Inner point
+        y_min = self.tf_coil_thickness
+
+        # TODO this can be better
+        x_min = max(
+            # distance to split if thickness less than angle
+            2 * koz_bb.x_min
+            - mirror_line.bounding_box.x_min * np.cos(half_beta)
+            - (y_min if curved else 0),
+            # distance to split between tf coils
+            y_min / np.tan(half_beta),
+            koz_bb.x_min,
+        )
+
+        # Outer point
+        x_a = koz_bb.x_max * np.cos(np.arcsin(y_min / koz_bb.x_max))
+
+        outer_line = make_polygon({"x": [x_min, x_a], "y": y_min})
+        inner_line = make_polygon(
+            {
+                "x": [x_min + x_double_thick, x_a - x_double_thick],
+                "y": y_min + self.port_wall_thickness,
+            }
         )
 
         inner_bb, inner_top_bb = _mirror_line(inner_line, mirror_point)
@@ -130,11 +148,6 @@ class DuctBuilder(Builder):
             [outer_bb.y_min, outer_bb.y_max, outer_top_bb.y_max, outer_top_bb.y_min]
         )
 
-        mirror_bug(x_ow)
-        mirror_bug(y_ow)
-
-        xy_outer_wire = make_polygon({"x": x_ow, "y": y_ow}, closed=True)
-
         # Inner Wire
         x_iw = np.array(
             [inner_bb.x_min, inner_bb.x_max, inner_top_bb.x_max, inner_top_bb.x_min]
@@ -143,20 +156,28 @@ class DuctBuilder(Builder):
             [inner_bb.y_min, inner_bb.y_max, inner_top_bb.y_max, inner_top_bb.y_min]
         )
 
-        mirror_bug(x_iw)
-        mirror_bug(y_iw)
+        if y_iw[0] > y_iw[-1]:
+            xy = np.array([x_iw, y_iw])
+            intersect = get_intersect(xy[:, (0, 1)], xy[:, (2, 3)])
+            if intersect[0].size == 0:
+                raise GeometryError("Port too small")
 
+            x_ow[0] = x_iw[-1]
+            y_ow[0] = y_iw[-1]
+
+            x_ow[-1] = x_iw[0]
+            y_ow[-1] = y_iw[0]
+
+            x_iw[(0, -1),], y_iw[(0, -1),] = intersect
+
+        xy_outer_wire = make_polygon({"x": x_ow, "y": y_ow}, closed=True)
         xy_inner_wire = make_polygon({"x": x_iw, "y": y_iw}, closed=True)
 
         xy_face = BluemiraFace((xy_outer_wire, xy_inner_wire))
-
         return xy_face
 
 
 def _mirror_line(line: BluemiraWire, mirror_point: Tuple[float, ...]):
-    new_line = mirror_shape(line, (0, 0, 0), mirror_point)
+    new_line = line.deepcopy()
+    new_line.rotate(direction=mirror_point)
     return line.bounding_box, new_line.bounding_box
-
-
-def mirror_bug(arr):
-    arr[2:] = abs(arr[2:][::-1])
