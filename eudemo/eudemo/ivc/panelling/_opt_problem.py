@@ -143,7 +143,7 @@ class PanellingOptProblem(OptimisationProblem):
                 bounds=self.bounds,
             )
 
-    def constraint_violations(self, x: np.ndarray, atol: float) -> bool:
+    def constraints_violated_by(self, x: np.ndarray, atol: float) -> bool:
         """Return True if any constraints are violated by more that ``atol``."""
         constraint = np.empty(self.n_constraints)
         self.constrain_min_length_and_angles(constraint, x, np.empty(0))

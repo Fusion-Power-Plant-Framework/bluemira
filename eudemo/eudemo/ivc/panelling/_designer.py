@@ -21,7 +21,7 @@
 """Designer for wall panelling."""
 
 from dataclasses import dataclass
-from typing import Dict, Optional, Union
+from typing import Dict, Optional, Tuple, Union
 
 import numpy as np
 
@@ -109,46 +109,23 @@ class PanellingDesigner(Designer[np.ndarray]):
         """Run the design problem, performing the optimisation."""
         boundary = self.wall_boundary.discretize(byedges=True).xyz[[0, 2], :]
         opt_problem = self._set_up_opt_problem(boundary)
-        initial_guess = opt_problem.paneller.x0
-        try:
-            x_opt = opt_problem.optimise()
-        except ExternalOptError:
-            # Ignoring the error here is OK, as the optimiser prints a
-            # warning and we either try again with more panels, or
-            # return our initial guess as a fall back.
-            x_opt = None
-        max_iter = int(self._get_config_or_default("n_panel_increment_attempts"))
-        iter_num = 0
-        while (
-            x_opt is None or not opt_problem.opt.check_constraints(x_opt, warn=False)
-        ) and iter_num < max_iter:
-            # We couldn't satisfy the constraints on our last attempt,
-            # so try increasing the number of panels.
-            # Note we're actually increasing the number of panels by 1
-            # by adding 3 below, as there are two more panels than
-            # optimisation parameters.
-            n_panels = len(x_opt) + 3
-            opt_problem = self._set_up_opt_problem(boundary, n_panels)
-            try:
-                x_opt = opt_problem.optimise(check_constraints=False)
-            except ExternalOptError:
-                x_opt = None
-            iter_num += 1
+        initial_solution = opt_problem.paneller.joints(opt_problem.paneller.x0)
+        max_retries = int(self._get_config_or_default("n_panel_increment_attempts"))
+        x_opt, opt_problem, num_retries = self._run_opt_problem_with_retries(
+            boundary, opt_problem, max_retries
+        )
 
-        if iter_num == max_iter:
-            # Make sure we warn about broken tolerances this time.
-            opt_problem.opt.check_constraints(x_opt, warn=True)
-            # We may be happy with a warning in cases where we're close
-            # to satisfying constraints, but if we're too far off, it's
-            # probably an issue with input parameters, so an error is
-            # best.
-            if opt_problem.constraint_violations(x_opt, 1):
-                bluemira_warn(
-                    "Could not solve panelling optimisation problem: no feasible "
-                    "solution found. Try reducing the minimum length and/or increasing "
-                    "the maximum allowed angle."
-                )
-                return opt_problem.paneller.joints(initial_guess)
+        # Make sure we warn about broken tolerances this time.
+        if num_retries == max_retries and (
+            x_opt is None or not opt_problem.opt.check_constraints(x_opt, warn=True)
+        ):
+            bluemira_warn(
+                "Could not solve panelling optimisation problem: no feasible "
+                "solution found. Try reducing the minimum length and/or increasing "
+                "the maximum allowed angle."
+            )
+        if x_opt is None or opt_problem.constraints_violated_by(x_opt, 1):
+            return initial_solution
 
         return opt_problem.paneller.joints(x_opt)
 
@@ -165,6 +142,46 @@ class PanellingDesigner(Designer[np.ndarray]):
             boundary, self.params.fw_a_max.value, self.params.fw_dL_min.value
         )
         return paneller.joints(paneller.x0)
+
+    def _run_opt_problem_with_retries(
+        self,
+        boundary: np.ndarray,
+        opt_problem: PanellingOptProblem,
+        max_retries: int,
+    ) -> Tuple[Union[np.ndarray, None], PanellingOptProblem, int]:
+        """
+        Run the minimise panel length optimisation problem.
+
+        If the optimisation fails, retry with an extra panel
+        ``max_retries`` times. Return ``None`` if the optimiser crashes,
+        which it can often do, with 'more than iter SQP iterations'.
+        """
+        try:
+            x_opt = opt_problem.optimise()
+        except ExternalOptError:
+            # Avoid 'more than iter SQP iterations' errors stopping the
+            # design.
+            # Ignoring the error here is OK, as the optimiser prints a
+            # warning and we either try again with more panels, or
+            # return our initial guess as a fall back.
+            x_opt = None
+        iter_num = 0
+        while (
+            x_opt is None or not opt_problem.opt.check_constraints(x_opt, warn=False)
+        ) and iter_num < max_retries:
+            # We couldn't satisfy the constraints on our last attempt,
+            # so try increasing the number of panels.
+            # Note we're actually increasing the number of panels by 1
+            # by adding 3 below, as there are two more panels than
+            # optimisation parameters.
+            n_panels = opt_problem.n_opts + 3
+            opt_problem = self._set_up_opt_problem(boundary, n_panels)
+            try:
+                x_opt = opt_problem.optimise(check_constraints=False)
+            except ExternalOptError:
+                x_opt = None
+            iter_num += 1
+        return x_opt, opt_problem, iter_num
 
     def _set_up_opt_problem(
         self, boundary: np.ndarray, fix_num_panels: Optional[int] = None
