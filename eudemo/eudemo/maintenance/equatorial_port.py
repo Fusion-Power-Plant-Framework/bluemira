@@ -4,7 +4,7 @@
 # activities.
 #
 # Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
-#                         J. Morris, D. Short
+#                         J. Morris, D. Short, I. Chiang
 #
 # bluemira is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -68,6 +68,16 @@ class EquatorialPortDesignerParams(ParameterFrame):
 
 
 @dataclass
+class EquatorialPortBuilderParams(ParameterFrame):
+    """
+    Castellation Builder parameters
+    """
+
+    ep_height: Parameter[float]
+    cst_r_corner: Parameter[float]
+
+
+@dataclass
 class CastellationBuilderParams(ParameterFrame):
     """
     Castellation Builder parameters
@@ -112,6 +122,70 @@ class EquatorialPortDesigner(Designer):
             make_polygon({"x": x, "y": 0, "z": z}, label="koz", closed=True)
         )
         return ep_boundary
+
+
+class EquatorialPortBuilder(Builder):
+    """
+    Equatorial Port Builder
+    """
+
+    NAME = "Equatorial Port"
+    param_cls: Type[EquatorialPortBuilderParams] = EquatorialPortBuilderParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame, EquatorialPortBuilderParams],
+        build_config: Union[Dict, None],
+        outer_profile: BluemiraWire,
+        length: float,
+        wall_thickness: float,
+    ):
+        super().__init__(params, build_config)
+        self.outer = outer_profile
+        self.length = length
+        self.offset = float(0 - wall_thickness)
+
+    def build(self) -> Component:
+        """Build the Equatorial Port"""
+        self.z_h = self.params.ep_height.value
+        self.r_rad = self.params.cst_r_corner.value
+        hole = offset_wire(self.outer.deepcopy(), self.offset)
+        self.profile = BluemiraFace([self.outer, hole])
+        self.port = extrude_shape(self.profile, (self.length, 0, 0))
+
+        return self.component_tree(
+            xz=[self.build_xz()],
+            xy=self.build_xy(),
+            xyz=self.build_xyz(),
+        )
+
+    def build_xz(self) -> PhysicalComponent:
+        """
+        Build the xy representation of the Equatorial Port
+        """
+        port = slice_shape(
+            extrude_shape(BluemiraFace(self.outer), (self.length, 0, 0)),
+            BluemiraPlane(axis=(0, 1, 0)),
+        )
+        body = PhysicalComponent(self.NAME, BluemiraFace(port))
+        body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
+        return body
+
+    def build_xy(self, n: int = 10) -> PhysicalComponent:
+        """
+        Build the cross-sectional representation of the Equatorial Port
+        """
+        body = PhysicalComponent(self.NAME, self.profile)
+        body.plot_options.face_options["color"] = BLUE_PALETTE["VV"][0]
+        return circular_pattern_component(body, n_children=n)
+
+    def build_xyz(self, n: int = 10) -> PhysicalComponent:
+        """
+        Build the 3D representation of the Equatorial Port
+        """
+        body = PhysicalComponent(self.NAME, self.port)
+        body.display_cad_options.color = BLUE_PALETTE["VV"][0]
+        return circular_pattern_component(body, n_children=n)
 
 
 class CastellationBuilder(Builder):
