@@ -22,6 +22,7 @@
 import numpy as np
 import pytest
 
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import (
     PictureFrame,
@@ -81,6 +82,16 @@ class TestBluemiraFace:
             assert not face.is_null()
             assert face.is_valid()
             assert face.area > 0.0
+
+    def test_face_vertices_are_ordered(self):
+        points = Coordinates(
+            {"x": [0, 1, 2, 1, 0, -1, 0], "y": [-2, -1, 0, 1, 2, 1, -2], "z": 0}
+        )
+        wire = make_polygon(points, closed=True)
+        face = BluemiraFace(wire)
+        vertices = face.vertexes
+        vertices.set_ccw([0, 0, -1])
+        np.testing.assert_allclose(points.xyz[:, :-1], vertices.xyz)
 
 
 class TestNormalAt:
