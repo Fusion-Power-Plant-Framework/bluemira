@@ -72,8 +72,6 @@ class ParameterisedRippleSolver:
         Vertical coordinate at which to calculate B_0
     B_0: float
         Toroidal field at (R_0, z_0)
-    ripple_points: np.ndarray
-        Points at which to calculate TF ripple
     """
 
     def __init__(self, wp_xs, nx, ny, n_TF, R_0, z_0, B_0):
@@ -190,7 +188,7 @@ class RipplePointSelector(ABC):
         Make the ripple OptimisationConstraint
         """
         return OptimisationConstraint(
-            self.constrain_ripple,
+            self._constrain_ripple,
             f_constraint_args={
                 "parameterisation": parameterisation,
                 "solver": solver,
@@ -201,7 +199,7 @@ class RipplePointSelector(ABC):
         )
 
     @staticmethod
-    def constrain_ripple(
+    def _constrain_ripple(
         constraint,
         vector,
         grad,
@@ -231,7 +229,7 @@ class RipplePointSelector(ABC):
         TF_ripple_limit: float
             Maximum allowable TF ripple
         """
-        func = RipplePointSelector.calculate_ripple
+        func = RipplePointSelector._calculate_ripple
         constraint[:] = func(vector, parameterisation, solver, points, TF_ripple_limit)
         if grad.size > 0:
             grad[:] = approx_derivative(
@@ -246,7 +244,7 @@ class RipplePointSelector(ABC):
         return constraint
 
     @staticmethod
-    def calculate_ripple(vector, parameterisation, solver, points, TF_ripple_limit):
+    def _calculate_ripple(vector, parameterisation, solver, points, TF_ripple_limit):
         """
         Calculate ripple constraint
 
@@ -401,7 +399,7 @@ class MaximiseSelector(RipplePointSelector):
         Make the ripple OptimisationConstraint
         """
         return OptimisationConstraint(
-            self.constrain_max_ripple,
+            self._constrain_max_ripple,
             f_constraint_args={
                 "parameterisation": parameterisation,
                 "solver": solver,
@@ -415,7 +413,7 @@ class MaximiseSelector(RipplePointSelector):
         )
 
     @staticmethod
-    def constrain_max_ripple(
+    def _constrain_max_ripple(
         constraint,
         vector,
         grad,
@@ -445,7 +443,7 @@ class MaximiseSelector(RipplePointSelector):
         TF_ripple_limit: float
             Maximum allowable TF ripple
         """
-        func = MaximiseSelector.calculate_max_ripple
+        func = MaximiseSelector._calculate_max_ripple
         constraint[:] = func(
             vector, parameterisation, solver, lcfs_wire, alpha_0, TF_ripple_limit, this
         )
@@ -469,7 +467,7 @@ class MaximiseSelector(RipplePointSelector):
         return constraint
 
     @staticmethod
-    def calculate_max_ripple(
+    def _calculate_max_ripple(
         vector,
         parameterisation,
         solver,
