@@ -110,7 +110,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         I_p: Optional[float] = None,
         R_0: Optional[float] = None,
         B_0: Optional[float] = None,
-        p_order: int = 3,
+        p_order: int = 2,
         max_iter: int = 10,
         iter_err_max: float = 1e-5,
         relaxation: float = 0.0,
