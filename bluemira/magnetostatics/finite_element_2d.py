@@ -184,7 +184,9 @@ class FemMagnetostatic2d:
         self.B = None
 
     def set_mesh(
-        self, mesh: Union[dolfin.Mesh, str], boundaries: Union[dolfin.Mesh, str] = None
+        self,
+        mesh: Union[dolfin.Mesh, str],
+        boundaries: Optional[Union[dolfin.Mesh, str]] = None,
     ):
         """
         Set the mesh for the solver

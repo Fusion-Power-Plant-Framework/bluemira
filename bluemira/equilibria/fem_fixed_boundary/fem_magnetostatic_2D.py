@@ -200,9 +200,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
         )
 
-    def set_mesh(
-        self, mesh: Union[dolfin.Mesh, str], boundaries: Union[dolfin.Mesh, str] = None
-    ):
+    def set_mesh(self, mesh: Union[dolfin.Mesh, str]):
         """
         Set the mesh for the solver
 
@@ -210,11 +208,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ----------
         mesh : Union[dolfin.Mesh, str]
             Filename of the xml file with the mesh definition or a dolfin mesh
-        boundaries : Union[dolfin.Mesh, str]
-            Filename of the xml file with the boundaries definition or a MeshFunction
-            that defines the boundaries
         """
-        super().set_mesh(mesh=mesh, boundaries=boundaries)
+        super().set_mesh(mesh=mesh)
         self._reset_psi_cache()
 
     def _create_g_func(
