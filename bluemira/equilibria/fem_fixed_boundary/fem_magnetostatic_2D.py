@@ -119,30 +119,34 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         relaxation: float = 0.0,
     ):
         super().__init__(p_order)
-
-        self._pprime = None
-        self._ffprime = None
+        self._curr_target = I_p
+        self._R_0 = R_0
+        self._B_0 = B_0
+        self._process_profiles(p_prime, ff_prime)
 
         if mesh is not None:
             self.set_mesh(mesh)
-            self.set_profiles(p_prime, ff_prime)
-        else:
             if (p_prime is not None) and (ff_prime is not None):
-                self._process_profiles(p_prime, ff_prime)
-            self._curr_target = I_p
-            self._R_0 = R_0
-            self._B_0 = B_0
+                self.define_g()
 
         self.iter_err_max = iter_err_max
         self.max_iter = max_iter
         self.relaxation = relaxation
         self.k = 1
 
+        self._g_func = None
         self._psi_ax = None
         self._psi_b = None
         self._grad_psi = None
 
-    def _process_profiles(self, p_prime: Callable, ff_prime: Callable):
+    def _process_profiles(
+        self,
+        p_prime: Callable,
+        ff_prime: Callable,
+        I_p: Optional[float] = None,
+        R_0: Optional[float] = None,
+        B_0: Optional[float] = None,
+    ):
         # Note: pprime and ffprime have been limited to a Callable,
         # because otherwise it is necessary to provide also psi_norm_1D
         # to which they refer.
@@ -156,6 +160,12 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self._ffprime_data = ff_prime(np.linspace(0, 1, 50))
         else:
             raise ValueError("ff_prime must be a function")
+        if I_p is not None:
+            self._curr_target = I_p
+        if B_0 is not None:
+            self._B_0 = B_0
+        if R_0 is not None:
+            self._R_0 = R_0
 
     @property
     def psi_ax(self) -> float:
@@ -292,13 +302,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         R_0:
             Major radius [m]. Used when saving to file.
         """
-        self._process_profiles(p_prime, ff_prime)
-        if I_p is not None:
-            self._curr_target = I_p
-        if B_0 is not None:
-            self._B_0 = B_0
-        if R_0 is not None:
-            self._R_0 = R_0
+        self._process_profiles(p_prime, ff_prime, I_p, B_0, R_0)
         self.define_g()
 
     def _calculate_curr_tot(self) -> float:
@@ -330,6 +334,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             raise EquilibriaError(
                 "You cannot solve this problem yet! Please set the profile functions first, using set_profiles(p_prime, ff_prime)."
             )
+        if self._g_func is None:
+            self.define_g()
 
     def solve(
         self,
