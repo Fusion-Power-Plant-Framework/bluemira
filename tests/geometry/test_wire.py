@@ -84,6 +84,15 @@ class TestWire:
 
         np.testing.assert_equal(start_point, np.array([[5], [0.2], [90]]))
 
+    def test_vertices_are_ordered(self):
+        points = Coordinates(
+            {"x": [0, 1, 2, 1, 0, -1, 0], "y": [-2, -1, 0, 1, 2, 1, -2], "z": 0}
+        )
+        wire = make_polygon(points, closed=True)
+        vertices = wire.vertexes
+        vertices.set_ccw([0, 0, -1])
+        np.testing.assert_allclose(points.xyz[:, :-1], vertices.xyz)
+
 
 class ValueParameterBase:
     @classmethod
