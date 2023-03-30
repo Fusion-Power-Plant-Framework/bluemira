@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.base.builder import ComponentManager
@@ -49,6 +50,10 @@ class TestReactor:
     def setup_class(cls):
         cls.reactor = cls._make_reactor()
 
+    @classmethod
+    def teardown_method(cls):
+        plt.close("all")
+
     def test_name_set_on_root_component(self):
         assert self.reactor.component().name == REACTOR_NAME
 
@@ -62,6 +67,10 @@ class TestReactor:
 
     def test_show_cad_displays_all_components(self):
         self.reactor.show_cad()
+
+    @pytest.mark.parametrize("dim", ["xz", "xy", ["xy", "xz"]])
+    def test_plot_displays_all_components(self, dim):
+        self.reactor.plot(dim)
 
     @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
     def test_ReactorError_given_invalid_plotting_dimension(self, bad_dim):
