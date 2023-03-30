@@ -133,7 +133,9 @@ equilibrium = solver.solve(plot=True)
 # if we we wish to do so:
 
 # %%
-solver.set_profiles(p_prime=DoublePowerFunc([2.0, 1.0]))
+solver.set_profiles(
+    p_prime=DoublePowerFunc([2.0, 1.0]), ff_prime=DoublePowerFunc([1.5, 2])
+)
 solver.solve(plot=True)
 
 # %%
@@ -141,6 +143,9 @@ plasma.shape.mesh_options = {"lcar": 0.15, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.15, "physical_group": "lcfs"}
 
 mesh = create_mesh(plasma, ".", "fixed_boundary_example", "fixed_boundary_example.msh")
+dolfin.plot(mesh)
+plt.show()
+
 solver.set_mesh(mesh)
 solver.solve()
 
