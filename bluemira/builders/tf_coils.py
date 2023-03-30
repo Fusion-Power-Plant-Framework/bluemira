@@ -23,6 +23,7 @@
 Built-in build steps for making parameterised TF coils.
 """
 
+import warnings
 from abc import ABC
 from copy import deepcopy
 from dataclasses import dataclass
@@ -34,7 +35,7 @@ import numpy as np
 from scipy.optimize import minimize
 
 from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_debug_flush, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug_flush
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.display import plot_2d
 from bluemira.geometry.coordinates import Coordinates
@@ -602,10 +603,11 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         )
 
         if ripple_selector is None:
-            bluemira_warn(
+            warnings.warn(
                 "RippleConstrainedLengthGOP API has changed, please specify how you want "
                 "to constrain TF ripple by using one of the available RipplePointSelector "
-                f"classes. Defaulting to an EquispacedSelector with {n_rip_points=} for now."
+                f"classes. Defaulting to an EquispacedSelector with {n_rip_points=} for now.",
+                category=DeprecationWarning,
             )
             ripple_selector = EquispacedSelector(n_rip_points)
 
@@ -706,5 +708,5 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
             self.ripple_selector.points.z,
             color=cm(norm(rv)),
         )
-        color_bar = plt.gcf().colorbar(sm)
+        color_bar = plt.colorbar(sm, ax=ax)
         color_bar.ax.set_ylabel("Toroidal field ripple [%]")
