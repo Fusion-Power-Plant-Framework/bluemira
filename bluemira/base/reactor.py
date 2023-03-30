@@ -28,12 +28,13 @@ from rich.progress import track
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
 from bluemira.base.error import ReactorError
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
 
-_PLOT_DIMS = ["xy", "xz", "xyz"]
+_PLOT_DIMS = ["xy", "xz"]
+_CAD_DIMS = ["xy", "xz", "xyz"]
 
 
 class Reactor:
@@ -200,10 +201,10 @@ class Reactor:
             )
             dims_to_show = (kw_dim,)
         for dim in dims_to_show:
-            if dim not in _PLOT_DIMS:
+            if dim not in _CAD_DIMS:
                 raise ReactorError(
                     f"Invalid plotting dimension '{dim}'."
-                    f"Must be one of {str(_PLOT_DIMS)}"
+                    f"Must be one of {str(_CAD_DIMS)}"
                 )
 
         comp_copy = self._filter_copy_comps(dims_to_show, with_components)
@@ -232,12 +233,13 @@ class Reactor:
         """
         # give dims_to_show a default value
         dims_to_show = ("xz",) if len(dims) == 0 else dims
-        true_dims_to_show = []
+
         for dim in dims_to_show:
-            if dim in ["xz", "xy"]:
-                true_dims_to_show.append(dim)
-            else:
-                bluemira_warn(f"Can only plot `xz` and `xy`, not {dim}")
-        for i, dim in enumerate(true_dims_to_show):
+            if dim not in _PLOT_DIMS:
+                raise ReactorError(
+                    f"Invalid plotting dimension '{dim}'."
+                    f"Must be one of {str(_PLOT_DIMS)}"
+                )
+        for i, dim in enumerate(dims_to_show):
             comp_copy = self._filter_copy_comps([dim], with_components)
             ComponentPlotter().plot_2d(comp_copy, show=i)
