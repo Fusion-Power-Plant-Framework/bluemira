@@ -125,7 +125,24 @@ solver = FemGradShafranovFixedBoundary(
     iter_err_max=1e-4,
     relaxation=0.05,
 )
-equilibrium = solver.solve(plot=False)
+equilibrium = solver.solve(plot=True)
+
+
+# %% [markdown]
+# We can also update the flux functions and/or the mesh with new entities
+# if we we wish to do so:
+
+# %%
+solver.set_profiles(p_prime=DoublePowerFunc([2.0, 1.0]))
+solver.solve(plot=True)
+
+# %%
+plasma.shape.mesh_options = {"lcar": 0.15, "physical_group": "plasma_face"}
+plasma.shape.boundary[0].mesh_options = {"lcar": 0.15, "physical_group": "lcfs"}
+
+mesh = create_mesh(plasma, ".", "fixed_boundary_example", "fixed_boundary_example.msh")
+solver.set_mesh(mesh)
+solver.solve()
 
 
 # %% [markdown]
