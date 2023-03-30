@@ -226,8 +226,8 @@ def closed_wire_wrapper(drop_closure_point: bool):
                 wire = cadapi.close_wire(wire)
             return BluemiraWire(wire, label=label)
 
-        return wrapper
         wrapper.__doc__ = func.__doc__
+        return wrapper
 
     return decorator
 
