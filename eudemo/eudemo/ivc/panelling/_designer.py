@@ -107,7 +107,7 @@ class PanellingDesigner(Designer[np.ndarray]):
 
     def run(self) -> np.ndarray:
         """Run the design problem, performing the optimisation."""
-        boundary = self.wall_boundary.discretize(byedges=True).xyz[[0, 2], :]
+        boundary = self.wall_boundary.discretize(byedges=True).xz
         opt_problem = self._set_up_opt_problem(boundary)
         initial_solution = opt_problem.paneller.joints(opt_problem.paneller.x0)
         max_retries = int(self._get_config_or_default("n_panel_increment_attempts"))
@@ -137,7 +137,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         boundary, but does not guarantee the maximum angle and minimum
         length constraints are honoured.
         """
-        boundary = self.wall_boundary.discretize(byedges=True).xyz[[0, 2], :]
+        boundary = self.wall_boundary.discretize(byedges=True).xz
         paneller = Paneller(
             boundary, self.params.fw_a_max.value, self.params.fw_dL_min.value
         )
