@@ -73,14 +73,17 @@ class TestReactor:
         with pytest.raises(ReactorError):
             self.reactor.show_cad(dim=bad_dim)
 
-    @pytest.mark.parametrize("dim", ["xz", "xy", ["xy", "xz"]])
+    @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
     def test_plot_displays_all_components(self, dim):
-        self.reactor.plot(dim)
+        if isinstance(dim, tuple):
+            self.reactor.plot(*dim)
+        else:
+            self.reactor.plot(dim)
 
     @pytest.mark.parametrize("bad_dim", ["i", 1, ["x"]])
     def test_ReactorError_given_invalid_plot_dimension_plot(self, bad_dim):
         with pytest.raises(ReactorError):
-            self.reactor.plot(dim=bad_dim)
+            self.reactor.plot(bad_dim)
 
     @staticmethod
     def _make_reactor() -> MyReactor:
