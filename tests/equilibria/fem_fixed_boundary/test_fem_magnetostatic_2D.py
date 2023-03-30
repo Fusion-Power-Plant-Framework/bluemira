@@ -24,6 +24,7 @@ import pytest
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
@@ -70,15 +71,31 @@ class TestFemGradShafranovFixedBoundary:
     )
 
     def test_all_optional_init_12(self):
-        mod_I_p = 20e6
-        self.optional_init_solver.set_profiles(self.p_prime, self.ff_prime, I_p=mod_I_p)
+        mod_current = 20e6
+        self.optional_init_solver.set_profiles(
+            self.p_prime, self.ff_prime, I_p=mod_current
+        )
         self.optional_init_solver.set_mesh(self.mesh)
         self.optional_init_solver.solve()
-        assert np.isclose(self.optional_init_solver._calculate_curr_tot(), mod_I_p)
+        assert np.isclose(self.optional_init_solver._curr_target, mod_current)
 
     def test_all_optional_init_21(self):
-        mod_I_p = 20e6
+        mod_current = 20e6
         self.optional_init_solver.set_mesh(self.mesh)
-        self.optional_init_solver.set_profiles(self.p_prime, self.ff_prime, I_p=mod_I_p)
+        self.optional_init_solver.set_profiles(
+            self.p_prime, self.ff_prime, I_p=mod_current
+        )
         self.optional_init_solver.solve()
-        assert np.isclose(self.optional_init_solver._calculate_curr_tot(), mod_I_p)
+        assert np.isclose(self.optional_init_solver._curr_target, mod_current)
+
+    @pytest.mark.parametrize(
+        "solver",
+        [
+            FemGradShafranovFixedBoundary(**solver_kwargs),
+            FemGradShafranovFixedBoundary(p_prime, ff_prime, **solver_kwargs),
+            FemGradShafranovFixedBoundary(mesh=mesh, **solver_kwargs),
+        ],
+    )
+    def test_not_fully_init(self, solver):
+        with pytest.raises(EquilibriaError):
+            solver.solve()

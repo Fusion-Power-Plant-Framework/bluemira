@@ -123,49 +123,23 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._psi_ax = None
         self._psi_b = None
         self._grad_psi = None
+        self._pprime = None
+        self._ffprime = None
 
         self._curr_target = I_p
         self._R_0 = R_0
         self._B_0 = B_0
-        self._process_profiles(p_prime, ff_prime)
+
+        if (p_prime is not None) and (ff_prime is not None):
+            self.set_profiles(p_prime, ff_prime)
 
         if mesh is not None:
             self.set_mesh(mesh)
-            if (p_prime is not None) and (ff_prime is not None):
-                self.define_g()
 
         self.iter_err_max = iter_err_max
         self.max_iter = max_iter
         self.relaxation = relaxation
         self.k = 1
-
-    def _process_profiles(
-        self,
-        p_prime: Callable,
-        ff_prime: Callable,
-        I_p: Optional[float] = None,
-        R_0: Optional[float] = None,
-        B_0: Optional[float] = None,
-    ):
-        # Note: pprime and ffprime have been limited to a Callable,
-        # because otherwise it is necessary to provide also psi_norm_1D
-        # to which they refer.
-        if callable(p_prime):
-            self._pprime = p_prime
-            self._pprime_data = p_prime(np.linspace(0, 1, 50))
-        else:
-            raise ValueError("p_prime must be a function")
-        if callable(ff_prime):
-            self._ffprime = ff_prime
-            self._ffprime_data = ff_prime(np.linspace(0, 1, 50))
-        else:
-            raise ValueError("ff_prime must be a function")
-        if I_p is not None:
-            self._curr_target = I_p
-        if B_0 is not None:
-            self._B_0 = B_0
-        if R_0 is not None:
-            self._R_0 = R_0
 
     @property
     def psi_ax(self) -> float:
@@ -297,8 +271,25 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         R_0:
             Major radius [m]. Used when saving to file.
         """
-        self._process_profiles(p_prime, ff_prime, I_p, B_0, R_0)
-        self.define_g()
+        # Note: pprime and ffprime have been limited to a Callable,
+        # because otherwise it is necessary to provide also psi_norm_1D
+        # to which they refer.
+        if callable(p_prime):
+            self._pprime = p_prime
+            self._pprime_data = p_prime(np.linspace(0, 1, 50))
+        else:
+            raise ValueError("p_prime must be a function")
+        if callable(ff_prime):
+            self._ffprime = ff_prime
+            self._ffprime_data = ff_prime(np.linspace(0, 1, 50))
+        else:
+            raise ValueError("ff_prime must be a function")
+        if I_p is not None:
+            self._curr_target = I_p
+        if B_0 is not None:
+            self._B_0 = B_0
+        if R_0 is not None:
+            self._R_0 = R_0
 
     def _calculate_curr_tot(self) -> float:
         """Calculate the total current into the domain"""
@@ -329,8 +320,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             raise EquilibriaError(
                 "You cannot solve this problem yet! Please set the profile functions first, using set_profiles(p_prime, ff_prime)."
             )
-        if self._g_func is None:
-            self.define_g()
 
     def solve(
         self,
@@ -355,6 +344,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             FixedBoundaryEquilibrium object corresponding to the solve
         """
         self._check_all_inputs_ready_error()
+        self.define_g()
+
         points = self.mesh.coordinates()
         plot = any((plot, debug, gif))
         folder = try_get_bluemira_path(
