@@ -1007,7 +1007,6 @@ class TestPhaseLoad:
         colors = netloads_testkit.color_order_for_plotting
         colors = iter(colors)
 
-        count = 0
         all_results = []
         list_of_plot_objects = []
         for sample in all_samples:
