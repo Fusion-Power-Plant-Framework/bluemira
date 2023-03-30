@@ -95,7 +95,7 @@ class PanellingOptProblem(OptimisationProblem):
         """
         return 2 * self.paneller.n_panels - 1
 
-    def optimise(self, check_constraints: bool = False):
+    def optimise(self, check_constraints: bool = False) -> np.ndarray:
         """Perform the optimisation."""
         self.paneller.x0 = self.opt.optimise(self.paneller.x0, check_constraints)
         return self.paneller.x0
