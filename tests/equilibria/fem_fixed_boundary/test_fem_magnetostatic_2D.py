@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -68,22 +69,28 @@ class TestFemGradShafranovFixedBoundary:
         p_prime, ff_prime, mesh, **solver_kwargs
     )
 
-    def test_all_optional_init_12(self):
+    @classmethod
+    def teardown_method(cls):
+        plt.close()
+
+    @pytest.mark.parametrize("plot", [False, True])
+    def test_all_optional_init_12(self, plot):
         mod_current = 20e6
         self.optional_init_solver.set_profiles(
             self.p_prime, self.ff_prime, I_p=mod_current
         )
         self.optional_init_solver.set_mesh(self.mesh)
-        self.optional_init_solver.solve()
+        self.optional_init_solver.solve(plot=plot)
         assert np.isclose(self.optional_init_solver._curr_target, mod_current)
 
-    def test_all_optional_init_21(self):
+    @pytest.mark.parametrize("plot", [False, True])
+    def test_all_optional_init_21(self, plot):
         mod_current = 20e6
         self.optional_init_solver.set_mesh(self.mesh)
         self.optional_init_solver.set_profiles(
             self.p_prime, self.ff_prime, I_p=mod_current
         )
-        self.optional_init_solver.solve()
+        self.optional_init_solver.solve(plot=plot)
         assert np.isclose(self.optional_init_solver._curr_target, mod_current)
 
     @pytest.mark.parametrize(
