@@ -114,11 +114,18 @@ ff_prime = DoublePowerFunc([1.5, 2])
 # %%
 
 solver = FemGradShafranovFixedBoundary(
-    I_p=I_p, R_0=R_0, B_0=B_0, p_order=2, max_iter=30, iter_err_max=1e-4, relaxation=0.05
+    p_prime,
+    ff_prime,
+    mesh,
+    I_p=I_p,
+    R_0=R_0,
+    B_0=B_0,
+    p_order=2,
+    max_iter=30,
+    iter_err_max=1e-4,
+    relaxation=0.05,
 )
-solver.set_mesh(mesh)
-solver.set_profiles(p_prime, ff_prime)
-equilibrium = solver.solve(plot=True)
+equilibrium = solver.solve(plot=False)
 
 
 # %% [markdown]

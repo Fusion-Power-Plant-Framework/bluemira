@@ -36,6 +36,7 @@ from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.display import plot_defaults
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     _interpolate_profile,
     find_magnetic_axis,
@@ -78,35 +79,37 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     Parameters
     ----------
-    p_prime: Optional[Union[np.ndarray, Callable[[float], float]]]
+    p_prime:
         p' flux function. If callable, then used directly (50 points saved in file).
-        If array, linear interpolation is used and the values are stored in the file.
         If None, these must be specified later on, but before the solve.
-    ff_prime: Optional[Union[np.ndarray, Callable[[float], float]]]
+    ff_prime:
         FF' flux function. If callable, then used directly (50 points saved in file).
-        If array, linear interpolation is used and the values are stored in the file.
         If None, these must be specified later on, but before the solve.
-    I_p: Optional[float]
+    mesh:
+        Mesh to use when solving the problem.
+        If None, must be specified later on, but before the solve.
+    I_p:
         Plasma current [A]. If None, the plasma current is calculated, otherwise
         the source term is scaled to match the plasma current.
-    B_0: Optional[float]
+    B_0:
         Toroidal field at R_0 [T]. Used when saving to file.
-    R_0: Optional[float]
+    R_0:
         Major radius [m]. Used when saving to file.
-    p_order : int
+    p_order:
         Order of the approximating polynomial basis functions
-    max_iter: int
+    max_iter:
         Maximum number of iterations
-    iter_err_max: float
+    iter_err_max:
         Convergence criterion value
-    relaxation: float
+    relaxation:
         Relaxation factor for the Picard iteration procedure
     """
 
     def __init__(
         self,
-        p_prime: Optional[Union[np.ndarray, Callable[[float], float]]] = None,
-        ff_prime: Optional[Union[np.ndarray, Callable[[float], float]]] = None,
+        p_prime: Optional[Callable[[float], float]] = None,
+        ff_prime: Optional[Callable[[float], float]] = None,
+        mesh: Optional[Union[dolfin.Mesh, str]] = None,
         I_p: Optional[float] = None,
         R_0: Optional[float] = None,
         B_0: Optional[float] = None,
@@ -116,15 +119,25 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         relaxation: float = 0.0,
     ):
         super().__init__(p_order)
-        if (p_prime is not None) and (ff_prime is not None):
-            self._process_profiles(p_prime, ff_prime)
-        self._curr_target = I_p
-        self._R_0 = R_0
-        self._B_0 = B_0
+
+        self._pprime = None
+        self._ffprime = None
+
+        if mesh is not None:
+            self.set_mesh(mesh)
+            self.set_profiles(p_prime, ff_prime)
+        else:
+            if (p_prime is not None) and (ff_prime is not None):
+                self._process_profiles(p_prime, ff_prime)
+            self._curr_target = I_p
+            self._R_0 = R_0
+            self._B_0 = B_0
+
         self.iter_err_max = iter_err_max
         self.max_iter = max_iter
         self.relaxation = relaxation
         self.k = 1
+
         self._psi_ax = None
         self._psi_b = None
         self._grad_psi = None
@@ -255,8 +268,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def set_profiles(
         self,
-        p_prime: Union[np.ndarray, Callable[[float], float]],
-        ff_prime: Union[np.ndarray, Callable[[float], float]],
+        p_prime: Callable[[float], float],
+        ff_prime: Callable[[float], float],
         I_p: Optional[float] = None,
         B_0: Optional[float] = None,
         R_0: Optional[float] = None,
@@ -266,17 +279,17 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         Parameters
         ----------
-        pprime: Union[Callable[[np.ndarray], np.ndarray]
+        pprime:
             pprime as function of psi_norm (1-D function)
-        ffprime: Union[Callable[[np.ndarray], np.ndarray]
+        ffprime:
             ffprime as function of psi_norm (1-D function)
-        I_p: Optional[float]
+        I_p:
             Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined).
             If None, plasma current is calculated and not constrained
-        B_0: Optional[float]
+        B_0:
             Toroidal field at R_0 [T]. Used when saving to file.
-        R_0: Optional[float]
+        R_0:
             Major radius [m]. Used when saving to file.
         """
         self._process_profiles(p_prime, ff_prime)
@@ -307,6 +320,16 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self._psi_b = None
         self._psi_ax = None
         self._grad_psi = None
+
+    def _check_all_inputs_ready_error(self):
+        if self.mesh is None:
+            raise EquilibriaError(
+                "You cannot solve this problem yet! Please set the mesh first, using set_mesh(mesh)."
+            )
+        if self._pprime is None or self._ffprime is None:
+            raise EquilibriaError(
+                "You cannot solve this problem yet! Please set the profile functions first, using set_profiles(p_prime, ff_prime)."
+            )
 
     def solve(
         self,
@@ -343,6 +366,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         equilibrium: FixedBoundaryEquilibrium
             FixedBoundaryEquilibrium object corresponding to the solve
         """
+        self._check_all_inputs_ready_error()
         points = self.mesh.coordinates()
         plot = any((plot, debug, gif))
         folder = try_get_bluemira_path(
