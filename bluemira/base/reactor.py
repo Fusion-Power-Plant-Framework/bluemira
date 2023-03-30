@@ -213,7 +213,19 @@ class Reactor:
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)
 
-    def plot(self, *dims, with_components: Optional[List[ComponentManager]] = None):
+    def plot(self, *dims: str, with_components: Optional[List[ComponentManager]] = None):
+        """
+        Plot the reactor.
+
+        Parameters
+        ----------
+        *dims:
+            The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
+            (default: 'xz')
+        with_components:
+            The components to construct when displaying CAD for xyz.
+            Defaults to None, which means show "all" components.
+        """
         # give dims_to_show a default value
         dims_to_show = ("xz",) if len(dims) == 0 else dims
         true_dims_to_show = []
