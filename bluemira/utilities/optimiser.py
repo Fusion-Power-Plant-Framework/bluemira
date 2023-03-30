@@ -209,7 +209,7 @@ class Optimiser(NLOPTOptimiser):
             tolerance = np.array([tolerance])
         super().add_ineq_constraints(f_constraint, tolerance)
 
-    def check_constraints(self, x: np.ndarray, warn: bool = False):
+    def check_constraints(self, x: np.ndarray, warn: bool = True):
         """
         Check that the constraints have been met.
 
