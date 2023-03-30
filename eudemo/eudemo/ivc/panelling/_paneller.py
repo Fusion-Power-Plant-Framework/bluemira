@@ -23,7 +23,7 @@ from typing import Optional, Union
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
-from bluemira.geometry.coordinates import vector_lengthnorm
+from bluemira.geometry.coordinates import vector_intersect, vector_lengthnorm
 from eudemo.ivc.panelling._pivot_string import make_pivoted_string
 
 
@@ -179,58 +179,3 @@ def norm_tangents(points: np.ndarray) -> np.ndarray:
     grad = np.gradient(points, axis=1)
     magnitudes = np.hypot(grad[0], grad[1])
     return np.divide(grad, magnitudes, out=grad)
-
-
-def vector_intersect(p1, p2, p3, p4):
-    """
-    Find the point of intersection between two vectors defined by the given points.
-
-    Parameters
-    ----------
-    p1: np.ndarray(2)
-        The first point on the first vector
-    p2: np.ndarray(2)
-        The second point on the first vector
-    p3: np.ndarray(2)
-        The first point on the second vector
-    p4: np.ndarray(2)
-        The second point on the second vector
-
-    Returns
-    -------
-    p_inter: np.ndarray(2)
-        The point of the intersection between the two vectors
-    """
-    da = p2 - p1
-    db = p4 - p3
-
-    if np.isclose(np.cross(da, db), 0):  # vectors parallel
-        point = p2
-    else:
-        dp = p1 - p3
-        dap = normal_vector(da)
-        denom = np.dot(dap, db)
-        num = np.dot(dap, dp)
-        point = num / denom.astype(float) * db + p3
-    return point
-
-
-def normal_vector(side_vectors):
-    """
-    Anti-clockwise
-
-    Parameters
-    ----------
-    side_vectors: np.array(N, 2)
-        The side vectors of a polygon
-
-    Returns
-    -------
-    a: np.array(2, N)
-        The array of 2-D normal vectors of each side of a polygon
-    """
-    a = -np.array([-side_vectors[1], side_vectors[0]]) / np.sqrt(
-        side_vectors[0] ** 2 + side_vectors[1] ** 2
-    )
-    a[np.isnan(a)] = 0
-    return a

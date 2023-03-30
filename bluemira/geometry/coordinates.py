@@ -1118,6 +1118,66 @@ def on_polygon(x, z, poly):
     return on_edge
 
 
+def normal_vector(side_vectors: np.ndarray) -> np.ndarray:
+    """
+    Find the anti-clockwise normal vector to the given side vectors.
+
+    Parameters
+    ----------
+    side_vectors: np.array
+        The side vectors of a polygon (shape: (N, 2)).
+
+    Returns
+    -------
+    a
+        The array of 2-D normal vectors of each side of a polygon
+        (shape: (2, N)).
+    """
+    a = -np.array([-side_vectors[1], side_vectors[0]]) / np.sqrt(
+        side_vectors[0] ** 2 + side_vectors[1] ** 2
+    )
+    nan = np.isnan(a)
+    a[nan] = 0
+    return a
+
+
+def vector_intersect(
+    p1: np.ndarray, p2: np.ndarray, p3: np.ndarray, p4: np.ndarray
+) -> np.ndarray:
+    """
+    Get the intersection point between two 2-D vectors.
+
+    Parameters
+    ----------
+    p1
+        The first point on the first vector (shape: (2,)).
+    p2
+        The second point on the first vector (shape: (2,)).
+    p3
+        The first point on the second vector (shape: (2,)).
+    p4
+        The second point on the second vector (shape: (2,)).
+
+    Returns
+    -------
+    p_inter
+        The point of the intersection between the two vectors (shape: (2,)).
+    """
+    da = p2 - p1
+    db = p4 - p3
+
+    if np.isclose(np.cross(da, db), 0):  # vectors parallel
+        # NOTE: careful modifying this, different behaviour required...
+        point = p2
+    else:
+        dp = p1 - p3
+        dap = normal_vector(da)
+        denom = np.dot(dap, db)
+        num = np.dot(dap, dp)
+        point = num / denom.astype(float) * db + p3
+    return point
+
+
 # =============================================================================
 # Coordinate class and parsers
 # =============================================================================
