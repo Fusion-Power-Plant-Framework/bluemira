@@ -229,11 +229,11 @@ class HelmholtzCage(SourceGroup):
 
         Parameters
         ----------
-        x
+        x:
             The x coordinate(s) of the points at which to calculate the ripple
-        y
+        y:
             The y coordinate(s) of the points at which to calculate the ripple
-        z
+        z:
             The z coordinate(s) of the points at which to calculate the ripple
 
         Returns
