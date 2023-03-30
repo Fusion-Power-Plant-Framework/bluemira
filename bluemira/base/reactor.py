@@ -161,7 +161,7 @@ class Reactor:
 
     def show_cad(
         self,
-        *dims,
+        *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
         **kwargs,
@@ -171,13 +171,13 @@ class Reactor:
 
         Parameters
         ----------
-        *dims: str
+        *dims:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
-        with_components: List
+        with_components:
             The components to construct when displaying CAD for xyz.
             Defaults to None, which means show "all" components.
-        n_sectors: Optional[int]
+        n_sectors:
             The number of sectors to construct when displaying CAD for xyz
             Defaults to None, which means show "all" sectors.
         """
