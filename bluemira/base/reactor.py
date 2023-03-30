@@ -145,7 +145,11 @@ class Reactor:
                 degree=(360 / self.n_sectors) * n_sectors,
             )
 
-    def _filter_copy_comps(self, with_components, dims_to_show):
+    def _filter_copy_comps(
+        self,
+        dims_to_show: List[str],
+        with_components: Optional[List[ComponentManager]] = None,
+    ):
         """
         Get a filtered copy of the Reactor components for display purposes
         """
@@ -202,7 +206,7 @@ class Reactor:
                     f"Must be one of {str(_PLOT_DIMS)}"
                 )
 
-        comp_copy = self._filter_copy_comps(with_components, dims_to_show)
+        comp_copy = self._filter_copy_comps(dims_to_show, with_components)
 
         # if "xyz" is requested, construct the 3d cad
         # from each xyz component in the tree,
@@ -235,5 +239,5 @@ class Reactor:
             else:
                 bluemira_warn(f"Can only plot `xz` and `xy`, not {dim}")
         for i, dim in enumerate(true_dims_to_show):
-            comp_copy = self._filter_copy_comps(with_components, [dim])
+            comp_copy = self._filter_copy_comps([dim], with_components)
             ComponentPlotter().plot_2d(comp_copy, show=i)
