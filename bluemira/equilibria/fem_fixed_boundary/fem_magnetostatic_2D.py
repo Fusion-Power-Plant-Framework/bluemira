@@ -334,11 +334,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def solve(
         self,
-        dirichlet_bc_function: Optional[
-            Union[dolfin.Expression, dolfin.Function]
-        ] = None,
-        dirichlet_marker: Optional[int] = None,
-        neumann_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]] = None,
         plot: bool = False,
         debug: bool = False,
         gif: bool = False,
@@ -349,14 +344,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         Parameters
         ----------
-        dirichlet_bc_function : Optional[Union[dolfin.Expression, dolfin.Function]]
-            Dirichlet boundary condition function. Defaults to a Dirichlet boundary
-            condition of 0 on the plasma boundary.
-        dirichlet_marker : int
-            Identification number for the dirichlet boundary
-        neumann_bc_function : Optional[Union[dolfin.Expression, dolfin.Function]]
-            Neumann boundary condition function. Defaults to a Neumann boundary
-            condition of 0 on the plasma boundary.
         plot: bool
             Whether or not to plot
         figname: Optional[str]
@@ -376,7 +363,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         if figname is None:
             figname = "Fixed boundary equilibrium iteration "
 
-        super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
+        super().solve()
         self._reset_psi_cache()
         self._update_curr()
 
@@ -400,7 +387,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
                         dpi=DPI_GIF,
                     )
 
-            super().solve(dirichlet_bc_function, dirichlet_marker, neumann_bc_function)
+            super().solve()
             self._reset_psi_cache()
 
             new = np.array([self.psi_norm_2d(p) for p in points])
