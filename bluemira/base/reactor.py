@@ -28,9 +28,10 @@ from rich.progress import track
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
 from bluemira.base.error import ReactorError
-from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
+from bluemira.display.plotter import ComponentPlotter
 
 _PLOT_DIMS = ["xy", "xz", "xyz"]
 
@@ -144,6 +145,20 @@ class Reactor:
                 degree=(360 / self.n_sectors) * n_sectors,
             )
 
+    def _filter_copy_comps(self, with_components, dims_to_show):
+        """
+        Get a filtered copy of the Reactor components for display purposes
+        """
+        comp = self.component(with_components)
+
+        # A copy of the component tree must be made
+        # as filtering would mutate the ComponentMangers' underlying component trees
+        # self.component (above) only creates a new root node for this reactor,
+        # not a new component tree.
+        comp_copy = comp.copy()
+        comp_copy.filter_components(dims_to_show)
+        return comp_copy
+
     def show_cad(
         self,
         *dims,
@@ -187,14 +202,7 @@ class Reactor:
                     f"Must be one of {str(_PLOT_DIMS)}"
                 )
 
-        comp = self.component(with_components)
-
-        # A copy of the component tree must be made
-        # as filtering would mutate the ComponentMangers' underlying component trees
-        # self.component (above) only creates a new root node for this reactor,
-        # not a new component tree.
-        comp_copy = comp.copy()
-        comp_copy.filter_components(dims_to_show)
+        comp_copy = self._filter_copy_comps(with_components, dims_to_show)
 
         # if "xyz" is requested, construct the 3d cad
         # from each xyz component in the tree,
@@ -204,3 +212,16 @@ class Reactor:
             self._construct_xyz_cad(comp_copy, with_components, n_sectors)
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)
+
+    def plot(self, *dims, with_components: Optional[List[ComponentManager]] = None):
+        # give dims_to_show a default value
+        dims_to_show = ("xz",) if len(dims) == 0 else dims
+        true_dims_to_show = []
+        for dim in dims_to_show:
+            if dim in ["xz", "xy"]:
+                true_dims_to_show.append(dim)
+            else:
+                bluemira_warn(f"Can only plot `xz` and `xy`, not {dim}")
+        for i, dim in enumerate(true_dims_to_show):
+            comp_copy = self._filter_copy_comps(with_components, [dim])
+            ComponentPlotter().plot_2d(comp_copy, show=i)
