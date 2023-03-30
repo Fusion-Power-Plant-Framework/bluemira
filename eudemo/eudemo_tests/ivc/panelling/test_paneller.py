@@ -20,25 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import numpy as np
 
-from eudemo.ivc.panelling._paneller import norm_lengths, norm_tangents
-
-
-def test_norm_lengths_gives_expected_lengths():
-    points = np.array([[0, 0], [2, 1], [3, 3], [5, 1], [3, 0]], dtype=float)
-
-    lengths = norm_lengths(points.T)
-
-    expected = np.array(
-        [
-            0,
-            np.sqrt(5),
-            np.sqrt(5) + np.sqrt(5),
-            np.sqrt(5) + np.sqrt(5) + np.sqrt(8),
-            np.sqrt(5) + np.sqrt(5) + np.sqrt(8) + np.sqrt(5),
-        ]
-    )
-    expected /= expected[-1]
-    np.testing.assert_allclose(lengths, expected)
+from eudemo.ivc.panelling._paneller import norm_tangents
 
 
 def test_tangent_returns_tangent_vectors():

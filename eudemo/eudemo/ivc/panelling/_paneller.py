@@ -23,6 +23,7 @@ from typing import Optional, Union
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
+from bluemira.geometry.coordinates import vector_lengthnorm
 from eudemo.ivc.panelling._pivot_string import make_pivoted_string
 
 
@@ -127,7 +128,7 @@ class LengthNormBoundary:
     """Class to represent a wire interpolated over the normalised distance along it."""
 
     def __init__(self, boundary_points: np.ndarray):
-        self.length_norm = norm_lengths(boundary_points)
+        self.length_norm = vector_lengthnorm(boundary_points[0], boundary_points[1])
         self._x_spline = InterpolatedUnivariateSpline(
             self.length_norm, boundary_points[0]
         )
@@ -158,23 +159,6 @@ class LengthNormBoundary:
     def z_tangent(self, dist: Union[float, np.ndarray]) -> np.ndarray:
         """Find z at the tangent vector a given distance along the boundary."""
         return self._z_tangent_spline(dist)
-
-
-def norm_lengths(points: np.ndarray) -> np.ndarray:
-    """
-    Calculate the cumulative normalized lengths between each 2D point.
-
-    Parameters
-    ----------
-    points
-        A numpy array of points, shape should be (2, N).
-    """
-    dists = np.diff(points, axis=1)
-    sq_dists = np.square(dists)
-    summed_dists = np.sum(sq_dists, axis=0)
-    sqrt_dists = np.sqrt(summed_dists)
-    cumulative_sum = np.cumsum(sqrt_dists)
-    return np.hstack((0, cumulative_sum / cumulative_sum[-1]))
 
 
 def norm_tangents(points: np.ndarray) -> np.ndarray:
