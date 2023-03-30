@@ -23,8 +23,6 @@ from typing import Tuple
 
 import numpy as np
 
-DEG_TO_RAD = np.pi / 180
-
 
 def make_pivoted_string(
     boundary_points: np.ndarray,
@@ -76,7 +74,6 @@ def make_pivoted_string(
 
     new_points = np.zeros_like(boundary_points)
     index = np.zeros(boundary_points.shape[0], dtype=int)
-    delta_turn = np.zeros_like(boundary_points)
 
     new_points[0] = boundary_points[0]
     to, po = tangent_vec[0], boundary_points[0]
@@ -87,12 +84,11 @@ def make_pivoted_string(
         c_mag = np.linalg.norm(c)
         dx = np.linalg.norm(p - po)  # segment length
         if (
-            c_mag > np.sin(max_angle * DEG_TO_RAD) and dx > dx_min
+            c_mag > np.sin(np.deg2rad(max_angle)) and dx > dx_min
         ) or dx + average_step_length > dx_max:
             j = next(k)
             new_points[j] = boundary_points[i]  # pivot point
             index[j] = i + 1  # pivot index
-            delta_turn[j - 1] = np.arcsin(c_mag) / DEG_TO_RAD
             to, po = t, p  # update
     if dx > dx_min:
         j = next(k)
