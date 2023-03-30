@@ -102,6 +102,9 @@ def coords_xz_to_polygon(coords: np.ndarray) -> BluemiraWire:
 
 
 class TestPanellingDesigner:
+    def teardown_method(self):
+        plt.close("all")
+
     @pytest.mark.parametrize("max_angle", [30, 50])
     @pytest.mark.parametrize(
         "shape", [make_cut_johner(), make_cut_polyspline()], ids=["johner", "polyspline"]
