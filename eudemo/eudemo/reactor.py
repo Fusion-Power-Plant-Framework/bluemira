@@ -54,7 +54,7 @@ from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import interpolate_bspline
-from eudemo.blanket import Blanket, BlanketBuilder
+from eudemo.blanket_builder import Blanket, BlanketBuilder
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
     CoilStructures,
