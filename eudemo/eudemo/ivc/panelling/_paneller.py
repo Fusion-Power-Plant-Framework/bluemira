@@ -178,4 +178,4 @@ def norm_tangents(points: np.ndarray) -> np.ndarray:
     """
     grad = np.gradient(points, axis=1)
     magnitudes = np.hypot(grad[0], grad[1])
-    return np.divide(grad, magnitudes, out=grad)
+    return np.divide(grad, magnitudes)
