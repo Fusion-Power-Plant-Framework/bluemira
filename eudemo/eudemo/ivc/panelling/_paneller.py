@@ -170,10 +170,10 @@ def norm_lengths(points: np.ndarray) -> np.ndarray:
         A numpy array of points, shape should be (2, N).
     """
     dists = np.diff(points, axis=1)
-    sq_dists = np.square(dists, out=dists)
+    sq_dists = np.square(dists)
     summed_dists = np.sum(sq_dists, axis=0)
-    sqrt_dists = np.sqrt(summed_dists, out=summed_dists)
-    cumulative_sum = np.cumsum(summed_dists, out=sqrt_dists)
+    sqrt_dists = np.sqrt(summed_dists)
+    cumulative_sum = np.cumsum(sqrt_dists)
     return np.hstack((0, cumulative_sum / cumulative_sum[-1]))
 
 
