@@ -33,10 +33,10 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor_config import ConfigParams
 from bluemira.builders.tools import apply_component_display_options, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.coordinates import Coordinates, get_intersect
+from bluemira.geometry.coordinates import get_intersect
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import extrude_shape, make_polygon, mirror_shape
+from bluemira.geometry.tools import extrude_shape, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -56,13 +56,16 @@ class UpperPortDuctBuilder(Builder):
     def __init__(
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
-        build_config: Dict,
         port_koz: BluemiraFace,
         port_wall_thickness: float,
         tf_coil_thickness: float,
     ):
-        super().__init__(params, build_config)
+        super().__init__(params, None)
         self.port_koz = port_koz.deepcopy()
+
+        if port_wall_thickness <= 0:
+            raise ValueError("Port wall thickness must be > 0")
+
         self.port_wall_thickness = port_wall_thickness
         self.tf_coil_thickness = tf_coil_thickness
 
@@ -81,7 +84,8 @@ class UpperPortDuctBuilder(Builder):
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         return comp
 
-    def build_xy(self, face):
+    def build_xy(self, face: BluemiraFace) -> PhysicalComponent:
+        """Build upport port xy face"""
         comp = PhysicalComponent(self.name, face)
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         return comp
@@ -98,7 +102,6 @@ class UpperPortDuctBuilder(Builder):
         the port koz is slightly trimmed to allow for square ends to the port
 
         """
-        curved = False
         half_sector_degree = 0.5 * get_n_sectors(self.params.n_TF.value)[0]
         half_beta = np.deg2rad(half_sector_degree)
         x_double_thick = np.sqrt(3 * self.port_wall_thickness**2)
@@ -116,6 +119,7 @@ class UpperPortDuctBuilder(Builder):
         y_min = self.tf_coil_thickness
 
         # TODO this can be better
+        curved = False
         x_min = max(
             # distance to split if thickness less than angle
             2 * koz_bb.x_min
@@ -157,18 +161,35 @@ class UpperPortDuctBuilder(Builder):
         )
 
         if y_iw[0] > y_iw[-1]:
+            # Inner lines have crossed
             xy = np.array([x_iw, y_iw])
-            intersect = get_intersect(xy[:, (0, 1)], xy[:, (2, 3)])
-            if intersect[0].size == 0:
+            x_int, y_int = get_intersect(xy[:, (0, 1)], xy[:, (2, 3)])
+            if x_int.size == 0:
                 raise GeometryError("Port too small")
+            inner_x_min = x_iw[-1] + x_double_thick
+            x_int_lower = x_int / np.cos(half_beta)
+            if inner_x_min < x_int_lower:
+                # intersection is before wall thickness
+                raise NotImplementedError
+                x_ow[0] = x_int_lower - 2 * self.port_wall_thickness
+                y_ow[0] = y_int / np.cos(
+                    half_beta
+                ) - 2 * self.port_wall_thickness * np.sin(half_beta)
 
-            x_ow[0] = x_iw[-1]
-            y_ow[0] = y_iw[-1]
+                x_ow[-1] = x_iw[0]
+                y_ow[-1] = y_iw[0]
 
-            x_ow[-1] = x_iw[0]
-            y_ow[-1] = y_iw[0]
+            else:
+                raise NotImplementedError
 
-            x_iw[(0, -1),], y_iw[(0, -1),] = intersect
+                x_ow[0] = x_iw[-1]
+                y_ow[0] = y_iw[-1]
+
+                x_ow[-1] = x_iw[0]
+                y_ow[-1] = y_iw[0]
+
+            x_iw[(0, -1),] = x_int
+            y_iw[(0, -1),] = y_int
 
         xy_outer_wire = make_polygon({"x": x_ow, "y": y_ow}, closed=True)
         xy_inner_wire = make_polygon({"x": x_iw, "y": y_iw}, closed=True)

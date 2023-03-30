@@ -35,6 +35,7 @@ from eudemo.maintenance.equatorial_port import (
 )
 from bluemira.base.parameter_frame import Parameter
 from bluemira.display.displayer import show_cad
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_fuse,
@@ -104,22 +105,16 @@ class TestDuctConnection:
             for point in (arc.start_point(), arc.end_point())
         ]
 
-    @pytest.mark.parametrize("port_wall", np.linspace(0.1, 0.5, num=3))
+    @pytest.mark.parametrize("port_wall", np.linspace(0.1, 0.42, num=3))
     @pytest.mark.parametrize("tf_thick", np.linspace(0, 2, num=5))
     def test_extrusion_shape(self, tf_thick, port_wall):
-        builder = UpperPortDuctBuilder(
-            self.params, {}, self.port_koz, port_wall, tf_thick
-        )
+        builder = UpperPortDuctBuilder(self.params, self.port_koz, port_wall, tf_thick)
         port = builder.build()
         xy = port.get_component("xyz").get_component_properties("shape")
         assert xy.wires[0].length > xy.wires[1].length
 
         xyz = port.get_component("xyz").get_component_properties("shape")
-        c_centre = (
-            0,
-            0,
-            self.port_koz.bounding_box.z_min,
-        )
+
         o_c = make_circle(self.port_koz.bounding_box.x_max, end_angle=self.angle)
         i_c = make_circle(self.port_koz.bounding_box.x_min, end_angle=self.angle)
         o_wires = self._wires(o_c)
@@ -133,6 +128,16 @@ class TestDuctConnection:
         show_cad([cylinder, xyz])
         finalshape = boolean_fuse([cylinder, xyz])
         assert np.allclose(finalshape.volume, cylinder.volume)
+
+    def test_ValueError_on_zero_wal_thickness(self):
+        with pytest.raises(ValueError):
+            UpperPortDuctBuilder(self.params, self.port_koz, 0, 0)
+
+    def test_GeometryError_on_too_small_port(self):
+        builder = UpperPortDuctBuilder(self.params, self.port_koz, 0.43, 2)
+
+        with pytest.raises(GeometryError):
+            builder.build()
 
 
 class TestEquatorialPortKOZDesigner:
