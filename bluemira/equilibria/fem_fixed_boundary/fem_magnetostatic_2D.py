@@ -119,6 +119,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         relaxation: float = 0.0,
     ):
         super().__init__(p_order)
+        self._g_func = None
+        self._psi_ax = None
+        self._psi_b = None
+        self._grad_psi = None
+
         self._curr_target = I_p
         self._R_0 = R_0
         self._B_0 = B_0
@@ -133,11 +138,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self.max_iter = max_iter
         self.relaxation = relaxation
         self.k = 1
-
-        self._g_func = None
-        self._psi_ax = None
-        self._psi_b = None
-        self._grad_psi = None
 
     def _process_profiles(
         self,
