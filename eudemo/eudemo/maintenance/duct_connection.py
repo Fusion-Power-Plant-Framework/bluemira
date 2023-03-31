@@ -45,6 +45,7 @@ class UpperPortDuctBuilderParams(ParameterFrame):
     """Duct Builder Parameter Frame"""
 
     n_TF: Parameter[int]
+    tk_upper_port_wall: Parameter[float]
 
 
 class UpperPortDuctBuilder(Builder):
@@ -57,16 +58,14 @@ class UpperPortDuctBuilder(Builder):
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
         port_koz: BluemiraFace,
-        port_wall_thickness: float,
         tf_coil_thickness: float,
     ):
         super().__init__(params, None)
         self.port_koz = port_koz.deepcopy()
 
-        if port_wall_thickness <= 0:
+        if self.params.tk_upper_port_wall.value <= 0:
             raise ValueError("Port wall thickness must be > 0")
 
-        self.port_wall_thickness = port_wall_thickness
         self.tf_coil_thickness = tf_coil_thickness
 
     def build(self) -> Component:
@@ -106,8 +105,8 @@ class UpperPortDuctBuilder(Builder):
         half_beta = np.deg2rad(half_sector_degree)
         cos_hb = np.cos(half_beta)
         tf_tk_in_y = self.tf_coil_thickness * cos_hb
-        tk_y_prt = tf_tk_in_y + self.port_wall_thickness
-        end_tk = 2 * self.port_wall_thickness
+        tk_y_prt = tf_tk_in_y + self.params.tk_upper_port_wall.value
+        end_tk = 2 * self.params.tk_upper_port_wall.value
 
         koz_bb = self.port_koz.bounding_box
 
