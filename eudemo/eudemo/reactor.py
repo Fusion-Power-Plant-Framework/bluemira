@@ -69,6 +69,7 @@ from eudemo.equilibria import (
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
+from eudemo.maintenance.lower_port import LowerPortDesigner
 from eudemo.maintenance.upper_port import UpperPortDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
@@ -316,6 +317,17 @@ if __name__ == "__main__":
         reactor.plasma.lcfs(),
         reactor.vv_thermal.xz_boundary(),
     )
+
+    lower_port_designer = LowerPortDesigner(
+        reactor_config.params_for("Lower Port"),
+        reactor_config.config_for("Lower Port"),
+        divertor_face,
+        reactor.tf_coils.boundary(),
+        boundary_pullout_factor=10,
+        straight_leg_extension_extent=10,
+        z_duct=40,
+    )
+    a = lower_port_designer.execute()
 
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
