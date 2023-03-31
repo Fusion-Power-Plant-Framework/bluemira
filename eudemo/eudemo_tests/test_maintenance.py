@@ -4,7 +4,7 @@
 # activities.
 #
 # Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
-#                         J. Morris, D. Short, I. Chiang
+#                         J. Morris, D. Short
 #
 # bluemira is free software; you can redistribute it and/or
 # modify it under the terms of the GNU Lesser General Public
@@ -22,7 +22,7 @@
 """
 Tests for EU-DEMO Maintenance
 """
-import math
+import numpy as np
 
 import pytest
 
@@ -31,8 +31,8 @@ from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.maintenance.equatorial_port import (
     CastellationBuilder,
-    EquatorialPortBuilder,
-    EquatorialPortDesigner,
+    EquatorialPortDuctBuilder,
+    EquatorialPortKOZDesigner,
 )
 from eudemo.maintenance.upper_port import UpperPortOP
 
@@ -69,77 +69,66 @@ class TestUpperPortOP:
         assert design_problem.opt.check_constraints(solution)
 
 
-class TestEquatorialPortDesigner:
-    """Tests the Equatorial Port Designer"""
+class TestEquatorialPortKOZDesigner:
+    """Tests the Equatorial Port KOZ Designer"""
 
     def setup_method(self) -> None:
         """Set-up Equatorial Port Designer"""
-        params = {
-            "ep_height": {"value": 0, "unit": "m"},
-        }
-
-        self.designer = EquatorialPortDesigner(params, None, 0, 0, 0)
+        pass
 
     @pytest.mark.parametrize(
-        "xi, xo, zh", zip([2.0, 3.0, 1.0], [9.0, 9.0, 4.0], [5.0, 4.0, 2.0])
+        "xi, xo, zh", zip([9.0, 9.0, 6.0], [16.0, 15.0, 9.0], [5.0, 4.0, 2.0])
     )
     def test_ep_designer(self, xi, xo, zh):
-        """Test Equatorial Port Designer"""
-        param_values = {"ep_height": zh}
-        self.designer.params.update_values(param_values)
-        self.designer.x_ib = xi
-        self.designer.x_ob = xo
-        output = self.designer.execute()
+        """Test Equatorial Port KOZ Designer"""
+        self.params = {
+            "ep_height": {"value": zh, "unit": "m"},
+        }
         x_len = xo - xi
-        z_len = zh
+        self.designer = EquatorialPortKOZDesigner(self.params, None, 0.0, xi, xo)
+        output = self.designer.execute()
 
-        assert math.isclose(output.length, 2 * (x_len + z_len))
-        assert math.isclose(output.area, x_len * z_len)
+        assert np.isclose(output.length, 2 * (x_len + zh))
+        assert np.isclose(output.area, x_len * zh)
 
 
-class TestEquatorialPortBuilder:
-    """Tests the Equatorial Port Builder"""
+class TestEquatorialPortDuctBuilder:
+    """Tests the Equatorial Port Duct Builder"""
 
     def setup_method(self) -> None:
-        """Set-up to Equatorial Port Builder"""
-        params = {
-            "ep_height": {"value": 0, "unit": "m"},
-            "cst_r_corner": {"value": 0, "unit": "m"},
-        }
-        y = (0, 1, 1, 0)
-        z = (-1, -1, 1, 1)
-        face = BluemiraFace(make_polygon({"x": 0, "y": y, "z": z}, closed=True))
-        self.builder = EquatorialPortBuilder(params, {}, face, 1.0, 0.1)
+        """Set-up to Equatorial Port Duct Builder"""
+        pass
 
     @pytest.mark.parametrize(
         "xi, xo, z, y, th",
         zip(
-            [2.0, 3.0, 1.0],  # x_inboard
-            [9.0, 9.0, 4.0],  # x_outboard
+            [9.0, 9.0, 6.0],  # x_inboard
+            [16.0, 15.0, 9.0],  # x_outboard
             [5.0, 4.0, 2.0],  # z_height
             [3.0, 2.0, 1.0],  # y_widths
-            [-0.5, -0.5, -0.25],  # thickness
+            [0.5, 0.5, 0.25],  # thickness
             # expected volumes: [63, 42, 5.25]
         ),
     )
     def test_ep_builder(self, xi, xo, z, y, th):
-        """Test Equatorial Port Builder"""
-        param_values = {"ep_height": z, "cst_r_corner": 0}
-        self.builder.params.update_values(param_values)
+        """Test Equatorial Port Duct Builder"""
+        self.params = {
+            "ep_height": {"value": z, "unit": "m"},
+            "cst_r_corner": {"value": 0, "unit": "m"},
+        }
         y_tup = (y / 2.0, -y / 2.0, -y / 2.0, y / 2.0)
         z_tup = (-z / 2.0, -z / 2.0, z / 2.0, z / 2.0)
         yz_profile = BluemiraWire(
             make_polygon({"x": xi, "y": y_tup, "z": z_tup}, closed=True)
         )
         length = xo - xi
-        self.builder.length = length
-        self.builder.outer = yz_profile
-        self.builder.offset = th
-        output = self.builder.build()
-        out_port = output.get_component("xyz").get_component("Equatorial Port 1")
-        expectation = length * (-2 * (th * (y + z + (2 * th))))
 
-        assert math.isclose(out_port.shape.volume, expectation)
+        self.builder = EquatorialPortDuctBuilder(self.params, {}, yz_profile, length, th)
+        output = self.builder.build()
+        out_port = output.get_component("xyz").get_component("Equatorial Port Duct 1")
+        expectation = length * (2 * (th * (y + z - (2 * th))))
+
+        assert np.isclose(out_port.shape.volume, expectation)
 
 
 class TestCastellationBuilder:
@@ -147,27 +136,16 @@ class TestCastellationBuilder:
 
     def setup_method(self) -> None:
         """Set-up Castellation Builder"""
-        params = {
+        self.params = {
             "n_components": {"value": 10, "unit": ""},
             "cst_r_corner": {"value": 0, "unit": "m"},
         }
-        length = 1
-        y = (0, 1, 1, 0)
-        z = (-1, -1, 1, 1)
-        face = BluemiraFace(make_polygon({"x": 0, "y": y, "z": z}, closed=True))
-        vector = (1, 0, 0)
-        x_offs = [0]
-        c_offs = [0]
-
-        self.builder = CastellationBuilder(
-            params, {}, length, face, vector, x_offs, c_offs
-        )
 
     @pytest.mark.parametrize(
         "xi, xo, zh, yw, vec, x_offsets, c_offsets, exp_v",
         zip(
-            [2.0, 3.0, 1.0],  # x_inboard
-            [9.0, 9.0, 4.0],  # x_outboard
+            [9.0, 9.0, 6.0],  # x_inboard
+            [16.0, 15.0, 9.0],  # x_outboard
             [5.0, 4.0, 2.0],  # z_height
             [3.0, 2.0, 1.0],  # y_widths
             [(1, 0, 0), (1, 0, 0), (1, 0, 0.5)],  # extrusion vectors
@@ -182,13 +160,11 @@ class TestCastellationBuilder:
         z = (-zh / 2.0, -zh / 2.0, zh / 2.0, zh / 2.0)
         yz_profile = BluemiraFace(make_polygon({"x": xi, "y": y, "z": z}, closed=True))
 
-        self.builder.length = xo - xi
-        self.builder.face = yz_profile
-        self.builder.vec = vec
-        self.builder.off = x_offsets
-        self.builder.cst = c_offsets
+        self.builder = CastellationBuilder(
+            self.params, {}, xo - xi, yz_profile, vec, x_offsets, c_offsets
+        )
         output = self.builder.build()
         out_cst = output.get_component("xyz").get_component("Castellation 1")
         if out_cst is None:
             out_cst = output.get_component("xyz").get_component("Castellation")
-        assert math.isclose(out_cst.shape.volume, exp_v)
+        assert np.isclose(out_cst.shape.volume, exp_v)
