@@ -230,7 +230,7 @@ class TestTFCoilBuilder:
         # Casing, Insulation, Winding pack
         assert len(xyz.leaves) == 3
         # inboard and outboard
-        assert len(xy.leaves) == self.params["n_TF"]["value"] * 3 * 2
+        assert len(xy.leaves) == 3 * 2
 
         ins = xyz.get_component(f"{TFCoilBuilder.INS} 1")
         wp = xyz.get_component(f"{TFCoilBuilder.WP} 1")
@@ -242,7 +242,7 @@ class TestTFCoilBuilder:
             ins.shape.bounding_box.y_max - wp.shape.bounding_box.y_max, insgap
         )
 
-        ib_cas = xy.get_component(f"{TFCoilBuilder.CASING} 1").get_component("inboard 1")
+        ib_cas = xy.get_component(f"{TFCoilBuilder.CASING}").get_component("inboard")
         case_thick = (
             self.params["tf_wp_width"]["value"]
             + self.params["tk_tf_nose"]["value"]
