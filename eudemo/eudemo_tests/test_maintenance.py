@@ -86,7 +86,9 @@ class TestUpperPortOP:
 
 class TestDuctConnection:
     def setup_method(self):
-        self.params = UpperPortDuctBuilderParams(Parameter("n_TF", 12, ""))
+        self.params = UpperPortDuctBuilderParams(
+            Parameter("n_TF", 12, ""), Parameter("tk_upper_port_wall", 0, "m")
+        )
         self.angle = 30
 
         self.port_koz = BluemiraFace(
@@ -108,7 +110,8 @@ class TestDuctConnection:
     @pytest.mark.parametrize("port_wall", np.linspace(0.1, 0.40, num=3))
     @pytest.mark.parametrize("tf_thick", np.linspace(0, 1.8, num=5))
     def test_extrusion_shape(self, tf_thick, port_wall):
-        builder = UpperPortDuctBuilder(self.params, self.port_koz, port_wall, tf_thick)
+        self.params.tk_upper_port_wall.value = port_wall
+        builder = UpperPortDuctBuilder(self.params, self.port_koz, tf_thick)
         port = builder.build()
         xy = port.get_component("xy").get_component_properties("shape")
         diff = xy.wires[0].length - xy.wires[1].length
@@ -134,11 +137,14 @@ class TestDuctConnection:
         assert np.allclose(finalshape.volume, cylinder.volume)
 
     def test_ValueError_on_zero_wal_thickness(self):
+        self.params.tk_upper_port_wall.value = 0
+
         with pytest.raises(ValueError):
-            UpperPortDuctBuilder(self.params, self.port_koz, 0, 0)
+            UpperPortDuctBuilder(self.params, self.port_koz, 0)
 
     def test_GeometryError_on_too_small_port(self):
-        builder = UpperPortDuctBuilder(self.params, self.port_koz, 0.43, 2)
+        self.params.tk_upper_port_wall.value = 0.43
+        builder = UpperPortDuctBuilder(self.params, self.port_koz, 2)
 
         with pytest.raises(GeometryError):
             builder.build()
