@@ -23,7 +23,7 @@
 Creating ducts for the port
 """
 from dataclasses import dataclass
-from typing import Dict, Tuple, Union
+from typing import Dict, Union
 
 import numpy as np
 
@@ -33,10 +33,10 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor_config import ConfigParams
 from bluemira.builders.tools import apply_component_display_options, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.coordinates import get_intersect
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import extrude_shape, make_polygon
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import extrude_shape, make_polygon, slice_shape, split_wire
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -104,101 +104,78 @@ class UpperPortDuctBuilder(Builder):
         """
         half_sector_degree = 0.5 * get_n_sectors(self.params.n_TF.value)[0]
         half_beta = np.deg2rad(half_sector_degree)
-        x_double_thick = np.sqrt(3 * self.port_wall_thickness**2)
+        cos_hb = np.cos(half_beta)
+        tf_tk_in_y = self.tf_coil_thickness * cos_hb
+        tk_y_prt = tf_tk_in_y + self.port_wall_thickness
+        end_tk = 2 * self.port_wall_thickness
+
         koz_bb = self.port_koz.bounding_box
 
-        mirror_line = make_polygon({"x": [koz_bb.x_min, koz_bb.x_max], "y": 0})
-        mirror_line.rotate(degree=half_sector_degree)
-        mirror_point = (
-            mirror_line.bounding_box.x_max,
-            mirror_line.bounding_box.y_max,
-            0,
-        )
-
-        # Inner point
-        y_min = self.tf_coil_thickness
-
-        # TODO this can be better
-        curved = False
         x_min = max(
-            # distance to split if thickness less than angle
-            2 * koz_bb.x_min
-            - mirror_line.bounding_box.x_min * np.cos(half_beta)
-            - (y_min if curved else 0),
-            # distance to split between tf coils
-            y_min / np.tan(half_beta),
-            koz_bb.x_min,
+            (tk_y_prt) * np.tan(half_beta),
+            koz_bb.x_min / cos_hb,
+        )
+        x_min_ins = x_min + end_tk
+        x_max = koz_bb.x_max * cos_hb
+        x_max_ins = x_max - end_tk
+
+        outer = make_polygon({"x": [x_min, x_max], "y": 0})
+        inner = make_polygon({"x": [x_min_ins, x_max_ins], "y": 0})
+
+        outer_lower = outer.deepcopy()
+        inner_lower = inner.deepcopy()
+        outer.translate((0, -tf_tk_in_y, 0))
+        outer_lower.translate((0, tf_tk_in_y, 0))
+        inner.translate((0, -tk_y_prt, 0))
+        inner_lower.translate((0, tk_y_prt, 0))
+
+        outer.rotate(degree=half_sector_degree)
+        inner.rotate(degree=half_sector_degree)
+        outer_lower.rotate(degree=-half_sector_degree)
+        inner_lower.rotate(degree=-half_sector_degree)
+
+        if (
+            outer.start_point()[1] - outer_lower.start_point()[1] < end_tk
+            or inner.start_point()[1] < inner_lower.start_point()[1]
+        ):
+            delta_y = (
+                ((end_tk - (outer.start_point()[1] - outer_lower.start_point()[1])) / 2)
+                + outer.start_point()[1]
+            )[0]
+            y_plane = BluemiraPlane((0, delta_y, 0), (0, 1, 0))
+            outer = split_wire(outer, slice_shape(outer, y_plane)[0])[1]
+
+            x_plane = BluemiraPlane((outer.start_point()[0] + end_tk, 0, 0), (1, 0, 0))
+
+            try:
+                inner = split_wire(inner, slice_shape(inner, x_plane)[0])[1]
+            except TypeError:
+                raise GeometryError("Port dimensions too small")
+
+            outer_lower = outer.deepcopy()
+            outer_lower.rotate(direction=(1, 0, 0))
+
+            inner_lower = inner.deepcopy()
+            inner_lower.rotate(direction=(1, 0, 0))
+
+        outer_join1 = make_polygon(
+            np.array([outer.start_point(), outer_lower.start_point()])
+        )
+        outer_join2 = make_polygon(
+            np.array([outer.end_point(), outer_lower.end_point()])
         )
 
-        # Outer point
-        x_a = koz_bb.x_max * np.cos(np.arcsin(y_min / koz_bb.x_max))
-
-        outer_line = make_polygon({"x": [x_min, x_a], "y": y_min})
-        inner_line = make_polygon(
-            {
-                "x": [x_min + x_double_thick, x_a - x_double_thick],
-                "y": y_min + self.port_wall_thickness,
-            }
+        inner_join1 = make_polygon(
+            np.array([inner.start_point(), inner_lower.start_point()])
+        )
+        inner_join2 = make_polygon(
+            np.array([inner.end_point(), inner_lower.end_point()])
         )
 
-        inner_bb, inner_top_bb = _mirror_line(inner_line, mirror_point)
-        outer_bb, outer_top_bb = _mirror_line(outer_line, mirror_point)
+        outer_wire = BluemiraWire((outer_join1, outer, outer_join2, outer_lower))
+        inner_wire = BluemiraWire((inner_join1, inner, inner_join2, inner_lower))
 
-        # Outer wire
-        x_ow = np.array(
-            [outer_bb.x_min, outer_bb.x_max, outer_top_bb.x_max, outer_top_bb.x_min]
-        )
-        y_ow = np.array(
-            [outer_bb.y_min, outer_bb.y_max, outer_top_bb.y_max, outer_top_bb.y_min]
-        )
+        xy_face = BluemiraFace((outer_wire, inner_wire))
+        xy_face.rotate(degree=half_sector_degree)
 
-        # Inner Wire
-        x_iw = np.array(
-            [inner_bb.x_min, inner_bb.x_max, inner_top_bb.x_max, inner_top_bb.x_min]
-        )
-        y_iw = np.array(
-            [inner_bb.y_min, inner_bb.y_max, inner_top_bb.y_max, inner_top_bb.y_min]
-        )
-
-        if y_iw[0] > y_iw[-1]:
-            # Inner lines have crossed
-            xy = np.array([x_iw, y_iw])
-            x_int, y_int = get_intersect(xy[:, (0, 1)], xy[:, (2, 3)])
-            if x_int.size == 0:
-                raise GeometryError("Port too small")
-            inner_x_min = x_iw[-1] + x_double_thick
-            x_int_lower = x_int / np.cos(half_beta)
-            if inner_x_min < x_int_lower:
-                # intersection is before wall thickness
-                raise NotImplementedError
-                x_ow[0] = x_int_lower - 2 * self.port_wall_thickness
-                y_ow[0] = y_int / np.cos(
-                    half_beta
-                ) - 2 * self.port_wall_thickness * np.sin(half_beta)
-
-                x_ow[-1] = x_iw[0]
-                y_ow[-1] = y_iw[0]
-
-            else:
-                raise NotImplementedError
-
-                x_ow[0] = x_iw[-1]
-                y_ow[0] = y_iw[-1]
-
-                x_ow[-1] = x_iw[0]
-                y_ow[-1] = y_iw[0]
-
-            x_iw[(0, -1),] = x_int
-            y_iw[(0, -1),] = y_int
-
-        xy_outer_wire = make_polygon({"x": x_ow, "y": y_ow}, closed=True)
-        xy_inner_wire = make_polygon({"x": x_iw, "y": y_iw}, closed=True)
-
-        xy_face = BluemiraFace((xy_outer_wire, xy_inner_wire))
         return xy_face
-
-
-def _mirror_line(line: BluemiraWire, mirror_point: Tuple[float, ...]):
-    new_line = line.deepcopy()
-    new_line.rotate(direction=mirror_point)
-    return line.bounding_box, new_line.bounding_box

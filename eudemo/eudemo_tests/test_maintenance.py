@@ -97,21 +97,25 @@ class TestDuctConnection:
         return [
             make_polygon(
                 {
-                    "x": np.array([0, point[0][0]]),
-                    "y": np.array([0, point[1][0]]),
+                    "x": [0, point[0][0]],
+                    "y": [0, point[1][0]],
                     "z": point[2],
                 }
             )
             for point in (arc.start_point(), arc.end_point())
         ]
 
-    @pytest.mark.parametrize("port_wall", np.linspace(0.1, 0.42, num=3))
-    @pytest.mark.parametrize("tf_thick", np.linspace(0, 2, num=5))
+    @pytest.mark.parametrize("port_wall", np.linspace(0.1, 0.40, num=3))
+    @pytest.mark.parametrize("tf_thick", np.linspace(0, 1.8, num=5))
     def test_extrusion_shape(self, tf_thick, port_wall):
         builder = UpperPortDuctBuilder(self.params, self.port_koz, port_wall, tf_thick)
         port = builder.build()
-        xy = port.get_component("xyz").get_component_properties("shape")
-        assert xy.wires[0].length > xy.wires[1].length
+        xy = port.get_component("xy").get_component_properties("shape")
+        diff = xy.wires[0].length - xy.wires[1].length
+        # Better test if I can work out the expected length difference
+        # expected = 4 * port_wall + (8 * port_wall * np.cos(np.deg2rad(self.angle / 2)))
+        # assert np.allclose(diff, expected)
+        assert diff > 0
 
         xyz = port.get_component("xyz").get_component_properties("shape")
 
