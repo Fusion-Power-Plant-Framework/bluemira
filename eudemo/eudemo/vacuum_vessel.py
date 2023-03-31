@@ -54,6 +54,15 @@ class VacuumVessel(ComponentManager):
             .shape.boundary[0]
         )
 
+    def xz_inner_boundary(self) -> BluemiraWire:
+        """Return a wire giving the vessel's boundary in the xz plane."""
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(VacuumVesselBuilder.BODY)
+            .shape.boundary[1]
+        )
+
 
 @dataclass
 class VacuumVesselBuilderParams(ParameterFrame):

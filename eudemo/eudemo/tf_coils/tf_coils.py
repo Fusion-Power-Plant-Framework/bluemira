@@ -115,6 +115,25 @@ class TFCoil(ComponentManager):
         )
         return BluemiraFace([outer, inner])
 
+    def xy_face(self) -> Tuple[BluemiraFace, ...]:
+        """Return the x-z face of the TF Coils."""
+        outer = (
+            self.component()
+            .get_component("xy")
+            .get_component("Casing")
+            .get_component("outboard")
+            .shape.boundary[0]
+        )
+
+        inner = (
+            self.component()
+            .get_component("xy")
+            .get_component("Casing")
+            .get_component("inboard")
+            .shape.boundary[0]
+        )
+        return BluemiraFace(inner), BluemiraFace(outer)
+
 
 @dataclass
 class TFCoilDesignerParams(ParameterFrame):
@@ -483,16 +502,13 @@ class TFCoilBuilder(Builder):
         """
         Build the x-y components of the TF coils.
         """
-        return circular_pattern_component(
-            [
-                self._build_xy_wp(),
-                self._build_xy_ins(ins_inner_face, ins_outer_face),
-                self._build_xy_case(
-                    ins_inner_face, ins_outer_face, ib_cas_wire, ob_cas_wire
-                ),
-            ],
-            self.params.n_TF.value,
-        )
+        return [
+            self._build_xy_wp(),
+            self._build_xy_ins(ins_inner_face, ins_outer_face),
+            self._build_xy_case(
+                ins_inner_face, ins_outer_face, ib_cas_wire, ob_cas_wire
+            ),
+        ]
 
     def build_xyz(
         self,

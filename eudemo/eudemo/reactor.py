@@ -42,6 +42,7 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 
+from bluemira.base.components import PhysicalComponent
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
 from bluemira.base.reactor import Reactor
@@ -53,7 +54,7 @@ from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import interpolate_bspline
+from bluemira.geometry.tools import boolean_cut, interpolate_bspline
 from eudemo.blanket import Blanket, BlanketBuilder
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -70,6 +71,7 @@ from eudemo.equilibria import (
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
+from eudemo.maintenance.duct_connection import UpperPortDuctBuilder
 from eudemo.maintenance.upper_port import UpperPortDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
@@ -148,6 +150,45 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
         params, build_config, centreline.create_shape(), wp_cross_section
     )
     return TFCoil(builder.build(), builder._make_field_solver())
+
+
+def build_upper_port_duct(reactor):
+    """Adds port and modifies reactor xyz in place"""
+    params = reactor_config.params_for("Thermal shield").global_params
+    vvthermal_tk = params.tk_ts.value + params.g_vv_ts.value
+    builder = UpperPortDuctBuilder(
+        reactor_config.params_for("Upper Port"),
+        upper_port_xz,
+        reactor.tf_coils.xy_face()[1].bounding_box.y_max + vvthermal_tk,
+    )
+
+    upper_port_duct = builder.build()
+
+    (new_duct,) = boolean_cut(
+        upper_port_duct.get_component("xyz").get_component_properties("shape"),
+        boolean_cut(
+            upper_port_duct.get_component("xyz").get_component_properties("shape"),
+            reactor.vacuum_vessel.component()
+            .get_component("xyz")
+            .get_component_properties("shape"),
+        )[0],
+    )
+    new_vv, vv_plug = boolean_cut(
+        reactor.vacuum_vessel.component()
+        .get_component("xyz")
+        .get_component_properties("shape"),
+        upper_port_duct.get_component("xyz").get_component_properties("shape"),
+    )
+
+    reactor.vacuum_vessel.component().get_component("xyz").get_component(
+        "Body 1"
+    ).shape = new_vv
+    upper_port_comp = upper_port_duct.get_component("xyz").get_component("UpperPortDuct")
+    upper_port_comp.shape = new_duct
+    reactor.vacuum_vessel.component().get_component("xyz").add_child(upper_port_comp)
+    reactor.vacuum_vessel.component().get_component("xyz").add_child(
+        PhysicalComponent("UpperPortPlug", vv_plug)
+    )
 
 
 def build_pf_coils(
@@ -314,12 +355,14 @@ if __name__ == "__main__":
         reactor.vv_thermal.xz_boundary(),
     )
 
+    build_upper_port_duct(reactor)
+
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
         reference_eq,
         reactor.tf_coils.boundary(),
-        pf_coil_keep_out_zones=[],
+        pf_coil_keep_out_zones=[upper_port_xz],
     )
 
     reactor.cryostat_thermal = build_cryots(
