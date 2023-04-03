@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from functools import lru_cache
+from typing import Tuple
 from unittest import mock
 
 import matplotlib.pyplot as plt
@@ -27,11 +28,14 @@ import pytest
 
 from bluemira.display import plot_2d
 from bluemira.equilibria.shapes import JohnerLCFS
+from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     boolean_cut,
     find_clockwise_angle_2d,
     make_polygon,
     signed_distance_2D_polygon,
+    slice_shape,
+    split_wire,
 )
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.ivc.panelling import PanellingDesigner
@@ -101,13 +105,35 @@ def coords_xz_to_polygon(coords: np.ndarray) -> BluemiraWire:
     return make_polygon(coords_3d)
 
 
+def cut_polygon_vertically(shape: BluemiraWire) -> Tuple[BluemiraWire, BluemiraWire]:
+    """Cut a polygon either side of a vertical line through it's centre."""
+    centre_x = shape.center_of_mass[0]
+    cutting_plane = BluemiraPlane((centre_x, 0, 0), (1, 0, 0))
+    slice = slice_shape(shape, cutting_plane)
+    return split_wire(shape, slice[0], tolerance=1e-8)
+
+
 class TestPanellingDesigner:
     def teardown_method(self):
         plt.close("all")
 
     @pytest.mark.parametrize("max_angle", [30, 50])
     @pytest.mark.parametrize(
-        "shape", [make_cut_johner(), make_cut_polyspline()], ids=["johner", "polyspline"]
+        "shape",
+        [
+            make_cut_johner(),
+            make_cut_polyspline(),
+            *cut_polygon_vertically(make_cut_johner()),
+            *cut_polygon_vertically(make_cut_polyspline()),
+        ],
+        ids=[
+            "johner",
+            "polyspline",
+            "johner_ib",
+            "johner_ob",
+            "polyspline_ib",
+            "polyspline_ob",
+        ],
     )
     def test_all_angles_lt_max_angle(self, max_angle, shape):
         params = {
@@ -131,9 +157,23 @@ class TestPanellingDesigner:
             np.less_equal(angles, max_angle) | np.isclose(angles, max_angle, rtol=1e-3)
         ).all()
 
-    @pytest.mark.parametrize("dl_min", [0, 0.1, 0.9])
+    @pytest.mark.parametrize("dl_min", [0.1, 0.9])
     @pytest.mark.parametrize(
-        "shape", [make_cut_johner(), make_cut_polyspline()], ids=["johner", "polyspline"]
+        "shape",
+        [
+            make_cut_johner(),
+            make_cut_polyspline(),
+            *cut_polygon_vertically(make_cut_johner()),
+            *cut_polygon_vertically(make_cut_polyspline()),
+        ],
+        ids=[
+            "johner",
+            "polyspline",
+            "johner_ib",
+            "johner_ob",
+            "polyspline_ib",
+            "polyspline_ob",
+        ],
     )
     def test_panel_lengths_gt_min_length(self, dl_min, shape):
         params = {
