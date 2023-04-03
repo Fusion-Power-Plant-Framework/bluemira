@@ -322,18 +322,15 @@ if __name__ == "__main__":
         reactor_config.params_for("Lower Port"),
         reactor_config.config_for("Lower Port"),
         divertor_face,
-        reactor.tf_coils.boundary(),
-        boundary_pullout_factor=10,
-        straight_leg_extension_extent=10,
-        z_duct=40,
+        reactor.tf_coils.xz_outer_boundary(),
     )
-    a = lower_port_designer.execute()
+    straight_cutters = lower_port_designer.execute()
 
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
         reference_eq,
-        reactor.tf_coils.boundary(),
+        reactor.tf_coils.xz_outer_boundary(),
         pf_coil_keep_out_zones=[],
     )
 
@@ -341,7 +338,7 @@ if __name__ == "__main__":
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "Cryostat"),
         reactor.pf_coils.xz_boundary(),
-        reactor.tf_coils.boundary(),
+        reactor.tf_coils.xz_outer_boundary(),
     )
 
     reactor.coil_structures = build_coil_structures(

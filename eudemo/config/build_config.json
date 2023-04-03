@@ -2,7 +2,7 @@
     "Lower Port": {
         "params": {
             "lower_port_angle": {
-                "value": -85,
+                "value": -90,
                 "unit": "degrees",
                 "source": "Input",
                 "long_name": "Lower port angle to the divertor."
