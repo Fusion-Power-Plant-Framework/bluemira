@@ -23,6 +23,7 @@ Equilibria Examples
     examples/equilibria/single_null
     examples/equilibria/eudemo_2017
     examples/equilibria/fixed_boundary
+    examples/equilibria/coilset_opt_problem_tutorial
 
 Geometry Examples
 ^^^^^^^^^^^^^^^^^
