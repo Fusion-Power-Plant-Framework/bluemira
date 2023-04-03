@@ -2,16 +2,10 @@
     "Lower Port": {
         "params": {
             "lower_port_angle": {
-                "value": -90,
+                "value": -30,
                 "unit": "degrees",
                 "source": "Input",
                 "long_name": "Lower port angle to the divertor."
-            },
-            "divertor_padding": {
-                "value": 10,
-                "unit": "dimensionless",
-                "source": "Input",
-                "long_name": "Divertor padding for lower port."
             }
         }
     },

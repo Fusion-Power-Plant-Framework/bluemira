@@ -30,9 +30,14 @@ import numpy as np
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.base import BluemiraGeo
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import boolean_cut, boolean_fuse, distance_to, make_polygon
+from bluemira.geometry.tools import (
+    boolean_cut,
+    boolean_fuse,
+    distance_to,
+    make_polygon,
+    offset_wire,
+)
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -41,21 +46,6 @@ class LowerPortDesignerParams(ParameterFrame):
     """LowerPort ParameterFrame"""
 
     lower_port_angle: Parameter[float]
-    divertor_padding: Parameter[float]
-
-
-def intersection_points(
-    wire_a: BluemiraGeo,
-    wire_b: BluemiraGeo,
-) -> List[Tuple]:
-    dist, vects, _ = wire_a.shape.distToShape(wire_b.shape)
-    if dist > 0.0001:  # not intersecting
-        return []
-    pois = []
-    for vect_pair in vects:
-        v = vect_pair[0]
-        pois.append((v.x, v.y, v.z))
-    return pois
 
 
 class LowerPortDesigner(Designer):
@@ -64,8 +54,7 @@ class LowerPortDesigner(Designer):
 
     Notes
     -----
-    Retrictions on angle is ±45° because there are no protections
-    keeping the port dimensions constant
+    Retrictions on the lower_port_angle are between [-90, -0.5]
 
     """
 
@@ -97,21 +86,31 @@ class LowerPortDesigner(Designer):
         div_x_inner = self.divertor_face.bounding_box.x_min
         div_x_outer = self.divertor_face.bounding_box.x_max
 
-        grad = np.tan(np.deg2rad(self.params.lower_port_angle.value))  # z/x
+        lower_duct_angled_leg_gradient = np.tan(
+            np.deg2rad(self.params.lower_port_angle.value),
+        )  # z/x
+
         r_search = 30
-        angled_leg_extent_factor = 1.5
-        lower_port_duct_size_factor = 1.5
         x_duct_extent = 30
 
-        lower_port_duct_size = abs(div_z_top - div_z_bot) * lower_port_duct_size_factor
+        # these are meant to be params, but their names may change,
+        # so leaving them here for now
+        lower_duct_angled_leg_extent_factor = 1.2
+        lower_duct_angled_leg_padding = 0.2
+        lower_duct_straight_leg_padding = 0.1
+        lower_duct_wall_thickness = 0.1
+
+        lower_duct_straight_leg_size = (
+            abs(div_z_top - div_z_bot) + lower_duct_straight_leg_padding
+        )
 
         # top outer
         (
-            to_intc_search_wire,
+            _,
             to_intc_search_point,
         ) = LowerPortDesigner._make_distance_xz_wire(
             (div_x_outer, div_z_top),
-            grad,
+            lower_duct_angled_leg_gradient,
             r_search,
         )
         # bottom inner
@@ -120,11 +119,11 @@ class LowerPortDesigner(Designer):
             bi_intc_search_point,
         ) = LowerPortDesigner._make_distance_xz_wire(
             (div_x_inner, div_z_bot),
-            grad,
+            lower_duct_angled_leg_gradient,
             r_search,
         )
 
-        lower_duct_angled_leg = make_polygon(
+        lower_duct_angled_leg_boundary = make_polygon(
             {
                 "x": np.array(
                     [
@@ -146,21 +145,31 @@ class LowerPortDesigner(Designer):
             },
             closed=True,
         )
-        lower_duct_angled_leg = BluemiraFace(lower_duct_angled_leg)
+        lower_duct_angled_leg_boundary_w_padding = offset_wire(
+            lower_duct_angled_leg_boundary,
+            lower_duct_angled_leg_padding / 2,
+        )
+        lower_duct_angled_leg = BluemiraFace(
+            lower_duct_angled_leg_boundary_w_padding,
+        )
 
-        # draw straight duct leg
-        to_intc_point = intersection_points(
+        # draw straight duct leg from the intersection point
+        to_intc_points = LowerPortDesigner._intersection_points(
             self.tf_coil_xz_boundary,
-            to_intc_search_wire,
-        )[0]
-        intc_dist_to_to, _ = distance_to(to_intc_point, [div_x_outer, 0, div_z_top])
+            lower_duct_angled_leg_boundary_w_padding,
+        )
+        # largest x
+        to_intc_point = max(to_intc_points, key=lambda p: p[0])
+        dist_from_to_to_intc_point, _ = distance_to(
+            to_intc_point, [div_x_outer, 0, div_z_top]
+        )
         (
             _,
             straight_duct_leg_point,
         ) = LowerPortDesigner._make_distance_xz_wire(
             (div_x_outer, div_z_top),
-            grad,
-            intc_dist_to_to * angled_leg_extent_factor,
+            lower_duct_angled_leg_gradient,
+            dist_from_to_to_intc_point * lower_duct_angled_leg_extent_factor,
         )
         lower_duct_straight_leg = make_polygon(
             {
@@ -170,8 +179,8 @@ class LowerPortDesigner(Designer):
                     [
                         straight_duct_leg_point[2],
                         straight_duct_leg_point[2],
-                        straight_duct_leg_point[2] - lower_port_duct_size,
-                        straight_duct_leg_point[2] - lower_port_duct_size,
+                        straight_duct_leg_point[2] - lower_duct_straight_leg_size,
+                        straight_duct_leg_point[2] - lower_duct_straight_leg_size,
                     ]
                 ),
             },
@@ -179,36 +188,31 @@ class LowerPortDesigner(Designer):
         )
         lower_duct_straight_leg = BluemiraFace(lower_duct_straight_leg)
 
-        straight_cutters = boolean_cut(lower_duct_angled_leg, [lower_duct_straight_leg])
-        angled_cutters = boolean_cut(lower_duct_straight_leg, [lower_duct_angled_leg])
-        koz_duct_fused = boolean_fuse([lower_duct_angled_leg, lower_duct_straight_leg])
-        koz_duct_fused = boolean_cut(
-            koz_duct_fused,
+        straight_cutters = boolean_cut(
+            lower_duct_angled_leg,
+            [lower_duct_straight_leg],
+        )
+        angled_cutters = boolean_cut(
+            lower_duct_straight_leg,
+            [lower_duct_angled_leg],
+        )
+
+        lower_duct_vacant_space = boolean_fuse(
+            [lower_duct_angled_leg, lower_duct_straight_leg]
+        )
+        lower_duct_vacant_space = boolean_cut(
+            lower_duct_vacant_space,
             [straight_cutters[1], angled_cutters[0]],
         )[0]
 
-        # # decide which to align to
-        # delta_z_for_move_in_x = (to_intc_point[0] - bi_intc_point[0]) * grad
-        # delta_x_for_move_in_z = (to_intc_point[2] - bi_intc_point[2]) / grad
-        # if abs(delta_z_for_move_in_x) <= abs(delta_x_for_move_in_z):
-        #     # align vertically (equal x's)
-        #     # set x's equal to top outer (always larger x)
-        #     bi_join_point = (
-        #         to_intc_point[0],
-        #         0,
-        #         bi_intc_point[2] + delta_z_for_move_in_x,
-        #     )
-        #     to_join_point = to_intc_point
-        # else:
-        #     # align horizontally (equal z's)
-        #     bi_join_point = bi_intc_point
-        #     to_join_point = (
-        #         to_intc_point[0] + delta_x_for_move_in_z,
-        #         0,
-        #         bi_intc_point[2],
-        #     )
+        lower_duct_koz = BluemiraFace(
+            offset_wire(
+                lower_duct_vacant_space.wires[0],
+                lower_duct_wall_thickness,
+            )
+        )
 
-        return koz_duct_fused
+        return lower_duct_koz
 
     @staticmethod
     def _make_distance_xz_wire(
@@ -228,3 +232,17 @@ class LowerPortDesigner(Designer):
                 "z": np.array([s_z, f_z]),
             },
         ), [f_x, 0, f_z]
+
+    @staticmethod
+    def _intersection_points(
+        wire_a: BluemiraGeo,
+        wire_b: BluemiraGeo,
+    ) -> List[Tuple]:
+        dist, vects, _ = wire_a.shape.distToShape(wire_b.shape)
+        if dist > 0.0001:  # not intersecting
+            return []
+        pois = []
+        for vect_pair in vects:
+            v = vect_pair[0]
+            pois.append((v.x, v.y, v.z))
+        return pois
