@@ -1,9 +1,25 @@
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
 # activities.
 #
-# Copyright (C) 2021-2022 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
 #                         J. Morris, D. Short
 #
 # bluemira is free software; you can redistribute it and/or
@@ -24,20 +40,19 @@ optimisation method with bound constraints on the maximum coil currents
 and on the position of the inboard midplane.
 """
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # # Introduction
-
+#
 # In this example, we will outline how to specify a CoilsetOptimisationProblem
 # that specifies how an 'optimised' coilset state is found during the Free Boundary
 # Equilibrium solve step.
-
+#
 # # Imports
-
+#
 # Import necessary equilbria module definitions.
 
 # %%
-
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -55,13 +70,13 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # # OptimisationProblem
-
+#
 # The `OptimisationProblem` class is intended to be the general base class for defining
 # optimisation problems across Bluemira.
-
+#
 # It is constructed from the following four objects:
 # - `parameterisation`
 #     - Object storing data that is updated during the optimisation to be carried out.
@@ -74,26 +89,26 @@ from bluemira.utilities.optimiser import Optimiser
 # - `constraints: List[OptimisationConstraint]`
 #     - List of `OptimisationConstraints`, specifying the set of constraints that must
 #       be satisfied during the numerical optimisation.
-
-
+#
+#
 # The goal of the `OptimisationProblem` is to be able to return an optimised
 # parameterisation, judged according to the provided objective, subject to
 # the set of constraints, using a numerical search algorithm defined in the optimiser.
-
+#
 # Crucially, it provides an `optimise()` method that returns this optimised
 # parameterisation. Subclasses may override this `optimise()` method, but must still
 # return an optimised parametrisation when `optimise()` is called
 # on the OptimisationProblem.
-
+#
 # A `CoilsetOP` is a subclass of `OptimisationProblem`, intended for problems where
 # the parameterisation is a `CoilSet` object, which provides some useful additional
 # methods for getting and setting coilset state vectors/arrays.
-
+#
 # Subclasses of `CoilsetOP`, such as `BoundedCurrentCOP` or `NestedCoilsetPositionCOP`,
 # can be made to bind a `CoilsetOP` to a specific objective function, which is often
 # useful for performance reasons where some data in the OptimisationProblem
 # does not need to be updated at every iteration.
-
+#
 # # Example
 # We will present an example problem where we take an existing `CoilsetOP`subclass,
 # `BoundedCurrentCOP`, and apply some additional constraints that
@@ -103,9 +118,9 @@ from bluemira.utilities.optimiser import Optimiser
 # specified, we only need to provide the `coilset` (parameterisation), `Optimiser`,
 # `OptimisationConstraints`, and any additional arguments that are used in the
 # `BoundedCurrentCOP` objective function.
-
+#
 # ### Parametrisation
-
+#
 # We first define the parameterisation to be used in the OptimisationProblem.
 # This is just the starting `coilset` in this case.
 
@@ -130,20 +145,20 @@ for i in range(len(coil_x)):
     circuits.append(circuit)
 coilset = CoilSet(*circuits)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # ### Optimiser
-
+#
 # We next define the `Optimiser` to be used. There is no one-size-fits-all approach
 # here, as the best optimiser for a given problem will depend strongly on the
 # OptimisationObjective and OptimisationConstraints being applied in the problem.
-
+#
 # `Optimiser` is currently only a wrapper for NLOpt based optimisers, and as such,
 # the range of algorithms that may be chosen is determined by those available in
 # the NLOpt library. Not all algorithms will work for all objectives - some
 # require gradient information, for example - and some require additional parameters.
 # Check the NLOpt API documentation for more details.
-
+#
 # Care must also be taken to ensure the termination criteria for the optimisation
 # are suitable. Otherwise, the optimisation may never stop running if tolerances
 # are too tight, or may stop early and return poorly optimised states if the
@@ -156,19 +171,18 @@ optimiser = Optimiser(
     opt_parameters={"initial_step": 0.03},
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # ### Additional Parameters
-
+#
 # `BoundedCurrentCOP` requires two additional parameters for generating arguments for
 # its `OptimisationObjective` during its `optimise()` call. The `OptimisationObjective`
 # figure of merit for `BoundedCurrentCOP` is the regularised least-squares deviation of a
 # provided Equilibrium from a set of magnetic field targets (eg. isoflux targets).
-
+#
 # We use a default set of isoflux targets here for this example.
 
 # %%
-
 x_lcfs = np.array([1.0, 1.67, 4.0, 1.73])
 z_lcfs = np.array([0, 4.19, 0, -4.19])
 
@@ -192,14 +206,13 @@ legs_isoflux = IsofluxConstraint(
 magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
 magnetic_core_targets = MagneticConstraintSet([lcfs_isoflux])
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # We also specify an initial Equilibrium state to be used in the optimisation.
-
+#
 # For this we need a Grid and some plasma profiles
 
 # %%
-
 # Intialise some parameters
 R_0 = 2.6
 Z_0 = 0
@@ -237,21 +250,20 @@ eq = Equilibrium(
     force_symmetry=True,
     vcontrol=None,
     psi=None,
-    li=None,
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # ### Constraints
-
+#
 # We next define the list of `OptimisationConstraints` to apply.
 # In this case, we wish to apply a constraint to prevent solutions where the
 # plasma boundary at the inboard midplane of the plasma is prevented from moving
 # inside a provided radius.
-
+#
 # We will use `bluemira.equilibria.opt_constraints.current_midplane_constraint`
 # as our constraint function here to do this.
-
+#
 # ```python
 # def current_midplane_constraint(
 #     constraint, vector, grad, opt_problem, radius, inboard=True
@@ -259,7 +271,7 @@ eq = Equilibrium(
 #     """
 #     Constraint function to constrain the inboard or outboard midplane
 #     of the plasma during optimisation.
-
+#
 #     Parameters
 #     ----------
 #     radius: float
@@ -277,7 +289,7 @@ eq = Equilibrium(
 #         constraint[:] = max(lcfs.x) - radius
 #     return constraint
 # ```
-
+#
 # The first three arguments here are expected by NLOpt, and must always be present in
 # constraint functions.
 # - constraint
@@ -291,24 +303,23 @@ eq = Equilibrium(
 #     - np.array representing Jacobian for the constraint function. This must always
 #       be present in the arguments, but only needs to be calculated if the `Optimiser`
 #       is employing an algorithm that requires derivative information.
-
+#
 # The fourth, `opt_problem`, is optional, and provides an interface to the
 # `OptimisationProblem` the constraint is applied to. This may be useful for performance
 # reasons, where data needed by the `constraint` does not need to be updated every
 # iteration of the optimisation. Where possible, explicit arguments should be provided to
 # the `OptimisationProblem`, however.
-
+#
 # The remaining arguments are explicit arguments that can be passed to the constraint to
 # control its behaviour.
-
+#
 # This constraint function can be passed to a `OptimisationConstraint` object, along with
 # explicit arguments, constraint tolerances, and constraint type, that is used by
 # NLOpt when applying the constraint.
-
+#
 # User specified constraints can be supplied here, if so desired.
 
 # %%
-
 opt_constraint_funcs = [
     OptimisationConstraint(
         f_constraint=opt_constraint_funcs.current_midplane_constraint,
@@ -318,12 +329,11 @@ opt_constraint_funcs = [
     )
 ]
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # We now have all the requirements to specify our `CoilsetOP`, and can now initialise it:
 
 # %%
-
 opt_problem = TikhonovCurrentCOP(
     coilset,
     eq,
@@ -334,21 +344,20 @@ opt_problem = TikhonovCurrentCOP(
     constraints=opt_constraint_funcs,
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # # Iterators
-
+#
 # The `CoilsetOP` is only used to optimise the coilset state at fixed plasma psi;
 # the Grad-Shafranov equation for the plasma is not guaranteed to still be satisfied
 # after the coilset state is optimised.
-
+#
 # Picard iteration is therefore used to find a self-consistent solution, employed
 # by `Iterator` objects. `PicardCoilsetIterator` specifies a scheme in which a
 # Grad-Shafranov iteration is used to update the plasma psi alternate with Coilset
 # optimisation at fixed plasma psi until the psi converges for the `Equilbrium`.
 
 # %%
-
 constrained_iterator = PicardIterator(
     eq,
     opt_problem,
@@ -358,8 +367,8 @@ constrained_iterator = PicardIterator(
     convergence=DudsonConvergence(1e-4),
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # However, a poor initial `Equilibrium` (with corresponding `coilset`) will lead
 # to difficulties during the Picard iteration used to find a self-consistent solution.
 # It is therefore useful to perform a coarser fast pre-optimisation to try find a
@@ -367,7 +376,6 @@ constrained_iterator = PicardIterator(
 # full constrained `OptimisationProblem`.
 
 # %%
-
 unconstrained_cop = UnconstrainedTikhonovCurrentGradientCOP(
     coilset, eq, magnetic_targets, gamma=1e-8
 )
@@ -380,34 +388,32 @@ unconstrained_iterator = PicardIterator(
     maxiter=400,
 )
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # # FBE Optimisation
 # We have now initialised the necessary objects to perform the optimisation of the
 # `coilset` state.
-
+#
 # We first plot the initial `Equilibrium` state - as the initial coilset for this
 # example has no current in the coils, it is predictably extremely poor!
 
 # %%
-
 f, ax = plt.subplots()
 eq.plot(ax=ax)
 unconstrained_cop.targets.plot(ax=ax)
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # ### Pre-optimisation
-
+#
 # Constrained optimisation of this poor initial state would be difficult, as
 # local optimisers would likely struggle to find the basin of convergence of
 # the desired state.
-
+#
 # We therefore perform a fast pre-optimisation to get closer to a physical
 # state that satisfies our constrained optimisation problem.
 
 # %%
-
 unconstrained_iterator()
 
 f, ax = plt.subplots()
@@ -415,14 +421,13 @@ eq.plot(ax=ax)
 magnetic_targets.plot(ax=ax)
 plt.show()
 
-# %%[markdown]
-
+# %% [markdown]
+#
 # ### Constrained Optimisation
-
+#
 # Now we have a better starting `Equilibrium` for our constrained optimisation
 
 # %%
-
 constrained_iterator()
 
 f, ax = plt.subplots()
