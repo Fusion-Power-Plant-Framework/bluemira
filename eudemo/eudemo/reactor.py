@@ -226,7 +226,7 @@ def _read_json(file_path: str) -> Dict:
 
 
 if __name__ == "__main__":
-    set_log_level("DEBUG")
+    set_log_level("INFO")
     reactor_config = ReactorConfig(
         BUILD_CONFIG_FILE_PATH,
         EUDEMOReactorParams,
