@@ -101,78 +101,45 @@ class UpperPortDuctBuilder(Builder):
         the port koz is slightly trimmed to allow for square ends to the port
 
         """
-        half_sector_degree = 0.5 * get_n_sectors(self.params.n_TF.value)[0]
-        half_beta = np.deg2rad(half_sector_degree)
+        half_beta = np.pi / self.params.n_TF.value
         cos_hb = np.cos(half_beta)
-        tf_tk_in_y = self.tf_coil_thickness * cos_hb
-        tk_y_prt = tf_tk_in_y + self.params.tk_upper_port_wall.value
-        end_tk = 2 * self.params.tk_upper_port_wall.value
+        tan_hb = np.tan(half_beta)
+        end_tk = 2 * self.port_wall_thickness  # should be an input
+        y_tf_out = self.tf_coil_thickness / cos_hb  # should really be 0.5 * ...
+        y_tf_in = y_tf_out + self.port_wall_thickness / cos_hb
 
-        koz_bb = self.port_koz.bounding_box
+        x1 = self.port_koz.bounding_box.x_min
 
-        x_min = max(
-            (tk_y_prt) * np.tan(half_beta),
-            koz_bb.x_min / cos_hb,
-        )
-        x_min_ins = x_min + end_tk
-        x_max = koz_bb.x_max * cos_hb
-        x_max_ins = x_max - end_tk
+        # This is the correct way to retrieve the outer radius of the port, accounting
+        # for the TF thickness
+        # It's just the intersection of a line and a circle in the positive quadrant.
+        a1 = 1 + tan_hb**2
+        b1 = -2 * y_tf_out * tan_hb
+        c1 = y_tf_out**2 - self.port_koz.bounding_box.x_max**2
+        discriminant = b1**2 - 4 * a1 * c1
+        x4 = 0.5 * (-b1 + np.sqrt(discriminant)) / a1
 
-        outer = make_polygon({"x": [x_min, x_max], "y": 0})
-        inner = make_polygon({"x": [x_min_ins, x_max_ins], "y": 0})
+        x2, x3 = x1 + end_tk, x4 - end_tk
 
-        outer_lower = outer.deepcopy()
-        inner_lower = inner.deepcopy()
-        outer.translate((0, -tf_tk_in_y, 0))
-        outer_lower.translate((0, tf_tk_in_y, 0))
-        inner.translate((0, -tk_y_prt, 0))
-        inner_lower.translate((0, tk_y_prt, 0))
+        if x2 >= x3:
+            raise GeometryError("Port dimensions too small")
 
-        outer.rotate(degree=half_sector_degree)
-        inner.rotate(degree=half_sector_degree)
-        outer_lower.rotate(degree=-half_sector_degree)
-        inner_lower.rotate(degree=-half_sector_degree)
+        y2, y3 = x2 * tan_hb - y_tf_in, x3 * tan_hb - y_tf_in
 
-        if (
-            outer.start_point()[1] - outer_lower.start_point()[1] < end_tk
-            or inner.start_point()[1] < inner_lower.start_point()[1]
-        ):
-            delta_y = (
-                ((end_tk - (outer.start_point()[1] - outer_lower.start_point()[1])) / 2)
-                + outer.start_point()[1]
-            )[0]
-            y_plane = BluemiraPlane((0, delta_y, 0), (0, 1, 0))
-            outer = split_wire(outer, slice_shape(outer, y_plane)[0])[1]
+        if y3 <= 0:
+            raise GeometryError("Port dimensions too small")
 
-            x_plane = BluemiraPlane((outer.start_point()[0] + end_tk, 0, 0), (1, 0, 0))
+        if y2 <= 0:
+            # Triangular inner port wall
+            y2 = 0
+            c = y3 - tan_hb * x3
+            x2 = -c / tan_hb
+            x1 = x2 - end_tk
 
-            try:
-                inner = split_wire(inner, slice_shape(inner, x_plane)[0])[1]
-            except TypeError:
-                raise GeometryError("Port dimensions too small")
+        y1, y4 = x1 * tan_hb - y_tf_out, x4 * tan_hb - y_tf_out
 
-            outer_lower = outer.deepcopy()
-            outer_lower.rotate(direction=(1, 0, 0))
-
-            inner_lower = inner.deepcopy()
-            inner_lower.rotate(direction=(1, 0, 0))
-
-        outer_join1 = make_polygon(
-            np.array([outer.start_point(), outer_lower.start_point()])
-        )
-        outer_join2 = make_polygon(
-            np.array([outer.end_point(), outer_lower.end_point()])
-        )
-
-        inner_join1 = make_polygon(
-            np.array([inner.start_point(), inner_lower.start_point()])
-        )
-        inner_join2 = make_polygon(
-            np.array([inner.end_point(), inner_lower.end_point()])
-        )
-
-        outer_wire = BluemiraWire((outer_join1, outer, outer_join2, outer_lower))
-        inner_wire = BluemiraWire((inner_join1, inner, inner_join2, inner_lower))
+        inner_wire = make_polygon({"x": [x2, x3, x3, x2], "y": [-y2, -y3, y3, y2]}, closed=True)
+        outer_wire = make_polygon({"x": [x1, x4, x4, x1], "y": [-y1, -y4, y4, y1]}, closed=True)
 
         xy_face = BluemiraFace((outer_wire, inner_wire))
         xy_face.rotate(degree=half_sector_degree)
