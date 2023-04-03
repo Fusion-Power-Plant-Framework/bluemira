@@ -26,9 +26,11 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
+import time
 from typing import Dict, List, Optional, Type, Union
 
 from bluemira.base.components import Component
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
 from bluemira.utilities.plot_tools import set_component_view
@@ -111,6 +113,16 @@ class Builder(abc.ABC):
         self.name = self.build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
         )
+        self._build = self.build
+        self.build = self._build_wrapper
+
+    def _build_wrapper(self) -> Component:
+        """Build the component."""
+        bluemira_print(f"Building {self.name}")
+        t1 = time.time()
+        out = self._build()
+        bluemira_debug(f"Built in {time.time() - t1} s")
+        return out
 
     @abc.abstractproperty
     def param_cls(self) -> Union[Type[ParameterFrame], None]:

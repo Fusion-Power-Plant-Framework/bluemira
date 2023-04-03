@@ -43,6 +43,7 @@ from typing import Dict
 import matplotlib.pyplot as plt
 
 from bluemira.base.designer import run_designer
+from bluemira.base.logs import set_log_level
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
@@ -225,8 +226,7 @@ def _read_json(file_path: str) -> Dict:
 
 
 if __name__ == "__main__":
-    import time
-
+    set_log_level("DEBUG")
     reactor_config = ReactorConfig(
         BUILD_CONFIG_FILE_PATH,
         EUDEMOReactorParams,
@@ -275,32 +275,24 @@ if __name__ == "__main__":
         equilibrium=reference_eq,
     )
 
-    t1 = time.time()
     upper_port_designer = UpperPortDesigner(
         reactor_config.params_for("Upper Port"),
         reactor_config.config_for("Upper Port"),
         blanket_face,
     )
-    t2 = time.time()
-    print(f"{t2-t1}")
     upper_port_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
-    t3 = time.time()
-    print(f"{t3-t2}")
+
     reactor.vacuum_vessel = build_vacuum_vessel(
         reactor_config.params_for("Vacuum vessel"),
         reactor_config.config_for("Vacuum vessel"),
         ivc_boundary,
     )
-    t4 = time.time()
-    print(f"{t4-t3}")
 
     reactor.divertor = build_divertor(
         reactor_config.params_for("Divertor"),
         reactor_config.config_for("Divertor"),
         divertor_face,
     )
-    t5 = time.time()
-    print(f"{t5-t4}")
 
     reactor.blanket = build_blanket(
         reactor_config.params_for("Blanket"),
@@ -309,15 +301,11 @@ if __name__ == "__main__":
         r_inner_cut,
         cut_angle,
     )
-    t6 = time.time()
-    print(f"{t6-t5}")
     reactor.vv_thermal = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "VVTS"),
         reactor.vacuum_vessel.xz_boundary(),
     )
-    t7 = time.time()
-    print(f"{t7-t6}")
 
     reactor.tf_coils = build_tf_coils(
         reactor_config.params_for("TF coils"),
@@ -325,8 +313,6 @@ if __name__ == "__main__":
         reactor.plasma.lcfs(),
         reactor.vv_thermal.xz_boundary(),
     )
-    t8 = time.time()
-    print(f"{t8-t7}")
 
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
