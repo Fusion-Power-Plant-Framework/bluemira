@@ -86,17 +86,13 @@ class LowerPortDesigner(Designer):
         div_x_inner = self.divertor_face.bounding_box.x_min
         div_x_outer = self.divertor_face.bounding_box.x_max
 
-        lower_duct_angled_leg_gradient = np.tan(
-            np.deg2rad(self.params.lower_port_angle.value),
-        )  # z/x
-
         r_search = 30
         x_duct_extent = 30
 
         # these are meant to be params, but their names may change,
         # so leaving them here for now
         lower_duct_angled_leg_extent_factor = 1.2
-        lower_duct_angled_leg_padding = 0.2
+        lower_duct_angled_leg_padding = 1
         lower_duct_straight_leg_padding = 0.1
         lower_duct_wall_thickness = 0.1
 
@@ -104,21 +100,46 @@ class LowerPortDesigner(Designer):
             abs(div_z_top - div_z_bot) + lower_duct_straight_leg_padding
         )
 
-        # top outer
+        # draw the angled leg from the padded diagonal divertor points
+
+        # get padded divertor points
+        div_gradient = (div_z_top - div_z_bot) / (div_x_outer - div_x_inner)
+        div_diag_length, _ = distance_to(
+            [div_x_inner, 0, div_z_bot],
+            [div_x_outer, 0, div_z_top],
+        )
+        (
+            _,
+            div_top_outer_point,
+        ) = LowerPortDesigner._xz_points_dist_away_from(
+            (div_x_inner, div_z_bot),
+            div_gradient,
+            div_diag_length + lower_duct_angled_leg_padding / 2,
+        )
+        (div_bot_inner_point, _) = LowerPortDesigner._xz_points_dist_away_from(
+            (div_x_outer, div_z_top),
+            div_gradient,
+            div_diag_length + lower_duct_angled_leg_padding / 2,
+        )
+
+        # get "search" points that will definitely intersect the tf_coil
+        lower_duct_angled_leg_gradient = np.tan(
+            np.deg2rad(self.params.lower_port_angle.value),
+        )  # z/x
+
         (
             _,
             to_intc_search_point,
-        ) = LowerPortDesigner._make_distance_xz_wire(
-            (div_x_outer, div_z_top),
+        ) = LowerPortDesigner._xz_points_dist_away_from(
+            div_top_outer_point,
             lower_duct_angled_leg_gradient,
             r_search,
         )
-        # bottom inner
         (
             _,
             bi_intc_search_point,
-        ) = LowerPortDesigner._make_distance_xz_wire(
-            (div_x_inner, div_z_bot),
+        ) = LowerPortDesigner._xz_points_dist_away_from(
+            div_bot_inner_point,
             lower_duct_angled_leg_gradient,
             r_search,
         )
@@ -127,67 +148,76 @@ class LowerPortDesigner(Designer):
             {
                 "x": np.array(
                     [
-                        div_x_inner,
-                        div_x_outer,
+                        div_top_outer_point[0],
                         to_intc_search_point[0],
                         bi_intc_search_point[0],
+                        div_bot_inner_point[0],
                     ]
                 ),
                 "y": 0,
                 "z": np.array(
                     [
-                        div_z_bot,
-                        div_z_top,
-                        to_intc_search_point[2],
-                        bi_intc_search_point[2],
+                        div_top_outer_point[1],
+                        to_intc_search_point[1],
+                        bi_intc_search_point[1],
+                        div_bot_inner_point[1],
                     ]
                 ),
             },
             closed=True,
         )
-        lower_duct_angled_leg_boundary_w_padding = offset_wire(
-            lower_duct_angled_leg_boundary,
-            lower_duct_angled_leg_padding / 2,
-        )
         lower_duct_angled_leg = BluemiraFace(
-            lower_duct_angled_leg_boundary_w_padding,
+            lower_duct_angled_leg_boundary,
         )
 
-        # draw straight duct leg from the intersection point
+        # Find the points where the angled duct
+        # (is large due to the search points)
+        # intersect the tf coil
+        # and extent the length of that
+        # by the lower_duct_angled_leg_extent_factor
+        # and draw the straight leg from that point
+
         to_intc_points = LowerPortDesigner._intersection_points(
+            lower_duct_angled_leg_boundary,
             self.tf_coil_xz_boundary,
-            lower_duct_angled_leg_boundary_w_padding,
         )
         # largest x
         to_intc_point = max(to_intc_points, key=lambda p: p[0])
-        dist_from_to_to_intc_point, _ = distance_to(
-            to_intc_point, [div_x_outer, 0, div_z_top]
+
+        top_outer_dist_to_intc_point, _ = distance_to(
+            [div_top_outer_point[0], 0, div_top_outer_point[1]],
+            to_intc_point,
         )
         (
             _,
-            straight_duct_leg_point,
-        ) = LowerPortDesigner._make_distance_xz_wire(
-            (div_x_outer, div_z_top),
+            duct_straight_leg_point,
+        ) = LowerPortDesigner._xz_points_dist_away_from(
+            div_top_outer_point,
             lower_duct_angled_leg_gradient,
-            dist_from_to_to_intc_point * lower_duct_angled_leg_extent_factor,
+            top_outer_dist_to_intc_point * lower_duct_angled_leg_extent_factor,
         )
-        lower_duct_straight_leg = make_polygon(
+
+        # draw straight duct leg from the lengthened intersection point
+        lower_duct_straight_leg_boundary = make_polygon(
             {
                 "x": np.array([0, x_duct_extent, x_duct_extent, 0]),
                 "y": 0,
                 "z": np.array(
                     [
-                        straight_duct_leg_point[2],
-                        straight_duct_leg_point[2],
-                        straight_duct_leg_point[2] - lower_duct_straight_leg_size,
-                        straight_duct_leg_point[2] - lower_duct_straight_leg_size,
+                        duct_straight_leg_point[1],
+                        duct_straight_leg_point[1],
+                        duct_straight_leg_point[1] - lower_duct_straight_leg_size,
+                        duct_straight_leg_point[1] - lower_duct_straight_leg_size,
                     ]
                 ),
             },
             closed=True,
         )
-        lower_duct_straight_leg = BluemiraFace(lower_duct_straight_leg)
+        lower_duct_straight_leg = BluemiraFace(
+            lower_duct_straight_leg_boundary,
+        )
 
+        # fuse and cut the unec. bits off
         straight_cutters = boolean_cut(
             lower_duct_angled_leg,
             [lower_duct_straight_leg],
@@ -215,23 +245,22 @@ class LowerPortDesigner(Designer):
         return lower_duct_koz
 
     @staticmethod
-    def _make_distance_xz_wire(
-        starting_xz_point: Tuple,
+    def _xz_points_dist_away_from(
+        starting_xz_point: Union[Tuple, List],
         gradient: float,
         distance: float,
-    ) -> BluemiraWire:
+    ) -> Tuple:
         s_x = starting_xz_point[0]
         s_z = starting_xz_point[1]
         sqrt_value = np.sqrt(distance**2 / (1 + gradient**2))
-        f_x = sqrt_value + s_x
-        f_z = gradient * sqrt_value + s_z
-        return make_polygon(
-            {
-                "x": np.array([s_x, f_x]),
-                "y": 0,
-                "z": np.array([s_z, f_z]),
-            },
-        ), [f_x, 0, f_z]
+        f_x_pve = sqrt_value + s_x
+        f_z_pve = gradient * sqrt_value + s_z
+        f_x_nve = -sqrt_value + s_x
+        f_z_nve = gradient * -sqrt_value + s_z
+        return (
+            [f_x_nve, f_z_nve],
+            [f_x_pve, f_z_pve],
+        )
 
     @staticmethod
     def _intersection_points(
