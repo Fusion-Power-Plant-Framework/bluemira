@@ -119,9 +119,9 @@ class Builder(abc.ABC):
     def _build_wrapper(self) -> Component:
         """Build the component."""
         bluemira_print(f"Building {self.name}")
-        t1 = time.time()
+        t1 = time.perf_counter()
         out = self._build()
-        bluemira_debug(f"Built in {time.time() - t1} s")
+        bluemira_debug(f"Built in {time.perf_counter() - t1:.2g} s")
         return out
 
     @abc.abstractproperty

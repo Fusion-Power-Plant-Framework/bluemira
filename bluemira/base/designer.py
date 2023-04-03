@@ -69,9 +69,9 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
         By default the run mode is 'run'.
         """
         bluemira_print(f"Executing {type(self).__name__}")
-        t1 = time.time()
+        t1 = time.perf_counter()
         out = self._run_func()
-        bluemira_debug(f"Executed in {time.time() - t1} s")
+        bluemira_debug(f"Executed in {time.perf_counter() - t1:.2g} s")
         return out
 
     @abc.abstractmethod
