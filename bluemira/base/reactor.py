@@ -242,4 +242,6 @@ class Reactor:
                 )
         for i, dim in enumerate(dims_to_show):
             comp_copy = self._filter_copy_comps([dim], with_components)
-            ComponentPlotter().plot_2d(comp_copy, show=i == len(dims_to_show) - 1)
+            ComponentPlotter(view=dim).plot_2d(
+                comp_copy, show=i == len(dims_to_show) - 1
+            )
