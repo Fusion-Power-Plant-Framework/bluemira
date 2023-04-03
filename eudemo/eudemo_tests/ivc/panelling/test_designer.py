@@ -109,8 +109,8 @@ def cut_polygon_vertically(shape: BluemiraWire) -> Tuple[BluemiraWire, BluemiraW
     """Cut a polygon either side of a vertical line through it's centre."""
     centre_x = shape.center_of_mass[0]
     cutting_plane = BluemiraPlane((centre_x, 0, 0), (1, 0, 0))
-    slice = slice_shape(shape, cutting_plane)
-    return split_wire(shape, slice[0], tolerance=1e-8)
+    slice_points = slice_shape(shape, cutting_plane)
+    return split_wire(shape, slice_points[0], tolerance=1e-8)
 
 
 class TestPanellingDesigner:
