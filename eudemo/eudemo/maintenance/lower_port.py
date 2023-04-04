@@ -23,12 +23,13 @@
 EU-DEMO Lower Port
 """
 from dataclasses import dataclass
-from typing import Dict, Tuple, Type, Union
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -243,3 +244,35 @@ class LowerPortDesigner(Designer):
         )
 
         return lower_duct_koz
+
+    @staticmethod
+    def _xz_points_dist_away_from(
+        starting_xz_point: Union[Tuple, List],
+        gradient: float,
+        distance: float,
+    ) -> Tuple:
+        s_x = starting_xz_point[0]
+        s_z = starting_xz_point[1]
+        sqrt_value = np.sqrt(distance**2 / (1 + gradient**2))
+        f_x_pve = sqrt_value + s_x
+        f_z_pve = gradient * sqrt_value + s_z
+        f_x_nve = -sqrt_value + s_x
+        f_z_nve = gradient * -sqrt_value + s_z
+        return (
+            [f_x_nve, f_z_nve],
+            [f_x_pve, f_z_pve],
+        )
+
+    @staticmethod
+    def _intersection_points(
+        wire_a: BluemiraGeo,
+        wire_b: BluemiraGeo,
+    ) -> List[Tuple]:
+        dist, vects, _ = wire_a.shape.distToShape(wire_b.shape)
+        if dist > 0.0001:  # not intersecting
+            return []
+        pois = []
+        for vect_pair in vects:
+            v = vect_pair[0]
+            pois.append((v.x, v.y, v.z))
+        return pois
