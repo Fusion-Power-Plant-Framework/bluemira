@@ -113,7 +113,7 @@ class Optimiser(NLOPTOptimiser):
     The grad and constraint matrices must be assigned in place.
     """  # noqa :W505
 
-    def optimise(self, x0=None):
+    def optimise(self, x0=None, check_constraints: bool = True):
         """
         Run the optimisation problem.
 
@@ -131,7 +131,7 @@ class Optimiser(NLOPTOptimiser):
             x0 = 0.5 * np.ones(self.n_variables)
 
         x_star = super().optimise(x0)
-        if self.constraints:
+        if self.constraints and check_constraints:
             self.check_constraints(x_star)
         return x_star
 
@@ -209,7 +209,7 @@ class Optimiser(NLOPTOptimiser):
             tolerance = np.array([tolerance])
         super().add_ineq_constraints(f_constraint, tolerance)
 
-    def check_constraints(self, x):
+    def check_constraints(self, x: np.ndarray, warn: bool = True):
         """
         Check that the constraints have been met.
 
@@ -233,16 +233,17 @@ class Optimiser(NLOPTOptimiser):
         tolerances = np.array(tolerances)
 
         if not np.all(c_values < tolerances):
-            indices = np.where(c_values > tolerances)[0]
-
-            message = "\n".join(
-                [
-                    f"constraint number {i}: {pformat(c_values[i])} !< {pformat(tolerances[i])}"
-                    for i in indices
-                ]
-            )
-            bluemira_warn(
-                "Some constraints have not been adequately satisfied.\n" f"{message}"
-            )
+            if warn:
+                indices = np.where(c_values > tolerances)[0]
+                message = "\n".join(
+                    [
+                        f"constraint number {i}: {pformat(c_values[i])} !< "
+                        f"{pformat(tolerances[i])}"
+                        for i in indices
+                    ]
+                )
+                bluemira_warn(
+                    "Some constraints have not been adequately satisfied.\n" f"{message}"
+                )
             return False
         return True

@@ -77,7 +77,7 @@ class Parameter(Generic[ParameterValueType]):
         self._description = description
         self._long_name = long_name
 
-        self._history: List[ParameterValue] = []
+        self._history: List[ParameterValue[ParameterValueType]] = []
         self._add_history_record()
 
     def __repr__(self) -> str:
@@ -100,7 +100,7 @@ class Parameter(Generic[ParameterValueType]):
             return False
         return (self.name == __o.name) and (self.value == o_value_with_correct_unit)
 
-    def history(self) -> List[ParameterValue]:
+    def history(self) -> List[ParameterValue[ParameterValueType]]:
         """Return the history of this parameter's value."""
         return copy.deepcopy(self._history)
 

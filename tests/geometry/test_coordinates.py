@@ -41,6 +41,7 @@ from bluemira.geometry.coordinates import (
     on_polygon,
     polygon_in_polygon,
     rotation_matrix,
+    vector_lengthnorm,
 )
 from bluemira.geometry.error import CoordinatesError
 from bluemira.geometry.plane import BluemiraPlane
@@ -713,3 +714,42 @@ class TestRotationMatrix:
         p2 = r_matrix @ p1
 
         assert np.isclose(p2[1], 9), p2
+
+
+def test_vector_lengthnorm_gives_expected_lengths_2d():
+    points = np.array([[0, 0], [2, 1], [3, 3], [5, 1], [3, 0]], dtype=float).T
+
+    lengths = vector_lengthnorm(points[0], points[1])
+
+    expected = np.array(
+        [
+            0,
+            np.sqrt(5),
+            np.sqrt(5) + np.sqrt(5),
+            np.sqrt(5) + np.sqrt(5) + np.sqrt(8),
+            np.sqrt(5) + np.sqrt(5) + np.sqrt(8) + np.sqrt(5),
+        ]
+    )
+    expected /= expected[-1]
+    np.testing.assert_allclose(lengths, expected)
+
+
+def test_vector_lengthnorm_gives_expected_lengths_3d():
+    points = np.array(
+        [[0, 0, 1], [2, 1, 2], [3, 3, 4], [5, 1, 0], [3, 0, 1]], dtype=float
+    ).T
+
+    lengths = vector_lengthnorm(points[0], points[1], points[2])
+
+    expected = np.array(
+        [
+            0,
+            np.sqrt(6),
+            np.sqrt(6) + np.sqrt(9),
+            np.sqrt(6) + np.sqrt(9) + np.sqrt(24),
+            np.sqrt(6) + np.sqrt(9) + np.sqrt(24) + np.sqrt(6),
+        ]
+    )
+    expected /= expected[-1]
+    np.testing.assert_allclose(lengths, expected)
+    np.testing.assert_allclose(lengths, expected)

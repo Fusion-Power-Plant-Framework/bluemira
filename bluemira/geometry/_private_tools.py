@@ -35,6 +35,8 @@ from bluemira.geometry.coordinates import (
     _validate_coordinates,
     get_angle_between_points,
     get_area,
+    normal_vector,
+    vector_intersect,
 )
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -98,63 +100,6 @@ def _side_vector(polygon_array):
     return polygon_array - np.roll(polygon_array, 1)
 
 
-def _normal_vector(side_vectors):
-    """
-    Anti-clockwise
-
-    Parameters
-    ----------
-    side_vectors: np.array(N, 2)
-        The side vectors of a polygon
-
-    Returns
-    -------
-    a: np.array(2, N)
-        The array of 2-D normal vectors of each side of a polygon
-    """
-    a = -np.array([-side_vectors[1], side_vectors[0]]) / np.sqrt(
-        side_vectors[0] ** 2 + side_vectors[1] ** 2
-    )
-    nan = np.isnan(a)
-    a[nan] = 0
-    return a
-
-
-def _vector_intersect(p1, p2, p3, p4):
-    """
-    Get the intersection point between two 2-D vectors.
-
-    Parameters
-    ----------
-    p1: np.ndarray(2)
-        The first point on the first vector
-    p2: np.ndarray(2)
-        The second point on the first vector
-    p3: np.ndarray(2)
-        The first point on the second vector
-    p4: np.ndarray(2)
-        The second point on the second vector
-
-    Returns
-    -------
-    p_inter: np.ndarray(2)
-        The point of the intersection between the two vectors
-    """
-    da = p2 - p1
-    db = p4 - p3
-
-    if np.isclose(np.cross(da, db), 0):  # vectors parallel
-        # NOTE: careful modifying this, different behaviour required...
-        point = p2
-    else:
-        dp = p1 - p3
-        dap = _normal_vector(da)
-        denom = np.dot(dap, db)
-        num = np.dot(dap, dp)
-        point = num / denom.astype(float) * db + p3
-    return point
-
-
 # =============================================================================
 # Coordinate creation
 # =============================================================================
@@ -194,7 +139,7 @@ def offset(x, z, offset_value):
         closed = False
     p = np.array([np.array(x), np.array(z)])
     # Normal vectors for each side
-    v = _normal_vector(_side_vector(p))
+    v = normal_vector(_side_vector(p))
     # Construct points offset
     off_p = np.column_stack(p + offset_value * v)
     off_p2 = np.column_stack(np.roll(p, 1) + offset_value * v)
@@ -207,9 +152,7 @@ def offset(x, z, offset_value):
     off_s = np.array([ox[2:], oz[2:]]).T
     pnts = []
     for i in range(len(off_s[:, 0]) - 2)[0::2]:
-        pnts.append(
-            _vector_intersect(off_s[i], off_s[i + 1], off_s[i + 3], off_s[i + 2])
-        )
+        pnts.append(vector_intersect(off_s[i], off_s[i + 1], off_s[i + 3], off_s[i + 2]))
     pnts.append(pnts[0])
     pnts = np.array(pnts)[:-1][::-1]  # sorted ccw nicely
     if closed:
