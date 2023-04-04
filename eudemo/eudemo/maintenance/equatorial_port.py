@@ -31,10 +31,7 @@ from bluemira.base.builder import Builder, ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.builders.tools import (
-    apply_component_display_options,
-    circular_pattern_component,
-)
+from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.plane import BluemiraFace, BluemiraPlane
 from bluemira.geometry.solid import BluemiraSolid, BluemiraWire
@@ -182,21 +179,21 @@ class EquatorialPortDuctBuilder(Builder):
         apply_component_display_options(body, BLUE_PALETTE["VV"][0])
         return body
 
-    def build_xy(self, n: int = 10) -> PhysicalComponent:
+    def build_xy(self) -> PhysicalComponent:
         """
         Build the cross-sectional representation of the Equatorial Port
         """
         body = PhysicalComponent(self.NAME, self.profile)
         apply_component_display_options(body, BLUE_PALETTE["VV"][0])
-        return circular_pattern_component(body, n_children=n)
+        return body
 
-    def build_xyz(self, n: int = 10) -> PhysicalComponent:
+    def build_xyz(self) -> PhysicalComponent:
         """
         Build the 3D representation of the Equatorial Port
         """
         body = PhysicalComponent(self.NAME, self.port)
         apply_component_display_options(body, BLUE_PALETTE["VV"][0])
-        return circular_pattern_component(body, n_children=n)
+        return body
 
 
 @dataclass
@@ -205,7 +202,6 @@ class CastellationBuilderParams(ParameterFrame):
     Castellation Builder parameters
     """
 
-    n_components: Parameter[int]
     cst_r_corner: Parameter[float]
 
 
@@ -266,21 +262,21 @@ class CastellationBuilder(Builder):
         apply_component_display_options(body, BLUE_PALETTE["VV"][0])
         return body
 
-    def build_xy(self, xy: BluemiraFace, n: int = 10) -> List[PhysicalComponent]:
+    def build_xy(self, xy: BluemiraFace) -> List[PhysicalComponent]:
         """
         Build the xy representation of the castellated component
         """
         body = PhysicalComponent(self.NAME, xy)
         apply_component_display_options(body, BLUE_PALETTE["VV"][0])
-        return circular_pattern_component(body, n_children=n)
+        return body
 
-    def build_xyz(self, xyz: BluemiraSolid, n: int = 10) -> List[PhysicalComponent]:
+    def build_xyz(self, xyz: BluemiraSolid) -> List[PhysicalComponent]:
         """
         Build the xyz representation of the castellated component
         """
         cst_shape = PhysicalComponent(self.NAME, xyz)
         apply_component_display_options(cst_shape, BLUE_PALETTE["VV"][0])
-        return circular_pattern_component(cst_shape, n_children=n)
+        return cst_shape
 
     def build_castellations(
         self,
@@ -317,9 +313,9 @@ class CastellationBuilder(Builder):
         if vec_mag != 1.0:
             vec /= vec_mag
 
-        if num_castellation is not (None or 0):
+        if num_castellation is not (None or 0.0):
             interval = length / (num_castellation + 1)
-            offset_iterable = [interval * i for i in range(num_castellation + 1)]
+            offset_iterable = [interval * i for i in range(1, num_castellation + 1)]
         else:
             offset_iterable = offsets
         parameter_array = list(zip(distances, offset_iterable))

@@ -23,7 +23,6 @@
 Tests for EU-DEMO Maintenance
 """
 import numpy as np
-
 import pytest
 
 from bluemira.geometry.face import BluemiraFace, BluemiraWire
@@ -126,6 +125,8 @@ class TestEquatorialPortDuctBuilder:
         self.builder = EquatorialPortDuctBuilder(self.params, {}, yz_profile, length, th)
         output = self.builder.build()
         out_port = output.get_component("xyz").get_component("Equatorial Port Duct 1")
+        if out_port is None:
+            out_port = output.get_component("xyz").get_component("Equatorial Port Duct")
         expectation = length * (2 * (th * (y + z - (2 * th))))
 
         assert np.isclose(out_port.shape.volume, expectation)
