@@ -177,7 +177,7 @@ class TestPanellingDesigner:
     )
     def test_panel_lengths_gt_min_length(self, dl_min, shape):
         params = {
-            "fw_a_max": {"value": 35, "unit": "degrees"},
+            "fw_a_max": {"value": 40, "unit": "degrees"},
             "fw_dL_min": {"value": dl_min, "unit": "m"},
         }
 
