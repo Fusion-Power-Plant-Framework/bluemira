@@ -92,8 +92,8 @@ class LowerPortDesigner(Designer):
 
         # these are meant to be params, but their names may change,
         # so leaving them here for now
-        lower_duct_angled_leg_extent_factor = 1.2
-        lower_duct_angled_leg_padding = 1
+        lower_duct_angled_leg_extent_factor = 2
+        lower_duct_angled_leg_padding = 0.2
         lower_duct_straight_leg_padding = 0.1
         lower_duct_wall_thickness = 0.1
 
