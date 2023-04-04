@@ -31,8 +31,10 @@ from bluemira.base.error import ReactorError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
+from bluemira.display.plotter import ComponentPlotter
 
-_PLOT_DIMS = ["xy", "xz", "xyz"]
+_PLOT_DIMS = ["xy", "xz"]
+_CAD_DIMS = ["xy", "xz", "xyz"]
 
 
 class Reactor:
@@ -144,9 +146,27 @@ class Reactor:
                 degree=(360 / self.n_sectors) * n_sectors,
             )
 
+    def _filter_copy_comps(
+        self,
+        dims_to_show: List[str],
+        with_components: Optional[List[ComponentManager]] = None,
+    ):
+        """
+        Get a filtered copy of the Reactor components for display purposes
+        """
+        comp = self.component(with_components)
+
+        # A copy of the component tree must be made
+        # as filtering would mutate the ComponentMangers' underlying component trees
+        # self.component (above) only creates a new root node for this reactor,
+        # not a new component tree.
+        comp_copy = comp.copy()
+        comp_copy.filter_components(dims_to_show)
+        return comp_copy
+
     def show_cad(
         self,
-        *dims,
+        *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
         **kwargs,
@@ -156,13 +176,13 @@ class Reactor:
 
         Parameters
         ----------
-        *dims: str
+        *dims:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
-        with_components: List
+        with_components:
             The components to construct when displaying CAD for xyz.
             Defaults to None, which means show "all" components.
-        n_sectors: Optional[int]
+        n_sectors:
             The number of sectors to construct when displaying CAD for xyz
             Defaults to None, which means show "all" sectors.
         """
@@ -181,20 +201,13 @@ class Reactor:
             )
             dims_to_show = (kw_dim,)
         for dim in dims_to_show:
-            if dim not in _PLOT_DIMS:
+            if dim not in _CAD_DIMS:
                 raise ReactorError(
                     f"Invalid plotting dimension '{dim}'."
-                    f"Must be one of {str(_PLOT_DIMS)}"
+                    f"Must be one of {str(_CAD_DIMS)}"
                 )
 
-        comp = self.component(with_components)
-
-        # A copy of the component tree must be made
-        # as filtering would mutate the ComponentMangers' underlying component trees
-        # self.component (above) only creates a new root node for this reactor,
-        # not a new component tree.
-        comp_copy = comp.copy()
-        comp_copy.filter_components(dims_to_show)
+        comp_copy = self._filter_copy_comps(dims_to_show, with_components)
 
         # if "xyz" is requested, construct the 3d cad
         # from each xyz component in the tree,
@@ -204,3 +217,31 @@ class Reactor:
             self._construct_xyz_cad(comp_copy, with_components, n_sectors)
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)
+
+    def plot(self, *dims: str, with_components: Optional[List[ComponentManager]] = None):
+        """
+        Plot the reactor.
+
+        Parameters
+        ----------
+        *dims:
+            The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
+            (default: 'xz')
+        with_components:
+            The components to construct when displaying CAD for xyz.
+            Defaults to None, which means show "all" components.
+        """
+        # give dims_to_show a default value
+        dims_to_show = ("xz",) if len(dims) == 0 else dims
+
+        for dim in dims_to_show:
+            if dim not in _PLOT_DIMS:
+                raise ReactorError(
+                    f"Invalid plotting dimension '{dim}'."
+                    f"Must be one of {str(_PLOT_DIMS)}"
+                )
+        for i, dim in enumerate(dims_to_show):
+            comp_copy = self._filter_copy_comps([dim], with_components)
+            ComponentPlotter(view=dim).plot_2d(
+                comp_copy, show=i == len(dims_to_show) - 1
+            )
