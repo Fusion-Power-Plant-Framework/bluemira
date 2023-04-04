@@ -165,8 +165,11 @@ class PanellingDesigner(Designer[np.ndarray]):
         Run the minimise panel length optimisation problem.
 
         If the optimisation fails, retry with an extra panel
-        ``max_retries`` times. Return ``None`` if the optimiser crashes,
-        which it can often do, with 'more than iter SQP iterations'.
+        ``max_retries`` times.
+
+        Return ``None`` as the first return value if the final
+        optimisation crashes with a 'more than iter SQP iterations'
+        error (which it often does given an infeasible problem).
         """
         try:
             x_opt = opt_problem.optimise()
