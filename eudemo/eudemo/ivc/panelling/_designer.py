@@ -85,7 +85,11 @@ class PanellingDesigner(Designer[np.ndarray]):
         * n_panel_increment_attempts: int
             The number of times to try incrementing the number of panels
             in order to satisfy the given constraints (default: 3).
-
+        * boundary_discretisation: int
+            The number of points to discretise the input boundary wire
+            into. A higher number here increases the fidelity in the
+            interpolation used in the :class:`.Paneller`, and can prevent
+            overlaps in the panels and boundary.
     """
 
     param_cls = PanellingDesignerParams
@@ -94,6 +98,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         "algorithm": "SLSQP",
         "opt_conditions": {"max_eval": 500, "ftol_rel": 1e-8},
         "n_panel_increment_attempts": 3,
+        "boundary_discretisation": 200,
     }
 
     def __init__(
@@ -104,10 +109,15 @@ class PanellingDesigner(Designer[np.ndarray]):
     ):
         super().__init__(params, build_config)
         self.wall_boundary = wall_boundary
+        self._n_boundary_discr = int(
+            self._get_config_or_default("boundary_discretisation")
+        )
 
     def run(self) -> np.ndarray:
         """Run the design problem, performing the optimisation."""
-        boundary = self.wall_boundary.discretize(byedges=True).xz
+        boundary = self.wall_boundary.discretize(
+            ndiscr=self._n_boundary_discr, byedges=True
+        ).xz
         opt_problem = self._set_up_opt_problem(boundary)
         initial_solution = opt_problem.paneller.joints(opt_problem.paneller.x0)
         max_retries = int(self._get_config_or_default("n_panel_increment_attempts"))
@@ -137,7 +147,9 @@ class PanellingDesigner(Designer[np.ndarray]):
         boundary, but does not guarantee the maximum angle and minimum
         length constraints are honoured.
         """
-        boundary = self.wall_boundary.discretize(byedges=True).xz
+        boundary = self.wall_boundary.discretize(
+            ndiscr=self._n_boundary_discr, byedges=True
+        ).xz
         paneller = Paneller(
             boundary, self.params.fw_a_max.value, self.params.fw_dL_min.value
         )
