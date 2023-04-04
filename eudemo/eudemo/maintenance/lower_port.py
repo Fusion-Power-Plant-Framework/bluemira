@@ -105,22 +105,22 @@ class LowerPortDesigner(Designer):
 
         # get padded divertor points
         div_gradient = (div_z_top - div_z_bot) / (div_x_outer - div_x_inner)
-        div_diag_length, _ = distance_to(
+        div_diag_len, _ = distance_to(
             [div_x_inner, 0, div_z_bot],
             [div_x_outer, 0, div_z_top],
         )
         (
             _,
-            div_top_outer_point,
+            div_padded_top_outer_point,
         ) = LowerPortDesigner._xz_points_dist_away_from(
             (div_x_inner, div_z_bot),
             div_gradient,
-            div_diag_length + lower_duct_angled_leg_padding / 2,
+            div_diag_len + lower_duct_angled_leg_padding / 2,
         )
-        (div_bot_inner_point, _) = LowerPortDesigner._xz_points_dist_away_from(
+        (div_padded_bot_inner_point, _) = LowerPortDesigner._xz_points_dist_away_from(
             (div_x_outer, div_z_top),
             div_gradient,
-            div_diag_length + lower_duct_angled_leg_padding / 2,
+            div_diag_len + lower_duct_angled_leg_padding / 2,
         )
 
         # get "search" points that will definitely intersect the tf_coil
@@ -132,7 +132,7 @@ class LowerPortDesigner(Designer):
             _,
             to_intc_search_point,
         ) = LowerPortDesigner._xz_points_dist_away_from(
-            div_top_outer_point,
+            div_padded_top_outer_point,
             lower_duct_angled_leg_gradient,
             r_search,
         )
@@ -140,7 +140,7 @@ class LowerPortDesigner(Designer):
             _,
             bi_intc_search_point,
         ) = LowerPortDesigner._xz_points_dist_away_from(
-            div_bot_inner_point,
+            div_padded_bot_inner_point,
             lower_duct_angled_leg_gradient,
             r_search,
         )
@@ -149,19 +149,19 @@ class LowerPortDesigner(Designer):
             {
                 "x": np.array(
                     [
-                        div_top_outer_point[0],
+                        div_padded_top_outer_point[0],
                         to_intc_search_point[0],
                         bi_intc_search_point[0],
-                        div_bot_inner_point[0],
+                        div_padded_bot_inner_point[0],
                     ]
                 ),
                 "y": 0,
                 "z": np.array(
                     [
-                        div_top_outer_point[1],
+                        div_padded_top_outer_point[1],
                         to_intc_search_point[1],
                         bi_intc_search_point[1],
-                        div_bot_inner_point[1],
+                        div_padded_bot_inner_point[1],
                     ]
                 ),
             },
@@ -186,14 +186,14 @@ class LowerPortDesigner(Designer):
         to_intc_point = max(to_intc_points, key=lambda p: p[0])
 
         top_outer_dist_to_intc_point, _ = distance_to(
-            [div_top_outer_point[0], 0, div_top_outer_point[1]],
+            [div_padded_top_outer_point[0], 0, div_padded_top_outer_point[1]],
             to_intc_point,
         )
         (
             _,
             duct_straight_leg_point,
         ) = LowerPortDesigner._xz_points_dist_away_from(
-            div_top_outer_point,
+            div_padded_top_outer_point,
             lower_duct_angled_leg_gradient,
             top_outer_dist_to_intc_point * lower_duct_angled_leg_extent_factor,
         )
@@ -218,7 +218,7 @@ class LowerPortDesigner(Designer):
             lower_duct_straight_leg_boundary,
         )
 
-        # fuse and cut the unec. bits off
+        # fuse and cut the construction bits off
         straight_cutters = boolean_cut(
             lower_duct_angled_leg,
             [lower_duct_straight_leg],

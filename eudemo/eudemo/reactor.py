@@ -324,14 +324,16 @@ if __name__ == "__main__":
         divertor_face,
         reactor.tf_coils.xz_outer_boundary(),
     )
-    straight_cutters = lower_port_designer.execute()
+    lower_duct_koz = lower_port_designer.execute()
 
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
         reference_eq,
         reactor.tf_coils.xz_outer_boundary(),
-        pf_coil_keep_out_zones=[],
+        pf_coil_keep_out_zones=[
+            lower_duct_koz,
+        ],
     )
 
     reactor.cryostat_thermal = build_cryots(
@@ -361,7 +363,7 @@ if __name__ == "__main__":
         reactor.cryostat.xz_boundary(),
     )
 
-    reactor.show_cad("xz")
+    # reactor.show_cad("xz")
     reactor.show_cad(n_sectors=2)
 
     sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
