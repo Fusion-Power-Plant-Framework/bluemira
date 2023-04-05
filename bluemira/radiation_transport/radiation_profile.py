@@ -55,7 +55,7 @@ if TYPE_CHECKING:
     from step_reactor.temp_flux_surface_maker import TempFsSolver
 
 
-SEP_CORRECTOR = 5e-3  # [m]
+SEP_CORRECTOR = 5e-2  # [m]
 E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
 
 
@@ -114,7 +114,7 @@ def upstream_temperature(
     # upstream power density
     p_fraction = lfs_p_fraction if lfs else 1 - lfs_p_fraction
     q_u = (p_fraction * p_sol) / a_par
-    #print(q_u/1000000, "q_u")
+
     # connection length from the midplane to the target
     if connection_length is None:
         l_tot = calculate_connection_length_flt(
@@ -223,7 +223,7 @@ def target_temperature(
     # Numerator and denominator of the upstream forcing function
     num_f = m_i_kg * 4 * (q_u**2)
     den_f = 2 * E_CHARGE * (gamma**2) * (E_CHARGE**2) * (n_u**2) * (t_u**2)
-    #print(E_CHARGE, "electron")
+
     # forcing function
     f_ev = num_f / den_f
 
@@ -250,12 +250,11 @@ def target_temperature(
 
     #test
     boltz = 1.380649e-23/(8.61e-5) #[J/K]
-    #print(boltz, "boltz")
+
     c_st = (2 * boltz * 5/m_i_kg)**(1/2)
-    #print(c_st, "c_st")
+
     q_t = 7*boltz*5*7.5e20*c_st
-    #print(q_u/1000000, "q_up")
-    #print(q_t/1000000, "q_target")
+
     return t_tar
 
 
@@ -339,10 +338,10 @@ def random_point_temperature(
         d = -SEP_CORRECTOR
 
     # Distance between the chosen point and the the target
-    if (lfs and z_p < o_pt_z) or (not lfs and z_p > o_pt_z):
-        forward = True
-    else:
+    if lfs:
         forward = False
+    else:
+        forward = True
     l_p = calculate_connection_length_flt(
         eq,
         x_p + (d * f_exp),
@@ -356,6 +355,7 @@ def random_point_temperature(
             eq,
             r_sep_mp,
             z_mp,
+            forward=forward,
             first_wall=firstwall_geom,
         )
     else:
@@ -363,6 +363,8 @@ def random_point_temperature(
 
     # connection length from mp to p point
     s_p = l_tot - l_p
+    if round(abs(z_p)) == 0:
+        s_p = 0
 
     # Local temperature
     t_p = ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
@@ -704,7 +706,7 @@ def calculate_line_radiation_loss(ne, p_loss_f, species_frac):
     (species_frac[0] * (ne**2) * p_loss_f) * 1e-6: np.array
         Line radiation losses [MW m^-3]
     """
-    #print(species_frac)
+
     return (species_frac * (ne**2) * p_loss_f) * 1e-6
 
 
@@ -879,7 +881,7 @@ def detect_radiation(wall_detectors, n_samples, world):
 
         # Use the power pipeline to record total power arriving at the surface
         power_data = PowerPipeline0D()
-        #print(power_data)
+
 
         pixel_transform = translate(
             centre_point.x, centre_point.y, centre_point.z
@@ -1063,7 +1065,7 @@ def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_ti
         extent=[min_r, max_r, min_z, max_z],
         clim=(0.0, np.amax(t_samples) * 1.0e-6),
     )
-    print(t_samples)
+
     segs = []
 
     for i in np.arange(len(wall_detectors)):
@@ -1733,7 +1735,8 @@ class ScrapeOffLayerRadiation(Radiation):
             toward the pfr
         """
         if main_ext is None:
-            main_ext = self.points["x_point"]["z_up"]
+            main_ext = abs(self.points["x_point"]["z_low"])
+
         if low_div is True:
             z_main = self.points["x_point"]["z_low"] + main_ext
             z_pfr = self.points["x_point"]["z_low"] - pfr_ext
@@ -1855,7 +1858,7 @@ class ScrapeOffLayerRadiation(Radiation):
         if te_sep is None:
             te_sep = self.params.T_e_sep
         ne_sep = self.params.n_e_sep
-        #print(ne_sep, "n_sep")
+
         te_sol, ne_sol = electron_density_and_temperature_sol_decay(
             te_sep,
             ne_sep,
@@ -2104,7 +2107,7 @@ class ScrapeOffLayerRadiation(Radiation):
         t_u_ev = constants.raw_uc(t_u_kev, "keV", "eV")
         p_sol = constants.raw_uc(self.params.P_sep, "MW", "W")
         f_ion_t = constants.raw_uc(self.params.f_ion_t, "keV", "eV")
-        #print(p_sol, "input p sol")
+
         t_mp_prof, n_mp_prof = self.mp_electron_density_temperature_profiles(
             t_u_kev, lfs
         )
@@ -2177,8 +2180,7 @@ class ScrapeOffLayerRadiation(Radiation):
             t_out_prof,
             detachment=detachment,
         )
-        #print(n_out_prof[0], n_tar_prof[0], "n_rec and n_tar")
-        #print(detachment, lfs, t_u_ev, t_out_prof[0], t_tar_prof[0])
+
         # temperature poloidal distribution
         t_pol = [
             self.flux_tube_pol_t(
@@ -2202,6 +2204,7 @@ class ScrapeOffLayerRadiation(Radiation):
             )
         ]
         #print(n_mp_prof[0], n_in_prof[0], n_out_prof[0], n_tar_prof[0])
+        #print(t_mp_prof[0], t_in_prof[0], t_out_prof[0], t_tar_prof[0])
         # density poloidal distribution
         n_pol = [
             self.flux_tube_pol_n(
@@ -2396,7 +2399,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.x_strike_lfs = self.flux_tubes_lfs_low[0].coords.x[-1]
         self.z_strike_lfs = self.flux_tubes_lfs_low[0].coords.z[-1]
         self.alpha_lfs = self.flux_tubes_lfs_low[0].alpha
-        # print(self.alpha_lfs)
+
         self.b_pol_out_tar = self.eq.Bp(self.x_strike_lfs, self.z_strike_lfs)
         self.b_tor_out_tar = self.eq.Bt(self.x_strike_lfs)
         self.b_tot_out_tar = np.hypot(self.b_pol_out_tar, self.b_tor_out_tar)
@@ -2404,7 +2407,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.x_strike_hfs = self.flux_tubes_hfs_low[0].coords.x[-1]
         self.z_strike_hfs = self.flux_tubes_hfs_low[0].coords.z[-1]
         self.alpha_hfs = self.flux_tubes_hfs_low[0].alpha
-        # print(self.alpha_hfs)
+
         self.b_pol_inn_tar = self.eq.Bp(self.x_strike_hfs, self.z_strike_hfs)
         self.b_tor_inn_tar = self.eq.Bt(self.x_strike_hfs)
         self.b_tot_inn_tar = np.hypot(self.b_pol_inn_tar, self.b_tor_inn_tar)
@@ -2618,34 +2621,10 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             self.flux_surf_solver.flux_surfaces_ib_hfs,
         ]
         flux_tubes = sum(flux_tubes, [])
-
-        all_b_pol = []
-        all_b_tor = []
-        all_b_tot = []
-        phi_all = []
-        for flux_tube in flux_tubes:
-            for x, z in zip(flux_tube.coords.x, flux_tube.coords.z):
-                
-                b_pol = self.eq.Bp(x, z)
-                b_tor = self.eq.Bt(x)
-                b_tot = np.hypot(b_pol, b_tor)
-                all_b_pol.append(b_pol)
-                all_b_tor.append(b_tor)
-                all_b_tot.append(b_tot)
-                phi = np.arctan(b_pol/b_tot)
-                phi_all.append(phi)
     
-        all_b_pol = np.array([all_b_pol])
-        all_b_tor = np.array([all_b_tor])
-        all_b_tot = np.array([all_b_tot])
-        phi_all = np.array([phi_all])
         self.x_tot = np.concatenate([flux_tube.coords.x for flux_tube in flux_tubes])
         self.z_tot = np.concatenate([flux_tube.coords.z for flux_tube in flux_tubes])
         self.rad_tot = np.concatenate(power)
-        test1 = np.array([2,3,4])
-        test2 = np.array([10,20,30])
-        self.rad_tot = self.rad_tot * np.sin(phi_all[0])
-        #print(test1*test2)
 
     def plot_poloidal_radiation_distribution(self, firstwall_geom: Grid):
         """
@@ -2707,7 +2686,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         # partial flux tube from the mp to the target at the
         # outboard and inboard - lower divertor
         self.flux_tubes_lfs = self.flux_surf_solver.flux_surfaces_ob_lfs
-        self.flux_tubes_hfs = self.flux_surf_solver.flux_surfaces_ob_lfs
+        self.flux_tubes_hfs = self.flux_surf_solver.flux_surfaces_ob_hfs
 
         # strike points from the first open flux tube
         self.x_strike_lfs = self.flux_tubes_lfs[0].coords.x[-1]
@@ -2781,7 +2760,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 "x_point_rad": False,
                 "detachment": False,
                 "lfs": side == "lfs",
-                "low_div": None,
+                "low_div": True,
                 "main_chamber_rad": True,
             }
             for side in ["lfs", "hfs"]
