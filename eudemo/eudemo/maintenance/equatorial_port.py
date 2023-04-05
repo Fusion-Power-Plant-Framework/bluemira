@@ -163,8 +163,8 @@ class EquatorialPortDuctBuilder(Builder):
 
         return self.component_tree(
             xz=[self.build_xz()],
-            xy=self.build_xy(),
-            xyz=self.build_xyz(),
+            xy=[self.build_xy()],
+            xyz=[self.build_xyz()],
         )
 
     def build_xz(self) -> PhysicalComponent:
@@ -221,7 +221,7 @@ class CastellationBuilder(Builder):
         start_profile: BluemiraFace,
         extrude_direction: Iterable,
         offsets: Union[float, Iterable],
-        depth_offsets: Union[float, Iterable],
+        depth_offsets: Optional[Union[float, Iterable]] = None,
         n_castellation: Optional[int] = None,
     ):
         super().__init__(params, build_config)
@@ -238,7 +238,6 @@ class CastellationBuilder(Builder):
         """
         # TODO: Implement corner radii using PR #1992
         self.r_rad = self.params.cst_r_corner.value
-        self.n = self.params.n_components.value
 
         xyz_solid = self.build_castellations(
             self.face, self.vec, self.length, self.off, self.cst, self.n_cst
@@ -250,8 +249,8 @@ class CastellationBuilder(Builder):
 
         return self.component_tree(
             xz=[self.build_xz(xz_slice)],
-            xy=self.build_xy(xy_slice),
-            xyz=self.build_xyz(xyz_solid),
+            xy=[self.build_xy(xy_slice)],
+            xyz=[self.build_xyz(xyz_solid)],
         )
 
     def build_xz(self, xz: BluemiraFace) -> PhysicalComponent:
@@ -283,9 +282,9 @@ class CastellationBuilder(Builder):
         face: BluemiraFace,
         vec: tuple,
         length: float,
-        distances: Optional[Union[float, Iterable]],
         offsets: Union[float, Iterable],
-        num_castellation: Optional[int],
+        distances: Optional[Iterable] = None,
+        n_cast: Optional[int] = None,
     ) -> BluemiraSolid:
         """
         Returns BluemiraSolid for a BluemiraFace castellated along a given vector
@@ -298,11 +297,11 @@ class CastellationBuilder(Builder):
             unit vector along which to extrude
         length: float
             total length of castellated BluemiraSolid in vec direction
-        distances: Optional[Union[float, Iterable]]
-            (optional) parameter for manually spaced castellations
         offsets: Union[float, Iterable]
-            castellations offsets for each position
-        num_castellation: Optional[int]
+            castellations offset(s) for each position
+        distances: Optional[Iterable]
+            (optional) parameter for manually spaced castellations
+        n_cast: Optional[int]
             (optional) parameter for equally spaced castellations
         """
         base = face
@@ -313,18 +312,32 @@ class CastellationBuilder(Builder):
         if vec_mag != 1.0:
             vec /= vec_mag
 
-        if num_castellation is not (None or 0.0):
-            interval = length / (num_castellation + 1)
-            offset_iterable = [interval * i for i in range(1, num_castellation + 1)]
+        # Check/Set-up distances iterable
+        if not ((n_cast is None) or (n_cast == 0)):
+            interval = length / (n_cast + 1)
+            dist_iter = [interval * i for i in range(1, n_cast + 1)]
         else:
-            offset_iterable = offsets
-        parameter_array = list(zip(distances, offset_iterable))
+            if distances is not None:
+                dist_iter = distances
+            else:
+                raise ValueError("Both distance and n_cast parameters are None")
+
+        # Check/Set-up offsets iterable
+        if type(offsets) == float:
+            off_iter = [offsets] * len(dist_iter)
+        else:
+            if len(offsets) == len(dist_iter):
+                off_iter = offsets
+            else:
+                raise ValueError("Length of offsets doesn't match distances/n_cast")
+
+        parameter_array = list(zip(dist_iter, off_iter))
         parameter_array.append((length, 0.0))
         _prev_dist = 0
-        for dist, offset in parameter_array:
+        for dist, off in parameter_array:
             ext_vec = np.array(vec) * (dist - _prev_dist)
             sections.append(extrude_shape(base, ext_vec))
             base.translate(ext_vec)
-            base = BluemiraFace(offset_wire(BluemiraWire(base.wires), offset))
+            base = BluemiraFace(offset_wire(BluemiraWire(base.wires), off))
             _prev_dist = dist
         return boolean_fuse(sections)

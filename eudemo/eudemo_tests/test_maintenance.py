@@ -138,7 +138,6 @@ class TestCastellationBuilder:
     def setup_method(self) -> None:
         """Set-up Castellation Builder"""
         self.params = {
-            "n_components": {"value": 10, "unit": ""},
             "cst_r_corner": {"value": 0, "unit": "m"},
         }
 
@@ -150,8 +149,8 @@ class TestCastellationBuilder:
             [5.0, 4.0, 2.0],  # z_height
             [3.0, 2.0, 1.0],  # y_widths
             [(1, 0, 0), (1, 0, 0), (1, 0, 0.5)],  # extrusion vectors
-            [[3.0], [2.0, 4.0], [1.0]],  # x castellation_positions
             [[1.0], [1.0, 1.0], [0.5]],  # y/z castellation_offsets
+            [[3.0], [2.0, 4.0], [1.0]],  # x castellation_positions
             [185.0, 160.0, 12.521980674],  # volume check value of Eq. Ports
         ),
     )
