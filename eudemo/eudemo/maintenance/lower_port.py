@@ -23,12 +23,13 @@
 EU-DEMO Lower Port
 """
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Type, Union
+from typing import Dict, Iterable, List, Tuple, Type, Union
 
 import numpy as np
 
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.display import show_cad
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -91,6 +92,9 @@ class LowerPortDesigner(Designer):
         self.lower_port_angle = self.params.lower_port_angle.value
         self.lower_port_size = 2
 
+        self.n_TF = self.params.n_TF.value
+        self.tf_coil_thickness = 0.7
+
     def run(self) -> Tuple[BluemiraFace, BluemiraWire]:
         """Run method of Designer"""
         div_z_top = self.divertor_face.bounding_box.z_max
@@ -99,52 +103,38 @@ class LowerPortDesigner(Designer):
         div_x_inner = self.divertor_face.bounding_box.x_min
         div_x_outer = self.divertor_face.bounding_box.x_max
 
-        straight_duct_z_top = (
-            self.tf_coil_xz_boundary.bounding_box.z_min
-            - self.lower_port_straight_duct_tf_z_offset
-        )
-
-        angled_duct_boundary = self._angled_duct_boundary(
+        (
+            padded_top_outer_point,
+            padded_bottom_inner_point,
+        ) = self._pad_angled_duct_points(
             xz_top_outer_point=(div_x_outer, div_z_top),
             xz_bottom_inner_point=(div_x_inner, div_z_bot),
         )
-        angled_duct = BluemiraFace(
-            angled_duct_boundary,
+
+        duct_w_wall_boundary = self._lower_duct_w_wall_boundary(
+            top_outer_point=padded_top_outer_point,
+            bottom_inner_point=padded_bottom_inner_point,
+        )
+        duct_w_wall_koz = BluemiraFace(duct_w_wall_boundary)
+
+        outer_point, inner_point = self._get_wall_points(
+            duct_w_wall_koz,
+            padded_top_outer_point,
+            padded_bottom_inner_point,
         )
 
-        straight_duct_boundary = self._straight_duct_boundary(
-            angled_duct_boundary=angled_duct_boundary,
-            top_z_point=straight_duct_z_top,
-        )
-        straight_duct = BluemiraFace(
-            straight_duct_boundary,
+        radial_extrude_face = self._radial_extrude_face_boundary(
+            outer_point,
+            inner_point,
         )
 
-        angled_cuts = boolean_cut(
-            angled_duct,
-            [straight_duct],
-        )
-        lower_duct_vacant_space = boolean_fuse(
-            [angled_cuts[0], straight_duct],
-        )
+        return duct_w_wall_koz, radial_extrude_face
 
-        lower_duct_koz = BluemiraFace(
-            offset_wire(
-                lower_duct_vacant_space.wires[0],
-                self.lower_port_duct_wall_thickness,
-            )
-        )
-
-        return lower_duct_koz
-
-    def _angled_duct_boundary(
+    def _pad_angled_duct_points(
         self,
         xz_top_outer_point: Tuple,
         xz_bottom_inner_point: Tuple,
     ):
-        r_search = 50  # must just be large
-
-        # get padded divertor points
         points_grad = (xz_top_outer_point[1] - xz_bottom_inner_point[1]) / (
             xz_top_outer_point[0] - xz_bottom_inner_point[0]
         )  # z/x
@@ -166,8 +156,143 @@ class LowerPortDesigner(Designer):
             points_grad,
             points_len + self.lower_port_angled_duct_padding / 2,
         )
+        return padded_top_outer_point, padded_bot_inner_point
 
-        angle_grad = np.tan(np.deg2rad(self.lower_port_angle))  # z/x
+    def _get_wall_points(
+        self,
+        duct_w_wall_koz: BluemiraFace,
+        padded_top_outer_point: Tuple,
+        padded_bottom_inner_point: Tuple,
+    ):
+        wall_top_outer_point = duct_w_wall_koz.vertexes.points[
+            duct_w_wall_koz.vertexes.argmin(
+                [
+                    padded_top_outer_point[0],
+                    0,
+                    padded_top_outer_point[1],
+                ]
+            )
+        ]
+        wall_bot_inner_point = duct_w_wall_koz.vertexes.points[
+            duct_w_wall_koz.vertexes.argmin(
+                [
+                    padded_bottom_inner_point[0],
+                    0,
+                    padded_bottom_inner_point[1],
+                ]
+            )
+        ]
+
+        return wall_top_outer_point, wall_bot_inner_point
+
+    def _radial_extrude_face_boundary(
+        self,
+        outer_point: Iterable,
+        inner_point: Iterable,
+    ) -> BluemiraWire:
+        def _calc_y_point(x_point):
+            half_beta = np.pi / self.n_TF
+            total_space = np.sin(half_beta) * x_point
+            less_thickness = total_space - self.tf_coil_thickness
+
+            if less_thickness < 0:
+                raise GeometryError(
+                    "LowerPortDesigner: tf_coil_thickness is too large for the"
+                    f" space between TF coils at x={x_point}."
+                )
+
+            y_at_thickness_proj = less_thickness / np.tan(half_beta)
+            return y_at_thickness_proj
+
+        outer_y_point = _calc_y_point(outer_point[0])
+        inner_y_point = _calc_y_point(inner_point[0])
+
+        outer = make_polygon(
+            {
+                "x": np.array(
+                    [
+                        outer_point[0],
+                        outer_point[0],
+                        inner_point[0],
+                        inner_point[0],
+                    ]
+                ),
+                "y": np.array(
+                    [
+                        outer_y_point,
+                        -outer_y_point,
+                        -inner_y_point,
+                        inner_y_point,
+                    ]
+                ),
+                "z": np.array(
+                    [
+                        outer_point[2],
+                        outer_point[2],
+                        inner_point[2],
+                        inner_point[2],
+                    ]
+                ),
+            },
+            closed=True,
+        )
+        inner = offset_wire(outer, -self.lower_port_duct_wall_thickness)
+
+        outer = BluemiraFace(outer)
+        inner = BluemiraFace(inner)
+
+        resolved = boolean_cut(outer, [inner])
+        return resolved[0]
+
+    def _lower_duct_w_wall_boundary(
+        self,
+        top_outer_point: Tuple,
+        bottom_inner_point: Tuple,
+    ):
+        angled_duct_boundary = self._angled_duct_boundary(
+            top_outer_point,
+            bottom_inner_point,
+        )
+        angled_duct = BluemiraFace(
+            angled_duct_boundary,
+        )
+
+        straight_duct_z_top = (
+            self.tf_coil_xz_boundary.bounding_box.z_min
+            - self.lower_port_straight_duct_tf_z_offset
+            # when the face is offset,
+            # the wall thickness is added to the z, so subtract it here
+            - self.lower_port_duct_wall_thickness
+        )
+
+        straight_duct_boundary = self._straight_duct_boundary(
+            angled_duct_boundary,
+            top_z_point=straight_duct_z_top,
+        )
+        straight_duct = BluemiraFace(
+            straight_duct_boundary,
+        )
+
+        angled_cuts = boolean_cut(
+            angled_duct,
+            [straight_duct],
+        )
+        top_piece = angled_cuts[0]
+        duct_inner = boolean_fuse([top_piece, straight_duct])
+
+        return offset_wire(
+            duct_inner.wires[0],
+            self.lower_port_duct_wall_thickness,
+        )
+
+    def _angled_duct_boundary(
+        self,
+        top_outer_point: Tuple,
+        bottom_inner_point: Tuple,
+    ):
+        r_search = 50  # must just be large
+
+        angled_duct_grad = np.tan(np.deg2rad(self.lower_port_angle))  # z/x
 
         # get "search" points to construct a really long angle duct
         # that will intersect the straight duct
@@ -175,16 +300,16 @@ class LowerPortDesigner(Designer):
             _,
             to_intc_search_point,
         ) = LowerPortDesigner._xz_points_dist_away_from(
-            padded_top_outer_point,
-            angle_grad,
+            top_outer_point,
+            angled_duct_grad,
             r_search,
         )
         (
             _,
             bi_intc_search_point,
         ) = LowerPortDesigner._xz_points_dist_away_from(
-            padded_bot_inner_point,
-            angle_grad,
+            bottom_inner_point,
+            angled_duct_grad,
             r_search,
         )
 
@@ -192,19 +317,19 @@ class LowerPortDesigner(Designer):
             {
                 "x": np.array(
                     [
-                        padded_top_outer_point[0],
+                        top_outer_point[0],
                         to_intc_search_point[0],
                         bi_intc_search_point[0],
-                        padded_bot_inner_point[0],
+                        bottom_inner_point[0],
                     ]
                 ),
                 "y": 0,
                 "z": np.array(
                     [
-                        padded_top_outer_point[1],
+                        top_outer_point[1],
                         to_intc_search_point[1],
                         bi_intc_search_point[1],
-                        padded_bot_inner_point[1],
+                        bottom_inner_point[1],
                     ]
                 ),
             },

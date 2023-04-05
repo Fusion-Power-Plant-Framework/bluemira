@@ -324,7 +324,7 @@ if __name__ == "__main__":
         divertor_face,
         reactor.tf_coils.xz_outer_boundary(),
     )
-    lower_duct_koz = lower_port_designer.execute()
+    lower_duct_koz, extrude_face = lower_port_designer.execute()
 
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
