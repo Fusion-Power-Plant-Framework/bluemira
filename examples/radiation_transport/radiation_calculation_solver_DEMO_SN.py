@@ -196,40 +196,40 @@ def create_radiation_source(
         # Plot Radiative loss function
         rad_solver.core_rad.plot_lz_vs_tref()
 
-        # # SOL Radiation Distribution
-        # rad_solver.sol_rad.plot_poloidal_radiation_distribution(fw_shape)
-        # # Individual plots for temperature and density from the mid-plane to the target
-        # # LFS
-        # rad_solver.sol_rad.poloidal_distribution_plot(
-        #     rad_solver.sol_rad.flux_tubes_lfs_low,
-        #     rad_solver.sol_rad.t_and_n_pol["lfs_low"][0],
-        # )
-        # rad_solver.sol_rad.poloidal_distribution_plot(
-        #     rad_solver.sol_rad.flux_tubes_lfs_low,
-        #     rad_solver.sol_rad.t_and_n_pol["lfs_low"][1],
-        #     temperature=False,
-        # )
-        # # HFS
-        # rad_solver.sol_rad.poloidal_distribution_plot(
-        #     rad_solver.sol_rad.flux_tubes_hfs_low,
-        #     rad_solver.sol_rad.t_and_n_pol["hfs_low"][0],
-        # )
-        # rad_solver.sol_rad.poloidal_distribution_plot(
-        #     rad_solver.sol_rad.flux_tubes_hfs_low,
-        #     rad_solver.sol_rad.t_and_n_pol["hfs_low"][1],
-        #     temperature=False,
-        # )
+        # SOL Radiation Distribution
+        rad_solver.sol_rad.plot_poloidal_radiation_distribution(fw_shape)
+        # Individual plots for temperature and density from the mid-plane to the target
+        # LFS
+        rad_solver.sol_rad.poloidal_distribution_plot(
+            rad_solver.sol_rad.flux_tubes_lfs,
+            rad_solver.sol_rad.t_and_n_pol["lfs"][0],
+        )
+        rad_solver.sol_rad.poloidal_distribution_plot(
+            rad_solver.sol_rad.flux_tubes_lfs,
+            rad_solver.sol_rad.t_and_n_pol["lfs"][1],
+            temperature=False,
+        )
+        # HFS
+        rad_solver.sol_rad.poloidal_distribution_plot(
+            rad_solver.sol_rad.flux_tubes_hfs,
+            rad_solver.sol_rad.t_and_n_pol["hfs"][0],
+        )
+        rad_solver.sol_rad.poloidal_distribution_plot(
+            rad_solver.sol_rad.flux_tubes_hfs,
+            rad_solver.sol_rad.t_and_n_pol["hfs"][1],
+            temperature=False,
+        )
 
-        # # Temperature VS Density for the first open flux surface
-        # first_sol_fs_lfs = rad_solver.sol_rad.flux_tubes_lfs_low[0]
-        # t_distribution = rad_solver.sol_rad.t_and_n_pol["lfs_low"][0][0]
-        # n_distribution = rad_solver.sol_rad.t_and_n_pol["lfs_low"][1][0]
-        # rad_solver.sol_rad.plot_t_vs_n(first_sol_fs_lfs, t_distribution, n_distribution)
+        # Temperature VS Density for the first open flux surface
+        first_sol_fs_lfs = rad_solver.sol_rad.flux_tubes_lfs[0]
+        t_distribution = rad_solver.sol_rad.t_and_n_pol["lfs"][0][0]
+        n_distribution = rad_solver.sol_rad.t_and_n_pol["lfs"][1][0]
+        rad_solver.sol_rad.plot_t_vs_n(first_sol_fs_lfs, t_distribution, n_distribution)
 
-        # first_sol_fs_hfs = rad_solver.sol_rad.flux_tubes_hfs_low[0]
-        # t_distribution = rad_solver.sol_rad.t_and_n_pol["hfs_low"][0][0]
-        # n_distribution = rad_solver.sol_rad.t_and_n_pol["hfs_low"][1][0]
-        # rad_solver.sol_rad.plot_t_vs_n(first_sol_fs_hfs, t_distribution, n_distribution)
+        first_sol_fs_hfs = rad_solver.sol_rad.flux_tubes_hfs[0]
+        t_distribution = rad_solver.sol_rad.t_and_n_pol["hfs"][0][0]
+        n_distribution = rad_solver.sol_rad.t_and_n_pol["hfs"][1][0]
+        rad_solver.sol_rad.plot_t_vs_n(first_sol_fs_hfs, t_distribution, n_distribution)
 
         plt.show()
 

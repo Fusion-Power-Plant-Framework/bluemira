@@ -1627,8 +1627,11 @@ class CoreRadiation(Radiation):
         p_max = max([np.amax(p) for p in power_density])
 
         separatrix = self.eq.get_separatrix()
+        if isinstance(separatrix, Coordinates):
+            separatrix = [separatrix]
+
         for sep in separatrix:
-            plot_coordinates(sep, ax=ax, linewidth=2)
+            plot_coordinates(sep, ax=ax, linewidth=0.2)
         for flux_tube, p in zip(flux_tubes, power_density):
             cm = ax.scatter(
                 flux_tube.x,
@@ -2255,8 +2258,11 @@ class ScrapeOffLayerRadiation(Radiation):
         
         plot_coordinates(firstwall, ax=ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()
+        if isinstance(separatrix, Coordinates):
+            separatrix = [separatrix]
+
         for sep in separatrix:
-            plot_coordinates(sep, ax=ax, linewidth=2)
+            plot_coordinates(sep, ax=ax, linewidth=0.2)
         for flux_tube, p in zip(tubes, power):
             cm = ax.scatter(
                 flux_tube.coords.x,
@@ -2915,16 +2921,12 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         """
         self.radiation_distribution_plot(
             [
-                self.flux_tubes_lfs_low,
-                self.flux_tubes_hfs_low,
-                self.flux_tubes_lfs_up,
-                self.flux_tubes_hfs_up,
+                self.flux_tubes_lfs,
+                self.flux_tubes_hfs,
             ],
             [
-                self.total_rad_lfs_low,
-                self.total_rad_hfs_low,
-                self.total_rad_lfs_up,
-                self.total_rad_hfs_up,
+                self.total_rad_lfs,
+                self.total_rad_hfs,
             ],
             firstwall_geom,
         )
@@ -3173,8 +3175,11 @@ class RadiationSolver:
         p_max = max(self.rad_tot)
 
         separatrix = self.eq.get_separatrix()
+        if isinstance(separatrix, Coordinates):
+            separatrix = [separatrix]
+
         for sep in separatrix:
-            plot_coordinates(sep, ax=ax, linewidth=2)
+            plot_coordinates(sep, ax=ax, linewidth=0.2)
         cm = ax.scatter(
             self.x_tot,
             self.z_tot,
