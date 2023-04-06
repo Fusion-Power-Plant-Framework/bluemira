@@ -23,13 +23,11 @@
 Aesthetic and ambiance functions.
 """
 
-import datetime
 import logging
 import os
 import platform
 import shutil
 import subprocess  # noqa :S404
-import time
 from getpass import getuser
 from textwrap import dedent, wrap
 
@@ -412,74 +410,6 @@ def bluemira_error_clean(string):
         The string to colour print
     """
     _terminator_handler(LOGGER.error, _print_color(string, "red"))
-
-
-class BluemiraClock:
-    """
-    A printed progress bar.
-
-    Parameters
-    ----------
-    n_iter: int
-        The number of iterations
-    print_rate: int
-        The update rate
-    width: int
-        The width of the progress bar
-    """
-
-    def __init__(self, n_iter, print_rate=1, width=73):
-        self.rate = print_rate
-        self.elapsed = " elapsed"
-        self.left = " left"
-
-        self.width = (
-            width - len(self.elapsed) - len(self.left) - 2 * (9 + len(str(n_iter))) - 17
-        )
-
-        # Constructors
-        self.i = 0
-        self.t_start = None
-        self.n_iter = None
-
-        self.start(n_iter)
-
-    def start(self, n_iter):
-        """
-        Start the clock.
-        """
-        self.i = 0
-        self.t_start = time.time()
-        self.n_iter = n_iter
-
-    def stop(self):
-        """
-        Stop the clock.
-        """
-        return time.time() - self.t_start
-
-    def tock(self):
-        """
-        Tick the iterations of the clock over.
-        """
-        self.i += 1
-        if self.i % self.rate == 0 and self.i > 0:
-            elapsed = time.time() - self.t_start
-            remain = elapsed * (self.n_iter - self.i) / self.i
-            prog_str = f"{self.i:1d}/{self.n_iter:1d}"
-
-            str_elapsed = str(datetime.timedelta(seconds=int(elapsed)))
-            str_left = str(datetime.timedelta(seconds=int(remain)))
-            prog_str += f" {str_elapsed:0>8}s{self.elapsed}"
-            prog_str += f" {str_left:0>8}s{self.left}"
-            prog_str += f" {1e2 * self.i / self.n_iter:1.1f}%"
-            nh = int((self.i / self.n_iter) * self.width)
-            prog_str += " |" + nh * "#" + (self.width - nh) * "-" + "|"
-
-            bluemira_print_flush(prog_str)
-
-        if self.i == self.n_iter:
-            print("\n")
 
 
 # =============================================================================

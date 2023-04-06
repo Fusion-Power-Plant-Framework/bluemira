@@ -26,8 +26,9 @@ from collections.abc import Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
+from rich.progress import track
 
-from bluemira.base.look_and_feel import BluemiraClock, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_warn
 
 __all__ = ["FuelCycleAnalysis"]
 
@@ -88,10 +89,8 @@ class FuelCycleAnalysis:
         if not isinstance(timelines, Iterable):  # Single timeline
             timelines = [timelines]
 
-        clock = BluemiraClock(len(timelines))
-        for timeline in timelines:
+        for timeline in track(timelines):
             self.model.run(timeline)
-            clock.tock()
             self.m_T_req.append(self.model.m_T_req)
             self.t_d.append(self.model.t_d)
             self.m_dot_release.append(self.model.m_dot_release)
