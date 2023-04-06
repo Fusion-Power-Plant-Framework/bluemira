@@ -88,12 +88,12 @@ class Builder(abc.ABC):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params
         The parameters required by the builder.
-    build_config: Dict
+    build_config
         The build configuration for the builder.
-    designer: Optional[Designer]
-        A designer to solve a design problem required by the builder.
+    verbose
+        control how much logging the designer will output
 
     Notes
     -----
