@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import logging
+
 import pytest
 
 from bluemira.base.tools import timing
@@ -32,6 +34,7 @@ def dummy(a, *, b=4):
     "print_name, records", [[True, ["INFO", "DEBUG"]], [False, ["DEBUG", "DEBUG"]]]
 )
 def test_timing(print_name, records, caplog):
+    caplog.set_level(logging.INFO)
     assert timing(dummy, "debug", "print", print_name=print_name)(1, b=2) == (1, 2)
     assert len(caplog.records) == 2
     assert [r.levelname for r in caplog.records] == records
