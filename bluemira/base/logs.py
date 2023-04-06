@@ -25,6 +25,7 @@
 import logging
 import sys
 from enum import Enum
+from typing import Iterable, Union
 
 from bluemira.base.error import LogsError
 
@@ -87,7 +88,11 @@ def logger_setup(logfilename="bluemira.log", *, level="INFO"):
     return bm_logger
 
 
-def set_log_level(verbose=1, increase=False, logger_names=["bluemira"]):
+def set_log_level(
+    verbose: Union[int, str] = 1,
+    increase: bool = False,
+    logger_names: Iterable[str] = ["bluemira"],
+):
     """
     Get new log level and check if it is possible.
 
@@ -109,7 +114,7 @@ def set_log_level(verbose=1, increase=False, logger_names=["bluemira"]):
         _modify_handler(new_level, logger)
 
 
-def get_log_level(logger_name="bluemira", as_str=True):
+def get_log_level(logger_name="bluemira", as_str=True) -> Union[str, int]:
     """
     Return the current logging level.
 
@@ -133,20 +138,19 @@ def get_log_level(logger_name="bluemira", as_str=True):
         return max_level // 10
 
 
-def _convert_log_level(level, current_level=0):
+def _convert_log_level(level: Union[str, int], current_level: int = 0) -> LogLevel:
     """
     Convert the provided logging level to a LogLevel objects.
 
     Parameters
     ----------
-    level: str or int
+    level
         The bluemira logging level.
-    current_level: int
+    current_level
         The current bluemira logging level to increment from.
 
     Returns
     -------
-    new_level: LogLevel
         The LogLevel corresponding to the requested level.
     """
     try:
@@ -162,15 +166,15 @@ def _convert_log_level(level, current_level=0):
     return new_level
 
 
-def _modify_handler(new_level, logger):
+def _modify_handler(new_level: LogLevel, logger: logging.Logger):
     """
     Change level of the logger from user's input.
 
     Parameters
     ----------
-    new_level: LogLevel
+    new_level
         Severity level for handler to be changed to, from set_log_level
-    logger: logging.RootLogger
+    logger
         Logger to be used
     """
     for handler in logger.handlers or logger.parent.handlers:

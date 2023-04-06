@@ -26,7 +26,7 @@ File I/O functions and some path operations
 import os
 import pathlib
 from contextlib import contextmanager
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
 BM_ROOT = "!BM_ROOT!"
 SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
@@ -107,8 +107,8 @@ def get_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
 
 
 def try_get_bluemira_path(
-    path: str = "", subfolder: str = "bluemira", allow_missing=True
-):
+    path: str = "", subfolder: str = "bluemira", allow_missing: bool = True
+) -> Optional[str]:
     """
     Try to get the bluemira path of a module subfolder.
 
@@ -116,17 +116,16 @@ def try_get_bluemira_path(
 
     Parameters
     ----------
-    path: str
+    path:
         The desired path from which to create a full path
-    subfolder: str (default = 'bluemira')
+    subfolder
         The subfolder (from the bluemira root) in which to create a path
         Defaults to the source code folder, but can be e.g. 'tests', or 'data'
-    allow_missing: bool
+    allow_missing
         Whether or not to raise an error if the path does not exist
 
     Returns
     -------
-    path: Optional[str]
         The full path to the desired `path` in the subfolder specified, or None if the
         requested path doesn't exist.
 
@@ -144,7 +143,7 @@ def try_get_bluemira_path(
             raise error
 
 
-def make_bluemira_path(path: str = "", subfolder: str = "bluemira"):
+def make_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
     """
     Create a new folder in the path, provided one does not already exist.
     """
@@ -169,14 +168,14 @@ def force_file_extension(file_path: str, valid_extensions: Union[str, List[str]]
 
     Parameters
     ----------
-    file_path: str
+    file_path
         path to file
-    valid_extensions: Union[str, List[str]]
+    valid_extensions
         collection of valid extensions
 
     Returns
     -------
-    file_path: str
+    file_path
 
     """
     if isinstance(valid_extensions, str):
@@ -188,20 +187,19 @@ def force_file_extension(file_path: str, valid_extensions: Union[str, List[str]]
     return file_path
 
 
-def get_files_by_ext(folder: str, extension: str):
+def get_files_by_ext(folder: str, extension: str) -> List[str]:
     """
     Get filenames of files in folder with the specified extension.
 
     Parameters
     ----------
-    folder: str
+    folder
         The full path directory in which to look for files
-    extension: str
+    extension
         The extension of the desired file-type
 
     Returns
     -------
-    files: List[str]
         The list of full path filenames found in the folder
     """
     files = []
@@ -221,14 +219,13 @@ def file_name_maker(filename: str, lowercase: bool = False) -> str:
 
     Parameters
     ----------
-    filename: str
+    filename
         Full filename or path
-    lowercase: bool
+    lowercase
         Whether or not to force lowercase filenames
 
     Returns
     -------
-    filename: str
         Full filename or path, corrected
     """
     filename = filename.replace(" ", "_")
@@ -294,7 +291,7 @@ class FileManager:
         """
         return self._reference_data_root
 
-    def replace_bm_root(self, keyword=BM_ROOT):
+    def replace_bm_root(self, keyword: str = BM_ROOT):
         """
         Replace the keyword in input paths with path to local bluemira installation.
         """

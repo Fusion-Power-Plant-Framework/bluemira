@@ -24,7 +24,7 @@ Tool function and classes for the bluemira base module.
 """
 import time
 from functools import wraps
-from typing import Callable, TypeVar
+from typing import Callable, Dict, TypeVar
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
@@ -72,7 +72,7 @@ def _timing(
     return wrapper
 
 
-def create_compound_from_component(comp):
+def create_compound_from_component(comp: Component) -> BluemiraCompound:
     """
     Creates a BluemiraCompound from the children's shapes of a component.
     """
@@ -83,14 +83,13 @@ def create_compound_from_component(comp):
         for c in comp.leaves:
             if hasattr(c, "shape") and c.shape:
                 boundary.append(c.shape)
-    compound = BluemiraCompound(label=comp.name, boundary=boundary)
-    return compound
+    return BluemiraCompound(label=comp.name, boundary=boundary)
 
 
 # # =============================================================================
 # # Serialize and Deserialize
 # # =============================================================================
-def serialize_component(comp: Component):
+def serialize_component(comp: Component) -> Dict:
     """
     Serialize a Component object.
     """
