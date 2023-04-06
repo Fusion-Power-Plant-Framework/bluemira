@@ -86,7 +86,7 @@ class LowerPortDesigner(Designer):
         self.lower_port_angled_duct_padding = 0.2
 
         self.lower_port_straight_duct_tf_z_offset = 1
-        self.lower_port_straight_duct_inner_padding = 2
+        self.lower_port_straight_duct_inset_padding = 2
 
         self.lower_port_duct_wall_thickness = 0.1
         self.lower_port_angle = self.params.lower_port_angle.value
@@ -111,7 +111,11 @@ class LowerPortDesigner(Designer):
             xz_bottom_inner_point=(div_x_inner, div_z_bot),
         )
 
-        duct_w_wall_boundary = self._lower_duct_w_wall_boundary(
+        (
+            duct_w_wall_boundary,
+            straight_duct_start_top,
+            straight_duct_start_bot,
+        ) = self._lower_duct_w_wall_boundary(
             top_outer_point=padded_top_outer_point,
             bottom_inner_point=padded_bottom_inner_point,
         )
@@ -123,12 +127,17 @@ class LowerPortDesigner(Designer):
             padded_bottom_inner_point,
         )
 
-        radial_extrude_face = self._radial_extrude_face_boundary(
+        angled_duct_extrude_face = self._angled_duct_extrude_face(
             outer_point,
             inner_point,
         )
 
-        return duct_w_wall_koz, radial_extrude_face
+        straight_duct_extrude_face = self._straight_duct_extrude_face(
+            straight_duct_start_top,
+            straight_duct_start_bot,
+        )
+
+        return duct_w_wall_koz, angled_duct_extrude_face
 
     def _pad_angled_duct_points(
         self,
@@ -185,11 +194,58 @@ class LowerPortDesigner(Designer):
 
         return wall_top_outer_point, wall_bot_inner_point
 
-    def _radial_extrude_face_boundary(
+    def _straight_duct_extrude_face(
+        self,
+        start_top_point: Tuple,
+        start_bot_point: Tuple,
+    ) -> BluemiraFace:
+        x_point = start_top_point[0]
+        half_wall_to_wall_len = (start_top_point[1] - start_bot_point[1]) / 2
+
+        outer = make_polygon(
+            {
+                "x": np.array(
+                    [
+                        x_point,
+                        x_point,
+                        x_point,
+                        x_point,
+                    ]
+                ),
+                "y": np.array(
+                    [
+                        half_wall_to_wall_len,
+                        -half_wall_to_wall_len,
+                        -half_wall_to_wall_len,
+                        half_wall_to_wall_len,
+                    ]
+                ),
+                "z": np.array(
+                    [
+                        start_top_point[1],
+                        start_top_point[1],
+                        start_bot_point[1],
+                        start_bot_point[1],
+                    ]
+                ),
+            },
+            closed=True,
+        )
+        inner = offset_wire(outer, -self.lower_port_duct_wall_thickness)
+
+        outer = BluemiraFace(outer)
+        inner = BluemiraFace(inner)
+
+        resolved = boolean_cut(outer, [inner])
+        return resolved[0]
+
+    def _angled_duct_extrude_face(
         self,
         outer_point: Iterable,
         inner_point: Iterable,
-    ) -> BluemiraWire:
+    ) -> BluemiraFace:
+        # outer_point and inner_point are np arrays of length 3: x,y,z
+
         def _calc_y_point(x_point):
             half_beta = np.pi / self.n_TF
             total_space = np.sin(half_beta) * x_point
@@ -260,12 +316,12 @@ class LowerPortDesigner(Designer):
         straight_duct_z_top = (
             self.tf_coil_xz_boundary.bounding_box.z_min
             - self.lower_port_straight_duct_tf_z_offset
-            # when the face is offset,
-            # the wall thickness is added to the z, so subtract it here
+            # the wall thickness is adds to the z, so subtract it here
+            # to make the actual top of the duct at the correct z
             - self.lower_port_duct_wall_thickness
         )
 
-        straight_duct_boundary = self._straight_duct_boundary(
+        straight_duct_boundary, bottom_left_point = self._straight_duct_boundary(
             angled_duct_boundary,
             top_z_point=straight_duct_z_top,
         )
@@ -280,9 +336,22 @@ class LowerPortDesigner(Designer):
         top_piece = angled_cuts[0]
         duct_inner = boolean_fuse([top_piece, straight_duct])
 
-        return offset_wire(
-            duct_inner.wires[0],
-            self.lower_port_duct_wall_thickness,
+        nowall_in_x_straight_duct_start_top = (
+            bottom_left_point[0],
+            straight_duct_z_top,
+        )
+        nowall_in_x_straight_duct_start_bot = (
+            bottom_left_point[0],
+            bottom_left_point[1] - self.lower_port_duct_wall_thickness,
+        )
+
+        return (
+            offset_wire(
+                duct_inner.wires[0],
+                self.lower_port_duct_wall_thickness,
+            ),
+            nowall_in_x_straight_duct_start_top,
+            nowall_in_x_straight_duct_start_bot,
         )
 
     def _angled_duct_boundary(
@@ -362,32 +431,40 @@ class LowerPortDesigner(Designer):
 
         # left-most
         intc_point = min(intc_points, key=lambda p: p[0])
-        intc_point_padded = (
-            intc_point[0] - self.lower_port_straight_duct_inner_padding,
+        intc_point_inset = (
+            intc_point[0] - self.lower_port_straight_duct_inset_padding,
             intc_point[2],
         )
 
-        return make_polygon(
-            {
-                "x": np.array(
-                    [
-                        intc_point_padded[0],
-                        x_duct_extent,
-                        x_duct_extent,
-                        intc_point_padded[0],
-                    ]
-                ),
-                "y": 0,
-                "z": np.array(
-                    [
-                        intc_point_padded[1],
-                        intc_point_padded[1],
-                        intc_point_padded[1] - self.lower_port_size,
-                        intc_point_padded[1] - self.lower_port_size,
-                    ]
-                ),
-            },
-            closed=True,
+        x_duct_start = intc_point_inset[0]
+        z_duct_top = intc_point_inset[1]
+        z_duct_bottom = intc_point_inset[1] - self.lower_port_size
+
+        return (
+            make_polygon(
+                {
+                    "x": np.array(
+                        [
+                            x_duct_start,
+                            x_duct_extent,
+                            x_duct_extent,
+                            x_duct_start,
+                        ]
+                    ),
+                    "y": 0,
+                    "z": np.array(
+                        [
+                            z_duct_top,
+                            z_duct_top,
+                            z_duct_bottom,
+                            z_duct_bottom,
+                        ]
+                    ),
+                },
+                closed=True,
+            ),
+            # bottom left point
+            (x_duct_start, z_duct_bottom),
         )
 
     @staticmethod
