@@ -34,7 +34,7 @@ def dummy(a, *, b=4):
     "print_name, records", [[True, ["INFO", "DEBUG"]], [False, ["DEBUG", "DEBUG"]]]
 )
 def test_timing(print_name, records, caplog):
-    caplog.set_level(logging.INFO)
+    caplog.set_level(logging.DEBUG)
     assert timing(dummy, "debug", "print", print_name=print_name)(1, b=2) == (1, 2)
     assert len(caplog.records) == 2
     assert [r.levelname for r in caplog.records] == records
