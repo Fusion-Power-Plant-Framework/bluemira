@@ -22,9 +22,34 @@
 """
 Tool function and classes for the bluemira base module.
 """
+import time
+from typing import Callable
+
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.tools import serialize_shape
+
+
+def timing(
+    func: Callable, timing_str: str, print_str: str = "", print_name: bool = True
+) -> Callable:
+    """Time a function and push to logging"""
+
+    def wrapper(*args, **kwargs):
+        """Time a function wrapper"""
+        if print_name:
+            bluemira_print(print_str)
+        else:
+            bluemira_debug(print_str)
+        t1 = time.perf_counter()
+        out = func(*args, **kwargs)
+        t2 = time.perf_counter()
+        bluemira_debug(f"{timing_str} {t2 - t1:.5g} s")
+        return out
+
+    wrapper.__doc__ = func.__doc__
+    return wrapper
 
 
 def create_compound_from_component(comp):

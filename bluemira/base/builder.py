@@ -26,13 +26,12 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-import time
 from typing import Dict, List, Optional, Type, Union
 
 from bluemira.base.components import Component
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
+from bluemira.base.tools import timing
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
@@ -106,6 +105,8 @@ class Builder(abc.ABC):
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
         build_config: Optional[Dict] = None,
+        *,
+        verbose=True,
     ):
         super().__init__()
         self.params = make_parameter_frame(params, self.param_cls)
@@ -113,16 +114,9 @@ class Builder(abc.ABC):
         self.name = self.build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
         )
-        self._build = self.build
-        self.build = self._build_wrapper
-
-    def _build_wrapper(self) -> Component:
-        """Build the component."""
-        bluemira_print(f"Building {self.name}")
-        t1 = time.perf_counter()
-        out = self._build()
-        bluemira_debug(f"Built in {time.perf_counter() - t1:.2g} s")
-        return out
+        self.build = timing(
+            self.build, "Built in", f"Building {self.name}", print_name=verbose
+        )
 
     @abc.abstractproperty
     def param_cls(self) -> Union[Type[ParameterFrame], None]:

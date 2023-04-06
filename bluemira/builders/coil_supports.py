@@ -321,7 +321,7 @@ class PFCoilSupportBuilder(Builder):
         tf_xz_keep_out_zone: BluemiraWire,
         pf_coil_xz: BluemiraWire,
     ):
-        super().__init__(params, build_config)
+        super().__init__(params, build_config, verbose=False)
         self.tf_xz_keep_out_zone = tf_xz_keep_out_zone
         self.pf_coil_xz = pf_coil_xz
         self.name = f"{self.name} {self.build_config.get('support_number', 0)}"

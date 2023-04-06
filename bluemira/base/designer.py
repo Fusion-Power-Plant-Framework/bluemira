@@ -23,12 +23,11 @@ Interface for designer classes.
 """
 
 import abc
-import time
 from typing import Callable, Dict, Generic, Optional, Type, TypeVar, Union
 
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
+from bluemira.base.tools import timing
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 
@@ -57,10 +56,19 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
         build_config: Optional[Dict] = None,
+        *,
+        verbose=True,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config if build_config is not None else {}
         self._run_func = self._get_run_func(self.run_mode)
+
+        self.execute = timing(
+            self.execute,
+            "Executed in",
+            f"Executing {type(self).__name__}",
+            print_name=verbose,
+        )
 
     def execute(self) -> _DesignerReturnT:
         """
@@ -68,11 +76,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
         By default the run mode is 'run'.
         """
-        bluemira_print(f"Executing {type(self).__name__}")
-        t1 = time.perf_counter()
-        out = self._run_func()
-        bluemira_debug(f"Executed in {time.perf_counter() - t1:.2g} s")
-        return out
+        return self._run_func()
 
     @abc.abstractmethod
     def run(self) -> _DesignerReturnT:
