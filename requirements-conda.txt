@@ -3,7 +3,7 @@ cached-property==1.5.2
 cftime==1.6.2
 gmsh-interop==2021.1.1
 h5py==3.7.0
-importlib-metadata==6.1.0
+importlib-metadata==6.3.0
 pybind11==2.10.4
 pybind11-global==2.10.4
 PySide2==5.15.5
