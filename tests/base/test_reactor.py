@@ -70,7 +70,7 @@ class TestReactor:
         self.reactor.show_cad()
 
     @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
-    def test_ReactorError_given_invalid_plotting_dimension(self, bad_dim):
+    def test_ComponentError_given_invalid_plotting_dimension(self, bad_dim):
         with pytest.raises(ComponentError):
             self.reactor.show_cad(dim=bad_dim)
 
@@ -82,8 +82,8 @@ class TestReactor:
             self.reactor.plot(dim)
 
     @pytest.mark.parametrize("bad_dim", ["i", 1, ["x"]])
-    def test_ReactorError_given_invalid_plot_dimension_plot(self, bad_dim):
-        with pytest.raises(ReactorError):
+    def test_ComponentError_given_invalid_plot_dimension_plot(self, bad_dim):
+        with pytest.raises(ComponentError):
             self.reactor.plot(bad_dim)
 
     @staticmethod
