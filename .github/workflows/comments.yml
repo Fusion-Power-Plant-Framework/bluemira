@@ -75,7 +75,7 @@ jobs:
 
     - name: Create or update warning report comment
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
-      uses: peter-evans/create-or-update-comment@v2
+      uses: peter-evans/create-or-update-comment@v3
       with:
         comment-id: ${{ steps.find-warning-report-comment.outputs.comment-id }}
         issue-number: ${{ steps.workflow-run-info.outputs.pullRequestNumber }}
