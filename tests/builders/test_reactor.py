@@ -23,8 +23,9 @@ import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.base.builder import ComponentManager
+from bluemira.base.error import ComponentError
 from bluemira.base.parameter_frame._parameter import Parameter
-from bluemira.base.reactor import Reactor, ReactorError
+from bluemira.base.reactor import Reactor
 from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
 from bluemira.geometry.tools import make_polygon
 
@@ -70,7 +71,7 @@ class TestReactor:
 
     @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
     def test_ReactorError_given_invalid_plotting_dimension(self, bad_dim):
-        with pytest.raises(ReactorError):
+        with pytest.raises(ComponentError):
             self.reactor.show_cad(dim=bad_dim)
 
     @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
