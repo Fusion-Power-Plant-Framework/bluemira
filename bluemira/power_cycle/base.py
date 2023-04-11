@@ -159,12 +159,10 @@ class PowerCycleTimeABC(PowerCycleABC):
     @staticmethod
     def _build_durations_list(load_set):
         """
-        Build a list with the 'duration' attribute of each element in
+        Build a list with the 'duration' attribute of each load in
         the 'load_set' list.
         """
-        durations_list = []
-        for element in load_set:
-            durations_list.append(element.duration)
+        durations_list = [load.duration for load in load_set]
         return durations_list
 
 
