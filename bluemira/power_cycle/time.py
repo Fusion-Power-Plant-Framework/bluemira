@@ -116,8 +116,7 @@ class PowerCyclePulse(PowerCycleTimeABC):
         phase_set = self.phase_set
         phase_library = dict()
         for phase in phase_set:
-            phase_label = phase.label
-            phase_library[phase_label] = phase
+            phase_library[phase.label] = phase
         return phase_library
 
 
@@ -186,8 +185,7 @@ class PowerCycleScenario(PowerCycleTimeABC):
         pulse_set = self.pulse_set
         pulse_library = dict()
         for pulse in pulse_set:
-            pulse_label = pulse.label
-            pulse_library[pulse_label] = pulse
+            pulse_library[pulse.label] = pulse
         return pulse_library
 
 
@@ -454,7 +452,7 @@ class ScenarioBuilder:
     def _build_scenario(cls, scenario_config, pulse_library):
         """
         Currently ignores the 'repetition' input and just uses a single
-        pulse as the scenario.
+        pulse as the scenario. To be altered to contain multiple pulses.
         """
         scenario_name = scenario_config["name"]
         pulse_list = scenario_config["pulses"]
