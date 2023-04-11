@@ -113,10 +113,7 @@ class PowerCyclePulse(PowerCycleTimeABC):
         Returns a 'dict' with phase labels as keys and the phases
         themselves as values.
         """
-        phase_set = self.phase_set
-        phase_library = dict()
-        for phase in phase_set:
-            phase_library[phase.label] = phase
+        phase_library = {phase.label: phase for phase in self.phase_set}
         return phase_library
 
 
@@ -182,10 +179,7 @@ class PowerCycleScenario(PowerCycleTimeABC):
         Returns a 'dict' with pulse labels as keys and the pulses
         themselves as values.
         """
-        pulse_set = self.pulse_set
-        pulse_library = dict()
-        for pulse in pulse_set:
-            pulse_library[pulse.label] = pulse
+        pulse_library = {pulse.label: pulse for pulse in self.pulse_set}
         return pulse_library
 
 
@@ -423,11 +417,7 @@ class ScenarioBuilder:
 
     @staticmethod
     def _build_time_set(time_library, time_list):
-        time_set = []
-        for time_label in time_list:
-            time_instance = time_library[time_label]
-            time_set.append(time_instance)
-        return time_set
+        return [time_library[label] for label in time_list]
 
     @classmethod
     def _build_pulse_library(cls, pulse_config, phase_library):
