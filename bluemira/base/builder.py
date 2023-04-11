@@ -152,7 +152,7 @@ class ComponentManager(abc.ABC):
         **kwargs,
     ):
         """
-        Show the CAD build of the reactor.
+        Show the CAD build of the component.
 
         Parameters
         ----------
@@ -176,7 +176,7 @@ class ComponentManager(abc.ABC):
 
     def plot(self, *dims: str):
         """
-        Plot the reactor.
+        Plot the component.
 
         Parameters
         ----------
