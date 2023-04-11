@@ -30,10 +30,7 @@ from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
-from bluemira.display.plotter import ComponentPlotter
 
-_PLOT_DIMS = ["xy", "xz"]
-_CAD_DIMS = ["xy", "xz", "xyz"]
 
 class Reactor(ComponentManager):
     """
@@ -191,7 +188,7 @@ class Reactor(ComponentManager):
             The number of sectors to construct when displaying CAD for xyz
             Defaults to None, which means show "all" sectors.
         """
-        dims_to_show = self._validate_dims(dims, kwargs)
+        dims_to_show = self._validate_cad_dims(*dims, **kwargs)
 
         # We filter because self.component (above) only creates
         # a new root node for this reactor, not a new component tree.
@@ -223,17 +220,4 @@ class Reactor(ComponentManager):
             The components to construct when displaying CAD for xyz.
             Defaults to None, which means show "all" components.
         """
-        # give dims_to_show a default value
-        dims_to_show = ("xz",) if len(dims) == 0 else dims
-
-        for dim in dims_to_show:
-            if dim not in _PLOT_DIMS:
-                raise ReactorError(
-                    f"Invalid plotting dimension '{dim}'."
-                    f"Must be one of {str(_PLOT_DIMS)}"
-                )
-        for i, dim in enumerate(dims_to_show):
-            comp_copy = self._filter_copy_comps([dim], with_components)
-            ComponentPlotter(view=dim).plot_2d(
-                comp_copy, show=i == len(dims_to_show) - 1
-            )
+        self._plot_dims(self.component(with_components), self._validate_plot_dims(dims))

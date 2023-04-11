@@ -33,6 +33,8 @@ from bluemira.base.components import Component
 from bluemira.base.error import ComponentError
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
+from bluemira.display.displayer import ComponentDisplayer
+from bluemira.display.plotter import ComponentPlotter
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
@@ -40,7 +42,9 @@ BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
 Type alias for representing nested build configuration information.
 """
 
-_PLOT_DIMS = ["xy", "xz", "xyz"]
+
+_PLOT_DIMS = ["xy", "xz"]
+_CAD_DIMS = ["xy", "xz", "xyz"]
 
 
 def _remove_suffix(s: str, suffix: str) -> str:
@@ -89,9 +93,9 @@ class ComponentManager(abc.ABC):
         """
         return self.component().tree()
 
-    def _validate_dims(self, *dims, **kwargs) -> Tuple[str, ...]:
+    def _validate_cad_dims(self, *dims: str, **kwargs) -> Tuple[str, ...]:
         """
-        Validate showable dimensions
+        Validate showable CAD dimensions
         """
         # give dims_to_show a default value
         dims_to_show = ("xyz",) if len(dims) == 0 else dims
@@ -104,6 +108,22 @@ class ComponentManager(abc.ABC):
                 category=DeprecationWarning,
             )
             dims_to_show = (kw_dim,)
+        for dim in dims_to_show:
+            if dim not in _CAD_DIMS:
+                raise ComponentError(
+                    f"Invalid plotting dimension '{dim}'."
+                    f"Must be one of {str(_CAD_DIMS)}"
+                )
+
+        return dims_to_show
+
+    def _validate_plot_dims(self, *dims) -> Tuple[str, ...]:
+        """
+        Validate showable plot dimensions
+        """
+        # give dims_to_show a default value
+        dims_to_show = ("xz",) if len(dims) == 0 else dims
+
         for dim in dims_to_show:
             if dim not in _PLOT_DIMS:
                 raise ComponentError(
@@ -141,9 +161,33 @@ class ComponentManager(abc.ABC):
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         """
         ComponentDisplayer().show_cad(
-            self._filter_tree(self.component(), self._validate_dims(dims, kwargs)),
+            self._filter_tree(
+                self.component(), self._validate_cad_dims(*dims, **kwargs)
+            ),
             **kwargs,
         )
+
+    def _plot_dims(self, comp: Component, dims_to_show: Tuple[str, ...]):
+        for i, dim in enumerate(dims_to_show):
+            ComponentPlotter(view=dim).plot_2d(
+                self._filter_tree(comp, dims_to_show),
+                show=i == len(dims_to_show) - 1,
+            )
+
+    def plot(self, *dims: str, with_components: Optional[List[ComponentManager]] = None):
+        """
+        Plot the reactor.
+
+        Parameters
+        ----------
+        *dims:
+            The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
+            (default: 'xz')
+        with_components:
+            The components to construct when displaying CAD for xyz.
+            Defaults to None, which means show "all" components.
+        """
+        self._plot_dims(self.component(), self._validate_plot_dims(dims))
 
 
 class Builder(abc.ABC):
