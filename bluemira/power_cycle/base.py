@@ -70,7 +70,7 @@ class PowerCycleABC(ABC):
         valid label for an instance of a child class of the
         PowerCycleABC class.
         """
-        argument_type_is_incorrect = type(argument) != str
+        argument_type_is_incorrect = not isinstance(argument, str)
         argument_length_is_incorrect = len(argument) != label_length
         if argument_type_is_incorrect or argument_length_is_incorrect:
             raise PowerCycleABCError(
@@ -100,16 +100,13 @@ class PowerCycleABC(ABC):
         Power Cycle objects should be considered equal even if their
         'name' and 'label' attributes are different.
         """
-        this_class = self.__class__
-        other_class = other.__class__
-        if this_class != other_class:
+        if type(self) != type(other):
             return False
-
-        attr_to_ignore = ["name", "label"]
 
         this_attributes = self.__dict__
         other_attributes = other.__dict__
 
+        attr_to_ignore = ["name", "label"]
         for attr in attr_to_ignore:
             this_attributes = copy_dict_without_key(this_attributes, attr)
             other_attributes = copy_dict_without_key(other_attributes, attr)
@@ -262,8 +259,9 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
     @staticmethod
     def _refine_vector(vector, n_points):
         """
-        Add 'n_point' equidistant points between each segment (defined
-        by a subsequent pair of points) in the input 'vector'.
+        Add 'n_point' equidistant points between the extremeties of
+        a segment of the input 'vector' (defined by a subsequent pair
+        of points).
         """
         try:
             vector = validate_vector(vector)
@@ -276,11 +274,11 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
         else:
             refined_vector = []
             for s in range(number_of_curve_segments):
-                first_point = vector[s]
-                second_point = vector[s + 1]
+                segment_start = vector[s]
+                segment_end = vector[s + 1]
                 refined_segment = np.linspace(
-                    first_point,
-                    second_point,
+                    segment_start,
+                    segment_end,
                     n_points + 1,
                     endpoint=False,
                 )
