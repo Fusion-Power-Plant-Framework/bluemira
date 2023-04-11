@@ -15,7 +15,6 @@ from typing import TYPE_CHECKING, Union
 
 from bluemira.base.components import Component
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
-from bluemira.base.reactor import ComponentManager  # noqa: F401 for compatibility
 from bluemira.base.tools import _timing
 from bluemira.utilities.plot_tools import set_component_view
 
