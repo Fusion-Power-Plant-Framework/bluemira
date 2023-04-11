@@ -32,14 +32,13 @@ def validate_numerical(argument):
     Validate an argument to be a numerical value (i.e. an instance
     of either the 'int' or the 'float' classes).
     """
-    if isinstance(argument, int) or isinstance(argument, float):
+    if isinstance(argument, (int, float)):
         return argument
     else:
         argument_class = type(argument)
         raise TypeError(
-            "This argument must be an instance of either the "
-            "'int' or 'float' classes, but it is of the "
-            f"{argument_class!r} class instead.",
+            "This argument must be either an 'int' or 'float', but "
+            f"it is a {argument_class!r} instead.",
         )
 
 
@@ -83,7 +82,9 @@ def validate_file(file_path):
     if file_exists:
         return absolute_path
     else:
-        raise FileNotFoundError("The file does not exist in the specified path.")
+        raise FileNotFoundError(
+            "The file does not exist in the specified path.",
+        )
 
 
 def validate_dict(dictionary, allowed_format):
@@ -97,8 +98,7 @@ def validate_dict(dictionary, allowed_format):
     not trigger an exception.
     """
     allowed_keys = allowed_format.keys()
-    dictionary_keys = dictionary.keys()
-    for key in dictionary_keys:
+    for key in dictionary.keys():
         key_is_allowed = key in allowed_keys
 
         if key_is_allowed:
@@ -125,16 +125,14 @@ def validate_subdict(dictionary, allowed_format):
     Applies 'validate_dict' to each dictionary stored as values in
     'dictionary'.
     """
-    dictionary_keys = dictionary.keys()
-    for key in dictionary_keys:
-        value = dictionary[key]
+    for value in dictionary.values():
         value_is_dict = type(value) == dict
         if value_is_dict:
             sub_dictionary = value
             sub_dictionary = validate_dict(sub_dictionary, allowed_format)
         else:
             raise TypeError(
-                "Values stored in 'dictionary' must be of the " "'dict' class.",
+                "Values stored in 'dictionary' must be of the 'dict' class.",
             )
     return dictionary
 
@@ -156,10 +154,8 @@ def validate_lists_to_have_same_length(*args):
     all_lenghts_are_not_equal = len(unique_lengths) != 1
     if all_lenghts_are_not_equal:
         raise ValueError(
-            (
-                "At least one of the lists does not have ",
-                "the same length as the others.",
-            )
+            "At least one of the lists passed as argument does not "
+            "have the same length as the others."
         )
     else:
         return argument_length
@@ -228,7 +224,9 @@ def read_json(file_path):
         with open(file_path) as json_file:
             contents_dict = json.load(json_file)
     except json.decoder.JSONDecodeError:
-        raise TypeError("The file could not be read as a 'json' file.")
+        raise TypeError(
+            "The file could not be read as a 'json' file.",
+        )
     return contents_dict
 
 
