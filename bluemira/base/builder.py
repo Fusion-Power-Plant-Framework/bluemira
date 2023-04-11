@@ -26,9 +26,11 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Optional, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
+from warnings import warn
 
 from bluemira.base.components import Component
+from bluemira.base.error import ComponentError
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
 from bluemira.utilities.plot_tools import set_component_view
@@ -37,6 +39,8 @@ BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
 """
 Type alias for representing nested build configuration information.
 """
+
+_PLOT_DIMS = ["xy", "xz", "xyz"]
 
 
 def _remove_suffix(s: str, suffix: str) -> str:
@@ -71,7 +75,6 @@ class ComponentManager(abc.ABC):
     """
 
     def __init__(self, component_tree: Component) -> None:
-        super().__init__()
         self._component = component_tree
 
     def component(self) -> Component:
@@ -79,6 +82,68 @@ class ComponentManager(abc.ABC):
         Return the component tree wrapped by this manager.
         """
         return self._component
+
+    def tree(self) -> str:
+        """
+        Get the component tree
+        """
+        return self.component().tree()
+
+    def _validate_dims(self, *dims, **kwargs) -> Tuple[str, ...]:
+        """
+        Validate showable dimensions
+        """
+        # give dims_to_show a default value
+        dims_to_show = ("xyz",) if len(dims) == 0 else dims
+
+        # if a kw "dim" is given, it is only used
+        if kw_dim := kwargs.pop("dim", None):
+            warn(
+                "Using kwarg 'dim' is no longer supported. "
+                "Simply pass in the dimensions you would like to show, e.g. show_cad('xz')",
+                category=DeprecationWarning,
+            )
+            dims_to_show = (kw_dim,)
+        for dim in dims_to_show:
+            if dim not in _PLOT_DIMS:
+                raise ComponentError(
+                    f"Invalid plotting dimension '{dim}'."
+                    f"Must be one of {str(_PLOT_DIMS)}"
+                )
+
+        return dims_to_show
+
+    def _filter_tree(self, comp: Component, dims_to_show: Tuple[str, ...]) -> Component:
+        """
+        Filter a component tree
+
+        Notes
+        -----
+        A copy of the component tree must be made
+        as filtering would mutate the ComponentMangers' underlying component trees
+        """
+        comp_copy = comp.copy()
+        comp_copy.filter_components(dims_to_show)
+        return comp_copy
+
+    def show_cad(
+        self,
+        *dims: str,
+        **kwargs,
+    ):
+        """
+        Show the CAD build of the reactor.
+
+        Parameters
+        ----------
+        *dims
+            The dimension of the reactor to show, typically one of
+            'xz', 'xy', or 'xyz'. (default: 'xyz')
+        """
+        ComponentDisplayer().show_cad(
+            self._filter_tree(self.component(), self._validate_dims(dims, kwargs)),
+            **kwargs,
+        )
 
 
 class Builder(abc.ABC):

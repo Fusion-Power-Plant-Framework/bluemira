@@ -20,14 +20,13 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Base class for a Bluemira reactor."""
 
+import time
 from typing import List, Optional, Type
-from warnings import warn
 
 from rich.progress import track
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component
-from bluemira.base.error import ReactorError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
@@ -36,8 +35,7 @@ from bluemira.display.plotter import ComponentPlotter
 _PLOT_DIMS = ["xy", "xz"]
 _CAD_DIMS = ["xy", "xz", "xyz"]
 
-
-class Reactor:
+class Reactor(ComponentManager):
     """
     Base class for reactor definitions.
 
@@ -86,6 +84,7 @@ class Reactor:
     def __init__(self, name: str, n_sectors: int):
         self.name = name
         self.n_sectors = n_sectors
+        self.start_time = time.perf_counter()
 
     def component(
         self,
@@ -93,6 +92,12 @@ class Reactor:
     ) -> Component:
         """Return the component tree."""
         return self._build_component_tree(with_components)
+
+    def build_time(self) -> float:
+        """
+        Get time since initialisation
+        """
+        return time.perf_counter() - self.start_time
 
     def _build_component_tree(
         self,
@@ -123,7 +128,7 @@ class Reactor:
         self,
         reactor_component: Component,
         with_components: Optional[List[ComponentManager]] = None,
-        n_sectors: Optional[int] = None,
+        n_sectors: int = 1,
     ):
         xyzs = reactor_component.get_component(
             "xyz",
@@ -176,45 +181,32 @@ class Reactor:
 
         Parameters
         ----------
-        *dims:
+        *dims
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
-        with_components:
+        with_components
             The components to construct when displaying CAD for xyz.
             Defaults to None, which means show "all" components.
-        n_sectors:
+        n_sectors
             The number of sectors to construct when displaying CAD for xyz
             Defaults to None, which means show "all" sectors.
         """
-        if n_sectors is None:
-            n_sectors = self.n_sectors
+        dims_to_show = self._validate_dims(dims, kwargs)
 
-        # give dims_to_show a default value
-        dims_to_show = ("xyz",) if len(dims) == 0 else dims
-
-        # if a kw "dim" is given, it is only used
-        if kw_dim := kwargs.pop("dim", None):
-            warn(
-                "Using kwarg 'dim' is no longer supported. "
-                "Simply pass in the dimensions you would like to show, e.g. show_cad('xz')",
-                category=DeprecationWarning,
-            )
-            dims_to_show = (kw_dim,)
-        for dim in dims_to_show:
-            if dim not in _CAD_DIMS:
-                raise ReactorError(
-                    f"Invalid plotting dimension '{dim}'."
-                    f"Must be one of {str(_CAD_DIMS)}"
-                )
-
-        comp_copy = self._filter_copy_comps(dims_to_show, with_components)
+        # We filter because self.component (above) only creates
+        # a new root node for this reactor, not a new component tree.
+        comp_copy = self._filter_tree(self.component(with_components), dims_to_show)
 
         # if "xyz" is requested, construct the 3d cad
         # from each xyz component in the tree,
         # as it's assumed that the cad is only built for 1 sector
         # and is sector symmetric, therefore can be patterned
         if "xyz" in dims_to_show:
-            self._construct_xyz_cad(comp_copy, with_components, n_sectors)
+            self._construct_xyz_cad(
+                comp_copy,
+                with_components,
+                self.n_sectors if n_sectors is None else n_sectors,
+            )
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)
 
