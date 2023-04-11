@@ -220,4 +220,4 @@ class Reactor(ComponentManager):
             The components to construct when displaying CAD for xyz.
             Defaults to None, which means show "all" components.
         """
-        self._plot_dims(self.component(with_components), self._validate_plot_dims(dims))
+        self._plot_dims(self.component(with_components), self._validate_plot_dims(*dims))

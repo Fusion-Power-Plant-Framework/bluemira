@@ -184,7 +184,7 @@ class ComponentManager(abc.ABC):
             The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
             (default: 'xz')
         """
-        self._plot_dims(self.component(), self._validate_plot_dims(dims))
+        self._plot_dims(self.component(), self._validate_plot_dims(*dims))
 
 
 class Builder(abc.ABC):
