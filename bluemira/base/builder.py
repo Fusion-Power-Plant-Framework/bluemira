@@ -31,7 +31,7 @@ from typing import Dict, List, Optional, Type, Union
 from bluemira.base.components import Component
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
-from bluemira.base.tools import timing
+from bluemira.base.tools import _timing
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
@@ -114,8 +114,8 @@ class Builder(abc.ABC):
         self.name = self.build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
         )
-        self.build = timing(
-            self.build, "Built in", f"Building {self.name}", print_name=verbose
+        self.build = _timing(
+            self.build, "Built in", f"Building {self.name}", debug_info_str=not verbose
         )
 
     @abc.abstractproperty

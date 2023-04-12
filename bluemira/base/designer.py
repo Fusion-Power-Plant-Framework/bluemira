@@ -27,7 +27,7 @@ from typing import Callable, Dict, Generic, Optional, Type, TypeVar, Union
 
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
-from bluemira.base.tools import timing
+from bluemira.base.tools import _timing
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 
@@ -63,14 +63,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     ):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config if build_config is not None else {}
-        self._run_func = self._get_run_func(self.run_mode)
-
-        self.execute = timing(
-            self.execute,
-            "Executed in",
-            f"Executing {type(self).__name__}",
-            print_name=verbose,
-        )
+        self._verbose = verbose
 
     def execute(self) -> _DesignerReturnT:
         """
@@ -78,7 +71,12 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
         By default the run mode is 'run'.
         """
-        return self._run_func()
+        return _timing(
+            self._get_run_func(self.run_mode),
+            "Executed in",
+            f"Executing {type(self).__name__}",
+            debug_info_str=not self._verbose,
+        )()
 
     @abc.abstractmethod
     def run(self) -> _DesignerReturnT:
