@@ -62,15 +62,16 @@ class LowerPortBuilder(Builder):
 
         self.lower_duct_wall_tk = self.params.lower_duct_wall_tk.value
         self.lower_duct_angle = self.params.lower_duct_angle.value
+        self.n_TF = self.params.n_TF.value
 
     def build(self) -> Component:
         """
         Build the Lower Port.
         """
         return self.component_tree(
-            xz=self.build_xz(),
+            xz=[self.build_xz()],
             xy=None,
-            xyz=self.build_xyz(),
+            xyz=[self.build_xyz()],
         )
 
     def build_xz(self) -> Component:
@@ -113,7 +114,20 @@ class LowerPortBuilder(Builder):
         )
         straight_duct = boolean_fuse([straight_duct_backwall, straight_duct_length])
 
-        return angled_duct, straight_duct
+        angled_pieces = boolean_cut(angled_duct, [straight_duct])
+        angled_top = boolean_cut(angled_duct, [angled_pieces[1]])[0]
+
+        straight_with_hole = boolean_cut(straight_duct, [angled_top])[0]
+
+        duct = boolean_fuse([angled_top, straight_with_hole])
+
+        # rotate duct to correct position
+        duct.rotate(degree=np.rad2deg(np.pi / self.n_TF))
+
+        pc = PhysicalComponent(self.DUCT, duct)
+        apply_component_display_options(pc, color=BLUE_PALETTE["VV"][0])
+
+        return pc
 
     def _hollow_face(
         self,

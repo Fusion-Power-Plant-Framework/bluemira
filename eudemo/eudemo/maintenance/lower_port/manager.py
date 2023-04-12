@@ -23,6 +23,7 @@ EUDEMO Lower Port Component Manager
 """
 
 from bluemira.base.builder import ComponentManager
+from bluemira.base.components import Component
 
 
 class LowerPort(ComponentManager):
@@ -30,5 +31,14 @@ class LowerPort(ComponentManager):
     Wrapper around the Lower Port component tree.
     """
 
-    def __init__(self, component):
+    def __init__(
+        self,
+        component: Component,
+        duct_xz_koz: Component,
+    ):
         super().__init__(component)
+        self._duct_xz_koz = duct_xz_koz
+
+    def duct_xz_koz(self):
+        """The xz Keep Out Zone for the lower duct."""
+        return self._duct_xz_koz

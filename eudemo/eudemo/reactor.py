@@ -153,7 +153,7 @@ def build_lower_port(
         angled_duct_boundary,
         straight_duct_boundary,
     )
-    return LowerPort(builder.build())
+    return LowerPort(builder.build(), lower_duct_koz)
 
 
 def build_blanket(
@@ -360,7 +360,7 @@ if __name__ == "__main__":
         reference_eq,
         reactor.tf_coils.xz_outer_boundary(),
         pf_coil_keep_out_zones=[
-            # lower_duct_koz,
+            reactor.lower_port.duct_xz_koz(),
         ],
     )
 
@@ -376,7 +376,10 @@ if __name__ == "__main__":
         reactor_config.config_for("Coil structures"),
         tf_coil_xz_face=reactor.tf_coils.xz_face(),
         pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
-        pf_coil_keep_out_zones=[upper_port_xz],
+        pf_coil_keep_out_zones=[
+            upper_port_xz,
+            reactor.lower_port.duct_xz_koz(),
+        ],
     )
 
     reactor.cryostat = build_cryostat(
@@ -394,7 +397,7 @@ if __name__ == "__main__":
     # reactor.show_cad("xz")
     reactor.show_cad(n_sectors=2)
 
-    sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
-    sspc_result = sspc_solver.execute()
-    sspc_solver.model.plot()
-    plt.show()
+    # sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
+    # sspc_result = sspc_solver.execute()
+    # sspc_solver.model.plot()
+    # plt.show()
