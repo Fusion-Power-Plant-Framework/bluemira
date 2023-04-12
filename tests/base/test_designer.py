@@ -56,4 +56,4 @@ class TestDesigner:
 
     def test_ValueError_on_init_given_unknown_run_mode(self):
         with pytest.raises(ValueError):
-            SimpleDesigner(None, {"run_mode": "not_a_mode"})
+            SimpleDesigner(None, {"run_mode": "not_a_mode"}).execute()

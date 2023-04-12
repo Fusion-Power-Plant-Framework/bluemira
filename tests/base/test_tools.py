@@ -23,7 +23,7 @@ import logging
 
 import pytest
 
-from bluemira.base.tools import timing
+from bluemira.base.tools import _timing
 
 
 def dummy(a, *, b=4):
@@ -31,11 +31,11 @@ def dummy(a, *, b=4):
 
 
 @pytest.mark.parametrize(
-    "print_name, records", [[True, ["INFO", "DEBUG"]], [False, ["DEBUG", "DEBUG"]]]
+    "debug, records", [[False, ["INFO", "DEBUG"]], [True, ["DEBUG", "DEBUG"]]]
 )
-def test_timing(print_name, records, caplog):
+def test_timing(debug, records, caplog):
     caplog.set_level(logging.DEBUG)
-    assert timing(dummy, "debug", "print", print_name=print_name)(1, b=2) == (1, 2)
+    assert _timing(dummy, "debug", "print", debug_info_str=debug)(1, b=2) == (1, 2)
     assert len(caplog.records) == 2
     assert [r.levelname for r in caplog.records] == records
     for msg, exp in zip(caplog.messages, ("print", "debug")):
