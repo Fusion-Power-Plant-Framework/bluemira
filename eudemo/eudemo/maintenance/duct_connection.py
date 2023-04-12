@@ -31,13 +31,11 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor_config import ConfigParams
-from bluemira.builders.tools import apply_component_display_options, get_n_sectors
+from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.tools import extrude_shape, make_polygon, slice_shape, split_wire
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.tools import extrude_shape, make_polygon
 
 
 @dataclass
