@@ -28,7 +28,7 @@ from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import BlanketBuilder
 
 
-class TestDivertorBuilder:
+class TestBlanketBuilder:
     @classmethod
     def setup_class(cls):
         cls.params = {
