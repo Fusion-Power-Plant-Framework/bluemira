@@ -1,11 +1,23 @@
 {
     "Lower Port": {
         "params": {
-            "lower_port_angle": {
+            "lower_duct_angle": {
                 "value": -30,
                 "unit": "degrees",
                 "source": "Input",
-                "long_name": "Lower port angle to the divertor."
+                "long_name": "Lower duct angle to the divertor."
+            },
+            "tf_coil_thickness": {
+                "value": 30,
+                "unit": "cm",
+                "source": "Input",
+                "long_name": "TF Coil thickness (temp)."
+            },
+            "lower_duct_wall_tk": {
+                "value": 10,
+                "unit": "cm",
+                "source": "Input",
+                "long_name": "TF Coil thickness (temp)."
             }
         }
     },

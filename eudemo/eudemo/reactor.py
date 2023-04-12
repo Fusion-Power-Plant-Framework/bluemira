@@ -69,7 +69,7 @@ from eudemo.equilibria import (
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
-from eudemo.maintenance.lower_port import LowerPortDesigner
+from eudemo.maintenance.lower_port import LowerPort, LowerPortBuilder, LowerPortDesigner
 from eudemo.maintenance.upper_port import UpperPortDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
@@ -97,6 +97,7 @@ class EUDEMO(Reactor):
     cryostat: Cryostat
     cryostat_thermal: CryostatThermalShield
     radiation_shield: RadiationShield
+    lower_port: LowerPort
 
 
 def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
@@ -125,6 +126,34 @@ def build_divertor(params, build_config, div_silhouette) -> Divertor:
     """Build the divertor given a silhouette of a sector."""
     builder = DivertorBuilder(params, build_config, div_silhouette)
     return Divertor(builder.build())
+
+
+def build_lower_port(
+    params,
+    build_config,
+    divertor_face,
+    tf_coils_outer_boundary,
+) -> LowerPort:
+    """Builder the Lower Port and Duct"""
+    designer = LowerPortDesigner(
+        params,
+        build_config,
+        divertor_face,
+        tf_coils_outer_boundary,
+    )
+    (
+        lower_duct_koz,
+        angled_duct_boundary,
+        straight_duct_boundary,
+    ) = designer.execute()
+    builder = LowerPortBuilder(
+        params,
+        build_config,
+        lower_duct_koz,
+        angled_duct_boundary,
+        straight_duct_boundary,
+    )
+    return LowerPort(builder.build())
 
 
 def build_blanket(
@@ -318,13 +347,12 @@ if __name__ == "__main__":
         reactor.vv_thermal.xz_boundary(),
     )
 
-    lower_port_designer = LowerPortDesigner(
+    reactor.lower_port = build_lower_port(
         reactor_config.params_for("Lower Port"),
         reactor_config.config_for("Lower Port"),
         divertor_face,
         reactor.tf_coils.xz_outer_boundary(),
     )
-    lower_duct_koz, extrude_face = lower_port_designer.execute()
 
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
@@ -332,7 +360,7 @@ if __name__ == "__main__":
         reference_eq,
         reactor.tf_coils.xz_outer_boundary(),
         pf_coil_keep_out_zones=[
-            lower_duct_koz,
+            # lower_duct_koz,
         ],
     )
 
