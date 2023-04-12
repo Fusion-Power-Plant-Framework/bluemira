@@ -102,16 +102,12 @@ class Builder(abc.ABC):
 
         Parameters
         ----------
-        xz: List[Component]
+        xz
             xz view of component
-        xy: List[Component]
+        xy
             xy view of component
-        xyz: List[Component]
+        xyz
             xyz view of component
-
-        Returns
-        -------
-        component
 
         """
         component = Component(self.name)

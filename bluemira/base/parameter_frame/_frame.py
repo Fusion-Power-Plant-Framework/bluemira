@@ -381,16 +381,15 @@ def _convert_angle_units(
 
     Parameters
     ----------
-    modified_unit: pint.Unit
+    modified_unit
         reconstructed unit without the angle
-    orig_unit_str: str
+    orig_unit_str
         the user supplied unit (without spaces)
-    angle_unit: str
+    angle_unit
         the angle unit in `orig_unit`
 
     Returns
     -------
-    pint.Unit;
         the new unit
 
     """
@@ -527,7 +526,6 @@ def make_parameter_frame(
 
     Returns
     -------
-    Union[ParameterFrame, None]
         A frame of the type `param_cls`, or `None` if `params` and
         `param_cls` are both `None`.
     """

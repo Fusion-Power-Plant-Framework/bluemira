@@ -189,7 +189,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component(
         self, name: str, first: bool = True, full_tree: bool = False
-    ) -> Union["Component", Tuple[Component], None]:
+    ) -> Union[Component, Tuple[Component], None]:
         """
         Find the components with the specified name.
 
@@ -326,7 +326,6 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             return
 
         duplicates = []
-        child: Component
         for idx, child in reversed(list(enumerate(children))):
             existing = self.get_component(child.name)
             if existing is not None:

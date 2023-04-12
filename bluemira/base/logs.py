@@ -41,20 +41,21 @@ class LogLevel(Enum):
     NOTSET = 0
 
 
-def logger_setup(logfilename="bluemira.log", *, level="INFO"):
+def logger_setup(
+    logfilename: str = "bluemira.log", *, level: Union[str, int] = "INFO"
+) -> logging.Logger:
     """
     Create logger with two handlers.
 
     Parameters
     ----------
-    logfilename: str (default = bluemira.log)
-        Name of file to write logs to
-    level: str or int (default = INFO)
-        The initial logging level to be printed to the console.
+    logfilename
+        Name of file to write logs to, default = bluemira.log
+    level
+        The initial logging level to be printed to the console, default = INFO.
 
     Returns
     -------
-    logger: logging.RootLogger
         The logger to be used
 
     Notes
@@ -91,19 +92,19 @@ def logger_setup(logfilename="bluemira.log", *, level="INFO"):
 def set_log_level(
     verbose: Union[int, str] = 1,
     increase: bool = False,
-    logger_names: Iterable[str] = ["bluemira"],
+    logger_names: Iterable[str] = ("bluemira"),
 ):
     """
     Get new log level and check if it is possible.
 
     Parameters
     ----------
-    verbose: str or int (default = 1)
+    verbose
         Amount the severity level of the logger should be changed by or to
-    increase: bool (default = False)
+    increase
         Whether level should be increased by specified amount or changed to it
-    logger_names: List[str] (default = ["bluemira"])
-        The loggers for which to set the level
+    logger_names
+        The loggers for which to set the level, default = ("bluemira")
     """
     # change loggers level
     for logger_name in logger_names:
@@ -114,15 +115,15 @@ def set_log_level(
         _modify_handler(new_level, logger)
 
 
-def get_log_level(logger_name="bluemira", as_str=True) -> Union[str, int]:
+def get_log_level(logger_name: str = "bluemira", as_str: bool = True) -> Union[str, int]:
     """
     Return the current logging level.
 
     Parameters
     ----------
-    logger_name: str (default = "")
+    logger_name
         The named logger to get the level for.
-    as_str: bool (default = True)
+    as_str
         If True then return the logging level as a string, else as an int.
     """
     logger = logging.getLogger(logger_name)
@@ -188,11 +189,11 @@ class LoggingContext:
 
     Parameters
     ----------
-    level: str or int
+    level
         The bluemira logging level to set within the context.
     """
 
-    def __init__(self, level):
+    def __init__(self, level: Union[str, int]):
         self.level = level
         self.original_level = get_log_level()
 

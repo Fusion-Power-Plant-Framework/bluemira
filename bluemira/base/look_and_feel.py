@@ -150,7 +150,6 @@ def count_slocs(
 
     Returns
     -------
-    lines: dict
         The dictionary of number of lines of code per file extension, and the
         total linecount
     """

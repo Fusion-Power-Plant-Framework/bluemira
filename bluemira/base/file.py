@@ -46,7 +46,6 @@ def get_bluemira_root() -> str:
 
     Returns
     -------
-    root: str
         The full path to the bluemira root folder, e.g.:
             '/home/user/code/bluemira'
     """
@@ -63,7 +62,6 @@ def try_get_bluemira_private_data_root() -> Union[str, None]:
 
     Returns
     -------
-    private_root: Union[None, str]
         The full path to the bluemira root folder, e.g.:
             '/home/user/code/bluemira-private-data'
 
@@ -86,15 +84,14 @@ def get_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
 
     Parameters
     ----------
-    path: str
+    path
         The desired path from which to create a full path
-    subfolder: str (default = 'bluemira')
+    subfolder
         The subfolder (from the bluemira root) in which to create a path
         Defaults to the source code folder, but can be e.g. 'tests', or 'data'
 
     Returns
     -------
-    path: str
         The full path to the desired `path` in the subfolder specified
     """
     root = get_bluemira_root()
@@ -116,7 +113,7 @@ def try_get_bluemira_path(
 
     Parameters
     ----------
-    path:
+    path
         The desired path from which to create a full path
     subfolder
         The subfolder (from the bluemira root) in which to create a path
@@ -317,12 +314,11 @@ class FileManager:
 
         Parameters
         ----------
-        subfolder: str
+        subfolder
             The subfolder of the bluemira directory in which to add the data structure
 
         Returns
         -------
-        mapping: dict
             The dictionary of subfolder names to full paths (useful shorthand)
         """
         root = os.path.join(subfolder, "reactors", self.reactor_name)
@@ -380,17 +376,16 @@ class FileManager:
 
         Parameters
         ----------
-        sub_dir_name: str
+        sub_dir_name
             The name of the sub-directory to create the path under. Must be one of the
             names in bluemira.base.file.SUB_DIRS.
-        path: str
+        path
             The path to create under the sub-directory.
-        make_dir: bool
+        make_dir
             Optionally create a directory at the path, by default False.
 
         Returns
         -------
-        path: str
             The path within the data sub-directories.
         """
         path = os.sep.join(

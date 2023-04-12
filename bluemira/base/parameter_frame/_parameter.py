@@ -37,17 +37,17 @@ class Parameter(Generic[ParameterValueType]):
 
     Parameters
     ----------
-    name: str
+    name
         The name of the parameter.
-    value: ParameterValueType
+    value
         The parameter's value.
-    unit: str
+    unit
         The parameter's unit.
-    source: str
+    source
         The origin of the parameter's value.
-    description: str
+    description
         A description of the parameter.
-    long_name: str
+    long_name
         A longer name for the parameter.
     """
 
