@@ -45,7 +45,8 @@ class UpperPortDuctBuilderParams(ParameterFrame):
     """Duct Builder Parameter Frame"""
 
     n_TF: Parameter[int]
-    tk_upper_port_wall: Parameter[float]
+    tk_upper_port_wall_end: Parameter[float]
+    tk_upper_port_wall_side: Parameter[float]
 
 
 class UpperPortDuctBuilder(Builder):
@@ -58,15 +59,18 @@ class UpperPortDuctBuilder(Builder):
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
         port_koz: BluemiraFace,
-        tf_coil_thickness: float,
+        y_offset: float,
     ):
         super().__init__(params, None)
         self.port_koz = port_koz.deepcopy()
 
-        if self.params.tk_upper_port_wall.value <= 0:
+        if (
+            self.params.tk_upper_port_wall_end.value <= 0
+            or self.params.tk_upper_port_wall_side.value <= 0
+        ):
             raise ValueError("Port wall thickness must be > 0")
 
-        self.tf_coil_thickness = tf_coil_thickness
+        self.y_offset = y_offset
 
     def build(self) -> Component:
         """Build upper port"""
@@ -104,9 +108,9 @@ class UpperPortDuctBuilder(Builder):
         half_beta = np.pi / self.params.n_TF.value
         cos_hb = np.cos(half_beta)
         tan_hb = np.tan(half_beta)
-        end_tk = 2 * self.port_wall_thickness  # should be an input
-        y_tf_out = self.tf_coil_thickness / cos_hb  # should really be 0.5 * ...
-        y_tf_in = y_tf_out + self.port_wall_thickness / cos_hb
+        end_tk = self.params.tk_upper_port_wall_end.value
+        y_tf_out = self.y_offset / cos_hb
+        y_tf_in = y_tf_out + self.params.tk_upper_port_wall_side.value / cos_hb
 
         x1 = self.port_koz.bounding_box.x_min
 
@@ -138,10 +142,14 @@ class UpperPortDuctBuilder(Builder):
 
         y1, y4 = x1 * tan_hb - y_tf_out, x4 * tan_hb - y_tf_out
 
-        inner_wire = make_polygon({"x": [x2, x3, x3, x2], "y": [-y2, -y3, y3, y2]}, closed=True)
-        outer_wire = make_polygon({"x": [x1, x4, x4, x1], "y": [-y1, -y4, y4, y1]}, closed=True)
+        inner_wire = make_polygon(
+            {"x": [x2, x3, x3, x2], "y": [-y2, -y3, y3, y2]}, closed=True
+        )
+        outer_wire = make_polygon(
+            {"x": [x1, x4, x4, x1], "y": [-y1, -y4, y4, y1]}, closed=True
+        )
 
         xy_face = BluemiraFace((outer_wire, inner_wire))
-        xy_face.rotate(degree=half_sector_degree)
+        xy_face.rotate(degree=np.rad2deg(half_beta))
 
         return xy_face

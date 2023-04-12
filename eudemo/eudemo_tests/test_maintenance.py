@@ -87,7 +87,9 @@ class TestUpperPortOP:
 class TestDuctConnection:
     def setup_method(self):
         self.params = UpperPortDuctBuilderParams(
-            Parameter("n_TF", 12, ""), Parameter("tk_upper_port_wall", 0, "m")
+            Parameter("n_TF", 12, ""),
+            Parameter("tk_upper_port_wall_side", 0.1, "m"),
+            Parameter("tk_upper_port_wall_end", 0.2, "m"),
         )
         self.angle = 30
 
@@ -110,7 +112,8 @@ class TestDuctConnection:
     @pytest.mark.parametrize("port_wall", np.linspace(0.1, 0.40, num=3))
     @pytest.mark.parametrize("tf_thick", np.linspace(0, 1.8, num=5))
     def test_extrusion_shape(self, tf_thick, port_wall):
-        self.params.tk_upper_port_wall.value = port_wall
+        self.params.tk_upper_port_wall_side.value = port_wall
+        self.params.tk_upper_port_wall_end.value = port_wall * 2
         builder = UpperPortDuctBuilder(self.params, self.port_koz, tf_thick)
         port = builder.build()
         xy = port.get_component("xy").get_component_properties("shape")
@@ -137,13 +140,16 @@ class TestDuctConnection:
         assert np.allclose(finalshape.volume, cylinder.volume)
 
     def test_ValueError_on_zero_wal_thickness(self):
-        self.params.tk_upper_port_wall.value = 0
+        self.params.tk_upper_port_wall_side.value = 0
 
         with pytest.raises(ValueError):
             UpperPortDuctBuilder(self.params, self.port_koz, 0)
 
-    def test_GeometryError_on_too_small_port(self):
-        self.params.tk_upper_port_wall.value = 0.43
+    @pytest.mark.parametrize("end", [1, 5])
+    def test_GeometryError_on_too_small_port(self, end):
+        # raises an error in two different places
+        self.params.tk_upper_port_wall_side.value = 0.5
+        self.params.tk_upper_port_wall_end.value = end
         builder = UpperPortDuctBuilder(self.params, self.port_koz, 2)
 
         with pytest.raises(GeometryError):

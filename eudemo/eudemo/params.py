@@ -189,7 +189,8 @@ class EUDEMOReactorParams(ParameterFrame):
     tf_gs_base_depth: Parameter[float]
 
     # Ports
-    tk_upper_port_wall: Parameter[float]
+    tk_upper_port_wall_end: Parameter[float]
+    tk_upper_port_wall_side: Parameter[float]
 
     # Powercycle
     bb_p_inlet: Parameter[float]
