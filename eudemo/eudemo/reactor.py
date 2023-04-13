@@ -35,7 +35,6 @@ The EUDEMO reactor design routine.
 11. Produce power cycle report
 """
 
-import json
 import os
 from pathlib import Path
 from typing import Dict
@@ -227,12 +226,6 @@ def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShiel
     return RadiationShield(
         RadiationShieldBuilder(params, build_config, BluemiraFace(cryostat_koz)).build()
     )
-
-
-def _read_json(file_path: str) -> Dict:
-    """Read a JSON file to a dictionary."""
-    with open(file_path, "r") as f:
-        return json.load(f)
 
 
 if __name__ == "__main__":
