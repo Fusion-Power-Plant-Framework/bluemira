@@ -91,7 +91,7 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         rm_clearance_face = _make_clearance_face(
             vessel_bbox.x_min,
             vessel_bbox.x_max,
-            self.wall_boundary.bounding_box.z_min,
+            self.wall_boundary.start_point().z,
             self.params.c_rm.value,
         )
 
