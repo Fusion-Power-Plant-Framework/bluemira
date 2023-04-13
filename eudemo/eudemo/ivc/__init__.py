@@ -21,6 +21,7 @@
 """
 Module containing builders for the EUDEMO first wall components
 """
+from dataclasses import dataclass
 from typing import Dict, Tuple
 
 from bluemira.base.designer import run_designer
@@ -37,9 +38,19 @@ from eudemo.ivc.wall_silhouette import WallSilhouetteDesigner
 from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline, WallPrincetonD
 
 
+@dataclass
+class IVCShapes:
+    """Collection of geometries used to design/build in-vessel components."""
+
+    blanket_face: BluemiraFace
+    divertor_face: BluemiraFace
+    outer_boundary: BluemiraWire
+    inner_boundary: BluemiraWire
+
+
 def design_ivc(
     params: ParameterFrame, build_config: Dict, equilibrium: Equilibrium
-) -> Tuple[BluemiraFace, BluemiraFace, BluemiraWire]:
+) -> IVCShapes:
     """
     Run the IVC component designers in sequence.
 
@@ -73,4 +84,10 @@ def design_ivc(
         wall_boundary=cut_wall_boundary,
         divertor_silhouette=divertor_shapes,
     ).execute()
-    return plasma_face, divertor_face, ivc_boundary
+    wall_boundary = cut_wall_below_x_point(wall_boundary, plasma_face.bounding_box.z_min)
+    return IVCShapes(
+        blanket_face=plasma_face,
+        divertor_face=divertor_face,
+        outer_boundary=ivc_boundary,
+        inner_boundary=wall_boundary,
+    )

@@ -210,3 +210,7 @@ class EUDEMOReactorParams(ParameterFrame):
     f_sol_rad_fw: Parameter[float]
     vvpfrac: Parameter[float]
     P_hcd_ss_el: Parameter[float]
+
+    # First wall panelling
+    fw_a_max: Parameter[float]
+    fw_dL_min: Parameter[float]  # noqa: N815

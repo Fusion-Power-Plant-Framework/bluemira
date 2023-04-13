@@ -18,3 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from eudemo.blanket.designer import BlanketDesigner
+from eudemo.blanket_builder import BlanketBuilder
+
+__all__ = ["BlanketBuilder", "BlanketDesigner"]

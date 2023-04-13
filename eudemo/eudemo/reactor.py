@@ -54,6 +54,7 @@ from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import interpolate_bspline
+from eudemo.blanket import BlanketDesigner
 from eudemo.blanket_builder import Blanket, BlanketBuilder
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -128,10 +129,19 @@ def build_divertor(params, build_config, div_silhouette) -> Divertor:
 
 
 def build_blanket(
-    params, build_config, blanket_face, r_inner_cut: float, cut_angle: float
+    params,
+    build_config: Dict,
+    blanket_boundary,
+    blanket_face,
+    r_inner_cut: float,
+    cut_angle: float,
 ) -> Blanket:
     """Build the blanket given a silhouette of a sector."""
-    builder = BlanketBuilder(params, build_config, blanket_face, r_inner_cut, cut_angle)
+    designer = BlanketDesigner(
+        params, blanket_boundary, blanket_face, r_inner_cut, cut_angle
+    )
+    ib_silhouette, ob_silhouette = designer.execute()
+    builder = BlanketBuilder(params, build_config, ib_silhouette, ob_silhouette)
     return Blanket(builder.build())
 
 
@@ -269,7 +279,7 @@ if __name__ == "__main__":
         reference_eq,
     )
 
-    blanket_face, divertor_face, ivc_boundary = design_ivc(
+    ivc_shapes = design_ivc(
         reactor_config.params_for("IVC").global_params,
         reactor_config.config_for("IVC"),
         equilibrium=reference_eq,
@@ -278,26 +288,27 @@ if __name__ == "__main__":
     upper_port_designer = UpperPortDesigner(
         reactor_config.params_for("Upper Port"),
         reactor_config.config_for("Upper Port"),
-        blanket_face,
+        ivc_shapes.blanket_face,
     )
     upper_port_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
 
     reactor.vacuum_vessel = build_vacuum_vessel(
         reactor_config.params_for("Vacuum vessel"),
         reactor_config.config_for("Vacuum vessel"),
-        ivc_boundary,
+        ivc_shapes.outer_boundary,
     )
 
     reactor.divertor = build_divertor(
         reactor_config.params_for("Divertor"),
         reactor_config.config_for("Divertor"),
-        divertor_face,
+        ivc_shapes.divertor_face,
     )
 
     reactor.blanket = build_blanket(
         reactor_config.params_for("Blanket"),
         reactor_config.config_for("Blanket"),
-        blanket_face,
+        ivc_shapes.inner_boundary,
+        ivc_shapes.blanket_face,
         r_inner_cut,
         cut_angle,
     )
