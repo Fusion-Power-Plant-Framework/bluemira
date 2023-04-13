@@ -126,6 +126,14 @@ class UpperPortDuctBuilder(Builder):
         if x2 >= x3:
             raise GeometryError("Port dimensions too small")
 
+        y1, y4 = x1 * tan_hb - y_tf_out, x4 * tan_hb - y_tf_out
+
+        if y1 < 0:
+            # Triangular outer port wall
+            y1 = 0
+            x1 = y_tf_out / tan_hb
+            x2 = x1 + end_tk
+
         y2, y3 = x2 * tan_hb - y_tf_in, x3 * tan_hb - y_tf_in
 
         if y3 <= 0:
