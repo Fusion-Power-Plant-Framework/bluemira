@@ -31,6 +31,7 @@ from typing import Dict, List, Optional, Type, Union
 from bluemira.base.components import Component
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
 from bluemira.base.reactor_config import ConfigParams
+from bluemira.base.tools import _timing
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
@@ -87,12 +88,12 @@ class Builder(abc.ABC):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params
         The parameters required by the builder.
-    build_config: Dict
+    build_config
         The build configuration for the builder.
-    designer: Optional[Designer]
-        A designer to solve a design problem required by the builder.
+    verbose
+        control how much logging the designer will output
 
     Notes
     -----
@@ -104,12 +105,17 @@ class Builder(abc.ABC):
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
         build_config: Optional[Dict] = None,
+        *,
+        verbose=True,
     ):
         super().__init__()
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config if build_config is not None else {}
         self.name = self.build_config.get(
             "name", _remove_suffix(self.__class__.__name__, "Builder")
+        )
+        self.build = _timing(
+            self.build, "Built in", f"Building {self.name}", debug_info_str=not verbose
         )
 
     @abc.abstractproperty

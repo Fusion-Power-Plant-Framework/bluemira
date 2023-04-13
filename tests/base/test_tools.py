@@ -18,42 +18,25 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+import logging
+
 import pytest
 
-from bluemira.base.designer import Designer
+from bluemira.base.tools import _timing
 
 
-class SimpleDesigner(Designer):
-    param_cls = None
-
-    def run(self) -> int:
-        return 10
-
-    def mock(self) -> int:
-        return 11
-
-    def read(self) -> int:
-        return 12
-
-    def custom_run_mode(self) -> int:
-        return 13
+def dummy(a, *, b=4):
+    return (a, b)
 
 
-class TestDesigner:
-    def test_execute_calls_run_if_no_run_mode_in_build_config(self):
-        designer = SimpleDesigner(None, {})
-
-        assert designer.execute() == 10
-
-    @pytest.mark.parametrize(
-        "mode, output",
-        [("run", 10), ("mock", 11), ("read", 12), ("custom_run_mode", 13)],
-    )
-    def test_execute_calls_function_given_by_run_mode(self, mode, output):
-        designer = SimpleDesigner(None, {"run_mode": mode})
-
-        assert designer.execute() == output
-
-    def test_ValueError_on_init_given_unknown_run_mode(self):
-        with pytest.raises(ValueError):
-            SimpleDesigner(None, {"run_mode": "not_a_mode"}).execute()
+@pytest.mark.parametrize(
+    "debug, records", [[False, ["INFO", "DEBUG"]], [True, ["DEBUG", "DEBUG"]]]
+)
+def test_timing(debug, records, caplog):
+    caplog.set_level(logging.DEBUG)
+    assert _timing(dummy, "debug", "print", debug_info_str=debug)(1, b=2) == (1, 2)
+    assert len(caplog.records) == 2
+    assert [r.levelname for r in caplog.records] == records
+    for msg, exp in zip(caplog.messages, ("print", "debug")):
+        assert exp in msg

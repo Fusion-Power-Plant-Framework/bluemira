@@ -70,7 +70,7 @@ class PFCoilBuilder(Builder):
         build_config: Dict,
         xz_cross_section: BluemiraWire,
     ):
-        super().__init__(params, build_config)
+        super().__init__(params, build_config, verbose=False)
         self.xz_cross_section = xz_cross_section
 
     def build(self) -> Component:
@@ -193,7 +193,7 @@ class PFCoilPictureFrame(Designer):
     param_cls = PFCoilPictureFrameParams
 
     def __init__(self, params: Union[PFCoilPictureFrameParams, Dict], coil: Coil):
-        super().__init__(params)
+        super().__init__(params, verbose=False)
         self.coil = coil
 
     def run(self) -> BluemiraWire:
