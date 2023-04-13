@@ -60,6 +60,7 @@ from bluemira.equilibria.opt_constraints import (
 )
 from bluemira.equilibria.opt_problems import (
     BreakdownCOP,
+    InputBreakdownZoneStrategy,
     MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
     TikhonovCurrentCOP,
@@ -218,6 +219,9 @@ coilset.assign_material("CS", j_max=16.5e6, b_max=13)
 coilset.assign_material("PF", j_max=12.5e6, b_max=11)
 coilset.fix_sizes()
 coilset.discretisation = 0.3
+
+# %%
+coilset.plot()
 
 # %% [markdown]
 #
@@ -495,17 +499,22 @@ for eq, problem in zip(eqs, opt_problems):
     PicardIterator(eq, problem, plot=True, relaxation=0.2, fixed_coils=True)()
 
 # %%
+# eqs[0].coilset["PF_6"].dx = 0.53
+# eqs[0].coilset["PF_6"].dz = 0.53
+# eqs[0].coilset.discretisation = 0.1
+# eqs[0].coilset.get_coiltype("CS").j_max = 16.5e6
+
+# %%
+eqs[0].coilset["CS_5"]
+
+# %%
 max_currents = eqs[0].coilset.get_max_current(0)
 
 # cs coils to max current pf to 0
 # alternate PF
 pfs = np.zeros(eqs[0].coilset.n_coils("PF"))
-pfs[
-    (0, 2, 4),
-] = 5e6
-pfs[
-    (1, 3, 5),
-] = -5e6
+pfs[(0, 2, 4),] = 5e6
+pfs[(1, 3, 5),] = -5e6
 
 
 new_currents = np.concatenate(
@@ -517,11 +526,22 @@ new_currents = np.concatenate(
 
 breakdown = Breakdown(deepcopy(eqs[0].coilset), grid)
 
+# Rev1 Looks ok - slightly lower flattop time ~99.9%
+# Rev2, breakdown is rubbish flattop time is good
+# Rev3, breakdown low, SOF down in LLC (very odd), EOF looks good
+# InputBreakdownZoneStrategy(R_0+R_0/A - 1,0, 1.5 ),
+# optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 20000, "ftol_rel": 1e-10})
+
+# Rev4  EOF looks like an upper single null, slightly lower flattop time ~97.2%
+# OutboardBreakdownZoneStrategy(R_0, A, 0.225),
+# optimiser=Optimiser("ISRES", opt_conditions={"max_eval": 300000, "ftol_rel": 1e-10}),
+
 bd_opt_problem = BreakdownCOP(
     breakdown.coilset,
     breakdown,
     OutboardBreakdownZoneStrategy(R_0, A, 0.225),
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 10000, "ftol_rel": 1e-10}),
+    #     InputBreakdownZoneStrategy(R_0+R_0/A - 1,0, 1.5 ),
+    optimiser=Optimiser("ISRES", opt_conditions={"max_eval": 300000, "ftol_rel": 1e-10}),
     max_currents=max_currents,
     B_stray_max=1e-3,
     B_stray_con_tol=1e-6,
@@ -543,9 +563,9 @@ bluemira_print(f"Breakdown psi: {breakdown_flux:.2f} V.s")
 # Plot the results
 
 # %%
-plt.close("all")
+# plt.close("all")
 f, ax = plt.subplots(1, 3)
-
+psis = []
 for name, _ax, eq in zip(["Breakdown", "SOF", "EOF"], ax, [breakdown] + eqs):
     eq.plot(_ax)
     eq.coilset.plot(_ax, label=True)
@@ -554,6 +574,7 @@ for name, _ax, eq in zip(["Breakdown", "SOF", "EOF"], ax, [breakdown] + eqs):
         psi = 2 * np.pi * eq.get_OX_psis()[1]
     else:
         psi = 2 * np.pi * eq.breakdown_psi
+    psis.append(psi)
 
     _ax.set_title(f"{name}" " $\\psi_{b}$ = " + f"{psi:.2f} V.s")
 
@@ -571,5 +592,14 @@ if with_koz_and_TF:
         _ax.plot(*TF_outer)
 
 plt.show()
+
+# %%
+print((psis[1] - psis[2]) / v_burn / 7200)
+
+# %%
+(155.46 + 148.7) / v_burn / 7200
+
+# %%
+psis
 
 # %%
