@@ -24,7 +24,7 @@ EUDEMO builder for blanket
 from dataclasses import dataclass
 from typing import Dict, List, Type, Union
 
-from bluemira.base.builder import Builder, Component, ComponentManager
+from bluemira.base.builder import Builder, Component
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import (
@@ -37,12 +37,6 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.placement import BluemiraPlacement
 from bluemira.geometry.tools import slice_shape
-
-
-class Blanket(ComponentManager):
-    """
-    Wrapper around a Blanket component tree.
-    """
 
 
 @dataclass

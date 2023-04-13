@@ -25,7 +25,7 @@ import pytest
 
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
-from eudemo.blanket_builder import BlanketBuilder
+from eudemo.blanket.builder import BlanketBuilder
 
 
 class TestBlanketBuilder:

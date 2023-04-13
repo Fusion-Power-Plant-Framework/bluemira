@@ -18,7 +18,15 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from eudemo.blanket.designer import BlanketDesigner
-from eudemo.blanket_builder import BlanketBuilder
+"""Builders, designers, and components for an EUDEMO blanket."""
 
-__all__ = ["BlanketBuilder", "BlanketDesigner"]
+from bluemira.base.builder import ComponentManager
+from eudemo.blanket.builder import BlanketBuilder
+from eudemo.blanket.designer import BlanketDesigner
+
+
+class Blanket(ComponentManager):
+    """Wrapper around a Blanket component tree."""
+
+
+__all__ = ["Blanket", "BlanketBuilder", "BlanketDesigner"]
