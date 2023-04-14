@@ -29,6 +29,7 @@ import numpy as np
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.geometry.base import BluemiraGeo
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
@@ -184,14 +185,14 @@ class LowerPortDesigner(Designer):
             [div_x_inner, 0, div_z_bot],
         )
 
-        points = LowerPortDesigner._xz_points_dist_away_from(
+        points = self._xz_points_dist_away_from(
             (div_x_inner, div_z_bot),
             self._angled_duct_gradient,
             div_diag_len,
         )
-        wire = LowerPortDesigner._make_xz_wire_from_points(points[0], points[1])
+        wire = self._make_xz_wire_from_points(points[0], points[1])
 
-        c_pts = LowerPortDesigner._closest_points(wire, self.divertor_face)
+        c_pts = self._closest_points(wire, self.divertor_face)
         z_highest = max(c_pts, key=lambda p: p[2])
 
         return (z_highest[0], z_highest[2]), (div_x_outer, div_z_top)
@@ -209,7 +210,7 @@ class LowerPortDesigner(Designer):
             [outer_point[0], 0, outer_point[1]],
         )
 
-        (padded_bot_inner_point, _) = LowerPortDesigner._xz_points_dist_away_from(
+        (padded_bot_inner_point, _) = self._xz_points_dist_away_from(
             outer_point,
             points_grad,
             points_len + self.lower_duct_div_padding / 2,
@@ -217,7 +218,7 @@ class LowerPortDesigner(Designer):
         (
             _,
             padded_top_outer_point,
-        ) = LowerPortDesigner._xz_points_dist_away_from(
+        ) = self._xz_points_dist_away_from(
             inner_point,
             points_grad,
             points_len + self.lower_duct_div_padding / 2,
@@ -268,14 +269,7 @@ class LowerPortDesigner(Designer):
 
         return make_polygon(
             {
-                "x": np.array(
-                    [
-                        x_point,
-                        x_point,
-                        x_point,
-                        x_point,
-                    ]
-                ),
+                "x": x_point,
                 "y": np.array(
                     [
                         y_size,
@@ -396,11 +390,10 @@ class LowerPortDesigner(Designer):
         )
         straight_duct = BluemiraFace(straight_duct_boundary)
 
-        angled_cuts = boolean_cut(
+        top_piece = boolean_cut(
             angled_duct,
             [straight_duct],
-        )
-        top_piece = angled_cuts[0]
+        )[0]
         duct_inner = boolean_fuse([top_piece, straight_duct])
 
         nowall_in_x_straight_duct_start_top = (
@@ -436,7 +429,7 @@ class LowerPortDesigner(Designer):
         (
             _,
             to_intc_search_point,
-        ) = LowerPortDesigner._xz_points_dist_away_from(
+        ) = self._xz_points_dist_away_from(
             top_outer_point,
             angled_duct_grad,
             r_search,
@@ -444,7 +437,7 @@ class LowerPortDesigner(Designer):
         (
             _,
             bi_intc_search_point,
-        ) = LowerPortDesigner._xz_points_dist_away_from(
+        ) = self._xz_points_dist_away_from(
             bottom_inner_point,
             angled_duct_grad,
             r_search,
@@ -481,11 +474,11 @@ class LowerPortDesigner(Designer):
         x_duct_extent = 30  # must extend past the outer rad. shield
 
         # find the other point along the horizontal
-        hori_search_wire = LowerPortDesigner._make_xz_wire_from_points(
+        hori_search_wire = self._make_xz_wire_from_points(
             (0, z_top_point),
             (x_duct_extent, z_top_point),
         )
-        intc_points = LowerPortDesigner._intersection_points(
+        intc_points = self._intersection_points(
             angled_duct_boundary,
             hori_search_wire,
         )
@@ -572,7 +565,7 @@ class LowerPortDesigner(Designer):
         shape_b: BluemiraGeo,
     ) -> List[Tuple]:
         dist, vects = distance_to(shape_a, shape_b)
-        if dist > 0.0001:  # not intersecting
+        if dist > D_TOLERANCE:  # not intersecting
             return []
         pois = []
         for vect_pair in vects:
@@ -586,7 +579,7 @@ class LowerPortDesigner(Designer):
         shape_b: BluemiraGeo,
     ) -> List[Tuple]:
         dist, vects = distance_to(shape_a, shape_b)
-        if dist < 0.0001:  # intersecting, return intersection points
+        if dist < D_TOLERANCE:  # intersecting, return intersection points
             return LowerPortDesigner._intersection_points(shape_a, shape_b)
         points = []
         vect_pairs = vects[0]

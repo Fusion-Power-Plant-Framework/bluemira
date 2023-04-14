@@ -96,7 +96,12 @@ class LowerPortBuilder(Builder):
             thickness=self.lower_duct_wall_tk,
         )
 
-        angled_duct_extrude_extent = 30
+        angled_duct_extrude_extent = (
+            self.angled_duct_boundary.bounding_box.z_max
+            - (
+                self.straight_duct_boundary.bounding_box.z_max - 1
+            )  # -1 to make sure it goes through
+        ) / np.cos(np.deg2rad(self.lower_duct_angle))
         straight_duct_extrude_extent = 20
 
         duct_heading_x = (

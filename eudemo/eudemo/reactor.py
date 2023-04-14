@@ -80,7 +80,7 @@ from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 PARAMS_FILE_PATH = os.path.join(CONFIG_DIR, "params.json")
-BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json")
+BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json.DAT")
 
 
 class EUDEMO(Reactor):
