@@ -41,14 +41,14 @@ and on the position of the inboard midplane.
 """
 
 # %% [markdown]
-#
-# # Introduction
+# # Coilset Optimisation Problem Tutorial
+# ## Introduction
 #
 # In this example, we will outline how to specify a CoilsetOptimisationProblem
 # that specifies how an 'optimised' coilset state is found during the Free Boundary
 # Equilibrium solve step.
 #
-# # Imports
+# ## Imports
 #
 # Import necessary equilbria module definitions.
 
@@ -71,8 +71,7 @@ from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.optimiser import Optimiser
 
 # %% [markdown]
-#
-# # OptimisationProblem
+# ## OptimisationProblem
 #
 # The `OptimisationProblem` class is intended to be the general base class for defining
 # optimisation problems across Bluemira.
@@ -109,7 +108,7 @@ from bluemira.utilities.optimiser import Optimiser
 # useful for performance reasons where some data in the OptimisationProblem
 # does not need to be updated at every iteration.
 #
-# # Example
+# ## Example
 # We will present an example problem where we take an existing `CoilsetOP`subclass,
 # `BoundedCurrentCOP`, and apply some additional constraints that
 # must be held during the optimisation.
@@ -146,7 +145,6 @@ for i in range(len(coil_x)):
 coilset = CoilSet(*circuits)
 
 # %% [markdown]
-#
 # ### Optimiser
 #
 # We next define the `Optimiser` to be used. There is no one-size-fits-all approach
@@ -172,7 +170,6 @@ optimiser = Optimiser(
 )
 
 # %% [markdown]
-#
 # ### Additional Parameters
 #
 # `BoundedCurrentCOP` requires two additional parameters for generating arguments for
@@ -253,7 +250,6 @@ eq = Equilibrium(
 )
 
 # %% [markdown]
-#
 # ### Constraints
 #
 # We next define the list of `OptimisationConstraints` to apply.
@@ -345,8 +341,7 @@ opt_problem = TikhonovCurrentCOP(
 )
 
 # %% [markdown]
-#
-# # Iterators
+# ## Iterators
 #
 # The `CoilsetOP` is only used to optimise the coilset state at fixed plasma psi;
 # the Grad-Shafranov equation for the plasma is not guaranteed to still be satisfied
@@ -389,8 +384,7 @@ unconstrained_iterator = PicardIterator(
 )
 
 # %% [markdown]
-#
-# # FBE Optimisation
+# ## FBE Optimisation
 # We have now initialised the necessary objects to perform the optimisation of the
 # `coilset` state.
 #
@@ -403,7 +397,6 @@ eq.plot(ax=ax)
 unconstrained_cop.targets.plot(ax=ax)
 
 # %% [markdown]
-#
 # ### Pre-optimisation
 #
 # Constrained optimisation of this poor initial state would be difficult, as
@@ -422,7 +415,6 @@ magnetic_targets.plot(ax=ax)
 plt.show()
 
 # %% [markdown]
-#
 # ### Constrained Optimisation
 #
 # Now we have a better starting `Equilibrium` for our constrained optimisation
