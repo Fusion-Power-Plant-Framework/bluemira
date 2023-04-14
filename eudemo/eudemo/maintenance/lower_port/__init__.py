@@ -23,7 +23,10 @@ Module containing components for the EUDEMO Lower Port
 """
 
 
-from .builder import LowerPortBuilder
-from .designer import LowerPortDesigner
-from .manager import LowerPort
-from .parameterisations import LowerPortBuilderParams, LowerPortDesignerParams
+from eudemo.maintenance.lower_port.builder import LowerPortBuilder
+from eudemo.maintenance.lower_port.designer import LowerPortDesigner
+from eudemo.maintenance.lower_port.manager import LowerPort
+from eudemo.maintenance.lower_port.parameterisations import (
+    LowerPortBuilderParams,
+    LowerPortDesignerParams,
+)
