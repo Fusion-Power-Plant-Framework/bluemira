@@ -46,7 +46,7 @@ class LevelFilter(logging.Filter):
     Filter out some logging levels
     """
 
-    def __init__(self, *filtered: str):
+    def __init__(self, *filtered: LogLevel):
         self.filter_list = filtered
 
     def filter(self, record: logging.LogRecord) -> bool:
