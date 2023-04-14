@@ -1,6 +1,36 @@
 {
     "Lower Port": {
         "params": {
+            "lower_duct_div_padding": {
+                "value": 5,
+                "unit": "cm",
+                "source": "Input",
+                "long_name": "Lower duct diverter padding."
+            },
+            "lower_port_tf_z_offset": {
+                "value": 250,
+                "unit": "cm",
+                "source": "Input",
+                "long_name": "Lower duct z-offset from the TF coil to the top of the straight duct leg."
+            },
+            "lower_port_z_length": {
+                "value": 200,
+                "unit": "cm",
+                "source": "Input",
+                "long_name": "Lower port length in z."
+            },
+            "lower_duct_straight_x_offset": {
+                "value": 50,
+                "unit": "cm",
+                "source": "Input",
+                "long_name": "Length in x to offset the straight duct leg from where it meets the angled duct leg."
+            },
+            "lower_duct_straight_y_offset": {
+                "value": 50,
+                "unit": "cm",
+                "source": "Input",
+                "long_name": "Length in y to offset the straight duct leg from where it meets the angled duct leg."
+            },
             "lower_duct_angle": {
                 "value": -60,
                 "unit": "degrees",
@@ -8,16 +38,16 @@
                 "long_name": "Lower duct angle to the divertor."
             },
             "tf_coil_thickness": {
-                "value": 50,
+                "value": 65,
                 "unit": "cm",
                 "source": "Input",
                 "long_name": "TF Coil thickness (temp)."
             },
             "lower_duct_wall_tk": {
-                "value": 10,
+                "value": 2,
                 "unit": "cm",
                 "source": "Input",
-                "long_name": "TF Coil thickness (temp)."
+                "long_name": "Lower duct wall thickness."
             }
         }
     },

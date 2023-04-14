@@ -142,6 +142,7 @@ def build_lower_port(
         tf_coils_outer_boundary,
     )
     (
+        lower_duct_vacant_space,
         lower_duct_koz,
         angled_duct_boundary,
         straight_duct_boundary,
@@ -258,7 +259,7 @@ def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShiel
 
 
 if __name__ == "__main__":
-    set_log_level("INFO")
+    set_log_level("WARNING")
     reactor_config = ReactorConfig(
         BUILD_CONFIG_FILE_PATH,
         EUDEMOReactorParams,
@@ -394,10 +395,10 @@ if __name__ == "__main__":
         reactor.cryostat.xz_boundary(),
     )
 
-    # reactor.show_cad("xz")
+    reactor.show_cad("xz")
     reactor.show_cad(n_sectors=2)
 
-    # sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
-    # sspc_result = sspc_solver.execute()
-    # sspc_solver.model.plot()
-    # plt.show()
+    sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
+    sspc_result = sspc_solver.execute()
+    sspc_solver.model.plot()
+    plt.show()

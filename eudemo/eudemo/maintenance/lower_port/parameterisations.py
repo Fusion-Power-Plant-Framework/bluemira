@@ -32,10 +32,17 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 class LowerPortDesignerParams(ParameterFrame):
     """LowerPort ParameterFrame"""
 
+    lower_duct_div_padding: Parameter[float]
+    lower_port_tf_z_offset: Parameter[float]
+    lower_port_z_length: Parameter[float]
+    lower_duct_straight_x_offset: Parameter[float]
+    lower_duct_straight_y_offset: Parameter[float]
+
     lower_duct_angle: Parameter[float]
     tf_coil_thickness: Parameter[float]
     lower_duct_wall_tk: Parameter[float]
     n_TF: Parameter[int]
+    n_div_cassettes: Parameter[int]
 
 
 @dataclass

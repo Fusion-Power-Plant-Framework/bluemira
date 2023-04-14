@@ -31,7 +31,6 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
-from bluemira.display.displayer import show_cad
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, extrude_shape, offset_wire
@@ -97,8 +96,15 @@ class LowerPortBuilder(Builder):
             thickness=self.lower_duct_wall_tk,
         )
 
-        duct_heading_x = np.cos(np.deg2rad(self.lower_duct_angle)) * 50
-        duct_heading_z = np.sin(np.deg2rad(self.lower_duct_angle)) * 50
+        angled_duct_extrude_extent = 30
+        straight_duct_extrude_extent = 20
+
+        duct_heading_x = (
+            np.cos(np.deg2rad(self.lower_duct_angle)) * angled_duct_extrude_extent
+        )
+        duct_heading_z = (
+            np.sin(np.deg2rad(self.lower_duct_angle)) * angled_duct_extrude_extent
+        )
         angled_duct = extrude_shape(
             angled_duct_hollow_face,
             (duct_heading_x, 0, duct_heading_z),
@@ -110,7 +116,7 @@ class LowerPortBuilder(Builder):
         )
         straight_duct_length = extrude_shape(
             straight_duct_hollow_face,
-            straight_duct_hollow_face.normal_at() * 40,
+            straight_duct_hollow_face.normal_at() * straight_duct_extrude_extent,
         )
         straight_duct = boolean_fuse([straight_duct_backwall, straight_duct_length])
 
