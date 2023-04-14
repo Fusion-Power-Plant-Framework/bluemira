@@ -104,7 +104,7 @@ def logger_setup(
     recorded_handler.setLevel(logging.DEBUG)
     recorded_handler.setFormatter(recorded_formatter)
 
-    root_logger.setLevel(logging.NOTSET)
+    root_logger.setLevel(logging.DEBUG)
     root_logger.addHandler(recorded_handler)
 
     bm_logger.setLevel(logging.DEBUG)
