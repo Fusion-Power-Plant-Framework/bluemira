@@ -19,7 +19,7 @@ ipython-genutils==0.2.0
 jedi==0.18.2
 Jinja2==3.1.2
 jsonschema==4.17.3
-jupyter-client==8.1.0
+jupyter-client==8.2.0
 jupyter-core==5.3.0
 jupyterlab-pygments==0.2.2
 jupytext==1.14.5
