@@ -745,11 +745,6 @@ class TestFilletChamfer2D:
 
     @pytest.mark.parametrize("func", [fillet_wire_2D, chamfer_wire_2D])
     def test_what_happens_with_two_tangent_edges(self, func):
-        """
-        At present, you will get:
-        DraftGeomUtils.fillet: Warning: edges have same direction. Did nothing
-        Which we don't catch or wrap because it is a print statement.
-        """
         w1 = make_polygon({"x": [0, 1], "z": [0, 0]})
         w2 = make_polygon({"x": [1, 2], "z": [0, 0]})
         wire = BluemiraWire([w1, w2])
