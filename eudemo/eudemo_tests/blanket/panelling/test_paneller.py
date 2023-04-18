@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import numpy as np
 
-from eudemo.ivc.panelling._paneller import norm_tangents
+from eudemo.blanket.panelling._paneller import norm_tangents
 
 
 def test_tangent_returns_tangent_vectors():

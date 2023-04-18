@@ -80,7 +80,7 @@ if __name__ == "__main__":
     from bluemira.display import plot_2d
     from bluemira.equilibria.shapes import JohnerLCFS
     from bluemira.geometry.tools import boolean_cut, make_polygon
-    from eudemo.ivc.panelling import PanellingDesigner
+    from eudemo.blanket.panelling import PanellingDesigner
 
     def cut_wire_below_z(wire, proportion: float):
         """Cut a wire below z that is 'proportion' of the height of the wire."""

@@ -31,8 +31,8 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.error import ExternalOptError
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.ivc.panelling._opt_problem import PanellingOptProblem
-from eudemo.ivc.panelling._paneller import Paneller
+from eudemo.blanket.panelling._opt_problem import PanellingOptProblem
+from eudemo.blanket.panelling._paneller import Paneller
 
 
 @dataclass

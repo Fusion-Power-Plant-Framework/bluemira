@@ -38,7 +38,7 @@ from bluemira.geometry.tools import (
     split_wire,
 )
 from bluemira.geometry.wire import BluemiraWire
-from eudemo.ivc.panelling import PanellingDesigner
+from eudemo.blanket.panelling import PanellingDesigner
 from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
 
 
@@ -216,7 +216,7 @@ class TestPanellingDesigner:
         np.testing.assert_allclose(poly_panels.start_point(), boundary.start_point())
         np.testing.assert_allclose(poly_panels.end_point(), boundary.end_point())
 
-    @mock.patch("eudemo.ivc.panelling._designer.bluemira_warn")
+    @mock.patch("eudemo.blanket.panelling._designer.bluemira_warn")
     def test_returns_guess_and_warning_given_infeasible_problem(self, warn_mock):
         params = {
             "fw_a_max": {"value": 35, "unit": "degrees"},

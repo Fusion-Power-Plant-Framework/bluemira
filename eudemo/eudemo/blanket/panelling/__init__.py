@@ -20,6 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Designer, builder, and tools for wall panelling."""
 
-from eudemo.ivc.panelling._designer import PanellingDesigner, PanellingDesignerParams
+from eudemo.blanket.panelling._designer import PanellingDesigner, PanellingDesignerParams
 
 __all__ = ["PanellingDesigner", "PanellingDesignerParams"]

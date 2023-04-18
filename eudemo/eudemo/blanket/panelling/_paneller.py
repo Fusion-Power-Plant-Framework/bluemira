@@ -24,7 +24,7 @@ import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 
 from bluemira.geometry.coordinates import vector_intersect, vector_lengthnorm
-from eudemo.ivc.panelling._pivot_string import make_pivoted_string
+from eudemo.blanket.panelling._pivot_string import make_pivoted_string
 
 
 class Paneller:
