@@ -220,7 +220,7 @@ def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
 
 def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShield:
     """
-    Design and build the Radition shield for the reactor.
+    Design and build the Radiation shield for the reactor.
     """
     return RadiationShield(
         RadiationShieldBuilder(params, build_config, BluemiraFace(cryostat_koz)).build()
