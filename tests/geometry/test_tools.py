@@ -768,3 +768,8 @@ class TestFilletChamfer2D:
         )
         with pytest.raises(GeometryError):
             func(three_d_wire, 0.2)
+
+    @pytest.mark.parametrize("func", [fillet_wire_2D, chamfer_wire_2D])
+    def test_GeometryError_on_negative_radius(self, func):
+        with pytest.raises(GeometryError):
+            func(self.open_rectangle, -0.01)
