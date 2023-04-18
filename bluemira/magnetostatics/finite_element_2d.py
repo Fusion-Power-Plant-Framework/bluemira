@@ -38,9 +38,9 @@ def Bz_coil_axis(
     current: Optional[float] = 1,
 ) -> float:
     """
-    Calculate the vertical magnetic field of a coil (of radius r and centered in
-    (0, z)) calculated on a point on the coil axis at a distance pz from the
-    axis origin.
+    Calculate the theoretical vertical magnetic field of a filament coil
+    (of radius r and centered in (0, z)) on a point on the coil axis at
+    a distance pz from the axis origin.
 
     Parameters
     ----------
