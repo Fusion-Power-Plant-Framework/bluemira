@@ -74,6 +74,10 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         self.boundary = blanket_boundary
         self.silhouette = blanket_silhouette
         self.r_inner_cut = r_inner_cut
+        if abs(cut_angle) >= 90:
+            raise ValueError(
+                "Cannot cut boundary silhouette at an angle greater than 90°."
+            )
         self.cut_angle = cut_angle
 
     def run(self) -> Tuple[BluemiraFace, BluemiraFace]:
