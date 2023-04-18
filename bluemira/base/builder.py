@@ -26,25 +26,19 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import Dict, List, Optional, Tuple, Type, Union
-from warnings import warn
+from typing import Dict, List, Optional, Type, Union
 
 from bluemira.base.components import Component
-from bluemira.base.error import ComponentError
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
+from bluemira.base.reactor import BaseManager
 from bluemira.base.reactor_config import ConfigParams
 from bluemira.display.displayer import ComponentDisplayer
-from bluemira.display.plotter import ComponentPlotter
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
 """
 Type alias for representing nested build configuration information.
 """
-
-
-_PLOT_DIMS = ["xy", "xz"]
-_CAD_DIMS = ["xy", "xz", "xyz"]
 
 
 def _remove_suffix(s: str, suffix: str) -> str:
@@ -54,7 +48,7 @@ def _remove_suffix(s: str, suffix: str) -> str:
     return s
 
 
-class ComponentManager(abc.ABC):
+class ComponentManager(BaseManager):
     """
     A wrapper around a component tree.
 
@@ -87,65 +81,6 @@ class ComponentManager(abc.ABC):
         """
         return self._component
 
-    def tree(self) -> str:
-        """
-        Get the component tree
-        """
-        return self.component().tree()
-
-    def _validate_cad_dims(self, *dims: str, **kwargs) -> Tuple[str, ...]:
-        """
-        Validate showable CAD dimensions
-        """
-        # give dims_to_show a default value
-        dims_to_show = ("xyz",) if len(dims) == 0 else dims
-
-        # if a kw "dim" is given, it is only used
-        if kw_dim := kwargs.pop("dim", None):
-            warn(
-                "Using kwarg 'dim' is no longer supported. "
-                "Simply pass in the dimensions you would like to show, e.g. show_cad('xz')",
-                category=DeprecationWarning,
-            )
-            dims_to_show = (kw_dim,)
-        for dim in dims_to_show:
-            if dim not in _CAD_DIMS:
-                raise ComponentError(
-                    f"Invalid plotting dimension '{dim}'."
-                    f"Must be one of {str(_CAD_DIMS)}"
-                )
-
-        return dims_to_show
-
-    def _validate_plot_dims(self, *dims) -> Tuple[str, ...]:
-        """
-        Validate showable plot dimensions
-        """
-        # give dims_to_show a default value
-        dims_to_show = ("xz",) if len(dims) == 0 else dims
-
-        for dim in dims_to_show:
-            if dim not in _PLOT_DIMS:
-                raise ComponentError(
-                    f"Invalid plotting dimension '{dim}'."
-                    f"Must be one of {str(_PLOT_DIMS)}"
-                )
-
-        return dims_to_show
-
-    def _filter_tree(self, comp: Component, dims_to_show: Tuple[str, ...]) -> Component:
-        """
-        Filter a component tree
-
-        Notes
-        -----
-        A copy of the component tree must be made
-        as filtering would mutate the ComponentMangers' underlying component trees
-        """
-        comp_copy = comp.copy()
-        comp_copy.filter_components(dims_to_show)
-        return comp_copy
-
     def show_cad(
         self,
         *dims: str,
@@ -166,13 +101,6 @@ class ComponentManager(abc.ABC):
             ),
             **kwargs,
         )
-
-    def _plot_dims(self, comp: Component, dims_to_show: Tuple[str, ...]):
-        for i, dim in enumerate(dims_to_show):
-            ComponentPlotter(view=dim).plot_2d(
-                self._filter_tree(comp, dims_to_show),
-                show=i == len(dims_to_show) - 1,
-            )
 
     def plot(self, *dims: str):
         """
