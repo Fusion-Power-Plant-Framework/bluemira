@@ -756,3 +756,15 @@ class TestFilletChamfer2D:
 
         result = func(wire, 0.2)
         assert wire.length == result.length
+
+    @pytest.mark.parametrize("func", [fillet_wire_2D, chamfer_wire_2D])
+    def test_GeometryError_on_non_planar_wire(self, func):
+        three_d_wire = make_polygon(
+            {
+                "x": [0, 1, 2, 3, 4, 5],
+                "y": [0, -1, -2, 0, 1, 2],
+                "z": [0, 1, 2, 1, 0, -1],
+            }
+        )
+        with pytest.raises(GeometryError):
+            func(three_d_wire, 0.2)
