@@ -26,6 +26,8 @@ Supporting functions for the bluemira geometry module.
 from __future__ import annotations
 
 import math
+import os
+import sys
 from copy import deepcopy
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 
@@ -1355,7 +1357,12 @@ def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWi
             f"Cannot {'chamfer' if chamfer else 'fillet'} a non-planar wire!"
         )
 
-    return DraftGeomUtils.filletWire(wire, radius, chamfer=chamfer)
+    # Temporarily suppress pesky print statement
+    sys.stdout = open(os.devnull, "w")
+    result = DraftGeomUtils.filletWire(wire, radius, chamfer=chamfer)
+    sys.stdout = sys.__stdout__
+
+    return result
 
 
 # ======================================================================================
