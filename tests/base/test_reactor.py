@@ -19,6 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import time
+from unittest.mock import patch
+
 import matplotlib.pyplot as plt
 import pytest
 
@@ -55,6 +58,13 @@ class TestReactor:
     def teardown_method(cls):
         plt.close("all")
 
+    def test_build_time(self):
+        a = self.reactor.build_time()
+        time.sleep(0.1)
+        b = self.reactor.build_time()
+        assert a > 0
+        assert b >= a + 0.1
+
     def test_name_set_on_root_component(self):
         assert self.reactor.component().name == REACTOR_NAME
 
@@ -66,8 +76,17 @@ class TestReactor:
     def test_component_tree_built_from_class_properties(self):
         assert self.reactor.plasma.component().name == "Plasma"
 
-    def test_show_cad_displays_all_components(self):
-        self.reactor.show_cad()
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    def test_show_cad_displays_all_components(self, dim):
+        with patch("bluemira.display.displayer.show_cad") as mock_show:
+            if isinstance(dim, tuple):
+                self.reactor.show_cad(*dim)
+            else:
+                self.reactor.show_cad(dim)
+
+        assert (
+            len(mock_show.call_args[0][0]) == len(dim) if isinstance(dim, tuple) else 1
+        )
 
     @pytest.mark.parametrize("bad_dim", ["not_a_dim", 1, ["x"]])
     def test_ComponentError_given_invalid_plotting_dimension(self, bad_dim):
@@ -99,3 +118,39 @@ class TestReactor:
             ).build()
         )
         return reactor
+
+
+class TestComponentMananger:
+    def setup_method(self):
+        lcfs = make_polygon({"x": [1, 1, 5, 5], "z": [-2, 2, 2, -2]}, closed=True)
+
+        self.plasma = Plasma(
+            PlasmaBuilder(
+                PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)),
+                {},
+                lcfs,
+            ).build()
+        )
+
+    def test_tree_contains_components(self):
+        plasmatree = self.plasma.tree()
+        assert all(dim in plasmatree for dim in ("xz", "xy", "xyz"))
+
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    def test_show_cad_contains_components(self, dim):
+        with patch("bluemira.display.displayer.show_cad") as mock_show:
+            if isinstance(dim, tuple):
+                self.plasma.show_cad(*dim)
+            else:
+                self.plasma.show_cad(dim)
+
+        assert (
+            len(mock_show.call_args[0][0]) == len(dim) if isinstance(dim, tuple) else 1
+        )
+
+    @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])
+    def test_plot_displays_all_components(self, dim):
+        if isinstance(dim, tuple):
+            self.plasma.plot(*dim)
+        else:
+            self.plasma.plot(dim)
