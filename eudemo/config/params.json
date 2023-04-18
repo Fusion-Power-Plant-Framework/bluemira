@@ -989,5 +989,17 @@
         "value": 150,
         "unit": "MW",
         "long_name": "Steady-state heating and current drive electrical power"
+    },
+    "tk_upper_port_wall_end": {
+        "value": 0.4,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Thickness of the upper port wall ends"
+    },
+    "tk_upper_port_wall_side": {
+        "value": 0.2,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Thickness of the upper port wall parallel with TF coil"
     }
 }
