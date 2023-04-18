@@ -25,9 +25,9 @@ Tests for EU-DEMO Maintenance
 import numpy as np
 import pytest
 
+from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter
 from bluemira.display.displayer import show_cad
-from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_fuse,
@@ -190,13 +190,13 @@ class TestDuctConnection:
             UpperPortDuctBuilder(self.params, self.port_koz, 0)
 
     @pytest.mark.parametrize("end", [1, 5])
-    def test_GeometryError_on_too_small_port(self, end):
+    def test_BuilderError_on_too_small_port(self, end):
         # raises an error in two different places
         self.params.tk_upper_port_wall_side.value = 0.5
         self.params.tk_upper_port_wall_end.value = end
         builder = UpperPortDuctBuilder(self.params, self.port_koz, 2)
 
-        with pytest.raises(GeometryError):
+        with pytest.raises(BuilderError):
             builder.build()
 
 

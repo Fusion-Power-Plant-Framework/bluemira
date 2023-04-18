@@ -29,11 +29,11 @@ import numpy as np
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.base.reactor_config import ConfigParams
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_polygon
 
@@ -124,7 +124,7 @@ class UpperPortDuctBuilder(Builder):
         x2, x3 = x1 + end_tk, x4 - end_tk
 
         if x2 >= x3:
-            raise GeometryError("Port dimensions too small")
+            raise BuilderError("Port dimensions too small")
 
         y1 = x1 * tan_hb - y_tf_out
 
@@ -137,7 +137,7 @@ class UpperPortDuctBuilder(Builder):
         y2, y3 = x2 * tan_hb - y_tf_in, x3 * tan_hb - y_tf_in
 
         if y3 <= 0:
-            raise GeometryError("Port dimensions too small")
+            raise BuilderError("Port dimensions too small")
 
         if y2 < 0:
             # Triangular inner port wall
