@@ -30,9 +30,8 @@ from typing import Dict, List, Optional, Type, Union
 
 from bluemira.base.components import Component
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
-from bluemira.base.reactor import BaseManager
+from bluemira.base.reactor import ComponentManager  # noqa: F401 for compatibility
 from bluemira.base.reactor_config import ConfigParams
-from bluemira.display.displayer import ComponentDisplayer
 from bluemira.utilities.plot_tools import set_component_view
 
 BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
@@ -46,73 +45,6 @@ def _remove_suffix(s: str, suffix: str) -> str:
     if suffix and s.endswith(suffix):
         return s[: -len(suffix)]
     return s
-
-
-class ComponentManager(BaseManager):
-    """
-    A wrapper around a component tree.
-
-    The purpose of the classes deriving from this is to abstract away
-    the structure of the component tree and provide access to a set of
-    its features. This way a reactor build procedure can be completely
-    agnostic of the structure of component trees, relying instead on
-    a set of methods implemented on concrete `ComponentManager`
-    instances.
-
-    This class can also be used to hold 'construction geometry' that may
-    not be part of the component tree, but was useful in construction
-    of the tree, and could be subsequently useful (e.g., an equilibrium
-    can be solved to get a plasma shape, the equilibrium is not
-    derivable from the plasma component tree, but can be useful in
-    other stages of a reactor build procedure).
-
-    Parameters
-    ----------
-    component_tree: Component
-        The component tree this manager should wrap.
-    """
-
-    def __init__(self, component_tree: Component) -> None:
-        self._component = component_tree
-
-    def component(self) -> Component:
-        """
-        Return the component tree wrapped by this manager.
-        """
-        return self._component
-
-    def show_cad(
-        self,
-        *dims: str,
-        **kwargs,
-    ):
-        """
-        Show the CAD build of the component.
-
-        Parameters
-        ----------
-        *dims
-            The dimension of the reactor to show, typically one of
-            'xz', 'xy', or 'xyz'. (default: 'xyz')
-        """
-        ComponentDisplayer().show_cad(
-            self._filter_tree(
-                self.component(), self._validate_cad_dims(*dims, **kwargs)
-            ),
-            **kwargs,
-        )
-
-    def plot(self, *dims: str):
-        """
-        Plot the component.
-
-        Parameters
-        ----------
-        *dims:
-            The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
-            (default: 'xz')
-        """
-        self._plot_dims(self.component(), self._validate_plot_dims(*dims))
 
 
 class Builder(abc.ABC):
