@@ -45,7 +45,7 @@ def Bz_coil_axis(
     Parameters
     ----------
     r: float
-        Radial position of the coil centroid [m]
+        Coil radius [m]
     z: float (default = 0)
         Vertical position of the coil centroid [m]
     pz: float (default = 0)
