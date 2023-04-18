@@ -1346,7 +1346,8 @@ def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWi
     """
     edges = wire.OrderedEdges
     if len(edges) < 2:
-        raise GeometryError("Cannot fillet a wire with less than 2 edges!")
+        func_name = "chamfer" if chamfer else "fillet"
+        raise GeometryError(f"Cannot {func_name} a wire with less than 2 edges!")
 
     return DraftGeomUtils.filletWire(wire, radius, chamfer=chamfer)
 
