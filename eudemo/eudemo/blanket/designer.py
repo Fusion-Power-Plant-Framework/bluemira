@@ -56,7 +56,36 @@ class BlanketDesignerParams(ParameterFrame):
 
 
 class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
-    """Designer for an EUDEMO-style blanket."""
+    """
+    Designer for an EUDEMO-style blanket.
+
+    This takes a blanket boundary and silhouette, cuts them into inboard
+    and outboard segments, and panels each segment.
+
+
+    Parameters
+    ----------
+    params
+        The parameters for the designer.
+        See :class:`.BlanketDesignerParams` for more details.
+    blanket_boundary
+        The wire defining the inner boundary of the blanket.
+        This should be an open wire, where the start and end points
+        share the same z-coordinate (i.e., an open loop).
+    blanket_silhouette
+        A face defining the poloidal shape of the blanket.
+        The inner boundary of this face *must* be the same as the
+        :obj:`blanket_boundary`. It's difficult to reverse engineer the
+        wire from the face, so both are required.
+    r_inner_cut
+        The x coordinate at which to cut the blanket into segments.
+        Note that this is the coordinate of the x-most end of the cut on
+        the inner wire of the boundary, not the center.
+    cut_angle
+        The angle at which to segment the blanket [degrees].
+        A positive angle will result in a downward top-to-bottom slope
+        on the inboard.
+    """
 
     param_cls = BlanketDesignerParams
     params: BlanketDesignerParams
@@ -81,6 +110,7 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         self.cut_angle = cut_angle
 
     def run(self) -> Tuple[BluemiraFace, BluemiraFace]:
+        """Run the blanket design problem."""
         inboard, outboard, ib_boundary, ob_boundary = self.segment_blanket()
         # Inboard
         ib_panels = self.panel_boundary(ib_boundary)
@@ -102,7 +132,14 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
 
         Returns
         -------
-        Inboard blanket segment and Outboard blanket segment silhouette
+        ib_face
+            Inboard blanket segment silhouette.
+        ob_face
+            Outboard blanket segment silhouette.
+        ib_bound
+            Inboard blanket segment's inner boundary.
+        ob_bound
+            Outboard blanket segment's inner boundary.
         """
         # Make cutting geometry
         p0 = get_inner_cut_point(self.silhouette, self.r_inner_cut)
@@ -142,6 +179,7 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         return ib_face, ob_face, ib_bound, ob_bound
 
     def panel_boundary(self, boundary: BluemiraWire) -> BluemiraWire:
+        """Create the panel shapes for the given boundary."""
         panel_coords = PanellingDesigner(self.params, boundary).run()
         return make_polygon(
             {"x": panel_coords[0], "z": panel_coords[1]}, label="panels", closed=True

@@ -24,9 +24,8 @@ from bluemira.base.builder import ComponentManager
 from eudemo.blanket.builder import BlanketBuilder
 from eudemo.blanket.designer import BlanketDesigner
 
+__all__ = ["Blanket", "BlanketBuilder", "BlanketDesigner"]
+
 
 class Blanket(ComponentManager):
     """Wrapper around a Blanket component tree."""
-
-
-__all__ = ["Blanket", "BlanketBuilder", "BlanketDesigner"]
