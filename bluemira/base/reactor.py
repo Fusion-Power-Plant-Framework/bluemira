@@ -275,7 +275,7 @@ class Reactor(BaseManager):
         """Return the component tree."""
         return self._build_component_tree(with_components)
 
-    def build_time(self) -> float:
+    def time_since_init(self) -> float:
         """
         Get time since initialisation
         """

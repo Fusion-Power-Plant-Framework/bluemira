@@ -58,10 +58,10 @@ class TestReactor:
     def teardown_method(cls):
         plt.close("all")
 
-    def test_build_time(self):
-        a = self.reactor.build_time()
+    def test_time_since_init(self):
+        a = self.reactor.time_since_init()
         time.sleep(0.1)
-        b = self.reactor.build_time()
+        b = self.reactor.time_since_init()
         assert a > 0
         assert b >= a + 0.1
 
