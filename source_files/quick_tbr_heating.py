@@ -1,26 +1,28 @@
 import math
-from dataclasses import dataclass
+from dataclasses import dataclass, asdict
 
 import matplotlib.pyplot as plt
 import openmc
-import pandas as pd
 import numpy as np
-import pint
+from numpy import pi
 from periodictable import elements
 
 import make_geometry as mg
 import make_materials as mm
 import pandas_df_functions as pdf
+from pandas_df_functions import DataFrame
+from collections import namedtuple
 
 # Constants
-pi = math.pi
-MJ_per_MeV = pint.Quantity("MeV").to("MJ").magnitude
-MJ_per_eV = pint.Quantity("eV").to("MJ").magnitude
-s_in_yr = pint.Quantity("year").to("s").magnitude
-per_cm2_to_per_m2 = pint.Quantity("1/cm^2").to("1/m^2").magnitude
-m_to_cm = pint.Quantity("m").to("cm").magnitude
+from bluemira.base.constants import BMUnitRegistry, elements
 
-avogadro = pint.Quantity("N_A").to_base_units().magnitude
+MJ_per_MeV = BMUnitRegistry.Quantity("MeV").to("MJ").magnitude
+MJ_per_eV = BMUnitRegistry.Quantity("eV").to("MJ").magnitude
+s_in_yr = BMUnitRegistry.Quantity("year").to("s").magnitude
+per_cm2_to_per_m2 = BMUnitRegistry.Quantity("1/cm^2").to("1/m^2").magnitude
+m_to_cm = BMUnitRegistry.Quantity("m").to("cm").magnitude
+
+avogadro = BMUnitRegistry.Quantity("N_A").to_base_units().magnitude
 fe_molar_mass_g = elements.isotope("Fe").mass
 fe_density_g_cc = elements.isotope("Fe").density
 
@@ -28,17 +30,20 @@ fe_density_g_cc = elements.isotope("Fe").density
 energy_per_fusion_MeV = 17.58
 dpa_fe_threshold_eV = 40
 
+import os
+os.environ['OPENMC_CROSS_SECTIONS'] = '/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml'
+# ----------------------------------------------------------------------------------------
 
 @dataclass
 class TBRHeatingBase:
     def to_dict(self):
-        pass
+        return asdict(self)
 
 
 @dataclass
 class TBRHeatingRuntimeParams:
-    stochastic_vol_calc: bool
-    plot_geometry: bool
+    # stochastic_vol_calc: bool
+    # plot_geometry: bool
     no_of_particles: int
     reactor_power_MW: float
     no_of_particles_stoch: int
@@ -393,8 +398,8 @@ def create_tallies(
 
 # ----------------------------------------------------------------------------------------
 
-def summary(universe, src_str, statepoint_file="statepoint.2.h5"):
-    
+DPACoefficients = namedtuple('DPACoefficients', 'atoms_per_cc, displacements_per_damage_eV')
+def get_dpa_coefs():
     # Calculate and print results
 
     #########################################
@@ -413,115 +418,138 @@ def summary(universe, src_str, statepoint_file="statepoint.2.h5"):
     #   Results in Physics 16 (2020) 102835
     #   https://doi.org/10.1016/j.rinp.2019.102835
     displacements_per_damage_eV = 0.8 / (2 * dpa_fe_threshold_eV)
-    
-    ##############################################
-    ### Load statepoint file and print results ###
-    ##############################################
+    return DPACoefficients(atoms_per_cc, displacements_per_damage_eV)
 
-    # Creating cell name dictionary to allow easy mapping to dataframe
-    cell_names = {}
-    for cell_id in universe.cells:
-        cell_names[cell_id] = universe.cells[cell_id].name
-        
-    # Creating material dictionary to allow easy mapping to dataframe
-    mat_names = {}
-    for cell_id in universe.cells:
-        try:
-            mat_names[ universe.cells[cell_id].fill.id ] = universe.cells[cell_id].fill.name
-        except:
-            pass
+class OpenMCResult(DataFrame):
+    """Open up the openmc results from statepoint and then format them to the desired shape."""
+    def __init__(self, universe, src_str, statepoint_file="statepoint.2.h5"):
+        # WHY recursion?
+        self.universe = universe
+        self.src_str = src_str
+        self.statepoint_file = statepoint_file
+        # Creating cell name dictionary to allow easy mapping to dataframe
+        cell_names = {}
+        for cell_id in self.universe.cells:
+            cell_names[cell_id] = self.universe.cells[cell_id].name
 
-    # Creating cell volume dictionary to allow easy mapping to dataframe
-    cell_vols = {}
-    for cell_id in universe.cells:
-        cell_vols[cell_id] = universe.cells[cell_id].volume
+        # Creating material dictionary to allow easy mapping to dataframe
+        mat_names = {}
+        for cell_id in self.universe.cells:
+            try:
+                mat_names[ self.universe.cells[cell_id].fill.id ] = self.universe.cells[cell_id].fill.name
+            except:
+                pass
 
-    # Loads up the output file from the simulation
-    statepoint = openmc.StatePoint(statepoint_file)
+        # Creating cell volume dictionary to allow easy mapping to dataframe
+        cell_vols = {}
+        for cell_id in self.universe.cells:
+            cell_vols[cell_id] = self.universe.cells[cell_id].volume
+            
+    def get_tbr(self, print_df: bool = True):
+        # Loads up the output file from the simulation
+        self.statepoint = openmc.StatePoint(self.statepoint_file)
 
-    tally = "TBR"
-    tbr_df = statepoint.get_tally(name=tally).get_pandas_dataframe()
-    tbr = "{:.2f}".format(tbr_df["mean"].sum())
-    tbr_e = "{:.2f}".format(tbr_df["std. dev."].sum())
-    print(f"\n{tally}\n{tbr} {tbr_e}")
+        tally = "TBR"
+        self.tbr_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
+        self.tbr = "{:.2f}".format(self.tbr_df["mean"].sum())
+        self.tbr_e = "{:.2f}".format(self.tbr_df["std. dev."].sum())
+        if print_df:
+            print(f"\n{tally}\n{self.tbr} {self.tbr_e}")
 
-    tally = "MW heating"  # 'mean' units are MW
-    heating_df = statepoint.get_tally(name=tally).get_pandas_dataframe()
-    heating_df["material_name"] = heating_df["material"].map(mat_names)
-    heating_df["%err."] = heating_df.apply(pdf.get_percent_err, axis=1).apply(
-        lambda x: "%.1f" % x
-    )
-    heating_df = heating_df[
-        ["material", "material_name", "nuclide", "score", "mean", "std. dev.", "%err."]
-    ]
-    print("\nHeating (MW)\n", heating_df)
-
-    tally = "neutron wall load"  # 'mean' units are eV per source particle
-    n_wl_df = statepoint.get_tally(name=tally).get_pandas_dataframe()
-    n_wl_df["cell_name"] = n_wl_df["cell"].map(cell_names)
-    n_wl_df["vol(cc)"] = n_wl_df["cell"].map(cell_vols)
-    n_wl_df["dpa/fpy"] = (
-        n_wl_df["mean"]
-        * displacements_per_damage_eV
-        / (n_wl_df["vol(cc)"] * atoms_per_cc)
-        * s_in_yr
-        * src_str
-    )
-    n_wl_df["dpa/fpy"] = n_wl_df["dpa/fpy"].apply(lambda x: "%.1f" % x)
-    n_wl_df["%err."] = n_wl_df.apply(pdf.get_percent_err, axis=1).apply(
-        lambda x: "%.1f" % x
-    )
-    n_wl_df = n_wl_df.drop(n_wl_df[~n_wl_df["cell_name"].str.contains("Surface")].index)  # ~ invert operator = doesnt contain
-    n_wl_df = n_wl_df.reindex([12,0,1,2,3,4,5,6,7,8,9,10,11])
-    n_wl_df = n_wl_df[
-        [
-            "cell",
-            "cell_name",
-            "particle",
-            "nuclide",
-            "score",
-            "vol(cc)",
-            "mean",
-            "std. dev.",
-            "dpa/fpy",
-            "%err.",
+    def get_heating_in_MW(self, print_df: bool = True):
+        tally = "MW heating"  # 'mean' units are MW
+        heating_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
+        heating_df["material_name"] = heating_df["material"].map(self.mat_names)
+        heating_df["%err."] = heating_df.apply(pdf.get_percent_err, axis=1).apply(
+            lambda x: "%.1f" % x
+        )
+        heating_df = heating_df[
+            ["material", "material_name", "nuclide", "score", "mean", "std. dev.", "%err."]
         ]
-    ]
-    print("\nNeutron Wall Load (eV)\n", n_wl_df)
+        self.heating_df = heating_df
+        if print_df:
+            print("\nHeating (MW)\n", heating_df)
 
-    tally = "photon heat flux"  # 'mean' units are MW cm
-    p_hf_df = statepoint.get_tally(name=tally).get_pandas_dataframe()
-    p_hf_df["cell_name"] = p_hf_df["cell"].map(cell_names)
-    p_hf_df["vol(cc)"] = p_hf_df["cell"].map(cell_vols)
-    p_hf_df["MW_m-2"] = p_hf_df["mean"] / p_hf_df["vol(cc)"] * per_cm2_to_per_m2
-    p_hf_df["%err."] = p_hf_df.apply(pdf.get_percent_err, axis=1).apply(
-        lambda x: "%.1f" % x
-    )
-    # Scaling first wall results by factor to surface results
-    surface_total = p_hf_df.loc[ p_hf_df["cell_name"].str.contains("FW Surface"),     "MW_m-2"].sum()
-    cell_total    = p_hf_df.loc[~p_hf_df["cell_name"].str.contains("FW Surface|PFC"), "MW_m-2"].sum()  # ~ invert operator = doesnt contain
-    surface_factor = surface_total / cell_total
-    p_hf_df["MW_m-2"] = np.where(~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
-                                           p_hf_df["MW_m-2"] * surface_factor,
-                                           p_hf_df["MW_m-2"])
-    p_hf_df = p_hf_df.drop(p_hf_df[p_hf_df["cell_name"].str.contains("FW Surface")].index)
-    p_hf_df = p_hf_df.drop(p_hf_df[p_hf_df["cell_name"] == "Divertor PFC"].index)
-    p_hf_df = p_hf_df.replace('FW','FW Surface', regex=True) #df.replace('Py','Python with ', regex=True)
-    p_hf_df = p_hf_df[
-        [
-            "cell",
-            "cell_name",
-            "particle",
-            "nuclide",
-            "score",
-            "vol(cc)",
-            "mean",
-            "std. dev.",
-            "MW_m-2",
-            "%err.",
+    def get_neutron_wall_loading(self, print_df: bool = True):
+        dfa_coefs = get_dpa_coefs()
+        tally = "neutron wall load"  # 'mean' units are eV per source particle
+        n_wl_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
+        n_wl_df["cell_name"] = n_wl_df["cell"].map(self.cell_names)
+        n_wl_df["vol(cc)"] = n_wl_df["cell"].map(self.cell_vols)
+        n_wl_df["dpa/fpy"] = (
+            n_wl_df["mean"]
+            * dfa_coefs.displacements_per_damage_eV
+            / (n_wl_df["vol(cc)"] * dfa_coefs.atoms_per_cc)
+            * s_in_yr
+            * src_str
+        )
+        n_wl_df["dpa/fpy"] = n_wl_df["dpa/fpy"].apply(lambda x: "%.1f" % x)
+        n_wl_df["%err."] = n_wl_df.apply(pdf.get_percent_err, axis=1).apply(
+            lambda x: "%.1f" % x
+        )
+        n_wl_df = n_wl_df.drop(n_wl_df[~n_wl_df["cell_name"].str.contains("Surface")].index)  # ~ invert operator = doesnt contain
+        n_wl_df = n_wl_df.reindex([12,0,1,2,3,4,5,6,7,8,9,10,11])
+        n_wl_df = n_wl_df[
+            [
+                "cell",
+                "cell_name",
+                "particle",
+                "nuclide",
+                "score",
+                "vol(cc)",
+                "mean",
+                "std. dev.",
+                "dpa/fpy",
+                "%err.",
+            ]
         ]
-    ]
-    print("\nPhoton Heat Flux MW m-2\n", p_hf_df)
+        self.neutron_wall_load = n_wl_df
+
+        if print_df:
+            print("\nNeutron Wall Load (eV)\n", n_wl_df)
+
+    def get_photon_heat_flux(self, print_df: bool = True):
+        tally = "photon heat flux"  # 'mean' units are MW cm
+        p_hf_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
+        p_hf_df["cell_name"] = p_hf_df["cell"].map(self.cell_names)
+        p_hf_df["vol(cc)"] = p_hf_df["cell"].map(self.cell_vols)
+        p_hf_df["MW_m-2"] = p_hf_df["mean"] / p_hf_df["vol(cc)"] * per_cm2_to_per_m2
+        p_hf_df["%err."] = p_hf_df.apply(pdf.get_percent_err, axis=1).apply(
+            lambda x: "%.1f" % x
+        )
+        # Scaling first wall results by factor to surface results
+        surface_total = p_hf_df.loc[ p_hf_df["cell_name"].str.contains("FW Surface"),     "MW_m-2"].sum()
+        cell_total    = p_hf_df.loc[~p_hf_df["cell_name"].str.contains("FW Surface|PFC"), "MW_m-2"].sum()  # ~ invert operator = doesnt contain
+        surface_factor = surface_total / cell_total
+        p_hf_df["MW_m-2"] = np.where(~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
+                                               p_hf_df["MW_m-2"] * surface_factor,
+                                               p_hf_df["MW_m-2"])
+        p_hf_df = p_hf_df.drop(p_hf_df[p_hf_df["cell_name"].str.contains("FW Surface")].index)
+        p_hf_df = p_hf_df.drop(p_hf_df[p_hf_df["cell_name"] == "Divertor PFC"].index)
+        p_hf_df = p_hf_df.replace('FW','FW Surface', regex=True) #df.replace('Py','Python with ', regex=True)
+        p_hf_df = p_hf_df[
+            [
+                "cell",
+                "cell_name",
+                "particle",
+                "nuclide",
+                "score",
+                "vol(cc)",
+                "mean",
+                "std. dev.",
+                "MW_m-2",
+                "%err.",
+            ]
+        ]
+        if print_df:
+            print("\nPhoton Heat Flux MW m-2\n", p_hf_df)
+
+
+    def summarize(self, print_dfs):
+        get_tbr(print_dfs)
+        get_heating_in_MW(print_dfs)
+        get_neutron_wall_loading(print_dfs)
+        get_photon_heat_flux(print_dfs)
     
 # ----------------------------------------------------------------------------------------
 
@@ -536,12 +564,14 @@ def stochastic_volume_calculation(
     ##############################################
     import os
 
+    # quietly delete the unused .hf files
     try:
         os.remove("summary.h5")
         os.remove("statepoint.1.h5")
     except OSError:
         pass
 
+    # maximum radius reached by the plasma 
     maxr = (
         geometry_variables.major_r
         + geometry_variables.minor_r
@@ -555,6 +585,7 @@ def stochastic_volume_calculation(
         + geometry_variables.outb_mnfld_thick
         + geometry_variables.outb_vv_thick
     )
+    # draw the bounding box for the tokamak.
     lower_left = (-maxr, -maxr, -maxz)
     upper_right = (maxr, maxr, maxz)
     cell_vol_calc = openmc.VolumeCalculation(
@@ -606,30 +637,24 @@ def geometry_plotter(cells, geometry_variables):
         cells["outer_container"]:   "darkgrey",
     }
     
-    for i in range(0, len(cells["outb_fw_cells"])):
-        mat_color_assignment[cells["outb_fw_cells"][i]] = "red"
-    for i in range(0, len(cells["inb_fw_cells"])):
-        mat_color_assignment[cells["inb_fw_cells"][i]] = "red"    
-                   
-    for i in range(0, len(cells["outb_bz_cells"])):
-        mat_color_assignment[cells["outb_bz_cells"][i]] = "yellow"
-    for i in range(0, len(cells["inb_bz_cells"])):
-        mat_color_assignment[cells["inb_bz_cells"][i]] = "yellow"    
-                   
-    for i in range(0, len(cells["outb_mani_cells"])):
-        mat_color_assignment[cells["outb_mani_cells"][i]] = "green"
-    for i in range(0, len(cells["inb_mani_cells"])):
-        mat_color_assignment[cells["inb_mani_cells"][i]] = "green"     
-                   
-    for i in range(0, len(cells["outb_vv_cells"])):
-        mat_color_assignment[cells["outb_vv_cells"][i]] = "grey"
-    for i in range(0, len(cells["inb_vv_cells"])):
-        mat_color_assignment[cells["inb_vv_cells"][i]] = "grey"
-        
-    for i in range(0, len(cells["divertor_cells"])):
-        mat_color_assignment[cells["divertor_cells"][i]] = "cyan"
-            
-                   
+    def color_cells(prefixed_cell_type, color):
+        for i in range(len(cells[prefixed_cell_type+"_cells"])):
+            mat_color_assignment[cells[prefixed_cell_type+"_cells"][i]] = color
+    # first wall: red
+    color_cells('outb_fw',   'red')
+    color_cells( 'inb_fw',   'red')
+    # breeding zone: yellow
+    color_cells('outb_bz',   'yellow')
+    color_cells( 'inb_bz',   'yellow')
+    # manifold: green
+    color_cells('outb_mani', 'green')
+    color_cells( 'inb_mani', 'green')
+    # vacuum vessel: grey
+    color_cells('outb_vv',   'grey')
+    color_cells( 'inb_vv',   'grey')
+    # divertor: cyan
+    color_cells('divertor',  'cyan')
+
     plot_width = 2 * (
         geometry_variables.major_r
         + geometry_variables.minor_r * geometry_variables.elong
@@ -659,159 +684,189 @@ def geometry_plotter(cells, geometry_variables):
     
 # ----------------------------------------------------------------------------------------
 
-def run_tbr_heating_calc(
-    runtime_variables,
-    material_variables,
-    geometry_variables
-):
+class TBRHeatingSimulation():
+    """Contains all the data necessary to run the openmc simulation of the tbr."""
+    def __init__(self, runtime_variables, material_variables, geometry_variables):
+        self.runtime_variables = runtime_variables
+        self.material_variables = material_variables
+        self.geometry_variables = geometry_variables
+
+        self.cells = None
+        self.universe = None
+
+    def setup(self, plot_geometry):
+        """
+            plot the geometry and saving them as hard-coded names before exiting.
+        """
+        create_materials(self.material_variables)
+        mg.check_geometry(self.geometry_variables)
+        if self.runtime_variables.parametric_source:
+            source = create_parametric_source(self.geometry_variables)
+        else:
+            source = create_ring_source(self.geometry_variables)
+
+        setup_openmc(
+            source,
+            self.runtime_variables.no_of_particles,
+            self.runtime_variables.batches,
+            self.runtime_variables.photon_transport,
+            self.runtime_variables.electron_treatment,
+            self.runtime_variables.run_mode,
+            self.runtime_variables.openmc_output_summary
+            )
+
+        fewer_inner_blanket_points, no_inboard_points, div_points = load_fw_points(self.geometry_variables)
+        self.cells, self.universe = mg.make_geometry(
+                self.geometry_variables,
+                fewer_inner_blanket_points,
+                no_inboard_points,
+                div_points,
+            )
+
+        # unpack one of the variables (reactor_power_MW) from runtime_variable to calculate source strength (self.src_str)
+        self.src_str = self.runtime_variables.reactor_power_MW / (energy_per_fusion_MeV * MJ_per_MeV)
+
+        create_tallies(*filter_cells(self.cells, self.src_str))
+
+        if plot_geometry:
+            geometry_plotter(self.cells, self.geometry_variables)
+        return
+
+    def run(self):
+        """Run the actual openmc simulation."""
+        openmc.run()
+
+    def get_result(self, print_summary: bool):
+        """
+        Create a summary object, attach it to self, and then return it.
+        Parameters
+        ----------
+        print_summary: bool
+            print the summary to stdout or not.
+        """
+        assert self.universe is not None, "The self.universe variable must have been first populated by self.run()!"
+        self.result = OpenMCResult(self.universe, self.src_str)
+        self.result.summarize(print_summary)
+        return self.result
+
+    def calculate_volume_stochastically(self):
+        stochastic_volume_calculation(
+            self.geometry_variables,
+            self.cells,
+            self.runtime_variables.no_of_particles_stoch,
+        )
+
+################################################################################################################
+
+if __name__ == "__main__":
+    BluemiraOpenMCVariables = namedtuple('BluemiraOpenMCVariables', 'runtime_variables, material_variables, geometry_variables')
+
+    def get_preset_variables(blanket_type):
+        """Currently blanket types with are:
+        ['wcll', 'dcll', 'hcpb']"""
+        # Calculation runtime variables
+        runtime_variables = TBRHeatingRuntimeParams(
+            **{
+                # "stochastic_vol_calc": False,    # Do a stochastic volume calculation - this takes a long time!
+                # "plot_geometry": True,
+                "reactor_power_MW": 1998.0,
+                "no_of_particles": 16800,        # 16800 = 5 seconds,  1000000 = 280 seconds }
+                "no_of_particles_stoch": 4e8,
+                "batches": 2,
+                "photon_transport": True,
+                "electron_treatment": "ttb",
+                "run_mode": "fixed source",
+                "openmc_output_summary": False,
+                "parametric_source": True
+            }
+        )
+
+        material_variables = TBRHeatingMaterialParams(
+            **{"blanket_type": blanket_type, 
+               "li_enrich_ao": 60.0}           # atomic fraction percentage of lithium
+        )  
+
+        # Geometry variables
+
+        # Other usable geometry variables:
+        # Paper inboard build --- Nuclear analyses of solid breeder blanket options for DEMO: Status,challenges and outlook,
+        #                         Pereslavtsev, 2019
+        #                        40.0,      # TF Coil inner
+        #                        20.0,      # gap                  from figures
+        #                        6.0,       # VV steel wall
+        #                        48.0,      # VV
+        #                        6.0,       # VV steel wall
+        #                        2.0,       # gap                  from figures
+        #                        35.0,      # Back Supporting Structure
+        #                        6.0,       # Back Wall and Gas Collectors   Back wall = 3.0
+        #                        35.0,      # breeder zone
+        #                        2.2        # fw and armour
+
+        plasma_shape = {"minor_r": 288.3,
+                        "major_r": 893.8,
+                        "elong": 1.65,
+                        "shaf_shift": 0.0,}# The shafranov shift of the plasma
+        if material_variables.blanket_type == "wcll":
+            # 
+            geometry_variables = TBRHeatingGeometryParams(
+                **plasma_shape,
+                **{
+                    "inb_fw_thick":    2.7,
+                    "inb_bz_thick":    37.8,
+                    "inb_mnfld_thick": 43.5,
+                    "inb_vv_thick":    60.0,
+                    "tf_thick":        40.0,
+                    "outb_fw_thick":   2.7,
+                    "outb_bz_thick":   53.8,
+                    "outb_mnfld_thick":42.9,
+                    "outb_vv_thick":   60.0
+                }
+            )
+        elif material_variables.blanket_type == "dcll":
+            geometry_variables = TBRHeatingGeometryParams(
+                **plasma_shape,
+                **{
+                    "inb_fw_thick":    2.2,
+                    "inb_bz_thick":    30.0,
+                    "inb_mnfld_thick": 17.8,
+                    "inb_vv_thick":    60.0,
+                    "tf_thick":        40.0,
+                    "outb_fw_thick":   2.2,
+                    "outb_bz_thick":   64.0,
+                    "outb_mnfld_thick":24.8,
+                    "outb_vv_thick":   60.0
+                }
+            )
+        elif material_variables.blanket_type == "hcpb":
+            # HCPB Design Report, 26/07/2019
+            geometry_variables = TBRHeatingGeometryParams(
+                **plasma_shape,
+                **{
+                    "inb_fw_thick":    2.7,
+                    "inb_bz_thick":    46.0,
+                    "inb_mnfld_thick": 56.0,
+                    "inb_vv_thick":    60.0,
+                    "tf_thick":        40.0,
+                    "outb_fw_thick":   2.7,
+                    "outb_bz_thick":   46.0,
+                    "outb_mnfld_thick":56.0,
+                    "outb_vv_thick":   60.0
+                }
+            )
+        else:
+            raise TypeError
+
+        return BluemiraOpenMCVariables(runtime_variables, material_variables, geometry_variables)
+        
+    runtime_variables, material_variables, geometry_variables = get_preset_variables('hcpb') # 'wcll', 'dcll', 'hcpb'
     """
     Runs OpenMC calculation to get TBR, component heating, first wall dpa, and photon
     heat flux for a DEMO-like reactor
     """
 
-    create_materials(material_variables)
-
-    mg.check_geometry(geometry_variables)
-    
-    if runtime_variables.parametric_source:
-        source = create_parametric_source(geometry_variables)
-    else:
-        source = create_ring_source(geometry_variables)
-
-    setup_openmc(
-        source,
-        runtime_variables.no_of_particles,
-        runtime_variables.batches,
-        runtime_variables.photon_transport,
-        runtime_variables.electron_treatment,
-        runtime_variables.run_mode,
-        runtime_variables.openmc_output_summary
-    )
-    
-    fewer_inner_blanket_points, no_inboard_points, div_points = load_fw_points(geometry_variables)
-    cells, universe = mg.make_geometry(geometry_variables, fewer_inner_blanket_points, no_inboard_points, div_points)
-
-    # Calculating source strength
-    src_str = runtime_variables.reactor_power_MW / (energy_per_fusion_MeV * MJ_per_MeV)
-
-    create_tallies(*filter_cells(cells, src_str))
-
-    if runtime_variables.plot_geometry:
-        geometry_plotter(cells, geometry_variables)
-
-    # Start the OpenMC calculation, run time calculated from here
-    openmc.run()
-
-    summary(universe, src_str)
-
-    if runtime_variables.stochastic_vol_calc:
-        stochastic_volume_calculation(
-            geometry_variables,
-            cells,
-            runtime_variables.no_of_particles_stoch,
-        )
-
-
-################################################################################################################
-
-if __name__ == "__main__":
-
-    # Calculation runtime variables
-    runtime_variables = TBRHeatingRuntimeParams(
-        **{
-            "stochastic_vol_calc": False,    # Do a stochastic volume calculation - this takes a long time!
-            "plot_geometry": True,
-            "reactor_power_MW": 1998.0,
-            "no_of_particles": 16800,        # 16800 = 5 seconds,  1000000 = 280 seconds }
-            "no_of_particles_stoch": 4e8,
-            "batches": 2,
-            "photon_transport": True,
-            "electron_treatment": "ttb",
-            "run_mode": "fixed source",
-            "openmc_output_summary": False,
-            "parametric_source": True
-        }
-    )
-
-    material_variables = TBRHeatingMaterialParams(
-        **{"blanket_type": "hcpb", 
-           "li_enrich_ao": 60.0}           # atomic fraction percentage of lithium
-    )  
-
-    # Geometry variables
-
-    # Paper inboard build --- Nuclear analyses of solid breeder blanket options for DEMO: Status,challenges and outlook,
-    #                         Pereslavtsev, 2019
-    #                        40.0,      # TF Coil inner
-    #                        20.0,      # gap                  from figures
-    #                        6.0,       # VV steel wall
-    #                        48.0,      # VV
-    #                        6.0,       # VV steel wall
-    #                        2.0,       # gap                  from figures
-    #                        35.0,      # Back Supporting Structure
-    #                        6.0,       # Back Wall and Gas Collectors   Back wall = 3.0
-    #                        35.0,      # breeder zone
-    #                        2.2        # fw and armour
-
-    if material_variables.blanket_type == "wcll":
-        # 
-        geometry_variables = TBRHeatingGeometryParams(
-            **{
-                "minor_r": 288.3,
-                "major_r": 893.8,
-                "elong": 1.65,
-                "shaf_shift": 0.0,  # The shafranov shift of the plasma
-                "inb_fw_thick": 2.7,
-                "inb_bz_thick": 37.8,
-                "inb_mnfld_thick": 43.5,
-                "inb_vv_thick": 60.0,
-                "tf_thick": 40.0,
-                "outb_fw_thick": 2.7,
-                "outb_bz_thick": 53.8,
-                "outb_mnfld_thick": 42.9,
-                "outb_vv_thick": 60.0
-            }
-        )
-    elif material_variables.blanket_type == "dcll":
-        geometry_variables = TBRHeatingGeometryParams(
-            **{
-                "minor_r": 288.3,
-                "major_r": 893.8,
-                "elong": 1.65,
-                "shaf_shift": 0.0,  # The shafranov shift of the plasma
-                "inb_fw_thick": 2.2,
-                "inb_bz_thick": 30.0,
-                "inb_mnfld_thick": 17.8,
-                "inb_vv_thick": 60.0,
-                "tf_thick": 40.0,
-                "outb_fw_thick": 2.2,
-                "outb_bz_thick": 64.0,
-                "outb_mnfld_thick": 24.8,
-                "outb_vv_thick": 60.0
-            }
-        )
-    else:
-        # HCPB Design Report, 26/07/2019
-        geometry_variables = TBRHeatingGeometryParams(
-            **{
-                "minor_r": 288.3,
-                "major_r": 893.8,
-                "elong": 1.65,
-                "shaf_shift": 0.0,  # The shafranov shift of the plasma
-                "inb_fw_thick": 2.7,
-                "inb_bz_thick": 46.0,
-                "inb_mnfld_thick": 56.0,
-                "inb_vv_thick": 60.0,
-                "tf_thick": 40.0,
-                "outb_fw_thick": 2.7,
-                "outb_bz_thick": 46.0,
-                "outb_mnfld_thick": 56.0,
-                "outb_vv_thick": 60.0
-            }
-        )
-        
-    run_tbr_heating_calc(
-        runtime_variables,
-        material_variables,
-        geometry_variables
-    )
+    tbr_heat_sim = TBRHeatingSimulation(runtime_variables, material_variables, geometry_variables)
+    tbr_heat_sim.setup(True)
+    tbr_heat_sim.run()
+    tbr_heat_sim.get_result(True)
+    if False:
+        tbr_heat_sim.calculate_volume_stochastically()

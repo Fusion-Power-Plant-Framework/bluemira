@@ -1,7 +1,11 @@
 import pandas as pd
+from pandas import DataFrame
 
 
 def get_percent_err(row):
+    """
+    Calculate a percentage error to the required row
+    """
 
     # Adds a column to an OpenMC results dataframe that is the
     # percentage stochastic uncertainty in the result

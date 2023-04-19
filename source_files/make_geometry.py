@@ -515,7 +515,7 @@ def create_divertor(div_points, outer_points, inner_points):
     )
     div_sf_region_outer = (
         -surfaces["divertor_surfs"]["top_surface"]
-        & +surfaces["divertor_r_chop_out"] 
+        & +surfaces["divertor_r_chop_out"]
         & -surfaces["divertor_surfs"]["outer_cone"]
         & +surfaces["divertor_scoring_surfs"][3] 
         & -surfaces["divertor_fw_surfs"][3]
