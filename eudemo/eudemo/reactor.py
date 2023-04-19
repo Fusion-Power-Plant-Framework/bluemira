@@ -134,7 +134,7 @@ def build_lower_port(
     divertor_face,
     tf_coils_outer_boundary,
 ) -> LowerPort:
-    """Builder the Lower Port and Duct"""
+    """Builder for the Lower Port and Duct"""
     designer = LowerPortDesigner(
         params,
         build_config,
