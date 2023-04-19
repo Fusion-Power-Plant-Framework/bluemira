@@ -81,18 +81,15 @@ class PowerCycleSystem(PowerCycleABC):
     ):
         scenario = self._validate_scenario(scenario)
 
-        system_format = self._system_format
-        system_config = validate_dict(system_config, system_format)
+        system_config = validate_dict(system_config, self._system_format)
 
         (
             name,
             reactive_config,
             active_config,
         ) = self._unpack_system_config(system_config)
-
-        load_format = self._load_format
-        active_config = validate_subdict(active_config, load_format)
-        reactive_config = validate_subdict(reactive_config, load_format)
+        active_config = validate_subdict(active_config, self._load_format)
+        reactive_config = validate_subdict(reactive_config, self._load_format)
 
         super().__init__(name, label=label)
         self.scenario = scenario
@@ -102,8 +99,7 @@ class PowerCycleSystem(PowerCycleABC):
 
     @staticmethod
     def _validate_scenario(scenario):
-        scenario_is_incorrect = type(scenario) != PowerCycleScenario
-        if scenario_is_incorrect:
+        if type(scenario) != PowerCycleScenario:
             raise PowerCycleSystemError("scenario")
         return scenario
 
@@ -112,7 +108,6 @@ class PowerCycleSystem(PowerCycleABC):
         name = system_config["name"]
         reactive_config = system_config["reactive"]
         active_config = system_config["active"]
-
         return name, reactive_config, active_config
 
     # ------------------------------------------------------------------
@@ -125,9 +120,7 @@ class PowerCycleSystem(PowerCycleABC):
         Dictionary of 'PhaseLoad' objects created from the 'active'
         (load type) fields of the JSON input file.
         """
-        active_config = self._active_config
-        active_loads = self._make_phaseloads_from_config(active_config)
-        return active_loads
+        return self._make_phaseloads_from_config(self._active_config)
 
     @property
     def reactive_loads(self):
@@ -135,17 +128,14 @@ class PowerCycleSystem(PowerCycleABC):
         Dictionary of 'PhaseLoad' objects created from the 'reactive'
         (load type) fields of the JSON input file.
         """
-        reactive_config = self._reactive_config
-        reactive_loads = self._make_phaseloads_from_config(reactive_config)
-        return reactive_loads
+        return self._make_phaseloads_from_config(self._reactive_config)
 
     @classmethod
     def list_all_load_types(cls):
         """
         List with all valid load types.
         """
-        system_format = cls._system_format
-        load_types = list(system_format.keys())
+        load_types = list(cls._system_format.keys())
         load_types.remove("name")
         return load_types
 
@@ -227,22 +217,16 @@ class PowerCycleSystem(PowerCycleABC):
         return phaseload_inputs
 
     def _build_phaseloads(self, load_name, phaseload_inputs):
-        scenario = self.scenario
-        valid_phases = scenario.build_phase_library()
+        valid_phases = self.scenario.build_phase_library()
 
         phase_list = phaseload_inputs["phase_list"]
         consumption = phaseload_inputs["consumption"]
         normalize_list = phaseload_inputs["normalize_list"]
         powerload_list = phaseload_inputs["powerload_list"]
 
-        n_phases = len(phase_list)
-        n_powerloads = len(powerload_list)
-
         phaseload_list = []
-        for p in range(n_phases):
-            phase_label = phase_list[p]
-            normalization_choice = normalize_list[p]
-
+        lists_zip = zip(phase_list, normalize_list)
+        for phase_label, normalization_choice in lists_zip:
             try:
                 phase = valid_phases[phase_label]
             except KeyError:
@@ -253,7 +237,7 @@ class PowerCycleSystem(PowerCycleABC):
                     "present in the 'scenario' attribute.",
                 )
 
-            normalization_flags = [normalization_choice] * n_powerloads
+            normalization_flags = [normalization_choice] * len(powerload_list)
 
             phaseload = PhaseLoad(
                 load_name,
@@ -379,18 +363,20 @@ class PowerCycleManager:
 
     def __init__(self, scenario_config_path: str, manager_config_path: str):
         scenario_builder = ScenarioBuilder(scenario_config_path)
-        scenario = scenario_builder.scenario
-        self.scenario = scenario
+        self.scenario = scenario_builder.scenario
 
         validated_path = validate_file(manager_config_path)
         json_contents = read_json(validated_path)
 
-        manager_format = self._manager_format
-        manager_config = validate_subdict(json_contents, manager_format)
-        self._manager_config = manager_config
+        self._manager_config = validate_subdict(
+            json_contents,
+            self._manager_format,
+        )
 
-        group_library = self._build_group_library(scenario, json_contents)
-        self.group_library = group_library
+        self.group_library = self._build_group_library(
+            self.scenario,
+            json_contents,
+        )
 
     @staticmethod
     def _build_group_library(scenario, manager_config):
@@ -430,13 +416,11 @@ class PowerCycleManager:
         group_library = self.group_library
 
         all_phaseloads = []
-        all_group_labels = group_library.keys()
-        for group_label in all_group_labels:
+        for group_label in group_library.keys():
             group = group_library[group_label]
             system_library = group.system_library
 
-            all_system_labels = system_library.keys()
-            for system_label in all_system_labels:
+            for system_label in system_library.keys():
                 system = system_library[system_label]
 
                 loads_property = load_type + "_loads"
