@@ -1,44 +1,44 @@
 {
-    "x1": {
-        "value": 3.9904249999999992,
-        "lower_bound": 4,
-        "upper_bound": 5,
-        "fixed": true
-    },
-    "dz": {
-        "value": -0.4446325399393063,
-        "lower_bound": -1,
-        "upper_bound": 1,
-        "fixed": false
-    },
-    "sl": {
-        "value": 5.0,
-        "lower_bound": 5,
-        "upper_bound": 10,
-        "fixed": false
-    },
-    "f1": {
-        "value": 4.508001347631,
-        "lower_bound": 4,
-        "upper_bound": 12,
-        "fixed": false
-    },
-    "f2": {
-        "value": 5.696378478911537,
-        "lower_bound": 4,
-        "upper_bound": 12,
-        "fixed": false
-    },
-    "a1": {
-        "value": 12.29534099554494,
-        "lower_bound": 5,
-        "upper_bound": 120,
-        "fixed": false
-    },
-    "a2": {
-        "value": 103.03025404695109,
-        "lower_bound": 10,
-        "upper_bound": 120,
-        "fixed": false
-    }
+  "x1": {
+    "value": 3.9904249999999992,
+    "lower_bound": 4,
+    "upper_bound": 5,
+    "fixed": true
+  },
+  "dz": {
+    "value": -0.4446325399393063,
+    "lower_bound": -1,
+    "upper_bound": 1,
+    "fixed": false
+  },
+  "sl": {
+    "value": 5.0,
+    "lower_bound": 5,
+    "upper_bound": 10,
+    "fixed": false
+  },
+  "f1": {
+    "value": 4.508001347631,
+    "lower_bound": 4,
+    "upper_bound": 12,
+    "fixed": false
+  },
+  "f2": {
+    "value": 5.696378478911537,
+    "lower_bound": 4,
+    "upper_bound": 12,
+    "fixed": false
+  },
+  "a1": {
+    "value": 12.29534099554494,
+    "lower_bound": 5,
+    "upper_bound": 120,
+    "fixed": false
+  },
+  "a2": {
+    "value": 103.03025404695109,
+    "lower_bound": 10,
+    "upper_bound": 120,
+    "fixed": false
+  }
 }

@@ -1427,14 +1427,14 @@
   },
   "n_DD_reactions": {
     "name": "D-D fusion reaction rate",
-    "value": 8.5e+18,
+    "value": 8.5e18,
     "unit": "1/s",
     "source": "Input",
     "description": "At full power"
   },
   "n_DT_reactions": {
     "name": "D-T fusion reaction rate",
-    "value": 7.1e+20,
+    "value": 7.1e20,
     "unit": "1/s",
     "source": "Input",
     "description": "At full power"
@@ -1880,7 +1880,7 @@
   },
   "tf_fluence": {
     "name": "Insulation fluence limit for ITER equivalent to 10 MGy",
-    "value": 3.2e+21,
+    "value": 3.2e21,
     "unit": "1/m^2",
     "source": "Input (https://ieeexplore.ieee.org/document/6374236/)"
   },
@@ -2192,7 +2192,7 @@
   },
   "tk_sh_bot": {
     "name": "Lower shield thickness",
-    "value": 1e-06,
+    "value": 1e-6,
     "unit": "m",
     "source": "Input",
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
@@ -2207,7 +2207,7 @@
   },
   "tk_sh_in": {
     "name": "Inboard shield thickness",
-    "value": 1e-06,
+    "value": 1e-6,
     "unit": "m",
     "source": "Input",
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
@@ -2222,7 +2222,7 @@
   },
   "tk_sh_out": {
     "name": "Outboard shield thickness",
-    "value": 1e-06,
+    "value": 1e-6,
     "unit": "m",
     "source": "Input",
     "description": "DO NOT USE - PROCESS has VV = VV + shield",
@@ -2237,7 +2237,7 @@
   },
   "tk_sh_top": {
     "name": "Upper shield thickness",
-    "value": 1e-06,
+    "value": 1e-6,
     "unit": "m",
     "source": "Input",
     "description": "DO NOT USE - PROCESS has VV = VV + shield",

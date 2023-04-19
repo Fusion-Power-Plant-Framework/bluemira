@@ -50,4 +50,3 @@ repos:
     hooks:
     - id: prettier
       types_or: [json]
-      args: ["--tab-width 2"]
