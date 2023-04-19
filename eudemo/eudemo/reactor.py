@@ -80,7 +80,7 @@ from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 PARAMS_FILE_PATH = os.path.join(CONFIG_DIR, "params.json")
-BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json.DAT")
+BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json")
 
 
 class EUDEMO(Reactor):
@@ -154,6 +154,8 @@ def build_lower_port(
         angled_duct_boundary,
         straight_duct_boundary,
     )
+    # this comp. manager is temporary
+    # the duct will be merged into the VV
     return LowerPort(builder.build(), lower_duct_koz)
 
 
