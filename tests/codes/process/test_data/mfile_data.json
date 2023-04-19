@@ -1,3766 +1,3766 @@
 {
-    "procver": {
-        "var_mod": "Power Reactor Optimisation Code",
-        "scan01": "2.1.0"
-    },
-    "date": {
-        "var_mod": "Power Reactor Optimisation Code",
-        "scan01": "11/03/2021"
-    },
-    "time": {
-        "var_mod": "Power Reactor Optimisation Code",
-        "scan01": "15:41"
-    },
-    "username": {
-        "var_mod": "Power Reactor Optimisation Code",
-        "scan01": "username"
-    },
-    "runtitle": {
-        "var_mod": "Power Reactor Optimisation Code",
-        "scan01": "\"Run Title (change this line using input variable 'runtitle')"
-    },
-    "tagno": {
-        "var_mod": "Power Reactor Optimisation Code",
-        "scan01": "v2.1-152-gf431eea5"
-    },
-    "branch_name": {
-        "var_mod": "Power Reactor Optimisation Code",
-        "scan01": "develop"
-    },
-    "commsg": {
-        "var_mod": "Power Reactor Optimisation Code",
-        "scan01": "Merge"
-    },
-    "fileprefix": {
-        "var_mod": "Power Reactor Optimisation Code",
-        "scan01": "/home/user/code/bluemira/tests/syscodes/test_data/IN.DAT"
-    },
-    "ifail": {
-        "var_mod": "Numerics",
-        "scan01": 1.0
-    },
-    "nvar": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 42.0
-    },
-    "neqns+nineqns": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 24.0
-    },
-    "ioptimz": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "minmax": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "sqsumsq": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.968e-09
-    },
-    "convergence_parameter": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 2.5908e-10
-    },
-    "nviter": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 19.0
-    },
-    "itvar001": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 2.395
-    },
-    "xcm001": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0416
-    },
-    "nitvar001": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.1455
-    },
-    "itvar002": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 4.1253
-    },
-    "xcm002": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0215
-    },
-    "nitvar002": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.20587
-    },
-    "itvar003": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 8.7841
-    },
-    "xcm003": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.95431
-    },
-    "nitvar003": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.67319
-    },
-    "itvar004": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 19.197
-    },
-    "xcm004": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.90992
-    },
-    "nitvar004": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.094751
-    },
-    "itvar005": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.067018
-    },
-    "xcm005": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.92636
-    },
-    "nitvar005": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.066085
-    },
-    "itvar006": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 6.4154e+19
-    },
-    "xcm006": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0455
-    },
-    "nitvar006": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.054701
-    },
-    "itvar007": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.2
-    },
-    "xcm007": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar007": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar008": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.4
-    },
-    "xcm008": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar008": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar009": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.7391
-    },
-    "xcm009": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.037539
-    },
-    "nitvar009": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.0017381
-    },
-    "itvar010": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.486
-    },
-    "xcm010": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0078
-    },
-    "nitvar010": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.023879
-    },
-    "itvar011": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.16071
-    },
-    "xcm011": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.98756
-    },
-    "nitvar011": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.15987
-    },
-    "itvar012": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.5
-    },
-    "xcm012": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar012": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.0
-    },
-    "itvar013": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 3.5
-    },
-    "xcm013": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar013": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.0
-    },
-    "itvar014": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.2384
-    },
-    "xcm014": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.92291
-    },
-    "nitvar014": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.11499
-    },
-    "itvar015": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.75677
-    },
-    "xcm015": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.9724
-    },
-    "nitvar015": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.75652
-    },
-    "itvar016": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 23666000.0
-    },
-    "xcm016": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.98929
-    },
-    "nitvar016": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.23589
-    },
-    "itvar017": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.52843
-    },
-    "xcm017": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.9455
-    },
-    "nitvar017": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.52367
-    },
-    "itvar018": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.51715
-    },
-    "xcm018": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0087
-    },
-    "nitvar018": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.51667
-    },
-    "itvar019": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.9349
-    },
-    "xcm019": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.019
-    },
-    "nitvar019": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.93484
-    },
-    "itvar020": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.05
-    },
-    "xcm020": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar020": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.0
-    },
-    "itvar021": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.94516
-    },
-    "xcm021": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.98244
-    },
-    "nitvar021": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.9451
-    },
-    "itvar022": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "xcm022": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar022": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar023": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.65509
-    },
-    "xcm023": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0041
-    },
-    "nitvar023": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.65475
-    },
-    "itvar024": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "xcm024": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0226
-    },
-    "nitvar024": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar025": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 10.0
-    },
-    "xcm025": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0226
-    },
-    "nitvar025": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar026": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "xcm026": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar026": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar027": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "xcm027": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar027": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar028": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 28.886
-    },
-    "xcm028": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.86731
-    },
-    "nitvar028": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.28814
-    },
-    "itvar029": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.32795
-    },
-    "xcm029": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.967
-    },
-    "nitvar029": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.29258
-    },
-    "itvar030": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.008
-    },
-    "xcm030": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar030": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.0
-    },
-    "itvar031": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.84199
-    },
-    "xcm031": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.99118
-    },
-    "nitvar031": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.77724
-    },
-    "itvar032": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 60000.0
-    },
-    "xcm032": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar032": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.0
-    },
-    "itvar033": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.02
-    },
-    "xcm033": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar033": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.0
-    },
-    "itvar034": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.7373
-    },
-    "xcm034": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0409
-    },
-    "nitvar034": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.081925
-    },
-    "itvar035": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "xcm035": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar035": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar036": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.094054
-    },
-    "xcm036": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.92328
-    },
-    "nitvar036": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.44054
-    },
-    "itvar037": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "xcm037": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar037": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar038": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.98542
-    },
-    "xcm038": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.98542
-    },
-    "nitvar038": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.9854
-    },
-    "itvar039": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "xcm039": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar039": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar040": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.42079
-    },
-    "xcm040": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.96154
-    },
-    "nitvar040": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.44235
-    },
-    "itvar041": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "xcm041": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "nitvar041": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0
-    },
-    "itvar042": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.0013085
-    },
-    "xcm042": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.88805
-    },
-    "nitvar042": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 0.13085
-    },
-    "normres001": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 2.1578e-12
-    },
-    "normres002": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": -9.0039e-14
-    },
-    "normres003": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 3.0174e-12
-    },
-    "normres004": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 2.5198e-12
-    },
-    "normres005": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 3.7947e-13
-    },
-    "normres006": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 7.4896e-13
-    },
-    "normres007": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 4.6077e-11
-    },
-    "normres008": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": -9.4015e-12
-    },
-    "normres009": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 5.9264e-13
-    },
-    "normres010": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.0114e-12
-    },
-    "normres011": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 2.3739e-11
-    },
-    "normres012": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": -2.5111e-12
-    },
-    "normres013": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.2133e-11
-    },
-    "normres014": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 4.0552e-12
-    },
-    "normres015": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 4.1502e-12
-    },
-    "normres016": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 6.4511e-12
-    },
-    "normres017": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": -1.9588e-09
-    },
-    "normres018": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 3.2934e-12
-    },
-    "normres019": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 1.7426e-10
-    },
-    "normres020": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 3.3902e-12
-    },
-    "normres021": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 2.1712e-12
-    },
-    "normres022": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": 5.4969e-12
-    },
-    "normres023": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": -5.006e-11
-    },
-    "normres024": {
-        "var_mod": "PROCESS found a feasible solution",
-        "scan01": -8.4011e-13
-    },
-    "abktflnc": {
-        "var_mod": "Plant Availability",
-        "scan01": 15.0
-    },
-    "adivflnc": {
-        "var_mod": "Plant Availability",
-        "scan01": 20.0
-    },
-    "bktlife": {
-        "var_mod": "Plant Availability",
-        "scan01": 15.556
-    },
-    "divlife": {
-        "var_mod": "Plant Availability",
-        "scan01": 3.6014
-    },
-    "cdrlife": {
-        "var_mod": "Plant Availability",
-        "scan01": 15.556
-    },
-    "tlife": {
-        "var_mod": "Plant Availability",
-        "scan01": 40.0
-    },
-    "cfactr": {
-        "var_mod": "Plant Availability",
-        "scan01": 0.75
-    },
-    "itart": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "rmajor": {
-        "var_mod": "Plasma",
-        "scan01": 8.7841
-    },
-    "rminor": {
-        "var_mod": "Plasma",
-        "scan01": 3.6678
-    },
-    "aspect": {
-        "var_mod": "Plasma",
-        "scan01": 2.395
-    },
-    "kappa": {
-        "var_mod": "Plasma",
-        "scan01": 1.848
-    },
-    "kappa95": {
-        "var_mod": "Plasma",
-        "scan01": 1.65
-    },
-    "kappaa": {
-        "var_mod": "Plasma",
-        "scan01": 1.7172
-    },
-    "triang": {
-        "var_mod": "Plasma",
-        "scan01": 0.5
-    },
-    "triang95": {
-        "var_mod": "Plasma",
-        "scan01": 0.33333
-    },
-    "pperim": {
-        "var_mod": "Plasma",
-        "scan01": 33.098
-    },
-    "xarea": {
-        "var_mod": "Plasma",
-        "scan01": 72.574
-    },
-    "sarea": {
-        "var_mod": "Plasma",
-        "scan01": 1757.6
-    },
-    "vol": {
-        "var_mod": "Plasma",
-        "scan01": 3896.6
-    },
-    "icurr": {
-        "var_mod": "Plasma",
-        "scan01": 4.0
-    },
-    "plascur/1d6": {
-        "var_mod": "Plasma",
-        "scan01": 25.022
-    },
-    "alphaj": {
-        "var_mod": "Plasma",
-        "scan01": 1.6552
-    },
-    "rli": {
-        "var_mod": "Plasma",
-        "scan01": 1.1388
-    },
-    "bvert": {
-        "var_mod": "Plasma",
-        "scan01": -0.95509
-    },
-    "bt": {
-        "var_mod": "Plasma",
-        "scan01": 4.1253
-    },
-    "bp": {
-        "var_mod": "Plasma",
-        "scan01": 0.95001
-    },
-    "btot": {
-        "var_mod": "Plasma",
-        "scan01": 4.2333
-    },
-    "q0": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "q95": {
-        "var_mod": "Plasma",
-        "scan01": 3.5
-    },
-    "qstar": {
-        "var_mod": "Plasma",
-        "scan01": 2.6552
-    },
-    "beta": {
-        "var_mod": "Plasma",
-        "scan01": 0.067018
-    },
-    "betap": {
-        "var_mod": "Plasma",
-        "scan01": 1.3307
-    },
-    "total_toroidal_beta": {
-        "var_mod": "Plasma",
-        "scan01": 0.070573
-    },
-    "betaft": {
-        "var_mod": "Plasma",
-        "scan01": 0.010009
-    },
-    "betanb": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "gammaft": {
-        "var_mod": "Plasma",
-        "scan01": 0.17556
-    },
-    "thermal_beta": {
-        "var_mod": "Plasma",
-        "scan01": 0.05701
-    },
-    "thermal_poloidal_beta": {
-        "var_mod": "Plasma",
-        "scan01": 1.132
-    },
-    "thermal_toroidal_beta_(=_beta-exp)": {
-        "var_mod": "Plasma",
-        "scan01": 0.060033
-    },
-    "eps*betap": {
-        "var_mod": "Plasma",
-        "scan01": 0.55564
-    },
-    "epbetmax": {
-        "var_mod": "Plasma",
-        "scan01": 1.38
-    },
-    "dnbeta": {
-        "var_mod": "Plasma",
-        "scan01": 4.5554
-    },
-    "normalised_thermal_beta": {
-        "var_mod": "Plasma",
-        "scan01": 3.4474
-    },
-    "normalised_total_beta": {
-        "var_mod": "Plasma",
-        "scan01": 4.0526
-    },
-    "betalim": {
-        "var_mod": "Plasma",
-        "scan01": 0.075333
-    },
-    "plasma_thermal_energy_(j)": {
-        "var_mod": "Plasma",
-        "scan01": 2376000000.0
-    },
-    "total_plasma_internal_energy": {
-        "var_mod": "Plasma",
-        "scan01": 2793100000.0
-    },
-    "te": {
-        "var_mod": "Plasma",
-        "scan01": 19.197
-    },
-    "te0": {
-        "var_mod": "Plasma",
-        "scan01": 43.343
-    },
-    "ti": {
-        "var_mod": "Plasma",
-        "scan01": 19.197
-    },
-    "ti0": {
-        "var_mod": "Plasma",
-        "scan01": 43.343
-    },
-    "ten": {
-        "var_mod": "Plasma",
-        "scan01": 21.516
-    },
-    "dene": {
-        "var_mod": "Plasma",
-        "scan01": 6.4154e+19
-    },
-    "ne0": {
-        "var_mod": "Plasma",
-        "scan01": 8.4384e+19
-    },
-    "dnla": {
-        "var_mod": "Plasma",
-        "scan01": 7.1047e+19
-    },
-    "dnla_gw": {
-        "var_mod": "Plasma",
-        "scan01": 1.2
-    },
-    "dnitot": {
-        "var_mod": "Plasma",
-        "scan01": 5.3766e+19
-    },
-    "deni": {
-        "var_mod": "Plasma",
-        "scan01": 4.7623e+19
-    },
-    "dnz": {
-        "var_mod": "Plasma",
-        "scan01": 8.7155e+16
-    },
-    "dnalp": {
-        "var_mod": "Plasma",
-        "scan01": 6.0339e+18
-    },
-    "dnprot": {
-        "var_mod": "Plasma",
-        "scan01": 2.2157e+16
-    },
-    "dnbeam": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "dnelimt": {
-        "var_mod": "Plasma",
-        "scan01": 5.9206e+19
-    },
-    "boundu(9)": {
-        "var_mod": "Plasma",
-        "scan01": 7.1047e+19
-    },
-    "ralpne": {
-        "var_mod": "Plasma",
-        "scan01": 0.094054
-    },
-    "fimp(01": {
-        "var_mod": "Plasma",
-        "scan01": 0.74267
-    },
-    "fimp(02": {
-        "var_mod": "Plasma",
-        "scan01": 0.094054
-    },
-    "fimp(03": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(04": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(05": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(06": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(07": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(08": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(09": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(10": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(11": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(12": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "fimp(13": {
-        "var_mod": "Plasma",
-        "scan01": 0.0013085
-    },
-    "fimp(14": {
-        "var_mod": "Plasma",
-        "scan01": 5e-05
-    },
-    "aion": {
-        "var_mod": "Plasma",
-        "scan01": 2.8796
-    },
-    "zeff": {
-        "var_mod": "Plasma",
-        "scan01": 4.6519
-    },
-    "alphan": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "ipedestal": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "rhopedn": {
-        "var_mod": "Plasma",
-        "scan01": 0.94
-    },
-    "neped": {
-        "var_mod": "Plasma",
-        "scan01": 5.0325e+19
-    },
-    "fgwped_out": {
-        "var_mod": "Plasma",
-        "scan01": 0.85
-    },
-    "rhopedt": {
-        "var_mod": "Plasma",
-        "scan01": 0.94
-    },
-    "ieped": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "teped": {
-        "var_mod": "Plasma",
-        "scan01": 6.129
-    },
-    "tesep": {
-        "var_mod": "Plasma",
-        "scan01": 0.1
-    },
-    "nesep": {
-        "var_mod": "Plasma",
-        "scan01": 2.9603e+19
-    },
-    "fgwsep_out": {
-        "var_mod": "Plasma",
-        "scan01": 0.5
-    },
-    "alphat": {
-        "var_mod": "Plasma",
-        "scan01": 1.45
-    },
-    "tbeta": {
-        "var_mod": "Plasma",
-        "scan01": 2.0
-    },
-    "dlimit(1)": {
-        "var_mod": "Plasma",
-        "scan01": 3.9995e+19
-    },
-    "dlimit(2)": {
-        "var_mod": "Plasma",
-        "scan01": 8.1095e+19
-    },
-    "dlimit(3)": {
-        "var_mod": "Plasma",
-        "scan01": 3.1983e+19
-    },
-    "dlimit(4)": {
-        "var_mod": "Plasma",
-        "scan01": 2.0596e+21
-    },
-    "dlimit(5)": {
-        "var_mod": "Plasma",
-        "scan01": 3.0909e+20
-    },
-    "dlimit(6)": {
-        "var_mod": "Plasma",
-        "scan01": 5.3061e+19
-    },
-    "dlimit(7)": {
-        "var_mod": "Plasma",
-        "scan01": 5.9206e+19
-    },
-    "fdeut": {
-        "var_mod": "Plasma",
-        "scan01": 0.5
-    },
-    "ftrit": {
-        "var_mod": "Plasma",
-        "scan01": 0.5
-    },
-    "powfmw": {
-        "var_mod": "Plasma",
-        "scan01": 3072.9
-    },
-    "pdt": {
-        "var_mod": "Plasma",
-        "scan01": 3068.0
-    },
-    "pdd": {
-        "var_mod": "Plasma",
-        "scan01": 4.9193
-    },
-    "pdhe3": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "palpmw": {
-        "var_mod": "Plasma",
-        "scan01": 613.6
-    },
-    "palpnb": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "pneutmw": {
-        "var_mod": "Plasma",
-        "scan01": 2456.2
-    },
-    "pchargemw": {
-        "var_mod": "Plasma",
-        "scan01": 3.1657
-    },
-    "total_power_deposited_in_plasma_(mw)": {
-        "var_mod": "Plasma",
-        "scan01": 811.09
-    },
-    "pbrempv*vol": {
-        "var_mod": "Plasma",
-        "scan01": 193.25
-    },
-    "plinepv*vol": {
-        "var_mod": "Plasma",
-        "scan01": 402.27
-    },
-    "psyncpv*vol": {
-        "var_mod": "Plasma",
-        "scan01": 51.362
-    },
-    "ssync": {
-        "var_mod": "Plasma",
-        "scan01": 0.6
-    },
-    "coreradius": {
-        "var_mod": "Plasma",
-        "scan01": 0.75
-    },
-    "coreradiationfraction": {
-        "var_mod": "Plasma",
-        "scan01": 0.6
-    },
-    "pcoreradmw": {
-        "var_mod": "Plasma",
-        "scan01": 261.1
-    },
-    "pedgeradmw": {
-        "var_mod": "Plasma",
-        "scan01": 385.78
-    },
-    "pradmw": {
-        "var_mod": "Plasma",
-        "scan01": 646.88
-    },
-    "rad_fraction_core": {
-        "var_mod": "Plasma",
-        "scan01": 0.79754
-    },
-    "rad_fraction_sol": {
-        "var_mod": "Plasma",
-        "scan01": 0.8
-    },
-    "rad_fraction": {
-        "var_mod": "Plasma",
-        "scan01": 0.95951
-    },
-    "photon_wall": {
-        "var_mod": "Plasma",
-        "scan01": 0.3386
-    },
-    "peakfactrad": {
-        "var_mod": "Plasma",
-        "scan01": 3.33
-    },
-    "maxradwallload": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "peakradwallload": {
-        "var_mod": "Plasma",
-        "scan01": 1.1275
-    },
-    "wallmw": {
-        "var_mod": "Plasma",
-        "scan01": 1.2856
-    },
-    "ptarmw": {
-        "var_mod": "Plasma",
-        "scan01": 32.842
-    },
-    "ftar": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "lambdaio": {
-        "var_mod": "Plasma",
-        "scan01": 0.00157
-    },
-    "fio": {
-        "var_mod": "Plasma",
-        "scan01": 0.41
-    },
-    "fli": {
-        "var_mod": "Plasma",
-        "scan01": 0.41
-    },
-    "flo": {
-        "var_mod": "Plasma",
-        "scan01": 0.59
-    },
-    "plimw": {
-        "var_mod": "Plasma",
-        "scan01": 13.465
-    },
-    "plomw": {
-        "var_mod": "Plasma",
-        "scan01": 19.377
-    },
-    "pohmmw": {
-        "var_mod": "Plasma",
-        "scan01": 1.4837e-10
-    },
-    "falpha": {
-        "var_mod": "Plasma",
-        "scan01": 0.95
-    },
-    "falpe": {
-        "var_mod": "Plasma",
-        "scan01": 0.64064
-    },
-    "falpi": {
-        "var_mod": "Plasma",
-        "scan01": 0.35936
-    },
-    "ptrimw": {
-        "var_mod": "Plasma",
-        "scan01": 250.77
-    },
-    "ptremw": {
-        "var_mod": "Plasma",
-        "scan01": 299.22
-    },
-    "pinjimw": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "pinjemw": {
-        "var_mod": "Plasma",
-        "scan01": 225.0
-    },
-    "ignite": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "pdivt": {
-        "var_mod": "Plasma",
-        "scan01": 164.21
-    },
-    "pdivt/rmajor": {
-        "var_mod": "Plasma",
-        "scan01": 18.694
-    },
-    "pdivtbt/qar": {
-        "var_mod": "Plasma",
-        "scan01": 9.2
-    },
-    "pthrmw(1)": {
-        "var_mod": "Plasma",
-        "scan01": 102.68
-    },
-    "pthrmw(2)": {
-        "var_mod": "Plasma",
-        "scan01": 223.94
-    },
-    "pthrmw(3)": {
-        "var_mod": "Plasma",
-        "scan01": 46.452
-    },
-    "pthrmw(4)": {
-        "var_mod": "Plasma",
-        "scan01": 171.04
-    },
-    "pthrmw(5)": {
-        "var_mod": "Plasma",
-        "scan01": 137.74
-    },
-    "pthrmw(6)": {
-        "var_mod": "Plasma",
-        "scan01": 93.616
-    },
-    "pthrmw(7)": {
-        "var_mod": "Plasma",
-        "scan01": 123.57
-    },
-    "pthrmw(8)": {
-        "var_mod": "Plasma",
-        "scan01": 63.658
-    },
-    "pthrmw(9)": {
-        "var_mod": "Plasma",
-        "scan01": 65.075
-    },
-    "pthrmw(10)": {
-        "var_mod": "Plasma",
-        "scan01": 96.769
-    },
-    "pthrmw(11)": {
-        "var_mod": "Plasma",
-        "scan01": 43.411
-    },
-    "pthrmw(12)": {
-        "var_mod": "Plasma",
-        "scan01": 26.408
-    },
-    "pthrmw(13)": {
-        "var_mod": "Plasma",
-        "scan01": 35.972
-    },
-    "pthrmw(14)": {
-        "var_mod": "Plasma",
-        "scan01": 19.25
-    },
-    "pthrmw(15)": {
-        "var_mod": "Plasma",
-        "scan01": 34.85
-    },
-    "pthrmw(16)": {
-        "var_mod": "Plasma",
-        "scan01": 17.113
-    },
-    "pthrmw(17)": {
-        "var_mod": "Plasma",
-        "scan01": 70.971
-    },
-    "pthrmw(18)": {
-        "var_mod": "Plasma",
-        "scan01": 292.42
-    },
-    "pthrmw(19)": {
-        "var_mod": "Plasma",
-        "scan01": 94.519
-    },
-    "pthrmw(20)": {
-        "var_mod": "Plasma",
-        "scan01": 124.77
-    },
-    "pthrmw(21)": {
-        "var_mod": "Plasma",
-        "scan01": 64.271
-    },
-    "boundl(103)": {
-        "var_mod": "Plasma",
-        "scan01": 94.519
-    },
-    "plhthresh": {
-        "var_mod": "Plasma",
-        "scan01": 94.519
-    },
-    "tauelaw": {
-        "var_mod": "Plasma",
-        "scan01": "IPB98(y,2)"
-    },
-    "hfact": {
-        "var_mod": "Plasma",
-        "scan01": 1.4
-    },
-    "taueff": {
-        "var_mod": "Plasma",
-        "scan01": 4.3196
-    },
-    "tauei": {
-        "var_mod": "Plasma",
-        "scan01": 4.3196
-    },
-    "tauee": {
-        "var_mod": "Plasma",
-        "scan01": 4.3196
-    },
-    "dntau": {
-        "var_mod": "Plasma",
-        "scan01": 2.7712e+20
-    },
-    "dntau*te": {
-        "var_mod": "Plasma",
-        "scan01": 5.3197e+21
-    },
-    "powerht": {
-        "var_mod": "Plasma",
-        "scan01": 549.98
-    },
-    "iradloss": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "radiation_power_subtracted_from_plasma_power_balance_(mw)": {
-        "var_mod": "Plasma",
-        "scan01": 261.1
-    },
-    "taup": {
-        "var_mod": "Plasma",
-        "scan01": 21.598
-    },
-    "taup/taueff": {
-        "var_mod": "Plasma",
-        "scan01": 5.0
-    },
-    "taulimit": {
-        "var_mod": "Plasma",
-        "scan01": 5.0
-    },
-    "total_energy_conf_time": {
-        "var_mod": "Plasma",
-        "scan01": 3.4437
-    },
-    "beta_mcdonald": {
-        "var_mod": "Plasma",
-        "scan01": 0.070573
-    },
-    "rho_star": {
-        "var_mod": "Plasma",
-        "scan01": 0.0023479
-    },
-    "nu_star": {
-        "var_mod": "Plasma",
-        "scan01": 0.00087682
-    },
-    "kappaa_ipb": {
-        "var_mod": "Plasma",
-        "scan01": 1.6705
-    },
-    "vsstt": {
-        "var_mod": "Plasma",
-        "scan01": 401.46
-    },
-    "vsind": {
-        "var_mod": "Plasma",
-        "scan01": 318.6
-    },
-    "gamma": {
-        "var_mod": "Plasma",
-        "scan01": 0.3
-    },
-    "vsres": {
-        "var_mod": "Plasma",
-        "scan01": 82.86
-    },
-    "vsbrn": {
-        "var_mod": "Plasma",
-        "scan01": 5.9355e-08
-    },
-    "cboot": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "bscf_iter89": {
-        "var_mod": "Plasma",
-        "scan01": 0.45241
-    },
-    "bscf_sauter": {
-        "var_mod": "Plasma",
-        "scan01": 0.525
-    },
-    "bscf_nevins": {
-        "var_mod": "Plasma",
-        "scan01": 0.48466
-    },
-    "bscf_wilson": {
-        "var_mod": "Plasma",
-        "scan01": 0.48155
-    },
-    "diacf_hender": {
-        "var_mod": "Plasma",
-        "scan01": 0.023935
-    },
-    "diacf_scene": {
-        "var_mod": "Plasma",
-        "scan01": 0.021919
-    },
-    "pscf_scene": {
-        "var_mod": "Plasma",
-        "scan01": -0.0060317
-    },
-    "bootipf.": {
-        "var_mod": "Plasma",
-        "scan01": 0.525
-    },
-    "diaipf.": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "psipf.": {
-        "var_mod": "Plasma",
-        "scan01": 0.0
-    },
-    "vburn": {
-        "var_mod": "Plasma",
-        "scan01": 5.9296e-12
-    },
-    "rplas": {
-        "var_mod": "Plasma",
-        "scan01": 2.3698e-09
-    },
-    "res_time": {
-        "var_mod": "Plasma",
-        "scan01": 5646.1
-    },
-    "rlp": {
-        "var_mod": "Plasma",
-        "scan01": 1.2733e-05
-    },
-    "csawth": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "tauratio": {
-        "var_mod": "Plasma",
-        "scan01": 1.0
-    },
-    "qfuel": {
-        "var_mod": "Plasma",
-        "scan01": 5.4265e+21
-    },
-    "rndfuel": {
-        "var_mod": "Plasma",
-        "scan01": 1.0971e+21
-    },
-    "burnup": {
-        "var_mod": "Plasma",
-        "scan01": 0.20217
-    },
-    "iefrf": {
-        "var_mod": "Current Drive System",
-        "scan01": 10.0
-    },
-    "pheat": {
-        "var_mod": "Current Drive System",
-        "scan01": 1.7391
-    },
-    "pcurrentdrivemw": {
-        "var_mod": "Current Drive System",
-        "scan01": 223.26
-    },
-    "bigq": {
-        "var_mod": "Current Drive System",
-        "scan01": 13.657
-    },
-    "auxiliary_cd": {
-        "var_mod": "Current Drive System",
-        "scan01": 11885000.0
-    },
-    "effcd": {
-        "var_mod": "Current Drive System",
-        "scan01": 0.053235
-    },
-    "gamcd": {
-        "var_mod": "Current Drive System",
-        "scan01": 0.3
-    },
-    "etacd": {
-        "var_mod": "Current Drive System",
-        "scan01": 0.4
-    },
-    "bootipf": {
-        "var_mod": "Current Drive System",
-        "scan01": 0.525
-    },
-    "diaipf": {
-        "var_mod": "Current Drive System",
-        "scan01": 0.0
-    },
-    "psipf": {
-        "var_mod": "Current Drive System",
-        "scan01": 0.0
-    },
-    "faccd": {
-        "var_mod": "Current Drive System",
-        "scan01": 0.475
-    },
-    "facoh": {
-        "var_mod": "Current Drive System",
-        "scan01": 1e-10
-    },
-    "plasipf+faccd+facoh": {
-        "var_mod": "Current Drive System",
-        "scan01": 1.0
-    },
-    "fvsbrnni": {
-        "var_mod": "Current Drive System",
-        "scan01": 1.0
-    },
-    "echpwr": {
-        "var_mod": "Current Drive System",
-        "scan01": 225.0
-    },
-    "pinjalw": {
-        "var_mod": "Current Drive System",
-        "scan01": 225.0
-    },
-    "etaech": {
-        "var_mod": "Current Drive System",
-        "scan01": 0.4
-    },
-    "echwpow": {
-        "var_mod": "Current Drive System",
-        "scan01": 562.5
-    },
-    "tramp": {
-        "var_mod": "Times",
-        "scan01": 50.043
-    },
-    "tohs": {
-        "var_mod": "Times",
-        "scan01": 50.043
-    },
-    "theat": {
-        "var_mod": "Times",
-        "scan01": 10.0
-    },
-    "tburn": {
-        "var_mod": "Times",
-        "scan01": 10000.0
-    },
-    "tqnch": {
-        "var_mod": "Times",
-        "scan01": 50.043
-    },
-    "tdwell": {
-        "var_mod": "Times",
-        "scan01": 0.0
-    },
-    "tcycle": {
-        "var_mod": "Times",
-        "scan01": 10160.0
-    },
-    "kallenbach_switch": {
-        "var_mod": "Times",
-        "scan01": 0.0
-    },
-    "bore": {
-        "var_mod": "Radial Build",
-        "scan01": 1.2384
-    },
-    "ohcth": {
-        "var_mod": "Radial Build",
-        "scan01": 0.5
-    },
-    "precomp": {
-        "var_mod": "Radial Build",
-        "scan01": 0.10396
-    },
-    "gapoh": {
-        "var_mod": "Radial Build",
-        "scan01": 0.05
-    },
-    "tfcth": {
-        "var_mod": "Radial Build",
-        "scan01": 1.486
-    },
-    "tftsgap": {
-        "var_mod": "Radial Build",
-        "scan01": 0.05
-    },
-    "thshield": {
-        "var_mod": "Radial Build",
-        "scan01": 0.05
-    },
-    "gapds": {
-        "var_mod": "Radial Build",
-        "scan01": 0.02
-    },
-    "d_vv_in": {
-        "var_mod": "Radial Build",
-        "scan01": 0.3
-    },
-    "shldith": {
-        "var_mod": "Radial Build",
-        "scan01": 0.3
-    },
-    "vvblgap": {
-        "var_mod": "Radial Build",
-        "scan01": 0.02
-    },
-    "blnkith": {
-        "var_mod": "Radial Build",
-        "scan01": 0.755
-    },
-    "fwith": {
-        "var_mod": "Radial Build",
-        "scan01": 0.018
-    },
-    "scrapli": {
-        "var_mod": "Radial Build",
-        "scan01": 0.225
-    },
-    "scraplo": {
-        "var_mod": "Radial Build",
-        "scan01": 0.225
-    },
-    "fwoth": {
-        "var_mod": "Radial Build",
-        "scan01": 0.018
-    },
-    "blnkoth": {
-        "var_mod": "Radial Build",
-        "scan01": 0.982
-    },
-    "shldoth": {
-        "var_mod": "Radial Build",
-        "scan01": 0.8
-    },
-    "d_vv_out": {
-        "var_mod": "Radial Build",
-        "scan01": 0.3
-    },
-    "gapsto": {
-        "var_mod": "Radial Build",
-        "scan01": 1.9036
-    },
-    "tfthko": {
-        "var_mod": "Radial Build",
-        "scan01": 1.486
-    },
-    "i_single_null": {
-        "var_mod": "Vertical Build",
-        "scan01": 1.0
-    },
-    "vgap2": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.05
-    },
-    "d_vv_top": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.3
-    },
-    "shldtth": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.3
-    },
-    "blnktth": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.8685
-    },
-    "fwtth": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.018
-    },
-    "vgaptop": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.6
-    },
-    "rminor*kappa": {
-        "var_mod": "Vertical Build",
-        "scan01": 6.778
-    },
-    "vgap": {
-        "var_mod": "Vertical Build",
-        "scan01": 2.0024
-    },
-    "divfix": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.621
-    },
-    "shldlth": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.7
-    },
-    "d_vv_bot": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.3
-    },
-    "ddwex": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.15
-    },
-    "ohhghf": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.9
-    },
-    "beamwd": {
-        "var_mod": "Vertical Build",
-        "scan01": 0.58
-    },
-    "ptop_radial": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 6.9503
-    },
-    "ptop_vertical": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 6.778
-    },
-    "rmajor.": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 8.7841
-    },
-    "0.0": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 0.0
-    },
-    "tril": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 0.5
-    },
-    "kappa.": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 1.848
-    },
-    "tfoffset": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": -0.75847
-    },
-    "rco": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 6.9261
-    },
-    "rci": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 13.443
-    },
-    "rxpt": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 6.9503
-    },
-    "zxpt": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": -6.778
-    },
-    "thetai": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 0.20714
-    },
-    "thetao": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 1.0423
-    },
-    "betai": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 1.0
-    },
-    "betao": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 1.0
-    },
-    "plsepi": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 1.0
-    },
-    "plsepo": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 1.5
-    },
-    "plleni": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 1.0
-    },
-    "plleno": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 1.0
-    },
-    "rspi": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 5.9716
-    },
-    "zspi": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": -6.9837
-    },
-    "rplti": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 6.1495
-    },
-    "zplti": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": -6.5164
-    },
-    "rplbi": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 5.7938
-    },
-    "zplbi": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": -7.451
-    },
-    "rspo": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 7.7066
-    },
-    "zspo": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": -8.0734
-    },
-    "rplto": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 7.9337
-    },
-    "zplto": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": -7.628
-    },
-    "rplbo": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 7.4795
-    },
-    "zplbo": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": -8.5188
-    },
-    "divht": {
-        "var_mod": "Divertor build and plasma position",
-        "scan01": 2.0024
-    },
-    "alstrtf": {
-        "var_mod": "TF coils",
-        "scan01": 580000000.0
-    },
-    "eyoung_wp_t*1.0d-9": {
-        "var_mod": "TF coils",
-        "scan01": 23.673
-    },
-    "eyoung_wp_z*1.0d-9": {
-        "var_mod": "TF coils",
-        "scan01": 96.556
-    },
-    "sig_tf_r_max(1)": {
-        "var_mod": "TF coils",
-        "scan01": 7.3273e-08
-    },
-    "sig_tf_t_max(1)": {
-        "var_mod": "TF coils",
-        "scan01": -381390000.0
-    },
-    "sig_tf_z_max(1)": {
-        "var_mod": "TF coils",
-        "scan01": 166800000.0
-    },
-    "sig_tf_vmises_max(1)": {
-        "var_mod": "TF coils",
-        "scan01": 486720000.0
-    },
-    "sig_tf_tresca_max(1)": {
-        "var_mod": "TF coils",
-        "scan01": 548190000.0
-    },
-    "sig_tf_r_max(2)": {
-        "var_mod": "TF coils",
-        "scan01": -132080000.0
-    },
-    "sig_tf_t_max(2)": {
-        "var_mod": "TF coils",
-        "scan01": -413200000.0
-    },
-    "sig_tf_z_max(2)": {
-        "var_mod": "TF coils",
-        "scan01": 166800000.0
-    },
-    "sig_tf_vmises_max(2)": {
-        "var_mod": "TF coils",
-        "scan01": 517180000.0
-    },
-    "sig_tf_tresca_max(2)": {
-        "var_mod": "TF coils",
-        "scan01": 580000000.0
-    },
-    "deflect": {
-        "var_mod": "TF coils",
-        "scan01": -0.0033932
-    },
-    "casestr": {
-        "var_mod": "TF coils",
-        "scan01": 0.00081368
-    },
-    "windstrain": {
-        "var_mod": "TF coils",
-        "scan01": 0.0017814
-    },
-    "insstrain": {
-        "var_mod": "TF coils",
-        "scan01": -0.0095905
-    },
-    "i_tf_sup": {
-        "var_mod": "TF coils",
-        "scan01": 1.0
-    },
-    "i_tf_sc_mat": {
-        "var_mod": "TF coils",
-        "scan01": 5.0
-    },
-    "i_tf_bucking": {
-        "var_mod": "TF coils",
-        "scan01": 1.0
-    },
-    "n_tf": {
-        "var_mod": "TF coils",
-        "scan01": 16.0
-    },
-    "r_tf_inboard_mid": {
-        "var_mod": "TF coils",
-        "scan01": 2.6354
-    },
-    "r_tf_outboard_mid": {
-        "var_mod": "TF coils",
-        "scan01": 17.544
-    },
-    "tftort": {
-        "var_mod": "TF coils",
-        "scan01": 1.3182
-    },
-    "hmax": {
-        "var_mod": "TF coils",
-        "scan01": 10.551
-    },
-    "tfleng": {
-        "var_mod": "TF coils",
-        "scan01": 59.097
-    },
-    "i_tf_shape": {
-        "var_mod": "TF coils",
-        "scan01": 1.0
-    },
-    "xarc(1)": {
-        "var_mod": "TF coils",
-        "scan01": 3.3784
-    },
-    "yarc(1)": {
-        "var_mod": "TF coils",
-        "scan01": 5.4207
-    },
-    "xarc(2)": {
-        "var_mod": "TF coils",
-        "scan01": 8.0506
-    },
-    "yarc(2)": {
-        "var_mod": "TF coils",
-        "scan01": 9.0345
-    },
-    "xarc(3)": {
-        "var_mod": "TF coils",
-        "scan01": 16.801
-    },
-    "yarc(3)": {
-        "var_mod": "TF coils",
-        "scan01": 0.0
-    },
-    "xarc(4)": {
-        "var_mod": "TF coils",
-        "scan01": 8.0506
-    },
-    "yarc(4)": {
-        "var_mod": "TF coils",
-        "scan01": -10.551
-    },
-    "xarc(5)": {
-        "var_mod": "TF coils",
-        "scan01": 3.3784
-    },
-    "yarc(5)": {
-        "var_mod": "TF coils",
-        "scan01": -6.3309
-    },
-    "tfareain": {
-        "var_mod": "TF coils",
-        "scan01": 24.606
-    },
-    "a_tf_steel*n_tf": {
-        "var_mod": "TF coils",
-        "scan01": 17.546
-    },
-    "f_tf_steel": {
-        "var_mod": "TF coils",
-        "scan01": 0.71309
-    },
-    "a_tf_ins*n_tf": {
-        "var_mod": "TF coils",
-        "scan01": 17.546
-    },
-    "f_tf_ins": {
-        "var_mod": "TF coils",
-        "scan01": 0.087543
-    },
-    "acasetf": {
-        "var_mod": "TF coils",
-        "scan01": 0.72861
-    },
-    "casthi": {
-        "var_mod": "TF coils",
-        "scan01": 0.06
-    },
-    "thkcas": {
-        "var_mod": "TF coils",
-        "scan01": 0.32795
-    },
-    "casths": {
-        "var_mod": "TF coils",
-        "scan01": 0.05
-    },
-    "whtcas": {
-        "var_mod": "TF coils",
-        "scan01": 1195600.0
-    },
-    "awpc": {
-        "var_mod": "TF coils",
-        "scan01": 0.80924
-    },
-    "aswp": {
-        "var_mod": "TF coils",
-        "scan01": 0.74515
-    },
-    "dr_tf_wp": {
-        "var_mod": "TF coils",
-        "scan01": 1.0331
-    },
-    "wwp1": {
-        "var_mod": "TF coils",
-        "scan01": 0.78331
-    },
-    "tinstf": {
-        "var_mod": "TF coils",
-        "scan01": 0.008
-    },
-    "tfinsgap": {
-        "var_mod": "TF coils",
-        "scan01": 0.01
-    },
-    "aswp*n_tf": {
-        "var_mod": "TF coils",
-        "scan01": 5.8884
-    },
-    "aswp/awpc": {
-        "var_mod": "TF coils",
-        "scan01": 0.45478
-    },
-    "aiwp/awpc": {
-        "var_mod": "TF coils",
-        "scan01": 0.13156
-    },
-    "awpc-aswp-aiwp)": {
-        "var_mod": "TF coils",
-        "scan01": 0.41367
-    },
-    "i_tf_turns_integer": {
-        "var_mod": "TF coils",
-        "scan01": 1.0
-    },
-    "n_tf_turn": {
-        "var_mod": "TF coils",
-        "scan01": 200.0
-    },
-    "n_pancake": {
-        "var_mod": "TF coils",
-        "scan01": 20.0
-    },
-    "n_layer": {
-        "var_mod": "TF coils",
-        "scan01": 10.0
-    },
-    "t_turn_radial": {
-        "var_mod": "TF coils",
-        "scan01": 0.09971
-    },
-    "t_turn_toroidal": {
-        "var_mod": "TF coils",
-        "scan01": 0.037366
-    },
-    "elonductor_radial": {
-        "var_mod": "TF coils",
-        "scan01": 0.09571
-    },
-    "t_conductor_toroidal": {
-        "var_mod": "TF coils",
-        "scan01": 0.033366
-    },
-    "t_cable_radial": {
-        "var_mod": "TF coils",
-        "scan01": 0.07971
-    },
-    "t_cable_toroidal": {
-        "var_mod": "TF coils",
-        "scan01": 0.017366
-    },
-    "thwcndut": {
-        "var_mod": "TF coils",
-        "scan01": 0.008
-    },
-    "thicndut": {
-        "var_mod": "TF coils",
-        "scan01": 0.002
-    },
-    "dhecoil": {
-        "var_mod": "TF coils",
-        "scan01": 0.01
-    },
-    "acstf": {
-        "var_mod": "TF coils",
-        "scan01": 0.0013533
-    },
-    "vftf": {
-        "var_mod": "TF coils",
-        "scan01": 0.3
-    },
-    "fcutfsu": {
-        "var_mod": "TF coils",
-        "scan01": 0.84199
-    },
-    "1-fcutfsu": {
-        "var_mod": "TF coils",
-        "scan01": 0.15801
-    },
-    "check_total_area_fractions_in_winding_pack_=_1": {
-        "var_mod": "TF coils",
-        "scan01": 1.0
-    },
-    "tmargmin_tf": {
-        "var_mod": "TF coils",
-        "scan01": 1.5
-    },
-    "tmargtf": {
-        "var_mod": "TF coils",
-        "scan01": 1.5
-    },
-    "whtconsc": {
-        "var_mod": "TF coils",
-        "scan01": 7568.4
-    },
-    "whtconcu": {
-        "var_mod": "TF coils",
-        "scan01": 75643.0
-    },
-    "whtconsh": {
-        "var_mod": "TF coils",
-        "scan01": 169640.0
-    },
-    "whtconin": {
-        "var_mod": "TF coils",
-        "scan01": 11325.0
-    },
-    "whtcon": {
-        "var_mod": "TF coils",
-        "scan01": 264180.0
-    },
-    "whttf/n_tf": {
-        "var_mod": "TF coils",
-        "scan01": 1466600.0
-    },
-    "whttf": {
-        "var_mod": "TF coils",
-        "scan01": 23466000.0
-    },
-    "bmaxtf": {
-        "var_mod": "TF coils",
-        "scan01": 11.2
-    },
-    "ritfc/1.d6": {
-        "var_mod": "TF coils",
-        "scan01": 181.19
-    },
-    "ritfc": {
-        "var_mod": "TF coils",
-        "scan01": 181190000.0
-    },
-    "bmaxtfrp": {
-        "var_mod": "TF coils",
-        "scan01": 11.716
-    },
-    "jwptf": {
-        "var_mod": "TF coils",
-        "scan01": 15197000.0
-    },
-    "oacdcp": {
-        "var_mod": "TF coils",
-        "scan01": 7363600.0
-    },
-    "estotftgj": {
-        "var_mod": "TF coils",
-        "scan01": 130.84
-    },
-    "vforce": {
-        "var_mod": "TF coils",
-        "scan01": 182920000.0
-    },
-    "vforce_outboard": {
-        "var_mod": "TF coils",
-        "scan01": 182920000.0
-    },
-    "f_vforce_inboard": {
-        "var_mod": "TF coils",
-        "scan01": 0.5
-    },
-    "cforce": {
-        "var_mod": "TF coils",
-        "scan01": 63415000.0
-    },
-    "ripmax": {
-        "var_mod": "TF coils",
-        "scan01": 0.6
-    },
-    "ripple": {
-        "var_mod": "TF coils",
-        "scan01": 0.6
-    },
-    "sigvvall": {
-        "var_mod": "TF coils",
-        "scan01": 93000000.0
-    },
-    "taucq": {
-        "var_mod": "TF coils",
-        "scan01": 28.464
-    },
-    "tdmptf": {
-        "var_mod": "TF coils",
-        "scan01": 28.886
-    },
-    "vdalw": {
-        "var_mod": "TF coils",
-        "scan01": 10.0
-    },
-    "vtfskv": {
-        "var_mod": "TF coils",
-        "scan01": 10.0
-    },
-    "tmaxpro": {
-        "var_mod": "TF coils",
-        "scan01": 150.0
-    },
-    "isumat": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 5.0
-    },
-    "bc20m": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 32.97
-    },
-    "tc0m": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 16.06
-    },
-    "thelium": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 4.75
-    },
-    "fhetot": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 0.35804
-    },
-    "strncon_tf": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": -0.005
-    },
-    "jcritsc": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 629610000.0
-    },
-    "jcritstr": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 99486000.0
-    },
-    "jwdgcrt": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 23198000.0
-    },
-    "jwdgop": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 15197000.0
-    },
-    "tmarg": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 1.5
-    },
-    "icrit": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 86431.0
-    },
-    "cpttf": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 56620.0
-    },
-    "iooic": {
-        "var_mod": "Superconducting TF Coils",
-        "scan01": 0.65509
-    },
-    "isumatoh": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 5.0
-    },
-    "bmaxoh0": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 14.046
-    },
-    "jscoh_bop": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 351730000.0
-    },
-    "jstrandoh_bop": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 105520000.0
-    },
-    "rjohc0": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 42783000.0
-    },
-    "cohbop": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 22125000.0
-    },
-    "bmaxoh": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 13.878
-    },
-    "jscoh_eof": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 368200000.0
-    },
-    "jstrandoh_eof": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 110460000.0
-    },
-    "rjohc": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 44785000.0
-    },
-    "coheof": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 23666000.0
-    },
-    "bore.": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.2384
-    },
-    "ohcth.": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.5
-    },
-    "areaoh": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 9.4963
-    },
-    "awpoh": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 5.5004
-    },
-    "awpoh*(1-vfohc)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 3.8503
-    },
-    "awpoh*vfohc": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.6501
-    },
-    "areaoh-awpoh": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 3.996
-    },
-    "oh_steel_frac": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.42079
-    },
-    "i_cs_stress": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.0
-    },
-    "alstroh": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 660000000.0
-    },
-    "sig_hoop": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 660000000.0
-    },
-    "sig_axial": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -825420000.0
-    },
-    "s_tresca_oh": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 660000000.0
-    },
-    "axial_force": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -812070000.0
-    },
-    "strncon_cs": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -0.005
-    },
-    "fcuohsu": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.7
-    },
-    "vfohc": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.3
-    },
-    "tftmp": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 4.75
-    },
-    "tmargoh": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.5
-    },
-    "tmargmin_cs": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.5
-    },
-    "isumatpf": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 3.0
-    },
-    "fcupfsu": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.69
-    },
-    "sigpfcalw": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 500.0
-    },
-    "sigpfcf": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.666
-    },
-    "rpf(01)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 5.4373
-    },
-    "zpf(01)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 11.38
-    },
-    "pfdr01": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.0625
-    },
-    "pfdz01": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.0625
-    },
-    "turns(01)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 294.28
-    },
-    "ric(01)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 12.419
-    },
-    "bpf(01)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 3.3113
-    },
-    "rpf(02)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 5.4373
-    },
-    "zpf(02)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -12.897
-    },
-    "pfdr02": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.098
-    },
-    "pfdz02": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -1.098
-    },
-    "turns(02)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 314.26
-    },
-    "ric(02)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 13.262
-    },
-    "bpf(02)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 2.9628
-    },
-    "rpf(03)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 19.444
-    },
-    "zpf(03)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 3.6678
-    },
-    "pfdr03": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.3846
-    },
-    "pfdz03": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.3846
-    },
-    "turns(03)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 272.56
-    },
-    "ric(03)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -11.502
-    },
-    "bpf(03)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 3.2246
-    },
-    "rpf(04)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 19.444
-    },
-    "zpf(04)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -3.6678
-    },
-    "pfdr04": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.3846
-    },
-    "pfdz04": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -1.3846
-    },
-    "turns(04)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 272.56
-    },
-    "ric(04)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -11.502
-    },
-    "bpf(04)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 3.2246
-    },
-    "rpf(05)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 16.913
-    },
-    "zpf(05)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 10.27
-    },
-    "pfdr05": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.93766
-    },
-    "pfdz05": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.93766
-    },
-    "turns(05)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 163.57
-    },
-    "ric(05)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -7.0337
-    },
-    "bpf(05)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 3.0134
-    },
-    "rpf(06)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 16.913
-    },
-    "zpf(06)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -10.27
-    },
-    "pfdr06": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.93766
-    },
-    "pfdz06": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -0.93766
-    },
-    "turns(06)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 163.57
-    },
-    "ric(06)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -7.0337
-    },
-    "bpf(06)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 3.0134
-    },
-    "rpf(nohc)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 1.4884
-    },
-    "zpf(nohc)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.0
-    },
-    "ohdr": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 0.5
-    },
-    "ohdz": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 18.993
-    },
-    "turns(nohc)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 5226.5
-    },
-    "ric(nohc)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": -224.74
-    },
-    "bpf(nohc)": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 14.046
-    },
-    "ssq0": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 5.9474e-05
-    },
-    "alfapf": {
-        "var_mod": "Central Solenoid and PF Coils",
-        "scan01": 5e-10
-    },
-    "vstot": {
-        "var_mod": "Volt Second Consumption",
-        "scan01": -401.46
-    },
-    "fcohbop": {
-        "var_mod": "Waveforms",
-        "scan01": 0.9349
-    },
-    "fcohbof": {
-        "var_mod": "Waveforms",
-        "scan01": 1.0
-    },
-    "ncirt": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 8.0
-    },
-    "pfc01t01": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 0.0
-    },
-    "pfc01t02": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 7310800.0
-    },
-    "pfc01t03": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 12419000.0
-    },
-    "pfc01t04": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 12419000.0
-    },
-    "pfc01t05": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 12419000.0
-    },
-    "pfc01t06": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 0.0
-    },
-    "pfc02t01": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 0.0
-    },
-    "pfc02t02": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 9799900.0
-    },
-    "pfc02t03": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 13262000.0
-    },
-    "pfc02t04": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 13262000.0
-    },
-    "pfc02t05": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 13262000.0
-    },
-    "pfc02t06": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 0.0
-    },
-    "pfc03t01": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "pfc03t02": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 186060.0
-    },
-    "pfc03t03": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -11502000.0
-    },
-    "pfc03t04": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -11502000.0
-    },
-    "pfc03t05": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -11502000.0
-    },
-    "pfc03t06": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "pfc04t01": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "pfc04t02": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 186060.0
-    },
-    "pfc04t03": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -11502000.0
-    },
-    "pfc04t04": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -11502000.0
-    },
-    "pfc04t05": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -11502000.0
-    },
-    "pfc04t06": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "pfc05t01": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "pfc05t02": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 171560.0
-    },
-    "pfc05t03": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -7033700.0
-    },
-    "pfc05t04": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -7033700.0
-    },
-    "pfc05t05": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -7033700.0
-    },
-    "pfc05t06": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "pfc06t01": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "pfc06t02": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 171560.0
-    },
-    "pfc06t03": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -7033700.0
-    },
-    "pfc06t04": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -7033700.0
-    },
-    "pfc06t05": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -7033700.0
-    },
-    "pfc06t06": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "cst01": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "cst02": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 210110000.0
-    },
-    "cst03": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -224740000.0
-    },
-    "cst04": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -224740000.0
-    },
-    "cst05": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -224740000.0
-    },
-    "cst06": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": -0.0
-    },
-    "plasmat01": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 0.0
-    },
-    "plasmat02": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 0.0
-    },
-    "plasmat03": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 25022000.0
-    },
-    "plasmat04": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 25022000.0
-    },
-    "plasmat05": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 25022000.0
-    },
-    "plasmat06": {
-        "var_mod": "PF Circuit Waveform Data",
-        "scan01": 0.0
-    },
-    "fncmass": {
-        "var_mod": "Support Structure",
-        "scan01": 782810.0
-    },
-    "aintmass": {
-        "var_mod": "Support Structure",
-        "scan01": 8659700.0
-    },
-    "coldmass": {
-        "var_mod": "Support Structure",
-        "scan01": 58775000.0
-    },
-    "clgsmass": {
-        "var_mod": "Support Structure",
-        "scan01": 2395900.0
-    },
-    "gsm1": {
-        "var_mod": "Support Structure",
-        "scan01": 110850.0
-    },
-    "gsm2": {
-        "var_mod": "Support Structure",
-        "scan01": 589110.0
-    },
-    "gsm3": {
-        "var_mod": "Support Structure",
-        "scan01": 1447700.0
-    },
-    "dp_he": {
-        "var_mod": "Pumping for primary coolant (helium)",
-        "scan01": 550000.0
-    },
-    "fpump": {
-        "var_mod": "Pumping for primary coolant (helium)",
-        "scan01": 0.089463
-    },
-    "p_plasma": {
-        "var_mod": "Pumping for primary coolant (helium)",
-        "scan01": 3359.0
-    },
-    "t_in_compressor": {
-        "var_mod": "Pumping for primary coolant (helium)",
-        "scan01": 557.03
-    },
-    "t_in_bb": {
-        "var_mod": "Pumping for primary coolant (helium)",
-        "scan01": 573.13
-    },
-    "htpmw_fw_blkt": {
-        "var_mod": "Pumping for primary coolant (helium)",
-        "scan01": 330.03
-    },
-    "htpmw_div": {
-        "var_mod": "Pumping for primary coolant (helium)",
-        "scan01": 2.6065
-    },
-    "htpmw_shld": {
-        "var_mod": "Pumping for primary coolant (helium)",
-        "scan01": 0.012629
-    },
-    "fbltibe12": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.375
-    },
-    "fblli2sio4": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.375
-    },
-    "fblss_ccfe": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.09705
-    },
-    "vfcblkt": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.05295
-    },
-    "vfpblkt": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.1
-    },
-    "fw_armour_vol": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 8.7881
-    },
-    "volfw": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 27.823
-    },
-    "volblkt": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 1690.1
-    },
-    "volshld": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 877.86
-    },
-    "vdewin": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 1346.6
-    },
-    "fw_armour_mass": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 169170.0
-    },
-    "fwmass": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 217020.0
-    },
-    "whtblkt": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 4232900.0
-    },
-    "whtbltibe12": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 1432400.0
-    },
-    "whtblli4sio4": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 1521100.0
-    },
-    "whtblss": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 1279400.0
-    },
-    "armour_fw_bl_mass": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 4619100.0
-    },
-    "whtshld": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 2738900.0
-    },
-    "vvmass": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 10503000.0
-    },
-    "ptfnuc": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.082044
-    },
-    "pnucfw": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 415.51
-    },
-    "pnucblkt": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 2340.3
-    },
-    "pnucshld": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 2.5259
-    },
-    "pnucdiv": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 282.71
-    },
-    "exp_blanket": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.99997
-    },
-    "exp_shield1": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.0017209
-    },
-    "exp_shield2": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.25427
-    },
-    "fdiv": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.115
-    },
-    "secondary_cycle": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 2.0
-    },
-    "fwpressure": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 15500000.0
-    },
-    "blpressure": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 15500000.0
-    },
-    "nblktmodpi": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 7.0
-    },
-    "nblktmodti": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 32.0
-    },
-    "nblktmodpo": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 8.0
-    },
-    "nblktmodto": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 48.0
-    },
-    "etaiso": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 0.9
-    },
-    "fwarea": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 2253.8
-    },
-    "rdewex": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 20.636
-    },
-    "zdewex": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 18.105
-    },
-    "clh1": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 6.068
-    },
-    "divsur": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 224.7
-    },
-    "divmas": {
-        "var_mod": "First wall and blanket : CCFE HCPB model",
-        "scan01": 55052.0
-    },
-    "itfka": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 56.62
-    },
-    "ntfc": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 16.0
-    },
-    "tchghr": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 4.0
-    },
-    "ltfth": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 81.626
-    },
-    "rcoils": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 0.0
-    },
-    "tfcv": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 431.41
-    },
-    "ntfbkr": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 16.0
-    },
-    "ndumpr": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 64.0
-    },
-    "r1dump": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 0.17661
-    },
-    "r1ppmw": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 141.55
-    },
-    "r1emj": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 2044.4
-    },
-    "ttfsec": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 28.886
-    },
-    "tfpsv": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 452.98
-    },
-    "tfpska": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 59.451
-    },
-    "tfckw": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 26930.0
-    },
-    "tfackw": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 29923.0
-    },
-    "rpower": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 6.2541
-    },
-    "xpower": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 18.172
-    },
-    "djmka": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 0.125
-    },
-    "albusa": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 452.96
-    },
-    "tfbusl": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 3372.7
-    },
-    "albuswt": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 412.49
-    },
-    "rtfbus": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 0.0019508
-    },
-    "vtfbus": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 110.46
-    },
-    "drarea": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 5169.4
-    },
-    "tfcfsp": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 1475.8
-    },
-    "tfcbv": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 8855.1
-    },
-    "xpwrmw": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 20.192
-    },
-    "tfacpd": {
-        "var_mod": "Superconducting TF Coil Power Conversion",
-        "scan01": 6.949
-    },
-    "pfckts": {
-        "var_mod": "PF Coils and Central Solenoid: Power and Energy",
-        "scan01": 12.0
-    },
-    "spsmva": {
-        "var_mod": "PF Coils and Central Solenoid: Power and Energy",
-        "scan01": 1700.7
-    },
-    "spfbusl": {
-        "var_mod": "PF Coils and Central Solenoid: Power and Energy",
-        "scan01": 2523.3
-    },
-    "pfbuspwr": {
-        "var_mod": "PF Coils and Central Solenoid: Power and Energy",
-        "scan01": 1756.9
-    },
-    "srcktpm": {
-        "var_mod": "PF Coils and Central Solenoid: Power and Energy",
-        "scan01": 1756.9
-    },
-    "vpfskv": {
-        "var_mod": "PF Coils and Central Solenoid: Power and Energy",
-        "scan01": 20.0
-    },
-    "etapsu": {
-        "var_mod": "PF Coils and Central Solenoid: Power and Energy",
-        "scan01": 0.9
-    },
-    "ensxpfm": {
-        "var_mod": "PF Coils and Central Solenoid: Power and Energy",
-        "scan01": 33137.0
-    },
-    "peakpoloidalpower": {
-        "var_mod": "PF Coils and Central Solenoid: Power and Energy",
-        "scan01": 662.17
-    },
-    "rat": {
-        "var_mod": "Vacuum System",
-        "scan01": 1.3e-08
-    },
-    "ogas": {
-        "var_mod": "Vacuum System",
-        "scan01": 0.00024251
-    },
-    "pbase": {
-        "var_mod": "Vacuum System",
-        "scan01": 0.0005
-    },
-    "s(1)": {
-        "var_mod": "Vacuum System",
-        "scan01": 0.48501
-    },
-    "snet(1)": {
-        "var_mod": "Vacuum System",
-        "scan01": 157.11
-    },
-    "volume": {
-        "var_mod": "Vacuum System",
-        "scan01": 4389.4
-    },
-    "pend": {
-        "var_mod": "Vacuum System",
-        "scan01": 0.1328
-    },
-    "pstart": {
-        "var_mod": "Vacuum System",
-        "scan01": 0.001328
-    },
-    "dwell_pump": {
-        "var_mod": "Vacuum System",
-        "scan01": 0.0
-    },
-    "tdwell.": {
-        "var_mod": "Vacuum System",
-        "scan01": 0.0
-    },
-    "tramp.": {
-        "var_mod": "Vacuum System",
-        "scan01": 50.043
-    },
-    "tpump": {
-        "var_mod": "Vacuum System",
-        "scan01": 50.043
-    },
-    "s(2)": {
-        "var_mod": "Vacuum System",
-        "scan01": 403.93
-    },
-    "snet(2)": {
-        "var_mod": "Vacuum System",
-        "scan01": 403.93
-    },
-    "prdiv": {
-        "var_mod": "Vacuum System",
-        "scan01": 0.36
-    },
-    "fhe": {
-        "var_mod": "Vacuum System",
-        "scan01": 0.20113
-    },
-    "s(3)": {
-        "var_mod": "Vacuum System",
-        "scan01": 62.388
-    },
-    "snet(3)": {
-        "var_mod": "Vacuum System",
-        "scan01": 137.07
-    },
-    "frate": {
-        "var_mod": "Vacuum System",
-        "scan01": 4.5054e-05
-    },
-    "s(4)": {
-        "var_mod": "Vacuum System",
-        "scan01": 62.388
-    },
-    "snet(4)": {
-        "var_mod": "Vacuum System",
-        "scan01": 403.93
-    },
-    "nduct": {
-        "var_mod": "Vacuum System",
-        "scan01": 16.0
-    },
-    "d(imax)": {
-        "var_mod": "Vacuum System",
-        "scan01": 1.2708
-    },
-    "l1": {
-        "var_mod": "Vacuum System",
-        "scan01": 2.286
-    },
-    "dout": {
-        "var_mod": "Vacuum System",
-        "scan01": 1.5249
-    },
-    "l2": {
-        "var_mod": "Vacuum System",
-        "scan01": 4.8
-    },
-    "l3": {
-        "var_mod": "Vacuum System",
-        "scan01": 2.0
-    },
-    "pumpn": {
-        "var_mod": "Vacuum System",
-        "scan01": 64.628
-    },
-    "vrci": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 1533400.0
-    },
-    "wrbi": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 46.03
-    },
-    "efloor": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 461950.0
-    },
-    "rbv": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 1710700.0
-    },
-    "rmbv": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 545430.0
-    },
-    "wsv": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 151360.0
-    },
-    "triv": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 40000.0
-    },
-    "elev": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 48855.0
-    },
-    "conv": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 60000.0
-    },
-    "cryv": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 15360.0
-    },
-    "admv": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 100000.0
-    },
-    "shov": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 100000.0
-    },
-    "volnucb": {
-        "var_mod": "Plant Buildings System",
-        "scan01": 2285500.0
-    },
-    "basemw": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 5.0
-    },
-    "bdvmw": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 0.0
-    },
-    "crymw": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 38.466
-    },
-    "htpmw..": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 382.36
-    },
-    "ppfmw": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 1678.8
-    },
-    "ptfmw": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 6.949
-    },
-    "pheatingmw": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 562.5
-    },
-    "trithtmw..": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 15.0
-    },
-    "vachtmw..": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 0.5
-    },
-    "pacpmw": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 2758.9
-    },
-    "fcsht": {
-        "var_mod": "Electric Power Requirements",
-        "scan01": 74.293
-    },
-    "qss/1.0d6": {
-        "var_mod": "Cryogenics",
-        "scan01": 0.025273
-    },
-    "qnuc/1.0d6": {
-        "var_mod": "Cryogenics",
-        "scan01": 0.01292
-    },
-    "qac/1.0d6": {
-        "var_mod": "Cryogenics",
-        "scan01": 0.0032776
-    },
-    "qcl/1.0d6": {
-        "var_mod": "Cryogenics",
-        "scan01": 0.012321
-    },
-    "qmisc/1.0d6": {
-        "var_mod": "Cryogenics",
-        "scan01": 0.024206
-    },
-    "helpow/1.0d6": {
-        "var_mod": "Cryogenics",
-        "scan01": 0.077998
-    },
-    "tmpcry": {
-        "var_mod": "Cryogenics",
-        "scan01": 4.5
-    },
-    "efficiency_(figure_of_merit)_of_cryogenic_plant_is_13%_of_ideal_carnot_v": {
-        "var_mod": "Cryogenics",
-        "scan01": 0.0020277
-    },
-    "crypmw": {
-        "var_mod": "Cryogenics",
-        "scan01": 38.466
-    },
-    "emult": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 1.269
-    },
-    "fhcd": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.0
-    },
-    "1-fdiv-fhcd": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.885
-    },
-    "primary_pumping": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 3.0
-    },
-    "htpmw_fw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.0
-    },
-    "htpmw_blkt": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.0
-    },
-    "htpmwe_fw_blkt": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 379.35
-    },
-    "htpmwe_shld": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.014517
-    },
-    "htpmwe_div": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 2.996
-    },
-    "htpmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 382.36
-    },
-    "fpumpshld": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.005
-    },
-    "fpumpdiv": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.005
-    },
-    "etahtp": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.87
-    },
-    "etath": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.375
-    },
-    "pdivfraction": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.12428
-    },
-    "total_power_leaving_reactor_(across_vacuum_vessel_boundary)_(mw)": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 3885.6
-    },
-    "fachtmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 74.293
-    },
-    "htpsecmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 49.706
-    },
-    "pinjht": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 337.5
-    },
-    "trithtmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 15.0
-    },
-    "vachtmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.5
-    },
-    "tfcmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.0
-    },
-    "psechtmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 523.23
-    },
-    "pthermmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 4215.5
-    },
-    "nphx": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 5.0
-    },
-    "pscalingmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 549.98
-    },
-    "pcoreradmw.": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 261.1
-    },
-    "total_(mw)": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 811.09
-    },
-    "falpha*palpmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 582.92
-    },
-    "pchargemw.": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 3.1657
-    },
-    "pohmmw.": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 1.4837e-10
-    },
-    "pinjmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 225.0
-    },
-    "powfmw.": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 3072.9
-    },
-    "emultmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 584.73
-    },
-    "pinjmw.": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 225.0
-    },
-    "htpmw_mech": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 332.65
-    },
-    "pthermfw_blkt": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 3689.0
-    },
-    "pthermshld": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 2.5385
-    },
-    "pthermdiv": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 523.92
-    },
-    "psechcd": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.0
-    },
-    "pnetelmw.": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 500.0
-    },
-    "pnetelin": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 500.0
-    },
-    "pinjwp": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 562.5
-    },
-    "pfwpmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.73638
-    },
-    "pgrossmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 1580.8
-    },
-    "pnetelmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 500.0
-    },
-    "rejected_main": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 2634.7
-    },
-    "pnetelmw/(powfmw+emultmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 13.67
-    },
-    "pnetelmw/powfmw": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 16.271
-    },
-    "cirpowfr": {
-        "var_mod": "Plant Power / Heat Transport Balance",
-        "scan01": 0.6837
-    },
-    "error_status": {
-        "var_mod": "Errors and Warnings",
-        "scan01": 2.0
-    },
-    "error_id": {
-        "var_mod": "Errors and Warnings",
-        "scan01": 145.0
-    }
+  "procver": {
+    "var_mod": "Power Reactor Optimisation Code",
+    "scan01": "2.1.0"
+  },
+  "date": {
+    "var_mod": "Power Reactor Optimisation Code",
+    "scan01": "11/03/2021"
+  },
+  "time": {
+    "var_mod": "Power Reactor Optimisation Code",
+    "scan01": "15:41"
+  },
+  "username": {
+    "var_mod": "Power Reactor Optimisation Code",
+    "scan01": "username"
+  },
+  "runtitle": {
+    "var_mod": "Power Reactor Optimisation Code",
+    "scan01": "\"Run Title (change this line using input variable 'runtitle')"
+  },
+  "tagno": {
+    "var_mod": "Power Reactor Optimisation Code",
+    "scan01": "v2.1-152-gf431eea5"
+  },
+  "branch_name": {
+    "var_mod": "Power Reactor Optimisation Code",
+    "scan01": "develop"
+  },
+  "commsg": {
+    "var_mod": "Power Reactor Optimisation Code",
+    "scan01": "Merge"
+  },
+  "fileprefix": {
+    "var_mod": "Power Reactor Optimisation Code",
+    "scan01": "/home/user/code/bluemira/tests/syscodes/test_data/IN.DAT"
+  },
+  "ifail": {
+    "var_mod": "Numerics",
+    "scan01": 1.0
+  },
+  "nvar": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 42.0
+  },
+  "neqns+nineqns": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 24.0
+  },
+  "ioptimz": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "minmax": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "sqsumsq": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.968e-9
+  },
+  "convergence_parameter": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 2.5908e-10
+  },
+  "nviter": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 19.0
+  },
+  "itvar001": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 2.395
+  },
+  "xcm001": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0416
+  },
+  "nitvar001": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.1455
+  },
+  "itvar002": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 4.1253
+  },
+  "xcm002": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0215
+  },
+  "nitvar002": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.20587
+  },
+  "itvar003": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 8.7841
+  },
+  "xcm003": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.95431
+  },
+  "nitvar003": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.67319
+  },
+  "itvar004": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 19.197
+  },
+  "xcm004": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.90992
+  },
+  "nitvar004": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.094751
+  },
+  "itvar005": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.067018
+  },
+  "xcm005": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.92636
+  },
+  "nitvar005": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.066085
+  },
+  "itvar006": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 6.4154e19
+  },
+  "xcm006": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0455
+  },
+  "nitvar006": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.054701
+  },
+  "itvar007": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.2
+  },
+  "xcm007": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar007": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar008": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.4
+  },
+  "xcm008": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar008": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar009": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.7391
+  },
+  "xcm009": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.037539
+  },
+  "nitvar009": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.0017381
+  },
+  "itvar010": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.486
+  },
+  "xcm010": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0078
+  },
+  "nitvar010": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.023879
+  },
+  "itvar011": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.16071
+  },
+  "xcm011": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.98756
+  },
+  "nitvar011": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.15987
+  },
+  "itvar012": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.5
+  },
+  "xcm012": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar012": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.0
+  },
+  "itvar013": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 3.5
+  },
+  "xcm013": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar013": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.0
+  },
+  "itvar014": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.2384
+  },
+  "xcm014": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.92291
+  },
+  "nitvar014": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.11499
+  },
+  "itvar015": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.75677
+  },
+  "xcm015": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.9724
+  },
+  "nitvar015": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.75652
+  },
+  "itvar016": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 23666000.0
+  },
+  "xcm016": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.98929
+  },
+  "nitvar016": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.23589
+  },
+  "itvar017": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.52843
+  },
+  "xcm017": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.9455
+  },
+  "nitvar017": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.52367
+  },
+  "itvar018": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.51715
+  },
+  "xcm018": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0087
+  },
+  "nitvar018": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.51667
+  },
+  "itvar019": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.9349
+  },
+  "xcm019": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.019
+  },
+  "nitvar019": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.93484
+  },
+  "itvar020": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.05
+  },
+  "xcm020": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar020": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.0
+  },
+  "itvar021": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.94516
+  },
+  "xcm021": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.98244
+  },
+  "nitvar021": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.9451
+  },
+  "itvar022": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "xcm022": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar022": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar023": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.65509
+  },
+  "xcm023": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0041
+  },
+  "nitvar023": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.65475
+  },
+  "itvar024": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "xcm024": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0226
+  },
+  "nitvar024": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar025": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 10.0
+  },
+  "xcm025": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0226
+  },
+  "nitvar025": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar026": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "xcm026": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar026": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar027": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "xcm027": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar027": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar028": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 28.886
+  },
+  "xcm028": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.86731
+  },
+  "nitvar028": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.28814
+  },
+  "itvar029": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.32795
+  },
+  "xcm029": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.967
+  },
+  "nitvar029": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.29258
+  },
+  "itvar030": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.008
+  },
+  "xcm030": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar030": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.0
+  },
+  "itvar031": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.84199
+  },
+  "xcm031": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.99118
+  },
+  "nitvar031": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.77724
+  },
+  "itvar032": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 60000.0
+  },
+  "xcm032": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar032": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.0
+  },
+  "itvar033": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.02
+  },
+  "xcm033": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar033": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.0
+  },
+  "itvar034": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.7373
+  },
+  "xcm034": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0409
+  },
+  "nitvar034": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.081925
+  },
+  "itvar035": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "xcm035": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar035": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar036": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.094054
+  },
+  "xcm036": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.92328
+  },
+  "nitvar036": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.44054
+  },
+  "itvar037": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "xcm037": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar037": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar038": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.98542
+  },
+  "xcm038": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.98542
+  },
+  "nitvar038": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.9854
+  },
+  "itvar039": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "xcm039": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar039": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar040": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.42079
+  },
+  "xcm040": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.96154
+  },
+  "nitvar040": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.44235
+  },
+  "itvar041": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "xcm041": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "nitvar041": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0
+  },
+  "itvar042": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.0013085
+  },
+  "xcm042": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.88805
+  },
+  "nitvar042": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 0.13085
+  },
+  "normres001": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 2.1578e-12
+  },
+  "normres002": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": -9.0039e-14
+  },
+  "normres003": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 3.0174e-12
+  },
+  "normres004": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 2.5198e-12
+  },
+  "normres005": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 3.7947e-13
+  },
+  "normres006": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 7.4896e-13
+  },
+  "normres007": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 4.6077e-11
+  },
+  "normres008": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": -9.4015e-12
+  },
+  "normres009": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 5.9264e-13
+  },
+  "normres010": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.0114e-12
+  },
+  "normres011": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 2.3739e-11
+  },
+  "normres012": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": -2.5111e-12
+  },
+  "normres013": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.2133e-11
+  },
+  "normres014": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 4.0552e-12
+  },
+  "normres015": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 4.1502e-12
+  },
+  "normres016": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 6.4511e-12
+  },
+  "normres017": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": -1.9588e-9
+  },
+  "normres018": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 3.2934e-12
+  },
+  "normres019": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 1.7426e-10
+  },
+  "normres020": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 3.3902e-12
+  },
+  "normres021": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 2.1712e-12
+  },
+  "normres022": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": 5.4969e-12
+  },
+  "normres023": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": -5.006e-11
+  },
+  "normres024": {
+    "var_mod": "PROCESS found a feasible solution",
+    "scan01": -8.4011e-13
+  },
+  "abktflnc": {
+    "var_mod": "Plant Availability",
+    "scan01": 15.0
+  },
+  "adivflnc": {
+    "var_mod": "Plant Availability",
+    "scan01": 20.0
+  },
+  "bktlife": {
+    "var_mod": "Plant Availability",
+    "scan01": 15.556
+  },
+  "divlife": {
+    "var_mod": "Plant Availability",
+    "scan01": 3.6014
+  },
+  "cdrlife": {
+    "var_mod": "Plant Availability",
+    "scan01": 15.556
+  },
+  "tlife": {
+    "var_mod": "Plant Availability",
+    "scan01": 40.0
+  },
+  "cfactr": {
+    "var_mod": "Plant Availability",
+    "scan01": 0.75
+  },
+  "itart": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "rmajor": {
+    "var_mod": "Plasma",
+    "scan01": 8.7841
+  },
+  "rminor": {
+    "var_mod": "Plasma",
+    "scan01": 3.6678
+  },
+  "aspect": {
+    "var_mod": "Plasma",
+    "scan01": 2.395
+  },
+  "kappa": {
+    "var_mod": "Plasma",
+    "scan01": 1.848
+  },
+  "kappa95": {
+    "var_mod": "Plasma",
+    "scan01": 1.65
+  },
+  "kappaa": {
+    "var_mod": "Plasma",
+    "scan01": 1.7172
+  },
+  "triang": {
+    "var_mod": "Plasma",
+    "scan01": 0.5
+  },
+  "triang95": {
+    "var_mod": "Plasma",
+    "scan01": 0.33333
+  },
+  "pperim": {
+    "var_mod": "Plasma",
+    "scan01": 33.098
+  },
+  "xarea": {
+    "var_mod": "Plasma",
+    "scan01": 72.574
+  },
+  "sarea": {
+    "var_mod": "Plasma",
+    "scan01": 1757.6
+  },
+  "vol": {
+    "var_mod": "Plasma",
+    "scan01": 3896.6
+  },
+  "icurr": {
+    "var_mod": "Plasma",
+    "scan01": 4.0
+  },
+  "plascur/1d6": {
+    "var_mod": "Plasma",
+    "scan01": 25.022
+  },
+  "alphaj": {
+    "var_mod": "Plasma",
+    "scan01": 1.6552
+  },
+  "rli": {
+    "var_mod": "Plasma",
+    "scan01": 1.1388
+  },
+  "bvert": {
+    "var_mod": "Plasma",
+    "scan01": -0.95509
+  },
+  "bt": {
+    "var_mod": "Plasma",
+    "scan01": 4.1253
+  },
+  "bp": {
+    "var_mod": "Plasma",
+    "scan01": 0.95001
+  },
+  "btot": {
+    "var_mod": "Plasma",
+    "scan01": 4.2333
+  },
+  "q0": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "q95": {
+    "var_mod": "Plasma",
+    "scan01": 3.5
+  },
+  "qstar": {
+    "var_mod": "Plasma",
+    "scan01": 2.6552
+  },
+  "beta": {
+    "var_mod": "Plasma",
+    "scan01": 0.067018
+  },
+  "betap": {
+    "var_mod": "Plasma",
+    "scan01": 1.3307
+  },
+  "total_toroidal_beta": {
+    "var_mod": "Plasma",
+    "scan01": 0.070573
+  },
+  "betaft": {
+    "var_mod": "Plasma",
+    "scan01": 0.010009
+  },
+  "betanb": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "gammaft": {
+    "var_mod": "Plasma",
+    "scan01": 0.17556
+  },
+  "thermal_beta": {
+    "var_mod": "Plasma",
+    "scan01": 0.05701
+  },
+  "thermal_poloidal_beta": {
+    "var_mod": "Plasma",
+    "scan01": 1.132
+  },
+  "thermal_toroidal_beta_(=_beta-exp)": {
+    "var_mod": "Plasma",
+    "scan01": 0.060033
+  },
+  "eps*betap": {
+    "var_mod": "Plasma",
+    "scan01": 0.55564
+  },
+  "epbetmax": {
+    "var_mod": "Plasma",
+    "scan01": 1.38
+  },
+  "dnbeta": {
+    "var_mod": "Plasma",
+    "scan01": 4.5554
+  },
+  "normalised_thermal_beta": {
+    "var_mod": "Plasma",
+    "scan01": 3.4474
+  },
+  "normalised_total_beta": {
+    "var_mod": "Plasma",
+    "scan01": 4.0526
+  },
+  "betalim": {
+    "var_mod": "Plasma",
+    "scan01": 0.075333
+  },
+  "plasma_thermal_energy_(j)": {
+    "var_mod": "Plasma",
+    "scan01": 2376000000.0
+  },
+  "total_plasma_internal_energy": {
+    "var_mod": "Plasma",
+    "scan01": 2793100000.0
+  },
+  "te": {
+    "var_mod": "Plasma",
+    "scan01": 19.197
+  },
+  "te0": {
+    "var_mod": "Plasma",
+    "scan01": 43.343
+  },
+  "ti": {
+    "var_mod": "Plasma",
+    "scan01": 19.197
+  },
+  "ti0": {
+    "var_mod": "Plasma",
+    "scan01": 43.343
+  },
+  "ten": {
+    "var_mod": "Plasma",
+    "scan01": 21.516
+  },
+  "dene": {
+    "var_mod": "Plasma",
+    "scan01": 6.4154e19
+  },
+  "ne0": {
+    "var_mod": "Plasma",
+    "scan01": 8.4384e19
+  },
+  "dnla": {
+    "var_mod": "Plasma",
+    "scan01": 7.1047e19
+  },
+  "dnla_gw": {
+    "var_mod": "Plasma",
+    "scan01": 1.2
+  },
+  "dnitot": {
+    "var_mod": "Plasma",
+    "scan01": 5.3766e19
+  },
+  "deni": {
+    "var_mod": "Plasma",
+    "scan01": 4.7623e19
+  },
+  "dnz": {
+    "var_mod": "Plasma",
+    "scan01": 8.7155e16
+  },
+  "dnalp": {
+    "var_mod": "Plasma",
+    "scan01": 6.0339e18
+  },
+  "dnprot": {
+    "var_mod": "Plasma",
+    "scan01": 2.2157e16
+  },
+  "dnbeam": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "dnelimt": {
+    "var_mod": "Plasma",
+    "scan01": 5.9206e19
+  },
+  "boundu(9)": {
+    "var_mod": "Plasma",
+    "scan01": 7.1047e19
+  },
+  "ralpne": {
+    "var_mod": "Plasma",
+    "scan01": 0.094054
+  },
+  "fimp(01": {
+    "var_mod": "Plasma",
+    "scan01": 0.74267
+  },
+  "fimp(02": {
+    "var_mod": "Plasma",
+    "scan01": 0.094054
+  },
+  "fimp(03": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(04": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(05": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(06": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(07": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(08": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(09": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(10": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(11": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(12": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "fimp(13": {
+    "var_mod": "Plasma",
+    "scan01": 0.0013085
+  },
+  "fimp(14": {
+    "var_mod": "Plasma",
+    "scan01": 5e-5
+  },
+  "aion": {
+    "var_mod": "Plasma",
+    "scan01": 2.8796
+  },
+  "zeff": {
+    "var_mod": "Plasma",
+    "scan01": 4.6519
+  },
+  "alphan": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "ipedestal": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "rhopedn": {
+    "var_mod": "Plasma",
+    "scan01": 0.94
+  },
+  "neped": {
+    "var_mod": "Plasma",
+    "scan01": 5.0325e19
+  },
+  "fgwped_out": {
+    "var_mod": "Plasma",
+    "scan01": 0.85
+  },
+  "rhopedt": {
+    "var_mod": "Plasma",
+    "scan01": 0.94
+  },
+  "ieped": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "teped": {
+    "var_mod": "Plasma",
+    "scan01": 6.129
+  },
+  "tesep": {
+    "var_mod": "Plasma",
+    "scan01": 0.1
+  },
+  "nesep": {
+    "var_mod": "Plasma",
+    "scan01": 2.9603e19
+  },
+  "fgwsep_out": {
+    "var_mod": "Plasma",
+    "scan01": 0.5
+  },
+  "alphat": {
+    "var_mod": "Plasma",
+    "scan01": 1.45
+  },
+  "tbeta": {
+    "var_mod": "Plasma",
+    "scan01": 2.0
+  },
+  "dlimit(1)": {
+    "var_mod": "Plasma",
+    "scan01": 3.9995e19
+  },
+  "dlimit(2)": {
+    "var_mod": "Plasma",
+    "scan01": 8.1095e19
+  },
+  "dlimit(3)": {
+    "var_mod": "Plasma",
+    "scan01": 3.1983e19
+  },
+  "dlimit(4)": {
+    "var_mod": "Plasma",
+    "scan01": 2.0596e21
+  },
+  "dlimit(5)": {
+    "var_mod": "Plasma",
+    "scan01": 3.0909e20
+  },
+  "dlimit(6)": {
+    "var_mod": "Plasma",
+    "scan01": 5.3061e19
+  },
+  "dlimit(7)": {
+    "var_mod": "Plasma",
+    "scan01": 5.9206e19
+  },
+  "fdeut": {
+    "var_mod": "Plasma",
+    "scan01": 0.5
+  },
+  "ftrit": {
+    "var_mod": "Plasma",
+    "scan01": 0.5
+  },
+  "powfmw": {
+    "var_mod": "Plasma",
+    "scan01": 3072.9
+  },
+  "pdt": {
+    "var_mod": "Plasma",
+    "scan01": 3068.0
+  },
+  "pdd": {
+    "var_mod": "Plasma",
+    "scan01": 4.9193
+  },
+  "pdhe3": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "palpmw": {
+    "var_mod": "Plasma",
+    "scan01": 613.6
+  },
+  "palpnb": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "pneutmw": {
+    "var_mod": "Plasma",
+    "scan01": 2456.2
+  },
+  "pchargemw": {
+    "var_mod": "Plasma",
+    "scan01": 3.1657
+  },
+  "total_power_deposited_in_plasma_(mw)": {
+    "var_mod": "Plasma",
+    "scan01": 811.09
+  },
+  "pbrempv*vol": {
+    "var_mod": "Plasma",
+    "scan01": 193.25
+  },
+  "plinepv*vol": {
+    "var_mod": "Plasma",
+    "scan01": 402.27
+  },
+  "psyncpv*vol": {
+    "var_mod": "Plasma",
+    "scan01": 51.362
+  },
+  "ssync": {
+    "var_mod": "Plasma",
+    "scan01": 0.6
+  },
+  "coreradius": {
+    "var_mod": "Plasma",
+    "scan01": 0.75
+  },
+  "coreradiationfraction": {
+    "var_mod": "Plasma",
+    "scan01": 0.6
+  },
+  "pcoreradmw": {
+    "var_mod": "Plasma",
+    "scan01": 261.1
+  },
+  "pedgeradmw": {
+    "var_mod": "Plasma",
+    "scan01": 385.78
+  },
+  "pradmw": {
+    "var_mod": "Plasma",
+    "scan01": 646.88
+  },
+  "rad_fraction_core": {
+    "var_mod": "Plasma",
+    "scan01": 0.79754
+  },
+  "rad_fraction_sol": {
+    "var_mod": "Plasma",
+    "scan01": 0.8
+  },
+  "rad_fraction": {
+    "var_mod": "Plasma",
+    "scan01": 0.95951
+  },
+  "photon_wall": {
+    "var_mod": "Plasma",
+    "scan01": 0.3386
+  },
+  "peakfactrad": {
+    "var_mod": "Plasma",
+    "scan01": 3.33
+  },
+  "maxradwallload": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "peakradwallload": {
+    "var_mod": "Plasma",
+    "scan01": 1.1275
+  },
+  "wallmw": {
+    "var_mod": "Plasma",
+    "scan01": 1.2856
+  },
+  "ptarmw": {
+    "var_mod": "Plasma",
+    "scan01": 32.842
+  },
+  "ftar": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "lambdaio": {
+    "var_mod": "Plasma",
+    "scan01": 0.00157
+  },
+  "fio": {
+    "var_mod": "Plasma",
+    "scan01": 0.41
+  },
+  "fli": {
+    "var_mod": "Plasma",
+    "scan01": 0.41
+  },
+  "flo": {
+    "var_mod": "Plasma",
+    "scan01": 0.59
+  },
+  "plimw": {
+    "var_mod": "Plasma",
+    "scan01": 13.465
+  },
+  "plomw": {
+    "var_mod": "Plasma",
+    "scan01": 19.377
+  },
+  "pohmmw": {
+    "var_mod": "Plasma",
+    "scan01": 1.4837e-10
+  },
+  "falpha": {
+    "var_mod": "Plasma",
+    "scan01": 0.95
+  },
+  "falpe": {
+    "var_mod": "Plasma",
+    "scan01": 0.64064
+  },
+  "falpi": {
+    "var_mod": "Plasma",
+    "scan01": 0.35936
+  },
+  "ptrimw": {
+    "var_mod": "Plasma",
+    "scan01": 250.77
+  },
+  "ptremw": {
+    "var_mod": "Plasma",
+    "scan01": 299.22
+  },
+  "pinjimw": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "pinjemw": {
+    "var_mod": "Plasma",
+    "scan01": 225.0
+  },
+  "ignite": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "pdivt": {
+    "var_mod": "Plasma",
+    "scan01": 164.21
+  },
+  "pdivt/rmajor": {
+    "var_mod": "Plasma",
+    "scan01": 18.694
+  },
+  "pdivtbt/qar": {
+    "var_mod": "Plasma",
+    "scan01": 9.2
+  },
+  "pthrmw(1)": {
+    "var_mod": "Plasma",
+    "scan01": 102.68
+  },
+  "pthrmw(2)": {
+    "var_mod": "Plasma",
+    "scan01": 223.94
+  },
+  "pthrmw(3)": {
+    "var_mod": "Plasma",
+    "scan01": 46.452
+  },
+  "pthrmw(4)": {
+    "var_mod": "Plasma",
+    "scan01": 171.04
+  },
+  "pthrmw(5)": {
+    "var_mod": "Plasma",
+    "scan01": 137.74
+  },
+  "pthrmw(6)": {
+    "var_mod": "Plasma",
+    "scan01": 93.616
+  },
+  "pthrmw(7)": {
+    "var_mod": "Plasma",
+    "scan01": 123.57
+  },
+  "pthrmw(8)": {
+    "var_mod": "Plasma",
+    "scan01": 63.658
+  },
+  "pthrmw(9)": {
+    "var_mod": "Plasma",
+    "scan01": 65.075
+  },
+  "pthrmw(10)": {
+    "var_mod": "Plasma",
+    "scan01": 96.769
+  },
+  "pthrmw(11)": {
+    "var_mod": "Plasma",
+    "scan01": 43.411
+  },
+  "pthrmw(12)": {
+    "var_mod": "Plasma",
+    "scan01": 26.408
+  },
+  "pthrmw(13)": {
+    "var_mod": "Plasma",
+    "scan01": 35.972
+  },
+  "pthrmw(14)": {
+    "var_mod": "Plasma",
+    "scan01": 19.25
+  },
+  "pthrmw(15)": {
+    "var_mod": "Plasma",
+    "scan01": 34.85
+  },
+  "pthrmw(16)": {
+    "var_mod": "Plasma",
+    "scan01": 17.113
+  },
+  "pthrmw(17)": {
+    "var_mod": "Plasma",
+    "scan01": 70.971
+  },
+  "pthrmw(18)": {
+    "var_mod": "Plasma",
+    "scan01": 292.42
+  },
+  "pthrmw(19)": {
+    "var_mod": "Plasma",
+    "scan01": 94.519
+  },
+  "pthrmw(20)": {
+    "var_mod": "Plasma",
+    "scan01": 124.77
+  },
+  "pthrmw(21)": {
+    "var_mod": "Plasma",
+    "scan01": 64.271
+  },
+  "boundl(103)": {
+    "var_mod": "Plasma",
+    "scan01": 94.519
+  },
+  "plhthresh": {
+    "var_mod": "Plasma",
+    "scan01": 94.519
+  },
+  "tauelaw": {
+    "var_mod": "Plasma",
+    "scan01": "IPB98(y,2)"
+  },
+  "hfact": {
+    "var_mod": "Plasma",
+    "scan01": 1.4
+  },
+  "taueff": {
+    "var_mod": "Plasma",
+    "scan01": 4.3196
+  },
+  "tauei": {
+    "var_mod": "Plasma",
+    "scan01": 4.3196
+  },
+  "tauee": {
+    "var_mod": "Plasma",
+    "scan01": 4.3196
+  },
+  "dntau": {
+    "var_mod": "Plasma",
+    "scan01": 2.7712e20
+  },
+  "dntau*te": {
+    "var_mod": "Plasma",
+    "scan01": 5.3197e21
+  },
+  "powerht": {
+    "var_mod": "Plasma",
+    "scan01": 549.98
+  },
+  "iradloss": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "radiation_power_subtracted_from_plasma_power_balance_(mw)": {
+    "var_mod": "Plasma",
+    "scan01": 261.1
+  },
+  "taup": {
+    "var_mod": "Plasma",
+    "scan01": 21.598
+  },
+  "taup/taueff": {
+    "var_mod": "Plasma",
+    "scan01": 5.0
+  },
+  "taulimit": {
+    "var_mod": "Plasma",
+    "scan01": 5.0
+  },
+  "total_energy_conf_time": {
+    "var_mod": "Plasma",
+    "scan01": 3.4437
+  },
+  "beta_mcdonald": {
+    "var_mod": "Plasma",
+    "scan01": 0.070573
+  },
+  "rho_star": {
+    "var_mod": "Plasma",
+    "scan01": 0.0023479
+  },
+  "nu_star": {
+    "var_mod": "Plasma",
+    "scan01": 0.00087682
+  },
+  "kappaa_ipb": {
+    "var_mod": "Plasma",
+    "scan01": 1.6705
+  },
+  "vsstt": {
+    "var_mod": "Plasma",
+    "scan01": 401.46
+  },
+  "vsind": {
+    "var_mod": "Plasma",
+    "scan01": 318.6
+  },
+  "gamma": {
+    "var_mod": "Plasma",
+    "scan01": 0.3
+  },
+  "vsres": {
+    "var_mod": "Plasma",
+    "scan01": 82.86
+  },
+  "vsbrn": {
+    "var_mod": "Plasma",
+    "scan01": 5.9355e-8
+  },
+  "cboot": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "bscf_iter89": {
+    "var_mod": "Plasma",
+    "scan01": 0.45241
+  },
+  "bscf_sauter": {
+    "var_mod": "Plasma",
+    "scan01": 0.525
+  },
+  "bscf_nevins": {
+    "var_mod": "Plasma",
+    "scan01": 0.48466
+  },
+  "bscf_wilson": {
+    "var_mod": "Plasma",
+    "scan01": 0.48155
+  },
+  "diacf_hender": {
+    "var_mod": "Plasma",
+    "scan01": 0.023935
+  },
+  "diacf_scene": {
+    "var_mod": "Plasma",
+    "scan01": 0.021919
+  },
+  "pscf_scene": {
+    "var_mod": "Plasma",
+    "scan01": -0.0060317
+  },
+  "bootipf.": {
+    "var_mod": "Plasma",
+    "scan01": 0.525
+  },
+  "diaipf.": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "psipf.": {
+    "var_mod": "Plasma",
+    "scan01": 0.0
+  },
+  "vburn": {
+    "var_mod": "Plasma",
+    "scan01": 5.9296e-12
+  },
+  "rplas": {
+    "var_mod": "Plasma",
+    "scan01": 2.3698e-9
+  },
+  "res_time": {
+    "var_mod": "Plasma",
+    "scan01": 5646.1
+  },
+  "rlp": {
+    "var_mod": "Plasma",
+    "scan01": 1.2733e-5
+  },
+  "csawth": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "tauratio": {
+    "var_mod": "Plasma",
+    "scan01": 1.0
+  },
+  "qfuel": {
+    "var_mod": "Plasma",
+    "scan01": 5.4265e21
+  },
+  "rndfuel": {
+    "var_mod": "Plasma",
+    "scan01": 1.0971e21
+  },
+  "burnup": {
+    "var_mod": "Plasma",
+    "scan01": 0.20217
+  },
+  "iefrf": {
+    "var_mod": "Current Drive System",
+    "scan01": 10.0
+  },
+  "pheat": {
+    "var_mod": "Current Drive System",
+    "scan01": 1.7391
+  },
+  "pcurrentdrivemw": {
+    "var_mod": "Current Drive System",
+    "scan01": 223.26
+  },
+  "bigq": {
+    "var_mod": "Current Drive System",
+    "scan01": 13.657
+  },
+  "auxiliary_cd": {
+    "var_mod": "Current Drive System",
+    "scan01": 11885000.0
+  },
+  "effcd": {
+    "var_mod": "Current Drive System",
+    "scan01": 0.053235
+  },
+  "gamcd": {
+    "var_mod": "Current Drive System",
+    "scan01": 0.3
+  },
+  "etacd": {
+    "var_mod": "Current Drive System",
+    "scan01": 0.4
+  },
+  "bootipf": {
+    "var_mod": "Current Drive System",
+    "scan01": 0.525
+  },
+  "diaipf": {
+    "var_mod": "Current Drive System",
+    "scan01": 0.0
+  },
+  "psipf": {
+    "var_mod": "Current Drive System",
+    "scan01": 0.0
+  },
+  "faccd": {
+    "var_mod": "Current Drive System",
+    "scan01": 0.475
+  },
+  "facoh": {
+    "var_mod": "Current Drive System",
+    "scan01": 1e-10
+  },
+  "plasipf+faccd+facoh": {
+    "var_mod": "Current Drive System",
+    "scan01": 1.0
+  },
+  "fvsbrnni": {
+    "var_mod": "Current Drive System",
+    "scan01": 1.0
+  },
+  "echpwr": {
+    "var_mod": "Current Drive System",
+    "scan01": 225.0
+  },
+  "pinjalw": {
+    "var_mod": "Current Drive System",
+    "scan01": 225.0
+  },
+  "etaech": {
+    "var_mod": "Current Drive System",
+    "scan01": 0.4
+  },
+  "echwpow": {
+    "var_mod": "Current Drive System",
+    "scan01": 562.5
+  },
+  "tramp": {
+    "var_mod": "Times",
+    "scan01": 50.043
+  },
+  "tohs": {
+    "var_mod": "Times",
+    "scan01": 50.043
+  },
+  "theat": {
+    "var_mod": "Times",
+    "scan01": 10.0
+  },
+  "tburn": {
+    "var_mod": "Times",
+    "scan01": 10000.0
+  },
+  "tqnch": {
+    "var_mod": "Times",
+    "scan01": 50.043
+  },
+  "tdwell": {
+    "var_mod": "Times",
+    "scan01": 0.0
+  },
+  "tcycle": {
+    "var_mod": "Times",
+    "scan01": 10160.0
+  },
+  "kallenbach_switch": {
+    "var_mod": "Times",
+    "scan01": 0.0
+  },
+  "bore": {
+    "var_mod": "Radial Build",
+    "scan01": 1.2384
+  },
+  "ohcth": {
+    "var_mod": "Radial Build",
+    "scan01": 0.5
+  },
+  "precomp": {
+    "var_mod": "Radial Build",
+    "scan01": 0.10396
+  },
+  "gapoh": {
+    "var_mod": "Radial Build",
+    "scan01": 0.05
+  },
+  "tfcth": {
+    "var_mod": "Radial Build",
+    "scan01": 1.486
+  },
+  "tftsgap": {
+    "var_mod": "Radial Build",
+    "scan01": 0.05
+  },
+  "thshield": {
+    "var_mod": "Radial Build",
+    "scan01": 0.05
+  },
+  "gapds": {
+    "var_mod": "Radial Build",
+    "scan01": 0.02
+  },
+  "d_vv_in": {
+    "var_mod": "Radial Build",
+    "scan01": 0.3
+  },
+  "shldith": {
+    "var_mod": "Radial Build",
+    "scan01": 0.3
+  },
+  "vvblgap": {
+    "var_mod": "Radial Build",
+    "scan01": 0.02
+  },
+  "blnkith": {
+    "var_mod": "Radial Build",
+    "scan01": 0.755
+  },
+  "fwith": {
+    "var_mod": "Radial Build",
+    "scan01": 0.018
+  },
+  "scrapli": {
+    "var_mod": "Radial Build",
+    "scan01": 0.225
+  },
+  "scraplo": {
+    "var_mod": "Radial Build",
+    "scan01": 0.225
+  },
+  "fwoth": {
+    "var_mod": "Radial Build",
+    "scan01": 0.018
+  },
+  "blnkoth": {
+    "var_mod": "Radial Build",
+    "scan01": 0.982
+  },
+  "shldoth": {
+    "var_mod": "Radial Build",
+    "scan01": 0.8
+  },
+  "d_vv_out": {
+    "var_mod": "Radial Build",
+    "scan01": 0.3
+  },
+  "gapsto": {
+    "var_mod": "Radial Build",
+    "scan01": 1.9036
+  },
+  "tfthko": {
+    "var_mod": "Radial Build",
+    "scan01": 1.486
+  },
+  "i_single_null": {
+    "var_mod": "Vertical Build",
+    "scan01": 1.0
+  },
+  "vgap2": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.05
+  },
+  "d_vv_top": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.3
+  },
+  "shldtth": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.3
+  },
+  "blnktth": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.8685
+  },
+  "fwtth": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.018
+  },
+  "vgaptop": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.6
+  },
+  "rminor*kappa": {
+    "var_mod": "Vertical Build",
+    "scan01": 6.778
+  },
+  "vgap": {
+    "var_mod": "Vertical Build",
+    "scan01": 2.0024
+  },
+  "divfix": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.621
+  },
+  "shldlth": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.7
+  },
+  "d_vv_bot": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.3
+  },
+  "ddwex": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.15
+  },
+  "ohhghf": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.9
+  },
+  "beamwd": {
+    "var_mod": "Vertical Build",
+    "scan01": 0.58
+  },
+  "ptop_radial": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 6.9503
+  },
+  "ptop_vertical": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 6.778
+  },
+  "rmajor.": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 8.7841
+  },
+  "0.0": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 0.0
+  },
+  "tril": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 0.5
+  },
+  "kappa.": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 1.848
+  },
+  "tfoffset": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": -0.75847
+  },
+  "rco": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 6.9261
+  },
+  "rci": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 13.443
+  },
+  "rxpt": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 6.9503
+  },
+  "zxpt": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": -6.778
+  },
+  "thetai": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 0.20714
+  },
+  "thetao": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 1.0423
+  },
+  "betai": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 1.0
+  },
+  "betao": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 1.0
+  },
+  "plsepi": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 1.0
+  },
+  "plsepo": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 1.5
+  },
+  "plleni": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 1.0
+  },
+  "plleno": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 1.0
+  },
+  "rspi": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 5.9716
+  },
+  "zspi": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": -6.9837
+  },
+  "rplti": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 6.1495
+  },
+  "zplti": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": -6.5164
+  },
+  "rplbi": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 5.7938
+  },
+  "zplbi": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": -7.451
+  },
+  "rspo": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 7.7066
+  },
+  "zspo": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": -8.0734
+  },
+  "rplto": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 7.9337
+  },
+  "zplto": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": -7.628
+  },
+  "rplbo": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 7.4795
+  },
+  "zplbo": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": -8.5188
+  },
+  "divht": {
+    "var_mod": "Divertor build and plasma position",
+    "scan01": 2.0024
+  },
+  "alstrtf": {
+    "var_mod": "TF coils",
+    "scan01": 580000000.0
+  },
+  "eyoung_wp_t*1.0d-9": {
+    "var_mod": "TF coils",
+    "scan01": 23.673
+  },
+  "eyoung_wp_z*1.0d-9": {
+    "var_mod": "TF coils",
+    "scan01": 96.556
+  },
+  "sig_tf_r_max(1)": {
+    "var_mod": "TF coils",
+    "scan01": 7.3273e-8
+  },
+  "sig_tf_t_max(1)": {
+    "var_mod": "TF coils",
+    "scan01": -381390000.0
+  },
+  "sig_tf_z_max(1)": {
+    "var_mod": "TF coils",
+    "scan01": 166800000.0
+  },
+  "sig_tf_vmises_max(1)": {
+    "var_mod": "TF coils",
+    "scan01": 486720000.0
+  },
+  "sig_tf_tresca_max(1)": {
+    "var_mod": "TF coils",
+    "scan01": 548190000.0
+  },
+  "sig_tf_r_max(2)": {
+    "var_mod": "TF coils",
+    "scan01": -132080000.0
+  },
+  "sig_tf_t_max(2)": {
+    "var_mod": "TF coils",
+    "scan01": -413200000.0
+  },
+  "sig_tf_z_max(2)": {
+    "var_mod": "TF coils",
+    "scan01": 166800000.0
+  },
+  "sig_tf_vmises_max(2)": {
+    "var_mod": "TF coils",
+    "scan01": 517180000.0
+  },
+  "sig_tf_tresca_max(2)": {
+    "var_mod": "TF coils",
+    "scan01": 580000000.0
+  },
+  "deflect": {
+    "var_mod": "TF coils",
+    "scan01": -0.0033932
+  },
+  "casestr": {
+    "var_mod": "TF coils",
+    "scan01": 0.00081368
+  },
+  "windstrain": {
+    "var_mod": "TF coils",
+    "scan01": 0.0017814
+  },
+  "insstrain": {
+    "var_mod": "TF coils",
+    "scan01": -0.0095905
+  },
+  "i_tf_sup": {
+    "var_mod": "TF coils",
+    "scan01": 1.0
+  },
+  "i_tf_sc_mat": {
+    "var_mod": "TF coils",
+    "scan01": 5.0
+  },
+  "i_tf_bucking": {
+    "var_mod": "TF coils",
+    "scan01": 1.0
+  },
+  "n_tf": {
+    "var_mod": "TF coils",
+    "scan01": 16.0
+  },
+  "r_tf_inboard_mid": {
+    "var_mod": "TF coils",
+    "scan01": 2.6354
+  },
+  "r_tf_outboard_mid": {
+    "var_mod": "TF coils",
+    "scan01": 17.544
+  },
+  "tftort": {
+    "var_mod": "TF coils",
+    "scan01": 1.3182
+  },
+  "hmax": {
+    "var_mod": "TF coils",
+    "scan01": 10.551
+  },
+  "tfleng": {
+    "var_mod": "TF coils",
+    "scan01": 59.097
+  },
+  "i_tf_shape": {
+    "var_mod": "TF coils",
+    "scan01": 1.0
+  },
+  "xarc(1)": {
+    "var_mod": "TF coils",
+    "scan01": 3.3784
+  },
+  "yarc(1)": {
+    "var_mod": "TF coils",
+    "scan01": 5.4207
+  },
+  "xarc(2)": {
+    "var_mod": "TF coils",
+    "scan01": 8.0506
+  },
+  "yarc(2)": {
+    "var_mod": "TF coils",
+    "scan01": 9.0345
+  },
+  "xarc(3)": {
+    "var_mod": "TF coils",
+    "scan01": 16.801
+  },
+  "yarc(3)": {
+    "var_mod": "TF coils",
+    "scan01": 0.0
+  },
+  "xarc(4)": {
+    "var_mod": "TF coils",
+    "scan01": 8.0506
+  },
+  "yarc(4)": {
+    "var_mod": "TF coils",
+    "scan01": -10.551
+  },
+  "xarc(5)": {
+    "var_mod": "TF coils",
+    "scan01": 3.3784
+  },
+  "yarc(5)": {
+    "var_mod": "TF coils",
+    "scan01": -6.3309
+  },
+  "tfareain": {
+    "var_mod": "TF coils",
+    "scan01": 24.606
+  },
+  "a_tf_steel*n_tf": {
+    "var_mod": "TF coils",
+    "scan01": 17.546
+  },
+  "f_tf_steel": {
+    "var_mod": "TF coils",
+    "scan01": 0.71309
+  },
+  "a_tf_ins*n_tf": {
+    "var_mod": "TF coils",
+    "scan01": 17.546
+  },
+  "f_tf_ins": {
+    "var_mod": "TF coils",
+    "scan01": 0.087543
+  },
+  "acasetf": {
+    "var_mod": "TF coils",
+    "scan01": 0.72861
+  },
+  "casthi": {
+    "var_mod": "TF coils",
+    "scan01": 0.06
+  },
+  "thkcas": {
+    "var_mod": "TF coils",
+    "scan01": 0.32795
+  },
+  "casths": {
+    "var_mod": "TF coils",
+    "scan01": 0.05
+  },
+  "whtcas": {
+    "var_mod": "TF coils",
+    "scan01": 1195600.0
+  },
+  "awpc": {
+    "var_mod": "TF coils",
+    "scan01": 0.80924
+  },
+  "aswp": {
+    "var_mod": "TF coils",
+    "scan01": 0.74515
+  },
+  "dr_tf_wp": {
+    "var_mod": "TF coils",
+    "scan01": 1.0331
+  },
+  "wwp1": {
+    "var_mod": "TF coils",
+    "scan01": 0.78331
+  },
+  "tinstf": {
+    "var_mod": "TF coils",
+    "scan01": 0.008
+  },
+  "tfinsgap": {
+    "var_mod": "TF coils",
+    "scan01": 0.01
+  },
+  "aswp*n_tf": {
+    "var_mod": "TF coils",
+    "scan01": 5.8884
+  },
+  "aswp/awpc": {
+    "var_mod": "TF coils",
+    "scan01": 0.45478
+  },
+  "aiwp/awpc": {
+    "var_mod": "TF coils",
+    "scan01": 0.13156
+  },
+  "awpc-aswp-aiwp)": {
+    "var_mod": "TF coils",
+    "scan01": 0.41367
+  },
+  "i_tf_turns_integer": {
+    "var_mod": "TF coils",
+    "scan01": 1.0
+  },
+  "n_tf_turn": {
+    "var_mod": "TF coils",
+    "scan01": 200.0
+  },
+  "n_pancake": {
+    "var_mod": "TF coils",
+    "scan01": 20.0
+  },
+  "n_layer": {
+    "var_mod": "TF coils",
+    "scan01": 10.0
+  },
+  "t_turn_radial": {
+    "var_mod": "TF coils",
+    "scan01": 0.09971
+  },
+  "t_turn_toroidal": {
+    "var_mod": "TF coils",
+    "scan01": 0.037366
+  },
+  "elonductor_radial": {
+    "var_mod": "TF coils",
+    "scan01": 0.09571
+  },
+  "t_conductor_toroidal": {
+    "var_mod": "TF coils",
+    "scan01": 0.033366
+  },
+  "t_cable_radial": {
+    "var_mod": "TF coils",
+    "scan01": 0.07971
+  },
+  "t_cable_toroidal": {
+    "var_mod": "TF coils",
+    "scan01": 0.017366
+  },
+  "thwcndut": {
+    "var_mod": "TF coils",
+    "scan01": 0.008
+  },
+  "thicndut": {
+    "var_mod": "TF coils",
+    "scan01": 0.002
+  },
+  "dhecoil": {
+    "var_mod": "TF coils",
+    "scan01": 0.01
+  },
+  "acstf": {
+    "var_mod": "TF coils",
+    "scan01": 0.0013533
+  },
+  "vftf": {
+    "var_mod": "TF coils",
+    "scan01": 0.3
+  },
+  "fcutfsu": {
+    "var_mod": "TF coils",
+    "scan01": 0.84199
+  },
+  "1-fcutfsu": {
+    "var_mod": "TF coils",
+    "scan01": 0.15801
+  },
+  "check_total_area_fractions_in_winding_pack_=_1": {
+    "var_mod": "TF coils",
+    "scan01": 1.0
+  },
+  "tmargmin_tf": {
+    "var_mod": "TF coils",
+    "scan01": 1.5
+  },
+  "tmargtf": {
+    "var_mod": "TF coils",
+    "scan01": 1.5
+  },
+  "whtconsc": {
+    "var_mod": "TF coils",
+    "scan01": 7568.4
+  },
+  "whtconcu": {
+    "var_mod": "TF coils",
+    "scan01": 75643.0
+  },
+  "whtconsh": {
+    "var_mod": "TF coils",
+    "scan01": 169640.0
+  },
+  "whtconin": {
+    "var_mod": "TF coils",
+    "scan01": 11325.0
+  },
+  "whtcon": {
+    "var_mod": "TF coils",
+    "scan01": 264180.0
+  },
+  "whttf/n_tf": {
+    "var_mod": "TF coils",
+    "scan01": 1466600.0
+  },
+  "whttf": {
+    "var_mod": "TF coils",
+    "scan01": 23466000.0
+  },
+  "bmaxtf": {
+    "var_mod": "TF coils",
+    "scan01": 11.2
+  },
+  "ritfc/1.d6": {
+    "var_mod": "TF coils",
+    "scan01": 181.19
+  },
+  "ritfc": {
+    "var_mod": "TF coils",
+    "scan01": 181190000.0
+  },
+  "bmaxtfrp": {
+    "var_mod": "TF coils",
+    "scan01": 11.716
+  },
+  "jwptf": {
+    "var_mod": "TF coils",
+    "scan01": 15197000.0
+  },
+  "oacdcp": {
+    "var_mod": "TF coils",
+    "scan01": 7363600.0
+  },
+  "estotftgj": {
+    "var_mod": "TF coils",
+    "scan01": 130.84
+  },
+  "vforce": {
+    "var_mod": "TF coils",
+    "scan01": 182920000.0
+  },
+  "vforce_outboard": {
+    "var_mod": "TF coils",
+    "scan01": 182920000.0
+  },
+  "f_vforce_inboard": {
+    "var_mod": "TF coils",
+    "scan01": 0.5
+  },
+  "cforce": {
+    "var_mod": "TF coils",
+    "scan01": 63415000.0
+  },
+  "ripmax": {
+    "var_mod": "TF coils",
+    "scan01": 0.6
+  },
+  "ripple": {
+    "var_mod": "TF coils",
+    "scan01": 0.6
+  },
+  "sigvvall": {
+    "var_mod": "TF coils",
+    "scan01": 93000000.0
+  },
+  "taucq": {
+    "var_mod": "TF coils",
+    "scan01": 28.464
+  },
+  "tdmptf": {
+    "var_mod": "TF coils",
+    "scan01": 28.886
+  },
+  "vdalw": {
+    "var_mod": "TF coils",
+    "scan01": 10.0
+  },
+  "vtfskv": {
+    "var_mod": "TF coils",
+    "scan01": 10.0
+  },
+  "tmaxpro": {
+    "var_mod": "TF coils",
+    "scan01": 150.0
+  },
+  "isumat": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 5.0
+  },
+  "bc20m": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 32.97
+  },
+  "tc0m": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 16.06
+  },
+  "thelium": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 4.75
+  },
+  "fhetot": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 0.35804
+  },
+  "strncon_tf": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": -0.005
+  },
+  "jcritsc": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 629610000.0
+  },
+  "jcritstr": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 99486000.0
+  },
+  "jwdgcrt": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 23198000.0
+  },
+  "jwdgop": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 15197000.0
+  },
+  "tmarg": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 1.5
+  },
+  "icrit": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 86431.0
+  },
+  "cpttf": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 56620.0
+  },
+  "iooic": {
+    "var_mod": "Superconducting TF Coils",
+    "scan01": 0.65509
+  },
+  "isumatoh": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 5.0
+  },
+  "bmaxoh0": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 14.046
+  },
+  "jscoh_bop": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 351730000.0
+  },
+  "jstrandoh_bop": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 105520000.0
+  },
+  "rjohc0": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 42783000.0
+  },
+  "cohbop": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 22125000.0
+  },
+  "bmaxoh": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 13.878
+  },
+  "jscoh_eof": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 368200000.0
+  },
+  "jstrandoh_eof": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 110460000.0
+  },
+  "rjohc": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 44785000.0
+  },
+  "coheof": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 23666000.0
+  },
+  "bore.": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.2384
+  },
+  "ohcth.": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.5
+  },
+  "areaoh": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 9.4963
+  },
+  "awpoh": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 5.5004
+  },
+  "awpoh*(1-vfohc)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 3.8503
+  },
+  "awpoh*vfohc": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.6501
+  },
+  "areaoh-awpoh": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 3.996
+  },
+  "oh_steel_frac": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.42079
+  },
+  "i_cs_stress": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.0
+  },
+  "alstroh": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 660000000.0
+  },
+  "sig_hoop": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 660000000.0
+  },
+  "sig_axial": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -825420000.0
+  },
+  "s_tresca_oh": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 660000000.0
+  },
+  "axial_force": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -812070000.0
+  },
+  "strncon_cs": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -0.005
+  },
+  "fcuohsu": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.7
+  },
+  "vfohc": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.3
+  },
+  "tftmp": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 4.75
+  },
+  "tmargoh": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.5
+  },
+  "tmargmin_cs": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.5
+  },
+  "isumatpf": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 3.0
+  },
+  "fcupfsu": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.69
+  },
+  "sigpfcalw": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 500.0
+  },
+  "sigpfcf": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.666
+  },
+  "rpf(01)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 5.4373
+  },
+  "zpf(01)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 11.38
+  },
+  "pfdr01": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.0625
+  },
+  "pfdz01": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.0625
+  },
+  "turns(01)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 294.28
+  },
+  "ric(01)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 12.419
+  },
+  "bpf(01)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 3.3113
+  },
+  "rpf(02)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 5.4373
+  },
+  "zpf(02)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -12.897
+  },
+  "pfdr02": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.098
+  },
+  "pfdz02": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -1.098
+  },
+  "turns(02)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 314.26
+  },
+  "ric(02)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 13.262
+  },
+  "bpf(02)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 2.9628
+  },
+  "rpf(03)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 19.444
+  },
+  "zpf(03)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 3.6678
+  },
+  "pfdr03": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.3846
+  },
+  "pfdz03": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.3846
+  },
+  "turns(03)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 272.56
+  },
+  "ric(03)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -11.502
+  },
+  "bpf(03)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 3.2246
+  },
+  "rpf(04)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 19.444
+  },
+  "zpf(04)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -3.6678
+  },
+  "pfdr04": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.3846
+  },
+  "pfdz04": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -1.3846
+  },
+  "turns(04)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 272.56
+  },
+  "ric(04)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -11.502
+  },
+  "bpf(04)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 3.2246
+  },
+  "rpf(05)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 16.913
+  },
+  "zpf(05)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 10.27
+  },
+  "pfdr05": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.93766
+  },
+  "pfdz05": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.93766
+  },
+  "turns(05)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 163.57
+  },
+  "ric(05)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -7.0337
+  },
+  "bpf(05)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 3.0134
+  },
+  "rpf(06)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 16.913
+  },
+  "zpf(06)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -10.27
+  },
+  "pfdr06": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.93766
+  },
+  "pfdz06": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -0.93766
+  },
+  "turns(06)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 163.57
+  },
+  "ric(06)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -7.0337
+  },
+  "bpf(06)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 3.0134
+  },
+  "rpf(nohc)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 1.4884
+  },
+  "zpf(nohc)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.0
+  },
+  "ohdr": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 0.5
+  },
+  "ohdz": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 18.993
+  },
+  "turns(nohc)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 5226.5
+  },
+  "ric(nohc)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": -224.74
+  },
+  "bpf(nohc)": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 14.046
+  },
+  "ssq0": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 5.9474e-5
+  },
+  "alfapf": {
+    "var_mod": "Central Solenoid and PF Coils",
+    "scan01": 5e-10
+  },
+  "vstot": {
+    "var_mod": "Volt Second Consumption",
+    "scan01": -401.46
+  },
+  "fcohbop": {
+    "var_mod": "Waveforms",
+    "scan01": 0.9349
+  },
+  "fcohbof": {
+    "var_mod": "Waveforms",
+    "scan01": 1.0
+  },
+  "ncirt": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 8.0
+  },
+  "pfc01t01": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 0.0
+  },
+  "pfc01t02": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 7310800.0
+  },
+  "pfc01t03": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 12419000.0
+  },
+  "pfc01t04": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 12419000.0
+  },
+  "pfc01t05": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 12419000.0
+  },
+  "pfc01t06": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 0.0
+  },
+  "pfc02t01": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 0.0
+  },
+  "pfc02t02": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 9799900.0
+  },
+  "pfc02t03": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 13262000.0
+  },
+  "pfc02t04": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 13262000.0
+  },
+  "pfc02t05": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 13262000.0
+  },
+  "pfc02t06": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 0.0
+  },
+  "pfc03t01": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "pfc03t02": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 186060.0
+  },
+  "pfc03t03": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -11502000.0
+  },
+  "pfc03t04": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -11502000.0
+  },
+  "pfc03t05": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -11502000.0
+  },
+  "pfc03t06": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "pfc04t01": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "pfc04t02": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 186060.0
+  },
+  "pfc04t03": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -11502000.0
+  },
+  "pfc04t04": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -11502000.0
+  },
+  "pfc04t05": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -11502000.0
+  },
+  "pfc04t06": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "pfc05t01": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "pfc05t02": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 171560.0
+  },
+  "pfc05t03": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -7033700.0
+  },
+  "pfc05t04": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -7033700.0
+  },
+  "pfc05t05": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -7033700.0
+  },
+  "pfc05t06": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "pfc06t01": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "pfc06t02": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 171560.0
+  },
+  "pfc06t03": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -7033700.0
+  },
+  "pfc06t04": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -7033700.0
+  },
+  "pfc06t05": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -7033700.0
+  },
+  "pfc06t06": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "cst01": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "cst02": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 210110000.0
+  },
+  "cst03": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -224740000.0
+  },
+  "cst04": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -224740000.0
+  },
+  "cst05": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -224740000.0
+  },
+  "cst06": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": -0.0
+  },
+  "plasmat01": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 0.0
+  },
+  "plasmat02": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 0.0
+  },
+  "plasmat03": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 25022000.0
+  },
+  "plasmat04": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 25022000.0
+  },
+  "plasmat05": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 25022000.0
+  },
+  "plasmat06": {
+    "var_mod": "PF Circuit Waveform Data",
+    "scan01": 0.0
+  },
+  "fncmass": {
+    "var_mod": "Support Structure",
+    "scan01": 782810.0
+  },
+  "aintmass": {
+    "var_mod": "Support Structure",
+    "scan01": 8659700.0
+  },
+  "coldmass": {
+    "var_mod": "Support Structure",
+    "scan01": 58775000.0
+  },
+  "clgsmass": {
+    "var_mod": "Support Structure",
+    "scan01": 2395900.0
+  },
+  "gsm1": {
+    "var_mod": "Support Structure",
+    "scan01": 110850.0
+  },
+  "gsm2": {
+    "var_mod": "Support Structure",
+    "scan01": 589110.0
+  },
+  "gsm3": {
+    "var_mod": "Support Structure",
+    "scan01": 1447700.0
+  },
+  "dp_he": {
+    "var_mod": "Pumping for primary coolant (helium)",
+    "scan01": 550000.0
+  },
+  "fpump": {
+    "var_mod": "Pumping for primary coolant (helium)",
+    "scan01": 0.089463
+  },
+  "p_plasma": {
+    "var_mod": "Pumping for primary coolant (helium)",
+    "scan01": 3359.0
+  },
+  "t_in_compressor": {
+    "var_mod": "Pumping for primary coolant (helium)",
+    "scan01": 557.03
+  },
+  "t_in_bb": {
+    "var_mod": "Pumping for primary coolant (helium)",
+    "scan01": 573.13
+  },
+  "htpmw_fw_blkt": {
+    "var_mod": "Pumping for primary coolant (helium)",
+    "scan01": 330.03
+  },
+  "htpmw_div": {
+    "var_mod": "Pumping for primary coolant (helium)",
+    "scan01": 2.6065
+  },
+  "htpmw_shld": {
+    "var_mod": "Pumping for primary coolant (helium)",
+    "scan01": 0.012629
+  },
+  "fbltibe12": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.375
+  },
+  "fblli2sio4": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.375
+  },
+  "fblss_ccfe": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.09705
+  },
+  "vfcblkt": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.05295
+  },
+  "vfpblkt": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.1
+  },
+  "fw_armour_vol": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 8.7881
+  },
+  "volfw": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 27.823
+  },
+  "volblkt": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 1690.1
+  },
+  "volshld": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 877.86
+  },
+  "vdewin": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 1346.6
+  },
+  "fw_armour_mass": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 169170.0
+  },
+  "fwmass": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 217020.0
+  },
+  "whtblkt": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 4232900.0
+  },
+  "whtbltibe12": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 1432400.0
+  },
+  "whtblli4sio4": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 1521100.0
+  },
+  "whtblss": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 1279400.0
+  },
+  "armour_fw_bl_mass": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 4619100.0
+  },
+  "whtshld": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 2738900.0
+  },
+  "vvmass": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 10503000.0
+  },
+  "ptfnuc": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.082044
+  },
+  "pnucfw": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 415.51
+  },
+  "pnucblkt": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 2340.3
+  },
+  "pnucshld": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 2.5259
+  },
+  "pnucdiv": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 282.71
+  },
+  "exp_blanket": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.99997
+  },
+  "exp_shield1": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.0017209
+  },
+  "exp_shield2": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.25427
+  },
+  "fdiv": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.115
+  },
+  "secondary_cycle": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 2.0
+  },
+  "fwpressure": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 15500000.0
+  },
+  "blpressure": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 15500000.0
+  },
+  "nblktmodpi": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 7.0
+  },
+  "nblktmodti": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 32.0
+  },
+  "nblktmodpo": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 8.0
+  },
+  "nblktmodto": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 48.0
+  },
+  "etaiso": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 0.9
+  },
+  "fwarea": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 2253.8
+  },
+  "rdewex": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 20.636
+  },
+  "zdewex": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 18.105
+  },
+  "clh1": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 6.068
+  },
+  "divsur": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 224.7
+  },
+  "divmas": {
+    "var_mod": "First wall and blanket : CCFE HCPB model",
+    "scan01": 55052.0
+  },
+  "itfka": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 56.62
+  },
+  "ntfc": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 16.0
+  },
+  "tchghr": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 4.0
+  },
+  "ltfth": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 81.626
+  },
+  "rcoils": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 0.0
+  },
+  "tfcv": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 431.41
+  },
+  "ntfbkr": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 16.0
+  },
+  "ndumpr": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 64.0
+  },
+  "r1dump": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 0.17661
+  },
+  "r1ppmw": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 141.55
+  },
+  "r1emj": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 2044.4
+  },
+  "ttfsec": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 28.886
+  },
+  "tfpsv": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 452.98
+  },
+  "tfpska": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 59.451
+  },
+  "tfckw": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 26930.0
+  },
+  "tfackw": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 29923.0
+  },
+  "rpower": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 6.2541
+  },
+  "xpower": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 18.172
+  },
+  "djmka": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 0.125
+  },
+  "albusa": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 452.96
+  },
+  "tfbusl": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 3372.7
+  },
+  "albuswt": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 412.49
+  },
+  "rtfbus": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 0.0019508
+  },
+  "vtfbus": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 110.46
+  },
+  "drarea": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 5169.4
+  },
+  "tfcfsp": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 1475.8
+  },
+  "tfcbv": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 8855.1
+  },
+  "xpwrmw": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 20.192
+  },
+  "tfacpd": {
+    "var_mod": "Superconducting TF Coil Power Conversion",
+    "scan01": 6.949
+  },
+  "pfckts": {
+    "var_mod": "PF Coils and Central Solenoid: Power and Energy",
+    "scan01": 12.0
+  },
+  "spsmva": {
+    "var_mod": "PF Coils and Central Solenoid: Power and Energy",
+    "scan01": 1700.7
+  },
+  "spfbusl": {
+    "var_mod": "PF Coils and Central Solenoid: Power and Energy",
+    "scan01": 2523.3
+  },
+  "pfbuspwr": {
+    "var_mod": "PF Coils and Central Solenoid: Power and Energy",
+    "scan01": 1756.9
+  },
+  "srcktpm": {
+    "var_mod": "PF Coils and Central Solenoid: Power and Energy",
+    "scan01": 1756.9
+  },
+  "vpfskv": {
+    "var_mod": "PF Coils and Central Solenoid: Power and Energy",
+    "scan01": 20.0
+  },
+  "etapsu": {
+    "var_mod": "PF Coils and Central Solenoid: Power and Energy",
+    "scan01": 0.9
+  },
+  "ensxpfm": {
+    "var_mod": "PF Coils and Central Solenoid: Power and Energy",
+    "scan01": 33137.0
+  },
+  "peakpoloidalpower": {
+    "var_mod": "PF Coils and Central Solenoid: Power and Energy",
+    "scan01": 662.17
+  },
+  "rat": {
+    "var_mod": "Vacuum System",
+    "scan01": 1.3e-8
+  },
+  "ogas": {
+    "var_mod": "Vacuum System",
+    "scan01": 0.00024251
+  },
+  "pbase": {
+    "var_mod": "Vacuum System",
+    "scan01": 0.0005
+  },
+  "s(1)": {
+    "var_mod": "Vacuum System",
+    "scan01": 0.48501
+  },
+  "snet(1)": {
+    "var_mod": "Vacuum System",
+    "scan01": 157.11
+  },
+  "volume": {
+    "var_mod": "Vacuum System",
+    "scan01": 4389.4
+  },
+  "pend": {
+    "var_mod": "Vacuum System",
+    "scan01": 0.1328
+  },
+  "pstart": {
+    "var_mod": "Vacuum System",
+    "scan01": 0.001328
+  },
+  "dwell_pump": {
+    "var_mod": "Vacuum System",
+    "scan01": 0.0
+  },
+  "tdwell.": {
+    "var_mod": "Vacuum System",
+    "scan01": 0.0
+  },
+  "tramp.": {
+    "var_mod": "Vacuum System",
+    "scan01": 50.043
+  },
+  "tpump": {
+    "var_mod": "Vacuum System",
+    "scan01": 50.043
+  },
+  "s(2)": {
+    "var_mod": "Vacuum System",
+    "scan01": 403.93
+  },
+  "snet(2)": {
+    "var_mod": "Vacuum System",
+    "scan01": 403.93
+  },
+  "prdiv": {
+    "var_mod": "Vacuum System",
+    "scan01": 0.36
+  },
+  "fhe": {
+    "var_mod": "Vacuum System",
+    "scan01": 0.20113
+  },
+  "s(3)": {
+    "var_mod": "Vacuum System",
+    "scan01": 62.388
+  },
+  "snet(3)": {
+    "var_mod": "Vacuum System",
+    "scan01": 137.07
+  },
+  "frate": {
+    "var_mod": "Vacuum System",
+    "scan01": 4.5054e-5
+  },
+  "s(4)": {
+    "var_mod": "Vacuum System",
+    "scan01": 62.388
+  },
+  "snet(4)": {
+    "var_mod": "Vacuum System",
+    "scan01": 403.93
+  },
+  "nduct": {
+    "var_mod": "Vacuum System",
+    "scan01": 16.0
+  },
+  "d(imax)": {
+    "var_mod": "Vacuum System",
+    "scan01": 1.2708
+  },
+  "l1": {
+    "var_mod": "Vacuum System",
+    "scan01": 2.286
+  },
+  "dout": {
+    "var_mod": "Vacuum System",
+    "scan01": 1.5249
+  },
+  "l2": {
+    "var_mod": "Vacuum System",
+    "scan01": 4.8
+  },
+  "l3": {
+    "var_mod": "Vacuum System",
+    "scan01": 2.0
+  },
+  "pumpn": {
+    "var_mod": "Vacuum System",
+    "scan01": 64.628
+  },
+  "vrci": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 1533400.0
+  },
+  "wrbi": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 46.03
+  },
+  "efloor": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 461950.0
+  },
+  "rbv": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 1710700.0
+  },
+  "rmbv": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 545430.0
+  },
+  "wsv": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 151360.0
+  },
+  "triv": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 40000.0
+  },
+  "elev": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 48855.0
+  },
+  "conv": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 60000.0
+  },
+  "cryv": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 15360.0
+  },
+  "admv": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 100000.0
+  },
+  "shov": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 100000.0
+  },
+  "volnucb": {
+    "var_mod": "Plant Buildings System",
+    "scan01": 2285500.0
+  },
+  "basemw": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 5.0
+  },
+  "bdvmw": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 0.0
+  },
+  "crymw": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 38.466
+  },
+  "htpmw..": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 382.36
+  },
+  "ppfmw": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 1678.8
+  },
+  "ptfmw": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 6.949
+  },
+  "pheatingmw": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 562.5
+  },
+  "trithtmw..": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 15.0
+  },
+  "vachtmw..": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 0.5
+  },
+  "pacpmw": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 2758.9
+  },
+  "fcsht": {
+    "var_mod": "Electric Power Requirements",
+    "scan01": 74.293
+  },
+  "qss/1.0d6": {
+    "var_mod": "Cryogenics",
+    "scan01": 0.025273
+  },
+  "qnuc/1.0d6": {
+    "var_mod": "Cryogenics",
+    "scan01": 0.01292
+  },
+  "qac/1.0d6": {
+    "var_mod": "Cryogenics",
+    "scan01": 0.0032776
+  },
+  "qcl/1.0d6": {
+    "var_mod": "Cryogenics",
+    "scan01": 0.012321
+  },
+  "qmisc/1.0d6": {
+    "var_mod": "Cryogenics",
+    "scan01": 0.024206
+  },
+  "helpow/1.0d6": {
+    "var_mod": "Cryogenics",
+    "scan01": 0.077998
+  },
+  "tmpcry": {
+    "var_mod": "Cryogenics",
+    "scan01": 4.5
+  },
+  "efficiency_(figure_of_merit)_of_cryogenic_plant_is_13%_of_ideal_carnot_v": {
+    "var_mod": "Cryogenics",
+    "scan01": 0.0020277
+  },
+  "crypmw": {
+    "var_mod": "Cryogenics",
+    "scan01": 38.466
+  },
+  "emult": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 1.269
+  },
+  "fhcd": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.0
+  },
+  "1-fdiv-fhcd": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.885
+  },
+  "primary_pumping": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 3.0
+  },
+  "htpmw_fw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.0
+  },
+  "htpmw_blkt": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.0
+  },
+  "htpmwe_fw_blkt": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 379.35
+  },
+  "htpmwe_shld": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.014517
+  },
+  "htpmwe_div": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 2.996
+  },
+  "htpmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 382.36
+  },
+  "fpumpshld": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.005
+  },
+  "fpumpdiv": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.005
+  },
+  "etahtp": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.87
+  },
+  "etath": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.375
+  },
+  "pdivfraction": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.12428
+  },
+  "total_power_leaving_reactor_(across_vacuum_vessel_boundary)_(mw)": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 3885.6
+  },
+  "fachtmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 74.293
+  },
+  "htpsecmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 49.706
+  },
+  "pinjht": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 337.5
+  },
+  "trithtmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 15.0
+  },
+  "vachtmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.5
+  },
+  "tfcmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.0
+  },
+  "psechtmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 523.23
+  },
+  "pthermmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 4215.5
+  },
+  "nphx": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 5.0
+  },
+  "pscalingmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 549.98
+  },
+  "pcoreradmw.": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 261.1
+  },
+  "total_(mw)": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 811.09
+  },
+  "falpha*palpmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 582.92
+  },
+  "pchargemw.": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 3.1657
+  },
+  "pohmmw.": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 1.4837e-10
+  },
+  "pinjmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 225.0
+  },
+  "powfmw.": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 3072.9
+  },
+  "emultmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 584.73
+  },
+  "pinjmw.": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 225.0
+  },
+  "htpmw_mech": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 332.65
+  },
+  "pthermfw_blkt": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 3689.0
+  },
+  "pthermshld": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 2.5385
+  },
+  "pthermdiv": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 523.92
+  },
+  "psechcd": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.0
+  },
+  "pnetelmw.": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 500.0
+  },
+  "pnetelin": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 500.0
+  },
+  "pinjwp": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 562.5
+  },
+  "pfwpmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.73638
+  },
+  "pgrossmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 1580.8
+  },
+  "pnetelmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 500.0
+  },
+  "rejected_main": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 2634.7
+  },
+  "pnetelmw/(powfmw+emultmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 13.67
+  },
+  "pnetelmw/powfmw": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 16.271
+  },
+  "cirpowfr": {
+    "var_mod": "Plant Power / Heat Transport Balance",
+    "scan01": 0.6837
+  },
+  "error_status": {
+    "var_mod": "Errors and Warnings",
+    "scan01": 2.0
+  },
+  "error_id": {
+    "var_mod": "Errors and Warnings",
+    "scan01": 145.0
+  }
 }

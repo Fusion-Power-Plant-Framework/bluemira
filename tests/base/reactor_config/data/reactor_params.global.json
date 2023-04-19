@@ -1,6 +1,6 @@
 {
-    "height": { "value": 180, "unit": "cm" },
-    "age": { "value": 30, "unit": "years" },
-    "only_global": { "value": 1, "unit": "years" },
-    "extra_global": { "value": 1, "unit": "s" }
+  "height": { "value": 180, "unit": "cm" },
+  "age": { "value": 30, "unit": "years" },
+  "only_global": { "value": 1, "unit": "years" },
+  "extra_global": { "value": 1, "unit": "s" }
 }

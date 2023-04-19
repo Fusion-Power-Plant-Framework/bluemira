@@ -1,575 +1,575 @@
 {
-    "C_Ejima": {
-        "value": 0.4,
-        "unit": "dimensionless",
-        "source": "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))",
-        "long_name": "Ejima constant"
-    },
-    "e_mult": {
-        "value": 1.35,
-        "unit": "dimensionless",
-        "source": "Input (HCPB classic)",
-        "long_name": "Energy multiplication factor",
-        "description": "Instantaneous energy multiplication due to neutron multiplication and the like"
-    },
-    "e_nbi": {
-        "value": 1000,
-        "unit": "kiloelectron_volt",
-        "source": "Input",
-        "long_name": "Neutral beam energy"
-    },
-    "eta_nb": {
-        "value": 0.3,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "NB electrical efficiency",
-        "description": "Check units!"
-    },
-    "n_TF": {
-        "value": 16,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Number of TF coils"
-    },
-    "P_el_net": {
-        "value": 500,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Net electrical power output"
-    },
-    "P_hcd_ss": {
-        "value": 50,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Steady-state HCD power"
-    },
-    "PsepB_qAR_max": {
-        "value": 9.2,
-        "unit": "MW.T/m",
-        "source": "Input",
-        "long_name": "Maximum PsepB/q95AR value"
-    },
-    "TF_ripple_limit": {
-        "value": 0.6,
-        "unit": "percent",
-        "source": "Input",
-        "long_name": "TF coil ripple limit"
-    },
-    "tk_cr_vv": {
-        "value": 0.3,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Cryostat VV thickness"
-    },
-    "tk_sh_bot": {
-        "value": 1e-06,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Lower shield thickness",
-        "description": "DO NOT USE - PROCESS has VV = VV + shield"
-    },
-    "tk_sh_out": {
-        "value": 1e-06,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Outboard shield thickness",
-        "description": "DO NOT USE - PROCESS has VV = VV + shield"
-    },
-    "tk_sh_top": {
-        "value": 1e-06,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Upper shield thickness",
-        "description": "DO NOT USE - PROCESS has VV = VV + shield"
-    },
-    "tk_tf_front_ib": {
-        "value": 0.04,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF coil inboard steel front plasma-facing"
-    },
-    "tk_tf_side": {
-        "value": 0.1,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF coil inboard case minimum side wall thickness"
-    },
-    "tk_vv_bot": {
-        "value": 0.6,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Lower vacuum vessel thickness"
-    },
-    "tk_vv_out": {
-        "value": 1.1,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Outboard vacuum vessel thickness"
-    },
-    "tk_vv_top": {
-        "value": 0.6,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Upper vacuum vessel thickness"
-    },
-    "B_0": {
-        "value": 6,
-        "unit": "tesla",
-        "source": "Input",
-        "long_name": "Toroidal field at R_0"
-    },
-    "beta_p": {
-        "value": 0.04,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Ratio of plasma pressure to poloidal magnetic pressure"
-    },
-    "beta": {
-        "value": 0.04,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Total ratio of plasma pressure to magnetic pressure"
-    },
-    "condrad_cryo_heat": {
-        "value": 0,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Conduction and radiation heat loads on cryogenic components"
-    },
-    "delta_95": {
-        "value": 0.333,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "95th percentile plasma triangularity"
-    },
-    "delta": {
-        "value": 0.5,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Last closed surface plasma triangularity"
-    },
-    "f_bs": {
-        "value": 0.5,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Bootstrap fraction"
-    },
-    "g_vv_ts": {
-        "value": 0.05,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Gap between VV and TS"
-    },
-    "H_star": {
-        "value": 1,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "H factor (radiation corrected)"
-    },
-    "I_p": {
-        "value": 19,
-        "unit": "megaampere",
-        "source": "Input",
-        "long_name": "Plasma current"
-    },
-    "kappa_95": {
-        "value": 1.6,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "95th percentile plasma elongation"
-    },
-    "kappa": {
-        "value": 1.792,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Last closed surface plasma elongation"
-    },
-    "P_bd_in": {
-        "value": 0,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "total auxiliary injected power"
-    },
-    "P_brehms": {
-        "value": 80,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Bremsstrahlung"
-    },
-    "P_el_net_process": {
-        "value": 0.0,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Net electrical power output as provided by PROCESS"
-    },
-    "P_fus_DD": {
-        "value": 5,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "D-D fusion power"
-    },
-    "P_fus_DT": {
-        "value": 1995,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "D-T fusion power"
-    },
-    "P_fus": {
-        "value": 2000,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Total fusion power"
-    },
-    "P_line": {
-        "value": 30,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Line radiation"
-    },
-    "P_rad_core": {
-        "value": 0,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Core radiation power"
-    },
-    "P_rad_edge": {
-        "value": 400,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Edge radiation power"
-    },
-    "P_rad": {
-        "value": 400,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Radiation power"
-    },
-    "P_sep": {
-        "value": 150,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Separatrix power"
-    },
-    "P_sync": {
-        "value": 50,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Synchrotron radiation"
-    },
-    "R_0": {
-        "value": 9,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Major radius"
-    },
-    "r_cp_top": {
-        "value": 0.8934,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Radial Position of Top of TF coil taper"
-    },
-    "r_cs_in": {
-        "value": 2.2,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Central Solenoid inner radius"
-    },
-    "r_fw_ib_in": {
-        "value": 5.8,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard first wall inner radius"
-    },
-    "r_fw_ob_in": {
-        "value": 12.1,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Outboard first wall inner radius"
-    },
-    "r_tf_in_centre": {
-        "value": 3.7,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard TF leg centre radius"
-    },
-    "r_tf_in": {
-        "value": 3.2,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard radius of the TF coil inboard leg"
-    },
-    "r_tf_out_centre": {
-        "value": 16.2,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Outboard TF leg centre radius"
-    },
-    "r_ts_ib_in": {
-        "value": 4.3,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard TS inner radius"
-    },
-    "r_vv_ib_in": {
-        "value": 5.1,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard vessel inner radius"
-    },
-    "r_vv_ob_in": {
-        "value": 14.5,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Outboard vessel inner radius"
-    },
-    "tau_e": {
-        "value": 3,
-        "unit": "second",
-        "source": "Input",
-        "long_name": "Energy confinement time"
-    },
-    "TF_currpt_ob": {
-        "value": 0,
-        "unit": "ampere",
-        "source": "Input",
-        "long_name": "TF coil current per turn"
-    },
-    "TF_E_stored": {
-        "value": 0,
-        "unit": "gigajoule",
-        "source": "Input",
-        "long_name": "total stored energy in the toroidal field"
-    },
-    "TF_res_bus": {
-        "value": 0,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF Bus resistance"
-    },
-    "TF_res_tot": {
-        "value": 0,
-        "unit": "ohm",
-        "source": "Input",
-        "long_name": "Total resistance for TF coil set"
-    },
-    "TF_respc_ob": {
-        "value": 0,
-        "unit": "ohm",
-        "source": "Input",
-        "long_name": "TF coil leg resistance"
-    },
-    "tf_wp_depth": {
-        "value": 1.05,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF coil winding pack depth (in y)",
-        "description": "Including insulation"
-    },
-    "tf_wp_width": {
-        "value": 0.76,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF coil winding pack radial width",
-        "description": "Including insulation"
-    },
-    "tk_cs": {
-        "value": 0.8,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Central Solenoid radial thickness"
-    },
-    "tk_fw_in": {
-        "value": 0.052,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard first wall thickness"
-    },
-    "tk_fw_out": {
-        "value": 0.052,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Outboard first wall thickness"
-    },
-    "tk_tf_inboard": {
-        "value": 1,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF coil inboard thickness"
-    },
-    "tk_tf_ins": {
-        "value": 0.08,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF coil ground insulation thickness"
-    },
-    "tk_tf_insgap": {
-        "value": 0.1,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF coil WP insertion gap",
-        "description": "Backfilled with epoxy resin (impregnation). This is an average value; can be less or more due to manufacturing tolerances"
-    },
-    "tk_tf_nose": {
-        "value": 0.6,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF coil inboard nose thickness"
-    },
-    "v_burn": {
-        "value": 0.05,
-        "unit": "volt",
-        "source": "Input",
-        "long_name": "Loop voltage during burn"
-    },
-    "A": {
-        "value": 3.1,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Plasma aspect ratio"
-    },
-    "g_cs_tf": {
-        "value": 0.05,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Gap between CS and TF"
-    },
-    "g_ts_tf": {
-        "value": 0.05,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Gap between TS and TF"
-    },
-    "g_vv_bb": {
-        "value": 0.02,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Gap between VV and BB"
-    },
-    "tk_bb_ib": {
-        "value": 0.8,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard blanket thickness"
-    },
-    "tk_bb_ob": {
-        "value": 1.1,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Outboard blanket thickness"
-    },
-    "tk_sh_in": {
-        "value": 1e-06,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard shield thickness",
-        "description": "DO NOT USE - PROCESS has VV = VV + shield"
-    },
-    "tk_sol_ib": {
-        "value": 0.225,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard SOL thickness"
-    },
-    "tk_sol_ob": {
-        "value": 0.225,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Outboard SOL thickness"
-    },
-    "tk_ts": {
-        "value": 0.05,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TS thickness"
-    },
-    "tk_vv_in": {
-        "value": 0.6,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Inboard vacuum vessel thickness"
-    },
-    "B_tf_peak": {
-        "value": 12,
-        "unit": "tesla",
-        "source": "Input",
-        "long_name": "Peak field inside the TF coil winding pack"
-    },
-    "T_e": {
-        "value": 13,
-        "unit": "kiloelectron_volt",
-        "source": "Input",
-        "long_name": "Average plasma electron temperature"
-    },
-    "V_p": {
-        "value": 2400,
-        "unit": "meter ** 3",
-        "source": "Calculated",
-        "long_name": "Plasma volume"
-    },
-    "Z_eff": {
-        "value": 2.2,
-        "unit": "unified_atomic_mass_unit",
-        "source": "Input",
-        "long_name": "Effective particle radiation atomic mass"
-    },
-    "f_ni": {
-        "value": 0.1,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Non-inductive current drive fraction"
-    },
-    "h_cp_top": {
-        "value": 6.0,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Height of the TF coil inboard Tapered section end"
-    },
-    "h_tf_max_in": {
-        "value": 6.5,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Plasma side TF coil maximum height"
-    },
-    "l_i": {
-        "value": 0.8,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Normalised internal plasma inductance"
-    },
-    "q_95": {
-        "value": 3.5,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Plasma safety factor"
-    },
-    "r_tf_inboard_out": {
-        "value": 0.6265,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Outboard Radius of the TF coil inboard leg tapered region"
-    },
-    "sigma_tf_case_max": {
-        "value": 550000000.0,
-        "unit": "pascal",
-        "source": "Input",
-        "long_name": "Maximum von Mises stress in the TF coil case nose"
-    },
-    "sigma_tf_wp_max": {
-        "value": 550000000.0,
-        "unit": "pascal",
-        "source": "Input",
-        "long_name": "Maximum von Mises stress in the TF coil winding pack nose"
-    },
-    "tau_flattop": {
-        "value": 7200,
-        "unit": "second",
-        "source": "Input",
-        "long_name": "Flat-top duration"
-    },
-    "tk_tf_outboard": {
-        "value": 1,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "TF coil outboard thickness"
-    }
+  "C_Ejima": {
+    "value": 0.4,
+    "unit": "dimensionless",
+    "source": "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))",
+    "long_name": "Ejima constant"
+  },
+  "e_mult": {
+    "value": 1.35,
+    "unit": "dimensionless",
+    "source": "Input (HCPB classic)",
+    "long_name": "Energy multiplication factor",
+    "description": "Instantaneous energy multiplication due to neutron multiplication and the like"
+  },
+  "e_nbi": {
+    "value": 1000,
+    "unit": "kiloelectron_volt",
+    "source": "Input",
+    "long_name": "Neutral beam energy"
+  },
+  "eta_nb": {
+    "value": 0.3,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "NB electrical efficiency",
+    "description": "Check units!"
+  },
+  "n_TF": {
+    "value": 16,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Number of TF coils"
+  },
+  "P_el_net": {
+    "value": 500,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Net electrical power output"
+  },
+  "P_hcd_ss": {
+    "value": 50,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Steady-state HCD power"
+  },
+  "PsepB_qAR_max": {
+    "value": 9.2,
+    "unit": "MW.T/m",
+    "source": "Input",
+    "long_name": "Maximum PsepB/q95AR value"
+  },
+  "TF_ripple_limit": {
+    "value": 0.6,
+    "unit": "percent",
+    "source": "Input",
+    "long_name": "TF coil ripple limit"
+  },
+  "tk_cr_vv": {
+    "value": 0.3,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Cryostat VV thickness"
+  },
+  "tk_sh_bot": {
+    "value": 1e-6,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Lower shield thickness",
+    "description": "DO NOT USE - PROCESS has VV = VV + shield"
+  },
+  "tk_sh_out": {
+    "value": 1e-6,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Outboard shield thickness",
+    "description": "DO NOT USE - PROCESS has VV = VV + shield"
+  },
+  "tk_sh_top": {
+    "value": 1e-6,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Upper shield thickness",
+    "description": "DO NOT USE - PROCESS has VV = VV + shield"
+  },
+  "tk_tf_front_ib": {
+    "value": 0.04,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF coil inboard steel front plasma-facing"
+  },
+  "tk_tf_side": {
+    "value": 0.1,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF coil inboard case minimum side wall thickness"
+  },
+  "tk_vv_bot": {
+    "value": 0.6,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Lower vacuum vessel thickness"
+  },
+  "tk_vv_out": {
+    "value": 1.1,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Outboard vacuum vessel thickness"
+  },
+  "tk_vv_top": {
+    "value": 0.6,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Upper vacuum vessel thickness"
+  },
+  "B_0": {
+    "value": 6,
+    "unit": "tesla",
+    "source": "Input",
+    "long_name": "Toroidal field at R_0"
+  },
+  "beta_p": {
+    "value": 0.04,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Ratio of plasma pressure to poloidal magnetic pressure"
+  },
+  "beta": {
+    "value": 0.04,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Total ratio of plasma pressure to magnetic pressure"
+  },
+  "condrad_cryo_heat": {
+    "value": 0,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Conduction and radiation heat loads on cryogenic components"
+  },
+  "delta_95": {
+    "value": 0.333,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "95th percentile plasma triangularity"
+  },
+  "delta": {
+    "value": 0.5,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Last closed surface plasma triangularity"
+  },
+  "f_bs": {
+    "value": 0.5,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Bootstrap fraction"
+  },
+  "g_vv_ts": {
+    "value": 0.05,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Gap between VV and TS"
+  },
+  "H_star": {
+    "value": 1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "H factor (radiation corrected)"
+  },
+  "I_p": {
+    "value": 19,
+    "unit": "megaampere",
+    "source": "Input",
+    "long_name": "Plasma current"
+  },
+  "kappa_95": {
+    "value": 1.6,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "95th percentile plasma elongation"
+  },
+  "kappa": {
+    "value": 1.792,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Last closed surface plasma elongation"
+  },
+  "P_bd_in": {
+    "value": 0,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "total auxiliary injected power"
+  },
+  "P_brehms": {
+    "value": 80,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Bremsstrahlung"
+  },
+  "P_el_net_process": {
+    "value": 0.0,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Net electrical power output as provided by PROCESS"
+  },
+  "P_fus_DD": {
+    "value": 5,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "D-D fusion power"
+  },
+  "P_fus_DT": {
+    "value": 1995,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "D-T fusion power"
+  },
+  "P_fus": {
+    "value": 2000,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Total fusion power"
+  },
+  "P_line": {
+    "value": 30,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Line radiation"
+  },
+  "P_rad_core": {
+    "value": 0,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Core radiation power"
+  },
+  "P_rad_edge": {
+    "value": 400,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Edge radiation power"
+  },
+  "P_rad": {
+    "value": 400,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Radiation power"
+  },
+  "P_sep": {
+    "value": 150,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Separatrix power"
+  },
+  "P_sync": {
+    "value": 50,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Synchrotron radiation"
+  },
+  "R_0": {
+    "value": 9,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Major radius"
+  },
+  "r_cp_top": {
+    "value": 0.8934,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Radial Position of Top of TF coil taper"
+  },
+  "r_cs_in": {
+    "value": 2.2,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Central Solenoid inner radius"
+  },
+  "r_fw_ib_in": {
+    "value": 5.8,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard first wall inner radius"
+  },
+  "r_fw_ob_in": {
+    "value": 12.1,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Outboard first wall inner radius"
+  },
+  "r_tf_in_centre": {
+    "value": 3.7,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard TF leg centre radius"
+  },
+  "r_tf_in": {
+    "value": 3.2,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard radius of the TF coil inboard leg"
+  },
+  "r_tf_out_centre": {
+    "value": 16.2,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Outboard TF leg centre radius"
+  },
+  "r_ts_ib_in": {
+    "value": 4.3,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard TS inner radius"
+  },
+  "r_vv_ib_in": {
+    "value": 5.1,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard vessel inner radius"
+  },
+  "r_vv_ob_in": {
+    "value": 14.5,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Outboard vessel inner radius"
+  },
+  "tau_e": {
+    "value": 3,
+    "unit": "second",
+    "source": "Input",
+    "long_name": "Energy confinement time"
+  },
+  "TF_currpt_ob": {
+    "value": 0,
+    "unit": "ampere",
+    "source": "Input",
+    "long_name": "TF coil current per turn"
+  },
+  "TF_E_stored": {
+    "value": 0,
+    "unit": "gigajoule",
+    "source": "Input",
+    "long_name": "total stored energy in the toroidal field"
+  },
+  "TF_res_bus": {
+    "value": 0,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF Bus resistance"
+  },
+  "TF_res_tot": {
+    "value": 0,
+    "unit": "ohm",
+    "source": "Input",
+    "long_name": "Total resistance for TF coil set"
+  },
+  "TF_respc_ob": {
+    "value": 0,
+    "unit": "ohm",
+    "source": "Input",
+    "long_name": "TF coil leg resistance"
+  },
+  "tf_wp_depth": {
+    "value": 1.05,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF coil winding pack depth (in y)",
+    "description": "Including insulation"
+  },
+  "tf_wp_width": {
+    "value": 0.76,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF coil winding pack radial width",
+    "description": "Including insulation"
+  },
+  "tk_cs": {
+    "value": 0.8,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Central Solenoid radial thickness"
+  },
+  "tk_fw_in": {
+    "value": 0.052,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard first wall thickness"
+  },
+  "tk_fw_out": {
+    "value": 0.052,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Outboard first wall thickness"
+  },
+  "tk_tf_inboard": {
+    "value": 1,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF coil inboard thickness"
+  },
+  "tk_tf_ins": {
+    "value": 0.08,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF coil ground insulation thickness"
+  },
+  "tk_tf_insgap": {
+    "value": 0.1,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF coil WP insertion gap",
+    "description": "Backfilled with epoxy resin (impregnation). This is an average value; can be less or more due to manufacturing tolerances"
+  },
+  "tk_tf_nose": {
+    "value": 0.6,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF coil inboard nose thickness"
+  },
+  "v_burn": {
+    "value": 0.05,
+    "unit": "volt",
+    "source": "Input",
+    "long_name": "Loop voltage during burn"
+  },
+  "A": {
+    "value": 3.1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Plasma aspect ratio"
+  },
+  "g_cs_tf": {
+    "value": 0.05,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Gap between CS and TF"
+  },
+  "g_ts_tf": {
+    "value": 0.05,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Gap between TS and TF"
+  },
+  "g_vv_bb": {
+    "value": 0.02,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Gap between VV and BB"
+  },
+  "tk_bb_ib": {
+    "value": 0.8,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard blanket thickness"
+  },
+  "tk_bb_ob": {
+    "value": 1.1,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Outboard blanket thickness"
+  },
+  "tk_sh_in": {
+    "value": 1e-6,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard shield thickness",
+    "description": "DO NOT USE - PROCESS has VV = VV + shield"
+  },
+  "tk_sol_ib": {
+    "value": 0.225,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard SOL thickness"
+  },
+  "tk_sol_ob": {
+    "value": 0.225,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Outboard SOL thickness"
+  },
+  "tk_ts": {
+    "value": 0.05,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TS thickness"
+  },
+  "tk_vv_in": {
+    "value": 0.6,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Inboard vacuum vessel thickness"
+  },
+  "B_tf_peak": {
+    "value": 12,
+    "unit": "tesla",
+    "source": "Input",
+    "long_name": "Peak field inside the TF coil winding pack"
+  },
+  "T_e": {
+    "value": 13,
+    "unit": "kiloelectron_volt",
+    "source": "Input",
+    "long_name": "Average plasma electron temperature"
+  },
+  "V_p": {
+    "value": 2400,
+    "unit": "meter ** 3",
+    "source": "Calculated",
+    "long_name": "Plasma volume"
+  },
+  "Z_eff": {
+    "value": 2.2,
+    "unit": "unified_atomic_mass_unit",
+    "source": "Input",
+    "long_name": "Effective particle radiation atomic mass"
+  },
+  "f_ni": {
+    "value": 0.1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Non-inductive current drive fraction"
+  },
+  "h_cp_top": {
+    "value": 6.0,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Height of the TF coil inboard Tapered section end"
+  },
+  "h_tf_max_in": {
+    "value": 6.5,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Plasma side TF coil maximum height"
+  },
+  "l_i": {
+    "value": 0.8,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Normalised internal plasma inductance"
+  },
+  "q_95": {
+    "value": 3.5,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Plasma safety factor"
+  },
+  "r_tf_inboard_out": {
+    "value": 0.6265,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Outboard Radius of the TF coil inboard leg tapered region"
+  },
+  "sigma_tf_case_max": {
+    "value": 550000000.0,
+    "unit": "pascal",
+    "source": "Input",
+    "long_name": "Maximum von Mises stress in the TF coil case nose"
+  },
+  "sigma_tf_wp_max": {
+    "value": 550000000.0,
+    "unit": "pascal",
+    "source": "Input",
+    "long_name": "Maximum von Mises stress in the TF coil winding pack nose"
+  },
+  "tau_flattop": {
+    "value": 7200,
+    "unit": "second",
+    "source": "Input",
+    "long_name": "Flat-top duration"
+  },
+  "tk_tf_outboard": {
+    "value": 1,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "TF coil outboard thickness"
+  }
 }

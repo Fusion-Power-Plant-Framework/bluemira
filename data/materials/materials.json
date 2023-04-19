@@ -1,537 +1,537 @@
 {
-    "Void": {
-        "material_class": "Void"
+  "Void": {
+    "material_class": "Void"
+  },
+  "Bronze": {
+    "material_class": "MassFractionMaterial",
+    "elements": { "Cu": 0.95, "Sn": 0.05 },
+    "density": 8877.5,
+    "poissons_ratio": 0.33
+  },
+  "Epoxy resin": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "Al": 0.0007074,
+      "C": 0.0034056,
+      "H": 0.0038934,
+      "Mg": 0.0002142004,
+      "N": 0.0003708,
+      "O": 0.0048708,
+      "S": 9.179996e-5,
+      "Si": 0.0058552000000000005
     },
-    "Bronze": {
-        "material_class": "MassFractionMaterial",
-        "elements": {"Cu": 0.95, "Sn": 0.05},
-        "density": 8877.5,
-        "poissons_ratio": 0.33
+    "density": 1207,
+    "youngs_modulus": {
+      "value": 7.5,
+      "reference": "https://ncsx.pppl.gov/NCSX_Engineering/ModCoil_TF-Coil_VVSA_Fab/TF%20Coil%20Fabrication/Insulation%20Systems/Coil%20Papers%20from%20Neumeyer/Mech_Prop_Solenoids.pdf"
     },
-    "Epoxy resin": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "Al": 0.0007074,
-            "C": 0.0034056,
-            "H": 0.0038934,
-            "Mg": 0.0002142004,
-            "N": 0.0003708,
-            "O": 0.0048708,
-            "S": 9.179996e-05,
-            "Si": 0.0058552000000000005
-        },
-        "density": 1207,
-        "youngs_modulus": {
-            "value": 7.5,
-            "reference": "https://ncsx.pppl.gov/NCSX_Engineering/ModCoil_TF-Coil_VVSA_Fab/TF%20Coil%20Fabrication/Insulation%20Systems/Coil%20Papers%20from%20Neumeyer/Mech_Prop_Solenoids.pdf"
-        },
-        "poissons_ratio": 0.33
+    "poissons_ratio": 0.33
+  },
+  "SS316-LN": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "B": 1e-5,
+      "C": 0.0003,
+      "Co": 0.0005,
+      "Cr": 0.18,
+      "Cu": 0.003,
+      "Fe": 0.63684,
+      "Mn": 0.02,
+      "Mo": 0.027,
+      "N": 0.0008,
+      "Nb": 0.0001,
+      "Ni": 0.125,
+      "P": 0.00025,
+      "S": 0.0001,
+      "Si": 0.005,
+      "Ta": 0.0001
     },
-    "SS316-LN": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "B": 1e-05,
-            "C": 0.0003,
-            "Co": 0.0005,
-            "Cr": 0.18,
-            "Cu": 0.003,
-            "Fe": 0.63684,
-            "Mn": 0.02,
-            "Mo": 0.027,
-            "N": 0.0008,
-            "Nb": 0.0001,
-            "Ni": 0.125,
-            "P": 0.00025,
-            "S": 0.0001,
-            "Si": 0.005,
-            "Ta": 0.0001
-        },
-        "poissons_ratio": 0.33,
-        "coefficient_thermal_expansion": {
-            "value": "polynomial.Polynomial([15.13, 7.93e-3, -3.33e-6])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 1000,
-            "reference": "ITER_D_222RLN v3.3 Equation 40"
-        },
-        "youngs_modulus": {
-            "value": "0.001 * (201660 - 84.8 * temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 700,
-            "reference": "ITER_D_222RLN v3.3 Equation 41"
-        },
-        "density": {
-            "value": "interp(temperature_in_C, [20, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800], [7930, 7919, 7899, 7879, 7858, 7837, 7815, 7793, 7770, 7747, 7724, 7701, 7677, 7654, 7630, 7606, 7582])",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 800,
-            "reference": "ITER_D_222RLN v3.3 Table A.S03.2.4-1"
-        },
-        "thermal_conductivity": {
-            "value": "13.98 + 1.502e-2 * temperature_in_C",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 800,
-            "reference": "ITER_D_222RLN v3.3 Equation 42"
-        },
-        "specific_heat": {
-            "value": "polynomial.Polynomial([462.69, 0.520265, -1.7117e-3, 3.3658e-6, -2.1958e-9])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 800,
-            "reference": "ITER_D_222RLN v3.3 Equation 43"
-        },
-        "minimum_yield_stress": {
-            "value": "polynomial.Polynomial([225.75, -0.73683, 2.5036e-3, -5.4546e-6, 6.4366e-9, -3.029e-12])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 700,
-            "reference": "ITER_D_222RLN v3.3 Equation 44"
-        },
-        "average_yield_stress": {
-            "value": "1.28 * polynomial.Polynomial([225.75, -0.73683, 2.5036e-3, -5.4546e-6, 6.4366e-9, -3.029e-12])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 700,
-            "reference": "ITER_D_222RLN v3.3 Equation 44"
-        },
-        "minimum_ultimate_tensile_stress": {
-            "value": "polynomial.Polynomial([529.75, -0.95180, 2.5732e-3, -2.3316e-6, -4.3944e-10, 3.4942e-13])(temperature_in_C)",
-            "temp_min_celsius": 50,
-            "temp_max_celsius": 650,
-            "reference": "ITER_D_222RLN v3.3 Equation 47"
-        },
-        "average_ultimate_tensile_stress": {
-            "value": "1.112 * polynomial.Polynomial([529.75, -0.95180, 2.5732e-3, -2.3316e-6, -4.3944e-10, 3.4942e-13])(temperature_in_C)",
-            "temp_min_celsius": 50,
-            "temp_max_celsius": 650,
-            "reference": "ITER_D_222RLN v3.3 Equation 47"
-        }
+    "poissons_ratio": 0.33,
+    "coefficient_thermal_expansion": {
+      "value": "polynomial.Polynomial([15.13, 7.93e-3, -3.33e-6])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 1000,
+      "reference": "ITER_D_222RLN v3.3 Equation 40"
     },
-    "Pure Cu": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "Cu": 0.9999075,
-            "Sb": 4e-6,
-            "As": 5e-6,
-            "Bi": 1e-6,
-            "Cd": 1e-6,
-            "Fe": 10e-6,
-            "Pb": 5e-6,
-            "Mn": 0.5e-6,
-            "Ni": 10e-6,
-            "O": 5e-6,
-            "P": 3e-6,
-            "Se": 3e-6,
-            "Ag": 25e-6,
-            "S": 15e-6,
-            "Te": 2e-6,
-            "Sn": 2e-6,
-            "Zn": 1e-6
-        },
-        "coefficient_thermal_expansion": {
-            "value": "polynomial.Polynomial([16.73, 5.26e-3, -5.53e-6, 4.2e-9])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 900,
-            "reference": "ITER_D_222RLN v3.3 Equation 83"
-        },
-        "youngs_modulus": {
-            "value": "polynomial.Polynomial([117, -2.17e-2, -6.29e-5])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 400,
-            "reference": "ITER_D_222RLN v3.3 Equation 84"
-        },
-        "poissons_ratio": 0.33,
-        "density": {
-            "value": "8940 * (1 - 3e-6 * (temperature_in_C - 20) * polynomial.Polynomial([16.8, 3.16e-3, 8.18e-6, -2.49e-9])(temperature_in_C))",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 900,
-            "reference": "ITER_D_222RLN v3.3 Equation 85"
-        },
-        "thermal_conductivity": {
-            "value": "polynomial.Polynomial([402, -7.08e-2, 2.46e-6])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 1000,
-            "reference": "ITER_D_222RLN v3.3 Equation 86"
-        },
-        "specific_heat": {
-            "value": "polynomial.Polynomial([387, 6.35e-2, 4.36e-5])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 1000,
-            "reference": "ITER_D_222RLN v3.3 Equation 87"
-        },
-        "minimum_yield_stress": {
-            "value": "polynomial.Polynomial([584, -5.04e-2, -5e-6])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 950,
-            "reference": "ITER_D_222RLN v3.3 Equation 91"
-        },
-        "minimum_ultimate_tensile_stress": {
-            "value": "polynomial.Polynomial([212, -2.94e-1, 8.17e-5])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 950,
-            "reference": "ITER_D_222RLN v3.3 Equation 92"
-        }
+    "youngs_modulus": {
+      "value": "0.001 * (201660 - 84.8 * temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 700,
+      "reference": "ITER_D_222RLN v3.3 Equation 41"
     },
-    "CuCrZr": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "Cu": 0.9883,
-            "Cr": 0.0075,
-            "Zr": 0.0011,
-            "Co": 0.0005,
-            "Ta": 0.0001,
-            "Nb": 0.001,
-            "B": 5.55556e-6,
-            "O": 1.77778e-5,
-            "Mg": 2.22222e-4,
-            "Al": 1.66667e-5,
-            "Si": 2.22222e-4,
-            "P": 7.77778e-5,
-            "S": 2.22222e-5,
-            "Mn": 1.11111e-5,
-            "Fe": 1.11111e-4,
-            "Ni": 3.33333e-4,
-            "Zn": 5.55556e-5,
-            "As": 5.55556e-5,
-            "Sn": 5.55556e-5,
-            "Sb": 6.11111e-5,
-            "Pb": 5.55556e-5,
-            "Bi": 1.66667e-5
-        },
-        "poissons_ratio": 0.33,
-        "youngs_modulus": {
-            "value": "polynomial.Polynomial([128, -2.59e-2, -4.87e-5])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 700,
-            "reference": "ITER_D_222RLN v3.3 Equation 96"
-        },
-        "coefficient_thermal_expansion": {
-            "value": "interp(temperature_in_C, [20, 50, 100, 150, 200, 250, 300, 400, 450, 500, 550, 600], [16.7, 17, 17.3, 17.5, 17.7, 17.8, 18, 18.1, 18.2, 18.4, 18.5, 18.6])",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 600,
-            "reference": "ITER_D_222RLN v3.3 Table A.S31.2.1-1"
-        },
-        "density": {
-            "value": "8900 * (1 - 3e-6 * (temperature_in_C - 20) * polynomial.Polynomial([16.6, 6.24e-3, -9.05e-6, 7.2e-9])(temperature_in_C))",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 700,
-            "reference": "ITER_D_222RLN v3.3 Equation 97"
-        },
-        "thermal_conductivity": {
-            "value": "polynomial.Polynomial([323, -1.38e-1, -2.83e-4, 2.11e-7])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 700,
-            "reference": "ITER_D_222RLN v3.3 Equation 98"
-        }
+    "density": {
+      "value": "interp(temperature_in_C, [20, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800], [7930, 7919, 7899, 7879, 7858, 7837, 7815, 7793, 7770, 7747, 7724, 7701, 7677, 7654, 7630, 7606, 7582])",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 800,
+      "reference": "ITER_D_222RLN v3.3 Table A.S03.2.4-1"
     },
-    "Tungsten": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "Ag": 1e-05,
-            "Al": 1.5e-05,
-            "As": 5e-06,
-            "Ba": 5e-06,
-            "C": 3e-05,
-            "Ca": 5e-06,
-            "Cd": 5e-06,
-            "Co": 1e-05,
-            "Cr": 2e-05,
-            "Cu": 1e-05,
-            "Fe": 3e-05,
-            "H": 5e-06,
-            "K": 1e-05,
-            "Mg": 5e-06,
-            "Mn": 5e-06,
-            "Mo": 0.0001,
-            "N": 5e-06,
-            "Na": 1e-05,
-            "Nb": 1e-05,
-            "Ni": 5e-06,
-            "O": 2e-05,
-            "P": 2e-05,
-            "Pb": 5e-06,
-            "S": 5e-06,
-            "Si": 2e-05,
-            "Ta": 2e-05,
-            "Ti": 5e-06,
-            "W": 0.999595,
-            "Zn": 5e-06,
-            "Zr": 5e-06
-        },
-        "poissons_ratio": 0.33,
-        "coefficient_thermal_expansion": {
-            "value": "polynomial.Polynomial([3.9225, 5.8352e-4, 5.7054e-11, -2.0463e-14])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 1200,
-            "reference": "ITER_D_222RLN v3.3 Equation 135"
-        },
-        "youngs_modulus": {
-            "value": "polynomial.Polynomial([397.903, -2.3066e-3, -2.7162e-5])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 800,
-            "reference": "ITER_D_222RLN v3.3 Equation 136"
-        },
-        "density": {
-            "value": "1000 * polynomial.Polynomial([19.3027, -2.3786e-4, -2.2448e-8])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 1200,
-            "reference": "ITER_D_222RLN v3.3 Equation 137"
-        },
-        "thermal_conductivity": {
-            "value": "polynomial.Polynomial([174.9274, -0.1067, 5.0067e-5, -7.8349e-9])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 1000,
-            "reference": "ITER_D_222RLN v3.3 Equation 138"
-        },
-        "specific_heat": {
-            "value": "polynomial.Polynomial([128.308, 3.2797e-2, -3.4097e-6])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 1000,
-            "reference": "ITER_D_222RLN v3.3 Equation 139"
-        }
+    "thermal_conductivity": {
+      "value": "13.98 + 1.502e-2 * temperature_in_C",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 800,
+      "reference": "ITER_D_222RLN v3.3 Equation 42"
     },
-    "Beryllium": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "Be": 0.99637,
-            "Al": 0.06e-2,
-            "C": 0.1e-2,
-            "Fe": 0.08e-2,
-            "Mg": 0.06e-2,
-            "Si": 0.06e-2,
-            "U": 0.003e-2
-        },
-        "poissons_ratio": 0.1,
-        "coefficient_thermal_expansion": {
-            "value": "polynomial.Polynomial([11.3, 1.33e-2, -1.2e-5, 4.1e-9])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 1000,
-            "reference": "ITER_D_222RLN v3.3 Equation 127"
-        },
-        "youngs_modulus": {
-            "value": "polynomial.Polynomial([306.78, -2.9281e-2, -4.5069e-5])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 800,
-            "reference": "ITER_D_222RLN v3.3 Equation 128"
-        },
-        "density": {
-            "value": "1830 * (1 - 3e-6 * (temperature_in_C - 20) * polynomial.Polynomial([11.3, 1.33e-2, -1.2e-5, 4.1e-9])(temperature_in_C))",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 800,
-            "reference": "ITER_D_222RLN v3.3 Equation 129"
-        },
-        "thermal_conductivity": {
-            "value": "polynomial.Polynomial([209, -4.8e-1, 9.38e-4, -9.37e-7, 3.34e-10])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 800,
-            "reference": "ITER_D_222RLN v3.3 Equation 130"
-        },
-        "specific_heat": {
-            "value": "interp(temperature_in_C, [20, 100, 200, 300, 400, 500, 600, 700, 800], [1807, 2046, 2295, 2497, 2660, 2791, 2998, 2989, 3071])",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 500,
-            "reference": "ITER_D_222RLN v3.3 Table A.A01.2.6-1"
-        },
-        "minimum_yield_stress": {
-            "value": "polynomial.Polynomial([252.2, -1.524e-1, -1.45e-4])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 650,
-            "reference": "ITER_D_222RLN v3.3 Equation 131"
-        },
-        "minimum_ultimate_tensile_stress": {
-            "value": "polynomial.Polynomial([392.8, -3.023e-1, -2.011e-4])(temperature_in_C)",
-            "temp_min_celsius": 20,
-            "temp_max_celsius": 950,
-            "reference": "ITER_D_222RLN v3.3 Equation 132"
-        }
+    "specific_heat": {
+      "value": "polynomial.Polynomial([462.69, 0.520265, -1.7117e-3, 3.3658e-6, -2.1958e-9])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 800,
+      "reference": "ITER_D_222RLN v3.3 Equation 43"
     },
-    "Concrete": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "H": 0.004530,
-            "O": 0.512600,
-            "Na": 0.015270,
-            "Al": 0.035550,
-            "Si": 0.360360,
-            "Ca": 0.057910,
-            "Fe": 0.013780
-        },
-        "density": 2250,
-        "poissons_ratio": 0.33
+    "minimum_yield_stress": {
+      "value": "polynomial.Polynomial([225.75, -0.73683, 2.5036e-3, -5.4546e-6, 6.4366e-9, -3.029e-12])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 700,
+      "reference": "ITER_D_222RLN v3.3 Equation 44"
     },
-    "OrdinaryConcrete": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "H": 0.00555,
-            "O": 0.4975,
-            "Si": 0.3147,
-            "Ca": 0.0828,
-            "Mg": 0.0026,
-            "Al": 0.0469,
-            "S": 0.0013,
-            "Fe": 0.0124,
-            "Na": 0.0171,
-            "K": 0.0192
-        },
-        "density": 2200,
-        "poissons_ratio": 0.33
+    "average_yield_stress": {
+      "value": "1.28 * polynomial.Polynomial([225.75, -0.73683, 2.5036e-3, -5.4546e-6, 6.4366e-9, -3.029e-12])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 700,
+      "reference": "ITER_D_222RLN v3.3 Equation 44"
     },
-    "HeavyConcrete": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "H": 0.0052,
-            "O": 0.3273,
-            "C": 0.004,
-            "Si": 0.0224,
-            "Ca": 0.0657,
-            "Mg": 0.0021,
-            "Al": 0.0038,
-            "Fe": 0.568,
-            "P": 0.0015
-        },
-        "density": 3600,
-        "poissons_ratio": 0.33
+    "minimum_ultimate_tensile_stress": {
+      "value": "polynomial.Polynomial([529.75, -0.95180, 2.5732e-3, -2.3316e-6, -4.3944e-10, 3.4942e-13])(temperature_in_C)",
+      "temp_min_celsius": 50,
+      "temp_max_celsius": 650,
+      "reference": "ITER_D_222RLN v3.3 Equation 47"
     },
-    "Pb-15.8Li_eutectic": {
-        "material_class": "MassFractionMaterial",
-        "elements": {
-            "Pb": 0.99283,
-            "Li": 0.0062,
-            "Ag": 0.00001,
-            "Cu": 0.00001,
-            "Nb": 0.00001,
-            "Pd": 0.00001,
-            "Zn": 0.00001,
-            "Fe": 0.00005,
-            "Cr": 0.00005,
-            "Mn": 0.00005,
-            "Mo": 0.00005,
-            "Ni": 0.00005,
-            "V": 0.00005,
-            "Si": 0.0001,
-            "Al": 0.0001,
-            "Bi": 0.0002,
-            "Sn": 0.0002,
-            "W": 0.00002
-        },
-        "density": 10000,
-        "poissons_ratio": 0.33
-    },
-    "NbTi": {
-        "material_class": "NbTiSuperconductor",
-        "elements": {
-            "Al": 1
-        },
-        "c_0": 168512,
-        "bc_20": 14.61,
-        "tc_0": 9.03,
-        "alpha": 1,
-        "beta": 1.54,
-        "gamma": 2.1,
-        "density": 6538,
-        "poissons_ratio": 0.33
-    },
-    "Nb3Sn - WST": {
-        "material_class": "NbSnSuperconductor",
-        "elements": {
-            "Al": 1
-        },
-        "c_a1": 50.06,
-        "c_a2": 0,
-        "eps_0a": 0.312,
-        "eps_m": -0.059,
-        "b_c20m": 33.24,
-        "t_c0max": 16.34,
-        "c": 83075,
-        "p": 0.593,
-        "q": 2.156,
-        "density": 8910,
-        "poissons_ratio": 0.33
-    },
-    "Nb3Sn - EUTF4": {
-        "material_class": "NbSnSuperconductor",
-        "elements": {
-            "Al": 1
-        },
-        "c_a1": 45.74,
-        "c_a2": 0,
-        "eps_0a": 0.256,
-        "eps_m": -0.110,
-        "b_c20m": 32.97,
-        "t_c0max": 16.06,
-        "c": 76189,
-        "p": 0.63,
-        "q": 2.1,
-        "density": 8910,
-        "poissons_ratio": 0.33
-    },
-    "H2O": {
-        "material_class": "Liquid",
-        "symbol": "H2O",
-        "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Water')"
-    },
-    "He": {
-        "material_class": "Liquid",
-        "symbol": "He",
-        "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Helium')",
-        "temperature_in_K": 4.5,
-        "pressure_in_Pa": 6e5
-    },
-    "Li4SiO4": {
-        "material_class": "UnitCellCompound",
-        "symbol": "Li4SiO4",
-        "volume_of_unit_cell_cm3": 1.1543e-21,
-        "atoms_per_unit_cell": 14,
-        "specific_heat": {
-            "value": "interp(temperature_in_C, [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1392.4, 1450, 1513.4, 1580, 1648.5, 1718.2, 1788.8, 1859.9, 1931.4, 2003.3, 2075.3, 2147.5, 2219.8, 2292.3, 2364.8, 2437.4, 2510.1, 2582.8, 2655.5, 2728.3, 2801.1])",
-            "temp_min_celsius": 0,
-            "temp_max_celsius": 1000,
-            "reference": "Fokkens, J. H., \"Thermomechanical finite element analysis of the HCPB in-pile test element\" NRG Report 21477/02.50560/P. Technical Report, TW0-TTBB-004-D1, 2003"
-        },
-        "coefficient_thermal_expansion": {
-            "value": "0.768 + 4.96e-4 * temperature_in_C + 0.045 * eps_vol",
-            "temp_min_celsius": 25,
-            "temp_max_celsius": 800,
-            "reference": "https://www.sciencedirect.com/science/article/pii/S0920379602001655"
-        }
-    },
-    "Li2SiO3": {
-        "material_class": "UnitCellCompound",
-        "symbol": "Li2SiO3",
-        "volume_of_unit_cell_cm3": 0.23632e-21,
-        "atoms_per_unit_cell": 4
-    },
-    "Li2ZrO3": {
-        "material_class": "UnitCellCompound",
-        "symbol": "Li2ZrO3",
-        "volume_of_unit_cell_cm3": 0.24479e-21,
-        "atoms_per_unit_cell": 4
-    },
-    "Li2TiO3": {
-        "material_class": "UnitCellCompound",
-        "symbol": "Li2TiO3",
-        "volume_of_unit_cell_cm3": 0.42701e-21,
-        "atoms_per_unit_cell": 8
-    },
-    "Be12Ti": {
-        "material_class": "UnitCellCompound",
-        "symbol": "Be12Ti",
-        "volume_of_unit_cell_cm3": 0.22724e-21,
-        "atoms_per_unit_cell": 2
-    },
-    "Be": {
-        "material_class": "BePebbleBed",
-        "symbol": "Be",
-        "volume_of_unit_cell_cm3": 0.01622e-21,
-        "atoms_per_unit_cell": 8,
-        "specific_heat": {
-            "value": "interp(temperature_in_C, [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1741.8, 1900.97, 2045.53, 2176.44, 2294.66, 2401.14, 2496.83, 2582.71, 2659.71, 2728.79, 2790.93, 2847.05, 2898.14, 2945.13, 2988.99, 3030.68, 3071.14, 3111.34, 3152.22, 3194.76, 3239.9])",
-            "temp_min_celsius": 0,
-            "temp_max_celsius": 1000,
-            "reference": "Fokkens, J. H., \"Thermomechanical finite element analysis of the HCPB in-pile test element\" NRG Report 21477/02.50560/P. Technical Report, TW0-TTBB-004-D1, 2003"
-        }
-    },
-    "D-T Plasma": {
-        "material_class": "Plasma",
-        "isotopes": {"H2": 0.5, "H3": 0.5}
-    },
-    "D-D Plasma": {
-        "material_class": "Plasma",
-        "isotopes": {"H2": 1.0}
+    "average_ultimate_tensile_stress": {
+      "value": "1.112 * polynomial.Polynomial([529.75, -0.95180, 2.5732e-3, -2.3316e-6, -4.3944e-10, 3.4942e-13])(temperature_in_C)",
+      "temp_min_celsius": 50,
+      "temp_max_celsius": 650,
+      "reference": "ITER_D_222RLN v3.3 Equation 47"
     }
+  },
+  "Pure Cu": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "Cu": 0.9999075,
+      "Sb": 4e-6,
+      "As": 5e-6,
+      "Bi": 1e-6,
+      "Cd": 1e-6,
+      "Fe": 10e-6,
+      "Pb": 5e-6,
+      "Mn": 0.5e-6,
+      "Ni": 10e-6,
+      "O": 5e-6,
+      "P": 3e-6,
+      "Se": 3e-6,
+      "Ag": 25e-6,
+      "S": 15e-6,
+      "Te": 2e-6,
+      "Sn": 2e-6,
+      "Zn": 1e-6
+    },
+    "coefficient_thermal_expansion": {
+      "value": "polynomial.Polynomial([16.73, 5.26e-3, -5.53e-6, 4.2e-9])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 900,
+      "reference": "ITER_D_222RLN v3.3 Equation 83"
+    },
+    "youngs_modulus": {
+      "value": "polynomial.Polynomial([117, -2.17e-2, -6.29e-5])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 400,
+      "reference": "ITER_D_222RLN v3.3 Equation 84"
+    },
+    "poissons_ratio": 0.33,
+    "density": {
+      "value": "8940 * (1 - 3e-6 * (temperature_in_C - 20) * polynomial.Polynomial([16.8, 3.16e-3, 8.18e-6, -2.49e-9])(temperature_in_C))",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 900,
+      "reference": "ITER_D_222RLN v3.3 Equation 85"
+    },
+    "thermal_conductivity": {
+      "value": "polynomial.Polynomial([402, -7.08e-2, 2.46e-6])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 1000,
+      "reference": "ITER_D_222RLN v3.3 Equation 86"
+    },
+    "specific_heat": {
+      "value": "polynomial.Polynomial([387, 6.35e-2, 4.36e-5])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 1000,
+      "reference": "ITER_D_222RLN v3.3 Equation 87"
+    },
+    "minimum_yield_stress": {
+      "value": "polynomial.Polynomial([584, -5.04e-2, -5e-6])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 950,
+      "reference": "ITER_D_222RLN v3.3 Equation 91"
+    },
+    "minimum_ultimate_tensile_stress": {
+      "value": "polynomial.Polynomial([212, -2.94e-1, 8.17e-5])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 950,
+      "reference": "ITER_D_222RLN v3.3 Equation 92"
+    }
+  },
+  "CuCrZr": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "Cu": 0.9883,
+      "Cr": 0.0075,
+      "Zr": 0.0011,
+      "Co": 0.0005,
+      "Ta": 0.0001,
+      "Nb": 0.001,
+      "B": 5.55556e-6,
+      "O": 1.77778e-5,
+      "Mg": 2.22222e-4,
+      "Al": 1.66667e-5,
+      "Si": 2.22222e-4,
+      "P": 7.77778e-5,
+      "S": 2.22222e-5,
+      "Mn": 1.11111e-5,
+      "Fe": 1.11111e-4,
+      "Ni": 3.33333e-4,
+      "Zn": 5.55556e-5,
+      "As": 5.55556e-5,
+      "Sn": 5.55556e-5,
+      "Sb": 6.11111e-5,
+      "Pb": 5.55556e-5,
+      "Bi": 1.66667e-5
+    },
+    "poissons_ratio": 0.33,
+    "youngs_modulus": {
+      "value": "polynomial.Polynomial([128, -2.59e-2, -4.87e-5])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 700,
+      "reference": "ITER_D_222RLN v3.3 Equation 96"
+    },
+    "coefficient_thermal_expansion": {
+      "value": "interp(temperature_in_C, [20, 50, 100, 150, 200, 250, 300, 400, 450, 500, 550, 600], [16.7, 17, 17.3, 17.5, 17.7, 17.8, 18, 18.1, 18.2, 18.4, 18.5, 18.6])",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 600,
+      "reference": "ITER_D_222RLN v3.3 Table A.S31.2.1-1"
+    },
+    "density": {
+      "value": "8900 * (1 - 3e-6 * (temperature_in_C - 20) * polynomial.Polynomial([16.6, 6.24e-3, -9.05e-6, 7.2e-9])(temperature_in_C))",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 700,
+      "reference": "ITER_D_222RLN v3.3 Equation 97"
+    },
+    "thermal_conductivity": {
+      "value": "polynomial.Polynomial([323, -1.38e-1, -2.83e-4, 2.11e-7])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 700,
+      "reference": "ITER_D_222RLN v3.3 Equation 98"
+    }
+  },
+  "Tungsten": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "Ag": 1e-5,
+      "Al": 1.5e-5,
+      "As": 5e-6,
+      "Ba": 5e-6,
+      "C": 3e-5,
+      "Ca": 5e-6,
+      "Cd": 5e-6,
+      "Co": 1e-5,
+      "Cr": 2e-5,
+      "Cu": 1e-5,
+      "Fe": 3e-5,
+      "H": 5e-6,
+      "K": 1e-5,
+      "Mg": 5e-6,
+      "Mn": 5e-6,
+      "Mo": 0.0001,
+      "N": 5e-6,
+      "Na": 1e-5,
+      "Nb": 1e-5,
+      "Ni": 5e-6,
+      "O": 2e-5,
+      "P": 2e-5,
+      "Pb": 5e-6,
+      "S": 5e-6,
+      "Si": 2e-5,
+      "Ta": 2e-5,
+      "Ti": 5e-6,
+      "W": 0.999595,
+      "Zn": 5e-6,
+      "Zr": 5e-6
+    },
+    "poissons_ratio": 0.33,
+    "coefficient_thermal_expansion": {
+      "value": "polynomial.Polynomial([3.9225, 5.8352e-4, 5.7054e-11, -2.0463e-14])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 1200,
+      "reference": "ITER_D_222RLN v3.3 Equation 135"
+    },
+    "youngs_modulus": {
+      "value": "polynomial.Polynomial([397.903, -2.3066e-3, -2.7162e-5])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 800,
+      "reference": "ITER_D_222RLN v3.3 Equation 136"
+    },
+    "density": {
+      "value": "1000 * polynomial.Polynomial([19.3027, -2.3786e-4, -2.2448e-8])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 1200,
+      "reference": "ITER_D_222RLN v3.3 Equation 137"
+    },
+    "thermal_conductivity": {
+      "value": "polynomial.Polynomial([174.9274, -0.1067, 5.0067e-5, -7.8349e-9])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 1000,
+      "reference": "ITER_D_222RLN v3.3 Equation 138"
+    },
+    "specific_heat": {
+      "value": "polynomial.Polynomial([128.308, 3.2797e-2, -3.4097e-6])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 1000,
+      "reference": "ITER_D_222RLN v3.3 Equation 139"
+    }
+  },
+  "Beryllium": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "Be": 0.99637,
+      "Al": 0.06e-2,
+      "C": 0.1e-2,
+      "Fe": 0.08e-2,
+      "Mg": 0.06e-2,
+      "Si": 0.06e-2,
+      "U": 0.003e-2
+    },
+    "poissons_ratio": 0.1,
+    "coefficient_thermal_expansion": {
+      "value": "polynomial.Polynomial([11.3, 1.33e-2, -1.2e-5, 4.1e-9])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 1000,
+      "reference": "ITER_D_222RLN v3.3 Equation 127"
+    },
+    "youngs_modulus": {
+      "value": "polynomial.Polynomial([306.78, -2.9281e-2, -4.5069e-5])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 800,
+      "reference": "ITER_D_222RLN v3.3 Equation 128"
+    },
+    "density": {
+      "value": "1830 * (1 - 3e-6 * (temperature_in_C - 20) * polynomial.Polynomial([11.3, 1.33e-2, -1.2e-5, 4.1e-9])(temperature_in_C))",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 800,
+      "reference": "ITER_D_222RLN v3.3 Equation 129"
+    },
+    "thermal_conductivity": {
+      "value": "polynomial.Polynomial([209, -4.8e-1, 9.38e-4, -9.37e-7, 3.34e-10])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 800,
+      "reference": "ITER_D_222RLN v3.3 Equation 130"
+    },
+    "specific_heat": {
+      "value": "interp(temperature_in_C, [20, 100, 200, 300, 400, 500, 600, 700, 800], [1807, 2046, 2295, 2497, 2660, 2791, 2998, 2989, 3071])",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 500,
+      "reference": "ITER_D_222RLN v3.3 Table A.A01.2.6-1"
+    },
+    "minimum_yield_stress": {
+      "value": "polynomial.Polynomial([252.2, -1.524e-1, -1.45e-4])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 650,
+      "reference": "ITER_D_222RLN v3.3 Equation 131"
+    },
+    "minimum_ultimate_tensile_stress": {
+      "value": "polynomial.Polynomial([392.8, -3.023e-1, -2.011e-4])(temperature_in_C)",
+      "temp_min_celsius": 20,
+      "temp_max_celsius": 950,
+      "reference": "ITER_D_222RLN v3.3 Equation 132"
+    }
+  },
+  "Concrete": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "H": 0.00453,
+      "O": 0.5126,
+      "Na": 0.01527,
+      "Al": 0.03555,
+      "Si": 0.36036,
+      "Ca": 0.05791,
+      "Fe": 0.01378
+    },
+    "density": 2250,
+    "poissons_ratio": 0.33
+  },
+  "OrdinaryConcrete": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "H": 0.00555,
+      "O": 0.4975,
+      "Si": 0.3147,
+      "Ca": 0.0828,
+      "Mg": 0.0026,
+      "Al": 0.0469,
+      "S": 0.0013,
+      "Fe": 0.0124,
+      "Na": 0.0171,
+      "K": 0.0192
+    },
+    "density": 2200,
+    "poissons_ratio": 0.33
+  },
+  "HeavyConcrete": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "H": 0.0052,
+      "O": 0.3273,
+      "C": 0.004,
+      "Si": 0.0224,
+      "Ca": 0.0657,
+      "Mg": 0.0021,
+      "Al": 0.0038,
+      "Fe": 0.568,
+      "P": 0.0015
+    },
+    "density": 3600,
+    "poissons_ratio": 0.33
+  },
+  "Pb-15.8Li_eutectic": {
+    "material_class": "MassFractionMaterial",
+    "elements": {
+      "Pb": 0.99283,
+      "Li": 0.0062,
+      "Ag": 0.00001,
+      "Cu": 0.00001,
+      "Nb": 0.00001,
+      "Pd": 0.00001,
+      "Zn": 0.00001,
+      "Fe": 0.00005,
+      "Cr": 0.00005,
+      "Mn": 0.00005,
+      "Mo": 0.00005,
+      "Ni": 0.00005,
+      "V": 0.00005,
+      "Si": 0.0001,
+      "Al": 0.0001,
+      "Bi": 0.0002,
+      "Sn": 0.0002,
+      "W": 0.00002
+    },
+    "density": 10000,
+    "poissons_ratio": 0.33
+  },
+  "NbTi": {
+    "material_class": "NbTiSuperconductor",
+    "elements": {
+      "Al": 1
+    },
+    "c_0": 168512,
+    "bc_20": 14.61,
+    "tc_0": 9.03,
+    "alpha": 1,
+    "beta": 1.54,
+    "gamma": 2.1,
+    "density": 6538,
+    "poissons_ratio": 0.33
+  },
+  "Nb3Sn - WST": {
+    "material_class": "NbSnSuperconductor",
+    "elements": {
+      "Al": 1
+    },
+    "c_a1": 50.06,
+    "c_a2": 0,
+    "eps_0a": 0.312,
+    "eps_m": -0.059,
+    "b_c20m": 33.24,
+    "t_c0max": 16.34,
+    "c": 83075,
+    "p": 0.593,
+    "q": 2.156,
+    "density": 8910,
+    "poissons_ratio": 0.33
+  },
+  "Nb3Sn - EUTF4": {
+    "material_class": "NbSnSuperconductor",
+    "elements": {
+      "Al": 1
+    },
+    "c_a1": 45.74,
+    "c_a2": 0,
+    "eps_0a": 0.256,
+    "eps_m": -0.11,
+    "b_c20m": 32.97,
+    "t_c0max": 16.06,
+    "c": 76189,
+    "p": 0.63,
+    "q": 2.1,
+    "density": 8910,
+    "poissons_ratio": 0.33
+  },
+  "H2O": {
+    "material_class": "Liquid",
+    "symbol": "H2O",
+    "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Water')"
+  },
+  "He": {
+    "material_class": "Liquid",
+    "symbol": "He",
+    "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Helium')",
+    "temperature_in_K": 4.5,
+    "pressure_in_Pa": 6e5
+  },
+  "Li4SiO4": {
+    "material_class": "UnitCellCompound",
+    "symbol": "Li4SiO4",
+    "volume_of_unit_cell_cm3": 1.1543e-21,
+    "atoms_per_unit_cell": 14,
+    "specific_heat": {
+      "value": "interp(temperature_in_C, [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1392.4, 1450, 1513.4, 1580, 1648.5, 1718.2, 1788.8, 1859.9, 1931.4, 2003.3, 2075.3, 2147.5, 2219.8, 2292.3, 2364.8, 2437.4, 2510.1, 2582.8, 2655.5, 2728.3, 2801.1])",
+      "temp_min_celsius": 0,
+      "temp_max_celsius": 1000,
+      "reference": "Fokkens, J. H., \"Thermomechanical finite element analysis of the HCPB in-pile test element\" NRG Report 21477/02.50560/P. Technical Report, TW0-TTBB-004-D1, 2003"
+    },
+    "coefficient_thermal_expansion": {
+      "value": "0.768 + 4.96e-4 * temperature_in_C + 0.045 * eps_vol",
+      "temp_min_celsius": 25,
+      "temp_max_celsius": 800,
+      "reference": "https://www.sciencedirect.com/science/article/pii/S0920379602001655"
+    }
+  },
+  "Li2SiO3": {
+    "material_class": "UnitCellCompound",
+    "symbol": "Li2SiO3",
+    "volume_of_unit_cell_cm3": 0.23632e-21,
+    "atoms_per_unit_cell": 4
+  },
+  "Li2ZrO3": {
+    "material_class": "UnitCellCompound",
+    "symbol": "Li2ZrO3",
+    "volume_of_unit_cell_cm3": 0.24479e-21,
+    "atoms_per_unit_cell": 4
+  },
+  "Li2TiO3": {
+    "material_class": "UnitCellCompound",
+    "symbol": "Li2TiO3",
+    "volume_of_unit_cell_cm3": 0.42701e-21,
+    "atoms_per_unit_cell": 8
+  },
+  "Be12Ti": {
+    "material_class": "UnitCellCompound",
+    "symbol": "Be12Ti",
+    "volume_of_unit_cell_cm3": 0.22724e-21,
+    "atoms_per_unit_cell": 2
+  },
+  "Be": {
+    "material_class": "BePebbleBed",
+    "symbol": "Be",
+    "volume_of_unit_cell_cm3": 0.01622e-21,
+    "atoms_per_unit_cell": 8,
+    "specific_heat": {
+      "value": "interp(temperature_in_C, [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1741.8, 1900.97, 2045.53, 2176.44, 2294.66, 2401.14, 2496.83, 2582.71, 2659.71, 2728.79, 2790.93, 2847.05, 2898.14, 2945.13, 2988.99, 3030.68, 3071.14, 3111.34, 3152.22, 3194.76, 3239.9])",
+      "temp_min_celsius": 0,
+      "temp_max_celsius": 1000,
+      "reference": "Fokkens, J. H., \"Thermomechanical finite element analysis of the HCPB in-pile test element\" NRG Report 21477/02.50560/P. Technical Report, TW0-TTBB-004-D1, 2003"
+    }
+  },
+  "D-T Plasma": {
+    "material_class": "Plasma",
+    "isotopes": { "H2": 0.5, "H3": 0.5 }
+  },
+  "D-D Plasma": {
+    "material_class": "Plasma",
+    "isotopes": { "H2": 1.0 }
+  }
 }

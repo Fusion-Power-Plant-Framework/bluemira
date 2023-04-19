@@ -1,207 +1,207 @@
 {
-    "A": {
-        "value": 3.1,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Plasma aspect ratio"
-    },
-    "B_0": {
-        "value": 6,
-        "unit": "tesla",
-        "source": "Input",
-        "long_name": "Toroidal field at R_0"
-    },
-    "delta_95": {
-        "value": 0.333,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "95th percentile plasma triangularity"
-    },
-    "kappa_95": {
-        "value": 1.6,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "95th percentile plasma elongation"
-    },
-    "R_0": {
-        "value": 9,
-        "unit": "meter",
-        "source": "Input",
-        "long_name": "Major radius"
-    },
-    "V_p": {
-        "value": 2400,
-        "unit": "meter ** 3",
-        "source": "Calculated",
-        "long_name": "Plasma volume"
-    },
-    "e_nbi": {
-        "value": 1000,
-        "unit": "kiloelectron_volt",
-        "source": "Input",
-        "long_name": "Neutral beam energy"
-    },
-    "f_ni": {
-        "value": 0.1,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Non-inductive current drive fraction"
-    },
-    "q_control": {
-        "value": 50,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Control HCD power"
-    },
-    "PsepB_qAR_max": {
-        "value": 9.2,
-        "unit": "MW.T/m",
-        "source": "Input",
-        "long_name": "Maximum PsepB/q95AR value"
-    },
-    "delta": {
-        "value": 0.5,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Last closed surface plasma triangularity"
-    },
-    "kappa": {
-        "value": 1.792,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Last closed surface plasma elongation"
-    },
-    "I_p": {
-        "value": 19,
-        "unit": "megaampere",
-        "source": "Input",
-        "long_name": "Plasma current"
-    },
-    "q_95": {
-        "value": 3.5,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Plasma safety factor"
-    },
-    "T_e_ped": {
-        "value": 5.5,
-        "unit": "kiloelectron_volt",
-        "source": "Input",
-        "long_name": "Electron temperature at the pedestal",
-        "description": "Used in PLASMOD if fixed temperature pedestal model used"
-    },
-    "beta_p": {
-        "value": 0.04,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Ratio of plasma pressure to poloidal magnetic pressure"
-    },
-    "beta_N": {
-        "value": 2.7,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Normalised ratio of plasma pressure to magnetic pressure"
-    },
-    "f_bs": {
-        "value": 0.5,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Bootstrap fraction"
-    },
-    "l_i": {
-        "value": 0.8,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "Normalised internal plasma inductance"
-    },
-    "H_star": {
-        "value": 1,
-        "unit": "dimensionless",
-        "source": "Input",
-        "long_name": "H factor (radiation corrected)"
-    },
-    "tau_e": {
-        "value": 3,
-        "unit": "second",
-        "source": "Input",
-        "long_name": "Energy confinement time"
-    },
-    "res_plasma": {
-        "value": 0,
-        "unit": "ohm",
-        "source": "Calculated",
-        "long_name": "Plasma resistance"
-    },
-    "P_fus_DD": {
-        "value": 5,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "D-D fusion power"
-    },
-    "P_fus_DT": {
-        "value": 1995,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "D-T fusion power"
-    },
-    "P_fus": {
-        "value": 2000,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Total fusion power"
-    },
-    "P_rad": {
-        "value": 400,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Radiation power"
-    },
-    "P_sep": {
-        "value": 150,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Separatrix power"
-    },
-    "P_sync": {
-        "value": 50,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Synchrotron radiation"
-    },
-    "P_brehms": {
-        "value": 80,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Bremsstrahlung"
-    },
-    "P_line": {
-        "value": 30,
-        "unit": "megawatt",
-        "source": "Input",
-        "long_name": "Line radiation"
-    },
-    "P_LH": {
-        "value": 0,
-        "unit": "watt",
-        "source": "Input",
-        "long_name": "LH transition power"
-    },
-    "P_ohm": {
-        "value": 0,
-        "unit": "watt",
-        "source": "Input",
-        "long_name": "Ohimic heating power"
-    },
-    "Z_eff": {
-        "value": 2.2,
-        "unit": "unified_atomic_mass_unit",
-        "source": "Input",
-        "long_name": "Effective particle radiation atomic mass"
-    },
-    "v_burn": {
-        "value": 0.05,
-        "unit": "volt",
-        "source": "Input",
-        "long_name": "Loop voltage during burn"
-    }
+  "A": {
+    "value": 3.1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Plasma aspect ratio"
+  },
+  "B_0": {
+    "value": 6,
+    "unit": "tesla",
+    "source": "Input",
+    "long_name": "Toroidal field at R_0"
+  },
+  "delta_95": {
+    "value": 0.333,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "95th percentile plasma triangularity"
+  },
+  "kappa_95": {
+    "value": 1.6,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "95th percentile plasma elongation"
+  },
+  "R_0": {
+    "value": 9,
+    "unit": "meter",
+    "source": "Input",
+    "long_name": "Major radius"
+  },
+  "V_p": {
+    "value": 2400,
+    "unit": "meter ** 3",
+    "source": "Calculated",
+    "long_name": "Plasma volume"
+  },
+  "e_nbi": {
+    "value": 1000,
+    "unit": "kiloelectron_volt",
+    "source": "Input",
+    "long_name": "Neutral beam energy"
+  },
+  "f_ni": {
+    "value": 0.1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Non-inductive current drive fraction"
+  },
+  "q_control": {
+    "value": 50,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Control HCD power"
+  },
+  "PsepB_qAR_max": {
+    "value": 9.2,
+    "unit": "MW.T/m",
+    "source": "Input",
+    "long_name": "Maximum PsepB/q95AR value"
+  },
+  "delta": {
+    "value": 0.5,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Last closed surface plasma triangularity"
+  },
+  "kappa": {
+    "value": 1.792,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Last closed surface plasma elongation"
+  },
+  "I_p": {
+    "value": 19,
+    "unit": "megaampere",
+    "source": "Input",
+    "long_name": "Plasma current"
+  },
+  "q_95": {
+    "value": 3.5,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Plasma safety factor"
+  },
+  "T_e_ped": {
+    "value": 5.5,
+    "unit": "kiloelectron_volt",
+    "source": "Input",
+    "long_name": "Electron temperature at the pedestal",
+    "description": "Used in PLASMOD if fixed temperature pedestal model used"
+  },
+  "beta_p": {
+    "value": 0.04,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Ratio of plasma pressure to poloidal magnetic pressure"
+  },
+  "beta_N": {
+    "value": 2.7,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Normalised ratio of plasma pressure to magnetic pressure"
+  },
+  "f_bs": {
+    "value": 0.5,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Bootstrap fraction"
+  },
+  "l_i": {
+    "value": 0.8,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Normalised internal plasma inductance"
+  },
+  "H_star": {
+    "value": 1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "H factor (radiation corrected)"
+  },
+  "tau_e": {
+    "value": 3,
+    "unit": "second",
+    "source": "Input",
+    "long_name": "Energy confinement time"
+  },
+  "res_plasma": {
+    "value": 0,
+    "unit": "ohm",
+    "source": "Calculated",
+    "long_name": "Plasma resistance"
+  },
+  "P_fus_DD": {
+    "value": 5,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "D-D fusion power"
+  },
+  "P_fus_DT": {
+    "value": 1995,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "D-T fusion power"
+  },
+  "P_fus": {
+    "value": 2000,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Total fusion power"
+  },
+  "P_rad": {
+    "value": 400,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Radiation power"
+  },
+  "P_sep": {
+    "value": 150,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Separatrix power"
+  },
+  "P_sync": {
+    "value": 50,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Synchrotron radiation"
+  },
+  "P_brehms": {
+    "value": 80,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Bremsstrahlung"
+  },
+  "P_line": {
+    "value": 30,
+    "unit": "megawatt",
+    "source": "Input",
+    "long_name": "Line radiation"
+  },
+  "P_LH": {
+    "value": 0,
+    "unit": "watt",
+    "source": "Input",
+    "long_name": "LH transition power"
+  },
+  "P_ohm": {
+    "value": 0,
+    "unit": "watt",
+    "source": "Input",
+    "long_name": "Ohimic heating power"
+  },
+  "Z_eff": {
+    "value": 2.2,
+    "unit": "unified_atomic_mass_unit",
+    "source": "Input",
+    "long_name": "Effective particle radiation atomic mass"
+  },
+  "v_burn": {
+    "value": 0.05,
+    "unit": "volt",
+    "source": "Input",
+    "long_name": "Loop voltage during burn"
+  }
 }
