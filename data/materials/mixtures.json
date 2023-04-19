@@ -1,107 +1,107 @@
 {
-    "Homogenised_HCPB_2015_v3_IB": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "SS316-LN": 0.43214342,
-            "Be": 0.10990350,
-            "Li4SiO4": 0.04471740,
-            "Tungsten": 0.00263158,
-            "Void": 0.41060410
-        },
-        "enrichment": 0.6,
-        "temperature_in_K": 673.15
+  "Homogenised_HCPB_2015_v3_IB": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "SS316-LN": 0.43214342,
+      "Be": 0.1099035,
+      "Li4SiO4": 0.0447174,
+      "Tungsten": 0.00263158,
+      "Void": 0.4106041
     },
-    "Homogenised_HCPB_2015_v3_OB": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "SS316-LN": 0.37848,
-            "Be": 0.15463,
-            "Li4SiO4": 0.06291,
-            "Tungsten": 0.00162,
-            "Void": 0.40236
-        },
-        "enrichment": 0.6,
-        "temperature_in_K": 673.15
+    "enrichment": 0.6,
+    "temperature_in_K": 673.15
+  },
+  "Homogenised_HCPB_2015_v3_OB": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "SS316-LN": 0.37848,
+      "Be": 0.15463,
+      "Li4SiO4": 0.06291,
+      "Tungsten": 0.00162,
+      "Void": 0.40236
     },
-    "Homogenised_HCPB_2015_v3_FW": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "SS316-LN": 0.586,
-            "Tungsten": 0.074,
-            "Void": 0.34
-        },
-        "temperature_in_K": 773.15
+    "enrichment": 0.6,
+    "temperature_in_K": 673.15
+  },
+  "Homogenised_HCPB_2015_v3_FW": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "SS316-LN": 0.586,
+      "Tungsten": 0.074,
+      "Void": 0.34
     },
-    "Homogenised_HCPB_2015_v3_BZ": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "SS316-LN": 0.0985,
-            "Be": 0.3663,
-            "Li4SiO4": 0.1491,
-            "Void": 0.3861
-        },
-        "enrichment": 0.6,
-        "temperature_in_K": 773.15
+    "temperature_in_K": 773.15
+  },
+  "Homogenised_HCPB_2015_v3_BZ": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "SS316-LN": 0.0985,
+      "Be": 0.3663,
+      "Li4SiO4": 0.1491,
+      "Void": 0.3861
     },
-    "Homogenised_HCPB_2015_v3_MB": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "SS316-LN": 0.4139,
-            "Void": 0.5861
-        },
-        "temperature_in_K": 773.15
+    "enrichment": 0.6,
+    "temperature_in_K": 773.15
+  },
+  "Homogenised_HCPB_2015_v3_MB": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "SS316-LN": 0.4139,
+      "Void": 0.5861
     },
-    "Homogenised_HCPB_2015_v3_BSS": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "SS316-LN": 0.6061,
-            "Void": 0.3939
-        },
-        "temperature_in_K": 773.15
+    "temperature_in_K": 773.15
+  },
+  "Homogenised_HCPB_2015_v3_BSS": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "SS316-LN": 0.6061,
+      "Void": 0.3939
     },
-    "Homogenised_Divertor_2015": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "CuCrZr": 0.00552,
-            "Pure Cu": 0.00438,
-            "SS316-LN": 0.5238,
-            "Tungsten": 0.01026,
-            "H2O": 0.45604
-        },
-        "temperature_in_K": 423.15
+    "temperature_in_K": 773.15
+  },
+  "Homogenised_Divertor_2015": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "CuCrZr": 0.00552,
+      "Pure Cu": 0.00438,
+      "SS316-LN": 0.5238,
+      "Tungsten": 0.01026,
+      "H2O": 0.45604
     },
-    "Toroidal_Field_Coil_2015": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "Nb3Sn - WST": 0.02895,
-            "Pure Cu": 0.1169,
-            "Epoxy resin": 0.18,
-            "Bronze": 0.0735,
-            "He": 0.1682,
-            "SS316-LN": 0.4319,
-            "Void": 0.00055
-        },
-        "temperature_in_K": 293.15
+    "temperature_in_K": 423.15
+  },
+  "Toroidal_Field_Coil_2015": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "Nb3Sn - WST": 0.02895,
+      "Pure Cu": 0.1169,
+      "Epoxy resin": 0.18,
+      "Bronze": 0.0735,
+      "He": 0.1682,
+      "SS316-LN": 0.4319,
+      "Void": 0.00055
     },
-    "Poloidal_Field_Coil": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "NbTi": 0.02895,
-            "Pure Cu": 0.1169,
-            "Epoxy resin": 0.18,
-            "Bronze": 0.0735,
-            "He": 0.1682,
-            "SS316-LN": 0.4319,
-            "Void": 0.00055
-        },
-        "temperature_in_K": 293.15
+    "temperature_in_K": 293.15
+  },
+  "Poloidal_Field_Coil": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "NbTi": 0.02895,
+      "Pure Cu": 0.1169,
+      "Epoxy resin": 0.18,
+      "Bronze": 0.0735,
+      "He": 0.1682,
+      "SS316-LN": 0.4319,
+      "Void": 0.00055
     },
-    "Steel Water 60/40": {
-        "material_class": "HomogenisedMixture",
-        "materials": {
-            "SS316-LN": 0.6,
-            "H2O": 0.4
-        },
-        "temperature_in_K": 293.15
-    }
+    "temperature_in_K": 293.15
+  },
+  "Steel Water 60/40": {
+    "material_class": "HomogenisedMixture",
+    "materials": {
+      "SS316-LN": 0.6,
+      "H2O": 0.4
+    },
+    "temperature_in_K": 293.15
+  }
 }

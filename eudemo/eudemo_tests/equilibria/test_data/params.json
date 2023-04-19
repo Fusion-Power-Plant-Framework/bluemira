@@ -1,137 +1,137 @@
 {
-    "A": {
-        "long_name": "Plasma aspect ratio",
-        "unit": "dimensionless",
-        "value": 3.1
-    },
-    "B_0": {
-        "long_name": "Toroidal field at R_0",
-        "unit": "T",
-        "value": 6
-    },
-    "CS_bmax": {
-        "long_name": "Maximum peak field to use in CS modules",
-        "unit": "T",
-        "value": 13
-    },
-    "CS_jmax": {
-        "long_name": "Maximum current density to use in CS modules",
-        "unit": "MA/m^2",
-        "value": 16
-    },
-    "I_p": {
-        "long_name": "Plasma current",
-        "unit": "MA",
-        "value": 19
-    },
-    "PF_bmax": {
-        "long_name": "Maximum peak field to use in PF modules",
-        "unit": "T",
-        "value": 11
-    },
-    "PF_jmax": {
-        "long_name": "Maximum current density to use in PF modules",
-        "unit": "MA/m^2",
-        "value": 12.5
-    },
-    "R_0": {
-        "long_name": "Major radius",
-        "unit": "m",
-        "value": 9
-    },
-    "beta_p": {
-        "long_name": "Ratio of plasma pressure to poloidal magnetic pressure",
-        "unit": "dimensionless",
-        "value": 0.04
-    },
-    "delta_95": {
-        "long_name": "Last closed surface plasma triangularity",
-        "unit": "dimensionless",
-        "value": 0.5
-    },
-    "delta": {
-        "long_name": "95th percentile plasma triangularity",
-        "unit": "dimensionless",
-        "value": 0.333
-    },
-    "div_L2D_ib": {
-        "long_name": "Inboard divertor leg length",
-        "unit": "m",
-        "value": 1.1
-    },
-    "div_L2D_ob": {
-        "long_name": "Outboard divertor leg length",
-        "unit": "m",
-        "value": 1.45
-    },
-    "g_cs_mod": {
-        "long_name": "Gap between CS modules",
-        "unit": "m",
-        "value": 0.05
-    },
-    "kappa": {
-        "long_name": "Last closed surface plasma elongation",
-        "unit": "dimensionless",
-        "value": 1.792
-    },
-    "kappa_95": {
-        "long_name": "95th percentile plasma elongation",
-        "unit": "dimensionless",
-        "value": 1.6
-    },
-    "l_i": {
-        "long_name": "Normalised internal plasma inductance",
-        "unit": "dimensionless",
-        "value": 0.8
-    },
-    "n_CS": {
-        "long_name": "Number of CS coil divisions",
-        "unit": "dimensionless",
-        "value": 5
-    },
-    "n_PF": {
-        "long_name": "Number of PF coils",
-        "unit": "dimensionless",
-        "value": 6
-    },
-    "q_95": {
-        "long_name": "Plasma safety factor",
-        "unit": "dimensionless",
-        "value": 3.5
-    },
-    "r_cs_in": {
-        "long_name": "Central Solenoid inner radius",
-        "unit": "m",
-        "value": 2.2
-    },
-    "r_tf_in_centre": {
-        "long_name": "Inboard TF leg centre radius",
-        "unit": "m",
-        "value": 3.7
-    },
-    "r_tf_out_centre": {
-        "long_name": "Outboard TF leg centre radius",
-        "unit": "m",
-        "value": 16.2
-    },
-    "tk_cs": {
-        "long_name": "Thickness of the CS coil insulation",
-        "unit": "m",
-        "value": 0.005
-    },
-    "tk_cs_casing": {
-        "long_name": "Thickness of the CS coil casing",
-        "unit": "m",
-        "value": 0.07
-    },
-    "tk_cs_insulation": {
-        "long_name": "Thickness of the CS coil insulation",
-        "unit": "m",
-        "value": 0.005
-    },
-    "shaf_shift": {
-        "long_name": "Shafranov shift of plasma (geometric=>magnetic)",
-        "unit": "m",
-        "value": 0.5
-    }
+  "A": {
+    "long_name": "Plasma aspect ratio",
+    "unit": "dimensionless",
+    "value": 3.1
+  },
+  "B_0": {
+    "long_name": "Toroidal field at R_0",
+    "unit": "T",
+    "value": 6
+  },
+  "CS_bmax": {
+    "long_name": "Maximum peak field to use in CS modules",
+    "unit": "T",
+    "value": 13
+  },
+  "CS_jmax": {
+    "long_name": "Maximum current density to use in CS modules",
+    "unit": "MA/m^2",
+    "value": 16
+  },
+  "I_p": {
+    "long_name": "Plasma current",
+    "unit": "MA",
+    "value": 19
+  },
+  "PF_bmax": {
+    "long_name": "Maximum peak field to use in PF modules",
+    "unit": "T",
+    "value": 11
+  },
+  "PF_jmax": {
+    "long_name": "Maximum current density to use in PF modules",
+    "unit": "MA/m^2",
+    "value": 12.5
+  },
+  "R_0": {
+    "long_name": "Major radius",
+    "unit": "m",
+    "value": 9
+  },
+  "beta_p": {
+    "long_name": "Ratio of plasma pressure to poloidal magnetic pressure",
+    "unit": "dimensionless",
+    "value": 0.04
+  },
+  "delta_95": {
+    "long_name": "Last closed surface plasma triangularity",
+    "unit": "dimensionless",
+    "value": 0.5
+  },
+  "delta": {
+    "long_name": "95th percentile plasma triangularity",
+    "unit": "dimensionless",
+    "value": 0.333
+  },
+  "div_L2D_ib": {
+    "long_name": "Inboard divertor leg length",
+    "unit": "m",
+    "value": 1.1
+  },
+  "div_L2D_ob": {
+    "long_name": "Outboard divertor leg length",
+    "unit": "m",
+    "value": 1.45
+  },
+  "g_cs_mod": {
+    "long_name": "Gap between CS modules",
+    "unit": "m",
+    "value": 0.05
+  },
+  "kappa": {
+    "long_name": "Last closed surface plasma elongation",
+    "unit": "dimensionless",
+    "value": 1.792
+  },
+  "kappa_95": {
+    "long_name": "95th percentile plasma elongation",
+    "unit": "dimensionless",
+    "value": 1.6
+  },
+  "l_i": {
+    "long_name": "Normalised internal plasma inductance",
+    "unit": "dimensionless",
+    "value": 0.8
+  },
+  "n_CS": {
+    "long_name": "Number of CS coil divisions",
+    "unit": "dimensionless",
+    "value": 5
+  },
+  "n_PF": {
+    "long_name": "Number of PF coils",
+    "unit": "dimensionless",
+    "value": 6
+  },
+  "q_95": {
+    "long_name": "Plasma safety factor",
+    "unit": "dimensionless",
+    "value": 3.5
+  },
+  "r_cs_in": {
+    "long_name": "Central Solenoid inner radius",
+    "unit": "m",
+    "value": 2.2
+  },
+  "r_tf_in_centre": {
+    "long_name": "Inboard TF leg centre radius",
+    "unit": "m",
+    "value": 3.7
+  },
+  "r_tf_out_centre": {
+    "long_name": "Outboard TF leg centre radius",
+    "unit": "m",
+    "value": 16.2
+  },
+  "tk_cs": {
+    "long_name": "Thickness of the CS coil insulation",
+    "unit": "m",
+    "value": 0.005
+  },
+  "tk_cs_casing": {
+    "long_name": "Thickness of the CS coil casing",
+    "unit": "m",
+    "value": 0.07
+  },
+  "tk_cs_insulation": {
+    "long_name": "Thickness of the CS coil insulation",
+    "unit": "m",
+    "value": 0.005
+  },
+  "shaf_shift": {
+    "long_name": "Shafranov shift of plasma (geometric=>magnetic)",
+    "unit": "m",
+    "value": 0.5
+  }
 }

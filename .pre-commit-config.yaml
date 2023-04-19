@@ -44,3 +44,10 @@ repos:
     - id: black-jupyter
       language_version: python3.8
       types: [jupyter]
+
+-   repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v2.5.1
+    hooks:
+    - id: prettier
+      types_or: [json]
+      args: [--tab-width=2]
