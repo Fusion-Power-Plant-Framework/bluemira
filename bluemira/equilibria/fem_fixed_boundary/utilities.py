@@ -375,7 +375,7 @@ def calculate_plasma_shape_params(
 ) -> Tuple[float, float, float]:
     """
     Calculate the plasma parameters (r_geo, kappa, delta) for a given magnetic
-    isoflux using optimisation.
+    isoflux from the mesh.
 
     Parameters
     ----------
