@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.power_cycle.tools import (
+    FormattedDict,
     adjust_2d_graph_ranges,
     build_dict_from_format,
     convert_string_into_numeric_list,
@@ -357,3 +358,146 @@ class TestPlottingTools:
 
         del test_ax
         plt.close("all")
+
+
+class TestFormattedDict:
+    tested_class = FormattedDict
+
+    def setup_method(self):
+        self.right_format_input = {
+            "key_1": str,
+            "key_2": list,
+            "key_3": [int, float],
+            "key_4": [None, bool],
+            "key_5": dict,
+        }
+        self.wrong_format_input = {
+            "key_1": "str",
+            "key_2": [[int, float], [str, bool]],
+            "key_3": 1.2,
+            "key_4": True,
+            "key_5": self.right_format_input,
+        }
+
+        self.right_index = [
+            0,
+            0,
+            1,
+            1,
+            0,
+        ]
+
+        non_int = 1.2
+        out_of_range = 10
+        self.wrong_index = [
+            0,
+            0,
+            non_int,
+            out_of_range,
+            0,
+        ]
+
+    def build_format(self):
+        return self.tested_class.Format(self.right_format_input)
+
+    def build_default_empty_instance(self):
+        """
+        Build empty 'FormattedDict' without specifying 'format_index'.
+        """
+        right_format = self.build_format()
+        return self.tested_class(right_format)
+
+    def build_indexed_empty_instance(self):
+        """
+        Build empty 'FormattedDict' and specify 'format_index'.
+        """
+        right_format = self.build_format()
+        return self.tested_class(right_format, format_index=self.right_index)
+
+    def build_full_instance(self):
+        """
+        Build 'FormattedDict' by converting an existing 'dict'.
+        """
+        right_format = self.build_format()
+        dict_for_conversion = self.wrong_format_input
+        return self.tested_class(right_format, dictionary=dict_for_conversion)
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    def test_validate_list_of_types(self):
+        tested_method = self.tested_class.Format._validate_list_of_types
+        input_zip = zip(
+            self.right_format_input.values(),
+            self.wrong_format_input.values(),
+        )
+        for right_value, wrong_value in input_zip:
+            validated_value = tested_method(right_value)
+            elements_are_types = [isinstance(e, type) for e in validated_value]
+            assert all(elements_are_types)
+
+            with pytest.raises(TypeError):
+                validated_value = tested_method(wrong_value)
+
+    def test_Format_constructor(self):
+        right_format = self.build_format()
+        assert isinstance(right_format, self.tested_class.Format)
+
+        for key, value in right_format.items():
+            assert key in self.right_format_input.keys()
+
+            original_value = self.right_format_input[key]
+            original_in_list = validate_list(original_value)
+            for o, v in zip(original_in_list, value):
+                if o is None:
+                    assert v == type(o)
+                else:
+                    assert v == o
+
+        with pytest.raises(TypeError):
+            wrong_format = self.tested_class.Format(self.wrong_format_input)
+
+    def test_validate_index(self):
+        default_sample = self.build_default_empty_instance()
+        right_index = default_sample._validate_index(self.right_index)
+        assert right_index == self.right_index
+        assert all(isinstance(e, int) for e in right_index)
+
+        short_index = self.right_index[:-1]
+        long_index = self.right_index + [self.right_index[-1]]
+        with pytest.raises((TypeError, ValueError)):
+            short_index = default_sample._validate_index(short_index)
+            long_index = default_sample._validate_index(long_index)
+            wrong_index = default_sample._validate_index(self.wrong_index)
+
+    def test_empty(self):
+        default_sample = self.build_default_empty_instance()
+        indexed_sample = self.build_indexed_empty_instance()
+        assert isinstance(default_sample, self.tested_class)
+        assert isinstance(indexed_sample, self.tested_class)
+
+        allowed_keys = default_sample.allowed_format.keys()
+
+        for key, value in default_sample.items():
+            assert key in allowed_keys
+
+            valid_types = default_sample.allowed_format[key]
+            assert isinstance(value, valid_types[0])
+
+        for n, (key, value) in enumerate(indexed_sample.items()):
+            assert key in allowed_keys
+
+            valid_types = indexed_sample.allowed_format[key]
+            chosen_index = self.right_index[n]
+            assert isinstance(value, valid_types[chosen_index])
+
+    def test_constructor(self):
+        sample = self.build_full_instance()
+        assert isinstance(sample, self.tested_class)
+
+        for key, value in sample.items():
+            assert key in sample.allowed_format.keys()
+
+            valid_types = tuple(sample.allowed_format[key])
+            assert isinstance(value, valid_types)
