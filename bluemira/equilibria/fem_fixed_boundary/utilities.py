@@ -40,8 +40,7 @@ from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
-from bluemira.utilities.error import ExternalOptError
-from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
+from bluemira.utilities.opt_problems import OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
 
@@ -366,62 +365,6 @@ def get_flux_surfaces_from_mesh(
         x_1d = np.delete(x_1d, index[xi])
 
     return x_1d, flux_surfaces
-
-
-def _f_max_radius(x, grad):
-    result = -x[0]
-    if grad.size > 0:
-        grad[0] = -1.0
-        grad[1] = 0.0
-    return result
-
-
-def _f_min_radius(x, grad):
-    result = x[0]
-    if grad.size > 0:
-        grad[0] = 1.0
-        grad[1] = 0.0
-    return result
-
-
-def _f_max_vert(x, grad):
-    result = -x[1]
-    if grad.size > 0:
-        grad[0] = 0.0
-        grad[1] = -1.0
-    return result
-
-
-def _f_min_vert(x, grad):
-    result = x[1]
-    if grad.size > 0:
-        grad[0] = 0.0
-        grad[1] = 1.0
-    return result
-
-
-def _f_constrain_psi_norm(
-    constraint: np.ndarray,
-    x: np.ndarray,
-    grad: np.ndarray,
-    psi_norm_func=None,
-    lower_bounds=None,
-    upper_bounds=None,
-) -> np.ndarray:
-    """
-    Constraint function for points on the psi_norm surface.
-    """
-    result = psi_norm_func(x)
-    constraint[:] = result
-    if grad.size > 0:
-        grad[:] = approx_derivative(
-            psi_norm_func,
-            x,
-            f0=result,
-            bounds=[lower_bounds, upper_bounds],
-            method="3-point",
-        )
-    return np.array([result])
 
 
 def calculate_plasma_shape_params(
