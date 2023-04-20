@@ -14,7 +14,7 @@ from pandas_df_functions import DataFrame
 from collections import namedtuple
 
 # Constants
-from bluemira.base.constants import BMUnitRegistry, elements
+from bluemira.base.constants import BMUnitRegistry
 
 MJ_per_MeV = BMUnitRegistry.Quantity("MeV").to("MJ").magnitude
 MJ_per_eV = BMUnitRegistry.Quantity("eV").to("MJ").magnitude
@@ -420,30 +420,29 @@ def get_dpa_coefs():
     displacements_per_damage_eV = 0.8 / (2 * dpa_fe_threshold_eV)
     return DPACoefficients(atoms_per_cc, displacements_per_damage_eV)
 
-class OpenMCResult(DataFrame):
+class OpenMCResult():
     """Open up the openmc results from statepoint and then format them to the desired shape."""
     def __init__(self, universe, src_str, statepoint_file="statepoint.2.h5"):
-        # WHY recursion?
         self.universe = universe
         self.src_str = src_str
         self.statepoint_file = statepoint_file
         # Creating cell name dictionary to allow easy mapping to dataframe
-        cell_names = {}
+        self.cell_names = {}
         for cell_id in self.universe.cells:
-            cell_names[cell_id] = self.universe.cells[cell_id].name
+            self.cell_names[cell_id] = self.universe.cells[cell_id].name
 
         # Creating material dictionary to allow easy mapping to dataframe
-        mat_names = {}
+        self.mat_names = {}
         for cell_id in self.universe.cells:
             try:
-                mat_names[ self.universe.cells[cell_id].fill.id ] = self.universe.cells[cell_id].fill.name
+                self.mat_names[ self.universe.cells[cell_id].fill.id ] = self.universe.cells[cell_id].fill.name
             except:
                 pass
 
         # Creating cell volume dictionary to allow easy mapping to dataframe
-        cell_vols = {}
+        self.cell_vols = {}
         for cell_id in self.universe.cells:
-            cell_vols[cell_id] = self.universe.cells[cell_id].volume
+            self.cell_vols[cell_id] = self.universe.cells[cell_id].volume
             
     def get_tbr(self, print_df: bool = True):
         # Loads up the output file from the simulation
@@ -467,6 +466,7 @@ class OpenMCResult(DataFrame):
             ["material", "material_name", "nuclide", "score", "mean", "std. dev.", "%err."]
         ]
         self.heating_df = heating_df
+
         if print_df:
             print("\nHeating (MW)\n", heating_df)
 
@@ -481,7 +481,7 @@ class OpenMCResult(DataFrame):
             * dfa_coefs.displacements_per_damage_eV
             / (n_wl_df["vol(cc)"] * dfa_coefs.atoms_per_cc)
             * s_in_yr
-            * src_str
+            * self.src_str
         )
         n_wl_df["dpa/fpy"] = n_wl_df["dpa/fpy"].apply(lambda x: "%.1f" % x)
         n_wl_df["%err."] = n_wl_df.apply(pdf.get_percent_err, axis=1).apply(
@@ -503,6 +503,7 @@ class OpenMCResult(DataFrame):
                 "%err.",
             ]
         ]
+
         self.neutron_wall_load = n_wl_df
 
         if print_df:
@@ -541,15 +542,17 @@ class OpenMCResult(DataFrame):
                 "%err.",
             ]
         ]
+
+        self.photon_heat_flux = p_hf_df
         if print_df:
             print("\nPhoton Heat Flux MW m-2\n", p_hf_df)
 
 
     def summarize(self, print_dfs):
-        get_tbr(print_dfs)
-        get_heating_in_MW(print_dfs)
-        get_neutron_wall_loading(print_dfs)
-        get_photon_heat_flux(print_dfs)
+        self.get_tbr(print_dfs)
+        self.get_heating_in_MW(print_dfs)
+        self.get_neutron_wall_loading(print_dfs)
+        self.get_photon_heat_flux(print_dfs)
     
 # ----------------------------------------------------------------------------------------
 
