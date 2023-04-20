@@ -454,10 +454,6 @@ def calculate_plasma_shape_params(
     delta: float
         Triangularity of the flux surface at psi_norm
     """
-
-    def f_psi_norm(x):
-        return psi_norm_func(x) - psi_norm
-
     points = mesh.coordinates()
     psi_norm_array = [psi_norm_func(x) for x in points]
 
@@ -469,54 +465,6 @@ def calculate_plasma_shape_params(
     po = contour[np.argmax(x)]
     pi = contour[np.argmin(x)]
 
-    search_range = mesh.hmax()
-
-    def find_extremum(
-        func: Callable[[np.ndarray], np.ndarray], x0: Iterable[float]
-    ) -> np.ndarray:
-        """
-        Extremum finding using constrained optimisation
-        """
-        lower_bounds = x0 - search_range
-        upper_bounds = x0 + search_range
-        # NOTE: COBYLA appears to do a better job here, as it seems that the
-        # NLOpt implementation of SLSQP really requires a feasible starting
-        # solution, which is not so readily available with this tight equality
-        # constraint. The scipy SLSQP implementation apparently does not require
-        # such a good starting solution. Neither SLSQP nor COBYLA can guarantee
-        # convergence without a feasible starting point.
-        optimiser = Optimiser(
-            "COBYLA", 2, opt_conditions={"ftol_abs": 1e-10, "max_eval": 1000}
-        )
-        optimiser.set_objective_function(func)
-        optimiser.set_lower_bounds(lower_bounds)
-        optimiser.set_upper_bounds(upper_bounds)
-
-        f_constraint = OptimisationConstraint(
-            _f_constrain_psi_norm,
-            f_constraint_args={
-                "psi_norm_func": f_psi_norm,
-                "lower_bounds": lower_bounds,
-                "upper_bounds": upper_bounds,
-            },
-            constraint_type="equality",
-        )
-
-        optimiser.add_eq_constraints(f_constraint, tolerance=1e-10)
-        # try:
-        #     x_star = optimiser.optimise(x0)
-        # except ExternalOptError as e:
-        #     bluemira_warn(
-        #         f"calculate_plasma_shape_params::find_extremum failing at {x0}, defaulting to mesh value: {e}"
-        #     )
-        x_star = x0
-        return x_star
-
-    pi_opt = find_extremum(_f_min_radius, pi)
-    pl_opt = find_extremum(_f_min_vert, pl)
-    po_opt = find_extremum(_f_max_radius, po)
-    pu_opt = find_extremum(_f_max_vert, pu)
-
     if plot:
         _, ax = plt.subplots()
         dolfin.plot(mesh)
@@ -527,24 +475,20 @@ def calculate_plasma_shape_params(
         ax.plot(*pu, marker="o", color="r")
         ax.plot(*pl, marker="o", color="r")
 
-        ax.plot(*po_opt, marker="o", color="b")
-        ax.plot(*pi_opt, marker="o", color="b")
-        ax.plot(*pu_opt, marker="o", color="b")
-        ax.plot(*pl_opt, marker="o", color="b")
         ax.set_aspect("equal")
         plt.show()
 
     # geometric center of a magnetic flux surface
-    r_geo = 0.5 * (po_opt[0] + pi_opt[0])
+    r_geo = 0.5 * (po[0] + pi[0])
 
     # elongation
-    a = 0.5 * (po_opt[0] - pi_opt[0])
-    b = 0.5 * (pu_opt[1] - pl_opt[1])
+    a = 0.5 * (po[0] - pi[0])
+    b = 0.5 * (pu[1] - pl[1])
     kappa = 1 if a == 0 else b / a
 
     # triangularity
-    c = r_geo - pl_opt[0]
-    d = r_geo - pu_opt[0]
+    c = r_geo - pl[0]
+    d = r_geo - pu[0]
     delta = 0 if a == 0 else 0.5 * (c + d) / a
 
     return r_geo, kappa, delta
