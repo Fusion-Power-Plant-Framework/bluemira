@@ -503,13 +503,13 @@ def calculate_plasma_shape_params(
         )
 
         optimiser.add_eq_constraints(f_constraint, tolerance=1e-10)
-        try:
-            x_star = optimiser.optimise(x0)
-        except ExternalOptError as e:
-            bluemira_warn(
-                f"calculate_plasma_shape_params::find_extremum failing at {x0}, defaulting to mesh value: {e}"
-            )
-            x_star = x0
+        # try:
+        #     x_star = optimiser.optimise(x0)
+        # except ExternalOptError as e:
+        #     bluemira_warn(
+        #         f"calculate_plasma_shape_params::find_extremum failing at {x0}, defaulting to mesh value: {e}"
+        #     )
+        x_star = x0
         return x_star
 
     pi_opt = find_extremum(_f_min_radius, pi)
