@@ -433,18 +433,18 @@ class TestScenarioBuilder:
 
     def test_build_breakdown_library(self):
         (breakdown_library, _, _, _) = self.run_build_breakdown_library()
-        assert type(breakdown_library) is dict
+        assert isinstance(breakdown_library, dict)
 
         library_items = breakdown_library.items()
         for element, value in library_items:
-            assert type(element) is str
+            assert isinstance(element, str)
 
             assert len(value) == 1
-            assert type(value) is dict
+            assert isinstance(value, dict)
 
             value_items = value.items()
             for key, duration in value_items:
-                assert type(key) is str
+                assert isinstance(key, str)
                 assert_value_is_nonnegative(duration)
 
     def test_build_phase_breakdown(self):
@@ -458,7 +458,7 @@ class TestScenarioBuilder:
             phase_breakdown = tested_class._build_phase_breakdown(
                 breakdown_library, breakdown_list, operator
             )
-            assert type(phase_breakdown) == dict
+            assert isinstance(phase_breakdown, dict)
 
             if operator == "&":
                 assert len(phase_breakdown) != 1
@@ -470,12 +470,12 @@ class TestScenarioBuilder:
 
     def test_build_phase_library(self):
         (phase_library, _, _) = self.run_build_phase_library()
-        assert type(phase_library) == dict
+        assert isinstance(phase_library, dict)
 
         library_items = phase_library.items()
         for key, value in library_items:
-            assert type(key) == str
-            assert type(value) == PowerCyclePhase
+            assert isinstance(key, str)
+            assert isinstance(value, PowerCyclePhase)
 
     def test_build_time_set(self):
         """
@@ -486,13 +486,13 @@ class TestScenarioBuilder:
 
     def test_build_pulse_library(self):
         (pulse_library, _) = self.run_build_pulse_library()
-        assert type(pulse_library) == dict
+        assert isinstance(pulse_library, dict)
 
         library_items = pulse_library.items()
         for key, value in library_items:
-            assert type(key) == str
-            assert type(value) == PowerCyclePulse
+            assert isinstance(key, str)
+            assert isinstance(value, PowerCyclePulse)
 
     def test_build_scenario(self):
         scenario = self.run_build_scenario()
-        assert type(scenario) == PowerCycleScenario
+        assert isinstance(scenario, PowerCycleScenario)

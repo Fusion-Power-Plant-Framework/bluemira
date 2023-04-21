@@ -11,12 +11,12 @@ from bluemira.power_cycle.base import PowerCycleTimeABC
 from bluemira.power_cycle.errors import PowerCyclePhaseError, ScenarioBuilderError
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
 from bluemira.power_cycle.tools import (
+    FormattedDict,
+    FormattedLibrary,
     read_json,
-    validate_dict,
     validate_file,
     validate_list,
     validate_nonnegative,
-    validate_subdict,
 )
 
 
@@ -207,35 +207,45 @@ class ScenarioBuilder:
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
-    _config_format = {
-        "scenario": dict,
-        "pulse-library": dict,
-        "phase-library": dict,
-        "breakdown-library": dict,
-    }
+    _config_format = FormattedDict.Format(
+        {
+            "scenario": dict,
+            "pulse-library": dict,
+            "phase-library": dict,
+            "breakdown-library": dict,
+        }
+    )
 
-    _scenario_format = {
-        "name": str,
-        "pulses": list,
-        "repetition": list,
-    }
+    _scenario_format = FormattedDict.Format(
+        {
+            "name": str,
+            "pulses": list,
+            "repetition": list,
+        }
+    )
 
-    _pulse_format = {
-        "name": str,
-        "phases": list,
-    }
+    _pulse_format = FormattedDict.Format(
+        {
+            "name": str,
+            "phases": list,
+        }
+    )
 
-    _phase_format = {
-        "name": str,
-        "logical": str,
-        "breakdown": list,
-    }
+    _phase_format = FormattedDict.Format(
+        {
+            "name": str,
+            "logical": str,
+            "breakdown": list,
+        }
+    )
 
-    _breakdown_format = {
-        "name": str,
-        "module": [type(None), str],
-        "variables_map": dict,
-    }
+    _breakdown_format = FormattedDict.Format(
+        {
+            "name": str,
+            "module": [None, str],
+            "variables_map": dict,
+        }
+    )
 
     def __init__(self, config_path: str):
         validated_path = validate_file(config_path)
@@ -275,38 +285,30 @@ class ScenarioBuilder:
 
     @classmethod
     def _validate_config(cls, json_contents):
-        allowed_format = cls._config_format
-        json_contents = validate_dict(
-            json_contents,
-            allowed_format,
+        json_contents = FormattedDict(
+            cls._config_format,
+            dictionary=json_contents,
         )
-        json_keys = json_contents.keys()
-        for key in json_keys:
-            contents_in_key = json_contents[key]
-
+        for key, key_contents in json_contents.items():
             if key == "scenario":
-                allowed_format = cls._scenario_format
-                scenario_config = validate_dict(
-                    contents_in_key,
-                    allowed_format,
+                scenario_config = FormattedDict(
+                    cls._scenario_format,
+                    dictionary=key_contents,
                 )
             elif key == "pulse-library":
-                allowed_format = cls._pulse_format
-                pulse_config = validate_subdict(
-                    contents_in_key,
-                    allowed_format,
+                pulse_config = FormattedLibrary(
+                    cls._pulse_format,
+                    dictionary=key_contents,
                 )
             elif key == "phase-library":
-                allowed_format = cls._phase_format
-                phase_config = validate_subdict(
-                    contents_in_key,
-                    allowed_format,
+                phase_config = FormattedLibrary(
+                    cls._phase_format,
+                    dictionary=key_contents,
                 )
             elif key == "breakdown-library":
-                allowed_format = cls._breakdown_format
-                breakdown_config = validate_subdict(
-                    contents_in_key,
-                    allowed_format,
+                breakdown_config = FormattedLibrary(
+                    cls._breakdown_format,
+                    dictionary=key_contents,
                 )
             else:
                 raise ScenarioBuilderError(
@@ -349,9 +351,8 @@ class ScenarioBuilder:
 
     @classmethod
     def _build_breakdown_library(cls, breakdown_config):
-        all_elements = breakdown_config.keys()
         breakdown_library = dict()
-        for element_label in all_elements:
+        for element_label in breakdown_config.keys():
             element_specs = breakdown_config[element_label]
 
             element_name = element_specs["name"]
@@ -395,9 +396,8 @@ class ScenarioBuilder:
 
     @classmethod
     def _build_phase_library(cls, phase_config, breakdown_library):
-        all_phases = phase_config.keys()
-        phase_library = dict()
-        for phase_label in all_phases:
+        phase_library = FormattedLibrary(PowerCyclePhase)
+        for phase_label in phase_config.keys():
             phase_specs = phase_config[phase_label]
             phase_name = phase_specs["name"]
 
@@ -421,9 +421,8 @@ class ScenarioBuilder:
 
     @classmethod
     def _build_pulse_library(cls, pulse_config, phase_library):
-        all_pulses = pulse_config.keys()
-        pulse_library = dict()
-        for pulse_label in all_pulses:
+        pulse_library = FormattedLibrary(PowerCyclePulse)
+        for pulse_label in pulse_config.keys():
             pulse_specs = pulse_config[pulse_label]
             pulse_name = pulse_specs["name"]
 
