@@ -8,6 +8,7 @@ import json
 import os
 import pprint as pp
 from abc import ABCMeta
+from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -537,17 +538,22 @@ class FormattedDict(FormattedABC):
 
 class FormattedLibrary(FormattedABC):
     """
-    Library of formatted dictionaries.
+    Formatted library.
 
     A child class of the 'dict' class that allows for the creation of
-    dictionaries in which each value is a 'FormattedDict'. All values
-    must have the same format, that can be specified with an object of
-    the inner class 'Format'.
+    dictionaries in which each value follows a specific format,
+    specified with the 'allowed_format' parameter. Formats can be a
+    'type' object, in which case all library values must be objects of
+    that type, or 'Format' objects, in which case all library values
+    must be objects of the 'FormattedDict' class with that format.
 
     Parameters
     ----------
-    allowed_format: FormattedDict.Format
-        Allowed format for all values in the library.
+    allowed_format: type | FormattedDict.Format
+        Allowed format for all values in the library. If a 'type'
+        object, all values in the library must be of that type. If a
+        'Format' object, all values in the library must be the of the
+        'FormattedDict' class with that format as 'allowed_format'.
     dictionary: dict
         Dictionary that will be converted to a 'FormattedLibrary'
         instance. If 'None', an empty 'FormattedLibrary' instance is
@@ -560,7 +566,7 @@ class FormattedLibrary(FormattedABC):
 
     def __init__(
         self,
-        allowed_format: FormattedABC.Format,
+        allowed_format: Union[type, FormattedABC.Format],
         dictionary=None,
     ):
         self.empty(allowed_format)
@@ -573,7 +579,7 @@ class FormattedLibrary(FormattedABC):
         Create an empty instance of 'FormattedLibrary' using a 'Format'
         object to specify the structure that all values must have.
         """
-        if isinstance(allowed_format, self.Format):
+        if isinstance(allowed_format, (type, self.Format)):
             self.allowed_format = allowed_format
         else:
             raise TypeError(
@@ -588,11 +594,25 @@ class FormattedLibrary(FormattedABC):
 
     def __setitem__(self, key, value):
         """
-        Set the ('key', 'value') item in the instance if each 'value'
-        can be converted into a 'FormattedDict'.
+        Set the ('key', 'value') item in the instance if 'value' is
+        valid.
+        If the 'allowed_format' attribute is a 'type', the value must
+        be of that type.
+        If the 'allowed_format' attribute is a 'Format', the value
+        must be a 'dict' that can be converted into a 'FormattedDict'
+        instance with that format.
         """
-        formatted_value = FormattedDict(
-            self.allowed_format,
-            dictionary=value,
-        )
-        super().__setitem__(key, formatted_value)
+        if isinstance(self.allowed_format, type):
+            if isinstance(value, self.allowed_format):
+                super().__setitem__(key, value)
+            else:
+                raise TypeError(
+                    f"The value to be set in key {key!r} is not of "
+                    f"the type {self.allowed_format!r}.",
+                )
+        else:
+            formatted_value = FormattedDict(
+                self.allowed_format,
+                dictionary=value,
+            )
+            super().__setitem__(key, formatted_value)
