@@ -54,7 +54,6 @@ from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import MINIMUM_LENGTH
-from bluemira.geometry.error import GeometryError
 
 apiVertex = Part.Vertex  # noqa :N816
 apiVector = Base.Vector  # noqa :N816
@@ -1346,17 +1345,6 @@ def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWi
     result_wire:
         Resulting filleted or chamfered wire
     """
-    edges = wire.OrderedEdges
-    if len(edges) < 2:
-        raise GeometryError(
-            f"Cannot {'chamfer' if chamfer else 'fillet'} a wire with less than 2 edges!"
-        )
-
-    if not _wire_is_planar(wire):
-        raise GeometryError(
-            f"Cannot {'chamfer' if chamfer else 'fillet'} a non-planar wire!"
-        )
-
     # Temporarily suppress pesky print statement:
     # DraftGeomUtils.fillet: Warning: edges have same direction. Did nothing
     sys.stdout = open(os.devnull, "w")
