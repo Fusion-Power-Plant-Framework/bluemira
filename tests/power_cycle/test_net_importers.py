@@ -9,7 +9,6 @@ from bluemira.power_cycle.errors import (
     PumpingImporterError,
 )
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
-from bluemira.power_cycle.tools import validate_dict
 from tests.power_cycle.kits_for_tests import (
     NetImportersTestKit,
     assert_value_is_nonnegative,
@@ -55,7 +54,7 @@ class TestEquilibriaImporter:
         tested_class_error = self.tested_class_error
 
         phaseload_inputs = self.phaseload_inputs
-        phaseload_inputs_format = tested_class._phaseload_inputs
+        inputs_format = tested_class._phaseload_inputs_format
         possible_variable_map_fields = phaseload_inputs.keys()
         all_values = []
         for field in possible_variable_map_fields:
@@ -63,8 +62,9 @@ class TestEquilibriaImporter:
             for request in possible_data_requests:
                 variable_map_input = {field: request}
                 value = tested_class.phaseload_inputs(variable_map_input)
-                validated_value = validate_dict(value, phaseload_inputs_format)
-                all_values.append(validated_value)
+
+                assert value.allowed_format == inputs_format
+                all_values.append(value)
 
             wrong_variable_map = {field: "non-implemented_request"}
             with pytest.raises(tested_class_error):
