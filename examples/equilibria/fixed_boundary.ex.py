@@ -109,7 +109,7 @@ ff_prime = DoublePowerFunc([1.5, 2])
 
 
 # %% [markdown]
-# Set up the esolver and run it
+# Set up the solver and run it
 
 # %%
 
@@ -149,14 +149,10 @@ plt.show()
 solver.set_mesh(mesh)
 solver.solve()
 
-
-# %% [markdown]
-# Let's inspect the result
-
-
 # %% [markdown]
 # Save the result to a file
 
+# %%
 save_fixed_boundary_to_file(
     "my_fixed_boundary eqdsk.json",
     f"{datetime.now().strftime('%m/%d/%Y, %H:%M:%S')}",

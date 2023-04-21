@@ -92,7 +92,8 @@ delta_95 = 0.333  # 95th percentile flux surface triangularity
 q_95 = 3.25  # 95th percentile flux surface safety factor
 
 
-# # Fixed Boundary Equilibrium
+# %% [markdown]
+# Fixed Boundary Equilibrium
 # Setup the Plasma shape parameterisation variables. A Johner parameterisation is used.
 
 # %%
@@ -109,6 +110,7 @@ johner_parameterisation = JohnerLCFS(
 
 # %% [markdown]
 # Initialise the transport solver (in this case PLASMOD is used)
+#
 # Note: it is necessary to manually ensure consistency between transport solver
 # and plasma parameters (as for R_0, A, etc.). In particular, since PLASMOD
 # is using a symmetric plasma, delta and kappa are set up as the average of
