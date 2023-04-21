@@ -32,7 +32,7 @@ The documentation is divided into the following sections:
     Fuel cycle model <fuel_cycle/fuel_cycle>
     Geometry module <geometry/geometry>
     Mesh modules <mesh/mesh>
-    3-D magnetostatics <magnetostatics/magnetostatics>
+    Magnetostatics <magnetostatics/magnetostatics>
     Materials <materials/materials>
     Radiation transport solvers <radiation_transport/radiation_transport>
     Structural module <structural/structural>

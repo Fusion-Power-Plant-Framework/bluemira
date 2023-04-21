@@ -1,4 +1,4 @@
-magnetostatics
+Magnetostatics
 ==============
 
 A collection of analytical and semi-analytical calculation tools to evaluate magnetic
@@ -139,29 +139,30 @@ Finite element
 --------------
 
 The implementation of the magnetostatic Finite Element solver is limited to
-2D axially symmetric problems with null Dirichlet boundary conditions.
-The solver is thought as support for the fem fixed boundary module
-:py:mod:`bluemira.equilibria.fem_fixed_boundary`. In such an approximation,
-the Maxwell equations, as function of the poloidal magnetic flux (:math:`\\Psi`),
-are reduced to the form ([Zohm_2015]_, page 25):
+2D axially symmetric problems.
+In such an approximation, the Maxwell equations, as function of the poloidal
+magnetic flux (:math:`\Psi`), are reduced to the form ([Zohm_2015]_, page 25):
 
 .. math::
     :label: strong_form
 
-    r^2 \\nabla\\cdot\\left(\\frac{\\nabla\\Psi}{r^2}\\right) = 2
-    \\pi r \\mu_0 J_{\\Phi}
+    r^2 \nabla\cdot\left(\frac{\nabla\Psi}{r^2}\right) = 2
+    \pi r \mu_0 J_{\Phi}
 
-whose weak formulation is defined as ([Villone_2013]_):
+whose weak formulation, considering null Dirichlet boundary conditions,
+is defined as ([Villone_2013]_):
 
 .. math::
     :label: weak_form
 
-    \\int_{D_p} {\\frac{1}{r}}{\\nabla}{\\Psi}{\\cdot}{\\nabla} v \\,dr\\,dz = 2
-    \\pi \\mu_0 \\int_{D_p} J_{\\Phi} v \\,dr\\,dz
+    \int_{D_p} {\frac{1}{r}}{\nabla}{\Psi}{\cdot}{\nabla} v \,dr\,dz = 2
+    \pi \mu_0 \int_{D_p} J_{\Phi} v \,dr\,dz
 
 where :math:`v` is the basis element function of the defined functional subspace
 :math:`V`.
 
+.. literalinclude:: doc_fem_single_coil.py
+    :language: python
 
 .. rubric:: References
 
