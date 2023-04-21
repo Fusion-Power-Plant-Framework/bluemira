@@ -25,6 +25,7 @@
 import logging
 import sys
 from enum import Enum
+from typing import Iterable, Union
 
 from bluemira.base.error import LogsError
 
@@ -40,20 +41,21 @@ class LogLevel(Enum):
     NOTSET = 0
 
 
-def logger_setup(logfilename="bluemira.log", *, level="INFO"):
+def logger_setup(
+    logfilename: str = "bluemira.log", *, level: Union[str, int] = "INFO"
+) -> logging.Logger:
     """
     Create logger with two handlers.
 
     Parameters
     ----------
-    logfilename: str (default = bluemira.log)
-        Name of file to write logs to
-    level: str or int (default = INFO)
-        The initial logging level to be printed to the console.
+    logfilename
+        Name of file to write logs to, default = bluemira.log
+    level
+        The initial logging level to be printed to the console, default = INFO.
 
     Returns
     -------
-    logger: logging.RootLogger
         The logger to be used
 
     Notes
@@ -87,18 +89,22 @@ def logger_setup(logfilename="bluemira.log", *, level="INFO"):
     return bm_logger
 
 
-def set_log_level(verbose=1, increase=False, logger_names=["bluemira"]):
+def set_log_level(
+    verbose: Union[int, str] = 1,
+    increase: bool = False,
+    logger_names: Iterable[str] = ("bluemira"),
+):
     """
     Get new log level and check if it is possible.
 
     Parameters
     ----------
-    verbose: str or int (default = 1)
+    verbose
         Amount the severity level of the logger should be changed by or to
-    increase: bool (default = False)
+    increase
         Whether level should be increased by specified amount or changed to it
-    logger_names: List[str] (default = ["bluemira"])
-        The loggers for which to set the level
+    logger_names
+        The loggers for which to set the level, default = ("bluemira")
     """
     # change loggers level
     for logger_name in logger_names:
@@ -109,15 +115,15 @@ def set_log_level(verbose=1, increase=False, logger_names=["bluemira"]):
         _modify_handler(new_level, logger)
 
 
-def get_log_level(logger_name="bluemira", as_str=True):
+def get_log_level(logger_name: str = "bluemira", as_str: bool = True) -> Union[str, int]:
     """
     Return the current logging level.
 
     Parameters
     ----------
-    logger_name: str (default = "")
+    logger_name
         The named logger to get the level for.
-    as_str: bool (default = True)
+    as_str
         If True then return the logging level as a string, else as an int.
     """
     logger = logging.getLogger(logger_name)
@@ -133,20 +139,19 @@ def get_log_level(logger_name="bluemira", as_str=True):
         return max_level // 10
 
 
-def _convert_log_level(level, current_level=0):
+def _convert_log_level(level: Union[str, int], current_level: int = 0) -> LogLevel:
     """
     Convert the provided logging level to a LogLevel objects.
 
     Parameters
     ----------
-    level: str or int
+    level
         The bluemira logging level.
-    current_level: int
+    current_level
         The current bluemira logging level to increment from.
 
     Returns
     -------
-    new_level: LogLevel
         The LogLevel corresponding to the requested level.
     """
     try:
@@ -162,15 +167,15 @@ def _convert_log_level(level, current_level=0):
     return new_level
 
 
-def _modify_handler(new_level, logger):
+def _modify_handler(new_level: LogLevel, logger: logging.Logger):
     """
     Change level of the logger from user's input.
 
     Parameters
     ----------
-    new_level: LogLevel
+    new_level
         Severity level for handler to be changed to, from set_log_level
-    logger: logging.RootLogger
+    logger
         Logger to be used
     """
     for handler in logger.handlers or logger.parent.handlers:
@@ -184,11 +189,11 @@ class LoggingContext:
 
     Parameters
     ----------
-    level: str or int
+    level
         The bluemira logging level to set within the context.
     """
 
-    def __init__(self, level):
+    def __init__(self, level: Union[str, int]):
         self.level = level
         self.original_level = get_log_level()
 

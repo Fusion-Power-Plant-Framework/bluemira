@@ -30,6 +30,7 @@ import shutil
 import subprocess  # noqa :S404
 from getpass import getuser
 from textwrap import dedent, wrap
+from typing import Callable, Dict, List, Optional
 
 from bluemira import __version__
 from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
@@ -55,18 +56,17 @@ except FileNotFoundError:
 # =============================================================================
 
 
-def get_git_version(directory):
+def get_git_version(directory: str) -> str:
     """
     Get the version string of the current git branch, e.g.: '0.0.3-74-g70d48be'.
 
     Parameters
     ----------
-    directory: str
+    directory
         The full path directory of the folder to get git information from
 
     Returns
     -------
-    vinfo: bytes
         The git version bytestring
     """
     return subprocess.check_output(  # noqa :S603, S607
@@ -74,18 +74,17 @@ def get_git_version(directory):
     ).strip()
 
 
-def get_git_branch(directory):
+def get_git_branch(directory: str) -> str:
     """
     Get the name of the current git branch, e.g. 'develop'.
 
     Parameters
     ----------
-    directory: str
+    directory
         The full path directory of the folder to get git information from
 
     Returns
     -------
-    branch: str
         The git branch string
     """
     out = subprocess.check_output(  # noqa :S603, S607
@@ -94,20 +93,19 @@ def get_git_branch(directory):
     return out.strip().decode("utf-8")
 
 
-def get_git_files(directory, branch):
+def get_git_files(directory: str, branch: str) -> List[str]:
     """
     Get the names of the files in the directory of the specified branch name.
 
     Parameters
     ----------
-    directory: str
+    directory
         The full path directory of the folder to get git information from
-    branch: str
+    branch
         The name of the git branch to retrieve the filenames from
 
     Returns
     -------
-    files: List[str]
         The list of git-controlled path strings
     """
     return (
@@ -119,41 +117,39 @@ def get_git_files(directory, branch):
     )
 
 
-def get_platform():
+def get_platform() -> str:
     """
     Get the OS platform.
 
     Returns
     -------
-    platform: str
         The generic name of the platform (e.g. Linux, Windows)
     """
     return platform.uname()[0]
 
 
 def count_slocs(
-    directory,
-    branch,
-    exts=None,
-    ignore=None,
-):
+    directory: str,
+    branch: str,
+    exts: Optional[List[str]] = None,
+    ignore: Optional[List[str]] = None,
+) -> Dict:
     """
     Counts lines of code within a given directory for a given git branch
 
     Parameters
     ----------
-    directory: str
+    directory
         The full path directory of the folder to get git information from
-    branch: str
+    branch
         The git branch string
-    exts: list
+    exts
         The list of file extensions to search the directory for
-    ignore: list
+    ignore
         The list of extensions and filenames to ignore
 
     Returns
     -------
-    lines: dict
         The dictionary of number of lines of code per file extension, and the
         total linecount
     """
@@ -192,39 +188,37 @@ def count_slocs(
 # =============================================================================
 
 
-def _print_color(string, color):
+def _print_color(string: str, color: str) -> str:
     """
     Create text to print. NOTE: Does not call print command
 
     Parameters
     ----------
-    string: str
+    string
         The text to colour
-    color: str
+    color
         The color to make the color-string for
 
     Returns
     -------
-    color_text: str
         The string with ANSI color decoration
     """
     return f"{ANSI_COLOR[color]}{string}{EXIT_COLOR}"
 
 
-def _bm_print(string, width=73):
+def _bm_print(string: str, width: int = 73):
     """
     Create the text string for boxed text to print to the console.
 
     Parameters
     ----------
-    string: str
+    string
         The string of text to colour and box
-    width: int (default = 73)
-        The width of the box (leave this alone for best results)
+    width
+        The width of the box, default = 73 (leave this alone for best results)
 
     Returns
     -------
-    ss: str
         The text string of the boxed text
     """
     strings = [
@@ -243,77 +237,76 @@ def _bm_print(string, width=73):
     return h + "\n" + "\n".join(lines) + "\n" + h
 
 
-def colourise(string, width=73, color="blue"):
+def colourise(string: str, width: int = 73, color: str = "blue") -> str:
     """
     Print coloured, boxed text to the console. Default template for bluemira
     information.
 
     Parameters
     ----------
-    string: str
+    string
         The string of text to colour and box
-    width: int (default = 73)
-        The width of the box (leave this alone for best results)
-    color: str from bluemira.base.constants.ANSI_COLOR
-        The color to print the text in
+    width
+        The width of the box, default = 73 (leave this alone for best results)
+    color
+        The color to print the text in from `bluemira.base.constants.ANSI_COLOR`
     """
     text = _bm_print(string, width=width)
     color_text = _print_color(text, color)
     return color_text
 
 
-def bluemira_critical(string):
+def bluemira_critical(string: str):
     """
     Standard template for bluemira critical errors.
     """
     return LOGGER.critical(colourise(f"CRITICAL: {string}", color="darkred"))
 
 
-def bluemira_error(string):
+def bluemira_error(string: str):
     """
     Standard template for bluemira errors.
     """
     return LOGGER.error(colourise(f"ERROR: {string}", color="red"))
 
 
-def bluemira_warn(string):
+def bluemira_warn(string: str):
     """
     Standard template for bluemira warnings.
     """
     return LOGGER.warning(colourise(f"WARNING: {string}", color="orange"))
 
 
-def bluemira_print(string):
+def bluemira_print(string: str):
     """
     Standard template for bluemira information messages.
     """
     return LOGGER.info(colourise(string, color="blue"))
 
 
-def bluemira_debug(string):
+def bluemira_debug(string: str):
     """
     Standard template for bluemira debugging.
     """
     return LOGGER.debug(colourise(string, color="green"))
 
 
-def _bm_print_singleflush(string, width=73, color="blue"):
+def _bm_print_singleflush(string: str, width: int = 73, color: str = "blue"):
     """
     Create the text string for coloured, boxed text to flush print to the
     console.
 
     Parameters
     ----------
-    string: str
+    string
         The string of text to colour and box
-    width: int (default = 73)
-        The width of the box (leave this alone for best results)
-    color: str from ['blue', 'red', 'green']
-        The color to print the text in
+    width
+        The width of the box, default = 73 (leave this alone for best results)
+    color
+        The color to print the text in, one of ['blue', 'red', 'green']
 
     Returns
     -------
-    ss: str
         The text string of the boxed coloured text to flush print
     """
     a = width - len(string) - 2
@@ -321,31 +314,31 @@ def _bm_print_singleflush(string, width=73, color="blue"):
     return _print_color(text, color)
 
 
-def _bluemira_clean_flush(string, func=LOGGER.info):
+def _bluemira_clean_flush(string, func: Callable[[str], None] = LOGGER.info):
     """
     Print and flush string. Useful for updating information.
 
     Parameters
     ----------
-    func: Callable[[str], None]
-        The function to use for logging, by default LOGGER.info
-    string: str
+    string
         The string to colour flush print
+    func
+        The function to use for logging, by default LOGGER.info
     """
     _terminator_handler(func, "\r" + string, fhterm=logging.StreamHandler.terminator)
 
 
-def _terminator_handler(func, string, *, fhterm=""):
+def _terminator_handler(func: Callable[[str], None], string: str, *, fhterm: str = ""):
     """
     Log string allowing modification to handler terminator
 
     Parameters
     ----------
-    func: Callable[[str], None]
+    func
         The function to use for logging (e.g LOGGER.info)
-    string: str
+    string
         The string to colour flush print
-    fhterm: str
+    fhterm
         FileHandler Terminator
     """
     original_terminator = logging.StreamHandler.terminator
@@ -358,27 +351,27 @@ def _terminator_handler(func, string, *, fhterm=""):
         logging.FileHandler.terminator = original_terminator
 
 
-def bluemira_print_flush(string):
+def bluemira_print_flush(string: str):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
     updating information.
 
     Parameters
     ----------
-    string: str
+    string
         The string to colour flush print
     """
     _bluemira_clean_flush(_bm_print_singleflush(string), func=LOGGER.info)
 
 
-def bluemira_debug_flush(string):
+def bluemira_debug_flush(string: str):
     """
     Print a coloured, boxed line to the console and flushes it. Useful for
     updating information when running at the debug logging level.
 
     Parameters
     ----------
-    string: str
+    string
         The string to colour flush print for debug messages.
     """
     _bluemira_clean_flush(
@@ -386,27 +379,27 @@ def bluemira_debug_flush(string):
     )
 
 
-def bluemira_print_clean(string):
+def bluemira_print_clean(string: str):
     """
     Print to the logging info console with no modification.
     Useful for external programs
 
     Parameters
     ----------
-    string: str
+    string
         The string to print
     """
     _terminator_handler(LOGGER.info, string)
 
 
-def bluemira_error_clean(string):
+def bluemira_error_clean(string: str):
     """
     Print to the logging error console, colouring the output red.
     No other modification is made. Useful for external programs
 
     Parameters
     ----------
-    string: str
+    string
         The string to colour print
     """
     _terminator_handler(LOGGER.error, _print_color(string, "red"))
@@ -437,13 +430,12 @@ def print_banner():
     bluemira_print("\n".join(v))
 
 
-def version_banner():
+def version_banner() -> List[str]:
     """
     Get the string for the version banner.
 
     Returns
     -------
-    output: List[str]
         The list of strings of text describing the version and code information
     """
     mapping = {
@@ -469,13 +461,12 @@ def version_banner():
     return output
 
 
-def user_banner():
+def user_banner() -> List[str]:
     """
     Get user and platform info and create text to print to banner.
 
     Returns
     -------
-    s: str
         The text for the banner containing user and platform information
     """
     return [

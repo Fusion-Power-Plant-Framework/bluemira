@@ -3,7 +3,7 @@
 import json
 import pprint
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple, Type, TypeVar, Union
+from typing import Dict, Iterable, Optional, Tuple, Type, TypeVar, Union
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_warn
@@ -105,18 +105,14 @@ class ReactorConfig:
 
         self.config_data = ReactorConfig._read_or_return(config_path)
 
-        if global_params_path is None:
-            self.global_params = make_parameter_frame(
-                self.config_data.get(_PARAMETERS_KEY, {}),
-                global_params_type,
-            )
-        else:
-            self.global_params: _PfT = make_parameter_frame(
-                ReactorConfig._read_or_return(
-                    global_params_path,
-                ),
-                global_params_type,
-            )
+        self.global_params = make_parameter_frame(
+            self.config_data.get(_PARAMETERS_KEY, {})
+            if global_params_path is None
+            else ReactorConfig._read_or_return(
+                global_params_path,
+            ),
+            global_params_type,
+        )
 
         if not self.global_params:
             bluemira_warn("Empty global params")
@@ -137,7 +133,7 @@ class ReactorConfig:
 
         Parameters
         ----------
-        component_name: str
+        component_name
             The component name, must match a key in the config
         *args
             Optionally, specify the keys of nested attributes.
@@ -150,7 +146,6 @@ class ReactorConfig:
 
         Returns
         -------
-        ConfigParams
             Holds the global_params (from `self.global_params`)
             and the extracted local_params.
 
@@ -182,7 +177,7 @@ class ReactorConfig:
 
         Parameters
         ----------
-        component_name: str
+        component_name
             The component name, must match a key in the config
         *args
             Optionally, specify the keys of nested attributes.
@@ -194,7 +189,6 @@ class ReactorConfig:
 
         Returns
         -------
-        dict
             The extracted config.
         """
         args = (component_name,) + args
@@ -235,7 +229,7 @@ class ReactorConfig:
                 f"'{shared_key}' in {arg} wil be overwritten with {existing_value}"
             )
 
-    def _check_args_are_strings(self, args):
+    def _check_args_are_strings(self, args: Iterable[str]):
         for a in args:
             if not isinstance(a, str):
                 raise ReactorConfigError("args must be strings")

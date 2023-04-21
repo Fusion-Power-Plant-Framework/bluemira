@@ -31,7 +31,7 @@ class BluemiraError(Exception):
     Base exception class. Sub-class from this for module level Errors.
     """
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Prettier handling of the Exception strings
         """

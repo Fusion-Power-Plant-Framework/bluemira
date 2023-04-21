@@ -383,7 +383,7 @@ def units_compatible(unit_1: str, unit_2: str) -> bool:
 
 
 def raw_uc(
-    value: Union[float, np.ndarray],
+    value: Union[float, np.ndarray, List[float]],
     unit_from: Union[str, ureg.Unit],
     unit_to: Union[str, ureg.Unit],
 ) -> Union[float, np.ndarray]:
@@ -457,21 +457,20 @@ def gas_flow_uc(
 
 
 def to_celsius(
-    temp: Union[float, np.array, List[float]], unit: Union[str, Unit] = ureg.kelvin
-) -> Union[float, np.array]:
+    temp: Union[float, np.ndarray, List[float]], unit: Union[str, Unit] = ureg.kelvin
+) -> Union[float, np.ndarray]:
     """
     Convert a temperature in Kelvin to Celsius.
 
     Parameters
     ----------
-    temp: Union[float, np.array, List[float]]
+    temp
         The temperature to convert, default [K]
-    unit: Union[str, Unit]
+    unit
         change the unit of the incoming value
 
     Returns
     -------
-    temp_in_celsius: Union[float, np.array]
         The temperature [°C]
     """
     converted_val = raw_uc(temp, unit, ureg.celsius)
@@ -480,22 +479,21 @@ def to_celsius(
 
 
 def to_kelvin(
-    temp: Union[float, np.array, List[float]], unit: Union[str, Unit] = ureg.celsius
-) -> Union[float, np.array]:
+    temp: Union[float, np.ndarray, List[float]], unit: Union[str, Unit] = ureg.celsius
+) -> Union[float, np.ndarray]:
     """
     Convert a temperature in Celsius to Kelvin.
 
     Parameters
     ----------
-    temp: Union[float, np.array, List[float]]
+    temp
         The temperature to convert, default [°C]
-    unit: Union[str, Unit]
+    unit
         change the unit of the incoming value
 
 
     Returns
     -------
-    temp_in_kelvin: Union[float, np.array]
         The temperature [K]
     """
     converted_val = raw_uc(temp, unit, ureg.kelvin)
@@ -528,7 +526,9 @@ def _temp_check(unit: Unit, val: Union[float, int, complex, Quantity]):
         raise ValueError("Negative temperature in K specified.")
 
 
-def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+def kgm3_to_gcm3(
+    density: Union[float, np.ndarray, List[float]]
+) -> Union[float, np.ndarray]:
     """
     Convert a density in kg/m3 to g/cm3
 
@@ -545,7 +545,9 @@ def kgm3_to_gcm3(density: Union[float, np.array, List[float]]) -> Union[float, n
     return raw_uc(density, "kg.m^-3", "g.cm^-3")
 
 
-def gcm3_to_kgm3(density: Union[float, np.array, List[float]]) -> Union[float, np.array]:
+def gcm3_to_kgm3(
+    density: Union[float, np.ndarray, List[float]]
+) -> Union[float, np.ndarray]:
     """
     Convert a density in g/cm3 to kg/m3
 
