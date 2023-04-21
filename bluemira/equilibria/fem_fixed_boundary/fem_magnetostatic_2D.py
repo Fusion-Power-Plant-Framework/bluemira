@@ -155,7 +155,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             self._psi_b = 0.0
         return self._psi_b
 
-    def grad_psi(self, point):
+    def grad_psi(self, point: np.ndarray) -> np.ndarray:
         """
         Calculate the gradients of psi at a point
         """
