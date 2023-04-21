@@ -7,7 +7,9 @@ import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.power_cycle.tools import (
+    FormattedABC,
     FormattedDict,
+    FormattedLibrary,
     adjust_2d_graph_ranges,
     build_dict_from_format,
     convert_string_into_numeric_list,
@@ -360,73 +362,20 @@ class TestPlottingTools:
         plt.close("all")
 
 
-class TestFormattedDict:
-    tested_class = FormattedDict
+class TestFormattedABC:
+    tested_class = FormattedABC
 
     def setup_method(self):
-        self.right_format_input = {
-            "key_1": str,
-            "key_2": list,
-            "key_3": [int, float],
-            "key_4": [None, bool],
-            "key_5": dict,
-        }
-        self.wrong_format_input = {
-            "key_1": "str",
-            "key_2": [[int, float], [str, bool]],
-            "key_3": 1.2,
-            "key_4": True,
-            "key_5": self.right_format_input,
-        }
-
-        self.right_index = [
-            0,
-            0,
-            1,
-            1,
-            0,
-        ]
-
-        non_int = 1.2
-        out_of_range = 10
-        self.wrong_index = [
-            0,
-            0,
-            non_int,
-            out_of_range,
-            0,
-        ]
-
-    def build_format(self):
-        return self.tested_class.Format(self.right_format_input)
-
-    def build_default_empty_instance(self):
-        """
-        Build empty 'FormattedDict' without specifying 'format_index'.
-        """
-        right_format = self.build_format()
-        return self.tested_class(right_format)
-
-    def build_indexed_empty_instance(self):
-        """
-        Build empty 'FormattedDict' and specify 'format_index'.
-        """
-        right_format = self.build_format()
-        return self.tested_class(right_format, format_index=self.right_index)
-
-    def build_full_instance(self):
-        """
-        Build 'FormattedDict' by converting an existing 'dict'.
-        """
-        right_format = self.build_format()
-        dict_for_conversion = self.wrong_format_input
-        return self.tested_class(right_format, dictionary=dict_for_conversion)
+        (
+            self.right_format_input,
+            self.wrong_format_input,
+        ) = tools_testkit.inputs_for_format()
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
-    def test_validate_list_of_types(self):
+    def test_Format_validate_list_of_types(self):
         tested_method = self.tested_class.Format._validate_list_of_types
         input_zip = zip(
             self.right_format_input.values(),
@@ -441,7 +390,7 @@ class TestFormattedDict:
                 validated_value = tested_method(wrong_value)
 
     def test_Format_constructor(self):
-        right_format = self.build_format()
+        right_format = self.tested_class.Format(self.right_format_input)
         assert isinstance(right_format, self.tested_class.Format)
 
         for key, value in right_format.items():
@@ -458,18 +407,68 @@ class TestFormattedDict:
         with pytest.raises(TypeError):
             wrong_format = self.tested_class.Format(self.wrong_format_input)
 
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    def test_display(self):
+        assert callable(self.tested_class.display)
+
+
+class TestFormattedDict:
+    tested_class = FormattedDict
+
+    def setup_method(self):
+        (
+            self.example_format,
+            self.example_dict,
+            self.right_index_input,
+            self.wrong_index_input,
+        ) = tools_testkit.inputs_for_formatteddict()
+
+    def build_format(self):
+        return self.tested_class.Format(self.right_format_input)
+
+    def build_default_empty_instance(self):
+        """
+        Build empty 'FormattedDict' without specifying 'format_index'.
+        """
+        return self.tested_class(self.example_format)
+
+    def build_indexed_empty_instance(self):
+        """
+        Build empty 'FormattedDict' and specify 'format_index'.
+        """
+        return self.tested_class(
+            self.example_format,
+            format_index=self.right_index_input,
+        )
+
+    def build_full_instance(self):
+        """
+        Build 'FormattedDict' by converting an existing 'dict'.
+        """
+        return self.tested_class(
+            self.example_format,
+            dictionary=self.example_dict,
+        )
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
     def test_validate_index(self):
         default_sample = self.build_default_empty_instance()
-        right_index = default_sample._validate_index(self.right_index)
-        assert right_index == self.right_index
+        right_index = default_sample._validate_index(self.right_index_input)
+        assert right_index == self.right_index_input
         assert all(isinstance(e, int) for e in right_index)
 
-        short_index = self.right_index[:-1]
-        long_index = self.right_index + [self.right_index[-1]]
+        short_index = self.right_index_input[:-1]
+        long_index = self.right_index_input + [self.right_index_input[-1]]
         with pytest.raises((TypeError, ValueError)):
             short_index = default_sample._validate_index(short_index)
             long_index = default_sample._validate_index(long_index)
-            wrong_index = default_sample._validate_index(self.wrong_index)
+            wrong_index = default_sample._validate_index(self.wrong_index_input)
 
     def test_empty(self):
         default_sample = self.build_default_empty_instance()
@@ -489,7 +488,7 @@ class TestFormattedDict:
             assert key in allowed_keys
 
             valid_types = indexed_sample.allowed_format[key]
-            chosen_index = self.right_index[n]
+            chosen_index = self.right_index_input[n]
             assert isinstance(value, valid_types[chosen_index])
 
     def test_constructor(self):
@@ -501,3 +500,58 @@ class TestFormattedDict:
 
             valid_types = tuple(sample.allowed_format[key])
             assert isinstance(value, valid_types)
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    def test_setitem(self):
+        sample = self.build_full_instance()
+        assert callable(sample.__setitem__)
+
+
+class TestFormattedLibrary:
+    tested_class = FormattedLibrary
+
+    def setup_method(self):
+        (
+            self.example_format,
+            self.example_dict,
+            self.example_keys_for_library,
+        ) = tools_testkit.inputs_for_formattedlibrary()
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    def test_empty(self):
+        empty_sample = self.tested_class(self.example_format)
+        assert empty_sample.allowed_format == self.example_format
+
+        assert isinstance(empty_sample, self.tested_class)
+        assert len(empty_sample) == 0
+
+    def test_constructor(self):
+        library_input = dict()
+        for key in self.example_keys_for_library:
+            library_input[key] = self.example_dict
+
+        full_sample = self.tested_class(
+            self.example_format,
+            dictionary=library_input,
+        )
+        assert full_sample.allowed_format == self.example_format
+
+        assert isinstance(full_sample, self.tested_class)
+        assert len(full_sample) == len(self.example_keys_for_library)
+
+        for key, value in full_sample.items():
+            assert key in self.example_keys_for_library
+            assert isinstance(value, FormattedDict)
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    def test_setitem(self):
+        assert callable(self.tested_class.__setitem__)

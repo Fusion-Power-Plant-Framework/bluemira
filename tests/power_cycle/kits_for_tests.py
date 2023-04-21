@@ -10,6 +10,8 @@ import bluemira.base.constants as constants
 from bluemira.power_cycle.net.loads import LoadData, LoadModel, PhaseLoad, PowerLoad
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse, ScenarioBuilder
 from bluemira.power_cycle.tools import (
+    FormattedABC,
+    FormattedDict,
     read_json,
     unnest_list,
     validate_axes,
@@ -122,6 +124,101 @@ class ToolsTestKit:
             subdictionaries_example[current_key] = dictionary_example
 
         return format_example, dictionary_example, subdictionaries_example
+
+    def inputs_for_format(self):
+        """
+        Function to create inputs for Format testing.
+        """
+        right_format_input = {
+            "key_1": str,
+            "key_2": list,
+            "key_3": [int, float],
+            "key_4": [None, bool],
+            "key_5": dict,
+        }
+        wrong_format_input = {
+            "key_1": "str",
+            "key_2": [[int, float], [str, bool]],
+            "key_3": 1.2,
+            "key_4": True,
+            "key_5": copy.deepcopy(right_format_input),
+        }
+        return (
+            right_format_input,
+            wrong_format_input,
+        )
+
+    def _format_index_inputs(self):
+        right_index_input = [
+            0,
+            0,
+            1,
+            1,
+            0,
+        ]
+
+        non_int = 1.2
+        out_of_range = 10
+        wrong_index_input = [
+            0,
+            0,
+            non_int,
+            out_of_range,
+            0,
+        ]
+
+        return (
+            right_index_input,
+            wrong_index_input,
+        )
+
+    def inputs_for_formatteddict(self):
+        """
+        Function to create inputs for FormattedDict testing.
+        """
+
+        (
+            right_format_input,
+            wrong_format_input,
+        ) = self.inputs_for_format()
+        example_format = FormattedABC.Format(right_format_input)
+        example_dict = wrong_format_input
+
+        (
+            right_index_input,
+            wrong_index_input,
+        ) = self._format_index_inputs()
+
+        return (
+            example_format,
+            example_dict,
+            right_index_input,
+            wrong_index_input,
+        )
+
+    def inputs_for_formattedlibrary(self):
+        """
+        Function to create inputs for FormattedLibrary testing.
+        """
+        (
+            example_format,
+            example_dict,
+            _,
+            _,
+        ) = self.inputs_for_formatteddict()
+
+        example_keys_for_library = [
+            "case_1",
+            "case_2",
+            "case_3",
+            "case_4",
+        ]
+
+        return (
+            example_format,
+            example_dict,
+            example_keys_for_library,
+        )
 
 
 class TimeTestKit:
