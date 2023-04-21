@@ -218,6 +218,7 @@ def solve_transport_fixed_boundary(
     lcar_mesh: float = 0.15,
     max_iter: int = 30,
     iter_err_max: float = 1e-5,
+    max_inner_iter: int = 20,
     inner_iter_err_max: float = 1e-4,
     relaxation: float = 0.2,
     transport_run_mode: Union[str, RunMode] = "run",
@@ -253,6 +254,8 @@ def solve_transport_fixed_boundary(
         Maximum number of iteration between Grad-Shafranov and the transport solver
     iter_err_max:
         Convergence maximum error to stop the iteration
+    max_inner_iter:
+        Maximum number of inner iterations on the flux functions
     inner_iter_err_max:
         Inner convergence error on when iterating flux functions
     relaxation:
@@ -305,8 +308,6 @@ def solve_transport_fixed_boundary(
     folder = try_get_bluemira_path("", subfolder="generated_data", allow_missing=False)
     figname = "Transport iteration "
     f, ax = None, None
-
-    max_iter_inner = 20
 
     for n_iter in range(max_iter):
         transp_out_params, x, pprime, ffprime = _run_transport_solver(
@@ -515,10 +516,7 @@ def calc_metric_coefficients(
         psi_norm_1D = np.insert(psi_norm_1D, 0, 0)
     nx = psi_norm_1D.size
 
-    g1 = np.zeros(nx)
-    g2 = np.zeros(nx)
-    g3 = np.zeros(nx)
-    volume = np.zeros(nx)
+    g1, g2, g3, volume = np.zeros((4, nx))
     volume[1:] = [fs.volume for fs in flux_surfaces]
 
     volume_func = interp1d(psi_norm_1D, volume, fill_value="extrapolate")

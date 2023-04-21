@@ -213,6 +213,7 @@ equilibrium = solve_transport_fixed_boundary(
     lcar_mesh=0.2,  # Best to not go lower than this!
     max_iter=15,
     iter_err_max=1e-3,
+    max_inner_iter=20,
     inner_iter_err_max=1e-3,
     relaxation=0.0,
     plot=False,
