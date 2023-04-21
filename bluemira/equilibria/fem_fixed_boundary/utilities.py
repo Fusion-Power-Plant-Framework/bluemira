@@ -499,8 +499,23 @@ def _interpolate_profile(
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
 
 
-def cell_distance(cell, refine_point, distance):
-    """Find the cells that are located in the vicinity of a point"""
+def _cell_near_point(cell: dolfin.Cell, refine_point: Iterable, distance: float) -> bool:
+    """
+    Determine whether or not a cell is in the vicinity of a point.
+
+    Parameters
+    ----------
+    cell:
+        Cell to check for vicintiy to a point
+    refine_point:
+        Point from which to determine vicinity to a cell
+    distance:
+        Distance away from the midpoint of the cell to determine vicinity
+    Returns
+    -------
+    bool:
+        Whether or not the cell is in the vicinity of a point
+    """
     # Get the center of the cell
     cell_center = cell.midpoint()[:]
 
@@ -514,13 +529,33 @@ def cell_distance(cell, refine_point, distance):
         return False
 
 
-def refine_mesh(mesh, refine_point, distance, num_levels=1):
-    """Refine the mesh around a reference point"""
-    for level in range(num_levels):
+def refine_mesh(
+    mesh: dolfin.Mesh, refine_point: Iterable, distance: float, num_levels: int = 1
+) -> dolfin.Mesh:
+    """
+    Refine the mesh around a reference point.
+
+    Parameters
+    ----------
+    mesh:
+        Mesh to refine
+    refine_point: Iterable
+        Point at which to refine the mesh
+    distance: float
+        Refinement distance from the point
+    num_levels: int
+        Number of refinement levels
+
+    Returns
+    -------
+    mesh:
+        Refined mesh
+    """
+    for _ in range(num_levels):
         cell_markers = dolfin.MeshFunction("bool", mesh, mesh.topology().dim())
         cell_markers.set_all(False)
         for cell in dolfin.cells(mesh):
-            if cell_distance(cell, refine_point, distance):
+            if _cell_near_point(cell, refine_point, distance):
                 cell_markers[cell.index()] = True
         mesh = dolfin.refine(mesh, cell_markers)
 
