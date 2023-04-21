@@ -62,7 +62,6 @@ E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
 def upstream_temperature(
     b_pol: float,
     b_tot: float,
-    lfs_p_fraction: float,
     lambda_q_near: float,
     p_sol: float,
     eq: Equilibrium,
@@ -70,7 +69,6 @@ def upstream_temperature(
     z_mp: float,
     k_0: float,
     firstwall_geom: Grid,
-    lfs=True,
     connection_length=None,
 ):
     """
@@ -84,8 +82,6 @@ def upstream_temperature(
         Poloidal magnetic field at the midplane [T]
     b_tot: float
         Total magnetic field at the midplane [T]
-    lfs_p_fraction: float
-        Power fraction exiting from the outboard midplane
     lambda_q_near: float
         Power decay length in the near SOL [m]
     p_sol: float
@@ -112,8 +108,7 @@ def upstream_temperature(
     a_par = 4 * np.pi * r_sep_mp * lambda_q_near * (b_pol / b_tot)
 
     # upstream power density
-    p_fraction = lfs_p_fraction if lfs else 1 - lfs_p_fraction
-    q_u = (p_fraction * p_sol) / a_par
+    q_u = p_sol / a_par
 
     # connection length from the midplane to the target
     if connection_length is None:
@@ -136,7 +131,6 @@ def upstream_temperature(
 def target_temperature(
     p_sol: float,
     t_u: float,
-    lfs_p_fraction: float,
     n_u: float,
     gamma: float,
     eps_cool: float,
@@ -148,7 +142,6 @@ def target_temperature(
     r_tar: float,
     lambda_q_near: float,
     b_tot_tar: float,
-    lfs=True,
 ):
     """
     Calculate the target as suggested from the 2PM.
@@ -162,8 +155,6 @@ def target_temperature(
         Total power entering the SOL [W]
     t_u: float
         Upstream temperature. Unit [eV]
-    lfs_p_fraction: float
-        lfs fraction of power entering the SOL
     n_u: float
         Electron density at the upstream [1/m^3]
     gamma: float
@@ -208,11 +199,8 @@ def target_temperature(
     # parallel cross section
     a_par = a_wet * (b_pol_tar / b_tot_tar)
 
-    # Either inboard or outboard power
-    p_fraction = lfs_p_fraction if lfs else 1 - lfs_p_fraction
-
     # parallel power flux density
-    q_u = p_sol * p_fraction / a_par
+    q_u = p_sol / a_par
 
     # ion mass in kg (it should be DT = 2.5*amu)
     m_i_amu = constants.D_MOLAR_MASS
@@ -221,9 +209,10 @@ def target_temperature(
     # converting upstream temperature
     # upstream electron density - no fifference hfs/lfs?
     # Numerator and denominator of the upstream forcing function
+    #print(q_u)
     num_f = m_i_kg * 4 * (q_u**2)
     den_f = 2 * E_CHARGE * (gamma**2) * (E_CHARGE**2) * (n_u**2) * (t_u**2)
-
+    #print(num_f, den_f)
     # forcing function
     f_ev = num_f / den_f
 
@@ -231,6 +220,7 @@ def target_temperature(
     t_crit = eps_cool / gamma
 
     # Finding roots of the target temperature quadratic equation
+    #print(eps_cool, gamma, f_ev)
     coeff_2 = 2 * (eps_cool / gamma) - f_ev
     coeff_3 = (eps_cool**2) / (gamma**2)
     coeff = [1, coeff_2, coeff_3]
@@ -240,6 +230,7 @@ def target_temperature(
         t_tar = f_ion_t
     else:
         # Excluding unstable solution
+        #print(roots)
         sol_i = np.where(roots > t_crit)[0][0]
 
         # Target temperature
@@ -264,11 +255,9 @@ def random_point_temperature(
     t_u: float,
     p_sol: float,
     lambda_q_near: float,
-    lfs_p_fraction: float,
     eq: Equilibrium,
     r_sep_mp: float,
     z_mp: float,
-    o_pt_z: float,
     k_0: float,
     firstwall_geom: Grid,
     lfs=True,
@@ -289,16 +278,12 @@ def random_point_temperature(
         Total power entering the SOL [W]
     lambda_q_near: float
         Power decay length in the near SOL at the midplane [m]
-    lfs_p_fraction: float
-        lfs fraction of power entering the SOL
     eq: Equilibrium
         Equilibrium in which to calculate the point temperature
     r_sep_omp: float
         Upstream location radial coordinate [m]
     z_mp: float
         Upstream location z coordinate [m]
-    o_pt_z: float
-        Magnetic axis height [m]
     k_0: float
         Material's conductivity
     firstwall_geom: grid
@@ -325,11 +310,8 @@ def random_point_temperature(
     # parallel cross section
     a_par = (4 * np.pi * x_p * lambda_q_local) * (b_pol_p / b_tot)
 
-    # Either inboard or outboard power
-    p_fraction = lfs_p_fraction if lfs else 1 - lfs_p_fraction
-
     # parallel power flux density
-    q_par = p_sol * p_fraction / a_par
+    q_par = p_sol / a_par
 
     # Distinction between lfs and hfs
     if lfs:
@@ -339,9 +321,9 @@ def random_point_temperature(
 
     # Distance between the chosen point and the the target
     if lfs:
-        forward = False
-    else:
         forward = True
+    else:
+        forward = False
     l_p = calculate_connection_length_flt(
         eq,
         x_p + (d * f_exp),
@@ -360,12 +342,10 @@ def random_point_temperature(
         )
     else:
         l_tot = connection_length
-
     # connection length from mp to p point
     s_p = l_tot - l_p
     if round(abs(z_p)) == 0:
         s_p = 0
-
     # Local temperature
     t_p = ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
 
@@ -801,17 +781,20 @@ def pfr_filter(separatrix: Grid, x_point_z: float):
         fact = 1
     else:
         fact = -1
-
+    
+    if isinstance(separatrix, Coordinates):
+            separatrix = [separatrix]
     # Selecting points between null and targets (avoiding the x-point singularity)
     z_ind = [
         np.where((halves.z * fact) < (x_point_z * fact - 0.01)) for halves in separatrix
     ]
     domains_x = [halves.x[list_ind] for list_ind, halves in zip(z_ind, separatrix)]
     domains_z = [halves.z[list_ind] for list_ind, halves in zip(z_ind, separatrix)]
-
-    # Closing the domain
-    domains_x[1] = np.append(domains_x[1], domains_x[0][0])
-    domains_z[1] = np.append(domains_z[1], domains_z[0][0])
+    
+    if len(domains_x) !=1:
+        # Closing the domain
+        domains_x[1] = np.append(domains_x[1], domains_x[0][0])
+        domains_z[1] = np.append(domains_z[1], domains_z[0][0])
 
     return np.concatenate(domains_x), np.concatenate(domains_z)
 
@@ -1041,14 +1024,19 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
     return wall_detectors
 
 
-def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_title):
+def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_title, fw_shape):
     """
     To plot the radiation on the wall as MW/m^2
     """
-    min_r = 1
-    max_r = 7
-    min_z = -9
-    max_z = 9
+    #min_r = 5.5
+    #max_r = 12.5
+    #min_z = -7
+    #max_z = 5
+
+    min_r = min(fw_shape.x)
+    max_r = max(fw_shape.x)
+    min_z = min(fw_shape.z)
+    max_z = max(fw_shape.z)
 
     t_r, _, t_z, t_samples = sample3d(
         radiation_function, (min_r, max_r, 500), (0, 0, 1), (min_z, max_z, 1000)
@@ -1168,7 +1156,7 @@ class Radiation:
             self.points["x_point"]["z_low"] = x_point[1][1]
             self.points["x_point"]["z_up"] = x_point[0][1]
 
-    def collect_separatrix_parameters(self, outboard=True):
+    def collect_separatrix_parameters(self):
         """
         Radiation source relevant parameters at the separatrix
         """
@@ -1179,7 +1167,10 @@ class Radiation:
             self.sep_lfs = self.separatrix[0]
             self.sep_hfs = self.separatrix[1]
         else:
-            self.sep_lfs = self.separatrix
+            ob_ind = np.where(self.separatrix.x > self.points["x_point"]["x"])
+            ib_ind = np.where(self.separatrix.x < self.points["x_point"]["x"])
+            self.sep_ob = Coordinates({"x": self.separatrix.x[ob_ind], "z": self.separatrix.z[ob_ind]})
+            self.sep_ib = Coordinates({"x": self.separatrix.x[ib_ind], "z": self.separatrix.z[ib_ind]})
 
         # The mid-plane radii
         self.x_sep_omp = self.flux_surf_solver.x_sep_omp
@@ -1774,7 +1765,7 @@ class ScrapeOffLayerRadiation(Radiation):
         if self.eq.is_double_null:
             sep_loop = self.sep_lfs if lfs else self.sep_hfs
         else:
-            sep_loop = self.sep_lfs
+            sep_loop = self.sep_ob if lfs else self.sep_ib
         if z_main > z_pfr:
             reg_i = np.where((sep_loop.z < z_main) & (sep_loop.z > z_pfr))[0]
             i_in = np.where(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
@@ -2108,6 +2099,11 @@ class ScrapeOffLayerRadiation(Radiation):
         p_sol = constants.raw_uc(self.params.P_sep, "MW", "W")
         f_ion_t = constants.raw_uc(self.params.f_ion_t, "keV", "eV")
 
+        if lfs and self.eq.is_double_null:
+            p_sol = p_sol*self.params.lfs_p_fraction
+        elif not lfs and self.eq.is_double_null:
+            p_sol = p_sol*(1-self.params.lfs_p_fraction)
+
         t_mp_prof, n_mp_prof = self.mp_electron_density_temperature_profiles(
             t_u_kev, lfs
         )
@@ -2119,10 +2115,8 @@ class ScrapeOffLayerRadiation(Radiation):
             t_u_ev,
             p_sol,
             fw_lambda_q_near,
-            self.params.lfs_p_fraction,
             self.eq,
             r_sep_mp,
-            self.points["o_point"]["z"], # this to remove
             self.points["o_point"]["z"],
             self.params.k_0,
             firstwall_geom,
@@ -2138,7 +2132,6 @@ class ScrapeOffLayerRadiation(Radiation):
             t_rad_out = target_temperature(
                 p_sol,
                 t_u_ev,
-                self.params.lfs_p_fraction,
                 self.params.n_e_sep,
                 self.params.gamma_sheath,
                 self.params.eps_cool,
@@ -2150,7 +2143,6 @@ class ScrapeOffLayerRadiation(Radiation):
                 x_strike,
                 fw_lambda_q_near,
                 b_tot_tar,
-                lfs,
             )
 
         # condition for occurred detachment
@@ -2413,14 +2405,15 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.b_tot_inn_tar = np.hypot(self.b_pol_inn_tar, self.b_tor_inn_tar)
 
         p_sol = constants.raw_uc(self.params.P_sep, "MW", "W")
+        p_sol_lfs = p_sol*self.params.lfs_p_fraction
+        p_sol_hfs = p_sol*(1-self.params.lfs_p_fraction)
 
         # upstream temperature and power density
         self.t_omp = upstream_temperature(
             b_pol=self.b_pol_sep_omp,
             b_tot=self.b_tot_sep_omp,
-            lfs_p_fraction=self.params.lfs_p_fraction,
             lambda_q_near=self.params.fw_lambda_q_near_omp,
-            p_sol=p_sol,
+            p_sol=p_sol_lfs,
             eq=self.eq,
             r_sep_mp=self.r_sep_omp,
             z_mp=self.z_mp,
@@ -2432,9 +2425,8 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.t_imp = upstream_temperature(
             b_pol=self.b_pol_sep_imp,
             b_tot=self.b_tot_sep_imp,
-            lfs_p_fraction=self.params.lfs_p_fraction,
             lambda_q_near=self.params.fw_lambda_q_near_imp,
-            p_sol=p_sol,
+            p_sol=p_sol_hfs,
             eq=self.eq,
             r_sep_mp=self.r_sep_imp,
             z_mp=self.z_mp,
@@ -2711,7 +2703,6 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.t_omp = upstream_temperature(
             b_pol=self.b_pol_sep_omp,
             b_tot=self.b_tot_sep_omp,
-            lfs_p_fraction=self.params.lfs_p_fraction,
             lambda_q_near=self.params.fw_lambda_q_near_omp,
             p_sol=p_sol,
             eq=self.eq,
@@ -2719,7 +2710,6 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             z_mp=self.points["o_point"]["z"],
             k_0=self.params.k_0,
             firstwall_geom=firstwall_geom,
-            lfs=True,
         )
 
     def build_sol_distribution(self, firstwall_geom: Grid):
@@ -2753,7 +2743,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 "flux_tubes": getattr(self, f"flux_tubes_{side}"),
                 "x_strike": getattr(self, f"x_strike_{side}"),
                 "z_strike": getattr(self, f"z_strike_{side}"),
-                "main_ext": None,
+                "main_ext": 1,
                 "firstwall_geom": firstwall_geom,
                 "pfr_ext": None,
                 "rec_ext": 2,

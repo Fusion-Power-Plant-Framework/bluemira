@@ -103,7 +103,7 @@ params = {
     "eps_cool": 25.0,
     "f_ion_t": 0.01,
     "det_t": 0.0015,
-    "lfs_p_fraction": 0.9,
+    "lfs_p_fraction": 1,
     "div_p_sharing": 0.5,
     "theta_outer_target": 5.0,
     "theta_inner_target": 5.0,
@@ -262,11 +262,11 @@ def create_radiation_source(
         pfr_x_down, pfr_z_down = pfr_filter(
             rad_solver.sol_rad.separatrix, rad_solver.sol_rad.points["x_point"]["z_low"]
         )
-        pfr_x_up, pfr_z_up = pfr_filter(
-            rad_solver.sol_rad.separatrix, rad_solver.sol_rad.points["x_point"]["z_up"]
-        )
+        #pfr_x_up, pfr_z_up = pfr_filter(
+        #    rad_solver.sol_rad.separatrix, rad_solver.sol_rad.points["x_point"]["z_up"]
+        #)
         pfr_down_filter = filtering_in_or_out(pfr_x_down, pfr_z_down, False)
-        pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, False)
+        #pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, False)
 
         # Fetch lcfs
         lcfs = rad_solver.lcfs
@@ -280,13 +280,7 @@ def create_radiation_source(
                         x_sol[i], z_sol[j], f_core
                     )
                 else:
-                    rad_sol_grid[j, i] = (
-                        rad_sol_grid[j, i]
-                        * (wall_filter(shp.Point(x_sol[i], z_sol[j])) * 1.0)
-                        * ((pfr_down_filter(shp.Point(x_sol[i], z_sol[j]))) * 1.0)
-                        * ((pfr_up_filter(shp.Point(x_sol[i], z_sol[j]))) * 1.0)
-                        * ((core_filter_out(shp.Point(x_sol[i], z_sol[j]))) * 1.0)
-                    )
+                    rad_sol_grid[j, i] = 0
 
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
 
@@ -304,7 +298,7 @@ def fw_radiation(rad_source, plot=True):
     Cylinder(
         np.max(fw_shape.x),
         2.0 * np.max(fw_shape.z),
-        transform=translate(0, 0, -np.max(fw_shape.z)),
+        transform=translate(0, 0, np.max(fw_shape.z)),
         parent=world,
         material=emitter,
     )
@@ -315,12 +309,12 @@ def fw_radiation(rad_source, plot=True):
 
     if plot:
         plot_radiation_loads(
-            rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads"
+            rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads", fw_shape
         )
 
     return wall_loads
 
-def main(only_source=True):
+def main(only_source=False):
 
     # Get the core impurity fractions
     f_impurities_core = config["f_imp_core"]
