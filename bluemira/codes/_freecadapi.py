@@ -1347,9 +1347,12 @@ def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWi
     """
     # Temporarily suppress pesky print statement:
     # DraftGeomUtils.fillet: Warning: edges have same direction. Did nothing
-    sys.stdout = open(os.devnull, "w")
-    result = DraftGeomUtils.filletWire(wire, radius, chamfer=chamfer)
-    sys.stdout = sys.__stdout__
+    old_stdout = sys.stdout
+    try:
+        sys.stdout = open(os.devnull, "w")
+        result = DraftGeomUtils.filletWire(wire, radius, chamfer=chamfer)
+    finally:
+        sys.stdout = old_stdout
 
     return result
 

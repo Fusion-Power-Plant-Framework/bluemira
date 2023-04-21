@@ -759,22 +759,24 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
 
 
 def fillet_chamfer_decorator(chamfer: bool):
+    """
+    Decorator for fillet and chamger operations, checking for validity of wire
+    and radius.
+    """
+
     def decorator(func):
         def wrapper(wire, radius):
             edges = wire.shape.OrderedEdges
+            func_name = "chamfer" if chamfer else "fillet"
             if len(edges) < 2:
-                raise GeometryError(
-                    f"Cannot {'chamfer' if chamfer else 'fillet'} a wire with less than 2 edges!"
-                )
+                raise GeometryError(f"Cannot {func_name} a wire with less than 2 edges!")
             if not cadapi._wire_is_planar(wire.shape):
-                raise GeometryError(
-                    f"Cannot {'chamfer' if chamfer else 'fillet'} a non-planar wire!"
-                )
+                raise GeometryError(f"Cannot {func_name} a non-planar wire!")
             if radius == 0:
                 return wire.deepcopy()
             if radius < 0:
                 raise GeometryError(
-                    f"Cannot {'chamfer' if chamfer else 'fillet'} a wire with a negative {radius=}"
+                    f"Cannot {func_name} a wire with a negative {radius=}"
                 )
             return func(wire, radius)
 
