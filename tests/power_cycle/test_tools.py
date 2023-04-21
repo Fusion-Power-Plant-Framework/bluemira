@@ -25,13 +25,7 @@ from bluemira.power_cycle.tools import (
     validate_numerical,
     validate_vector,
 )
-from tests.power_cycle.kits_for_tests import (
-    NetManagerTestKit,
-    TimeTestKit,
-    ToolsTestKit,
-    copy_dict_with_wrong_key,
-    copy_dict_with_wrong_value,
-)
+from tests.power_cycle.kits_for_tests import NetManagerTestKit, TimeTestKit, ToolsTestKit
 
 tools_testkit = ToolsTestKit()
 time_testkit = TimeTestKit()
@@ -104,59 +98,6 @@ class TestValidationTools:
         wrong_path = absolute_path.replace("txt", "doc")
         with pytest.raises(FileNotFoundError):
             return_path = validate_file(wrong_path)
-
-    '''
-    def test_validate_dict(self):
-        format_example = self.format_example
-        dictionary_example = self.dictionary_example
-
-        returned_dictionary = validate_dict(
-            dictionary_example,
-            format_example,
-        )
-        assert returned_dictionary == dictionary_example
-
-        all_allowed_keys = format_example.keys()
-        all_dict_keys = returned_dictionary.keys()
-        for dict_key in all_dict_keys:
-            dict_key_is_allowed = dict_key in all_allowed_keys
-            assert dict_key_is_allowed
-
-            dict_value = returned_dictionary[dict_key]
-            dict_value_type = type(dict_value)
-            necessary_type = format_example[dict_key]
-            value_is_the_necessary_type = dict_value_type == necessary_type
-            assert value_is_the_necessary_type
-
-        first_dict_key = list(all_allowed_keys)[0]
-        wrong_format = copy_dict_with_wrong_key(
-            format_example,
-            first_dict_key,
-        )
-        with pytest.raises(KeyError):
-            returned_dictionary = validate_dict(
-                dictionary_example,
-                wrong_format,
-            )
-
-        first_dict_key = list(all_dict_keys)[0]
-        wrong_dictionary = copy_dict_with_wrong_value(
-            dictionary_example,
-            first_dict_key,
-            dict(),
-        )
-        with pytest.raises(TypeError):
-            returned_dictionary = validate_dict(
-                wrong_dictionary,
-                format_example,
-            )
-
-    def test_validate_subdict(self):
-        """
-        No new functionality to be tested.
-        """
-        assert callable(validate_subdict)
-    '''
 
     @pytest.mark.parametrize("max_n_arguments", [10])
     def test_validate_lists_to_have_same_length(self, max_n_arguments):
@@ -270,22 +211,6 @@ class TestManipulationTools:
         wrong_path = self.test_file_path
         with pytest.raises(TypeError):
             contents = read_json(wrong_path)
-
-    """
-    def test_build_dict_from_format(self):
-        format_example = self.format_example
-        dictionary_example = self.dictionary_example
-
-        dictionary_with_empty_values = dict()
-        for key, value in dictionary_example.items():
-            value_type = type(value)
-            empty_value_of_same_type = value_type()
-            dictionary_with_empty_values[key] = empty_value_of_same_type
-
-        built_dictionary = build_dict_from_format(format_example)
-
-        assert built_dictionary == dictionary_with_empty_values
-    """
 
 
 class TestPlottingTools:
