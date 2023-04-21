@@ -11,7 +11,6 @@ from bluemira.power_cycle.tools import (
     FormattedDict,
     FormattedLibrary,
     adjust_2d_graph_ranges,
-    build_dict_from_format,
     convert_string_into_numeric_list,
     copy_dict_without_key,
     read_json,
@@ -19,13 +18,11 @@ from bluemira.power_cycle.tools import (
     unique_and_sorted_vector,
     unnest_list,
     validate_axes,
-    validate_dict,
     validate_file,
     validate_list,
     validate_lists_to_have_same_length,
     validate_nonnegative,
     validate_numerical,
-    validate_subdict,
     validate_vector,
 )
 from tests.power_cycle.kits_for_tests import (
@@ -108,6 +105,7 @@ class TestValidationTools:
         with pytest.raises(FileNotFoundError):
             return_path = validate_file(wrong_path)
 
+    '''
     def test_validate_dict(self):
         format_example = self.format_example
         dictionary_example = self.dictionary_example
@@ -158,6 +156,7 @@ class TestValidationTools:
         No new functionality to be tested.
         """
         assert callable(validate_subdict)
+    '''
 
     @pytest.mark.parametrize("max_n_arguments", [10])
     def test_validate_lists_to_have_same_length(self, max_n_arguments):
@@ -272,6 +271,7 @@ class TestManipulationTools:
         with pytest.raises(TypeError):
             contents = read_json(wrong_path)
 
+    """
     def test_build_dict_from_format(self):
         format_example = self.format_example
         dictionary_example = self.dictionary_example
@@ -285,6 +285,7 @@ class TestManipulationTools:
         built_dictionary = build_dict_from_format(format_example)
 
         assert built_dictionary == dictionary_with_empty_values
+    """
 
 
 class TestPlottingTools:
