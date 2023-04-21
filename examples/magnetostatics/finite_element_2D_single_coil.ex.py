@@ -62,11 +62,12 @@ import bluemira.geometry.tools as tools
 import bluemira.magnetostatics.greens as greens
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-    FemMagnetostatic2d,
-)
-from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_coil_axis
 from bluemira.geometry.face import BluemiraFace
+from bluemira.magnetostatics.finite_element_2d import (
+    Bz_coil_axis,
+    FemMagnetostatic2d,
+    ScalarSubFunc,
+)
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
@@ -205,7 +206,7 @@ r_points_axis = np.zeros(z_points_axis.shape)
 Bz_axis = np.array(
     [em_solver.B(x) for x in np.array([r_points_axis, z_points_axis]).T]
 ).T[1]
-B_teo = np.array([b_coil_axis(rc, 0, z, Ic) for z in z_points_axis])
+B_teo = np.array([Bz_coil_axis(rc, 0, z, Ic) for z in z_points_axis])
 
 fig, ax = plt.subplots()
 ax.plot(z_points_axis, Bz_axis, label="B_calc")

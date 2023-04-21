@@ -65,9 +65,7 @@ import numpy as np
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.logs import set_log_level
 from bluemira.codes import transport_code_solver
-from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
-    solve_transport_fixed_boundary,
-)
+from bluemira.codes.plasmod.equilibrium_2d_coupling import solve_transport_fixed_boundary
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
@@ -200,6 +198,9 @@ fem_GS_fixed_boundary = FemGradShafranovFixedBoundary(
 # Solve the fixed boundary problem. Set plot = True if you want to check the
 # solution at each iteration.
 
+# NOTE: The procedure is known to be sensitive to low mesh sizes. There is
+# a TODO on this, see issue #2140.
+
 # %%
 equilibrium = solve_transport_fixed_boundary(
     johner_parameterisation,
@@ -207,7 +208,7 @@ equilibrium = solve_transport_fixed_boundary(
     fem_GS_fixed_boundary,
     kappa95_t=kappa_95,  # Target kappa_95
     delta95_t=delta_95,  # Target delta_95
-    lcar_mesh=0.2,
+    lcar_mesh=0.2,  # Best to not go lower than this!
     max_iter=15,
     iter_err_max=1e-3,
     inner_iter_err_max=1e-3,

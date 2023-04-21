@@ -19,113 +19,88 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
-
-import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
-import bluemira.geometry.tools as tools
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.components import PhysicalComponent
+from bluemira.base.file import get_bluemira_path
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-    FemMagnetostatic2d,
+    FemGradShafranovFixedBoundary,
 )
-from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_coil_axis
+from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh
+from bluemira.equilibria.profiles import DoublePowerFunc, LaoPolynomialFunc
 from bluemira.geometry.face import BluemiraFace
-from bluemira.mesh import meshing
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+from bluemira.geometry.tools import make_polygon
 
-DATA_DIR = os.path.join(os.path.dirname(__file__), "test_generated_data")
+DATA_DIR = get_bluemira_path(
+    "equilibria/fem_fixed_boundary/test_generated_data", subfolder="tests"
+)
 
 
-class TestGetNormal:
-    def test_simple_thin_coil(self):
-        """
-        Compare the magnetic field on the axis of a coil with a very small cross-section
-        calculated with the fem module and the analytic solution as limit of the
-        Biot-Savart law.
-        """
+class TestFemGradShafranovFixedBoundary:
+    lcfs_shape = make_polygon({"x": [7, 10, 7], "z": [-4, 0, 4]}, closed=True)
+    lcfs_face = BluemiraFace(lcfs_shape)
+    plasma = PhysicalComponent("plasma", lcfs_face)
+    plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
+    plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
+    mesh = create_mesh(
+        plasma, DATA_DIR, "fixed_boundary_example", "fixed_boundary_example.msh"
+    )
 
-        r_enclo = 100
-        lcar_enclo = 0.5
+    p_prime = LaoPolynomialFunc([2, 3, 1])
+    ff_prime = DoublePowerFunc([1.5, 2])
+    solver_kwargs = {
+        "R_0": 9,
+        "I_p": 17e6,
+        "B_0": 5,
+        "p_order": 1,
+        "max_iter": 2,
+        "iter_err_max": 1.0,
+        "relaxation": 0.0,
+    }
+    optional_init_solver = FemGradShafranovFixedBoundary(**solver_kwargs)
+    flux_func_init_solver = FemGradShafranovFixedBoundary(
+        p_prime, ff_prime, **solver_kwargs
+    )
+    mesh_init_solver = FemGradShafranovFixedBoundary(mesh=mesh, **solver_kwargs)
+    full_init_solver = FemGradShafranovFixedBoundary(
+        p_prime, ff_prime, mesh, **solver_kwargs
+    )
 
-        rc = 5
-        drc = 0.01
-        lcar_coil = 0.01
+    @classmethod
+    def teardown_method(cls):
+        plt.close()
 
-        poly_coil = tools.make_polygon(
-            [
-                [rc - drc, rc + drc, rc + drc, rc - drc],
-                [0, 0, 0, 0],
-                [-drc, -drc, +drc, +drc],
-            ],
-            closed=True,
-            label="poly_enclo",
+    @pytest.mark.parametrize("plot", [False, True])
+    def test_all_optional_init_12(self, plot):
+        mod_current = 20e6
+        self.optional_init_solver.set_profiles(
+            self.p_prime, self.ff_prime, I_p=mod_current
         )
+        self.optional_init_solver.set_mesh(self.mesh)
+        self.optional_init_solver.solve(plot=plot)
+        assert np.isclose(self.optional_init_solver._curr_target, mod_current)
 
-        poly_coil.mesh_options = {"lcar": lcar_coil, "physical_group": "poly_coil"}
-        coil = BluemiraFace(poly_coil)
-        coil.mesh_options = {"lcar": lcar_coil, "physical_group": "coil"}
-
-        poly_enclo = tools.make_polygon(
-            [
-                [0, r_enclo, r_enclo, 0],
-                [0, 0, 0, 0],
-                [-r_enclo, -r_enclo, r_enclo, r_enclo],
-            ],
-            closed=True,
-            label="poly_enclo",
+    @pytest.mark.parametrize("plot", [False, True])
+    def test_all_optional_init_21(self, plot):
+        mod_current = 20e6
+        self.optional_init_solver.set_mesh(self.mesh)
+        self.optional_init_solver.set_profiles(
+            self.p_prime, self.ff_prime, I_p=mod_current
         )
+        self.optional_init_solver.solve(plot=plot)
+        assert np.isclose(self.optional_init_solver._curr_target, mod_current)
 
-        poly_enclo.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_enclo"}
-        enclosure = BluemiraFace([poly_enclo, poly_coil])
-        enclosure.mesh_options = {"lcar": lcar_enclo, "physical_group": "enclo"}
-
-        c_universe = Component(name="universe")
-        c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
-        c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
-
-        meshfiles = [
-            os.path.join(DATA_DIR, p) for p in ["Mesh.geo_unrolled", "Mesh.msh"]
-        ]
-        m = meshing.Mesh(meshfile=meshfiles)
-        m(c_universe, dim=2)
-
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=DATA_DIR)
-
-        mesh, boundaries, subdomains, labels = import_mesh(
-            "Mesh",
-            directory=DATA_DIR,
-            subdomains=True,
-        )
-
-        dolfin.plot(mesh)
-        plt.show()
-
-        em_solver = FemMagnetostatic2d(3)
-        em_solver.set_mesh(mesh, boundaries)
-
-        current = 1e6
-        jc = current / coil.area
-        markers = [labels["coil"]]
-        functions = [jc]
-        jtot = ScalarSubFunc(functions, markers, subdomains)
-
-        em_solver.define_g(jtot)
-        em_solver.solve()
-        em_solver.calculate_b()
-
-        z_points_axis = np.linspace(0, r_enclo, 200)
-        r_points_axis = np.zeros(z_points_axis.shape)
-
-        Bz_axis = np.array(
-            [em_solver.B(x) for x in np.array([r_points_axis, z_points_axis]).T]
-        ).T[1]
-
-        B_teo = np.array([b_coil_axis(rc, 0, z, current) for z in z_points_axis])
-
-        # I just set an absolute tolerance for the comparison (since the magnetic field
-        # goes to zero, the comparison cannot be made on the basis of a relative
-        # tolerance). An allclose comparison was out of discussion considering the
-        # necessary accuracy.
-        np.testing.assert_allclose(Bz_axis, B_teo, atol=1e-4)
+    @pytest.mark.parametrize(
+        "solver",
+        [
+            FemGradShafranovFixedBoundary(**solver_kwargs),
+            FemGradShafranovFixedBoundary(p_prime, ff_prime, **solver_kwargs),
+            FemGradShafranovFixedBoundary(mesh=mesh, **solver_kwargs),
+        ],
+    )
+    def test_not_fully_init(self, solver):
+        with pytest.raises(EquilibriaError):
+            solver.solve()

@@ -35,13 +35,11 @@ from bluemira.base.designer import Designer
 from bluemira.base.file import get_bluemira_path, get_bluemira_root
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.codes.plasmod.equilibrium_2d_coupling import solve_transport_fixed_boundary
 from bluemira.codes.wrapper import transport_code_solver
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.fem_fixed_boundary.equilibrium import (
-    FemGradShafranovFixedBoundary,
-    solve_transport_fixed_boundary,
-)
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FemGradShafranovFixedBoundary,
     FixedBoundaryEquilibrium,
 )
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
