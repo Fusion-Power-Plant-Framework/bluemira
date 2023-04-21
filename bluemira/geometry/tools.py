@@ -24,6 +24,7 @@ Useful functions for bluemira geometries.
 """
 
 import datetime
+import functools
 import inspect
 import json
 import os
@@ -765,6 +766,7 @@ def fillet_chamfer_decorator(chamfer: bool):
     """
 
     def decorator(func):
+        @functools.wraps(func)
         def wrapper(wire, radius):
             edges = wire.shape.OrderedEdges
             func_name = "chamfer" if chamfer else "fillet"
