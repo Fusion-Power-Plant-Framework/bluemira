@@ -24,6 +24,7 @@ Useful functions for bluemira geometries.
 """
 
 import datetime
+import functools
 import inspect
 import json
 import os
@@ -758,6 +759,74 @@ def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
     result = cadapi.sweep_shape(profile_shapes, path.shape, solid, frenet)
 
     return convert(result, label=label)
+
+
+def fillet_chamfer_decorator(chamfer: bool):
+    """
+    Decorator for fillet and chamger operations, checking for validity of wire
+    and radius.
+    """
+
+    def decorator(func):
+        @functools.wraps(func)
+        def wrapper(wire, radius):
+            edges = wire.shape.OrderedEdges
+            func_name = "chamfer" if chamfer else "fillet"
+            if len(edges) < 2:
+                raise GeometryError(f"Cannot {func_name} a wire with less than 2 edges!")
+            if not cadapi._wire_is_planar(wire.shape):
+                raise GeometryError(f"Cannot {func_name} a non-planar wire!")
+            if radius == 0:
+                return wire.deepcopy()
+            if radius < 0:
+                raise GeometryError(
+                    f"Cannot {func_name} a wire with a negative {radius=}"
+                )
+            return func(wire, radius)
+
+        return wrapper
+
+    return decorator
+
+
+@fillet_chamfer_decorator(False)
+def fillet_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
+    """
+    Fillet all edges of a wire
+
+    Parameters
+    ----------
+    wire:
+        Wire to fillet
+    radius:
+        Radius of the fillet operation
+
+    Returns
+    -------
+    filleted_wire:
+        The filleted wire
+    """
+    return BluemiraWire(cadapi.fillet_wire_2D(wire.shape, radius))
+
+
+@fillet_chamfer_decorator(True)
+def chamfer_wire_2D(wire: BluemiraWire, radius: float):
+    """
+    Chamfer all edges of a wire
+
+    Parameters
+    ----------
+    wire:
+        Wire to chamfer
+    radius:
+        Radius of the chamfer operation
+
+    Returns
+    -------
+    chamfered_wire:
+        The chamfered wire
+    """
+    return BluemiraWire(cadapi.fillet_wire_2D(wire.shape, radius, chamfer=True))
 
 
 def distance_to(

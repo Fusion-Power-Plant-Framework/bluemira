@@ -26,6 +26,8 @@ Supporting functions for the bluemira geometry module.
 from __future__ import annotations
 
 import math
+import os
+import sys
 from copy import deepcopy
 from dataclasses import dataclass, field
 from typing import Dict, Iterable, List, Optional, Tuple, Union
@@ -40,6 +42,7 @@ import BOPTools.ShapeMerge
 import BOPTools.SplitAPI
 import BOPTools.SplitFeatures
 import BOPTools.Utils
+import DraftGeomUtils
 import FreeCADGui
 import matplotlib.colors as colors
 import numpy as np
@@ -1332,6 +1335,36 @@ def sweep_shape(profiles, path, solid=True, frenet=True):
         return solid_result
     else:
         return solid_result.Shells[0]
+
+
+def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWire:
+    """
+    Fillet or chamfer a two-dimensional wire, returning a new wire
+
+    Parameters
+    ----------
+    wire:
+        Wire to be filleted or chamfered
+    radius:
+        Radius of the fillet or chamfer operation
+    chamfer: bool (default=False)
+        Whether to chamfer or not
+
+    Returns
+    -------
+    result_wire:
+        Resulting filleted or chamfered wire
+    """
+    # Temporarily suppress pesky print statement:
+    # DraftGeomUtils.fillet: Warning: edges have same direction. Did nothing
+    old_stdout = sys.stdout
+    try:
+        sys.stdout = open(os.devnull, "w")
+        result = DraftGeomUtils.filletWire(wire, radius, chamfer=chamfer)
+    finally:
+        sys.stdout = old_stdout
+
+    return result
 
 
 # ======================================================================================

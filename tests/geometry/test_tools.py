@@ -44,10 +44,12 @@ from bluemira.geometry.parameterisations import (
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
+    chamfer_wire_2D,
     convex_hull_wires_2d,
     deserialize_shape,
     extrude_shape,
     fallback_to,
+    fillet_wire_2D,
     find_clockwise_angle_2d,
     interpolate_bspline,
     log_geometry_on_failure,
@@ -64,6 +66,7 @@ from bluemira.geometry.tools import (
     signed_distance_2D_polygon,
     slice_shape,
 )
+from bluemira.geometry.wire import BluemiraWire
 from tests._helpers import combine_text_mock_write_calls
 
 generic_wire = make_polygon(
@@ -715,3 +718,56 @@ class TestMirrorShape:
     def test_bad_direction(self, shape):
         with pytest.raises(GeometryError):
             mirror_shape(shape, base=(0, 0, 0), direction=(EPS, EPS, EPS))
+
+
+class TestFilletChamfer2D:
+    closed_rectangle = make_polygon({"x": [0, 2, 2, 0], "z": [0, 0, 2, 2]}, closed=True)
+    open_rectangle = make_polygon({"x": [0, 2, 2, 0], "z": [0, 0, 2, 2]}, closed=False)
+
+    @pytest.mark.parametrize("wire", [closed_rectangle, open_rectangle])
+    @pytest.mark.parametrize("radius", [0, 0.1, 0.2, 0.3, 0.5])
+    def test_simple_rectangle_fillet(self, wire, radius):
+        n = 4 if wire.is_closed() else 2
+        correct_length = wire.length - n * 2 * radius
+        correct_length += n * np.pi / 2 * radius
+        result = fillet_wire_2D(wire, radius)
+        assert np.isclose(result.length, correct_length)
+
+    @pytest.mark.parametrize("wire", [closed_rectangle, open_rectangle])
+    @pytest.mark.parametrize("radius", [0, 0.1, 0.2, 0.3, 0.5])
+    def test_simple_rectangle_chamfer(self, wire, radius):
+        result = chamfer_wire_2D(wire, radius)
+        n = 4 if wire.is_closed() else 2
+        # I'll be honest, I don't understand why this modified radius happens...
+        # I worry about what happens at other angles...
+        radius = 0.5 * np.sqrt(2) * radius
+        correct_length = wire.length - n * 2 * radius
+        correct_length += n * np.sqrt(2 * radius**2)
+
+        assert np.isclose(result.length, correct_length)
+
+    @pytest.mark.parametrize("func", [fillet_wire_2D, chamfer_wire_2D])
+    def test_what_happens_with_two_tangent_edges(self, func):
+        w1 = make_polygon({"x": [0, 1], "z": [0, 0]})
+        w2 = make_polygon({"x": [1, 2], "z": [0, 0]})
+        wire = BluemiraWire([w1, w2])
+
+        result = func(wire, 0.2)
+        assert wire.length == result.length
+
+    @pytest.mark.parametrize("func", [fillet_wire_2D, chamfer_wire_2D])
+    def test_GeometryError_on_non_planar_wire(self, func):
+        three_d_wire = make_polygon(
+            {
+                "x": [0, 1, 2, 3, 4, 5],
+                "y": [0, -1, -2, 0, 1, 2],
+                "z": [0, 1, 2, 1, 0, -1],
+            }
+        )
+        with pytest.raises(GeometryError):
+            func(three_d_wire, 0.2)
+
+    @pytest.mark.parametrize("func", [fillet_wire_2D, chamfer_wire_2D])
+    def test_GeometryError_on_negative_radius(self, func):
+        with pytest.raises(GeometryError):
+            func(self.open_rectangle, -0.01)
