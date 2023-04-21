@@ -274,7 +274,7 @@ def adjust_2d_graph_ranges(x_frac=0.1, y_frac=0.1, ax=None):
 # FORMATTED DICTIONARY
 # ######################################################################
 
-
+'''
 def build_dict_from_format(allowed_format, format_index=0):
     """
     Build a 'dict' based on an 'allowed_format' dictionary. Keys are
@@ -340,6 +340,7 @@ def validate_subdict(dictionary, allowed_format):
                 "Values stored in 'dictionary' must be of the 'dict' class.",
             )
     return dictionary
+'''
 
 
 class FormattedABC(dict, metaclass=ABCMeta):
