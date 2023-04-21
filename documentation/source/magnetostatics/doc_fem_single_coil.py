@@ -5,7 +5,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 import bluemira.geometry.tools as tools
-import bluemira.magnetostatics.greens as greens
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.face import BluemiraFace

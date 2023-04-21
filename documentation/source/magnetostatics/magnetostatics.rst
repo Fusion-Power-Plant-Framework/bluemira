@@ -164,6 +164,9 @@ where :math:`v` is the basis element function of the defined functional subspace
 .. literalinclude:: doc_fem_single_coil.py
     :language: python
 
+.. figure:: pic_single_coil_bz.png
+    :name: fig:single_coil_bz
+
 .. rubric:: References
 
 .. [Zhang_2012] D. Zhang, C. S. Koh, An Efficient Semianalytic Computation Method of Magnetic Field for a Circular Coil With Rectangular Cross Section, IEEE Transactions on Magnetics, 2012, pp. 62-68
