@@ -19,7 +19,7 @@ from bluemira.power_cycle.net.manager import (
     PowerCycleSystem,
 )
 from bluemira.power_cycle.time import PowerCycleScenario
-from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list, validate_dict
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list
 from tests.power_cycle.kits_for_tests import NetManagerTestKit, ToolsTestKit
 
 tools_testkit = ToolsTestKit()
@@ -94,7 +94,6 @@ class TestPowerCycleSystem:
 
         all_samples = self.construct_multiple_samples()
         for sample in all_samples:
-
             for instance_attr in all_instance_attr:
                 attr_was_created = hasattr(sample, instance_attr)
                 assert attr_was_created
@@ -168,23 +167,14 @@ class TestPowerCycleSystem:
         tested_class = self.tested_class
         tested_class_error = self.tested_class_error
 
-        phaseload_inputs_format = {
-            "phase_list": list,
-            "consumption": bool,
-            "normalize_list": list,
-            "powerload_list": list,
-        }
+        inputs_format = tested_class._phaseload_inputs_format
 
         all_phaseload_inputs = self.list_all_phaseload_inputs()
         for phaseload_inputs in all_phaseload_inputs:
+            assert phaseload_inputs.allowed_format == inputs_format
 
-            assert validate_dict(phaseload_inputs, phaseload_inputs_format)
-
-            valid_keys = phaseload_inputs_format.keys()
-            for key in valid_keys:
-
+            for key in inputs_format.keys():
                 if key != "consumption":
-
                     list_in_key = phaseload_inputs[key]
                     if key == "phase_list":
                         valid_type = str
@@ -226,7 +216,6 @@ class TestPowerCycleSystem:
             # valid_phases = list(set(all_phases))
 
             for phaseload_inputs in all_phaseload_inputs:
-
                 example_load_name = sample.name + " load"
                 phaseload_list = sample._build_phaseloads(
                     example_load_name, phaseload_inputs
@@ -248,7 +237,6 @@ class TestPowerCycleSystem:
 
         n_samples = len(all_samples)
         for s in range(n_samples):
-
             sample = all_samples[s]
             sample_inputs = all_sample_inputs[s]
             for load_type in all_instance_properties:
