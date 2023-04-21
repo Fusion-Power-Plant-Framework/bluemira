@@ -224,14 +224,14 @@ class ScenarioBuilder:
         }
     )
 
-    _pulse_format = FormattedDict.Format(
+    _pulse_format = FormattedLibrary.Format(
         {
             "name": str,
             "phases": list,
         }
     )
 
-    _phase_format = FormattedDict.Format(
+    _phase_format = FormattedLibrary.Format(
         {
             "name": str,
             "logical": str,
@@ -239,7 +239,7 @@ class ScenarioBuilder:
         }
     )
 
-    _breakdown_format = FormattedDict.Format(
+    _breakdown_format = FormattedLibrary.Format(
         {
             "name": str,
             "module": [None, str],

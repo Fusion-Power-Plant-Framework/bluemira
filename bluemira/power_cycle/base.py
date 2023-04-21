@@ -10,6 +10,7 @@ import numpy as np
 
 from bluemira.power_cycle.errors import PowerCycleABCError, PowerCycleLoadABCError
 from bluemira.power_cycle.tools import (
+    FormattedDict,
     copy_dict_without_key,
     unique_and_sorted_vector,
     unnest_list,
@@ -373,11 +374,14 @@ class PowerCycleImporterABC(metaclass=ABCMeta):
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
-    _phaseload_inputs = {
-        "phase_list": list,
-        "normalize_list": list,
-        "powerload_list": list,
-    }
+    _phaseload_inputs_format = FormattedDict.Format(
+        {
+            "phase_list": list,
+            "consumption": bool,
+            "normalize_list": list,
+            "powerload_list": list,
+        }
+    )
 
     # ------------------------------------------------------------------
     #  OPERATIONS

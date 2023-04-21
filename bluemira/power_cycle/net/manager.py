@@ -5,7 +5,7 @@ Classes for the calculation of net power in the Power Cycle model.
 """
 
 from bluemira.base.constants import raw_uc
-from bluemira.power_cycle.base import PowerCycleABC
+from bluemira.power_cycle.base import PowerCycleABC, PowerCycleImporterABC
 from bluemira.power_cycle.errors import (
     PowerCycleGroupError,
     PowerCycleManagerError,
@@ -21,14 +21,14 @@ from bluemira.power_cycle.net.loads import (
 )
 from bluemira.power_cycle.time import PowerCycleScenario, ScenarioBuilder
 from bluemira.power_cycle.tools import (
+    FormattedDict,
+    FormattedLibrary,
     convert_string_into_numeric_list,
     read_json,
     unnest_list,
     validate_axes,
-    validate_dict,
     validate_file,
     validate_lists_to_have_same_length,
-    validate_subdict,
 )
 
 
@@ -62,16 +62,22 @@ class PowerCycleSystem(PowerCycleABC):
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
-    _system_format = {
-        "name": str,
-        "reactive": dict,
-        "active": dict,
-    }
-    _load_format = {
-        "name": str,
-        "module": [type(None), str],
-        "variables_map": dict,
-    }
+    _phaseload_inputs_format = PowerCycleImporterABC._phaseload_inputs_format
+
+    _system_format = FormattedDict.Format(
+        {
+            "name": str,
+            "reactive": dict,
+            "active": dict,
+        }
+    )
+    _load_format = FormattedLibrary.Format(
+        {
+            "name": str,
+            "module": [None, str],
+            "variables_map": dict,
+        }
+    )
 
     def __init__(
         self,
@@ -81,15 +87,25 @@ class PowerCycleSystem(PowerCycleABC):
     ):
         scenario = self._validate_scenario(scenario)
 
-        system_config = validate_dict(system_config, self._system_format)
+        system_config = FormattedDict(
+            self._system_format,
+            dictionary=system_config,
+        )
 
         (
             name,
             reactive_config,
             active_config,
         ) = self._unpack_system_config(system_config)
-        active_config = validate_subdict(active_config, self._load_format)
-        reactive_config = validate_subdict(reactive_config, self._load_format)
+
+        active_config = FormattedLibrary(
+            self._load_format,
+            dictionary=active_config,
+        )
+        reactive_config = FormattedLibrary(
+            self._load_format,
+            dictionary=reactive_config,
+        )
 
         super().__init__(name, label=label)
         self.scenario = scenario
@@ -139,8 +155,8 @@ class PowerCycleSystem(PowerCycleABC):
         load_types.remove("name")
         return load_types
 
-    @staticmethod
-    def import_phaseload_inputs(module, variables_map):
+    @classmethod
+    def import_phaseload_inputs(cls, module, variables_map):
         """
         Method that unpacks the 'variables_map' field of a JSON input
         file.
@@ -196,17 +212,21 @@ class PowerCycleSystem(PowerCycleABC):
 
                 powerload_list.append(powerload)
 
-            phaseload_inputs = dict()
+            phaseload_inputs = FormattedDict(cls._phaseload_inputs_format)
             phaseload_inputs["phase_list"] = phase_list
             phaseload_inputs["consumption"] = consumption
             phaseload_inputs["normalize_list"] = normalize_list
             phaseload_inputs["powerload_list"] = powerload_list
 
         elif module == "equilibria":
-            phaseload_inputs = EquilibriaImporter.phaseload_inputs(variables_map)
+            phaseload_inputs = EquilibriaImporter.phaseload_inputs(
+                variables_map,
+            )
 
         elif module == "pumping":
-            phaseload_inputs = PumpingImporter.phaseload_inputs(variables_map)
+            phaseload_inputs = PumpingImporter.phaseload_inputs(
+                variables_map,
+            )
 
         else:
             raise PowerCycleSystemError(
@@ -254,7 +274,7 @@ class PowerCycleSystem(PowerCycleABC):
         return phaseload_list
 
     def _make_phaseloads_from_config(self, type_config):
-        system_loads = dict()
+        system_loads = FormattedLibrary(list)
         for label, load_config in type_config.items():
             load_name = load_config["name"]
             module = load_config["module"]
@@ -310,7 +330,7 @@ class PowerCycleGroup(PowerCycleABC):
 
     @staticmethod
     def _build_system_library(scenario, group_config):
-        system_library = dict()
+        system_library = FormattedLibrary(PowerCycleSystem)
         for system_label, system_config in group_config.items():
             system = PowerCycleSystem(
                 scenario,
@@ -355,11 +375,13 @@ class PowerCycleManager:
 
     _load_types = PowerCycleSystem.list_all_load_types()
 
-    _manager_format = {
-        "name": str,
-        "config_path": str,
-        "systems": list,
-    }
+    _manager_format = FormattedLibrary.Format(
+        {
+            "name": str,
+            "config_path": str,
+            "systems": list,
+        }
+    )
 
     def __init__(self, scenario_config_path: str, manager_config_path: str):
         scenario_builder = ScenarioBuilder(scenario_config_path)
@@ -368,9 +390,9 @@ class PowerCycleManager:
         validated_path = validate_file(manager_config_path)
         json_contents = read_json(validated_path)
 
-        self._manager_config = validate_subdict(
-            json_contents,
+        self._manager_config = FormattedLibrary(
             self._manager_format,
+            dictionary=json_contents,
         )
 
         self.group_library = self._build_group_library(
@@ -380,7 +402,7 @@ class PowerCycleManager:
 
     @staticmethod
     def _build_group_library(scenario, manager_config):
-        group_library = dict()
+        group_library = FormattedLibrary(PowerCycleGroup)
         for group_label, group_inputs in manager_config.items():
             group_name = group_inputs["name"]
             group_config_path = group_inputs["config_path"]
@@ -438,7 +460,7 @@ class PowerCycleManager:
     def _build_net_loads(self):
         valid_types = self._load_types
 
-        all_loads = dict()
+        all_loads = FormattedLibrary(PulseLoad)
         for load_type in valid_types:
             all_loads[load_type] = self._build_pulseload_of_type(load_type)
 
