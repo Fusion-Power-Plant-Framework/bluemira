@@ -516,38 +516,50 @@ class TestFormattedLibrary:
     def setup_method(self):
         (
             self.example_format,
+            self.example_types,
             self.example_dict,
             self.example_keys_for_library,
         ) = tools_testkit.inputs_for_formattedlibrary()
+
+        all_valid_formats = self.example_types
+        all_valid_formats.append(self.example_format)
+        self.all_valid_formats = all_valid_formats
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
     def test_empty(self):
-        empty_sample = self.tested_class(self.example_format)
-        assert empty_sample.allowed_format == self.example_format
-
-        assert isinstance(empty_sample, self.tested_class)
-        assert len(empty_sample) == 0
+        for valid_format in self.all_valid_formats:
+            empty_sample = self.tested_class(valid_format)
+            assert isinstance(empty_sample, self.tested_class)
+            assert empty_sample.allowed_format == valid_format
+            assert len(empty_sample) == 0
 
     def test_constructor(self):
-        library_input = dict()
-        for key in self.example_keys_for_library:
-            library_input[key] = self.example_dict
+        for valid_format in self.all_valid_formats:
+            valid_dictionary = dict()
+            for key in self.example_keys_for_library:
+                if isinstance(valid_format, FormattedABC.Format):
+                    valid_dictionary[key] = self.example_dict
+                else:
+                    valid_dictionary[key] = valid_format()
 
-        full_sample = self.tested_class(
-            self.example_format,
-            dictionary=library_input,
-        )
-        assert full_sample.allowed_format == self.example_format
+            full_sample = self.tested_class(
+                valid_format,
+                dictionary=valid_dictionary,
+            )
+            assert isinstance(full_sample, self.tested_class)
+            assert full_sample.allowed_format == valid_format
+            assert len(full_sample) == len(self.example_keys_for_library)
 
-        assert isinstance(full_sample, self.tested_class)
-        assert len(full_sample) == len(self.example_keys_for_library)
+            for key, value in full_sample.items():
+                assert key in self.example_keys_for_library
 
-        for key, value in full_sample.items():
-            assert key in self.example_keys_for_library
-            assert isinstance(value, FormattedDict)
+                if isinstance(valid_format, FormattedABC.Format):
+                    assert isinstance(value, FormattedDict)
+                else:
+                    assert isinstance(value, valid_format)
 
     # ------------------------------------------------------------------
     # OPERATIONS

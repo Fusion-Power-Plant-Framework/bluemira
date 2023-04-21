@@ -11,7 +11,6 @@ from bluemira.power_cycle.net.loads import LoadData, LoadModel, PhaseLoad, Power
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse, ScenarioBuilder
 from bluemira.power_cycle.tools import (
     FormattedABC,
-    FormattedDict,
     read_json,
     unnest_list,
     validate_axes,
@@ -207,6 +206,15 @@ class ToolsTestKit:
             _,
         ) = self.inputs_for_formatteddict()
 
+        example_types = [
+            str,
+            list,
+            int,
+            float,
+            bool,
+            dict,
+        ]
+
         example_keys_for_library = [
             "case_1",
             "case_2",
@@ -216,6 +224,7 @@ class ToolsTestKit:
 
         return (
             example_format,
+            example_types,
             example_dict,
             example_keys_for_library,
         )
