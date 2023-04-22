@@ -208,5 +208,8 @@ class TestSolveTransportFixedBoundary:
             inner_iter_err_max=1,
             max_iter=max_iter,
             lcar_mesh=0.3,
+            refine=True,
+            num_levels=1,
+            distance=0.1,
         )
         assert message in caplog.messages[-1]
