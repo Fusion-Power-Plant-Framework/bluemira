@@ -27,7 +27,7 @@ from unittest import mock
 import fortranformat as ff
 import numpy as np
 import pytest
-from typeguard import check_type
+from typeguard import TypeCheckError, check_type
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.file import EQDSKInterface
@@ -193,8 +193,8 @@ class TestEQDSKInterface:
         for key, value_type in EQDSKInterface.__annotations__.items():
             value = getattr(eq, key)
             try:
-                check_type(key, value, value_type)
-            except TypeError:
+                check_type(value, value_type)
+            except TypeCheckError:
                 mismatched.append((key, type(value), value_type))
         assert not mismatched
 
