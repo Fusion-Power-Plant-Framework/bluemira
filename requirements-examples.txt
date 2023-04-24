@@ -41,7 +41,7 @@ psutil==5.9.4
 ptyprocess==0.7.0
 pure-eval==0.2.2
 pycparser==2.21
-Pygments==2.15.0
+Pygments==2.15.1
 pyrsistent==0.19.3
 pyzmq==25.0.2
 Send2Trash==1.8.0
