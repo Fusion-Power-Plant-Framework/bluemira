@@ -24,6 +24,7 @@ from bluemira.power_cycle.tools import (
     validate_axes,
     validate_list,
     validate_numerical,
+    validate_vector,
 )
 
 CURVE_TEXT_IN_LABEL = " (curve)"
@@ -103,11 +104,7 @@ class LoadData(PowerCycleLoadABC):
         """
         Instantiates a null version of the class.
         """
-        name = "Null LoadData"
-        time = [0, 1]
-        data = [0, 0]
-        null_instance = cls(name, time, data)
-        return null_instance
+        return cls("Null LoadData", time=[0, 1], data=[0, 0])
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -332,13 +329,11 @@ class PowerLoad(PowerCycleLoadABC):
         """
         Instantiates an null version of the class.
         """
-        null_loaddata = LoadData.null()
-
-        name = "Null PowerLoad"
-        loaddata_set = null_loaddata
-        loadmodel_set = LoadModel["RAMP"]
-        null_instance = cls(name, loaddata_set, loadmodel_set)
-        return null_instance
+        return cls(
+            "Null PowerLoad",
+            LoadData.null(),
+            LoadModel["RAMP"],
+        )
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -373,13 +368,10 @@ class PowerLoad(PowerCycleLoadABC):
     def _validate_curve_input(time):
         """
         Validate the 'time' input for the 'curve' method to be a list of
-        numeric values.
+        numeric values. In this case, the elements of 'time' can be
+        negative.
         """
-        time = validate_list(time)
-        for element in time:
-            if not isinstance(element, (int, float)):
-                raise PowerLoadError("curve")
-        return time
+        return validate_vector(time)
 
     def curve(self, time):
         """
@@ -517,7 +509,7 @@ class PowerLoad(PowerCycleLoadABC):
         plot_object = ax.plot(
             computed_time,
             computed_curve,
-            label=self.name + CURVE_TEXT_IN_LABEL,
+            label=f"{self.name} (curve)",
             **final_kwargs,
         )
         list_of_plot_objects.append(plot_object)
@@ -829,7 +821,7 @@ class PhaseLoad(PowerCycleLoadABC):
         plot_object = ax.plot(
             computed_time,
             computed_curve,
-            label=self.name + CURVE_TEXT_IN_LABEL,
+            label=f"{self.name} (curve)",
             **final_kwargs,
         )
         list_of_plot_objects.append(plot_object)
@@ -1183,8 +1175,7 @@ class PulseLoad(PowerCycleLoadABC):
         attribute (i.e. all times are shifted in respect to the
         duration of previous phases).
         """
-        time = self._build_time_from_load_set(self._shifted_set)
-        return time
+        return self._build_time_from_load_set(self._shifted_set)
 
     def _plot_phase_delimiters(self, ax=None):
         """
@@ -1294,7 +1285,7 @@ class PulseLoad(PowerCycleLoadABC):
         plot_object = ax.plot(
             modified_time,
             computed_curve,
-            label=self.name + CURVE_TEXT_IN_LABEL,
+            label=f"{self.name} (curve)",
             **final_kwargs,
         )
         list_of_plot_objects.append(plot_object)

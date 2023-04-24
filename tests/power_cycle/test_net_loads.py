@@ -428,7 +428,6 @@ class TestPowerLoad:
 
     def test_validate_curve_input(self):
         tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
 
         test_arguments = [
             None,
@@ -447,7 +446,7 @@ class TestPowerLoad:
                 time = tested_class._validate_curve_input(argument)
                 assert isinstance(time, list)
             else:
-                with pytest.raises(tested_class_error):
+                with pytest.raises(TypeError):
                     time = tested_class._validate_curve_input(argument)
 
     def test_curve(self):
