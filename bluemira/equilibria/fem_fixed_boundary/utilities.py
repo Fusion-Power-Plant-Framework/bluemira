@@ -531,7 +531,10 @@ def _cell_near_point(cell: dolfin.Cell, refine_point: Iterable, distance: float)
 
 
 def refine_mesh(
-    mesh: dolfin.Mesh, refine_point: Iterable, distance: float, num_levels: int = 1
+    mesh: dolfin.Mesh,
+    refine_point: Iterable[float],
+    distance: float,
+    num_levels: int = 1,
 ) -> dolfin.Mesh:
     """
     Refine the mesh around a reference point.
@@ -540,11 +543,11 @@ def refine_mesh(
     ----------
     mesh:
         Mesh to refine
-    refine_point: Iterable
+    refine_point:
         Point at which to refine the mesh
-    distance: float
+    distance:
         Refinement distance from the point
-    num_levels: int
+    num_levels:
         Number of refinement levels
 
     Returns
