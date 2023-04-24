@@ -1,4 +1,4 @@
-magnetostatics
+Magnetostatics
 ==============
 
 A collection of analytical and semi-analytical calculation tools to evaluate magnetic
@@ -136,9 +136,36 @@ described in [Feng_1985]_.
     :name: fig:circular
 
 Finite element
-##############
+--------------
 
-TBD.
+The implementation of the magnetostatic Finite Element solver is limited to
+2D axially symmetric problems.
+In such an approximation, the Maxwell equations, as function of the poloidal
+magnetic flux (:math:`\Psi`), are reduced to the form ([Zohm_2015]_, page 25):
+
+.. math::
+    :label: strong_form
+
+    r^2 \nabla\cdot\left(\frac{\nabla\Psi}{r^2}\right) = 2
+    \pi r \mu_0 J_{\Phi}
+
+whose weak formulation, considering null Dirichlet boundary conditions,
+is defined as ([Villone_2013]_):
+
+.. math::
+    :label: weak_form
+
+    \int_{D_p} {\frac{1}{r}}{\nabla}{\Psi}{\cdot}{\nabla} v \,dr\,dz = 2
+    \pi \mu_0 \int_{D_p} J_{\Phi} v \,dr\,dz
+
+where :math:`v` is the basis element function of the defined functional subspace
+:math:`V`.
+
+.. literalinclude:: doc_fem_single_coil.py
+    :language: python
+
+.. figure:: pic_single_coil_bz.png
+    :name: fig:single_coil_bz
 
 .. rubric:: References
 
@@ -146,3 +173,5 @@ TBD.
 .. [Babic_2005a] S. Babic and C. Aykel, An improvement in the calculation of the magnetic field for an arbitrary geometry coil with rectangular cross section, International Journal of Numerical Modelling, Electronic Networks, Devices and Fields, 2005, vol. 18, pp. 493-504
 .. [Babic_2005b] S. Babic and C. Aykel, An improvement in the calculation of the magnetic field for an arbitrary geometry coil with rectangular cross section - Erratum, International Journal of Numerical Modelling, Electronic Networks, Devices and Fields, 2005
 .. [Feng_1985] Z. X. Feng, The treatment of singularities in calculation of magnetic field using integral method, IEEE Transactions on Magnetics, 1985, vol. 21
+.. [Zohm_2015] H. Zohm, Magnetohydrodynamic Stability of Tokamaks, Wiley-VCH, Germany, 2015
+.. [Villone_2013] VILLONE, F. et al. Plasma Phys. Control. Fusion 55 (2013) 095008, https://doi.org/10.1088/0741-3335/55/9/095008

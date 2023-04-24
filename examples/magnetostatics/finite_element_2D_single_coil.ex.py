@@ -40,7 +40,7 @@ Application of the dolfin fem 2D magnetostatic to a single coil problem
 """
 
 # %% [markdown]
-# # 2D FEM magnetostatic single coil
+# # 2-D FEM magnetostatic single coil
 # ## Introduction
 #
 # In this example, we will show how to use the fem_magnetostatic_2D solver to find the
@@ -62,11 +62,12 @@ import bluemira.geometry.tools as tools
 import bluemira.magnetostatics.greens as greens
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_path
-from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-    FemMagnetostatic2d,
-)
-from bluemira.equilibria.fem_fixed_boundary.utilities import ScalarSubFunc, b_coil_axis
 from bluemira.geometry.face import BluemiraFace
+from bluemira.magnetostatics.finite_element_2d import (
+    Bz_coil_axis,
+    FemMagnetostatic2d,
+    ScalarSubFunc,
+)
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
@@ -78,11 +79,11 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 # %%
 r_enclo = 100
-lcar_enclo = 0.5
+lcar_enclo = 1.0
 
 rc = 5
-drc = 0.01
-lcar_coil = 0.01
+drc = 0.025
+lcar_coil = 0.05
 
 # %% [markdown]
 #
@@ -157,7 +158,7 @@ plt.show()
 # Finally, instantiate the em solver
 
 # %%
-em_solver = FemMagnetostatic2d(3)
+em_solver = FemMagnetostatic2d(2)
 em_solver.set_mesh(mesh, boundaries)
 
 # %% [markdown]
@@ -205,11 +206,13 @@ r_points_axis = np.zeros(z_points_axis.shape)
 Bz_axis = np.array(
     [em_solver.B(x) for x in np.array([r_points_axis, z_points_axis]).T]
 ).T[1]
-B_teo = np.array([b_coil_axis(rc, 0, z, Ic) for z in z_points_axis])
+B_teo = np.array([Bz_coil_axis(rc, 0, z, Ic) for z in z_points_axis])
 
 fig, ax = plt.subplots()
 ax.plot(z_points_axis, Bz_axis, label="B_calc")
 ax.plot(z_points_axis, B_teo, label="B_teo")
+plt.xlabel("r (m)")
+plt.ylabel("B (T)")
 plt.legend()
 plt.show()
 
@@ -217,6 +220,8 @@ diff = Bz_axis - B_teo
 
 fig, ax = plt.subplots()
 ax.plot(z_points_axis, diff, label="B_calc - B_teo")
+plt.xlabel("r (m)")
+plt.ylabel("error (T)")
 plt.legend()
 plt.show()
 
@@ -241,12 +246,16 @@ Bz_fem = B_fem.T[1]
 fig, ax = plt.subplots()
 ax.plot(z_points_axis, Bx_fem, label="Bx_fem")
 ax.plot(z_points_axis, g_bx, label="Green Bx")
+plt.xlabel("r (m)")
+plt.ylabel("Bx (T)")
 plt.legend()
 plt.show()
 
 fig, ax = plt.subplots()
 ax.plot(z_points_axis, Bz_fem, label="Bz_fem")
 ax.plot(z_points_axis, g_bz, label="Green Bz")
+plt.xlabel("r (m)")
+plt.ylabel("Bz (T)")
 plt.legend()
 plt.show()
 
@@ -257,4 +266,6 @@ fig, ax = plt.subplots()
 ax.plot(z_points_axis, diff1, label="B_calc - GreenBx")
 ax.plot(z_points_axis, diff2, label="B_calc - GreenBz")
 plt.legend()
+plt.xlabel("r (m)")
+plt.ylabel("error (T)")
 plt.show()

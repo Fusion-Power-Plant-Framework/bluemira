@@ -21,109 +21,28 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
+import os
 from typing import Callable, Iterable, List, Optional, Tuple, Union
 
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
+from dolfin import BoundaryMesh, Mesh, Vertex
 from matplotlib._tri import TriContourGenerator
 from matplotlib.axes._axes import Axes
 from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
+from bluemira.base.components import PhysicalComponent
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.error import ExternalOptError
-from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.mesh import meshing
+from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+from bluemira.utilities.opt_problems import OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import is_num
-
-
-def b_coil_axis(r, z, pz, curr):
-    """
-    Return the module of the magnetic field of a coil (of radius r and centered in
-    (0, z)) calculated on a point on the coil axis at a distance pz from the
-    axis origin.
-
-    TODO: add equation
-    """
-    return 4 * np.pi * 1e-7 * curr * r**2 / (r**2 + (pz - z) ** 2) ** 1.5 / 2.0
-
-
-def _convert_const_to_dolfin(value: float):
-    """Convert a constant value to a dolfin function"""
-    if not isinstance(value, (int, float)):
-        raise ValueError("Value must be integer or float.")
-
-    return dolfin.Constant(value)
-
-
-class ScalarSubFunc(dolfin.UserExpression):
-    """
-    Create a dolfin UserExpression from a set of functions defined in the subdomains
-
-    Parameters
-    ----------
-    func_list: Union[Iterable[Union[float, Callable]], float, Callable]
-        list of functions to be interpolated into the subdomains. Int and float values
-        are considered as constant functions. Any other callable function must return
-        a single value.
-    mark_list: Iterable[int]
-        list of markers that identify the subdomain in which the respective functions
-        of func_list must to be applied.
-    subdomains: dolfin.cpp.mesh.MeshFunctionSizet
-        the whole subdomains mesh function
-    """
-
-    def __init__(
-        self,
-        func_list: Union[Iterable[Union[float, Callable]], float, Callable],
-        mark_list: Optional[Iterable[int]] = None,
-        subdomains: Optional[dolfin.cpp.mesh.MeshFunctionSizet] = None,
-        **kwargs,
-    ):
-        super().__init__(**kwargs)
-        self.functions = self.check_functions(func_list)
-        self.markers = mark_list
-        self.subdomains = subdomains
-
-    def check_functions(
-        self,
-        functions: Union[Iterable[Union[float, Callable]], float, Callable],
-    ) -> Iterable[Union[float, Callable]]:
-        """Check if the argument is a function or a list of fuctions"""
-        if not isinstance(functions, Iterable):
-            functions = [functions]
-        if all(isinstance(f, (float, Callable)) for f in functions):
-            return functions
-        raise ValueError(
-            "Accepted functions are instance of (int, float, Callable)"
-            "or a list of them."
-        )
-
-    def eval_cell(self, values: List, x: float, cell):
-        """Evaluate the value on each cell"""
-        if self.markers is None or self.subdomains is None:
-            func = self.functions[0]
-        else:
-            m = self.subdomains[cell.index]
-            func = (
-                self.functions[np.where(np.array(self.markers) == m)[0][0]]
-                if m in self.markers
-                else 0
-            )
-        if callable(func):
-            values[0] = func(x)
-        elif isinstance(func, (int, float)):
-            values[0] = func
-        else:
-            raise ValueError(f"{func} is not callable or is not a constant")
-
-    def value_shape(self) -> Tuple:
-        """
-        Value_shape function (necessary for a UserExpression)
-        https://fenicsproject.discourse.group/t/problems-interpolating-a-userexpression-and-plotting-it/1303
-        """
-        return ()
 
 
 def plot_scalar_field(
@@ -209,31 +128,41 @@ def plot_profile(
 
 def get_tricontours(
     x: np.ndarray, z: np.ndarray, array: np.ndarray, value: Union[float, Iterable]
-) -> List[np.ndarray]:
+) -> List[Union[np.ndarray, None]]:
     """
     Get the contours of a value in a triangular set of points.
 
     Parameters
     ----------
-    x: np.array(n, m)
+    x:
         The x value array
-    z: np.array(n, m)
+    z:
         The z value array
-    array: np.array(n, m)
+    array:
         The value array
-    value: Union[float, Iterable]
+    value:
         The value of the desired contour in the array
 
     Returns
     -------
-    value_loop: List[np.array(ni, mi)]
-        The points of the value contour in the array
+    value_loop:
+        The points of the value contour in the array. If no contour is found
+        for a value, None is returned
     """
     tri = Triangulation(x, z)
     tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
     if is_num(value):
         value = [value]
-    return [tcg.create_contour(val)[0][0] for val in value]
+
+    results = []
+    for val in value:
+        contour = tcg.create_contour(val)[0]
+        if len(contour) > 0:
+            results.append(contour[0])
+        else:
+            bluemira_warn(f"No tricontour found for {val=}")
+            results.append(None)
+    return results
 
 
 def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
@@ -326,60 +255,117 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     return points
 
 
-def _f_max_radius(x, grad):
-    result = -x[0]
-    if grad.size > 0:
-        grad[0] = -1.0
-        grad[1] = 0.0
-    return result
-
-
-def _f_min_radius(x, grad):
-    result = x[0]
-    if grad.size > 0:
-        grad[0] = 1.0
-        grad[1] = 0.0
-    return result
-
-
-def _f_max_vert(x, grad):
-    result = -x[1]
-    if grad.size > 0:
-        grad[0] = 0.0
-        grad[1] = -1.0
-    return result
-
-
-def _f_min_vert(x, grad):
-    result = x[1]
-    if grad.size > 0:
-        grad[0] = 0.0
-        grad[1] = 1.0
-    return result
-
-
-def _f_constrain_psi_norm(
-    constraint: np.ndarray,
-    x: np.ndarray,
-    grad: np.ndarray,
-    psi_norm_func=None,
-    lower_bounds=None,
-    upper_bounds=None,
-) -> np.ndarray:
+def get_mesh_boundary(mesh):
     """
-    Constraint function for points on the psi_norm surface.
+    Retrieve the boundary of the mesh, as an ordered set of coordinates.
+
+    Parameters
+    ----------
+    mesh: dolfin.Mesh
+        Mesh for which to retrieve the exterior boundary
+
+    Returns
+    -------
+    xbdry: np.ndarray
+        x coordinates of the boundary
+    zbdry: np.ndarray
+        z coordinates of the boundary
     """
-    result = psi_norm_func(x)
-    constraint[:] = result
-    if grad.size > 0:
-        grad[:] = approx_derivative(
-            psi_norm_func,
-            x,
-            f0=result,
-            bounds=[lower_bounds, upper_bounds],
-            method="3-point",
-        )
-    return np.array([result])
+    boundary = BoundaryMesh(mesh, "exterior")
+    edges = boundary.cells()
+    check_edge = np.ones(boundary.num_edges())
+
+    index = 0
+    temp_edge = edges[index]
+    sorted_v = []
+    sorted_v.append(temp_edge[0])
+
+    for i in range(len(edges) - 1):
+        temp_v = [v for v in temp_edge if v not in sorted_v][0]
+        sorted_v.append(temp_v)
+        check_edge[index] = 0
+        connected = np.where(edges == temp_v)[0]
+        index = [e for e in connected if check_edge[e] == 1][0]
+        temp_edge = edges[index]
+
+    points_sorted = []
+    for v in sorted_v:
+        points_sorted.append(Vertex(boundary, v).point().array())
+    points_sorted = np.array(points_sorted)
+    return points_sorted[:, 0], points_sorted[:, 1]
+
+
+def get_flux_surfaces_from_mesh(
+    mesh: dolfin.Mesh,
+    psi_norm_func: Callable[[float, float], float],
+    x_1d: Optional[np.ndarray] = None,
+    nx: Optional[int] = None,
+) -> Tuple[np.ndarray, List[ClosedFluxSurface]]:
+    """
+    Get a list of flux surfaces from a mesh and normalised psi callable.
+
+    Parameters
+    ----------
+    mesh:
+        Mesh for which to extract the flux surfaces
+    psi_norm_func:
+        Callable for psi_norm on the mesh
+    x_1d:
+        Array of 1-D normalised psi_values [0..1]. If None, nx will
+        define a linearly spaced vector.
+    nx:
+        Number of points to linearly space along [0..1]. If x_1d is
+        defined, not used.
+
+    Returns
+    -------
+    x_1d:
+        The 1-D normalised psi_values for which flux surfaces could be
+        retrieved.
+    flux_surfaces:
+        The list of closed flux surfaces
+
+    Notes
+    -----
+    x_1d is returned, as it is not always possible to return a flux surface for
+    small values of normalised psi.
+    """
+    if x_1d is None:
+        if nx is None:
+            raise ValueError("Please input either x_1d: np.ndarray or nx: int.")
+        else:
+            x_1d = np.linspace(0, 1, nx)
+    else:
+        if nx is not None:
+            bluemira_warn("x_1d and nx specified, discarding nx.")
+
+    mesh_points = mesh.coordinates()
+    x = mesh_points[:, 0]
+    z = mesh_points[:, 1]
+    psi_norm_data = np.array([psi_norm_func(p) for p in mesh_points])
+
+    index = []
+    flux_surfaces = []
+    for i, xi in enumerate(x_1d):
+        if np.isclose(xi, 1.0, rtol=0, atol=EPS):
+            path = get_mesh_boundary(mesh)
+            fs = Coordinates({"x": path[0], "z": path[1]})
+            fs.close()
+            flux_surfaces.append(ClosedFluxSurface(fs))
+        else:
+            path = get_tricontours(x, z, psi_norm_data, xi)[0]
+            if path is not None:
+                fs = Coordinates({"x": path.T[0], "z": path.T[1]})
+                fs.close()
+                flux_surfaces.append(ClosedFluxSurface(fs))
+            else:
+                index.append(i)
+
+    n = len(index)
+    for xi in range(n):
+        x_1d = np.delete(x_1d, index[xi])
+
+    return x_1d, flux_surfaces
 
 
 def calculate_plasma_shape_params(
@@ -390,7 +376,7 @@ def calculate_plasma_shape_params(
 ) -> Tuple[float, float, float]:
     """
     Calculate the plasma parameters (r_geo, kappa, delta) for a given magnetic
-    isoflux using optimisation.
+    isoflux from the mesh.
 
     Parameters
     ----------
@@ -412,10 +398,6 @@ def calculate_plasma_shape_params(
     delta: float
         Triangularity of the flux surface at psi_norm
     """
-
-    def f_psi_norm(x):
-        return psi_norm_func(x) - psi_norm
-
     points = mesh.coordinates()
     psi_norm_array = [psi_norm_func(x) for x in points]
 
@@ -427,54 +409,6 @@ def calculate_plasma_shape_params(
     po = contour[np.argmax(x)]
     pi = contour[np.argmin(x)]
 
-    search_range = mesh.hmax()
-
-    def find_extremum(
-        func: Callable[[np.ndarray], np.ndarray], x0: Iterable[float]
-    ) -> np.ndarray:
-        """
-        Extremum finding using constrained optimisation
-        """
-        lower_bounds = x0 - search_range
-        upper_bounds = x0 + search_range
-        # NOTE: COBYLA appears to do a better job here, as it seems that the
-        # NLOpt implementation of SLSQP really requires a feasible starting
-        # solution, which is not so readily available with this tight equality
-        # constraint. The scipy SLSQP implementation apparently does not require
-        # such a good starting solution. Neither SLSQP nor COBYLA can guarantee
-        # convergence without a feasible starting point.
-        optimiser = Optimiser(
-            "COBYLA", 2, opt_conditions={"ftol_abs": 1e-10, "max_eval": 1000}
-        )
-        optimiser.set_objective_function(func)
-        optimiser.set_lower_bounds(lower_bounds)
-        optimiser.set_upper_bounds(upper_bounds)
-
-        f_constraint = OptimisationConstraint(
-            _f_constrain_psi_norm,
-            f_constraint_args={
-                "psi_norm_func": f_psi_norm,
-                "lower_bounds": lower_bounds,
-                "upper_bounds": upper_bounds,
-            },
-            constraint_type="equality",
-        )
-
-        optimiser.add_eq_constraints(f_constraint, tolerance=1e-10)
-        try:
-            x_star = optimiser.optimise(x0)
-        except ExternalOptError as e:
-            bluemira_warn(
-                f"calculate_plasma_shape_params::find_extremum failing at {x0}, defaulting to mesh value: {e}"
-            )
-            x_star = x0
-        return x_star
-
-    pi_opt = find_extremum(_f_min_radius, pi)
-    pl_opt = find_extremum(_f_min_vert, pl)
-    po_opt = find_extremum(_f_max_radius, po)
-    pu_opt = find_extremum(_f_max_vert, pu)
-
     if plot:
         _, ax = plt.subplots()
         dolfin.plot(mesh)
@@ -485,24 +419,20 @@ def calculate_plasma_shape_params(
         ax.plot(*pu, marker="o", color="r")
         ax.plot(*pl, marker="o", color="r")
 
-        ax.plot(*po_opt, marker="o", color="b")
-        ax.plot(*pi_opt, marker="o", color="b")
-        ax.plot(*pu_opt, marker="o", color="b")
-        ax.plot(*pl_opt, marker="o", color="b")
         ax.set_aspect("equal")
         plt.show()
 
     # geometric center of a magnetic flux surface
-    r_geo = 0.5 * (po_opt[0] + pi_opt[0])
+    r_geo = 0.5 * (po[0] + pi[0])
 
     # elongation
-    a = 0.5 * (po_opt[0] - pi_opt[0])
-    b = 0.5 * (pu_opt[1] - pl_opt[1])
+    a = 0.5 * (po[0] - pi[0])
+    b = 0.5 * (pu[1] - pl[1])
     kappa = 1 if a == 0 else b / a
 
     # triangularity
-    c = r_geo - pl_opt[0]
-    d = r_geo - pu_opt[0]
+    c = r_geo - pl[0]
+    d = r_geo - pu[0]
     delta = 0 if a == 0 else 0.5 * (c + d) / a
 
     return r_geo, kappa, delta
@@ -568,3 +498,83 @@ def _interpolate_profile(
 ) -> Callable[[np.ndarray], np.ndarray]:
     """Interpolate profile data"""
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
+
+
+def _cell_near_point(cell: dolfin.Cell, refine_point: Iterable, distance: float) -> bool:
+    """
+    Determine whether or not a cell is in the vicinity of a point.
+
+    Parameters
+    ----------
+    cell:
+        Cell to check for vicintiy to a point
+    refine_point:
+        Point from which to determine vicinity to a cell
+    distance:
+        Distance away from the midpoint of the cell to determine vicinity
+    Returns
+    -------
+    bool:
+        Whether or not the cell is in the vicinity of a point
+    """
+    # Get the center of the cell
+    cell_center = cell.midpoint()[:]
+
+    # Calculate the distance between the cell center and the refinement point
+    d = np.linalg.norm(cell_center - np.array(refine_point))
+
+    # Refine the cell if it is close to the refinement point
+    if d < distance:
+        return True
+    else:
+        return False
+
+
+def refine_mesh(
+    mesh: dolfin.Mesh,
+    refine_point: Iterable[float],
+    distance: float,
+    num_levels: int = 1,
+) -> dolfin.Mesh:
+    """
+    Refine the mesh around a reference point.
+
+    Parameters
+    ----------
+    mesh:
+        Mesh to refine
+    refine_point:
+        Point at which to refine the mesh
+    distance:
+        Refinement distance from the point
+    num_levels:
+        Number of refinement levels
+
+    Returns
+    -------
+    mesh:
+        Refined mesh
+    """
+    for _ in range(num_levels):
+        cell_markers = dolfin.MeshFunction("bool", mesh, mesh.topology().dim())
+        cell_markers.set_all(False)
+        for cell in dolfin.cells(mesh):
+            if _cell_near_point(cell, refine_point, distance):
+                cell_markers[cell.index()] = True
+        mesh = dolfin.refine(mesh, cell_markers)
+
+    return mesh
+
+
+def create_mesh(
+    plasma: PhysicalComponent,
+    directory: str,
+    mesh_filename: str,
+    mesh_name_msh: str,
+) -> Mesh:
+    """
+    Create mesh
+    """
+    meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma)
+    msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
+    return import_mesh(mesh_filename, directory=directory, subdomains=True)[0]
