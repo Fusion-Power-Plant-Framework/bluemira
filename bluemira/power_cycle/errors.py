@@ -237,11 +237,6 @@ class PowerLoadError(PowerCycleError):
                 "The attributes 'load' and 'model' of an instance of "
                 f"the {self._source} class must have the same length."
             ),
-            "curve": (
-                "The 'time' input used to create a curve with an "
-                f"instance of the {self._source} class must be numeric "
-                "or a list of numeric values."
-            ),
         }
         return errors
 
