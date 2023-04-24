@@ -296,33 +296,33 @@ def get_mesh_boundary(mesh):
 
 
 def get_flux_surfaces_from_mesh(
-    mesh,
-    psi_norm_func: callable,
+    mesh: dolfin.Mesh,
+    psi_norm_func: Callable[[float, float], float],
     x_1d: Optional[np.ndarray] = None,
     nx: Optional[int] = None,
-):
+) -> Tuple[np.ndarray, List[ClosedFluxSurface]]:
     """
     Get a list of flux surfaces from a mesh and normalised psi callable.
 
     Parameters
     ----------
-    mesh: Mesh
+    mesh:
         Mesh for which to extract the flux surfaces
-    psi_norm_func: callable
+    psi_norm_func:
         Callable for psi_norm on the mesh
-    x_1d: Optional[np.ndarray]
+    x_1d:
         Array of 1-D normalised psi_values [0..1]. If None, nx will
         define a linearly spaced vector.
-    nx: Optional[int]
+    nx:
         Number of points to linearly space along [0..1]. If x_1d is
         defined, not used.
 
     Returns
     -------
-    x_1d: np.ndarray
+    x_1d:
         The 1-D normalised psi_values for which flux surfaces could be
         retrieved.
-    flux_surfaces: List[ClosedFluxSurface]
+    flux_surfaces:
         The list of closed flux surfaces
 
     Notes
