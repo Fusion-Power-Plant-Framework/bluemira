@@ -65,11 +65,11 @@ class TestBlanketDesigner:
             cut_angle=cut_angle,
         )
 
-        ib_face, ob_face, _, _ = designer.segment_blanket()
+        segments = designer.segment_blanket()
 
-        assert ib_face.area == pytest.approx(13 - self.params["c_rm"]["value"])
-        assert ob_face.area == pytest.approx(13)
-        assert ib_face.center_of_mass[0] < ob_face.center_of_mass[0]
+        assert segments.inboard.area == pytest.approx(13 - self.params["c_rm"]["value"])
+        assert segments.outboard.area == pytest.approx(13)
+        assert segments.inboard.center_of_mass[0] < segments.outboard.center_of_mass[0]
 
     @pytest.mark.parametrize("cut_angle", [1, 25, 58])
     def test_segment_blanket_returns_two_faces_with_correct_area(self, cut_angle):
@@ -82,17 +82,19 @@ class TestBlanketDesigner:
             cut_angle=cut_angle,
         )
 
-        ib_face, ob_face, _, _ = designer.segment_blanket()
+        segments = designer.segment_blanket()
 
         c_rm = self.params["c_rm"]["value"]
-        expected_cut_area = c_rm / np.sin(np.deg2rad(90 - cut_angle))
-        cut_area = self.silhouette.area - (ib_face.area + ob_face.area)
+        expected_cut_area = c_rm / np.cos(np.deg2rad(cut_angle))
+        cut_area = self.silhouette.area - (
+            segments.inboard.area + segments.outboard.area
+        )
         assert cut_area == pytest.approx(expected_cut_area)
         expected_ib_area = 13.5 - expected_cut_area - np.tan(np.deg2rad(cut_angle)) / 2
-        assert ib_face.area == pytest.approx(expected_ib_area)
+        assert segments.inboard.area == pytest.approx(expected_ib_area)
         expected_ob_area = 12.5 + np.tan(np.deg2rad(cut_angle)) / 2
-        assert ob_face.area == pytest.approx(expected_ob_area)
-        assert ib_face.center_of_mass[0] < ob_face.center_of_mass[0]
+        assert segments.outboard.area == pytest.approx(expected_ob_area)
+        assert segments.inboard.center_of_mass[0] < segments.outboard.center_of_mass[0]
 
     @pytest.mark.parametrize("cut_angle", [90, 90.01, 100])
     def test_ValueError_given_cut_angle_ge_90(self, cut_angle):

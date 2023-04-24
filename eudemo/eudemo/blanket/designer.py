@@ -55,13 +55,22 @@ class BlanketDesignerParams(ParameterFrame):
     """Minimum length for an individual panel [m]."""
 
 
+@dataclass
+class BlanketSegments:
+    """Container for parts of a blanket."""
+
+    inboard: BluemiraFace
+    outboard: BluemiraFace
+    inboard_boundary: BluemiraWire
+    outboard_boundary: BluemiraWire
+
+
 class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
     """
     Designer for an EUDEMO-style blanket.
 
     This takes a blanket boundary and silhouette, cuts them into inboard
     and outboard segments, and panels each segment.
-
 
     Parameters
     ----------
@@ -111,20 +120,18 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
 
     def run(self) -> Tuple[BluemiraFace, BluemiraFace]:
         """Run the blanket design problem."""
-        inboard, outboard, ib_boundary, ob_boundary = self.segment_blanket()
+        segments = self.segment_blanket()
         # Inboard
-        ib_panels = self.panel_boundary(ib_boundary)
+        ib_panels = self.panel_boundary(segments.inboard_boundary)
         ib_panels_face = BluemiraFace(ib_panels)
-        cut_ib = boolean_cut(inboard, [ib_panels_face])[0]
+        cut_ib = boolean_cut(segments.inboard, [ib_panels_face])[0]
         # Outboard
-        ob_panels = self.panel_boundary(ob_boundary)
+        ob_panels = self.panel_boundary(segments.outboard_boundary)
         ob_panels_face = BluemiraFace(ob_panels)
-        cut_ob = boolean_cut(outboard, [ob_panels_face])[0]
+        cut_ob = boolean_cut(segments.outboard, [ob_panels_face])[0]
         return cut_ib, cut_ob
 
-    def segment_blanket(
-        self,
-    ) -> Tuple[BluemiraFace, BluemiraFace, BluemiraWire, BluemiraWire]:
+    def segment_blanket(self) -> BlanketSegments:
         """
         Segment the breeding blanket's poloidal cross-section.
 
@@ -144,7 +151,12 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         cut_zone = self._make_cutting_face()
         ib_face, ob_face = self._cut_silhouette(cut_zone)
         ib_bound, ob_bound = self._cut_boundary(cut_zone)
-        return ib_face, ob_face, ib_bound, ob_bound
+        return BlanketSegments(
+            inboard=ib_face,
+            outboard=ob_face,
+            inboard_boundary=ib_bound,
+            outboard_boundary=ob_bound,
+        )
 
     def panel_boundary(self, boundary: BluemiraWire) -> BluemiraWire:
         """Create the panel shapes for the given boundary."""
