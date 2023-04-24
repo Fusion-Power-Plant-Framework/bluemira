@@ -31,7 +31,7 @@ lazy-object-proxy==1.9.0
 MarkupSafe==2.1.2
 mccabe==0.7.0
 mypy-extensions==1.0.0
-myst-nb==0.17.1
+myst-nb==0.17.2
 myst-parser==0.18.1
 nbclient==0.5.13
 nodeenv==1.7.0
