@@ -13,6 +13,7 @@ from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImport
 from bluemira.power_cycle.tools import (
     FormattedDict,
     FormattedLibrary,
+    Library,
     read_json,
     validate_file,
     validate_list,
@@ -351,7 +352,7 @@ class ScenarioBuilder:
 
     @classmethod
     def _build_breakdown_library(cls, breakdown_config):
-        breakdown_library = dict()
+        breakdown_library = Library(dict)
         for element_label in breakdown_config.keys():
             element_specs = breakdown_config[element_label]
 
@@ -396,7 +397,7 @@ class ScenarioBuilder:
 
     @classmethod
     def _build_phase_library(cls, phase_config, breakdown_library):
-        phase_library = FormattedLibrary(PowerCyclePhase)
+        phase_library = Library(PowerCyclePhase)
         for phase_label in phase_config.keys():
             phase_specs = phase_config[phase_label]
             phase_name = phase_specs["name"]
@@ -421,7 +422,7 @@ class ScenarioBuilder:
 
     @classmethod
     def _build_pulse_library(cls, pulse_config, phase_library):
-        pulse_library = FormattedLibrary(PowerCyclePulse)
+        pulse_library = Library(PowerCyclePulse)
         for pulse_label in pulse_config.keys():
             pulse_specs = pulse_config[pulse_label]
             pulse_name = pulse_specs["name"]

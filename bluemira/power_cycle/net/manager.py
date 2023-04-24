@@ -23,6 +23,7 @@ from bluemira.power_cycle.time import PowerCycleScenario, ScenarioBuilder
 from bluemira.power_cycle.tools import (
     FormattedDict,
     FormattedLibrary,
+    Library,
     convert_string_into_numeric_list,
     read_json,
     unnest_list,
@@ -274,7 +275,7 @@ class PowerCycleSystem(PowerCycleABC):
         return phaseload_list
 
     def _make_phaseloads_from_config(self, type_config):
-        system_loads = FormattedLibrary(list)
+        system_loads = Library(list)
         for label, load_config in type_config.items():
             load_name = load_config["name"]
             module = load_config["module"]
@@ -330,7 +331,7 @@ class PowerCycleGroup(PowerCycleABC):
 
     @staticmethod
     def _build_system_library(scenario, group_config):
-        system_library = FormattedLibrary(PowerCycleSystem)
+        system_library = Library(PowerCycleSystem)
         for system_label, system_config in group_config.items():
             system = PowerCycleSystem(
                 scenario,
@@ -402,7 +403,7 @@ class PowerCycleManager:
 
     @staticmethod
     def _build_group_library(scenario, manager_config):
-        group_library = FormattedLibrary(PowerCycleGroup)
+        group_library = Library(PowerCycleGroup)
         for group_label, group_inputs in manager_config.items():
             group_name = group_inputs["name"]
             group_config_path = group_inputs["config_path"]
@@ -460,7 +461,7 @@ class PowerCycleManager:
     def _build_net_loads(self):
         valid_types = self._load_types
 
-        all_loads = FormattedLibrary(PulseLoad)
+        all_loads = Library(PulseLoad)
         for load_type in valid_types:
             all_loads[load_type] = self._build_pulseload_of_type(load_type)
 
