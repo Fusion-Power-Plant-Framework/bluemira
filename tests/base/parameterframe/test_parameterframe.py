@@ -6,6 +6,7 @@ from unittest import mock
 
 import pint
 import pytest
+from typeguard import TypeCheckError
 
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.base.parameter_frame._parameter import ParamDictT
@@ -95,12 +96,12 @@ class TestParameterFrame:
         assert frame.x.value == 10
 
     @pytest.mark.parametrize("value", ["OK", ["OK"]])
-    def test_TypeError_given_field_has_Union_Parameter_type(self, value):
+    def test_TypeCheckError_given_field_has_Union_Parameter_type(self, value):
         @dataclass
         class GenericFrame(ParameterFrame):
             x: Parameter[Union[str, list]]
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeCheckError):
             GenericFrame.from_dict({"x": {"value": value, "unit": "m"}})
 
     def test_TypeError_given_field_does_not_have_Parameter_type(self):

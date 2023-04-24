@@ -41,7 +41,7 @@ dependencies = [
     "seaborn",
     "tables",
     "tabulate",
-    "typeguard",
+    "typeguard >3.0.0",
     "scipy",
 ]
 

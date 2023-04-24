@@ -1,6 +1,7 @@
 import copy
 
 import pytest
+from typeguard import TypeCheckError
 
 from bluemira.base.parameter_frame import Parameter
 
@@ -63,11 +64,11 @@ class TestParameter:
             ("long_name", ["a", "b"]),
         ],
     )
-    def test_TypeError_on_init_given_arg_incorrect_type(self, arg, value):
+    def test_TypeCheckError_on_init_given_arg_incorrect_type(self, arg, value):
         kwargs = copy.deepcopy(self.SERIALIZED_PARAM)
         kwargs[arg] = value
 
-        with pytest.raises(TypeError):
+        with pytest.raises(TypeCheckError):
             Parameter(**kwargs)
 
     def test_to_dict_returns_equal_dict_as_used_in_init(self):
