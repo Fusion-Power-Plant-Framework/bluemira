@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from functools import partial
 from random import uniform
 
 import pytest
@@ -52,11 +53,11 @@ class TestDivertorBuilder:
             )
         )
 
-    @pytest.mark.parametrize("cut_angle", [uniform(0, 90) for _ in range(2)])
-    @pytest.mark.parametrize("r_inner_cut", [uniform(2, 4) for _ in range(2)])
+    @pytest.mark.parametrize("cut_angle", [partial(uniform, 0, 90) for _ in range(2)])
+    @pytest.mark.parametrize("r_inner_cut", [partial(uniform, 2, 4) for _ in range(2)])
     def test_components_and_segments(self, r_inner_cut, cut_angle):
         builder = BlanketBuilder(
-            self.params, {}, self.silhouette, r_inner_cut, cut_angle
+            self.params, {}, self.silhouette, r_inner_cut(), cut_angle()
         )
         blanket = builder.build()
 
