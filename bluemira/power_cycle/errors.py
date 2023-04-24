@@ -242,13 +242,6 @@ class PowerLoadError(PowerCycleError):
                 f"instance of the {self._source} class must be numeric "
                 "or a list of numeric values."
             ),
-            "time": (
-                "The 'intrinsic_time' property of an instance of the "
-                f"{self._source} class cannot be set; it is instead "
-                "built from the 'intrinsic_time' attributes of the "
-                "'LoadData' objects stored in the 'loaddata_set' "
-                "attribute.",
-            ),
         }
         return errors
 
@@ -276,16 +269,6 @@ class PhaseLoadError(PowerCycleError):
                 "not valid. Only the strings 'load' and 'normal' are "
                 "accepted."
             ),
-            "normalized_set": (
-                "The 'normalized_set' property of an instance of the "
-                f"{self._source} class cannot be set; it is instead "
-                "calculated from the 'powerload_set' and 'phase' "
-                "attributes."
-            ),
-            "time": (
-                "The time properties of an instance of the "
-                f"{self._source} class cannot be set."
-            ),
             "addition": (
                 f"Instances of the {self._source} class can only be "
                 "added if their 'phase' attributes represent the same "
@@ -302,15 +285,6 @@ class PulseLoadError(PowerCycleError):
 
     def _errors(self):
         errors = {
-            "shifted_set": (
-                "The 'shifted_set' property of an instance of the "
-                f"{self._source} class cannot be set; it is instead "
-                "calculated from the 'phaseload_set' attribute."
-            ),
-            "time": (
-                "The time properties of an instance of the "
-                f"{self._source} class cannot be set."
-            ),
             "addition": (
                 f"Instances of the {self._source} class can only be "
                 "added if their 'pulse' attributes represent the same "

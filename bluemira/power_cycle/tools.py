@@ -8,7 +8,6 @@ import json
 import os
 import pprint as pp
 from abc import ABCMeta
-from typing import Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -271,22 +270,27 @@ def adjust_2d_graph_ranges(x_frac=0.1, y_frac=0.1, ax=None):
 
 
 # ######################################################################
-# FORMATTED DICTIONARY
+# CLASSES
 # ######################################################################
 
 
-class FormattedABC(dict, metaclass=ABCMeta):
+class FormattedABC(metaclass=ABCMeta):
     """
     Abstract base class for Formatted classes used to structure data,
-    that is a child class of the 'dict' class.
+    that includes the 'Format' inner class.
+
+    Parameters
+    ----------
+    allowed_format: FormattedABC.Format
+        Allowed format for values of the instance.
     """
 
     class Format(dict):
         """
         A class that allows for the creation of a dictionary that
         specifies the allowed format for objects of child classes of
-        the 'FormattedABC' class. The 'Format' instance as a "blueprint"
-        for these objects.
+        the 'FormattedABC' class. The 'Format' instance acts as a
+        "blueprint" for these objects.
         """
 
         def __init__(self, dictionary: dict):
@@ -307,9 +311,8 @@ class FormattedABC(dict, metaclass=ABCMeta):
             elements_are_types = [isinstance(t, type) for t in argument]
             if not all(elements_are_types):
                 raise TypeError(
-                    "Values of a 'Format' dictionary instance "
-                    "must be a single, or a list of, 'type' "
-                    "object(s).",
+                    "Values of a 'Format' dictionary instance must "
+                    "be a 'type' object, or a list of them.",
                 )
             return argument
 
@@ -317,18 +320,29 @@ class FormattedABC(dict, metaclass=ABCMeta):
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
+    def __init__(
+        self,
+        allowed_format: Format,
+    ):
+        if isinstance(allowed_format, self.Format):
+            self.allowed_format = allowed_format
+        else:
+            raise TypeError(
+                "The 'allowed_format' parameter must be an "
+                "instance of the inner class 'Format'.",
+            )
+
     # ------------------------------------------------------------------
     # OPERATIONS
     # ------------------------------------------------------------------
     def display(self) -> str:
         """
-        Print representation of the 'FormattedDict'
-        instance using the 'pprint' module.
+        Print representation of the instance using the 'pprint' module.
         """
         pp.pp(self)
 
 
-class FormattedDict(FormattedABC):
+class FormattedDict(dict, FormattedABC):
     """
     Formatted dictionary.
 
@@ -338,7 +352,7 @@ class FormattedDict(FormattedABC):
 
     Parameters
     ----------
-    allowed_format: FormattedDict.Format
+    allowed_format: FormattedABC.Format
         Allowed format for 'FormattedDict' instance.
     dictionary: dict
         Dictionary that will be converted to a 'FormattedDict' instance.
@@ -361,43 +375,41 @@ class FormattedDict(FormattedABC):
         dictionary=None,
         format_index=None,
     ):
-        self.empty(allowed_format, format_index)
-
-        if dictionary is None:
-            pass
-
-        elif isinstance(dictionary, dict):
-            for key, value in dictionary.items():
-                self.__setitem__(key, value)
-
-        else:
-            raise TypeError(
-                "The 'dictionary' parameter must be a 'dict' " "or 'None'.",
-            )
-
-    def empty(self, allowed_format, format_index):
-        """
-        Create an empty instance of 'FormattedDict' using a 'Format'
-        object to specify the structure of the dictionary. When the
-        'Format' object specifies multiple valid types for any given
-        key of 'FormattedDict', the 'format_index' parameter can be
-        used to specify which type to use for that key.
-        """
-        if isinstance(allowed_format, self.Format):
-            self.allowed_format = allowed_format
-        else:
-            raise TypeError(
-                "The 'allowed_format' parameter must be an "
-                "instance of the 'Format' class",
-            )
-        format_index = self._validate_index(format_index)
+        FormattedABC.__init__(self, allowed_format)
         self._build_formatted_dict(format_index)
+        self._fill_formatted_dict(dictionary)
+
+    def _build_formatted_dict(self, format_index):
+        """
+        Build a 'dict' based on the 'Format' object stored in the
+        'allowed_format' attribute. Keys are the same as in the format,
+        and values are empty instances of one of the elements of the
+        value for that key. The element is chosen with the associated
+        integer of the 'format_index' parameter.
+        """
+        format_index = self._validate_index(format_index)
+
+        loop_elements = enumerate(self.allowed_format.items())
+        for n, (allowed_key, allowed_types) in loop_elements:
+            chosen_index = format_index[n]
+            try:
+                chosen_type = allowed_types[chosen_index]
+            except IndexError:
+                raise IndexError(
+                    f"Element number {n!r} of the 'format_index' "
+                    f"parameter is {chosen_index!r} but this integer "
+                    "is out of range for the associated list in the "
+                    "allowed_format attribute, that has length "
+                    f"{len(allowed_types)!r}.",
+                )
+            super().__setitem__(allowed_key, chosen_type())
 
     def _validate_index(self, format_index):
         """
         Validate the 'format_index' parameter to be a 'list' with
         the same length as the 'allowed_format' attribute,  in which
-        each element is an integer.
+        each element is an integer. If 'None' is given, a list of zeroes
+        with the same lenght of 'allowed_format' is returned.
         """
         required_length = len(self.allowed_format)
         if format_index is None:
@@ -422,27 +434,16 @@ class FormattedDict(FormattedABC):
             )
         return format_index
 
-    def _build_formatted_dict(self, format_index):
-        """
-        Build a 'dict' based on the 'allowed_format' attribute. Keys are
-        the same as in the format, and values are empty instances of one
-        of the elements of the value for that key. The element is chosen
-        with the associated integer of the 'format_index' parameter.
-        """
-        loop_elements = enumerate(self.allowed_format.items())
-        for n, (allowed_key, allowed_types) in loop_elements:
-            chosen_index = format_index[n]
-            try:
-                chosen_type = allowed_types[chosen_index]
-            except IndexError:
-                raise IndexError(
-                    f"Element number {n!r} of the 'format_index' "
-                    f"parameter is {chosen_index!r} but this integer "
-                    "is out of range for the associated list in the "
-                    "allowed_format attribute, that has length "
-                    f"{len(allowed_types)!r}.",
-                )
-            super().__setitem__(allowed_key, chosen_type())
+    def _fill_formatted_dict(self, dictionary):
+        if dictionary is None:
+            pass
+        elif isinstance(dictionary, dict):
+            for key, value in dictionary.items():
+                self.__setitem__(key, value)
+        else:
+            raise TypeError(
+                "The 'dictionary' parameter must be a 'dict' or 'None'.",
+            )
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -469,24 +470,81 @@ class FormattedDict(FormattedABC):
             )
 
 
-class FormattedLibrary(FormattedABC):
+class Library(dict):
     """
-    Formatted library.
+    Library-style dictionary.
 
     A child class of the 'dict' class that allows for the creation of
-    dictionaries in which each value follows a specific format,
-    specified with the 'allowed_format' parameter. Formats can be a
-    'type' object, in which case all library values must be objects of
-    that type, or 'Format' objects, in which case all library values
-    must be objects of the 'FormattedDict' class with that format.
+    dictionaries in which each value must be of the same type.
 
     Parameters
     ----------
-    allowed_format: type | FormattedDict.Format
-        Allowed format for all values in the library. If a 'type'
-        object, all values in the library must be of that type. If a
-        'Format' object, all values in the library must be the of the
-        'FormattedDict' class with that format as 'allowed_format'.
+    allowed_type: type
+        Allowed type for all values in the library.
+    dictionary: dict
+        Dictionary that will be converted to a 'Library' instance.
+        If 'None', an empty 'Library' instance is created.
+    """
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    def __init__(
+        self,
+        allowed_type,
+        dictionary=None,
+    ):
+        super().__init__()
+        self._validate_allowed_type(allowed_type)
+        self._fill_library(dictionary)
+
+    def _validate_allowed_type(self, allowed_type):
+        if isinstance(allowed_type, type):
+            self.allowed_type = allowed_type
+        else:
+            raise TypeError(
+                "The 'allowed_type' parameter must be a 'type' object.",
+            )
+
+    def _fill_library(self, dictionary):
+        if dictionary is not None:
+            for key, value in dictionary.items():
+                self.__setitem__(key, value)
+
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
+
+    def __setitem__(self, key, value):
+        """
+        Set the ('key', 'value') item in the instance if 'value' is
+        an object of type allowed by 'allowed_type'.
+        """
+        if isinstance(value, self.allowed_type):
+            super().__setitem__(key, value)
+        else:
+            raise TypeError(
+                f"The value to be set in key {key!r} is not of "
+                f"the type {self.allowed_type!r}.",
+            )
+
+
+class FormattedLibrary(Library, FormattedABC):
+    """
+    Formatted library.
+
+    A child of the 'Library' and 'FormattedABC' classes that allows for
+    the creation of library-style dictionaries in which each value
+    follows a specific format, specified with the 'allowed_format'
+    parameter.
+
+    Parameters
+    ----------
+    allowed_format: FormattedABC.Format
+        Allowed format for all values in the library. All values in
+        library must be the of the 'FormattedDict' class with the
+        format specified by 'allowed_format'.
     dictionary: dict
         Dictionary that will be converted to a 'FormattedLibrary'
         instance. If 'None', an empty 'FormattedLibrary' instance is
@@ -499,27 +557,18 @@ class FormattedLibrary(FormattedABC):
 
     def __init__(
         self,
-        allowed_format: Union[type, FormattedABC.Format],
+        allowed_format: FormattedABC.Format,
         dictionary=None,
     ):
-        self.empty(allowed_format)
+        allowed_type = FormattedDict
+        Library.__init__(self, allowed_type)
+        FormattedABC.__init__(self, allowed_format)
+        self._fill_formatted_library(dictionary)
+
+    def _fill_formatted_library(self, dictionary):
         if dictionary is not None:
             for key, value in dictionary.items():
                 self.__setitem__(key, value)
-
-    def empty(self, allowed_format):
-        """
-        Create an empty instance of 'FormattedLibrary' using a 'Format'
-        object to specify the structure that all values must have.
-        """
-        if isinstance(allowed_format, (type, self.Format)):
-            self.allowed_format = allowed_format
-        else:
-            raise TypeError(
-                "The 'allowed_format' parameter must be an "
-                "instance of the inner class 'Format'.",
-            )
-        super().__init__()
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -527,25 +576,9 @@ class FormattedLibrary(FormattedABC):
 
     def __setitem__(self, key, value):
         """
-        Set the ('key', 'value') item in the instance if 'value' is
-        valid.
-        If the 'allowed_format' attribute is a 'type', the value must
-        be of that type.
-        If the 'allowed_format' attribute is a 'Format', the value
-        must be a 'dict' that can be converted into a 'FormattedDict'
-        instance with that format.
+        Set the ('key', 'value') item in the instance if 'value' is a
+        'dict' that can be converted into a 'FormattedDict' instance
+        with the format specified by the 'allowed_format' attribute.
         """
-        if isinstance(self.allowed_format, type):
-            if isinstance(value, self.allowed_format):
-                super().__setitem__(key, value)
-            else:
-                raise TypeError(
-                    f"The value to be set in key {key!r} is not of "
-                    f"the type {self.allowed_format!r}.",
-                )
-        else:
-            formatted_value = FormattedDict(
-                self.allowed_format,
-                dictionary=value,
-            )
-            super().__setitem__(key, formatted_value)
+        formatted_value = FormattedDict(self.allowed_format, dictionary=value)
+        super().__setitem__(key, formatted_value)

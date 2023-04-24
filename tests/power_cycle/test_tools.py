@@ -10,6 +10,7 @@ from bluemira.power_cycle.tools import (
     FormattedABC,
     FormattedDict,
     FormattedLibrary,
+    Library,
     adjust_2d_graph_ranges,
     convert_string_into_numeric_list,
     copy_dict_without_key,
@@ -25,7 +26,12 @@ from bluemira.power_cycle.tools import (
     validate_numerical,
     validate_vector,
 )
-from tests.power_cycle.kits_for_tests import NetManagerTestKit, TimeTestKit, ToolsTestKit
+from tests.power_cycle.kits_for_tests import (
+    NetManagerTestKit,
+    TimeTestKit,
+    ToolsTestKit,
+    copy_dict_with_wrong_value,
+)
 
 tools_testkit = ToolsTestKit()
 time_testkit = TimeTestKit()
@@ -291,11 +297,26 @@ class TestPlottingTools:
 class TestFormattedABC:
     tested_class = FormattedABC
 
+    class SampleConcreteClass(tested_class):
+        """
+        Inner class that is a dummy concrete class for testing the main
+        abstract class of the test.
+        """
+
+        class_attr = "some string"
+
+        def __init__(self, allowed_format):
+            super().__init__(allowed_format)
+            self.instance_attr = "another string"
+
     def setup_method(self):
         (
             self.right_format_input,
             self.wrong_format_input,
         ) = tools_testkit.inputs_for_format()
+
+    def build_right_format(self):
+        return self.tested_class.Format(self.right_format_input)
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
@@ -316,7 +337,7 @@ class TestFormattedABC:
                 validated_value = tested_method(wrong_value)
 
     def test_Format_constructor(self):
-        right_format = self.tested_class.Format(self.right_format_input)
+        right_format = self.build_right_format()
         assert isinstance(right_format, self.tested_class.Format)
 
         for key, value in right_format.items():
@@ -332,6 +353,13 @@ class TestFormattedABC:
 
         with pytest.raises(TypeError):
             wrong_format = self.tested_class.Format(self.wrong_format_input)
+
+    def test_constructor(self):
+        right_format = self.build_right_format()
+        sample = self.SampleConcreteClass(right_format)
+        assert isinstance(sample, self.SampleConcreteClass)
+        assert hasattr(sample, "allowed_format")
+        assert sample.allowed_format == right_format
 
     # ------------------------------------------------------------------
     # OPERATIONS
@@ -396,7 +424,7 @@ class TestFormattedDict:
             long_index = default_sample._validate_index(long_index)
             wrong_index = default_sample._validate_index(self.wrong_index_input)
 
-    def test_empty(self):
+    def test_build_formatted_dict(self):
         default_sample = self.build_default_empty_instance()
         indexed_sample = self.build_indexed_empty_instance()
         assert isinstance(default_sample, self.tested_class)
@@ -417,7 +445,7 @@ class TestFormattedDict:
             chosen_index = self.right_index_input[n]
             assert isinstance(value, valid_types[chosen_index])
 
-    def test_constructor(self):
+    def test_fill_formatted_dict(self):
         sample = self.build_full_instance()
         assert isinstance(sample, self.tested_class)
 
@@ -436,56 +464,103 @@ class TestFormattedDict:
         assert callable(sample.__setitem__)
 
 
-class TestFormattedLibrary:
-    tested_class = FormattedLibrary
+class TestLibrary:
+    tested_class = Library
 
     def setup_method(self):
         (
-            self.example_format,
             self.example_types,
-            self.example_dict,
-            self.example_keys_for_library,
-        ) = tools_testkit.inputs_for_formattedlibrary()
-
-        all_valid_formats = self.example_types
-        all_valid_formats.append(self.example_format)
-        self.all_valid_formats = all_valid_formats
+            self.example_library_key,
+        ) = tools_testkit.inputs_for_library()
 
     # ------------------------------------------------------------------
     # CLASS ATTRIBUTES & CONSTRUCTOR
     # ------------------------------------------------------------------
 
     def test_empty(self):
-        for valid_format in self.all_valid_formats:
-            empty_sample = self.tested_class(valid_format)
+        for single_type in self.example_types:
+            empty_sample = self.tested_class(single_type)
             assert isinstance(empty_sample, self.tested_class)
-            assert empty_sample.allowed_format == valid_format
+            assert empty_sample.allowed_type == single_type
             assert len(empty_sample) == 0
 
+            with pytest.raises(TypeError):
+                wrong_sample = self.tested_class(single_type())
+
     def test_constructor(self):
-        for valid_format in self.all_valid_formats:
-            valid_dictionary = dict()
-            for key in self.example_keys_for_library:
-                if isinstance(valid_format, FormattedABC.Format):
-                    valid_dictionary[key] = self.example_dict
-                else:
-                    valid_dictionary[key] = valid_format()
+        for t in self.example_types:
+            right_dictionary = {k: t() for k in self.example_library_key}
+            sample = self.tested_class(t, dictionary=right_dictionary)
+            assert isinstance(sample, self.tested_class)
+            assert sample.allowed_type == t
+            assert len(sample) == len(self.example_library_key)
+            assert all(isinstance(v, t) for v in sample.values())
 
-            full_sample = self.tested_class(
-                valid_format,
-                dictionary=valid_dictionary,
+            wrong_dictionary = copy_dict_with_wrong_value(
+                right_dictionary,
+                self.example_library_key[0],
+                type(None),
             )
-            assert isinstance(full_sample, self.tested_class)
-            assert full_sample.allowed_format == valid_format
-            assert len(full_sample) == len(self.example_keys_for_library)
+            with pytest.raises(TypeError):
+                wrong_sample = self.tested_class(
+                    t,
+                    dictionary=wrong_dictionary,
+                )
 
-            for key, value in full_sample.items():
-                assert key in self.example_keys_for_library
+    # ------------------------------------------------------------------
+    # OPERATIONS
+    # ------------------------------------------------------------------
 
-                if isinstance(valid_format, FormattedABC.Format):
-                    assert isinstance(value, FormattedDict)
-                else:
-                    assert isinstance(value, valid_format)
+    def test_setitem(self):
+        assert callable(self.tested_class.__setitem__)
+
+
+class TestFormattedLibrary:
+    tested_class = FormattedLibrary
+
+    def setup_method(self):
+        (
+            self.example_format,
+            self.example_dict,
+            self.example_library_keys,
+        ) = tools_testkit.inputs_for_formattedlibrary()
+
+    # ------------------------------------------------------------------
+    # CLASS ATTRIBUTES & CONSTRUCTOR
+    # ------------------------------------------------------------------
+
+    def test_empty_constructor(self):
+        empty_sample = self.tested_class(self.example_format)
+        assert isinstance(empty_sample, self.tested_class)
+        assert empty_sample.allowed_type == FormattedDict
+        assert empty_sample.allowed_format == self.example_format
+        assert len(empty_sample) == 0
+
+    def test_full_constructor(self):
+        right_dict = {k: self.example_dict for k in self.example_library_keys}
+        full_sample = self.tested_class(
+            self.example_format,
+            dictionary=right_dict,
+        )
+        assert isinstance(full_sample, self.tested_class)
+        assert full_sample.allowed_type == FormattedDict
+        assert full_sample.allowed_format == self.example_format
+        assert len(full_sample) == len(self.example_library_keys)
+        for key in self.example_library_keys:
+            assert key in full_sample.keys()
+            assert isinstance(full_sample[key], FormattedDict)
+            assert full_sample[key].allowed_format == self.example_format
+
+        wrong_dictionary = copy_dict_with_wrong_value(
+            right_dict,
+            self.example_library_keys[0],
+            "value_with_wrong_format",
+        )
+        with pytest.raises(TypeError):
+            wrong_sample = self.tested_class(
+                self.example_format,
+                dictionary=wrong_dictionary,
+            )
 
     # ------------------------------------------------------------------
     # OPERATIONS

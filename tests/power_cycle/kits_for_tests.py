@@ -195,6 +195,31 @@ class ToolsTestKit:
             wrong_index_input,
         )
 
+    def inputs_for_library(self):
+        """
+        Function to create inputs for Library testing.
+        """
+        example_types = [
+            str,
+            list,
+            int,
+            float,
+            bool,
+            dict,
+        ]
+
+        example_library_keys = [
+            "case_1",
+            "case_2",
+            "case_3",
+            "case_4",
+        ]
+
+        return (
+            example_types,
+            example_library_keys,
+        )
+
     def inputs_for_formattedlibrary(self):
         """
         Function to create inputs for FormattedLibrary testing.
@@ -206,27 +231,15 @@ class ToolsTestKit:
             _,
         ) = self.inputs_for_formatteddict()
 
-        example_types = [
-            str,
-            list,
-            int,
-            float,
-            bool,
-            dict,
-        ]
-
-        example_keys_for_library = [
-            "case_1",
-            "case_2",
-            "case_3",
-            "case_4",
-        ]
+        (
+            _,
+            example_library_keys,
+        ) = self.inputs_for_library()
 
         return (
             example_format,
-            example_types,
             example_dict,
-            example_keys_for_library,
+            example_library_keys,
         )
 
 
