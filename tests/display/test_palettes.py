@@ -61,8 +61,8 @@ class TestColorPalette:
 
     def test_repr_term(self):
         assert (
-            self.pal._repr_colour_str()
-            == "\x1b[48:2::0:0:0m \x1b[49m\x1b[48:2::255:255:255m \x1b[49m\n"
+            self.pal._repr_colour_str(self.pal._hex_horizontal())
+            == "\x1b[48:2::0:0:0m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
         )
 
     def test_repr_html(self):
@@ -81,23 +81,23 @@ class TestColorPalette:
         assert pal._repr_html() == (
             '<svg  width="110" height="440">'
             + self.rect_str.format(0, 0, "#000000")
+            + self.rect_str.format(55, 0, "#ffffff")
             + self.rect_str.format(0, 55, "#202020")
+            + self.rect_str.format(55, 55, "#ffffff")
             + self.rect_str.format(0, 110, "#404040")
+            + self.rect_str.format(55, 110, "#ffffff")
             + self.rect_str.format(0, 165, "#606060")
             + self.rect_str.format(0, 220, "#808080")
             + self.rect_str.format(0, 275, "#9f9f9f")
             + self.rect_str.format(0, 330, "#bfbfbf")
             + self.rect_str.format(0, 385, "#dfdfdf")
-            + self.rect_str.format(55, 0, "#ffffff")
-            + self.rect_str.format(55, 55, "#ffffff")
-            + self.rect_str.format(55, 110, "#ffffff")
             + "</svg>"
         )
 
 
 def test_background_colour_string():
-    assert background_colour_string("#123456") == "\x1b[48:2::18:52:86m \x1b[49m"
-    assert background_colour_string("#123") == "\x1b[48:2::1:2:3m \x1b[49m"
+    assert background_colour_string("#123456") == "\x1b[48:2::18:52:86m  \x1b[49m"
+    assert background_colour_string("#123") == "\x1b[48:2::1:2:3m  \x1b[49m"
 
 
 def test_make_rgb_alpha():

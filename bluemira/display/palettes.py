@@ -23,8 +23,8 @@
 Colour palettes
 """
 
-from itertools import cycle
-from typing import List, Optional, Tuple, Union
+from itertools import cycle, zip_longest
+from typing import List, Tuple, Union
 
 import matplotlib.colors as colors
 import numpy as np
@@ -107,32 +107,53 @@ class ColorPalette:
                 else type(self)({idx_or_key: self._dict[idx_or_key]})
             )
 
+    def _hex_horizontal(self) -> Union[List[str], List[List[str]]]:
+        _hex = self.as_hex()
+        if isinstance(_hex, str):
+            _hex = [_hex]
+        elif any(isinstance(h, list) for h in _hex):
+            for i, h in enumerate(_hex):
+                if isinstance(h, str):
+                    _hex[i] = [h]
+            _hex = list(map(list, zip_longest(*_hex, fillvalue="  ")))
+        return _hex
+
     def _repr_html(self) -> str:
-        def html_str(_hex: List[str], c_no: int = 0, column=False) -> str:
+        def html_str(_hex: Union[List[str], List[List[str]]], y: int = 0) -> str:
             string = ""
-            for no, col in enumerate(_hex):
+            x = 0
+            for col in _hex:
                 if isinstance(col, list):
-                    string += html_str(_hex=col, c_no=no, column=True)
+                    string += html_str(_hex=col, y=y)
+                    y += 1
                 else:
-                    if column:
-                        x = c_no * s
-                        y = no * s
-                    else:
-                        x = no * s
-                        y = c_no * s
-                    string += (
-                        f'<rect x="{x}" y="{y}"'
-                        f' width="{s}" height="{s}" style="fill:{col};'
-                        'stroke-width:2;stroke:rgb(255,255,255)"/>'
-                    )
+                    if col != "  ":
+                        string += (
+                            f'<rect x="{x*s}" y="{y*s}"'
+                            f' width="{s}" height="{s}" style="fill:{col};'
+                            'stroke-width:2;stroke:rgb(255,255,255)"/>'
+                        )
+                    x += 1
 
             return string
 
         s = 55
-        hex_str = self.as_hex()
-        m = max([len(sp) if isinstance(sp, list) else 1 for sp in hex_str])
+        hex_str = self._hex_horizontal()
+        m = len(hex_str) if any(isinstance(h, list) for h in hex_str) else 1
         colours = html_str(hex_str)
         return f'<svg  width="{(len(self))* s}" height="{m * s}">{colours}</svg>'
+
+    def _repr_colour_str(self, _hex: Union[List[str], List[List[str]]]) -> str:
+        """Create colourful representation in terminal"""
+        string = ""
+        for col in _hex:
+            if isinstance(col, list):
+                string += self._repr_colour_str(_hex=col)
+            elif col != "  ":
+                string += background_colour_string(col, sqlen=2)
+            else:
+                string += col
+        return f"{string}\n"
 
     def __repr__(self) -> str:
         """
@@ -141,32 +162,20 @@ class ColorPalette:
         try:
             g_ipy = get_ipython()
             if "terminal" in str(type(g_ipy)) or g_ipy is None:
-                return self._repr_colour_str()
+                return self._repr_colour_str(self._hex_horizontal())
         except NameError:
-            return self._repr_colour_str()
+            return self._repr_colour_str(self._hex_horizontal())
 
         from IPython.core.display import HTML, display
 
         display(HTML(self._repr_html()))
         return ""
 
-    def _repr_colour_str(self, *, _hex: Optional[Union[str, List[str]]] = None) -> str:
-        """Create colourful representation in terminal"""
-        string = ""
-        if _hex is None:
-            _hex = self.as_hex()
-        for col in _hex:
-            if isinstance(col, list):
-                string += self._repr_colour_str(_hex=col)
-            else:
-                string += background_colour_string(col)
-        return f"{string}\n"
-
     def __len__(self) -> int:
         """Get the length of the ColorPalette"""
         return len(self._palette)
 
-    def as_hex(self) -> Union[List[str], str]:
+    def as_hex(self) -> Union[List[str], List[List[str]], str]:
         """
         Get the hex representation of the palette
         """
@@ -184,14 +193,14 @@ class ColorPalette:
         return hex_list[0] if len(hex_list) == 1 else hex_list
 
 
-def background_colour_string(hexstring: str) -> str:
+def background_colour_string(hexstring: str, sqlen=2) -> str:
     """Create ANSI background colour string for hex colour"""
     hexstring = hexstring.strip("#")
     a, b, c = (1, 2, 3) if len(hexstring) == 3 else (2, 4, 6)
     return (
         f"\033[48:2::{int(hexstring[:a], 16)}:"
         f"{int(hexstring[a:b], 16)}:"
-        f"{int(hexstring[b:c], 16)}m \033[49m"
+        f"{int(hexstring[b:c], 16)}m{' '*sqlen}\033[49m"
     )
 
 
