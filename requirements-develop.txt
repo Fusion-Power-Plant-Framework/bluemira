@@ -33,7 +33,7 @@ mccabe==0.7.0
 mypy-extensions==1.0.0
 myst-nb==0.17.2
 myst-parser==0.18.1
-nbclient==0.5.13
+nbclient==0.7.3
 nodeenv==1.7.0
 pathspec==0.11.1
 pbr==5.11.1
