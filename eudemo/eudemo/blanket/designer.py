@@ -141,7 +141,20 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         ob_bound
             Outboard blanket segment's inner boundary.
         """
-        # Make cutting geometry
+        cut_zone = self._make_cutting_face()
+        ib_face, ob_face = self._cut_silhouette(cut_zone)
+        ib_bound, ob_bound = self._cut_boundary(cut_zone)
+        return ib_face, ob_face, ib_bound, ob_bound
+
+    def panel_boundary(self, boundary: BluemiraWire) -> BluemiraWire:
+        """Create the panel shapes for the given boundary."""
+        panel_coords = PanellingDesigner(self.params, boundary).run()
+        return make_polygon(
+            {"x": panel_coords[0], "z": panel_coords[1]}, label="panels", closed=True
+        )
+
+    def _make_cutting_face(self) -> BluemiraFace:
+        """Make a face that can be used to cut the blanket into inboard & outboard."""
         p0 = get_inner_cut_point(self.silhouette, self.r_inner_cut)
         p1 = [p0[0], 0, p0[2] + VERY_BIG]
         p2 = [p0[0] - self.params.c_rm.value, 0, p1[2]]
@@ -149,8 +162,12 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         cut_zone = BluemiraFace(make_polygon([p0, p1, p2, p3], closed=True))
         if self.cut_angle != 0.0:
             cut_zone.rotate(base=p0, direction=(0, -1, 0), degree=self.cut_angle)
+        return cut_zone
 
-        # Cut the silhouette
+    def _cut_silhouette(
+        self, cut_zone: BluemiraFace
+    ) -> Tuple[BluemiraFace, BluemiraFace]:
+        """Cut the blanket silhouette into inboard and outboard using the given face."""
         cut_result = boolean_cut(self.silhouette, cut_zone)
         if len(cut_result) < 2:
             raise BuilderError(
@@ -162,25 +179,20 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
                 f"({len(cut_result)}); only taking the first two..."
             )
         ib_face, ob_face = sorted(cut_result, key=lambda x: x.center_of_mass[0])[:2]
+        return ib_face, ob_face
 
-        # Cut the boundary
+    def _cut_boundary(self, cut_zone: BluemiraFace) -> Tuple[BluemiraWire, BluemiraWire]:
+        """Cut the blanket boundary into inboard and outboard using the given face."""
         boundary_cut = boolean_cut(self.boundary, cut_zone)
-        if len(cut_result) < 2:
+        if len(boundary_cut) < 2:
             raise BuilderError(
-                f"BB poloidal boundary segmentation only returned '{len(cut_result)}' "
+                f"BB poloidal boundary segmentation only returned '{len(boundary_cut)}' "
                 "wire(s)."
             )
-        if len(cut_result) > 2:
+        if len(boundary_cut) > 2:
             bluemira_warn(
                 "The BB poloidal boundary segmentation operation returned more than 2 "
-                f"wires ({len(cut_result)}); only taking the first two..."
+                f"wires ({len(boundary_cut)}); only taking the first two..."
             )
         ib_bound, ob_bound = sorted(boundary_cut, key=lambda x: x.center_of_mass[0])[:2]
-        return ib_face, ob_face, ib_bound, ob_bound
-
-    def panel_boundary(self, boundary: BluemiraWire) -> BluemiraWire:
-        """Create the panel shapes for the given boundary."""
-        panel_coords = PanellingDesigner(self.params, boundary).run()
-        return make_polygon(
-            {"x": panel_coords[0], "z": panel_coords[1]}, label="panels", closed=True
-        )
+        return ib_bound, ob_bound

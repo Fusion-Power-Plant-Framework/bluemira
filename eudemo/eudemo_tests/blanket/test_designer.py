@@ -37,6 +37,7 @@ class TestBlanketDesigner:
             "fw_a_max": {"value": 25, "unit": "degrees"},
             "fw_dL_min": {"value": 0.15, "unit": "m"},
         }
+        # makes a rectangular 'horseshoe' with the open end at the bottom
         cls.boundary = make_polygon(
             [
                 [1, 0, -2],
@@ -50,7 +51,7 @@ class TestBlanketDesigner:
             ],
             closed=True,
         )
-        # note that the area of this face is 26 m.
+        # note that the area of this face is 26 m2.
         cls.silhouette = BluemiraFace(cls.boundary)
 
     def test_segment_blanket_0_angle_returns_two_faces_with_correct_area(self):
