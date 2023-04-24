@@ -264,9 +264,11 @@ class FemMagnetostatic2d:
 
     def solve(
         self,
-        dirichlet_bc_function: Union[dolfin.Expression, dolfin.Function] = None,
-        dirichlet_marker: int = None,
-        neumann_bc_function: Union[dolfin.Expression, dolfin.Function] = None,
+        dirichlet_bc_function: Optional[
+            Union[dolfin.Expression, dolfin.Function]
+        ] = None,
+        dirichlet_marker: Optional[int] = None,
+        neumann_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]] = None,
     ) -> dolfin.Function:
         """
         Solve the weak formulation maxwell equation given a right hand side g,
