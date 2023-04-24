@@ -5,9 +5,25 @@ from dataclasses import dataclass
 from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar, Union
 
 import pint
-from typeguard import typechecked
+from typeguard import config, typechecked
 
 from bluemira.base.constants import raw_uc, units_compatible
+
+
+def type_fail(exc, memo):
+    """
+    Raise TypeError on wrong type
+
+    Notes
+    -----
+    typeguard by default raises a TypeCheckError
+    may want to have a custom checker in future
+
+    """
+    raise TypeError(f"{exc._path[0]} {exc.args[0]}")
+
+
+config.typecheck_fail_callback = type_fail
 
 ParameterValueType = TypeVar("ParameterValueType")
 
