@@ -128,25 +128,26 @@ def plot_profile(
 
 def get_tricontours(
     x: np.ndarray, z: np.ndarray, array: np.ndarray, value: Union[float, Iterable]
-) -> List[np.ndarray]:
+) -> List[Union[np.ndarray, None]]:
     """
     Get the contours of a value in a triangular set of points.
 
     Parameters
     ----------
-    x: np.array(n, m)
+    x:
         The x value array
-    z: np.array(n, m)
+    z:
         The z value array
-    array: np.array(n, m)
+    array:
         The value array
-    value: Union[float, Iterable]
+    value:
         The value of the desired contour in the array
 
     Returns
     -------
-    value_loop: List[np.array(ni, mi)]
-        The points of the value contour in the array
+    value_loop:
+        The points of the value contour in the array. If no contour is found
+        for a value, None is returned
     """
     tri = Triangulation(x, z)
     tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
