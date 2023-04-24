@@ -23,7 +23,7 @@
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
 
-from typing import Callable, Iterable, List, Optional, Tuple, Union
+from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
 
 import dolfin
 import numpy as np
@@ -80,20 +80,22 @@ class ScalarSubFunc(dolfin.UserExpression):
 
     Parameters
     ----------
-    func_list: Union[Iterable[Union[float, Callable]], float, Callable]
+    func_list:
         list of functions to be interpolated into the subdomains. Int and float values
         are considered as constant functions. Any other callable function must return
         a single value.
-    mark_list: Iterable[int]
+    mark_list:
         list of markers that identify the subdomain in which the respective functions
         of func_list must to be applied.
-    subdomains: dolfin.cpp.mesh.MeshFunctionSizet
+    subdomains:
         the whole subdomains mesh function
     """
 
     def __init__(
         self,
-        func_list: Union[Iterable[Union[float, Callable]], float, Callable],
+        func_list: Union[
+            Iterable[Union[float, Callable[[Any], float]]], float, Callable[[Any], float]
+        ],
         mark_list: Optional[Iterable[int]] = None,
         subdomains: Optional[dolfin.cpp.mesh.MeshFunctionSizet] = None,
         **kwargs,
