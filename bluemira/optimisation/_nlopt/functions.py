@@ -51,10 +51,11 @@ class _NloptFunction(abc.ABC):
         bounds: Tuple[_FloatOrArrayT, _FloatOrArrayT],
     ):
         self.f = f
+        self.f0: Union[None, np.ndarray] = None
         self.bounds = bounds
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
-        return approx_derivative(self.f, x, bounds=self.bounds)
+        return approx_derivative(self.f, x, bounds=self.bounds, f0=self.f0)
 
     def set_approx_derivative_lower_bound(self, lower_bound: np.ndarray) -> None:
         """Set the lower bounds for use in derivative approximation."""
@@ -88,16 +89,17 @@ class ObjectiveFunction(_NloptFunction):
 
     def call(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function."""
+        # Cache f(x) so we do not need to recalculate it if we're using
+        # an approximate gradient
+        self.f0 = self.f(x)
         if grad.size > 0:
             grad[:] = self.df(x)
-        return self.f(x)
+        return self.f0
 
     def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function, recording the iteration history."""
         self.history.append(np.copy(x))
-        if grad.size > 0:
-            grad[:] = self.df(x)
-        return self.f(x)
+        return self.call(x, grad)
 
 
 class Constraint(_NloptFunction):
@@ -122,6 +124,9 @@ class Constraint(_NloptFunction):
 
         https://nlopt.readthedocs.io/en/latest/NLopt_Python_Reference/#vector-valued-constraints
         """
+        # Cache f(x) so we do not need to recalculate it if we're using
+        # an approximate gradient
+        result[:] = self.f(x)
+        self.f0 = result
         if grad.size > 0:
             grad[:] = self.df(x)
-        result[:] = self.f(x)
