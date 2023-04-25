@@ -27,7 +27,6 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import slice_shape
 
 
-# TODO(hsaunders1904): move this into blanket module
 def get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
     """
     Get the inner cut point of the breeding blanket geometry.
