@@ -3,6 +3,12 @@
 
 """
 Construct a simplified scenario to run the Power Cycle module.
+
+Reference for scenario inputs:
+------------------------------
+F. Franza, Development and Validation of a Computational Tool for
+Fusion Reactors' System Analysis, Karlsruher Institut für Technologie,
+2019.
 """
 
 # Run with:

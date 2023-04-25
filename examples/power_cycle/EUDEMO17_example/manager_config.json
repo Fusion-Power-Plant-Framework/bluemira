@@ -1,0 +1,66 @@
+{
+    "HCD": {
+        "name": "Heating & Current Drive",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_HCD.json",
+        "systems": [
+            "ECH",
+            "NBI",
+            "ICH"
+        ]
+    },
+    "MAG": {
+        "name": "Magnetics",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_MAG.json",
+        "systems": []
+    },
+    "BOP": {
+        "name": "Balance-of-Plant",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_BOP.json",
+        "systems": [
+            "PHT",
+            "IHT",
+            "PCS"
+        ]
+    },
+    "TFV": {
+        "name": "Tritium, Fuelling & Vacuum",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_TFV.json",
+        "systems": [
+            "TPS",
+            "TER"
+        ]
+    },
+    "PDC": {
+        "name": "Plasma Diagnostics & Control",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_PDC.json",
+        "systems": [
+            "DCS",
+            "PPC"
+        ]
+    },
+    "MNT": {
+        "name": "Maintenance",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_MNT.json",
+        "systems": [
+            "RMS",
+            "ASS",
+            "WTS"
+        ]
+    },
+    "CRY": {
+        "name": "Cryoplant & Cryodistribution",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_CRY.json",
+        "systems": [
+            "CRS"
+        ]
+    },
+    "AUX": {
+        "name": "Auxiliaries",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_AUX.json",
+        "systems": [
+            "EPS",
+            "BDS",
+            "AXS"
+        ]
+    }
+}

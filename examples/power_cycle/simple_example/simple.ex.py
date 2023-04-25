@@ -4,6 +4,10 @@
 """
 Time evolution of production and consumption power loads in simplified
 power plant using the Power Cycle module.
+
+Reference for load inputs:
+--------------------------
+
 """
 
 # Run with:
@@ -37,7 +41,7 @@ except ImportError:
 # with it.
 # In this example we see three groups are initialized in the manager:
 # - Heating & Current Drive (`loads_HCD.json` file);
-# - Magnetic (`loads_MAG.json` file);
+# - Magnetics (`loads_MAG.json` file);
 # - Balance-of-Plant (`loads_BOP.json` file).
 #
 # The "systems" field specifies which systems defined in the input files
@@ -145,12 +149,11 @@ def print_hcd_config_file(hcd_config):
 
 
 # %%
-def build_manager(scenario_config_path, manager_config_path):
+def build_manager(manager_config_path):
     """
     Create the Power Cycle manager.
     """
     scenario_config_path = ScenarioKit.build_scenario_config_path()
-    manager_config_path = build_manager_config_path()
     manager = PowerCycleManager(scenario_config_path, manager_config_path)
     return manager
 
@@ -272,7 +275,7 @@ if __name__ == "__main__":
     print_hcd_config_file(hcd_config)
 
     # Compute net power loads
-    manager = build_manager(manager_config_path, manager_config_path)
+    manager = build_manager(manager_config_path)
     plot_manager(manager)
 
     # Analyze active pulse load
