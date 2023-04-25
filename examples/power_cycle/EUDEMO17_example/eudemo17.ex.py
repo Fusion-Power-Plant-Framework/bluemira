@@ -77,9 +77,53 @@ def plot_manager(manager):
     ax = DisplayKit.finalize_plot(ax)
 
 
+# %% [markdown]
+# # Analyze load in particular phase
+#
+#
+
+
+# %%
+def extract_phaseload_for_single_phase(pulseload, phase_label):
+    """
+    Extract 'PhaseLoad' from list that has a 'phase' attribute whose
+    label matches 'phase_label'.
+    """
+    all_phaseloads = pulseload.phaseload_set
+    match = [p for p in all_phaseloads if p.phase.label == phase_label]
+    phaseload_of_single_phase = match[0]
+    return phaseload_of_single_phase
+
+
+def plot_detailed_phaseload(phaseload):
+    """
+    Plot 'PhaseLoad' in 'detailed' mode.
+    """
+    phase_name = phaseload.phase.name
+    ax = DisplayKit.prepare_plot(f"Detailed plot of {phase_name!r} load")
+    ax, _ = phaseload.plot(ax=ax, detailed=True)
+    ax = DisplayKit.finalize_plot(ax)
+
+
 # %%
 if __name__ == "__main__":
     # Build Power Cycle Manager
     manager_config_path = build_manager_config_path()
     manager = build_manager(manager_config_path)
     plot_manager(manager)
+
+    # Analyze active load in particular phase
+    active_pulseload = manager.net_active
+    ftt_active_phaseload = extract_phaseload_for_single_phase(
+        active_pulseload,
+        "ftt",
+    )
+    plot_detailed_phaseload(ftt_active_phaseload)
+
+    # Analyze reactive load in particular phase
+    reactive_pulseload = manager.net_reactive
+    ftt_reactive_phaseload = extract_phaseload_for_single_phase(
+        reactive_pulseload,
+        "ftt",
+    )
+    plot_detailed_phaseload(ftt_reactive_phaseload)

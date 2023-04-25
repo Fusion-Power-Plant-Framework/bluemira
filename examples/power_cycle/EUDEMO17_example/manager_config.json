@@ -32,7 +32,11 @@
     "BOP": {
         "name": "Magnetics (PBS = 49,50,54,58,70)",
         "config_path": "examples/power_cycle/EUDEMO17_example/loads_BOP.json",
-        "systems": []
+        "systems": [
+            "PHT",
+            "IHT",
+            "PCS"
+        ]
     },
     "MNT": {
         "name": "Maintenance (PBS = 60,61,63)",
