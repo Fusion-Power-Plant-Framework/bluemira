@@ -18,11 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from functools import partial
-from random import uniform
-
-import pytest
-
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from eudemo.blanket.builder import BlanketBuilder
@@ -37,37 +32,50 @@ class TestBlanketBuilder:
             "c_rm": {"value": 0.02, "unit": "m"},
             "n_TF": {"value": 12, "unit": ""},
         }
-        cls.silhouette = BluemiraFace(
+        cls.ib_silhouette = BluemiraFace(
             make_polygon(
                 [
                     [1, 0, -2],
                     [1, 0, 10],
-                    [5, 0, 10],
-                    [5, 0, -2],
-                    [4, 0, -2],
-                    [4, 0, 9],
+                    [2.9, 0, 10],
+                    [2.9, 0, 9],
                     [2, 0, 9],
                     [2, 0, -2],
+                    [1, 0, -2],
+                ],
+                closed=True,
+            )
+        )
+        cls.ob_silhouette = BluemiraFace(
+            make_polygon(
+                [
+                    [5, 0, -2],
+                    [5, 0, 10],
+                    [3.1, 0, 10],
+                    [3.1, 0, 9],
+                    [4, 0, 9],
+                    [4, 0, -2],
+                    [5, 0, -2],
                 ],
                 closed=True,
             )
         )
 
-    @pytest.mark.parametrize("cut_angle", [partial(uniform, 0, 90) for _ in range(2)])
-    @pytest.mark.parametrize("r_inner_cut", [partial(uniform, 2, 4) for _ in range(2)])
-    def test_components_and_segments(self, r_inner_cut, cut_angle):
+    def test_components_and_segments(self):
         builder = BlanketBuilder(
-            self.params, {}, self.silhouette, r_inner_cut(), cut_angle()
+            self.params,
+            build_config={},
+            ib_silhouette=self.ib_silhouette,
+            ob_silhouette=self.ob_silhouette,
         )
         blanket = builder.build()
 
         assert blanket.get_component("xz")
         assert blanket.get_component("xy")
-
         xyz = blanket.get_component("xyz")
         assert xyz
-        assert (
-            len(xyz.leaves)
-            == self.params["n_bb_inboard"]["value"]
-            + self.params["n_bb_outboard"]["value"]
+        xyz.show_cad()
+        expected_num_leaves = (
+            self.params["n_bb_inboard"]["value"] + self.params["n_bb_outboard"]["value"]
         )
+        assert len(xyz.leaves) == expected_num_leaves
