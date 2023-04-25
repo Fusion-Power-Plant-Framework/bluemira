@@ -12,5 +12,13 @@
         "name": "Magnetics",
         "config_path": "examples/power_cycle/EUDEMO17_example/loads_MAG.json",
         "systems": []
+    },
+    "TFV": {
+        "name": "Tritium, Fuelling & Vacuum",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_TFV.json",
+        "systems": [
+            "TPS",
+            "TER"
+        ]
     }
 }
