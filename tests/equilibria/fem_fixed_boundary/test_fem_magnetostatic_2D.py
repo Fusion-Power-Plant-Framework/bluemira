@@ -39,35 +39,53 @@ DATA_DIR = get_bluemira_path(
 )
 
 
-class TestFemGradShafranovFixedBoundary:
-    lcfs_shape = make_polygon({"x": [7, 10, 7], "z": [-4, 0, 4]}, closed=True)
-    lcfs_face = BluemiraFace(lcfs_shape)
-    plasma = PhysicalComponent("plasma", lcfs_face)
-    plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
-    plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
-    mesh = create_mesh(
-        plasma, DATA_DIR, "fixed_boundary_example", "fixed_boundary_example.msh"
-    )
+def parameterisation_fixture_not_fully_init(
+    test_no: int, solver_kwargs, p_prime=None, ff_prime=None, mesh=None
+) -> FemGradShafranovFixedBoundary:
+    """
+    This function is to parameterise test_not_fully_init without creating the
+    parametrize value which stop parallelised tests running
+    """
+    if test_no == 1:
+        return FemGradShafranovFixedBoundary(**solver_kwargs)
+    elif test_no == 2:
+        return FemGradShafranovFixedBoundary(p_prime, ff_prime, **solver_kwargs)
+    else:
+        return FemGradShafranovFixedBoundary(mesh=mesh, **solver_kwargs)
 
-    p_prime = LaoPolynomialFunc([2, 3, 1])
-    ff_prime = DoublePowerFunc([1.5, 2])
-    solver_kwargs = {
-        "R_0": 9,
-        "I_p": 17e6,
-        "B_0": 5,
-        "p_order": 1,
-        "max_iter": 2,
-        "iter_err_max": 1.0,
-        "relaxation": 0.0,
-    }
-    optional_init_solver = FemGradShafranovFixedBoundary(**solver_kwargs)
-    flux_func_init_solver = FemGradShafranovFixedBoundary(
-        p_prime, ff_prime, **solver_kwargs
-    )
-    mesh_init_solver = FemGradShafranovFixedBoundary(mesh=mesh, **solver_kwargs)
-    full_init_solver = FemGradShafranovFixedBoundary(
-        p_prime, ff_prime, mesh, **solver_kwargs
-    )
+
+class TestFemGradShafranovFixedBoundary:
+    def setup_method(self):
+        lcfs_shape = make_polygon({"x": [7, 10, 7], "z": [-4, 0, 4]}, closed=True)
+        lcfs_face = BluemiraFace(lcfs_shape)
+        plasma = PhysicalComponent("plasma", lcfs_face)
+        plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
+        plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
+        self.mesh = create_mesh(
+            plasma, DATA_DIR, "fixed_boundary_example", "fixed_boundary_example.msh"
+        )
+
+        self.p_prime = LaoPolynomialFunc([2, 3, 1])
+        self.ff_prime = DoublePowerFunc([1.5, 2])
+        self.solver_kwargs = {
+            "R_0": 9,
+            "I_p": 17e6,
+            "B_0": 5,
+            "p_order": 1,
+            "max_iter": 2,
+            "iter_err_max": 1.0,
+            "relaxation": 0.0,
+        }
+        self.optional_init_solver = FemGradShafranovFixedBoundary(**self.solver_kwargs)
+        self.flux_func_init_solver = FemGradShafranovFixedBoundary(
+            self.p_prime, self.ff_prime, **self.solver_kwargs
+        )
+        self.mesh_init_solver = FemGradShafranovFixedBoundary(
+            mesh=self.mesh, **self.solver_kwargs
+        )
+        self.full_init_solver = FemGradShafranovFixedBoundary(
+            self.p_prime, self.ff_prime, self.mesh, **self.solver_kwargs
+        )
 
     @classmethod
     def teardown_method(cls):
@@ -93,14 +111,10 @@ class TestFemGradShafranovFixedBoundary:
         self.optional_init_solver.solve(plot=plot)
         assert np.isclose(self.optional_init_solver._curr_target, mod_current)
 
-    @pytest.mark.parametrize(
-        "solver",
-        [
-            FemGradShafranovFixedBoundary(**solver_kwargs),
-            FemGradShafranovFixedBoundary(p_prime, ff_prime, **solver_kwargs),
-            FemGradShafranovFixedBoundary(mesh=mesh, **solver_kwargs),
-        ],
-    )
-    def test_not_fully_init(self, solver):
+    @pytest.mark.parametrize("test_no", [1, 2, 3])
+    def test_not_fully_init(self, test_no):
+        solver = parameterisation_fixture_not_fully_init(
+            test_no, self.solver_kwargs, self.p_prime, self.ff_prime, self.mesh
+        )
         with pytest.raises(EquilibriaError):
             solver.solve()
