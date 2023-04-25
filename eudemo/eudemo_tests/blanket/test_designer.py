@@ -127,11 +127,6 @@ class TestBlanketDesigner:
         # within the BlanketDesigner, we can't initialise the
         # PanellingDesigner first. This probably speaks to a bit of a
         # design issue.
-        # TODO(hsaunders1904): open issue for refactor of
-        # PanellingDesigner into Bluemira-proper, make it not a designer
-        # and allow dependency injection here. We could also add a
-        # BlanketSegmentor class to do the segmenting, as that would now
-        # need to happen outside of the BlanketDesigner.
         blanket = make_simple_blanket()
         d = 3 * np.sqrt(2) / 2
         # fmt: off
