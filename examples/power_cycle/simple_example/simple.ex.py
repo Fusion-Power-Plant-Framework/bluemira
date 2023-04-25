@@ -14,12 +14,11 @@ Reference for load inputs:
 # python examples/power_cycle/simple_example/simple.ex.py
 
 # %%
-from bluemira.power_cycle.net.manager import PowerCycleManager
 from bluemira.power_cycle.tools import read_json
 
 try:
     import kits_import
-    from kits_for_examples import DisplayKit, PathKit, ScenarioKit
+    from kits_for_examples import DisplayKit, ManagerKit, PathKit
 
     kits_import.successfull_import()
 
@@ -149,22 +148,12 @@ def print_hcd_config_file(hcd_config):
 
 
 # %%
-def build_manager(manager_config_path):
-    """
-    Create the Power Cycle manager.
-    """
-    scenario_config_path = ScenarioKit.build_scenario_config_path()
-    manager = PowerCycleManager(scenario_config_path, manager_config_path)
-    return manager
-
-
-def plot_manager(manager):
+def plot_all_net_loads(manager):
     """
     Plot net loads computed by the Power Cycle manager.
     """
-    ax = DisplayKit.prepare_plot("Net Power Loads")
-    ax, _ = manager.plot(ax=ax)
-    ax = DisplayKit.finalize_plot(ax)
+    title = "Net Power Loads"
+    return ManagerKit.plot_manager(title, manager)
 
 
 # %% [markdown]
@@ -210,24 +199,6 @@ def plot_phaseload_set(phaseload_set, color):
 
 
 # %%
-def extract_phaseload_for_single_phase(phaseload_set, phase_label):
-    """
-    Extract 'PhaseLoad' from list that has a 'phase' attribute whose
-    label matches 'phase_label'.
-    """
-    match = [p for p in phaseload_set if p.phase.label == phase_label]
-    phaseload_of_single_phase = match[0]
-    return phaseload_of_single_phase
-
-
-def plot_detailed_phaseload(phaseload):
-    """
-    Plot 'PhaseLoad' in 'detailed' mode.
-    """
-    phase_name = phaseload.phase.name
-    ax = DisplayKit.prepare_plot(f"Detailed plot of {phase_name!r} load")
-    ax, _ = phaseload.plot(ax=ax, detailed=True)
-    ax = DisplayKit.finalize_plot(ax)
 
 
 # %% [markdown]
@@ -275,8 +246,8 @@ if __name__ == "__main__":
     print_hcd_config_file(hcd_config)
 
     # Compute net power loads
-    manager = build_manager(manager_config_path)
-    plot_manager(manager)
+    manager = ManagerKit.build_manager(manager_config_path)
+    plot_all_net_loads(manager)
 
     # Analyze active pulse load
     active_pulseload = manager.net_active
@@ -284,11 +255,11 @@ if __name__ == "__main__":
     plot_phaseload_set(active_phaseload_set, "g")
 
     # Analyze "flat-top" phase load
-    ftt_active_phaseload = extract_phaseload_for_single_phase(
+    ftt_active_phaseload = ManagerKit.extract_phaseload_for_single_phase(
         active_phaseload_set,
         "ftt",
     )
-    plot_detailed_phaseload(ftt_active_phaseload)
+    ManagerKit.plot_detailed_phaseload(ftt_active_phaseload)
 
     # Analyze "island control" power load of ECH
     ftt_active_powerload_set = ftt_active_phaseload.powerload_set

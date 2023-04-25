@@ -3,8 +3,8 @@
         "name": "All Field Coils",
         "reactive": {},
         "active": {
-            "tfu": {
-                "name": "superconducting coils",
+            "scc": {
+                "name": "superconducting coils consumption",
                 "module": null,
                 "variables_map": {
                     "phases": [
