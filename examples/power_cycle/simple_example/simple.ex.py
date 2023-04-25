@@ -9,91 +9,20 @@ power plant using the Power Cycle module.
 # Run with:
 # python examples/power_cycle/simple_example/simple.ex.py
 
+import import_kits
+
 # %%
-import os
-from pprint import pprint
-
-import matplotlib.pyplot as plt
-from tabulate import tabulate
-
-from bluemira.base.file import get_bluemira_root
 from bluemira.power_cycle.net.manager import PowerCycleManager
-from bluemira.power_cycle.time import ScenarioBuilder
-from bluemira.power_cycle.tools import adjust_2d_graph_ranges, read_json, validate_axes
+from bluemira.power_cycle.tools import read_json
 
-# %% [markdown]
-# # Base inputs
+try:
+    from kits_for_examples import DisplayKit, PathKit, ScenarioKit
 
-# %%
-# Path of BLUEMIRA project
-project_path = get_bluemira_root()
+    import_kits.successfull_import()
 
-# Directory elements of Power Cycle and Simple Example paths
-examples_crumbs = (project_path, "examples", "power_cycle")
-simple_example_crumbs = examples_crumbs + tuple(["simple_example"])
+except ImportError:
+    import_kits.sys.exit(import_kits.failed_import())
 
-# Plot preparetion functions
-
-
-def prepare_plot(figure_title):
-    """Prepare axes for an example plot."""
-    ax = validate_axes()
-    plt.grid()
-    plt.title(figure_title)
-    return ax
-
-
-def finalize_plot(ax):
-    """Finalize axes and display example plot."""
-    adjust_2d_graph_ranges(ax=ax)
-    plt.show()
-    return ax
-
-
-# %% [markdown]
-# # Build a scenario
-#
-# The simplified scenario is built from the `scenario_config.json` file,
-# in which a single "standard pulse" (`std`) is applied a single time.
-#
-# Pulse types are found in the "pulse_library" JSON field. The `std`
-# pulse is defined as being composed of 4 phases, each of which can be
-# found in the "phase-library" JSON field.
-#
-# Phases are contructed either summing (logical `"&"`) or taking the
-# largest (logical `"|"`) time periods defined in the "breakdown-library"
-# JSON field.
-#
-# At the end of this secion, the total duration of the pulse, and of
-# each of its phases, is displayed in tabulated format.
-#
-
-# %%
-# Scenario inputs
-scenario_config_filename = tuple(["scenario_config.json"])
-scenario_config_crumbs = examples_crumbs + scenario_config_filename
-scenario_config_path = os.path.join(*scenario_config_crumbs)
-
-# Build a scenario
-scenario_builder = ScenarioBuilder(scenario_config_path)
-
-# Gather durations that make up phases in scenario
-phase_library = scenario_builder.scenario.build_phase_library()
-phase_durations = {p.name: p.duration for p in phase_library.values()}
-
-# Gather durations that make up pulses in scenario
-pulse_library = scenario_builder.scenario.build_pulse_library()
-pulse_durations = {p.name: p.duration for p in pulse_library.values()}
-
-# Visualization configuration
-phase_headers = ["Phase", "duration (s)"]
-pulse_headers = ["Pulse", "duration (s)"]
-phase_table = tabulate(phase_durations.items(), headers=phase_headers)
-pulse_table = tabulate(pulse_durations.items(), headers=pulse_headers)
-
-# Visualize scenario configuration
-print(phase_table)
-print(pulse_table)
 
 # %% [markdown]
 # # Set up Power Cycle Manager to compute net power loads
@@ -116,17 +45,35 @@ print(pulse_table)
 # should be initialized.
 #
 
+
 # %%
-# Power Cycle manager configuration file
-manager_config_filename = tuple(["manager_config.json"])
-manager_config_crumbs = simple_example_crumbs + manager_config_filename
-manager_config_path = os.path.join(*manager_config_crumbs)
+def build_manager_config_path():
+    """
+    Read Power Cycle manager configuration file.
+    """
+    manager_config_filename = "manager_config.json"
+    manager_config_path = PathKit.path_from_crumbs(
+        PathKit.examples_crumbs,
+        PathKit.simple_folder,
+        manager_config_filename,
+    )
+    return manager_config_path
 
-# Read manager configuration file
-manager_config = read_json(manager_config_path)
 
-# Visualize manager configuration
-pprint(manager_config)
+def read_manager_config(manager_config_path):
+    """
+    Read Power Cycle manager configuration file.
+    """
+    manager_config = read_json(manager_config_path)
+    return manager_config
+
+
+def print_manager_config_file(manager_config):
+    """
+    Visualize manager configuration file.
+    """
+    DisplayKit.pp(manager_config)
+
 
 # %% [markdown]
 # # Group configuration files
@@ -159,17 +106,27 @@ pprint(manager_config)
 # A similar set of inputs can be seen for the `inj` load, although its
 # load is only maintained during the flat-top
 
+
 # %%
-# Heating & Current Drive group configuration file
-hcd_config_path_from_manager_file = manager_config["HCD"]["config_path"]
-hcd_config_crumbs = (project_path, hcd_config_path_from_manager_file)
-hcd_config_path = os.path.join(*hcd_config_crumbs)
+def read_hcd_config_from_manager_config(manager_config):
+    """
+    Read Heating & Current Drive group configuration file.
+    """
+    hcd_config_path = manager_config["HCD"]["config_path"]
+    hcd_config_path = PathKit.path_from_crumbs(
+        PathKit.project_path,
+        hcd_config_path,
+    )
+    hcd_config = read_json(hcd_config_path)
+    return hcd_config
 
-# Read group configuration file
-hcd_config = read_json(hcd_config_path)
 
-# Visualize group configuration
-pprint(hcd_config, width=90, sort_dicts=False)
+def print_hcd_config_file(hcd_config):
+    """
+    Visualize H&CD configuration file.
+    """
+    DisplayKit.pp(hcd_config)
+
 
 # %% [markdown]
 # # Compute net power loads
@@ -187,35 +144,50 @@ pprint(hcd_config, width=90, sort_dicts=False)
 # Of note, only "active" power loads are considered in this example.
 #
 
-# %%
-# Create the manager
-manager = PowerCycleManager(scenario_config_path, manager_config_path)
 
-# Plot net loads
-ax = prepare_plot("Net Power Loads")
-ax, _ = manager.plot(ax=ax)
-ax = finalize_plot(ax)
+# %%
+def build_manager(scenario_config_path, manager_config_path):
+    """
+    Create the Power Cycle manager.
+    """
+    scenario_config_path = ScenarioKit.build_scenario_config_path()
+    manager_config_path = build_manager_config_path()
+    manager = PowerCycleManager(scenario_config_path, manager_config_path)
+    return manager
+
+
+def plot_manager(manager):
+    """
+    Plot net loads computed by the Power Cycle manager.
+    """
+    ax = DisplayKit.prepare_plot("Net Power Loads")
+    ax, _ = manager.plot(ax=ax)
+    ax = DisplayKit.finalize_plot(ax)
+
 
 # %% [markdown]
-# # Analyze active pulse load
+# # Analyze individual pulse load
 #
-# One can study any part of the pulse load in more detail. The property
-# `net_active` of the manager contains the `PulseLoad` instance that is
-# composed by all `PhaseLoad` objects built during the initialization of
-# the manager.
+# One can study any part of the pulse load in more detail. Each of the
+# `net_active` and `net_passive` properties of the `PowerCycleManager`
+# contain the `PulseLoad` instance that is composed by all `PhaseLoad`
+# objects built during the initialization of the manager for that kind
+# of load.
 #
+
 
 # %%
-# Active load
-active_pulseload = manager.net_active
+def plot_phaseload_set(phaseload_set, color):
+    """
+    Plot all 'PhaseLoad' objects in a list.
+    """
+    for phaseload in phaseload_set:
+        phase_name = phaseload.phase.name
+        title = f"Load in phase {phase_name}"
+        ax = DisplayKit.prepare_plot(title)
+        ax, _ = phaseload.plot(ax=ax, c=color)
+        ax = DisplayKit.finalize_plot(ax)
 
-# Plot active loads by phase, in green
-active_phaseloads = active_pulseload.phaseload_set
-for phaseload in active_phaseloads:
-    phase_name = phaseload.phase.name
-    ax = prepare_plot(phase_name)
-    ax, _ = phaseload.plot(ax=ax, c="g")
-    ax = finalize_plot(ax)
 
 # %% [markdown]
 # # Analyze individual phase load
@@ -234,27 +206,92 @@ for phaseload in active_phaseloads:
 # "island control" plot.
 #
 
+
 # %%
-# Chose flat-top phase by its label
-label = "ftt"
+def extract_phaseload_for_single_phase(phaseload_set, phase_label):
+    """
+    Extract 'PhaseLoad' from list that has a 'phase' attribute whose
+    label matches 'phase_label'.
+    """
+    match = [p for p in phaseload_set if p.phase.label == phase_label]
+    phaseload_of_single_phase = match[0]
+    return phaseload_of_single_phase
 
-# Retrieve `PhaseLoad` for flat-top phase
-ftt_load = [load for load in active_phaseloads if load.phase.label == label]
-ftt_load = ftt_load[0]
 
-# Plot detailed `PhaseLoad` for flat-top
-phase_name = ftt_load.phase.name
-ax = prepare_plot(f"Detailed plot of {phase_name!r} load")
-ax, _ = ftt_load.plot(ax=ax, detailed=True)
-ax = finalize_plot(ax)
+def plot_detailed_phaseload(phaseload):
+    """
+    Plot 'PhaseLoad' in 'detailed' mode.
+    """
+    phase_name = phaseload.phase.name
+    ax = DisplayKit.prepare_plot(f"Detailed plot of {phase_name!r} load")
+    ax, _ = phaseload.plot(ax=ax, detailed=True)
+    ax = DisplayKit.finalize_plot(ax)
 
-# Retrieve ECH `PowerLoad` that characterizes "island control"
-load_name = "island control"
-ftt_powerloads = ftt_load.powerload_set
-control_load = [load for load in ftt_powerloads if load.name == load_name]
-control_load = control_load[0]
 
-# Plot detailed "island control" load during flat-top
-ax = prepare_plot(f"Detailed plot of {phase_name!r} load for {load_name!r}")
-ax, _ = control_load.plot(ax=ax, c="m", detailed=True)
-ax = finalize_plot(ax)
+# %% [markdown]
+# # Analyze individual power load
+#
+# The same can be done to an individual `PowerLoad` object, to verify
+# that particular input without time normalization due to the phase
+# length or time shift due to phase ordering in the pulse.
+# In this example, all individual `PowerLoad` objects have a single
+# `LoadData` object as parameter, so data points coincide with the
+# `PowerLoad` curve, as can be seen by the different colors in the plot.
+#
+
+
+# %%
+def extract_powerload_for_single_name(powerload_set, load_name):
+    """
+    Extract 'PowerLoad' from list that has a 'name' attribute that
+    matches 'load_name'.
+    """
+    match = [p for p in powerload_set if p.name == load_name]
+    powerload_of_single_name = match[0]
+    return powerload_of_single_name
+
+
+def plot_detailed_powerload(powerload):
+    """
+    Plot 'PowerLoad' in 'detailed' mode.
+    """
+    load_name = powerload.name
+    ax = DisplayKit.prepare_plot(f"Detailed plot of load for {load_name!r}")
+    ax, _ = powerload.plot(ax=ax, c="m", detailed=True)
+    ax = DisplayKit.finalize_plot(ax)
+
+
+# %%
+if __name__ == "__main__":
+    # Set up Power Cycle Manager to compute net power loads
+    manager_config_path = build_manager_config_path()
+    manager_config = read_manager_config(manager_config_path)
+    print_manager_config_file(manager_config)
+
+    # Group configuration files
+    hcd_config = read_hcd_config_from_manager_config(manager_config)
+    print_hcd_config_file(hcd_config)
+
+    # Compute net power loads
+    manager = build_manager(manager_config_path, manager_config_path)
+    plot_manager(manager)
+
+    # Analyze active pulse load
+    active_pulseload = manager.net_active
+    active_phaseload_set = active_pulseload.phaseload_set
+    plot_phaseload_set(active_phaseload_set, "g")
+
+    # Analyze "flat-top" phase load
+    ftt_active_phaseload = extract_phaseload_for_single_phase(
+        active_phaseload_set,
+        "ftt",
+    )
+    plot_detailed_phaseload(ftt_active_phaseload)
+
+    # Analyze "island control" power load of ECH
+    ftt_active_powerload_set = ftt_active_phaseload.powerload_set
+    island_control_ftt_active_powerload = extract_powerload_for_single_name(
+        ftt_active_powerload_set,
+        "island control",
+    )
+    plot_detailed_powerload(island_control_ftt_active_powerload)
