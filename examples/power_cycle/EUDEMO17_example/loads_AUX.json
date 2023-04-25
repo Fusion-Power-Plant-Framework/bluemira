@@ -251,7 +251,7 @@
                     "efficiencies": {},
                     "loads": {
                         "description": [
-                            "SF6 & compressed air distribution, CCWS, CHWS"
+                            "ITER extrapolation for: SF6 & compressed air distribution, CCWS, CHWS"
                         ],
                         "time": [
                             "[0, 1]"
@@ -288,7 +288,7 @@
                     "efficiencies": {},
                     "loads": {
                         "description": [
-                            "SF6 & compressed air distribution, CCWS, CHWS"
+                            "ITER extrapolation for: SF6 & compressed air distribution, CCWS, CHWS"
                         ],
                         "time": [
                             "[0, 1]"
