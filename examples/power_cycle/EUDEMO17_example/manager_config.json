@@ -1,6 +1,19 @@
 {
+    "MAG": {
+        "name": "Magnetics (PBS = 11,12,13,14,16,18,20,21)",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_MAG.json",
+        "systems": []
+    },
+    "TFV": {
+        "name": "Tritium, Fuelling & Vacuum (PBS = 22,25)",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_TFV.json",
+        "systems": [
+            "TPS",
+            "TER"
+        ]
+    },
     "HCD": {
-        "name": "Heating & Current Drive",
+        "name": "Heating & Current Drive (PBS = 30,31,32)",
         "config_path": "examples/power_cycle/EUDEMO17_example/loads_HCD.json",
         "systems": [
             "ECH",
@@ -8,34 +21,42 @@
             "NBI"
         ]
     },
-    "MAG": {
-        "name": "Magnetics",
-        "config_path": "examples/power_cycle/EUDEMO17_example/loads_MAG.json",
-        "systems": []
-    },
-    "TFV": {
-        "name": "Tritium, Fuelling & Vacuum",
-        "config_path": "examples/power_cycle/EUDEMO17_example/loads_TFV.json",
-        "systems": [
-            "TPS",
-            "TER"
-        ]
-    },
     "PDC": {
-        "name": "Plasma Diagnostics & Control",
+        "name": "Plasma Diagnostics & Control (PBS = 40,85)",
         "config_path": "examples/power_cycle/EUDEMO17_example/loads_PDC.json",
         "systems": [
             "DCS",
             "PPC"
         ]
     },
+    "BOP": {
+        "name": "Magnetics (PBS = 49,50,54,58,70)",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_BOP.json",
+        "systems": []
+    },
     "MNT": {
-        "name": "Maintenance",
+        "name": "Maintenance (PBS = 60,61,63)",
         "config_path": "examples/power_cycle/EUDEMO17_example/loads_MNT.json",
         "systems": [
             "RMS",
             "ASS",
             "WTS"
+        ]
+    },
+    "CRY": {
+        "name": "Cryoplant & Cryodistribution (PBS = 81)",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_CRY.json",
+        "systems": [
+            "CGS"
+        ]
+    },
+    "AUX": {
+        "name": "Auxiliaries (PBS = 80,82,83,87)",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_AUX.json",
+        "systems": [
+            "EPS",
+            "BSU",
+            "OTR"
         ]
     }
 }
