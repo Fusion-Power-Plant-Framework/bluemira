@@ -114,7 +114,15 @@ class PanellingDesigner(Designer[np.ndarray]):
         )
 
     def run(self) -> np.ndarray:
-        """Run the design problem, performing the optimisation."""
+        """
+        Run the design problem, performing the optimisation.
+
+        Returns
+        -------
+        coordinates
+            The coordinates of the panel end points (or joints). Has
+            shape (2, N).
+        """
         boundary = self.wall_boundary.discretize(
             ndiscr=self._n_boundary_discr, byedges=True
         ).xz

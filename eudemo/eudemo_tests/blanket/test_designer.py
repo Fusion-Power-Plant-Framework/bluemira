@@ -18,12 +18,16 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from unittest import mock
+
 import numpy as np
 import pytest
 
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import make_circle, make_polygon
+from bluemira.geometry.wire import BluemiraWire
 from eudemo.blanket import BlanketDesigner
+from eudemo.blanket.designer import BlanketSegments
 
 
 class TestBlanketDesigner:
@@ -106,3 +110,99 @@ class TestBlanketDesigner:
                 r_inner_cut=3,
                 cut_angle=cut_angle,
             )
+
+    @mock.patch("eudemo.blanket.designer.PanellingDesigner")
+    def test_segments_cut_using_panels(self, paneller_mock):
+        # Make a pre-cut blanket that's just two quarter-circles and
+        # cook up some panel coordinates to cut into the two faces with.
+        # We're testing that the panelling is called, and the resulting
+        # coordinates are used to cut into the inboard/outboard
+        # silhouettes. We check this using the expected areas of the
+        # newly-cut shapes.
+
+        # There's a fair bit of mocking going on in this test. Ideally,
+        # we'd be passing a fake PanellingDesigner using dependency
+        # injection. But, because the PanellingDesigner takes its
+        # boundary in the constructor, and the blanket boundary is cut
+        # within the BlanketDesigner, we can't initialise the
+        # PanellingDesigner first. This probably speaks to a bit of a
+        # design issue.
+        # TODO(hsaunders1904): open issue for refactor of
+        # PanellingDesigner into Bluemira-proper, make it not a designer
+        # and allow dependency injection here. We could also add a
+        # BlanketSegmentor class to do the segmenting, as that would now
+        # need to happen outside of the BlanketDesigner.
+        blanket = make_simple_blanket()
+        d = 3 * np.sqrt(2) / 2
+        # fmt: off
+        ib_panel_coords = np.array([
+            [2, 2, 5 - d, 8 - 2 * d, 5, 2],
+            [4, 1 + 2 * d, 4 + d, 7, 7, 4],
+        ])
+        ob_panel_coords = np.array([
+            [9, 9, 6 + d, 3 + 2 * d, 6],
+            [4, 1 + 2 * d, 4 + d, 7, 7],
+        ])
+        # fmt: on
+        paneller_mock.return_value.run.side_effect = [ib_panel_coords, ob_panel_coords]
+        r_inner_cut = 3.5
+        cut_angle = 3
+        designer = BlanketDesigner(
+            self.params,
+            self.boundary,
+            self.silhouette,
+            r_inner_cut=r_inner_cut,
+            cut_angle=cut_angle,
+        )
+
+        with mock.patch.object(designer, "segment_blanket") as sb_mock:
+            sb_mock.return_value = blanket
+            ib, ob = designer.run()
+
+        # These areas were (painstakingly) worked out by hand
+        panel_trapezium_area = 9 / 2 * (4 * np.sqrt(2) - 5)
+        circle_segment_area = 9 / 2 * (np.pi / 2 - 1)
+        area_removed = panel_trapezium_area - circle_segment_area
+        assert ib.area == pytest.approx(blanket.inboard.area - area_removed)
+        assert ob.area == pytest.approx(blanket.outboard.area - area_removed)
+        assert ib.center_of_mass[0] < ob.center_of_mass[0]
+
+
+def make_simple_blanket() -> BlanketSegments:
+    """
+    Make semi-circular blanket segments.
+
+    The inboard and outboard are symmetrical quarter-circles with radius
+    3. Where the centre of the inboard quarter-circle is [5, 4] and the
+    centre of the outboard is [6, 4] (in the xz-plane).
+    """
+    # Inboard
+    ib_arc_inner = make_circle(
+        radius=3, center=[5, 0, 4], start_angle=180, end_angle=270, axis=(0, 1, 0)
+    )
+    ib_arc_outer = make_circle(
+        radius=4, center=[5, 0, 4], start_angle=180, end_angle=270, axis=(0, 1, 0)
+    )
+    lower_join = make_polygon({"x": [1, 2], "z": [4, 4]})
+    upper_join = make_polygon({"x": [5, 5], "z": [7, 8]})
+    inboard = BluemiraFace(
+        BluemiraWire([ib_arc_inner, lower_join, ib_arc_outer, upper_join])
+    )
+    # Outboard
+    ob_arc_inner = make_circle(
+        radius=3, center=[6, 0, 4], start_angle=270, end_angle=360, axis=(0, 1, 0)
+    )
+    ob_arc_outer = make_circle(
+        radius=4, center=[6, 0, 4], start_angle=270, end_angle=360, axis=(0, 1, 0)
+    )
+    lower_join = make_polygon({"x": [9, 10], "z": [4, 4]})
+    upper_join = make_polygon({"x": [6, 6], "z": [7, 8]})
+    outboard = BluemiraFace(
+        BluemiraWire([ob_arc_inner, upper_join, ob_arc_outer, lower_join])
+    )
+    return BlanketSegments(
+        inboard=inboard,
+        outboard=outboard,
+        inboard_boundary=ib_arc_inner,
+        outboard_boundary=ob_arc_inner,
+    )
