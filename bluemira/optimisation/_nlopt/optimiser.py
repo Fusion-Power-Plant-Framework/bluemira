@@ -222,7 +222,7 @@ class NloptOptimiser(Optimiser):
         the form the arguments should take.
         """
         if x0 is None:
-            x0 = _inital_guess_from_bounds(self.lower_bounds, self.upper_bounds)
+            x0 = _initial_guess_from_bounds(self.lower_bounds, self.upper_bounds)
 
         try:
             x_star = self._opt.optimize(x0)
@@ -343,7 +343,7 @@ def _check_bounds(n_dims: int, new_bounds: np.ndarray) -> None:
         )
 
 
-def _inital_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
+def _initial_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarray:
     """
     Derive an initial guess for the optimiser.
 
