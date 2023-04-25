@@ -9,19 +9,18 @@ power plant using the Power Cycle module.
 # Run with:
 # python examples/power_cycle/simple_example/simple.ex.py
 
-import import_kits
-
 # %%
 from bluemira.power_cycle.net.manager import PowerCycleManager
 from bluemira.power_cycle.tools import read_json
 
 try:
+    import kits_import
     from kits_for_examples import DisplayKit, PathKit, ScenarioKit
 
-    import_kits.successfull_import()
+    kits_import.successfull_import()
 
 except ImportError:
-    import_kits.sys.exit(import_kits.failed_import())
+    kits_import.sys.exit(kits_import.failed_import())
 
 
 # %% [markdown]
