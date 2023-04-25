@@ -30,9 +30,64 @@ from bluemira.geometry.parameterisations import (
 )
 from bluemira.geometry.tools import make_circle, make_polygon, signed_distance
 from bluemira.optimisation import optimise_geometry
+from bluemira.optimisation.error import GeometryOptimisationError
 
 
 class TestGeometry:
+    @pytest.mark.parametrize(
+        "kozs",
+        [
+            [
+                make_polygon(
+                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
+                    closed=False,
+                )
+            ],
+            [
+                make_polygon(
+                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
+                    closed=True,
+                ),
+                make_polygon(
+                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
+                    closed=False,
+                ),
+            ],
+        ],
+    )
+    def test_GeometryOptimisationError_given_unclosed_koz(self, kozs):
+        with pytest.raises(GeometryOptimisationError):
+            optimise_geometry(
+                PictureFrame(), f_objective=lambda _: 1, keep_out_zones=kozs
+            )
+
+    @pytest.mark.parametrize(
+        "kizs",
+        [
+            [
+                make_polygon(
+                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
+                    closed=False,
+                )
+            ],
+            [
+                make_polygon(
+                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
+                    closed=True,
+                ),
+                make_polygon(
+                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
+                    closed=False,
+                ),
+            ],
+        ],
+    )
+    def test_GeometryOptimisationError_given_unclosed_kiz(self, kizs):
+        with pytest.raises(GeometryOptimisationError):
+            optimise_geometry(
+                PictureFrame(), f_objective=lambda _: 1, keep_in_zones=kizs
+            )
+
     def test_simple_optimisation_with_keep_out_zone(self):
         def length(geom: GeometryParameterisation):
             return geom.create_shape().length

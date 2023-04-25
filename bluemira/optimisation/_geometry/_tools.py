@@ -39,6 +39,9 @@ from bluemira.optimisation._typing import (
 )
 from bluemira.optimisation.error import GeometryOptimisationError
 
+_DEFAULT_ZONE_DISCR = 100  # points
+_DEFAULT_ZONE_TOL = 1e-3
+
 
 def to_objective(
     geom_objective: GeomOptimiserObjective, geom: GeometryParameterisation
@@ -85,41 +88,53 @@ def to_constraint(
     return constraint
 
 
-def calculate_signed_distance(parameterisation, n_shape_discr, koz_points):
+def calculate_signed_distance(parameterisation, n_shape_discr, zone_points):
     """
-    Signed distance from the parameterised shape to the keep-out zone.
+    Signed distance from the parameterised shape to the keep-out/in zone.
     """
     shape = parameterisation.create_shape()
     s = shape.discretize(ndiscr=n_shape_discr).xz
-    return signed_distance_2D_polygon(s.T, koz_points.T).T
+    return signed_distance_2D_polygon(s.T, zone_points.T).T
 
 
-def make_keep_out_zone_constraint(koz: BluemiraWire) -> GeomConstraintT:
+def make_keep_out_zone_constraint(
+    koz: BluemiraWire,
+    n_discr: int = _DEFAULT_ZONE_DISCR,
+    tol: float = _DEFAULT_ZONE_TOL,
+) -> GeomConstraintT:
     """Make a keep-out zone inequality constraint from a wire."""
     if not koz.is_closed():
         raise GeometryOptimisationError(
             f"Keep-out zone with label '{koz.label}' is not closed."
         )
-    koz_points = koz.discretize(100, byedges=True).xz
+    koz_points = koz.discretize(n_discr, byedges=True).xz
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
-        return calculate_signed_distance(geom, n_shape_discr=100, koz_points=koz_points)
-
-    return {"f_constraint": _f_constraint, "tolerance": np.full(100, 1e-3)}
-
-
-def make_keep_in_zone_constraint(koz: BluemiraWire) -> GeomConstraintT:
-    """Make a keep-in zone inequality constraint from a wire."""
-    if not koz.is_closed():
-        raise GeometryOptimisationError(
-            f"Keep-in zone with label '{koz.label}' is not closed."
+        return calculate_signed_distance(
+            geom, n_shape_discr=n_discr, zone_points=koz_points
         )
-    koz_points = koz.discretize(100, byedges=True).xz
+
+    return {"f_constraint": _f_constraint, "tolerance": np.full(n_discr, tol)}
+
+
+def make_keep_in_zone_constraint(
+    kiz: BluemiraWire,
+    n_discr: int = _DEFAULT_ZONE_DISCR,
+    tol: float = _DEFAULT_ZONE_TOL,
+) -> GeomConstraintT:
+    """Make a keep-in zone inequality constraint from a wire."""
+    if not kiz.is_closed():
+        raise GeometryOptimisationError(
+            f"Keep-in zone with label '{kiz.label}' is not closed."
+        )
+    kiz_points = kiz.discretize(n_discr, byedges=True).xz
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
-        return -calculate_signed_distance(geom, n_shape_discr=100, koz_points=koz_points)
+        return -calculate_signed_distance(
+            geom, n_shape_discr=n_discr, zone_points=kiz_points
+        )
 
-    return {"f_constraint": _f_constraint, "tolerance": np.full(100, 1e-3)}
+    return {"f_constraint": _f_constraint, "tolerance": np.full(n_discr, tol)}
 
 
 def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstraintT]:
