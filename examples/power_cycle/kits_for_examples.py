@@ -10,6 +10,7 @@ from pprint import pprint
 import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_root
+from bluemira.power_cycle.net.manager import PowerCycleManager
 from bluemira.power_cycle.time import ScenarioBuilder
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges, validate_axes
 
@@ -100,6 +101,51 @@ class ScenarioKit:
         scenario_config_path = cls.build_scenario_config_path()
         scenario_builder = ScenarioBuilder(scenario_config_path)
         return scenario_builder.scenario
+
+
+class ManagerKit:
+    """
+    Kit of methods to build and visualize Power Cycle managers.
+    """
+
+    @staticmethod
+    def build_manager(manager_config_path):
+        """
+        Create the Power Cycle manager.
+        """
+        scenario_config_path = ScenarioKit.build_scenario_config_path()
+        return PowerCycleManager(scenario_config_path, manager_config_path)
+
+    @staticmethod
+    def plot_manager(title, manager):
+        """
+        Plot net loads computed by the Power Cycle manager.
+        """
+        ax = DisplayKit.prepare_plot(title)
+        ax, _ = manager.plot(ax=ax)
+        ax = DisplayKit.finalize_plot(ax)
+        return ax
+
+    @staticmethod
+    def extract_phaseload_for_single_phase(phaseload_set, phase_label):
+        """
+        Extract 'PhaseLoad' from list that has a 'phase' attribute whose
+        label matches 'phase_label'.
+        """
+        match = [p for p in phaseload_set if p.phase.label == phase_label]
+        phaseload_of_single_phase = match[0]
+        return phaseload_of_single_phase
+
+    @staticmethod
+    def plot_detailed_phaseload(phaseload):
+        """
+        Plot 'PhaseLoad' in 'detailed' mode.
+        """
+        phase_name = phaseload.phase.name
+        ax = DisplayKit.prepare_plot(f"Detailed plot of {phase_name!r} load")
+        ax, _ = phaseload.plot(ax=ax, detailed=True)
+        ax = DisplayKit.finalize_plot(ax)
+        return ax
 
 
 if __name__ == "__main__":

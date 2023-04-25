@@ -14,13 +14,13 @@ Fusion Reactors' System Analysis, Karlsruher Institut für Technologie,
 # Run with:
 # python examples/power_cycle/scenario.ex.py
 
-
 from kits_for_examples import DisplayKit, ScenarioKit
 
 # %%
 from tabulate import tabulate
 
 
+# %%
 def print_scenario_summary(scenario):
     """
     Visualize scenario by printing tables.
@@ -44,7 +44,7 @@ def print_scenario_summary(scenario):
     DisplayKit.p(pulse_table)
 
 
-# %%
+# %% [markdown]
 # # Build a scenario
 #
 # The simplified scenario is built from the `scenario_config.json` file,
@@ -58,8 +58,8 @@ def print_scenario_summary(scenario):
 # largest (logical `"|"`) time periods defined in the "breakdown-library"
 # JSON field.
 #
-# Finally, the total duration of the pulse and of each of its phases are
-# displayed in tabulated format.
+# Finally, the custom function is used to display the total duration of
+# the pulse and of each of its phases, displayed in tabulated format.
 #
 
 # %%
