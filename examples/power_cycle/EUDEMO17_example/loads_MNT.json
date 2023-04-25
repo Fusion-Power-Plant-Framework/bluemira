@@ -1,0 +1,213 @@
+{
+    "RMS": {
+        "name": "Remote Maintenance Systems",
+        "reactive": {
+            "rrm": {
+                "name": "reactive remote maintenance power (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [],
+                    "normalize": [],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "not operational during standard pulses"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[3.1, 3.1]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        },
+        "active": {
+            "arm": {
+                "name": "active remote maintenance power (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [],
+                    "normalize": [],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "not operational during standard pulses"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[5, 5]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "ASS": {
+        "name": "Assembly Systems",
+        "reactive": {
+            "ras": {
+                "name": "reactive assembly power (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "from Active Maintenance Facility building"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[2.2, 2.2]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        },
+        "active": {
+            "aas": {
+                "name": "active assembly power (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "from Active Maintenance Facility building"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[4.6, 4.6]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "WTS": {
+        "name": "(Radioactive) Waste Treatment and Storage",
+        "reactive": {
+            "rts": {
+                "name": "reactive treatment & storage power (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "assumed continuous"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[2.2, 2.2]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        },
+        "active": {
+            "ats": {
+                "name": "active treatment & storage power (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "assumed continuous"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[4.6, 4.6]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

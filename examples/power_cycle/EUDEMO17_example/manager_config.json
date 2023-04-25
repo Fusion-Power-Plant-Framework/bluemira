@@ -28,5 +28,14 @@
             "DCS",
             "PPC"
         ]
+    },
+    "MNT": {
+        "name": "Maintenance",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_MNT.json",
+        "systems": [
+            "RMS",
+            "ASS",
+            "WTS"
+        ]
     }
 }
