@@ -20,5 +20,13 @@
             "TPS",
             "TER"
         ]
+    },
+    "PDC": {
+        "name": "Plasma Diagnostics & Control",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_PDC.json",
+        "systems": [
+            "DCS",
+            "PPC"
+        ]
     }
 }
