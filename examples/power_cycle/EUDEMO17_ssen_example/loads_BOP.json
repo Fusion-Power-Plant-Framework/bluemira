@@ -1,0 +1,416 @@
+{
+    "PHT": {
+        "name": "Primary Heat Transfer System",
+        "reactive": {
+            "rcc": {
+                "name": "reactive constant PHTS consumption (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "Vacuum Vessel (VV)",
+                            "(HCPB) Vacuum Vessel pressure suppression (VVPS)",
+                            "Divertor & Limiter (DV & LM)"
+                        ],
+                        "time": [
+                            "[0, 1]",
+                            "[0, 1]",
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[4.7, 4.7]",
+                            "[0, 0]",
+                            "[12.1, 12.1]"
+                        ],
+                        "model": [
+                            "RAMP",
+                            "RAMP",
+                            "RAMP"
+                        ]
+                    }
+                }
+            },
+            "rvb": {
+                "name": "reactive variable PHTS consumption during burn (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "ftt"
+                    ],
+                    "normalize": [
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "(HCPB) Breeding Blanket (BB) - peak value"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[54.4, 54.4]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            },
+            "rvo": {
+                "name": "reactive variable PHTS consumption outside burn (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {
+                        "coolant-flow-to-20%": 5
+                    },
+                    "loads": {
+                        "description": [
+                            "(HCPB) Breeding Blanket (BB) - peak value"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[54.4, 54.4]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        },
+        "active": {
+            "acc": {
+                "name": "active constant PHTS consumption (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "Vacuum Vessel (VV)",
+                            "(HCPB) Vacuum Vessel pressure suppression (VVPS)",
+                            "Divertor & Limiter (DV & LM)"
+                        ],
+                        "time": [
+                            "[0, 1]",
+                            "[0, 1]",
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[9.7, 9.7]",
+                            "[2.3, 2.3]",
+                            "[19.5, 19.5]"
+                        ],
+                        "model": [
+                            "RAMP",
+                            "RAMP",
+                            "RAMP"
+                        ]
+                    }
+                }
+            },
+            "avb": {
+                "name": "active variable PHTS consumption during burn (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "ftt"
+                    ],
+                    "normalize": [
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "(HCPB) Breeding Blanket (BB) - peak value"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[165.6, 165.6]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            },
+            "rvo": {
+                "name": "active variable PHTS consumption outside burn (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {
+                        "coolant-flow-to-20%": 5
+                    },
+                    "loads": {
+                        "description": [
+                            "(HCPB) Breeding Blanket (BB) - peak value"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[165.6, 165.6]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "IHT": {
+        "name": "Intermediate Heat Transfer System",
+        "reactive": {
+            "rpc": {
+                "name": "NO ESTIMATES for reactive pumping consumption (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [],
+                    "normalize": [],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [],
+                        "time": [],
+                        "data": [],
+                        "model": []
+                    }
+                }
+            }
+        },
+        "active": {
+            "apc": {
+                "name": "NO ESTIMATES for active pumping consumption (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [],
+                    "normalize": [],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [],
+                        "time": [],
+                        "data": [],
+                        "model": []
+                    }
+                }
+            }
+        }
+    },
+    "PCS": {
+        "name": "Power Conversion System",
+        "reactive": {
+            "rbc": {
+                "name": "reactive 'balance-of-plant' consumption (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "(HCPB) Hirn Cycle components"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[5.8, 5.8]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            },
+            "rbp": {
+                "name": "reactive 'balance-of-plant' production (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": false,
+                    "efficiencies": {
+                        "indirect-storage": 0.85,
+                        "inverse-of-minimum-power-factor=0.8": 1.25
+                    },
+                    "loads": {
+                        "description": [
+                            "nominal active turbine power for direct concept"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[750, 750]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        },
+        "active": {
+            "abc": {
+                "name": "reactive 'balance-of-plant' consumption (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "(HCPB) Hirn Cycle components"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[12, 12]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            },
+            "abp": {
+                "name": "reactive 'balance-of-plant' production (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": false,
+                    "efficiencies": {
+                        "indirect-storage": 0.85
+                    },
+                    "loads": {
+                        "description": [
+                            "nominal active turbine power for direct concept"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[750, 750]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}

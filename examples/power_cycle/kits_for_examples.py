@@ -11,7 +11,6 @@ import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.power_cycle.net.manager import PowerCycleManager
-from bluemira.power_cycle.time import ScenarioBuilder
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges, validate_axes
 
 
@@ -28,6 +27,10 @@ class PathKit:
     simple_folder = "simple_example"
     eudemo17_folder = "EUDEMO17_example"
 
+    # Recurring filenames
+    scenario_config_filename = "scenario_config.json"
+    manager_config_filename = "manager_config.json"
+
     @staticmethod
     def path_from_crumbs(*args):
         """Return file path from directory elements."""
@@ -40,6 +43,29 @@ class PathKit:
             elif isinstance(element, list):
                 crumbs = crumbs + element
         return os.path.join(*tuple(crumbs))
+
+    @classmethod
+    def build_scenario_config_path(cls):
+        """
+        Build scenario configuration path.
+        """
+        scenario_config_path = cls.path_from_crumbs(
+            cls.examples_crumbs,
+            cls.scenario_config_filename,
+        )
+        return scenario_config_path
+
+    @classmethod
+    def build_eudemo_manager_config_path(cls, manager_config_filename):
+        """
+        Build manager configuration file path.
+        """
+        manager_config_path = cls.path_from_crumbs(
+            cls.examples_crumbs,
+            cls.eudemo17_folder,
+            manager_config_filename,
+        )
+        return manager_config_path
 
 
 class DisplayKit:
@@ -75,34 +101,6 @@ class DisplayKit:
         return ax
 
 
-class ScenarioKit:
-    """
-    Kit of methods to build and visualize scenarios.
-    """
-
-    scenario_config_filename = "scenario_config.json"
-
-    @classmethod
-    def build_scenario_config_path(cls):
-        """
-        Build scenario configuration path.
-        """
-        scenario_config_path = PathKit.path_from_crumbs(
-            PathKit.examples_crumbs,
-            cls.scenario_config_filename,
-        )
-        return scenario_config_path
-
-    @classmethod
-    def build_scenario(cls):
-        """
-        Build scenario by calling the 'ScenarioBuilder' class.
-        """
-        scenario_config_path = cls.build_scenario_config_path()
-        scenario_builder = ScenarioBuilder(scenario_config_path)
-        return scenario_builder.scenario
-
-
 class ManagerKit:
     """
     Kit of methods to build and visualize Power Cycle managers.
@@ -113,7 +111,7 @@ class ManagerKit:
         """
         Create the Power Cycle manager.
         """
-        scenario_config_path = ScenarioKit.build_scenario_config_path()
+        scenario_config_path = PathKit.build_scenario_config_path()
         return PowerCycleManager(scenario_config_path, manager_config_path)
 
     @staticmethod
@@ -137,12 +135,15 @@ class ManagerKit:
         return phaseload_of_single_phase
 
     @staticmethod
-    def plot_detailed_phaseload(phaseload):
+    def plot_detailed_phaseload(phaseload, monicker=""):
         """
-        Plot 'PhaseLoad' in 'detailed' mode.
+        Plot 'PhaseLoad' in 'detailed' mode, but transform unit
         """
-        phase_name = phaseload.phase.name
-        ax = DisplayKit.prepare_plot(f"Detailed plot of {phase_name!r} load")
+        title = (
+            f"Detailed plot of {monicker!r} phase load "
+            f"in phase {phaseload.phase.name!r}"
+        )
+        ax = DisplayKit.prepare_plot(title)
         ax, _ = phaseload.plot(ax=ax, detailed=True)
         ax = DisplayKit.finalize_plot(ax)
         return ax
