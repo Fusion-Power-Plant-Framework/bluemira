@@ -97,6 +97,11 @@ def extract_phaseload_for_single_phase(pulseload, phase_label):
 # - Heating & Current Drive (`loads_HCD_complete.json` file);
 # - Auxiliaries (`loads_AUX_complete.json` file).
 #
+# This differentiation between cases could have been made in alternative
+# ways. For example by defining different systems in a single input
+# file (e.g. in `loads_HCD.json`) and defining different systems in it
+# (e.g. splitting between ECH_SSEN and ECH_PPEN), and then only listing
+# the desired systems in each relevant "manager_config" file.
 
 
 # %%
