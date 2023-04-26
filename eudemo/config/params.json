@@ -289,7 +289,7 @@
     "unit": "degree",
     "source": "Input",
     "long_name": "Maximum panel angle",
-    "description": "Maximum angle of rotation between adjacent first wall panels"
+    "description": "Maximum turning angle (clockwise tail-to-tail angle) between adjacent first wall panels"
   },
   "fw_dL_min": {
     "value": 0.3,
