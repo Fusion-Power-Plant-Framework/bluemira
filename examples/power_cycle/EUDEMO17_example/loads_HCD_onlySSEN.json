@@ -1,0 +1,233 @@
+{
+    "ECH": {
+        "name": "Electron Cyclotron Heating",
+        "reactive": {
+            "aux": {
+                "name": "reactive auxiliary (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "power extrapolated from ITER solution"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[2.9, 2.9]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        },
+        "active": {
+            "aux": {
+                "name": "active auxiliary (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "power extrapolated from ITER solution"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[6, 6]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "ICH": {
+        "name": "Ion Cyclotron Heating",
+        "reactive": {
+            "aux": {
+                "name": "reactive auxiliary (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "power extrapolated from ITER solution"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[2.9, 2.9]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        },
+        "active": {
+            "aux": {
+                "name": "active auxiliary (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "power extrapolated from ITER solution"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[6, 6]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    },
+    "NBI": {
+        "name": "Neutral Beam Injection",
+        "reactive": {
+            "aux": {
+                "name": "reactive auxiliary (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "power extrapolated from ITER solution"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[2.9, 2.9]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        },
+        "active": {
+            "aux": {
+                "name": "active auxiliary (SSEN)",
+                "module": null,
+                "variables_map": {
+                    "phases": [
+                        "dwl",
+                        "d2f",
+                        "ftt",
+                        "f2d"
+                    ],
+                    "normalize": [
+                        true,
+                        true,
+                        true,
+                        true
+                    ],
+                    "unit": "MW",
+                    "consumption": true,
+                    "efficiencies": {},
+                    "loads": {
+                        "description": [
+                            "power extrapolated from ITER solution"
+                        ],
+                        "time": [
+                            "[0, 1]"
+                        ],
+                        "data": [
+                            "[6, 6]"
+                        ],
+                        "model": [
+                            "RAMP"
+                        ]
+                    }
+                }
+            }
+        }
+    }
+}
