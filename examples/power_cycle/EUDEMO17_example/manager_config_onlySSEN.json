@@ -14,7 +14,7 @@
     },
     "HCD": {
         "name": "Heating & Current Drive (PBS = 30,31,32)",
-        "config_path": "examples/power_cycle/EUDEMO17_example/loads_HCD.json",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_HCD_onlySSEN.json",
         "systems": [
             "ECH",
             "ICH",
@@ -56,7 +56,7 @@
     },
     "AUX": {
         "name": "Auxiliaries (PBS = 80,82,83,87)",
-        "config_path": "examples/power_cycle/EUDEMO17_example/loads_AUX.json",
+        "config_path": "examples/power_cycle/EUDEMO17_example/loads_AUX_onlySSEN.json",
         "systems": [
             "EPS",
             "BSU",

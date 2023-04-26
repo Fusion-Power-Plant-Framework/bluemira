@@ -11,16 +11,42 @@ Fusion Reactors' System Analysis, Karlsruher Institut für Technologie,
 2019.
 """
 
+from kits_for_examples import DisplayKit, PathKit
+
 # Run with:
 # python examples/power_cycle/scenario.ex.py
-
-from kits_for_examples import DisplayKit, ScenarioKit
-
-# %%
 from tabulate import tabulate
 
+from bluemira.power_cycle.time import ScenarioBuilder
+
+# %% [markdown]
+# # Build a scenario
+#
+# The simplified scenario is built from the `scenario_config.json` file,
+# in which a single "standard pulse" (`std`) is applied a single time.
+#
+# Pulse types are found in the "pulse_library" JSON field. The `std`
+# pulse is defined as being composed of 4 phases, each of which can be
+# found in the "phase-library" JSON field.
+#
+# Phases are contructed either summing (logical `"&"`) or taking the
+# largest (logical `"|"`) time periods defined in the "breakdown-library"
+# JSON field.
+#
+# Finally, a custom function can be used to display the total duration
+# of the pulse and of each of its phases, displayed in tabulated format.
+#
+
 
 # %%
+def build_scenario(scenario_config_path):
+    """
+    Build scenario by calling the 'ScenarioBuilder' class.
+    """
+    scenario_builder = ScenarioBuilder(scenario_config_path)
+    return scenario_builder.scenario
+
+
 def print_scenario_summary(scenario):
     """
     Visualize scenario by printing tables.
@@ -44,28 +70,11 @@ def print_scenario_summary(scenario):
     DisplayKit.p(pulse_table)
 
 
-# %% [markdown]
-# # Build a scenario
-#
-# The simplified scenario is built from the `scenario_config.json` file,
-# in which a single "standard pulse" (`std`) is applied a single time.
-#
-# Pulse types are found in the "pulse_library" JSON field. The `std`
-# pulse is defined as being composed of 4 phases, each of which can be
-# found in the "phase-library" JSON field.
-#
-# Phases are contructed either summing (logical `"&"`) or taking the
-# largest (logical `"|"`) time periods defined in the "breakdown-library"
-# JSON field.
-#
-# Finally, the custom function is used to display the total duration of
-# the pulse and of each of its phases, displayed in tabulated format.
-#
-
 # %%
 if __name__ == "__main__":
     # Build scenario
-    scenario = ScenarioKit.build_scenario()
+    scenario_config_path = PathKit.build_scenario_config_path()
+    scenario = build_scenario(scenario_config_path)
 
     # Visualize scenario results
     print_scenario_summary(scenario)

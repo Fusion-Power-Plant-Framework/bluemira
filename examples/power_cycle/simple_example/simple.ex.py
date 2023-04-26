@@ -107,6 +107,7 @@ def print_manager_config_file(manager_config):
 #
 # A similar set of inputs can be seen for the `inj` load, although its
 # load is only maintained during the flat-top
+#
 
 
 # %%
@@ -199,6 +200,11 @@ def plot_phaseload_set(phaseload_set, color):
 
 
 # %%
+def plot_resulting_phaseload(phaseload):
+    """
+    Plot resulting phaseload.
+    """
+    ManagerKit.plot_detailed_phaseload(phaseload, "Resulting")
 
 
 # %% [markdown]
@@ -259,7 +265,7 @@ if __name__ == "__main__":
         active_phaseload_set,
         "ftt",
     )
-    ManagerKit.plot_detailed_phaseload(ftt_active_phaseload)
+    plot_resulting_phaseload(ftt_active_phaseload)
 
     # Analyze "island control" power load of ECH
     ftt_active_powerload_set = ftt_active_phaseload.powerload_set
