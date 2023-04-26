@@ -38,49 +38,24 @@ from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import get_area_2d, get_intersect, polygon_in_polygon
 
 
-def coil_harmonic_amplitudes(input_coils, i_f, max_degree, r_t):
+def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
     """
-    Returns spherical harmonics coefficients/amplitudes (A_l) to be used
-    in a spherical harmonic approximation of the vacuum/coil contribution
-    to the polodial flux (psi). Vacuum Psi = Total Psi - Plasma Psi.
-    These coefficients can be used as contraints in optimisation.
+    Construct matrix from harmonic amplitudes at given coil locations.
 
-    For a single filament (coil):
+    To get an array of spherical harmonic amplitudes/coeffcients (A_l)
+    which can be used in a spherical harmonic approximation of the
+    vacuum/coil contribution to the polodial flux (psi) do:
+        A_l = matrix harmonic amplitudes @ vector of coil currents
+
+    A_l can be used as contraints in optimisation, see spherical_harmonics_constraint.
+
+    N.B. for a single filament (coil):
 
         A_l =  1/2 * mu_0 * I_f * sin(theta_f) * (r_t/r_f)**l *
                     ( P_l * cos(theta_f) / sqrt(l*(l+1)) )
 
     Where l = degree, and P_l * cos(theta_f) are the associated
     Legendre polynomials of degree l and order (m) = 1.
-
-    Parmeters
-    ----------
-    input_coils:
-        Bluemira CoilSet
-    i_f: np.array
-        Currents of filaments (coils)
-    max_degree: integer
-        Maximum degree of harmonic to calculate up to
-    r_t: float
-        Typical length scale (e.g. radius at outer midplane)
-
-    Returns
-    -------
-    amplitudes: np.array
-        Array of spherical harmonic amplitudes from given coil potitions and currents
-    """
-    # SH coefficients from fuction of the current distribution outside of the sphere
-    # containing the plamsa, i.e., LCFS (r_lcfs)
-    # SH coeffs = currents2harmonics @ coil currents
-    # N.B., cannot use coil located within r_lcfs as part of this method.
-    currents2harmonics = coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t)
-
-    return currents2harmonics @ i_f
-
-
-def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
-    """
-    Construct matrix from harmonic amplitudes at given coil locations.
 
     Parmeters
     ----------
@@ -94,8 +69,8 @@ def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
     Returns
     -------
     currents2harmonics: np.array
-        Matrix of harmonic amplitudes (to get spherical harmonic coefficents
-        -> matrix @ vector of coil currents, see coil_harmonic_amplitudes)
+        Matrix of harmonic amplitudes
+
     """
     x_f = input_coils.get_control_coils().x
     z_f = input_coils.get_control_coils().z

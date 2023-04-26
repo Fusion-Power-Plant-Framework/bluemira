@@ -403,6 +403,10 @@ def spherical_harmonics_constraint(
     vector_harmonics_matrix = harmonics.coil_harmonic_amplitude_matrix(
         eq.coilset, max_degree, r_t
     )
+
+    # SH coefficients from fuction of the current distribution outside of the sphere
+    # containing the plamsa, i.e., LCFS (r_lcfs)
+    # N.B., cannot use coil located within r_lcfs as part of this method.
     vector_harmonics = vector_harmonics_matrix @ currents
 
     constraint[:] = ref_harmonics - vector_harmonics
