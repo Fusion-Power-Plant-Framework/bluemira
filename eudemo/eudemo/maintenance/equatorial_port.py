@@ -64,7 +64,13 @@ class EquatorialPortKOZDesignerParams(ParameterFrame):
     Equatorial Port Designer parameters
     """
 
+    g_vv_ts: Parameter[float]
+    g_ts_tf: Parameter[float]
+    tk_ts: Parameter[float]
+
+    # Lower port parameters
     ep_height: Parameter[float]
+    ep_wall_tk: Parameter[float]
 
 
 class EquatorialPortKOZDesigner(Designer):
@@ -80,7 +86,6 @@ class EquatorialPortKOZDesigner(Designer):
         self,
         params: Union[Dict, ParameterFrame, EquatorialPortKOZDesignerParams],
         build_config: Union[Dict, None],
-        koz_z_offset: float,
         x_ib: float,
         x_ob: float,
         z_pos: float = 0.0,
@@ -102,7 +107,12 @@ class EquatorialPortKOZDesigner(Designer):
             z-positional height of the KOZ x-y midplane, default: 0.0
         """
         super().__init__(params, build_config)
-        self.koz_offset = koz_z_offset
+        self.koz_offset = (
+            self.params.ep_wall_tk.value
+            + self.params.g_ts_tf.value
+            + self.params.g_vv_ts.value
+            + self.params.tk_ts.value
+        )
         self.x_ib = x_ib
         self.x_ob = x_ob
         self.z_pos = z_pos
@@ -111,7 +121,7 @@ class EquatorialPortKOZDesigner(Designer):
         """
         Design the xz keep-out zone profile of the equatorial port
         """
-        z_h = (self.params.ep_height.value / 2.0) + self.koz_offset
+        z_h = 0.5 * self.params.ep_height.value + self.koz_offset
         z_o = self.z_pos
 
         x = (self.x_ib, self.x_ob, self.x_ob, self.x_ib)

@@ -230,7 +230,13 @@
         "value": 2.0,
         "unit": "m",
         "source": "Input",
-        "long_name": "Equatorial port height"
+        "long_name": "Equatorial port height (void height)"
+      },
+      "ep_wall_tk": {
+        "value": 0.1,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Equatorial port wall thickness"
       }
     }
   }
