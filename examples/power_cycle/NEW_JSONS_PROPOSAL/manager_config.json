@@ -1,0 +1,15 @@
+{
+    "HCD": {
+        "name": "Heating & Current Drive",
+        "config_path": "examples/power_cycle/.../library_HCD.json",
+        "systems": {
+            "ECH": {
+                "name": "Electron Cyclotron Heating",
+                "loads": [
+                    "eup",
+                    "eip"
+                ]
+            }
+        }
+    }
+}

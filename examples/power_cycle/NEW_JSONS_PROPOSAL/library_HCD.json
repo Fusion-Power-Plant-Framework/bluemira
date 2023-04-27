@@ -1,0 +1,83 @@
+{
+    "eup": {
+        "name": "ECH upkeep power",
+        "module": null,
+        "variables_map": {
+            "phases": [
+                "dwl",
+                "d2f",
+                "ftt",
+                "f2d"
+            ],
+            "normalize": [
+                true,
+                true,
+                true,
+                true
+            ],
+            "tags": [
+                "consumption",
+                "active",
+                "PBS 30",
+                "reactor",
+                "SSEN"
+            ],
+            "unit": "MW",
+            "efficiencies": {
+                "wall-plug": 0.5
+            },
+            "loads": {
+                "description": [
+                    "minimal maintenance power"
+                ],
+                "time": [
+                    "[0, 1]"
+                ],
+                "data": [
+                    "[1, 1]"
+                ],
+                "model": [
+                    "RAMP"
+                ]
+            }
+        }
+    },
+    "eip": {
+        "name": "ECH injection during burn",
+        "module": null,
+        "variables_map": {
+            "phases": [
+                "ftt"
+            ],
+            "normalize": [
+                true
+            ],
+            "tags": [
+                "consumption",
+                "active",
+                "PBS 30",
+                "reactor",
+                "PPEN"
+            ],
+            "unit": "MW",
+            "efficiencies": {
+                "cooling": 0.7,
+                "gyrotron efficiency": 0.7
+            },
+            "loads": {
+                "description": [
+                    "island control"
+                ],
+                "time": [
+                    "[0, 1, 2, 3, 4]"
+                ],
+                "data": [
+                    "[1, 30, 25, 30, 1]"
+                ],
+                "model": [
+                    "STEP"
+                ]
+            }
+        }
+    }
+}
