@@ -139,14 +139,9 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
 
         Returns
         -------
-        ib_face
-            Inboard blanket segment silhouette.
-        ob_face
-            Outboard blanket segment silhouette.
-        ib_bound
-            Inboard blanket segment's inner boundary.
-        ob_bound
-            Outboard blanket segment's inner boundary.
+        blanket_segments
+            An instance of :class:`.BlanketSegments` containing the
+            blanket segment geometries.
         """
         cut_zone = self._make_cutting_face()
         ib_face, ob_face = self._cut_geom(self.silhouette, cut_zone)
