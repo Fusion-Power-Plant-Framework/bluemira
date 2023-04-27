@@ -70,7 +70,7 @@ from eudemo.equilibria import (
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
-from eudemo.maintenance.duct_connection import UpperPortDuctBuilder
+from eudemo.maintenance.duct_connection import TSUpperPortDuctBuilder
 from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.params import EUDEMOReactorParams
@@ -220,7 +220,7 @@ def build_coil_structures(
 
 def build_upper_port(params, build_config, upper_port_koz):
     y_offset = params.tf_wp_depth.value + params.tf_ts_gap.value
-    builder = UpperPortDuctBuilder(params, upper_port_koz, y_offset)
+    builder = TSUpperPortDuctBuilder(params, upper_port_koz, y_offset)
     return builder.build()
 
 

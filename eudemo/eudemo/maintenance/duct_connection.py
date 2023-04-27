@@ -39,25 +39,25 @@ from bluemira.geometry.tools import extrude_shape, make_polygon
 
 
 @dataclass
-class UpperPortDuctBuilderParams(ParameterFrame):
-    """Duct Builder Parameter Frame"""
+class TSUpperPortDuctBuilderParams(ParameterFrame):
+    """Thermal shield upper port duct builder Parameter Frame"""
 
     n_TF: Parameter[int]
-    tk_upper_port_wall_end: Parameter[float]
-    tk_upper_port_wall_side: Parameter[float]
+    tf_wp_depth: Parameter[float]
+    g_ts_tf: Parameter[float]
+    tk_ts: Parameter[float]
 
 
-class UpperPortDuctBuilder(Builder):
-    """Duct Builder"""
+class TSUpperPortDuctBuilder(Builder):
+    """Thermal shield upper port duct builder"""
 
-    params: UpperPortDuctBuilderParams
-    param_cls = UpperPortDuctBuilderParams
+    params: TSUpperPortDuctBuilderParams
+    param_cls = TSUpperPortDuctBuilderParams
 
     def __init__(
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
         port_koz: BluemiraFace,
-        y_offset: float,
     ):
         super().__init__(params, None)
         self.port_koz = port_koz.deepcopy()
@@ -68,11 +68,87 @@ class UpperPortDuctBuilder(Builder):
         ):
             raise ValueError("Port wall thickness must be > 0")
 
-        self.y_offset = y_offset
+        self.y_offset = self.params.tf_wp_depth.value + self.params.g_ts_tf
 
     def build(self) -> Component:
         """Build upper port"""
-        xy_face = self._single_xy_face()
+        xy_face = make_upper_port_xy_face(
+            self.params.n_TF.value,
+            self.port_koz.bounding_box.x_min,
+            self.port_koz.bounding_box.x_max,
+            self.params.tk_ts.value,
+            self.params.tk_ts.value,
+            self.y_offset,
+        )
+
+        return self.component_tree(
+            None, [self.build_xy(xy_face)], [self.build_xyz(xy_face)]
+        )
+
+    def build_xyz(self, xy_face: BluemiraFace) -> PhysicalComponent:
+        """Build upper port xyz"""
+        port = extrude_shape(xy_face, (0, 0, self.port_koz.bounding_box.z_max))
+        comp = PhysicalComponent(self.name, port)
+        apply_component_display_options(comp, BLUE_PALETTE["TS"][0])
+        return comp
+
+    def build_xy(self, face: BluemiraFace) -> PhysicalComponent:
+        """Build upport port xy face"""
+        comp = PhysicalComponent(self.name, face)
+        apply_component_display_options(comp, BLUE_PALETTE["TS"][0])
+        return comp
+
+
+@dataclass
+class VVUpperPortDuctBuilderParams(ParameterFrame):
+    """Vacuum vessel upper port duct builder Parameter Frame"""
+
+    n_TF: Parameter[int]
+    tf_wp_depth: Parameter[float]
+    g_ts_tf: Parameter[float]
+    tk_ts: Parameter[float]
+    g_vv_ts: Parameter[float]
+    tk_upper_port_wall_end: Parameter[float]
+    tk_upper_port_wall_side: Parameter[float]
+
+
+class VVUpperPortDuctBuilder(Builder):
+    """Vacuum vessel upper port duct builder"""
+
+    params: VVUpperPortDuctBuilderParams
+    param_cls = VVUpperPortDuctBuilderParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        port_koz: BluemiraFace,
+    ):
+        super().__init__(params, None)
+        self.port_koz = port_koz.deepcopy()
+
+        if (
+            self.params.tk_upper_port_wall_end.value <= 0
+            or self.params.tk_upper_port_wall_side.value <= 0
+        ):
+            raise ValueError("Port wall thickness must be > 0")
+
+        self.y_offset = (
+            self.params.tf_wp_depth.value
+            + self.params.g_ts_tf
+            + self.params.tk_ts.value
+            + self.params.g_vv_ts.value
+        )
+
+    def build(self) -> Component:
+        """Build upper port"""
+        xy_face = make_upper_port_xy_face(
+            self.params.n_TF.value,
+            self.port_koz.bounding_box.x_min,
+            self.port_koz.bounding_box.x_max,
+            self.params.tk_ts.value,
+            self.params.tk_ts.value,
+            self.y_offset,
+        )
 
         return self.component_tree(
             None, [self.build_xy(xy_face)], [self.build_xyz(xy_face)]

@@ -39,8 +39,8 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.maintenance.duct_connection import (
-    UpperPortDuctBuilder,
-    UpperPortDuctBuilderParams,
+    TSUpperPortDuctBuilder,
+    TSUpperPortDuctBuilderParams,
 )
 from eudemo.maintenance.equatorial_port import (
     CastellationBuilder,
@@ -93,7 +93,7 @@ class TestDuctConnection:
     )
 
     def setup_method(self):
-        self.params = UpperPortDuctBuilderParams(
+        self.params = TSUpperPortDuctBuilderParams(
             Parameter("n_TF", 12, ""),
             Parameter("tk_upper_port_wall_side", 0.1, "m"),
             Parameter("tk_upper_port_wall_end", 0.2, "m"),
@@ -130,7 +130,7 @@ class TestDuctConnection:
         self.params.n_TF.value = n_TF
         self.params.tk_upper_port_wall_side.value = port_wall
         self.params.tk_upper_port_wall_end.value = port_wall * 2
-        builder = UpperPortDuctBuilder(self.params, port_koz, y_offset)
+        builder = TSUpperPortDuctBuilder(self.params, port_koz, y_offset)
         port = builder.build()
         xy = port.get_component("xy").get_component_properties("shape")
         diff = xy.wires[0].length - xy.wires[1].length
@@ -187,14 +187,14 @@ class TestDuctConnection:
         self.params.tk_upper_port_wall_side.value = 0
 
         with pytest.raises(ValueError):
-            UpperPortDuctBuilder(self.params, self.port_koz, 0)
+            TSUpperPortDuctBuilder(self.params, self.port_koz, 0)
 
     @pytest.mark.parametrize("end", [1, 5])
     def test_BuilderError_on_too_small_port(self, end):
         # raises an error in two different places
         self.params.tk_upper_port_wall_side.value = 0.5
         self.params.tk_upper_port_wall_end.value = end
-        builder = UpperPortDuctBuilder(self.params, self.port_koz, 2)
+        builder = TSUpperPortDuctBuilder(self.params, self.port_koz, 2)
 
         with pytest.raises(BuilderError):
             builder.build()
