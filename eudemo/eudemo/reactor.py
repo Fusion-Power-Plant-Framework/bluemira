@@ -222,11 +222,15 @@ def build_coil_structures(
 
 
 def build_upper_port(params, build_config, upper_port_koz):
+    """
+    Build the upper port for the reactor.
+    """
     ts_builder = TSUpperPortDuctBuilder(params, upper_port_koz)
     ts_upper_port = ts_builder.build()
     vv_builder = VVUpperPortDuctBuilder(params, upper_port_koz)
     vv_upper_port = vv_builder.build()
-    show_cad([ts_upper_port, vv_upper_port])
+    ts_upper_port.show_cad()
+    vv_upper_port.show_cad()
 
 
 def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:

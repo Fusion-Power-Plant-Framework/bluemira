@@ -200,6 +200,11 @@ def make_upper_port_xy_face(
         Offset value from the x-z plane at which to start building the port
         (excluding port side wall thickness)
 
+    Returns
+    -------
+    xy_face:
+        x-y face of the upper port
+
     Notes
     -----
     the port koz is slightly trimmed to allow for square ends to the port
@@ -261,3 +266,33 @@ def make_upper_port_xy_face(
     xy_face.rotate(degree=np.rad2deg(half_beta))
 
     return xy_face
+
+
+if __name__ == "__main__":
+    from bluemira.display import show_cad
+    from bluemira.geometry.parameterisations import PrincetonD
+    from bluemira.geometry.tools import (
+        boolean_cut,
+        boolean_fuse,
+        extrude_shape,
+        make_polygon,
+        offset_wire,
+        revolve_shape,
+    )
+
+    p = PrincetonD().create_shape()
+    p2 = offset_wire(p, 1.0)
+    face = BluemiraFace([p2, p])
+
+    vv = revolve_shape(face, degree=20)
+
+    port = make_polygon(
+        {"x": [7, 9, 9, 7], "y": [0.5, 0.5, 2.5, 1.4], "z": 0}, closed=True
+    )
+    p2 = offset_wire(port, 0.05)
+    port = extrude_shape(BluemiraFace([p2, port]), (0, 0, 10))
+
+    show_cad([vv, port])
+
+    def pipe_pipe_component_fuse(target_pipe_component, pierce_pipe_component):
+        pass
