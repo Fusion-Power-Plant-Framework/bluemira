@@ -64,13 +64,10 @@ class TSUpperPortDuctBuilder(Builder):
         self.x_max = port_koz.bounding_box.x_max
         self.z_max = port_koz.bounding_box.z_max
 
-        if (
-            self.params.tk_upper_port_wall_end.value <= 0
-            or self.params.tk_upper_port_wall_side.value <= 0
-        ):
+        if self.params.tk_ts.value <= 0:
             raise ValueError("Port wall thickness must be > 0")
 
-        self.y_offset = self.params.tf_wp_depth.value + self.params.g_ts_tf
+        self.y_offset = self.params.tf_wp_depth.value + self.params.g_ts_tf.value
 
     def build(self) -> Component:
         """Build upper port"""
@@ -139,7 +136,7 @@ class VVUpperPortDuctBuilder(Builder):
 
         self.y_offset = (
             self.params.tf_wp_depth.value
-            + self.params.g_ts_tf
+            + self.params.g_ts_tf.value
             + self.params.tk_ts.value
             + self.params.g_vv_ts.value
         )
