@@ -87,15 +87,16 @@ def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
     # SH coefficients from function of the current distribution
     # outside of the sphere coitaining the LCFS
     # SH coeffs = currents2harmonics @ coil currents
-    for degree in np.arange(1, max_degree):
-        currents2harmonics[degree, :] = (
-            0.5
-            * MU_0
-            * (r_t / r_f) ** degree
-            * np.sin(theta_f)
-            * lpmv(1, degree, np.cos(theta_f))
-            / np.sqrt(degree * (degree + 1))
-        )
+    degrees = np.arange(1, max_degree)[:, None]
+    ones = np.ones_like(degrees)
+    currents2harmonics[1:, :] = (
+        0.5
+        * MU_0
+        * (r_t / r_f)[None, :] ** degrees
+        * np.sin(theta_f)[None, :]
+        * lpmv(ones, degrees, np.cos(theta_f)[None, :])
+        / np.sqrt(degrees * (degrees + 1))
+    )
 
     return currents2harmonics
 
@@ -142,13 +143,14 @@ def harmonic_amplitude_marix(collocation_r, collocation_theta, r_t):
 
     # SH coeffcient matrix
     # SH coeffs = harmonics2collocation \ vector psi_vacuum at colocation points
-    for degree in np.arange(1, n - 1):
-        harmonics2collocation[:, degree] = (
-            collocation_r ** (degree + 1)
-            * np.sin(collocation_theta)
-            * lpmv(1, degree, np.cos(collocation_theta))
-            / ((r_t**degree) * np.sqrt(degree * (degree + 1)))
-        )
+    degrees = np.arange(1, n - 1)[None]
+    ones = np.ones_like(degrees)
+    harmonics2collocation[:, 1:] = (
+        collocation_r[:, None] ** (degrees + 1)
+        * np.sin(collocation_theta)[:, None]
+        * lpmv(ones, degrees, np.cos(collocation_theta)[:, None])
+        / ((r_t**degrees) * np.sqrt(degrees * (degrees + 1)))
+    )
 
     return harmonics2collocation
 

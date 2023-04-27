@@ -49,7 +49,6 @@ from bluemira.equilibria.equilibrium import Equilibrium
 # from bluemira.equilibria.find import find_OX_points
 from bluemira.equilibria.harmonics import (
     coil_harmonic_amplitude_matrix,
-    coil_harmonic_amplitudes,
     collocation_points,
     harmonic_amplitude_marix,
     lcfs_fit_metric,
