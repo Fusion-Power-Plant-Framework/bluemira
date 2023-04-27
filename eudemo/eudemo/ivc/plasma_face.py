@@ -89,10 +89,16 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         # Cut a clearance between the blankets and divertor - getting two
         # new faces
         vessel_bbox = in_vessel_face.bounding_box
+        # The minimum z-value of the wall boundary. The boundary should
+        # be open at the lower end and the start and end points of the
+        # wire should be at the same z. But take the minimum z value of
+        # the start and end points.
+        # Note we do not use bounding_box here due to a bug: 34228d3
+        min_z = min(self.wall_boundary.start_point().z, self.wall_boundary.end_point().z)
         rm_clearance_face = _make_clearance_face(
             vessel_bbox.x_min,
             vessel_bbox.x_max,
-            self.wall_boundary.start_point().z,
+            min_z,
             self.params.c_rm.value,
         )
 
