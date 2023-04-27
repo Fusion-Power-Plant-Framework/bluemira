@@ -203,8 +203,8 @@ class UpperPortOP(OptimisationProblem):
         return self.opt.optimise(x0)
 
 
-class UpperPortDesigner(Designer):
-    """Upper Port Designer"""
+class UpperPortKOZDesigner(Designer):
+    """Upper Port keep-out zone designer"""
 
     param_cls = UpperPortOPParameters
 

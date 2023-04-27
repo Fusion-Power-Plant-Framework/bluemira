@@ -71,7 +71,7 @@ from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
 from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
-from eudemo.maintenance.upper_port import UpperPortDesigner
+from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -292,7 +292,7 @@ if __name__ == "__main__":
         equilibrium=reference_eq,
     )
 
-    upper_port_designer = UpperPortDesigner(
+    upper_port_designer = UpperPortKOZDesigner(
         reactor_config.params_for("Upper Port"),
         reactor_config.config_for("Upper Port"),
         ivc_shapes.blanket_face,
