@@ -297,12 +297,15 @@ if __name__ == "__main__":
         reactor_config.config_for("Upper Port"),
         ivc_shapes.blanket_face,
     )
-    upper_port_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
+    upper_port_koz_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
 
     eq_port_designer = EquatorialPortKOZDesigner(
         reactor_config.params_for("Equatorial Port"),
         reactor_config.config_for("Equatorial Port"),
+        x_ob=20.0,
     )
+
+    eq_port_koz_xz = eq_port_designer.execute()
 
     reactor.vacuum_vessel = build_vacuum_vessel(
         reactor_config.params_for("Vacuum vessel"),
@@ -348,10 +351,8 @@ if __name__ == "__main__":
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
         reference_eq,
-        reactor.tf_coils.xz_outer_boundary(),
-        pf_coil_keep_out_zones=[
-            upper_port_xz, lower_port_duct_xz_koz,
-        ],
+        reactor.tf_coils.boundary(),
+        pf_coil_keep_out_zones=[upper_port_koz_xz, eq_port_koz_xz, lower_port_duct_xz_koz],
     )
 
     reactor.cryostat_thermal = build_cryots(
@@ -366,10 +367,7 @@ if __name__ == "__main__":
         reactor_config.config_for("Coil structures"),
         tf_coil_xz_face=reactor.tf_coils.xz_face(),
         pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
-        pf_coil_keep_out_zones=[
-            upper_port_xz,
-            lower_port_duct_xz_koz,
-        ],
+        pf_coil_keep_out_zones=[upper_port_koz_xz, eq_port_koz_xz, lower_port_duct_xz_koz],
     )
 
     reactor.cryostat = build_cryostat(
@@ -383,6 +381,14 @@ if __name__ == "__main__":
         reactor_config.config_for("RadiationShield"),
         reactor.cryostat.xz_boundary(),
     )
+
+    from bluemira.display import show_cad
+
+    debug = [upper_port_koz_xz, eq_port_koz_xz]
+    debug.extend(reactor.pf_coils.xz_boundary())
+    # I know there are clashes, I need to put in dynamic bounds on position opt to
+    # include coil XS.
+    show_cad(debug)
 
     reactor.show_cad("xz")
     reactor.show_cad(n_sectors=2)

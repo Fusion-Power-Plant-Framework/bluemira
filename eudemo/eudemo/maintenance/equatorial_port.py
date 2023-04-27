@@ -64,11 +64,20 @@ class EquatorialPortKOZDesignerParams(ParameterFrame):
     Equatorial Port Designer parameters
     """
 
+    R_0: Parameter[float]
+    """Gap between VV and TS"""
     g_vv_ts: Parameter[float]
-    g_ts_tf: Parameter[float]
+    """TS thickness"""
     tk_ts: Parameter[float]
+    """Gap between TS and TF (used for short gap to PF)"""
+    g_ts_tf: Parameter[float]
+    """Gap between PF coil and support"""
+    pf_s_g: Parameter[float]
+    """PF coil support thickness"""
+    pf_s_tk_plate: Parameter[float]
 
     # Lower port parameters
+    ep_z_position: Parameter[float]
     ep_height: Parameter[float]
     ep_wall_tk: Parameter[float]
 
@@ -86,9 +95,7 @@ class EquatorialPortKOZDesigner(Designer):
         self,
         params: Union[Dict, ParameterFrame, EquatorialPortKOZDesignerParams],
         build_config: Union[Dict, None],
-        x_ib: float,
         x_ob: float,
-        z_pos: float = 0.0,
     ):
         """
         Parameters:
@@ -109,13 +116,15 @@ class EquatorialPortKOZDesigner(Designer):
         super().__init__(params, build_config)
         self.koz_offset = (
             self.params.ep_wall_tk.value
-            + self.params.g_ts_tf.value
             + self.params.g_vv_ts.value
             + self.params.tk_ts.value
+            + self.params.g_ts_tf.value
+            + self.params.pf_s_tk_plate.value
+            + self.params.pf_s_g.value
         )
-        self.x_ib = x_ib
+        self.x_ib = self.params.R_0.value
         self.x_ob = x_ob
-        self.z_pos = z_pos
+        self.z_pos = self.params.ep_z_position.value
 
     def run(self) -> BluemiraWire:
         """

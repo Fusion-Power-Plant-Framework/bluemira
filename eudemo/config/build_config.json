@@ -237,6 +237,12 @@
         "unit": "m",
         "source": "Input",
         "long_name": "Equatorial port wall thickness"
+      },
+      "ep_z_position": {
+        "value": 0.0,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Equatorial port central axis z coordinate"
       }
     }
   }
