@@ -22,12 +22,11 @@ from unittest import mock
 
 import numpy as np
 import pytest
+from eudemo_tests.blanket.tools import make_simple_blanket
 
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, make_polygon
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.tools import make_polygon
 from eudemo.blanket import BlanketDesigner
-from eudemo.blanket.designer import BlanketSegments
 
 
 class TestBlanketDesigner:
@@ -132,11 +131,11 @@ class TestBlanketDesigner:
         # fmt: off
         ib_panel_coords = np.array([
             [2, 2, 5 - d, 8 - 2 * d, 5, 2],
-            [4, 1 + 2 * d, 4 + d, 7, 7, 4],
+            [-1.5, 2 * d - 4.5, d - 1.5, 1.5, 1.5, -1.5],
         ])
         ob_panel_coords = np.array([
             [9, 9, 6 + d, 3 + 2 * d, 6],
-            [4, 1 + 2 * d, 4 + d, 7, 7],
+            [-1.5, 2 * d - 4.5, d - 1.5, 1.5, 1.5],
         ])
         # fmt: on
         paneller_mock.return_value.run.side_effect = [ib_panel_coords, ob_panel_coords]
@@ -161,43 +160,3 @@ class TestBlanketDesigner:
         assert ib.area == pytest.approx(blanket.inboard.area - area_removed)
         assert ob.area == pytest.approx(blanket.outboard.area - area_removed)
         assert ib.center_of_mass[0] < ob.center_of_mass[0]
-
-
-def make_simple_blanket() -> BlanketSegments:
-    """
-    Make semi-circular blanket segments.
-
-    The inboard and outboard are symmetrical quarter-circles with radius
-    3. Where the centre of the inboard quarter-circle is [5, 4] and the
-    centre of the outboard is [6, 4] (in the xz-plane).
-    """
-    # Inboard
-    ib_arc_inner = make_circle(
-        radius=3, center=[5, 0, 4], start_angle=180, end_angle=270, axis=(0, 1, 0)
-    )
-    ib_arc_outer = make_circle(
-        radius=4, center=[5, 0, 4], start_angle=180, end_angle=270, axis=(0, 1, 0)
-    )
-    lower_join = make_polygon({"x": [1, 2], "z": [4, 4]})
-    upper_join = make_polygon({"x": [5, 5], "z": [7, 8]})
-    inboard = BluemiraFace(
-        BluemiraWire([ib_arc_inner, lower_join, ib_arc_outer, upper_join])
-    )
-    # Outboard
-    ob_arc_inner = make_circle(
-        radius=3, center=[6, 0, 4], start_angle=270, end_angle=360, axis=(0, 1, 0)
-    )
-    ob_arc_outer = make_circle(
-        radius=4, center=[6, 0, 4], start_angle=270, end_angle=360, axis=(0, 1, 0)
-    )
-    lower_join = make_polygon({"x": [9, 10], "z": [4, 4]})
-    upper_join = make_polygon({"x": [6, 6], "z": [7, 8]})
-    outboard = BluemiraFace(
-        BluemiraWire([ob_arc_inner, upper_join, ob_arc_outer, lower_join])
-    )
-    return BlanketSegments(
-        inboard=inboard,
-        outboard=outboard,
-        inboard_boundary=ib_arc_inner,
-        outboard_boundary=ob_arc_inner,
-    )
