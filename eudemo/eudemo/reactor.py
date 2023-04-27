@@ -70,6 +70,7 @@ from eudemo.equilibria import (
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
+from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
 from eudemo.maintenance.upper_port import UpperPortDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
@@ -297,6 +298,11 @@ if __name__ == "__main__":
         ivc_shapes.blanket_face,
     )
     upper_port_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
+
+    eq_port_designer = EquatorialPortKOZDesigner(
+        reactor_config.params_for("Equatorial Port"),
+        reactor_config.config_for("Equatorial Port"),
+    )
 
     reactor.vacuum_vessel = build_vacuum_vessel(
         reactor_config.params_for("Vacuum vessel"),

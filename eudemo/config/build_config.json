@@ -56,7 +56,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "plot": true,
     "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
     "file_path": "config/equilibrium_eqdsk.json",
@@ -103,7 +103,7 @@
     "Divertor silhouette": {}
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "config/TFCoilDesign.json",
     "plot": true,
     "param_class": "TripleArc",
@@ -221,6 +221,16 @@
           "max_eval": 50,
           "ftol_rel": 1e-10
         }
+      }
+    }
+  },
+  "Equatorial Port": {
+    "params": {
+      "ep_height": {
+        "value": 2.0,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Equatorial port height"
       }
     }
   }
