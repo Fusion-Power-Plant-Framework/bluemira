@@ -44,6 +44,7 @@ from bluemira.geometry.parameterisations import (
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
+    boolean_fragments,
     chamfer_wire_2D,
     convex_hull_wires_2d,
     deserialize_shape,
@@ -771,3 +772,17 @@ class TestFilletChamfer2D:
     def test_GeometryError_on_negative_radius(self, func):
         with pytest.raises(GeometryError):
             func(self.open_rectangle, -0.01)
+
+
+class TestBooleanFragments:
+    p11 = make_circle(1.2, (0, 0, 0), axis=(1, 0, 0))
+    p12 = make_circle(1.0, (0, 0, 0), axis=(1, 0, 0))
+    p21 = make_circle(1.2, (-5, -5, 0), axis=(0, 1, 0))
+    p22 = make_circle(1.0, (-5, -5, 0), axis=(0, 1, 0))
+    pipe_1 = extrude_shape(BluemiraFace([p11, p12]), vec=(10, 0, 0))
+    pipe_2 = extrude_shape(BluemiraFace([p21, p22]), vec=(0, 10, 0))
+
+    def test_pipe_pipe_fragments(self):
+        result = boolean_fragments([self.pipe_1, self.pipe_2], tolerance=0.0)
+        assert len(result[0]) == 3
+        assert len(result[1]) == 3

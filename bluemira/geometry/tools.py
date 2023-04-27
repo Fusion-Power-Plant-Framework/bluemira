@@ -1289,6 +1289,7 @@ def boolean_fragments(
     Notes
     -----
     Labelling will be lost.
+    This function is only tested on solids.
     """
     result = cadapi.boolean_fragments([s.shape for s in shapes], tolerance)
     converted = []

@@ -1529,7 +1529,10 @@ def boolean_fragments(shapes: List[apiSolid], tolerance: float = 0.0):
         An ordered list of groups of solid Boolean fragments (ordered in terms of
         input ordering)
     """
-    _, map = shapes[0].generalFuse(shapes[1:], tolerance=tolerance)
+    try:
+        _, map = shapes[0].generalFuse(shapes[1:], tolerance=tolerance)
+    except Exception as e:
+        raise FreeCADError(f"Boolean fragments operation failed: {str(e)}")
     return map
 
 
