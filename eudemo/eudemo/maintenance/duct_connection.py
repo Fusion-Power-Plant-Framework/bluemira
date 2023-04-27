@@ -91,71 +91,95 @@ class UpperPortDuctBuilder(Builder):
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         return comp
 
-    def _single_xy_face(self) -> BluemiraFace:
-        """
-        Creates a xy cross section of the port
 
-        translates the port koz to the origin,
-        builds the port at the origin and moves it back
+def make_upper_port_xy_face(
+    n_TF: int,
+    x_min: float,
+    x_max: float,
+    wall_end_tk: float,
+    wall_side_tk: float,
+    y_offset: float,
+) -> BluemiraFace:
+    """
+    Creates a xy cross section of the port
 
-        Notes
-        -----
-        the port koz is slightly trimmed to allow for square ends to the port
+    translates the port koz to the origin,
+    builds the port at the origin and moves it back
 
-        """
-        half_beta = np.pi / self.params.n_TF.value
-        cos_hb = np.cos(half_beta)
-        tan_hb = np.tan(half_beta)
-        end_tk = self.params.tk_upper_port_wall_end.value
-        y_tf_out = self.y_offset / cos_hb
-        y_tf_in = y_tf_out + self.params.tk_upper_port_wall_side.value / cos_hb
+    Parameters
+    ----------
+    n_TF:
+        Number of TF coils
+    x_min:
+        Inner radius of the port keep-out zone
+    x_max:
+        Outer radius of the port keep-out zone
+    wall_end_tk:
+        Port wall end thickness
+    wall_size_tk:
+        Port wall side thickness
+    y_offset:
+        Offset value from the x-z plane at which to start building the port
+        (excluding port side wall thickness)
 
-        x1 = self.port_koz.bounding_box.x_min
+    Notes
+    -----
+    the port koz is slightly trimmed to allow for square ends to the port
 
-        # This is the correct way to retrieve the outer radius of the port, accounting
-        # for the TF thickness
-        # It's just the intersection of a line and a circle in the positive quadrant.
-        a1 = 1 + tan_hb**2
-        b1 = -2 * y_tf_out * tan_hb
-        c1 = y_tf_out**2 - self.port_koz.bounding_box.x_max**2
-        discriminant = b1**2 - 4 * a1 * c1
-        x4 = 0.5 * (-b1 + np.sqrt(discriminant)) / a1
+    """
+    half_beta = np.pi / n_TF
+    cos_hb = np.cos(half_beta)
+    tan_hb = np.tan(half_beta)
 
-        x2, x3 = x1 + end_tk, x4 - end_tk
+    y_tf_out = y_offset / cos_hb
+    y_tf_in = y_tf_out + wall_side_tk / cos_hb
 
-        if x2 >= x3:
-            raise BuilderError("Port dimensions too small")
+    x1 = x_min
 
-        y1 = x1 * tan_hb - y_tf_out
+    # This is the correct way to retrieve the outer radius of the port, accounting
+    # for the TF thickness
+    # It's just the intersection of a line and a circle in the positive quadrant.
+    a1 = 1 + tan_hb**2
+    b1 = -2 * y_tf_out * tan_hb
+    c1 = y_tf_out**2 - x_max**2
+    discriminant = b1**2 - 4 * a1 * c1
+    x4 = 0.5 * (-b1 + np.sqrt(discriminant)) / a1
 
-        if y1 < 0:
-            # Triangular outer port wall
-            y1 = 0
-            x1 = y_tf_out / tan_hb
-            x2 = x1 + end_tk
+    x2, x3 = x1 + wall_end_tk, x4 - wall_end_tk
 
-        y2, y3 = x2 * tan_hb - y_tf_in, x3 * tan_hb - y_tf_in
+    if x2 >= x3:
+        raise BuilderError("Port dimensions too small")
 
-        if y3 <= 0:
-            raise BuilderError("Port dimensions too small")
+    y1 = x1 * tan_hb - y_tf_out
 
-        if y2 < 0:
-            # Triangular inner port wall
-            y2 = 0
-            c = y3 - tan_hb * x3
-            x2 = -c / tan_hb
-            x1 = x2 - end_tk
+    if y1 < 0:
+        # Triangular outer port wall
+        y1 = 0
+        x1 = y_tf_out / tan_hb
+        x2 = x1 + wall_end_tk
 
-        y1, y4 = x1 * tan_hb - y_tf_out, x4 * tan_hb - y_tf_out
+    y2, y3 = x2 * tan_hb - y_tf_in, x3 * tan_hb - y_tf_in
 
-        inner_wire = make_polygon(
-            {"x": [x2, x3, x3, x2], "y": [-y2, -y3, y3, y2]}, closed=True
-        )
-        outer_wire = make_polygon(
-            {"x": [x1, x4, x4, x1], "y": [-y1, -y4, y4, y1]}, closed=True
-        )
+    if y3 <= 0:
+        raise BuilderError("Port dimensions too small")
 
-        xy_face = BluemiraFace((outer_wire, inner_wire))
-        xy_face.rotate(degree=np.rad2deg(half_beta))
+    if y2 < 0:
+        # Triangular inner port wall
+        y2 = 0
+        c = y3 - tan_hb * x3
+        x2 = -c / tan_hb
+        x1 = x2 - wall_end_tk
 
-        return xy_face
+    y1, y4 = x1 * tan_hb - y_tf_out, x4 * tan_hb - y_tf_out
+
+    inner_wire = make_polygon(
+        {"x": [x2, x3, x3, x2], "y": [-y2, -y3, y3, y2]}, closed=True
+    )
+    outer_wire = make_polygon(
+        {"x": [x1, x4, x4, x1], "y": [-y1, -y4, y4, y1]}, closed=True
+    )
+
+    xy_face = BluemiraFace((outer_wire, inner_wire))
+    xy_face.rotate(degree=np.rad2deg(half_beta))
+
+    return xy_face

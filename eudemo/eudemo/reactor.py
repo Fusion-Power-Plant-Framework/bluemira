@@ -70,6 +70,7 @@ from eudemo.equilibria import (
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
+from eudemo.maintenance.duct_connection import UpperPortDuctBuilder
 from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.params import EUDEMOReactorParams
@@ -215,6 +216,12 @@ def build_coil_structures(
         params, build_config, tf_coil_xz_face, pf_coil_xz_wires, pf_coil_keep_out_zones
     )
     return CoilStructures(component)
+
+
+def build_upper_port(params, build_config, upper_port_koz):
+    y_offset = params.tf_wp_depth.value + params.tf_ts_gap.value
+    builder = UpperPortDuctBuilder(params, upper_port_koz, y_offset)
+    return builder.build()
 
 
 def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
@@ -369,6 +376,10 @@ if __name__ == "__main__":
         pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
         pf_coil_keep_out_zones=[upper_port_koz_xz, eq_port_koz_xz, lower_port_duct_xz_koz],
     )
+
+    # Incorporate ports, potentially larger depending on where the PF
+    # coils ended up. Warn if this isn't the case.
+    upper_port = build_upper_port(params, {}, upper_port_koz_xz)
 
     reactor.cryostat = build_cryostat(
         reactor_config.params_for("Cryostat"),
