@@ -123,7 +123,7 @@ extend-exclude = '\.env'
 line_length = 89
 profile = "black"
 skip_gitignore = true
-known_first_party = ["bluemira", "eudemo"]
+known_first_party = ["bluemira", "eudemo", "eudemo_tests"]
 force_to_top = ["freecad"]
 
 [tool.mypy]
