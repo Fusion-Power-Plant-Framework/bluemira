@@ -273,10 +273,12 @@ if __name__ == "__main__":
     from bluemira.geometry.parameterisations import PrincetonD
     from bluemira.geometry.tools import (
         boolean_cut,
+        boolean_fragments,
         boolean_fuse,
         extrude_shape,
         make_polygon,
         offset_wire,
+        point_inside_shape,
         revolve_shape,
     )
 
@@ -294,5 +296,10 @@ if __name__ == "__main__":
 
     show_cad([vv, port])
 
-    def pipe_pipe_component_fuse(target_pipe_component, pierce_pipe_component):
-        pass
+    def pipe_pipe_join(target_shape, tool_shape):
+        target_fragments, tool_fragments = boolean_fragments([target_shape, tool_shape])
+
+        # Find the piece to remove from the target
+        new_target = []
+        for solid in target_fragments:
+            pass
