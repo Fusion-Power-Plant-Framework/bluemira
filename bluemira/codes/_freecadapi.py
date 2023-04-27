@@ -1512,6 +1512,27 @@ def boolean_cut(
     return output
 
 
+def boolean_fragments(shapes: List[apiSolid], tolerance: float = 0.0):
+    """
+    Split a list of shapes into their Boolean fragments.
+
+    Parameters
+    ----------
+    shapes:
+        List of BluemiraSolids to be split into Boolean fragments
+    tolerance:
+        Tolerance with which to perform the operation
+
+    Returns
+    -------
+    fragments:
+        An ordered list of groups of solid Boolean fragments (ordered in terms of
+        input ordering)
+    """
+    _, map = shapes[0].generalFuse(shapes[1:], tolerance=tolerance)
+    return map
+
+
 def point_inside_shape(point: Iterable[float], shape: apiShape) -> bool:
     """
     Whether or not a point is inside a shape.

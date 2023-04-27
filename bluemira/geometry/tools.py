@@ -1267,6 +1267,37 @@ def boolean_cut(shape, tools):
     return convert(cut_shape, shape.label)
 
 
+def boolean_fragments(
+    shapes: List[BluemiraSolid], tolerance: float
+) -> List[List[BluemiraSolid]]:
+    """
+    Split a list of shapes into their Boolean fragments.
+
+    Parameters
+    ----------
+    shapes:
+        List of BluemiraSolids to be split into Boolean fragments
+    tolerance:
+        Tolerance with which to perform the operation
+
+    Returns
+    -------
+    fragments:
+        An ordered list of groups of solid Boolean fragments (ordered in terms of
+        input ordering)
+
+    Notes
+    -----
+    Labelling will be lost.
+    """
+    result = cadapi.boolean_fragments([s.shape for s in shapes], tolerance)
+    converted = []
+    for group in result:
+        converted.append([convert(s) for s in group])
+
+    return converted
+
+
 def point_inside_shape(point, shape):
     """
     Check whether or not a point is inside a shape.
