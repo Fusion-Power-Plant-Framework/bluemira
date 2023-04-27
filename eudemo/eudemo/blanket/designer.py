@@ -21,7 +21,7 @@
 """Designer for EUDEMO blankets."""
 
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple, Union
+from typing import Dict, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 
@@ -149,8 +149,8 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
             Outboard blanket segment's inner boundary.
         """
         cut_zone = self._make_cutting_face()
-        ib_face, ob_face = self._cut_silhouette(cut_zone)
-        ib_bound, ob_bound = self._cut_boundary(cut_zone)
+        ib_face, ob_face = self._cut_geom(self.silhouette, cut_zone)
+        ib_bound, ob_bound = self._cut_geom(self.boundary, cut_zone)
         return BlanketSegments(
             inboard=ib_face,
             outboard=ob_face,
@@ -176,35 +176,20 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
             cut_zone.rotate(base=p0, direction=(0, -1, 0), degree=self.cut_angle)
         return cut_zone
 
-    def _cut_silhouette(
-        self, cut_zone: BluemiraFace
-    ) -> Tuple[BluemiraFace, BluemiraFace]:
-        """Cut the blanket silhouette into inboard and outboard using the given face."""
-        cut_result = boolean_cut(self.silhouette, cut_zone)
-        if len(cut_result) < 2:
-            raise BuilderError(
-                f"BB poloidal segmentation only returned {len(cut_result)} face(s)."
-            )
-        if len(cut_result) > 2:
-            bluemira_warn(
-                "The BB poloidal segmentation operation returned more than 2 faces "
-                f"({len(cut_result)}); only taking the first two..."
-            )
-        ib_face, ob_face = sorted(cut_result, key=lambda x: x.center_of_mass[0])[:2]
-        return ib_face, ob_face
+    _GeomT = TypeVar("_GeomT", BluemiraFace, BluemiraWire)
 
-    def _cut_boundary(self, cut_zone: BluemiraFace) -> Tuple[BluemiraWire, BluemiraWire]:
-        """Cut the blanket boundary into inboard and outboard using the given face."""
-        boundary_cut = boolean_cut(self.boundary, cut_zone)
-        if len(boundary_cut) < 2:
+    def _cut_geom(self, geom: _GeomT, cut_tool: BluemiraFace) -> Tuple[_GeomT, _GeomT]:
+        """Cut the given geometry into two using the given cutting tool."""
+        parts = boolean_cut(geom, cut_tool)
+        if len(parts) < 2:
             raise BuilderError(
-                f"BB poloidal boundary segmentation only returned '{len(boundary_cut)}' "
-                "wire(s)."
+                f"BB poloidal segmentation only returned {len(parts)} part(s), expected "
+                "2."
             )
-        if len(boundary_cut) > 2:
+        if len(parts) > 2:
             bluemira_warn(
-                "The BB poloidal boundary segmentation operation returned more than 2 "
-                f"wires ({len(boundary_cut)}); only taking the first two..."
+                "The BB poloidal segmentation operation returned more than 2 parts "
+                f"({len(parts)}); only taking the first two..."
             )
-        ib_bound, ob_bound = sorted(boundary_cut, key=lambda x: x.center_of_mass[0])[:2]
-        return ib_bound, ob_bound
+        inboard, outboard = sorted(parts, key=lambda x: x.center_of_mass[0])[:2]
+        return inboard, outboard
