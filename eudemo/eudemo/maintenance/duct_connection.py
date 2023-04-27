@@ -60,7 +60,9 @@ class TSUpperPortDuctBuilder(Builder):
         port_koz: BluemiraFace,
     ):
         super().__init__(params, None)
-        self.port_koz = port_koz.deepcopy()
+        self.x_min = port_koz.bounding_box.x_min
+        self.x_max = port_koz.bounding_box.x_max
+        self.z_max = port_koz.bounding_box.z_max
 
         if (
             self.params.tk_upper_port_wall_end.value <= 0
@@ -74,8 +76,8 @@ class TSUpperPortDuctBuilder(Builder):
         """Build upper port"""
         xy_face = make_upper_port_xy_face(
             self.params.n_TF.value,
-            self.port_koz.bounding_box.x_min,
-            self.port_koz.bounding_box.x_max,
+            self.x_min,
+            self.x_max,
             self.params.tk_ts.value,
             self.params.tk_ts.value,
             self.y_offset,
@@ -87,7 +89,7 @@ class TSUpperPortDuctBuilder(Builder):
 
     def build_xyz(self, xy_face: BluemiraFace) -> PhysicalComponent:
         """Build upper port xyz"""
-        port = extrude_shape(xy_face, (0, 0, self.port_koz.bounding_box.z_max))
+        port = extrude_shape(xy_face, (0, 0, self.z_max))
         comp = PhysicalComponent(self.name, port)
         apply_component_display_options(comp, BLUE_PALETTE["TS"][0])
         return comp
@@ -124,7 +126,10 @@ class VVUpperPortDuctBuilder(Builder):
         port_koz: BluemiraFace,
     ):
         super().__init__(params, None)
-        self.port_koz = port_koz.deepcopy()
+        koz_offset = self.params.tk_ts.value + self.params.g_vv_ts.value
+        self.x_min = port_koz.bounding_box.x_min + koz_offset
+        self.x_max = port_koz.bounding_box.x_max - koz_offset
+        self.z_max = port_koz.bounding_box.z_max
 
         if (
             self.params.tk_upper_port_wall_end.value <= 0
@@ -143,10 +148,10 @@ class VVUpperPortDuctBuilder(Builder):
         """Build upper port"""
         xy_face = make_upper_port_xy_face(
             self.params.n_TF.value,
-            self.port_koz.bounding_box.x_min,
-            self.port_koz.bounding_box.x_max,
-            self.params.tk_ts.value,
-            self.params.tk_ts.value,
+            self.x_min,
+            self.x_max,
+            self.params.tk_upper_port_wall_end.value,
+            self.params.tk_upper_port_wall_side.value,
             self.y_offset,
         )
 
@@ -156,7 +161,7 @@ class VVUpperPortDuctBuilder(Builder):
 
     def build_xyz(self, xy_face: BluemiraFace) -> PhysicalComponent:
         """Build upper port xyz"""
-        port = extrude_shape(xy_face, (0, 0, self.port_koz.bounding_box.z_max))
+        port = extrude_shape(xy_face, (0, 0, self.z_max))
         comp = PhysicalComponent(self.name, port)
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         return comp
