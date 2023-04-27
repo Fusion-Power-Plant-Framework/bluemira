@@ -344,7 +344,7 @@ if __name__ == "__main__":
         reference_eq,
         reactor.tf_coils.xz_outer_boundary(),
         pf_coil_keep_out_zones=[
-            lower_port_duct_xz_koz,
+            upper_port_xz, lower_port_duct_xz_koz,
         ],
     )
 
