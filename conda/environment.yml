@@ -1,4 +1,4 @@
-name: bluemira
+name: bluemira-fenicsx
 channels:
   - conda-forge
   - nodefaults
@@ -19,17 +19,12 @@ variables:
   PYTHONIOENCODING: 'utf-8'
 
 dependencies:
-  - python=3.8
-  - freecad=0.20.1
-  - pivy=0.6.8
-  - libpng=1.6.37 # malloc crash on 1.6.38
-  - hdf5=1.12.1
-  - netcdf4=1.6.0
-  - numpy=1.22.4
-  - MeshPy=2020.1
-  - meshio=4.4.5
-  - mshr=2019.1.0
-  - scipy=1.7.3
+  - python=3.10
+  - freecad
+  - numpy
+  - meshio
+  - scipy
+  - fenics-dolfinx
   - graphviz
   - pip
   - pip:
