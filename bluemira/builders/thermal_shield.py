@@ -51,6 +51,7 @@ from bluemira.geometry.tools import (
     offset_wire,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.materials.cache import Void
 
 
 @dataclass
@@ -70,6 +71,7 @@ class VVTSBuilder(Builder):
     """
 
     VVTS = "VVTS"
+    VOID = "VVTS voidspace"
     param_cls: Type[VVTSBuilderParams] = VVTSBuilderParams
 
     def __init__(
@@ -148,11 +150,12 @@ class VVTSBuilder(Builder):
             xz face to build vvts
         """
         return build_sectioned_xyz(
-            vvts_face,
-            self.VVTS,
+            [vvts_face, BluemiraFace(vvts_face.boundary[1])],
+            [self.VVTS, self.VOID],
             self.params.n_TF.value,
-            BLUE_PALETTE["TS"][0],
+            [BLUE_PALETTE["TS"][0], (0, 0, 0)],
             degree,
+            material=[None, Void("vacuum")],
         )
 
 
