@@ -440,6 +440,11 @@ def build_sectioned_xyz(
     if not isinstance(material, list):
         material = [material]
 
+    if not (len(face) == len(name) == len(plot_colour) == len(material)):
+        raise ValueError(
+            "Lengths of the face, name, plot_colour, and material lists are not equal."
+        )
+
     bodies = []
     for fac, nam, color, mat in zip(face, name, plot_colour, material):
         shape = revolve_shape(
