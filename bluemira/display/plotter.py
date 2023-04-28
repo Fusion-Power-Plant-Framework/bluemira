@@ -604,11 +604,11 @@ class ComponentPlotter(BasePlotter):
         return True
 
     def _populate_data(self, comp):
+        from bluemira.materials.cache import Void
+
         self._cplotters = []
 
         def _populate_plotters(comp):
-            from bluemira.materials.cache import Void
-
             if (
                 comp.is_leaf
                 and getattr(comp, "shape", None) is not None
