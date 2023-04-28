@@ -201,13 +201,16 @@ class CryostatTSBuilder(Builder):
         """
         Build the cryostat thermal shield component.
         """
-        xz_cts = self.build_xz(self.pf_keep_out_zones, self.tf_keep_out_zone)
+        xz_cts, xz_cts_void = self.build_xz(
+            self.pf_keep_out_zones, self.tf_keep_out_zone
+        )
         cts_face: BluemiraFace = xz_cts.get_component_properties("shape")
+        cts_void_face: BluemiraFace = xz_cts_void.get_component_properties("shape")
 
         return self.component_tree(
-            xz=[xz_cts],
+            xz=[xz_cts, xz_cts_void],
             xy=[self.build_xy(cts_face)],
-            xyz=self.build_xyz(cts_face, degree=0),
+            xyz=self.build_xyz(cts_face, cts_void_face, degree=0),
         )
 
     def build_xz(
@@ -268,9 +271,18 @@ class CryostatTSBuilder(Builder):
         )
 
         cts = boolean_cut(cts_face, cutter)[0]
+        cts_void_wire = boolean_cut(cts_inner, cutter)[0]
+        cts_void_wire.close()
+        cts_void_face = BluemiraFace(cts_void_wire)
+
         cryostat_ts = PhysicalComponent(self.CRYO_TS, cts)
+        cryostat_ts_void = PhysicalComponent(
+            self.VOID, cts_void_face, material=Void("vacuum")
+        )
+
         apply_component_display_options(cryostat_ts, color=BLUE_PALETTE["TS"][0])
-        return cryostat_ts
+        apply_component_display_options(cryostat_ts_void, color=(0, 0, 0))
+        return cryostat_ts, cryostat_ts_void
 
     def build_xy(self, cts_face: BluemiraFace) -> PhysicalComponent:
         """
@@ -285,16 +297,17 @@ class CryostatTSBuilder(Builder):
         return cryostat_ts
 
     def build_xyz(
-        self, cts_face: BluemiraFace, degree: float = 360
+        self, cts_face: BluemiraFace, cts_void_face: BluemiraFace, degree: float = 360
     ) -> List[PhysicalComponent]:
         """
         Build the x-y-z components of the thermal shield.
         """
         return build_sectioned_xyz(
-            cts_face,
-            self.CRYO_TS,
+            [cts_face, cts_void_face],
+            [self.CRYO_TS, self.VOID],
             self.params.n_TF.value,
-            BLUE_PALETTE["TS"][0],
+            [BLUE_PALETTE["TS"][0], (0, 0, 0)],
             degree,
             enable_sectioning=True,
+            material=[None, Void("vacuum")],
         )
