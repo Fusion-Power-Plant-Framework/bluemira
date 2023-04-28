@@ -1148,7 +1148,9 @@ def _slice_solid(obj, normal_plane, shift):
 # ======================================================================================
 # FreeCAD Configuration
 # ======================================================================================
-def _setup_document(parts: Iterable[apiShape]) -> Iterable[Part.Feature]:
+def _setup_document(
+    parts: Iterable[apiShape], labels: Optional[Iterable[str]] = None
+) -> Iterable[Part.Feature]:
     """
     Setup FreeCAD document.
 
@@ -1159,10 +1161,19 @@ def _setup_document(parts: Iterable[apiShape]) -> Iterable[Part.Feature]:
 
     doc = FreeCAD.newDocument()
 
-    for part in parts:
+    if labels is None:
+        # Empty string is the default argument for addObject
+        labels = [""] * len(parts)
+
+    elif len(labels) != len(parts):
+        raise ValueError(
+            f"Number of labels ({len(labels)}) != number of objects ({len(parts)}"
+        )
+
+    for part, label in zip(parts, labels):
         new_part = part.copy()
         new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
-        obj = doc.addObject("Part::Feature")
+        obj = doc.addObject("Part::Feature", label)
         obj.Shape = new_part
         doc.recompute()
         yield obj
@@ -1321,16 +1332,6 @@ def save_as_STP(shapes: List[apiShape], filename: str = "test", unit_scale: str 
     compound.exportStep(filename)
 
 
-def _feature_labeller(objs, labels):
-    if labels is not None:
-        if len(labels) != len(objs):
-            raise ValueError(
-                f"Number of labels ({len(labels)}) != number of objects ({len(objs)}"
-            )
-        for ob, lab in zip(objs, labels):
-            ob.Label = lab
-
-
 def _scale_obj(objs, scale: float = 1000):
     """
     Scale objects
@@ -1351,7 +1352,7 @@ def save_cad(
     shapes: Iterable[apiShape],
     filename: str,
     formatt: Union[str, CADFileType] = "stp",
-    labels: Iterable[str] = None,
+    labels: Optional[Iterable[str]] = None,
     unit_scale: str = "metre",
     **kwargs,
 ):
@@ -1383,9 +1384,7 @@ def save_cad(
 
     _freecad_save_config(**kwargs)
 
-    objs = list(_setup_document(shapes))
-
-    _feature_labeller(objs, labels)
+    objs = list(_setup_document(shapes, labels))
 
     # Part is always built in mm
     _scale_obj(objs, scale=raw_uc(1, "mm", unit_scale))
@@ -2342,7 +2341,7 @@ def show_cad(
 
     root = coin.SoSeparator()
 
-    for obj, option in zip(_setup_document(parts), options):
+    for obj, option in zip(_setup_document(parts, labels), options):
         subgraph = FreeCADGui.subgraphFromObject(obj)
         _colourise(subgraph, option)
         root.addChild(subgraph)
