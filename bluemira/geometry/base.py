@@ -212,8 +212,28 @@ class BluemiraGeo(ABC, GeoMeshable):
     @property
     def bounding_box(self) -> BoundingBox:
         """
-        The bounding box of the shape."""
+        The bounding box of the shape.
+        """
         x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
+        return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
+
+    def get_optimal_bounding_box(self, tolerance: float = 1.0) -> BoundingBox:
+        """
+        Get the optimised bounding box of the shape, via tesselation of the underlying
+        geometry.
+
+        Parameters
+        ----------
+        tolerance:
+            Tolerance with which to tesselate the BluemiraGeo before calculating the
+            bounding box.
+        """
+        if tolerance <= 0.0:
+            raise ValueError("Cannot have a tolerance that is less than or equal to 0.0")
+
+        x_min, y_min, z_min, x_max, y_max, z_max = cadapi.tesselated_bounding_box(
+            self.shape, tolerance=tolerance
+        )
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
 
     def is_null(self) -> bool:
