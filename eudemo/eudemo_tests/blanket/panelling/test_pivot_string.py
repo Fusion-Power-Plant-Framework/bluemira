@@ -24,7 +24,7 @@ import numpy as np
 import pytest
 
 from bluemira.geometry.parameterisations import PrincetonD
-from eudemo.ivc.panelling._pivot_string import make_pivoted_string
+from eudemo.blanket.panelling._pivot_string import make_pivoted_string
 
 DATA_DIR = os.path.join(os.path.dirname(__file__), "data")
 

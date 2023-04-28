@@ -35,7 +35,7 @@ from bluemira.geometry.wire import BluemiraWire
 
 @dataclass
 class PlasmaFaceDesignerParams(ParameterFrame):
-    """Parameters for running the `PlasmaFaceDesigner`."""
+    """Parameters for running the :class:`.PlasmaFaceDesigner`."""
 
     div_type: Parameter[str]
     c_rm: Parameter[float]
@@ -58,6 +58,7 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
     """
 
     param_cls = PlasmaFaceDesignerParams
+    params: PlasmaFaceDesignerParams
 
     def __init__(
         self,
@@ -88,10 +89,16 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         # Cut a clearance between the blankets and divertor - getting two
         # new faces
         vessel_bbox = in_vessel_face.bounding_box
+        # The minimum z-value of the wall boundary. The boundary should
+        # be open at the lower end and the start and end points of the
+        # wire should be at the same z. But take the minimum z value of
+        # the start and end points.
+        # Note we do not use bounding_box here due to a bug: 34228d3
+        min_z = min(self.wall_boundary.start_point().z, self.wall_boundary.end_point().z)
         rm_clearance_face = _make_clearance_face(
             vessel_bbox.x_min,
             vessel_bbox.x_max,
-            self.wall_boundary.bounding_box.z_min,
+            min_z,
             self.params.c_rm.value,
         )
 
@@ -104,7 +111,7 @@ def _make_clearance_face(
     """
     Makes a rectangular face in xz with the given thickness in z.
 
-    The face is intended to be used to cut a remote maintainance
+    The face is intended to be used to cut a remote maintenance
     clearance between blankets and divertor.
     """
     x_coords = np.zeros(4)
@@ -124,7 +131,7 @@ def _cut_vessel_shape(
     in_vessel_face: BluemiraFace, rm_clearance_face: BluemiraFace
 ) -> Tuple[BluemiraFace, BluemiraFace]:
     """
-    Cut a remote maintainance clearance into the given vessel shape.
+    Cut a remote maintenance clearance into the given vessel shape.
     """
     pieces = boolean_cut(in_vessel_face, [rm_clearance_face])
     blanket_face = pieces[np.argmax([p.center_of_mass[2] for p in pieces])]

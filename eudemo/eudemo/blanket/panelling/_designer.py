@@ -31,8 +31,8 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.error import ExternalOptError
 from bluemira.utilities.optimiser import Optimiser
-from eudemo.ivc.panelling._opt_problem import PanellingOptProblem
-from eudemo.ivc.panelling._paneller import Paneller
+from eudemo.blanket.panelling._opt_problem import PanellingOptProblem
+from eudemo.blanket.panelling._paneller import Paneller
 
 
 @dataclass
@@ -114,7 +114,15 @@ class PanellingDesigner(Designer[np.ndarray]):
         )
 
     def run(self) -> np.ndarray:
-        """Run the design problem, performing the optimisation."""
+        """
+        Run the design problem, performing the optimisation.
+
+        Returns
+        -------
+        coordinates
+            The coordinates of the panel end points (or joints). Has
+            shape (2, N).
+        """
         boundary = self.wall_boundary.discretize(
             ndiscr=self._n_boundary_discr, byedges=True
         ).xz

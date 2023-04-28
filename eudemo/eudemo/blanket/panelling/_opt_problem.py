@@ -29,7 +29,7 @@ from bluemira.utilities.opt_problems import (
     Optimiser,
 )
 from bluemira.utilities.optimiser import approx_derivative
-from eudemo.ivc.panelling._paneller import Paneller
+from eudemo.blanket.panelling._paneller import Paneller
 
 
 class PanellingOptProblem(OptimisationProblem):

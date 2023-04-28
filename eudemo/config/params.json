@@ -284,6 +284,20 @@
     "source": "Input",
     "long_name": "Non-inductive current drive fraction"
   },
+  "fw_a_max": {
+    "value": 25,
+    "unit": "degree",
+    "source": "Input",
+    "long_name": "Maximum panel angle",
+    "description": "Maximum turning angle (clockwise tail-to-tail angle) between adjacent first wall panels"
+  },
+  "fw_dL_min": {
+    "value": 0.3,
+    "source": "Input",
+    "unit": "meter",
+    "long_name": "Minimum panel length",
+    "description": "Minimum length of an individual first wall panel"
+  },
   "q_control": {
     "value": 50,
     "unit": "megawatt",
