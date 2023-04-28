@@ -607,7 +607,14 @@ class ComponentPlotter(BasePlotter):
         self._cplotters = []
 
         def _populate_plotters(comp):
-            if comp.is_leaf and getattr(comp, "shape", None) is not None:
+            from bluemira.materials.cache import Void
+
+            material_is_void = isinstance(getattr(comp, "material", None), Void)
+            if (
+                comp.is_leaf
+                and getattr(comp, "shape", None) is not None
+                and not material_is_void
+            ):
                 options = (
                     self.options if comp.plot_options is None else comp.plot_options
                 )
