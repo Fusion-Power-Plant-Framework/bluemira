@@ -24,7 +24,7 @@ Plasma MHD equilibrium and state objects
 """
 import os
 from enum import Enum
-from typing import Iterable
+from typing import Iterable, List, Optional, Union
 
 import numpy as np
 import tabulate
@@ -1104,34 +1104,44 @@ class Equilibrium(MHDState):
         )
         return Coordinates({"x": f[0], "z": f[1]})
 
-    def get_LCFS(self, psi=None):
+    def get_LCFS(
+        self, psi: Optional[np.ndarray] = None, psi_n_tol: float = 1e-6
+    ) -> Coordinates:
         """
         Get the Last Closed FLux Surface (LCFS).
 
         Parameters
         ----------
-        psi: Union[np.array(n, m), None]
+        psi:
             The psi field on which to compute the LCFS. Will re-calculate if
             set to None
+        psi_n_tol:
+            The normalised psi tolerance to use when finding the LCFS
 
         Returns
         -------
-        lcfs: Coordinates
+        lcfs:
             The Coordinates of the LCFS
         """
         if psi is None:
             psi = self.psi()
         o_points, x_points = self.get_OX_points(psi=psi)
-        return find_LCFS_separatrix(self.x, self.z, psi, o_points, x_points)[0]
+        return find_LCFS_separatrix(
+            self.x, self.z, psi, o_points, x_points, psi_n_tol=psi_n_tol
+        )[0]
 
-    def get_separatrix(self, psi=None):
+    def get_separatrix(
+        self, psi: Optional[np.ndarray] = None, psi_n_tol: float = 1e-6
+    ) -> Union[Coordinates, List[Coordinates]]:
         """
         Get the plasma separatrix(-ices).
 
         Parameters
         ----------
-        psi: Union[np.array(n, m), None]
+        psi:
             The flux array. Will re-calculate if set to None
+        psi_n_tol:
+            The normalised psi tolerance to use when finding the separatrix
 
         Returns
         -------
@@ -1142,7 +1152,13 @@ class Equilibrium(MHDState):
             psi = self.psi()
         o_points, x_points = self.get_OX_points(psi=psi)
         return find_LCFS_separatrix(
-            self.x, self.z, psi, o_points, x_points, double_null=self.is_double_null
+            self.x,
+            self.z,
+            psi,
+            o_points,
+            x_points,
+            double_null=self.is_double_null,
+            psi_n_tol=psi_n_tol,
         )[1]
 
     def _clear_OX_points(self):  # noqa :N802
