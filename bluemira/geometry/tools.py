@@ -1268,7 +1268,7 @@ def boolean_cut(shape, tools):
 
 
 def boolean_fragments(
-    shapes: List[BluemiraSolid], tolerance: float
+    shapes: List[BluemiraSolid], tolerance: float = 0.0
 ) -> List[List[BluemiraSolid]]:
     """
     Split a list of shapes into their Boolean fragments.

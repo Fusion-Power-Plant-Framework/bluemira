@@ -805,6 +805,22 @@ class TestBooleanFragments:
         n_shared = self.get_shared_fragments(*result)
         assert n_shared == 1
 
+    def test_no_shared_fragments(self):
+        pipe_1 = extrude_shape(
+            BluemiraFace(make_circle(1.0, center=(0, 0, 0), axis=(0, 1, 0))),
+            vec=(0, 2, 0),
+        )
+        pipe_2 = extrude_shape(
+            BluemiraFace(make_circle(1.0, center=(3, 0, 0), axis=(0, 1, 0))),
+            vec=(0, 2, 0),
+        )
+        result = boolean_fragments([pipe_1, pipe_2])
+        assert len(result) == 2
+        assert len(result[0]) == 0
+        assert len(result[1]) == 0
+        n_shared = self.get_shared_fragments(*result)
+        assert n_shared == 0
+
     @staticmethod
     def get_shared_fragments(group_1, group_2):
         count = 0
