@@ -301,5 +301,19 @@ if __name__ == "__main__":
 
         # Find the piece to remove from the target
         new_target = []
+        new_tool = []
         for solid in target_fragments:
+            for other in tool_fragments:
+                if solid.is_same(other):
+                    new_target.append(solid)
+                    target_fragments.remove(other)
+                else:
+                    if point_inside_shape(solid.center_of_mass, target_shape):
+                        new_target.append(solid)
+
+        for solid in tool_fragments:
             pass
+
+        new_target = boolean_fuse(new_target)
+        new_tool = boolean_fuse(new_tool)
+        return new_target, new_tool
