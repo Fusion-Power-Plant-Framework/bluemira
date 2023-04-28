@@ -291,6 +291,31 @@ class ComponentDisplayer(BaseDisplayer):
     CAD displayer for Components
     """
 
+    def _get_component_display_info(self, comps):
+        import bluemira.base.components as bm_comp
+        from bluemira.materials.cache import Void
+
+        (
+            shape,
+            display_cad_options,
+            name,
+            material,
+        ) = bm_comp.get_properties_from_components(
+            comps, ("shape", "display_cad_options", "name", "material")
+        )
+        if not isinstance(material, list):
+            material = [material]
+            shape = [shape]
+            display_cad_options = [display_cad_options]
+            name = [name]
+
+        for i, mat in enumerate(material):
+            if isinstance(mat, Void):
+                shape.pop(i)
+                display_cad_options.pop(i)
+                name.pop(i)
+        return shape, display_cad_options, name
+
     def show_cad(
         self,
         comps,
@@ -304,21 +329,5 @@ class ComponentDisplayer(BaseDisplayer):
         comp: Union[Iterable[Component], Component]
             Component, or iterable of Components, to be displayed
         """
-        import bluemira.base.components as bm_comp
-        from bluemira.materials.cache import Void
-
-        (
-            shape,
-            display_cad_options,
-            name,
-            material,
-        ) = bm_comp.get_properties_from_components(
-            comps, ("shape", "display_cad_options", "name", "material")
-        )
-        for i, mat in enumerate(material):
-            if isinstance(mat, Void):
-                shape.pop(i)
-                display_cad_options.pop(i)
-                name.pop(i)
-
+        shape, display_cad_options, name = self._get_component_display_info(comps)
         show_cad(shape, display_cad_options, name, **kwargs)

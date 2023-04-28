@@ -35,6 +35,7 @@ from bluemira.display import displayer
 from bluemira.display.error import DisplayError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_circle, make_polygon
+from bluemira.materials.cache import Void
 
 _FREECAD_REF = "bluemira.codes._freecadapi"
 
@@ -133,6 +134,29 @@ class TestComponentDisplayer:
 
         with pytest.raises(DisplayError):
             child2.display_cad_options = (0.0, 0.0, 1.0)
+
+    @pytest.mark.parametrize("n", [0, 1, 2])
+    def test_no_display_on_void(self, n):
+        inner = make_circle(1.0)
+        outer = make_circle(2.0)
+        solid = extrude_shape(BluemiraFace([outer, inner]), (0, 0, 5))
+        void_solid = extrude_shape(BluemiraFace(inner), (0, 0, 5))
+        solid_comp = PhysicalComponent("pipe", solid)
+        void_comp = PhysicalComponent("void", void_solid, material=Void("void"))
+
+        if n == 0:
+            group = Component("dummy")
+        if n == 1:
+            group = Component("one_invisible", children=[void_comp])
+        if n == 2:
+            group = Component("one_of_each", children=[solid_comp, void_comp])
+
+        assert len(group.children) == n
+        a, b, c = group._displayer._get_component_display_info(group.children)
+        if n != 2:
+            assert len(a) == len(b) == len(c) == 0
+        else:
+            assert len(a) == len(b) == len(c) == 1
 
 
 class TestGeometryDisplayer:
