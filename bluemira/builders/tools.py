@@ -431,19 +431,31 @@ def build_sectioned_xyz(
     """
     sector_degree, n_sectors = get_n_sectors(n_TF, degree)
 
-    shape = revolve_shape(
-        face,
-        base=(0, 0, 0),
-        direction=(0, 0, 1),
-        degree=sector_degree if enable_sectioning else min(359, degree),
-    )
-    body = PhysicalComponent(name, shape, material=material)
-    apply_component_display_options(body, color=plot_colour)
+    if isinstance(face, BluemiraFace):
+        face = [face]
+    if isinstance(name, str):
+        name = [name]
+    if isinstance(plot_colour, Tuple):
+        plot_colour = [plot_colour]
+    if not isinstance(material, list):
+        material = [material]
+
+    bodies = []
+    for fac, nam, color, mat in zip(face, name, plot_colour, material):
+        shape = revolve_shape(
+            fac,
+            base=(0, 0, 0),
+            direction=(0, 0, 1),
+            degree=sector_degree if enable_sectioning else min(359, degree),
+        )
+        body = PhysicalComponent(nam, shape, material=mat)
+        apply_component_display_options(body, color=color)
+        bodies.append(body)
 
     # this is currently broken in some situations
     # because of #1319 and related Topological naming issues
     return (
-        circular_pattern_component(body, n_sectors, degree=sector_degree * n_sectors)
+        circular_pattern_component(bodies, n_sectors, degree=sector_degree * n_sectors)
         if enable_sectioning
-        else [body]
+        else bodies
     )

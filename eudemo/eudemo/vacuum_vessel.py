@@ -38,6 +38,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import _offset_wire_discretised
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.materials.cache import Void
 
 
 class VacuumVessel(ComponentManager):
@@ -78,6 +79,7 @@ class VacuumVesselBuilder(Builder):
 
     VV = "VV"
     BODY = "Body"
+    VOID = "Vessel voidspace"
     param_cls: Type[VacuumVesselBuilderParams] = VacuumVesselBuilderParams
 
     def __init__(
@@ -144,9 +146,10 @@ class VacuumVesselBuilder(Builder):
         Build the x-y-z components of the vacuum vessel.
         """
         return build_sectioned_xyz(
-            vv_face,
-            self.BODY,
+            [vv_face, BluemiraFace(vv_face.boundary[1])],
+            [self.BODY, self.VOID],
             self.params.n_TF.value,
-            BLUE_PALETTE[self.VV][0],
+            [BLUE_PALETTE[self.VV][0], (0, 0, 0)],
             degree,
+            material=[None, Void("vacuum")],
         )
