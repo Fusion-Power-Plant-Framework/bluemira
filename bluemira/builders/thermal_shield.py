@@ -87,11 +87,11 @@ class VVTSBuilder(Builder):
         """
         Build the vacuum vessel thermal shield component.
         """
-        xz_vvts = self.build_xz(self.keep_out_zone)
+        xz_vvts, xz_vvts_void = self.build_xz(self.keep_out_zone)
         vvts_face: BluemiraFace = xz_vvts.get_component_properties("shape")
 
         return self.component_tree(
-            xz=[xz_vvts],
+            xz=[xz_vvts, xz_vvts_void],
             xy=self.build_xy(vvts_face),
             xyz=self.build_xyz(vvts_face, degree=0),
         )
@@ -124,8 +124,13 @@ class VVTSBuilder(Builder):
         self.vvts_face = vvts_face
 
         vvts = PhysicalComponent(self.VVTS, vvts_face)
+        vvts_void = PhysicalComponent(
+            self.VOID, BluemiraFace(vvts_face.boundary[1]), material=Void("vacuum")
+        )
+
         apply_component_display_options(vvts, color=BLUE_PALETTE["TS"][0])
-        return vvts
+        apply_component_display_options(vvts_void, color=(0, 0, 0))
+        return vvts, vvts_void
 
     def build_xy(self, vvts_face: BluemiraFace) -> List[PhysicalComponent]:
         """
@@ -177,6 +182,7 @@ class CryostatTSBuilder(Builder):
     """
 
     CRYO_TS = "Cryostat TS"
+    VOID = "Cryostat voidspace"
 
     param_cls: Type[CryostatTSBuilderParams] = CryostatTSBuilderParams
 
