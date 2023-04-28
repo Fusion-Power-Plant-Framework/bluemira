@@ -48,6 +48,7 @@ from bluemira.geometry.tools import (
     slice_shape,
     sweep_shape,
 )
+from bluemira.materials.material import SerialisedMaterial
 
 __all__ = [
     "apply_component_display_options",
@@ -354,17 +355,21 @@ def make_circular_xy_ring(r_inner, r_outer):
 
 
 def build_sectioned_xy(
-    face: BluemiraFace, plot_colour: Tuple[float]
+    face: BluemiraFace,
+    plot_colour: Tuple[float],
+    material: Optional[SerialisedMaterial] = None,
 ) -> List[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
 
     Parameters
     ----------
-    face: BluemiraFace
+    face:
         xz face to build xy component
-    plot_colour: Tuple[float]
+    plot_colour:
         colour tuple for component
+    material:
+        Optional material to apply to physical component
 
     """
     xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
@@ -378,7 +383,7 @@ def build_sectioned_xy(
         ["outboard", r_ob_in, r_ob_out],
     ]:
         board = make_circular_xy_ring(r_in, r_out)
-        section = PhysicalComponent(name, board)
+        section = PhysicalComponent(name, board, material=material)
         apply_component_display_options(section, color=plot_colour)
         sections.append(section)
 
@@ -392,24 +397,27 @@ def build_sectioned_xyz(
     plot_colour: Tuple[float],
     degree: float = 360,
     enable_sectioning: bool = True,
+    material: Optional[SerialisedMaterial] = None,
 ) -> List[PhysicalComponent]:
     """
     Build the x-y-z components of sectioned component
 
     Parameters
     ----------
-    face: BluemiraFace
+    face:
         xz face to build xyz component
-    name: str
+    name:
         PhysicalComponent name
-    n_TF: int
+    n_TF:
         number of TF coils
     plot_colour: Tuple[float]
         colour tuple for component
-    degree: float
+    degree:
         angle to sweep through
-    enable_sectioning: bool
+    enable_sectioning:
         Switch on/off sectioning (#1319 Topology issue)
+    material:
+        Optional material to apply to physical component
 
     Notes
     -----
@@ -429,7 +437,7 @@ def build_sectioned_xyz(
         direction=(0, 0, 1),
         degree=sector_degree if enable_sectioning else min(359, degree),
     )
-    body = PhysicalComponent(name, shape)
+    body = PhysicalComponent(name, shape, material=material)
     apply_component_display_options(body, color=plot_colour)
 
     # this is currently broken in some situations
