@@ -72,4 +72,14 @@ class TestHardBoundingBox:
 
     @pytest.mark.xfail
     def test_bad_bounding_box(self):
-        assert not np.isclose(self.wire.bounding_box.z_min, -5)
+        assert np.isclose(self.wire.bounding_box.z_min, -5.0)
+
+    @pytest.mark.parametrize("tol", [10.0, 1.0, 0.1, 0.001])
+    def test_opt_bounding_box(self, tol):
+        bb = self.wire.get_optimal_bounding_box(tolerance=tol)
+        assert np.isclose(bb.z_min, -5.0)
+
+    @pytest.mark.parametrize("tol", [0.0, -1e-9])
+    def test_bad_tolerace(self, tol):
+        with pytest.raises(ValueError):
+            self.wire.get_optimal_bounding_box(tolerance=tol)

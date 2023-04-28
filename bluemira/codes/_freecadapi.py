@@ -667,6 +667,24 @@ def bounding_box(obj: apiShape) -> Tuple[float, float, float, float, float, floa
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
 
 
+def tesselated_bounding_box(
+    obj: apiShape, tolerance: float = 1.0
+) -> Tuple[float, float, float, float, float, float]:
+    """
+    Object's bounding box passing through tesselation
+
+    Notes
+    -----
+    Tesselating less trivial geometry objects is the only way to get a more
+    accurate bounding box. Once tesselated, various attributes are modified
+    according to the the tolerance used.
+
+    Lower tolerances will not update the tesselation.
+    """
+    obj.tessellate(tolerance)
+    return bounding_box(obj)
+
+
 def start_point(obj: apiShape) -> np.ndarray:
     """The start point of the object"""
     point = obj.Edges[0].firstVertex().Point
