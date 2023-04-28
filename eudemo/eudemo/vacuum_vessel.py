@@ -101,8 +101,8 @@ class VacuumVesselBuilder(Builder):
 
         return self.component_tree(
             xz=[xz_vv, xz_vacuum],
-            xy=self.build_xy(vv_face, vacuum_face),
-            xyz=self.build_xyz(vv_face, degree=0),
+            xy=self.build_xy(vv_face),
+            xyz=self.build_xyz(vv_face, vacuum_face, degree=0),
         )
 
     def build_xz(
