@@ -305,10 +305,20 @@ class ComponentDisplayer(BaseDisplayer):
             Component, or iterable of Components, to be displayed
         """
         import bluemira.base.components as bm_comp
+        from bluemira.materials.cache import Void
 
-        show_cad(
-            *bm_comp.get_properties_from_components(
-                comps, ("shape", "display_cad_options", "name")
-            ),
-            **kwargs,
+        (
+            shape,
+            display_cad_options,
+            name,
+            material,
+        ) = bm_comp.get_properties_from_components(
+            comps, ("shape", "display_cad_options", "name", "material")
         )
+        for i, mat in enumerate(material):
+            if isinstance(mat, Void):
+                shape.pop(i)
+                display_cad_options.pop(i)
+                name.pop(i)
+
+        show_cad(shape, display_cad_options, name, **kwargs)
