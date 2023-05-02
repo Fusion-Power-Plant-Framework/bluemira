@@ -374,6 +374,77 @@ class TestCoordinates:
         assert len(c) == 8
 
 
+class TestShortCoordinates:
+    point = Coordinates({"x": 0, "y": 0, "z": 0})
+    line = Coordinates({"x": [0, 1], "y": [0, 1], "z": [0, 1]})
+
+    def test_point_instantiation(self):
+        point = Coordinates({"x": [1], "y": [1], "z": [1]})
+        point2 = Coordinates([[1], [1], [1]])
+        point3 = Coordinates({"x": 1, "y": 1, "z": 1})
+        point4 = Coordinates([1, 1, 1])
+        assert point == point2 == point3 == point4
+
+    def test_line_instantiation(self):
+        line = Coordinates({"x": [0, 1], "y": [0, 1], "z": [0, 1]})
+        line2 = Coordinates([[0, 1], [0, 1], [0, 1]])
+        assert line == line2
+
+    @pytest.mark.parametrize("c, length", [(point, 0.0), (line, np.sqrt(3))])
+    def test_length(self, c, length):
+        measured = c.length
+        np.testing.assert_almost_equal(measured, length)
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_normal_vector(self, c, caplog):
+        assert c.normal_vector is None
+        assert len(caplog.messages) == 1
+        assert "Cannot set planar properties" in caplog.messages[0]
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_is_planar(self, c, caplog):
+        assert not c.is_planar
+
+    @pytest.mark.parametrize(
+        "c, com", [(point, np.array([0, 0, 0])), (line, np.array([0.5, 0.5, 0.5]))]
+    )
+    def test_center_of_mass(self, c, com):
+        measured = c.center_of_mass
+        np.testing.assert_allclose(measured, com)
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_closed(self, c):
+        assert not c.closed
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_close(self, c, caplog):
+        c.close()
+        assert len(caplog.messages) == 1
+        assert "Cannot close Coordinates" in caplog.messages[0]
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_open(self, c, caplog):
+        c.open()
+        assert len(caplog.messages) == 1
+        assert "Cannot open Coordinates" in caplog.messages[0]
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_check_ccw(self, c):
+        assert not c.check_ccw()
+
+    @pytest.mark.parametrize("c, lenn", [(point, 1), (line, 2)])
+    def test_len(self, c, lenn):
+        assert len(c) == lenn
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_T(self, c):
+        np.testing.assert_allclose(c.T[0], np.array([0, 0, 0]))
+
+    @pytest.mark.parametrize("c", [point, line])
+    def test_points(self, c):
+        np.testing.assert_allclose(c.points[0], np.array([0, 0, 0]))
+
+
 class TestCheckLineSegment:
     def test_true(self):
         a = [0, 0]
