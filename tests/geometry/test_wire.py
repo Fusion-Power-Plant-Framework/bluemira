@@ -235,7 +235,12 @@ class TestWireDiscretize:
         with pytest.raises(ValueError):
             self.line.discretize(n, byedges=False)
 
-    @pytest.mark.parametrize("n", [-10.0, 0])
+    @pytest.mark.parametrize("dl", [-10.0, 0])
     def test_low_dl(self, dl):
         with pytest.raises(ValueError):
-            self.line.discretize(n=3, dl=dl, byedges=False)
+            self.line.discretize(ndiscr=3, dl=dl, byedges=False)
+
+    @pytest.mark.parametrize("byedges", [True, False])
+    def test_ndiscr_3(self, byedges):
+        coords = self.line.discretize(ndiscr=3, byedges=byedges)
+        assert np.all(coords.x[1:] > 0.0)
