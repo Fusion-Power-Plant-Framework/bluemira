@@ -44,7 +44,7 @@ pycparser==2.21
 Pygments==2.15.1
 pyrsistent==0.19.3
 pyzmq==25.0.2
-Send2Trash==1.8.0
+Send2Trash==1.8.2
 soupsieve==2.4.1
 stack-data==0.6.2
 terminado==0.17.1
