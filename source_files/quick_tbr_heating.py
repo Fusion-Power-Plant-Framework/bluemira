@@ -1,16 +1,30 @@
 """
 TODO:
-1. load_fw_points, create_materials, filter_cells, create_tallies
+1.  [x]load_fw_points,
+    [x]create_materials,
+    [ ]filter_cells,
+    [ ]create_tallies
 2. Documentation:
-    load_fw_points, setup_openmc, create_tallies, OpenMCResult.get*
-3. The rest of the *.py files too
-    - same reformatting to make it modular enough for re-testing
-4. Break quick_tbr_heating into multiple
+    []load_fw_points
+    [ ]setup_openmc
+    [ ]create_tallies
+    [ ]OpenMCResult.get*
+3. Integration into our logging system (print should go through bluemira_print etc)
+[ ]load_fw_points is incorrectly named!
+[ ]The rest of the *.py files too
+[ ]Break quick_tbr_heating into multiple
     - keep openmc set-up here?
     - Ask how much time I should spend on this and future directions.
-5. Integration into our logging system (print should go through bluemira_print etc)
-1.1 find the units and documentations for creating source_params_dict (PPS_OpenMC.so library)
-6. ?Tests?
+[ ]OOP-ize:
+    i.e.same formatting to make it modular enough for re-testing
+    [ ]load_fw_points
+[ ]find the units and documentations for creating source_params_dict (PPS_OpenMC.so library)
+[ ]?Tests?
+____Concerns
+- Some parameters are locked up inside functions:
+    - create_parametric_source
+    - load_fw_points
+- why parametric source mode = 2: need to dig open the PPS_OpenMC.so
 """
 import math
 import dataclasses
@@ -29,6 +43,9 @@ from collections import namedtuple
 # Constants
 from bluemira.base.constants import BMUnitRegistry
 
+import os
+os.environ['OPENMC_CROSS_SECTIONS'] = '/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml'
+
 MJ_per_MeV= BMUnitRegistry.Quantity("MeV").to("MJ").magnitude
 MJ_per_eV = BMUnitRegistry.Quantity("eV").to("MJ").magnitude
 eV_per_MeV= BMUnitRegistry.Quantity("MeV").to("eV").magnitude
@@ -44,13 +61,32 @@ fe_density_g_cc = elements.isotope("Fe").density
 energy_per_dt_MeV = 17.58
 dpa_fe_threshold_eV = 40 # Energy required to displace an Fe atom in Fe. See docstring of get_dpa_coefs. Source cites 40 eV.
 
-import os
-os.environ['OPENMC_CROSS_SECTIONS'] = '/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml'
+DPACoefficients = namedtuple('DPACoefficients', 'atoms_per_cc, displacements_per_damage_eV')
+
+def get_dpa_coefs():
+    """
+    Get the coefficients required to convert the number of damage into the number of displacements.
+    number of atoms in region = avogadro * density * volume / molecular mass
+    number of atoms in cc     = avogadro * density          / molecular mass
+    dpa_fpy = displacements / atoms * s_in_yr * src_rate
+
+    taken from [1]_.
+    .. [1] Shengli Chena, David Bernard
+       On the calculation of atomic displacements using damage energy 
+       Results in Physics 16 (2020) 102835
+       https://doi.org/10.1016/j.rinp.2019.102835
+    """
+
+    atoms_per_cc = avogadro * fe_density_g_cc / fe_molar_mass_g
+
+    displacements_per_damage_eV = 0.8 / (2 * dpa_fe_threshold_eV)
+    return DPACoefficients(atoms_per_cc, displacements_per_damage_eV)
 # ----------------------------------------------------------------------------------------
+# classes to store parameters
 
 class ParameterHolder:
     def to_dict(self):
-        return dataclass.asdict(self)
+        return dataclasses.asdict(self)
 
 
 @dataclasses.dataclass
@@ -74,6 +110,7 @@ class TokamakOperationParameters(ParameterHolder):
 
     def calculate_total_neutron_rate(self):
         return self.reactor_power_MW / (energy_per_dt_MeV * MJ_per_MeV)
+
 
 @dataclasses.dataclass
 class BreederTypeParameters(ParameterHolder):
@@ -100,6 +137,7 @@ class TokamakGeometry(ParameterHolder):
     inb_gap: float = 20.0
         
 # ----------------------------------------------------------------------------------------
+# openmc source maker
 
 def create_ring_source(tokamak_geometry):
     """
@@ -124,8 +162,6 @@ def create_ring_source(tokamak_geometry):
     ring_source.energy = openmc.stats.Discrete([energy_per_dt_MeV * (4/5) * eV_per_MeV], [1])
     
     return ring_source
-
-# ----------------------------------------------------------------------------------------
 
 def create_parametric_source(tokamak_geometry):
     """
@@ -159,9 +195,31 @@ def create_parametric_source(tokamak_geometry):
 
 # ----------------------------------------------------------------------------------------
 
-def load_fw_points(tokamak_geometry):
+class PoloidalXSPlot(object):
+    """Context manager so that we can save the plot as soon as we exit.
+    Using the 'with' statement (i.e. in the syntax of context manager in python)
+    also improves readability, as the save_name is written at the top of the indented block,
+    so it's obvious what's the indented block plotting."""
+    def __init__(self, save_name, title=None):
+        self.save_name = save_name
+        self.ax = plt.subplot()
+        self.ax.axis('equal')
+        if title:
+            self.ax.set_title(title)
+
+    def __enter__(self):
+        return self.ax
+
+    def __exit__(self, exception_type, value, traceback):
+        plt.savefig(self.save_name)
+        # self.ax.cla()
+        # self.ax.figure.clf()
+        plt.close()
+
+
+def load_fw_points(tokamak_geometry, save_plots=True):
     """
-    Load given first wall points and adjusts for given major and minor radii.
+    Load given first wall points, and scale them according to the given major and minor radii.
 
     Parameters
     ----------
@@ -169,90 +227,82 @@ def load_fw_points(tokamak_geometry):
         TokamakGeometry
     """
 
+    ######## get data ########
+    # getting geometry from existing .npy files
     blanket_face = np.load('blanket_face.npy')[0]
     divertor_face = np.load('divertor_face.npy')[0]
-    
-    # The plasma geometry for the given points
+    ibf = inner_blanket_face = blanket_face[52:-2]
+    # The plasma geometry
     ex_pts_maj_r = 900.
     ex_pts_min_r = 290.
     ex_pts_elong = 1.792
-    
-    inner_blanket_face = blanket_face[52:-2]
-    
-    # plot
-    plt.clf()
-    plt.scatter(blanket_face[:,0], blanket_face[:,2])
-    plt.axis('equal')
-    plt.savefig('blanket_face.png')
-    
-    select_fw_elements = [0, 4, 8, 11, 14, 17, 21, 25, 28, 33, 39, 42, -1]   
-    fewer_inner_blanket_points = inner_blanket_face[ select_fw_elements ] * m_to_cm
-    
-    # Adjusting point too close to plasma
-    fewer_inner_blanket_points[-5][0] = fewer_inner_blanket_points[-5][0] - 25.
-    
     # Specifying the number of the selected points that define the inboard
     no_inboard_points = 6
-   
-    select_div_elements = [72, 77, 86]   # also going to use first and last points from first wall
-    fewer_div_points = divertor_face[ select_div_elements ] * m_to_cm
     
-    all_points = np.concatenate( (fewer_inner_blanket_points, fewer_div_points), axis=0 )
+    ######## (down)sample existing data ########
+    # first wall
+    selected_fw_samples = [0, 4, 8, 11, 14, 17, 21, 25, 28, 33, 39, 42, -1] # sample points
+    downsampled_ibf = ibf[ selected_fw_samples ] * m_to_cm
+    # Move the point that is too close to plasma (by moving it closer to the central column instead)
+    downsampled_ibf[-5][0] = downsampled_ibf[-5][0] - 25.
     
-    # Plotting provided points
-    plt.clf()
-    plt.plot(all_points[:,0], all_points[:,2], label='Initial fw points')
+    # divertor
+    selected_div_samples = [72, 77, 86]   # also going to use first and last points from first wall
+    downsampled_divf = divertor_face[ selected_div_samples ] * m_to_cm
     
-    print('FW points before adjustment\n', all_points )
+    # make the plotable list of points
+    old_points = np.concatenate( (downsampled_ibf, downsampled_divf), axis=0 )
     
+    print('FW points before adjustment\n', old_points )
+    
+    ######## rescale data to fit new geometry. ########
     # Adjusting points for major radius
     shift_cm   = tokamak_geometry.major_r - ex_pts_maj_r
-    all_points = mg.shift_points(all_points, shift_cm)
+    new_points = mg.shift_points(old_points, shift_cm)
     
     # Adjusting points for elongation and minor radius
     # This elongation also include an allowance for the minor radius
-    elong_w_minor_r =  tokamak_geometry.minor_r / ex_pts_min_r * tokamak_geometry.elong              
-    all_points = mg.elongate(all_points, elong_w_minor_r / ex_pts_elong)
-    
+    elong_w_minor_r =  tokamak_geometry.minor_r / ex_pts_min_r * tokamak_geometry.elong
     stretch_r_val  = tokamak_geometry.minor_r / ex_pts_min_r
-    all_points = mg.stretch_r(all_points, tokamak_geometry, stretch_r_val)
+    new_points = mg.elongate(new_points, elong_w_minor_r / ex_pts_elong)
+    new_points = mg.stretch_r(new_points, tokamak_geometry, stretch_r_val)
     
-    # Plotting adjusted points
-    plt.plot(all_points[:,0], all_points[:,2], label='Adjusted fw points')
-    
-    fewer_inner_blanket_points = all_points[:-len(select_div_elements)]
-    fewer_div_points           = np.concatenate( (all_points[-(len(select_div_elements)+1):],
-                                                  all_points[:1]
+
+    new_downsampled_fw = new_points[:-len(selected_div_samples)]
+    new_downsampled_div           = np.concatenate( (new_points[-(len(selected_div_samples)+1):],
+                                                  new_points[:1]
                                                  ), axis=0 )
     
-    # Plotting source envelope
+    ######## parametric variables ########
     # https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf pg. 239
     # R = R0 + a cos(θ + δ sin θ)
     # where a = minor radius
     #       δ = triangularity
     u = tokamak_geometry.major_r                              # x-position of the center
-    v = 0.0                                                     # y-position of the center
+    v = 0.0                                                   # y-position of the center
     a = tokamak_geometry.minor_r                              # radius on the x-axis
-    b = tokamak_geometry.elong * tokamak_geometry.minor_r   # radius on the y-axis
+    b = tokamak_geometry.elong * tokamak_geometry.minor_r     # radius on the y-axis
     tri = tokamak_geometry.triang                             # triangularity
     t = np.linspace(0, 2 * pi, 100)
-    plt.plot( u + a * np.cos( t + tri * np.sin(t) ), v + b * np.sin(t), label='Plasma envelope' )
-    
-    plt.axis('equal')
-    plt.legend(loc="upper right")
-    plt.savefig('all_points_before_after.png')
-    
-    plt.clf()
-    plt.scatter(fewer_inner_blanket_points[:,0], fewer_inner_blanket_points[:,2])
-    plt.axis('equal')
-    plt.savefig('selected_pts_inner_blanket_face.png')
-    
-    plt.clf()
-    plt.scatter(fewer_div_points[:,0], fewer_div_points[:,2])
-    plt.axis('equal')
-    plt.savefig('selected_pts_divertor_face.png')
-    
-    return fewer_inner_blanket_points, no_inboard_points, fewer_div_points
+    if save_plots:
+        with PoloidalXSPlot('blanket_face.png', 'Blanket face') as ax:
+            ax.scatter(blanket_face[:,0], blanket_face[:,2])
+
+        with PoloidalXSPlot('all_points_before_after.png', '') as ax:
+            ax.plot(old_points[:,0], old_points[:,2], label='Initial fw points')
+            ax.plot(new_points[:,0], new_points[:,2], label='Adjusted fw points')
+            ax.plot( u + a * np.cos( t + tri * np.sin(t) ), v + b * np.sin(t), label='Plasma envelope' ) # source envelope
+            ax.legend(loc="upper right")
+        
+        with PoloidalXSPlot('selected_pts_inner_blanket_face.png',
+                'Selected points on the inner blanket') as ax:
+            ax.scatter(new_downsampled_fw[:,0], new_downsampled_fw[:,2])
+        
+        with PoloidalXSPlot('selected_pts_divertor_face.png',
+                'Selected points on the divertor face') as ax:
+            ax.scatter(new_downsampled_div[:,0], new_downsampled_div[:,2])
+
+    return new_downsampled_fw, no_inboard_points, new_downsampled_div
 
 # ----------------------------------------------------------------------------------------
 
@@ -289,15 +339,13 @@ def create_materials(breeder_materials):
     ----------
     breeder_materials: BreederTypeParameters
     """
-    if breeder_materials.blanket_type == "hcpb":
-        mm.make_hcpb_mats(breeder_materials.li_enrich_ao)
-    elif breeder_materials.blanket_type == 'dcll':
-        mm.make_dcll_mats(breeder_materials.li_enrich_ao)
-    elif breeder_materials.blanket_type == 'wcll':
-        mm.make_wcll_mats(breeder_materials.li_enrich_ao)
-    else:
-        raise ValueError("blanket_type must be either hcpb, dcll, or wcll")
-
+    try:
+        # this syntax allows for extension.
+        materials_maker = getattr(mm, "make_{}_mats".format(breeder_materials.blanket_type))
+    except AttributeError:
+        raise ValueError(f"{breeder_materials.blanket_type} is not an available blanket type.")
+        # currently it may be 'hcpb', 'dcll', 'wcll'.
+    materials_maker(breeder_materials.li_enrich_ao)
     return
 
 # ----------------------------------------------------------------------------------------
@@ -454,26 +502,7 @@ def create_tallies(
     tallies.export_to_xml()
 
 # ----------------------------------------------------------------------------------------
-
-DPACoefficients = namedtuple('DPACoefficients', 'atoms_per_cc, displacements_per_damage_eV')
-def get_dpa_coefs():
-    """
-    Get the coefficients required to convert the number of damage into the number of displacements.
-    number of atoms in region = avogadro * density * volume / molecular mass
-    number of atoms in cc     = avogadro * density          / molecular mass
-    dpa_fpy = displacements / atoms * s_in_yr * src_rate
-
-    taken from [1]_.
-    .. [1] Shengli Chena, David Bernard
-       On the calculation of atomic displacements using damage energy 
-       Results in Physics 16 (2020) 102835
-       https://doi.org/10.1016/j.rinp.2019.102835
-    """
-
-    atoms_per_cc = avogadro * fe_density_g_cc / fe_molar_mass_g
-
-    displacements_per_damage_eV = 0.8 / (2 * dpa_fe_threshold_eV)
-    return DPACoefficients(atoms_per_cc, displacements_per_damage_eV)
+# result processing
 
 class OpenMCResult():
     """
@@ -762,7 +791,8 @@ def geometry_plotter(cells, tokamak_geometry):
 
 class TBRHeatingSimulation():
     """
-    Contains all the data necessary to run the openmc simulation of the tbr.
+    Contains all the data necessary to run the openmc simulation of the tbr,
+    and the relevant pre-and post-processing.
     """
     def __init__(self, runtime_variables, operation_variable, breeder_materials, tokamak_geometry):
         self.runtime_variables = runtime_variables
@@ -773,7 +803,7 @@ class TBRHeatingSimulation():
         self.cells = None
         self.universe = None
 
-    def setup(self, plot_geometry):
+    def setup(self, plot_geometry=True):
         """
         plot the geometry and saving them as hard-coded png names.
         """
@@ -794,7 +824,7 @@ class TBRHeatingSimulation():
             self.runtime_variables.openmc_write_summary
             )
 
-        fewer_inner_blanket_points, no_inboard_points, div_points = load_fw_points(self.tokamak_geometry)
+        fewer_inner_blanket_points, no_inboard_points, div_points = load_fw_points(self.tokamak_geometry, True)
         self.cells, self.universe = mg.make_geometry(
                 self.tokamak_geometry,
                 fewer_inner_blanket_points,
@@ -841,21 +871,7 @@ class TBRHeatingSimulation():
 if __name__ == "__main__":
     BluemiraOpenMCVariables = namedtuple('BluemiraOpenMCVariables', 'breeder_materials, tokamak_geometry')
 
-    runtime_variables = OpenMCSimulationRuntimeParameters(
-            num_particles=16800,        # 16800 takes 5 seconds,  1000000 takes 280 seconds.
-            batches=2,
-            photon_transport=True,
-            electron_treatment="ttb",
-            run_mode="fixed source",
-            openmc_write_summary=False,
-
-            parametric_source=True,
-            num_particles_stoch=4e8, # only used if stochastic_volume_calculation is turned on.
-            )
-
-    operation_variable = TokamakOperationParameters(reactor_power_MW=1998.0)
-
-    def preset_physical_properties(blanket_type):
+    def get_preset_physical_properties(blanket_type):
         """
         Works as a switch-case for choosing the tokamak geometry and blankets for a given blanket type.
         Currently blanket types with pre-populated data are: ('wcll', 'dcll', 'hcpb')
@@ -926,19 +942,30 @@ if __name__ == "__main__":
                 outb_vv_thick =    60.0,
             )
         else:
-            raise TypeError
+            raise ValueError("This function only support 'hcpb', 'dcll', 'wcll'.")
 
         return BluemiraOpenMCVariables(breeder_materials, tokamak_geometry)
-        
-    breeder_materials, tokamak_geometry = preset_physical_properties('hcpb') # 'wcll', 'dcll', 'hcpb'
 
-    """
-    Runs OpenMC calculation to get TBR, component heating, first wall dpa, and photon
-    heat flux for a DEMO-like reactor
-    """
+    runtime_variables = OpenMCSimulationRuntimeParameters(
+            num_particles=16800,        # 16800 takes 5 seconds,  1000000 takes 280 seconds.
+            batches=2,
+            photon_transport=True,
+            electron_treatment="ttb",
+            run_mode="fixed source",
+            openmc_write_summary=False,
+
+            parametric_source=True,
+            num_particles_stoch=4e8, # only used if stochastic_volume_calculation is turned on.
+            )
+
+    operation_variable = TokamakOperationParameters(reactor_power_MW=1998.0)
+
+    breeder_materials, tokamak_geometry = get_preset_physical_properties('hcpb') # 'wcll', 'dcll', 'hcpb'
+
+    # set up a DEMO-like reactor, and run OpenMC simualtion
     tbr_heat_sim = TBRHeatingSimulation(runtime_variables, operation_variable, breeder_materials, tokamak_geometry)
     tbr_heat_sim.setup(True)
     tbr_heat_sim.run()
+    # get the TBR, component heating, first wall dpa, and photon heat flux 
     tbr_heat_sim.get_result(True)
-    if False:
-        tbr_heat_sim.calculate_volume_stochastically()
+    # tbr_heat_sim.calculate_volume_stochastically() # don't do this because it takes a long time.
