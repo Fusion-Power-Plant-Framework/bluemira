@@ -18,7 +18,7 @@ flake8-polyfill==1.0.2
 gitdb==4.0.10
 GitPython==3.1.31
 greenlet==2.0.2
-identify==2.5.22
+identify==2.5.23
 idna==3.4
 imagesize==1.4.1
 importlib-metadata==6.6.0
