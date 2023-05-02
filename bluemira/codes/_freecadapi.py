@@ -782,7 +782,8 @@ def discretize(w: apiWire, ndiscr: int = 10, dl: Optional[float] = None) -> np.n
     output = []
 
     if dl is None:
-        pass
+        if ndiscr < 2:
+            raise ValueError("ndiscr must be greater than 2.")
     elif dl <= 0.0:
         raise ValueError("dl must be > 0.")
     else:
