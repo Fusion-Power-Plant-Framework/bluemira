@@ -146,7 +146,7 @@ class BluemiraWire(BluemiraGeo):
             points = cadapi.discretize_by_edges(self.shape, ndiscr=ndiscr, dl=dl)
         else:
             points = cadapi.discretize(self.shape, ndiscr=ndiscr, dl=dl)
-        return Coordinates(points)
+        return Coordinates(points.T)
 
     def value_at(
         self, alpha: Optional[float] = None, distance: Optional[float] = None
