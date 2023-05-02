@@ -776,11 +776,14 @@ def discretize(w: apiWire, ndiscr: int = 10, dl: Optional[float] = None) -> np.n
 
     Returns
     -------
-    Array of points.
-    """
-    # discretization points array
-    output = []
+    Array of points
 
+    Raises
+    ------
+    ValueError:
+        If ndiscr < 2
+        If dl <= 0.0
+    """
     if dl is None:
         if ndiscr < 2:
             raise ValueError("ndiscr must be greater than 2.")
