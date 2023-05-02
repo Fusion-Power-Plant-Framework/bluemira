@@ -42,7 +42,7 @@ Below is an overview of our development roadmap for 2023/24:
 
 * `balance_of_plant`: power balance solver and tools
 * `base`: the software backbone of the ``bluemira`` framework
-* `codes` **[WIP]**: interfaces to external codes (both API and file PI)
+* `codes`: interfaces to external codes (both API and file PI)
 * `display`: plotting and display module
 * `equilibria`: equilibrium solvers and objects
 * `fuel_cycle`: fuel cycle model
@@ -51,7 +51,7 @@ Below is an overview of our development roadmap for 2023/24:
 * `materials`: materials module
 * `plasma_physics`: 0-D plasma physics tools
 * `radiation_transport` **[WIP]**: radiation and advection transport solvers
-* `structural` **[WIP]**: beam finite element structural solver
+* `structural`: beam finite element structural solver
 * `utilities`: collection of utility toolboxes for file IO, databases,
   machine learning, and misc.
 
