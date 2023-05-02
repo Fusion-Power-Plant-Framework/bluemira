@@ -45,7 +45,6 @@ class BMUnitRegistry(UnitRegistry):
 
     displacements_per_atom (dpa)
     full_power_year (fpy)
-    percent (%)
     atomic_parts_per_million (appm)
     USD ($)
 
@@ -59,7 +58,6 @@ class BMUnitRegistry(UnitRegistry):
         super().__init__(
             fmt_locale="en_GB",
             preprocessors=[
-                lambda x: x.replace("%", " percent "),
                 lambda x: x.replace("$", "USD "),
             ],
         )
@@ -67,8 +65,7 @@ class BMUnitRegistry(UnitRegistry):
         # Extra units
         self.define("displacements_per_atom  = count = dpa")
         self.define("full_power_year = year = fpy")
-        self.define("percent = 0.01 count = %")
-        self.define("atomic_parts_per_million = count * 1e-6 = appm")
+        self.define("atomic_parts_per_million = appm = ppm")
         # Other currencies need to be set up in a new context
         self.define("USD = [currency]")
 
