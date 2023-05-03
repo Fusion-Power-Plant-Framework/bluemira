@@ -281,6 +281,10 @@ class ReactorConfig:
                 # if doing a params extraction,
                 # get the values from the _PARAMETERS_KEY
                 to_extract = current_layer.get(_PARAMETERS_KEY, {})
+                if isinstance(to_extract, str) and to_extract.endswith(".json"):
+                    to_extract = self._get_nested_filepaths(
+                        to_extract, _PARAMETERS_KEY, arg_keys, next_idx + 1
+                    )
 
             # add all keys not in extracted already
             # if doing a config, ignore the "params" (_PARAMETERS_KEY)
