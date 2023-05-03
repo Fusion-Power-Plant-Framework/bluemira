@@ -365,7 +365,11 @@ class CoilGroup(CoilGroupFieldsMixin):
         self._pad_discretisation(_quad_list)
 
         for i, d in enumerate(self._pad_size):
-            _quad_list[i] = np.pad(_quad_list[i], (0, d))
+            if _quad_list[i].ndim > 1:
+                pad = tuple((0, 0) for _ in range(_quad_list[i].ndim - 1)) + ((0, d),)
+            else:
+                pad = (0, d)
+            _quad_list[i] = np.pad(_quad_list[i], pad)
 
         return np.vstack(_quad_list)
 
