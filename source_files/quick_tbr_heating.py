@@ -2,10 +2,12 @@
 TODO:
 1.  [x]load_fw_points,
     [x]create_materials,
-    [ ]filter_cells,
+    [ ]setup_openmc
+    [ ]filter_cells: separate the key into a list? IDK.
     [ ]create_tallies
+Implement Enum on create_materials
 2. Documentation:
-    []load_fw_points
+    [ ]load_fw_points
     [ ]setup_openmc
     [ ]create_tallies
     [ ]OpenMCResult.get*
@@ -15,11 +17,13 @@ TODO:
 [ ]Break quick_tbr_heating into multiple
     - keep openmc set-up here?
     - Ask how much time I should spend on this and future directions.
+    [ ]filter_cells needs to be somewhere else. Definitely does not belong in quick_btr_heating.py
 [ ]OOP-ize:
     i.e.same formatting to make it modular enough for re-testing
     [ ]load_fw_points
 [ ]find the units and documentations for creating source_params_dict (PPS_OpenMC.so library)
 [ ]?Tests?
+[ ]Unit: cgs -> metric
 ____Concerns
 - Some parameters are locked up inside functions:
     - create_parametric_source
@@ -76,9 +80,7 @@ def get_dpa_coefs():
        Results in Physics 16 (2020) 102835
        https://doi.org/10.1016/j.rinp.2019.102835
     """
-
     atoms_per_cc = avogadro * fe_density_g_cc / fe_molar_mass_g
-
     displacements_per_damage_eV = 0.8 / (2 * dpa_fe_threshold_eV)
     return DPACoefficients(atoms_per_cc, displacements_per_damage_eV)
 # ----------------------------------------------------------------------------------------
@@ -106,7 +108,8 @@ class OpenMCSimulationRuntimeParameters(ParameterHolder):
 
 @dataclasses.dataclass
 class TokamakOperationParameters(ParameterHolder):
-    reactor_power_MW: float
+    """The tokamak's operational parameter, such as its power"""
+    reactor_power_MW: float # Mega Watt
 
     def calculate_total_neutron_rate(self):
         return self.reactor_power_MW / (energy_per_dt_MeV * MJ_per_MeV)
@@ -219,12 +222,19 @@ class PoloidalXSPlot(object):
 
 def load_fw_points(tokamak_geometry, save_plots=True):
     """
-    Load given first wall points, and scale them according to the given major and minor radii.
+    Load given first wall points,
+    scale them according to the given major and minor radii,
+    then downsample them so that a simplified geometry can be made.
 
     Parameters
     ----------
-    tokamak_geometry:
-        TokamakGeometry
+    tokamak_geometry: TokamakGeometry
+
+    Returns
+    -------
+    new_downsampled_fw: points belonging to the first wall
+    new_downsampled_div: points belonging to the divertor
+    num_inboard_points: number of inboard points used
     """
 
     ######## get data ########
@@ -237,7 +247,7 @@ def load_fw_points(tokamak_geometry, save_plots=True):
     ex_pts_min_r = 290.
     ex_pts_elong = 1.792
     # Specifying the number of the selected points that define the inboard
-    no_inboard_points = 6
+    num_inboard_points = 6
     
     ######## (down)sample existing data ########
     # first wall
@@ -285,24 +295,24 @@ def load_fw_points(tokamak_geometry, save_plots=True):
     tri = tokamak_geometry.triang                             # triangularity
     t = np.linspace(0, 2 * pi, 100)
     if save_plots:
-        with PoloidalXSPlot('blanket_face.png', 'Blanket face') as ax:
+        with PoloidalXSPlot('blanket_face.svg', 'Blanket Face') as ax:
             ax.scatter(blanket_face[:,0], blanket_face[:,2])
 
-        with PoloidalXSPlot('all_points_before_after.png', '') as ax:
+        with PoloidalXSPlot('all_points_before_after.svg', 'Points sampled for making the MCNP model') as ax:
             ax.plot(old_points[:,0], old_points[:,2], label='Initial fw points')
             ax.plot(new_points[:,0], new_points[:,2], label='Adjusted fw points')
             ax.plot( u + a * np.cos( t + tri * np.sin(t) ), v + b * np.sin(t), label='Plasma envelope' ) # source envelope
             ax.legend(loc="upper right")
         
-        with PoloidalXSPlot('selected_pts_inner_blanket_face.png',
+        with PoloidalXSPlot('selected_pts_inner_blanket_face.svg',
                 'Selected points on the inner blanket') as ax:
             ax.scatter(new_downsampled_fw[:,0], new_downsampled_fw[:,2])
         
-        with PoloidalXSPlot('selected_pts_divertor_face.png',
+        with PoloidalXSPlot('selected_pts_divertor_face.svg',
                 'Selected points on the divertor face') as ax:
             ax.scatter(new_downsampled_div[:,0], new_downsampled_div[:,2])
 
-    return new_downsampled_fw, no_inboard_points, new_downsampled_div
+    return new_downsampled_fw, new_downsampled_div, num_inboard_points
 
 # ----------------------------------------------------------------------------------------
 
@@ -315,6 +325,19 @@ def setup_openmc(
     run_mode="fixed source",
     output_summary=False
 ):
+    """Configure openmc.Settings, so that it's ready for the run() step.
+
+    Parameters
+    ----------
+    plasma_source
+    num_particles
+    batches=2
+    photon_transport=True
+    electron_treatment="ttb"
+    run_mode: str = {'eigenvalue', 'fixed source', 'plot', 'volume', 'particle restart'}
+    output_summary: bool = False
+    """
+    
     #######################
     ### OPENMC SETTINGS ###
     #######################
@@ -353,7 +376,6 @@ def create_materials(breeder_materials):
 def filter_cells(cells, src_rate):
     """
     Requests cells for scoring.
-
     Parameters
     ----------
     cells:
@@ -372,7 +394,7 @@ def filter_cells(cells, src_rate):
             cells["divertor_fw"],
             cells["divertor_fw_sf"]
             
-        ] + cells["inb_vv_cells"] 
+        ] + cells["inb_vv_cells"] # AAAAAAAAAAAAAA WTF, some of the cells (those names ending with _cells) are actually lists of cells and some of the cells 
           + cells["inb_mani_cells"] 
           + cells["inb_bz_cells"] 
           + cells["inb_fw_cells"]
@@ -771,7 +793,7 @@ def geometry_plotter(cells, tokamak_geometry):
     )  
 
     plot_list = []
-    for plot_no, basis in enumerate(["xz", "xy", "yz"]):
+    for _, basis in enumerate(["xz", "xy", "yz"]):
         plot = openmc.Plot()
         plot.basis = basis
         plot.pixels = [400,400]
@@ -824,11 +846,11 @@ class TBRHeatingSimulation():
             self.runtime_variables.openmc_write_summary
             )
 
-        fewer_inner_blanket_points, no_inboard_points, div_points = load_fw_points(self.tokamak_geometry, True)
+        blanket_points, div_points, num_inboard_points = load_fw_points(self.tokamak_geometry, True)
         self.cells, self.universe = mg.make_geometry(
                 self.tokamak_geometry,
-                fewer_inner_blanket_points,
-                no_inboard_points,
+                blanket_points,
+                num_inboard_points,
                 div_points,
             )
 
@@ -964,6 +986,7 @@ if __name__ == "__main__":
 
     # set up a DEMO-like reactor, and run OpenMC simualtion
     tbr_heat_sim = TBRHeatingSimulation(runtime_variables, operation_variable, breeder_materials, tokamak_geometry)
+    import sys; sys.exit()
     tbr_heat_sim.setup(True)
     tbr_heat_sim.run()
     # get the TBR, component heating, first wall dpa, and photon heat flux 

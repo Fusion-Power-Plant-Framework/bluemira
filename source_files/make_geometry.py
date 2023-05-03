@@ -1,3 +1,4 @@
+"""Make the entire tokamak from scratch using user-provided variables."""
 import math
 import copy
 import openmc
