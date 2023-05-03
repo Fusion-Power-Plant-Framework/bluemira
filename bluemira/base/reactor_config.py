@@ -3,6 +3,7 @@
 import json
 import pprint
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Iterable, Optional, Tuple, Type, TypeVar, Union
 
 from bluemira.base.error import ReactorConfigError
@@ -103,6 +104,7 @@ class ReactorConfig:
         self.warn_on_empty_local_params = warn_on_empty_local_params
         self.warn_on_empty_config = warn_on_empty_config
 
+        self._config_path = config_path
         self.config_data = ReactorConfig._read_or_return(config_path)
 
         self.global_params = make_parameter_frame(
@@ -234,6 +236,31 @@ class ReactorConfig:
             if not isinstance(a, str):
                 raise ReactorConfigError("args must be strings")
 
+    def _get_nested_filepaths(
+        self,
+        current_layer: str,
+        current_arg_key: str,
+        arg_keys: Tuple[str],
+        next_idx: int,
+    ) -> Dict:
+        if not Path(current_layer).resolve().is_file():
+            if isinstance(self._config_path, str):
+                current_layer = str(Path(self._config_path).parent / current_layer)
+            if not Path(current_layer).resolve().is_file():
+                raise FileNotFoundError(f"Cannot find file {current_layer}")
+
+        new_layer = self._read_json_file(current_layer)
+
+        # Dont need to load files repeatedly so put it back in config_data
+        if next_idx == 1:
+            self.config_data[current_arg_key] = new_layer
+        else:
+            tmp_dict = self.config_data
+            for key in arg_keys[: next_idx - 1]:
+                tmp_dict = tmp_dict[key]
+            tmp_dict[current_arg_key] = new_layer
+        return new_layer
+
     def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
         extracted = {}
 
@@ -244,7 +271,12 @@ class ReactorConfig:
             current_layer = current_layer.get(current_arg_key, {})
             next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
 
+            if isinstance(current_layer, str) and current_layer.endswith(".json"):
+                current_layer = self._get_nested_filepaths(
+                    current_layer, current_arg_key, arg_keys, next_idx
+                )
             to_extract = current_layer
+
             if not is_config:
                 # if doing a params extraction,
                 # get the values from the _PARAMETERS_KEY
