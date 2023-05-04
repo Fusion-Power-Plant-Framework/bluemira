@@ -23,7 +23,7 @@
 Just-in-time compilation and LowLevelCallable speed-up tools.
 """
 import warnings
-from typing import Callable, Iterable, Union
+from typing import Callable, Iterable, List, Union
 
 import numba as nb
 import numpy as np
