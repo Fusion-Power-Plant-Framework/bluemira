@@ -137,7 +137,7 @@ class OptimisationProblem(ABC):
     ----------
     parameterisation: any
         Object storing parameterisation data to be optimised.
-    optimiser: Optimiser (default: None)
+    optimiser: bluemira.utilities.optimiser.Optimiser (default: None)
         Optimiser object to use for constrained optimisation.
         Does not need to be provided if not used by
         optimise(), such as for purely unconstrained
@@ -200,7 +200,7 @@ class OptimisationProblem(ABC):
 
         Parameters
         ----------
-        opt: Optimiser
+        opt: bluemira.utilities.optimiser.Optimiser
             Optimiser on which to apply the constraints. Updated in place.
         opt_constraints: iterable
             Iterable of OptimisationConstraint objects containing optimisation
