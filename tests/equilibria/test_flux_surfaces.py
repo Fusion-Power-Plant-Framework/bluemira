@@ -27,7 +27,6 @@ import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import (

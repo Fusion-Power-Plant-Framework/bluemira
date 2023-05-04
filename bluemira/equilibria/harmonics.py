@@ -292,13 +292,13 @@ def lcfs_fit_metric(coords1, coords2):
     if coords2.x[0] != coords2.x[-1] or coords2.z[0] != coords2.z[-1]:
         # If not closed then go back and try again
         bluemira_print(
-            f"The approximate LCFS is not closed. Trying again with more degrees."
+            "The approximate LCFS is not closed. Trying again with more degrees."
         )
         return 1
 
     # If the two LCFSs have identical coordinates then return a perfect fit metric
     if np.array_equal(coords1.x, coords2.x) and np.array_equal(coords1.z, coords2.z):
-        bluemira_print(f"Perfect match! Original LCFS = SH approx LCFS")
+        bluemira_print("Perfect match! Original LCFS = SH approx LCFS")
         return 0
 
     # Get area of within the original and the SH approx LCFS
@@ -311,7 +311,7 @@ def lcfs_fit_metric(coords1, coords2):
     # Check there are an even number of intersections
     if np.mod(len(xcross), 2) != 0:
         bluemira_print(
-            f"Odd number of intersections for input and SH approx LCFS: this shouldn''t be possible. Trying again with more degrees."
+            "Odd number of intersections for input and SH approx LCFS: this shouldn''t be possible. Trying again with more degrees."
         )
         return 1
 
@@ -326,7 +326,7 @@ def lcfs_fit_metric(coords1, coords2):
         else:
             # Otherwise they are in entirely different places
             bluemira_print(
-                f"The approximate LCFS does not overlap with the original. Trying again with more degrees."
+                "The approximate LCFS does not overlap with the original. Trying again with more degrees."
             )
             return 1
 
@@ -391,7 +391,8 @@ def coils_outside_sphere_vacuum_psi(eq):
     Returns
     -------
     vacuum_psi: ndarray
-        Psi contributuion from control coils (only control coils! - be careful how you use it)
+        Psi contributuion from control coils
+        (only control coils! - be careful how you use it)
     plasma_psi: ndarray
         Psi contribution from plasma
     new_coilset: Bluemira CoilSet
@@ -483,7 +484,7 @@ def get_psi_harmonic_ampltidues(vacuum_psi, grid, collocation, r_t):
     return psi_harmonic_ampltidues
 
 
-def SHApproximation(
+def spherical_harmonic_approximation(
     eq,
     n_points=None,
     point_type=None,
@@ -531,7 +532,8 @@ def SHApproximation(
         Typical lengthscale for spherical harmonic approximation.
     extra_info: bool (default = False)
         If False, return only the information needed for use in optimisation.
-        If True, return additional information and a plot comparing orginal psi to the SH approximation.
+        If True, return additional information and a plot comparing orginal psi
+        to the SH approximation.
 
     Returns
     -------
@@ -566,8 +568,9 @@ def SHApproximation(
     # Grid keep the same as input equilibrium
     grid = eq_copy.grid
 
-    # Contribution to psi that we would like to approximate (and plasma contribution for later),
-    # also make sure control coils are in acceptable locations for approximation
+    # Contribution to psi that we would like to approximate
+    # (and plasma contribution for later), also make sure
+    # control coils are in acceptable locations for approximation
     vacuum_psi, plasma_psi, sh_coilset = coils_outside_sphere_vacuum_psi(eq_copy)
 
     # Create the set of collocation points within the LCFS for the SH calculations
@@ -626,7 +629,8 @@ def SHApproximation(
                 f"Uh oh, you may need to use more degrees for a fit metric of {acceptable_fit_metric}! Use a greater number of collocation points please."
             )
 
-    # Return additional information and a plot comparing orginal psi to the SH approximation
+    # Return additional information and a plot
+    # comparing orginal psi to the SH approximation
     if extra_info:
         plot_psi_comparision(
             grid,

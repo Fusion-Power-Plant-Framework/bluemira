@@ -13,10 +13,38 @@
 #     name: python3
 # ---
 
-# %% [markdown]
-# # SHApproximation Fuction
+# %% tags=["remove-cell"]
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
 #
-# This example illustrates the input and output of the Bluemira spherical harmonics approximation fuction (SHApproximation) which can be used in coilset current and position optimisation for spherical tokamaks. For an example of how SHApproximation is used, please see the notebook called 'Use of Spherical Harmonic Approximation in Optimisation.ipynb'.
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                         J. Morris, D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+# %% [markdown]
+# # spherical_harmonic_approximation Fuction
+#
+# This example illustrates the input and output of the
+# Bluemira spherical harmonics approximation fuction
+# (spherical_harmonic_approximation) which can be used
+# in coilset current and position optimisation for spherical tokamaks.
+# For an example of how spherical_harmonic_approximation is used,
+# please see the notebook called
+# 'Use of Spherical Harmonic Approximation in Optimisation.ipynb'.
 
 # %%
 # from bluemira.equilibria.equilibrium import Equilibrium
@@ -25,8 +53,7 @@ import numpy as np
 
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.harmonics import SHApproximation
-from bluemira.equilibria.plotting import PLOT_DEFAULTS, EquilibriumPlotter
+from bluemira.equilibria.harmonics import spherical_harmonic_approximation
 
 plot_defaults()
 
@@ -56,11 +83,12 @@ plt.show()
 # - point_type: How the collocation points are distributed
 # - acceptable_fit_metric: how 'good' we require the approximation to be
 # - r_t: typical lengthscale for spherical harmonic approximation
-# - extra_info: set this to true if you wish to return additional information and plot the results.
+# - extra_info: set this to true if you wish to return additional
+#               information and plot the results.
 
 # %%
 # Information needed for SH Approximation
-shapprox = SHApproximation(
+shapprox = spherical_harmonic_approximation(
     eq,
     n_points=50,
     point_type="random_plus_extrema",
@@ -71,7 +99,7 @@ shapprox = SHApproximation(
 # %% [markdown]
 # ### Outputs
 #
-# SHApproximation outputs a dictionary of results that can be used in optimisation.
+# spherical_harmonic_approximation outputs a dictionary of results that can be used in optimisation.
 #
 # #### Always output
 #
