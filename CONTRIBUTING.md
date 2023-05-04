@@ -220,8 +220,7 @@ def IPB98y2(
 
   Returns
   -------
-  tau_E:
-      Energy confinement time [s]
+  Energy confinement time [s]
 
   Notes
   -----
