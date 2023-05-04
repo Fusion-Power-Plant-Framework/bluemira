@@ -35,52 +35,54 @@ from bluemira.base.constants import (
 )
 
 
-def debye_length(temperature, density):
+def debye_length(temperature: float, density: float) -> float:
     """
     Debye length
 
     Parameters
     ----------
-    temperature: float
+    temperature:
         Temperature [K]
-    density: float
+    density:
         Density [m^-3]
 
     Returns
     -------
-    debye_length: float
-        Debye length [m]
+    Debye length [m]
     """
     return np.sqrt(EPS_0 * K_BOLTZMANN * temperature / (EV_TO_J**2 * density))
 
 
-def reduced_mass(mass_1, mass_2):
+def reduced_mass(mass_1: float, mass_2: float) -> float:
     """
     Calculate the reduced mass of a two-particle system
 
     Parameters
     ----------
-    mass_1: float
+    mass_1:
         Mass of the first particle
-    mass_2: float
+    mass_2:
         Mass of the second particle
 
     Returns
     -------
-    mu_12: float
-        Reduced mass
+    Reduced mass
     """
     return (mass_1 * mass_2) / (mass_1 + mass_2)
 
 
-def thermal_velocity(temperature, mass):
+def thermal_velocity(temperature: float, mass: float) -> float:
     """
     Parameters
     ----------
-    temperature: float
+    temperature:
         Temperature [K]
-    mass: float
+    mass:
         Mass of the particle [kg]
+
+    Returns
+    -------
+    Thermal velocity [m/s]
 
     Notes
     -----
@@ -90,59 +92,56 @@ def thermal_velocity(temperature, mass):
     return np.sqrt(2) * np.sqrt(K_BOLTZMANN * temperature / mass)
 
 
-def de_broglie_length(velocity, mu_12):
+def de_broglie_length(velocity: float, mu_12: float) -> float:
     """
     Calculate the de Broglie wavelength
 
     Parameters
     ----------
-    velocity: float
+    velocity:
         Velocity [m/s]
-    mu_12: float
+    mu_12:
         Reduced mass [kg]
 
     Returns
     -------
-    lambda_de_broglie: float
-        De Broglie wavelength [m]
+    De Broglie wavelength [m]
     """
     return H_PLANCK / (2 * mu_12 * velocity)
 
 
-def impact_parameter_perp(velocity, mu_12):
+def impact_parameter_perp(velocity: float, mu_12: float):
     """
-    Calculate the perpendicular impact parameter
+    Calculate the perpendicular impact parameter, a.k.a. b90
 
     Parameters
     ----------
-    velocity: float
+    velocity:
         Velocity [m/s]
-    mu_12: float
+    mu_12:
         Reduced mass [kg]
 
     Returns
     -------
-    b90: float
-        Perpendicular impact parameter [m]
+    Perpendicular impact parameter [m]
     """
     return EV_TO_J**2 / (4 * np.pi * EPS_0 * mu_12 * velocity**2)
 
 
-def coulomb_logarithm(temperature, density):
+def coulomb_logarithm(temperature: float, density: float) -> float:
     """
     Calculate the value of the Coulomb logarithm for an electron hitting a proton.
 
     Parameters
     ----------
-    temperature: float
+    temperature:
         Temperature [K]
-    density: float
+    density:
         Density [1/m^3]
 
     Returns
     -------
-    ln_lambda: float
-        Coulomb logarithm value
+    Coulomb logarithm value
     """
     lambda_debye = debye_length(temperature, density)
     mu_12 = reduced_mass(ELECTRON_MASS, PROTON_MASS)
@@ -153,23 +152,22 @@ def coulomb_logarithm(temperature, density):
     return np.log(np.sqrt(1 + (lambda_debye / b_min) ** 2))
 
 
-def spitzer_conductivity(Z_eff, T_e, ln_lambda):
+def spitzer_conductivity(Z_eff: float, T_e: float, ln_lambda: float) -> float:
     """
     Formula for electrical conductivity in a plasma as per L. Spitzer.
 
     Parameters
     ----------
-    Z_eff: float
+    Z_eff:
         Effective charge [a.m.u.]
-    T_e: float
+    T_e:
         Electron temperature on axis [eV]
-    ln_lambda: float
+    ln_lambda:
         Coulomb logarithm value
 
     Returns
     -------
-    sigma: float
-        Plasma resistivity [1/Ohm/m]
+    Plasma resistivity [1/Ohm/m]
 
     Notes
     -----
