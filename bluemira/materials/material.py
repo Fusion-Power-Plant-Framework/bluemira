@@ -25,7 +25,7 @@ The home of base material objects. Use classes in here to make new materials.
 
 import json
 import warnings
-from typing import Any, Dict, Optional, Union
+from typing import Any, Dict, List, Optional, Union
 
 import asteval
 import matplotlib.pyplot as plt
@@ -1349,9 +1349,9 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
         """
         return _try_calc_property(self, "specific_heat", temperature)
 
-    def CTE(
+    def CTE(  # noqa :N802
         self, temperature: float, eps_vol: Optional[float] = None
-    ) -> float:  # noqa :N802
+    ) -> float:
         """
         Mean coefficient of thermal expansion in 10**-6/T
         """
