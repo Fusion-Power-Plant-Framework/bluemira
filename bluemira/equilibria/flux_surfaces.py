@@ -27,7 +27,7 @@ Flux surface utility classes and calculations
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -66,38 +66,38 @@ class FluxSurface:
 
     Parameters
     ----------
-    geometry: Coordinates
+    geometry:
         Flux surface geometry object
     """
 
     __slots__ = "coords"
 
-    def __init__(self, geometry):
+    def __init__(self, geometry: Coordinates):
         self.coords = geometry
 
     @property
-    def x_start(self):
+    def x_start(self) -> float:
         """
         Start radial coordinate of the FluxSurface.
         """
         return self.coords.x[0]
 
     @property
-    def z_start(self):
+    def z_start(self) -> float:
         """
         Start vertical coordinate of the FluxSurface.
         """
         return self.coords.z[0]
 
     @property
-    def x_end(self):
+    def x_end(self) -> float:
         """
         End radial coordinate of the FluxSurface.
         """
         return self.coords.x[-1]
 
     @property
-    def z_end(self):
+    def z_end(self) -> float:
         """
         End vertical coordinate of the FluxSurface.
         """
@@ -109,20 +109,19 @@ class FluxSurface:
         Bt = eq.Bt(x)
         return _flux_surface_dl(x, z, np.diff(x), np.diff(z), Bp, Bt)
 
-    def connection_length(self, eq):
+    def connection_length(self, eq) -> float:
         """
         Calculate the parallel connection length along a field line (i.e. flux surface).
 
         Parameters
         ----------
-        eq: Equilibrium
+        eq:
             Equilibrium from which the FluxSurface was extracted
 
         Returns
         -------
-        l_par: float
-            Connection length from the start of the flux surface to the end of the flux
-            surface
+        Connection length from the start of the flux surface to the end of the flux
+        surface
         """
         return np.sum(self._dl(eq))
 
@@ -152,7 +151,7 @@ class ClosedFluxSurface(FluxSurface):
 
     __slots__ = ("_p1", "_p2", "_p3", "_p4", "_z_centre")
 
-    def __init__(self, geometry):
+    def __init__(self, geometry: Coordinates):
         if not geometry.closed:
             raise FluxSurfaceError(
                 "Cannot make a ClosedFluxSurface from an open geometry."
@@ -172,7 +171,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def major_radius(self):
+    def major_radius(self) -> float:
         """
         Major radius of the ClosedFluxSurface.
         """
@@ -180,7 +179,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def minor_radius(self):
+    def minor_radius(self) -> float:
         """
         Minor radius of the ClosedFluxSurface.
         """
@@ -188,7 +187,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def aspect_ratio(self):
+    def aspect_ratio(self) -> float:
         """
         Aspect ratio of the ClosedFluxSurface.
         """
@@ -196,7 +195,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def kappa(self):
+    def kappa(self) -> float:
         """
         Average elongation of the ClosedFluxSurface.
         """
@@ -204,7 +203,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def kappa_upper(self):
+    def kappa_upper(self) -> float:
         """
         Upper elongation of the ClosedFluxSurface.
         """
@@ -212,7 +211,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def kappa_lower(self):
+    def kappa_lower(self) -> float:
         """
         Lower elongation of the ClosedFluxSurface.
         """
@@ -220,7 +219,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def delta(self):
+    def delta(self) -> float:
         """
         Average triangularity of the ClosedFluxSurface.
         """
@@ -228,7 +227,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def delta_upper(self):
+    def delta_upper(self) -> float:
         """
         Upper triangularity of the ClosedFluxSurface.
         """
@@ -236,7 +235,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def delta_lower(self):
+    def delta_lower(self) -> float:
         """
         Lower triangularity of the ClosedFluxSurface.
         """
@@ -244,7 +243,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def zeta(self):
+    def zeta(self) -> float:
         """
         Average squareness of the ClosedFluxSurface.
         """
@@ -252,7 +251,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def zeta_upper(self):
+    def zeta_upper(self) -> float:
         """
         Outer upper squareness of the ClosedFluxSurface.
         """
@@ -269,7 +268,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def zeta_lower(self):
+    def zeta_lower(self) -> float:
         """
         Outer lower squareness of the ClosedFluxSurface.
         """
@@ -305,7 +304,7 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def area(self):
+    def area(self) -> float:
         """
         Enclosed area of the ClosedFluxSurface.
         """
@@ -313,45 +312,44 @@ class ClosedFluxSurface(FluxSurface):
 
     @property
     @lru_cache(1)
-    def volume(self):
+    def volume(self) -> float:
         """
         Volume of the ClosedFluxSurface.
         """
         return 2 * np.pi * self.area * self.coords.center_of_mass[0]
 
-    def shafranov_shift(self, eq):
+    def shafranov_shift(self, eq) -> Tuple[float, float]:
         """
         Calculate the Shafranov shift of the ClosedFluxSurface.
 
         Parameters
         ----------
-        eq: Equilibrium
+        eq:
             Equilibrium with which to calculate the safety factor
 
         Returns
         -------
-        dx_shaf: float
+        dx_shaf:
             Radial Shafranov shift
-        dz_shaf: float
+        dz_shaf:
             Vertical Shafranov shift
         """
         o_point = eq.get_OX_points()[0][0]  # magnetic axis
         return o_point.x - self.major_radius, o_point.z - self._z_centre
 
-    def safety_factor(self, eq):
+    def safety_factor(self, eq) -> float:
         """
         Calculate the cylindrical safety factor of the ClosedFluxSurface. The ratio of
         toroidal turns to a single full poloidal turn.
 
         Parameters
         ----------
-        eq: Equilibrium
+        eq:
             Equilibrium with which to calculate the safety factor
 
         Returns
         -------
-        q: float
-            Cylindrical safety factor of the closed flux surface
+        Cylindrical safety factor of the closed flux surface
         """
         x, z = self.coords.x, self.coords.z
         dx, dz = np.diff(x), np.diff(z)
@@ -370,7 +368,7 @@ class OpenFluxSurface(FluxSurface):
 
     __slots__ = ()
 
-    def __init__(self, coords):
+    def __init__(self, coords: Coordinates):
         if coords.closed:
             raise FluxSurfaceError(
                 "OpenFluxSurface cannot be made from a closed geometry."
@@ -384,8 +382,6 @@ class OpenFluxSurface(FluxSurface):
 
         Parameters
         ----------
-        flux_surface: OpenFluxSurface
-            The open flux surface to split into two
         o_point: O-point
             The magnetic centre of the plasma
         plane: Optional[Plane]
@@ -451,18 +447,18 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
     __slots__ = ["alpha"]
 
-    def __init__(self, coords):
+    def __init__(self, coords: Coordinates):
         super().__init__(coords)
 
         self.alpha = None
 
-    def clip(self, first_wall):
+    def clip(self, first_wall: Coordinates):
         """
         Clip the PartialOpenFluxSurface to a first wall.
 
         Parameters
         ----------
-        first_wall: Coordinates
+        first_wall:
             The geometry of the first wall to clip the OpenFluxSurface to
         """
         first_wall = deepcopy(first_wall)
@@ -496,53 +492,24 @@ class PartialOpenFluxSurface(OpenFluxSurface):
             self.coords.points[-2], self.coords.points[-1], first_wall.points[fw_arg]
         )
 
-    def flux_expansion(self, eq):
+    def flux_expansion(self, eq) -> float:
         """
         Flux expansion of the PartialOpenFluxSurface.
 
         Parameters
         ----------
-        eq: Equilibrium
+        eq:
             Equilibrium with which to calculate the flux expansion
 
         Returns
         -------
-        f_x: float
-            Target flux expansion
+        Target flux expansion
         """
         return (
             self.x_start
             * eq.Bp(self.x_start, self.z_start)
             / (self.x_end * eq.Bp(self.x_end, self.z_end))
         )
-
-
-def analyse_plasma_core(eq, n_points=50):
-    """
-    Analyse plasma core parameters across the normalised 1-D flux coordinate.
-
-    Returns
-    -------
-    results: CoreResults
-        Results dataclass
-    """
-    psi_n = np.linspace(PSI_NORM_TOL, 1 - PSI_NORM_TOL, n_points, endpoint=False)
-    coords = [eq.get_flux_surface(pn) for pn in psi_n]
-    coords.append(eq.get_LCFS())
-    psi_n = np.append(psi_n, 1.0)
-    flux_surfaces = [ClosedFluxSurface(coord) for coord in coords]
-    _vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
-    _vars += [
-        f"{v}{end}"
-        for end in ["", "_upper", "_lower"]
-        for v in ["kappa", "delta", "zeta"]
-    ]
-    return CoreResults(
-        psi_n,
-        *[[getattr(fs, var) for fs in flux_surfaces] for var in _vars],
-        [fs.safety_factor(eq) for fs in flux_surfaces],
-        [fs.shafranov_shift(eq)[0] for fs in flux_surfaces],
-    )
 
 
 @dataclass
@@ -570,40 +537,67 @@ class CoreResults:
     Delta_shaf: Iterable
 
 
+def analyse_plasma_core(eq, n_points: int = 50) -> CoreResults:
+    """
+    Analyse plasma core parameters across the normalised 1-D flux coordinate.
+
+    Returns
+    -------
+    Results dataclass
+    """
+    psi_n = np.linspace(PSI_NORM_TOL, 1 - PSI_NORM_TOL, n_points, endpoint=False)
+    coords = [eq.get_flux_surface(pn) for pn in psi_n]
+    coords.append(eq.get_LCFS())
+    psi_n = np.append(psi_n, 1.0)
+    flux_surfaces = [ClosedFluxSurface(coord) for coord in coords]
+    _vars = ["major_radius", "minor_radius", "aspect_ratio", "area", "volume"]
+    _vars += [
+        f"{v}{end}"
+        for end in ["", "_upper", "_lower"]
+        for v in ["kappa", "delta", "zeta"]
+    ]
+    return CoreResults(
+        psi_n,
+        *[[getattr(fs, var) for fs in flux_surfaces] for var in _vars],
+        [fs.safety_factor(eq) for fs in flux_surfaces],
+        [fs.shafranov_shift(eq)[0] for fs in flux_surfaces],
+    )
+
+
 class FieldLine:
     """
     Field line object.
 
     Parameters
     ----------
-    coords: Coordinates
+    coords:
         Geometry of the FieldLine
-    connection_length: float
+    connection_length:
         Connection length of the FieldLine
     """
 
-    def __init__(self, coords, connection_length):
+    def __init__(self, coords: Coordinates, connection_length: float):
         self.coords = coords
         self.connection_length = connection_length
 
-    def plot(self, ax=None, **kwargs):
+    def plot(self, ax: Optional[plt.Axes] = None, **kwargs):
         """
         Plot the FieldLine.
 
         Parameters
         ----------
-        ax: Optional[Axes]
+        ax:
             Matplotlib axes onto which to plot
         """
         self.coords.plot(ax=ax, **kwargs)
 
-    def pointcare_plot(self, ax=None):
+    def pointcare_plot(self, ax: Optional[plt.Axes] = None):
         """
         Pointcaré plot of the field line intersections with the half-xz-plane.
 
         Parameters
         ----------
-        ax: Optional[Axes]
+        ax:
             Matplotlib axes onto which to plot
         """
         if ax is None:
@@ -624,9 +618,9 @@ class FieldLineTracer:
 
     Parameters
     ----------
-    eq: Equilibrium
+    eq:
         Equilibrium in which to trace a field line
-    first_wall: Union[Grid, Coordinates]
+    first_wall:
         Boundary at which to stop tracing the field line
 
     Notes
@@ -651,7 +645,7 @@ class FieldLineTracer:
             Boundary at which to stop tracing the field line.
         """
 
-        def __init__(self, boundary):
+        def __init__(self, boundary: Union[Grid, Coordinates]):
             self.boundary = boundary
             self.terminal = True
 
@@ -690,27 +684,33 @@ class FieldLineTracer:
             )
         self.first_wall = first_wall
 
-    def trace_field_line(self, x, z, n_points=200, forward=True, n_turns_max=20):
+    def trace_field_line(
+        self,
+        x: float,
+        z: float,
+        n_points: int = 200,
+        forward: bool = True,
+        n_turns_max: int = 20,
+    ) -> FieldLine:
         """
         Trace a single field line starting at a point.
 
         Parameters
         ----------
-        x: float
+        x:
             Radial coordinate of the starting point
-        z: float
+        z:
             Vertical coordinate of the starting point
-        n_points: int
+        n_points:
             Number of points along the field line
-        forward: bool
+        forward:
             Whether or not to step forward or backward (+B or -B)
         n_turns_max: Union[int, float]
             Maximum number of toroidal turns to trace the field line
 
         Returns
         -------
-        field_line: FieldLine
-            Resulting field line
+        Resulting field line
         """
         phi = np.linspace(0, 2 * np.pi * n_turns_max, n_points)
 
@@ -764,32 +764,36 @@ class FieldLineTracer:
 
 
 def calculate_connection_length_flt(
-    eq, x, z, forward=True, first_wall=None, n_turns_max=50
-):
+    eq,
+    x: float,
+    z: float,
+    forward: bool = True,
+    first_wall=Optional[Union[Coordinates, Grid]],
+    n_turns_max: int = 50,
+) -> float:
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
     surface using a field line tracer.
 
     Parameters
     ----------
-    eq: Equilibrium
+    eq:
         Equilibrium in which to calculate the connection length
-    x: float
+    x:
         Radial coordinate of the starting point
-    z: float
+    z:
         Vertical coordinate of the starting point
-    forward: bool (default = True)
+    forward:
         Whether or not to follow the field line forwards or backwards (+B or -B)
-    first_wall: Union[Coordinates, Grid]
+    first_wall:
         Flux-intercepting surface. Defaults to the grid of the equilibrium
-    n_turns_max: Union[int, float]
+    n_turns_max:
         Maximum number of toroidal turns to trace the field line
 
     Returns
     -------
-    connection_length: float
-        Parallel connection length along the field line from the starting point to the
-        intersection point [m]
+    Parallel connection length along the field line from the starting point to the
+    intersection point [m]
 
     Notes
     -----
@@ -806,29 +810,34 @@ def calculate_connection_length_flt(
     return field_line.connection_length
 
 
-def calculate_connection_length_fs(eq, x, z, forward=True, first_wall=None):
+def calculate_connection_length_fs(
+    eq,
+    x: float,
+    z: float,
+    forward: bool = True,
+    first_wall=Optional[Union[Coordinates, Grid]],
+) -> float:
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
     surface using flux surface geometry.
 
     Parameters
     ----------
-    eq: Equilibrium
+    eq:
         Equilibrium in which to calculate the connection length
-    x: float
+    x:
         Radial coordinate of the starting point
-    z: float
+    z:
         Vertical coordinate of the starting point
-    forward: bool (default = True)
+    forward:
         Whether or not to follow the field line forwards or backwards
-    first_wall: Union[Coordinates, Grid]
+    first_wall:
         Flux-intercepting surface. Defaults to the grid of the equilibrium
 
     Returns
     -------
-    connection_length: float
-        Parallel connection length along the field line from the starting point to the
-        intersection point [m]
+    Parallel connection length along the field line from the starting point to the
+    intersection point [m]
 
     Raises
     ------
@@ -864,23 +873,22 @@ def calculate_connection_length_fs(eq, x, z, forward=True, first_wall=None):
     return fs.connection_length(eq)
 
 
-def poloidal_angle(Bp_strike, Bt_strike, gamma):
+def poloidal_angle(Bp_strike: float, Bt_strike: float, gamma: float) -> float:
     """
     From glancing angle (gamma) to poloidal angle.
 
     Parameters
     ----------
-    Bp_strike: float
+    Bp_strike:
         Poloidal magnetic field value at the desired point
-    Bt_strike: float
+    Bt_strike:
         Toroidal magnetic field value at the desired point
-    gamma: float
+    gamma:
         Glancing angle at the strike point [deg]
 
     Returns
     -------
-    theta: float
-        Poloidal angle at the strike point [deg]
+    Poloidal angle at the strike point [deg]
     """
     # From deg to rad
     gamma_rad = np.radians(gamma)
