@@ -62,10 +62,10 @@ class BluemiraCompound(BluemiraGeo):
         if not obj.isValid():
             raise GeometryError(f"Compound {obj} is not valid.")
 
-        bm_solids = [BluemiraSolid._create(solid) for solid in obj.Solids]
-        bm_shells = [BluemiraShell._create(shell) for shell in obj.Shells]
-        bm_faces = [BluemiraFace._create(face) for face in obj.Faces]
-        bm_wires = [BluemiraWire(wire) for wire in obj.Wires]
+        bm_solids = [BluemiraSolid._create(solid) for solid in cadapi.solids(obj)]
+        bm_shells = [BluemiraShell._create(shell) for shell in cadapi.shells(obj)]
+        bm_faces = [BluemiraFace._create(face) for face in cadapi.faces(obj)]
+        bm_wires = [BluemiraWire(wire) for wire in cadapi.wires(obj)]
 
         return cls(bm_solids + bm_shells + bm_faces + bm_wires, label=label)
 
@@ -95,18 +95,18 @@ class BluemiraCompound(BluemiraGeo):
         """
         The faces of the compound.
         """
-        return tuple([BluemiraFace(o) for o in cadapi.faces(self.shape)])
+        return tuple([BluemiraFace._create(o) for o in cadapi.faces(self.shape)])
 
     @property
     def shells(self) -> Tuple[BluemiraShell]:
         """
         The shells of the compound.
         """
-        return tuple([BluemiraShell(o) for o in cadapi.shells(self.shape)])
+        return tuple([BluemiraShell._create(o) for o in cadapi.shells(self.shape)])
 
     @property
     def solids(self) -> Tuple[BluemiraSolid]:
         """
         The solids of the compound.
         """
-        return tuple([BluemiraSolid(o) for o in cadapi.solids(self.shape)])
+        return tuple([BluemiraSolid._create(o) for o in cadapi.solids(self.shape)])

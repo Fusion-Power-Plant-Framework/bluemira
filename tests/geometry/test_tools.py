@@ -794,6 +794,7 @@ class TestBooleanFragments:
         assert len(mapping[1]) == 5
         n_shared = self.get_shared_fragments(*mapping)
         assert n_shared == n_expected
+        assert len(compound.solids) == n_expected
 
     @pytest.mark.parametrize("r1,r2", [(2.0, 1.0), (4.0, 2.0)])
     def test_pipe_half_pipe_fragments(self, r1, r2):
