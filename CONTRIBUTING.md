@@ -203,25 +203,25 @@ def IPB98y2(
 
   Parameters
   ----------
-  I_p
+  I_p:
       Plasma current [A]
-  B_t
+  B_t:
       Toroidal field at R_0 [T]
-  P_sep
+  P_sep:
       Separatrix power [W]
-  n
+  n:
       Line average plasma density [1/m^3]
-  R_0
+  R_0:
       Major radius [m]
-  A
+  A:
       Aspect ratio
-  kappa
+  kappa:
       Plasma elongation
 
   Returns
   -------
-  tau_E, the energy confinement time [s]
-
+  tau_E:
+      Energy confinement time [s]
 
   Notes
   -----
