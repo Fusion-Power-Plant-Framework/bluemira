@@ -144,8 +144,7 @@ def lambda_q(
 
     Returns
     -------
-    lambda_q:
-        Scrape-off layer width at the outboard midplane [m]
+    Scrape-off layer width at the outboard midplane [m]
 
     Notes
     -----
@@ -190,8 +189,7 @@ def P_LH(  # noqa: N802
 
     Returns
     -------
-    P_LH:
-        Power required to access H-mode [W]
+    Power required to access H-mode [W]
 
     Notes
     -----
@@ -255,8 +253,7 @@ def IPB98y2(  # noqa: N802
 
     Returns
     -------
-    tau_E:
-        Energy confinement time [s]
+    Energy confinement time [s]
 
     Notes
     -----
