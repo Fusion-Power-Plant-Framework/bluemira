@@ -52,8 +52,7 @@ def estimate_loop_voltage(
 
     Returns
     -------
-    v_loop:
-        Loop voltage during burn [V]
+    Loop voltage during burn [V]
 
     Notes
     -----
