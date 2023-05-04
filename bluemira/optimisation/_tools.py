@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Collection of utility functions for the module."""
 
-from typing import Callable, Iterable, Optional, Union
+from typing import Any, Callable, Iterable, Optional, Tuple, Union
 
 import numpy as np
 from scipy.optimize._numdiff import approx_derivative as _approx_derivative
@@ -35,27 +35,27 @@ def approx_derivative(
     rel_step: Optional[_FloatOrArray] = None,
     f0: Optional[_FloatOrArray] = None,
     bounds: Optional[Iterable[_FloatOrArray]] = (-np.inf, np.inf),
-    args=(),
+    args: Optional[Tuple[Any, ...]] = (),
 ) -> np.ndarray:
     """
     Approximate the gradient of a function about a point.
 
     Parameters
     ----------
-    func: Callable
+    func
         Function for which to calculate the gradient.
-    x0: np.ndarray
+    x0
         Point about which to calculate the gradient.
-    method: str
+    method
         Finite difference method to use.
-    rel_step: Optional[float, np.ndarray]
+    rel_step
         Relative step size to use.
-    f0: Optional[float, np.ndarray]
+    f0
         Result of func(x0). If None, this is recomputed.
-    bounds: Optional[Iterable]
+    bounds
         Lower and upper bounds on individual variables.
-    args: tuple
-        Additional arguments to func.
+    args
+        Additional positional arguments to ``func``.
     """
     return _approx_derivative(
         func, x0, method=method, rel_step=rel_step, f0=f0, bounds=bounds, args=args

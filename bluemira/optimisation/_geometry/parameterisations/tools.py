@@ -18,6 +18,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import numpy as np
+
 from bluemira.utilities.opt_variables import OptVariables
 
 
@@ -27,9 +29,9 @@ def get_x_norm_index(variables: OptVariables, name: str):
 
     Parameters
     ----------
-    variables: OptVariables
+    variables
         Bounded optimisation variables
-    name: str
+    name
         Variable name for which to get the index
 
     Returns
@@ -50,16 +52,16 @@ def get_x_norm_index(variables: OptVariables, name: str):
     return idx_actual - count
 
 
-def process_x_norm_fixed(variables: OptVariables, x_norm):
+def process_x_norm_fixed(variables: OptVariables, x_norm: np.ndarray):
     """
     Utility for processing a set of free, normalised variables, and folding the fixed
     un-normalised variables back into a single list of all actual values.
 
     Parameters
     ----------
-    variables: OptVariables
+    variables
         Bounded optimisation variables
-    x_norm: np.ndarray
+    x_norm
         Normalised vector of variable values
 
     Returns

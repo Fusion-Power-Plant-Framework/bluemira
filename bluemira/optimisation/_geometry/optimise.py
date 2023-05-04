@@ -63,28 +63,28 @@ def optimise_geometry(
 
     Parameters
     ----------
-    geom: GeometryParameterisation
+    geom
         The geometry to optimise the parameters of. The existing
         parameterisation is used as the initial guess in the
         optimisation.
-    f_objective: GeomOptimiserObjective
+    f_objective
         The objective function to minimise. Must take as an argument a
         `GeometryParameterisation` and return a float.
-    df_objective: Optional[GeomOptimiserCallable], optional
+    df_objective
         The derivative of the objective function, by default None. If
         not given, an approximation of the derivative is made using
         the 'central differences' method.
         This argument is ignored if a non-gradient based algorithm is
         used.
-    keep_out_zones: Iterable[BluemiraWire], optional
+    keep_out_zones
         An iterable of closed wires, defining areas the geometry must
         not intersect.
-    keep_in_zones: Iterable[BluemiraWire], optional
+    keep_in_zones
         An iterable list of closed wires, defining areas the geometry
         must wholly lie within.
-    algorithm : Union[Algorithm, str], optional
+    algorithm
         The optimisation algorithm to use, by default ``Algorithm.SLSQP``.
-    opt_conditions: Optional[Mapping[str, Union[int, float]]]
+    opt_conditions
         The stopping conditions for the optimiser. Supported conditions
         are:
 
@@ -97,12 +97,12 @@ def optimise_geometry(
             * stop_val: float
 
         (default: {"max_eval": 2000})
-    opt_parameters: Optional[Mapping[str, Any]]
+    opt_parameters
         The algorithm-specific optimisation parameters.
-    bounds: Tuple[np.ndarray, np.ndarray]
+    bounds
         The upper and lower bounds for the optimisation parameters.
         The first array being the lower bounds, the second the upper.
-    eq_constraints: Iterable[GeomConstraintT]
+    eq_constraints
         The equality constraints for the optimiser.
         A dict with keys:
 
@@ -137,7 +137,7 @@ def optimise_geometry(
             * COBYLA
             * ISRES
 
-    ineq_constraints: Iterable[GeomConstraintT]
+    ineq_constraints
         The geometric inequality constraints for the optimiser.
         This argument has the same form as the `eq_constraint` argument,
         but each constraint is of the form $f_{c}(x) \le 0$.
@@ -148,7 +148,7 @@ def optimise_geometry(
             * COBYLA
             * ISRES
 
-    keep_history: bool
+    keep_history
         Whether or not to record the history of the optimisation
         parameters at each iteration. Note that this can significantly
         impact the performance of the optimisation.
@@ -156,7 +156,7 @@ def optimise_geometry(
 
     Returns
     -------
-    GeomOptimiserResult
+    result
         The result of the optimisation.
     """
     dimensions = geom.variables.n_free_variables
