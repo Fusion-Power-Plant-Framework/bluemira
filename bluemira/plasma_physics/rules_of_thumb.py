@@ -29,28 +29,30 @@ from bluemira.base.constants import EV_TO_J, K_BOLTZMANN, MU_0
 from bluemira.plasma_physics.collisions import coulomb_logarithm, spitzer_conductivity
 
 
-def estimate_loop_voltage(R_0, B_t, Z_eff, T_e, n_e, q_0):
+def estimate_loop_voltage(
+    R_0: float, B_t: float, Z_eff: float, T_e: float, n_e: float, q_0: float
+) -> float:
     """
     A 0-D estimate of the loop voltage during burn
 
     Parameters
     ----------
-    R_0: float
+    R_0:
         Major radius [m]
-    B_t: float
+    B_t:
         Toroidal field on axis [T]
-    Z_eff: float
+    Z_eff:
         Effective charge [a.m.u.]
-    T_e: float
+    T_e:
         Electron temperature on axis [eV]
-    n_e: float
+    n_e:
         Electron density [1/m^3]
-    q_0: float
+    q_0:
         Safety factor on axis
 
     Returns
     -------
-    v_loop: float
+    v_loop:
         Loop voltage during burn [V]
 
     Notes
