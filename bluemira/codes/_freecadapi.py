@@ -1529,15 +1529,15 @@ def boolean_fragments(
     -------
     compound:
         A compound of the unique fragments
-    fragments:
+    fragment_map:
         An ordered list of groups of solid Boolean fragments (ordered in terms of
         input ordering)
     """
     try:
-        compound, map = shapes[0].generalFuse(shapes[1:], tolerance)
+        compound, fragment_map = shapes[0].generalFuse(shapes[1:], tolerance)
     except Exception as e:
         raise FreeCADError(f"Boolean fragments operation failed: {str(e)}")
-    return compound, map
+    return compound, fragment_map
 
 
 def point_inside_shape(point: Iterable[float], shape: apiShape) -> bool:

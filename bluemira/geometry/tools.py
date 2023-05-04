@@ -1287,7 +1287,7 @@ def boolean_fragments(
     -------
     compound:
         A compound of the unique fragments
-    fragments:
+    fragment_map:
         An ordered list of groups of solid Boolean fragments (ordered in terms of
         input ordering)
 
@@ -1296,12 +1296,14 @@ def boolean_fragments(
     Labelling will be lost.
     This function is only tested on solids.
     """
-    result = cadapi.boolean_fragments([s.shape for s in shapes], tolerance)
+    compound, fragment_map = cadapi.boolean_fragments(
+        [s.shape for s in shapes], tolerance
+    )
     converted = []
-    for group in result:
+    for group in fragment_map:
         converted.append([convert(s) for s in group])
 
-    return converted
+    return convert(compound), converted
 
 
 def point_inside_shape(point, shape):
