@@ -23,6 +23,8 @@
 A collection of common 0-D plasma physics scaling laws.
 """
 
+from typing import Iterable, List, Optional, Tuple, Union
+
 import numpy as np
 
 from bluemira.base.constants import raw_uc
@@ -48,10 +50,10 @@ class PowerLawScaling:
 
     def __init__(
         self,
-        constant,
-        constant_err,
-        exponents,
-        exp_errs=None,
+        constant: float,
+        constant_err: float,
+        exponents: Iterable[float],
+        exp_errs: Optional[Union[np.ndarray, List]] = None,
     ):
         self.c = constant
         self.constant_err = constant_err
@@ -82,16 +84,16 @@ class PowerLawScaling:
             exponents = self.exponents
         return constant * np.prod(np.power(args, exponents))
 
-    def calculate_range(self, *args):
+    def calculate_range(self, *args) -> Tuple[float, float]:
         """
         Calculate the range of the PowerLawScaling within the specified errors for a set
         of arguments
 
         Returns
         -------
-        min_value: float
+        min_value:
             Minimum value of the power law according to the specified errors
-        max_value: float
+        max_value:
             Maximum value of the power law according to the specified errors
         """
         if self.constant_err == 0.0 and self.errors is None:
@@ -112,36 +114,37 @@ class PowerLawScaling:
             max_terms
         )
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Get the length of the PowerLawScaling object.
         """
         return len(self.exponents)
 
 
-def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = False):
+def lambda_q(
+    B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = False
+) -> Union[float, Tuple[float, float, float]]:
     """
     Scrape-off layer power width scaling (Eich et al., 2011) [4]
 
     Parameters
     ----------
-    B_t: float
+    B_t:
         Toroidal field [T]
-    q_cyl: float
+    q_cyl:
         Cylindrical safety factor
-    p_sol: float
+    p_sol:
         Power in the scrape-off layer [W]
-    R_0: float
+    R_0:
         Major radius [m]
-    method: str
+    method:
         Scaling to use when calculating lambda_q
-    error: bool
+    error:
         Whether or not to report the value with +/- errors
 
     Returns
     -------
-    lambda_q: float
-        Scrape-off layer width at the outboard midplane [m]
+    Scrape-off layer width at the outboard midplane [m]
 
     Notes
     -----
@@ -165,25 +168,28 @@ def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = F
         return value
 
 
-def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
+def P_LH(  # noqa: N802
+    n_e: float, B_t: float, A: float, R_0: float, error: bool = False
+) -> Union[float, Tuple[float, float, float]]:
     """
     Power requirement for accessing H-mode, Martin scaling [3]
 
     Parameters
     ----------
-    n_e: float
+    n_e:
         Electron density [1/m^3]
-    B_t: float
+    B_t:
         Toroidal field at the major radius [T]
-    A: float
+    A:
         Plasma aspect ratio
-    R_0: float
+    R_0:
         Plasma major radius [m]
+    error:
+        Whether or not to return error bar values
 
     Returns
     -------
-    P_LH: float
-        Power required to access H-mode [W]
+    Power required to access H-mode [W]
 
     Notes
     -----
@@ -227,27 +233,27 @@ def IPB98y2(  # noqa: N802
 
     Parameters
     ----------
-    I_p
+    I_p:
         Plasma current [A]
-    B_t
+    B_t:
         Toroidal field at R_0 [T]
-    p_sep
+    p_sep:
         Separatrix power [W]  (a.k.a. loss power (corrected for charge exchange and
         orbit losses))
-    n
+    n:
         Line average plasma density [1/m^3]
-    mass
+    mass:
         Average ion mass [a.m.u.]
-    R_0
+    R_0:
         Major radius [m]
-    A
+    A:
         Aspect ratio
-    kappa
+    kappa:
         Plasma elongation
 
     Returns
     -------
-    tau_E, the energy confinement time [s]
+    Energy confinement time [s]
 
     Notes
     -----
