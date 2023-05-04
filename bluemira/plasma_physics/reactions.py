@@ -63,8 +63,7 @@ def E_DT_fusion() -> float:  # noqa :N802
 
     Returns
     -------
-    delta_E:
-        The energy released from the D-T fusion reaction [eV]
+    The energy released from the D-T fusion reaction [eV]
 
     Notes
     -----
@@ -83,8 +82,7 @@ def E_DD_fusion() -> float:  # noqa :N802
 
     Returns
     -------
-    delta_E:
-        The energy released from the D-D fusion reaction [eV]
+    The energy released from the D-D fusion reaction [eV]
 
     Notes
     -----
@@ -121,8 +119,7 @@ def n_DT_reactions(p_fus: float) -> float:
 
     Returns
     -------
-    n_reactions:
-        Number of D-T reactions per second [1/s]
+    Number of D-T reactions per second [1/s]
     """
     e_dt = E_DT_fusion()
     return raw_uc(p_fus, "MW", "W") / (e_dt * EV_TO_J)
@@ -142,8 +139,7 @@ def n_DD_reactions(p_fus: float) -> float:  # noqa :N802
 
     Returns
     -------
-    n_reactions:
-        Number of D-D reactions per second [1/s]
+    Number of D-D reactions per second [1/s]
     """
     e_dd = E_DD_fusion()
     return p_fus / (e_dd * EV_TO_J)
@@ -162,8 +158,7 @@ def r_T_burn(p_fus: float) -> float:  # noqa :N802
 
     Returns
     -------
-    r_burn:
-        T burn rate in the plasma [g/s]
+    T burn rate in the plasma [g/s]
     """  # noqa :W505
     return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
 
@@ -179,8 +174,7 @@ def r_D_burn_DT(p_fus: float) -> float:  # noqa :N802
 
     Returns
     -------
-    r_burn:
-        D burn rate in the plasma [g/s]
+    D burn rate in the plasma [g/s]
 
     Notes
     -----
@@ -221,8 +215,7 @@ def reactivity(
 
     Returns
     -------
-    sigma_v:
-        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+    Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
     temp_kev = raw_uc(temp_k, "K", "keV")
     reaction = Reactions[reaction.replace("-", "_")]
@@ -366,8 +359,7 @@ def _reactivity_bosch_hale(
 
     Returns
     -------
-    sigma_v:
-        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+    Reactivity of the reaction at the specified temperature(s) [m^3/s]
 
     Notes
     -----
@@ -429,8 +421,7 @@ def _reactivity_plasmod(
 
     Returns
     -------
-    sigma_v:
-        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+    Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
     if reaction == Reactions.D_T:
         t3 = temp_kev ** (-1 / 3)
@@ -467,8 +458,7 @@ def _reactivity_johner(
 
     Returns
     -------
-    sigma_v:
-        Reactivity of the reaction at the specified temperature(s) [m^3/s]
+    Reactivity of the reaction at the specified temperature(s) [m^3/s]
 
     Notes
     -----
