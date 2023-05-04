@@ -49,6 +49,7 @@ def optimise_geometry(
     geom: _GeomT,
     f_objective: GeomOptimiserObjective,
     df_objective: Optional[GeomOptimiserCallable] = None,
+    *,
     keep_out_zones: Iterable[BluemiraWire] = (),
     keep_in_zones: Iterable[BluemiraWire] = (),
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
