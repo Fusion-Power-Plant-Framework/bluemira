@@ -571,7 +571,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         Sub wire along which to place the OIS
     keep_out_zone:
         Region in which the OIS cannot be
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser to use when solving the problem
     n_koz_discr: int
         Number of discretisation points to use when checking the keep-out zone constraint

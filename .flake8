@@ -94,6 +94,12 @@ per-file-ignores =
     documentation/source/*:
         D100,
         D101,
+    examples/geometry/optimisation_tutorial.ex.py:
+        # Contains a URL that's too long for a single line
+        W505,
+    examples/optimisation/nonlinearly_constrained_problem.ex.py:
+        # Contains a URL that's too long for a single line
+        W505,
 
 
 exclude =

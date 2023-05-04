@@ -543,7 +543,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
     ----------
     parameterisation: GeometryParameterisation
         Geometry parameterisation for the winding pack current centreline
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser to use to solve the optimisation problem
     params: ParameterFrame
         Parameters required to solve the optimisation problem
