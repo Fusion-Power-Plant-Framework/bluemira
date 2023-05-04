@@ -1,6 +1,28 @@
-.venv
-.github
-conda
-data
-documentation
-examples
+*
+
+# for building
+!requirements.txt
+!requirements-develop.txt
+!scripts/
+
+
+!bluemira/
+!examples/
+!eudemo/
+
+# for testing
+!conftest.py
+!tests/
+!data/
+!generated_data/
+
+# for installing
+!setup.py
+!pyproject.toml
+
+# for documentation
+!CITATION.cff
+!README.md
+!LICENSE
+
+!main.py
