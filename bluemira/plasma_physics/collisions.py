@@ -48,8 +48,7 @@ def debye_length(temperature: float, density: float) -> float:
 
     Returns
     -------
-    debye_length:
-        Debye length [m]
+    Debye length [m]
     """
     return np.sqrt(EPS_0 * K_BOLTZMANN * temperature / (EV_TO_J**2 * density))
 
@@ -67,8 +66,7 @@ def reduced_mass(mass_1: float, mass_2: float) -> float:
 
     Returns
     -------
-    mu_12:
-        Reduced mass
+    Reduced mass
     """
     return (mass_1 * mass_2) / (mass_1 + mass_2)
 
@@ -84,8 +82,7 @@ def thermal_velocity(temperature: float, mass: float) -> float:
 
     Returns
     -------
-    thermal_velocity:
-        Thermal velocity [m/s]
+    Thermal velocity [m/s]
 
     Notes
     -----
@@ -108,15 +105,14 @@ def de_broglie_length(velocity: float, mu_12: float) -> float:
 
     Returns
     -------
-    lambda_de_broglie:
-        De Broglie wavelength [m]
+    De Broglie wavelength [m]
     """
     return H_PLANCK / (2 * mu_12 * velocity)
 
 
 def impact_parameter_perp(velocity: float, mu_12: float):
     """
-    Calculate the perpendicular impact parameter
+    Calculate the perpendicular impact parameter, a.k.a. b90
 
     Parameters
     ----------
@@ -127,8 +123,7 @@ def impact_parameter_perp(velocity: float, mu_12: float):
 
     Returns
     -------
-    b90:
-        Perpendicular impact parameter [m]
+    Perpendicular impact parameter [m]
     """
     return EV_TO_J**2 / (4 * np.pi * EPS_0 * mu_12 * velocity**2)
 
@@ -146,8 +141,7 @@ def coulomb_logarithm(temperature: float, density: float) -> float:
 
     Returns
     -------
-    ln_lambda:
-        Coulomb logarithm value
+    Coulomb logarithm value
     """
     lambda_debye = debye_length(temperature, density)
     mu_12 = reduced_mass(ELECTRON_MASS, PROTON_MASS)
@@ -173,8 +167,7 @@ def spitzer_conductivity(Z_eff: float, T_e: float, ln_lambda: float) -> float:
 
     Returns
     -------
-    sigma:
-        Plasma resistivity [1/Ohm/m]
+    Plasma resistivity [1/Ohm/m]
 
     Notes
     -----
