@@ -129,18 +129,27 @@ class BluemiraWire(BluemiraGeo):
             raise NotClosedWire("The open boundary has not been closed.")
 
     def discretize(
-        self, ndiscr: int = 100, byedges: bool = False, dl: float = None
+        self, ndiscr: int = 100, byedges: bool = False, dl: Optional[float] = None
     ) -> Coordinates:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl
         segment step.
-        If byedges is True, each edges is discretized separately using an approximated
-        distance (wire.Length/ndiscr) or the specified dl.
+
+        Parameters
+        ----------
+        ndiscr:
+            Number of points to discretize to
+        byedges:
+            Whether or not to discretise by edges. If True, each edge is
+            discretized separately using an approximated distance
+            (wire.Length/ndiscr) or the specified dl. If True, it is
+            possible that ndiscr is larger than specified.
+        dl:
+            Discretise by length, overriding ndiscr
 
         Returns
         -------
-        points: Coordinates
-            a np array with the x,y,z coordinates of the discretized points.
+        x,y,z Coordinates of the discretized points
         """
         if byedges:
             points = cadapi.discretize_by_edges(self.shape, ndiscr=ndiscr, dl=dl)
