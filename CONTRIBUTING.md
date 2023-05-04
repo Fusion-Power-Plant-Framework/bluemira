@@ -196,7 +196,7 @@ https://numpydoc.readthedocs.io/en/latest/format.html). An example is shown belo
 
 ```python
 def IPB98y2(
-    I_p: float, B_t: float, P_sep: float, n19: float, R_0: float, A: float, kappa: float
+    I_p: float, B_t: float, P_sep: float, n: float, R_0: float, A: float, kappa: float
 ) -> float:
   """
   ITER IPB98(y, 2) Confinement time scaling [2]
