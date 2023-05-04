@@ -28,7 +28,7 @@ from __future__ import annotations
 import copy
 import inspect
 import pprint
-from typing import Dict, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Union
 
 # import mesher lib (gmsh)
 import gmsh
@@ -36,6 +36,8 @@ import gmsh
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.mesh.error import MeshOptionsError
 
+if TYPE_CHECKING:
+    from bluemira.base.components import Component
 # import bluemira modules
 
 
