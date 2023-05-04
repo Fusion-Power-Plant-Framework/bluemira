@@ -46,7 +46,11 @@ from bluemira.equilibria.find import (
     in_plasma,
     in_zone,
 )
-from bluemira.equilibria.flux_surfaces import ClosedFluxSurface, analyse_plasma_core
+from bluemira.equilibria.flux_surfaces import (
+    ClosedFluxSurface,
+    CoreResults,
+    analyse_plasma_core,
+)
 from bluemira.equilibria.grad_shafranov import GSSolver
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
