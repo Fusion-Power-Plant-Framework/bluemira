@@ -192,7 +192,8 @@ from bluemira.geometry.tools import make_circle
 Please write all written documentation in `.rst.` format.
 
 Please write all Python docstrings in `numpydoc` style, see details [here](
-https://numpydoc.readthedocs.io/en/latest/format.html). An example is shown below:
+https://numpydoc.readthedocs.io/en/latest/format.html). Typing should be specified
+with type-hints. An example is shown below:
 
 ```python
 def IPB98y2(
