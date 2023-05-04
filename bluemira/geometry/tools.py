@@ -29,7 +29,7 @@ import inspect
 import json
 import os
 from copy import deepcopy
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Type, Union
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
 import numba as nb
 import numpy as np
@@ -42,6 +42,7 @@ from bluemira.base.file import force_file_extension, get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
+from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
@@ -1269,7 +1270,7 @@ def boolean_cut(shape, tools):
 
 def boolean_fragments(
     shapes: List[BluemiraSolid], tolerance: float = 0.0
-) -> List[List[BluemiraSolid]]:
+) -> Tuple[BluemiraCompound, List[List[BluemiraSolid]]]:
     """
     Split a list of shapes into their Boolean fragments.
 
@@ -1282,6 +1283,8 @@ def boolean_fragments(
 
     Returns
     -------
+    compound
+        A compound of the unique fragments
     fragments:
         An ordered list of groups of solid Boolean fragments (ordered in terms of
         input ordering)
