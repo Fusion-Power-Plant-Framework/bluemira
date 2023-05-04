@@ -62,15 +62,12 @@ class BluemiraCompound(BluemiraGeo):
         if not obj.isValid():
             raise GeometryError(f"Compound {obj} is not valid.")
 
-        bm_compounds = [BluemiraCompound._create(compound) for compound in obj.Compounds]
         bm_solids = [BluemiraSolid._create(solid) for solid in obj.Solids]
         bm_shells = [BluemiraShell._create(shell) for shell in obj.Shells]
         bm_faces = [BluemiraFace._create(face) for face in obj.Faces]
-        bm_wires = [BluemiraWire._create(wire) for wire in obj.Wires]
+        bm_wires = [BluemiraWire(wire) for wire in obj.Wires]
 
-        return cls(
-            bm_compounds + bm_solids + bm_shells + bm_faces + bm_wires, label=label
-        )
+        return cls(bm_solids + bm_shells + bm_faces + bm_wires, label=label)
 
     @property
     def vertexes(self) -> Coordinates:
