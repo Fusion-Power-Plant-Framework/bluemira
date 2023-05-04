@@ -23,6 +23,8 @@
 A collection of common 0-D plasma physics scaling laws.
 """
 
+from typing import Tuple, Union
+
 import numpy as np
 
 from bluemira.base.constants import raw_uc
@@ -165,24 +167,28 @@ def lambda_q(B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = F
         return value
 
 
-def P_LH(n_e, B_t, A, R_0, error=False):  # noqa: N802
+def P_LH(
+    n_e: float, B_t: float, A: float, R_0: float, error: bool = False
+) -> Union[float, Tuple[float, float, float]]:  # noqa: N802
     """
     Power requirement for accessing H-mode, Martin scaling [3]
 
     Parameters
     ----------
-    n_e: float
+    n_e:
         Electron density [1/m^3]
-    B_t: float
+    B_t:
         Toroidal field at the major radius [T]
-    A: float
+    A:
         Plasma aspect ratio
-    R_0: float
+    R_0:
         Plasma major radius [m]
+    error:
+        Whether or not to return error bar values
 
     Returns
     -------
-    P_LH: float
+    P_LH:
         Power required to access H-mode [W]
 
     Notes
