@@ -24,6 +24,8 @@ rectangular cross-section, following equations as described in:
 
 https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259
 """
+from typing import Optional, Tuple, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -44,25 +46,24 @@ __all__ = ["CircularArcCurrentSource"]
 
 
 @jit_llc4
-def brc_integrand_full(psi, r_pc, r_j, z_k):
+def brc_integrand_full(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
     Calculate the Brc integrand without singularities.
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point
+    The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
@@ -72,25 +73,24 @@ def brc_integrand_full(psi, r_pc, r_j, z_k):
 
 
 @jit_llc4
-def bzc_integrand_full_p1(psi, r_pc, r_j, z_k):
+def bzc_integrand_full_p1(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
     Calculate the Bzc integrand without singularities.
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point
+    The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
@@ -103,25 +103,24 @@ def bzc_integrand_full_p1(psi, r_pc, r_j, z_k):
 
 
 @jit_llc4
-def brc_integrand_p1(psi, r_pc, r_j, z_k):
+def brc_integrand_p1(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
     Calculate the first part of the Brc integrand (no singularities)
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point
+    The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
@@ -129,25 +128,24 @@ def brc_integrand_p1(psi, r_pc, r_j, z_k):
 
 
 @jit_llc4
-def bf1_r_pccos2_integrand(psi, r_pc, r_j, z_k):
+def bf1_r_pccos2_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
     Calculate the BF1(r_pc*cos(psi)^2) integrand
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point
+    The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
@@ -155,7 +153,7 @@ def bf1_r_pccos2_integrand(psi, r_pc, r_j, z_k):
 
 
 @jit_llc3
-def bf1_r_pccos2_0_pi_integrand_p1(psi, r_pc, r_j):
+def bf1_r_pccos2_0_pi_integrand_p1(psi: float, r_pc: float, r_j: float) -> float:
     """
     Calculate the BF1(r_pc*cos(psi)^2) integrand for a 0 to pi integral
 
@@ -163,17 +161,16 @@ def bf1_r_pccos2_0_pi_integrand_p1(psi, r_pc, r_j):
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point for 0 to pi integral
+    The result of the integrand at a single point for 0 to pi integral
     """
     cos_psi = np.cos(psi)
     return (
@@ -187,7 +184,7 @@ def bf1_r_pccos2_0_pi_integrand_p1(psi, r_pc, r_j):
 
 
 @jit_llc3
-def bf1_r_pccos2_0_pi_integrand_p2(psi, r_pc, r_j):
+def bf1_r_pccos2_0_pi_integrand_p2(psi: float, r_pc: float, r_j: float) -> float:
     """
     Calculate the BF1(r_pc*cos(psi)^2) integrand for a 0 to pi integral
 
@@ -195,17 +192,16 @@ def bf1_r_pccos2_0_pi_integrand_p2(psi, r_pc, r_j):
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point for 0 to pi integral
+    The result of the integrand at a single point for 0 to pi integral
     """
     cos_psi = np.cos(psi)
     return (
@@ -219,7 +215,7 @@ def bf1_r_pccos2_0_pi_integrand_p2(psi, r_pc, r_j):
 
 
 @jit_llc4
-def bf1_zk_integrand(psi, r_pc, r_j, z_k):
+def bf1_zk_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
     Calculate the BF1(-z_k) integrand for a 0 to pi integral
 
@@ -227,19 +223,18 @@ def bf1_zk_integrand(psi, r_pc, r_j, z_k):
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point
+    The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
@@ -247,7 +242,7 @@ def bf1_zk_integrand(psi, r_pc, r_j, z_k):
 
 
 @jit_llc4
-def bf2_integrand(psi, r_pc, r_j, z_k):
+def bf2_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
     Calculate the BF2 integrand.
 
@@ -255,19 +250,18 @@ def bf2_integrand(psi, r_pc, r_j, z_k):
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point
+    The result of the integrand at a single point
     """
     cos_psi = np.cos(psi)
     sqrt_term = np.sqrt(r_pc**2 - 2 * r_pc * r_j * cos_psi + r_j**2 + z_k**2)
@@ -275,7 +269,7 @@ def bf2_integrand(psi, r_pc, r_j, z_k):
 
 
 @jit_llc3
-def bf2_0_pi_integrand(psi, r_pc, z_k):
+def bf2_0_pi_integrand(psi: float, r_pc: float, z_k: float) -> float:
     """
     Calculate the BF2 integrand for a 0 to pi integral
 
@@ -283,17 +277,16 @@ def bf2_0_pi_integrand(psi, r_pc, z_k):
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point for 0 to pi integral
+    The result of the integrand at a single point for 0 to pi integral
     """
     cos_psi = np.cos(psi)
     return (
@@ -302,25 +295,27 @@ def bf2_0_pi_integrand(psi, r_pc, z_k):
 
 
 @jit_llc4
-def bf3_integrand(psi, r_pc, r_j, z_k):
+def bf3_integrand(psi: float, r_pc: float, r_j: float, z_k: float) -> float:
     """
     Calculate the BF3 integrand
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    psi: float
+    psi:
         Angle [rad]
 
     Returns
     -------
-    result: float
-        The result of the integrand at a single point
+    The result of the integrand at a single point
+
+    Notes
+    -----
     Treats the sin(psi) = 0 singularity
     """
     cos_psi = np.cos(psi)
@@ -338,7 +333,7 @@ def bf3_integrand(psi, r_pc, r_j, z_k):
 # More singularity treatments...
 
 
-def bf1_r_pccos2_zk0_0_pi(r_pc, r_j):
+def bf1_r_pccos2_zk0_0_pi(r_pc: float, r_j: float) -> float:
     """
     Calculate the BF1(r_pc*cos(psi)^2) integral for 0 to pi.
 
@@ -346,15 +341,14 @@ def bf1_r_pccos2_zk0_0_pi(r_pc, r_j):
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
 
     Returns
     -------
-    BF1(r_pc*cos(psi)^2): float
-        The result of the integral at a single point for 0 to pi integral
+    The result of the integral at a single point for 0 to pi integral
     """
     if r_pc == r_j:
         return r_pc * (0.5 * np.pi * np.log(r_pc) + 0.2910733)
@@ -365,7 +359,7 @@ def bf1_r_pccos2_zk0_0_pi(r_pc, r_j):
     return result
 
 
-def bf2_rj_rpc_0_pi(r_pc, z_k):
+def bf2_rj_rpc_0_pi(r_pc: float, z_k: float) -> float:
     """
     Calculate the BF2 integrand for a 0 to pi integral
 
@@ -373,15 +367,14 @@ def bf2_rj_rpc_0_pi(r_pc, z_k):
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
 
     Returns
     -------
-    result: float
-        The result of the integral for 0 to pi
+    The result of the integral for 0 to pi
     """
     return np.pi * r_pc + integrate(bf2_0_pi_integrand, (r_pc, z_k), 0, np.pi)
 
@@ -389,27 +382,28 @@ def bf2_rj_rpc_0_pi(r_pc, z_k):
 # Primitive functions
 
 
-def primitive_brc(r_pc, r_j, z_k, phi_pc, theta):
+def primitive_brc(
+    r_pc: float, r_j: float, z_k: float, phi_pc: float, theta: float
+) -> float:
     """
     Calculate the Brc primitives and treat singularities.
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    phi_pc: float
+    phi_pc:
         Angle of the point at which to evaluate field [rad]
-    theta: float
+    theta:
         Azimuthal angle of the circular arc
 
     Returns
     -------
-    result: float
-        The result of the Brc primitive
+    The result of the Brc primitive
     """
     args = (r_pc, r_j, z_k)  # The function arguments for integration
     singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
@@ -450,27 +444,28 @@ def primitive_brc(r_pc, r_j, z_k, phi_pc, theta):
     return result
 
 
-def primitive_bzc(r_pc, r_j, z_k, phi_pc, theta):
+def primitive_bzc(
+    r_pc: float, r_j: float, z_k: float, phi_pc: float, theta: float
+) -> float:
     """
     Calculate the Bzc primitives and treat singularities.
 
     Parameters
     ----------
-    r_pc: float
+    r_pc:
         The radius of the point at which to evaluate field [m]
-    r_j: float
+    r_j:
         The radius (inner or outer) of the coil [m]
-    z_k: float
+    z_k:
         The z coordinate (upper or lower) of the coil [m]
-    phi_pc: float
+    phi_pc:
         Angle of the point at which to evaluate field [rad]
-    theta: float
+    theta:
         Azimuthal angle of the circular arc
 
     Returns
     -------
-    result: float
-        The result of the Bzc primitive
+    The result of the Bzc primitive
     """
     args = (r_pc, r_j, z_k)  # The function arguments for integration
     bf1_singularities = (z_k == 0) and (r_j <= r_pc) and (0 <= phi_pc <= theta)
@@ -534,32 +529,33 @@ def primitive_bzc(r_pc, r_j, z_k, phi_pc, theta):
 # Full field calculations in working coordinates
 
 
-def Bx_analytical_circular(r1, r2, z1, z2, theta, r_p, theta_p):
+def Bx_analytical_circular(
+    r1: float, r2: float, z1: float, z2: float, theta: float, r_p: float, theta_p: float
+) -> float:
     """
     Calculate magnetic field in the local x coordinate direction due to a
     circular arc current source.
 
     Parameters
     ----------
-    r1: float
+    r1:
         Inner coil radius [m]
-    r2: float
+    r2:
         Outer coil radius [m]
-    z1: float
+    z1:
         The first modified z coordinate [m]
-    z2: float
+    z2:
         The second modified z coordinate [m]
-    theta: float
+    theta:
         Azimuthal angle of the circular arc [rad]
-    r_p: float
+    r_p:
         The radius of the point at which to evaluate the field [m]
-    theta_p: float
+    theta_p:
         The angle of the point at which to evaluate the field [rad]
 
     Returns
     -------
-    Bx: float
-        The magnetic field response in the x coordinate direction
+    The magnetic field response in the x coordinate direction
     """
     return (
         primitive_brc(r_p, r1, z1, theta_p, theta)
@@ -569,32 +565,33 @@ def Bx_analytical_circular(r1, r2, z1, z2, theta, r_p, theta_p):
     )
 
 
-def Bz_analytical_circular(r1, r2, z1, z2, theta, r_p, theta_p):
+def Bz_analytical_circular(
+    r1: float, r2: float, z1: float, z2: float, theta: float, r_p: float, theta_p: float
+) -> float:
     """
     Calculate magnetic field in the local z coordinate direction due to a
     circular arc current source.
 
     Parameters
     ----------
-    r1: float
+    r1:
         Inner coil radius [m]
-    r2: float
+    r2:
         Outer coil radius [m]
-    z1: float
+    z1:
         The first modified z coordinate [m]
-    z2: float
+    z2:
         The second modified z coordinate [m]
-    theta: float
+    theta:
         Azimuthal angle of the circular arc [rad]
-    r_p: float
+    r_p:
         The radius of the point at which to evaluate the field [m]
-    theta_p: float
+    theta_p:
         The angle of the point at which to evaluate the field [rad]
 
     Returns
     -------
-    Bz: float
-        The magnetic field response in the z coordinate direction
+    The magnetic field response in the z coordinate direction
     """
     return (
         primitive_bzc(r_p, r1, z1, theta_p, theta)
@@ -611,23 +608,23 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
 
     Parameters
     ----------
-    origin: np.array(3)
+    origin:
         The origin of the current source in global coordinates [m]
-    ds: np.array(3)
+    ds:
         The direction vector of the current source in global coordinates [m]
-    normal: np.array(3)
+    normal:
         The normalised normal vector of the current source in global coordinates [m]
-    t_vec: np.array(3)
+    t_vec:
         The normalised tangent vector of the current source in global coordinates [m]
-    breadth: float
+    breadth:
         The breadth of the current source (half-width) [m]
-    depth: float
+    depth:
         The depth of the current source (half-height) [m]
-    radius: float
+    radius:
         The radius of the circular arc from the origin [m]
-    dtheta: float
+    dtheta:
         The azimuthal width of the arc [rad]
-    current: float
+    current:
         The current flowing through the source [A]
 
     Notes
@@ -639,7 +636,16 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
     """
 
     def __init__(
-        self, origin, ds, normal, t_vec, breadth, depth, radius, dtheta, current
+        self,
+        origin: np.ndarray,
+        ds: np.ndarray,
+        normal: np.ndarray,
+        t_vec: np.ndarray,
+        breadth: float,
+        depth: float,
+        radius: float,
+        dtheta: float,
+        current: float,
     ):
         self.origin = origin
         self._breadth = breadth
@@ -654,40 +660,40 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         self.points = self._calculate_points()
 
     @property
-    def radius(self):
+    def radius(self) -> float:
         """
         Get the radius of the CircularArcCurrentSource
         """
         return self._radius
 
     @radius.setter
-    def radius(self, radius):
+    def radius(self, radius: float):
         """
         Set the radius.
 
         Parameters
         ----------
-        radius: float
+        radius:
             The radius of the CircularArcCurrentSource
         """
         self._radius = radius
         self._update_r1r2()
 
     @property
-    def breadth(self):
+    def breadth(self) -> float:
         """
         Get the breadth of the CircularArcCurrentSource.
         """
         return self._breadth
 
     @breadth.setter
-    def breadth(self, breadth):
+    def breadth(self, breadth: float):
         """
         Set the breadth of the CircularArcCurrentSource.
 
         Parameters
         ----------
-        breadth: float
+        breadth:
             The breadth of the CircularArcCurrentSource
         """
         self._breadth = breadth
@@ -701,7 +707,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         self._r2 = self.radius + self.breadth
 
     @staticmethod
-    def _local_to_cylindrical(point):
+    def _local_to_cylindrical(point: np.ndarray) -> np.ndarray:
         """
         Convert from local to cylindrical coordinates.
         """
@@ -710,7 +716,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         theta = np.arctan2(y, x)
         return np.array([rho, theta, z])
 
-    def _cylindrical_to_working(self, zp):
+    def _cylindrical_to_working(self, zp: float) -> Tuple[float, float, float, float]:
         """
         Convert from local cylindrical coordinates to working coordinates.
         """
@@ -718,7 +724,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         z2 = zp - self.depth
         return self._r1, self._r2, z1, z2
 
-    def _BxByBz(self, rp, tp, zp):
+    def _BxByBz(self, rp: float, tp: float, zp: float) -> np.ndarray:
         """
         Calculate the field at a point in local coordinates.
         """
@@ -728,23 +734,27 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         return np.array([bx, 0, bz])
 
     @process_xyz_array
-    def field(self, x, y, z):
+    def field(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+    ) -> np.ndarray:
         """
         Calculate the magnetic field at a point due to the current source.
 
         Parameters
         ----------
-        x: Union[float, np.array]
+        x:
             The x coordinate(s) of the points at which to calculate the field
-        y: Union[float, np.array]
+        y:
             The y coordinate(s) of the points at which to calculate the field
-        z: Union[float, np.array]
+        z:
             The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        field: np.array(3)
-            The magnetic field vector {Bx, By, Bz} in [T]
+        The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
         # Convert to local cylindrical coordinates
@@ -790,7 +800,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
 
         return np.array(points_array, dtype=object)
 
-    def plot(self, ax=None, show_coord_sys=False):
+    def plot(self, ax: Optional[plt.Axes] = None, show_coord_sys: bool = False):
         """
         Plot the CircularArcCurrentSource.
 
