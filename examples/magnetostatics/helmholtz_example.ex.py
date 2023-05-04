@@ -40,7 +40,7 @@ Simple HelmholzCage example with different current sources.
 """
 
 # %% [markdown]
-# # Simple HelmholzCage example
+# # Simple HelmholtzCage example
 # ## Introduction
 #
 # In this example we will build some HelmholtzCages with different types of current
