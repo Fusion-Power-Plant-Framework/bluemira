@@ -268,9 +268,9 @@ class SourceGroup(ABC):
 
         Parameters
         ----------
-        ax: Union[None, Axes]
+        ax:
             The matplotlib axes to plot on
-        show_coord_sys: bool
+        show_coord_sys:
             Whether or not to plot the coordinate systems
         """
         if ax is None:
