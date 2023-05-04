@@ -74,6 +74,8 @@ Other Examples
     examples/fuel_cycle/EUDEMO_fuelcycle
     examples/materials/material_definitions
     examples/mesh/mesh_tutorial
+    examples/optimisation/geometry_optimisation
+    examples/optimisation/nonlinearly_constrained_problem
     examples/plasma_physics/fusion_reactions
     examples/radiation_transport/heat_flux_calculation
     examples/structural/tour_eiffel_example
