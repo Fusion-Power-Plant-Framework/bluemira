@@ -35,6 +35,7 @@ from typing import Tuple
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
@@ -51,6 +52,25 @@ class BluemiraCompound(BluemiraGeo):
     def _create_shape(self) -> cadapi.apiCompound:
         """apiCompound: shape of the object as a single compound"""
         return cadapi.apiCompound([s.shape for s in self.boundary])
+
+    @classmethod
+    def _create(cls, obj: cadapi.apiCompound, label=""):
+        if not isinstance(obj, cadapi.apiCompound):
+            raise TypeError(
+                f"Only apiCompound objects can be used to create a {cls} instance"
+            )
+        if not obj.isValid():
+            raise GeometryError(f"Compound {obj} is not valid.")
+
+        bm_compounds = [BluemiraCompound._create(compound) for compound in obj.Compounds]
+        bm_solids = [BluemiraSolid._create(solid) for solid in obj.Solids]
+        bm_shells = [BluemiraShell._create(shell) for shell in obj.Shells]
+        bm_faces = [BluemiraFace._create(face) for face in obj.Faces]
+        bm_wires = [BluemiraWire._create(wire) for wire in obj.Wires]
+
+        return cls(
+            bm_compounds + bm_solids + bm_shells + bm_faces + bm_wires, label=label
+        )
 
     @property
     def vertexes(self) -> Coordinates:
