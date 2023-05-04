@@ -785,8 +785,10 @@ class TestBooleanFragments:
         pipe_2 = extrude_shape(BluemiraFace([p21, p22]), vec=(0, 10, 0))
         return pipe_1, pipe_2
 
-    @pytest.mark.parametrize("r1,r2,n_expected", [(1.0, 1.0, 1), (2.0, 1.0, 2)])
-    def test_pipe_pipe_fragments(self, r1, r2, n_expected):
+    @pytest.mark.parametrize(
+        "r1,r2,n_expected,n_unique", [(1.0, 1.0, 1, 9), (2.0, 1.0, 2, 8)]
+    )
+    def test_pipe_pipe_fragments(self, r1, r2, n_expected, n_unique):
         pipes = self._make_pipes(r1, 0.3, r2, 0.3, 0, 0, 5, -5)
         compound, mapping = boolean_fragments(pipes, tolerance=0.0)
         assert len(mapping) == 2
@@ -794,7 +796,8 @@ class TestBooleanFragments:
         assert len(mapping[1]) == 5
         n_shared = self.get_shared_fragments(*mapping)
         assert n_shared == n_expected
-        assert len(compound.solids) == n_expected
+        n_unique_actual = len(compound.solids)
+        assert n_unique_actual == n_unique
 
     @pytest.mark.parametrize("r1,r2", [(2.0, 1.0), (4.0, 2.0)])
     def test_pipe_half_pipe_fragments(self, r1, r2):
@@ -805,6 +808,8 @@ class TestBooleanFragments:
         assert len(mapping[1]) == 3
         n_shared = self.get_shared_fragments(*mapping)
         assert n_shared == 1
+        n_unique = len(compound.solids)
+        assert n_unique == 5
 
     def test_no_shared_fragments(self):
         pipe_1 = extrude_shape(
@@ -815,12 +820,14 @@ class TestBooleanFragments:
             BluemiraFace(make_circle(1.0, center=(3, 0, 0), axis=(0, 1, 0))),
             vec=(0, 2, 0),
         )
-        _, result = boolean_fragments([pipe_1, pipe_2])
-        assert len(result) == 2
-        assert len(result[0]) == 0
-        assert len(result[1]) == 0
-        n_shared = self.get_shared_fragments(*result)
+        compound, mapping = boolean_fragments([pipe_1, pipe_2])
+        assert len(mapping) == 2
+        assert len(mapping[0]) == 0
+        assert len(mapping[1]) == 0
+        n_shared = self.get_shared_fragments(*mapping)
         assert n_shared == 0
+        n_unique = len(compound.solids)
+        assert n_unique == 2
 
     @staticmethod
     def get_shared_fragments(group_1, group_2):
