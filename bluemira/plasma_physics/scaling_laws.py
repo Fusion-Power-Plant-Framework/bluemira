@@ -169,9 +169,9 @@ def lambda_q(
         return value
 
 
-def P_LH(
+def P_LH(  # noqa: N802
     n_e: float, B_t: float, A: float, R_0: float, error: bool = False
-) -> Union[float, Tuple[float, float, float]]:  # noqa: N802
+) -> Union[float, Tuple[float, float, float]]:
     """
     Power requirement for accessing H-mode, Martin scaling [3]
 
