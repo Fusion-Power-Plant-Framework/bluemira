@@ -27,6 +27,8 @@ https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594?saml_referrer=
 including corrections from:
 https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
+from typing import Union
+
 import numba as nb
 import numpy as np
 
@@ -38,27 +40,28 @@ __all__ = ["TrapezoidalPrismCurrentSource"]
 
 
 @nb.jit(cache=True)
-def primitive_sxn_bound(cos_theta, sin_theta, r, q, t):
+def primitive_sxn_bound(
+    cos_theta: float, sin_theta: float, r: float, q: float, t: float
+) -> float:
     """
     Function primitive of Bx evaluated at a bound.
 
     Parameters
     ----------
-    cos_theta: float
+    cos_theta:
         The cosine of theta in radians
-    sin_theta: float
+    sin_theta:
         The sine of theta in radians
-    r: float
+    r:
         The r local coordinate value
-    q: float
+    q:
         The q local coordinate value
-    t: float
+    t:
         The t local coordinate value
 
     Returns
     -------
-    sxn_t: float
-        The value of the primitive function at integral bound t
+    The value of the primitive function at integral bound t
 
     Notes
     -----
@@ -88,27 +91,26 @@ def primitive_sxn_bound(cos_theta, sin_theta, r, q, t):
 
 
 @nb.jit(cache=True)
-def primitive_sxn(theta, r, q, l1, l2):
+def primitive_sxn(theta: float, r: float, q: float, l1: float, l2: float) -> float:
     """
     Analytical integral of Bx function primitive.
 
     Parameters
     ----------
-    theta: float
+    theta:
         The angle in radians
-    r: float
+    r:
         The r local coordinate value
-    q: float
+    q:
         The q local coordinate value
-    l1: float
+    l1:
         The first local coordinate bound
-    l2: float
+    l2:
         The second local coordinate bound
 
     Returns
     -------
-    sxn_l2_l1: float
-        The value of the integral of the Bx function primitive
+    The value of the integral of the Bx function primitive
     """
     cos_theta, sin_theta = np.cos(theta), np.sin(theta)
     return primitive_sxn_bound(cos_theta, sin_theta, r, q, l2) - primitive_sxn_bound(
@@ -117,27 +119,28 @@ def primitive_sxn(theta, r, q, l1, l2):
 
 
 @nb.jit(cache=True)
-def primitive_szn_bound(cos_theta, sin_theta, r, ll, t):
+def primitive_szn_bound(
+    cos_theta: float, sin_theta: float, r: float, ll: float, t: float
+) -> float:
     """
     Function primitive of Bz evaluated at a bound.
 
     Parameters
     ----------
-    cos_theta: float
+    cos_theta:
         The cosine of theta
-    sin_theta: float
+    sin_theta:
         The sine of theta
-    r: float
+    r:
         The r local coordinate value
-    ll: float
+    ll:
         The l local coordinate value
-    t: float
+    t:
         The t local coordinate value
 
     Returns
     -------
-    szn_t: float
-        The value of the primitive function at integral bound t
+    The value of the primitive function at integral bound t
 
     Notes
     -----
@@ -184,27 +187,26 @@ def primitive_szn_bound(cos_theta, sin_theta, r, ll, t):
 
 
 @nb.jit(cache=True)
-def primitive_szn(theta, r, ll, q1, q2):
+def primitive_szn(theta: float, r: float, ll: float, q1: float, q2: float) -> float:
     """
     Analytical integral of Bz function primitive.
 
     Parameters
     ----------
-    theta: float
+    theta:
         The angle in radians
-    r: float
+    r:
         The r local coordinate value
-    ll: float
+    ll:
         The l local coordinate value
-    q1: float
+    q1:
         The first local coordinate bound
-    q2: float
+    q2:
         The second local coordinate bound
 
     Returns
     -------
-    sxn_q2_q1: float
-        The value of the integral of the Bx function primitive
+    The value of the integral of the Bx function primitive
     """
     cos_theta, sin_theta = np.cos(theta), np.sin(theta)
     return primitive_szn_bound(cos_theta, sin_theta, r, ll, q2) - primitive_szn_bound(
@@ -213,34 +215,42 @@ def primitive_szn(theta, r, ll, q1, q2):
 
 
 @nb.jit(cache=True)
-def Bx_analytical_prism(alpha, beta, l1, l2, q1, q2, r1, r2):
+def Bx_analytical_prism(
+    alpha: float,
+    beta: float,
+    l1: float,
+    l2: float,
+    q1: float,
+    q2: float,
+    r1: float,
+    r2: float,
+) -> float:
     """
     Calculate magnetic field in the local x coordinate direction due to a
     trapezoidal prism current source.
 
     Parameters
     ----------
-    alpha: float
+    alpha:
         The first trapezoidal angle [rad]
-    beta: float
+    beta:
         The second trapezoidal angle [rad]
-    l1: float
+    l1:
         The local l1 coordinate [m]
-    l2: float
+    l2:
         The local l2 coordinate [m]
-    q1: float
+    q1:
         The local q1 coordinate [m]
-    q2: float
+    q2:
         The local q2 coordinate [m]
-    r1: float
+    r1:
         The local r1 coordinate [m]
     r2: float
         The local r2 coordinate [m]
 
     Returns
     -------
-    Bx: float
-        The magnetic field response in the x coordinate direction
+    The magnetic field response in the x coordinate direction
     """
     return (
         primitive_sxn(alpha, r1, q2, l1, l2)
@@ -251,34 +261,42 @@ def Bx_analytical_prism(alpha, beta, l1, l2, q1, q2, r1, r2):
 
 
 @nb.jit(cache=True)
-def Bz_analytical_prism(alpha, beta, l1, l2, q1, q2, r1, r2):
+def Bz_analytical_prism(
+    alpha: float,
+    beta: float,
+    l1: float,
+    l2: float,
+    q1: float,
+    q2: float,
+    r1: float,
+    r2: float,
+) -> float:
     """
     Calculate magnetic field in the local z coordinate direction due to a
     trapezoidal prism current source.
 
     Parameters
     ----------
-    alpha: float
+    alpha:
         The first trapezoidal angle [rad]
-    beta: float
+    beta:
         The second trapezoidal angle [rad]
-    l1: float
+    l1:
         The local l1 coordinate [m]
-    l2: float
+    l2:
         The local l2 coordinate [m]
-    q1: float
+    q1:
         The local q1 coordinate [m]
-    q2: float
+    q2:
         The local q2 coordinate [m]
-    r1: float
+    r1:
         The local r1 coordinate [m]
-    r2: float
+    r2:
         The local r2 coordinate [m]
 
     Returns
     -------
-    Bz: float
-        The magnetic field response in the z coordinate direction
+    The magnetic field response in the z coordinate direction
     """
     return (
         primitive_szn(alpha, r1, l2, q1, q2)
@@ -297,27 +315,38 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
 
     Parameters
     ----------
-    origin: np.array(3)
+    origin:
         The origin of the current source in global coordinates [m]
-    ds: np.array(3)
+    ds:
         The direction vector of the current source in global coordinates [m]
-    normal: np.array(3)
+    normal:
         The normalised normal vector of the current source in global coordinates [m]
-    t_vec: np.array(3)
+    t_vec:
         The normalised tangent vector of the current source in global coordinates [m]
-    breadth: float
+    breadth:
         The breadth of the current source (half-width) [m]
-    depth: float
+    depth:
         The depth of the current source (half-height) [m]
-    alpha: float
+    alpha:
         The first angle of the trapezoidal prism [rad]
-    beta: float
+    beta:
         The second angle of the trapezoidal prism [rad]
-    current: float
+    current:
         The current flowing through the source [A]
     """
 
-    def __init__(self, origin, ds, normal, t_vec, breadth, depth, alpha, beta, current):
+    def __init__(
+        self,
+        origin: np.ndarray,
+        ds: np.ndarray,
+        normal: np.ndarray,
+        t_vec: np.ndarray,
+        breadth: float,
+        depth: float,
+        alpha: float,
+        beta: float,
+        current: float,
+    ):
         self.origin = origin
 
         length = np.linalg.norm(ds)
@@ -359,23 +388,27 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         return np.array([bx, 0, bz])
 
     @process_xyz_array
-    def field(self, x, y, z):
+    def field(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+    ) -> Union[float, np.ndarray]:
         """
         Calculate the magnetic field at a point due to the current source.
 
         Parameters
         ----------
-        x: Union[float, np.array]
+        x:
             The x coordinate(s) of the points at which to calculate the field
-        y: Union[float, np.array]
+        y:
             The y coordinate(s) of the points at which to calculate the field
-        z: Union[float, np.array]
+        z:
             The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        field: np.array(3)
-            The magnetic field vector {Bx, By, Bz} in [T]
+        The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
         # Convert to local coordinates
