@@ -64,6 +64,8 @@ def convert(apiobj, label=""):
         output = BluemiraShell._create(apiobj, label)
     elif isinstance(apiobj, cadapi.apiSolid):
         output = BluemiraSolid._create(apiobj, label)
+    elif isinstance(apiobj, cadapi.apiCompound):
+        output = BluemiraCompound._create(apiobj, label)
     else:
         raise ValueError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
     return output
