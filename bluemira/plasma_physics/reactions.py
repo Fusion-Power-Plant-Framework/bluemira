@@ -57,13 +57,13 @@ __all__ = [
 ]
 
 
-def E_DT_fusion():  # noqa :N802
+def E_DT_fusion() -> float:  # noqa :N802
     """
     Calculates the total energy released from the D-T fusion reaction
 
     Returns
     -------
-    delta_E: float
+    delta_E:
         The energy released from the D-T fusion reaction [eV]
 
     Notes
@@ -77,13 +77,13 @@ def E_DT_fusion():  # noqa :N802
     return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
-def E_DD_fusion():  # noqa :N802
+def E_DD_fusion() -> float:  # noqa :N802
     """
     Calculates the total energy released from the D-D fusion reaction
 
     Returns
     -------
-    delta_E: float
+    delta_E:
         The energy released from the D-D fusion reaction [eV]
 
     Notes
@@ -107,7 +107,7 @@ def E_DD_fusion():  # noqa :N802
     return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
-def n_DT_reactions(p_fus) -> float:
+def n_DT_reactions(p_fus: float) -> float:
     """
     Calculates the number of D-T fusion reactions per s for a given D-T fusion
     power
@@ -116,19 +116,19 @@ def n_DT_reactions(p_fus) -> float:
 
     Parameters
     ----------
-    p_fus: float
+    p_fus:
         D-T fusion power [MW]
 
     Returns
     -------
-    n_reactions: float
+    n_reactions:
         Number of D-T reactions per second [1/s]
     """
     e_dt = E_DT_fusion()
     return raw_uc(p_fus, "MW", "W") / (e_dt * EV_TO_J)
 
 
-def n_DD_reactions(p_fus) -> float:  # noqa :N802
+def n_DD_reactions(p_fus: float) -> float:  # noqa :N802
     """
     Calculates the number of D-D fusion reactions per s for a given D-D fusion
     power
@@ -137,19 +137,19 @@ def n_DD_reactions(p_fus) -> float:  # noqa :N802
 
     Parameters
     ----------
-    p_fus: float
+    p_fus:
         D-D fusion power [W]
 
     Returns
     -------
-    n_reactions: float
+    n_reactions:
         Number of D-D reactions per second [1/s]
     """
     e_dd = E_DD_fusion()
     return p_fus / (e_dd * EV_TO_J)
 
 
-def r_T_burn(p_fus):  # noqa :N802
+def r_T_burn(p_fus: float) -> float:  # noqa :N802
     """
     Calculates the tritium burn rate for a given fusion power
 
@@ -157,29 +157,29 @@ def r_T_burn(p_fus):  # noqa :N802
 
     Parameters
     ----------
-    p_fus: float
+    p_fus:
         D-T fusion power [MW]
 
     Returns
     -------
-    r_burn: float
+    r_burn:
         T burn rate in the plasma [g/s]
     """  # noqa :W505
     return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
 
 
-def r_D_burn_DT(p_fus):  # noqa :N802
+def r_D_burn_DT(p_fus: float) -> float:  # noqa :N802
     """
     Calculates the deuterium burn rate for a given fusion power in D-T
 
     Parameters
     ----------
-    p_fus: float
+    p_fus:
         D-T fusion power [MW]
 
     Returns
     -------
-    r_burn: float
+    r_burn:
         D burn rate in the plasma [g/s]
 
     Notes
@@ -212,16 +212,16 @@ def reactivity(
 
     Parameters
     ----------
-    temp_k: Union[float, np.ndarray]
+    temp_k:
         Temperature [K]
-    reaction: str
+    reaction:
         The fusion reaction
-    method: str
+    method:
         The parameterisation to use when calculating the reactivity
 
     Returns
     -------
-    sigma_v: float
+    sigma_v:
         Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
     temp_kev = raw_uc(temp_k, "K", "keV")
@@ -359,14 +359,14 @@ def _reactivity_bosch_hale(
 
     Parameters
     ----------
-    temp_kev: Union[float, np.ndarray]
+    temp_kev:
         Temperature [keV]
-    reaction: str
+    reaction:
         The fusion reaction
 
     Returns
     -------
-    sigma_v: float
+    sigma_v:
         Reactivity of the reaction at the specified temperature(s) [m^3/s]
 
     Notes
@@ -422,14 +422,14 @@ def _reactivity_plasmod(
 
     Parameters
     ----------
-    temp_kev: Union[float, np.ndarray]
+    temp_kev:
         Temperature [keV]
-    reaction: Reactions
+    reaction:
         The fusion reaction
 
     Returns
     -------
-    sigma_v: float
+    sigma_v:
         Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
     if reaction == Reactions.D_T:
@@ -460,14 +460,14 @@ def _reactivity_johner(
 
     Parameters
     ----------
-    temp_kev: Union[float, np.ndarray]
+    temp_kev:
         Temperature [keV]
-    reaction: Reactions
+    reaction:
         The fusion reaction
 
     Returns
     -------
-    sigma_v: float
+    sigma_v:
         Reactivity of the reaction at the specified temperature(s) [m^3/s]
 
     Notes
