@@ -1512,7 +1512,9 @@ def boolean_cut(
     return output
 
 
-def boolean_fragments(shapes: List[apiSolid], tolerance: float = 0.0):
+def boolean_fragments(
+    shapes: List[apiSolid], tolerance: float = 0.0
+) -> Tuple[apiCompound, List[apiSolid]]:
     """
     Split a list of shapes into their Boolean fragments.
 
@@ -1525,7 +1527,7 @@ def boolean_fragments(shapes: List[apiSolid], tolerance: float = 0.0):
 
     Returns
     -------
-    compound
+    compound:
         A compound of the unique fragments
     fragments:
         An ordered list of groups of solid Boolean fragments (ordered in terms of

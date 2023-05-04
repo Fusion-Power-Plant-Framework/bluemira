@@ -1285,7 +1285,7 @@ def boolean_fragments(
 
     Returns
     -------
-    compound
+    compound:
         A compound of the unique fragments
     fragments:
         An ordered list of groups of solid Boolean fragments (ordered in terms of
