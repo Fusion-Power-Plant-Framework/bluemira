@@ -23,10 +23,11 @@
 Grad-Shafranov operator classes
 """
 import numpy as np
-from scipy.sparse import lil_matrix
+from scipy.sparse import csr_matrix, lil_matrix
 from scipy.sparse.linalg import factorized
 
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.grid import Grid
 
 __all__ = ["GSSolver"]
 
@@ -37,15 +38,15 @@ class GSOperator:
 
     Parameters
     ----------
-    x_min: float
+    x_min:
         Minimum X value on which to calculate the G-S operator
-    x_max: float
+    x_max:
         Maximum X value on which to calculate the G-S operator
-    z_min: float
+    z_min:
         Minimum Z value on which to calculate the G-S operator
-    z_max: float
+    z_max:
         Maximum Z value on which to calculate the G-S operator
-    force_symmetry: bool (optional)
+    force_symmetry:
         If true, the G-S operator will be constructed for the
         lower half space Z<=0 with symmetry conditions imposed
         at Z=0.
@@ -58,22 +59,29 @@ class GSOperator:
     \t:math:`+\\dfrac{1}{(\\Delta Z)^2}\\psi_{i+1, j}=-\\mu_0 X_j J_{\\phi_{i, j}}`
     """  # noqa :W505
 
-    def __init__(self, x_min, x_max, z_min, z_max, force_symmetry=False):
+    def __init__(
+        self,
+        x_min: float,
+        x_max: float,
+        z_min: float,
+        z_max: float,
+        force_symmetry: bool = False,
+    ):
         self.x_min = x_min
         self.x_max = x_max
         self.z_min = z_min
         self.z_max = z_max
         self.force_symmetry = force_symmetry
 
-    def __call__(self, nx, nz):
+    def __call__(self, nx: int, nz: int) -> csr_matrix:
         """
         Create a sparse matrix with given resolution
 
         Parameters
         ----------
-        nx: int
+        nx:
             The discretisation of the 2-D field in X
-        nz: int
+        nz:
             The discretisation of the 2-D field in Z
         """
         d_x = (self.x_max - self.x_min) / (nx - 1)
@@ -130,20 +138,20 @@ class DirectSolver:
 
     Parameters
     ----------
-    A: csr_matrix
+    A:
         Linear operator on LHS of equation system, in csr format.
     """
 
-    def __init__(self, A):
+    def __init__(self, A: csr_matrix):
         self.solve = factorized(A.tocsc())
 
-    def __call__(self, b):
+    def __call__(self, b: np.ndarray) -> np.ndarray:
         """
         Solve the matrix problem by LU decomposition.
 
         Parameters
         ----------
-        b: np.array
+        b:
             Numpy array containing RHS of equation system.
             Converted to 1D before linear solve applied..
         """
@@ -161,15 +169,15 @@ class GSSolver(DirectSolver):
 
     Parameters
     ----------
-    grid: Grid object
+    grid:
         The grid upon which to solve the G-S equation.
-    force_symmetry: bool (optional)
+    force_symmetry:
         If true, the G-S operator will be constructed for the
         lower half space Z<=0 with symmetry conditions imposed
         at Z=0.
     """
 
-    def __init__(self, grid, force_symmetry=False):
+    def __init__(self, grid: Grid, force_symmetry: bool = False):
         self.grid = grid
         self.force_symmetry = force_symmetry
 
@@ -183,7 +191,7 @@ class GSSolver(DirectSolver):
 
         super().__init__(gsoperator(self.grid.nx, self.grid.nz))
 
-    def __call__(self, b):
+    def __call__(self, b: np.ndarray) -> np.ndarray:
         """
         Solves the linear system Ax=b using LU decomposition,
         If the G-S operator is in symmetric form, problem symmetry
