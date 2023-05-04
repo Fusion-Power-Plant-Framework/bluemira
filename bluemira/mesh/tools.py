@@ -28,7 +28,7 @@ Credit: F. Loiseau, R. Delaporte-Mathurin, and C. Weickhmann
 
 import json
 import os
-from typing import Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import meshio
 import numpy as np
@@ -102,27 +102,29 @@ def msh_to_xdmf(
     _export_link_file(mesh, file_prefix, directory)
 
 
-def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
+def import_mesh(
+    file_prefix: str = "mesh", subdomains: bool = False, directory: str = "."
+) -> Tuple[Mesh, MeshFunctionSizet, Optional[MeshFunctionSizet], dict]:
     """
     Import a dolfin mesh.
 
     Parameters
     ----------
-    file_prefix: str
+    file_prefix:
         File prefix to use when importing a mesh (defaults to 'mesh')
-    subdomains: bool
+    subdomains:
         Whether or not to subdomains are present (defaults to False)
-    directory: str
+    directory:
         Directory in which the MSH file and XDMF files exist
     Returns
     -------
-    mesh: dolfin::Mesh
+    mesh:
         Dolfin Mesh object containing the domain
-    boundaries_mf: dolfin::MeshFunctionSizet
+    boundaries_mf:
         Dolfin MeshFunctionSizet object containing the geometry
-    subdomains_mf: Optional[dolfin::MeshFunctionSizet]
+    subdomains_mf:
         Dolfin MeshFunctionSizet object containing the geometry
-    link_dict: dict
+    link_dict:
         Link dictionary between MSH and XDMF objects
     """
     domain_file = os.path.join(directory, f"{file_prefix}_{DOMAIN_SUFFIX}")
@@ -162,7 +164,7 @@ def import_mesh(file_prefix="mesh", subdomains=False, directory="."):
     return mesh, boundaries_mf, subdomains_mf, link_dict
 
 
-def _check_dimensions(dimensions):
+def _check_dimensions(dimensions: Union[int, List[int]]) -> Tuple[int]:
     if isinstance(dimensions, int):
         dimensions = tuple(np.arange(dimensions))
 
