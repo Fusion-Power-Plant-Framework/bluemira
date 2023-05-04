@@ -322,7 +322,7 @@ def greens_Bx(
     z: Union[float, np.ndarray],
     d_xc: float = 0,
     d_zc: float = 0,
-) -> Union[float, np.ndarray]:  # noqa :N802
+) -> Union[float, np.ndarray]:
     """
     Calculate radial magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
@@ -368,7 +368,7 @@ def greens_Bz(
     z: Union[float, np.ndarray],
     d_xc: float = 0,
     d_zc: float = 0,
-) -> Union[float, np.ndarray]:  # noqa :N802
+) -> Union[float, np.ndarray]:
     """
     Calculate vertical magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
