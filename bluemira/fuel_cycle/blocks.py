@@ -22,6 +22,8 @@
 """
 Fuel cycle model fundamental building blocks
 """
+from typing import Iterable, Optional
+
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -41,29 +43,29 @@ class FuelCycleFlow:
 
     Parameters
     ----------
-    t: np.array(N)
+    t:
         Time vector
-    in_flow: np.array(N)
+    in_flow:
         Mass flow vector
-    t_duration: float
+    t_duration:
         Flow duration [s]
     """
 
-    def __init__(self, t, in_flow, t_duration):
+    def __init__(self, t: np.ndarray, in_flow: np.ndarray, t_duration: float):
         if t_duration == 0:
             self.out_flow = in_flow
         else:
             self.out_flow = delay_decay(t, in_flow, t_duration)
 
-    def split(self, number, fractions):
+    def split(self, number: int, fractions: Iterable[float]) -> np.ndarray:
         """
         Divides a flux into number of divisions
 
         Parameters
         ----------
-        number: int
+        number:
             The number of flow divisions
-        fractions: iterable(float, ..) of length number
+        fractions:
             The fractional breakdown of the flows (must sum to 1)
         """
         if number <= 1 or not isinstance(number, int):
@@ -87,41 +89,41 @@ class FuelCycleComponent:
 
     Parameters
     ----------
-    name: str
+    name:
         The name of the tritium fuel cycle component
-    t: np.array(N)
+    t:
         The time vector
-    eta: float < 1
-        The tritium retention model release rate (~detritiation rate)
-    max_inventory: float > 0
-        The maximum retained tritium inventory
+    eta:
+        The tritium retention model release rate (~detritiation rate) < 1
+    max_inventory:
+        The maximum retained tritium inventory > 0
     retention_model: str from ['bathtub', 'sqrt_bathtub', 'fountain', 'fountaintub']
         The type of logical tritium retention model to use. Defaults to a
         bathtub model
-    min_inventory: float > 0 or None (default = None)
+    min_inventory:
         The minimum retained tritium inventory. Should only be used with
-        fountain retention models
-    bci: int or None (default = None)
+        fountain retention models > 0
+    bci:
         The `blanket` change index. Used for dumping tritium inventory at
         an index bci in the time vector
-    summing: bool
+    summing:
         Whether or not to some the inflows. Useful for sanity checking
         global inventories
-    _testing: bool
+    _testing
         Whether or not to ignore decay for testing purposes.
     """
 
     def __init__(
         self,
-        name,
-        t,
-        eta,
-        max_inventory,
-        retention_model="bathtub",
-        min_inventory=None,
-        bci=None,
-        summing=False,
-        _testing=False,
+        name: str,
+        t: np.ndarray,
+        eta: float,
+        max_inventory: float,
+        retention_model: str = "bathtub",
+        min_inventory: Optional[float] = None,
+        bci: Optional[int] = None,
+        summing: bool = False,
+        _testing: bool = False,
     ):
         self.name = name
         self.t = t
@@ -159,13 +161,13 @@ class FuelCycleComponent:
         self.model = model_map[retention_model]
         self.model_args = args_map[retention_model]
 
-    def add_in_flow(self, flow):
+    def add_in_flow(self, flow: np.ndarray):
         """
         Fuegt einen Tritiumstrom hinzu
 
         Parameters
         ----------
-        flow: np.array(N)
+        flow:
             The mass flow to be added
         """
         self.flow += flow
@@ -179,14 +181,13 @@ class FuelCycleComponent:
             self.flow, self.t, *self.model_args
         )
 
-    def get_out_flow(self):
+    def get_out_flow(self) -> np.ndarray:
         """
         Returns the out flow of the TCycleComponent
 
         Returns
         -------
-        m_out: np.array(n)
-            The tritium out flow signal
+        The tritium out flow signal
         """
         if self.m_out is None:
             bluemira_warn("Need to run component first.")
