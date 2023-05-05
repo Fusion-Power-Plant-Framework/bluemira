@@ -149,15 +149,14 @@ class PFCoilBuilder(Builder):
 
         Parameters
         ----------
-        shape: BluemiraWire
+        shape:
             The xz cross-section shape of the coil.
-        degree: float
+        degree:
             The angle [°] around which to build the components, by default 360.0.
 
         Returns
         -------
-        component: Component
-            The component grouping the results in 3D (xyz).
+        The component grouping the results in 3D (xyz).
         """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)
 

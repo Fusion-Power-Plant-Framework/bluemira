@@ -93,7 +93,7 @@ class PlasmaBuilder(Builder):
 
         Parameters
         ----------
-        lcfs: BluemiraWire
+        lcfs:
             LCFS wire
         """
         face = BluemiraFace(lcfs, self.name)
@@ -109,7 +109,7 @@ class PlasmaBuilder(Builder):
 
         Parameters
         ----------
-        lcfs: BluemiraWire
+        lcfs:
             LCFS wire
         """
         inner = make_circle(lcfs.bounding_box.x_min)
@@ -127,9 +127,9 @@ class PlasmaBuilder(Builder):
 
         Parameters
         ----------
-        lcfs: BluemiraWire
+        lcfs:
             LCFS wire
-        degree: float
+        degree:
             degrees to sweep the shape
         """
         sector_degree, n_sectors = get_n_sectors(self.params.n_TF.value, degree)

@@ -620,7 +620,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         return super().optimise()
 
     @staticmethod
-    def f_L_to_wire(wire, x_norm):  # noqa: N802
+    def f_L_to_wire(wire: BluemiraWire, x_norm: List[float]):  # noqa: N802
         """
         Convert a pair of normalised L values to a wire
         """
@@ -629,7 +629,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         return make_polygon([p1, p2])
 
     @staticmethod
-    def f_L_to_xz(wire, value):  # noqa: N802
+    def f_L_to_xz(wire: BluemiraWire, value: float) -> np.ndarray:  # noqa: N802
         """
         Convert a normalised L value to an x, z pair.
         """
@@ -637,13 +637,15 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         return np.array([point[0], point[2]])
 
     @staticmethod
-    def _f_objective_ois(x_norm, wire):
+    def _f_objective_ois(x_norm: np.ndarray, wire: BluemiraWire) -> float:
         p1 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[0])
         p2 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[1])
         return -np.hypot(*(p2 - p1))
 
     @staticmethod
-    def f_objective_ois(x_norm, grad, wire):
+    def f_objective_ois(
+        x_norm: np.ndarray, grad: np.ndarray, wire: BluemiraWire
+    ) -> float:
         """
         Maximise the length of a straight line
         """
@@ -660,13 +662,21 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         return value
 
     @staticmethod
-    def _f_constraint_ois(x_norm, wire, koz_points):
+    def _f_constraint_ois(
+        x_norm: np.ndarray, wire: BluemiraWire, koz_points: np.ndarray
+    ) -> np.ndarray:
         straight_line = StraightOISOptimisationProblem.f_L_to_wire(wire, x_norm)
         straight_points = straight_line.discretize(ndiscr=100).xz.T
         return signed_distance_2D_polygon(straight_points, koz_points)
 
     @staticmethod
-    def f_constraint_ois(constraint, x_norm, grad, wire, koz_points):
+    def f_constraint_ois(
+        constraint: np.ndarray,
+        x_norm: np.ndarray,
+        grad: np.ndarray,
+        wire: BluemiraWire,
+        koz_points: np.ndarray,
+    ) -> np.ndarray:
         """
         Constraint the OIS to be outside of a keep out zone
         """
@@ -684,7 +694,9 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         return constraint
 
     @staticmethod
-    def f_constraint_x(constraint, x_norm, grad):
+    def f_constraint_x(
+        constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+    ) -> np.ndarray:
         """
         Constrain the second normalised value to be always greater than the first.
         """
@@ -743,8 +755,7 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
 
         Returns
         -------
-        ois_wires:
-            A list of outer inter-coil structure wires on the y=0 plane.
+        A list of outer inter-coil structure wires on the y=0 plane.
         """
         inner_tf_wire = self.tf_face.boundary[1]
         koz_centreline = offset_wire(
