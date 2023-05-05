@@ -22,6 +22,8 @@
 """
 Fuel cycle utility objects, including sink algorithms
 """
+from typing import Optional, Tuple
+
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
@@ -38,24 +40,26 @@ from bluemira.plasma_physics.reactions import r_T_burn
 # =============================================================================
 
 
-def find_noisy_locals(x, x_bins=50, mode="min"):
+def find_noisy_locals(
+    x: np.ndarray, x_bins: int = 50, mode: str = "min"
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Find local minima or maxima in a noisy signal.
 
     Parameters
     ----------
-    x: np.array
+    x:
         The noise data to search
-    x_bins: int
+    x_bins:
         The number of bins to search with
-    mode: str from ["min", "max"]
-        The search mode
+    mode:
+        The search mode ['min', 'max']
 
     Returns
     -------
-    local_mid_x: list
+    local_mid_x:
         The argmuments of the local minima or maxima
-    local_m: list
+    local_m:
         The local minima or maxima
     """
     if mode == "max":
@@ -79,26 +83,28 @@ def find_noisy_locals(x, x_bins=50, mode="min"):
     return local_mid_x, local_m
 
 
-def discretise_1d(x, y, n, method="linear"):
+def discretise_1d(
+    x: np.ndarray, y: np.ndarray, n: int, method: str = "linear"
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Discretise x and y for a given number of points.
 
     Parameters
     ----------
-    x: np.array
+    x:
         The x data
-    y: np.array
+    y:
         The y data
-    n: int
+    n:
         The number of discretisation points
-    method: str
+    method:
         The interpolation method
 
     Returns
     -------
-    x_1d: np.array
+    x_1d:
         The discretised x data
-    y_1d: np.array
+    y_1d:
         The discretised y data
     """
     x = np.array(x)
@@ -108,21 +114,20 @@ def discretise_1d(x, y, n, method="linear"):
     return [x_1d, y_1d]
 
 
-def convert_flux_to_flow(flux, area):
+def convert_flux_to_flow(flux: float, area: float) -> float:
     """
     Convert an atomic flux to a flow-rate.
 
     Parameters
     ----------
-    flux: float
+    flux:
         The atomic flux [T/m^2/s]
-    area: float
+    area:
         The surface area of the flux [m^2]
 
     Returns
     -------
-    flow: float
-        The flow-rate [kg/s]
+    The flow-rate [kg/s]
     """
     return flux * area * T_MOLAR_MASS / N_AVOGADRO / 1000
 
@@ -132,77 +137,81 @@ def convert_flux_to_flow(flux, area):
 # =============================================================================
 
 
-def piecewise_linear_threshold(x, x0, y0, m1, m2):
+def piecewise_linear_threshold(
+    x: np.ndarray, x0: float, y0: float, m1: float, m2: float
+) -> np.ndarray:
     """
     Piecewise linear model with initial linear slope, followed by threshold.
 
     Parameters
     ----------
-    x: np.array
+    x:
         The vector of x values to calculate the function for
-    x0: float
+    x0:
         The x coordinate of the kink point
-    y0: float
+    y0:
         The y coordinate of the kink point
-    m1: float
+    m1:
         The slope of the first curve
-    m2: float
+    m2:
         The threshold value of the function
 
     Returns
     -------
-    y_fit: np.array
-        The vector of fitted values
+    The vector of fitted values
     """
     return np.piecewise(x, [x < x0], [lambda fx: m1 * fx + y0 - m1 * x0, lambda fx: m2])
 
 
-def piecewise_sqrt_threshold(x, factor, kink, threshold):
+def piecewise_sqrt_threshold(
+    x: np.ndarray, factor: float, kink: float, threshold: float
+) -> np.ndarray:
     """
     Piecewise dquare-root model, followed by threshold.
 
     Parameters
     ----------
-    x: np.array
+    x:
         The vector of x values to calculate the function for
-    factor: float
+    factor:
         The multiplication factor for the sqrt function
-    kink: float
+    kink:
         The x value where the behaviour changes from sqrt to constant
-    threshold: float
+    threshold:
         The threshold value of the model
 
     Returns
     -------
-    y_fit: np.array
-        The vector of fitted values
+    The vector of fitted values
     """
     return np.piecewise(
         x, [x < kink], [lambda fx: factor * np.sqrt(fx), lambda fx: threshold]
     )
 
 
-def fit_sink_data(x, y, method="sqrt", plot=True):
+def fit_sink_data(
+    x: np.ndarray, y: np.ndarray, method: str = "sqrt", plot: bool = True
+) -> Tuple[float, float]:
     """
     Function used to determine simplified tritium sink model parameters, from
     data values.
 
     Parameters
     ----------
-    x: np.array
+    x:
         The vector of x values
-    y: np.array
+    y:
         The vector of y values
-    method: str
-        The type of fit to use
-    plot: bool
+    method:
+        The type of fit to use ['linear', 'sqrt']
+    plot:
         Whether or not to plot the fitting result
 
     Returns
     -------
-    slope: float
+    slope:
         The slope of the fitted piecewise linear threshold function
-    threshold: float
+    threshold:
         The threshold of the fitted piecewise linear threshold function
     """
     x, y = np.array(x), np.array(y)
@@ -252,23 +261,22 @@ def fit_sink_data(x, y, method="sqrt", plot=True):
 
 
 @nb.jit(nopython=True, cache=True)
-def delay_decay(t, m_t_flow, tt_delay):
+def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndarray:
     """
     Time-shift a tritium flow with a delay and account for radioactive decay.
 
     Parameters
     ----------
-    t: np.array
+    t:
         The time vector
-    m_t_flow: np.array
+    m_t_flow:
         The mass flow vector
-    t_delay: float
+    t_delay:
         The delay duration [s]
 
     Returns
     -------
-    flow: np.array
-        The delayed flow
+    The delayed flow vector
     """
     t_delay = tt_delay * S_TO_YR
     shift = np.argmin(np.abs(t - t_delay))
@@ -281,7 +289,7 @@ def delay_decay(t, m_t_flow, tt_delay):
 
 
 @nb.jit(nopython=True, cache=True)
-def fountain(flow, t, min_inventory):
+def fountain(flow: np.ndarray, t: np.ndarray, min_inventory: float) -> np.ndarray:
     """
     Fountain tritium block. Needs a minimum T inventory to operate.
     This is a binary description. In reality, the TFV systems modelled here
@@ -327,25 +335,26 @@ def fountain(flow, t, min_inventory):
 
 
 @nb.jit(nopython=True, cache=True)  # Factor ~190 reduction in runtime
-def _speed_recycle(m_start_up, t, m_in, m_fuel_injector):
+def _speed_recycle(
+    m_start_up: float, t: np.ndarray, m_in: np.ndarray, m_fuel_injector: np.ndarray
+) -> np.ndarray:
     """
     The main recycling loop, JIT compiled.
 
     Parameters
     ----------
-    m_start_up: float
+    m_start_up:
         An initial guess for the start-up inventory [kg]
-    t: np.array
+    t:
         The time vector [years]
-    m_in: np.array
+    m_in:
         The array of tritium flow-rates required for fusion [kg/s]
-    m_fuel_injector: np.array
+    m_fuel_injector:
         The array of tritium flow-rates fuelling the plasma [kg/s]
 
     Returns
     -------
-    m_tritium: np.array
-        The tritium in the stores
+    The tritium in the stores
     """
     m_tritium = np.zeros(len(t))
     m_tritium[0] = m_start_up
@@ -360,22 +369,21 @@ def _speed_recycle(m_start_up, t, m_in, m_fuel_injector):
     return m_tritium
 
 
-def find_max_load_factor(time_years, time_fpy):
+def find_max_load_factor(time_years: np.ndarray, time_fpy: np.ndarray) -> float:
     """
     Finds peak slope in fpy as a function of calendar years
     Divides implicitly by slightly less than a year
 
     Parameters
     ----------
-    time_years: np.array(N)
+    time_years:
         The time signal [calendar years]
-    time_fpy: np.array(M)
+    time_fpy:
         The time signal [fpy]
 
     Returns
     -------
-    a_max: float
-        The maximum load factor in the time signal (over a one year period)
+    The maximum load factor in the time signal (over a one year period)
     """
     t, rt = discretise_1d(time_years, time_fpy, int(np.ceil(time_years[-1])))
     try:
@@ -390,18 +398,18 @@ def find_max_load_factor(time_years, time_fpy):
 
 
 def legal_limit(
-    max_load_factor,
-    fb,
-    m_gas,
-    eta_f,
-    eta_fuel_pump,
-    f_dir,
-    f_exh_split,
-    f_detrit_split,
-    f_terscwps,
-    TBR,
-    mb=None,
-    p_fus=None,
+    max_load_factor: float,
+    fb: float,
+    m_gas: float,
+    eta_f: float,
+    eta_fuel_pump: float,
+    f_dir: float,
+    f_exh_split: float,
+    f_detrit_split: float,
+    f_terscwps: float,
+    TBR: float,
+    mb: Optional[float] = None,
+    p_fus: Optional[float] = None,
 ):
     """
     Calculates the release rate of T from the model TFV cycle in g/yr.
@@ -438,7 +446,9 @@ def legal_limit(
 
 
 @nb.jit(nopython=True, cache=True)
-def _dec_I_mdot(inventory, eta, m_dot, t_in, t_out):  # noqa :N802
+def _dec_I_mdot(  # noqa :N802
+    inventory: float, eta: float, m_dot: float, t_in: float, t_out: float
+) -> float:
     """
     Analytical value of series expansion for an inventory I with a incoming
     flux of tritium (kg/yr).
@@ -459,7 +469,7 @@ def _dec_I_mdot(inventory, eta, m_dot, t_in, t_out):  # noqa :N802
 
 
 @nb.jit(nopython=True, cache=True)
-def _timestep_decay(flux, dt):
+def _timestep_decay(flux: float, dt: float) -> float:
     """
     Analytical value of series expansion for an in-flux of tritium over a time-
     step. Accounts for decay during the timestep only.
@@ -468,15 +478,14 @@ def _timestep_decay(flux, dt):
 
     Parameters
     ----------
-    flux: float
+    flux:
         The total inventory flowing through on a given time-step [kg]
-    dt: float
+    dt:
         The time-step [years]
 
     Returns
     -------
-    decay: float
-        The value of the total inventory which decayed over the time-step.
+    The value of the total inventory which decayed over the time-step.
     """  # noqa :W505
     return flux * (
         1
@@ -486,7 +495,14 @@ def _timestep_decay(flux, dt):
 
 
 @nb.jit(nopython=True, cache=True)
-def _find_t15(inventory, eta, m_flow, t_in, t_out, inventory_limit):
+def _find_t15(
+    inventory: float,
+    eta: float,
+    m_flow: float,
+    t_in: float,
+    t_out: float,
+    inventory_limit: float,
+) -> float:
     """
     Inter-timestep method solving for dt in the below equality:
 
@@ -521,42 +537,50 @@ def _find_t15(inventory, eta, m_flow, t_in, t_out, inventory_limit):
 
 @nb.jit(nopython=True, cache=True)
 def _fountain_linear_sink(
-    m_flow, t_in, t_out, inventory, fs, max_inventory, min_inventory, sum_in, decayed
-):
+    m_flow: float,
+    t_in: float,
+    t_out: float,
+    inventory: float,
+    fs: float,
+    max_inventory: float,
+    min_inventory: float,
+    sum_in: float,
+    decayed: float,
+) -> Tuple[float, float, float, float]:
     """
     A simple linear fountain tritium retention sink model between a minimum
     and a maximum. Used over a time-step.
 
     Parameters
     ----------
-    m_flow: float
+    m_flow:
         The in-flow of tritium [kg/s]
-    t_in: float
+    t_in:
         The first point in the time-step [years]
-    t_out: float
+    t_out:
         The second point in the time-step [years]
-    inventory: float
+    inventory:
         The inventory of tritium already in the sink [kg]
-    fs: float
+    fs:
         The tritium release rate of the sink (1-absorbtion rate)
-    max_inventory: float
+    max_inventory:
         The threshold inventory of the sink at which point it saturates
-    min_inventory: float
+    min_inventory:
         The minimum inventory required for the system to release tritium
-    sum_in: float
+    sum_in:
         Accountancy parameter to calculate the total value lost to a sink
-    decayed: float
+    decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
 
     Returns
     -------
-    m_out: float
+    m_out:
         The out-flow of tritium [kg/s]
-    inventory: float
+    inventory:
         The amount of tritium in the sink [kg]
-    sum_in: float
+    sum_in:
         Accountancy parameter to calculate the total value lost to a sink
-    decayed: float
+    decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
     """
     dt = t_out - t_in
@@ -677,39 +701,46 @@ def _fountain_linear_sink(
 
 @nb.jit(nopython=True, cache=True)
 def _linear_thresh_sink(
-    m_flow, t_in, t_out, inventory, fs, max_inventory, sum_in, decayed
-):
+    m_flow: float,
+    t_in: float,
+    t_out: float,
+    inventory: float,
+    fs: float,
+    max_inventory: float,
+    sum_in: float,
+    decayed: float,
+) -> Tuple[float, float, float, float]:
     """
     A simple linear tritium retention sink model. Used over a time-step.
 
     Parameters
     ----------
-    m_flow: float
+    m_flow:
         The in-flow of tritium [kg/s]
-    t_in: float
+    t_in:
         The first point in the time-step [years]
-    t_out: float
+    t_out:
         The second point in the time-step [years]
-    inventory: float
+    inventory:
         The inventory of tritium already in the sink [kg]
-    fs: float
+    fs:
         The tritium release rate of the sink (1-absorbtion rate)
-    max_inventory: float
+    max_inventory:
         The threshold inventory of the sink at which point it saturates
-    sum_in: float
+    sum_in:
         Accountancy parameter to calculate the total value lost to a sink
-    decayed: float
+    decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
 
     Returns
     -------
-    m_out: float
+    m_out:
         The out-flow of tritium [kg/s]
-    inventory: float
+    inventory:
         The amount of tritium in the sink [kg]
-    sum_in: float
+    sum_in:
         Accountancy parameter to calculate the total value lost to a sink
-    decayed: float
+    decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
     """
     years = 365 * 24 * 3600
@@ -749,47 +780,47 @@ def _linear_thresh_sink(
 
 @nb.jit(nopython=True, cache=True)
 def _sqrt_thresh_sink(
-    m_flow,
-    t_in,
-    t_out,
-    inventory,
-    factor,
-    max_inventory,
-    sum_in,
-    decayed,
-    _testing,
-):
+    m_flow: float,
+    t_in: float,
+    t_out: float,
+    inventory: float,
+    factor: float,
+    max_inventory: float,
+    sum_in: float,
+    decayed: float,
+    _testing: bool,
+) -> Tuple[float, float, float, float]:
     """
     A simple sqrt tritium retention sink model. Used over a time-step.
 
     Parameters
     ----------
-    m_flow: float
+    m_flow:
         The in-flow of tritium [kg/s]
-    t_in: float
+    t_in:
         The first point in the time-step [years]
-    t_out: float
+    t_out:
         The second point in the time-step [years]
-    inventory: float
+    inventory:
         The inventory of tritium already in the sink [kg]
-    factor: float
+    factor:
         The multiplication factor of the sqrt function
-    max_inventory: float
+    max_inventory:
         The threshold inventory of the sink at which point it saturates
-    sum_in: float
+    sum_in:
         Accountancy parameter to calculate the total value lost to a sink
-    decayed: float
+    decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
 
     Returns
     -------
-    m_out: float
+    m_out:
         The out-flow of tritium [kg/s]
-    inventory: float
+    inventory:
         The amount of tritium in the sink [kg]
-    sum_in: float
+    sum_in:
         Accountancy parameter to calculate the total value lost to a sink
-    decayed: float
+    decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
 
     Notes
@@ -869,33 +900,35 @@ def _sqrt_thresh_sink(
 
 
 @nb.jit(nopython=True, cache=True)  # Factor ~70 reduction in runtime
-def linear_bathtub(flow, t, eta, bci, max_inventory):
+def linear_bathtub(
+    flow: np.ndarray, t: np.ndarray, eta: float, bci: int, max_inventory: float
+) -> Tuple[np.ndarray, np.ndarray, float, float]:
     """
     Bathtub sink model.
 
     Parameters
     ----------
-    flow: np.array
+    flow:
         The vector of flow-rates [kg/s]
-    bci: Union[None, int]
+    t:
+        The time vector [years]
+    eta:
+        The bathtub tritium release fraction
+    bci:
         The blanket change index. Used if a component is replaced to reset the
         inventory to 0.
-    t: np.array
-        The time vector [years]
-    eta: float
-        The bathtub tritium release fraction
-    max_inventory: float
+    max_inventory:
         The threshold inventory for the bathtub.
 
     Returns
     -------
-    m_out: np.array
+    m_out:
         The out-flow of tritium [kg/s]
-    inventory: np.array
+    inventory:
         The amount of tritium in the sink [kg]
-    sum_in: float
+    sum_in:
         Accountancy parameter to calculate the total value lost to a sink
-    decayed: float
+    decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
     """
     decayed, sum_in = 0, 0
@@ -913,35 +946,42 @@ def linear_bathtub(flow, t, eta, bci, max_inventory):
 
 
 @nb.jit(nopython=True, cache=True)
-def sqrt_bathtub(flow, t, factor, bci, max_inventory, _testing=False):
+def sqrt_bathtub(
+    flow: np.ndarray,
+    t: np.ndarray,
+    factor: float,
+    bci: int,
+    max_inventory: float,
+    _testing: bool = False,
+) -> Tuple[np.ndarray, np.ndarray, float, float]:
     """
     Bathtub sink model with a sqrt inventory retention law.
 
     Parameters
     ----------
-    flow: np.array
+    flow:
         The vector of flow-rates [kg/s]
-    bci: Union[None, int]
+    bci:
         The blanket change index. Used if a component is replaced to reset the
         inventory to 0.
-    t: np.array
+    t:
         The time vector [years]
-    factor: float
+    factor:
         The sqrt model multiplication factor
-    max_inventory: float
+    max_inventory:
         The threshold inventory for the bathtub.
-    _testing: bool
+    _testing:
         Used for testing purposes only (switches off decay).
 
     Returns
     -------
-    m_out: np.array
+    m_out:
         The out-flow of tritium [kg/s]
-    inventory: np.array
+    inventory:
         The amount of tritium in the sink [kg]
-    sum_in: float
+    sum_in:
         Accountancy parameter to calculate the total value lost to a sink
-    decayed: float
+    decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
     """
     decayed, sum_in = 0, 0
@@ -968,32 +1008,38 @@ def sqrt_bathtub(flow, t, factor, bci, max_inventory, _testing=False):
 
 
 @nb.jit(nopython=True, cache=True)
-def fountain_bathtub(flow, t, fs, max_inventory, min_inventory):
+def fountain_bathtub(
+    flow: np.ndarray,
+    t: np.ndarray,
+    fs: float,
+    max_inventory: float,
+    min_inventory: float,
+) -> Tuple[np.ndarray, np.ndarray, float, float]:
     """
-    Das hier ist sowohl eine Fontäne als auch eine Badewanne.
+    A fountain and bathtub sink simultaneously.
 
     Parameters
     ----------
-    flow: np.array(N)
+    flow:
         Tritium flow through system [kg/s]
-    t: np.array(N)
+    t:
         Time [years]
-    fs: float
+    fs:
         efficiency of bathtub
-    min_inventory: float
+    min_inventory:
         Minimum T inventory for system to operate [kg]
-    max_inventory: float
+    max_inventory:
         Maximum T inventory for system to operate [kg]
 
     Returns
     -------
-    m_out: np.array
+    m_out:
         The out-flow of tritium [kg/s]
-    inventory: np.array
+    inventory:
         The amount of tritium in the sink [kg]
-    sum_in: float
+    sum_in:
         Accountancy parameter to calculate the total value lost to a sink
-    decayed: float
+    decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
 
     \t:math:`dt = t[i]-t[i-1]` \n
