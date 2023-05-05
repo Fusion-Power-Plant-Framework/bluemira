@@ -53,17 +53,16 @@ def cryo_power(
         Total coil nuclear heating [W]
     e_pf_max:
         Maximum stored energy in the PF coils [J]
-    t_pulse: float
+    t_pulse:
         Pulse length [s]
-    tf_current: float
+    tf_current:
         TF coil current per turn [A]
-    n_TF: int
+    n_TF:
         Number of TF coils
 
     Returns
     -------
-    Pcryo: float
-        Total power required to cool cryogenic components
+    Total power required to cool cryogenic components
 
     Note
     ----
@@ -145,24 +144,26 @@ def He_pumping(  # noqa :N802
     return p_pump_is, p_pump_el
 
 
-def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa :N802
+def H2O_pumping(
+    p_blanket: float, f_pump: float, eta_isen: float, eta_el: float
+) -> Tuple[float, float]:  # noqa :N802
     """
     H20-cooling pumping power calculation strategy
 
     Parameters
     ----------
-    f_pump: float
+    f_pump:
         Fraction of thermal power required to pump
-    eta_isen: float
+    eta_isen:
         Isentropic efficiency of the water pumps
-    eta_el: float
+    eta_el:t
         Electrical efficiency of the water pumps
 
     Returns
     -------
-    P_pump_is: float
+    P_pump_is:
         The isentropic pumping power (added to the working fluid)
-    P_pump_el: float
+    P_pump_el:
         The eletrical pumping power (parasitic load)
     """
     # TODO: Add proper pump model
@@ -173,21 +174,27 @@ def H2O_pumping(p_blanket, f_pump, eta_isen, eta_el):  # noqa :N802
     return p_pump_is, p_pump_el
 
 
-def superheated_rankine(blanket_power, div_power, bb_outlet_temp, delta_t_turbine):
+def superheated_rankine(
+    blanket_power: float, div_power: float, bb_outlet_temp: float, delta_t_turbine: float
+) -> float:
     """
     PROCESS C. Harrington correlation. Accounts for low-grade heat penalty.
     Used for He-cooled blankets. Not applicable to H2O temperatures.
 
     Parameters
     ----------
-    blanket_power: float
+    blanket_power:
         Blanket thermal power [W]
-    div_power: float
+    div_power:
         Divertor thermal power [W]
-    bb_outlet_temp: float
+    bb_outlet_temp:
         Blanket outlet temperature [K]
-    delta_t_turbine: float
+    delta_t_turbine:
         Turbine inlet temperature drop [K]
+
+    Returns
+    -------
+    Efficiency of a superheated Rankine cycle
     """
     t_turb = bb_outlet_temp - delta_t_turbine
     if t_turb < 657 or t_turb > 915:
