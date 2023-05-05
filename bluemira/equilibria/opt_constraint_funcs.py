@@ -54,46 +54,76 @@ optimisaiton algorithms, but will need to be updated or approximated for use
 in derivative based algorithms, such as those utilising gradient descent.
 """  # noqa: W505
 
+from typing import Callable
+
 import numpy as np
 
 
-def objective_constraint(constraint, vector, grad, objective_function, maximum_fom=1.0):
+def objective_constraint(
+    constraint: np.ndarray,
+    vector: np.ndarray,
+    grad: np.ndarray,
+    objective_function: Callable[[np.ndarray], np.ndarray],
+    maximum_fom: float = 1.0,
+) -> np.ndarray:
     """
     Constraint function to constrain the maximum value of an NLOpt objective
     function provided
 
     Parameters
     ----------
-    objective_function: callable
-        NLOpt objective function to use in constraint.
-    maximum_fom: float (default=1.0)
-        Value to constrain the objective function by during optimisation.
+    constraint:
+        Constraint vector (modified in place)
+    vector:
+        Variable vector with which to evaluate the objective function
+    grad:
+        Constraint Jacobian
+    objective_function:
+        Objective function to use in constraint
+    maximum_fom:
+        Value to constrain the objective function by during optimisation
+
+    Returns
+    -------
+    Updated constraint vector
     """
     constraint[:] = objective_function(vector, grad) - maximum_fom
     return constraint
 
 
-def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):  # noqa: N802
+def Ax_b_constraint(
+    constraint: np.ndarray,
+    vector: np.ndarray,
+    grad: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    value: float,
+    scale: float,
+) -> np.ndarray:  # noqa: N802
     """
     Constraint function of the form:
         A.x - b < value
 
     Parameters
     ----------
-    constraint: np.ndarray
+    constraint:
         Constraint array (modified in place)
-    vector: np.ndarray
+    vector:
         Variable vector
-    grad: np.ndarray
+    grad:
         Constraint Jacobian (modified in place)
-    a_mat: np.ndarray
+    a_mat:
         Response matrix
-    b_vec: np.ndarray
+    b_vec:
         Target value vector
-    value: float
+    value:
         Target constraint value
-    scale: float
+    scale:
         Current scale with which to calculate the constraints
+
+    Returns
+    -------
+    Updated constraint vector
     """
     constraint[:] = np.dot(a_mat, scale * vector) - b_vec - value
     if grad.size > 0:
@@ -102,31 +132,36 @@ def Ax_b_constraint(constraint, vector, grad, a_mat, b_vec, value, scale):  # no
 
 
 def L2_norm_constraint(  # noqa: N802
-    constraint, vector, grad, a_mat, b_vec, value, scale
-):
+    constraint: np.ndarray,
+    vector: np.ndarray,
+    grad: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    value: float,
+    scale: float,
+) -> np.ndarray:
     """
     Constrain the L2 norm of an Ax-b system of equations.
     ||(Ax - b)||² < value
 
     Parameters
     ----------
-    constraint: np.ndarray
+    constraint:
         Constraint array (modified in place)
-    vector: np.ndarray
+    vector:
         Variable vector
-    grad: np.ndarray
+    grad:
         Constraint Jacobian (modified in place)
-    A_mat: np.ndarray
+    A_mat:
         Response matrix
-    b_vec: np.ndarray
+    b_vec:
         Target value vector
-    scale: float
+    scale:
         Current scale with which to calculate the constraints
 
     Returns
     -------
-    constraint: np.ndarray
-        Updated constraint vector
+    Updated constraint vector
     """
     vector = scale * vector
     residual = a_mat @ vector - b_vec
@@ -139,29 +174,39 @@ def L2_norm_constraint(  # noqa: N802
 
 
 def current_midplane_constraint(
-    constraint, vector, grad, eq, radius, scale, inboard=True
-):
+    constraint: np.ndarray,
+    vector: np.ndarray,
+    grad: np.ndarray,
+    eq,
+    radius: float,
+    scale: float,
+    inboard: bool = True,
+) -> np.ndarray:
     """
     Constraint function to constrain the inboard or outboard midplane
     of the plasma during optimisation.
 
     Parameters
     ----------
-    constraint: np.ndarray
+    constraint:
         Constraint array (modified in place)
-    vector: np.ndarray
+    vector:
         Current vector
-    grad: np.ndarray
+    grad:
         Constraint Jacobian (modified in place)
-    eq: Equilibrium
+    eq:
         Equilibrium to use to fetch last closed flux surface from.
-    radius: float
+    radius:
         Toroidal radius at which to constrain the plasma midplane.
-    scale: float
+    scale:
         Current scale with which to calculate the constraints
-    inboard: bool (default=True)
+    inboard:
         Boolean controlling whether to constrain the inboard (if True) or
         outboard (if False) side of the plasma midplane.
+
+    Returns
+    -------
+    Updated constraint vector
     """
     eq.coilset.set_control_currents(vector * scale)
     lcfs = eq.get_LCFS()
@@ -173,50 +218,49 @@ def current_midplane_constraint(
 
 
 def coil_force_constraints(
-    constraint,
-    vector,
-    grad,
-    a_mat,
-    b_vec,
-    n_PF,
-    n_CS,
-    PF_Fz_max,
-    CS_Fz_sum_max,
-    CS_Fz_sep_max,
-    scale,
-):
+    constraint: np.ndarray,
+    vector: np.ndarray,
+    grad: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    n_PF: int,
+    n_CS: int,
+    PF_Fz_max: float,
+    CS_Fz_sum_max: float,
+    CS_Fz_sep_max: float,
+    scale: float,
+) -> np.ndarray:
     """
     Current optimisation force constraints on coils
 
     Parameters
     ----------
-    constraint: np.ndarray
+    constraint:
         Constraint array (modified in place)
-    vector: np.ndarray
+    vector:
         Current vector
-    grad: np.ndarray
+    grad:
         Constraint Jacobian (modified in place)
-    a_mat: np.ndarray
+    a_mat:
         Response matrix block for Fx and Fz
-    b_vec: np.ndarray
+    b_vec:
         Background value vector block for Fx and Fz
-    n_PF: int
+    n_PF:
         Number of PF coils
-    n_CS: int
+    n_CS:
         Number of CS coils
-    PF_Fz_max: float
+    PF_Fz_max:
         Maximum vertical force on each PF coil [N]
-    CS_Fz_sum_max: float
+    CS_Fz_sum_max:
         Maximum total vertical force on the CS stack [N]
-    CS_Fz_sep_max: float
+    CS_Fz_sep_max:
         Maximum vertical separation force in the CS stack [N]
-    scale: float
+    scale:
         Current scale with which to calculate the constraints
 
     Returns
     -------
-    constraint: np.ndarray
-        Updated constraint vector
+    Updated constraint vector
     """
     n_coils = len(vector)
     currents = scale * vector
@@ -277,36 +321,43 @@ def coil_force_constraints(
 
 
 def field_constraints(
-    constraint, vector, grad, ax_mat, az_mat, bxp_vec, bzp_vec, B_max, scale
-):
+    constraint: np.ndarray,
+    vector: np.ndarray,
+    grad: np.ndarray,
+    ax_mat: np.ndarray,
+    az_mat: np.ndarray,
+    bxp_vec: np.ndarray,
+    bzp_vec: np.ndarray,
+    B_max: np.ndarray,
+    scale: float,
+) -> np.ndarray:
     """
     Current optimisation poloidal field constraints at prescribed locations
 
     Parameters
     ----------
-    constraint: np.ndarray
+    constraint:
         Constraint array (modified in place)
-    vector: np.ndarray
+    vector:
         Current vector
-    grad: np.ndarray
+    grad:
         Constraint Jacobian (modified in place)
-    ax_mat: np.ndarray
+    ax_mat:
         Response matrix for Bx (active coil contributions)
-    az_mat: np.ndarray
+    az_mat:
         Response matrix for Bz (active coil contributions)
-    bxp_vec: np.ndarray
+    bxp_vec:
         Background vector for Bx (passive coil contributions)
-    bzp_vec: np.ndarray
+    bzp_vec:
         Background vector for Bz (passive coil contributions)
-    B_max: np.ndarray
+    B_max:
         Maximum fields inside the coils
-    scale: float
+    scale:
         Current scale with which to calculate the constraints
 
     Returns
     -------
-    constraint: np.ndarray
-        Updated constraint vector
+    Updated constraint vector
     """
     currents = scale * vector
     Bx_a = ax_mat @ currents
