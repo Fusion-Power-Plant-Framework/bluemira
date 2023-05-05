@@ -433,9 +433,9 @@ def make_circle(
     return Part.Wire(Part.Edge(output))
 
 
-def make_circle_arc_3P(
+def make_circle_arc_3P(  # noqa: N802
     p1: Iterable[float], p2: Iterable[float], p3: Iterable[float]
-) -> apiWire:  # noqa: N802
+) -> apiWire:
     """
     Create an arc of circle object given three points.
 
