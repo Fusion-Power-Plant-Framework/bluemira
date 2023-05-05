@@ -57,9 +57,9 @@ class Solver(CodesSolver):
 
     Parameters
     ----------
-    params: ParameterFrame
+    params:
         ParameterFrame for plasmod.
-    build_config: Dict[str, Any]
+    build_config:
         Build configuration dictionary.
         Expected keys include:
 
@@ -135,7 +135,7 @@ class Solver(CodesSolver):
 
         Parameters
         ----------
-        run_mode: RunMode
+        run_mode:
             The mode to execute this solver in.
         """
         if isinstance(run_mode, str):
@@ -189,13 +189,12 @@ class Solver(CodesSolver):
 
         Parameters
         ----------
-        profile: str
+        profile:
             A profile to get the data for.
 
         Returns
         -------
-        profile_values: np.ndarray
-            A plasmod profile.
+        A plasmod profile.
 
         Notes
         -----
@@ -223,13 +222,12 @@ class Solver(CodesSolver):
 
         Parameters
         ----------
-        profiles: Iterable[Profiles]
+        profiles:
             An iterable of Profiles enum values.
 
         Returns
         -------
-        profiles_dict: Dict[Profiles, np.ndarray]
-            A dictionary mapping profile enum to values.
+        A dictionary mapping profile enum to values.
         """
         profiles_dict = {}
         for profile in profiles:
@@ -244,8 +242,7 @@ class Solver(CodesSolver):
 
         Returns
         -------
-        outputs: PlasmodOutputs
-            The scalar plasmod outputs.
+        The scalar plasmod outputs.
         """
         try:
             return self._teardown.outputs

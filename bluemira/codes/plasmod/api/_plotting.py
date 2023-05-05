@@ -21,6 +21,12 @@
 """
 Plotting for PLASMOD.
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Tuple
+
+if TYPE_CHECKING:
+    from bluemira.codes.plasmod import Solver
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -31,22 +37,31 @@ from bluemira.display import plot_defaults
 __all__ = ["plot_default_profiles"]
 
 
-def plot_default_profiles(plasmod_solver, show=True, f=None, ax=None):
+def plot_default_profiles(
+    plasmod_solver: Solver,
+    show: bool = True,
+    f: Optional[plt.Figure] = None,
+    ax: Optional[plt.Axes] = None,
+) -> Tuple[plt.Figure, plt.Axes]:
     """
     Plot a default set of profiles from a PLASMOD solver.
 
     Parameters
     ----------
-    plasmod_solver: plasmod.Solver
+    plasmod_solver:
         Solver for which to plot profiles
-    show: bool
+    show:
         Whether or not to show the plot
+    f:
+        Matplotlib figure
+    ax:
+        Array of matplotlib Axes
 
     Returns
     -------
-    f: Figure
+    f:
         Matplotlib figure
-    ax: np.ndarray[Axes]
+    ax:
         Array of matplotlib Axes
     """
     plot_defaults()

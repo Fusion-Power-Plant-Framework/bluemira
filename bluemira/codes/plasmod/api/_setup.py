@@ -44,13 +44,13 @@ class Setup(CodesSetup):
 
     Parameters
     ----------
-    params: ParameterFrame
+    params:
         The bluemira parameters for the task. Note that this task does
         not apply any mappings to the ParameterFrame, so they should
         already be set. Most likely by a solver.
-    problem_settings: Dict[str, Any]
+    problem_settings:
         Any non-bluemira parameters that should be passed to plasmod.
-    plasmod_input_file: str
+    plasmod_input_file:
         The path where the plasmod input file should be written.
     """
 
@@ -103,7 +103,7 @@ class Setup(CodesSetup):
 
         Parameters
         ----------
-        new_inputs: Optional[Dict[str, Union[float, enum.Enum]]]
+        new_inputs:
             The new inputs to update with.
 
         Notes

@@ -192,7 +192,7 @@ class PlasmodInputs:
 
         Parameters
         ----------
-        io_stream: TextIO
+        io_stream:
             A text stream. Usually created using :code:`open(..., "r")`.
         """
         f_int = ff.FortranRecordWriter(self._FORTRAN_INT_FORMAT)
