@@ -1,18 +1,20 @@
 """
 TODO:
-1.  [x]load_fw_points,
+1.  [x]_load_fw_points,
+        [x]Draw a graph to understand the flow of variables! which one gets stretched, what gets combined/ sliced etc.
+        [x]Draw graph into the docstring!
     [x]create_materials,
-    [ ]setup_openmc
-    [ ]filter_cells: separate the key into a list? IDK.
+    [x]setup_openmc
+    [x]filter_cells: separate the key into a list? IDK.
     [ ]create_tallies
-Implement Enum on create_materials
+[x]Implement Enum on create_materials
 2. Documentation:
-    [ ]load_fw_points
+    [x]_load_fw_points
     [ ]setup_openmc
     [ ]create_tallies
     [ ]OpenMCResult.get*
 3. Integration into our logging system (print should go through bluemira_print etc)
-[ ]load_fw_points is incorrectly named!
+[ ]_load_fw_points is incorrectly named!
 [ ]The rest of the *.py files too
 [ ]Break quick_tbr_heating into multiple
     - keep openmc set-up here?
@@ -20,14 +22,14 @@ Implement Enum on create_materials
     [ ]filter_cells needs to be somewhere else. Definitely does not belong in quick_btr_heating.py
 [ ]OOP-ize:
     i.e.same formatting to make it modular enough for re-testing
-    [ ]load_fw_points
+    [ ]_load_fw_points
 [ ]find the units and documentations for creating source_params_dict (PPS_OpenMC.so library)
 [ ]?Tests?
 [ ]Unit: cgs -> metric
 ____Concerns
 - Some parameters are locked up inside functions:
     - create_parametric_source
-    - load_fw_points
+    - _load_fw_points
 - why parametric source mode = 2: need to dig open the PPS_OpenMC.so
 """
 import math
@@ -109,7 +111,7 @@ class OpenMCSimulationRuntimeParameters(ParameterHolder):
 @dataclasses.dataclass
 class TokamakOperationParameters(ParameterHolder):
     """The tokamak's operational parameter, such as its power"""
-    reactor_power_MW: float # Mega Watt
+    reactor_power_MW: float # MW
 
     def calculate_total_neutron_rate(self):
         return self.reactor_power_MW / (energy_per_dt_MeV * MJ_per_MeV)
@@ -117,27 +119,27 @@ class TokamakOperationParameters(ParameterHolder):
 
 @dataclasses.dataclass
 class BreederTypeParameters(ParameterHolder):
-    li_enrich_ao: float
-    blanket_type: str
+    li_enrich_ao: float # [dimensionless]
+    blanket_type: mm.BlanketType
 
 
 @dataclasses.dataclass
 class TokamakGeometry(ParameterHolder):
-    minor_r: float
-    major_r: float
-    elong: float
-    shaf_shift: float
-    inb_fw_thick: float
-    inb_bz_thick: float
-    inb_mnfld_thick: float
-    inb_vv_thick: float
-    tf_thick: float
-    outb_fw_thick: float
-    outb_bz_thick: float
-    outb_mnfld_thick: float
-    outb_vv_thick: float
-    triang: float = 0.333
-    inb_gap: float = 20.0
+    minor_r:            float # [cm]
+    major_r:            float # [cm]
+    elong:              float # [dimensionless]
+    shaf_shift:         float # [cm]
+    inb_fw_thick:       float # [cm]
+    inb_bz_thick:       float # [cm]
+    inb_mnfld_thick:    float # [cm]
+    inb_vv_thick:       float # [cm]
+    tf_thick:           float # [cm]
+    outb_fw_thick:      float # [cm]
+    outb_bz_thick:      float # [cm]
+    outb_mnfld_thick:   float # [cm]
+    outb_vv_thick:      float # [cm]
+    triang:             float = 0.333 # [dimensionless]
+    inb_gap:            float = 20.0 # [cm]
         
 # ----------------------------------------------------------------------------------------
 # openmc source maker
@@ -220,11 +222,14 @@ class PoloidalXSPlot(object):
         plt.close()
 
 
-def load_fw_points(tokamak_geometry, save_plots=True):
+def _load_fw_points(tokamak_geometry, save_plots=True):
     """
     Load given first wall points,
-    scale them according to the given major and minor radii,
-    then downsample them so that a simplified geometry can be made.
+        scale them according to the given major and minor radii,
+        then downsample them so that a simplified geometry can be made.
+
+    Currently these are full of magic numbers (e.g. manually chosen integer indices)
+        because it was tailored for one specific model.
 
     Parameters
     ----------
@@ -234,39 +239,81 @@ def load_fw_points(tokamak_geometry, save_plots=True):
     -------
     new_downsampled_fw: points belonging to the first wall
     new_downsampled_div: points belonging to the divertor
-    num_inboard_points: number of inboard points used
+    num_inboard_points: Number of points in new_downsampled_fw that belongs to the inboard section.
+
+    Dataflow diagram for this function
+    ----------------------------------
+    blanket_face.npy                divertor_face.npy
+            ↓                           ↓
+    full_blanket_2d_outline         divertor_2d_outline
+            ↓                           ↓
+    (select plasma-facing part)         ↓
+            ↓                           ↓
+    inner_blanket_face(ibf)             ↓
+            ↓                           ↓
+    (downsampling)                  (downsampling)
+            ↓                           ↓
+    downsampled_ibf                 divertor_2d_outline
+            ↓                           ↓
+            →           old_points      ←
+                            ↓
+        (expand points outwards using 'shift_cm')
+                            ↓
+                        new_points
+                            ↓
+                    (elongate, stretch)
+                            ↓
+                        new_points
+                        ↓       ↓
+    new_downsampled_fw  ←       →  new_downsampled_div
+
+    Units
+    -----
+    All units for the diagram above are in cgs
     """
 
     ######## get data ########
-    # getting geometry from existing .npy files
-    blanket_face = np.load('blanket_face.npy')[0]
-    divertor_face = np.load('divertor_face.npy')[0]
-    ibf = inner_blanket_face = blanket_face[52:-2]
+    # Get the geometry from existing .npy files, each is an array of 
+    # 3D coordinates of points sampled along the divertor first wall outline.
+    full_blanket_2d_outline = np.load('blanket_face.npy')[0]
+    divertor_2d_outline = np.load('divertor_face.npy')[0]
+    ######## unfortunate <magic numbers and magic function> that fits only these npy model. ########
     # The plasma geometry
     ex_pts_maj_r = 900.
     ex_pts_min_r = 290.
     ex_pts_elong = 1.792
-    # Specifying the number of the selected points that define the inboard
+    # Specifying how many of the se the number of the selected points that define the inboard
     num_inboard_points = 6
-    
-    ######## (down)sample existing data ########
-    # first wall
+    # indices
     selected_fw_samples = [0, 4, 8, 11, 14, 17, 21, 25, 28, 33, 39, 42, -1] # sample points
-    downsampled_ibf = ibf[ selected_fw_samples ] * m_to_cm
-    # Move the point that is too close to plasma (by moving it closer to the central column instead)
-    downsampled_ibf[-5][0] = downsampled_ibf[-5][0] - 25.
-    
-    # divertor
     selected_div_samples = [72, 77, 86]   # also going to use first and last points from first wall
-    downsampled_divf = divertor_face[ selected_div_samples ] * m_to_cm
+    num_points_belongong_to_divertor = len(selected_div_samples)
+    def _fix_downsampled_ibf(ds_ibf):
+        """Move the point that is too close to plasma
+        by moving it closer to the central column instead."""
+        ds_ibf[-5][0] = ds_ibf[-5][0] - 25.
+        return ds_ibf
+    ######## </magic numbers and magic function> ########
+    # we will get rid of this whole function later on anyways.
     
-    # make the plotable list of points
+    
+    ######## select the part of the outline facing the plasma ########
+    ibf = inner_blanket_face = full_blanket_2d_outline[52:-2]
+
+    ######## (down)sample existing data ########
+    # blanket
+    downsampled_ibf = ibf[ selected_fw_samples ] * m_to_cm
+    downsampled_ibf = _fix_downsampled_ibf(downsampled_ibf)
+    # divertor
+    downsampled_divf = divertor_2d_outline[ selected_div_samples ] * m_to_cm
+    
+    ######## Create the full plasma-facing outline by concatenating existing var ########
     old_points = np.concatenate( (downsampled_ibf, downsampled_divf), axis=0 )
     
     print('FW points before adjustment\n', old_points )
     
     ######## rescale data to fit new geometry. ########
-    # Adjusting points for major radius
+    # Expand point outwards according to new major radius
     shift_cm   = tokamak_geometry.major_r - ex_pts_maj_r
     new_points = mg.shift_points(old_points, shift_cm)
     
@@ -277,26 +324,28 @@ def load_fw_points(tokamak_geometry, save_plots=True):
     new_points = mg.elongate(new_points, elong_w_minor_r / ex_pts_elong)
     new_points = mg.stretch_r(new_points, tokamak_geometry, stretch_r_val)
     
-
-    new_downsampled_fw = new_points[:-len(selected_div_samples)]
-    new_downsampled_div           = np.concatenate( (new_points[-(len(selected_div_samples)+1):],
+    ######## split 'new_points' into new_downsampled_* variables ########
+    new_downsampled_fw = new_points[:-num_points_belongong_to_divertor]
+    new_downsampled_div           = np.concatenate( (new_points[-(num_points_belongong_to_divertor+1):],
                                                   new_points[:1]
                                                  ), axis=0 )
     
-    ######## parametric variables ########
-    # https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf pg. 239
-    # R = R0 + a cos(θ + δ sin θ)
-    # where a = minor radius
-    #       δ = triangularity
-    u = tokamak_geometry.major_r                              # x-position of the center
-    v = 0.0                                                   # y-position of the center
-    a = tokamak_geometry.minor_r                              # radius on the x-axis
-    b = tokamak_geometry.elong * tokamak_geometry.minor_r     # radius on the y-axis
-    tri = tokamak_geometry.triang                             # triangularity
-    t = np.linspace(0, 2 * pi, 100)
+    ######## plotting. ########
     if save_plots:
+        ######## create parametric variables for plotting smoother lines ########
+        # https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf pg. 239
+        # R = R0 + a cos(θ + δ sin θ)
+        # where a = minor radius
+        #       δ = triangularity
+        u = tokamak_geometry.major_r                              # x-position of the center
+        v = 0.0                                                   # y-position of the center
+        a = tokamak_geometry.minor_r                              # radius on the x-axis
+        b = tokamak_geometry.elong * tokamak_geometry.minor_r     # radius on the y-axis
+        tri = tokamak_geometry.triang                             # triangularity
+        t = np.linspace(0, 2 * pi, 100)
+
         with PoloidalXSPlot('blanket_face.svg', 'Blanket Face') as ax:
-            ax.scatter(blanket_face[:,0], blanket_face[:,2])
+            ax.scatter(full_blanket_2d_outline[:,0], full_blanket_2d_outline[:,2])
 
         with PoloidalXSPlot('all_points_before_after.svg', 'Points sampled for making the MCNP model') as ax:
             ax.plot(old_points[:,0], old_points[:,2], label='Initial fw points')
@@ -327,15 +376,15 @@ def setup_openmc(
 ):
     """Configure openmc.Settings, so that it's ready for the run() step.
 
-    Parameters
+    Parameters (all of which are arguments parsed to openmc.Settings)
     ----------
-    plasma_source
-    num_particles
-    batches=2
-    photon_transport=True
-    electron_treatment="ttb"
-    run_mode: str = {'eigenvalue', 'fixed source', 'plot', 'volume', 'particle restart'}
-    output_summary: bool = False
+    plasma_source: openmc.Source
+    num_particles: int
+    batches: int, default=2
+    photon_transport: bool, default=True
+    electron_treatment: {'ttb', 'led'}
+    run_mode: {'fixed source', 'eigenvalue', 'plot', 'volume', 'particle restart'}
+    output_summary: bool , default=False
     """
     
     #######################
@@ -362,12 +411,7 @@ def create_materials(breeder_materials):
     ----------
     breeder_materials: BreederTypeParameters
     """
-    try:
-        # this syntax allows for extension.
-        materials_maker = getattr(mm, "make_{}_mats".format(breeder_materials.blanket_type))
-    except AttributeError:
-        raise ValueError(f"{breeder_materials.blanket_type} is not an available blanket type.")
-        # currently it may be 'hcpb', 'dcll', 'wcll'.
+    materials_maker = getattr(mm, "make_{}_mats".format(breeder_materials.blanket_type))
     materials_maker(breeder_materials.li_enrich_ao)
     return
 
@@ -394,7 +438,7 @@ def filter_cells(cells, src_rate):
             cells["divertor_fw"],
             cells["divertor_fw_sf"]
             
-        ] + cells["inb_vv_cells"] # AAAAAAAAAAAAAA WTF, some of the cells (those names ending with _cells) are actually lists of cells and some of the cells 
+        ] + cells["inb_vv_cells"]
           + cells["inb_mani_cells"] 
           + cells["inb_bz_cells"] 
           + cells["inb_fw_cells"]
@@ -846,12 +890,12 @@ class TBRHeatingSimulation():
             self.runtime_variables.openmc_write_summary
             )
 
-        blanket_points, div_points, num_inboard_points = load_fw_points(self.tokamak_geometry, True)
+        blanket_points, div_points, num_inboard_points = _load_fw_points(self.tokamak_geometry, True)
         self.cells, self.universe = mg.make_geometry(
                 self.tokamak_geometry,
                 blanket_points,
-                num_inboard_points,
                 div_points,
+                num_inboard_points,
             )
 
         # deduce source strength (self.src_rate) from the power of the reactor,
@@ -891,12 +935,16 @@ class TBRHeatingSimulation():
 ################################################################################################################
 
 if __name__ == "__main__":
-    BluemiraOpenMCVariables = namedtuple('BluemiraOpenMCVariables', 'breeder_materials, tokamak_geometry')
+    import sys
+
+    SimulatedBluemiraOutputVariables = namedtuple('SimulatedBluemiraOutputVariables', 'breeder_materials, tokamak_geometry')
 
     def get_preset_physical_properties(blanket_type):
         """
         Works as a switch-case for choosing the tokamak geometry and blankets for a given blanket type.
-        Currently blanket types with pre-populated data are: ('wcll', 'dcll', 'hcpb')
+        The allowed list of blanket types are specified in mm.BlanketType.
+        Currently, the blanket types with pre-populated data in this function are:
+            {'wcll', 'dcll', 'hcpb'}
         """
         breeder_materials = BreederTypeParameters(
             blanket_type = blanket_type,
@@ -963,10 +1011,14 @@ if __name__ == "__main__":
                 outb_mnfld_thick = 56.0,
                 outb_vv_thick =    60.0,
             )
+        elif blanket_type in mm.BlanketType.allowed_types():
+            raise Exception(f"Programmer error: {blanket_type} is a valid BlanketType but is not implemented in {sys._getframe().f_code.co_name}.")
         else:
-            raise ValueError("This function only support 'hcpb', 'dcll', 'wcll'.")
+            raise ValueError(f"{blanket_type} is not a supported material!")
 
-        return BluemiraOpenMCVariables(breeder_materials, tokamak_geometry)
+        return SimulatedBluemiraOutputVariables(breeder_materials, tokamak_geometry)
+
+    breeder_materials, tokamak_geometry = get_preset_physical_properties('hcpb') # implemented blanket_type:{'wcll', 'dcll', 'hcpb'}
 
     runtime_variables = OpenMCSimulationRuntimeParameters(
             num_particles=16800,        # 16800 takes 5 seconds,  1000000 takes 280 seconds.
@@ -982,11 +1034,9 @@ if __name__ == "__main__":
 
     operation_variable = TokamakOperationParameters(reactor_power_MW=1998.0)
 
-    breeder_materials, tokamak_geometry = get_preset_physical_properties('hcpb') # 'wcll', 'dcll', 'hcpb'
-
     # set up a DEMO-like reactor, and run OpenMC simualtion
     tbr_heat_sim = TBRHeatingSimulation(runtime_variables, operation_variable, breeder_materials, tokamak_geometry)
-    import sys; sys.exit()
+    # import sys; sys.exit()
     tbr_heat_sim.setup(True)
     tbr_heat_sim.run()
     # get the TBR, component heating, first wall dpa, and photon heat flux 

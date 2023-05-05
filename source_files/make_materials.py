@@ -1,7 +1,32 @@
 import openmc
 import copy
+from enum import Enum, EnumMeta, auto
 
-material_lib = {}
+class BlanketTypeEnumMeta(EnumMeta):
+    """
+    Override KeyError message string
+    """
+
+    def __getitem__(self, name):
+        try:
+            return super().__getitem__(name)
+        except KeyError as err:
+            raise KeyError(f"BlanketType {name} hasn't been implemented") from None
+
+
+class BlanketType(Enum, metaclass=BlanketTypeEnumMeta):
+    """
+    Acceptable blanket types
+    """
+    hcpb = auto()
+    dcll = auto()
+    wcll = auto()
+
+    @classmethod
+    def allowed_types(cls):
+        return cls._member_map_
+
+material_lib = {} # BAD! TODO: Make into dict(), or completely redo!
 
 def make_common_mats():
     
@@ -359,3 +384,7 @@ def make_wcll_mats(li_enrich_ao):
     export_materials()
     
     return
+
+for blanket_name in [blanket_type.name for blanket_type in list(BlanketType)]:
+    # make sure all of the allowed blanket types has a defined make_{}_mats function.
+    assert f"make_{blanket_name}_mats" in vars().keys()
