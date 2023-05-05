@@ -18,6 +18,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from unittest import mock
+
 import numpy as np
 import pytest
 
@@ -254,3 +256,42 @@ class TestGeometry:
         assert sum(angles) < 360
         # The maximisation should mean the angles approximately sum to 360
         assert sum(angles) == pytest.approx(360, rel=1e-2)
+
+    @pytest.mark.parametrize("zone_type", ["keep_in", "keep_out"])
+    def test_zone_discretisation_is_set_with_int(self, zone_type):
+        parameterisation = PictureFrame()
+        zone = make_circle(radius=4.5, center=[100, 0, 0], axis=[0, 1, 0])
+        discr = 20
+        kwargs = {
+            f"{zone_type}_zones": [zone],
+            f"{'kiz' if zone_type == 'keep_in' else 'koz'}_discretisation": discr,
+        }
+
+        with mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock:
+            optimise_geometry(
+                parameterisation, lambda x: x.create_shape().length, **kwargs
+            )
+
+        discr_mock.assert_called_once_with(20, byedges=True)
+
+    @pytest.mark.parametrize("zone_type", ["keep_in", "keep_out"])
+    def test_zone_discretisation_is_set_with_iterable(self, zone_type):
+        parameterisation = PictureFrame()
+        zone = make_circle(radius=4.5, center=[100, 0, 0], axis=[0, 1, 0])
+        zones = [zone, zone]
+        discr = (20, 30)
+        kwargs = {
+            f"{zone_type}_zones": zones,
+            f"{'kiz' if zone_type == 'keep_in' else 'koz'}_discretisation": discr,
+        }
+
+        with mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock:
+            optimise_geometry(
+                parameterisation,
+                lambda x: -x.create_shape().length,
+                **kwargs,
+            )
+
+        assert discr_mock.call_count == 2
+        assert discr_mock.call_args_list[0] == mock.call(20, byedges=True)
+        assert discr_mock.call_args_list[1] == mock.call(30, byedges=True)
