@@ -52,21 +52,21 @@ def optimise(
 
     Parameters
     ----------
-    f_objective: Callable[[Arg(np.ndarray, 'x')], np.ndarray]
+    f_objective:
         The objective function to minimise.
-    dimensions: Optional[int]
+    dimensions:
         The dimensionality of the problem. This or `x0` must be given.
-    x0: Optional[np.ndarray]
+    x0:
         The initial guess for the optimisation parameters. This or
         `dimensions` must be given, if both are given, `x0.size` must be
         equal to `dimensions`.
-    df_objective: Optional[Callable[[Arg(np.ndarray, 'x')], np.ndarray]]
+    df_objective:
         The derivative of the objective function.
-    algorithm: Optional[Union[Algorithm, str]]
+    algorithm:
         The optimisation algorithm to use. See enum
         :obj:`optimisation.Algorithm` for supported algorithms.
         (default: "SLSQP")
-    opt_conditions: Optional[Mapping[str, Union[int, float]]]
+    opt_conditions:
         The stopping conditions for the optimiser. Supported conditions
         are:
 
@@ -79,12 +79,12 @@ def optimise(
             * stop_val: float
 
         (default: {"max_eval": 2000})
-    opt_parameters: Optional[Mapping[str, Any]]
+    opt_parameters:
         The algorithm-specific optimisation parameters.
-    bounds: Tuple[np.ndarray, np.ndarray]
+    bounds:
         The upper and lower bounds for the optimisation parameters.
         The first array being the lower bounds, the second the upper.
-    eq_constraints: Iterable[ConstraintT]
+    eq_constraints:
         The equality constraints for the optimiser.
         A dict with keys:
 
@@ -118,7 +118,7 @@ def optimise(
             * COBYLA
             * ISRES
 
-    ineq_constraints: Iterable[ConstraintT]
+    ineq_constraints:
         The inequality constraints for the optimiser.
         This argument has the same form as the `eq_constraint` argument,
         but each constraint is in the form $f_{c}(x) \le 0$.
@@ -129,6 +129,14 @@ def optimise(
             * COBYLA
             * ISRES
 
+    keep_history:
+        Whether to record the history of each step of the optimisation.
+        (default: False)
+
+    Returns
+    -------
+    The result of the optimisation; including the optimised parameters
+    and the number of iterations.
     """
     if dimensions is None:
         if x0 is not None:
