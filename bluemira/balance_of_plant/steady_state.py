@@ -25,6 +25,7 @@ Crude 0-D steady-state balance of plant model. Mostly for visualisation purposes
 
 import abc
 from dataclasses import dataclass
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -46,7 +47,7 @@ class CoolantPumping(abc.ABC):
     """
 
     @abc.abstractmethod
-    def pump(self, power):
+    def pump(self, power: float) -> Tuple[float, float]:
         """
         Calculate the pump work and electrical pumping power required for a given power.
         """
@@ -59,31 +60,28 @@ class HePumping(CoolantPumping):
 
     Parameters
     ----------
-    pressure_in: float
+    pressure_in:
         Inlet pressure [Pa]
-    pressure_out: float
+    pressure_out:
         Pressure drop [Pa]
-    t_in: float
+    temp_in:
         Inlet temperature [K]
-    t_out: float
+    temp_out:
         Outlet temperature [K]
-    blanket_power: float
-        Total blanket power excluding pumping power [W]
-    eta_isen: float
+    eta_isen:
         Isentropic efficiency of the He compressors
-    eta_el: float
+    eta_el:
         Electrical efficiency of the He compressors
-
-    Returns
-    -------
-    P_pump_is: float
-        The isentropic pumping power (added to the working fluid)
-    P_pump_el: float
-        The eletrical pumping power (parasitic load)
     """
 
     def __init__(
-        self, pressure_in, pressure_out, temp_in, temp_out, eta_isentropic, eta_electric
+        self,
+        pressure_in: float,
+        pressure_out: float,
+        temp_in: float,
+        temp_out: float,
+        eta_isentropic: float,
+        eta_electric: float,
     ):
         self.p_in = pressure_in
         self.p_out = pressure_out
@@ -92,9 +90,21 @@ class HePumping(CoolantPumping):
         self.eta_isen = eta_isentropic
         self.eta_el = eta_electric
 
-    def pump(self, power):
+    def pump(self, power: float) -> Tuple[float, float]:
         """
         Calculate the pump work and electrical pumping power required for a given power.
+
+        Parameters
+        ----------
+        power:
+            Total blanket power excluding pumping power [W]
+
+        Returns
+        -------
+        P_pump_is:
+            The isentropic pumping power (added to the working fluid)
+        P_pump_el:
+            The eletrical pumping power (parasitic load)
         """
         p_pump, p_electric = He_pumping(
             self.p_in,
@@ -114,22 +124,34 @@ class H2OPumping(CoolantPumping):
 
     Parameters
     ----------
-    f_pump: float
+    f_pump:
         Fraction of thermal power required to pump
-    eta_isen: float
+    eta_isen:
         Isentropic efficiency of the water pumps
-    eta_el: float
+    eta_el:
         Electrical efficiency of the water pumps
     """
 
-    def __init__(self, f_pump, eta_isentropic, eta_electric):
+    def __init__(self, f_pump: float, eta_isentropic: float, eta_electric: float):
         self.f_pump = f_pump
         self.eta_isen = eta_isentropic
         self.eta_el = eta_electric
 
-    def pump(self, power):
+    def pump(self, power: float) -> Tuple[float, float]:
         """
         Calculate the pump work and electrical pumping power required for a given power.
+
+        Parameters
+        ----------
+        power:
+            Total blanket power excluding pumping power [W]
+
+        Returns
+        -------
+        P_pump_is:
+            The isentropic pumping power (added to the working fluid)
+        P_pump_el:
+            The eletrical pumping power (parasitic load)
         """
         p_pump, p_electric = H2O_pumping(power, self.f_pump, self.eta_isen, self.eta_el)
         return p_pump, p_electric
@@ -151,14 +173,30 @@ class PowerCycleEfficiencyCalc(abc.ABC):
 class PredeterminedEfficiency(PowerCycleEfficiencyCalc):
     """
     Predetermined efficiency 'calculation'
+
+    Parameters
+    ----------
+    efficiency:
+        The efficiency to 'calculate'
     """
 
-    def __init__(self, efficiency):
+    def __init__(self, efficiency: float):
         self.efficiency = efficiency
 
-    def calculate(self, p_blanket, p_divertor) -> float:
+    def calculate(self, p_blanket: float, p_divertor: float) -> float:
         """
         Calculate the efficiency of the power cycle
+
+        Parameters
+        ----------
+        p_blanket:
+            Blanket thermal power [MW]
+        p_divertor:
+            Divertor thermal power [MW]
+
+        Returns
+        -------
+        The efficiency
         """
         return self.efficiency
 
@@ -169,26 +207,30 @@ class SuperheatedRankine(PowerCycleEfficiencyCalc):
 
     Parameters
     ----------
-    bb_t_out: float
+    bb_t_out:
         Breeding blanket outlet temperature [K]
-    delta_t_turbine: float
+    delta_t_turbine:
         Turbine inlet delta T [K]
     """
 
-    def __init__(self, bb_t_out, delta_t_turbine):
+    def __init__(self, bb_t_out: float, delta_t_turbine: float):
         self.bb_t_out = bb_t_out
         self.delta_t_turbine = delta_t_turbine
 
-    def calculate(self, p_blanket, p_divertor) -> float:
+    def calculate(self, p_blanket: float, p_divertor: float) -> float:
         """
         Calculate the efficiency of the power cycle
 
         Parameters
         ----------
-        blanket_power: float
+        p_blanket:
             Blanket thermal power [MW]
-        div_power: float
+        p_divertor:
             Divertor thermal power [MW]
+
+        Returns
+        -------
+        The efficiency
         """
         return superheated_rankine(
             p_blanket, p_divertor, self.bb_t_out, self.delta_t_turbine
@@ -207,7 +249,7 @@ class FractionSplitStrategy(abc.ABC):
         """
         pass
 
-    def check_fractions(self, fractions):
+    def check_fractions(self, fractions: List[float]) -> bool:
         """
         Check that fractions sum to 1.0
 
@@ -229,28 +271,28 @@ class NeutronPowerStrategy(FractionSplitStrategy):
 
     Parameters
     ----------
-    f_blanket: float
+    f_blanket:
         Fraction of neutron power going to the blankets
-    f_divertor: float
+    f_divertor:
         Fraction of neutron power going to the divertors
-    f_vessel: float
+    f_vessel:
         Fraction of neutron power going to the vacuum vessel
-    f_other: float
+    f_other:
         Fraction of neutron power going to other systems
-    energy_multiplication: float
+    energy_multiplication:
         Energy multiplication factor applied to blanket neutron power
-    decay_multiplication: float
+    decay_multiplication:
         Decay energy multiplication applied to the blanket neutron power
     """
 
     def __init__(
         self,
-        f_blanket,
-        f_divertor,
-        f_vessel,
-        f_other,
-        energy_multiplication,
-        decay_multiplication,
+        f_blanket: float,
+        f_divertor: float,
+        f_vessel: float,
+        f_other: float,
+        energy_multiplication: float,
+        decay_multiplication: float,
     ):
         self.check_fractions([f_blanket, f_divertor, f_vessel, f_other])
         self.f_blanket = f_blanket
@@ -268,28 +310,30 @@ class NeutronPowerStrategy(FractionSplitStrategy):
         self.nrg_mult = energy_multiplication
         self.dec_mult = decay_multiplication
 
-    def split(self, neutron_power):
+    def split(
+        self, neutron_power: float
+    ) -> Tuple[float, float, float, float, float, float]:
         """
         Split neutron power into several flows
 
         Parameters
         ----------
-        neutron_power: float
+        neutron_power:
             Total neutron power
 
         Returns
         -------
-        blk_power: float
+        blk_power:
             Neutron power to blankets
-        div_power: float
+        div_power:
             Neutron power to divertors
-        vv_power: float
+        vv_power:
             Neutron power to vessel
-        aux_power: float
+        aux_power:
             Neutron power to auxiliary systems
-        mult_power: float
+        mult_power:
             Energy multiplication power which is assumed to come solely from the blanket
-        decay_power: float
+        decay_power:
             Decay power which is assumed to come solely from the blanket
         """
         blk_power = self.f_blanket * self.nrg_mult * neutron_power
@@ -308,35 +352,53 @@ class RadChargedPowerStrategy(FractionSplitStrategy):
 
     Parameters
     ----------
-    f_core_rad_fw: float
+    f_core_rad_fw:
         Fraction of core radiation power distributed to the first wall
-    f_sol_rad: float
+    f_sol_rad:
         Fraction of SOL power that is radiated
-    f_sol_rad_fw: float
+    f_sol_rad_fw:
         Fraction of radiated SOL power that is distributed to the first wall
-    f_sol_ch_fw: float
+    f_sol_ch_fw:
         Fraction of SOL charged particle power that is distributed to the first wall
-    f_fw_aux: float
+    f_fw_aux:
         Fraction of first power that actually goes into auxiliary systems
     """
 
-    def __init__(self, f_core_rad_fw, f_sol_rad, f_sol_rad_fw, f_sol_ch_fw, f_fw_aux):
+    def __init__(
+        self,
+        f_core_rad_fw: float,
+        f_sol_rad: float,
+        f_sol_rad_fw: float,
+        f_sol_ch_fw: float,
+        f_fw_aux: float,
+    ):
         self.f_core_rad_fw = f_core_rad_fw
         self.f_sol_rad = f_sol_rad
         self.f_sol_rad_fw = f_sol_rad_fw
         self.f_sol_ch_fw = f_sol_ch_fw
         self.f_fw_aux = f_fw_aux
 
-    def split(self, p_radiation, p_separatrix):
+    def split(
+        self, p_radiation: float, p_separatrix: float
+    ) -> Tuple[float, float, float]:
         """
         Split the radiation and charged particle power
 
         Parameters
         ----------
-        p_radiation: float
+        p_radiation:
             Plasma core radiation power
-        p_separatrix: float
+        p_separatrix:
             Charged particle power crossing the separatrix
+
+        Returns
+        -------
+        p_rad_sep_blk:
+            Radiation power from separatrix to blanket
+        p_rad_sep_div:
+            Radiation power from separatrix to divertor
+        p_rad_sep_aux:
+            Radiation power from separatrix to auxiliaries
         """
         # Core radiation
         p_core_rad_fw = p_radiation * self.f_core_rad_fw
@@ -366,19 +428,19 @@ class ParasiticLoadStrategy(abc.ABC):
     """
 
     @abc.abstractmethod
-    def calculate(*args, **kwargs):
+    def calculate(*args, **kwargs) -> Tuple[float, float, float, float]:
         """
         Calculate the parasitic loads somehow
 
         Returns
         -------
-        p_mag: float
+        p_mag:
             Parasitic loads to power the magnets
-        p_cryo: float
+        p_cryo:
             Parasitic loads to power the cryoplant
-        p_t_plant: float
+        p_t_plant:
             Parasitic loads to power the tritium plant
-        p_other: float
+        p_other:
             Parasitic loads to power other miscellaneous things
         """
         pass
@@ -401,7 +463,7 @@ class BalanceOfPlantModel:
 
     Parameters
     ----------
-    params: Union[Dict[str, float], BoPModelParams]
+    params:
         Structure containing input parameters.
         If this is a dictionary, required keys are:
 
@@ -412,18 +474,18 @@ class BalanceOfPlantModel:
             * P_hcd_ss_el: float
 
         See :class:`BoPModelParams` for parameter details.
-    rad_sep_strat: FractionSplitStrategy
+    rad_sep_strat:
         Strategy to calculate the where the radiation and charged particle power
         in the scrape-off-layer is carried to
-    neutron_strat: FractionSplitStrategy
+    neutron_strat:
         Strategy to calculate where the neutron power is carried to
-    blanket_pump_strat: CoolantPumping
+    blanket_pump_strat:
         Strategy to calculate the coolant pumping power for the blanket
-    divertor_pump_strat: CoolantPumping
+    divertor_pump_strat:
         Strategy to calculate the coolant pumping power for the divertor
-    bop_cycle_strat: PowerCycleEfficiencyCalc
+    bop_cycle_strat:
         Strategy to calculate the balance of plant thermal efficiency
-    parasitic_load_strat: ParasiticLoadStrategy
+    parasitic_load_strat:
         Strategy to caculate the parasitic loads
 
     Notes
@@ -442,13 +504,13 @@ class BalanceOfPlantModel:
 
     def __init__(
         self,
-        params,
-        rad_sep_strat,
-        neutron_strat,
-        blanket_pump_strat,
-        divertor_pump_strat,
-        bop_cycle_strat,
-        parasitic_load_strat,
+        params: Union[Dict[str, float], BoPModelParams],
+        rad_sep_strat: FractionSplitStrategy,
+        neutron_strat: FractionSplitStrategy,
+        blanket_pump_strat: CoolantPumping,
+        divertor_pump_strat: CoolantPumping,
+        bop_cycle_strat: PowerCycleEfficiencyCalc,
+        parasitic_load_strat: ParasiticLoadStrategy,
     ):
         self.params = make_parameter_frame(params, BoPModelParams)
         self.rad_sep_strat = rad_sep_strat
@@ -578,13 +640,13 @@ class BalanceOfPlantModel:
                 f"The balance of plant model is inconsistent: {delta_truth:.2f} MW are lost somewhere."
             )
 
-    def plot(self, title=None, **kwargs):
+    def plot(self, title: Optional[str] = None, **kwargs):
         """
         Plot the BalanceOfPlant object.
 
         Parameters
         ----------
-        title: Optional[str]
+        title:
             Title to print on the plot
 
         Other Parameters
