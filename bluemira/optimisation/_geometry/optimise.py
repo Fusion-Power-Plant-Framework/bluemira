@@ -19,7 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from dataclasses import asdict, dataclass
-from typing import Any, Generic, Iterable, Mapping, Optional, TypeVar, Union
+from itertools import repeat
+from typing import Any, Generic, Iterable, Mapping, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 
@@ -49,6 +50,7 @@ def optimise_geometry(
     geom: _GeomT,
     f_objective: GeomOptimiserObjective,
     df_objective: Optional[GeomOptimiserCallable] = None,
+    *,
     keep_out_zones: Iterable[BluemiraWire] = (),
     keep_in_zones: Iterable[BluemiraWire] = (),
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
@@ -57,6 +59,8 @@ def optimise_geometry(
     eq_constraints: Iterable[GeomConstraintT] = (),
     ineq_constraints: Iterable[GeomConstraintT] = (),
     keep_history: bool = False,
+    koz_discretisation: Union[int, Iterable[int]] = 100,
+    kiz_discretisation: Union[int, Iterable[int]] = 100,
 ) -> GeomOptimiserResult[_GeomT]:
     r"""
     Minimise the given objective function for a geometry parameterisation.
@@ -153,6 +157,20 @@ def optimise_geometry(
         parameters at each iteration. Note that this can significantly
         impact the performance of the optimisation.
         (default: False)
+    koz_discretisation:
+        The number of points to discretise the keep-out zone(s) over.
+        If this is an int, all keep-out zones will be discretised with
+        the same number of points. If this is an iterable, each i-th
+        keep-out zone is discretised using value in the i-th item.
+        The iterable should have the same number of items as
+        ``keep_out_zones``.
+    kiz_discretisation:
+        The number of points to discretise the keep-in zone(s) over.
+        If this is an int, all keep-in zones will be discretised with
+        the same number of points. If this is an iterable, each i-th
+        keep-in zone is discretised using value in the i-th item.
+        The iterable should have the same number of items as
+        ``keep_in_zones``.
 
     Returns
     -------
@@ -167,10 +185,14 @@ def optimise_geometry(
     ineq_constraints_list = _tools.get_shape_ineq_constraint(geom)
     for constraint in ineq_constraints:
         ineq_constraints_list.append(constraint)
-    for koz in keep_out_zones:
-        ineq_constraints_list.append(_tools.make_keep_out_zone_constraint(koz))
-    for kiz in keep_in_zones:
-        ineq_constraints_list.append(_tools.make_keep_in_zone_constraint(kiz))
+    for koz, discr in zip_with_scalar(keep_out_zones, koz_discretisation):
+        ineq_constraints_list.append(
+            _tools.make_keep_out_zone_constraint(koz, n_discr=discr)
+        )
+    for kiz, discr in zip_with_scalar(keep_in_zones, kiz_discretisation):
+        ineq_constraints_list.append(
+            _tools.make_keep_in_zone_constraint(kiz, n_discr=discr)
+        )
 
     result = optimise(
         f_obj,
@@ -189,3 +211,16 @@ def optimise_geometry(
     # geometry update may not have been with the optimum result
     geom.variables.set_values_from_norm(result.x)
     return GeomOptimiserResult(**asdict(result), geom=geom)
+
+
+_T1 = TypeVar("_T1")
+_T2 = TypeVar("_T2")
+
+
+def zip_with_scalar(
+    it1: Iterable[_T1], it2: Union[Iterable[_T2], _T2]
+) -> Iterable[Tuple[_T1, _T2]]:
+    """Return an iterator that zips an iterable with another, or with a scalar."""
+    if not isinstance(it2, Iterable):
+        it2 = repeat(it2)
+    return zip(it1, it2)
