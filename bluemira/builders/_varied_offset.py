@@ -51,25 +51,24 @@ def varied_offset(
 
     Parameters
     ----------
-    wire: BluemiraWire
+    wire:
         The wire to create the offset from. This should be convex in
         order to get a sensible, non-intersecting, offset.
-    inboard_offset: float
+    inboard_offset:
         The size of the offset on the inboard side.
-    outboard_offset: float
+    outboard_offset:
         The size of the offset on the outboard side.
-    inboard_offset_degree: float
+    inboard_offset_degree:
         The angle at which the variable offset should begin, in degrees.
-    outboard_offset_degree: float
+    outboard_offset_degree:
         The angle at which the variable offset should end, in degrees.
-    num_points: int
+    num_points:
         The number of points to use in the discretization of the input
         wire.
 
     Returns
     -------
-    offset_wire: BluemiraWire
-        New wire at a variable offset to the input.
+    New wire at a variable offset to the input.
     """
     _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree)
     coordinates = wire.discretize(num_points, byedges=True)
