@@ -24,7 +24,7 @@ Finite element model
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple
 
 if TYPE_CHECKING:
     from bluemira.geometry.coordinates import Coordinates
