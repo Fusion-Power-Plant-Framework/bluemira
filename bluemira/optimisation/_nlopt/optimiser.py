@@ -56,7 +56,7 @@ class NloptOptimiser(Optimiser):
 
     Parameters
     ----------
-    algorithm
+    algorithm:
         The optimisation algorithm to use. Available algorithms are:
 
             * SLSQP
@@ -69,18 +69,18 @@ class NloptOptimiser(Optimiser):
             * CRS
             * ISRES
 
-    n_variables
+    n_variables:
         The number of optimisation parameters.
-    f_objective
+    f_objective:
         The objective function to minimise. This function must take one
         argument (a numpy array), and return a numpy array or float.
-    df_objective
+    df_objective:
         The derivative of the objective function. This must take the
         form: `f(x) -> y` where `x` is a numpy array containing the
         optimization parameters, and `y` is a numpy array where each
         element `i` is the partial derivative `\partialf/\partialdx_{i}`.
         If not given, a numerical approximation of the gradient is used.
-    opt_conditions
+    opt_conditions:
         The stopping conditions for the optimiser. At least one stopping
         condition is required. Supported conditions are:
 
@@ -92,10 +92,10 @@ class NloptOptimiser(Optimiser):
             * max_time: float
             * stop_val: float
 
-    opt_parameters
+    opt_parameters:
         Parameters specific to the algorithm being used. Consult NLopt
         documentation for these.
-    keep_history
+    keep_history:
         Whether to record the history of each step of the optimisation.
         (default: False)
     """

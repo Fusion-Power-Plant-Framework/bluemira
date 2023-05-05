@@ -42,19 +42,19 @@ def approx_derivative(
 
     Parameters
     ----------
-    func
+    func:
         Function for which to calculate the gradient.
-    x0
+    x0:
         Point about which to calculate the gradient.
-    method
+    method:
         Finite difference method to use.
-    rel_step
+    rel_step:
         Relative step size to use.
-    f0
+    f0:
         Result of func(x0). If None, this is recomputed.
-    bounds
+    bounds:
         Lower and upper bounds on individual variables.
-    args
+    args:
         Additional positional arguments to ``func``.
     """
     return _approx_derivative(

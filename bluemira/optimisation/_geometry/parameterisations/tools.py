@@ -29,15 +29,14 @@ def get_x_norm_index(variables: OptVariables, name: str):
 
     Parameters
     ----------
-    variables
+    variables:
         Bounded optimisation variables
-    name
+    name:
         Variable name for which to get the index
 
     Returns
     -------
-    idx_x_norm: int
-        Index of the variable name in the modified-length x_norm vector
+    Index of the variable name in the modified-length x_norm vector
     """
     fixed_idx = variables._fixed_variable_indices
     idx_actual = variables.names.index(name)
@@ -59,15 +58,14 @@ def process_x_norm_fixed(variables: OptVariables, x_norm: np.ndarray):
 
     Parameters
     ----------
-    variables
+    variables:
         Bounded optimisation variables
-    x_norm
+    x_norm:
         Normalised vector of variable values
 
     Returns
     -------
-    x_actual: list
-        List of ordered actual (un-normalised) values
+    List of ordered actual (un-normalised) values
     """
     fixed_idx = variables._fixed_variable_indices
 

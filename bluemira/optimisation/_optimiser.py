@@ -64,11 +64,11 @@ class Optimiser(abc.ABC):
 
         Parameters
         ----------
-        f_constraint
+        f_constraint:
             The constraint function, with form as described above.
-        tolerance
+        tolerance:
             The tolerances for each optimisation parameter.
-        df_constraint
+        df_constraint:
             The gradient of the constraint function. This should have the
             same form as the constraint function, however its output
             array should have dimensions `m x n_variables` where `m` is
@@ -107,11 +107,11 @@ class Optimiser(abc.ABC):
 
         Parameters
         ----------
-        f_constraint
+        f_constraint:
             The constraint function, with form as described above.
-        tolerance
+        tolerance:
             The tolerances for each optimisation parameter.
-        df_constraint
+        df_constraint:
             The gradient of the constraint function. This should have the
             same form as the constraint function, however its output
             array should have dimensions `m x n_variables` where `m` is
@@ -134,7 +134,7 @@ class Optimiser(abc.ABC):
 
         Parameters
         ----------
-        x0
+        x0:
             The initial guess for each of the optimisation parameters.
             If not given, each parameter is set to the average of its
             lower and upper bound. If no bounds exist, the initial guess
@@ -142,10 +142,9 @@ class Optimiser(abc.ABC):
 
         Returns
         -------
-        result
-            The result of the optimisation, containing the optimised
-            parameters `x`, as well as other information about the
-            optimisation.
+        The result of the optimisation, containing the optimised
+        parameters `x`, as well as other information about the
+        optimisation.
         """
 
     @abc.abstractmethod
