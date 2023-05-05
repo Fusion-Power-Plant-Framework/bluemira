@@ -36,14 +36,14 @@ class Run(CodesTask):
 
     Parameters
     ----------
-    params: ParameterFrame
+    params:
         The bluemira parameters for this task.
-    in_dat_path: str
+    in_dat_path:
         The path to an existing PROCESS IN.DAT input file.
-    run_directory: str
+    run_directory:
         The directory in which to run PROCESS. This is where the output
         files will be written to. Default is current working directory.
-    binary: str
+    binary:
         The path, or name, of the PROCESS executable. The default is
         'process', which requires the executable to be on the system
         path.

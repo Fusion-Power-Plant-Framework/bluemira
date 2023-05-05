@@ -30,7 +30,10 @@ import os
 import sys
 from copy import deepcopy
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 import freecad  # noqa: F401
 import FreeCAD
@@ -100,22 +103,21 @@ def catch_caderr(new_error_type):
 # ======================================================================================
 
 
-def arrange_edges(old_wire: apiWire, new_wire: apiWire):
+def arrange_edges(old_wire: apiWire, new_wire: apiWire) -> apiWire:
     """
     A helper to try and fix some topological naming issues.
     Tries to arrange edges as they were in the old wire
 
     Parameters
     ----------
-    old_wire: apiWire
+    old_wire:
         old wire to emulate edges from
-    new_wire: apiWire
+    new_wire:
         new wire to change edge arrangement
 
     Returns
     -------
-    apiWire
-
+    Wire with arranged edges
     """
     old_edges = Part.sortEdges(old_wire.Edges)[0]
     new_edges = Part.sortEdges(new_wire.Edges)[0]
@@ -163,37 +165,37 @@ def check_data_type(data_type):
 
 
 @check_data_type(Base.Vector)
-def vector_to_list(vectors):
+def vector_to_list(vectors: List[apiVector]) -> List[List[float]]:
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a list"""
     return [list(v) for v in vectors]
 
 
 @check_data_type(Part.Point)
-def point_to_list(points):
+def point_to_list(points: List[Part.Point]) -> List[List[float]]:
     """Converts a FreeCAD Part.Point or list(Part.Point) into a list"""
     return [[p.X, p.Y, p.Z] for p in points]
 
 
 @check_data_type(Part.Vertex)
-def vertex_to_list(vertexes):
+def vertex_to_list(vertexes: List[apiVertex]) -> List[List[float]]:
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a list"""
     return [[v.X, v.Y, v.Z] for v in vertexes]
 
 
 @check_data_type(Base.Vector)
-def vector_to_numpy(vectors):
+def vector_to_numpy(vectors: List[apiVector]) -> np.ndarray:
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
     return np.array([np.array(v) for v in vectors])
 
 
 @check_data_type(Part.Point)
-def point_to_numpy(points):
+def point_to_numpy(points: List[Part.Point]) -> np.ndarray:
     """Converts a FreeCAD Part.Point or list(Part.Point) into a numpy array"""
     return np.array([np.array([p.X, p.Y, p.Z]) for p in points])
 
 
 @check_data_type(Part.Vertex)
-def vertex_to_numpy(vertexes):
+def vertex_to_numpy(vertexes: List[apiVertex]) -> np.ndarray:
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a numpy array"""
     return np.array([np.array([v.X, v.Y, v.Z]) for v in vertexes])
 
@@ -203,47 +205,45 @@ def vertex_to_numpy(vertexes):
 # ======================================================================================
 
 
-def make_solid(shell: apiShell):
+def make_solid(shell: apiShell) -> apiSolid:
     """Make a solid from a shell."""
     return Part.makeSolid(shell)
 
 
-def make_shell(faces: List[apiFace]):
+def make_shell(faces: List[apiFace]) -> apiShell:
     """Make a shell from faces."""
     return Part.makeShell(faces)
 
 
-def make_compound(shapes):
+def make_compound(shapes: List[apiShape]) -> apiCompound:
     """
     Make an FreeCAD compound object out of many shapes
 
     Parameters
     ----------
-    shapes: list of FreeCAD shape objects
+    shapes:
         A set of objects to be compounded
 
     Returns
     -------
-    compound: FreeCAD compound object
-        A compounded set of shapes
+    A compounded set of shapes
     """
     return Part.makeCompound(shapes)
 
 
-def make_polygon(points: Union[list, np.ndarray]) -> Part.Wire:
+def make_polygon(points: Union[list, np.ndarray]) -> apiWire:
     """
     Make a polygon from a set of points.
 
     Parameters
     ----------
-    points: Union[list, np.ndarray]
+    points:
         list of points. It can be given as a list of 3D tuples, a 3D numpy array,
         or similar.
 
     Returns
     -------
-    wire: Part.Wire
-        a FreeCAD wire that contains the polygon
+    A FreeCAD wire that contains the polygon
     """
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
@@ -251,20 +251,19 @@ def make_polygon(points: Union[list, np.ndarray]) -> Part.Wire:
     return wire
 
 
-def make_bezier(points: Union[list, np.ndarray]) -> Part.Wire:
+def make_bezier(points: Union[list, np.ndarray]) -> apiWire:
     """
     Make a bezier curve from a set of points.
 
     Parameters
     ----------
-    points: Union[list, np.ndarray]
+    points:
         list of points. It can be given as a list of 3D tuples, a 3D numpy array,
         or similar.
 
     Returns
     -------
-    wire: Part.Wire
-        a FreeCAD wire that contains the bezier curve
+    A FreeCAD wire that contains the bezier curve
     """
     # Points must be converted into FreeCAD Vectors
     pntslist = [Base.Vector(x) for x in points]
@@ -275,32 +274,37 @@ def make_bezier(points: Union[list, np.ndarray]) -> Part.Wire:
 
 
 def make_bspline(
-    poles, mults, knots, periodic, degree, weights, check_rational
-) -> Part.Wire:
+    poles: np.ndarray,
+    mults: np.ndarray,
+    knots: np.ndarray,
+    periodic: bool,
+    degree: int,
+    weights: np.ndarray,
+    check_rational: bool,
+) -> apiWire:
     """
     Builds a B-Spline by a lists of Poles, Mults, Knots
 
     Parameters
     ----------
-    poles: Union[list, np.ndarray]
+    poles:
         list of poles.
-    mults: Union[list, np.ndarray]
+    mults:
         list of integers for the multiplicity
-    knots: Union[list, np.ndarray]
+    knots:
         list of knots
-    periodic: bool
+    periodic:
         Whether or not the spline is periodic (same curvature at start and end points)
     degree: int
         bspline degree
-    weights: Union[list, np.ndarray]
+    weights:
         sequence of float
-    check_rational: bool
+    check_rational:
         Whether or not to check if the BSpline is rational (not sure)
 
     Returns
     -------
-    wire: apiWire
-        a FreeCAD wire that contains the bspline curve
+    A FreeCAD wire that contains the bspline curve
 
     Notes
     -----
@@ -320,27 +324,26 @@ def interpolate_bspline(
     closed: bool = False,
     start_tangent: Optional[Iterable] = None,
     end_tangent: Optional[Iterable] = None,
-) -> Part.Wire:
+) -> apiWire:
     """
     Make a B-Spline curve by interpolating a set of points.
 
     Parameters
     ----------
-    points: Union[list, np.ndarray]
+    points:
         list of points. It can be given as a list of 3D tuples, a 3D numpy array,
         or similar.
-    closed: bool, default = False
+    closed:
         if True, the first and last points will be connected in order to form a
         closed shape.
-    start_tangent: Optional[Iterable]
+    start_tangent:
         Tangency of the BSpline at the first pole. Must be specified with end_tangent
-    end_tangent: Optional[Iterable]
+    end_tangent:
         Tangency of the BSpline at the last pole. Must be specified with start_tangent
 
     Returns
     -------
-    wire: apiWire
-        a FreeCAD wire that contains the bspline curve
+    A FreeCAD wire that contains the bspline curve
     """
     # In this case, it is not really necessary to convert points in FreeCAD vector. Just
     # left for consistency with other methods.
@@ -390,34 +393,33 @@ def interpolate_bspline(
 
 
 def make_circle(
-    radius=1.0,
-    center=[0.0, 0.0, 0.0],
-    start_angle=0.0,
-    end_angle=360.0,
-    axis=[0.0, 0.0, 1.0],
-):
+    radius: float = 1.0,
+    center: Iterable[float] = [0.0, 0.0, 0.0],
+    start_angle: float = 0.0,
+    end_angle: float = 360.0,
+    axis: Iterable[float] = [0.0, 0.0, 1.0],
+) -> apiWire:
     """
     Create a circle or arc of circle object with given parameters.
 
     Parameters
     ----------
-    radius: float, default =1.0
+    radius:
         Radius of the circle
-    center: Iterable, default = [0, 0, 0]
+    center:
         Center of the circle
-    start_angle: float, default = 0.0
+    start_angle:
         Start angle of the arc [degrees]
-    end_angle: float, default = 360.0
+    end_angle:
         End angle of the arc [degrees]. If start_angle == end_angle, a circle is created,
         otherwise a circle arc is created
-    axis: Iterable, default = [0, 0, 1]
+    axis:
         Normal vector to the circle plane. It defines the clockwise/anticlockwise
         circle orientation according to the right hand rule. Default [0., 0., 1.].
 
     Returns
     -------
-    wire: Part.Wire
-        FreeCAD wire that contains the arc or circle
+    FreeCAD wire that contains the arc or circle
     """
     # TODO: check the creation of the arc when start_angle < end_angle
     output = Part.Circle()
@@ -431,23 +433,24 @@ def make_circle(
     return Part.Wire(Part.Edge(output))
 
 
-def make_circle_arc_3P(p1, p2, p3):  # noqa: N802
+def make_circle_arc_3P(  # noqa: N802
+    p1: Iterable[float], p2: Iterable[float], p3: Iterable[float]
+) -> apiWire:
     """
     Create an arc of circle object given three points.
 
     Parameters
     ----------
-    p1: Iterable
+    p1:
         Starting point of the circle arc
-    p2: Iterable
+    p2:
         Middle point of the circle arc
-    p3: Iterable
+    p3:
         End point of the circle arc
 
     Returns
     -------
-    wire: Part.Wire
-        FreeCAD wire that contains the arc of circle
+    FreeCAD wire that contains the arc of circle
     """
     # TODO: check what happens when the 3 points are in a line
     arc = Part.ArcOfCircle(Base.Vector(p1), Base.Vector(p2), Base.Vector(p3))
@@ -466,39 +469,38 @@ def make_circle_arc_3P(p1, p2, p3):  # noqa: N802
 
 
 def make_ellipse(
-    center=[0.0, 0.0, 0.0],
-    major_radius=2.0,
-    minor_radius=1.0,
-    major_axis=[1, 0, 0],
-    minor_axis=[0, 1, 0],
-    start_angle=0.0,
-    end_angle=360.0,
-):
+    center: Iterable[float] = [0.0, 0.0, 0.0],
+    major_radius: float = 2.0,
+    minor_radius: float = 1.0,
+    major_axis: Iterable[float] = [1, 0, 0],
+    minor_axis: Iterable[float] = [0, 1, 0],
+    start_angle: float = 0.0,
+    end_angle: float = 360.0,
+) -> apiWire:
     """
     Creates an ellipse or arc of ellipse object with given parameters.
 
     Parameters
     ----------
-    center: Iterable, default = [0, 0, 0]
+    center:
         Center of the ellipse
-    major_radius: float, default = 2
+    major_radius:
         the major radius of the ellipse
-    minor_radius: float, default = 1
+    minor_radius:
         the minor radius of the ellipse
-    major_axis: Iterable, default = [1, 0, 0,]
+    major_axis:
         major axis direction
-    minor_axis: Iterable, default = [0, 1, 0,]
+    minor_axis:
         minor axis direction
-    start_angle: float, default = 0.0
+    start_angle:
         Start angle of the arc [degrees]
-    end_angle: float, default = 360.0
+    end_angle:
         End angle of the arc [degrees]. If start_angle == end_angle, an ellipse is
         created, otherwise an arc of ellipse is created
 
     Returns
     -------
-    wire: Part.Wire
-        FreeCAD wire that contains the ellipse or arc of ellipse
+    FreeCAD wire that contains the ellipse or arc of ellipse
     """
     # TODO: check the creation of the arc when start_angle < end_angle
     s1 = Base.Vector(major_axis).normalize().multiply(major_radius) + Base.Vector(center)
@@ -525,21 +527,20 @@ def offset_wire(
 
     Parameters
     ----------
-    wire: Part.Wire
+    wire:
         Wire to offset from
-    thickness: float
+    thickness:
         Offset distance. Positive values outwards, negative values inwards
-    join: str
+    join:
         Offset method. "arc" gives rounded corners, and "intersect" gives sharp corners
-    open_wire: bool
+    open_wire:
         For open wires (counter-clockwise default) whether or not to make an open offset
         wire, or a closed offset wire that encompasses the original wire. This is
         disabled for closed wires.
 
     Returns
     -------
-    wire: Part.Wire
-        Offset wire
+    Offset wire
     """
     if thickness == 0.0:
         return deepcopy(wire)
@@ -587,13 +588,12 @@ def make_face(wire: apiWire) -> apiFace:
 
     Parameters
     ----------
-    wire: apiWire
+    wire:
         Wire boundary from which to make a face
 
     Returns
     -------
-    face: apiFace
-        Face created from the wire boundary
+    Face created from the wire boundary
 
     Raises
     ------
@@ -614,39 +614,39 @@ def make_face(wire: apiWire) -> apiFace:
 # ======================================================================================
 # Object properties
 # ======================================================================================
-def _get_api_attr(obj, prop):
+def _get_api_attr(obj: apiShape, prop: str):
     try:
         return getattr(obj, prop)
     except AttributeError:
         raise FreeCADError(f"FreeCAD object {obj} does not have an attribute: {prop}")
 
 
-def length(obj) -> float:
+def length(obj: apiShape) -> float:
     """Object's length"""
     return _get_api_attr(obj, "Length")
 
 
-def area(obj) -> float:
+def area(obj: apiShape) -> float:
     """Object's Area"""
     return _get_api_attr(obj, "Area")
 
 
-def volume(obj) -> float:
+def volume(obj: apiShape) -> float:
     """Object's volume"""
     return _get_api_attr(obj, "Volume")
 
 
-def center_of_mass(obj) -> np.ndarray:
+def center_of_mass(obj: apiShape) -> np.ndarray:
     """Object's center of mass"""
     return vector_to_numpy(_get_api_attr(obj, "CenterOfMass"))
 
 
-def is_null(obj) -> bool:
+def is_null(obj: apiShape) -> bool:
     """True if obj is null"""
     return _get_api_attr(obj, "isNull")()
 
 
-def is_closed(obj) -> bool:
+def is_closed(obj: apiShape) -> bool:
     """True if obj is closed"""
     return _get_api_attr(obj, "isClosed")()
 
@@ -656,77 +656,77 @@ def is_valid(obj) -> bool:
     return _get_api_attr(obj, "isValid")()
 
 
-def is_same(obj1, obj2) -> bool:
+def is_same(obj1: apiShape, obj2: apiShape) -> bool:
     """True if obj1 and obj2 have the same shape."""
     return obj1.isSame(obj2)
 
 
-def bounding_box(obj) -> Tuple[float, float, float, float, float, float]:
+def bounding_box(obj: apiShape) -> Tuple[float, float, float, float, float, float]:
     """Object's bounding box"""
     box = _get_api_attr(obj, "BoundBox")
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
 
 
-def start_point(obj) -> np.ndarray:
+def start_point(obj: apiShape) -> np.ndarray:
     """The start point of the object"""
     point = obj.Edges[0].firstVertex().Point
     return vector_to_numpy(point)
 
 
-def end_point(obj) -> np.ndarray:
+def end_point(obj: apiShape) -> np.ndarray:
     """The end point of the object"""
     point = obj.Edges[-1].lastVertex().Point
     return vector_to_numpy(point)
 
 
-def ordered_vertexes(obj) -> np.ndarray:
+def ordered_vertexes(obj: apiShape) -> np.ndarray:
     """Ordered vertexes of the object"""
     vertexes = _get_api_attr(obj, "OrderedVertexes")
     return vertex_to_numpy(vertexes)
 
 
-def vertexes(obj) -> np.ndarray:
+def vertexes(obj: apiShape) -> np.ndarray:
     """Wires of the object"""
     vertexes = _get_api_attr(obj, "Vertexes")
     return vertex_to_numpy(vertexes)
 
 
-def orientation(obj) -> bool:
+def orientation(obj: apiShape) -> bool:
     """True if obj is valid"""
     return _get_api_attr(obj, "Orientation")
 
 
-def edges(obj) -> list[apiWire]:
+def edges(obj: apiShape) -> list[apiWire]:
     """Edges of the object"""
     return _get_api_attr(obj, "Edges")
 
 
-def ordered_edges(obj) -> np.ndarray:
+def ordered_edges(obj: apiShape) -> np.ndarray:
     """Ordered edges of the object"""
     return _get_api_attr(obj, "OrderedEdges")
 
 
-def wires(obj) -> list[apiWire]:
+def wires(obj: apiShape) -> list[apiWire]:
     """Wires of the object"""
     return _get_api_attr(obj, "Wires")
 
 
-def faces(obj) -> list[apiFace]:
+def faces(obj: apiShape) -> list[apiFace]:
     """Faces of the object"""
     return _get_api_attr(obj, "Faces")
 
 
-def shells(obj) -> list[apiShell]:
+def shells(obj: apiShape) -> list[apiShell]:
     """Shells of the object"""
     return _get_api_attr(obj, "Shells")
 
 
-def solids(obj) -> list[apiSolid]:
+def solids(obj: apiShape) -> list[apiSolid]:
     """Solids of the object"""
     return _get_api_attr(obj, "Solids")
 
 
-def normal_at(face, alpha_1=0.0, alpha_2=0.0) -> np.ndarray:
+def normal_at(face: apiFace, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.ndarray:
     """
     Get the normal vector of the face at a parameterised point in space. For
     planar faces, the normal is the same everywhere.
@@ -737,7 +737,7 @@ def normal_at(face, alpha_1=0.0, alpha_2=0.0) -> np.ndarray:
 # ======================================================================================
 # Wire manipulation
 # ======================================================================================
-def wire_closure(wire: Part.Wire):
+def wire_closure(wire: apiWire) -> apiWire:
     """Create a line segment wire that closes an open wire"""
     closure = None
     if not wire.isClosed():
@@ -747,7 +747,7 @@ def wire_closure(wire: Part.Wire):
     return closure
 
 
-def close_wire(wire: Part.Wire):
+def close_wire(wire: apiWire) -> apiWire:
     """
     Closes a wire with a line segment, if not already closed.
     A new wire is returned.
@@ -760,25 +760,23 @@ def close_wire(wire: Part.Wire):
     return wire
 
 
-def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
+def discretize(w: apiWire, ndiscr: int = 10, dl: Optional[float] = None) -> np.ndarray:
     """
     Discretize a wire.
 
     Parameters
     ----------
-    w : Part.Wire
+    w:
         wire to be discretized.
-    ndiscr : int
+    ndiscr:
         number of points for the whole wire discretization.
-    dl : float
+    dl:
         target discretization length (default None). If dl is defined,
         ndiscr is not considered.
 
     Returns
     -------
-    output : list(numpy.ndarray)
-        list of points.
-
+    Array of points.
     """
     # discretization points array
     output = []
@@ -801,25 +799,26 @@ def discretize(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     return output
 
 
-def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
+def discretize_by_edges(
+    w: apiWire, ndiscr: int = 10, dl: Optional[float] = None
+) -> np.ndarray:
     """
     Discretize a wire taking into account the edges of which it consists of.
 
     Parameters
     ----------
-    w : Part.Wire
+    w:
         wire to be discretized.
-    ndiscr : int
+    ndiscr:
         number of points for the whole wire discretization. Final number of points
         can be slightly different due to edge discretization routine.
-    dl : float
+    dl:
         target discretization length (default None). If dl is defined,
         ndiscr is not considered.
 
     Returns
     -------
-    output : list(numpy.ndarray)
-        list of points.
+    Array of points.
     """
     # discretization points array
     output = []
@@ -846,7 +845,9 @@ def discretize_by_edges(w: Part.Wire, ndiscr: int = 10, dl: float = None):
     return output
 
 
-def dist_to_shape(shape1, shape2):
+def dist_to_shape(
+    shape1: apiShape, shape2: apiShape
+) -> Tuple[float, List[Tuple[np.ndarray, np.ndarray]]]:
     """
     Find the minimum distance between two shapes
 
@@ -859,10 +860,10 @@ def dist_to_shape(shape1, shape2):
 
     Returns
     -------
-    output:
-        a tuple of two -> (dist, vectors)
-        dist is the minimum distance (float value)
-        vectors is a list of tuples corresponding to the nearest points (numpy.ndarray)
+    dist:
+        Minimum distance
+    vectors:
+        List of tuples corresponding to the nearest points (numpy.ndarray)
         between shape1 and shape2. The distance between those points is the minimum
         distance given by dist.
     """
@@ -873,16 +874,20 @@ def dist_to_shape(shape1, shape2):
     return dist, vectors
 
 
-def wire_value_at(wire: apiWire, distance: float):
+def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     """
     Get a point a given distance along a wire.
 
     Parameters
     ----------
-    wire: apiWire
+    wire:
         Wire along which to get a point
-    distance: float
+    distance:
         Distance
+
+    Returns
+    -------
+    Wire point value at distance
     """
     if distance == 0.0:
         return start_point(wire)
@@ -913,23 +918,24 @@ def wire_value_at(wire: apiWire, distance: float):
     return np.array(point)
 
 
-def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS) -> float:
+def wire_parameter_at(
+    wire: apiWire, vertex: Iterable[float], tolerance: float = EPS
+) -> float:
     """
     Get the parameter value at a vertex along a wire.
 
     Parameters
     ----------
-    wire: apiWire
+    wire:
         Wire along which to get the parameter
-    vertex: Iterable
+    vertex:
         Vertex for which to get the parameter
-    tolerance: float
+    tolerance:
         Tolerance within which to get the parameter
 
     Returns
     -------
-    alpha: float
-        Parameter value along the wire at the vertex
+    Parameter value along the wire at the vertex
 
     Raises
     ------
@@ -943,24 +949,26 @@ def wire_parameter_at(wire: apiWire, vertex: Iterable, tolerance=EPS) -> float:
         return 0.0
 
 
-def split_wire(wire, vertex, tolerance):
+def split_wire(
+    wire: apiWire, vertex: Iterable[float], tolerance: float
+) -> Tuple[Union[None, apiWire], Union[None, apiWire]]:
     """
     Split a wire at a given vertex.
 
     Parameters
     ----------
-    wire: apiWire
+    wire:
         Wire to be split
-    vertex: Iterable
+    vertex:
         Vertex at which to split the wire
-    tolerance: float
+    tolerance:
         Tolerance within which to find the closest vertex on the wire
 
     Returns
     -------
-    wire_1: Optional[apiWire]
+    wire_1:
         First half of the wire. Will be None if the vertex is the start point of the wire
-    wire_2: Optional[apiWire]
+    wire_2:
         Last half of the wire. Will be None if the vertex is the start point of the wire
 
     Raises
@@ -1032,7 +1040,9 @@ def _get_closest_edge_idx(wire, vertex):
     return idx
 
 
-def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
+def slice_shape(
+    shape: apiShape, plane_origin: Iterable[float], plane_axis: Iterable[float]
+):
     """
     Slice a shape along a given plane
 
@@ -1040,11 +1050,11 @@ def slice_shape(shape: apiShape, plane_origin: Iterable, plane_axis: Iterable):
 
     Parameters
     ----------
-    shape: apiShape
+    shape:
         shape to slice
-    plane_origin: Iterable
+    plane_origin:
         plane origin
-    plane_axis: Iterable
+    plane_axis:
         normal plane axis
 
     Notes
@@ -1085,17 +1095,17 @@ def _slice_solid(obj, normal_plane, shift):
 # ======================================================================================
 # Save functions
 # ======================================================================================
-def save_as_STP(shapes, filename="test", scale=1):
+def save_as_STP(shapes: List[apiShape], filename: str = "test", scale: float = 1.0):
     """
     Saves a series of Shape objects as a STEP assembly
 
     Parameters
     ----------
-    shapes: (Shape, ..)
+    shapes:
         Iterable of shape objects to be saved
-    filename: str
+    filename:
         Full path filename of the STP assembly
-    scale: float (default 1)
+    scale:
         The scale in which to save the Shape objects
     """
     filename = force_file_extension(filename, [".stp", ".step"])
@@ -1108,7 +1118,7 @@ def save_as_STP(shapes, filename="test", scale=1):
 
     compound = make_compound(shapes)
 
-    if scale != 1:
+    if scale != 1.0:
         # scale the compound. Since the scale function modifies directly the shape,
         # a copy of the compound is made to avoid modification of the original shapes.
         compound = compound.copy().scale(scale)
@@ -1119,70 +1129,74 @@ def save_as_STP(shapes, filename="test", scale=1):
 # # =============================================================================
 # # Shape manipulations
 # # =============================================================================
-def scale_shape(shape, factor):
+def scale_shape(shape: apiShape, factor: float) -> apiShape:
     """
     Apply scaling with factor to the shape
 
     Parameters
     ----------
-    shape: FreeCAD Shape object
+    shape:
         The shape to be scaled
-    factor: float
+    factor:
         The scaling factor
 
     Returns
     -------
-    shape: the modified shape
+    The scaled shape
     """
     return shape.scale(factor)
 
 
-def translate_shape(shape, vector: tuple):
+def translate_shape(shape: apiShape, vector: Tuple[float, float, float]) -> apiShape:
     """
     Apply scaling with factor to the shape
 
     Parameters
     ----------
-    shape: FreeCAD Shape object
+    shape:
         The shape to be scaled
-    vector: tuple (x,y,z)
+    vector:
         The translation vector
 
     Returns
     -------
-    shape: the modified shape
+    The translated shape
     """
     return shape.translate(Base.Vector(vector))
 
 
 def rotate_shape(
-    shape,
-    base: tuple = (0.0, 0.0, 0.0),
-    direction: tuple = (0.0, 0.0, 1.0),
+    shape: apiShape,
+    base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 180,
-):
+) -> apiShape:
     """
     Apply the rotation (base, dir, degree) to this shape
 
     Parameters
     ----------
-    shape: FreeCAD Shape object
+    shape:
         The shape to be rotated
-    base: tuple (x,y,z)
+    base:
         Origin location of the rotation
-    direction: tuple (x,y,z)
+    direction:
         The direction vector
-    degree: float
+    degree:
         rotation angle
 
     Returns
     -------
-    shape: the modified shape
+    The rotated shape
     """
     return shape.rotate(base, direction, degree)
 
 
-def mirror_shape(shape, base, direction):
+def mirror_shape(
+    shape: apiShape,
+    base: Tuple[float, float, float],
+    direction: Tuple[float, float, float],
+) -> apiShape:
     """
     Mirror a shape about a plane.
 
@@ -1197,8 +1211,7 @@ def mirror_shape(shape, base, direction):
 
     Returns
     -------
-    shape:
-        The mirrored shape
+    The mirrored shape
     """
     base = Base.Vector(base)
     direction = Base.Vector(direction)
@@ -1216,50 +1229,48 @@ def mirror_shape(shape, base, direction):
 
 
 def revolve_shape(
-    shape,
-    base: tuple = (0.0, 0.0, 0.0),
-    direction: tuple = (0.0, 0.0, 1.0),
-    degree: float = 180,
-):
+    shape: apiShape,
+    base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    degree: float = 180.0,
+) -> apiShape:
     """
     Apply the revolve (base, dir, degree) to this shape
 
     Parameters
     ----------
-    shape: FreeCAD Shape object
+    shape:
         The shape to be revolved
-    base: tuple (x,y,z)
+    base:
         Origin location of the revolution
-    direction: tuple (x,y,z)
+    direction:
         The direction vector
-    degree: double
+    degree:
         revolution angle
 
     Returns
     -------
-    shape:
-        the revolved shape.
+    The revolved shape.
     """
     base = Base.Vector(base)
     direction = Base.Vector(direction)
     return shape.revolve(base, direction, degree)
 
 
-def extrude_shape(shape, vec: tuple):
+def extrude_shape(shape: apiShape, vec: Tuple[float, float, float]) -> apiShape:
     """
     Apply the extrusion along vec to this shape
 
     Parameters
     ----------
-    shape: FreeCAD Shape object
+    shape:
         The shape to be extruded
-    vec: tuple (x,y,z)
+    vec:
         The vector along which to extrude
 
     Returns
     -------
-    shape:
-        The extruded shape.
+    The extruded shape.
     """
     vec = Base.Vector(vec)
     return shape.extrude(vec)
@@ -1286,26 +1297,27 @@ def _split_wire(wire):
     return apiWire(edges_1), apiWire(edges_2)
 
 
-def sweep_shape(profiles, path, solid=True, frenet=True):
+def sweep_shape(
+    profiles: Iterable[apiWire], path: apiWire, solid: bool = True, frenet: bool = True
+) -> Union[apiShell, apiSolid]:
     """
     Sweep a a set of profiles along a path.
 
     Parameters
     ----------
-    profiles: Iterable[apiWire]
+    profiles:
         Set of profiles to sweep
-    path: apiWire
+    path:
         Path along which to sweep the profiles
-    solid: bool
+    solid:
         Whether or not to create a Solid
-    frenet: bool
+    frenet:
         If true, the orientation of the profile(s) is calculated based on local curvature
         and tangency. For planar paths, should not make a difference.
 
     Returns
     -------
-    swept: Union[Part.Solid, Part.Shell]
-        Swept geometry object
+    Swept geometry object
     """
     if not isinstance(profiles, Iterable):
         profiles = [profiles]
@@ -1352,8 +1364,7 @@ def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWi
 
     Returns
     -------
-    result_wire:
-        Resulting filleted or chamfered wire
+    Resulting filleted or chamfered wire
     """
     # Temporarily suppress pesky print statement:
     # DraftGeomUtils.fillet: Warning: edges have same direction. Did nothing
@@ -1370,24 +1381,23 @@ def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWi
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
-def boolean_fuse(shapes, remove_splitter=True):
+def boolean_fuse(shapes: Iterable[apiShape], remove_splitter: bool = True) -> apiShape:
     """
     Fuse two or more shapes together. Internal splitter are removed.
 
     Parameters
     ----------
-    shapes: Iterable
+    shapes:
         List of FreeCAD shape objects to be fused together. All the objects in the
         list must be of the same type.
-    remove_splitter: booelan
+    remove_splitter:
         if True, shape is refined removing extra edges.
         See(https://wiki.freecadweb.org/Part_RefineShape)
 
 
     Returns
     -------
-    fuse_shape:
-        Result of the boolean operation.
+    Result of the boolean operation.
 
     Raises
     ------
@@ -1453,23 +1463,24 @@ def boolean_fuse(shapes, remove_splitter=True):
         raise FreeCADError(str(e))
 
 
-def boolean_cut(shape, tools, split=True):
+def boolean_cut(
+    shape: apiShape, tools: List[apiShape], split: bool = True
+) -> List[apiShape]:
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
     Parameters
     ----------
-    shape: FreeCAD shape
+    shape:
         the reference object
-    tools: Iterable
+    tools:
         List of FreeCAD shape objects to be used as tools.
-    split: bool
+    split:
         If True, shape is split into pieces based on intersections with tools.
 
     Returns
     -------
-    cut_shape:
-        Result of the boolean operation.
+    Result of the boolean operation.
 
     Raises
     ------
@@ -1501,21 +1512,20 @@ def boolean_cut(shape, tools, split=True):
     return output
 
 
-def point_inside_shape(point, shape):
+def point_inside_shape(point: Iterable[float], shape: apiShape) -> bool:
     """
     Whether or not a point is inside a shape.
 
     Parameters
     ----------
-    point: Iterable(3)
+    point:
         Coordinates of the point
-    shape: BluemiraGeo
+    shape:
         Geometry to check with
 
     Returns
     -------
-    inside: bool
-        Whether or not the point is inside the shape
+    Whether or not the point is inside the shape
     """
     vector = apiVector(*point)
     return shape.isInside(vector, EPS, True)
@@ -1644,17 +1654,17 @@ def _make_shapes_coaxis(shapes):
 # ======================================================================================
 
 
-def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
+def fix_wire(wire: apiWire, precision: float = EPS, min_length: float = MINIMUM_LENGTH):
     """
     Fix a wire by removing any small edges and joining the remaining edges.
 
     Parameters
     ----------
-    wire: apiWire
+    wire:
         Wire to fix
-    precision: float
+    precision:
         General precision with which to work
-    min_length: float
+    min_length:
         Minimum edge length
     """
     wire.fix(precision, min_length, min_length)
@@ -1663,7 +1673,9 @@ def fix_wire(wire, precision=EPS, min_length=MINIMUM_LENGTH):
 # ======================================================================================
 # Placement manipulations
 # ======================================================================================
-def make_placement(base, axis, angle):
+def make_placement(
+    base: Iterable[float], axis: Iterable[float], angle: float
+) -> apiPlacement:
     """
     Make a FreeCAD Placement
 
@@ -1682,13 +1694,13 @@ def make_placement(base, axis, angle):
     return Base.Placement(base, axis, angle)
 
 
-def make_placement_from_matrix(matrix):
+def make_placement_from_matrix(matrix: np.ndarray) -> apiPlacement:
     """
     Make a FreeCAD Placement from a 4 x 4 matrix.
 
     Parameters
     ----------
-    matrix: np.ndarray
+    matrix:
         4 x 4 matrix from which to make the placement
 
     Notes
@@ -1711,49 +1723,43 @@ def make_placement_from_matrix(matrix):
     return Base.Placement(matrix)
 
 
-def move_placement(placement, vector):
+def move_placement(placement: apiPlacement, vector: Iterable[float]):
     """
     Moves the FreeCAD Placement along the given vector
 
     Parameters
     ----------
-    placement: FreeCAD placement
+    placement:
         the FreeCAD placement to be modified
-    vector: Iterable
+    vector:
         direction along which the placement is moved
-
-    Returns
-    -------
-    nothing:
-        The placement is directly modified.
     """
     placement.move(Base.Vector(vector))
 
 
 def make_placement_from_vectors(
-    base=[0, 0, 0], vx=[1, 0, 0], vy=[0, 1, 0], vz=[0, 0, 1], order="ZXY"
-):
+    base: Iterable[float] = [0, 0, 0],
+    vx: Iterable[float] = [1, 0, 0],
+    vy: Iterable[float] = [0, 1, 0],
+    vz: Iterable[float] = [0, 0, 1],
+    order: str = "ZXY",
+) -> apiPlacement:
     """Create a placement from three directional vectors"""
     rotation = Base.Rotation(vx, vy, vz, order)
     placement = Base.Placement(base, rotation)
     return placement
 
 
-def change_placement(geo, placement):
+def change_placement(geo: apiShape, placement: apiPlacement):
     """
     Change the placement of a FreeCAD object
 
     Parameters
     ----------
-    geo: FreeCAD object
+    geo:
         the object to be modified
-    placement: FreeCAD placement
+    placement:
         the FreeCAD placement to be modified
-
-    Returns
-    -------
-    nothing:
-        The object is directly modified.
     """
     new_placement = geo.Placement.multiply(placement)
     new_base = placement.multVec(geo.Placement.Base)
@@ -1764,16 +1770,23 @@ def change_placement(geo, placement):
 # ======================================================================================
 # Plane creation and manipulations
 # ======================================================================================
-def make_plane(base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0)):
+def make_plane(
+    base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    axis: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+) -> apiPlane:
     """
     Creates a FreeCAD plane with a given location and normal
 
     Parameters
     ----------
-    base: Iterable
+    base:
         a reference point in the plane
-    axis: Iterable
+    axis:
         normal vector to the plane
+
+    Returns
+    -------
+    Plane from base and axis
     """
     base = Base.Vector(base)
     axis = Base.Vector(axis)
@@ -1782,17 +1795,25 @@ def make_plane(base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0)):
 
 
 def make_plane_from_3_points(
-    point1=(0.0, 0.0, 0.0), point2=(1.0, 0.0, 0.0), point3=(0.0, 1.0, 0.0)
-):
+    point1: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    point2: Tuple[float, float, float] = (1.0, 0.0, 0.0),
+    point3: Tuple[float, float, float] = (0.0, 1.0, 0.0),
+) -> apiPlane:
     """
     Creates a FreeCAD plane defined by three non-linear points
 
     Parameters
     ----------
-    point: Iterable
+    point1:
         a reference point in the plane
-    axis: Iterable
-        normal vector to the plane
+    point2:
+        a reference point in the plane
+    point3:
+        a reference point in the plane
+
+    Returns
+    -------
+    Plane from three points
     """
     point1 = Base.Vector(point1)
     point2 = Base.Vector(point2)
@@ -1801,7 +1822,7 @@ def make_plane_from_3_points(
     return Part.Plane(point1, point2, point3)
 
 
-def face_from_plane(plane: Part.Plane, width: float, height: float):
+def face_from_plane(plane: apiPlane, width: float, height: float) -> apiFace:
     """
     Creates a FreeCAD face from a Plane with specified height and width.
 
@@ -1812,12 +1833,16 @@ def face_from_plane(plane: Part.Plane, width: float, height: float):
 
     Parameters
     ----------
-    plane: Part.Plane
+    plane:
         the reference plane
-    width: float
+    width:
         output face width
-    height: float
+    height:
         output face height
+
+    Returns
+    -------
+    Face from plane
     """
     # as suggested in https://forum.freecadweb.org/viewtopic.php?t=46418
     corners = [
@@ -1835,13 +1860,13 @@ def face_from_plane(plane: Part.Plane, width: float, height: float):
     return wall
 
 
-def plane_from_shape(shape):
+def plane_from_shape(shape: apiShape) -> apiPlane:
     """Return a plane if the shape is planar"""
     plane = shape.findPlane()
     return plane
 
 
-def placement_from_plane(plane):
+def placement_from_plane(plane: apiPlane) -> apiPlacement:
     """
     Return a placement from a plane with the origin on the plane base and the z-axis
     directed as the plane normal.
@@ -1872,7 +1897,7 @@ def _colourise(node: coin.SoNode, options: Dict):
 
 
 def collect_verts_faces(
-    solid: Part.Shape, tesselation: float = 0.1
+    solid: apiShape, tesselation: float = 0.1
 ) -> Tuple[Optional[np.ndarray], ...]:
     """
     Collects verticies and faces of parts and tessellates them
@@ -1880,15 +1905,17 @@ def collect_verts_faces(
 
     Parameters
     ----------
-    solid: Part.Shape
+    solid:
         FreeCAD Part
-    tesselation: float
+    tesselation:
         amount of tesselation for the mesh
 
     Returns
     -------
-    vertices, faces
-
+    vertices:
+        Vertices
+    faces:
+        Faces
     """
     verts = []
     faces = []
@@ -1910,20 +1937,22 @@ def collect_verts_faces(
         return None, None
 
 
-def collect_wires(solid: Part.Shape, **kwds) -> Tuple[np.ndarray]:
+def collect_wires(solid: apiShape, **kwds) -> Tuple[np.ndarray, np.ndarray]:
     """
     Collects verticies and edges of parts and discretizes them
     for the CAD viewer
 
     Parameters
     ----------
-    solid: Part.Shape
+    solid:
         FreeCAD Part
 
     Returns
     -------
-    vertices, edges
-
+    vertices:
+        Vertices
+    edges:
+        Edges
     """
     verts = []
     edges = []
@@ -1970,7 +1999,7 @@ class DefaultDisplayOptions:
 
 
 def show_cad(
-    parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],
     options: Union[Dict, List[Optional[Dict]]],
     labels: List[str],
     **kwargs,
@@ -1980,11 +2009,11 @@ def show_cad(
 
     Parameters
     ----------
-    parts
+    parts:
         The parts to display.
-    options
+    options:
         The options to use to display the parts.
-    labels
+    labels:
         labels to use for each part object
     """
     if options is None:
@@ -2148,7 +2177,7 @@ def deserialize_shape(buffer):
 
     Parameters
     ----------
-    buffer
+    buffer:
         Object serialization as stored by serialize_shape
 
     Returns
@@ -2194,19 +2223,18 @@ def deserialize_shape(buffer):
             raise NotImplementedError(f"Deserialization non implemented for {type_}")
 
 
-def _convert_edge_to_curve(edge):
+def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
     """
     Convert a Freecad Edge to the respective curve.
 
     Parameters
     ----------
-    edge: Part.Edge
+    edge:
         FreeCAD Edge
 
     Returns
     -------
-    output:
-        FreeCAD Part curve object
+    FreeCAD Part curve object
     """
     curve = edge.Curve
     first = edge.FirstParameter

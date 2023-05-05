@@ -85,7 +85,7 @@ class MappedParameterFrame(ParameterFrame):
 
         Parameters
         ----------
-        new_send_recv: Dict[str, Dict[Literal["send", "recv"], bool]]
+        new_send_recv:
             The new send/recv values for all, or a subset, of the
             parameter mappings.
             Keys are parameter names (as defined in this class, not the
@@ -121,11 +121,11 @@ class ParameterMapping:
 
     Parameters
     ----------
-    name: str
+    name:
        name of mapped parameter
-    recv: bool
+    recv:
         receive data from mapped parameter (to overwrite bluemira parameter)
-    send: bool
+    send:
         send data to mapped parameter (from bluemira parameter)
     """
 
@@ -172,9 +172,9 @@ class ParameterMapping:
         Protect against additional attributes
         Parameters
         ----------
-        attr: str
+        attr:
             Attribute to set (name can only be set on init)
-        value: Union[bool, str]
+        value:
             Value of attribute
         """
         if (

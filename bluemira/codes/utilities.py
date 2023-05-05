@@ -28,7 +28,8 @@ import os
 import subprocess  # noqa: S404
 import threading
 from enum import Enum
-from typing import Dict, List
+from types import ModuleType
+from typing import Any, Dict, List
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
@@ -68,19 +69,18 @@ def read_mock_json_or_raise(file_path: str, name: str) -> Dict[str, float]:
         ) from os_error
 
 
-def get_code_interface(module):
+def get_code_interface(module: str) -> ModuleType:
     """
     Dynamically import code interface
 
     Parameters
     ----------
-    module: str
+    module:
         module to import
 
     Returns
     -------
     code module
-
     """
     try:
         return get_module(f"bluemira.codes.{module.lower()}")
@@ -90,14 +90,13 @@ def get_code_interface(module):
 
 def create_mapping(
     in_mappings=None, out_mappings=None, io_mappings=None, none_mappings=None
-):
+) -> Dict[str, Any]:
     """
     Creates mappings for external codes
 
     Returns
     -------
-    mappings: Dict
-        A mapping from bluemira names to an external code ParameterMapping
+    A mapping from bluemira names to an external code ParameterMapping
 
     """
     mappings = {}
@@ -129,12 +128,12 @@ class LogPipe(threading.Thread):
 
     Parameters
     ----------
-    loglevel: str
+    loglevel:
         print or error flush printing
 
     """
 
-    def __init__(self, loglevel):
+    def __init__(self, loglevel: str):
         super().__init__(daemon=True)
 
         self.logfunc = {"print": bluemira_print_clean, "error": bluemira_error_clean}[
@@ -177,12 +176,12 @@ def run_subprocess(command: List[str], run_directory: str = ".", **kwargs) -> in
 
     Parameters
     ----------
-    command: List[str]
+    command:
         The arguments of the command to run.
-    run_directory: str
+    run_directory:
         The directory to run the command in. Default is current working
         directory.
-    **kwargs: Dict[str, Any]
+    **kwargs:
         Arguments passed directly to subprocess.Popen.
 
     Returns

@@ -2,7 +2,10 @@ from __future__ import annotations
 
 import functools
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 import matplotlib.colors as colors
 import numpy as np
@@ -50,7 +53,7 @@ class DefaultDisplayOptions:
 
 
 def show_cad(
-    parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],
     part_options: List[Dict],
     labels: List[str],
     **kwargs,
@@ -60,13 +63,13 @@ def show_cad(
 
     Parameters
     ----------
-    parts
+    parts:
         The parts to display.
-    part_options
+    part_options:
         The options to use to display the parts.
-    labels
+    labels:
         Labels to use for each part object
-    **kwargs
+    **kwargs:
         options passed to polyscope
     """
     if part_options is None:
@@ -110,22 +113,22 @@ def polyscope_setup(
 
     Parameters
     ----------
-    up_direction: str
+    up_direction:
         'x_up' The positive X-axis is up.
         'neg_x_up' The negative X-axis is up.
         'y_up' The positive Y-axis is up.
         'neg_y_up' The negative Y-axis is up.
         'z_up' The positive Z-axis is up.
         'neg_z_up' The negative Z-axis is up.
-    fps: int
+    fps:
         maximum frames per second of viewer (-1 == infinite)
-    aa: int
+    aa:
         anti aliasing amount, 1 is off, 2 is usually enough
-    transparency: str
+    transparency:
         the transparency mode (none, simple, pretty)
-    render_passes: int
+    render_passes:
         for transparent shapes how many render passes to undertake
-    gplane: str
+    gplane:
         the ground plane mode (none, tile, tile_reflection, shadon_only)
     """
     _init_polyscope()
@@ -156,7 +159,7 @@ def _init_polyscope():
 
 def add_features(
     labels: List[str],
-    parts: Union[BluemiraGeo, List[BluemiraGeo]],  # noqa: F821
+    parts: Union[BluemiraGeo, List[BluemiraGeo]],
     options: Union[Dict, List[Dict]],
 ) -> Tuple[List[ps.SurfaceMesh], List[ps.CurveNetwork]]:
     """
@@ -164,9 +167,9 @@ def add_features(
 
     Parameters
     ----------
-    parts
+    parts:
         parts to be displayed
-    options
+    options:
         display options
 
     Returns
@@ -219,15 +222,14 @@ def clean_name(label: str, index_label: str) -> str:
 
     Parameters
     ----------
-    label: str
+    label:
         name to be cleaned
-    index_label: str
+    index_label:
         if name is empty -> {index_label}: NO LABEL
 
     Returns
     -------
     name
-
     """
     label = label.replace("#", "_")
     index_label = index_label.replace("#", "_")

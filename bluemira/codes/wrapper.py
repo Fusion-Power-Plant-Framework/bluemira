@@ -25,7 +25,7 @@ Bluemira External Codes Wrapper
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from bluemira.codes.interface import CodesSolver
 from bluemira.codes.utilities import get_code_interface
@@ -45,15 +45,16 @@ def systems_code_solver(
 
     Parameters
     ----------
-    params: ParameterFrame
+    params:
         ParameterFrame for code
-    build_config: Dict
+    build_config:
         build configuration dictionary
+    module:
+        Module to use
 
     Returns
     -------
-    Solver object: CodesSolver
-        The solver that has been run.
+    The solver that has been run.
 
     Raises
     ------
@@ -66,21 +67,22 @@ def systems_code_solver(
 
 
 def plot_radial_build(
-    filename: str, width: float = 1.0, show: bool = True, module="PROCESS"
+    filename: str, width: float = 1.0, show: bool = True, module: str = "PROCESS"
 ):
     """
     Systems code radial build
 
     Parameters
     ----------
-    filename: str
+    filename:
         The directory containing the system code run results.
-    width: float
+    width:
         The relative width of the plot.
-    show: bool
+    show:
         If True then immediately display the plot, else delay displaying the plot until
         the user shows it, by default True.
-
+    module:
+        Module to use
     """
     syscode = get_code_interface(module)
 
@@ -90,22 +92,23 @@ def plot_radial_build(
 def transport_code_solver(
     params: ParameterFrame,
     build_config: BuildConfig,
-    module: Optional[str] = "PLASMOD",
+    module: str = "PLASMOD",
 ) -> CodesSolver:
     """
     Transport solver
 
     Parameters
     ----------
-    params: ParameterFrame
+    params:
         ParameterFrame for plasmod
-    build_config: Dict
+    build_config:
         build configuration dictionary
+    module:
+        Module to use
 
     Returns
     -------
-    solver: CodesSolver
-        The solver object to be run
+    The solver object to be run
     """
     transp = get_code_interface(module)
     return transp.Solver(params, build_config)

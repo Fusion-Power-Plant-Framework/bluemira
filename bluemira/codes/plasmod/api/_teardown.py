@@ -42,13 +42,13 @@ class Teardown(CodesTeardown):
 
     Parameters
     ----------
-    params: ParameterFrame
+    params:
         The bluemira parameters for the task. Note that this task does
         not apply any mappings to the ParameterFrame, so they should
         already be set. Most likely by a solver.
-    output_file: str
+    output_file:
         The path to the plasmod output file.
-    profiles_file: str
+    profiles_file:
         The path to the plasmod profiles file.
     """
 

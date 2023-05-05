@@ -22,7 +22,7 @@
 import copy
 import os
 from enum import auto
-from typing import Dict, List, Tuple, Union
+from typing import Dict, List, Mapping, Tuple, Union
 
 import numpy as np
 
@@ -62,22 +62,22 @@ class Solver(CodesSolver):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params:
         ParameterFrame or dict containing parameters for running PROCESS.
         See :class:`bluemira.codes.plasmod.params.ProcessSolverParams` for
         parameter details.
-    build_config: Mapping[str, Mapping[float, str, BuildConfig]]
+    build_config:
         Dictionary containing the configuration for this solver.
         Expected keys are:
 
-        * binary: str
+        * binary:
             The path to the PROCESS binary. The default assumes the
             PROCESS executable is on the system path.
-        * run_dir: str
+        * run_dir:
             The directory in which to run PROCESS. It is also the
             directory in which to look for PROCESS input and output
             files. Default is current working directory.
-        * problem_settings: Mapping[str, float]
+        * problem_settings:
             Any PROCESS parameters that do not correspond to a bluemira
             parameter.
 
@@ -113,7 +113,11 @@ class Solver(CodesSolver):
     teardown_cls = Teardown
     run_mode_cls = RunMode
 
-    def __init__(self, params: Union[Dict, ParameterFrame], build_config: BuildConfig):
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame],
+        build_config: Mapping[str, Union[float, str, BuildConfig]],
+    ):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
         self._setup: Union[Setup, None] = None
@@ -154,7 +158,7 @@ class Solver(CodesSolver):
 
         Parameters
         ----------
-        run_mode: RunMode
+        run_mode:
             The run mode to execute the solver in. See the
             :func:`~bluemira.codes.process._solver.Solver.__init__`
             docstring for details of the behaviour of each run mode.
@@ -179,7 +183,7 @@ class Solver(CodesSolver):
 
         return self.params
 
-    def get_raw_variables(self, params: Union[List, str]):
+    def get_raw_variables(self, params: Union[List, str]) -> List[float]:
         """
         Get raw variables from this solver's associate MFile.
 
@@ -187,13 +191,12 @@ class Solver(CodesSolver):
 
         Parameters
         ----------
-        params: Union[List, str]
+        params:
             Names of parameters to access.
 
         Returns
         -------
-        values: List[float]
-            The parameter values.
+        The parameter values.
         """
         if self._teardown:
             return self._teardown.get_raw_outputs(params)
@@ -211,18 +214,18 @@ class Solver(CodesSolver):
 
         Parameters
         ----------
-        impurity: str
+        impurity:
             The impurity to get the species data for. This string should
             be one of the names in the
             :class:`~bluemira.codes.process.api.Impurities` Enum.
 
         Returns
         -------
-        tref: np.ndarray
+        tref:
             The temperature in keV.
-        l_ref: np.ndarray
+        l_ref:
             The loss function value $L_z(n_e, T_e)$ in W.m3.
-        z_ref: np.ndarray
+        z_ref:
             Average effective charge.
         """
         t_ref, lz_ref, z_av_ref = np.genfromtxt(Impurities[impurity].file()).T
@@ -234,15 +237,14 @@ class Solver(CodesSolver):
 
         Parameters
         ----------
-        impurity: str
+        impurity:
             The impurity to get the species data for. This string should
             be one of the names in the
             :class:`~bluemira.codes.process.api.Impurities` Enum.
 
         Returns
         -------
-        species_fraction: float
-            The species fraction for the impurity taken from the PROCESS
-            output MFile.
+        The species fraction for the impurity taken from the PROCESS
+        output MFile.
         """
         return self.get_raw_variables(Impurities[impurity].id())[0]

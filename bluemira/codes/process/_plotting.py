@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import os
+from typing import Any, Dict, Tuple
 
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
@@ -30,7 +31,9 @@ from bluemira.codes.process.constants import NAME as PROCESS
 from bluemira.utilities.tools import is_num
 
 
-def boxr(ri, ro, w, off=0):
+def boxr(
+    ri: float, ro: float, w: float, off: float = 0
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Generate coordinates for an arbitrary height radial width. Used in plotting.
     """
@@ -40,7 +43,7 @@ def boxr(ri, ro, w, off=0):
     return xc, yc
 
 
-def read_rb_line(line):
+def read_rb_line(line: str):
     """
     Inputs: a line from the PROCESS radial/vertical build
     Outputs: the first three columns from that line
@@ -56,7 +59,7 @@ def read_rb_line(line):
             return line[:3]
 
 
-def strip_num(line, typ="float", n=0):
+def strip_num(line: str, typ: str = "float", n: int = 0) -> int:
     """
     Returns a single number in a line
     """
@@ -66,7 +69,7 @@ def strip_num(line, typ="float", n=0):
     return numb
 
 
-def read_n_line(line):
+def read_n_line(line: str):
     """
     Reads a line from the PROCESS output in the format below:
     Major radius (m)   / (rmajor)     /           9.203  ITV
@@ -86,13 +89,13 @@ def read_n_line(line):
     return out
 
 
-def setup_radial_build(run, width=1.0):
+def setup_radial_build(run: Dict[str, Any], width: float = 1.0):
     """
     Plots radial and vertical build of a PROCESS run.
 
     Parameters
     ----------
-    run: Dict
+    run:
         Dictionary of PROCESS outputs.
 
     Returns
@@ -239,18 +242,17 @@ def plot_radial_build(
 
     Parameters
     ----------
-    sys_code_dir: str
+    sys_code_dir:
         OUT.DAT directory location
-    width: float
+    width:
         The relative width of the plot.
-    show: bool
+    show:
         If True then immediately display the plot, else delay displaying the plot until
         the user shows it, by default True.
 
     Returns
     -------
-    plot_axes: matplotlib.pyplot.Axes
-        The plot Axes object.
+    The plot Axes object.
     """
     filename = os.path.join(sys_code_dir, "OUT.DAT")
 

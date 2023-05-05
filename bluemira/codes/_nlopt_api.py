@@ -24,6 +24,7 @@ Thin wrapper API interface to optimisation library (NLOpt)
 """
 
 import functools
+from typing import Any, Callable, Dict, Optional
 
 import nlopt
 import numpy as np
@@ -66,20 +67,21 @@ TERMINATION_KEYS = [
 ]
 
 
-def process_NLOPT_conditions(opt_conditions):  # noqa :N802
+def process_NLOPT_conditions(  # noqa :N802
+    opt_conditions: Dict[str, float]
+) -> Dict[str, float]:
     """
     Process NLopt termination conditions. Checks for negative or 0 values on some
     conditions (which mean they are inactive), and warns if you are doing weird stuff.
 
     Parameters
     ----------
-    opt_conditions: dict
+    opt_conditions:
         Dictionary of termination condition keys and values
 
     Returns
     -------
-    conditions: dict
-        Dictionary of processed termination condition keys and values
+    Dictionary of processed termination condition keys and values
 
     Raises
     ------
@@ -111,13 +113,13 @@ def process_NLOPT_conditions(opt_conditions):  # noqa :N802
     return conditions
 
 
-def process_NLOPT_result(opt):  # noqa :N802
+def process_NLOPT_result(opt: nlopt.opt):  # noqa :N802
     """
     Handle a NLopt optimiser and check results.
 
     Parameters
     ----------
-    opt: NLopt Optimize object
+    opt:
         The optimiser to check
     """
     result = opt.last_optimize_result()
@@ -149,7 +151,7 @@ class _NLOPTObjectiveFunction:
     Wrapper to store x-vector in case of RoundOffLimited errors.
     """
 
-    def __init__(self, func):
+    def __init__(self, func: Callable[[Any], float]):
         self.func = func
         self.last_x = None
 
@@ -168,22 +170,22 @@ class NLOPTOptimiser:
 
     Parameters
     ----------
-    algorithm_name: str
+    algorithm_name:
         Optimisation algorithm to use
-    n_variables: Optional[int]
+    n_variables:
         Size of the variable vector
-    opt_conditions: dict
+    opt_conditions:
         Dictionary of algorithm termination criteria
-    opt_parameters: dict
+    opt_parameters:
         Dictionary of algorithm parameters
     """
 
     def __init__(
         self,
-        algorithm_name,
-        n_variables=None,
-        opt_conditions=None,
-        opt_parameters=None,
+        algorithm_name: str,
+        n_variables: Optional[int] = None,
+        opt_conditions: Optional[Dict[str, float]] = None,
+        opt_parameters: Optional[Dict[str, float]] = None,
     ):
         self.opt_conditions = opt_conditions
         self.opt_parameters = opt_parameters
@@ -215,20 +217,20 @@ class NLOPTOptimiser:
         self.constraint_tols = []
 
     @property
-    def algorithm_name(self):
+    def algorithm_name(self) -> str:
         """
         Name of the optimisation algorithm.
         """
         return self._algorithm_name
 
     @algorithm_name.setter
-    def algorithm_name(self, name):
+    def algorithm_name(self, name: str):
         """
         Setter for the name of the optimisation algorithm.
 
         Parameters
         ----------
-        name: str
+        name:
             Name of the optimisation algorithm
 
         Raises
@@ -240,13 +242,13 @@ class NLOPTOptimiser:
             raise OptUtilitiesError(f"Unknown or unmapped algorithm: {name}")
         self._algorithm_name = name
 
-    def build_optimiser(self, n_variables):
+    def build_optimiser(self, n_variables: Optional[int]):
         """
         Build the underlying optimisation algorithm.
 
         Parameters
         ----------
-        n_variables: Optional[int]
+        n_variables:
             Dimension of the optimisation problem. If None, the algorithm is not built.
         """
         self.n_variables = n_variables
@@ -274,13 +276,13 @@ class NLOPTOptimiser:
         self._opt = nlopt.opt(algorithm, n_variables)
 
     @_opt_inputs_ready
-    def set_algorithm_parameters(self, opt_parameters):
+    def set_algorithm_parameters(self, opt_parameters: Dict[str, float]):
         """
         Set the optimisation algorithm parameters to use.
 
         Parameters
         ----------
-        opt_parameters: dict
+        opt_parameters:
             Optimisation algorithm parameters to use
         """
         if opt_parameters is None:
@@ -295,13 +297,13 @@ class NLOPTOptimiser:
                 bluemira_warn(f"Unrecognised algorithm parameter: {k}")
 
     @_opt_inputs_ready
-    def set_termination_conditions(self, opt_conditions):
+    def set_termination_conditions(self, opt_conditions: Dict[str, float]):
         """
         Set the optimisation algorithm termination condition(s) to use.
 
         Parameters
         ----------
-        opt_conditions: dict
+        opt_conditions:
             Termination conditions for the optimisation algorithm
         """
         if opt_conditions is None:
@@ -325,13 +327,13 @@ class NLOPTOptimiser:
             self._opt.set_stopval(conditions["stop_val"])
 
     @_opt_inputs_ready
-    def set_objective_function(self, f_objective):
+    def set_objective_function(self, f_objective: Callable[[Any], float]):
         """
         Set the objective function (minimisation).
 
         Parameters
         ----------
-        f_objective: callable
+        f_objective:
             Objective function to minimise
         """
         f_objective = _NLOPTObjectiveFunction(f_objective)
@@ -339,41 +341,43 @@ class NLOPTOptimiser:
         self._opt.set_min_objective(f_objective)
 
     @_opt_inputs_ready
-    def set_lower_bounds(self, lower_bounds):
+    def set_lower_bounds(self, lower_bounds: np.ndarray):
         """
         Set the lower bounds.
 
         Parameters
         ----------
-        lower_bounds: np.ndarray
+        lower_bounds:
             Lower bound vector
         """
         self.lower_bounds = lower_bounds
         self._opt.set_lower_bounds(lower_bounds)
 
     @_opt_inputs_ready
-    def set_upper_bounds(self, upper_bounds):
+    def set_upper_bounds(self, upper_bounds: np.ndarray):
         """
         Set the upper bounds.
 
         Parameters
         ----------
-        upper_bounds: np.ndarray
+        upper_bounds:
             Upper bound vector
         """
         self.upper_bounds = upper_bounds
         self._opt.set_upper_bounds(upper_bounds)
 
     @_opt_inputs_ready
-    def add_eq_constraints(self, f_constraint, tolerance):
+    def add_eq_constraints(
+        self, f_constraint: Callable[[Any], np.ndarray], tolerance: float
+    ):
         """
         Add a vector-valued equality constraint.
 
         Parameters
         ----------
-        f_constraint: callable
+        f_constraint:
             Constraint function
-        tolerance: float
+        tolerance:
             Tolerance with which to enforce the constraint
         """
         if self.algorithm_name not in EQ_CON_ALGS:
@@ -385,15 +389,17 @@ class NLOPTOptimiser:
         self._append_constraint_tols(f_constraint, tolerance)
 
     @_opt_inputs_ready
-    def add_ineq_constraints(self, f_constraint, tolerance):
+    def add_ineq_constraints(
+        self, f_constraint: Callable[[Any], np.ndarray], tolerance: float
+    ):
         """
         Add a vector-valued inequality constraint.
 
         Parameters
         ----------
-        f_constraint: callable
+        f_constraint:
             Constraint function
-        tolerance: np.ndarray
+        tolerance:
             Tolerance array with which to enforce the constraint
         """
         if self.algorithm_name not in INEQ_CON_ALGS:
@@ -404,19 +410,18 @@ class NLOPTOptimiser:
         self._opt.add_inequality_mconstraint(f_constraint, tolerance)
         self._append_constraint_tols(f_constraint, tolerance)
 
-    def optimise(self, x0):
+    def optimise(self, x0: np.ndarray) -> np.ndarray:
         """
         Run the optimiser.
 
         Parameters
         ----------
-        x0: np.ndarray
+        x0:
             Starting solution vector
 
         Returns
         -------
-        x_star: np.ndarray
-            Optimal solution vector
+        Optimal solution vector
         """
         if self._f_objective is None:
             raise OptUtilitiesError(

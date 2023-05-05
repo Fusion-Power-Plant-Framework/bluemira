@@ -25,10 +25,14 @@ Couple PLASMOD to a 2-D asymmetric fixed boundary equilibrium solve
 NOTE: This procedure is known to be sensitive to inputs, exercise
 caution.
 """
+from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -262,15 +266,15 @@ def solve_transport_fixed_boundary(
         Iteration relaxing factor
     transport_run_mode:
         Run mode for transport solver
-    mesh_filename: str
+    mesh_filename:
         filename for mesh output file
-    plot: bool
+    plot:
         Whether or not to plot
-    refine: bool
+    refine:
         Whether or not the mesh should be refined around the magnetic axis
-    num_levels: int
+    num_levels:
         number of refinement levels
-    distance: float
+    distance:
         maximum distance from the magnetic axis to which the refinement will be applied
 
     Returns
@@ -479,11 +483,11 @@ def solve_transport_fixed_boundary(
 
 
 def calc_metric_coefficients(
-    flux_surfaces,
-    grad_psi_2D_func: callable,
+    flux_surfaces: List[ClosedFluxSurface],
+    grad_psi_2D_func: Callable[[float, float], float],
     psi_norm_1D: np.ndarray,
     psi_ax: float,
-):
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Calculate metric coefficients of a set of flux surfaces.
 
@@ -500,15 +504,15 @@ def calc_metric_coefficients(
 
     Returns
     -------
-    psi_norm_1D: np.ndarray
+    psi_norm_1D:
         1-D vector of normalised psi values at which the coefficients were calculated
-    volume: np.ndarray
+    volume:
         1-D volume vector
-    g1: np.ndarray
+    g1:
         1-D g1 vector
-    g2: np.ndarray
+    g2:
         1-D g2 vector
-    g3: np.ndarray
+    g3:
         1-D g3 vector
     """
     if psi_norm_1D[0] != 0:
@@ -582,7 +586,7 @@ def calc_curr_dens_profiles(
     R_0: float,
     psi_ax: float,
     psi_b: float,
-):
+) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Calculate pprime and ffprime from metric coefficients, emulating behaviour
     in PLASMOD.
