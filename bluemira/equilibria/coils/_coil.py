@@ -24,7 +24,7 @@ Coil and coil grouping objects
 """
 
 from enum import Enum, EnumMeta, auto
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Tuple, Union
 
 import numpy as np
 
@@ -108,27 +108,27 @@ class Coil(CoilFieldsMixin):
 
     Parameters
     ----------
-    x
+    x:
         Coil geometric centre x coordinate [m]
-    z
+    z:
         Coil geometric centre z coordinate [m]
-    dx
+    dx:
         Coil radial half-width [m] from coil centre to edge (either side)
-    dz
+    dz:
         Coil vertical half-width [m] from coil centre to edge (either side)
-    name
+    name:
         The name of the coil
-    ctype
+    ctype:
         Type of coil as defined in CoilType
-    current
+    current:
         Coil current [A] (default = 0)
-    j_max
+    j_max:
         Maximum current density in the coil [A/m^2]
-    b_max
+    b_max:
         Maximum magnetic field at the coil [T]
-    discretisation
+    discretisation:
         discretise the coil, value in [m]. The minimum size is COIL_DISCR
-    n_turns: int
+    n_turns:
         Number of turns
 
     Notes
@@ -214,7 +214,7 @@ class Coil(CoilFieldsMixin):
 
     def plot(
         self,
-        ax=None,
+        ax: Optional[Axes] = None,
         subcoil: bool = True,
         label: bool = False,
         force: Optional[Iterable] = None,
@@ -225,23 +225,22 @@ class Coil(CoilFieldsMixin):
 
         Parameters
         ----------
-        ax: Optional[Axes]
+        ax:
             Matplotlib axis object
-        subcoil: bool
+        subcoil:
             plot coil discretisations
-        label: bool
+        label:
             show coil labels on plot
-        force: Optional[Iterable]
+        force:
             force arrows iterable
         kwargs:
             passed to matplotlib's Axes.plot
-
         """
         return CoilGroupPlotter(
             self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
         )
 
-    def n_coils(self):
+    def n_coils(self) -> int:
         """
         Number of coils in coil
 
@@ -262,7 +261,7 @@ class Coil(CoilFieldsMixin):
         return self._z
 
     @property
-    def position(self):
+    def position(self) -> np.ndarray:
         """Get coil x, z position"""
         return np.array([self.x, self.z])
 
@@ -308,8 +307,7 @@ class Coil(CoilFieldsMixin):
 
         Returns
         -------
-        area: float
-            The cross-sectional area of the coil [m^2]
+        The cross-sectional area of the coil [m^2]
         """
         return 4 * self.dx * self.dz
 
@@ -320,8 +318,7 @@ class Coil(CoilFieldsMixin):
 
         Returns
         -------
-        volume: float
-            The volume of the coil [m^3]
+        The volume of the coil [m^3]
         """
         return self.area * 2 * np.pi * self.x
 
@@ -420,24 +417,23 @@ class Coil(CoilFieldsMixin):
 
     def assign_material(
         self,
-        j_max=NBTI_J_MAX,
-        b_max=NBTI_B_MAX,
+        j_max: float = NBTI_J_MAX,
+        b_max: float = NBTI_B_MAX,
     ) -> None:
         """
         Assigns EM material properties to coil
 
         Parameters
         ----------
-        j_max: float
+        j_max:
             Overwrite default constant material max current density [A/m^2]
-        b_max: float
+        b_max:
             Overwrite default constant material max field [T]
 
         Notes
         -----
         Will always modify both j_max and b_max of the coil with either the default
         or specified values.
-
         """
         self.j_max = j_max
         self.b_max = b_max
@@ -505,16 +501,6 @@ class Coil(CoilFieldsMixin):
         Discretise a coil into filaments based on the length in [m]
         of the discretisation. Each filament will be plotted as a rectangle
         with the filament at its centre.
-
-        Parameters
-        ----------
-        d_coil: float
-            Target discretisation length [m]
-
-        Returns
-        -------
-        weighting: np.ndarray
-
         """
         nx = np.maximum(1, np.ceil(self.dx * 2 / self.discretisation))
         nz = np.maximum(1, np.ceil(self.dz * 2 / self.discretisation))
@@ -563,7 +549,7 @@ class Coil(CoilFieldsMixin):
             self._discretise()
             self._set_coil_attributes()
 
-    def _make_size(self, current=None):
+    def _make_size(self, current: Optional[float] = None):
         """
         Size the coil based on a current and a current density.
         """
@@ -576,25 +562,29 @@ class Coil(CoilFieldsMixin):
             return self.dx, self.dz
 
     @staticmethod
-    def _make_boundary(x_c: float, z_c: float, dx: float, dz: float):
+    def _make_boundary(
+        x_c: float, z_c: float, dx: float, dz: float
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Makes the coil boundary vectors
 
         Parameters
         ----------
-        x_c: float
+        x_c:
             x coordinate of centre
-        z_c: float
+        z_c:
             z coordinate of centre
-        dx: float
+        dx:
             dx of coil
-        dz: float
+        dz:
             dz of coil
 
         Returns
         -------
-        x_boundary: np.ndarray
-        z_boundary: np.ndarray
+        x_boundary:
+            Radial coordinates of the boundary
+        z_boundary:
+            Vertical coordinates of the boundary
 
         Note
         ----
