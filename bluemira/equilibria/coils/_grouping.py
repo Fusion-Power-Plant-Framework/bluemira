@@ -27,7 +27,10 @@ from __future__ import annotations
 from collections import Counter
 from copy import deepcopy
 from operator import attrgetter
-from typing import Iterable, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type, Union
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
 
 import numpy as np
 
@@ -46,20 +49,19 @@ from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import flatten_iterable, yintercept
 
 
-def symmetrise_coilset(coilset) -> CoilSet:
+def symmetrise_coilset(coilset: CoilSet) -> CoilSet:
     """
     Symmetrise a CoilSet by converting any coils that are up-down symmetric about
     z=0 to SymmetricCircuits.
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         CoilSet to symmetrise
 
     Returns
     -------
-    symmetric_coilset: CoilSet
-        New CoilSet with SymmetricCircuits where appropriate
+    New CoilSet with SymmetricCircuits where appropriate
     """
     if not check_coilset_symmetric(coilset):
         bluemira_warn(
@@ -96,8 +98,8 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     Parameters
     ----------
-    coils: Union[Coil, CoilGroup[Coil]]
-
+    coils:
+        Coils and groups of Coils to group
     """
 
     __slots__ = ("_coils", "_pad_size")
@@ -123,13 +125,12 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         Parameters
         ----------
-        ctype: Optional[Union[str, CoilType]]
+        ctype:
             get number of coils of a specific type
 
         Returns
         -------
-        int
-            Number of coils
+        Number of coils
         """
         if ctype is None:
             return len(self.x)
@@ -141,7 +142,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def plot(
         self,
-        ax=None,
+        ax: Optional[Axes] = None,
         subcoil: bool = True,
         label: bool = False,
         force: Optional[Iterable] = None,
@@ -152,13 +153,13 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         Parameters
         ----------
-        ax: Optional[Axes]
+        ax:
             Matplotlib axis object
-        subcoil: bool
+        subcoil:
             plot coil discretisations
-        label: bool
+        label:
             show coil labels on plot
-        force: Optional[Iterable]
+        force:
             force arrows iterable
         kwargs:
             passed to matplotlib's Axes.plot
@@ -225,15 +226,14 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         Parameters
         ----------
-        coil_name: str
+        coil_name:
             coil(s) to remove
-        _top_level: bool
+        _top_level:
             FOR INTERNAL USE, flags if at top level of nested coilgroup stack
 
         Returns
         -------
-        Union[List, None]
-            Removed names if not at top level of nested stack
+        Removed names if not at top level of nested stack
 
         Notes
         -----
@@ -330,21 +330,23 @@ class CoilGroup(CoilGroupFieldsMixin):
         coils.extend(passivecoils)
         return cls(*coils)
 
-    def to_group_vecs(self):
+    def to_group_vecs(
+        self,
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Output CoilGroup properties as numpy arrays
 
         Returns
         -------
-        x: np.ndarray(n_coils)
+        x:
             The x-positions of coils
-        z: np.ndarray(n_coils)
+        z:
             The z-positions of coils.
-        dx: np.ndarray(n_coils)
+        dx:
             The coil size in the x-direction.
-        dz: np.ndarray(n_coils)
+        dz:
             The coil size in the z-direction.
-        currents: np.ndarray(n_coils)
+        currents:
             The coil currents.
         """
         return self.x, self.z, self.dx, self.dz, self.current
@@ -432,7 +434,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         Parameters
         ----------
-        _to_pad: List[np.ndarray]
+        _to_pad:
             x quadratures
 
         Notes
@@ -493,12 +495,12 @@ class CoilGroup(CoilGroupFieldsMixin):
 
         Parameters
         ----------
-        max_current: float
+        max_current:
             max current value if j_max == nan
 
         Returns
         -------
-        np.ndarray
+        Maximum currents
         """
         return np.where(
             np.isnan(self.j_max) | ~self._flag_sizefix,  # or not
@@ -698,9 +700,9 @@ class Circuit(CoilGroup):
 
     Parameters
     ----------
-    coils: Union[Coil, CoilGroup[Coil]]
+    coils:
         coils in circuit
-    current: Optional[float]
+    current:
         The current value, if not provided the first coil current is used
     """
 
@@ -742,7 +744,7 @@ class SymmetricCircuit(Circuit):
 
     Parameters
     ----------
-    coils: Union[Coil, CoilGroup[Coil]]
+    coils:
         2 coil or coil group objects to symmetrise in a circuit
 
 
@@ -782,9 +784,8 @@ class SymmetricCircuit(Circuit):
 
         Parameters
         ----------
-        symmetry_line: np.ndarray[[float, float], [float, float]]
-            two points making a symmetry line
-
+        symmetry_line:
+            two points making a symmetry line [[float, float], [float, float]]
         """
         self._symmetry_line = (
             np.array(symmetry_line)
@@ -866,9 +867,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
     Parameters
     ----------
-    coils: Union[Coil, CoilGroup[Coil]]
+    coils:
         The coils to be added to the set
-    control_names: Optional[List]
+    control_names:
         List of coil names to be controlled
 
     """
@@ -950,17 +951,16 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
         Parameters
         ----------
-        output: np.ndarray
+        output:
             Output of calculation
-        sum_coils: bool
+        sum_coils:
             sum over coils
-        control: bool
+        control:
             operations on control coils only
 
         Returns
         -------
-        np.ndarray
-            Response output
+        Summed response output
         """
         ind = self._control_ind if control else slice(None)
 
