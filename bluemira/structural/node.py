@@ -144,8 +144,7 @@ class Node:
         Parameters
         ----------
         supports:
-            A boolean vector of the support DOFs:
-            np.array([dx, dy, dz, rx, ry, rz], dtype=np.bool)
+            A boolean vector of the support DOFs, [dx, dy, dz, rx, ry, rz]:
                 True == supported
                 False == free
         """

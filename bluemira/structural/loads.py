@@ -53,7 +53,7 @@ def node_load(load: float, load_type: str) -> np.ndarray:
     ----------
     load:
         The value of the point load (which may be a force or a moment)
-    load_type: ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
+    load_type:
         The type of load to apply (from 'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'])
             'Fi': force in the 'i' direction
             'Mi': moment about the 'i' direction
@@ -190,7 +190,7 @@ class LoadCase(list):
 
         Parameters
         ----------
-        element_id: i
+        element_id:
             The id_number of the Element to apply the load at
         load:
             The value of the load

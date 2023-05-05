@@ -42,7 +42,7 @@ class StructuralMaterial:
         Youngs modulus [Pa]
     nu:
         Poisson ratio
-    rho: f
+    rho:
         Density [kg/m^3]
     sigma_y:
         Yield stress [Pa]

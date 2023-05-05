@@ -65,7 +65,7 @@ def cyclic_decomposition(
         The stiffness matrix to decompose
     p:
         The load vector to decompose
-    l_nodes:]
+    l_nodes:
         The left nodes indices where a symmetry condition was specified
     r_nodes:
         The right node indices where a symmetry condition was specified
