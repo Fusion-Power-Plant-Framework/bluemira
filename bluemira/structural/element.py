@@ -24,7 +24,7 @@ Finite element class
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Dict, Optional
 
 if TYPE_CHECKING:
     from bluemira.structural.node import Node
@@ -148,8 +148,8 @@ def local_k_shear(
 
 # @nb.jit(nopython=True, cache=True)
 def local_k(
-    EA: float, EIyy: float, EIzz: float, L: float, GJ: float
-) -> np.ndarray:  # noqa (N803)
+    EA: float, EIyy: float, EIzz: float, L: float, GJ: float  # noqa (N803)
+) -> np.ndarray:
     """
     3-D stiffness local member stiffness matrix, including shear deformation
 
