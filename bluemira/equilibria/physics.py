@@ -24,7 +24,7 @@ A collection of simple equilibrium physics calculations
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Dict, Iterable, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -473,9 +473,9 @@ def normalise_beta(beta: float, a: float, b_tor: float, I_p: float) -> float:
     return beta * a * b_tor / I_p
 
 
-def beta_N_to_beta(
-    beta_N: float, a: float, Btor: float, I_p: float
-) -> float:  # noqa :N802
+def beta_N_to_beta(  # noqa :N802
+    beta_N: float, a: float, Btor: float, I_p: float  # noqa: N803
+) -> float:
     """
     Converts normalised beta to beta
 
