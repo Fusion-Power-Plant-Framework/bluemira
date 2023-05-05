@@ -25,10 +25,14 @@ Couple PLASMOD to a 2-D asymmetric fixed boundary equilibrium solve
 NOTE: This procedure is known to be sensitive to inputs, exercise
 caution.
 """
+from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 
 import matplotlib.pyplot as plt
 import numpy as np
