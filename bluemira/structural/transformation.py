@@ -30,16 +30,6 @@ from scipy.linalg import block_diag
 from bluemira.geometry.coordinates import rotation_matrix
 
 
-def _nb_isclose(a, b, rtol=1.0e-5, atol=0.0e-8):
-    """
-    Enable future compatibility with numba (0.46).
-
-    Was found in general to slow test run speed... remains to be seen if
-    it will have the same effect on real problems, but it's likely
-    """
-    return abs(a - b) <= atol + rtol * abs(b)
-
-
 def _direction_cosine_matrix(dx, dy, dz):
     """
     Calculates the direction cosine (transformation) matrix for an arbitrary
