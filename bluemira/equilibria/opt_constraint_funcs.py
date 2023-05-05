@@ -54,7 +54,12 @@ optimisaiton algorithms, but will need to be updated or approximated for use
 in derivative based algorithms, such as those utilising gradient descent.
 """  # noqa: W505
 
-from typing import Callable
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Callable
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 import numpy as np
 
@@ -177,7 +182,7 @@ def current_midplane_constraint(
     constraint: np.ndarray,
     vector: np.ndarray,
     grad: np.ndarray,
-    eq,
+    eq: Equilibrium,
     radius: float,
     scale: float,
     inboard: bool = True,

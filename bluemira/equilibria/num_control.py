@@ -22,8 +22,12 @@
 """
 Numerical vertical stability control - still not quite there!
 """
+from __future__ import annotations
 
-from typing import Union
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 import numpy as np
 
@@ -89,7 +93,7 @@ class VirtualController(CoilGroup):
     seems to fall over for large numerical instabilities.
     """
 
-    def __init__(self, eq, gz: float = 1.5):
+    def __init__(self, eq: Equilibrium, gz: float = 1.5):
         self.eq = eq
         self.coilset = eq.coilset
         self.Xc = (self.eq.grid.x_min + self.eq.grid.x_max) / 2
