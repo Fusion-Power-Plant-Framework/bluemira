@@ -144,9 +144,9 @@ def He_pumping(  # noqa :N802
     return p_pump_is, p_pump_el
 
 
-def H2O_pumping(
+def H2O_pumping(  # noqa :N802
     p_blanket: float, f_pump: float, eta_isen: float, eta_el: float
-) -> Tuple[float, float]:  # noqa :N802
+) -> Tuple[float, float]:
     """
     H20-cooling pumping power calculation strategy
 
