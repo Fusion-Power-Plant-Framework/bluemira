@@ -88,13 +88,21 @@ def to_constraint(
     return constraint
 
 
-def calculate_signed_distance(parameterisation, n_shape_discr, zone_points):
+def calculate_signed_distance(
+    parameterisation: GeometryParameterisation,
+    n_shape_discr: int,
+    zone_points: np.ndarray,
+):
     """
     Signed distance from the parameterised shape to the keep-out/in zone.
     """
     shape = parameterisation.create_shape()
     s = shape.discretize(ndiscr=n_shape_discr).xz
-    return signed_distance_2D_polygon(s.T, zone_points.T).T
+    # The order of the operands below is important, we always want this
+    # to return an array with the same shape as ``zone_points``, or
+    # we'll get 'could not broadcast' errors when we assign the result
+    # of our zone constraints.
+    return signed_distance_2D_polygon(zone_points.T, s.T).T
 
 
 def make_keep_out_zone_constraint(
@@ -108,13 +116,16 @@ def make_keep_out_zone_constraint(
             f"Keep-out zone with label '{koz.label}' is not closed."
         )
     koz_points = koz.discretize(n_discr, byedges=True).xz
+    # As we're discretizing by edges, we may not get exactly the number
+    # of points we ask for, especially if n_discr is small.
+    real_n_discr = koz_points.shape[1]
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
-        return calculate_signed_distance(
-            geom, n_shape_discr=n_discr, zone_points=koz_points
+        return -calculate_signed_distance(
+            geom, n_shape_discr=real_n_discr, zone_points=koz_points
         )
 
-    return {"f_constraint": _f_constraint, "tolerance": np.full(n_discr, tol)}
+    return {"f_constraint": _f_constraint, "tolerance": np.full(real_n_discr, tol)}
 
 
 def make_keep_in_zone_constraint(
@@ -128,13 +139,16 @@ def make_keep_in_zone_constraint(
             f"Keep-in zone with label '{kiz.label}' is not closed."
         )
     kiz_points = kiz.discretize(n_discr, byedges=True).xz
+    # As we're discretizing by edges, we may not get exactly the number
+    # of points we ask for, especially if n_discr is small.
+    real_n_discr = kiz_points.shape[1]
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
-        return -calculate_signed_distance(
-            geom, n_shape_discr=n_discr, zone_points=kiz_points
+        return calculate_signed_distance(
+            geom, n_shape_discr=real_n_discr, zone_points=kiz_points
         )
 
-    return {"f_constraint": _f_constraint, "tolerance": np.full(n_discr, tol)}
+    return {"f_constraint": _f_constraint, "tolerance": np.full(real_n_discr, tol)}
 
 
 def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstraintT]:
@@ -143,7 +157,6 @@ def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstr
 
     If no constraints are registered, return an empty list.
     """
-    constraints = INEQ_CONSTRAINT_REGISTRY.get(type(geom), [])
-    if constraints:
+    if constraints := INEQ_CONSTRAINT_REGISTRY.get(type(geom), []):
         return copy.deepcopy(constraints)
     return constraints
