@@ -116,7 +116,7 @@ class Solver(CodesSolver):
     def __init__(
         self,
         params: Union[Dict, ParameterFrame],
-        build_config: Mapping[str, Mapping[float, str, BuildConfig]],
+        build_config: Mapping[str, Union[float, str, BuildConfig]],
     ):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
