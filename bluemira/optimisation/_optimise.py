@@ -138,6 +138,7 @@ def optimise(
     The result of the optimisation; including the optimised parameters
     and the number of iterations.
     """
+    # TODO(hsaunders1904): finish this docstring!
     if dimensions is None:
         if x0 is not None:
             dimensions = x0.size
