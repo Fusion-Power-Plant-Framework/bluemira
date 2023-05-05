@@ -5,7 +5,9 @@ TODO:
         [x]Draw graph into the docstring!
     [x]create_materials,
     [x]setup_openmc
-    [x]filter_cells: separate the key into a list? IDK.
+    [half-done]filter_cells
+        [ ]separate the key into a list?
+        [ ]Write a docstring of some sort to explain that some items are lists and some items are cells.
     [ ]create_tallies
 [x]Implement Enum on create_materials
 2. Documentation:
@@ -97,7 +99,7 @@ class ParameterHolder:
 class OpenMCSimulationRuntimeParameters(ParameterHolder):
     """Parameters used in the actual simulation"""
     # parameters used in setup_openmc()
-    num_particles: int
+    particles: int # number of particles used in the neutronics simulation
     batches: int
     photon_transport: bool
     electron_treatment: str
@@ -105,7 +107,7 @@ class OpenMCSimulationRuntimeParameters(ParameterHolder):
     openmc_write_summary: str
     # Parameters used elsewhere
     parametric_source: bool
-    num_particles_stoch: int
+    volume_calc_particles: int # number of particles used in the volume calculation. 
 
 
 @dataclasses.dataclass
@@ -367,7 +369,7 @@ def _load_fw_points(tokamak_geometry, save_plots=True):
 
 def setup_openmc(
     plasma_source,
-    num_particles,
+    particles,
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
@@ -379,7 +381,7 @@ def setup_openmc(
     Parameters (all of which are arguments parsed to openmc.Settings)
     ----------
     plasma_source: openmc.Source
-    num_particles: int
+    particles: int
     batches: int, default=2
     photon_transport: bool, default=True
     electron_treatment: {'ttb', 'led'}
@@ -394,7 +396,7 @@ def setup_openmc(
     # Assuming 293K temperature for nuclear cross-sections for calculation speed
     settings = openmc.Settings()
     settings.source = plasma_source
-    settings.particles = num_particles
+    settings.particles = particles
     settings.batches = batches
     settings.photon_transport = photon_transport
     settings.electron_treatment = electron_treatment
@@ -417,40 +419,41 @@ def create_materials(breeder_materials):
 
 # ----------------------------------------------------------------------------------------
 
-def filter_cells(cells, src_rate):
+def filter_cells(cells_and_cell_lists, src_rate):
     """
     Requests cells for scoring.
     Parameters
     ----------
-    cells:
-        dictionary of openmc cells
+    cells_and_cell_lists:
+        dictionary where each item is either a single openmc.Cell,
+            or a list of openmc.Cell.
     src_rate:
         number of neutrons produced by the source (plasma) per second.
     """
     
     cell_filter = openmc.CellFilter(
         [
-            cells["tf_coil_cell"],
-            cells["plasma_inner1"],
-            cells["plasma_inner2"],
-            cells["plasma_outer1"],
-            cells["plasma_outer2"],
-            cells["divertor_fw"],
-            cells["divertor_fw_sf"]
+            cells_and_cell_lists["tf_coil_cell"],
+            cells_and_cell_lists["plasma_inner1"],
+            cells_and_cell_lists["plasma_inner2"],
+            cells_and_cell_lists["plasma_outer1"],
+            cells_and_cell_lists["plasma_outer2"],
+            cells_and_cell_lists["divertor_fw"],
+            cells_and_cell_lists["divertor_fw_sf"]
             
-        ] + cells["inb_vv_cells"]
-          + cells["inb_mani_cells"] 
-          + cells["inb_bz_cells"] 
-          + cells["inb_fw_cells"]
-          + cells["inb_sf_cells"]
+        ] + cells_and_cell_lists["inb_vv_cells"]
+          + cells_and_cell_lists["inb_mani_cells"] 
+          + cells_and_cell_lists["inb_bz_cells"] 
+          + cells_and_cell_lists["inb_fw_cells"]
+          + cells_and_cell_lists["inb_sf_cells"]
         
-          + cells["outb_vv_cells"] 
-          + cells["outb_mani_cells"] 
-          + cells["outb_bz_cells"] 
-          + cells["outb_fw_cells"]  
-          + cells["outb_sf_cells"]
+          + cells_and_cell_lists["outb_vv_cells"] 
+          + cells_and_cell_lists["outb_mani_cells"] 
+          + cells_and_cell_lists["outb_bz_cells"] 
+          + cells_and_cell_lists["outb_fw_cells"]  
+          + cells_and_cell_lists["outb_sf_cells"]
         
-          + cells["divertor_cells"],
+          + cells_and_cell_lists["divertor_cells"],
     )
     
     mat_filter = openmc.MaterialFilter(
@@ -473,12 +476,12 @@ def filter_cells(cells, src_rate):
     )
 
     fw_surf_filter = openmc.CellFilter(
-        cells["inb_sf_cells"]
-        + cells["outb_sf_cells"]
-        + [cells["divertor_fw_sf"]]
-        + cells["inb_fw_cells"]
-        + cells["outb_fw_cells"]
-        + [cells["divertor_fw"]]
+        cells_and_cell_lists["inb_sf_cells"]
+        + cells_and_cell_lists["outb_sf_cells"]
+        + [cells_and_cell_lists["divertor_fw_sf"]]
+        + cells_and_cell_lists["inb_fw_cells"]
+        + cells_and_cell_lists["outb_fw_cells"]
+        + [cells_and_cell_lists["divertor_fw"]]
     )
 
     neutron_filter = openmc.ParticleFilter(["neutron"])
@@ -710,15 +713,16 @@ class OpenMCResult():
 # ----------------------------------------------------------------------------------------
 
 def stochastic_volume_calculation(
-    tokamak_geometry, cells, num_particles=4e7
+    tokamak_geometry, cells_and_cell_lists, particles=4e7
 ):
     """
     Parameters
     ----------
     tokamak_geometry: TokamakGeometry
-    cells: dict
-        dictionary of openmc cells
-    num_particles:
+    cells_and_cell_lists: dict
+        dictionary where each item is either a single openmc.Cell,
+            or a list of openmc.Cell.
+    particles:
         how many randomly generated particle to use
         for the stochastic volume calculation.
     """
@@ -751,10 +755,10 @@ def stochastic_volume_calculation(
     lower_left = (-maxr, -maxr, -maxz)
     upper_right = (maxr, maxr, maxz)
     cell_vol_calc = openmc.VolumeCalculation(
-        cells["inb_fw_cells"]
-        + [cells["divertor_fw"]]
-        + cells["outb_fw_cells"],
-        int(num_particles),
+        cells_and_cell_lists["inb_fw_cells"]
+        + [cells_and_cell_lists["divertor_fw"]]
+        + cells_and_cell_lists["outb_fw_cells"],
+        int(particles),
         lower_left,
         upper_right,
     )
@@ -768,49 +772,50 @@ def stochastic_volume_calculation(
     
 # ----------------------------------------------------------------------------------------
 
-def geometry_plotter(cells, tokamak_geometry):
+def geometry_plotter(cells_and_cell_lists, tokamak_geometry):
     """
     Uses the OpenMC plotter to produce an image of the modelled geometry
 
     Parameters
     ----------
-    cells:
-        dictionary of openmc cells
+    cells_and_cell_lists:
+        dictionary where each item is either a single openmc.Cell,
+            or a list of openmc.Cell.
     tokamak_geometry : TokamakGeometry
     """
 
     # Assigning colours for plots
     cell_color_assignment = {
-        cells["tf_coil_cell"]: "brown",
-        cells["plasma_inner1"]: "dimgrey",
-        cells["plasma_inner2"]: "grey",
-        cells["plasma_outer1"]: "darkgrey",
-        cells["plasma_outer2"]: "dimgrey",
-        cells["divertor_inner1"]: "grey",
-        cells["divertor_inner2"]: "dimgrey",
-        cells["outer_vessel_cell"]: "white",
-        cells["inb_vv_cells"][0]: "red", 
-        cells["outb_vv_cells"][1]:  "orange", 
-        cells["outb_vv_cells"][2]:  "yellow", 
+        cells_and_cell_lists["tf_coil_cell"]: "brown",
+        cells_and_cell_lists["plasma_inner1"]: "dimgrey",
+        cells_and_cell_lists["plasma_inner2"]: "grey",
+        cells_and_cell_lists["plasma_outer1"]: "darkgrey",
+        cells_and_cell_lists["plasma_outer2"]: "dimgrey",
+        cells_and_cell_lists["divertor_inner1"]: "grey",
+        cells_and_cell_lists["divertor_inner2"]: "dimgrey",
+        cells_and_cell_lists["outer_vessel_cell"]: "white",
+        cells_and_cell_lists["inb_vv_cells"][0]: "red", 
+        cells_and_cell_lists["outb_vv_cells"][1]:  "orange", 
+        cells_and_cell_lists["outb_vv_cells"][2]:  "yellow", 
     }
 
     mat_color_assignment = {
-        cells["bore_cell"]: "blue",
-        cells["tf_coil_cell"]: "brown",
-        cells["plasma_inner1"]: "white",
-        cells["plasma_inner2"]: "white",
-        cells["plasma_outer1"]: "white",
-        cells["plasma_outer2"]: "white",
-        cells["divertor_inner1"]: "white",
-        cells["divertor_inner2"]: "white",
-        cells["divertor_fw"]:     "red",
-        cells["outer_vessel_cell"]: "white",
-        cells["outer_container"]:   "darkgrey",
+        cells_and_cell_lists["bore_cell"]: "blue",
+        cells_and_cell_lists["tf_coil_cell"]: "brown",
+        cells_and_cell_lists["plasma_inner1"]: "white",
+        cells_and_cell_lists["plasma_inner2"]: "white",
+        cells_and_cell_lists["plasma_outer1"]: "white",
+        cells_and_cell_lists["plasma_outer2"]: "white",
+        cells_and_cell_lists["divertor_inner1"]: "white",
+        cells_and_cell_lists["divertor_inner2"]: "white",
+        cells_and_cell_lists["divertor_fw"]:     "red",
+        cells_and_cell_lists["outer_vessel_cell"]: "white",
+        cells_and_cell_lists["outer_container"]:   "darkgrey",
     }
     
     def color_cells(prefixed_cell_type, color):
-        for i in range(len(cells[prefixed_cell_type+"_cells"])):
-            mat_color_assignment[cells[prefixed_cell_type+"_cells"][i]] = color
+        for i in range(len(cells_and_cell_lists[prefixed_cell_type+"_cells"])):
+            mat_color_assignment[cells_and_cell_lists[prefixed_cell_type+"_cells"][i]] = color
     # first wall: red
     color_cells('outb_fw',   'red')
     color_cells( 'inb_fw',   'red')
@@ -882,7 +887,7 @@ class TBRHeatingSimulation():
 
         setup_openmc(
             source,
-            self.runtime_variables.num_particles,
+            self.runtime_variables.particles,
             self.runtime_variables.batches,
             self.runtime_variables.photon_transport,
             self.runtime_variables.electron_treatment,
@@ -929,7 +934,7 @@ class TBRHeatingSimulation():
         stochastic_volume_calculation(
             self.tokamak_geometry,
             self.cells,
-            self.runtime_variables.num_particles_stoch,
+            self.runtime_variables.volume_calc_particles,
         )
 
 ################################################################################################################
@@ -1021,7 +1026,7 @@ if __name__ == "__main__":
     breeder_materials, tokamak_geometry = get_preset_physical_properties('hcpb') # implemented blanket_type:{'wcll', 'dcll', 'hcpb'}
 
     runtime_variables = OpenMCSimulationRuntimeParameters(
-            num_particles=16800,        # 16800 takes 5 seconds,  1000000 takes 280 seconds.
+            particles=16800,        # 16800 takes 5 seconds,  1000000 takes 280 seconds.
             batches=2,
             photon_transport=True,
             electron_treatment="ttb",
@@ -1029,7 +1034,7 @@ if __name__ == "__main__":
             openmc_write_summary=False,
 
             parametric_source=True,
-            num_particles_stoch=4e8, # only used if stochastic_volume_calculation is turned on.
+            volume_calc_particles=4e8, # only used if stochastic_volume_calculation is turned on.
             )
 
     operation_variable = TokamakOperationParameters(reactor_power_MW=1998.0)
