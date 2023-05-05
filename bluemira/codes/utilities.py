@@ -128,12 +128,12 @@ class LogPipe(threading.Thread):
 
     Parameters
     ----------
-    loglevel: str
+    loglevel:
         print or error flush printing
 
     """
 
-    def __init__(self, loglevel):
+    def __init__(self, loglevel: str):
         super().__init__(daemon=True)
 
         self.logfunc = {"print": bluemira_print_clean, "error": bluemira_error_clean}[
@@ -176,12 +176,12 @@ def run_subprocess(command: List[str], run_directory: str = ".", **kwargs) -> in
 
     Parameters
     ----------
-    command: List[str]
+    command:
         The arguments of the command to run.
-    run_directory: str
+    run_directory:
         The directory to run the command in. Default is current working
         directory.
-    **kwargs: Dict[str, Any]
+    **kwargs:
         Arguments passed directly to subprocess.Popen.
 
     Returns
