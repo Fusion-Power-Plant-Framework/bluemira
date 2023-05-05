@@ -262,7 +262,7 @@ class PlasmaCoil:
 
         Parameters
         ----------
-        ax: Axes object
+        ax:
             The matplotlib axes on which to plot the PlasmaCoil
         """
         return PlasmaCoilPlotter(self, ax=ax)
