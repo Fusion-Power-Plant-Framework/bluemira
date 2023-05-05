@@ -157,14 +157,14 @@ def optimise_geometry(
         parameters at each iteration. Note that this can significantly
         impact the performance of the optimisation.
         (default: False)
-    koz_discretisation
+    koz_discretisation:
         The number of points to discretise the keep-out zone(s) over.
         If this is an int, all keep-out zones will be discretised with
         the same number of points. If this is an iterable, each i-th
         keep-out zone is discretised using value in the i-th item.
         The iterable should have the same number of items as
         ``keep_out_zones``.
-    kiz_discretisation
+    kiz_discretisation:
         The number of points to discretise the keep-in zone(s) over.
         If this is an int, all keep-in zones will be discretised with
         the same number of points. If this is an iterable, each i-th
