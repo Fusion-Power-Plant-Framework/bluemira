@@ -15,25 +15,25 @@ div_clearance = 49.
 
 # ------------------------------------------------------------------------------------
 
-def check_geometry(geometry_variables):
+def check_geometry(tokamak_geometry):
     
     # Some basic geometry checks
     
-    if geometry_variables.elong < 1.0:
+    if tokamak_geometry.elong < 1.0:
         raise ValueError("Elongation must be at least 1.0")
 
     # TODO update this
     inboard_build = (
-        geometry_variables.minor_r
-        + geometry_variables.inb_fw_thick
-        + geometry_variables.inb_bz_thick
-        + geometry_variables.inb_mnfld_thick
-        + geometry_variables.inb_vv_thick
-        + geometry_variables.tf_thick
-        + geometry_variables.inb_gap
+        tokamak_geometry.minor_r
+        + tokamak_geometry.inb_fw_thick
+        + tokamak_geometry.inb_bz_thick
+        + tokamak_geometry.inb_mnfld_thick
+        + tokamak_geometry.inb_vv_thick
+        + tokamak_geometry.tf_thick
+        + tokamak_geometry.inb_gap
     )
 
-    if inboard_build > geometry_variables.major_r:
+    if inboard_build > tokamak_geometry.major_r:
         raise ValueError("The inboard build does not fit within the major radius. Increase the major radius.")
 
 # ------------------------------------------------------------------------------------
@@ -163,13 +163,13 @@ def elongate(points, adjust_elong):
 
 # ------------------------------------------------------------------------------------
 
-def stretch_r(points, geometry_variables, stretch_r_val):
+def stretch_r(points, tokamak_geometry, stretch_r_val):
     
     # Moves the points in the r dimension away from the major radius by extra_r_cm
     
-    geometry_variables.major_r
+    tokamak_geometry.major_r
     
-    points[:, 0] = (points[:, 0] - geometry_variables.major_r) * stretch_r_val + geometry_variables.major_r
+    points[:, 0] = (points[:, 0] - tokamak_geometry.major_r) * stretch_r_val + tokamak_geometry.major_r
     
     return points
 
@@ -200,7 +200,7 @@ def get_min_max_z_r_of_points(points):
 def create_inboard_layer(prefix_for_layer,
                          prefix_for_layer_behind,
                          layer_points,
-                         no_inboard_points,
+                         num_inboard_points,
                          layer_name
                         ):
     
@@ -217,7 +217,7 @@ def create_inboard_layer(prefix_for_layer,
     )
     surfaces[ prefix_for_layer+ "_surfs"]["planes"].append(region_bot)
     
-    for inb_i in range(1, no_inboard_points):
+    for inb_i in range(1, num_inboard_points):
         
         # Making surfaces
         inb_z0, inb_r2 = get_cone_eqn_from_two_points( layer_points[-inb_i], layer_points[-inb_i -1] )
@@ -239,7 +239,7 @@ def create_inboard_layer(prefix_for_layer,
         )
         
         # Different top surface for top region
-        if inb_i == no_inboard_points - 1:          # if top segment
+        if inb_i == num_inboard_points - 1:          # if top segment
             inb_cell.region = inb_cell.region & -surfaces["meeting_cone"]
         else:
             inb_cell.region = inb_cell.region & -surfaces[ prefix_for_layer+ "_surfs"]["planes"][-1]  # Recently appended top surface  
@@ -293,7 +293,7 @@ def create_inboard_layer(prefix_for_layer,
 def create_outboard_layer(prefix_for_layer,
                          prefix_for_layer_behind,
                          layer_points,
-                         no_outboard_points,
+                         num_outboard_points,
                          layer_name
                         ):
     
@@ -310,7 +310,7 @@ def create_outboard_layer(prefix_for_layer,
     )
     surfaces[ prefix_for_layer+ "_surfs"]["planes"].append(region_bot)
     
-    for outb_i in range(0, no_outboard_points): 
+    for outb_i in range(0, num_outboard_points): 
         
         # Making surfaces
         outb_z0, outb_r2 = get_cone_eqn_from_two_points( layer_points[outb_i], layer_points[outb_i+1])
@@ -333,7 +333,7 @@ def create_outboard_layer(prefix_for_layer,
         )
         
         # Different top surface for top region
-        if outb_i == no_outboard_points - 1:          # if top segment
+        if outb_i == num_outboard_points - 1:          # if top segment
             outb_cell.region = outb_cell.region & +surfaces["meeting_cone"] 
         else:
             outb_cell.region = outb_cell.region & -surfaces[ prefix_for_layer+ "_surfs"]["planes"][-1]  # Recently appended top surface  
@@ -650,26 +650,54 @@ def create_plasma_chamber():
 
 # ------------------------------------------------------------------------------------
 
-def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
-
+def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
+    """
+    Create a dictionary of cells 
+    Parameters
+    ----------
+    tokamak_geometry: TokamakGeometry
+        TokamakGeometry (child of dataclass) instance containing the attributes:
+            elong
+            inb_bz_thick
+            inb_fw_thick
+            inb_gap
+            inb_mnfld_thick
+            inb_vv_thick
+            major_r
+            minor_r
+            outb_bz_thick
+            outb_fw_thick
+            outb_mnfld_thick
+            outb_vv_thick
+            tf_thick
+        which are all either floats in cm, or dimensionless.
+    fw_points:
+        coordinates of sample points representing the blanket, where
+        blanket = first wall MINUS divertor
+        (Hence I think this variable is poorly named)
+    div_points:
+        coordinates of sample points representing the divertor
+    num_inboard_points:
+        number of points in fw points that represents the number of inboard points.
+    """
     # Creates an OpenMC CSG geometry for an EU Demo reactor
     print('fw_points',fw_points)
     print('div_points', div_points)
 
-    minor_r = geometry_variables.minor_r
-    major_r = geometry_variables.major_r
-    elong = geometry_variables.elong
+    minor_r = tokamak_geometry.minor_r
+    major_r = tokamak_geometry.major_r
+    elong = tokamak_geometry.elong
 
-    inb_fw_thick = geometry_variables.inb_fw_thick
-    inb_bz_thick = geometry_variables.inb_bz_thick
-    inb_mnfld_thick = geometry_variables.inb_mnfld_thick
-    inb_vv_thick = geometry_variables.inb_vv_thick
-    tf_thick = geometry_variables.tf_thick
+    inb_fw_thick = tokamak_geometry.inb_fw_thick
+    inb_bz_thick = tokamak_geometry.inb_bz_thick
+    inb_mnfld_thick = tokamak_geometry.inb_mnfld_thick
+    inb_vv_thick = tokamak_geometry.inb_vv_thick
+    tf_thick = tokamak_geometry.tf_thick
 
-    outb_fw_thick = geometry_variables.outb_fw_thick
-    outb_bz_thick = geometry_variables.outb_bz_thick
-    outb_mnfld_thick = geometry_variables.outb_mnfld_thick
-    outb_vv_thick = geometry_variables.outb_vv_thick
+    outb_fw_thick = tokamak_geometry.outb_fw_thick
+    outb_bz_thick = tokamak_geometry.outb_bz_thick
+    outb_mnfld_thick = tokamak_geometry.outb_mnfld_thick
+    outb_vv_thick = tokamak_geometry.outb_vv_thick
 
     inner_plasma_r = major_r - minor_r
     outer_plasma_r = major_r + minor_r
@@ -678,10 +706,10 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     fw_surf_score_depth = 0.01
     
     # Of the points in fw_points, this specifies the number that define the outboard
-    no_outboard_points = len(fw_points) - no_inboard_points
+    num_outboard_points = len(fw_points) - num_inboard_points
     
-    print('\nNumber of inboard points', no_inboard_points )
-    print('Number of outboard points', no_outboard_points,'\n' )
+    print('\nNumber of inboard points', num_inboard_points )
+    print('Number of outboard points', num_outboard_points,'\n' )
     
     #########################################
     ### Inboard surfaces behind breeder zone
@@ -706,7 +734,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     
     # Getting tf coil r surfaces
     back_of_inb_vv_r = get_min_r_of_points( inner_points )
-    gap_between_vv_tf = geometry_variables.inb_gap
+    gap_between_vv_tf = tokamak_geometry.inb_gap
     
     surfaces["bore_surface"] = openmc.ZCylinder(
         r = back_of_inb_vv_r - gap_between_vv_tf - tf_thick 
@@ -720,7 +748,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     div_points_w_clearance[:,2] -= div_clearance
     
     dummy, max_z, max_r = get_min_max_z_r_of_points( np.concatenate((outer_points, 
-                                                                     inner_points[-no_inboard_points:]), axis=0) )
+                                                                     inner_points[-num_inboard_points:]), axis=0) )
     min_z, dummy, dummy = get_min_max_z_r_of_points( np.concatenate((outer_points, 
                                                                      div_points_w_clearance), axis=0) )
     
@@ -756,11 +784,11 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     
     # Meeting point between inboard and outboard
     surfaces["meeting_r_cyl"] = openmc.ZCylinder(
-        r = fw_points[-no_inboard_points][0]
+        r = fw_points[-num_inboard_points][0]
     )
     
     # Meeting cone at top between inboard and outboard
-    z0, r2 = get_cone_eqn_from_two_points(fw_points[-no_inboard_points], inb_vv_points[-no_inboard_points] )
+    z0, r2 = get_cone_eqn_from_two_points(fw_points[-num_inboard_points], inb_vv_points[-num_inboard_points] )
     surfaces["meeting_cone"] = openmc.ZCone(
         x0=0.0, y0=0.0, z0=z0, r2=r2
     )
@@ -769,7 +797,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     surfaces["inner_surfs"] = {}
     surfaces["inner_surfs"]["cones"] = []  # runs bottom to top
     
-    for inb_i in range(1, no_inboard_points): 
+    for inb_i in range(1, num_inboard_points): 
         inb_z0, inb_r2 = get_cone_eqn_from_two_points(inner_points[-inb_i], inner_points[-inb_i -1] )
         
         cone_surface = openmc.ZCone(
@@ -784,7 +812,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_inboard_layer("inb_vv", 
                          "inner", 
                          inb_vv_points,
-                         no_inboard_points,
+                         num_inboard_points,
                          "Inboard VV" )
         
     ##################################
@@ -793,7 +821,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_inboard_layer("inb_mani", 
                          "inb_vv", 
                          inb_mani_points,
-                         no_inboard_points,
+                         num_inboard_points,
                          "Inboard Manifold" )
     
     ##################################
@@ -802,7 +830,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_inboard_layer("inb_bz", 
                          "inb_mani", 
                          inb_bz_points,
-                         no_inboard_points,
+                         num_inboard_points,
                          "Inboard BZ" )
         
     ##################################
@@ -811,7 +839,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_inboard_layer("inb_fw", 
                          "inb_bz", 
                          fw_points,
-                         no_inboard_points,
+                         num_inboard_points,
                          "Inboard FW" )
         
     ##################################
@@ -820,7 +848,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_inboard_layer("inb_sf", 
                          "inb_fw", 
                          sf_points,
-                         no_inboard_points,
+                         num_inboard_points,
                          "Inboard FW Surface" )
     
     #############################################################################################
@@ -833,7 +861,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     surfaces["outer_surfs"] = {}
     surfaces["outer_surfs"]["cones"] = []  # runs bottom to top
     
-    for outb_i in range(0, no_outboard_points): 
+    for outb_i in range(0, num_outboard_points): 
         outb_z0, outb_r2 = get_cone_eqn_from_two_points(outer_points[outb_i], outer_points[outb_i+1])
         
         cone_surface = openmc.ZCone(
@@ -848,7 +876,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_outboard_layer("outb_vv",
                          "outer",
                          outb_vv_points,
-                         no_outboard_points,
+                         num_outboard_points,
                          "Outboard VV")
     
     ##################################
@@ -857,7 +885,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_outboard_layer("outb_mani",
                          "outb_vv",
                          outb_mani_points,
-                         no_outboard_points,
+                         num_outboard_points,
                          "Outboard Manifold")
     
     ##################################
@@ -866,7 +894,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_outboard_layer("outb_bz",
                          "outb_mani",
                          outb_bz_points,
-                         no_outboard_points,
+                         num_outboard_points,
                          "Outboard BZ")
         
     ##################################
@@ -875,7 +903,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_outboard_layer("outb_fw",
                          "outb_bz",
                          fw_points,
-                         no_outboard_points,
+                         num_outboard_points,
                          "Outboard FW")
     
     #######################################
@@ -884,7 +912,7 @@ def make_geometry(geometry_variables, fw_points, no_inboard_points, div_points):
     create_outboard_layer("outb_sf",
                          "outb_fw",
                          sf_points,
-                         no_outboard_points,
+                         num_outboard_points,
                          "Outboard FW Surface")
 
     ######################
