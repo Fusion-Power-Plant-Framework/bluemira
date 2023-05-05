@@ -132,9 +132,9 @@ class CryostatBuilder(Builder):
 
         Parameters
         ----------
-        x_out: float
+        x_out:
             x coordinate extremity
-        z_top: float
+        z_top:
             z coordinate extremity
 
         Notes
@@ -176,7 +176,7 @@ class CryostatBuilder(Builder):
 
         Parameters
         ----------
-        x_out: float
+        x_out:
             x coordinate extremity
         """
         cryostat_vv = PhysicalComponent(
@@ -193,8 +193,10 @@ class CryostatBuilder(Builder):
 
         Parameters
         ----------
-        xz_cross_section: BluemiraFace
+        xz_cross_section:
             xz cross section of cryostat
+        degree:
+            Revolution degree
         """
         return build_sectioned_xyz(
             xz_cross_section,
