@@ -1,56 +1,4 @@
 {
-  "Lower Port": {
-    "params": {
-      "lower_duct_div_padding": {
-        "value": 5,
-        "unit": "cm",
-        "source": "Input",
-        "long_name": "Lower duct diverter padding."
-      },
-      "lower_port_tf_z_offset": {
-        "value": 250,
-        "unit": "cm",
-        "source": "Input",
-        "long_name": "Lower duct z-offset from the TF coil to the top of the straight duct leg."
-      },
-      "lower_port_z_length": {
-        "value": 200,
-        "unit": "cm",
-        "source": "Input",
-        "long_name": "Lower port length in z."
-      },
-      "lower_duct_straight_x_offset": {
-        "value": 50,
-        "unit": "cm",
-        "source": "Input",
-        "long_name": "Length in x to offset the straight duct leg from where it meets the angled duct leg."
-      },
-      "lower_duct_straight_y_offset": {
-        "value": 50,
-        "unit": "cm",
-        "source": "Input",
-        "long_name": "Length in y to offset the straight duct leg from where it meets the angled duct leg."
-      },
-      "lower_duct_angle": {
-        "value": -60,
-        "unit": "degrees",
-        "source": "Input",
-        "long_name": "Lower duct angle to the divertor."
-      },
-      "tf_coil_thickness": {
-        "value": 65,
-        "unit": "cm",
-        "source": "Input",
-        "long_name": "TF Coil thickness (temp)."
-      },
-      "lower_duct_wall_tk": {
-        "value": 2,
-        "unit": "cm",
-        "source": "Input",
-        "long_name": "Lower duct wall thickness."
-      }
-    }
-  },
   "Radial build": {
     "run_mode": "read",
     "read_dir": "config/",
@@ -171,6 +119,58 @@
       "conditions": {
         "max_eval": 200,
         "ftol_rel": 1e-6
+      }
+    }
+  },
+  "Lower Port": {
+    "params": {
+      "lower_duct_tf_offset": {
+        "value": 0.5,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Lower duct TF Coil offset."
+      },
+      "lower_duct_div_pad_dx_outer": {
+        "value": 0.3,
+        "unit": "m",
+        "source": "Input",
+        "long_name": ""
+      },
+      "lower_duct_div_pad_dx_inner": {
+        "value": 0.1,
+        "unit": "m",
+        "source": "Input",
+        "long_name": ""
+      },
+      "lower_port_height": {
+        "value": 3,
+        "unit": "m",
+        "source": "Input",
+        "long_name": ""
+      },
+      "lower_port_width": {
+        "value": 3,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Length in y to offset the straight duct leg from where it meets the angled duct leg."
+      },
+      "lower_duct_angle": {
+        "value": -30,
+        "unit": "degrees",
+        "source": "Input",
+        "long_name": "Lower duct angle to the divertor."
+      },
+      "tf_coil_thickness": {
+        "value": 0.65,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "TF Coil thickness (temp)."
+      },
+      "lower_duct_wall_tk": {
+        "value": 0.02,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Lower duct wall thickness."
       }
     }
   },

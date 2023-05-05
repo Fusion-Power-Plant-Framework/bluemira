@@ -80,7 +80,7 @@ from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 PARAMS_FILE_PATH = os.path.join(CONFIG_DIR, "params.json")
-BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json")
+BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json.DAT")
 
 
 class EUDEMO(Reactor):
@@ -97,6 +97,7 @@ class EUDEMO(Reactor):
     cryostat: Cryostat
     cryostat_thermal: CryostatThermalShield
     radiation_shield: RadiationShield
+    # todo: remove before merging
     lower_port: LowerPort
 
 
@@ -154,8 +155,7 @@ def build_lower_port(
         angled_duct_boundary,
         straight_duct_boundary,
     )
-    # this comp. manager is temporary
-    # the duct will be merged into the VV
+    # todo: remove before merging
     return LowerPort(builder.build(), lower_duct_koz)
 
 
@@ -353,7 +353,7 @@ if __name__ == "__main__":
     reactor.lower_port = build_lower_port(
         reactor_config.params_for("Lower Port"),
         reactor_config.config_for("Lower Port"),
-        divertor_face,
+        ivc_shapes.divertor_face,
         reactor.tf_coils.xz_outer_boundary(),
     )
 

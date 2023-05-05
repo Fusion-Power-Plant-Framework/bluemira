@@ -51,13 +51,13 @@ class LowerPortBuilder(Builder):
         params: Union[ParameterFrame, Dict],
         build_config: Dict,
         lower_duct_xz: BluemiraFace,
-        angled_duct_boundary: BluemiraWire,
-        straight_duct_boundary: BluemiraWire,
+        angled_duct_inner_boundary: BluemiraWire,
+        straight_duct_inner_boundary: BluemiraWire,
     ):
         super().__init__(params, build_config)
         self.lower_duct_xz = lower_duct_xz
-        self.angled_duct_boundary = angled_duct_boundary
-        self.straight_duct_boundary = straight_duct_boundary
+        self.angled_duct_inner_boundary = angled_duct_inner_boundary
+        self.straight_duct_inner_boundary = straight_duct_inner_boundary
 
         self.lower_duct_wall_tk = self.params.lower_duct_wall_tk.value
         self.lower_duct_angle = self.params.lower_duct_angle.value
@@ -85,23 +85,38 @@ class LowerPortBuilder(Builder):
         """
         Build the Lower Port in XYZ.
         """
-        angled_duct_face = BluemiraFace(self.angled_duct_boundary)
-        angled_duct_hollow_face = self._hollow_face(
-            angled_duct_face,
-            thickness=self.lower_duct_wall_tk,
+        angled_duct_hollow_face = self._hollow_face_from_inner_bndry(
+            self.angled_duct_inner_boundary,
+            face_thickness=self.lower_duct_wall_tk,
         )
-        straight_duct_face = BluemiraFace(self.straight_duct_boundary)
-        straight_duct_hollow_face = self._hollow_face(
-            straight_duct_face,
-            thickness=self.lower_duct_wall_tk,
+        straight_duct_backwall_face = BluemiraFace(
+            offset_wire(self.straight_duct_inner_boundary, self.lower_duct_wall_tk)
+        )
+        straight_duct_hollow_face = self._hollow_face_from_inner_bndry(
+            self.straight_duct_inner_boundary,
+            face_thickness=self.lower_duct_wall_tk,
         )
 
-        angled_duct_extrude_extent = (
-            self.angled_duct_boundary.bounding_box.z_max
-            - (
-                self.straight_duct_boundary.bounding_box.z_max - 1
-            )  # -1 to make sure it goes through
-        ) / np.cos(np.deg2rad(self.lower_duct_angle))
+        if self.lower_duct_angle < -45:
+            angled_duct_extrude_extent = abs(
+                (
+                    self.angled_duct_inner_boundary.bounding_box.z_max
+                    - (
+                        self.straight_duct_inner_boundary.bounding_box.z_max - 1
+                    )  # -1 to make sure it goes through
+                )
+                / np.sin(np.deg2rad(self.lower_duct_angle))
+            )
+        else:
+            angled_duct_extrude_extent = abs(
+                (
+                    self.angled_duct_inner_boundary.bounding_box.x_min
+                    - (
+                        self.straight_duct_inner_boundary.bounding_box.x_min + 1
+                    )  # +1 to make sure it goes through
+                )
+                / np.cos(np.deg2rad(self.lower_duct_angle))
+            )
         straight_duct_extrude_extent = 20
 
         duct_heading_x = (
@@ -116,17 +131,21 @@ class LowerPortBuilder(Builder):
         )
 
         straight_duct_backwall = extrude_shape(
-            straight_duct_face,
-            straight_duct_face.normal_at() * -self.lower_duct_wall_tk,
+            straight_duct_backwall_face,
+            straight_duct_backwall_face.normal_at() * self.lower_duct_wall_tk,
         )
         straight_duct_length = extrude_shape(
             straight_duct_hollow_face,
-            straight_duct_hollow_face.normal_at() * straight_duct_extrude_extent,
+            straight_duct_hollow_face.normal_at() * -straight_duct_extrude_extent,
         )
         straight_duct = boolean_fuse([straight_duct_backwall, straight_duct_length])
 
         angled_pieces = boolean_cut(angled_duct, [straight_duct])
-        angled_top = boolean_cut(angled_duct, [angled_pieces[1]])[0]
+        angled_top = (
+            angled_pieces[0]
+            if len(angled_pieces) == 1
+            else boolean_cut(angled_duct, [angled_pieces[1]])[0]
+        )
 
         straight_with_hole = boolean_cut(straight_duct, [angled_top])[0]
 
@@ -140,13 +159,12 @@ class LowerPortBuilder(Builder):
 
         return pc
 
-    def _hollow_face(
-        self,
-        outer_face: BluemiraFace,
-        thickness: float,
+    @staticmethod
+    def _hollow_face_from_inner_bndry(
+        inner_bndry: BluemiraWire,
+        face_thickness: float,
     ) -> BluemiraFace:
-        inner = offset_wire(outer_face.wires[0], -thickness)
-        inner = BluemiraFace(inner)
-
-        resolved = boolean_cut(outer_face, [inner])
-        return resolved[0]
+        return boolean_cut(
+            BluemiraFace(offset_wire(inner_bndry, face_thickness)),
+            [BluemiraFace(inner_bndry)],
+        )[0]
