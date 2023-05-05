@@ -117,7 +117,7 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
         z: Union[float, np.ndarray],
         B_max: Union[float, np.ndarray],
         tolerance: Union[float, np.ndarray] = 1.0e-6,
-        constraint_type: STR = "inequality",
+        constraint_type: str = "inequality",
     ):
         if is_num(x):
             x = np.array([x])
