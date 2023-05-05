@@ -394,17 +394,16 @@ def raw_uc(
 
     Parameters
     ----------
-    value: Union[int, float, np.array]
+    value:
         value to convert
-    unit_from: Union[str, Unit]
+    unit_from:
         unit to convert from
-    unit_to: Union[str, Unit]
+    unit_to:
         unit to convert to
 
     Returns
     -------
     converted value
-
     """
     try:
         return (
@@ -434,13 +433,13 @@ def gas_flow_uc(
 
     Parameters
     ----------
-    value: Union[float, np.array]
+    value:
         value to convert
-    unit_from: Union[str, Unit]
+    unit_from:
         unit to convert from
-    unit_to: Union[str, Unit]
+    unit_to:
         unit to convert to
-    gas_flow_temperature: Optional[Union[float, Quantity]]
+    gas_flow_temperature:
         Gas flow temperature if not provided is 273.15 K,
         if not a `Quantity` the units are assumed to be kelvin
 
@@ -464,14 +463,14 @@ def to_celsius(
 
     Parameters
     ----------
-    temp
+    temp:
         The temperature to convert, default [K]
-    unit
+    unit:
         change the unit of the incoming value
 
     Returns
     -------
-        The temperature [°C]
+    The temperature [°C]
     """
     converted_val = raw_uc(temp, unit, ureg.celsius)
     _temp_check(ureg.celsius, converted_val)
@@ -486,15 +485,15 @@ def to_kelvin(
 
     Parameters
     ----------
-    temp
+    temp:
         The temperature to convert, default [°C]
-    unit
+    unit:
         change the unit of the incoming value
 
 
     Returns
     -------
-        The temperature [K]
+    The temperature [K]
     """
     converted_val = raw_uc(temp, unit, ureg.kelvin)
     _temp_check(ureg.kelvin, converted_val)
@@ -507,9 +506,9 @@ def _temp_check(unit: Unit, val: Union[float, int, complex, Quantity]):
 
     Parameters
     ----------
-    unit: Unit
+    unit:
         pint Unit
-    val: Union[float, int, complex, Quantity]
+    val:
         value to check
 
     Raises
@@ -534,13 +533,12 @@ def kgm3_to_gcm3(
 
     Parameters
     ----------
-    density : Union[float, np.array, List[float]]
+    density:
         The density [kg/m3]
 
     Returns
     -------
-    density_gcm3 : Union[float, np.array]
-        The density [g/cm3]
+    The density [g/cm3]
     """
     return raw_uc(density, "kg.m^-3", "g.cm^-3")
 
@@ -553,13 +551,12 @@ def gcm3_to_kgm3(
 
     Parameters
     ----------
-    density : Union[float, np.array, List[float]]
+    density:
         The density [g/cm3]
 
     Returns
     -------
-    density_kgm3 : Union[float, np.array]
-        The density [kg/m3]
+    The density [kg/m3]
     """
     return raw_uc(density, "g.cm^-3", "kg.m^-3")
 
