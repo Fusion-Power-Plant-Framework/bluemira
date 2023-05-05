@@ -28,7 +28,7 @@ from abc import ABC, abstractmethod
 from typing import TYPE_CHECKING, Iterator, Optional
 
 if TYPE_CHECKING:
-    from bluemira.equilibria.equilibrium import EquilibriumPlotter
+    from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.opt_problems import CoilsetOptimisationProblem
 
 import matplotlib.pyplot as plt
@@ -434,8 +434,8 @@ class PicardIterator:
 
     def __init__(
         self,
-        eq,
-        optimisation_problem,
+        eq: Euilibrium,
+        optimisation_problem: CoilsetOptimisationProblem,
         convergence: ConvergenceCriterion = DudsonConvergence(),
         fixed_coils: bool = False,
         relaxation: float = 0,
