@@ -25,7 +25,7 @@ A collection of plotting tools.
 
 import os
 import re
-from typing import Union
+from typing import Optional, Union
 
 import imageio
 import matplotlib.pyplot as plt
