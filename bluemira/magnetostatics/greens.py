@@ -22,6 +22,8 @@
 """
 Green's functions mappings for psi, Bx, and Bz
 """
+from typing import Tuple, Union
+
 import numba as nb
 import numpy as np
 from scipy.special import ellipe, ellipk
@@ -43,24 +45,25 @@ GREENS_ZERO = 1e-8
 
 
 @nb.vectorize(nopython=True, cache=True)
-def clip_nb(val, val_min, val_max):
+def clip_nb(
+    val: Union[float, np.ndarray], val_min: float, val_max: float
+) -> Union[float, np.ndarray]:
     """
     Clips (limits) val between val_min and val_max. Vectorised for speed and
     compatibility with numba.
 
     Parameters
     ----------
-    val: float
+    val:
         The value to be clipped.
-    val_min: float
+    val_min:
         The minimum value.
-    val_max: float
+    val_max:
         The maximum value.
 
     Returns
     -------
-    clipped_val: float
-        The clipped values.
+    The clipped values.
     """
     if val < val_min:
         return val_min
@@ -70,7 +73,7 @@ def clip_nb(val, val_min, val_max):
 
 
 @nb.vectorize(nopython=True)
-def ellipe_nb(k):
+def ellipe_nb(k: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
     """
     Vectorised scipy ellipe
 
@@ -85,7 +88,7 @@ ellipe_nb.__doc__ += ellipe.__doc__
 
 
 @nb.vectorize(nopython=True)
-def ellipk_nb(k):
+def ellipk_nb(k: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
     """
     Vectorised scipy ellipk
 
@@ -99,21 +102,20 @@ def ellipk_nb(k):
 ellipk_nb.__doc__ += ellipk.__doc__
 
 
-def circular_coil_inductance_elliptic(radius, rc):
+def circular_coil_inductance_elliptic(radius: float, rc: float) -> float:
     """
     Calculate the inductance of a circular coil by elliptic integrals.
 
     Parameters
     ----------
-    radius: float
+    radius:
         The radius of the circular coil
-    rc: float
+    rc:
         The radius of the coil cross-section
 
     Returns
     -------
-    inductance: float
-        The self-inductance of the circular coil [H]
+    The self-inductance of the circular coil [H]
     """
     k = 4 * radius * (radius - rc) / (2 * radius - rc) ** 2
     args = (
@@ -123,48 +125,53 @@ def circular_coil_inductance_elliptic(radius, rc):
     return MU_0 * (2 * radius - rc) * ((1 - k**2 / 2) * ellipk(k) - ellipe(k))
 
 
-def circular_coil_inductance_kirchhoff(radius, rc):
+def circular_coil_inductance_kirchhoff(radius: float, rc: float) -> float:
     """
     Calculate the inductance of a circular coil by Kirchhoff's approximation.
 
-    radius: float
+    radius:
         The radius of the circular coil
-    rc: float
+    rc:
         The radius of the coil cross-section
 
     Returns
     -------
-    inductance: float
-        The self-inductance of the circular coil [H]
+    The self-inductance of the circular coil [H]
     """
     return MU_0 * radius * (np.log(8 * radius / rc) - 2 + 0.25)
 
 
 @nb.jit(nopython=True)
-def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
+def greens_psi(
+    xc: Union[float, np.ndarray],
+    zc: Union[float, np.ndarray],
+    x: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+    d_xc: float = 0,
+    d_zc: float = 0,
+) -> Union[float, np.ndarray]:
     """
     Calculate poloidal flux at (x, z) due to a unit current at (xc, zc)
     using a Greens function.
 
     Parameters
     ----------
-    xc: float or 1-D array
+    xc:
         Coil x coordinates [m]
-    zc: float or 1-D array
+    zc:
         Coil z coordinates [m]
-    x: float or np.array(N, M)
+    x:
         Calculation x locations
-    z: float or np.array(N, M)
+    z:
         Calculation z locations
-    d_xc: float
+    d_xc:
         The coil half-width (overload argument)
-    d_zc: float
+    d_zc:
         The coil half-height (overload argument)
 
     Returns
     -------
-    psi: float or np.array(N, M)
-        Poloidal magnetic flux per radian response at (x, z)
+    Poloidal magnetic flux per radian response at (x, z)
 
     Raises
     ------
@@ -193,30 +200,36 @@ def greens_psi(xc, zc, x, z, d_xc=0, d_zc=0):
 
 
 @nb.jit(nopython=True)
-def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
+def greens_dpsi_dx(
+    xc: Union[float, np.ndarray],
+    zc: Union[float, np.ndarray],
+    x: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+    d_xc: float = 0,
+    d_zc: float = 0,
+) -> Union[float, np.ndarray]:
     """
     Calculate the radial derivative of the poloidal flux at (x, z)
     due to a unit current at (xc, zc) using a Greens function.
 
     Parameters
     ----------
-    xc: float or 1-D array
+    xc:
         Coil x coordinates [m]
-    zc: float or 1-D array
+    zc:
         Coil z coordinates [m]
-    x: float or np.array(N, M)
+    x:
         Calculation x locations
-    z: float or np.array(N, M)
+    z:
         Calculation z locations
-    d_xc: float
+    d_xc:
         The coil half-width (overload argument)
-    d_zc: float
+    d_zc:
         The coil half-height (overload argument)
 
     Returns
     -------
-    dpsi_dx: float or np.array(N, M)
-        Radial derivative of the poloidal flux response at (x, z)
+    Radial derivative of the poloidal flux response at (x, z)
 
     Notes
     -----
@@ -245,30 +258,36 @@ def greens_dpsi_dx(xc, zc, x, z, d_xc=0, d_zc=0):
 
 
 @nb.jit(nopython=True)
-def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
+def greens_dpsi_dz(
+    xc: Union[float, np.ndarray],
+    zc: Union[float, np.ndarray],
+    x: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+    d_xc: float = 0,
+    d_zc: float = 0,
+) -> Union[float, np.ndarray]:
     """
     Calculate the vertical derivative of the poloidal flux at (x, z)
     due to a unit current at (xc, zc) using a Greens function.
 
     Parameters
     ----------
-    xc: float or 1-D array
+    xc:
         Coil x coordinates [m]
-    zc: float or 1-D array
+    zc:
         Coil z coordinates [m]
-    x: float or np.array(N, M)
+    x:
         Calculation x locations
-    z: float or np.array(N, M)
+    z:
         Calculation z locations
-    d_xc: float
+    d_xc:
         The coil half-width (overload argument)
-    d_zc: float
+    d_zc:
         The coil half-height (overload argument)
 
     Returns
     -------
-    dpsi_dz: float or np.array(N, M)
-        Vertical derivative of the poloidal flux response at (x, z)
+    Vertical derivative of the poloidal flux response at (x, z)
 
     Notes
     -----
@@ -296,30 +315,36 @@ def greens_dpsi_dz(xc, zc, x, z, d_xc=0, d_zc=0):
 
 
 @nb.jit(nopython=True)
-def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
+def greens_Bx(
+    xc: Union[float, np.ndarray],
+    zc: Union[float, np.ndarray],
+    x: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+    d_xc: float = 0,
+    d_zc: float = 0,
+) -> Union[float, np.ndarray]:
     """
     Calculate radial magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
 
     Parameters
     ----------
-    xc: float or 1-D array
+    xc:
         Coil x coordinates [m]
-    zc: float or 1-D array
+    zc:
         Coil z coordinates [m]
-    x: float or np.array(N, M)
+    x:
         Calculation x locations
-    z: float or np.array(N, M)
+    z:
         Calculation z locations
-    d_xc: float
+    d_xc:
         The coil half-width (overload argument)
-    d_zc: float
+    d_zc:
         The coil half-height (overload argument)
 
     Returns
     -------
-    Bx: float or np.array(N, M)
-        Radial magnetic field response at (x, z)
+    Radial magnetic field response at (x, z)
 
     Raises
     ------
@@ -336,30 +361,36 @@ def greens_Bx(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
 
 
 @nb.jit(nopython=True)
-def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
+def greens_Bz(
+    xc: Union[float, np.ndarray],
+    zc: Union[float, np.ndarray],
+    x: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+    d_xc: float = 0,
+    d_zc: float = 0,
+) -> Union[float, np.ndarray]:
     """
     Calculate vertical magnetic field at (x, z) due to unit current at (xc, zc)
     using a Greens function.
 
     Parameters
     ----------
-    xc: float or 1-D array
+    xc:
         Coil x coordinates [m]
-    zc: float or 1-D array
+    zc:
         Coil z coordinates [m]
-    x: float or np.array(N, M)
+    x:
         Calculation x locations
-    z: float or np.array(N, M)
+    z:
         Calculation z locations
-    d_xc: float
+    d_xc:
         The coil half-width (overload argument)
-    d_zc: float
+    d_zc:
         The coil half-height (overload argument)
 
     Returns
     -------
-    Bz: float or np.array(N, M)
-        Vertical magnetic field response at (x, z)
+    Vertical magnetic field response at (x, z)
 
     Raises
     ------
@@ -376,28 +407,33 @@ def greens_Bz(xc, zc, x, z, d_xc=0, d_zc=0):  # noqa :N802
 
 
 @nb.jit(nopython=True)
-def greens_all(xc, zc, x, z):
+def greens_all(
+    xc: Union[float, np.ndarray],
+    zc: Union[float, np.ndarray],
+    x: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray], Union[float, np.ndarray]]:
     """
     Speed optimisation of Green's functions for psi, Bx, and Bz
 
     Parameters
     ----------
-    xc: float or 1-D array
+    xc:
         Coil x coordinates [m]
-    zc: float or 1-D array
+    zc:
         Coil z coordinates [m]
-    x: float or np.array(N, M)
+    x:
         Calculation x locations
-    z: float or np.array(N, M)
+    z:
         Calculation z locations
 
     Returns
     -------
-    psi: float or np.array(N, M)
+    psi:
         Poloidal magnetic flux per radian response at (x, z)
-    Bx: float or np.array(N, M)
+    Bx:
         Radial magnetic field response at (x, z)
-    Bz: float or np.array(N, M)
+    Bz:
         Vertical magnetic field response at (x, z)
 
     Raises

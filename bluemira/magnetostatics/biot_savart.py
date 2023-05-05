@@ -22,7 +22,15 @@
 """
 Biot-Savart filament object
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Optional, Union
+
 import numpy as np
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
+    from bluemira.geometry.coordinates import Coordinates
 
 from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
@@ -42,17 +50,22 @@ class BiotSavartFilament(CurrentSource):
 
     Parameters
     ----------
-    arrays: Union[Coordinates, np.array(n, 3), List[Coordinates, np.array(n, 3)]]
+    arrays:
         The arbitrarily shaped closed current Coordinates. Alternatively provide the
         list of Coordinates objects.
-    radius: float
+    radius:
         The nominal radius of the coil
-    current: float
+    current:
         The current flowing through the filament [A]. Defaults to 1 A to enable
         current to be optimised separately from the field response.
     """
 
-    def __init__(self, arrays, radius, current=1.0):
+    def __init__(
+        self,
+        arrays: Union[Coordinates, np.ndarray, List[Coordinates], List[np.ndarray]],
+        radius: float,
+        current: float = 1.0,
+    ):
         if not isinstance(arrays, list):
             # Handle single Coordinates/array
             arrays = [arrays]
@@ -88,7 +101,7 @@ class BiotSavartFilament(CurrentSource):
         self.radius = radius
         self.current = current
 
-    def _check_discretisation(self, d_l):
+    def _check_discretisation(self, d_l: np.ndarray):
         """
         Check the discretisation of the array.
         """
@@ -100,24 +113,28 @@ class BiotSavartFilament(CurrentSource):
         # TODO: Improve check and modify discretisation
 
     @process_xyz_array
-    def potential(self, x, y, z):
+    def potential(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+    ) -> np.ndarray:
         """
         Calculate the vector potential of an arbitrarily shaped Coordinates.
 
         Parameters
         ----------
-        x: Union[float, np.array]
+        x:
             The x coordinate(s) of the points at which to calculate the potential
-        y: Union[float, np.array]
+        y:
             The y coordinate(s) of the points at which to calculate the potential
-        z: Union[float, np.array]
+        z:
             The z coordinate(s) of the points at which to calculate the potential
 
 
         Returns
         -------
-        potential: np.array(3)
-            The vector potential at the point due to the arbitrarily shaped Coordinates
+        The vector potential at the point due to the arbitrarily shaped Coordinates
         """
         point = np.array([x, y, z])
         r = point - self.points
@@ -133,23 +150,27 @@ class BiotSavartFilament(CurrentSource):
         )
 
     @process_xyz_array
-    def field(self, x, y, z):
+    def field(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+    ) -> np.ndarray:
         """
         Calculate the field due to the arbitrarily shaped Coordinates.
 
         Parameters
         ----------
-        x: Union[float, np.array]
+        x:
             The x coordinate(s) of the points at which to calculate the field
-        y: Union[float, np.array]
+        y:
             The y coordinate(s) of the points at which to calculate the field
-        z: Union[float, np.array]
+        z:
             The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        B: np.array
-            The field at the point(s) due to the arbitrarily shaped Coordinates
+        The field at the point(s) due to the arbitrarily shaped Coordinates
 
         Notes
         -----
@@ -173,15 +194,13 @@ class BiotSavartFilament(CurrentSource):
         core[ds_mag > self.radius] = 1
         return MU_0_4PI * self.current * np.sum(core * ds / r3[:, np.newaxis], axis=0)
 
-    def inductance(self):
+    def inductance(self) -> float:
         """
         Calculate the total inductance of the BiotSavartFilament.
 
         Returns
         -------
-        inductance: float
-            The total inductance (including self-inductance of reference Coordinates)
-            in Henries [H]
+        The total inductance (including self-inductance of reference Coordinates) [H]
 
         Notes
         -----
@@ -210,15 +229,15 @@ class BiotSavartFilament(CurrentSource):
 
         return MU_0_4PI * inductance
 
-    def rotate(self, angle, axis):
+    def rotate(self, angle: float, axis: Union[str, np.ndarray]):
         """
         Rotate the CurrentSource about an axis.
 
         Parameters
         ----------
-        angle: float
+        angle:
             The rotation degree [degree]
-        axis: Union[np.array(3), str]
+        axis:
             The axis of rotation
         """
         r = rotation_matrix(np.deg2rad(angle), axis).T
@@ -228,15 +247,15 @@ class BiotSavartFilament(CurrentSource):
         self.ref_d_l = self.ref_d_l @ r
         self.ref_mid_points = self.ref_mid_points @ r
 
-    def plot(self, ax=None, show_coord_sys=False):
+    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
         """
         Plot the CurrentSource.
 
         Parameters
         ----------
-        ax: Union[None, Axes]
+        ax:
             The matplotlib axes to plot on
-        show_coord_sys: bool
+        show_coord_sys:
             Whether or not to plot the coordinate systems
         """
         if ax is None:

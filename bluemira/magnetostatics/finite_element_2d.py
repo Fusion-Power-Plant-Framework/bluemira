@@ -44,20 +44,19 @@ def Bz_coil_axis(
 
     Parameters
     ----------
-    r: float
+    r:
         Coil radius [m]
-    z: float (default = 0)
+    z:
         Vertical position of the coil centroid [m]
-    pz: float (default = 0)
+    pz:
         Vertical position of the point on the axis on which the magnetic field
         shall be calculated [m]
-    current: float (default = 0)
+    current:
         Current of the coil [A]
 
     Returns
     -------
-    field: float
-        Vertical magnetic field on the axis [T]
+    Vertical magnetic field on the axis [T]
 
     Notes
     -----
@@ -172,7 +171,7 @@ class FemMagnetostatic2d:
 
     Parameters
     ----------
-    p_order : int
+    p_order:
         Order of the approximating polynomial basis functions
     """
 
@@ -201,9 +200,9 @@ class FemMagnetostatic2d:
 
         Parameters
         ----------
-        mesh : Union[dolfin.Mesh, str]
+        mesh:
             Filename of the xml file with the mesh definition or a dolfin mesh
-        boundaries : Union[dolfin.Mesh, str]
+        boundaries:
             Filename of the xml file with the boundaries definition or a MeshFunction
             that defines the boundaries
         """
@@ -257,7 +256,7 @@ class FemMagnetostatic2d:
 
         Parameters
         ----------
-        g : Union[dolfin.Expression, dolfin.Function]
+        g:
             Right hand side function of the Poisson problem
         """
         self.g = g
@@ -276,17 +275,16 @@ class FemMagnetostatic2d:
 
         Parameters
         ----------
-        dirichlet_bc_function : Union[dolfin.Expression, dolfin.Function]
+        dirichlet_bc_function:
             Dirichlet boundary condition function
-        dirichlet_marker : int
+        dirichlet_marker:
             Identification number for the dirichlet boundary
-        neumann_bc_function : Union[dolfin.Expression, dolfin.Function]
+        neumann_bc_function:
             Neumann boundary condition function
 
         Returns
         -------
-        psi : dolfin.Function
-            Poloidal magnetic flux as solution of the magnetostatic problem
+        Poloidal magnetic flux function as solution of the magnetostatic problem
         """
         if neumann_bc_function is None:
             neumann_bc_function = dolfin.Expression("0.0", degree=self.p_order)

@@ -22,10 +22,14 @@
 """
 Base classes for use in magnetostatics.
 """
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import List
+from typing import TYPE_CHECKING, List, Optional, Union
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
 
 import numpy as np
 
@@ -43,60 +47,64 @@ class CurrentSource(ABC):
 
     current: float
 
-    def set_current(self, current):
+    def set_current(self, current: float):
         """
         Set the current inside each of the circuits.
 
         Parameters
         ----------
-        current: float
+        current:
             The current of each circuit [A]
         """
         self.current = current
 
     @abstractmethod
-    def field(self, x, y, z):
+    def field(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+    ) -> np.ndarray:
         """
         Calculate the magnetic field at a set of coordinates.
 
         Parameters
         ----------
-        x: Union[float, np.array]
+        x:
             The x coordinate(s) of the points at which to calculate the field
-        y: Union[float, np.array]
+        y:
             The y coordinate(s) of the points at which to calculate the field
-        z: Union[float, np.array]
+        z:
             The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        field: np.array
-            The magnetic field vector {Bx, By, Bz} in [T]
+        The magnetic field vector {Bx, By, Bz} in [T]
         """
         pass
 
     @abstractmethod
-    def plot(self, ax, **kwargs):
+    def plot(self, ax: Optional[Axes], **kwargs):
         """
         Plot the CurrentSource.
 
         Parameters
         ----------
-        ax: Union[None, Axes]
+        ax:
             The matplotlib axes to plot on
         """
         pass
 
     @abstractmethod
-    def rotate(self, angle, axis):
+    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
         Rotate the CurrentSource about an axis.
 
         Parameters
         ----------
-        angle: float
+        angle:
             The rotation degree [rad]
-        axis: Union[np.array(3), str]
+        axis:
             The axis of rotation
         """
         pass
@@ -120,27 +128,27 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
     depth: float
     length: float
 
-    def set_current(self, current):
+    def set_current(self, current: float):
         """
         Set the current inside the source, adjusting current density.
 
         Parameters
         ----------
-        current: float
+        current:
             The current of the source [A]
         """
         super().set_current(current)
         self.rho = current / (4 * self.breadth * self.depth)
 
-    def rotate(self, angle, axis):
+    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
         Rotate the CurrentSource about an axis.
 
         Parameters
         ----------
-        angle: float
+        angle:
             The rotation degree [degree]
-        axis: Union[np.array(3), str]
+        axis:
             The axis of rotation
         """
         r = rotation_matrix(np.deg2rad(angle), axis).T
@@ -148,19 +156,19 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
         self.points = np.array([p @ r for p in self.points], dtype=object)
         self.dcm = self.dcm @ r
 
-    def _local_to_global(self, points):
+    def _local_to_global(self, points: np.ndarray) -> np.ndarray:
         """
         Convert local x', y', z' point coordinates to global x, y, z point coordinates.
         """
         return np.array([self.origin + self.dcm.T @ p for p in points])
 
-    def _global_to_local(self, points):
+    def _global_to_local(self, points: np.ndarray) -> np.ndarray:
         """
         Convert global x, y, z point coordinates to local x', y', z' point coordinates.
         """
         return np.array([(self.dcm @ (p - self.origin)) for p in points])
 
-    def plot(self, ax=None, show_coord_sys=False):
+    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
         """
         Plot the CurrentSource.
 
@@ -200,66 +208,70 @@ class SourceGroup(ABC):
     sources: List[CurrentSource]
     points: np.array
 
-    def __init__(self, sources):
+    def __init__(self, sources: List[CurrentSource]):
         self.sources = sources
         self.points = np.vstack([np.vstack(s.points) for s in self.sources])
 
-    def set_current(self, current):
+    def set_current(self, current: float):
         """
         Set the current inside each of the circuits.
 
         Parameters
         ----------
-        current: float
+        current:
             The current of each circuit [A]
         """
         for source in self.sources:
             source.set_current(current)
 
-    def field(self, x, y, z):
+    def field(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+    ) -> np.ndarray:
         """
         Calculate the magnetic field at a point.
 
         Parameters
         ----------
-        x: Union[float, np.array]
+        x:
             The x coordinate(s) of the points at which to calculate the field
-        y: Union[float, np.array]
+        y:
             The y coordinate(s) of the points at which to calculate the field
-        z: Union[float, np.array]
+        z:
             The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        field: np.array
-            The magnetic field vector {Bx, By, Bz} in [T]
+        The magnetic field vector {Bx, By, Bz} in [T]
         """
         return np.sum([source.field(x, y, z) for source in self.sources], axis=0)
 
-    def rotate(self, angle, axis):
+    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
         Rotate the CurrentSource about an axis.
 
         Parameters
         ----------
-        angle: float
+        angle:
             The rotation degree [rad]
-        axis: Union[np.array(3), str]
+        axis:
             The axis of rotation
         """
         for source in self.sources:
             source.rotate(angle, axis)
         self.points = self.points @ rotation_matrix(angle, axis)
 
-    def plot(self, ax=None, show_coord_sys=False):
+    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
         """
         Plot the MultiCurrentSource.
 
         Parameters
         ----------
-        ax: Union[None, Axes]
+        ax:
             The matplotlib axes to plot on
-        show_coord_sys: bool
+        show_coord_sys:
             Whether or not to plot the coordinate systems
         """
         if ax is None:

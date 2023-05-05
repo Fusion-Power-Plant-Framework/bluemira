@@ -23,6 +23,8 @@
 Semi-analytic methods for Bx, Bz, and psi for circular coils of rectangular
 cross-section.
 """
+from typing import Tuple, Union
+
 import numba as nb
 import numpy as np
 
@@ -41,7 +43,7 @@ __all__ = ["semianalytic_Bx", "semianalytic_Bz", "semianalytic_psi"]
 
 
 @nb.jit(nopython=True, cache=True)
-def _partial_x_integrand(phi, rr, zz):
+def _partial_x_integrand(phi: float, rr: float, zz: float) -> float:
     """
     Integrand edge cases derived to constant integrals. Much faster than
     splitting up the integrands.
@@ -61,7 +63,7 @@ def _partial_x_integrand(phi, rr, zz):
 
 
 @jit_llc5
-def _full_x_integrand(phi, r1, r2, z1, z2):
+def _full_x_integrand(phi: float, r1: float, r2: float, z1: float, z2: float) -> float:
     """
     Calculate the P_x primitive integral.
 
@@ -76,7 +78,7 @@ def _full_x_integrand(phi, r1, r2, z1, z2):
     )
 
 
-def _partial_z_integrand_nojit(phi, rr, zz):
+def _partial_z_integrand_nojit(phi: float, rr: float, zz: float) -> float:
     """
     Integrand edge cases derived to constant integrals. Much faster than
     splitting up the integrands.
@@ -107,7 +109,7 @@ _partial_z_integrand_llc = jit_llc3(_partial_z_integrand_nojit)
 
 
 @jit_llc5
-def _full_z_integrand(phi, r1, r2, z1, z2):
+def _full_z_integrand(phi: float, r1: float, r2: float, z1: float, z2: float) -> float:
     """
     Calculate the P_z primitive integral at all 4 corner combinations
 
@@ -123,7 +125,7 @@ def _full_z_integrand(phi, r1, r2, z1, z2):
     )
 
 
-def _integrate_z_by_parts(r1, r2, z1, z2):
+def _integrate_z_by_parts(r1: float, r2: float, z1: float, z2: float) -> float:
     """
     Integrate the Bz integrand by parts.
 
@@ -138,7 +140,9 @@ def _integrate_z_by_parts(r1, r2, z1, z2):
 
 
 @nb.jit(nopython=True, cache=True)
-def _get_working_coords(xc, zc, x, z, d_xc, d_zc):
+def _get_working_coords(
+    xc: float, zc: float, x: float, z: float, d_xc: float, d_zc: float
+) -> Tuple[float, float, float, float, float]:
     """
     Convert coil and global coordinates to working coordinates.
     """
@@ -199,7 +203,14 @@ def _array_dispatcher(func):
 
 
 @_array_dispatcher
-def semianalytic_Bx(xc, zc, x, z, d_xc, d_zc):
+def semianalytic_Bx(
+    xc: float,
+    zc: float,
+    x: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+    d_xc: float,
+    d_zc: float,
+) -> Union[float, np.ndarray]:
     """
     Calculate the Bx and Bz fields from a rectangular cross-section circular
     coil with a unit current using a semi-analytic reduction of the Biot-Savart
@@ -207,23 +218,22 @@ def semianalytic_Bx(xc, zc, x, z, d_xc, d_zc):
 
     Parameters
     ----------
-    xc: float
+    xc:
         Coil x coordinate [m]
-    zc: float
+    zc:
         Coil z coordinate [m]
-    x: float
+    x:
         Calculation x location
-    z: float
+    z:
         Calculation z location
-    d_xc: float
+    d_xc:
         The half-width of the coil
-    d_zc: float
+    d_zc:
         The half-height of the coil
 
     Returns
     -------
-    Bx: Union[float, np.array(N, M)]
-        Radial magnetic field response (x, z)
+    Radial magnetic field response (x, z)
 
     Notes
     -----
@@ -243,7 +253,14 @@ def semianalytic_Bx(xc, zc, x, z, d_xc, d_zc):
 
 
 @_array_dispatcher
-def semianalytic_Bz(xc, zc, x, z, d_xc, d_zc):
+def semianalytic_Bz(
+    xc: float,
+    zc: float,
+    x: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+    d_xc: float,
+    d_zc: float,
+) -> Union[float, np.ndarray]:
     """
     Calculate the Bx and Bz fields from a rectangular cross-section circular
     coil with a unit current using a semi-analytic reduction of the Biot-Savart
@@ -251,23 +268,22 @@ def semianalytic_Bz(xc, zc, x, z, d_xc, d_zc):
 
     Parameters
     ----------
-    xc: float
+    xc:
         Coil x coordinate [m]
-    zc: float
+    zc:
         Coil z coordinate [m]
-    x: float
+    x:
         Calculation x location
-    z: float
+    z:
         Calculation z location
-    d_xc: float
+    d_xc:
         The half-width of the coil
-    d_zc: float
+    d_zc:
         The half-height of the coil
 
     Returns
     -------
-    Bz: Union[float, np.array(N, M)]
-        Vertical magnetic field response at (x, z)
+    Vertical magnetic field response at (x, z)
 
     Notes
     -----
@@ -306,7 +322,14 @@ def _full_psi_integrand(x, phi, xc, zc, z, d_xc, d_zc):
 
 
 @_array_dispatcher
-def semianalytic_psi(xc, zc, x, z, d_xc, d_zc):
+def semianalytic_psi(
+    xc: float,
+    zc: float,
+    x: Union[float, np.ndarray],
+    z: Union[float, np.ndarray],
+    d_xc: float,
+    d_zc: float,
+) -> Union[float, np.ndarray]:
     """
     Calculate the poloidal magnetic flux from a rectangular cross-section circular
     coil with a unit current using a semi-analytic reduction of the Biot-Savart
@@ -314,23 +337,22 @@ def semianalytic_psi(xc, zc, x, z, d_xc, d_zc):
 
     Parameters
     ----------
-    xc: float
+    xc:
         Coil x coordinate [m]
-    zc: float
+    zc:
         Coil z coordinate [m]
-    x: float
+    x:
         Calculation x location
-    z: float
+    z:
         Calculation z location
-    d_xc: float
+    d_xc:
         The half-width of the coil
-    d_zc: float
+    d_zc:
         The half-height of the coil
 
     Returns
     -------
-    psi: Union[float, np.array(N, M)]
-        Poloidal magnetic flux response at (x, z)
+    Poloidal magnetic flux response at (x, z)
 
     Notes
     -----

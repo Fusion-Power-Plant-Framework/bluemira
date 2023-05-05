@@ -35,7 +35,7 @@ from bluemira.geometry.coordinates import (
     rotation_matrix,
     rotation_matrix_v1v2,
 )
-from bluemira.magnetostatics.baseclass import SourceGroup
+from bluemira.magnetostatics.baseclass import CurrentSource, SourceGroup
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_to_coordinates, process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
@@ -50,13 +50,13 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
 
     Parameters
     ----------
-    shape: Union[np.array, Loop]
-        The geometry from which to form an ArbitraryPlanarCurrentLoop
-    breadth: float
+    shape:
+        The geometry from which to form an ArbitraryPlanarRectangularXSCircuit
+    breadth:
         The breadth of the current source (half-width) [m]
-    depth: float
+    depth:
         The depth of the current source (half-height) [m]
-    current: float
+    current:
         The current flowing through the source [A]
 
     Notes
@@ -69,7 +69,13 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
     depth: float
     current: float
 
-    def __init__(self, shape, breadth, depth, current):
+    def __init__(
+        self,
+        shape: Union[np.ndarray, Coordinates],
+        breadth: float,
+        depth: float,
+        current: float,
+    ):
         shape = process_to_coordinates(shape)
         if not shape.is_planar:
             raise MagnetostaticsError(
@@ -195,18 +201,25 @@ class HelmholtzCage(SourceGroup):
     """
     Axisymmetric arrangement of current sources about the z-axis.
 
+    Parameters
+    ----------
+    circuit:
+        Current source to pattern
+    n_TF:
+        Number of sources to pattern
+
     Notes
     -----
     The plane at 0 degrees is set to be between two circuits.
     """
 
-    def __init__(self, circuit, n_TF):
+    def __init__(self, circuit: CurrentSource, n_TF: int):
         self.n_TF = n_TF
         sources = self._pattern(circuit)
 
         super().__init__(sources)
 
-    def _pattern(self, circuit) -> List:
+    def _pattern(self, circuit: CurrentSource) -> List[CurrentSource]:
         """
         Pattern the CurrentSource axisymmetrically.
         """

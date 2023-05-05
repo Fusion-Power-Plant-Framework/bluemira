@@ -23,6 +23,7 @@
 Just-in-time compilation and LowLevelCallable speed-up tools.
 """
 import warnings
+from typing import Callable, Iterable, List, Union
 
 import numba as nb
 import numpy as np
@@ -88,18 +89,18 @@ def process_xyz_array(func):
     return wrapper
 
 
-def process_coords_array(shape):
+def process_coords_array(shape: Union[np.ndarray, Coordinates]) -> np.ndarray:
     """
     Parse Coordinates or array to an array.
 
     Parameters
     ----------
-    shape: Union[np.array(N, 3), Coordinates]
+    shape:
         The Coordinates or array to make into a coordinate array
 
     Returns
     -------
-    shape: np.array(N, 3)
+    Array in proper dimensions
     """
     if isinstance(shape, np.ndarray):
         pass
@@ -115,7 +116,7 @@ def process_coords_array(shape):
     return shape
 
 
-def process_to_coordinates(shape):
+def process_to_coordinates(shape: Union[np.ndarray, dict, Coordinates]) -> Coordinates:
     """
     Parse input to Coordinates
 
@@ -129,19 +130,18 @@ def process_to_coordinates(shape):
         return Coordinates(shape)
 
 
-def jit_llc7(f_integrand):
+def jit_llc7(f_integrand: Callable) -> LowLevelCallable:
     """
     Decorator for 6-argument integrand function to a low-level callable.
 
     Parameters
     ----------
-    f_integrand: callable
+    f_integrand:
         The integrand function
 
     Returns
     -------
-    low_level: LowLevelCallable
-        The decorated integrand function as a LowLevelCallable
+    The decorated integrand function as a LowLevelCallable
     """
     f_jitted = nb.jit(f_integrand, nopython=True, cache=True)
 
@@ -152,19 +152,18 @@ def jit_llc7(f_integrand):
     return LowLevelCallable(wrapped.ctypes)
 
 
-def jit_llc5(f_integrand):
+def jit_llc5(f_integrand: Callable) -> LowLevelCallable:
     """
     Decorator for 4-argument integrand function to a low-level callable.
 
     Parameters
     ----------
-    f_integrand: callable
+    f_integrand:
         The integrand function
 
     Returns
     -------
-    low_level: LowLevelCallable
-        The decorated integrand function as a LowLevelCallable
+    The decorated integrand function as a LowLevelCallable
     """
     f_jitted = nb.jit(f_integrand, nopython=True, cache=True)
 
@@ -175,19 +174,18 @@ def jit_llc5(f_integrand):
     return LowLevelCallable(wrapped.ctypes)
 
 
-def jit_llc4(f_integrand):
+def jit_llc4(f_integrand: Callable) -> LowLevelCallable:
     """
     Decorator for 3-argument integrand function to a low-level callable.
 
     Parameters
     ----------
-    f_integrand: callable
+    f_integrand:
         The integrand function
 
     Returns
     -------
-    low_level: LowLevelCallable
-        The decorated integrand function as a LowLevelCallable
+    The decorated integrand function as a LowLevelCallable
     """
     f_jitted = nb.jit(f_integrand, nopython=True, cache=True)
 
@@ -198,19 +196,18 @@ def jit_llc4(f_integrand):
     return LowLevelCallable(wrapped.ctypes)
 
 
-def jit_llc3(f_integrand):
+def jit_llc3(f_integrand: Callable) -> LowLevelCallable:
     """
     Decorator for 2-argument integrand function to a low-level callable.
 
     Parameters
     ----------
-    f_integrand: callable
+    f_integrand:
         The integrand function
 
     Returns
     -------
-    low_level: LowLevelCallable
-        The decorated integrand function as a LowLevelCallable
+    The decorated integrand function as a LowLevelCallable
     """
     f_jitted = nb.jit(f_integrand, nopython=True, cache=True)
 
@@ -221,27 +218,28 @@ def jit_llc3(f_integrand):
     return LowLevelCallable(wrapped.ctypes)
 
 
-def integrate(func, args, bound1, bound2):
+def integrate(
+    func: Callable, args: Iterable, bound1: Union[float, int], bound2: Union[float, int]
+) -> float:
     """
     Utility for integration of a function between bounds. Easier to refactor
     integration methods.
 
     Parameters
     ----------
-    func: callable
+    func:
         The function to integrate. The integration variable should be the last
         argument of this function.
-    args: Iterable
+    args:
         The iterable of static arguments to the function.
-    bound1: Union[float, int]
+    bound1:
         The lower integration bound
-    bound2: Union[float, int]
+    bound2:
         The upper integration bound
 
     Returns
     -------
-    value: float
-        The value of the integral of the function between the bounds
+    The value of the integral of the function between the bounds
     """
     warnings.filterwarnings("error", category=IntegrationWarning)
     try:
@@ -262,24 +260,25 @@ def integrate(func, args, bound1, bound2):
     return result
 
 
-def n_integrate(func, args, bounds):
+def n_integrate(
+    func: Callable, args: Iterable, bounds: List[Iterable[Union[int, float]]]
+) -> float:
     """
     Utility for n-dimensional integration of a function between bounds. Easier
     to refactor integration methods.
 
     Parameters
     ----------
-    func: callable
+    func:
         The function to integrate. The integration variable should be the last
         argument of this function.
-    args: Iterable
+    args:
         The iterable of static arguments to the function.
-    bounds: List[Iterable[Union[int, float]]]
+    bounds:
         The list of lower and upper integration bounds applied to x[0], x[1], ..
 
     Returns
     -------
-    value: float
-        The value of the integral of the function between the bounds
+    The value of the integral of the function between the bounds
     """
     return nquad(func, bounds, args=args)[0]
