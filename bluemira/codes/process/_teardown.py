@@ -42,12 +42,12 @@ class Teardown(CodesTeardown):
 
     Parameters
     ----------
-    params: ProcessSolverParams
+    params:
         The parameters for this task.
-    run_directory: str
+    run_directory:
         The directory in which to run PROCESS. Used in run, and runinput
         functions.
-    read_directory: str
+    read_directory:
         The directory to read PROCESS output files from. Used in read,
         readall, and mock functions.
     """
@@ -120,13 +120,12 @@ class Teardown(CodesTeardown):
 
         Parameters
         ----------
-        params: Union[List, str]
+        params:
             Names of parameters to access.
 
         Returns
         -------
-        values: List[float]
-            The parameter values.
+        The parameter values.
         """
         if not self._mfile_wrapper:
             raise CodesError(
@@ -182,7 +181,7 @@ class _MFileWrapper:
 
     Parameters
     ----------
-    file_path: str
+    file_path:
         Path to an MFile.
     """
 
@@ -265,7 +264,7 @@ def _raise_on_infeasible_solution(m_file: _MFileWrapper):
 
     Parameters
     ----------
-    m_file
+    m_file:
         The PROCESS MFILE to check for a feasible solution
 
     Raises

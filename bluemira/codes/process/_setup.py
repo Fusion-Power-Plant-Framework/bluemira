@@ -42,15 +42,15 @@ class Setup(CodesSetup):
 
     Parameters
     ----------
-    params: ParameterFrame
+    params:
         The bluemira parameters for this task.
-    in_dat_path: str
+    in_dat_path:
         The path to where the IN.DAT file should be written.
-    problem_settings: Dict[str, Union[float, str]]
-        The PROCESS parameters that do not exist in Bluemira.
-    template_in_dat_path: str
+    template_in_dat_path:
         The path to a template PROCESS IN.DAT file. By default this
         points to a sample one within the Bluemira repository.
+    problem_settings:
+        The PROCESS parameters that do not exist in Bluemira.
     """
 
     MODELS = {
@@ -90,13 +90,13 @@ class Setup(CodesSetup):
         """
         self._write_in_dat(use_bp_inputs=False)
 
-    def _write_in_dat(self, use_bp_inputs=True):
+    def _write_in_dat(self, use_bp_inputs: bool = True):
         """
         Write the IN.DAT file and stores in the main PROCESS folder.
 
         Parameters
         ----------
-        use_bp_inputs: bool
+        use_bp_inputs:
             Option to use bluemira values as PROCESS inputs. Used to re-run PROCESS
             within a bluemira run. If False, runs PROCESS without modifying inputs.
             Default, True
