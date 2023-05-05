@@ -37,6 +37,10 @@ class TestCompADesignerParams(ParameterFrame):
 
 test_config_path = Path(__file__).parent / "data" / "reactor_config.test.json"
 empty_config_path = Path(__file__).parent / "data" / "reactor_config.empty.json"
+nested_config_path = Path(__file__).parent / "data" / "reactor_config.nested_config.json"
+nested_params_config_path = (
+    Path(__file__).parent / "data" / "reactor_config.nested_params.json"
+)
 global_params_path = Path(__file__).parent / "data" / "reactor_params.global.json"
 
 
@@ -90,17 +94,19 @@ class TestReactorConfigClass:
 
         cpf = make_parameter_frame(cp, TestCompADesignerParams)
 
-        # value checks
+        # instance checks
+        assert cpf.only_global is reactor_config.global_params.only_global
+        assert cpf.height is reactor_config.global_params.height
+        assert cpf.age is reactor_config.global_params.age
+
+        self._compa_designer_param_value_checks(cpf)
+
+    def _compa_designer_param_value_checks(self, cpf):
         assert cpf.only_global.value == raw_uc(1, "years", "s")
         assert cpf.height.value == 1.8
         assert cpf.age.value == raw_uc(30, "years", "s")
         assert cpf.name.value == "Comp A"
         assert cpf.location.value == "here"
-
-        # instance checks
-        assert cpf.only_global is reactor_config.global_params.only_global
-        assert cpf.height is reactor_config.global_params.height
-        assert cpf.age is reactor_config.global_params.age
 
     def test_params_for_warnings_make_param_frame_type_value_overrides(
         self,
@@ -119,12 +125,7 @@ class TestReactorConfigClass:
 
         cpf = make_parameter_frame(cp, TestCompADesignerParams)
 
-        # value checks
-        assert cpf.only_global.value == raw_uc(1, "years", "s")
-        assert cpf.height.value == 1.8
-        assert cpf.age.value == raw_uc(30, "years", "s")
-        assert cpf.name.value == "Comp A"
-        assert cpf.location.value == "here"
+        self._compa_designer_param_value_checks(cpf)
 
         # instance checks
         assert cpf.only_global is reactor_config.global_params.only_global
@@ -214,3 +215,39 @@ class TestReactorConfigClass:
 
         with pytest.raises(ReactorConfigError):
             reactor_config.config_for("comp A", 1)
+
+    def test_file_path_loading_in_json_nested_params(self):
+        out_dict = {
+            "height": {"value": 1.8, "unit": "m"},
+            "age": {"value": 946728000, "unit": "s"},
+            "only_global": {"value": 31557600, "unit": "s"},
+            "extra_global": {"value": 1, "unit": "s"},
+        }
+        reactor_config = ReactorConfig(nested_params_config_path.as_posix(), EmptyFrame)
+        assert reactor_config.config_data == {
+            "Tester": {"params": "reactor_params.global.json"}
+        }
+        pf = make_parameter_frame(reactor_config.params_for("Tester"), TestGlobalParams)
+        assert pf == TestGlobalParams.from_dict(out_dict)
+
+        # Stored in memory test
+        assert reactor_config.config_data == {"Tester": {"params": out_dict}}
+
+    def test_file_path_loading_in_json_nested_config(self):
+        reactor_config = ReactorConfig(nested_config_path.as_posix(), EmptyFrame)
+        import ipdb
+
+        ipdb.set_trace()
+
+        pf = make_parameter_frame(
+            reactor_config.params_for("Tester", "comp A", "designer"),
+            TestCompADesignerParams,
+        )
+
+        self._compa_designer_param_value_checks(pf)
+
+        assert reactor_config.config_for("Tester", "comp A", "designer") == {
+            "config_a": {"a_value": "overridden_value"},
+            "config_b": {"b_value": "b_value"},
+            "config_c": {"c_value": "c_value"},
+        }
