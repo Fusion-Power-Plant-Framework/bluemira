@@ -66,7 +66,7 @@ class BaseManager(abc.ABC):
 
         Parameters
         ----------
-        *dims
+        *dims:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         """
@@ -170,7 +170,7 @@ class ComponentManager(BaseManager):
 
     Parameters
     ----------
-    component_tree: Component
+    component_tree:
         The component tree this manager should wrap.
     """
 
@@ -193,7 +193,7 @@ class ComponentManager(BaseManager):
 
         Parameters
         ----------
-        *dims
+        *dims:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         """
@@ -237,10 +237,12 @@ class Reactor(BaseManager):
 
     Parameters
     ----------
-    name: str
+    name:
         The name of the reactor. This will be the label for the top
         level :obj:`bluemira.base.components.Component` in the reactor
         tree.
+    n_sectors:
+        Number of sectors in a reactor
 
     Example
     -------
@@ -345,13 +347,13 @@ class Reactor(BaseManager):
 
         Parameters
         ----------
-        *dims
+        *dims:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
-        with_components
+        with_components:
             The components to construct when displaying CAD for xyz.
             Defaults to None, which means show "all" components.
-        n_sectors
+        n_sectors:
             The number of sectors to construct when displaying CAD for xyz
             Defaults to None, which means show "all" sectors.
         """

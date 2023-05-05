@@ -49,14 +49,14 @@ def logger_setup(
 
     Parameters
     ----------
-    logfilename
+    logfilename:
         Name of file to write logs to, default = bluemira.log
-    level
+    level:
         The initial logging level to be printed to the console, default = INFO.
 
     Returns
     -------
-        The logger to be used
+    The logger to be used
 
     Notes
     -----
@@ -99,11 +99,11 @@ def set_log_level(
 
     Parameters
     ----------
-    verbose
+    verbose:
         Amount the severity level of the logger should be changed by or to
-    increase
+    increase:
         Whether level should be increased by specified amount or changed to it
-    logger_names
+    logger_names:
         The loggers for which to set the level, default = ("bluemira")
     """
     # change loggers level
@@ -145,14 +145,14 @@ def _convert_log_level(level: Union[str, int], current_level: int = 0) -> LogLev
 
     Parameters
     ----------
-    level
+    level:
         The bluemira logging level.
-    current_level
+    current_level:
         The current bluemira logging level to increment from.
 
     Returns
     -------
-        The LogLevel corresponding to the requested level.
+    The LogLevel corresponding to the requested level.
     """
     try:
         if isinstance(level, str):
@@ -173,9 +173,9 @@ def _modify_handler(new_level: LogLevel, logger: logging.Logger):
 
     Parameters
     ----------
-    new_level
+    new_level:
         Severity level for handler to be changed to, from set_log_level
-    logger
+    logger:
         Logger to be used
     """
     for handler in logger.handlers or logger.parent.handlers:
@@ -189,7 +189,7 @@ class LoggingContext:
 
     Parameters
     ----------
-    level
+    level:
         The bluemira logging level to set within the context.
     """
 

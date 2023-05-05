@@ -62,12 +62,12 @@ def get_git_version(directory: str) -> str:
 
     Parameters
     ----------
-    directory
+    directory:
         The full path directory of the folder to get git information from
 
     Returns
     -------
-        The git version bytestring
+    The git version bytestring
     """
     return subprocess.check_output(  # noqa :S603, S607
         ["git", "describe", "--tags", "--always"], cwd=directory
@@ -80,12 +80,12 @@ def get_git_branch(directory: str) -> str:
 
     Parameters
     ----------
-    directory
+    directory:
         The full path directory of the folder to get git information from
 
     Returns
     -------
-        The git branch string
+    The git branch string
     """
     out = subprocess.check_output(  # noqa :S603, S607
         ["git", "rev-parse", "--abbrev-ref", "HEAD"], cwd=directory
@@ -99,14 +99,14 @@ def get_git_files(directory: str, branch: str) -> List[str]:
 
     Parameters
     ----------
-    directory
+    directory:
         The full path directory of the folder to get git information from
-    branch
+    branch:
         The name of the git branch to retrieve the filenames from
 
     Returns
     -------
-        The list of git-controlled path strings
+    The list of git-controlled path strings
     """
     return (
         subprocess.check_output(  # noqa :S603, S607
@@ -123,7 +123,7 @@ def get_platform() -> str:
 
     Returns
     -------
-        The generic name of the platform (e.g. Linux, Windows)
+    The generic name of the platform (e.g. Linux, Windows)
     """
     return platform.uname()[0]
 
@@ -139,19 +139,19 @@ def count_slocs(
 
     Parameters
     ----------
-    directory
+    directory:
         The full path directory of the folder to get git information from
-    branch
+    branch:
         The git branch string
-    exts
+    exts:
         The list of file extensions to search the directory for
-    ignore
+    ignore:
         The list of extensions and filenames to ignore
 
     Returns
     -------
-        The dictionary of number of lines of code per file extension, and the
-        total linecount
+    The dictionary of number of lines of code per file extension, and the
+    total linecount
     """
     if ignore is None:
         ignore = [".git", ".txt", "look_and_feel.py"]
@@ -194,14 +194,14 @@ def _print_color(string: str, color: str) -> str:
 
     Parameters
     ----------
-    string
+    string:
         The text to colour
-    color
+    color:
         The color to make the color-string for
 
     Returns
     -------
-        The string with ANSI color decoration
+    The string with ANSI color decoration
     """
     return f"{ANSI_COLOR[color]}{string}{EXIT_COLOR}"
 
@@ -212,14 +212,14 @@ def _bm_print(string: str, width: int = 73):
 
     Parameters
     ----------
-    string
+    string:
         The string of text to colour and box
-    width
+    width:
         The width of the box, default = 73 (leave this alone for best results)
 
     Returns
     -------
-        The text string of the boxed text
+    The text string of the boxed text
     """
     strings = [
         " " if s == "\n" and i != 0 else s[:-1] if s.endswith("\n") else s
@@ -244,11 +244,11 @@ def colourise(string: str, width: int = 73, color: str = "blue") -> str:
 
     Parameters
     ----------
-    string
+    string:
         The string of text to colour and box
-    width
+    width:
         The width of the box, default = 73 (leave this alone for best results)
-    color
+    color:
         The color to print the text in from `bluemira.base.constants.ANSI_COLOR`
     """
     text = _bm_print(string, width=width)
@@ -298,11 +298,11 @@ def _bm_print_singleflush(string: str, width: int = 73, color: str = "blue"):
 
     Parameters
     ----------
-    string
+    string:
         The string of text to colour and box
-    width
+    width:
         The width of the box, default = 73 (leave this alone for best results)
-    color
+    color:
         The color to print the text in, one of ['blue', 'red', 'green']
 
     Returns
@@ -320,9 +320,9 @@ def _bluemira_clean_flush(string, func: Callable[[str], None] = LOGGER.info):
 
     Parameters
     ----------
-    string
+    string:
         The string to colour flush print
-    func
+    func:
         The function to use for logging, by default LOGGER.info
     """
     _terminator_handler(func, "\r" + string, fhterm=logging.StreamHandler.terminator)
@@ -334,11 +334,11 @@ def _terminator_handler(func: Callable[[str], None], string: str, *, fhterm: str
 
     Parameters
     ----------
-    func
+    func:
         The function to use for logging (e.g LOGGER.info)
-    string
+    string:
         The string to colour flush print
-    fhterm
+    fhterm:
         FileHandler Terminator
     """
     original_terminator = logging.StreamHandler.terminator
@@ -358,7 +358,7 @@ def bluemira_print_flush(string: str):
 
     Parameters
     ----------
-    string
+    string:
         The string to colour flush print
     """
     _bluemira_clean_flush(_bm_print_singleflush(string), func=LOGGER.info)
@@ -371,7 +371,7 @@ def bluemira_debug_flush(string: str):
 
     Parameters
     ----------
-    string
+    string:
         The string to colour flush print for debug messages.
     """
     _bluemira_clean_flush(
@@ -386,7 +386,7 @@ def bluemira_print_clean(string: str):
 
     Parameters
     ----------
-    string
+    string:
         The string to print
     """
     _terminator_handler(LOGGER.info, string)
@@ -399,7 +399,7 @@ def bluemira_error_clean(string: str):
 
     Parameters
     ----------
-    string
+    string:
         The string to colour print
     """
     _terminator_handler(LOGGER.error, _print_color(string, "red"))
@@ -436,7 +436,7 @@ def version_banner() -> List[str]:
 
     Returns
     -------
-        The list of strings of text describing the version and code information
+    The list of strings of text describing the version and code information
     """
     mapping = {
         "SLOC": "total",
@@ -467,7 +467,7 @@ def user_banner() -> List[str]:
 
     Returns
     -------
-        The text for the banner containing user and platform information
+    The text for the banner containing user and platform information
     """
     return [
         f"User       : {getuser()}",

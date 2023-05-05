@@ -62,8 +62,8 @@ def try_get_bluemira_private_data_root() -> Union[str, None]:
 
     Returns
     -------
-        The full path to the bluemira root folder, e.g.:
-            '/home/user/code/bluemira-private-data'
+    The full path to the bluemira root folder, e.g.:
+        '/home/user/code/bluemira-private-data'
 
     Notes
     -----
@@ -84,15 +84,15 @@ def get_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
 
     Parameters
     ----------
-    path
+    path:
         The desired path from which to create a full path
-    subfolder
+    subfolder:
         The subfolder (from the bluemira root) in which to create a path
         Defaults to the source code folder, but can be e.g. 'tests', or 'data'
 
     Returns
     -------
-        The full path to the desired `path` in the subfolder specified
+    The full path to the desired `path` in the subfolder specified
     """
     root = get_bluemira_root()
     if "egg" in root:
@@ -113,18 +113,18 @@ def try_get_bluemira_path(
 
     Parameters
     ----------
-    path
+    path:
         The desired path from which to create a full path
-    subfolder
+    subfolder:
         The subfolder (from the bluemira root) in which to create a path
         Defaults to the source code folder, but can be e.g. 'tests', or 'data'
-    allow_missing
+    allow_missing:
         Whether or not to raise an error if the path does not exist
 
     Returns
     -------
-        The full path to the desired `path` in the subfolder specified, or None if the
-        requested path doesn't exist.
+    The full path to the desired `path` in the subfolder specified, or None if the
+    requested path doesn't exist.
 
     Raises
     ------
@@ -165,15 +165,14 @@ def force_file_extension(file_path: str, valid_extensions: Union[str, List[str]]
 
     Parameters
     ----------
-    file_path
+    file_path:
         path to file
-    valid_extensions
+    valid_extensions:
         collection of valid extensions
 
     Returns
     -------
-    file_path
-
+    File path
     """
     if isinstance(valid_extensions, str):
         valid_extensions = [valid_extensions]
@@ -190,14 +189,14 @@ def get_files_by_ext(folder: str, extension: str) -> List[str]:
 
     Parameters
     ----------
-    folder
+    folder:
         The full path directory in which to look for files
-    extension
+    extension:
         The extension of the desired file-type
 
     Returns
     -------
-        The list of full path filenames found in the folder
+    The list of full path filenames found in the folder
     """
     files = []
     for file in os.listdir(folder):
@@ -216,14 +215,14 @@ def file_name_maker(filename: str, lowercase: bool = False) -> str:
 
     Parameters
     ----------
-    filename
+    filename:
         Full filename or path
-    lowercase
+    lowercase:
         Whether or not to force lowercase filenames
 
     Returns
     -------
-        Full filename or path, corrected
+    Full filename or path, corrected
     """
     filename = filename.replace(" ", "_")
     if lowercase:
@@ -314,12 +313,12 @@ class FileManager:
 
         Parameters
         ----------
-        subfolder
+        subfolder:
             The subfolder of the bluemira directory in which to add the data structure
 
         Returns
         -------
-            The dictionary of subfolder names to full paths (useful shorthand)
+        The dictionary of subfolder names to full paths (useful shorthand)
         """
         root = os.path.join(subfolder, "reactors", self.reactor_name)
         pathlib.Path(root).mkdir(parents=True, exist_ok=True)
@@ -376,17 +375,17 @@ class FileManager:
 
         Parameters
         ----------
-        sub_dir_name
+        sub_dir_name:
             The name of the sub-directory to create the path under. Must be one of the
             names in bluemira.base.file.SUB_DIRS.
-        path
+        path:
             The path to create under the sub-directory.
-        make_dir
+        make_dir:
             Optionally create a directory at the path, by default False.
 
         Returns
         -------
-            The path within the data sub-directories.
+        The path within the data sub-directories.
         """
         path = os.sep.join(
             [self.generated_data_dirs[sub_dir_name], path.replace("/", os.sep)]

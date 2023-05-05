@@ -53,7 +53,6 @@ def _timing(
         information to print before running function
     debug_info_str:
         send info_str to debug logger instead of info logger
-
     """
 
     @wraps(func)

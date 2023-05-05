@@ -39,11 +39,11 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
     Parameters
     ----------
-    params
+    params:
         The parameters required by the designer.
-    build_config
+    build_config:
         The build configuration options for the designer.
-    verbose
+    verbose:
         control how much logging the designer will output
 
     Notes

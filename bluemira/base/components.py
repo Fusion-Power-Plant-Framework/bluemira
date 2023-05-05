@@ -97,7 +97,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Parameters
         ----------
-        names
+        names:
             The list of names of each component to search for.
 
         Notes
@@ -140,7 +140,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Parameters
         ----------
-        parent
+        parent:
             The component to set as the copy's parent
 
         Returns
@@ -174,7 +174,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Parameters
         ----------
-        parent
+        parent:
             The component to set as the copied children's parent
 
         Returns
@@ -195,18 +195,18 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Parameters
         ----------
-        name
+        name:
             The name of the component to search for.
-        first
+        first:
             If True, only the first element is returned, by default True.
-        full_tree
+        full_tree:
             If True, searches the tree from the root, else searches from this node, by
             default False.
 
         Returns
         -------
-            The first component of the search if first is True, else all components
-            matching the search.
+        The first component of the search if first is True, else all components
+        matching the search.
 
         Notes
         -----
@@ -228,19 +228,19 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Parameters
         ----------
-        properties
+        properties:
             properties to extract from component tree
-        first
+        first:
             If True, only the first element is returned, by default True.
-        full_tree
+        full_tree:
             If True, searches the tree from the root, else searches from this node, by
             default False.
 
         Returns
         -------
-            If multiple properties specified returns a tuple of the list of properties,
-            otherwise returns a list of the property.
-            If only one node has the property returns the value(s).
+        If multiple properties specified returns a tuple of the list of properties,
+        otherwise returns a list of the property.
+        If only one node has the property returns the value(s).
 
         Notes
         -----
@@ -285,12 +285,12 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Parameters
         ----------
-        child
+        child:
             The child to be added
 
         Returns
         -------
-            This component.
+        This component.
         """
         # TODO: Support merge_trees here too.
         if child in self.children or child.name in (ch.name for ch in self.children):
@@ -309,12 +309,12 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
         Parameters
         ----------
-        children
+        children:
             The children to be added
 
         Returns
         -------
-            This component.
+        This component.
         """
         if children is None:
             return
@@ -356,6 +356,19 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 class PhysicalComponent(Component):
     """
     A physical component. It includes shape and materials.
+
+    Parameters
+    ----------
+    name:
+        Name of the PhysicalComponent
+    shape:
+        Geometry of the PhysicalComponent
+    material:
+        Material of the PhysicalComponent
+    parent:
+        Parent of the PhysicalComponent
+    children:
+        Children of the PhysicalComponent
     """
 
     def __init__(
@@ -484,17 +497,16 @@ def get_properties_from_components(
 
     Parameters
     ----------
-    comps
+    comps:
         A component or list of components
-    properties
+    properties:
         properties to collect
 
     Returns
     -------
-        If multiple properties specified returns a tuple of the list of properties,
-        otherwise returns a list of the property.
-        If only one node has the property returns the value(s).
-
+    If multiple properties specified returns a tuple of the list of properties,
+    otherwise returns a list of the property.
+    If only one node has the property returns the value(s).
     """
     if isinstance(properties, str):
         properties = [properties]
