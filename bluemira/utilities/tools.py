@@ -33,7 +33,7 @@ from itertools import permutations
 from json import JSONEncoder, dumps
 from os import listdir
 from types import ModuleType
-from typing import Any, Dict, Tuple, Type, Union
+from typing import Any, Dict, Optional, Tuple, Type, Union
 
 import nlopt
 import numpy as np
