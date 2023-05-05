@@ -52,7 +52,7 @@ class RunMode(enum.Enum):
 
         Parameters
         ----------
-        mode_str: str
+        mode_str:
             The run mode's name.
         """
         for run_mode_str, enum_value in cls.__members__.items():
@@ -118,15 +118,14 @@ class CodesSetup(CodesTask):
 
         Parameters
         ----------
-        remapper: Optional[Union[Callable, Dict[str, str]]]
+        remapper:
             A function or dictionary for remapping variable names.
             Useful for renaming old variables
 
         Returns
         -------
-        _inputs: Dict[str, float]
-            Keys are external code parameter names, values are the input
-            values for those parameters.
+        Keys are external code parameter names, values are the input
+        values for those parameters.
         """
         _inputs = {}
 
@@ -175,9 +174,9 @@ class CodesTeardown(CodesTask):
 
     Parameters
     ----------
-    params: ParameterFrame
+    params:
         The parameters for this task.
-    codes_name: str
+    codes_name:
         The name of the external code the task is associated with.
     """
 
@@ -191,16 +190,16 @@ class CodesTeardown(CodesTask):
 
         Parameters
         ----------
-        outputs: Dict[str, float]
+        outputs:
             Key are the external code's parameter names, the values are
             the values for those parameters.
-        recv_all: bool
+        recv_all:
             Whether to ignore the 'recv' attribute on the parameter
             mapping, and update all output parameter values.
 
         Raises
         ------
-        CodesError
+        CodesError:
             If any output does not have a mapping to a bluemira
             parameter, or the output maps to a bluemira parameter that
             does not exist in this object's ParameterFrame.
@@ -217,20 +216,19 @@ class CodesTeardown(CodesTask):
 
         Parameters
         ----------
-        external_outputs: Dict[str, Any]
+        external_outputs:
             An output produced by an external code. The keys are the
             outputs' names (not the bluemira version of the name), the
             values are the output's value (in the external code's unit).
-        recv_all: bool
+        recv_all:
             Whether to ignore the 'recv' attribute on the parameter
             mapping, and update all output parameter values.
 
         Returns
         -------
-        mapped_outputs: Dict[str, float]
-            The keys are bluemira parameter names and the values are the
-            external codes' outputs for those parameters (with necessary
-            unit conversions made).
+        The keys are bluemira parameter names and the values are the
+        external codes' outputs for those parameters (with necessary
+        unit conversions made).
         """
         mapped_outputs = {}
         for bm_name, mapping in self.params.mappings.items():
@@ -353,7 +351,7 @@ class CodesSolver(abc.ABC):
 
         Parameters
         ----------
-        mappings: dict
+        mappings:
             A dictionary where keys are variables to change the mappings
             of, and values specify 'send', and or, 'recv' booleans.
 
