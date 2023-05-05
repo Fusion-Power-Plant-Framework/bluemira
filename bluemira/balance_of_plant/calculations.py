@@ -31,19 +31,27 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 
 
-def cryo_power(s_tf, m_cold, nucl_heating, e_pf_max, t_pulse, tf_current, n_TF):
+def cryo_power(
+    s_tf: float,
+    m_cold: float,
+    nucl_heating: float,
+    e_pf_max: float,
+    t_pulse: float,
+    tf_current: float,
+    n_TF: int,
+) -> float:
     """
     Calculates cryogenic loads (taken from PROCESS)
 
     Parameters
     ----------
-    s_tf: float
+    s_tf:
         TF coil total surface area [m^2]
-    m_cold: float
+    m_cold:
         Total cold mass [kg]
-    nucl_heating: float
+    nucl_heating:
         Total coil nuclear heating [W]
-    e_pf_max: float
+    e_pf_max:
         Maximum stored energy in the PF coils [J]
     t_pulse: float
         Pulse length [s]
