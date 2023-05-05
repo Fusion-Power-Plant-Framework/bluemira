@@ -722,6 +722,9 @@ class MagneticConstraintSet(ABC):
     def __call__(
         self, equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
     ):  # noqa :N803
+        """
+        Update the MagneticConstraintSet
+        """
         if I_not_dI:
             equilibrium = _get_dummy_equilibrium(equilibrium)
 
