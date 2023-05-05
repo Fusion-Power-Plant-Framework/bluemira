@@ -1,23 +1,15 @@
 """
 TODO:
-1.  [x]_load_fw_points,
-        [x]Draw a graph to understand the flow of variables! which one gets stretched, what gets combined/ sliced etc.
-        [x]Draw graph into the docstring!
-    [x]create_materials,
-    [x]setup_openmc
-    [half-done]filter_cells
+1.  [ ]filter_cells
+        [x]rename variables
         [ ]separate the key into a list?
         [ ]Write a docstring of some sort to explain that some items are lists and some items are cells.
     [ ]create_tallies
-[x]Implement Enum on create_materials
 2. Documentation:
-    [x]_load_fw_points
-    [ ]setup_openmc
     [ ]create_tallies
     [ ]OpenMCResult.get*
-3. Integration into our logging system (print should go through bluemira_print etc)
-[ ]_load_fw_points is incorrectly named!
-[ ]The rest of the *.py files too
+3. Integration into our logging system (print should go through bluemira_print etc.)
+[ ]The rest of the *.py files too: but only those that actually will get reused (i.e. skip make_geometry.py)
 [ ]Break quick_tbr_heating into multiple
     - keep openmc set-up here?
     - Ask how much time I should spend on this and future directions.
