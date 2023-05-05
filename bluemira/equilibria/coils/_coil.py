@@ -24,7 +24,10 @@ Coil and coil grouping objects
 """
 
 from enum import Enum, EnumMeta, auto
-from typing import Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
 
 import numpy as np
 
