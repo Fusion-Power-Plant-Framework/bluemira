@@ -25,7 +25,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from typing import Dict, Union
+from typing import Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -49,20 +49,20 @@ class LifeCycle:
 
     Parameters
     ----------
-    config: Union[LifeCycleParams, Dict[str, float]]
+    config:
         Parameters for the reactor life cycle. See
         :class:`bluemira.fuel_cycle.lifecycle.LifeCycleParams` for
         parameters details.
         Set to an empty ``dict`` to use default values.
-    learning_strategy: LearningStrategy
+    learning_strategy:
         A concrete instance of a ``LearningStrategy`` for distributing
         the total operational availability over different operational
         phases.
-    availability_strategy: OperationalAvailabilityStrategy
+    availability_strategy:
         Concrete instance of an OperationalAvailabilityStrategy
         implementing a strategy to generate distributions of unplanned
         outages.
-    inputs: Dict
+    inputs:
         Currently unused.
     """
 
@@ -186,7 +186,7 @@ class LifeCycle:
             # TODO: treat output parameter
         self.n_cycles = self.fpy * YR_TO_S / self.t_flattop
 
-    def set_availabilities(self, load_factor):
+    def set_availabilities(self, load_factor: float):
         """
         Sets availability and distributes it between the two phases of planned operation.
         The planned maintenance windows are substracted from the availability which
@@ -219,7 +219,7 @@ class LifeCycle:
             self.params.A_global, op_durations
         )
 
-    def calc_n_pulses(self, phases):
+    def calc_n_pulses(self, phases: List[List[float]]):
         """
         Calculate the number of pulses per phase.
         """
@@ -230,7 +230,7 @@ class LifeCycle:
                 n_pulse_p.append(int(round(YR_TO_S * phases[i][0] / self.t_flattop, 0)))
         self.n_pulse_p = n_pulse_p
 
-    def get_op_phases(self):
+    def get_op_phases(self) -> List[float]:
         """
         Get the operational phases for the LifeCycle.
         """
@@ -238,7 +238,7 @@ class LifeCycle:
             d for n, d in zip(self.phase_names, self.phase_durations) if "Phase P" in n
         ]
 
-    def make_timeline(self):
+    def make_timeline(self) -> Timeline:
         """
         Builds a Timeline instance
         """
@@ -401,14 +401,14 @@ class LifeCycle:
         ax.set_xlim([0, self.fpy / self.params.A_global])
         ax.set_ylim(bottom=0)
 
-    def plot_load_factor(self, typ="pie", ax=None):
+    def plot_load_factor(self, typ: str = "pie", ax: Optional[plt.Axes] = None):
         """
         Plots a pie or bar chart of the breakdown of the reactor lifetime
 
         Parameters
         ----------
-        typ: str from ['pie', 'bar']
-            Whether to plot a pie or bar chart
+        typ:
+            Whether to plot a pie or bar chart ['pie', 'bar']
         """
         if ax is None:
             ax = plt.gca()
@@ -452,7 +452,7 @@ class LifeCycle:
             )
         )
 
-    def write(self, filename, **kwargs):
+    def write(self, filename: str, **kwargs):
         """
         Save a Timeline to a JSON file.
         """
@@ -460,7 +460,7 @@ class LifeCycle:
         data = self.T.to_dict()
         return json_writer(data, filename, **kwargs)
 
-    def read(self, filename):
+    def read(self, filename: str):
         """
         Load a Timeline from a JSON file.
         """

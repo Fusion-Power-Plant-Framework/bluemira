@@ -23,6 +23,7 @@
 Distribution and timeline utilities
 """
 import abc
+from typing import Iterable, Tuple
 
 import numpy as np
 from scipy.optimize import brentq
@@ -40,7 +41,7 @@ __all__ = [
 ]
 
 
-def f_gompertz(t, a, b, c):
+def f_gompertz(t: float, a: float, b: float, c: float) -> float:
     """
     Gompertz sigmoid function parameterisation.
 
@@ -49,14 +50,14 @@ def f_gompertz(t, a, b, c):
     return a * np.exp(-b * np.exp(-c * t))
 
 
-def f_logistic(t, value, k, x_0):
+def f_logistic(t: float, value: float, k: float, x_0: float) -> float:
     """
     Logistic function parameterisation.
     """
     return value / (1 + np.exp(-k * (t - x_0)))
 
 
-def histify(x, y):
+def histify(x: np.ndarray, y: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     Transform values into arrays usable to make histograms.
     """
@@ -64,7 +65,7 @@ def histify(x, y):
     return x.repeat(2)[1:-1], y.repeat(2)
 
 
-def generate_lognorm_distribution(n, integral, sigma):
+def generate_lognorm_distribution(n: int, integral: float, sigma: float) -> np.ndarray:
     """
     Generate a log-norm distribution for a given standard deviation of the
     underlying normal distribution. The mean value of the normal distribution
@@ -72,17 +73,16 @@ def generate_lognorm_distribution(n, integral, sigma):
 
     Parameters
     ----------
-    n: int
+    n:
         The size of the distribution
-    integral: float
+    integral:
         The integral value of the distribution
-    sigma: float
+    sigma:
         The standard deviation of the underlying normal distribution
 
     Returns
     -------
-    distribution: np.array
-        The distribution of size n and of the correct integral value
+    The distribution of size n and of the correct integral value
     """
 
     def f_integral(x):
@@ -96,23 +96,22 @@ def generate_lognorm_distribution(n, integral, sigma):
     return distribution
 
 
-def generate_truncnorm_distribution(n, integral, sigma):
+def generate_truncnorm_distribution(n: int, integral: float, sigma: float) -> np.ndarray:
     """
     Generate a truncated normal distribution for a given standard deviation.
 
     Parameters
     ----------
-    n: int
+    n:
         The size of the distribution
-    integral: float
+    integral:
         The integral value of the distribution
-    sigma: float
+    sigma:
         The standard deviation of the underlying normal distribution
 
     Returns
     -------
-    distribution: np.array
-        The distribution of size n and of the correct integral value
+    The distribution of size n and of the correct integral value
     """
     distribution = np.random.normal(0, sigma, n)
     # Truncate distribution by 0-folding
@@ -123,23 +122,24 @@ def generate_truncnorm_distribution(n, integral, sigma):
     return distribution
 
 
-def generate_exponential_distribution(n, integral, lambdda):
+def generate_exponential_distribution(
+    n: int, integral: float, lambdda: float
+) -> np.ndarray:
     """
     Generate an exponential distribution for a given rate parameter.
 
     Parameters
     ----------
-    n: int
+    n:
         The size of the distribution
-    integral: float
+    integral:
         The integral value of the distribution
-    lambdda: float
+    lambdda:
         The rate parameter of the ditribution
 
     Returns
     -------
-    distribution: np.array
-        The distribution of size n and of the correct integral value
+    The distribution of size n and of the correct integral value
     """
     distribution = np.random.exponential(lambdda, n)
     # Correct distribution integral
@@ -155,21 +155,22 @@ class LearningStrategy(abc.ABC):
     """
 
     @abc.abstractmethod
-    def generate_phase_availabilities(self, lifetime_op_availability, op_durations):
+    def generate_phase_availabilities(
+        self, lifetime_op_availability: float, op_durations: Iterable[float]
+    ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
 
         Parameters
         ----------
-        lifetime_op_availability: float
+        lifetime_op_availability:
             Operational availability averaged over the lifetime
-        op_durations: Iterable[float]
+        op_durations:
             Durations of the operational phases [fpy]
 
         Returns
         -------
-        op_availabities: Iterable[float]
-            Operational availabilities at each operational phase
+        Operational availabilities at each operational phase
         """
         pass
 
@@ -179,21 +180,22 @@ class UniformLearningStrategy(LearningStrategy):
     Uniform learning strategy
     """
 
-    def generate_phase_availabilities(self, lifetime_op_availability, op_durations):
+    def generate_phase_availabilities(
+        self, lifetime_op_availability: float, op_durations: Iterable[float]
+    ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
 
         Parameters
         ----------
-        lifetime_op_availability: float
+        lifetime_op_availability:
             Operational availability averaged over the lifetime
-        op_durations: Iterable[float]
+        op_durations:
             Durations of the operational phases [fpy]
 
         Returns
         -------
-        op_availabities: Iterable[float]
-            Operational availabilities at each operational phase
+        Operational availabilities at each operational phase
         """
         return lifetime_op_availability * np.ones(len(op_durations))
 
@@ -204,28 +206,31 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
     each operational phase.
     """
 
-    def __init__(self, operational_availabilities):
+    def __init__(self, operational_availabilities: Iterable[float]):
         """
         Parameters
         ----------
-        operational_availabilities: Iterable[float]
+        operational_availabilities:
             Operational availabilities to prescribe
         """
         self.operational_availabilities = operational_availabilities
 
-    def generate_phase_availabilities(self, lifetime_op_availability, op_durations):
+    def generate_phase_availabilities(
+        self, lifetime_op_availability: float, op_durations: Iterable[float]
+    ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
 
         Parameters
         ----------
-        op_durations: Iterable[float]
+        lifetime_op_availability:
+            Lifetime operational availability
+        op_durations:
             Durations of the operational phases [fpy]
 
         Returns
         -------
-        op_availabities: Iterable[float]
-            Operational availabilities at each operational phase
+        Operational availabilities at each operational phase
         """
         if len(op_durations) != len(self.operational_availabilities):
             raise FuelCycleError(
@@ -249,15 +254,17 @@ class GompertzLearningStrategy(LearningStrategy):
     Gompertz learning strategy.
     """
 
-    def __init__(self, learn_rate, min_op_availability, max_op_availability):
+    def __init__(
+        self, learn_rate: float, min_op_availability: float, max_op_availability: float
+    ):
         """
         Parameters
         ----------
-        learn_rate: float
+        learn_rate:
             Gompertz distribution learning rate
-        min_op_availability: float
+        min_op_availability:
             Minimum operational availability within any given operational phase
-        max_op_availability: float
+        max_op_availability:
             Maximum operational availability within any given operational phase
         """
         self.learn_rate = learn_rate
@@ -274,21 +281,22 @@ class GompertzLearningStrategy(LearningStrategy):
             [np.mean(a_ops[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])]
         )
 
-    def generate_phase_availabilities(self, lifetime_op_availability, op_durations):
+    def generate_phase_availabilities(
+        self, lifetime_op_availability: float, op_durations: Iterable[float]
+    ) -> Iterable[float]:
         """
         Generate operational availabilities for the specified phase durations.
 
         Parameters
         ----------
-        lifetime_op_availability: float
+        lifetime_op_availability:
             Operational availability averaged over the lifetime
-        op_durations: Iterable[float]
+        op_durations:
             Durations of the operational phases [fpy]
 
         Returns
         -------
-        op_availabities: Iterable[float]
-            Operational availabilities at each operational phase
+        Operational availabilities at each operational phase
         """
         if not self.min_op_a < lifetime_op_availability < self.max_op_a:
             raise FuelCycleError(
@@ -325,16 +333,20 @@ class OperationalAvailabilityStrategy(abc.ABC):
     """
 
     @abc.abstractmethod
-    def generate_distribution(self, n, integral):
+    def generate_distribution(self, n: int, integral: float) -> np.ndarray:
         """
         Generate a distribution with a specified number of entries and integral.
 
         Parameters
         ----------
-        n: int
+        n:
             Number of entries in the distribution
-        integral: float
+        integral:
             Integral of the distribution
+
+        Returns
+        -------
+        The distribution of size n and of the correct integral value
         """
         pass
 
@@ -344,27 +356,31 @@ class LogNormalAvailabilityStrategy(OperationalAvailabilityStrategy):
     Log-normal distribution strategy
     """
 
-    def __init__(self, sigma):
+    def __init__(self, sigma: float):
         """
         Parameters
         ----------
-        sigma: float
+        sigma:
             Standard deviation of the underlying normal distribution
         """
         self.sigma = sigma
         super().__init__()
 
-    def generate_distribution(self, n, integral):
+    def generate_distribution(self, n: int, integral: float) -> np.ndarray:
         """
         Generate a log-normal distribution with a specified number of entries and
         integral.
 
         Parameters
         ----------
-        n: int
+        n:
             Number of entries in the distribution
-        integral: float
+        integral:
             Integral of the distribution
+
+        Returns
+        -------
+        The distribution of size n and of the correct integral value
         """
         return generate_lognorm_distribution(n, integral, self.sigma)
 
@@ -374,27 +390,31 @@ class TruncNormAvailabilityStrategy(OperationalAvailabilityStrategy):
     Truncated normal distribution strategy
     """
 
-    def __init__(self, sigma):
+    def __init__(self, sigma: float):
         """
         Parameters
         ----------
-        sigma: float
+        sigma:
             Standard deviation of the underlying normal distribution
         """
         self.sigma = sigma
         super().__init__()
 
-    def generate_distribution(self, n, integral):
+    def generate_distribution(self, n: int, integral: float) -> np.ndarray:
         """
         Generate a truncated normal distribution with a specified number of entries and
         integral.
 
         Parameters
         ----------
-        n: int
+        n:
             Number of entries in the distribution
-        integral: float
+        integral:
             Integral of the distribution
+
+        Returns
+        -------
+        The distribution of size n and of the correct integral value
         """
         return generate_truncnorm_distribution(n, integral, self.sigma)
 
@@ -404,26 +424,30 @@ class ExponentialAvailabilityStrategy(OperationalAvailabilityStrategy):
     Exponential distribution strategy
     """
 
-    def __init__(self, lambdda):
+    def __init__(self, lambdda: float):
         """
         Parameters
         ----------
-        lambdda: float
+        lambdda:
             Rate of the distribution
         """
         self.lambdda = lambdda
         super().__init__()
 
-    def generate_distribution(self, n, integral):
+    def generate_distribution(self, n: int, integral: float) -> np.ndarray:
         """
         Generate an exponential distribution with a specified number of entries and
         integral.
 
         Parameters
         ----------
-        n: int
+        n
             Number of entries in the distribution
-        integral: float
+        integral:
             Integral of the distribution
+
+        Returns
+        -------
+        The distribution of size n and of the correct integral value
         """
         return generate_exponential_distribution(n, integral, self.lambdda)
