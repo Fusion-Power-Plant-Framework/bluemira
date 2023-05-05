@@ -262,6 +262,7 @@ class ReactorConfig:
         # this routine is designed not to copy any dict's while parsing
 
         current_layer = self.config_data
+
         for next_idx, current_arg_key in enumerate(arg_keys, start=1):
             current_layer = current_layer.get(current_arg_key, {})
             next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
