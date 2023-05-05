@@ -434,7 +434,7 @@ class PicardIterator:
 
     def __init__(
         self,
-        eq: Euilibrium,
+        eq: Equilibrium,
         optimisation_problem: CoilsetOptimisationProblem,
         convergence: ConvergenceCriterion = DudsonConvergence(),
         fixed_coils: bool = False,
