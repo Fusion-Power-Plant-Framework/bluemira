@@ -22,6 +22,16 @@
 """
 FE result object
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
+    from bluemira.structural.geometry import Geometry
+    from bluemira.structural.symmetry import CyclicSymmetry
+    from bluemira.structural.loads import LoadCase
+
 import numpy as np
 
 from bluemira.structural.geometry import DeformedGeometry
@@ -47,7 +57,14 @@ class Result:
         "_max_deflections",
     ]
 
-    def __init__(self, geometry, load_case, deflections, reactions, cyclic_symmetry):
+    def __init__(
+        self,
+        geometry: Geometry,
+        load_case: LoadCase,
+        deflections: np.ndarray,
+        reactions: np.ndarray,
+        cyclic_symmetry: Optional[CyclicSymmetry],
+    ):
         self.geometry = geometry
         self.load_case = load_case
         self.deflections = deflections
@@ -86,23 +103,22 @@ class Result:
         self._stresses = s
         self._max_deflections = max_deflections
 
-    def make_deformed_geometry(self, scale=30):
+    def make_deformed_geometry(self, scale: float = 30.0) -> DeformedGeometry:
         """
         Make deformed geometry of the result
 
         Parameters
         ----------
-        scale: float
+        scale:
             The scale for the deformations
 
         Returns
         -------
-        dg: DeformedGeometry
-            The deformed geometry of the Result at the specified scale
+        The deformed geometry of the Result at the specified scale
         """
         return DeformedGeometry(self.geometry, scale=scale)
 
-    def _make_cyclic_geometry(self, geometry=None):
+    def _make_cyclic_geometry(self, geometry: Optional[Geometry] = None):
         if geometry is None:
             geometry = self.geometry
 
@@ -114,11 +130,11 @@ class Result:
 
     def plot(
         self,
-        deformation_scale=10,
-        ax=None,
-        stress=False,
-        deflection=False,
-        pattern=False,
+        deformation_scale: float = 10.0,
+        ax: Optional[Axes] = None,
+        stress: bool = False,
+        deflection: bool = False,
+        pattern: bool = False,
         **kwargs,
     ):
         """
@@ -126,15 +142,15 @@ class Result:
 
         Parameters
         ----------
-        deformation_scale: Union[int, float]
+        deformation_scale:
             The scale of the deformation to be shown in the plot
-        ax: Union[None, Axes]:
+        ax:
             The Axes onto which to plot (should be 3-D).
-        stress: bool
+        stress:
             Whether or not to plot stresses [color map]
-        deflection: bool
+        deflection:
             Whether or not to plot deflection [color map]
-        pattern: bool
+        pattern:
             Whether or not to pattern the model (if symmetry was used)
         """
         if ax is None:
