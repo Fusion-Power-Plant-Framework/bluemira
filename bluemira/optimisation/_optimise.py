@@ -36,9 +36,10 @@ from bluemira.optimisation._typing import (
 
 def optimise(
     f_objective: ObjectiveCallable,
-    dimensions: Optional[int] = None,
-    x0: Optional[np.ndarray] = None,
     df_objective: Optional[OptimiserCallable] = None,
+    *,
+    x0: Optional[np.ndarray] = None,
+    dimensions: Optional[int] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
