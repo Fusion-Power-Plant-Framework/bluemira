@@ -73,18 +73,17 @@ class CoilNumber:
     @staticmethod
     def generate(ctype: CoilType) -> int:
         """
-        Generate a coil name based on its type and indexing if specified.
+        Generate a coil number based on its type and indexing if specified.
         An encapsulated global counter assigns an index.
 
         Parameters
         ----------
-        coil: Any
-            Object to name
+        coil:
+            Object to number
 
         Returns
         -------
-        name: str
-            Coil name
+        Coil number
         """
         if ctype == CoilType.NONE:
             idx = CoilNumber.__no_counter
