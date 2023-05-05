@@ -22,8 +22,14 @@
 """
 Material mixture utility classes
 """
+from __future__ import annotations
+
 import copy
-import typing
+from typing import TYPE_CHECKING, Any, Dict, Optional
+
+if TYPE_CHECKING:
+    from bluemira.materials.cache import MaterialCache
+
 import warnings
 
 import numpy as np
@@ -43,7 +49,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
     Inherits and does some dropping of 0 fractions (avoid touching nmm)
     """
 
-    materials: typing.Dict[str, float]
+    materials: Dict[str, float]
     temperature_in_K: float  # noqa :N815
     enrichment: float
 
@@ -52,12 +58,12 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
 
     def __init__(
         self,
-        name,
-        materials,
-        temperature_in_K=None,  # noqa :N803
-        enrichment=None,
-        zaid_suffix=None,
-        material_id=None,
+        name: str,
+        materials: Dict[str, float],
+        temperature_in_K: Optional[float] = None,  # noqa :N803
+        enrichment: Optional[float] = None,
+        zaid_suffix: Optional[str] = None,
+        material_id: Optional[str] = None,
     ):
         if temperature_in_K is None:
             temperature_in_K = self.default_temperature  # noqa :N803
@@ -81,7 +87,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
 
         self.name = name
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         Get the name of the mixture.
         """
@@ -117,104 +123,100 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
 
         return value
 
-    def E(self, temperature):  # noqa :N802
+    def E(self, temperature: float) -> float:  # noqa :N802
         """
         Young's modulus.
 
         Parameters
         ----------
-        temperature: float
+        temperature:
             The optional temperature [K].
 
         Returns
         -------
-        youngs_modulus: float
-            The Young's modulus of the material at the given temperature.
+        The Young's modulus of the material at the given temperature.
         """
         return self._calc_homogenised_property("E", temperature)
 
-    def mu(self, temperature):
+    def mu(self, temperature: float) -> float:
         """
         Poisson's ratio.
 
         Parameters
         ----------
-        temperature: float
+        temperature:
             The optional temperature [K].
 
         Returns
         -------
-        poissons_ratio: float
-            Poisson's ratio for the material at the given temperature.
+        Poisson's ratio for the material at the given temperature.
         """
         return self._calc_homogenised_property("mu", temperature)
 
-    def CTE(self, temperature):  # noqa :N802
+    def CTE(self, temperature: float) -> float:  # noqa :N802
         """
         Mean coefficient of thermal expansion in 10**-6/T
 
         Parameters
         ----------
-        temperature: float
+        temperature:
             The temperature in Kelvin
 
         Returns
         -------
-        cte: float
-            Mean coefficient of thermal expansion in 10**-6/T at the given temperature.
+        Mean coefficient of thermal expansion in 10**-6/T at the given temperature.
         """
         return self._calc_homogenised_property("CTE", temperature)
 
-    def rho(self, temperature):
+    def rho(self, temperature: float) -> float:
         """
         Density.
 
         Parameters
         ----------
-        temperature: float
+        temperature:
             The optional temperature [K].
 
         Returns
         -------
-        density: float
-            The density of the material at the given temperature.
+        The density of the material at the given temperature.
         """
         return self._calc_homogenised_property("rho", temperature)
 
-    def Sy(self, temperature):  # noqa :N802
+    def Sy(self, temperature: float) -> float:  # noqa :N802
         """
         Minimum yield stress in MPa
 
         Parameters
         ----------
-        temperature: float
+        temperature:
             The temperature in Kelvin
 
         Returns
         -------
-        sy: float
-            Minimum yield stress in MPa at the given temperature.
+        Minimum yield stress in MPa at the given temperature.
         """
         return self._calc_homogenised_property("Sy", temperature)
 
     @classmethod
-    def from_dict(cls, name, material_dict, material_cache):
+    def from_dict(
+        cls, name: str, material_dict: Dict[str, Any], material_cache: MaterialCache
+    ) -> SerialisedMaterial:
         """
         Generate an instance of the mixture from a dictionary of materials.
 
         Parameters
         ----------
-        name : str
-            The name of the mixture.
-        materials_dict: Dict[str, Any]
-            The dictionary defining this and any additional mixtures.
-        material_cache: MaterialCache
-            The cache to load the constituent materials from.
+        name:
+            The name of the mixture
+        materials_dict:
+            The dictionary defining this and any additional mixtures
+        material_cache:
+            The cache to load the constituent materials from
 
         Returns
         -------
-        mixture : SerialisedMaterial
-            The mixture.
+        The mixture
         """
         mat_dict = copy.deepcopy(material_dict[name])
         if "materials" not in material_dict[name].keys():

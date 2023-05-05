@@ -25,6 +25,7 @@ Classes and methods to load, store, and retrieve materials.
 
 import copy
 import json
+from typing import Any, Dict
 
 from bluemira.materials.material import (
     BePebbleBed,
@@ -34,6 +35,7 @@ from bluemira.materials.material import (
     NbSnSuperconductor,
     NbTiSuperconductor,
     Plasma,
+    SerialisedMaterial,
     UnitCellCompound,
     Void,
 )
@@ -68,33 +70,34 @@ class MaterialCache:
             mat_class.__name__: mat_class for mat_class in self.default_classes
         }
 
-    def load_from_file(self, path):
+    def load_from_file(self, path: str) -> Dict[str, Any]:
         """
         Load materials from a file.
 
         Parameters
         ----------
-        path: str
+        path:
             The path to the file from which to load the materials.
 
         Returns
         -------
-        material_dict: dict
-            The dictionary containing the loaded materials.
+        The dictionary containing the loaded materials.
         """
         with open(path, "r") as fh:
             mats_dict = json.load(fh)
         return {name: self.load_from_dict(name, mats_dict) for name in mats_dict.keys()}
 
-    def load_from_dict(self, mat_name, mats_dict, overwrite=True):
+    def load_from_dict(
+        self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
+    ):
         """
         Load a material or mixture from a dictionary.
 
         Parameters
         ----------
-        mat_name: str
+        mat_name:
             The name of the material or mixture.
-        mat_dict: Dict[str, Any]
+        mat_dict:
             The dictionary containing the material or mixture attributes to be loaded.
         """
         material_class = mats_dict[mat_name]["material_class"]
@@ -108,15 +111,17 @@ class MaterialCache:
         else:
             self.material_from_dict(mat_name, mats_dict)
 
-    def mixture_from_dict(self, mat_name, mats_dict, overwrite=True):
+    def mixture_from_dict(
+        self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
+    ):
         """
         Load a mixture from a dictionary.
 
         Parameters
         ----------
-        mat_name: str
+        mat_name:
             The name of the mixture.
-        mat_dict: Dict[str, Any]
+        mat_dict:
             The dictionary containing the mixture attributes to be loaded.
         """
         class_name = mats_dict[mat_name].pop("material_class")
@@ -124,15 +129,17 @@ class MaterialCache:
         mat = mat_class.from_dict(mat_name, mats_dict, self)
         self._update_cache(mat_name, mat, overwrite=overwrite)
 
-    def material_from_dict(self, mat_name, mats_dict, overwrite=True):
+    def material_from_dict(
+        self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
+    ):
         """
         Load a material from a dictionary.
 
         Parameters
         ----------
-        mat_name: str
+        mat_name:
             The name of the material.
-        mat_dict: Dict[str, Any]
+        mat_dict:
             The dictionary containing the material attributes to be loaded.
         """
         class_name = mats_dict[mat_name].pop("material_class")
@@ -140,29 +147,30 @@ class MaterialCache:
         mat = mat_class.from_dict(mat_name, mats_dict)
         self._update_cache(mat_name, mat, overwrite=overwrite)
 
-    def get_material(self, name, clone=True):
+    def get_material(self, name: str, clone: bool = True) -> SerialisedMaterial:
         """
         Get the named material from the material dictionary
 
         Parameters
         ----------
-        name: str
+        name:
             The name of the material to retrieve from the dictionary
-        clone: bool
+        clone:
             If True, get a clone (deepcopy) of the material, else get the actual material
             as stored in the material dictionary. By default True.
 
         Returns
         -------
-        mat: nmm.Material
-            The requested material.
+        The requested material.
         """
         if clone:
             return copy.deepcopy(self._material_dict[name])
         else:
             return self._material_dict[name]
 
-    def _update_cache(self, mat_name, mat, overwrite=True):
+    def _update_cache(
+        self, mat_name: str, mat: SerialisedMaterial, overwrite: bool = True
+    ):
         if not overwrite and mat_name in self._material_dict:
             raise MaterialsError(
                 f"Attempt to load material {mat_name}, which already "
