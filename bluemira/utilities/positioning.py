@@ -343,7 +343,7 @@ class PositionMapper:
         The ordered list of geometry interpolators
     """
 
-    def __init__(self, interpolators: Dict[str:XZGeometryInterpolator]):
+    def __init__(self, interpolators: Dict[str, XZGeometryInterpolator]):
         self.interpolators = interpolators
 
     def _check_length(self, thing):
