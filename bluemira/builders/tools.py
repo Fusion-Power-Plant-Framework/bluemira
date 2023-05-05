@@ -22,9 +22,13 @@
 """
 A collection of tools used in the EU-DEMO design.
 """
+from __future__ import annotations
 
 from collections.abc import Iterable
-from typing import List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.geometry.solid import BluemiraSolid
 
 import numpy as np
 from anytree import PreOrderIter
@@ -78,22 +82,22 @@ def apply_component_display_options(
         phys_component.display_cad_options.transparency = transparency
 
 
-def get_n_sectors(no_obj, degree=360):
+def get_n_sectors(no_obj: int, degree: float = 360) -> Tuple[float, int]:
     """
     Get sector count and angle size for a given number of degrees of the reactor.
 
     Parameters
     ----------
-    no_obj: int
+    no_obj:
         total number of components (eg TF coils)
-    degree: float
+    degree:
         angle to view of reactor
 
     Returns
     -------
-    sector_degree: float
+    sector_degree:
         number of degrees per sector
-    n_sectors: int
+    n_sectors:
         number of sectors
     """
     sector_degree = 360 / no_obj
@@ -106,9 +110,9 @@ def circular_pattern_component(
     n_children: int,
     parent_prefix: str = "Sector",
     *,
-    origin=(0.0, 0.0, 0.0),
-    direction=(0.0, 0.0, 1.0),
-    degree=360.0,
+    origin: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    degree: float = 360.0,
 ):
     """
     Pattern the provided Component equally spaced around a circle n_children times.
@@ -120,19 +124,19 @@ def circular_pattern_component(
 
     Parameters
     ----------
-    component: Union[Component, List[Component]],
+    component:
         The original Component to use as the template for copying around the circle.
-    n_children: int
+    n_children:
         The number of children to produce around the circle.
-    parent_prefix: str
+    parent_prefix:
         The prefix to provide to the new parent component, having a name of the form
         "{parent_prefix} {idx}", by default "Sector".
-    origin: Tuple[float, float, float]
+    origin:
         The origin of the circle to pattern around, by default (0., 0., 0.).
-    direction: Tuple[float, float, float]
+    direction:
         The surface normal of the circle to pattern around, by default (0., 0., 1.) i.e.
         the positive z axis, resulting in a counter clockwise circle in the x-y plane.
-    degree: float
+    degree:
         The angular extent of the patterning in degrees, by default 360.
     """
     component = [component] if isinstance(component, bm_comp.Component) else component
@@ -176,26 +180,27 @@ def circular_pattern_component(
     return sectors
 
 
-def pattern_revolved_silhouette(face, n_seg_p_sector, n_sectors, gap):
+def pattern_revolved_silhouette(
+    face: BluemiraFace, n_seg_p_sector: int, n_sectors: int, gap: float
+) -> List[BluemiraSolid]:
     """
     Pattern a silhouette with revolutions about the z-axis, inter-spaced with parallel
     gaps between solids.
 
     Parameters
     ----------
-    face: BluemiraFace
+    face:
         x-z silhouette of the geometry to revolve and pattern
-    n_seg_p_sector: int
+    n_seg_p_sector:
         Number of segments per sector
-    n_sectors: int
+    n_sectors:
         Number of sectors
-    gap: float
+    gap:
         Absolute distance between segments (parallel)
 
     Returns
     -------
-    shapes: List[BluemiraSolid]
-        List of solids for each segment (ordered anti-clockwise)
+    List of solids for each segment (ordered anti-clockwise)
     """
     sector_degree = 360 / n_sectors
 
@@ -217,26 +222,27 @@ def pattern_revolved_silhouette(face, n_seg_p_sector, n_sectors, gap):
     return _order_shapes_anticlockwise(shapes)
 
 
-def pattern_lofted_silhouette(face, n_seg_p_sector, n_sectors, gap):
+def pattern_lofted_silhouette(
+    face: BluemiraFace, n_seg_p_sector: int, n_sectors: int, gap: float
+) -> List[BluemiraSolid]:
     """
     Pattern a silhouette with lofts about the z-axis, inter-spaced with parallel
     gaps between solids.
 
     Parameters
     ----------
-    face: BluemiraFace
+    face:
         x-z silhouette of the geometry to loft and pattern
-    n_seg_p_sector: int
+    n_seg_p_sector:
         Number of segments per sector
-    n_sectors: int
+    n_sectors:
         Number of sectors
-    gap: float
+    gap:
         Absolute distance between segments (parallel)
 
     Returns
     -------
-    shapes: List[BluemiraSolid]
-        List of solids for each segment (ordered anti-clockwise)
+    List of solids for each segment (ordered anti-clockwise)
     """
     sector_degree = 360 / n_sectors
 
@@ -316,27 +322,26 @@ def _order_shapes_anticlockwise(shapes):
     return list(np.array(shapes)[indices])
 
 
-def find_xy_plane_radii(wire, plane):
+def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> List[float]:
     """
     Get the radial coordinates of a wire's intersection points with a plane.
 
     Parameters
     ----------
-    wire: BluemiraWire
+    wire:
         Wire to get the radii for in the plane
-    plane: BluemiraPlacement
+    plane:
         Plane to slice with
 
     Returns
     -------
-    radii: list
-        The array of radii of intersections, sorted from smallest to largest
+    The radii of intersections, sorted from smallest to largest
     """
     intersections = slice_shape(wire, plane)
     return sorted(intersections[:, 0])
 
 
-def make_circular_xy_ring(r_inner, r_outer):
+def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
     """
     Make a circular annulus in the x-y plane (z=0)
     """
@@ -361,11 +366,14 @@ def build_sectioned_xy(
 
     Parameters
     ----------
-    face: BluemiraFace
+    face:
         xz face to build xy component
-    plot_colour: Tuple[float]
+    plot_colour:
         colour tuple for component
 
+    Returns
+    -------
+    List of PhysicalComponents with colours applied
     """
     xy_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 1, 0])
 
@@ -398,18 +406,22 @@ def build_sectioned_xyz(
 
     Parameters
     ----------
-    face: BluemiraFace
+    face:
         xz face to build xyz component
-    name: str
+    name:
         PhysicalComponent name
-    n_TF: int
+    n_TF:
         number of TF coils
-    plot_colour: Tuple[float]
+    plot_colour:
         colour tuple for component
-    degree: float
+    degree:
         angle to sweep through
-    enable_sectioning: bool
+    enable_sectioning:
         Switch on/off sectioning (#1319 Topology issue)
+
+    Returns
+    -------
+    List of PhysicalComponents
 
     Notes
     -----

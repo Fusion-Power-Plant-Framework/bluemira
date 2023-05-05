@@ -100,7 +100,7 @@ class VVTSBuilder(Builder):
 
         Parameters
         ----------
-        koz: BluemiraWire
+        koz:
             keep out zone for the thermal shield
         """
         # This split hack works round #1319
@@ -131,7 +131,7 @@ class VVTSBuilder(Builder):
 
         Parameters
         ----------
-        vvts_face: BluemiraFace
+        vvts_face:
             xz face to build vvts
         """
         return build_sectioned_xy(vvts_face, BLUE_PALETTE["TS"][0])
@@ -144,8 +144,10 @@ class VVTSBuilder(Builder):
 
         Parameters
         ----------
-        vvts_face: BluemiraFace
+        vvts_face:
             xz face to build vvts
+        degree:
+            Revolution degrees
         """
         return build_sectioned_xyz(
             vvts_face,
