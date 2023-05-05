@@ -22,11 +22,16 @@
 """
 Partially randomised fusion reactor load signal object and tools
 """
+from typing import Dict, List, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import S_TO_YR, YR_TO_S
-from bluemira.fuel_cycle.timeline_tools import LogNormalAvailabilityStrategy
+from bluemira.fuel_cycle.timeline_tools import (
+    LogNormalAvailabilityStrategy,
+    OperationalAvailabilityStrategy,
+)
 
 __all__ = ["Timeline"]
 
@@ -70,47 +75,49 @@ class OperationPhase(Phase):
 
     Parameters
     ----------
-    name: str
+    name:
         Name of the operational phase
-    n_pulse: int
+    n_pulse:
         Number of pulses in the phase
-    load_factor: 0 < float < 1
-        Load factor of the phase
-    t_rampup: float
+    load_factor:
+        Load factor of the phase  0 < float < 1
+    t_rampup:
         Ramp-up duration of each pulse during the phase [s]
-    t_flattop: float
+    t_flattop:
         Phase flat-top duration of each pulse [s]
-    t_rampdown: float
+    t_rampdown:
         Ramp-down duration of each pulse during the phase [s]
-    t_min_down: float
+    t_min_down:
         Minimum downtime between pulses [s]
-    n_DT_reactions: float
+    n_DT_reactions:
         D-T reaction rate at full power [1/s]
-    n_DD_reactions: float
+    n_DD_reactions:
         D-D reaction rate at full power [1/s]
-    plasma_current: float
+    plasma_current:
         Plasma current [A]
-    t_start: float
+    t_start:
         Time at which the phase starts [s] (default = 0)
-    sigma: float
+    sigma:
         Standard deviation of the underlying normal distribution of the outages
 
     """
 
     def __init__(
         self,
-        name,
-        n_pulse,
-        load_factor,
-        t_rampup,
-        t_flattop,
-        t_rampdown,
-        t_min_down,
-        n_DT_reactions,
-        n_DD_reactions,
-        plasma_current,
-        t_start=0,
-        availability_strategy=LogNormalAvailabilityStrategy(sigma=2.0),
+        name: str,
+        n_pulse: int,
+        load_factor: float,
+        t_rampup: float,
+        t_flattop: float,
+        t_rampdown: float,
+        t_min_down: float,
+        n_DT_reactions: float,
+        n_DD_reactions: float,
+        plasma_current: float,
+        t_start: float = 0.0,
+        availability_strategy: OperationalAvailabilityStrategy = LogNormalAvailabilityStrategy(
+            sigma=2.0
+        ),
     ):
         super().__init__()
         self.name = name
@@ -154,21 +161,22 @@ class OperationPhase(Phase):
         self.DT_rate = DT_rate
         self.DD_rate = DD_rate
 
-    def calculate_outages(self, availability_strategy):
+    def calculate_outages(
+        self, availability_strategy: OperationalAvailabilityStrategy
+    ) -> np.ndarray:
         """
         Calculates the randomised vector of outages according ot a Log-normal
         distribution
 
         Parameters
         ----------
-        availability_strategy: OperationAvailabilityStrategy
+        availability_strategy:
             Operational availability strategy for the generation of distributions of
             unplanned outages
 
         Returns
         -------
-        t_dwell: np.array(self.n_pulse)
-            The array of outage durations [s]
+        The array of outage durations [s] (n_pulse)
         """
         t_fus = self.n_pulse * self.t_flattop  # [s] fusion time in phase
         # [s] total downtime per phase
@@ -212,15 +220,15 @@ class MaintenancePhase(Phase):
 
     Parameters
     ----------
-    name: str
+    name:
         The name of the operational phase
-    duration: float
+    duration:
         The length of the planned maintenance outage [s]
-    t_start: float
+    t_start:
         The time at which the phase starts [s] (default = 0)
     """
 
-    def __init__(self, name, duration, t_start=0):
+    def __init__(self, name: str, duration: float, t_start: float = 0.0):
         super().__init__()
         self.name = name
         t = np.array([0, duration])
@@ -237,89 +245,91 @@ class Timeline:
 
     Parameters
     ----------
-    phase_names: list(str, str, ..)
+    phase_names:
         The names of all the phases, from: ['Phase P X.x', 'Phase M X.x']
-    phase_durations: list(float, float, ..)
+    phase_durations:
         The durations of all the phases [y]
-    load_factors: list(float, float, ..)
+    load_factors:
         The load factors of the operational phases only
-    n_pulses: list(int, int, ..)
+    n_pulses:
         The number of pulses of the operational phases only
-    t_rampups: list(float, float, ..)
+    t_rampups:
         The ramp-up duration of each pulse during each operation phase [s]
-    t_flattops: list(float, float, ..)
+    t_flattops:
         The flat-top duration of each pulse during each operation phase [s]
-    t_rampdowns: list(float, float, ..)
+    t_rampdowns
         The ramp-down duration of each pulse during each operation phase [s]
-    t_min_downs: list(float, float, ..)
+    t_min_downs:
         The minimum downtime between pulses during each operation phase [s]
-    n_DTs: list(int, int, ..)
+    n_DTs:
         The D-T reaction rate at full power during each operation phase [1/s]
-    n_DDs: list(int, int, ..)
+    n_DDs:
         The D-D reaction rate at full power during each operation phase [1/s]
-    plasma_currents: list(float, float, ..)
+    plasma_currents:
         The plasma current at full power during each operation phase [A]
-    load_factor: 0 < float < 1
-        The global timeline load factor
-    blk_dmg: float
+    load_factor:
+        The global timeline load factor 0 < float < 1
+    blk_dmg:
         The rate of neutron damage to the blankets [dpa/yr]
-    blk_1_dpa: float
+    blk_1_dpa:
         The 1st blanket life limit [dpa]
-    blk_2_dpa: float
+    blk_2_dpa:
         The second blanket life limit [dpa]
-    div_dmg: float
+    div_dmg:
         The rate of neutron damage to the divertors [dpa/yr]
-    div_dpa: float
+    div_dpa:
         The divertor life limit [dpa]
-    tf_ins_nflux: float
+    tf_ins_nflux:
         The neutron flux at the TF coil insulation [1/m^2/s]
-    tf_fluence: float
+    tf_fluence:
         The peak neutron fluence the TF coil insulation can handle [1/m^2]
-    vv_dmg: float
+    vv_dmg:
         The rate of neutron damage to the vacuum vessel [dpa/yr]
-    vv_dpa: float
+    vv_dpa:
         The vacuum vessel life limit [dpa]
+    availability_strategy:
+        Operational availability strategy
 
     Attributes
     ----------
-    t: np.array(N)
+    t:
         Reactor calendar time [yr]
-    ft: np.array(N)
+    ft:
         Reactor fusion time [yr]
-    I: np.array(N)
+    I:
         Plasma current signal vector [A]
-    DT_rate: np.array(N)
+    DT_rate:
         D-T fusion rate signal [1/s]
-    DD_rate: np.array(N)
+    DD_rate
         D-D fusion rate signal [1/s]
-    bci: int
+    bci:
         The blanket change index
     """
 
     def __init__(
         self,
-        phase_names,
-        phase_durations,
-        load_factors,
-        n_pulses,
-        t_rampups,
-        t_flattops,
-        t_rampdowns,
-        t_min_downs,
-        n_DTs,
-        n_DDs,
-        plasma_currents,
-        load_factor,
-        blk_dmg,
-        blk_1_dpa,
-        blk_2_dpa,
-        div_dmg,
-        div_dpa,
-        tf_ins_nflux,
-        tf_fluence,
-        vv_dmg,
-        vv_dpa,
-        availability_strategy,
+        phase_names: List[str],
+        phase_durations: List[float],
+        load_factors: List[float],
+        n_pulses: List[int],
+        t_rampups: List[float],
+        t_flattops: List[float],
+        t_rampdowns: List[float],
+        t_min_downs: List[float],
+        n_DTs: List[int],
+        n_DDs: List[int],
+        plasma_currents: List[float],
+        load_factor: float,
+        blk_dmg: float,
+        blk_1_dpa: float,
+        blk_2_dpa: float,
+        div_dmg: float,
+        div_dpa: float,
+        tf_ins_nflux: float,
+        tf_fluence: float,
+        vv_dmg: float,
+        vv_dpa: float,
+        availability_strategy: OperationalAvailabilityStrategy,
     ):
         # Input class attributes
         self.A_global = load_factor
@@ -369,13 +379,13 @@ class Timeline:
         self.build_arrays(phases)
         self.component_damage()
 
-    def build_arrays(self, phases):
+    def build_arrays(self, phases: List[Phase]):
         """
         Build the time arrays based on phases.
 
         Parameters
         ----------
-        phases: list(Phase, Phase, ..)
+        phases:
             The list of phases objects to be concatenated
         """
 
@@ -400,7 +410,7 @@ class Timeline:
         self.t *= S_TO_YR
         self.plant_life = self.t[-1]  # total plant lifetime [calendar]
 
-    def to_dict(self):
+    def to_dict(self) -> Dict[str, Union[np.ndarray, int]]:
         """
         Convert the timeline to a dictionary object for use in FuelCycle.
         """
