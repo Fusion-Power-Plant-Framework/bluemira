@@ -25,7 +25,10 @@ Full fuel cycle model object
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.fuel_cycle.timeline import Timeline
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -52,11 +55,11 @@ class EUDEMOFuelCycleModel:
 
     Parameters
     ----------
-    params: Union[EDFCMParams, Dict[str, float]]
+    params:
         The parameters for the model. See
         :class:`bluemira.fuel_cycle.cycle.EDFCMParams` for list of
         available parameters.
-    build_config: Dict[str, Any]
+    build_config:
         Configuration options for the model. Options are:
 
             * verbose: bool (False)
@@ -125,13 +128,13 @@ class EUDEMOFuelCycleModel:
         self.t_d = None
         self.t_infl = None
 
-    def run(self, timeline):
+    def run(self, timeline: Timeline):
         """
         Run the fuel cycle model.
 
         Parameters
         ----------
-        timeline: Timeline
+        timeline:
             Timeline with which to run the model
         """
         if self.n is None:
@@ -163,7 +166,7 @@ class EUDEMOFuelCycleModel:
         self.arg_t_d, self.t_d = self.calc_t_d()
         self.arg_t_infl, self.t_infl = self.calc_t_infl()
 
-    def initialise_arrays(self, timeline, n):
+    def initialise_arrays(self, timeline: Timeline, n: int):
         """
         Initialise timeline arrays for TFV model.
 
@@ -190,7 +193,7 @@ class EUDEMOFuelCycleModel:
         self.m_T_start = 5.0
         self.m_T = [self.m_T_start]
 
-    def tbreed(self, TBR, m_T_0):
+    def tbreed(self, TBR: float, m_T_0: float):
         """
         Ideal system without T sequestration. Used for plotting and sanity.
         """
@@ -204,23 +207,29 @@ class EUDEMOFuelCycleModel:
             m_T[i] = (m_T[i - 1]) * np.exp(-T_LAMBDA * dt) - t_burnt + t_bred + t_DD
         return m_T
 
-    def plasma(self, eta_iv, max_inventory, flows=None):
+    def plasma(
+        self,
+        eta_iv: float,
+        max_inventory: float,
+        flows: Optional[List[np.ndarray]] = None,
+    ) -> np.ndarray:
         """
         In-vessel environment
 
         Parameters
         ----------
-        eta_iv: 0 <= float <= 1
-            In-vessel accumulation efficiency
+        eta_iv:
+            In-vessel accumulation efficiency 0 <= float <= 1
 
-        max_inventory: float
-            Tnventory limit of in-vessel environment [kg]
+        max_inventory:
+            T inventory limit of in-vessel environment [kg]
             (e.g. 0.7 kg in ITER in-vessel)
+        flows:
+            Additional flows to add into plasma
 
         Returns
         -------
-        m_out: np.array(N)
-            Flow-rate out of the system [kg/s]
+        Flow-rate out of the system [kg/s]
         """
         plasma = FuelCycleComponent(
             "Plasma",
@@ -237,21 +246,20 @@ class EUDEMOFuelCycleModel:
         self.I_plasma = plasma.inventory
         return plasma.m_out
 
-    def blanket(self, eta_b, max_inventory):
+    def blanket(self, eta_b: float, max_inventory: float) -> np.ndarray:
         """
         The tritium breeding system. Dumps stored inventory at blanket change.
 
         Parameters
         ----------
-        eta_b: float
+        eta_b:
             The retention efficiency parameter for the blanket
-        max_inventory: float
+        max_inventory:
             The maximum inventory in the blanket
 
         Returns
         -------
-        m_out: array_like
-            Flow-rate out of the system [kg/s]
+        Flow-rate out of the system [kg/s]
         """
         m_T_bred = self.params.TBR * self.brate
         blanket = FuelCycleComponent(
@@ -263,21 +271,20 @@ class EUDEMOFuelCycleModel:
         self.I_blanket = blanket.inventory
         return blanket.m_out
 
-    def tfv(self, eta_tfv, flows):
+    def tfv(self, eta_tfv: float, flows: List[np.ndarray]) -> np.ndarray:
         """
         The TFV system where the tritium flows from the BB and plasma are combined.
 
         Parameters
         ----------
-        eta_tfv: float
+        eta_tfv:
             Detritiation factor of the system
-        flows: list(np.array(N), ..)
+        flows:
             The flows to be added to the TFV block
 
         Returns
         -------
-        m_out: np.array(N)
-            Flow-rate out of the system [kg/s]
+        Flow-rate out of the system [kg/s]
         """
         # Runs in compressed time
         tfv = FuelCycleComponent(
@@ -304,7 +311,7 @@ class EUDEMOFuelCycleModel:
         m_exh_stor, m_ex_stack = m_in_exhaust_det.split(2, [self.params.f_detrit_split])
         return m_in_isotope_re + m_exh_stor, m_ex_stack
 
-    def stack(self, flows):
+    def stack(self, flows: List[np.ndarray]):
         """
         Exhaust to environment
         """
@@ -318,7 +325,7 @@ class EUDEMOFuelCycleModel:
         # Total release to the environment
         self.M_T_stack = stack.sum_in
 
-    def injector(self, flows):
+    def injector(self, flows: List[np.ndarray]) -> np.ndarray:
         """
         Pellet injection system assumed
         """
@@ -547,15 +554,14 @@ class EUDEMOFuelCycleModel:
             inventory[i + 1] = inventory[i]
         return inventory
 
-    def calc_t_d(self):
+    def calc_t_d(self) -> float:
         """
         Calculate the doubling time of a fuel cycle timeline, assuming that a future
         tokamak requires the same start-up inventory as the present one.
 
         Returns
         -------
-        t_d: float
-            Doubling time of the tritium fuel cycle [y]
+        Doubling time of the tritium fuel cycle [y]
 
         \t:math:`t_{d} = t[\\text{max}(\\text{argmin}\\lvert m_{T_{store}}-I_{TFV_{min}}-m_{T_{start}}\\rvert))]`
         """  # noqa :W505
@@ -579,7 +585,7 @@ class EUDEMOFuelCycleModel:
         except IndexError:
             return arg_t_d - 1, self.t[-1]
 
-    def calc_t_infl(self):
+    def calc_t_infl(self) -> Tuple[int, float]:
         """
         Calculate the inflection time of the reactor tritium inventory
         """
@@ -604,14 +610,13 @@ class EUDEMOFuelCycleModel:
         (c,) = ax.plot(self.t[arg], self.m_T[arg], marker="o", markersize=10)
         ax.plot(vlinex, vliney, color=c.get_color(), linestyle="--")
 
-    def calc_m_release(self):
+    def calc_m_release(self) -> float:
         """
         Calculate the tritium release rate from the entire system to the environment.
 
         Returns
         -------
-        release_rate: float
-            Tritium release rate [g/yr]
+        Tritium release rate [g/yr]
         """
         max_load_factor = find_max_load_factor(self.DEMO_t, self.DEMO_rt)
         mb = 1000 * max(self.brate)
