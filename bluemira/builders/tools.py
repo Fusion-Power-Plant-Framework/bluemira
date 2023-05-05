@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
+    from bluemira.geometry.wire import BluemiraWire
 
 import numpy as np
 from anytree import PreOrderIter
