@@ -24,8 +24,10 @@ Limiter object class
 """
 
 from itertools import cycle
+from typing import Optional, Union
 
 import numpy as np
+from matplotlib.pyplot import Axes
 
 from bluemira.equilibria.plotting import LimiterPlotter
 
@@ -38,15 +40,15 @@ class Limiter:
 
     Parameters
     ----------
-    x: Iterable
+    x:
         The x coordinates of the limiter points
-    z: Iterable
+    z:
         The z coordinates of the limiter points
     """
 
     __slots__ = ["x", "z", "xz", "_i"]
 
-    def __init__(self, x, z):
+    def __init__(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
         self.x = x
         self.z = z
         self.xz = cycle(np.array([x, z]).T)
@@ -61,7 +63,7 @@ class Limiter:
             yield next(self.xz)
             i += 1
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         The length of the limiter.
         """
@@ -76,7 +78,7 @@ class Limiter:
         self._i += 1
         return next(self.xz[self._i - 1])
 
-    def plot(self, ax=None):
+    def plot(self, ax: Optional[Axes] = None):
         """
         Plots the Limiter object
         """
