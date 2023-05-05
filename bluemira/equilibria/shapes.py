@@ -23,6 +23,8 @@
 Useful parameterisations for plasma flux surface shapes.
 """
 
+from typing import List, Tuple
+
 import numpy as np
 
 from bluemira.geometry.coordinates import Coordinates, interpolate_points
@@ -45,7 +47,7 @@ __all__ = [
 ]
 
 
-def _generate_theta(n):
+def _generate_theta(n: int) -> np.ndarray:
     """
     Generate a poloidal angle vector that encompasses all extrema
     """
@@ -80,29 +82,30 @@ def _generate_theta(n):
     return np.concatenate(thetas)
 
 
-def flux_surface_zakharov(r_0, z_0, a, kappa, delta, n=20):
+def flux_surface_zakharov(
+    r_0: float, z_0: float, a: float, kappa: float, delta: float, n: int = 20
+) -> Coordinates:
     """
     As featured in Zakharov's EMEQ
 
     Parameters
     ----------
-    r_0: float
+    r_0:
         Plasma magnetic axis radius [m]
-    z_0: float
+    z_0:
         Plasma magnetic axis height [m]
-    a: float
+    a:
         Plasma geometric minor radius [m]
-    kappa: float
+    kappa:
         Plasma elongation
-    delta: float
+    delta:
         Plasma triangularity
-    n: int
+    n:
         Number of points
 
     Returns
     -------
-    flux_surface: Coordinates
-        Plasma flux surface shape
+    Plasma flux surface shape
 
     Notes
     -----
@@ -159,51 +162,57 @@ class ZakharovLCFS(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label="LCFS", n_points=1000):
+    def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
         Make a CAD representation of the Zakharov LCFS.
 
         Parameters
         ----------
-        label: str, default = "LCFS"
+        label:
             Label to give the wire
-        n_points: int
+        n_points:
             Number of points to use when creating the Bspline representation
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         coordinates = flux_surface_zakharov(*self.variables.values, n=n_points)
         return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
-def flux_surface_cunningham(r_0, z_0, a, kappa, delta, delta2=0.0, n=20):
+def flux_surface_cunningham(
+    r_0: float,
+    z_0: float,
+    a: float,
+    kappa: float,
+    delta: float,
+    delta2: float = 0.0,
+    n: int = 20,
+) -> Coordinates:
     """
     As featured in Geof Cunningham's FIESTA (shape_fun)
 
     Parameters
     ----------
-    r_0: float
+    r_0:
         Plasma geometric major radius [m]
-    z_0: float
+    z_0:
         Plasma geometric vertical height [m]
-    a: float
+    a:
         Plasma geometric minor radius [m]
-    kappa: float
+    kappa:
         Plasma elongation
-    delta: float
+    delta:
         Plasma triangularity
-    delta2: float
+    delta2:
         Plasma "delta2" curliness?
-    n: int
+    n:
         Number of points
 
     Returns
     -------
-    flux_surface: Coordinates
-        Plasma flux surface shape
+    Plasma flux surface shape
 
     Notes
     -----
@@ -262,51 +271,57 @@ class CunninghamLCFS(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label="LCFS", n_points=1000):
+    def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
         Make a CAD representation of the Cunningham LCFS.
 
         Parameters
         ----------
-        label: str, default = "LCFS"
+        label:
             Label to give the wire
-        n_points: int
+        n_points:
             Number of points to use when creating the Bspline representation
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         coordinates = flux_surface_cunningham(*self.variables.values, n=n_points)
         return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
-def flux_surface_manickam(r_0, z_0, a, kappa=1, delta=0, indent=0, n=20):
+def flux_surface_manickam(
+    r_0: float,
+    z_0: float,
+    a: float,
+    kappa: float = 1.0,
+    delta: float = 0.0,
+    indent: float = 0.0,
+    n: int = 20,
+) -> Coordinates:
     """
     J. Manickam, Nucl. Fusion 24 595 (1984)
 
     Parameters
     ----------
-    r_0: float
+    r_0:
         Plasma geometric major radius [m]
-    z_0: float
+    z_0:
         Plasma geometric vertical height [m]
-    a: float
+    a:
         Plasma geometric minor radius [m]
-    kappa: float
+    kappa:
         Plasma elongation
-    delta: float
+    delta:
         Plasma triangularity
-    indent: float
+    indent:
         Plasma indentation (beaniness)
-    n: int
+    n:
         Number of points
 
     Returns
     -------
-    flux_surface: Coordinates
-        Plasma flux surface shape
+    Plasma flux surface shape
 
     Notes
     -----
@@ -365,37 +380,36 @@ class ManickamLCFS(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label="LCFS", n_points=1000):
+    def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
         Make a CAD representation of the Manickam LCFS.
 
         Parameters
         ----------
-        label: str, default = "LCFS"
+        label:
             Label to give the wire
-        n_points: int
+        n_points:
             Number of points to use when creating the Bspline representation
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         coordinates = flux_surface_manickam(*self.variables.values, n=n_points)
         return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
 def flux_surface_kuiroukidis_quadrants(
-    r_0,
-    z_0,
-    a,
-    kappa_u,
-    kappa_l,
-    delta_u,
-    delta_l,
+    r_0: float,
+    z_0: float,
+    a: float,
+    kappa_u: float,
+    kappa_l: float,
+    delta_u: float,
+    delta_l: float,
     n_power: int = 8,
     n_points: int = 100,
-):
+) -> Tuple[List[np.ndarray], List[np.ndarray]]:
     """
     Kuiroukidis flux surface individual quadrants
 
@@ -502,16 +516,16 @@ def flux_surface_kuiroukidis_quadrants(
 
 
 def flux_surface_kuiroukidis(
-    r_0,
-    z_0,
-    a,
-    kappa_u,
-    kappa_l,
-    delta_u,
-    delta_l,
+    r_0: float,
+    z_0: float,
+    a: float,
+    kappa_u: float,
+    kappa_l: float,
+    delta_u: float,
+    delta_l: float,
     n_power: int = 8,
     n_points: int = 100,
-):
+) -> Coordinates:
     """
     Make an up-down asymmetric flux surface with a lower X-point.
 
@@ -522,29 +536,28 @@ def flux_surface_kuiroukidis(
 
     Parameters
     ----------
-    r_0: float
+    r_0:
         Plasma geometric major radius [m]
-    z_0: float
+    z_0:
         Plasma geometric vertical height [m]
-    a: float
+    a:
         Plasma geometric minor radius [m]
-    kappa_u: float
+    kappa_u:
         Upper plasma elongation
-    kappa_l: float
+    kappa_l:
         Lower plasma elongation
-    delta_u: float
+    delta_u:
         Upper plasma triangularity
-    delta_l: float
+    delta_l:
         Lower plasma triangularity
-    n_power: int
+    n_power:
         Exponent related to the steepness of the triangularity
-    n_points: int
+    n_points:
         Number of points
 
     Returns
     -------
-    flux_surface: Coordinates
-        Plasma flux surface shape
+    Plasma flux surface shape
 
     Notes
     -----
@@ -636,21 +649,20 @@ class KuiroukidisLCFS(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label="LCFS", n_points=1000):
+    def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
         Make a CAD representation of the Kuiroukidis LCFS.
 
         Parameters
         ----------
-        label: str, default = "LCFS"
+        label:
             Label to give the wire
-        n_points: int
+        n_points:
             Number of points to use when creating the Bspline representation
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         x_quadrants, z_quadrants = flux_surface_kuiroukidis_quadrants(
             *self.variables.values, n_points=n_points
@@ -705,19 +717,19 @@ def calc_angles_pos_above(delta, kappa, t_pos):
 
 
 def flux_surface_johner_quadrants(
-    r_0,
-    z_0,
-    a,
-    kappa_u,
-    kappa_l,
-    delta_u,
-    delta_l,
-    psi_u_neg,
-    psi_u_pos,
-    psi_l_neg,
-    psi_l_pos,
-    n=100,
-):
+    r_0: float,
+    z_0: float,
+    a: float,
+    kappa_u: float,
+    kappa_l: float,
+    delta_u: float,
+    delta_l: float,
+    psi_u_neg: float,
+    psi_u_pos: float,
+    psi_l_neg: float,
+    psi_l_pos: float,
+    n: int = 100,
+) -> Tuple[List[np.ndarray], List[np.ndarray]]:
     """
     Initial plasma shape parametrerisation from HELIOS author
     J. Johner (CEA). Sets initial separatrix shape for the plasma core
@@ -728,35 +740,37 @@ def flux_surface_johner_quadrants(
 
     Parameters
     ----------
-    r_0: float
+    r_0:
         Major radius [m]
-    z_0: float
+    z_0:
         Vertical position of major radius [m]
-    a: float
+    a:
         Minor radius [m]
-    kappa_u: float
+    kappa_u:
         Upper elongation at the plasma edge (psi_n=1)
-    kappa_l: float
+    kappa_l:
         Lower elongation at the plasma edge (psi_n=1)
-    delta_u: float
+    delta_u:
         Upper triangularity at the plasma edge (psi_n=1)
-    delta_l: float
+    delta_l:
         Lower triangularity at the plasma edge (psi_n=1)
-    psi_u_neg: float
+    psi_u_neg:
         Upper inner angle [°]
-    psi_u_pos: float
+    psi_u_pos:
         Upper outer angle [°]
-    psi_l_neg: float
+    psi_l_neg:
         Lower inner angle [°]
-    psi_l_pos: float
+    psi_l_pos:
         Lower outer angle [°]
-    n: int (defeault = 100)
+    n: i
         Number of point to generate on the flux surface
 
     Returns
     -------
-    flux_surface: Coordinates
-        Plasma flux surface shape
+    x_quadrants:
+        Plasma flux surface shape x quadrants
+    z_quadrants:
+        Plasma flux surface shape z quadrants
     """
     # May appear tempting to refactor, but equations subtly different
     # Careful of bad angles or invalid plasma shape parameters
@@ -872,19 +886,19 @@ def flux_surface_johner_quadrants(
 
 
 def flux_surface_johner(
-    r_0,
-    z_0,
-    a,
-    kappa_u,
-    kappa_l,
-    delta_u,
-    delta_l,
-    psi_u_neg,
-    psi_u_pos,
-    psi_l_neg,
-    psi_l_pos,
-    n=100,
-):
+    r_0: float,
+    z_0: float,
+    a: float,
+    kappa_u: float,
+    kappa_l: float,
+    delta_u: float,
+    delta_l: float,
+    psi_u_neg: float,
+    psi_u_pos: float,
+    psi_l_neg: float,
+    psi_l_pos: float,
+    n: int = 100,
+) -> Coordinates:
     """
     Initial plasma shape parametrerisation from HELIOS author
     J. Johner (CEA). Sets initial separatrix shape for the plasma core
@@ -895,35 +909,34 @@ def flux_surface_johner(
 
     Parameters
     ----------
-    r_0: float
+    r_0:
         Major radius [m]
-    z_0: float
+    z_0:
         Vertical position of major radius [m]
-    a: float
+    a:
         Minor radius [m]
-    kappa_u: float
+    kappa_u:
         Upper elongation at the plasma edge (psi_n=1)
-    kappa_l: float
+    kappa_l:
         Lower elongation at the plasma edge (psi_n=1)
-    delta_u: float
+    delta_u:
         Upper triangularity at the plasma edge (psi_n=1)
-    delta_l: float
+    delta_l:
         Lower triangularity at the plasma edge (psi_n=1)
-    psi_u_neg: float
+    psi_u_neg:
         Upper inner angle [°]
-    psi_u_pos: float
+    psi_u_pos:
         Upper outer angle [°]
-    psi_l_neg: float
+    psi_l_neg:
         Lower inner angle [°]
-    psi_l_pos: float
+    psi_l_pos:
         Lower outer angle [°]
-    n: int (defeault = 100)
+    n:
         Number of point to generate on the flux surface
 
     Returns
     -------
-    flux_surface: Coordinates
-        Plasma flux surface shape
+    Plasma flux surface shape
     """
     x_quadrants, z_quadrants = flux_surface_johner_quadrants(
         r_0,
@@ -1030,21 +1043,20 @@ class JohnerLCFS(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label="LCFS", n_points=1000):
+    def create_shape(self, label: str = "LCFS", n_points: int = 1000) -> BluemiraWire:
         """
         Make a CAD representation of the Johner LCFS.
 
         Parameters
         ----------
-        label: str, default = "LCFS"
+        label:
             Label to give the wire
-        n_points: int
+        n_points:
             Number of points to use when creating the Bspline representation
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         x_quadrants, z_quadrants = flux_surface_johner_quadrants(
             *self.variables.values, n=n_points
