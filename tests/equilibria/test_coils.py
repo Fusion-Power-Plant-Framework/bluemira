@@ -438,6 +438,13 @@ class TestCoilSet:
 
         cls.coilset = CoilSet(coil, circuit)
 
+    def test_padding_of_quads(self):
+        cs = copy.deepcopy(self.coilset)
+        cs._coils[0].discretisation = 0.5
+
+        # if padding is done on multiple axes this shape will be (10, 8)
+        assert cs._quad_x.shape == (3, 8)
+
     def test_group_vecs(self):
         x, z, dx, dz, currents = self.coilset.to_group_vecs()
 
