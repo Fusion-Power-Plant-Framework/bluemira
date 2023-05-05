@@ -33,7 +33,7 @@ from itertools import permutations
 from json import JSONEncoder, dumps
 from os import listdir
 from types import ModuleType
-from typing import Any, Tuple, Type, Union
+from typing import Any, Dict, Tuple, Type, Union
 
 import nlopt
 import numpy as np
@@ -60,21 +60,28 @@ class NumpyJSONEncoder(JSONEncoder):
         return super().default(obj)
 
 
-def json_writer(data, file=None, return_output=False, *, cls=NumpyJSONEncoder, **kwargs):
+def json_writer(
+    data: Dict[str, Any],
+    file: Optional[str] = None,
+    return_output: bool = False,
+    *,
+    cls: JSONEncoder = NumpyJSONEncoder,
+    **kwargs,
+):
     """
     Write json in the bluemria style.
 
     Parameters
     ----------
-    data: dict
+    data:
         dictionary to write to json
-    filename: str
+    filename:
         filename to write to
-    return_output:bool
+    return_output:
         return the json as a string
-    cls: JsonEncoder
+    cls:
         json encoder child class
-    kwargs: dict
+    kwargs:
         all further kwargs passed to the json writer
 
     """
@@ -99,7 +106,7 @@ def json_writer(data, file=None, return_output=False, *, cls=NumpyJSONEncoder, *
 # =====================================================
 # Einsum utilities
 # =====================================================
-def asciistr(length):
+def asciistr(length: int) -> str:
     """
     Get a string of characters of desired length.
 
@@ -107,7 +114,7 @@ def asciistr(length):
 
     Parameters
     ----------
-    length: int
+    length:
         number of characters to return
 
     Returns
@@ -121,7 +128,7 @@ def asciistr(length):
     return string.ascii_letters[:length]
 
 
-def levi_civita_tensor(dim=3):
+def levi_civita_tensor(dim: int = 3) -> np.ndarray:
     """
     N dimensional Levi-Civita Tensor.
 
@@ -133,7 +140,7 @@ def levi_civita_tensor(dim=3):
 
     Parameters
     ----------
-    dim: int
+    dim:
         The number of dimensions for the LCT
 
     Returns
@@ -180,7 +187,7 @@ class EinsumWrapper:
         self.cross_strs = [cross_2x1, cross_2x2, cross_2x3]
         self.cross_lcts = [E_I, E_IJ, E_IJK]
 
-    def norm(self, ix, axis=0):
+    def norm(self, ix: np.ndarray, axis: int = 0) -> np.ndarray:
         """
         Emulates some of the functionality of np.linalg.norm for 2D arrays.
 
@@ -192,22 +199,19 @@ class EinsumWrapper:
 
         Parameters
         ----------
-        ix: np.array
+        ix:
             Array to perform norm on
-        axis: int
+        axis:
             axis for the norm to occur on
-
-        Returns
-        -------
-        np.array
-
         """
         try:
             return np.sqrt(np.einsum(self.norm_strs[axis], ix, ix))
         except IndexError:
             raise ValueError("matrices dimensions >2d Unsupported")
 
-    def dot(self, ix, iy, out=None):
+    def dot(
+        self, ix: np.ndarray, iy: np.ndarray, out: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         A dot product emulation using np.einsum.
 
@@ -223,17 +227,12 @@ class EinsumWrapper:
 
         Parameters
         ----------
-        ix: np.array
+        ix:
             First array
-        iy: np.array
+        iy:
             Second array
-        out: np.array
+        out:
             output array for inplace dot product
-
-        Returns
-        -------
-        np.array
-
         """
         # Ordered hopefully by most used
         if ix.ndim == 2 and iy.ndim == 2:
@@ -256,7 +255,9 @@ class EinsumWrapper:
 
         return np.einsum(out_str, ix, iy, out=out)
 
-    def cross(self, ix, iy, out=None):
+    def cross(
+        self, ix: np.ndarray, iy: np.ndarray, out: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """
         A row-wise cross product of a 2D matrices of vectors.
 
@@ -269,16 +270,12 @@ class EinsumWrapper:
 
         Parameters
         ----------
-        ix: np.array
+        ix:
             1st array to cross
-        iy: np.array
+        iy:
             2nd array to cross
-        out: np.array
+        out:
             output array for inplace cross product
-
-        Returns
-        -------
-        np.array (ix.shape)
 
         Raises
         ------
@@ -305,7 +302,7 @@ cross = wrap.cross
 # =====================================================
 
 
-def is_num(thing):
+def is_num(thing: Any) -> bool:
     """
     Determine whether or not the input is a number.
 
@@ -316,8 +313,7 @@ def is_num(thing):
 
     Returns
     -------
-    num: bool
-        Whether or not the input is a number
+    Whether or not the input is a number
     """
     if thing is True or thing is False:
         return False
@@ -330,7 +326,7 @@ def is_num(thing):
         return False
 
 
-def is_num_array(thing):
+def is_num_array(thing: Any) -> bool:
     """
     :func:is_num but also includes arrays
     """
@@ -340,22 +336,21 @@ def is_num_array(thing):
         return is_num(thing)
 
 
-def abs_rel_difference(v2, v1_ref):
+def abs_rel_difference(v2: float, v1_ref: float) -> float:
     """
     Calculate the absolute relative difference between a new value and an old
     reference value.
 
     Parameters
     ----------
-    v2: float
+    v2:
         The new value to compare to the old
-    v1_ref: float
+    v1_ref:
         The old reference value
 
     Returns
     -------
-    delta: float
-        The absolute relative difference between v2 and v1ref
+    The absolute relative difference between v2 and v1ref
     """
     return abs((v2 - v1_ref) / v1_ref)
 
@@ -368,14 +363,21 @@ def set_random_seed(seed_number: int):
 
     Parameters
     ----------
-    seed_number: int
+    seed_number:
         The random seed number, preferably a very large integer
     """
     np.random.seed(seed_number)
     nlopt.srand(seed_number)
 
 
-def compare_dicts(d1, d2, almost_equal=False, verbose=True, rtol=1e-5, atol=1e-8):
+def compare_dicts(
+    d1: Dict[str, Any],
+    d2: Dict[str, Any],
+    almost_equal: bool = False,
+    verbose: bool = True,
+    rtol: float = 1e-5,
+    atol: float = 1e-8,
+) -> bool:
     """
     Compares two dictionaries. Will print information about the differences
     between the two to the console. Dictionaries are compared by length, keys,
@@ -383,23 +385,22 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True, rtol=1e-5, atol=1e-8
 
     Parameters
     ----------
-    d1: dict
+    d1:
         The reference dictionary
-    d2: dict
+    d2:
         The dictionary to be compared with the reference
-    almost_equal: bool (default = False)
+    almost_equal:
         Whether or not to use np.isclose and np.allclose for numbers and arrays
-    verbose: bool (default = True)
+    verbose:
         Whether or not to print to the console
-    rtol: float
+    rtol:
         The relative tolerance parameter, used if ``almost_eqaul`` is True
-    atol: float
+    atol:
         The abosulte tolerance parameter, used if ``almost_eqaul`` is True
 
     Returns
     -------
-    the_same: bool
-        Whether or not the dictionaries are the same
+    Whether or not the dictionaries are the same
     """
     nkey_diff = len(d1) - len(d2)
     k1 = set(d1.keys())
@@ -479,7 +480,11 @@ def compare_dicts(d1, d2, almost_equal=False, verbose=True, rtol=1e-5, atol=1e-8
     return the_same
 
 
-def clip(val, val_min, val_max):
+def clip(
+    val: Union[float, np.ndarray],
+    val_min: Union[float, np.ndarray],
+    val_max: Union[float, np.ndarray],
+) -> Union[float, np.ndarray]:
     """
     Clips (limits) val between val_min and val_max.
     This function wraps the numpy core umath minimum and maximum functions
@@ -490,17 +495,16 @@ def clip(val, val_min, val_max):
 
     Parameters
     ----------
-    val: scalar or array
+    val:
         The value to be clipped.
-    val_min: scalar or array
+    val_min:
         The minimum value.
-    val_max: scalar or array
+    val_max:
         The maximum value.
 
     Returns
     -------
-    clipped_val: scalar or array
-        The clipped values.
+    The clipped values.
     """
     if isinstance(val, np.ndarray):
         np.core.umath.clip(val, val_min, val_max, out=val)
@@ -541,15 +545,10 @@ def consec_repeat_elem(arr: np.ndarray, num_rep: int) -> np.ndarray:
 
     Parameters
     ----------
-    arr: np.ndarray
+    arr:
         array to find repeats in
-    num_rep: int
+    num_rep:
         number of repetitions to find
-
-    Returns
-    -------
-    np.ndarray
-
     """
     if num_rep <= 1:
         raise NotImplementedError("Not implemented for less than 2 repeat elements")
@@ -575,26 +574,28 @@ def yintercept(arr: np.ndarray) -> Tuple[float]:
 # ======================================================================================
 
 
-def cartesian_to_polar(x, z, x_ref=0, z_ref=0):
+def cartesian_to_polar(
+    x: np.ndarray, z: np.ndarray, x_ref: float = 0.0, z_ref: float = 0.0
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Convert from 2-D Cartesian coordinates to polar coordinates about a reference point.
 
     Parameters
     ----------
-    x: np.ndarray
+    x:
         Radial coordinates
-    z: np.ndarray
+    z:
         Vertical coordinates
-    x_ref: float
+    x_ref:
         Reference radial coordinate
-    z_ref: float
+    z_ref:
         Reference vertical coordinate
 
     Returns
     -------
-    r: np.ndarray
+    r:
         Polar radial coordinates
-    phi: np.ndarray
+    phi:
         Polar angle coordinates
     """
     xi, zi = x - x_ref, z - z_ref
@@ -603,26 +604,28 @@ def cartesian_to_polar(x, z, x_ref=0, z_ref=0):
     return r, phi
 
 
-def polar_to_cartesian(r, phi, x_ref=0, z_ref=0):
+def polar_to_cartesian(
+    r: np.ndarray, phi: np.ndarray, x_ref: float = 0.0, z_ref: float = 0.0
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Convert from 2-D polar to Cartesian coordinates about a reference point.
 
     Parameters
     ----------
-    r: np.ndarray
+    r:
         Polar radial coordinates
-    phi: np.ndarray
+    phi:
         Polar angle coordinates
-    x_ref: float
+    x_ref:
         Reference radial coordinate
-    z_ref: float
+    z_ref:
         Reference vertical coordinate
 
     Returns
     -------
-    x: np.ndarray
+    x:
         Radial coordinates
-    z: np.ndarray
+    z:
         Vertical coordinate
     """
     x = x_ref + r * np.cos(phi)
@@ -641,13 +644,12 @@ def get_module(name: str) -> ModuleType:
 
     Parameters
     ----------
-    name: str
+    name:
         Filename or python path (a.b.c) of module to import
 
     Returns
     -------
-    output: ModuleType
-        Loaded module
+    Loaded module
     """
     try:
         module = imp(name)
@@ -663,14 +665,12 @@ def _loadfromspec(name: str) -> ModuleType:
 
     Parameters
     ----------
-    name: string
+    name:
         Filename of module to import
 
     Returns
     -------
-    output: module
-        Loaded module
-
+    Loaded module
     """
     full_dirname = name.rsplit("/", 1)
     dirname = "." if len(full_dirname[0]) == 0 else full_dirname[0]
@@ -727,19 +727,18 @@ def get_class_from_module(name: str, default_module: str = "") -> Type:
 
     Parameters
     ----------
-    name: str
+    name:
         Filename or python path (a.b.c) of module to import, with specific class to load
         appended following :: e.g. my_package.my_module::my_class. If the default_module
         is provided then only the class name (e.g. my_class) needs to be provided.
-    default_module: str
+    default_module:
         The default module to search for the class, by default "". If provided then if
         name does not contain a module path then this the default module will be used to
         search for the class. Can be overridden if the name provides a module path.
 
     Returns
     -------
-    output: Type
-        Loaded class
+    Loaded class
     """
     module = default_module
     class_name = name
@@ -761,13 +760,12 @@ def list_array(list_: Any) -> np.ndarray:
 
     Parameters
     ----------
-    list_ : Any
+    list_:
         The value to convert into a numpy array.
 
     Returns
     -------
-    result : np.ndarray
-        The value as a numpy array.
+    he value as a numpy array.
 
     Raises
     ------
@@ -794,13 +792,12 @@ def array_or_num(array: Any) -> Union[np.ndarray, float]:
 
     Parameters
     ----------
-    array : Any
+    array:
         The value to convert into a numpy array or number.
 
     Returns
     -------
-    result : Union[np.ndarray, float]
-        The value as a numpy array or number.
+    The value as a numpy array or number.
 
     Raises
     ------
