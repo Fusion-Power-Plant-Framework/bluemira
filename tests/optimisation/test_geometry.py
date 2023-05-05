@@ -295,16 +295,3 @@ class TestGeometry:
         assert discr_mock.call_count == 2
         assert discr_mock.call_args_list[0] == mock.call(20, byedges=True)
         assert discr_mock.call_args_list[1] == mock.call(30, byedges=True)
-
-
-def make_picture_frame() -> PictureFrame:
-    return PictureFrame(
-        {
-            "x1": {"value": 4.5, "upper_bound": 6, "lower_bound": 3},
-            "x2": {"value": 16, "upper_bound": 17.5, "lower_bound": 14.0},
-            "z1": {"value": 8, "upper_bound": 15, "lower_bound": 2.5},
-            "z2": {"value": -6, "upper_bound": -2.5, "lower_bound": -15},
-            "ri": {"value": 0, "fixed": True},
-            "ro": {"value": 0, "fixed": True},
-        }
-    )
