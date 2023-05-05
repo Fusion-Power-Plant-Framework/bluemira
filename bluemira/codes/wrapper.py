@@ -25,7 +25,7 @@ Bluemira External Codes Wrapper
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from bluemira.codes.interface import CodesSolver
 from bluemira.codes.utilities import get_code_interface
