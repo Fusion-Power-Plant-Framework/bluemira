@@ -342,14 +342,13 @@ class SerialisedMaterial:
         return json_writer(mat_dict, return_output=True, **kwargs)
 
     @classmethod
-    def from_json(cls, data):
+    def from_json(cls, data: str) -> str:
         """
         Generate an instance of the material from JSON.
 
         Returns
         -------
-        data : str
-            The JSON representation of the material.
+        The JSON representation of the material.
         """
         mat_dict = json.loads(data)
         mat_name = list(mat_dict.keys())[0]

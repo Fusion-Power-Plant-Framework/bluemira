@@ -207,17 +207,16 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
 
         Parameters
         ----------
-        name : str
-            The name of the mixture.
-        materials_dict: Dict[str, Any]
-            The dictionary defining this and any additional mixtures.
-        material_cache: MaterialCache
-            The cache to load the constituent materials from.
+        name:
+            The name of the mixture
+        materials_dict:
+            The dictionary defining this and any additional mixtures
+        material_cache:
+            The cache to load the constituent materials from
 
         Returns
         -------
-        mixture : SerialisedMaterial
-            The mixture.
+        The mixture
         """
         mat_dict = copy.deepcopy(material_dict[name])
         if "materials" not in material_dict[name].keys():
