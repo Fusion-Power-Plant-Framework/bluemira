@@ -22,9 +22,13 @@
 """
 Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
+from __future__ import annotations
 
 import operator
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.limiter import Limiter
 
 import numba as nb
 import numpy as np
@@ -34,7 +38,6 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.limiter import Limiter
 from bluemira.geometry.coordinates import (
     Coordinates,
     get_area_2d,
