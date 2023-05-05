@@ -22,6 +22,16 @@
 """
 Structural module plotting tools
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional
+
+if TYPE_CHECKING:
+    from bluemira.structural.geometry import Geometry, DeformedGeometry
+    from bluemira.structural.element import Element
+    from bluemira.structural.node import Node
+    from matplotlib.pyplot import Axes
+
 from copy import deepcopy
 
 import numpy as np
@@ -56,7 +66,7 @@ DEFAULT_STRUCT_PLOT_OPTIONS = {
 }
 
 
-def annotate_node(ax, node, text_size, color):
+def annotate_node(ax: Axes, node: Node, text_size: int, color: str):
     """
     Annotate a node.
     """
@@ -71,7 +81,7 @@ def annotate_node(ax, node, text_size, color):
     )
 
 
-def annotate_element(ax, element, text_size, color):
+def annotate_element(ax: Axes, element: Element, text_size: int, color: str):
     """
     Annotate an element.
     """
@@ -84,24 +94,23 @@ def annotate_element(ax, element, text_size, color):
     )
 
 
-def arrow_scale(vector, max_length, max_force):
+def arrow_scale(vector: np.ndarray, max_length: float, max_force: float) -> np.ndarray:
     """
     Scales an arrow such that, regardless of direction, it has a reasonable
     size
 
     Parameters
     ----------
-    vector: np.array(3)
-        3-D vector of the arrow
-    max_length: float
+    vector:
+        3-D vector of the arrow (3)
+    max_length
         The maximum length of the arrow
-    max_force: float
+    max_force:
         The maximum force value in the model (absolute)
 
     Returns
     -------
-    vector: np.array(3)
-        The scaled force arrow
+    The scaled force arrow (3)
     """
     v_norm = np.linalg.norm(vector)
     if v_norm == 0:
@@ -112,19 +121,19 @@ def arrow_scale(vector, max_length, max_force):
     return scale * vector / v_norm
 
 
-def _plot_force(ax, node, vector, color="r"):
+def _plot_force(ax: Axes, node: Node, vector: np.ndarray, color: str = "r"):
     """
     Plots a single force arrow in 3-D to indicate a linear load
 
     Parameters
     ----------
-    ax: matplotlib Axes3D object
+    ax:
         The ax on which to plot
-    node: Node object
+    node:
         The node or location at which the force occurs
-    vector: np.array(3)
+    vector:
         The force direction vector
-    color: str
+    color:
         The color to plot the force as
     """
     ax.quiver(
@@ -132,20 +141,22 @@ def _plot_force(ax, node, vector, color="r"):
     )
 
 
-def _plot_moment(ax, node, vector, color="r", support=False):
+def _plot_moment(
+    ax: Axes, node: Node, vector: np.ndarray, color: str = "r", support: bool = False
+):
     """
     Plots a double "moment" arrow in 3-D to indicate a moment load. Offset the
     moment arrows off from the nodes a little, to enable overlaps with forces.
 
     Parameters
     ----------
-    ax: matplotlib Axes3D object
+    ax:
         The ax on which to plot
-    node: Node object
+    node:
         The node or location at which the force occurs
-    vector: np.array(3)
+    vector:
         The force direction vector
-    color: str
+    color:
         The color to plot the force as
     """
     if support:
@@ -178,7 +189,7 @@ class BasePlotter:
     Base utility plotting class for structural models
     """
 
-    def __init__(self, geometry, ax=None, **kwargs):
+    def __init__(self, geometry: Geometry, ax: Optional[Axes] = None, **kwargs):
         self.geometry = geometry
         if ax is None:
             self.ax = Plot3D()
@@ -195,7 +206,7 @@ class BasePlotter:
         self.color_normer = None
 
     @property
-    def unit_length(self):
+    def unit_length(self) -> float:
         """
         Calculates a characteristic unit length for the model: the minimum
         element size
@@ -209,14 +220,13 @@ class BasePlotter:
         return self._unit_length
 
     @property
-    def force_size(self):
+    def force_size(self) -> float:
         """
         Calculates a characteristic force vector length for plotting purposes
 
         Returns
         -------
-        f_length: float
-            The minimum and maximum forces
+        The minimum and maximum forces
         """
         if self._force_size is None:
             loads = []
@@ -236,7 +246,7 @@ class BasePlotter:
         return self._force_size
 
     @property
-    def size(self):
+    def size(self) -> float:
         """
         Calculates the size of the model bounding box
         """
@@ -248,7 +258,7 @@ class BasePlotter:
         return self._size
 
     @property
-    def text_size(self):
+    def text_size(self) -> int:
         """
         Get a reasonable guess of the font size to use in plotting.
 
@@ -441,7 +451,7 @@ class GeometryPlotter(BasePlotter):
     Utility class for the plotting of structural geometry models
     """
 
-    def __init__(self, geometry, ax=None, **kwargs):
+    def __init__(self, geometry: Geometry, ax: Optional[Axes] = None, **kwargs):
         super().__init__(geometry, ax, **kwargs)
         self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
         self.options["show_stress"] = False
@@ -462,7 +472,7 @@ class DeformedGeometryPlotter(BasePlotter):
     overlaying with GeometryPlotters
     """
 
-    def __init__(self, geometry, ax=None, **kwargs):
+    def __init__(self, geometry: DeformedGeometry, ax: Optional[Axes] = None, **kwargs):
         super().__init__(geometry, ax, **kwargs)
         self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
         self.options["node_options"]["color"] = "b"
@@ -484,7 +494,14 @@ class StressDeformedGeometryPlotter(BasePlotter):
     overlaying with GeometryPlotters
     """
 
-    def __init__(self, geometry, ax=None, stress=None, deflection=False, **kwargs):
+    def __init__(
+        self,
+        geometry: DeformedGeometry,
+        ax: Optional[Axes] = None,
+        stress: Optional[np.ndarray] = None,
+        deflection: bool = False,
+        **kwargs,
+    ):
         super().__init__(geometry, ax, **kwargs)
         self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
         self.options["node_options"]["color"] = "b"
@@ -502,7 +519,7 @@ class StressDeformedGeometryPlotter(BasePlotter):
         self._set_aspect_equal()
 
     @staticmethod
-    def make_color_normer(stress, deflection=False):
+    def make_color_normer(stress: np.ndarray, deflection: bool = False):
         """
         Make a ColorNorm object for the plot based on the stress values.
         """

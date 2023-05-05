@@ -22,6 +22,15 @@
 """
 Finite element class
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Dict, Optional
+
+if TYPE_CHECKING:
+    from bluemira.structural.node import Node
+    from bluemira.structural.crosssection import CrossSection
+    from bluemira.structural.material import StructuralMaterial
+
 import numpy as np
 
 from bluemira.base.constants import GRAVITY
@@ -40,20 +49,29 @@ from bluemira.structural.transformation import lambda_matrix
 
 
 # @nb.jit(nopython=True, cache=True)
-def _k_array(k11, k22, k33, k44, k55, k66, k35, k26, k511, k612):
+def _k_array(
+    k11: float,
+    k22: float,
+    k33: float,
+    k44: float,
+    k55: float,
+    k66: float,
+    k35: float,
+    k26: float,
+    k511: float,
+    k612: float,
+) -> np.ndarray:
     """
     3-D stiffness local member stiffness matrix, generalised for cases with
     and without shear
 
     Parameters
     ----------
-    [k11, .., k612] 10 * floats
-        The individual values of the stiffness matrix
+    Local stiffness matrix non-zero elements
 
     Returns
     -------
-    k: np.array((12, 12))
-        The local member stiffness matrix
+    The local member stiffness matrix
     """
     return np.array(
         [
@@ -74,33 +92,44 @@ def _k_array(k11, k22, k33, k44, k55, k66, k35, k26, k511, k612):
 
 
 # @nb.jit(nopython=True, cache=True)
-def local_k_shear(EA, EIyy, EIzz, ry, rz, L, GJ, A, A_sy, A_sz, nu=NU):  # noqa (N803)
+def local_k_shear(
+    EA: float,  # noqa: N803
+    EIyy: float,  # noqa: N803
+    EIzz: float,  # noqa: N803
+    ry: float,
+    rz: float,
+    L: float,  # noqa: N803
+    GJ: float,  # noqa: N803
+    A: float,  # noqa: N803
+    A_sy: float,  # noqa: N803
+    A_sz: float,  # noqa: N803
+    nu: float = NU,
+) -> np.ndarray:
     """
     3-D stiffness local member stiffness matrix, including shear deformation
 
     Parameters
     ----------
-    EA: float
+    EA:
         Youngs modulus x cross-sectional area
-    EIyy: float
+    EIyy:
         Youngs modulus x second moment of area about the element y-axis
-    EIzz: float
+    EIzz:
         Youngs modulus x second moment of area about the element z-axis
-    L: float
+    L:
         The length of the beam
-    GJ: float
+    GJ:
         The rigidity modulus x torsion constant
-    A_sy: float
+    A_sy:
         The shear area in the y-plane
-    A_sz: float
+    A_sz:
         The shear area in the z-plane
-    nu: float
+    nu:
         Poisson ratio
 
     Returns
     -------
-    k: np.array((12, 12))
-        The local member stiffness matrix
+    The local member stiffness matrix
     """
     phi_y = 24 * (1 + nu) * (A / A_sy) * (rz / L) ** 2  # y shear deformation parameter
     phi_z = 24 * (1 + nu) * (A / A_sz) * (ry / L) ** 2  # z shear deformation parameter
@@ -118,27 +147,28 @@ def local_k_shear(EA, EIyy, EIzz, ry, rz, L, GJ, A, A_sy, A_sz, nu=NU):  # noqa 
 
 
 # @nb.jit(nopython=True, cache=True)
-def local_k(EA, EIyy, EIzz, L, GJ):  # noqa (N803)
+def local_k(
+    EA: float, EIyy: float, EIzz: float, L: float, GJ: float  # noqa (N803)
+) -> np.ndarray:
     """
     3-D stiffness local member stiffness matrix, including shear deformation
 
     Parameters
     ----------
-    EA: float
+    EA:
         Youngs modulus x cross-sectional area
-    EIyy: float
+    EIyy:
         Youngs modulus x second moment of area about the element y-axis
-    EIzz: float
+    EIzz:
         Youngs modulus x second moment of area about the element z-axis
-    L: float
+    L:
         The length of the beam
-    GJ: float
+    GJ:
         The rigidity modulus x torsion constant
 
     Returns
     -------
-    k: np.array((12, 12))
-        The local member stiffness matrix
+    The local member stiffness matrix
     """
     k11 = EA / L
     k22 = 12 * EIzz / L**3
@@ -159,15 +189,15 @@ class Element:
 
     Parameters
     ----------
-    node_1: Node
+    node_1:
         The first node
-    node_2: Node
+    node_2:
         The second node
-    id_number: int
+    id_number:
         The ID number of this element
-    cross_section: CrossSection
+    cross_section:
         The CrossSection property object of the element
-    material: Material
+    material:
         The Material property object of the element
     """
 
@@ -194,7 +224,14 @@ class Element:
         "_s_functs",
     )
 
-    def __init__(self, node_1, node_2, id_number, cross_section, material=None):
+    def __init__(
+        self,
+        node_1: Node,
+        node_2: Node,
+        id_number: int,
+        cross_section: CrossSection,
+        material: Optional[StructuralMaterial] = None,
+    ):
         # Utility properties
         self.node_1 = node_1
         self.node_2 = node_2
@@ -263,7 +300,7 @@ class Element:
         return properties
 
     @property
-    def length(self):
+    def length(self) -> float:
         """
         Element length
         """
@@ -272,7 +309,7 @@ class Element:
         return self._length
 
     @property
-    def weight(self):
+    def weight(self) -> float:
         """
         Element self-weight force per unit length
         """
@@ -282,7 +319,7 @@ class Element:
         return self._weight
 
     @property
-    def mid_point(self):
+    def mid_point(self) -> np.ndarray:
         """
         The mid point of the Element
 
@@ -312,7 +349,7 @@ class Element:
         )
 
     @property
-    def displacements(self):
+    def displacements(self) -> np.ndarray:
         """
         Element global displacement vector at nodes
         """
@@ -322,21 +359,20 @@ class Element:
         return u
 
     @property
-    def max_displacement(self):
+    def max_displacement(self) -> float:
         """
         Maximum element absolute displacement values
 
         Returns
         -------
-        max_disp: float
-            The maximum absolute deflection distance of the two Nodes
+        The maximum absolute deflection distance of the two Nodes
         """
         d_1 = self.node_1.displacements[:3]
         d_2 = self.node_2.displacements[:3]
         return max(np.sqrt(np.sum(d_1**2)), np.sqrt(np.sum(d_2**2)))
 
     @property
-    def k_matrix(self):
+    def k_matrix(self) -> np.ndarray:
         """
         Element stiffness matrix in local coordinates
         """
@@ -354,7 +390,7 @@ class Element:
         return self._k_matrix
 
     @property
-    def k_matrix_glob(self):
+    def k_matrix_glob(self) -> np.ndarray:
         """
         Element stiffness matrix in global coordinates
         """
@@ -365,7 +401,7 @@ class Element:
         return self._k_matrix_glob
 
     @property
-    def lambda_matrix(self):
+    def lambda_matrix(self) -> np.ndarray:
         """
         Transformation (direction cosine) matrix
 
@@ -385,13 +421,13 @@ class Element:
 
         return self._lambda_matrix
 
-    def add_load(self, load):
+    def add_load(self, load: Dict[str, float]):
         """
         Applies a load to the Element object.
 
         Parameters
         ----------
-        load: Load dict
+        load:
             The dictionary of load values (in local coordinates)
         """
         self.loads.append(load)
@@ -414,31 +450,31 @@ class Element:
         self._k_matrix_glob = None
         self._s_functs = None
 
-    def u_vector(self):
+    def u_vector(self) -> np.ndarray:
         """
         Element local displacement vector
         """
         return self.lambda_matrix @ self.displacements
 
-    def p_vector(self):
+    def p_vector(self) -> np.ndarray:
         """
         The local force vector of the element
         """
         return self.k_matrix @ self.u_vector() - self._equivalent_node_forces()
 
-    def p_vector_glob(self):
+    def p_vector_glob(self) -> np.ndarray:
         """
         The global force vector of the element
         """
         return self.lambda_matrix.T @ self.p_vector()
 
-    def equivalent_node_forces(self):
+    def equivalent_node_forces(self) -> np.ndarray:
         """
         Equivalent concentrated forces in global coordinates
         """
         return self.lambda_matrix.T @ self._equivalent_node_forces()
 
-    def _equivalent_node_forces(self):
+    def _equivalent_node_forces(self) -> np.ndarray:
         """
         Element local nodal force vector
 
@@ -469,14 +505,14 @@ class Element:
 
         return self._s_functs
 
-    def interpolate(self, scale):
+    def interpolate(self, scale: float):
         """
         Interpolates the displacement of the beam with Hermite polynomial
         shape functions to obtain inter-node displacement and stress
 
         Parameters
         ----------
-        scale: float
+        scale:
             The scale at which to calculate the interpolated displacements
         """
         length = self.length

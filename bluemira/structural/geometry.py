@@ -22,6 +22,16 @@
 """
 Finite element geometry
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Tuple
+
+if TYPE_CHECKING:
+    from bluemira.structural.material import StructuralMaterial
+    from bluemira.structural.crosssection import CrossSection
+    from bluemira.geometry.coordinates import Coordinates
+    from matplotlib.pyplot import Axes
+
 from copy import deepcopy
 
 import numpy as np
@@ -51,47 +61,44 @@ class Geometry:
         self.elements = []
 
     @property
-    def n_nodes(self):
+    def n_nodes(self) -> int:
         """
         The number of Nodes in the Geometry. Used to index Nodes.
 
         Returns
         -------
-        n_nodes: int
-            The number of Nodes in the Geometry.
+        The number of Nodes in the Geometry.
         """
         return len(self.nodes)
 
     @property
-    def n_elements(self):
+    def n_elements(self) -> int:
         """
         The number of Elements in the Geometry. Used to index Elements.
 
         Returns
         -------
-        n_elements: int
-            The number of Elements in the Geometry.
+        The number of Elements in the Geometry.
         """
         return len(self.elements)
 
-    def add_node(self, x, y, z):
+    def add_node(self, x: float, y: float, z: float) -> int:
         """
         Add a Node to the Geometry object. Will check if an identical Node is
         already present.
 
         Parameters
         ----------
-        x: float
+        x:
             The node global x coordinate
-        y: float
+        y:
             The node global y coordinate
-        z: float
+        z:
             The node global z coordinate
 
         Returns
         -------
-        id_number: int
-            The ID number of the node that was added
+        The ID number of the node that was added
         """
         node = Node(x, y, z, self.n_nodes)
 
@@ -105,23 +112,22 @@ class Geometry:
         self.node_xyz.append([x, y, z])
         return node.id_number
 
-    def find_node(self, x, y, z):
+    def find_node(self, x: float, y: float, z: float) -> int:
         """
         Return the node ID if the node coordinates are in the geometry.
 
         Parameters
         ----------
-        x: float
+        x:
             The x coordinate of the node to find
-        y: float
+        y:
             The y coordinate of the node to find
-        z: float
+        z:
             The z coordinate of the node to find
 
         Returns
         -------
-        node_id: int
-            The node ID
+        The node ID
         """
         a = np.array(self.node_xyz)
         b = np.array([x, y, z])
@@ -141,7 +147,7 @@ class Geometry:
         else:
             return self.nodes[arg].id_number
 
-    def move_node(self, node_id, dx=0, dy=0, dz=0):
+    def move_node(self, node_id: int, dx: float = 0.0, dy: float = 0.0, dz: float = 0.0):
         """
         Move a Node in the Geometry. If the Node is moved to the position
         of another Node, its connections are transferred, and the Node is
@@ -149,13 +155,13 @@ class Geometry:
 
         Parameters
         ----------
-        node_id: int
+        node_id:
             The id_number of the Node to move
-        dx: float
+        dx:
             The x distance to move the Node
-        dy: float
+        dy:
             The y distance to move the Node
-        dz: float
+        dz:
             The z distance to move the Node
         """
         if np.sqrt(dx**2 + dy**2 + dz**2) <= D_TOLERANCE:
@@ -205,13 +211,13 @@ class Geometry:
                     element.node_2 = moved_node
                 element.clear_cache()
 
-    def remove_node(self, node_id):
+    def remove_node(self, node_id: int):
         """
         Remove a Node from the Geometry.
 
         Parameters
         ----------
-        node_id: int
+        node_id:
             The id_number of the Node to remove
         """
         # Drop the node information from the Geometry
@@ -226,25 +232,30 @@ class Geometry:
         for elem_id in sorted(deepcopy(dead_node.connections))[::-1]:
             self.remove_element(elem_id)
 
-    def add_element(self, node_id1, node_id2, cross_section, material=None):
+    def add_element(
+        self,
+        node_id1: int,
+        node_id2: int,
+        cross_section: CrossSection,
+        material: Optional[StructuralMaterial] = None,
+    ) -> int:
         """
         Adds an Element to the Geometry object
 
         Parameters
         ----------
-        node_id1: int
+        node_id1:
             The ID number of the first node
-        node_id2: int
+        node_id2:
             The ID number of the second node
-        cross_section: CrossSection
+        cross_section:
             The CrossSection property object of the element
-        material: Material
+        material:
             The Material property object of the element
 
         Returns
         -------
-        id_number: int
-            The ID number of the element that was added
+        The ID number of the element that was added
         """
         # Check if there is already an Element specified between the Nodes
         new_element_nodes = sorted([node_id1, node_id2])
@@ -280,13 +291,13 @@ class Geometry:
         self.nodes[node_id2].add_connection(element.id_number)
         return element.id_number
 
-    def remove_element(self, elem_id):
+    def remove_element(self, elem_id: int):
         """
         Remove an Element from the Geometry.
 
         Parameters
         ----------
-        elem_id: int
+        elem_id:
             The Element id_number to remove
         """
         # Drop the Element information from the Geometry
@@ -311,17 +322,22 @@ class Geometry:
                     new_connections.add(connection)
             node.connections = new_connections
 
-    def add_coordinates(self, coordinates, cross_section, material=None):
+    def add_coordinates(
+        self,
+        coordinates: Coordinates,
+        cross_section: CrossSection,
+        material: Optional[StructuralMaterial] = None,
+    ):
         """
         Adds a Coordinates object to the Geometry
 
         Parameters
         ----------
-        coordinates: Coordinates
+        coordinates:
             The coordinates to transform into connected Nodes and Elements
-        cross_section: CrossSection
+        cross_section:
             The cross section of all the Elements in the Coordinates
-        material: Material
+        material:
             The material of all the Elements in the Coordinates
         """
         n_start = self.add_node(*coordinates.points[0])  # Add first Node
@@ -335,14 +351,13 @@ class Geometry:
         if coordinates.closed:
             self.add_element(n2, n_start, cross_section, material)
 
-    def k_matrix(self):
+    def k_matrix(self) -> np.ndarray:
         """
         Builds the global stiffness matrix K
 
         Returns
         -------
-        K: np.array((6*n_nodes, 6*n_nodes))
-            The global stiffness matrix of the Geometry
+        The global stiffness matrix of the Geometry ((6*n_nodes, 6*n_nodes))
         """
         # Explore how scipy sparse matrices or numba fares on this
         k = np.zeros((6 * self.n_nodes, 6 * self.n_nodes))
@@ -357,14 +372,13 @@ class Geometry:
             k[j : j + 6, j : j + 6] += k_elem[6:, 6:]
         return k
 
-    def k_matrix_sparse(self):
+    def k_matrix_sparse(self) -> lil_matrix:
         """
         Builds the sparse global stiffness matrix K
 
         Returns
         -------
-        K: scipy lil_matrix((6*n_nodes, 6*n_nodes))
-            The sparse global stiffness matrix of the Geometry
+        The sparse global stiffness matrix of the Geometry ((6*n_nodes, 6*n_nodes))
         """
         k = lil_matrix((6 * self.n_nodes, 6 * self.n_nodes))
         # Loop through elements, adding local stiffness matrices into global
@@ -378,7 +392,7 @@ class Geometry:
             k[j : j + 6, j : j + 6] += k_elem[6:, 6:]
         return k
 
-    def bounds(self):
+    def bounds(self) -> Tuple[float, float, float, float, float, float]:
         """
         Calculates the bounds of the geometry
         """
@@ -387,39 +401,34 @@ class Geometry:
         z = [node.z for node in self.nodes]
         return max(x), min(x), max(y), min(y), max(z), min(z)
 
-    def bounding_box(self):
+    def bounding_box(self) -> BoundingBox:
         """
         Calculates a bounding box for the Geometry object
 
         Returns
         -------
-        x_b: np.array(8)
-            The x coordinates of the bounding box rectangular cuboid
-        y_b: np.array(8)
-            The y coordinates of the bounding box rectangular cuboid
-        z_b: np.array(8)
-            The z coordinates of the bounding box rectangular cuboid
+        BoundingBox rectangular cuboid of the geometry
         """
         x = np.array([node.x for node in self.nodes])
         y = np.array([node.y for node in self.nodes])
         z = np.array([node.z for node in self.nodes])
         return BoundingBox.from_xyz(x, y, z).get_box_arrays()
 
-    def interpolate(self, scale=100):
+    def interpolate(self, scale: float = 100.0):
         """
         Interpolates the geometry model between Nodes
         """
         for element in self.elements:
             element.interpolate(scale=scale)
 
-    def rotate(self, t_matrix):
+    def rotate(self, t_matrix: np.ndarray):
         """
         Rotates a geometry by updating the positions of all nodes and their
         global displacements
 
         Parameters
         ----------
-        t_matrix: np.array((3, 3))
+        t_matrix:
             The rotation matrix to use
         """
         for node in self.nodes:
@@ -435,13 +444,13 @@ class Geometry:
         for element in self.elements:
             element._lambda_matrix = None
 
-    def transfer_node(self, node):
+    def transfer_node(self, node: Node):
         """
         Transfer a Node into the Geometry, copying all its state.
 
         Parameters
         ----------
-        node: Node
+        node:
             The Node to transfer into the geometry
         """
         id_number = self.add_node(*node.xyz)
@@ -455,13 +464,13 @@ class Geometry:
         added_node.displacements = node.displacements
         return id_number
 
-    def merge(self, other):
+    def merge(self, other: Geometry):
         """
         Combine geometry object with another
 
         Parameters
         ----------
-        other: Geometry
+        other:
             The geometry to combine with
 
         Notes
@@ -512,7 +521,7 @@ class DeformedGeometry(Geometry):
     element model, with the ability to be deformed.
     """
 
-    def __init__(self, geometry, scale):
+    def __init__(self, geometry: Geometry, scale: float):
         geometry = deepcopy(geometry)
         self.nodes = geometry.nodes
         self.node_xyz = geometry.node_xyz
@@ -534,15 +543,17 @@ class DeformedGeometry(Geometry):
             node.displacements[1] = 0
             node.displacements[2] = 0
 
-    def plot(self, ax=None, stress=None, **kwargs):
+    def plot(
+        self, ax: Optional[Axes] = None, stress: Optional[np.ndarray] = None, **kwargs
+    ):
         """
         Plot the DeformedGeometry.
 
         Parameters
         ----------
-        ax: Union[Axes, None]
+        ax:
             The matplotlib Axes upon which to plot
-        stress: Union[array_like, None]
+        stress:
             The stress values to use (if any) when plotting
         """
         if stress is None:

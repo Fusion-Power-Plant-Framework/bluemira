@@ -38,15 +38,15 @@ class StructuralMaterial:
 
     Parameters
     ----------
-    E: float
+    E:
         Youngs modulus [Pa]
-    nu: float
+    nu:
         Poisson ratio
-    rho: float
+    rho:
         Density [kg/m^3]
-    sigma_y: float
+    sigma_y:
         Yield stress [Pa]
-    description: str
+    description:
         A description of the material
     """
 
@@ -73,15 +73,14 @@ def make_structural_material(
 
     Parameters
     ----------
-    material: MaterialType
+    material:
         Material type to create a structural representation for
-    temperature: float
+    temperature:
         Temperature at which to make a structural representation of a material [K]
 
     Returns
     -------
-    struct_mat: StructuralMaterial
-        Structural representation of a material
+    Structural representation of a material
     """
     description = f"{material.name} at {temperature:.2f} K"
     return StructuralMaterial(

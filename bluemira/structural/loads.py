@@ -44,24 +44,23 @@ def _check_load_type(load_type, sub_type="all"):
         )
 
 
-def node_load(load, load_type):
+def node_load(load: float, load_type: str) -> np.ndarray:
     """
     Calculates the reaction force vector due to a point load Q, applied at a
     Node.
 
     Parameters
     ----------
-    load: float
+    load:
         The value of the point load (which may be a force or a moment)
-    load_type: str from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
-        The type of load to apply:
+    load_type:
+        The type of load to apply (from 'Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'])
             'Fi': force in the 'i' direction
             'Mi': moment about the 'i' direction
 
     Returns
     -------
-    reactions: np.array(6)
-        The fixed-ends reaction force vector
+    The fixed-ends reaction force vector (6)
     """
     reactions = np.zeros(6)
     _check_load_type(load_type)
@@ -69,29 +68,28 @@ def node_load(load, load_type):
     return reactions
 
 
-def point_load(load, x, length, load_type):
+def point_load(load: float, x: float, length: float, load_type: str) -> np.ndarray:
     """
     Calculates the reaction force vector due to a point load Q, applied at x
     along the element of length L, going from node_1 to node_2.
 
     Parameters
     ----------
-    load: float
+    load:
         The value of the point load (which may be a force or a moment)
-    x: float
+    x:
         The parameterised distance along the element from node_1 to node_2,
         from 0 to 1.
-    length: float
+    length:
         The element length
-    load_type: str from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
-        The type of load to apply:
+    load_type:
+        The type of load to apply (from['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'])
             'Fi': force in the 'i' direction
             'Mi': moment about the 'i' direction
 
     Returns
     -------
-    reactions: np.array(12)
-        The fixed-ends reaction force vector
+    The fixed-ends reaction force vector (12)
     """
     _check_load_type(load_type)
 
@@ -128,19 +126,19 @@ def point_load(load, x, length, load_type):
     return reactions
 
 
-def distributed_load(w, length, load_type):
+def distributed_load(w: float, length: float, load_type: str) -> np.ndarray:
     """
     Calculates the reactor force vector due to a distributed load w, applied
     over the length of the element.
 
     Parameters
     ----------
-    w: float
+    w:
         The value of the distributed load
-    length: float
+    length:
         Length of the element along which the load is applied
-    load_type: str from ['Fx', 'Fy', 'Fz']
-        The type of load to apply:
+    load_type:
+        The type of load to apply (from ['Fx', 'Fy', 'Fz']):
             'Fi': force in the 'i' direction
     """
     _check_load_type(load_type, sub_type="force")
@@ -168,35 +166,35 @@ class LoadCase(list):
     A simple container object for a collection of loads
     """
 
-    def add_node_load(self, node_id, load, load_type):
+    def add_node_load(self, node_id: int, load: float, load_type: str):
         """
         Adds a node load to the LoadCase
 
         Parameters
         ----------
-        node_id: int
+        node_id:
             The id_number of the Node to apply the load at
-        load: float
+        load:
             The value of the load
-        load_type: str from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
-            The type and axis of the load
+        load_type:
+            The type and axis of the load from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
         """
         _check_load_type(load_type)
         self.append(
             {"type": "Node Load", "sub_type": load_type, "node_id": node_id, "Q": load}
         )
 
-    def add_element_load(self, element_id, load, x, load_type):
+    def add_element_load(self, element_id: int, load: float, x: float, load_type: str):
         """
         Adds an element point load to the LoadCase
 
         Parameters
         ----------
-        element_id: int
+        element_id:
             The id_number of the Element to apply the load at
-        load: float
+        load:
             The value of the load
-        x: 0 < float < 1
+        x:
             The parameterised and normalised distance along the element x-axis
         load_type: str from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
             The type and axis of the load
@@ -215,18 +213,18 @@ class LoadCase(list):
             }
         )
 
-    def add_distributed_load(self, element_id, w, load_type):
+    def add_distributed_load(self, element_id: int, w: float, load_type: str):
         """
         Adds a distributed load to the LoadCase
 
         Parameters
         ----------
-        element_id: int
+        element_id:
             The id_number of the Element to apply the load at
-        w: float
+        w:
             The value of the distributed load
-        load_type: str from ['Fx', 'Fy', 'Fz']
-            The type and axis of the load
+        load_type:
+            The type and axis of the load (from ['Fx', 'Fy', 'Fz'])
         """
         _check_load_type(load_type)
         self.append(

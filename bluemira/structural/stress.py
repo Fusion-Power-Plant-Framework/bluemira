@@ -23,10 +23,12 @@
 FE stress interpolations
 """
 
+from typing import List
+
 import numpy as np
 
 
-def hermite_displacement(n):
+def hermite_displacement(n: int) -> np.ndarray:
     """
     \t:math:`v(x)`
     """
@@ -39,7 +41,7 @@ def hermite_displacement(n):
     return matrix
 
 
-def hermite_curvature(n):
+def hermite_curvature(n: int) -> np.ndarray:
     """
     \t:math:`M = EI\\dfrac{\\partial^2 v}{\\partial^2 x}`
     """
@@ -52,7 +54,7 @@ def hermite_curvature(n):
     return matrix
 
 
-def hermite_shear(n):
+def hermite_shear(n: int) -> np.ndarray:
     """
     \t:math:`V = EI\\dfrac{\\partial^3 v}{\\partial^3 x}`
     """
@@ -64,13 +66,13 @@ def hermite_shear(n):
     return matrix
 
 
-def hermite_polynomials(n):
+def hermite_polynomials(n: int) -> List[np.ndarray]:
     """
     Calculate all the base Hermite polynomials
 
     Parameters
     ----------
-    n: int
+    n:
         The number of interpolation points
     """
     # NOTE: still need [:, 1] and [:, 3] to be multiplied by element length

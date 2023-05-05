@@ -22,6 +22,13 @@
 """
 FE transformation matrices and methods
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Union
+
+if TYPE_CHECKING:
+    from bluemira.structural.geometry import DeformedGeometry, Geometry
+
 from copy import deepcopy
 
 import numpy as np
@@ -30,17 +37,7 @@ from scipy.linalg import block_diag
 from bluemira.geometry.coordinates import rotation_matrix
 
 
-def _nb_isclose(a, b, rtol=1.0e-5, atol=0.0e-8):
-    """
-    Enable future compatibility with numba (0.46).
-
-    Was found in general to slow test run speed... remains to be seen if
-    it will have the same effect on real problems, but it's likely
-    """
-    return abs(a - b) <= atol + rtol * abs(b)
-
-
-def _direction_cosine_matrix(dx, dy, dz):
+def _direction_cosine_matrix(dx: float, dy: float, dz: float) -> np.ndarray:
     """
     Calculates the direction cosine (transformation) matrix for an arbitrary
     vector in space. A number of painful edge cases are handled...
@@ -52,18 +49,17 @@ def _direction_cosine_matrix(dx, dy, dz):
 
     Parameters
     ----------
-    dx: float
+    dx:
         The absolute length of the vector in the x global coordinate
-    dy: float
+    dy:
         The absolute length of the vector in the y global coordinate
-    dz: float
+    dz:
         The absolute length of the vector in the z global coordinate
 
     Returns
     -------
-    dcm: np.array((3, 3))
-        The direction cosine matrix with reference to the global coordinate
-        system
+    The direction cosine matrix with reference to the global coordinate
+    system (3, 3)
     """
     # Please be careful when modifying this function, and instead work on the
     # debugging version which is tested...
@@ -169,42 +165,55 @@ def _direction_cosine_matrix_debugging(dx, dy, dz, debug=False):
         return dcm, local
 
 
-def lambda_matrix(dx, dy, dz):
+def lambda_matrix(dx: float, dy: float, dz: float) -> np.ndarray:
     """
     3-D transformation matrix, generalised to a 2-node beam.
     Effectively only handles the tiling of the direction cosine matrix
     transform.
 
+    Parameters
+    ----------
+    dx:
+        The absolute length of the vector in the x global coordinate
+    dy:
+        The absolute length of the vector in the y global coordinate
+    dz:
+        The absolute length of the vector in the z global coordinate
+
     Returns
     -------
-    llambda: np.array((12, 12))
-        The transformation matrix
+    The transformation matrix (12, 12)
     """
     dcm = _direction_cosine_matrix(dx, dy, dz)
     return block_diag(*[dcm] * 4)
 
 
-def cyclic_pattern(geometry, axis, angle, n, include_first=True):
+def cyclic_pattern(
+    geometry: Geometry,
+    axis: np.ndarray,
+    angle: float,
+    n: int,
+    include_first: bool = True,
+) -> List[Union[Geometry, DeformedGeometry]]:
     """
     Build a cyclic pattern of a Geometry.
 
     Parameters
     ----------
-    geometry: Geometry
+    geometry:
         The geometry to pattern
-    axis: Iterable(3)
+    axis:
         The axis vector about which to pattern
-    angle: float
+    angle:
         The pattern angle [degrees]
-    n: int
+    n:
         The number of sectors to pattern
-    include_first: bool
+    include_first:
         Whether or not to include the first sector in the result
 
     Returns
     -------
-    patterned: Geometry
-        The patterned and merged geometry
+    The patterned and merged geometry
     """
     # Dodge cyclic import
     from bluemira.structural.geometry import DeformedGeometry, Geometry

@@ -22,6 +22,8 @@
 """
 Finite element Node object
 """
+from typing import Dict, Tuple
+
 import numpy as np
 
 from bluemira.structural.constants import D_TOLERANCE
@@ -35,13 +37,13 @@ class Node:
 
     Parameters
     ----------
-    x: float
+    x:
         The node global x coordinate
-    y: float
+    y:
         The node global y coordinate
-    z: float
+    z:
         The node global z coordinate
-    id_number: int
+    id_number:
         The node number in the finite element model
     """
 
@@ -58,7 +60,7 @@ class Node:
         "connections",
     )
 
-    def __init__(self, x, y, z, id_number):
+    def __init__(self, x: float, y: float, z: float, id_number: int):
         self.x = x
         self.y = y
         self.z = z
@@ -72,54 +74,52 @@ class Node:
         self.connections = set()
 
     @property
-    def xyz(self):
+    def xyz(self) -> np.ndarray:
         """
         Coordinate vector
 
         Returns
         -------
-        xyz: np.array(3)
-            The x-y-z coordinate vector of the Node
+        The x-y-z coordinate vector of the Node (3)
         """
         return np.array([self.x, self.y, self.z])
 
     @xyz.setter
-    def xyz(self, xyz):
+    def xyz(self, xyz: np.ndarray):
         """
         Sets the Node coordinates
 
         Parameters
         ----------
-        xyz: np.array(3)
-            The x-y-z coordinate vector of the Node
+        xyz:
+            The x-y-z coordinate vector of the Node (3)
         """
         self.x, self.y, self.z = xyz
 
-    def distance_to_other(self, node):
+    def distance_to_other(self, node) -> float:
         """
         Calculates the distance to another Node
 
         Parameters
         ----------
-        node: Node object
+        node:
             The other node
 
         Returns
         -------
-        L: float
-            The absolute distance between the two nodes
+        The absolute distance between the two nodes
         """
         return np.sqrt(
             (node.x - self.x) ** 2 + (node.y - self.y) ** 2 + (node.z - self.z) ** 2
         )
 
-    def add_load(self, load):
+    def add_load(self, load: Dict[str, float]):
         """
         Applies a load to the Node object.
 
         Parameters
         ----------
-        load: Load dict
+        load:
             The dictionary of nodal load values (always in global coordinates)
         """
         self.loads.append(load)
@@ -137,42 +137,42 @@ class Node:
         """
         self.supports = np.zeros(6, dtype=bool)  # Defaults to False
 
-    def add_support(self, supports):
+    def add_support(self, supports: np.ndarray):
         """
         Define a support condition at the Node
 
         Parameters
         ----------
-        supports: np.array([dx, dy, dz, rx, ry, rz], dtype=np.bool)
-            A boolean vector of the support DOFs:
+        supports:
+            A boolean vector of the support DOFs, [dx, dy, dz, rx, ry, rz]:
                 True == supported
                 False == free
         """
         self.supports = supports
 
-    def add_connection(self, elem_id):
+    def add_connection(self, elem_id: int):
         """
         Add a connection to the Node.
 
         Parameters
         ----------
-        elem_id: int
+        elem_id:
             The Element id_number which is connected to this Node
         """
         self.connections.add(elem_id)
 
-    def remove_connection(self, elem_id):
+    def remove_connection(self, elem_id: int):
         """
         Remove a connection to the Node.
 
         Parameters
         ----------
-        elem_id: int
+        elem_id:
             The Element id_number which is to be disconnected from this Node
         """
         self.connections.remove(elem_id)
 
-    def p_vector(self):
+    def p_vector(self) -> np.ndarray:
         """
         Global nodal force vector
 
@@ -191,7 +191,7 @@ class Node:
                 )
         return nfv
 
-    def __eq__(self, other):
+    def __eq__(self, other) -> bool:
         """
         Checks the Node for equality to another Node.
 
@@ -199,13 +199,12 @@ class Node:
 
         Parameters
         ----------
-        other: Node
+        other:
             The other Node to check for equality
 
         Returns
         -------
-        equal: bool
-            Whether or not the nodes are coincident
+        Whether or not the nodes are coincident
         """
         if isinstance(self, other.__class__):
             return self.distance_to_other(other) <= D_TOLERANCE
@@ -215,19 +214,20 @@ class Node:
     __hash__ = None
 
 
-def get_midpoint(node1, node2):
+def get_midpoint(node1: Node, node2: Node) -> Tuple[float, float, float]:
     """
     Calculates the mid-point between two 3-D nodes
 
     Parameters
     ----------
-    node1, node2: Node objects
-        The two nodes for which to calculate the mid-point
+    node1:
+        First node
+    node2:
+        Second node
 
     Returns
     -------
-    x, y, z: float, float, float
-        The coordinates of the mid-point
+    The coordinates of the mid-point
     """
     return (
         0.5 * (node1.x + node2.x),

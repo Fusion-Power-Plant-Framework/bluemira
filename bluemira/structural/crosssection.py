@@ -22,6 +22,12 @@
 """
 Objects and tools for calculating cross-sectional properties
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List
+
+if TYPE_CHECKING:
+    from bluemira.structural.material import StructuralMaterial
 
 from copy import deepcopy
 
@@ -120,13 +126,13 @@ class CrossSection:
         """
         self.geometry.plot(ax=ax, points=True)
 
-    def rotate(self, angle):
+    def rotate(self, angle: float):
         """
         Rotate the CrossSection about its centroid.
 
         Parameters
         ----------
-        angle: float
+        angle:
             The angle to rotate the CrossSection by [degrees]
         """
         alpha = np.deg2rad(angle)
@@ -157,14 +163,14 @@ class CrossSection:
         else:
             self.geometry.rotate(base=self.centroid, direction=(1, 0, 0), degree=angle)
 
-    def translate(self, vector):
+    def translate(self, vector: np.ndarray):
         """
         Translate the CrossSection. Should not affect its properties. Note that
         CrossSections are defined in the y-z plane.
 
         Parameters
         ----------
-        vector: iterable(3)
+        vector:
             The translation vector.
         """
         self.geometry.translate(vector)
@@ -183,15 +189,15 @@ class RectangularBeam(CrossSection):
 
     Parameters
     ----------
-    width: float
+    width:
         The width of the beam
-    height: float
+    height:
         The height of the beam
     """
 
     __slots__ = ()
 
-    def __init__(self, width, height):
+    def __init__(self, width: float, height: float):
         super().__init__()
         self.area = width * height
         self.i_zz = width**3 * height / 12
@@ -205,7 +211,7 @@ class RectangularBeam(CrossSection):
         self.make_geometry(width, height)
 
     @staticmethod
-    def calc_torsion(width, height):
+    def calc_torsion(width: float, height: float) -> float:
         """
         Estimate the torsional constant of the rectangular beam.
 
@@ -224,7 +230,7 @@ class RectangularBeam(CrossSection):
 
         return a * b**3 * (16 / 3 - 3.36 * (b / a) * (1 - b**4 / (12 * a**4)))
 
-    def make_geometry(self, width, height):
+    def make_geometry(self, width: float, height: float):
         """
         Make a BluemiraFace for the RectangularBeam cross-section.
         """
@@ -250,13 +256,15 @@ class CircularBeam(CrossSection):
 
     Parameters
     ----------
-    radius: float
+    radius:
         The radius of the circular cross-section
+    n_discr:
+        Number of points to discretise to when plotting
     """
 
     __slots__ = ()
 
-    def __init__(self, radius, n_discr=30):
+    def __init__(self, radius: float, n_discr: int = 30):
         super().__init__()
         self.area = np.pi * radius**2
         self.i_zz = np.pi * radius**4 / 4
@@ -278,15 +286,17 @@ class CircularHollowBeam(CrossSection):
 
     Parameters
     ----------
-    r_inner: float
+    r_inner:
         The inner radius of the hollow circular cross-section
-    r_outer: float
+    r_outer:
         The outer radius of the hollow circular cross-section
+    n_discr:
+        Number of points to discretise to when plotting
     """
 
     __slots__ = ()
 
-    def __init__(self, r_inner, r_outer, n_discr=30):
+    def __init__(self, r_inner: float, r_outer: float, n_discr: int = 30):
         super().__init__()
         self.area = np.pi * (r_outer**2 - r_inner**2)
         self.i_zz = np.pi / 4 * (r_outer**4 - r_inner**4)
@@ -313,19 +323,19 @@ class IBeam(CrossSection):
 
     Parameters
     ----------
-    base: float
+    base:
         I-beam base width
-    depth: float
+    depth:
         I-beam depth
-    web: float
+    web:
         I-beam web thickness
-    flange:float
+    flange:
         I-beam flange thickness
     """
 
     __slots__ = ()
 
-    def __init__(self, base, depth, flange, web):
+    def __init__(self, base: float, depth: float, flange: float, web: float):
         super().__init__()
         self.check_dimensions(base, depth, flange, web)
         h = depth - 2 * flange
@@ -342,7 +352,7 @@ class IBeam(CrossSection):
         self.make_geometry(base, depth, flange, web)
 
     @staticmethod
-    def check_dimensions(base, depth, flange, web):
+    def check_dimensions(base: float, depth: float, flange: float, web: float):
         """
         Edge case eradication
         """
@@ -356,7 +366,7 @@ class IBeam(CrossSection):
         ):
             raise StructuralError("I-beam dimensions don't make sense.")
 
-    def make_geometry(self, base, depth, flange, web):
+    def make_geometry(self, base: float, depth: float, flange: float, web: float):
         """
         Make a BluemiraFace for the IBeam cross-section.
         """
@@ -390,8 +400,12 @@ class AnalyticalCrossSection(CrossSection):
 
     Parameters
     ----------
-    geometry: BluemiraFace
+    geometry:
         The geometry for the polygonal cross-section
+    n_discr:
+        Number of points to discretise to when plotting
+    j_opt_var:
+        Torsional constant estimation parameter from optimisation
 
     Notes
     -----
@@ -405,7 +419,9 @@ class AnalyticalCrossSection(CrossSection):
 
     __slots__ = ()
 
-    def __init__(self, geometry, n_discr=100, j_opt_var=14.123):
+    def __init__(
+        self, geometry: BluemiraFace, n_discr: int = 100, j_opt_var: float = 14.123
+    ):
         super().__init__()
         self.geometry = deepcopy(geometry)
         self.area = area = self.geometry.area
@@ -462,15 +478,15 @@ class AnalyticalCompositeCrossSection(CrossSection):
 
     Parameters
     ----------
-    geometry: BluemiraFace
+    geometry:
         The ordered list of geometries making up the cross-section
-    materials: List[Material]
+    materials:
         The ordered list of Materials to use for the geometry
     """
 
     __slots__ = ("ea", "nu", "gj", "rho")
 
-    def __init__(self, geometry, materials):
+    def __init__(self, geometry: BluemiraFace, materials: List[StructuralMaterial]):
         super().__init__()
         self.geometry = deepcopy(geometry)
 
