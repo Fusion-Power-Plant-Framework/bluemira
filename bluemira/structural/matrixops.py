@@ -23,7 +23,7 @@
 Matrix manipulation methods for finite element solver
 """
 from copy import deepcopy
-from typing import Tuple
+from typing import List, Tuple
 
 import numpy as np
 

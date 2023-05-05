@@ -22,6 +22,15 @@
 """
 Finite element model
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Tuple
+
+if TYPE_CHECKING:
+    from bluemira.geometry.coordinates import Coordinates
+    from bluemira.structural.crosssection import CrossSection
+    from bluemira.structural.material import StructuralMaterial
+
 from copy import deepcopy
 
 import numpy as np
@@ -37,16 +46,16 @@ from bluemira.structural.result import Result
 from bluemira.structural.symmetry import CyclicSymmetry
 
 
-def check_matrix_condition(matrix, digits):
+def check_matrix_condition(matrix: np.ndarray, digits: int):
     """
     Checks the condition number of a matrix and warns if it is unsuitable for
     working with.
 
     Parameters
     ----------
-    matrix: np.array
+    matrix:
         The matrix to check the condition number of
-    digits: int
+    digits:
         The desired level of digit-precision (higher is less demanding)
 
     Raises
@@ -86,15 +95,15 @@ class FiniteElementModel:
 
     Attributes
     ----------
-    geometry: bluemira::structural::Geometry object
+    geometry:
         The geometry in the FiniteElementModel
-    load_case: bluemira::structural::LoadCase object
+    load_case:
         The load case applied in the FiniteElementModel
-    n_fixed_dofs: int
+    n_fixed_dofs:
         The number of fixed degrees of freedom
-    fixed_dofs: np.array(6)
+    fixed_dofs:
         The fixed degrees of freedom
-    fixed_dof_ids: list
+    fixed_dof_ids:
         The id_numbers of the fixed degrees of freedom
 
     """
@@ -114,87 +123,103 @@ class FiniteElementModel:
     # Geometry definition methods
     # =========================================================================
 
-    def set_geometry(self, geometry):
+    def set_geometry(self, geometry: Geometry):
         """
         Set a Geometry in the FiniteElementModel
 
         Parameters
         ----------
-        geometry: Geometry
+        geometry:
             The Geometry to add to the FiniteElementModel
         """
         self.geometry = geometry
 
-    def add_node(self, x, y, z):
+    def add_node(self, x: float, y: float, z: float) -> int:
         """
         Adds a Node to the FiniteElementModel
 
         Parameters
         ----------
-        x: float
+        x:
             The node global x coordinate
-        y: float
+        y:
             The node global y coordinate
-        z: float
+        z:
             The node global z coordinate
 
         Returns
         -------
-        id_number: int
-            The ID number of the node that was added
+        The ID number of the node that was added
         """
         return self.geometry.add_node(x, y, z)
 
-    def add_element(self, node_id1, node_id2, cross_section, material=None):
+    def add_element(
+        self,
+        node_id1: int,
+        node_id2: int,
+        cross_section: CrossSection,
+        material: Optional[StructuralMaterial] = None,
+    ) -> int:
         """
         Adds an Element to the FiniteElementModel
 
         Parameters
         ----------
-        node_id1: int
+        node_id1:
             The ID number of the first node
-        node_id2: int
+        node_id2:
             The ID number of the second node
-        cross_section: CrossSection
+        cross_section:
             The CrossSection property object of the element
-        material: Material
+        material:
             The Material property object of the element
 
         Returns
         -------
-        id_number: int
-            The ID number of the element that was added
+        The ID number of the element that was added
         """
         return self.geometry.add_element(node_id1, node_id2, cross_section, material)
 
-    def add_coordinates(self, coords, cross_section, material=None):
+    def add_coordinates(
+        self,
+        coords: Coordinates,
+        cross_section: CrossSection,
+        material: Optional[StructuralMaterial] = None,
+    ):
         """
         Adds a Coordinates object to the FiniteElementModel
 
         Parameters
         ----------
-        coordinates: Coordinates
+        coordinates:
             The coordinates to transform into connected Nodes and Elements
-        cross_section: CrossSection object
+        cross_section:
             The cross section of all the Elements in the Coordinates
-        material: Material object
+        material:
             The material of all the Elements in the Coordinates
         """
         self.geometry.add_coordinates(coords, cross_section, material)
 
     def add_support(
-        self, node_id, dx=False, dy=False, dz=False, rx=False, ry=False, rz=False
+        self,
+        node_id: int,
+        dx: bool = False,
+        dy: bool = False,
+        dz: bool = False,
+        rx: bool = False,
+        ry: bool = False,
+        rz: bool = False,
     ):
         """
         Applies a support condition at a Node in the FiniteElementModel
 
         Parameters
         ----------
-        node_id: int
+        node_id:
             The id_number of the Node where to apply the condition
-        dx, dy, dz: bool, bool, bool
+        dx, dy, dz:
             Whether or not the linear DOFs at the Node are constrained
-        rx, ry, rz: bool, bool, bool
+        rx, ry, rz:
             Whether or not the rotational DOFs at the Node
         """
         supports = np.array([dx, dy, dz, rx, ry, rz], dtype=bool)
@@ -221,19 +246,25 @@ class FiniteElementModel:
                 # Keep track of which DOFs are fixed
                 self.fixed_dofs[support_indices] = True
 
-    def apply_cyclic_symmetry(self, left_node_ids, right_node_ids, p1=None, p2=None):
+    def apply_cyclic_symmetry(
+        self,
+        left_node_ids: List[int],
+        right_node_ids: List[int],
+        p1: Optional[np.ndarray] = None,
+        p2: Optional[np.ndarray] = None,
+    ):
         """
         Applies a cyclic symmetry condition to the FiniteElementModel
 
         Parameters
         ----------
-        left_node_ids: List[int]
+        left_node_ids:
             The id numbers of the nodes on the left boundary
-        right_node_ids: List[int]
+        right_node_ids:
             The id numbers of the nodes on the right boundary
-        p1: Iterable(3)
+        p1:
             The first point of the symmetry rotation axis
-        p1: Iterable(3)
+        p1:
             The second point of the symmetry rotation axis
         """
         if p1 is None:
@@ -251,61 +282,61 @@ class FiniteElementModel:
     # Load definition methods
     # =========================================================================
 
-    def apply_load_case(self, load_case):
+    def apply_load_case(self, load_case: LoadCase):
         """
         Apply a load case to the FiniteElementModel.
 
         Parameters
         ----------
-        load_case: LoadCase
+        load_case:
             The load case to apply to the model.
         """
         self.load_case = load_case
 
-    def add_node_load(self, node_id, load, load_type):
+    def add_node_load(self, node_id: int, load: float, load_type: str):
         """
         Adds a node load to the FiniteElementModel
 
         Parameters
         ----------
-        node_id: int
+        node_id:
             The id_number of the Node to apply the load at
-        load: float
+        load:
             The value of the load
-        load_type: str from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
-            The type and axis of the load
+        load_type:
+            The type and axis of the load (from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'])
         """
         self.load_case.add_node_load(node_id, load, load_type)
 
-    def add_element_load(self, element_id, load, x, load_type):
+    def add_element_load(self, element_id: int, load: float, x: float, load_type: str):
         """
         Adds an element point load to the FiniteElementModel
 
         Parameters
         ----------
-        element_id: int
+        element_id:
             The id_number of the Element to apply the load at
-        load: float
+        load:
             The value of the load
-        x: 0 < float < 1
+        x:
             The parameterised and normalised distance along the element x-axis
-        load_type: str from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
-            The type and axis of the load
+        load_type:
+            The type and axis of the load (from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz'])
         """
         self.load_case.add_element_load(element_id, load, x, load_type)
 
-    def add_distributed_load(self, element_id, w, load_type):
+    def add_distributed_load(self, element_id: int, w: float, load_type: str):
         """
         Adds a distributed load to the FiniteElementModel
 
         Parameters
         ----------
-        element_id: int
+        element_id:
             The id_number of the Element to apply the load at
-        w: float
+        w:
             The value of the distributed load
-        load_type: str from ['Fx', 'Fy', 'Fz']
-            The type and axis of the load
+        load_type:
+            The type and axis of the load (from ['Fx', 'Fy', 'Fz'])
         """
         self.load_case.add_distributed_load(element_id, w, load_type)
 
@@ -341,7 +372,7 @@ class FiniteElementModel:
     # Private solution methods
     # =========================================================================
 
-    def _apply_load_case(self, load_case):
+    def _apply_load_case(self, load_case: LoadCase):
         """
         Applies a LoadCase to the FiniteElementModel. Maps individual loads to
         their respective Nodes and Elements.
@@ -362,15 +393,14 @@ class FiniteElementModel:
             else:
                 raise StructuralError(f'Unknown load type "{load["type"]}"')
 
-    def _get_nodal_forces(self):
+    def _get_nodal_forces(self) -> np.ndarray:
         """
         Calculates the total nodal forces (including forces applied at nodes
         and equivalent concentrated forces from element loads).
 
         Returns
         -------
-        p_vector: np.array(6*n_nodes)
-            The global nodal force vector
+        The global nodal force vector (6*n_nodes)
         """
         # NOTE: looping over loads in a LoadCase would no doubt be faster
         # but it is more difficult to keep track of things in OO like this
@@ -388,15 +418,14 @@ class FiniteElementModel:
             p_vector[j : j + 6] += enf[6:]
         return p_vector
 
-    def _get_reaction_forces(self):
+    def _get_reaction_forces(self) -> np.ndarray:
         """
         Calculates the reaction forces, applying them to each of the nodes
         and returning the full vector
 
         Returns
         -------
-        reactions: np.array(6*n_nodes)
-            The full reaction vector in global coordinates over all the nodes
+        The full reaction vector in global coordinates over all the nodes (6*n_nodes)
         """
         reactions = np.zeros(6 * self.geometry.n_nodes)
 
@@ -411,7 +440,7 @@ class FiniteElementModel:
             reactions[idn : idn + 6] = node.reactions
         return reactions
 
-    def _math_checks(self, k_matrix):
+    def _math_checks(self, k_matrix: np.ndarray):
         """
         Performs a series of checks on the model boundary conditions and the
         global stiffness matrix K, prior to the solution of the system of
@@ -419,8 +448,8 @@ class FiniteElementModel:
 
         Parameters
         ----------
-        k_matrix: np.array((6*n_nodes, 6*n_nodes))
-            The global stiffness matrix to be checked
+        k_matrix:
+            The global stiffness matrix to be checked ((6*n_nodes, 6*n_nodes))
         """
         if self.n_fixed_dofs < 6:
             # TODO: check dimensionality of problem (1-D, 2-D, 3-D) and reduce
@@ -437,15 +466,15 @@ class FiniteElementModel:
             )
         check_matrix_condition(k_matrix, 15)
 
-    def _displacement_check(self, deflections):
+    def _displacement_check(self, deflections: np.ndarray):
         """
         Checks to see if the displacements are not too big relative to the
         size of the model.
 
         Parameters
         ----------
-        deflections: np.array(6*n_nodes)
-            The vector of absolute displacements
+        deflections:
+            The vector of absolute displacements (6*n_nodes)
         """
         xmax, xmin, ymax, ymin, zmax, zmin = self.geometry.bounds()
         dx, dy, dz = xmax - xmin, ymax - ymin, zmax - zmin
@@ -463,7 +492,9 @@ class FiniteElementModel:
                 "!\nYou can't trust the results..."
             )
 
-    def _apply_boundary_conditions(self, k, p, method="Przemieniecki"):
+    def _apply_boundary_conditions(
+        self, k: np.ndarray, p: np.ndarray, method: str = "Przemieniecki"
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Applies the boundary conditions to the matrices to make the problem
         solvable. This is creation of the "reduced" stiffness matrix and
@@ -471,16 +502,16 @@ class FiniteElementModel:
 
         Parameters
         ----------
-        k: np.array((N, N))
+        k:
             The global stiffness matrix of the problem
-        p: np.array(N)
+        p:
             The global nodal force vector of the problem
 
         Returns
         -------
-        kr: np.array((N, N))
+        kr:
             The reduced global stiffness matrix of the problem
-        pr: np.array((N))
+        pr:
             The reduced global nodal force vector of the problem
         """
         # TODO: detemine which approach is more suitable!
@@ -533,23 +564,24 @@ class FiniteElementModel:
         """
         return self.geometry.plot(ax=ax, **kwargs)
 
-    def solve(self, load_case=None, sparse=False):
+    def solve(
+        self, load_case: Optional[LoadCase] = None, sparse: bool = False
+    ) -> Result:
         """
         Solves the system of linear equations for deflection and applies the
         deflections to the nodes and elements of the geometry
 
         Parameters
         ----------
-        load_case: LoadCase (default=None)
+        load_case:
             Will default to the loads applied to the elements and nodes in the
             geometry
-        sparse: bool (default=False)
+        sparse:
             Whether or not to use sparse matrices to solve
 
         Returns
         -------
-        result: Result object container
-            The result of the FE analysis with the applied LoadCase
+        The result of the FE analysis with the applied LoadCase
         """
         # Find model physical boundary conditions
         self.find_supports()
