@@ -129,8 +129,15 @@ def optimise(
             * COBYLA
             * ISRES
 
+    keep_history:
+        Whether to record the history of each step of the optimisation.
+        (default: False)
+
+    Returns
+    -------
+    The result of the optimisation; including the optimised parameters
+    and the number of iterations.
     """
-    # TODO(hsaunders1904): finish this docstring!
     if dimensions is None:
         if x0 is not None:
             dimensions = x0.size
