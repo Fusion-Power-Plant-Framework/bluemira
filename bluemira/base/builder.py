@@ -54,11 +54,11 @@ class Builder(abc.ABC):
 
     Parameters
     ----------
-    params
+    params:
         The parameters required by the builder.
-    build_config
+    build_config:
         The build configuration for the builder.
-    verbose
+    verbose:
         control how much logging the designer will output
 
     Notes
@@ -102,13 +102,12 @@ class Builder(abc.ABC):
 
         Parameters
         ----------
-        xz
+        xz:
             xz view of component
-        xy
+        xy:
             xy view of component
-        xyz
+        xyz:
             xyz view of component
-
         """
         component = Component(self.name)
         component.add_child(Component("xz", children=xz))
