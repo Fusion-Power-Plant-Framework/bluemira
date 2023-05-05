@@ -23,11 +23,16 @@
 Flux surface utility classes and calculations
 """
 
+from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.find import PsiPoint
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -109,7 +114,7 @@ class FluxSurface:
         Bt = eq.Bt(x)
         return _flux_surface_dl(x, z, np.diff(x), np.diff(z), Bp, Bt)
 
-    def connection_length(self, eq) -> float:
+    def connection_length(self, eq: Equilibrium) -> float:
         """
         Calculate the parallel connection length along a field line (i.e. flux surface).
 
@@ -125,7 +130,7 @@ class FluxSurface:
         """
         return np.sum(self._dl(eq))
 
-    def plot(self, ax=None, **kwargs):
+    def plot(self, ax: Optional[plt.Axes] = None, **kwargs):
         """
         Plot the FluxSurface.
         """
@@ -318,7 +323,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         return 2 * np.pi * self.area * self.coords.center_of_mass[0]
 
-    def shafranov_shift(self, eq) -> Tuple[float, float]:
+    def shafranov_shift(self, eq: Equilibrium) -> Tuple[float, float]:
         """
         Calculate the Shafranov shift of the ClosedFluxSurface.
 
@@ -337,7 +342,7 @@ class ClosedFluxSurface(FluxSurface):
         o_point = eq.get_OX_points()[0][0]  # magnetic axis
         return o_point.x - self.major_radius, o_point.z - self._z_centre
 
-    def safety_factor(self, eq) -> float:
+    def safety_factor(self, eq: Equilibrium) -> float:
         """
         Calculate the cylindrical safety factor of the ClosedFluxSurface. The ratio of
         toroidal turns to a single full poloidal turn.
@@ -375,22 +380,26 @@ class OpenFluxSurface(FluxSurface):
             )
         super().__init__(coords)
 
-    def split(self, o_point, plane=None):
+    def split(
+        self, o_point: PsiPoint, plane: Optional[BluemiraPlane] = None
+    ) -> Tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
         """
         Split an OpenFluxSurface into two separate PartialOpenFluxSurfaces about a
         horizontal plane.
 
         Parameters
         ----------
-        o_point: O-point
+        o_point:
             The magnetic centre of the plasma
-        plane: Optional[Plane]
+        plane:
             The x-y cutting plane. Will default to the O-point x-y plane
 
         Returns
         -------
-        down, up: Iterable[OpenFluxSurface]
-            The downwards and upwards open flux surfaces from the splitting point
+        down:
+            The downwards open flux surfaces from the splitting point
+        up:
+            The upwards open flux surfaces from the splitting point
         """
 
         def reset_direction(coords):
@@ -492,7 +501,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
             self.coords.points[-2], self.coords.points[-1], first_wall.points[fw_arg]
         )
 
-    def flux_expansion(self, eq) -> float:
+    def flux_expansion(self, eq: Equilibrium) -> float:
         """
         Flux expansion of the PartialOpenFluxSurface.
 
@@ -537,7 +546,7 @@ class CoreResults:
     Delta_shaf: Iterable
 
 
-def analyse_plasma_core(eq, n_points: int = 50) -> CoreResults:
+def analyse_plasma_core(eq: Equilibrium, n_points: int = 50) -> CoreResults:
     """
     Analyse plasma core parameters across the normalised 1-D flux coordinate.
 
@@ -674,7 +683,9 @@ class FieldLineTracer:
             """
             return _signed_distance_2D(xz[:2], self.boundary.xz.T)
 
-    def __init__(self, eq, first_wall: Optional[Union[Grid, Coordinates]] = None):
+    def __init__(
+        self, eq: Equilibrium, first_wall: Optional[Union[Grid, Coordinates]] = None
+    ):
         self.eq = eq
         if first_wall is None:
             first_wall = self.eq.grid
@@ -764,7 +775,7 @@ class FieldLineTracer:
 
 
 def calculate_connection_length_flt(
-    eq,
+    eq: Equilibrium,
     x: float,
     z: float,
     forward: bool = True,
@@ -811,7 +822,7 @@ def calculate_connection_length_flt(
 
 
 def calculate_connection_length_fs(
-    eq,
+    eq: Equilibrium,
     x: float,
     z: float,
     forward: bool = True,

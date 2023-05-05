@@ -139,11 +139,11 @@ class MHDState:
         -----
         Modifies:
 
-            ._pgreen: dict
+            ._pgreen:
                 Greens function coil mapping for psi
-            ._bxgreen: dict
+            ._bxgreen:
                 Greens function coil mapping for Bx
-            .bzgreen: dict
+            .bzgreen:
                 Greens function coil mapping for Bz
         """
         self._psi_green = self.coilset.psi_response(self.x, self.z)

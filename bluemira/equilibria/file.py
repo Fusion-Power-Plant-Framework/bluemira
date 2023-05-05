@@ -26,7 +26,7 @@ import json
 import os
 import time
 from dataclasses import asdict, dataclass
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import fortranformat as ff
 import numpy as np
@@ -201,7 +201,7 @@ class EQDSKInterface:
             )
             _write_eqdsk(file_path, self.to_dict())
 
-    def update(self, eqdsk_data: Dict):
+    def update(self, eqdsk_data: Dict[str, Any]):
         """
         Update this object's data with values from a dictionary.
 
@@ -225,7 +225,7 @@ class EQDSKInterface:
                 )
 
 
-def _read_json(file) -> Dict:
+def _read_json(file) -> Dict[str, Any]:
     if isinstance(file, str):
         with open(file, "r") as f_h:
             return _read_json(f_h)

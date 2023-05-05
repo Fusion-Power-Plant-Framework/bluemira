@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from bluemira.equilibria.limiter import Limiter
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 import numba as nb
 import numpy as np
@@ -821,7 +822,7 @@ def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_poi
 
 
 def get_legs(
-    equilibrium, n_layers: int = 1, dx_off: float = 0.0
+    equilibrium: Equilibrium, n_layers: int = 1, dx_off: float = 0.0
 ) -> Dict[str, List[Coordinates]]:
     """
     Get the legs of a separatrix.
