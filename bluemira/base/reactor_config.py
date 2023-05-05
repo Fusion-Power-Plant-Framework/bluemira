@@ -32,25 +32,20 @@ class ReactorConfig:
 
     Parameters
     ----------
-    config_path
+    config_path:
         The path to the config JSON file or a dict of the data.
-
-    global_params_type
+    global_params_type:
         The ParameterFrame type for the global params.
-
-    global_params_path
+    global_params_path:
         A path to a JSON file
         holding the global params or a dict of the params.
-
-    warn_on_duplicate_keys
+    warn_on_duplicate_keys:
         Print a warning when duplicate keys are found,
         whose value will be overwritten.
-
-    warn_on_empty_local_params
+    warn_on_empty_local_params:
         Print a warning when the local params for some args are empty,
         when calling params_for(args)
-
-    warn_on_empty_config
+    warn_on_empty_config:
         Print a warning when the config for some args are empty,
         when calling config_for(args)
 
@@ -133,9 +128,9 @@ class ReactorConfig:
 
         Parameters
         ----------
-        component_name
+        component_name:
             The component name, must match a key in the config
-        *args
+        *args:
             Optionally, specify the keys of nested attributes.
 
             This will hoist the values defined in the nested attributes
@@ -146,12 +141,12 @@ class ReactorConfig:
 
         Returns
         -------
-            Holds the global_params (from `self.global_params`)
-            and the extracted local_params.
+        Holds the global_params (from `self.global_params`)
+        and the extracted local_params.
 
-            Use the
-            :func:`~bluemira.base.parameter_frame._frame.make_parameter_frame`
-            helper function to convert it into a typed ParameterFrame.
+        Use the
+        :func:`~bluemira.base.parameter_frame._frame.make_parameter_frame`
+        helper function to convert it into a typed ParameterFrame.
         """
         args = (component_name,) + args
         self._check_args_are_strings(args)
@@ -177,9 +172,9 @@ class ReactorConfig:
 
         Parameters
         ----------
-        component_name
+        component_name:
             The component name, must match a key in the config
-        *args
+        *args:
             Optionally, specify the keys of nested attributes.
 
             This will hoist the values defined in the nested attributes
@@ -189,7 +184,7 @@ class ReactorConfig:
 
         Returns
         -------
-            The extracted config.
+        The extracted config.
         """
         args = (component_name,) + args
         self._check_args_are_strings(args)
