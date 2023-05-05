@@ -22,6 +22,7 @@
 """
 Coil and coil grouping objects
 """
+from __future__ import annotations
 
 from enum import Enum, EnumMeta, auto
 from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
