@@ -235,9 +235,6 @@ class TestReactorConfigClass:
 
     def test_file_path_loading_in_json_nested_config(self):
         reactor_config = ReactorConfig(nested_config_path.as_posix(), EmptyFrame)
-        import ipdb
-
-        ipdb.set_trace()
 
         pf = make_parameter_frame(
             reactor_config.params_for("Tester", "comp A", "designer"),
@@ -247,6 +244,7 @@ class TestReactorConfigClass:
         self._compa_designer_param_value_checks(pf)
 
         assert reactor_config.config_for("Tester", "comp A", "designer") == {
+            # "comp B": {}, # Bug
             "config_a": {"a_value": "overridden_value"},
             "config_b": {"b_value": "b_value"},
             "config_c": {"c_value": "c_value"},
