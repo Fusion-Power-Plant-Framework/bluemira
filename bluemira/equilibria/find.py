@@ -22,8 +22,14 @@
 """
 Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
+from __future__ import annotations
 
 import operator
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.limiter import Limiter
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 import numba as nb
 import numpy as np
@@ -66,7 +72,7 @@ class PsiPoint:
 
     __slots__ = ("x", "z", "psi")
 
-    def __init__(self, x, z, psi):
+    def __init__(self, x: float, z: float, psi: float):
         self.x, self.z = x, z
         self.psi = psi
 
@@ -78,13 +84,13 @@ class PsiPoint:
         yield self.z
         yield self.psi
 
-    def __getitem__(self, i):
+    def __getitem__(self, i: int) -> float:
         """
         Imbue PsiPoint with list-like behaviour
         """
         return [self.x, self.z, self.psi][i]
 
-    def __str__(self):
+    def __str__(self) -> str:
         """
         A better string representation of the PsiPoint.
         """
@@ -118,19 +124,21 @@ class Lpoint(PsiPoint):
     __slots__ = ()
 
 
-def find_local_minima(f):
+def find_local_minima(f: np.ndarray) -> np.ndarray.np.ndarray:
     """
     Finds all local minima in a 2-D function map
 
     Parameters
     ----------
-    f: np.array(N, M)
+    f:
         The 2-D field on which to find local minima
 
     Returns
     -------
-    i, j: np.array(int64, ..), np.array(int64, ..)
-        The indices of local minima on the field map
+    i:
+        The radial indices of local minima on the field map
+    j:
+        The vertical indices of local minima on the field map
 
     Notes
     -----
@@ -151,34 +159,36 @@ def find_local_minima(f):
 
 
 @nb.jit(nopython=True, cache=True)
-def inv_2x2_matrix(a, b, c, d):
+def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> np.ndarray:
     """
     Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
     """
     return np.array([[d, -b], [-c, a]]) / (a * d - b * c)
 
 
-def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
+def find_local_Bp_minima_cg(
+    f_psi: RectBivariateSpline, x0: float, z0: float, radius: float
+) -> Union[None, Tuple[float, float]]:
     """
     Find local Bp minima on a grid (precisely) using a local Newton/Powell
     conjugate gradient search.
 
     Parameters
     ----------
-    f_psi: callable
+    f_psi:
         The function handle for psi interpolation
-    x0: float
+    x0:
         The local grid minimum x coordinate
-    z0: float
+    z0:
         The local grid minimum z coordinate
-    radius: float
+    radius:
         The search radius
 
     Returns
     -------
-    x: Union[float, None]
+    x:
         The x coordinate of the minimum. None if the minimum is not valid.
-    z: float
+    z:
         The z coordinate of the minimum
     """
     xi, zi = x0, z0
@@ -202,7 +212,9 @@ def find_local_Bp_minima_cg(f_psi, x0, z0, radius):
                 return None
 
 
-def drop_space_duplicates(points, tol=X_TOLERANCE):
+def drop_space_duplicates(
+    points: Iterable, tol: float = X_TOLERANCE
+) -> List[np.ndarray]:
     """
     Drop duplicates from a list of points if closer together than tol
     """
@@ -218,22 +230,24 @@ def drop_space_duplicates(points, tol=X_TOLERANCE):
     return stack
 
 
-def triage_OX_points(f_psi, points):
+def triage_OX_points(
+    f_psi: RectBivariateSpline, points: List[List[float]]
+) -> Tuple[List[Opoint], List[Xpoint]]:
     """
     Triage the local Bp minima into O- and X-points: sort the field minima by second
     derivative.
 
     Parameters
     ----------
-    f_psi: callable
+    f_psi:
         The function handle for psi interpolation
-    points: List[List]
+    points:
 
     Returns
     -------
-    o_points: List[List]
+    o_points:
         The O-point locations
-    x_points: List[List]
+    x_points:
         The X-point locations
 
     Notes
@@ -261,26 +275,33 @@ def triage_OX_points(f_psi, points):
     return o_points, x_points
 
 
-def find_OX_points(x, z, psi, limiter=None, *, field_cut_off=1.0):  # noqa :N802
+def find_OX_points(
+    x: np.ndarray,
+    z: np.ndarray,
+    psi: np.ndarray,
+    limiter: Optional[Limiter] = None,
+    *,
+    field_cut_off: float = 1.0,
+) -> Tuple[List[Opoint], List[Union[Xpoint, Lpoint]]]:  # noqa :N802
     """
     Finds O-points and X-points by minimising the poloidal field.
 
     Parameters
     ----------
-    x: np.array(N, M)
+    x:
         The spatial x coordinates of the grid points [m]
-    z: np.array(N, M)
+    z:
         The spatial z coordinates of the grid points [m]
-    psi: np.array(N, M)
+    psi:
         The poloidal magnetic flux map [V.s/rad]
-    limiter: Optional[Limiter]
+    limiter:
         The limiter to use (if any)
-    field_cut_off: float
+    field_cut_off:
         The field above which local minima are not searched [T]. Must be > 0.1 T
 
     Returns
     -------
-    o_points: List[Opoint]
+    o_points:
         The O-points in the psi map
     x_points: List[Union[Xpoint,LPoint]]
         The X-points and L-points in the psi map
@@ -423,25 +444,26 @@ def _parse_OXp(x, z, psi, o_points, x_points):  # noqa :N802
 # =============================================================================
 
 
-def get_contours(x, z, array, value):
+def get_contours(
+    x: np.ndarray, z: np.ndarray, array: np.ndarray, value: float
+) -> List[np.ndarray]:
     """
     Get the contours of a value in continuous array.
 
     Parameters
     ----------
-    x: np.array(n, m)
+    x:
         The x value array
-    z: np.array(n, m)
+    z:
         The z value array
-    array: np.array(n, m)
+    array:
         The value array
-    value: float
+    value: f
         The value of the desired contour in the array
 
     Returns
     -------
-    values: List[np.ndarray]
-        The list of arrays of value contour(s) in the array
+    The list of arrays of value contour(s) in the array
     """
     con_gen = contour_generator(
         x, z, array, name="mpl2014", line_type=LineType.SeparateCode
@@ -449,29 +471,37 @@ def get_contours(x, z, array, value):
     return con_gen.lines(value)[0]
 
 
-def find_flux_surfs(x, z, psi, psinorm, o_points=None, x_points=None):
+def find_flux_surfs(
+    x: np.ndarray,
+    z: np.ndarray,
+    psi: np.ndarray,
+    psinorm: float,
+    o_points: Optional[List[Opoint]] = None,
+    x_points: Optional[List[Xpoint]] = None,
+) -> List[np.ndarray]:
     """
     Finds all flux surfaces with a given normalised psi. If a flux loop goes off
     the grid, separate sets of coordinates will be produced.
 
     Parameters
     ----------
-    x: np.array(N, M)
+    x:
         The spatial x coordinates of the grid points [m]
-    z: np.array(N, M)
+    z:
         The spatial z coordinates of the grid points [m]
-    psi: np.array(N, M)
+    psi:
         The poloidal magnetic flux map [V.s/rad]
-    psinorm: float
+    psinorm:
         The normalised psi value of the desired flux surface [-]
-    o_points, x_points: list(Opoints, ..), list(Xpoint, ..) or None
-        The O- and X-points to use to calculate psinorm (saves time if you
+    o_points:
+        O-points to use to calculate psinorm
+    x_points:
+        X-points to use to calculate psinorm (saves time if you
         have them)
 
     Returns
     -------
-    psi_loop: np.array(P, K)
-        The coordinates of the loops that was found
+    The coordinates of the loops that was found
     """
     # NOTE: This may all fall over for multiple psi_norm islands with overlaps
     # on the grid edges...
@@ -482,7 +512,14 @@ def find_flux_surfs(x, z, psi, psinorm, o_points=None, x_points=None):
     return get_contours(x, z, psi, psinormed)
 
 
-def find_flux_surf(x, z, psi, psinorm, o_points=None, x_points=None):
+def find_flux_surf(
+    x: np.ndarray,
+    z: np.ndarray,
+    psi: np.ndarray,
+    psinorm: float,
+    o_points: Optional[List[Opoint]] = None,
+    x_points: Optional[List[Xpoint]] = None,
+) -> np.ndarray:
     """
     Picks a flux surface with a normalised psinorm relative to the separatrix.
     Uses least squares to retain only the most appropriate flux surface. This
@@ -490,22 +527,23 @@ def find_flux_surf(x, z, psi, psinorm, o_points=None, x_points=None):
 
     Parameters
     ----------
-    x: np.array(N, M)
+    x:
         The spatial x coordinates of the grid points [m]
-    z: np.array(N, M)
+    z:
         The spatial z coordinates of the grid points [m]
-    psi: np.array(N, M)
+    psi:
         The poloidal magnetic flux map [V.s/rad]
-    psinorm: float
+    psinorm:
         The normalised psi value of the desired flux surface [-]
-    o_points, x_points: list(Opoints, ..), list(Xpoint, ..) or None
-        The O- and X-points to use to calculate psinorm (saves time if you
+    o_points:
+        O-points to use to calculate psinorm
+    x_points:
+        X-points to use to calculate psinorm (saves time if you
         have them)
 
     Returns
     -------
-    coordinates: np.array(2, P)
-        The flux surface coordinate vectors
+    The flux surface coordinate array
 
     \t:math:`{\\Psi}_{N} = {\\psi}_{O}-N({\\psi}_{O}-{\\psi}_{X})`
 
@@ -535,25 +573,26 @@ def find_flux_surf(x, z, psi, psinorm, o_points=None, x_points=None):
     return psi_surfs[np.argmin(err)].T
 
 
-def find_field_surf(x, z, Bp, field):
+def find_field_surf(
+    x: np.ndarray, z: np.ndarray, Bp: np.ndarray, field: float
+) -> np.ndarray:
     """
     Picks a field surface most likely to be the desired breakdown region
 
     Parameters
     ----------
-    x: np.array(N, M)
+    x:
         The spatial x coordinates of the grid points [m]
-    z: np.array(N, M)
+    z:
         The spatial z coordinates of the grid points [m]
-    Bp: 2-D numpy array
+    Bp:
         The field map
-    field: float
+    field:
         The value of the desired field surfaces
 
     Returns
     -------
-    x, z: 1-D np.array
-        The coordinates of the field surface
+    The coordinates of the field surface
     """
     m, n = x.shape
     xo, zo = x[m // 2, n // 2], z[m // 2, n // 2]
@@ -584,31 +623,35 @@ def find_field_surf(x, z, Bp, field):
         return None
 
 
-def find_flux_surface_through_point(x, z, psi, point_x, point_z, point_psi):
+def find_flux_surface_through_point(
+    x: np.ndarray,
+    z: np.ndarray,
+    psi: np.ndarray,
+    point_x: float,
+    point_z: float,
+    point_psi: float,
+) -> np.ndarray:
     """
     Get a flux surface passing through a point.
 
     Parameters
     ----------
-    x: np.array(N, M)
+    x:
         The spatial x coordinates of the grid points [m]
-    z: np.array(N, M)
+    z:
         The spatial z coordinates of the grid points [m]
-    psi: np.array(N, M)
+    psi:
         The poloidal magnetic flux map [V.s/rad]
-    point_x: float
+    point_x:
         The radial coordinate of the point [m]
-    point_z: float
+    point_z:
         The vertical coordinate of the point [m]
-    point_psi: float
+    point_psi:
         The magnetic flux at the point [V.s/rad]
 
     Returns
     -------
-    x: 1-D np.array
-        The radial coordinates of the flux surface
-    z: 1-D np.array
-        The vertical coordinates of the flux surface
+    The coordinates of the flux surface
     """
 
     def f_min(x_opt, z_opt):
@@ -622,39 +665,39 @@ def find_flux_surface_through_point(x, z, psi, point_x, point_z, point_psi):
 
 
 def find_LCFS_separatrix(
-    x,
-    z,
-    psi,
-    o_points=None,
-    x_points=None,
-    double_null=False,
-    psi_n_tol=1e-6,
-):
+    x: np.ndarray,
+    z: np.ndarray,
+    psi: np.ndarray,
+    o_points: Optional[List[Opoint]] = None,
+    x_points: Optional[List[Xpoint]] = None,
+    double_null: bool = False,
+    psi_n_tol: float = 1e-6,
+) -> Tuple[Coordinates, Union[Coordinates, List[Coordinates]]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
 
     Parameters
     ----------
-    x: np.array(N, M)
+    x:
         The spatial x coordinates of the grid points [m]
-    z: np.array(N, M)
+    z:
         The spatial z coordinates of the grid points [m]
-    psi: np.array(N, M)
+    psi:
         The poloidal magnetic flux map [V.s/rad]
-    o_points: Union[None, List[Opoint]]
+    o_points:
         The O-points in the psi map
-    x_points: Union[None, List[Xpoint]]
+    x_points:
         The X-points in the psi map
-    double_null: bool
+    double_null:
         Whether or not to search for a double null separatrix.
-    psi_n_tol: float
+    psi_n_tol:
         The normalised psi tolerance to use
 
     Returns
     -------
-    lcfs: Coordinates
+    lcfs:
         The last closed flux surface
-    separatrix: Union[Coordinates, list]
+    separatrix:
         The plasma separatrix (first open flux surface). Will return a
         list of Coordinates for double_null=True, with all four separatrix legs being
         captured.
@@ -778,23 +821,24 @@ def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_poi
     return offset_legs
 
 
-def get_legs(equilibrium, n_layers: int = 1, dx_off: float = 0.0):
+def get_legs(
+    equilibrium: Equilibrium, n_layers: int = 1, dx_off: float = 0.0
+) -> Dict[str, List[Coordinates]]:
     """
     Get the legs of a separatrix.
 
     Parameters
     ----------
-    equilibrium: Equilibrium
+    equilibrium:
         Equilibrium for which to find the separatrix legs
-    n_layers: int
+    n_layers:
         Number of flux surfaces to extract for each leg
-    dx_off: float
+    dx_off:
         Total span in radial space of the flux surfaces to extract
 
     Returns
     -------
-    legs: Dict[str, List[Coordinates]]
-        Dictionary of the legs with each key containing a list of geometries
+    Dictionary of the legs with each key containing a list of geometries
 
     Raises
     ------
@@ -865,22 +909,22 @@ def get_legs(equilibrium, n_layers: int = 1, dx_off: float = 0.0):
     return leg_dict
 
 
-def grid_2d_contour(x, z):
+def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
     """
     Grid a smooth contour and get the outline of the cells it encompasses.
 
     Parameters
     ----------
-    x: np.array
+    x:
         The closed ccw x coordinates
-    z: np.array
+    z:
         The closed ccw z coordinates
 
     Returns
     -------
-    x_new: np.array
+    x_new:
         The x coordinates of the grid-coordinates
-    z_new: np.array
+    z_new:
         The z coordinates of the grid-coordinates
     """
     x_new, z_new = [], []
@@ -906,72 +950,81 @@ def grid_2d_contour(x, z):
 # =============================================================================
 
 
-def in_plasma(x, z, psi, o_points=None, x_points=None):
+def in_plasma(
+    x: np.ndarray,
+    z: np.ndarray,
+    psi: np.ndarray,
+    o_points: Optional[List[Opoint]] = None,
+    x_points: Optional[List[Xpoint]] = None,
+) -> np.ndarray:
     """
     Get a psi-shaped mask of psi where 1 is inside the plasma, 0 outside.
 
     Parameters
     ----------
-    x, z: np.array(N, M)
-        The spatial coordinates of the grid points
-    psi: np.array(N, M)
+    x:
+        The radial coordinates of the grid points
+    z:
+        The vertical coordinates of the grid points
+    psi:
         The poloidal magnetic flux map [V.s/rad]
-    o_points, x_points: list(Opoints, ..), list(Xpoint, ..) or None
-        The O- and X-points to use to calculate psinorm (saves time if you
+    o_points:
+        O-points to use to calculate psinorm
+    x_points:
+        X-points to use to calculate psinorm (saves time if you
         have them)
 
     Returns
     -------
-    mask: np.array(N, M)
-        Masking matrix for the location of the plasma [0 outside/1 inside]
+    Masking matrix for the location of the plasma [0 outside/1 inside]
     """
     mask = np.zeros_like(psi)
     lcfs, _ = find_LCFS_separatrix(x, z, psi, o_points=o_points, x_points=x_points)
     return _in_plasma(x, z, mask, lcfs.xz.T)
 
 
-def in_zone(x, z, zone):
+def in_zone(x: np.ndarray, z: np.ndarray, zone: np.ndarray):
     """
     Get a masking matrix for a specified zone.
 
     Parameters
     ----------
-    x: np.array(n, m)
-        The x coordinates matrix
-    z: np.array(n, m)
-        The z coordinates matrix
-    zone: np.array(p, 2)
+    x:
+        The x coordinates array
+    z:
+        The z coordinates array
+    zone:
         The array of point coordinates delimiting the zone
 
     Returns
     -------
-    mask: np.array(n, m)
-        The masking array where 1 denotes inside the zone, and 0 outside
+    The masking array where 1 denotes inside the zone, and 0 outside
     """
     mask = np.zeros_like(x)
     return _in_plasma(x, z, mask, zone)
 
 
 @nb.jit(nopython=True, cache=True)
-def _in_plasma(x, z, mask, sep):
+def _in_plasma(
+    x: np.ndarray, z: np.ndarray, mask: np.ndarray, sep: np.ndarray
+) -> np.ndarray:
     """
     Get a masking matrix for a specified zone. JIT compilation utility.
 
     Parameters
     ----------
-    x: np.array(n, m)
+    x:
         The x coordinates matrix
-    z: np.array(n, m)
+    z:
         The z coordinates matrix
-    mask: np.array(n, m)
+    mask:
         The masking matrix to populate with 0 or 1 values
-    sep: np.array(p, 2)
+    sep:
         The array of point coordinates delimiting the zone
 
     Returns
     -------
-    mask: np.array(n, m)
-        The masking array where 1 denotes inside the zone, and 0 outside
+    The masking array where 1 denotes inside the zone, and 0 outside
     """
     n, m = x.shape
     for i in range(n):

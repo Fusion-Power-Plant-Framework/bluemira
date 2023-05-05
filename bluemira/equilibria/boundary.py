@@ -23,9 +23,11 @@
 Boundary conditions for equilibria.
 """
 
+from typing import Union
+
 import numpy as np
 
-from bluemira.equilibria.grid import integrate_dx_dz
+from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.magnetostatics.greens import greens_psi
 from bluemira.utilities.tools import is_num
 
@@ -39,13 +41,13 @@ class FreeBoundary:
 
     Parameters
     ----------
-    grid: Grid
+    grid:
         The grid upon which to apply the free Dirichlet boundary condition
     """
 
     __slots__ = ["dx", "dz", "edges", "f_greens"]
 
-    def __init__(self, grid):
+    def __init__(self, grid: Grid):
         x, z = grid.x, grid.z
         self.dx, self.dz = grid.dx, grid.dz
         self.edges = grid.edges
@@ -57,15 +59,15 @@ class FreeBoundary:
             values[i] = g
         self.f_greens = values
 
-    def __call__(self, psi, jtor):
+    def __call__(self, psi: np.ndarray, jtor: np.ndarray):
         """
         Applies a free boundary (Dirichlet) condition using Green's functions
 
         Parameters
         ----------
-        psi: np.array(N, M)
+        psi:
             The poloidal magnetic flux [V.s/rad]
-        jtor: np.array(N, M)
+        jtor:
             The toroidal current density in the plasma [A/m^2]
 
         Note
@@ -76,16 +78,16 @@ class FreeBoundary:
             psi[j, k] = integrate_dx_dz(self.f_greens[i] * jtor, self.dx, self.dz)
 
 
-def apply_boundary(rhs, lhs):
+def apply_boundary(rhs: np.ndarray, lhs: Union[float, np.ndarray]):
     """
     Applies a boundary constraint to the boundaries of an array for use on finite
     difference grids.
 
     Parameters
     ----------
-    rhs: np.array(N, M)
+    rhs:
         The right-hand-side of the equality
-    lhs: np.array(N, M) or 0
+    lhs:
         The left-hand-side of the equality
         If 0, will apply a fixed boundary condition of 0 to the rhs
 

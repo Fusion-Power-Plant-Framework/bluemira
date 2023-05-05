@@ -22,6 +22,13 @@
 """
 Representation of the plasma
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.grid import Grid
+
 import numpy as np
 from scipy.interpolate import RectBivariateSpline
 
@@ -65,11 +72,11 @@ class PlasmaCoil:
 
     Parameters
     ----------
-    plasma_psi: np.ndarray
+    plasma_psi:
         Psi contribution from the plasma on the grid
-    j_tor: Optional[np.ndarray]
+    j_tor:
         Toroidal current density distribution from the plasma on the grid
-    grid: Grid
+    grid:
         Grid object on which the finite difference representation of the plasma should be
         constructed
 
@@ -79,19 +86,19 @@ class PlasmaCoil:
     when using very dense grids (e.g. CREATE).
     """
 
-    def __init__(self, plasma_psi, j_tor, grid):
+    def __init__(self, plasma_psi: np.ndarray, j_tor: Optional[np.ndarray], grid: Grid):
         self._grid = grid
         self._set_j_tor(j_tor)
         self._set_funcs(plasma_psi)
 
-    def _set_j_tor(self, j_tor):
+    def _set_j_tor(self, j_tor: Optional[np.ndarray]):
         self._j_tor = j_tor
         if j_tor is not None:
             self._ii, self._jj = np.where(j_tor > J_TOR_MIN)
         else:
             self._ii, self._jj = None, None
 
-    def _set_funcs(self, plasma_psi):
+    def _set_funcs(self, plasma_psi: np.ndarray):
         self._plasma_psi = plasma_psi
         self._psi_func = RectBivariateSpline(
             self._grid.x[:, 0], self._grid.z[0, :], plasma_psi
@@ -126,15 +133,19 @@ class PlasmaCoil:
         return array
 
     @treat_xz_array
-    def psi(self, x=None, z=None):
+    def psi(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
         """
         Poloidal magnetic flux at x, z
 
         Parameters
         ----------
-        x: Optional[Union[float, np.ndarray]]
+        x:
             Radial coordinates at which to calculate
-        z: Optional[Union[float, np.ndarray]]
+        z:
             Vertical coordinates at which to calculate.
 
         Notes
@@ -143,8 +154,7 @@ class PlasmaCoil:
 
         Returns
         -------
-        psi: Union[float, np.ndarray]
-            Poloidal magnetic flux at the points [V.s/rad]
+        Poloidal magnetic flux at the points [V.s/rad]
         """
         if x is None and z is None:
             return self._plasma_psi
@@ -155,15 +165,19 @@ class PlasmaCoil:
             return self._psi_func(x, z)
 
     @treat_xz_array
-    def Bx(self, x=None, z=None):
+    def Bx(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
         """
         Radial magnetic field at x, z
 
         Parameters
         ----------
-        x: Optional[Union[float, np.ndarray]]
+        x:
             Radial coordinates at which to calculate
-        z: Optional[Union[float, np.ndarray]]
+        z:
             Vertical coordinates at which to calculate.
 
         Notes
@@ -172,8 +186,7 @@ class PlasmaCoil:
 
         Returns
         -------
-        Bx: Union[float, np.ndarray]
-            Radial magnetic field at the points [T]
+        Radial magnetic field at the points [T]
         """
         if x is None and z is None:
             return self._plasma_Bx
@@ -184,15 +197,19 @@ class PlasmaCoil:
             return self._Bx_func(x, z)
 
     @treat_xz_array
-    def Bz(self, x=None, z=None):
+    def Bz(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
         """
         Vertical magnetic field at x, z
 
         Parameters
         ----------
-        x: Optional[Union[float, np.ndarray]]
+        x:
             Radial coordinates at which to calculate
-        z: Optional[Union[float, np.ndarray]]
+        z:
             Vertical coordinates at which to calculate.
 
         Notes
@@ -201,8 +218,7 @@ class PlasmaCoil:
 
         Returns
         -------
-        Bz: Union[float, np.ndarray]
-            Vertical magnetic field at the points [T]
+        Vertical magnetic field at the points [T]
         """
         if x is None and z is None:
             return self._plasma_Bz
@@ -212,15 +228,19 @@ class PlasmaCoil:
         else:
             return self._Bz_func(x, z)
 
-    def Bp(self, x=None, z=None):
+    def Bp(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
         """
         Poloidal magnetic field at x, z
 
         Parameters
         ----------
-        x: Optional[Union[float, np.ndarray]]
+        x:
             Radial coordinates at which to calculate
-        z: Optional[Union[float, np.ndarray]]
+        z:
             Vertical coordinates at which to calculate.
 
         Notes
@@ -229,8 +249,7 @@ class PlasmaCoil:
 
         Returns
         -------
-        Bp: Union[float, np.ndarray]
-            Poloidal magnetic field at the points [T]
+        Poloidal magnetic field at the points [T]
         """
         if x is None and z is None:
             return self._plasma_Bp
@@ -243,7 +262,7 @@ class PlasmaCoil:
 
         Parameters
         ----------
-        ax: Axes object
+        ax:
             The matplotlib axes on which to plot the PlasmaCoil
         """
         return PlasmaCoilPlotter(self, ax=ax)
@@ -262,23 +281,27 @@ class NoPlasmaCoil:
 
     Parameters
     ----------
-    grid: Grid
+    grid:
         Grid object on which the finite difference representation of the plasma should be
         constructed
     """
 
-    def __init__(self, grid):
+    def __init__(self, grid: Grid):
         self.grid = grid
 
-    def psi(self, x=None, z=None):
+    def psi(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
         """
         Poloidal magnetic flux at x, z
 
         Parameters
         ----------
-        x: Optional[Union[float, np.ndarray]]
+        x:
             Radial coordinates at which to calculate
-        z: Optional[Union[float, np.ndarray]]
+        z:
             Vertical coordinates at which to calculate.
 
         Notes
@@ -287,20 +310,23 @@ class NoPlasmaCoil:
 
         Returns
         -------
-        psi: Union[float, np.ndarray]
-            Poloidal magnetic flux at the points [V.s/rad]
+        Poloidal magnetic flux at the points [V.s/rad]
         """
         return self._return_zeros(x, z)
 
-    def Bx(self, x=None, z=None):
+    def Bx(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
         """
         Radial magnetic field at x, z
 
         Parameters
         ----------
-        x: Optional[Union[float, np.ndarray]]
+        x:
             Radial coordinates at which to calculate
-        z: Optional[Union[float, np.ndarray]]
+        z:
             Vertical coordinates at which to calculate.
 
         Notes
@@ -309,20 +335,23 @@ class NoPlasmaCoil:
 
         Returns
         -------
-        Bx: Union[float, np.ndarray]
-            Radial magnetic field at the points [T]
+        Radial magnetic field at the points [T]
         """
         return self._return_zeros(x, z)
 
-    def Bz(self, x=None, z=None):
+    def Bz(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
         """
         Vertical magnetic field at x, z
 
         Parameters
         ----------
-        x: Optional[Union[float, np.ndarray]]
+        x:
             Radial coordinates at which to calculate
-        z: Optional[Union[float, np.ndarray]]
+        z:
             Vertical coordinates at which to calculate.
 
         Notes
@@ -331,20 +360,23 @@ class NoPlasmaCoil:
 
         Returns
         -------
-        Bz: Union[float, np.ndarray]
-            Vertical magnetic field at the points [T]
+        Vertical magnetic field at the points [T]
         """
         return self._return_zeros(x, z)
 
-    def Bp(self, x=None, z=None):
+    def Bp(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
         """
         Poloidal magnetic field at x, z
 
         Parameters
         ----------
-        x: Optional[Union[float, np.ndarray]]
+        x:
             Radial coordinates at which to calculate
-        z: Optional[Union[float, np.ndarray]]
+        z:
             Vertical coordinates at which to calculate.
 
         Notes
@@ -353,8 +385,7 @@ class NoPlasmaCoil:
 
         Returns
         -------
-        Bp: Union[float, np.ndarray]
-            Poloidal magnetic field at the points [T]
+        Poloidal magnetic field at the points [T]
         """
         return self._return_zeros(x, z)
 

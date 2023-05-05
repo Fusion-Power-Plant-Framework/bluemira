@@ -73,19 +73,19 @@ class Snapshot:
 
     Parameters
     ----------
-    eq
+    eq:
         The equilibrium at the snapshot
-    coilset
+    coilset:
         The coilset at the snapshot
-    opt_problem
+    opt_problem:
         The constraints at the snapshot
-    profiles
+    profiles:
         The profile at the snapshot
-    optimiser
+    optimiser:
         The optimiser for the snapshot
-    limiter
+    limiter:
         The limiter for the snapshot
-    tfcoil
+    tfcoil:
         The PF coil placement boundary
     """
 
@@ -147,42 +147,42 @@ class PulsedCoilsetDesign(ABC):
 
     Parameters
     ----------
-    params
+    params:
         Parameter frame with which to perform the problem
-    coilset
+    coilset:
         PF coilset to use in the equilibrium design
-    grid
+    grid:
         Grid to use in the equilibrium design
-    equilibrium_constraints
+    equilibrium_constraints:
         List of magnetic constraints to use for equilibria. Depending on the optimisation
         problem, these may be used in the objective function or constraints
-    profiles
+    profiles:
         Plasma profile object to use when solving equilibria
-    breakdown_strategy_cls
+    breakdown_strategy_cls:
         BreakdownZoneStrategy class to use when determining breakdown constraints
-    breakdown_problem_cls
+    breakdown_problem_cls:
         Coilset optimisation problem class for the breakdown phase
-    breakdown_optimiser
+    breakdown_optimiser:
         Optimiser for the breakdown,
         default is COBYLA with ftol_rel=1e-10 and max_eval=5000
-    breakdown_settings
+    breakdown_settings:
         Breakdown optimiser settings
-    equilibrium_problem_cls
+    equilibrium_problem_cls:
         Coilset optimisation problem class for the equilibria and current vector
-    equilibrium_optimiser
+    equilibrium_optimiser:
         Optimiser for the equilibria and current vector
         default is SLSQP with ftol_rel=1e-6 and max_eval=1000
-    equilibrium_convergence
+    equilibrium_convergence:
         Convergence criteria to use when solving equilibria
         default is 1e-2 DudsonConvergence
-    equilibrium_settings
+    equilibrium_settings:
         Settings for the solution of equilibria
-    current_opt_constraints
+    current_opt_constraints:
         List of current optimisation constraints for equilibria
-    coil_constraints
+    coil_constraints:
         List of coil current optimisation constraints for all snapshots (including
         breakdown)
-    limiter
+    limiter:
         Limiter to use when solving equilibria
     """
 
@@ -566,51 +566,50 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
 
     Parameters
     ----------
-    params
+    params:
         Parameter frame with which to perform the problem
-    coilset
+    coilset:
         PF coilset to use in the equilibrium design
-    position_mapper
+    position_mapper:
         Normalised coil position mapping
-    grid
+    grid:
         Grid to use in the equilibrium design
-    equilibrium_constraints
+    equilibrium_constraints:
         List of magnetic constraints to use for equilibria. Depending on the optimisation
         problem, these may be used in the objective function or constraints
-    profiles
+    profiles:
         Plasma profile object to use when solving equilibria
-    breakdown_strategy_cls
+    breakdown_strategy_cls:
         BreakdownZoneStrategy class to use when determining breakdown constraints
-    breakdown_problem_cls
+    breakdown_problem_cls:
         Coilset optimisation problem class for the breakdown phase
-    breakdown_optimiser
+    breakdown_optimiser:
         Optimiser for the breakdown,
         default is COBYLA with ftol_rel=1e-10 and max_eval=5000
-    breakdown_settings
+    breakdown_settings:
         Breakdown optimiser settings
-    equilibrium_problem_cls
+    equilibrium_problem_cls:
         Coilset optimisation problem class for the equilibria and current vector
-    equilibrium_optimiser
+    equilibrium_optimiser:
         Optimiser for the equilibria and current vector
         default is SLSQP with ftol_rel=1e-6 and max_eval=1000
-    equilibrium_convergence
+    equilibrium_convergence:
         Convergence criteria to use when solving equilibria
         default is 1e-2 DudsonConvergence
-    equilibrium_settings
+    equilibrium_settings:
         Settings for the solution of equilibria
-    current_opt_constraints: Optional[List[OptimisationConstraint]]
+    current_opt_constraints:
         List of current optimisation constraints for equilibria
-    coil_constraints: Optional[List[OptimisationConstraint]]
+    coil_constraints:
         List of coil current optimisation constraints for all snapshots (including
         breakdown)
-    limiter
+    limiter:
         Limiter to use when solving equilibria
-    position_problem_cls
+    position_problem_cls:
         Coilset optimisation problem class for the coil positions
-    position_optimiser
+    position_optimiser:
         Optimiser for the coil positions
         default is COBYLA with ftol_rel=1e-4 and max_eval=100
-
     """
 
     def __init__(

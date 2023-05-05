@@ -22,10 +22,15 @@
 """
 Equilibrium optimisation constraint classes
 """
+from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import List, Union
+from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 import numpy as np
 
@@ -41,7 +46,7 @@ from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.tools import abs_rel_difference, is_num
 
 
-def _get_dummy_equilibrium(equilibrium):
+def _get_dummy_equilibrium(equilibrium: Equilibrium):
     """
     Get a dummy equilibrium for current optimisation where the background response is
     solely due to the plasma and passive coils.
@@ -67,21 +72,21 @@ class UpdateableConstraint(ABC):
     """
 
     @abstractmethod
-    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
+    def prepare(self, equilibrium: Equilibrium, I_not_dI=False, fixed_coils=False):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
         pass
 
     @abstractmethod
-    def control_response(self, coilset):
+    def control_response(self, coilset: CoilSet):
         """
         Calculate control response of a CoilSet to the constraint.
         """
         pass
 
     @abstractmethod
-    def evaluate(self, equilibrium):
+    def evaluate(self, equilibrium: Equilibrium):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -94,19 +99,26 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
 
     Parameters
     ----------
-    x: Union[float, np.ndarray]
+    x:
         Radial coordinate(s) at which to constrain the poloidal field
-    z: Union[float, np.ndarray]
+    z:
         Vertical coordinate(s) at which to constrain the poloidal field
-    B_max: Union[float, np.ndarray]
+    B_max:
         Maximum poloidal field value(s) at location(s)
-    tolerance: Union[float, np.ndarray]
+    tolerance:
         Tolerance with which the constraint(s) will be met
-    constraint_type: str
+    constraint_type:
         Type of constraint
     """
 
-    def __init__(self, x, z, B_max, tolerance=1.0e-6, constraint_type="inequality"):
+    def __init__(
+        self,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        B_max: Union[float, np.ndarray],
+        tolerance: Union[float, np.ndarray] = 1.0e-6,
+        constraint_type: str = "inequality",
+    ):
         if is_num(x):
             x = np.array([x])
         if is_num(z):
@@ -140,7 +152,9 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
             constraint_type=constraint_type,
         )
 
-    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
+    def prepare(
+        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+    ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -157,7 +171,7 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
 
-    def control_response(self, coilset):
+    def control_response(self, coilset: CoilSet) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calculate control response of a CoilSet to the constraint.
         """
@@ -166,7 +180,7 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
             coilset.Bz_response(self.x, self.z, control=True),
         )
 
-    def evaluate(self, equilibrium):
+    def evaluate(self, equilibrium: Equilibrium) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -175,7 +189,7 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
         Bz = equilibrium.Bz(self.x, self.z)
         return Bx, Bz
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         Length of field constraints.
         """
@@ -189,11 +203,11 @@ class CoilFieldConstraints(FieldConstraints):
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         Coilset for which to constrain the fields in the coils
-    B_max: Union[float, np.ndarray]
+    B_max:
         Maximum field allowed in the coils
-    tolerance: Union[float, np.ndarray]
+    tolerance:
         Tolerance with which the inequality constraints will be met
 
     Notes
@@ -206,7 +220,12 @@ class CoilFieldConstraints(FieldConstraints):
     plasma (TF from TF coils not accounted for if PF coils are inside the TF coils.)
     """
 
-    def __init__(self, coilset, B_max, tolerance=1.0e-6):
+    def __init__(
+        self,
+        coilset: CoilSet,
+        B_max: Union[float, np.ndarray],
+        tolerance: Union[float, np.ndarray] = 1.0e-6,
+    ):
         n_coils = coilset.n_coils()
         if is_num(B_max):
             B_max = B_max * np.ones(n_coils)
@@ -228,7 +247,9 @@ class CoilFieldConstraints(FieldConstraints):
     def _get_constraint_points(coilset):
         return coilset.x - coilset.dx, coilset.z
 
-    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
+    def prepare(
+        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+    ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -254,15 +275,15 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         Coilset for which to constrain the fields in the coils
-    PF_Fz_max: float
+    PF_Fz_max:
         Maximum absolute vertical force in a PF coil [MN]
-    CS_Fz_sum_max: float
+    CS_Fz_sum_max:
         Maximum absolute vertical force sum in the CS stack [MN]
-    CS_Fz_sep_max: float
+    CS_Fz_sep_max:
         Maximum separation vertical force between two CS modules [MN]
-    tolerance: Union[float, np.ndarray]
+    tolerance:
         Tolerance with which the inequality constraints will be met
 
     Notes
@@ -272,7 +293,12 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
     """
 
     def __init__(
-        self, coilset, PF_Fz_max, CS_Fz_sum_max, CS_Fz_sep_max, tolerance=1.0e-6
+        self,
+        coilset: CoilSet,
+        PF_Fz_max: float,
+        CS_Fz_sum_max: float,
+        CS_Fz_sep_max: float,
+        tolerance: Union[float, np.ndarray] = 1.0e-6,
     ):
         n_PF = coilset.n_coils("PF")
         n_CS = coilset.n_coils("CS")
@@ -298,7 +324,9 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
             tolerance=tolerance,
         )
 
-    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
+    def prepare(
+        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+    ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -311,13 +339,13 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
 
         self._args["b_vec"] = self.evaluate(equilibrium)
 
-    def control_response(self, coilset):
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
         """
         return coilset.control_F(coilset)
 
-    def evaluate(self, equilibrium):
+    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -345,9 +373,9 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
         self,
         target_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=1e-6,
-        f_constraint=L2_norm_constraint,
-        constraint_type="inequality",
+        tolerance: Union[float, np.ndarray] = 1e-6,
+        f_constraint: Callable[[np.ndarray], np.ndarray] = L2_norm_constraint,
+        constraint_type: str = "inequality",
     ):
         self.target_value = target_value * np.ones(len(self))
         if is_num(tolerance):
@@ -364,7 +392,9 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
             constraint_type=constraint_type,
         )
 
-    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
+    def prepare(
+        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+    ):  # noqa :N803
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -378,7 +408,7 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
         self.update_target(equilibrium)
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
 
-    def update_target(self, equilibrium):
+    def update_target(self, equilibrium: Equilibrium):
         """
         Update the target value of the magnetic constraint.
         """
@@ -391,7 +421,7 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
         """
         pass
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         The mathematical size of the constraint.
 
@@ -410,13 +440,13 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
 
     def __init__(
         self,
-        x,
-        z,
-        target_value,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        target_value: float,
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=1e-6,
-        f_constraint=Ax_b_constraint,
-        constraint_type="equality",
+        tolerance: Union[float, np.ndarray] = 1e-6,
+        f_constraint: Callable[[np.ndarray], np.ndarray] = Ax_b_constraint,
+        constraint_type: str = "equality",
     ):
         self.x = x
         self.z = z
@@ -437,15 +467,15 @@ class RelativeMagneticConstraint(MagneticConstraint):
 
     def __init__(
         self,
-        x,
-        z,
-        ref_x,
-        ref_z,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        ref_x: float,
+        ref_z: float,
         constraint_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=1e-6,
-        f_constraint=L2_norm_constraint,
-        constraint_type="inequality",
+        tolerance: Union[float, np.ndarray] = 1e-6,
+        f_constraint: Callable[[np.ndarray], np.ndarray] = L2_norm_constraint,
+        constraint_type: str = "inequality",
     ):
         self.x = x
         self.z = z
@@ -461,7 +491,7 @@ class RelativeMagneticConstraint(MagneticConstraint):
         self._args["value"] = constraint_value
 
     @abstractmethod
-    def update_target(self, equilibrium):
+    def update_target(self, equilibrium: Equilibrium):
         """
         Update the target value of the magnetic constraint.
         """
@@ -476,10 +506,10 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
 
     def __init__(
         self,
-        x,
-        z,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=1e-6,
+        tolerance: float = 1e-6,
     ):
         super().__init__(
             x,
@@ -491,7 +521,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
             f_constraint=L2_norm_constraint,
         )
 
-    def control_response(self, coilset):
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
         """
@@ -502,7 +532,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
             ]
         )
 
-    def evaluate(self, eq):
+    def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -521,7 +551,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         }
         ax.plot(self.x, self.z, **kwargs)
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         The mathematical size of the constraint.
         """
@@ -534,7 +564,12 @@ class PsiConstraint(AbsoluteMagneticConstraint):
     """
 
     def __init__(
-        self, x, z, target_value, weights: Union[float, np.ndarray] = 1.0, tolerance=1e-6
+        self,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        target_value: float,
+        weights: Union[float, np.ndarray] = 1.0,
+        tolerance: Union[float, np.ndarray] = 1e-6,
     ):
         super().__init__(
             x,
@@ -546,13 +581,13 @@ class PsiConstraint(AbsoluteMagneticConstraint):
             constraint_type="equality",
         )
 
-    def control_response(self, coilset):
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
         """
         return coilset.psi_response(self.x, self.z, control=True)
 
-    def evaluate(self, eq):
+    def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -573,10 +608,10 @@ class IsofluxConstraint(RelativeMagneticConstraint):
 
     def __init__(
         self,
-        x,
-        z,
-        ref_x,
-        ref_z,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        ref_x: float,
+        ref_z: float,
         constraint_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance: float = 1e-6,
@@ -593,7 +628,7 @@ class IsofluxConstraint(RelativeMagneticConstraint):
             constraint_type="inequality",
         )
 
-    def control_response(self, coilset):
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
         """
@@ -601,13 +636,13 @@ class IsofluxConstraint(RelativeMagneticConstraint):
             self.ref_x, self.ref_z, control=True
         )
 
-    def evaluate(self, eq):
+    def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
         return eq.psi(self.x, self.z)
 
-    def update_target(self, eq):
+    def update_target(self, eq: Equilibrium):
         """
         We need to update the target value, as it is a relative constraint.
         """
@@ -638,7 +673,12 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
     """
 
     def __init__(
-        self, x, z, target_value, weights: Union[float, np.ndarray] = 1.0, tolerance=1e-6
+        self,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        target_value: float,
+        weights: Union[float, np.ndarray] = 1.0,
+        tolerance: Union[float, np.ndarray] = 1e-6,
     ):
         super().__init__(
             x,
@@ -650,13 +690,13 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
             constraint_type="inequality",
         )
 
-    def control_response(self, coilset):
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
         """
         return coilset.psi_response(self.x, self.z, control=True)
 
-    def evaluate(self, eq):
+    def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -702,7 +742,12 @@ class MagneticConstraintSet(ABC):
         self.target = None
         self.background = None
 
-    def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
+    def __call__(
+        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+    ):  # noqa :N803
+        """
+        Update the MagneticConstraintSet
+        """
         if I_not_dI:
             equilibrium = _get_dummy_equilibrium(equilibrium)
 
@@ -722,13 +767,13 @@ class MagneticConstraintSet(ABC):
         self.build_background()
         self.build_weight_matrix()
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         The mathematical size of the constraint set.
         """
         return sum([len(c) for c in self.constraints])
 
-    def get_weighted_arrays(self):
+    def get_weighted_arrays(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get [A] and [b] scaled by weight matrix.
         Weight matrix assumed to be diagonal.
@@ -788,19 +833,19 @@ class MagneticConstraintSet(ABC):
             i += n
 
     @property
-    def b(self):
+    def b(self) -> np.ndarray:
         """
         The b vector of target - background values.
         """
         return self.target - self.background
 
-    def update_psi_boundary(self, psi_bndry):
+    def update_psi_boundary(self, psi_bndry: float):
         """
         Update the target value for all PsiBoundaryConstraints.
 
         Parameters
         ----------
-        psi_bndry: float
+        psi_bndry:
             The target psi boundary value [V.s/rad]
         """
         for constraint in self.constraints:
@@ -822,18 +867,24 @@ class AutoConstraints(MagneticConstraintSet):
 
     Parameters
     ----------
-    x: np.array
+    x:
         The x coordinates of the LCFS
-    z: np.array
+    z:
         The z coordinates of the LCFS
-    psi_boundary: Union[None, float]
+    psi_boundary:
         The psi boundary value to use as a constraint. If None, an
         isoflux constraint is used.
-    n_points: int
+    n_points:
         The number of interpolated points to use
     """
 
-    def __init__(self, x, z, psi_boundary=None, n_points=40):
+    def __init__(
+        self,
+        x: np.ndarray,
+        z: np.ndarray,
+        psi_boundary: Optional[float] = None,
+        n_points: int = 40,
+    ):
         x = np.array(x)
         z = np.array(z)
         z_max = max(z)

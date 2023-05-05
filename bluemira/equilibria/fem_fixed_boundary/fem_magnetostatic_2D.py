@@ -180,7 +180,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         Parameters
         ----------
-        mesh : Union[dolfin.Mesh, str]
+        mesh:
             Filename of the xml file with the mesh definition or a dolfin mesh
         """
         super().set_mesh(mesh=mesh)
@@ -197,18 +197,17 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         Parameters
         ----------
-        pprime: Union[callable, float]
+        pprime:
             pprime as function of psi_norm (1-D function)
-        ffprime: Union[callable, float]
+        ffprime:
             ffprime as function of psi_norm (1-D function)
-        curr_target: Optional[float]
+        curr_target:
             Target current (also used to initialize the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined) [A]
 
         Returns
         -------
-        g: callable
-            Source current to solve the magnetostatic problem
+        Source current callable to solve the magnetostatic problem
         """
         area = dolfin.assemble(
             dolfin.Constant(1) * dolfin.Measure("dx", domain=self.mesh)()
@@ -333,15 +332,18 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         Parameters
         ----------
-        plot: bool
+        plot:
             Whether or not to plot
-        figname: Optional[str]
+        debug:
+            Whether or not to display debug information
+        gif: bool
+            Whether or not to produce a GIF
+        figname:
             The name of the figure. If None, a suitable default is used.
 
         Returns
         -------
-        equilibrium: FixedBoundaryEquilibrium
-            FixedBoundaryEquilibrium object corresponding to the solve
+        FixedBoundaryEquilibrium object corresponding to the solve
         """
         self._check_all_inputs_ready_error()
         self.define_g()

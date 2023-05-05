@@ -22,25 +22,30 @@
 """
 Tools for Coilgroups
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
 
 import numpy as np
 
 from bluemira.magnetostatics.greens import circular_coil_inductance_elliptic, greens_psi
 
 
-def make_mutual_inductance_matrix(coilset):
+def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
     """
     Calculate the mutual inductance matrix of a coilset.
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         Coilset for which to calculate the mutual inductance matrix
 
     Returns
     -------
-    M: np.ndarray
-        The symmetric mutual inductance matrix [H]
+    The symmetric mutual inductance matrix [H]
 
     Notes
     -----
@@ -72,7 +77,7 @@ def make_mutual_inductance_matrix(coilset):
     return M
 
 
-def _get_symmetric_coils(coilset):
+def _get_symmetric_coils(coilset: CoilSet):
     """
     Coilset symmetry utility
     """
@@ -94,19 +99,18 @@ def _get_symmetric_coils(coilset):
     return sym_stack
 
 
-def check_coilset_symmetric(coilset):
+def check_coilset_symmetric(coilset: CoilSet) -> bool:
     """
     Check whether or not a CoilSet is purely symmetric about z=0.
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         CoilSet to check for symmetry
 
     Returns
     -------
-    symmetric: bool
-        Whether or not the CoilSet is symmetric about z=0
+    Whether or not the CoilSet is symmetric about z=0
     """
     sym_stack = _get_symmetric_coils(coilset)
     for coil, count in sym_stack:
@@ -116,22 +120,21 @@ def check_coilset_symmetric(coilset):
     return True
 
 
-def get_max_current(dx, dz, j_max):
+def get_max_current(dx: float, dz: float, j_max: float) -> float:
     """
     Get the maximum current in a rectangular coil cross-sectional area
 
     Parameters
     ----------
-    dx: float
+    dx:
         Coil half-width [m]
-    dz: float
+    dz:
         Coil half-height [m]
-    j_max: float
+    j_max:
         Coil current density [A/m^2]
 
     Returns
     -------
-    max_current: float
-        Maximum current [A]
+    Maximum current [A]
     """
     return abs(j_max * (4 * dx * dz))

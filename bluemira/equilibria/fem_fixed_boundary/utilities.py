@@ -29,7 +29,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from dolfin import BoundaryMesh, Mesh, Vertex
 from matplotlib._tri import TriContourGenerator
-from matplotlib.axes._axes import Axes
+from matplotlib.pyplot import Axes
 from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
@@ -60,25 +60,24 @@ def plot_scalar_field(
 
     Parameters
     ----------
-    x: np.array(n, m)
+    x:
         x coordinate array
-    z: np.array(n, m)
+    z:
         z coordinate array
-    data: np.array(n, m)
+    data:
         value array
-    levels: int
+    levels:
         Number of contour levels to plot
-    axis: Optional[Axis]
+    axis:
         axis onto which to plot
-    contour: bool
+    contour:
         Whether or not to plot contour lines
-    tofill: bool
+    tofill:
         Whether or not to plot filled contours
 
     Returns
     -------
-    axis: Axis
-        Matplotlib axis on which the plot ocurred
+    Matplotlib axis on which the plot ocurred
     """
     if ax is None:
         fig, ax = plt.subplots()
@@ -145,9 +144,8 @@ def get_tricontours(
 
     Returns
     -------
-    value_loop:
-        The points of the value contour in the array. If no contour is found
-        for a value, None is returned
+    The points of the value contour in the array. If no contour is found
+    for a value, None is returned
     """
     tri = Triangulation(x, z)
     tcg = TriContourGenerator(tri.get_cpp_triangulation(), array)
@@ -165,28 +163,30 @@ def get_tricontours(
     return results
 
 
-def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
+def find_flux_surface(
+    psi_norm_func: Callable[[np.ndarray], float],
+    psi_norm: float,
+    mesh: Optional[dolfin.Mesh] = None,
+    n_points: int = 100,
+) -> np.ndarray:
     """
     Find a flux surface in the psi_norm function precisely by normalised psi value.
 
     Parameters
     ----------
-    psi_norm_func: Callable[[np.ndarray], float]
+    psi_norm_func:
         Function to calculate normalised psi
-    mesh: dolfin.Mesh
-        Mesh object to use to estimate extrema prior to optimisation
-    psi_norm: float
+    psi_norm:
         Normalised psi value for which to find the flux surface
-    mesh: Optional[dolfin.Mesh]
+    mesh:
         Mesh object to use to estimate the flux surface
         If None, reasonable guesses are used.
-    n_points: int
+    n_points:
         Number of points along the flux surface
 
     Returns
     -------
-    points: np.ndarray
-        x, z coordinates of the flux surface
+    x, z coordinates of the flux surface
     """
     x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), mesh=mesh)
 
@@ -255,20 +255,20 @@ def find_flux_surface(psi_norm_func, psi_norm, mesh=None, n_points=100):
     return points
 
 
-def get_mesh_boundary(mesh):
+def get_mesh_boundary(mesh: dolfin.Mesh) -> Tuple[np.ndarray, np.ndarray]:
     """
     Retrieve the boundary of the mesh, as an ordered set of coordinates.
 
     Parameters
     ----------
-    mesh: dolfin.Mesh
+    mesh:
         Mesh for which to retrieve the exterior boundary
 
     Returns
     -------
-    xbdry: np.ndarray
+    xbdry:
         x coordinates of the boundary
-    zbdry: np.ndarray
+    zbdry:
         z coordinates of the boundary
     """
     boundary = BoundaryMesh(mesh, "exterior")
@@ -380,22 +380,22 @@ def calculate_plasma_shape_params(
 
     Parameters
     ----------
-    psi_norm_func: Callable[[np.ndarray], float]
+    psi_norm_func:
         Function to calculate normalised psi
-    mesh: dolfin.Mesh
+    mesh:
         Mesh object to use to estimate extrema prior to optimisation
-    psi_norm: float
+    psi_norm:
         Normalised psi value for which to calculate the shape parameters
-    plot: bool
+    plot:
         Whether or not to plot
 
     Returns
     -------
-    r_geo: float
+    r_geo:
         Geometric major radius of the flux surface at psi_norm
-    kappa: float
+    kappa:
         Elongation of the flux surface at psi_norm
-    delta: float
+    delta:
         Triangularity of the flux surface at psi_norm
     """
     points = mesh.coordinates()
@@ -438,22 +438,23 @@ def calculate_plasma_shape_params(
     return r_geo, kappa, delta
 
 
-def find_magnetic_axis(psi_func, mesh=None):
+def find_magnetic_axis(
+    psi_func: Callable[[np.ndarray], float], mesh: Optional[dolfin.Mesh] = None
+) -> np.ndarray:
     """
     Find the magnetic axis in the poloidal flux map.
 
     Parameters
     ----------
-    psi_func: Callable[[np.ndarray], float]
+    psi_func:
         Function to return psi at a given point
-    mesh: Optional[dolfin.Mesh]
+    mesh:
         Mesh object to use to estimate magnetic axis prior to optimisation
         If None, a reasonable guess is made.
 
     Returns
     -------
-    mag_axis: np.ndarray
-        Position vector (2) of the magnetic axis [m]
+    Position vector (2) of the magnetic axis [m]
     """
     optimiser = Optimiser(
         "SLSQP", 2, opt_conditions={"ftol_abs": 1e-6, "max_eval": 1000}
@@ -514,8 +515,7 @@ def _cell_near_point(cell: dolfin.Cell, refine_point: Iterable, distance: float)
         Distance away from the midpoint of the cell to determine vicinity
     Returns
     -------
-    bool:
-        Whether or not the cell is in the vicinity of a point
+    Whether or not the cell is in the vicinity of a point
     """
     # Get the center of the cell
     cell_center = cell.midpoint()[:]
@@ -552,8 +552,7 @@ def refine_mesh(
 
     Returns
     -------
-    mesh:
-        Refined mesh
+    Refined mesh
     """
     for _ in range(num_levels):
         cell_markers = dolfin.MeshFunction("bool", mesh, mesh.topology().dim())

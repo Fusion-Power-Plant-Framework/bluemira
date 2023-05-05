@@ -38,6 +38,8 @@ Note that the gradient of the objective function is of the form:
 :math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
 """  # noqa (W505)
 
+from typing import Any, Callable, Dict, Optional, Tuple
+
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_print_flush
@@ -45,7 +47,13 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.utilities.optimiser import approx_derivative
 
 
-def ad_objective(vector, grad, objective, objective_args, ad_args=None):
+def ad_objective(
+    vector: np.ndarray,
+    grad: np.ndarray,
+    objective: Callable[[np.ndarray], np.ndarray],
+    objective_args: Dict[str, Any],
+    ad_args: Optional[Dict[str, Any]] = None,
+) -> float:
     """
     Objective function that calculates gradient information via
     automatic differentiation of the figure of merit returned from a
@@ -56,24 +64,23 @@ def ad_objective(vector, grad, objective, objective_args, ad_args=None):
 
     Parameters
     ----------
-    vector: np.array(n_C)
+    vector:
         State vector of the array of coil currents.
-    grad: np.array
+    grad:
         Local gradient of objective function used by LD NLOPT algorithms.
         Updated in-place.
-    objective: function
+    objective:
         Objective function for which a numerical approximation for
         derivative information will be calculated.
-    objective_args: dict
+    objective_args:
         Arguments to pass to objective function during call.
-    ad_args: dict
+    ad_args:
         Optional keyword arguments to pass to derivative approximation
         function.
 
     Returns
     -------
-    fom: float
-        Value of objective function (figure of merit).
+    Value of objective function (figure of merit).
     """
     fom = objective(vector, grad, **objective_args)
     if grad.size > 0:
@@ -84,7 +91,14 @@ def ad_objective(vector, grad, objective, objective_args, ad_args=None):
     return fom
 
 
-def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
+def regularised_lsq_objective(
+    vector: np.ndarray,
+    grad: np.ndarray,
+    scale: float,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    gamma: float,
+) -> float:
     """
     Objective function for nlopt optimisation (minimisation),
     consisting of a least-squares objective with Tikhonov
@@ -92,24 +106,23 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
 
     Parameters
     ----------
-    vector: np.array(n_C)
-        State vector of the array of coil currents.
-    grad: np.array
-        Local gradient of objective function used by LD NLOPT algorithms.
-        Updated in-place.
+    vector:
+        State vector of the array of coil currents (m)
+    grad:
+        Local gradient of objective function used by LD NLOPT algorithms
+        Updated in-place (n, m).
     scale: float
         Scaling factor for the vector
-    a_mat: np.array(n, m)
-        The 2-D a_mat control matrix A
-    b_vec: np.array(n)
-        The 1-D b vector of target values
-    gamma: float
+    a_mat:
+        The 2-D a_mat control matrix A (n, m)
+    b_vec:
+        The 1-D b vector of target values (n)
+    gamma:
         The Tikhonov regularisation parameter.
 
     Returns
     -------
-    fom: float
-        Value of objective function (figure of merit).
+    Value of objective function (figure of merit).
     """
     vector = vector * scale
     fom, err = regularised_lsq_fom(vector, a_mat, b_vec, gamma)
@@ -125,22 +138,21 @@ def regularised_lsq_objective(vector, grad, scale, a_mat, b_vec, gamma):
     return fom
 
 
-def minimise_coil_currents(vector, grad):
+def minimise_coil_currents(vector: np.ndarray, grad: np.ndarray) -> float:
     """
     Objective function for the minimisation of the sum of coil currents squared
 
     Parameters
     ----------
-    vector: np.ndarray
+    vector:
         State vector of the array of coil currents.
-    grad: np.array
+    grad:
         Local gradient of objective function used by LD NLOPT algorithms.
         Updated in-place.
 
     Returns
     -------
-    sum_sq_currents: float
-        Sum of the currents squared.
+    Sum of the currents squared.
     """
     sum_sq_currents = np.sum(vector**2)
 
@@ -150,27 +162,28 @@ def minimise_coil_currents(vector, grad):
     return sum_sq_currents
 
 
-def maximise_flux(vector, grad, c_psi_mat, scale):
+def maximise_flux(
+    vector: np.ndarray, grad: np.ndarray, c_psi_mat: np.ndarray, scale: float
+) -> float:
     """
     Objective function to maximise flux
 
     Parameters
     ----------
-    vector: np.ndarray
+    vector:
         State vector of the array of coil currents.
-    grad: np.array
+    grad:
         Local gradient of objective function used by LD NLOPT algorithms.
         Updated in-place.
-    c_psi_mat: np.ndarray
+    c_psi_mat:
         Response matrix of the coil psi contributions to the point at which the flux
         should be maximised
-    scale: float
+    scale:
         Scaling factor for the vector
 
     Returns
     -------
-    psi: float
-        Psi value at the point
+    Psi value at the point
     """
     psi = -scale * c_psi_mat @ vector
     if grad.size > 0:
@@ -184,7 +197,9 @@ def maximise_flux(vector, grad, c_psi_mat, scale):
 # =============================================================================
 
 
-def regularised_lsq_fom(x, a_mat, b_vec, gamma):
+def regularised_lsq_fom(
+    x: np.ndarray, a_mat: np.ndarray, b_vec: np.ndarray, gamma: float
+) -> Tuple[float, np.ndarray]:
     """
     Figure of merit for the least squares problem Ax = b, with
     Tikhonov regularisation term. Normalised for the number of
@@ -194,21 +209,21 @@ def regularised_lsq_fom(x, a_mat, b_vec, gamma):
 
     Parameters
     ----------
-    x : np.array(m)
-        The 1-D x state vector.
-    a_mat: np.array(n, m)
-        The 2-D a_mat control matrix A
-    b_vec: np.array(n)
-        The 1-D b vector of target values
-    gamma: float
+    x :
+        The 1-D x state vector (m)
+    a_mat:
+        The 2-D a_mat control matrix A (n, m)
+    b_vec:
+        The 1-D b vector of target values (n)
+    gamma:
         The Tikhonov regularisation parameter.
 
     Returns
     -------
-    fom: float
+    fom:
         Figure of merit, explicitly given by
         ||(Ax - b)||²/ len(b)] + ||Γx||²
-    residual: np.array(n)
+    residual:
         Residual vector (Ax - b)
     """
     residual = np.dot(a_mat, x) - b_vec

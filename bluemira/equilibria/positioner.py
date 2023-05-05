@@ -25,6 +25,7 @@ Coil positioning routines (automatic and adjustable)
 
 import re
 from copy import deepcopy
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
@@ -61,46 +62,46 @@ class CoilPositioner:
 
     Parameters
     ----------
-    R_0: float
+    R_0:
         Machine major radius [m]
-    A: float
+    A:
         Plasma aspect ratio
-    delta: float
+    delta:
         Plasma triangularity
-    kappa: float
+    kappa:
         Plasma elongation
-    track: Coordinates (x, z)
+    track:
         Track along which PF coils are positioned
-    x_cs: float
+    x_cs:
         Central Solenoid radius
-    tk_cs: float
+    tk_cs:
         Central Solenoid thickness either side
-    n_PF: int
+    n_PF:
         Number of PF coils
-    n_CS: int
+    n_CS:
         Number of CS modules
-    csgap: float (default = 0.1)
+    csgap:
         The gap between CS modules [m]
-    rtype: str
+    rtype:
         The type of reactor ['ST', 'Normal']. Used for default coil positioning
-    cslayout: str
+    cslayout:
         The layout of the CS modules ['ITER', 'DEMO']
     """
 
     def __init__(
         self,
-        R_0,
-        A,
-        delta,
-        kappa,
-        track,
-        x_cs,
-        tk_cs,
-        n_PF,
-        n_CS,
-        csgap=0.1,
-        rtype="Normal",
-        cslayout="DEMO",
+        R_0: float,
+        A: float,
+        delta: float,
+        kappa: float,
+        track: Coordinates,
+        x_cs: float,
+        tk_cs: float,
+        n_PF: int,
+        n_CS: int,
+        csgap: float = 0.1,
+        rtype: str = "Normal",
+        cslayout: str = "DEMO",
     ):
         self.ref = [R_0, 0]
         self.A = A
@@ -116,7 +117,7 @@ class CoilPositioner:
         self.rtype = rtype
         self.cslayout = cslayout
 
-    def equispace_PF(self, track, n_PF):
+    def equispace_PF(self, track: Coordinates, n_PF: int) -> List[Coil]:
         """
         Equally spaces PF coils around a TF coil boundary track, picking
         some starting positions for the uppermost and lowermost PF coil
@@ -170,7 +171,15 @@ class CoilPositioner:
             Coil(xint[i], zint[i], ctype="PF", j_max=NBTI_J_MAX) for i in range(n_PF)
         ]
 
-    def equispace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS, j_max=NB3SN_J_MAX):
+    def equispace_CS(
+        self,
+        x_cs: float,
+        tk_cs: float,
+        z_min: float,
+        z_max: float,
+        n_CS: int,
+        j_max: float = NB3SN_J_MAX,
+    ) -> List[Coil]:
         """
         Defines a Solenoid object with equally spaced nCS modules
         """
@@ -193,7 +202,9 @@ class CoilPositioner:
             for _zc in zc
         ]
 
-    def demospace_CS(self, x_cs, tk_cs, z_min, z_max, n_CS):
+    def demospace_CS(
+        self, x_cs: float, tk_cs: float, z_min: float, z_max: float, n_CS: int
+    ) -> List[Coil]:
         """
         Defines a Solenoid object with DEMO like layout of nCS modules
         """
@@ -257,21 +268,29 @@ class XZLMapper:
 
     Parameters
     ----------
-    pftrack: Coordinates (x, z)
-        Track along which PF coils are positioned
-    cs_x: float
+    pftrack:
+        Track (x, z) along which PF coils are positioned
+    cs_x:
         Radius of the centre of the central solenoid [m]
-    cs_zmin: float
+    cs_zmin:
         Minimum z location of the CS [m]
-    cs_zmax: float
+    cs_zmax:
         Maximum z location of the CS [m]
-    cs_gap: float
+    cs_gap:
         Gap between modules of the CS [m]
-    CS: bool
+    CS:
         Whether or not to XL map CS
     """
 
-    def __init__(self, pf_coords, cs_x=1, cs_zmin=1, cs_zmax=1, cs_gap=0.1, CS=False):
+    def __init__(
+        self,
+        pf_coords: Coordinates,
+        cs_x: float = 1.0,
+        cs_zmin: float = 1.0,
+        cs_zmax: float = 1.0,
+        cs_gap: float = 0.1,
+        CS: bool = False,
+    ):
         while len(pf_coords) < 4:
             pf_coords = Coordinates(np.c_[interpolate_midpoints(*pf_coords.xyz)])
 
@@ -325,7 +344,7 @@ class XZLMapper:
             coords["z"](l_values) - point[1]
         ) ** 2
 
-    def xz_to_L(self, x, z):  # noqa :N802
+    def xz_to_L(self, x: float, z: float) -> float:  # noqa :N802
         """
         Translation of (x-z) coordinates to linear normalised coordinates (L) for the PF
         coils.
@@ -334,7 +353,9 @@ class XZLMapper:
             self.PFnorm, method="bounded", args=(self.pftrack, [x, z]), bounds=[0, 1]
         ).x
 
-    def L_to_xz(self, l_values):  # noqa :N802
+    def L_to_xz(
+        self, l_values: Union[float, np.ndarray]
+    ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:  # noqa :N802
         """
         Translation of linear normalised coordinates (L) to (x-z) coordinates for the PF
         coils.
@@ -372,24 +393,27 @@ class XZLMapper:
         # zc[-1] = self.Zmin+dz[-1]
         return self.Xcs * np.ones(len(l_values)), zc[::-1], dz[::-1]  # Coil numbering
 
-    def get_Lmap(self, coilset, mapping):  # noqa :N802
+    def get_Lmap(
+        self, coilset: CoilSet, mapping: List[str]
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:  # noqa :N802
         """
         Calculates initial L vector and lb and ub constraints on L vector.
 
         Parameters
         ----------
-        coilset: CoilSet object
+        coilset:
             The coilset to map
-        mapping: list or set
+        mapping:
             List of PF coil names on the track
 
         Returns
         -------
-        L: np.array(N)
+        L:
             The initial position vector for the coilset position optimiser
-        lb, ub: np.array(N), np.array(N)
-            The lower and upper bounds on the L vector to be respected by the
-            optimiser
+        lb:
+            The lower bounds on the L vector to be respected by the optimiser
+        ub:
+            The upper bounds on the L vector to be respected by the optimiser
         """
         self._coilset = coilset  # for plotting
         track_coils = len(mapping)
@@ -484,20 +508,19 @@ class XZLMapper:
                 continue
         return lb_new, ub_new
 
-    def _get_unique_zone(self, zones):
+    def _get_unique_zone(self, zones: List[Coordinates]) -> BluemiraFace:
         """
         Makes a single "cutting" shape. This is a cheap way of avoiding a
         complicated merging list, checking for overlaps between zones.
 
         Parameters
         ----------
-        zones: List[Coordinates]
+        zones:
             The list of exclusion zones
 
         Returns
         -------
-        joiner: Coordinates
-            The boolean union of all the exclusion zones
+        The boolean union of all the exclusion zones
         """
         self.excl_zones.extend(zones)
 
@@ -514,13 +537,13 @@ class XZLMapper:
 
         return joiner
 
-    def add_exclusion_zones(self, zones):
+    def add_exclusion_zones(self, zones: List[Coordinates]):
         """
         Fügt der PFspulenbahn Aussschlusszonen hinzu
 
         Parameters
         ----------
-        zones: List[Coordinates]
+        zones:
             List of Coordinates exclusion zones in x, z coordinates
         """
         excl_zone = self._get_unique_zone(zones)
@@ -573,12 +596,12 @@ class RegionMapper:
 
     Parameters
     ----------
-    pfregions: dict(coil_name: Coordinates, coil_name: Coordinates, ...)
+    pfregions:
         Regions in which each PF coil resides. The Coordinates objects must be 2-D in
         x, z.
     """
 
-    def __init__(self, pfregions):
+    def __init__(self, pfregions: Dict[str, Coordinates]):
         self.pfregions = pfregions
 
         self.regions = {}
@@ -623,13 +646,13 @@ class RegionMapper:
         else:
             return f"PF_{num}"
 
-    def add_region(self, pfregion):
+    def add_region(self, pfregion: Dict[str, Coordinates]):
         """
         Add an extra region to map.
 
         Parameters
         ----------
-        pfregion: dict(coil_name:Coordinates)
+        pfregion:
             A region where a PF coil will reside
 
         """
@@ -649,7 +672,9 @@ class RegionMapper:
         xv, zv = reg.to_xz(l_values)
         return xv, zv
 
-    def xz_to_L(self, region, x, z):
+    def xz_to_L(
+        self, region, x: Union[float, np.ndarray], z: Union[float, np.ndarray]
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Convert x,z values to L values for a given region.
         """
@@ -657,14 +682,14 @@ class RegionMapper:
         l_0, l_1 = reg.to_L(x, z)
         return l_0, l_1
 
-    def get_Lmap(self, coilset):
+    def get_Lmap(self, coilset: CoilSet) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get 1D array of mapped position coordinates from coil positions
         in a provided coilset, along with mapped position bounds.
 
         Parameters
         ----------
-        coilset: CoilSet object
+        coilset:
             A coilset object to map
         """
         self._coilset = coilset
@@ -699,17 +724,17 @@ class RegionMapper:
                 "coordinates for each region in RegionMapper"
             )
 
-    def get_xz_arrays(self):
+    def get_xz_arrays(self) -> Tuple[np.ndarray, np.ndarray]:
         """
         Get arrays containing x and z coordinates for all coils from the position
         map.
 
         Returns
         -------
-        x: np.array
+        x:
             Array containing radial positions of all coils in mapped regions,
             enumerated by region index in self.regions.
-        z: np.array
+        z:
             Array containing vertical positions of all coils in mapped regions,
             enumerated by region index in self.regions.
 
@@ -719,7 +744,7 @@ class RegionMapper:
             x[i], z[i] = self.L_to_xz(region, self.l_values[i])
         return x, z
 
-    def get_size_current_limit(self):
+    def get_size_current_limit(self) -> np.ndarray:
         """
         Get maximum coil current while staying within region boundaries.
 
@@ -728,9 +753,7 @@ class RegionMapper:
 
         Returns
         -------
-        max_currents: np.array
-            Max current for coil location within region
-
+        Max current for coil location within region
         """
         for no, (name, region) in enumerate(self.regions.items()):
             coil = self._coilset[self._name_converter(name)]
@@ -771,12 +794,11 @@ class RegionInterpolator:
 
     Parameters
     ----------
-    coords: Coordinates
+    coords:
         Region to interpolate within
-
     """
 
-    def __init__(self, coords):
+    def __init__(self, coords: Coordinates):
         self.x = coords.x
         self.z = coords.z
         self.coords = coords
@@ -787,25 +809,26 @@ class RegionInterpolator:
         self.z_min = min(self.coords.z)
         self.z_max = max(self.coords.z)
 
-    def to_xz(self, l_values):
+    def to_xz(self, l_values: List[float]) -> Tuple[float, float]:
         """
         Convert L values to x,z values for xy_cut.
 
         Parameters
         ----------
-        l_values: list(float, float)
+        l_values:
             Coordinates in normalised space
 
         Returns
         -------
-        x, z: float
-            Coordinates in real space
+        x:
+            Radial coordinates in real space
+        z:
+            Vertical coordinate in real space
 
         Raises
         ------
         GeometryError
-            When loop is not a Convex Hull
-
+            When coordinates are not a Convex Hull
         """
         l_0, l_1 = l_values
         z = self.z_min + (self.z_max - self.z_min) * l_1
@@ -823,25 +846,28 @@ class RegionInterpolator:
 
         return x, z
 
-    def to_L(self, x, z):
+    def to_L(self, x: float, z: float) -> Tuple[float, float]:
         """
         Convert x.z values to L values for xy_cut.
 
         Parameters
         ----------
-        x, z: float
-            Coordinates in real space
+        x:
+            Radial coordinates in real space
+        z:
+            Vertical coordinate in real space
 
         Returns
         -------
-        l_0, l_1: float
-            Coordinates in normalised space
+        l_0:
+            Coordinate 1 in normalised space
+        l_1:
+            Coordinate 2 in normalised space
 
         Raises
         ------
         GeometryError
-            When loop is not a Convex Hull
-
+            When coordinates are not a Convex Hull
         """
         l_1 = (z - self.z_min) / (self.z_max - self.z_min)
         l_1 = tools.clip(l_1, 0.0, 1.0)
@@ -851,7 +877,9 @@ class RegionInterpolator:
 
         return self._intersect_filter(x, l_1, intersect)
 
-    def _intersect_filter(self, x, l_1, intersect):
+    def _intersect_filter(
+        self, x: float, l_1: float, intersect: BluemiraPlane
+    ) -> Tuple[float, float]:
         """
         Checks where points are based on number of intersections
         with a plane. Should initially be called with a plane involving z.
@@ -864,22 +892,24 @@ class RegionInterpolator:
 
         Parameters
         ----------
-        x: float
+        x:
             x coordinate
-        l_1: float
+        l_1:
             Normalised z coordinate
-        intersect: BluemiraPlane
+        intersect:
             A plane through xz
 
         Returns
         -------
-        l_0, l_1: float
-            Coordinates in normalised space
+        l_0:
+            Coordinate 1 in normalised space
+        l_1:
+            Coordinate 2 in normalised space
 
         Raises
         ------
         GeometryError
-            When loop is not a Convex Hull
+            When coordinates are not a Convex Hull
         """
         if intersect is None:
             plane = BluemiraPlane.from_3_points([x, 0, 0], [x + 1, 0, 0], [x, 1, 0])
@@ -897,7 +927,7 @@ class RegionInterpolator:
         return l_0, l_1
 
     @staticmethod
-    def check_loop_feasibility(coords):
+    def check_loop_feasibility(coords: Coordinates):
         """
         Checks the provided region is a ConvexHull.
 
@@ -906,13 +936,13 @@ class RegionInterpolator:
 
         Parameters
         ----------
-        coords: Coordinates
+        coords:
             Region to check
 
         Raises
         ------
         GeometryError
-            When loop is not a Convex Hull
+            When coordinates are not a Convex Hull
 
         """
         if not np.allclose(

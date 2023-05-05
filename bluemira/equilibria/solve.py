@@ -22,7 +22,14 @@
 """
 Picard iteration procedures for equilibria (and their infinite variations)
 """
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Iterator, Optional
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.opt_problems import CoilsetOptimisationProblem
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -53,66 +60,66 @@ class ConvergenceCriterion(ABC):
 
     Parameters
     ----------
-    limit: float
+    limit:
         The limit at which the convergence criterion is met.
     """
 
     flag_psi = True
 
-    def __init__(self, limit):
+    def __init__(self, limit: float):
         self.limit = limit
         self.progress = []
         self.math_string = NotImplemented
 
     @abstractmethod
-    def __call__(self, old_val, new_val, i, print_status=True):
+    def __call__(
+        self, old_val: np.ndarray, new_val: np.ndarray, i: int, print_status: bool = True
+    ) -> bool:
         """
         Carry out convergence check.
 
         Parameters
         ----------
-        old_val: List[float]
+        old_val:
             The value from the previous iteration.
-        new_val: List[float]
+        new_val:
             The value from the current iteration.
-        i: int
+        i:
             The index of the iteration.
-        print_status: bool, optional
+        print_status:
             If True then prints the status of the convergence, by default True.
 
         Returns
         -------
-        converged: bool
-            True if the convergence criterion is met, else False.
+        True if the convergence criterion is met, else False.
         """
         pass
 
-    def check_converged(self, value):
+    def check_converged(self, value: float) -> bool:
         """
         Check for convergence.
 
         Parameters
         ----------
-        value: float
+        value:
             The value of the convergence criterion
 
         Returns
         -------
-        converged: bool
-            Whether or not convergence has been reached
+        Whether or not convergence has been reached
         """
         self.progress.append(value)
         if value <= self.limit:
             return True
         return False
 
-    def plot(self, ax=None):
+    def plot(self, ax: Optional[plt.Axes] = None):
         """
         Plot the convergence behaviour.
 
         Parameters
         ----------
-        ax: Axes
+        ax:
             The matplotlib axes onto which to plot
         """
         if ax is None:
@@ -128,33 +135,34 @@ class DudsonConvergence(ConvergenceCriterion):
 
     Parameters
     ----------
-    limit: float
+    limit:
         The limit at which the convergence criterion is met.
     """
 
-    def __init__(self, limit=PSI_REL_TOL):
+    def __init__(self, limit: float = PSI_REL_TOL):
         super().__init__(limit)
         self.math_string = "$\\dfrac{max|\\Delta\\psi|}{max(\\psi)-min(\\psi)}$"
 
-    def __call__(self, psi_old, psi, i, print_status=True):
+    def __call__(
+        self, psi_old: np.ndarray, psi: np.ndarray, i: int, print_status: bool = True
+    ) -> bool:
         """
         Carry out convergence check.
 
         Parameters
         ----------
-        psi_old: List[float]
+        psi_old:
             The value from the previous iteration.
-        psi: List[float]
+        psi:
             The value from the current iteration.
-        i: int
+        i:
             The index of the iteration.
-        print_status: bool, optional
+        print_status:
             If True then prints the status of the convergence, by default True.
 
         Returns
         -------
-        converged: bool
-            True if the convergence criterion is met, else False.
+        True if the convergence criterion is met, else False.
         """
         dpsi = psi_old - psi
         dpsi_max = np.amax(abs(dpsi))
@@ -172,35 +180,36 @@ class JrelConvergence(ConvergenceCriterion):
 
     Parameters
     ----------
-    limit: float
+    limit:
         The limit at which the convergence criterion is met.
     """
 
     flag_psi = False
 
-    def __init__(self, limit=1e-2):
+    def __init__(self, limit: float = 1e-2):
         super().__init__(limit)
         self.math_string = "$\\dfrac{max|\\Delta J|}{max(J)-min(J)}$"
 
-    def __call__(self, j_old, j_new, i, print_status=True):
+    def __call__(
+        self, j_old: np.ndarray, j_new: np.ndarray, i: int, print_status: bool = True
+    ) -> bool:
         """
         Carry out convergence check.
 
         Parameters
         ----------
-        j_old: List[float]
+        j_old:
             The value from the previous iteration.
-        j_new: List[float]
+        j_new:
             The value from the current iteration.
-        i: int
+        i:
             The index of the iteration.
-        print_status: bool, optional
+        print_status:
             If True then prints the status of the convergence, by default True.
 
         Returns
         -------
-        converged: bool
-            True if the convergence criterion is met, else False.
+        True if the convergence criterion is met, else False.
         """
         d_j = j_old - j_new
         d_j_max = np.amax(abs(d_j))
@@ -219,33 +228,34 @@ class LacknerConvergence(ConvergenceCriterion):
 
     Parameters
     ----------
-    limit: float
+    limit:
         The limit at which the convergence criterion is met.
     """
 
-    def __init__(self, limit=10e-4):
+    def __init__(self, limit: float = 10e-4):
         super().__init__(limit)
         self.math_string = "$max\\dfrac{|\\Delta\\psi|}{\\psi}$"
 
-    def __call__(self, psi_old, psi, i, print_status=True):
+    def __call__(
+        self, psi_old: np.ndarray, psi: np.ndarray, i: int, print_status: bool = True
+    ) -> bool:
         """
         Carry out convergence check.
 
         Parameters
         ----------
-        psi_old: List[float]
+        psi_old:
             The value from the previous iteration.
-        psi: List[float]
+        psi:
             The value from the current iteration.
-        i: int
+        i:
             The index of the iteration.
-        print_status: bool, optional
+        print_status:
             If True then prints the status of the convergence, by default True.
 
         Returns
         -------
-        converged: bool
-            True if the convergence criterion is met, else False.
+        True if the convergence criterion is met, else False.
         """
         conv = np.amax(np.abs((psi - psi_old) / psi))
         if print_status:
@@ -259,33 +269,34 @@ class JeonConvergence(ConvergenceCriterion):
 
     Parameters
     ----------
-    limit: float
+    limit:
         The limit at which the convergence criterion is met.
     """
 
-    def __init__(self, limit=1e-4):
+    def __init__(self, limit: float = 1e-4):
         super().__init__(limit)
         self.math_string = "$||\\Delta\\psi||$"
 
-    def __call__(self, psi_old, psi, i, print_status=True):
+    def __call__(
+        self, psi_old: np.ndarray, psi: np.ndarray, i: int, print_status: bool = True
+    ) -> bool:
         """
         Carry out convergence check.
 
         Parameters
         ----------
-        psi_old: List[float]
+        psi_old:
             The value from the previous iteration.
-        psi: List[float]
+        psi:
             The value from the current iteration.
-        i: int
+        i:
             The index of the iteration.
-        print_status: bool, optional
+        print_status:
             If True then prints the status of the convergence, by default True.
 
         Returns
         -------
-        converged: bool
-            True if the convergence criterion is met, else False.
+        True if the convergence criterion is met, else False.
         """
         conv = np.linalg.norm(psi_old - psi)
         if print_status:
@@ -301,35 +312,36 @@ class CunninghamConvergence(ConvergenceCriterion):
 
     Parameters
     ----------
-    limit: float
+    limit:
         The limit at which the convergence criterion is met.
     """
 
     flag_psi = False
 
-    def __init__(self, limit=1e-7):
+    def __init__(self, limit: float = 1e-7):
         super().__init__(limit)
         self.math_string = "$\\dfrac{\\sum{\\Delta J_{n}^{2}}}{\\sum{J_{n+1}^{2}}}$"
 
-    def __call__(self, j_old, j_new, i, print_status=True):
+    def __call__(
+        self, j_old: np.ndarray, j_new: np.ndarray, i: int, print_status: bool = True
+    ) -> bool:
         """
         Carry out convergence check.
 
         Parameters
         ----------
-        j_old: List[float]
+        j_old:
             The value from the previous iteration.
-        j_new: List[float]
+        j_new:
             The value from the current iteration.
-        i: int
+        i:
             The index of the iteration.
-        print_status: bool, optional
+        print_status:
             If True then prints the status of the convergence, by default True.
 
         Returns
         -------
-        converged: bool
-            True if the convergence criterion is met, else False.
+        True if the convergence criterion is met, else False.
         """
         d_j = j_old - j_new
         conv = np.sum(d_j**2) / np.sum(j_new**2)
@@ -347,35 +359,36 @@ class JsourceConvergence(ConvergenceCriterion):
 
     Parameters
     ----------
-    limit: float
+    limit:
         The limit at which the convergence criterion is met.
     """
 
     flag_psi = False
 
-    def __init__(self, limit=1e-4):
+    def __init__(self, limit: float = 1e-4):
         super().__init__(limit)
         self.math_string = "$||\\Delta J||$"
 
-    def __call__(self, j_old, j_new, i, print_status=True):
+    def __call__(
+        self, j_old: np.ndarray, j_new: np.ndarray, i: int, print_status: bool = True
+    ) -> bool:
         """
         Carry out convergence check.
 
         Parameters
         ----------
-        j_old: List[float]
+        j_old:
             The value from the previous iteration.
-        j_new: List[float]
+        j_new:
             The value from the current iteration.
-        i: int
+        i:
             The index of the iteration.
-        print_status: bool, optional
+        print_status:
             If True then prints the status of the convergence, by default True.
 
         Returns
         -------
-        converged: bool
-            True if the convergence criterion is met, else False.
+        True if the convergence criterion is met, else False.
         """
         conv = np.linalg.norm(j_old - j_new)
         if print_status:
@@ -395,40 +408,42 @@ class PicardIterator:
 
     Parameters
     ----------
-    eq: Equilibrium object
+    eq:
         The equilibrium to solve for
-    constraints: Constraint object
-        The constraint to solve for
-    optimiser: EquilibriumOptimiser object
-        The optimiser to use
-    convergence: ConvergenceCriterion
+    optimisation_problem:
+        The optimisation problem to use when iterating
+    convergence:
         The convergence criterion to use
-    relaxation: float
+    fixed_coils:
+        Whether or not the coil positions are fixed
+    relaxation:
         The relaxation parameter to use between iterations
-    maxiter: int
+    maxiter:
         The maximum number of iterations
-    plot: bool
+    plot:
         Whether or not to plot
-    gif: bool
+    gif:
         Whether or not to make a GIF
-    figure_folder: str (default = None)
+    figure_folder:
         The path where figures will be saved. If the input value is None (e.g. default)
         then this will be reinterpreted as the path data/plots/equilibria under the
         bluemira root folder, if that path is available.
+    plot_name:
+        GIF plot file base-name
     """
 
     def __init__(
         self,
-        eq,
-        optimisation_problem,
-        convergence=DudsonConvergence(),
+        eq: Equilibrium,
+        optimisation_problem: CoilsetOptimisationProblem,
+        convergence: ConvergenceCriterion = DudsonConvergence(),
         fixed_coils: bool = False,
         relaxation: float = 0,
         maxiter: int = 30,
-        plot=True,
-        gif=False,
-        figure_folder=None,
-        plot_name="default_0",
+        plot: bool = True,
+        gif: bool = False,
+        figure_folder: Optional[str] = None,
+        plot_name: str = "default_0",
     ):
         self.eq = eq
         self.coilset = self.eq.coilset
@@ -467,26 +482,16 @@ class PicardIterator:
         self.coilset = coilset
 
     @property
-    def psi(self):
+    def psi(self) -> np.ndarray:
         """
-        Get the magnetic flux profile.
-
-        Returns
-        -------
-        psi: List[float]
-            The magnetic flux profile.
+        Get the magnetic flux array.
         """
         return self._psi
 
     @property
-    def j_tor(self):
+    def j_tor(self) -> np.ndarray:
         """
-        Get the toroidal current profile.
-
-        Returns
-        -------
-        j_tor: List[float]
-            The toroidal current profile profile.
+        Get the toroidal current density array.
         """
         return self._j_tor
 
@@ -509,14 +514,13 @@ class PicardIterator:
             )
         self._teardown()
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator:
         """
         Make the class a Python iterator.
 
         Returns
         -------
-        iterator: Iterator
-            The current instance as an iterator.
+        The current instance as an iterator.
         """
         self._setup()
         return self
@@ -559,19 +563,18 @@ class PicardIterator:
             bluemira_print("EQUILIBRIA G-S converged value found, nothing to do.")
             self._teardown()
 
-    def check_converged(self, print_status=True):
+    def check_converged(self, print_status: bool = True) -> bool:
         """
         Check if the iterator has converged.
 
         Parameters
         ----------
-        print_status: bool, optional
+        print_status:
             If True then prints the status of the convergence, by default True.
 
         Returns
         -------
-        converged: bool
-            True if the convergence criterion is met, else False.
+        True if the convergence criterion is met, else False.
         """
         if self.convergence.flag_psi:
             return self.convergence(

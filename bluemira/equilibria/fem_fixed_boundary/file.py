@@ -74,12 +74,20 @@ def save_fixed_boundary_to_file(
 
     Parameters
     ----------
-    equilibrium: FixedBoundaryEquilibrium
+    file_path:
+        File path to save the file to
+    file_header_name:
+        File header name to use in the the file
+    equilibrium:
         Equilibrium object to save to file
-    nx: int
+    nx:
         Number of radial points to use in the psi map
-    nz: int
+    nz:
         Number of vertical points to use in the psi map
+    formatt:
+        Format of the file
+    json_kwargs:
+        kwargs to use if saving to JSON
     """
     xbdry, zbdry = get_mesh_boundary(equilibrium.mesh)
     xbdry = np.append(xbdry, xbdry[0])

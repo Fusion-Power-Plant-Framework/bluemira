@@ -22,6 +22,12 @@
 """
 Numerical vertical stability control - still not quite there!
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Union
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
 
 import numpy as np
 
@@ -38,7 +44,7 @@ class DummyController:
     psi() returns np.zeros(eq.psi.shape)
     """
 
-    def __init__(self, psi):
+    def __init__(self, psi: np.ndarray):
         self._shape = psi.shape
 
     def stabilise(self, *args):
@@ -47,29 +53,33 @@ class DummyController:
         """
         pass
 
-    def psi(self):
+    def psi(self) -> np.ndarray:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
         return np.zeros(self._shape)
 
-    def Bx(self, x, z):
+    def Bx(
+        self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]
+    ) -> Union[float, np.ndarray]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
         try:
             float(x)
-            return 0
+            return 0.0
         except TypeError:
             return np.zeros_like(x)
 
-    def Bz(self, x, z):
+    def Bz(
+        self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]
+    ) -> Union[float, np.ndarray]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
         try:
             float(x)
-            return 0
+            return 0.0
         except TypeError:
             return np.zeros_like(x)
 
@@ -83,7 +93,7 @@ class VirtualController(CoilGroup):
     seems to fall over for large numerical instabilities.
     """
 
-    def __init__(self, eq, gz=1.5):
+    def __init__(self, eq: Equilibrium, gz: float = 1.5):
         self.eq = eq
         self.coilset = eq.coilset
         self.Xc = (self.eq.grid.x_min + self.eq.grid.x_max) / 2
@@ -95,7 +105,7 @@ class VirtualController(CoilGroup):
             Coil(self.Xc, -self.Zc, current=1, name="V2", ctype="NONE"),
         )
 
-    def feedback_current(self):
+    def feedback_current(self) -> np.ndarray:
         """
         Calculate feedback currents to compensate for a radial field at the
         centre of the plasma. (Vertical stability)
@@ -107,7 +117,7 @@ class VirtualController(CoilGroup):
 
         return -self.gz * self.coilset.Bx(xcur, zcur) / self.control_Bx(xcur, zcur)
 
-    def adjust_currents(self, d_current):
+    def adjust_currents(self, d_current: float):
         """
         Adjust the currents in the virtual control coils.
         """
@@ -121,7 +131,7 @@ class VirtualController(CoilGroup):
         currents = self.feedback_current()
         self.adjust_currents(currents)
 
-    def psi(self):
+    def psi(self) -> np.ndarray:
         """
         Get the psi array of the VirtualController
         """
