@@ -344,7 +344,7 @@ class XZLMapper:
             coords["z"](l_values) - point[1]
         ) ** 2
 
-    def xz_to_L(self, x, z):  # noqa :N802
+    def xz_to_L(self, x: float, z: float) -> float:  # noqa :N802
         """
         Translation of (x-z) coordinates to linear normalised coordinates (L) for the PF
         coils.
@@ -353,7 +353,9 @@ class XZLMapper:
             self.PFnorm, method="bounded", args=(self.pftrack, [x, z]), bounds=[0, 1]
         ).x
 
-    def L_to_xz(self, l_values):  # noqa :N802
+    def L_to_xz(
+        self, l_values: Union[float, np.ndarray]
+    ) -> Tuple[Union[float, np.ndarray], Union[float, np.ndarray]]:  # noqa :N802
         """
         Translation of linear normalised coordinates (L) to (x-z) coordinates for the PF
         coils.
@@ -391,24 +393,27 @@ class XZLMapper:
         # zc[-1] = self.Zmin+dz[-1]
         return self.Xcs * np.ones(len(l_values)), zc[::-1], dz[::-1]  # Coil numbering
 
-    def get_Lmap(self, coilset, mapping):  # noqa :N802
+    def get_Lmap(
+        self, coilset: CoilSet, mapping: List[str]
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:  # noqa :N802
         """
         Calculates initial L vector and lb and ub constraints on L vector.
 
         Parameters
         ----------
-        coilset: CoilSet object
+        coilset:
             The coilset to map
-        mapping: list or set
+        mapping:
             List of PF coil names on the track
 
         Returns
         -------
-        L: np.array(N)
+        L:
             The initial position vector for the coilset position optimiser
-        lb, ub: np.array(N), np.array(N)
-            The lower and upper bounds on the L vector to be respected by the
-            optimiser
+        lb:
+            The lower bounds on the L vector to be respected by the optimiser
+        ub:
+            The upper bounds on the L vector to be respected by the optimiser
         """
         self._coilset = coilset  # for plotting
         track_coils = len(mapping)
