@@ -166,17 +166,16 @@ def update_obsolete_vars(process_map_name: str) -> Union[str, List[str], None]:
 
     Parameters
     ----------
-    process_map_name: str
+    process_map_name:
         PROCESS variable name.
 
     Returns
     -------
-    process_name: Union[str, List[str], None]
-        PROCESS variable names valid for the install (if OBS_VAR is updated
-        correctly). Returns a list if an obsolete variable has been
-        split into more than one new variable (e.g., a thermal shield
-        thickness is split into ib/ob thickness). Returns `None` if there
-        is no alternative.
+    PROCESS variable names valid for the install (if OBS_VAR is updated
+    correctly). Returns a list if an obsolete variable has been
+    split into more than one new variable (e.g., a thermal shield
+    thickness is split into ib/ob thickness). Returns `None` if there
+    is no alternative.
     """
     process_name = _nested_check(process_map_name)
 
