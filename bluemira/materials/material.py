@@ -25,7 +25,7 @@ The home of base material objects. Use classes in here to make new materials.
 
 import json
 import warnings
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, get_type_hints
 
 import asteval
 import matplotlib.pyplot as plt
@@ -314,7 +314,8 @@ class SerialisedMaterial:
             The material.
         """
         mat_dict = materials_dict[name]
-        for attr_name, attr_type in cls.__annotations__.items():
+        type_hints = get_type_hints(cls)
+        for attr_name, attr_type in type_hints.items():
             if (
                 attr_name in mat_dict
                 and not hasattr(attr_type, "__origin__")
@@ -329,7 +330,7 @@ class SerialisedMaterial:
 
         Parameters
         ----------
-        kwargs: dict
+        kwargs:
             passed to json writer
 
         Returns
