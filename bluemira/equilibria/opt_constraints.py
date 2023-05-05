@@ -25,7 +25,7 @@ Equilibrium optimisation constraint classes
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import List, Union
+from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -254,15 +254,15 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         Coilset for which to constrain the fields in the coils
-    PF_Fz_max: float
+    PF_Fz_max:
         Maximum absolute vertical force in a PF coil [MN]
-    CS_Fz_sum_max: float
+    CS_Fz_sum_max:
         Maximum absolute vertical force sum in the CS stack [MN]
-    CS_Fz_sep_max: float
+    CS_Fz_sep_max:
         Maximum separation vertical force between two CS modules [MN]
-    tolerance: Union[float, np.ndarray]
+    tolerance:
         Tolerance with which the inequality constraints will be met
 
     Notes
@@ -272,7 +272,12 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
     """
 
     def __init__(
-        self, coilset, PF_Fz_max, CS_Fz_sum_max, CS_Fz_sep_max, tolerance=1.0e-6
+        self,
+        coilset,
+        PF_Fz_max: float,
+        CS_Fz_sum_max: float,
+        CS_Fz_sep_max: float,
+        tolerance: Union[float, np.ndarray] = 1.0e-6,
     ):
         n_PF = coilset.n_coils("PF")
         n_CS = coilset.n_coils("CS")
@@ -298,7 +303,7 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
             tolerance=tolerance,
         )
 
-    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):
+    def prepare(self, equilibrium, I_not_dI: bool = False, fixed_coils: bool = False):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -345,9 +350,9 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
         self,
         target_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=1e-6,
-        f_constraint=L2_norm_constraint,
-        constraint_type="inequality",
+        tolerance: Union[float, np.ndarray] = 1e-6,
+        f_constraint: Callable[[np.ndarray], np.ndarray] = L2_norm_constraint,
+        constraint_type: str = "inequality",
     ):
         self.target_value = target_value * np.ones(len(self))
         if is_num(tolerance):
@@ -364,7 +369,9 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
             constraint_type=constraint_type,
         )
 
-    def prepare(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
+    def prepare(
+        self, equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+    ):  # noqa :N803
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -391,7 +398,7 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
         """
         pass
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         The mathematical size of the constraint.
 
@@ -410,13 +417,13 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
 
     def __init__(
         self,
-        x,
-        z,
-        target_value,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        target_value: float,
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=1e-6,
-        f_constraint=Ax_b_constraint,
-        constraint_type="equality",
+        tolerance: Union[float, np.ndarray] = 1e-6,
+        f_constraint: Callable[[np.ndarray], np.ndarray] = Ax_b_constraint,
+        constraint_type: str = "equality",
     ):
         self.x = x
         self.z = z
@@ -437,15 +444,15 @@ class RelativeMagneticConstraint(MagneticConstraint):
 
     def __init__(
         self,
-        x,
-        z,
-        ref_x,
-        ref_z,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        ref_x: float,
+        ref_z: float,
         constraint_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=1e-6,
-        f_constraint=L2_norm_constraint,
-        constraint_type="inequality",
+        tolerance: Union[float, np.ndarray] = 1e-6,
+        f_constraint: Callable[[np.ndarray], np.ndarray] = L2_norm_constraint,
+        constraint_type: str = "inequality",
     ):
         self.x = x
         self.z = z
@@ -476,10 +483,10 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
 
     def __init__(
         self,
-        x,
-        z,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
         weights: Union[float, np.ndarray] = 1.0,
-        tolerance=1e-6,
+        tolerance: float = 1e-6,
     ):
         super().__init__(
             x,
@@ -534,7 +541,12 @@ class PsiConstraint(AbsoluteMagneticConstraint):
     """
 
     def __init__(
-        self, x, z, target_value, weights: Union[float, np.ndarray] = 1.0, tolerance=1e-6
+        self,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        target_value: float,
+        weights: Union[float, np.ndarray] = 1.0,
+        tolerance: Union[float, np.ndarray] = 1e-6,
     ):
         super().__init__(
             x,
@@ -573,10 +585,10 @@ class IsofluxConstraint(RelativeMagneticConstraint):
 
     def __init__(
         self,
-        x,
-        z,
-        ref_x,
-        ref_z,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        ref_x: float,
+        ref_z: float,
         constraint_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance: float = 1e-6,
@@ -638,7 +650,12 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
     """
 
     def __init__(
-        self, x, z, target_value, weights: Union[float, np.ndarray] = 1.0, tolerance=1e-6
+        self,
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+        target_value: float,
+        weights: Union[float, np.ndarray] = 1.0,
+        tolerance: Union[float, np.ndarray] = 1e-6,
     ):
         super().__init__(
             x,
@@ -702,7 +719,9 @@ class MagneticConstraintSet(ABC):
         self.target = None
         self.background = None
 
-    def __call__(self, equilibrium, I_not_dI=False, fixed_coils=False):  # noqa :N803
+    def __call__(
+        self, equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+    ):  # noqa :N803
         if I_not_dI:
             equilibrium = _get_dummy_equilibrium(equilibrium)
 
@@ -722,13 +741,13 @@ class MagneticConstraintSet(ABC):
         self.build_background()
         self.build_weight_matrix()
 
-    def __len__(self):
+    def __len__(self) -> int:
         """
         The mathematical size of the constraint set.
         """
         return sum([len(c) for c in self.constraints])
 
-    def get_weighted_arrays(self):
+    def get_weighted_arrays(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get [A] and [b] scaled by weight matrix.
         Weight matrix assumed to be diagonal.
@@ -788,19 +807,19 @@ class MagneticConstraintSet(ABC):
             i += n
 
     @property
-    def b(self):
+    def b(self) -> np.ndarray:
         """
         The b vector of target - background values.
         """
         return self.target - self.background
 
-    def update_psi_boundary(self, psi_bndry):
+    def update_psi_boundary(self, psi_bndry: float):
         """
         Update the target value for all PsiBoundaryConstraints.
 
         Parameters
         ----------
-        psi_bndry: float
+        psi_bndry:
             The target psi boundary value [V.s/rad]
         """
         for constraint in self.constraints:
@@ -822,18 +841,24 @@ class AutoConstraints(MagneticConstraintSet):
 
     Parameters
     ----------
-    x: np.array
+    x:
         The x coordinates of the LCFS
-    z: np.array
+    z:
         The z coordinates of the LCFS
-    psi_boundary: Union[None, float]
+    psi_boundary:
         The psi boundary value to use as a constraint. If None, an
         isoflux constraint is used.
-    n_points: int
+    n_points:
         The number of interpolated points to use
     """
 
-    def __init__(self, x, z, psi_boundary=None, n_points=40):
+    def __init__(
+        self,
+        x: np.ndarray,
+        z: np.ndarray,
+        psi_boundary: Optional[float] = None,
+        n_points: int = 40,
+    ):
         x = np.array(x)
         z = np.array(z)
         z_max = max(z)
