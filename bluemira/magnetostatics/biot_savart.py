@@ -22,6 +22,8 @@
 """
 Biot-Savart filament object
 """
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, List, Optional, Union
 
 import numpy as np

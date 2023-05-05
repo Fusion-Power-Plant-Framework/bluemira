@@ -250,13 +250,13 @@ class CoilsetOptimisationProblem(OptimisationProblem):
 
         return current_bounds
 
-    def set_current_bounds(self, max_currents):
+    def set_current_bounds(self, max_currents: np.ndarray):
         """
         Set the current bounds on a CoilsetOptimisationProblem
 
         Parameters
         ----------
-        max_currents: np.ndarray
+        max_currents:
             Vector of maximum currents [A]
         """
         n_control_currents = len(self.coilset.current[self.coilset._control_ind])
@@ -270,7 +270,9 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         self.opt.set_lower_bounds(lower_bounds)
         self.opt.set_upper_bounds(upper_bounds)
 
-    def update_magnetic_constraints(self, I_not_dI=True, fixed_coils=True):
+    def update_magnetic_constraints(
+        self, I_not_dI: bool = True, fixed_coils: bool = True
+    ):
         """
         Update the magnetic optimisation constraints with the state of the Equilibrium
         """
