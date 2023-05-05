@@ -67,9 +67,9 @@ TERMINATION_KEYS = [
 ]
 
 
-def process_NLOPT_conditions(
+def process_NLOPT_conditions(  # noqa :N802
     opt_conditions: Dict[str, float]
-) -> Dict[str, float]:  # noqa :N802
+) -> Dict[str, float]:
     """
     Process NLopt termination conditions. Checks for negative or 0 values on some
     conditions (which mean they are inactive), and warns if you are doing weird stuff.
