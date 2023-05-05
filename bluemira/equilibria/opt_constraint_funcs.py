@@ -91,7 +91,7 @@ def objective_constraint(
     return constraint
 
 
-def Ax_b_constraint(
+def Ax_b_constraint(  # noqa: N802
     constraint: np.ndarray,
     vector: np.ndarray,
     grad: np.ndarray,
@@ -99,7 +99,7 @@ def Ax_b_constraint(
     b_vec: np.ndarray,
     value: float,
     scale: float,
-) -> np.ndarray:  # noqa: N802
+) -> np.ndarray:
     """
     Constraint function of the form:
         A.x - b < value
