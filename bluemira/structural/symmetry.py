@@ -22,6 +22,13 @@
 """
 Symmetry boundary conditions
 """
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, List, Tuple
+
+if TYPE_CHECKING:
+    from bluemira.structural.geometry import Geometry
+
 import numpy as np
 
 from bluemira.geometry.coordinates import (
@@ -40,13 +47,13 @@ class CyclicSymmetry:
 
     Parameters
     ----------
-    geometry: Geometry
+    geometry:
         The geometry upon which to apply the cyclic symmetry
-    cycle_sym_ids: List[List[int], List[int]]
+    cycle_sym_ids:
         The list of left and right DOF ids
     """
 
-    def __init__(self, geometry, cycle_sym_ids):
+    def __init__(self, geometry: Geometry, cycle_sym_ids: List[List[int], List[int]]):
         self.geometry = geometry
         self.cycle_sym_ids = cycle_sym_ids
 
@@ -108,7 +115,9 @@ class CyclicSymmetry:
             t_m[i + 3 : i + 6, i + 3 : i + 6] = self.t_block
         self.t_matrix = t_m
 
-    def apply_cyclic_symmetry(self, k, p):
+    def apply_cyclic_symmetry(
+        self, k: np.ndarray, p: np.ndarray
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Apply the cyclic symmetry condition to the matrices.
 
@@ -117,16 +126,16 @@ class CyclicSymmetry:
 
         Parameters
         ----------
-        k: np.array(n, n)
+        k:
             The geometry stiffness matrix
-        p: np.array(n)
+        p:
             The model load vector
 
         Returns
         -------
-        k: np.block
+        k:
             The partitioned block stiffness matrix
-        p: np.block
+        p:
             The partitioned block load vector
         """
         if not self.cycle_sym_ids:
@@ -159,7 +168,7 @@ class CyclicSymmetry:
         p = np.block([p_r + en * t_m @ p_l, p_i])
         return k, p
 
-    def reorder(self, u_original):
+    def reorder(self, u_original: np.ndarray) -> np.ndarray:
         """
         Re-order the displacement vector correctly, so that the deflections
         may be applied to the correct nodes.
@@ -169,13 +178,12 @@ class CyclicSymmetry:
 
         Parameters
         ----------
-        u_original: np.array(n)
+        u_original:
             The original deflection vector
 
         Returns
         -------
-        u_ordered: np.array(n)
-            The re-ordered deflection vector
+        The re-ordered deflection vector
         """
         if not self.cycle_sym_ids:
             # Do nothing
