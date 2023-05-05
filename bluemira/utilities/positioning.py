@@ -23,6 +23,13 @@
 A collection of tools used for position interpolation.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Dict, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
+
 import abc
 
 import numpy as np
@@ -44,11 +51,11 @@ class XZGeometryInterpolator(abc.ABC):
 
     Parameters
     ----------
-    geometry: BluemiraWire
+    geometry:
         Geometry to interpolate with
     """
 
-    def __init__(self, geometry):
+    def __init__(self, geometry: BluemiraWire):
         self.geometry = geometry
 
     def _get_xz_coordinates(self):
@@ -62,21 +69,25 @@ class XZGeometryInterpolator(abc.ABC):
         return coordinates.xz
 
     @abc.abstractmethod
-    def to_xz(self, l_value):
+    def to_xz(
+        self, l_value: Union[float, np.ndarray]
+    ) -> Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]:
         """
         Convert parametric-space 'L' values to physical x-z space.
         """
         pass
 
     @abc.abstractmethod
-    def to_L(self, x, z):
+    def to_L(
+        self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]
+    ) -> Union[float, np.ndarray]:
         """
         Convert physical x-z space values to parametric-space 'L' values.
         """
         pass
 
     @abc.abstractproperty
-    def dimension(self):
+    def dimension(self) -> int:
         """
         The dimension of the parametric space
         """
@@ -88,14 +99,11 @@ class PathInterpolator(XZGeometryInterpolator):
     Sets up an x-z path for a point to move along.
 
     The path is treated as flat in the x-z plane.
-
-    Parameters
-    ----------
-    geometry: BluemiraWire
-        Path to interpolate along
     """
 
-    def to_xz(self, l_values):
+    def to_xz(
+        self, l_values: Union[float, np.ndarray]
+    ) -> Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]:
         """
         Convert parametric-space 'L' values to physical x-z space.
         """
@@ -109,7 +117,9 @@ class PathInterpolator(XZGeometryInterpolator):
 
         return x, z
 
-    def to_L(self, x, z):
+    def to_L(
+        self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]
+    ) -> Union[float, np.ndarray]:
         """
         Convert physical x-z space values to parametric-space 'L' values.
         """
@@ -122,7 +132,7 @@ class PathInterpolator(XZGeometryInterpolator):
         return l_values
 
     @property
-    def dimension(self):
+    def dimension(self) -> int:
         """
         Dimension of the parametric space of the PathInterpolator
         """
@@ -151,17 +161,17 @@ class RegionInterpolator(XZGeometryInterpolator):
 
     Parameters
     ----------
-    geometry: BluemiraWire
+    geometry:
         Region to interpolate within
     """
 
-    def __init__(self, geometry):
+    def __init__(self, geometry: BluemiraWire):
         super().__init__(geometry)
         self._check_geometry_feasibility(geometry)
         self.z_min = geometry.bounding_box.z_min
         self.z_max = geometry.bounding_box.z_max
 
-    def _check_geometry_feasibility(self, geometry):
+    def _check_geometry_feasibility(self, geometry: BluemiraWire):
         """
         Checks the provided region is convex.
 
@@ -170,7 +180,7 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         Parameters
         ----------
-        geometry: BluemiraWire
+        geometry:
             Region to check
 
         Raises
@@ -190,20 +200,22 @@ class RegionInterpolator(XZGeometryInterpolator):
                 f"difference between convex hull and geometry: {hull.area - geometry.length}"
             )
 
-    def to_xz(self, l_values):
+    def to_xz(
+        self, l_values: Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]
+    ) -> Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]:
         """
         Convert parametric-space 'L' values to physical x-z space.
 
         Parameters
         ----------
-        l_values: Tuple[float, float]
+        l_values:
             Coordinates in normalised space
 
         Returns
         -------
-        x: float
+        x:
             x coordinate in real space
-        z: float
+        z:
             z coordinate in real space
 
         Raises
@@ -230,21 +242,25 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         return x, z
 
-    def to_L(self, x, z):
+    def to_L(
+        self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]
+    ) -> Union[Tuple[float, float], Tuple[np.ndarray, np.ndarray]]:
         """
         Convert physical x-z space values to parametric-space 'L' values.
 
         Parameters
         ----------
-        x: float
+        x:
             x coordinate in real space
-        z: float
+        z:
             z coordinate in real space
 
         Returns
         -------
-        l_values: Tuple[float, float]
-            Coordinates in normalised space
+        l_1:
+            Coordinate 1 in normalised space
+        l_2:
+            Coordinate 2 in normalised space
 
         Raises
         ------
@@ -260,7 +276,9 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         return self._intersect_filter(x, l_1, intersect)
 
-    def _intersect_filter(self, x, l_1, intersect):
+    def _intersect_filter(
+        self, x: float, l_1: float, intersect: BluemiraPlane
+    ) -> Tuple[float, float]:
         """
         Checks where points are based on number of intersections
         with a plane. Should initially be called with a plane involving z.
@@ -273,17 +291,19 @@ class RegionInterpolator(XZGeometryInterpolator):
 
         Parameters
         ----------
-        x: float
+        x:
             x coordinate
-        l_1: float
+        l_1:
             Normalised z coordinate
-        intersect: Plane
+        intersect:
             A plane through xz
 
         Returns
         -------
-        l_values: Tuple[float, float]
-            Coordinates in normalised space
+        l_1:
+            Coordinate 1 in normalised space
+        l_2:
+            Coordinate 2 in normalised space
 
         Raises
         ------
@@ -319,11 +339,11 @@ class PositionMapper:
 
     Parameters
     ----------
-    interpolators: Dict[str: XZGeometryInterpolator]
+    interpolators:
         The ordered list of geometry interpolators
     """
 
-    def __init__(self, interpolators):
+    def __init__(self, interpolators: Dict[str, XZGeometryInterpolator]):
         self.interpolators = interpolators
 
     def _check_length(self, thing):
@@ -345,20 +365,20 @@ class PositionMapper:
             list_values.append(values)
         return list_values
 
-    def to_xz(self, l_values):
+    def to_xz(self, l_values: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
         """
         Convert a set of parametric-space values to physical x-z coordinates.
 
         Parameters
         ----------
-        l_values: np.ndarray
+        l_values:
             The set of parametric-space values to convert
 
         Returns
         -------
-        x: np.ndarray
+        x:
             Array of x coordinates
-        z: np.ndarray
+        z:
             Array of z coordinates
         """
         l_values = self._vector_to_list(l_values)
@@ -370,20 +390,19 @@ class PositionMapper:
             ]
         ).T
 
-    def to_xz_dict(self, l_values):
+    def to_xz_dict(self, l_values: np.ndarray) -> Dict[str, np.ndarray]:
         """
         Convert a set of parametric space values to physical coordinates in a dictionary
         form.
 
         Parameters
         ----------
-        l_values: np.ndarray
+        l_values:
             The set of parametric-space values to convert
 
         Returns
         -------
-        xz_dict: dict
-            Dictionary of x-z values corresponding to each interpolator
+        Dictionary of x-z values corresponding to each interpolator
         """
         l_values = self._vector_to_list(l_values)
         self._check_length(l_values)
@@ -392,20 +411,20 @@ class PositionMapper:
             xz_dict[key] = tool.to_xz(l_values[i])
         return xz_dict
 
-    def to_L(self, x, z):
+    def to_L(self, x: np.ndarray, z: np.ndarray) -> np.ndarray:
         """
         Convert a set of physical x-z coordinates to parametric-space values.
 
         Parameters
         ----------
-        x: Iterable
+        x:
             The x coordinates to convert
-        z: Iterable
+        z:
             The z coordinates to convert
 
         Returns
         -------
-        l_values: np.ndarray
+        l_values:
             The set of parametric-space values
         """
         self._check_length(x)
@@ -416,7 +435,7 @@ class PositionMapper:
         return np.array(l_values)
 
     @property
-    def dimension(self):
+    def dimension(self) -> int:
         """
         The total dimension of the parametric space
         """

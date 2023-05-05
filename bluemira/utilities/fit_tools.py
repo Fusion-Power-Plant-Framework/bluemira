@@ -21,7 +21,7 @@
 """
 Fitting tools
 """
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from scipy.linalg import lstsq
@@ -29,34 +29,36 @@ from sklearn.metrics import r2_score
 from sklearn.preprocessing import PolynomialFeatures
 
 
-def surface_fit(x, y, z, order: int = 2, n_grid: int = 30):
+def surface_fit(
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, order: int = 2, n_grid: int = 30
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, List[float], float]:
     """
     Fit a polynomial surface to a 3-D data set.
 
     Parameters
     ----------
-    x: np.array(n)
+    x:
         The x values of the data set
-    y: np.array(n)
+    y:
         The y values of the data set
-    z: np.array(n)
+    z:
         The z values of the data set
-    order: int
+    order:
         The order of the fitting polynomial
-    n_grid: int
+    n_grid:
         The number of gridding points to use on the x and y data
 
     Returns
     -------
-    x2d: np.array(n_grid, n_grid)
+    x2d:
         The gridded x data
-    y2d: np.array(n_grid, n_grid)
+    y2d:
         The gridded y data
-    zz: np.array(n_grid, n_grid)
+    zz:
         The gridded z fit data
-    coeffs: list
+    coeffs:
         The list of polynomial coefficents
-    r2: float
+    r2:
         The R^2 score of the fit
 
     Notes
@@ -103,13 +105,12 @@ def powers_arange(powers: np.ndarray) -> List:
 
     Parameters
     ----------
-    powers: np.ndarray
+    powers:
         array of powers
 
     Returns
     -------
-    index: list
-        index to rearrange array
+    index to rearrange array
 
     """
     return sorted(

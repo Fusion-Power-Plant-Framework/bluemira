@@ -25,7 +25,7 @@ A collection of plotting tools.
 
 import os
 import re
-from typing import Union
+from typing import Optional, Union
 
 import imageio
 import matplotlib.pyplot as plt
@@ -52,19 +52,18 @@ __all__ = [
 ]
 
 
-def gsymbolify(string):
+def gsymbolify(string: str) -> str:
     """
     Convert a string to a LaTEX printable greek letter if detected.
 
     Parameters
     ----------
-    string: str
+    string:
         The string to add Greek symbols to
 
     Returns
     -------
-    string: str
-        The modified string. Returns input if no changes made
+    The modified string. Returns input if no changes made
     """
     if string in GREEK_ALPHABET or string in GREEK_ALPHABET_CAPS:
         return "\\" + string
@@ -72,19 +71,18 @@ def gsymbolify(string):
         return string
 
 
-def str_to_latex(string):
+def str_to_latex(string: str) -> str:
     """
     Create a new string which can be printed in LaTEX nicely.
 
     Parameters
     ----------
-    string: str
+    string:
         The string to be converted
 
     Returns
     -------
-    string: str
-        The mathified string
+    The mathified string
 
     'I_m_p' ==> '$I_{m_{p}}$'
     """
@@ -94,7 +92,7 @@ def str_to_latex(string):
     return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
 
 
-def make_gif(folder, figname, formatt="png", clean=True):
+def make_gif(folder: str, figname: str, formatt: str = "png", clean: bool = True):
     """
     Make a GIF image from a set of images with similar names in a folder.
     Figures are sorted in increasing order based on a trailing number, e.g.
@@ -104,13 +102,13 @@ def make_gif(folder, figname, formatt="png", clean=True):
 
     Parameters
     ----------
-    folder: str
+    folder:
         Full path folder name
-    figname: str
+    figname:
         Figure name prefix
-    formatt: str (default = 'png')
+    formatt:
         Figure filename extension
-    clean: bool (default = True)
+    clean:
         Delete figures after completion?
     """
     ims = []
@@ -143,7 +141,7 @@ def save_figure(fig, name, save=False, folder=None, dpi=600, formatt="png", **kw
         fig.savefig(name, dpi=dpi, bbox_inches="tight", format=formatt, **kwargs)
 
 
-def ring_coding(n):
+def ring_coding(n: int) -> np.ndarray:
     """
     The codes will be all "LINETO" commands, except for "MOVETO"s at the
     beginning of each subpath
@@ -153,7 +151,7 @@ def ring_coding(n):
     return codes
 
 
-def coordinates_to_path(x, z):
+def coordinates_to_path(x: np.ndarray, z: np.ndarray) -> Path:
     """
     Convert coordinates to path vertices.
     """
@@ -200,19 +198,26 @@ class BluemiraPathPatch3D(PathPatch3D):
 
     Parameters
     ----------
-    path: matplotlib path::Path object
+    path:
         The path object to plot in 3-D
-    normal: iterable(3)
+    normal:
         The 3-D normal vector of the face
-    translation: iterable(3)
+    translation:
         Translation vector to apply to the face
-    color: str
+    color:
         The color to plot the fill
     """
 
     # Thank you StackOverflow
     # https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
-    def __init__(self, path, normal, translation=None, color="b", **kwargs):
+    def __init__(
+        self,
+        path: Path,
+        normal: np.ndarray,
+        translation: Optional[np.ndarray] = None,
+        color: str = "b",
+        **kwargs,
+    ):
         # Initialise the patch first, or we can get into nasty recursive
         # calls in __getattr__
         self._patch2d = PathPatch(path, color=color, **kwargs)
@@ -235,7 +240,7 @@ class BluemiraPathPatch3D(PathPatch3D):
 
         self._segment3d = new_points + t_matrix
 
-    def __getattr__(self, key):
+    def __getattr__(self, key: str):
         """
         Transfer the key getattr to underlying PathPatch object.
         """
