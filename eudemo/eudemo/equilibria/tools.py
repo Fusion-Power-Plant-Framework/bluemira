@@ -20,6 +20,11 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Utility functions related to EUDEMO equilibria calculations."""
 
+from typing import TYPE_CHECKING, Dict
+
+if TYPE_CHECKING:
+    from bluemira.base.parameter_frame import ParameterFrame
+    from bluemira.geometry.parameterisations import GeometryParameterisation
 
 import numpy as np
 
@@ -36,21 +41,23 @@ from bluemira.geometry.coordinates import Coordinates, interpolate_points
 from bluemira.geometry.wire import BluemiraWire
 
 
-def estimate_kappa95(A, m_s_limit):
+def estimate_kappa95(A: float, m_s_limit: float) -> float:
     """
     Estimate the maximum kappa_95 for a given aspect ratio and margin to
     stability. It is always better to have as high a kappa_95 as possible, so
     we maximise it here, for a specified margin to stability value.
+
     Parameters
     ----------
-    A: float
+    A:
         The aspect ratio of the plasma
-    m_s_limit: float
+    m_s_limit:
         The margin to stability (typically ~0.3)
+
     Returns
     -------
-    kappa_95: float
-        The maximum elongation for the specified input values
+    The maximum elongation for the specified input values
+
     Notes
     -----
     The model used here is a 2nd order polynomial surface fit, generated using
@@ -102,26 +109,28 @@ def estimate_kappa95(A, m_s_limit):
     return kappa_95
 
 
-def handle_lcfs_shape_input(param_cls, params, shape_config):
+def handle_lcfs_shape_input(
+    param_cls: GeometryParameterisation,
+    params: ParameterFrame,
+    shape_config: Dict[str, float],
+) -> Dict[str, float]:
     """
     Process the LCFS shape parameterisation inputs based on a parameterisation
     and a shape configuration.
 
     Parameters
     ----------
-    param_cls: GeometryParameterisation
+    param_cls:
         LCFS geometry parameterisation
-    params: ParameterFrame
+    params:
         Parameters of the reactor
-    shape_config: dict
+    shape_config:
         Dictionary with the various shape configuration keys, which can be specific
         to the geometry parameterisation
 
     Returns
     -------
-    input_dict: dict
-        Input dictionary for the initialisation of the specified
-        GeometryParameterisation
+    Input dictionary for the initialisation of the specified GeometryParameterisation
     """
     defaults = {
         "f_kappa_l": 1.0,
@@ -159,25 +168,26 @@ def handle_lcfs_shape_input(param_cls, params, shape_config):
     return input_dict
 
 
-def make_grid(R_0, A, kappa, grid_settings):
+def make_grid(
+    R_0: float, A: float, kappa: float, grid_settings: Dict[str, float]
+) -> Grid:
     """
     Make a finite difference Grid for an Equilibrium.
 
     Parameters
     ----------
-    R_0: float
+    R_0:
         Major radius
-    A: float
+    A:
         Aspect ratio
-    kappa: float
+    kappa:
         Elongation
-    grid_settings: dict
+    grid_settings:
         Dictionary of grid settings
 
     Returns
     -------
-    grid: Grid
-        Finite difference grid for an Equilibrium
+    Finite difference grid for an Equilibrium
     """
     defaults = {
         "grid_scale_x": 2.0,
@@ -239,23 +249,23 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
 
     def __init__(
         self,
-        R_0,
-        Z_0,
-        A,
-        kappa_u,
-        kappa_l,
-        delta_u,
-        delta_l,
-        psi_u_neg,
-        psi_u_pos,
-        psi_l_neg,
-        psi_l_pos,
-        div_l_ib,
-        div_l_ob,
-        psibval,
-        psibtol=1e-3,
-        lower=True,
-        n=100,
+        R_0: float,
+        Z_0: float,
+        A: float,
+        kappa_u: float,
+        kappa_l: float,
+        delta_u: float,
+        delta_l: float,
+        psi_u_neg: float,
+        psi_u_pos: float,
+        psi_l_neg: float,
+        psi_l_pos: float,
+        div_l_ib: float,
+        div_l_ob: float,
+        psibval: float,
+        psibtol: float = 1e-3,
+        lower: float = True,
+        n: int = 100,
     ):
         constraints = []
         f_s = flux_surface_johner(
@@ -313,17 +323,17 @@ class EUDEMODoubleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
 
     def __init__(
         self,
-        R_0,
-        Z_0,
-        A,
-        kappa,
-        delta,
-        psi_neg,
-        psi_pos,
-        div_l_ib,
-        div_l_ob,
-        psibval,
-        n=400,
+        R_0: float,
+        Z_0: float,
+        A: float,
+        kappa: float,
+        delta: float,
+        psi_neg: float,
+        psi_pos: float,
+        div_l_ib: float,
+        div_l_ob: float,
+        psibval: float,
+        n: int = 400,
     ):
         super().__init__()
         f_s = flux_surface_johner(
@@ -359,9 +369,9 @@ class ReferenceConstraints(MagneticConstraintSet):
     """
     Parameters
     ----------
-    shape: BluemiraWire
+    shape:
         Geometry from which to build the reference constraints for the equilibrium
-    n_points: int
+    n_points:
         Number of points to use when creating the constraints
     """
 
