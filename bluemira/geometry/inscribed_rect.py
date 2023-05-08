@@ -24,6 +24,7 @@ Function to find inscribed rectangle.
 In contained file because loop module imports geomtools and geombase modules
 """
 from copy import deepcopy
+from typing import List, Tuple
 
 import numpy as np
 from scipy.spatial.distance import pdist
@@ -40,43 +41,43 @@ __all__ = ["inscribed_rect_in_poly"]
 
 
 def inscribed_rect_in_poly(
-    x_poly,
-    z_poly,
-    x_point,
-    z_point,
-    aspectratio=1,
+    x_poly: np.ndarray,
+    z_poly: np.ndarray,
+    x_point: float,
+    z_point: float,
+    aspectratio: float = 1.0,
     *,
-    convex=True,
-    rtol=1e-06,
-    atol=1e-08,
-):
+    convex: bool = True,
+    rtol: float = 1e-06,
+    atol: float = 1e-08,
+) -> Tuple[float, float]:
     """
     Find largest inscribed rectangle in a given polygon.
 
     Parameters
     ----------
-    x_poly: np.array
+    x_poly:
         x coordinates of the polygon
-    z_poly: np.array
+    z_poly:
         z coordinates of the ploygon
-    x_point: float
+    x_point:
         x coordinate of the centroid of the
-    z_point: float
+    z_point:
         z coordinate of the centroid of the rectangle
-    aspectratio: float, optional
+    aspectratio:
         aspect ratio of rectangle
-    convex: bool, optional
+    convex:
         treat the loop as convex default:True
-    rtol: float, optional
+    rtol:
         The relative tolerance parameter (see Notes)
-    atol: float, optional
+    atol:
         The absolute tolerance parameter (see Notes)
 
     Returns
     -------
-    dx: float
+    dx:
         half width of inscribed rectangle
-    dz: float
+    dz:
         half height of inscribed rectangle
 
     Notes
@@ -85,7 +86,6 @@ def inscribed_rect_in_poly(
     for an explanation of relative and absolute tolerances.
     The tolerances only affects non convex loops in certain complex situations.
     Setting either value to a very small value could cause the function to hang.
-
     """
     coordinates = Coordinates({"x": x_poly, "z": z_poly})
     if not coordinates.closed:
@@ -152,20 +152,26 @@ class _GetDxDz:
 
     Parameters
     ----------
-    coords: Coordinates
+    coords:
         Region coordinates
-    point: (float, float)
+    point:
         central point of rectangle
-    aspectratio: float
+    aspectratio:
         Aspect ratio of rectangle
-    convex: bool
+    convex:
         convex region boolean
-    planes: list
+    planes:
         list of intersection planes
-
     """
 
-    def __init__(self, coords, point, aspectratio, convex, planes):
+    def __init__(
+        self,
+        coords: Coordinates,
+        point: Tuple[float, float],
+        aspectratio: float,
+        convex: bool,
+        planes: List[BluemiraPlane],
+    ):
         self.vec_arr_x = np.zeros((9, 2))
         self.vec_arr_x[0] = point
 
@@ -181,7 +187,7 @@ class _GetDxDz:
 
         self.check = self.approx if convex else self.precise
 
-    def approx(self, n, lpi):
+    def approx(self, n: int, lpi):
         """
         Approximate nearest intersection (for convex shapes).
         """
@@ -202,15 +208,15 @@ class _GetDxDz:
                 self.vec_arr_x[n : n + 2] = int_s1, int_s2
                 break
 
-    def __call__(self):
+    def __call__(self) -> Tuple[float, float]:
         """
         Get dx and dz.
 
         Returns
         -------
-        dx: float
+        dx:
             maximum width/2 of rectangle
-        dz: float
+        dz:
             maximum height/2 of rectangle
         """
         for n, plane in zip(self.elements, self.planes):
@@ -243,7 +249,7 @@ class _GetDxDz:
         return (dx2, dz2) if dx2 < dx1 or dz2 < dz1 else (dx1, dz1)
 
 
-def _rect(x, z, dx, dz):
+def _rect(x: float, z: float, dx: float, dz: float) -> Coordinates:
     """
     Helper function to create a rectangular loop at a given point.
 
@@ -260,8 +266,7 @@ def _rect(x, z, dx, dz):
 
     Returns
     -------
-    coords
-        Rectangular closed set of coordinates
+    Rectangular closed set of coordinates
     """
     return Coordinates(
         {
