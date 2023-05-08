@@ -34,7 +34,6 @@ from pyclipper import (
     JT_MITER,
     JT_ROUND,
     JT_SQUARE,
-    PolyTree,
     PolyTreeToPaths,
     PyclipperOffset,
     PyPolyNode,
@@ -86,13 +85,13 @@ def pyclippath_to_coordinates(path: np.ndarray) -> Coordinates:
     return Coordinates({"x": p2[0], "y": 0, "z": p2[1]})
 
 
-def pyclippolytree_to_coordinates(polytree: PolyTree) -> List[Coordinates]:
+def pyclippolytree_to_coordinates(polytree: List[np.ndarray]) -> List[Coordinates]:
     """
     Converts a ClipperLib PolyTree into a list of Coordinates
 
     Parameters
     ----------
-    polytree: ClipperLib::PolyTree
+    polytree:
         The polytree to convert to Coordinates
     """
     paths = PolyTreeToPaths(polytree)
