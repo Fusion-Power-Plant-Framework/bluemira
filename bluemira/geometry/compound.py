@@ -30,7 +30,7 @@ Wrapper for FreeCAD Part.Compounds objects
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import List, Tuple
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo
@@ -43,9 +43,18 @@ from bluemira.geometry.wire import BluemiraWire
 
 
 class BluemiraCompound(BluemiraGeo):
-    """Bluemira Compound class."""
+    """
+    Bluemira Compound class.
 
-    def __init__(self, boundary, label: str = ""):
+    Parameters
+    ----------
+    boundary:
+        List of BluemiraGeo objects to include in the compound
+    label:
+        Label to assign to the compound
+    """
+
+    def __init__(self, boundary: List[BluemiraGeo], label: str = ""):
         boundary_classes = [BluemiraGeo]
         super().__init__(boundary, label, boundary_classes)
 
