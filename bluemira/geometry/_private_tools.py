@@ -26,6 +26,7 @@ use primitive operations in geometry/tools.py instead.
 
 from functools import partial
 from itertools import zip_longest
+from typing import Tuple
 
 import numpy as np
 
@@ -68,34 +69,33 @@ def _segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-    x: array_like
+    x:
         x coordinates [m]
-    y: array_like
+    y:
         y coordinates [m]
-    z: array_like
+    z:
         z coordinates [m]
 
     Returns
     -------
-    dL: np.array(N)
-        The length of each individual segment in the coordinates
+    The length of each individual segment in the coordinates
     """
     return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
 
 
-def _side_vector(polygon_array):
+def _side_vector(polygon_array: np.ndarray) -> np.ndarray:
     """
     Calculates the side vectors of an anti-clockwise polygon
 
     Parameters
     ----------
-    polygon_array: np.array(2, N)
-        The array of polygon point coordinates
+    polygon_array:
+        The 2-D array of polygon point coordinates
 
     Returns
     -------
-    sides: np.array(N, 2)
-        The array of the polygon side vectors
+    sides:
+        The 2-D array of the polygon side vectors
     """
     return polygon_array - np.roll(polygon_array, 1)
 
@@ -105,7 +105,9 @@ def _side_vector(polygon_array):
 # =============================================================================
 
 
-def offset(x, z, offset_value):
+def offset(
+    x: np.ndarray, z: np.ndarray, offset_value: float
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Get a square-based offset of the coordinates (no splines). N-sized output
 
@@ -120,9 +122,9 @@ def offset(x, z, offset_value):
 
     Returns
     -------
-    xo: np.array(N)
+    xo:
         The x offset coordinates
-    zo: np.array(N)
+    zo:
         The z offset coordinates
     """
     # check numpy arrays:
