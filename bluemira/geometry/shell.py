@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import List, Tuple
 
 # import from freecad
 import bluemira.codes._freecadapi as cadapi
@@ -40,13 +40,22 @@ __all__ = ["BluemiraShell"]
 
 
 class BluemiraShell(BluemiraGeo):
-    """Bluemira Shell class."""
+    """
+    Bluemira Shell class.
 
-    def __init__(self, boundary, label: str = ""):
+    Parameters
+    ----------
+    boundary:
+        List of faces from which to make the BluemiraShell
+    label:
+        Label to assign to the shell
+    """
+
+    def __init__(self, boundary: List[BluemiraFace], label: str = ""):
         boundary_classes = [BluemiraFace]
         super().__init__(boundary, label, boundary_classes)
 
-    def _create_shell(self, check_reverse=True):
+    def _create_shell(self, check_reverse: bool = True):
         """Creation of the shell"""
         faces = [f._create_face(check_reverse=True) for f in self.boundary]
         shell = cadapi.apiShell(faces)
