@@ -29,7 +29,18 @@ import inspect
 import json
 import os
 from copy import deepcopy
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    Union,
+)
 
 import numba as nb
 import numpy as np
@@ -255,7 +266,7 @@ def make_polygon(
 
     Returns
     -------
-    A BluemiraWire of the polygon
+    BluemiraWire of the polygon
 
     Notes
     -----
@@ -284,7 +295,7 @@ def make_bezier(
 
     Returns
     -------
-    A BluemiraWire that contains the bspline
+    BluemiraWire that contains the bspline
 
     Notes
     -----
@@ -326,7 +337,7 @@ def make_bspline(
 
     Returns
     -------
-    A BluemiraWire of the spline
+    BluemiraWire of the spline
     """
     return BluemiraWire(
         cadapi.make_bspline(
@@ -357,23 +368,22 @@ def interpolate_bspline(
 
     Parameters
     ----------
-    points: Union[list, np.ndarray]
+    points:
         list of points. It can be given as a list of 3D tuples, a 3D numpy array,
         or similar.
-    label: str, default = ""
+    label:
         Object's label
-    closed: bool, default = False
+    closed:
         if True, the first and last points will be connected in order to form a
         closed bspline. Defaults to False.
-    start_tangent: Optional[Iterable]
+    start_tangent:
         Tangency of the BSpline at the first pole. Must be specified with end_tangent
-    end_tangent: Optional[Iterable]
+    end_tangent:
         Tangency of the BSpline at the last pole. Must be specified with start_tangent
 
     Returns
     -------
-    wire: BluemiraWire
-        a bluemira wire that contains the bspline
+    Bluemira wire that contains the bspline
     """
     points = Coordinates(points)
     return BluemiraWire(
@@ -383,11 +393,11 @@ def interpolate_bspline(
 
 
 def make_circle(
-    radius=1.0,
-    center=(0.0, 0.0, 0.0),
-    start_angle=0.0,
-    end_angle=360.0,
-    axis=(0.0, 0.0, 1.0),
+    radius: float = 1.0,
+    center: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    start_angle: float = 0.0,
+    end_angle: float = 360.0,
+    axis: Tuple[float, float, float] = (0.0, 0.0, 1.0),
     label: str = "",
 ) -> BluemiraWire:
     """
@@ -395,47 +405,47 @@ def make_circle(
 
     Parameters
     ----------
-    radius: float, default =1.0
+    radius:
         Radius of the circle
-    center: Iterable, default = (0, 0, 0)
+    center:
         Center of the circle
-    start_angle: float, default = 0.0
+    start_angle:
         Start angle of the arc [degrees]
-    end_angle: float, default = 360.0
+    end_angle:
         End angle of the arc [degrees]. If start_angle == end_angle, a circle is created,
         otherwise a circle arc is created
-    axis: Iterable, default = (0, 0, 1)
+    axis:
         Normal vector to the circle plane. It defines the clockwise/anticlockwise
         circle orientation according to the right hand rule.
-    label: str
+    label:
         object's label
 
     Returns
     -------
-    wire: BluemiraWire
-        bluemira wire that contains the arc or circle
+    Bluemira wire that contains the arc or circle
     """
     output = cadapi.make_circle(radius, center, start_angle, end_angle, axis)
     return BluemiraWire(output, label=label)
 
 
-def make_circle_arc_3P(p1, p2, p3, label: str = ""):  # noqa: N802
+def make_circle_arc_3P(  # noqa: N802
+    p1: Iterable[float], p2: Iterable[float], p3: Iterable[float], label: str = ""
+):
     """
     Create an arc of circle object given three points.
 
     Parameters
     ----------
-    p1: Iterable
+    p1:
         Starting point of the circle arc
-    p2: Iterable
+    p2:
         Middle point of the circle arc
-    p3: Iterable
+    p3:
         End point of the circle arc
 
     Returns
     -------
-    wire: BluemiraWire
-        bluemira wire that contains the arc or circle
+    Bluemira wire that contains the arc or circle
     """
     # TODO: check what happens when the 3 points are in a line
     output = cadapi.make_circle_arc_3P(p1, p2, p3)
@@ -443,42 +453,41 @@ def make_circle_arc_3P(p1, p2, p3, label: str = ""):  # noqa: N802
 
 
 def make_ellipse(
-    center=(0.0, 0.0, 0.0),
-    major_radius=2.0,
-    minor_radius=1.0,
-    major_axis=(1, 0, 0),
-    minor_axis=(0, 1, 0),
-    start_angle=0.0,
-    end_angle=360.0,
+    center: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    major_radius: float = 2.0,
+    minor_radius: float = 1.0,
+    major_axis: Tuple[float, float, float] = (1, 0, 0),
+    minor_axis: Tuple[float, float, float] = (0, 1, 0),
+    start_angle: float = 0.0,
+    end_angle: float = 360.0,
     label: str = "",
-):
+) -> BluemiraWire:
     """
     Create an ellipse or arc of ellipse object with given parameters.
 
     Parameters
     ----------
-    center: Iterable, default = (0, 0, 0)
+    center:
         Center of the ellipse
-    major_radius: float, default = 2
+    major_radius:
         Major radius of the ellipse
-    minor_radius: float, default = 2
+    minor_radius:
         Minor radius of the ellipse (float). Default to 2.
-    major_axis: Iterable, default = (1, 0, 0)
+    major_axis:
         Major axis direction
-    minor_axis: Iterable, default = (0, 1, 0)
+    minor_axis:
         Minor axis direction
-    start_angle:  float, default = 0
+    start_angle:
         Start angle of the arc [degrees]
-    end_angle: float, default = 360
+    end_angle:
         End angle of the arc [degrees].  if start_angle == end_angle, an ellipse is
         created, otherwise a ellipse arc is created
-    label: str, default = ""
+    label:
         Object's label
 
     Returns
     -------
-    wire: BluemiraWire:
-         Bluemira wire that contains the arc or ellipse
+    Bluemira wire that contains the arc or ellipse
     """
     output = cadapi.make_ellipse(
         center,
@@ -498,15 +507,14 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
 
     Parameters
     ----------
-    bmwire: BluemiraWire
+    bmwire:
         supporting wire for the closure
-    label: str, default = ""
+    label:
         Object's label
 
     Returns
     -------
-        closure: BluemiraWire
-            Closure wire
+    Closure wire
     """
     wire = bmwire.shape
     closure = BluemiraWire(cadapi.wire_closure(wire), label=label)
@@ -574,24 +582,24 @@ def offset_wire(
 
     Parameters
     ----------
-    wire: BluemiraWire
+    wire:
         Wire to offset from
-    thickness: float
+    thickness:
         Offset distance. Positive values outwards, negative values inwards
-    join: str
+    join:
         Offset method. "arc" gives rounded corners, and "intersect" gives sharp corners
-    open_wire: bool
+    open_wire:
         For open wires (counter-clockwise default) whether or not to make an open offset
         wire, or a closed offset wire that encompasses the original wire. This is
         disabled for closed wires.
 
     Other Parameters
     ----------------
-    byedges: bool (default = True)
+    byedges:
         Whether or not to discretise the wire by edges
-    ndiscr: int (default = 200)
+    ndiscr:
         Number of points to discretise the wire to
-    fallback_method: str
+    fallback_method:
         Method to use in discretised offsetting, will default to `square` as `round`
         is know to be very slow
 
@@ -603,8 +611,7 @@ def offset_wire(
 
     Returns
     -------
-    wire: BluemiraWire
-        Offset wire
+    Offset wire
     """
     return BluemiraWire(
         cadapi.offset_wire(wire.shape, thickness, join, open_wire), label=label
@@ -612,7 +619,7 @@ def offset_wire(
 
 
 def convex_hull_wires_2d(
-    wires: Sequence[BluemiraWire], ndiscr: int, plane="xz"
+    wires: Sequence[BluemiraWire], ndiscr: int, plane: str = "xz"
 ) -> BluemiraWire:
     """
     Perform a convex hull around the given wires and return the hull
@@ -622,19 +629,18 @@ def convex_hull_wires_2d(
 
     Parameters
     ----------
-    wires: Sequence[BluemiraWire]
+    wires:
         The wires to draw a hull around.
-    ndiscr: int
+    ndiscr:
         The number of points to discretise each wire into.
-    plane: str
+    plane:
         The plane to perform the hull in. One of: 'xz', 'xy', 'yz'.
         Default is 'xz'.
 
     Returns
     -------
-    hull: BluemiraWire
-        A wire forming a convex hull around the input wires in the given
-        plane.
+    A wire forming a convex hull around the input wires in the given
+    plane.
     """
     if not wires:
         raise ValueError("Must have at least one wire to draw a hull around.")
@@ -663,30 +669,29 @@ def convex_hull_wires_2d(
 # # Shape operation
 # # =============================================================================
 def revolve_shape(
-    shape,
-    base: Iterable = (0.0, 0.0, 0.0),
-    direction: Iterable = (0.0, 0.0, 1.0),
+    shape: BluemiraGeo,
+    base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+    direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 180,
     label: str = "",
-):
+) -> BluemiraGeo:
     """
     Apply the revolve (base, dir, degree) to this shape
 
     Parameters
     ----------
-    shape: BluemiraGeo
+    shape:
         The shape to be revolved
-    base: Iterable (x,y,z), default = (0.0, 0.0, 0.0)
+    base:
         Origin location of the revolution
-    direction: Iterable (x,y,z), default = (0.0, 0.0, 1.0)
+    direction:
         The direction vector
-    degree: double, default = 180
+    degree:
         revolution angle
 
     Returns
     -------
-    shape: Union[BluemiraShell, BluemiraSolid]
-        the revolved shape.
+    The revolved shape.
     """
     if degree > 360:
         bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
@@ -714,23 +719,24 @@ def revolve_shape(
     return convert(cadapi.revolve_shape(shape.shape, base, direction, degree), label)
 
 
-def extrude_shape(shape: BluemiraGeo, vec: tuple, label="") -> BluemiraSolid:
+def extrude_shape(
+    shape: BluemiraGeo, vec: Tuple[float, float, float], label=""
+) -> BluemiraSolid:
     """
     Apply the extrusion along vec to this shape
 
     Parameters
     ----------
-    shape: BluemiraGeo
+    shape:
         The shape to be extruded
-    vec: tuple (x,y,z)
+    vec:
         The vector along which to extrude
-    label: str, default = ""
+    label:
         label of the output shape
 
     Returns
     -------
-    shape: BluemiraSolid
-        The extruded shape.
+    The extruded shape.
     """
     if not label:
         label = shape.label
@@ -738,26 +744,31 @@ def extrude_shape(shape: BluemiraGeo, vec: tuple, label="") -> BluemiraSolid:
     return convert(cadapi.extrude_shape(shape.shape, vec), label)
 
 
-def sweep_shape(profiles, path, solid=True, frenet=True, label=""):
+def sweep_shape(
+    profiles: Union[BluemiraWire, Iterable[BluemiraWire]],
+    path: BluemiraWire,
+    solid: bool = True,
+    frenet: bool = True,
+    label: str = "",
+) -> Union[BluemiraSolid, BluemiraShell]:
     """
     Sweep a profile along a path.
 
     Parameters
     ----------
-    profiles: BluemiraWire
-        Profile to sweep
-    path: BluemiraWire
+    profiles:
+        Profile(s) to sweep
+    path:
         Path along which to sweep the profiles
-    solid: bool
+    solid:
         Whether or not to create a Solid
-    frenet: bool
+    frenet:
         If true, the orientation of the profile(s) is calculated based on local curvature
         and tangency. For planar paths, should not make a difference.
 
     Returns
     -------
-    swept: Union[BluemiraSolid, BluemiraShell]
-        Swept geometry object
+    Swept geometry object
     """
     if not isinstance(profiles, Iterable):
         profiles = [profiles]
@@ -811,8 +822,7 @@ def fillet_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
 
     Returns
     -------
-    filleted_wire:
-        The filleted wire
+    The filleted wire
     """
     return BluemiraWire(cadapi.fillet_wire_2D(wire.shape, radius))
 
@@ -831,30 +841,29 @@ def chamfer_wire_2D(wire: BluemiraWire, radius: float):
 
     Returns
     -------
-    chamfered_wire:
-        The chamfered wire
+    The chamfered wire
     """
     return BluemiraWire(cadapi.fillet_wire_2D(wire.shape, radius, chamfer=True))
 
 
 def distance_to(
     geo1: Union[Iterable[float], BluemiraGeo], geo2: Union[Iterable[float], BluemiraGeo]
-):
+) -> Tuple[float, List[Tuple[float, float, float]]]:
     """
     Calculate the distance between two BluemiraGeos.
 
     Parameters
     ----------
-    geo1: Union[Iterable[float], BluemiraGeo]
+    geo1:
         Reference shape. If an iterable of length 3, converted to a point.
-    geo2: Union[Iterable[float], BluemiraGeo]
+    geo2:
         Target shape. If an iterable of length 3, converted to a point.
 
     Returns
     -------
-    dist: float
+    dist:
         Minimum distance
-    vectors: List[Tuple]
+    vectors:
         List of tuples corresponding to the nearest points between geo1 and geo2. The
         distance between those points is the minimum distance given by dist.
     """
@@ -870,24 +879,26 @@ def distance_to(
     return cadapi.dist_to_shape(shape1, shape2)
 
 
-def split_wire(wire: BluemiraWire, vertex: Iterable, tolerance: float = EPS):
+def split_wire(
+    wire: BluemiraWire, vertex: Iterable[float], tolerance: float = EPS
+) -> Tuple[Union[None, BluemiraWire], Union[None, BluemiraWire]]:
     """
     Split a wire at a given vertex.
 
     Parameters
     ----------
-    wire: apiWire
+    wire:
         Wire to be split
-    vertex: Iterable
+    vertex:
         Vertex at which to split the wire
-    tolerance: float
+    tolerance:
         Tolerance within which to find the closest vertex on the wire
 
     Returns
     -------
-    wire_1: Optional[BluemiraWire]
+    wire_1:
         First half of the wire. Will be None if the vertex is the start point of the wire
-    wire_2: Optional[BluemiraWire]
+    wire_2:
         Last half of the wire. Will be None if the vertex is the start point of the wire
 
     Raises
@@ -903,15 +914,18 @@ def split_wire(wire: BluemiraWire, vertex: Iterable, tolerance: float = EPS):
     return wire_1, wire_2
 
 
-def slice_shape(shape: BluemiraGeo, plane: BluemiraPlane):
+def slice_shape(
+    shape: BluemiraGeo, plane: BluemiraPlane
+) -> Union[List[np.ndarray], None, List[BluemiraWire]]:
     """
     Calculate the plane intersection points with an object
 
     Parameters
     ----------
-    shape: Union[BluemiraWire, BluemiraFace, BluemiraSolid, BluemiraShell]
-        obj to intersect with a plane
-    plane: BluemiraPlane
+    shape:
+        Shape to intersect with a plane
+    plane:
+        Plane to intersect with
 
     Returns
     -------
@@ -939,28 +953,31 @@ def slice_shape(shape: BluemiraGeo, plane: BluemiraPlane):
 
 
 def circular_pattern(
-    shape, origin=(0, 0, 0), direction=(0, 0, 1), degree=360, n_shapes=10
+    shape: BluemiraGeo,
+    origin: Tuple[float, float, float] = (0, 0, 0),
+    direction: Tuple[float, float, float] = (0, 0, 1),
+    degree: float = 360,
+    n_shapes: int = 10,
 ) -> List[BluemiraGeo]:
     """
     Make a equally spaced circular pattern of shapes.
 
     Parameters
     ----------
-    shape: BluemiraGeo
+    shape:
         Shape to pattern
-    origin: Iterable(3)
+    origin:
         Origin vector of the circular pattern
-    direction: Iterable(3)
+    direction:
         Direction vector of the circular pattern
-    degree: float
+    degree:
         Angle range of the patterning
-    n_shapes: int
+    n_shapes:
         Number of shapes to pattern
 
     Returns
     -------
-    shapes: List[BluemiraGeo]
-        List of patterned shapes, the first element is the original shape
+    List of patterned shapes, the first element is the original shape
     """
     angle = degree / n_shapes
 
@@ -989,8 +1006,7 @@ def mirror_shape(
 
     Returns
     -------
-    mirrored_shape
-        The mirrored shape
+    The mirrored shape
 
     Raises
     ------
@@ -1012,11 +1028,11 @@ def save_as_STP(
 
     Parameters
     ----------
-    shapes: Iterable (BluemiraGeo, ...)
+    shapes:
         List of shape objects to be saved
-    filename: str
+    filename:
         Full path filename of the STP assembly
-    scale: float, default = 1.0
+    scale:
         The scale in which to save the Shape objects
     """
     filename = force_file_extension(filename, [".stp", ".step"])
@@ -1036,11 +1052,11 @@ def save_cad(
 
     Parameters
     ----------
-    components: Union[Component, Iterable[Component]]
+    components:
         components to save
-    filename: str
+    filename:
         Full path filename of the STP assembly
-    scale: float, default = 1.0
+    scale:
         The scale in which to save the Shape objects
     """
     save_as_STP(get_properties_from_components(components, "shape"), filename, scale)
@@ -1068,7 +1084,7 @@ def _nb_clip(val, a_min, a_max):
 
 
 @nb.jit(nopython=True, cache=True)
-def _signed_distance_2D(point, polygon):
+def _signed_distance_2D(point: np.ndarray, polygon: np.ndarray) -> float:
     """
     2-D function for the signed distance from a point to a polygon. The return value is
     negative if the point is outside the polygon, and positive if the point is inside the
@@ -1076,15 +1092,14 @@ def _signed_distance_2D(point, polygon):
 
     Parameters
     ----------
-    point: np.ndarray(2)
+    point:
         2-D point
-    polygon: np.ndarray(n, 2)
+    polygon:
         2-D set of point coordinates
 
     Returns
     -------
-    signed_distance: float
-        Signed distance value of the point to the polygon
+    Signed distance value of the point to the polygon
 
     Notes
     -----
@@ -1120,7 +1135,9 @@ def _signed_distance_2D(point, polygon):
 
 
 @nb.jit(nopython=True, cache=True)
-def signed_distance_2D_polygon(subject_poly, target_poly):
+def signed_distance_2D_polygon(
+    subject_poly: np.ndarray, target_poly: np.ndarray
+) -> np.ndarray:
     """
     2-D vector-valued signed distance function from a subject polygon to a target
     polygon. The return values are negative for points outside the subject polygon, and
@@ -1128,15 +1145,14 @@ def signed_distance_2D_polygon(subject_poly, target_poly):
 
     Parameters
     ----------
-    subject_poly: np.ndarray(n, 2)
-        Subject polygon
-    target_poly: np.ndarray(m, 2)
-        Target polygon
+    subject_poly
+        Subject 2-D polygon
+    target_poly:
+        Target 2-D polygon
 
     Returns
     -------
-    signed_distance: np.ndarray(n)
-        Signed distances from the subject polygon to the target polygon
+    Signed distances from the vertices of the subject polygon to the target polygon
     """
     m = len(subject_poly)
     d = np.zeros(m)
@@ -1147,7 +1163,7 @@ def signed_distance_2D_polygon(subject_poly, target_poly):
     return d
 
 
-def signed_distance(wire_1, wire_2):
+def signed_distance(wire_1: BluemiraWire, wire_2: BluemiraWire) -> float:
     """
     Single-valued signed "distance" function between two wires. Will return negative
     values if wire_1 does not touch or intersect wire_2, 0 if there is one intersection,
@@ -1155,15 +1171,14 @@ def signed_distance(wire_1, wire_2):
 
     Parameters
     ----------
-    wire_1: BluemiraWire
+    wire_1:
         Subject wire
-    wire_2: BluemiraWire
+    wire_2:
         Target wire
 
     Returns
     -------
-    signed_distance: float
-        Signed distance from wire_1 to wire_2
+    Signed distance from wire_1 to wire_2
 
     Notes
     -----
@@ -1201,21 +1216,20 @@ def signed_distance(wire_1, wire_2):
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
-def boolean_fuse(shapes, label=""):
+def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
     """
     Fuse two or more shapes together. Internal splitter are removed.
 
     Parameters
     ----------
-    shapes: Iterable (BluemiraGeo, ...)
+    shapes:
         List of shape objects to be saved
-    label: str
+    label:
         Label for the resulting shape
 
     Returns
     -------
-    merged_geo: BluemiraGeo
-        Result of the boolean operation.
+    Result of the boolean operation.
 
     Raises
     ------
@@ -1242,21 +1256,22 @@ def boolean_fuse(shapes, label=""):
         raise GeometryError(f"Boolean fuse operation failed: {e}")
 
 
-def boolean_cut(shape, tools):
+def boolean_cut(
+    shape: BluemiraGeo, tools: Iterable[BluemiraGeo]
+) -> Iterable[BluemiraGeo]:
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
     Parameters
     ----------
-    shape: BluemiraGeo
+    shape:
         the reference object
-    tools: Iterable
+    tools:
         List of BluemiraGeo shape objects to be used as tools.
 
     Returns
     -------
-    cut_shape:
-        Result of the boolean operation.
+    Result of the boolean cut operation.
 
     Raises
     ------
@@ -1311,42 +1326,42 @@ def boolean_fragments(
     return convert(compound), converted
 
 
-def point_inside_shape(point, shape):
+def point_inside_shape(point: Iterable[float], shape: BluemiraGeo) -> bool:
     """
     Check whether or not a point is inside a shape.
 
     Parameters
     ----------
-    point: Iterable(3)
+    point:
         Coordinates of the point
-    shape: BluemiraGeo
+    shape:
         Geometry to check with
 
     Returns
     -------
-    inside: bool
-        Whether or not the point is inside the shape
+    Whether or not the point is inside the shape
     """
     return cadapi.point_inside_shape(point, shape.shape)
 
 
-def point_on_plane(point, plane, tolerance=D_TOLERANCE):
+def point_on_plane(
+    point: Iterable[float], plane: BluemiraPlane, tolerance: float = D_TOLERANCE
+) -> bool:
     """
     Check whether or not a point is on a plane.
 
     Parameters
     ----------
-    point: Iterable
+    point:
         Coordinates of the point
-    plane: BluemiraPlane
+    plane:
         Plane to check
-    tolerance: float
+    tolerance:
         Tolerance with which to check
 
     Returns
     -------
-    point_on_plane: bool
-        Whether or not the point is on the plane
+    Whether or not the point is on the plane
     """
     return (
         abs(
@@ -1390,12 +1405,12 @@ def deserialize_shape(buffer: dict):
 
     Parameters
     ----------
-    buffer
+    buffer:
         Object serialization as stored by serialize_shape
 
     Returns
     -------
-        The deserialized BluemiraGeo object.
+    The deserialized BluemiraGeo object.
     """
     supported_types = [BluemiraWire, BluemiraFace, BluemiraShell]
 
@@ -1443,7 +1458,7 @@ def deserialize_shape(buffer: dict):
 # # =============================================================================
 # # shape utils
 # # =============================================================================
-def get_shape_by_name(shape: BluemiraGeo, name: str):
+def get_shape_by_name(shape: BluemiraGeo, name: str) -> List[BluemiraGeo]:
     """
     Search through the boundary of the shape and get any shapes with a label
     corresponding to the provided name. Includes the shape itself if the name matches
@@ -1451,15 +1466,14 @@ def get_shape_by_name(shape: BluemiraGeo, name: str):
 
     Parameters
     ----------
-    shape: BluemiraGeo
+    shape:
         The shape to search for the provided name.
-    name: str
+    name:
         The name to search for.
 
     Returns
     -------
-    shapes: List[BluemiraGeo]
-        The shapes known to the provided shape that correspond to the provided name.
+    The shapes known to the provided shape that correspond to the provided name.
     """
     shapes = []
     if hasattr(shape, "label") and shape.label == name:
@@ -1480,15 +1494,14 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-    base: np.ndarray[float, (2, N)]
+    base:
         The vector to start the angle from.
-    vector: np.ndarray[float, (2, N)]
+    vector:
         The vector to end the angle at.
 
     Returns
     -------
-    angle: np.ndarray[float, (1, N)]
-        The clockwise angle between the two vectors in degrees.
+    The clockwise angle between the two vectors in degrees.
     """
     if not isinstance(base, np.ndarray) or not isinstance(vector, np.ndarray):
         raise TypeError(
