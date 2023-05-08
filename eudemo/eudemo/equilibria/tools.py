@@ -20,6 +20,8 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Utility functions related to EUDEMO equilibria calculations."""
 
+from __future__ import annotations
+
 from typing import TYPE_CHECKING, Dict
 
 if TYPE_CHECKING:
