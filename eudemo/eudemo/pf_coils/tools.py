@@ -20,6 +20,8 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Functions related to EUDEMO PF coils."""
 
+from typing import List
+
 import numpy as np
 
 from bluemira.base.constants import EPS
@@ -39,7 +41,16 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
 
 
-def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
+def make_solenoid(
+    r_cs: float,
+    tk_cs: float,
+    z_min: float,
+    z_max: float,
+    g_cs: float,
+    tk_cs_ins: float,
+    tk_cs_cas: float,
+    n_CS: int,
+) -> List[Coil]:
     """
     Make a set of solenoid coils in an EU-DEMO fashion. If n_CS is odd, the central
     module is twice the size of the others. If n_CS is even, all the modules are the
@@ -47,27 +58,27 @@ def make_solenoid(r_cs, tk_cs, z_min, z_max, g_cs, tk_cs_ins, tk_cs_cas, n_CS):
 
     Parameters
     ----------
-    r_cs: float
+    r_cs:
         Radius of the solenoid
-    tk_cs: float
+    tk_cs:
         Half-thickness of the solenoid in the radial direction (including insulation and
         casing)
-    z_min: float
+    z_min:
         Minimum vertical position of the solenoid
-    z_max: float
+    z_max:
         Maximum vertical position of the solenoid
-    g_cs: float
+    g_cs:
         Gap between modules
-    tk_cs_ins: float
+    tk_cs_ins:
         Insulation thickness around modules
-    tk_cs_cas: float
+    tk_cs_cas:
         Casing thickness around modules
-    n_CS: int
+    n_CS:
         Number of modules in the solenoid
+
     Returns
     -------
-    coils: List[Coil]
-        List of solenoid coil(s)
+    List of solenoid coil(s)
     """
 
     def make_CS_coil(z_coil, dz_coil, i):
@@ -166,22 +177,22 @@ def make_PF_coil_positions(tf_boundary, n_PF, R_0, kappa, delta):
 
 
 def make_coilset(
-    tf_boundary,
-    R_0,
-    kappa,
-    delta,
-    r_cs,
-    tk_cs,
-    g_cs,
-    tk_cs_ins,
-    tk_cs_cas,
-    n_CS,
-    n_PF,
-    CS_jmax,
-    CS_bmax,
-    PF_jmax,
-    PF_bmax,
-):
+    tf_boundary: BluemiraWire,
+    R_0: float,
+    kappa: float,
+    delta: float,
+    r_cs: float,
+    tk_cs: float,
+    g_cs: float,
+    tk_cs_ins: float,
+    tk_cs_cas: float,
+    n_CS: int,
+    n_PF: int,
+    CS_jmax: float,
+    CS_bmax: float,
+    PF_jmax: float,
+    PF_bmax: float,
+) -> CoilSet:
     """
     Make an initial EU-DEMO-like coilset.
     """
@@ -228,7 +239,7 @@ def make_reference_coilset(
     tk_cs_insulation: float,
     n_CS: int,
     n_PF: int,
-):
+) -> CoilSet:
     """
     Make a reference coilset.
     """
@@ -275,7 +286,9 @@ def make_reference_coilset(
     return CoilSet(*pf_coils + solenoid, control_names=True)
 
 
-def make_coil_mapper(track, exclusion_zones, coils):
+def make_coil_mapper(
+    track: BluemiraWire, exclusion_zones: List[BluemiraFace], coils: List[Coil]
+) -> PositionMapper:
     """
     Make a PositionMapper for the given coils.
 
@@ -284,17 +297,16 @@ def make_coil_mapper(track, exclusion_zones, coils):
 
     Parameters
     ----------
-    track: BluemiraWire
+    track:
         Full length interpolator track for PF coils
-    exclusion_zones: List[BluemiraFace]
+    exclusion_zones:
         List of exclusion zones
-    coils: List[Coil]
+    coils:
         List of coils
 
     Returns
     -------
-    mapper: PositionMapper
-        Position mapper for coil position interpolation
+    Position mapper for coil position interpolation
 
     Notes
     -----
@@ -368,14 +380,14 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
 
     Parameters
     ----------
-    tf_boundary: BluemiraWire
+    tf_boundary:
         Outside edge of the TF coil in the x-z plane
-    offset_value: float
+    offset_value:
         Offset value from the TF coil edge
+
     Returns
     -------
-    pf_coil_path: BluemiraWire
-        Path along which the PF coil centroids should be positioned
+    Path along which the PF coil centroids should be positioned
     """
     tf_offset = offset_wire(tf_boundary, offset_value)
 
