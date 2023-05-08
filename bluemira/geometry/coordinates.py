@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 import os
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.plane import BluemiraPlane
