@@ -27,10 +27,13 @@ from __future__ import annotations
 
 import copy
 import enum
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.geometry.placement import BluemiraPlacement
 
 # import for abstract class
 from abc import ABC, abstractmethod
-from typing import List
 
 import numpy as np
 
@@ -47,7 +50,7 @@ class GeoMeshable(meshing.Meshable):
     Extended Meshable class for BluemiraGeo objects.
     """
 
-    def remove_mesh_options(self, recursive=False):
+    def remove_mesh_options(self, recursive: bool = False):
         """
         Remove mesh options for this object.
         """
@@ -57,7 +60,7 @@ class GeoMeshable(meshing.Meshable):
                 if isinstance(obj, GeoMeshable):
                     obj.remove_mesh_options(recursive=True)
 
-    def print_mesh_options(self, recursive=True):
+    def print_mesh_options(self, recursive: bool = True):
         """
         Print the mesh options for this object.
         """
@@ -84,7 +87,7 @@ class BluemiraGeo(ABC, GeoMeshable):
     ----------
     boundary:
         shape's boundary
-    label: str
+    label:
         identification label for the shape
     boundary_classes:
         list of allowed class types for shape's boundary
@@ -92,9 +95,9 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     def __init__(
         self,
-        boundary,
+        boundary: Union[BluemiraGeo, List[BluemiraGeo]],
         label: str = "",
-        boundary_classes=None,
+        boundary_classes: Optional[BluemiraGeo] = None,
     ):
         super().__init__()
         self._boundary_classes = boundary_classes
@@ -154,7 +157,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return tuple(self._boundary)
 
-    def _set_boundary(self, objs, replace_shape=True):
+    def _set_boundary(self, objs, replace_shape: bool = True):
         self._boundary = self._check_boundary(objs)
         if replace_shape:
             if self._boundary is None:
@@ -171,14 +174,14 @@ class BluemiraGeo(ABC, GeoMeshable):
         pass
 
     @property
-    def shape(self):
+    def shape(self) -> cadapi.apiShape:
         """
         The primitive shape of the object.
         """
         # Note: this is the "hidden" connection with primitive shapes
         return self._shape
 
-    def _set_shape(self, value):
+    def _set_shape(self, value: cadapi.apiShape):
         self._shape = value
 
     @property
@@ -246,14 +249,12 @@ class BluemiraGeo(ABC, GeoMeshable):
 
         Parameters
         ----------
-        label : str
-            shape label.
+        label:
+            Shape label
 
         Returns
         -------
-        output : [BluemiraGeo]
-            list of shapes that have the specified label.
-
+        List of shapes that have the specified label
         """
         output = []
         if self.label == label:
@@ -263,7 +264,7 @@ class BluemiraGeo(ABC, GeoMeshable):
                 output += o.search(label)
         return output
 
-    def scale(self, factor) -> None:
+    def scale(self, factor: float) -> None:
         """
         Apply scaling with factor to this object. This function modifies the self
         object.
@@ -281,7 +282,7 @@ class BluemiraGeo(ABC, GeoMeshable):
                 cadapi.scale_shape(o, factor)
         cadapi.scale_shape(self.shape, factor)
 
-    def translate(self, vector) -> None:
+    def translate(self, vector: Tuple[float, float, float]) -> None:
         """
         Translate this shape with the vector. This function modifies the self
         object.
@@ -301,8 +302,8 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     def rotate(
         self,
-        base: tuple = (0.0, 0.0, 0.0),
-        direction: tuple = (0.0, 0.0, 1.0),
+        base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+        direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
         degree: float = 180,
     ):
         """
@@ -310,11 +311,11 @@ class BluemiraGeo(ABC, GeoMeshable):
 
         Parameters
         ----------
-        base: tuple (x,y,z)
+        base:
             Origin location of the rotation
-        direction: tuple (x,y,z)
+        direction:
             The direction vector
-        degree: float
+        degree:
             rotation angle
 
         Note
@@ -330,7 +331,7 @@ class BluemiraGeo(ABC, GeoMeshable):
                 cadapi.rotate_shape(o, base, direction, degree)
         cadapi.rotate_shape(self.shape, base, direction, degree)
 
-    def change_placement(self, placement) -> None:
+    def change_placement(self, placement: BluemiraPlacement) -> None:
         """
         Change the placement of self
         Note
@@ -346,7 +347,7 @@ class BluemiraGeo(ABC, GeoMeshable):
                 cadapi.change_placement(o, placement._shape)
         cadapi.change_placement(self.shape, placement._shape)
 
-    def __repr__(self):  # noqa D105
+    def __repr__(self) -> str:  # noqa D105
         new = []
         new.append(f"([{type(self).__name__}] = Label: {self.label}")
         new.append(f" length: {self.length}")
@@ -355,7 +356,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         new.append(")")
         return ", ".join(new)
 
-    def copy(self, label=None):
+    def copy(self, label: Optional[str] = None):
         """
         Make a copy of the BluemiraGeo.
         """
@@ -366,7 +367,7 @@ class BluemiraGeo(ABC, GeoMeshable):
             geo_copy.label = self.label
         return geo_copy
 
-    def deepcopy(self, label=None):
+    def deepcopy(self, label: Optional[str] = None):
         """
         Make a deepcopy of the BluemiraGeo.
         """
