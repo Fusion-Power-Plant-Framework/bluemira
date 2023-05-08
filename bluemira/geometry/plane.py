@@ -26,8 +26,12 @@ Wrapper for FreeCAD Plane objects
 from __future__ import annotations
 
 import copy
+from typing import TYPE_CHECKING, Iterable, Optional, Tuple
 
 import numpy as np
+
+if TYPE_CHECKING:
+    from bluemira.geometry.placement import BluemiraPlacement
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.geometry.constants import VERY_BIG
@@ -42,34 +46,45 @@ class BluemiraPlane:
 
     Parameters
     ----------
-    base: Iterable
+    base:
         Plane reference point
-    axis: Iterable
+    axis:
         normal vector dto the plane
-    label: str
+    label:
         Label of the plane
     """
 
-    def __init__(self, base=(0.0, 0.0, 0.0), axis=(0.0, 0.0, 1.0), label: str = ""):
+    def __init__(
+        self,
+        base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
+        axis: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+        label: str = "",
+    ):
         if np.allclose(np.array(axis), np.array([0, 0, 0])):
             raise ValueError("Axis must to be a vector with non zero norm.")
         self._shape = cadapi.make_plane(base, axis)
         self.label = label
 
     @classmethod
-    def from_3_points(cls, point_1, point_2, point_3, label: str = ""):
+    def from_3_points(
+        cls,
+        point_1: Iterable[float],
+        point_2: Iterable[float],
+        point_3: Iterable[float],
+        label: str = "",
+    ):
         """
         Instantiate a BluemiraPlane from three points.
 
         Parameters
         ----------
-        point_1: Iterable
+        point_1:
             First point
-        point_2: Iterable
+        point_2:
             Second Point
-        point_3: Iterable
+        point_3:
             Third point
-        label: str
+        label:
             Label of the plane
         """
         plane = BluemiraPlane()
@@ -78,42 +93,44 @@ class BluemiraPlane:
         return plane
 
     @property
-    def base(self):
+    def base(self) -> np.ndarray:
         """Plane's reference point"""
         return cadapi.vector_to_numpy(self._shape.Position)
 
     @base.setter
-    def base(self, value):
+    def base(self, value: Iterable[float]):
         """
         Set a new plane base
 
         Parameters
         ----------
-        value: Iterable
+        value:
+            Base vector
         """
         self._shape.Position = cadapi.Base.Vector(value)
 
     @property
-    def axis(self):
+    def axis(self) -> np.ndarray:
         """Plane's normal vector"""
         return cadapi.vector_to_numpy(self._shape.Axis)
 
     @axis.setter
-    def axis(self, value):
+    def axis(self, value: Iterable[float]):
         """
         Set a new plane axis
 
         Parameters
         ----------
-        value: Iterable
+        value:
+            Axis vector
         """
         self._shape.Axis = cadapi.Base.Vector(value)
 
-    def move(self, vector):
+    def move(self, vector: Iterable[float]):
         """Moves the Plane along the given vector"""
         self.base = self.base + np.array(vector)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Plane __repr__
         """
@@ -123,7 +140,7 @@ class BluemiraPlane:
             f" axis: {self.axis})"
         )
 
-    def copy(self, label=None):
+    def copy(self, label: Optional[str] = None):
         """
         Make a copy of the BluemiraGeo.
         """
@@ -134,7 +151,7 @@ class BluemiraPlane:
             plane_copy.label = self.label
         return plane_copy
 
-    def deepcopy(self, label=None):
+    def deepcopy(self, label: Optional[str] = None):
         """Make a deepcopy of the BluemiraPlane"""
         plane_copy = BluemiraPlane(self.base, self.axis)
         if label is not None:
@@ -145,7 +162,7 @@ class BluemiraPlane:
 
     def to_face(
         self, width: float = VERY_BIG, height: float = VERY_BIG, label: str = ""
-    ):
+    ) -> BluemiraFace:
         """
         Convert the plane to a face with dimension (width, height) and centered into
         the plane base position.
@@ -154,7 +171,7 @@ class BluemiraPlane:
         bmface = BluemiraFace._create(face, label)
         return bmface
 
-    def to_placement(self):
+    def to_placement(self) -> BluemiraPlacement:
         """
         Convert the plane into a placement
         """
