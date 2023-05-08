@@ -776,13 +776,17 @@ def discretize(w: apiWire, ndiscr: int = 10, dl: Optional[float] = None) -> np.n
 
     Returns
     -------
-    Array of points.
-    """
-    # discretization points array
-    output = []
+    Array of points
 
+    Raises
+    ------
+    ValueError:
+        If ndiscr < 2
+        If dl <= 0.0
+    """
     if dl is None:
-        pass
+        if ndiscr < 2:
+            raise ValueError("ndiscr must be greater than 2.")
     elif dl <= 0.0:
         raise ValueError("dl must be > 0.")
     else:
@@ -808,17 +812,21 @@ def discretize_by_edges(
     Parameters
     ----------
     w:
-        wire to be discretized.
+        Wire to be discretized.
     ndiscr:
-        number of points for the whole wire discretization. Final number of points
-        can be slightly different due to edge discretization routine.
+        Number of points for the whole wire discretization.
     dl:
-        target discretization length (default None). If dl is defined,
+        Target discretization length (default None). If dl is defined,
         ndiscr is not considered.
 
     Returns
     -------
-    Array of points.
+    Array of points
+
+    Notes
+    -----
+    Final number of points can be slightly different due to edge discretization
+    routine.
     """
     # discretization points array
     output = []
@@ -833,7 +841,7 @@ def discretize_by_edges(
     # Note: OrderedEdges already return a list of edges that considers the edge in the
     # correct sequence and orientation. No need for tricks after the discretization.
     for e in w.OrderedEdges:
-        pointse = list(discretize(Part.Wire(e), dl=dl))
+        pointse = list(discretize(apiWire(e), dl=dl))
         output += pointse[:-1]
 
     if w.isClosed():
