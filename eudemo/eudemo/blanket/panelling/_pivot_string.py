@@ -41,22 +41,22 @@ def make_pivoted_string(
 
     Parameters
     ----------
-    points
+    points:
         The coordinates (in 3D) of the pivot points. Must have shape
         (N, 3) where N is the number of boundary points.
-    max_angle
+    max_angle:
         The maximum angle between neighbouring pivot points.
-    dx_min
+    dx_min:
         The minimum distance between pivot points.
-    dx_max
+    dx_max:
         The maximum distance between pivot points.
 
     Returns
     -------
-    new_points
+    new_points:
         The pivot points' coordinates. Has shape (M, 3), where M is the
         number of pivot points.
-    index
+    index:
         The indices of the pivot points into the input points.
     """
     if dx_min > dx_max:

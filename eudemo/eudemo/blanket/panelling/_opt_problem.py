@@ -46,11 +46,11 @@ class PanellingOptProblem(OptimisationProblem):
 
     Parameters
     ----------
-    paneller
+    paneller:
         The :class:`.Paneller` to optimise the parameters of. Note that
         these parameters are the normalised length along the paneller's
         boundary where the panels and boundary meet.
-    optimiser
+    optimiser:
         The :class:`.Optimiser` to perform the optimisation with.
     """
 

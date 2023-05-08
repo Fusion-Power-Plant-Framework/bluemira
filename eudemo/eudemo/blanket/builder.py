@@ -57,11 +57,11 @@ class BlanketBuilder(Builder):
 
     Parameters
     ----------
-    params
+    params:
         the parameter frame
-    build_config
+    build_config:
         the build config
-    blanket_silhouette
+    blanket_silhouette:
         breeding blanket silhouette
     """
 
