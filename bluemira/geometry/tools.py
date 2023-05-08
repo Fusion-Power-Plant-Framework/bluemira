@@ -54,7 +54,7 @@ from bluemira.geometry.wire import BluemiraWire
 
 
 @cadapi.catch_caderr(GeometryError)
-def convert(apiobj, label=""):
+def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
     """Convert a FreeCAD shape into the corresponding BluemiraGeo object."""
     if isinstance(apiobj, cadapi.apiWire):
         output = BluemiraWire(apiobj, label)
@@ -76,7 +76,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     JSON Encoder for BluemiraGeo.
     """
 
-    def default(self, obj):
+    def default(self, obj: Union[BluemiraGeo, np.ndarray, Any]):
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
         """
@@ -112,7 +112,7 @@ def _reconstruct_function_call(signature, *args, **kwargs) -> dict:
     return data
 
 
-def _make_debug_file(name) -> str:
+def _make_debug_file(name: str) -> str:
     """
     Make a new file in the geometry debugging folder.
     """
@@ -187,19 +187,18 @@ def fallback_to(fallback_func, exception):
 # # =============================================================================
 # # Geometry creation
 # # =============================================================================
-def _make_vertex(point):
+def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     """
     Make a vertex.
 
     Parameters
     ----------
-    point: Iterable
+    point:
         Coordinates of the point
 
     Returns
     -------
-    vertex: apiVertex
-        Vertex at the point
+    Vertex at the point
     """
     if len(point) != 3:
         raise GeometryError("Points must be of dimension 3.")
@@ -245,18 +244,18 @@ def make_polygon(
 
     Parameters
     ----------
-    points
+    points:
         list of points. It can be given as a list of 3D tuples, a 3D numpy array,
         or similar.
-    label
+    label:
         Object's label
-    closed
+    closed:
         if True, the first and last points will be connected in order to form a
         closed polygon. Defaults to False.
 
     Returns
     -------
-        a bluemira wire that contains the polygon
+    A BluemiraWire of the polygon
 
     Notes
     -----
@@ -274,19 +273,18 @@ def make_bezier(
 
     Parameters
     ----------
-    points: Union[list, np.ndarray]
+    points:
         list of points. It can be given as a list of 3D tuples, a 3D numpy array,
         or similar.
-    label: str, default = ""
+    label:
         Object's label
-    closed: bool, default = False
+    closed:
         if True, the first and last points will be connected in order to form a
         closed bspline. Defaults to False.
 
     Returns
     -------
-    wire: BluemiraWire
-        a bluemira wire that contains the bspline
+    A BluemiraWire that contains the bspline
 
     Notes
     -----
@@ -297,31 +295,38 @@ def make_bezier(
 
 
 def make_bspline(
-    poles, mults, knots, periodic, degree, weights, check_rational, label: str = ""
-):
+    poles: Union[list, np.ndarray],
+    mults: Union[list, np.ndarray],
+    knots: Union[list, np.ndarray],
+    periodic: bool,
+    degree: int,
+    weights: Union[list, np.ndarray],
+    check_rational: bool,
+    label: str = "",
+) -> BluemiraWire:
     """
     Builds a B-Spline by a lists of Poles, Mults, Knots
 
     Parameters
     ----------
-    poles: Union[list, np.ndarray]
+    poles:
         list of poles.
-    mults: Union[list, np.ndarray]
+    mults:
         list of integers for the multiplicity
-    knots: Union[list, np.ndarray]
+    knots:
         list of knots
-    periodic: bool
+    periodic:
         Whether or not the spline is periodic (same curvature at start and end points)
     degree: int
         bspline degree
-    weights: Union[list, np.ndarray]
+    weights:
         sequence of float
-    check_rational: bool
+    check_rational:
         Whether or not to check if the BSpline is rational
 
     Returns
     -------
-    wire: BluemiraWire
+    A BluemiraWire of the spline
     """
     return BluemiraWire(
         cadapi.make_bspline(

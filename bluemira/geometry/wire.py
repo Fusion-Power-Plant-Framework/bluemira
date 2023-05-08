@@ -24,7 +24,7 @@ Wrapper for FreeCAD Part.Wire objects
 """
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Tuple
+from typing import Iterable, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -46,9 +46,20 @@ __all__ = ["BluemiraWire"]
 
 
 class BluemiraWire(BluemiraGeo):
-    """Bluemira Wire class."""
+    """
+    Bluemira Wire class.
 
-    def __init__(self, boundary, label: str = ""):
+    Parameters
+    ----------
+    boundary:
+        List of wires from which to make the BluemiraWire
+    label:
+        Label to assign to the wire
+    """
+
+    def __init__(
+        self, boundary: List[Union[cadapi.apiWire, BluemiraWire]], label: str = ""
+    ):
         boundary_classes = [self.__class__, cadapi.apiWire]
         super().__init__(boundary, label, boundary_classes)
         self._check_orientations()
@@ -84,7 +95,7 @@ class BluemiraWire(BluemiraGeo):
         """apiWire: shape of the object as a single wire"""
         return self._create_wire()
 
-    def _create_wire(self, check_reverse=True):
+    def _create_wire(self, check_reverse: bool = True):
         wire = cadapi.apiWire(self._get_wires())
         if check_reverse:
             return self._check_reverse(wire)
@@ -105,7 +116,7 @@ class BluemiraWire(BluemiraGeo):
                 wires += o._get_wires()
         return wires
 
-    def __add__(self, other):
+    def __add__(self, other: BluemiraWire) -> BluemiraWire:
         """Add two wires"""
         output = None
         if isinstance(other, BluemiraWire):
@@ -114,7 +125,7 @@ class BluemiraWire(BluemiraGeo):
             raise TypeError(f"{type(other)} is not an instance of BluemiraWire.")
         return output
 
-    def close(self, label="") -> None:
+    def close(self, label: str = "") -> None:
         """
         Close the shape with a line segment between shape's end and start point.
         This function modifies the object boundary.
@@ -149,7 +160,7 @@ class BluemiraWire(BluemiraGeo):
 
         Returns
         -------
-        x,y,z Coordinates of the discretized points
+        Coordinates of the discretized points.
         """
         if byedges:
             points = cadapi.discretize_by_edges(self.shape, ndiscr=ndiscr, dl=dl)
@@ -165,15 +176,14 @@ class BluemiraWire(BluemiraGeo):
 
         Parameters
         ----------
-        alpha: Optional[float]
+        alpha:
             Parameterised distance along the wire length, in the range [0 .. 1]
-        distance: Optional[float]
+        distance:
             Physical distance along the wire length
 
         Returns
         -------
-        point: np.ndarray
-            Point coordinates (w.r.t. BluemiraWire's BluemiraPlacement)
+        Point coordinates (w.r.t. BluemiraWire's BluemiraPlacement)
         """
         if alpha is None and distance is None:
             raise GeometryError("Must specify one of alpha or distance.")
@@ -195,23 +205,20 @@ class BluemiraWire(BluemiraGeo):
 
         return cadapi.wire_value_at(self.shape, distance)
 
-    def parameter_at(self, vertex: Iterable, tolerance: float = EPS) -> float:
+    def parameter_at(self, vertex: Iterable[float], tolerance: float = EPS) -> float:
         """
         Get the parameter value at a vertex along a wire.
 
         Parameters
         ----------
-        wire: apiWire
-            Wire along which to get the parameter
-        vertex: Iterable
+        vertex:
             Vertex for which to get the parameter
-        tolerance: float
+        tolerance:
             Tolerance within which to get the parameter
 
         Returns
         -------
-        alpha: float
-            Parameter value along the wire at the vertex
+        Parameter value along the wire at the vertex
 
         Raises
         ------
