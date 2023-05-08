@@ -1512,6 +1512,34 @@ def boolean_cut(
     return output
 
 
+def boolean_fragments(
+    shapes: List[apiSolid], tolerance: float = 0.0
+) -> Tuple[apiCompound, List[apiSolid]]:
+    """
+    Split a list of shapes into their Boolean fragments.
+
+    Parameters
+    ----------
+    shapes:
+        List of BluemiraSolids to be split into Boolean fragments
+    tolerance:
+        Tolerance with which to perform the operation
+
+    Returns
+    -------
+    compound:
+        A compound of the unique fragments
+    fragment_map:
+        An ordered list of groups of solid Boolean fragments (ordered in terms of
+        input ordering)
+    """
+    try:
+        compound, fragment_map = shapes[0].generalFuse(shapes[1:], tolerance)
+    except Exception as e:
+        raise FreeCADError(f"Boolean fragments operation failed: {str(e)}")
+    return compound, fragment_map
+
+
 def point_inside_shape(point: Iterable[float], shape: apiShape) -> bool:
     """
     Whether or not a point is inside a shape.

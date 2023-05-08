@@ -29,7 +29,7 @@ import inspect
 import json
 import os
 from copy import deepcopy
-from typing import Callable, Dict, Iterable, List, Optional, Sequence, Type, Union
+from typing import Callable, Dict, Iterable, List, Optional, Sequence, Tuple, Type, Union
 
 import numba as nb
 import numpy as np
@@ -42,6 +42,7 @@ from bluemira.base.file import force_file_extension, get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.codes import _freecadapi as cadapi
 from bluemira.geometry.base import BluemiraGeo, GeoMeshable
+from bluemira.geometry.compound import BluemiraCompound
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
@@ -63,6 +64,8 @@ def convert(apiobj, label=""):
         output = BluemiraShell._create(apiobj, label)
     elif isinstance(apiobj, cadapi.apiSolid):
         output = BluemiraSolid._create(apiobj, label)
+    elif isinstance(apiobj, cadapi.apiCompound):
+        output = BluemiraCompound._create(apiobj, label)
     else:
         raise ValueError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
     return output
@@ -1265,6 +1268,42 @@ def boolean_cut(shape, tools):
         return [convert(obj, shape.label) for obj in cut_shape]
 
     return convert(cut_shape, shape.label)
+
+
+def boolean_fragments(
+    shapes: List[BluemiraSolid], tolerance: float = 0.0
+) -> Tuple[BluemiraCompound, List[List[BluemiraSolid]]]:
+    """
+    Split a list of shapes into their Boolean fragments.
+
+    Parameters
+    ----------
+    shapes:
+        List of BluemiraSolids to be split into Boolean fragments
+    tolerance:
+        Tolerance with which to perform the operation
+
+    Returns
+    -------
+    compound:
+        A compound of the unique fragments
+    fragment_map:
+        An ordered list of groups of solid Boolean fragments (ordered in terms of
+        input ordering)
+
+    Notes
+    -----
+    Labelling will be lost.
+    This function is only tested on solids.
+    """
+    compound, fragment_map = cadapi.boolean_fragments(
+        [s.shape for s in shapes], tolerance
+    )
+    converted = []
+    for group in fragment_map:
+        converted.append([convert(s) for s in group])
+
+    return convert(compound), converted
 
 
 def point_inside_shape(point, shape):

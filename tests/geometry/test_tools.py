@@ -44,6 +44,7 @@ from bluemira.geometry.parameterisations import (
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
     _signed_distance_2D,
+    boolean_fragments,
     chamfer_wire_2D,
     convex_hull_wires_2d,
     deserialize_shape,
@@ -771,3 +772,68 @@ class TestFilletChamfer2D:
     def test_GeometryError_on_negative_radius(self, func):
         with pytest.raises(GeometryError):
             func(self.open_rectangle, -0.01)
+
+
+class TestBooleanFragments:
+    @staticmethod
+    def _make_pipes(r1, dr1, r2, dr2, x1, y1, x2, y2):
+        p11 = make_circle(r1 + dr1, (x1, y1, 0), axis=(1, 0, 0))
+        p12 = make_circle(r1, (x1, y1, 0), axis=(1, 0, 0))
+        p21 = make_circle(r2 + dr2, (x2, y2, 0), axis=(0, 1, 0))
+        p22 = make_circle(r2, (x2, y2, 0), axis=(0, 1, 0))
+        pipe_1 = extrude_shape(BluemiraFace([p11, p12]), vec=(10, 0, 0))
+        pipe_2 = extrude_shape(BluemiraFace([p21, p22]), vec=(0, 10, 0))
+        return pipe_1, pipe_2
+
+    @pytest.mark.parametrize(
+        "r1,r2,n_expected,n_unique", [(1.0, 1.0, 1, 9), (2.0, 1.0, 2, 8)]
+    )
+    def test_pipe_pipe_fragments(self, r1, r2, n_expected, n_unique):
+        pipes = self._make_pipes(r1, 0.3, r2, 0.3, 0, 0, 5, -5)
+        compound, mapping = boolean_fragments(pipes, tolerance=0.0)
+        assert len(mapping) == 2
+        assert len(mapping[0]) == 5
+        assert len(mapping[1]) == 5
+        n_shared = self.get_shared_fragments(*mapping)
+        assert n_shared == n_expected
+        n_unique_actual = len(compound.solids)
+        assert n_unique_actual == n_unique
+
+    @pytest.mark.parametrize("r1,r2", [(2.0, 1.0), (4.0, 2.0)])
+    def test_pipe_half_pipe_fragments(self, r1, r2):
+        pipes = self._make_pipes(r1, 0.3, r2, 0.3, 0, 0, 5, -10)
+        compound, mapping = boolean_fragments(pipes, tolerance=0.0)
+        assert len(mapping) == 2
+        assert len(mapping[0]) == 3
+        assert len(mapping[1]) == 3
+        n_shared = self.get_shared_fragments(*mapping)
+        assert n_shared == 1
+        n_unique = len(compound.solids)
+        assert n_unique == 5
+
+    def test_no_shared_fragments(self):
+        pipe_1 = extrude_shape(
+            BluemiraFace(make_circle(1.0, center=(0, 0, 0), axis=(0, 1, 0))),
+            vec=(0, 2, 0),
+        )
+        pipe_2 = extrude_shape(
+            BluemiraFace(make_circle(1.0, center=(3, 0, 0), axis=(0, 1, 0))),
+            vec=(0, 2, 0),
+        )
+        compound, mapping = boolean_fragments([pipe_1, pipe_2])
+        assert len(mapping) == 2
+        assert len(mapping[0]) == 0
+        assert len(mapping[1]) == 0
+        n_shared = self.get_shared_fragments(*mapping)
+        assert n_shared == 0
+        n_unique = len(compound.solids)
+        assert n_unique == 2
+
+    @staticmethod
+    def get_shared_fragments(group_1, group_2):
+        count = 0
+        for sol in group_1:
+            for sol_2 in group_2:
+                if sol.is_same(sol_2):
+                    count += 1
+        return count
