@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import List, Tuple
 
 # import from freecad
 import bluemira.codes._freecadapi as cadapi
@@ -42,13 +42,22 @@ __all__ = ["BluemiraSolid"]
 
 
 class BluemiraSolid(BluemiraGeo):
-    """Bluemira Solid class."""
+    """
+    Bluemira Solid class.
 
-    def __init__(self, boundary, label: str = ""):
+    Parameters
+    ----------
+    boundary:
+        List of shells from  which to make the BluemiraSolid
+    label:
+        Label to assign to the solid
+    """
+
+    def __init__(self, boundary: List[BluemiraShell], label: str = ""):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, boundary_classes)
 
-    def _create_solid(self, check_reverse=True):
+    def _create_solid(self, check_reverse: bool = True):
         """Creation of the solid"""
         new_shell = self.boundary[0]._create_shell(check_reverse=False)
         solid = cadapi.apiSolid(new_shell)
@@ -71,7 +80,7 @@ class BluemiraSolid(BluemiraGeo):
         return self._create_solid()
 
     @classmethod
-    def _create(cls, obj: cadapi.apiSolid, label=""):
+    def _create(cls, obj: cadapi.apiSolid, label: str = ""):
         if isinstance(obj, cadapi.apiSolid):
             if len(obj.Solids) > 1:
                 raise DisjointedSolid("Disjointed solids are not accepted.")
