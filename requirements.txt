@@ -16,7 +16,7 @@ matplotlib==3.7.1
 neutronics-material-maker==0.1.11
 nlopt==2.7.1
 meshio==4.4.5
-numba==0.56.4
+numba==0.57.0
 numba-scipy==0.3.1
 numexpr==2.8.4
 numpy==1.22.4
