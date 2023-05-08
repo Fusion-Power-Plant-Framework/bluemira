@@ -231,13 +231,8 @@ class BluemiraGeo(ABC, GeoMeshable):
             Tolerance with which to tesselate the BluemiraGeo before calculating the
             bounding box.
         """
-        if tolerance <= 0.0:
-            raise ValueError("Cannot have a tolerance that is less than or equal to 0.0")
-
-        x_min, y_min, z_min, x_max, y_max, z_max = cadapi.tesselated_bounding_box(
-            self.shape, tolerance=tolerance
-        )
-        return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
+        self._tessellate(tolerance)
+        return self.bounding_box
 
     def is_null(self) -> bool:
         """
@@ -301,6 +296,22 @@ class BluemiraGeo(ABC, GeoMeshable):
             else:
                 cadapi.scale_shape(o, factor)
         cadapi.scale_shape(self.shape, factor)
+
+    def _tessellate(self, tolerance: float = 1.0) -> None:
+        """
+        Tessellate the geometry object.
+
+        Parameters
+        ----------
+        tolerance:
+            Tolerance with which to tessellate the geometry
+
+        Notes
+        -----
+        Once tesselated an object's properties may change. Tesselation cannot be reverted
+        to a previous lower value, but can be increased (irreversibly).
+        """
+        cadapi.tessellate(self.shape, tolerance)
 
     def translate(self, vector: Tuple[float, float, float]) -> None:
         """
