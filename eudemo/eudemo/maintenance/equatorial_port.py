@@ -23,7 +23,7 @@
 EU-DEMO Equatorial Port
 """
 from dataclasses import dataclass
-from typing import Dict, Iterable, List, Optional, Type, Union
+from typing import Dict, Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
@@ -88,15 +88,17 @@ class EquatorialPortKOZDesigner(Designer):
         """
         Parameters:
         -----------
-        params: Union[Dict, ParameterFrame, EquatorialPortKOZDesignerParams]
-        build_config: Union[Dict, None]
-        koz_z_offset: float
+        params:
+            Parameters for the equatorial port designer
+        build_config:
+            Build config for the equatorial port designer
+        koz_z_offset:
             offset distance for the KOZ around the equatorial port
-        x_ib: float
+        x_ib:
             in-board x-position of the KOZ
-        x_ob: float
+        x_ob:
             out-board x-position of the KOZ
-        z_pos: float
+        z_pos:
             z-positional height of the KOZ x-y midplane, default: 0.0
         """
         super().__init__(params, build_config)
@@ -280,7 +282,7 @@ class CastellationBuilder(Builder):
     def build_castellations(
         self,
         face: BluemiraFace,
-        vec: tuple,
+        vec: Tuple[float, float, float],
         length: float,
         offsets: Union[float, Iterable],
         distances: Optional[Iterable] = None,
@@ -291,17 +293,17 @@ class CastellationBuilder(Builder):
 
         Parameters
         ----------
-        face: BluemiraFace
+        face:
             starting profile to be castellated
-        vec: tuple (x,y,z)
+        vec:
             unit vector along which to extrude
-        length: float
+        length:
             total length of castellated BluemiraSolid in vec direction
-        offsets: Union[float, Iterable]
+        offsets:
             castellations offset(s) for each position
-        distances: Optional[Iterable]
+        distances:
             (optional) parameter for manually spaced castellations
-        n_cast: Optional[int]
+        n_cast:
             (optional) parameter for equally spaced castellations
         """
         base = face

@@ -65,14 +65,14 @@ class UpperPortOP(OptimisationProblem):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params:
         Parameter frame for the problem. See
         :class:`UpperPortOPParameters` for parameter details.
-    optimiser: Optimiser
+    optimiser:
         Optimiser object to use when solving this problem
-    breeding_blanket_xz: BluemiraFace
+    breeding_blanket_xz:
         Unsegmented breeding blanket x-z geometry
-    constraint_tol: float
+    constraint_tol:
         Constraint tolerance
     """
 
@@ -80,7 +80,7 @@ class UpperPortOP(OptimisationProblem):
 
     def __init__(
         self,
-        params,
+        params: Union[Dict, ParameterFrame],
         optimiser: Optimiser,
         breeding_blanket_xz: BluemiraFace,
         constraint_tol: float = 1e-6,
@@ -240,25 +240,26 @@ class UpperPortDesigner(Designer):
         )
 
 
-def build_upper_port_zone(r_up_inner, r_up_outer, z_max=10, z_min=0):
+def build_upper_port_zone(
+    r_up_inner: float, r_up_outer: float, z_max: float = 10, z_min: float = 0
+) -> BluemiraFace:
     """
     Make the void geometry for the upper port in the poloidal plane.
 
     Parameters
     ----------
-    r_up_inner: float
+    r_up_inner:
         Inner radius of the upper port void space
-    r_up_outer: float
+    r_up_outer:
         Outer radius of the upper port void space
-    z_max: float
+    z_max:
         Maximum vertical height of the upper port void space
-    z_min: float
+    z_min:
         Minimum vertical height of the upper port void space
 
     Returns
     -------
-    upper_port: BluemiraFace
-        Face representing the upper port void space in the x-z plane
+    Face representing the upper port void space in the x-z plane
     """
     x = [r_up_inner, r_up_outer, r_up_outer, r_up_inner]
     z = [z_min, z_min, z_max, z_max]
