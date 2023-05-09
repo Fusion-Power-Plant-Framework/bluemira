@@ -632,9 +632,10 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.psi_response(self.x, self.z, control=True) - coilset.psi_response(
-            self.ref_x, self.ref_z, control=True
-        )
+        return np.array(
+            coilset.psi_response(self.x, self.z, control=True)
+            - coilset.psi_response(self.ref_x, self.ref_z, control=True)
+        ).T
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
@@ -694,7 +695,8 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.psi_response(self.x, self.z, control=True)
+        # return coilset.psi_response(self.x, self.z, control=True)
+        return coilset.psi_response(self.x, self.z, control=True).T
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
@@ -805,7 +807,8 @@ class MagneticConstraintSet(ABC):
         i = 0
         for constraint in self.constraints:
             n = len(constraint)
-            self.A[i : i + n, :] = constraint.control_response(self.coilset)
+            # self.A[i : i + n, :] = constraint.control_response(self.coilset)
+            self.A[i : i + n, :] = constraint.control_response(self.coilset).T
             i += n
 
     def build_target(self):

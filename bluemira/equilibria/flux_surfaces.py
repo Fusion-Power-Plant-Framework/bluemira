@@ -37,13 +37,11 @@ if TYPE_CHECKING:
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
-import pointpats
 from scipy.integrate import solve_ivp
 from scipy.special import lpmv
-from shapely.geometry import Polygon
 
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
 from bluemira.equilibria.find import find_flux_surface_through_point
@@ -56,6 +54,7 @@ from bluemira.geometry.coordinates import (
     get_area_2d,
     get_intersect,
     join_intersect,
+    polygon_in_polygon,
 )
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import _signed_distance_2D
@@ -919,14 +918,14 @@ def poloidal_angle(Bp_strike: float, Bt_strike: float, gamma: float) -> float:
     return np.rad2deg(np.arcsin(sin_theta))
 
 
-def coil_harmonic_amplitudes(x_f, z_f, i_f, max_degree, r_t):
+def coil_harmonic_amplitudes(input_coils, i_f, max_degree, r_t):
     """
     Returns spherical harmonics coefficients/amplitudes (A_l) to be used
     in a spherical harmonic approximation of the vacuum/coil contribution
-    to the poilodal flux (psi). Vacuum Psi = Total Psi - Plasma Psi.
+    to the polodial flux (psi). Vacuum Psi = Total Psi - Plasma Psi.
     These coefficients can be used as contraints in optimisation.
 
-    For a single filiment (coil):
+    For a single filement (coil):
 
         A_l =  1/2 * mu_0 * I_f * sin(theta_f) * (r_t/r_f)**l *
                     ( P_l * cos(theta_f) / sqrt(l*(l+1)) )
@@ -936,10 +935,8 @@ def coil_harmonic_amplitudes(x_f, z_f, i_f, max_degree, r_t):
 
     Parmeters
     ----------
-    x_f: np.array
-        X coordinates of filaments (coils)
-    z_f: np.array
-        Z coordinates of filaments (coils)
+    input_coils:
+        Bluemira CoilSet
     i_f: np.array
         Currents of filaments (coils)
     max_degree: integer
@@ -954,28 +951,26 @@ def coil_harmonic_amplitudes(x_f, z_f, i_f, max_degree, r_t):
      max_valid_r: float
         Maximum spherical radius for which the spherical harmonics apply
     """
-    # SH coeffcients from fuction of the current distribution outside of the sphere
+    # SH coefficients from fuction of the current distribution outside of the sphere
     # containing the plamsa, i.e., LCFS (r_lcfs)
     # SH coeffs = currents2harmonics @ coil currents
     # N.B., max_valid_r >= r_lcfs,
     # i.e., cannot use coil located within r_lcfs as part of this method.
     currents2harmonics, max_valid_r = coil_harmonic_amplitude_matrix(
-        x_f, z_f, max_degree, r_t
+        input_coils, max_degree, r_t
     )
 
     return currents2harmonics @ i_f, max_valid_r
 
 
-def coil_harmonic_amplitude_matrix(x_f, z_f, max_degree, r_t):
+def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
     """
     Construct matrix from harmonic amplitudes at given coil locations.
 
     Parmeters
     ----------
-    x_f: np.array
-        X coordinates of filaments (coils)
-    z_f: np.array
-        Z coordinates of filaments (coils)
+    input_coils:
+        Bluemira CoilSet
     max_degree: integer
         Maximum degree of harmonic to calculate up to
     r_t: float
@@ -990,6 +985,9 @@ def coil_harmonic_amplitude_matrix(x_f, z_f, max_degree, r_t):
         Maximum spherical radius for which the spherical harmonic
         approximation is valid
     """
+    x_f = input_coils.get_control_coils().x
+    z_f = input_coils.get_control_coils().z
+
     # Spherical coords
     r_f = np.sqrt(x_f**2 + z_f**2)
     theta_f = np.arctan2(x_f, z_f)
@@ -1074,27 +1072,27 @@ def harmonic_amplitude_marix(
     return harmonics2collocation
 
 
-def collocation_points(n_points, x_bdry, z_bdry, point_type):
+def collocation_points(n_points, plamsa_bounday, point_type):
     """
     Create a set of collocation points for use wih spherical harmonic
     approximations. Points are found within the user-supplied
     boundary and should correspond to the LCFS of a chosen equilibrium.
     Curent functionality is for:
         - equispaced points on an arc of fixed radius,
-        - extrema,
-        - equispaced points on an arc of fixed radius plus extrema,
+        - equispaced points on an arc plus extrema,
+        - random points within a circle enclosed by the LCFS,
+        - random points plus extrema.
 
     Parameters
     ----------
     n_points: integer
         Number of points/targets (not including extrema - these are added
         automatically if relevent).
-    x_bdry: np.array
-        X location of plamsa bounday
-    z_bdry: np.array
-        Z locations of plamsa boundary
+    plamsa_bounday:
+        XZ coordinates of the plasma boundary
     point_type: string
-        Method for creating a set of points: 'arc', 'arc_plus_extrema' or 'random'
+        Method for creating a set of points: 'arc', 'arc_plus_extrema',
+        'random', or 'random_plus_extrema'
 
     Returns
     -------
@@ -1105,10 +1103,11 @@ def collocation_points(n_points, x_bdry, z_bdry, point_type):
     n_collocation: integer
         Number of collocation points
     """
-    if point_type == "arc" or point_type == "arc_plus_extrema":
+    x_bdry = plamsa_bounday.x
+    z_bdry = plamsa_bounday.z
 
+    if point_type == "arc" or point_type == "arc_plus_extrema":
         # Hello spherical coordinates
-        r_bdry = np.sqrt(x_bdry**2 + z_bdry**2)
         theta_bdry = np.arctan2(x_bdry, z_bdry)
 
         # Equispaced arc
@@ -1118,12 +1117,27 @@ def collocation_points(n_points, x_bdry, z_bdry, point_type):
         collocation_theta = collocation_theta[1:-1]
         collocation_r = 0.9 * np.amax(x_bdry) * np.ones(n_points)
 
-        # Hasta luego spherical coordinates
+        # Cartesian coordinates
         collocation_x = collocation_r * np.sin(collocation_theta)
         collocation_z = collocation_r * np.cos(collocation_theta)
 
-    if point_type == "arc_plus_extrema":
+    if point_type == "random" or point_type == "random_plus_extrema":
+        # Random sample within a circle enclosed by the LCFS
+        half_sample_x_range = 0.5 * (np.max(x_bdry) - np.min(x_bdry))
+        sample_r = half_sample_x_range * np.random.rand(n_points)
+        sample_theta = (np.random.rand(n_points) * 2 * np.pi) - np.pi
 
+        # Cartesian coordinates
+        collocation_x = (
+            sample_r * np.sin(sample_theta) + np.min(x_bdry) + half_sample_x_range
+        )
+        collocation_z = sample_r * np.cos(sample_theta) + z_bdry[np.argmax(x_bdry)]
+
+        # Spherical coordinates
+        collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
+        collocation_theta = np.arctan2(collocation_x, collocation_z)
+
+    if point_type == "arc_plus_extrema" or point_type == "random_plus_extrema":
         # Extrema
         d = 0.1
         extrema_x = np.array(
@@ -1147,21 +1161,130 @@ def collocation_points(n_points, x_bdry, z_bdry, point_type):
         collocation_x = np.concatenate([collocation_x, extrema_x])
         collocation_z = np.concatenate([collocation_z, extrema_z])
 
-    if point_type == "random":
+        # Hello again spherical coordinates
+        collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
+        collocation_theta = np.arctan2(collocation_x, collocation_z)
 
-        # Create a polygon from the boundary points
-        coords_zip = zip(list(x_bdry), list(z_bdry))
-        coords = list(coords_zip)
-        poly = Polygon(coords)
-
-        # Randomly select points from within the polygon
-        poly_points = pointpats.random.poisson(poly, size=n_points)
-        collocation_x = poly_points[:, 0]
-        collocation_z = poly_points[:, 1]
-
-    # Hello again spherical coordinates
+    # Number of collocation points
     n_collocation = np.size(collocation_x)
-    collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
-    collocation_theta = np.arctan2(collocation_x, collocation_z)
 
     return collocation_r, collocation_theta, collocation_x, collocation_z, n_collocation
+
+
+def lcfs_fit_metric(coords1, coords2):
+    """
+    Calculate the value of the metric used for evaluating the SH aprroximation.
+    This is equal to 1 for non-intersecting LCFSs, and 0 for identical LCFSs.
+
+    Parameters
+    ----------
+    coords1: np.array
+        Coordinates of plamsa bounday from input equlibrum state
+    coords2: np.array
+        Coordinates of plamsa bounday from approximation equlibrum state
+
+    Returns
+    -------
+    fit_metric_value: float
+        Measure of how 'good' the approximation is.
+        fit_metric_value = total area within one but not both LCFSs /
+                            (input LCFS area + approximation LCFS area)
+
+    """
+    # Test to see if the LCFS for the SH approx is not closed for some reason
+    if coords2.x[0] != coords2.x[-1] or coords2.z[0] != coords2.z[-1]:
+        # If not closed then go back and try again
+        # raise BluemiraError('hmmm')
+        bluemira_print(
+            f"The approximate LCFS is not closed. Trying again with more degrees."
+        )
+        fit_metric_value = 1
+        return fit_metric_value
+
+    # If the two LCFSs have identical coordinates then return a perfect fit metric
+    if np.array_equal(coords1.x, coords2.x) and np.array_equal(coords1.z, coords2.z):
+        bluemira_print(f"Perfect match! Original LCFS = SH approx LCFS")
+        fit_metric_value = 0
+        return fit_metric_value
+
+    # Get area of within the original and the SH approx LCFS
+    area1 = get_area_2d(coords1.x, coords1.z)
+    area2 = get_area_2d(coords2.x, coords2.z)
+
+    # Find intersections of the LCFSs
+    xcross, zcross = get_intersect(coords1.xz, coords2.xz)
+
+    # Check there are an even number of intersections
+    if np.mod(len(xcross), 2) != 0:
+        bluemira_print(
+            f"Odd number of intersections for input and SH approx LCFS: this shouldn''t be possible. Trying again with more degrees."
+        )
+        fit_metric_value = 1
+        return fit_metric_value
+
+    # If there are no intersections then...
+    if len(xcross) == 0:
+        # Check if one LCFS is entirely within another
+        test_1_in_2 = polygon_in_polygon(coords2.xz.T, coords1.xz.T)
+        test_2_in_1 = polygon_in_polygon(coords1.xz.T, coords2.xz.T)
+        if all(test_1_in_2) or all(test_2_in_1):
+            # Calculate the metric if one is inside the other
+            fit_metric_value = (np.max([area1, area2]) - np.min([area1, area2])) / (
+                area1 + area2
+            )
+            return fit_metric_value
+        else:
+            # Otherwise they are in entirely different places
+            bluemira_print(
+                f"The approximate LCFS does not overlap with the original. Trying again with more degrees."
+            )
+            fit_metric_value = 1
+            return fit_metric_value
+
+    # Calculate the area between the intersections of the two LCFSs,
+    # i.e., area within one but not both LCFSs.
+
+    # Initial value
+    area_between = 0
+
+    # Add first intersection to the end
+    xcross = np.append(xcross, xcross[0])
+    zcross = np.append(zcross, zcross[0])
+
+    # Scan over intersections
+    for i in np.arange(len(xcross) - 1):
+        # Find indeces of start and end of the segment of LCFSs between
+        # intersections
+        start1 = np.argmin(abs(coords1.x - xcross[i]) + abs(coords1.z - zcross[i]))
+        start2 = np.argmin(abs(coords2.x - xcross[i]) + abs(coords2.z - zcross[i]))
+        end1 = np.argmin(abs(coords1.x - xcross[i + 1]) + abs(coords1.z - zcross[i + 1]))
+        end2 = np.argmin(abs(coords2.x - xcross[i + 1]) + abs(coords2.z - zcross[i + 1]))
+
+        if end1 < start1:
+            # If segment overlaps start of line defining LCFS
+            seg1 = np.append(coords1.xz[:, start1:], coords1.xz[:, :end1], axis=1)
+        else:
+            seg1 = coords1.xz[:, start1:end1]
+
+        if end2 < start2:
+            # If segment overlaps start of line defining LCFS
+            seg2 = np.append(coords2.xz[:, start2:], coords2.xz[:, :end2], axis=1)
+        else:
+            seg2 = coords2.xz[:, start2:end2]
+
+        # Generate co-ordinates defining a polygon between these two
+        # intersections.
+        x = np.array([xcross[i], xcross[i + 1], xcross[i]])
+        z = np.array([zcross[i], zcross[i + 1], zcross[i]])
+        x = np.insert(x, 2, np.flip(seg2[0, :]), axis=0)
+        z = np.insert(z, 2, np.flip(seg2[1, :]), axis=0)
+        x = np.insert(x, 1, seg1[0, :], axis=0)
+        z = np.insert(z, 1, seg1[1, :], axis=0)
+
+        # Calculate the area of the polygon
+        area_between = area_between + get_area_2d(x, z)
+
+    #  Calculate metric
+    fit_metric_value = area_between / (area1 + area2)
+
+    return fit_metric_value

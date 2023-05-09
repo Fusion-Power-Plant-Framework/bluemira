@@ -63,6 +63,8 @@ if TYPE_CHECKING:
 
 import numpy as np
 
+import bluemira.equilibria.flux_surfaces as fs
+
 
 def objective_constraint(
     constraint: np.ndarray,
@@ -130,7 +132,8 @@ def Ax_b_constraint(  # noqa: N802
     -------
     Updated constraint vector
     """
-    constraint[:] = np.dot(a_mat, scale * vector) - b_vec - value
+    # constraint[:] = np.dot(a_mat, scale * vector) - b_vec - value
+    constraint[:] = a_mat @ scale * vector - b_vec - value
     if grad.size > 0:
         grad[:] = scale * a_mat
     return constraint
@@ -375,4 +378,39 @@ def field_constraints(
         ) / (B * scale**2)
 
     constraint[:] = B - B_max
+    return constraint
+
+
+def spherical_harmonics_constraint(
+    constraint, vector, grad, eq, r_t, ref_harmonics, max_degree, scale
+):
+    """
+    Constraint function to constrain spherical harmonics starting from initial
+    coil currents and associated core plasma.
+
+    Parameters
+    ----------
+    eq: Equilibrium
+        Equilibrium used to for coilset.
+    r_t: float
+        Typical length scale of the problem (e.g. radius at outer midplane)
+    ref_harmonics: np.ndarry
+        Initial harmonic amplitudes obtained from desired core plasma
+    max_degree: float
+        Maximum degree of spherical harmonics desired to constrain.
+    """
+    # Could look at a way of adding harmonics until a desired precision in core
+    # plasma is reached.
+
+    currents = scale * vector
+
+    vector_harmonics, max_valid_r = fs.coil_harmonic_amplitudes(
+        eq.coilset,
+        currents,
+        max_degree,
+        r_t,
+    )
+
+    constraint[:] = ref_harmonics - vector_harmonics
+
     return constraint
