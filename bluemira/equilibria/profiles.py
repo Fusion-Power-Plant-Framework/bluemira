@@ -74,7 +74,7 @@ def fitfunc(func, data, order=None):
     return popt
 
 
-@nb.jit
+@nb.jit(nopython=True)
 def singlepowerfunc(x, *args):
     """
     Single power shape function defined e.g. CREATE stuff
@@ -85,7 +85,7 @@ def singlepowerfunc(x, *args):
     return 1 - x**n
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def doublepowerfunc(x, *args):
     """
     Double power shape function defined e.g. in Lao 1985
@@ -109,7 +109,7 @@ def pshape(shape, psinorm, psio, psix):
     return si
 
 
-@nb.jit(cache=False, forceobj=True)  # Cannot cache due to "lifted loops"
+@nb.jit(forceobj=True, looplift=True)  # Cannot cache due to "lifted loops"
 def speedy_pressure(psi_norm, psio, psix, shape):
     """
     Calculate the pressure map on the psi_norm array without any masking because
@@ -188,7 +188,7 @@ def laopoly(x, *args):
     return res
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def luxonexp(x, *args):
     """
     Exponential shape function defined in Luxon 1984

@@ -37,7 +37,7 @@ from bluemira.magnetostatics.tools import process_xyz_array
 __all__ = ["TrapezoidalPrismCurrentSource"]
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def primitive_sxn_bound(cos_theta, sin_theta, r, q, t):
     """
     Function primitive of Bx evaluated at a bound.
@@ -87,7 +87,7 @@ def primitive_sxn_bound(cos_theta, sin_theta, r, q, t):
     return result
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def primitive_sxn(theta, r, q, l1, l2):
     """
     Analytical integral of Bx function primitive.
@@ -116,7 +116,7 @@ def primitive_sxn(theta, r, q, l1, l2):
     )
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def primitive_szn_bound(cos_theta, sin_theta, r, ll, t):
     """
     Function primitive of Bz evaluated at a bound.
@@ -183,7 +183,7 @@ def primitive_szn_bound(cos_theta, sin_theta, r, ll, t):
     return result
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def primitive_szn(theta, r, ll, q1, q2):
     """
     Analytical integral of Bz function primitive.
@@ -212,7 +212,7 @@ def primitive_szn(theta, r, ll, q1, q2):
     )
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def Bx_analytical_prism(alpha, beta, l1, l2, q1, q2, r1, r2):
     """
     Calculate magnetic field in the local x coordinate direction due to a
@@ -250,7 +250,7 @@ def Bx_analytical_prism(alpha, beta, l1, l2, q1, q2, r1, r2):
     )
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def Bz_analytical_prism(alpha, beta, l1, l2, q1, q2, r1, r2):
     """
     Calculate magnetic field in the local z coordinate direction due to a
