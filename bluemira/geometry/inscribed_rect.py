@@ -187,7 +187,7 @@ class _GetDxDz:
 
         self.check = self.approx if convex else self.precise
 
-    def approx(self, n: int, lpi):
+    def approx(self, n: int, lpi: np.ndarray):
         """
         Approximate nearest intersection (for convex shapes).
         """
