@@ -53,7 +53,7 @@ if TYPE_CHECKING:
     from step_reactor.temp_flux_surface_maker import TempFsSolver
 
 
-SEP_CORRECTOR = 5e-2  # [m]
+SEP_CORRECTOR = 5e-3  # [m]
 E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
 
 
@@ -443,10 +443,6 @@ def gaussian_decay(max_value: float, min_value: float, no_points: float, decay=T
     dec_param: np.array
         decayed parameter
     """
-    if max_value < min_value:
-        temp_max = max_value
-        max_value = min_value
-        min_value = temp_max
     no_points = max(no_points, 1)
 
     # setting values on the horizontal axis
@@ -2167,7 +2163,7 @@ class ScrapeOffLayerRadiation(Radiation):
             t_out_prof,
             detachment=detachment,
         )
-
+        
         # temperature poloidal distribution
         t_pol = [
             self.flux_tube_pol_t(
