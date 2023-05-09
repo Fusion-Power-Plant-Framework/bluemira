@@ -48,17 +48,15 @@ from bluemira.equilibria.find import (
     in_plasma,
     in_zone,
 )
-from bluemira.equilibria.flux_surfaces import (
-    ClosedFluxSurface,
-    CoreResults,
-    analyse_plasma_core,
+from bluemira.equilibria.flux_surfaces import ClosedFluxSurface, analyse_plasma_core
+from bluemira.equilibria.grad_shafranov import GSSolver
+from bluemira.equilibria.grid import Grid, integrate_dx_dz
+from bluemira.equilibria.harmonics import (
     coil_harmonic_amplitude_matrix,
     collocation_points,
     harmonic_amplitude_marix,
     lcfs_fit_metric,
 )
-from bluemira.equilibria.grad_shafranov import GSSolver
-from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.num_control import DummyController, VirtualController
 from bluemira.equilibria.physics import calc_li3minargs, calc_psi_norm, calc_summary
