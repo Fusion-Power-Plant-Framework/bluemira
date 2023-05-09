@@ -399,12 +399,10 @@ def spherical_harmonics_constraint(
     max_degree: float
         Maximum degree of spherical harmonics desired to constrain.
     """
-    # Could look at a way of adding harmonics until a desired precision in core
-    # plasma is reached.
 
     currents = scale * vector
 
-    vector_harmonics, max_valid_r = fs.coil_harmonic_amplitudes(
+    vector_harmonics = fs.coil_harmonic_amplitudes(
         eq.coilset,
         currents,
         max_degree,

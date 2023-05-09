@@ -24,10 +24,13 @@ Spherical harmonics classes and calculations.
 """
 
 import numpy as np
+from scipy.interpolate import RectBivariateSpline
 from scipy.special import lpmv
 
 from bluemira.base.constants import MU_0
+from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_print
+from bluemira.equilibria.coils import CoilSet
 from bluemira.geometry.coordinates import get_area_2d, get_intersect, polygon_in_polygon
 
 
@@ -38,7 +41,7 @@ def coil_harmonic_amplitudes(input_coils, i_f, max_degree, r_t):
     to the polodial flux (psi). Vacuum Psi = Total Psi - Plasma Psi.
     These coefficients can be used as contraints in optimisation.
 
-    For a single filement (coil):
+    For a single filament (coil):
 
         A_l =  1/2 * mu_0 * I_f * sin(theta_f) * (r_t/r_f)**l *
                     ( P_l * cos(theta_f) / sqrt(l*(l+1)) )
@@ -61,19 +64,14 @@ def coil_harmonic_amplitudes(input_coils, i_f, max_degree, r_t):
     -------
     amplitudes: np.array
         Array of spherical harmonic amplitudes from given coil potitions and currents
-     max_valid_r: float
-        Maximum spherical radius for which the spherical harmonics apply
     """
     # SH coefficients from fuction of the current distribution outside of the sphere
     # containing the plamsa, i.e., LCFS (r_lcfs)
     # SH coeffs = currents2harmonics @ coil currents
-    # N.B., max_valid_r >= r_lcfs,
-    # i.e., cannot use coil located within r_lcfs as part of this method.
-    currents2harmonics, max_valid_r = coil_harmonic_amplitude_matrix(
-        input_coils, max_degree, r_t
-    )
+    # N.B., cannot use coil located within r_lcfs as part of this method.
+    currents2harmonics = coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t)
 
-    return currents2harmonics @ i_f, max_valid_r
+    return currents2harmonics @ i_f
 
 
 def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
@@ -94,9 +92,6 @@ def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
     currents2harmonics: np.array
         Matrix of harmonic amplitudes (to get spherical harmonic coefficents
         -> matrix @ vector of coil currents, see coil_harmonic_amplitudes)
-     max_valid_r: float
-        Maximum spherical radius for which the spherical harmonic
-        approximation is valid
     """
     x_f = input_coils.get_control_coils().x
     z_f = input_coils.get_control_coils().z
@@ -104,15 +99,13 @@ def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
     # Spherical coords
     r_f = np.sqrt(x_f**2 + z_f**2)
     theta_f = np.arctan2(x_f, z_f)
-    # Maxmimum r value for the sphere whithin which harmonics apply
-    max_valid_r = np.amin(r_f)
 
     # [number of degrees, number of coils]
     currents2harmonics = np.zeros([max_degree, np.size(r_f)])
     # First 'harmonic' is constant (this line avoids Nan isuues)
     currents2harmonics[0, :] = 1  #
 
-    # SH coeffcients from fuction of the current distribution
+    # SH coefficients from function of the current distribution
     # outside of the sphere coitaining the LCFS
     # SH coeffs = currents2harmonics @ coil currents
     for degree in np.arange(1, max_degree):
@@ -125,17 +118,15 @@ def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
             / np.sqrt(degree * (degree + 1))
         )
 
-    return currents2harmonics, max_valid_r
+    return currents2harmonics
 
 
-def harmonic_amplitude_marix(
-    collocation_r, collocation_theta, n_collocation, max_degree, r_t
-):
+def harmonic_amplitude_marix(collocation_r, collocation_theta, r_t):
     """
     Construct matrix from harmonic amplitudes at given points (in spherical coords).
 
     The matrix is used in a spherical harmonic approximation of the vacuum/coil
-    contribution to the poilodal flux (psi):
+    contribution to the poloidal flux (psi):
 
         psi = SUM(
             A_l * ( r**(l+1) / r_t**l ) * sin (theta) *
@@ -154,10 +145,6 @@ def harmonic_amplitude_marix(
         R values of collocation points
     collocation_theta: np.array
         Theta values of collocation points
-    n_collocation: integer
-        Number of collocation points
-    max_degree: integer
-        Maximum degree of harmonic to calculate up to
     r_t: float
         Typical length scale (e.g. radius at outer midplane)
 
@@ -167,14 +154,16 @@ def harmonic_amplitude_marix(
         Matrix of harmonic amplitudes (to get spherical harmonic coefficents
         use matrix @ coefficents = vector psi_vacuum at colocation points)
     """
+    # Maximum degree of harmonic to calculate up to = n_collocation - 1
     # [number of points, number of degrees]
-    harmonics2collocation = np.zeros([n_collocation, max_degree])
+    n = len(collocation_r)
+    harmonics2collocation = np.zeros([n, n - 1])
     # First 'harmonic' is constant (this line avoids Nan isuues)
     harmonics2collocation[:, 0] = 1
 
     # SH coeffcient matrix
     # SH coeffs = harmonics2collocation \ vector psi_vacuum at colocation points
-    for degree in np.arange(1, max_degree):
+    for degree in np.arange(1, n - 1):
         harmonics2collocation[:, degree] = (
             collocation_r ** (degree + 1)
             * np.sin(collocation_theta)
@@ -209,12 +198,11 @@ def collocation_points(n_points, plamsa_bounday, point_type):
 
     Returns
     -------
-    collocation_r: np.array
-        R values of collocation points
-    collocation_theta: np.array
-        Theta values of collocation points
-    n_collocation: integer
-        Number of collocation points
+    collocation: dict
+        Dictionary containing collocation points:
+        - "x" and "z" values of collocation points.
+        - "r" and "theta" values of collocation points.
+
     """
     x_bdry = plamsa_bounday.x
     z_bdry = plamsa_bounday.z
@@ -278,10 +266,14 @@ def collocation_points(n_points, plamsa_bounday, point_type):
         collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
         collocation_theta = np.arctan2(collocation_x, collocation_z)
 
-    # Number of collocation points
-    n_collocation = np.size(collocation_x)
+    collocation = {
+        "r": collocation_r,
+        "theta": collocation_theta,
+        "x": collocation_x,
+        "z": collocation_z,
+    }
 
-    return collocation_r, collocation_theta, collocation_x, collocation_z, n_collocation
+    return collocation
 
 
 def lcfs_fit_metric(coords1, coords2):
@@ -307,18 +299,15 @@ def lcfs_fit_metric(coords1, coords2):
     # Test to see if the LCFS for the SH approx is not closed for some reason
     if coords2.x[0] != coords2.x[-1] or coords2.z[0] != coords2.z[-1]:
         # If not closed then go back and try again
-        # raise BluemiraError('hmmm')
         bluemira_print(
             f"The approximate LCFS is not closed. Trying again with more degrees."
         )
-        fit_metric_value = 1
-        return fit_metric_value
+        return 1
 
     # If the two LCFSs have identical coordinates then return a perfect fit metric
     if np.array_equal(coords1.x, coords2.x) and np.array_equal(coords1.z, coords2.z):
         bluemira_print(f"Perfect match! Original LCFS = SH approx LCFS")
-        fit_metric_value = 0
-        return fit_metric_value
+        return 0
 
     # Get area of within the original and the SH approx LCFS
     area1 = get_area_2d(coords1.x, coords1.z)
@@ -332,8 +321,7 @@ def lcfs_fit_metric(coords1, coords2):
         bluemira_print(
             f"Odd number of intersections for input and SH approx LCFS: this shouldn''t be possible. Trying again with more degrees."
         )
-        fit_metric_value = 1
-        return fit_metric_value
+        return 1
 
     # If there are no intersections then...
     if len(xcross) == 0:
@@ -342,17 +330,13 @@ def lcfs_fit_metric(coords1, coords2):
         test_2_in_1 = polygon_in_polygon(coords1.xz.T, coords2.xz.T)
         if all(test_1_in_2) or all(test_2_in_1):
             # Calculate the metric if one is inside the other
-            fit_metric_value = (np.max([area1, area2]) - np.min([area1, area2])) / (
-                area1 + area2
-            )
-            return fit_metric_value
+            return (np.max([area1, area2]) - np.min([area1, area2])) / (area1 + area2)
         else:
             # Otherwise they are in entirely different places
             bluemira_print(
                 f"The approximate LCFS does not overlap with the original. Trying again with more degrees."
             )
-            fit_metric_value = 1
-            return fit_metric_value
+            return 1
 
     # Calculate the area between the intersections of the two LCFSs,
     # i.e., area within one but not both LCFSs.
@@ -398,6 +382,257 @@ def lcfs_fit_metric(coords1, coords2):
         area_between = area_between + get_area_2d(x, z)
 
     #  Calculate metric
-    fit_metric_value = area_between / (area1 + area2)
+    return area_between / (area1 + area2)
 
-    return fit_metric_value
+
+def coils_outside_sphere_vacuum_psi(eq):
+    """
+    Calculate the poloidal flux (psi) contribution from the vacuumn/coils
+    located outside of the sphere containing the plamsa, i.e., LCFS of
+    equlibrium state. N.B., currents from coilset are not considered here.
+
+    Parameters
+    ----------
+    eq:
+        FIXME
+
+    Returns
+    -------
+    vacuum_psi:
+        FIXME
+    plamsa_psi:
+        FIXME
+
+    """
+    # Psi contribution from the coils = total - plasma contribution
+    plamsa_psi = eq.plasma.psi(eq.grid.x, eq.grid.z)
+    vacuum_psi = eq.psi() - plamsa_psi
+
+    # If not using all coils in approx (have set control coils)
+    if len(eq.coilset.get_control_coils().name) != len(eq.coilset.name):
+        # Calculate psi contributuion from non-control coils
+        # This shouldn't matter if none of the coil currents have been set
+        non_ccoil_cont = eq.coilset.psi(
+            eq.grid.x, eq.grid.z
+        ) - eq.coilset.get_control_coils().psi(eq.grid.x, eq.grid.z)
+        # Remove contributuion from non-control coils
+        vacuum_psi -= non_ccoil_cont
+
+    return vacuum_psi, plamsa_psi
+
+
+def get_coils_for_approx(coilset, original_LCFS):
+    """
+    Make sure that the coils are at an acceptable distance
+    from the LCFS.
+
+    Parameters
+    ----------
+    coilset:
+        FIXME
+    original_LCFS:
+        FIXME
+
+    Returns
+    -------
+    new_coilset:
+        FIXME
+    """
+    # Approximation boundary - sphere must contain
+    # plasma/LCFS for chosen equilibrium.
+    # Are the control coils outside the sphere containing
+    # the last closed flux surface?
+
+    c_names = np.array(coilset.name)
+
+    max_bdry_r = np.max(np.sqrt(original_LCFS.x**2 + original_LCFS.z**2))
+    coil_r = np.sqrt(np.array(coilset.x) ** 2 + np.array(coilset.z) ** 2)
+
+    if max_bdry_r > np.min(coil_r):
+        too_close_coils = c_names[coil_r <= max_bdry_r]
+        not_too_close_coils = c_names[coil_r > max_bdry_r].tolist()
+        bluemira_print(
+            f"One or more of your coils is too close to the LCFS to be used in the SH approximation. Coil names: {too_close_coils}."
+        )
+
+        # Need a coilset with control coils outside sphere
+        new_coils = []
+        for n in coilset.name:
+            new_coils.append(coilset[n])
+        new_coilset = CoilSet(*new_coils, control_names=not_too_close_coils)
+
+    return new_coilset
+
+
+def get_psi_harmonic_ampltidues(vacuum_psi, grid, collocation, r_t):
+    """
+    Calculate the Spherical Harmoic (SH) amplitudes/coefficients needed to produce
+    a SH approximation of the vaccum (i.e. control coil) contribution to
+    the poloidal flux (psi).The number of degrees used in the approximation is
+    one less than the number of collocation points.
+
+    Parameters
+    ----------
+    vacuum_psi:
+        FIXME
+    grid:
+        FIXME
+    collocation:
+        FIXME
+    r_t:
+        FIXME
+
+    Returns
+    -------
+    psi_harmonic_ampltidues: np.array
+        SH coefficients for given number of degrees
+
+    """
+    # Set up interpolation with gridded values
+    psi_func = RectBivariateSpline(grid.x[:, 0], grid.z[0, :], vacuum_psi)
+
+    # Evaluate at collocation points
+    collocation_psivac = psi_func.ev(collocation["x"], collocation["z"])
+
+    # Construct matrix from SH amplitudes for flux function at collocation points
+    harmonics2collocation = harmonic_amplitude_marix(
+        collocation["r"], collocation["theta"], r_t
+    )
+
+    # Fit harmonics to match values at collocation points
+    psi_harmonic_ampltidues, residual, rank, s = np.linalg.lstsq(
+        harmonics2collocation, collocation_psivac, rcond=None
+    )
+
+    return psi_harmonic_ampltidues
+
+
+def get_coilset_sh_approx(
+    eq, n_points=None, point_type=None, acceptable_fit_metric=None, r_t=None
+):
+    """
+    Calculate the spherical harmonic (SH) amplitudes/coefficients
+    needed as a reference value for the 'spherical_harmonics_constraint'
+    used in coilset optimisation.
+
+    Use a LCFS fit metric to determine the rquired number of degrees.
+
+    The number of degrees used in the approximation is one less than
+    the number of collocation points.
+
+    Parameters
+    ----------
+    n_points: integer
+        Number of desired collocation points
+        excluding extrema (always +4 automatically)
+    point_type: string
+        Name that determines how the collocation points are selected.
+        The following options are available for colocation point distibution:
+            - 'arc' = equispaced points on an arc of fixed radius,
+            - 'arc_plus_extrema' = 'arc' plus the min and max points of the LSFS
+                in the x- and z-directions (4 points total),
+            - 'random',
+            - 'random_plus_extrema'.
+    acceptable_fit_metric: float
+        Value between 0 and 1 chosen by user.
+        If the LCFS found using the SH approximation method perfectly matches the
+        LCFS of the input equilibria then the fit metric = 0.
+        A fit metric of 1 means that they do not overlap at all.
+        fit_metric_value = total area within one but not both LCFSs /
+                            (input LCFS area + approximation LCFS area)
+    r_t: float
+        Typical lengthscale for spherical harmonic approximation.
+
+    Returns
+    -------
+    coil_current_harmonic_ampltidues: np.array
+        SH coefficients/amplitudes for given number of degrees
+        (for use in coilset optimisation)
+    sh_coilset:
+        FIXME
+    fit_metric_value: float
+        Fit metric acheived
+    required_degrees: integer
+        Number of degrees required for a SH approx with the desired fit metric
+
+    """
+    # Default value if not input
+    if acceptable_fit_metric is None:
+        acceptable_fit_metric = 0.01
+
+    # Get the nessisary boundary locations and lengthscale
+    # for use in spherical harmonic approximations.
+    # Starting LCFS
+    original_LCFS = eq.get_LCFS()
+    # Typical lengthscale default if not chosen by user
+    if r_t is None:
+        r_t = np.amax(original_LCFS.x)
+
+    # Starting coilset and grid is copied from input equilibrium
+    sh_coilset = eq.coilset.get_control_coils()
+    grid = eq.grid
+
+    # Make sure control coils are in acceptable locations for approximation
+    sh_coilset = get_coils_for_approx(sh_coilset, original_LCFS)
+
+    # Create the set of collocation points within the LCFS for the SH calculations
+    collocation = collocation_points(
+        n_points,
+        original_LCFS,
+        point_type,
+    )
+
+    # Contribution to psi that we would like to approximate (and plasma contribution for later)
+    vacuum_psi, plasma_psi = coils_outside_sphere_vacuum_psi(eq)
+
+    # SH amplitudes needed to produce an approximation of vaccum psi contribution
+    psi_harmonic_ampltidues = get_psi_harmonic_ampltidues(
+        vacuum_psi, grid, collocation, r_t
+    )
+
+    # Set min to save some time
+    min_degree = 2
+    max_degree = len(collocation["x"]) - 1
+
+    for degree in np.arange(min_degree, max_degree):
+        # Construct matrix from harmonic amplitudes for coils
+        currents2harmonics, max_valid_r = coil_harmonic_amplitude_matrix(
+            sh_coilset.get_control_coils(), degree, r_t
+        )
+
+        # Calculate necessary coil currents
+        currents, residual, rank, s = np.linalg.lstsq(
+            currents2harmonics, psi_harmonic_ampltidues[:degree], rcond=None
+        )
+
+        # Calculate the coilset SH amplitudes for use in optimisisation
+        coil_current_harmonic_ampltidues = currents2harmonics @ currents
+
+        # Set currents in coilset
+        sh_coilset.get_control_coils().current = currents
+
+        # Calculate the approximate Psi contribution from the coils
+        coilset_approx_psi = sh_coilset.psi(grid.x, grid.z)
+
+        # Total
+        approx_total_psi = coilset_approx_psi + plasma_psi
+
+        # Get plasma boundary for comparison to starting equilibrium using fit metric
+        approx_LCFS = eq.get_LCFS(psi=approx_total_psi)
+
+        # Compare staring equlibrium to new approximate equilibrium
+        fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
+        if degree == max_degree and fit_metric_value > acceptable_fit_metric:
+            raise BluemiraError(
+                f"Uh oh, you may need to use more degrees for a fit metric of {acceptable_fit_metric}! Use a greater number of collocation points please."
+            )
+        elif fit_metric_value < acceptable_fit_metric:
+            required_degrees = degree
+            break
+
+    return (
+        coil_current_harmonic_ampltidues,
+        sh_coilset,
+        fit_metric_value,
+        required_degrees,
+    )
