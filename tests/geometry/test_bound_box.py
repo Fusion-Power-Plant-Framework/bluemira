@@ -92,7 +92,7 @@ class TestHardBoundingBox:
         # Test that bounding box via tesselation did not modify properties
         np.testing.assert_allclose(vertices, vertices2)
         np.testing.assert_allclose(indices, indices2)
-        vertices3, indices3 = solid._tessellate(0.01)
+        vertices3, _ = solid._tessellate(0.01)
         assert vertices3.shape != vertices2.shape
 
     @pytest.mark.parametrize("tol", [0.0, -1e-9])
