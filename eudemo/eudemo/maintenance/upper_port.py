@@ -30,16 +30,11 @@ import numpy as np
 
 from bluemira.base.constants import EPS
 from bluemira.base.designer import Designer
-from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import make_polygon, slice_shape
-from bluemira.utilities.opt_problems import (
-    OptimisationConstraint,
-    OptimisationObjective,
-    OptimisationProblem,
-)
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.optimisation import optimise
 from eudemo.tools import get_inner_cut_point
 
 
@@ -59,127 +54,74 @@ class UpperPortOPParameters(ParameterFrame):
     """Blanket outboard thickness [m]."""
 
 
-class UpperPortOP(OptimisationProblem):
+class UpperPortOpt:
     """
-    Reduced model optimisation problem for the vertical upper port size optimisation.
+    Collection of functions to use to minimise the upper port size.
 
     Parameters
     ----------
-    params:
-        Parameter frame for the problem. See
-        :class:`UpperPortOPParameters` for parameter details.
-    optimiser:
-        Optimiser object to use when solving this problem
-    breeding_blanket_xz:
-        Unsegmented breeding blanket x-z geometry
-    constraint_tol:
-        Constraint tolerance
+    bb:
+        The xz-silhouette of the breeding blanket.
+    c_rm:
+        The required remote maintenance clearance.
     """
 
-    params: UpperPortOPParameters
+    def __init__(self, bb: BluemiraFace, c_rm: float):
+        self.bb = bb
+        self.c_rm = c_rm
+        self.r_ib_min = self.bb.bounding_box.x_min
+        self.r_ob_max = self.bb.bounding_box.x_max
+        self.gradient = np.array([-1, 1, 0, 1], dtype=float)
 
-    def __init__(
-        self,
-        params: Union[Dict, ParameterFrame],
-        optimiser: Optimiser,
-        breeding_blanket_xz: BluemiraFace,
-        constraint_tol: float = 1e-6,
-    ):
-        params = make_parameter_frame(params, UpperPortOPParameters)
-        objective = OptimisationObjective(self.minimise_port_size, f_objective_args={})
+    def port_size(self, x: np.ndarray) -> float:
+        """Return the port size given parameterisation ``x``."""
+        ri, ro, _, gamma = x
+        return ro - ri + gamma
 
-        box = breeding_blanket_xz.bounding_box
-        r_ib_min = box.x_min
-        r_ob_max = box.x_max
-        c_rm = params.c_rm.value
-        R_0 = params.R_0.value
-        bb_min_angle = 90 - params.bb_min_angle.value
-        tk_bb_ib = params.tk_bb_ib.value
-        tk_bb_ob = params.tk_bb_ob.value
-
-        n_variables = 4
-        n_constraints = 3
-
-        constraints = [
-            OptimisationConstraint(
-                self.constrain_blanket_cut,
-                f_constraint_args={
-                    "bb": breeding_blanket_xz,
-                    "c_rm": c_rm,
-                    "r_ib_min": r_ib_min,
-                    "r_ob_max": r_ob_max,
-                },
-                tolerance=constraint_tol * np.ones(n_constraints),
-            )
-        ]
-        super().__init__(np.array([]), optimiser, objective, constraints)
-
-        lower_bounds = [r_ib_min - c_rm, R_0, r_ib_min + tk_bb_ib, 0]
-        upper_bounds = [R_0, r_ob_max + c_rm, r_ob_max - tk_bb_ob, bb_min_angle]
-        self.set_up_optimiser(n_variables, bounds=[lower_bounds, upper_bounds])
-        self.params = params
-
-    @staticmethod
-    def minimise_port_size(vector, grad):
+    def df_port_size(self, _: np.ndarray) -> np.ndarray:
         """
-        Minimise the size of the port.
-        """
-        ri, ro, ci, gamma = vector
-        # Dual objective: minimise port (ro - ri) and minimise cut angle
-        value = ro - ri + gamma
-        if grad.size > 0:
-            grad[0] = -1
-            grad[1] = 1
-            grad[2] = 0
-            grad[3] = 1
-        return value
+        Return the gradient of the port size.
 
-    @staticmethod
-    def constrain_blanket_cut(constraint, vector, grad, bb, c_rm, r_ib_min, r_ob_max):
-        """
-        Calculate the constraint and grad matrices.
-        """
-        constraint[:] = UpperPortOP.calculate_constraints(
-            vector, bb, c_rm, r_ib_min, r_ob_max
-        )
+        Parameters
+        ----------
+        _:
+            The parameterisation of the port size. This is unused as the
+            gradient is constant.
 
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                UpperPortOP.calculate_constraints,
-                vector,
-                f0=constraint,
-                args=(bb, c_rm, r_ib_min, r_ob_max),
-            )
-
-        return constraint
-
-    @staticmethod
-    def calculate_constraints(vector, bb, c_rm, r_ib_min, r_ob_max):
+        Returns
+        -------
+        The gradient of the port size parameterisation, with shape (3,).
         """
-        Calculate the constraints on the upper port size.
-        """
-        ri, ro, ci, gamma = vector
+        return self.gradient
 
-        co = UpperPortOP.get_outer_cut_point(bb, ci, gamma)[0]
-
-        return [
-            # The outboard blanket must fit through the port
-            (r_ob_max - co + c_rm) - (ro - co),
-            # The inboard blanket must fit through the port (dominated by below)
-            # (ci - r_ib_min + c_rm) - (ro - ri),
-            # The inboard blanket must squeeze past the other inboard blanket
-            (ci - r_ib_min) - (ro - ci + c_rm),
-            # There should be enough vertically accessible space on the inboard blanket
-            (ri + 0.5 * abs(ci - r_ib_min)) - (ci),
-        ]
-
-    @staticmethod
-    def get_outer_cut_point(bb, ci, gamma):
+    def constrain_blanket_cut(self, x: np.ndarray) -> np.ndarray:
         """
-        Get the outer cut point radius of the cutting plane with the breeding blanket
-        geometry.
+        Constrain the upper port size.
+
+        This enforces 3 constraints:
+
+        c1. The outboard blanket must fit through the port.
+        c2. The inboard blanket must squeeze past the other blanket
+            segment. Note that this also enforces that the inboard
+            blanket fits through the port.
+        c3. There should be enough vertically accessible space on the
+            inboard blanket.
         """
-        intersection = get_inner_cut_point(bb, ci)
+        ri, ro, ci, gamma = x
+        co = self.get_outer_cut_point(ci, gamma)[0]
+        c1 = (self.r_ob_max - co + self.c_rm) - (ro - co)
+        c2 = (ci - self.r_ib_min) - (ro - ci + self.c_rm)
+        c3 = (ri + 0.5 * abs(ci - self.r_ib_min)) - ci
+        return np.array([c1, c2, c3])
+
+    def get_outer_cut_point(self, ci: float, gamma: float):
+        """
+        Get the coordinate of the outer blanket cut point.
+
+        The outer cut point radius of the cutting plane with the
+        breeding blanket geometry.
+        """
+        intersection = get_inner_cut_point(self.bb, ci)
         x, y, z = intersection
         x2 = x - np.sin(np.deg2rad(gamma))
         y2 = y
@@ -188,25 +130,17 @@ class UpperPortOP(OptimisationProblem):
             intersection, [x2, y2, z2], [x, y + 1, z]
         )
         # Get the last intersection with the angled cut plane and the outer
-        intersections = slice_shape(bb.boundary[0], angled_cut_plane)
+        intersections = slice_shape(self.bb.boundary[0], angled_cut_plane)
         intersections = intersections[intersections[:, -1] > z + EPS]
-        intersection = sorted(intersections, key=lambda x: x[-1])[0]
+        intersection = min(intersections, key=lambda x: x[-1])
         return intersection
-
-    def optimise(self, x0=None):
-        """
-        Solve the optimisation problem.
-        """
-        if x0 is None:
-            R_0 = self.params.R_0.value
-            x0 = np.array([R_0, R_0, R_0, 0])
-        return self.opt.optimise(x0)
 
 
 class UpperPortDesigner(Designer):
     """Upper Port Designer"""
 
     param_cls = UpperPortOPParameters
+    params: UpperPortOPParameters
 
     def __init__(
         self,
@@ -224,14 +158,34 @@ class UpperPortDesigner(Designer):
         self.upper_port_extrema = upper_port_extrema
 
     def run(self):
-        """Run Method of Designer"""
-        design_problem = UpperPortOP(
-            self.params,
-            Optimiser("SLSQP", opt_conditions=self.opt_conditions),
-            self.blanket_face,
-        )
+        """Run the design problem to minimise the port size."""
+        r_ib_min = self.blanket_face.bounding_box.x_min
+        r_ob_max = self.blanket_face.bounding_box.x_max
+        c_rm = self.params.c_rm.value
+        R_0 = self.params.R_0.value
+        bb_min_angle = 90 - self.params.bb_min_angle.value
+        tk_bb_ib = self.params.tk_bb_ib.value
+        tk_bb_ob = self.params.tk_bb_ob.value
 
-        r_up_inner, r_up_outer, r_cut, cut_angle = design_problem.optimise()
+        opt_problem = UpperPortOpt(bb=self.blanket_face, c_rm=self.params.c_rm.value)
+        opt_result = optimise(
+            opt_problem.port_size,
+            dimensions=4,
+            df_objective=opt_problem.df_port_size,
+            ineq_constraints=[
+                {
+                    "f_constraint": opt_problem.constrain_blanket_cut,
+                    "tolerance": np.full(3, 1e-6),
+                }
+            ],
+            algorithm="SLSQP",
+            opt_conditions=self.opt_conditions,
+            bounds=(
+                [r_ib_min - c_rm, R_0, r_ib_min + tk_bb_ib, 0],
+                [R_0, r_ob_max + c_rm, r_ob_max - tk_bb_ob, bb_min_angle],
+            ),
+        )
+        r_up_inner, r_up_outer, r_cut, cut_angle = opt_result.x
 
         return (
             build_upper_port_zone(r_up_inner, r_up_outer, z_max=self.upper_port_extrema),
