@@ -1,12 +1,12 @@
 # ---
 # jupyter:
 #   jupytext:
-#     formats: ipynb,py:percent
-#     text_representation:
+#    cell_metadata_filter: tags,-all
+#    notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#       text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -34,6 +34,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+"""
+An example that shows how the Spherical Harmonic Approximation works
+"""
 
 # %% [markdown]
 # # Example of using Spherical Harmonic Approximation

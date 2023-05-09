@@ -24,6 +24,7 @@ Spherical harmonics classes and calculations.
 """
 from copy import deepcopy
 from enum import Enum, auto
+from typing import Dict, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,11 +35,22 @@ from bluemira.base.constants import MU_0
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
-from bluemira.geometry.coordinates import get_area_2d, get_intersect, polygon_in_polygon
+from bluemira.geometry.coordinates import (
+    Coordinates,
+    get_area_2d,
+    get_intersect,
+    polygon_in_polygon,
+)
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.tools import boolean_cut, make_polygon
 
 
-def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
+def coil_harmonic_amplitude_matrix(
+    input_coils: CoilSet, max_degree: int, r_t: float
+) -> np.ndarray:
     """
     Construct matrix from harmonic amplitudes at given coil locations.
 
@@ -101,7 +113,9 @@ def coil_harmonic_amplitude_matrix(input_coils, max_degree, r_t):
     return currents2harmonics
 
 
-def harmonic_amplitude_marix(collocation_r, collocation_theta, r_t):
+def harmonic_amplitude_marix(
+    collocation_r: np.ndarray, collocation_theta: np.ndarray, r_t: float
+) -> np.ndarray:
     """
     Construct matrix from harmonic amplitudes at given points (in spherical coords).
 
@@ -167,7 +181,9 @@ class PointType(Enum):
     RANDOM_PLUS_EXTREMA = auto()
 
 
-def collocation_points(n_points, plamsa_bounday, point_type):
+def collocation_points(
+    n_points: int, plamsa_bounday: np.ndarray, point_type: str
+) -> Dict:
     """
     Create a set of collocation points for use wih spherical harmonic
     approximations. Points are found within the user-supplied
@@ -268,7 +284,7 @@ def collocation_points(n_points, plamsa_bounday, point_type):
     }
 
 
-def lcfs_fit_metric(coords1, coords2):
+def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> Dict:
     """
     Calculate the value of the metric used for evaluating the SH aprroximation.
     This is equal to 1 for non-intersecting LCFSs, and 0 for identical LCFSs.
@@ -332,52 +348,22 @@ def lcfs_fit_metric(coords1, coords2):
 
     # Calculate the area between the intersections of the two LCFSs,
     # i.e., area within one but not both LCFSs.
-
-    # Initial value
-    area_between = 0
-
-    # Add first intersection to the end
-    xcross = np.append(xcross, xcross[0])
-    zcross = np.append(zcross, zcross[0])
-
-    # Scan over intersections
-    for i in np.arange(len(xcross) - 1):
-        # Find indeces of start and end of the segment of LCFSs between
-        # intersections
-        start1 = np.argmin(abs(coords1.x - xcross[i]) + abs(coords1.z - zcross[i]))
-        start2 = np.argmin(abs(coords2.x - xcross[i]) + abs(coords2.z - zcross[i]))
-        end1 = np.argmin(abs(coords1.x - xcross[i + 1]) + abs(coords1.z - zcross[i + 1]))
-        end2 = np.argmin(abs(coords2.x - xcross[i + 1]) + abs(coords2.z - zcross[i + 1]))
-
-        if end1 < start1:
-            # If segment overlaps start of line defining LCFS
-            seg1 = np.append(coords1.xz[:, start1:], coords1.xz[:, :end1], axis=1)
-        else:
-            seg1 = coords1.xz[:, start1:end1]
-
-        if end2 < start2:
-            # If segment overlaps start of line defining LCFS
-            seg2 = np.append(coords2.xz[:, start2:], coords2.xz[:, :end2], axis=1)
-        else:
-            seg2 = coords2.xz[:, start2:end2]
-
-        # Generate co-ordinates defining a polygon between these two
-        # intersections.
-        x = np.array([xcross[i], xcross[i + 1], xcross[i]])
-        z = np.array([zcross[i], zcross[i + 1], zcross[i]])
-        x = np.insert(x, 2, np.flip(seg2[0, :]), axis=0)
-        z = np.insert(z, 2, np.flip(seg2[1, :]), axis=0)
-        x = np.insert(x, 1, seg1[0, :], axis=0)
-        z = np.insert(z, 1, seg1[1, :], axis=0)
-
-        # Calculate the area of the polygon
-        area_between = area_between + get_area_2d(x, z)
+    c1 = Coordinates({"x": coords1.x, "z": coords1.z})
+    c2 = Coordinates({"x": coords2.x, "z": coords2.z})
+    c1_face = BluemiraFace(make_polygon(c1, closed=True))
+    c2_face = BluemiraFace(make_polygon(c2, closed=True))
+    result1 = boolean_cut(c1_face, c2_face)
+    result2 = boolean_cut(c2_face, c1_face)
 
     #  Calculate metric
-    return area_between / (area1 + area2)
+    return (sum([f.area for f in result1]) + sum([f.area for f in result2])) / (
+        c1_face.area + c2_face.area
+    )
 
 
-def coils_outside_sphere_vacuum_psi(eq):
+def coils_outside_sphere_vacuum_psi(
+    eq: Equilibrium,
+) -> Tuple[np.ndarray, np.ndarray, CoilSet]:
     """
     Calculate the poloidal flux (psi) contribution from the vacuumn/coils
     located outside of the sphere containing the plamsa, i.e., LCFS of
@@ -441,7 +427,9 @@ def coils_outside_sphere_vacuum_psi(eq):
     return vacuum_psi, plasma_psi, new_coilset
 
 
-def get_psi_harmonic_ampltidues(vacuum_psi, grid, collocation, r_t):
+def get_psi_harmonic_ampltidues(
+    vacuum_psi: np.ndarray, grid: Grid, collocation: Dict, r_t: float
+) -> np.ndarray:
     """
     Calculate the Spherical Harmoic (SH) amplitudes/coefficients needed to produce
     a SH approximation of the vaccum (i.e. control coil) contribution to
@@ -450,7 +438,7 @@ def get_psi_harmonic_ampltidues(vacuum_psi, grid, collocation, r_t):
 
     Parameters
     ----------
-    vacuum_psi:
+    vacuum_psi: ndarray
         Psi contributuion from coils that we wish to approximate
     grid: Bluemira Grid
         Associated grid
@@ -485,13 +473,13 @@ def get_psi_harmonic_ampltidues(vacuum_psi, grid, collocation, r_t):
 
 
 def spherical_harmonic_approximation(
-    eq,
-    n_points=None,
-    point_type=None,
-    acceptable_fit_metric=None,
-    r_t=None,
-    extra_info=False,
-):
+    eq: Equilibrium,
+    n_points: int = None,
+    point_type: str = None,
+    acceptable_fit_metric: float = None,
+    r_t: float = None,
+    plot: bool = False,
+) -> Tuple[CoilSet, float, np.ndarray, int, float, np.ndarray]:
     """
     Calculate the spherical harmonic (SH) amplitudes/coefficients
     needed as a reference value for the 'spherical_harmonics_constraint'
@@ -537,15 +525,18 @@ def spherical_harmonic_approximation(
 
     Returns
     -------
-    shapprox: dict
-        Dictionary containing information needed to use SH approximation in optimisation.
-        - "coilset", coilset to use with SH approximation (Bluemira Coilset)
-        - "r_t", typical lengthscale for spherical harmonic approximation (float)
-        - "harmonic_amplitudes", SH coefficients/amplitudes for required number of degrees (ndarray)
-        - "max_degree", number of degrees required for a SH approx with the desired fit metric (int)
-        - ("fit_metric_value", fit metric acheived (float))
-        - ("approx_total_psi", the total psi obtained using the SH approximation (ndarray))
-
+    sh_coilset: Bluemira Coilset
+        Coilset to use with SH approximation
+    r_t: float
+        typical lengthscale for spherical harmonic approximation
+    coil_current_harmonic_ampltidues: ndarray
+        SH coefficients/amplitudes for required number of degrees
+    degree: int
+        number of degrees required for a SH approx with the desired fit metric
+    fit_metric_value: float
+        fit metric acheived
+    approx_total_psi: ndarray
+        the total psi obtained using the SH approximation
     """
     # Default values if not input
     if acceptable_fit_metric is None:
@@ -629,9 +620,8 @@ def spherical_harmonic_approximation(
                 f"Uh oh, you may need to use more degrees for a fit metric of {acceptable_fit_metric}! Use a greater number of collocation points please."
             )
 
-    # Return additional information and a plot
-    # comparing orginal psi to the SH approximation
-    if extra_info:
+    # plot comparing orginal psi to the SH approximation
+    if plot:
         plot_psi_comparision(
             grid,
             eq.psi(grid.x, grid.z),
@@ -640,26 +630,23 @@ def spherical_harmonic_approximation(
             coilset_approx_psi,
         )
 
-        return {
-            "coilset": sh_coilset,
-            "r_t": r_t,
-            "harmonic_amplitudes": coil_current_harmonic_ampltidues,
-            "max_degree": degree,
-            "fit_metric_value": fit_metric_value,
-            "approx_total_psi": approx_total_psi,
-        }
-
-        # Return only the information needed for use in optimisation
-    else:
-        return {
-            "coilset": sh_coilset,
-            "r_t": r_t,
-            "harmonic_amplitudes": coil_current_harmonic_ampltidues,
-            "max_degree": degree,
-        }
+    return (
+        sh_coilset,
+        r_t,
+        coil_current_harmonic_ampltidues,
+        degree,
+        fit_metric_value,
+        approx_total_psi,
+    )
 
 
-def plot_psi_comparision(grid, tot_psi_org, tot_psi_app, vac_psi_org, vac_psi_app):
+def plot_psi_comparision(
+    grid: Grid,
+    tot_psi_org: np.ndarray,
+    tot_psi_app: np.ndarray,
+    vac_psi_org: np.ndarray,
+    vac_psi_app: np.ndarray,
+):
     """
     Create plot comparing an orginal psi to psi obtained from approximation.
 
@@ -681,10 +668,10 @@ def plot_psi_comparision(grid, tot_psi_org, tot_psi_app, vac_psi_org, vac_psi_ap
     cmap = PLOT_DEFAULTS["psi"]["cmap"]
     clevels = np.linspace(np.amin(tot_psi_org), np.amax(tot_psi_org), nlevels)
 
-    plot1 = plt.subplot2grid((4, 4), (0, 0), rowspan=2, colspan=1)
+    plot1 = plt.subplot2grid((5, 4), (0, 0), rowspan=2, colspan=1)
     plot1.set_title("Original, Total Psi")
     plot1.contour(grid.x, grid.z, tot_psi_org, levels=clevels, cmap=cmap, zorder=8)
-    plot2 = plt.subplot2grid((4, 4), (0, 2), rowspan=2, colspan=1)
+    plot2 = plt.subplot2grid((5, 4), (0, 2), rowspan=2, colspan=1)
     plot2.set_title("SH Approximation, Total Psi")
     plot2.contour(grid.x, grid.z, tot_psi_app, levels=clevels, cmap=cmap, zorder=8)
     plot3 = plt.subplot2grid((5, 4), (3, 0), rowspan=2, colspan=1)

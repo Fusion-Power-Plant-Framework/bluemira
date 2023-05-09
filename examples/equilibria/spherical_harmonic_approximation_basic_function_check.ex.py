@@ -1,12 +1,12 @@
 # ---
 # jupyter:
 #   jupytext:
-#     formats: ipynb,py:percent
-#     text_representation:
+#    cell_metadata_filter: tags,-all
+#    notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#       text_representation:
 #       extension: .py
 #       format_name: percent
 #       format_version: '1.3'
-#       jupytext_version: 1.14.5
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
@@ -34,6 +34,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+"""
+Fuction 'spherical_harmonic_approximation' usage.
+"""
 
 # %% [markdown]
 # # spherical_harmonic_approximation Fuction
@@ -88,18 +92,26 @@ plt.show()
 
 # %%
 # Information needed for SH Approximation
-shapprox = spherical_harmonic_approximation(
+(
+    sh_coilset,
+    r_t,
+    coil_current_harmonic_ampltidues,
+    degree,
+    fit_metric_value,
+    approx_total_psi,
+) = spherical_harmonic_approximation(
     eq,
     n_points=50,
     point_type="random_plus_extrema",
     acceptable_fit_metric=0.03,
-    extra_info=True,
+    plot=True,
 )
 
 # %% [markdown]
 # ### Outputs
 #
-# spherical_harmonic_approximation outputs a dictionary of results that can be used in optimisation.
+# spherical_harmonic_approximation outputs a dictionary of results
+# that can be used in optimisation.
 #
 # #### Always output
 #
@@ -109,16 +121,16 @@ shapprox = spherical_harmonic_approximation(
 # - "max_degree", number of degrees required for a SH approx with the desired fit metric
 
 # %%
-print(shapprox["coilset"])
+print(sh_coilset)
 
 # %%
-print(shapprox["r_t"])
+print(r_t)
 
 # %%
-print(shapprox["harmonic_amplitudes"])
+print(coil_current_harmonic_ampltidues)
 
 # %%
-print(shapprox["max_degree"])
+print(degree)
 
 # %% [markdown]
 # #### Ouput on request
@@ -127,10 +139,10 @@ print(shapprox["max_degree"])
 # - "approx_total_psi", the total psi obtained using the SH approximation
 
 # %%
-print(shapprox["fit_metric_value"])
+print(fit_metric_value)
 
 # %%
-psi = shapprox["approx_total_psi"]
+psi = approx_total_psi
 levels = np.linspace(np.amin(psi), np.amax(psi), 50)
 plot = plt.subplot2grid((2, 2), (0, 0), rowspan=2, colspan=1)
 plot.set_title("approx_total_psi")
