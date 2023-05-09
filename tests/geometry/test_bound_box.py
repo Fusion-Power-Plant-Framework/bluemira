@@ -83,7 +83,7 @@ class TestHardBoundingBox:
         assert np.isclose(bb.z_min, -5.0)
 
     @pytest.mark.parametrize("tol", [10.0, 1.0, 0.1, 0.01])
-    def test_opt_bounding_box(self, tol):
+    def test_opt_bounding_box_solid(self, tol):
         solid = self.solid.deepcopy()
         vertices, indices = solid._tessellate(1.0)
         bb = self.solid.get_optimal_bounding_box(tolerance=tol)
