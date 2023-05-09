@@ -94,7 +94,6 @@ class TestHardBoundingBox:
         np.testing.assert_allclose(indices, indices2)
         vertices3, indices3 = solid._tessellate(0.01)
         assert vertices3.shape != vertices2.shape
-        assert indices.shape != indices2.shape
 
     @pytest.mark.parametrize("tol", [0.0, -1e-9])
     def test_bad_tolerace(self, tol):
