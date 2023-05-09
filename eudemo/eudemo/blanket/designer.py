@@ -74,23 +74,23 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
 
     Parameters
     ----------
-    params
+    params:
         The parameters for the designer.
         See :class:`.BlanketDesignerParams` for more details.
-    blanket_boundary
+    blanket_boundary:
         The wire defining the inner boundary of the blanket.
         This should be an open wire, where the start and end points
         share the same z-coordinate (i.e., an open loop).
-    blanket_silhouette
+    blanket_silhouette:
         A face defining the poloidal shape of the blanket.
         The inner boundary of this face *must* be the same as the
         :obj:`blanket_boundary`. It's difficult to reverse engineer the
         wire from the face, so both are required.
-    r_inner_cut
+    r_inner_cut:
         The x coordinate at which to cut the blanket into segments.
         Note that this is the coordinate of the x-most end of the cut on
         the inner wire of the boundary, not the center.
-    cut_angle
+    cut_angle:
         The angle at which to segment the blanket [degrees].
         A positive angle will result in a downward top-to-bottom slope
         on the inboard.
@@ -139,9 +139,8 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
 
         Returns
         -------
-        blanket_segments
-            An instance of :class:`.BlanketSegments` containing the
-            blanket segment geometries.
+        An instance of :class:`.BlanketSegments` containing the
+        blanket segment geometries.
         """
         cut_zone = self._make_cutting_face()
         ib_face, ob_face = self._cut_geom(self.silhouette, cut_zone)

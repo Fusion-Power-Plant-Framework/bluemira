@@ -106,11 +106,11 @@ class EquilibriumDesigner(Designer[Equilibrium]):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params:
         The parameters for the solver, the dictionary or frame must
         contain all the parameters present in
         `UnconstrainedTikhonovSolverParams`.
-    build_config: Optional[Dict]
+    build_config:
         The config for the solver. Optional keys:
         - `read_file_path`: str
             the path to an eqdsk file to read the equilibrium from,
@@ -304,9 +304,9 @@ class FixedEquilibriumDesigner(Designer[Tuple[Coordinates, CustomProfile]]):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params:
         The parameters for the solver
-    build_config: Optional[Dict]
+    build_config:
         The config for the solver.
     """
 

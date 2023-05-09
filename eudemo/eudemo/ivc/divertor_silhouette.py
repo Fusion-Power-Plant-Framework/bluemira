@@ -104,11 +104,11 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
 
     Parameters
     ----------
-    params: Union[ParameterFrame, Dict]
+    params:
         Divertor silhouette designer parameters
-    equilibrium: Equilibrium
+    equilibrium:
         The equilibrium to design around
-    wall: BluemiraWire
+    wall:
         wall boundary keep out zone (cut at divertor)
 
     """
@@ -255,12 +255,12 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
 
         Parameters
         ----------
-        label: str
+        label:
             The label to give the returned Component.
-        start: Sequence
+        start:
             The position (in x-z) to start drawing the baffle from,
             e.g., the outside end of a target.
-        end: Sequence
+        end:
             The position (in x-z) to stop drawing the baffle, e.g., the
             postion to the upper part of the first wall.
         """

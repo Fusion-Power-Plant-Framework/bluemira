@@ -73,23 +73,27 @@ class TFCoil(ComponentManager):
         super().__init__(component)
         self._field_solver = field_solver
 
-    def field(self, x, y, z):
+    def field(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+    ) -> Union[float, np.ndarray]:
         """
         Calculate the magnetic field due to the TF coils at a set of points.
 
         Parameters
         ----------
-        x: Union[float, np.array]
+        x:
             The x coordinate(s) of the points at which to calculate the field
-        y: Union[float, np.array]
+        y:
             The y coordinate(s) of the points at which to calculate the field
-        z: Union[float, np.array]
+        z:
             The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        field: np.array
-            The magnetic field vector {Bx, By, Bz} in [T]
+        The magnetic field vector {Bx, By, Bz} in [T]
         """
         return self._field_solver.field(x, y, z)
 
@@ -146,9 +150,9 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
     Parameters
     ----------
-    params: Union[Dict, ParameterFrame]
+    params:
         TF Coil Designer parameters
-    build_config: Dict
+    build_config:
         Required keys:
 
             * param_class: str
@@ -182,7 +186,10 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
                 solve
             * optimisation_settings: Dict
                 problem_class optimisation settings
-
+    separatrix:
+        Wire of the separatrix along which to constrain ripple
+    keep_out_zone:
+        Wire of the keep-out-zone for the TF coil
     """
 
     param_cls = TFCoilDesignerParams
@@ -236,7 +243,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         wp_xs = make_polygon([x_c, d_yc, np.zeros(4)], closed=True)
         return wp_xs
 
-    def _make_centreline_koz(self, keep_out_zone) -> BluemiraWire:
+    def _make_centreline_koz(self, keep_out_zone: BluemiraWire) -> BluemiraWire:
         """
         Make a keep-out-zone for the TF coil centreline optimisation problem.
         """

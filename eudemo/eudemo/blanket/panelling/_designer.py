@@ -67,14 +67,14 @@ class PanellingDesigner(Designer[np.ndarray]):
 
     Parameters
     ----------
-    params
+    params:
         The parameters for the panelling design problem. See
         :class:`.PanellingDesignerParams` for the required parameters.
-    wall_boundary
+    wall_boundary:
         The boundary of the first wall to build the panels around. Note
         that this designer constructs panels around the *outside* of the
         given wall boundary; i.e., the panels enclose the wall.
-    build_config
+    build_config:
         Configuration options for the designer:
 
         * algorithm: str
@@ -119,9 +119,8 @@ class PanellingDesigner(Designer[np.ndarray]):
 
         Returns
         -------
-        coordinates
-            The coordinates of the panel end points (or joints). Has
-            shape (2, N).
+        The coordinates of the panel end points (or joints). Has
+        shape (2, N).
         """
         boundary = self.wall_boundary.discretize(
             ndiscr=self._n_boundary_discr, byedges=True

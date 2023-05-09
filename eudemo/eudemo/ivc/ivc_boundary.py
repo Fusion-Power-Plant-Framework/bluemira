@@ -47,9 +47,9 @@ class IVCBoundaryDesigner(Designer[BluemiraWire]):
 
     Parameters
     ----------
-    params: Union[ParameterFrame, Dict]
+    params:
         IVC Boundary designer parameters
-    wall_shape: BluemiraWire
+    wall_shape:
         Wall shape as defined by the wall silhouette designer
 
     """

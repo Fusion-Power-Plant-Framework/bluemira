@@ -34,15 +34,14 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
 
     Parameters
     ----------
-    params: ParameterFrame
+    params:
         Parameters on which to perform the solve (updated)
-    build_config: dict
+    build_config:
         Build configuration
 
     Returns
     -------
-    params: ParameterFrame
-        Updated parameters following the solve.
+    Updated parameters following the solve.
     """
     run_mode = build_config.pop("run_mode", "mock")
     plot = build_config.pop("plot", False)

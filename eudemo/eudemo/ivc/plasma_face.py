@@ -47,13 +47,13 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
 
     Parameters
     ----------
-    params: Union[ParameterFrame, Dict]
+    params:
         Plasma face designer parameters
-    ivc_boundary: BluemiraWire
+    ivc_boundary:
         IVC boundary keep out zone
-    wall_boundary: BluemiraWire
+    wall_boundary:
         wall boundary keep out zone (cut at divertor)
-    divertor_silhouette: BluemiraWire
+    divertor_silhouette:
         divertor keep out zone
     """
 

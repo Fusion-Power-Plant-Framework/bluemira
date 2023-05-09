@@ -33,9 +33,15 @@ class Paneller:
 
     Parameters
     ----------
-    boundary_points
+    boundary_points:
         The points defining the boundary along which to build the panels.
         This should have shape (2, N), where N is the number of points.
+    max_angle:
+        Maximum turning angle of the panels
+    dx_min:
+        Minimum panel length
+    fix_num_panels:
+        If specified, fix the number of panels to an integer value
     """
 
     def __init__(
@@ -72,7 +78,7 @@ class Paneller:
 
         Parameters
         ----------
-        dists
+        dists:
             The normalised distances along the boundary at which there
             are panel-boundary tangent points.
         """
@@ -167,14 +173,13 @@ def norm_tangents(points: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-    points
+    points:
         Array of coordinates. This must have shape (2, N), where N is
         the number of points.
 
     Returns
     -------
-    tangents
-        The normalised vector of tangents.
+    The normalised vector of tangents.
     """
     grad = np.gradient(points, axis=1)
     magnitudes = np.hypot(grad[0], grad[1])

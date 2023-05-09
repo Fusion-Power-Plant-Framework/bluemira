@@ -58,11 +58,11 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
     Parameters
     ----------
-    params: Union[ParameterFrame, Dict]
+    params:
         Wall silhouette designer parameters
-    build_config: Dict
+    build_config:
         configuration of the design
-    equilibrium: Equilibrium
+    equilibrium:
         The equilibrium to design around
 
     """
