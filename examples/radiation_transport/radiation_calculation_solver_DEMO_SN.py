@@ -28,14 +28,12 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import shapely.geometry as shp
 
 import bluemira.codes.process as process
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.radiation_profile import (
     RadiationSolver, 
     linear_interpolator, 
@@ -47,7 +45,7 @@ from bluemira.radiation_transport.radiation_profile import (
     detect_radiation,
     plot_radiation_loads,
 )
-from bluemira.radiation_transport.flux_surfaces_maker import FluxSuraceSolver
+from bluemira.radiation_transport.flux_surfaces_maker import FluxSurfaceSolver
 
 # CHERAB imports
 from cherab.core.math import AxisymmetricMapper
@@ -136,7 +134,7 @@ config = {
 # Initialising the `TempFsSolverChargedParticleSolver` and run it.
 
 # %%
-flux_surface_solver = FluxSuraceSolver(equilibrium=eq, dx_mp=0.001)
+flux_surface_solver = FluxSurfaceSolver(equilibrium=eq, dx_mp=0.001)
 flux_surface_solver.analyse(first_wall=fw_shape)
 
 # %% [markdown]
@@ -262,11 +260,8 @@ def create_radiation_source(
         pfr_x_down, pfr_z_down = pfr_filter(
             rad_solver.sol_rad.separatrix, rad_solver.sol_rad.points["x_point"]["z_low"]
         )
-        #pfr_x_up, pfr_z_up = pfr_filter(
-        #    rad_solver.sol_rad.separatrix, rad_solver.sol_rad.points["x_point"]["z_up"]
-        #)
+
         pfr_down_filter = filtering_in_or_out(pfr_x_down, pfr_z_down, False)
-        #pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, False)
 
         # Fetch lcfs
         lcfs = rad_solver.lcfs
@@ -275,12 +270,16 @@ def create_radiation_source(
 
         for i in range(len(x_sol)):
             for j in range(len(z_sol)):
-                if core_filter_in(shp.Point(x_sol[i], z_sol[j])):
-                    rad_sol_grid[j, i] = interpolated_field_values(
-                        x_sol[i], z_sol[j], f_core
-                    )
-                else:
+                point = x_sol[i], z_sol[j]
+                if core_filter_in(point):
                     rad_sol_grid[j, i] = 0
+                else:
+                    rad_sol_grid[j, i] = (
+                        rad_sol_grid[j, i]
+                        * (wall_filter(point) * 1.0)
+                        * (pfr_down_filter(point) * 1.0)
+                        * (core_filter_out(point) * 1.0)
+                    )
 
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
 
