@@ -25,6 +25,8 @@ Wrapper for FreeCAD Placement objects
 
 from __future__ import annotations
 
+from typing import Iterable, Optional
+
 import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
@@ -40,36 +42,46 @@ class BluemiraPlacement:
 
     Parameters
     ----------
-    base: Iterable
+    base:
         Placement origin
-    axis: Iterable
+    axis:
         vector describing the axis of rotation
-    angle: float
+    angle:
         angle of rotation in degree
-    label: str
+    label:
         Label of the placement
     """
 
     def __init__(
-        self, base=[0.0, 0.0, 0.0], axis=[0.0, 0.0, 1.0], angle=0.0, label: str = ""
+        self,
+        base: Iterable[float] = [0.0, 0.0, 0.0],
+        axis: Iterable[float] = [0.0, 0.0, 1.0],
+        angle: float = 0.0,
+        label: str = "",
     ):
         self._shape = cadapi.make_placement(base, axis, angle)
         self.label = label
 
     @classmethod
-    def from_3_points(cls, point_1, point_2, point_3, label: str = ""):
+    def from_3_points(
+        cls,
+        point_1: Iterable[float],
+        point_2: Iterable[float],
+        point_3: Iterable[float],
+        label: str = "",
+    ):
         """
         Instantiate a BluemiraPlacement from three points.
 
         Parameters
         ----------
-        point_1: Iterable
+        point_1:
             First point
-        point_2: Iterable
+        point_2:
             Second Point
-        point_3: Iterable
+        point_3:
             Third point
-        label: str
+        label:
             Label of the placement
         """
         p1 = np.array(point_1)
@@ -84,15 +96,15 @@ class BluemiraPlacement:
         return cls(point_1, normal, 0.0, label=label)
 
     @classmethod
-    def from_matrix(cls, matrix, label=""):
+    def from_matrix(cls, matrix: np.ndarray, label: str = ""):
         """
         Instantiate a BluemiraPlacement from a 4 x 4 matrix
 
         Parameters
         ----------
-        matrix: np.ndarray
+        matrix:
             4 x 4 matrix from which to make the placement
-        label: str
+        label:
             Label of the placement
         """
         obj = cls.__new__(cls)
@@ -101,65 +113,67 @@ class BluemiraPlacement:
         return obj
 
     @property
-    def base(self):
+    def base(self) -> np.ndarray:
         """Placement's local origin"""
         return cadapi.vector_to_numpy(self._shape.Base)
 
     @base.setter
-    def base(self, value):
+    def base(self, value: Iterable[float]):
         """
         Set a new placement base
 
         Parameters
         ----------
-        value: Iterable
+        value:
+            Base vector
         """
         self._shape.Base = cadapi.Base.Vector(value)
 
     @property
-    def axis(self):
+    def axis(self) -> np.ndarray:
         """Placement's rotation matrix"""
         return self._shape.Rotation.Axis
 
     @axis.setter
-    def axis(self, value):
+    def axis(self, value: Iterable[float]):
         """
         Set a new placement axis
 
         Parameters
         ----------
-        value: Iterable
+        value:
+            Axis vector
         """
         self._shape.Axis = cadapi.Base.Vector(value)
 
     @property
-    def angle(self):
+    def angle(self) -> float:
         """Placement's angle of rotation"""
         return np.rad2deg(self._shape.Rotation.Angle)
 
     @angle.setter
-    def angle(self, value):
+    def angle(self, value: float):
         """
         Set a new placement angle of rotation
 
         Parameters
         ----------
-        value: float
-            angle value in degree
+        value:
+            Angle value in degree
         """
         self._shape.Angle = value
 
-    def to_matrix(self):
+    def to_matrix(self) -> np.ndarray:
         """Returns a matrix (quaternion) representing the Plascement's transformation"""
         return np.array(self._shape.Matrix.A).reshape(4, 4)
 
-    def inverse(self):
+    def inverse(self) -> BluemiraPlacement:
         """Returns the inverse placement"""
         return BluemiraPlacement._create(
             self._shape.inverse(), label=self.label + "_inverse"
         )
 
-    def move(self, vector):
+    def move(self, vector: Iterable[float]):
         """Moves the Placement along the given vector"""
         cadapi.move_placement(self._shape, vector)
 
@@ -172,7 +186,7 @@ class BluemiraPlacement:
         new.append(")")
         return ", ".join(new)
 
-    def copy(self, label=None):
+    def copy(self, label: Optional[str] = None):
         """Make a copy of the BluemiraPlacement"""
         placement_copy = BluemiraPlacement(self.base, self.axis, self.angle)
         if label is not None:
@@ -181,12 +195,12 @@ class BluemiraPlacement:
             placement_copy.label = self.label
         return placement_copy
 
-    def deepcopy(self, label=None):
+    def deepcopy(self, label: Optional[str] = None):
         """Make a deepcopy of the BluemiraPlacement"""
         return self.copy()
 
     @classmethod
-    def _create(cls, obj: cadapi.apiPlacement, label="") -> BluemiraPlacement:
+    def _create(cls, obj: cadapi.apiPlacement, label: str = "") -> BluemiraPlacement:
         """Create a placement from a cadapi Placement"""
         if isinstance(obj, cadapi.apiPlacement):
             placement = BluemiraPlacement(label=label)
@@ -197,26 +211,28 @@ class BluemiraPlacement:
             f"Only Base.Placement objects can be used to create a {cls} instance"
         )
 
-    def mult_vec(self, vec):
+    def mult_vec(self, vec: Iterable[float]) -> np.ndarray:
         """Transform a vector into the local placement"""
         return cadapi.vector_to_numpy(self._shape.multVec(cadapi.Base.Vector(vec)))
 
-    def extract_plane(self, v1, v2, base=None):
+    def extract_plane(
+        self, v1: Iterable[float], v2: Iterable[float], base: Optional[float] = None
+    ) -> BluemiraPlane:
         """
         Return a plane identified by two vector given in the self placement
 
         Parameters
         ----------
-        v1: Iterable
+        v1:
             first reference vector
-        v2: Iterable
+        v2:
             second reference vector
-        base: float
+        base:
             output plane origin
 
         Returns
         -------
-        plane: BluemiraPlane
+        A BluemiraPlane
         """
         if base is None:
             base = self.base

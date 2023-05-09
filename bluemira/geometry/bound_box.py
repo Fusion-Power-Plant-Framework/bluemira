@@ -23,6 +23,7 @@
 Bounding box object
 """
 from dataclasses import dataclass
+from typing import Tuple
 
 import numpy as np
 
@@ -36,17 +37,17 @@ class BoundingBox:
 
     Parameters
     ----------
-    x_min: float
+    x_min:
         Minimum x coordinate
-    x_max: float
+    x_max:
         Maximum x coordinate
-    y_min: float
+    y_min:
         Minimum y coordinate
-    y_max: float
+    y_max:
         Maximum y coordinate
-    z_min: float
+    z_min:
         Minimum z coordinate
-    z_max: float
+    z_max:
         Maximum z coordinate
     """
 
@@ -69,17 +70,17 @@ class BoundingBox:
             self.z_min, self.z_max = self.z_max, self.z_min
 
     @classmethod
-    def from_xyz(cls, x, y, z):
+    def from_xyz(cls, x: np.ndarray, y: np.ndarray, z: np.ndarray):
         """
         Create a BoundingBox from a set of coordinates
 
         Parameters
         ----------
-        x: np.ndarray
+        x:
             x coordinates from which to create the bounding box
-        y: np.ndarray
+        y:
             y coordinates from which to create the bounding box
-        z: np.ndarray
+        z:
             z coordinates from which to create the bounding box
         """
         x_max, x_min = np.max(x), np.min(x)
@@ -87,17 +88,17 @@ class BoundingBox:
         z_max, z_min = np.max(z), np.min(z)
         return cls(x_min, x_max, y_min, y_max, z_min, z_max)
 
-    def get_box_arrays(self):
+    def get_box_arrays(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get the x, y, z arrays of the BoundingBox in space.
 
         Returns
         -------
-        x_b: np.ndarray
+        x_b:
             x coordinates of the BoundingBox in space
-        y_b: np.ndarray
+        y_b:
             y coordinates of the BoundingBox in space
-        z_b: np.ndarray
+        z_b:
             z coordinates of the BoundingBox in space
         """
         size = max(

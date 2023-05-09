@@ -26,6 +26,7 @@ use primitive operations in geometry/tools.py instead.
 
 from functools import partial
 from itertools import zip_longest
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 
@@ -68,34 +69,33 @@ def _segment_lengths(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
 
     Parameters
     ----------
-    x: array_like
+    x:
         x coordinates [m]
-    y: array_like
+    y:
         y coordinates [m]
-    z: array_like
+    z:
         z coordinates [m]
 
     Returns
     -------
-    dL: np.array(N)
-        The length of each individual segment in the coordinates
+    The array of the length of each individual segment in the coordinates
     """
     return np.sqrt(np.diff(x) ** 2 + np.diff(y) ** 2 + np.diff(z) ** 2)
 
 
-def _side_vector(polygon_array):
+def _side_vector(polygon_array: np.ndarray) -> np.ndarray:
     """
     Calculates the side vectors of an anti-clockwise polygon
 
     Parameters
     ----------
-    polygon_array: np.array(2, N)
-        The array of polygon point coordinates
+    polygon_array:
+        The 2-D array of polygon point coordinates
 
     Returns
     -------
-    sides: np.array(N, 2)
-        The array of the polygon side vectors
+    sides:
+        The 2-D array of the polygon side vectors
     """
     return polygon_array - np.roll(polygon_array, 1)
 
@@ -105,24 +105,26 @@ def _side_vector(polygon_array):
 # =============================================================================
 
 
-def offset(x, z, offset_value):
+def offset(
+    x: np.ndarray, z: np.ndarray, offset_value: float
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Get a square-based offset of the coordinates (no splines). N-sized output
 
     Parameters
     ----------
-    x: np.array
+    x:
         The x coordinate vector
-    z: np.array
+    z:
         The x coordinate vector
-    offset_value: float
+    offset_value:
         The offset value [m]
 
     Returns
     -------
-    xo: np.array(N)
+    xo:
         The x offset coordinates
-    zo: np.array(N)
+    zo:
         The z offset coordinates
     """
     # check numpy arrays:
@@ -166,31 +168,36 @@ def offset(x, z, offset_value):
 
 
 def make_circle_arc(
-    radius, x_centre=0, y_centre=0, angle=2 * np.pi, n_points=200, start_angle=0
-):
+    radius: float,
+    x_centre: float = 0,
+    y_centre: float = 0,
+    angle: float = 2 * np.pi,
+    n_points: int = 200,
+    start_angle: float = 0,
+) -> Tuple[np.ndarray, np.ndarray]:
     """
     Make a circle arc of a specified radius and angle at a given location.
 
     Parameters
     ----------
-    radius: float
+    radius:
         The radius of the circle arc
-    x_centre: float
+    x_centre:
         The x coordinate of the circle arc centre
-    y_centre: float
+    y_centre:
         The y coordinate of the circle arc centre
-    angle: float
+    angle:
         The angle of the circle arc [radians]
-    n_points: int
+    n_points:
         The number of points on the circle
-    start_angle: float
+    start_angle:
         The starting angle of the circle arc
 
     Returns
     -------
-    x: np.array
+    x:
         The x coordinates of the circle arc
-    y: np.array
+    y:
         The y coordinates of the circle arc
     """
     n = np.linspace(start_angle, start_angle + angle, n_points)
@@ -212,37 +219,36 @@ def convert_coordinates_to_wire(
     x: np.ndarray,
     y: np.ndarray,
     z: np.ndarray,
-    label="",
-    method="mixed",
-    **kwargs,
-):
+    label: str = "",
+    method: str = "mixed",
+    **kwargs: Dict[str, Any],
+) -> BluemiraWire:
     """
     Converts the provided coordinates into a BluemiraWire using the specified method.
 
     Parameters
     ----------
-    x: np.ndarray
+    x:
         The x coordinates of points to be converted to a BluemiraWire object
-    y: np.ndarray
+    y:
         The y coordinates of points to be converted to a BluemiraWire object
-    z: np.ndarray
+    z:
         The z coordinates of points to be converted to a BluemiraWire object
-    method: str
+    method:
         The conversion method to be used:
 
             - mixed (default): results in a mix of splines and polygons
             - polygon: pure polygon representation
             - spline: pure spline representation
 
-    label: str
+    label:
         The label for the resulting BluemiraWire object
-    kwargs: Dict[str, Any]
+    kwargs:
         Any other arguments for the conversion method, see e.g. make_mixed_face
 
     Returns
     -------
-    face: BluemiraWire
-        The resulting BluemiraWire from the conversion
+    The resulting BluemiraWire from the conversion
     """
     method_map = {
         "mixed": make_mixed_wire,
@@ -257,20 +263,20 @@ def convert_coordinates_to_face(
     x: np.ndarray,
     y: np.ndarray,
     z: np.ndarray,
-    method="mixed",
-    label="",
-    **kwargs,
-):
+    method: str = "mixed",
+    label: str = "",
+    **kwargs: Dict[str, Any],
+) -> BluemiraFace:
     """
     Converts the provided coordinates into a BluemiraFace using the specified method.
 
     Parameters
     ----------
-    x: np.ndarray
+    x:
         The x coordinates of points to be converted to a BluemiraFace object
-    y: np.ndarray
+    y:
         The y coordinates of points to be converted to a BluemiraFace object
-    z: np.ndarray
+    z:
         The z coordinates of points to be converted to a BluemiraFace object
     method: str
         The conversion method to be used:
@@ -279,15 +285,14 @@ def convert_coordinates_to_face(
             - polygon: pure polygon representation
             - spline: pure spline representation
 
-    label: str
+    label:
         The label for the resulting BluemiraFace object
-    kwargs: Dict[str, Any]
+    kwargs:
         Any other arguments for the conversion method, see e.g. make_mixed_face
 
     Returns
     -------
-    face: BluemiraFace
-        The resulting BluemiraFace from the conversion
+    The resulting BluemiraFace from the conversion
     """
     method_map = {
         "mixed": make_mixed_face,
@@ -302,15 +307,15 @@ def make_mixed_wire(
     x: np.ndarray,
     y: np.ndarray,
     z: np.ndarray,
-    label="",
+    label: str = "",
     *,
-    median_factor=2.0,
-    n_segments=4,
-    a_acute=150,
-    cleaning_atol=1e-6,
-    allow_fallback=True,
-    debug=False,
-):
+    median_factor: float = 2.0,
+    n_segments: int = 4,
+    a_acute: float = 150.0,
+    cleaning_atol: float = 1e-6,
+    allow_fallback: bool = True,
+    debug: bool = False,
+) -> BluemiraWire:
     """
     Construct a BluemiraWire object from the provided coordinates using a combination of
     polygon and spline wires. Polygons are determined by having a median length larger
@@ -318,40 +323,39 @@ def make_mixed_wire(
 
     Parameters
     ----------
-    x: np.ndarray
+    x:
         The x coordinates of points to be converted to a BluemiraWire object
-    y: np.ndarray
+    y:
         The y coordinates of points to be converted to a BluemiraWire object
-    z: np.ndarray
+    z:
         The z coordinates of points to be converted to a BluemiraWire object
-    label: str
+    label:
         The label for the resulting BluemiraWire object
 
     Other Parameters
     ----------------
-    median_factor: float
+    median_factor:
         The factor of the median for which to filter segment lengths
         (below median_factor*median_length --> spline)
-    n_segments: int
+    n_segments:
         The minimum number of segments for a spline
-    a_acute: float
+    a_acute:
         The angle [degrees] between two consecutive segments deemed to be too
         acute to be fit with a spline.
-    cleaning_atol: float
+    cleaning_atol:
         If a point lies within this distance [m] of the previous point then it will be
         treated as a duplicate and removed. This can stabilise the conversion in cases
         where the point density is too high for a wire to be constructed as a spline.
         By default this is set to 1e-6.
-    allow_fallback: bool
+    allow_fallback:
         If True then a failed attempt to make a mixed wire will fall back to a polygon
         wire, else an exception will be raised. By default True.
-    debug: bool
+    debug:
         Whether or not to print debugging information
 
     Returns
     -------
-    wire: BluemiraWire
-        The BluemiraWire of the mixed polygon/spline coordinates
+    The BluemiraWire of the mixed polygon/spline coordinates
     """
     mfm = MixedFaceMaker(
         x,
@@ -384,16 +388,16 @@ def make_mixed_face(
     x: np.ndarray,
     y: np.ndarray,
     z: np.ndarray,
-    label="",
+    label: str = "",
     *,
-    median_factor=2.0,
-    n_segments=4,
-    a_acute=150,
-    cleaning_atol=1e-6,
-    area_rtol=5e-2,
-    allow_fallback=True,
-    debug=False,
-):
+    median_factor: float = 2.0,
+    n_segments: int = 4,
+    a_acute: float = 150.0,
+    cleaning_atol: float = 1e-6,
+    area_rtol: float = 5e-2,
+    allow_fallback: bool = True,
+    debug: bool = False,
+) -> BluemiraFace:
     """
     Construct a BluemiraFace object from the provided coordinates using a combination of
     polygon and spline wires. Polygons are determined by having a median length larger
@@ -401,45 +405,44 @@ def make_mixed_face(
 
     Parameters
     ----------
-    x: np.ndarray
+    x:
         The x coordinates of points to be converted to a BluemiraFace object
-    y: np.ndarray
+    y:
         The y coordinates of points to be converted to a BluemiraFace object
-    z: np.ndarray
+    z:
         The z coordinates of points to be converted to a BluemiraFace object
-    label: str
+    label:
         The label for the resulting BluemiraFace object
 
     Other Parameters
     ----------------
-    median_factor: float
+    median_factor:
         The factor of the median for which to filter segment lengths
         (below median_factor*median_length --> spline)
-    n_segments: int
+    n_segments:
         The minimum number of segments for a spline
-    a_acute: float
+    a_acute:
         The angle [degrees] between two consecutive segments deemed to be too
         acute to be fit with a spline.
-    cleaning_atol: float
+    cleaning_atol:
         If a point lies within this distance [m] of the previous point then it will be
         treated as a duplicate and removed. This can stabilise the conversion in cases
         where the point density is too high for a wire to be constructed as a spline.
         By default this is set to 1e-6.
-    area_rtol: float
+    area_rtol:
         If the area of the resulting face deviates by this relative value from the area
         enclosed by the provided coordinates then the conversion will fail and either
         fall back to a polygon-like face or raise an exception, depending on the setting
         of `allow_fallback`.
-    allow_fallback: bool
+    allow_fallback:
         If True then a failed attempt to make a mixed face will fall back to a polygon
         wire, else an exception will be raised. By default True.
-    debug: bool
+    debug:
         Whether or not to print debugging information
 
     Returns
     -------
-    face: BluemiraFace
-        The BluemiraFace of the mixed polygon/spline coordinates
+    The BluemiraFace of the mixed polygon/spline coordinates
     """
     mfm = MixedFaceMaker(
         x,
@@ -486,55 +489,57 @@ def make_mixed_face(
             )
 
 
-def make_wire(x, y, z, label="", spline=False):
+def make_wire(
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, label: str = "", spline: bool = False
+) -> BluemiraWire:
     """
     Makes a wire from a set of coordinates.
 
     Parameters
     ----------
-    x: np.ndarray
+    x:
         The x coordinates of points to be converted to a BluemiraWire object
-    y: np.ndarray
+    y:
         The y coordinates of points to be converted to a BluemiraWire object
-    z: np.ndarray
+    z:
         The z coordinates of points to be converted to a BluemiraWire object
-    label: str
+    label:
         The label for the resulting BluemiraWire object
-    spline: bool
+    spline:
         If True then creates the BluemiraWire using a Bezier spline curve, by default
         False
 
     Returns
     -------
-    wire: BluemiraWire
-        The BluemiraWire bound by the coordinates
+    The BluemiraWire bound by the coordinates
     """
     wire_func = cadapi.interpolate_bspline if spline else cadapi.make_polygon
     return BluemiraWire(wire_func(np.array([x, y, z]).T), label=label)
 
 
-def make_face(x, y, z, label="", spline=False):
+def make_face(
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, label: str = "", spline: bool = False
+) -> BluemiraFace:
     """
     Makes a face from a set of coordinates.
 
     Parameters
     ----------
-    x: np.ndarray
+    x:
         The x coordinates of points to be converted to a BluemiraFace object
-    y: np.ndarray
+    y:
         The y coordinates of points to be converted to a BluemiraFace object
-    z: np.ndarray
+    z:
         The z coordinates of points to be converted to a BluemiraFace object
-    label: str
+    label:
         The label for the resulting BluemiraFace object
-    spline: bool
+    spline:
         If True then creates the BluemiraFace using a Bezier spline curve, by default
         False
 
     Returns
     -------
-    face: BluemiraFace
-        The BluemiraFace bound by the coordinates
+    The BluemiraFace bound by the coordinates
     """
     wire = make_wire(x, y, z, label=label, spline=spline)
     return BluemiraFace(wire, label=label)
@@ -548,31 +553,31 @@ class MixedFaceMaker:
 
     Parameters
     ----------
-    x: np.ndarray
+    x:
         The x coordinates of points to be converted to a BluemiraFace object
-    y: np.ndarray
+    y:
         The y coordinates of points to be converted to a BluemiraFace object
-    z: np.ndarray
+    z:
         The z coordinates of points to be converted to a BluemiraFace object
-    label: str
+    label:
         The label for the resulting BluemiraFace object
 
     Other Parameters
     ----------------
-    median_factor: float
+    median_factor:
         The factor of the median for which to filter segment lengths
         (below median_factor*median_length --> spline)
-    n_segments: int
+    n_segments:
         The minimum number of segments for a spline
-    a_acute: float
+    a_acute:
         The angle [degrees] between two consecutive segments deemed to be too
         acute to be fit with a spline.
-    cleaning_atol: float
+    cleaning_atol:
         If a point lies within this distance [m] of the previous point then it will be
         treated as a duplicate and removed. This can stabilise the conversion in cases
         where the point density is too high for a wire to be constructed as a spline.
         By default this is set to 1e-6.
-    debug: bool
+    debug:
         Whether or not to print debugging information
     """
 
@@ -581,13 +586,13 @@ class MixedFaceMaker:
         x: np.ndarray,
         y: np.ndarray,
         z: np.ndarray,
-        label="",
+        label: str = "",
         *,
-        median_factor=2.0,
-        n_segments=4,
-        a_acute=150,
-        cleaning_atol=1e-6,
-        debug=False,
+        median_factor: float = 2.0,
+        n_segments: int = 4,
+        a_acute: float = 150.0,
+        cleaning_atol: float = 1e-6,
+        debug: bool = False,
     ):
         _validate_coordinates(x, y, z)
         self.x = np.copy(x)
@@ -651,14 +656,13 @@ class MixedFaceMaker:
         self._make_wire()
         self.face = BluemiraFace(self.wire, label=self.label)
 
-    def _find_polygon_vertices(self):
+    def _find_polygon_vertices(self) -> np.ndarray:
         """
         Finds all vertices in the Coordinates which belong to polygon-like edges
 
         Returns
         -------
-        vertices: np.ndarray(dtype=int)
-            The vertices of the coordinates which are polygon-like
+        The vertices of the coordinates which are polygon-like (dtype=int)
         """
         seg_lengths = _segment_lengths(self.x, self.y, self.z)
         median = np.median(seg_lengths)
@@ -709,19 +713,19 @@ class MixedFaceMaker:
         vertices = np.unique(np.array(vertices, dtype=int))
         return vertices
 
-    def _get_polygon_sequences(self, vertices: np.ndarray):
+    def _get_polygon_sequences(self, vertices: np.ndarray) -> List[List[float]]:
         """
         Gets the sequences of polygon segments
 
         Parameters
         ----------
-        vertices: np.ndarray(dtype=int)
+        vertices:
             The vertices of the lcoordinates which are polygon-like
 
         Returns
         -------
-        p_sequences: list([start, end], [start, end])
-            The list of start and end tuples of the polygon segments
+        The list of start and end tuples of the polygon segments
+        list([start, end], [start, end])
         """
         sequences = []
 
@@ -788,19 +792,19 @@ class MixedFaceMaker:
 
         return sequences
 
-    def _get_spline_sequences(self, polygon_sequences):
+    def _get_spline_sequences(self, polygon_sequences: np.ndarray) -> List[List[float]]:
         """
         Gets the sequences of spline segments
 
         Parameters
         ----------
-        polygon_sequences: list([start, end], [start, end])
+        polygon_sequences:
             The list of start and end tuples of the polygon segments
 
         Returns
         -------
-        spline_sequences: list([start, end], [start, end])
-            The list of start and end tuples of the spline segments
+        The list of start and end tuples of the spline segments
+        list([start, end], [start, end])
         """
         spline_sequences = []
 
@@ -849,20 +853,19 @@ class MixedFaceMaker:
 
         return spline_sequences
 
-    def _clean_coordinates(self, coords: np.ndarray):
+    def _clean_coordinates(self, coords: np.ndarray) -> np.ndarray:
         """
         Clean the provided coordinates by removing any values that are closer than the
         instance's cleaning_atol value.
 
         Parameters
         ----------
-        coords: np.ndarray
+        coords:
             3D array of coordinates to be cleaned.
 
         Returns
         -------
-        clean_coords: np.ndarray
-            3D array of cleaned coordinates.
+        3D array of cleaned coordinates.
         """
         mask = ~np.isclose(_segment_lengths(*coords), 0, atol=self.cleaning_atol)
         mask = np.insert(mask, 0, True)

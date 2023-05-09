@@ -29,7 +29,7 @@ import abc
 import json
 from enum import Enum
 from functools import partial
-from typing import Dict, Iterable, Optional, TextIO, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -78,7 +78,7 @@ class GeometryParameterisation(abc.ABC):
         """
         Parameters
         ----------
-        variables: OptVariables
+        variables:
             Set of optimisation variables of the GeometryParameterisation
         """
         self.name = self.__class__.__name__
@@ -86,38 +86,46 @@ class GeometryParameterisation(abc.ABC):
         self.n_ineq_constraints = 0
         super().__init__()
 
-    def adjust_variable(self, name, value=None, lower_bound=None, upper_bound=None):
+    def adjust_variable(
+        self,
+        name: str,
+        value: Optional[float] = None,
+        lower_bound: Optional[float] = None,
+        upper_bound: Optional[float] = None,
+    ):
         """
         Adjust a variable in the GeometryParameterisation.
 
         Parameters
         ----------
-        name: str
+        name:
             Name of the variable to adjust
-        value: Optional[float]
+        value:
             Value of the variable to set
-        lower_bound: Optional[float]
+        lower_bound:
             Value of the lower bound to set
-        upper_bound: Optional[float]
+        upper_bound:
             Value of the upper to set
         """
         self.variables.adjust_variable(name, value, lower_bound, upper_bound)
 
-    def fix_variable(self, name, value=None):
+    def fix_variable(self, name: str, value: Optional[float] = None):
         """
         Fix a variable in the GeometryParameterisation, removing it from optimisation
         but preserving a constant value.
 
         Parameters
         ----------
-        name: str
+        name:
             Name of the variable to fix
-        value: Optional[float]
+        value:
             Value at which to fix the variable (will default to present value)
         """
         self.variables.fix_variable(name, value)
 
-    def shape_ineq_constraints(self, constraint, x, grad):
+    def shape_ineq_constraints(
+        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
+    ):
         """
         Inequality constraint function for the variable vector of the geometry
         parameterisation. This is used when internal consistency between different
@@ -125,11 +133,11 @@ class GeometryParameterisation(abc.ABC):
 
         Parameters
         ----------
-        constraint: np.ndarray
+        constraint:
             Constraint vector (assign in place)
-        x: np.ndarray
+        x:
             Normalised vector of free variables
-        grad: np.ndarray
+        grad:
             Gradient matrix of the constraint (assign in place)
         """
         if self.n_ineq_constraints < 1:
@@ -138,20 +146,19 @@ class GeometryParameterisation(abc.ABC):
                 "has no inequality constraints."
             )
 
-    def _process_x_norm_fixed(self, x_norm):
+    def _process_x_norm_fixed(self, x_norm: np.ndarray) -> List[float]:
         """
         Utility for processing a set of free, normalised variables, and folding the fixed
         un-normalised variables back into a single list of all actual values.
 
         Parameters
         ----------
-        x_norm: np.ndarray
+        x_norm:
             Normalised vector of variable values
 
         Returns
         -------
-        x_actual: list
-            List of ordered actual (un-normalised) values
+        List of ordered actual (un-normalised) values
         """
         fixed_idx = self.variables._fixed_variable_indices
 
@@ -164,19 +171,18 @@ class GeometryParameterisation(abc.ABC):
                 x_actual.insert(i, x_fixed[i])
         return x_actual
 
-    def _get_x_norm_index(self, name: str):
+    def _get_x_norm_index(self, name: str) -> int:
         """
         Get the index of a variable name in the modified-length x_norm vector
 
         Parameters
         ----------
-        name: str
+        name:
             Variable name for which to get the index
 
         Returns
         -------
-        idx_x_norm: int
-            Index of the variable name in the modified-length x_norm vector
+        Index of the variable name in the modified-length x_norm vector
         """
         fixed_idx = self.variables._fixed_variable_indices
         idx_actual = self.variables.names.index(name)
@@ -191,19 +197,18 @@ class GeometryParameterisation(abc.ABC):
         return idx_actual - count
 
     @abc.abstractmethod
-    def create_shape(self, label="", **kwargs) -> BluemiraWire:
+    def create_shape(self, label: str = "", **kwargs: Dict[str, Any]) -> BluemiraWire:
         """
         Make a CAD representation of the geometry.
 
         Parameters
         ----------
-        label: str, default = ""
+        label:
             Label to give the wire
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         pass
 
@@ -213,7 +218,7 @@ class GeometryParameterisation(abc.ABC):
 
         Parameters
         ----------
-        file: str
+        file:
             The path to the file.
         """
         self.variables.to_json(file)
@@ -225,7 +230,7 @@ class GeometryParameterisation(abc.ABC):
 
         Parameters
         ----------
-        file: Union[str, TextIO]
+        file:
             The path to the file, or an open file handle that supports reading.
         """
         if isinstance(file, str):
@@ -241,15 +246,15 @@ class GeometryParameterisation(abc.ABC):
 
         Parameters
         ----------
-        ax: Axes
+        ax:
             Matplotlib axis instance
-        key: str
+        key:
             label of annotation
-        xy1: Tuple
+        xy1:
             Tuple for first arrow point
-        xy2: Tuple
+        xy2:
             Tuple for second arrow point
-        xy3: Tuple
+        xy3:
             Tuple for arrow label location
 
         """
@@ -275,15 +280,15 @@ class GeometryParameterisation(abc.ABC):
             textcoords="offset points",
         )
 
-    def _label_function(self, ax, shape):
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
         Parameters
         ----------
-        ax: Axes
+        ax:
             Matplotlib axis instance
-        shape: BluemiraWire
+        shape:
             parameterisation wire
 
         """
@@ -349,7 +354,7 @@ class PrincetonD(GeometryParameterisation):
 
     Parameters
     ----------
-    var_dict: Optional[dict]
+    var_dict:
         Dictionary with which to update the default values of the parameterisation.
 
     Notes
@@ -372,7 +377,7 @@ class PrincetonD(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -400,22 +405,21 @@ class PrincetonD(GeometryParameterisation):
         super().__init__(variables)
         self.n_ineq_constraints = 1
 
-    def create_shape(self, label="", n_points=2000):
+    def create_shape(self, label: str = "", n_points: int = 2000) -> BluemiraWire:
         """
         Make a CAD representation of the Princeton D.
 
         Parameters
         ----------
-        label: str, default = ""
+        label:
             Label to give the wire
-        n_points: int
+        n_points:
             The number of points to use when calculating the geometry of the Princeton
             D.
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         x, z = self._princeton_d(
             *self.variables.values,
@@ -434,18 +438,20 @@ class PrincetonD(GeometryParameterisation):
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
-    def shape_ineq_constraints(self, constraint, x_norm, grad):
+    def shape_ineq_constraints(
+        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+    ) -> np.ndarray:
         """
         Inequality constraint function for the variable vector of the geometry
         parameterisation.
 
         Parameters
         ----------
-        constraint: np.ndarray
+        constraint:
             Constraint vector (assign in place)
-        x: np.ndarray
+        x:
             Normalised vector of free variables
-        grad: np.ndarray
+        grad:
             Gradient matrix of the constraint (assign in place)
         """
         x_actual = self._process_x_norm_fixed(x_norm)
@@ -467,31 +473,33 @@ class PrincetonD(GeometryParameterisation):
         return constraint
 
     @staticmethod
-    def _princeton_d(x1, x2, dz, npoints=2000):
+    def _princeton_d(
+        x1: float, x2: float, dz: float, npoints: int = 2000
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
         File, Mills, and Sheffield, 1971)
 
         Parameters
         ----------
-        x1: float
+        x1:
             The inboard centreline radius of the Princeton D
-        x2: float
+        x2:
             The outboard centreline radius of the Princeton D
-        dz: float
+        dz:
             The vertical offset (from z=0)
         npoints: int (default = 2000)
             The size of the x, z coordinate sets to return
 
         Returns
         -------
-        x: np.array(npoints)
+        x:
             The x coordinates of the Princeton D shape
-        z: np.array(npoints)
+        z:
             The z coordinates of the Princeton D shape
 
-        Note
-        ----
+        Notes
+        -----
         Returns an open set of coordinates
 
         :math:`x = X_{0}e^{ksin(\\theta)}`
@@ -543,7 +551,7 @@ class TripleArc(GeometryParameterisation):
 
     Parameters
     ----------
-    var_dict: Optional[dict]
+    var_dict:
         Dictionary with which to update the default values of the parameterisation.
 
     Notes
@@ -574,7 +582,7 @@ class TripleArc(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -617,18 +625,20 @@ class TripleArc(GeometryParameterisation):
         super().__init__(variables)
         self.n_ineq_constraints = 1
 
-    def shape_ineq_constraints(self, constraint, x_norm, grad):
+    def shape_ineq_constraints(
+        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+    ) -> np.ndarray:
         """
         Inequality constraint function for the variable vector of the geometry
         parameterisation.
 
         Parameters
         ----------
-        constraint: np.ndarray
+        constraint:
             Contraint vector (assign in place)
-        x: np.ndarray
+        x:
             Normalised vector of free variables
-        grad: np.ndarray
+        grad:
             Gradient matrix of the constraint (assign in place)
         """
         x_actual = self._process_x_norm_fixed(x_norm)
@@ -650,19 +660,18 @@ class TripleArc(GeometryParameterisation):
 
         return constraint
 
-    def create_shape(self, label=""):
+    def create_shape(self, label: str = "") -> BluemiraWire:
         """
         Make a CAD representation of the triple arc.
 
         Parameters
         ----------
-        label: str, default = ""
+        label:
             Label to give the wire
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         x1, dz, sl, f1, f2, a1, a2 = self.variables.values
         a1, a2 = np.deg2rad(a1), np.deg2rad(a2)
@@ -727,7 +736,7 @@ class TripleArc(GeometryParameterisation):
         wire.translate((0, 0, dz))
         return wire
 
-    def _label_function(self, ax, shape):
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
@@ -735,9 +744,9 @@ class TripleArc(GeometryParameterisation):
 
         Parameters
         ----------
-        ax: Axes
+        ax:
             Matplotlib axis instance
-        shape: BluemiraWire
+        shape:
             parameterisation wire
 
         """
@@ -750,7 +759,7 @@ class SextupleArc(GeometryParameterisation):
 
     Parameters
     ----------
-    var_dict: Optional[dict]
+    var_dict:
         Dictionary with which to update the default values of the parameterisation.
 
     Notes
@@ -774,7 +783,7 @@ class SextupleArc(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -840,18 +849,20 @@ class SextupleArc(GeometryParameterisation):
         super().__init__(variables)
         self.n_ineq_constraints = 1
 
-    def shape_ineq_constraints(self, constraint, x_norm, grad):
+    def shape_ineq_constraints(
+        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+    ) -> np.ndarray:
         """
         Inequality constraint function for the variable vector of the geometry
         parameterisation.
 
         Parameters
         ----------
-        constraint: np.ndarray
+        constraint:
             Contraint vector (assign in place)
-        x: np.ndarray
+        x:
             Normalised vector of free variables
-        grad: np.ndarray
+        grad:
             Gradient matrix of the constraint (assign in place)
         """
         x_actual = self._process_x_norm_fixed(x_norm)
@@ -879,19 +890,18 @@ class SextupleArc(GeometryParameterisation):
         zc = zi - vec[1] * ri
         return xc, zc, vec
 
-    def create_shape(self, label=""):
+    def create_shape(self, label: str = "") -> BluemiraWire:
         """
         Make a CAD representation of the sextuple arc.
 
         Parameters
         ----------
-        label: str, default = ""
+        label:
             Label to give the wire
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         variables = self.variables.values
         x1, z1 = variables[:2]
@@ -953,7 +963,7 @@ class SextupleArc(GeometryParameterisation):
 
         return BluemiraWire(wires, label=label)
 
-    def _label_function(self, ax, shape):
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
@@ -961,9 +971,9 @@ class SextupleArc(GeometryParameterisation):
 
         Parameters
         ----------
-        ax: Axes
+        ax:
             Matplotlib axis instance
-        shape: BluemiraWire
+        shape:
             parameterisation wire
 
         """
@@ -976,7 +986,7 @@ class PolySpline(GeometryParameterisation):
 
     Parameters
     ----------
-    var_dict: Optional[dict]
+    var_dict:
         Dictionary with which to update the default values of the parameterisation.
 
     Notes
@@ -1019,7 +1029,7 @@ class PolySpline(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
         variables = OptVariables(
             [
                 BoundedVariable(
@@ -1137,19 +1147,18 @@ class PolySpline(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label=""):
+    def create_shape(self, label: str = "") -> BluemiraWire:
         """
         Make a CAD representation of the poly spline.
 
         Parameters
         ----------
-        label: str, default = ""
+        label:
             Label to give the wire
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         variables = self.variables.values
         (
@@ -1230,7 +1239,7 @@ class PolySpline(GeometryParameterisation):
 
         return p1, p2
 
-    def _label_function(self, ax, shape):
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
@@ -1240,9 +1249,9 @@ class PolySpline(GeometryParameterisation):
 
         Parameters
         ----------
-        ax: Axes
+        ax:
             Matplotlib axis instance
-        shape: BluemiraWire
+        shape:
             parameterisation wire
 
         """
@@ -1265,7 +1274,7 @@ class PictureFrameTools:
         ri: float,
         axis: Iterable[float] = (0, -1, 0),
         flip: bool = False,
-    ):
+    ) -> BluemiraWire:
         """
         Makes smooth dome for CP coils. This includes a initial straight section
         and a main curved dome section, with a transitioning 'joint' between them,
@@ -1273,27 +1282,26 @@ class PictureFrameTools:
 
         Parameters
         ----------
-        x_out: float
+        x_out:
             Radial position of outer edge of limb [m]
-        x_curve start: float
+        x_curve start:
             Radial position of straight-curve transition of limb [m]
-        x_mid: float
+        x_mid:
             Radial position of inner edge of  upper/lower limb [m]
-        z_top: float
+        z_top:
             Vertical position of top of limb dome [m]
-        z_mid: float
+        z_mid:
             Vertical position of flat section [m]
-        ri: float
+        ri:
             Radius of inner corner transition. Nominally 0 [m]
-        axis: Iterable[float]
+        axis:
             [x,y,z] vector normal to plane of parameterisation
-        flip: bool
+        flip:
             True if limb is lower limb of section, False if upper
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         # Define the basic main curve (with no joint or transitions curves)
         alpha = np.arctan(0.5 * (x_out - x_curve_start) / abs(z_top - z_mid))
@@ -1419,31 +1427,30 @@ class PictureFrameTools:
         r_o: float,
         axis: Iterable[float] = (0, 1, 0),
         flip: bool = False,
-    ):
+    ) -> BluemiraWire:
         """
         Makes a flat leg (top/bottom limb) with the option of one end rounded.
 
         Parameters
         ----------
-        x_in: float
+        x_in:
             Radial position of inner edge of limb [m]
-        x_out: float
+        x_out:
             Radial position of outer edge of limb [m]
-        z: float
+        z:
             Vertical position of limb [m]
-        r_i: float
+        r_i:
             Radius of inner corner [m]
-        r_o: float
+        r_o:
             Radius of outer corner [m]
-        axis: Iterable[float]
+        axis:
             [x,y,z] vector normal to plane of parameterisation
-        flip: bool
+        flip:
             True if limb is lower limb of section, False if upper
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         wires = []
         label = "bottom" if flip else "top"
@@ -1495,7 +1502,7 @@ class PictureFrameTools:
         z1: float,
         z2: float,
         axis: Iterable[float] = (0, 1, 0),
-    ):
+    ) -> BluemiraWire:
         """
         Makes a tapered inboard leg using a circle arc taper, symmetric about the
         midplane with the tapering beginning at a certain height and reaching a
@@ -1503,23 +1510,22 @@ class PictureFrameTools:
 
         Parameters
         ----------
-        x_in: float
+        x_in:
             Radial position of innermost point of limb [m]
-        x_mid: float
+        x_mid:
             Radial position of outer edge of limb [m]
-        z_in: float
+        z_in:
             Vertical position of start of tapering [m]
-        z1: float
+        z1:
             Vertical position of top of limb [m]
-        z2: float
+        z2:
             Vertical position of bottom of limb [m]
-        axis: Iterable[float]
+        axis:
             [x,y,z] vector normal to plane of parameterisation
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the geometry
+        CAD Wire of the geometry
         """
         # Bottom straight section
         p1 = [x_mid, 0, -z_in]
@@ -1688,7 +1694,7 @@ class PictureFrame(
 
     Parameters
     ----------
-    var_dict: Optional[dict]
+    var_dict:
         Dictionary with which to update the default values of the parameterisation.
 
     Notes
@@ -1745,7 +1751,7 @@ class PictureFrame(
         ]
     )
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
         bounded_vars = [
             BoundedVariable(
                 "x1", 0.4, lower_bound=0.3, upper_bound=0.5, descr="Inner limb radius"
@@ -1818,19 +1824,18 @@ class PictureFrame(
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
-    def create_shape(self, label=""):
+    def create_shape(self, label: str = "") -> BluemiraWire:
         """
         Make a CAD representation of the picture frame.
 
         Parameters
         ----------
-        label: str, default = ""
+        label:
             Label to give the wire
 
         Returns
         -------
-        shape: BluemiraWire
-            CAD Wire of the Picture Frame geometry
+        CAD Wire of the Picture Frame geometry
         """
         inb_leg = self.inner(*self.inner_vars(self.variables))
         top_leg = self.upper(*self.upper_vars(self.variables), flip=False)

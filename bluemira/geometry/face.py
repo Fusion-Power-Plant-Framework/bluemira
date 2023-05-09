@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -43,9 +43,18 @@ __all__ = ["BluemiraFace"]
 
 
 class BluemiraFace(BluemiraGeo):
-    """Bluemira Face class."""
+    """
+    Bluemira Face class.
 
-    def __init__(self, boundary, label: str = ""):
+    Parameters
+    ----------
+    boundary:
+        List of BluemiraWires to use to make the face
+    label:
+        Label to assign to the BluemiraFace
+    """
+
+    def __init__(self, boundary: List[BluemiraWire], label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
 
@@ -65,7 +74,7 @@ class BluemiraFace(BluemiraGeo):
         """Make a copy of the BluemiraFace"""
         return BluemiraFace(self.boundary, self.label)
 
-    def deepcopy(self, label=None):
+    def deepcopy(self, label: Optional[str] = None):
         """Make a copy of the BluemiraFace"""
         boundary = []
         for o in self.boundary:
@@ -97,7 +106,7 @@ class BluemiraFace(BluemiraGeo):
             f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
-    def _create_face(self, check_reverse=True):
+    def _create_face(self, check_reverse: bool = True):
         """Create the primitive face"""
         external: BluemiraWire = self.boundary[0]
         face = cadapi.apiFace(external._create_wire(check_reverse=False))
@@ -148,16 +157,17 @@ class BluemiraFace(BluemiraGeo):
 
         Parameters
         ----------
-        ndiscr: int
+        ndiscr:
             Number of points in the array
-        byedges: bool
+        byedges:
             Whether or not to discretise by edges
+        dl:
+            Optional length discretisation (overrides ndiscr)
 
         Returns
         -------
-        xyz: np.ndarray
-            (M, (3, N)) array of point coordinates where M is the number of boundaries
-            and N the number of discretization points.
+        (M, (3, N)) array of point coordinates where M is the number of boundaries
+        and N the number of discretization points.
         """
         points = []
         for w in self.shape.Wires:
@@ -167,7 +177,7 @@ class BluemiraFace(BluemiraGeo):
                 points.append(cadapi.discretize(w, ndiscr=ndiscr, dl=dl))
         return points
 
-    def normal_at(self, alpha_1=0.0, alpha_2=0.0):
+    def normal_at(self, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.ndarray:
         """
         Get the normal vector of the face at a parameterised point in space. For
         planar faces, the normal is the same everywhere.

@@ -24,6 +24,7 @@ Discretised offset operations used in case of failure in primitive offsetting.
 """
 
 from copy import deepcopy
+from typing import List, Tuple
 
 import numpy as np
 from pyclipper import (
@@ -51,48 +52,46 @@ __all__ = ["offset_clipper"]
 # =============================================================================
 
 
-def coordinates_to_pyclippath(coordinates):
+def coordinates_to_pyclippath(coordinates: Coordinates) -> np.ndarray:
     """
     Transforms a bluemira Coordinates object into a Path for use in pyclipper
 
     Parameters
     ----------
-    coordinates: Coordinates
+    coordinates:
         The Coordinates to be used in pyclipper
 
     Returns
     -------
-    path: [(x1, z1), (x2, z2), ...]
-        The vertex polygon path formatting required by pyclipper
+    The vertex polygon path formatting required by pyclipper
     """
     return scale_to_clipper(coordinates.xz.T)
 
 
-def pyclippath_to_coordinates(path):
+def pyclippath_to_coordinates(path: np.ndarray) -> Coordinates:
     """
     Transforms a pyclipper path into a bluemira Coordinates object
 
     Parameters
     ----------
-    path: [(x1, z1), (x2, z2), ...]
+    path:
         The vertex polygon path formatting used in pyclipper
 
     Returns
     -------
-    coordinates: Coordinates
-        The Coordinates from the path object
+    The Coordinates from the path object
     """
     p2 = scale_from_clipper(np.array(path).T)
     return Coordinates({"x": p2[0], "y": 0, "z": p2[1]})
 
 
-def pyclippolytree_to_coordinates(polytree):
+def pyclippolytree_to_coordinates(polytree: List[np.ndarray]) -> List[Coordinates]:
     """
     Converts a ClipperLib PolyTree into a list of Coordinates
 
     Parameters
     ----------
-    polytree: ClipperLib::PolyTree
+    polytree:
         The polytree to convert to Coordinates
     """
     paths = PolyTreeToPaths(polytree)
@@ -118,20 +117,19 @@ class PyclipperMixin:
         """
         bluemira_warn(f"{self.name} operation on 2-D polygons returning None.\n")
 
-    def handle_solution(self, solution):
+    def handle_solution(self, solution: Tuple[np.ndarray]) -> List[Coordinates]:
         """
         Handles the output of the Pyclipper.Execute(*) algorithms, turning them
         into Coordaintes objects. NOTE: These are closed by default.
 
         Parameters
         ----------
-        solution: Paths
+        solution:
             The tuple of tuple of tuple of path vertices
 
         Returns
         -------
-        coords: List(Coordinates)
-            The list of Coordinates objects produced by the pyclipper operations
+        The list of Coordinates objects produced by the pyclipper operations
         """
         if not solution:
             self.raise_warning()
@@ -161,7 +159,7 @@ class OffsetOperationManager(PyclipperMixin):
 
     Parameters
     ----------
-    coordinates: Coordinates
+    coordinates:
         The Coordinates upon which to perform the offset operation
     """
 
@@ -181,13 +179,13 @@ class OffsetOperationManager(PyclipperMixin):
 
         self.tool.AddPath(path, self.method, co_method)
 
-    def perform(self, delta):
+    def perform(self, delta: float):
         """
         Perform the offset operation.
 
         Parameters
         ----------
-        delta: float
+        delta:
             The value of the offset [m]. Positive for increasing size, negative for
             decreasing
         """
@@ -196,7 +194,7 @@ class OffsetOperationManager(PyclipperMixin):
         return self.handle_solution(solution)
 
     @staticmethod
-    def _calculate_scale(path, coordinates):
+    def _calculate_scale(path: np.ndarray, coordinates: Coordinates):
         """
         Calculate the pyclipper scaling to integers
         """
@@ -237,34 +235,38 @@ class MiterOffset(OffsetOperationManager):
     method = JT_MITER
     open_method = ET_OPENROUND
 
-    def __init__(self, coordinates, miter_limit=2.0):
+    def __init__(self, coordinates: Coordinates, miter_limit: float = 2.0):
         super().__init__(coordinates)
 
         self.tool.MiterLimit = miter_limit
 
 
-def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit=2.0):
+def offset_clipper(
+    coordinates: Coordinates,
+    delta: float,
+    method: str = "square",
+    miter_limit: float = 2.0,
+) -> Coordinates:
     """
     Carries out an offset operation on the Coordinates using the ClipperLib library.
     Only supports closed Coordinates.
 
     Parameters
     ----------
-    coordinates: Coordinates
+    coordinates:
         The Coordinates upon which to perform the offset operation
-    delta: float
+    delta:
         The value of the offset [m]. Positive for increasing size, negative for
         decreasing
-    method: str from ['square', 'round', 'miter'] (default = 'square')
-        The type of offset to perform
-    miter_limit: float (default = 2.0)
+    method:
+        The type of offset to perform ['square', 'round', 'miter']
+    miter_limit:
         The ratio of delta to use when mitering acute corners. Only used if
         method == 'miter'
 
     Returns
     -------
-    result: Coordinates
-        The offset Coordinates result
+    The offset Coordinates result
 
     Raises
     ------
@@ -316,7 +318,9 @@ def offset_clipper(coordinates: Coordinates, delta, method="square", miter_limit
     return result
 
 
-def transform_coordinates_to_xz(coordinates, base, direction):
+def transform_coordinates_to_xz(
+    coordinates: Coordinates, base: np.ndarray, direction: np.ndarray
+) -> Coordinates:
     """
     Rotate coordinates to the x-z plane.
     """
@@ -331,7 +335,9 @@ def transform_coordinates_to_xz(coordinates, base, direction):
     return coordinates
 
 
-def transform_coordinates_to_original(coordinates, base, original_normal):
+def transform_coordinates_to_original(
+    coordinates: Coordinates, base: np.ndarray, original_normal: np.ndarray
+) -> Coordinates:
     """
     Rotate coordinates back to original plane
     """
