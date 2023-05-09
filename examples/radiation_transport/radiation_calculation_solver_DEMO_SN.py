@@ -272,7 +272,9 @@ def create_radiation_source(
             for j in range(len(z_sol)):
                 point = x_sol[i], z_sol[j]
                 if core_filter_in(point):
-                    rad_sol_grid[j, i] = 0
+                    rad_sol_grid[j, i] = interpolated_field_values(
+                        x_sol[i], z_sol[j], f_core
+                    )
                 else:
                     rad_sol_grid[j, i] = (
                         rad_sol_grid[j, i]
@@ -313,7 +315,7 @@ def fw_radiation(rad_source, plot=True):
 
     return wall_loads
 
-def main(only_source=False):
+def main(only_source=True):
 
     # Get the core impurity fractions
     f_impurities_core = config["f_imp_core"]
