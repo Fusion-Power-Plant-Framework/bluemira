@@ -24,7 +24,7 @@ Some crude EU-DEMO remote maintenance considerations
 """
 
 from dataclasses import dataclass
-from typing import Dict, Union
+from typing import Dict, Tuple, Union
 
 import numpy as np
 
@@ -136,7 +136,7 @@ class UpperPortOpt:
         return intersection
 
 
-class UpperPortDesigner(Designer):
+class UpperPortDesigner(Designer[Tuple[BluemiraFace, float, float]]):
     """Upper Port Designer"""
 
     param_cls = UpperPortOPParameters
