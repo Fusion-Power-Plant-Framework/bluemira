@@ -297,7 +297,9 @@ class BluemiraGeo(ABC, GeoMeshable):
                 cadapi.scale_shape(o, factor)
         cadapi.scale_shape(self.shape, factor)
 
-    def _tessellate(self, tolerance: float = 1.0) -> None:
+    def _tessellate(
+        self, tolerance: float = 1.0
+    ) -> Tuple[List[np.ndarray], List[Tuple[int, ...]]]:
         """
         Tessellate the geometry object.
 
@@ -311,7 +313,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         Once tesselated an object's properties may change. Tesselation cannot be reverted
         to a previous lower value, but can be increased (irreversibly).
         """
-        cadapi.tessellate(self.shape, tolerance)
+        return cadapi.tessellate(self.shape, tolerance)
 
     def translate(self, vector: Tuple[float, float, float]) -> None:
         """

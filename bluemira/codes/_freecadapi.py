@@ -667,7 +667,7 @@ def bounding_box(obj: apiShape) -> Tuple[float, float, float, float, float, floa
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
 
 
-def tessellate(obj: apiShape, tolerance: float) -> None:
+def tessellate(obj: apiShape, tolerance: float) -> Tuple[np.ndarray, np.ndarray]:
     """
     Tessellate a geometry object.
 
@@ -683,6 +683,13 @@ def tessellate(obj: apiShape, tolerance: float) -> None:
     ValueError:
         If the tolerance is <= 0.0
 
+    Returns
+    -------
+    vertices:
+        Array of the vertices (N, 3, dtype=float) from the tesselation operation
+    indices:
+        Array of the indices (M, 3, dtype=int) from the tesselation operation
+
     Notes
     -----
     Once tesselated an object's properties may change. Tesselation cannot be reverted
@@ -691,7 +698,8 @@ def tessellate(obj: apiShape, tolerance: float) -> None:
     if tolerance <= 0.0:
         raise ValueError("Cannot have a tolerance that is less than or equal to 0.0")
 
-    obj.tessellate(tolerance)
+    vectors, indices = obj.tessellate(tolerance)
+    return vector_to_numpy(vectors), np.array(indices)
 
 
 def start_point(obj: apiShape) -> np.ndarray:
