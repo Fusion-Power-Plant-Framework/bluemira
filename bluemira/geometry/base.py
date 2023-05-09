@@ -34,6 +34,7 @@ if TYPE_CHECKING:
 
 # import for abstract class
 from abc import ABC, abstractmethod
+from typing import List, Tuple
 
 import numpy as np
 
@@ -297,9 +298,7 @@ class BluemiraGeo(ABC, GeoMeshable):
                 cadapi.scale_shape(o, factor)
         cadapi.scale_shape(self.shape, factor)
 
-    def _tessellate(
-        self, tolerance: float = 1.0
-    ) -> Tuple[List[np.ndarray], List[Tuple[int, ...]]]:
+    def _tessellate(self, tolerance: float = 1.0) -> Tuple[np.ndarray, np.ndarray]:
         """
         Tessellate the geometry object.
 
@@ -307,6 +306,13 @@ class BluemiraGeo(ABC, GeoMeshable):
         ----------
         tolerance:
             Tolerance with which to tessellate the geometry
+
+        Returns
+        -------
+        vertices:
+            Array of the vertices (N, 3, dtype=float) from the tesselation operation
+        indices:
+            Array of the indices (M, 3, dtype=int) from the tesselation operation
 
         Notes
         -----
