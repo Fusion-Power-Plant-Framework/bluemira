@@ -232,8 +232,9 @@ class BluemiraGeo(ABC, GeoMeshable):
             Tolerance with which to tesselate the BluemiraGeo before calculating the
             bounding box.
         """
-        self._tessellate(tolerance)
-        return self.bounding_box
+        auto_copy = self.deepcopy()
+        auto_copy._tessellate(tolerance)
+        return auto_copy.bounding_box
 
     def is_null(self) -> bool:
         """
