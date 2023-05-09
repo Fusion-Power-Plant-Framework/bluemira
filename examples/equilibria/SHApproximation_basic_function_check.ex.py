@@ -1,13 +1,24 @@
-#!/usr/bin/env python
-# coding: utf-8
+# ---
+# jupyter:
+#   jupytext:
+#     formats: ipynb,py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.14.5
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
 
+# %% [markdown]
 # # SHApproximation Fuction
 #
 # This example illustrates the input and output of the Bluemira spherical harmonics approximation fuction (SHApproximation) which can be used in coilset current and position optimisation for spherical tokamaks. For an example of how SHApproximation is used, please see the notebook called 'Use of Spherical Harmonic Approximation in Optimisation.ipynb'.
 
-# In[1]:
-
-
+# %%
 # from bluemira.equilibria.equilibrium import Equilibrium
 import matplotlib.pyplot as plt
 import numpy as np
@@ -19,12 +30,9 @@ from bluemira.equilibria.plotting import PLOT_DEFAULTS, EquilibriumPlotter
 
 plot_defaults()
 
-get_ipython().run_line_magic("pdb", "")
+# %pdb
 
-
-# In[5]:
-
-
+# %%
 # Data from EQDSK file
 file_path = "SH_test_file.json"
 
@@ -35,7 +43,7 @@ eq.plot(ax=ax)
 eq.coilset.plot(ax=ax)
 plt.show()
 
-
+# %% [markdown]
 # ### Inputs
 #
 # #### Required
@@ -50,9 +58,7 @@ plt.show()
 # - r_t: typical lengthscale for spherical harmonic approximation
 # - extra_info: set this to true if you wish to return additional information and plot the results.
 
-# In[3]:
-
-
+# %%
 # Information needed for SH Approximation
 shapprox = SHApproximation(
     eq,
@@ -62,7 +68,7 @@ shapprox = SHApproximation(
     extra_info=True,
 )
 
-
+# %% [markdown]
 # ### Outputs
 #
 # SHApproximation outputs a dictionary of results that can be used in optimisation.
@@ -74,44 +80,28 @@ shapprox = SHApproximation(
 # - "harmonic_amplitudes", SH coefficients/amplitudes for required number of degrees
 # - "max_degree", number of degrees required for a SH approx with the desired fit metric
 
-# In[11]:
-
-
+# %%
 print(shapprox["coilset"])
 
-
-# In[10]:
-
-
+# %%
 print(shapprox["r_t"])
 
-
-# In[9]:
-
-
+# %%
 print(shapprox["harmonic_amplitudes"])
 
-
-# In[8]:
-
-
+# %%
 print(shapprox["max_degree"])
 
-
+# %% [markdown]
 # #### Ouput on request
 #
 # - "fit_metric_value", fit metric acheived
 # - "approx_total_psi", the total psi obtained using the SH approximation
 
-# In[14]:
-
-
+# %%
 print(shapprox["fit_metric_value"])
 
-
-# In[19]:
-
-
+# %%
 psi = shapprox["approx_total_psi"]
 levels = np.linspace(np.amin(psi), np.amax(psi), 50)
 plot = plt.subplot2grid((2, 2), (0, 0), rowspan=2, colspan=1)

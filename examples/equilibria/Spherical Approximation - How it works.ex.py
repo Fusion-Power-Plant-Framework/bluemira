@@ -1,6 +1,19 @@
-#!/usr/bin/env python
-# coding: utf-8
+# ---
+# jupyter:
+#   jupytext:
+#     formats: ipynb,py:percent
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#       jupytext_version: 1.14.5
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
 
+# %% [markdown]
 # # Example of using Spherical Harmonic Approximation
 #
 # This example illustrates the inner workings of the Bluemira spherical harmonics approximation fuction (SHApproximation) which can be used in coilset current and position optimisation for spherical tokamaks. For an example of how SHApproximation is used, please see the notebook called 'Use of Spherical Harmonic Approximation in Optimisation.ipynb'.
@@ -13,11 +26,10 @@
 #
 # - We can decopose the vacuum feild into Spherical Harmonics (SH) to create a minimal set of constraints for use in optimisation.
 
+# %% [markdown]
 # ### Imports
 
-# In[1]:
-
-
+# %%
 # Standard useful
 from copy import deepcopy
 
@@ -37,22 +49,21 @@ from bluemira.equilibria.equilibrium import Equilibrium
 # from bluemira.equilibria.find import find_OX_points
 from bluemira.equilibria.harmonics import (
     coil_harmonic_amplitude_matrix,
+    coil_harmonic_amplitudes,
     collocation_points,
     harmonic_amplitude_marix,
     lcfs_fit_metric,
 )
 from bluemira.geometry.coordinates import Coordinates
 
-get_ipython().run_line_magic("pdb", "")
+# %pdb
 
-
+# %% [markdown]
 # ### Equilibria and Coilset Data from File
 #
 # Note: We cannot use coils that are within the sphere containing the LCFS for our approximation. The maximum radial distance of the LCFS is used as a limit (orange shaded area in plot below). If you have coils in this region then please specify the control coils using a list of the coil names that are outside of the radial limit (this is done automatically in the SHApproximation class).
 
-# In[2]:
-
-
+# %%
 # Data from EQDSK file
 file_path = "SH_test_file.json"
 
@@ -99,10 +110,7 @@ plt.show()
 # Look at coilset info
 print(eq.coilset)
 
-
-# In[3]:
-
-
+# %%
 # Set control coils if nessisary
 list_of_cc_names = [
     "PF_2",
@@ -126,14 +134,12 @@ list_of_cc_names = [
 coilset.control = list_of_cc_names
 print(coilset.control)
 
-
+# %% [markdown]
 # ### Find Vacuum Psi
 #
 # Vacuum (coil) contribution to the poiloidal flux = total flux - contribution from plasma
 
-# In[4]:
-
-
+# %%
 # Poloidal magnetic flux
 total_psi = eq.psi()
 
@@ -180,7 +186,7 @@ plot3.contour(
 )
 plt.show()
 
-
+# %% [markdown]
 # ### Flux Function at collocation points within LCFS
 #
 # The steps are as follows:
@@ -206,9 +212,7 @@ plt.show()
 #
 # In the plot below the colocations points are shown as purple dots, and the LCFS is indicated by a red line.
 
-# In[5]:
-
-
+# %%
 # Number of desired collocation points excluding extrema (always 4 or +4 automatically)
 n = 50
 
@@ -233,20 +237,18 @@ plot1.plot(x_bdry, z_bdry, color="red")
 plt.show()
 print("number of colocation points = ", len(collocation["x"]))
 
-
+# %% [markdown]
 # #### 2. Flux function at collocation points
 # N.B. linear interpolation is default.
 
-# In[6]:
-
-
+# %%
 # Set up with gridded values from chosen equilibirum
 psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], vacuum_psi)
 
 # Evaluate at collocation points
 collocation_psivac = psi_func.ev(collocation["x"], collocation["z"])
 
-
+# %% [markdown]
 # #### 3. Construct and fit harmonic amplitudes matrix
 #
 # Construct matrix from harmonic amplitudes called 'harmonics2collocation' (rows = collocation, columns = degrees).
@@ -261,9 +263,7 @@ collocation_psivac = psi_func.ev(collocation["x"], collocation["z"])
 #
 # In our case, the maximum degree of harmonics to calculate up to is set to be equal to number of collocation points - 1.
 
-# In[7]:
-
-
+# %%
 # Typical lengthscale
 r_t = np.amax(x_bdry)
 # max_degree is set in the bluemira SH code but we need it here
@@ -279,16 +279,14 @@ psi_harmonic_ampltidues, residual, rank, s = np.linalg.lstsq(
     harmonics2collocation, collocation_psivac, rcond=None
 )
 
-
+# %% [markdown]
 # ### Selecting the required degrees for the approximation
 #
 # Choose the maximum number of degrees to calculate up to in order to acheive a aaproprite SH aprroximation. Below we set plot_max_degree = 4 as a test. You can cahnge the number to see what will happen to the plotted results.
 #
 # In the next section, we will caculate a metric that can be used to find an approriate number of degrees to use.
 
-# In[8]:
-
-
+# %%
 # Select the maximum degree to use in the approximation
 plot_max_degree = 4
 if plot_max_degree > max_degree:
@@ -334,7 +332,7 @@ plot3.contour(x_plot, z_plot, approx_psi_vac_data, levels=levels, cmap=cmap, zor
 plot3.plot(x_bdry, z_bdry, color="red")
 plt.show()
 
-
+# %% [markdown]
 # ### Calculate Coil Currents and Find the Appropiate Degree to calculate up to
 #
 # psi_harmonic_ampltidues can be written as a function of the current distribution from the coils outside of the sphere that contains the LCFS. As we already have the value of these coeffcients, we can use them to calculate the coil currents.
@@ -355,9 +353,7 @@ plt.show()
 #     - The fit metric we use for the LCFS comparision is as follows:
 #         fit metric value = total area within one but not both LCFSs / (input LCFS area + approximation LCFS area)
 
-# In[20]:
-
-
+# %%
 # Set min to save some time
 min_degree = 4
 # Choose acceptable value for fit metric
@@ -365,7 +361,6 @@ min_degree = 4
 acceptable = 0.03
 
 for degree in np.arange(min_degree, max_degree + 1):
-
     # Construct matrix from harmonic amplitudes for coils
     currents2harmonics = coil_harmonic_amplitude_matrix(
         coilset,
@@ -449,7 +444,7 @@ plot3.add_patch(max_circ)
 
 plt.show()
 
-
+# %% [markdown]
 # ### Compare the difference
 #
 # Compare the diffenece between the coilset contribution from our starting equilibria and our approximations. There should be minimal differences between the psi values inside the LCFS. The psi values outside the LCFS would be allowed to vary during optimisation.
@@ -458,9 +453,7 @@ plt.show()
 #
 # The coil current harmonic ampltidues used in the approximation can be used as constaints.
 
-# In[17]:
-
-
+# %%
 x_lcfs = coilset_eq.get_LCFS().x
 z_lcfs = coilset_eq.get_LCFS().z
 
