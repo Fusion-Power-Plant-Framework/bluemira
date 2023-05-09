@@ -3,7 +3,7 @@ astroid==2.15.4
 attrs==23.1.0
 bandit==1.7.5
 black==23.3.0
-certifi==2022.12.7
+certifi==2023.5.7
 cfgv==3.3.1
 charset-normalizer==3.1.0
 coverage[toml]==7.2.5
