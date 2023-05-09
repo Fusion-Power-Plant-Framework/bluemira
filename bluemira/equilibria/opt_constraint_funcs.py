@@ -63,7 +63,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 
-import bluemira.equilibria.flux_surfaces as fs
+import bluemira.equilibria.harmonics as harmonics
 
 
 def objective_constraint(
@@ -132,8 +132,7 @@ def Ax_b_constraint(  # noqa: N802
     -------
     Updated constraint vector
     """
-    # constraint[:] = np.dot(a_mat, scale * vector) - b_vec - value
-    constraint[:] = a_mat @ scale * vector - b_vec - value
+    constraint[:] = a_mat @ (scale * vector) - b_vec - value
     if grad.size > 0:
         grad[:] = scale * a_mat
     return constraint
@@ -399,15 +398,12 @@ def spherical_harmonics_constraint(
     max_degree: float
         Maximum degree of spherical harmonics desired to constrain.
     """
-
     currents = scale * vector
 
-    vector_harmonics = fs.coil_harmonic_amplitudes(
-        eq.coilset,
-        currents,
-        max_degree,
-        r_t,
+    vector_harmonics_matrix = harmonics.coil_harmonic_amplitude_matrix(
+        eq.coilset, max_degree, r_t
     )
+    vector_harmonics = vector_harmonics_matrix @ currents
 
     constraint[:] = ref_harmonics - vector_harmonics
 

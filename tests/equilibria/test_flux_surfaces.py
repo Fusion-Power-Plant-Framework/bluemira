@@ -35,9 +35,6 @@ from bluemira.equilibria.flux_surfaces import (
     FieldLineTracer,
     OpenFluxSurface,
     PartialOpenFluxSurface,
-    coil_harmonic_amplitude_matrix,
-    harmonic_amplitude_marix,
-    lcfs_fit_metric,
     poloidal_angle,
 )
 from bluemira.equilibria.shapes import flux_surface_cunningham, flux_surface_johner

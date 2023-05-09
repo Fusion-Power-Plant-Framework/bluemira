@@ -57,7 +57,7 @@ def test_harmonic_amplitude_marix():
     d = 2
     r_t = 1.0
 
-    test_output = harmonic_amplitude_marix(r, theta, n, d, r_t)
+    test_output = harmonic_amplitude_marix(r, theta, r_t)
 
     assert test_output.shape == (n, d)
 
@@ -96,9 +96,7 @@ def test_coil_harmonic_amplitude_matrix():
     d = 2
     r_t = 1
 
-    test_out_matrx, test_out_max_r = coil_harmonic_amplitude_matrix(coilset, d, r_t)
+    test_out_matrx = coil_harmonic_amplitude_matrix(coilset, d, r_t)
 
     assert test_out_matrx.shape[1] == len(coilset.x)
     assert test_out_matrx.shape[0] == d
-
-    assert pytest.approx(test_out_max_r) == 6.18465844
