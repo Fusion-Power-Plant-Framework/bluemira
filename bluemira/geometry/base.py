@@ -217,6 +217,11 @@ class BluemiraGeo(ABC, GeoMeshable):
     def bounding_box(self) -> BoundingBox:
         """
         The bounding box of the shape.
+
+        Notes
+        -----
+        If your shape is complicated, this has the potential to not be very accurate.
+        Consider using :meth:`~get_optimal_bounding_box`.
         """
         x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
