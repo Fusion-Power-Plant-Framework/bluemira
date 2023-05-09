@@ -30,9 +30,8 @@ from dataclasses import dataclass, fields
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-import shapely.geometry as shp
 
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Union
 from bluemira.base import constants
 from bluemira.base.constants import ureg
 from bluemira.base.error import BuilderError
@@ -42,8 +41,7 @@ from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.display.plotter import plot_coordinates
-from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
-from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.coordinates import Coordinates, in_polygon
 from cherab.core.math import sample3d
 from matplotlib.collections import LineCollection
 from raysect.core import Point3D, Vector3D, rotate_basis, translate
@@ -96,8 +94,6 @@ def upstream_temperature(
         Material's conductivity
     firstwall_geom: grid
         First wall geometry
-    lfs: Boolean
-        True for the outboard. False for the inboard
 
     Returns
     -------
@@ -209,10 +205,8 @@ def target_temperature(
     # converting upstream temperature
     # upstream electron density - no fifference hfs/lfs?
     # Numerator and denominator of the upstream forcing function
-    #print(q_u)
     num_f = m_i_kg * 4 * (q_u**2)
     den_f = 2 * E_CHARGE * (gamma**2) * (E_CHARGE**2) * (n_u**2) * (t_u**2)
-    #print(num_f, den_f)
     # forcing function
     f_ev = num_f / den_f
 
@@ -220,7 +214,6 @@ def target_temperature(
     t_crit = eps_cool / gamma
 
     # Finding roots of the target temperature quadratic equation
-    #print(eps_cool, gamma, f_ev)
     coeff_2 = 2 * (eps_cool / gamma) - f_ev
     coeff_3 = (eps_cool**2) / (gamma**2)
     coeff = [1, coeff_2, coeff_3]
@@ -230,7 +223,6 @@ def target_temperature(
         t_tar = f_ion_t
     else:
         # Excluding unstable solution
-        #print(roots)
         sol_i = np.where(roots > t_crit)[0][0]
 
         # Target temperature
@@ -451,6 +443,10 @@ def gaussian_decay(max_value: float, min_value: float, no_points: float, decay=T
     dec_param: np.array
         decayed parameter
     """
+    if max_value < min_value:
+        temp_max = max_value
+        max_value = min_value
+        min_value = temp_max
     no_points = max(no_points, 1)
 
     # setting values on the horizontal axis
@@ -818,16 +814,15 @@ def filtering_in_or_out(domain_x: list, domain_z: list, include_points=True):
     include: shapely method
         method which includes or excludes from the domain a given point
     """
-    region_data = np.zeros((len(domain_x), 2))
-    region_data[:, 0] = domain_x
-    region_data[:, 1] = domain_z
-    shapely_region = shp.Polygon(region_data)
+    region = np.zeros((len(domain_x), 2))
+    region[:, 0] = domain_x
+    region[:, 1] = domain_z
 
     def include(point):
         if include_points:
-            return shapely_region.contains(point)
+            return in_polygon(point[0], point[1], region, include_edges=True)
         else:
-            return not shapely_region.contains(point)
+            return not in_polygon(point[0], point[1], region, include_edges=True)
 
     return include
 
@@ -1161,7 +1156,7 @@ class Radiation:
         Radiation source relevant parameters at the separatrix
         """
         self.separatrix = self.eq.get_separatrix()
-        z_mp = self.points["o_point"]["z"]
+        self.z_mp = self.points["o_point"]["z"]
         if self.eq.is_double_null:
             # The two halves
             self.sep_lfs = self.separatrix[0]
@@ -1178,14 +1173,14 @@ class Radiation:
         # give infinite connection length
         self.r_sep_omp = self.x_sep_omp + SEP_CORRECTOR
         # magnetic field components at the midplane
-        self.b_pol_sep_omp = self.eq.Bp(self.x_sep_omp, z_mp)
+        self.b_pol_sep_omp = self.eq.Bp(self.x_sep_omp, self.z_mp)
         b_tor_sep_omp = self.eq.Bt(self.x_sep_omp)
         self.b_tot_sep_omp = np.hypot(self.b_pol_sep_omp, b_tor_sep_omp)
 
         if self.eq.is_double_null:
             self.x_sep_imp = self.flux_surf_solver.x_sep_imp
             self.r_sep_imp = self.x_sep_imp - SEP_CORRECTOR
-            self.b_pol_sep_imp = self.eq.Bp(self.x_sep_imp, z_mp)
+            self.b_pol_sep_imp = self.eq.Bp(self.x_sep_imp, self.z_mp)
             b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
             self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, b_tor_sep_imp)
 
@@ -2056,7 +2051,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 z_strike,
                 self.flux_surf_solver.eq,
                 self.points["x_point"]["z_low"],
-                rec_ext=0.2,
+                rec_ext=0.4,
             )
             pfr_ext = abs(ion_front_z)
 
@@ -2195,8 +2190,6 @@ class ScrapeOffLayerRadiation(Radiation):
                 t_tar_prof,
             )
         ]
-        #print(n_mp_prof[0], n_in_prof[0], n_out_prof[0], n_tar_prof[0])
-        #print(t_mp_prof[0], t_in_prof[0], t_out_prof[0], t_tar_prof[0])
         # density poloidal distribution
         n_pol = [
             self.flux_tube_pol_n(
@@ -2419,7 +2412,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             z_mp=self.z_mp,
             k_0=self.params.k_0,
             firstwall_geom=firstwall_geom,
-            lfs=True,
         )
 
         self.t_imp = upstream_temperature(
@@ -2432,7 +2424,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             z_mp=self.z_mp,
             k_0=self.params.k_0,
             firstwall_geom=firstwall_geom,
-            lfs=False,
         )
 
     def build_sol_distribution(self, firstwall_geom: Grid):

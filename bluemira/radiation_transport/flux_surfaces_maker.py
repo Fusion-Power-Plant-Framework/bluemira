@@ -43,7 +43,7 @@ from bluemira.radiation_transport.error import AdvectionTransportError
 __all__ = ["ChargedParticleSolver"]
 
 
-class FluxSuraceSolver:
+class FluxSurfaceSolver:
     """
     A simplified charged particle transport model along open field lines.
 

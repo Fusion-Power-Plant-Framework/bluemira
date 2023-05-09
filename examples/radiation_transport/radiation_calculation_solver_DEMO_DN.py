@@ -35,7 +35,6 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 from bluemira.radiation_transport.radiation_profile import (
     RadiationSolver, 
     linear_interpolator, 
@@ -47,7 +46,7 @@ from bluemira.radiation_transport.radiation_profile import (
     detect_radiation,
     plot_radiation_loads,
 )
-from bluemira.radiation_transport.flux_surfaces_maker import FluxSuraceSolver
+from bluemira.radiation_transport.flux_surfaces_maker import FluxSurfaceSolver
 
 # CHERAB imports
 from cherab.core.math import AxisymmetricMapper
@@ -136,7 +135,7 @@ config = {
 # Initialising the `TempFsSolverChargedParticleSolver` and run it.
 
 # %%
-flux_surface_solver = FluxSuraceSolver(equilibrium=eq, dx_mp=0.001)
+flux_surface_solver = FluxSurfaceSolver(equilibrium=eq, dx_mp=0.001)
 flux_surface_solver.analyse(first_wall=fw_shape)
 
 # %% [markdown]
@@ -275,23 +274,24 @@ def create_radiation_source(
 
         for i in range(len(x_sol)):
             for j in range(len(z_sol)):
-                if core_filter_in(shp.Point(x_sol[i], z_sol[j])):
+                point = x_sol[i], z_sol[j]
+                if core_filter_in(point):
                     rad_sol_grid[j, i] = interpolated_field_values(
                         x_sol[i], z_sol[j], f_core
                     )
                 else:
                     rad_sol_grid[j, i] = (
                         rad_sol_grid[j, i]
-                        * (wall_filter(shp.Point(x_sol[i], z_sol[j])) * 1.0)
-                        * ((pfr_down_filter(shp.Point(x_sol[i], z_sol[j]))) * 1.0)
-                        * ((pfr_up_filter(shp.Point(x_sol[i], z_sol[j]))) * 1.0)
-                        * ((core_filter_out(shp.Point(x_sol[i], z_sol[j]))) * 1.0)
+                        * (wall_filter(point) * 1.0)
+                        * (pfr_down_filter(point) * 1.0)
+                        * (pfr_up_filter(point) * 1.0)
+                        * (core_filter_out(point) * 1.0)
                     )
 
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
 
         return func
-    
+
 def fw_radiation(rad_source, plot=True):
 
     rad_3d = AxisymmetricMapper(rad_source)
@@ -304,7 +304,7 @@ def fw_radiation(rad_source, plot=True):
     Cylinder(
         np.max(fw_shape.x),
         2.0 * np.max(fw_shape.z),
-        transform=translate(0, 0, -np.max(fw_shape.z)),
+        transform=translate(0, 0, np.max(fw_shape.z)),
         parent=world,
         material=emitter,
     )
@@ -315,7 +315,7 @@ def fw_radiation(rad_source, plot=True):
 
     if plot:
         plot_radiation_loads(
-            rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads"
+            rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads", fw_shape
         )
 
     return wall_loads
