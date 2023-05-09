@@ -34,7 +34,6 @@ if TYPE_CHECKING:
 
 # import for abstract class
 from abc import ABC, abstractmethod
-from typing import List, Tuple
 
 import numpy as np
 
@@ -322,8 +321,8 @@ class BluemiraGeo(ABC, GeoMeshable):
 
         Notes
         -----
-        Once tesselated, an object's properties may change. Tesselation cannot be reverted
-        to a previous lower value, but can be increased (irreversibly).
+        Once tesselated, an object's properties may change. Tesselation cannot be
+        reverted to a previous lower value, but can be increased (irreversibly).
         """
         return cadapi.tessellate(self.shape, tolerance)
 
