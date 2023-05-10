@@ -22,17 +22,11 @@
 
 import numpy as np
 
-from bluemira.utilities.opt_problems import (
-    OptimisationConstraint,
-    OptimisationObjective,
-    OptimisationProblem,
-    Optimiser,
-)
-from bluemira.utilities.optimiser import approx_derivative
+from bluemira.optimisation import optimise
 from eudemo.blanket.panelling._paneller import Paneller
 
 
-class PanellingOptProblem(OptimisationProblem):
+class PanellingOptProblem:
     """
     Optimisation problem to minimise the cumulative length of first wall panels.
 
@@ -50,21 +44,11 @@ class PanellingOptProblem(OptimisationProblem):
         The :class:`.Paneller` to optimise the parameters of. Note that
         these parameters are the normalised length along the paneller's
         boundary where the panels and boundary meet.
-    optimiser:
-        The :class:`.Optimiser` to perform the optimisation with.
     """
 
-    def __init__(self, paneller: Paneller, optimiser: Optimiser):
+    def __init__(self, paneller: Paneller):
         self.paneller = paneller
         self.bounds = (np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0))
-        objective = OptimisationObjective(self.objective)
-        constraint = OptimisationConstraint(
-            self.constrain_min_length_and_angles,
-            f_constraint_args={},
-            tolerance=np.full(self.n_constraints, 1e-8),
-        )
-        super().__init__(self.paneller.x0, optimiser, objective, [constraint])
-        self.set_up_optimiser(self.n_opts, bounds=self.bounds)
 
     @property
     def n_opts(self) -> int:
@@ -95,56 +79,43 @@ class PanellingOptProblem(OptimisationProblem):
         """
         return 2 * self.paneller.n_panels - 1
 
-    def optimise(self, check_constraints: bool = False) -> np.ndarray:
+    def optimise(self) -> np.ndarray:
         """Perform the optimisation."""
-        self.paneller.x0 = self.opt.optimise(self.paneller.x0, check_constraints)
-        return self.paneller.x0
+        return optimise(
+            self.objective,
+            x0=self.paneller.x0,
+            ineq_constraints=[
+                {
+                    "f_constraint": self.constrain_min_length_and_angles,
+                    "tolerance": np.full(self.n_constraints, 1e-8),
+                }
+            ],
+            bounds=self.bounds,
+        ).x
 
-    def objective(self, x: np.ndarray, grad: np.ndarray) -> float:
-        """Objective function to pass to ``nlopt``."""
-        length = self.paneller.length(x)
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                self.paneller.length, x, bounds=self.bounds, f0=length
-            )
-        return length
+    def objective(self, x: np.ndarray) -> float:
+        """Objective function to minimise the total panel length."""
+        return self.paneller.length(x)
 
-    def constrain_min_length_and_angles(
-        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
-    ) -> np.ndarray:
-        """Constraint function to pass to ``nlopt``."""
+    def constrain_min_length_and_angles(self, x: np.ndarray) -> np.ndarray:
+        """Constraint function function for the optimiser."""
         n_panels = self.paneller.n_panels
-        self._constrain_min_length(constraint[:n_panels], x, grad[:n_panels])
-        self._constrain_max_angle(constraint[n_panels:], x, grad[n_panels:])
+        constraint = np.empty(self.n_constraints)
+        constraint[:n_panels] = self._constrain_min_length(x)
+        constraint[n_panels:] = self._constrain_max_angle(x)
         return constraint
 
-    def _constrain_min_length(
-        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
-    ) -> None:
+    def _constrain_min_length(self, x: np.ndarray) -> np.ndarray:
         lengths = self.paneller.panel_lengths(x)
-        constraint[:] = self.paneller.dx_min - lengths
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                lambda x_opt: -self.paneller.panel_lengths(x_opt),
-                x0=x,
-                f0=constraint,
-                bounds=self.bounds,
-            )
+        return self.paneller.dx_min - lengths
 
-    def _constrain_max_angle(
-        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
-    ) -> None:
-        constraint[:] = self.paneller.angles(x) - self.paneller.max_angle
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                self.paneller.angles,
-                x0=x,
-                f0=constraint,
-                bounds=self.bounds,
-            )
+    def _constrain_max_angle(self, x: np.ndarray) -> np.ndarray:
+        return self.paneller.angles(x) - self.paneller.max_angle
 
     def constraints_violated_by(self, x: np.ndarray, atol: float) -> bool:
         """Return True if any constraints are violated by more that ``atol``."""
-        constraint = np.empty(self.n_constraints)
-        self.constrain_min_length_and_angles(constraint, x, np.empty(0))
+        constraint = self.constrain_min_length_and_angles(x)
         return np.any(constraint > atol)
+
+    def check_constraints(self, x: np.ndarray, warn: bool = True) -> bool:
+        return np.all(self.constrain_min_length_and_angles(x) <= 1e-16)

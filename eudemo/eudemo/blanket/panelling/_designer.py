@@ -134,7 +134,7 @@ class PanellingDesigner(Designer[np.ndarray]):
 
         # Make sure we warn about broken tolerances this time.
         if num_retries == max_retries and (
-            x_opt is None or not opt_problem.opt.check_constraints(x_opt, warn=True)
+            x_opt is None or not opt_problem.check_constraints(x_opt, warn=True)
         ):
             bluemira_warn(
                 "Could not solve panelling optimisation problem: no feasible "
@@ -189,7 +189,7 @@ class PanellingDesigner(Designer[np.ndarray]):
             x_opt = None
         iter_num = 0
         while (
-            x_opt is None or not opt_problem.opt.check_constraints(x_opt, warn=False)
+            x_opt is None or not opt_problem.check_constraints(x_opt, warn=False)
         ) and iter_num < max_retries:
             # We couldn't satisfy the constraints on our last attempt,
             # so try increasing the number of panels.
@@ -199,7 +199,7 @@ class PanellingDesigner(Designer[np.ndarray]):
             n_panels = opt_problem.n_opts + 3
             opt_problem = self._set_up_opt_problem(boundary, n_panels)
             try:
-                x_opt = opt_problem.optimise(check_constraints=False)
+                x_opt = opt_problem.optimise()
             except ExternalOptError:
                 x_opt = None
             iter_num += 1
@@ -215,11 +215,7 @@ class PanellingDesigner(Designer[np.ndarray]):
             self.params.fw_dL_min.value,
             fix_num_panels=fix_num_panels,
         )
-        optimiser = Optimiser(
-            self._get_config_or_default("algorithm"),
-            opt_conditions=self._get_config_or_default("opt_conditions"),
-        )
-        return PanellingOptProblem(paneller, optimiser)
+        return PanellingOptProblem(paneller)
 
     def _get_config_or_default(self, config_key: str) -> Union[str, int]:
         return self.build_config.get(config_key, self._defaults[config_key])
