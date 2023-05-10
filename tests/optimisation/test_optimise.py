@@ -55,6 +55,7 @@ class TestOptimise:
         # We just want to verify we're not just adding the same array
         # every time
         assert not np.allclose(result.history[0][0], result.history[1][0])
+        assert not np.allclose(result.history[0][1], result.history[1][1])
 
     @pytest.mark.parametrize(
         "algorithm",
