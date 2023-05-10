@@ -4,9 +4,9 @@
 #    cell_metadata_filter: tags,-all
 #    notebook_metadata_filter: -jupytext.text_representation.jupytext_version
 #       text_representation:
-#       extension: .py
-#       format_name: percent
-#       format_version: '1.3'
+#         extension: .py
+#         format_name: percent
+#         format_version: '1.3'
 #   kernelspec:
 #     display_name: Python 3 (ipykernel)
 #     language: python
