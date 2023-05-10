@@ -54,6 +54,7 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.optimisation import optimise
 from bluemira.utilities.opt_problems import (
     OptimisationConstraint,
     OptimisationObjective,
@@ -868,6 +869,16 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
         ois_wires = []
         for region in ois_regions:
             opt_problem = StraightOISOptimisationProblem(region, koz)
+            result = optimise(
+                opt_problem.negative_length,
+                df_objective=None,
+                x0=None,
+                algorithm="COBYLA",
+                opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
+                bounds=([0, 0], [1, 1]),
+                ineq_constraints={},
+                keep_history=False,
+            )
             result = opt_problem.optimise()
             p1 = region.value_at(result[0])
             p2 = region.value_at(result[1])
