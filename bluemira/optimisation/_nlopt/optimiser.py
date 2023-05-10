@@ -226,6 +226,7 @@ class NloptOptimiser(Optimiser):
 
         try:
             x_star = self._opt.optimize(x0)
+            f_x = self._objective.f(x_star)
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
             bluemira_warn(

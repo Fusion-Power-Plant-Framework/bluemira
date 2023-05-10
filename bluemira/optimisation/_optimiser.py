@@ -33,8 +33,8 @@ from bluemira.optimisation._typing import OptimiserCallable
 class OptimiserResult:
     """Container for optimiser results."""
 
-    x: np.ndarray
     f_x: float
+    x: np.ndarray
     n_evals: int
     history: List[np.ndarray] = field(repr=False)
 
