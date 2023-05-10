@@ -22,9 +22,10 @@
 
 import abc
 import time
-from typing import List, Optional, Tuple, Type
+from typing import Callable, List, Optional, Tuple, Type, Union
 from warnings import warn
 
+import anytree
 from rich.progress import track
 
 from bluemira.base.components import Component
@@ -33,6 +34,7 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
+from bluemira.materials.material import SerialisedMaterial, Void
 
 _PLOT_DIMS = ["xy", "xz"]
 _CAD_DIMS = ["xy", "xz", "xyz"]
@@ -59,6 +61,7 @@ class BaseManager(abc.ABC):
     def show_cad(
         self,
         *dims: str,
+        filter_: Callable,
         **kwargs,
     ):
         """
@@ -72,7 +75,7 @@ class BaseManager(abc.ABC):
         """
 
     @abc.abstractmethod
-    def plot(self, *dims: str):
+    def plot(self, *dims: str, filter_: Callable):
         """
         Plot the component.
 
@@ -129,7 +132,9 @@ class BaseManager(abc.ABC):
 
         return dims_to_show
 
-    def _filter_tree(self, comp: Component, dims_to_show: Tuple[str, ...]) -> Component:
+    def _filter_tree(
+        self, comp: Component, dims_to_show: Tuple[str, ...], filter_: Callable
+    ) -> Component:
         """
         Filter a component tree
 
@@ -140,14 +145,45 @@ class BaseManager(abc.ABC):
         """
         comp_copy = comp.copy()
         comp_copy.filter_components(dims_to_show)
-        return comp_copy
+        return comp_copy._get_thing(filter_, first=False, full_tree=False)
 
-    def _plot_dims(self, comp: Component, dims_to_show: Tuple[str, ...]):
+    def _plot_dims(
+        self, comp: Component, dims_to_show: Tuple[str, ...], filter_: Callable
+    ):
+        filtered = self._filter_tree(comp, dims_to_show, filter_)
+        if filtered is None:
+            return
         for i, dim in enumerate(dims_to_show):
             ComponentPlotter(view=dim).plot_2d(
-                self._filter_tree(comp, dims_to_show),
+                filtered,
                 show=i == len(dims_to_show) - 1,
             )
+
+
+class FilterMaterial:
+    def __init__(
+        self,
+        material: Union[
+            Type[SerialisedMaterial], Tuple[Type[SerialisedMaterial]], None
+        ] = None,
+        not_material: Union[
+            Type[SerialisedMaterial], Tuple[Type[SerialisedMaterial]], None
+        ] = Void,
+    ):
+        self.material = material
+        self.not_material = not_material
+
+    def __call__(self, node: anytree.Node):
+        return hasattr(node, "material") and self._filterer(node.material)
+
+    def _filterer(self, material):
+        bool_store = True
+        if self.material is not None:
+            bool_store = isinstance(material, self.material)
+
+        if self.not_material is not None:
+            bool_store = not isinstance(material, self.not_material)
+        return bool_store
 
 
 class ComponentManager(BaseManager):
@@ -186,6 +222,7 @@ class ComponentManager(BaseManager):
     def show_cad(
         self,
         *dims: str,
+        filter_: Union[Callable, None] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -197,14 +234,17 @@ class ComponentManager(BaseManager):
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         """
+        comp_copy = self._filter_tree(
+            self.component(), self._validate_cad_dims(*dims, **kwargs), filter_
+        )
+        if comp_copy is None:
+            return
         ComponentDisplayer().show_cad(
-            self._filter_tree(
-                self.component(), self._validate_cad_dims(*dims, **kwargs)
-            ),
+            comp_copy,
             **kwargs,
         )
 
-    def plot(self, *dims: str):
+    def plot(self, *dims: str, filter_: Union[Callable, None] = FilterMaterial()):
         """
         Plot the component.
 
@@ -214,7 +254,7 @@ class ComponentManager(BaseManager):
             The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
             (default: 'xz')
         """
-        self._plot_dims(self.component(), self._validate_plot_dims(*dims))
+        self._plot_dims(self.component(), self._validate_plot_dims(*dims), filter_)
 
 
 class Reactor(BaseManager):
@@ -340,6 +380,7 @@ class Reactor(BaseManager):
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
+        filter_: Union[Callable, None] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -361,8 +402,11 @@ class Reactor(BaseManager):
 
         # We filter because self.component (above) only creates
         # a new root node for this reactor, not a new component tree.
-        comp_copy = self._filter_tree(self.component(with_components), dims_to_show)
-
+        comp_copy = self._filter_tree(
+            self.component(with_components), dims_to_show, filter_
+        )
+        if comp_copy is None:
+            return
         # if "xyz" is requested, construct the 3d cad
         # from each xyz component in the tree,
         # as it's assumed that the cad is only built for 1 sector
@@ -376,7 +420,12 @@ class Reactor(BaseManager):
 
         ComponentDisplayer().show_cad(comp_copy, **kwargs)
 
-    def plot(self, *dims: str, with_components: Optional[List[ComponentManager]] = None):
+    def plot(
+        self,
+        *dims: str,
+        with_components: Optional[List[ComponentManager]] = None,
+        filter_: Union[Callable, None] = FilterMaterial(),
+    ):
         """
         Plot the reactor.
 
@@ -389,4 +438,6 @@ class Reactor(BaseManager):
             The components to construct when displaying CAD for xyz.
             Defaults to None, which means show "all" components.
         """
-        self._plot_dims(self.component(with_components), self._validate_plot_dims(*dims))
+        self._plot_dims(
+            self.component(with_components), self._validate_plot_dims(*dims), filter_
+        )

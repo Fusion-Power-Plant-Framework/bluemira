@@ -269,7 +269,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             ]
             return tuple(map(list, zip(*node_properties)))
 
-    def _get_thing(self, filter_: Callable, first: bool, full_tree: bool):
+    def _get_thing(self, filter_: Union[Callable, None], first: bool, full_tree: bool):
         found_nodes = anytree.search.findall(
             self.root if full_tree else self, filter_=filter_
         )
