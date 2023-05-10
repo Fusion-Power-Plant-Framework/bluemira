@@ -215,9 +215,30 @@ class BluemiraGeo(ABC, GeoMeshable):
     @property
     def bounding_box(self) -> BoundingBox:
         """
-        The bounding box of the shape."""
+        The bounding box of the shape.
+
+        Notes
+        -----
+        If your shape is complicated, this has the potential to not be very accurate.
+        Consider using :meth:`~get_optimal_bounding_box`.
+        """
         x_min, y_min, z_min, x_max, y_max, z_max = cadapi.bounding_box(self.shape)
         return BoundingBox(x_min, x_max, y_min, y_max, z_min, z_max)
+
+    def get_optimal_bounding_box(self, tolerance: float = 1.0) -> BoundingBox:
+        """
+        Get the optimised bounding box of the shape, via tesselation of the underlying
+        geometry.
+
+        Parameters
+        ----------
+        tolerance:
+            Tolerance with which to tesselate the BluemiraGeo before calculating the
+            bounding box.
+        """
+        auto_copy = self.deepcopy()
+        auto_copy._tessellate(tolerance)
+        return auto_copy.bounding_box
 
     def is_null(self) -> bool:
         """
@@ -281,6 +302,29 @@ class BluemiraGeo(ABC, GeoMeshable):
             else:
                 cadapi.scale_shape(o, factor)
         cadapi.scale_shape(self.shape, factor)
+
+    def _tessellate(self, tolerance: float = 1.0) -> Tuple[np.ndarray, np.ndarray]:
+        """
+        Tessellate the geometry object.
+
+        Parameters
+        ----------
+        tolerance:
+            Tolerance with which to tessellate the geometry
+
+        Returns
+        -------
+        vertices:
+            Array of the vertices (N, 3, dtype=float) from the tesselation operation
+        indices:
+            Array of the indices (M, 3, dtype=int) from the tesselation operation
+
+        Notes
+        -----
+        Once tesselated, an object's properties may change. Tesselation cannot be
+        reverted to a previous lower value, but can be increased (irreversibly).
+        """
+        return cadapi.tessellate(self.shape, tolerance)
 
     def translate(self, vector: Tuple[float, float, float]) -> None:
         """

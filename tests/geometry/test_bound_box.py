@@ -20,8 +20,12 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+import pytest
 
 from bluemira.geometry.bound_box import BoundingBox
+from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.parameterisations import PolySpline
+from bluemira.geometry.tools import boolean_cut, make_polygon, revolve_shape
 
 
 class TestBoundingBox:
@@ -43,3 +47,55 @@ class TestBoundingBox:
         assert np.allclose(xb, np.array([-2, -2, -2, -2, 2, 2, 2, 2]))
         assert np.allclose(yb, np.array([-2, -2, 2, 2, -2, -2, 2, 2]))
         assert np.allclose(zb, np.array([-2, 2, -2, 2, -2, 2, -2, 2]))
+
+
+class TestHardBoundingBox:
+    ps = PolySpline(
+        {
+            "bottom": {"value": 0.509036},
+            "flat": {"value": 1},
+            "height": {"value": 10.1269},
+            "lower": {"value": 0.2},
+            "tilt": {"value": 19.6953},
+            "top": {"value": 0.46719},
+            "upper": {"value": 0.326209},
+            "x1": {"value": 5},
+            "x2": {"value": 11.8222},
+            "z2": {"value": -0.170942},
+        }
+    )
+
+    cut_box = BluemiraFace(
+        make_polygon({"x": [0, 15, 15, 0], "z": [-7, -7, -5, -5], "y": 0}, closed=True)
+    )
+    wire = boolean_cut(ps.create_shape(), cut_box)[0]
+    temp = wire.deepcopy()
+    temp.close()
+    solid = revolve_shape(BluemiraFace(temp), degree=159)
+
+    @pytest.mark.xfail
+    def test_bad_bounding_box(self):
+        assert np.isclose(self.wire.bounding_box.z_min, -5.0)
+
+    @pytest.mark.parametrize("tol", [10.0, 1.0, 0.1, 0.001])
+    def test_opt_bounding_box(self, tol):
+        bb = self.wire.get_optimal_bounding_box(tolerance=tol)
+        assert np.isclose(bb.z_min, -5.0)
+
+    @pytest.mark.parametrize("tol", [10.0, 1.0, 0.1, 0.01])
+    def test_opt_bounding_box_solid(self, tol):
+        solid = self.solid.deepcopy()
+        vertices, indices = solid._tessellate(1.0)
+        bb = self.solid.get_optimal_bounding_box(tolerance=tol)
+        vertices2, indices2 = solid._tessellate(1.0)
+        assert np.isclose(bb.z_min, -5.0)
+        # Test that bounding box via tesselation did not modify properties
+        np.testing.assert_allclose(vertices, vertices2)
+        np.testing.assert_allclose(indices, indices2)
+        vertices3, _ = solid._tessellate(0.01)
+        assert vertices3.shape != vertices2.shape
+
+    @pytest.mark.parametrize("tol", [0.0, -1e-9])
+    def test_bad_tolerace(self, tol):
+        with pytest.raises(ValueError):
+            self.wire.get_optimal_bounding_box(tolerance=tol)
