@@ -34,6 +34,7 @@ class OptimiserResult:
     """Container for optimiser results."""
 
     x: np.ndarray
+    f_x: float
     n_evals: int
     history: List[np.ndarray] = field(repr=False)
 

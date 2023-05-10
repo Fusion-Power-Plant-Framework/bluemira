@@ -233,11 +233,19 @@ class NloptOptimiser(Optimiser):
                 "parameterisation."
             )
             if self._objective.history:
-                x_star = self._objective.history[-1]
+                fx_values = np.array(self._objective.history).T[1]
+                f_x = np.min(fx_values)
+                arg_min_fx = np.argmin(fx_values)
+                x_star = self._objective.history[arg_min_fx][0]
             else:
                 x_star = x0
+                f_x = np.infty
+
         return OptimiserResult(
-            x_star, n_evals=self._opt.get_numevals(), history=self._objective.history
+            x_star,
+            f_x=f_x,
+            n_evals=self._opt.get_numevals(),
+            history=self._objective.history,
         )
 
     def set_lower_bounds(self, bounds: np.ndarray) -> None:
