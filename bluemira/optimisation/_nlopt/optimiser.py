@@ -243,8 +243,8 @@ class NloptOptimiser(Optimiser):
                 f_x = np.infty
 
         return OptimiserResult(
-            x_star,
             f_x=f_x,
+            x=x_star,
             n_evals=self._opt.get_numevals(),
             history=self._objective.history,
         )
