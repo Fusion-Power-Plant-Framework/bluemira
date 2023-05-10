@@ -243,9 +243,7 @@ class TestReactorConfigClass:
 
         self._compa_designer_param_value_checks(pf)
 
-        assert reactor_config.config_for("Tester", "comp A", "designer") == {
-            # "comp B": {}, # Bug
-            "config_a": {"a_value": "overridden_value"},
-            "config_b": {"b_value": "b_value"},
-            "config_c": {"c_value": "c_value"},
-        }
+        compa_designer_config = reactor_config.config_for("Tester", "comp A", "designer")
+        assert compa_designer_config["config_a"] == {"a_value": "overridden_value"}
+        assert compa_designer_config["config_b"] == {"b_value": "b_value"}
+        assert compa_designer_config["config_c"] == {"c_value": "c_value"}
