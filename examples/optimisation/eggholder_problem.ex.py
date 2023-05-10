@@ -46,11 +46,11 @@ Constrained Rosenbrock Optimisation Problem
 #
 # $$ \min_{x \in \mathbb{R}^2} -(x_2 + 47) \sin{\sqrt{\lvert\frac{x_2}{2}+x_1+47\rvert}} -x_1 \sin{\sqrt{\lvert x_1-x_2-47\rvert}} \tag{1}$$
 #
-# for parameters $a = 1$, $b = 100$.
-#
 # For the 2-D case, bounded at $\pm 512$, this function expects a minimum
 # at $ x = (512, 404.2319..) = -959.6407..$.
 #
+# Here, we're too lazy to come up with an analytical gradient, but let's see what we can do
+# without.
 
 
 # %%
@@ -71,3 +71,25 @@ def f_eggholder(x):
             i
         ] * np.sin(np.sqrt(abs(x[0] - x[i + 1] - 47)))
     return f_x
+
+
+results = {}
+for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
+    t1 = time.time()
+    result = optimise(
+        f_eggholder,
+        df_objective=None,
+        x0=np.array([0.0, 0.0]),
+        algorithm=algorithm,
+        opt_conditions={"ftol_rel": 1e-12, "ftol_abs": 1e-12, "max_eval": 10000},
+        bounds=([-512, -512], [512, 512]),
+        keep_history=False,
+    )
+    t2 = time.time()
+    print(f"{algorithm}: {result}, time={t2-t1:.3f} seconds")
+
+# %% [markdown]
+# SLSQP and COBYLA are local optimisation algorithms, and converge rapidly on a local
+# minimum. ISRES is a stochastic global optimisation algorithm, and keeps looking for
+# longer, finding a much better minimum, but caps out at the maximum number of
+# evaluations (usually).
