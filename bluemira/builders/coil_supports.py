@@ -876,7 +876,14 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
                 algorithm="COBYLA",
                 opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
                 bounds=([0, 0], [1, 1]),
-                ineq_constraints={},
+                ineq_constraints=[
+                    {"f_constraint": opt_problem.constrain_koz, "tolerance": 1e-6},
+                    {
+                        "f_constraint": opt_problem.constrain_x,
+                        "df_constraint": opt_problem.df_constrain_x,
+                        "tolerance": 1e-6,
+                    },
+                ],
                 keep_history=False,
             )
             result = opt_problem.optimise()
