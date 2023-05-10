@@ -132,6 +132,7 @@ nb_execution_mode = "off"
 nb_custom_formats = {
     ".ex.py": ["jupytext.reads", {"fmt": "py:percent"}],
 }
+myst_enable_extensions = ["amsmath", "dollarmath"]
 
 
 class ParamsDirective(Directive):
