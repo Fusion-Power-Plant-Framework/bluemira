@@ -39,7 +39,7 @@ from bluemira.magnetostatics.tools import process_xyz_array
 __all__ = ["TrapezoidalPrismCurrentSource"]
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def primitive_sxn_bound(
     cos_theta: float, sin_theta: float, r: float, q: float, t: float
 ) -> float:
@@ -90,7 +90,7 @@ def primitive_sxn_bound(
     return result
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def primitive_sxn(theta: float, r: float, q: float, l1: float, l2: float) -> float:
     """
     Analytical integral of Bx function primitive.
@@ -118,7 +118,7 @@ def primitive_sxn(theta: float, r: float, q: float, l1: float, l2: float) -> flo
     )
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def primitive_szn_bound(
     cos_theta: float, sin_theta: float, r: float, ll: float, t: float
 ) -> float:
@@ -186,7 +186,7 @@ def primitive_szn_bound(
     return result
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def primitive_szn(theta: float, r: float, ll: float, q1: float, q2: float) -> float:
     """
     Analytical integral of Bz function primitive.
@@ -214,7 +214,7 @@ def primitive_szn(theta: float, r: float, ll: float, q1: float, q2: float) -> fl
     )
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def Bx_analytical_prism(
     alpha: float,
     beta: float,
@@ -260,7 +260,7 @@ def Bx_analytical_prism(
     )
 
 
-@nb.jit(cache=True)
+@nb.jit(nopython=True, cache=True)
 def Bz_analytical_prism(
     alpha: float,
     beta: float,
