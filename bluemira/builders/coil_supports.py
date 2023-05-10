@@ -872,21 +872,23 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
             result = optimise(
                 opt_problem.negative_length,
                 df_objective=None,
-                x0=None,
+                x0=np.array([0.0, 1.0]),
                 algorithm="COBYLA",
                 opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
                 bounds=([0, 0], [1, 1]),
                 ineq_constraints=[
-                    {"f_constraint": opt_problem.constrain_koz, "tolerance": 1e-6},
+                    {
+                        "f_constraint": opt_problem.constrain_koz,
+                        "tolerance": 1e-6 * np.ones(opt_problem.n_koz_discr),
+                    },
                     {
                         "f_constraint": opt_problem.constrain_x,
                         "df_constraint": opt_problem.df_constrain_x,
-                        "tolerance": 1e-6,
+                        "tolerance": np.array([1e-6]),
                     },
                 ],
                 keep_history=False,
-            )
-            result = opt_problem.optimise()
+            ).x
             p1 = region.value_at(result[0])
             p2 = region.value_at(result[1])
             wire = self._make_ois_wire(p1, p2)
