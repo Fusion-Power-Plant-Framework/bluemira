@@ -308,8 +308,13 @@ class TestStraightOISDesigner:
     def test_that_the_right_number_of_OIS_are_made(self, koz, n_ois):
         designer = StraightOISDesigner(self.params, {}, self.tf_xz_face, koz)
         ois_wires = designer.run()
-        print([w.length for w in ois_wires])
         assert len(ois_wires) == n_ois
+        # regression test:
+        # print([w.length for w in ois_wires])
+        # previous: [7.938291929677863, 8.14804252516768, 3.9195699898575236]
+        #           [7.938291929677863, 8.149554771020297]
+        # now:      [7.938291929677863, 8.14804252516768, 3.9195699898575236]
+        #           [7.938291929677863, 8.149554771020297]
 
     def test_that_gradient_based_optimiser_works(self):
         wire = make_polygon({"x": [9, 8, 7, 6, 5, 4], "z": [0, 1, 2, 3, 3.5, 4]})
