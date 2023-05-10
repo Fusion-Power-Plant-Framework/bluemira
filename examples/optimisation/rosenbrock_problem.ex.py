@@ -46,21 +46,14 @@ Constrained Rosenbrock Optimisation Problem
 #
 # $$ \min_{x \in \mathbb{R}^2} (a-x_1)^2 + b(x_2-x_1^2)^2 \tag{1}$$
 #
-# subject to
-#
-# $$ x_2 \ge 0 \tag{2} $$
-# $$x_2 \ge (a_1x_1 + b_1)^3 \tag{3} $$
-# $$ x_2 \ge (a_2 x_1 + b_2)^3 \tag{4} $$
-#
-# for parameters $a = 1$, $b = 100.
+# for parameters $a = 1$, $b = 100$.
 #
 # This problem expects a minimum at $ x = ( a, a^2 ) $.
 #
-#
-
-import time
 
 # %%
+import time
+
 import numpy as np
 
 from bluemira.optimisation import optimise
@@ -110,7 +103,16 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
 # unless one sets the random seed. It is unlikely ever to find the exact optimum in
 # this simple problem, but it will get reasonably close.
 #
-# Now let's add in a couple of simple constraints.
+# Now let's add in a couple of simple constraints:
+#
+# $$ \min_{x \in \mathbb{R}^2} (a-x_1)^2 + b(x_2-x_1^2)^2 \tag{1}$$
+#
+# subject to
+#
+# $$ x_1 + x_2 \le 3 \tag{2} $$
+# $$ x_2 -2x_1 \ge 1 \tag{3} $$
+#
+# for parameters $a = 1$, $b = 100$.
 
 # %%
 
