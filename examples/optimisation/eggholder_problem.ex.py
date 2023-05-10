@@ -44,7 +44,8 @@ Constrained Rosenbrock Optimisation Problem
 # # Eggholder Optimisation Problem
 # Let's solve the unconstrained minimization problem:
 #
-# $$ \min_{x \in \mathbb{R}^2} -(x_2 + 47) \sin{\sqrt{\lvert\frac{x_2}{2}+x_1+47\rvert}} -x_1 \sin{\sqrt{\lvert x_1-x_2-47\rvert}} \tag{1}$$
+# $$ \min_{x \in \mathbb{R}^2} -(x_2 + 47) \sin{\sqrt{\lvert\frac{x_2}{2}+x_1+47\rvert}}
+# -x_1 \sin{\sqrt{\lvert x_1-x_2-47\rvert}} \tag{1}$$
 #
 # For the 2-D case, bounded at $\pm 512$, this function expects a minimum
 # at $ x = (512, 404.2319..) = -959.6407..$.
