@@ -52,6 +52,9 @@ Constrained Rosenbrock Optimisation Problem
 #
 # Here, we're too lazy to come up with an analytical gradient, but let's see what we
 # can do without.
+#
+# For the algorithms that require a gradient (e.g. SLSQP), one is automatically
+# estimated for you, but you should not rely on this too heavily!
 
 
 # %%
