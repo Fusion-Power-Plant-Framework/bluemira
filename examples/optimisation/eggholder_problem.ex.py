@@ -50,8 +50,8 @@ Constrained Rosenbrock Optimisation Problem
 # For the 2-D case, bounded at $\pm 512$, this function expects a minimum
 # at $ x = (512, 404.2319..) = -959.6407..$.
 #
-# Here, we're too lazy to come up with an analytical gradient, but let's see what we can do
-# without.
+# Here, we're too lazy to come up with an analytical gradient, but let's see what we
+# can do without.
 
 
 # %%
