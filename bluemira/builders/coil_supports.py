@@ -55,12 +55,6 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation import optimise
-from bluemira.utilities.opt_problems import (
-    OptimisationConstraint,
-    OptimisationObjective,
-    OptimisationProblem,
-)
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
 
 @dataclass
