@@ -32,7 +32,6 @@ from typing import TYPE_CHECKING, Dict, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.parameterisations import GeometryParameterisation
-    from bluemira.utilities.optimiser import Optimiser
 
 import matplotlib
 import matplotlib.pyplot as plt
