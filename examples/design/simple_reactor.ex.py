@@ -64,8 +64,7 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation import optimise, optimise_geometry
-from bluemira.optimisation._geometry._tools import get_shape_ineq_constraint
+from bluemira.optimisation import optimise_geometry
 from bluemira.utilities.tools import get_class_from_module
 
 # %% [markdown]
