@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import time
+from copy import deepcopy
 from unittest.mock import patch
 
 import matplotlib.pyplot as plt
@@ -31,6 +32,7 @@ from bluemira.base.parameter_frame._parameter import Parameter
 from bluemira.base.reactor import Reactor
 from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
 from bluemira.geometry.tools import make_polygon
+from bluemira.materials.material import Void
 
 REACTOR_NAME = "My Reactor"
 
@@ -105,6 +107,42 @@ class TestReactor:
         with pytest.raises(ComponentError):
             self.reactor.plot(bad_dim)
 
+    @pytest.mark.parametrize("material_filter", [True, False])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    def test_reactor_doesnt_show_void_material_by_default(self, dim, material_filter):
+        reactor = self._make_reactor()
+
+        if isinstance(dim, tuple):
+            for d in dim:
+                reactor.plasma.component().get_component(d).get_component(
+                    "LCFS"
+                ).material = Void("test")
+        else:
+            reactor.plasma.component().get_component(dim).get_component(
+                "LCFS"
+            ).material = Void("test")
+
+        with patch("bluemira.display.displayer.show_cad") as mock_show:
+            if isinstance(dim, tuple):
+                if material_filter:
+                    reactor.show_cad(*dim)
+                else:
+                    reactor.show_cad(*dim, _filter=None)
+
+            else:
+                if material_filter:
+                    reactor.show_cad(dim)
+                else:
+                    reactor.show_cad(dim, _filter=None)
+
+        assert (
+            len(mock_show.call_args[0][0]) == 0
+            if material_filter
+            else len(dim)
+            if isinstance(dim, tuple)
+            else 1
+        )
+
     @staticmethod
     def _make_reactor() -> MyReactor:
         reactor = MyReactor(REACTOR_NAME, n_sectors=1)
@@ -124,13 +162,13 @@ class TestComponentMananger:
     def setup_method(self):
         lcfs = make_polygon({"x": [1, 1, 5, 5], "z": [-2, 2, 2, -2]}, closed=True)
 
-        self.plasma = Plasma(
-            PlasmaBuilder(
-                PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)),
-                {},
-                lcfs,
-            ).build()
-        )
+        self.p_comp = PlasmaBuilder(
+            PlasmaBuilderParams(n_TF=Parameter(name="n_TF", value=1)),
+            {},
+            lcfs,
+        ).build()
+
+        self.plasma = Plasma(self.p_comp)
 
     def test_tree_contains_components(self):
         plasmatree = self.plasma.tree()
@@ -146,6 +184,44 @@ class TestComponentMananger:
 
         assert (
             len(mock_show.call_args[0][0]) == len(dim) if isinstance(dim, tuple) else 1
+        )
+
+    @pytest.mark.parametrize("material_filter", [True, False])
+    @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
+    def test_show_cad_ignores_void_by_default(self, dim, material_filter):
+        p_comp = deepcopy(self.p_comp)
+        if isinstance(dim, tuple):
+            for d in dim:
+                p_comp.get_component(d).get_component("LCFS").material = Void("test")
+        else:
+            p_comp.get_component(dim).get_component("LCFS").material = Void("test")
+
+        plasma = Plasma(p_comp)
+
+        with patch("bluemira.display.displayer.show_cad") as mock_show:
+            if isinstance(dim, tuple):
+                plasma.show_cad(*dim)
+            else:
+                plasma.show_cad(dim)
+
+            if isinstance(dim, tuple):
+                if material_filter:
+                    plasma.show_cad(*dim)
+                else:
+                    plasma.show_cad(*dim, _filter=None)
+
+            else:
+                if material_filter:
+                    plasma.show_cad(dim)
+                else:
+                    plasma.show_cad(dim, _filter=None)
+
+        assert (
+            len(mock_show.call_args[0][0]) == 0
+            if material_filter
+            else len(dim)
+            if isinstance(dim, tuple)
+            else 1
         )
 
     @pytest.mark.parametrize("dim", ["xz", "xy", ("xy", "xz")])

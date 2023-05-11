@@ -22,7 +22,7 @@
 
 import abc
 import time
-from typing import Callable, List, Optional, Tuple, Type, Union
+from typing import Callable, Iterable, List, Optional, Tuple, Type, Union
 from warnings import warn
 
 import anytree
@@ -61,7 +61,7 @@ class BaseManager(abc.ABC):
     def show_cad(
         self,
         *dims: str,
-        filter_: Callable,
+        filter_: Union[Callable, None],
         **kwargs,
     ):
         """
@@ -75,7 +75,7 @@ class BaseManager(abc.ABC):
         """
 
     @abc.abstractmethod
-    def plot(self, *dims: str, filter_: Callable):
+    def plot(self, *dims: str, filter_: Union[Callable, None]):
         """
         Plot the component.
 
@@ -133,8 +133,11 @@ class BaseManager(abc.ABC):
         return dims_to_show
 
     def _filter_tree(
-        self, comp: Component, dims_to_show: Tuple[str, ...], filter_: Callable
-    ) -> Component:
+        self,
+        comp: Component,
+        dims_to_show: Tuple[str, ...],
+        filter_: Union[Callable, None],
+    ) -> Union[Component, Iterable[Component], None]:
         """
         Filter a component tree
 
@@ -144,11 +147,14 @@ class BaseManager(abc.ABC):
         as filtering would mutate the ComponentMangers' underlying component trees
         """
         comp_copy = comp.copy()
-        comp_copy.filter_components(dims_to_show)
-        return comp_copy._get_thing(filter_, first=False, full_tree=False)
+        comp_copy.filter_components(dims_to_show, filter_)
+        return comp_copy  # ._get_thing(filter_, first=False, full_tree=False)
 
     def _plot_dims(
-        self, comp: Component, dims_to_show: Tuple[str, ...], filter_: Callable
+        self,
+        comp: Component,
+        dims_to_show: Tuple[str, ...],
+        filter_: Union[Callable, None],
     ):
         filtered = self._filter_tree(comp, dims_to_show, filter_)
         if filtered is None:
@@ -176,13 +182,17 @@ class FilterMaterial:
     def __call__(self, node: anytree.Node):
         return hasattr(node, "material") and self._filterer(node.material)
 
-    def _filterer(self, material):
+    def _filterer(
+        self, material: Union[SerialisedMaterial, Tuple[SerialisedMaterial]]
+    ) -> bool:
         bool_store = True
+
         if self.material is not None:
             bool_store = isinstance(material, self.material)
 
         if self.not_material is not None:
-            bool_store = not isinstance(material, self.not_material)
+            bool_store = not isinstance(material, self.not_material) and bool_store
+
         return bool_store
 
 
