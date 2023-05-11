@@ -85,7 +85,7 @@ class ObjectiveFunction(_NloptFunction):
     ):
         super().__init__(f, bounds)
         self.df = df if df is not None else self._approx_derivative
-        self.history: List[np.ndarray] = []
+        self.history: List[Tuple[np.ndarray, float]] = []
 
     def call(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function."""
@@ -98,8 +98,9 @@ class ObjectiveFunction(_NloptFunction):
 
     def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function, recording the iteration history."""
-        self.history.append(np.copy(x))
-        return self.call(x, grad)
+        f_x = self.call(x, grad)
+        self.history.append((np.copy(x), f_x))
+        return f_x
 
 
 class Constraint(_NloptFunction):
