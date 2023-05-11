@@ -677,7 +677,7 @@ class _FreeCADGmsh:
     @staticmethod
     def _fragment(
         dim: List[int] = [2, 1, 0],
-        all_ent=None,
+        all_ent: Optional[List[int]] = None,
         tools=[],
         remove_object: bool = True,
         remove_tool: bool = True,
@@ -702,7 +702,7 @@ class _FreeCADGmsh:
         return all_ent, oo, oov
 
     @staticmethod
-    def _map_mesh_dict(mesh_dict: dict, all_ent, oov):
+    def _map_mesh_dict(mesh_dict: dict, all_ent, oov: list = []):
         dim_dict = {
             "points_tag": 0,
             "cntrpoints_tag": 0,
