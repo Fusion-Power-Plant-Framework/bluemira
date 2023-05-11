@@ -35,7 +35,6 @@ from bluemira.builders.tf_coils import (
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import make_polygon
-from bluemira.utilities.optimiser import Optimiser
 
 
 class TestRippleConstrainedLengthGOP:
