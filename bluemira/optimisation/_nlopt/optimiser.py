@@ -226,6 +226,7 @@ class NloptOptimiser(Optimiser):
 
         try:
             x_star = self._opt.optimize(x0)
+            f_x = self._objective.f(x_star)
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
             bluemira_warn(
@@ -233,11 +234,19 @@ class NloptOptimiser(Optimiser):
                 "parameterisation."
             )
             if self._objective.history:
-                x_star = self._objective.history[-1]
+                fx_values = np.array(self._objective.history).T[1]
+                f_x = np.min(fx_values)
+                arg_min_fx = np.argmin(fx_values)
+                x_star = self._objective.history[arg_min_fx][0]
             else:
                 x_star = x0
+                f_x = np.infty
+
         return OptimiserResult(
-            x_star, n_evals=self._opt.get_numevals(), history=self._objective.history
+            f_x=f_x,
+            x=x_star,
+            n_evals=self._opt.get_numevals(),
+            history=self._objective.history,
         )
 
     def set_lower_bounds(self, bounds: np.ndarray) -> None:
