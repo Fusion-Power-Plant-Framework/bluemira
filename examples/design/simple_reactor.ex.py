@@ -65,6 +65,7 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.optimisation import optimise
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import get_class_from_module
@@ -251,7 +252,16 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
         """
         Run the optimisation problem.
         """
-        return super().optimise(x0)
+        return optimise(
+            minimise_length,
+            df_objective=None,
+            x0=x0,
+            algorithm="SLSQP",
+            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
+            ineq_constraints=[
+                {"f_constraint": None, "df_constraint": None, "tolerance": 1e-6}
+            ],
+        )
 
 
 # %% [markdown]
