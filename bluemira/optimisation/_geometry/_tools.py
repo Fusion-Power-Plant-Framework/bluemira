@@ -81,9 +81,12 @@ def to_constraint(
         "tolerance": geom_constraint["tolerance"],
     }
     if "df_constraint" in geom_constraint:
-        constraint["df_constraint"] = to_optimiser_callable(
-            geom_constraint["df_constraint"], geom
-        )
+        if geom_constraint["df_constraint"] is None:
+            constraint["df_constraint"] = None
+        else:
+            constraint["df_constraint"] = to_optimiser_callable(
+                geom_constraint["df_constraint"], geom
+            )
 
     return constraint
 
