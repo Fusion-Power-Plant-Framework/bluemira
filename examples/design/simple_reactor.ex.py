@@ -540,26 +540,6 @@ tf_coil_designer = TFCoilDesigner(
     plasma.lcfs(), None, reactor_config.config_for("TF Coil", "designer")
 )
 tf_parameterisation = tf_coil_designer.execute()
-# print(tf_parameterisation.variables) [REGRESSION]
-# ╒════════╤═════════════╤═══════════════╤═══════════════╤═════════╤══════════════════════════╕
-# │ Name   │       Value │   Lower Bound │   Upper Bound │ Fixed   │ Description              │
-# ╞════════╪═════════════╪═══════════════╪═══════════════╪═════════╪══════════════════════════╡
-# │ dz     │ 7.24879e-07 │          -0.5 │           0.5 │ False   │ Vertical offset from z=0 │
-# ├────────┼─────────────┼───────────────┼───────────────┼─────────┼──────────────────────────┤
-# │ x1     │           3 │             2 │             6 │ True    │ Inboard limb radius      │
-# ├────────┼─────────────┼───────────────┼───────────────┼─────────┼──────────────────────────┤
-# │ x2     │     12.9032 │            12 │            18 │ False   │ Outboard limb radius     │
-# ╘════════╧═════════════╧═══════════════╧═══════════════╧═════════╧══════════════════════════╛
-# [NEW] (NOTE: without geometry parameterisation internal inequality constraint)
-# ╒════════╤═════════════╤═══════════════╤═══════════════╤═════════╤══════════════════════════╕
-# │ Name   │       Value │   Lower Bound │   Upper Bound │ Fixed   │ Description              │
-# ╞════════╪═════════════╪═══════════════╪═══════════════╪═════════╪══════════════════════════╡
-# │ dz     │ 7.24879e-07 │          -0.5 │           0.5 │ False   │ Vertical offset from z=0 │
-# ├────────┼─────────────┼───────────────┼───────────────┼─────────┼──────────────────────────┤
-# │ x1     │           3 │             2 │             6 │ True    │ Inboard limb radius      │
-# ├────────┼─────────────┼───────────────┼───────────────┼─────────┼──────────────────────────┤
-# │ x2     │     12.9032 │            12 │            18 │ False   │ Outboard limb radius     │
-# ╘════════╧═════════════╧═══════════════╧═══════════════╧═════════╧══════════════════════════╛
 
 tf_coil_builder = TFCoilBuilder(
     reactor_config.params_for("TF Coil", "builder"),
