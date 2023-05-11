@@ -55,7 +55,6 @@ from bluemira.base.reactor_config import ReactorConfig
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.optimisation import minimise_length
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import (
     distance_to,
@@ -65,7 +64,8 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation import optimise
+from bluemira.optimisation import optimise, optimise_geometry
+from bluemira.optimisation._geometry._tools import get_shape_ineq_constraint
 from bluemira.utilities.tools import get_class_from_module
 
 # %% [markdown]
@@ -189,34 +189,35 @@ class MyTFCoilOptProblem:
         self.lcfs = lcfs
         self.min_distance = min_distance
 
-    def constraint_value(self, vector: np.ndarray):
+    def calculate_length(self, geom) -> float:
+        """
+        The objective evaluation function
+        """
+        shape = geom.create_shape()
+        return shape.length
+
+    def constraint_value(self, geom) -> float:
         """
         The constraint evaluation function
         """
-        self.parameterisation.variables.set_values_from_norm(vector)
-        shape = self.parameterisation.create_shape()
+        shape = geom.create_shape()
         return self.min_distance - distance_to(shape, self.lcfs)[0]
 
     def optimise(self, x0=None):
         """
         Run the optimisation problem.
         """
-        n_vector = self.parameterisation.variables
-        x_star = optimise(
-            minimise_length,
-            df_objective=None,
-            x0=x0,
-            dimension=n_vector,
+        x_star = optimise_geometry(
+            self.parameterisation,
+            self.calculate_length,
             algorithm="SLSQP",
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
             ineq_constraints=[
                 {
-                    "f_constraint": self.f_constraint,
-                    "df_constraint": None,
-                    "tolerance": 1e-6,
+                    "f_constraint": self.constraint_value,
+                    "tolerance": np.array([1e-6]),
                 }
             ],
-            bounds=(np.zeros(n_vector), np.ones(n_vector)),
         ).x
         self.parameterisation.variables.set_values_from_norm(x_star)
         return self.parameterisation
@@ -540,6 +541,16 @@ tf_coil_designer = TFCoilDesigner(
 )
 tf_parameterisation = tf_coil_designer.execute()
 # print(tf_parameterisation.variables) [REGRESSION]
+# ╒════════╤═════════════╤═══════════════╤═══════════════╤═════════╤══════════════════════════╕
+# │ Name   │       Value │   Lower Bound │   Upper Bound │ Fixed   │ Description              │
+# ╞════════╪═════════════╪═══════════════╪═══════════════╪═════════╪══════════════════════════╡
+# │ dz     │ 7.24879e-07 │          -0.5 │           0.5 │ False   │ Vertical offset from z=0 │
+# ├────────┼─────────────┼───────────────┼───────────────┼─────────┼──────────────────────────┤
+# │ x1     │           3 │             2 │             6 │ True    │ Inboard limb radius      │
+# ├────────┼─────────────┼───────────────┼───────────────┼─────────┼──────────────────────────┤
+# │ x2     │     12.9032 │            12 │            18 │ False   │ Outboard limb radius     │
+# ╘════════╧═════════════╧═══════════════╧═══════════════╧═════════╧══════════════════════════╛
+# [NEW] (NOTE: without geometry parameterisation internal inequality constraint)
 # ╒════════╤═════════════╤═══════════════╤═══════════════╤═════════╤══════════════════════════╕
 # │ Name   │       Value │   Lower Bound │   Upper Bound │ Fixed   │ Description              │
 # ╞════════╪═════════════╪═══════════════╪═══════════════╪═════════╪══════════════════════════╡
