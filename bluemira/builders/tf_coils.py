@@ -617,7 +617,7 @@ class RippleConstrainedLengthGOP:
             keep_out_zones=self.keep_out_zone,
             koz_discretisation=self.n_koz_points,
         )
-        self.parameterisation.variables.set_values_from_xnorm(result.x)
+        self.parameterisation.variables.set_values_from_norm(result.x)
 
         self.solver.update_cage(self.parameterisation.create_shape())
         self.ripple_values = self.solver.ripple(*self.ripple_selector.points)
@@ -645,7 +645,7 @@ class RippleConstrainedLengthGOP:
             wire_options={"color": "red", "linewidth": "0.5"},
         )
         plot_2d(
-            self._parameterisation.create_shape(),
+            self.parameterisation.create_shape(),
             ax=ax,
             show=False,
             wire_options={"color": "blue", "linewidth": 1.0},
