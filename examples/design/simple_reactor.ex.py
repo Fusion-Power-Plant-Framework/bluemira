@@ -55,7 +55,7 @@ from bluemira.base.reactor_config import ReactorConfig
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
+from bluemira.geometry.optimisation import minimise_length
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import (
     distance_to,
@@ -66,8 +66,6 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation import optimise
-from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import get_class_from_module
 
 # %% [markdown]
@@ -170,7 +168,7 @@ class MyReactor(Reactor):
 
 
 # %%
-class MyTFCoilOptProblem(GeometryOptimisationProblem):
+class MyTFCoilOptProblem:
     """
     A simple geometry optimisation problem for the TF coil current centreline
 
@@ -185,83 +183,43 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
         self,
         geometry_parameterisation: GeometryParameterisation,
         lcfs: BluemiraWire,
-        optimiser: Optimiser,
         min_distance: float,
     ):
-        objective = OptimisationObjective(
-            minimise_length,
-            f_objective_args={"parameterisation": geometry_parameterisation},
-        )
-        constraints = [
-            OptimisationConstraint(
-                self.f_constraint,
-                f_constraint_args={
-                    "parameterisation": geometry_parameterisation,
-                    "lcfs": lcfs,
-                    "min_distance": min_distance,
-                    "ad_args": {},
-                },
-                tolerance=1e-6,
-                constraint_type="inequality",
-            )
-        ]
-        super().__init__(
-            geometry_parameterisation, optimiser, objective, constraints=constraints
-        )
+        self.parameterisation = geometry_parameterisation
+        self.lcfs = lcfs
+        self.min_distance = min_distance
 
-    @staticmethod
-    def constraint_value(
-        vector: np.ndarray,
-        parameterisation: GeometryParameterisation,
-        lcfs: BluemiraWire,
-        min_distance: float,
-    ):
+    def constraint_value(self, vector: np.ndarray):
         """
         The constraint evaluation function
         """
-        parameterisation.variables.set_values_from_norm(vector)
-        shape = parameterisation.create_shape()
-        return min_distance - distance_to(shape, lcfs)[0]
-
-    @staticmethod
-    def f_constraint(
-        constraint: np.ndarray,
-        vector: np.ndarray,
-        grad: np.ndarray,
-        parameterisation: GeometryParameterisation,
-        lcfs: BluemiraWire,
-        min_distance: float,
-        ad_args=None,
-    ):
-        """
-        Constraint function
-        """
-        tffunction = MyTFCoilOptProblem.constraint_value
-        constraint[:] = tffunction(vector, parameterisation, lcfs, min_distance)
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                tffunction,
-                vector,
-                f0=constraint,
-                args=(parameterisation, lcfs, min_distance),
-                bounds=[0, 1],
-            )
-        return constraint
+        self.parameterisation.variables.set_values_from_norm(vector)
+        shape = self.parameterisation.create_shape()
+        return self.min_distance - distance_to(shape, self.lcfs)[0]
 
     def optimise(self, x0=None):
         """
         Run the optimisation problem.
         """
-        return optimise(
+        n_vector = self.parameterisation.variables
+        x_star = optimise(
             minimise_length,
             df_objective=None,
             x0=x0,
+            dimension=n_vector,
             algorithm="SLSQP",
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
             ineq_constraints=[
-                {"f_constraint": None, "df_constraint": None, "tolerance": 1e-6}
+                {
+                    "f_constraint": self.f_constraint,
+                    "df_constraint": None,
+                    "tolerance": 1e-6,
+                }
             ],
-        )
+            bounds=(np.zeros(n_vector), np.ones(n_vector)),
+        ).x
+        self.parameterisation.variables.set_values_from_norm(x_star)
+        return self.parameterisation
 
 
 # %% [markdown]
@@ -393,9 +351,6 @@ class TFCoilDesigner(Designer):
         my_tf_coil_opt_problem = MyTFCoilOptProblem(
             parameterisation,
             self.lcfs,
-            optimiser=Optimiser(
-                "SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6}
-            ),
             min_distance=1.0,  # the coil must be >= 1 meter from the LCFS
         )
         return my_tf_coil_opt_problem.optimise()
@@ -584,6 +539,16 @@ tf_coil_designer = TFCoilDesigner(
     plasma.lcfs(), None, reactor_config.config_for("TF Coil", "designer")
 )
 tf_parameterisation = tf_coil_designer.execute()
+# print(tf_parameterisation.variables) [REGRESSION]
+# ╒════════╤═════════════╤═══════════════╤═══════════════╤═════════╤══════════════════════════╕
+# │ Name   │       Value │   Lower Bound │   Upper Bound │ Fixed   │ Description              │
+# ╞════════╪═════════════╪═══════════════╪═══════════════╪═════════╪══════════════════════════╡
+# │ dz     │ 7.24879e-07 │          -0.5 │           0.5 │ False   │ Vertical offset from z=0 │
+# ├────────┼─────────────┼───────────────┼───────────────┼─────────┼──────────────────────────┤
+# │ x1     │           3 │             2 │             6 │ True    │ Inboard limb radius      │
+# ├────────┼─────────────┼───────────────┼───────────────┼─────────┼──────────────────────────┤
+# │ x2     │     12.9032 │            12 │            18 │ False   │ Outboard limb radius     │
+# ╘════════╧═════════════╧═══════════════╧═══════════════╧═════════╧══════════════════════════╛
 
 tf_coil_builder = TFCoilBuilder(
     reactor_config.params_for("TF Coil", "builder"),
