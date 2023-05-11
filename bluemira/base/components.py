@@ -89,7 +89,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         return self.name + " (" + self.__class__.__name__ + ")"
 
-    def filter_components(self, names: Iterable[str], filter_: Optional[Callable[[anytree.Node], bool]] = None):
+    def filter_components(
+        self,
+        names: Iterable[str],
+        filter_: Optional[Callable[[anytree.Node], bool]] = None,
+    ):
         """
         Removes all components from the tree, starting at this component,
         that are siblings of each component specified in `names`
