@@ -22,7 +22,7 @@
 
 import abc
 import time
-from typing import Callable, Iterable, List, Optional, Tuple, Type, Union
+from typing import Callable, List, Optional, Tuple, Type, Union
 from warnings import warn
 
 import anytree
@@ -164,6 +164,18 @@ class BaseManager(abc.ABC):
 
 
 class FilterMaterial:
+    """
+    Filter nodes by material
+
+    Parameters
+    ----------
+    material:
+       materials to include
+    not_material:
+       materials to exclude
+
+    """
+
     def __init__(
         self,
         material: Union[
@@ -176,7 +188,8 @@ class FilterMaterial:
         self.material = material
         self.not_material = not_material
 
-    def __call__(self, node: anytree.Node):
+    def __call__(self, node: anytree.Node) -> bool:
+        """Filter node based on material include and exclude rules"""
         return hasattr(node, "material") and self._filterer(node.material)
 
     def _filterer(
