@@ -137,7 +137,7 @@ class BaseManager(abc.ABC):
         comp: Component,
         dims_to_show: Tuple[str, ...],
         filter_: Union[Callable, None],
-    ) -> Union[Component, Iterable[Component], None]:
+    ) -> Component:
         """
         Filter a component tree
 
@@ -148,7 +148,7 @@ class BaseManager(abc.ABC):
         """
         comp_copy = comp.copy()
         comp_copy.filter_components(dims_to_show, filter_)
-        return comp_copy  # ._get_thing(filter_, first=False, full_tree=False)
+        return comp_copy
 
     def _plot_dims(
         self,
@@ -156,12 +156,9 @@ class BaseManager(abc.ABC):
         dims_to_show: Tuple[str, ...],
         filter_: Union[Callable, None],
     ):
-        filtered = self._filter_tree(comp, dims_to_show, filter_)
-        if filtered is None:
-            return
         for i, dim in enumerate(dims_to_show):
             ComponentPlotter(view=dim).plot_2d(
-                filtered,
+                self._filter_tree(comp, dims_to_show, filter_),
                 show=i == len(dims_to_show) - 1,
             )
 
@@ -191,7 +188,7 @@ class FilterMaterial:
             bool_store = isinstance(material, self.material)
 
         if self.not_material is not None:
-            bool_store = not isinstance(material, self.not_material) and bool_store
+            bool_store = not isinstance(material, self.not_material)
 
         return bool_store
 
@@ -244,13 +241,10 @@ class ComponentManager(BaseManager):
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         """
-        comp_copy = self._filter_tree(
-            self.component(), self._validate_cad_dims(*dims, **kwargs), filter_
-        )
-        if comp_copy is None:
-            return
         ComponentDisplayer().show_cad(
-            comp_copy,
+            self._filter_tree(
+                self.component(), self._validate_cad_dims(*dims, **kwargs), filter_
+            ),
             **kwargs,
         )
 
@@ -415,8 +409,6 @@ class Reactor(BaseManager):
         comp_copy = self._filter_tree(
             self.component(with_components), dims_to_show, filter_
         )
-        if comp_copy is None:
-            return
         # if "xyz" is requested, construct the 3d cad
         # from each xyz component in the tree,
         # as it's assumed that the cad is only built for 1 sector
