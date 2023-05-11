@@ -613,7 +613,7 @@ class RippleConstrainedLengthGOP:
             algorithm=self.algorithm,
             opt_conditions=self.opt_conditions,
             opt_parameters=self.opt_parameters,
-            ineq_constraints=[self.constraints],
+            ineq_constraints=self.constraints,
             keep_out_zones=self.keep_out_zone,
             koz_discretisation=self.n_koz_points,
         )
