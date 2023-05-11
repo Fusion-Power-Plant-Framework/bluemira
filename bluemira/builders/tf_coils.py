@@ -49,8 +49,6 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.optimisation import optimise_geometry
-from bluemira.utilities.opt_problems import OptimisationConstraint
-from bluemira.utilities.optimiser import approx_derivative
 
 
 class ParameterisedRippleSolver:
