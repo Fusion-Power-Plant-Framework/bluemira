@@ -54,6 +54,7 @@ from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
+from bluemira.optimisation import optimise_geometry
 from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import approx_derivative
 
@@ -553,7 +554,7 @@ class RippleConstrainedLengthGOPParams(ParameterFrame):
     TF_ripple_limit: Parameter[float]
 
 
-class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
+class RippleConstrainedLengthGOP:
     """
     Toroidal field coil winding pack shape optimisation problem.
 
@@ -561,8 +562,12 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
     ----------
     parameterisation:
         Geometry parameterisation for the winding pack current centreline
-    optimiser:
-        Optimiser to use to solve the optimisation problem
+    algorithm:
+        Optimisation algorithm to use
+    opt_conditions:
+        Optimisation termination conditions dictionary
+    opt_parameters:
+        Optimisation parameters dictionary
     params:
         Parameters required to solve the optimisation problem
     wp_cross_section:
@@ -598,7 +603,9 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
     def __init__(
         self,
         parameterisation: GeometryParameterisation,
-        optimiser: Optimiser,
+        algorithm: str,
+        opt_conditions: Dict[str, float],
+        opt_parameters: Dict[str, float],
         params: ParameterFrame,
         wp_cross_section: BluemiraWire,
         separatrix: BluemiraWire,
@@ -611,14 +618,15 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         n_koz_points: int = 100,
         ripple_selector: Optional[RipplePointSelector] = None,
     ):
+        self.parameterisation = parameterisation
         self.params = make_parameter_frame(params, RippleConstrainedLengthGOPParams)
         self.separatrix = separatrix
         self.wp_cross_section = wp_cross_section
         self.keep_out_zone = keep_out_zone
-
-        objective = OptimisationObjective(
-            minimise_length, f_objective_args={"parameterisation": parameterisation}
-        )
+        self.algorithm = algorithm
+        self.opt_parameters = opt_parameters
+        self.opt_conditions = opt_conditions
+        self.n_koz_points = n_koz_points
 
         if ripple_selector is None:
             warnings.warn(
@@ -646,22 +654,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         )
         self.ripple_selector = ripple_selector
 
-        constraints = [ripple_constraint]
-
-        if keep_out_zone is not None:
-            koz_points = self._make_koz_points(keep_out_zone)
-            koz_constraint = OptimisationConstraint(
-                constrain_koz,
-                f_constraint_args={
-                    "parameterisation": parameterisation,
-                    "n_shape_discr": n_koz_points,
-                    "koz_points": koz_points,
-                },
-                tolerance=koz_con_tol * np.ones(n_koz_points),
-            )
-            constraints.append(koz_constraint)
-
-        super().__init__(parameterisation, optimiser, objective, constraints)
+        self.constraints = [ripple_constraint]
 
     def _make_koz_points(self, keep_out_zone: BluemiraWire) -> Coordinates:
         """
@@ -669,16 +662,33 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
         """
         return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200).xz
 
+    def calculate_length(self, parameterisation: GeometryParameterisation) -> float:
+        """
+        Objective function (minimise length)
+        """
+        return parameterisation.create_shape().length
+
     def optimise(self, x0: Optional[np.ndarray] = None) -> GeometryParameterisation:
         """
         Solve the GeometryOptimisationProblem.
         """
-        parameterisation = super().optimise(x0=x0)
-        self.solver.update_cage(parameterisation.create_shape())
+        result = optimise_geometry(
+            self.parameterisation,
+            self.calculate_length,
+            algorithm=self.algorithm,
+            opt_conditions=self.opt_conditions,
+            opt_parameters=self.opt_parameters,
+            ineq_constraints=[self.constraints],
+            keep_out_zones=[self.keep_out_zone],
+            koz_discretisation=self.n_koz_points,
+        )
+        self.parameterisation.variables.set_values_from_xnorm(result.x)
+
+        self.solver.update_cage(self.parameterisation.create_shape())
         self.ripple_values = self.solver.ripple(*self.ripple_selector.points)
         if isinstance(self.ripple_values, float):
             self.ripple_values = np.array([self.ripple_values])
-        return parameterisation
+        return self.parameterisation
 
     def plot(self, ax: Optional[plt.Axes] = None):
         """
