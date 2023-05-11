@@ -555,11 +555,13 @@ class RippleConstrainedLengthGOP:
         self.params = make_parameter_frame(params, RippleConstrainedLengthGOPParams)
         self.separatrix = separatrix
         self.wp_cross_section = wp_cross_section
-        self.keep_out_zone = keep_out_zone
+        self.keep_out_zone = [keep_out_zone] if keep_out_zone else []
         self.algorithm = algorithm
         self.opt_parameters = opt_parameters
         self.opt_conditions = opt_conditions
         self.n_koz_points = n_koz_points
+        # TODO: koz_con_tol cannot be piped to optimise_geometry
+        self.koz_con_tol = koz_con_tol
 
         if ripple_selector is None:
             warnings.warn(
@@ -612,7 +614,7 @@ class RippleConstrainedLengthGOP:
             opt_conditions=self.opt_conditions,
             opt_parameters=self.opt_parameters,
             ineq_constraints=[self.constraints],
-            keep_out_zones=[self.keep_out_zone],
+            keep_out_zones=self.keep_out_zone,
             koz_discretisation=self.n_koz_points,
         )
         self.parameterisation.variables.set_values_from_xnorm(result.x)
