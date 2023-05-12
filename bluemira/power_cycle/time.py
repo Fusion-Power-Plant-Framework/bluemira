@@ -4,6 +4,7 @@
 Classes to define the timeline for Power Cycle simulations.
 """
 
+from dataclasses import dataclass
 from typing import Dict, List, Union
 
 from bluemira.base.constants import raw_uc
@@ -12,8 +13,6 @@ from bluemira.power_cycle.errors import PowerCyclePhaseError, ScenarioBuilderErr
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
 from bluemira.power_cycle.net.manager import ModuleType
 from bluemira.power_cycle.tools import (
-    FormattedDict,
-    FormattedLibrary,
     read_json,
     validate_file,
     validate_list,
@@ -158,6 +157,41 @@ class PowerCycleScenario(PowerCycleTimeABC):
         return pulse_library
 
 
+@dataclass
+class ScenarioConfig:
+    name: str
+    pulses: list
+    repetition: list
+
+
+@dataclass
+class PulseConfig:
+    name: str
+    phases: list
+
+
+@dataclass
+class PhaseConfig:
+    name: str
+    logical: str
+    breakdown: list
+
+
+@dataclass
+class BreakdownConfig:
+    name: str
+    module: Union[None, str, ModuleType]
+    variable_map: dict
+
+
+@dataclass
+class ScenarioBulderConfig:
+    scenario: Union[dict, ScenarioConfig]
+    pulse_library: dict
+    phase_library: dict
+    breakdown_library: dict
+
+
 class ScenarioBuilder:
     """
     Class to read time inputs for the Power Cycle module, and build
@@ -178,59 +212,10 @@ class ScenarioBuilder:
 
     """
 
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
-    _config_format = FormattedDict.Format(
-        {
-            "scenario": dict,
-            "pulse-library": dict,
-            "phase-library": dict,
-            "breakdown-library": dict,
-        }
-    )
-
-    _scenario_format = FormattedDict.Format(
-        {
-            "name": str,
-            "pulses": list,
-            "repetition": list,
-        }
-    )
-
-    _pulse_format = FormattedLibrary.Format(
-        {
-            "name": str,
-            "phases": list,
-        }
-    )
-
-    _phase_format = FormattedLibrary.Format(
-        {
-            "name": str,
-            "logical": str,
-            "breakdown": list,
-        }
-    )
-
-    _breakdown_format = FormattedLibrary.Format(
-        {
-            "name": str,
-            "module": [None, str],
-            "variables_map": dict,
-        }
-    )
-
     def __init__(self, config_path: str):
         validated_path = validate_file(config_path)
-        json_contents = read_json(validated_path)
-        (
-            scenario_config,
-            pulse_config,
-            phase_config,
-            breakdown_config,
-        ) = self._validate_config(json_contents)
+
+        scenario_builder_config = self._validate_config(read_json(validated_path))
 
         breakdown_library = self._build_breakdown_library(
             breakdown_config,
@@ -260,44 +245,22 @@ class ScenarioBuilder:
 
     @classmethod
     def _validate_config(cls, json_contents):
-        json_contents = FormattedDict(
-            cls._config_format,
-            dictionary=json_contents,
+        scenario_builder_config = ScenarioBulderConfig(**json_contents)
+        scenario_builder_config.scenario = ScenarioConfig(
+            **scenario_builder_config.scenario
         )
-        for key, key_contents in json_contents.items():
-            if key == "scenario":
-                scenario_config = FormattedDict(
-                    cls._scenario_format,
-                    dictionary=key_contents,
-                )
-            elif key == "pulse-library":
-                pulse_config = FormattedLibrary(
-                    cls._pulse_format,
-                    dictionary=key_contents,
-                )
-            elif key == "phase-library":
-                phase_config = FormattedLibrary(
-                    cls._phase_format,
-                    dictionary=key_contents,
-                )
-            elif key == "breakdown-library":
-                breakdown_config = FormattedLibrary(
-                    cls._breakdown_format,
-                    dictionary=key_contents,
-                )
-            else:
-                raise ScenarioBuilderError(
-                    "config",
-                    f"Validation for the json field {key!r} has not "
-                    "been implemented yet.",
-                )
+        scenario_builder_config.pulse_library = {
+            k: PulseConfig(**v) for k, v in scenario_builder_config.pulse_library.items()
+        }
+        scenario_builder_config.phase_library = {
+            k: PhaseConfig(**v) for k, v in scenario_builder_config.phase_library.items()
+        }
+        scenario_builder_config.breakdown_library = {
+            k: BreakdownConfig(**v)
+            for k, v in scenario_builder_config.breakdown_library.items()
+        }
 
-        return (
-            scenario_config,
-            pulse_config,
-            phase_config,
-            breakdown_config,
-        )
+        return scenario_builder_config
 
     @staticmethod
     def import_duration(module, variables_map):
