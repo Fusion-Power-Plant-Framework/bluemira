@@ -10,7 +10,6 @@ import bluemira.base.constants as constants
 from bluemira.power_cycle.net.loads import LoadData, LoadModel, PhaseLoad, PowerLoad
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse, ScenarioBuilder
 from bluemira.power_cycle.tools import (
-    FormattedABC,
     read_json,
     unnest_list,
     validate_axes,
@@ -169,77 +168,6 @@ class ToolsTestKit:
         return (
             right_index_input,
             wrong_index_input,
-        )
-
-    def inputs_for_formatteddict(self):
-        """
-        Function to create inputs for FormattedDict testing.
-        """
-
-        (
-            right_format_input,
-            wrong_format_input,
-        ) = self.inputs_for_format()
-        example_format = FormattedABC.Format(right_format_input)
-        example_dict = wrong_format_input
-
-        (
-            right_index_input,
-            wrong_index_input,
-        ) = self._format_index_inputs()
-
-        return (
-            example_format,
-            example_dict,
-            right_index_input,
-            wrong_index_input,
-        )
-
-    def inputs_for_library(self):
-        """
-        Function to create inputs for Library testing.
-        """
-        example_types = [
-            str,
-            list,
-            int,
-            float,
-            bool,
-            dict,
-        ]
-
-        example_library_keys = [
-            "case_1",
-            "case_2",
-            "case_3",
-            "case_4",
-        ]
-
-        return (
-            example_types,
-            example_library_keys,
-        )
-
-    def inputs_for_formattedlibrary(self):
-        """
-        Function to create inputs for FormattedLibrary testing.
-        """
-        (
-            example_format,
-            example_dict,
-            _,
-            _,
-        ) = self.inputs_for_formatteddict()
-
-        (
-            _,
-            example_library_keys,
-        ) = self.inputs_for_library()
-
-        return (
-            example_format,
-            example_dict,
-            example_library_keys,
         )
 
 
