@@ -4,14 +4,13 @@
 Classes for the definition of power loads in the power cycle model.
 """
 import copy
-import sys
 from enum import Enum
 from typing import List, Union
 
 import numpy as np
-from matplotlib.pyplot import plot
 from scipy.interpolate import interp1d
 
+from bluemira.base.constants import EPS
 from bluemira.power_cycle.base import PowerCycleLoadABC
 from bluemira.power_cycle.errors import (
     LoadDataError,
@@ -867,7 +866,7 @@ class PulseLoad(PowerCycleLoadABC):
     }
 
     # Minimal shift for time correction in 'curve' method
-    epsilon = 1e6 * sys.float_info.epsilon
+    epsilon = 1e6 * EPS
 
     def __init__(self, name, pulse, phaseload_set):
         super().__init__(name)

@@ -11,7 +11,6 @@ import numpy as np
 
 from bluemira.power_cycle.errors import PowerCycleABCError, PowerCycleLoadABCError
 from bluemira.power_cycle.tools import (
-    FormattedDict,
     copy_dict_without_key,
     unique_and_sorted_vector,
     unnest_list,
