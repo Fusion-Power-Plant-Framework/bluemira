@@ -22,7 +22,7 @@
 
 import abc
 import time
-from typing import Callable, List, Optional, Tuple, Type, Union
+from typing import Any, Callable, List, Optional, Tuple, Type, Union
 from warnings import warn
 
 import anytree
@@ -191,12 +191,23 @@ class FilterMaterial:
             Type[SerialisedMaterial], Tuple[Type[SerialisedMaterial]], None
         ] = Void,
     ):
-        self.material = material
-        self.not_material = not_material
+        super().__setattr__("material", material)
+        super().__setattr__("not_material", not_material)
 
     def __call__(self, node: anytree.Node) -> bool:
         """Filter node based on material include and exclude rules"""
         return hasattr(node, "material") and self._filterer(node.material)
+
+    def __setattr__(self, name: str, value: Any):
+        """
+        Override setattr to force immutability
+
+        This method makes the class nearly immutable as no new attributes
+        can be modified or added by standard methods.
+
+        See #2236 discussion_r1191246003 for further details
+        """
+        raise AttributeError(f"{type(self).__name__} is immutable")
 
     def _filterer(
         self, material: Union[SerialisedMaterial, Tuple[SerialisedMaterial]]
