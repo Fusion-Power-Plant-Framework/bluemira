@@ -36,22 +36,21 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Fuction 'spherical_harmonic_approximation' usage.
+Usage of the 'spherical_harmonic_approximation' function.
 """
 
 # %% [markdown]
-# # spherical_harmonic_approximation Fuction
+# # spherical_harmonic_approximation Function
 #
 # This example illustrates the input and output of the
-# Bluemira spherical harmonics approximation fuction
+# Bluemira spherical harmonics approximation function
 # (spherical_harmonic_approximation) which can be used
 # in coilset current and position optimisation for spherical tokamaks.
-# For an example of how spherical_harmonic_approximation is used,
-# please see the notebook called
-# 'Use of Spherical Harmonic Approximation in Optimisation.ipynb'.
+# For an example of how spherical_harmonic_approximation is used
+# please see,
+# [Use_of_Spherical_Harmonic_Approximation_in_Optimisation](./example_name.ex.py)
 
 # %%
-# from bluemira.equilibria.equilibrium import Equilibrium
 import matplotlib.pyplot as plt
 import numpy as np
 
