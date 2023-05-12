@@ -176,7 +176,6 @@ class TestPowerCycleTimeABC:
         name = "instance being created in constructor test"
         possible_errors = (TypeError, ValueError)
         for argument in test_arguments:
-
             argument_in_list = validate_list(argument)
             try:
                 test_instance = self.SampleConcreteClass(name, argument)

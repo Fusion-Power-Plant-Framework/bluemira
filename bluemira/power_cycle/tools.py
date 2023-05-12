@@ -14,10 +14,6 @@ import numpy as np
 
 from bluemira.base.file import get_bluemira_root
 
-# ######################################################################
-# VALIDATION
-# ######################################################################
-
 
 def validate_list(argument):
     """
@@ -113,11 +109,6 @@ def validate_lists_to_have_same_length(*args):
         return argument_length
 
 
-# ######################################################################
-# MANIPULATION
-# ######################################################################
-
-
 def copy_dict_without_key(dictionary, key_to_remove):
     """
     Returns a dictionary that is a copy of the parameter 'dictionary',
@@ -167,11 +158,6 @@ def read_json(file_path):
             "The file could not be read as a 'json' file.",
         )
     return contents_dict
-
-
-# ######################################################################
-# PLOTTING
-# ######################################################################
 
 
 def validate_axes(ax=None):
@@ -303,10 +289,6 @@ class FormattedABC(metaclass=ABCMeta):
                 )
             return argument
 
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
     def __init__(
         self,
         allowed_format: Format,
@@ -319,9 +301,6 @@ class FormattedABC(metaclass=ABCMeta):
                 "instance of the inner class 'Format'.",
             )
 
-    # ------------------------------------------------------------------
-    # OPERATIONS
-    # ------------------------------------------------------------------
     def display(self) -> str:
         """
         Print representation of the instance using the 'pprint' module.
@@ -351,10 +330,6 @@ class FormattedDict(dict, FormattedABC):
         'FormattedDict'. Each type is specified in the values of
         same keys in the 'allowed_format' dictionary.
     """
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
 
     def __init__(
         self,
@@ -432,10 +407,6 @@ class FormattedDict(dict, FormattedABC):
                 "The 'dictionary' parameter must be a 'dict' or 'None'.",
             )
 
-    # ------------------------------------------------------------------
-    # OPERATIONS
-    # ------------------------------------------------------------------
-
     def __setitem__(self, key, value):
         """
         Set the ('key', 'value') item in the instance if 'key' is valid
@@ -473,10 +444,6 @@ class Library(dict):
         If 'None', an empty 'Library' instance is created.
     """
 
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
     def __init__(
         self,
         allowed_type,
@@ -498,10 +465,6 @@ class Library(dict):
         if dictionary is not None:
             for key, value in dictionary.items():
                 self.__setitem__(key, value)
-
-    # ------------------------------------------------------------------
-    # OPERATIONS
-    # ------------------------------------------------------------------
 
     def __setitem__(self, key, value):
         """
@@ -538,10 +501,6 @@ class FormattedLibrary(Library, FormattedABC):
         created.
     """
 
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
     def __init__(
         self,
         allowed_format: FormattedABC.Format,
@@ -556,10 +515,6 @@ class FormattedLibrary(Library, FormattedABC):
         if dictionary is not None:
             for key, value in dictionary.items():
                 self.__setitem__(key, value)
-
-    # ------------------------------------------------------------------
-    # OPERATIONS
-    # ------------------------------------------------------------------
 
     def __setitem__(self, key, value):
         """
