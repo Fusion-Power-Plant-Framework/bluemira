@@ -28,7 +28,7 @@ from __future__ import annotations
 import copy
 import inspect
 import pprint
-from typing import Dict, Iterable, List, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Union
 
 # import mesher lib (gmsh)
 import gmsh
@@ -36,6 +36,8 @@ import gmsh
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.mesh.error import MeshOptionsError
 
+if TYPE_CHECKING:
+    from bluemira.base.components import Component
 # import bluemira modules
 
 
@@ -51,7 +53,7 @@ MESH_DATA = {"points_tag": 0, "cntrpoints_tag": 0, "curve_tag": 1, "surface_tag"
 SUPPORTED_GEOS = ["BluemiraWire", "BluemiraFace", "BluemiraShell", "BluemiraCompound"]
 
 
-def get_default_options():
+def get_default_options() -> dict:
     """
     Returns the default display options.
     """
@@ -68,14 +70,14 @@ class MeshOptions:
         self.modify(**kwargs)
 
     @property
-    def lcar(self):
+    def lcar(self) -> float:
         """
         Mesh size of points.
         """
         return self._options["lcar"]
 
     @lcar.setter
-    def lcar(self, val):
+    def lcar(self, val: float):
         self._options["lcar"] = val
 
     @property
@@ -86,10 +88,10 @@ class MeshOptions:
         return self._options["physical_group"]
 
     @physical_group.setter
-    def physical_group(self, val):
+    def physical_group(self, val: float):
         self._options["physical_group"] = val
 
-    def as_dict(self):
+    def as_dict(self) -> dict:
         """
         Returns the instance as a dictionary.
         """
@@ -142,7 +144,13 @@ class Mesh:
     A class for supporting the creation of meshes and writing out those meshes to files.
     """
 
-    def __init__(self, modelname="Mesh", terminal=0, meshfile=None, logfile="gmsh.log"):
+    def __init__(
+        self,
+        modelname: str = "Mesh",
+        terminal: int = 0,
+        meshfile: Optional[Union[str, List[str]]] = None,
+        logfile: str = "gmsh.log",
+    ):
         self.modelname = modelname
         self.terminal = terminal
         self.meshfile = (
@@ -150,7 +158,7 @@ class Mesh:
         )
         self.logfile = logfile
 
-    def _check_meshfile(self, meshfile):
+    def _check_meshfile(self, meshfile: Union[str, list]) -> List[str]:
         """
         Check the mesh file input.
         """
@@ -166,17 +174,17 @@ class Mesh:
         return meshfile
 
     @property
-    def meshfile(self):
+    def meshfile(self) -> List[str]:
         """
         The path(s) to the file(s) containing the meshes.
         """
         return self._meshfile
 
     @meshfile.setter
-    def meshfile(self, meshfile):
+    def meshfile(self, meshfile: Union[str, List[str]]):
         self._meshfile = self._check_meshfile(meshfile)
 
-    def __call__(self, obj, dim=2):
+    def __call__(self, obj: Union[Component, Meshable], dim: int = 2):
         """
         Generate the mesh and save it to file.
         """
@@ -220,7 +228,7 @@ class Mesh:
 
         return buffer
 
-    def __mesh_obj(self, obj, dim):
+    def __mesh_obj(self, obj, dim: int):
         """
         Function to mesh the object.
         """
@@ -244,7 +252,7 @@ class Mesh:
             bluemira_print("Object already meshed")
         return buffer
 
-    def __convert_item_to_gmsh(self, buffer, dim):
+    def __convert_item_to_gmsh(self, buffer: dict, dim: int):
         for k, v in buffer.items():
             if k == "BluemiraWire":
                 self.__convert_wire_to_gmsh(buffer, dim)
@@ -255,7 +263,7 @@ class Mesh:
             if k == "BluemiraCompound":
                 self.__convert_compound_to_gmsh(buffer, dim)
 
-    def _apply_physical_group(self, buffer):
+    def _apply_physical_group(self, buffer: dict):
         """
         Function to apply physical groups
         """
@@ -277,7 +285,7 @@ class Mesh:
                 for o in v["boundary"]:
                     self._apply_physical_group(o)
 
-    def _apply_mesh_size(self, buffer):
+    def _apply_mesh_size(self, buffer: dict):
         """
         Function to apply mesh size.
         """
@@ -290,7 +298,7 @@ class Mesh:
             for p in points_lcar2:
                 _FreeCADGmsh._set_mesh_size([(0, p[0])], p[1])
 
-    def __create_dict_for_mesh_size(self, buffer):
+    def __create_dict_for_mesh_size(self, buffer: dict):
         """
         Function to create the correct dictionary format for the
         application of the mesh size.
@@ -320,12 +328,12 @@ class Mesh:
 
     def __apply_fragment(
         self,
-        buffer,
-        dim=[2, 1, 0],
+        buffer: dict,
+        dim: List[int] = [2, 1, 0],
         all_ent=None,
         tools=[],
-        remove_object=True,
-        remove_tool=True,
+        remove_object: bool = True,
+        remove_tool: bool = True,
     ):
         """
         Apply the boolean fragment operation.
@@ -336,7 +344,7 @@ class Mesh:
         Mesh.__iterate_gmsh_dict(buffer, _FreeCADGmsh._map_mesh_dict, all_ent, oov)
 
     @staticmethod
-    def _check_intersections(gmsh_dict):
+    def _check_intersections(gmsh_dict: dict):
         """
         Check intersection and add the necessary vertexes to the gmsh dict.
         """
@@ -347,7 +355,7 @@ class Mesh:
             gmsh_dict["points_tag"] = new_points
 
     @staticmethod
-    def __iterate_gmsh_dict(buffer, function, *args):
+    def __iterate_gmsh_dict(buffer: dict, function: Callable, *args):
         """
         Supporting function to iterate over a gmsh dict.
         """
@@ -381,7 +389,7 @@ class Mesh:
             for item in boundary:
                 Mesh.__iterate_gmsh_dict(item, function, *args)
 
-    def __convert_wire_to_gmsh(self, buffer, dim):
+    def __convert_wire_to_gmsh(self, buffer: dict, dim: int):
         """
         Converts a wire to gmsh. If dim is not equal to 1, wire is not meshed.
         """
@@ -425,7 +433,7 @@ class Mesh:
             else:
                 raise NotImplementedError(f"Serialization non implemented for {type_}")
 
-    def __convert_face_to_gmsh(self, buffer, dim):
+    def __convert_face_to_gmsh(self, buffer: dict, dim: int):
         """
         Converts a face to gmsh.
         """
@@ -459,7 +467,7 @@ class Mesh:
                     ]
                     gmsh.model.occ.synchronize()
 
-    def __convert_shell_to_gmsh(self, buffer, dim):
+    def __convert_shell_to_gmsh(self, buffer: dict, dim: int):
         """
         Converts a shell to gmsh.
         """
@@ -481,7 +489,7 @@ class Mesh:
                     for item in boundary:
                         self.__convert_face_to_gmsh(item, dim)
 
-    def __convert_compound_to_gmsh(self, buffer, dim):
+    def __convert_compound_to_gmsh(self, buffer: dict, dim: int):
         """
         Converts a compound to gmsh.
         """
@@ -503,7 +511,7 @@ class Mesh:
                     for item in boundary:
                         self.__convert_item_to_gmsh(item, dim)
 
-    def get_gmsh_dict(self, buffer, format="default"):
+    def get_gmsh_dict(self, buffer: dict, format: str = "default"):
         """
         Returns the gmsh dict in a default (only tags) or gmsh (tuple(dim,
         tag)) format.
@@ -555,7 +563,7 @@ class Mesh:
 
 class _FreeCADGmsh:
     @staticmethod
-    def _initialize_mesh(terminal=1, modelname="Mesh"):
+    def _initialize_mesh(terminal: int = 1, modelname: str = "Mesh"):
         # GMSH file generation #######################
         # Before using any functions in the Python API,
         # Gmsh must be initialized:
@@ -576,12 +584,12 @@ class _FreeCADGmsh:
         gmsh.model.add(modelname)
 
     @staticmethod
-    def _save_mesh(meshfile="Mesh.geo_unrolled"):
+    def _save_mesh(meshfile: str = "Mesh.geo_unrolled"):
         # ... and save it to disk
         gmsh.write(meshfile)
 
     @staticmethod
-    def _finalize_mesh(logfile="gmsh.log"):
+    def _finalize_mesh(logfile: str = "gmsh.log"):
         with open(logfile, "w") as file_handler:
             file_handler.write("\n".join(str(item) for item in gmsh.logger.get()))
 
@@ -591,7 +599,7 @@ class _FreeCADGmsh:
         gmsh.finalize()
 
     @staticmethod
-    def _generate_mesh(mesh_dim=3):
+    def _generate_mesh(mesh_dim: int = 3):
         # Before it can be meshed, the internal CAD representation must
         # be synchronized with the Gmsh model, which will create the
         # relevant Gmsh data structures. This is achieved by the
@@ -607,7 +615,7 @@ class _FreeCADGmsh:
         gmsh.model.mesh.generate(mesh_dim)
 
     @staticmethod
-    def create_gmsh_curve(buffer):
+    def create_gmsh_curve(buffer: dict):
         """
         Function to create gmsh curve from a dictionary (buffer).
         """
@@ -668,7 +676,11 @@ class _FreeCADGmsh:
 
     @staticmethod
     def _fragment(
-        dim=[2, 1, 0], all_ent=None, tools=[], remove_object=True, remove_tool=True
+        dim: List[int] = [2, 1, 0],
+        all_ent: Optional[List[int]] = None,
+        tools=[],
+        remove_object: bool = True,
+        remove_tool: bool = True,
     ):
         if not hasattr(dim, "__len__"):
             dim = [dim]
@@ -690,7 +702,7 @@ class _FreeCADGmsh:
         return all_ent, oo, oov
 
     @staticmethod
-    def _map_mesh_dict(mesh_dict, all_ent, oov):
+    def _map_mesh_dict(mesh_dict: dict, all_ent, oov: list = []):
         dim_dict = {
             "points_tag": 0,
             "cntrpoints_tag": 0,
@@ -724,7 +736,7 @@ class _FreeCADGmsh:
         gmsh.model.occ.synchronize()
 
     @staticmethod
-    def add_physical_group(dim, tags, name=None):
+    def add_physical_group(dim, tags, name: Optional[str] = None):
         tag = gmsh.model.addPhysicalGroup(dim, tags)
         if name is not None:
             gmsh.model.setPhysicalName(dim, tag, name)
