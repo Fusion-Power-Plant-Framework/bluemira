@@ -4,6 +4,7 @@
 Base classes for the power cycle model.
 """
 from abc import ABC, ABCMeta, abstractmethod, abstractproperty
+from dataclasses import dataclass
 from typing import Union
 
 import numpy as np
@@ -37,54 +38,24 @@ class PowerCycleABC(ABC):
 
     """
 
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
     _label_length = 3
 
     def __init__(self, name: str, label=None):
-        self.name = self._validate_name(name)
+        if not isinstance(name, str):
+            raise PowerCycleABCError("name")
 
-        label_length = self._label_length
+        self.name = name
         if label is None:
             label = name[0:label_length]
-        else:
-            label = self._validate_label(label, label_length)
-        self.label = label
-
-    @staticmethod
-    def _validate_name(argument):
-        """
-        Validate an argument to be an instance of the 'str' class to be
-        considered a valid name for an instance of a child class of the
-        PowerCycleABC class.
-        """
-        if not isinstance(argument, str):
-            raise PowerCycleABCError("name")
-        return argument
-
-    @staticmethod
-    def _validate_label(argument, label_length):
-        """
-        Validate an argument to be an instance of the 'str' class, with
-        a maximum length defined by 'label_length', to be considered a
-        valid label for an instance of a child class of the
-        PowerCycleABC class.
-        """
-        argument_type_is_incorrect = not isinstance(argument, str)
-        argument_length_is_incorrect = len(argument) != label_length
-        if argument_type_is_incorrect or argument_length_is_incorrect:
+        elif not isinstance(label, str) and len(label) != self._label_length:
             raise PowerCycleABCError(
                 "label",
-                f"The argument {argument!r} cannot be applied because "
+                f"The argument {label!r} cannot be applied because "
                 "labels for this class must be objects of the 'str' "
-                f"class with an exact length of {label_length!r}.",
+                f"class with an exact length of {self._label_length!r}.",
             )
-        return argument
-
-    # ------------------------------------------------------------------
-    #  OPERATIONS
-    # ------------------------------------------------------------------
+        else:
+            self.label = label
 
     @classmethod
     def validate_class(cls, instance):
@@ -104,13 +75,10 @@ class PowerCycleABC(ABC):
         if type(self) != type(other):
             return False
 
-        this_attributes = self.__dict__
-        other_attributes = other.__dict__
-
         attr_to_ignore = ["name", "label"]
         for attr in attr_to_ignore:
-            this_attributes = copy_dict_without_key(this_attributes, attr)
-            other_attributes = copy_dict_without_key(other_attributes, attr)
+            this_attributes = copy_dict_without_key(self.__dict__, attr)
+            other_attributes = copy_dict_without_key(other.__dict__, attr)
 
         return this_attributes == other_attributes
 
@@ -349,6 +317,19 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
             )
         return plot_object
 
+    def plot_obj(self, ax, x, y, name, kwargs, final_kwargs, plot_or_scatter=True):
+        if plot_or_scatter:
+            plot = getattr(ax, "plot")
+            lab = "(curve)"
+        else:
+            plot = getattr(ax, "scatter")
+            lab = "(data)"
+
+        return [
+            plot(x, y, label=f"{name} {lab}", **final_kwargs),
+            self._add_text_to_point_in_plot(ax, name, x, y, **kwargs),
+        ]
+
     # ------------------------------------------------------------------
     # ARITHMETICS
     # ------------------------------------------------------------------
@@ -363,25 +344,20 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
             return self.__add__(other)
 
 
+@dataclass
+class PhaseLoadConfig:
+    phase_list: list
+    consumption: bool
+    normalise_list: list
+    powerload_list: list
+
+
 class PowerCycleImporterABC(metaclass=ABCMeta):
     """
     Abstract base class for classes in the NET submodule of the Power
     Cycle module that are used to import data from other Bluemira
     modules into the Power Cycle module.
     """
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
-    _phaseload_inputs_format = FormattedDict.Format(
-        {
-            "phase_list": list,
-            "consumption": bool,
-            "normalize_list": list,
-            "powerload_list": list,
-        }
-    )
 
     # ------------------------------------------------------------------
     #  OPERATIONS
@@ -407,7 +383,7 @@ class PowerCycleImporterABC(metaclass=ABCMeta):
         following keys and values:
             - "phase_list": 'list' of 'str',
             - "consumption: 'bool',
-            - "normalize_list": 'list' of 'bool',
+            - "normalise_list": 'list' of 'bool',
             - "powerload_list": 'list' of ''PowerLoad' objects.
 
         Strings in "phase_list" indicate the phase labels in which the
@@ -415,7 +391,7 @@ class PowerCycleImporterABC(metaclass=ABCMeta):
         The boolean in "consumption" indicate whether these loads are of
         power consumption or production (and thus positive or negative
         contributions in the net power balance).
-        The booleans in "normalize_list" enforce time normalization to
+        The booleans in "normalise_list" enforce time normalization to
         each "PowerLoad" in the "powerload_list", when each 'PhaseLoad'
         is instantiated.
 
