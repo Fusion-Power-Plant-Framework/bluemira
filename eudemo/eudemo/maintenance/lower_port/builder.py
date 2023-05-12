@@ -29,13 +29,23 @@ import numpy as np
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, extrude_shape, offset_wire
 from bluemira.geometry.wire import BluemiraWire
-from eudemo.maintenance.lower_port.parameterisations import LowerPortBuilderParams
+from dataclasses import dataclass
+
+
+@dataclass
+class LowerPortBuilderParams(ParameterFrame):
+    """LowerPort ParameterFrame"""
+
+    n_TF: Parameter[int]
+
+    lp_duct_angle: Parameter[float]
+    lp_duct_wall_tk: Parameter[float]
 
 
 class LowerPortBuilder(Builder):
@@ -43,8 +53,8 @@ class LowerPortBuilder(Builder):
     Lower Port Builder
     """
 
-    DUCT = "Lower Duct"
     param_cls = LowerPortBuilderParams
+    DUCT = "Lower Duct"
 
     def __init__(
         self,
@@ -59,9 +69,9 @@ class LowerPortBuilder(Builder):
         self.angled_duct_inner_boundary = angled_duct_inner_boundary
         self.straight_duct_inner_boundary = straight_duct_inner_boundary
 
-        self.lower_duct_wall_tk = self.params.lower_duct_wall_tk.value
-        self.lower_duct_angle = self.params.lower_duct_angle.value
         self.n_TF = self.params.n_TF.value
+        self.duct_angle = self.params.lp_duct_angle.value
+        self.wall_tk = self.params.lp_duct_wall_tk.value
 
     def build(self) -> Component:
         """
@@ -87,17 +97,17 @@ class LowerPortBuilder(Builder):
         """
         angled_duct_hollow_face = self._hollow_face_from_inner_bndry(
             self.angled_duct_inner_boundary,
-            face_thickness=self.lower_duct_wall_tk,
+            face_thickness=self.wall_tk,
         )
         straight_duct_backwall_face = BluemiraFace(
-            offset_wire(self.straight_duct_inner_boundary, self.lower_duct_wall_tk)
+            offset_wire(self.straight_duct_inner_boundary, self.wall_tk)
         )
         straight_duct_hollow_face = self._hollow_face_from_inner_bndry(
             self.straight_duct_inner_boundary,
-            face_thickness=self.lower_duct_wall_tk,
+            face_thickness=self.wall_tk,
         )
 
-        if self.lower_duct_angle < -45:
+        if self.duct_angle < -45:
             angled_duct_extrude_extent = abs(
                 (
                     self.angled_duct_inner_boundary.bounding_box.z_max
@@ -105,7 +115,7 @@ class LowerPortBuilder(Builder):
                         self.straight_duct_inner_boundary.bounding_box.z_max - 1
                     )  # -1 to make sure it goes through
                 )
-                / np.sin(np.deg2rad(self.lower_duct_angle))
+                / np.sin(np.deg2rad(self.duct_angle))
             )
         else:
             angled_duct_extrude_extent = abs(
@@ -115,16 +125,12 @@ class LowerPortBuilder(Builder):
                         self.straight_duct_inner_boundary.bounding_box.x_min + 1
                     )  # +1 to make sure it goes through
                 )
-                / np.cos(np.deg2rad(self.lower_duct_angle))
+                / np.cos(np.deg2rad(self.duct_angle))
             )
         straight_duct_extrude_extent = 20
 
-        duct_heading_x = (
-            np.cos(np.deg2rad(self.lower_duct_angle)) * angled_duct_extrude_extent
-        )
-        duct_heading_z = (
-            np.sin(np.deg2rad(self.lower_duct_angle)) * angled_duct_extrude_extent
-        )
+        duct_heading_x = np.cos(np.deg2rad(self.duct_angle)) * angled_duct_extrude_extent
+        duct_heading_z = np.sin(np.deg2rad(self.duct_angle)) * angled_duct_extrude_extent
         angled_duct = extrude_shape(
             angled_duct_hollow_face,
             (duct_heading_x, 0, duct_heading_z),
@@ -132,7 +138,7 @@ class LowerPortBuilder(Builder):
 
         straight_duct_backwall = extrude_shape(
             straight_duct_backwall_face,
-            straight_duct_backwall_face.normal_at() * self.lower_duct_wall_tk,
+            straight_duct_backwall_face.normal_at() * self.wall_tk,
         )
         straight_duct_length = extrude_shape(
             straight_duct_hollow_face,
