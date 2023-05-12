@@ -28,7 +28,7 @@ from warnings import warn
 import anytree
 from rich.progress import track
 
-from bluemira.base.components import Component
+from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
@@ -61,7 +61,7 @@ class BaseManager(abc.ABC):
     def show_cad(
         self,
         *dims: str,
-        filter_: Union[Callable, None],
+        filter_: Union[Callable[[PhysicalComponent], bool], None],
         **kwargs,
     ):
         """
@@ -72,10 +72,14 @@ class BaseManager(abc.ABC):
         *dims:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
+        filter_:
+            A callable to filter PhysicalComponents from the Component tree
         """
 
     @abc.abstractmethod
-    def plot(self, *dims: str, filter_: Union[Callable, None]):
+    def plot(
+        self, *dims: str, filter_: Union[Callable[[PhysicalComponent], bool], None]
+    ):
         """
         Plot the component.
 
@@ -84,6 +88,8 @@ class BaseManager(abc.ABC):
         *dims:
             The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
             (default: 'xz')
+        filter_:
+            A callable to filter PhysicalComponents from the Component tree
         """
 
     def tree(self) -> str:
@@ -136,7 +142,7 @@ class BaseManager(abc.ABC):
         self,
         comp: Component,
         dims_to_show: Tuple[str, ...],
-        filter_: Union[Callable, None],
+        filter_: Union[Callable[[PhysicalComponent], bool], None],
     ) -> Component:
         """
         Filter a component tree
@@ -154,7 +160,7 @@ class BaseManager(abc.ABC):
         self,
         comp: Component,
         dims_to_show: Tuple[str, ...],
-        filter_: Union[Callable, None],
+        filter_: Union[Callable[[PhysicalComponent], bool], None],
     ):
         for i, dim in enumerate(dims_to_show):
             ComponentPlotter(view=dim).plot_2d(
@@ -242,7 +248,7 @@ class ComponentManager(BaseManager):
     def show_cad(
         self,
         *dims: str,
-        filter_: Union[Callable, None] = FilterMaterial(),
+        filter_: Union[Callable[[PhysicalComponent], bool], None] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -253,6 +259,8 @@ class ComponentManager(BaseManager):
         *dims:
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
+        filter_:
+            A callable to filter PhysicalComponents from the Component tree
         """
         ComponentDisplayer().show_cad(
             self._filter_tree(
@@ -261,7 +269,11 @@ class ComponentManager(BaseManager):
             **kwargs,
         )
 
-    def plot(self, *dims: str, filter_: Union[Callable, None] = FilterMaterial()):
+    def plot(
+        self,
+        *dims: str,
+        filter_: Union[Callable[[PhysicalComponent], bool], None] = FilterMaterial(),
+    ):
         """
         Plot the component.
 
@@ -270,6 +282,8 @@ class ComponentManager(BaseManager):
         *dims:
             The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
             (default: 'xz')
+        filter_:
+            A callable to filter PhysicalComponents from the Component tree
         """
         self._plot_dims(self.component(), self._validate_plot_dims(*dims), filter_)
 
@@ -397,7 +411,7 @@ class Reactor(BaseManager):
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
-        filter_: Union[Callable, None] = FilterMaterial(),
+        filter_: Union[Callable[[PhysicalComponent], bool], None] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -414,6 +428,8 @@ class Reactor(BaseManager):
         n_sectors:
             The number of sectors to construct when displaying CAD for xyz
             Defaults to None, which means show "all" sectors.
+        filter_:
+            A callable to filter PhysicalComponents from the Component tree
         """
         dims_to_show = self._validate_cad_dims(*dims, **kwargs)
 
@@ -439,7 +455,7 @@ class Reactor(BaseManager):
         self,
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
-        filter_: Union[Callable, None] = FilterMaterial(),
+        filter_: Union[Callable[[PhysicalComponent], bool], None] = FilterMaterial(),
     ):
         """
         Plot the reactor.
@@ -452,6 +468,8 @@ class Reactor(BaseManager):
         with_components:
             The components to construct when displaying CAD for xyz.
             Defaults to None, which means show "all" components.
+        filter_:
+            A callable to filter PhysicalComponents from the Component tree
         """
         self._plot_dims(
             self.component(with_components), self._validate_plot_dims(*dims), filter_

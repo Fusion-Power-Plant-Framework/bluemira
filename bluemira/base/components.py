@@ -92,7 +92,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def filter_components(
         self,
         names: Iterable[str],
-        filter_: Optional[Callable[[anytree.Node], bool]] = None,
+        filter_: Optional[Callable[[PhysicalComponent], bool]] = None,
     ):
         """
         Removes all components from the tree, starting at this component,
@@ -103,6 +103,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         ----------
         names:
             The list of names of each component to search for.
+        filter_:
+            A callable to filter PhysicalComponents from the Component tree
 
         Notes
         -----
@@ -201,7 +203,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component(
         self, name: str, first: bool = True, full_tree: bool = False
-    ) -> Union[Component, Iterable[Component], None]:
+    ) -> Union[Component, Tuple[Component], None]:
         """
         Find the components with the specified name.
 
@@ -283,7 +285,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def _get_thing(
         self, filter_: Union[Callable, None], first: bool, full_tree: bool
-    ) -> Union[Component, Iterable[Component], None]:
+    ) -> Union[Component, Tuple[Component], None]:
         found_nodes = anytree.search.findall(
             self.root if full_tree else self, filter_=filter_
         )
