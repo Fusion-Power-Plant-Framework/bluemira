@@ -20,9 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-EUDEMO Lower Port Builder
+EUDEMO Lower Port Duct Builder
 """
 
+from dataclasses import dataclass
 from typing import Dict, Union
 
 import numpy as np
@@ -35,12 +36,11 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, extrude_shape, offset_wire
 from bluemira.geometry.wire import BluemiraWire
-from dataclasses import dataclass
 
 
 @dataclass
-class LowerPortBuilderParams(ParameterFrame):
-    """LowerPort ParameterFrame"""
+class LowerPortDuctBuilderParams(ParameterFrame):
+    """Lower Port Duct Builder Parameters"""
 
     n_TF: Parameter[int]
 
@@ -48,13 +48,13 @@ class LowerPortBuilderParams(ParameterFrame):
     lp_duct_wall_tk: Parameter[float]
 
 
-class LowerPortBuilder(Builder):
+class LowerPortDuctBuilder(Builder):
     """
-    Lower Port Builder
+    Lower Port Duct Builder
     """
 
-    param_cls = LowerPortBuilderParams
-    DUCT = "Lower Duct"
+    param_cls = LowerPortDuctBuilderParams
+    DUCT = "Lower Port Duct"
 
     def __init__(
         self,
@@ -95,14 +95,14 @@ class LowerPortBuilder(Builder):
         """
         Build the Lower Port in XYZ.
         """
-        angled_duct_hollow_face = self._hollow_face_from_inner_bndry(
+        angled_duct_hollow_face = self._hollow_face_from_inner_boundary(
             self.angled_duct_inner_boundary,
             face_thickness=self.wall_tk,
         )
         straight_duct_backwall_face = BluemiraFace(
             offset_wire(self.straight_duct_inner_boundary, self.wall_tk)
         )
-        straight_duct_hollow_face = self._hollow_face_from_inner_bndry(
+        straight_duct_hollow_face = self._hollow_face_from_inner_boundary(
             self.straight_duct_inner_boundary,
             face_thickness=self.wall_tk,
         )
@@ -166,11 +166,11 @@ class LowerPortBuilder(Builder):
         return pc
 
     @staticmethod
-    def _hollow_face_from_inner_bndry(
-        inner_bndry: BluemiraWire,
+    def _hollow_face_from_inner_boundary(
+        inner_boundary: BluemiraWire,
         face_thickness: float,
     ) -> BluemiraFace:
         return boolean_cut(
-            BluemiraFace(offset_wire(inner_bndry, face_thickness)),
-            [BluemiraFace(inner_bndry)],
+            BluemiraFace(offset_wire(inner_boundary, face_thickness)),
+            [BluemiraFace(inner_boundary)],
         )[0]

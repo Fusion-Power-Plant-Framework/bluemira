@@ -22,6 +22,7 @@
 """
 EU-DEMO Lower Port
 """
+from dataclasses import dataclass
 from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
@@ -40,7 +41,6 @@ from bluemira.geometry.tools import (
     offset_wire,
 )
 from bluemira.geometry.wire import BluemiraWire
-from dataclasses import dataclass
 
 
 @dataclass

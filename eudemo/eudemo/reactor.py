@@ -71,7 +71,7 @@ from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.lower_port import (
     LowerPort,
-    LowerPortBuilder,
+    LowerPortDuctBuilder,
     LowerPortDuctDesigner,
 )
 from eudemo.maintenance.upper_port import UpperPortDesigner
@@ -152,7 +152,7 @@ def build_lower_port(
         angled_duct_boundary,
         straight_duct_boundary,
     ) = designer.execute()
-    builder = LowerPortBuilder(
+    builder = LowerPortDuctBuilder(
         params,
         build_config,
         lower_duct_koz,
