@@ -175,9 +175,9 @@ class FilterMaterial:
 
     Parameters
     ----------
-    material:
+    keep_material:
        materials to include
-    not_material:
+    reject_material:
        materials to exclude
 
     """
