@@ -28,7 +28,7 @@ from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._geometry import _tools
-from bluemira.optimisation._geometry._typing import (
+from bluemira.optimisation._geometry.typing import (
     GeomConstraintT,
     GeomOptimiserCallable,
     GeomOptimiserObjective,

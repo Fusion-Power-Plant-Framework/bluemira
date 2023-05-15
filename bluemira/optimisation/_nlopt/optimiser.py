@@ -34,8 +34,8 @@ from bluemira.optimisation._nlopt.functions import (
     ObjectiveFunction,
 )
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._typing import ObjectiveCallable, OptimiserCallable
 from bluemira.optimisation.error import OptimisationError, OptimisationParametersError
+from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
 
 _NLOPT_ALG_MAPPING = {
     Algorithm.SLSQP: nlopt.LD_SLSQP,
