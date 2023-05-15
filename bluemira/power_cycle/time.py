@@ -4,20 +4,17 @@
 Classes to define the timeline for Power Cycle simulations.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Dict, List, Union
+
+from numpy.typing import ArrayLike
 
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.base import PowerCycleTimeABC
-from bluemira.power_cycle.errors import PowerCyclePhaseError, ScenarioBuilderError
+from bluemira.power_cycle.errors import ScenarioBuilderError
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
 from bluemira.power_cycle.net.manager import ModuleType
-from bluemira.power_cycle.tools import (
-    read_json,
-    validate_file,
-    validate_list,
-    validate_nonnegative,
-)
+from bluemira.power_cycle.tools import read_json, validate_file, validate_nonnegative
 
 
 class PowerCyclePhase(PowerCycleTimeABC):
@@ -37,26 +34,11 @@ class PowerCyclePhase(PowerCycleTimeABC):
     def __init__(
         self,
         name,
-        duration_breakdown: Dict[str, Union[int, float]],
+        duration_breakdown: float,
         label=None,
     ):
-        breakdown = self._validate_breakdown(duration_breakdown)
-        durations_list = list(breakdown.values())
-
-        super().__init__(name, durations_list, label=label)
-        self.duration_breakdown = breakdown
-
-    @staticmethod
-    def _validate_breakdown(duration_breakdown):
-        """
-        Validate 'duration_breakdown' input to be a dictionary with
-        keys of the 'str' class and non-negative numbers as values.
-        """
-        for key, value in duration_breakdown.items():
-            if not isinstance(key, str):
-                raise PowerCyclePhaseError("breakdown")
-            validate_nonnegative(value)
-        return duration_breakdown
+        super().__init__(name, [validate_nonnegative(duration_breakdown)], label=label)
+        self.duration_breakdown = validate_nonnegative(duration_breakdown)
 
 
 class PowerCyclePulse(PowerCycleTimeABC):
@@ -74,31 +56,18 @@ class PowerCyclePulse(PowerCycleTimeABC):
     def __init__(
         self,
         name,
-        phase_set: Union[PowerCyclePhase, List[PowerCyclePhase]],
+        phase_set: List[PowerCyclePhase],
         label=None,
     ):
-        self.phase_set = self._validate_phase_set(phase_set)
-        durations_list = self._build_durations_list(phase_set)
-        super().__init__(name, durations_list, label=label)
-
-    @staticmethod
-    def _validate_phase_set(phase_set):
-        """
-        Validate 'phase_set' input to be a list of 'PowerCyclePhase'
-        instances.
-        """
-        phase_set = validate_list(phase_set)
-        for element in phase_set:
-            PowerCyclePhase.validate_class(element)
-        return phase_set
+        super().__init__(name, self._build_durations_list(phase_set), label=label)
+        self.phase_set = phase_set
 
     def build_phase_library(self):
         """
         Returns a 'dict' with phase labels as keys and the phases
         themselves as values.
         """
-        phase_library = {phase.label: phase for phase in self.phase_set}
-        return phase_library
+        return {phase.label: phase for phase in self.phase_set}
 
 
 class PowerCycleScenario(PowerCycleTimeABC):
@@ -120,23 +89,11 @@ class PowerCycleScenario(PowerCycleTimeABC):
     def __init__(
         self,
         name,
-        pulse_set: Union[PowerCyclePulse, List[PowerCyclePulse]],
+        pulse_set: List[PowerCyclePulse],
         label=None,
     ):
-        self.pulse_set = self._validate_pulse_set(pulse_set)
-        durations_list = self._build_durations_list(self.pulse_set)
-        super().__init__(name, durations_list, label=label)
-
-    @staticmethod
-    def _validate_pulse_set(pulse_set):
-        """
-        Validate 'pulse_set' input to be a list of 'PowerCyclePulse'
-        instances.
-        """
-        pulse_set = validate_list(pulse_set)
-        for element in pulse_set:
-            PowerCyclePulse.validate_class(element)
-        return pulse_set
+        super().__init__(name, self._build_durations_list(self.pulse_set), label=label)
+        self.pulse_set = pulse_set
 
     def build_phase_library(self):
         """
@@ -153,8 +110,7 @@ class PowerCycleScenario(PowerCycleTimeABC):
         Returns a 'dict' with pulse labels as keys and the pulses
         themselves as values.
         """
-        pulse_library = {pulse.label: pulse for pulse in self.pulse_set}
-        return pulse_library
+        return {pulse.label: pulse for pulse in self.pulse_set}
 
 
 @dataclass
@@ -168,6 +124,7 @@ class ScenarioConfig:
 class PulseConfig:
     name: str
     phases: list
+    label: str
 
 
 @dataclass
@@ -183,6 +140,25 @@ class BreakdownConfig:
     module: Union[None, str, ModuleType]
     variable_map: dict
 
+    _module: ModuleType = field(init=False, repr=False)
+
+    @property
+    def module(self):
+        return self._module
+
+    @module.setter
+    def module(self, value):
+        if value is None:
+            self._module = ModuleType.NONE
+        elif isinstance(value, str):
+            self._module = ModuleType[value.upper()]
+
+
+@dataclass
+class Breakdown:
+    name: str
+    duration: ArrayLike
+
 
 @dataclass
 class ScenarioBulderConfig:
@@ -190,6 +166,55 @@ class ScenarioBulderConfig:
     pulse_library: dict
     phase_library: dict
     breakdown_library: dict
+
+    _scenario: ScenarioConfig = field(init=False, repr=False)
+    _pulse_library: Dict[str, PulseConfig] = field(init=False, repr=False)
+    _phase_library: Dict[str, PhaseConfig] = field(init=False, repr=False)
+    _breakdown_library: Dict[str, BreakdownConfig] = field(init=False, repr=False)
+
+    @property
+    def scenario(self):
+        return self._scenario
+
+    @scenario.setter
+    def scenario(self, value: Union[dict, ScenarioConfig]):
+        if isinstance(value, ScenarioConfig):
+            self._scenario = value
+        else:
+            self._scenario = ScenarioConfig(**value)
+
+    @property
+    def pulse_library(self):
+        return self._pulse_library
+
+    @pulse_library.setter
+    def pulse_library(self, value: dict):
+        for k, v in value.items():
+            if not isinstance(v, PulseConfig):
+                value[k] = PulseConfig(**v)
+        self._pulse_library = value
+
+    @property
+    def phase_library(self):
+        return self._phase_library
+
+    @phase_library.setter
+    def phase_library(self, value: dict):
+        for k, v in value.items():
+            if not isinstance(v, PhaseConfig):
+                value[k] = PhaseConfig(**v)
+        self._phase_library = value
+
+    @property
+    def breakdown_library(self):
+        return self._breakdown_library
+
+    @breakdown_library.setter
+    def breakdown_library(self, value: dict):
+        for k, v in value.items():
+            if not isinstance(v, BreakdownConfig):
+                value[k] = BreakdownConfig(**v)
+        self._breakdown_library = value
 
 
 class ScenarioBuilder:
@@ -213,57 +238,30 @@ class ScenarioBuilder:
     """
 
     def __init__(self, config_path: str):
-        validated_path = validate_file(config_path)
-
-        scenario_builder_config = self._validate_config(read_json(validated_path))
-
-        breakdown_library = self._build_breakdown_library(
-            breakdown_config,
+        self._scenario_config_path = validate_file(config_path)
+        self.scenario_config = ScenarioBulderConfig(
+            **read_json(self._scenario_config_path)
         )
 
-        phase_library = self._build_phase_library(
-            phase_config,
-            breakdown_library,
-        )
+        self._build_breakdown_library()
 
-        pulse_library = self._build_pulse_library(
-            pulse_config,
-            phase_library,
-        )
+        self._build_phase_library()
 
-        scenario = self._build_scenario(
-            scenario_config,
-            pulse_library,
-        )
+        self._build_pulse_library()
 
-        self._scenario_config_path = validated_path
-        self._breakdown_library = breakdown_library
-        self._phase_library = phase_library
-        self._pulse_library = pulse_library
+        self._build_scenario()
 
-        self.scenario = scenario
-
-    @classmethod
-    def _validate_config(cls, json_contents):
-        scenario_builder_config = ScenarioBulderConfig(**json_contents)
-        scenario_builder_config.scenario = ScenarioConfig(
-            **scenario_builder_config.scenario
-        )
-        scenario_builder_config.pulse_library = {
-            k: PulseConfig(**v) for k, v in scenario_builder_config.pulse_library.items()
+    def _build_breakdown_library(self):
+        self._breakdown_library = {
+            k: Breakdown(
+                v.name,
+                self.import_duration(v.module, v.variable_map),
+            )
+            for k, v in self.scenario_config.breakdown_library.items()
         }
-        scenario_builder_config.phase_library = {
-            k: PhaseConfig(**v) for k, v in scenario_builder_config.phase_library.items()
-        }
-        scenario_builder_config.breakdown_library = {
-            k: BreakdownConfig(**v)
-            for k, v in scenario_builder_config.breakdown_library.items()
-        }
-
-        return scenario_builder_config
 
     @staticmethod
-    def import_duration(module, variables_map):
+    def import_duration(module: ModuleType, variables_map: dict) -> ArrayLike:
         """
         Method that unpacks the 'variables_map' field of a JSON input
         file.
@@ -276,84 +274,50 @@ class ScenarioBuilder:
             duration = raw_uc(variables_map["duration"], variables_map["unit"], "second")
         return duration
 
-    @classmethod
-    def _build_breakdown_library(cls, breakdown_config):
-        return {
-            element_label: {
-                element_specs["name"]: cls.import_duration(
-                    element_specs["module"], element_specs["variables_map"]
-                )
-            }
-            for element_label, element_specs in breakdown_config.items()
-        }
-
-    @staticmethod
-    def _build_phase_breakdown(breakdown_library, breakdown_list, operator):
-        phase_breakdown = {}
-        last_value = 0
-        for label in breakdown_list:
-            try:
-                element = breakdown_library[label]
-            except KeyError:
-                raise ScenarioBuilderError(
-                    "library",
-                    f"Breakdown element {label!r} has not been defined.",
-                )
-
-            element_key = list(element.keys())[0]
-            element_value = element[element_key]
-            if operator == "&":
-                pass
-            elif operator == "|":
-                if element_value > last_value:
-                    phase_breakdown = {}
-                    last_value = element_value
-            else:
-                raise ScenarioBuilderError(
-                    "operator",
-                    f"Unknown routine for {operator!r} operator.",
-                )
-            phase_breakdown[element_key] = element_value
-
-        return phase_breakdown
-
-    @classmethod
-    def _build_phase_library(cls, phase_config, breakdown_library):
-        return {
-            phase_label: PowerCyclePhase(
-                phase_specs["name"],
-                cls._build_phase_breakdown(
-                    breakdown_library, phase_specs["breakdown"], phase_specs["logical"]
+    def _build_phase_library(self):
+        self._phase_library = {
+            k: PowerCyclePhase(
+                v.name,
+                self._build_phase_logical(
+                    [self._breakdown_library[br].duration for br in v.breakdown],
+                    v.logical,
                 ),
-                label=phase_label,
             )
-            for phase_label, phase_specs in phase_config.items()
+            for k, v in self.scenario_config.phase_library.items()
         }
 
-    @staticmethod
-    def _build_time_set(time_library, time_list):
-        return [time_library[label] for label in time_list]
-
-    @classmethod
-    def _build_pulse_library(cls, pulse_config, phase_library):
-        return {
-            pulse_label: PowerCyclePulse(
-                pulse_specs["name"],
-                cls._build_time_set(phase_library, pulse_specs["phases"]),
-                label=pulse_label,
+    def _build_phase_logical(self, durations, operator) -> float:
+        if operator == "&":
+            pass
+        elif operator == "|":
+            return max(durations)
+        else:
+            raise ScenarioBuilderError(
+                "operator",
+                f"Unknown routine for {operator!r} operator.",
             )
-            for pulse_label, pulse_specs in pulse_config.items()
+
+    def _build_pulse_library(self):
+        self._pulse_library = {
+            k: PowerCyclePulse(
+                v.name,
+                [self._phase_library[label] for label in v.phases],
+                v.label,
+            )
+            for k, v in self.scenario_config.pulse_library.items()
         }
 
-    @classmethod
-    def _build_scenario(cls, scenario_config, pulse_library):
+    def _build_scenario(self):
         """
         Currently ignores the 'repetition' input and just uses a single
         pulse as the scenario. To be altered to contain multiple pulses.
         """
         # pulse_repetitions = scenario_config["repetition"]
 
-        return PowerCycleScenario(
-            scenario_config["name"],
-            cls._build_time_set(pulse_library, scenario_config["pulses"]),
+        self.scenario = PowerCycleScenario(
+            self.scenario_config.scenario.name,
+            [
+                self._pulse_library[label]
+                for label in self.scenario_config.scenario.pulses
+            ],
         )

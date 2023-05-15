@@ -43,16 +43,21 @@ class LoadType(Enum):
 @dataclass
 class PowerCycleLoadConfig:
     name: str
-    _module: Union[None, str, ModuleType]
+    module: Union[None, str, ModuleType]
     variables_map: dict
 
-    module: ModuleType
+    _module: ModuleType = field(init=False, repr=False)
 
-    def __post_init__(self):
-        if self.module is None:
-            self.module = ModuleType.NONE
-        elif isinstance(self.module, str):
-            self.module = ModuleType[self.module.upper()]
+    @property
+    def module(self):
+        return self._module
+
+    @module.setter
+    def module(self, value):
+        if value is None:
+            self._module = ModuleType.NONE
+        elif isinstance(value, str):
+            self._module = ModuleType[value.upper()]
 
 
 @dataclass
