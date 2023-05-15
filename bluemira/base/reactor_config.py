@@ -4,7 +4,7 @@ import json
 import pprint
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Iterable, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Iterable, Optional, Tuple, Type, TypeVar, Union
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_warn
@@ -20,7 +20,9 @@ class ConfigParams:
 
 
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
+
 _PARAMETERS_KEY = "params"
+_FILEPATH_PREFIX = "$"
 
 
 class ReactorConfig:
@@ -231,30 +233,35 @@ class ReactorConfig:
             if not isinstance(a, str):
                 raise ReactorConfigError("args must be strings")
 
-    def _get_nested_filepaths(
-        self,
-        current_layer: str,
-        current_arg_key: str,
-        arg_keys: Tuple[str],
-        next_idx: int,
-    ) -> Dict:
-        if not Path(current_layer).resolve().is_file():
-            if isinstance(self._config_path, str):
-                current_layer = str(Path(self._config_path).parent / current_layer)
-            if not Path(current_layer).resolve().is_file():
-                raise FileNotFoundError(f"Cannot find file {current_layer}")
+    def _expand_filepath_if_needed(self, value: Any, expand_nested_paths: bool) -> dict:
+        if not isinstance(value, str):
+            return value
+        if not value.startswith(_FILEPATH_PREFIX):
+            return value
 
-        new_layer = self._read_json_file(current_layer)
+        # remove _FILEPATH_PREFIX
+        f_path = value[len(_FILEPATH_PREFIX) :]
 
-        # Dont need to load files repeatedly so put it back in config_data
-        if next_idx == 1:
-            self.config_data[current_arg_key] = new_layer
-        else:
-            tmp_dict = self.config_data
-            for key in arg_keys[: next_idx - 1]:
-                tmp_dict = tmp_dict[key]
-            tmp_dict[current_arg_key] = new_layer
-        return new_layer
+        # replace . with a path relative to the config file
+        if f_path.startswith("."):
+            if not isinstance(self._config_path, str):
+                raise ReactorConfigError(
+                    "Can only use relative paths with a path config"
+                )
+            # handles removing the first . and the /
+            f_path = Path(self._config_path).parent / f_path
+
+        # check if file exists
+        if not Path(f_path).resolve().is_file():
+            raise FileNotFoundError(f"Cannot find file {f_path}")
+
+        f_data = self._read_json_file(f_path)
+        if expand_nested_paths:
+            for k, v in f_data.items():
+                # don't go further that one level deep
+                f_data[k] = self._expand_filepath_if_needed(v, False)
+
+        return f_data
 
     def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
         extracted = {}
@@ -267,20 +274,19 @@ class ReactorConfig:
             current_layer = current_layer.get(current_arg_key, {})
             next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
 
-            if isinstance(current_layer, str) and current_layer.endswith(".json"):
-                current_layer = self._get_nested_filepaths(
-                    current_layer, current_arg_key, arg_keys, next_idx
-                )
             to_extract = current_layer
-
             if not is_config:
                 # if doing a params extraction,
                 # get the values from the _PARAMETERS_KEY
                 to_extract = current_layer.get(_PARAMETERS_KEY, {})
-                if isinstance(to_extract, str) and to_extract.endswith(".json"):
-                    to_extract = self._get_nested_filepaths(
-                        to_extract, _PARAMETERS_KEY, arg_keys, next_idx + 1
-                    )
+
+            to_extract = self._expand_filepath_if_needed(to_extract, True)
+            if not isinstance(to_extract, dict):
+                raise ReactorConfigError(
+                    f"Arg ${current_arg_key} is too specific, "
+                    "it must be bound to a dict (or JSON object), "
+                    "or be a path to one."
+                )
 
             # add all keys not in extracted already
             # if doing a config, ignore the "params" (_PARAMETERS_KEY)
@@ -294,6 +300,7 @@ class ReactorConfig:
                         continue
                     if next_arg_key and k == next_arg_key:
                         continue
+                v = self._expand_filepath_if_needed(v, True)
                 extracted[k] = v
 
         return extracted

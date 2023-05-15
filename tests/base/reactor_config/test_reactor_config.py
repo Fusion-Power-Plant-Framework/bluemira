@@ -225,13 +225,10 @@ class TestReactorConfigClass:
         }
         reactor_config = ReactorConfig(nested_params_config_path.as_posix(), EmptyFrame)
         assert reactor_config.config_data == {
-            "Tester": {"params": "reactor_params.global.json"}
+            "Tester": {"params": "$./reactor_params.global.json"}
         }
         pf = make_parameter_frame(reactor_config.params_for("Tester"), TestGlobalParams)
         assert pf == TestGlobalParams.from_dict(out_dict)
-
-        # Stored in memory test
-        assert reactor_config.config_data == {"Tester": {"params": out_dict}}
 
     def test_file_path_loading_in_json_nested_config(self):
         reactor_config = ReactorConfig(nested_config_path.as_posix(), EmptyFrame)
