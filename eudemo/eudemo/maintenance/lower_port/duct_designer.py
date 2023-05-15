@@ -114,19 +114,19 @@ class LowerPortDuctDesigner(Designer):
         ) = self._duct_xz_shapes(ib_div_pt_padded, ob_div_pt_padded)
         duct_w_wall_xz_koz = BluemiraFace(duct_outer_xz_boundary)
 
-        angled_duct_inner_xy_boundary = self._angled_duct_nowall_xy_boundary(
+        duct_angled_nowall_extrude_boundary = self._angled_duct_nowall_xy_boundary(
             ib_div_pt_padded, ob_div_pt_padded
         )
 
-        straight_duct_inner_yz_boundary = self._straight_duct_inner_yz_boundary(
+        duct_straight_nowall_extrude_boundary = self._straight_duct_inner_yz_boundary(
             straight_top_inner_pt, straight_bot_inner_pt
         )
 
         return (
             duct_inner_xz_boundary,
             duct_w_wall_xz_koz,
-            angled_duct_inner_xy_boundary,
-            straight_duct_inner_yz_boundary,
+            duct_angled_nowall_extrude_boundary,
+            duct_straight_nowall_extrude_boundary,
         )
 
     @property

@@ -23,6 +23,6 @@ Module containing components for the EUDEMO Lower Port
 """
 
 
-from eudemo.maintenance.lower_port.builder import LowerPortDuctBuilder
-from eudemo.maintenance.lower_port.designer import LowerPortDuctDesigner
+from eudemo.maintenance.lower_port.builder import LowerPortBuilder
+from eudemo.maintenance.lower_port.duct_designer import LowerPortDuctDesigner
 from eudemo.maintenance.lower_port.manager import LowerPort

@@ -29,10 +29,14 @@ from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_fuse, make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
-from eudemo.maintenance.lower_port.designer import LowerPortDuctDesignerParams
+from eudemo.maintenance.lower_port.builder import LowerPortBuilder
+from eudemo.maintenance.lower_port.duct_designer import (
+    LowerPortDuctDesigner,
+    LowerPortDuctDesignerParams,
+)
 
 
-class TestLowerPortDuctDesigner:
+class TestLowerPort:
     """Test Lower Port Duct Designer"""
 
     @classmethod
@@ -41,22 +45,38 @@ class TestLowerPortDuctDesigner:
             [
                 make_polygon(
                     [
-                        [-1, 0, 1],
-                        [0, 0, 0],
-                        [0, 0, 0],
+                        [4, 6],
+                        [0, 0],
+                        [0, 0],
                     ]
                 ),
-                make_circle(1, start_angle=-180, end_angle=0, axis=(0, -1, 0)),
+                make_circle(
+                    1, center=(5, 0, 0), start_angle=-180, end_angle=0, axis=(0, -1, 0)
+                ),
+            ]
+        )
+        cls.tf_coils_outer_boundary = BluemiraWire(
+            [
+                make_polygon(
+                    [
+                        [3, 3],
+                        [0, 0],
+                        [8, -8],
+                    ]
+                ),
+                make_circle(
+                    8, center=(3, 0, 0), start_angle=-90, end_angle=90, axis=(0, -1, 0)
+                ),
             ]
         )
 
     def setup_method(self):
-        self.params = make_parameter_frame(
+        self.duct_des_params = make_parameter_frame(
             {
-                "n_TF": {"value": 18, "unit": "dimensionless"},
+                "n_TF": {"value": 10, "unit": "dimensionless"},
                 "n_div_cassettes": {"value": 3, "unit": "dimensionless"},
                 "tf_coil_thickness": {"value": 0.65, "unit": "m"},
-                "lp_duct_tf_offset": {"value": 0.5, "unit": "m"},
+                "lp_duct_tf_offset": {"value": 3, "unit": "m"},
                 "lp_duct_div_pad_outer": {"value": 0.3, "unit": "m"},
                 "lp_duct_div_pad_inner": {"value": 0.1, "unit": "m"},
                 "lp_height": {"value": 3, "unit": "m"},
@@ -67,5 +87,24 @@ class TestLowerPortDuctDesigner:
             LowerPortDuctDesignerParams,
         )
 
-    def test_duct_div_hole(self):
-        ...
+    def test_duct_div_hole_shape(self):
+        (
+            lp_duct_xz_void_space,
+            lp_duct_xz_koz,
+            lp_duct_angled_boundary,
+            lp_duct_straight_boundary,
+        ) = LowerPortDuctDesigner(
+            self.duct_des_params,
+            {},
+            self.divertor_xz_silhouette,
+            self.tf_coils_outer_boundary,
+        ).execute()
+        builder = LowerPortBuilder(
+            self.duct_des_params,
+            {},
+            lp_duct_xz_koz,
+            lp_duct_angled_boundary,
+            lp_duct_straight_boundary,
+        )
+        lp_duct = builder.build()
+        a = 1

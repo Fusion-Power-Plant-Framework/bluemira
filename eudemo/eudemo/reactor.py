@@ -71,7 +71,7 @@ from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.lower_port import (
     LowerPort,
-    LowerPortDuctBuilder,
+    LowerPortBuilder,
     LowerPortDuctDesigner,
 )
 from eudemo.maintenance.upper_port import UpperPortDesigner
@@ -140,27 +140,23 @@ def build_lower_port(
     tf_coils_outer_boundary,
 ) -> LowerPort:
     """Builder for the Lower Port and Duct"""
-    designer = LowerPortDuctDesigner(
-        params,
-        build_config,
-        divertor_face,
-        tf_coils_outer_boundary,
-    )
     (
-        lower_duct_vacant_space,
-        lower_duct_koz,
-        angled_duct_boundary,
-        straight_duct_boundary,
-    ) = designer.execute()
-    builder = LowerPortDuctBuilder(
+        lp_duct_xz_void_space,
+        lp_duct_xz_koz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
+    ) = LowerPortDuctDesigner(
+        params, build_config, divertor_face, tf_coils_outer_boundary
+    ).execute()
+    builder = LowerPortBuilder(
         params,
         build_config,
-        lower_duct_koz,
-        angled_duct_boundary,
-        straight_duct_boundary,
+        lp_duct_xz_koz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
     )
     # todo: remove before merging
-    return LowerPort(builder.build()), lower_duct_koz
+    return LowerPort(builder.build()), lp_duct_xz_koz
 
 
 def build_blanket(
