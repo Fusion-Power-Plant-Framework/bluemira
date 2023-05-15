@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-EU-DEMO Lower Port
+EU-DEMO Lower Port Duct Designer
 """
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Type, Union
@@ -99,7 +99,7 @@ class LowerPortDuctDesigner(Designer):
         """Run method of Designer"""
         # ib -> inboard
         # ob -> outboard
-        # inner -> closer to the center
+        # inner -> closer to the center (or without the duct wall)
         # outer -> further from the center
         # pt -> point
 
@@ -114,19 +114,19 @@ class LowerPortDuctDesigner(Designer):
         ) = self._duct_xz_shapes(ib_div_pt_padded, ob_div_pt_padded)
         duct_w_wall_xz_koz = BluemiraFace(duct_outer_xz_boundary)
 
-        duct_angled_nowall_extrude_boundary = self._angled_duct_nowall_xy_boundary(
+        duct_angled_inner_extrude_boundary = self._angled_duct_inner_xy_boundary(
             ib_div_pt_padded, ob_div_pt_padded
         )
 
-        duct_straight_nowall_extrude_boundary = self._straight_duct_inner_yz_boundary(
+        duct_straight_inner_extrude_boundary = self._straight_duct_inner_yz_boundary(
             straight_top_inner_pt, straight_bot_inner_pt
         )
 
         return (
             duct_inner_xz_boundary,
             duct_w_wall_xz_koz,
-            duct_angled_nowall_extrude_boundary,
-            duct_straight_nowall_extrude_boundary,
+            duct_angled_inner_extrude_boundary,
+            duct_straight_inner_extrude_boundary,
         )
 
     @property
@@ -204,7 +204,7 @@ class LowerPortDuctDesigner(Designer):
             closed=True,
         )
 
-    def _angled_duct_nowall_xy_boundary(
+    def _angled_duct_inner_xy_boundary(
         self, ib_div_pt_padded: Tuple, ob_div_pt_padded: Tuple
     ):
         def _calc_y_point(x_point):
@@ -273,7 +273,7 @@ class LowerPortDuctDesigner(Designer):
         )
 
     def _duct_xz_shapes(self, ib_div_pt_padded: Tuple, ob_div_pt_padded: Tuple):
-        angled_duct_boundary = self._angled_duct_boundary(
+        angled_duct_boundary = self._angled_duct_xz_boundary(
             ib_div_pt_padded, ob_div_pt_padded
         )
 
@@ -283,7 +283,9 @@ class LowerPortDuctDesigner(Designer):
             duct_inner_boundary,
             straight_top_inner_pt,
             straight_bot_inner_pt,
-        ) = self._duct_combined_nowall_boundary(angled_duct_boundary, offset_tf_boundary)
+        ) = self._duct_combined_inner_xz_boundary(
+            angled_duct_boundary, offset_tf_boundary
+        )
 
         duct_outer_boundary = offset_wire(duct_inner_boundary, self.wall_tk)
 
@@ -294,10 +296,11 @@ class LowerPortDuctDesigner(Designer):
             straight_bot_inner_pt,
         )
 
-    def _angled_duct_boundary(self, ib_pt: Tuple, ob_pt: Tuple):
+    def _angled_duct_xz_boundary(self, ib_pt: Tuple, ob_pt: Tuple):
         """
         Returns a rectangular face at the duct angle,
-        starting at the `top_outer_point` and `bottom_inner_point` points
+        starting at the inboard and outboard points
+        of the padded points from the divertor.
         """
         r_search = 50  # must just be large
 
@@ -329,7 +332,7 @@ class LowerPortDuctDesigner(Designer):
             closed=True,
         )
 
-    def _duct_combined_nowall_boundary(
+    def _duct_combined_inner_xz_boundary(
         self, angled_duct_boundary: BluemiraWire, tf_boundary: BluemiraWire
     ):
         x_duct_extent = 30  # must extend past the outer rad. shield

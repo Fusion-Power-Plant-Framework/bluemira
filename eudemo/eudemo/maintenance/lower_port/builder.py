@@ -167,6 +167,8 @@ class LowerPortBuilder(Builder):
         pc = PhysicalComponent(self.DUCT, duct)
         apply_component_display_options(pc, color=BLUE_PALETTE["VV"][0])
 
+        return pc
+
     @staticmethod
     def _hollow_face_from_inner_boundary(
         inner_boundary: BluemiraWire,

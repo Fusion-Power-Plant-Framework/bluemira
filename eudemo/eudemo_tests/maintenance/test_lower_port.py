@@ -20,14 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Tests for EU-DEMO Lower Port Duct Designer
+Tests for EU-DEMO Lower Port
 """
 
-# import pytest
+import numpy as np
+import pytest
 
 from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import boolean_fuse, make_circle, make_polygon
+from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.maintenance.lower_port.builder import LowerPortBuilder
 from eudemo.maintenance.lower_port.duct_designer import (
@@ -81,18 +82,21 @@ class TestLowerPort:
                 "lp_duct_div_pad_inner": {"value": 0.1, "unit": "m"},
                 "lp_height": {"value": 3, "unit": "m"},
                 "lp_width": {"value": 3, "unit": "m"},
-                "lp_duct_angle": {"value": 0, "unit": "degrees"},
+                "lp_duct_angle": {"value": -30, "unit": "degrees"},
                 "lp_duct_wall_tk": {"value": 0.02, "unit": "m"},
             },
             LowerPortDuctDesignerParams,
         )
 
-    def test_duct_div_hole_shape(self):
+    @pytest.mark.parametrize("duct_angle", [0, -30, -45, -60, -90])
+    def test_duct_angle(self, duct_angle):
+        self.duct_des_params.lp_duct_angle.value = duct_angle
+
         (
             lp_duct_xz_void_space,
             lp_duct_xz_koz,
-            lp_duct_angled_boundary,
-            lp_duct_straight_boundary,
+            lp_duct_angled_nowall_extrude_boundary,
+            lp_duct_straight_nowall_extrude_boundary,
         ) = LowerPortDuctDesigner(
             self.duct_des_params,
             {},
@@ -103,8 +107,44 @@ class TestLowerPort:
             self.duct_des_params,
             {},
             lp_duct_xz_koz,
-            lp_duct_angled_boundary,
-            lp_duct_straight_boundary,
+            lp_duct_angled_nowall_extrude_boundary,
+            lp_duct_straight_nowall_extrude_boundary,
         )
         lp_duct = builder.build()
-        a = 1
+
+        # make angle plane
+        x_angled_start = lp_duct_angled_nowall_extrude_boundary.vertexes.x[0]
+        z_angled_start = lp_duct_angled_nowall_extrude_boundary.vertexes.z[0]
+        pl = BluemiraFace(
+            make_polygon(
+                [
+                    [
+                        x_angled_start,
+                        x_angled_start + 1,
+                        x_angled_start + 1,
+                        x_angled_start,
+                    ],
+                    [0.1, 0.1, -0.1, -0.1],
+                    [z_angled_start] * 4,
+                ],
+                closed=True,
+            )
+        )
+        pl.rotate(
+            degree=duct_angle,
+            base=(x_angled_start, 0, z_angled_start),
+            direction=(0, -1, 0),
+        )
+        pl.rotate(degree=np.rad2deg(np.pi / self.duct_des_params.n_TF.value))
+
+        duct_xyz_cad = (
+            lp_duct.get_component("xyz").get_component(LowerPortBuilder.DUCT).shape
+        )
+        angled_face = (
+            duct_xyz_cad.faces[0] if duct_angle != -90 else duct_xyz_cad.faces[4]
+        )  # this was an angled face when I tested it
+
+        assert np.allclose(
+            angled_face.normal_at() if duct_angle != -90 else -angled_face.normal_at(),
+            pl.normal_at(),
+        )

@@ -155,8 +155,7 @@ def build_lower_port(
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )
-    # todo: remove before merging
-    return LowerPort(builder.build()), lp_duct_xz_koz
+    return builder.build(), lp_duct_xz_koz
 
 
 def build_blanket(
@@ -350,7 +349,7 @@ if __name__ == "__main__":
         reactor.vv_thermal.xz_boundary(),
     )
 
-    reactor.lower_port, lower_port_xz = build_lower_port(
+    lower_port, lower_port_duct_xz_koz = build_lower_port(
         reactor_config.params_for("Lower Port"),
         reactor_config.config_for("Lower Port"),
         ivc_shapes.divertor_face,
@@ -363,7 +362,7 @@ if __name__ == "__main__":
         reference_eq,
         reactor.tf_coils.xz_outer_boundary(),
         pf_coil_keep_out_zones=[
-            lower_port_xz,
+            lower_port_duct_xz_koz,
         ],
     )
 
@@ -381,7 +380,7 @@ if __name__ == "__main__":
         pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
         pf_coil_keep_out_zones=[
             upper_port_xz,
-            lower_port_xz,
+            lower_port_duct_xz_koz,
         ],
     )
 
