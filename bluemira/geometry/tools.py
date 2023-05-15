@@ -1047,7 +1047,10 @@ def save_as_STP(
 
 
 def save_cad(
-    components: Union[Component, Iterable[Component]], filename: str, formatt: str ="stp", **kwargs
+    components: Union[Component, Iterable[Component]],
+    filename: str,
+    formatt: str = "stp",
+    **kwargs,
 ):
     """
     Save the CAD of a component (eg a reactor) or a list of components

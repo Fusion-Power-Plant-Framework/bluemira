@@ -1284,7 +1284,9 @@ class CADFileType(enum.Enum):
             return FreeCADwriter
 
 
-def save_as_STP(shapes: List[apiShape], filename: str = "test", unit_scale: str = "metre", **kwargs):
+def save_as_STP(
+    shapes: List[apiShape], filename: str = "test", unit_scale: str = "metre", **kwargs
+):
     """
     Saves a series of Shape objects as a STEP assembly
 
