@@ -43,10 +43,12 @@ def test_lcfs_fit_metric():
     poly1 = Coordinates({"x": xa, "z": za})
     poly2 = Coordinates({"x": xb, "z": za})
     poly3 = Coordinates({"x": xc, "z": zc})
+    poly4 = Coordinates({"x": xc, "z": za})
 
     assert lcfs_fit_metric(poly1, poly1) == 0
     assert lcfs_fit_metric(poly1, poly2) == 1
-    assert lcfs_fit_metric(poly1, poly3) == 0.375
+    assert lcfs_fit_metric(poly1, poly3) == 0.75
+    assert lcfs_fit_metric(poly1, poly4) == 0.5
 
 
 def test_harmonic_amplitude_marix():
