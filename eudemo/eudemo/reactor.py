@@ -69,11 +69,7 @@ from eudemo.equilibria import (
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
-from eudemo.maintenance.lower_port import (
-    LowerPort,
-    LowerPortBuilder,
-    LowerPortDuctDesigner,
-)
+from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
 from eudemo.maintenance.upper_port import UpperPortDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
@@ -84,7 +80,7 @@ from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 PARAMS_FILE_PATH = os.path.join(CONFIG_DIR, "params.json")
-BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json.DAT")
+BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json")
 
 
 class EUDEMO(Reactor):
@@ -101,8 +97,6 @@ class EUDEMO(Reactor):
     cryostat: Cryostat
     cryostat_thermal: CryostatThermalShield
     radiation_shield: RadiationShield
-    # todo: remove before merging
-    lower_port: LowerPort
 
 
 def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
@@ -133,12 +127,7 @@ def build_divertor(params, build_config, div_silhouette) -> Divertor:
     return Divertor(builder.build())
 
 
-def build_lower_port(
-    params,
-    build_config,
-    divertor_face,
-    tf_coils_outer_boundary,
-) -> LowerPort:
+def build_lower_port(params, build_config, divertor_face, tf_coils_outer_boundary):
     """Builder for the Lower Port and Duct"""
     (
         lp_duct_xz_void_space,
@@ -260,7 +249,7 @@ def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShiel
 
 
 if __name__ == "__main__":
-    set_log_level("WARNING")
+    set_log_level("INFO")
     reactor_config = ReactorConfig(
         BUILD_CONFIG_FILE_PATH,
         EUDEMOReactorParams,
@@ -396,11 +385,8 @@ if __name__ == "__main__":
         reactor.cryostat.xz_boundary(),
     )
 
-    # reactor.show_cad("xz")
-    reactor.show_cad(
-        n_sectors=2,
-        with_components=[reactor.tf_coils, reactor.vacuum_vessel, reactor.lower_port],
-    )
+    reactor.show_cad("xz")
+    reactor.show_cad(n_sectors=2)
 
     sspc_solver = SteadyStatePowerCycleSolver(reactor_config.global_params)
     sspc_result = sspc_solver.execute()
