@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Dict, Generic, List, Tuple, Type, TypedDict, TypeVar, Union
+from typing import Dict, Generic, List, Optional, Tuple, Type, TypedDict, TypeVar, Union
 
 import pint
 from typeguard import config, typechecked
@@ -76,7 +76,7 @@ class Parameter(Generic[ParameterValueType]):
         source: str = "",
         description: str = "",
         long_name: str = "",
-        _value_types: Tuple[Type, ...] = None,
+        _value_types: Optional[Tuple[Type, ...]] = None,
     ):
         if _value_types and value is not None:
             if float in _value_types and isinstance(value, int):
