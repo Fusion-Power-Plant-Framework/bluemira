@@ -143,7 +143,7 @@ class NloptOptimiser(Optimiser):
         return self._opt_conditions.to_dict()
 
     @property
-    def opt_parameters(self) -> Mapping:
+    def opt_parameters(self) -> Mapping[str, Union[int, float]]:
         """Return the optimiser algorithms's parameters."""
         return self._opt_parameters
 
