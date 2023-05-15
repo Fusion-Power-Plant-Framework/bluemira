@@ -24,7 +24,6 @@ from bluemira.power_cycle.tools import (
     validate_axes,
     validate_list,
     validate_numerical,
-    validate_vector,
 )
 
 
@@ -66,8 +65,8 @@ class LoadData(PowerCycleLoadABC):
     ):
         super().__init__(name)
 
-        self.data = validate_list(data)
-        self.time = validate_list(time)
+        self.data = np.array(validate_list(data))
+        self.time = np.array(validate_list(time))
         self._is_increasing(self.time)
 
         if len(self.data) != len(self.time):
@@ -100,10 +99,8 @@ class LoadData(PowerCycleLoadABC):
         Stores the normalization factor in the attribute '_norm', which
         is always initialized as an empty list.
         """
-        old_time = self.time
-        old_end_time = old_time[-1]
-        norm = new_end_time / old_end_time
-        new_time = [norm * t for t in old_time]
+        norm = new_end_time / self.time[-1]
+        new_time = norm * self.time
         self._is_increasing(new_time)
         self.time = new_time
         self._norm.append(norm)
@@ -116,7 +113,7 @@ class LoadData(PowerCycleLoadABC):
         is always initialized as an empty list.
         """
         time_shift = validate_numerical(time_shift)
-        self.time = [t + time_shift for t in self.time]
+        self.time = time_shift + self.time
         self._shift.append(time_shift)
 
     def make_consumption_explicit(self):
@@ -124,9 +121,7 @@ class LoadData(PowerCycleLoadABC):
         Modifies the instance by turning every non-positive value stored
         in 'data' into its opposite.
         """
-        for i, value in enumerate(self.data):
-            if value > 0:
-                self.data[i] = -value
+        self.data = np.where(self.data > 0, -self.data, self.data)
 
     @property
     def intrinsic_time(self):
@@ -166,15 +161,7 @@ class LoadData(PowerCycleLoadABC):
         ax = validate_axes(ax)
 
         # Set each default options in kwargs, if not specified
-        return ax, self.plot_obj(
-            ax,
-            self.time,
-            self.data,
-            self.name,
-            kwargs,
-            {**self._scatter_kwargs, **kwargs},
-            False,
-        )
+        return ax, self.plot_obj(ax, self.time, self.data, self.name, kwargs, False)
 
 
 class LoadModel(Enum):
@@ -230,7 +217,7 @@ class PowerLoad(PowerCycleLoadABC):
         self,
         name,
         loaddata_set: Union[LoadData, List[LoadData]],
-        loadmodel_set: Union[LoadModel, List[LoadModel]],
+        loadmodel_set: Union[str, LoadModel, List[Union[LoadModel, str]]],
     ):
         super().__init__(name)
 
@@ -258,14 +245,9 @@ class PowerLoad(PowerCycleLoadABC):
         objects.
         """
         loadmodel_set = validate_list(loadmodel_set)
-        for element in loadmodel_set:
+        for no, element in enumerate(loadmodel_set):
             if not isinstance(element, LoadModel):
-                element_class = type(element)
-                raise PowerLoadError(
-                    "loadmodel",
-                    "One of the arguments provided is an instance of "
-                    f"the {element_class!r} class instead.",
-                )
+                loadmodel_set[no] = LoadModel[element.upper()]
         return loadmodel_set
 
     @classmethod
@@ -273,11 +255,7 @@ class PowerLoad(PowerCycleLoadABC):
         """
         Instantiates an null version of the class.
         """
-        return cls(
-            "Null PowerLoad",
-            LoadData.null(),
-            LoadModel["RAMP"],
-        )
+        return cls("Null PowerLoad", LoadData.null(), LoadModel["RAMP"])
 
     @staticmethod
     def _single_curve(loaddata, loadmodel, time):
@@ -288,29 +266,15 @@ class PowerLoad(PowerCycleLoadABC):
         are returned at the times specified in the 'time' input, with
         any out-of-bound values set to zero.
         """
-        try:
-            interpolation_kind = loadmodel.value
-        except AttributeError:
-            raise PowerLoadError("loadmodel")
-
         interpolation_operator = interp1d(
             loaddata.time,
             loaddata.data,
-            kind=interpolation_kind,
+            kind=loadmodel.value,
             bounds_error=False,  # turn-off error for out-of-bound
             fill_value=(0, 0),  # below-/above-bounds extrapolations
         )
 
         return interpolation_operator(time)
-
-    @staticmethod
-    def _validate_curve_input(time):
-        """
-        Validate the 'time' input for the 'curve' method to be a list of
-        numeric values. In this case, the elements of 'time' can be
-        negative.
-        """
-        return validate_vector(time)
 
     def curve(self, time):
         """
@@ -333,7 +297,7 @@ class PowerLoad(PowerCycleLoadABC):
         curve: list[float]
             List of power values. [W]
         """
-        time = self._validate_curve_input(time)
+        time = np.array(validate_list(time))
         curve = np.zeros(len(time))
 
         for loaddata, loadmodel in zip(self.loaddata_set, self.loadmodel_set):
@@ -425,38 +389,29 @@ class PowerLoad(PowerCycleLoadABC):
         """
         ax = validate_axes(ax)
 
-        # Set each default options in kwargs, if not specified
-        final_kwargs = {**self._plot_kwargs, **kwargs}
-
         computed_time = self._refine_vector(
             self.intrinsic_time, self._validate_n_points(n_points)
         )
-        computed_curve = self.curve(computed_time)
 
         list_of_plot_objects = self.plot_obj(
-            computed_time, computed_curve, self.name, kwargs, final_kwargs, True
+            computed_time, self.curve(computed_time), self.name, kwargs, True
         )
 
         if detailed:
             for ld, lm in zip(self.loaddata_set, self.loadmodel_set):
-                current_curve = self._single_curve(
-                    ld,
-                    lm,
-                    computed_time,
-                )
-
                 # Plot current LoadData with seconday kwargs
                 ld._make_secondary_in_plot()
                 ax, current_plot_list = ld.plot(ax=ax)
 
                 # Plot current curve as line with secondary kwargs
                 kwargs.update(ld._plot_kwargs)
-                plot_object = ax.plot(
-                    computed_time,
-                    current_curve,
-                    **kwargs,
+                current_plot_list.append(
+                    ax.plot(
+                        computed_time,
+                        self._single_curve(ld, lm, computed_time),
+                        **kwargs,
+                    )
                 )
-                current_plot_list.append(plot_object)
 
                 list_of_plot_objects.append(current_plot_list)
 
@@ -487,8 +442,7 @@ class PowerLoad(PowerCycleLoadABC):
         number = validate_numerical(number)
         other = copy.deepcopy(self)
         for loaddata in other.loaddata_set:
-            multiplied_data = [d * number for d in loaddata.data]
-            loaddata.data = multiplied_data
+            loaddata.data *= number
         return other
 
     def __truediv__(self, number):
@@ -502,8 +456,7 @@ class PowerLoad(PowerCycleLoadABC):
         number = validate_numerical(number)
         other = copy.deepcopy(self)
         for loaddata in other.loaddata_set:
-            divided_data = [d / number for d in loaddata.data]
-            loaddata.data = divided_data
+            loaddata.data /= number
         return other
 
 
@@ -551,25 +504,17 @@ class PhaseLoad(PowerCycleLoadABC):
     _n_points = 100
 
     # Override pyplot defaults
-    _plot_defaults = {
-        "c": "k",  # Line color
-        "lw": 2,  # Line width
-        "ls": "-",  # Line style
-    }
+    _plot_defaults = {"color": "k", "linewidth": 2, "linestyle": "-"}
 
     # Defaults for detailed plots
-    _detailed_defaults = {
-        "c": "k",  # Line color
-        "lw": 1,  # Line width
-        "ls": "--",  # Line style
-    }
+    _detailed_defaults = {"color": "k", "linewidth": 1, "linestyle": "--"}
 
     def __init__(self, name, phase, powerload_set, normalise):
         super().__init__(name)
 
         self.phase = self._validate_phase(phase)
         self.powerload_set = self._validate_powerload_set(powerload_set)
-        self.normalise = self._validate_normalise(normalise)
+        self.normalise = np.array(validate_list(normalise), dtype=bool)
 
         if len(self.powerload_set) != len(self.normalise):
             raise PhaseLoadError("sanity")
@@ -592,21 +537,6 @@ class PhaseLoad(PowerCycleLoadABC):
         for element in powerload_set:
             PowerLoad.validate_class(element)
         return powerload_set
-
-    @staticmethod
-    def _validate_normalise(normalise):
-        """
-        Validate 'normalise' input to be a list of boolean values.
-        """
-        normalise = validate_list(normalise)
-        for element in normalise:
-            if not isinstance(element, (bool)):
-                raise PhaseLoadError(
-                    "normalise",
-                    f"Element {element!r} of 'normalise' list is an "
-                    f"instance of the {type(element)!r} class instead.",
-                )
-        return normalise
 
     @classmethod
     def null(cls, phase):
@@ -706,7 +636,6 @@ class PhaseLoad(PowerCycleLoadABC):
             self._curve(computed_time, primary=primary),
             self.name,
             kwargs,
-            {**self._plot_kwargs, **kwargs},
             True,
         )
 
@@ -847,23 +776,13 @@ class PulseLoad(PowerCycleLoadABC):
     _n_points = 100
 
     # Override pyplot defaults
-    _plot_defaults = {
-        "c": "k",  # Line color
-        "lw": 2,  # Line width
-        "ls": "-",  # Line style
-    }
+    _plot_defaults = {"color": "k", "linewidth": 2, "linestyle": "-"}
 
     # Defaults for detailed plots
-    _detailed_defaults = {
-        "c": "k",  # Line color
-        "lw": 1,  # Line width
-        "ls": "--",  # Line style
-    }
+    _detailed_defaults = {"color": "k", "linewidth": 1, "linestyle": "--"}
 
     # Defaults for delimiter plots
-    _delimiter_defaults = {
-        "c": "darkorange",  # Line color
-    }
+    _delimiter_defaults = {"color": "darkorange"}
 
     # Minimal shift for time correction in 'curve' method
     epsilon = 1e6 * EPS
@@ -892,25 +811,17 @@ class PulseLoad(PowerCycleLoadABC):
         phaseload_set = validate_list(phaseload_set)
 
         validated_phaseload_set = []
-        phase_library = pulse.build_phase_library()
-        for phase_in_pulse in phase_library.values():
+        for phase_in_pulse in pulse.build_phase_library().values():
             phaseloads_for_phase = []
             for phaseload in phaseload_set:
                 PhaseLoad.validate_class(phaseload)
-
-                phase_of_phaseload = phaseload.phase
-                if phase_of_phaseload == phase_in_pulse:
+                if phaseload.phase == phase_in_pulse:
                     phaseloads_for_phase.append(phaseload)
 
-            no_phaseloads_were_added = len(phaseloads_for_phase) == 0
-            if no_phaseloads_were_added:
-                null_phaseload = PhaseLoad.null(phase_in_pulse)
-                phaseloads_for_phase = null_phaseload
+            if len(phaseloads_for_phase) == 0:
+                phaseloads_for_phase = PhaseLoad.null(phase_in_pulse)
 
-            phaseloads_for_phase = validate_list(phaseloads_for_phase)
-
-            single_phaseload = sum(phaseloads_for_phase)
-            validated_phaseload_set.append(single_phaseload)
+            validated_phaseload_set.append(sum(validate_list(phaseloads_for_phase)))
 
         return validated_phaseload_set
 
@@ -919,11 +830,10 @@ class PulseLoad(PowerCycleLoadABC):
         """
         Instantiates an null version of the class.
         """
-        phase_library = pulse.build_phase_library()
         return cls(
             f"Null PhaseLoad for pulse {pulse.name}",
             pulse,
-            [PhaseLoad.null(phase) for phase in phase_library.values()],
+            [PhaseLoad.null(phase) for phase in pulse.build_phase_library().values()],
         )
 
     def _build_pulse_from_phaseload_set(self):
@@ -947,11 +857,9 @@ class PulseLoad(PowerCycleLoadABC):
         Shifts are applied to the '_normalised_set' property of each
         'PhaseLoad' object.
         """
-        phaseload_set = copy.deepcopy(self.phaseload_set)
-
         time_shift = 0
         shifted_set = []
-        for phaseload in phaseload_set:
+        for phaseload in copy.deepcopy(self.phaseload_set):
             normalised_set = phaseload._normalised_set
             for normal_load in normalised_set:
                 normal_load._shift_time(time_shift)
@@ -986,27 +894,20 @@ class PulseLoad(PowerCycleLoadABC):
         curve: list[float]
             List of power values. [W]
         """
-        shifted_set = self._shifted_set
-
         curve = []
         modified_time = []
-        for shifted_load in shifted_set:
+        for shifted_load in self._shifted_set:
             intrinsic_time = shifted_load.intrinsic_time
-
             max_t = max(intrinsic_time)
             min_t = min(intrinsic_time)
-            load_time = [t for t in time if (min_t <= t) and (t <= max_t)]
 
+            load_time = [t for t in time if (min_t <= t) and (t <= max_t)]
             load_time[-1] = load_time[-1] - self.epsilon
-            load_curve = shifted_load._curve(load_time, primary=False)
 
             modified_time.append(load_time)
-            curve.append(load_curve)
+            curve.append(shifted_load._curve(load_time, primary=False))
 
-        modified_time = unnest_list(modified_time)
-        curve = unnest_list(curve)
-
-        return modified_time, curve
+        return unnest_list(modified_time), unnest_list(curve)
 
     def make_consumption_explicit(self):
         """
@@ -1042,23 +943,15 @@ class PulseLoad(PowerCycleLoadABC):
         ax = validate_axes(ax)
         axis_limits = ax.get_ylim()
 
-        shifted_set = self._shifted_set
-
-        default_delimiter_kwargs = self._delimiter_defaults
-        delimiter_kwargs = default_delimiter_kwargs
-
-        default_line_kwargs = self._detailed_defaults
-        line_kwargs = {**default_line_kwargs, **delimiter_kwargs}
-
-        default_text_kwargs = self._text_kwargs
-        text_kwargs = {**default_text_kwargs, **delimiter_kwargs}
+        line_kwargs = {**self._detailed_defaults, **self._delimiter_defaults}
+        text_kwargs = {**self._text_kwargs, **self._delimiter_defaults}
 
         list_of_plot_objects = []
-        for shifted_load in shifted_set:
+        for shifted_load in self._shifted_set:
             intrinsic_time = shifted_load.intrinsic_time
             last_time = intrinsic_time[-1]
 
-            label = "Phase delimiter for " + shifted_load.phase.name
+            label = f"Phase delimiter for {shifted_load.phase.name}"
 
             plot_object = ax.plot(
                 [last_time, last_time],
@@ -1071,7 +964,7 @@ class PulseLoad(PowerCycleLoadABC):
             plot_object = ax.text(
                 last_time,
                 axis_limits[-1],
-                "End of " + shifted_load.phase.name,
+                f"End of {shifted_load.phase.name}",
                 label=label,
                 **text_kwargs,
             )
@@ -1127,17 +1020,12 @@ class PulseLoad(PowerCycleLoadABC):
         """
         ax = validate_axes(ax)
 
-        # Set each default options in kwargs, if not specified
-        default_plot_kwargs = self._plot_kwargs
-        final_kwargs = {**default_plot_kwargs, **kwargs}
-
-        time_to_plot = self.shifted_time
         modified_time, computed_curve = self.curve(
-            self._refine_vector(time_to_plot, self._validate_n_points(n_points))
+            self._refine_vector(self.shifted_time, self._validate_n_points(n_points))
         )
 
         list_of_plot_objects = self.plot_obj(
-            ax, modified_time, computed_curve, self.name, kwargs, final_kwargs
+            ax, modified_time, computed_curve, self.name, kwargs
         )
 
         if detailed:
