@@ -1311,7 +1311,7 @@ class Equilibrium(MHDState):
 
     def _clear_OX_points(self):  # noqa :N802
         """
-        Speed optimisation for storing OX point searches in a single interation
+        Speed optimisation for storing OX point searches in a single iteration
         of the solve. Large grids can cause OX finding to be expensive..
         """
         self._o_points = None
@@ -1432,7 +1432,7 @@ class Equilibrium(MHDState):
     def analyse_coils(self) -> Tuple[Dict[str, Any], float, float]:
         """
         Analyse and summarise the electro-magneto-mechanical characteristics
-        of the equilbrium and coilset.
+        of the equilibrium and coilset.
         """
         ccoils = self.coilset.get_control_coils()
         c_names = ccoils.name

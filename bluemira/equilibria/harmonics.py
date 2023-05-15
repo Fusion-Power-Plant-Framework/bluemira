@@ -55,13 +55,13 @@ def coil_harmonic_amplitude_matrix(
     """
     Construct matrix from harmonic amplitudes at given coil locations.
 
-    To get an array of spherical harmonic amplitudes/coeffcients (A_l)
+    To get an array of spherical harmonic amplitudes/coefficients (A_l)
     which can be used in a spherical harmonic approximation of the
-    vacuum/coil contribution to the polodial flux (psi) do:
+    vacuum/coil contribution to the poloidal flux (psi) do:
 
     A_l = matrix harmonic amplitudes @ vector of coil currents
 
-    A_l can be used as contraints in optimisation, see spherical_harmonics_constraint.
+    A_l can be used as constraints in optimisation, see spherical_harmonics_constraint.
 
     N.B. for a single filament (coil):
 
@@ -97,12 +97,12 @@ def coil_harmonic_amplitude_matrix(
 
     # [number of degrees, number of coils]
     currents2harmonics = np.zeros([max_degree, np.size(r_f)])
-    # First 'harmonic' is constant (this line avoids Nan isuues)
+    # First 'harmonic' is constant (this line avoids Nan issues)
     currents2harmonics[0, :] = 1  #
 
     # SH coefficients from function of the current distribution
-    # outside of the sphere coitaining the LCFS
-    # SH coeffs = currents2harmonics @ coil currents
+    # outside of the sphere containing the LCFS
+    # SH coefficients = currents2harmonics @ coil currents
     degrees = np.arange(1, max_degree)[:, None]
     ones = np.ones_like(degrees)
     currents2harmonics[1:, :] = (
@@ -130,7 +130,7 @@ def harmonic_amplitude_marix(
         \\psi = \\sum{A_{l} \\frac{r^{l+1}}{r_{t}^l} \\sin{\\theta_{f}}
         \\frac{P_{l} \\cos{\\theta_{f}}}{\\sqrt{l(l+1)}}}
 
-    Where l = degree, A_l are the spherical harmonic coeffcients/ampletudes,
+    Where l = degree, A_l are the spherical harmonic coefficients/amplitudes,
     and math: P_{l} \\cos{\\theta_{f}} are the associated Legendre polynomials of
     degree l and order (m) = 1.
 
@@ -148,18 +148,18 @@ def harmonic_amplitude_marix(
     Returns
     -------
     harmonics2collocation: np.array
-        Matrix of harmonic amplitudes (to get spherical harmonic coefficents
-        use matrix @ coefficents = vector psi_vacuum at colocation points)
+        Matrix of harmonic amplitudes (to get spherical harmonic coefficients
+        use matrix @ coefficients = vector psi_vacuum at collocation points)
     """
     # Maximum degree of harmonic to calculate up to = n_collocation - 1
     # [number of points, number of degrees]
     n = len(collocation_r)
     harmonics2collocation = np.zeros([n, n - 1])
-    # First 'harmonic' is constant (this line avoids Nan isuues)
+    # First 'harmonic' is constant (this line avoids Nan issues)
     harmonics2collocation[:, 0] = 1
 
-    # SH coeffcient matrix
-    # SH coeffs = harmonics2collocation \ vector psi_vacuum at colocation points
+    # SH coefficient matrix
+    # SH coefficients = harmonics2collocation \ vector psi_vacuum at collocation points
     degrees = np.arange(1, n - 1)[None]
     ones = np.ones_like(degrees)
     harmonics2collocation[:, 1:] = (
@@ -195,13 +195,13 @@ class Collocation:
 
 
 def collocation_points(
-    n_points: int, plasma_bounday: np.ndarray, point_type: str
+    n_points: int, plasma_boundary: np.ndarray, point_type: str
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
     approximations. Points are found within the user-supplied
     boundary and should correspond to the LCFS of a chosen equilibrium.
-    Curent functionality is for:
+    Current functionality is for:
 
     - equispaced points on an arc of fixed radius,
     - equispaced points on an arc plus extrema,
@@ -212,8 +212,8 @@ def collocation_points(
     ----------
     n_points:
         Number of points/targets (not including extrema - these are added
-        automatically if relevent).
-    plasma_bounday:
+        automatically if relevant).
+    plasma_boundary:
         XZ coordinates of the plasma boundary
     point_type:
         Method for creating a set of points: 'arc', 'arc_plus_extrema',
@@ -227,8 +227,8 @@ def collocation_points(
 
     """
     point_type = PointType[point_type.upper()]
-    x_bdry = plasma_bounday.x
-    z_bdry = plasma_bounday.z
+    x_bdry = plasma_boundary.x
+    z_bdry = plasma_boundary.z
 
     if point_type in (PointType.ARC, PointType.ARC_PLUS_EXTREMA):
         # Hello spherical coordinates
@@ -294,15 +294,15 @@ def collocation_points(
 
 def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> float:
     """
-    Calculate the value of the metric used for evaluating the SH aprroximation.
+    Calculate the value of the metric used for evaluating the SH approximation.
     This is equal to 1 for non-intersecting LCFSs, and 0 for identical LCFSs.
 
     Parameters
     ----------
     coords1:
-        Coordinates of plasma bounday from input equlibrum state
+        Coordinates of plasma boundary from input equilibrium state
     coords2:
-        Coordinates of plasma bounday from approximation equlibrum state
+        Coordinates of plasma boundary from approximation equilibrium state
 
     Returns
     -------
@@ -373,9 +373,9 @@ def coils_outside_sphere_vacuum_psi(
     eq: Equilibrium,
 ) -> Tuple[np.ndarray, np.ndarray, CoilSet]:
     """
-    Calculate the poloidal flux (psi) contribution from the vacuumn/coils
+    Calculate the poloidal flux (psi) contribution from the vacuum/coils
     located outside of the sphere containing the plasma, i.e., LCFS of
-    equlibrium state. N.B., currents from coilset are not considered here.
+    equilibrium state. N.B., currents from coilset are not considered here.
 
     Parameters
     ----------
@@ -385,7 +385,7 @@ def coils_outside_sphere_vacuum_psi(
     Returns
     -------
     vacuum_psi:
-        Psi contributuion from control coils
+        Psi contribution from control coils
         (only control coils! - be careful how you use it)
     plasma_psi:
         Psi contribution from plasma
@@ -424,41 +424,41 @@ def coils_outside_sphere_vacuum_psi(
 
     # If not using all coils in approx (have set control coils)
     if len(new_coilset.get_control_coils().name) != len(new_coilset.name):
-        # Calculate psi contributuion from non-control coils
+        # Calculate psi contribution from non-control coils
         # This shouldn't matter if none of the coil currents have been set
         non_ccoil_cont = new_coilset.psi(
             eq.grid.x, eq.grid.z
         ) - new_coilset.get_control_coils().psi(eq.grid.x, eq.grid.z)
-        # Remove contributuion from non-control coils
+        # Remove contribution from non-control coils
         vacuum_psi -= non_ccoil_cont
 
     return vacuum_psi, plasma_psi, new_coilset
 
 
-def get_psi_harmonic_ampltidues(
+def get_psi_harmonic_amplitudes(
     vacuum_psi: np.ndarray, grid: Grid, collocation: Collocation, r_t: float
 ) -> np.ndarray:
     """
-    Calculate the Spherical Harmoic (SH) amplitudes/coefficients needed to produce
-    a SH approximation of the vaccum (i.e. control coil) contribution to
+    Calculate the Spherical Harmonic (SH) amplitudes/coefficients needed to produce
+    a SH approximation of the vacuum (i.e. control coil) contribution to
     the poloidal flux (psi).The number of degrees used in the approximation is
     one less than the number of collocation points.
 
     Parameters
     ----------
     vacuum_psi:
-        Psi contributuion from coils that we wish to approximate
+        Psi contribution from coils that we wish to approximate
     grid:
         Associated grid
     collocation:
         Collocation points
     r_t:
-        Typical lengthscale for spherical harmonic approximation
+        Typical length scale for spherical harmonic approximation
         (default = maximum x value of LCFS).
 
     Returns
     -------
-    psi_harmonic_ampltidues: np.array
+    psi_harmonic_amplitudes:
         SH coefficients for given number of degrees
 
     """
@@ -474,11 +474,11 @@ def get_psi_harmonic_ampltidues(
     )
 
     # Fit harmonics to match values at collocation points
-    psi_harmonic_ampltidues, residual, rank, s = np.linalg.lstsq(
+    psi_harmonic_amplitudes, residual, rank, s = np.linalg.lstsq(
         harmonics2collocation, collocation_psivac, rcond=None
     )
 
-    return psi_harmonic_ampltidues
+    return psi_harmonic_amplitudes
 
 
 def spherical_harmonic_approximation(
@@ -495,7 +495,7 @@ def spherical_harmonic_approximation(
     needed as a reference value for the 'spherical_harmonics_constraint'
     used in coilset optimisation.
 
-    Use a LCFS fit metric to determine the rquired number of degrees.
+    Use a LCFS fit metric to determine the required number of degrees.
 
     The number of degrees used in the approximation is one less than
     the number of collocation points.
@@ -507,16 +507,16 @@ def spherical_harmonic_approximation(
         We will approximate psi using SHs - the aim is to keep the
         core plasma contribution fixed (using SH amplitudes as constraints)
         while being able to vary the vacuum (coil) contribution, so that
-        we do not need to re-solve for the equilibria during oiptimisation.
+        we do not need to re-solve for the equilibria during optimisation.
     n_points:
         Number of desired collocation points (default=8)
         excluding extrema (always +4 automatically)
     point_type:
         Name that determines how the collocation points are selected,
         (default="arc_plus_extrema"). The following options are
-        available for colocation point distibution:
+        available for collocation point distribution:
         - 'arc' = equispaced points on an arc of fixed radius,
-        - 'arc_plus_extrema' = 'arc' plus the min and max points of the LSFS
+        - 'arc_plus_extrema' = 'arc' plus the min and max points of the LCFS
         in the x- and z-directions (4 points total),
         - 'random',
         - 'random_plus_extrema'.
@@ -528,11 +528,11 @@ def spherical_harmonic_approximation(
         fit_metric_value = total area within one but not both LCFSs /
         (input LCFS area + approximation LCFS area)
     r_t:
-        Typical lengthscale for spherical harmonic approximation
+        Typical length scale for spherical harmonic approximation
         (default = maximum x value of LCFS).
     extra_info:
         If False (default), return only the information needed for use in optimisation.
-        If True, return additional information and a plot comparing orginal psi
+        If True, return additional information and a plot comparing original psi
         to the SH approximation.
 
     Returns
@@ -540,13 +540,13 @@ def spherical_harmonic_approximation(
     sh_coilset:
         Coilset to use with SH approximation
     r_t:
-        typical lengthscale for spherical harmonic approximation
-    coil_current_harmonic_ampltidues: ndarray
+        typical length scale for spherical harmonic approximation
+    coil_current_harmonic_amplitudes:
         SH coefficients/amplitudes for required number of degrees
     degree:
         number of degrees required for a SH approx with the desired fit metric
     fit_metric_value:
-        fit metric acheived
+        fit metric achieved
     approx_total_psi:
         the total psi obtained using the SH approximation
     """
@@ -558,13 +558,13 @@ def spherical_harmonic_approximation(
     if point_type is None:
         point_type = "arc_plus_extrema"
 
-    # Get the necessary boundary locations and lengthscale
+    # Get the necessary boundary locations and length scale
     # for use in spherical harmonic approximations.
     # Starting LCFS
     eq_copy = deepcopy(eq)
     original_LCFS = eq_copy.get_LCFS()
 
-    # Typical lengthscale default if not chosen by user
+    # Typical length scale default if not chosen by user
     if r_t is None:
         r_t = np.amax(original_LCFS.x)
 
@@ -583,8 +583,8 @@ def spherical_harmonic_approximation(
         point_type,
     )
 
-    # SH amplitudes needed to produce an approximation of vaccum psi contribution
-    psi_harmonic_ampltidues = get_psi_harmonic_ampltidues(
+    # SH amplitudes needed to produce an approximation of vacuum psi contribution
+    psi_harmonic_amplitudes = get_psi_harmonic_amplitudes(
         vacuum_psi, grid, collocation, r_t
     )
 
@@ -600,11 +600,11 @@ def spherical_harmonic_approximation(
 
         # Calculate necessary coil currents
         currents, residual, rank, s = np.linalg.lstsq(
-            currents2harmonics, psi_harmonic_ampltidues[:degree], rcond=None
+            currents2harmonics, psi_harmonic_amplitudes[:degree], rcond=None
         )
 
-        # Calculate the coilset SH amplitudes for use in optimisisation
-        coil_current_harmonic_ampltidues = currents2harmonics @ currents
+        # Calculate the coilset SH amplitudes for use in optimisation
+        coil_current_harmonic_amplitudes = currents2harmonics @ currents
 
         # Set currents in coilset
         sh_coilset.get_control_coils().current = currents
@@ -619,7 +619,7 @@ def spherical_harmonic_approximation(
         eq_copy.coilset = sh_coilset
         approx_LCFS = eq_copy.get_LCFS(psi=approx_total_psi)
 
-        # Compare staring equlibrium to new approximate equilibrium
+        # Compare staring equilibrium to new approximate equilibrium
         fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
 
         if fit_metric_value <= acceptable_fit_metric:
@@ -632,7 +632,7 @@ def spherical_harmonic_approximation(
                 f"Uh oh, you may need to use more degrees for a fit metric of {acceptable_fit_metric}! Use a greater number of collocation points please."
             )
 
-    # plot comparing orginal psi to the SH approximation
+    # plot comparing original psi to the SH approximation
     if plot:
         plot_psi_comparision(
             grid,
@@ -646,7 +646,7 @@ def spherical_harmonic_approximation(
     return (
         sh_coilset,
         r_t,
-        coil_current_harmonic_ampltidues,
+        coil_current_harmonic_amplitudes,
         degree,
         fit_metric_value,
         approx_total_psi,
@@ -662,12 +662,12 @@ def plot_psi_comparision(
     nlevels: int = 50,
 ):
     """
-    Create plot comparing an orginal psi to psi obtained from approximation.
+    Create plot comparing an original psi to psi obtained from approximation.
 
     Parameters
     ----------
     grid:
-        Nedd x and z values to plot psi.
+        Need x and z values to plot psi.
     tot_psi_org:
         Original Total Psi
     tot_psi_app:

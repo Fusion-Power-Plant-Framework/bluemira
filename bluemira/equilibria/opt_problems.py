@@ -1220,7 +1220,7 @@ class InputBreakdownZoneStrategy(CircularZoneStrategy):
 
 class BreakdownCOP(CoilsetOptimisationProblem):
     """
-    Coilset optimisation problem for the premagnetisation / breakdown phase.
+    Coilset optimisation problem for the pre-magnetisation / breakdown phase.
     """
 
     def __init__(

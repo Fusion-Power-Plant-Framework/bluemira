@@ -85,7 +85,7 @@ plt.show()
 # - n_points: Number of desired collocation points
 # - point_type: How the collocation points are distributed
 # - acceptable_fit_metric: how 'good' we require the approximation to be
-# - r_t: typical lengthscale for spherical harmonic approximation
+# - r_t: typical length scale for spherical harmonic approximation
 # - extra_info: set this to true if you wish to return additional
 #               information and plot the results.
 
@@ -94,7 +94,7 @@ plt.show()
 (
     sh_coilset,
     r_t,
-    coil_current_harmonic_ampltidues,
+    coil_current_harmonic_amplitudes,
     degree,
     fit_metric_value,
     approx_total_psi,
@@ -115,7 +115,7 @@ plt.show()
 # #### Always output
 #
 # - "coilset", coilset to use with SH approximation
-# - "r_t", typical lengthscale for spherical harmonic approximation
+# - "r_t", typical length scale for spherical harmonic approximation
 # - "harmonic_amplitudes", SH coefficients/amplitudes for required number of degrees
 # - "max_degree", number of degrees required for a SH approx with the desired fit metric
 
@@ -126,15 +126,15 @@ print(sh_coilset)
 print(r_t)
 
 # %%
-print(coil_current_harmonic_ampltidues)
+print(coil_current_harmonic_amplitudes)
 
 # %%
 print(degree)
 
 # %% [markdown]
-# #### Ouput on request
+# #### Output on request
 #
-# - "fit_metric_value", fit metric acheived
+# - "fit_metric_value", fit metric achieved
 # - "approx_total_psi", the total psi obtained using the SH approximation
 
 # %%

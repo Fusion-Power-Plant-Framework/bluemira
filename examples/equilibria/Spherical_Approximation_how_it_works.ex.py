@@ -51,12 +51,12 @@ An example that shows how the Spherical Harmonic Approximation works
 #
 # ## Premise:
 #
-# - Our equilibrium solution will not change if the coilset contibution
-# to the poiloidal field (vacuum field) is kept the same in the region
+# - Our equilibrium solution will not change if the coilset contribution
+# to the poloidal field (vacuum field) is kept the same in the region
 # occupied by the core plasma (i.e. the region characterised by closed fux surfaces).
 #
 # - If we constrain the core plasma while altering (optimising) other aspects
-#   of the magnetic conguration, then we will not need to re-solve for
+#   of the magnetic configuration, then we will not need to re-solve for
 #   the plasma equilibrium at each iteration.
 #
 # - We can decompose the vacuum field into Spherical Harmonics (SH)
@@ -170,14 +170,14 @@ print(coilset.control)
 # %% [markdown]
 # ### Find Vacuum Psi
 #
-# Vacuum (coil) contribution to the poiloidal flux =
+# Vacuum (coil) contribution to the poloidal flux =
 #       total flux - contribution from plasma
 
 # %%
 # Poloidal magnetic flux
 total_psi = eq.psi()
 
-# Psi contibution from the plasma
+# Psi contribution from the plasma
 plasma_psi = eq.plasma.psi(grid.x, grid.z)
 
 # Psi contribution from the coils
@@ -186,12 +186,12 @@ test = vacuum_psi
 
 # If not using all coils in approx (have set control coils)
 if len(coilset.get_control_coils().name) != len(coilset.name):
-    # Calculate psi contributuion from non-control coils
+    # Calculate psi contribution from non-control coils
     # This shouldn't matter if none of the coil currents have been set
     non_ccoil_cont = coilset.psi(grid.x, grid.z) - coilset.get_control_coils().psi(
         grid.x, grid.z
     )
-    # Remove contributuion from non-control coils
+    # Remove contribution from non-control coils
     vacuum_psi -= non_ccoil_cont
 
 # Plot
@@ -226,10 +226,10 @@ plt.show()
 # The steps are as follows:
 #
 #
-# 1. Select collocation points within the LCFS for the chosen eqilibium.
+# 1. Select collocation points within the LCFS for the chosen equilibrium.
 #
 #
-# 2. Calculate psi at the collocation points using interploation of
+# 2. Calculate psi at the collocation points using interpolation of
 #    the equilibrium vacuum psi.
 #
 #
@@ -237,17 +237,17 @@ plt.show()
 #
 # #### 1. Collocation points
 #
-# There are currently four options for colocation point distibution:
+# There are currently four options for collocation point distribution:
 # - 'arc' = equispaced points on an arc of fixed radius
 # - 'arc_plus_extrema' = 'arc' plus the min and max points
-#    of the LSFS in the x- and z-directions (4 points total)
+#    of the LCFS in the x- and z-directions (4 points total)
 # - 'random'
 # - 'random_plus_extrema'
 #
 # N.B., the SH degree that you calculate up to should be
 # less than the number of collocation points.
 #
-# In the plot below the colocations points are shown as
+# In the plot below the collocations points are shown as
 # purple dots, and the LCFS is indicated by a red line.
 
 # %%
@@ -273,14 +273,14 @@ plot1.contour(x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=8)
 plot1.scatter(collocation.x, collocation.z, color="purple")
 plot1.plot(x_bdry, z_bdry, color="red")
 plt.show()
-print("number of colocation points = ", len(collocation.x))
+print("number of collocation points = ", len(collocation.x))
 
 # %% [markdown]
 # #### 2. Flux function at collocation points
 # N.B. linear interpolation is default.
 
 # %%
-# Set up with gridded values from chosen equilibirum
+# Set up with gridded values from chosen equilibrium
 psi_func = RectBivariateSpline(eq.grid.x[:, 0], eq.grid.z[0, :], vacuum_psi)
 
 # Evaluate at collocation points
@@ -294,24 +294,24 @@ collocation_psivac = psi_func.ev(collocation.x, collocation.z)
 #
 # For each collocation point (r, $\theta$) and degree calculate the following:
 #
-# $$ A_{l} = \frac{ r_{colocation}^{(l+1)} }{ r_{typical}^{l} }
+# $$ A_{l} = \frac{ r_{collocation}^{(l+1)} }{ r_{typical}^{l} }
 #           \frac{ P^{1}_{l}cos(\theta) }{ \sqrt(l(l+1)) } $$
 #
 # Fit to psi at collocation points using 'np.linalg.lstsq'.
 # This function uses least-squares to find the vector x that
 # approximately solves the equation a @ x = b.
-# Where 'a' is our coeffcient matrix 'harmonics2collocation',
-# and 'b' is our depentant variable, a.k.a, the psi values
-# at the collocation points foumd by interpolation 'collocation_psivac'.
+# Where 'a' is our coefficient matrix 'harmonics2collocation',
+# and 'b' is our dependant variable, a.k.a, the psi values
+# at the collocation points found by interpolation 'collocation_psivac'.
 #
-# Result is 'psi_harmonic_ampltidues', a.k.a., the coeffcients necessary
-# to represent the vaccum psi using a sum of harmonics up to the selected degree.
+# Result is 'psi_harmonic_amplitudes', a.k.a., the coefficients necessary
+# to represent the vacuum psi using a sum of harmonics up to the selected degree.
 #
 # In our case, the maximum degree of harmonics to calculate up to
 # is set to be equal to number of collocation points - 1.
 
 # %%
-# Typical lengthscale
+# Typical length scale
 r_t = np.amax(x_bdry)
 # max_degree is set in the bluemira SH code but we need it here
 max_degree = len(collocation.x) - 1
@@ -320,7 +320,7 @@ max_degree = len(collocation.x) - 1
 harmonics2collocation = harmonic_amplitude_marix(collocation.r, collocation.theta, r_t)
 
 # Fit harmonics to match values at collocation points
-psi_harmonic_ampltidues, residual, rank, s = np.linalg.lstsq(
+psi_harmonic_amplitudes, residual, rank, s = np.linalg.lstsq(
     harmonics2collocation, collocation_psivac, rcond=None
 )
 
@@ -347,11 +347,11 @@ r = np.sqrt(eq.x**2 + eq.z**2)
 theta = np.arctan2(eq.x, eq.z)
 
 # First harmonic is constant
-approx_psi_vac_data = psi_harmonic_ampltidues[0] * np.ones(np.shape(total_psi))
+approx_psi_vac_data = psi_harmonic_amplitudes[0] * np.ones(np.shape(total_psi))
 
 for degree in np.arange(1, plot_max_degree):
     approx_psi_vac_data = approx_psi_vac_data + (
-        psi_harmonic_ampltidues[degree]
+        psi_harmonic_amplitudes[degree]
         * eq.x
         * (r / r_t) ** degree
         * lpmv(1, degree, np.cos(theta))
@@ -385,12 +385,12 @@ plt.show()
 # %% [markdown]
 # ### Calculate Coil Currents and Find the Appropriate Degree to calculate up to
 #
-# psi_harmonic_ampltidues can be written as a function of the current distribution
+# psi_harmonic_amplitudes can be written as a function of the current distribution
 # from the coils outside of the sphere that contains the LCFS.
-# As we already have the value of these coeffcients,
+# As we already have the value of these coefficients,
 # we can use them to calculate the coil currents.
 #
-# We can then calculate an approximate value of the vaccum psi,
+# We can then calculate an approximate value of the vacuum psi,
 # and compare the LCFS from our starting equilibria to the LCFS
 # of our the equilibria calculated from our SH approximation.
 # This will allow us to choose the maximum degree necessary
@@ -400,7 +400,7 @@ plt.show()
 #
 # 1. Construct matrix from harmonic amplitudes and calculate
 #   the necessary coil currents using the previously calculated
-#   'psi_harmonic_ampltidues'.
+#   'psi_harmonic_amplitudes'.
 #
 #     - Construct matrix from harmonic amplitudes called
 #       'currents2harmonics' (rows = degrees, columns = coils).
@@ -411,15 +411,15 @@ plt.show()
 #     - Calculate the coil currents using 'np.linalg.lstsq'.
 #       This function uses least-squares to find the vector x
 #       that approximately solves the equation a @ x = b.
-#       Where 'a' is our coeffcient matrix 'currents2harmonics',
-#       and 'b' is our depentant variable,
-#       a.k.a, the psi harmonic amplitides .
+#       Where 'a' is our coefficient matrix 'currents2harmonics',
+#       and 'b' is our dependant variable,
+#       a.k.a, the psi harmonic amplitudes .
 #
 #
 # 2. Calculate the total value of psi, find the XZ coordinates of the associated LCFS
 # and compare to the original LCFS.
 #
-#     - The fit metric we use for the LCFS comparision is as follows:
+#     - The fit metric we use for the LCFS comparison is as follows:
 #         fit metric value = total area within one but not both LCFSs /
 #                                      (input LCFS area + approximation LCFS area)
 
@@ -440,12 +440,12 @@ for degree in np.arange(min_degree, max_degree + 1):
 
     # Calculate necessary coil currents
     currents, residual, rank, s = np.linalg.lstsq(
-        currents2harmonics[:, :], (psi_harmonic_ampltidues[:degree]), rcond=None
+        currents2harmonics[:, :], (psi_harmonic_amplitudes[:degree]), rcond=None
     )
 
     # Calculate the coefficients (amplitudes) of spherical harmonics
     # for use in optimising equilibria.
-    coil_current_harmonic_ampltidues = currents2harmonics[:, :] @ currents
+    coil_current_harmonic_amplitudes = currents2harmonics[:, :] @ currents
 
     # Set currents in coilset
     coilset.get_control_coils().current = currents
@@ -460,7 +460,7 @@ for degree in np.arange(min_degree, max_degree + 1):
     coilset_eq.coilset = coilset
     approx_LCFS = coilset_eq.get_LCFS(psi=coilset_total_psi)
 
-    # Compare staring equlibrium to new approximate equilibrium
+    # Compare staring equilibrium to new approximate equilibrium
     fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
 
     if fit_metric_value <= acceptable:
@@ -519,16 +519,16 @@ plt.show()
 # %% [markdown]
 # ### Compare the difference
 #
-# Compare the diffenece between the coilset contribution from our
+# Compare the difference between the coilset contribution from our
 # starting equilibria and our approximations.
 # There should be minimal differences between the psi values inside the LCFS.
 # The psi values outside the LCFS would be allowed to vary during optimisation.
 #
 # In the plot below, we include our original LCFS (solid red line)
-# and the LCFS found using our approximation (dashsed blue line).
+# and the LCFS found using our approximation (dashed blue line).
 #
-# The coil current harmonic ampltidues used in the approximation
-# can be used as constaints.
+# The coil current harmonic amplitudes used in the approximation
+# can be used as constraints.
 
 # %%
 x_lcfs = coilset_eq.get_LCFS().x
