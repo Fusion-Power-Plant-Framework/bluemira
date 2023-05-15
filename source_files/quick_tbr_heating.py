@@ -1,12 +1,6 @@
 """
 TODO:
-1.  [ ]filter_cells
-        [x]rename variables
-        [ ]separate the key into a list?
-        [ ]Write a docstring of some sort to explain that some items are lists and some items are cells.
-    [ ]create_tallies
-2. Documentation:
-    [ ]create_tallies
+2. Documentation
     [ ]OpenMCResult.get*
 3. Integration into our logging system (print should go through bluemira_print etc.)
 [ ]The rest of the *.py files too: but only those that actually will get reused (i.e. skip make_geometry.py)
@@ -405,13 +399,15 @@ def create_materials(breeder_materials):
     ----------
     breeder_materials: BreederTypeParameters
     """
-    materials_maker = getattr(mm, "make_{}_mats".format(breeder_materials.blanket_type))
-    materials_maker(breeder_materials.li_enrich_ao)
-    return
+
+    material_lib = mm.AutoPopulatingMaterialsLibrary()
+    material_lib.create_complete_material_library(breeder_materials.blanket_type, breeder_materials.li_enrich_ao)
+    return material_lib
+    # material_lib = mm.AutoPopulatingMaterialsLibrary.create_complete_material_library(breeder_materials.blanket_type, breeder_materials.li_enrich_ao)
 
 # ----------------------------------------------------------------------------------------
 
-def filter_cells(cells_and_cell_lists, src_rate):
+def filter_cells(cells_and_cell_lists, material_lib, src_rate):
     """
     Requests cells for scoring.
     Parameters
@@ -419,11 +415,15 @@ def filter_cells(cells_and_cell_lists, src_rate):
     cells_and_cell_lists:
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
-    src_rate:
+    material_lib: (dict)
+        A dictionary (or an instance of MaterialsLibrary, which is an offspring class of dict)
+        with all of the material definitions stored.
+    src_rate: float
         number of neutrons produced by the source (plasma) per second.
     """
     
     cell_filter = openmc.CellFilter(
+        # the single cells
         [
             cells_and_cell_lists["tf_coil_cell"],
             cells_and_cell_lists["plasma_inner1"],
@@ -431,46 +431,48 @@ def filter_cells(cells_and_cell_lists, src_rate):
             cells_and_cell_lists["plasma_outer1"],
             cells_and_cell_lists["plasma_outer2"],
             cells_and_cell_lists["divertor_fw"],
-            cells_and_cell_lists["divertor_fw_sf"]
+            cells_and_cell_lists["divertor_fw_sf"] # sf = surface
             
-        ] + cells_and_cell_lists["inb_vv_cells"]
+        ]
+        # the cell lists
+          + cells_and_cell_lists["inb_vv_cells"]
           + cells_and_cell_lists["inb_mani_cells"] 
           + cells_and_cell_lists["inb_bz_cells"] 
           + cells_and_cell_lists["inb_fw_cells"]
-          + cells_and_cell_lists["inb_sf_cells"]
+          + cells_and_cell_lists["inb_sf_cells"] # sf = surface
         
           + cells_and_cell_lists["outb_vv_cells"] 
           + cells_and_cell_lists["outb_mani_cells"] 
           + cells_and_cell_lists["outb_bz_cells"] 
           + cells_and_cell_lists["outb_fw_cells"]  
-          + cells_and_cell_lists["outb_sf_cells"]
+          + cells_and_cell_lists["outb_sf_cells"] # sf = surface
         
           + cells_and_cell_lists["divertor_cells"],
     )
     
     mat_filter = openmc.MaterialFilter(
         [   
-            mm.material_lib['inb_fw_mat'],
-            mm.material_lib['outb_fw_mat'],
-            mm.material_lib['inb_bz_mat'],
-            mm.material_lib['outb_bz_mat'],
-            mm.material_lib['inb_mani_mat'],
-            mm.material_lib['outb_mani_mat'],
-            mm.material_lib['inb_vv_mat'],
-            mm.material_lib['outb_vv_mat'], 
-            mm.material_lib['divertor_mat'], 
-            mm.material_lib['div_fw_mat'], 
-            mm.material_lib['tf_coil_mat'], 
-            mm.material_lib['inb_sf_mat'],
-            mm.material_lib['outb_sf_mat'],  
-            mm.material_lib['div_sf_mat']
+            material_lib['inb_fw_mat'],
+            material_lib['outb_fw_mat'],
+            material_lib['inb_bz_mat'],
+            material_lib['outb_bz_mat'],
+            material_lib['inb_mani_mat'],
+            material_lib['outb_mani_mat'],
+            material_lib['inb_vv_mat'],
+            material_lib['outb_vv_mat'], 
+            material_lib['divertor_mat'], 
+            material_lib['div_fw_mat'], 
+            material_lib['tf_coil_mat'], 
+            material_lib['inb_sf_mat'], # sf = surface
+            material_lib['outb_sf_mat'],   # sf = surface
+            material_lib['div_sf_mat'] # sf = surface
         ]
     )
 
     fw_surf_filter = openmc.CellFilter(
-        cells_and_cell_lists["inb_sf_cells"]
-        + cells_and_cell_lists["outb_sf_cells"]
-        + [cells_and_cell_lists["divertor_fw_sf"]]
+        cells_and_cell_lists["inb_sf_cells"] # sf = surface
+        + cells_and_cell_lists["outb_sf_cells"] # sf = surface
+        + [cells_and_cell_lists["divertor_fw_sf"]] # sf = surface
         + cells_and_cell_lists["inb_fw_cells"]
         + cells_and_cell_lists["outb_fw_cells"]
         + [cells_and_cell_lists["divertor_fw"]]
@@ -522,6 +524,26 @@ def create_tallies(
 ):
     """
     Produces tallies for OpenMC scoring.
+
+    Parameters
+    ----------
+    cell_filter:        openmc.CellFilter
+        tally binned by cell
+    mat_filter:         openmc.MaterialFilter
+        tally binned by materials
+        # wait you should provide cells, not materials??!
+    fw_surf_filter:     openmc.CellFilter
+        tally binned by first wall surface
+    neutron_filter:     openmc.ParticleFilter
+        tally binned by neutron
+    photon_filter:      openmc.ParticleFilter
+        tally binned by photon
+    MW_mult_filter:     openmc.EnergyFunctionFilter
+        tally binned by energy so that it can be used to obtain the MW rate
+    energy_mult_filter: openmc.EnergyFunctionFilter
+        tally binned by energy so that it can calculate the spectrum
+    cyl_mesh_filter:    openmc.MeshFilter
+        tally binned spatially: the tokamak is cut into stacks of concentric rings
     """
 
     tally_tbr = openmc.Tally(name="TBR")
@@ -557,7 +579,9 @@ def create_tallies(
             tally_heating,
             tally_heating_MW,
             tally_n_wall_load,
-            tally_p_heat_flux
+            tally_p_heat_flux,
+            # tally_n_flux, # skipped
+            # tally_n_flux_mesh, # skipped
         ]
     )
     tallies.export_to_xml()
@@ -864,13 +888,15 @@ class TBRHeatingSimulation():
         self.tokamak_geometry = tokamak_geometry
 
         self.cells = None
+        self.material_lib = None
         self.universe = None
 
     def setup(self, plot_geometry=True):
         """
         plot the geometry and saving them as hard-coded png names.
         """
-        create_materials(self.breeder_materials)
+        material_lib = create_materials(self.breeder_materials)
+        self.material_lib = material_lib
         mg.check_geometry(self.tokamak_geometry)
         if self.runtime_variables.parametric_source:
             source = create_parametric_source(self.tokamak_geometry)
@@ -893,13 +919,14 @@ class TBRHeatingSimulation():
                 blanket_points,
                 div_points,
                 num_inboard_points,
+                self.material_lib,
             )
 
         # deduce source strength (self.src_rate) from the power of the reactor,
         # by assuming 100% of reactor power comes from DT fusion
         self.src_rate = self.operation_variable.calculate_total_neutron_rate()
 
-        create_tallies(*filter_cells(self.cells, self.src_rate))
+        create_tallies(*filter_cells(self.cells, self.material_lib, self.src_rate))
 
         if plot_geometry:
             geometry_plotter(self.cells, self.tokamak_geometry)

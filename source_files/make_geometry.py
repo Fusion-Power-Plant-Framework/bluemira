@@ -5,7 +5,6 @@ import openmc
 
 import volume_functions as vf
 import numpy as np
-from make_materials import material_lib
 
 cells = {}
 surfaces = {}
@@ -201,7 +200,8 @@ def create_inboard_layer(prefix_for_layer,
                          prefix_for_layer_behind,
                          layer_points,
                          num_inboard_points,
-                         layer_name
+                         layer_name,
+                         material_lib,
                         ):
     
     # Creates a layer of inboard cells for scoring 
@@ -294,7 +294,8 @@ def create_outboard_layer(prefix_for_layer,
                          prefix_for_layer_behind,
                          layer_points,
                          num_outboard_points,
-                         layer_name
+                         layer_name,
+                         material_lib,
                         ):
     
     # Creates a layer of outboard cells for scoring 
@@ -372,11 +373,10 @@ def create_outboard_layer(prefix_for_layer,
 
 # ------------------------------------------------------------------------------------
 
-def create_divertor(div_points, outer_points, inner_points):
-    
-    # This creates the divertors cells
-    # outer_points gives the bottom of the VV
-    
+def create_divertor(div_points, outer_points, inner_points, material_lib):
+    """This creates the divertors cells
+    outer_points gives the bottom of the VV
+    """
     div_fw_thick = 2.5                            # Divertor first wall thickness
     div_sf_thick = 0.01
     div_points_fw_back = offset_points(div_points,  div_fw_thick)
@@ -650,7 +650,7 @@ def create_plasma_chamber():
 
 # ------------------------------------------------------------------------------------
 
-def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
+def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points, material_lib):
     """
     Create a dictionary of cells 
     Parameters
@@ -679,6 +679,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
         coordinates of sample points representing the divertor
     num_inboard_points:
         number of points in fw points that represents the number of inboard points.
+    material_lib: dict
+        dictionary of materials {name:openmc.Material} used to create cells.
     """
     # Creates an OpenMC CSG geometry for an EU Demo reactor
     print('fw_points',fw_points)
@@ -813,7 +815,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "inner", 
                          inb_vv_points,
                          num_inboard_points,
-                         "Inboard VV" )
+                         "Inboard VV" ,
+                         material_lib)
         
     ##################################
     ### Making inboard manifold 
@@ -822,7 +825,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "inb_vv", 
                          inb_mani_points,
                          num_inboard_points,
-                         "Inboard Manifold" )
+                         "Inboard Manifold" ,
+                         material_lib)
     
     ##################################
     ### Making inboard breeder zone 
@@ -831,7 +835,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "inb_mani", 
                          inb_bz_points,
                          num_inboard_points,
-                         "Inboard BZ" )
+                         "Inboard BZ" ,
+                         material_lib)
         
     ##################################
     ### Making inboard first wall   
@@ -840,7 +845,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "inb_bz", 
                          fw_points,
                          num_inboard_points,
-                         "Inboard FW" )
+                         "Inboard FW" ,
+                         material_lib)
         
     ##################################
     ### Making inboard scoring pionts  
@@ -849,7 +855,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "inb_fw", 
                          sf_points,
                          num_inboard_points,
-                         "Inboard FW Surface" )
+                         "Inboard FW Surface" ,
+                         material_lib)
     
     #############################################################################################
     #############################################################################################
@@ -877,7 +884,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "outer",
                          outb_vv_points,
                          num_outboard_points,
-                         "Outboard VV")
+                         "Outboard VV",
+                         material_lib)
     
     ##################################
     ### Making outboard manifold
@@ -886,7 +894,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "outb_vv",
                          outb_mani_points,
                          num_outboard_points,
-                         "Outboard Manifold")
+                         "Outboard Manifold",
+                         material_lib)
     
     ##################################
     ### Making outboard breeder zone 
@@ -895,7 +904,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "outb_mani",
                          outb_bz_points,
                          num_outboard_points,
-                         "Outboard BZ")
+                         "Outboard BZ",
+                         material_lib)
         
     ##################################
     ### Making outboard first wall
@@ -904,7 +914,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "outb_bz",
                          fw_points,
                          num_outboard_points,
-                         "Outboard FW")
+                         "Outboard FW",
+                         material_lib)
     
     #######################################
     ### Making outboard first wall surface
@@ -913,7 +924,8 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
                          "outb_fw",
                          sf_points,
                          num_outboard_points,
-                         "Outboard FW Surface")
+                         "Outboard FW Surface",
+                         material_lib)
 
     ######################
     ### Outboard surfaces
@@ -954,7 +966,7 @@ def make_geometry(tokamak_geometry, fw_points, div_points, num_inboard_points):
     )
     
     ### Divertor
-    create_divertor(div_points, outer_points, inner_points)
+    create_divertor(div_points, outer_points, inner_points, material_lib)
     
     
     ### Plasma chamber
