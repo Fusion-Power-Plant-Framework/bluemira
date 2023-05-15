@@ -1,5 +1,5 @@
 alabaster==0.7.13
-astroid==2.15.4
+astroid==2.15.5
 attrs==23.1.0
 bandit==1.7.5
 black==23.3.0
