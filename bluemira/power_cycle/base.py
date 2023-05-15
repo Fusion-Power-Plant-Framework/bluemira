@@ -9,7 +9,11 @@ from typing import Union
 
 import numpy as np
 
-from bluemira.power_cycle.errors import PowerCycleABCError, PowerCycleLoadABCError
+from bluemira.power_cycle.errors import (
+    LoadDataError,
+    PowerCycleABCError,
+    PowerCycleLoadABCError,
+)
 from bluemira.power_cycle.tools import (
     copy_dict_without_key,
     unique_and_sorted_vector,
@@ -45,7 +49,7 @@ class PowerCycleABC(ABC):
 
         self.name = name
         if label is None:
-            label = name[0:label_length]
+            label = name[0 : self._label_length]
         elif not isinstance(label, str) and len(label) != self._label_length:
             raise PowerCycleABCError(
                 "label",
@@ -75,11 +79,19 @@ class PowerCycleABC(ABC):
             return False
 
         attr_to_ignore = ["name", "label"]
+        this_attributes = self.__dict__
+        other_attributes = other.__dict__
         for attr in attr_to_ignore:
-            this_attributes = copy_dict_without_key(self.__dict__, attr)
-            other_attributes = copy_dict_without_key(other.__dict__, attr)
+            this_attributes = copy_dict_without_key(this_attributes, attr)
+            other_attributes = copy_dict_without_key(other_attributes, attr)
 
         return this_attributes == other_attributes
+
+    def __add__(self, other):
+        """
+        Addition is not defined for 'LoadData' instances.
+        """
+        raise LoadDataError("add")
 
 
 class PowerCycleTimeABC(PowerCycleABC):
@@ -100,9 +112,6 @@ class PowerCycleTimeABC(PowerCycleABC):
         Sum of all numerical values in the 'durations_list' attribute.
     """
 
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
     def __init__(self, name, durations_list, label=None):
         super().__init__(name, label=label)
 
@@ -120,18 +129,13 @@ class PowerCycleTimeABC(PowerCycleABC):
             value = validate_nonnegative(value)
         return durations_list
 
-    # ------------------------------------------------------------------
-    #  OPERATIONS
-    # ------------------------------------------------------------------
-
     @staticmethod
     def _build_durations_list(load_set):
         """
         Build a list with the 'duration' attribute of each load in
         the 'load_set' list.
         """
-        durations_list = [load.duration for load in load_set]
-        return durations_list
+        return [load.duration for load in load_set]
 
 
 class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
@@ -140,10 +144,6 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
     used to represent and sum power loads.
     """
 
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
     # Default number of points (for any plotting method)
     _n_points = 50
 
@@ -151,34 +151,14 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
     _text_index = -1
 
     # Pyplot defaults (kwargs arguments for 'matplotlib.pyplot' methods)
-    _plot_kwargs = {
-        "c": "k",  # Line color
-        "lw": 2,  # Line width
-        "ls": "-",  # Line style
-    }
-    _scatter_kwargs = {
-        "c": "k",  # Marker color
-        "s": 100,  # Marker size
-        "marker": "x",  # Marker style
-    }
-    _text_kwargs = {
-        "c": "k",  # Font color
-        "size": 10,  # Font size
-        "rotation": 45,  # Rotation angle (º)
-    }
-
-    # ------------------------------------------------------------------
-    #  OPERATIONS
-    # ------------------------------------------------------------------
+    _plot_kwargs = {"color": "k", "linewidth": 2, "linestyle": "-"}
+    _scatter_kwargs = {"color": "k", "s": 100, "marker": "x"}
+    _text_kwargs = {"color": "k", "size": 10, "rotation": 45}
 
     @staticmethod
     def _recursive_make_consumption_explicit(load_set):
         for element in load_set:
             element.make_consumption_explicit()
-
-    # ------------------------------------------------------------------
-    # VISUALIZATION
-    # ------------------------------------------------------------------
 
     @abstractproperty
     def intrinsic_time(self):
@@ -191,10 +171,9 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
 
     @staticmethod
     def _build_time_from_load_set(load_set):
-        all_times = [load_object.intrinsic_time for load_object in load_set]
-        unnested_times = unnest_list(all_times)
-        time = unique_and_sorted_vector(unnested_times)
-        return time
+        return unique_and_sorted_vector(
+            unnest_list([load_object.intrinsic_time for load_object in load_set])
+        )
 
     def _validate_n_points(self, n_points: Union[int, float, bool, None]):
         """
@@ -234,22 +213,17 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
         except PowerCycleABCError:
             raise PowerCycleLoadABCError("refine_vector")
 
-        number_of_curve_segments = len(vector) - 1
         if (n_points is None) or (n_points == 0):
             refined_vector = vector
         else:
             refined_vector = []
-            for s in range(number_of_curve_segments):
-                segment_start = vector[s]
-                segment_end = vector[s + 1]
-                refined_segment = np.linspace(
-                    segment_start,
-                    segment_end,
+            for s in range(len(vector) - 1):
+                refined_vector += np.linspace(
+                    vector[s],
+                    vector[s + 1],
                     n_points + 1,
                     endpoint=False,
-                )
-                refined_segment = refined_segment.tolist()
-                refined_vector = refined_vector + refined_segment
+                ).tolist()
             refined_vector.append(vector[-1])
 
         return refined_vector
@@ -264,21 +238,9 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
         primary plot.
         """
         self._text_index = 0
-        self._plot_kwargs = {
-            "c": "k",  # Line color
-            "lw": 1,  # Line width
-            "ls": "--",  # Line style
-        }
-        self._scatter_kwargs = {
-            "c": "k",  # Marker color
-            "s": 100,  # Marker size
-            "marker": "x",  # Marker style
-        }
-        self._text_kwargs = {
-            "c": "k",  # Font color
-            "size": 10,  # Font size
-            "rotation": 45,  # Rotation angle (º)
-        }
+        self._plot_kwargs = {"color": "k", "linewidth": 1, "linestyle": "--"}
+        self._scatter_kwargs = {"color": "k", "s": 100, "marker": "x"}
+        self._text_kwargs = {"color": "k", "size": 10, "rotation": 45}
 
     def _add_text_to_point_in_plot(
         self,
@@ -288,50 +250,43 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
         y_list,
         **kwargs,
     ):
-        class_calling_method = self.__class__.__name__
-        text_to_be_added = f"{name} ({class_calling_method})"
-        label_of_text_object = name + " (name)"
-
-        # Set each default options in kwargs, if not specified
-        default_text_kwargs = self._text_kwargs
-        final_kwargs = {**default_text_kwargs, **kwargs}
+        text_to_be_added = f"{name} ({type(self).__name__})"
+        label_of_text_object = f"{name} (name)"
 
         # Fall back on default kwargs if wrong keys are passed
-        index_for_text_placement = self._text_index
         try:
             plot_object = axes.text(
-                x_list[index_for_text_placement],
-                y_list[index_for_text_placement],
+                x_list[self._text_index],
+                y_list[self._text_index],
                 text_to_be_added,
                 label=label_of_text_object,
-                **final_kwargs,
+                **{**self._text_kwargs, **kwargs},
             )
         except AttributeError:
             plot_object = axes.text(
-                x_list[index_for_text_placement],
-                y_list[index_for_text_placement],
+                x_list[self._text_index],
+                y_list[self._text_index],
                 text_to_be_added,
                 label=label_of_text_object,
-                **default_text_kwargs,
+                **self._text_kwargs,
             )
         return plot_object
 
-    def plot_obj(self, ax, x, y, name, kwargs, final_kwargs, plot_or_scatter=True):
+    def plot_obj(self, ax, x, y, name, kwargs, plot_or_scatter=True):
         if plot_or_scatter:
             plot = getattr(ax, "plot")
             lab = "(curve)"
+            final_kwargs = {**self._plot_kwargs, **kwargs}
         else:
             plot = getattr(ax, "scatter")
             lab = "(data)"
+            final_kwargs = {**self._scatter_kwargs, **kwargs}
 
         return [
             plot(x, y, label=f"{name} {lab}", **final_kwargs),
             self._add_text_to_point_in_plot(ax, name, x, y, **kwargs),
         ]
 
-    # ------------------------------------------------------------------
-    # ARITHMETICS
-    # ------------------------------------------------------------------
     def __radd__(self, other):
         """
         The reverse addition operator, to enable the 'sum' method for
@@ -357,10 +312,6 @@ class PowerCycleImporterABC(metaclass=ABCMeta):
     Cycle module that are used to import data from other Bluemira
     modules into the Power Cycle module.
     """
-
-    # ------------------------------------------------------------------
-    #  OPERATIONS
-    # ------------------------------------------------------------------
 
     @staticmethod
     @abstractmethod
