@@ -30,7 +30,21 @@ from bluemira.optimisation.typing import ConstraintT
 
 
 class OptimisationProblem(abc.ABC):
-    """Interface for a an optimisation problem."""
+    """
+    Interface for an optimisation problem.
+
+    This is an alternative to running an optimisation using the
+    :func:`.optimise` function.
+
+    Using this interface to define an optimisation can provide a few
+    benefits, including:
+
+        * Shared state between optimisation functions and constraints.
+          This can enable things like shared parameters and dynamic
+          constraints.
+        * Switch out optimisation problems using Liskov Substitution.
+        * Logical grouping of related functions.
+    """
 
     @abc.abstractmethod
     def objective(self, x: np.ndarray) -> float:
@@ -60,7 +74,11 @@ class OptimisationProblem(abc.ABC):
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,
     ) -> OptimiserResult:
-        """Perform the optimisation."""
+        """
+        Perform the optimisation.
+
+        See :func:`.optimise` for more function parameter details.
+        """
         return optimise(
             self.objective,
             df_objective=self.__overridden_or_default(self.df_objective, None),
