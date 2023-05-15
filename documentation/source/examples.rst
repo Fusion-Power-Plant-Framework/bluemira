@@ -23,6 +23,8 @@ Equilibria Examples
     examples/equilibria/single_null
     examples/equilibria/eudemo_2017
     examples/equilibria/fixed_boundary
+    examples/equilibria/Spherical_Approximation_how_it_works
+    examples/equilibria/spherical_harmonic_approximation_basic_function_check
 
 Geometry Examples
 ^^^^^^^^^^^^^^^^^

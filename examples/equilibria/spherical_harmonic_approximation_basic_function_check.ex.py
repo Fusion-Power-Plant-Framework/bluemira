@@ -47,8 +47,7 @@ Usage of the 'spherical_harmonic_approximation' function.
 # (spherical_harmonic_approximation) which can be used
 # in coilset current and position optimisation for spherical tokamaks.
 # For an example of how spherical_harmonic_approximation is used
-# please see,
-# [Use_of_Spherical_Harmonic_Approximation_in_Optimisation](./example_name.ex.py)
+# please see, <TODO add link>
 
 # %%
 import matplotlib.pyplot as plt
@@ -74,13 +73,13 @@ eq.coilset.plot(ax=ax)
 plt.show()
 
 # %% [markdown]
-# ### Inputs
+# ## Inputs
 #
-# #### Required
+# ### Required
 #
 # - eq = Our chosen Bluemira Equilibrium
 #
-# #### Optional
+# ### Optional
 #
 # - n_points: Number of desired collocation points
 # - point_type: How the collocation points are distributed
@@ -107,12 +106,12 @@ plt.show()
 )
 
 # %% [markdown]
-# ### Outputs
+# ## Outputs
 #
 # spherical_harmonic_approximation outputs a dictionary of results
 # that can be used in optimisation.
 #
-# #### Always output
+# ### Always output
 #
 # - "coilset", coilset to use with SH approximation
 # - "r_t", typical length scale for spherical harmonic approximation
@@ -132,7 +131,7 @@ print(coil_current_harmonic_amplitudes)
 print(degree)
 
 # %% [markdown]
-# #### Output on request
+# ### Output on request
 #
 # - "fit_metric_value", fit metric achieved
 # - "approx_total_psi", the total psi obtained using the SH approximation

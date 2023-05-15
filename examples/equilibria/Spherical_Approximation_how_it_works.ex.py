@@ -47,7 +47,6 @@ An example that shows how the Spherical Harmonic Approximation works
 # coilset current and position optimisation for spherical tokamaks.
 # For an example of how spherical_harmonic_approximation is used
 # please see,
-# [Use_of_Spherical_Harmonic_Approximation_in_Optimisation](./example_name.ex.py)
 #
 # ## Premise:
 #
