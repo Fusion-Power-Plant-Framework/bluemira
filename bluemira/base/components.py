@@ -92,7 +92,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def filter_components(
         self,
         names: Iterable[str],
-        filter_: Optional[Callable[[PhysicalComponent], bool]] = None,
+        filter_: Optional[Callable[[Component], bool]] = None,
     ):
         """
         Removes all components from the tree, starting at this component,
@@ -104,7 +104,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         names:
             The list of names of each component to search for.
         filter_:
-            A callable to filter PhysicalComponents from the Component tree
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
 
         Notes
         -----
@@ -128,11 +129,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
                         c_sib.parent = None
 
                 for c_child in c.descendants:
-                    if (
-                        isinstance(c_child, PhysicalComponent)
-                        and filter_ is not None
-                        and not filter_(c_child)
-                    ):
+                    if filter_ is not None and not filter_(c_child):
                         c_child.parent = None
 
     def tree(self) -> str:

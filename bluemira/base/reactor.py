@@ -28,7 +28,7 @@ from warnings import warn
 import anytree
 from rich.progress import track
 
-from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.components import Component
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
@@ -61,7 +61,7 @@ class BaseManager(abc.ABC):
     def show_cad(
         self,
         *dims: str,
-        filter_: Union[Callable[[PhysicalComponent], bool], None],
+        filter_: Union[Callable[[Component], bool], None],
         **kwargs,
     ):
         """
@@ -73,13 +73,12 @@ class BaseManager(abc.ABC):
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         filter_:
-            A callable to filter PhysicalComponents from the Component tree
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
         """
 
     @abc.abstractmethod
-    def plot(
-        self, *dims: str, filter_: Union[Callable[[PhysicalComponent], bool], None]
-    ):
+    def plot(self, *dims: str, filter_: Union[Callable[[Component], bool], None]):
         """
         Plot the component.
 
@@ -89,7 +88,8 @@ class BaseManager(abc.ABC):
             The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
             (default: 'xz')
         filter_:
-            A callable to filter PhysicalComponents from the Component tree
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
         """
 
     def tree(self) -> str:
@@ -142,7 +142,7 @@ class BaseManager(abc.ABC):
         self,
         comp: Component,
         dims_to_show: Tuple[str, ...],
-        filter_: Union[Callable[[PhysicalComponent], bool], None],
+        filter_: Union[Callable[[Component], bool], None],
     ) -> Component:
         """
         Filter a component tree
@@ -160,7 +160,7 @@ class BaseManager(abc.ABC):
         self,
         comp: Component,
         dims_to_show: Tuple[str, ...],
-        filter_: Union[Callable[[PhysicalComponent], bool], None],
+        filter_: Union[Callable[[Component], bool], None],
     ):
         for i, dim in enumerate(dims_to_show):
             ComponentPlotter(view=dim).plot_2d(
@@ -184,19 +184,21 @@ class FilterMaterial:
 
     def __init__(
         self,
-        material: Union[
+        keep_material: Union[
             Type[SerialisedMaterial], Tuple[Type[SerialisedMaterial]], None
         ] = None,
-        not_material: Union[
+        reject_material: Union[
             Type[SerialisedMaterial], Tuple[Type[SerialisedMaterial]], None
         ] = Void,
     ):
-        super().__setattr__("material", material)
-        super().__setattr__("not_material", not_material)
+        super().__setattr__("keep_material", keep_material)
+        super().__setattr__("reject_material", reject_material)
 
     def __call__(self, node: anytree.Node) -> bool:
         """Filter node based on material include and exclude rules"""
-        return hasattr(node, "material") and self._filterer(node.material)
+        if not hasattr(node, "material"):
+            return True
+        return self._apply_filters(node.material)
 
     def __setattr__(self, name: str, value: Any):
         """
@@ -209,16 +211,16 @@ class FilterMaterial:
         """
         raise AttributeError(f"{type(self).__name__} is immutable")
 
-    def _filterer(
+    def _apply_filters(
         self, material: Union[SerialisedMaterial, Tuple[SerialisedMaterial]]
     ) -> bool:
         bool_store = True
 
-        if self.material is not None:
-            bool_store = isinstance(material, self.material)
+        if self.keep_material is not None:
+            bool_store = isinstance(material, self.keep_material)
 
-        if self.not_material is not None:
-            bool_store = not isinstance(material, self.not_material)
+        if self.reject_material is not None:
+            bool_store = not isinstance(material, self.reject_material)
 
         return bool_store
 
@@ -259,7 +261,7 @@ class ComponentManager(BaseManager):
     def show_cad(
         self,
         *dims: str,
-        filter_: Union[Callable[[PhysicalComponent], bool], None] = FilterMaterial(),
+        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -271,7 +273,8 @@ class ComponentManager(BaseManager):
             The dimension of the reactor to show, typically one of
             'xz', 'xy', or 'xyz'. (default: 'xyz')
         filter_:
-            A callable to filter PhysicalComponents from the Component tree
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
         """
         ComponentDisplayer().show_cad(
             self._filter_tree(
@@ -283,7 +286,7 @@ class ComponentManager(BaseManager):
     def plot(
         self,
         *dims: str,
-        filter_: Union[Callable[[PhysicalComponent], bool], None] = FilterMaterial(),
+        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
     ):
         """
         Plot the component.
@@ -294,7 +297,8 @@ class ComponentManager(BaseManager):
             The dimension(s) of the reactor to show, 'xz' and/or 'xy'.
             (default: 'xz')
         filter_:
-            A callable to filter PhysicalComponents from the Component tree
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
         """
         self._plot_dims(self.component(), self._validate_plot_dims(*dims), filter_)
 
@@ -422,7 +426,7 @@ class Reactor(BaseManager):
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
-        filter_: Union[Callable[[PhysicalComponent], bool], None] = FilterMaterial(),
+        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -440,7 +444,8 @@ class Reactor(BaseManager):
             The number of sectors to construct when displaying CAD for xyz
             Defaults to None, which means show "all" sectors.
         filter_:
-            A callable to filter PhysicalComponents from the Component tree
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
         """
         dims_to_show = self._validate_cad_dims(*dims, **kwargs)
 
@@ -466,7 +471,7 @@ class Reactor(BaseManager):
         self,
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
-        filter_: Union[Callable[[PhysicalComponent], bool], None] = FilterMaterial(),
+        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
     ):
         """
         Plot the reactor.
@@ -480,7 +485,8 @@ class Reactor(BaseManager):
             The components to construct when displaying CAD for xyz.
             Defaults to None, which means show "all" components.
         filter_:
-            A callable to filter PhysicalComponents from the Component tree
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
         """
         self._plot_dims(
             self.component(with_components), self._validate_plot_dims(*dims), filter_
