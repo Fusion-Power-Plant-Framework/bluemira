@@ -125,7 +125,7 @@
   "Lower Port": {
     "params": {
       "lp_duct_tf_offset": {
-        "value": 0.5,
+        "value": 3,
         "unit": "m",
         "source": "Input",
         "long_name": "Lower duct TF Coil offset."
@@ -134,43 +134,43 @@
         "value": 0.3,
         "unit": "m",
         "source": "Input",
-        "long_name": ""
+        "long_name": "Padding applied towards the outboard from the divertor."
       },
       "lp_duct_div_pad_inner": {
         "value": 0.1,
         "unit": "m",
         "source": "Input",
-        "long_name": ""
+        "long_name": "Padding applied towards the inboard from the divertor."
       },
       "lp_height": {
         "value": 3,
         "unit": "m",
         "source": "Input",
-        "long_name": ""
+        "long_name": "Height of the lower port"
       },
       "lp_width": {
         "value": 3,
         "unit": "m",
         "source": "Input",
-        "long_name": "Length in y to offset the straight duct leg from where it meets the angled duct leg."
+        "long_name": "Width of the lower port"
       },
       "lp_duct_angle": {
-        "value": 0,
+        "value": -30,
         "unit": "degrees",
         "source": "Input",
-        "long_name": "Lower duct angle to the divertor."
+        "long_name": "Angle of the lower port duct to the divertor."
       },
       "tf_coil_thickness": {
         "value": 0.65,
         "unit": "m",
         "source": "Input",
-        "long_name": "TF Coil thickness (temp)."
+        "long_name": "TF Coil thickness (temporary)."
       },
       "lp_duct_wall_tk": {
         "value": 0.02,
         "unit": "m",
         "source": "Input",
-        "long_name": "Lower duct wall thickness."
+        "long_name": "Lower port duct wall thickness."
       }
     }
   },
