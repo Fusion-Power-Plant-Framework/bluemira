@@ -23,5 +23,6 @@
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._geometry.optimise import optimise_geometry
 from bluemira.optimisation._optimise import optimise
+from bluemira.optimisation.problem import OptimisationProblem
 
-__all__ = ["Algorithm", "optimise", "optimise_geometry"]
+__all__ = ["Algorithm", "OptimisationProblem", "optimise", "optimise_geometry"]
