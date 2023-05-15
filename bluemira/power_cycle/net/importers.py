@@ -5,9 +5,8 @@ Classes for importing data from other Bluemira modules.
 """
 
 from bluemira.base.constants import raw_uc
-from bluemira.power_cycle.base import PowerCycleImporterABC
+from bluemira.power_cycle.base import PhaseLoadConfig, PowerCycleImporterABC
 from bluemira.power_cycle.errors import EquilibriaImporterError, PumpingImporterError
-from bluemira.power_cycle.tools import FormattedDict
 
 
 class EquilibriaImporter(PowerCycleImporterABC):
@@ -45,25 +44,16 @@ class EquilibriaImporter(PowerCycleImporterABC):
         """
         Mock of method to import loads from 'equilibria' module.
         """
-        phaseload_inputs = FormattedDict(
-            PowerCycleImporterABC._phaseload_inputs_format,
-        )
 
         request = variables_map["desired_data"]
         if request == "CS-coils":
-            phaseload_inputs["phase_list"] = []
-            phaseload_inputs["normalize_list"] = []
-            phaseload_inputs["powerload_list"] = []
+            phaseload_inputs = PhaseLoadConfig([], True, [], [])
 
         elif request == "TF-coils":
-            phaseload_inputs["phase_list"] = []
-            phaseload_inputs["normalize_list"] = []
-            phaseload_inputs["powerload_list"] = []
+            phaseload_inputs = PhaseLoadConfig([], True, [], [])
 
         elif request == "PF-coils":
-            phaseload_inputs["phase_list"] = []
-            phaseload_inputs["normalize_list"] = []
-            phaseload_inputs["powerload_list"] = []
+            phaseload_inputs = PhaseLoadConfig([], True, [], [])
 
         else:
             raise EquilibriaImporterError(
