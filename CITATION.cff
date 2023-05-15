@@ -86,6 +86,10 @@ authors:
     given-names: D.
     affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
 
+  - family-names: Graham
+    given-names: G. A.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
 message: "If you use this software, please cite it using these references."
 references:
   - type: article
