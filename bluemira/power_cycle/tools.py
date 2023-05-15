@@ -31,10 +31,9 @@ def validate_numerical(argument):
     if isinstance(argument, (int, float)):
         return argument
     else:
-        argument_class = type(argument)
         raise TypeError(
             "This argument must be either an 'int' or 'float', but "
-            f"it is a {argument_class!r} instead.",
+            f"it is a {type(argument).__name__} instead.",
         )
 
 
@@ -55,6 +54,7 @@ def validate_vector(argument):
     """
     Validate an argument to be a numerical list.
     """
+
     argument = validate_list(argument)
     for element in argument:
         element = validate_numerical(element)
@@ -67,20 +67,18 @@ def validate_file(file_path):
     function returns its absolute path. If not, 'FileNotFoundError'
     is issued.
     """
-    path_is_relative = not os.path.isabs(file_path)
-    if path_is_relative:
-        project_path = get_bluemira_root()
-        absolute_path = os.path.join(project_path, file_path)
-    else:
-        absolute_path = file_path
+    absolute_path = (
+        os.path.join(get_bluemira_root(), file_path)
+        if not os.path.isabs(file_path)
+        else file_path
+    )
 
-    file_exists = os.path.isfile(absolute_path)
-    if file_exists:
-        return absolute_path
-    else:
+    if not os.path.isfile(absolute_path):
         raise FileNotFoundError(
             "The file does not exist in the specified path.",
         )
+
+    return absolute_path
 
 
 def validate_lists_to_have_same_length(*args):
@@ -95,16 +93,13 @@ def validate_lists_to_have_same_length(*args):
         argument = validate_list(argument)
         argument_length = len(argument)
         all_lengths.append(argument_length)
-    unique_lengths = unique_and_sorted_vector(all_lengths)
 
-    all_lenghts_are_not_equal = len(unique_lengths) != 1
-    if all_lenghts_are_not_equal:
+    if len(unique_and_sorted_vector(all_lengths)) != 1:
         raise ValueError(
             "At least one of the lists passed as argument does not "
             "have the same length as the others."
         )
-    else:
-        return argument_length
+    return argument_length
 
 
 def copy_dict_without_key(dictionary, key_to_remove):
@@ -112,9 +107,7 @@ def copy_dict_without_key(dictionary, key_to_remove):
     Returns a dictionary that is a copy of the parameter 'dictionary',
     but without the 'key_to_remove' key.
     """
-    d = dictionary
-    dictionary_without_key = {k: d[k] for k in d if k != key_to_remove}
-    return dictionary_without_key
+    return {k: dictionary[k] for k in dictionary if k != key_to_remove}
 
 
 def unnest_list(list_of_lists):
@@ -129,10 +122,7 @@ def unique_and_sorted_vector(vector):
     Returns a sorted list, in ascending order, created from the set
     created from a vector, as a way to eliminate redundant entries.
     """
-    vector = validate_vector(vector)
-    unique_vector = list(set(vector))
-    sorted_vector = sorted(unique_vector)
-    return sorted_vector
+    return sorted(list(set(validate_vector(vector))))
 
 
 def remove_characters(string, character_list):
