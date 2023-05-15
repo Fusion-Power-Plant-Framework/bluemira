@@ -36,12 +36,24 @@ class SimpleOptProblem(OptimisationProblem):
         x2 >= (-x1 + 1)^3
     """
 
+    df_call_count: int
+    """
+    Number of times ``df_objective`` is called.
+
+    Useful for testing we're actually calling the given gradient and not
+    an approximation.
+    """
+
+    def __init__(self) -> None:
+        self.df_call_count = 0
+
     def objective(self, x: np.ndarray) -> float:
         """Objective to minimise (x - 1)^2 + x + 3."""
         return np.sqrt(x[1])
 
     def df_objective(self, x: np.ndarray) -> np.ndarray:
         """Gradient of the objective function."""
+        self.df_call_count += 1
         return np.array([0.0, 0.5 / np.sqrt(x[1])])
 
     def ineq_constraints(self) -> List[ConstraintT]:
@@ -146,6 +158,7 @@ class TestOptimisationProblem:
         result = op.optimise(np.array([1, 1]), opt_conditions=conditions)
 
         np.testing.assert_allclose(result.x, [1 / 3, 8 / 27], rtol=1e-4)
+        assert op.df_call_count > 0
 
     def test_opt_problem_with_no_gradient_defined(self):
         # We should still get a good solution, as we should be

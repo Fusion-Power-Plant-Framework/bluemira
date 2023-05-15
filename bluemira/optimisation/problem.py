@@ -105,14 +105,19 @@ class OptimisationProblem(abc.ABC):
         interface, but we want to be able to tell if it's been overridden so we can
         use an approximate gradient if it has not been.
         """
-        if self.__is_overridden(f):
+        if self.__is_base_class_method(f):
             return f
         return default
 
-    def __is_overridden(self, f: __T1) -> bool:
-        """Determine if the given object is a member of this class or not."""
+    def __is_base_class_method(self, f: __T1) -> bool:
+        """
+        Determine if the given method is a member of this base class or not.
+
+        Note that ``f`` must be a bound method, i.e., it needs the
+        ``__func__`` dunder method.
+        """
         try:
             this_f = getattr(OptimisationProblem, f.__name__)
         except AttributeError:
             return False
-        return f is this_f
+        return f.__func__ is not this_f
