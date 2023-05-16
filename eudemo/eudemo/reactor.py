@@ -78,7 +78,6 @@ from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
-PARAMS_FILE_PATH = os.path.join(CONFIG_DIR, "params.json")
 BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json")
 
 
@@ -232,7 +231,6 @@ if __name__ == "__main__":
     reactor_config = ReactorConfig(
         BUILD_CONFIG_FILE_PATH,
         EUDEMOReactorParams,
-        global_params_path=PARAMS_FILE_PATH,
         warn_on_empty_config=False,
         warn_on_empty_local_params=False,
     )

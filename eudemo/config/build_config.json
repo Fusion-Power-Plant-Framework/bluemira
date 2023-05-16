@@ -1,4 +1,5 @@
 {
+  "params": "$./params.json",
   "Radial build": {
     "run_mode": "read",
     "read_dir": "config/",

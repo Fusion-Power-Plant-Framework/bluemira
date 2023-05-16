@@ -101,7 +101,7 @@ class ReactorConfig:
         self.warn_on_empty_config = warn_on_empty_config
 
         self._config_path = config_path
-        self.config_data = ReactorConfig._read_or_return(config_path)
+        self.config_data = self._read_or_return(config_path)
         self.global_params = make_parameter_frame(
             self._extract_file_data_if_needed(self.config_data.get(_PARAMETERS_KEY, {})),
             global_params_type,
