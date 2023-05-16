@@ -25,10 +25,11 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.harmonics import (
     coil_harmonic_amplitude_matrix,
+    collocation_points,
     harmonic_amplitude_marix,
     lcfs_fit_metric,
 )
-from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.coordinates import Coordinates, in_polygon
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -101,3 +102,32 @@ def test_coil_harmonic_amplitude_matrix():
 
     assert test_out_matrx.shape[1] == len(coilset.x)
     assert test_out_matrx.shape[0] == d
+
+
+def test_collocation_points():
+    n_points = 8
+
+    x = [1, 1.5, 2, 2.1, 2, 1.5, 1, 0.9, 1]
+    z = [-1.8, -1.9, -1.8, 0, 1.8, 1.9, 1.8, 0, -1.8]
+    plasma_boundary = Coordinates({"x": x, "z": z})
+
+    point_type_1 = "arc"
+    point_type_2 = "arc_plus_extrema"
+    point_type_3 = "random"
+    point_type_4 = "random_plus_extrema"
+
+    colloc1 = collocation_points(n_points, plasma_boundary, point_type_1)
+    colloc2 = collocation_points(n_points, plasma_boundary, point_type_2)
+    colloc3 = collocation_points(n_points, plasma_boundary, point_type_3)
+    colloc4 = collocation_points(n_points, plasma_boundary, point_type_4)
+
+    assert colloc1.r.shape[0] == 8
+    assert colloc2.r.shape[0] == 12
+    assert colloc3.r.shape[0] == 8
+    assert colloc4.r.shape[0] == 12
+
+    for x, z in zip(colloc2.x, colloc2.z):
+        assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True) == True
+
+    for x, z in zip(colloc4.x, colloc4.z):
+        assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True) == True
