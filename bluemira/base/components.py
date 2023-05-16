@@ -89,7 +89,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         """
         return self.name + " (" + self.__class__.__name__ + ")"
 
-    def filter_components(self, names: Iterable[str]):
+    def filter_components(
+        self,
+        names: Iterable[str],
+        filter_: Optional[Callable[[Component], bool]] = None,
+    ):
         """
         Removes all components from the tree, starting at this component,
         that are siblings of each component specified in `names`
@@ -99,6 +103,9 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         ----------
         names:
             The list of names of each component to search for.
+        filter_:
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
 
         Notes
         -----
@@ -120,6 +127,10 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
                 for c_sib in c.siblings:
                     if c_sib.name not in names:
                         c_sib.parent = None
+
+                for c_child in c.descendants:
+                    if filter_ is not None and not filter_(c_child):
+                        c_child.parent = None
 
     def tree(self) -> str:
         """
@@ -269,7 +280,9 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             ]
             return tuple(map(list, zip(*node_properties)))
 
-    def _get_thing(self, filter_: Callable, first: bool, full_tree: bool):
+    def _get_thing(
+        self, filter_: Union[Callable, None], first: bool, full_tree: bool
+    ) -> Union[Component, Tuple[Component], None]:
         found_nodes = anytree.search.findall(
             self.root if full_tree else self, filter_=filter_
         )
