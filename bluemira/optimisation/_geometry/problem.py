@@ -21,17 +21,7 @@
 """Interface for defining a geometry-based optimisation problem."""
 
 import abc
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    List,
-    Mapping,
-    Optional,
-    Tuple,
-    TypeVar,
-    Union,
-)
+from typing import Any, Iterable, List, Mapping, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 
@@ -40,11 +30,12 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation import Algorithm, optimise_geometry
 from bluemira.optimisation._geometry.optimise import GeomOptimiserResult
 from bluemira.optimisation._geometry.typing import GeomConstraintT
+from bluemira.optimisation.problem import OptimisationProblemBase
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
 
 
-class GeomOptimisationProblem(abc.ABC):
+class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
     """
     Interface for a geometry optimisation problem.
 
@@ -123,10 +114,13 @@ class GeomOptimisationProblem(abc.ABC):
         """
         koz, koz_discr = self.__split_zones_and_discr(self.keep_out_zones())
         kiz, kiz_discr = self.__split_zones_and_discr(self.keep_in_zones())
+        df_objective = self._overridden_or_default(
+            self.df_objective, GeomOptimisationProblem, None
+        )
         return optimise_geometry(
             geom,
             f_objective=self.objective,
-            df_objective=self.__overridden_or_default(self.df_objective, None),
+            df_objective=df_objective,
             keep_out_zones=koz,
             keep_in_zones=kiz,
             algorithm=algorithm,
@@ -157,33 +151,3 @@ class GeomOptimisationProblem(abc.ABC):
                 zones.append(zone[0])
                 zone_discr.append(zone[1])
         return zones, zone_discr
-
-    __T1 = TypeVar("__T1", bound=Callable[[Any], Any])
-    __T2 = TypeVar("__T2")
-
-    def __overridden_or_default(self, f: __T1, default: __T2) -> Union[__T1, __T2]:
-        """
-        If the given object is not a member of this class return a default.
-
-        This can be used to decide whether a function has been overridden or not.
-        Which is useful in this class for the ``df_objective`` case, where overriding
-        the method is possible, but not necessary. We want it to appear in the class
-        interface, but we want to be able to tell if it's been overridden so we can
-        use an approximate gradient if it has not been.
-        """
-        if self.__is_base_class_method(f):
-            return f
-        return default
-
-    def __is_base_class_method(self, f: __T1) -> bool:
-        """
-        Determine if the given method is a member of this base class or not.
-
-        Note that ``f`` must be a bound method, i.e., it needs the
-        ``__func__`` dunder method.
-        """
-        try:
-            this_f = getattr(GeomOptimisationProblem, f.__name__)
-        except AttributeError:
-            return False
-        return f.__func__ is not this_f
