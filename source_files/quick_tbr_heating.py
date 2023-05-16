@@ -1,7 +1,5 @@
 """
 TODO:
-2. Documentation
-    [ ]OpenMCResult.get*
 3. Integration into our logging system (print should go through bluemira_print etc.)
 [ ]The rest of the *.py files too: but only those that actually will get reused (i.e. skip make_geometry.py)
 [ ]Break quick_tbr_heating into multiple
@@ -630,6 +628,7 @@ class OpenMCResult():
             
     @print_df_decorator_with_title_string("TBR")
     def load_tbr(self):
+        """load the TBR value and uncertainty"""
         tally = "TBR"
         self.tbr_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
         self.tbr = "{:.2f}".format(self.tbr_df["mean"].sum())
@@ -638,6 +637,7 @@ class OpenMCResult():
 
     @print_df_decorator_with_title_string("Heating (MW)")
     def load_heating_in_MW(self):
+        """load the heating (sorted by material) dataframe"""
         tally = "MW heating"  # 'mean' units are MW
         selected_columns = ["material", "material_name", "nuclide", "score", "mean", "std. dev.", "%err."]
         heating_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
@@ -651,6 +651,7 @@ class OpenMCResult():
 
     @print_df_decorator_with_title_string("Neutron Wall Load (eV)")
     def load_neutron_wall_loading(self):
+        """load the neutron wall load dataframe"""
         dfa_coefs = get_dpa_coefs()
         tally = "neutron wall load"  # 'mean' units are eV per source particle
         n_wl_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
@@ -689,6 +690,7 @@ class OpenMCResult():
 
     @print_df_decorator_with_title_string("Photon Heat Flux MW m-2")
     def load_photon_heat_flux(self):
+        """load the photon heaat flux dataframe"""
         tally = "photon heat flux"  # 'mean' units are MW cm
         p_hf_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
         p_hf_df["cell_name"] = p_hf_df["cell"].map(self.cell_names)
@@ -726,6 +728,7 @@ class OpenMCResult():
         return self.photon_heat_flux
 
     def summarize(self, print_dfs):
+        """Run all of the results formatting method available in this class."""
         self.load_tbr(print_dfs)
         self.load_heating_in_MW(print_dfs)
         self.load_neutron_wall_loading(print_dfs)
