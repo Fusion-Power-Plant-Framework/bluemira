@@ -142,10 +142,10 @@ def optimise(
         Whether to record the history of each step of the optimisation.
         (default: False)
     check_constraints:
-        Whether to check whether all constraints have been
-        satisfied at the end of the optimisation, and warn if they have
-        not. Note that, if this is set to False, the result's
-        ``constraints_satisfied`` attribute will be set to ``None``.
+        Whether to check all constraints have been satisfied at the end
+        of the optimisation, and warn if they have not. Note that, if
+        this is set to False, the result's ``constraints_satisfied``
+        attribute will be set to ``None``.
 
     Returns
     -------
