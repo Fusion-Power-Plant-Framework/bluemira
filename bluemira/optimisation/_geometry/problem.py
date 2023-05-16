@@ -27,8 +27,11 @@ import numpy as np
 
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation import Algorithm, optimise_geometry
-from bluemira.optimisation._geometry.optimise import GeomOptimiserResult
+from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._geometry.optimise import (
+    GeomOptimiserResult,
+    optimise_geometry,
+)
 from bluemira.optimisation._geometry.typing import GeomConstraintT
 from bluemira.optimisation.problem import OptimisationProblemBase
 
