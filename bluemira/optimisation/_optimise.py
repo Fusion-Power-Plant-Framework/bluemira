@@ -164,8 +164,8 @@ def optimise(
     if opt_conditions is None:
         opt_conditions = {"max_eval": 2000}
     bounds = _process_bounds(bounds, dimensions)
-    # Convert to list, as it could be an iterable, and we may need to
-    # consume it more than once.
+    # Convert to lists, as these could be generators, and we may need to
+    # consume them more than once.
     eq_constraints = list(eq_constraints)
     ineq_constraints = list(ineq_constraints)
 
