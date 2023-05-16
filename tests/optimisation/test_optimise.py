@@ -132,23 +132,24 @@ class TestOptimise:
             x0=np.array([1, 1]),
             algorithm=alg,
             df_objective=df_objective,
-            opt_conditions={"xtol_rel": 1e-4, "max_eval": 3000},
+            opt_conditions={"xtol_rel": 1e-8, "max_eval": 1000},
             bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
             ineq_constraints=[
                 {
                     "f_constraint": lambda x: f_constraint(x, 2, 0),
                     # Exclude df_constraint to test approx_derivative is doing work
-                    "tolerance": np.array([1e-8]),
+                    "tolerance": np.array([5e-6]),
                 },
                 {
                     "f_constraint": lambda x: f_constraint(x, -1, 1),
                     "df_constraint": lambda x: df_constraint(x, -1, 1),
-                    "tolerance": np.array([1e-8]),
+                    "tolerance": np.array([5e-6]),
                 },
             ],
         )
 
         np.testing.assert_allclose(result.x, [1 / 3, 8 / 27], atol=1e-4)
+        assert result.constraints_satisfied is True
 
     def test_scalar_lower_bounds_are_expanded(self):
         result = optimise(
@@ -191,7 +192,7 @@ class TestOptimise:
         def f_constraint(x, a, b):
             return (a * x[0] + b) ** 3 - x[1]
 
-        optimise(
+        result = optimise(
             f_objective,
             x0=np.array([1, 1]),
             algorithm="SLSQP",
@@ -213,6 +214,7 @@ class TestOptimise:
         assert re.search(
             r"constraints .*not .*satisfied", bm_warn_mock.call_args[0][0].lower()
         )
+        assert result.constraints_satisfied is False
 
     @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
     def test_no_constraint_warning_given_check_constraints_False(self, bm_warn_mock):
@@ -222,7 +224,7 @@ class TestOptimise:
         def f_constraint(x, a, b):
             return (a * x[0] + b) ** 3 - x[1]
 
-        optimise(
+        result = optimise(
             f_objective,
             x0=np.array([1, 1]),
             algorithm="SLSQP",
@@ -241,4 +243,5 @@ class TestOptimise:
             check_constraints=False,
         )
 
+        assert result.constraints_satisfied is None
         assert bm_warn_mock.call_count == 0

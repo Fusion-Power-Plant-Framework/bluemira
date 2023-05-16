@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Definition of the generic `optimise` function."""
 
+from dataclasses import asdict, dataclass
 from pprint import pformat
 from typing import Any, Iterable, List, Mapping, Optional, Tuple, Union
 
@@ -37,6 +38,11 @@ from bluemira.optimisation.typing import (
 )
 
 
+@dataclass
+class OptimisationResult(OptimiserResult):
+    constraints_satisfied: Union[bool, None]
+
+
 def optimise(
     f_objective: ObjectiveCallable,
     df_objective: Optional[OptimiserCallable] = None,
@@ -51,7 +57,7 @@ def optimise(
     ineq_constraints: Iterable[ConstraintT] = (),
     keep_history: bool = False,
     check_constraints: bool = True,
-) -> OptimiserResult:
+) -> OptimisationResult:
     r"""
     Find the parameters that minimise the given objective function.
 
@@ -181,9 +187,12 @@ def optimise(
         keep_history,
     )
     result = optimiser.optimise(x0)
+    constraints_satisfied = None
     if check_constraints:
-        _check_constraints(result.x, ineq_constraints)
-    return result
+        constraints_satisfied = _check_constraints(result.x, ineq_constraints)
+    return OptimisationResult(
+        **asdict(result), constraints_satisfied=constraints_satisfied
+    )
 
 
 def _make_optimiser(

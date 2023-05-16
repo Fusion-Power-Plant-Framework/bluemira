@@ -33,14 +33,13 @@ from bluemira.optimisation._geometry.typing import (
     GeomOptimiserCallable,
     GeomOptimiserObjective,
 )
-from bluemira.optimisation._optimise import optimise
-from bluemira.optimisation._optimiser import OptimiserResult
+from bluemira.optimisation._optimise import OptimisationResult, optimise
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
 
 
 @dataclass
-class GeomOptimiserResult(OptimiserResult, Generic[_GeomT]):
+class GeomOptimiserResult(OptimisationResult, Generic[_GeomT]):
     """Container for the result of a geometry optimisation."""
 
     geom: _GeomT
