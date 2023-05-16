@@ -23,12 +23,14 @@
 Initialise the bluemira package.
 """
 
+import os
 import sys
 
 from . import _version  # noqa: ABS101
 
-sys.path.append("/usr/lib/freecad/Ext")
-sys.path.append("/usr/lib/freecad/Mod/Part")
-sys.path.append("/usr/lib/freecad/Mod/Draft")
+if os.environ.get("BLUEMIRA_ENV", "") == "CONTAINER":
+    sys.path.append("/usr/lib/freecad/Ext")
+    sys.path.append("/usr/lib/freecad/Mod/Part")
+    sys.path.append("/usr/lib/freecad/Mod/Draft")
 
 __version__ = _version.get_versions()["version"]
