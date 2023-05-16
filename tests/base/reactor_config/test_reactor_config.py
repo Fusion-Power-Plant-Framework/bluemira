@@ -76,15 +76,8 @@ class TestReactorConfigClass:
         with pytest.raises(ValueError):
             ReactorConfig(test_config_path.as_posix(), EmptyFrame)
 
-    def test_set_global_params(
-        self,
-        caplog,
-    ):
-        reactor_config = ReactorConfig(
-            test_config_path.as_posix(),
-            TestGlobalParams,
-            global_params_path=global_params_path.as_posix(),
-        )
+    def test_set_global_params(self, caplog):
+        reactor_config = ReactorConfig(test_config_path.as_posix(), TestGlobalParams)
 
         cp = reactor_config.params_for("comp A", "designer")
 

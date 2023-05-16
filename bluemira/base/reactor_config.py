@@ -4,7 +4,7 @@ import json
 import pprint
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Optional, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Iterable, Tuple, Type, TypeVar, Union
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_warn
@@ -92,7 +92,6 @@ class ReactorConfig:
         self,
         config_path: Union[str, dict],
         global_params_type: Type[_PfT],
-        global_params_path: Optional[Union[str, dict]] = None,
         warn_on_duplicate_keys: bool = True,
         warn_on_empty_local_params: bool = True,
         warn_on_empty_config: bool = True,
@@ -103,13 +102,8 @@ class ReactorConfig:
 
         self._config_path = config_path
         self.config_data = ReactorConfig._read_or_return(config_path)
-
         self.global_params = make_parameter_frame(
-            self.config_data.get(_PARAMETERS_KEY, {})
-            if global_params_path is None
-            else ReactorConfig._read_or_return(
-                global_params_path,
-            ),
+            self._extract_file_data_if_needed(self.config_data.get(_PARAMETERS_KEY, {})),
             global_params_type,
         )
 
@@ -233,13 +227,11 @@ class ReactorConfig:
             if not isinstance(a, str):
                 raise ReactorConfigError("args must be strings")
 
-    def _expand_filepath_if_needed(
-        self, value: Any, expand_nested_paths: bool
-    ) -> Tuple[Union[Any, dict], bool]:
+    def _extract_file_data_if_needed(self, value: Any) -> Union[Any, dict]:
         if not isinstance(value, str):
-            return value, False
+            return value
         if not value.startswith(_FILEPATH_PREFIX):
-            return value, False
+            return value
 
         # remove _FILEPATH_PREFIX
         f_path = value[len(_FILEPATH_PREFIX) :]
@@ -258,12 +250,8 @@ class ReactorConfig:
             raise FileNotFoundError(f"Cannot find file {f_path}")
 
         f_data = self._read_json_file(f_path)
-        if expand_nested_paths:
-            for k, v in f_data.items():
-                # don't go further that one level deep
-                f_data[k] = self._expand_filepath_if_needed(v, False)
 
-        return f_data, True
+        return f_data
 
     def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
         extracted = {}
@@ -276,13 +264,16 @@ class ReactorConfig:
             current_layer = current_layer.get(current_arg_key, {})
             next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
 
+            current_layer = self._extract_file_data_if_needed(current_layer)
+
             to_extract = current_layer
             if not is_config:
                 # if doing a params extraction,
                 # get the values from the _PARAMETERS_KEY
                 to_extract = current_layer.get(_PARAMETERS_KEY, {})
+                # could be a filepath
+                to_extract = self._extract_file_data_if_needed(to_extract)
 
-            to_extract, did_expand = self._expand_filepath_if_needed(to_extract, False)
             if not isinstance(to_extract, dict):
                 raise ReactorConfigError(
                     f"Arg ${current_arg_key} is too specific, "
@@ -302,11 +293,6 @@ class ReactorConfig:
                         continue
                     if next_arg_key and k == next_arg_key:
                         continue
-                v, did_expand = self._expand_filepath_if_needed(v, True)
-                if did_expand:
-                    # if we expanded a file, we need to merge it
-                    # with the current layer
-                    current_layer.update(v)
                 extracted[k] = v
 
         return extracted
