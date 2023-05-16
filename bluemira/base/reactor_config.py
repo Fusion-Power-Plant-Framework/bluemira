@@ -233,11 +233,13 @@ class ReactorConfig:
             if not isinstance(a, str):
                 raise ReactorConfigError("args must be strings")
 
-    def _expand_filepath_if_needed(self, value: Any, expand_nested_paths: bool) -> dict:
+    def _expand_filepath_if_needed(
+        self, value: Any, expand_nested_paths: bool
+    ) -> Tuple[Union[Any, dict], bool]:
         if not isinstance(value, str):
-            return value
+            return value, False
         if not value.startswith(_FILEPATH_PREFIX):
-            return value
+            return value, False
 
         # remove _FILEPATH_PREFIX
         f_path = value[len(_FILEPATH_PREFIX) :]
@@ -252,7 +254,7 @@ class ReactorConfig:
             f_path = Path(self._config_path).parent / f_path
 
         # check if file exists
-        if not Path(f_path).resolve().is_file():
+        if not Path(f_path).is_file():
             raise FileNotFoundError(f"Cannot find file {f_path}")
 
         f_data = self._read_json_file(f_path)
@@ -261,7 +263,7 @@ class ReactorConfig:
                 # don't go further that one level deep
                 f_data[k] = self._expand_filepath_if_needed(v, False)
 
-        return f_data
+        return f_data, True
 
     def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
         extracted = {}
@@ -280,7 +282,7 @@ class ReactorConfig:
                 # get the values from the _PARAMETERS_KEY
                 to_extract = current_layer.get(_PARAMETERS_KEY, {})
 
-            to_extract = self._expand_filepath_if_needed(to_extract, True)
+            to_extract, did_expand = self._expand_filepath_if_needed(to_extract, False)
             if not isinstance(to_extract, dict):
                 raise ReactorConfigError(
                     f"Arg ${current_arg_key} is too specific, "
@@ -300,7 +302,11 @@ class ReactorConfig:
                         continue
                     if next_arg_key and k == next_arg_key:
                         continue
-                v = self._expand_filepath_if_needed(v, True)
+                v, did_expand = self._expand_filepath_if_needed(v, True)
+                if did_expand:
+                    # if we expanded a file, we need to merge it
+                    # with the current layer
+                    current_layer.update(v)
                 extracted[k] = v
 
         return extracted
