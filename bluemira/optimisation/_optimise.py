@@ -166,6 +166,7 @@ def optimise(
     bounds = _process_bounds(bounds, dimensions)
     # Convert to list, as it could be an iterable, and we may need to
     # consume it more than once.
+    eq_constraints = list(eq_constraints)
     ineq_constraints = list(ineq_constraints)
 
     optimiser = _make_optimiser(
@@ -182,8 +183,31 @@ def optimise(
     )
     result = optimiser.optimise(x0)
     if check_constraints:
-        result.constraints_satisfied = _check_constraints(result.x, ineq_constraints)
+        result.constraints_satisfied = validate_constraints(
+            result.x, eq_constraints, ineq_constraints
+        )
     return result
+
+
+def validate_constraints(
+    x_star: np.ndarray,
+    eq_constraints: List[ConstraintT],
+    ineq_constraints: List[ConstraintT],
+) -> bool:
+    """
+    Check the given parametrisation satisfies the given constraints.
+
+    Additionally, print warnings listing constraints that are not
+    satisfied.
+    """
+    eq_warnings = _check_eq_constraints(x_star, eq_constraints)
+    ineq_warnings = _check_ineq_constraints(x_star, ineq_constraints)
+    all_warnings = eq_warnings + ineq_warnings
+    if all_warnings:
+        message = "\n".join(all_warnings)
+        bluemira_warn(f"Some constraints have not been adequately satisfied.\n{message}")
+        return False
+    return True
 
 
 def _make_optimiser(
@@ -231,27 +255,54 @@ def _process_bounds(
     return new_bounds[0], new_bounds[1]
 
 
-def _check_constraints(x_star: np.ndarray, ineq_constraints: List[ConstraintT]) -> bool:
-    """Check the given parametrisation satisfies the given constraints."""
+def _check_ineq_constraints(
+    x_star: np.ndarray, constraints: List[ConstraintT]
+) -> List[str]:
+    """Check for inequality constraint violations."""
     warnings = []
-    for i, constraint in enumerate(ineq_constraints):
-        c_value = constraint["f_constraint"](x_star)
-        c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
-        tols = np.array(constraint["tolerance"])
-        indices = np.where(c_value > tols)[0]
-        if indices.size == 0:
-            continue
-        warnings.append(
-            "\n".join(
-                [
-                    f"constraint number {i} [{j}]: "
-                    f"{pformat(c_value[j])} !< {pformat(tols[j])}"
-                    for j in indices
-                ]
+    for i, constraint in enumerate(constraints):
+        if diff := _check_constraint(x_star, constraint):
+            indices, c_value, tols = diff
+            warnings.append(
+                "\n".join(
+                    [
+                        f"inequality constraint {i} [{j}]: "
+                        f"{pformat(c_value[j])} !< {pformat(tols[j])}"
+                        for j in indices
+                    ]
+                )
             )
-        )
-    if warnings:
-        message = "\n".join(warnings)
-        bluemira_warn(f"Some constraints have not been adequately satisfied.\n{message}")
-        return False
-    return True
+    return warnings
+
+
+def _check_eq_constraints(
+    x_star: np.ndarray, constraints: List[ConstraintT]
+) -> List[str]:
+    """Check for equality constraint violations."""
+    warnings = []
+    for i, constraint in enumerate(constraints):
+        if diff := _check_constraint(x_star, constraint):
+            indices, c_value, tols = diff
+            warnings.append(
+                "\n".join(
+                    [
+                        f"  equality constraint {i} [{j}]: "
+                        f"|{pformat(c_value[j])}| !< {pformat(tols[j])}"
+                        for j in indices
+                    ]
+                )
+            )
+    return warnings
+
+
+def _check_constraint(
+    x_star: np.ndarray, constraint: ConstraintT
+) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], None]:
+    c_value = constraint["f_constraint"](x_star)
+    # Deal with scalar constraints
+    c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
+    tols = np.array(constraint["tolerance"])
+    indices = np.where(abs(c_value) - tols > 0)[0]
+    if indices.size > 0:
+        return (indices, c_value, tols)
+    return None

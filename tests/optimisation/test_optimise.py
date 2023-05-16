@@ -184,13 +184,21 @@ class TestOptimise:
                 opt_conditions={"ftol_rel": 1e-6, "max_eval": 1},
             )
 
+    @pytest.mark.parametrize("constraint_type", ["ineq", "eq"])
     @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
-    def test_warning_given_constraints_not_satisfied(self, bm_warn_mock):
+    def test_warning_given_constraints_not_satisfied(
+        self, bm_warn_mock, constraint_type
+    ):
         def f_objective(x):
             return np.sqrt(x[1])
 
         def f_constraint(x, a, b):
             return (a * x[0] + b) ** 3 - x[1]
+
+        constraint = {
+            "f_constraint": lambda x: f_constraint(x, 2, 0),
+            "tolerance": np.array([1e-8]),
+        }
 
         result = optimise(
             f_objective,
@@ -198,22 +206,13 @@ class TestOptimise:
             algorithm="SLSQP",
             opt_conditions={"max_eval": 1},
             bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
-            ineq_constraints=[
-                {
-                    "f_constraint": lambda x: f_constraint(x, 2, 0),
-                    "tolerance": np.array([1e-8]),
-                },
-                {
-                    "f_constraint": lambda x: f_constraint(x, -1, 1),
-                    "tolerance": np.array([1e-8]),
-                },
-            ],
+            **{f"{constraint_type}_constraints": [constraint]},
         )
 
         bm_warn_mock.assert_called_once()
-        assert re.search(
-            r"constraints .*not .*satisfied", bm_warn_mock.call_args[0][0].lower()
-        )
+        message = bm_warn_mock.call_args[0][0].lower()
+        assert re.search(r"constraints .*not .*satisfied", message)
+        assert constraint_type in message
         assert result.constraints_satisfied is False
 
     @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
