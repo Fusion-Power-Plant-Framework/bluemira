@@ -398,10 +398,9 @@ def create_materials(breeder_materials):
     Parameters
     ----------
     breeder_materials: BreederTypeParameters
+        dataclass containing attributes: 'blanket_type', 'li_enrich_ao'
     """
-
-    material_lib = mm.AutoPopulatingMaterialsLibrary()
-    material_lib.create_complete_material_library(breeder_materials.blanket_type, breeder_materials.li_enrich_ao)
+    material_lib = mm.AutoPopulatingMaterialsLibrary.create_complete_material_library(breeder_materials.blanket_type, breeder_materials.li_enrich_ao)
     return material_lib
     # material_lib = mm.AutoPopulatingMaterialsLibrary.create_complete_material_library(breeder_materials.blanket_type, breeder_materials.li_enrich_ao)
 
@@ -589,6 +588,16 @@ def create_tallies(
 # ----------------------------------------------------------------------------------------
 # result processing
 
+def print_df_decorator_with_title_string(title_string):
+    def print_dataframe_decorator(method):
+        def dataframe_method_wrapper(self, print_df : bool=True):
+            method_output = method(self)
+            if print_df:
+                print("\n{}\n".format(title_string)+str(method_output))
+            return method_output
+        return dataframe_method_wrapper
+    return print_dataframe_decorator
+
 class OpenMCResult():
     """
     Class that looks opens up the openmc universe from the statepoint file,
@@ -616,34 +625,32 @@ class OpenMCResult():
         self.cell_vols = {}
         for cell_id in self.universe.cells:
             self.cell_vols[cell_id] = self.universe.cells[cell_id].volume
-            
-    def get_tbr(self, print_df: bool = True):
         # Loads up the output file from the simulation
         self.statepoint = openmc.StatePoint(self.statepoint_file)
-
+            
+    @print_df_decorator_with_title_string("TBR")
+    def load_tbr(self):
         tally = "TBR"
         self.tbr_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
         self.tbr = "{:.2f}".format(self.tbr_df["mean"].sum())
         self.tbr_e = "{:.2f}".format(self.tbr_df["std. dev."].sum())
-        if print_df:
-            print(f"\n{tally}\n{self.tbr} {self.tbr_e}")
+        return self.tbr, self.tbr_e
 
-    def get_heating_in_MW(self, print_df: bool = True):
+    @print_df_decorator_with_title_string("Heating (MW)")
+    def load_heating_in_MW(self):
         tally = "MW heating"  # 'mean' units are MW
+        selected_columns = ["material", "material_name", "nuclide", "score", "mean", "std. dev.", "%err."]
         heating_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
         heating_df["material_name"] = heating_df["material"].map(self.mat_names)
         heating_df["%err."] = heating_df.apply(pdf.get_percent_err, axis=1).apply(
             lambda x: "%.1f" % x
         )
-        heating_df = heating_df[
-            ["material", "material_name", "nuclide", "score", "mean", "std. dev.", "%err."]
-        ]
+        heating_df = heating_df[selected_columns] # rearrange dataframe into this desired order
         self.heating_df = heating_df
+        return self.heating_df
 
-        if print_df:
-            print("\nHeating (MW)\n", heating_df)
-
-    def get_neutron_wall_loading(self, print_df: bool = True):
+    @print_df_decorator_with_title_string("Neutron Wall Load (eV)")
+    def load_neutron_wall_loading(self):
         dfa_coefs = get_dpa_coefs()
         tally = "neutron wall load"  # 'mean' units are eV per source particle
         n_wl_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
@@ -678,11 +685,10 @@ class OpenMCResult():
         ]
 
         self.neutron_wall_load = n_wl_df
+        return self.neutron_wall_load
 
-        if print_df:
-            print("\nNeutron Wall Load (eV)\n", n_wl_df)
-
-    def get_photon_heat_flux(self, print_df: bool = True):
+    @print_df_decorator_with_title_string("Photon Heat Flux MW m-2")
+    def load_photon_heat_flux(self):
         tally = "photon heat flux"  # 'mean' units are MW cm
         p_hf_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
         p_hf_df["cell_name"] = p_hf_df["cell"].map(self.cell_names)
@@ -717,14 +723,13 @@ class OpenMCResult():
         ]
 
         self.photon_heat_flux = p_hf_df
-        if print_df:
-            print("\nPhoton Heat Flux MW m-2\n", p_hf_df)
+        return self.photon_heat_flux
 
     def summarize(self, print_dfs):
-        self.get_tbr(print_dfs)
-        self.get_heating_in_MW(print_dfs)
-        self.get_neutron_wall_loading(print_dfs)
-        self.get_photon_heat_flux(print_dfs)
+        self.load_tbr(print_dfs)
+        self.load_heating_in_MW(print_dfs)
+        self.load_neutron_wall_loading(print_dfs)
+        self.load_photon_heat_flux(print_dfs)
     
 # ----------------------------------------------------------------------------------------
 

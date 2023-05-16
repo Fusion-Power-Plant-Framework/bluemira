@@ -335,26 +335,26 @@ class AutoPopulatingMaterialsLibrary(MaterialsLibrary):
         material_list = openmc.Materials(self.values())
         return material_list.export_to_xml()
 
-    # @classmethod
-    # def create_complete_material_library(cls, blanket_type, li_enrich_ao, export_to_xml=True):
-    #     make_method = getattr(cls, "make_{}_mats".format(blanket_type), None)
-    #     if make_method is None:
-    #         raise KeyError("Not a valid blanket_type; See BlanketType for allowed blanket_type.")
-    #     self = AutoPopulatingMaterialsLibrary()
-    #     make_method(self, li_enrich_ao)
-    #     self.populate_materials()
-    #     if export_to_xml:
-    #         self.export_to_xml()
-    #     return self
-
-    def create_complete_material_library(self, blanket_type, li_enrich_ao, export_to_xml=True):
-        make_method = getattr(self, "make_{}_mats".format(blanket_type), None)
+    @classmethod
+    def create_complete_material_library(cls, blanket_type, li_enrich_ao, export_to_xml=True):
+        make_method = getattr(cls, "make_{}_mats".format(blanket_type), None)
         if make_method is None:
             raise KeyError("Not a valid blanket_type; See BlanketType for allowed blanket_type.")
-        make_method(li_enrich_ao)
+        self = AutoPopulatingMaterialsLibrary()
+        make_method(self, li_enrich_ao)
         self.populate_materials()
         if export_to_xml:
             self.export_to_xml()
+        return self
+
+    # def create_complete_material_library(self, blanket_type, li_enrich_ao, export_to_xml=True):
+    #     make_method = getattr(self, "make_{}_mats".format(blanket_type), None)
+    #     if make_method is None:
+    #         raise KeyError("Not a valid blanket_type; See BlanketType for allowed blanket_type.")
+    #     make_method(li_enrich_ao)
+    #     self.populate_materials()
+    #     if export_to_xml:
+    #         self.export_to_xml()
 
 
 def _make_common_mats():
