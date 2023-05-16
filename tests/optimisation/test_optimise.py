@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import re
 from unittest import mock
 
 import numpy as np
@@ -211,8 +210,9 @@ class TestOptimise:
 
         bm_warn_mock.assert_called_once()
         message = bm_warn_mock.call_args[0][0].lower()
-        assert re.search(r"constraints .*not .*satisfied", message)
-        assert constraint_type in message
+        assert all(
+            m in message for m in ["constraints", "not", "satisfied", constraint_type]
+        )
         assert result.constraints_satisfied is False
 
     @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
