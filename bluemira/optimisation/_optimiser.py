@@ -22,7 +22,7 @@
 
 import abc
 from dataclasses import dataclass, field
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -34,9 +34,13 @@ class OptimiserResult:
     """Container for optimiser results."""
 
     f_x: float
+    """The evaluation of the optimised parameterisation."""
     x: np.ndarray
+    """The optimised parameterisation."""
     n_evals: int
-    history: List[np.ndarray] = field(repr=False)
+    """The number of evaluations of the objective function in the optimisation."""
+    history: List[Tuple[np.ndarray, float]] = field(repr=False)
+    """The history of the parametrisation at each iteration."""
 
 
 class Optimiser(abc.ABC):

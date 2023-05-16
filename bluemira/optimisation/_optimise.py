@@ -40,7 +40,14 @@ from bluemira.optimisation.typing import (
 
 @dataclass
 class OptimisationResult(OptimiserResult):
+    """The result of a call to :func:`.optimise`."""
+
     constraints_satisfied: Union[bool, None]
+    """
+    Whether all constraints have been satisfied to within the required tolerance.
+
+    Is ``None`` if constraints have not been checked.
+    """
 
 
 def optimise(
@@ -148,10 +155,10 @@ def optimise(
         Whether to record the history of each step of the optimisation.
         (default: False)
     check_constraints:
-        Whether to check, and warn, whether all constraints have been
-        satisfied at the end of the optimisation. Note that, if this
-        is set to False, the result will mark constraints as satisfied.
-        Default is True.
+        Whether to check whether all constraints have been
+        satisfied at the end of the optimisation, and warn if they have
+        not. Note that, if this is set to False, the result's
+        ``constraints_satisfied`` attribute will be set to ``None``.
 
     Returns
     -------
