@@ -18,6 +18,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import re
+from unittest import mock
+
 import numpy as np
 import pytest
 
@@ -179,3 +182,63 @@ class TestOptimise:
                 bounds=bad_bounds,
                 opt_conditions={"ftol_rel": 1e-6, "max_eval": 1},
             )
+
+    @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
+    def test_warning_given_constraints_not_satisfied(self, bm_warn_mock):
+        def f_objective(x):
+            return np.sqrt(x[1])
+
+        def f_constraint(x, a, b):
+            return (a * x[0] + b) ** 3 - x[1]
+
+        optimise(
+            f_objective,
+            x0=np.array([1, 1]),
+            algorithm="SLSQP",
+            opt_conditions={"max_eval": 1},
+            bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
+            ineq_constraints=[
+                {
+                    "f_constraint": lambda x: f_constraint(x, 2, 0),
+                    "tolerance": np.array([1e-8]),
+                },
+                {
+                    "f_constraint": lambda x: f_constraint(x, -1, 1),
+                    "tolerance": np.array([1e-8]),
+                },
+            ],
+        )
+
+        bm_warn_mock.assert_called_once()
+        assert re.search(
+            r"constraints .*not .*satisfied", bm_warn_mock.call_args[0][0].lower()
+        )
+
+    @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
+    def test_no_constraint_warning_given_check_constraints_False(self, bm_warn_mock):
+        def f_objective(x):
+            return np.sqrt(x[1])
+
+        def f_constraint(x, a, b):
+            return (a * x[0] + b) ** 3 - x[1]
+
+        optimise(
+            f_objective,
+            x0=np.array([1, 1]),
+            algorithm="SLSQP",
+            opt_conditions={"max_eval": 1},
+            bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
+            ineq_constraints=[
+                {
+                    "f_constraint": lambda x: f_constraint(x, 2, 0),
+                    "tolerance": np.array([1e-8]),
+                },
+                {
+                    "f_constraint": lambda x: f_constraint(x, -1, 1),
+                    "tolerance": np.array([1e-8]),
+                },
+            ],
+            check_constraints=False,
+        )
+
+        assert bm_warn_mock.call_count == 0

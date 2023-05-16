@@ -20,11 +20,13 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Definition of the generic `optimise` function."""
 
-from typing import Any, Iterable, Mapping, Optional, Tuple, Union
+from pprint import pformat
+from typing import Any, Iterable, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
@@ -48,6 +50,7 @@ def optimise(
     eq_constraints: Iterable[ConstraintT] = (),
     ineq_constraints: Iterable[ConstraintT] = (),
     keep_history: bool = False,
+    check_constraints: bool = True,
 ) -> OptimiserResult:
     r"""
     Find the parameters that minimise the given objective function.
@@ -138,6 +141,11 @@ def optimise(
     keep_history:
         Whether to record the history of each step of the optimisation.
         (default: False)
+    check_constraints:
+        Whether to check, and warn, whether all constraints have been
+        satisfied at the end of the optimisation. Note that, if this
+        is set to False, the result will mark constraints as satisfied.
+        Default is True.
 
     Returns
     -------
@@ -156,6 +164,9 @@ def optimise(
     if opt_conditions is None:
         opt_conditions = {"max_eval": 2000}
     bounds = _process_bounds(bounds, dimensions)
+    # Convert to list, as it could be an iterable, and we may need to
+    # consume it more than once.
+    ineq_constraints = list(ineq_constraints)
 
     optimiser = _make_optimiser(
         f_objective,
@@ -169,7 +180,10 @@ def optimise(
         ineq_constraints,
         keep_history,
     )
-    return optimiser.optimise(x0)
+    result = optimiser.optimise(x0)
+    if check_constraints:
+        _check_constraints(result.x, ineq_constraints)
+    return result
 
 
 def _make_optimiser(
@@ -215,3 +229,29 @@ def _process_bounds(
         raise ValueError(f"Bounds must have exactly 2 elements, found '{len(bounds)}'")
     new_bounds = [np.full(dims, b) if np.isscalar(b) else np.array(b) for b in bounds]
     return new_bounds[0], new_bounds[1]
+
+
+def _check_constraints(x_star: np.ndarray, ineq_constraints: List[ConstraintT]) -> bool:
+    """Check the given parametrisation satisfies the given constraints."""
+    warnings = []
+    for i, constraint in enumerate(ineq_constraints):
+        c_value = constraint["f_constraint"](x_star)
+        c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
+        tols = np.array(constraint["tolerance"])
+        indices = np.where(c_value > tols)[0]
+        if indices.size == 0:
+            continue
+        warnings.append(
+            "\n".join(
+                [
+                    f"constraint number {i} [{j}]: "
+                    f"{pformat(c_value[j])} !< {pformat(tols[j])}"
+                    for j in indices
+                ]
+            )
+        )
+    if warnings:
+        message = "\n".join(warnings)
+        bluemira_warn(f"Some constraints have not been adequately satisfied.\n{message}")
+        return False
+    return True
