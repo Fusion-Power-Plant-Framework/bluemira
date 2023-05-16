@@ -18,9 +18,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from itertools import repeat
-from typing import Any, Generic, Iterable, Mapping, Optional, Tuple, TypeVar, Union
+from typing import Any, Generic, Iterable, List, Mapping, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 
@@ -33,16 +33,37 @@ from bluemira.optimisation._geometry.typing import (
     GeomOptimiserCallable,
     GeomOptimiserObjective,
 )
-from bluemira.optimisation._optimise import OptimisationResult, optimise
+from bluemira.optimisation._optimise import optimise
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
 
 
 @dataclass
-class GeomOptimiserResult(OptimisationResult, Generic[_GeomT]):
+class GeomOptimiserResult(Generic[_GeomT]):
     """Container for the result of a geometry optimisation."""
 
+    # Note that the attributes here are duplicates of those in
+    # 'OptimiserResult`. This is because, until Python 3.10, you cannot
+    # extend dataclasses with default values through inheritance:
+    # https://stackoverflow.com/a/53085935.
+    # Once we're on Python 3.10, we can use `the `kw_only` argument of
+    # `dataclass` to tidy this up.
     geom: _GeomT
+    """The geometry parameterisation with optimised parameters."""
+    f_x: float
+    """The evaluation of the optimised parameterisation."""
+    x: np.ndarray
+    """The optimised parameterisation."""
+    n_evals: int
+    """The number of evaluations of the objective function in the optimisation."""
+    history: List[Tuple[np.ndarray, float]] = field(repr=False)
+    """The history of the parametrisation at each iteration."""
+    constraints_satisfied: Union[bool, None] = None
+    """
+    Whether all constraints have been satisfied to within the required tolerance.
+
+    Is ``None`` if constraints have not been checked.
+    """
 
 
 def optimise_geometry(

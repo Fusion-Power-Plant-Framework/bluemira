@@ -22,7 +22,7 @@
 
 import abc
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -41,6 +41,12 @@ class OptimiserResult:
     """The number of evaluations of the objective function in the optimisation."""
     history: List[Tuple[np.ndarray, float]] = field(repr=False)
     """The history of the parametrisation at each iteration."""
+    constraints_satisfied: Union[bool, None] = None
+    """
+    Whether all constraints have been satisfied to within the required tolerance.
+
+    Is ``None`` if constraints have not been checked.
+    """
 
 
 class Optimiser(abc.ABC):

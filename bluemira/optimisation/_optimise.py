@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Definition of the generic `optimise` function."""
 
-from dataclasses import asdict, dataclass
 from pprint import pformat
 from typing import Any, Iterable, List, Mapping, Optional, Tuple, Union
 
@@ -38,18 +37,6 @@ from bluemira.optimisation.typing import (
 )
 
 
-@dataclass
-class OptimisationResult(OptimiserResult):
-    """The result of a call to :func:`.optimise`."""
-
-    constraints_satisfied: Union[bool, None]
-    """
-    Whether all constraints have been satisfied to within the required tolerance.
-
-    Is ``None`` if constraints have not been checked.
-    """
-
-
 def optimise(
     f_objective: ObjectiveCallable,
     df_objective: Optional[OptimiserCallable] = None,
@@ -64,7 +51,7 @@ def optimise(
     ineq_constraints: Iterable[ConstraintT] = (),
     keep_history: bool = False,
     check_constraints: bool = True,
-) -> OptimisationResult:
+) -> OptimiserResult:
     r"""
     Find the parameters that minimise the given objective function.
 
@@ -194,12 +181,9 @@ def optimise(
         keep_history,
     )
     result = optimiser.optimise(x0)
-    constraints_satisfied = None
     if check_constraints:
-        constraints_satisfied = _check_constraints(result.x, ineq_constraints)
-    return OptimisationResult(
-        **asdict(result), constraints_satisfied=constraints_satisfied
-    )
+        result.constraints_satisfied = _check_constraints(result.x, ineq_constraints)
+    return result
 
 
 def _make_optimiser(
