@@ -53,10 +53,9 @@ class LowerPortDuctDesignerParams(ParameterFrame):
 
     lp_duct_angle: Parameter[float]
     lp_duct_tf_offset: Parameter[float]
-    lp_duct_div_pad_outer: Parameter[float]
-    lp_duct_div_pad_inner: Parameter[float]
-
     lp_duct_wall_tk: Parameter[float]
+    lp_duct_div_pad_ob: Parameter[float]
+    lp_duct_div_pad_ib: Parameter[float]
 
     lp_height: Parameter[float]
     lp_width: Parameter[float]
@@ -89,8 +88,8 @@ class LowerPortDuctDesigner(Designer):
         self.n_div_cassettes = self.params.n_div_cassettes.value
         self.duct_angle = self.params.lp_duct_angle.value
         self.tf_offset = self.params.lp_duct_tf_offset.value
-        self.div_pad_outer = self.params.lp_duct_div_pad_outer.value
-        self.div_pad_inner = self.params.lp_duct_div_pad_inner.value
+        self.div_pad_ob = self.params.lp_duct_div_pad_ob.value
+        self.div_pad_ib = self.params.lp_duct_div_pad_ib.value
         self.wall_tk = self.params.lp_duct_wall_tk.value
         self.port_height = self.params.lp_height.value
         self.port_width = self.params.lp_width.value
@@ -169,10 +168,10 @@ class LowerPortDuctDesigner(Designer):
         )
 
         padded_ib_pt, _ = self._xz_points_dist_away_from(
-            ob_point, points_grad, points_len + self.div_pad_inner
+            ob_point, points_grad, points_len + self.div_pad_ib
         )
         _, padded_ob_pt = self._xz_points_dist_away_from(
-            ib_point, points_grad, points_len + self.div_pad_outer
+            ib_point, points_grad, points_len + self.div_pad_ob
         )
         return padded_ib_pt, padded_ob_pt
 
