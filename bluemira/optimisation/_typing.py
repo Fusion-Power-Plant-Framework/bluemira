@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Types for the optimisation module."""
 
-from typing import Protocol, TypedDict
+from typing import Optional, Protocol, TypedDict
 
 import numpy as np
 from typing_extensions import NotRequired
@@ -47,4 +47,4 @@ class ConstraintT(TypedDict):
 
     f_constraint: OptimiserCallable
     tolerance: np.ndarray
-    df_constraint: NotRequired[OptimiserCallable]
+    df_constraint: NotRequired[Optional[OptimiserCallable]]
