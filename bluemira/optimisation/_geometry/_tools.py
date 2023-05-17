@@ -78,13 +78,11 @@ def to_constraint(
     """Convert a geometry constraint to a normal one."""
     constraint: ConstraintT = {
         "f_constraint": to_optimiser_callable(geom_constraint["f_constraint"], geom),
+        "df_constraint": None,
         "tolerance": geom_constraint["tolerance"],
     }
-    if "df_constraint" in geom_constraint:
-        constraint["df_constraint"] = to_optimiser_callable(
-            geom_constraint["df_constraint"], geom
-        )
-
+    if df_constraint := geom_constraint.get("df_constraint", None):
+        constraint["df_constraint"] = to_optimiser_callable(df_constraint, geom)
     return constraint
 
 
