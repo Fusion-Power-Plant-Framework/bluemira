@@ -1,22 +1,21 @@
 """
 TODO:
-3. Integration into our logging system (print should go through bluemira_print etc.)
-[ ]The rest of the *.py files too: but only those that actually will get reused (i.e. skip make_geometry.py)
+[ ]Integration into our logging system (print should go through bluemira_print etc.)
 [ ]Break quick_tbr_heating into multiple
-    - keep openmc set-up here?
-    - Ask how much time I should spend on this and future directions.
-    [ ]filter_cells needs to be somewhere else. Definitely does not belong in quick_btr_heating.py
-[ ]OOP-ize:
-    i.e.same formatting to make it modular enough for re-testing
-    [ ]_load_fw_points
+    [ ]get_dpa_coefs -> eslewhere
+    [ ]pandas_df_functions ->^ same place
+    [ ]All openmc setting up -> one file
+    [ ]results -> another file
+    [ ]filter_cells needs to be somewhere else. Definitely does not belong in quick_btr_heating.py Probably make_geometry?
+    [-] _load_fw_points
 [ ]find the units and documentations for creating source_params_dict (PPS_OpenMC.so library)
-[ ]?Tests?
+    - why parametric source mode=2: need to dig open the PPS_OpenMC.so
+[ ]Some parameters are locked up inside functions:
+    [ ]create_parametric_source
+    [-] _load_fw_points
 [ ]Unit: cgs -> metric
-____Concerns
-- Some parameters are locked up inside functions:
-    - create_parametric_source
-    - _load_fw_points
-- why parametric source mode = 2: need to dig open the PPS_OpenMC.so
+____
+[ ]Tests?
 """
 import math
 import dataclasses
@@ -50,7 +49,7 @@ fe_molar_mass_g = elements.isotope("Fe").mass
 fe_density_g_cc = elements.isotope("Fe").density
 
 # Manually set constants
-energy_per_dt_MeV = 17.58
+energy_per_dt_MeV = 17.58 # probably good to put this in bluemira anyways
 dpa_fe_threshold_eV = 40 # Energy required to displace an Fe atom in Fe. See docstring of get_dpa_coefs. Source cites 40 eV.
 
 DPACoefficients = namedtuple('DPACoefficients', 'atoms_per_cc, displacements_per_damage_eV')
@@ -105,12 +104,14 @@ class TokamakOperationParameters(ParameterHolder):
 
 @dataclasses.dataclass
 class BreederTypeParameters(ParameterHolder):
+    """Dataclass to hold information about the breeder blanket material and design choices"""
     li_enrich_ao: float # [dimensionless]
     blanket_type: mm.BlanketType
 
 
 @dataclasses.dataclass
 class TokamakGeometry(ParameterHolder):
+    """The measurements for all of the geneic components of the tokamak"""
     minor_r:            float # [cm]
     major_r:            float # [cm]
     elong:              float # [dimensionless]
@@ -203,7 +204,7 @@ class PoloidalXSPlot(object):
 
     def __exit__(self, exception_type, value, traceback):
         plt.savefig(self.save_name)
-        # self.ax.cla()
+        # self.ax.cla() # not necessary to clear axes or clear figure
         # self.ax.figure.clf()
         plt.close()
 
@@ -587,11 +588,22 @@ def create_tallies(
 # result processing
 
 def print_df_decorator_with_title_string(title_string):
+    """
+    Decorator for methods inside OpenMCResult,
+        so that the method has an added option to print the dataframe before exiting.
+    Parameter
+    ---------
+    title_string: bool, default=True
+    """
     def print_dataframe_decorator(method):
         def dataframe_method_wrapper(self, print_df : bool=True):
             method_output = method(self)
             if print_df:
-                print("\n{}\n".format(title_string)+str(method_output))
+                if isinstance(method_output, pd.DataFrame):
+                    output_str = method_output.print()
+                else:
+                    output_str = str(method_output)
+                print("\n{}\n".format(title_string)+output_str)
             return method_output
         return dataframe_method_wrapper
     return print_dataframe_decorator
@@ -900,9 +912,7 @@ class TBRHeatingSimulation():
         self.universe = None
 
     def setup(self, plot_geometry=True):
-        """
-        plot the geometry and saving them as hard-coded png names.
-        """
+        """plot the geometry and saving them as .png files with hard-coded names."""
         material_lib = create_materials(self.breeder_materials)
         self.material_lib = material_lib
         mg.check_geometry(self.tokamak_geometry)
