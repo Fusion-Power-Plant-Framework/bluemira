@@ -100,8 +100,8 @@ class TestGeometry:
         # between the parallel edges is equal to the diameter of the
         # keep-out zone.
         koz_radius = 4.5
-        koz_center = [10, 0, 0]
-        keep_out_zone = make_circle(radius=koz_radius, center=koz_center, axis=[0, 1, 0])
+        koz_center = (10, 0, 0)
+        keep_out_zone = make_circle(radius=koz_radius, center=koz_center, axis=(0, 1, 0))
         parameterisation = PictureFrame(
             {
                 # Make sure bounds are set within the keep-out zone so
@@ -144,8 +144,8 @@ class TestGeometry:
         # in-place. Add a test for the behaviour
         original_length = parameterisation.create_shape().length
         koz_radius = 4.5
-        koz_center = [12.5, 0, 0]
-        keep_out_zone = make_circle(radius=koz_radius, center=koz_center, axis=[0, 1, 0])
+        koz_center = (12.5, 0, 0)
+        keep_out_zone = make_circle(radius=koz_radius, center=koz_center, axis=(0, 1, 0))
 
         opt_result = optimise_geometry(
             parameterisation,
@@ -295,3 +295,34 @@ class TestGeometry:
         assert discr_mock.call_count == 2
         assert discr_mock.call_args_list[0] == mock.call(20, byedges=True)
         assert discr_mock.call_args_list[1] == mock.call(30, byedges=True)
+
+    def test_ineq_constraint(self):
+        def square_constraint(geom: PictureFrame) -> np.ndarray:
+            """Constraint to make a PictureFrame a square."""
+            x1, x2, z1, z2, _, _ = geom.variables.values
+            return np.array([abs(x2 - x1) - abs(z2 - z1)])
+
+        pf = PictureFrame(
+            {
+                "x1": {"value": 2, "upper_bound": 4, "lower_bound": 0},
+                "x2": {"value": 7.5, "upper_bound": 10, "lower_bound": 5},
+                "z1": {"value": 5, "upper_bound": 10, "lower_bound": 4},
+                "z2": {"value": -5, "upper_bound": -4, "lower_bound": -10},
+                "ri": {"value": 0, "fixed": True},
+                "ro": {"value": 0, "fixed": True},
+            }
+        )
+        eq_constraint = {
+            "f_constraint": square_constraint,
+            "df_constraint": None,
+            "tolerance": np.array([1e-8]),
+        }
+
+        result = optimise_geometry(
+            pf,
+            f_objective=lambda g: g.create_shape().length,
+            eq_constraints=[eq_constraint],
+            opt_conditions={"ftol_rel": 1e-5},
+        )
+
+        assert square_constraint(result.geom)[0] == pytest.approx(0, abs=1e-8)
