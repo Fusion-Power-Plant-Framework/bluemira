@@ -127,7 +127,7 @@ def test_collocation_points():
     assert colloc4.r.shape[0] == 12
 
     for x, z in zip(colloc2.x, colloc2.z):
-        assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True) == True
+        assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
 
     for x, z in zip(colloc4.x, colloc4.z):
-        assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True) == True
+        assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
