@@ -236,20 +236,22 @@ class ReactorConfig:
         # remove _FILEPATH_PREFIX
         f_path = value[len(_FILEPATH_PREFIX) :]
 
-        # replace . with a path relative to the config file
-        if f_path.startswith("."):
+        # check if rel path
+        if not f_path.startswith("/"):
             if not isinstance(self._config_path, str):
                 raise ReactorConfigError(
                     "Can only use relative paths with a path config"
                 )
             # handles removing the first . and the /
             f_path = Path(self._config_path).parent / f_path
+        else:
+            f_path = Path(f_path)
 
         # check if file exists
-        if not Path(f_path).is_file():
+        if not f_path.is_file():
             raise FileNotFoundError(f"Cannot find file {f_path}")
 
-        f_data = self._read_json_file(f_path)
+        f_data = self._read_json_file(f_path.as_posix())
 
         return f_data
 
