@@ -18,7 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from typing import Protocol, TypedDict
+from typing import Optional, Protocol, TypedDict
 
 import numpy as np
 from typing_extensions import NotRequired
@@ -47,4 +47,4 @@ class GeomConstraintT(TypedDict):
 
     f_constraint: GeomOptimiserCallable
     tolerance: np.ndarray
-    df_constraint: NotRequired[GeomOptimiserCallable]
+    df_constraint: NotRequired[Optional[GeomOptimiserCallable]]
