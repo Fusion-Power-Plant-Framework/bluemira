@@ -8,6 +8,28 @@ on:
       - main
 
 jobs:
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_TAG: bluemira/bluemira:${{ github.sha }}
+    steps:
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Build docker image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: ./docker/Dockerfile
+          load: true
+          tags: ${{ env.DOCKER_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Run tests
+        run: |
+          docker run --rm ${{ env.DOCKER_TAG }}
+
   build-and-test:
 
     runs-on: ubuntu-latest
@@ -128,25 +150,3 @@ jobs:
       uses: codecov/codecov-action@v3
       with:
         fail_ci_if_error: ${{ github.ref_name == 'develop' || github.ref_name == 'main' }}
-
-  docker:
-    runs-on: ubuntu-latest
-    env:
-      DOCKER_TAG: bluemira/bluemira:${{ github.sha }}
-    steps:
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-
-      - name: Build docker image
-        uses: docker/build-push-action@v4
-        with:
-          context: .
-          file: ./docker/Dockerfile
-          load: true
-          tags: ${{ env.DOCKER_TAG }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Run tests
-        run: |
-          docker run --rm ${{ env.DOCKER_TAG }}
