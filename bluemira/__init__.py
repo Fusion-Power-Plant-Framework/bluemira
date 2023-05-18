@@ -28,6 +28,7 @@ import sys
 
 from . import _version  # noqa: ABS101
 
+# this a change
 if os.environ.get("BLUEMIRA_ENV", "") == "CONTAINER":
     sys.path.append("/usr/lib/freecad/Ext")
     sys.path.append("/usr/lib/freecad/Mod/Part")
