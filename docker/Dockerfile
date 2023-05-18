@@ -71,4 +71,4 @@ RUN chown -R user:user /opt/venv
 RUN chown -R user:user /home/user
 
 USER user
-ENTRYPOINT [ "tail","-f", "/dev/null" ]
+ENTRYPOINT [ "pytest","--longrun", "tests/" ]
