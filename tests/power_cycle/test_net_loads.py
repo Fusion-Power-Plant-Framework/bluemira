@@ -10,8 +10,6 @@ from bluemira.power_cycle.errors import (
     LoadDataError,
     LoadModelError,
     PhaseLoadError,
-    PowerCycleABCError,
-    PowerCycleLoadABCError,
     PowerLoadError,
     PulseLoadError,
 )
@@ -33,7 +31,6 @@ netloads_testkit = NetLoadsTestKit()
 
 class TestLoadData:
     tested_class_super = PowerCycleLoadABC
-    tested_class_super_error = PowerCycleLoadABCError
     tested_class = LoadData
     tested_class_error = LoadDataError
 
@@ -255,7 +252,6 @@ class TestLoadModel:
 
 class TestPowerLoad:
     tested_class_super = PowerCycleLoadABC
-    tested_class_super_error = PowerCycleLoadABCError
     tested_class = PowerLoad
     tested_class_error = PowerLoadError
 
@@ -308,7 +304,7 @@ class TestPowerLoad:
         tested_class = self.tested_class
         tested_class_error = self.tested_class_error
 
-        constructor_exceptions = (PowerCycleABCError, tested_class_error)
+        constructor_exceptions = tested_class_error
         with pytest.raises(constructor_exceptions):
             wrong_sample = tested_class(
                 test_name,
@@ -681,7 +677,6 @@ class TestPowerLoad:
 
 class TestPhaseLoad:
     tested_class_super = PowerCycleLoadABC
-    tested_class_super_error = PowerCycleLoadABCError
     tested_class = PhaseLoad
     tested_class_error = PhaseLoadError
 
@@ -749,7 +744,7 @@ class TestPhaseLoad:
         tested_class = self.tested_class
         tested_class_error = self.tested_class_error
 
-        constructor_exceptions = (PowerCycleABCError, tested_class_error)
+        constructor_exceptions = tested_class_error
         with pytest.raises(constructor_exceptions):
             wrong_sample = tested_class(
                 test_name,
@@ -1029,8 +1024,8 @@ class TestPhaseLoad:
             result_set = result.powerload_set
             assert result_set == this_set + this_set
 
-            result_normalize = result.normalize
-            assert result_normalize == this_normalize + this_normalize
+            result_normalise = result.normalise
+            assert result_normalise == this_normalize + this_normalise
 
             result.name = "2x " + sample.name + " (added to itself)"
             result_color = next(colors)
@@ -1052,7 +1047,6 @@ class TestPhaseLoad:
 
 class TestPulseLoad:
     tested_class_super = PowerCycleLoadABC
-    tested_class_super_error = PowerCycleLoadABCError
     tested_class = PulseLoad
     tested_class_error = PulseLoadError
 
@@ -1105,20 +1099,6 @@ class TestPulseLoad:
 
         multisample = self.construct_multisample()
         assert isinstance(multisample, tested_class)
-
-    def assert_constructor_fails(
-        self,
-        test_name,
-        test_phaseloads,
-    ):
-        tested_class = self.tested_class
-
-        constructor_exceptions = PowerCycleABCError
-        with pytest.raises(constructor_exceptions):
-            wrong_sample = tested_class(
-                test_name,
-                test_phaseloads,
-            )
 
     def test_validate_phaseload_set(self):
         tested_class = self.tested_class

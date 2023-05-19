@@ -5,16 +5,16 @@ Classes to define the timeline for Power Cycle simulations.
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Union
+from typing import Dict, List, Optional, Union
 
+import numpy as np
 from numpy.typing import ArrayLike
 
 from bluemira.base.constants import raw_uc
-from bluemira.power_cycle.base import PowerCycleTimeABC
+from bluemira.power_cycle.base import ModuleType, PowerCycleTimeABC
 from bluemira.power_cycle.errors import ScenarioBuilderError
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
-from bluemira.power_cycle.net.manager import ModuleType
-from bluemira.power_cycle.tools import read_json, validate_file, validate_nonnegative
+from bluemira.power_cycle.tools import read_json, validate_file
 
 
 class PowerCyclePhase(PowerCycleTimeABC):
@@ -37,8 +37,10 @@ class PowerCyclePhase(PowerCycleTimeABC):
         duration_breakdown: float,
         label=None,
     ):
-        super().__init__(name, [validate_nonnegative(duration_breakdown)], label=label)
-        self.duration_breakdown = validate_nonnegative(duration_breakdown)
+        super().__init__(name, np.array([duration_breakdown]), label=label)
+        if duration_breakdown < 0:
+            raise ValueError("duration_breakdown must be positive")
+        self.duration_breakdown = duration_breakdown
 
 
 class PowerCyclePulse(PowerCycleTimeABC):
@@ -92,7 +94,7 @@ class PowerCycleScenario(PowerCycleTimeABC):
         pulse_set: List[PowerCyclePulse],
         label=None,
     ):
-        super().__init__(name, self._build_durations_list(self.pulse_set), label=label)
+        super().__init__(name, self._build_durations_list(pulse_set), label=label)
         self.pulse_set = pulse_set
 
     def build_phase_library(self):
@@ -124,7 +126,7 @@ class ScenarioConfig:
 class PulseConfig:
     name: str
     phases: list
-    label: str
+    label: Optional[str] = None
 
 
 @dataclass
@@ -137,8 +139,8 @@ class PhaseConfig:
 @dataclass
 class BreakdownConfig:
     name: str
+    variables_map: dict
     module: Union[None, str, ModuleType]
-    variable_map: dict
 
     _module: ModuleType = field(init=False, repr=False)
 
@@ -255,7 +257,7 @@ class ScenarioBuilder:
         self._breakdown_library = {
             k: Breakdown(
                 v.name,
-                self.import_duration(v.module, v.variable_map),
+                self.import_duration(v.module, v.variables_map),
             )
             for k, v in self.scenario_config.breakdown_library.items()
         }
@@ -268,7 +270,7 @@ class ScenarioBuilder:
         """
         if module is ModuleType.EQUILIBRIA:
             duration = EquilibriaImporter.duration(variables_map)
-        elif module is ModuleType.EQUILIBRIA:
+        elif module is ModuleType.PUMPING:
             duration = PumpingImporter.duration(variables_map)
         else:
             duration = raw_uc(variables_map["duration"], variables_map["unit"], "second")
@@ -288,7 +290,7 @@ class ScenarioBuilder:
 
     def _build_phase_logical(self, durations, operator) -> float:
         if operator == "&":
-            pass
+            return sum(durations)
         elif operator == "|":
             return max(durations)
         else:

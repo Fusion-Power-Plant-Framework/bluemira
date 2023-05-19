@@ -3,11 +3,7 @@
 import pytest
 
 from bluemira.power_cycle.base import PowerCycleImporterABC
-from bluemira.power_cycle.errors import (
-    EquilibriaImporterError,
-    PowerCycleImporterABCError,
-    PumpingImporterError,
-)
+from bluemira.power_cycle.errors import EquilibriaImporterError, PumpingImporterError
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
 from tests.power_cycle.kits_for_tests import (
     NetImportersTestKit,
@@ -19,7 +15,6 @@ importers_testkit = NetImportersTestKit()
 
 class TestEquilibriaImporter:
     tested_class_super = PowerCycleImporterABC
-    tested_class_super_error = PowerCycleImporterABCError
     tested_class = EquilibriaImporter
     tested_class_error = EquilibriaImporterError
 
@@ -73,7 +68,6 @@ class TestEquilibriaImporter:
 
 class TestPumpingImporter:
     tested_class_super = PowerCycleImporterABC
-    tested_class_super_error = PowerCycleImporterABCError
     tested_class = PumpingImporter
     tested_class_error = PumpingImporterError
 

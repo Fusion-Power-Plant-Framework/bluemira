@@ -3,13 +3,18 @@
 """
 Classes for the calculation of net power in the Power Cycle model.
 """
-from dataclasses import dataclass
-from enum import Enum, auto
+from dataclasses import dataclass, field
+from typing import Union
 
 import numpy as np
 
 from bluemira.base.constants import raw_uc
-from bluemira.power_cycle.base import PhaseLoadConfig, PowerCycleABC
+from bluemira.power_cycle.base import (
+    LoadType,
+    ModuleType,
+    PhaseLoadConfig,
+    PowerCycleABC,
+)
 from bluemira.power_cycle.errors import PowerCycleSystemError
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
 from bluemira.power_cycle.net.loads import (
@@ -29,22 +34,11 @@ from bluemira.power_cycle.tools import (
 )
 
 
-class ModuleType(Enum):
-    NONE = auto()
-    EQUILIBRIA = auto()
-    PUMPING = auto()
-
-
-class LoadType(Enum):
-    ACTIVE = auto()
-    REACTIVE = auto()
-
-
 @dataclass
 class PowerCycleLoadConfig:
     name: str
-    module: Union[None, str, ModuleType]
     variables_map: dict
+    module: Union[None, str, ModuleType]
 
     _module: ModuleType = field(init=False, repr=False)
 
@@ -217,16 +211,16 @@ class PowerCycleSystem(PowerCycleABC):
         return phaseload_list
 
     def _make_phaseloads_from_config(self, type_config):
-        system_loads = {}
-        for label, load_config in type_config.items():
-            system_loads[label] = self._build_phaseloads(
-                load_config.name,
+        return {
+            label: self._build_phaseloads(
+                load_config["name"],
                 self.import_phaseload_inputs(
-                    load_config.module,
-                    load_config.variables_map,
+                    load_config["module"],
+                    load_config["variables_map"],
                 ),
             )
-        return system_loads
+            for label, load_config in type_config.items()
+        }
 
 
 class PowerCycleGroup(PowerCycleABC):
@@ -259,7 +253,7 @@ class PowerCycleGroup(PowerCycleABC):
         self.system_library = {
             system_label: PowerCycleSystem(
                 scenario,
-                system_config,
+                PowerCycleSystemConfig(**system_config),
                 label=system_label,
             )
             for system_label, system_config in group_config.items()
