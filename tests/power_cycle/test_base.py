@@ -52,17 +52,13 @@ class TestPowerCycleABC:
         self.test_arguments = test_arguments
 
     def test_validate_class(self):
-        tested_class_error = self.tested_class_error
-
-        sample = self.sample
-        all_arguments = self.test_arguments
-        for argument in all_arguments:
+        for argument in self.test_arguments:
             if isinstance(argument, self.SampleConcreteClass):
-                validated_argument = sample.validate_class(argument)
+                validated_argument = self.sample.validate_class(argument)
                 assert validated_argument == argument
             else:
-                with pytest.raises(tested_class_error):
-                    validated_argument = sample.validate_class(argument)
+                with pytest.raises(TypeError):
+                    validated_argument = self.sample.validate_class(argument)
 
     def test_equality(self):
         sample = self.sample
@@ -153,8 +149,6 @@ class TestPowerCycleLoadABC:
         self.test_arguments = test_arguments
 
     def test_validate_n_points(self):
-        tested_class_error = self.tested_class_error
-
         sample = self.sample
         all_arguments = self.test_arguments
         for argument in all_arguments:
@@ -175,7 +169,7 @@ class TestPowerCycleLoadABC:
                 validated_arg = sample._validate_n_points(argument)
                 assert isinstance(validated_arg, int)
             else:
-                with pytest.raises(tested_class_error):
+                with pytest.raises((ValueError, TypeError)):
                     validated_arg = sample._validate_n_points(argument)
 
     @pytest.mark.parametrize("refinement_order", range(10))

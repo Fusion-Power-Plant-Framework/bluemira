@@ -76,7 +76,7 @@ class LoadData(PowerCycleLoadABC):
         Validate a parameter for creation of a class instance to be an
         (not necessarily strictly) increasing list.
         """
-        if any(np.diff(parameter) <= 0):
+        if any(np.diff(parameter) < 0):
             raise LoadDataError("increasing")
         return parameter
 
