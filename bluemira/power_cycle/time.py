@@ -12,7 +12,7 @@ from numpy.typing import ArrayLike
 
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.base import ModuleType, PowerCycleTimeABC
-from bluemira.power_cycle.errors import ScenarioBuilderError
+from bluemira.power_cycle.errors import PowerCycleError, ScenarioBuilderError
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
 from bluemira.power_cycle.tools import read_json, validate_file
 
@@ -163,7 +163,7 @@ class Breakdown:
 
 
 @dataclass
-class ScenarioBulderConfig:
+class ScenarioBuilderConfig:
     scenario: Union[dict, ScenarioConfig]
     pulse_library: dict
     phase_library: dict
@@ -241,7 +241,7 @@ class ScenarioBuilder:
 
     def __init__(self, config_path: str):
         self._scenario_config_path = validate_file(config_path)
-        self.scenario_config = ScenarioBulderConfig(
+        self.scenario_config = ScenarioBuilderConfig(
             **read_json(self._scenario_config_path)
         )
 
@@ -273,7 +273,14 @@ class ScenarioBuilder:
         elif module is ModuleType.PUMPING:
             duration = PumpingImporter.duration(variables_map)
         else:
-            duration = raw_uc(variables_map["duration"], variables_map["unit"], "second")
+            try:
+                duration = raw_uc(
+                    variables_map["duration"], variables_map["unit"], "second"
+                )
+            except KeyError:
+                raise PowerCycleError(
+                    msg=f'Variables map incomplete no keys {set(("duration", "unit")) - variables_map.keys()}'
+                )
         return duration
 
     def _build_phase_library(self):
