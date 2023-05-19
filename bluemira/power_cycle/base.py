@@ -185,7 +185,9 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
 
     @staticmethod
     def _build_time_from_load_set(load_set):
-        return np.unique([load_object.intrinsic_time for load_object in load_set])
+        return np.unique(
+            np.concatenate([load_object.intrinsic_time for load_object in load_set])
+        )
 
     def _validate_n_points(self, n_points: Union[int, float, None]):
         """

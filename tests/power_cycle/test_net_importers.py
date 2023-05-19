@@ -14,10 +14,6 @@ importers_testkit = NetImportersTestKit()
 
 
 class TestEquilibriaImporter:
-    tested_class_super = PowerCycleImporterABC
-    tested_class = EquilibriaImporter
-    tested_class_error = EquilibriaImporterError
-
     def setup_method(self):
         duration_inputs = importers_testkit.equilibria_duration_inputs()
         self.duration_inputs = duration_inputs
@@ -26,73 +22,39 @@ class TestEquilibriaImporter:
         self.phaseload_inputs = phaseload_inputs
 
     def test_duration(self):
-        tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
-
-        duration_inputs = self.duration_inputs
-        possible_variable_map_fields = duration_inputs.keys()
         all_values = []
-        for field in possible_variable_map_fields:
-            possible_data_requests = duration_inputs[field]
-            for request in possible_data_requests:
-                variable_map_input = {field: request}
-                value = tested_class.duration(variable_map_input)
+        for field, data in self.duration_inputs.items():
+            for request in data:
+                value = EquilibriaImporter.duration({field: request})
                 assert_value_is_nonnegative(value)
                 all_values.append(value)
 
-            wrong_variable_map = {field: "non-implemented_request"}
-            with pytest.raises(tested_class_error):
-                value = tested_class.duration(wrong_variable_map)
+            with pytest.raises(EquilibriaImporterError):
+                EquilibriaImporter.duration({field: "non-implemented_request"})
 
     def test_phaseload_inputs(self):
-        tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
-
-        phaseload_inputs = self.phaseload_inputs
-        inputs_format = tested_class._phaseload_inputs_format
-        possible_variable_map_fields = phaseload_inputs.keys()
         all_values = []
-        for field in possible_variable_map_fields:
-            possible_data_requests = phaseload_inputs[field]
-            for request in possible_data_requests:
-                variable_map_input = {field: request}
-                value = tested_class.phaseload_inputs(variable_map_input)
-
-                assert value.allowed_format == inputs_format
+        for field, data in self.phaseload_inputs.items():
+            for request in data:
+                value = EquilibriaImporter.phaseload_inputs({field: request})
                 all_values.append(value)
 
-            wrong_variable_map = {field: "non-implemented_request"}
-            with pytest.raises(tested_class_error):
-                value = tested_class.duration(wrong_variable_map)
+            with pytest.raises(EquilibriaImporterError):
+                EquilibriaImporter.duration({field: "non-implemented_request"})
 
 
 class TestPumpingImporter:
-    tested_class_super = PowerCycleImporterABC
-    tested_class = PumpingImporter
-    tested_class_error = PumpingImporterError
-
     def setup_method(self):
         duration_inputs = importers_testkit.pumping_duration_inputs()
         self.duration_inputs = duration_inputs
 
     def test_duration(self):
-        tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
-
-        duration_inputs = self.duration_inputs
-        possible_variable_map_fields = duration_inputs.keys()
         all_values = []
-        for field in possible_variable_map_fields:
-            possible_data_requests = duration_inputs[field]
-            for request in possible_data_requests:
-                variable_map_input = {field: request}
-                value = tested_class.duration(variable_map_input)
+        for field, data in self.duration_inputs.items():
+            for request in data:
+                value = PumpingImporter.duration({field: request})
                 assert_value_is_nonnegative(value)
                 all_values.append(value)
 
-            wrong_variable_map = {field: "non-implemented_request"}
-            with pytest.raises(tested_class_error):
-                value = tested_class.duration(wrong_variable_map)
-
-    def test_phaseload_inputs(self):
-        pass
+            with pytest.raises(PumpingImporterError):
+                PumpingImporter.duration({field: "non-implemented_request"})

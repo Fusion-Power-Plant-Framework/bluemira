@@ -60,8 +60,8 @@ class LoadData(PowerCycleLoadABC):
     ):
         super().__init__(name)
 
-        self.data = np.array(validate_list(data))
-        self.time = np.array(validate_list(time))
+        self.data = np.array(validate_list(data), dtype=float)
+        self.time = np.array(validate_list(time), dtype=float)
         self._is_increasing(self.time)
 
         if len(self.data) != len(self.time):
@@ -291,11 +291,11 @@ class PowerLoad(PowerCycleLoadABC):
             List of power values. [W]
         """
         time = np.array(validate_list(time))
-        curve = np.zeros(len(time))
+        curve = []
 
         for loaddata, loadmodel in zip(self.loaddata_set, self.loadmodel_set):
-            curve += self._single_curve(loaddata, loadmodel, time)
-        return curve
+            curve.append(self._single_curve(loaddata, loadmodel, time))
+        return np.vstack(curve) if len(curve) > 1 else curve[0]
 
     def _normalise_time(self, new_end_time):
         """
@@ -387,7 +387,7 @@ class PowerLoad(PowerCycleLoadABC):
         )
 
         list_of_plot_objects = self.plot_obj(
-            computed_time, self.curve(computed_time), self.name, kwargs, True
+            ax, computed_time, self.curve(computed_time), self.name, kwargs, True
         )
 
         if detailed:

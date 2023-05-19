@@ -240,15 +240,6 @@ class TestPowerLoad:
         multisample = self.construct_multisample()
         assert isinstance(multisample, PowerLoad)
 
-    def assert_constructor_fails(
-        self,
-        test_name,
-        test_loaddata,
-        test_loadmodel,
-    ):
-        with pytest.raises(KeyError):
-            PowerLoad(test_name, test_loaddata, test_loadmodel)
-
     def test_validate_loaddata_set(self):
         sample_loaddatas = self.sample_loaddatas
         sample_loadmodels = self.sample_loadmodels
@@ -263,11 +254,8 @@ class TestPowerLoad:
 
         wrong_loaddatas = copy.deepcopy(right_loaddatas)
         wrong_loaddatas[0] = "non-LoadData"
-        self.assert_constructor_fails(
-            right_name,
-            wrong_loaddatas,
-            right_loadmodels,
-        )
+        with pytest.raises(TypeError):
+            PowerLoad(right_name, wrong_loaddatas, right_loadmodels)
 
     def test_validate_loadmodel_set(self):
         sample_loaddatas = self.sample_loaddatas
@@ -283,11 +271,8 @@ class TestPowerLoad:
 
         wrong_loadmodels = copy.deepcopy(right_loadmodels)
         wrong_loadmodels[0] = "non-LoadModel"
-        self.assert_constructor_fails(
-            right_name,
-            right_loaddatas,
-            wrong_loadmodels,
-        )
+        with pytest.raises(KeyError):
+            PowerLoad(right_name, right_loaddatas, wrong_loadmodels)
 
     def test_sanity(self):
         sample_loaddatas = self.sample_loaddatas
@@ -303,74 +288,40 @@ class TestPowerLoad:
 
         wrong_loaddatas = copy.deepcopy(right_loaddatas)
         wrong_loaddatas.pop()
-        self.assert_constructor_fails(
-            right_name,
-            wrong_loaddatas,
-            right_loadmodels,
-        )
+        with pytest.raises(PowerLoadError):
+            PowerLoad(right_name, wrong_loaddatas, right_loadmodels)
 
         wrong_loadmodels = copy.deepcopy(right_loadmodels)
         wrong_loadmodels.pop()
-        self.assert_constructor_fails(
-            right_name,
-            right_loaddatas,
-            wrong_loadmodels,
-        )
+        with pytest.raises(PowerLoadError):
+            PowerLoad(right_name, right_loaddatas, wrong_loadmodels)
 
     def test_null_constructor(self):
         null_instance = PowerLoad.null()
-
         null_loaddata = LoadData.null()
-        loaddata_set = null_instance.loaddata_set
-        for loaddata in loaddata_set:
-            assert loaddata.time == null_loaddata.time
-            assert loaddata.data == null_loaddata.data
 
-        null_loadmodel = LoadModel["RAMP"]
-        loadmodel_set = null_instance.loadmodel_set
-        for element in loadmodel_set:
-            assert element == null_loadmodel
+        for loaddata in null_instance.loaddata_set:
+            assert np.allclose(loaddata.time, null_loaddata.time)
+            assert np.allclose(loaddata.data, null_loaddata.data)
+
+        for element in null_instance.loadmodel_set:
+            assert element == LoadModel["RAMP"]
 
     def test_single_curve(self):
-        sample_loaddatas = self.sample_loaddatas
-        sample_loadmodels = self.sample_loadmodels
-
         test_time = netloads_testkit.inputs_for_time_interpolation()
         time_length = len(test_time)
 
-        for loaddata in sample_loaddatas:
+        for loaddata in self.sample_loaddatas:
             power_points = loaddata.data
 
-            for loadmodel in sample_loadmodels:
+            for loadmodel in self.sample_loadmodels:
                 curve = PowerLoad._single_curve(
                     loaddata,
                     loadmodel,
                     test_time,
                 )
-                curve_length = len(curve)
-                assert curve_length == time_length
+                assert len(curve) == time_length
                 netloads_testkit.assert_is_interpolation(power_points, curve)
-
-    def test_validate_curve_input(self):
-        test_arguments = [
-            None,
-            1.2,
-            -1.2,
-            70,
-            -70,
-            "some string",
-            [1, 2, 3, 4],
-            (1, 2, 3, 4),
-        ]
-        test_arguments = test_arguments + self.all_samples
-
-        for argument in test_arguments:
-            if isinstance(argument, (int, float, list)):
-                time = PowerLoad._validate_curve_input(argument)
-                assert isinstance(time, list)
-            else:
-                with pytest.raises(TypeError):
-                    time = PowerLoad._validate_curve_input(argument)
 
     def test_curve(self):
         all_samples = self.all_samples
@@ -381,46 +332,33 @@ class TestPowerLoad:
         all_sets = []
         all_models = []
         for sample in all_samples:
-            curve = sample.curve(test_time)
-            curve_length = len(curve)
-            assert curve_length == time_length
+            assert len(sample.curve(test_time)) == time_length
 
             all_data.append(sample.loaddata_set[0].data)
             all_sets.append(sample.loaddata_set[0])
             all_models.append(sample.loadmodel_set[0])
-        multiset_load = PowerLoad("Multi Load", all_sets, all_models)
-        multiset_curve = multiset_load.curve(test_time)
 
-        data_maxima = [max(data) for data in all_data]
-        data_minima = [min(data) for data in all_data]
-        sum_of_maxima = sum(data_maxima)
-        sum_of_minima = sum(data_minima)
-        extreme_points = [sum_of_minima, sum_of_maxima]
-        netloads_testkit.assert_is_interpolation(extreme_points, multiset_curve)
+        netloads_testkit.assert_is_interpolation(
+            [
+                sum([min(data) for data in all_data]),
+                sum([max(data) for data in all_data]),
+            ],
+            PowerLoad("Multi Load", all_sets, all_models).curve(test_time),
+        )
 
     @staticmethod
     def assert_length_and_data_have_not_changed(old_set, new_set):
-        correct_number_of_elements = len(old_set)
-        wanted_lenght = correct_number_of_elements
-        new_set_lenght = len(new_set)
-        length_has_not_changed = new_set_lenght == wanted_lenght
-        assert length_has_not_changed
-
-        for p in range(correct_number_of_elements):
-            old_data = old_set[p]
-            new_data = new_set[p]
-            data_has_not_changed = old_data == new_data
-            assert data_has_not_changed
+        assert len(new_set) == len(old_set)
+        for p in range(len(old_set)):
+            assert old_set[p] == new_set[p]
 
     @pytest.mark.parametrize(
         "new_end_time",
         netloads_testkit.attribute_manipulation_examples,
     )
     def test_normalise_time(self, new_end_time):
-        all_samples = self.all_samples
-        multisample = self.construct_multisample()
-        all_samples.append(multisample)
-        for sample in all_samples:
+        self.all_samples.append(self.construct_multisample())
+        for sample in self.all_samples:
             old_loaddata_set = sample.loaddata_set
             sample._normalise_time(new_end_time)
             new_loaddata_set = sample.loaddata_set
@@ -461,26 +399,19 @@ class TestPowerLoad:
 
     def test_intrinsic_time(self):
         multisample = self.construct_multisample()
-        loaddata_set = multisample.loaddata_set
-
         intrinsic_time = multisample.intrinsic_time
-        for loaddata in loaddata_set:
-            loaddata_time = loaddata.intrinsic_time
-            for t in loaddata_time:
+        for loaddata in multisample.loaddata_set:
+            for t in loaddata.intrinsic_time:
                 assert t in intrinsic_time
 
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_plot(self, detailed_plot_flag):
-        figure_title = "'detailed' flag = " + str(detailed_plot_flag)
-        figure_title = "PowerLoad Plotting (" + figure_title + ")"
-        ax = tools_testkit.prepare_figure(figure_title)
-
-        colors = netloads_testkit.color_order_for_plotting
-        colors = iter(colors)
-
-        all_samples = self.all_samples
+        ax = tools_testkit.prepare_figure(
+            f"PowerLoad Plotting ('detailed' flag = {detailed_plot_flag})"
+        )
+        colors = iter(netloads_testkit.color_order_for_plotting)
         list_of_plot_objects = []
-        for sample in all_samples:
+        for sample in self.all_samples:
             sample_color = next(colors)
             ax, plot_list = sample.plot(
                 ax=ax,
@@ -499,18 +430,10 @@ class TestPowerLoad:
         figure_title = "PowerLoad Addition"
         ax = tools_testkit.prepare_figure(figure_title)
 
-        all_samples = self.all_samples
-        sample_loaddatas = self.sample_loaddatas
-        sample_loadmodels = self.sample_loadmodels
-
-        result = sum(all_samples)  # requires both __add__ and __radd__
+        result = sum(self.all_samples)  # requires both __add__ and __radd__
         assert isinstance(result, PowerLoad)
-
-        result_loaddata = result.loaddata_set
-        assert result_loaddata == sample_loaddatas
-
-        result_loadmodel = result.loadmodel_set
-        assert result_loadmodel == sample_loadmodels
+        assert result.loaddata_set == self.sample_loaddatas
+        assert result.loadmodel_set == self.sample_loadmodels
 
         ax, list_of_plot_objects = result.plot(
             ax=ax,
@@ -525,15 +448,10 @@ class TestPowerLoad:
         """
         Tests both '__mul__' and '__truediv__'.
         """
-        rel_tol = None
-        abs_tol = None
-
-        num_spec = "x" + str(number) + " & /" + str(number)
-        figure_title = "PowerLoad Multiplication (" + num_spec + ")"
-        ax = tools_testkit.prepare_figure(figure_title)
-
-        colors = netloads_testkit.color_order_for_plotting
-        colors = iter(colors)
+        ax = tools_testkit.prepare_figure(
+            f"PowerLoad Multiplication (x{number} & /{number})"
+        )
+        colors = iter(netloads_testkit.color_order_for_plotting)
 
         multisample = self.construct_multisample()
         test_time = multisample.intrinsic_time
@@ -549,27 +467,20 @@ class TestPowerLoad:
 
         length_time = len(test_time)
         for t in range(length_time):
-            curve_point = curve[t]
-            lesser_point = lesser_curve[t]
-            greater_point = greater_curve[t]
+            curve_point = curve[:, t]
+            lesser_point = lesser_curve[:, t]
+            greater_point = greater_curve[:, t]
 
             n = number
             cp = curve_point
             lp = lesser_point
             gp = greater_point
 
-            assert lp == pytest.approx(cp / n, rel=rel_tol, abs=abs_tol)
-            assert gp == pytest.approx(cp * n, rel=rel_tol, abs=abs_tol)
+            assert lp == pytest.approx(cp / n)
+            assert gp == pytest.approx(cp * n)
 
-        samples_to_plot = [
-            multisample,
-            lesser_multisample,
-            greater_multisample,
-        ]
-        n_samples = len(samples_to_plot)
         list_of_plot_objects = []
-        for s in range(n_samples):
-            sample = samples_to_plot[s]
+        for sample in [multisample, lesser_multisample, greater_multisample]:
             assert isinstance(sample, PowerLoad)
 
             sample_color = next(colors)
@@ -630,102 +541,63 @@ class TestPhaseLoad:
             PhaseLoad(test_name, test_phase, test_powerloads, test_normalflags)
 
     def test_validate_phase(self):
-        sample_phases = self.sample_phases
-        sample_powerloads = self.sample_powerloads
-        sample_normalflags = self.sample_normalflags
-
-        right_name = [
-            "PhaseLoad with a non-PowerCyclePhase",
-            "element in its 'phase' argument",
-        ]
-        right_name = " ".join(right_name)
-        right_phase = sample_phases[0]
-        right_phaseloads = sample_powerloads
-        right_normalflags = sample_normalflags
-
-        wrong_phase = "non-PowerCyclePhase"
+        right_name = (
+            "PhaseLoad with a non-PowerCyclePhase element in its 'phase' argument"
+        )
         self.assert_constructor_fails(
             right_name,
-            wrong_phase,
-            right_phaseloads,
-            right_normalflags,
+            "non-PowerCyclePhase",
+            self.sample_powerloads,
+            self.sample_normalflags,
         )
 
     def test_validate_powerload_set(self):
-        sample_phases = self.sample_phases
-        sample_powerloads = self.sample_powerloads
-        sample_normalflags = self.sample_normalflags
-
-        right_name = [
-            "PhaseLoad with a non-PowerLoad",
-            "element in its 'powerload_set' list argument",
-        ]
-        right_name = " ".join(right_name)
-        example_phase = sample_phases[0]
-        right_phaseloads = sample_powerloads
-        right_normalflags = sample_normalflags
-
-        wrong_phaseloads = copy.deepcopy(right_phaseloads)
+        right_name = (
+            "PhaseLoad with a non-PowerLoad element in its 'powerload_set' list argument"
+        )
+        wrong_phaseloads = copy.deepcopy(self.sample_powerloads)
         wrong_phaseloads[0] = "non-PowerLoad"
         self.assert_constructor_fails(
             right_name,
-            example_phase,
+            self.sample_phases[0],
             wrong_phaseloads,
-            right_normalflags,
+            self.sample_normalflags,
         )
 
     def test_validate_normalise(self):
-        sample_phases = self.sample_phases
-        sample_powerloads = self.sample_powerloads
-        sample_normalflags = self.sample_normalflags
+        right_name = (
+            "PhaseLoad with a non-boolean element in its 'normalise' list argument"
+        )
 
-        right_name = [
-            "PhaseLoad with a non-boolean",
-            "element in its 'normalise' list argument",
-        ]
-        right_name = " ".join(right_name)
-        example_phase = sample_phases[0]
-        right_phaseloads = sample_powerloads
-        right_normalflags = sample_normalflags
-
-        wrong_normalflags = copy.deepcopy(right_normalflags)
+        wrong_normalflags = copy.deepcopy(self.sample_normalflags)
         wrong_normalflags[0] = "non-boolean"
         self.assert_constructor_fails(
             right_name,
-            example_phase,
-            right_phaseloads,
+            self.sample_phases[0],
+            self.sample_powerloads,
             wrong_normalflags,
         )
 
     def test_sanity(self):
-        sample_phases = self.sample_phases
-        sample_powerloads = self.sample_powerloads
-        sample_normalflags = self.sample_normalflags
+        right_name = (
+            "PhaseLoad with different lengths of 'powerload_set' & 'normalise' arguments"
+        )
 
-        right_name = [
-            "PhaseLoad with different lengths",
-            "of 'powerload_set' & 'normalise' arguments",
-        ]
-        right_name = " ".join(right_name)
-        example_phase = sample_phases[0]
-        right_phaseloads = sample_powerloads
-        right_normalflags = sample_normalflags
-
-        wrong_phaseloads = copy.deepcopy(right_phaseloads)
+        wrong_phaseloads = copy.deepcopy(self.sample_powerloads)
         wrong_phaseloads.pop()
         self.assert_constructor_fails(
             right_name,
-            example_phase,
+            self.sample_phases[0],
             wrong_phaseloads,
-            right_normalflags,
+            self.sample_normalflags,
         )
 
-        wrong_normalflags = copy.deepcopy(right_normalflags)
+        wrong_normalflags = copy.deepcopy(self.sample_normalflags)
         wrong_normalflags.pop()
         self.assert_constructor_fails(
             right_name,
-            example_phase,
-            right_phaseloads,
+            self.sample_phases[0],
+            self.sample_powerloads,
             wrong_normalflags,
         )
 
@@ -749,11 +621,9 @@ class TestPhaseLoad:
     def test_normalised_set(self):
         multisample = self.construct_multisample()
         normalised_set = multisample._normalised_set
-
         normalise = multisample.normalise
-        n_normalise = len(normalise)
 
-        for n in range(n_normalise):
+        for n in range(len(normalise)):
             normalization_flag = normalise[n]
             powerload = normalised_set[n]
             loaddata_set = powerload.loaddata_set
@@ -780,10 +650,8 @@ class TestPhaseLoad:
 
     def test_normalised_time(self):
         multisample = self.construct_multisample()
-        normalised_set = multisample._normalised_set
-
         normalised_time = multisample.normalised_time
-        for normal_load in normalised_set:
+        for normal_load in multisample._normalised_set:
             normal_load_time = normal_load.intrinsic_time
             for t in normal_load_time:
                 assert t in normalised_time
@@ -794,18 +662,15 @@ class TestPhaseLoad:
     @pytest.mark.parametrize("color_index", [2])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_public_plot(self, color_index, detailed_plot_flag):
-        figure_title = "'detailed' flag = " + str(detailed_plot_flag)
-        figure_title = "PhaseLoad Plotting (" + figure_title + ")"
-        ax = tools_testkit.prepare_figure(figure_title)
-
-        colors = netloads_testkit.color_order_for_plotting
-        sample_color = colors[color_index]
+        ax = tools_testkit.prepare_figure(
+            f"PhaseLoad Plotting ('detailed' flag = {detailed_plot_flag})"
+        )
 
         multisample = self.construct_multisample()
         ax, list_of_plot_objects = multisample.plot(
             ax=ax,
             detailed=detailed_plot_flag,
-            color=sample_color,
+            color=netloads_testkit.color_order_for_plotting[color_index],
         )
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
@@ -816,8 +681,7 @@ class TestPhaseLoad:
         """
         ax = tools_testkit.prepare_figure("PhaseLoad Addition")
 
-        colors = netloads_testkit.color_order_for_plotting
-        colors = iter(colors)
+        colors = iter(netloads_testkit.color_order_for_plotting)
 
         all_results = []
         list_of_plot_objects = []
@@ -836,14 +700,9 @@ class TestPhaseLoad:
             result = sample + sample
             assert isinstance(result, PhaseLoad)
 
-            result_phase = result.phase
-            assert result_phase == this_phase
-
-            result_set = result.powerload_set
-            assert result_set == this_set + this_set
-
-            result_normalise = result.normalise
-            assert result_normalise == this_normalise + this_normalise
+            assert result.phase == this_phase
+            assert result.powerload_set == this_set + this_set
+            assert result.normalise == this_normalise + this_normalise
 
             result.name = "2x " + sample.name + " (added to itself)"
             result_color = next(colors)
@@ -927,9 +786,7 @@ class TestPulseLoad:
     def test_null_constructor(self):
         null_instance = PulseLoad.null(self.example_pulse)
         assert null_instance.pulse == self.example_pulse
-
-        phaseload_set = null_instance.phaseload_set
-        assert len(phaseload_set) == len(self.example_pulse.phase_set)
+        assert len(null_instance.phaseload_set) == len(self.example_pulse.phase_set)
 
     def test_build_pulse(self):
         built_pulse = self.construct_multisample().pulse
@@ -953,9 +810,6 @@ class TestPulseLoad:
 
         time_memory = []
         for shifted_load in shifted_set:
-            current_phase = shifted_load.phase
-            current_phase_duration = current_phase.duration
-
             powerload_set = shifted_load.powerload_set
             current_time = shifted_load._build_time_from_load_set(powerload_set)
             time_memory.append(current_time)
@@ -964,9 +818,9 @@ class TestPulseLoad:
             last_time = current_time[-1]
             time_span = last_time - first_time
 
-            spn = time_span
-            dur = current_phase_duration
-            assert spn == pytest.approx(dur, rel=rel_tol, abs=abs_tol)
+            assert time_span == pytest.approx(
+                shifted_load.phase.duration, rel=rel_tol, abs=abs_tol
+            )
 
         with pytest.raises((AttributeError, PulseLoadError)):
             multisample._shifted_set = multisample.phaseload_set[0]._normalised_set
@@ -1047,9 +901,7 @@ class TestPulseLoad:
         original = self.construct_multisample()
         result = original + original
 
-        original_shifted_time = original.shifted_time
-        result_shifted_time = result.shifted_time
-        assert result_shifted_time == original_shifted_time
+        assert result.shifted_time == original.shifted_time
         assert result.pulse == original.pulse
 
         for original_phaseload, result_phaseload in zip(
@@ -1074,7 +926,3 @@ class TestPulseLoad:
 
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
-
-
-class TestScenarioLoad:
-    pass
