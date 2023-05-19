@@ -308,10 +308,10 @@ class NetLoadsTestKit:
 
         Possibly to be substituted by 'unittest.mock'.
         """
-        original_max = max(original_points)
-        original_min = min(original_points)
-        curve_max = max(curve)
-        curve_min = min(curve)
+        original_max = np.max(original_points)
+        original_min = np.min(original_points)
+        curve_max = np.max(curve)
+        curve_min = np.min(curve)
         assert (curve_max <= original_max) or (curve_max == 0)
         assert (curve_min >= original_min) or (curve_min == 0)
 
