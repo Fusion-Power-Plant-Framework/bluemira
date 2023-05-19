@@ -8,12 +8,6 @@ from bluemira.power_cycle.base import (
     PowerCycleLoadABC,
     PowerCycleTimeABC,
 )
-from bluemira.power_cycle.errors import (
-    PowerCycleABCError,
-    PowerCycleImporterABCError,
-    PowerCycleLoadABCError,
-    PowerCycleTimeABCError,
-)
 from bluemira.power_cycle.tools import (
     validate_list,
     validate_nonnegative,
@@ -28,7 +22,6 @@ class TestPowerCycleABC:
     tested_class_super = None
     tested_class_super_error = None
     tested_class = PowerCycleABC
-    tested_class_error = PowerCycleABCError
 
     class SampleConcreteClass(tested_class):
         """
@@ -58,56 +51,6 @@ class TestPowerCycleABC:
         self.another_sample = another_sample
         self.test_arguments = test_arguments
 
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
-    def test_validate_name(self):
-        tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
-
-        all_arguments = self.test_arguments
-        for argument in all_arguments:
-            if isinstance(argument, str):
-                validated_argument = tested_class._validate_name(argument)
-                assert validated_argument == argument
-            else:
-                with pytest.raises(tested_class_error):
-                    validated_argument = tested_class._validate_name(argument)
-
-    def test_validate_label(self):
-        tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
-
-        example_name = "a_long_string_that_should_be_cut"
-        label_length = tested_class._label_length
-        example_correct_label = example_name[0 : label_length - 1]
-
-        all_arguments = self.test_arguments
-        all_arguments.append(example_correct_label)
-        for argument in all_arguments:
-            type_is_correct = isinstance(argument, str)
-
-            if type_is_correct:
-                length_is_incorrect = len(argument) != label_length
-
-                if length_is_incorrect:
-                    with pytest.raises(tested_class_error):
-                        validated_argument = tested_class._validate_label(
-                            argument,
-                            label_length,
-                        )
-                else:
-                    validated_argument = tested_class._validate_label(
-                        argument,
-                        label_length,
-                    )
-                    assert validated_argument == argument
-
-    # ------------------------------------------------------------------
-    #  OPERATIONS
-    # ------------------------------------------------------------------
-
     def test_validate_class(self):
         tested_class_error = self.tested_class_error
 
@@ -134,9 +77,7 @@ class TestPowerCycleABC:
 
 class TestPowerCycleTimeABC:
     tested_class_super = PowerCycleABC
-    tested_class_super_error = PowerCycleABCError
     tested_class = PowerCycleTimeABC
-    tested_class_error = PowerCycleTimeABCError
 
     class SampleConcreteClass(tested_class):
         """
@@ -156,20 +97,6 @@ class TestPowerCycleTimeABC:
 
         self.sample = sample
         self.test_arguments = test_arguments
-
-    def test_validate_durations(self):
-        """
-        No new functionality to be tested.
-        """
-        sample = self.sample
-        assert callable(sample._validate_durations)
-
-    def test_build_durations_list(self):
-        """
-        No new functionality to be tested.
-        """
-        sample = self.sample
-        assert callable(sample._build_durations_list)
 
     def test_constructor(self):
         test_arguments = self.test_arguments
@@ -198,9 +125,7 @@ class TestPowerCycleTimeABC:
 
 class TestPowerCycleLoadABC:
     tested_class_super = PowerCycleABC
-    tested_class_super_error = PowerCycleABCError
     tested_class = PowerCycleLoadABC
-    tested_class_error = PowerCycleLoadABCError
 
     class SampleConcreteClass(tested_class):
         """
@@ -226,13 +151,6 @@ class TestPowerCycleLoadABC:
         self.sample = sample
         self.another_sample = another_sample
         self.test_arguments = test_arguments
-
-    def test_intrinsic_time(self):
-        """
-        No new functionality to be tested.
-        """
-        sample = self.sample
-        assert hasattr(sample, "intrinsic_time")
 
     def test_validate_n_points(self):
         tested_class_error = self.tested_class_error
@@ -288,13 +206,6 @@ class TestPowerCycleLoadABC:
             refined_list_length = len(refined_list)
             assert points_in_refined == refined_list_length
 
-    def test_build_time_from_load_set(self):
-        """
-        No new functionality to be tested.
-        """
-        sample = self.sample
-        assert callable(sample._build_time_from_load_set)
-
     @pytest.mark.parametrize(
         "attribute",
         [
@@ -311,48 +222,3 @@ class TestPowerCycleLoadABC:
         one_attr = getattr(one_sample, attribute)
         another_attr = getattr(another_sample, attribute)
         assert one_attr != another_attr
-
-
-class TestPowerCycleImporterABC:
-    tested_class_super = None
-    tested_class_super_error = None
-    tested_class = PowerCycleImporterABC
-    tested_class_error = PowerCycleImporterABCError
-
-    class SampleConcreteClass(tested_class):
-        """
-        Inner class that is a dummy concrete class for testing the main
-        abstract class of the test.
-        """
-
-        @staticmethod
-        def duration(variables_map):
-            """
-            Define concrete version of abstract static method.
-            """
-            pass
-
-        @staticmethod
-        def phaseload_inputs(variables_map):
-            """
-            Define concrete version of abstract static method.
-            """
-            pass
-
-    def setup_method(self):
-        sample = self.SampleConcreteClass()
-        self.sample = sample
-
-    def test_duration(self):
-        """
-        No new functionality to be tested.
-        """
-        sample = self.sample
-        assert callable(sample.duration)
-
-    def test_phaseload_inputs(self):
-        """
-        No new functionality to be tested.
-        """
-        sample = self.sample
-        assert callable(sample.phaseload_inputs)
