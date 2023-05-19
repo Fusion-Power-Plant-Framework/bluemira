@@ -11,7 +11,7 @@ import numpy as np
 from numpy.typing import ArrayLike
 
 from bluemira.base.constants import raw_uc
-from bluemira.power_cycle.base import ModuleType, PowerCycleTimeABC
+from bluemira.power_cycle.base import BaseConfig, ModuleType, PowerCycleTimeABC
 from bluemira.power_cycle.errors import PowerCycleError, ScenarioBuilderError
 from bluemira.power_cycle.net.importers import EquilibriaImporter, PumpingImporter
 from bluemira.power_cycle.tools import read_json, validate_file
@@ -137,23 +137,8 @@ class PhaseConfig:
 
 
 @dataclass
-class BreakdownConfig:
-    name: str
-    variables_map: dict
-    module: Union[None, str, ModuleType]
-
-    _module: ModuleType = field(init=False, repr=False)
-
-    @property
-    def module(self):
-        return self._module
-
-    @module.setter
-    def module(self, value):
-        if value is None:
-            self._module = ModuleType.NONE
-        elif isinstance(value, str):
-            self._module = ModuleType[value.upper()]
+class BreakdownConfig(BaseConfig):
+    """Breakdown Config"""
 
 
 @dataclass

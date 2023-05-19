@@ -4,7 +4,7 @@
 Base classes for the power cycle model.
 """
 from abc import ABC, ABCMeta, abstractmethod, abstractproperty
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Union
 
@@ -23,6 +23,28 @@ class ModuleType(Enum):
 class LoadType(Enum):
     ACTIVE = auto()
     REACTIVE = auto()
+
+
+@dataclass
+class BaseConfig:
+    name: str
+    variables_map: dict
+    module: Union[None, str, ModuleType]
+
+    _module: ModuleType = field(init=False, repr=False)
+
+    @property
+    def module(self):
+        return self._module
+
+    @module.setter
+    def module(self, value):
+        if value is None:
+            self._module = ModuleType.NONE
+        elif isinstance(value, str):
+            self._module = ModuleType[value.upper()]
+        else:
+            self._module = value
 
 
 class PowerCycleABC:

@@ -3,13 +3,13 @@
 """
 Classes for the calculation of net power in the Power Cycle model.
 """
-from dataclasses import dataclass, field
-from typing import Union
+from dataclasses import dataclass
 
 import numpy as np
 
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.base import (
+    BaseConfig,
     LoadType,
     ModuleType,
     PhaseLoadConfig,
@@ -35,23 +35,8 @@ from bluemira.power_cycle.tools import (
 
 
 @dataclass
-class PowerCycleLoadConfig:
-    name: str
-    variables_map: dict
-    module: Union[None, str, ModuleType]
-
-    _module: ModuleType = field(init=False, repr=False)
-
-    @property
-    def module(self):
-        return self._module
-
-    @module.setter
-    def module(self, value):
-        if value is None:
-            self._module = ModuleType.NONE
-        elif isinstance(value, str):
-            self._module = ModuleType[value.upper()]
+class PowerCycleLoadConfig(BaseConfig):
+    """Power cycle load config"""
 
 
 @dataclass
