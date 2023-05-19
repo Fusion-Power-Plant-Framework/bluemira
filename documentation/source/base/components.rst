@@ -1,5 +1,5 @@
-Components
-==========
+Reactors, Components and Managers
+=================================
 
 :py:class:`Components` are the fundamental building blocks of a bluemira design.
 A :py:class:`Component` is a physical object or a group of physical objects, organised in a tree structure.
@@ -64,3 +64,6 @@ for instance the separatrix of a plasma.
             )
 
 A :py:class:`ComponentManager` should be how a :py:class:`Component` is used after creation within the top level of the reactor design.
+
+Reactor
+-------
