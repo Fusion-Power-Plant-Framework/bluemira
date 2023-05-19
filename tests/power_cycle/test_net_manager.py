@@ -35,56 +35,32 @@ class TestPowerCycleSystem:
 
     def setup_method(self):
         self.scenario = manager_testkit.scenario
+        self.all_system_inputs = manager_testkit.inputs_for_systems()
+        self.all_load_inputs = manager_testkit.inputs_for_loads()
+        self.all_class_attr = ["_system_format", "_load_format"]
+        self.highest_level_json_keys = ["name", "reactive", "active"]
 
-        all_system_inputs = manager_testkit.inputs_for_systems()
-        self.all_system_inputs = all_system_inputs
-
-        all_load_inputs = manager_testkit.inputs_for_loads()
-        self.all_load_inputs = all_load_inputs
-
-        all_class_attr = [
-            "_system_format",
-            "_load_format",
-        ]
-        self.all_class_attr = all_class_attr
-
-        highest_level_json_keys = [
-            "name",
-            "reactive",
-            "active",
-        ]
-        self.highest_level_json_keys = highest_level_json_keys
-
-        all_instance_attr = [
+        self.all_instance_attr = [
             "scenario",
             "_system_config",
             "_active_config",
             "_reactive_config",
         ]
-        self.all_instance_attr = all_instance_attr
 
-        all_instance_properties = [
-            "active_loads",
-            "reactive_loads",
-        ]
-        self.all_instance_properties = all_instance_properties
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
+        self.all_instance_properties = ["active_loads", "reactive_loads"]
 
     def construct_multiple_samples(self):
-        tested_class = self.tested_class
-
-        scenario = self.scenario
         all_system_inputs = self.all_system_inputs
 
         all_samples = []
         all_system_labels = all_system_inputs.keys()
         for system_label in all_system_labels:
-            system_config = PowerCycleSystemConfig(**all_system_inputs[system_label])
-            sample = tested_class(scenario, system_config)
-            all_samples.append(sample)
+            all_samples.append(
+                PowerCycleSystem(
+                    self.scenario,
+                    PowerCycleSystemConfig(**all_system_inputs[system_label]),
+                )
+            )
         return all_samples
 
     def test_constructor(self):
@@ -102,31 +78,6 @@ class TestPowerCycleSystem:
                 property_is_defined = hasattr(sample, instance_property)
                 assert property_is_defined
 
-    def test_validate_scenario(self):
-        tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
-
-        scenario = self.scenario
-
-        validated_scenario = tested_class._validate_scenario(scenario)
-        assert validated_scenario == scenario
-        assert type(scenario) == PowerCycleScenario
-
-        not_a_scenario = "not_a_scenario"
-        with pytest.raises(tested_class_error):
-            validated_scenario = tested_class._validate_scenario(not_a_scenario)
-
-    def test_unpack_system_config(self):
-        """
-        No new functionality to be tested.
-        """
-        tested_class = self.tested_class
-        assert callable(tested_class._unpack_system_config)
-
-    # ------------------------------------------------------------------
-    # OPERATIONS
-    # ------------------------------------------------------------------
-
     def list_all_load_configs(self):
         all_system_inputs = self.all_system_inputs
         highest_level_json_keys = self.highest_level_json_keys
@@ -140,39 +91,24 @@ class TestPowerCycleSystem:
             system_config = all_system_inputs[system_label]
             for load_type in all_load_types:
                 load_config = PowerCycleSystemConfig(**system_config[load_type])
-                load_config = load_config.values()
-                all_load_configs += load_config
+                all_load_configs.append(load_config)
 
         return all_load_configs
 
     def list_all_phaseload_inputs(self):
-        tested_class = self.tested_class
-
-        all_load_configs = self.list_all_load_configs()
-        all_phaseload_inputs = []
-        for load_config in all_load_configs:
-            load_name = load_config["name"]
-
-            module = load_config["module"]
-            variables_map = load_config["variables_map"]
-
-            phaseload_inputs = tested_class.import_phaseload_inputs(
-                module,
-                variables_map,
+        return [
+            PowerCycleSystem.import_phaseload_inputs(
+                load_config.module,
+                load_config.variables_map,
             )
-            all_phaseload_inputs.append(phaseload_inputs)
-        return all_phaseload_inputs
+            for load_config in self.list_all_load_configs()
+        ]
 
     def test_import_phaseload_inputs(self):
         tested_class = self.tested_class
         tested_class_error = self.tested_class_error
-
-        inputs_format = tested_class._phaseload_inputs_format
-
         all_phaseload_inputs = self.list_all_phaseload_inputs()
         for phaseload_inputs in all_phaseload_inputs:
-            assert phaseload_inputs.allowed_format == inputs_format
-
             for key in inputs_format.keys():
                 if key != "consumption":
                     list_in_key = phaseload_inputs[key]
@@ -266,10 +202,6 @@ class TestPowerCycleGroup:
         ]
         self.all_instance_attr = all_instance_attr
 
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
     def construct_multiple_samples(self):
         tested_class = self.tested_class
 
@@ -301,17 +233,6 @@ class TestPowerCycleGroup:
                 attr_was_created = hasattr(sample, instance_attr)
                 assert attr_was_created
 
-    def test_build_system_library(self):
-        """
-        No new functionality to be tested.
-        """
-        tested_class = self.tested_class
-        assert callable(tested_class._build_system_library)
-
-    # ------------------------------------------------------------------
-    # OPERATIONS
-    # ------------------------------------------------------------------
-
 
 class TestPowerCycleManager:
     tested_class_super = None
@@ -328,10 +249,6 @@ class TestPowerCycleManager:
 
         manager_json_contents = manager_testkit.inputs_for_manager()
         self.manager_json_contents = manager_json_contents
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
 
     def construct_sample(self):
         tested_class = self.tested_class
@@ -399,13 +316,6 @@ class TestPowerCycleManager:
         plt.show()
         """
         pass
-
-    def test_build_net_loads(self):
-        """
-        No new functionality to be tested.
-        """
-        tested_class = self.tested_class
-        assert callable(tested_class._build_net_loads)
 
     def test_net_active(self):
         """
