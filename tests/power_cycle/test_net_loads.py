@@ -1025,10 +1025,11 @@ class TestPulseLoad:
     @pytest.mark.parametrize("color_index", [3])
     @pytest.mark.parametrize("detailed_plot_flag", [False, True])
     def test_plot(self, color_index, detailed_plot_flag):
+        ax = tools_testkit.prepare_figure(
+            f"PulseLoad Plotting 'detailed' flag = {detailed_plot_flag}"
+        )
         list_of_plot_objects = self.construct_multisample().plot(
-            ax=tools_testkit.prepare_figure(
-                f"PulseLoad Plotting ('detailed' flag = {detailed_plot_flag}"
-            ),
+            ax=ax,
             detailed=detailed_plot_flag,
             color=netloads_testkit.color_order_for_plotting[color_index],
         )
