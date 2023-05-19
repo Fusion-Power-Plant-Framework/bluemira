@@ -88,48 +88,17 @@ class TestPowerCycleSystem:
         all_load_configs = []
         all_system_labels = all_system_inputs.keys()
         for system_label in all_system_labels:
-            system_config = all_system_inputs[system_label]
-            for load_type in all_load_types:
-                load_config = PowerCycleSystemConfig(**system_config[load_type])
-                all_load_configs.append(load_config)
+            all_load_configs.append(
+                PowerCycleSystemConfig(**all_system_inputs[system_label])
+            )
 
         return all_load_configs
 
     def list_all_phaseload_inputs(self):
         return [
-            PowerCycleSystem.import_phaseload_inputs(
-                load_config.module,
-                load_config.variables_map,
-            )
+            PowerCycleSystem(self.scenario, load_config)
             for load_config in self.list_all_load_configs()
         ]
-
-    def test_import_phaseload_inputs(self):
-        tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
-        all_phaseload_inputs = self.list_all_phaseload_inputs()
-        for phaseload_inputs in all_phaseload_inputs:
-            for key in inputs_format.keys():
-                if key != "consumption":
-                    list_in_key = phaseload_inputs[key]
-                    if key == "phase_list":
-                        valid_type = str
-                    elif key == "normalize_list":
-                        valid_type = bool
-                    elif key == "powerload_list":
-                        valid_type = PowerLoad
-
-                    b = [type(e) == valid_type for e in list_in_key]
-                    types_in_list_are_correct = b
-                    assert all(types_in_list_are_correct)
-
-        inexistent_module = "inexistent_module"
-        example_variables_map = dict()
-        with pytest.raises(tested_class_error):
-            phaseload_inputs = tested_class.import_phaseload_inputs(
-                inexistent_module,
-                example_variables_map,
-            )
 
     def test_build_phaseloads(self):
         all_samples = self.construct_multiple_samples()
