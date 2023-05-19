@@ -19,12 +19,7 @@ from bluemira.power_cycle.errors import (
     PulseLoadError,
 )
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
-from bluemira.power_cycle.tools import (
-    unnest_list,
-    validate_axes,
-    validate_list,
-    validate_numerical,
-)
+from bluemira.power_cycle.tools import validate_axes, validate_list, validate_numerical
 
 
 class LoadData(PowerCycleLoadABC):
@@ -81,7 +76,7 @@ class LoadData(PowerCycleLoadABC):
         Validate a parameter for creation of a class instance to be an
         (not necessarily strictly) increasing list.
         """
-        if not all(i <= j for i, j in zip(parameter, parameter[1:])):
+        if any(np.diff(parameter) <= 0):
             raise LoadDataError("increasing")
         return parameter
 
@@ -100,9 +95,7 @@ class LoadData(PowerCycleLoadABC):
         is always initialized as an empty list.
         """
         norm = new_end_time / self.time[-1]
-        new_time = norm * self.time
-        self._is_increasing(new_time)
-        self.time = new_time
+        self.time = self._is_increasing(norm * self.time)
         self._norm.append(norm)
 
     def _shift_time(self, time_shift):
@@ -901,13 +894,13 @@ class PulseLoad(PowerCycleLoadABC):
             max_t = max(intrinsic_time)
             min_t = min(intrinsic_time)
 
-            load_time = [t for t in time if (min_t <= t) and (t <= max_t)]
+            load_time = time[(time >= min_t) & (time <= max_t)]
             load_time[-1] = load_time[-1] - self.epsilon
 
             modified_time.append(load_time)
             curve.append(shifted_load._curve(load_time, primary=False))
 
-        return unnest_list(modified_time), unnest_list(curve)
+        return np.array(modified_time).flatten(), np.array(curve).flatten()
 
     def make_consumption_explicit(self):
         """

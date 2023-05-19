@@ -20,12 +20,7 @@ from bluemira.power_cycle.tools import (
     validate_numerical,
     validate_vector,
 )
-from tests.power_cycle.kits_for_tests import (
-    NetManagerTestKit,
-    TimeTestKit,
-    ToolsTestKit,
-    copy_dict_with_wrong_value,
-)
+from tests.power_cycle.kits_for_tests import NetManagerTestKit, TimeTestKit, ToolsTestKit
 
 tools_testkit = ToolsTestKit()
 time_testkit = TimeTestKit()
