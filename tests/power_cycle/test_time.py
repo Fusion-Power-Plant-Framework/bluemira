@@ -7,7 +7,6 @@ from bluemira.power_cycle.errors import (
     PowerCyclePhaseError,
     PowerCyclePulseError,
     PowerCycleScenarioError,
-    PowerCycleTimeABCError,
     ScenarioBuilderError,
 )
 from bluemira.power_cycle.time import (
@@ -28,7 +27,6 @@ time_testkit = TimeTestKit()
 
 class TestPowerCyclePhase:
     tested_class_super = PowerCycleTimeABC
-    tested_class_super_error = PowerCycleTimeABCError
     tested_class = PowerCyclePhase
     tested_class_error = PowerCyclePhaseError
 
@@ -47,7 +45,7 @@ class TestPowerCyclePhase:
             name = sample_names[s]
             breakdown = sample_breakdowns[s]
             label = sample_labels[s]
-            sample = tested_class(name, breakdown, label=label)
+            sample = tested_class(name, breakdown.values(), label=label)
             all_samples.append(sample)
         self.sample_breakdowns = sample_breakdowns
         self.all_samples = all_samples
@@ -74,7 +72,8 @@ class TestPowerCyclePhase:
         breakdown = dict(zip(test_keys, test_values))
         possible_errors = (TypeError, ValueError, tested_class_error)
         try:
-            sample = tested_class(name, breakdown)
+            print(breakdown)
+            sample = tested_class(name, test_values)
         except possible_errors:
             str_keys = [isinstance(k, str) for k in test_keys]
             all_keys_are_str = all(str_keys)
@@ -94,7 +93,6 @@ class TestPowerCyclePhase:
 
 class TestPowerCyclePulse:
     tested_class_super = PowerCycleTimeABC
-    tested_class_super_error = PowerCycleTimeABCError
     tested_class = PowerCyclePulse
     tested_class_error = PowerCyclePulseError
 
@@ -142,7 +140,6 @@ class TestPowerCyclePulse:
 
 class TestPowerCycleScenario:
     tested_class_super = PowerCycleTimeABC
-    tested_class_super_error = PowerCycleTimeABCError
     tested_class = PowerCycleScenario
     tested_class_error = PowerCycleScenarioError
 

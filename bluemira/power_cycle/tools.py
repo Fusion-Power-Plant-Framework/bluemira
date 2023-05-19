@@ -18,7 +18,7 @@ def validate_list(argument):
     Validate an argument to be a list. If the argument is just a
     single value, insert it in a list.
     """
-    if not isinstance(argument, list):
+    if not isinstance(argument, (list, np.ndarray)):
         argument = [argument]
     return argument
 
@@ -122,7 +122,7 @@ def unique_and_sorted_vector(vector):
     Returns a sorted list, in ascending order, created from the set
     created from a vector, as a way to eliminate redundant entries.
     """
-    return sorted(list(set(validate_vector(vector))))
+    return sorted(set(validate_vector(vector)))
 
 
 def remove_characters(string, character_list):

@@ -7,7 +7,6 @@ import pytest
 
 from bluemira.power_cycle.base import PowerCycleABC
 from bluemira.power_cycle.errors import (
-    PowerCycleABCError,
     PowerCycleGroupError,
     PowerCycleManagerError,
     PowerCycleSystemError,
@@ -17,6 +16,7 @@ from bluemira.power_cycle.net.manager import (
     PowerCycleGroup,
     PowerCycleManager,
     PowerCycleSystem,
+    PowerCycleSystemConfig,
 )
 from bluemira.power_cycle.time import PowerCycleScenario
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list
@@ -30,7 +30,6 @@ manager_testkit = NetManagerTestKit()
 
 class TestPowerCycleSystem:
     tested_class_super = PowerCycleABC
-    tested_class_super_error = PowerCycleABCError
     tested_class = PowerCycleSystem
     tested_class_error = PowerCycleSystemError
 
@@ -83,7 +82,7 @@ class TestPowerCycleSystem:
         all_samples = []
         all_system_labels = all_system_inputs.keys()
         for system_label in all_system_labels:
-            system_config = all_system_inputs[system_label]
+            system_config = PowerCycleSystemConfig(**all_system_inputs[system_label])
             sample = tested_class(scenario, system_config)
             all_samples.append(sample)
         return all_samples
@@ -99,6 +98,7 @@ class TestPowerCycleSystem:
                 assert attr_was_created
 
             for instance_property in all_instance_properties:
+                # getattr(sample, instance_property)
                 property_is_defined = hasattr(sample, instance_property)
                 assert property_is_defined
 
@@ -139,7 +139,7 @@ class TestPowerCycleSystem:
         for system_label in all_system_labels:
             system_config = all_system_inputs[system_label]
             for load_type in all_load_types:
-                load_config = system_config[load_type]
+                load_config = PowerCycleSystemConfig(**system_config[load_type])
                 load_config = load_config.values()
                 all_load_configs += load_config
 
@@ -250,7 +250,6 @@ class TestPowerCycleSystem:
 
 class TestPowerCycleGroup:
     tested_class_super = PowerCycleABC
-    tested_class_super_error = PowerCycleABCError
     tested_class = PowerCycleGroup
     tested_class_error = PowerCycleGroupError
 
@@ -361,10 +360,9 @@ class TestPowerCycleManager:
 
         all_system_labels = unnest_list(all_systems)
 
-        group_library = tested_class._build_group_library(
-            scenario,
-            manager_json_contents,
-        )
+        group_library = tested_class(
+            self.scenario_json_path, self.manager_json_path
+        ).group_library
 
         for group_label in all_group_labels:
             group = group_library[group_label]

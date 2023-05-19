@@ -5,26 +5,27 @@ Base classes for the power cycle model.
 """
 from abc import ABC, ABCMeta, abstractmethod, abstractproperty
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Union
 
 import numpy as np
+from numpy.typing import ArrayLike
 
-from bluemira.power_cycle.errors import (
-    LoadDataError,
-    PowerCycleABCError,
-    PowerCycleLoadABCError,
-)
-from bluemira.power_cycle.tools import (
-    copy_dict_without_key,
-    unique_and_sorted_vector,
-    unnest_list,
-    validate_list,
-    validate_nonnegative,
-    validate_vector,
-)
+from bluemira.power_cycle.errors import PowerCycleError
 
 
-class PowerCycleABC(ABC):
+class ModuleType(Enum):
+    NONE = auto()
+    EQUILIBRIA = auto()
+    PUMPING = auto()
+
+
+class LoadType(Enum):
+    ACTIVE = auto()
+    REACTIVE = auto()
+
+
+class PowerCycleABC:
     """
     Abstract base class for all classes in the Power Cycle module.
 
@@ -45,18 +46,15 @@ class PowerCycleABC(ABC):
 
     def __init__(self, name: str, label=None):
         if not isinstance(name, str):
-            raise PowerCycleABCError("name")
+            raise TypeError("name is not a string")
 
         self.name = name
         if label is None:
-            label = name[0 : self._label_length]
-        elif not isinstance(label, str) and len(label) != self._label_length:
-            raise PowerCycleABCError(
-                "label",
-                f"The argument {label!r} cannot be applied because "
-                "labels for this class must be objects of the 'str' "
-                f"class with an exact length of {self._label_length!r}.",
-            )
+            self.label = name[0 : self._label_length]
+        elif not isinstance(label, str):
+            raise TypeError("label is not a string")
+        elif len(label) != self._label_length:
+            raise ValueError(f"label length != {self._label_length}")
         else:
             self.label = label
 
@@ -67,7 +65,9 @@ class PowerCycleABC(ABC):
         this method.
         """
         if not isinstance(instance, cls):
-            raise PowerCycleABCError("class")
+            raise TypeError(
+                f"class is not of type {cls.__name__} but {type(instance).__name__}"
+            )
         return instance
 
     def __eq__(self, other):
@@ -78,12 +78,12 @@ class PowerCycleABC(ABC):
         if type(self) != type(other):
             return False
 
-        attr_to_ignore = ["name", "label"]
-        this_attributes = self.__dict__
-        other_attributes = other.__dict__
-        for attr in attr_to_ignore:
-            this_attributes = copy_dict_without_key(this_attributes, attr)
-            other_attributes = copy_dict_without_key(other_attributes, attr)
+        this_attributes = self.__dict__.copy()
+        other_attributes = other.__dict__.copy()
+
+        for attr in ["name", "label"]:
+            this_attributes.pop(attr, None)
+            other_attributes.pop(attr, None)
 
         return this_attributes == other_attributes
 
@@ -91,7 +91,7 @@ class PowerCycleABC(ABC):
         """
         Addition is not defined for 'LoadData' instances.
         """
-        raise LoadDataError("add")
+        raise PowerCycleError(msg="Add is not defined for this class")
 
 
 class PowerCycleTimeABC(PowerCycleABC):
@@ -101,7 +101,7 @@ class PowerCycleTimeABC(PowerCycleABC):
 
     Parameters
     ----------
-    durations_list: int | float | list[ int | float ]
+    durations_list:
         List of all numerical values that compose the duration of an
         instance of a child class. Values must be non-negative.
 
@@ -112,22 +112,11 @@ class PowerCycleTimeABC(PowerCycleABC):
         Sum of all numerical values in the 'durations_list' attribute.
     """
 
-    def __init__(self, name, durations_list, label=None):
+    def __init__(self, name, durations_list: ArrayLike, label=None):
         super().__init__(name, label=label)
 
-        self.durations_list = self._validate_durations(durations_list)
-        self.duration = sum(self.durations_list)
-
-    @staticmethod
-    def _validate_durations(argument):
-        """
-        Validate 'durations_list' input to be a list of non-negative
-        numerical values.
-        """
-        durations_list = validate_list(argument)
-        for value in durations_list:
-            value = validate_nonnegative(value)
-        return durations_list
+        self.durations_list = durations_list
+        self.duration = np.sum(self.durations_list)
 
     @staticmethod
     def _build_durations_list(load_set):
@@ -135,7 +124,10 @@ class PowerCycleTimeABC(PowerCycleABC):
         Build a list with the 'duration' attribute of each load in
         the 'load_set' list.
         """
-        return [load.duration for load in load_set]
+        durations = np.array([load.duration for load in load_set])
+        if np.any(durations < 0):
+            raise ValueError("durations must be positive")
+        return durations
 
 
 class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
@@ -171,34 +163,21 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
 
     @staticmethod
     def _build_time_from_load_set(load_set):
-        return unique_and_sorted_vector(
-            unnest_list([load_object.intrinsic_time for load_object in load_set])
-        )
+        return np.unique([load_object.intrinsic_time for load_object in load_set])
 
-    def _validate_n_points(self, n_points: Union[int, float, bool, None]):
+    def _validate_n_points(self, n_points: Union[int, float, None]):
         """
         Validate an 'n_points' argument that specifies a "number of
         points". If the argument is 'None', retrieves the default of
         the class; else it must be a non-negative number.
         Non-integer arguments are converted into integers.
-        Boolean arguments 'True' and 'False' are treated as 1 and 0
-        respectively.
         """
         if not n_points:
             n_points = self._n_points
         else:
-            try:
-                n_points = int(n_points)
-                if n_points < 0:
-                    raise PowerCycleLoadABCError(
-                        "n_points",
-                        f"The value '{n_points}' is negative.",
-                    )
-            except (TypeError, ValueError):
-                raise PowerCycleLoadABCError(
-                    "n_points",
-                    f"The value '{n_points}' is non-numeric.",
-                )
+            n_points = int(n_points)
+            if n_points < 0:
+                raise ValueError("Number of points is negative")
         return n_points
 
     @staticmethod
@@ -208,23 +187,22 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
         a segment of the input 'vector' (defined by a subsequent pair
         of points).
         """
-        try:
-            vector = validate_vector(vector)
-        except PowerCycleABCError:
-            raise PowerCycleLoadABCError("refine_vector")
+        vector = np.array(vector, dtype=float)
 
         if (n_points is None) or (n_points == 0):
             refined_vector = vector
         else:
-            refined_vector = []
-            for s in range(len(vector) - 1):
-                refined_vector += np.linspace(
-                    vector[s],
-                    vector[s + 1],
-                    n_points + 1,
-                    endpoint=False,
-                ).tolist()
-            refined_vector.append(vector[-1])
+            refined_vector = np.array(
+                [
+                    np.linspace(
+                        vector[s],
+                        vector[s + 1],
+                        n_points + 1,
+                        endpoint=False,
+                    )
+                    for s in range(len(vector) - 1)
+                ]
+            )
 
         return refined_vector
 
@@ -306,7 +284,7 @@ class PhaseLoadConfig:
     powerload_list: list
 
 
-class PowerCycleImporterABC(metaclass=ABCMeta):
+class PowerCycleImporterABC(ABC):
     """
     Abstract base class for classes in the NET submodule of the Power
     Cycle module that are used to import data from other Bluemira
@@ -319,7 +297,7 @@ class PowerCycleImporterABC(metaclass=ABCMeta):
         """
         Every child of 'PowerCycleImporterABC' must define the
         'duration' method, that returns single time-related values
-        from other BLUEMIRA modules to be used in the
+        from other modules to be used in the
         'duration_breakdown' parameter of 'PowerCyclePhase' objects.
         """
         pass
@@ -347,7 +325,7 @@ class PowerCycleImporterABC(metaclass=ABCMeta):
 
 
         The dictionary should be constructed with data from other
-        BLUEMIRA modules to be used in the '_build_phaseloads' method
+        modules to be used in the '_build_phaseloads' method
         of a 'PowerCycleManager' object.
         """
         pass
