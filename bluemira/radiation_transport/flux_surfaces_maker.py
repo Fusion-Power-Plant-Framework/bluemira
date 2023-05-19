@@ -40,10 +40,10 @@ from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
 
-__all__ = ["ChargedParticleSolver"]
+__all__ = ["FluxSurfaceMaker"]
 
 
-class FluxSurfaceSolver:
+class FluxSurfaceMaker:
     """
     A simplified charged particle transport model along open field lines.
 
@@ -119,17 +119,41 @@ class FluxSurfaceSolver:
         return first_wall
 
     @staticmethod
-    def _get_arrays(flux_surfaces):
+    def _get_array_x_mp(flux_surfaces):
         """
-        Get arrays of flux surface values.
+        Get x_mp array of flux surface values.
         """
         x_mp = np.array([fs.x_start for fs in flux_surfaces])
-        z_mp = np.array([fs.z_start for fs in flux_surfaces])
-        x_fw = np.array([fs.x_end for fs in flux_surfaces])
-        z_fw = np.array([fs.z_end for fs in flux_surfaces])
-        alpha = np.array([fs.alpha for fs in flux_surfaces])
-        return x_mp, z_mp, x_fw, z_fw, alpha
+        return x_mp
 
+    def _get_array_z_mp(flux_surfaces):
+        """
+        Get z_mp array of flux surface values.
+        """
+        z_mp = np.array([fs.z_start for fs in flux_surfaces])
+        return z_mp
+    
+    def _get_array_x_fw(flux_surfaces):
+        """
+        Get x_fw array of flux surface values.
+        """
+        x_fw = np.array([fs.x_end for fs in flux_surfaces])
+        return x_fw
+
+    def _get_array_z_fw(flux_surfaces):
+        """
+        Get z_fw array of flux surface values.
+        """
+        z_fw = np.array([fs.z_end for fs in flux_surfaces])
+        return z_fw
+    
+    def _get_array_alpha(flux_surfaces):
+        """
+        Get alpha angle array of flux surface values.
+        """
+        alpha = np.array([fs.alpha for fs in flux_surfaces])
+        return alpha
+    
     def _get_sep_out_intersection(self, outboard=True):
         """
         Find the middle and maximum outboard mid-plane psi norm values
@@ -183,12 +207,14 @@ class FluxSurfaceSolver:
         self.flux_surfaces_ob_lfs = []
         self.flux_surfaces_ob_hfs = []
 
-        x = self.x_sep_omp + self.dx_mp
-        while x < x_out_omp - EPS:
+        start = self.x_sep_omp + self.dx_mp
+        stop = x_out_omp - EPS
+        step = ((x_out_omp - EPS - (self.x_sep_omp + self.dx_mp)) // self.dx_mp).astype(int)
+        range = np.linspace(start, stop, step)
+        for x in range:
             lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
             self.flux_surfaces_ob_lfs.append(lfs)
             self.flux_surfaces_ob_hfs.append(hfs)
-            x += self.dx_mp
 
     def _make_flux_surfaces_ib(self):
         """
@@ -198,12 +224,15 @@ class FluxSurfaceSolver:
 
         self.flux_surfaces_ib_lfs = []
         self.flux_surfaces_ib_hfs = []
-        x = self.x_sep_imp - self.dx_mp
-        while x > x_out_imp + EPS:
+
+        start = self.x_sep_imp - self.dx_mp
+        stop = x_out_imp + EPS
+        step = (((self.x_sep_imp - self.dx_mp) - (x_out_imp + EPS)) // self.dx_mp).astype(int)
+        range = np.linspace(start, stop, step)
+        for x in range:
             lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
             self.flux_surfaces_ib_lfs.append(lfs)
-            self.flux_surfaces_ib_hfs.append(hfs)
-            x -= self.dx_mp
+            self.flux_surfaces_ib_hfs.append(hfs)    
 
     def _clip_flux_surfaces(self, first_wall):
         """
@@ -259,7 +288,7 @@ class FluxSurfaceSolver:
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(first_wall)
 
-        x_omp, _, _, _, _ = self._get_arrays(
+        x_omp = self._get_array_x_mp(
             self.flux_surfaces_ob_lfs
         )
 
@@ -276,21 +305,9 @@ class FluxSurfaceSolver:
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(first_wall)
 
-        (
-            x_omp,
-            _,
-            _,
-            _,
-            _,
-        ) = self._get_arrays(self.flux_surfaces_ob_lfs)
+        x_omp = self._get_array_x_mp(self.flux_surfaces_ob_lfs)
 
-        (
-            x_imp,
-            _,
-            _,
-            _,
-            _,
-        ) = self._get_arrays(self.flux_surfaces_ib_lfs)
+        x_imp = self._get_array_x_mp(self.flux_surfaces_ib_lfs)
 
         # Calculate values at OMP
         self.dx_omp = x_omp - self.x_sep_omp

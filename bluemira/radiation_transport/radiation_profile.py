@@ -53,7 +53,7 @@ if TYPE_CHECKING:
     from step_reactor.temp_flux_surface_maker import TempFsSolver
 
 
-SEP_CORRECTOR = 5e-3  # [m]
+SEP_CORRECTOR = 5e-3  # [m] DN: 5e-3, SN: 5e-2
 E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
 
 

@@ -46,7 +46,7 @@ from bluemira.radiation_transport.radiation_profile import (
     detect_radiation,
     plot_radiation_loads,
 )
-from bluemira.radiation_transport.flux_surfaces_maker import FluxSurfaceSolver
+from bluemira.radiation_transport.flux_surfaces_maker import FluxSurfaceMaker
 
 # CHERAB imports
 from cherab.core.math import AxisymmetricMapper
@@ -135,7 +135,7 @@ config = {
 # Initialising the `TempFsSolverChargedParticleSolver` and run it.
 
 # %%
-flux_surface_solver = FluxSurfaceSolver(equilibrium=eq, dx_mp=0.001)
+flux_surface_solver = FluxSurfaceMaker(equilibrium=eq, dx_mp=0.001)
 flux_surface_solver.analyse(first_wall=fw_shape)
 
 # %% [markdown]
@@ -320,7 +320,7 @@ def fw_radiation(rad_source, plot=True):
 
     return wall_loads
 
-def main(only_source=False):
+def main(only_source=True):
 
     # Get the core impurity fractions
     f_impurities_core = config["f_imp_core"]
