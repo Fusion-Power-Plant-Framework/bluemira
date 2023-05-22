@@ -63,7 +63,7 @@ digraph {
         e[
             label="Component",
             tooltip="Component",
-            href="../base/components.html#components",
+            href="../base/components.html#reactors-components-and-managers",
             target="_parent",
             fontcolor="#2980b9"
         ]
@@ -79,16 +79,21 @@ digraph {
         f[
             label="Component",
             tooltip="Component",
-            href="../base/components.html#components",
+            href="../base/components.html#reactors-components-and-managers",
             target="_parent",
             fontcolor="#2980b9"
         ]
 
     }
     a -> d [group=g1, ltail=cluster_0, lhead=cluster_1, minlen=2];
-    d -> f [ltail=cluster_1, lhead=cluster_3, minlen=2];
+    d -> f [ltail=cluster_1, minlen=2];
     e -> reac [ltail=cluster_2, minlen=2];
     f -> reac [ltail=cluster_3, minlen=2];
 
-    reac[label="Reactor", tooltip="Reactor"]
+    reac[
+           label="Reactor", tooltip="Reactor",
+           href="../base/components.html#reactor",
+           target="_parent",
+           fontcolor="#2980b9"
+    ]
 }
