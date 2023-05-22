@@ -3,7 +3,6 @@
 """
 Exception classes for the power cycle model.
 """
-from abc import abstractmethod
 from typing import Dict
 
 from bluemira.base.error import BluemiraError
@@ -19,95 +18,21 @@ class PowerCycleError(BluemiraError):
     """
 
     def __init__(self, case=None, msg=""):
-        try:
-            msg += f" {self._errors()[case]}"
-        except KeyError:
-            raise ValueError(
-                f"The requested error case '{case}' has not been "
-                f"defined for the error class '{self.__class__}'."
-            ) from None
+        if case is not None:
+            try:
+                msg += f" {self._errors()[case]}"
+            except KeyError:
+                raise ValueError(
+                    f"The requested error case '{case}' has not been "
+                    f"defined for the error class '{self.__class__}'."
+                ) from None
         super().__init__(msg)
 
     def _source(self):
-        class_name = self.__class__
-        source_class = class_name.replace("Error", "")
-        source_class = f"{source_class!r}"
-        return source_class
+        return type(self).__name__.replace("Error", "")
 
-    @abstractmethod
     def _errors(self) -> Dict:
-        pass
-
-
-# ######################################################################
-# BASE
-# ######################################################################
-
-
-class PowerCycleABCError(PowerCycleError):
-    """
-    Exception class for 'PowerCycleABC' class of the Power Cycle module.
-    """
-
-    def _errors(self):
-        errors = {
-            "name": (
-                "Invalid 'name' parameter. The 'name' attribute of ' "
-                f"instances of the {self._source} class must be of "
-                "the 'str' class."
-            ),
-            "label": (
-                f"Invalid 'label' parameter for an instance of the {self._source}."
-            ),
-            "class": (
-                "Invalid instance. The tested object is not an "
-                f"instance of the {self._source} class."
-            ),
-        }
-        return errors
-
-
-class PowerCycleTimeABCError(PowerCycleError):
-    """
-    Exception class for 'PowerCycleTimeABC' class of the Power Cycle
-    module.
-    """
-
-    def _errors(self):
-        errors = {}
-        return errors
-
-
-class PowerCycleLoadABCError(PowerCycleError):
-    """
-    Exception class for 'PowerCycleLoadABC' class of the Power Cycle
-    module.
-    """
-
-    def _errors(self):
-        errors = {
-            "n_points": (
-                "The argument given for 'n_points' is not a valid "
-                f"value for plotting an instance of the {self._source} "
-                "class. Only non-negative integers are accepted."
-            ),
-            "refine_vector": (
-                "The argument given for 'vector' is not a valid "
-                "value. Only lists of numerical values are accepted."
-            ),
-        }
-        return errors
-
-
-class PowerCycleImporterABCError(PowerCycleError):
-    """
-    Exception class for 'PowerCycleImporterABC' class of the Power Cycle
-    module.
-    """
-
-    def _errors(self):
-        errors = {}
-        return errors
+        return {}
 
 
 # ######################################################################
@@ -142,20 +67,12 @@ class PowerCyclePulseError(PowerCycleError):
     module.
     """
 
-    def _errors(self):
-        errors = {}
-        return errors
-
 
 class PowerCycleScenarioError(PowerCycleError):
     """
     Exception class for 'PowerCycleScenario' class of the Power Cycle
     module.
     """
-
-    def _errors(self):
-        errors = {}
-        return errors
 
 
 class ScenarioBuilderError(PowerCycleError):
@@ -216,10 +133,6 @@ class LoadModelError(PowerCycleError):
     Exception class for 'LoadModel' class of the Power Cycle module.
     """
 
-    def _errors(self):
-        errors = {}
-        return errors
-
 
 class PowerLoadError(PowerCycleError):
     """
@@ -248,13 +161,13 @@ class PhaseLoadError(PowerCycleError):
 
     def _errors(self):
         errors = {
-            "normalize": (
-                "The argument given for 'normalize' is not a valid "
+            "normalise": (
+                "The argument given for 'normalise' is not a valid "
                 f"value for an instance of the {self._source} class. "
-                "Each element of 'normalize' must be a boolean."
+                "Each element of 'normalise' must be a boolean."
             ),
             "sanity": (
-                "The attributes 'load_set' and 'normalize' of an "
+                "The attributes 'load_set' and 'normalise' of an "
                 f"instance of the {self._source} class must have the "
                 "same length."
             ),
@@ -293,10 +206,6 @@ class ScenarioLoadError(PowerCycleError):
     """
     Exception class for 'ScenarioLoad' class of the Power Cycle module.
     """
-
-    def _errors(self):
-        errors = {}
-        return errors
 
 
 # ######################################################################
@@ -356,10 +265,6 @@ class PowerCycleGroupError(PowerCycleError):
     module.
     """
 
-    def _errors(self):
-        errors = {}
-        return errors
-
 
 class PowerCycleManagerError(PowerCycleError):
     """
@@ -400,16 +305,8 @@ class BOPPulseError(PowerCycleError):
     Exception class for 'BOPPulse' class of the Power Cycle module.
     """
 
-    def _errors(self):
-        errors = {}
-        return errors
-
 
 class BOPScenarioError(PowerCycleError):
     """
     Exception class for 'BOPScenario' class of the Power Cycle module.
     """
-
-    def _errors(self):
-        errors = {}
-        return errors
