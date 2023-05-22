@@ -63,7 +63,7 @@ digraph {
         e[
             label="Component",
             tooltip="Component",
-            href="../base/components.html#components",
+            href="../base/components.html#reactors-components-and-managers",
             target="_parent",
             fontcolor="#2980b9"
         ]
@@ -79,7 +79,7 @@ digraph {
         f[
             label="Component",
             tooltip="Component",
-            href="../base/components.html#components",
+            href="../base/components.html#reactors-components-and-managers",
             target="_parent",
             fontcolor="#2980b9"
         ]
