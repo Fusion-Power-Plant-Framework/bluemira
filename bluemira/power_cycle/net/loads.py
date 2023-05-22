@@ -105,7 +105,6 @@ class LoadData(PowerCycleLoadABC):
         Stores the shifting factor in the attribute '_shift', which
         is always initialized as an empty list.
         """
-        time_shift = validate_numerical(time_shift)
         self.time = time_shift + self.time
         self._shift.append(time_shift)
 
@@ -291,11 +290,11 @@ class PowerLoad(PowerCycleLoadABC):
             List of power values. [W]
         """
         time = np.array(validate_list(time))
-        curve = []
+        curve = np.zeros_like(time)
 
         for loaddata, loadmodel in zip(self.loaddata_set, self.loadmodel_set):
-            curve.append(self._single_curve(loaddata, loadmodel, time))
-        return np.vstack(curve) if len(curve) > 1 else curve[0]
+            curve += self._single_curve(loaddata, loadmodel, time)
+        return curve
 
     def _normalise_time(self, new_end_time):
         """
@@ -507,7 +506,13 @@ class PhaseLoad(PowerCycleLoadABC):
 
         self.phase = self._validate_phase(phase)
         self.powerload_set = self._validate_powerload_set(powerload_set)
-        self.normalise = np.array(validate_list(normalise), dtype=bool)
+        normalise = validate_list(normalise)
+        if isinstance(normalise, np.ndarray):
+            if normalise.dtype != bool:
+                raise ValueError("Normalise should a a boolean array")
+        elif not all(isinstance(n, bool) for n in normalise):
+            raise ValueError("Normalise should a a boolean array")
+        self.normalise = np.array(normalise, dtype=bool)
 
         if len(self.powerload_set) != len(self.normalise):
             raise PhaseLoadError("sanity")
@@ -712,7 +717,7 @@ class PhaseLoad(PowerCycleLoadABC):
             f"Resulting PhaseLoad for phase {this.phase.name!r}",
             this.phase,
             this.powerload_set + other.powerload_set,
-            this.normalise + other.normalise,
+            np.concatenate([this.normalise, other.normalise]),
         )
 
 
@@ -900,7 +905,7 @@ class PulseLoad(PowerCycleLoadABC):
             modified_time.append(load_time)
             curve.append(shifted_load._curve(load_time, primary=False))
 
-        return np.array(modified_time).flatten(), np.array(curve).flatten()
+        return np.concatenate(modified_time), np.concatenate(curve, axis=-1)
 
     def make_consumption_explicit(self):
         """

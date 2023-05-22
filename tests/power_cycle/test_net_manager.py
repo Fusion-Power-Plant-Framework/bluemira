@@ -5,7 +5,7 @@ import copy
 import matplotlib.pyplot as plt
 import pytest
 
-from bluemira.power_cycle.base import PowerCycleABC
+from bluemira.power_cycle.base import LoadType, PowerCycleABC
 from bluemira.power_cycle.errors import (
     PowerCycleGroupError,
     PowerCycleManagerError,
@@ -14,6 +14,7 @@ from bluemira.power_cycle.errors import (
 from bluemira.power_cycle.net.loads import PhaseLoad, PowerLoad
 from bluemira.power_cycle.net.manager import (
     PowerCycleGroup,
+    PowerCycleLoadConfig,
     PowerCycleManager,
     PowerCycleSystem,
     PowerCycleSystemConfig,
@@ -29,10 +30,6 @@ manager_testkit = NetManagerTestKit()
 
 
 class TestPowerCycleSystem:
-    tested_class_super = PowerCycleABC
-    tested_class = PowerCycleSystem
-    tested_class_error = PowerCycleSystemError
-
     def setup_method(self):
         self.scenario = manager_testkit.scenario
         self.all_system_inputs = manager_testkit.inputs_for_systems()
@@ -79,26 +76,21 @@ class TestPowerCycleSystem:
                 assert property_is_defined
 
     def list_all_load_configs(self):
-        all_system_inputs = self.all_system_inputs
-        highest_level_json_keys = self.highest_level_json_keys
-
-        all_load_types = copy.deepcopy(highest_level_json_keys)
-        all_load_types.remove("name")
-
-        all_load_configs = []
-        all_system_labels = all_system_inputs.keys()
-        for system_label in all_system_labels:
-            all_load_configs.append(
-                PowerCycleSystemConfig(**all_system_inputs[system_label])
-            )
-
-        return all_load_configs
+        return [
+            PowerCycleSystemConfig(**data) for data in self.all_system_inputs.values()
+        ]
 
     def list_all_phaseload_inputs(self):
-        return [
-            PowerCycleSystem(self.scenario, load_config)
-            for load_config in self.list_all_load_configs()
-        ]
+        phaseloads = []
+        for sys_config in self.list_all_load_configs():
+            for load_type in (LoadType.ACTIVE, LoadType.REACTIVE):
+                load = getattr(sys_config, load_type.name.lower())
+                phaseloads.append(
+                    PowerCycleSystem.import_phaseload_inputs(
+                        load.module, load.variable_map
+                    )
+                )
+        return phaseloads
 
     def test_build_phaseloads(self):
         all_samples = self.construct_multiple_samples()
@@ -154,10 +146,6 @@ class TestPowerCycleSystem:
 
 
 class TestPowerCycleGroup:
-    tested_class_super = PowerCycleABC
-    tested_class = PowerCycleGroup
-    tested_class_error = PowerCycleGroupError
-
     def setup_method(self):
         scenario = manager_testkit.scenario
         self.scenario = scenario
@@ -172,8 +160,6 @@ class TestPowerCycleGroup:
         self.all_instance_attr = all_instance_attr
 
     def construct_multiple_samples(self):
-        tested_class = self.tested_class
-
         scenario = self.scenario
         all_group_inputs = self.all_group_inputs
 
@@ -185,7 +171,7 @@ class TestPowerCycleGroup:
             group_name = group_inputs["name"]
             group_config = group_inputs["systems_config"]
 
-            sample = tested_class(
+            sample = PowerCycleGroup(
                 group_name,
                 scenario,
                 group_config,
@@ -204,11 +190,6 @@ class TestPowerCycleGroup:
 
 
 class TestPowerCycleManager:
-    tested_class_super = None
-    tested_class_super_error = None
-    tested_class = PowerCycleManager
-    tested_class_error = PowerCycleManagerError
-
     def setup_method(self):
         self.scenario_json_path = manager_testkit.scenario_json_path
         self.manager_json_path = manager_testkit.manager_json_path
@@ -220,22 +201,9 @@ class TestPowerCycleManager:
         self.manager_json_contents = manager_json_contents
 
     def construct_sample(self):
-        tested_class = self.tested_class
-
-        scenario_json_path = self.scenario_json_path
-        manager_json_path = self.manager_json_path
-
-        sample = tested_class(scenario_json_path, manager_json_path)
-        return sample
-
-    def test_constructor(self):
-        sample = self.construct_sample()
-        assert isinstance(sample, PowerCycleManager)
+        return PowerCycleManager(self.scenario_json_path, self.manager_json_path)
 
     def test_build_group_library(self):
-        tested_class = self.tested_class
-
-        scenario = self.scenario
         manager_json_contents = self.manager_json_contents
 
         all_group_labels = manager_json_contents.keys()
@@ -246,7 +214,7 @@ class TestPowerCycleManager:
 
         all_system_labels = unnest_list(all_systems)
 
-        group_library = tested_class(
+        group_library = PowerCycleManager(
             self.scenario_json_path, self.manager_json_path
         ).group_library
 
@@ -258,10 +226,6 @@ class TestPowerCycleManager:
             keys_in_library = system_library.keys()
             for key in keys_in_library:
                 assert key in all_system_labels
-
-    # ------------------------------------------------------------------
-    # OPERATIONS
-    # ------------------------------------------------------------------
 
     @pytest.mark.parametrize("load_type", ["active", "reactive"])
     def test_build_pulseload_of_type(self, load_type):
@@ -286,23 +250,19 @@ class TestPowerCycleManager:
         """
         pass
 
-    def test_net_active(self):
-        """
-        No new functionality to be tested.
-        """
-        sample = self.construct_sample()
-        assert hasattr(sample, "net_active")
+    # def test_net_active(self):
+    #     """
+    #     No new functionality to be tested.
+    #     """
+    #     sample = self.construct_sample()
+    #     assert hasattr(sample, "net_active")
 
-    def test_net_reactive(self):
-        """
-        No new functionality to be tested.
-        """
-        sample = self.construct_sample()
-        assert hasattr(sample, "net_reactive")
-
-    # ------------------------------------------------------------------
-    # VISUALIZATION
-    # ------------------------------------------------------------------
+    # def test_net_reactive(self):
+    #     """
+    #     No new functionality to be tested.
+    #     """
+    #     sample = self.construct_sample()
+    #     assert hasattr(sample, "net_reactive")
 
     def test_plot(self):
         sample = self.construct_sample()

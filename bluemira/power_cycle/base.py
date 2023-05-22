@@ -6,7 +6,7 @@ Base classes for the power cycle model.
 from abc import ABC, ABCMeta, abstractmethod, abstractproperty
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Union
+from typing import Iterable, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -23,6 +23,14 @@ class ModuleType(Enum):
 class LoadType(Enum):
     ACTIVE = auto()
     REACTIVE = auto()
+
+
+@dataclass
+class PhaseLoadConfig:
+    phase_list: list
+    consumption: bool
+    normalise_list: list
+    powerload_list: list
 
 
 @dataclass
@@ -100,14 +108,18 @@ class PowerCycleABC:
         if type(self) != type(other):
             return False
 
-        this_attributes = self.__dict__.copy()
-        other_attributes = other.__dict__.copy()
-
+        attributes = list(self.__dict__.keys())
         for attr in ["name", "label"]:
-            this_attributes.pop(attr, None)
-            other_attributes.pop(attr, None)
+            attributes.pop(attributes.index(attr))
 
-        return this_attributes == other_attributes
+        for attr in attributes:
+            check = getattr(self, attr) == getattr(other, attr)
+            if isinstance(check, Iterable):
+                if not all(check):
+                    return False
+            elif not check:
+                return False
+        return True
 
     def __add__(self, other):
         """
@@ -216,18 +228,22 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
         if (n_points is None) or (n_points == 0):
             refined_vector = vector
         else:
-            refined_vector = np.array(
+            refined_vector = np.concatenate(
                 [
-                    np.linspace(
-                        vector[s],
-                        vector[s + 1],
-                        n_points + 1,
-                        endpoint=False,
-                    )
-                    for s in range(len(vector) - 1)
-                ]
+                    np.concatenate(
+                        [
+                            np.linspace(
+                                vector[s],
+                                vector[s + 1],
+                                n_points + 1,
+                                endpoint=False,
+                            )
+                            for s in range(len(vector) - 1)
+                        ]
+                    ),
+                    [vector[-1]],
+                ],
             )
-
         return refined_vector
 
     def _make_secondary_in_plot(self):
@@ -283,7 +299,6 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
             plot = getattr(ax, "scatter")
             lab = "(data)"
             final_kwargs = {**self._scatter_kwargs, **kwargs}
-
         return [
             plot(x, y, label=f"{name} {lab}", **final_kwargs),
             self._add_text_to_point_in_plot(ax, name, x, y, **kwargs),
@@ -298,14 +313,6 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
             return self
         else:
             return self.__add__(other)
-
-
-@dataclass
-class PhaseLoadConfig:
-    phase_list: list
-    consumption: bool
-    normalise_list: list
-    powerload_list: list
 
 
 class PowerCycleImporterABC(ABC):

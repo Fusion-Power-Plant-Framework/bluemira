@@ -3,9 +3,11 @@
 """
 Classes for the calculation of net power in the Power Cycle model.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Dict, Union
 
 import numpy as np
+from numpy.typing import ArrayLike
 
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.base import (
@@ -33,17 +35,55 @@ from bluemira.power_cycle.tools import (
     validate_lists_to_have_same_length,
 )
 
+# @dataclass
+# class Loads:
+#     name: str
+#     time: ArrayLike
+#     data: ArrayLike
+#     model: str
+
+
+# @dataclass
+# class LoadConfig:
+#     phases: list
+#     normalise: bool
+#     unit: str
+#     consumption: bool
+#     efficiencies: dict  # todo  another dataclass
+#     loads: dict  # another dataclass
+
 
 @dataclass
 class PowerCycleLoadConfig(BaseConfig):
     """Power cycle load config"""
 
+    # _variable_map: LoadConfig
+
 
 @dataclass
 class PowerCycleSystemConfig:
     name: str
-    reactive: PowerCycleLoadConfig
-    active: PowerCycleLoadConfig
+    reactive: dict
+    active: dict
+
+    _reactive: Dict[str, PowerCycleLoadConfig] = field(init=False, repr=False)
+    _active: Dict[str, PowerCycleLoadConfig] = field(init=False, repr=False)
+
+    @property
+    def reactive(self):
+        return self._reactive
+
+    @reactive.setter
+    def reactive(self, value):
+        self._reactive = {k: PowerCycleLoadConfig(**v) for k, v in value.items()}
+
+    @property
+    def active(self):
+        return self._active
+
+    @active.setter
+    def active(self, value):
+        self._active = {k: PowerCycleLoadConfig(**v) for k, v in value.items()}
 
 
 @dataclass
@@ -172,7 +212,12 @@ class PowerCycleSystem(PowerCycleABC):
             phaseload_inputs.phase_list, phaseload_inputs.normalise_list
         ):
             try:
-                phase = valid_phases[phase_label]
+                phaseload = PhaseLoad(
+                    load_name,
+                    valid_phases[phase_label],
+                    phaseload_inputs.powerload_list,
+                    [normalisation_choice] * len(phaseload_inputs.powerload_list),
+                )
             except KeyError:
                 raise PowerCycleSystemError(
                     "scenario",
@@ -180,13 +225,6 @@ class PowerCycleSystem(PowerCycleABC):
                     "'PhaseLoad' class for phases that are not "
                     "present in the 'scenario' attribute.",
                 )
-
-            phaseload = PhaseLoad(
-                load_name,
-                phase,
-                phaseload_inputs.powerload_list,
-                [normalisation_choice] * len(phaseload_inputs.powerload_list),
-            )
 
             if phaseload_inputs.consumption:
                 phaseload.make_consumption_explicit()
@@ -198,10 +236,10 @@ class PowerCycleSystem(PowerCycleABC):
     def _make_phaseloads_from_config(self, type_config):
         return {
             label: self._build_phaseloads(
-                load_config["name"],
+                load_config.name,
                 self.import_phaseload_inputs(
-                    load_config["module"],
-                    load_config["variables_map"],
+                    load_config.module,
+                    load_config.variables_map,
                 ),
             )
             for label, load_config in type_config.items()
@@ -294,11 +332,9 @@ class PowerCycleManager:
 
     def _build_pulseload_of_type(self, load_type):
         pulse = self.scenario.pulse_set[0]
-        group_library = self.group_library
 
         all_phaseloads = []
-        for group_label in group_library.keys():
-            group = group_library[group_label]
+        for group in self.group_library.values():
             system_library = group.system_library
 
             for system_label in system_library.keys():
@@ -356,11 +392,11 @@ class PowerCycleManager:
             ax=validate_axes(ax),
             n_points=n_points,
             detailed=False,
-            c="r",
+            color="r",
             **kwargs,
         )
         ax, reactive_plot_objects = self.net_reactive.plot(
-            ax=ax, n_points=n_points, detailed=False, c="b", **kwargs
+            ax=ax, n_points=n_points, detailed=False, color="b", **kwargs
         )
 
         return ax, (active_plot_objects, reactive_plot_objects)

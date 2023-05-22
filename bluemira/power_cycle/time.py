@@ -34,11 +34,20 @@ class PowerCyclePhase(PowerCycleTimeABC):
     def __init__(
         self,
         name,
-        duration_breakdown: float,
+        duration_breakdown: dict,
         label=None,
     ):
-        super().__init__(name, np.array([duration_breakdown]), label=label)
-        if duration_breakdown < 0:
+        if isinstance(duration_breakdown, dict):
+            duration_breakdown = list(duration_breakdown.items())
+        else:
+            duration_breakdown = [(name, duration_breakdown)]
+
+        duration_breakdown = [Breakdown(*db) for db in duration_breakdown]
+        duration = np.array([db.duration for db in duration_breakdown])
+        super().__init__(name, duration, label=label)
+        if None in [db.duration for db in duration_breakdown]:
+            raise ValueError("duration value cannot be None")
+        if any(duration < 0):
             raise ValueError("duration_breakdown must be positive")
         self.duration_breakdown = duration_breakdown
 
@@ -276,6 +285,7 @@ class ScenarioBuilder:
                     [self._breakdown_library[br].duration for br in v.breakdown],
                     v.logical,
                 ),
+                k,
             )
             for k, v in self.scenario_config.phase_library.items()
         }
