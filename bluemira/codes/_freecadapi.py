@@ -1997,7 +1997,7 @@ def collect_verts_faces(
         # tesselation is likely to be the most expensive part of this
         v, f = face.tessellate(tesselation)
 
-        if v != []:
+        if v != [] and f != []:
             verts.append(np.array(v))
             faces.append(np.array(f) + voffset)
             voffset += len(v)
