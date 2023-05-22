@@ -1,18 +1,18 @@
 Reactors, Components and Managers
 =================================
 
-:py:class:`Components` are the fundamental building blocks of a bluemira design.
-A :py:class:`Component` is a physical object or a group of physical objects, organised in a tree structure.
-A user may want access to some properties associated with a :py:class:`Component` that are related
+:py:class:`~bluemira.base.components.Component`\s are the fundamental building blocks of a bluemira design.
+A :py:class:`~bluemira.base.components.Component` is a physical object or a group of physical objects, organised in a tree structure.
+A user may want access to some properties associated with a :py:class:`~bluemira.base.components.Component` that are related
 but not directly connected to the physical object.
-For this reason we have :py:class:`ComponentManagers` which can provide helper functions for common operations or
-have extra information stored such as the equilibira in a plasma :py:class:`ComponentManager`.
-To manage a set of :py:class:`ComponentManagers` a `Reactor` class is used which represents the full reactor object.
+For this reason we have :py:class:`~bluemira.base.reactor.ComponentManager`\s which can provide helper functions for common operations or
+have extra information stored such as the equilibira in a plasma :py:class:`~bluemira.base.reactor.ComponentManager`.
+To manage a set of :py:class:`~bluemira.base.reactor.ComponentManager`\s a :py:class:`~bluemira.base.reactor.Reactor` class is used which represents the full reactor object.
 
 The Component class
 -------------------
 
-Two types of :py:class:`Component` classes are defined that can be used to represent different parts of a design:
+Two types of :py:class:`~bluemira.base.components.Component` classes are defined that can be used to represent different parts of a design:
 
 - :py:class:`bluemira.base.components.Component` is the base class and defines the
   framework on which other components can be defined within bluemira.
@@ -24,7 +24,7 @@ Two types of :py:class:`Component` classes are defined that can be used to repre
   As implementations of :py:class:`bluemira.base.components.PhysicalComponent` correspond to a physical object,
   instances of that class can be defined with a shape and a material.
 
-A :py:class:`Component` can be used as shown below:
+A :py:class:`~bluemira.base.components.Component` can be used as shown below:
 
 .. code-block:: pycon
 
@@ -45,8 +45,8 @@ A :py:class:`Component` can be used as shown below:
 ComponentManagers
 -----------------
 
-:py:class:`ComponentManagers` are designed to be created by the :ref:`Reactor Designer <how to use>`.
-The aim is to make it easier to access logically associated properties of a :py:class:`Component` that may not be directly connected to the physical object.
+:py:class:`~bluemira.base.reactor.ComponentManager`\s are designed to be created by the :ref:`Reactor Designer <how to use>`.
+The aim is to make it easier to access logically associated properties of a :py:class:`~bluemira.base.components.Component` that may not be directly connected to the physical object.
 It also can contain helper methods to ease access of specific sections of geometry,
 for instance the separatrix of a plasma.
 
@@ -64,15 +64,15 @@ for instance the separatrix of a plasma.
                 .shape.boundary[0]
             )
 
-A :py:class:`ComponentManager` should be how a :py:class:`Component` is used after creation within the top level of the reactor design.
+A :py:class:`~bluemira.base.reactor.ComponentManager` should be how a :py:class:`~bluemira.base.components.Component` is used after creation within the top level of the reactor design.
 
 Reactor
 -------
 
-:py:class:`Reactors` are again designed to be created by the :ref:`Reactor Designer <how to use>`.
+:py:class:`~bluemira.base.reactor.Reactor`\s are again designed to be created by the :ref:`Reactor Designer <how to use>`.
 This object is the complete reactor and is a container that allows easy access to any part of it.
-Methods on the :py:class:`Reactor` object have access to all parts of the reactor
-enabling functionality that needs to interact with multiple :py:class:`ComponentManagers`.
+Methods on the :py:class:`~bluemira.base.reactor.Reactor` object have access to all parts of the reactor
+enabling functionality that needs to interact with multiple :py:class:`~bluemira.base.reactor.ComponentManager`\s.
 
 .. code-block:: python
 
@@ -90,9 +90,8 @@ enabling functionality that needs to interact with multiple :py:class:`Component
     reactor.tf_coils = build_tf_coils()
     reactor.show_cad()
 
-A :py:class:`Reactor` interacts dynamically with :py:class:`ComponentManagers`.
-All the default methods on :py:class:`Reactor` such as :py:meth:`show_cad` will act
-on the currently available :py:class:`ComponentManagers` ignoring unavailable parts
-of the reactor. If a :py:class:`Component` is directly added to a :py:class:`Reactor`
-and not wrapped in a :py:class:`ComponentManagers` it will be ignored by the
-:py:class:`Reactor` methods.
+A :py:class:`~bluemira.base.reactor.Reactor` interacts dynamically with :py:class:`~bluemira.base.reactor.ComponentManager`\s.
+All the default methods on :py:class:`~bluemira.base.reactor.Reactor` such as :py:meth:`show_cad` will act
+on the currently available :py:class:`~bluemira.base.reactor.ComponentManager`\s ignoring unavailable parts
+of the reactor. If a :py:class:`~bluemira.base.components.Component` is directly added to a :py:class:`~bluemira.base.reactor.Reactor`
+and not wrapped in a :py:class:`~bluemira.base.reactor.ComponentManager`\s it will be ignored by the :py:class:`~bluemira.base.reactor.Reactor` methods.
