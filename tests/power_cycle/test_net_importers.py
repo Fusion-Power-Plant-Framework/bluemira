@@ -15,11 +15,8 @@ importers_testkit = NetImportersTestKit()
 
 class TestEquilibriaImporter:
     def setup_method(self):
-        duration_inputs = importers_testkit.equilibria_duration_inputs()
-        self.duration_inputs = duration_inputs
-
-        phaseload_inputs = importers_testkit.equilibria_phaseload_inputs()
-        self.phaseload_inputs = phaseload_inputs
+        self.duration_inputs = importers_testkit.equilibria_duration_inputs()
+        self.phaseload_inputs = importers_testkit.equilibria_phaseload_inputs()
 
     def test_duration(self):
         all_values = []
@@ -45,8 +42,7 @@ class TestEquilibriaImporter:
 
 class TestPumpingImporter:
     def setup_method(self):
-        duration_inputs = importers_testkit.pumping_duration_inputs()
-        self.duration_inputs = duration_inputs
+        self.duration_inputs = importers_testkit.pumping_duration_inputs()
 
     def test_duration(self):
         all_values = []

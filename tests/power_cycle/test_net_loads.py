@@ -467,9 +467,9 @@ class TestPowerLoad:
 
         length_time = len(test_time)
         for t in range(length_time):
-            curve_point = curve[:, t]
-            lesser_point = lesser_curve[:, t]
-            greater_point = greater_curve[:, t]
+            curve_point = curve[t]
+            lesser_point = lesser_curve[t]
+            greater_point = greater_curve[t]
 
             n = number
             cp = curve_point
@@ -544,12 +544,13 @@ class TestPhaseLoad:
         right_name = (
             "PhaseLoad with a non-PowerCyclePhase element in its 'phase' argument"
         )
-        self.assert_constructor_fails(
-            right_name,
-            "non-PowerCyclePhase",
-            self.sample_powerloads,
-            self.sample_normalflags,
-        )
+        with pytest.raises(TypeError):
+            PhaseLoad(
+                right_name,
+                "non-PowerCyclePhase",
+                self.sample_powerloads,
+                self.sample_normalflags,
+            )
 
     def test_validate_powerload_set(self):
         right_name = (
@@ -557,12 +558,13 @@ class TestPhaseLoad:
         )
         wrong_phaseloads = copy.deepcopy(self.sample_powerloads)
         wrong_phaseloads[0] = "non-PowerLoad"
-        self.assert_constructor_fails(
-            right_name,
-            self.sample_phases[0],
-            wrong_phaseloads,
-            self.sample_normalflags,
-        )
+        with pytest.raises(TypeError):
+            PhaseLoad(
+                right_name,
+                self.sample_phases[0],
+                wrong_phaseloads,
+                self.sample_normalflags,
+            )
 
     def test_validate_normalise(self):
         right_name = (
@@ -571,12 +573,13 @@ class TestPhaseLoad:
 
         wrong_normalflags = copy.deepcopy(self.sample_normalflags)
         wrong_normalflags[0] = "non-boolean"
-        self.assert_constructor_fails(
-            right_name,
-            self.sample_phases[0],
-            self.sample_powerloads,
-            wrong_normalflags,
-        )
+        with pytest.raises(ValueError):
+            PhaseLoad(
+                right_name,
+                self.sample_phases[0],
+                self.sample_powerloads,
+                wrong_normalflags,
+            )
 
     def test_sanity(self):
         right_name = (
@@ -613,8 +616,8 @@ class TestPhaseLoad:
 
                 loaddata = loaddata_set[0]
                 null_loaddata = null_powerload.loaddata_set[0]
-                assert loaddata.time == null_loaddata.time
-                assert loaddata.data == null_loaddata.data
+                assert np.allclose(loaddata.time, null_loaddata.time)
+                assert np.allclose(loaddata.data, null_loaddata.data)
 
             assert null_instance.normalise == [True]
 
@@ -702,7 +705,9 @@ class TestPhaseLoad:
 
             assert result.phase == this_phase
             assert result.powerload_set == this_set + this_set
-            assert result.normalise == this_normalise + this_normalise
+            assert all(
+                result.normalise == np.concatenate([this_normalise, this_normalise])
+            )
 
             result.name = "2x " + sample.name + " (added to itself)"
             result_color = next(colors)
@@ -901,7 +906,7 @@ class TestPulseLoad:
         original = self.construct_multisample()
         result = original + original
 
-        assert result.shifted_time == original.shifted_time
+        assert np.allclose(result.shifted_time, original.shifted_time)
         assert result.pulse == original.pulse
 
         for original_phaseload, result_phaseload in zip(
@@ -912,7 +917,7 @@ class TestPulseLoad:
 
             original_intrinsic_time = original_phaseload.intrinsic_time
             result_intrinsic_time = result_phaseload.intrinsic_time
-            assert result_intrinsic_time == original_intrinsic_time
+            assert np.allclose(result_intrinsic_time, original_intrinsic_time)
 
         negative_original = copy.deepcopy(original)
         negative_original.make_consumption_explicit()
@@ -921,7 +926,7 @@ class TestPulseLoad:
         ax, result_plot_objects = result.plot(ax=ax, detailed=False, color="y")
         ax, original_plot_objects = original.plot(ax=ax, detailed=False, color="k")
         ax, subtraction_plot_objects = result_minus_original.plot(
-            ax=ax, detailed=False, color="c", ls="--"
+            ax=ax, detailed=False, color="c", linestyle="--"
         )
 
         adjust_2d_graph_ranges(ax=ax)

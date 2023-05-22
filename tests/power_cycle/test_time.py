@@ -2,14 +2,7 @@
 
 import pytest
 
-from bluemira.power_cycle.base import PowerCycleTimeABC
-from bluemira.power_cycle.errors import (
-    PowerCycleError,
-    PowerCyclePhaseError,
-    PowerCyclePulseError,
-    PowerCycleScenarioError,
-    ScenarioBuilderError,
-)
+from bluemira.power_cycle.errors import PowerCycleError, PowerCyclePhaseError
 from bluemira.power_cycle.time import (
     Breakdown,
     PowerCyclePhase,
@@ -18,7 +11,6 @@ from bluemira.power_cycle.time import (
     ScenarioBuilder,
     ScenarioBuilderConfig,
 )
-from bluemira.power_cycle.tools import validate_list
 from tests.power_cycle.kits_for_tests import (
     TimeTestKit,
     assert_value_is_nonnegative,
@@ -29,13 +21,7 @@ time_testkit = TimeTestKit()
 
 
 class TestPowerCyclePhase:
-    tested_class_super = PowerCycleTimeABC
-    tested_class = PowerCyclePhase
-    tested_class_error = PowerCyclePhaseError
-
     def setup_method(self):
-        tested_class = self.tested_class
-
         (
             n_samples,
             sample_names,
@@ -48,151 +34,68 @@ class TestPowerCyclePhase:
             name = sample_names[s]
             breakdown = sample_breakdowns[s]
             label = sample_labels[s]
-            sample = tested_class(name, breakdown.values(), label=label)
+            sample = PowerCyclePhase(name, breakdown, label=label)
             all_samples.append(sample)
         self.sample_breakdowns = sample_breakdowns
         self.all_samples = all_samples
 
     breakdown_argument_examples = [
-        [None, None, None, None],
         [1, 2, 3, 4],
         [-1, -2, -3, -4],
         [1.1, 2.2, 3.3, 4.4],
-        ["1", "2", "3", "4"],
     ]
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
 
     @pytest.mark.parametrize("test_keys", breakdown_argument_examples)
     @pytest.mark.parametrize("test_values", breakdown_argument_examples)
     def test_validate_breakdown(self, test_keys, test_values):
-        tested_class = self.tested_class
-        tested_class_error = self.tested_class_error
-
         name = "Name for dummy sample"
         breakdown = dict(zip(test_keys, test_values))
-        possible_errors = (TypeError, ValueError, tested_class_error)
+        possible_errors = (TypeError, ValueError, PowerCyclePhaseError)
         try:
-            print(breakdown)
-            sample = tested_class(name, test_values)
+            sample = PowerCyclePhase(name, breakdown)
         except possible_errors:
             str_keys = [isinstance(k, str) for k in test_keys]
             all_keys_are_str = all(str_keys)
             nonnegative_errors = (TypeError, ValueError)
-            nonstr_keys_errors = tested_class_error
+            nonstr_keys_errors = ValueError
             if all_keys_are_str:
                 with pytest.raises(nonnegative_errors):
-                    sample = tested_class(name, breakdown)
+                    PowerCyclePhase(name, breakdown)
             else:
                 with pytest.raises(nonstr_keys_errors):
-                    sample = tested_class(name, breakdown)
-
-    # ------------------------------------------------------------------
-    #  OPERATIONS
-    # ------------------------------------------------------------------
+                    PowerCyclePhase(name, breakdown)
 
 
 class TestPowerCyclePulse:
-    tested_class_super = PowerCycleTimeABC
-    tested_class = PowerCyclePulse
-    tested_class_error = PowerCyclePulseError
-
     def setup_method(self):
-        tested_class = self.tested_class
+        (_, self.sample_phases) = time_testkit.inputs_for_pulse()
 
-        (
-            _,
-            sample_phases,
-        ) = time_testkit.inputs_for_pulse()
-
-        name = "Pulse example"
-        phase_set = sample_phases
-        pulse = tested_class(name, phase_set)
-        self.sample_phases = sample_phases
-        self.sample = pulse
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
-    def test_validate_phase_set(self):
-        tested_class = self.tested_class
-
-        sample_phases = self.sample_phases
-        for phase in sample_phases:
-            phase_set = tested_class._validate_phase_set(phase)
-            individual_phase_becomes_list = isinstance(phase_set, list)
-            assert individual_phase_becomes_list
-        phase_set = tested_class._validate_phase_set(sample_phases)
-        phase_set_becomes_list = isinstance(phase_set, list)
-        assert phase_set_becomes_list
-
-    # ------------------------------------------------------------------
-    #  OPERATIONS
-    # ------------------------------------------------------------------
+        self.sample = PowerCyclePulse("Pulse example", self.sample_phases)
 
     def test_build_phase_library(self):
         """
         No new functionality to be tested.
         """
-        sample = self.sample
-        assert callable(sample.build_phase_library)
+        assert callable(self.sample.build_phase_library)
 
 
 class TestPowerCycleScenario:
-    tested_class_super = PowerCycleTimeABC
-    tested_class = PowerCycleScenario
-    tested_class_error = PowerCycleScenarioError
-
     def setup_method(self):
-        tested_class = self.tested_class
+        (_, self.sample_pulses) = time_testkit.inputs_for_scenario()
 
-        (
-            _,
-            sample_pulses,
-        ) = time_testkit.inputs_for_scenario()
-
-        name = "Scenario example"
-        pulse_set = sample_pulses
-        scenario = tested_class(name, pulse_set)
-        self.sample_pulses = pulse_set
-        self.sample = scenario
-
-    # ------------------------------------------------------------------
-    # CLASS ATTRIBUTES & CONSTRUCTOR
-    # ------------------------------------------------------------------
-
-    def test_validate_pulse_set(self):
-        tested_class = self.tested_class
-
-        sample_pulses = self.sample_pulses
-        for pulse in sample_pulses:
-            pulse_set = tested_class._validate_pulse_set(pulse)
-            individual_pulse_becomes_list = isinstance(pulse_set, list)
-            assert individual_pulse_becomes_list
-        pulse_set = tested_class._validate_pulse_set(sample_pulses)
-        pulse_set_becomes_list = isinstance(pulse_set, list)
-        assert pulse_set_becomes_list
-
-    # ------------------------------------------------------------------
-    #  OPERATIONS
-    # ------------------------------------------------------------------
+        self.sample = PowerCycleScenario("Scenario example", self.sample_pulses)
 
     def test_build_phase_library(self):
         """
         No new functionality to be tested.
         """
-        sample = self.sample
-        assert callable(sample.build_phase_library)
+        assert callable(self.sample.build_phase_library)
 
     def test_build_pulse_library(self):
         """
         No new functionality to be tested.
         """
-        sample = self.sample
-        assert callable(sample.build_pulse_library)
+        assert callable(self.sample.build_pulse_library)
 
 
 class TestScenarioBuilder:
@@ -200,13 +103,12 @@ class TestScenarioBuilder:
         self.scenario_json_path = time_testkit.scenario_json_path
         self.scenario_json_contents = time_testkit.inputs_for_builder()
 
-        highest_level_json_keys = [
+        self.highest_level_json_keys = [
             "scenario",
             "pulse_library",
             "phase_library",
             "breakdown_library",
         ]
-        self.highest_level_json_keys = highest_level_json_keys
         self.sample = ScenarioBuilder(self.scenario_json_path)
 
     def run_validate_config(self):
