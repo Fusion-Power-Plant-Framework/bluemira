@@ -1,413 +1,233 @@
 {
-    "ECH": {
-        "name": "Electron Cyclotron Heating",
-        "reactive": {
-            "aux": {
-                "name": "reactive auxiliary (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "power extrapolated from ITER solution"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[2.9, 2.9]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            },
-            "man": {
-                "name": "reactive main (PPEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "ftt"
-                    ],
-                    "normalize": [
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "peak value extrapolated to whole burn"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[60.5, 60.5]"
-                        ],
-                        "model": [
-                            "STEP"
-                        ]
-                    }
-                }
-            }
-        },
-        "active": {
-            "aux": {
-                "name": "active auxiliary (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "power extrapolated from ITER solution"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[6, 6]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            },
-            "man": {
-                "name": "active main (PPEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "ftt"
-                    ],
-                    "normalize": [
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {
-                        "wall-plug": 0.4
-                    },
-                    "loads": {
-                        "description": [
-                            "peak value extrapolated to whole burn"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[50, 50]"
-                        ],
-                        "model": [
-                            "STEP"
-                        ]
-                    }
-                }
-            }
+  "ECH": {
+    "name": "Electron Cyclotron Heating",
+    "reactive": {
+      "aux": {
+        "name": "reactive auxiliary (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["power extrapolated from ITER solution"],
+            "time": [0, 1],
+            "data": [2.9, 2.9],
+            "model": ["RAMP"]
+          }
         }
+      },
+      "man": {
+        "name": "reactive main (PPEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["ftt"],
+          "normalize": [true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["peak value extrapolated to whole burn"],
+            "time": [0, 1],
+            "data": [60.5, 60.5],
+            "model": ["STEP"]
+          }
+        }
+      }
     },
-    "ICH": {
-        "name": "Ion Cyclotron Heating",
-        "reactive": {
-            "aux": {
-                "name": "reactive auxiliary (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "power extrapolated from ITER solution"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[2.9, 2.9]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            },
-            "man": {
-                "name": "reactive main (PPEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "ftt"
-                    ],
-                    "normalize": [
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "peak value extrapolated to whole burn"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[60.5, 60.5]"
-                        ],
-                        "model": [
-                            "STEP"
-                        ]
-                    }
-                }
-            }
-        },
-        "active": {
-            "aux": {
-                "name": "active auxiliary (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "power extrapolated from ITER solution"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[6, 6]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            },
-            "man": {
-                "name": "active main (PPEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "ftt"
-                    ],
-                    "normalize": [
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {
-                        "wall-plug": 0.4
-                    },
-                    "loads": {
-                        "description": [
-                            "peak value extrapolated to whole burn"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[50, 50]"
-                        ],
-                        "model": [
-                            "STEP"
-                        ]
-                    }
-                }
-            }
+    "active": {
+      "aux": {
+        "name": "active auxiliary (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["power extrapolated from ITER solution"],
+            "time": [0, 1],
+            "data": [6, 6],
+            "model": ["RAMP"]
+          }
         }
-    },
-    "NBI": {
-        "name": "Neutral Beam Injection",
-        "reactive": {
-            "aux": {
-                "name": "reactive auxiliary (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "power extrapolated from ITER solution"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[2.9, 2.9]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            },
-            "man": {
-                "name": "reactive main (PPEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "ftt"
-                    ],
-                    "normalize": [
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "peak value extrapolated to whole burn"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[60.5, 60.5]"
-                        ],
-                        "model": [
-                            "STEP"
-                        ]
-                    }
-                }
-            }
-        },
-        "active": {
-            "aux": {
-                "name": "active auxiliary (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "power extrapolated from ITER solution"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[6, 6]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            },
-            "man": {
-                "name": "active main (PPEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "ftt"
-                    ],
-                    "normalize": [
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {
-                        "wall-plug": 0.4
-                    },
-                    "loads": {
-                        "description": [
-                            "peak value extrapolated to whole burn"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[50, 50]"
-                        ],
-                        "model": [
-                            "STEP"
-                        ]
-                    }
-                }
-            }
+      },
+      "man": {
+        "name": "active main (PPEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["ftt"],
+          "normalize": [true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {
+            "wall-plug": 0.4
+          },
+          "loads": {
+            "description": ["peak value extrapolated to whole burn"],
+            "time": [0, 1],
+            "data": [50, 50],
+            "model": ["STEP"]
+          }
         }
+      }
     }
+  },
+  "ICH": {
+    "name": "Ion Cyclotron Heating",
+    "reactive": {
+      "aux": {
+        "name": "reactive auxiliary (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["power extrapolated from ITER solution"],
+            "time": [0, 1],
+            "data": [2.9, 2.9],
+            "model": ["RAMP"]
+          }
+        }
+      },
+      "man": {
+        "name": "reactive main (PPEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["ftt"],
+          "normalize": [true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["peak value extrapolated to whole burn"],
+            "time": [0, 1],
+            "data": [60.5, 60.5],
+            "model": ["STEP"]
+          }
+        }
+      }
+    },
+    "active": {
+      "aux": {
+        "name": "active auxiliary (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["power extrapolated from ITER solution"],
+            "time": [0, 1],
+            "data": [6, 6],
+            "model": ["RAMP"]
+          }
+        }
+      },
+      "man": {
+        "name": "active main (PPEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["ftt"],
+          "normalize": [true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {
+            "wall-plug": 0.4
+          },
+          "loads": {
+            "description": ["peak value extrapolated to whole burn"],
+            "time": [0, 1],
+            "data": [50, 50],
+            "model": ["STEP"]
+          }
+        }
+      }
+    }
+  },
+  "NBI": {
+    "name": "Neutral Beam Injection",
+    "reactive": {
+      "aux": {
+        "name": "reactive auxiliary (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["power extrapolated from ITER solution"],
+            "time": [0, 1],
+            "data": [2.9, 2.9],
+            "model": ["RAMP"]
+          }
+        }
+      },
+      "man": {
+        "name": "reactive main (PPEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["ftt"],
+          "normalize": [true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["peak value extrapolated to whole burn"],
+            "time": [0, 1],
+            "data": [60.5, 60.5],
+            "model": ["STEP"]
+          }
+        }
+      }
+    },
+    "active": {
+      "aux": {
+        "name": "active auxiliary (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["power extrapolated from ITER solution"],
+            "time": [0, 1],
+            "data": [6, 6],
+            "model": ["RAMP"]
+          }
+        }
+      },
+      "man": {
+        "name": "active main (PPEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["ftt"],
+          "normalize": [true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {
+            "wall-plug": 0.4
+          },
+          "loads": {
+            "description": ["peak value extrapolated to whole burn"],
+            "time": [0, 1],
+            "data": [50, 50],
+            "model": ["STEP"]
+          }
+        }
+      }
+    }
+  }
 }

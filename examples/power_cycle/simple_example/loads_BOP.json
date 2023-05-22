@@ -1,97 +1,63 @@
 {
-    "PHT": {
-        "name": "Primary Heat Transfer System",
-        "reactive": {},
-        "active": {
-            "php": {
-                "name": "Primary (Heat Transfer) System Pumps",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "ftt"
-                    ],
-                    "normalize": [
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {
-                        "isentropic": 0.98,
-                        "mechanical": 0.998
-                    },
-                    "loads": {
-                        "description": [
-                            "Divertor pumps",
-                            "Vacuum Vessel pumps",
-                            "Breeding Blanket pumps"
-                        ],
-                        "time": [
-                            "[0, 1]",
-                            "[0, 1]",
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[1, 1]",
-                            "[0.1, 0.1]",
-                            "[80, 80]"
-                        ],
-                        "model": [
-                            "RAMP",
-                            "RAMP",
-                            "RAMP"
-                        ]
-                    }
-                }
-            }
+  "PHT": {
+    "name": "Primary Heat Transfer System",
+    "reactive": {},
+    "active": {
+      "php": {
+        "name": "Primary (Heat Transfer) System Pumps",
+        "module": null,
+        "variables_map": {
+          "phases": ["ftt"],
+          "normalize": [true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {
+            "isentropic": 0.98,
+            "mechanical": 0.998
+          },
+          "loads": {
+            "description": [
+              "Divertor pumps",
+              "Vacuum Vessel pumps",
+              "Breeding Blanket pumps"
+            ],
+            "time": ["[0, 1]", "[0, 1]", "[0, 1]"],
+            "data": ["[1, 1]", "[0.1, 0.1]", "[80, 80]"],
+            "model": ["RAMP", "RAMP", "RAMP"]
+          }
         }
-    },
-    "IHT": {
-        "name": "Intermediate Heat Transfer System",
-        "reactive": {},
-        "active": {}
-    },
-    "PCS": {
-        "name": "Power Conversion System",
-        "reactive": {},
-        "active": {
-            "rnk": {
-                "name": "Generic Rankine cycle",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": false,
-                    "efficiencies": {
-                        "stored in IHTS": 0.9,
-                        "Rankine": 0.40
-                    },
-                    "loads": {
-                        "description": [
-                            "IHTS-to-PCS"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[2000, 2000]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            }
-        }
+      }
     }
+  },
+  "IHT": {
+    "name": "Intermediate Heat Transfer System",
+    "reactive": {},
+    "active": {}
+  },
+  "PCS": {
+    "name": "Power Conversion System",
+    "reactive": {},
+    "active": {
+      "rnk": {
+        "name": "Generic Rankine cycle",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": false,
+          "efficiencies": {
+            "stored in IHTS": 0.9,
+            "Rankine": 0.4
+          },
+          "loads": {
+            "description": ["IHTS-to-PCS"],
+            "time": ["[0, 1]"],
+            "data": ["[2000, 2000]"],
+            "model": ["RAMP"]
+          }
+        }
+      }
+    }
+  }
 }

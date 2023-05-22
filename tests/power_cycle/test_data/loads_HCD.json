@@ -13,7 +13,7 @@
                         "ftt",
                         "f2d"
                     ],
-                    "normalize": [
+                    "normalise": [
                         true,
                         true,
                         true,
@@ -30,12 +30,12 @@
                             "auxiliary"
                         ],
                         "time": [
-                            "[0, 1]",
-                            "[0, 1]"
+                            [0, 1],
+                            [0, 1]
                         ],
                         "data": [
-                            "[2, 2]",
-                            "[1, 1]"
+                            [2, 2],
+                            [1, 1]
                         ],
                         "model": [
                             "STEP",
@@ -51,7 +51,7 @@
                     "phases": [
                         "ftt"
                     ],
-                    "normalize": [
+                    "normalise": [
                         true
                     ],
                     "unit": "MW",
@@ -65,10 +65,10 @@
                             "injection"
                         ],
                         "time": [
-                            "[0, 1, 2, 3, 4]"
+                            [0, 1, 2, 3, 4]
                         ],
                         "data": [
-                            "[1, 30, 25, 30, 1]"
+                            [1, 30, 25, 30, 1]
                         ],
                         "model": [
                             "RAMP"
@@ -89,7 +89,7 @@
                     "phases": [
                         "ftt"
                     ],
-                    "normalize": [
+                    "normalise": [
                         true
                     ],
                     "unit": "MW",
@@ -103,10 +103,10 @@
                             "injection"
                         ],
                         "time": [
-                            "[0, 1, 2, 3, 4]"
+                            [0, 1, 2, 3, 4]
                         ],
                         "data": [
-                            "[0, 25, 30, 25, 0]"
+                            [0, 25, 30, 25, 0]
                         ],
                         "model": [
                             "RAMP"

@@ -1,156 +1,84 @@
 {
-    "DCS": {
-        "name": "Diagnostics & Control Systems",
-        "reactive": {
-            "plm": {
-                "name": "reactive plasma D&C power (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "estimated from ITER data (with air conditioning)"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[3, 3]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            }
-        },
-        "active": {
-            "plm": {
-                "name": "active plasma D&C power (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "estimated from ITER data (with air conditioning)"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[6.1, 6.1]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            }
+  "DCS": {
+    "name": "Diagnostics & Control Systems",
+    "reactive": {
+      "plm": {
+        "name": "reactive plasma D&C power (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["estimated from ITER data (with air conditioning)"],
+            "time": [0, 1],
+            "data": [3, 3],
+            "model": ["RAMP"]
+          }
         }
+      }
     },
-    "PPC": {
-        "name": "Power Plant Control",
-        "reactive": {
-            "rpc": {
-                "name": "reactive plant control power (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "estimated from CODAC, CIS & CSS in ITER"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[1.7, 1.7]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            }
-        },
-        "active": {
-            "apc": {
-                "name": "active plant control power (SSEN)",
-                "module": null,
-                "variables_map": {
-                    "phases": [
-                        "dwl",
-                        "d2f",
-                        "ftt",
-                        "f2d"
-                    ],
-                    "normalize": [
-                        true,
-                        true,
-                        true,
-                        true
-                    ],
-                    "unit": "MW",
-                    "consumption": true,
-                    "efficiencies": {},
-                    "loads": {
-                        "description": [
-                            "estimated from CODAC, CIS & CSS in ITER"
-                        ],
-                        "time": [
-                            "[0, 1]"
-                        ],
-                        "data": [
-                            "[3.6, 3.6]"
-                        ],
-                        "model": [
-                            "RAMP"
-                        ]
-                    }
-                }
-            }
+    "active": {
+      "plm": {
+        "name": "active plasma D&C power (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["estimated from ITER data (with air conditioning)"],
+            "time": [0, 1],
+            "data": [6.1, 6.1],
+            "model": ["RAMP"]
+          }
         }
+      }
     }
+  },
+  "PPC": {
+    "name": "Power Plant Control",
+    "reactive": {
+      "rpc": {
+        "name": "reactive plant control power (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["estimated from CODAC, CIS & CSS in ITER"],
+            "time": [0, 1],
+            "data": [1.7, 1.7],
+            "model": ["RAMP"]
+          }
+        }
+      }
+    },
+    "active": {
+      "apc": {
+        "name": "active plant control power (SSEN)",
+        "module": null,
+        "variables_map": {
+          "phases": ["dwl", "d2f", "ftt", "f2d"],
+          "normalize": [true, true, true, true],
+          "unit": "MW",
+          "consumption": true,
+          "efficiencies": {},
+          "loads": {
+            "description": ["estimated from CODAC, CIS & CSS in ITER"],
+            "time": [0, 1],
+            "data": [3.6, 3.6],
+            "model": ["RAMP"]
+          }
+        }
+      }
+    }
+  }
 }
