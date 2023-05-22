@@ -91,7 +91,7 @@ jobs:
     - name: Check Code Quality
       shell: bash -l {0}
       env:
-         COPYRIGHT=${{ github.event_name == 'pull_request' && "PR" || '' }}
+         COPYRIGHT=${{ github.event_name == 'pull_request' && 'PR' || '' }}
       run: |
         SKIP=flake8,black,update_copyright pre-commit run --all-files
         flake8 --count
