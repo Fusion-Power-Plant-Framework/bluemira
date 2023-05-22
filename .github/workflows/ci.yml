@@ -90,10 +90,15 @@ jobs:
 
     - name: Check Code Quality
       shell: bash -l {0}
+      env:
+         COPYRIGHT=${{ github.event_name == 'pull_request' }}
       run: |
-        SKIP=flake8,black,black-jupyter pre-commit run --all-files
+        SKIP=flake8,black,update_copyright pre-commit run --all-files
         flake8 --count
         black --check .
+        if [ $COPYRIGHT ]; then
+           pre-commit run update_copyright --from-ref $GITHUB_BASE_REF --to-ref $GITHUB_HEAD_REF
+        fi
 
     - name: Build Documentation bluemira
       shell: bash -l {0}
