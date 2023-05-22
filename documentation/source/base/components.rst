@@ -72,7 +72,7 @@ Reactor
 :py:class:`Reactors` are again designed to be created by the :ref:`Reactor Designer <how to use>`.
 This object is the complete reactor and is a container that allows easy access to any part of it.
 Methods on the :py:class:`Reactor` object have access to all parts of the reactor
-enabling functionality that need to interact with multiple :py:class:`ComponentManagers`.
+enabling functionality that needs to interact with multiple :py:class:`ComponentManagers`.
 
 .. code-block:: python
 
@@ -94,5 +94,5 @@ A :py:class:`Reactor` interacts dynamically with :py:class:`ComponentManagers`.
 All the default methods on :py:class:`Reactor` such as :py:meth:`show_cad` will act
 on the currently available :py:class:`ComponentManagers` ignoring unavailable parts
 of the reactor. If a :py:class:`Component` is directly added to a :py:class:`Reactor`
-and not wrapped in a :py:class:`ComponentManagers` it will be ignored by the :py:class
-:`Reactor` methods.
+and not wrapped in a :py:class:`ComponentManagers` it will be ignored by the
+:py:class:`Reactor` methods.
