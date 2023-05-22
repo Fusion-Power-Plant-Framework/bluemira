@@ -40,7 +40,7 @@ pbr==5.11.1
 pep8-naming==0.13.3
 platformdirs==3.5.1
 pluggy==1.0.0
-pre-commit==3.3.1
+pre-commit==3.3.2
 pycodestyle==2.10.0
 pydocstyle==6.3.0
 pyflakes==3.0.1
