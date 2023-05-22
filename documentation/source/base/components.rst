@@ -91,7 +91,7 @@ enabling functionality that need to interact with multiple :py:class:`ComponentM
     reactor.show_cad()
 
 A :py:class:`Reactor` interacts dynamically with :py:class:`ComponentManagers`.
-All the default methods on :py:class:`Reactor` such as :py:method:`show_cad` will act
+All the default methods on :py:class:`Reactor` such as :py:meth:`show_cad` will act
 on the currently available :py:class:`ComponentManagers` ignoring unavailable parts
 of the reactor. If a :py:class:`Component` is directly added to a :py:class:`Reactor`
 and not wrapped in a :py:class:`ComponentManagers` it will be ignored by the :py:class
