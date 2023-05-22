@@ -7,6 +7,7 @@ A user may want access to some properties associated with a :py:class:`Component
 but not directly connected to the physical object.
 For this reason we have :py:class:`ComponentManagers` which can provide helper functions for common operations or
 have extra information stored such as the equilibira in a plasma :py:class:`ComponentManager`.
+To manage a set of :py:class:`ComponentManagers` a `Reactor` class is used which represents the full reactor object.
 
 The Component class
 -------------------
@@ -67,3 +68,31 @@ A :py:class:`ComponentManager` should be how a :py:class:`Component` is used aft
 
 Reactor
 -------
+
+:py:class:`Reactors` are again designed to be created by the :ref:`Reactor Designer <how to use>`.
+This object is the complete reactor and is a container that allows easy access to any part of it.
+Methods on the :py:class:`Reactor` object have access to all parts of the reactor
+enabling functionality that need to interact with multiple :py:class:`ComponentManagers`.
+
+.. code-block:: python
+
+    class MyReactor(Reactor):
+        '''An example of how to declare a reactor structure.'''
+
+        plasma: MyPlasma
+        tf_coils: MyTfCoils
+
+        def get_ripple(self):
+            '''Calculate the ripple in the TF coils.'''
+
+    reactor = MyReactor("My Reactor")
+    reactor.plasma = build_plasma()
+    reactor.tf_coils = build_tf_coils()
+    reactor.show_cad()
+
+A :py:class:`Reactor` interacts dynamically with :py:class:`ComponentManagers`.
+All the default methods on :py:class:`Reactor` such as :py:method:`show_cad` will act
+on the currently available :py:class:`ComponentManagers` ignoring unavailable parts
+of the reactor. If a :py:class:`Component` is directly added to a :py:class:`Reactor`
+and not wrapped in a :py:class:`ComponentManagers` it will be ignored by the :py:class
+:`Reactor` methods.
