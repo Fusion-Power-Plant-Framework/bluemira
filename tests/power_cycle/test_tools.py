@@ -12,10 +12,8 @@ from bluemira.power_cycle.tools import (
     FormattedLibrary,
     Library,
     adjust_2d_graph_ranges,
-    convert_string_into_numeric_list,
     copy_dict_without_key,
     read_json,
-    remove_characters,
     unique_and_sorted_vector,
     unnest_list,
     validate_axes,
@@ -192,21 +190,6 @@ class TestManipulationTools:
         No new functionality to be tested.
         """
         assert callable(unique_and_sorted_vector)
-
-    def test_remove_characters(self):
-        example_string = "[item_1, item_2, item_3]"
-        character_list = ["[", "]", "_", ","]
-        desired_string = "item1 item2 item3"
-
-        result_string = remove_characters(example_string, character_list)
-        assert result_string == desired_string
-
-    def test_convert_string_into_numeric_list(self):
-        example_string = "[1, 2.5, 3]"
-        desired_list = [1, 2.5, 3]
-
-        result_list = convert_string_into_numeric_list(example_string)
-        assert result_list == desired_list
 
     def test_read_json(self):
         right_path = self.scenario_json_path

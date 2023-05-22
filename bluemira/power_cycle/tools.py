@@ -155,19 +155,6 @@ def remove_characters(string, character_list):
     return string
 
 
-def convert_string_into_numeric_list(string):
-    """
-    Converts a string in the format '[x, y, z]' imported from a json
-    into a list on numbers.
-    """
-    string = copy.deepcopy(string)
-    unwanted_characters = [" ", "[", "]"]
-    clean_string = remove_characters(string, unwanted_characters)
-    list_from_string = list(clean_string.split(","))
-    numbers_list = [float(n) for n in list_from_string]
-    return numbers_list
-
-
 def read_json(file_path):
     """
     Returns the contents of a 'json' file in 'dict' format.
