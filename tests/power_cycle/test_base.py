@@ -19,11 +19,7 @@ tools_testkit = ToolsTestKit()
 
 
 class TestPowerCycleABC:
-    tested_class_super = None
-    tested_class_super_error = None
-    tested_class = PowerCycleABC
-
-    class SampleConcreteClass(tested_class):
+    class SampleConcreteClass(PowerCycleABC):
         """
         Inner class that is a dummy concrete class for testing the main
         abstract class of the test.
@@ -72,10 +68,7 @@ class TestPowerCycleABC:
 
 
 class TestPowerCycleTimeABC:
-    tested_class_super = PowerCycleABC
-    tested_class = PowerCycleTimeABC
-
-    class SampleConcreteClass(tested_class):
+    class SampleConcreteClass(PowerCycleTimeABC):
         """
         Inner class that is a dummy concrete class for testing the main
         abstract class of the test.
@@ -120,10 +113,7 @@ class TestPowerCycleTimeABC:
 
 
 class TestPowerCycleLoadABC:
-    tested_class_super = PowerCycleABC
-    tested_class = PowerCycleLoadABC
-
-    class SampleConcreteClass(tested_class):
+    class SampleConcreteClass(PowerCycleLoadABC):
         """
         Inner class that is a dummy concrete class for testing the main
         abstract class of the test.
