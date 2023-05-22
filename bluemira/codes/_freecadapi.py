@@ -1363,17 +1363,17 @@ def save_cad(
 
     Parameters
     ----------
-    shapes
+    shapes:
         CAD shape objects to save
-    filename
+    filename:
         filename (file extension will be forced base on `formatt`)
-    formatt
+    formatt:
         file formatt
-    labels
+    labels:
         shape labels
-    unit_scale
+    unit_scale:
         unit to save the objects as.
-    kwargs
+    kwargs:
         passed to freecad preferences configuration
 
     Notes
