@@ -3,6 +3,7 @@
 """
 Classes for the calculation of net power in the Power Cycle model.
 """
+import numpy as np
 
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.base import PowerCycleABC, PowerCycleImporterABC
@@ -24,7 +25,6 @@ from bluemira.power_cycle.tools import (
     FormattedDict,
     FormattedLibrary,
     Library,
-    convert_string_into_numeric_list,
     read_json,
     unnest_list,
     validate_axes,
@@ -195,8 +195,8 @@ class PowerCycleSystem(PowerCycleABC):
                 data = data_list[n]
                 model = model_list[n]
 
-                time = convert_string_into_numeric_list(time)
-                data = convert_string_into_numeric_list(data)
+                time = np.array(time_list[n])
+                data = raw_uc(np.array(data_list[n]), unit, "W")
 
                 model = LoadModel[model]
 
