@@ -8,7 +8,7 @@
             1
         ]
     },
-    "pulse-library": {
+    "pulse_library": {
         "std": {
             "name": "standard pulse",
             "phases": [
@@ -29,7 +29,7 @@
             ]
         }
     },
-    "phase-library": {
+    "phase_library": {
         "dwl": {
             "name": "dwell",
             "logical": "|",
@@ -62,7 +62,7 @@
             ]
         }
     },
-    "breakdown-library": {
+    "breakdown_library": {
         "csr": {
             "name": "Central Solenoid recharge",
             "module": "equilibria",
