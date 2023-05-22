@@ -213,9 +213,6 @@ class TestPlottingTools:
             all_limits.append(axis_lim)
         return all_limits
 
-    # ------------------------------------------------------------------
-    #  TESTS
-    # ------------------------------------------------------------------
     def test_validate_axes(self):
         _, sample_ax = plt.subplots()
         sample_ax = sample_ax.plot(self.sample_x, self.sample_y)
