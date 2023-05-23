@@ -24,7 +24,7 @@ Thermal shield builders
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 from scipy.spatial import ConvexHull
@@ -89,14 +89,15 @@ class VVTSBuilder(Builder):
         """
         xz_vvts, xz_vvts_void = self.build_xz(self.keep_out_zone)
         vvts_face: BluemiraFace = xz_vvts.get_component_properties("shape")
+        vvts_void_face: BluemiraFace = xz_vvts_void.get_component_properties("shape")
 
         return self.component_tree(
             xz=[xz_vvts, xz_vvts_void],
             xy=self.build_xy(vvts_face),
-            xyz=self.build_xyz(vvts_face, degree=0),
+            xyz=self.build_xyz(vvts_face, vvts_void_face, degree=0),
         )
 
-    def build_xz(self, koz: BluemiraWire) -> PhysicalComponent:
+    def build_xz(self, koz: BluemiraWire) -> Tuple[PhysicalComponent, ...]:
         """
         Build the x-z components of the vacuum vessel thermal shield.
 
@@ -144,7 +145,7 @@ class VVTSBuilder(Builder):
         return build_sectioned_xy(vvts_face, BLUE_PALETTE["TS"][0])
 
     def build_xyz(
-        self, vvts_face: BluemiraFace, degree: float = 360
+        self, vvts_face: BluemiraFace, vvts_void_face: BluemiraFace, degree: float = 360
     ) -> List[PhysicalComponent]:
         """
         Build the x-y-z components of the vacuum vessel thermal shield
@@ -155,7 +156,7 @@ class VVTSBuilder(Builder):
             xz face to build vvts
         """
         return build_sectioned_xyz(
-            [vvts_face, BluemiraFace(vvts_face.boundary[1])],
+            [vvts_face, vvts_void_face],
             [self.VVTS, self.VOID],
             self.params.n_TF.value,
             [BLUE_PALETTE["TS"][0], (0, 0, 0)],
