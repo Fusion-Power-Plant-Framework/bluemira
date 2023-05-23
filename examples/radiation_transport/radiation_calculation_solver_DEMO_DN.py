@@ -28,7 +28,6 @@ import os
 
 import matplotlib.pyplot as plt
 import numpy as np
-import shapely.geometry as shp
 
 import bluemira.codes.process as process
 from bluemira.base.file import get_bluemira_path
@@ -39,6 +38,8 @@ from bluemira.radiation_transport.radiation_profile import (
     RadiationSolver, 
     linear_interpolator, 
     interpolated_field_values, 
+)
+from bluemira.radiation_transport.radiation_tools import (
     filtering_in_or_out, 
     pfr_filter,
     grid_interpolator,
