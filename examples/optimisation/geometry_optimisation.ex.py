@@ -136,7 +136,7 @@ for i, x in enumerate(result.history):
     geom.variables.set_values_from_norm(x)
     wire = geom.create_shape()
     wire_options = {
-        "alpha": (len(result.history) - i + 1) / (len(result.history) + 1),
+        "alpha": 0.5 + ((i + 1) / len(result.history)) / 2,
         "color": "red",
         "linewidth": 0.1,
     }

@@ -146,3 +146,36 @@ class TestOptimise:
         )
 
         np.testing.assert_allclose(result.x, [1 / 3, 8 / 27], atol=1e-4)
+
+    def test_scalar_lower_bounds_are_expanded(self):
+        result = optimise(
+            np.sum,
+            x0=np.array([5, 5]),
+            algorithm="COBYLA",
+            bounds=(1, np.array([10, 20])),
+            opt_conditions={"ftol_rel": 1e-6, "max_eval": 100},
+        )
+
+        np.testing.assert_allclose(result.x, [1, 1])
+
+    def test_scalar_upper_bounds_are_expanded(self):
+        result = optimise(
+            lambda x: -np.sum(x),
+            x0=np.array([5, 5]),
+            algorithm="COBYLA",
+            bounds=(1, 10),
+            opt_conditions={"ftol_rel": 1e-6, "max_eval": 100},
+        )
+
+        np.testing.assert_allclose(result.x, [10, 10])
+
+    @pytest.mark.parametrize("bad_bounds", [(None, 1), (1, 2, 3), (), 10])
+    def test_error_given_invalid_bounds(self, bad_bounds):
+        with pytest.raises((ValueError, TypeError)):
+            optimise(
+                np.sum,
+                x0=np.array([5, 5]),
+                algorithm="COBYLA",
+                bounds=bad_bounds,
+                opt_conditions={"ftol_rel": 1e-6, "max_eval": 1},
+            )
