@@ -321,6 +321,8 @@ class TestCADFiletype:
             filetype = cadapi.CADFileType[name]
             filetype.exporter([self.shape], f"{tmp_path/'tst'}.{filetype.value}")
 
+    # Commented out CADFileTypes dont work with basic shapes tested or needed more
+    # FreeCAD imported, should be reviewed in future
     @pytest.mark.parametrize(
         "name",
         (
@@ -343,6 +345,7 @@ class TestCADFiletype:
             "OBJ_WAVE",
             "OFF",
             "OPENSCAD",
+            "PLY_STANFORD",
             "SIMPLE_MODEL",
             "STEP",
             "STEP_2",
@@ -351,35 +354,34 @@ class TestCADFiletype:
             # ifcopenshell package required
             pytest.param("IFC_BIM", marks=[pytest.mark.xfail]),
             pytest.param("IFC_BIM_JSON", marks=[pytest.mark.xfail]),
-            # Part.Feature has no compatible object type TODO find compatible object type
-            pytest.param("ASC", marks=[pytest.mark.xfail]),
-            pytest.param("BDF", marks=[pytest.mark.xfail]),
-            pytest.param("DAT", marks=[pytest.mark.xfail]),
-            pytest.param("FENICS_FEM", marks=[pytest.mark.xfail]),
-            pytest.param("FENICS_FEM_XML", marks=[pytest.mark.xfail]),
-            pytest.param("INP", marks=[pytest.mark.xfail]),
-            pytest.param("MED", marks=[pytest.mark.xfail]),
-            pytest.param("MESHJSON", marks=[pytest.mark.xfail]),
-            pytest.param("MESHPY", marks=[pytest.mark.xfail]),
-            pytest.param("MESHYAML", marks=[pytest.mark.xfail]),
-            pytest.param("PCD", marks=[pytest.mark.xfail]),
-            pytest.param("PLY", marks=[pytest.mark.xfail]),
-            pytest.param("PLY", marks=[pytest.mark.xfail]),
-            pytest.param("TETGEN_FEM", marks=[pytest.mark.xfail]),
-            pytest.param("UNV", marks=[pytest.mark.xfail]),
-            pytest.param("VTK", marks=[pytest.mark.xfail]),
-            pytest.param("VTU", marks=[pytest.mark.xfail]),
-            pytest.param("YAML", marks=[pytest.mark.xfail]),
-            pytest.param("Z88_FEM_MESH", marks=[pytest.mark.xfail]),
-            pytest.param("Z88_FEM_MESH_2", marks=[pytest.mark.xfail]),
-            # No file created probably same problem as above block
-            pytest.param("AUTOCAD", marks=[pytest.mark.xfail]),
-            pytest.param("DAE", marks=[pytest.mark.xfail]),
-            pytest.param("SVG_FLAT", marks=[pytest.mark.xfail]),
-            pytest.param("STEP_ZIP", marks=[pytest.mark.xfail]),
-            pytest.param("SVG", marks=[pytest.mark.xfail]),
-            # More FreeCAD than we import, fails differently on each import
-            pytest.param("WEBGL", marks=[pytest.mark.xfail]),
+            # # Part.Feature has no compatible object type, find compatible object type
+            # pytest.param("ASC", marks=[pytest.mark.xfail]),
+            # pytest.param("BDF", marks=[pytest.mark.xfail]),
+            # pytest.param("DAT", marks=[pytest.mark.xfail]),
+            # pytest.param("FENICS_FEM", marks=[pytest.mark.xfail]),
+            # pytest.param("FENICS_FEM_XML", marks=[pytest.mark.xfail]),
+            # pytest.param("INP", marks=[pytest.mark.xfail]),
+            # pytest.param("MED", marks=[pytest.mark.xfail]),
+            # pytest.param("MESHJSON", marks=[pytest.mark.xfail]),
+            # pytest.param("MESHPY", marks=[pytest.mark.xfail]),
+            # pytest.param("MESHYAML", marks=[pytest.mark.xfail]),
+            # pytest.param("PCD", marks=[pytest.mark.xfail]),
+            # pytest.param("PLY", marks=[pytest.mark.xfail]),
+            # pytest.param("TETGEN_FEM", marks=[pytest.mark.xfail]),
+            # pytest.param("UNV", marks=[pytest.mark.xfail]),
+            # pytest.param("VTK", marks=[pytest.mark.xfail]),
+            # pytest.param("VTU", marks=[pytest.mark.xfail]),
+            # pytest.param("YAML", marks=[pytest.mark.xfail]),
+            # pytest.param("Z88_FEM_MESH", marks=[pytest.mark.xfail]),
+            # pytest.param("Z88_FEM_MESH_2", marks=[pytest.mark.xfail]),
+            # # No file created probably same problem as above block
+            # pytest.param("AUTOCAD", marks=[pytest.mark.xfail]),
+            # pytest.param("DAE", marks=[pytest.mark.xfail]),
+            # pytest.param("SVG_FLAT", marks=[pytest.mark.xfail]),
+            # pytest.param("STEP_ZIP", marks=[pytest.mark.xfail]),
+            # pytest.param("SVG", marks=[pytest.mark.xfail]),
+            # # More FreeCAD than we import, fails differently on each import
+            # pytest.param("WEBGL", marks=[pytest.mark.xfail]),
         ),
     )
     def test_exporter_function_exists_and_creates_a_file(self, name, tmp_path):
