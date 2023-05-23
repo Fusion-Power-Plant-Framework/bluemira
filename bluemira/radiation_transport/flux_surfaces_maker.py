@@ -123,36 +123,31 @@ class FluxSurfaceMaker:
         """
         Get x_mp array of flux surface values.
         """
-        x_mp = np.array([fs.x_start for fs in flux_surfaces])
-        return x_mp
+        return np.array([fs.x_start for fs in flux_surfaces])
 
     def _get_array_z_mp(flux_surfaces):
         """
         Get z_mp array of flux surface values.
         """
-        z_mp = np.array([fs.z_start for fs in flux_surfaces])
-        return z_mp
+        return np.array([fs.z_start for fs in flux_surfaces])
     
     def _get_array_x_fw(flux_surfaces):
         """
         Get x_fw array of flux surface values.
         """
-        x_fw = np.array([fs.x_end for fs in flux_surfaces])
-        return x_fw
+        return np.array([fs.x_end for fs in flux_surfaces])
 
     def _get_array_z_fw(flux_surfaces):
         """
         Get z_fw array of flux surface values.
         """
-        z_fw = np.array([fs.z_end for fs in flux_surfaces])
-        return z_fw
+        return np.array([fs.z_end for fs in flux_surfaces])
     
     def _get_array_alpha(flux_surfaces):
         """
         Get alpha angle array of flux surface values.
         """
-        alpha = np.array([fs.alpha for fs in flux_surfaces])
-        return alpha
+        return np.array([fs.alpha for fs in flux_surfaces])
     
     def _get_sep_out_intersection(self, outboard=True):
         """
@@ -207,11 +202,7 @@ class FluxSurfaceMaker:
         self.flux_surfaces_ob_lfs = []
         self.flux_surfaces_ob_hfs = []
 
-        start = self.x_sep_omp + self.dx_mp
-        stop = x_out_omp - EPS
-        step = ((x_out_omp - EPS - (self.x_sep_omp + self.dx_mp)) // self.dx_mp).astype(int)
-        range = np.linspace(start, stop, step)
-        for x in range:
+        for x in np.arange(self.x_sep_omp + self.dx_mp, x_out_omp - EPS, self.dx_mp):
             lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
             self.flux_surfaces_ob_lfs.append(lfs)
             self.flux_surfaces_ob_hfs.append(hfs)
@@ -225,11 +216,7 @@ class FluxSurfaceMaker:
         self.flux_surfaces_ib_lfs = []
         self.flux_surfaces_ib_hfs = []
 
-        start = self.x_sep_imp - self.dx_mp
-        stop = x_out_imp + EPS
-        step = (((self.x_sep_imp - self.dx_mp) - (x_out_imp + EPS)) // self.dx_mp).astype(int)
-        range = np.linspace(start, stop, step)
-        for x in range:
+        for x in np.arange(self.x_sep_imp - self.dx_mp, x_out_imp + EPS, -self.dx_mp):
             lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
             self.flux_surfaces_ib_lfs.append(lfs)
             self.flux_surfaces_ib_hfs.append(hfs)    
