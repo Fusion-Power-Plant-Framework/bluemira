@@ -1999,7 +1999,8 @@ def collect_verts_faces(
 
         if v != []:
             verts.append(np.array(v))
-            faces.append(np.array(f) + voffset)
+            if f != []:
+                faces.append(np.array(f) + voffset)
             voffset += len(v)
 
     if len(solid.Faces) > 0:
