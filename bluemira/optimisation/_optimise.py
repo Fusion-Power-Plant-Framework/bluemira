@@ -23,11 +23,12 @@
 from typing import Any, Iterable, Mapping, Optional, Tuple, Union
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._typing import (
+from bluemira.optimisation.typing import (
     ConstraintT,
     ObjectiveCallable,
     OptimiserCallable,
@@ -43,7 +44,7 @@ def optimise(
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
-    bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
+    bounds: Optional[Tuple[npt.ArrayLike, npt.ArrayLike]] = None,
     eq_constraints: Iterable[ConstraintT] = (),
     ineq_constraints: Iterable[ConstraintT] = (),
     keep_history: bool = False,
@@ -85,6 +86,10 @@ def optimise(
     bounds:
         The upper and lower bounds for the optimisation parameters.
         The first array being the lower bounds, the second the upper.
+        This can also be ``None``, in which case the bounds are
+        ``(-inf, inf)`` for each optimisation parameter. You can also
+        specify scalars for either the upper or lower bounds or both,
+        and those bound will be applied to every optimisation parameter.
     eq_constraints:
         The equality constraints for the optimiser.
         A dict with keys:
@@ -150,6 +155,7 @@ def optimise(
 
     if opt_conditions is None:
         opt_conditions = {"max_eval": 2000}
+    bounds = _process_bounds(bounds, dimensions)
 
     optimiser = _make_optimiser(
         f_objective,
@@ -196,3 +202,16 @@ def _make_optimiser(
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
     return opt
+
+
+def _process_bounds(
+    bounds: Union[Tuple[npt.ArrayLike, npt.ArrayLike], None], dims: int
+) -> Tuple[np.ndarray, np.ndarray]:
+    """Handle bounds converting ``None`` to +/-inf and expanding scalar bounds."""
+    if bounds is None:
+        return (np.full(dims, -np.inf), np.full(dims, np.inf))
+    bounds = tuple(bounds)
+    if len(bounds) != 2:
+        raise ValueError(f"Bounds must have exactly 2 elements, found '{len(bounds)}'")
+    new_bounds = [np.full(dims, b) if np.isscalar(b) else np.array(b) for b in bounds]
+    return new_bounds[0], new_bounds[1]
