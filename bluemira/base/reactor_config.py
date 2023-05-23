@@ -22,7 +22,7 @@ class ConfigParams:
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
 _PARAMETERS_KEY = "params"
-_FILEPATH_PREFIX = "$"
+_FILEPATH_PREFIX = "$path:"
 
 
 class ReactorConfig:
@@ -39,9 +39,6 @@ class ReactorConfig:
         The path to the config JSON file or a dict of the data.
     global_params_type:
         The ParameterFrame type for the global params.
-    global_params_path:
-        A path to a JSON file
-        holding the global params or a dict of the params.
     warn_on_duplicate_keys:
         Print a warning when duplicate keys are found,
         whose value will be overwritten.
@@ -100,10 +97,13 @@ class ReactorConfig:
         self.warn_on_empty_local_params = warn_on_empty_local_params
         self.warn_on_empty_config = warn_on_empty_config
 
-        self._config_path = config_path
-        self.config_data = self._read_or_return(config_path)
+        config_data = self._read_or_return(config_path)
+        if isinstance(config_path, str):
+            self._expand_paths_in_dict(config_data, Path(config_path).parent)
+
+        self.config_data = config_data
         self.global_params = make_parameter_frame(
-            self._extract_file_data_if_needed(self.config_data.get(_PARAMETERS_KEY, {})),
+            self.config_data.get(_PARAMETERS_KEY, {}),
             global_params_type,
         )
 
@@ -199,8 +199,7 @@ class ReactorConfig:
             return ReactorConfig._read_json_file(dict_or_str_path)
         elif isinstance(dict_or_str_path, dict):
             return dict_or_str_path
-        else:
-            raise ReactorConfigError("Invalid config_path")
+        raise ReactorConfigError("Invalid config_path")
 
     @staticmethod
     def _read_json_file(path: str) -> dict:
@@ -227,23 +226,34 @@ class ReactorConfig:
             if not isinstance(a, str):
                 raise ReactorConfigError("args must be strings")
 
-    def _extract_file_data_if_needed(self, value: Any) -> Union[Any, dict]:
+    def _expand_paths_in_dict(self, d: Dict[str, Any], rel_path: Path):
+        """
+        Expand all file paths in the dict
+        by replacing their values with the json file contents.
+
+        This mutates the passed in dict.
+        """
+        for k in d:
+            d[k], rel_path_from = self._extract_and_expand_file_data_if_needed(
+                d[k], rel_path
+            )
+            if isinstance(d[k], dict):
+                self._expand_paths_in_dict(d[k], rel_path_from)
+
+    def _extract_and_expand_file_data_if_needed(
+        self, value: Any, rel_path: Path
+    ) -> Tuple[Union[Any, dict], str]:
         if not isinstance(value, str):
-            return value
+            return value, rel_path
         if not value.startswith(_FILEPATH_PREFIX):
-            return value
+            return value, rel_path
 
         # remove _FILEPATH_PREFIX
         f_path = value[len(_FILEPATH_PREFIX) :]
 
         # check if rel path
         if not f_path.startswith("/"):
-            if not isinstance(self._config_path, str):
-                raise ReactorConfigError(
-                    "Can only use relative paths with a path config"
-                )
-            # handles removing the first . and the /
-            f_path = Path(self._config_path).parent / f_path
+            f_path = rel_path / f_path
         else:
             f_path = Path(f_path)
 
@@ -252,8 +262,7 @@ class ReactorConfig:
             raise FileNotFoundError(f"Cannot find file {f_path}")
 
         f_data = self._read_json_file(f_path.as_posix())
-
-        return f_data
+        return f_data, f_path.parent
 
     def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
         extracted = {}
@@ -266,15 +275,11 @@ class ReactorConfig:
             current_layer = current_layer.get(current_arg_key, {})
             next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
 
-            current_layer = self._extract_file_data_if_needed(current_layer)
-
             to_extract = current_layer
             if not is_config:
                 # if doing a params extraction,
                 # get the values from the _PARAMETERS_KEY
                 to_extract = current_layer.get(_PARAMETERS_KEY, {})
-                # could be a filepath
-                to_extract = self._extract_file_data_if_needed(to_extract)
 
             if not isinstance(to_extract, dict):
                 raise ReactorConfigError(

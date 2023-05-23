@@ -217,9 +217,6 @@ class TestReactorConfigClass:
             "extra_global": {"value": 1, "unit": "s"},
         }
         reactor_config = ReactorConfig(nested_params_config_path.as_posix(), EmptyFrame)
-        assert reactor_config.config_data == {
-            "Tester": {"params": "$./reactor_params.global.json"}
-        }
         pf = make_parameter_frame(reactor_config.params_for("Tester"), TestGlobalParams)
         assert pf == TestGlobalParams.from_dict(out_dict)
 

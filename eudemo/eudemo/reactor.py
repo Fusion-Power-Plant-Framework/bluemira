@@ -229,10 +229,7 @@ def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShiel
 if __name__ == "__main__":
     set_log_level("INFO")
     reactor_config = ReactorConfig(
-        BUILD_CONFIG_FILE_PATH,
-        EUDEMOReactorParams,
-        warn_on_empty_config=False,
-        warn_on_empty_local_params=False,
+        BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams, warn_on_empty_config=False
     )
     reactor = EUDEMO(
         "EUDEMO",

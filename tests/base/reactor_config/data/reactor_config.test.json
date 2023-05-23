@@ -1,5 +1,5 @@
 {
-  "params": "$./reactor_params.global.json",
+  "params": "$path:reactor_params.global.json",
   "comp A": {
     "params": {
       "height": { "value": 18, "unit": "cm" },
