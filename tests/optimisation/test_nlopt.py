@@ -104,6 +104,14 @@ class TestNloptOptimiser:
         with pytest.raises(OptimisationConditionsError):
             NloptOptimiser("SLSQP", 5, no_op)
 
+    def test_warning_raised_if_max_eval_is_float(self, caplog):
+        NloptOptimiser("SLSQP", 5, no_op, opt_conditions={"ftol_abs": 1, "max_eval": 5})
+        assert len(caplog.records) == 0
+        NloptOptimiser(
+            "SLSQP", 5, no_op, opt_conditions={"ftol_abs": 1, "max_eval": 1e6}
+        )
+        assert len(caplog.records) == 1
+
     @pytest.mark.parametrize(
         "string, enum_value, nlopt_enum",
         [
