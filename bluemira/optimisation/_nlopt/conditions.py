@@ -42,6 +42,9 @@ class NLOptConditions:
             raise OptimisationConditionsError(
                 "Must specify at least one stopping condition for the optimiser."
             )
+        if self.max_eval is not None and isinstance(self.max_eval, float):
+            bluemira_warn("optimisation: max_eval must be an integer, forcing type.")
+            self.max_eval = int(self.max_eval)
 
     def _no_stopping_condition_set(self) -> bool:
         return all(
