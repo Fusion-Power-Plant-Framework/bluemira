@@ -174,4 +174,5 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
 # ISRES probably won't do so well here on average.
 #
 # It's usually wise to set a max_eval termination condition when doing optimisations,
-# otherwise they can take a very long time... and may never converge.
+# otherwise they can take a very long time... and may never converge. A default of
+# max_eval = 2000 is set for you, but you can easily override it.
