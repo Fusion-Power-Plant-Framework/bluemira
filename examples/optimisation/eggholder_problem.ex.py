@@ -60,6 +60,7 @@ Constrained Rosenbrock Optimisation Problem
 # %%
 import time
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.optimisation import optimise
@@ -87,8 +88,9 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
         algorithm=algorithm,
         opt_conditions={"ftol_rel": 1e-12, "ftol_abs": 1e-12, "max_eval": 10000},
         bounds=([-512, -512], [512, 512]),
-        keep_history=False,
+        keep_history=True,
     )
+    results[algorithm] = result
     t2 = time.time()
     print(f"{algorithm}: {result}, time={t2-t1:.3f} seconds")
 
@@ -97,3 +99,31 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
 # minimum. ISRES is a stochastic global optimisation algorithm, and keeps looking for
 # longer, finding a much better minimum, but caps out at the maximum number of
 # evaluations (usually).
+
+
+# %%
+# %matplotlib inline
+
+n = 500
+x = y = np.linspace(-512, 512, n)
+xx, yy = np.meshgrid(x, y, indexing="ij")
+zz = np.zeros((n, n))
+for i, xi in enumerate(x):
+    for j, yi in enumerate(y):
+        zz[i, j] = f_eggholder([xi, yi])
+
+fig = plt.figure()
+ax = fig.add_subplot(projection="3d")
+ax.plot_surface(xx, yy, zz, cmap="viridis", linewidth=0.0)
+
+for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
+    z = f_eggholder(results[algorithm].x)
+    ax.plot(*results[algorithm].x, zs=z, marker="o", color="red")
+    ax.text(*results[algorithm].x, z, algorithm)
+
+ax.set_title("Eggholder function")
+ax.set_xlabel("\n\nx")
+ax.set_ylabel("\n\ny")
+ax.set_zlabel("\n\nz")
+ax.view_init(elev=50, azim=-45)
+plt.show()
