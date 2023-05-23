@@ -53,6 +53,7 @@ from bluemira.geometry.tools import (
     slice_shape,
     sweep_shape,
 )
+from bluemira.materials.material import SerialisedMaterial
 
 __all__ = [
     "apply_component_display_options",
@@ -360,7 +361,9 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 
 
 def build_sectioned_xy(
-    face: BluemiraFace, plot_colour: Tuple[float]
+    face: BluemiraFace,
+    plot_colour: Tuple[float],
+    material: Optional[SerialisedMaterial] = None,
 ) -> List[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
@@ -371,6 +374,8 @@ def build_sectioned_xy(
         xz face to build xy component
     plot_colour:
         colour tuple for component
+    material:
+        Optional material to apply to physical component
 
     Returns
     -------
@@ -387,7 +392,7 @@ def build_sectioned_xy(
         ["outboard", r_ob_in, r_ob_out],
     ]:
         board = make_circular_xy_ring(r_in, r_out)
-        section = PhysicalComponent(name, board)
+        section = PhysicalComponent(name, board, material=material)
         apply_component_display_options(section, color=plot_colour)
         sections.append(section)
 
@@ -401,6 +406,7 @@ def build_sectioned_xyz(
     plot_colour: Tuple[float],
     degree: float = 360,
     enable_sectioning: bool = True,
+    material: Optional[SerialisedMaterial] = None,
 ) -> List[PhysicalComponent]:
     """
     Build the x-y-z components of sectioned component
@@ -419,6 +425,8 @@ def build_sectioned_xyz(
         angle to sweep through
     enable_sectioning:
         Switch on/off sectioning (#1319 Topology issue)
+    material:
+        Optional material to apply to physical component
 
     Returns
     -------
@@ -436,19 +444,36 @@ def build_sectioned_xyz(
     """
     sector_degree, n_sectors = get_n_sectors(n_TF, degree)
 
-    shape = revolve_shape(
-        face,
-        base=(0, 0, 0),
-        direction=(0, 0, 1),
-        degree=sector_degree if enable_sectioning else min(359, degree),
-    )
-    body = PhysicalComponent(name, shape)
-    apply_component_display_options(body, color=plot_colour)
+    if isinstance(face, BluemiraFace):
+        face = [face]
+    if isinstance(name, str):
+        name = [name]
+    if isinstance(plot_colour, Tuple):
+        plot_colour = [plot_colour]
+    if not isinstance(material, list):
+        material = [material]
+
+    if not (len(face) == len(name) == len(plot_colour) == len(material)):
+        raise ValueError(
+            "Lengths of the face, name, plot_colour, and material lists are not equal."
+        )
+
+    bodies = []
+    for fac, nam, color, mat in zip(face, name, plot_colour, material):
+        shape = revolve_shape(
+            fac,
+            base=(0, 0, 0),
+            direction=(0, 0, 1),
+            degree=sector_degree if enable_sectioning else min(359, degree),
+        )
+        body = PhysicalComponent(nam, shape, material=mat)
+        apply_component_display_options(body, color=color)
+        bodies.append(body)
 
     # this is currently broken in some situations
     # because of #1319 and related Topological naming issues
     return (
-        circular_pattern_component(body, n_sectors, degree=sector_degree * n_sectors)
+        circular_pattern_component(bodies, n_sectors, degree=sector_degree * n_sectors)
         if enable_sectioning
-        else [body]
+        else bodies
     )

@@ -54,4 +54,4 @@ class TestVacuumVesselBuilder:
 
         xyz = vacuum_vessel.get_component("xyz")
         assert xyz
-        assert len(xyz.leaves) == 1
+        assert len(xyz.leaves) == 2

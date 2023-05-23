@@ -38,6 +38,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import _offset_wire_discretised
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.materials.cache import Void
 
 
 class VacuumVessel(ComponentManager):
@@ -78,6 +79,7 @@ class VacuumVesselBuilder(Builder):
 
     VV = "VV"
     BODY = "Body"
+    VOID = "Vessel voidspace"
     param_cls: Type[VacuumVesselBuilderParams] = VacuumVesselBuilderParams
 
     def __init__(
@@ -93,13 +95,14 @@ class VacuumVesselBuilder(Builder):
         """
         Build the vacuum vessel component.
         """
-        xz_vv = self.build_xz()
+        xz_vv, xz_vacuum = self.build_xz()
         vv_face = xz_vv.get_component_properties("shape")
+        vacuum_face = xz_vacuum.get_component_properties("shape")
 
         return self.component_tree(
-            xz=[xz_vv],
+            xz=[xz_vv, xz_vacuum],
             xy=self.build_xy(vv_face),
-            xyz=self.build_xyz(vv_face, degree=0),
+            xyz=self.build_xyz(vv_face, vacuum_face, degree=0),
         )
 
     def build_xz(
@@ -127,9 +130,13 @@ class VacuumVesselBuilder(Builder):
         face = BluemiraFace([outer_vv, inner_vv])
 
         body = PhysicalComponent(self.BODY, face)
+        vacuum = PhysicalComponent(
+            self.VOID, BluemiraFace(inner_vv), material=Void("vacuum")
+        )
         apply_component_display_options(body, color=BLUE_PALETTE[self.VV][0])
+        apply_component_display_options(vacuum, color=(0, 0, 0))
 
-        return body
+        return body, vacuum
 
     def build_xy(self, vv_face: BluemiraFace) -> List[PhysicalComponent]:
         """
@@ -138,15 +145,16 @@ class VacuumVesselBuilder(Builder):
         return build_sectioned_xy(vv_face, BLUE_PALETTE[self.VV][0])
 
     def build_xyz(
-        self, vv_face: BluemiraFace, degree: float = 360.0
+        self, vv_face: BluemiraFace, vacuum_face: BluemiraFace, degree: float = 360.0
     ) -> PhysicalComponent:
         """
         Build the x-y-z components of the vacuum vessel.
         """
         return build_sectioned_xyz(
-            vv_face,
-            self.BODY,
+            [vv_face, vacuum_face],
+            [self.BODY, self.VOID],
             self.params.n_TF.value,
-            BLUE_PALETTE[self.VV][0],
+            [BLUE_PALETTE[self.VV][0], (0, 0, 0)],
             degree,
+            material=[None, Void("vacuum")],
         )
