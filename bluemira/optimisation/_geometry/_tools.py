@@ -26,18 +26,18 @@ import numpy as np
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation._geometry._typing import (
+from bluemira.optimisation._geometry.parameterisations import INEQ_CONSTRAINT_REGISTRY
+from bluemira.optimisation._geometry.typing import (
     GeomConstraintT,
     GeomOptimiserCallable,
     GeomOptimiserObjective,
 )
-from bluemira.optimisation._geometry.parameterisations import INEQ_CONSTRAINT_REGISTRY
-from bluemira.optimisation._typing import (
+from bluemira.optimisation.error import GeometryOptimisationError
+from bluemira.optimisation.typing import (
     ConstraintT,
     ObjectiveCallable,
     OptimiserCallable,
 )
-from bluemira.optimisation.error import GeometryOptimisationError
 
 _DEFAULT_ZONE_DISCR = 100  # points
 _DEFAULT_ZONE_TOL = 1e-3

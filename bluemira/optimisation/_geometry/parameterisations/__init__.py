@@ -27,12 +27,12 @@ from bluemira.geometry.parameterisations import (
     SextupleArc,
     TripleArc,
 )
-from bluemira.optimisation._geometry._typing import GeomConstraintT
 from bluemira.optimisation._geometry.parameterisations import (
     princeton_d,
     sextuple_arc,
     triple_arc,
 )
+from bluemira.optimisation._geometry.typing import GeomConstraintT
 
 INEQ_CONSTRAINT_REGISTRY: Dict[Type[GeometryParameterisation], List[GeomConstraintT]] = {
     PrincetonD: [
