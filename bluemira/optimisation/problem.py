@@ -92,10 +92,12 @@ class OptimisationProblem(abc.ABC):
             keep_history=keep_history,
         )
 
-    __T1 = TypeVar("__T1", bound=Callable[[Any], Any])
-    __T2 = TypeVar("__T2")
+    __MethodT = TypeVar("__MethodT", bound=Callable[..., Any])
+    __AnyT = TypeVar("__AnyT")
 
-    def __overridden_or_default(self, f: __T1, default: __T2) -> Union[__T1, __T2]:
+    def __overridden_or_default(
+        self, f: __MethodT, default: __AnyT
+    ) -> Union[__MethodT, __AnyT]:
         """
         If the given object is not a member of this class return a default.
 
@@ -109,7 +111,7 @@ class OptimisationProblem(abc.ABC):
             return f
         return default
 
-    def __is_base_class_method(self, f: __T1) -> bool:
+    def __is_base_class_method(self, f: __MethodT) -> bool:
         """
         Determine if the given method is a member of this base class or not.
 
