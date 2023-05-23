@@ -23,6 +23,7 @@ import abc
 from typing import Any, Callable, List, Mapping, Optional, Tuple, TypeVar, Union
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._optimise import OptimiserResult, optimise
@@ -61,9 +62,9 @@ class OptimisationProblem(abc.ABC):
         """The inequality constraints on the optimisation."""
         return []
 
-    def bounds(self) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+    def bounds(self) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
         """The lower and upper bounds of the optimisation parameters."""
-        return None
+        return -np.inf, np.inf
 
     def optimise(
         self,
