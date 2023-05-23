@@ -1049,7 +1049,7 @@ def save_as_STP(
 def save_cad(
     components: Union[Component, Iterable[Component]],
     filename: str,
-    formatt: str = "stp",
+    formatt: Union[str, cadapi.CADFileType] = "stp",
     **kwargs,
 ):
     """
