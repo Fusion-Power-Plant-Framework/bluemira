@@ -33,12 +33,12 @@ from bluemira.optimisation.typing import ConstraintT
 class OptimisationProblemBase:
     """Common base class for OptimisationProblem classes."""
 
-    __T1 = TypeVar("__T1", bound=Callable[[Any], Any])
-    __T2 = TypeVar("__T2")
+    __MethodT = TypeVar("__MethodT", bound=Callable[..., Any])
+    __AnyT = TypeVar("__AnyT")
 
     def _overridden_or_default(
-        self, f: __T1, cls: Type[Any], default: __T2
-    ) -> Union[__T1, __T2]:
+        self, f: __MethodT, cls: Type[Any], default: __AnyT
+    ) -> Union[__MethodT, __AnyT]:
         """
         If the given object is not a member of this class return a default.
 
@@ -48,13 +48,13 @@ class OptimisationProblemBase:
         interface, but we want to be able to tell if it's been overridden so we can
         use an approximate gradient if it has not been.
         """
-        if self._is_class_method(f, cls):
+        if self.__is_method(f, cls):
             return f
         return default
 
-    def _is_class_method(self, f: __T1, cls: Type[Any]) -> bool:
+    def __is_method(self, f: __MethodT, cls: Type[Any]) -> bool:
         """
-        Determine if the given method is a member of ``cls`` or not.
+        Determine if the given method is a member of this base class or not.
 
         Note that ``f`` must be a bound method, i.e., it needs the
         ``__func__`` dunder method.
