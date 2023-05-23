@@ -37,7 +37,9 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.radiation_profile import (
     RadiationSolver, 
     linear_interpolator, 
-    interpolated_field_values, 
+    interpolated_field_values,
+)
+from bluemira.radiation_transport.radiation_tools import (
     filtering_in_or_out, 
     pfr_filter,
     grid_interpolator,
