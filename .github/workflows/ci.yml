@@ -97,8 +97,8 @@ jobs:
         flake8 --count
         black --check .
         if [ $COPYRIGHT ]; then
-           git fetch origin
-           pre-commit run update_copyright --from-ref origin/$GITHUB_BASE_REF --to-ref $GITHUB_HEAD_REF
+           git fetch origin $GITHUB_BASE_REF $GITHUB_HEAD_REF
+           pre-commit run update_copyright --from-ref origin/$GITHUB_BASE_REF --to-ref origin/$GITHUB_HEAD_REF
         fi
 
     - name: Build Documentation bluemira
