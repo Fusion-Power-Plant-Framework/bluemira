@@ -19,15 +19,22 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import os
+
 import numpy as np
+import pytest
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.harmonics import (
     coil_harmonic_amplitude_matrix,
+    coils_outside_sphere_vacuum_psi,
     collocation_points,
+    get_psi_harmonic_amplitudes,
     harmonic_amplitude_marix,
     lcfs_fit_metric,
+    spherical_harmonic_approximation,
 )
 from bluemira.geometry.coordinates import Coordinates, in_polygon
 
@@ -131,3 +138,107 @@ def test_collocation_points():
 
     for x, z in zip(colloc4.x, colloc4.z):
         assert in_polygon(x, z, plasma_boundary.xz.T, include_edges=True)
+
+
+def test_coils_outside_sphere_vacuum_psi():
+    path = get_bluemira_path("equilibria/test_data", subfolder="tests")
+    fn = os.sep.join([path, "SH_test_file.json"])
+    eq = Equilibrium.from_eqdsk(fn)
+
+    test_v_psi, test_p_psi, test_coilset = coils_outside_sphere_vacuum_psi(eq)
+
+    assert len(test_coilset.get_control_coils().x) == 16
+
+    non_cc_diff = np.array([eq.coilset.psi(eq.grid.x, eq.grid.z) == test_v_psi])
+    test_total = np.array(
+        [test_coilset.psi(eq.grid.x, eq.grid.z) - (test_v_psi + test_p_psi)]
+    )
+
+    assert not non_cc_diff.all()
+    assert test_total.all()
+
+
+def test_get_psi_harmonic_amplitudes():
+    path = get_bluemira_path("equilibria/test_data", subfolder="tests")
+    fn = os.sep.join([path, "SH_test_file.json"])
+    eq = Equilibrium.from_eqdsk(fn)
+
+    test_colocation = collocation_points(
+        n_points=18, plasma_boundary=eq.get_LCFS(), point_type="arc"
+    )
+    test_v_psi, _, _ = coils_outside_sphere_vacuum_psi(eq)
+    test_sh_amps = get_psi_harmonic_amplitudes(test_v_psi, eq.grid, test_colocation, 1.2)
+
+    sh_amps = np.array(
+        [
+            6.27021137e-03,
+            1.13305430e-01,
+            -7.10644651e-04,
+            -1.21121072e-02,
+            2.26606652e-04,
+            8.62564002e-03,
+            -1.09407173e-03,
+            1.40751192e-02,
+            -9.94184734e-04,
+            1.18311187e-02,
+            -7.55837162e-04,
+            7.67252084e-03,
+            -3.87118182e-04,
+            2.66066774e-03,
+            -1.87114805e-04,
+            1.09257867e-03,
+            -5.05761500e-05,
+        ]
+    )
+
+    assert test_sh_amps == pytest.approx(sh_amps)
+
+
+def test_spherical_harmonic_approximation():
+    path = get_bluemira_path("equilibria/test_data", subfolder="tests")
+    fn = os.sep.join([path, "SH_test_file.json"])
+    eq = Equilibrium.from_eqdsk(fn)
+
+    (
+        test_sh_coilset,
+        test_r_t,
+        test_harmonic_amps,
+        test_degree,
+        test_fit_metric,
+        _,
+    ) = spherical_harmonic_approximation(
+        eq,
+        n_points=18,
+        point_type="arc",
+        acceptable_fit_metric=0.3,
+    )
+
+    sh_coilset_current = np.array(
+        [
+            7629.10582467,
+            80572.92343772,
+            72402.30872331,
+            64228.69554408,
+            21485.75482944,
+            -16683.29269502,
+            -67147.66998197,
+            -169607.44792089,
+            13184.10256721,
+            12076.3164052,
+            80572.92343772,
+            72402.30872331,
+            64228.69554408,
+            21485.75482944,
+            -13554.03543257,
+            -67147.66998197,
+            -169607.44792089,
+            13184.10256721,
+        ]
+    )
+    harmonic_amps = np.array([0.00627021, 0.12891703])
+
+    assert test_sh_coilset.current == pytest.approx(sh_coilset_current)
+    assert test_r_t == pytest.approx(1.3653400)
+    assert test_harmonic_amps == pytest.approx(harmonic_amps)
+    assert test_degree == 2
+    assert test_fit_metric == pytest.approx(0.03, abs=0.005)
