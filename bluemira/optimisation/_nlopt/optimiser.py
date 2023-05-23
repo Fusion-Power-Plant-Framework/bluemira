@@ -34,8 +34,8 @@ from bluemira.optimisation._nlopt.functions import (
     ObjectiveFunction,
 )
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._typing import ObjectiveCallable, OptimiserCallable
 from bluemira.optimisation.error import OptimisationError, OptimisationParametersError
+from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
 
 _NLOPT_ALG_MAPPING = {
     Algorithm.SLSQP: nlopt.LD_SLSQP,
@@ -143,7 +143,7 @@ class NloptOptimiser(Optimiser):
         return self._opt_conditions.to_dict()
 
     @property
-    def opt_parameters(self) -> Mapping:
+    def opt_parameters(self) -> Mapping[str, Union[int, float]]:
         """Return the optimiser algorithms's parameters."""
         return self._opt_parameters
 
