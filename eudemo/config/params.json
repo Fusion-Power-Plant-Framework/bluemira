@@ -308,7 +308,7 @@
     "value": 0.3,
     "unit": "meter",
     "source": "Input",
-    "long_name": "Gap between Cyrostat and radition shield"
+    "long_name": "Gap between Cyrostat and radiation shield"
   },
   "g_cr_ts": {
     "value": 0.3,
@@ -574,7 +574,7 @@
     "value": 0.2,
     "unit": "meter",
     "source": "Input",
-    "long_name": "Gap betweeen outer inter-coil casing and TF edge"
+    "long_name": "Gap between outer inter-coil casing and TF edge"
   },
   "min_OIS_length": {
     "value": 1.0,

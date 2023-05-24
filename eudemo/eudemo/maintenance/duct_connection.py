@@ -86,7 +86,7 @@ class UpperPortDuctBuilder(Builder):
         return comp
 
     def build_xy(self, face: BluemiraFace) -> PhysicalComponent:
-        """Build upport port xy face"""
+        """Build upper port xy face"""
         comp = PhysicalComponent(self.name, face)
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         return comp

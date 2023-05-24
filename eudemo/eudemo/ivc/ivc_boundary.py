@@ -38,7 +38,7 @@ class IVCBoundaryParams(ParameterFrame):
     tk_bb_ib: Parameter[float]  # Inboard blanket thickness
     tk_bb_ob: Parameter[float]  # Outboard blanket thickness
     ib_offset_angle: Parameter[float]  # 45 degrees
-    ob_offset_angle: Parameter[float]  # 175 degress
+    ob_offset_angle: Parameter[float]  # 175 degrees
 
 
 class IVCBoundaryDesigner(Designer[BluemiraWire]):
