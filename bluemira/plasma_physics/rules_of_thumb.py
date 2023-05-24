@@ -76,3 +76,63 @@ def estimate_loop_voltage(
     j_0 = 2 * B_t / (MU_0 * q_0 * R_0)
     v_loop = 2 * np.pi * R_0 * j_0 / sigma
     return v_loop
+
+
+def estimate_li(A: float, kappa: float) -> float:
+    """
+    Estimate the normalised plasma internal inductance.
+
+    Parameters
+    ----------
+    A:
+        Last closed flux surface aspect ratio
+    kappa:
+        Last closed flux surface elongation
+
+    Returns
+    -------
+    Normalised plasma internal inductance
+
+    Notes
+    -----
+    Hirshman and Neilson, 1986
+    https://pubs.aip.org/aip/pfl/article/29/3/790/944223/External-inductance-of-an-axisymmetric-plasma
+    """
+    eps = 1 / A
+    sqrt_eps = np.sqrt(eps)
+
+    a = (
+        (1 + 1.81 * sqrt_eps + 2.05 * eps) * np.log(8 * A)
+        - 2.0
+        + 9.25 * sqrt_eps
+        - 1.21 * eps
+    )
+    b = 0.73 * sqrt_eps * (1 + 2 * eps**4 - 6 * eps**5 + 3.7 * eps**6)
+    return a * (1 - eps) / (1 - eps + b * kappa)
+
+
+def estimate_Le(A: float, kappa: float) -> float:
+    """
+    Estimate the plasma external inductance.
+
+    Parameters
+    ----------
+    A:
+        Last closed flux surface aspect ratio
+    kappa:
+        Last closed flux surface elongation
+
+    Returns
+    -------
+    Plasma external inductance
+
+    Notes
+    -----
+    Hirshman and Neilson, 1986
+    https://pubs.aip.org/aip/pfl/article/29/3/790/944223/External-inductance-of-an-axisymmetric-plasma
+    """
+    eps = 1 / A
+
+    c = 1 + 0.98 * eps**2 + 0.49 * eps**4 + 1.47 * eps**6
+    d = 0.25 * eps * (1 + 0.84 * eps - 1.44 * eps**2)
+    return (1 - eps) ** 2 / ((1 - eps) ** 2 * c + d * np.sqrt(kappa))
