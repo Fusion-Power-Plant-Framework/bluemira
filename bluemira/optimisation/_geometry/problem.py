@@ -51,15 +51,32 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """The objective function to minimise."""
 
     def df_objective(self, geom: _GeomT) -> np.ndarray:
-        """The derivative of the objective function."""
+        """
+        The derivative of the objective function.
+
+        If not overridden, an approximation of the derivative is made
+        using the 'central differences' method.
+        This method is ignored if a non-gradient based algorithm is
+        used when calling :meth:`.GeomOptimisationProblem.optimise`.
+        """
         raise NotImplementedError
 
     def eq_constraints(self) -> List[GeomConstraintT]:
-        """List of equality constraints for the optimisation."""
+        """
+        List of equality constraints for the optimisation.
+
+        See :func:`.optimise_geometry` for a description of the form
+        these constraints should take.
+        """
         return []
 
     def ineq_constraints(self) -> List[GeomConstraintT]:
-        """List of inequality constraints for the optimisation."""
+        """
+        List of inequality constraints for the optimisation.
+
+        See :func:`.optimise_geometry` for a description of the form
+        these constraints should take.
+        """
         return []
 
     def keep_out_zones(self) -> List[BluemiraWire]:
@@ -94,48 +111,8 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         Run the geometry optimisation.
 
-        Parameters
-        ----------
-        geom:
-            The geometry to optimise the parameters of. The existing
-            parameterisation is used as the initial guess in the
-            optimisation.
-        algorithm:
-            The optimisation algorithm to use, by default ``Algorithm.SLSQP``.
-        opt_conditions:
-            The stopping conditions for the optimiser. Supported conditions
-            are:
-
-                * ftol_abs: float
-                * ftol_rel: float
-                * xtol_abs: float
-                * xtol_rel: float
-                * max_eval: int
-                * max_time: float
-                * stop_val: float
-
-            (default: {"max_eval": 2000})
-        opt_parameters:
-            The algorithm-specific optimisation parameters.
-        keep_history:
-            Whether or not to record the history of the optimisation
-            parameters at each iteration. Note that this can significantly
-            impact the performance of the optimisation.
-            (default: False)
-        koz_discretisation:
-            The number of points to discretise the keep-out zone(s) over.
-            If this is an int, all keep-out zones will be discretised with
-            the same number of points. If this is an iterable, each i-th
-            keep-out zone is discretised using value in the i-th item.
-            The iterable should have the same number of items as
-            ``keep_out_zones``.
-        kiz_discretisation:
-            The number of points to discretise the keep-in zone(s) over.
-            If this is an int, all keep-in zones will be discretised with
-            the same number of points. If this is an iterable, each i-th
-            keep-in zone is discretised using value in the i-th item.
-            The iterable should have the same number of items as
-            ``keep_in_zones``.
+        See :func:`.optimise_geometry` for a description of the
+        parameters.
 
         Returns
         -------
