@@ -37,20 +37,20 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.equilibria.grid import Grid
 from bluemira.geometry.coordinates import Coordinates, in_polygon
-from cherab.core.math import sample3d
 from matplotlib.collections import LineCollection
-from raysect.core import Point3D, Vector3D, rotate_basis, translate
-from raysect.optical.observer import PowerPipeline0D
-from raysect.optical.observer.nonimaging.pixel import Pixel
-from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
 # CHERAB imports
-from cherab.core.math import AxisymmetricMapper
+from cherab.core.math import AxisymmetricMapper, sample3d
 from cherab.tools.emitters import RadiationFunction
-from raysect.core import translate
+from raysect.core import Point3D, Vector3D, rotate_basis, translate
 from raysect.optical import World
+from raysect.optical.observer import PowerPipeline0D
+from raysect.optical.observer.nonimaging.pixel import Pixel
 from raysect.optical.material import VolumeTransform
 from raysect.primitive import Cylinder
+
+# Scipy import
+from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
 
 SEP_CORRECTOR = 5e-3  # [m] DN: 5e-3, SN: 5e-2
