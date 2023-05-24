@@ -21,7 +21,7 @@
 """Definition of the generic `optimise` function."""
 
 from pprint import pformat
-from typing import Any, Iterable, List, Mapping, Optional, Tuple, Union
+from typing import Any, Callable, Iterable, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -259,9 +259,14 @@ def _check_ineq_constraints(
     x_star: np.ndarray, constraints: List[ConstraintT]
 ) -> List[str]:
     """Check for inequality constraint violations."""
+
+    def condition(c_value, tols) -> np.ndarray:
+        """Condition under which the ineq constraint is violated."""
+        return c_value > tols
+
     warnings = []
     for i, constraint in enumerate(constraints):
-        if diff := _check_constraint(x_star, constraint):
+        if diff := _check_constraint(x_star, constraint, condition):
             indices, c_value, tols = diff
             warnings.append(
                 "\n".join(
@@ -279,9 +284,14 @@ def _check_eq_constraints(
     x_star: np.ndarray, constraints: List[ConstraintT]
 ) -> List[str]:
     """Check for equality constraint violations."""
+
+    def condition(c_value, tols) -> np.ndarray:
+        """Condition under which the eq constraint is violated."""
+        return ~np.isclose(c_value, 0, atol=tols)
+
     warnings = []
     for i, constraint in enumerate(constraints):
-        if diff := _check_constraint(x_star, constraint):
+        if diff := _check_constraint(x_star, constraint, condition):
             indices, c_value, tols = diff
             warnings.append(
                 "\n".join(
@@ -296,13 +306,15 @@ def _check_eq_constraints(
 
 
 def _check_constraint(
-    x_star: np.ndarray, constraint: ConstraintT
+    x_star: np.ndarray,
+    constraint: ConstraintT,
+    condition: Callable[[npt.ArrayLike, npt.ArrayLike], npt.ArrayLike],
 ) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], None]:
     c_value = constraint["f_constraint"](x_star)
     # Deal with scalar constraints
     c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
     tols = np.array(constraint["tolerance"])
-    indices = np.where(abs(c_value) - tols > 0)[0]
+    indices = np.where(condition(c_value, tols))[0]
     if indices.size > 0:
         return (indices, c_value, tols)
     return None

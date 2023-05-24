@@ -244,3 +244,30 @@ class TestOptimise:
 
         assert result.constraints_satisfied is None
         assert bm_warn_mock.call_count == 0
+
+    @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
+    def test_no_warnings_given_constraints_satisfied(self, bm_warn_mock):
+        def f_objective(x):
+            return np.sqrt(x[1])
+
+        def f_ineq_constraint(x):
+            return np.sum(x) - 5
+
+        def f_eq_constraint(x):
+            return abs(x[0] - x[1])
+
+        result = optimise(
+            f_objective,
+            x0=np.array([1, 1]),
+            opt_conditions={"max_eval": 1},
+            eq_constraints=[
+                {"f_constraint": f_eq_constraint, "tolerance": np.array([1e-8])}
+            ],
+            ineq_constraints=[
+                {"f_constraint": f_ineq_constraint, "tolerance": np.array([1e-8])}
+            ],
+            check_constraints=True,
+        )
+
+        assert result.constraints_satisfied is True
+        assert bm_warn_mock.call_count == 0
