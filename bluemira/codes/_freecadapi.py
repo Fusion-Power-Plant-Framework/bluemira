@@ -1325,7 +1325,7 @@ def save_as_STP(
             category=DeprecationWarning,
         )
     else:
-        scale = raw_uc(1, "mm", unit_scale)
+        scale = raw_uc(1, unit_scale, "mm")
 
     if scale != 1:
         # scale the compound. Since the scale function modifies directly the shape,
@@ -1390,7 +1390,7 @@ def save_cad(
     objs = list(_setup_document(shapes, labels))
 
     # Part is always built in mm
-    _scale_obj(objs, scale=raw_uc(1, "mm", unit_scale))
+    _scale_obj(objs, scale=raw_uc(1, unit_scale, "mm"))
 
     # Some exporters need FreeCADGui to be setup before their import,
     # this is achieved in _setup_document
