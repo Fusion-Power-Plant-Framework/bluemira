@@ -20,11 +20,23 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Definition of the generic `optimise` function."""
 
-from typing import Any, Iterable, Mapping, Optional, Tuple, Union
+from pprint import pformat
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
@@ -48,6 +60,7 @@ def optimise(
     eq_constraints: Iterable[ConstraintT] = (),
     ineq_constraints: Iterable[ConstraintT] = (),
     keep_history: bool = False,
+    check_constraints: bool = True,
 ) -> OptimiserResult:
     r"""
     Find the parameters that minimise the given objective function.
@@ -138,6 +151,11 @@ def optimise(
     keep_history:
         Whether to record the history of each step of the optimisation.
         (default: False)
+    check_constraints:
+        Whether to check all constraints have been satisfied at the end
+        of the optimisation, and warn if they have not. Note that, if
+        this is set to False, the result's ``constraints_satisfied``
+        attribute will be set to ``None``.
 
     Returns
     -------
@@ -156,6 +174,10 @@ def optimise(
     if opt_conditions is None:
         opt_conditions = {"max_eval": 2000}
     bounds = _process_bounds(bounds, dimensions)
+    # Convert to lists, as these could be generators, and we may need to
+    # consume them more than once.
+    eq_constraints = list(eq_constraints)
+    ineq_constraints = list(ineq_constraints)
 
     optimiser = _make_optimiser(
         f_objective,
@@ -169,7 +191,33 @@ def optimise(
         ineq_constraints,
         keep_history,
     )
-    return optimiser.optimise(x0)
+    result = optimiser.optimise(x0)
+    if check_constraints:
+        result.constraints_satisfied = validate_constraints(
+            result.x, eq_constraints, ineq_constraints
+        )
+    return result
+
+
+def validate_constraints(
+    x_star: np.ndarray,
+    eq_constraints: List[ConstraintT],
+    ineq_constraints: List[ConstraintT],
+) -> bool:
+    """
+    Check the given parametrisation satisfies the given constraints.
+
+    Additionally, print warnings listing constraints that are not
+    satisfied.
+    """
+    eq_warnings = _check_constraints(x_star, eq_constraints, "equality")
+    ineq_warnings = _check_constraints(x_star, ineq_constraints, "inequality")
+    all_warnings = eq_warnings + ineq_warnings
+    if all_warnings:
+        message = "\n".join(all_warnings)
+        bluemira_warn(f"Some constraints have not been adequately satisfied.\n{message}")
+        return False
+    return True
 
 
 def _make_optimiser(
@@ -215,3 +263,62 @@ def _process_bounds(
         raise ValueError(f"Bounds must have exactly 2 elements, found '{len(bounds)}'")
     new_bounds = [np.full(dims, b) if np.isscalar(b) else np.array(b) for b in bounds]
     return new_bounds[0], new_bounds[1]
+
+
+def _check_constraints(
+    x_star: np.ndarray,
+    constraints: List[ConstraintT],
+    constraint_type: Literal["inequality", "equality"],
+) -> List[str]:
+    """
+    Check if any of the given constraints are violated by the parameterisation.
+
+    Returns a list of formatted warnings. If there are no warnings, there
+    are no violations.
+    """
+
+    def _check_constraint(
+        x_star: np.ndarray,
+        constraint: ConstraintT,
+        condition: Callable[[np.ndarray, np.ndarray], np.ndarray],
+    ) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], None]:
+        """Return the items in the constraint vector that violate the condition."""
+        c_value = constraint["f_constraint"](x_star)
+        # Deal with scalar constraints
+        c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
+        tols = np.array(constraint["tolerance"])
+        indices = np.where(condition(c_value, tols))[0]
+        if indices.size > 0:
+            return (indices, c_value, tols)
+        return None
+
+    condition, comp_str = (
+        (_eq_constraint_condition, "!=")
+        if constraint_type == "equality"
+        else (_ineq_constraint_condition, "!<")
+    )
+
+    warnings = []
+    for i, constraint in enumerate(constraints):
+        if diff := _check_constraint(x_star, constraint, condition):
+            indices, c_value, tols = diff
+            warnings.append(
+                "\n".join(
+                    [
+                        f"{constraint_type} constraint {i} [{j}]: "
+                        f"{pformat(c_value[j])} {comp_str} {pformat(tols[j])}"
+                        for j in indices
+                    ]
+                )
+            )
+    return warnings
+
+
+def _eq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndarray:
+    """Condition under which an equality constraint is violated."""
+    return ~np.isclose(c_value, 0, atol=tols)
+
+
+def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndarray:
+    """Condition under which an inequality constraint is violated."""
+    return c_value > tols
