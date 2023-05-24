@@ -21,7 +21,7 @@
 """Interface for defining a geometry-based optimisation problem."""
 
 import abc
-from typing import Any, Iterable, List, Mapping, Optional, Tuple, TypeVar, Union
+from typing import Any, Iterable, List, Mapping, Optional, TypeVar, Union
 
 import numpy as np
 
@@ -62,12 +62,22 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """List of inequality constraints for the optimisation."""
         return []
 
-    def keep_out_zones(self) -> List[Union[BluemiraWire, Tuple[BluemiraWire, int]]]:
-        """List of geometric keep-out zones."""
+    def keep_out_zones(self) -> List[BluemiraWire]:
+        """
+        List of geometric keep-out zones.
+
+        An iterable of closed wires, defining areas the geometry must
+        not intersect.
+        """
         return []
 
-    def keep_in_zones(self) -> List[Union[BluemiraWire, Tuple[BluemiraWire, int]]]:
-        """List of geometric keep-in zones."""
+    def keep_in_zones(self) -> List[BluemiraWire]:
+        """
+        List of geometric keep-in zones.
+
+        An iterable list of closed wires, defining areas the geometry
+        must wholly lie within.
+        """
         return []
 
     def optimise(
@@ -78,6 +88,8 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,
+        koz_discretisation: Union[int, Iterable[int]] = 100,
+        kiz_discretisation: Union[int, Iterable[int]] = 100,
     ) -> GeomOptimiserResult[_GeomT]:
         """
         Run the geometry optimisation.
@@ -110,13 +122,25 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
             parameters at each iteration. Note that this can significantly
             impact the performance of the optimisation.
             (default: False)
+        koz_discretisation:
+            The number of points to discretise the keep-out zone(s) over.
+            If this is an int, all keep-out zones will be discretised with
+            the same number of points. If this is an iterable, each i-th
+            keep-out zone is discretised using value in the i-th item.
+            The iterable should have the same number of items as
+            ``keep_out_zones``.
+        kiz_discretisation:
+            The number of points to discretise the keep-in zone(s) over.
+            If this is an int, all keep-in zones will be discretised with
+            the same number of points. If this is an iterable, each i-th
+            keep-in zone is discretised using value in the i-th item.
+            The iterable should have the same number of items as
+            ``keep_in_zones``.
 
         Returns
         -------
         The result of the optimisation.
         """
-        koz, koz_discr = self.__split_zones_and_discr(self.keep_out_zones())
-        kiz, kiz_discr = self.__split_zones_and_discr(self.keep_in_zones())
         df_objective = self._overridden_or_default(
             self.df_objective, GeomOptimisationProblem, None
         )
@@ -124,33 +148,14 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
             geom,
             f_objective=self.objective,
             df_objective=df_objective,
-            keep_out_zones=koz,
-            keep_in_zones=kiz,
+            keep_out_zones=self.keep_out_zones(),
+            keep_in_zones=self.keep_in_zones(),
             algorithm=algorithm,
             opt_conditions=opt_conditions,
             opt_parameters=opt_parameters,
             eq_constraints=self.eq_constraints(),
             ineq_constraints=self.ineq_constraints(),
             keep_history=keep_history,
-            koz_discretisation=koz_discr,
-            kiz_discretisation=kiz_discr,
+            koz_discretisation=koz_discretisation,
+            kiz_discretisation=kiz_discretisation,
         )
-
-    def __split_zones_and_discr(
-        self, zones_and_discr: Iterable[Union[BluemiraWire, Tuple[BluemiraWire, int]]]
-    ) -> Tuple[List[BluemiraWire], List[int]]:
-        """
-        Split the zones and their discretizations.
-
-        Set the discretization to 100 if one is not given for a zone.
-        """
-        zones = []
-        zone_discr = []
-        for zone in zones_and_discr:
-            if isinstance(zone, BluemiraWire):
-                zones.append(zone)
-                zone_discr.append(100)
-            else:
-                zones.append(zone[0])
-                zone_discr.append(zone[1])
-        return zones, zone_discr
