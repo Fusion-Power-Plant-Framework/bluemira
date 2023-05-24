@@ -78,9 +78,9 @@ def estimate_loop_voltage(
     return v_loop
 
 
-def estimate_li(A: float, kappa: float) -> float:
+def estimate_Le(A: float, kappa: float) -> float:
     """
-    Estimate the normalised plasma internal inductance.
+    Estimate the normalised external plasma self-inductance.
 
     Parameters
     ----------
@@ -104,17 +104,16 @@ def estimate_li(A: float, kappa: float) -> float:
     a = (
         (1 + 1.81 * sqrt_eps + 2.05 * eps) * np.log(8 * A)
         - 2.0
-        + 9.25 * sqrt_eps
-        - 1.21 * eps
+        - 9.25 * sqrt_eps
+        + 1.21 * eps
     )
     b = 0.73 * sqrt_eps * (1 + 2 * eps**4 - 6 * eps**5 + 3.7 * eps**6)
     return a * (1 - eps) / (1 - eps + b * kappa)
 
 
-def estimate_Le(A: float, kappa: float) -> float:  # noqa: N802
+def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
     """
-    Estimate the plasma external inductance.
-
+    Estimate the mutual inductance
     Parameters
     ----------
     A:
@@ -136,3 +135,18 @@ def estimate_Le(A: float, kappa: float) -> float:  # noqa: N802
     c = 1 + 0.98 * eps**2 + 0.49 * eps**4 + 1.47 * eps**6
     d = 0.25 * eps * (1 + 0.84 * eps - 1.44 * eps**2)
     return (1 - eps) ** 2 / ((1 - eps) ** 2 * c + d * np.sqrt(kappa))
+
+
+if __name__ == "__main__":
+    A = np.exp(np.linspace(np.log(1), np.log(20), 10))
+    kappa = 1.0
+
+    li = estimate_Le(A, kappa)
+    Le = estimate_M(A, kappa)
+    import matplotlib.pyplot as plt
+
+    f, ax = plt.subplots()
+    ax.semilogx(A, li, marker="o", label="li")
+    ax.semilogx(A, 1 - Le, label="Le")
+    ax.legend()
+    plt.show()
