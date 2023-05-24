@@ -78,7 +78,7 @@ def estimate_loop_voltage(
     return v_loop
 
 
-def estimate_Le(A: float, kappa: float) -> float:
+def estimate_Le(A: float, kappa: float) -> float:  # noqa: N802
     """
     Estimate the normalised external plasma self-inductance.
 
