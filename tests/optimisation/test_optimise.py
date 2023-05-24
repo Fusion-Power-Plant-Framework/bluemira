@@ -18,6 +18,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from unittest import mock
+
 import numpy as np
 import pytest
 
@@ -129,23 +131,24 @@ class TestOptimise:
             x0=np.array([1, 1]),
             algorithm=alg,
             df_objective=df_objective,
-            opt_conditions={"xtol_rel": 1e-4, "max_eval": 3000},
+            opt_conditions={"xtol_rel": 1e-8, "max_eval": 1000},
             bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
             ineq_constraints=[
                 {
                     "f_constraint": lambda x: f_constraint(x, 2, 0),
                     # Exclude df_constraint to test approx_derivative is doing work
-                    "tolerance": np.array([1e-8]),
+                    "tolerance": np.array([5e-6]),
                 },
                 {
                     "f_constraint": lambda x: f_constraint(x, -1, 1),
                     "df_constraint": lambda x: df_constraint(x, -1, 1),
-                    "tolerance": np.array([1e-8]),
+                    "tolerance": np.array([5e-6]),
                 },
             ],
         )
 
         np.testing.assert_allclose(result.x, [1 / 3, 8 / 27], atol=1e-4)
+        assert result.constraints_satisfied is True
 
     def test_scalar_lower_bounds_are_expanded(self):
         result = optimise(
@@ -179,3 +182,92 @@ class TestOptimise:
                 bounds=bad_bounds,
                 opt_conditions={"ftol_rel": 1e-6, "max_eval": 1},
             )
+
+    @pytest.mark.parametrize("constraint_type", ["ineq", "eq"])
+    @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
+    def test_warning_given_constraints_not_satisfied(
+        self, bm_warn_mock, constraint_type
+    ):
+        def f_objective(x):
+            return np.sqrt(x[1])
+
+        def f_constraint(x, a, b):
+            return (a * x[0] + b) ** 3 - x[1]
+
+        constraint = {
+            "f_constraint": lambda x: f_constraint(x, 2, 0),
+            "tolerance": np.array([1e-8]),
+        }
+
+        result = optimise(
+            f_objective,
+            x0=np.array([1, 1]),
+            algorithm="SLSQP",
+            opt_conditions={"max_eval": 1},
+            bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
+            **{f"{constraint_type}_constraints": [constraint]},
+        )
+
+        bm_warn_mock.assert_called_once()
+        message = bm_warn_mock.call_args[0][0].lower()
+        comp_str = "!<" if constraint_type == "ineq" else "!="
+        msg_strs = ["constraints", "not", "satisfied", constraint_type, comp_str]
+        assert all(m in message for m in msg_strs)
+        assert result.constraints_satisfied is False
+
+    @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
+    def test_no_constraint_warning_given_check_constraints_False(self, bm_warn_mock):
+        def f_objective(x):
+            return np.sqrt(x[1])
+
+        def f_constraint(x, a, b):
+            return (a * x[0] + b) ** 3 - x[1]
+
+        result = optimise(
+            f_objective,
+            x0=np.array([1, 1]),
+            algorithm="SLSQP",
+            opt_conditions={"max_eval": 1},
+            bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
+            ineq_constraints=[
+                {
+                    "f_constraint": lambda x: f_constraint(x, 2, 0),
+                    "tolerance": np.array([1e-8]),
+                },
+                {
+                    "f_constraint": lambda x: f_constraint(x, -1, 1),
+                    "tolerance": np.array([1e-8]),
+                },
+            ],
+            check_constraints=False,
+        )
+
+        assert result.constraints_satisfied is None
+        assert bm_warn_mock.call_count == 0
+
+    @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
+    def test_no_warnings_given_constraints_satisfied(self, bm_warn_mock):
+        def f_objective(x):
+            return np.sqrt(x[1])
+
+        def f_ineq_constraint(x):
+            return np.sum(x) - 5
+
+        def f_eq_constraint(x):
+            return abs(x[0] - x[1])
+
+        result = optimise(
+            f_objective,
+            x0=np.array([1, 1]),
+            opt_conditions={"max_eval": 1},
+            eq_constraints=[
+                {"f_constraint": f_eq_constraint, "tolerance": np.array([1e-8])}
+            ],
+            ineq_constraints=[
+                {"f_constraint": f_ineq_constraint, "tolerance": np.array([1e-8])}
+            ],
+            check_constraints=True,
+        )
+
+        assert result.constraints_satisfied is True
+        assert bm_warn_mock.call_count == 0
