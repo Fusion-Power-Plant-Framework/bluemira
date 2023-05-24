@@ -111,7 +111,7 @@ def estimate_li(A: float, kappa: float) -> float:
     return a * (1 - eps) / (1 - eps + b * kappa)
 
 
-def estimate_Le(A: float, kappa: float) -> float:
+def estimate_Le(A: float, kappa: float) -> float:  # noqa: N802
     """
     Estimate the plasma external inductance.
 
