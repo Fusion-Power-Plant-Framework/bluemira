@@ -91,7 +91,7 @@ def estimate_Le(A: float, kappa: float) -> float:  # noqa: N802
 
     Returns
     -------
-    Normalised plasma internal inductance
+    Normalised plasma external inductance
 
     Notes
     -----
