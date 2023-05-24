@@ -1145,7 +1145,7 @@ def signed_distance_2D_polygon(
 
     Parameters
     ----------
-    subject_poly
+    subject_poly:
         Subject 2-D polygon
     target_poly:
         Target 2-D polygon
