@@ -36,6 +36,7 @@ from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 __all__ = [
     "flux_surface_cunningham",
     "flux_surface_johner",
+    "flux_surface_hirshman",
     "flux_surface_manickam",
     "flux_surface_kuiroukidis",
     "flux_surface_zakharov",
@@ -80,6 +81,41 @@ def _generate_theta(n: int) -> np.ndarray:
     if n > 7:
         thetas.append(np.array([2 * np.pi]))
     return np.concatenate(thetas)
+
+
+def flux_surface_hirshman(
+    r_0: float, z_0: float, a: float, kappa: float, n: int = 20
+) -> Coordinates:
+    """
+    Hirshman and Neilson flux surface parameterisation.
+
+    Parameters
+    ----------
+    r_0:
+        Plasma magnetic axis radius [m]
+    z_0:
+        Plasma magnetic axis height [m]
+    a:
+        Plasma geometric minor radius [m]
+    kappa:
+        Plasma elongation
+    n:
+        Number of points
+
+    Returns
+    -------
+    Plasma flux surface shape
+
+    Notes
+    -----
+    Hirshman and Neilson, 1986
+    https://pubs.aip.org/aip/pfl/article/29/3/790/944223/External-inductance-of-an-axisymmetric-plasma
+    """
+    t = _generate_theta(n)
+    eps = a / r_0
+    x = r_0 * (1 + eps * np.cos(t))
+    z = z_0 + r_0 * eps * kappa * np.sin(t)
+    return Coordinates({"x": x, "z": z})
 
 
 def flux_surface_zakharov(
