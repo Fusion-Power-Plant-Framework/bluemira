@@ -37,7 +37,7 @@ TripleArc
     TripleArc().plot(labels=True)
 
 The TripleArc has more customisations than show here including the length of inboard
-straigh section, sl, and the small and middle arc angles (a1 and a2). Please see the
+straight section, sl, and the small and middle arc angles (a1 and a2). Please see the
 API documentation for more information
 
 SextupleArc

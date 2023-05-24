@@ -13,7 +13,7 @@ Conda warns of ``WARNING: overwriting environment variables set in the machine; 
         # Run this to stop your bluemira environment overwriting the 'LANG' variable.
         conda env config vars unset LANG
 
-My github ssh connection doesnt connect
+My github ssh connection doesn't connect
     Firstly make sure you have followed our :ref:`SSH key guide <ssh-keys>`.
     A simple fix could be to set a new variable in your `~/.ssh/config`::
 
@@ -38,7 +38,7 @@ How do I update my dependencies?
         pip install -r requirements.txt && pip install -r requirements-develop.txt
 
     Both commands will install the pip dependencies as run in the CI system.
-    To update the conda environment completely (only relevent when we update the conda environment
+    To update the conda environment completely (only relevant when we update the conda environment
     which is less frequently)::
 
         conda env update --file conda/environment.yml

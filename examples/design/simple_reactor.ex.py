@@ -46,11 +46,11 @@ from typing import Dict
 
 import numpy as np
 
-from bluemira.base.builder import Builder, ComponentManager
+from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import EmptyFrame, Parameter, ParameterFrame
-from bluemira.base.reactor import Reactor
+from bluemira.base.reactor import ComponentManager, Reactor
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.shapes import JohnerLCFS
@@ -145,7 +145,7 @@ class TFCoil(ComponentManager):
 # %% [markdown]
 #
 # We then need a reactor in which to store the components.
-# Notice that the typing of the components here is the relevent `ComponentManager`
+# Notice that the typing of the components here is the relevant `ComponentManager`
 
 
 # %%
@@ -269,7 +269,7 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
 
 # %%
 class PlasmaDesigner(Designer):
-    """Design a plasma's LCFS using a Johner paramterisation."""
+    """Design a plasma's LCFS using a Johner parameterisation."""
 
     param_cls = PlasmaDesignerParams
 

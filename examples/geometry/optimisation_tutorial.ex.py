@@ -43,7 +43,7 @@ A quick tutorial on the optimisation of geometry in bluemira
 # ## Introduction
 #
 # We're going to set up some geometry optimisation problems and solve them with different
-# optimisastion algorithms.
+# optimisation algorithms.
 
 # %%
 import numpy as np

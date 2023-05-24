@@ -16,7 +16,7 @@ There are a few actions that should be taken:
     .. code-block:: python
 
         from bluemira.base.look_and_feel import (
-            bluemira_critial,
+            bluemira_critical,
             bluemira_debug,
             bluemira_error,
             bluemira_print,
@@ -45,7 +45,7 @@ There are a few actions that should be taken:
 
         from bluemira.base.logs import get_log_level
 
-        # Possiblity if verbosity wants to be explicit
+        # Possibility if verbosity wants to be explicit
         def my_function(verbosity=get_log_level(as_str=False) < 2):
             if verbosity:
                 # Do stuff

@@ -218,7 +218,7 @@ bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
 psi_sof = calc_psib(breakdown.breakdown_psi * 2 * np.pi, R_0, I_p, l_i, c_ejima)
 psi_eof = psi_sof - tau_flattop * v_burn
 
-# CREATE then knocked off an extra 10 V.s for misc plasma stuff I didnt look into
+# CREATE then knocked off an extra 10 V.s for misc plasma stuff I didn't look into
 
 psi_sof -= 10
 psi_eof -= 10

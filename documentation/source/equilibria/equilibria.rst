@@ -261,7 +261,10 @@ where:
 .. figure:: coordinates_grid_domain_crop.png
    :name: fig:domains
 
-   Diagram depicting the (:math:`X, \phi, Z`) coordinate system, the plasma domain and boundary, :math:`\Omega_p` and :math:`\partial\Omega_p`, the finite difference domain and boundary, :math:`\Omega_{FD}` and :math:`\partial\Omega_{FD}` (here :math:`n_x=20` nd :math:`n_z=25`), and an example set of discretised external CS and PF coils, which haved been numbered and named *à la* ITER.
+   Diagram depicting the (:math:`X, \phi, Z`) coordinate system, the plasma domain and boundary,
+   :math:`\Omega_p` and :math:`\partial\Omega_p`, the finite difference domain and boundary,
+   :math:`\Omega_{FD}` and :math:`\partial\Omega_{FD}` (here :math:`n_x=20` nd :math:`n_z=25`),
+   and an example set of discretised external CS and PF coils, which have been numbered and named *à la* ITER.
 
 
 
@@ -770,7 +773,7 @@ Circuits
 ********
 
 If one wants to run the solver for double null equilibria, it might be
-expected that such an equilbrium should be symmetrical about :math:`z = 0`.
+expected that such an equilibrium should be symmetrical about :math:`z = 0`.
 In this case, it makes sense for the coil positions to be up-down symmetric
 and for them to carry the same current. In reality, these coils might be in an actual circuit
 that allows them to be controlled simultaneously and maintain proportional currents.
