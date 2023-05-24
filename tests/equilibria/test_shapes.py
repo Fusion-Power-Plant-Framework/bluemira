@@ -33,6 +33,7 @@ from bluemira.equilibria.shapes import (
     ZakharovLCFS,
     _generate_theta,
     flux_surface_cunningham,
+    flux_surface_hirshman,
     flux_surface_johner,
     flux_surface_kuiroukidis,
     flux_surface_manickam,
@@ -76,6 +77,32 @@ class TestCunningham:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Cunningham parameterisations")
+        plt.close(cls.f)
+
+
+class TestHirschman:
+    @classmethod
+    def setup_class(cls):
+        cls.f, cls.ax = plt.subplots(4, 2)
+
+    @pytest.mark.parametrize(
+        "kappa, ax, label",
+        [
+            pytest.param(1.6, 0.33, 0, [0, 0], "Normal", id="Normal"),
+        ],
+    )
+    def test_manickam(self, kappa, ax, label):
+        f_s = flux_surface_hirshman(9, 0, 3, kappa, n=100)
+
+        ax0, ax1 = ax
+        self.ax[ax0, ax1].plot(f_s.x, f_s.z, label=label)
+        self.ax[ax0, ax1].set_aspect("equal")
+        self.ax[ax0, ax1].legend()
+
+    @classmethod
+    def teardown_class(cls):
+        cls.f.suptitle("Hirschman parameterisations")
+        plt.show()
         plt.close(cls.f)
 
 

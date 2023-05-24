@@ -87,7 +87,7 @@ def flux_surface_hirshman(
     r_0: float, z_0: float, a: float, kappa: float, n: int = 20
 ) -> Coordinates:
     """
-    Hirschman and Neilson flux surface parameterisation.
+    Hirshman and Neilson flux surface parameterisation.
 
     Parameters
     ----------

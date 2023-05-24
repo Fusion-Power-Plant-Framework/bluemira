@@ -113,7 +113,8 @@ def estimate_Le(A: float, kappa: float) -> float:  # noqa: N802
 
 def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
     """
-    Estimate the mutual inductance
+    Estimate the plasma mutual inductance.
+
     Parameters
     ----------
     A:
@@ -123,7 +124,7 @@ def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
 
     Returns
     -------
-    Plasma external inductance
+    Plasma mutual inductance
 
     Notes
     -----
@@ -139,7 +140,7 @@ def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
 
 if __name__ == "__main__":
     A = np.exp(np.linspace(np.log(1), np.log(20), 10))
-    kappa = 1.0
+    kappa = 2.0
 
     li = estimate_Le(A, kappa)
     Le = estimate_M(A, kappa)
