@@ -44,6 +44,14 @@ from raysect.optical.observer import PowerPipeline0D
 from raysect.optical.observer.nonimaging.pixel import Pixel
 from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
+# CHERAB imports
+from cherab.core.math import AxisymmetricMapper
+from cherab.tools.emitters import RadiationFunction
+from raysect.core import translate
+from raysect.optical import World
+from raysect.optical.material import VolumeTransform
+from raysect.primitive import Cylinder
+
 
 SEP_CORRECTOR = 5e-3  # [m] DN: 5e-3, SN: 5e-2
 E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
@@ -1087,3 +1095,31 @@ def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_ti
     plt.suptitle(plot_title)
 
     plt.show()
+
+def calculate_fw_rad_loads(rad_source, fw_shape, plot=True):
+
+    rad_3d = AxisymmetricMapper(rad_source)
+    ray_stepsize = 1.0  # 2.0e-4
+    emitter = VolumeTransform(
+        RadiationFunction(rad_3d, step=ray_stepsize * 0.1),
+        translate(0, 0, np.max(fw_shape.z)),
+    )
+    world = World()
+    Cylinder(
+        np.max(fw_shape.x),
+        2.0 * np.max(fw_shape.z),
+        transform=translate(0, 0, np.max(fw_shape.z)),
+        parent=world,
+        material=emitter,
+    )
+    max_wall_len = 10.0e-2
+    X_WIDTH = 0.01
+    wall_detectors = build_wall_detectors(fw_shape.x, fw_shape.z, max_wall_len, X_WIDTH)
+    wall_loads = detect_radiation(wall_detectors, 500, world)
+
+    if plot:
+        plot_radiation_loads(
+            rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads", fw_shape
+        )
+
+    return wall_loads

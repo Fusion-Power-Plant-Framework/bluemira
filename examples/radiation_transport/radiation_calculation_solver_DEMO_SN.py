@@ -43,19 +43,10 @@ from bluemira.radiation_transport.radiation_tools import (
     filtering_in_or_out, 
     pfr_filter,
     grid_interpolator,
-    build_wall_detectors,
-    detect_radiation,
-    plot_radiation_loads,
+    calculate_fw_rad_loads,
 )
 from bluemira.radiation_transport.flux_surfaces_maker import FluxSurfaceMaker
 
-# CHERAB imports
-from cherab.core.math import AxisymmetricMapper
-from cherab.tools.emitters import RadiationFunction
-from raysect.core import translate
-from raysect.optical import World
-from raysect.optical.material import VolumeTransform
-from raysect.primitive import Cylinder
 
 # %% [markdown]
 # # Double Null radiation
@@ -288,34 +279,6 @@ def create_radiation_source(
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
 
         return func
-    
-def fw_radiation(rad_source, plot=True):
-
-    rad_3d = AxisymmetricMapper(rad_source)
-    ray_stepsize = 1.0  # 2.0e-4
-    emitter = VolumeTransform(
-        RadiationFunction(rad_3d, step=ray_stepsize * 0.1),
-        translate(0, 0, np.max(fw_shape.z)),
-    )
-    world = World()
-    Cylinder(
-        np.max(fw_shape.x),
-        2.0 * np.max(fw_shape.z),
-        transform=translate(0, 0, np.max(fw_shape.z)),
-        parent=world,
-        material=emitter,
-    )
-    max_wall_len = 10.0e-2
-    X_WIDTH = 0.01
-    wall_detectors = build_wall_detectors(fw_shape.x, fw_shape.z, max_wall_len, X_WIDTH)
-    wall_loads = detect_radiation(wall_detectors, 500, world)
-
-    if plot:
-        plot_radiation_loads(
-            rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads", fw_shape
-        )
-
-    return wall_loads
 
 def main(only_source=True):
 
@@ -342,7 +305,7 @@ def main(only_source=True):
 
     if only_source is False:
         # Calculate radiation of FW points
-        fw_radiation(rad_source=rad_source_func)
+        calculate_fw_rad_loads(rad_source=rad_source_func, fw_shape=fw_shape)
 
 if __name__ == "__main__":
     main()
