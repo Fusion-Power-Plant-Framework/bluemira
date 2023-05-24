@@ -140,18 +140,3 @@ def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
     c = 1 + 0.98 * eps**2 + 0.49 * eps**4 + 1.47 * eps**6
     d = 0.25 * eps * (1 + 0.84 * eps - 1.44 * eps**2)
     return (1 - eps) ** 2 / ((1 - eps) ** 2 * c + d * np.sqrt(kappa))
-
-
-if __name__ == "__main__":
-    A = np.exp(np.linspace(np.log(1), np.log(20), 10))
-    kappa = 2.0
-
-    li = estimate_Le(A, kappa)
-    Le = estimate_M(A, kappa)
-    import matplotlib.pyplot as plt
-
-    f, ax = plt.subplots()
-    ax.semilogx(A, li, marker="o", label="li")
-    ax.semilogx(A, 1 - Le, label="Le")
-    ax.legend()
-    plt.show()
