@@ -43,24 +43,15 @@ from bluemira.radiation_transport.radiation_tools import (
     filtering_in_or_out, 
     pfr_filter,
     grid_interpolator,
-    build_wall_detectors,
-    detect_radiation,
-    plot_radiation_loads,
+    calculate_fw_rad_loads,
 )
 from bluemira.radiation_transport.flux_surfaces_maker import FluxSurfaceMaker
 
-# CHERAB imports
-from cherab.core.math import AxisymmetricMapper
-from cherab.tools.emitters import RadiationFunction
-from raysect.core import translate
-from raysect.optical import World
-from raysect.optical.material import VolumeTransform
-from raysect.primitive import Cylinder
 
 # %% [markdown]
 # # Double Null radiation
 #
-# First we load an up equilibrium
+# First we load an equilibrium.
 
 # %%
 read_path = get_bluemira_path("equilibria", subfolder="data")
@@ -71,8 +62,7 @@ eq = Equilibrium.from_eqdsk(eq_name)
 
 # %% [markdown]
 #
-# Now we load a first wall geometry, so that the solver can determine where the flux
-# surfaces intersect the first wall.
+# Now we load a first wall geometry.
 
 # %%
 read_path = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
@@ -133,7 +123,7 @@ config = {
 
 # %% [markdown]
 #
-# Initialising the `TempFsSolverChargedParticleSolver` and run it.
+# Initialising the `FluxSurfaceMaker` and run it.
 
 # %%
 flux_surface_solver = FluxSurfaceMaker(equilibrium=eq, dx_mp=0.001)
@@ -144,7 +134,6 @@ flux_surface_solver.analyse(first_wall=fw_shape)
 # Getting impurity data.
 
 # %%
-
 def get_impurity_data(impurities_list: list = ["H", "He"]):
     """
     Function getting the PROCESS impurity data
@@ -161,81 +150,46 @@ def get_impurity_data(impurities_list: list = ["H", "He"]):
 
     return impurity_data
 
-def create_radiation_source(
-    eq: Equilibrium,
-    params: ParameterFrame,
-    impurity_content_core: dict,
-    impurity_data_core: dict,
-    impurity_content_sol: dict,
-    impurity_data_sol: dict,
-    only_source=True,
-):
+# Get the core impurity fractions
+f_impurities_core = config["f_imp_core"]
+f_impurities_sol = config["f_imp_sol"]
+impurities_list_core = [imp for imp in f_impurities_core]
+impurities_list_sol = [imp for imp in f_impurities_sol]
+# Get the impurities data
+impurity_data_core = get_impurity_data(impurities_list=impurities_list_core)
+impurity_data_sol = get_impurity_data(impurities_list=impurities_list_sol)
 
-    # Make the radiation source
-    rad_solver = RadiationSolver(
+
+# %% [markdown]
+#
+# Initialising the `RadiationSolver` and run it.
+
+# %%
+rad_solver = RadiationSolver(
         eq=eq,
         flux_surf_solver=flux_surface_solver,
         params=params,
-        impurity_content_core=impurity_content_core,
+        impurity_content_core=f_impurities_core,
         impurity_data_core=impurity_data_core,
-        impurity_content_sol=impurity_content_sol,
+        impurity_content_sol=f_impurities_sol,
         impurity_data_sol=impurity_data_sol,
     )
+rad_solver.analyse(firstwall_geom=fw_shape)
+rad_solver.rad_map(fw_shape)
+
+# %% [markdown]
+#
+# Defining whether to run the radiation source only [MW/m^3]
+# or to calculate radiation loads on the first wall [MW/m^2].
+
+# %%
+def main(only_source=True):
 
     if only_source:
-
-        rad_solver.analyse(fw_shape)
-        rad_solver.rad_map(fw_shape)
-        # Call plot from the Solver
         rad_solver.plot()
-        # Core Radiation distribution
-        rad_solver.core_rad.plot_radiation_distribution()
-        # Core Radiation profile at the midplane
-        rad_solver.core_rad.build_mp_radiation_profile()
-        rad_solver.core_rad.plot_mp_radiation_profile()
-        # Plot Radiative loss function
-        rad_solver.core_rad.plot_lz_vs_tref()
-
-        # SOL Radiation Distribution
-        rad_solver.sol_rad.plot_poloidal_radiation_distribution(fw_shape)
-        # Individual plots for temperature and density from the mid-plane to the target
-        # LFS
-        rad_solver.sol_rad.poloidal_distribution_plot(
-            rad_solver.sol_rad.flux_tubes_lfs_low,
-            rad_solver.sol_rad.t_and_n_pol["lfs_low"][0],
-        )
-        rad_solver.sol_rad.poloidal_distribution_plot(
-            rad_solver.sol_rad.flux_tubes_lfs_low,
-            rad_solver.sol_rad.t_and_n_pol["lfs_low"][1],
-            temperature=False,
-        )
-        # HFS
-        rad_solver.sol_rad.poloidal_distribution_plot(
-            rad_solver.sol_rad.flux_tubes_hfs_low,
-            rad_solver.sol_rad.t_and_n_pol["hfs_low"][0],
-        )
-        rad_solver.sol_rad.poloidal_distribution_plot(
-            rad_solver.sol_rad.flux_tubes_hfs_low,
-            rad_solver.sol_rad.t_and_n_pol["hfs_low"][1],
-            temperature=False,
-        )
-
-        # Temperature VS Density for the first open flux surface
-        first_sol_fs_lfs = rad_solver.sol_rad.flux_tubes_lfs_low[0]
-        t_distribution = rad_solver.sol_rad.t_and_n_pol["lfs_low"][0][0]
-        n_distribution = rad_solver.sol_rad.t_and_n_pol["lfs_low"][1][0]
-        rad_solver.sol_rad.plot_t_vs_n(first_sol_fs_lfs, t_distribution, n_distribution)
-
-        first_sol_fs_hfs = rad_solver.sol_rad.flux_tubes_hfs_low[0]
-        t_distribution = rad_solver.sol_rad.t_and_n_pol["hfs_low"][0][0]
-        n_distribution = rad_solver.sol_rad.t_and_n_pol["hfs_low"][1][0]
-        rad_solver.sol_rad.plot_t_vs_n(first_sol_fs_hfs, t_distribution, n_distribution)
-
         plt.show()
-
+    
     else:
-        rad_solver.analyse(firstwall_geom=fw_shape)
-        rad_solver.rad_map(fw_shape)
         # Core and SOL source: coordinates and radiation values
         x_core = rad_solver.core_rad.x_tot
         z_core = rad_solver.core_rad.z_tot
@@ -272,7 +226,6 @@ def create_radiation_source(
         lcfs = rad_solver.lcfs
         core_filter_in = filtering_in_or_out(lcfs.x, lcfs.z)
         core_filter_out = filtering_in_or_out(lcfs.x, lcfs.z, False)
-
         for i in range(len(x_sol)):
             for j in range(len(z_sol)):
                 point = x_sol[i], z_sol[j]
@@ -290,63 +243,8 @@ def create_radiation_source(
                     )
 
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
-
-        return func
-
-def fw_radiation(rad_source, plot=True):
-
-    rad_3d = AxisymmetricMapper(rad_source)
-    ray_stepsize = 1.0  # 2.0e-4
-    emitter = VolumeTransform(
-        RadiationFunction(rad_3d, step=ray_stepsize * 0.1),
-        translate(0, 0, np.max(fw_shape.z)),
-    )
-    world = World()
-    Cylinder(
-        np.max(fw_shape.x),
-        2.0 * np.max(fw_shape.z),
-        transform=translate(0, 0, np.max(fw_shape.z)),
-        parent=world,
-        material=emitter,
-    )
-    max_wall_len = 10.0e-2
-    X_WIDTH = 0.01
-    wall_detectors = build_wall_detectors(fw_shape.x, fw_shape.z, max_wall_len, X_WIDTH)
-    wall_loads = detect_radiation(wall_detectors, 500, world)
-
-    if plot:
-        plot_radiation_loads(
-            rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads", fw_shape
-        )
-
-    return wall_loads
-
-def main(only_source=True):
-
-    # Get the core impurity fractions
-    f_impurities_core = config["f_imp_core"]
-    f_impurities_sol = config["f_imp_sol"]
-    impurities_list_core = [imp for imp in f_impurities_core]
-    impurities_list_sol = [imp for imp in f_impurities_sol]
-
-    # Get the impurities data
-    impurity_data_core = get_impurity_data(impurities_list=impurities_list_core)
-    impurity_data_sol = get_impurity_data(impurities_list=impurities_list_sol)
-
-    # Make the radiation sources
-    rad_source_func = create_radiation_source(
-        eq=eq,
-        params=params,
-        impurity_content_core=f_impurities_core,
-        impurity_data_core=impurity_data_core,
-        impurity_content_sol=f_impurities_sol,
-        impurity_data_sol=impurity_data_sol,
-        only_source=only_source,
-    )
-
-    if only_source is False:
         # Calculate radiation of FW points
-        fw_radiation(rad_source=rad_source_func)
+        calculate_fw_rad_loads(rad_source=func, fw_shape=fw_shape)
 
 if __name__ == "__main__":
     main()
