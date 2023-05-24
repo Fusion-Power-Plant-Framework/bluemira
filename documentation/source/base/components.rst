@@ -42,6 +42,10 @@ A :py:class:`~bluemira.base.components.Component` can be used as shown below:
         ├── First Wall (PhysicalComponent)
         └── Breeding Zone (PhysicalComponent)
 
+A component object as above doesn't expose much functionality or flexibility and is designed to
+exist as a container for CAD structures. The `ComponentManagers`_ and `Reactor`_ objects discussed below are
+designed to give the :ref:`Reactor Designer <how to use>` this flexibility.
+
 ComponentManagers
 -----------------
 
@@ -53,7 +57,7 @@ for instance the separatrix of a plasma.
 .. code-block:: python
 
     from bluemira.base.components import Component
-    from bluemira.base.builder import ComponentManager
+    from bluemira.base.reactor import ComponentManager
 
     class Plasma(ComponentManager):
         def lcfs(self):
@@ -75,6 +79,8 @@ Methods on the :py:class:`~bluemira.base.reactor.Reactor` object have access to 
 enabling functionality that needs to interact with multiple :py:class:`~bluemira.base.reactor.ComponentManager`\s.
 
 .. code-block:: python
+
+    from bluemira.base.reactor import Reactor
 
     class MyReactor(Reactor):
         '''An example of how to declare a reactor structure.'''
