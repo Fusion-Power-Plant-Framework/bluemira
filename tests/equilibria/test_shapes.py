@@ -118,7 +118,7 @@ class TestHirschman:
             ),
         ],
     )
-    def test_manickam(self, a, kappa, ax, label):
+    def test_hirshman(self, a, kappa, ax, label):
         f_s = flux_surface_hirshman(9, 0, a, kappa, n=100)
 
         ax0, ax1 = ax
