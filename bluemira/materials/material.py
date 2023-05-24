@@ -809,8 +809,8 @@ class Superconductor:
     @staticmethod
     def _handle_ij(number):
         """
-        Takes the real part of the imaginary number that results from the exponation of a
-        negative number with a fraction.
+        Takes the real part of the imaginary number that results from the
+        exponentiation of a negative number with a fraction.
         """
         return number.real
 

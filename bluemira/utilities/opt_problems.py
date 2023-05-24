@@ -196,7 +196,7 @@ class OptimisationProblem(ABC):
     ):
         """
         Updates the optimiser in-place to apply problem constraints.
-        To be overidden by child classes to apply specific constraints.
+        To be overridden by child classes to apply specific constraints.
 
         Parameters
         ----------

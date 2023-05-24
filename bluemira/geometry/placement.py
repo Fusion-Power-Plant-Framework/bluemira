@@ -164,7 +164,7 @@ class BluemiraPlacement:
         self._shape.Angle = value
 
     def to_matrix(self) -> np.ndarray:
-        """Returns a matrix (quaternion) representing the Plascement's transformation"""
+        """Returns a matrix (quaternion) representing the Placement's transformation"""
         return np.array(self._shape.Matrix.A).reshape(4, 4)
 
     def inverse(self) -> BluemiraPlacement:

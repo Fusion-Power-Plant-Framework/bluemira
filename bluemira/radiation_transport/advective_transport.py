@@ -313,7 +313,7 @@ class ChargedParticleSolver:
         Bp_hfs = self.eq.Bp(x_hfs_inter, z_hfs_inter)
 
         # Calculate parallel power at the intersections
-        # Note that flux expansion terms cancelate down to this
+        # Note that flux expansion terms cancel down to this
         q_par_lfs = q_par_omp * Bp_lfs / B_omp
         q_par_hfs = q_par_omp * Bp_hfs / B_omp
 
@@ -384,7 +384,7 @@ class ChargedParticleSolver:
         Bp_hfs_up = self.eq.Bp(x_hfs_up_inter, z_hfs_up_inter)
 
         # Calculate parallel power at the intersections
-        # Note that flux expansion terms cancelate down to this
+        # Note that flux expansion terms cancel down to this
         q_par_lfs_down = q_par_omp * Bp_lfs_down / B_omp
         q_par_lfs_up = q_par_omp * Bp_lfs_up / B_omp
         q_par_hfs_down = q_par_imp * Bp_hfs_down / B_imp

@@ -478,7 +478,7 @@ class EmptyFrame(ParameterFrame):
     Class to represent an empty `ParameterFrame` (one with no Parameters).
 
     Can be used when initializing a
-    :class:`~bluemire.base.reactor_config.ConfigParams` object with no global params.
+    :class:`~bluemira.base.reactor_config.ConfigParams` object with no global params.
     """
 
     def __init__(self) -> None:

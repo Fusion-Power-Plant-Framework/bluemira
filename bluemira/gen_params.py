@@ -49,7 +49,7 @@ from bluemira.utilities.tools import get_module, json_writer
 
 def def_param() -> Dict:
     """
-    Get the defualt parameter json skeleton
+    Get the default parameter json skeleton
     """
     dp = deepcopy(ParamDictT.__annotations__)
     del dp["name"]
@@ -186,7 +186,7 @@ def find_modules(path: str) -> Set:
 
 def main():
     """
-    Generate python and json paramterframe files
+    Generate python and json parameterframe files
     """
     args = parse_args()
 

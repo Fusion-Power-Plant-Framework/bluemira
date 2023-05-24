@@ -514,7 +514,7 @@ class FiniteElementModel:
         pr:
             The reduced global nodal force vector of the problem
         """
-        # TODO: detemine which approach is more suitable!
+        # TODO: determine which approach is more suitable!
 
         # Modification of K and P matrices to remove the rigid-body DOFs
         # This is the method recommended by Przemieniecki in the book

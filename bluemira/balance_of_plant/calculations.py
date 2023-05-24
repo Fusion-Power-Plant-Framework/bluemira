@@ -115,7 +115,7 @@ def He_pumping(  # noqa :N802
     P_pump_is:
         The isentropic pumping power (added to the working fluid) [W]
     P_pump_el:
-        The eletrical pumping power (parasitic load) [W]
+        The electrical pumping power (parasitic load) [W]
 
     \t:math:`T_{in_{comp}} = \\dfrac{T_{in_{BB}}}{\\dfrac{P}{P-dP}^{\\dfrac{\\gamma-1}{\\gamma}}}`\n
     \t:math:`f_{p} = \\dfrac{T_{in_{comp}}}{\\eta_{is}dT}\\Bigg(\\dfrac{P}{P-dP}^{\\dfrac{\\gamma-1}{\\gamma}}-1\\Bigg)`

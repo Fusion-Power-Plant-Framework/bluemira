@@ -59,7 +59,7 @@ def inscribed_rect_in_poly(
     x_poly:
         x coordinates of the polygon
     z_poly:
-        z coordinates of the ploygon
+        z coordinates of the polygon
     x_point:
         x coordinate of the centroid of the
     z_point:

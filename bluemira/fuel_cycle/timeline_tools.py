@@ -135,7 +135,7 @@ def generate_exponential_distribution(
     integral:
         The integral value of the distribution
     lambdda:
-        The rate parameter of the ditribution
+        The rate parameter of the distribution
 
     Returns
     -------

@@ -27,8 +27,8 @@ Constants for use in the equilibria module.
 #     Used to find last closed flux surface
 PSI_NORM_TOL = 1e-2
 
-# Relative toleranse on psi [n. a.]
-#     Used as a convergence crtierion for Picard iterations
+# Relative tolerance on psi [n. a.]
+#     Used as a convergence criterion for Picard iterations
 PSI_REL_TOL = 2e-3
 
 # Absolute tolerance on position [m]

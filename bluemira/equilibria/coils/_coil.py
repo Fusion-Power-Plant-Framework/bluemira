@@ -547,7 +547,7 @@ class Coil(CoilFieldsMixin):
 
     def _re_discretise(self):
         """
-        Re discretise and re set attibutes if sizing information changes.
+        Re discretise and re set attributes if sizing information changes.
         """
         if None not in (self.dx, self.dz):
             self._discretise()

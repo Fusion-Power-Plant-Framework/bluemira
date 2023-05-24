@@ -39,7 +39,7 @@ def Bz_coil_axis(
 ) -> float:
     """
     Calculate the theoretical vertical magnetic field of a filament coil
-    (of radius r and centered in (0, z)) on a point on the coil axis at
+    (of radius r and centred in (0, z)) on a point on the coil axis at
     a distance pz from the axis origin.
 
     Parameters
@@ -216,7 +216,7 @@ class FemMagnetostatic2d:
                 "size_t", mesh, mesh.topology().dim() - 1
             )
         elif isinstance(boundaries, str):
-            # check wether boundaries is a filename or a MeshFunction,
+            # check weather boundaries is a filename or a MeshFunction,
             # then load it or use it
             self.boundaries = dolfin.MeshFunction(
                 "size_t", self.mesh, boundaries

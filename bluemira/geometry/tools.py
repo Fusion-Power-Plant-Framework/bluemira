@@ -782,7 +782,7 @@ def sweep_shape(
 
 def fillet_chamfer_decorator(chamfer: bool):
     """
-    Decorator for fillet and chamger operations, checking for validity of wire
+    Decorator for fillet and chamfer operations, checking for validity of wire
     and radius.
     """
 

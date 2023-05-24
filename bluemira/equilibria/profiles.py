@@ -172,7 +172,7 @@ def speedy_pressure_mask(
     ii:
         The i indices of the array to populate (dtype=int)
     jj:
-        The j indices of the aray to populate (dtype=int)
+        The j indices of the array to populate (dtype=int)
     psi_norm:
         The normalised poloidal magnetic flux array
     psio:

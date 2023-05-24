@@ -268,7 +268,7 @@ def volume_integral(func, x, d_x, d_z):
     Parameters
     ----------
     func: 2-D np.array
-        Field to volume intregrate
+        Field to volume integrate
     x: 2-D np.array
         X coordinate grid
     d_x: float

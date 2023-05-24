@@ -129,7 +129,7 @@ def _integrate_z_by_parts(r1: float, r2: float, z1: float, z2: float) -> float:
     """
     Integrate the Bz integrand by parts.
 
-    This can be used as a fall-kack if the full integration fails.
+    This can be used as a fallback if the full integration fails.
     """
     return (
         integrate(_partial_z_integrand_llc, (r1, z1), 0, np.pi)

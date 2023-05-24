@@ -85,16 +85,16 @@ def calc_psi(
 
 def calc_tau_flattop(psi_sof: float, psi_eof: float, v_burn: float) -> float:
     """
-    Calulates the flat-top length
+    Calculates the flat-top length
 
     \t:math:`\\tau_{flat-top}=\\dfrac{\\psi_{SOF}-\\psi_{EOF}}{V_{burn}}`
 
     Parameters
     ----------
     psi_sof:
-        The start of flat-top magnetix flux at the plasma boundary [V.s]
+        The start of flat-top magnetic flux at the plasma boundary [V.s]
     psi_eof:
-        The end of flat-top magnetix flux at the plasma boundary [V.s]
+        The end of flat-top magnetic flux at the plasma boundary [V.s]
     v_burn:
         The plasma loop voltage during burn [V]
 

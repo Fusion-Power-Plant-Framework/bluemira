@@ -635,7 +635,7 @@ class TripleArc(GeometryParameterisation):
         Parameters
         ----------
         constraint:
-            Contraint vector (assign in place)
+            Constraint vector (assign in place)
         x:
             Normalised vector of free variables
         grad:
@@ -859,7 +859,7 @@ class SextupleArc(GeometryParameterisation):
         Parameters
         ----------
         constraint:
-            Contraint vector (assign in place)
+            Constraint vector (assign in place)
         x:
             Normalised vector of free variables
         grad:

@@ -58,7 +58,7 @@ def find_noisy_locals(
     Returns
     -------
     local_mid_x:
-        The argmuments of the local minima or maxima
+        The arguments of the local minima or maxima
     local_m:
         The local minima or maxima
     """
@@ -167,7 +167,7 @@ def piecewise_sqrt_threshold(
     x: np.ndarray, factor: float, kink: float, threshold: float
 ) -> np.ndarray:
     """
-    Piecewise dquare-root model, followed by threshold.
+    Piecewise square-root model, followed by threshold.
 
     Parameters
     ----------

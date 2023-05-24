@@ -603,7 +603,7 @@ def Bz_analytical_circular(
 
 class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
     """
-    3-D circular arc prism current source with a retangular cross-section and
+    3-D circular arc prism current source with a rectangular cross-section and
     uniform current distribution.
 
     Parameters
@@ -760,7 +760,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         # Convert to local cylindrical coordinates
         point = self._global_to_local([point])[0]
         rp, tp, zp = self._local_to_cylindrical(point)
-        # Calculate field in local coordindates
+        # Calculate field in local coordinates
         b_local = MU_0_4PI * self.rho * self._BxByBz(rp, tp, zp)
         # Convert field to global coordinates
         return self.dcm.T @ b_local

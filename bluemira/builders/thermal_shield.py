@@ -108,7 +108,7 @@ class VVTSBuilder(Builder):
         """
         # This split hack works round #1319
         # _offset_wire_discretised used because
-        # the cad offset regulary doesnt work properly here.
+        # the cad offset regularly doesn't work properly here.
         # due to topology but unknown why here particularly
         ex_args = dict(
             join="intersect",

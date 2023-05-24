@@ -164,7 +164,7 @@ class BluemiraPlane:
         self, width: float = VERY_BIG, height: float = VERY_BIG, label: str = ""
     ) -> BluemiraFace:
         """
-        Convert the plane to a face with dimension (width, height) and centered into
+        Convert the plane to a face with dimension (width, height) and centred into
         the plane base position.
         """
         face = cadapi.face_from_plane(self._shape, width, height)

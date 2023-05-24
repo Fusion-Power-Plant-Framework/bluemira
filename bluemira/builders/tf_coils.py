@@ -582,7 +582,7 @@ class RippleConstrainedLengthGOP(GeometryOptimisationProblem):
     n_koz_points:
         Number of discretised points to use when enforcing the keep-out-zone constraint
     ripple_selector:
-        Selection strategy for the poitns at which to calculate ripple. Defaults to
+        Selection strategy for the points at which to calculate ripple. Defaults to
         an equi-spaced set of points along the separatrix
 
     Notes

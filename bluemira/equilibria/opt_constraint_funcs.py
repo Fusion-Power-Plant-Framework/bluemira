@@ -50,7 +50,7 @@ Note that the gradient (Jacobian) of the constraint function is of the form:
 The grad and constraint matrices must be assigned in place.
 
 If grad is not updated, the constraint can still be used for derivative-free
-optimisaiton algorithms, but will need to be updated or approximated for use
+optimisation algorithms, but will need to be updated or approximated for use
 in derivative based algorithms, such as those utilising gradient descent.
 """  # noqa: W505
 
@@ -293,7 +293,7 @@ def coil_force_constraints(
         # Absolute sum of vertical force constraint on entire CS stack
         constraint[n_PF] = cs_z_sum**2 - CS_Fz_sum_max**2
         for i in range(n_CS - 1):  # evaluate each gap in CS stack
-            # CS seperation constraints
+            # CS separation constraints
             f_sep = np.sum(cs_fz[: i + 1]) - np.sum(cs_fz[i + 1 :])
             constraint[n_PF + 1 + i] = f_sep - CS_Fz_sep_max
 

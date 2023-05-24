@@ -28,7 +28,7 @@ from bluemira.base.error import BluemiraError
 
 class FuelCycleError(BluemiraError):
     """
-    The base fuel_cyle error class.
+    The base fuel_cycle error class.
     """
 
     pass
