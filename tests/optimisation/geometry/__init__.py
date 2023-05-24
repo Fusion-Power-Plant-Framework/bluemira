@@ -18,18 +18,3 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""Public functions and classes for the optimisation module."""
-
-from bluemira.optimisation._algorithm import Algorithm
-from bluemira.optimisation._geometry.optimise import optimise_geometry
-from bluemira.optimisation._geometry.problem import GeomOptimisationProblem
-from bluemira.optimisation._optimise import optimise
-from bluemira.optimisation.problem import OptimisationProblem
-
-__all__ = [
-    "Algorithm",
-    "GeomOptimisationProblem",
-    "OptimisationProblem",
-    "optimise",
-    "optimise_geometry",
-]
