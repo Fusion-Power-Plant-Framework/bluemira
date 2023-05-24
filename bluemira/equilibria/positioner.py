@@ -482,7 +482,7 @@ class XZLMapper:
         sub-track into two, so that two coils don't end up on top of each other
         """
         # beware of np.zeros_like!
-        # TODO this feels tempramental
+        # TODO this feels temperamental
         lb_new, ub_new = np.zeros(len(lb)), np.zeros(len(ub))
         lb, ub = list(lb), list(ub)
         flag = False

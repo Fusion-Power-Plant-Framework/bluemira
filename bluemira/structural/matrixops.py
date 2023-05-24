@@ -73,7 +73,7 @@ def cyclic_decomposition(
     Returns
     -------
     k_cyc:
-        The partitioned and ordered stiffnes matrix
+        The partitioned and ordered stiffness matrix
     p_cyc:
         The partitioned and ordered load vector
     selections:

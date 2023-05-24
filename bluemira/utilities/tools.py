@@ -394,9 +394,9 @@ def compare_dicts(
     verbose:
         Whether or not to print to the console
     rtol:
-        The relative tolerance parameter, used if ``almost_eqaul`` is True
+        The relative tolerance parameter, used if ``almost_equal`` is True
     atol:
-        The abosulte tolerance parameter, used if ``almost_eqaul`` is True
+        The absolute tolerance parameter, used if ``almost_equal`` is True
 
     Returns
     -------

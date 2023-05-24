@@ -210,7 +210,7 @@ def make_grid(
 
 class DivertorLegCalculator:
     """
-    Straight line divertor leg mixin claculator.
+    Straight line divertor leg mixin calculator.
     """
 
     @staticmethod

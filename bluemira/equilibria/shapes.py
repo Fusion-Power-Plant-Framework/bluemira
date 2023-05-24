@@ -529,7 +529,7 @@ def flux_surface_kuiroukidis(
     """
     Make an up-down asymmetric flux surface with a lower X-point.
 
-    Ap. Kuiroukidis and G. N. Throumoulopoulos, Plasma Phys. Contol. Fusion 57  (2015)
+    Ap. Kuiroukidis and G. N. Throumoulopoulos, Plasma Phys. Control. Fusion 57  (2015)
     078001
 
     DOI: 10.1088/0741-3335/57/7/078001

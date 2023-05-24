@@ -331,7 +331,7 @@ class CoilGroupFieldsMixin:
         _quad_weight: Optional[np.ndarray] = None,
     ) -> Union[float, np.ndarray]:
         """
-        Calculate magnetic field B respose at (x, z) due to a unit
+        Calculate magnetic field B response at (x, z) due to a unit
         current using Green's functions.
 
         Parameters
@@ -388,7 +388,7 @@ class CoilGroupFieldsMixin:
         _quad_weight: Optional[np.ndarray] = None,
     ) -> Union[float, np.ndarray]:
         """
-        Calculate radial magnetic field Bx respose at (x, z) due to a unit
+        Calculate radial magnetic field Bx response at (x, z) due to a unit
         current using Green's functions.
 
         Parameters
@@ -865,7 +865,7 @@ class CoilSetFieldsMixin(CoilGroupFieldsMixin):
 
         Returns
         -------
-        Cached Greens Bx reponse
+        Cached Greens Bx response
         """
         return self._sum(
             super()._Bx_greens(bgreen), sum_coils=sum_coils, control=control

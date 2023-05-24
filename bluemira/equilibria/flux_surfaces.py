@@ -809,7 +809,7 @@ def calculate_connection_length_flt(
     Notes
     -----
     More mathematically accurate, but needs additional configuration. Will not likely
-    return a very accurate flux inteception point. Also works for closed flux surfaces,
+    return a very accurate flux interception point. Also works for closed flux surfaces,
     but can't tell the difference. Not sensitive to equilibrium grid discretisation.
     Will work correctly for flux surfaces passing through Coils, but really they should
     be intercepted beforehand!

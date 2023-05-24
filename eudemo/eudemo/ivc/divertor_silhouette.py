@@ -198,7 +198,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         -----
         The dome shape follows a constant line of flux that is closest to the input
         coordinates.
-        The nearset point on the flux surface to the start point and the end point are
+        The nearest point on the flux surface to the start point and the end point are
         joined.
         The flux surface is picked based on the lowest z coordinate of the start and end
         point to ensure a continuous divertor shape is produced.
@@ -262,7 +262,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
             e.g., the outside end of a target.
         end:
             The position (in x-z) to stop drawing the baffle, e.g., the
-            postion to the upper part of the first wall.
+            position to the upper part of the first wall.
         """
         return make_polygon(
             np.array([[start[0], end[0]], [0, 0], [start[1], end[1]]]), label=label
@@ -337,7 +337,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
     def _get_wire_end(wire: BluemiraWire, axis: str, comp: Callable) -> np.ndarray:
         """
         Get the coordinates of the end of a wire whose coordinate in the
-        given axis satisfies the comparision function.
+        given axis satisfies the comparison function.
         """
         axis = WireEndAxis[axis.upper()].name.lower()
 

@@ -46,7 +46,7 @@ An example that shows how to set up a fixed boundary equilibrium problem.
 #
 # In this example, we will show how to couple PLASMOD (1.5-D current diffusion
 # and fixed boundary equilibrium solver with an up-down symmetric plasma boundary)
-# to our 2-D finite element fixed boudary equilibrium solver with an up-down
+# to our 2-D finite element fixed boundary equilibrium solver with an up-down
 # asymmetric boundary and X-point.
 
 # This procedure is known to not be particularly robust, please use with caution.
@@ -240,7 +240,7 @@ data = save_fixed_boundary_to_file(
 )
 
 # %% [markdown]
-# Inspect the final converged equilibrum
+# Inspect the final converged equilibrium
 
 # %%
 xx, zz = np.meshgrid(data.x, data.z, indexing="ij")

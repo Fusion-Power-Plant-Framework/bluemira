@@ -900,7 +900,7 @@ class Equilibrium(MHDState):
         jtor:
             The 2-D array toroidal current at each (x, z) point (optional)
         psi:
-            The 2-D arrau of poloidal magnetic flux at each (x, z) point (optional)
+            The 2-D array of poloidal magnetic flux at each (x, z) point (optional)
 
         Note
         ----

@@ -13,7 +13,7 @@ for example for a github key (the name is up to you)::
   ssh-keygen -t ed25519 -o -a 100 -f id_github
 
 The command will ask you to enter a password, it is not strictly needed but personal
-preference (just hit enter if you dont want one). Two files will have been created `id_github`
+preference (just hit enter if you don't want one). Two files will have been created `id_github`
 and `id_github.pub` you can see with the command `ls`.
 
 Next uploading the key. For github go to this link https://github.com/settings/keys and

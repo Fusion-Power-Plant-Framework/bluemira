@@ -409,7 +409,7 @@ print(solver.execute("run"))
 
 # %% [markdown]
 # Turning on the header option (that output wont change) but the source has changed
-# because we havent updated it.
+# because we haven't updated it.
 
 # %%
 solver.params.header.value = True

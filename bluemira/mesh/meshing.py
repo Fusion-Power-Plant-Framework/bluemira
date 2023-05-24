@@ -291,7 +291,7 @@ class Mesh:
         """
         # mesh size is applied not only to the vertexes of the defined geometry,
         # but also to the intersection points (new vertexes). For this reason,
-        # it is important to do this operation after the completition of the mesh
+        # it is important to do this operation after the completion of the mesh
         # procedure.
         points_lcar2 = self.__create_dict_for_mesh_size(buffer)
         if len(points_lcar2) > 0:

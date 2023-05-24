@@ -189,7 +189,7 @@ class LifeCycle:
     def set_availabilities(self, load_factor: float):
         """
         Sets availability and distributes it between the two phases of planned operation.
-        The planned maintenance windows are substracted from the availability which
+        The planned maintenance windows are subtracted from the availability which
         needs to be achieved during the phase of operation. The target overall plant
         lifetime availability as specified in input parameter A remains the same.
 
@@ -544,11 +544,11 @@ class LifeCycleParams:
     """
 
     blk_dmg: float = 10.2
-    """Blanket neutron daamge rate [dpa/fpy]. Pavel Pereslavtsev 2M7HN3 fig. 20."""
+    """Blanket neutron damage rate [dpa/fpy]. Pavel Pereslavtsev 2M7HN3 fig. 20."""
 
     div_dmg: float = 3
     """
-    Divertor neutron damange rate [dpa/fpy].
+    Divertor neutron damage rate [dpa/fpy].
     https://iopscience.iop.org/article/10.1088/1741-4326/57/9/092002/pdf.
     """
 

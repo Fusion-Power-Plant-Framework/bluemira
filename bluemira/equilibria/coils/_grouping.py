@@ -432,7 +432,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         _to_pad: List[np.ndarray],
     ):
         """
-        Convert quadrature list of array to rectuangular arrays.
+        Convert quadrature list of array to rectangular arrays.
         Padding quadrature arrays with zeros to allow array operations
         on rectangular matricies.
 
@@ -951,7 +951,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self, output: np.ndarray, sum_coils: bool = False, control: bool = False
     ) -> np.ndarray:
         """
-        Get reponses of coils optionally only control and/or sum over the responses
+        Get responses of coils optionally only control and/or sum over the responses
 
         Parameters
         ----------

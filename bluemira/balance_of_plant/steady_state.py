@@ -104,7 +104,7 @@ class HePumping(CoolantPumping):
         P_pump_is:
             The isentropic pumping power (added to the working fluid)
         P_pump_el:
-            The eletrical pumping power (parasitic load)
+            The electrical pumping power (parasitic load)
         """
         p_pump, p_electric = He_pumping(
             self.p_in,
@@ -486,7 +486,7 @@ class BalanceOfPlantModel:
     bop_cycle_strat:
         Strategy to calculate the balance of plant thermal efficiency
     parasitic_load_strat:
-        Strategy to caculate the parasitic loads
+        Strategy to calculate the parasitic loads
 
     Notes
     -----

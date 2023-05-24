@@ -59,7 +59,7 @@ print(plane)
 
 # %% [markdown]
 # The plane can be converted into a BluemiraFace both for plotting purpose or to be
-# used for the generation of components or in boolena operations.
+# used for the generation of components or in boolean operations.
 
 # %%
 face = plane.to_face(width=50, height=50)

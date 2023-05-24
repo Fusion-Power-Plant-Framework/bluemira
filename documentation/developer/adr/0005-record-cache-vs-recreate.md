@@ -9,7 +9,7 @@ Proposed
 ## Context
 
 At present we recreate FreeCAD geometries by travelling through the boundaries of their
-"Matryoshka". We have a number of issues relating to this as our implementation apppears
+"Matryoshka". We have a number of issues relating to this as our implementation appears
  to be imperfect.
 
 Assumption: `BluemiraGeo` objects are "static".

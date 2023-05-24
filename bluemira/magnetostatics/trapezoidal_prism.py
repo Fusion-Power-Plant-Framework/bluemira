@@ -308,7 +308,7 @@ def Bz_analytical_prism(
 
 class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
     """
-    3-D trapezoidal prism current source with a retangular cross-section and
+    3-D trapezoidal prism current source with a rectangular cross-section and
     uniform current distribution.
 
     The current direction is along the local y coordinate.

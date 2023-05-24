@@ -108,7 +108,7 @@ lifecycle_config = {
 # %%
 lifecycle_inputs = {}
 
-# We need to define some stragies to define the pseudo-random timelines
+# We need to define some strategies to define the pseudo-random timelines
 
 # Let's choose a LearningStrategy such that the operational availability grows over time
 learning_strategy = GompertzLearningStrategy(
