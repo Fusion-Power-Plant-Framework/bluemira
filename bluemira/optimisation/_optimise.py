@@ -21,7 +21,17 @@
 """Definition of the generic `optimise` function."""
 
 from pprint import pformat
-from typing import Any, Callable, Iterable, List, Mapping, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Literal,
+    Mapping,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import numpy.typing as npt
@@ -200,8 +210,8 @@ def validate_constraints(
     Additionally, print warnings listing constraints that are not
     satisfied.
     """
-    eq_warnings = _check_eq_constraints(x_star, eq_constraints)
-    ineq_warnings = _check_ineq_constraints(x_star, ineq_constraints)
+    eq_warnings = _check_constraints(x_star, eq_constraints, "equality")
+    ineq_warnings = _check_constraints(x_star, ineq_constraints, "inequality")
     all_warnings = eq_warnings + ineq_warnings
     if all_warnings:
         message = "\n".join(all_warnings)
@@ -255,66 +265,60 @@ def _process_bounds(
     return new_bounds[0], new_bounds[1]
 
 
-def _check_ineq_constraints(
-    x_star: np.ndarray, constraints: List[ConstraintT]
-) -> List[str]:
-    """Check for inequality constraint violations."""
-
-    def condition(c_value, tols) -> np.ndarray:
-        """Condition under which the ineq constraint is violated."""
-        return c_value > tols
-
-    warnings = []
-    for i, constraint in enumerate(constraints):
-        if diff := _check_constraint(x_star, constraint, condition):
-            indices, c_value, tols = diff
-            warnings.append(
-                "\n".join(
-                    [
-                        f"inequality constraint {i} [{j}]: "
-                        f"{pformat(c_value[j])} !< {pformat(tols[j])}"
-                        for j in indices
-                    ]
-                )
-            )
-    return warnings
-
-
-def _check_eq_constraints(
-    x_star: np.ndarray, constraints: List[ConstraintT]
-) -> List[str]:
-    """Check for equality constraint violations."""
-
-    def condition(c_value, tols) -> np.ndarray:
-        """Condition under which the eq constraint is violated."""
-        return ~np.isclose(c_value, 0, atol=tols)
-
-    warnings = []
-    for i, constraint in enumerate(constraints):
-        if diff := _check_constraint(x_star, constraint, condition):
-            indices, c_value, tols = diff
-            warnings.append(
-                "\n".join(
-                    [
-                        f"  equality constraint {i} [{j}]: "
-                        f"|{pformat(c_value[j])}| !< {pformat(tols[j])}"
-                        for j in indices
-                    ]
-                )
-            )
-    return warnings
-
-
-def _check_constraint(
+def _check_constraints(
     x_star: np.ndarray,
-    constraint: ConstraintT,
-    condition: Callable[[npt.ArrayLike, npt.ArrayLike], npt.ArrayLike],
-) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], None]:
-    c_value = constraint["f_constraint"](x_star)
-    # Deal with scalar constraints
-    c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
-    tols = np.array(constraint["tolerance"])
-    indices = np.where(condition(c_value, tols))[0]
-    if indices.size > 0:
-        return (indices, c_value, tols)
-    return None
+    constraints: List[ConstraintT],
+    constraint_type: Literal["inequality", "equality"],
+) -> List[str]:
+    """
+    Check if any of the given constraints are violated by the parameterisation.
+
+    Returns a list of formatted warnings. If there are no warnings, there
+    are no violations.
+    """
+
+    def _check_constraint(
+        x_star: np.ndarray,
+        constraint: ConstraintT,
+        condition: Callable[[np.ndarray, np.ndarray], np.ndarray],
+    ) -> Union[Tuple[np.ndarray, np.ndarray, np.ndarray], None]:
+        """Return the items in the constraint vector that violate the condition."""
+        c_value = constraint["f_constraint"](x_star)
+        # Deal with scalar constraints
+        c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
+        tols = np.array(constraint["tolerance"])
+        indices = np.where(condition(c_value, tols))[0]
+        if indices.size > 0:
+            return (indices, c_value, tols)
+        return None
+
+    condition, comp_str = (
+        (_eq_constraint_condition, "!=")
+        if constraint_type == "equality"
+        else (_ineq_constraint_condition, "!<")
+    )
+
+    warnings = []
+    for i, constraint in enumerate(constraints):
+        if diff := _check_constraint(x_star, constraint, condition):
+            indices, c_value, tols = diff
+            warnings.append(
+                "\n".join(
+                    [
+                        f"{constraint_type} constraint {i} [{j}]: "
+                        f"{pformat(c_value[j])} {comp_str} {pformat(tols[j])}"
+                        for j in indices
+                    ]
+                )
+            )
+    return warnings
+
+
+def _eq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndarray:
+    """Condition under which an equality constraint is violated."""
+    return ~np.isclose(c_value, 0, atol=tols)
+
+
+def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndarray:
+    """Condition under which an inequality constraint is violated."""
+    return c_value > tols

@@ -210,9 +210,9 @@ class TestOptimise:
 
         bm_warn_mock.assert_called_once()
         message = bm_warn_mock.call_args[0][0].lower()
-        assert all(
-            m in message for m in ["constraints", "not", "satisfied", constraint_type]
-        )
+        comp_str = "!<" if constraint_type == "ineq" else "!="
+        msg_strs = ["constraints", "not", "satisfied", constraint_type, comp_str]
+        assert all(m in message for m in msg_strs)
         assert result.constraints_satisfied is False
 
     @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
