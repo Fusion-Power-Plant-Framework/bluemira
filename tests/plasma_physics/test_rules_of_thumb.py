@@ -26,7 +26,8 @@ from bluemira.plasma_physics.rules_of_thumb import estimate_Le, estimate_M
 
 
 class TestHirshmanInductanceRules:
-    # Table I of https://pubs.aip.org/aip/pfl/article/29/3/790/944223/External-inductance-of-an-axisymmetric-plasma
+    # Table I of
+    # https://pubs.aip.org/aip/pfl/article/29/3/790/944223/External-inductance-of-an-axisymmetric-plasma  # noqa: W505
     eps = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     a = np.array([2.975, 2.285, 1.848, 1.507, 1.217, 0.957, 0.716, 0.487, 0.272])
     b = np.array([0.228, 0.325, 0.403, 0.465, 0.512, 0.542, 0.553, 0.538, 0.508])
