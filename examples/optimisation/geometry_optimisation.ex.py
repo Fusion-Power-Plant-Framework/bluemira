@@ -132,7 +132,7 @@ plot_2d([boundary, plasma])
 # %%
 geom = PrincetonD()
 ax = plot_2d(plasma, show=False)
-for i, x in enumerate(result.history):
+for i, (x, _) in enumerate(result.history):
     geom.variables.set_values_from_norm(x)
     wire = geom.create_shape()
     wire_options = {

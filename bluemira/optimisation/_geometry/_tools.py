@@ -95,12 +95,11 @@ def calculate_signed_distance(
     Signed distance from the parameterised shape to the keep-out/in zone.
     """
     shape = parameterisation.create_shape()
-    s = shape.discretize(ndiscr=n_shape_discr).xz
-    # The order of the operands below is important, we always want this
-    # to return an array with the same shape as ``zone_points``, or
-    # we'll get 'could not broadcast' errors when we assign the result
-    # of our zone constraints.
-    return signed_distance_2D_polygon(zone_points.T, s.T).T
+    # Note that we do not discretize by edges here, as the number of
+    # points must remain constant so the size of constraint vectors
+    # remain constant.
+    s = shape.discretize(n_shape_discr, byedges=False).xz
+    return signed_distance_2D_polygon(s.T, zone_points.T).T
 
 
 def make_keep_out_zone_constraint(
@@ -119,7 +118,7 @@ def make_keep_out_zone_constraint(
     real_n_discr = koz_points.shape[1]
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
-        return -calculate_signed_distance(
+        return calculate_signed_distance(
             geom, n_shape_discr=real_n_discr, zone_points=koz_points
         )
 
@@ -142,7 +141,7 @@ def make_keep_in_zone_constraint(
     real_n_discr = kiz_points.shape[1]
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
-        return calculate_signed_distance(
+        return -calculate_signed_distance(
             geom, n_shape_discr=real_n_discr, zone_points=kiz_points
         )
 
