@@ -30,9 +30,19 @@ class TestHirshmanInductanceRules:
     eps = np.array([0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9])
     a = np.array([2.975, 2.285, 1.848, 1.507, 1.217, 0.957, 0.716, 0.487, 0.272])
     b = np.array([0.228, 0.325, 0.403, 0.465, 0.512, 0.542, 0.553, 0.538, 0.508])
+    c = np.array([1.008, 1.038, 1.093, 1.177, 1.301, 1.486, 1.769, 2.223, 2.864])
+    d = np.array([0.022, 0.056, 0.087, 0.113, 0.134, 0.148, 0.155, 0.152, 0.133])
 
     @pytest.mark.parametrize("kappa", [1.0, 2.0])
-    def test_Le(self, kappa):
-        Le_table = self.a * (1 - self.eps) / (1 - self.eps + self.b * kappa)
-        Le = estimate_Le(1 / self.eps, kappa=kappa)
-        np.testing.assert_allclose(Le, Le_table, rtol=3.1e-2)
+    def test_le(self, kappa):
+        le_table = self.a * (1 - self.eps) / (1 - self.eps + self.b * kappa)
+        le = estimate_Le(1 / self.eps, kappa=kappa)
+        np.testing.assert_allclose(le, le_table, rtol=3.1e-2)
+
+    @pytest.mark.parametrize("kappa", [1.0, 2.0])
+    def test_M(self, kappa):
+        m_table = (1 - self.eps) ** 2 / (
+            (1 - self.eps) ** 2 * self.c + self.d * np.sqrt(kappa)
+        )
+        m = estimate_M(1 / self.eps, kappa=kappa)
+        np.testing.assert_allclose(m_table, m, rtol=1.1e-2)
