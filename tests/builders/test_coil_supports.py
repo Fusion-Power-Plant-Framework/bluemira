@@ -48,7 +48,6 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.optimiser import Optimiser
 
 
 class TestITERGravitySupportBuilder:
@@ -317,14 +316,19 @@ class TestStraightOISDesigner:
         )
 
         opt_problem = StraightOISOptimisationProblem(wire, keep_out_zone)
-        result_1 = opt_problem.optimise()
-        optimiser = Optimiser(
-            "SLSQP", opt_conditions={"ftol_rel": 1e-10, "max_eval": 1000}
-        )
-        opt_problem = StraightOISOptimisationProblem(
-            wire, keep_out_zone, optimiser=optimiser
-        )
-        result_2 = opt_problem.optimise()
+        result_1 = opt_problem.optimise(
+            x0=np.array([0.0, 1.0]),
+            algorithm="COBYLA",
+            opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
+        ).x
+
+        opt_problem = StraightOISOptimisationProblem(wire, keep_out_zone)
+        result_2 = opt_problem.optimise(
+            x0=np.array([0.0, 1.0]),
+            algorithm="SLSQP",
+            opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
+        ).x
+
         length_1 = result_1[1] - result_1[0]
         length_2 = result_2[1] - result_2[0]
         # Alright so SLSQP isn't going to do as well as COBYLA on this one, but at
