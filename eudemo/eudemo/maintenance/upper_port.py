@@ -20,11 +20,11 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Some crude EU-DEMO remote maintenance considerations
+Some crude EU-DEMO remote maintenance considerations.
 """
 
 from dataclasses import dataclass
-from typing import Dict, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 
@@ -34,13 +34,14 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import make_polygon, slice_shape
-from bluemira.optimisation import optimise
+from bluemira.optimisation import OptimisationProblem
+from bluemira.optimisation.typing import ConstraintT
 from eudemo.tools import get_inner_cut_point
 
 
 @dataclass
-class UpperPortOPParameters(ParameterFrame):
-    """Parameters required to run :class:`UpperPortOP`."""
+class UpperPortParameters(ParameterFrame):
+    """Parameters required to run :class:`UpperPortDesigner`."""
 
     c_rm: Parameter[float]
     """Remote maintenance clearance [m]."""
@@ -54,7 +55,7 @@ class UpperPortOPParameters(ParameterFrame):
     """Blanket outboard thickness [m]."""
 
 
-class UpperPortOpt:
+class UpperPortOP(OptimisationProblem):
     """
     Collection of functions to use to minimise the upper port size.
 
@@ -66,12 +67,49 @@ class UpperPortOpt:
         The required remote maintenance clearance.
     """
 
-    def __init__(self, bb: BluemiraFace, c_rm: float):
+    def __init__(
+        self,
+        bb: BluemiraFace,
+        c_rm: float,
+        R_0: float,
+        tk_bb_ib: float,
+        tk_bb_ob: float,
+        bb_min_angle: float,
+    ):
         self.bb = bb
         self.c_rm = c_rm
+        self.R_0 = R_0
+        self.tk_bb_ib = tk_bb_ib
+        self.bb_min_angle = bb_min_angle
+        self.tk_bb_ob = tk_bb_ob
         self.r_ib_min = self.bb.bounding_box.x_min
         self.r_ob_max = self.bb.bounding_box.x_max
         self.gradient = np.array([-1, 1, 0, 1], dtype=float)
+
+    def objective(self, x: np.ndarray) -> float:
+        """The objective function of the optimisation."""
+        return self.port_size(x)
+
+    def df_objective(self, x: np.ndarray) -> np.ndarray:
+        """The gradient of the objective function."""
+        return self.df_port_size(x)
+
+    def ineq_constraints(self) -> List[ConstraintT]:
+        """Inequality constraints for the problem."""
+        return [
+            {"f_constraint": self.constrain_blanket_cut, "tolerance": np.full(3, 1e-6)}
+        ]
+
+    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+        """The bounds for the optimisation parameters."""
+        lower = [self.r_ib_min - self.c_rm, self.R_0, self.r_ib_min + self.tk_bb_ib, 0]
+        upper = [
+            self.R_0,
+            self.r_ob_max + self.c_rm,
+            self.r_ob_max - self.tk_bb_ob,
+            self.bb_min_angle,
+        ]
+        return np.array(lower), np.array(upper)
 
     def port_size(self, x: np.ndarray) -> float:
         """Return the port size given parameterisation ``x``."""
@@ -137,10 +175,31 @@ class UpperPortOpt:
 
 
 class UpperPortDesigner(Designer[Tuple[BluemiraFace, float, float]]):
-    """Upper Port Designer"""
+    """
+    Designer for an EUDEMO upper port.
 
-    param_cls = UpperPortOPParameters
-    params: UpperPortOPParameters
+    Parameters
+    ----------
+    params:
+        The parameters for the designer. See
+        :class:`.UpperPortParameters` for the parameter list.
+    build_config:
+        The configuration for the designer. The configuration options
+        are:
+
+        * opt_algorithm: the optimisation algorithm to use, note that
+          this must support inequality constraints.
+        * opt_conditions: the stopping conditions to pass to the
+          optimiser.
+    blanket_face:
+        The face defining the poloidal silhouette of the reactor's
+        blanket.
+    upper_port_extrema:
+        The height of the upper end of the port.
+    """
+
+    param_cls = UpperPortParameters
+    params: UpperPortParameters
 
     def __init__(
         self,
@@ -151,6 +210,7 @@ class UpperPortDesigner(Designer[Tuple[BluemiraFace, float, float]]):
     ):
         super().__init__(params, build_config)
         self.blanket_face = blanket_face
+        self.opt_algorithm = self.build_config.get("opt_algorithm", "SLSQP")
         self.opt_conditions = {
             **{"max_eval": 1000, "ftol_rel": 1e-8},
             **self.build_config.get("opt_conditions", {}),
@@ -159,31 +219,19 @@ class UpperPortDesigner(Designer[Tuple[BluemiraFace, float, float]]):
 
     def run(self):
         """Run the design problem to minimise the port size."""
-        r_ib_min = self.blanket_face.bounding_box.x_min
-        r_ob_max = self.blanket_face.bounding_box.x_max
-        c_rm = self.params.c_rm.value
-        R_0 = self.params.R_0.value
-        bb_min_angle = 90 - self.params.bb_min_angle.value
-        tk_bb_ib = self.params.tk_bb_ib.value
-        tk_bb_ob = self.params.tk_bb_ob.value
-
-        opt_problem = UpperPortOpt(bb=self.blanket_face, c_rm=self.params.c_rm.value)
-        opt_result = optimise(
-            opt_problem.port_size,
-            dimensions=4,
-            df_objective=opt_problem.df_port_size,
-            ineq_constraints=[
-                {
-                    "f_constraint": opt_problem.constrain_blanket_cut,
-                    "tolerance": np.full(3, 1e-6),
-                }
-            ],
-            algorithm="SLSQP",
+        opt_problem = UpperPortOP(
+            bb=self.blanket_face,
+            c_rm=self.params.c_rm.value,
+            R_0=self.params.R_0.value,
+            tk_bb_ib=self.params.tk_bb_ib.value,
+            tk_bb_ob=self.params.tk_bb_ob.value,
+            bb_min_angle=(90 - self.params.bb_min_angle.value),
+        )
+        opt_result = opt_problem.optimise(
+            # Initial guess at center of bounds
+            x0=np.vstack(opt_problem.bounds()).mean(axis=0),
+            algorithm=self.opt_algorithm,
             opt_conditions=self.opt_conditions,
-            bounds=(
-                [r_ib_min - c_rm, R_0, r_ib_min + tk_bb_ib, 0],
-                [R_0, r_ob_max + c_rm, r_ob_max - tk_bb_ob, bb_min_angle],
-            ),
         )
         r_up_inner, r_up_outer, r_cut, cut_angle = opt_result.x
 
