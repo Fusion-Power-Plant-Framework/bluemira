@@ -20,13 +20,16 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Definition of panelling optimisation problem for EUDEMO."""
 
+from typing import List, Tuple
+
 import numpy as np
 
-from bluemira.optimisation import optimise
+from bluemira.optimisation import OptimisationProblem
+from bluemira.optimisation.typing import ConstraintT
 from eudemo.blanket.panelling._paneller import Paneller
 
 
-class PanellingOptProblem:
+class PanellingOptProblem(OptimisationProblem):
     """
     Optimisation problem to minimise the cumulative length of first wall panels.
 
@@ -48,7 +51,28 @@ class PanellingOptProblem:
 
     def __init__(self, paneller: Paneller):
         self.paneller = paneller
-        self.bounds = (np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0))
+
+    def objective(self, x: np.ndarray) -> float:
+        """Objective function to minimise the total panel length."""
+        return self.paneller.length(x)
+
+    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+        """The normalized bounds of the parameterisation."""
+        return np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0)
+
+    def ineq_constraints(self) -> List[ConstraintT]:
+        """
+        The inequality constraints for the optimiser.
+
+        We are constraining the tail-to-tail angle between panels and
+        the minimum panel length.
+        """
+        return [
+            {
+                "f_constraint": self.constrain_min_length_and_angles,
+                "tolerance": np.full(self.n_constraints, 1e-8),
+            }
+        ]
 
     @property
     def n_opts(self) -> int:
@@ -79,28 +103,10 @@ class PanellingOptProblem:
         """
         return 2 * self.paneller.n_panels - 1
 
-    def optimise(self) -> np.ndarray:
-        """Perform the optimisation."""
-        return optimise(
-            self.objective,
-            x0=self.paneller.x0,
-            ineq_constraints=[
-                {
-                    "f_constraint": self.constrain_min_length_and_angles,
-                    "tolerance": np.full(self.n_constraints, 1e-8),
-                }
-            ],
-            bounds=self.bounds,
-        ).x
-
-    def objective(self, x: np.ndarray) -> float:
-        """Objective function to minimise the total panel length."""
-        return self.paneller.length(x)
-
     def constrain_min_length_and_angles(self, x: np.ndarray) -> np.ndarray:
         """Constraint function function for the optimiser."""
         n_panels = self.paneller.n_panels
-        constraint = np.empty(self.n_constraints)
+        constraint = np.empty(self.n_constraints, dtype=float)
         constraint[:n_panels] = self._constrain_min_length(x)
         constraint[n_panels:] = self._constrain_max_angle(x)
         return constraint
@@ -116,6 +122,3 @@ class PanellingOptProblem:
         """Return True if any constraints are violated by more that ``atol``."""
         constraint = self.constrain_min_length_and_angles(x)
         return np.any(constraint > atol)
-
-    def check_constraints(self, x: np.ndarray, warn: bool = True) -> bool:
-        return np.all(self.constrain_min_length_and_angles(x) <= 1e-16)

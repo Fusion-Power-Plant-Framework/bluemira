@@ -21,7 +21,7 @@
 """Designer for wall panelling."""
 
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple, Union
+from typing import Any, Dict, Optional, Tuple, Union
 
 import numpy as np
 
@@ -30,7 +30,6 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.error import ExternalOptError
-from bluemira.utilities.optimiser import Optimiser
 from eudemo.blanket.panelling._opt_problem import PanellingOptProblem
 from eudemo.blanket.panelling._paneller import Paneller
 
@@ -112,6 +111,8 @@ class PanellingDesigner(Designer[np.ndarray]):
         self._n_boundary_discr = int(
             self._get_config_or_default("boundary_discretisation")
         )
+        self.opt_algorithm = str(self._get_config_or_default("algorithm"))
+        self.opt_conditions = dict(self._get_config_or_default("opt_conditions"))
 
     def run(self) -> np.ndarray:
         """
@@ -179,7 +180,12 @@ class PanellingDesigner(Designer[np.ndarray]):
         error (which it often does given an infeasible problem).
         """
         try:
-            x_opt = opt_problem.optimise()
+            x_opt = opt_problem.optimise(
+                opt_problem.paneller.x0,
+                check_constraints=False,
+                algorithm=self.opt_algorithm,
+                opt_conditions=self.opt_conditions,
+            ).x
         except ExternalOptError:
             # Avoid 'more than iter SQP iterations' errors stopping the
             # design.
@@ -199,7 +205,12 @@ class PanellingDesigner(Designer[np.ndarray]):
             n_panels = opt_problem.n_opts + 3
             opt_problem = self._set_up_opt_problem(boundary, n_panels)
             try:
-                x_opt = opt_problem.optimise()
+                x_opt = opt_problem.optimise(
+                    opt_problem.paneller.x0,
+                    check_constraints=False,
+                    algorithm=self.opt_algorithm,
+                    opt_conditions=self.opt_conditions,
+                ).x
             except ExternalOptError:
                 x_opt = None
             iter_num += 1
@@ -217,5 +228,5 @@ class PanellingDesigner(Designer[np.ndarray]):
         )
         return PanellingOptProblem(paneller)
 
-    def _get_config_or_default(self, config_key: str) -> Union[str, int]:
+    def _get_config_or_default(self, config_key: str) -> Any:
         return self.build_config.get(config_key, self._defaults[config_key])

@@ -114,6 +114,8 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,
+        check_constraints: bool = True,
+        check_constraints_warn: bool = True,
     ) -> OptimiserResult:
         """
         Perform the optimisation.
@@ -134,6 +136,8 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
             eq_constraints=self.eq_constraints(),
             ineq_constraints=self.ineq_constraints(),
             keep_history=keep_history,
+            check_constraints=check_constraints,
+            check_constraints_warn=check_constraints_warn,
         )
 
     def check_constraints(self, x: np.ndarray, warn: bool = True) -> bool:
@@ -152,6 +156,7 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         -------
         True if any constraints are violated by the parameterisation.
         """
+        print(f"{x=}")
         return validate_constraints(
             x, self.eq_constraints(), self.ineq_constraints(), warn=warn
         )
