@@ -25,17 +25,20 @@ Supporting functions for the bluemira geometry module.
 
 from __future__ import annotations
 
+import enum
 import math
 import os
 import sys
 from copy import deepcopy
 from dataclasses import dataclass, field
+from types import DynamicClassAttribute
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
 
-import freecad  # noqa: F401
+from warnings import warn
+
 import FreeCAD
 import BOPTools
 import BOPTools.GeneralFuseResult
@@ -54,9 +57,10 @@ from FreeCAD import Base
 from pivy import coin, quarter
 from PySide2.QtWidgets import QApplication
 
-from bluemira.base.constants import EPS
+from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.codes._freecadconfig import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import MINIMUM_LENGTH
 
@@ -519,6 +523,14 @@ def make_ellipse(
     return Part.Wire(Part.Edge(output))
 
 
+class JoinType(enum.IntEnum):
+    """See Part/PartEnums.py, its not importable"""
+
+    Arc = 0
+    Tangent = 1
+    Intersect = 2
+
+
 def offset_wire(
     wire: apiWire, thickness: float, join: str = "intersect", open_wire: bool = True
 ) -> apiWire:
@@ -551,14 +563,12 @@ def offset_wire(
     if not _wire_is_planar(wire):
         raise InvalidCADInputsError("Cannot offset a non-planar wire.")
 
-    if join == "arc":
-        f_join = 0
-    elif join == "intersect":
-        f_join = 2
-    else:
+    f_join = JoinType[join.lower().capitalize()]
+    if f_join is JoinType.Tangent:
         # NOTE: The "tangent": 1 option misbehaves in FreeCAD
-        raise InvalidCADInputsError(
-            f"Unrecognised join value: {join}. Please choose from ['arc', 'intersect']."
+        bluemira_warn(
+            f"Join type: {join} is unstable."
+            " Please consider using from ['arc', 'intersect']."
         )
 
     if wire.isClosed() and open_wire:
@@ -567,7 +577,7 @@ def offset_wire(
     shape = apiShape(wire)
     try:
         wire = arrange_edges(
-            wire, shape.makeOffset2D(thickness, f_join, False, open_wire)
+            wire, shape.makeOffset2D(thickness, f_join.value, False, open_wire)
         )
     except Base.FreeCADError as error:
         msg = "\n".join(
@@ -1136,9 +1146,148 @@ def _slice_solid(obj, normal_plane, shift):
 
 
 # ======================================================================================
+# FreeCAD Configuration
+# ======================================================================================
+def _setup_document(
+    parts: Iterable[apiShape], labels: Optional[Iterable[str]] = None
+) -> Iterable[Part.Feature]:
+    """
+    Setup FreeCAD document.
+
+    Converts shapes to FreeCAD Part.Features to enable saving and viewing
+    """
+    if not hasattr(FreeCADGui, "subgraphFromObject"):
+        FreeCADGui.setupWithoutGUI()
+
+    doc = FreeCAD.newDocument()
+
+    if labels is None:
+        # Empty string is the default argument for addObject
+        labels = [""] * len(parts)
+
+    elif len(labels) != len(parts):
+        raise ValueError(
+            f"Number of labels ({len(labels)}) != number of objects ({len(parts)}"
+        )
+
+    for part, label in zip(parts, labels):
+        new_part = part.copy()
+        new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
+        obj = doc.addObject("Part::Feature", label)
+        obj.Shape = new_part
+        doc.recompute()
+        yield obj
+
+
+# ======================================================================================
 # Save functions
 # ======================================================================================
-def save_as_STP(shapes: List[apiShape], filename: str = "test", scale: float = 1.0):
+class CADFileType(enum.Enum):
+    """
+    FreeCAD standard export filetypes
+
+    Notes
+    -----
+    Some filetypes my require additional dependencies see:
+    https://wiki.freecad.org/Import_Export
+    """
+
+    # Commented out currently don't function
+    ACSII_STEREO_MESH = ("ast", "Mesh")
+    ADDITIVE_MANUFACTURING = ("amf", "Mesh")
+    # ASC = ("asc", "Points")
+    # AUTOCAD = ("dwg", "importDWG")
+    AUTOCAD_DXF = ("dxf", "importDXF")
+    # BDF = ("bdf", "feminout.exportNastranMesh")
+    BINMESH = ("bms", "Mesh")
+    BREP = ("brep", "Part")
+    BREP_2 = ("brp", "Part")
+    CSG = ("csg", "exportCSG")
+    # DAE = ("dae", "importDAE")
+    # DAT = ("dat", "Fem")
+    FREECAD = ("FCStd", None)
+    # FENICS_FEM = ("xdmf", "feminout.importFenicsMesh")
+    # FENICS_FEM_XML = ("xml", "feminout.importFenicsMesh")
+    GLTRANSMISSION = ("gltf", "ImportGui")
+    GLTRANSMISSION_2 = ("glb", "ImportGui")
+    IFC_BIM = ("ifc", "exportIFC")
+    IFC_BIM_JSON = ("ifcJSON", "exportIFC")
+    IGES = ("iges", "ImportGui")
+    IGES_2 = ("igs", "ImportGui")
+    # INP = ("inp", "Fem")
+    INVENTOR_V2_1 = ("iv", "Mesh")
+    JSON = ("json", "importJSON")
+    JSON_MESH = ("json", "feminout.importYamlJsonMesh")
+    # MED = ("med", "Fem")
+    # MESHJSON = ("meshjson", "feminout.importYamlJsonMesh")
+    # MESHPY = ("meshpy", "feminout.importPyMesh")
+    # MESHYAML = ("meshyaml", "feminout.importYamlJsonMesh")
+    OBJ = ("obj", "Mesh")
+    OBJ_WAVE = ("obj", "importOBJ")
+    OFF = ("off", "Mesh")
+    OPENSCAD = ("scad", "exportCSG")
+    # PCD = ("pcd", "Points")
+    PDF = ("pdf", "FreeCADGui")
+    # PLY = ("ply", "Points")
+    PLY_STANFORD = ("ply", "Mesh")
+    SIMPLE_MODEL = ("smf", "Mesh")
+    STEP = ("stp", "ImportGui")
+    STEP_2 = ("step", "ImportGui")
+    # STEP_ZIP = ("stpz", "stepZ")
+    STL = ("stl", "Mesh")
+    # SVG = ("svg", "DrawingGui")
+    # SVG_FLAT = ("svg", "importSVG")
+    # TETGEN_FEM = ("poly", "feminout.convert2TetGen")
+    THREED_MANUFACTURING = ("3mf", "Mesh")
+    # UNV = ("unv", "Fem")
+    VRML = ("vrml", "FreeCADGui")
+    VRML_2 = ("wrl", "FreeCADGui")
+    VRML_ZIP = ("wrl.gz", "FreeCADGui")
+    VRML_ZIP_2 = ("wrz", "FreeCADGui")
+    # VTK = ("vtk", "Fem")
+    # VTU = ("vtu", "Fem")
+    # WEBGL = ("html", "importWebGL")
+    WEBGL_X3D = ("xhtml", "FreeCADGui")
+    X3D = ("x3d", "FreeCADGui")
+    X3DZ = ("x3dz", "FreeCADGui")
+    # YAML = ("yaml", "feminout.importYamlJsonMesh")
+    # Z88_FEM_MESH = ("z88", "Fem")
+    # Z88_FEM_MESH_2 = ("i1.txt", "feminout.importZ88Mesh")
+
+    def __new__(cls, *args, **kwds):
+        """Create Enum from first half of tuple"""
+        obj = object.__new__(cls)
+        obj._value_ = args[0]
+        return obj
+
+    def __init__(self, _, module):
+        self.module = module
+
+    @DynamicClassAttribute
+    def exporter(self):
+        """Get exporter module for each filetype"""
+        try:
+            return __import__(self.module).export
+        except AttributeError:
+            modlist = self.module.split(".")
+            if len(modlist) > 1:
+                return getattr(__import__(modlist[0]), modlist[1]).export
+            else:
+                raise FreeCADError(
+                    f"Unable to save to {self.value} please try through the main FreeCAD GUI"
+                )
+        except TypeError:
+            # Assume CADFileType.FREECAD
+            def FreeCADwriter(objs, filename):
+                doc = objs[0].Document
+                doc.saveAs(filename)
+
+            return FreeCADwriter
+
+
+def save_as_STP(
+    shapes: List[apiShape], filename: str = "test", unit_scale: str = "metre", **kwargs
+):
     """
     Saves a series of Shape objects as a STEP assembly
 
@@ -1148,8 +1297,16 @@ def save_as_STP(shapes: List[apiShape], filename: str = "test", scale: float = 1
         Iterable of shape objects to be saved
     filename:
         Full path filename of the STP assembly
-    scale:
+    unit_scale:
         The scale in which to save the Shape objects
+
+    Notes
+    -----
+    This uses the legacy method to save to STP files.
+    It doesnt require freecad documents but also doesnt allow much customisation.
+    Part builds in millimetres therefore we need to scale to metres to be
+    consistent with our units.
+
     """
     filename = force_file_extension(filename, [".stp", ".step"])
 
@@ -1161,12 +1318,94 @@ def save_as_STP(shapes: List[apiShape], filename: str = "test", scale: float = 1
 
     compound = make_compound(shapes)
 
-    if scale != 1.0:
+    if "scale" in kwargs:
+        scale = kwargs["scale"]
+        warn(
+            "Using kwarg 'scale' is no longer supported. Please use 'unit_scale'",
+            category=DeprecationWarning,
+        )
+    else:
+        scale = raw_uc(1, unit_scale, "mm")
+
+    if scale != 1:
         # scale the compound. Since the scale function modifies directly the shape,
         # a copy of the compound is made to avoid modification of the original shapes.
-        compound = compound.copy().scale(scale)
+        compound = scale_shape(compound.copy(), scale)
 
     compound.exportStep(filename)
+
+
+def _scale_obj(objs, scale: float = 1000):
+    """
+    Scale objects
+
+    Notes
+    -----
+    Since the scale function modifies directly the shape,
+    a copy of the shape is made to avoid modification of the original shapes.
+    The scale of Part is in mm by default therefore we scale by 1000 to convert
+    to metres.
+    """
+    if scale != 1:
+        for no, obj in enumerate(objs):
+            objs[no].Shape = scale_shape(obj.Shape.copy(), scale)
+
+
+def save_cad(
+    shapes: Iterable[apiShape],
+    filename: str,
+    formatt: Union[str, CADFileType] = "stp",
+    labels: Optional[Iterable[str]] = None,
+    unit_scale: str = "metre",
+    **kwargs,
+):
+    """
+    Save CAD in a given file format
+
+    Parameters
+    ----------
+    shapes:
+        CAD shape objects to save
+    filename:
+        filename (file extension will be forced base on `formatt`)
+    formatt:
+        file formatt
+    labels:
+        shape labels
+    unit_scale:
+        unit to save the objects as.
+    kwargs:
+        passed to freecad preferences configuration
+
+    Notes
+    -----
+    Part builds in millimetres therefore we need to scale to metres to be
+    consistent with our units
+    """
+    formatt = CADFileType(formatt)
+    filename = force_file_extension(filename, f".{formatt.value}")
+
+    _freecad_save_config(**kwargs)
+
+    objs = list(_setup_document(shapes, labels))
+
+    # Part is always built in mm
+    _scale_obj(objs, scale=raw_uc(1, unit_scale, "mm"))
+
+    # Some exporters need FreeCADGui to be setup before their import,
+    # this is achieved in _setup_document
+    try:
+        formatt.exporter(objs, filename)
+    except ImportError as imp_err:
+        raise FreeCADError(
+            f"Unable to save to {formatt.value} please try through the main FreeCAD GUI"
+        ) from imp_err
+
+    if not os.path.exists(filename):
+        raise FileNotFoundError(
+            f"{filename} not created, filetype not written by FreeCAD."
+            f"Possibly no object compatible with '{formatt.value}'"
+        )
 
 
 # # =============================================================================
@@ -2104,19 +2343,9 @@ def show_cad(
     if app is None:
         app = QApplication([])
 
-    if not hasattr(FreeCADGui, "subgraphFromObject"):
-        FreeCADGui.setupWithoutGUI()
-
-    doc = FreeCAD.newDocument()
-
     root = coin.SoSeparator()
 
-    for label, part, option in zip(labels, parts, options):
-        new_part = part.shape.copy()
-        new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
-        obj = doc.addObject("Part::Feature", label)
-        obj.Shape = new_part
-        doc.recompute()
+    for obj, option in zip(_setup_document(parts, labels), options):
         subgraph = FreeCADGui.subgraphFromObject(obj)
         _colourise(subgraph, option)
         root.addChild(subgraph)

@@ -117,7 +117,7 @@ class TestOffset:
         assert o_rect.length == 6.0
 
     def test_errors(self):
-        with pytest.raises(InvalidCADInputsError):
+        with pytest.raises(KeyError):
             offset_wire(self.rect_wire, 1.0, join="bad")
 
     def test_straight_line(self):

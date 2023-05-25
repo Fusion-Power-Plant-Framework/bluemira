@@ -1021,7 +1021,10 @@ def mirror_shape(
 # # Save functions
 # # =============================================================================
 def save_as_STP(
-    shapes: Union[BluemiraGeo, Iterable[BluemiraGeo]], filename: str, scale: float = 1
+    shapes: Union[BluemiraGeo, Iterable[BluemiraGeo]],
+    filename: str,
+    unit_scale: str = "metre",
+    **kwargs,
 ):
     """
     Saves a series of Shape objects as a STEP assembly
@@ -1032,7 +1035,7 @@ def save_as_STP(
         List of shape objects to be saved
     filename:
         Full path filename of the STP assembly
-    scale:
+    unit_scale:
         The scale in which to save the Shape objects
     """
     filename = force_file_extension(filename, [".stp", ".step"])
@@ -1040,12 +1043,14 @@ def save_as_STP(
     if not isinstance(shapes, list):
         shapes = [shapes]
 
-    freecad_shapes = [s.shape for s in shapes]
-    cadapi.save_as_STP(freecad_shapes, filename, scale)
+    cadapi.save_as_STP([s.shape for s in shapes], filename, unit_scale, **kwargs)
 
 
 def save_cad(
-    components: Union[Component, Iterable[Component]], filename: str, scale: float = 1
+    components: Union[Component, Iterable[Component]],
+    filename: str,
+    formatt: Union[str, cadapi.CADFileType] = "stp",
+    **kwargs,
 ):
     """
     Save the CAD of a component (eg a reactor) or a list of components
@@ -1056,10 +1061,19 @@ def save_cad(
         components to save
     filename:
         Full path filename of the STP assembly
-    scale:
-        The scale in which to save the Shape objects
+    formatt:
+        file format to save as
+    kwargs:
+        arguments passed to cadapi save function
     """
-    save_as_STP(get_properties_from_components(components, "shape"), filename, scale)
+    shape_name = get_properties_from_components(components, ("shape", "name"))
+    if isinstance(shape_name[0], BluemiraGeo):
+        shapes, names = [shape_name[0]], [shape_name[1]]
+    else:
+        shapes, names = zip(*shape_name)
+    cadapi.save_cad(
+        [s.shape for s in shapes], filename, formatt=formatt, labels=names, **kwargs
+    )
 
 
 # ======================================================================================

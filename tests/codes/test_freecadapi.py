@@ -19,13 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import os
 from unittest.mock import patch
 
 import freecad  # noqa: F401
 import numpy as np
 import Part
 import pytest
-from FreeCAD import Base
+from FreeCAD import Base, newDocument
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.codes.error import FreeCADError
@@ -254,3 +255,140 @@ class TestFreecadapi:
 
         with pytest.raises(ValueError):
             func()
+
+    def test_save_cad(self, tmp_path):
+        shape = cadapi.extrude_shape(cadapi.make_circle(), (0, 0, 1))
+        filename = f"{tmp_path}/tst.stp"
+
+        cadapi.save_cad([shape], filename)
+        assert os.path.exists(filename)
+        stp_content = open(filename).read()
+        assert "myshape" not in stp_content
+        assert "Bluemira" in stp_content
+        assert (
+            "AP242_MANAGED_MODEL_BASED_3D_ENGINEERING_MIM_LF. {1 0 10303 442 1 1 4"
+            in stp_content
+        )
+
+        cadapi.save_cad(
+            [shape],
+            filename,
+            labels=["myshape"],
+            author="myfile",
+            stp_file_scheme="AP214IS",
+        )
+        assert os.path.exists(filename)
+        stp_content = open(filename).read()
+        assert "myshape" in stp_content  # shape label in file
+        assert "Bluemira" in stp_content  # bluemira still in file if author changed
+        assert "myfile" in stp_content  # author change
+        assert (
+            "AUTOMOTIVE_DESIGN { 1 0 10303 214 1 1 1 1 }" in stp_content
+        )  # scheme change
+
+
+class TestCADFiletype:
+    @classmethod
+    def setup_class(cls):
+        doc = newDocument()
+        cls.shape = doc.addObject("Part::Feature")
+        cls.shape.Shape = cadapi.extrude_shape(cadapi.make_circle(), (0, 0, 1))
+        doc.recompute()
+
+    def setup_method(self):
+        import FreeCADGui
+
+        if not hasattr(FreeCADGui, "subgraphFromObject"):
+            FreeCADGui.setupWithoutGUI()
+
+    @pytest.mark.parametrize("name, ftype", cadapi.CADFileType.__members__.items())
+    def test_init(self, name, ftype):
+        assert cadapi.CADFileType[name] == ftype
+        assert cadapi.CADFileType(ftype.value) == ftype
+
+    @pytest.mark.parametrize(
+        "name",
+        ("PDF", "VRML", "VRML_2", "VRML_ZIP", "VRML_ZIP_2", "WEBGL_X3D", "X3D", "X3DZ"),
+    )
+    def test_exporter_raised_FreeCADError(self, name, tmp_path):
+        """
+        These extensions require more of FreeCAD than we set up
+        Just tracking them.
+        Some of them may work if other packages are installed.
+        """
+
+        with pytest.raises(FreeCADError):
+            filetype = cadapi.CADFileType[name]
+            filetype.exporter([self.shape], f"{tmp_path/'tst'}.{filetype.value}")
+
+    # Commented out CADFileTypes dont work with basic shapes tested or needed more
+    # FreeCAD imported, should be reviewed in future
+    @pytest.mark.parametrize(
+        "name",
+        (
+            "ACSII_STEREO_MESH",
+            "ADDITIVE_MANUFACTURING",
+            "AUTOCAD_DXF",
+            "BINMESH",
+            "BREP",
+            "BREP_2",
+            "CSG",
+            "FREECAD",
+            "GLTRANSMISSION",
+            "GLTRANSMISSION_2",
+            "IGES",
+            "IGES_2",
+            "INVENTOR_V2_1",
+            "JSON",
+            "JSON_MESH",
+            "OBJ",
+            "OBJ_WAVE",
+            "OFF",
+            "OPENSCAD",
+            "PLY_STANFORD",
+            "SIMPLE_MODEL",
+            "STEP",
+            "STEP_2",
+            "STL",
+            "THREED_MANUFACTURING",
+            # ifcopenshell package required
+            pytest.param("IFC_BIM", marks=[pytest.mark.xfail]),
+            pytest.param("IFC_BIM_JSON", marks=[pytest.mark.xfail]),
+            # # Part.Feature has no compatible object type, find compatible object type
+            # pytest.param("ASC", marks=[pytest.mark.xfail]),
+            # pytest.param("BDF", marks=[pytest.mark.xfail]),
+            # pytest.param("DAT", marks=[pytest.mark.xfail]),
+            # pytest.param("FENICS_FEM", marks=[pytest.mark.xfail]),
+            # pytest.param("FENICS_FEM_XML", marks=[pytest.mark.xfail]),
+            # pytest.param("INP", marks=[pytest.mark.xfail]),
+            # pytest.param("MED", marks=[pytest.mark.xfail]),
+            # pytest.param("MESHJSON", marks=[pytest.mark.xfail]),
+            # pytest.param("MESHPY", marks=[pytest.mark.xfail]),
+            # pytest.param("MESHYAML", marks=[pytest.mark.xfail]),
+            # pytest.param("PCD", marks=[pytest.mark.xfail]),
+            # pytest.param("PLY", marks=[pytest.mark.xfail]),
+            # pytest.param("TETGEN_FEM", marks=[pytest.mark.xfail]),
+            # pytest.param("UNV", marks=[pytest.mark.xfail]),
+            # pytest.param("VTK", marks=[pytest.mark.xfail]),
+            # pytest.param("VTU", marks=[pytest.mark.xfail]),
+            # pytest.param("YAML", marks=[pytest.mark.xfail]),
+            # pytest.param("Z88_FEM_MESH", marks=[pytest.mark.xfail]),
+            # pytest.param("Z88_FEM_MESH_2", marks=[pytest.mark.xfail]),
+            # # No file created probably same problem as above block
+            # pytest.param("AUTOCAD", marks=[pytest.mark.xfail]),
+            # pytest.param("DAE", marks=[pytest.mark.xfail]),
+            # pytest.param("SVG_FLAT", marks=[pytest.mark.xfail]),
+            # pytest.param("STEP_ZIP", marks=[pytest.mark.xfail]),
+            # pytest.param("SVG", marks=[pytest.mark.xfail]),
+            # # More FreeCAD than we import, fails differently on each import
+            # pytest.param("WEBGL", marks=[pytest.mark.xfail]),
+        ),
+    )
+    def test_exporter_function_exists_and_creates_a_file(self, name, tmp_path):
+        filetype = cadapi.CADFileType[name]
+        filename = f"{tmp_path/'tst'}.{filetype.value}"
+        if name != "FREECAD":  # custom function in this case
+            assert filetype.exporter.__name__ == "export"
+
+        cadapi.CADFileType[name].exporter([self.shape], filename)
+        assert os.path.exists(filename)
