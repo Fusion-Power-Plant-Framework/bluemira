@@ -69,6 +69,7 @@ from eudemo.equilibria import (
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
+from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
 from eudemo.maintenance.upper_port import UpperPortDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
@@ -124,6 +125,26 @@ def build_divertor(params, build_config, div_silhouette) -> Divertor:
     """Build the divertor given a silhouette of a sector."""
     builder = DivertorBuilder(params, build_config, div_silhouette)
     return Divertor(builder.build())
+
+
+def build_lower_port(params, build_config, divertor_face, tf_coils_outer_boundary):
+    """Builder for the Lower Port and Duct"""
+    (
+        lp_duct_xz_void_space,
+        lp_duct_xz_koz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
+    ) = LowerPortDuctDesigner(
+        params, build_config, divertor_face, tf_coils_outer_boundary
+    ).execute()
+    builder = LowerPortBuilder(
+        params,
+        build_config,
+        lp_duct_xz_koz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
+    )
+    return builder.build(), lp_duct_xz_koz
 
 
 def build_blanket(
@@ -317,19 +338,28 @@ if __name__ == "__main__":
         reactor.vv_thermal.xz_boundary(),
     )
 
+    lower_port, lower_port_duct_xz_koz = build_lower_port(
+        reactor_config.params_for("Lower Port"),
+        reactor_config.config_for("Lower Port"),
+        ivc_shapes.divertor_face,
+        reactor.tf_coils.xz_outer_boundary(),
+    )
+
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
         reference_eq,
-        reactor.tf_coils.boundary(),
-        pf_coil_keep_out_zones=[],
+        reactor.tf_coils.xz_outer_boundary(),
+        pf_coil_keep_out_zones=[
+            lower_port_duct_xz_koz,
+        ],
     )
 
     reactor.cryostat_thermal = build_cryots(
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "Cryostat"),
         reactor.pf_coils.xz_boundary(),
-        reactor.tf_coils.boundary(),
+        reactor.tf_coils.xz_outer_boundary(),
     )
 
     reactor.coil_structures = build_coil_structures(
@@ -337,7 +367,10 @@ if __name__ == "__main__":
         reactor_config.config_for("Coil structures"),
         tf_coil_xz_face=reactor.tf_coils.xz_face(),
         pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
-        pf_coil_keep_out_zones=[upper_port_xz],
+        pf_coil_keep_out_zones=[
+            upper_port_xz,
+            lower_port_duct_xz_koz,
+        ],
     )
 
     reactor.cryostat = build_cryostat(

@@ -97,7 +97,7 @@ class TFCoil(ComponentManager):
         """
         return self._field_solver.field(x, y, z)
 
-    def boundary(self) -> BluemiraWire:
+    def xz_outer_boundary(self) -> BluemiraWire:
         """Return the outer xz-boundary of the TF Coils."""
         return (
             self.component()
@@ -109,7 +109,7 @@ class TFCoil(ComponentManager):
 
     def xz_face(self) -> BluemiraFace:
         """Return the x-z face of the TF Coils."""
-        outer = self.boundary()
+        outer = self.xz_outer_boundary()
         inner = (
             self.component()
             .get_component("xz")

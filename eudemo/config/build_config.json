@@ -1,6 +1,6 @@
 {
   "Radial build": {
-    "run_mode": "read",
+    "run_mode": "run",
     "read_dir": "config/",
     "run_dir": "config/",
     "plot": false
@@ -119,6 +119,58 @@
       "conditions": {
         "max_eval": 200,
         "ftol_rel": 1e-6
+      }
+    }
+  },
+  "Lower Port": {
+    "params": {
+      "lp_duct_tf_offset": {
+        "value": 3,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Lower duct TF Coil offset."
+      },
+      "lp_duct_div_pad_ob": {
+        "value": 0.3,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Padding applied towards the outboard from the divertor."
+      },
+      "lp_duct_div_pad_ib": {
+        "value": 0.1,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Padding applied towards the inboard from the divertor."
+      },
+      "lp_height": {
+        "value": 3,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Height of the lower port"
+      },
+      "lp_width": {
+        "value": 3,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Width of the lower port"
+      },
+      "lp_duct_angle": {
+        "value": -30,
+        "unit": "degrees",
+        "source": "Input",
+        "long_name": "Angle of the lower port duct to the divertor."
+      },
+      "tf_coil_thickness": {
+        "value": 0.65,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "TF Coil thickness (temporary)."
+      },
+      "lp_duct_wall_tk": {
+        "value": 0.02,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Lower port duct wall thickness."
       }
     }
   },
