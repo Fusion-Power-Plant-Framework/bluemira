@@ -26,7 +26,11 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.optimisation._algorithm import Algorithm
-from bluemira.optimisation._optimise import OptimiserResult, optimise
+from bluemira.optimisation._optimise import (
+    OptimiserResult,
+    optimise,
+    validate_constraints,
+)
 from bluemira.optimisation.typing import ConstraintT
 
 
@@ -130,4 +134,24 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
             eq_constraints=self.eq_constraints(),
             ineq_constraints=self.ineq_constraints(),
             keep_history=keep_history,
+        )
+
+    def check_constraints(self, x: np.ndarray, warn: bool = True) -> bool:
+        """
+        Check if the given parameterisation violates this optimiser's constraints.
+
+        Parameters
+        ----------
+        x:
+            The parametrisation to check the constraints against.
+        warn:
+            If ``True`` print a warning that lists the violated
+            constraints.
+
+        Returns
+        -------
+        True if any constraints are violated by the parameterisation.
+        """
+        return validate_constraints(
+            x, self.eq_constraints(), self.ineq_constraints(), warn=warn
         )
