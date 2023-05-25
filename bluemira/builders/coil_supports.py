@@ -24,7 +24,7 @@ Coil support builders
 """
 
 from dataclasses import dataclass
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Tuple, Type, Union
 
 import numpy as np
 
@@ -54,7 +54,8 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation import optimise
+from bluemira.optimisation import OptimisationProblem
+from bluemira.optimisation.typing import ConstraintT
 
 
 @dataclass
@@ -556,7 +557,7 @@ class PFCoilSupportBuilder(Builder):
         return component
 
 
-class StraightOISOptimisationProblem:
+class StraightOISOptimisationProblem(OptimisationProblem):
     """
     Optimisation problem for a straight outer inter-coil structure
 
@@ -581,6 +582,28 @@ class StraightOISOptimisationProblem:
         self.koz_points = (
             keep_out_zone.boundary[0].discretize(byedges=True, ndiscr=n_koz_discr).xz.T
         )
+
+    def objective(self, x: np.ndarray) -> float:
+        """Objective function to maximise length."""
+        return self.negative_length(x)
+
+    def ineq_constraints(self) -> List[ConstraintT]:
+        """The inequality constraints for the problem."""
+        return [
+            {
+                "f_constraint": self.constrain_koz,
+                "tolerance": np.full(self.n_koz_discr, 1e-6),
+            },
+            {
+                "f_constraint": self.constrain_x,
+                "df_constraint": self.df_constrain_x,
+                "tolerance": np.array([1e-6]),
+            },
+        ]
+
+    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+        """The optimisation parameter bounds."""
+        return np.array([0, 0]), np.array([1, 1])
 
     @staticmethod
     def f_L_to_wire(wire: BluemiraWire, x_norm: List[float]):  # noqa: N802
@@ -713,25 +736,10 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
         ois_wires = []
         for region in ois_regions:
             opt_problem = StraightOISOptimisationProblem(region, koz)
-            result = optimise(
-                opt_problem.negative_length,
-                df_objective=None,
+            result = opt_problem.optimise(
                 x0=np.array([0.0, 1.0]),
                 algorithm="COBYLA",
                 opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
-                bounds=([0, 0], [1, 1]),
-                ineq_constraints=[
-                    {
-                        "f_constraint": opt_problem.constrain_koz,
-                        "tolerance": 1e-6 * np.ones(opt_problem.n_koz_discr),
-                    },
-                    {
-                        "f_constraint": opt_problem.constrain_x,
-                        "df_constraint": opt_problem.df_constrain_x,
-                        "tolerance": np.array([1e-6]),
-                    },
-                ],
-                keep_history=False,
             ).x
             p1 = region.value_at(result[0])
             p2 = region.value_at(result[1])

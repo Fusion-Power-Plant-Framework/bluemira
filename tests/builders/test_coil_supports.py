@@ -48,7 +48,6 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation import optimise
 
 
 class TestITERGravitySupportBuilder:
@@ -317,48 +316,19 @@ class TestStraightOISDesigner:
         )
 
         opt_problem = StraightOISOptimisationProblem(wire, keep_out_zone)
-        result_1 = optimise(
-            opt_problem.negative_length,
-            df_objective=None,
+        result_1 = opt_problem.optimise(
             x0=np.array([0.0, 1.0]),
             algorithm="COBYLA",
             opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
-            bounds=([0, 0], [1, 1]),
-            ineq_constraints=[
-                {
-                    "f_constraint": opt_problem.constrain_koz,
-                    "tolerance": 1e-6 * np.ones(opt_problem.n_koz_discr),
-                },
-                {
-                    "f_constraint": opt_problem.constrain_x,
-                    "df_constraint": opt_problem.df_constrain_x,
-                    "tolerance": np.array([1e-6]),
-                },
-            ],
-            keep_history=False,
         ).x
 
         opt_problem = StraightOISOptimisationProblem(wire, keep_out_zone)
-        result_2 = optimise(
-            opt_problem.negative_length,
-            df_objective=None,
+        result_2 = opt_problem.optimise(
             x0=np.array([0.0, 1.0]),
             algorithm="SLSQP",
-            opt_conditions={"ftol_rel": 1e-10, "max_eval": 1000},
-            bounds=([0, 0], [1, 1]),
-            ineq_constraints=[
-                {
-                    "f_constraint": opt_problem.constrain_koz,
-                    "tolerance": 1e-6 * np.ones(opt_problem.n_koz_discr),
-                },
-                {
-                    "f_constraint": opt_problem.constrain_x,
-                    "df_constraint": opt_problem.df_constrain_x,
-                    "tolerance": np.array([1e-6]),
-                },
-            ],
-            keep_history=False,
+            opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
         ).x
+
         length_1 = result_1[1] - result_1[0]
         length_2 = result_2[1] - result_2[0]
         # Alright so SLSQP isn't going to do as well as COBYLA on this one, but at
