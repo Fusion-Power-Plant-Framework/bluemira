@@ -140,3 +140,33 @@ def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
     c = 1 + 0.98 * eps**2 + 0.49 * eps**4 + 1.47 * eps**6
     d = 0.25 * eps * (1 + 0.84 * eps - 1.44 * eps**2)
     return (1 - eps) ** 2 / ((1 - eps) ** 2 * c + d * np.sqrt(kappa))
+
+
+def calc_qstar_freidberg(
+    R_0: float, A: float, B_0: float, kappa: float, I_p: float
+) -> float:
+    """
+    Calculates the kink safety factor at the plasma edge
+
+    Freidberg, Ideal MHD, p 131
+    \t:math:`q_{*}=\\dfrac{2\\pi a^2 B_0}{\\mu_0 R_0 I_p}`
+    \t:math:`\\bigg(\\dfrac{1+\\kappa^2}{2}\\bigg)`
+
+    Parameters
+    ----------
+    R_0:
+        Plasma major radius [m]
+    A:
+        Plasma aspect ratio
+    B_0:
+        Toroidal field at major radius [T]
+    kappa:
+        Plasma elongation
+    I_p:
+        Plasma current [A]
+
+    Returns
+    -------
+    Kink safety factor
+    """
+    return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa**2) / (MU_0 * R_0 * I_p)

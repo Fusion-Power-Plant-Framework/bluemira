@@ -136,34 +136,6 @@ def calc_psib(
     return psi_bd - 0.5 * MU_0 * R_0 * li * I_p - c_ejima * MU_0 * R_0 * I_p
 
 
-def calc_qstar(R_0: float, A: float, B_0: float, kappa: float, I_p: float) -> float:
-    """
-    Calculates the kink safety factor at the plasma edge
-
-    Freidberg, Ideal MHD, p 131
-    \t:math:`q_{*}=\\dfrac{2\\pi a^2 B_0}{\\mu_0 R_0 I_p}`
-    \t:math:`\\bigg(\\dfrac{1+\\kappa^2}{2}\\bigg)`
-
-    Parameters
-    ----------
-    R_0:
-        Plasma major radius [m]
-    A:
-        Plasma aspect ratio
-    B_0:
-        Toroidal field at major radius [T]
-    kappa:
-        Plasma elongation
-    I_p:
-        Plasma current [A]
-
-    Returns
-    -------
-    Kink safety factor
-    """
-    return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa**2) / (MU_0 * R_0 * I_p)
-
-
 def calc_k0(psi_xx0: float, psi_zz0: float) -> float:
     """
     Calculates the plasma elongation on the plasma axis (rho = 0).
