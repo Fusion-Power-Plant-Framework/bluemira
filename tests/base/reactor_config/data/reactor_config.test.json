@@ -1,10 +1,5 @@
 {
-  "params": {
-    "height": { "value": 180, "unit": "cm" },
-    "age": { "value": 30, "unit": "years" },
-    "only_global": { "value": 1, "unit": "years" },
-    "extra_global": { "value": 1, "unit": "s" }
-  },
+  "params": "$path:reactor_params.global.json",
   "comp A": {
     "params": {
       "height": { "value": 18, "unit": "cm" },

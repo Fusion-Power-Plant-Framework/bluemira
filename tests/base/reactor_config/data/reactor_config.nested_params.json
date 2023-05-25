@@ -1,0 +1,3 @@
+{
+  "Tester": { "params": "$path:reactor_params.global.json" }
+}
