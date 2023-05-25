@@ -281,22 +281,26 @@ def estimate_li_wesson(
     Notes
     -----
     Wesson, Tokamaks 3rd edition, page 120
+
+    This appears to give high values for li, even when using 95th flux surface values
     """
     q_star = calc_qstar_uckan(R_0, A, B_0, I_p, kappa, delta)
+    # q_star = 2*np.pi*(R_0/A)*(kappa*R_0/A)*B_0/(MU_0*I_p*R_0)
+
     nu = q_star / q_0 - 1.0
     return np.log(1.65 + 0.89 * nu)
 
 
 if __name__ == "__main__":
     n = 50
-    q = np.linspace(3.5, 4.0, n)
+
     A = np.linspace(2.6, 3.1, n)
     k = 1.12 * np.linspace(1.75, 1.65, n)
     B = np.linspace(4.1, 5.3, n)
     I_p = np.linspace(20e6, 18.5e6, n)
     delta = 0.5
     q_0 = 1.0
-    R_0 = 8.5
+    R_0 = 9.0
     import matplotlib.pyplot as plt
 
     li = np.zeros(n)
@@ -306,3 +310,32 @@ if __name__ == "__main__":
     f, ax = plt.subplots()
     ax.plot(A, li)
     plt.show()
+
+    R_0 = 8.079
+    A = 2.6
+    kappa = 1.963
+    delta = 0.5
+    kappa_95 = 1.747
+    delta_95 = 0.333
+    B_0 = 4.198
+    I_p = 20.972e6
+
+    qstar_process = 2.762
+    li_process = 1.169
+    qstar = calc_qstar_uckan(R_0, A, B_0, I_p, kappa_95, delta_95)
+    li = estimate_li_wesson(R_0, A, B_0, I_p, kappa_95, delta_95)
+    print(f"{qstar_process=}")
+    print(f"{qstar=}")
+    print(f"{li_process=}")
+    print(f"{li=}")
+
+    W_process = 1.368e9  # [J]
+    b_tot_process = 4.293  # [T]
+    beta = 4.590e-02
+    volume = 2.710e03
+    W_process = 1.5 * beta * b_tot_process**2 / (2 * MU_0) * volume
+
+    Le = estimate_Le(A, kappa) * MU_0 * R_0 / 2
+    Li = 2 * W_process / (I_p) ** 2 - Le
+    li_new = 2 * Li / MU_0 / R_0
+    print(f"{li_new=}")
