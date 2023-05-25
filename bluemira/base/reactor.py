@@ -23,7 +23,7 @@
 import abc
 import time
 from pathlib import Path
-from typing import Any, Callable, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Type, Union
 from warnings import warn
 
 import anytree
@@ -35,8 +35,11 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
-from bluemira.geometry.tools import cadapi, save_cad
+from bluemira.geometry.tools import save_cad
 from bluemira.materials.material import SerialisedMaterial, Void
+
+if TYPE_CHECKING:
+    import bluemira.codes._freecadapi as cadapi
 
 _PLOT_DIMS = ["xy", "xz"]
 _CAD_DIMS = ["xy", "xz", "xyz"]
