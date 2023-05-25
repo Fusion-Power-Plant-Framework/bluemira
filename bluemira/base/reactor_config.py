@@ -300,7 +300,7 @@ class ReactorConfig:
                 raise ReactorConfigError(
                     f"Arg {current_arg_key} is too specific, "
                     "it must either be another JSON object "
-                    "or a path a JSON file."
+                    "or a path to a JSON file."
                 )
 
             # add all keys not in extracted already
