@@ -195,7 +195,7 @@ class ReactorConfig:
 
     @staticmethod
     def _read_or_return(config_path: Union[str, Path, dict]) -> Dict:
-        if isinstance(config_path, str) or isinstance(config_path, Path):
+        if isinstance(config_path, (str, Path)):
             return ReactorConfig._read_json_file(config_path)
         elif isinstance(config_path, dict):
             return config_path
