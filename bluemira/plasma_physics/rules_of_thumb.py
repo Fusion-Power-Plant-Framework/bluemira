@@ -176,7 +176,7 @@ def calc_qstar_freidberg(
 
 
 def calc_qstar_uckan(
-    R_0: float, A: float, B_0: float, kappa: float, I_p: float, delta: float
+    R_0: float, A: float, B_0: float, I_p: float, kappa: float, delta: float
 ) -> float:
     """
     Calculate the cylindrical equivalent safety factor at the plasma edge
@@ -211,7 +211,7 @@ def calc_qstar_uckan(
 
 
 def estimate_q95_uckan(
-    R_0: float, A: float, B_0: float, kappa: float, I_p: float, delta: float
+    R_0: float, A: float, B_0: float, I_p: float, kappa: float, delta: float
 ) -> float:
     """
     Estimate safety factor at the 95th percentile flux surface based on an empirical fit.
@@ -247,12 +247,39 @@ def estimate_li_wesson(
     R_0: float,
     A: float,
     B_0: float,
-    kappa: float,
     I_p: float,
+    kappa: float,
     delta: float,
     q_0: float = 1.0,
 ) -> float:
     """
-    Estimate the plasma internal inductance based on an empirical fit.
+    Estimate the normalised plasma internal inductance based on an empirical fit.
+
+    Parameters
+    ----------
+    R_0:
+        Plasma major radius [m]
+    A:
+        Plasma aspect ratio
+    B_0:
+        Toroidal field at major radius [T]
+    I_p:
+        Plasma current [A]
+    kappa:
+        Plasma elongation
+    delta:
+        Plasma triangularity
+    q_0:
+        Safety factor on axis
+
+    Returns
+    -------
+    Normalised lasma internal inductance
+
+    Notes
+    -----
+    Wesson, Tokamaks 3rd edition, page 120
     """
-    pass
+    q_star = calc_qstar_uckan(R_0, A, B_0, I_p, kappa, delta)
+    nu = q_star / q_0 - 1.0
+    return np.log(1.65 + 0.89 * nu)
