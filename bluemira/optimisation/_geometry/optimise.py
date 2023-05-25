@@ -72,7 +72,6 @@ def optimise_geometry(
     df_objective: Optional[GeomOptimiserCallable] = None,
     *,
     keep_out_zones: Iterable[BluemiraWire] = (),
-    keep_in_zones: Iterable[BluemiraWire] = (),
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
@@ -80,7 +79,6 @@ def optimise_geometry(
     ineq_constraints: Iterable[GeomConstraintT] = (),
     keep_history: bool = False,
     koz_discretisation: Union[int, Iterable[int]] = 100,
-    kiz_discretisation: Union[int, Iterable[int]] = 100,
 ) -> GeomOptimiserResult[_GeomT]:
     r"""
     Minimise the given objective function for a geometry parameterisation.
@@ -103,9 +101,6 @@ def optimise_geometry(
     keep_out_zones:
         An iterable of closed wires, defining areas the geometry must
         not intersect.
-    keep_in_zones:
-        An iterable list of closed wires, defining areas the geometry
-        must wholly lie within.
     algorithm:
         The optimisation algorithm to use, by default ``Algorithm.SLSQP``.
     opt_conditions:
@@ -184,13 +179,6 @@ def optimise_geometry(
         keep-out zone is discretised using value in the i-th item.
         The iterable should have the same number of items as
         ``keep_out_zones``.
-    kiz_discretisation:
-        The number of points to discretise the keep-in zone(s) over.
-        If this is an int, all keep-in zones will be discretised with
-        the same number of points. If this is an iterable, each i-th
-        keep-in zone is discretised using value in the i-th item.
-        The iterable should have the same number of items as
-        ``keep_in_zones``.
 
     Returns
     -------
@@ -208,10 +196,6 @@ def optimise_geometry(
     for koz, discr in zip_with_scalar(keep_out_zones, koz_discretisation):
         ineq_constraints_list.append(
             _tools.make_keep_out_zone_constraint(koz, n_discr=discr)
-        )
-    for kiz, discr in zip_with_scalar(keep_in_zones, kiz_discretisation):
-        ineq_constraints_list.append(
-            _tools.make_keep_in_zone_constraint(kiz, n_discr=discr)
         )
 
     result = optimise(
