@@ -140,10 +140,11 @@ class UpperPortOP(OptimisationProblem):
 
         c1. The outboard blanket must fit through the port.
         c2. The inboard blanket must squeeze past the other blanket
-            segment. Note that this also enforces that the inboard
-            blanket fits through the port.
+            segment and out the port. Hence, this also enforces that
+            the inboard blanket fits through the port.
         c3. There should be enough vertically accessible space on the
-            inboard blanket.
+            inboard blanket to connect pipes and a remote attachment
+            point.
         """
         ri, ro, ci, gamma = x
         co = self.get_outer_cut_point(ci, gamma)[0]
