@@ -156,74 +156,6 @@ class MyReactor(Reactor):
 
 # %% [markdown]
 #
-# Now we want to define a way to optimise the TF coil shape.
-# We want to minimise the length of the TF coil, constraining the optimiser such that
-# the any part of the coil is always a minimum distance away from the plasma.
-#
-# Further information on geometry can be found in the
-# [geometry tutorial](../geometry/geometry_tutorial.ex.py) and information about
-# geometry optimisation can be found in the
-# [geometry optimisation tutorial](../geometry/optimisation_tutorial.ex.py).
-
-
-# %%
-class MyTFCoilOptProblem:
-    """
-    A simple geometry optimisation problem for the TF coil current centreline
-
-    Here we:
-
-    minimise: length
-        subject to:
-            min_distance_to_LCFS >= min_distance
-    """
-
-    def __init__(
-        self,
-        geometry_parameterisation: GeometryParameterisation,
-        lcfs: BluemiraWire,
-        min_distance: float,
-    ):
-        self.parameterisation = geometry_parameterisation
-        self.lcfs = lcfs
-        self.min_distance = min_distance
-
-    def calculate_length(self, geom) -> float:
-        """
-        The objective evaluation function
-        """
-        shape = geom.create_shape()
-        return shape.length
-
-    def constraint_value(self, geom) -> float:
-        """
-        The constraint evaluation function
-        """
-        shape = geom.create_shape()
-        return self.min_distance - distance_to(shape, self.lcfs)[0]
-
-    def optimise(self, x0=None):
-        """
-        Run the optimisation problem.
-        """
-        x_star = optimise_geometry(
-            self.parameterisation,
-            self.calculate_length,
-            algorithm="SLSQP",
-            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
-            ineq_constraints=[
-                {
-                    "f_constraint": self.constraint_value,
-                    "tolerance": np.array([1e-6]),
-                }
-            ],
-        ).x
-        self.parameterisation.variables.set_values_from_norm(x_star)
-        return self.parameterisation
-
-
-# %% [markdown]
-#
 # We need to define some `Designers` and `Builders` for our various `Components`.
 #
 # Firstly the plasma.
@@ -236,7 +168,7 @@ class MyTFCoilOptProblem:
 
 
 # %%
-class PlasmaDesigner(Designer):
+class PlasmaDesigner(Designer[GeometryParameterisation]):
     """Design a plasma's LCFS using a Johner paramterisation."""
 
     param_cls = PlasmaDesignerParams
@@ -315,14 +247,17 @@ class PlasmaBuilder(Builder):
 #
 # And now the TF Coil, in this instance for simplicity we are only making one TF coil.
 #
-# The TF coil designer is finding the given geometry parameterisation given a string
-# in the `build_config` which should point to a class.
-# The parameterisation is then fed into the optimisation problem we made earlier.
-# Finally when the designer is executed the optimisation problem is run to generate
-# the centreline wire of the coil.
+# The TF coil designer finds the geometry parameterisation given in
+# the `build_config` which should point to a class.
+# The parameterisation is then fed into the optimiser that
+# minimises the size of the TF coil, whilst keeping at least a meter away
+# from the plasma at any point.
+# Further information on geometry and geometry optimisations can be found in the
+# [geometry tutorial](../geometry/geometry_tutorial.ex.py) and
+# [geometry optimisation tutorial](../optimisation/geometry_optimisation.ex.py).
 #
-# The TF coil builder then is passed the centreline from the designer to create the
-# Component and therefore the CAD of the TF coil.
+# The TF coil builder is then passed the centreline from the designer to create the
+# Component and the CAD of the TF coil.
 # If more TF coils were to be required the build_xyz of `TFCoilBuilder` would need to
 # be modified.
 #
@@ -330,7 +265,7 @@ class PlasmaBuilder(Builder):
 
 
 # %%
-class TFCoilDesigner(Designer):
+class TFCoilDesigner(Designer[GeometryParameterisation]):
     """TF coil Designer"""
 
     param_cls = None  # This designer takes no parameters
@@ -348,12 +283,32 @@ class TFCoilDesigner(Designer):
         parameterisation = self.parameterisation_cls(
             var_dict=self.build_config["var_dict"]
         )
-        my_tf_coil_opt_problem = MyTFCoilOptProblem(
-            parameterisation,
-            self.lcfs,
-            min_distance=1.0,  # the coil must be >= 1 meter from the LCFS
+        min_dist_to_plasma = 1  # meter
+        return self.minimise_tf_coil_size(parameterisation, min_dist_to_plasma)
+
+    def minimise_tf_coil_size(
+        self, geom: GeometryParameterisation, min_dist_to_plasma: float
+    ) -> GeometryParameterisation:
+        """
+        Run an optimisation to minimise the size of the TF coil.
+
+        We're minimising the size of the coil whilst always keeping a
+        minimum distance to the plasma.
+        """
+        distance_constraint = {
+            "f_constraint": lambda g: self._constrain_distance(g, min_dist_to_plasma),
+            "tolerance": np.array([1e-6]),
+        }
+        optimisation_result = optimise_geometry(
+            geom=geom,
+            f_objective=lambda g: g.create_shape().length,
+            opt_conditions={"max_eval": 500, "ftol_rel": 1e-6},
+            ineq_constraints=[distance_constraint],
         )
-        return my_tf_coil_opt_problem.optimise()
+        return optimisation_result.geom
+
+    def _constrain_distance(self, geom: BluemiraWire, min_distance: float) -> np.ndarray:
+        return np.array(min_distance - distance_to(geom.create_shape(), self.lcfs)[0])
 
 
 class TFCoilBuilder(Builder):
@@ -361,6 +316,7 @@ class TFCoilBuilder(Builder):
     Build a 3D model of a TF Coil from a given centre line
     """
 
+    params: TFCoilBuilderParams
     param_cls = TFCoilBuilderParams
 
     def __init__(self, params, centreline):
