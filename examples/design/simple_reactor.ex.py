@@ -88,7 +88,7 @@ from bluemira.utilities.tools import get_class_from_module
 # %%
 @dataclass
 class PlasmaDesignerParams(ParameterFrame):
-    """Plasma Designer ParameterFrame"""
+    """Parameters for designing a plasma."""
 
     R_0: Parameter[float]
     A: Parameter[float]
@@ -105,7 +105,7 @@ class PlasmaDesignerParams(ParameterFrame):
 
 @dataclass
 class TFCoilBuilderParams(ParameterFrame):
-    """TF Coil Builder ParameterFrame"""
+    """Parameters for building a TF coil."""
 
     tf_wp_width: Parameter[float]
     tf_wp_depth: Parameter[float]
@@ -118,7 +118,7 @@ class TFCoilBuilderParams(ParameterFrame):
 
 # %%
 class Plasma(ComponentManager):
-    """Plasma manager"""
+    """Plasma component manager."""
 
     def lcfs(self):
         """Get separatrix"""
@@ -128,7 +128,7 @@ class Plasma(ComponentManager):
 
 
 class TFCoil(ComponentManager):
-    """TF Coil manager"""
+    """TF Coil component manager."""
 
     def wp_volume(self):
         """Get winding pack volume"""
@@ -143,12 +143,12 @@ class TFCoil(ComponentManager):
 # %% [markdown]
 #
 # We then need a reactor in which to store the components.
-# Notice that the typing of the components here is the relevent `ComponentManager`
+# Notice that the typing of the components here is the relevant `ComponentManager`
 
 
 # %%
 class MyReactor(Reactor):
-    """Reactor container"""
+    """A simple reactor with two components."""
 
     plasma: Plasma
     tf_coil: TFCoil
@@ -164,12 +164,12 @@ class MyReactor(Reactor):
 # last-closed-flux-surface (LCFS).
 #
 # In this case `PlasmaDesigner` has some required parameters but `PlasmaBuilder` does
-# not
+# not.
 
 
 # %%
 class PlasmaDesigner(Designer[GeometryParameterisation]):
-    """Design a plasma's LCFS using a Johner paramterisation."""
+    """Design a plasma's LCFS using a Johner parametrisation."""
 
     param_cls = PlasmaDesignerParams
 
@@ -266,7 +266,7 @@ class PlasmaBuilder(Builder):
 
 # %%
 class TFCoilDesigner(Designer[GeometryParameterisation]):
-    """TF coil Designer"""
+    """TF coil shape designer."""
 
     param_cls = None  # This designer takes no parameters
 
@@ -279,7 +279,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         )
 
     def run(self) -> GeometryParameterisation:
-        """TF coil run method"""
+        """Run the design of the TF coil."""
         parameterisation = self.parameterisation_cls(
             var_dict=self.build_config["var_dict"]
         )
@@ -313,7 +313,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
 class TFCoilBuilder(Builder):
     """
-    Build a 3D model of a TF Coil from a given centre line
+    Build a 3D model of a TF Coil from a given centre line.
     """
 
     params: TFCoilBuilderParams
