@@ -200,7 +200,7 @@ class ReactorConfig:
         elif isinstance(config_path, dict):
             return config_path
         raise ReactorConfigError(
-            "config_path must be either a dict, a Path object, or a string"
+            f"config_path must be either a dict, a Path object, or a string, found {type(config_path)}."
         )
 
     @staticmethod
