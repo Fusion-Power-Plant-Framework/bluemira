@@ -143,12 +143,11 @@ def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
 
 
 def calc_qstar_freidberg(
-    R_0: float, A: float, B_0: float, kappa: float, I_p: float
+    R_0: float, A: float, B_0: float, I_p: float, kappa: float
 ) -> float:
     """
-    Calculates the kink safety factor at the plasma edge
+    Calculate the kink safety factor at the plasma edge
 
-    Freidberg, Ideal MHD, p 131
     \t:math:`q_{*}=\\dfrac{2\\pi a^2 B_0}{\\mu_0 R_0 I_p}`
     \t:math:`\\bigg(\\dfrac{1+\\kappa^2}{2}\\bigg)`
 
@@ -160,13 +159,100 @@ def calc_qstar_freidberg(
         Plasma aspect ratio
     B_0:
         Toroidal field at major radius [T]
-    kappa:
-        Plasma elongation
     I_p:
         Plasma current [A]
+    kappa:
+        Plasma elongation
 
     Returns
     -------
     Kink safety factor
+
+    Notes
+    -----
+    Freidberg, Ideal MHD, p 131
     """
     return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa**2) / (MU_0 * R_0 * I_p)
+
+
+def calc_qstar_uckan(
+    R_0: float, A: float, B_0: float, kappa: float, I_p: float, delta: float
+) -> float:
+    """
+    Calculate the cylindrical equivalent safety factor at the plasma edge
+
+    Parameters
+    ----------
+    R_0:
+        Plasma major radius [m]
+    A:
+        Plasma aspect ratio
+    B_0:
+        Toroidal field at major radius [T]
+    I_p:
+        Plasma current [A]
+    kappa:
+        Plasma elongation
+    delta:
+        Plasma triangularity
+
+    Returns
+    -------
+    Cylindrical equivalent safety factor
+
+    Notes
+    -----
+    Uckan et al., ITER Physics Design Guidelines, 1989, sec. 2.3
+    https://inis.iaea.org/search/search.aspx?orig_q=RN:21068960
+    """
+    a = R_0 / A
+    shape_factor = 0.5 + 0.5 * kappa**2 * (1 + 2 * delta**2 - 1.2 * delta**3)
+    return 5 * a**2 * B_0 / (R_0 * I_p) * shape_factor
+
+
+def estimate_q95_uckan(
+    R_0: float, A: float, B_0: float, kappa: float, I_p: float, delta: float
+) -> float:
+    """
+    Estimate safety factor at the 95th percentile flux surface based on an empirical fit.
+
+    Parameters
+    ----------
+    R_0:
+        Plasma major radius [m]
+    A:
+        Plasma aspect ratio
+    B_0:
+        Toroidal field at major radius [T]
+    I_p:
+        Plasma current [A]
+    kappa:
+        Plasma elongation
+    delta:
+        Plasma triangularity
+
+    Notes
+    -----
+    Uckan et al., ITER Physics Design Guidelines, 1989, sec. 2.3
+    https://inis.iaea.org/search/search.aspx?orig_q=RN:21068960
+    Ref [11] in the above does not appear to include the geometry factor
+    """
+    eps = 1 / A
+    geometry_factor = (1.17 - 0.65 * eps) / (1 - eps**2) ** 2
+    q_star = calc_qstar_uckan(R_0, A, B_0, I_p, kappa, delta)
+    return q_star * geometry_factor
+
+
+def estimate_li_wesson(
+    R_0: float,
+    A: float,
+    B_0: float,
+    kappa: float,
+    I_p: float,
+    delta: float,
+    q_0: float = 1.0,
+) -> float:
+    """
+    Estimate the plasma internal inductance based on an empirical fit.
+    """
+    pass
