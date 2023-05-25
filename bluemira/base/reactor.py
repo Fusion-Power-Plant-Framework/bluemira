@@ -85,7 +85,7 @@ class BaseManager(abc.ABC):
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
         filename:
-            the filename to save, will default to the component name
+            the filename to save
         formatt:
             CAD file format
         directory:
