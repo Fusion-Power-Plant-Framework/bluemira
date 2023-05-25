@@ -88,15 +88,6 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         return []
 
-    def keep_in_zones(self) -> List[BluemiraWire]:
-        """
-        List of geometric keep-in zones.
-
-        An iterable list of closed wires, defining areas the geometry
-        must wholly lie within.
-        """
-        return []
-
     def optimise(
         self,
         geom: _GeomT,
@@ -106,7 +97,6 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,
         koz_discretisation: Union[int, Iterable[int]] = 100,
-        kiz_discretisation: Union[int, Iterable[int]] = 100,
     ) -> GeomOptimiserResult[_GeomT]:
         """
         Run the geometry optimisation.
@@ -126,7 +116,6 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
             f_objective=self.objective,
             df_objective=df_objective,
             keep_out_zones=self.keep_out_zones(),
-            keep_in_zones=self.keep_in_zones(),
             algorithm=algorithm,
             opt_conditions=opt_conditions,
             opt_parameters=opt_parameters,
@@ -134,5 +123,4 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
             ineq_constraints=self.ineq_constraints(),
             keep_history=keep_history,
             koz_discretisation=koz_discretisation,
-            kiz_discretisation=kiz_discretisation,
         )
