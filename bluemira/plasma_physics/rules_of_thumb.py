@@ -25,7 +25,7 @@ A collection of simple 0-D rules of thumb for tokamak plasmas.
 
 import numpy as np
 
-from bluemira.base.constants import EV_TO_J, K_BOLTZMANN, MU_0
+from bluemira.base.constants import EV_TO_J, K_BOLTZMANN, MU_0, raw_uc
 from bluemira.plasma_physics.collisions import coulomb_logarithm, spitzer_conductivity
 
 
@@ -172,6 +172,7 @@ def calc_qstar_freidberg(
     -----
     Freidberg, Ideal MHD, p 131
     """
+    I_p = raw_uc(I_p, "A", "MA")
     return np.pi * (R_0 / A) ** 2 * B_0 * (1 + kappa**2) / (MU_0 * R_0 * I_p)
 
 
@@ -206,6 +207,7 @@ def calc_qstar_uckan(
     https://inis.iaea.org/search/search.aspx?orig_q=RN:21068960
     """
     a = R_0 / A
+    I_p = raw_uc(I_p, "A", "MA")
     shape_factor = 0.5 + 0.5 * kappa**2 * (1 + 2 * delta**2 - 1.2 * delta**3)
     return 5 * a**2 * B_0 / (R_0 * I_p) * shape_factor
 
@@ -283,3 +285,24 @@ def estimate_li_wesson(
     q_star = calc_qstar_uckan(R_0, A, B_0, I_p, kappa, delta)
     nu = q_star / q_0 - 1.0
     return np.log(1.65 + 0.89 * nu)
+
+
+if __name__ == "__main__":
+    n = 50
+    q = np.linspace(3.5, 4.0, n)
+    A = np.linspace(2.6, 3.1, n)
+    k = 1.12 * np.linspace(1.75, 1.65, n)
+    B = np.linspace(4.1, 5.3, n)
+    I_p = np.linspace(20e6, 18.5e6, n)
+    delta = 0.5
+    q_0 = 1.0
+    R_0 = 8.5
+    import matplotlib.pyplot as plt
+
+    li = np.zeros(n)
+    for i, xi in enumerate(A):
+        li[i] = estimate_li_wesson(R_0, A[i], B[i], I_p[i], k[i], delta, q_0)
+
+    f, ax = plt.subplots()
+    ax.plot(A, li)
+    plt.show()
