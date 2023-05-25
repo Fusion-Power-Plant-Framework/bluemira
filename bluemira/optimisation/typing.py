@@ -30,15 +30,33 @@ class ObjectiveCallable(Protocol):
     """Form for an optimiser objective function."""
 
     def __call__(self, x: np.ndarray) -> float:
-        """Call the optimiser function."""
+        """
+        Call the objective function.
+
+        Parameters
+        ----------
+        x:
+            The optimisation parameters.
+        """
         ...
 
 
 class OptimiserCallable(Protocol):
-    """Form for an non-objective optimiser function (derivative, constraint, etc.)."""
+    """
+    Form for an non-objective optimiser function.
+
+    This is the form for a gradient, constraint, or constraint gradient.
+    """
 
     def __call__(self, x: np.ndarray) -> np.ndarray:
-        """Call the optimiser function."""
+        """
+        Call the optimiser function.
+
+        Parameters
+        ----------
+        x:
+            The optimisation parameters.
+        """
         ...
 
 
