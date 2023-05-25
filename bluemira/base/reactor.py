@@ -64,6 +64,35 @@ class BaseManager(abc.ABC):
         """
 
     @abc.abstractmethod
+    def save_cad(
+        self,
+        *dims: str,
+        filter_: Union[Callable[[Component], bool], None],
+        filename: Optional[str] = None,
+        formatt: Union[str, cadapi.CADFileType] = "stp",
+        directory: str = "",
+        **kwargs,
+    ):
+        """
+        Save the CAD build of the component.
+
+        Parameters
+        ----------
+        *dims:
+            The dimension of the reactor to show, typically one of
+            'xz', 'xy', or 'xyz'. (default: 'xyz')
+        filter_:
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
+        filename:
+            the filename to save, will default to the component name
+        formatt:
+            CAD file format
+        directory:
+            Directory to save into
+        """
+
+    @abc.abstractmethod
     def show_cad(
         self,
         *dims: str,
