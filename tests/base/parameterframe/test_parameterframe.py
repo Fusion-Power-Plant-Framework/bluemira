@@ -293,6 +293,18 @@ class TestParameterFrame:
         assert frame.age.value is None
         assert frame.age.source != "a test"
 
+    def test_get_values(self):
+        frame = BasicFrame.from_dict(FRAME_DATA)
+
+        assert frame.get_values("height", "age") == (
+            frame.height.value,
+            frame.age.value,
+        )
+        assert frame.height.value_as("cm") == pytest.approx(
+            FRAME_DATA["height"]["value"]
+        )
+        assert frame.age.value_as("yr") == pytest.approx(FRAME_DATA["age"]["value"])
+
     def _call_tabulate(self, head_keys):
         frame_data = deepcopy(FRAME_DATA)
         frame_data["height"]["unit"] = "m"

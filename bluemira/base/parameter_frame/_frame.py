@@ -92,6 +92,15 @@ class ParameterFrame:
             except TypeError:
                 self.update_values(new_values)
 
+    def get_values(self, *names: str) -> Tuple[ParameterValueType, ...]:
+        """Get values of a set of Parameters"""
+        try:
+            return tuple(getattr(self, n).value for n in names)
+        except AttributeError:
+            raise AttributeError(
+                f"Parameters {[n for n in names if not hasattr(self, n)]} not in ParameterFrame"
+            )
+
     def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values."""
         for key, value in new_values.items():
@@ -314,8 +323,7 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
         not hasattr(member_type, "__origin__") or member_type.__origin__ is not Parameter
     ):
         raise TypeError(f"Field '{field}' does not have type Parameter.")
-    value_types = get_args(member_type)
-    return value_types
+    return get_args(member_type)
 
 
 def _validate_units(param_data: Dict, value_type: Iterable[Type]):
