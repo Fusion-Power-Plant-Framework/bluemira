@@ -1,0 +1,4 @@
+{
+  "nest_a": "$path:./nest_a/nest_a.config.json",
+  "nest_b": "$path:./nest_b/nest_b.config.json"
+}

@@ -41,7 +41,7 @@ nested_config_path = Path(__file__).parent / "data" / "reactor_config.nested_con
 nested_params_config_path = (
     Path(__file__).parent / "data" / "reactor_config.nested_params.json"
 )
-global_params_path = Path(__file__).parent / "data" / "reactor_params.global.json"
+nesting_config_path = Path(__file__).parent / "data" / "reactor_config.nesting.json"
 
 
 class TestReactorConfigClass:
@@ -49,11 +49,8 @@ class TestReactorConfigClass:
     Tests for the Reactor Config class functionality.
     """
 
-    def test_file_loading_with_empty_config(
-        self,
-        caplog,
-    ):
-        reactor_config = ReactorConfig(empty_config_path.as_posix(), EmptyFrame)
+    def test_file_loading_with_empty_config(self, caplog):
+        reactor_config = ReactorConfig(empty_config_path, EmptyFrame)
 
         # want to know explicitly if it is an EmptyFrame
         assert type(reactor_config.global_params) is EmptyFrame
@@ -70,14 +67,20 @@ class TestReactorConfigClass:
 
     def test_incorrect_global_config_type_empty_config(self):
         with pytest.raises(ValueError):
-            ReactorConfig(empty_config_path.as_posix(), TestGlobalParams)
+            ReactorConfig(empty_config_path, TestGlobalParams)
 
     def test_incorrect_global_config_type_non_empty_config(self):
         with pytest.raises(ValueError):
-            ReactorConfig(test_config_path.as_posix(), EmptyFrame)
+            ReactorConfig(test_config_path, EmptyFrame)
+
+    def test_throw_on_too_specific_arg(self):
+        reactor_config = ReactorConfig(test_config_path, TestGlobalParams)
+
+        with pytest.raises(ReactorConfigError):
+            reactor_config.config_for("comp A", "config_a", "a_value")
 
     def test_set_global_params(self, caplog):
-        reactor_config = ReactorConfig(test_config_path.as_posix(), TestGlobalParams)
+        reactor_config = ReactorConfig(test_config_path, TestGlobalParams)
 
         cp = reactor_config.params_for("comp A", "designer")
 
@@ -94,6 +97,11 @@ class TestReactorConfigClass:
 
         self._compa_designer_param_value_checks(cpf)
 
+        cpf.only_global.value = raw_uc(2, "years", "s")
+        assert cpf.only_global.value == raw_uc(2, "years", "s")
+        assert reactor_config.global_params.only_global.value == raw_uc(2, "years", "s")
+        assert cpf.only_global is reactor_config.global_params.only_global
+
     def _compa_designer_param_value_checks(self, cpf):
         assert cpf.only_global.value == raw_uc(1, "years", "s")
         assert cpf.height.value == 1.8
@@ -101,12 +109,9 @@ class TestReactorConfigClass:
         assert cpf.name.value == "Comp A"
         assert cpf.location.value == "here"
 
-    def test_params_for_warnings_make_param_frame_type_value_overrides(
-        self,
-        caplog,
-    ):
+    def test_params_for_warnings_make_param_frame_type_value_overrides(self, caplog):
         reactor_config = ReactorConfig(
-            test_config_path.as_posix(),
+            test_config_path,
             TestGlobalParams,
         )
 
@@ -125,12 +130,9 @@ class TestReactorConfigClass:
         assert cpf.height is reactor_config.global_params.height
         assert cpf.age is reactor_config.global_params.age
 
-    def test_config_for_warnings_value_overrides(
-        self,
-        caplog,
-    ):
+    def test_config_for_warnings_value_overrides(self, caplog):
         reactor_config = ReactorConfig(
-            test_config_path.as_posix(),
+            test_config_path,
             TestGlobalParams,
         )
 
@@ -187,16 +189,14 @@ class TestReactorConfigClass:
         assert len(cf_comp_a_des) == 0
         assert len(cf_comp_a_des_dne) == 0
 
-    def test_invalid_rc_initialization(
-        self,
-    ):
+    def test_invalid_rc_initialization(self):
         with pytest.raises(ReactorConfigError):
             ReactorConfig(
                 ["wrong"],
                 EmptyFrame,
             )
 
-    def test_args_arent_str(self, caplog):
+    def test_args_arent_str(self):
         reactor_config = ReactorConfig(
             {
                 "comp A": {
@@ -216,12 +216,12 @@ class TestReactorConfigClass:
             "only_global": {"value": 31557600, "unit": "s"},
             "extra_global": {"value": 1, "unit": "s"},
         }
-        reactor_config = ReactorConfig(nested_params_config_path.as_posix(), EmptyFrame)
+        reactor_config = ReactorConfig(nested_params_config_path, EmptyFrame)
         pf = make_parameter_frame(reactor_config.params_for("Tester"), TestGlobalParams)
         assert pf == TestGlobalParams.from_dict(out_dict)
 
     def test_file_path_loading_in_json_nested_config(self):
-        reactor_config = ReactorConfig(nested_config_path.as_posix(), EmptyFrame)
+        reactor_config = ReactorConfig(nested_config_path, EmptyFrame)
 
         pf = make_parameter_frame(
             reactor_config.params_for("Tester", "comp A", "designer"),
@@ -234,3 +234,12 @@ class TestReactorConfigClass:
         assert compa_designer_config["config_a"] == {"a_value": "overridden_value"}
         assert compa_designer_config["config_b"] == {"b_value": "b_value"}
         assert compa_designer_config["config_c"] == {"c_value": "c_value"}
+
+    def test_deeply_nested_files(self):
+        reactor_config = ReactorConfig(nesting_config_path, EmptyFrame)
+
+        assert reactor_config.config_for("nest_a")["a_val"] == "nest_a"
+        assert reactor_config.config_for("nest_b")["a_val"] == "nest_b"
+
+        assert reactor_config.params_for("nest_a").local_params["a_param"] == "nest_a"
+        assert reactor_config.params_for("nest_b").local_params["a_param"] == "nest_b"

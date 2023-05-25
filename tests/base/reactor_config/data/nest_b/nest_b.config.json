@@ -1,0 +1,4 @@
+{
+  "params": "$path:nest_b_inner/nest_b.params.json",
+  "a_val": "nest_b"
+}

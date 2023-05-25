@@ -87,7 +87,7 @@ class ReactorConfig:
 
     def __init__(
         self,
-        config_path: Union[str, dict],
+        config_path: Union[str, Path, dict],
         global_params_type: Type[_PfT],
         warn_on_duplicate_keys: bool = True,
         warn_on_empty_local_params: bool = True,
@@ -98,7 +98,7 @@ class ReactorConfig:
         self.warn_on_empty_config = warn_on_empty_config
 
         config_data = self._read_or_return(config_path)
-        if isinstance(config_path, str):
+        if not isinstance(config_path, dict):
             self._expand_paths_in_dict(config_data, Path(config_path).parent)
 
         self.config_data = config_data
@@ -194,15 +194,17 @@ class ReactorConfig:
         return _return
 
     @staticmethod
-    def _read_or_return(dict_or_str_path: Union[str, dict]) -> Dict:
-        if isinstance(dict_or_str_path, str):
-            return ReactorConfig._read_json_file(dict_or_str_path)
-        elif isinstance(dict_or_str_path, dict):
-            return dict_or_str_path
-        raise ReactorConfigError("Invalid config_path")
+    def _read_or_return(config_path: Union[str, Path, dict]) -> Dict:
+        if isinstance(config_path, str) or isinstance(config_path, Path):
+            return ReactorConfig._read_json_file(config_path)
+        elif isinstance(config_path, dict):
+            return config_path
+        raise ReactorConfigError(
+            "config_path must be either a dict, a Path object, or a string"
+        )
 
     @staticmethod
-    def _read_json_file(path: str) -> dict:
+    def _read_json_file(path: Union[Path, str]) -> dict:
         with open(path, "r") as f:
             return json.load(f)
 
@@ -228,10 +230,11 @@ class ReactorConfig:
 
     def _expand_paths_in_dict(self, d: Dict[str, Any], rel_path: Path):
         """
-        Expand all file paths in the dict
-        by replacing their values with the json file contents.
+        Expand all file paths by replacing their values with the json file's contents.
 
-        This mutates the passed in dict.
+        Notes
+        -----
+            This mutates the passed in dict.
         """
         for k in d:
             d[k], rel_path_from = self._extract_and_expand_file_data_if_needed(
@@ -243,6 +246,17 @@ class ReactorConfig:
     def _extract_and_expand_file_data_if_needed(
         self, value: Any, rel_path: Path
     ) -> Tuple[Union[Any, dict], str]:
+        """
+        Returns the file data and the path to the file if value is a path.
+
+        Otherwise, returns value and rel_path that was passed in.
+
+        rel_path is the path to the file that the value is in.
+
+        Notes
+        -----
+        If the value is not a path, returns the value and the passed in rel_path.
+        """
         if not isinstance(value, str):
             return value, rel_path
         if not value.startswith(_FILEPATH_PREFIX):
@@ -251,7 +265,8 @@ class ReactorConfig:
         # remove _FILEPATH_PREFIX
         f_path = value[len(_FILEPATH_PREFIX) :]
 
-        # check if rel path
+        # if the path does not start with a /, it is considered a relative path,
+        # relative to the file the path is in (i.e. rel_path)
         if not f_path.startswith("/"):
             f_path = rel_path / f_path
         else:
@@ -261,7 +276,7 @@ class ReactorConfig:
         if not f_path.is_file():
             raise FileNotFoundError(f"Cannot find file {f_path}")
 
-        f_data = self._read_json_file(f_path.as_posix())
+        f_data = self._read_json_file(f_path)
         return f_data, f_path.parent
 
     def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
@@ -283,9 +298,9 @@ class ReactorConfig:
 
             if not isinstance(to_extract, dict):
                 raise ReactorConfigError(
-                    f"Arg ${current_arg_key} is too specific, "
-                    "it must be bound to a dict (or JSON object), "
-                    "or be a path to one."
+                    f"Arg {current_arg_key} is too specific, "
+                    "it must either be another JSON object "
+                    "or a path a JSON file."
                 )
 
             # add all keys not in extracted already
