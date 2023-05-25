@@ -63,33 +63,6 @@ class TestGeometry:
                 PictureFrame(), f_objective=lambda _: 1, keep_out_zones=kozs
             )
 
-    @pytest.mark.parametrize(
-        "kizs",
-        [
-            [
-                make_polygon(
-                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
-                    closed=False,
-                )
-            ],
-            [
-                make_polygon(
-                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
-                    closed=True,
-                ),
-                make_polygon(
-                    np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]),
-                    closed=False,
-                ),
-            ],
-        ],
-    )
-    def test_GeometryOptimisationError_given_unclosed_kiz(self, kizs):
-        with pytest.raises(GeometryOptimisationError):
-            optimise_geometry(
-                PictureFrame(), f_objective=lambda _: 1, keep_in_zones=kizs
-            )
-
     def test_simple_optimisation_with_keep_out_zone(self):
         def length(geom: GeometryParameterisation):
             return geom.create_shape().length
@@ -167,38 +140,6 @@ class TestGeometry:
         signed_dist = signed_distance(opt_shape, keep_out_zone)
         # The PrincetonD should fully enclose the keep-out zone
         np.testing.assert_array_less(signed_dist, np.zeros_like(signed_dist))
-
-    def test_maximise_length_with_keep_in_zone_with_TripleArc(self):
-        # Make a rectangular keep-in zone and check the TripleArc
-        # respects the bounds. Note that in this example we expect the
-        # height of the TripleArc to match the height of the keep-in
-        # zone, and the width of the TripleArc should be less than the
-        # width of the keep-in zone.
-        arc = TripleArc(
-            {
-                "x1": {"value": 3.5, "lower_bound": 2.75},
-                "dz": {"value": 0},
-            }
-        )
-        kiz = make_polygon(
-            np.array([[3, 13, 13, 3], [0, 0, 0, 0], [-5, -5, 6, 6]]), closed=True
-        )
-
-        result = optimise_geometry(
-            arc,
-            f_objective=lambda geom: -geom.create_shape().length,
-            keep_in_zones=(kiz,),
-            algorithm="SLSQP",
-            opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
-        )
-
-        opt_shape = result.geom.create_shape()
-        assert opt_shape.center_of_mass[2] == pytest.approx(0.5, rel=0.01)
-        bbox = opt_shape.bounding_box
-        assert bbox.z_min == pytest.approx(-5, rel=0.01)
-        assert bbox.z_max == pytest.approx(6, rel=0.01)
-        assert bbox.x_min >= 3
-        assert bbox.x_max * 0.99905 <= 13
 
     def test_maximise_angles_with_TripleArc(self):
         # Maximise the sum of the angles in a TripleArc. The shape's
