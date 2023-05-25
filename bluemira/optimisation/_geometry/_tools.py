@@ -125,29 +125,6 @@ def make_keep_out_zone_constraint(
     return {"f_constraint": _f_constraint, "tolerance": np.full(real_n_discr, tol)}
 
 
-def make_keep_in_zone_constraint(
-    kiz: BluemiraWire,
-    n_discr: int = _DEFAULT_ZONE_DISCR,
-    tol: float = _DEFAULT_ZONE_TOL,
-) -> GeomConstraintT:
-    """Make a keep-in zone inequality constraint from a wire."""
-    if not kiz.is_closed():
-        raise GeometryOptimisationError(
-            f"Keep-in zone with label '{kiz.label}' is not closed."
-        )
-    kiz_points = kiz.discretize(n_discr, byedges=True).xz
-    # As we're discretizing by edges, we may not get exactly the number
-    # of points we ask for, especially if n_discr is small.
-    real_n_discr = kiz_points.shape[1]
-
-    def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
-        return -calculate_signed_distance(
-            geom, n_shape_discr=real_n_discr, zone_points=kiz_points
-        )
-
-    return {"f_constraint": _f_constraint, "tolerance": np.full(real_n_discr, tol)}
-
-
 def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstraintT]:
     """
     Retrieve the inequality constraints registered for the given parameterisation.
