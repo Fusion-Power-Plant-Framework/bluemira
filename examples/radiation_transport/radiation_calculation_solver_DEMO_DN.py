@@ -32,7 +32,6 @@ import numpy as np
 import bluemira.codes.process as process
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
-from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.radiation_profile import (
     RadiationSolver, 
@@ -109,13 +108,13 @@ config = {
             "f_imp_core" : {
                 "H": 0.7,
                 "He": 0.05,
-                "Xe": 0.25e-3,
-                "W": 0.1e-3
+                "Xe": 0.25e-2,
+                "W": 0.1e-2
             },
             "f_imp_sol" : {
                 "H": 0,
                 "He": 0,
-                "Ar": 0.1e-2,
+                "Ar": 0.01,
                 "Xe": 0,
                 "W": 0
             }

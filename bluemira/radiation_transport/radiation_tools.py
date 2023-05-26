@@ -679,7 +679,7 @@ def calculate_line_radiation_loss(ne, p_loss_f, species_frac):
         Line radiation losses [MW m^-3]
     """
 
-    return (species_frac * (ne**2) * p_loss_f) * 1e-6
+    return (species_frac * (ne**2) * p_loss_f)/(4*np.pi) * 1e-6
 
 
 def linear_interpolator(x, z, field):
@@ -1019,10 +1019,6 @@ def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_ti
     """
     To plot the radiation on the wall as MW/m^2
     """
-    #min_r = 5.5
-    #max_r = 12.5
-    #min_z = -7
-    #max_z = 5
 
     min_r = min(fw_shape.x)
     max_r = max(fw_shape.x)
