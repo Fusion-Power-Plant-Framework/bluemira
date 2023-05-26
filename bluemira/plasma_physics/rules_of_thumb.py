@@ -142,6 +142,33 @@ def estimate_M(A: float, kappa: float) -> float:  # noqa: N802
     return (1 - eps) ** 2 / ((1 - eps) ** 2 * c + d * np.sqrt(kappa))
 
 
+def calc_cyl_safety_factor(R_0: float, A: float, B_0: float, I_p: float) -> float:
+    """
+    Calculate the cylindrical safety factor.
+
+    Parameters
+    ----------
+    R_0:
+        Plasma major radius [m]
+    A:
+        Plasma aspect ratio
+    B_0:
+        Toroidal field at major radius [T]
+    I_p:
+        Plasma current [A]
+
+    Returns
+    -------
+    Cylindrical safety factor
+
+    Notes
+    -----
+    Sometimes also written with :math:`\dfrac{2\\pi}{\\mu_{0}} = 5` and I_p in [MA]
+    """
+    a = R_0 / A
+    return 2 * np.pi * a**2 * B_0 / (MU_0 * R_0 * I_p)
+
+
 def calc_qstar_freidberg(
     R_0: float, A: float, B_0: float, I_p: float, kappa: float
 ) -> float:
@@ -172,9 +199,9 @@ def calc_qstar_freidberg(
     -----
     Freidberg, Ideal MHD, p 131
     """
-    a = R_0 / A
     shape_factor = 0.5 * (1 + kappa**2)
-    return 2 * np.pi * a**2 * B_0 / (MU_0 * R_0 * I_p) * shape_factor
+    q_cyl = calc_cyl_safety_factor(R_0, A, B_0, I_p)
+    return q_cyl * shape_factor
 
 
 def calc_qstar_uckan(
@@ -207,9 +234,9 @@ def calc_qstar_uckan(
     Uckan et al., ITER Physics Design Guidelines, 1989, sec. 2.3
     https://inis.iaea.org/search/search.aspx?orig_q=RN:21068960
     """
-    a = R_0 / A
     shape_factor = 0.5 + 0.5 * kappa**2 * (1 + 2 * delta**2 - 1.2 * delta**3)
-    return 2 * np.pi * a**2 * B_0 / (MU_0 * R_0 * I_p) * shape_factor
+    q_cyl = calc_cyl_safety_factor(R_0, A, B_0, I_p)
+    return q_cyl * shape_factor
 
 
 def estimate_q95_uckan(
@@ -271,25 +298,3 @@ def estimate_li_wesson(
     """
     nu = q_star / q_0 - 1.0
     return np.log(1.65 + 0.89 * nu)
-
-
-if __name__ == "__main__":
-    A = np.linspace(2.6, 3.1)
-
-    q = calc_qstar_freidberg(9, A, 4, 20e6, 1.8)
-    qq = calc_qstar_uckan(9, A, 4, 20e6, 1.8, 0.5)
-    li = estimate_li_wesson(q, 1)
-    lii = estimate_li_wesson(qq, 1)
-    import matplotlib.pyplot as plt
-
-    f, ax = plt.subplots()
-    ax.plot(A, q, label="Freidberg")
-    ax.plot(A, qq, label="Uckan")
-    ax.legend()
-    plt.show()
-
-    f, ax = plt.subplots()
-    ax.plot(A, li, label="Freidberg")
-    ax.plot(A, lii, label="Uckan")
-    ax.legend()
-    plt.show()
