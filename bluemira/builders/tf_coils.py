@@ -48,7 +48,7 @@ from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
-from bluemira.optimisation import optimise_geometry
+from bluemira.optimisation import GeomOptimisationProblem
 
 
 class ParameterisedRippleSolver:
@@ -401,7 +401,7 @@ class RippleConstrainedLengthGOPParams(ParameterFrame):
     TF_ripple_limit: Parameter[float]
 
 
-class RippleConstrainedLengthGOP:
+class RippleConstrainedLengthGOP(GeomOptimisationProblem):
     """
     Toroidal field coil winding pack shape optimisation problem.
 
@@ -469,7 +469,7 @@ class RippleConstrainedLengthGOP:
         self.params = make_parameter_frame(params, RippleConstrainedLengthGOPParams)
         self.separatrix = separatrix
         self.wp_cross_section = wp_cross_section
-        self.keep_out_zone = [keep_out_zone] if keep_out_zone else []
+        self._keep_out_zone = [keep_out_zone] if keep_out_zone else []
         self.algorithm = algorithm
         self.opt_parameters = opt_parameters
         self.opt_conditions = opt_conditions
@@ -498,37 +498,45 @@ class RippleConstrainedLengthGOP:
             params.z_0.value,
             params.B_0.value,
         )
-        ripple_constraint = ripple_selector.make_ripple_constraint(
+        self._ripple_constraint = ripple_selector.make_ripple_constraint(
             parameterisation, self.solver, params.TF_ripple_limit.value, rip_con_tol
         )
         self.ripple_selector = ripple_selector
-
-        self.constraints = [ripple_constraint]
 
     def _make_koz_points(self, keep_out_zone: BluemiraWire) -> Coordinates:
         """
         Make a set of points at which to evaluate the KOZ constraint
         """
+        # TODO: I guess I'm gonna lose this fine control?
         return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200).xz
 
-    def calculate_length(self, parameterisation: GeometryParameterisation) -> float:
+    def objective(self, parameterisation: GeometryParameterisation) -> float:
         """
         Objective function (minimise length)
         """
         return parameterisation.create_shape().length
 
+    def keep_out_zones(self):
+        """
+        Keep out zone
+        """
+        return self._keep_out_zone
+
+    def ineq_constraints(self):
+        """
+        Inequality constraints
+        """
+        return [self._ripple_constraint]
+
     def optimise(self, x0: Optional[np.ndarray] = None) -> GeometryParameterisation:
         """
         Solve the GeometryOptimisationProblem.
         """
-        result = optimise_geometry(
+        result = super().optimise(
             self.parameterisation,
-            self.calculate_length,
             algorithm=self.algorithm,
             opt_conditions=self.opt_conditions,
             opt_parameters=self.opt_parameters,
-            ineq_constraints=self.constraints,
-            keep_out_zones=self.keep_out_zone,
             koz_discretisation=self.n_koz_points,
         )
         self.parameterisation.variables.set_values_from_norm(result.x)
@@ -565,9 +573,9 @@ class RippleConstrainedLengthGOP:
             wire_options={"color": "blue", "linewidth": 1.0},
         )
 
-        if self.keep_out_zone:
+        if self._keep_out_zone:
             plot_2d(
-                self.keep_out_zone,
+                self._keep_out_zone,
                 ax=ax,
                 show=False,
                 wire_options={"color": "k", "linewidth": 0.5},
