@@ -32,8 +32,8 @@ from typing import List, Optional, Tuple, Union
 
 import meshio
 import numpy as np
-from dolfinx.io import XDMFFile
-from dolfinx.mesh import Mesh, MeshValueCollection
+from dolfin import Mesh, MeshValueCollection, XDMFFile
+from dolfin.cpp.mesh import MeshFunctionSizet
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn

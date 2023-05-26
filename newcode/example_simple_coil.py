@@ -133,7 +133,6 @@ plt.xlabel("x")
 plt.legend()
 # If run in parallel as a python file, we save a plot per processor
 plt.savefig(f"B_Az_rank{MPI.COMM_WORLD.rank:d}.png")
-plt.show()
 
 adiff = B_values[:, 1] - B_z_teo
 fig = plt.figure()

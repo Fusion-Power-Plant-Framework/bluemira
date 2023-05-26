@@ -54,7 +54,7 @@ Application of the dolfin fem 2D magnetostatic to a single coil problem
 # %%
 import os
 
-import dolfinx
+import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
 

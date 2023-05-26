@@ -6,11 +6,9 @@ h5py==3.7.0
 importlib-metadata==6.6.0
 pybind11==2.10.4
 pybind11-global==2.10.4
-PySide2==5.15.5
 pytools==2022.1.14
 PyYAML==6.0
 Shapely==2.0.1
-shiboken2==5.15.5
 sympy==1.11.1
 typing_extensions==4.5.0
 vtk==9.1.0

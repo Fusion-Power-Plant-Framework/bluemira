@@ -25,7 +25,7 @@ Solver for a 2D magnetostatic problem with cylindrical symmetry
 
 from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
 
-import dolfinx
+import dolfin
 import numpy as np
 
 from bluemira.base.constants import MU_0
@@ -207,7 +207,7 @@ class FemMagnetostatic2d:
             that defines the boundaries
         """
         # check whether mesh is a filename or a mesh, then load it or use it
-        self.mesh = dolfinx.mesh.Mesh(mesh) if isinstance(mesh, str) else mesh
+        self.mesh = dolfin.Mesh(mesh) if isinstance(mesh, str) else mesh
 
         # define boundaries
         if boundaries is None:
@@ -222,22 +222,19 @@ class FemMagnetostatic2d:
                 "size_t", self.mesh, boundaries
             )  # define the boundaries
         else:
-            self.boundaries = boundariesaqqqq
+            self.boundaries = boundaries
 
         # define the function space and bilinear forms
         # the Continuos Galerkin function space has been chosen as suitable for the
         # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
-        self.V = dolfinx.fem.VectorFunctionSpace(
-            self.mesh,
-            ("CG", self.p_order),
-        )
+        self.V = dolfin.FunctionSpace(self.mesh, "CG", self.p_order)
 
         # define trial and test functions
         self.u = dolfin.TrialFunction(self.V)
         self.v = dolfin.TestFunction(self.V)
 
         # Define r
-        r = dolfinx.fem.Expression("x[0]", degree=self.p_order)
+        r = dolfin.Expression("x[0]", degree=self.p_order)
 
         self.a = (
             1
@@ -247,13 +244,13 @@ class FemMagnetostatic2d:
         )
 
         # initialize solution
-        self.psi = dolfinx.fem.Function(self.V)
+        self.psi = dolfin.Function(self.V)
         self.psi.set_allow_extrapolation(True)
 
         # initialize g to zero
-        self.g = dolfinx.fem.Function(self.V)
+        self.g = dolfin.Function(self.V)
 
-    def define_g(self, g: Union[dolfinx.fem.Expression, dolfinx.fem.Function]):
+    def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):
         """
         Define g, the right hand side function of the Poisson problem
 
@@ -298,8 +295,9 @@ class FemMagnetostatic2d:
         # define the Dirichlet boundary conditions
         if dirichlet_bc_function is None:
             dirichlet_bc_function = dolfin.Expression("0.0", degree=self.p_order)
-            dirichlet_bc = dolfinx.fem.dirichletbc()
-
+            dirichlet_bc = dolfin.DirichletBC(
+                self.V, dirichlet_bc_function, "on_boundary"
+            )
         else:
             dirichlet_bc = dolfin.DirichletBC(
                 self.V, dirichlet_bc_function, self.boundaries, dirichlet_marker
