@@ -163,7 +163,7 @@ def calc_cyl_safety_factor(R_0: float, A: float, B_0: float, I_p: float) -> floa
 
     Notes
     -----
-    Sometimes also written with :math:`\dfrac{2\\pi}{\\mu_{0}} = 5` and I_p in [MA]
+    Sometimes also written with :math:`\\dfrac{2\\pi}{\\mu_{0}} = 5` and I_p in [MA]
     """
     a = R_0 / A
     return 2 * np.pi * a**2 * B_0 / (MU_0 * R_0 * I_p)
