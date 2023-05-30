@@ -42,6 +42,14 @@ Magnetostatics Examples
     examples/magnetostatics/helmholtz_example
     examples/magnetostatics/finite_element_2D_single_coil
 
+Magnets Examples
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+    :maxdepth: 1
+
+    examples/magnetostatics/central_solenoid_example
+
 External Code Examples
 ^^^^^^^^^^^^^^^^^^^^^^
 
