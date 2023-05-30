@@ -69,6 +69,14 @@ Magnets Examples
 
     examples/magnets/central_solenoid_example
 
+Magnets Examples
+^^^^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+    :maxdepth: 1
+
+    examples/magnetostatics/central_solenoid_example
+
 External Code Examples
 ^^^^^^^^^^^^^^^^^^^^^^
 
