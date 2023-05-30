@@ -33,6 +33,7 @@ The documentation is divided into the following sections:
     Geometry module <geometry/geometry>
     Mesh modules <mesh/mesh>
     Magnetostatics <magnetostatics/magnetostatics>
+    Magnets <magnets/magnets>
     Materials <materials/materials>
     Radiation transport solvers <radiation_transport/radiation_transport>
     Structural module <structural/structural>
