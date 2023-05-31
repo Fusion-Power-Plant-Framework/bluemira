@@ -30,16 +30,31 @@ from bluemira.base.look_and_feel import bluemira_warn
 
 
 def calculate_B_max(
-    rho_j: float, r_inner: float, r_outer: float, half_height: float
+    rho_j: float, r_inner: float, r_outer: float, height: float
 ) -> float:
     """
+    Calculate the maximum field in a solenoid
+
     Parameters
     ----------
+    rho_j:
+        Current density across the solenoid winding pack
+    r_inner:
+        Solenoid inner radius
+    r_outer:
+        Solenoid outer radius
+    height:
+        Solenoid vertical extent
 
     Return
     ------
     Maximum field in a solenoid
+
+    Notes
+    -----
+    M. Wilson, Superconducting Magnets, 1983, p22
     """
+    half_height = 0.5 * height
     alpha = r_outer / r_inner
     beta = half_height / r_inner
 
@@ -60,25 +75,69 @@ def calculate_B_max(
     )
 
     tail = 0.0
+    alpha_1 = alpha - 1.0
     if beta > 3.0:
         a = (3.0 / beta) ** 2
-        factor = a * (1.007 + 0.0055 * (alpha - 1))
+        factor = a * (1.007 + 0.0055 * alpha_1)
         tail = (1 - a) * MU_0 * rho_j * (r_outer - r_inner)
 
     elif beta > 2.0:
-        factor = 1.025 - 0.018 * (beta - 2) + (0.01 - 0.0045 * (beta - 2)) * (alpha - 1)
+        b_c = beta - 2.0
+        factor = 1.025 - 0.018 * b_c + (0.01 - 0.0045 * b_c) * alpha_1
 
     elif beta > 1.0:
-        factor = 1.117 - 0.092 * (beta - 1) + (0.01 * (beta - 1)) * (alpha - 1)
+        b_c = beta - 1.0
+        factor = 1.117 - 0.092 * b_c + (0.01 * b_c) * alpha_1
 
     elif beta > 0.75:
-        factor = (
-            1.3 - 0.732 * (beta - 0.75) + (-0.05 + 0.2 * (beta - 0.75)) * (alpha - 1)
-        )
+        b_c = beta - 0.75
+        factor = 1.3 - 0.732 * b_c + (-0.05 + 0.2 * b_c) * alpha_1
 
     else:
-        factor = 1.64 - 1.4 * (beta - 0.5) + (-0.2 + 0.6 * (beta - 0.5)) * (alpha - 1)
+        b_c = beta - 0.5
+        factor = 1.64 - 1.4 * b_c + (-0.2 + 0.6 * b_c) * alpha_1
 
     B_max = factor * b_0 + tail
 
     return B_max
+
+
+def calculate_hoop_stress(
+    B_in: float,
+    B_out: float,
+    rho_j: float,
+    r_inner: float,
+    r_outer: float,
+    r: float,
+    poisson_ratio: float = 0.3,
+) -> float:
+    """
+    Calculate the hoop stress at a radial location in a solenoid
+
+    Parameters
+    ----------
+    r:
+        Radius at which to calculate
+
+    Return
+    ------
+    Hoop stress at the radial location
+    """
+    alpha = r_outer / r_inner
+    eps = r / r_inner
+    nu = poisson_ratio
+
+    K = (alpha * B_in - B_out) * rho_j * r_inner / (alpha - 1)
+    M = (B_in - B_out) * rho_j * r_inner / (alpha - 1)
+    a = K * (2 + nu) / (3 * (alpha + 1))
+    b = (
+        1.0
+        + alpha
+        + alpha**2 * (1 + 1 / eps**2)
+        - eps * (1 + 2 * nu) * (alpha + 1) / (2 + nu)
+    )
+    c = M * (3 + nu) / 8
+    d = 1.0 + alpha**2 * (1 + 1 / eps**2) - eps**2 * (1 + 3 * nu) / (3 + nu)
+    hoop_stress = a * b - c * d
+
+    return hoop_stress
