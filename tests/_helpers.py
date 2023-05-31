@@ -28,6 +28,8 @@ import os
 from pathlib import Path
 from unittest import mock
 
+import pytest
+
 
 def combine_text_mock_write_calls(open_mock: mock.MagicMock) -> str:
     """
@@ -74,3 +76,16 @@ def file_exists(good_file_path: str, isfile_ref: str):
 
     with mock.patch(isfile_ref, new=new_isfile) as is_file_mock:
         yield is_file_mock
+
+
+def skipif_import_error(*module_name: str) -> pytest.MarkDecorator:
+    """Create skipif marker for unimportable modules"""
+    for m in module_name:
+        try:
+            __import__(m)
+            skip = False
+        except ImportError:
+            skip = True
+            break
+
+    return pytest.mark.skipif(skip, reason=f"{module_name} dependency not found")

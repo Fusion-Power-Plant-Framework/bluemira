@@ -1193,17 +1193,17 @@ class CADFileType(enum.Enum):
     """
 
     # Commented out currently don't function
-    ACSII_STEREO_MESH = ("ast", "Mesh")
+    ASCII_STEREO_MESH = ("ast", "Mesh")
     ADDITIVE_MANUFACTURING = ("amf", "Mesh")
-    # ASC = ("asc", "Points")
-    # AUTOCAD = ("dwg", "importDWG")
+    ASC = ("asc", "Points")
+    AUTOCAD = ("dwg", "importDWG")
     AUTOCAD_DXF = ("dxf", "importDXF")
     # BDF = ("bdf", "feminout.exportNastranMesh")
     BINMESH = ("bms", "Mesh")
     BREP = ("brep", "Part")
     BREP_2 = ("brp", "Part")
     CSG = ("csg", "exportCSG")
-    # DAE = ("dae", "importDAE")
+    DAE = ("dae", "importDAE")
     # DAT = ("dat", "Fem")
     FREECAD = ("FCStd", None)
     # FENICS_FEM = ("xdmf", "feminout.importFenicsMesh")
@@ -1227,29 +1227,29 @@ class CADFileType(enum.Enum):
     OFF = ("off", "Mesh")
     OPENSCAD = ("scad", "exportCSG")
     # PCD = ("pcd", "Points")
-    PDF = ("pdf", "FreeCADGui")
+    # PDF = ("pdf", "FreeCADGui")
     # PLY = ("ply", "Points")
     PLY_STANFORD = ("ply", "Mesh")
     SIMPLE_MODEL = ("smf", "Mesh")
     STEP = ("stp", "ImportGui")
     STEP_2 = ("step", "ImportGui")
-    # STEP_ZIP = ("stpz", "stepZ")
+    STEP_ZIP = ("stpZ", "stepZ")
     STL = ("stl", "Mesh")
     # SVG = ("svg", "DrawingGui")
     # SVG_FLAT = ("svg", "importSVG")
     # TETGEN_FEM = ("poly", "feminout.convert2TetGen")
     THREED_MANUFACTURING = ("3mf", "Mesh")
     # UNV = ("unv", "Fem")
-    VRML = ("vrml", "FreeCADGui")
-    VRML_2 = ("wrl", "FreeCADGui")
-    VRML_ZIP = ("wrl.gz", "FreeCADGui")
-    VRML_ZIP_2 = ("wrz", "FreeCADGui")
+    # VRML = ("vrml", "FreeCADGui")
+    # VRML_2 = ("wrl", "FreeCADGui")
+    # VRML_ZIP = ("wrl.gz", "FreeCADGui")
+    # VRML_ZIP_2 = ("wrz", "FreeCADGui")
     # VTK = ("vtk", "Fem")
     # VTU = ("vtu", "Fem")
     # WEBGL = ("html", "importWebGL")
-    WEBGL_X3D = ("xhtml", "FreeCADGui")
-    X3D = ("x3d", "FreeCADGui")
-    X3DZ = ("x3dz", "FreeCADGui")
+    # WEBGL_X3D = ("xhtml", "FreeCADGui")
+    # X3D = ("x3d", "FreeCADGui")
+    # X3DZ = ("x3dz", "FreeCADGui")
     # YAML = ("yaml", "feminout.importYamlJsonMesh")
     # Z88_FEM_MESH = ("z88", "Fem")
     # Z88_FEM_MESH_2 = ("i1.txt", "feminout.importZ88Mesh")
@@ -1402,9 +1402,21 @@ def save_cad(
         ) from imp_err
 
     if not os.path.exists(filename):
+        mesg = f"{filename} not created, filetype not written by FreeCAD."
+        if formatt is CADFileType.IFC_BIM:
+            mesg += " FreeCAD requires `ifcopenshell` to save in this format."
+        elif formatt is CADFileType.DAE:
+            mesg += " FreeCAD requires `pycollada` to save in this format."
+        elif formatt is CADFileType.IFC_BIM_JSON:
+            mesg += (
+                " FreeCAD requires `ifcopenshell` and"
+                " IFCJSON module to save in this format."
+            )
+        elif formatt is CADFileType.AUTOCAD:
+            mesg += " FreeCAD requires `LibreDWG` to save in this format."
+
         raise FileNotFoundError(
-            f"{filename} not created, filetype not written by FreeCAD."
-            f"Possibly no object compatible with '{formatt.value}'"
+            f"{mesg} Not able to save object with format: '{formatt.value}'"
         )
 
 
