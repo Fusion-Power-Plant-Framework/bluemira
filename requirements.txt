@@ -24,7 +24,7 @@ packaging==23.1
 pandas==2.0.1
 periodictable==1.6.1
 Pillow==9.5.0
-Pint==0.21
+Pint==0.22
 pyclipper==1.3.0.post4
 polyscope==1.3.3
 pyparsing==3.0.9
