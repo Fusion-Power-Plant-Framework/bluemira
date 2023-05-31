@@ -127,8 +127,8 @@ def calculate_hoop_stress(
     eps = r / r_inner
     nu = poisson_ratio
 
-    K = (alpha * B_in - B_out) * rho_j * r_inner / (alpha - 1)
-    M = (B_in - B_out) * rho_j * r_inner / (alpha - 1)
+    K = (alpha * B_in - B_out) * rho_j * r_inner / (alpha - 1)  # noqa: N806
+    M = (B_in - B_out) * rho_j * r_inner / (alpha - 1)  # noqa: N806
     a = K * (2 + nu) / (3 * (alpha + 1))
     b = (
         1.0
