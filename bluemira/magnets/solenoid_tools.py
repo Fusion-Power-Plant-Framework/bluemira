@@ -24,3 +24,61 @@ Tools for simple solenoid calculations.
 """
 
 import numpy as np
+
+from bluemira.base.constants import MU_0
+from bluemira.base.look_and_feel import bluemira_warn
+
+
+def calculate_B_max(
+    rho_j: float, r_inner: float, r_outer: float, half_height: float
+) -> float:
+    """
+    Parameters
+    ----------
+
+    Return
+    ------
+    Maximum field in a solenoid
+    """
+    alpha = r_outer / r_inner
+    beta = half_height / r_inner
+
+    if not (1.0 < alpha < 2.0):
+        bluemira_warn(
+            f"Solenoid B_max calculation parameter alpha is not between 1.0 and 2.0: {alpha=:.2f}"
+        )
+    if beta <= 0.5:
+        bluemira_warn(
+            f"Solenoid B_max calculation parameter beta is not greater than 0.5: {beta=:.2f}"
+        )
+
+    b_0 = (
+        rho_j
+        * MU_0
+        * half_height
+        * np.log((alpha + np.hypot(alpha, beta)) / (1 + np.hypot(1, beta)))
+    )
+
+    tail = 0.0
+    if beta > 3.0:
+        a = (3.0 / beta) ** 2
+        factor = a * (1.007 + 0.0055 * (alpha - 1))
+        tail = (1 - a) * MU_0 * rho_j * (r_outer - r_inner)
+
+    elif beta > 2.0:
+        factor = 1.025 - 0.018 * (beta - 2) + (0.01 - 0.0045 * (beta - 2)) * (alpha - 1)
+
+    elif beta > 1.0:
+        factor = 1.117 - 0.092 * (beta - 1) + (0.01 * (beta - 1)) * (alpha - 1)
+
+    elif beta > 0.75:
+        factor = (
+            1.3 - 0.732 * (beta - 0.75) + (-0.05 + 0.2 * (beta - 0.75)) * (alpha - 1)
+        )
+
+    else:
+        factor = 1.64 - 1.4 * (beta - 0.5) + (-0.2 + 0.6 * (beta - 0.5)) * (alpha - 1)
+
+    B_max = factor * b_0 + tail
+
+    return B_max
