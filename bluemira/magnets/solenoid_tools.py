@@ -143,7 +143,7 @@ def calculate_hoop_stress(
     return hoop_stress
 
 
-def calculate_flux(B_max: float, r_inner: float, r_outer: float) -> float:
+def calculate_flux_max(B_max: float, r_inner: float, r_outer: float) -> float:
     """
     Calculate the maximum flux achievable from a solenoid
 
