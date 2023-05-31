@@ -38,17 +38,17 @@ def calculate_B_max(
     Parameters
     ----------
     rho_j:
-        Current density across the solenoid winding pack
+        Current density across the solenoid winding pack [A/m^2]
     r_inner:
-        Solenoid inner radius
+        Solenoid inner radius [m]
     r_outer:
-        Solenoid outer radius
+        Solenoid outer radius [m]
     height:
-        Solenoid vertical extent
+        Solenoid vertical extent [m]
 
     Return
     ------
-    Maximum field in a solenoid
+    Maximum field in a solenoid [T]
 
     Notes
     -----
@@ -116,12 +116,24 @@ def calculate_hoop_stress(
 
     Parameters
     ----------
+    B_in:
+        Field at the inside edge of the solenoid [T]
+    B_out:
+        Field at the outside edge of the solenoid [T]
+    rho_j:
+        Current density across the solenoid winding pack [A/m^2]
+    r_inner:
+        Solenoid inner radius [m]
+    r_outer:
+        Solenoid outer radius [m]
     r:
-        Radius at which to calculate
+        Radius at which to calculate [m]
+    poisson_ratio:
+        Poisson ratio of the material
 
     Return
     ------
-    Hoop stress at the radial location
+    Hoop stress at the radial location [Pa]
     """
     alpha = r_outer / r_inner
     eps = r / r_inner
