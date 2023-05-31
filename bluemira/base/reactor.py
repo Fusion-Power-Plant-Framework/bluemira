@@ -70,7 +70,7 @@ class BaseManager(abc.ABC):
         filter_: Union[Callable[[Component], bool], None],
         filename: Optional[str] = None,
         formatt: Union[str, cadapi.CADFileType] = "stp",
-        directory: str = "",
+        directory: Union[str, Path] = "",
         **kwargs,
     ):
         """
@@ -89,7 +89,7 @@ class BaseManager(abc.ABC):
         formatt:
             CAD file format
         directory:
-            Directory to save into
+            Directory to save into, defaults to the current directory
         """
 
     @abc.abstractmethod
@@ -299,7 +299,7 @@ class ComponentManager(BaseManager):
         filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
         filename: Optional[str] = None,
         formatt: Union[str, cadapi.CADFileType] = "stp",
-        directory: str = "",
+        directory: Union[str, Path] = "",
         **kwargs,
     ):
         """
@@ -318,7 +318,7 @@ class ComponentManager(BaseManager):
         formatt:
             CAD file format
         directory:
-            Directory to save into
+            Directory to save into, defaults to the current directory
         kwargs:
             passed to the `~bluemira.geometry.tools.save_cad` function
         """
@@ -505,7 +505,7 @@ class Reactor(BaseManager):
         n_sectors: Optional[int],
         filter_: Union[Callable[[Component], bool], None],
         **kwargs,
-    ):
+    ) -> Component:
         # We filter because self.component (above) only creates
         # a new root node for this reactor, not a new component tree.
         comp_copy = self._filter_tree(
@@ -531,7 +531,7 @@ class Reactor(BaseManager):
         filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
         filename: Optional[str] = None,
         formatt: Union[str, cadapi.CADFileType] = "stp",
-        directory: str = "",
+        directory: Union[str, Path] = "",
         **kwargs,
     ):
         """
@@ -556,7 +556,7 @@ class Reactor(BaseManager):
         formatt:
             CAD file format
         directory:
-            Directory to save into
+            Directory to save into, defaults to the current directory
         kwargs:
             passed to the `~bluemira.geometry.tools.save_cad` function
         """
