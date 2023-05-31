@@ -46,8 +46,8 @@ def calculate_B_max(
     height:
         Solenoid vertical extent [m]
 
-    Return
-    ------
+    Returns
+    -------
     Maximum field in a solenoid [T]
 
     Notes
@@ -131,9 +131,13 @@ def calculate_hoop_stress(
     poisson_ratio:
         Poisson ratio of the material
 
-    Return
-    ------
+    Returns
+    -------
     Hoop stress at the radial location [Pa]
+
+    Notes
+    -----
+    Must still factor in the fraction of load-bearing material
     """
     alpha = r_outer / r_inner
     eps = r / r_inner
@@ -153,6 +157,42 @@ def calculate_hoop_stress(
     hoop_stress = a * b - c * d
 
     return hoop_stress
+
+
+def calculate_axial_stress(
+    r_inner: float, r_outer: float, height: float, current: float
+) -> float:
+    """
+    Calculate the axial stress in a solenoid
+
+    Parameters
+    ----------
+    r_inner:
+        Solenoid inner radius [m]
+    r_outer:
+        Solenoid outer radius [m]
+    height:
+        Solenoid vertical extent [m]
+    current:
+        Current in the solenoid [A]
+
+    Returns
+    -------
+    Axial stress [Pa]
+
+    Notes
+    -----
+    Must still factor in the fraction of load-bearing material
+    """
+    hh = 0.5 * height
+    a = -0.5 * MU_0 * current**2
+    # TODO: I don't trust things without pi
+    b = 0
+    c = 0
+
+    force = a * (b - c)
+    area = np.pi * (r_outer**2 - r_inner**2)
+    return force / area
 
 
 def calculate_flux_max(B_max: float, r_inner: float, r_outer: float) -> float:
