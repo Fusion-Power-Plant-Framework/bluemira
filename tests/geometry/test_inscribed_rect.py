@@ -75,7 +75,13 @@ class TestInscribedRectangle:
         fig, ax = plt.subplots()
 
         shape_face = BluemiraFace(make_polygon(shape, closed=True))
-        plot_2d(shape_face, self.po, ax=ax, linewidth=0.1, show=False, zorder=-10)
+        plot_2d(
+            shape_face,
+            self.po,
+            ax=ax,
+            wire_options=dict(linewidth=0.1, zorder=-10),
+            show=False,
+        )
         for i in range(x):
             for j in range(y):
                 point = points[:, i, j]

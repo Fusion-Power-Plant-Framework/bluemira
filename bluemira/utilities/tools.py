@@ -35,6 +35,7 @@ from os import listdir
 from types import ModuleType
 from typing import Any, Dict, Optional, Tuple, Type, Union
 
+import matplotlib.colors as colors
 import nlopt
 import numpy as np
 
@@ -300,6 +301,28 @@ cross = wrap.cross
 # =====================================================
 # Misc utilities
 # =====================================================
+
+
+class ColourDescriptor:
+    """Colour Descriptor for use with dataclasses"""
+
+    def __init__(self):
+        self._default = colors.to_hex((0.5, 0.5, 0.5))
+
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
+
+    def __get__(self, obj: Any, _) -> str:
+        """Get the hex colour"""
+        if obj is None:
+            return self._default
+
+        return colors.to_hex(getattr(obj, self._name, self._default))
+
+    def __set__(self, obj: Any, value: Union[str, Tuple[float, ...]]):
+        """Set the colour"""
+        setattr(obj, self._name, value)
 
 
 def is_num(thing: Any) -> bool:

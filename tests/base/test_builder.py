@@ -65,11 +65,13 @@ class TestBuilder:
         assert len(component.children) == 3
         assert [ch.name for ch in component.children] == ["xz", "xy", "xyz"]
         # xyz child's view is not changed from the default
-        assert [desc.plot_options.view for desc in component.descendants] == [
-            "xz",
-            "xz",
-            "xy",
-            "xy",
-            "xz",
-            "xz",
+        assert [
+            desc.plot_options.view_placement.label for desc in component.descendants
+        ] == [
+            "xzy",
+            "xzy",
+            "xyz",
+            "xyz",
+            "xzy",
+            "xzy",
         ]

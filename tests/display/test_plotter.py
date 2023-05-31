@@ -23,6 +23,8 @@
 Tests for the plotter module.
 """
 
+from dataclasses import asdict
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -44,13 +46,24 @@ SQUARE_POINTS = np.array(
 
 
 class TestPlotOptions:
+    def setup_method(self):
+        self.default = plotter.DefaultPlotOptions()
+
     def test_default_options(self):
         """
         Check the values of the default options correspond to the global defaults.
         """
-        the_options = plotter.PlotOptions()
-        assert the_options.as_dict() == plotter.DEFAULT_PLOT_OPTIONS
-        assert the_options.as_dict() is not plotter.DEFAULT_PLOT_OPTIONS
+        the_options = plotter.PlotOptions().as_dict()
+        default_dict = asdict(self.default)
+        d_view = default_dict.pop("view")
+        o_view = the_options.pop("view")
+        assert the_options == default_dict
+        assert the_options is not default_dict
+        for no, d in enumerate(d_view):
+            try:
+                assert o_view[no] == d
+            except ValueError:
+                assert all(o_view[no] == d)
 
     def test_options(self):
         """
@@ -58,11 +71,18 @@ class TestPlotOptions:
         """
         the_options = plotter.PlotOptions(show_points=True)
         options_dict = the_options.as_dict()
+
         for key, val in options_dict.items():
             if key == "show_points":
-                assert val != plotter.DEFAULT_PLOT_OPTIONS[key]
+                assert val != getattr(self.default, key)
+            elif key == "view":
+                for no, d in enumerate(getattr(self.default, key)):
+                    try:
+                        assert val[no] == d
+                    except ValueError:
+                        assert all(val[no] == d)
             else:
-                assert val == plotter.DEFAULT_PLOT_OPTIONS[key]
+                assert val == getattr(self.default, key)
 
     def test_options_placement_dict(self):
         """
@@ -73,10 +93,14 @@ class TestPlotOptions:
         options_dict = the_options.as_dict()
         for key, val in options_dict.items():
             if key == "view":
-                assert val != plotter.DEFAULT_PLOT_OPTIONS[key]
+                for no, d in enumerate(getattr(self.default, key)):
+                    try:
+                        assert val[no] != d
+                    except ValueError:
+                        assert all(val[no] == d)
                 assert val is not the_placement
             else:
-                assert val == plotter.DEFAULT_PLOT_OPTIONS[key]
+                assert val == getattr(self.default, key)
 
     def test_modify_options(self):
         """
@@ -87,31 +111,52 @@ class TestPlotOptions:
         options_dict = the_options.as_dict()
         for key, val in options_dict.items():
             if key == "show_points":
-                assert val != plotter.DEFAULT_PLOT_OPTIONS[key]
+                assert val != getattr(self.default, key)
+            elif key == "view":
+                for no, d in enumerate(getattr(self.default, key)):
+                    try:
+                        assert val[no] == d
+                    except ValueError:
+                        assert all(val[no] == d)
             else:
-                assert val == plotter.DEFAULT_PLOT_OPTIONS[key]
+                assert val == getattr(self.default, key)
 
     def test_properties(self):
         """
         Check the display option properties can be accessed
         """
         the_options = plotter.PlotOptions()
-        for key, val in plotter.DEFAULT_PLOT_OPTIONS.items():
-            assert getattr(the_options, key) == val
+        dict_default = asdict(self.default)
+        for key, val in dict_default.items():
+            if key == "view":
+                for no, d in enumerate(getattr(self.default, key)):
+                    try:
+                        assert val[no] == d
+                    except ValueError:
+                        assert all(val[no] == d)
+            else:
+                assert getattr(the_options, key) == val
 
-        the_options.show_points = not plotter.DEFAULT_PLOT_OPTIONS["show_points"]
-        the_options.show_wires = not plotter.DEFAULT_PLOT_OPTIONS["show_wires"]
-        the_options.show_faces = not plotter.DEFAULT_PLOT_OPTIONS["show_faces"]
+        the_options.show_points = not self.default.show_points
+        the_options.show_wires = not self.default.show_wires
+        the_options.show_faces = not self.default.show_faces
         the_options.point_options = {}
         the_options.wire_options = {}
         the_options.face_options = {}
         the_options.view = "xyz"
         the_options.view = placement.BluemiraPlacement()
         the_options.ndiscr = 20
-        the_options.byedges = not plotter.DEFAULT_PLOT_OPTIONS["byedges"]
+        the_options.byedges = not self.default.byedges
 
-        for key, val in plotter.DEFAULT_PLOT_OPTIONS.items():
-            assert getattr(the_options, key) != val
+        for key, val in dict_default.items():
+            if key == "view":
+                for no, d in enumerate(getattr(self.default, key)):
+                    try:
+                        assert val[no] == d
+                    except ValueError:
+                        assert all(val[no] == d)
+            else:
+                assert getattr(the_options, key) != val
 
 
 class TestPlot3d:

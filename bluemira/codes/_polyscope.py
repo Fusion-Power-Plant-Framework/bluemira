@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import functools
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Dict, List, Tuple, Union
 
 import matplotlib.colors as colors
@@ -10,33 +10,20 @@ import polyscope as ps
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.utilities.tools import ColourDescriptor
 
 
 @dataclass
 class DefaultDisplayOptions:
     """Polyscope default display options"""
 
-    colour: Union[Tuple, str]
+    colour: ColourDescriptor = ColourDescriptor()
     transparency: float = 0.0
     material: str = "wax"
     tesselation: float = 0.05
     wires_on: bool = False
     wire_radius: float = 0.001
     smooth: bool = True
-
-    _colour: Union[Tuple, str] = field(
-        init=False, repr=False, default_factory=lambda: colors.to_hex((0.5, 0.5, 0.5))
-    )
-
-    @property
-    def colour(self):
-        """Colour as rbg"""
-        return colors.to_hex(self._colour)
-
-    @colour.setter
-    def colour(self, value):
-        """Set colour"""
-        self._colour = value
 
     @property
     def color(self):
