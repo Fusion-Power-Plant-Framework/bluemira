@@ -32,11 +32,7 @@ import sys
 from copy import deepcopy
 from dataclasses import dataclass, field
 from types import DynamicClassAttribute
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
-
-if TYPE_CHECKING:
-    from bluemira.geometry.base import BluemiraGeo
-
+from typing import Dict, Iterable, List, Optional, Tuple, Union
 from warnings import warn
 
 import FreeCAD
@@ -2310,7 +2306,7 @@ class DefaultDisplayOptions:
 
 
 def show_cad(
-    parts: Union[BluemiraGeo, List[BluemiraGeo]],
+    parts: Union[apiShape, List[apiShape]],
     options: Union[Dict, List[Optional[Dict]]],
     labels: List[str],
     **kwargs,
