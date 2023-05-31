@@ -77,9 +77,9 @@ def calculate_B_max(
     tail = 0.0
     alpha_1 = alpha - 1.0
     if beta > 3.0:
-        a = (3.0 / beta) ** 2
-        factor = a * (1.007 + 0.0055 * alpha_1)
-        tail = (1 - a) * MU_0 * rho_j * (r_outer - r_inner)
+        b_c = (3.0 / beta) ** 2
+        factor = b_c * (1.007 + 0.0055 * alpha_1)
+        tail = (1 - b_c) * MU_0 * rho_j * (r_outer - r_inner)
 
     elif beta > 2.0:
         b_c = beta - 2.0
@@ -141,3 +141,23 @@ def calculate_hoop_stress(
     hoop_stress = a * b - c * d
 
     return hoop_stress
+
+
+def calculate_flux(B_max: float, r_inner: float, r_outer: float) -> float:
+    """
+    Calculate the maximum flux achievable from a solenoid
+
+    Parameters
+    ----------
+    B_max:
+        Maximum field in the solenoid [T]
+    r_inner:
+        Solenoid inner radius [m]
+    r_outer:
+        Solenoid outer radius [m]
+
+    Returns
+    -------
+    Maximum flux achievable from a solenoid [V.s]
+    """
+    return np.pi / 3 * B_max * (r_outer**2 + r_inner**2 + r_outer * r_inner)
