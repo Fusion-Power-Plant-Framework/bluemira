@@ -50,10 +50,10 @@ A geometry tutorial for users.
 # There a few basic concepts you need to familiarise yourself with:
 # * Basic objects: [`BluemiraWire`, `BluemiraFace`, `BluemiraShell`, `BluemiraSolid`]
 # * Basic properties
-# * Matryoshka structure
-# * Geometry creation
-# * Geometry modification
-# * Geometry operations
+# * [Matryoshka structure](#Matryoshka-structure)
+# * [Geometry creation](#Geometry-creation-(1-D))
+# * [Geometry modification](#Modification-of-existing-geometries)
+# * [Geometry operations](#Additional-examples)
 #
 # ## Imports
 #
