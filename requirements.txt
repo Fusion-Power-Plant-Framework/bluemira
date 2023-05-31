@@ -6,7 +6,7 @@ contourpy==1.0.7
 CoolProp==6.4.3.post1
 cycler==0.11.0
 fonttools==4.39.4
-fortranformat==1.2.2
+fortranformat==2.0.0
 gmsh==4.11.1
 imageio==2.28.1
 joblib==1.2.0
