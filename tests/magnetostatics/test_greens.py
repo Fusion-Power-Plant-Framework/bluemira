@@ -177,6 +177,12 @@ class TestGreensEdgeCases:
 
 class TestGreensFz:
     def test_two_far_away_equals_approx(self):
+        """
+        Approximate calculation for two ring coils far apart
+        Y. Iwasa, Case Studies in Superconducting Magnets Design and Operational Issues,
+        Second Edition, 2009, equation 3.39c
+        ISBN 978-0-387-09799-2
+        """
         xa = 2.0
         za = 0.0
         xb = 3.0
