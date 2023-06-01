@@ -431,11 +431,17 @@ def greens_Fz(
 
     Returns
     -------
+    The force response from coil A to coil B.
+
+    Raises
+    ------
+    ZeroDivisionError:
+        If xa==xb and za==zb
 
     Notes
     -----
     The absolute value of the force can be obtained by multiplying the result by
-    the Ampere-turns in both coils (i.e. Na*Ia*Nb*Ib). The force is towards coil b.
+    the Ampere-turns in both coils (i.e. Na*Ia*Nb*Ib). The force is towards coil B.
     Y. Iwasa, Case Studies in Superconducting Magnets Design and Operational Issues,
     Second Edition, 2009, equation 3.34 and 3.36, p.83
     ISBN 978-0-387-09799-2
