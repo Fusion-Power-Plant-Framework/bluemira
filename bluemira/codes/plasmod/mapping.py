@@ -23,8 +23,6 @@
 PLASMOD mappings
 """
 
-from types import DynamicClassAttribute
-
 from bluemira.codes.utilities import Model, create_mapping
 
 
@@ -197,19 +195,18 @@ class Profiles(Model):
     # qrad = "q_rad"
     # qneut = "q_neut"
 
-    @DynamicClassAttribute
-    def value(self):
-        """Modified value to not return unit"""
-        return self._value_[0]
+    def __new__(cls, *args, **kwds):
+        """Create Enum from first half of tuple"""
+        obj = object.__new__(cls)
+        obj._value_ = args[0]
+        return obj
 
-    @DynamicClassAttribute
-    def unit(self):
-        """The unit of the profile"""
-        return self._value_[1]
+    def __init__(self, _, unit):
+        self.unit = unit
 
     def __repr__(self):
         """Modified repr to only show value"""
-        return "<%s.%s: %r>" % (self.__class__.__name__, self._name_, self._value_[0])
+        return f"<{type(self).__name__}.{self.name}: {self.value}{self.unit}>"
 
 
 PLASMOD_INPUTS = {
