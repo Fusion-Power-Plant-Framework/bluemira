@@ -10,8 +10,8 @@ import polyscope as ps
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.utilities.tools import ColourDescriptor
 from bluemira.display.palettes import ColorPalette
+from bluemira.utilities.tools import ColourDescriptor
 
 
 @dataclass
