@@ -27,6 +27,8 @@ from dataclasses import asdict, dataclass
 from enum import Enum
 from typing import Dict, Union
 
+import numpy as np
+
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.plasmod.api._inputs import PlasmodInputs
@@ -200,4 +202,3 @@ class PlasmodSolverProfiles(MappedParameterFrame):
     n_He: Parameter[np.ndarray] = Parameter(  # noqa: N815
         name="n_He", value=np.array([]), unit="1/m^3"
     )
->>>>>>> 0a24ca339 (🚧 attempt 1)
