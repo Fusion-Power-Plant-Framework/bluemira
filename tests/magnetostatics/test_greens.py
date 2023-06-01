@@ -180,10 +180,12 @@ class TestGreensFz:
         xa = 2.0
         za = 0.0
         xb = 3.0
-        zb = 100.0
+        zb = 1000.0
         rho = za - zb
-        approx = (
+
+        current2 = 1e12
+        approx = current2 * (
             3 * MU_0_2PI * (np.pi * xa**2 / rho**2) * (np.pi * xb**2 / rho**2)
         )
-        Fz = greens_Fz(xa, za, xb, zb)
-        np.testing.assert_allclose(Fz, approx)
+        Fz = current2 * greens_Fz(xa, za, xb, zb)
+        np.testing.assert_allclose(Fz, approx, rtol=5e-5)

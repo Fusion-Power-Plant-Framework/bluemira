@@ -431,7 +431,7 @@ def greens_Fz(
 
     Returns
     -------
-    The force response from coil A to coil B.
+    The force response from coil A to coil B [N/A^2].
 
     Raises
     ------
@@ -441,18 +441,21 @@ def greens_Fz(
     Notes
     -----
     The absolute value of the force can be obtained by multiplying the result by
-    the Ampere-turns in both coils (i.e. Na*Ia*Nb*Ib). The force is towards coil B.
+    the Ampere-turns in both coils (i.e. Na*Ia*Nb*Ib). The force is towards coil B,
+    and is always positive. The signs of the currents then determine the direction
+    of the force. (same sign -> attractive force, opposite sign -> repulsive force).
+
     Y. Iwasa, Case Studies in Superconducting Magnets Design and Operational Issues,
     Second Edition, 2009, equation 3.34 and 3.36, p.83
     ISBN 978-0-387-09799-2
     """
-    rho = za - zb
+    rho = abs(za - zb)
     factor = rho * np.sqrt((xa + xb) ** 2 + rho**2) / ((xa - xb) ** 2 + rho**2)
     k2 = 4 * xa * xb / ((xa + xb) ** 2 + rho**2)
     k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
     kk2 = ellipk_nb(k2)
     ek2 = ellipe_nb(k2)
-    return 0.5 * MU_0 * factor * (k2 * kk2 + (k2 + 2) * (kk2 - ek2))
+    return 0.5 * MU_0 * factor * (k2 * kk2 + (k2 - 2) * (kk2 - ek2))
 
 
 @nb.jit(nopython=True)
