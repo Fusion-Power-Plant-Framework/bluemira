@@ -36,6 +36,7 @@ __all__ = [
     "greens_Bz",
     "greens_dpsi_dx",
     "greens_dpsi_dz",
+    "greens_Fz",
     "greens_all",
 ]
 
@@ -404,6 +405,45 @@ def greens_Bz(
     \t:math:`(x_{c}, z_{c}; x, z)`
     """
     return 1 / x * greens_dpsi_dx(xc, zc, x, z, d_xc, d_zc)
+
+
+@nb.jit(nopython=True)
+def greens_Fz(
+    xa: Union[float, np.ndarray],
+    za: Union[float, np.ndarray],
+    xb: Union[float, np.ndarray],
+    zb: Union[float, np.ndarray],
+) -> Union[float, np.ndarray]:
+    """
+    Calculate vertical force between two coils at (xa, za) and (xb, zb) due to unit currents
+    using a Greens function.
+
+    Parameters
+    ----------
+    xa:
+        Coil x coordinates [m]
+    za:
+        Coil z coordinates [m]
+    xb:
+        Other coil x locations [m]
+    zb:
+        Other coil z locations [m]
+
+    Notes
+    -----
+    The absolute value of the force can be obtained by multiplying the result by
+    the Ampere-turns in both coils (i.e. Ia*Ib)
+    Y. Iwasa, Case Studies in Superconducting Magnets Design and Operational Issues,
+    Second Edition, 2009, equation 3.34 and 3.36, p83
+    ISBN 978-0-387-09799-2
+    """
+    rho = za - zb
+    factor = rho * np.sqrt((xa + xb) ** 2 + rho**2) / ((xa - xb) ** 2 + rho**2)
+    k2 = 4 * xa * xb / ((xa + xb) ** 2 + rho**2)
+    k2 = clip_nb(k2, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    kk2 = ellipk_nb(k2)
+    ek2 = ellipe_nb(k2)
+    return 0.5 * MU_0 * factor * (k2 * kk2 + (k2 + 2) * (kk2 - ek2))
 
 
 @nb.jit(nopython=True)
