@@ -94,6 +94,22 @@ class TestColorPalette:
             + "</svg>"
         )
 
+    def test_repr_term_with_alpha(self):
+        pal = copy(self.pal)
+        pal["C1"] = make_alpha_palette(pal["C1"], 8)
+        pal["C2"] = make_alpha_palette(pal["C2"], 3)
+
+        assert pal._repr_colour_str(pal._hex_horizontal()) == (
+            "\x1b[48:2::0:0:0m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
+            "\x1b[48:2::32:32:32m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
+            "\x1b[48:2::64:64:64m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
+            "\x1b[48:2::96:96:96m  \x1b[49m  \n"
+            "\x1b[48:2::128:128:128m  \x1b[49m  \n"
+            "\x1b[48:2::159:159:159m  \x1b[49m  \n"
+            "\x1b[48:2::191:191:191m  \x1b[49m  \n"
+            "\x1b[48:2::223:223:223m  \x1b[49m  \n\n"
+        )
+
 
 def test_background_colour_string():
     assert background_colour_string("#123456") == "\x1b[48:2::18:52:86m  \x1b[49m"

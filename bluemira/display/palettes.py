@@ -162,9 +162,9 @@ class ColorPalette:
         try:
             g_ipy = get_ipython()
             if "terminal" in str(type(g_ipy)) or g_ipy is None:
-                return self._repr_colour_str(self._hex_horizontal())
+                return self._repr_colour_str(self._hex_horizontal()).strip(" \n")
         except NameError:
-            return self._repr_colour_str(self._hex_horizontal())
+            return self._repr_colour_str(self._hex_horizontal()).strip(" \n")
 
         from IPython.core.display import HTML, display
 
