@@ -429,12 +429,15 @@ def greens_Fz(
     zb:
         Other coil z locations [m]
 
+    Returns
+    -------
+
     Notes
     -----
     The absolute value of the force can be obtained by multiplying the result by
-    the Ampere-turns in both coils (i.e. Ia*Ib)
+    the Ampere-turns in both coils (i.e. Na*Ia*Nb*Ib). The force is towards coil b.
     Y. Iwasa, Case Studies in Superconducting Magnets Design and Operational Issues,
-    Second Edition, 2009, equation 3.34 and 3.36, p83
+    Second Edition, 2009, equation 3.34 and 3.36, p.83
     ISBN 978-0-387-09799-2
     """
     rho = za - zb
