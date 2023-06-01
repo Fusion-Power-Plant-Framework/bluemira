@@ -415,8 +415,8 @@ def greens_Fz(
     zb: Union[float, np.ndarray],
 ) -> Union[float, np.ndarray]:
     """
-    Calculate vertical force between two coils at (xa, za) and (xb, zb) due to unit currents
-    using a Greens function.
+    Calculate vertical force between two coils at (xa, za) and (xb, zb) due to unit
+    currents using a Greens function.
 
     Parameters
     ----------
