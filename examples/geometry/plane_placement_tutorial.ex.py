@@ -40,6 +40,11 @@ Plane placement example
 
 # %% [markdown]
 # # Plane placement examples
+# A plane and a placement are two CAD primitives for orientation and positioning
+# of an object.
+# A placement describes the origin and orientation for a given object.
+# A plane is a CAD primitive surface which is defined by its placement.
+#
 # Necessary imports
 
 # %%

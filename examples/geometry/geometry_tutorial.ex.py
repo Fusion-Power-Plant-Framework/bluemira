@@ -86,7 +86,7 @@ from bluemira.geometry.tools import (
     make_circle,
     make_polygon,
     revolve_shape,
-    save_as_STP,
+    save_cad,
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
@@ -406,8 +406,8 @@ show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 # %% [markdown]
 # ## Exporting geometry
 #
-# At present, only the STEP Assembly format is supported
-# for exporting geometry.
+# Many different CAD file types can be written,
+# for a full list see the `CADFileType` class.
 
 # %%
 # Try saving any shape or group of shapes created above
@@ -416,10 +416,10 @@ show_cad([cut_box_1, new_cut_box_1], options=blue_red_options)
 my_shapes = [cut_box_1]
 # Modify this file path to where you want to save the data.
 my_file_path = "my_tutorial_assembly.STP"
-save_as_STP(
+save_cad(
     my_shapes,
     filename=os.path.join(
         get_bluemira_path("", subfolder="generated_data"), my_file_path
     ),
-    scale=1,
+    unit_scale="metre",
 )

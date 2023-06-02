@@ -83,8 +83,10 @@ from bluemira.utilities.tools import get_class_from_module
 # for the plasma and TF coil,
 # and how to run the build with configurable parameters.
 #
+# ## ParameterFrames and ComponentMangers
 # Firstly we need to define the parameters we're going to use in our reactor design for
-# each component.
+# each component. See the [ParameterFrame example](../base/params.ex.py) for more
+# information.
 
 
 # %%
@@ -157,7 +159,7 @@ class MyReactor(Reactor):
 
 
 # %% [markdown]
-#
+# ## Optimisation Problem
 # Now we want to define a way to optimise the TF coil shape.
 # We want to minimise the length of the TF coil, constraining the optimiser such that
 # the any part of the coil is always a minimum distance away from the plasma.
@@ -255,7 +257,7 @@ class MyTFCoilOptProblem(GeometryOptimisationProblem):
 
 
 # %% [markdown]
-#
+# ## Designers and Builders
 # We need to define some `Designers` and `Builders` for our various `Components`.
 #
 # Firstly the plasma.
@@ -447,7 +449,7 @@ class TFCoilBuilder(Builder):
 
 
 # %% [markdown]
-#
+# ## Setup and Run
 # Now let us setup our build configuration.
 # This could be stored as a JSON file and read in but for simplicity it is all written
 # here.

@@ -175,6 +175,7 @@ jtot = ScalarSubFunc(functions, markers, subdomains)
 # %% [markdown]
 #
 # plot the source term
+#
 # Note: depending on the geometric dimension of the coil, enclosure, and mesh
 # characteristic length, the plot could be not so "explanatory".
 
