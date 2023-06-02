@@ -4,8 +4,8 @@
 Classes to define the timeline for Power Cycle simulations.
 """
 
-from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Union
+from dataclasses import dataclass
+from typing import Any, Callable, Dict, List, Optional, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -156,61 +156,60 @@ class Breakdown:
     duration: ArrayLike
 
 
+class ScenarioConfigDescriptor:
+    """Scenario config descriptor for use with dataclasses"""
+
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
+
+    def __get__(self, obj: Any, _) -> str:
+        """Get the scenario config"""
+        return getattr(obj, self._name)
+
+    def __set__(self, obj: Any, value: Union[dict, ScenarioConfig]):
+        """Set the scenario config"""
+        if not isinstance(value, ScenarioConfig):
+            value = ScenarioConfig(**value)
+
+        setattr(obj, self._name, value)
+
+
+class LibraryConfigDescriptor:
+    """Scenario config descriptor for use with dataclasses"""
+
+    def __init__(self, *, library_config: Callable):
+        self.library_config = library_config
+
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
+
+    def __get__(self, obj: Any, _) -> str:
+        """Get the scenario config"""
+        return getattr(obj, self._name)
+
+    def __set__(self, obj: Any, value: Dict[str, Union[PulseConfig, Dict]]):
+        """Set the scenario config"""
+        for k, v in value.items():
+            if not isinstance(v, self.library_config):
+                value[k] = self.library_config(**v)
+
+        setattr(obj, self._name, value)
+
+
 @dataclass
 class ScenarioBuilderConfig:
-    scenario: Union[dict, ScenarioConfig]
-    pulse_library: dict
-    phase_library: dict
-    breakdown_library: dict
-
-    _scenario: ScenarioConfig = field(init=False, repr=False)
-    _pulse_library: Dict[str, PulseConfig] = field(init=False, repr=False)
-    _phase_library: Dict[str, PhaseConfig] = field(init=False, repr=False)
-    _breakdown_library: Dict[str, BreakdownConfig] = field(init=False, repr=False)
-
-    @property
-    def scenario(self):
-        return self._scenario
-
-    @scenario.setter
-    def scenario(self, value: Union[dict, ScenarioConfig]):
-        if isinstance(value, ScenarioConfig):
-            self._scenario = value
-        else:
-            self._scenario = ScenarioConfig(**value)
-
-    @property
-    def pulse_library(self):
-        return self._pulse_library
-
-    @pulse_library.setter
-    def pulse_library(self, value: dict):
-        for k, v in value.items():
-            if not isinstance(v, PulseConfig):
-                value[k] = PulseConfig(**v)
-        self._pulse_library = value
-
-    @property
-    def phase_library(self):
-        return self._phase_library
-
-    @phase_library.setter
-    def phase_library(self, value: dict):
-        for k, v in value.items():
-            if not isinstance(v, PhaseConfig):
-                value[k] = PhaseConfig(**v)
-        self._phase_library = value
-
-    @property
-    def breakdown_library(self):
-        return self._breakdown_library
-
-    @breakdown_library.setter
-    def breakdown_library(self, value: dict):
-        for k, v in value.items():
-            if not isinstance(v, BreakdownConfig):
-                value[k] = BreakdownConfig(**v)
-        self._breakdown_library = value
+    scenario: ScenarioConfigDescriptor = ScenarioConfigDescriptor()
+    pulse_library: LibraryConfigDescriptor = LibraryConfigDescriptor(
+        library_config=PulseConfig
+    )
+    phase_library: LibraryConfigDescriptor = LibraryConfigDescriptor(
+        library_config=PhaseConfig
+    )
+    breakdown_library: LibraryConfigDescriptor = LibraryConfigDescriptor(
+        library_config=BreakdownConfig
+    )
 
 
 class ScenarioBuilder:
