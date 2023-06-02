@@ -4,9 +4,9 @@
 Base classes for the power cycle model.
 """
 from abc import ABC, ABCMeta, abstractmethod, abstractproperty
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Iterable, Union
+from typing import Any, Iterable, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -18,6 +18,27 @@ class ModuleType(Enum):
     NONE = auto()
     EQUILIBRIA = auto()
     PUMPING = auto()
+
+
+class ModuleDescriptor:
+    """Module Descriptor for use with dataclasses"""
+
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
+
+    def __get__(self, obj: Any, _) -> str:
+        """Get the module"""
+        return getattr(obj, self._name)
+
+    def __set__(self, obj: Any, value: Union[None, str, ModuleType]):
+        """Set the module"""
+        if value is None:
+            value = ModuleType.NONE
+        elif isinstance(value, str):
+            value = ModuleType[value.upper()]
+
+        setattr(obj, self._name, value)
 
 
 class LoadType(Enum):
@@ -37,22 +58,7 @@ class PhaseLoadConfig:
 class BaseConfig:
     name: str
     variables_map: dict
-    module: Union[None, str, ModuleType]
-
-    _module: ModuleType = field(init=False, repr=False)
-
-    @property
-    def module(self):
-        return self._module
-
-    @module.setter
-    def module(self, value):
-        if value is None:
-            self._module = ModuleType.NONE
-        elif isinstance(value, str):
-            self._module = ModuleType[value.upper()]
-        else:
-            self._module = value
+    module: ModuleDescriptor = ModuleDescriptor()
 
 
 class PowerCycleABC:

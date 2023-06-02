@@ -3,11 +3,10 @@
 """
 Classes for the calculation of net power in the Power Cycle model.
 """
-from dataclasses import dataclass, field
-from typing import Dict, Union
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
-from numpy.typing import ArrayLike
 
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.base import (
@@ -60,30 +59,29 @@ class PowerCycleLoadConfig(BaseConfig):
     # _variable_map: LoadConfig
 
 
+class LoadDescriptor:
+    """Load Descriptor for use with dataclasses"""
+
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
+
+    def __get__(self, obj: Any, _) -> str:
+        """Get the load"""
+        return getattr(obj, self._name)
+
+    def __set__(self, obj: Any, value: dict):
+        """Set the load"""
+        setattr(
+            obj, self._name, {k: PowerCycleLoadConfig(**v) for k, v in value.items()}
+        )
+
+
 @dataclass
 class PowerCycleSystemConfig:
     name: str
-    reactive: dict
-    active: dict
-
-    _reactive: Dict[str, PowerCycleLoadConfig] = field(init=False, repr=False)
-    _active: Dict[str, PowerCycleLoadConfig] = field(init=False, repr=False)
-
-    @property
-    def reactive(self):
-        return self._reactive
-
-    @reactive.setter
-    def reactive(self, value):
-        self._reactive = {k: PowerCycleLoadConfig(**v) for k, v in value.items()}
-
-    @property
-    def active(self):
-        return self._active
-
-    @active.setter
-    def active(self, value):
-        self._active = {k: PowerCycleLoadConfig(**v) for k, v in value.items()}
+    reactive: LoadDescriptor = LoadDescriptor()
+    active: LoadDescriptor = LoadDescriptor()
 
 
 @dataclass
@@ -186,7 +184,7 @@ class PowerCycleSystem(PowerCycleABC):
                 description = description_list[n]
                 time = np.array(time_list[n])
                 data = raw_uc(np.array(data_list[n]), unit, "W")
-                
+
                 for efficiency in all_efficiencies:
                     if consumption:
                         data /= efficiency
