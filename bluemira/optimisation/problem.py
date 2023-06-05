@@ -156,7 +156,6 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         -------
         True if any constraints are violated by the parameterisation.
         """
-        print(f"{x=}")
         return validate_constraints(
             x, self.eq_constraints(), self.ineq_constraints(), warn=warn
         )
