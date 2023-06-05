@@ -22,6 +22,8 @@
 """
 Creating ducts for the port
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Tuple, Union
 
@@ -289,6 +291,68 @@ def make_upper_port_xy_face(
     return xy_face
 
 
+def pipe_pipe_join(
+    target_shape: BluemiraSolid,
+    target_void: BluemiraSolid,
+    tool_shape: BluemiraSolid,
+    tool_void: BluemiraSolid,
+) -> Tuple[BluemiraSolid, :BluemiraSolid]:
+    """
+    Join two hollow, intersecting pipes.
+
+    Parameters
+    ----------
+    target_shape:
+        Solid of the target shape
+    target_void:
+        Solid of the target void
+    tool_shape:
+        Solid of the tool shape
+    tool_void:
+        Solid of the tool void
+
+    Returns
+    -------
+    shape:
+        Solid of the joined pipe-pipe shape
+    void:
+        Solid of the joined pipe-pipe void
+
+    Notes
+    -----
+    This approach is more brittle than a classic fuse, fuse, cut operation, but is
+    substantially faster. If the parts do not fully intersect, undesired results
+    are to be expected.
+    """
+    void = boolean_fuse([target_void, tool_void])
+    _, (target_fragments, tool_fragments) = boolean_fragments([target_shape, tool_shape])
+
+    # Keep the largest piece of the target by volume (opinionated)
+    # This is in case its COG is inside the tool void
+    target_fragments.sort(key=lambda solid: -solid.volume)
+    new_shape_pieces = [target_fragments[0]]
+    target_fragments = target_fragments[1:]
+    for targ_frag in target_fragments:
+        # Find the target piece(s) that are inside the tool
+        com = targ_frag.center_of_mass
+        if not point_inside_shape(com, tool_void):
+            new_shape_pieces.append(targ_frag)
+
+    for tool_frag in tool_fragments:
+        # Find the tool piece(s) that are inside the target
+        com = tool_frag.center_of_mass
+        if not point_inside_shape(com, target_void):
+            new_shape_pieces.append(tool_frag)
+        else:
+            for targ_frag in target_fragments:
+                # Find the union piece(s)
+                if tool_frag.is_same(targ_frag):
+                    new_shape_pieces.append(tool_frag)
+
+    shape = boolean_fuse(new_shape_pieces)
+    return shape, void
+
+
 if __name__ == "__main__":
     from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.display import show_cad
@@ -320,7 +384,7 @@ if __name__ == "__main__":
     builder = VacuumVesselBuilder(params, {}, ivc_koz=p)
     VV = builder.build()
 
-    port_koz = make_polygon({"x": [7, 12, 12, 7], "z": [20, 20, 0, 0]}, closed=True)
+    port_koz = make_polygon({"x": [7, 12, 12, 7], "z": [20, 20, -20, -20]}, closed=True)
     params = VVUpperPortDuctBuilderParams.from_dict(
         {
             "n_TF": {"value": 16, "unit": ""},
@@ -343,73 +407,15 @@ if __name__ == "__main__":
     up_xyz = UP.get_component("xyz")
     tool_void = up_xyz.get_component("VVUpperPortDuct voidspace").shape
     tool_shape = up_xyz.get_component("VVUpperPortDuct").shape
+    wire = make_polygon(
+        {"x": [9, 13, 13, 9], "y": [-0.5, -1, 1, 0.5], "z": 10}, closed=True
+    )
+    wire.rotate(degree=10)
+    from bluemira.geometry.tools import extrude_shape, offset_wire
 
-    def pipe_pipe_join(
-        target_shape: BluemiraSolid,
-        target_void: BluemiraSolid,
-        tool_shape: BluemiraSolid,
-        tool_void: BluemiraSolid,
-    ) -> Tuple[BluemiraSolid, :BluemiraSolid]:
-        """
-        Join two hollow, intersecting pipes.
-
-        Parameters
-        ----------
-        target_shape:
-            Solid of the target shape
-        target_void:
-            Solid of the target void
-        tool_shape:
-            Solid of the tool shape
-        tool_void:
-            Solid of the tool void
-
-        Returns
-        -------
-        shape:
-            Solid of the joined pipe-pipe shape
-        void:
-            Solid of the joined pipe-pipe void
-
-        Notes
-        -----
-        This approach is more brittle than a classic fuse, fuse, cut operation, but is
-        substantially faster.
-        """
-        void = boolean_fuse([target_void, tool_void])
-        _, (_, tool_void_fragments) = boolean_fragments([target_void, tool_void])
-
-        new_void_pieces = []
-        for void_frag in tool_void_fragments:
-            if not point_inside_shape(void_frag.center_of_mass, target_void):
-                new_void_pieces.append(void_frag)
-
-        _, (target_fragments, tool_fragments) = boolean_fragments(
-            [target_shape, tool_shape]
-        )
-
-        new_shape_pieces = []
-        for targ_frag in target_fragments:
-            # Find and remove the target piece(s) that are inside the tool
-            com = targ_frag.center_of_mass
-            for tool_void_frag in new_void_pieces:
-                if point_inside_shape(com, tool_void_frag):
-                    continue
-                else:
-                    new_shape_pieces.append(targ_frag)
-
-        for tool_frag in tool_fragments:
-            # Find and remove the tool piece(s) that are inside the target
-            com = tool_frag.center_of_mass
-            if not point_inside_shape(com, target_void):
-                new_shape_pieces.append(tool_frag)
-            else:
-                for targ_frag in target_fragments:
-                    # Find the union piece
-                    if tool_frag.is_same(targ_frag):
-                        new_shape_pieces.append(tool_frag)
-
-        shape = boolean_fuse(new_shape_pieces)
-        return shape, void
-
+    wire2 = offset_wire(wire, 0.1)
+    face = BluemiraFace([wire2, wire])
+    void_face = BluemiraFace(wire)
+    tool_shape = extrude_shape(face, vec=(0, 0, -10))
+    tool_void = extrude_shape(void_face, vec=(0, 0, -10))
     shape2, void2 = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
