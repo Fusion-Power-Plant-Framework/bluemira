@@ -67,7 +67,7 @@ class BaseManager(abc.ABC):
     def save_cad(
         self,
         *dims: str,
-        filter_: Union[Callable[[Component], bool], None],
+        filter_: Optional[Callable[[Component], bool]],
         filename: Optional[str] = None,
         formatt: Union[str, cadapi.CADFileType] = "stp",
         directory: Union[str, Path] = "",
@@ -96,7 +96,7 @@ class BaseManager(abc.ABC):
     def show_cad(
         self,
         *dims: str,
-        filter_: Union[Callable[[Component], bool], None],
+        filter_: Optional[Callable[[Component], bool]],
         **kwargs,
     ):
         """
@@ -113,7 +113,7 @@ class BaseManager(abc.ABC):
         """
 
     @abc.abstractmethod
-    def plot(self, *dims: str, filter_: Union[Callable[[Component], bool], None]):
+    def plot(self, *dims: str, filter_: Optional[Callable[[Component], bool]]):
         """
         Plot the component.
 
@@ -177,7 +177,7 @@ class BaseManager(abc.ABC):
         self,
         comp: Component,
         dims_to_show: Tuple[str, ...],
-        filter_: Union[Callable[[Component], bool], None],
+        filter_: Optional[Callable[[Component], bool]],
     ) -> Component:
         """
         Filter a component tree
@@ -195,7 +195,7 @@ class BaseManager(abc.ABC):
         self,
         comp: Component,
         dims_to_show: Tuple[str, ...],
-        filter_: Union[Callable[[Component], bool], None],
+        filter_: Optional[Callable[[Component], bool]],
     ):
         for i, dim in enumerate(dims_to_show):
             ComponentPlotter(view=dim).plot_2d(
@@ -296,7 +296,7 @@ class ComponentManager(BaseManager):
     def save_cad(
         self,
         *dims: str,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
         filename: Optional[str] = None,
         formatt: Union[str, cadapi.CADFileType] = "stp",
         directory: Union[str, Path] = "",
@@ -336,7 +336,7 @@ class ComponentManager(BaseManager):
     def show_cad(
         self,
         *dims: str,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -363,7 +363,7 @@ class ComponentManager(BaseManager):
     def plot(
         self,
         *dims: str,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
     ):
         """
         Plot the component.
@@ -503,7 +503,7 @@ class Reactor(BaseManager):
         dims_to_show: Tuple[str, ...],
         with_components: Optional[List[ComponentManager]],
         n_sectors: Optional[int],
-        filter_: Union[Callable[[Component], bool], None],
+        filter_: Optional[Callable[[Component], bool]],
         **kwargs,
     ) -> Component:
         # We filter because self.component (above) only creates
@@ -528,7 +528,7 @@ class Reactor(BaseManager):
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
         filename: Optional[str] = None,
         formatt: Union[str, cadapi.CADFileType] = "stp",
         directory: Union[str, Path] = "",
@@ -577,7 +577,7 @@ class Reactor(BaseManager):
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -614,7 +614,7 @@ class Reactor(BaseManager):
         self,
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
     ):
         """
         Plot the reactor.
