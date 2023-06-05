@@ -341,8 +341,6 @@ if __name__ == "__main__":
     target_shape = vv_xyz_sector_1.get_component("Body 1").shape
 
     def pipe_pipe_join(target_shape, target_void, tool_shape, tool_void):
-        target_void = target_component.get_component("xyz").get_component("Sector 1")
-
         compound, fragments = boolean_fragments([target_shape, tool_shape])
         target_fragments, tool_fragments = fragments
         # Find the piece to remove from the target
@@ -363,6 +361,3 @@ if __name__ == "__main__":
         new_target = boolean_fuse(new_target)
         new_tool = boolean_fuse(new_tool)
         return new_target, new_tool
-
-    new_target, new_tool = pipe_pipe_join(vv, port)
-    show_cad(new_target)
