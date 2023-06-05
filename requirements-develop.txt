@@ -28,7 +28,7 @@ Jinja2==3.1.2
 jupyter-cache==0.6.1
 jupytext==1.14.6
 lazy-object-proxy==1.9.0
-MarkupSafe==2.1.2
+MarkupSafe==2.1.3
 mccabe==0.7.0
 mypy-extensions==1.0.0
 myst-nb==0.17.2
