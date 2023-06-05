@@ -321,7 +321,13 @@ class ColourDescriptor:
         return colors.to_hex(getattr(obj, self._name, self._default))
 
     def __set__(self, obj: Any, value: Union[str, Tuple[float, ...]]):
-        """Set the colour"""
+        """
+        Set the colour
+
+        Notes
+        -----
+        The value can be anything accepted by matplotlib.colors.to_hex
+        """
         setattr(obj, self._name, value)
 
 
