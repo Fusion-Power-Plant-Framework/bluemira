@@ -296,9 +296,7 @@ if __name__ == "__main__":
         boolean_fuse,
         extrude_shape,
         make_polygon,
-        offset_wire,
         point_inside_shape,
-        revolve_shape,
     )
     from eudemo.vacuum_vessel import VacuumVesselBuilder, VacuumVesselBuilderParams
 
@@ -336,28 +334,83 @@ if __name__ == "__main__":
     c = Component("test", children=[VV, UP])
     c.show_cad()
 
-    vv_xyz_sector_1 = VV.get_component("xyz").get_component("Sector 1")
-    target_void = vv_xyz_sector_1.get_component("Vessel voidspace 1").shape
-    target_shape = vv_xyz_sector_1.get_component("Body 1").shape
+    vv_xyz = VV.get_component("xyz").get_component("Sector 1")
+    target_void = vv_xyz.get_component("Vessel voidspace 1").shape
+    target_shape = vv_xyz.get_component("Body 1").shape
+    up_xyz = UP.get_component("xyz")
+    tool_void = up_xyz.get_component("VVUpperPortDuct voidspace").shape
+    tool_shape = up_xyz.get_component("VVUpperPortDuct").shape
+
+    import time
 
     def pipe_pipe_join(target_shape, target_void, tool_shape, tool_void):
-        compound, fragments = boolean_fragments([target_shape, tool_shape])
+        """Naive"""
+        t1 = time.time()
+        void = boolean_fuse([target_void, tool_void])
+        shape = boolean_fuse([target_shape, tool_shape])
+        shape = boolean_cut(shape, void)
+        print(f"{time.time()-t1} seconds")
+        return shape, void
+
+    def pipe_pipe_join2(target_shape, target_void, tool_shape, tool_void):
+        """Smart but dumb"""
+        t1 = time.time()
+        void = boolean_fuse([target_void, tool_void])
+        _, void_fragments = boolean_fragments([target_void, tool_void])
+        target_void_fragments, tool_void_fragments = void_fragments
+        new_void_pieces = []
+        for void_frag in tool_void_fragments:
+            if not point_inside_shape(void_frag.center_of_mass, target_void):
+                new_void_pieces.append(void_frag)
+
+        _, fragments = boolean_fragments([target_shape, tool_shape])
         target_fragments, tool_fragments = fragments
-        # Find the piece to remove from the target
-        new_target = []
-        new_tool = []
-        for solid in target_fragments:
-            for other in tool_fragments:
-                if solid.is_same(other):
-                    new_target.append(solid)
-                    # target_fragments.remove(other)
+
+        new_shape_pieces = []
+        for targ_frag in target_fragments:
+            # Find and remove the target piece(s) that are inside the tool
+            com = targ_frag.center_of_mass
+            for tool_void_frag in new_void_pieces:
+                if point_inside_shape(com, tool_void_frag):
+                    continue
                 else:
-                    if point_inside_shape(solid.center_of_mass, target_shape):
-                        new_target.append(solid)
+                    new_shape_pieces.append(targ_frag)
 
-        for solid in tool_fragments:
-            pass
+        for tool_frag in tool_fragments:
+            # Find and remove the tool piece(s) that are inside the target
+            com = tool_frag.center_of_mass
+            if not point_inside_shape(com, target_void):
+                new_shape_pieces.append(tool_frag)
+            else:
+                for targ_frag in target_fragments:
+                    # Find the union piece
+                    if tool_frag.is_same(targ_frag):
+                        new_shape_pieces.append(tool_frag)
 
-        new_target = boolean_fuse(new_target)
-        new_tool = boolean_fuse(new_tool)
-        return new_target, new_tool
+        shape = boolean_fuse(new_shape_pieces)
+        print(f"{time.time()-t1} seconds")
+        return shape, void
+        # compound, fragments = boolean_fragments([target_shape, tool_shape])
+
+        # target_fragments, tool_fragments = fragments
+        # # Find the piece to remove from the target
+        # new_shape_pieces = []
+        # for solid in target_fragments:
+        #     if point_inside
+        #     for other in tool_fragments:
+        #         if solid.is_same(other):
+        #             new_target.append(solid)
+        #             # target_fragments.remove(other)
+        #         else:
+        #             if point_inside_shape(solid.center_of_mass, target_shape):
+        #                 new_target.append(solid)
+
+        # for solid in tool_fragments:
+        #     pass
+
+        # new_target = boolean_fuse(new_target)
+        # new_tool = boolean_fuse(new_tool)
+        # return new_target, new_tool
+
+    # shape, void = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
+    shape2, void2 = pipe_pipe_join2(target_shape, target_void, tool_shape, tool_void)
