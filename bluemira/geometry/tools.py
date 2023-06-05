@@ -1070,7 +1070,7 @@ def save_cad(
     if isinstance(shape_name[0], BluemiraGeo):
         shapes, names = [shape_name[0]], [shape_name[1]]
     else:
-        shapes, names = zip(*shape_name)
+        shapes, names = shape_name
     cadapi.save_cad(
         [s.shape for s in shapes], filename, formatt=formatt, labels=names, **kwargs
     )
