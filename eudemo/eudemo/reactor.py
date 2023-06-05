@@ -69,12 +69,12 @@ from eudemo.equilibria import (
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
-from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
 from eudemo.maintenance.duct_connection import (
     TSUpperPortDuctBuilder,
     VVUpperPortDuctBuilder,
 )
 from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
+from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
@@ -367,8 +367,12 @@ if __name__ == "__main__":
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
         reference_eq,
-        reactor.tf_coils.boundary(),
-        pf_coil_keep_out_zones=[upper_port_koz_xz, eq_port_koz_xz, lower_port_duct_xz_koz],
+        reactor.tf_coils.xz_outer_boundary(),
+        pf_coil_keep_out_zones=[
+            upper_port_koz_xz,
+            eq_port_koz_xz,
+            lower_port_duct_xz_koz,
+        ],
     )
 
     reactor.cryostat_thermal = build_cryots(
@@ -383,7 +387,11 @@ if __name__ == "__main__":
         reactor_config.config_for("Coil structures"),
         tf_coil_xz_face=reactor.tf_coils.xz_face(),
         pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
-        pf_coil_keep_out_zones=[upper_port_koz_xz, eq_port_koz_xz, lower_port_duct_xz_koz],
+        pf_coil_keep_out_zones=[
+            upper_port_koz_xz,
+            eq_port_koz_xz,
+            lower_port_duct_xz_koz,
+        ],
     )
 
     # Incorporate ports, potentially larger depending on where the PF
