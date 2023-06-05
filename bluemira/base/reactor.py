@@ -19,22 +19,38 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Base class for a Bluemira reactor."""
+from __future__ import annotations
 
 import abc
 import time
-from typing import Any, Callable, List, Optional, Tuple, Type, Union
+from pathlib import Path
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 from warnings import warn
 
 import anytree
 from rich.progress import track
 
-from bluemira.base.components import Component
+from bluemira.base.components import Component, get_properties_from_components
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
+from bluemira.geometry.tools import save_cad
 from bluemira.materials.material import SerialisedMaterial, Void
+
+if TYPE_CHECKING:
+    import bluemira.codes._freecadapi as cadapi
 
 _PLOT_DIMS = ["xy", "xz"]
 _CAD_DIMS = ["xy", "xz", "xyz"]
@@ -58,10 +74,38 @@ class BaseManager(abc.ABC):
         """
 
     @abc.abstractmethod
+    def save_cad(
+        self,
+        components: Union[Component, Iterable[Component]],
+        filename: str,
+        formatt: Union[str, cadapi.CADFileType] = "stp",
+        **kwargs,
+    ):
+        """
+        Save the CAD build of the component.
+
+        Parameters
+        ----------
+        components:
+            components to save
+        filename:
+            the filename to save
+        formatt:
+            CAD file format
+        """
+        shape_name = get_properties_from_components(components, ("shape", "name"))
+        if not isinstance(shape_name[0], tuple):
+            shapes, names = [shape_name[0]], [shape_name[1]]
+        else:
+            shapes, names = shape_name
+
+        save_cad(shapes, filename, formatt, names, **kwargs)
+
+    @abc.abstractmethod
     def show_cad(
         self,
         *dims: str,
-        filter_: Union[Callable[[Component], bool], None],
+        filter_: Optional[Callable[[Component], bool]],
         **kwargs,
     ):
         """
@@ -78,7 +122,7 @@ class BaseManager(abc.ABC):
         """
 
     @abc.abstractmethod
-    def plot(self, *dims: str, filter_: Union[Callable[[Component], bool], None]):
+    def plot(self, *dims: str, filter_: Optional[Callable[[Component], bool]]):
         """
         Plot the component.
 
@@ -142,7 +186,7 @@ class BaseManager(abc.ABC):
         self,
         comp: Component,
         dims_to_show: Tuple[str, ...],
-        filter_: Union[Callable[[Component], bool], None],
+        filter_: Optional[Callable[[Component], bool]],
     ) -> Component:
         """
         Filter a component tree
@@ -160,7 +204,7 @@ class BaseManager(abc.ABC):
         self,
         comp: Component,
         dims_to_show: Tuple[str, ...],
-        filter_: Union[Callable[[Component], bool], None],
+        filter_: Optional[Callable[[Component], bool]],
     ):
         for i, dim in enumerate(dims_to_show):
             ComponentPlotter(view=dim).plot_2d(
@@ -258,10 +302,50 @@ class ComponentManager(BaseManager):
         """
         return self._component
 
+    def save_cad(
+        self,
+        *dims: str,
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
+        filename: Optional[str] = None,
+        formatt: Union[str, cadapi.CADFileType] = "stp",
+        directory: Union[str, Path] = "",
+        **kwargs,
+    ):
+        """
+        Save the CAD build of the component.
+
+        Parameters
+        ----------
+        *dims:
+            The dimension of the reactor to show, typically one of
+            'xz', 'xy', or 'xyz'. (default: 'xyz')
+        filter_:
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
+        filename:
+            the filename to save, will default to the component name
+        formatt:
+            CAD file format
+        directory:
+            Directory to save into, defaults to the current directory
+        kwargs:
+            passed to the :func:`bluemira.geometry.tools.save_cad` function
+        """
+        comp = self.component()
+        if filename is None:
+            filename = comp.name
+
+        super().save_cad(
+            self._filter_tree(comp, self._validate_cad_dims(*dims, **kwargs), filter_),
+            filename=Path(directory, filename).as_posix(),
+            formatt=formatt,
+            **kwargs,
+        )
+
     def show_cad(
         self,
         *dims: str,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -275,6 +359,8 @@ class ComponentManager(BaseManager):
         filter_:
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
+        kwargs:
+            passed to the `~bluemira.display.displayer.show_cad` function
         """
         ComponentDisplayer().show_cad(
             self._filter_tree(
@@ -286,7 +372,7 @@ class ComponentManager(BaseManager):
     def plot(
         self,
         *dims: str,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
     ):
         """
         Plot the component.
@@ -421,12 +507,86 @@ class Reactor(BaseManager):
                 degree=(360 / self.n_sectors) * n_sectors,
             )
 
+    def _filter_and_reconstruct(
+        self,
+        dims_to_show: Tuple[str, ...],
+        with_components: Optional[List[ComponentManager]],
+        n_sectors: Optional[int],
+        filter_: Optional[Callable[[Component], bool]],
+        **kwargs,
+    ) -> Component:
+        # We filter because self.component (above) only creates
+        # a new root node for this reactor, not a new component tree.
+        comp_copy = self._filter_tree(
+            self.component(with_components), dims_to_show, filter_
+        )
+        # if "xyz" is requested, construct the 3d cad
+        # from each xyz component in the tree,
+        # as it's assumed that the cad is only built for 1 sector
+        # and is sector symmetric, therefore can be patterned
+        if "xyz" in dims_to_show:
+            self._construct_xyz_cad(
+                comp_copy,
+                with_components,
+                self.n_sectors if n_sectors is None else n_sectors,
+            )
+        return comp_copy
+
+    def save_cad(
+        self,
+        *dims: str,
+        with_components: Optional[List[ComponentManager]] = None,
+        n_sectors: Optional[int] = None,
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
+        filename: Optional[str] = None,
+        formatt: Union[str, cadapi.CADFileType] = "stp",
+        directory: Union[str, Path] = "",
+        **kwargs,
+    ):
+        """
+        Save the CAD build of the reactor.
+
+        Parameters
+        ----------
+        *dims:
+            The dimension of the reactor to show, typically one of
+            'xz', 'xy', or 'xyz'. (default: 'xyz')
+        with_components:
+            The components to construct when displaying CAD for xyz.
+            Defaults to None, which means show "all" components.
+        n_sectors:
+            The number of sectors to construct when displaying CAD for xyz
+            Defaults to None, which means show "all" sectors.
+        filter_:
+            A callable to filter Components from the Component tree,
+            returning True keeps the node False removes it
+        filename:
+            the filename to save, will default to the component name
+        formatt:
+            CAD file format
+        directory:
+            Directory to save into, defaults to the current directory
+        kwargs:
+            passed to the :func:`bluemira.geometry.tools.save_cad` function
+        """
+        if filename is None:
+            filename = self.name
+
+        super().save_cad(
+            self._filter_and_reconstruct(
+                self._validate_cad_dims(*dims), with_components, n_sectors, filter_
+            ),
+            Path(directory, filename).as_posix(),
+            formatt,
+            **kwargs,
+        )
+
     def show_cad(
         self,
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
         **kwargs,
     ):
         """
@@ -446,32 +606,24 @@ class Reactor(BaseManager):
         filter_:
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
+        kwargs:
+            passed to the `~bluemira.display.displayer.show_cad` function
         """
-        dims_to_show = self._validate_cad_dims(*dims, **kwargs)
-
-        # We filter because self.component (above) only creates
-        # a new root node for this reactor, not a new component tree.
-        comp_copy = self._filter_tree(
-            self.component(with_components), dims_to_show, filter_
-        )
-        # if "xyz" is requested, construct the 3d cad
-        # from each xyz component in the tree,
-        # as it's assumed that the cad is only built for 1 sector
-        # and is sector symmetric, therefore can be patterned
-        if "xyz" in dims_to_show:
-            self._construct_xyz_cad(
-                comp_copy,
+        ComponentDisplayer().show_cad(
+            self._filter_and_reconstruct(
+                self._validate_cad_dims(*dims, **kwargs),
                 with_components,
-                self.n_sectors if n_sectors is None else n_sectors,
-            )
-
-        ComponentDisplayer().show_cad(comp_copy, **kwargs)
+                n_sectors,
+                filter_,
+            ),
+            **kwargs,
+        )
 
     def plot(
         self,
         *dims: str,
         with_components: Optional[List[ComponentManager]] = None,
-        filter_: Union[Callable[[Component], bool], None] = FilterMaterial(),
+        filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
     ):
         """
         Plot the reactor.

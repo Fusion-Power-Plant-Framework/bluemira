@@ -21,6 +21,7 @@
 
 import time
 from copy import deepcopy
+from pathlib import Path
 from unittest.mock import patch
 
 import matplotlib.pyplot as plt
@@ -143,6 +144,10 @@ class TestReactor:
             else 1
         )
 
+    def test_save_cad(self, tmp_path):
+        self.reactor.save_cad("xyz", directory=tmp_path)
+        assert Path(tmp_path, f"{REACTOR_NAME}.stp").is_file()
+
     @staticmethod
     def _make_reactor() -> MyReactor:
         reactor = MyReactor(REACTOR_NAME, n_sectors=1)
@@ -173,6 +178,10 @@ class TestComponentMananger:
     def test_tree_contains_components(self):
         plasmatree = self.plasma.tree()
         assert all(dim in plasmatree for dim in ("xz", "xy", "xyz"))
+
+    def test_save_cad(self, tmp_path):
+        self.plasma.save_cad("xyz", directory=tmp_path)
+        assert Path(tmp_path, "Plasma.stp").is_file()
 
     @pytest.mark.parametrize("dim", ["xz", "xy", "xyz", ("xy", "xz")])
     def test_show_cad_contains_components(self, dim):

@@ -31,7 +31,6 @@ import pytest
 from numpy.linalg import norm
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.error import GeometryError
@@ -663,7 +662,7 @@ class TestSavingCAD:
         self._save_and_check(self.obj, save_as_STP, tmpdir)
 
     def test_save_cad(self, tmpdir):
-        self._save_and_check(PhysicalComponent("", self.obj), save_cad, tmpdir)
+        self._save_and_check(self.obj, save_cad, tmpdir)
 
     def _save_and_check(self, obj, save_func, tmpdir):
         # Can't mock out as written by freecad not python

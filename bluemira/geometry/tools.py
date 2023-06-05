@@ -47,7 +47,6 @@ import numpy as np
 from scipy.spatial import ConvexHull
 
 import bluemira.mesh.meshing as meshing
-from bluemira.base.components import Component, get_properties_from_components
 from bluemira.base.constants import EPS
 from bluemira.base.file import force_file_extension, get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
@@ -1047,9 +1046,10 @@ def save_as_STP(
 
 
 def save_cad(
-    components: Union[Component, Iterable[Component]],
+    shapes: Union[BluemiraGeo, List[BluemiraGeo]],
     filename: str,
     formatt: Union[str, cadapi.CADFileType] = "stp",
+    names: Optional[Union[str, Iterable[str]]] = None,
     **kwargs,
 ):
     """
@@ -1057,8 +1057,8 @@ def save_cad(
 
     Parameters
     ----------
-    components:
-        components to save
+    shapes:
+        shapes to save
     filename:
         Full path filename of the STP assembly
     formatt:
@@ -1066,11 +1066,9 @@ def save_cad(
     kwargs:
         arguments passed to cadapi save function
     """
-    shape_name = get_properties_from_components(components, ("shape", "name"))
-    if isinstance(shape_name[0], BluemiraGeo):
-        shapes, names = [shape_name[0]], [shape_name[1]]
-    else:
-        shapes, names = zip(*shape_name)
+    if not isinstance(shapes, list):
+        shapes = [shapes]
+
     cadapi.save_cad(
         [s.shape for s in shapes], filename, formatt=formatt, labels=names, **kwargs
     )
