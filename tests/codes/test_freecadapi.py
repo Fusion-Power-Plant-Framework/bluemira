@@ -31,6 +31,7 @@ from FreeCAD import Base, newDocument
 import bluemira.codes._freecadapi as cadapi
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import D_TOLERANCE
+from tests._helpers import skipif_import_error
 
 
 class TestFreecadapi:
@@ -306,27 +307,12 @@ class TestCADFiletype:
         assert cadapi.CADFileType[name] == ftype
         assert cadapi.CADFileType(ftype.value) == ftype
 
-    @pytest.mark.parametrize(
-        "name",
-        ("PDF", "VRML", "VRML_2", "VRML_ZIP", "VRML_ZIP_2", "WEBGL_X3D", "X3D", "X3DZ"),
-    )
-    def test_exporter_raised_FreeCADError(self, name, tmp_path):
-        """
-        These extensions require more of FreeCAD than we set up
-        Just tracking them.
-        Some of them may work if other packages are installed.
-        """
-
-        with pytest.raises(FreeCADError):
-            filetype = cadapi.CADFileType[name]
-            filetype.exporter([self.shape], f"{tmp_path/'tst'}.{filetype.value}")
-
     # Commented out CADFileTypes dont work with basic shapes tested or needed more
     # FreeCAD imported, should be reviewed in future
     @pytest.mark.parametrize(
         "name",
         (
-            "ACSII_STEREO_MESH",
+            "ASCII_STEREO_MESH",
             "ADDITIVE_MANUFACTURING",
             "AUTOCAD_DXF",
             "BINMESH",
@@ -349,39 +335,27 @@ class TestCADFiletype:
             "SIMPLE_MODEL",
             "STEP",
             "STEP_2",
+            "STEP_ZIP",  # Case sensitive extension
             "STL",
             "THREED_MANUFACTURING",
-            # ifcopenshell package required
-            pytest.param("IFC_BIM", marks=[pytest.mark.xfail]),
-            pytest.param("IFC_BIM_JSON", marks=[pytest.mark.xfail]),
+            pytest.param("IFC_BIM", marks=[skipif_import_error("ifcopenshell")]),
+            pytest.param(
+                "IFC_BIM_JSON",  # github.com/buildingSMART/ifcJSON
+                marks=[skipif_import_error("ifcopenshell", "ifcjson")],
+            ),
+            pytest.param("DAE", marks=[skipif_import_error("collada")]),
+            pytest.param("AUTOCAD", marks=[pytest.mark.xfail]),  # LibreDWG required
             # # Part.Feature has no compatible object type, find compatible object type
-            # pytest.param("ASC", marks=[pytest.mark.xfail]),
-            # pytest.param("BDF", marks=[pytest.mark.xfail]),
-            # pytest.param("DAT", marks=[pytest.mark.xfail]),
-            # pytest.param("FENICS_FEM", marks=[pytest.mark.xfail]),
-            # pytest.param("FENICS_FEM_XML", marks=[pytest.mark.xfail]),
-            # pytest.param("INP", marks=[pytest.mark.xfail]),
-            # pytest.param("MED", marks=[pytest.mark.xfail]),
-            # pytest.param("MESHJSON", marks=[pytest.mark.xfail]),
-            # pytest.param("MESHPY", marks=[pytest.mark.xfail]),
-            # pytest.param("MESHYAML", marks=[pytest.mark.xfail]),
-            # pytest.param("PCD", marks=[pytest.mark.xfail]),
-            # pytest.param("PLY", marks=[pytest.mark.xfail]),
-            # pytest.param("TETGEN_FEM", marks=[pytest.mark.xfail]),
-            # pytest.param("UNV", marks=[pytest.mark.xfail]),
-            # pytest.param("VTK", marks=[pytest.mark.xfail]),
-            # pytest.param("VTU", marks=[pytest.mark.xfail]),
-            # pytest.param("YAML", marks=[pytest.mark.xfail]),
-            # pytest.param("Z88_FEM_MESH", marks=[pytest.mark.xfail]),
-            # pytest.param("Z88_FEM_MESH_2", marks=[pytest.mark.xfail]),
-            # # No file created probably same problem as above block
-            # pytest.param("AUTOCAD", marks=[pytest.mark.xfail]),
-            # pytest.param("DAE", marks=[pytest.mark.xfail]),
-            # pytest.param("SVG_FLAT", marks=[pytest.mark.xfail]),
-            # pytest.param("STEP_ZIP", marks=[pytest.mark.xfail]),
-            # pytest.param("SVG", marks=[pytest.mark.xfail]),
+            # "ASC", "BDF", "DAT", "FENICS_FEM", "FENICS_FEM_XML", "INP", "MED",
+            # "MESHJSON", "MESHPY", "MESHYAML", "PCD", "PLY", "TETGEN_FEM", "UNV",
+            # "VTK", "VTU", "YAML", "Z88_FEM_MESH", "Z88_FEM_MESH_2",
             # # More FreeCAD than we import, fails differently on each import
-            # pytest.param("WEBGL", marks=[pytest.mark.xfail]),
+            # "WEBGL",
+            # # No file output
+            # "SVG, "SVG_FLAT",
+            # # Requires TechDrawGui import which requires a GUI
+            # "PDF", "VRML", "VRML_2", "VRML_ZIP", "VRML_ZIP_2",
+            # "WEBGL_X3D", "X3D", "X3DZ"
         ),
     )
     def test_exporter_function_exists_and_creates_a_file(self, name, tmp_path):
