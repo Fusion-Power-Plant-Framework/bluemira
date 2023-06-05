@@ -94,4 +94,4 @@ def skipif_import_error(*module_name: str) -> pytest.MarkDecorator:
         modules = ", ".join(module_name[no] for no, i in enumerate(skip) if i)
         reason = f"dependencies {modules} not found"
 
-    return pytest.mark.skipif(skip, reason=reason)
+    return pytest.mark.skipif(any(skip), reason=reason)
