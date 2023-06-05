@@ -113,41 +113,28 @@ class TestOptimise:
         See 'examples/nonlinearly_constrained_problem.py' for details of
         the problem.
         """
-
-        def f_objective(x):
-            return np.sqrt(x[1])
-
-        def df_objective(x):
-            return np.array([0.0, 0.5 / np.sqrt(x[1])])
-
-        def f_constraint(x, a, b):
-            return (a * x[0] + b) ** 3 - x[1]
-
-        def df_constraint(x, a, b):
-            return np.array([3 * a * (a * x[0] + b) * (a * x[0] + b), -1.0])
-
         result = optimise(
-            f_objective,
+            NonLinearExample.f_objective,
             x0=np.array([1, 1]),
             algorithm=alg,
-            df_objective=df_objective,
+            df_objective=NonLinearExample.df_objective,
             opt_conditions={"xtol_rel": 1e-8, "max_eval": 1000},
             bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
             ineq_constraints=[
                 {
-                    "f_constraint": lambda x: f_constraint(x, 2, 0),
+                    "f_constraint": lambda x: NonLinearExample.f_constraint(x, 2, 0),
                     # Exclude df_constraint to test approx_derivative is doing work
                     "tolerance": np.array([5e-6]),
                 },
                 {
-                    "f_constraint": lambda x: f_constraint(x, -1, 1),
-                    "df_constraint": lambda x: df_constraint(x, -1, 1),
+                    "f_constraint": lambda x: NonLinearExample.f_constraint(x, -1, 1),
+                    "df_constraint": lambda x: NonLinearExample.df_constraint(x, -1, 1),
                     "tolerance": np.array([5e-6]),
                 },
             ],
         )
 
-        np.testing.assert_allclose(result.x, [1 / 3, 8 / 27], atol=1e-4)
+        np.testing.assert_allclose(result.x, NonLinearExample.EXPECTED_RESULT, atol=1e-4)
         assert result.constraints_satisfied is True
 
     def test_scalar_lower_bounds_are_expanded(self):
@@ -188,23 +175,15 @@ class TestOptimise:
     def test_warning_given_constraints_not_satisfied(
         self, bm_warn_mock, constraint_type
     ):
-        def f_objective(x):
-            return np.sqrt(x[1])
-
-        def f_constraint(x, a, b):
-            return (a * x[0] + b) ** 3 - x[1]
-
         constraint = {
-            "f_constraint": lambda x: f_constraint(x, 2, 0),
+            "f_constraint": lambda x: NonLinearExample.f_constraint(x, 2, 0),
             "tolerance": np.array([1e-8]),
         }
 
         result = optimise(
-            f_objective,
+            NonLinearExample.f_objective,
             x0=np.array([1, 1]),
-            algorithm="SLSQP",
             opt_conditions={"max_eval": 1},
-            bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
             **{f"{constraint_type}_constraints": [constraint]},
         )
 
@@ -215,27 +194,40 @@ class TestOptimise:
         assert all(m in message for m in msg_strs)
         assert result.constraints_satisfied is False
 
+    @pytest.mark.parametrize("constraint_type", ["ineq", "eq"])
     @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
-    def test_no_constraint_warning_given_check_constraints_False(self, bm_warn_mock):
-        def f_objective(x):
-            return np.sqrt(x[1])
-
-        def f_constraint(x, a, b):
-            return (a * x[0] + b) ** 3 - x[1]
+    def test_no_warning_given_constraints_not_satisfied_and_warn_False(
+        self, bm_warn_mock, constraint_type
+    ):
+        constraint = {
+            "f_constraint": lambda x: NonLinearExample.f_constraint(x, 2, 0),
+            "tolerance": np.array([1e-8]),
+        }
 
         result = optimise(
-            f_objective,
+            NonLinearExample.f_objective,
             x0=np.array([1, 1]),
-            algorithm="SLSQP",
             opt_conditions={"max_eval": 1},
-            bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
+            **{f"{constraint_type}_constraints": [constraint]},
+            check_constraints_warn=False,
+        )
+
+        assert bm_warn_mock.call_count == 0
+        assert result.constraints_satisfied is False
+
+    @mock.patch("bluemira.optimisation._optimise.bluemira_warn")
+    def test_no_constraint_warning_given_check_constraints_False(self, bm_warn_mock):
+        result = optimise(
+            NonLinearExample.f_objective,
+            x0=np.array([1, 1]),
+            opt_conditions={"max_eval": 1},
             ineq_constraints=[
                 {
-                    "f_constraint": lambda x: f_constraint(x, 2, 0),
+                    "f_constraint": lambda x: NonLinearExample.f_constraint(x, 2, 0),
                     "tolerance": np.array([1e-8]),
                 },
                 {
-                    "f_constraint": lambda x: f_constraint(x, -1, 1),
+                    "f_constraint": lambda x: NonLinearExample.f_constraint(x, -1, 1),
                     "tolerance": np.array([1e-8]),
                 },
             ],
@@ -271,3 +263,30 @@ class TestOptimise:
 
         assert result.constraints_satisfied is True
         assert bm_warn_mock.call_count == 0
+
+
+class NonLinearExample:
+    """
+    A basic optimisation example with non-linear inequality constraints.
+
+    See 'examples/nonlinearly_constrained_problem.py' for details of
+    the problem.
+    """
+
+    EXPECTED_RESULT = np.array([1 / 3, 8 / 27])
+
+    @staticmethod
+    def f_objective(x):
+        return np.sqrt(x[1])
+
+    @staticmethod
+    def df_objective(x):
+        return np.array([0.0, 0.5 / np.sqrt(x[1])])
+
+    @staticmethod
+    def f_constraint(x, a, b):
+        return (a * x[0] + b) ** 3 - x[1]
+
+    @staticmethod
+    def df_constraint(x, a, b):
+        return np.array([3 * a * (a * x[0] + b) * (a * x[0] + b), -1.0])
