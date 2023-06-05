@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
@@ -68,9 +68,7 @@ class ViewDescriptor:
         """Set the attribute name from a dataclass"""
         self._name = "_" + name
 
-    def __get__(
-        self, obj: Any, _
-    ) -> Tuple[Iterable[float], Iterable[float], float, str]:
+    def __get__(self, obj: Any, _) -> Tuple[np.ndarray, np.ndarray, float, str]:
         """Get the view tuple"""
         if obj is None:
             return self._default
