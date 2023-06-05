@@ -24,13 +24,23 @@ from __future__ import annotations
 import abc
 import time
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    Union,
+)
 from warnings import warn
 
 import anytree
 from rich.progress import track
 
-from bluemira.base.components import Component
+from bluemira.base.components import Component, get_properties_from_components
 from bluemira.base.error import ComponentError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.builders.tools import circular_pattern_component
@@ -66,11 +76,9 @@ class BaseManager(abc.ABC):
     @abc.abstractmethod
     def save_cad(
         self,
-        *dims: str,
-        filter_: Optional[Callable[[Component], bool]],
-        filename: Optional[str] = None,
+        components: Union[Component, Iterable[Component]],
+        filename: str,
         formatt: Union[str, cadapi.CADFileType] = "stp",
-        directory: Union[str, Path] = "",
         **kwargs,
     ):
         """
@@ -78,19 +86,20 @@ class BaseManager(abc.ABC):
 
         Parameters
         ----------
-        *dims:
-            The dimension of the reactor to show, typically one of
-            'xz', 'xy', or 'xyz'. (default: 'xyz')
-        filter_:
-            A callable to filter Components from the Component tree,
-            returning True keeps the node False removes it
+        components:
+            components to save
         filename:
             the filename to save
         formatt:
             CAD file format
-        directory:
-            Directory to save into, defaults to the current directory
         """
+        shape_name = get_properties_from_components(components, ("shape", "name"))
+        if not isinstance(shape_name[0], tuple):
+            shapes, names = [shape_name[0]], [shape_name[1]]
+        else:
+            shapes, names = shape_name
+
+        save_cad(shapes, filename, formatt, names, **kwargs)
 
     @abc.abstractmethod
     def show_cad(
@@ -326,7 +335,7 @@ class ComponentManager(BaseManager):
         if filename is None:
             filename = comp.name
 
-        save_cad(
+        super().save_cad(
             self._filter_tree(comp, self._validate_cad_dims(*dims, **kwargs), filter_),
             filename=Path(directory, filename).as_posix(),
             formatt=formatt,
@@ -563,7 +572,7 @@ class Reactor(BaseManager):
         if filename is None:
             filename = self.name
 
-        save_cad(
+        super().save_cad(
             self._filter_and_reconstruct(
                 self._validate_cad_dims(*dims), with_components, n_sectors, filter_
             ),
