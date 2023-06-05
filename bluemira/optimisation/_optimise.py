@@ -61,6 +61,7 @@ def optimise(
     ineq_constraints: Iterable[ConstraintT] = (),
     keep_history: bool = False,
     check_constraints: bool = True,
+    check_constraints_warn: bool = True,
 ) -> OptimiserResult:
     r"""
     Find the parameters that minimise the given objective function.
@@ -156,6 +157,10 @@ def optimise(
         of the optimisation, and warn if they have not. Note that, if
         this is set to False, the result's ``constraints_satisfied``
         attribute will be set to ``None``.
+    check_constraints_warn:
+        Whether to print a warning that constraints have not been
+        satisfied at the end of an optimisation. This argument has no
+        effect if ``check_constraints`` is ``False``.
 
     Returns
     -------
@@ -194,7 +199,7 @@ def optimise(
     result = optimiser.optimise(x0)
     if check_constraints:
         result.constraints_satisfied = validate_constraints(
-            result.x, eq_constraints, ineq_constraints
+            result.x, eq_constraints, ineq_constraints, warn=check_constraints_warn
         )
     return result
 
@@ -203,19 +208,39 @@ def validate_constraints(
     x_star: np.ndarray,
     eq_constraints: List[ConstraintT],
     ineq_constraints: List[ConstraintT],
+    warn: bool = True,
 ) -> bool:
     """
     Check the given parametrisation satisfies the given constraints.
 
     Additionally, print warnings listing constraints that are not
     satisfied.
+
+    Parameters
+    ----------
+    x_star:
+        The parameterisation to check the constraints against.
+    eq_constraints:
+        The list of equality constraints to check.
+    ineq_constraints:
+        The list of inequality constraints to check.
+    warn:
+        Whether to print warnings if constraints are violated.
+        Default is true.
+
+    Returns
+    -------
+    True if no constraints are violated by the parameterisation.
     """
     eq_warnings = _check_constraints(x_star, eq_constraints, "equality")
     ineq_warnings = _check_constraints(x_star, ineq_constraints, "inequality")
     all_warnings = eq_warnings + ineq_warnings
     if all_warnings:
-        message = "\n".join(all_warnings)
-        bluemira_warn(f"Some constraints have not been adequately satisfied.\n{message}")
+        if warn:
+            message = "\n".join(all_warnings)
+            bluemira_warn(
+                f"Some constraints have not been adequately satisfied.\n{message}"
+            )
         return False
     return True
 
