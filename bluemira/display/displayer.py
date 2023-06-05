@@ -199,9 +199,12 @@ def show_cad(
         else:
             new_options.append(DisplayCADOptions(**kwargs, backend=backend))
 
-    part_options = [o.as_dict() for o in new_options]
-
-    backend.get_module().show_cad(parts, part_options, labels, **kwargs)
+    backend.get_module().show_cad(
+        [part.shape for part in parts],
+        [o.as_dict() for o in new_options],
+        labels,
+        **kwargs,
+    )
 
 
 class BaseDisplayer(ABC):
