@@ -36,6 +36,7 @@ from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_polygon
+from bluemira.materials import Void
 
 
 @dataclass
@@ -151,23 +152,40 @@ class VVUpperPortDuctBuilder(Builder):
             self.params.tk_upper_port_wall_side.value,
             self.y_offset,
         )
+        xy_voidface = BluemiraFace(xy_face.boundary[1])
 
         return self.component_tree(
-            None, [self.build_xy(xy_face)], [self.build_xyz(xy_face)]
+            None,
+            self.build_xy(xy_face, xy_voidface),
+            self.build_xyz(xy_face, xy_voidface),
         )
 
-    def build_xyz(self, xy_face: BluemiraFace) -> PhysicalComponent:
+    def build_xyz(
+        self, xy_face: BluemiraFace, xy_voidface: BluemiraFace
+    ) -> PhysicalComponent:
         """Build upper port xyz"""
         port = extrude_shape(xy_face, (0, 0, self.z_max))
         comp = PhysicalComponent(self.name, port)
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
-        return comp
+        void = PhysicalComponent(
+            self.name + " voidspace",
+            extrude_shape(xy_voidface, (0, 0, self.z_max)),
+            material=Void("vacuum"),
+        )
+        apply_component_display_options(void, color=(0, 0, 0))
+        return [comp, void]
 
-    def build_xy(self, face: BluemiraFace) -> PhysicalComponent:
+    def build_xy(
+        self, face: BluemiraFace, xy_voidface: BluemiraFace
+    ) -> PhysicalComponent:
         """Build upper port xy face"""
         comp = PhysicalComponent(self.name, face)
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
-        return comp
+        void = PhysicalComponent(
+            self.name + " voidspace", xy_voidface, material=Void("vacuum")
+        )
+        apply_component_display_options(void, color=(0, 0, 0))
+        return [comp, void]
 
 
 def make_upper_port_xy_face(
@@ -269,6 +287,7 @@ def make_upper_port_xy_face(
 
 
 if __name__ == "__main__":
+    from bluemira.base.parameter_frame import ParameterFrame
     from bluemira.display import show_cad
     from bluemira.geometry.parameterisations import PrincetonD
     from bluemira.geometry.tools import (
@@ -281,22 +300,49 @@ if __name__ == "__main__":
         point_inside_shape,
         revolve_shape,
     )
+    from eudemo.vacuum_vessel import VacuumVesselBuilder, VacuumVesselBuilderParams
 
     p = PrincetonD().create_shape()
-    p2 = offset_wire(p, 1.0)
-    face = BluemiraFace([p2, p])
 
-    vv = revolve_shape(face, degree=20)
-
-    port = make_polygon(
-        {"x": [7, 9, 9, 7], "y": [0.5, 0.5, 2.5, 1.4], "z": 0}, closed=True
+    params = VacuumVesselBuilderParams.from_dict(
+        {
+            "n_TF": {"value": 16, "unit": ""},
+            "r_vv_ib_in": {"value": 3.0, "unit": "m"},
+            "r_vv_ob_in": {"value": 9.0, "unit": "m"},
+            "tk_vv_in": {"value": 0.6, "unit": "m"},
+            "tk_vv_out": {"value": 1.1, "unit": "m"},
+            "g_vv_bb": {"value": 0.05, "unit": "m"},
+            "vv_in_off_deg": {"value": 20, "unit": "deg"},
+            "vv_out_off_deg": {"value": 160, "unit": "deg"},
+        }
     )
-    p2 = offset_wire(port, 0.05)
-    port = extrude_shape(BluemiraFace([p2, port]), (0, 0, 10))
+    builder = VacuumVesselBuilder(params, {}, ivc_koz=p)
+    VV = builder.build()
 
-    show_cad([vv, port])
+    port_koz = make_polygon({"x": [7, 12, 12, 7], "z": [20, 20, 0, 0]}, closed=True)
+    params = VVUpperPortDuctBuilderParams.from_dict(
+        {
+            "n_TF": {"value": 16, "unit": ""},
+            "tf_wp_depth": {"value": 1.0, "unit": "m"},
+            "g_ts_tf": {"value": 0.05, "unit": "m"},
+            "tk_ts": {"value": 0.05, "unit": "m"},
+            "g_vv_ts": {"value": 0.05, "unit": "m"},
+            "tk_upper_port_wall_end": {"value": 0.2, "unit": "m"},
+            "tk_upper_port_wall_side": {"value": 0.1, "unit": "m"},
+        }
+    )
+    builder = VVUpperPortDuctBuilder(params, port_koz=port_koz)
+    UP = builder.build()
+    c = Component("test", children=[VV, UP])
+    c.show_cad()
 
-    def pipe_pipe_join(target_shape, tool_shape):
+    vv_xyz_sector_1 = VV.get_component("xyz").get_component("Sector 1")
+    target_void = vv_xyz_sector_1.get_component("Vessel voidspace 1").shape
+    target_shape = vv_xyz_sector_1.get_component("Body 1").shape
+
+    def pipe_pipe_join(target_shape, target_void, tool_shape, tool_void):
+        target_void = target_component.get_component("xyz").get_component("Sector 1")
+
         compound, fragments = boolean_fragments([target_shape, tool_shape])
         target_fragments, tool_fragments = fragments
         # Find the piece to remove from the target
