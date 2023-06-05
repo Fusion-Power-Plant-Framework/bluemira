@@ -1415,7 +1415,7 @@ def save_cad(
         elif formatt is CADFileType.AUTOCAD:
             mesg += " FreeCAD requires `LibreDWG` to save in this format."
 
-        raise FileNotFoundError(
+        raise FreeCADError(
             f"{mesg} Not able to save object with format: '{formatt.value}'"
         )
 

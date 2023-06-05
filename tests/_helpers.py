@@ -80,12 +80,18 @@ def file_exists(good_file_path: str, isfile_ref: str):
 
 def skipif_import_error(*module_name: str) -> pytest.MarkDecorator:
     """Create skipif marker for unimportable modules"""
+    skip = []
     for m in module_name:
         try:
             __import__(m)
-            skip = False
+            skip.append(False)
         except ImportError:
-            skip = True
-            break
+            skip.append(True)
 
-    return pytest.mark.skipif(skip, reason=f"{module_name} dependency not found")
+    if len(module_name) == 1:
+        reason = f"dependency {module_name[0]} not found"
+    else:
+        modules = ", ".join(module_name[no] for no, i in enumerate(skip) if i)
+        reason = f"dependencies {modules} not found"
+
+    return pytest.mark.skipif(skip, reason=reason)
