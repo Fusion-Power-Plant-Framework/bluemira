@@ -41,8 +41,7 @@ class Options:
         Set attributes in options dictionary
         """
         if (
-            hasattr(self, "_options")
-            and self._options is not None
+            getattr(self, "_options", None) is not None
             and (attr in self._options.__annotations__ or hasattr(self._options, attr))
         ):
             setattr(self._options, attr, val)
