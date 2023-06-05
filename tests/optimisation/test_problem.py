@@ -160,6 +160,31 @@ class TestOptimisationProblem:
         np.testing.assert_allclose(result.x, [1 / 3, 8 / 27], rtol=1e-4)
         assert op.df_call_count > 0
 
+    def test_check_constraints_prints_warnings_if_violated(self, caplog):
+        op = SimpleOptProblem()
+
+        constraints_ok = op.check_constraints(np.array([20, 30]))
+
+        assert not constraints_ok
+        messages = "\n".join(caplog.messages)
+        assert all(m in messages for m in ["constraints", "not", "satisfied"])
+
+    def test_check_constraints_no_warnings_given_warn_false(self, caplog):
+        op = SimpleOptProblem()
+
+        constraints_ok = op.check_constraints(np.array([20, 30]), warn=False)
+
+        assert not constraints_ok
+        assert not caplog.messages
+
+    def test_check_constraints_no_warnings_given_no_violation(self, caplog):
+        op = SimpleOptProblem()
+
+        constraints_ok = op.check_constraints(np.array([1 / 3, 8 / 27]))
+
+        assert constraints_ok
+        assert not caplog.messages
+
     def test_opt_problem_with_no_gradient_defined(self):
         # We should still get a good solution, as we should be
         # approximating the gradient automatically.
