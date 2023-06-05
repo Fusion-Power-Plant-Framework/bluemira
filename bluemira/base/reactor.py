@@ -329,7 +329,7 @@ class ComponentManager(BaseManager):
         directory:
             Directory to save into, defaults to the current directory
         kwargs:
-            passed to the `~bluemira.geometry.tools.save_cad` function
+            passed to the :func:`bluemira.geometry.tools.save_cad` function
         """
         comp = self.component()
         if filename is None:
@@ -567,7 +567,7 @@ class Reactor(BaseManager):
         directory:
             Directory to save into, defaults to the current directory
         kwargs:
-            passed to the `~bluemira.geometry.tools.save_cad` function
+            passed to the :func:`bluemira.geometry.tools.save_cad` function
         """
         if filename is None:
             filename = self.name
