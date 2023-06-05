@@ -23,7 +23,10 @@
 Creating ducts for the port
 """
 from dataclasses import dataclass
-from typing import Dict, Union
+from typing import TYPE_CHECKING, Dict, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.geometry.solid import BluemiraSolid
 
 import numpy as np
 
@@ -341,30 +344,49 @@ if __name__ == "__main__":
     tool_void = up_xyz.get_component("VVUpperPortDuct voidspace").shape
     tool_shape = up_xyz.get_component("VVUpperPortDuct").shape
 
-    import time
+    def pipe_pipe_join(
+        target_shape: BluemiraSolid,
+        target_void: BluemiraSolid,
+        tool_shape: BluemiraSolid,
+        tool_void: BluemiraSolid,
+    ) -> Tuple[BluemiraSolid, :BluemiraSolid]:
+        """
+        Join two hollow, intersecting pipes.
 
-    def pipe_pipe_join(target_shape, target_void, tool_shape, tool_void):
-        """Naive"""
-        t1 = time.time()
-        void = boolean_fuse([target_void, tool_void])
-        shape = boolean_fuse([target_shape, tool_shape])
-        shape = boolean_cut(shape, void)
-        print(f"{time.time()-t1} seconds")
-        return shape, void
+        Parameters
+        ----------
+        target_shape:
+            Solid of the target shape
+        target_void:
+            Solid of the target void
+        tool_shape:
+            Solid of the tool shape
+        tool_void:
+            Solid of the tool void
 
-    def pipe_pipe_join2(target_shape, target_void, tool_shape, tool_void):
-        """Smart but dumb"""
-        t1 = time.time()
+        Returns
+        -------
+        shape:
+            Solid of the joined pipe-pipe shape
+        void:
+            Solid of the joined pipe-pipe void
+
+        Notes
+        -----
+        This approach is more brittle than a classic fuse, fuse, cut operation, but is
+        substantially faster.
+        """
         void = boolean_fuse([target_void, tool_void])
-        _, void_fragments = boolean_fragments([target_void, tool_void])
-        target_void_fragments, tool_void_fragments = void_fragments
+        _, (_, tool_void_fragments) = boolean_fragments([target_void, tool_void])
+
         new_void_pieces = []
         for void_frag in tool_void_fragments:
             if not point_inside_shape(void_frag.center_of_mass, target_void):
                 new_void_pieces.append(void_frag)
 
-        _, fragments = boolean_fragments([target_shape, tool_shape])
-        target_fragments, tool_fragments = fragments
+        _, (target_fragments, tool_fragments) = boolean_fragments(
+            [target_shape, tool_shape]
+        )
 
         new_shape_pieces = []
         for targ_frag in target_fragments:
@@ -388,29 +410,6 @@ if __name__ == "__main__":
                         new_shape_pieces.append(tool_frag)
 
         shape = boolean_fuse(new_shape_pieces)
-        print(f"{time.time()-t1} seconds")
         return shape, void
-        # compound, fragments = boolean_fragments([target_shape, tool_shape])
 
-        # target_fragments, tool_fragments = fragments
-        # # Find the piece to remove from the target
-        # new_shape_pieces = []
-        # for solid in target_fragments:
-        #     if point_inside
-        #     for other in tool_fragments:
-        #         if solid.is_same(other):
-        #             new_target.append(solid)
-        #             # target_fragments.remove(other)
-        #         else:
-        #             if point_inside_shape(solid.center_of_mass, target_shape):
-        #                 new_target.append(solid)
-
-        # for solid in tool_fragments:
-        #     pass
-
-        # new_target = boolean_fuse(new_target)
-        # new_tool = boolean_fuse(new_tool)
-        # return new_target, new_tool
-
-    # shape, void = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
-    shape2, void2 = pipe_pipe_join2(target_shape, target_void, tool_shape, tool_void)
+    shape2, void2 = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
