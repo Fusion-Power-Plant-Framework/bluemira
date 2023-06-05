@@ -30,7 +30,7 @@ import math
 import os
 import sys
 from copy import deepcopy
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from types import DynamicClassAttribute
 from typing import Dict, Iterable, List, Optional, Tuple, Union
 from warnings import warn
@@ -59,6 +59,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadconfig import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import MINIMUM_LENGTH
+from bluemira.utilities.tools import ColourDescriptor
 
 apiVertex = Part.Vertex  # noqa :N816
 apiVector = Base.Vector  # noqa :N816
@@ -2289,22 +2290,8 @@ def collect_wires(solid: apiShape, **kwds) -> Tuple[np.ndarray, np.ndarray]:
 class DefaultDisplayOptions:
     """Freecad default display options"""
 
-    colour: Union[Tuple, str]
+    colour: ColourDescriptor = ColourDescriptor()
     transparency: float = 0.0
-
-    _colour: Union[Tuple, str] = field(
-        init=False, repr=False, default_factory=lambda: colors.to_hex((0.5, 0.5, 0.5))
-    )
-
-    @property
-    def colour(self) -> str:
-        """Colour as rbg"""
-        return colors.to_hex(self._colour)
-
-    @colour.setter
-    def colour(self, value):
-        """Set colour"""
-        self._colour = value
 
     @property
     def color(self) -> str:

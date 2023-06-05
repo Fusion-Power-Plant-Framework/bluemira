@@ -54,7 +54,8 @@ class TestDisplayCADOptions:
         Check the values of the default options correspond to the global defaults.
         """
         the_options = displayer.DisplayCADOptions()
-        assert the_options.as_dict() == asdict(displayer.get_default_options())
+        d_dict = asdict(displayer.get_default_options())
+        assert the_options.as_dict() == d_dict
         assert the_options.as_dict() is not displayer.get_default_options()
 
     def test_options(self):
