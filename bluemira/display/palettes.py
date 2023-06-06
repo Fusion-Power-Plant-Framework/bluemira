@@ -218,7 +218,7 @@ def make_rgb_alpha(
         Tuple of 3 RGB floats  (0<=float<=1)
     alpha:
         Transparency as a fraction  (0<=float<=1)
-    background_rgb
+    background_rgb:
         3 RGB floats (0<=float<=1), background colour (default = white)
 
     Returns
@@ -236,7 +236,7 @@ def make_alpha_palette(color, n_colors: int, background_rgb="white") -> ColorPal
     ----------
     color: Any
         Palette base color. Anything matplotlib will recognise as a color
-    n_colors
+    n_colors:
         Numer of colors to make in the palette
     background_rgb: Any
         Background color. Anything matplotlib will recognise as a color
