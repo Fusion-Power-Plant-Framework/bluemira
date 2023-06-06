@@ -230,7 +230,8 @@ class VVEquatorialPortDuctBuilder(Builder):
         cryostat_xz: BluemiraWire,
     ):
         super().__init__(params, None)
-        # Put the end of the equatorial port half-way between cryostat and radiation shield
+        # Put the end of the equatorial port half-way between cryostat and
+        # radiation shield
         self.x_max = cryostat_xz.bounding_box.x_max + 0.5 * self.params.g_cr_rs.value
 
     def build(self) -> Component:
@@ -439,73 +440,3 @@ def pipe_pipe_join(
                     new_shape_pieces.append(tool_frag)
 
     return new_shape_pieces
-
-
-if __name__ == "__main__":
-    from bluemira.base.parameter_frame import ParameterFrame
-    from bluemira.display import show_cad
-    from bluemira.geometry.parameterisations import PrincetonD
-    from bluemira.geometry.tools import (
-        boolean_cut,
-        boolean_fragments,
-        boolean_fuse,
-        extrude_shape,
-        make_polygon,
-        point_inside_shape,
-    )
-    from eudemo.vacuum_vessel import VacuumVesselBuilder, VacuumVesselBuilderParams
-
-    p = PrincetonD().create_shape()
-
-    params = VacuumVesselBuilderParams.from_dict(
-        {
-            "n_TF": {"value": 16, "unit": ""},
-            "r_vv_ib_in": {"value": 3.0, "unit": "m"},
-            "r_vv_ob_in": {"value": 9.0, "unit": "m"},
-            "tk_vv_in": {"value": 0.6, "unit": "m"},
-            "tk_vv_out": {"value": 1.1, "unit": "m"},
-            "g_vv_bb": {"value": 0.05, "unit": "m"},
-            "vv_in_off_deg": {"value": 20, "unit": "deg"},
-            "vv_out_off_deg": {"value": 160, "unit": "deg"},
-        }
-    )
-    builder = VacuumVesselBuilder(params, {}, ivc_koz=p)
-    VV = builder.build()
-
-    port_koz = make_polygon({"x": [7, 12, 12, 7], "z": [20, 20, -20, -20]}, closed=True)
-    params = VVUpperPortDuctBuilderParams.from_dict(
-        {
-            "n_TF": {"value": 16, "unit": ""},
-            "tf_wp_depth": {"value": 1.0, "unit": "m"},
-            "g_ts_tf": {"value": 0.05, "unit": "m"},
-            "tk_ts": {"value": 0.05, "unit": "m"},
-            "g_vv_ts": {"value": 0.05, "unit": "m"},
-            "tk_vv_double_wall": {"value": 0.2, "unit": "m"},
-            "tk_vv_single_wall": {"value": 0.1, "unit": "m"},
-        }
-    )
-    builder = VVUpperPortDuctBuilder(params, port_koz=port_koz)
-    UP = builder.build()
-    c = Component("test", children=[VV, UP])
-    c.show_cad()
-
-    vv_xyz = VV.get_component("xyz").get_component("Sector 1")
-    target_void = vv_xyz.get_component("Vessel voidspace 1").shape
-    target_shape = vv_xyz.get_component("Body 1").shape
-    up_xyz = UP.get_component("xyz")
-    tool_void = up_xyz.get_component("VVUpperPortDuct voidspace").shape
-    tool_shape = up_xyz.get_component("VVUpperPortDuct").shape
-    wire = make_polygon(
-        {"x": [9, 15, 15, 9], "y": [-0.5, -1, 1, 0.5], "z": 10}, closed=True
-    )
-    wire.rotate(degree=10)
-    from bluemira.geometry.tools import extrude_shape, offset_wire
-
-    wire2 = offset_wire(wire, 0.1)
-    face = BluemiraFace([wire2, wire])
-    void_face = BluemiraFace(wire)
-    tool_shape = extrude_shape(face, vec=(0, 0, -10))
-
-    tool_void = extrude_shape(void_face, vec=(0, 0, -10))
-    new_shape_pieces = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
-    show_cad(boolean_fuse(new_shape_pieces))
