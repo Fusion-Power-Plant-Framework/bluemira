@@ -58,12 +58,8 @@ class VacuumVessel(ComponentManager):
             .shape.boundary[0]
         )
 
-    def add_ports(self, n_TF: int, port: Union[Component, List[Component]]):
+    def add_ports(self, n_TF: int, ports: Union[Component, List[Component]]):
         """ """
-        if isinstance(port, Component):
-            port = [port]
-        degree = 0.0
-        sector_degree, n_sectors = get_n_sectors(n_TF, degree)
         component = self.component()
         xyz = component.get_component("xyz")
         vv_xyz = xyz.get_component("Sector 1")
@@ -71,13 +67,20 @@ class VacuumVessel(ComponentManager):
         target_shape = vv_xyz.get_component("Body 1").shape
         xyz.parent = None
         del xyz
-        port_xyz = port.get_component("xyz")
-        tool_shape = port_xyz.get_component(port.name).shape
-        tool_void = port_xyz.get_component(port.name + " voidspace").shape
-        shape, void = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
-        sector_body = PhysicalComponent(VacuumVesselBuilder.BODY, shape)
+
+        if isinstance(ports, Component):
+            ports = [ports]
+        for port in ports:
+            port_xyz = port.get_component("xyz")
+            tool_shape = port_xyz.get_component(port.name).shape
+            tool_void = port_xyz.get_component(port.name + " voidspace").shape
+            target_shape, target_void = pipe_pipe_join(
+                target_shape, target_void, tool_shape, tool_void
+            )
+
+        sector_body = PhysicalComponent(VacuumVesselBuilder.BODY, target_shape)
         sector_void = PhysicalComponent(
-            VacuumVesselBuilder.VOID, void, material=Void("vacuum")
+            VacuumVesselBuilder.VOID, target_void, material=Void("vacuum")
         )
         Component("xyz", children=[sector_body, sector_void], parent=component)
 

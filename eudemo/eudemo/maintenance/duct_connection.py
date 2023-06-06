@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Dict, Tuple, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
+    from bluemira.geometry.wire import BluemiraWire
 
 import numpy as np
 
@@ -203,7 +204,10 @@ class VVUpperPortDuctBuilder(Builder):
 class VVEquatorialPortDuctBuilderParams(ParameterFrame):
     """Vacuum vessel equatorial port duct builder Parameter Frame"""
 
+    R_0: Parameter[float]
+    g_cr_rs: Parameter[float]
     ep_z_position: Parameter[float]
+    ep_width: Parameter[float]
     ep_height: Parameter[float]
     tk_vv_single_wall: Parameter[float]
 
@@ -217,60 +221,40 @@ class VVEquatorialPortDuctBuilder(Builder):
     def __init__(
         self,
         params: Union[Dict, ParameterFrame, ConfigParams, None],
+        cryostat_xz: BluemiraWire,
     ):
         super().__init__(params, None)
-        koz_offset = self.params.tk_ts.value + self.params.g_vv_ts.value
-        self.z_min = port_koz.bounding_box.x_min + koz_offset
-        self.z_max = port_koz.bounding_box.x_min + koz_offset
-        self.x_max = port_koz.bounding_box.x_max
-        self.z_max = port_koz.bounding_box.z_max
-
-        if self.params.tk_eq_port_wall_side.value <= 0:
-            raise ValueError("Port wall thickness must be > 0")
-
-        self.y_offset = +self.params.tk_ts.value + self.params.g_vv_ts.value
+        # Put the end of the equatorial port half-way between cryostat and radiation shield
+        self.x_max = cryostat_xz.bounding_box.x_max + 0.5 * self.params.g_cr_rs.value
 
     def build(self) -> Component:
         """Build upper port"""
-        xy_face = make_upper_port_xy_face(
-            self.params.n_TF.value,
-            self.x_min,
-            self.x_max,
-            self.params.tk_upper_port_wall_end.value,
-            self.params.tk_upper_port_wall_side.value,
-            self.y_offset,
+        y_val = 0.5 * self.params.ep_width.value
+        z_val = (self.params.ep_z_position.value - 0.5 * self.params.ep_height.value,)
+        yz_face = make_equatorial_port_yz_face(
+            self.x_max, -y_val, y_val, -z_val, z_val, self.params.tk_vv_single_wall.value
         )
-        xy_voidface = BluemiraFace(xy_face.boundary[1])
+
+        yz_voidface = BluemiraFace(yz_face.boundary[1])
 
         return self.component_tree(
             None,
-            self.build_xy(xy_face, xy_voidface),
-            self.build_xyz(xy_face, xy_voidface),
+            None,
+            self.build_xyz(yz_face, yz_voidface),
         )
 
     def build_xyz(
-        self, xy_face: BluemiraFace, xy_voidface: BluemiraFace
+        self, yz_face: BluemiraFace, yz_voidface: BluemiraFace
     ) -> PhysicalComponent:
-        """Build upper port xyz"""
-        port = extrude_shape(xy_face, (0, 0, self.z_max))
+        """Build equatorial port xyz"""
+        vec = (self.params.R_0.value - self.x_max, 0, 0)
+        port = extrude_shape(yz_face, vec)
         comp = PhysicalComponent(self.name, port)
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         void = PhysicalComponent(
             self.name + " voidspace",
-            extrude_shape(xy_voidface, (0, 0, self.z_max)),
+            extrude_shape(yz_voidface, vec),
             material=Void("vacuum"),
-        )
-        apply_component_display_options(void, color=(0, 0, 0))
-        return [comp, void]
-
-    def build_xy(
-        self, face: BluemiraFace, xy_voidface: BluemiraFace
-    ) -> PhysicalComponent:
-        """Build upper port xy face"""
-        comp = PhysicalComponent(self.name, face)
-        apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
-        void = PhysicalComponent(
-            self.name + " voidspace", xy_voidface, material=Void("vacuum")
         )
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]

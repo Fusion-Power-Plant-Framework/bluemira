@@ -71,6 +71,7 @@ from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.duct_connection import (
     TSUpperPortDuctBuilder,
+    VVEquatorialPortDuctBuilder,
     VVUpperPortDuctBuilder,
 )
 from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
@@ -232,11 +233,13 @@ def build_upper_port(params, build_config, upper_port_koz):
     return ts_upper_port, vv_upper_port
 
 
-def build_equatorial_port(params, build_config, eq_port_koz_xz):
+def build_equatorial_port(params, build_config, cryostat_xz):
     """
     Build the equatorial port for the reactor.
     """
-    pass
+    builder = VVEquatorialPortDuctBuilder(params, cryostat_xz)
+    vv_eq_port = builder.build()
+    return None, vv_eq_port
 
 
 def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
@@ -400,23 +403,6 @@ if __name__ == "__main__":
         ],
     )
 
-    # Incorporate ports, potentially larger depending on where the PF
-    # coils ended up. Warn if this isn't the case.
-    ts_upper_port, vv_upper_port = build_upper_port(
-        reactor_config.params_for("Upper Port"),
-        reactor_config.config_for("Upper Port"),
-        upper_port_koz_xz,
-    )
-    ts_eq_port, vv_eq_port = build_equatorial_port(
-        reactor_config.params_for("Equatorial Port"),
-        reactor_config.config_for("Equatorial Port"),
-        eq_port_koz_xz,
-    )
-
-    reactor.vacuum_vessel.add_ports(
-        reactor_config.global_params.n_TF.value, vv_upper_port
-    )
-
     reactor.cryostat = build_cryostat(
         reactor_config.params_for("Cryostat"),
         reactor_config.config_for("Cryostat"),
@@ -427,6 +413,23 @@ if __name__ == "__main__":
         reactor_config.params_for("RadiationShield"),
         reactor_config.config_for("RadiationShield"),
         reactor.cryostat.xz_boundary(),
+    )
+
+    # Incorporate ports, potentially larger depending on where the PF
+    # coils ended up. Warn if this isn't the case.
+    ts_upper_port, vv_upper_port = build_upper_port(
+        reactor_config.params_for("Upper Port"),
+        reactor_config.config_for("Upper Port"),
+        upper_port_koz_xz,
+    )
+    ts_eq_port, vv_eq_port = build_equatorial_port(
+        reactor_config.params_for("Equatorial Port"),
+        reactor_config.config_for("Equatorial Port"),
+        reactor.cryostat.xz_boundary(),
+    )
+
+    reactor.vacuum_vessel.add_ports(
+        reactor_config.global_params.n_TF.value, [vv_upper_port, vv_eq_port]
     )
 
     from bluemira.display import show_cad

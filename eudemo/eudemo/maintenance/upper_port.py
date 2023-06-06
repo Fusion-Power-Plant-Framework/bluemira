@@ -208,7 +208,7 @@ class UpperPortKOZDesignerParams(ParameterFrame):
     """Parameters required to run :class:`UpperPortOP`."""
 
     """VV upper port wall thickness at radial ends"""
-    tk_upper_port_wall_end: Parameter[float]
+    tk_vv_double_wall: Parameter[float]
     """Gap between VV and TS"""
     g_vv_ts: Parameter[float]
     """TS thickness"""
@@ -263,7 +263,7 @@ class UpperPortKOZDesigner(Designer):
         r_up_inner, r_up_outer, r_cut, cut_angle = design_problem.optimise()
 
         offset = (
-            self.params.tk_upper_port_wall_end.value
+            self.params.tk_vv_double_wall.value
             + self.params.g_vv_ts.value
             + self.params.tk_ts.value
             + self.params.g_ts_tf.value
