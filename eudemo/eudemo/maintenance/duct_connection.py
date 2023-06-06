@@ -25,7 +25,7 @@ Creating ducts for the port
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
@@ -46,6 +46,7 @@ from bluemira.geometry.tools import (
     boolean_fuse,
     extrude_shape,
     make_polygon,
+    offset_wire,
     point_inside_shape,
 )
 from bluemira.materials import Void
@@ -177,6 +178,10 @@ class VVUpperPortDuctBuilder(Builder):
     ) -> PhysicalComponent:
         """Build upper port xyz"""
         port = extrude_shape(xy_face, (0, 0, self.z_max))
+        # Add start-cap for future boolean fragmentation help
+        cap = extrude_shape(BluemiraFace(xy_face.boundary[0]), vec=(0, 0, 0.1))
+        port = boolean_fuse([port, cap])
+
         comp = PhysicalComponent(self.name, port)
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
         void = PhysicalComponent(
@@ -205,6 +210,7 @@ class VVEquatorialPortDuctBuilderParams(ParameterFrame):
     """Vacuum vessel equatorial port duct builder Parameter Frame"""
 
     R_0: Parameter[float]
+    n_TF: Parameter[int]
     g_cr_rs: Parameter[float]
     ep_z_position: Parameter[float]
     ep_width: Parameter[float]
@@ -230,7 +236,7 @@ class VVEquatorialPortDuctBuilder(Builder):
     def build(self) -> Component:
         """Build upper port"""
         y_val = 0.5 * self.params.ep_width.value
-        z_val = (self.params.ep_z_position.value - 0.5 * self.params.ep_height.value,)
+        z_val = self.params.ep_z_position.value - 0.5 * self.params.ep_height.value
         yz_face = make_equatorial_port_yz_face(
             self.x_max, -y_val, y_val, -z_val, z_val, self.params.tk_vv_single_wall.value
         )
@@ -247,15 +253,17 @@ class VVEquatorialPortDuctBuilder(Builder):
         self, yz_face: BluemiraFace, yz_voidface: BluemiraFace
     ) -> PhysicalComponent:
         """Build equatorial port xyz"""
+        degree = 180 / self.params.n_TF.value
         vec = (self.params.R_0.value - self.x_max, 0, 0)
         port = extrude_shape(yz_face, vec)
+        port.rotate(degree=degree)
         comp = PhysicalComponent(self.name, port)
+
+        void = extrude_shape(yz_voidface, vec)
+        void.rotate(degree=degree)
+        void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
+
         apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
-        void = PhysicalComponent(
-            self.name + " voidspace",
-            extrude_shape(yz_voidface, vec),
-            material=Void("vacuum"),
-        )
         apply_component_display_options(void, color=(0, 0, 0))
         return [comp, void]
 
@@ -378,7 +386,7 @@ def pipe_pipe_join(
     target_void: BluemiraSolid,
     tool_shape: BluemiraSolid,
     tool_void: BluemiraSolid,
-) -> Tuple[BluemiraSolid, :BluemiraSolid]:
+) -> List[BluemiraSolid]:
     """
     Join two hollow, intersecting pipes.
 
@@ -430,9 +438,7 @@ def pipe_pipe_join(
                 if tool_frag.is_same(targ_frag):
                     new_shape_pieces.append(tool_frag)
 
-    shape = boolean_fuse(new_shape_pieces)
-    void = boolean_fuse([target_void, tool_void])
-    return shape, void
+    return new_shape_pieces
 
 
 if __name__ == "__main__":
@@ -474,8 +480,8 @@ if __name__ == "__main__":
             "g_ts_tf": {"value": 0.05, "unit": "m"},
             "tk_ts": {"value": 0.05, "unit": "m"},
             "g_vv_ts": {"value": 0.05, "unit": "m"},
-            "tk_upper_port_wall_end": {"value": 0.2, "unit": "m"},
-            "tk_upper_port_wall_side": {"value": 0.1, "unit": "m"},
+            "tk_vv_double_wall": {"value": 0.2, "unit": "m"},
+            "tk_vv_single_wall": {"value": 0.1, "unit": "m"},
         }
     )
     builder = VVUpperPortDuctBuilder(params, port_koz=port_koz)
@@ -490,7 +496,7 @@ if __name__ == "__main__":
     tool_void = up_xyz.get_component("VVUpperPortDuct voidspace").shape
     tool_shape = up_xyz.get_component("VVUpperPortDuct").shape
     wire = make_polygon(
-        {"x": [9, 13, 13, 9], "y": [-0.5, -1, 1, 0.5], "z": 10}, closed=True
+        {"x": [9, 15, 15, 9], "y": [-0.5, -1, 1, 0.5], "z": 10}, closed=True
     )
     wire.rotate(degree=10)
     from bluemira.geometry.tools import extrude_shape, offset_wire
@@ -499,5 +505,7 @@ if __name__ == "__main__":
     face = BluemiraFace([wire2, wire])
     void_face = BluemiraFace(wire)
     tool_shape = extrude_shape(face, vec=(0, 0, -10))
+
     tool_void = extrude_shape(void_face, vec=(0, 0, -10))
-    shape2, void2 = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
+    new_shape_pieces = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
+    show_cad(boolean_fuse(new_shape_pieces))

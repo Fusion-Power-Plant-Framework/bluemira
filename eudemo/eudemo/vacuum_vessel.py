@@ -32,13 +32,15 @@ from bluemira.builders.tools import (
     apply_component_display_options,
     build_sectioned_xy,
     build_sectioned_xyz,
-    circular_pattern_component,
-    get_n_sectors,
     varied_offset,
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import _offset_wire_discretised
+from bluemira.geometry.tools import (
+    _offset_wire_discretised,
+    boolean_fuse,
+    interpolate_bspline,
+)
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
 from eudemo.maintenance.duct_connection import pipe_pipe_join
@@ -58,7 +60,7 @@ class VacuumVessel(ComponentManager):
             .shape.boundary[0]
         )
 
-    def add_ports(self, n_TF: int, ports: Union[Component, List[Component]]):
+    def add_ports(self, ports: Union[Component, List[Component]]):
         """ """
         component = self.component()
         xyz = component.get_component("xyz")
@@ -70,17 +72,26 @@ class VacuumVessel(ComponentManager):
 
         if isinstance(ports, Component):
             ports = [ports]
-        for port in ports:
+
+        tool_voids = []
+        for i, port in enumerate(ports):
+            if i > 0:
+                target_shape = boolean_fuse(new_shape_pieces)
+
             port_xyz = port.get_component("xyz")
             tool_shape = port_xyz.get_component(port.name).shape
             tool_void = port_xyz.get_component(port.name + " voidspace").shape
-            target_shape, target_void = pipe_pipe_join(
+            tool_voids.append(tool_void)
+            new_shape_pieces = pipe_pipe_join(
                 target_shape, target_void, tool_shape, tool_void
             )
 
-        sector_body = PhysicalComponent(VacuumVesselBuilder.BODY, target_shape)
+        final_shape = boolean_fuse(new_shape_pieces)
+        final_void = boolean_fuse([target_void] + tool_voids)
+
+        sector_body = PhysicalComponent(VacuumVesselBuilder.BODY, final_shape)
         sector_void = PhysicalComponent(
-            VacuumVesselBuilder.VOID, target_void, material=Void("vacuum")
+            VacuumVesselBuilder.VOID, final_void, material=Void("vacuum")
         )
         Component("xyz", children=[sector_body, sector_void], parent=component)
 
@@ -146,6 +157,9 @@ class VacuumVesselBuilder(Builder):
             join="arc",
             open_wire=False,
             ndiscr=600,
+        )
+        inner_vv = interpolate_bspline(
+            inner_vv.discretize(ndiscr=600, byedges=True), closed=True
         )
 
         outer_vv = varied_offset(

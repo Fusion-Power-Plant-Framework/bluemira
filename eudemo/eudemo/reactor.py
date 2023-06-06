@@ -428,9 +428,7 @@ if __name__ == "__main__":
         reactor.cryostat.xz_boundary(),
     )
 
-    reactor.vacuum_vessel.add_ports(
-        reactor_config.global_params.n_TF.value, [vv_upper_port, vv_eq_port]
-    )
+    reactor.vacuum_vessel.add_ports([vv_upper_port, vv_eq_port])
 
     from bluemira.display import show_cad
 
