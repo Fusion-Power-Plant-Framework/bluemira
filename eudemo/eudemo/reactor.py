@@ -143,7 +143,7 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
 
 
 def assemble_thermal_shield():
-    return Ther
+    return ThermalShield(None)
 
 
 def build_divertor(params, build_config, div_silhouette) -> Divertor:
