@@ -429,6 +429,7 @@ if __name__ == "__main__":
     )
 
     reactor.vacuum_vessel.add_ports([vv_upper_port, vv_eq_port])
+    reactor.th
 
     from bluemira.display import show_cad
 

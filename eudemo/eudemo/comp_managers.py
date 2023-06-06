@@ -42,21 +42,6 @@ class VacuumVesselThermalShield(ComponentManager):
         )
 
 
-class Cryostat(ComponentManager):
-    """
-    Wrapper around a VVTS component tree.
-    """
-
-    def xz_boundary(self) -> BluemiraWire:
-        """Return a wire representing the VVTS poloidal silhouette."""
-        return (
-            self.component()
-            .get_component("xz")
-            .get_component(CryostatBuilder.CRYO)
-            .shape.boundary[0]
-        )
-
-
 class CryostatThermalShield(ComponentManager):
     """
     Wrapper around a VVTS component tree.
@@ -68,6 +53,29 @@ class CryostatThermalShield(ComponentManager):
             self.component()
             .get_component("xz")
             .get_component(CryostatTSBuilder.CRYO_TS)
+            .shape.boundary[0]
+        )
+
+
+class ThermalShield(ComponentManager):
+    """
+    Wrapper around a Thermal Shield component tree.
+    """
+
+    pass
+
+
+class Cryostat(ComponentManager):
+    """
+    Wrapper around a VVTS component tree.
+    """
+
+    def xz_boundary(self) -> BluemiraWire:
+        """Return a wire representing the VVTS poloidal silhouette."""
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(CryostatBuilder.CRYO)
             .shape.boundary[0]
         )
 
