@@ -40,7 +40,13 @@ from bluemira.base.reactor_config import ConfigParams
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import extrude_shape, make_polygon
+from bluemira.geometry.tools import (
+    boolean_fragments,
+    boolean_fuse,
+    extrude_shape,
+    make_polygon,
+    point_inside_shape,
+)
 from bluemira.materials import Void
 
 
@@ -324,7 +330,6 @@ def pipe_pipe_join(
     substantially faster. If the parts do not fully intersect, undesired results
     are to be expected.
     """
-    void = boolean_fuse([target_void, tool_void])
     _, (target_fragments, tool_fragments) = boolean_fragments([target_shape, tool_shape])
 
     # Keep the largest piece of the target by volume (opinionated)
@@ -350,6 +355,7 @@ def pipe_pipe_join(
                     new_shape_pieces.append(tool_frag)
 
     shape = boolean_fuse(new_shape_pieces)
+    void = boolean_fuse([target_void, tool_void])
     return shape, void
 
 
