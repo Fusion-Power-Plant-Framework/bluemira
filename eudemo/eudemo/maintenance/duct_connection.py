@@ -278,7 +278,7 @@ def make_upper_port_xy_face(
     y_offset: float,
 ) -> BluemiraFace:
     """
-    Creates a xy cross section of the port
+    Creates a xy cross section of the upper port
 
     translates the port koz to the origin,
     builds the port at the origin and moves it back
@@ -307,7 +307,6 @@ def make_upper_port_xy_face(
     Notes
     -----
     the port koz is slightly trimmed to allow for square ends to the port
-
     """
     half_beta = np.pi / n_TF
     cos_hb = np.cos(half_beta)
@@ -375,6 +374,31 @@ def make_equatorial_port_yz_face(
     z_max: float,
     wall_side_tk: float,
 ) -> BluemiraFace:
+    """
+    Creates a yz cross section of the equatorial port
+
+    builds the port at the origin
+
+    Parameters
+    ----------
+    x_ref:
+        Reference x coordinate of the y-z plane
+    y_min:
+        Minimum y coordinate of the port void
+    y_max:
+        Maximum y coordinate of the port void
+    z_min:
+        Minimum z coordinate of the port void
+    z_max:
+        Maximum z coordinate of the port void
+    wall_side_tk:
+        Thickness of the port walss
+
+    Returns
+    -------
+    yz_face:
+        y-z face of the equatorial port
+    """
     y = np.array([y_min, y_min, y_max, y_max])
     z = np.array([z_min, z_max, z_max, z_min])
     inner = make_polygon({"x": x_ref, "y": y, "z": z}, closed=True)
