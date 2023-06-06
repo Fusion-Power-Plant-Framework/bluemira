@@ -75,11 +75,10 @@ class EquatorialPortKOZDesignerParams(ParameterFrame):
     pf_s_g: Parameter[float]
     """PF coil support thickness"""
     pf_s_tk_plate: Parameter[float]
+    tk_vv_single_wall: Parameter[float]
 
-    # Lower port parameters
     ep_z_position: Parameter[float]
     ep_height: Parameter[float]
-    ep_wall_tk: Parameter[float]
 
 
 class EquatorialPortKOZDesigner(Designer):
@@ -115,7 +114,7 @@ class EquatorialPortKOZDesigner(Designer):
         """
         super().__init__(params, build_config)
         self.koz_offset = (
-            self.params.ep_wall_tk.value
+            self.params.tk_vv_single_wall.value
             + self.params.g_vv_ts.value
             + self.params.tk_ts.value
             + self.params.g_ts_tf.value

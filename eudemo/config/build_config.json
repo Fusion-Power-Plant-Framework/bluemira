@@ -124,7 +124,28 @@
     }
   },
   "Upper Port": {},
-  "Equatorial Port": {},
+  "Equatorial Port": {
+    "params": {
+      "ep_width": {
+        "value": 2.0,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Equatorial port width (void width)"
+      },
+      "ep_height": {
+        "value": 2.0,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Equatorial port height (void height)"
+      },
+      "ep_z_position": {
+        "value": 0.0,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Equatorial port central axis z coordinate"
+      }
+    }
+  },
   "Lower Port": {
     "params": {
       "lp_duct_tf_offset": {
@@ -223,28 +244,6 @@
           "max_eval": 50,
           "ftol_rel": 1e-10
         }
-      }
-    }
-  },
-  "Equatorial Port": {
-    "params": {
-      "ep_height": {
-        "value": 2.0,
-        "unit": "m",
-        "source": "Input",
-        "long_name": "Equatorial port height (void height)"
-      },
-      "ep_wall_tk": {
-        "value": 0.1,
-        "unit": "m",
-        "source": "Input",
-        "long_name": "Equatorial port wall thickness"
-      },
-      "ep_z_position": {
-        "value": 0.0,
-        "unit": "m",
-        "source": "Input",
-        "long_name": "Equatorial port central axis z coordinate"
       }
     }
   }

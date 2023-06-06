@@ -119,8 +119,8 @@ class VVUpperPortDuctBuilderParams(ParameterFrame):
     g_ts_tf: Parameter[float]
     tk_ts: Parameter[float]
     g_vv_ts: Parameter[float]
-    tk_upper_port_wall_end: Parameter[float]
-    tk_upper_port_wall_side: Parameter[float]
+    tk_vv_double_wall: Parameter[float]
+    tk_vv_single_wall: Parameter[float]
 
 
 class VVUpperPortDuctBuilder(Builder):
@@ -141,8 +141,8 @@ class VVUpperPortDuctBuilder(Builder):
         self.z_max = port_koz.bounding_box.z_max
 
         if (
-            self.params.tk_upper_port_wall_end.value <= 0
-            or self.params.tk_upper_port_wall_side.value <= 0
+            self.params.tk_vv_double_wall.value <= 0
+            or self.params.tk_vv_single_wall.value <= 0
         ):
             raise ValueError("Port wall thickness must be > 0")
 
@@ -152,6 +152,83 @@ class VVUpperPortDuctBuilder(Builder):
             + self.params.tk_ts.value
             + self.params.g_vv_ts.value
         )
+
+    def build(self) -> Component:
+        """Build upper port"""
+        xy_face = make_upper_port_xy_face(
+            self.params.n_TF.value,
+            self.x_min,
+            self.x_max,
+            self.params.tk_vv_double_wall.value,
+            self.params.tk_vv_single_wall.value,
+            self.y_offset,
+        )
+        xy_voidface = BluemiraFace(xy_face.boundary[1])
+
+        return self.component_tree(
+            None,
+            self.build_xy(xy_face, xy_voidface),
+            self.build_xyz(xy_face, xy_voidface),
+        )
+
+    def build_xyz(
+        self, xy_face: BluemiraFace, xy_voidface: BluemiraFace
+    ) -> PhysicalComponent:
+        """Build upper port xyz"""
+        port = extrude_shape(xy_face, (0, 0, self.z_max))
+        comp = PhysicalComponent(self.name, port)
+        apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
+        void = PhysicalComponent(
+            self.name + " voidspace",
+            extrude_shape(xy_voidface, (0, 0, self.z_max)),
+            material=Void("vacuum"),
+        )
+        apply_component_display_options(void, color=(0, 0, 0))
+        return [comp, void]
+
+    def build_xy(
+        self, face: BluemiraFace, xy_voidface: BluemiraFace
+    ) -> PhysicalComponent:
+        """Build upper port xy face"""
+        comp = PhysicalComponent(self.name, face)
+        apply_component_display_options(comp, BLUE_PALETTE["VV"][0])
+        void = PhysicalComponent(
+            self.name + " voidspace", xy_voidface, material=Void("vacuum")
+        )
+        apply_component_display_options(void, color=(0, 0, 0))
+        return [comp, void]
+
+
+@dataclass
+class VVEquatorialPortDuctBuilderParams(ParameterFrame):
+    """Vacuum vessel equatorial port duct builder Parameter Frame"""
+
+    ep_z_position: Parameter[float]
+    ep_height: Parameter[float]
+    tk_vv_single_wall: Parameter[float]
+
+
+class VVEquatorialPortDuctBuilder(Builder):
+    """Vacuum vessel upper port duct builder"""
+
+    params: VVEquatorialPortDuctBuilderParams
+    param_cls = VVEquatorialPortDuctBuilderParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame, ConfigParams, None],
+    ):
+        super().__init__(params, None)
+        koz_offset = self.params.tk_ts.value + self.params.g_vv_ts.value
+        self.z_min = port_koz.bounding_box.x_min + koz_offset
+        self.z_max = port_koz.bounding_box.x_min + koz_offset
+        self.x_max = port_koz.bounding_box.x_max
+        self.z_max = port_koz.bounding_box.z_max
+
+        if self.params.tk_eq_port_wall_side.value <= 0:
+            raise ValueError("Port wall thickness must be > 0")
+
+        self.y_offset = +self.params.tk_ts.value + self.params.g_vv_ts.value
 
     def build(self) -> Component:
         """Build upper port"""
@@ -295,6 +372,21 @@ def make_upper_port_xy_face(
     xy_face.rotate(degree=np.rad2deg(half_beta))
 
     return xy_face
+
+
+def make_equatorial_port_yz_face(
+    x_ref: float,
+    y_min: float,
+    y_max: float,
+    z_min: float,
+    z_max: float,
+    wall_side_tk: float,
+) -> BluemiraFace:
+    y = np.array([y_min, y_min, y_max, y_max])
+    z = np.array([z_min, z_max, z_max, z_min])
+    inner = make_polygon({"x": x_ref, "y": y, "z": z}, closed=True)
+    outer = offset_wire(inner, wall_side_tk, open_wire=False)
+    return BluemiraFace([outer, inner])
 
 
 def pipe_pipe_join(
