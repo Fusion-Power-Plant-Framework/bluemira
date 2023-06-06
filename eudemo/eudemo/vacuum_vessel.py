@@ -39,6 +39,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import _offset_wire_discretised
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
+from eudemo.maintenance.duct_connection import pipe_pipe_join
 
 
 class VacuumVessel(ComponentManager):
@@ -158,3 +159,14 @@ class VacuumVesselBuilder(Builder):
             degree,
             material=[None, Void("vacuum")],
         )
+
+    def add_port(self, port: Component):
+        """ """
+        vv_xyz = self.get_component("xyz").get_component("Sector 1")
+        target_void = vv_xyz.get_component("Vessel voidspace 1").shape
+        target_shape = vv_xyz.get_component("Body 1").shape
+        tool_shape = port.get_component(port.name).shape
+        tool_void = port.get_component(port.name + " voidspace").shape
+        shape, void = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
+        sector_body = PhysicalComponent(self.BODY, shape)
+        sector_void = PhysicalComponent(self.VOID, void, material=Void("vacuum"))

@@ -21,9 +21,8 @@
 
 import pytest
 
-from bluemira.display import show_cad
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import boolean_cut, boolean_fuse, extrude_shape, make_circle
+from bluemira.geometry.tools import extrude_shape, make_circle
 from eudemo.maintenance.duct_connection import pipe_pipe_join
 
 

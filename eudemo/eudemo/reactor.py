@@ -229,8 +229,7 @@ def build_upper_port(params, build_config, upper_port_koz):
     ts_upper_port = ts_builder.build()
     vv_builder = VVUpperPortDuctBuilder(params, upper_port_koz)
     vv_upper_port = vv_builder.build()
-    ts_upper_port.show_cad()
-    vv_upper_port.show_cad()
+    return ts_upper_port, vv_upper_port
 
 
 def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
@@ -396,7 +395,7 @@ if __name__ == "__main__":
 
     # Incorporate ports, potentially larger depending on where the PF
     # coils ended up. Warn if this isn't the case.
-    upper_port = build_upper_port(
+    ts_upper_port, vv_upper_port = build_upper_port(
         reactor_config.params_for("Upper port"),
         reactor_config.config_for("Upper port"),
         upper_port_koz_xz,
