@@ -123,6 +123,8 @@
       }
     }
   },
+  "Upper Port": {},
+  "Equatorial Port": {},
   "Lower Port": {
     "params": {
       "lp_duct_tf_offset": {

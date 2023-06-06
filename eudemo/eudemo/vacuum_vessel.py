@@ -32,6 +32,8 @@ from bluemira.builders.tools import (
     apply_component_display_options,
     build_sectioned_xy,
     build_sectioned_xyz,
+    circular_pattern_component,
+    get_n_sectors,
     varied_offset,
 )
 from bluemira.display.palettes import BLUE_PALETTE
@@ -55,6 +57,29 @@ class VacuumVessel(ComponentManager):
             .get_component(VacuumVesselBuilder.BODY)
             .shape.boundary[0]
         )
+
+    def add_ports(self, n_TF: int, port: Union[Component, List[Component]]):
+        """ """
+        if isinstance(port, Component):
+            port = [port]
+        degree = 0.0
+        sector_degree, n_sectors = get_n_sectors(n_TF, degree)
+        component = self.component()
+        xyz = component.get_component("xyz")
+        vv_xyz = xyz.get_component("Sector 1")
+        target_void = vv_xyz.get_component("Vessel voidspace 1").shape
+        target_shape = vv_xyz.get_component("Body 1").shape
+        xyz.parent = None
+        del xyz
+        port_xyz = port.get_component("xyz")
+        tool_shape = port_xyz.get_component(port.name).shape
+        tool_void = port_xyz.get_component(port.name + " voidspace").shape
+        shape, void = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
+        sector_body = PhysicalComponent(VacuumVesselBuilder.BODY, shape)
+        sector_void = PhysicalComponent(
+            VacuumVesselBuilder.VOID, void, material=Void("vacuum")
+        )
+        Component("xyz", children=[sector_body, sector_void], parent=component)
 
 
 @dataclass
@@ -159,14 +184,3 @@ class VacuumVesselBuilder(Builder):
             degree,
             material=[None, Void("vacuum")],
         )
-
-    def add_port(self, port: Component):
-        """ """
-        vv_xyz = self.get_component("xyz").get_component("Sector 1")
-        target_void = vv_xyz.get_component("Vessel voidspace 1").shape
-        target_shape = vv_xyz.get_component("Body 1").shape
-        tool_shape = port.get_component(port.name).shape
-        tool_void = port.get_component(port.name + " voidspace").shape
-        shape, void = pipe_pipe_join(target_shape, target_void, tool_shape, tool_void)
-        sector_body = PhysicalComponent(self.BODY, shape)
-        sector_void = PhysicalComponent(self.VOID, void, material=Void("vacuum"))
