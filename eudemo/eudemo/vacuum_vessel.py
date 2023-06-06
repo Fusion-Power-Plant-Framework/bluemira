@@ -61,7 +61,9 @@ class VacuumVessel(ComponentManager):
         )
 
     def add_ports(self, ports: Union[Component, List[Component]]):
-        """ """
+        """
+        Add a series of ports to the vacuum vessel component tree.
+        """
         component = self.component()
         xyz = component.get_component("xyz")
         vv_xyz = xyz.get_component("Sector 1")
