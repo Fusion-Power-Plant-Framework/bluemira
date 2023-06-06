@@ -44,7 +44,7 @@ from bluemira.materials.error import MaterialsError
 from bluemira.materials.material import SerialisedMaterial
 
 
-class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
+class HomogenisedMixture(SerialisedMaterial, nmm.Material):
     """
     Inherits and does some dropping of 0 fractions (avoid touching nmm)
     """
