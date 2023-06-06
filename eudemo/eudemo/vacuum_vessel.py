@@ -74,6 +74,7 @@ class VacuumVessel(ComponentManager):
             ports = [ports]
 
         tool_voids = []
+        new_shape_pieces = []
         for i, port in enumerate(ports):
             if i > 0:
                 target_shape = boolean_fuse(new_shape_pieces)
