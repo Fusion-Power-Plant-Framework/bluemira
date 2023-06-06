@@ -60,6 +60,7 @@ from eudemo.comp_managers import (
     Cryostat,
     CryostatThermalShield,
     RadiationShield,
+    ThermalShield,
     VacuumVesselThermalShield,
 )
 from eudemo.equilibria import (
@@ -93,14 +94,15 @@ class EUDEMO(Reactor):
 
     plasma: Plasma
     vacuum_vessel: VacuumVessel
-    vv_thermal: VacuumVesselThermalShield
+    thermal_shield: ThermalShield
+
     divertor: Divertor
     blanket: Blanket
     tf_coils: TFCoil
     pf_coils: PFCoil
     coil_structures: CoilStructures
     cryostat: Cryostat
-    cryostat_thermal: CryostatThermalShield
+
     radiation_shield: RadiationShield
 
 
@@ -124,6 +126,24 @@ def build_vacuum_vessel_thermal_shield(
     """Build the vacuum vessel thermal shield around the given  VV keep-out zone"""
     vvts_builder = VVTSBuilder(params, build_config, vv_koz)
     return VacuumVesselThermalShield(vvts_builder.build())
+
+
+def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
+    """
+    Build the Cryostat thermal shield for the reactor.
+    """
+    return CryostatThermalShield(
+        CryostatTSBuilder(
+            params,
+            build_config,
+            pf_kozs,
+            tf_koz,
+        ).build()
+    )
+
+
+def assemble_thermal_shield():
+    return Ther
 
 
 def build_divertor(params, build_config, div_silhouette) -> Divertor:
@@ -242,20 +262,6 @@ def build_equatorial_port(params, build_config, cryostat_xz):
     return None, vv_eq_port
 
 
-def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
-    """
-    Build the Cryostat thermal shield for the reactor.
-    """
-    return CryostatThermalShield(
-        CryostatTSBuilder(
-            params,
-            build_config,
-            pf_kozs,
-            tf_koz,
-        ).build()
-    )
-
-
 def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
     """
     Design and build the Cryostat for the reactor.
@@ -352,7 +358,7 @@ if __name__ == "__main__":
         r_inner_cut,
         cut_angle,
     )
-    reactor.vv_thermal = build_vacuum_vessel_thermal_shield(
+    vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "VVTS"),
         reactor.vacuum_vessel.xz_boundary(),
@@ -362,7 +368,7 @@ if __name__ == "__main__":
         reactor_config.params_for("TF coils"),
         reactor_config.config_for("TF coils"),
         reactor.plasma.lcfs(),
-        reactor.vv_thermal.xz_boundary(),
+        vv_thermal_shield.xz_boundary(),
     )
 
     lower_port, lower_port_duct_xz_koz = build_lower_port(
@@ -384,11 +390,15 @@ if __name__ == "__main__":
         ],
     )
 
-    reactor.cryostat_thermal = build_cryots(
+    cryostat_thermal_shield = build_cryots(
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "Cryostat"),
         reactor.pf_coils.xz_boundary(),
         reactor.tf_coils.xz_outer_boundary(),
+    )
+
+    reactor.thermal_shield = assemble_thermal_shield(
+        vv_thermal_shield, cryostat_thermal_shield
     )
 
     reactor.coil_structures = build_coil_structures(
@@ -406,7 +416,7 @@ if __name__ == "__main__":
     reactor.cryostat = build_cryostat(
         reactor_config.params_for("Cryostat"),
         reactor_config.config_for("Cryostat"),
-        reactor.cryostat_thermal.xz_boundary(),
+        cryostat_thermal_shield.xz_boundary(),
     )
 
     reactor.radiation_shield = build_radiation_shield(
