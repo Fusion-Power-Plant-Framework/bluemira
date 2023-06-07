@@ -41,6 +41,7 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 
+from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
 from bluemira.base.reactor import Reactor
@@ -52,7 +53,7 @@ from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import interpolate_bspline
+from bluemira.geometry.tools import interpolate_bspline, make_polygon
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -71,6 +72,7 @@ from eudemo.equilibria import (
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
 from eudemo.maintenance.duct_connection import (
+    TSEquatorialPortDuctBuilder,
     TSUpperPortDuctBuilder,
     VVEquatorialPortDuctBuilder,
     VVUpperPortDuctBuilder,
@@ -142,8 +144,12 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
     )
 
 
-def assemble_thermal_shield():
-    return ThermalShield(None)
+def assemble_thermal_shield(vv_thermal_shield, cryostat_thermal_shield):
+    component = Component(
+        name="Thermal Shield",
+        children=[vv_thermal_shield.component(), cryostat_thermal_shield.component()],
+    )
+    return ThermalShield(component)
 
 
 def build_divertor(params, build_config, div_silhouette) -> Divertor:
@@ -242,24 +248,32 @@ def build_coil_structures(
     return CoilStructures(component)
 
 
-def build_upper_port(params, build_config, upper_port_koz):
+def build_upper_port(
+    params,
+    build_config,
+    upper_port_koz: BluemiraFace,
+    pf_coils,
+    cryostat_ts_xz_boundary: BluemiraFace,
+):
     """
     Build the upper port for the reactor.
     """
-    ts_builder = TSUpperPortDuctBuilder(params, upper_port_koz)
+    ts_builder = TSUpperPortDuctBuilder(params, upper_port_koz, cryostat_ts_xz_boundary)
     ts_upper_port = ts_builder.build()
-    vv_builder = VVUpperPortDuctBuilder(params, upper_port_koz)
+    vv_builder = VVUpperPortDuctBuilder(params, upper_port_koz, cryostat_ts_xz_boundary)
     vv_upper_port = vv_builder.build()
     return ts_upper_port, vv_upper_port
 
 
-def build_equatorial_port(params, build_config, cryostat_xz):
+def build_equatorial_port(params, build_config, cryostat_ts_xz_boundary):
     """
     Build the equatorial port for the reactor.
     """
-    builder = VVEquatorialPortDuctBuilder(params, cryostat_xz)
+    builder = VVEquatorialPortDuctBuilder(params, cryostat_ts_xz_boundary)
     vv_eq_port = builder.build()
-    return None, vv_eq_port
+    builder = TSEquatorialPortDuctBuilder(params, cryostat_ts_xz_boundary)
+    ts_eq_port = builder.build()
+    return ts_eq_port, vv_eq_port
 
 
 def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
@@ -427,19 +441,22 @@ if __name__ == "__main__":
 
     # Incorporate ports, potentially larger depending on where the PF
     # coils ended up. Warn if this isn't the case.
+
     ts_upper_port, vv_upper_port = build_upper_port(
         reactor_config.params_for("Upper Port"),
         reactor_config.config_for("Upper Port"),
         upper_port_koz_xz,
+        reactor.pf_coils,
+        cryostat_thermal_shield.xz_boundary(),
     )
     ts_eq_port, vv_eq_port = build_equatorial_port(
         reactor_config.params_for("Equatorial Port"),
         reactor_config.config_for("Equatorial Port"),
-        reactor.cryostat.xz_boundary(),
+        cryostat_thermal_shield.xz_boundary(),
     )
 
     reactor.vacuum_vessel.add_ports([vv_upper_port, vv_eq_port])
-    reactor.th
+    reactor.thermal_shield.add_ports([ts_upper_port, ts_eq_port])
 
     from bluemira.display import show_cad
 

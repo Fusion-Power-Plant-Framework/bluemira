@@ -85,7 +85,7 @@
           "value": "r_fw_ob_in"
         }
       },
-      "run_mode": "run",
+      "run_mode": "read",
       "name": "First Wall",
       "file_path": "config/FirstWallDesign.json",
       "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
@@ -120,6 +120,55 @@
       "conditions": {
         "max_eval": 200,
         "ftol_rel": 1e-6
+      }
+    }
+  },
+  "PF coils": {
+    "run_mode": "read",
+    "file_path": "config/PFCoilDesign.json",
+    "verbose": false,
+    "plot": true,
+    "grid_settings": {
+      "nx": 127,
+      "nz": 127,
+      "grid_scale_x": 2.0,
+      "grid_scale_z": 2.0
+    },
+    "breakdown_settings": {
+      "param_class": "bluemira.equilibria.opt_problems::OutboardBreakdownZoneStrategy",
+      "problem_class": "bluemira.equilibria.opt_problems::BreakdownCOP",
+      "B_stray_con_tol": 1e-6,
+      "n_B_stray_points": 10,
+      "optimisation_settings": {
+        "algorithm_name": "COBYLA",
+        "conditions": {
+          "max_eval": 5000,
+          "ftol_rel": 1e-10
+        }
+      }
+    },
+    "equilibrium_settings": {
+      "problem_class": "bluemira.equilibria.opt_problems::TikhonovCurrentCOP",
+      "convergence_class": "bluemira.equilibria.solve::DudsonConvergence",
+      "conv_limit": 1e-4,
+      "gamma": 1e-12,
+      "relaxation": 0.2,
+      "peak_PF_current_factor": 1.5,
+      "optimisation_settings": {
+        "algorithm_name": "SLSQP",
+        "conditions": {
+          "max_eval": 5000,
+          "ftol_rel": 1e-6
+        }
+      }
+    },
+    "position_settings": {
+      "optimisation_settings": {
+        "algorithm_name": "COBYLA",
+        "conditions": {
+          "max_eval": 50,
+          "ftol_rel": 1e-10
+        }
       }
     }
   },
@@ -195,55 +244,6 @@
         "unit": "m",
         "source": "Input",
         "long_name": "Lower port duct wall thickness."
-      }
-    }
-  },
-  "PF coils": {
-    "run_mode": "run",
-    "file_path": "config/PFCoilDesign.json",
-    "verbose": false,
-    "plot": true,
-    "grid_settings": {
-      "nx": 127,
-      "nz": 127,
-      "grid_scale_x": 2.0,
-      "grid_scale_z": 2.0
-    },
-    "breakdown_settings": {
-      "param_class": "bluemira.equilibria.opt_problems::OutboardBreakdownZoneStrategy",
-      "problem_class": "bluemira.equilibria.opt_problems::BreakdownCOP",
-      "B_stray_con_tol": 1e-6,
-      "n_B_stray_points": 10,
-      "optimisation_settings": {
-        "algorithm_name": "COBYLA",
-        "conditions": {
-          "max_eval": 5000,
-          "ftol_rel": 1e-10
-        }
-      }
-    },
-    "equilibrium_settings": {
-      "problem_class": "bluemira.equilibria.opt_problems::TikhonovCurrentCOP",
-      "convergence_class": "bluemira.equilibria.solve::DudsonConvergence",
-      "conv_limit": 1e-4,
-      "gamma": 1e-12,
-      "relaxation": 0.2,
-      "peak_PF_current_factor": 1.5,
-      "optimisation_settings": {
-        "algorithm_name": "SLSQP",
-        "conditions": {
-          "max_eval": 5000,
-          "ftol_rel": 1e-6
-        }
-      }
-    },
-    "position_settings": {
-      "optimisation_settings": {
-        "algorithm_name": "COBYLA",
-        "conditions": {
-          "max_eval": 50,
-          "ftol_rel": 1e-10
-        }
       }
     }
   }

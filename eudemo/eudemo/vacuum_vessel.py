@@ -96,6 +96,8 @@ class VacuumVessel(ComponentManager):
         sector_void = PhysicalComponent(
             VacuumVesselBuilder.VOID, final_void, material=Void("vacuum")
         )
+        apply_component_display_options(sector_body, color=BLUE_PALETTE["VV"][0])
+        apply_component_display_options(sector_void, color=(0, 0, 0))
         Component("xyz", children=[sector_body, sector_void], parent=component)
 
 
@@ -161,9 +163,9 @@ class VacuumVesselBuilder(Builder):
             open_wire=False,
             ndiscr=600,
         )
-        inner_vv = interpolate_bspline(
-            inner_vv.discretize(ndiscr=600, byedges=True), closed=True
-        )
+        # inner_vv = interpolate_bspline(
+        #     inner_vv.discretize(ndiscr=300, byedges=True), closed=True
+        # )
 
         outer_vv = varied_offset(
             inner_vv,
