@@ -78,7 +78,7 @@ class BaseManager(abc.ABC):
         self,
         components: Union[Component, Iterable[Component]],
         filename: str,
-        formatt: Union[str, cadapi.CADFileType] = "stp",
+        cad_format: Union[str, cadapi.CADFileType] = "stp",
         **kwargs,
     ):
         """
@@ -90,16 +90,24 @@ class BaseManager(abc.ABC):
             components to save
         filename:
             the filename to save
-        formatt:
+        cad_format:
             CAD file format
         """
+        if kw_formatt := kwargs.pop("formatt", None):
+            warn(
+                "Using kwarg 'formatt' is no longer supported. "
+                "Use cad_format instead.",
+                category=DeprecationWarning,
+            )
+            cad_format = kw_formatt
+
         shape_name = get_properties_from_components(components, ("shape", "name"))
         if not isinstance(shape_name[0], tuple):
             shapes, names = [shape_name[0]], [shape_name[1]]
         else:
             shapes, names = shape_name
 
-        save_cad(shapes, filename, formatt, names, **kwargs)
+        save_cad(shapes, filename, cad_format, names, **kwargs)
 
     @abc.abstractmethod
     def show_cad(
@@ -307,7 +315,7 @@ class ComponentManager(BaseManager):
         *dims: str,
         filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
         filename: Optional[str] = None,
-        formatt: Union[str, cadapi.CADFileType] = "stp",
+        cad_format: Union[str, cadapi.CADFileType] = "stp",
         directory: Union[str, Path] = "",
         **kwargs,
     ):
@@ -324,7 +332,7 @@ class ComponentManager(BaseManager):
             returning True keeps the node False removes it
         filename:
             the filename to save, will default to the component name
-        formatt:
+        cad_format:
             CAD file format
         directory:
             Directory to save into, defaults to the current directory
@@ -338,7 +346,7 @@ class ComponentManager(BaseManager):
         super().save_cad(
             self._filter_tree(comp, self._validate_cad_dims(*dims, **kwargs), filter_),
             filename=Path(directory, filename).as_posix(),
-            formatt=formatt,
+            cad_format=cad_format,
             **kwargs,
         )
 
@@ -539,7 +547,7 @@ class Reactor(BaseManager):
         n_sectors: Optional[int] = None,
         filter_: Optional[Callable[[Component], bool]] = FilterMaterial(),
         filename: Optional[str] = None,
-        formatt: Union[str, cadapi.CADFileType] = "stp",
+        cad_format: Union[str, cadapi.CADFileType] = "stp",
         directory: Union[str, Path] = "",
         **kwargs,
     ):
@@ -562,7 +570,7 @@ class Reactor(BaseManager):
             returning True keeps the node False removes it
         filename:
             the filename to save, will default to the component name
-        formatt:
+        cad_format:
             CAD file format
         directory:
             Directory to save into, defaults to the current directory
@@ -577,7 +585,7 @@ class Reactor(BaseManager):
                 self._validate_cad_dims(*dims), with_components, n_sectors, filter_
             ),
             Path(directory, filename).as_posix(),
-            formatt,
+            cad_format,
             **kwargs,
         )
 

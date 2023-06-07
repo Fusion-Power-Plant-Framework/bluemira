@@ -29,6 +29,7 @@ import inspect
 import json
 import os
 from copy import deepcopy
+from logging import warn
 from typing import (
     Any,
     Callable,
@@ -1048,7 +1049,7 @@ def save_as_STP(
 def save_cad(
     shapes: Union[BluemiraGeo, List[BluemiraGeo]],
     filename: str,
-    formatt: Union[str, cadapi.CADFileType] = "stp",
+    cad_format: Union[str, cadapi.CADFileType] = "stp",
     names: Optional[Union[str, Iterable[str]]] = None,
     **kwargs,
 ):
@@ -1061,16 +1062,27 @@ def save_cad(
         shapes to save
     filename:
         Full path filename of the STP assembly
-    formatt:
+    cad_format:
         file format to save as
     kwargs:
         arguments passed to cadapi save function
     """
+    if kw_formatt := kwargs.pop("formatt", None):
+        warn(
+            "Using kwarg 'formatt' is no longer supported. Use cad_format instead.",
+            category=DeprecationWarning,
+        )
+        cad_format = kw_formatt
+
     if not isinstance(shapes, list):
         shapes = [shapes]
 
     cadapi.save_cad(
-        [s.shape for s in shapes], filename, formatt=formatt, labels=names, **kwargs
+        [s.shape for s in shapes],
+        filename,
+        cad_format=cad_format,
+        labels=names,
+        **kwargs,
     )
 
 
