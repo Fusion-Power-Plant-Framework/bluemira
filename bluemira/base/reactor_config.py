@@ -98,7 +98,7 @@ class ReactorConfig:
         self.warn_on_empty_config = warn_on_empty_config
 
         config_data = self._read_or_return(config_path)
-        if not isinstance(config_path, dict):
+        if isinstance(config_path, (Path, str)):
             self._expand_paths_in_dict(config_data, Path(config_path).parent)
 
         self.config_data = config_data
