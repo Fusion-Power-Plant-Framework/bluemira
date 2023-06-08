@@ -53,6 +53,9 @@ class TestReactorConfigClass:
     def setup_method(self):
         set_log_level("DEBUG")
 
+    def teardown_method(self):
+        set_log_level("INFO")
+
     def test_file_loading_with_empty_config(self, caplog):
         reactor_config = ReactorConfig(empty_config_path, EmptyFrame)
 
