@@ -304,9 +304,7 @@ class ComponentManager(BaseManager):
             filename = comp.name
 
         super().save_cad(
-            self._filter_tree(
-                comp, self._validate_cad_dims(*dims, **kwargs), component_filter
-            ),
+            self._filter_tree(comp, self._validate_cad_dims(*dims), component_filter),
             filename=Path(directory, filename).as_posix(),
             cad_format=cad_format,
             **kwargs,
@@ -335,7 +333,7 @@ class ComponentManager(BaseManager):
         ComponentDisplayer().show_cad(
             self._filter_tree(
                 self.component(),
-                self._validate_cad_dims(*dims, **kwargs),
+                self._validate_cad_dims(*dims),
                 component_filter,
             ),
             **kwargs,
@@ -601,7 +599,7 @@ class Reactor(BaseManager):
         """
         ComponentDisplayer().show_cad(
             self._filter_and_reconstruct(
-                self._validate_cad_dims(*dims, **kwargs),
+                self._validate_cad_dims(*dims),
                 with_components,
                 n_sectors,
                 component_filter,

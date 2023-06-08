@@ -76,9 +76,7 @@ def str_to_latex(string: str) -> str:
     return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
 
 
-def make_gif(
-    folder: str, figname: str, file_format: str = "png", clean: bool = True, **kwargs
-):
+def make_gif(folder: str, figname: str, file_format: str = "png", clean: bool = True):
     """
     Make a GIF image from a set of images with similar names in a folder.
     Figures are sorted in increasing order based on a trailing number, e.g.
