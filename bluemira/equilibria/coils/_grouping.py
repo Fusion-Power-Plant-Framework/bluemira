@@ -528,7 +528,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return self.__getter("z")
 
     @property
-    def position(self):
+    def position(self) -> np.ndarray:
         """Get coil x, z positions"""
         return np.array([self.x, self.z])
 
