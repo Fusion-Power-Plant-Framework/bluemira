@@ -350,7 +350,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self.problem_settings["ripple_selector"] = ripple_selector(
                 **rs_config.get("args", {})
             )
-        
+
         design_problem = self.problem_class(
             parameterisation,
             self.algorithm_name,

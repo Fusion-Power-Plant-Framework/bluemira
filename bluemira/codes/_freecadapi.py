@@ -45,7 +45,6 @@ from typing import (
     Tuple,
     Union,
 )
-from warnings import warn
 
 import FreeCAD
 import BOPTools
@@ -1337,7 +1336,7 @@ def meshed_exporter(
 
 
 def save_as_STP(
-    shapes: List[apiShape], filename: str = "test", unit_scale: str = "metre", **kwargs
+    shapes: List[apiShape], filename: str = "test", unit_scale: str = "metre"
 ):
     """
     Saves a series of Shape objects as a STEP assembly
@@ -1368,16 +1367,7 @@ def save_as_STP(
         raise FreeCADError("Shape is null.")
 
     compound = make_compound(shapes)
-
-    if "scale" in kwargs:
-        scale = kwargs["scale"]
-        warn(
-            "Using kwarg 'scale' is no longer supported. Please use 'unit_scale'",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-    else:
-        scale = raw_uc(1, unit_scale, "mm")
+    scale = raw_uc(1, unit_scale, "mm")
 
     if scale != 1:
         # scale the compound. Since the scale function modifies directly the shape,
@@ -1434,14 +1424,6 @@ def save_cad(
     Part builds in millimetres therefore we need to scale to metres to be
     consistent with our units
     """
-    if kw_formatt := kwargs.pop("formatt", None):
-        warn(
-            "Using kwarg 'formatt' is no longer supported. Use cad_format instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        cad_format = kw_formatt
-
     try:
         cad_format = CADFileType(cad_format)
     except ValueError as ve:

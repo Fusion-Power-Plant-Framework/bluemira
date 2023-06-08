@@ -27,7 +27,6 @@ import os
 import re
 from pathlib import Path
 from typing import Optional, Union
-from warnings import warn
 
 import imageio
 import matplotlib.pyplot as plt
@@ -114,14 +113,6 @@ def make_gif(
     clean:
         Delete figures after completion?
     """
-    if kw_formatt := kwargs.pop("formatt", None):
-        warn(
-            "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        file_format = kw_formatt
-
     ims = []
     for filename in os.listdir(folder):
         if filename.startswith(figname) and filename.endswith(file_format):
@@ -144,14 +135,6 @@ def save_figure(
     """
     Saves a figure to the directory if save flag active
     """
-    if kw_formatt := kwargs.pop("formatt", None):
-        warn(
-            "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        file_format = kw_formatt
-
     if save is True:
         if folder is None:
             folder = get_bluemira_path("plots", subfolder="data")
