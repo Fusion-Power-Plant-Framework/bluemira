@@ -151,10 +151,8 @@ class ReactorConfig:
 
         local_params = self._extract(args, is_config=False)
         if not local_params:
-            if self.warn_on_empty_local_params:
-                bluemira_warn(f"Empty local params for args: {args}")
-            else:
-                bluemira_debug(f"Empty local params for args: {args}")
+            log_func = bluemira_warn if self.warn_on_empty_local_params else bluemira_debug
+            log_func(f"Empty local params for args: {args}")
 
         return ConfigParams(
             global_params=self.global_params,
