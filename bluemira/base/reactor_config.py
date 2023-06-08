@@ -114,6 +114,13 @@ class ReactorConfig:
         """Returns config_data as a nicely pretty formatted string"""
         return self._pprint_dict(self.config_data)
 
+    @staticmethod
+    def _warn_or_debug_log(msg: str, warn: bool) -> None:
+        if warn:
+            bluemira_warn(msg)
+        else:
+            bluemira_debug(msg)
+
     def params_for(self, component_name: str, *args: str) -> ConfigParams:
         """
         Gets the params for the `component_name` from the config file.
@@ -151,8 +158,9 @@ class ReactorConfig:
 
         local_params = self._extract(args, is_config=False)
         if not local_params:
-            log_func = bluemira_warn if self.warn_on_empty_local_params else bluemira_debug
-            log_func(f"Empty local params for args: {args}")
+            self._warn_or_debug_log(
+                f"Empty local params for args: {args}", self.warn_on_empty_local_params
+            )
 
         return ConfigParams(
             global_params=self.global_params,
@@ -190,10 +198,9 @@ class ReactorConfig:
 
         _return = self._extract(args, is_config=True)
         if not _return:
-            if self.warn_on_empty_config:
-                bluemira_warn(f"Empty config for args: {args}")
-            else:
-                bluemira_debug(f"Empty config for args: {args}")
+            self._warn_or_debug_log(
+                f"Empty config for args: {args}", self.warn_on_empty_config
+            )
 
         return _return
 
@@ -221,16 +228,11 @@ class ReactorConfig:
         arg: str,
         existing_value,
     ):
-        if self.warn_on_duplicate_keys:
-            bluemira_warn(
-                "duplicate config key: "
-                f"'{shared_key}' in {arg} wil be overwritten with {existing_value}"
-            )
-        else:
-            bluemira_debug(
-                "duplicate config key: "
-                f"'{shared_key}' in {arg} wil be overwritten with {existing_value}"
-            )
+        self._warn_or_debug_log(
+            "duplicate config key: "
+            f"'{shared_key}' in {arg} wil be overwritten with {existing_value}",
+            self.warn_on_duplicate_keys,
+        )
 
     def _check_args_are_strings(self, args: Iterable[str]):
         for a in args:
