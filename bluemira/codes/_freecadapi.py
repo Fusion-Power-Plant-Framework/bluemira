@@ -1330,7 +1330,7 @@ def save_as_STP(
     Notes
     -----
     This uses the legacy method to save to STP files.
-    It doesnt require freecad documents but also doesnt allow much customisation.
+    It doesn't require freecad documents but also doesn't allow much customisation.
     Part builds in millimetres therefore we need to scale to metres to be
     consistent with our units.
 
