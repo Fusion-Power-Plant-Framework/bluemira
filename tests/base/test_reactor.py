@@ -11,10 +11,9 @@ from unittest.mock import patch
 
 import pytest
 
-from bluemira.base.builder import ComponentManager
 from bluemira.base.error import ComponentError
 from bluemira.base.parameter_frame._parameter import Parameter
-from bluemira.base.reactor import Reactor
+from bluemira.base.reactor import ComponentManager, Reactor
 from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
 from bluemira.geometry.tools import make_polygon
 from bluemira.materials.material import Void

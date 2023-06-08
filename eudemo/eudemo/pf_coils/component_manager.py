@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Component Manager for PF coils."""
 
-from bluemira.base.builder import ComponentManager
+from bluemira.base.reactor import ComponentManager
 
 
 class PFCoil(ComponentManager):
