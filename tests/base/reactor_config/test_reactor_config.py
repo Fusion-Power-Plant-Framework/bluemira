@@ -5,7 +5,7 @@ import pytest
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.error import ReactorConfigError
-from bluemira.base.logs import set_log_level
+from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.base.parameter_frame import (
     EmptyFrame,
     Parameter,
@@ -51,10 +51,11 @@ class TestReactorConfigClass:
     """
 
     def setup_method(self):
+        self.old_log_level = get_log_level()
         set_log_level("DEBUG")
 
     def teardown_method(self):
-        set_log_level("INFO")
+        set_log_level(self.old_log_level)
 
     def test_file_loading_with_empty_config(self, caplog):
         reactor_config = ReactorConfig(empty_config_path, EmptyFrame)
