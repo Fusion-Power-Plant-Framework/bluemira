@@ -29,9 +29,9 @@ from typing import Callable, Dict, Iterable, List, Sequence, Tuple, Union
 
 import numpy as np
 
-from bluemira.base.builder import ComponentManager
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.base.reactor import ComponentManager
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
