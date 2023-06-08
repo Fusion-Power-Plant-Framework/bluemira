@@ -23,6 +23,7 @@
 """
 File saving for fixed boundary equilibrium
 """
+from logging import warn
 from typing import Dict, Optional
 
 import numpy as np
@@ -66,8 +67,9 @@ def save_fixed_boundary_to_file(
     equilibrium: FixedBoundaryEquilibrium,
     nx: int,
     nz: int,
-    formatt: str = "json",
+    file_format: str = "json",
     json_kwargs: Optional[Dict] = None,
+    **kwargs,
 ):
     """
     Save a fixed boundary equilibrium to a file.
@@ -84,11 +86,18 @@ def save_fixed_boundary_to_file(
         Number of radial points to use in the psi map
     nz:
         Number of vertical points to use in the psi map
-    formatt:
+    file_format:
         Format of the file
     json_kwargs:
         kwargs to use if saving to JSON
     """
+    if kw_formatt := kwargs.pop("formatt", None):
+        warn(
+            "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
+            category=DeprecationWarning,
+        )
+        file_format = kw_formatt
+
     xbdry, zbdry = get_mesh_boundary(equilibrium.mesh)
     xbdry = np.append(xbdry, xbdry[0])
     zbdry = np.append(zbdry, zbdry[0])
@@ -175,5 +184,5 @@ def save_fixed_boundary_to_file(
         psinorm=psi_norm,
         qpsi=np.array([]),
     )
-    data.write(file_path, format=formatt, json_kwargs=json_kwargs)
+    data.write(file_path, format=file_format, json_kwargs=json_kwargs)
     return data

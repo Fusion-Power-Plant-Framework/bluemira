@@ -1351,7 +1351,7 @@ def _scale_obj(objs, scale: float = 1000):
 def save_cad(
     shapes: Iterable[apiShape],
     filename: str,
-    formatt: Union[str, CADFileType] = "stp",
+    cad_format: Union[str, CADFileType] = "stp",
     labels: Optional[Iterable[str]] = None,
     unit_scale: str = "metre",
     **kwargs,
@@ -1364,9 +1364,9 @@ def save_cad(
     shapes:
         CAD shape objects to save
     filename:
-        filename (file extension will be forced base on `formatt`)
-    formatt:
-        file formatt
+        filename (file extension will be forced base on `cad_format`)
+    cad_format:
+        file cad_format
     labels:
         shape labels
     unit_scale:
@@ -1379,8 +1379,15 @@ def save_cad(
     Part builds in millimetres therefore we need to scale to metres to be
     consistent with our units
     """
-    formatt = CADFileType(formatt)
-    filename = force_file_extension(filename, f".{formatt.value}")
+    if kw_formatt := kwargs.pop("formatt", None):
+        warn(
+            "Using kwarg 'formatt' is no longer supported. Use cad_format instead.",
+            category=DeprecationWarning,
+        )
+        cad_format = kw_formatt
+
+    cad_format = CADFileType(cad_format)
+    filename = force_file_extension(filename, f".{cad_format.value}")
 
     _freecad_save_config(**kwargs)
 
@@ -1392,28 +1399,28 @@ def save_cad(
     # Some exporters need FreeCADGui to be setup before their import,
     # this is achieved in _setup_document
     try:
-        formatt.exporter(objs, filename)
+        cad_format.exporter(objs, filename)
     except ImportError as imp_err:
         raise FreeCADError(
-            f"Unable to save to {formatt.value} please try through the main FreeCAD GUI"
+            f"Unable to save to {cad_format.value} please try through the main FreeCAD GUI"
         ) from imp_err
 
     if not os.path.exists(filename):
         mesg = f"{filename} not created, filetype not written by FreeCAD."
-        if formatt is CADFileType.IFC_BIM:
+        if cad_format is CADFileType.IFC_BIM:
             mesg += " FreeCAD requires `ifcopenshell` to save in this format."
-        elif formatt is CADFileType.DAE:
+        elif cad_format is CADFileType.DAE:
             mesg += " FreeCAD requires `pycollada` to save in this format."
-        elif formatt is CADFileType.IFC_BIM_JSON:
+        elif cad_format is CADFileType.IFC_BIM_JSON:
             mesg += (
                 " FreeCAD requires `ifcopenshell` and"
                 " IFCJSON module to save in this format."
             )
-        elif formatt is CADFileType.AUTOCAD:
+        elif cad_format is CADFileType.AUTOCAD:
             mesg += " FreeCAD requires `LibreDWG` to save in this format."
 
         raise FreeCADError(
-            f"{mesg} Not able to save object with format: '{formatt.value}'"
+            f"{mesg} Not able to save object with format: '{cad_format.value}'"
         )
 
 

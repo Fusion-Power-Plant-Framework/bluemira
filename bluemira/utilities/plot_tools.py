@@ -25,6 +25,7 @@ A collection of plotting tools.
 
 import os
 import re
+from logging import warn
 from typing import Optional, Union
 
 import imageio
@@ -92,7 +93,9 @@ def str_to_latex(string: str) -> str:
     return "$" + s[0] + ss + "}" * (len(s) - 1) + "$"
 
 
-def make_gif(folder: str, figname: str, formatt: str = "png", clean: bool = True):
+def make_gif(
+    folder: str, figname: str, file_format: str = "png", clean: bool = True, **kwargs
+):
     """
     Make a GIF image from a set of images with similar names in a folder.
     Figures are sorted in increasing order based on a trailing number, e.g.
@@ -106,14 +109,21 @@ def make_gif(folder: str, figname: str, formatt: str = "png", clean: bool = True
         Full path folder name
     figname:
         Figure name prefix
-    formatt:
+    file_format:
         Figure filename extension
     clean:
         Delete figures after completion?
     """
+    if kw_formatt := kwargs.pop("formatt", None):
+        warn(
+            "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
+            category=DeprecationWarning,
+        )
+        file_format = kw_formatt
+
     ims = []
     for filename in os.listdir(folder):
-        if filename.startswith(figname) and filename.endswith(formatt):
+        if filename.startswith(figname) and filename.endswith(file_format):
             fp = os.path.join(folder, filename)
             ims.append(fp)
 
@@ -128,17 +138,26 @@ def make_gif(folder: str, figname: str, formatt: str = "png", clean: bool = True
     imageio.mimsave(gifname, images, "GIF-FI", **kwargs)
 
 
-def save_figure(fig, name, save=False, folder=None, dpi=600, formatt="png", **kwargs):
+def save_figure(
+    fig, name, save=False, folder=None, dpi=600, file_format="png", **kwargs
+):
     """
     Saves a figure to the directory if save flag active
     """
+    if kw_formatt := kwargs.pop("formatt", None):
+        warn(
+            "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
+            category=DeprecationWarning,
+        )
+        file_format = kw_formatt
+
     if save is True:
         if folder is None:
             folder = get_bluemira_path("plots", subfolder="data")
-        name = os.sep.join([folder, name]) + "." + formatt
+        name = os.sep.join([folder, name]) + "." + file_format
         if os.path.isfile(name):
             os.remove(name)  # f.savefig will otherwise not overwrite
-        fig.savefig(name, dpi=dpi, bbox_inches="tight", format=formatt, **kwargs)
+        fig.savefig(name, dpi=dpi, bbox_inches="tight", format=file_format, **kwargs)
 
 
 def ring_coding(n: int) -> np.ndarray:

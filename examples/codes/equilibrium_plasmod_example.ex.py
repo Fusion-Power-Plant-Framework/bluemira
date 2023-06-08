@@ -236,7 +236,7 @@ data = save_fixed_boundary_to_file(
     equilibrium,
     100,
     110,
-    formatt="json",
+    file_format="json",
 )
 
 # %% [markdown]
