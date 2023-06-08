@@ -5,6 +5,7 @@ import pytest
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.error import ReactorConfigError
+from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.base.parameter_frame import (
     EmptyFrame,
     Parameter,
@@ -49,6 +50,13 @@ class TestReactorConfigClass:
     Tests for the Reactor Config class functionality.
     """
 
+    def setup_method(self):
+        self.old_log_level = get_log_level()
+        set_log_level("DEBUG")
+
+    def teardown_method(self):
+        set_log_level(self.old_log_level)
+
     def test_file_loading_with_empty_config(self, caplog):
         reactor_config = ReactorConfig(empty_config_path, EmptyFrame)
 
@@ -60,7 +68,7 @@ class TestReactorConfigClass:
 
         assert len(caplog.records) == 2
         for record in caplog.records:
-            assert record.levelname == "WARNING"
+            assert record.levelname == "DEBUG"
 
         assert len(p_dne.local_params) == 0
         assert len(c_dne) == 0
@@ -86,7 +94,7 @@ class TestReactorConfigClass:
 
         assert len(caplog.records) == 1
         for record in caplog.records:
-            assert record.levelname == "WARNING"
+            assert record.levelname == "DEBUG"
 
         cpf = make_parameter_frame(cp, TestCompADesignerParams)
 
@@ -119,7 +127,7 @@ class TestReactorConfigClass:
 
         assert len(caplog.records) == 1
         for record in caplog.records:
-            assert record.levelname == "WARNING"
+            assert record.levelname == "DEBUG"
 
         cpf = make_parameter_frame(cp, TestCompADesignerParams)
 
@@ -141,7 +149,7 @@ class TestReactorConfigClass:
 
         assert len(caplog.records) == 1
         for record in caplog.records:
-            assert record.levelname == "WARNING"
+            assert record.levelname == "DEBUG"
 
         assert cf_comp_a["config_a"] == cf_comp_a_des["config_a"]
         assert cf_comp_a["config_b"] == cf_comp_a_des["config_b"]
@@ -162,7 +170,7 @@ class TestReactorConfigClass:
 
         assert len(caplog.records) == 2
         for record in caplog.records:
-            assert record.levelname == "WARNING"
+            assert record.levelname == "DEBUG"
 
         assert len(cp.local_params) == 0
         assert len(cp_dne.local_params) == 0
@@ -183,7 +191,7 @@ class TestReactorConfigClass:
 
         assert len(caplog.records) == 2
         for record in caplog.records:
-            assert record.levelname == "WARNING"
+            assert record.levelname == "DEBUG"
 
         assert len(cf_comp_a) == 1
         assert len(cf_comp_a_des) == 0
