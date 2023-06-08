@@ -9,8 +9,6 @@
 File saving for fixed boundary equilibrium
 """
 
-from warnings import warn
-
 import numpy as np
 from scipy.integrate import quad, quadrature
 
@@ -54,7 +52,6 @@ def save_fixed_boundary_to_file(
     nz: int,
     file_format: str = "json",
     json_kwargs: dict | None = None,
-    **kwargs,
 ) -> EQDSKInterface:
     """
     Save a fixed boundary equilibrium to a file.
@@ -76,14 +73,6 @@ def save_fixed_boundary_to_file(
     json_kwargs:
         kwargs to use if saving to JSON
     """
-    if kw_formatt := kwargs.pop("formatt", None):
-        warn(
-            "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        file_format = kw_formatt
-
     xbdry, zbdry = get_mesh_boundary(equilibrium.mesh)
     xbdry = np.append(xbdry, xbdry[0])
     zbdry = np.append(zbdry, zbdry[0])

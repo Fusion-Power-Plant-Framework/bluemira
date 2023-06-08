@@ -11,7 +11,6 @@ import abc
 import time
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, get_type_hints
-from warnings import warn
 
 from rich.progress import track
 
@@ -73,16 +72,7 @@ class BaseManager(abc.ABC):
         cad_format:
             CAD file format
         """
-        if kw_formatt := kwargs.pop("formatt", None):
-            warn(
-                "Using kwarg 'formatt' is no longer supported. Use cad_format instead.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            cad_format = kw_formatt
-
         shapes, names = get_properties_from_components(components, ("shape", "name"))
-
         save_cad(shapes, filename, cad_format, names, **kwargs)
 
     @abc.abstractmethod
@@ -127,22 +117,13 @@ class BaseManager(abc.ABC):
         return self.component().tree()
 
     @staticmethod
-    def _validate_cad_dims(*dims: str, **kwargs) -> tuple[str, ...]:
+    def _validate_cad_dims(*dims: str) -> tuple[str, ...]:
         """
         Validate showable CAD dimensions
         """
         # give dims_to_show a default value
         dims_to_show = ("xyz",) if len(dims) == 0 else dims
 
-        # if a kw "dim" is given, it is only used
-        if kw_dim := kwargs.pop("dim", None):
-            warn(
-                "Using kwarg 'dim' is no longer supported. Simply pass in the dimensions"
-                " you would like to show, e.g. show_cad('xz')",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            dims_to_show = (kw_dim,)
         for dim in dims_to_show:
             if dim not in _CAD_DIMS:
                 raise ComponentError(
@@ -318,15 +299,6 @@ class ComponentManager(BaseManager):
         kwargs:
             passed to the :func:`bluemira.geometry.tools.save_cad` function
         """
-        if kw_filter_ := kwargs.pop("filter_", None):
-            warn(
-                "Using kwarg 'filter_' is no longer supported. "
-                "Use component_filter instead.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            component_filter = kw_filter_
-
         comp = self.component()
         if filename is None:
             filename = comp.name
@@ -360,15 +332,6 @@ class ComponentManager(BaseManager):
         kwargs:
             passed to the `~bluemira.display.displayer.show_cad` function
         """
-        if kw_filter_ := kwargs.pop("filter_", None):
-            warn(
-                "Using kwarg 'filter_' is no longer supported. "
-                "Use component_filter instead.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            component_filter = kw_filter_
-
         ComponentDisplayer().show_cad(
             self._filter_tree(
                 self.component(),
@@ -382,7 +345,6 @@ class ComponentManager(BaseManager):
         self,
         *dims: str,
         component_filter: Callable[[Component], bool] | None = FilterMaterial(),
-        **kwargs,
     ):
         """
         Plot the component.
@@ -396,15 +358,6 @@ class ComponentManager(BaseManager):
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
         """
-        if kw_filter_ := kwargs.pop("filter_", None):
-            warn(
-                "Using kwarg 'filter_' is no longer supported. "
-                "Use component_filter instead.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            component_filter = kw_filter_
-
         self._plot_dims(
             self.component(), self._validate_plot_dims(*dims), component_filter
         )
@@ -603,15 +556,6 @@ class Reactor(BaseManager):
         kwargs:
             passed to the :func:`bluemira.geometry.tools.save_cad` function
         """
-        if kw_filter_ := kwargs.pop("filter_", None):
-            warn(
-                "Using kwarg 'filter_' is no longer supported. "
-                "Use component_filter instead.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            component_filter = kw_filter_
-
         if filename is None:
             filename = self.name
 
@@ -655,15 +599,6 @@ class Reactor(BaseManager):
         kwargs:
             passed to the `~bluemira.display.displayer.show_cad` function
         """
-        if kw_filter_ := kwargs.pop("filter_", None):
-            warn(
-                "Using kwarg 'filter_' is no longer supported. "
-                "Use component_filter instead.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            component_filter = kw_filter_
-
         ComponentDisplayer().show_cad(
             self._filter_and_reconstruct(
                 self._validate_cad_dims(*dims, **kwargs),
@@ -679,7 +614,6 @@ class Reactor(BaseManager):
         *dims: str,
         with_components: list[ComponentManager] | None = None,
         component_filter: Callable[[Component], bool] | None = FilterMaterial(),
-        **kwargs,
     ):
         """
         Plot the reactor.
@@ -696,15 +630,6 @@ class Reactor(BaseManager):
             A callable to filter Components from the Component tree,
             returning True keeps the node False removes it
         """
-        if kw_filter_ := kwargs.pop("filter_", None):
-            warn(
-                "Using kwarg 'filter_' is no longer supported. "
-                "Use component_filter instead.",
-                category=DeprecationWarning,
-                stacklevel=2,
-            )
-            component_filter = kw_filter_
-
         self._plot_dims(
             self.component(with_components),
             self._validate_plot_dims(*dims),

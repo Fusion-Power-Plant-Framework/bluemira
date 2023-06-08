@@ -16,7 +16,6 @@ from collections.abc import Callable, Iterable, Sequence
 from enum import Enum, auto
 from pathlib import Path
 from typing import Any
-from warnings import warn
 
 import numba as nb
 import numpy as np
@@ -1144,14 +1143,6 @@ def save_cad(
     kwargs:
         arguments passed to cadapi save function
     """
-    if kw_formatt := kwargs.pop("formatt", None):
-        warn(
-            "Using kwarg 'formatt' is no longer supported. Use cad_format instead.",
-            category=DeprecationWarning,
-            stacklevel=2,
-        )
-        cad_format = kw_formatt
-
     if not isinstance(shapes, list):
         shapes = [shapes]
     if names is not None and not isinstance(names, list):
