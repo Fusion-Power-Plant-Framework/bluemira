@@ -853,17 +853,17 @@ class SextupleArc(GeometryParameterisation):
         self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
     ) -> np.ndarray:
         """
-                Inequality constraint function for the variable vector of the geometry
-                parameterisation.
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation.
 
-                Parameters
-                ----------
-                constraint:
-                    Constraint vector (assign in place)
-                x_norm:
-                    Normalised vector of free variables
-                grad:
-                    Gradient matrix of the constraint (assign in place)
+        Parameters
+        ----------
+        constraint:
+            Constraint vector (assign in place)
+        x_norm:
+            Normalised vector of free variables
+        grad:
+            Gradient matrix of the constraint (assign in place)
         """
         x_actual = self._process_x_norm_fixed(x_norm)
 
