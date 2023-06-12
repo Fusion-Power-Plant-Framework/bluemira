@@ -246,7 +246,7 @@ class NloptOptimiser(Optimiser):
                     f"{round_off_msg}. Returning last optimisation parameterisation."
                 )
                 x_star = self._objective.prev_iter
-                f_x = np.infty
+                f_x = self._objective.f(x_star)
 
         return OptimiserResult(
             f_x=f_x,
