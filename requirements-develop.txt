@@ -45,7 +45,7 @@ pycodestyle==2.10.0
 pydocstyle==6.3.0
 pyflakes==3.0.1
 Pygments==2.15.1
-pytest==7.3.1
+pytest==7.3.2
 pytest-cov==4.1.0
 pytest-html==3.2.0
 pytest-metadata==3.0.0
