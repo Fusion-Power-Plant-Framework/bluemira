@@ -26,12 +26,10 @@ from typing import Any, List, Mapping, Optional, TypeVar, Union
 import numpy as np
 
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation._algorithm import Algorithm
-from bluemira.optimisation._geometry._tools import KeepOutZone
 from bluemira.optimisation._geometry.optimise import (
     GeomOptimiserResult,
-    KeepOutZoneT,
+    KeepOutZone,
     optimise_geometry,
 )
 from bluemira.optimisation._geometry.typing import GeomConstraintT
@@ -81,7 +79,7 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         return []
 
-    def keep_out_zones(self) -> List[Union[BluemiraWire, KeepOutZoneT, KeepOutZone]]:
+    def keep_out_zones(self) -> List[KeepOutZone]:
         """
         List of geometric keep-out zones.
 
