@@ -79,6 +79,8 @@ def optimise_geometry(
     ineq_constraints: Iterable[GeomConstraintT] = (),
     keep_history: bool = False,
     koz_discretisation: Union[int, Iterable[int]] = 100,
+    check_constraints: bool = True,
+    check_constraints_warn: bool = True,
 ) -> GeomOptimiserResult[_GeomT]:
     r"""
     Minimise the given objective function for a geometry parameterisation.
@@ -179,6 +181,15 @@ def optimise_geometry(
         keep-out zone is discretised using value in the i-th item.
         The iterable should have the same number of items as
         ``keep_out_zones``.
+    check_constraints:
+        Whether to check all constraints have been satisfied at the end
+        of the optimisation, and warn if they have not. Note that, if
+        this is set to False, the result's ``constraints_satisfied``
+        attribute will be set to ``None``.
+    check_constraints_warn:
+        Whether to print a warning that constraints have not been
+        satisfied at the end of an optimisation. This argument has no
+        effect if ``check_constraints`` is ``False``.
 
     Returns
     -------
@@ -210,6 +221,8 @@ def optimise_geometry(
         eq_constraints=[_tools.to_constraint(c, geom) for c in eq_constraints],
         ineq_constraints=[_tools.to_constraint(c, geom) for c in ineq_constraints_list],
         keep_history=keep_history,
+        check_constraints=check_constraints,
+        check_constraints_warn=check_constraints_warn,
     )
     # Make sure we update the geometry with the result, the last
     # geometry update may not have been with the optimum result

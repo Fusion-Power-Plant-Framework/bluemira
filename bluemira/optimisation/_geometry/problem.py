@@ -97,6 +97,8 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,
         koz_discretisation: Union[int, Iterable[int]] = 100,
+        check_constraints: bool = True,
+        check_constraints_warn: bool = True,
     ) -> GeomOptimiserResult[_GeomT]:
         """
         Run the geometry optimisation.
@@ -123,4 +125,6 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
             ineq_constraints=self.ineq_constraints(),
             keep_history=keep_history,
             koz_discretisation=koz_discretisation,
+            check_constraints=check_constraints,
+            check_constraints_warn=check_constraints_warn,
         )
