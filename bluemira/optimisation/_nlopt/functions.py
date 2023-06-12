@@ -86,9 +86,12 @@ class ObjectiveFunction(_NloptFunction):
         super().__init__(f, bounds)
         self.df = df if df is not None else self._approx_derivative
         self.history: List[Tuple[np.ndarray, float]] = []
+        self.prev_iter = np.array([], dtype=float)
 
     def call(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function."""
+        if not np.any(np.isnan(x)):
+            self._store_x(x)
         # Cache f(x) so we do not need to recalculate it if we're using
         # an approximate gradient
         self.f0 = self.f(x)
@@ -101,6 +104,15 @@ class ObjectiveFunction(_NloptFunction):
         f_x = self.call(x, grad)
         self.history.append((np.copy(x), f_x))
         return f_x
+
+    def _store_x(self, x: np.ndarray) -> None:
+        """Store ``x`` in ``self.prev_iter``."""
+        if self.prev_iter.size:
+            # Assign in place when possible to avoid lots of allocations.
+            # Not benchmarked, but may be more efficient...
+            self.prev_iter[:] = x
+        else:
+            self.prev_iter = np.copy(x)
 
 
 class Constraint(_NloptFunction):

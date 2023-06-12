@@ -239,7 +239,7 @@ class NloptOptimiser(Optimiser):
                 arg_min_fx = np.argmin(fx_values)
                 x_star = self._objective.history[arg_min_fx][0]
             else:
-                x_star = x0
+                x_star = self._objective.prev_iter
                 f_x = np.infty
 
         return OptimiserResult(
