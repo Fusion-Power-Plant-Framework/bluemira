@@ -229,16 +229,22 @@ class NloptOptimiser(Optimiser):
             f_x = self._objective.f(x_star)
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
-            bluemira_warn(
-                "optimisation: round-off error occurred, returning last optimisation "
-                "parameterisation."
-            )
+            round_off_msg = "optimisation: round-off error occurred"
             if self._objective.history:
+                # TODO(hsaunders1904): Is this really what we want to
+                # return? Can't the minimum have been something that
+                # wildly violates constraints?
+                bluemira_warn(
+                    f"{round_off_msg}. Returning best parameterisation found so far."
+                )
                 fx_values = np.array(self._objective.history).T[1]
-                f_x = np.min(fx_values)
                 arg_min_fx = np.argmin(fx_values)
+                f_x = fx_values[arg_min_fx]
                 x_star = self._objective.history[arg_min_fx][0]
             else:
+                bluemira_warn(
+                    f"{round_off_msg}. Returning last optimisation parameterisation."
+                )
                 x_star = self._objective.prev_iter
                 f_x = np.infty
 
