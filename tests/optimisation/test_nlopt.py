@@ -355,11 +355,7 @@ class TestNloptOptimiser:
         error_on = 4
         erroring_objective = ErroringObjective(error_on)
         err_opt = NloptOptimiser(
-            "COBYLA",
-            2,
-            erroring_objective,
-            opt_conditions={"max_eval": 5},
-            keep_history=True,
+            "COBYLA", 2, erroring_objective, opt_conditions={"max_eval": 5}
         )
         err_res = err_opt.optimise(np.array([0, 0]))
 
