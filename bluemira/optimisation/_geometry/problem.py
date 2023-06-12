@@ -21,15 +21,17 @@
 """Interface for defining a geometry-based optimisation problem."""
 
 import abc
-from typing import Any, Iterable, List, Mapping, Optional, TypeVar, Union
+from typing import Any, List, Mapping, Optional, TypeVar, Union
 
 import numpy as np
 
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._geometry._tools import KeepOutZone
 from bluemira.optimisation._geometry.optimise import (
     GeomOptimiserResult,
+    KeepOutZoneT,
     optimise_geometry,
 )
 from bluemira.optimisation._geometry.typing import GeomConstraintT
@@ -79,12 +81,12 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         return []
 
-    def keep_out_zones(self) -> List[BluemiraWire]:
+    def keep_out_zones(self) -> List[Union[BluemiraWire, KeepOutZoneT, KeepOutZone]]:
         """
         List of geometric keep-out zones.
 
-        An iterable of closed wires, defining areas the geometry must
-        not intersect.
+        An iterable of keep-out zones: closed wires that the geometry
+        must not intersect.
         """
         return []
 
@@ -96,7 +98,6 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,
-        koz_discretisation: Union[int, Iterable[int]] = 100,
         check_constraints: bool = True,
         check_constraints_warn: bool = True,
     ) -> GeomOptimiserResult[_GeomT]:
@@ -124,7 +125,6 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
             eq_constraints=self.eq_constraints(),
             ineq_constraints=self.ineq_constraints(),
             keep_history=keep_history,
-            koz_discretisation=koz_discretisation,
             check_constraints=check_constraints,
             check_constraints_warn=check_constraints_warn,
         )

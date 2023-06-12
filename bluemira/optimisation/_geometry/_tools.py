@@ -19,7 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import copy
-from typing import List
+from dataclasses import dataclass
+from typing import List, Optional
 
 import numpy as np
 
@@ -39,8 +40,16 @@ from bluemira.optimisation.typing import (
     OptimiserCallable,
 )
 
-_DEFAULT_ZONE_DISCR = 100  # points
-_DEFAULT_ZONE_TOL = 1e-3
+
+@dataclass
+class KeepOutZone:
+    """Definition of a keep-out zone for a geometry optimisation."""
+
+    wire: BluemiraWire
+    byedges: bool = True
+    dl: Optional[int] = None
+    n_discr: int = 100
+    tol: float = 1e-8
 
 
 def to_objective(
@@ -102,17 +111,13 @@ def calculate_signed_distance(
     return signed_distance_2D_polygon(s.T, zone_points.T).T
 
 
-def make_keep_out_zone_constraint(
-    koz: BluemiraWire,
-    n_discr: int = _DEFAULT_ZONE_DISCR,
-    tol: float = _DEFAULT_ZONE_TOL,
-) -> GeomConstraintT:
+def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
     """Make a keep-out zone inequality constraint from a wire."""
-    if not koz.is_closed():
+    if not koz.wire.is_closed():
         raise GeometryOptimisationError(
-            f"Keep-out zone with label '{koz.label}' is not closed."
+            f"Keep-out zone with label '{koz.wire.label}' is not closed."
         )
-    koz_points = koz.discretize(n_discr, byedges=True).xz
+    koz_points = koz.wire.discretize(koz.n_discr, byedges=koz.byedges, dl=koz.dl).xz
     # As we're discretizing by edges, we may not get exactly the number
     # of points we ask for, especially if n_discr is small.
     real_n_discr = koz_points.shape[1]
@@ -122,7 +127,7 @@ def make_keep_out_zone_constraint(
             geom, n_shape_discr=real_n_discr, zone_points=koz_points
         )
 
-    return {"f_constraint": _f_constraint, "tolerance": np.full(real_n_discr, tol)}
+    return {"f_constraint": _f_constraint, "tolerance": np.full(real_n_discr, koz.tol)}
 
 
 def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstraintT]:
