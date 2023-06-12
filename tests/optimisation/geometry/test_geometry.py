@@ -206,9 +206,15 @@ class TestGeometry:
         with mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock:
             optimise_geometry(
                 parameterisation,
-                lambda x: x.create_shape().length,
+                lambda _: 1.0,
                 keep_out_zones=[
-                    {"wire": zone, "n_discr": 20, "byedges": False, "dl": None}
+                    {
+                        "wire": zone,
+                        "n_discr": 20,
+                        "byedges": False,
+                        "dl": None,
+                        "shape_n_discr": 30,
+                    }
                 ],
                 opt_conditions={"max_eval": 1},
             )
