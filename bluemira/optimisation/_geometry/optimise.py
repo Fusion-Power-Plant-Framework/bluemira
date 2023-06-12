@@ -84,10 +84,15 @@ class KeepOutZoneDict(TypedDict):
     """Typing for a dict representing a keep-out zone for a geometry optimisation."""
 
     wire: BluemiraWire
+    """Closed wire defining the keep-out zone."""
     byedges: NotRequired[bool]
+    """Whether to discretize the wire by edges or not."""
     dl: NotRequired[Optional[int]]
+    """Set the discretization length, this overrides ``n_discr`` if given."""
     n_discr: NotRequired[int]
+    """Set the number of points to discretise the wire into."""
     tol: NotRequired[float]
+    """Set the tolerance for the keep-out zone constraint."""
 
 
 def optimise_geometry(

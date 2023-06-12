@@ -46,10 +46,15 @@ class KeepOutZone:
     """Definition of a keep-out zone for a geometry optimisation."""
 
     wire: BluemiraWire
+    """Closed wire defining the keep-out zone."""
     byedges: bool = True
+    """Whether to discretize the wire by edges or not."""
     dl: Optional[int] = None
+    """Set the discretization length, this overrides ``n_discr`` if given."""
     n_discr: int = 100
+    """Set the number of points to discretise the wire into."""
     tol: float = 1e-8
+    """Set the tolerance for the keep-out zone constraint."""
 
 
 def to_objective(
