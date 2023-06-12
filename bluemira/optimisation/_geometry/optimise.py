@@ -80,7 +80,7 @@ class GeomOptimiserResult(Generic[_GeomT]):
     """
 
 
-class KeepOutZoneT(TypedDict):
+class KeepOutZoneDict(TypedDict):
     """Typing for a dict representing a keep-out zone for a geometry optimisation."""
 
     wire: BluemiraWire
@@ -95,7 +95,7 @@ def optimise_geometry(
     f_objective: GeomOptimiserObjective,
     df_objective: Optional[GeomOptimiserCallable] = None,
     *,
-    keep_out_zones: Iterable[Union[BluemiraWire, KeepOutZoneT, KeepOutZone]] = (),
+    keep_out_zones: Iterable[Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]] = (),
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
@@ -244,7 +244,7 @@ def optimise_geometry(
     return GeomOptimiserResult(**asdict(result), geom=geom)
 
 
-def _to_koz(koz: Union[BluemiraWire, KeepOutZoneT, KeepOutZone]) -> KeepOutZone:
+def _to_koz(koz: Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]) -> KeepOutZone:
     """Convert ``koz`` to a ``KeepOutZone``."""
     if isinstance(koz, BluemiraWire):
         return KeepOutZone(koz)
