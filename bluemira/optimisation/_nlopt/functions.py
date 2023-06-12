@@ -77,6 +77,8 @@ class ObjectiveFunction(_NloptFunction):
     based, a numerical approximation of the gradient is calculated.
     """
 
+    f: ObjectiveCallable
+
     def __init__(
         self,
         f: ObjectiveCallable,
