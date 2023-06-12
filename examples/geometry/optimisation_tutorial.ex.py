@@ -57,10 +57,7 @@ import numpy as np
 
 from bluemira.geometry.optimisation import GeometryOptimisationProblem, minimise_length
 from bluemira.geometry.parameterisations import PrincetonD
-from bluemira.utilities.opt_problems import (
-    OptimisationConstraint,
-    OptimisationObjective,
-)
+from bluemira.utilities.opt_problems import OptimisationConstraint, OptimisationObjective
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 from bluemira.utilities.tools import set_random_seed
 
