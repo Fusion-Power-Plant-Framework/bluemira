@@ -248,7 +248,7 @@ def _to_koz(koz: Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]) -> KeepOutZo
     """Convert ``koz`` to a ``KeepOutZone``."""
     if isinstance(koz, BluemiraWire):
         return KeepOutZone(koz)
-    if isinstance(koz, dict):
+    if isinstance(koz, Mapping):
         return KeepOutZone(**koz)
     if isinstance(koz, KeepOutZone):
         return koz
