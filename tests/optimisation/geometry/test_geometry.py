@@ -199,41 +199,6 @@ class TestGeometry:
         # The maximisation should mean the angles approximately sum to 360
         assert sum(angles) == pytest.approx(360, rel=1e-2)
 
-    # @pytest.mark.parametrize(
-    #     "zone",
-    #     [
-    #         {
-    #             "wire": make_circle(radius=4.5, center=(100, 0, 0), axis=(0, 1, 0)),
-    #             "n_discr": 20,
-    #             "byedges": False,
-    #             "dl": None,
-    #         },
-    #         KeepOutZone(
-    #             wire=make_circle(radius=4.5, center=(100, 0, 0), axis=(0, 1, 0)),
-    #             n_discr=20,
-    #             byedges=False,
-    #             dl=None,
-    #         ),
-    #     ],
-    # )
-    # def test_koz_settings_passed_to_discretize(self, zone):
-    #     parameterisation = PictureFrame()
-    #     discr = (
-    #         zone.wire.discretize if isinstance(zone, KeepOutZone) else zone.discretize
-    #     )
-
-    #     with mock.patch.object(zone, "discretize", wraps=discr) as discr_mock:
-    #         optimise_geometry(
-    #             parameterisation,
-    #             lambda x: x.create_shape().length,
-    #             keep_out_zones=[
-    #                 {"wire": zone, "n_discr": 20, "byedges": False, "dl": None}
-    #             ],
-    #             opt_conditions={"max_eval": 1},
-    #         )
-
-    #     discr_mock.assert_called_once_with(20, byedges=False, dl=None)
-
     def test_dict_koz_settings_passed_to_discretize(self):
         parameterisation = PictureFrame()
         zone = make_circle(radius=4.5, center=(100, 0, 0), axis=(0, 1, 0))
