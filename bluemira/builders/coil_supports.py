@@ -921,4 +921,3 @@ class OISBuilder(Builder):
             apply_component_display_options(component, color=BLUE_PALETTE["TF"][2])
 
         return components
-        return components
