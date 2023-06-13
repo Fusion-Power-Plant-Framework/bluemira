@@ -285,7 +285,7 @@ class NloptOptimiser(Optimiser):
             bluemira_warn(
                 f"{round_off_msg}. Returning best parameterisation found so far."
             )
-            fx_values = np.array(self._objective.history).T[1]
+            fx_values = [h[1] for h in self._objective.history]
             arg_min_fx = np.argmin(fx_values)
             f_x = fx_values[arg_min_fx]
             x_star = self._objective.history[arg_min_fx][0]
