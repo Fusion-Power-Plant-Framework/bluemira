@@ -43,6 +43,7 @@ This problem expects a minimum at
     This example is ripped straight from the
     `NLOpt docs <https://nlopt.readthedocs.io/en/latest/NLopt_Tutorial/#example-nonlinearly-constrained-problem>`_.
 
+.. _optimisation-functions-objective_function:
 
 Objective Function
 ------------------
@@ -76,9 +77,11 @@ for the corresponding optimisation parameter.
 
 .. code-block:: python
 
-    def df_objective(x):
+    def df_objective(x) -> np.ndarray:
         """Gradient of the objective function."""
         return np.array([0.0, 0.5 / np.sqrt(x[1])])
+
+.. _optimisation-functions-constraints:
 
 Constraints
 -----------
@@ -122,11 +125,11 @@ and equation 3 becomes
 
 Notice that these two constraints are similar,
 so we can define a single function,
-then use lambdas to set ``a`` and ``b`` to get the required form.
+then use lambdas to set ``a`` and ``b`` to get the required values.
 
 .. code-block:: python
 
-    def f_constraint(x, a, b):
+    def f_constraint(x: np.ndarray, a: float, b: float) -> np.ndarray:
         """Inequality constraint."""
         return np.array([(a * x[0] + b) ** 3 - x[1]])
 
@@ -155,9 +158,9 @@ So our Python function will be
 
 .. code-block:: python
 
-    def df_constraint(x, a, b):
+    def df_constraint(x: np.ndarray, a: float, b: float) -> np.ndarray:
         """Inequality constraint gradient."""
-        return np.array([3 * a * (a * x[0] + b) * (a * x[0] + b), -1.0])
+        return np.array([3 * a * (a * x[0] + b) ** 2, -1.0])
 
 
 Note that we are using two separate constraints here,
@@ -168,16 +171,16 @@ could look like this
 
 .. code-block:: python
 
-    def vector_constraint(x, a1, b1, a2, b2):
+    def vector_constraint(x: np.ndarray, a1: float, b1: float, a2: float, b2: float) -> np.ndarray:
         return np.array([f_constraint(x, a1, b1), f_constraint(x, a2, b2)])
 
 
-    def d_vector_constraint(x, a1, b1, a2, b2):
+    def d_vector_constraint(x: np.ndarray, a1: float, b1: float, a2: float, b2: float) -> np.ndarray:
         return np.vstack([df_constraint(x, a1, b1), df_constraint(x, a2, b2)])
 
 .. note::
 
-    Not all optimisations algorithms support non-linear constraints.
+    Not all optimisation algorithms support non-linear constraints.
     They can only be used with
     ``SLSQP``, ``COBYLA``, and ``ISRES``.
 
@@ -202,7 +205,7 @@ history of the optimisation parameters
     ...     df_objective=df_objective,
     ...     algorithm="SLSQP",
     ...     x0=np.array([1, 1]),
-    ...     opt_conditions={"xtol_rel": 1e-4, "max_eval": 3000},
+    ...     opt_conditions={"xtol_rel": 1e-10, "max_eval": 1000},
     ...     keep_history=True,
     ...     bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
     ...     ineq_constraints=[
@@ -220,6 +223,51 @@ history of the optimisation parameters
     ... )
     >>> print(result)
     OptimiserResult(x=array([0.33333528, 0.29629148]), n_evals=18)
+
+The Optimisation Problem Class
+-----------------------------
+
+As an alternative to the :py:func:`~bluemira.optimisation._optimise.optimise`
+function,
+it is possible to take a class-based approach to performing an optimisation.
+This can have several benefits, including
+Liskov Substitution of optimisation problems,
+shared state between objective functions and constraints,
+and logical grouping of related functionality.
+
+To define an optimisation problem, inherit from
+:py:class:`~bluemira.optimisation.problem.OptimisationProblem`
+and implement the interface.
+
+You must implement the
+:py:meth:`~bluemira.optimisation.problem.OptimisationProblem.objective`
+method.
+
+You can optionally override:
+
+* :py:meth:`~bluemira.optimisation.problem.OptimisationProblem.df_objective`
+    Must return the gradient of the objective function
+    at the given parameterisation.
+    If this is not overridden, and a gradient-based algorithm is used,
+    a gradient will be numerically estimated.
+    See also, :ref:`optimisation-functions-objective_function`.
+* :py:meth:`~bluemira.optimisation.problem.OptimisationProblem.eq_constraints`
+    Must return a list of
+    :py:class:`~bluemira.optimisation.typing.ConstraintT`
+    dictionaries, defining equality constraints.
+    See also, :ref:`optimisation-functions-constraints`.
+* :py:meth:`~bluemira.optimisation.problem.OptimisationProblem.ineq_constraints`
+    Must return a list of
+    :py:class:`~bluemira.optimisation.typing.ConstraintT`
+    dictionaries, defining inequality constraints.
+    See also, :ref:`optimisation-functions-constraints`.
+* :py:meth:`~bluemira.optimisation.problem.OptimisationProblem.bounds`
+    Must return the lower and upper bounds of the optimisation parameters.
+    The default is to return :code:`(-np.inf, np.inf)`.
+
+See
+:doc:`here <../examples/optimisation/nonlinearly_constrained_problem>`
+for an implemented example of an :code:`OptimisationProblem`.
 
 Available Optimisation Algorithms
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^

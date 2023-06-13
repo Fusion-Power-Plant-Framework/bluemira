@@ -50,7 +50,14 @@
 # plasma, we will use a PrincetonD for the wall shape,
 # and set the minimum distance to half a meter.
 
+# %% [markdown]
+# ## Using the `optimise_geometry` Function
+# Let's perform this geometry optimisation,
+# utilising bluemira's `optimise_geometry` function.
+
 # %%
+from typing import List
+
 import numpy as np
 
 from bluemira.display import plot_2d
@@ -93,9 +100,9 @@ def distance_constraint(
     The constraint must be in the form f(x) <= 0, i.e., constraint
     is satisfied if f(x) <= 0.
 
-    Since what we want is min_distance <= distance(A, B), we rewrite
-    this in the form min_distance - distance(A, B) <= 0, and return the
-    left-hand side from this function.
+    Since what we want is 'min_distance <= distance(A, B)', we rewrite
+    this in the form 'min_distance - distance(A, B) <= 0', and return
+    the left-hand side from this function.
     """
     shape = geom.create_shape()
     return min_distance - distance_to(shape, boundary)[0]
@@ -142,3 +149,56 @@ for i, (x, _) in enumerate(result.history):
     }
     ax = plot_2d(wire, options=PlotOptions(wire_options=wire_options), ax=ax, show=False)
 plot_2d(boundary, ax=ax, show=True)
+
+# %% [markdown]
+# ## Using the `GeomOptimisationProblem` Class
+# Alternatively, we can take a class-based approach to defining this
+# optimisation problem, using the `GeomOptimisationProblem` base class.
+
+from bluemira.optimisation import GeomOptimisationProblem
+from bluemira.optimisation._geometry.typing import GeomConstraintT
+
+
+class ContractLengthGOP(GeomOptimisationProblem):
+    """Geometry optimisation problem to minimise a shape's length."""
+
+    def __init__(self, plasma: BluemiraWire, min_distance: float):
+        self.plasma = plasma
+        self.min_distance = min_distance
+
+    def objective(self, geom: GeometryParameterisation) -> float:
+        """Objective function to minimise."""
+        return geom.create_shape().length
+
+    def ineq_constraints(self) -> List[GeomConstraintT]:
+        """List of inequality constraints to satisfy."""
+        return [
+            {
+                "f_constraint": lambda geom: self._distance_constraint(
+                    geom, self.plasma, self.min_distance
+                ),
+                "tolerance": np.array([1e-8]),
+            }
+        ]
+
+    def _distance_constraint(
+        self, geom: GeometryParameterisation, boundary: BluemiraWire, min_distance: float
+    ) -> float:
+        """A constraint to keep a minimum distance between two shapes."""
+        shape = geom.create_shape()
+        return min_distance - distance_to(shape, boundary)[0]
+
+
+wall_boundary = PrincetonD(
+    {"x1": {"value": 4, "upper_bound": 6}, "x2": {"value": 12, "lower_bound": 10}}
+)
+opt_problem = ContractLengthGOP(plasma, min_distance)
+result = opt_problem.optimise(
+    wall_boundary, algorithm="SLSQP", opt_conditions={"ftol_abs": 1e-6}
+)
+print("Optimised parameterisation:")
+print(result.geom.variables)
+
+boundary = result.geom.create_shape()
+print("Length of wall    :", boundary.length)
+print("Distance to plasma:", distance_to(boundary, plasma)[0])
