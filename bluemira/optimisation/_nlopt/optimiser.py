@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import nlopt
 import numpy as np
@@ -229,27 +229,7 @@ class NloptOptimiser(Optimiser):
             f_x = self._objective.f(x_star)
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
-            round_off_msg = "optimisation: round-off error occurred"
-            if self._objective.history:
-                # TODO(hsaunders1904): Is this really what we want to
-                # return? Can't the minimum have been something that
-                # wildly violates constraints?
-                bluemira_warn(
-                    f"{round_off_msg}. Returning best parameterisation found so far."
-                )
-                fx_values = np.array(self._objective.history).T[1]
-                arg_min_fx = np.argmin(fx_values)
-                f_x = fx_values[arg_min_fx]
-                x_star = self._objective.history[arg_min_fx][0]
-            else:
-                bluemira_warn(
-                    f"{round_off_msg}. Returning last optimisation parameterisation."
-                )
-                x_star = self._objective.prev_iter
-                if x_star.size:
-                    f_x = self._objective.f(x_star)
-                else:
-                    f_x = np.inf
+            x_star, f_x = self._handle_round_off_error()
 
         return OptimiserResult(
             f_x=f_x,
@@ -289,6 +269,33 @@ class NloptOptimiser(Optimiser):
         self._objective.set_approx_derivative_upper_bound(bounds)
         for constraint in self._eq_constraints + self._ineq_constraints:
             constraint.set_approx_derivative_upper_bound(bounds)
+
+    def _handle_round_off_error(self) -> Tuple[np.ndarray, float]:
+        """
+        Handle a round-off error occurring in an optimisation.
+
+        It's likely the last call was a decent solution, so return that
+        (with a warning).
+        """
+        round_off_msg = "optimisation: round-off error occurred"
+        if self._objective.history:
+            # TODO(hsaunders1904): Is this really what we want to
+            # return? Can't the minimum have been something that
+            # wildly violates constraints?
+            bluemira_warn(
+                f"{round_off_msg}. Returning best parameterisation found so far."
+            )
+            fx_values = np.array(self._objective.history).T[1]
+            arg_min_fx = np.argmin(fx_values)
+            f_x = fx_values[arg_min_fx]
+            x_star = self._objective.history[arg_min_fx][0]
+        else:
+            bluemira_warn(
+                f"{round_off_msg}. Returning last optimisation parameterisation."
+            )
+            x_star = self._objective.prev_iter
+            f_x = self._objective.f(x_star) if x_star.size else np.inf
+        return x_star, f_x
 
     def _set_algorithm(self, alg: Union[str, Algorithm]) -> None:
         """Set the optimiser's algorithm."""
