@@ -118,9 +118,6 @@ def optimise_geometry(
         (default: {"max_eval": 2000})
     opt_parameters:
         The algorithm-specific optimisation parameters.
-    bounds:
-        The upper and lower bounds for the optimisation parameters.
-        The first array being the lower bounds, the second the upper.
     eq_constraints:
         The equality constraints for the optimiser.
         A dict with keys:
@@ -131,8 +128,8 @@ def optimise_geometry(
               function. If not given, a numerical approximation of the
               gradient is made (if a gradient is required).
 
-        A constraint is a vector-valued, non-linear, inequality
-        constraint of the form $f_{c}(x) \le 0$.
+        A constraint is a vector-valued, non-linear, equality
+        constraint of the form $f_{c}(x) \eq 0$.
 
         The constraint function should have the form ``f(g) -> y``,
         where:
