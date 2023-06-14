@@ -20,6 +20,7 @@ ____
 import math
 import dataclasses
 
+import pandas as pd
 import matplotlib.pyplot as plt
 import openmc
 import numpy as np
@@ -600,7 +601,7 @@ def print_df_decorator_with_title_string(title_string):
             method_output = method(self)
             if print_df:
                 if isinstance(method_output, pd.DataFrame):
-                    output_str = method_output.print()
+                    output_str = method_output.to_string()
                 else:
                     output_str = str(method_output)
                 print("\n{}\n".format(title_string)+output_str)
