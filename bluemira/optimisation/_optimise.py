@@ -114,8 +114,8 @@ def optimise(
               function. If not given, a numerical approximation of the
               gradient is made (if a gradient is required).
 
-        A constraint is a vector-valued, non-linear, inequality
-        constraint of the form $f_{c}(x) \le 0$.
+        A constraint is a vector-valued, non-linear, equality
+        constraint of the form $f_{c}(x) \eq 0$.
 
         The constraint function should have the form `f(x) -> y`,
         where:
