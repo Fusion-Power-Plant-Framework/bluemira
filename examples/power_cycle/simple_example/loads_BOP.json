@@ -21,8 +21,8 @@
               "Vacuum Vessel pumps",
               "Breeding Blanket pumps"
             ],
-            "time": ["[0, 1]", "[0, 1]", "[0, 1]"],
-            "data": ["[1, 1]", "[0.1, 0.1]", "[80, 80]"],
+            "time": [[0, 1], [0, 1], [0, 1]],
+            "data": [[1, 1], [0.1, 0.1], [80, 80]],
             "model": ["RAMP", "RAMP", "RAMP"]
           }
         }
@@ -52,8 +52,8 @@
           },
           "loads": {
             "description": ["IHTS-to-PCS"],
-            "time": ["[0, 1]"],
-            "data": ["[2000, 2000]"],
+            "time": [0, 1],
+            "data": [2000, 2000],
             "model": ["RAMP"]
           }
         }
