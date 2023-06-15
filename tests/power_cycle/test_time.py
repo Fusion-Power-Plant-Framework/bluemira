@@ -50,19 +50,14 @@ class TestPowerCyclePhase:
     def test_validate_breakdown(self, test_keys, test_values):
         name = "Name for dummy sample"
         breakdown = dict(zip(test_keys, test_values))
-        possible_errors = (TypeError, ValueError, PowerCyclePhaseError)
         try:
             sample = PowerCyclePhase(name, breakdown)
-        except possible_errors:
-            str_keys = [isinstance(k, str) for k in test_keys]
-            all_keys_are_str = all(str_keys)
-            nonnegative_errors = (TypeError, ValueError)
-            nonstr_keys_errors = ValueError
-            if all_keys_are_str:
-                with pytest.raises(nonnegative_errors):
+        except (TypeError, ValueError, PowerCyclePhaseError):
+            if all([isinstance(k, str) for k in test_keys]):
+                with pytest.raises((TypeError, ValueError)):
                     PowerCyclePhase(name, breakdown)
             else:
-                with pytest.raises(nonstr_keys_errors):
+                with pytest.raises(ValueError):
                     PowerCyclePhase(name, breakdown)
 
 

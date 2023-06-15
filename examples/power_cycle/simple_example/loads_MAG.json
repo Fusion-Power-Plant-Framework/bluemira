@@ -14,8 +14,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["toroidal, poloidal, central"],
-            "time": ["[0, 1]"],
-            "data": ["[5, 5]"],
+            "time": [0, 1],
+            "data": [5, 5],
             "model": ["RAMP"]
           }
         }
@@ -39,8 +39,8 @@
           },
           "loads": {
             "description": ["upper_set", "lower_set"],
-            "time": ["[0, 500]", "[0, 500]"],
-            "data": ["[0, 10]", "[0, 10]"],
+            "time": [[0, 500], [0, 500]],
+            "data": [[0, 10], [0, 10]],
             "model": ["RAMP", "RAMP"]
           }
         }
