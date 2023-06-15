@@ -1164,8 +1164,8 @@ def signed_distance_2D_polygon(
 ) -> np.ndarray:
     """
     2-D vector-valued signed distance function from a subject polygon to a target
-    polygon. The return values are negative for points outside the subject polygon, and
-    positive for points inside the subject polygon.
+    polygon. The return values are negative for points outside the target polygon, and
+    positive for points inside the target polygon.
 
     Parameters
     ----------
@@ -1177,6 +1177,12 @@ def signed_distance_2D_polygon(
     Returns
     -------
     Signed distances from the vertices of the subject polygon to the target polygon
+
+    Notes
+    -----
+    This can used as a keep-out-zone constraint, in which the target polygon would
+    be the keep-out-zone, and the subject polygon would be the shape which must
+    be outsize of the keep-out-zone.
     """
     m = len(subject_poly)
     d = np.zeros(m)
