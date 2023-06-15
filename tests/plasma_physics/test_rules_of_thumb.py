@@ -22,7 +22,13 @@
 import numpy as np
 import pytest
 
-from bluemira.plasma_physics.rules_of_thumb import estimate_Le, estimate_M
+from bluemira.plasma_physics.rules_of_thumb import (
+    calc_cyl_safety_factor,
+    calc_qstar_freidberg,
+    calc_qstar_uckan,
+    estimate_Le,
+    estimate_M,
+)
 
 
 class TestHirshmanInductanceRules:
@@ -47,3 +53,17 @@ class TestHirshmanInductanceRules:
         )
         m = estimate_M(1 / self.eps, kappa=kappa)
         np.testing.assert_allclose(m_table, m, rtol=1.1e-2)
+
+
+class TestSafetyFactors:
+    def test_uckan_is_cylindrical(self):
+        R_0, A, B_0, I_p = 9, 3, 6, 20e6
+        qstar_uckan = calc_qstar_uckan(R_0, A, B_0, I_p, 1.0, 0.0)
+        qstar_cyl = calc_cyl_safety_factor(R_0, A, B_0, I_p)
+        np.testing.assert_almost_equal(qstar_uckan, qstar_cyl)
+
+    def test_freidberg_is_cylindrical(self):
+        R_0, A, B_0, I_p = 9, 3, 6, 20e6
+        qstar_uckan = calc_qstar_freidberg(R_0, A, B_0, I_p, 1.0)
+        qstar_cyl = calc_cyl_safety_factor(R_0, A, B_0, I_p)
+        np.testing.assert_almost_equal(qstar_uckan, qstar_cyl)
