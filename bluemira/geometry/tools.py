@@ -1119,7 +1119,7 @@ def _signed_distance_2D(point: np.ndarray, polygon: np.ndarray) -> float:
     point:
         2-D point
     polygon:
-        2-D set of point coordinates
+        2-D set of points (closed)
 
     Returns
     -------
@@ -1172,7 +1172,7 @@ def signed_distance_2D_polygon(
     subject_poly
         Subject 2-D polygon
     target_poly:
-        Target 2-D polygon
+        Target 2-D polygon (closed polygons only)
 
     Returns
     -------
@@ -1183,6 +1183,8 @@ def signed_distance_2D_polygon(
     This can used as a keep-out-zone constraint, in which the target polygon would
     be the keep-out-zone, and the subject polygon would be the shape which must
     be outsize of the keep-out-zone.
+
+    The target polygon must be closed.
     """
     m = len(subject_poly)
     d = np.zeros(m)
