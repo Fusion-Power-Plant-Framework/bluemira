@@ -745,9 +745,9 @@ def make_geometry(
     print("\nNumber of inboard points", num_inboard_points)
     print("Number of outboard points", num_outboard_points, "\n")
 
-    #
+    #########################################
     # Inboard surfaces behind breeder zone
-    #
+    #########################################
 
     # Getting layer points
     outb_bz_points = offset_points(fw_points, outb_fw_thick)
