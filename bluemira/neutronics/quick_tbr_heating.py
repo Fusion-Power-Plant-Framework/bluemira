@@ -22,8 +22,6 @@ import math
 import os
 from collections import namedtuple
 
-import make_geometry as mg
-import make_materials as mm
 import matplotlib.pyplot as plt
 import numpy as np
 import openmc
@@ -31,6 +29,9 @@ import pandas as pd
 import pandas_df_functions as pdf
 from numpy import pi
 from periodictable import elements
+
+import bluemira.neutronics.make_geometry as mg
+import bluemira.neutronics.make_materials as mm
 
 # Constants
 from bluemira.base.constants import BMUnitRegistry
