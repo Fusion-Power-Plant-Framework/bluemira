@@ -746,7 +746,7 @@ def make_geometry(
     print("Number of outboard points", num_outboard_points, "\n")
 
     #########################################
-    # Inboard surfaces behind breeder zone
+    ### Inboard surfaces behind breeder zone
     #########################################
 
     # Getting layer points
