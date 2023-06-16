@@ -213,7 +213,6 @@ class TestGeometry:
                         "n_discr": 20,
                         "byedges": False,
                         "dl": None,
-                        "shape_n_discr": 30,
                     }
                 ],
                 opt_conditions={"max_eval": 1},
@@ -223,18 +222,32 @@ class TestGeometry:
 
     def test_koz_settings_passed_to_discretize(self):
         parameterisation = PictureFrame()
+        pf = parameterisation.create_shape()
         zone = make_circle(radius=4.5, center=(100, 0, 0), axis=(0, 1, 0))
-        koz = KeepOutZone(wire=zone, n_discr=20, byedges=False, dl=None)
+        koz = KeepOutZone(
+            wire=zone, n_discr=20, byedges=False, dl=None, shape_n_discr=30
+        )
 
         with mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock:
-            optimise_geometry(
-                parameterisation,
-                lambda x: x.create_shape().length,
-                keep_out_zones=[koz],
-                opt_conditions={"max_eval": 1},
-            )
+            with mock.patch.object(parameterisation, "create_shape", return_value=pf):
+                with mock.patch.object(
+                    pf, "discretize", wraps=pf.discretize
+                ) as shape_discr_mock:
+                    optimise_geometry(
+                        parameterisation,
+                        lambda x: x.create_shape().length,
+                        keep_out_zones=[koz],
+                        opt_conditions={"max_eval": 1},
+                    )
 
         discr_mock.assert_called_once_with(20, byedges=False, dl=None)
+        # Note we expect more than one call to 'geom.discretize' due to
+        # gradient approximation of objective and constraints. They
+        # should all be using the same discretization.
+        assert all(
+            call == mock.call(30, byedges=False)
+            for call in shape_discr_mock.call_args_list
+        )
 
     @pytest.mark.parametrize(
         "bad_koz", [{"n_discr": 20, "byedges": False, "dl": None}, 10, None]
