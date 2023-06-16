@@ -167,7 +167,7 @@ class TSEquatorialPortDuctBuilder(Builder):
         )
         y_val = 0.5 * self.params.ep_width.value + offset
         z_ref = self.params.ep_z_position.value
-        z_val = 0.5 * self.params.ep_height.value
+        z_val = 0.5 * self.params.ep_height.value + offset
         yz_face = make_equatorial_port_yz_face(
             self.x_max,
             -y_val,
