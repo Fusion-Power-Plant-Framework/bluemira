@@ -321,20 +321,46 @@ class TestNloptOptimiser:
         with pytest.raises(OptimisationError):
             getattr(opt, f"add_{t}_constraint")(no_op, np.array([1e-4, 1e-4]))
 
-    @mock.patch(f"{NLOPT_OPT_REF}.optimize")
     @mock.patch("bluemira.optimisation._nlopt.optimiser.bluemira_warn")
-    def test_warning_and_prev_iter_result_given_round_off_error(
-        self, bm_warn, nlopt_mock
-    ):
-        nlopt_mock.side_effect = nlopt.RoundoffLimited
-        x0 = np.array([1, 2])
-        opt = NloptOptimiser("SLSQP", 2, no_op, opt_conditions={"max_eval": 200})
+    def test_warning_and_prev_iter_result_given_round_off_error(self, bm_warn):
+        # This is a bit of tricky one to test, so this is also a little
+        # bit hacky, sorry!
+        # Run a deterministic optimisation once, keeping the history.
+        # Then run that optimisation again, but throw a round-off error
+        # a set no. of iterations in. Then check, in the history, that
+        # we return the parameterisation from the iteration previous to
+        # the one we threw the round-off error in.
+        def objective(x):
+            return -np.sum(x)
 
-        res = opt.optimise(x0)
+        class ErroringObjective:
+            def __init__(self, error_on_iter: int) -> None:
+                self.iter_num = 0
+                self.error_on_iter = error_on_iter
+
+            def __call__(self, x):
+                self.iter_num += 1
+                if self.iter_num == self.error_on_iter:
+                    raise nlopt.RoundoffLimited()
+                return objective(x)
+
+        # Run the first optimisation
+        opt = NloptOptimiser(
+            "COBYLA", 2, objective, opt_conditions={"max_eval": 5}, keep_history=True
+        )
+        hist = opt.optimise(np.array([0, 0])).history
+
+        # Now run it again, but throw an error on iteration 4 of the
+        # optimisation loop
+        error_on = 4
+        erroring_objective = ErroringObjective(error_on)
+        err_opt = NloptOptimiser(
+            "COBYLA", 2, erroring_objective, opt_conditions={"max_eval": 5}
+        )
+        err_res = err_opt.optimise(np.array([0, 0]))
 
         bm_warn.assert_called_once()
-        assert res.n_evals == 0
-        np.testing.assert_allclose(res.x, x0)
+        np.testing.assert_allclose(err_res.x, hist[error_on - 1][0])
 
     @pytest.mark.parametrize("bad_alg", [0, ["SLSQP"]])
     def test_TypeError_setting_alg_with_invalid_type(self, bad_alg):
