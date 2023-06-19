@@ -68,8 +68,6 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.utilities.opt_tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
-EQ_FOLDER = get_bluemira_path("equilibria", subfolder="data")
-
 
 class MHDState:
     """
