@@ -94,18 +94,23 @@ class ObjectiveFunction(_NloptFunction):
         """Execute the NLOpt objective function."""
         if not np.any(np.isnan(x)):
             self._store_x(x)
+        return self._call_inner(x, grad)
+
+    def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
+        """Execute the NLOpt objective function, recording the iteration history."""
+        f_x = self._call_inner(x, grad)
+        self.history.append((np.copy(x), f_x))
+        self.prev_iter = self.history[-1][0]
+        return f_x
+
+    def _call_inner(self, x: np.ndarray, grad: np.ndarray) -> float:
+        """Execute the objective function in the form required by NLOpt."""
         # Cache f(x) so we do not need to recalculate it if we're using
         # an approximate gradient
         self.f0 = self.f(x)
         if grad.size > 0:
             grad[:] = self.df(x)
         return self.f0
-
-    def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
-        """Execute the NLOpt objective function, recording the iteration history."""
-        f_x = self.call(x, grad)
-        self.history.append((np.copy(x), f_x))
-        return f_x
 
     def _store_x(self, x: np.ndarray) -> None:
         """Store ``x`` in ``self.prev_iter``."""
