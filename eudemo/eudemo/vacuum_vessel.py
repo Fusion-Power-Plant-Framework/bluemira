@@ -36,15 +36,10 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import (
-    _offset_wire_discretised,
-    boolean_fuse,
-    interpolate_bspline,
-)
+from bluemira.geometry.tools import _offset_wire_discretised, boolean_fuse
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
 from eudemo.maintenance.duct_connection import pipe_pipe_join
-from eudemo.tools import make_2d_view_components
 
 
 class VacuumVessel(ComponentManager):
@@ -105,7 +100,8 @@ class VacuumVessel(ComponentManager):
         #     view_comp = component.get_component(view)
         #     view_comp.parent = None
         #     del view_comp
-        #     new_2d_comps = make_2d_view_components(view, azimuthal_angle=180/n_TF, components=[sector_body, sector_void])
+        #     new_2d_comps = make_2d_view_components(view, azimuthal_angle=180/n_TF,
+        #                                            components=[sector_body, sector_void])
         #     Component(view, children=new_2d_comps, parent=component)
 
 
@@ -171,9 +167,6 @@ class VacuumVesselBuilder(Builder):
             open_wire=False,
             ndiscr=600,
         )
-        # inner_vv = interpolate_bspline(
-        #     inner_vv.discretize(ndiscr=300, byedges=True), closed=True
-        # )
 
         outer_vv = varied_offset(
             inner_vv,
