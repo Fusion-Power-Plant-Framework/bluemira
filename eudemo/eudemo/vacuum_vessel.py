@@ -44,6 +44,7 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
 from eudemo.maintenance.duct_connection import pipe_pipe_join
+from eudemo.tools import make_2d_view_components
 
 
 class VacuumVessel(ComponentManager):
@@ -69,8 +70,6 @@ class VacuumVessel(ComponentManager):
         vv_xyz = xyz.get_component("Sector 1")
         target_void = vv_xyz.get_component("Vessel voidspace 1").shape
         target_shape = vv_xyz.get_component("Body 1").shape
-        xyz.parent = None
-        del xyz
 
         if isinstance(ports, Component):
             ports = [ports]
@@ -98,7 +97,15 @@ class VacuumVessel(ComponentManager):
         )
         apply_component_display_options(sector_body, color=BLUE_PALETTE["VV"][0])
         apply_component_display_options(sector_void, color=(0, 0, 0))
+        xyz.parent = None
+        del xyz
         Component("xyz", children=[sector_body, sector_void], parent=component)
+        # for view in ["xz", "xy"]:
+        #     view_comp = component.get_component(view)
+        #     view_comp.parent = None
+        #     del view_comp
+        #     new_2d_comps = make_2d_view_components(view, 0, [sector_body, sector_void])
+        #     Component(view, children=new_2d_comps, parent=component)
 
 
 @dataclass

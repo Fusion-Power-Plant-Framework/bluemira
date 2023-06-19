@@ -22,7 +22,12 @@
 """
 A collection of tools used in the EU-DEMO design.
 """
+from typing import List
 
+import numpy as np
+
+from bluemira.base.components import PhysicalComponent
+from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import slice_shape
 
@@ -39,3 +44,39 @@ def get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
     intersections = intersections[intersections[:, -1] > 0.0]
     intersection = sorted(intersections, key=lambda x: x[-1])[0]
     return intersection
+
+
+def make_2d_view_components(
+    view: str, azimuthal_angle: float, components: List[PhysicalComponent]
+) -> List[PhysicalComponent]:
+    """
+    Make a 2-D slice of a list of 3-D components
+
+    Parameters
+    ----------
+
+    Returns
+    -------
+    """
+    azimuthal_angle = np.deg2rad(azimuthal_angle)
+    if view == "xz":
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])
+    elif view == "xy":
+        plane = BluemiraPlane.from_3_points([0, 0, 0], [0, 1, 0], [1, 0, 0])
+    else:
+        raise ValueError(f"Unrecognised view: {view}, please choose from ['xz', 'xy']")
+
+    view_comps = []
+    for comp in components:
+        try:
+            pieces = slice_shape(comp.shape, plane)
+        except:
+            from bluemira.display import show_cad
+
+            show_cad(comp.shape)
+        for i, piece in enumerate(pieces):
+            new_comp = PhysicalComponent(
+                f"{comp.name} {i}", BluemiraFace(piece), material=comp.material
+            )
+            view_comps.append(new_comp)
+    return view_comps
