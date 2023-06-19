@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import Any, Dict, List, Mapping, Optional, Union
+from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import nlopt
 import numpy as np
@@ -126,7 +126,7 @@ class NloptOptimiser(Optimiser):
 
         self._set_algorithm(algorithm)
         self._opt = nlopt.opt(_NLOPT_ALG_MAPPING[self.algorithm], n_variables)
-        self._set_objective_function(f_objective, df_objective)
+        self._set_objective_function(f_objective, df_objective, n_variables)
         self._set_termination_conditions(opt_conditions)
         self._set_algorithm_parameters(opt_parameters)
         self._eq_constraints: List[Constraint] = []
@@ -229,18 +229,7 @@ class NloptOptimiser(Optimiser):
             f_x = self._objective.f(x_star)
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
-            bluemira_warn(
-                "optimisation: round-off error occurred, returning last optimisation "
-                "parameterisation."
-            )
-            if self._objective.history:
-                fx_values = np.array(self._objective.history).T[1]
-                f_x = np.min(fx_values)
-                arg_min_fx = np.argmin(fx_values)
-                x_star = self._objective.history[arg_min_fx][0]
-            else:
-                x_star = x0
-                f_x = np.infty
+            x_star, f_x = self._handle_round_off_error()
 
         return OptimiserResult(
             f_x=f_x,
@@ -281,16 +270,34 @@ class NloptOptimiser(Optimiser):
         for constraint in self._eq_constraints + self._ineq_constraints:
             constraint.set_approx_derivative_upper_bound(bounds)
 
+    def _handle_round_off_error(self) -> Tuple[np.ndarray, float]:
+        """
+        Handle a round-off error occurring in an optimisation.
+
+        It's likely the last call was a decent solution, so return that
+        (with a warning).
+        """
+        bluemira_warn(
+            "optimisation: round-off error occurred. "
+            "Returning last optimisation parameterisation."
+        )
+        x_star = self._objective.prev_iter
+        f_x = self._objective.f(x_star) if x_star.size else np.inf
+        return x_star, f_x
+
     def _set_algorithm(self, alg: Union[str, Algorithm]) -> None:
         """Set the optimiser's algorithm."""
         self._algorithm = _check_algorithm(alg)
 
     def _set_objective_function(
-        self, func: ObjectiveCallable, df: Union[None, OptimiserCallable]
+        self,
+        func: ObjectiveCallable,
+        df: Union[None, OptimiserCallable],
+        n_variables: int,
     ) -> None:
         """Wrap and set the objective function."""
         self._objective = ObjectiveFunction(
-            func, df, bounds=(self.lower_bounds, self.upper_bounds)
+            func, df, n_variables, bounds=(self.lower_bounds, self.upper_bounds)
         )
         if self._keep_history:
             self._opt.set_min_objective(self._objective.call_with_history)

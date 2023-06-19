@@ -40,7 +40,12 @@ class OptimiserResult:
     n_evals: int
     """The number of evaluations of the objective function in the optimisation."""
     history: List[Tuple[np.ndarray, float]] = field(repr=False)
-    """The history of the parametrisation at each iteration."""
+    """
+    The history of the parametrisation at each iteration.
+
+    The first element of each tuple is the parameterisation (x), the
+    second is the evaluation of the objective function at x (f(x)).
+    """
     constraints_satisfied: Union[bool, None] = None
     """
     Whether all constraints have been satisfied to within the required tolerance.
