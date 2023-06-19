@@ -51,7 +51,7 @@ class _NloptFunction(abc.ABC):
         bounds: Tuple[_FloatOrArrayT, _FloatOrArrayT],
     ):
         self.f = f
-        self.f0: Union[None, np.ndarray] = None
+        self.f0: Union[float, np.ndarray] = 0
         self.bounds = bounds
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
@@ -78,17 +78,19 @@ class ObjectiveFunction(_NloptFunction):
     """
 
     f: ObjectiveCallable
+    f0: float
 
     def __init__(
         self,
         f: ObjectiveCallable,
-        df: Optional[OptimiserCallable] = None,
+        df: Optional[OptimiserCallable],
+        n_variables: int,
         bounds: Tuple[_FloatOrArrayT, _FloatOrArrayT] = (-np.inf, np.inf),
     ):
         super().__init__(f, bounds)
         self.df = df if df is not None else self._approx_derivative
         self.history: List[Tuple[np.ndarray, float]] = []
-        self.prev_iter = np.array([], dtype=float)
+        self.prev_iter = np.zeros(n_variables, dtype=float)
 
     def call(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function."""
@@ -114,16 +116,16 @@ class ObjectiveFunction(_NloptFunction):
 
     def _store_x(self, x: np.ndarray) -> None:
         """Store ``x`` in ``self.prev_iter``."""
-        if self.prev_iter.size:
-            # Assign in place when possible to avoid lots of allocations.
-            # Not benchmarked, but may be more efficient...
-            self.prev_iter[:] = x
-        else:
-            self.prev_iter = np.copy(x)
+        # Assign in place to avoid lots of allocations.
+        # Not benchmarked, but may be more efficient...
+        self.prev_iter[:] = x
 
 
 class Constraint(_NloptFunction):
     """Holder for NLOpt constraint functions."""
+
+    f: OptimiserCallable
+    f0: np.ndarray
 
     def __init__(
         self,

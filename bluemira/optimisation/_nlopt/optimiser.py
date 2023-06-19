@@ -126,7 +126,7 @@ class NloptOptimiser(Optimiser):
 
         self._set_algorithm(algorithm)
         self._opt = nlopt.opt(_NLOPT_ALG_MAPPING[self.algorithm], n_variables)
-        self._set_objective_function(f_objective, df_objective)
+        self._set_objective_function(f_objective, df_objective, n_variables)
         self._set_termination_conditions(opt_conditions)
         self._set_algorithm_parameters(opt_parameters)
         self._eq_constraints: List[Constraint] = []
@@ -302,11 +302,14 @@ class NloptOptimiser(Optimiser):
         self._algorithm = _check_algorithm(alg)
 
     def _set_objective_function(
-        self, func: ObjectiveCallable, df: Union[None, OptimiserCallable]
+        self,
+        func: ObjectiveCallable,
+        df: Union[None, OptimiserCallable],
+        n_variables: int,
     ) -> None:
         """Wrap and set the objective function."""
         self._objective = ObjectiveFunction(
-            func, df, bounds=(self.lower_bounds, self.upper_bounds)
+            func, df, n_variables, bounds=(self.lower_bounds, self.upper_bounds)
         )
         if self._keep_history:
             self._opt.set_min_objective(self._objective.call_with_history)
