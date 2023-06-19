@@ -51,7 +51,7 @@ class _NloptFunction(abc.ABC):
         bounds: Tuple[_FloatOrArrayT, _FloatOrArrayT],
     ):
         self.f = f
-        self.f0: Union[None, np.ndarray] = None
+        self.f0: Union[float, np.ndarray] = 0
         self.bounds = bounds
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
@@ -77,18 +77,36 @@ class ObjectiveFunction(_NloptFunction):
     based, a numerical approximation of the gradient is calculated.
     """
 
+    f: ObjectiveCallable
+    f0: float
+
     def __init__(
         self,
         f: ObjectiveCallable,
-        df: Optional[OptimiserCallable] = None,
+        df: Optional[OptimiserCallable],
+        n_variables: int,
         bounds: Tuple[_FloatOrArrayT, _FloatOrArrayT] = (-np.inf, np.inf),
     ):
         super().__init__(f, bounds)
         self.df = df if df is not None else self._approx_derivative
         self.history: List[Tuple[np.ndarray, float]] = []
+        self.prev_iter = np.zeros(n_variables, dtype=float)
 
     def call(self, x: np.ndarray, grad: np.ndarray) -> float:
         """Execute the NLOpt objective function."""
+        if not np.any(np.isnan(x)):
+            self._store_x(x)
+        return self._call_inner(x, grad)
+
+    def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
+        """Execute the NLOpt objective function, recording the iteration history."""
+        f_x = self._call_inner(x, grad)
+        self.history.append((np.copy(x), f_x))
+        self.prev_iter = self.history[-1][0]
+        return f_x
+
+    def _call_inner(self, x: np.ndarray, grad: np.ndarray) -> float:
+        """Execute the objective function in the form required by NLOpt."""
         # Cache f(x) so we do not need to recalculate it if we're using
         # an approximate gradient
         self.f0 = self.f(x)
@@ -96,15 +114,18 @@ class ObjectiveFunction(_NloptFunction):
             grad[:] = self.df(x)
         return self.f0
 
-    def call_with_history(self, x: np.ndarray, grad: np.ndarray) -> float:
-        """Execute the NLOpt objective function, recording the iteration history."""
-        f_x = self.call(x, grad)
-        self.history.append((np.copy(x), f_x))
-        return f_x
+    def _store_x(self, x: np.ndarray) -> None:
+        """Store ``x`` in ``self.prev_iter``."""
+        # Assign in place to avoid lots of allocations.
+        # Not benchmarked, but may be more efficient...
+        self.prev_iter[:] = x
 
 
 class Constraint(_NloptFunction):
     """Holder for NLOpt constraint functions."""
+
+    f: OptimiserCallable
+    f0: np.ndarray
 
     def __init__(
         self,
