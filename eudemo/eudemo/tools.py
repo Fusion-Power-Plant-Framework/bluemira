@@ -60,7 +60,9 @@ def make_2d_view_components(
     """
     azimuthal_angle = np.deg2rad(azimuthal_angle)
     if view == "xz":
-        plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])
+        plane = BluemiraPlane.from_3_points(
+            [0, 0, 0], [0, 0, 1], [np.cos(azimuthal_angle), np.sin(azimuthal_angle), 0]
+        )
     elif view == "xy":
         plane = BluemiraPlane.from_3_points([0, 0, 0], [0, 1, 0], [1, 0, 0])
     else:
@@ -68,12 +70,9 @@ def make_2d_view_components(
 
     view_comps = []
     for comp in components:
-        try:
-            pieces = slice_shape(comp.shape, plane)
-        except:
-            from bluemira.display import show_cad
+        pieces = slice_shape(comp.shape, plane)
+        # TODO: slice_shape is unreliable for complex shapes...
 
-            show_cad(comp.shape)
         for i, piece in enumerate(pieces):
             new_comp = PhysicalComponent(
                 f"{comp.name} {i}", BluemiraFace(piece), material=comp.material

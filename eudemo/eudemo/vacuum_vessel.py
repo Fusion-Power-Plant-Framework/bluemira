@@ -61,7 +61,7 @@ class VacuumVessel(ComponentManager):
             .shape.boundary[0]
         )
 
-    def add_ports(self, ports: Union[Component, List[Component]]):
+    def add_ports(self, ports: Union[Component, List[Component]], n_TF: int):
         """
         Add a series of ports to the vacuum vessel component tree.
         """
@@ -100,11 +100,12 @@ class VacuumVessel(ComponentManager):
         xyz.parent = None
         del xyz
         Component("xyz", children=[sector_body, sector_void], parent=component)
+        # TODO: This doesn't work because slice_shape returns nothing
         # for view in ["xz", "xy"]:
         #     view_comp = component.get_component(view)
         #     view_comp.parent = None
         #     del view_comp
-        #     new_2d_comps = make_2d_view_components(view, 0, [sector_body, sector_void])
+        #     new_2d_comps = make_2d_view_components(view, azimuthal_angle=180/n_TF, components=[sector_body, sector_void])
         #     Component(view, children=new_2d_comps, parent=component)
 
 

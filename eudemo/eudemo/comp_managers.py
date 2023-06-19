@@ -77,7 +77,7 @@ class ThermalShield(ComponentManager):
     def cryostat_thermal_shield(self) -> Component:
         return self.component().get_component("CryostatTS")
 
-    def add_ports(self, ports: List[Component]):
+    def add_ports(self, ports: List[Component], n_TF: int):
         vvts = self.vacuum_vessel_thermal_shield()
         cts = self.cryostat_thermal_shield()
 
@@ -156,6 +156,8 @@ class ThermalShield(ComponentManager):
             ],
             parent=cts,
         )
+        # TODO: 2-D views
+        n_TF *= 1
 
 
 class Cryostat(ComponentManager):

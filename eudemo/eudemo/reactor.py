@@ -454,8 +454,12 @@ if __name__ == "__main__":
         cryostat_thermal_shield.xz_boundary(),
     )
 
-    reactor.vacuum_vessel.add_ports([vv_upper_port, vv_eq_port])
-    reactor.thermal_shield.add_ports([ts_upper_port, ts_eq_port])
+    reactor.vacuum_vessel.add_ports(
+        [vv_upper_port, vv_eq_port], n_TF=reactor_config.global_params.n_TF.value
+    )
+    reactor.thermal_shield.add_ports(
+        [ts_upper_port, ts_eq_port], n_TF=reactor_config.global_params.n_TF.value
+    )
 
     from bluemira.display import show_cad
 
