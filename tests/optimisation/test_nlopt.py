@@ -32,6 +32,7 @@ from bluemira.optimisation.error import (
     OptimisationError,
     OptimisationParametersError,
 )
+from bluemira.utilities.error import OptVariablesError
 from tests.optimisation.tools import rosenbrock
 
 NLOPT_OPT_REF = "bluemira.optimisation._nlopt.optimiser.nlopt.opt"
@@ -321,8 +322,8 @@ class TestNloptOptimiser:
         with pytest.raises(OptimisationError):
             getattr(opt, f"add_{t}_constraint")(no_op, np.array([1e-4, 1e-4]))
 
-    @mock.patch("bluemira.optimisation._nlopt.optimiser.bluemira_warn")
-    def test_warning_and_prev_iter_result_given_round_off_error(self, bm_warn):
+    @pytest.mark.parametrize("err", [nlopt.RoundoffLimited, OptVariablesError])
+    def test_warning_and_prev_iter_result_given_recoverable_error(self, caplog, err):
         # This is a bit of tricky one to test, so this is also a little
         # bit hacky, sorry!
         # Run a deterministic optimisation once, keeping the history.
@@ -341,7 +342,7 @@ class TestNloptOptimiser:
             def __call__(self, x):
                 self.iter_num += 1
                 if self.iter_num == self.error_on_iter:
-                    raise nlopt.RoundoffLimited()
+                    raise err
                 return objective(x)
 
         # Run the first optimisation
@@ -359,7 +360,7 @@ class TestNloptOptimiser:
         )
         err_res = err_opt.optimise(np.array([0, 0]))
 
-        bm_warn.assert_called_once()
+        assert len(caplog.messages) >= 1
         np.testing.assert_allclose(err_res.x, hist[error_on - 1][0])
 
     @pytest.mark.parametrize("bad_alg", [0, ["SLSQP"]])
@@ -429,3 +430,36 @@ class TestNloptOptimiser:
         opt.set_upper_bounds(bounds)
 
         np.testing.assert_allclose(opt.upper_bounds, bounds)
+
+    @pytest.mark.parametrize(
+        ("nlopt_err", "msg"),
+        [
+            (nlopt.MAXEVAL_REACHED, ["succeeded", "maximum", "evaluations"]),
+            (nlopt.MAXTIME_REACHED, ["succeeded", "maximum", "duration"]),
+            (nlopt.ROUNDOFF_LIMITED, ["round-off", "last", "parameterisation"]),
+            (nlopt.FAILURE, ["failed"]),
+            (nlopt.INVALID_ARGS, ["invalid", "arguments"]),
+            (nlopt.OUT_OF_MEMORY, ["out", "of", "memory"]),
+            (nlopt.FORCED_STOP, ["forced", "stop"]),
+        ],
+    )
+    @pytest.mark.parametrize(
+        ("opt_err", "rethrow_err"),
+        [(RuntimeError, OptimisationError), (KeyboardInterrupt, KeyboardInterrupt)],
+    )
+    @mock.patch("bluemira.optimisation._nlopt.optimiser.nlopt.opt.last_optimize_result")
+    def test_warning_given_optimise_exception(
+        self, lor_mock, caplog, opt_err, rethrow_err, nlopt_err, msg
+    ):
+        def objective(_):
+            raise opt_err
+
+        lor_mock.return_value = nlopt_err
+        opt = NloptOptimiser("COBYLA", 2, objective, opt_conditions={"max_eval": 5})
+
+        with pytest.raises(rethrow_err):
+            opt.optimise(np.zeros(2))
+
+        warning_msgs = caplog.messages
+        assert len(warning_msgs) == 1
+        assert all(m in warning_msgs[0] for m in msg)

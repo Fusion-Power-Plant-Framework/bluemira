@@ -36,6 +36,7 @@ from bluemira.optimisation._nlopt.functions import (
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation.error import OptimisationError, OptimisationParametersError
 from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
+from bluemira.utilities.error import OptVariablesError
 
 _NLOPT_ALG_MAPPING = {
     Algorithm.SLSQP: nlopt.LD_SLSQP,
@@ -229,8 +230,24 @@ class NloptOptimiser(Optimiser):
             f_x = self._objective.f(x_star)
         except nlopt.RoundoffLimited:
             # It's likely that the last call was still a reasonably good solution.
-            x_star, f_x = self._handle_round_off_error()
+            x_star, f_x = self._get_previous_iter_result()
+        except OptVariablesError:
+            # Probably still some rounding errors due to numerical gradients
+            # It's likely that the last call was still a reasonably good solution.
+            bluemira_warn("Badly behaved numerical gradients are causing trouble...")
+            x_star, f_x = self._get_previous_iter_result()
+        except RuntimeError as error:
+            # Usually "more than iter SQP iterations"
+            _process_nlopt_result(self._opt)
+            raise OptimisationError(str(error))
+        except KeyboardInterrupt:
+            _process_nlopt_result(self._opt)
+            raise KeyboardInterrupt(
+                "The optimisation was halted by the user. Please check "
+                "your optimisation problem and termination conditions."
+            )
 
+        _process_nlopt_result(self._opt)
         return OptimiserResult(
             f_x=f_x,
             x=x_star,
@@ -269,6 +286,12 @@ class NloptOptimiser(Optimiser):
         self._objective.set_approx_derivative_upper_bound(bounds)
         for constraint in self._eq_constraints + self._ineq_constraints:
             constraint.set_approx_derivative_upper_bound(bounds)
+
+    def _get_previous_iter_result(self) -> Tuple[np.ndarray, float]:
+        """Get the parameterisation and result from the previous iteration."""
+        x_star = self._objective.prev_iter
+        f_x = self._objective.f(x_star) if x_star.size else np.inf
+        return x_star, f_x
 
     def _handle_round_off_error(self) -> Tuple[np.ndarray, float]:
         """
@@ -375,3 +398,38 @@ def _initial_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarr
         copy=False,
     )
     return np.mean(bounds, axis=0)
+
+
+def _process_nlopt_result(opt: nlopt.opt) -> None:
+    """
+    Communicate to the user the NLopt optimisation result.
+
+    Usually this would be called when dealing with an error in an
+    optimisation loop.
+
+    Parameters
+    ----------
+    opt:
+        The optimiser to check
+    """
+    result = opt.last_optimize_result()
+    message = None
+    if result == nlopt.MAXEVAL_REACHED:
+        message = "optimiser succeeded but stopped at the maximum number of evaluations."
+    elif result == nlopt.MAXTIME_REACHED:
+        message = "optimiser succeeded but stopped at the maximum duration."
+    elif result == nlopt.ROUNDOFF_LIMITED:
+        message = (
+            "optimiser was halted due to round-off errors.\n"
+            "Returning last optimisation parameterisation."
+        )
+    elif result == nlopt.FAILURE:
+        message = "optimiser failed real hard..."
+    elif result == nlopt.INVALID_ARGS:
+        message = "optimiser failed because of invalid arguments."
+    elif result == nlopt.OUT_OF_MEMORY:
+        message = "optimiser failed because it ran out of memory."
+    elif result == nlopt.FORCED_STOP:
+        message = "optimiser failed because of a forced stop."
+    if message:
+        bluemira_warn(f"\n{message}\n")
