@@ -19,7 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import copy
-from typing import List
+from dataclasses import dataclass
+from typing import List, Optional
 
 import numpy as np
 
@@ -39,8 +40,27 @@ from bluemira.optimisation.typing import (
     OptimiserCallable,
 )
 
-_DEFAULT_ZONE_DISCR = 100  # points
-_DEFAULT_ZONE_TOL = 1e-3
+
+@dataclass
+class KeepOutZone:
+    """Definition of a keep-out zone for a geometry optimisation."""
+
+    wire: BluemiraWire
+    """Closed wire defining the keep-out zone."""
+    byedges: bool = True
+    """Whether to discretize the keep-out zone by edges or not."""
+    dl: Optional[float] = None
+    """
+    The discretization length for the keep-out zone.
+
+    This overrides ``n_discr`` if given.
+    """
+    n_discr: int = 100
+    """The number of points to discretise the keep-out zone into."""
+    shape_n_discr: int = 100
+    """The number of points to discretise the geometry being optimised into."""
+    tol: float = 1e-8
+    """The tolerance for the keep-out zone constraint."""
 
 
 def to_objective(
@@ -102,27 +122,27 @@ def calculate_signed_distance(
     return signed_distance_2D_polygon(s.T, zone_points.T).T
 
 
-def make_keep_out_zone_constraint(
-    koz: BluemiraWire,
-    n_discr: int = _DEFAULT_ZONE_DISCR,
-    tol: float = _DEFAULT_ZONE_TOL,
-) -> GeomConstraintT:
+def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
     """Make a keep-out zone inequality constraint from a wire."""
-    if not koz.is_closed():
+    if not koz.wire.is_closed():
         raise GeometryOptimisationError(
-            f"Keep-out zone with label '{koz.label}' is not closed."
+            f"Keep-out zone with label '{koz.wire.label}' is not closed."
         )
-    koz_points = koz.discretize(n_discr, byedges=True).xz
-    # As we're discretizing by edges, we may not get exactly the number
-    # of points we ask for, especially if n_discr is small.
-    real_n_discr = koz_points.shape[1]
+    koz_points = koz.wire.discretize(koz.n_discr, byedges=koz.byedges, dl=koz.dl).xz
+    # Note that we do not allow discretization using 'dl' or 'byedges'
+    # for the shape being optimised. The size of the constraint cannot
+    # change within an optimisation loop (NLOpt will error) and these
+    # options do not guarantee a constant number of discretized points.
+    shape_n_discr = koz.shape_n_discr
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:
         return calculate_signed_distance(
-            geom, n_shape_discr=real_n_discr, zone_points=koz_points
+            geom,
+            n_shape_discr=shape_n_discr,
+            zone_points=koz_points,
         )
 
-    return {"f_constraint": _f_constraint, "tolerance": np.full(real_n_discr, tol)}
+    return {"f_constraint": _f_constraint, "tolerance": np.full(shape_n_discr, koz.tol)}
 
 
 def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstraintT]:
