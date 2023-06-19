@@ -32,6 +32,7 @@ from bluemira.geometry.parameterisations import (
 )
 from bluemira.geometry.tools import make_circle, make_polygon, signed_distance
 from bluemira.optimisation import optimise_geometry
+from bluemira.optimisation._geometry.optimise import KeepOutZone
 from bluemira.optimisation.error import GeometryOptimisationError
 
 
@@ -198,44 +199,71 @@ class TestGeometry:
         # The maximisation should mean the angles approximately sum to 360
         assert sum(angles) == pytest.approx(360, rel=1e-2)
 
-    def test_koz_discretisation_is_set_with_int(self):
+    def test_dict_koz_settings_passed_to_discretize(self):
         parameterisation = PictureFrame()
-        zone = make_circle(radius=4.5, center=[100, 0, 0], axis=[0, 1, 0])
-        discr = 20
-        kwargs = {
-            "keep_out_zones": [zone],
-            "koz_discretisation": discr,
-            "opt_conditions": {"max_eval": 1},
-        }
+        zone = make_circle(radius=4.5, center=(100, 0, 0), axis=(0, 1, 0))
 
         with mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock:
             optimise_geometry(
-                parameterisation, lambda x: x.create_shape().length, **kwargs
+                parameterisation,
+                lambda _: 1.0,
+                keep_out_zones=[
+                    {
+                        "wire": zone,
+                        "n_discr": 20,
+                        "byedges": False,
+                        "dl": None,
+                    }
+                ],
+                opt_conditions={"max_eval": 1},
             )
 
-        discr_mock.assert_called_once_with(20, byedges=True)
+        discr_mock.assert_called_once_with(20, byedges=False, dl=None)
 
-    def test_zone_discretisation_is_set_with_iterable(self):
+    def test_koz_settings_passed_to_discretize(self):
         parameterisation = PictureFrame()
-        zone = make_circle(radius=4.5, center=[100, 0, 0], axis=[0, 1, 0])
-        zones = [zone, zone]
-        discr = (20, 30)
-        kwargs = {
-            "keep_out_zones": zones,
-            "koz_discretisation": discr,
-            "opt_conditions": {"max_eval": 1},
-        }
+        pf = parameterisation.create_shape()
+        zone = make_circle(radius=4.5, center=(100, 0, 0), axis=(0, 1, 0))
+        koz = KeepOutZone(
+            wire=zone, n_discr=20, byedges=False, dl=None, shape_n_discr=30
+        )
 
         with mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock:
+            with mock.patch.object(parameterisation, "create_shape", return_value=pf):
+                with mock.patch.object(
+                    pf, "discretize", wraps=pf.discretize
+                ) as shape_discr_mock:
+                    optimise_geometry(
+                        parameterisation,
+                        lambda x: x.create_shape().length,
+                        keep_out_zones=[koz],
+                        opt_conditions={"max_eval": 1},
+                    )
+
+        discr_mock.assert_called_once_with(20, byedges=False, dl=None)
+        # Note we expect more than one call to 'geom.discretize' due to
+        # gradient approximation of objective and constraints. They
+        # should all be using the same discretization.
+        assert all(
+            call == mock.call(30, byedges=False)
+            for call in shape_discr_mock.call_args_list
+        )
+
+    @pytest.mark.parametrize(
+        "bad_koz", [{"n_discr": 20, "byedges": False, "dl": None}, 10, None]
+    )
+    def test_TypeError_given_invalid_koz(self, bad_koz):
+        parameterisation = PictureFrame()
+
+        with pytest.raises(TypeError):
             optimise_geometry(
-                parameterisation, lambda x: x.create_shape().length, **kwargs
+                parameterisation,
+                lambda _: 1,
+                keep_out_zones=[bad_koz],
+                opt_conditions={"max_eval": 1},
             )
 
-        assert discr_mock.call_count == 2
-        assert discr_mock.call_args_list[0] == mock.call(20, byedges=True)
-        assert discr_mock.call_args_list[1] == mock.call(30, byedges=True)
-
-    def test_ineq_constraint(self):
+    def test_eq_constraint(self):
         def square_constraint(geom: PictureFrame) -> np.ndarray:
             """Constraint to make a PictureFrame a square."""
             x1, x2, z1, z2, _, _ = geom.variables.values

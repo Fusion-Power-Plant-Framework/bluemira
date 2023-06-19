@@ -19,15 +19,27 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from dataclasses import asdict, dataclass, field
-from itertools import repeat
-from typing import Any, Generic, Iterable, List, Mapping, Optional, Tuple, TypeVar, Union
+from typing import (
+    Any,
+    Generic,
+    Iterable,
+    List,
+    Mapping,
+    Optional,
+    Tuple,
+    TypedDict,
+    TypeVar,
+    Union,
+)
 
 import numpy as np
+from typing_extensions import NotRequired
 
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._geometry import _tools
+from bluemira.optimisation._geometry._tools import KeepOutZone
 from bluemira.optimisation._geometry.typing import (
     GeomConstraintT,
     GeomOptimiserCallable,
@@ -36,6 +48,8 @@ from bluemira.optimisation._geometry.typing import (
 from bluemira.optimisation._optimise import optimise
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
+
+__all__ = ["GeomOptimiserResult", "optimise_geometry", "KeepOutZone"]
 
 
 @dataclass
@@ -66,19 +80,39 @@ class GeomOptimiserResult(Generic[_GeomT]):
     """
 
 
+class KeepOutZoneDict(TypedDict):
+    """Typing for a dict representing a keep-out zone for a geometry optimisation."""
+
+    wire: BluemiraWire
+    """Closed wire defining the keep-out zone."""
+    byedges: NotRequired[bool]
+    """Whether to discretize the keep-out zone by edges or not."""
+    dl: NotRequired[Optional[float]]
+    """
+    The discretization length for the keep-out zone.
+
+    This overrides ``n_discr`` if given.
+    """
+    n_discr: NotRequired[int]
+    """The number of points to discretise the wire into."""
+    shape_n_discr: NotRequired[int]
+    """The number of points to discretise the keep-out zone into."""
+    tol: NotRequired[float]
+    """The number of points to discretise the geometry being optimised into."""
+
+
 def optimise_geometry(
     geom: _GeomT,
     f_objective: GeomOptimiserObjective,
     df_objective: Optional[GeomOptimiserCallable] = None,
     *,
-    keep_out_zones: Iterable[BluemiraWire] = (),
+    keep_out_zones: Iterable[Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]] = (),
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
     eq_constraints: Iterable[GeomConstraintT] = (),
     ineq_constraints: Iterable[GeomConstraintT] = (),
     keep_history: bool = False,
-    koz_discretisation: Union[int, Iterable[int]] = 100,
     check_constraints: bool = True,
     check_constraints_warn: bool = True,
 ) -> GeomOptimiserResult[_GeomT]:
@@ -101,8 +135,11 @@ def optimise_geometry(
         This argument is ignored if a non-gradient based algorithm is
         used.
     keep_out_zones:
-        An iterable of closed wires, defining areas the geometry must
-        not intersect.
+        An iterable of keep-out zones: closed wires that the geometry
+        must not intersect.
+        Each item can be given as a :class:`.KeepOutZone`, or a
+        dictionary with keys the same as the properties of the
+        `:class:`.KeepOutZone` class, or just a :class:`.BluemiraWire`.
     algorithm:
         The optimisation algorithm to use, by default ``Algorithm.SLSQP``.
     opt_conditions:
@@ -124,11 +161,11 @@ def optimise_geometry(
         The equality constraints for the optimiser.
         A dict with keys:
 
-            * f_constraint: the constraint function.
-            * tolerance: the tolerances in each constraint dimension.
-            * df_constraint (optional): the derivative of the constraint
-              function. If not given, a numerical approximation of the
-              gradient is made (if a gradient is required).
+        * f_constraint: the constraint function.
+        * tolerance: the tolerances in each constraint dimension.
+        * df_constraint (optional): the derivative of the constraint
+            function. If not given, a numerical approximation of the
+            gradient is made (if a gradient is required).
 
         A constraint is a vector-valued, non-linear, equality
         constraint of the form $f_{c}(x) \eq 0$.
@@ -138,9 +175,9 @@ def optimise_geometry(
 
             * `g` is a geometry parameterisation.
             * `y` is a numpy array containing the values of the
-              constraint at the current parameterisation of ``g``.
-              It must have size $m$, where $m$ is the dimensionality of
-              the constraint.
+                constraint at the current parameterisation of ``g``.
+                It must have size $m$, where $m$ is the dimensionality of
+                the constraint.
 
         The tolerance array must have the same dimensionality as the
         constraint.
@@ -171,13 +208,6 @@ def optimise_geometry(
         parameters at each iteration. Note that this can significantly
         impact the performance of the optimisation.
         (default: False)
-    koz_discretisation:
-        The number of points to discretise the keep-out zone(s) over.
-        If this is an int, all keep-out zones will be discretised with
-        the same number of points. If this is an iterable, each i-th
-        keep-out zone is discretised using value in the i-th item.
-        The iterable should have the same number of items as
-        ``keep_out_zones``.
     check_constraints:
         Whether to check all constraints have been satisfied at the end
         of the optimisation, and warn if they have not. Note that, if
@@ -201,10 +231,8 @@ def optimise_geometry(
     ineq_constraints_list = _tools.get_shape_ineq_constraint(geom)
     for constraint in ineq_constraints:
         ineq_constraints_list.append(constraint)
-    for koz, discr in zip_with_scalar(keep_out_zones, koz_discretisation):
-        ineq_constraints_list.append(
-            _tools.make_keep_out_zone_constraint(koz, n_discr=discr)
-        )
+    for zone in keep_out_zones:
+        ineq_constraints_list.append(_tools.make_keep_out_zone_constraint(_to_koz(zone)))
 
     result = optimise(
         f_obj,
@@ -227,14 +255,12 @@ def optimise_geometry(
     return GeomOptimiserResult(**asdict(result), geom=geom)
 
 
-_T1 = TypeVar("_T1")
-_T2 = TypeVar("_T2")
-
-
-def zip_with_scalar(
-    it1: Iterable[_T1], it2: Union[Iterable[_T2], _T2]
-) -> Iterable[Tuple[_T1, _T2]]:
-    """Return an iterator that zips an iterable with another, or with a scalar."""
-    if not isinstance(it2, Iterable):
-        it2 = repeat(it2)
-    return zip(it1, it2)
+def _to_koz(koz: Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]) -> KeepOutZone:
+    """Convert ``koz`` to a ``KeepOutZone``."""
+    if isinstance(koz, BluemiraWire):
+        return KeepOutZone(koz)
+    if isinstance(koz, Mapping):
+        return KeepOutZone(**koz)
+    if isinstance(koz, KeepOutZone):
+        return koz
+    raise TypeError(f"Type '{type(koz).__name__}' is not a valid keep-out zone.")
