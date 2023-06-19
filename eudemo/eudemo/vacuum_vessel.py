@@ -101,7 +101,7 @@ class VacuumVessel(ComponentManager):
         #     view_comp.parent = None
         #     del view_comp
         #     new_2d_comps = make_2d_view_components(view, azimuthal_angle=180/n_TF,
-        #                                            components=[sector_body, sector_void])
+        #                                         components=[sector_body, sector_void])
         #     Component(view, children=new_2d_comps, parent=component)
 
 
