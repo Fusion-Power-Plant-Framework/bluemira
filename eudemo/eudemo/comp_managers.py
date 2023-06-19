@@ -30,7 +30,7 @@ from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.geometry.tools import boolean_fuse
+from bluemira.geometry.tools import boolean_cut, boolean_fuse
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials import Void
 from eudemo.maintenance.duct_connection import pipe_pipe_join
@@ -72,10 +72,10 @@ class ThermalShield(ComponentManager):
     """
 
     def vacuum_vessel_thermal_shield(self) -> Component:
-        return self.component().get_component(VVTSBuilder.VVTS)
+        return self.component().get_component("VVTS")
 
     def cryostat_thermal_shield(self) -> Component:
-        return self.component().get_component(CryostatTSBuilder.CRYO_TS)
+        return self.component().get_component("CryostatTS")
 
     def add_ports(self, ports: List[Component]):
         vvts = self.vacuum_vessel_thermal_shield()
@@ -83,17 +83,17 @@ class ThermalShield(ComponentManager):
 
         vvts_xyz = vvts.get_component("xyz")
         vv_xyz = vvts_xyz.get_component("Sector 1")
-        vvts_target_void = vv_xyz.get_component(VVTSBuilder.VVTS + " voidspace 1").shape
-        vvts_target_shape = vv_xyz.get_component(VVTSBuilder.VVTS + " 1").shape
-        vvts_xyz.parent = None
-        del vvts_xyz
+        vvts_target_name = f"{VVTSBuilder.VOID} 1"
+        vvts_void_name = f"{VVTSBuilder.VVTS} 1"
+        vvts_target_void = vv_xyz.get_component(vvts_target_name).shape
+        vvts_target_shape = vv_xyz.get_component(vvts_void_name).shape
 
-        # cts_xyz = cts.get_component("xyz")
-        # cr_xyz = cts_xyz.get_component("Sector 1")
-        # cts_target_void = cr_xyz.get_component("Vessel voidspace 1").shape
-        # cts_target_shape = cr_xyz.get_component("Body 1").shape
-        # cts_xyz.parent = None
-        # del cts_xyz
+        cts_xyz = cts.get_component("xyz")
+        cr_xyz = cts_xyz.get_component("Sector 1")
+        cts_target_name = f"{CryostatTSBuilder.VOID} 1"
+        cts_void_name = f"{CryostatTSBuilder.CRYO_TS} 1"
+        cts_target_void = cr_xyz.get_component(cts_target_name).shape
+        cts_target_shape = cr_xyz.get_component(cts_void_name).shape
 
         if isinstance(ports, Component):
             ports = [ports]
@@ -102,7 +102,7 @@ class ThermalShield(ComponentManager):
         new_shape_pieces = []
         for i, port in enumerate(ports):
             if i > 0:
-                vvts_target_shape = boolean_fuse(new_shape_pieces)
+                vvts_target_shape = new_shape_pieces[0]
 
             port_xyz = port.get_component("xyz")
             tool_shape = port_xyz.get_component(port.name).shape
@@ -111,16 +111,53 @@ class ThermalShield(ComponentManager):
             new_shape_pieces = pipe_pipe_join(
                 vvts_target_shape, vvts_target_void, tool_shape, tool_void
             )
+            # Assume the body is the biggest piece
+            new_shape_pieces.sort(key=lambda solid: -solid.volume)
+
+        cts_target_shape = boolean_cut(cts_target_shape, tool_voids)
+
         final_shape = boolean_fuse(new_shape_pieces)
         final_void = boolean_fuse([vvts_target_void] + tool_voids)
 
-        sector_body = PhysicalComponent(VVTSBuilder.VVTS, final_shape)
-        sector_void = PhysicalComponent(
-            VVTSBuilder.VOID, final_void, material=Void("vacuum")
+        vvts_sector_body = PhysicalComponent(vvts_target_name, final_shape)
+        vvts_sector_void = PhysicalComponent(
+            vvts_void_name, final_void, material=Void("vacuum")
         )
-        apply_component_display_options(sector_body, color=BLUE_PALETTE["TS"][0])
-        apply_component_display_options(sector_void, color=(0, 0, 0))
-        Component("xyz", children=[sector_body, sector_void], parent=vvts)
+        apply_component_display_options(vvts_sector_body, color=BLUE_PALETTE["TS"][0])
+        apply_component_display_options(vvts_sector_void, color=(0, 0, 0))
+
+        cts_sector_body = PhysicalComponent(cts_target_name, cts_target_shape)
+        cts_sector_void = PhysicalComponent(
+            cts_void_name, cts_target_void, material=Void("vacuum")
+        )
+        apply_component_display_options(cts_sector_body, color=BLUE_PALETTE["TS"][0])
+        apply_component_display_options(cts_sector_void, color=(0, 0, 0))
+
+        # Orphan and kill old shapes
+        vvts_xyz.parent = None
+        del vvts_xyz
+        cts_xyz.parent = None
+        del cts_xyz
+        vvts.add_child(
+            Component(
+                "xyz",
+                children=[
+                    Component("Sector 1", children=[vvts_sector_body, vvts_sector_void])
+                ],
+            )
+        )
+        cts.add_child(
+            Component(
+                "xyz",
+                children=[
+                    Component("Sector 1", children=[cts_sector_body, cts_sector_void])
+                ],
+            )
+        )
+        # component = self.component()
+        # parent = component.parent
+        # component.parent = None
+        # Component(component.name, children=[vvts, cts], parent=parent)
 
 
 class Cryostat(ComponentManager):

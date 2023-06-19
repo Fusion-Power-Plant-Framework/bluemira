@@ -134,14 +134,13 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
     """
     Build the Cryostat thermal shield for the reactor.
     """
-    return CryostatThermalShield(
-        CryostatTSBuilder(
-            params,
-            build_config,
-            pf_kozs,
-            tf_koz,
-        ).build()
+    cts_builder = CryostatTSBuilder(
+        params,
+        build_config,
+        pf_kozs,
+        tf_koz,
     )
+    return CryostatThermalShield(cts_builder.build())
 
 
 def assemble_thermal_shield(vv_thermal_shield, cryostat_thermal_shield):
