@@ -53,7 +53,7 @@ from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import interpolate_bspline, make_polygon
+from bluemira.geometry.tools import interpolate_bspline
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -144,6 +144,9 @@ def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield
 
 
 def assemble_thermal_shield(vv_thermal_shield, cryostat_thermal_shield):
+    """
+    Assemble the thermal shield component for the reactor.
+    """
     component = Component(
         name="Thermal Shield",
         children=[vv_thermal_shield.component(), cryostat_thermal_shield.component()],
