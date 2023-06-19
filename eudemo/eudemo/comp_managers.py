@@ -101,23 +101,26 @@ class ThermalShield(ComponentManager):
         tool_voids = []
         new_shape_pieces = []
         for i, port in enumerate(ports):
-            if i > 0:
-                vvts_target_shape = new_shape_pieces[0]
-
             port_xyz = port.get_component("xyz")
             tool_shape = port_xyz.get_component(port.name).shape
             tool_void = port_xyz.get_component(port.name + " voidspace").shape
             tool_voids.append(tool_void)
-            new_shape_pieces = pipe_pipe_join(
+            result_pieces = pipe_pipe_join(
                 vvts_target_shape, vvts_target_void, tool_shape, tool_void
             )
             # Assume the body is the biggest piece
-            new_shape_pieces.sort(key=lambda solid: -solid.volume)
+            result_pieces.sort(key=lambda solid: -solid.volume)
+            vvts_target_shape = result_pieces[0]
+            new_shape_pieces.extend(result_pieces[1:])
 
-        cts_target_shape = boolean_cut(cts_target_shape, tool_voids)
-
-        final_shape = boolean_fuse(new_shape_pieces)
+        final_shape = boolean_fuse([vvts_target_shape] + new_shape_pieces)
         final_void = boolean_fuse([vvts_target_void] + tool_voids)
+
+        temp = boolean_cut(final_shape, cts_target_shape)
+        temp.sort(key=lambda solid: -solid.volume)
+        final_shape = temp[0]
+
+        cts_target_shape = boolean_cut(cts_target_shape, tool_voids)[0]
 
         vvts_sector_body = PhysicalComponent(vvts_target_name, final_shape)
         vvts_sector_void = PhysicalComponent(
@@ -138,26 +141,21 @@ class ThermalShield(ComponentManager):
         del vvts_xyz
         cts_xyz.parent = None
         del cts_xyz
-        vvts.add_child(
-            Component(
-                "xyz",
-                children=[
-                    Component("Sector 1", children=[vvts_sector_body, vvts_sector_void])
-                ],
-            )
+        # Replace xyz components
+        Component(
+            "xyz",
+            children=[
+                Component("Sector 1", children=[vvts_sector_body, vvts_sector_void])
+            ],
+            parent=vvts,
         )
-        cts.add_child(
-            Component(
-                "xyz",
-                children=[
-                    Component("Sector 1", children=[cts_sector_body, cts_sector_void])
-                ],
-            )
+        Component(
+            "xyz",
+            children=[
+                Component("Sector 1", children=[cts_sector_body, cts_sector_void])
+            ],
+            parent=cts,
         )
-        # component = self.component()
-        # parent = component.parent
-        # component.parent = None
-        # Component(component.name, children=[vvts, cts], parent=parent)
 
 
 class Cryostat(ComponentManager):
