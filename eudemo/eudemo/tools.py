@@ -54,9 +54,17 @@ def make_2d_view_components(
 
     Parameters
     ----------
+    view:
+        View to make the components for. From ['xz', 'xy']
+    azimuthal_angle:
+        Angle at which to cut the x-z plane [degree]. Has no effect for the
+        x-y plane
+    components:
+        List of PhysicalComponents to take slices from
 
     Returns
     -------
+    List of PhysicalComponents in the desired view plane
     """
     azimuthal_angle = np.deg2rad(azimuthal_angle)
     if view == "xz":
