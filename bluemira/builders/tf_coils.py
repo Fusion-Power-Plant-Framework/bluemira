@@ -49,6 +49,7 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.optimisation import GeomOptimisationProblem
+from bluemira.optimisation._geometry.optimise import KeepOutZone
 
 
 class ParameterisedRippleSolver:
@@ -469,13 +470,22 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         self.params = make_parameter_frame(params, RippleConstrainedLengthGOPParams)
         self.separatrix = separatrix
         self.wp_cross_section = wp_cross_section
-        self._keep_out_zone = [keep_out_zone] if keep_out_zone else []
         self.algorithm = algorithm
         self.opt_parameters = opt_parameters
         self.opt_conditions = opt_conditions
-        self.n_koz_points = n_koz_points
-        # TODO: koz_con_tol cannot be piped to optimise_geometry
-        self.koz_con_tol = koz_con_tol
+
+        if keep_out_zone:
+            self._keep_out_zone = [
+                KeepOutZone(
+                    keep_out_zone,
+                    byedges=True,
+                    dl=keep_out_zone.length / 200,
+                    koz_con_tol=koz_con_tol,
+                    shape_n_discr=n_koz_points,
+                )
+            ]
+        else:
+            self._keep_out_zone = []
 
         if ripple_selector is None:
             warnings.warn(
@@ -537,7 +547,6 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             algorithm=self.algorithm,
             opt_conditions=self.opt_conditions,
             opt_parameters=self.opt_parameters,
-            koz_discretisation=self.n_koz_points,
         )
         self.parameterisation.variables.set_values_from_norm(result.x)
 
