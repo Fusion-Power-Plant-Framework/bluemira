@@ -277,21 +277,12 @@ class NloptOptimiser(Optimiser):
         It's likely the last call was a decent solution, so return that
         (with a warning).
         """
-        round_off_msg = "optimisation: round-off error occurred"
-        if self._objective.history:
-            bluemira_warn(
-                f"{round_off_msg}. Returning best parameterisation found so far."
-            )
-            fx_values = [h[1] for h in self._objective.history]
-            arg_min_fx = np.argmin(fx_values)
-            f_x = fx_values[arg_min_fx]
-            x_star = self._objective.history[arg_min_fx][0]
-        else:
-            bluemira_warn(
-                f"{round_off_msg}. Returning last optimisation parameterisation."
-            )
-            x_star = self._objective.prev_iter
-            f_x = self._objective.f(x_star) if x_star.size else np.inf
+        bluemira_warn(
+            "optimisation: round-off error occurred. "
+            "Returning last optimisation parameterisation."
+        )
+        x_star = self._objective.prev_iter
+        f_x = self._objective.f(x_star) if x_star.size else np.inf
         return x_star, f_x
 
     def _set_algorithm(self, alg: Union[str, Algorithm]) -> None:
