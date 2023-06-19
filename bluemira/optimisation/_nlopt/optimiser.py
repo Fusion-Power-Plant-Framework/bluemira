@@ -279,9 +279,6 @@ class NloptOptimiser(Optimiser):
         """
         round_off_msg = "optimisation: round-off error occurred"
         if self._objective.history:
-            # TODO(hsaunders1904): Is this really what we want to
-            # return? Can't the minimum have been something that
-            # wildly violates constraints?
             bluemira_warn(
                 f"{round_off_msg}. Returning best parameterisation found so far."
             )
