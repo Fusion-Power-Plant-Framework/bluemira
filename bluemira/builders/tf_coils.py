@@ -32,6 +32,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.parameterisations import GeometryParameterisation
+    from bluemira.optimisation._geometry.typing import GeomConstraintT
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -48,8 +49,7 @@ from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
-from bluemira.optimisation import GeomOptimisationProblem
-from bluemira.optimisation._geometry.optimise import KeepOutZone
+from bluemira.optimisation import GeomOptimisationProblem, KeepOutZone
 
 
 class ParameterisedRippleSolver:
@@ -206,7 +206,7 @@ class RipplePointSelector(ABC):
         self.TF_ripple_limit = TF_ripple_limit
         return {
             "f_constraint": self._constrain_ripple,
-            "tolerance": rip_con_tol * np.ones(len(self.points)),
+            "tolerance": np.full(len(self.points), rip_con_tol),
         }
 
     def _constrain_ripple(
@@ -347,7 +347,7 @@ class MaximiseSelector(RipplePointSelector):
 
     def make_ripple_constraint(
         self, parameterisation, solver, TF_ripple_limit, rip_con_tol
-    ) -> Dict:
+    ) -> GeomConstraintT:
         """
         Make the ripple OptimisationConstraint
         """
@@ -356,7 +356,7 @@ class MaximiseSelector(RipplePointSelector):
         self.TF_ripple_limit = TF_ripple_limit
         return {
             "f_constraint": self._constrain_max_ripple,
-            "tolerance": rip_con_tol * np.ones(2),
+            "tolerance": np.full(2, rip_con_tol),
         }
 
     def _constrain_max_ripple(self, parameterisation: GeometryParameterisation) -> float:
