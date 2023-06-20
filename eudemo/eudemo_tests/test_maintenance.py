@@ -39,8 +39,6 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.maintenance.duct_connection import (
-    TSUpperPortDuctBuilder,
-    TSUpperPortDuctBuilderParams,
     VVUpperPortDuctBuilder,
     VVUpperPortDuctBuilderParams,
 )
