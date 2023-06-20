@@ -109,7 +109,7 @@ class ThermalShield(ComponentManager):
 
         tool_voids = []
         new_shape_pieces = []
-        for i, port in enumerate(ports):
+        for port in ports:
             port_xyz = port.get_component("xyz")
             tool_shape = port_xyz.get_component(port.name).shape
             tool_void = port_xyz.get_component(port.name + " voidspace").shape
