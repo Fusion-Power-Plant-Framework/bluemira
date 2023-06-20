@@ -513,13 +513,6 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         )
         self.ripple_selector = ripple_selector
 
-    def _make_koz_points(self, keep_out_zone: BluemiraWire) -> Coordinates:
-        """
-        Make a set of points at which to evaluate the KOZ constraint
-        """
-        # TODO: I guess I'm gonna lose this fine control?
-        return keep_out_zone.discretize(byedges=True, dl=keep_out_zone.length / 200).xz
-
     def objective(self, parameterisation: GeometryParameterisation) -> float:
         """
         Objective function (minimise length)
