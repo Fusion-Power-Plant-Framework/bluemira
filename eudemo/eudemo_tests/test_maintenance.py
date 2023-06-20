@@ -101,10 +101,10 @@ class TestDuctConnection:
         self.params = VVUpperPortDuctBuilderParams(
             Parameter("n_TF", 12, ""),
             Parameter("tf_wp_depth", 1.0, "m"),
-            Parameter("g_ts_tf", 0.05, "m"),
-            Parameter("tk_ts", 0.05, "m"),
-            Parameter("g_vv_ts", 0.05, "m"),
-            Parameter("g_cr_ts", 0.05, "m"),
+            Parameter("g_ts_tf", 0.00, "m"),
+            Parameter("tk_ts", 0.00, "m"),
+            Parameter("g_vv_ts", 0.00, "m"),
+            Parameter("g_cr_ts", 0.00, "m"),
             Parameter("tk_vv_double_wall", 0.1, "m"),
             Parameter("tk_vv_single_wall", 0.05, "m"),
         )
