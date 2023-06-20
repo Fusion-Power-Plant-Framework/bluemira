@@ -72,12 +72,21 @@ class ThermalShield(ComponentManager):
     """
 
     def vacuum_vessel_thermal_shield(self) -> Component:
+        """
+        Get the vacuum vessel thermal shield component
+        """
         return self.component().get_component("VVTS")
 
     def cryostat_thermal_shield(self) -> Component:
+        """
+        Get the cryostat thermal shield component
+        """
         return self.component().get_component("CryostatTS")
 
     def add_ports(self, ports: List[Component], n_TF: int):
+        """
+        Add ports to the thermal shield
+        """
         vvts = self.vacuum_vessel_thermal_shield()
         cts = self.cryostat_thermal_shield()
 
