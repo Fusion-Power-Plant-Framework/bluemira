@@ -351,9 +351,6 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         )
 
         bluemira_print(f"Solving design problem: {type(design_problem).__name__}")
-        if parameterisation.n_ineq_constraints > 0:
-            bluemira_debug("Applying shape constraints")
-            design_problem.apply_shape_constraints()
 
         result = design_problem.optimise()
         result.to_json(self.file_path)
