@@ -480,7 +480,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
                     keep_out_zone,
                     byedges=True,
                     dl=keep_out_zone.length / 200,
-                    koz_con_tol=koz_con_tol,
+                    tol=koz_con_tol,
                     shape_n_discr=n_koz_points,
                 )
             ]
