@@ -531,17 +531,20 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         """
         return [self._ripple_constraint]
 
-    def optimise(self, x0: Optional[np.ndarray] = None) -> GeometryParameterisation:
+    def optimise(self) -> GeometryParameterisation:
         """
         Solve the GeometryOptimisationProblem.
         """
-        result = super().optimise(
-            self.parameterisation,
-            algorithm=self.algorithm,
-            opt_conditions=self.opt_conditions,
-            opt_parameters=self.opt_parameters,
+        self.parameterisation = (
+            super()
+            .optimise(
+                self.parameterisation,
+                algorithm=self.algorithm,
+                opt_conditions=self.opt_conditions,
+                opt_parameters=self.opt_parameters,
+            )
+            .geom
         )
-        self.parameterisation.variables.set_values_from_norm(result.x)
 
         self.solver.update_cage(self.parameterisation.create_shape())
         self.ripple_values = self.solver.ripple(*self.ripple_selector.points)
