@@ -105,8 +105,8 @@ class TestDuctConnection:
             Parameter("tk_ts", 0.05, "m"),
             Parameter("g_vv_ts", 0.05, "m"),
             Parameter("g_cr_ts", 0.05, "m"),
-            Parameter("tk_vv_single_wall", 0.5, "m"),
             Parameter("tk_vv_double_wall", 0.1, "m"),
+            Parameter("tk_vv_single_wall", 0.05, "m"),
         )
         self.port_koz = self.port_kozs[0]
 
