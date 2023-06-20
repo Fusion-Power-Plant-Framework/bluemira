@@ -582,9 +582,9 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             wire_options={"color": "blue", "linewidth": 1.0},
         )
 
-        if self._keep_out_zone:
+        for koz in self._keep_out_zone:
             plot_2d(
-                self._keep_out_zone,
+                koz.wire,
                 ax=ax,
                 show=False,
                 wire_options={"color": "k", "linewidth": 0.5},
