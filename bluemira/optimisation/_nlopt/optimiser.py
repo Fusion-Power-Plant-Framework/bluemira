@@ -77,10 +77,12 @@ class NloptOptimiser(Optimiser):
         argument (a numpy array), and return a numpy array or float.
     df_objective:
         The derivative of the objective function. This must take the
-        form: `f(x) -> y` where `x` is a numpy array containing the
-        optimization parameters, and `y` is a numpy array where each
-        element `i` is the partial derivative `\partialf/\partialdx_{i}`.
-        If not given, a numerical approximation of the gradient is used.
+        form: :math:`f(x) \rightarrow y` where :math:`x` is a numpy
+        array containing the optimization parameters, and :math:`y` is a
+        numpy array where each element :math:`i` is the partial
+        derivative :math:`\frac{\partial f(x)}{\partial x_{i}}`.
+        If not given, and a gradient based algorithm is used, a
+        numerical approximation of the gradient will be made.
     opt_conditions:
         The stopping conditions for the optimiser. At least one stopping
         condition is required. Supported conditions are:
@@ -94,22 +96,12 @@ class NloptOptimiser(Optimiser):
             * stop_val: float
 
     opt_parameters:
-        Parameters specific to the algorithm being used. Consult NLopt
-        documentation for these.
+        Parameters specific to the algorithm being used. Consult the
+        NLopt documentation for these.
     keep_history:
         Whether to record the history of each step of the optimisation.
-        (default: False)
+        (default: ``False``)
     """
-
-    SLSQP = "SLSQP"
-    COBYLA = "COBYLA"
-    SBPLX = "SBPLX"
-    MMA = "MMA"
-    BFGS = "BFGS"
-    DIRECT = "DIRECT"
-    DIRECT_L = "DIRECT_L"
-    CRS = "CRS"
-    ISRES = "ISRES"
 
     def __init__(
         self,
@@ -164,13 +156,6 @@ class NloptOptimiser(Optimiser):
         tolerance: np.ndarray,
         df_constraint: Optional[OptimiserCallable] = None,
     ) -> None:
-        """
-        Add an equality constraint to the optimiser.
-
-        See docs of
-        :obj:`optimisation._optimiser.Optimiser.add_eq_constraint` for
-        details of the form the arguments should take.
-        """
         if self.algorithm not in [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES]:
             raise OptimisationError(
                 f"Algorithm '{self.algorithm.name}' does not support equality "
@@ -192,13 +177,6 @@ class NloptOptimiser(Optimiser):
         tolerance: np.ndarray,
         df_constraint: Optional[OptimiserCallable] = None,
     ) -> None:
-        r"""
-        Add an inequality constraint to the optimiser.
-
-        See docs of
-        :obj:`optimisation._optimiser.Optimiser.add_ineq_constraint` for
-        details of the form the arguments should take.
-        """
         if self.algorithm not in [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES]:
             raise OptimisationError(
                 f"Algorithm '{self.algorithm.name}' does not support inequality "
@@ -215,13 +193,6 @@ class NloptOptimiser(Optimiser):
         self._ineq_constraints.append(constraint)
 
     def optimise(self, x0: Optional[np.ndarray] = None) -> OptimiserResult:
-        """
-        Run the optimiser.
-
-        See docs of
-        :obj:`optimisation._optimiser.Optimiser.optimise` for details of
-        the form the arguments should take.
-        """
         if x0 is None:
             x0 = _initial_guess_from_bounds(self.lower_bounds, self.upper_bounds)
 
@@ -256,11 +227,6 @@ class NloptOptimiser(Optimiser):
         )
 
     def set_lower_bounds(self, bounds: np.ndarray) -> None:
-        """
-        Set the lower bound for each optimisation parameter.
-
-        Set to `-np.inf` to unbound the parameter's minimum.
-        """
         bounds = np.array(bounds)
         _check_bounds(self._opt.get_dimension(), bounds)
         self._opt.set_lower_bounds(bounds)
@@ -272,11 +238,6 @@ class NloptOptimiser(Optimiser):
             constraint.set_approx_derivative_lower_bound(bounds)
 
     def set_upper_bounds(self, bounds: Union[np.ndarray, float]) -> None:
-        """
-        Set the upper bound for each optimisation parameter.
-
-        Set to `np.inf` to unbound the parameter's minimum.
-        """
         bounds = np.array(bounds)
         _check_bounds(self._opt.get_dimension(), bounds)
         self._opt.set_upper_bounds(bounds)
