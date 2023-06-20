@@ -37,7 +37,6 @@ if TYPE_CHECKING:
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.optimize import minimize
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_debug_flush
@@ -49,7 +48,7 @@ from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
-from bluemira.optimisation import GeomOptimisationProblem, KeepOutZone
+from bluemira.optimisation import GeomOptimisationProblem, KeepOutZone, optimise
 
 
 class ParameterisedRippleSolver:
@@ -375,8 +374,13 @@ class MaximiseSelector(RipplePointSelector):
             point = self._wire.value_at(alpha)
             return -self.solver.ripple(*point)
 
-        result = minimize(
-            f_max_ripple, x0=self._alpha_0, bounds=[(0, 1)], method="SLSQP"
+        result = optimise(
+            f_max_ripple,
+            x0=np.array([self._alpha_0]),
+            dimensions=1,
+            bounds=[(0), (1)],
+            algorithm="SLSQP",
+            opt_conditions={"ftol_rel": 1e-6, "max_eval": 2000},
         )
 
         max_ripple_point = self._wire.value_at(result.x)
