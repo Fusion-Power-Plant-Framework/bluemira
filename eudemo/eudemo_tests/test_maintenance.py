@@ -202,6 +202,7 @@ class TestDuctConnection:
         # raises an error in two different places
         self.params.tk_vv_single_wall.value = 0.5
         self.params.tk_vv_double_wall.value = end
+        self.params.tf_wp_depth.value = 2.0
         builder = VVUpperPortDuctBuilder(self.params, self.port_koz, self.port_koz)
 
         with pytest.raises(BuilderError):
