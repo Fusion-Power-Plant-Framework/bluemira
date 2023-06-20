@@ -41,6 +41,8 @@ from bluemira.utilities.optimiser import Optimiser
 from eudemo.maintenance.duct_connection import (
     TSUpperPortDuctBuilder,
     TSUpperPortDuctBuilderParams,
+    VVUpperPortDuctBuilder,
+    VVUpperPortDuctBuilderParams,
 )
 from eudemo.maintenance.equatorial_port import (
     CastellationBuilder,
@@ -91,12 +93,20 @@ class TestDuctConnection:
             make_polygon({"x": [0.1, 10, 10, 0.1], "z": [4, 4, 15, 15]}, closed=True)
         ),
     )
+    cryostat_xz = make_polygon(
+        {"x": [0, 20, 20, 0], "z": [-16, -16, 16, 16]}, closed=True
+    )
 
     def setup_method(self):
-        self.params = TSUpperPortDuctBuilderParams(
+        self.params = VVUpperPortDuctBuilderParams(
             Parameter("n_TF", 12, ""),
-            Parameter("tk_upper_port_wall_side", 0.1, "m"),
-            Parameter("tk_upper_port_wall_end", 0.2, "m"),
+            Parameter("tf_wp_depth", 1.0, "m"),
+            Parameter("g_ts_tf", 0.05, "m"),
+            Parameter("tk_ts", 0.05, "m"),
+            Parameter("g_vv_ts", 0.05, "m"),
+            Parameter("g_cr_ts", 0.05, "m"),
+            Parameter("tk_vv_single_wall", 0.5, "m"),
+            Parameter("tk_vv_double_wall", 0.1, "m"),
         )
         self.port_koz = self.port_kozs[0]
 
@@ -128,9 +138,10 @@ class TestDuctConnection:
     def test_extrusion_shape(self, port_koz, n_TF, y_offset, port_wall):
         angle = 2 * np.rad2deg(np.pi / n_TF)
         self.params.n_TF.value = n_TF
-        self.params.tk_upper_port_wall_side.value = port_wall
-        self.params.tk_upper_port_wall_end.value = port_wall * 2
-        builder = TSUpperPortDuctBuilder(self.params, port_koz, y_offset)
+        self.params.tk_vv_single_wall.value = port_wall
+        self.params.tk_vv_double_wall.value = port_wall * 2
+        self.params.tf_wp_depth.value = y_offset
+        builder = VVUpperPortDuctBuilder(self.params, port_koz, self.cryostat_xz)
         port = builder.build()
         xy = port.get_component("xy").get_component_properties("shape")
         diff = xy.wires[0].length - xy.wires[1].length
@@ -184,17 +195,17 @@ class TestDuctConnection:
         assert np.allclose(finalshape.volume, cylinder.volume)
 
     def test_ValueError_on_zero_wal_thickness(self):
-        self.params.tk_upper_port_wall_side.value = 0
+        self.params.tk_vv_single_wall.value = 0
 
         with pytest.raises(ValueError):
-            TSUpperPortDuctBuilder(self.params, self.port_koz, 0)
+            VVUpperPortDuctBuilder(self.params, self.port_koz, self.cryostat_xz)
 
     @pytest.mark.parametrize("end", [1, 5])
     def test_BuilderError_on_too_small_port(self, end):
         # raises an error in two different places
-        self.params.tk_upper_port_wall_side.value = 0.5
-        self.params.tk_upper_port_wall_end.value = end
-        builder = TSUpperPortDuctBuilder(self.params, self.port_koz, 2)
+        self.params.tk_vv_single_wall.value = 0.5
+        self.params.tk_vv_double_wall.value = end
+        builder = VVUpperPortDuctBuilder(self.params, self.port_koz, self.cryostat_xz)
 
         with pytest.raises(BuilderError):
             builder.build()
