@@ -103,14 +103,8 @@ class EquatorialPortKOZDesigner(Designer):
             Parameters for the equatorial port designer
         build_config:
             Build config for the equatorial port designer
-        koz_z_offset:
-            offset distance for the KOZ around the equatorial port
-        x_ib:
-            in-board x-position of the KOZ
         x_ob:
             out-board x-position of the KOZ
-        z_pos:
-            z-positional height of the KOZ x-y midplane, default: 0.0
         """
         super().__init__(params, build_config)
         self.koz_offset = (

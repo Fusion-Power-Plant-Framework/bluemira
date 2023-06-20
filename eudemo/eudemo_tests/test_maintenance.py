@@ -93,14 +93,11 @@ class TestDuctConnection:
             make_polygon({"x": [0.1, 10, 10, 0.1], "z": [4, 4, 15, 15]}, closed=True)
         ),
     )
-    cryostat_xz = make_polygon(
-        {"x": [0, 20, 20, 0], "z": [-16, -16, 16, 16]}, closed=True
-    )
 
     def setup_method(self):
         self.params = VVUpperPortDuctBuilderParams(
             Parameter("n_TF", 12, ""),
-            Parameter("tf_wp_depth", 1.0, "m"),
+            Parameter("tf_wp_depth", 0.0, "m"),
             Parameter("g_ts_tf", 0.00, "m"),
             Parameter("tk_ts", 0.00, "m"),
             Parameter("g_vv_ts", 0.00, "m"),
@@ -141,7 +138,7 @@ class TestDuctConnection:
         self.params.tk_vv_single_wall.value = port_wall
         self.params.tk_vv_double_wall.value = port_wall * 2
         self.params.tf_wp_depth.value = y_offset
-        builder = VVUpperPortDuctBuilder(self.params, port_koz, self.cryostat_xz)
+        builder = VVUpperPortDuctBuilder(self.params, port_koz, port_koz)
         port = builder.build()
         xy = port.get_component("xy").get_component_properties("shape")
         diff = xy.wires[0].length - xy.wires[1].length
@@ -198,14 +195,14 @@ class TestDuctConnection:
         self.params.tk_vv_single_wall.value = 0
 
         with pytest.raises(ValueError):
-            VVUpperPortDuctBuilder(self.params, self.port_koz, self.cryostat_xz)
+            VVUpperPortDuctBuilder(self.params, self.port_koz, self.port_koz)
 
     @pytest.mark.parametrize("end", [1, 5])
     def test_BuilderError_on_too_small_port(self, end):
         # raises an error in two different places
         self.params.tk_vv_single_wall.value = 0.5
         self.params.tk_vv_double_wall.value = end
-        builder = VVUpperPortDuctBuilder(self.params, self.port_koz, self.cryostat_xz)
+        builder = VVUpperPortDuctBuilder(self.params, self.port_koz, self.port_koz)
 
         with pytest.raises(BuilderError):
             builder.build()
@@ -223,11 +220,20 @@ class TestEquatorialPortKOZDesigner:
     )
     def test_ep_designer(self, xi, xo, zh):
         """Test Equatorial Port KOZ Designer"""
+        R_0 = xi
         self.params = {
+            "R_0": {"value": R_0, "unit": "m"},
             "ep_height": {"value": zh, "unit": "m"},
+            "ep_z_position": {"value": 0.0, "unit": "m"},
+            "g_vv_ts": {"value": 0.0, "unit": "m"},
+            "tk_ts": {"value": 0.0, "unit": "m"},
+            "g_ts_tf": {"value": 0.0, "unit": "m"},
+            "pf_s_g": {"value": 0.0, "unit": "m"},
+            "pf_s_tk_plate": {"value": 0.0, "unit": "m"},
+            "tk_vv_single_wall": {"value": 0.0, "unit": "m"},
         }
-        x_len = xo - xi
-        self.designer = EquatorialPortKOZDesigner(self.params, None, 0.0, xi, xo)
+        x_len = xo - R_0
+        self.designer = EquatorialPortKOZDesigner(self.params, None, xo)
         output = self.designer.execute()
 
         assert np.isclose(output.length, 2 * (x_len + zh))
