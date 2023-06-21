@@ -24,6 +24,7 @@ from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import nlopt
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm
@@ -156,6 +157,11 @@ class NloptOptimiser(Optimiser):
         tolerance: np.ndarray,
         df_constraint: Optional[OptimiserCallable] = None,
     ) -> None:
+        """
+        Add an equality constraint.
+
+        See :meth:`~bluemira.optimisation._optimiser.Optimiser.add_eq_constraint`.
+        """
         if self.algorithm not in [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES]:
             raise OptimisationError(
                 f"Algorithm '{self.algorithm.name}' does not support equality "
@@ -177,6 +183,11 @@ class NloptOptimiser(Optimiser):
         tolerance: np.ndarray,
         df_constraint: Optional[OptimiserCallable] = None,
     ) -> None:
+        """
+        Add an inequality constraint.
+
+        See :meth:`~bluemira.optimisation._optimiser.Optimiser.add_ineq_constraint`.
+        """
         if self.algorithm not in [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES]:
             raise OptimisationError(
                 f"Algorithm '{self.algorithm.name}' does not support inequality "
@@ -193,6 +204,11 @@ class NloptOptimiser(Optimiser):
         self._ineq_constraints.append(constraint)
 
     def optimise(self, x0: Optional[np.ndarray] = None) -> OptimiserResult:
+        """
+        Run the optimisation.
+
+        See :meth:`~bluemira.optimisation._optimiser.Optimiser.optimise`.
+        """
         if x0 is None:
             x0 = _initial_guess_from_bounds(self.lower_bounds, self.upper_bounds)
 
@@ -226,7 +242,12 @@ class NloptOptimiser(Optimiser):
             history=self._objective.history,
         )
 
-    def set_lower_bounds(self, bounds: np.ndarray) -> None:
+    def set_lower_bounds(self, bounds: npt.ArrayLike) -> None:
+        """
+        Set the lower bound for each optimisation parameter.
+
+        See :meth:`~bluemira.optimisation._optimiser.Optimiser.set_lower_bounds`.
+        """
         bounds = np.array(bounds)
         _check_bounds(self._opt.get_dimension(), bounds)
         self._opt.set_lower_bounds(bounds)
@@ -237,7 +258,12 @@ class NloptOptimiser(Optimiser):
         for constraint in self._eq_constraints + self._ineq_constraints:
             constraint.set_approx_derivative_lower_bound(bounds)
 
-    def set_upper_bounds(self, bounds: Union[np.ndarray, float]) -> None:
+    def set_upper_bounds(self, bounds: npt.ArrayLike) -> None:
+        """
+        Set the upper bound for each optimisation parameter.
+
+        See :meth:`~bluemira.optimisation._optimiser.Optimiser.set_upper_bounds`.
+        """
         bounds = np.array(bounds)
         _check_bounds(self._opt.get_dimension(), bounds)
         self._opt.set_upper_bounds(bounds)
