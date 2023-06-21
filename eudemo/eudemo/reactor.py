@@ -160,26 +160,6 @@ def build_divertor(params, build_config, div_silhouette) -> Divertor:
     return Divertor(builder.build())
 
 
-def build_lower_port(params, build_config, divertor_face, tf_coils_outer_boundary):
-    """Builder for the Lower Port and Duct"""
-    (
-        lp_duct_xz_void_space,
-        lp_duct_xz_koz,
-        lp_duct_angled_nowall_extrude_boundary,
-        lp_duct_straight_nowall_extrude_boundary,
-    ) = LowerPortDuctDesigner(
-        params, build_config, divertor_face, tf_coils_outer_boundary
-    ).execute()
-    builder = LowerPortBuilder(
-        params,
-        build_config,
-        lp_duct_xz_koz,
-        lp_duct_angled_nowall_extrude_boundary,
-        lp_duct_straight_nowall_extrude_boundary,
-    )
-    return builder.build(), lp_duct_xz_koz
-
-
 def build_blanket(
     params,
     build_config: Dict,
@@ -276,6 +256,26 @@ def build_equatorial_port(params, build_config, cryostat_ts_xz_boundary):
     builder = TSEquatorialPortDuctBuilder(params, cryostat_ts_xz_boundary)
     ts_eq_port = builder.build()
     return ts_eq_port, vv_eq_port
+
+
+def build_lower_port(params, build_config, divertor_face, tf_coils_outer_boundary):
+    """Builder for the Lower Port and Duct"""
+    (
+        lp_duct_xz_void_space,
+        lp_duct_xz_koz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
+    ) = LowerPortDuctDesigner(
+        params, build_config, divertor_face, tf_coils_outer_boundary
+    ).execute()
+    builder = LowerPortBuilder(
+        params,
+        build_config,
+        lp_duct_xz_koz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
+    )
+    return builder.build(), lp_duct_xz_koz
 
 
 def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
@@ -466,7 +466,7 @@ if __name__ == "__main__":
 
     from bluemira.display import show_cad
 
-    debug = [upper_port_koz_xz, eq_port_koz_xz]
+    debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_duct_xz_koz]
     debug.extend(reactor.pf_coils.xz_boundary())
     # I know there are clashes, I need to put in dynamic bounds on position opt to
     # include coil XS.
