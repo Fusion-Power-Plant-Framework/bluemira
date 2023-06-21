@@ -184,8 +184,9 @@ def optimise_geometry(
 
         The gradient function should have the same form as the
         constraint function, however its output should have size
-        :math:`n \times m` where :math:`m` is the dimensionality of the
-        constraint.
+        :math:`n \times m` where, again, :math:`m` is the dimensionality
+        of the constraint and :math:`n` is the number of parameters in
+        the geometry parameterisation.
 
         Equality constraints are only supported by algorithms:
 

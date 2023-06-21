@@ -131,7 +131,8 @@ def optimise(
         The gradient function should have the same form as the
         constraint function, however its output should have size
         :math:`n \times m` where :math:`m` is the dimensionality of the
-        constraint.
+        constraint and :math:`n` is the number of optimisation
+        parameters.
 
         Equality constraints are only supported by algorithms:
 
