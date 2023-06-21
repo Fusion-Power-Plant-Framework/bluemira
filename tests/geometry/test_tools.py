@@ -850,4 +850,30 @@ class TestBooleanFragments:
 
 
 class TestForceWireToSpline:
-    pass
+    filename = "vvts_face_polygon_test.json"
+
+    @classmethod
+    def setup_class(cls):
+        path = get_bluemira_path("geometry/test_data", subfolder="tests")
+        filename = os.path.join(path, cls.filename)
+        wires = []
+        with open(filename, "r") as file:
+            data = json.load(file)
+
+        for wire in data["BluemiraFace"]["boundary"]:
+            wires.append(deserialize_shape(wire))
+        cls.wires = wires
+
+    def test_force_spline(self):
+        new_wires = []
+        n_edges_max = 200
+        for wire in self.wires:
+            new_wire = force_wire_to_spline(wire, n_edges_max=n_edges_max)
+            new_wires.append(new_wire)
+            assert len(new_wire.edges) < n_edges_max
+
+        wires = self.wires
+        wires.sort(key=lambda wire: -wire.length)
+        new_wires.sort(key=lambda wire: -wire.length)
+        for w, nw in zip(wires, new_wires):
+            np.testing.assert_almost_equal(w.length, nw.length, decimal=3)

@@ -395,7 +395,7 @@ def interpolate_bspline(
 def force_wire_to_spline(
     wire: BluemiraWire,
     n_edges_max: int = 200,
-    l2_tolerance: float = 1e-4,
+    l2_tolerance: float = 5e-3,
 ) -> BluemiraWire:
     """
     Force a wire to be a spline wire.
@@ -428,12 +428,12 @@ def force_wire_to_spline(
         )
         return wire
 
-    original_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=True)
+    original_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=False)
 
     n_discrs = np.array(original_n_edges * np.linspace(0.8, 0.1, 8), dtype=int)
 
-    for n_discr in range(n_discrs):
-        points = wire.discretize(ndiscr=n_discr, byedges=False)
+    for n_discr in n_discrs:
+        points = wire.discretize(ndiscr=int(n_discr), byedges=False)
         try:
             wire = BluemiraWire(
                 cadapi.interpolate_bspline(points.T, closed=wire.is_closed()),
@@ -443,12 +443,12 @@ def force_wire_to_spline(
         except cadapi.FreeCADError:
             continue
 
-    new_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=True)
+    new_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=False)
 
     delta = np.linalg.norm(original_points.xyz - new_points.xyz, ord=2)
-    if delta < l2_tolerance:
+    if delta > l2_tolerance:
         bluemira_warn(
-            f"Forcing wire to spline with {n_discr} interpolation points did not achieve the desired tolerance: {delta} < {l2_tolerance}"
+            f"Forcing wire to spline with {n_discr} interpolation points did not achieve the desired tolerance: {delta} > {l2_tolerance}"
         )
 
     return wire
