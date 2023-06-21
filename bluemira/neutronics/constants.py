@@ -1,7 +1,12 @@
 """constants used for the neutronics module"""
-# Manually set constants
-energy_per_dt_MeV = 17.58  # probably good to put this in bluemira anyways
-dpa_Fe_threshold_eV = 40  # Energy required to displace an Fe atom in Fe. See docstring of get_dpa_coefs. Source cites 40 eV.
+S_TO_YEAR = BMUnitRegistry.Quantity("s").to("year").magnitude
+
+# Amount of energy released in a single dt fusion reaction, in MeV.
+energy_per_dt_MeV = 17.58
+# Amount of energy carried away by the neutron
+dt_neutron_energy_MeV = energy_per_dt_MeV * (4 / 5)
+# Energy required to displace an Fe atom in Fe. See docstring of DPACoefficients
+dpa_Fe_threshold_eV = 40  # Source cites 40 eV.
 
 avogadro = BMUnitRegistry.Quantity("N_A").to_base_units().magnitude
 Fe_molar_mass_g = elements.isotope("Fe").mass
@@ -14,7 +19,8 @@ class DPACoefficients:
         to convert the number of damage into the number of displacements.
     number of atoms in region = avogadro * density * volume / molecular mass
     number of atoms in 1 cc   = avogadro * density          / molecular mass
-    dpa_fpy = displacements / atoms * s_in_yr * src_rate
+    dpa_per_second_of_operation = src_rate * displacements / atoms
+    dpa_fpy = dpa_per_second_of_operation / S_TO_YEAR
 
     taken from [1]_.
     .. [1] Shengli Chena, David Bernard

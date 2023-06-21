@@ -1,7 +1,7 @@
 """
 TODO:
 []Unit: cgs -> metric
-    []Try the conversion thing that James spoke about
+    [x]Try the conversion thing that James spoke about
 []make_materials
     []remove CheckedDict
         []MaterialsLibrary export in real time instead
@@ -48,18 +48,15 @@ import bluemira.neutronics.make_materials as mm
 
 # Constants
 from bluemira.base.constants import BMUnitRegistry, raw_uc
-from bluemira.neutronics.constants import DPACoefficients, energy_per_dt_MeV
+from bluemira.neutronics.constants import (
+    DPACoefficients,
+    dt_neutron_energy_MeV,
+    energy_per_dt_MeV,
+)
 
 os.environ[
     "OPENMC_CROSS_SECTIONS"
 ] = "/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml"
-
-MJ_per_MeV = BMUnitRegistry.Quantity("MeV").to("MJ").magnitude
-MJ_per_eV = BMUnitRegistry.Quantity("eV").to("MJ").magnitude
-eV_per_MeV = BMUnitRegistry.Quantity("MeV").to("eV").magnitude
-s_in_yr = BMUnitRegistry.Quantity("year").to("s").magnitude
-per_cm2_to_per_m2 = BMUnitRegistry.Quantity("1/cm^2").to("1/m^2").magnitude
-m_to_cm = BMUnitRegistry.Quantity("m").to("cm").magnitude
 
 
 class ParameterHolder:
@@ -96,7 +93,9 @@ class TokamakOperationParameters(ParameterHolder):
         """Convert the reactor power to neutron rate
         (number of neutrons produced per second)
         """
-        return self.reactor_power_MW / (energy_per_dt_MeV * MJ_per_MeV)
+        reactor_power_in_MeV_per_s = raw_uc(self.reactor_power_MW, "MW", "MeV/s")
+        num_dt_per_second = reactor_power_in_MeV_per_s / energy_per_dt_MeV
+        return num_dt_per_second
 
 
 @dataclass
@@ -158,7 +157,7 @@ def create_ring_source(tokamak_geometry):
     )
     ring_source.angle = openmc.stats.Isotropic()
     ring_source.energy = openmc.stats.Discrete(
-        [energy_per_dt_MeV * (4 / 5) * eV_per_MeV], [1]
+        [raw_uc(dt_neutron_energy_MeV, "MeV", "eV")], [1]
     )
 
     return ring_source
@@ -326,10 +325,10 @@ def _load_fw_points(tokamak_geometry, save_plots=True):
 
     ######## (down)sample existing data ########
     # blanket
-    downsampled_ibf = ibf[selected_fw_samples] * m_to_cm
+    downsampled_ibf = ibf[selected_fw_samples] * M_TO_CM
     downsampled_ibf = _fix_downsampled_ibf(downsampled_ibf)
     # divertor
-    downsampled_divf = divertor_2d_outline[selected_div_samples] * m_to_cm
+    downsampled_divf = raw_uc(divertor_2d_outline[selected_div_samples], "m", "cm")
 
     ######## Create the full plasma-facing outline by concatenating existing var ########
     old_points = np.concatenate((downsampled_ibf, downsampled_divf), axis=0)
@@ -528,16 +527,19 @@ def filter_cells(cells_and_cell_lists, material_lib, src_rate):
     photon_filter = openmc.ParticleFilter(["photon"])
 
     # eV per source particle to MW coefficients
-    eV_per_sp_to_MW = src_rate * MJ_per_eV
+    # SOMETHING SEEMS WRONG @ JAMES HAGUE (original file line L.313)
+    eV_per_sp_to_MW = raw_uc(src_rate, "eV/s", "MW")
 
     MW_energy_bins = [0.0, 100.0e6]  # Up to 100 MeV
     MW_dose_coeffs = [eV_per_sp_to_MW, eV_per_sp_to_MW]
+    # makes a flat line function
     MW_mult_filter = openmc.EnergyFunctionFilter(MW_energy_bins, MW_dose_coeffs)
 
     # photon heat flux coefficients (cm per source particle to MW cm)
     # Tally heat flux
     energy_bins = [0.0, 100.0e6]  # Up to 100 MeV
     dose_coeffs = [0.0 * eV_per_sp_to_MW, 100.0e6 * eV_per_sp_to_MW]
+    # simply modify the energy by multiplying by the constant
     energy_mult_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
 
     cyl_mesh = openmc.CylindricalMesh(mesh_id=1)
@@ -741,7 +743,7 @@ class OpenMCResult:
             n_wl_df["mean"]
             * dfa_coefs.displacements_per_damage_eV
             / (n_wl_df["vol(cc)"] * dfa_coefs.atoms_per_cc)
-            * s_in_yr
+            / S_TO_YEAR
             * self.src_rate
         )
         n_wl_df["dpa/fpy"] = n_wl_df["dpa/fpy"].apply(lambda x: "%.1f" % x)
@@ -777,7 +779,8 @@ class OpenMCResult:
         p_hf_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
         p_hf_df["cell_name"] = p_hf_df["cell"].map(self.cell_names)
         p_hf_df["vol(cc)"] = p_hf_df["cell"].map(self.cell_vols)
-        p_hf_df["MW_m-2"] = p_hf_df["mean"] / p_hf_df["vol(cc)"] * per_cm2_to_per_m2
+        _MW_per_cm_2 = p_hf_df["mean"] / p_hf_df["vol(cc)"]
+        p_hf_df["MW_m-2"] = raw_uc(_MW_per_cm_2.to_numpy(), "1/cm^2", "1/m^2")
         p_hf_df["%err."] = p_hf_df.apply(pdf.get_percent_err, axis=1).apply(
             lambda x: "%.1f" % x
         )
