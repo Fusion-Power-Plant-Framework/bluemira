@@ -167,7 +167,7 @@ def optimise_geometry(
             function. If not given, a numerical approximation of the
             gradient is made (if a gradient is required).
 
-        The constraint is a vector-valued, non-linear, inequality
+        The constraint is a vector-valued, non-linear, equality
         constraint of the form :math:`f_{c}(g) = 0`.
 
         The constraint function should have the form

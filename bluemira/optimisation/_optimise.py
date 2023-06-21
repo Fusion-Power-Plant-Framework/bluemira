@@ -141,7 +141,7 @@ def optimise(
 
     ineq_constraints:
         The inequality constraints for the optimiser.
-        This argument has the same form as the `eq_constraint` argument,
+        This argument has the same form as the ``eq_constraint`` argument,
         but each constraint is in the form :math:`f_{c}(x) \le 0`.
 
         Inequality constraints are only supported by algorithms:
