@@ -52,6 +52,7 @@ from bluemira.geometry.tools import (
     fallback_to,
     fillet_wire_2D,
     find_clockwise_angle_2d,
+    force_wire_to_spline,
     interpolate_bspline,
     log_geometry_on_failure,
     make_circle,
@@ -846,3 +847,7 @@ class TestBooleanFragments:
                 if sol.is_same(sol_2):
                     count += 1
         return count
+
+
+class TestForceWireToSpline:
+    pass
