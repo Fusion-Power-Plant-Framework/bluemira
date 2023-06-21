@@ -397,8 +397,24 @@ def force_wire_to_spline(
     n_edges_max: int = 200,
     n_decrement: int = 100,
     l2_tolerance: float = 1e-4,
-):
-    """ """
+) -> BluemiraWire:
+    """
+    Force a wire to be a spline wire.
+
+    Parameters
+    ----------
+
+
+    Returns
+    -------
+    A new spline version of the wire
+
+    Notes
+    -----
+    This is intended for use with wires that consist of large polygons, often resulting
+    from operations that failed with primitives and fallback methods making use of
+    of polygons. This can be relatively stubborn to transform back to splines.
+    """
     original_n_edges = len(wire.edges)
     if original_n_edges < n_edges_max:
         bluemira_debug(
@@ -411,8 +427,8 @@ def force_wire_to_spline(
     n_attempts = original_n_edges // n_decrement
     for i in n_attempts:
         n_discr = original_n_edges - i * n_decrement
+        points = wire.discretize(ndiscr=n_discr, byedges=False)
         try:
-            points = wire.discretize(ndiscr=n_discr, byedges=False)
             wire = BluemiraWire(
                 cadapi.interpolate_bspline(points.T, closed=wire.is_closed()),
                 label=wire.label,
