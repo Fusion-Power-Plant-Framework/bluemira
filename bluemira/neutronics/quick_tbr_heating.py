@@ -1,27 +1,38 @@
 """
 TODO:
-[ ]Integration into our logging system (print should go through bluemira_print etc.)
+[]Unit: cgs -> metric
+    []Try the conversion thing that James spoke about
+[]make_materials
+    []remove CheckedDict
+        []MaterialsLibrary export in real time instead
+    []AutoPopulatingMaterialsLibrary: see if it needs to have 3 methods?
+        []BlanketType should then be fixed by it
+        - possibly need to use multiple ways of getting
+[]Replace parametric-plasma-source/parametric_plasma_source/fortran_api/* and src/ vs pps_api
+    - `pip install git+https://github.com/open-radiation-source/parametric-plasma-source.git@main`
 [ ]Break quick_tbr_heating into multiple
-    [ ]get_dpa_coefs -> eslewhere
-    [ ]pandas_df_functions ->^ same place
-    [ ]All openmc setting up -> one file
-    [ ]results -> another file
-    [ ]filter_cells needs to be somewhere else.
-        - Definitely does not belong in quick_btr_heating.py Probably make_geometry?
-    [-]_load_fw_points
-[ ]find the units and documentations for creating source_params_dict
-    - See details in PPS_OpenMC.so library
-    - why parametric source mode=2: need to dig open the PPS_OpenMC.so
+    [x]get_dpa_coefs -> constants
+    [ ]quick_tbr_heating.PoloidalXSPlot -> result_presentation
+    [ ]quick_tbr_heating.print_df_decorator_with_title_string, quick_tbr_heating.OpenMCResult -> result_presentation
+    [ ]pandas_df_functions -> result_presentation
+    [ ]quick_tbr_heating.geometry_plotter -> result_presentation
+    [ ]All openmc setting up -> stay here at quick_btr_heating.py
+    [ ]quick_tbr_heating.filter_cells -> filter_cells.py
+    [ ]create_parametric_source
+        [ ]Its magic numbers/ strings -> constants.py
+[ ]compare the pps_api with open-radiation-source/parametric-plasma-source/.git
+    [ ]find the units and documentations for creating source_params_dict
+        - See details in PPS_OpenMC.so library
+        - why parametric source mode=2: need to dig open the PPS_OpenMC.so
 [ ]Some parameters are locked up inside functions:
     [ ]create_parametric_source
-    [x]_load_fw_points
+[ ]Integration into our logging system (print should go through bluemira_print etc.)
 [ ]Unit: cgs -> metric
 ____
 [ ]Tests?
 """
 import dataclasses
 import os
-from collections import namedtuple
 from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
@@ -37,6 +48,7 @@ import bluemira.neutronics.make_materials as mm
 
 # Constants
 from bluemira.base.constants import BMUnitRegistry, raw_uc
+from bluemira.neutronics.constants import DPACoefficients, energy_per_dt_MeV
 
 os.environ[
     "OPENMC_CROSS_SECTIONS"
@@ -48,42 +60,6 @@ eV_per_MeV = BMUnitRegistry.Quantity("MeV").to("eV").magnitude
 s_in_yr = BMUnitRegistry.Quantity("year").to("s").magnitude
 per_cm2_to_per_m2 = BMUnitRegistry.Quantity("1/cm^2").to("1/m^2").magnitude
 m_to_cm = BMUnitRegistry.Quantity("m").to("cm").magnitude
-
-avogadro = BMUnitRegistry.Quantity("N_A").to_base_units().magnitude
-fe_molar_mass_g = elements.isotope("Fe").mass
-fe_density_g_cc = elements.isotope("Fe").density
-
-# Manually set constants
-energy_per_dt_MeV = 17.58  # probably good to put this in bluemira anyways
-dpa_fe_threshold_eV = 40  # Energy required to displace an Fe atom in Fe. See docstring of get_dpa_coefs. Source cites 40 eV.
-
-DPACoefficients = namedtuple(
-    "DPACoefficients", "atoms_per_cc, displacements_per_damage_eV"
-)
-
-
-@dataclass
-class DPACoefficients:
-    """
-    Get the coefficients required
-        to convert the number of damage into the number of displacements.
-    number of atoms in region = avogadro * density * volume / molecular mass
-    number of atoms in 1 cc   = avogadro * density          / molecular mass
-    dpa_fpy = displacements / atoms * s_in_yr * src_rate
-
-    taken from [1]_.
-    .. [1] Shengli Chena, David Bernard
-       On the calculation of atomic displacements using damage energy
-       Results in Physics 16 (2020) 102835
-       https://doi.org/10.1016/j.rinp.2019.102835
-    """
-
-    atoms_per_cc: float = avogadro * fe_density_g_cc / fe_molar_mass_g
-    displacements_per_damage_eV: float = 0.8 / (2 * dpa_fe_threshold_eV)
-
-
-# ----------------------------------------------------------------------------------------
-# classes to store parameters
 
 
 class ParameterHolder:
@@ -199,13 +175,13 @@ def create_parametric_source(tokamak_geometry):
     """
     source_params_dict = {
         "mode": 2,
-        "temperature": 15.4,
+        "temperature": 15.4,  # turn this into a constant and put it in constants.py!
         "major_r": tokamak_geometry.major_r,
         "minor_r": tokamak_geometry.minor_r,
         "elongation": tokamak_geometry.elong,
         "triangulation": tokamak_geometry.triang,
         "radial_shift": tokamak_geometry.shaf_shift,
-        "peaking_factor": 1.508,
+        "peaking_factor": 1.508,  # turn this into a constant and put it in constants.py!
         "vertical_shift": 0.0,
         "start_angle": 0.0,
         "angle_range": 360.0,
@@ -756,7 +732,7 @@ class OpenMCResult:
     @print_df_decorator_with_title_string("Neutron Wall Load (eV)")
     def load_neutron_wall_loading(self):
         """load the neutron wall load dataframe"""
-        dfa_coefs = get_dpa_coefs()
+        dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
         tally = "neutron wall load"  # 'mean' units are eV per source particle
         n_wl_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
         n_wl_df["cell_name"] = n_wl_df["cell"].map(self.cell_names)
@@ -1101,9 +1077,10 @@ class TBRHeatingSimulation:
 if __name__ == "__main__":
     import sys
 
-    SimulatedBluemiraOutputVariables = namedtuple(
-        "SimulatedBluemiraOutputVariables", "breeder_materials, tokamak_geometry"
-    )
+    @dataclass
+    class SimulatedBluemiraOutputVariables:
+        breeder_materials: BreederTypeParameters
+        tokamak_geometry: TokamakGeometry
 
     def get_preset_physical_properties(blanket_type):
         """
