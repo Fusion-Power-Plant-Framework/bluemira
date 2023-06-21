@@ -395,7 +395,6 @@ def interpolate_bspline(
 def force_wire_to_spline(
     wire: BluemiraWire,
     n_edges_max: int = 200,
-    n_decrement: int = 100,
     l2_tolerance: float = 1e-4,
 ) -> BluemiraWire:
     """
@@ -403,7 +402,14 @@ def force_wire_to_spline(
 
     Parameters
     ----------
-
+    wire:
+        The BluemiraWire to be turned into a splined wire
+    n_edges_max:
+        The maximum number of edges in the wire, below which this operation
+        does nothing
+    l2_tolerance:
+        The L2-norm difference w.r.t. the original wire, above which this
+        operation will warn that the desired tolerance was not achieved.
 
     Returns
     -------
@@ -424,9 +430,9 @@ def force_wire_to_spline(
 
     original_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=True)
 
-    n_attempts = original_n_edges // n_decrement
-    for i in n_attempts:
-        n_discr = original_n_edges - i * n_decrement
+    n_discrs = np.array(original_n_edges * np.linspace(0.8, 0.1, 8), dtype=int)
+
+    for n_discr in range(n_discrs):
         points = wire.discretize(ndiscr=n_discr, byedges=False)
         try:
             wire = BluemiraWire(
@@ -442,7 +448,7 @@ def force_wire_to_spline(
     delta = np.linalg.norm(original_points.xyz - new_points.xyz, ord=2)
     if delta < l2_tolerance:
         bluemira_warn(
-            f"Forcing wire to spline did not achieve the desired tolerance: {delta} < {l2_tolerance}"
+            f"Forcing wire to spline with {n_discr} interpolation points did not achieve the desired tolerance: {delta} < {l2_tolerance}"
         )
 
     return wire
