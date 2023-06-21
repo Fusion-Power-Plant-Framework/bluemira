@@ -1,6 +1,5 @@
 """Make the entire tokamak from scratch using user-provided variables."""
 import copy
-import math
 
 import numpy as np
 import openmc

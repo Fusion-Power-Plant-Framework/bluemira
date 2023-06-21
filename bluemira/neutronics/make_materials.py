@@ -54,7 +54,8 @@ class MaterialsLibrary(CheckedDict):
 
 class AutoPopulatingMaterialsLibrary(MaterialsLibrary):
     """A dictionary of materials that auto-complete the materials
-    according to the type of blanket used"""
+    according to the type of blanket used
+    """
 
     def __init__(self):
         common_mats = _make_common_mats()
@@ -267,7 +268,8 @@ class AutoPopulatingMaterialsLibrary(MaterialsLibrary):
     def make_wcll_mats(self, li_enrich_ao):
         """
         This function creates openmc material definitions for a wcll blanket
-        Ref. D. Nevo and M. Oron-Carl, WCLL Design Report 2018, Eurofusion, WPBB-DEL-BB-3.2.1-T005-D001, June 2019.
+        Ref. D. Nevo and M. Oron-Carl, WCLL Design Report 2018, Eurofusion,
+            WPBB-DEL-BB-3.2.1-T005-D001, June 2019.
         """
 
         PbLi_mat = openmc.Material(name="PbLi")
@@ -293,7 +295,7 @@ class AutoPopulatingMaterialsLibrary(MaterialsLibrary):
         )
         self["inb_vv_mat"].id = 104
 
-        ### Making first wall
+        # Making first wall
         self["inb_fw_mat"] = openmc.Material.mix_materials(
             name="inb_first_wall",
             materials=[self["tungsten_mat"], self["water_mat"], self["eurofer_mat"]],
@@ -302,7 +304,7 @@ class AutoPopulatingMaterialsLibrary(MaterialsLibrary):
         )
         self["inb_fw_mat"].id = 101
 
-        ### Making blanket
+        # Making blanket
         self["inb_bz_mat"] = openmc.Material.mix_materials(
             name="inb_breeder_zone",
             materials=[
@@ -333,7 +335,7 @@ class AutoPopulatingMaterialsLibrary(MaterialsLibrary):
     ################################################################################################
 
     def export_materials(self):
-        """exports material defintions to xml"""
+        """Exports material defintions to xml"""
         material_list = openmc.Materials(self.values())
         return material_list.export_to_xml()
 
@@ -353,10 +355,14 @@ class AutoPopulatingMaterialsLibrary(MaterialsLibrary):
             self.export_to_xml()
         return self
 
-    # def create_complete_material_library(self, blanket_type, li_enrich_ao, export_to_xml=True):
+    # def create_complete_material_library(self,
+    #                                      blanket_type,
+    #                                      li_enrich_ao,
+    #                                      export_to_xml=True):
     #     make_method = getattr(self, "make_{}_mats".format(blanket_type), None)
     #     if make_method is None:
-    #         raise KeyError("Not a valid blanket_type; See BlanketType for allowed blanket_type.")
+    #         msg = "Not a valid blanket_type; See BlanketType for allowed blanket_type."
+    #         raise KeyError(msg)
     #     make_method(li_enrich_ao)
     #     self.populate_materials()
     #     if export_to_xml:

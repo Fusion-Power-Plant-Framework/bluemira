@@ -6,21 +6,23 @@ TODO:
     [ ]pandas_df_functions ->^ same place
     [ ]All openmc setting up -> one file
     [ ]results -> another file
-    [ ]filter_cells needs to be somewhere else. Definitely does not belong in quick_btr_heating.py Probably make_geometry?
-    [-] _load_fw_points
-[ ]find the units and documentations for creating source_params_dict (PPS_OpenMC.so library)
+    [ ]filter_cells needs to be somewhere else.
+        - Definitely does not belong in quick_btr_heating.py Probably make_geometry?
+    [-]_load_fw_points
+[ ]find the units and documentations for creating source_params_dict
+    - See details in PPS_OpenMC.so library
     - why parametric source mode=2: need to dig open the PPS_OpenMC.so
 [ ]Some parameters are locked up inside functions:
     [ ]create_parametric_source
-    [-] _load_fw_points
+    [x]_load_fw_points
 [ ]Unit: cgs -> metric
 ____
 [ ]Tests?
 """
 import dataclasses
-import math
 import os
 from collections import namedtuple
+from dataclasses import dataclass
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -34,7 +36,7 @@ import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.make_materials as mm
 
 # Constants
-from bluemira.base.constants import BMUnitRegistry
+from bluemira.base.constants import BMUnitRegistry, raw_uc
 
 os.environ[
     "OPENMC_CROSS_SECTIONS"
@@ -60,11 +62,13 @@ DPACoefficients = namedtuple(
 )
 
 
-def get_dpa_coefs():
+@dataclass
+class DPACoefficients:
     """
-    Get the coefficients required to convert the number of damage into the number of displacements.
+    Get the coefficients required
+        to convert the number of damage into the number of displacements.
     number of atoms in region = avogadro * density * volume / molecular mass
-    number of atoms in cc     = avogadro * density          / molecular mass
+    number of atoms in 1 cc   = avogadro * density          / molecular mass
     dpa_fpy = displacements / atoms * s_in_yr * src_rate
 
     taken from [1]_.
@@ -73,9 +77,9 @@ def get_dpa_coefs():
        Results in Physics 16 (2020) 102835
        https://doi.org/10.1016/j.rinp.2019.102835
     """
-    atoms_per_cc = avogadro * fe_density_g_cc / fe_molar_mass_g
-    displacements_per_damage_eV = 0.8 / (2 * dpa_fe_threshold_eV)
-    return DPACoefficients(atoms_per_cc, displacements_per_damage_eV)
+
+    atoms_per_cc: float = avogadro * fe_density_g_cc / fe_molar_mass_g
+    displacements_per_damage_eV: float = 0.8 / (2 * dpa_fe_threshold_eV)
 
 
 # ----------------------------------------------------------------------------------------
@@ -83,11 +87,14 @@ def get_dpa_coefs():
 
 
 class ParameterHolder:
+    """Parent class to all classes that only hold parameters"""
+
     def to_dict(self):
+        """Convert the parameters held into a dictionary."""
         return dataclasses.asdict(self)
 
 
-@dataclasses.dataclass
+@dataclass
 class OpenMCSimulationRuntimeParameters(ParameterHolder):
     """Parameters used in the actual simulation"""
 
@@ -103,25 +110,30 @@ class OpenMCSimulationRuntimeParameters(ParameterHolder):
     volume_calc_particles: int  # number of particles used in the volume calculation.
 
 
-@dataclasses.dataclass
+@dataclass
 class TokamakOperationParameters(ParameterHolder):
     """The tokamak's operational parameter, such as its power"""
 
     reactor_power_MW: float  # MW
 
     def calculate_total_neutron_rate(self):
+        """Convert the reactor power to neutron rate
+        (number of neutrons produced per second)
+        """
         return self.reactor_power_MW / (energy_per_dt_MeV * MJ_per_MeV)
 
 
-@dataclasses.dataclass
+@dataclass
 class BreederTypeParameters(ParameterHolder):
-    """Dataclass to hold information about the breeder blanket material and design choices"""
+    """Dataclass to hold information about the breeder blanket material
+    and design choices.
+    """
 
     li_enrich_ao: float  # [dimensionless]
     blanket_type: mm.BlanketType
 
 
-@dataclasses.dataclass
+@dataclass
 class TokamakGeometry(ParameterHolder):
     """The measurements for all of the geneic components of the tokamak"""
 
@@ -154,7 +166,10 @@ def create_ring_source(tokamak_geometry):
     Parameters
     ----------
     tokamak_geometry: TokamakGeometry
-        Only the tokamak_geometry.major_r & tokamak_geometry.shaf_shift variables are required.
+        Only the
+            - tokamak_geometry.major_r
+            - tokamak_geometry.shaf_shift
+        variables are used in this function.
     """
     ring_source = openmc.Source()
     source_radii = openmc.stats.Discrete(
@@ -211,8 +226,9 @@ def create_parametric_source(tokamak_geometry):
 class PoloidalXSPlot(object):
     """Context manager so that we can save the plot as soon as we exit.
     Using the 'with' statement (i.e. in the syntax of context manager in python)
-    also improves readability, as the save_name is written at the top of the indented block,
-    so it's obvious what's the indented block plotting."""
+    also improves readability, as the save_name is written at the top of the indented
+    block, so it's obvious what's the indented block plotting.
+    """
 
     def __init__(self, save_name, title=None):
         self.save_name = save_name
@@ -222,9 +238,11 @@ class PoloidalXSPlot(object):
             self.ax.set_title(title)
 
     def __enter__(self):
+        """Return the initialized matplotlib axes object"""
         return self.ax
 
     def __exit__(self, exception_type, value, traceback):
+        """Save and close upon exit."""
         plt.savefig(self.save_name)
         # self.ax.cla() # not necessary to clear axes or clear figure
         # self.ax.figure.clf()
@@ -248,7 +266,8 @@ def _load_fw_points(tokamak_geometry, save_plots=True):
     -------
     new_downsampled_fw: points belonging to the first wall
     new_downsampled_div: points belonging to the divertor
-    num_inboard_points: Number of points in new_downsampled_fw that belongs to the inboard section.
+    num_inboard_points: Number of points in new_downsampled_fw
+                        that belongs to the inboard section.
 
     Dataflow diagram for this function
     ----------------------------------
@@ -280,18 +299,18 @@ def _load_fw_points(tokamak_geometry, save_plots=True):
     -----
     All units for the diagram above are in cgs
     """
-
     ######## get data ########
     # Get the geometry from existing .npy files, each is an array of
     # 3D coordinates of points sampled along the divertor first wall outline.
     full_blanket_2d_outline = np.load("blanket_face.npy")[0]
     divertor_2d_outline = np.load("divertor_face.npy")[0]
-    ######## unfortunate <magic numbers and magic function> that fits only these npy model. ########
+    ######## <magic numbers and magic function> ########
+    # that fits only these npy model.
     # The plasma geometry
     ex_pts_maj_r = 900.0
     ex_pts_min_r = 290.0
     ex_pts_elong = 1.792
-    # Specifying how many of the se the number of the selected points that define the inboard
+    # Specifying the number of the selected points that define the inboard.
     num_inboard_points = 6
     # indices
     selected_fw_samples = [
@@ -318,7 +337,8 @@ def _load_fw_points(tokamak_geometry, save_plots=True):
 
     def _fix_downsampled_ibf(ds_ibf):
         """Move the point that is too close to plasma
-        by moving it closer to the central column instead."""
+        by moving it closer to the central column instead.
+        """
         ds_ibf[-5][0] = ds_ibf[-5][0] - 25.0
         return ds_ibf
 
@@ -361,7 +381,7 @@ def _load_fw_points(tokamak_geometry, save_plots=True):
     ######## plotting. ########
     if save_plots:
         ######## create parametric variables for plotting smoother lines ########
-        # https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf pg. 239
+        # https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf pg. 239 # noqa: W505
         # R = R0 + a cos(θ + δ sin θ)
         # where a = minor radius
         #       δ = triangularity
@@ -424,7 +444,6 @@ def setup_openmc(
     run_mode: {'fixed source', 'eigenvalue', 'plot', 'volume', 'particle restart'}
     output_summary: bool , default=False
     """
-
     #######################
     ### OPENMC SETTINGS ###
     #######################
@@ -456,7 +475,6 @@ def create_materials(breeder_materials):
         breeder_materials.blanket_type, breeder_materials.li_enrich_ao
     )
     return material_lib
-    # material_lib = mm.AutoPopulatingMaterialsLibrary.create_complete_material_library(breeder_materials.blanket_type, breeder_materials.li_enrich_ao)
 
 
 # ----------------------------------------------------------------------------------------
@@ -471,12 +489,12 @@ def filter_cells(cells_and_cell_lists, material_lib, src_rate):
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
     material_lib: (dict)
-        A dictionary (or an instance of MaterialsLibrary, which is an offspring class of dict)
+        A dictionary (or an instance of MaterialsLibrary,
+            which is an offspring class of dict)
         with all of the material definitions stored.
     src_rate: float
         number of neutrons produced by the source (plasma) per second.
     """
-
     cell_filter = openmc.CellFilter(
         # the single cells
         [
@@ -599,7 +617,6 @@ def create_tallies(
     cyl_mesh_filter:    openmc.MeshFilter
         tally binned spatially: the tokamak is cut into stacks of concentric rings
     """
-
     tally_tbr = openmc.Tally(name="TBR")
     tally_tbr.scores = ["(n,Xt)"]
 
@@ -860,7 +877,7 @@ def stochastic_volume_calculation(tokamak_geometry, cells_and_cell_lists, partic
     except OSError:
         pass
 
-    # maximum radii and heigth reached by all of the tokamak's breeder zone component initi
+    # maximum radii and heigth reached by all of the tokamak's breeder zone component
     maxr = (
         tokamak_geometry.major_r
         + tokamak_geometry.minor_r
@@ -909,7 +926,6 @@ def geometry_plotter(cells_and_cell_lists, tokamak_geometry):
             or a list of openmc.Cell.
     tokamak_geometry : TokamakGeometry
     """
-
     # Assigning colours for plots
     cell_color_assignment = {
         cells_and_cell_lists["tf_coil_cell"]: "brown",
@@ -1070,6 +1086,9 @@ class TBRHeatingSimulation:
         return self.result
 
     def calculate_volume_stochastically(self):
+        """Using openmc's built-in stochastic volume calculation function to calculate
+        the volume
+        """
         stochastic_volume_calculation(
             self.tokamak_geometry,
             self.cells,
@@ -1077,7 +1096,7 @@ class TBRHeatingSimulation:
         )
 
 
-################################################################################################################
+#########################################################################################
 
 if __name__ == "__main__":
     import sys
