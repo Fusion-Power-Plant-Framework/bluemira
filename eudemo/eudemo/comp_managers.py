@@ -92,15 +92,15 @@ class ThermalShield(ComponentManager):
 
         vvts_xyz = vvts.get_component("xyz")
         vv_xyz = vvts_xyz.get_component("Sector 1")
-        vvts_target_name = f"{VVTSBuilder.VOID} 1"
-        vvts_void_name = f"{VVTSBuilder.VVTS} 1"
+        vvts_target_name = f"{VVTSBuilder.VVTS} 1"
+        vvts_void_name = f"{VVTSBuilder.VOID} 1"
         vvts_target_void = vv_xyz.get_component(vvts_target_name).shape
         vvts_target_shape = vv_xyz.get_component(vvts_void_name).shape
 
         cts_xyz = cts.get_component("xyz")
         cr_xyz = cts_xyz.get_component("Sector 1")
-        cts_target_name = f"{CryostatTSBuilder.VOID} 1"
-        cts_void_name = f"{CryostatTSBuilder.CRYO_TS} 1"
+        cts_target_name = f"{CryostatTSBuilder.CRYO_TS} 1"
+        cts_void_name = f"{CryostatTSBuilder.VOID} 1"
         cts_target_void = cr_xyz.get_component(cts_target_name).shape
         cts_target_shape = cr_xyz.get_component(cts_void_name).shape
 
