@@ -877,3 +877,8 @@ class TestForceWireToSpline:
         new_wires.sort(key=lambda wire: -wire.length)
         for w, nw in zip(wires, new_wires):
             np.testing.assert_almost_equal(w.length, nw.length, decimal=3)
+
+    def test_simple_wire_returns_itself(self):
+        p = make_circle(radius=1.0)
+        p2 = force_wire_to_spline(p)
+        assert p2 == p
