@@ -60,7 +60,6 @@ from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
-from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import get_class_from_module
 
 
@@ -332,12 +331,6 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             f"opt_conditions: {self.opt_conditions}\n"
             f"opt_parameters: {self.opt_parameters}"
         )
-        optimiser = Optimiser(
-            self.algorithm_name,
-            parameterisation.variables.n_free_variables,
-            self.opt_conditions,
-            self.opt_parameters,
-        )
 
         if self.problem_settings != {}:
             bluemira_debug(
@@ -345,7 +338,9 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             )
         design_problem = self.problem_class(
             parameterisation,
-            optimiser,
+            self.algorithm_name,
+            self.opt_conditions,
+            self.opt_parameters,
             self.params,
             wp_cross_section=wp_cross_section,
             separatrix=self.separatrix,
@@ -356,9 +351,6 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         )
 
         bluemira_print(f"Solving design problem: {type(design_problem).__name__}")
-        if parameterisation.n_ineq_constraints > 0:
-            bluemira_debug("Applying shape constraints")
-            design_problem.apply_shape_constraints()
 
         result = design_problem.optimise()
         result.to_json(self.file_path)
