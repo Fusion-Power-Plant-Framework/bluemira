@@ -1,13 +1,15 @@
 """
 TODO:
-[]Unit: cgs -> metric
-    [x]Try the conversion thing that James spoke about
 []make_materials
     []remove CheckedDict
         []MaterialsLibrary export in real time instead
     []AutoPopulatingMaterialsLibrary: see if it needs to have 3 methods?
         []BlanketType should then be fixed by it
         - possibly need to use multiple ways of getting
+[]Change ParamHolder etc. into bluemira.ParameterFrame/ make_parameter_frame
+[]Unit: cgs -> metric
+    [x]Try the conversion thing that James spoke about
+    [ ]Check other files (other than quick_tbr_heating.py) as well
 []Replace parametric-plasma-source/parametric_plasma_source/fortran_api/* and src/ vs pps_api
     - `pip install git+https://github.com/open-radiation-source/parametric-plasma-source.git@main`
 [ ]Break quick_tbr_heating into multiple
@@ -39,16 +41,16 @@ import matplotlib.pyplot as plt
 import numpy as np
 import openmc
 import pandas as pd
-import pandas_df_functions as pdf
 from numpy import pi
-from periodictable import elements
 
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.make_materials as mm
+import bluemira.neutronics.pandas_df_functions as pdf
 
 # Constants
 from bluemira.base.constants import BMUnitRegistry, raw_uc
 from bluemira.neutronics.constants import (
+    S_TO_YEAR,
     DPACoefficients,
     dt_neutron_energy_MeV,
     energy_per_dt_MeV,
@@ -325,7 +327,7 @@ def _load_fw_points(tokamak_geometry, save_plots=True):
 
     ######## (down)sample existing data ########
     # blanket
-    downsampled_ibf = ibf[selected_fw_samples] * M_TO_CM
+    downsampled_ibf = raw_uc(ibf[selected_fw_samples], "m", "cm")
     downsampled_ibf = _fix_downsampled_ibf(downsampled_ibf)
     # divertor
     downsampled_divf = raw_uc(divertor_2d_outline[selected_div_samples], "m", "cm")
@@ -1168,9 +1170,10 @@ if __name__ == "__main__":
 
         return SimulatedBluemiraOutputVariables(breeder_materials, tokamak_geometry)
 
-    breeder_materials, tokamak_geometry = get_preset_physical_properties(
-        "hcpb"
-    )  # implemented blanket_type:{'wcll', 'dcll', 'hcpb'}
+    # implemented blanket_type:{'wcll', 'dcll', 'hcpb'}
+    properties = get_preset_physical_properties("hcpb")
+    breeder_materials = properties.breeder_materials
+    tokamak_geometry = properties.tokamak_geometry
 
     runtime_variables = OpenMCSimulationRuntimeParameters(
         particles=16800,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.

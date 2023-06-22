@@ -1,4 +1,8 @@
 """constants used for the neutronics module"""
+from periodictable import elements
+
+from bluemira.base.constants import BMUnitRegistry
+
 S_TO_YEAR = BMUnitRegistry.Quantity("s").to("year").magnitude
 
 # Amount of energy released in a single dt fusion reaction, in MeV.
