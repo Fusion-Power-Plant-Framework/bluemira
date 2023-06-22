@@ -196,7 +196,7 @@ class RipplePointSelector(ABC):
 
     def make_ripple_constraint(
         self, parameterisation, solver, TF_ripple_limit, rip_con_tol
-    ) -> Dict:
+    ) -> GeomConstraintT:
         """
         Make the ripple OptimisationConstraint
         """
