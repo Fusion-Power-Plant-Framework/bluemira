@@ -35,7 +35,8 @@ subject to constraints
 for parameters
 :math:`a_1 = 2`, :math:`b_1 = 0`, :math:`a_2 = -1`, :math:`b_2 = 1`.
 
-This problem expects a minimum at :math:`x = ( \frac{1}{3}, \frac{8}{27} )`.
+This problem expects a minimum at
+:math:`\boldsymbol{x} = ( \frac{1}{3}, \frac{8}{27} )`.
 
 .. note::
 
@@ -89,18 +90,19 @@ so the function can return a float, or,
 an array of length :math:`m`,
 where :math:`m` is the dimensionality of the constraint.
 
-Given a constraint function :math:`f_c`, and optimisation parameters :math:`x`,
+Given a constraint function :math:`f_c`, and optimisation parameters
+:math:`\boldsymbol{x}`,
 an equality constraint has the form
 
 .. math::
 
-    f_c(x) = 0
+    f_c(\boldsymbol{x}) = 0
 
 and an inequality constraint has the form
 
 .. math::
 
-    f_c(x) \le 0
+    f_c(\boldsymbol{x}) \le 0
 
 
 In our example, we have two inequality constraints.

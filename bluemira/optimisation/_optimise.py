@@ -71,17 +71,17 @@ def optimise(
     f_objective:
         The objective function to minimise.
     dimensions:
-        The dimensionality of the problem. This or `x0` must be given.
+        The dimensionality of the problem. This or ``x0`` must be given.
     x0:
         The initial guess for the optimisation parameters. This or
-        `dimensions` must be given, if both are given, `x0.size` must be
-        equal to `dimensions`.
+        `dimensions` must be given, if both are given, ``x0.size`` must
+        be equal to ``dimensions``.
     df_objective:
         The derivative of the objective function.
     algorithm:
         The optimisation algorithm to use. See enum
-        :obj:`optimisation.Algorithm` for supported algorithms.
-        (default: "SLSQP")
+        :class:`.Algorithm` for supported algorithms.
+        (default: ``"SLSQP"``)
     opt_conditions:
         The stopping conditions for the optimiser. Supported conditions
         are:
@@ -94,7 +94,7 @@ def optimise(
             * max_time: float
             * stop_val: float
 
-        (default: {"max_eval": 2000})
+        (default: ``{"max_eval": 2000}``\)
     opt_parameters:
         The algorithm-specific optimisation parameters.
     bounds:
@@ -115,22 +115,24 @@ def optimise(
               gradient is made (if a gradient is required).
 
         A constraint is a vector-valued, non-linear, equality
-        constraint of the form $f_{c}(x) \eq 0$.
+        constraint of the form :math:`f_{c}(x) = 0`.
 
-        The constraint function should have the form `f(x) -> y`,
-        where:
+        The constraint function should have the form
+        :math:`f(x) \rightarrow y`, where:
 
-            * `x` is a numpy array of the optimisation parameters.
-            * `y` is a numpy array containing the values of the
-              constraint at `x`, with size $m$, where $m$ is the
-              dimensionality of the constraint.
+            * :math:`x` is a numpy array of the optimisation parameters.
+            * :math:`y` is a numpy array containing the values of the
+              constraint at :math:`x`, with size :math:`m`, where
+              :math:`m` is the dimensionality of the constraint.
 
         The tolerance array must have the same dimensionality as the
         constraint.
 
         The gradient function should have the same form as the
         constraint function, however its output should have size
-        $n \cross m$ where $m$ is the dimensionality of the constraint.
+        :math:`n \times m` where :math:`m` is the dimensionality of the
+        constraint and :math:`n` is the number of optimisation
+        parameters.
 
         Equality constraints are only supported by algorithms:
 
@@ -140,8 +142,8 @@ def optimise(
 
     ineq_constraints:
         The inequality constraints for the optimiser.
-        This argument has the same form as the `eq_constraint` argument,
-        but each constraint is in the form $f_{c}(x) \le 0$.
+        This argument has the same form as the ``eq_constraint`` argument,
+        but each constraint is in the form :math:`f_{c}(x) \le 0`.
 
         Inequality constraints are only supported by algorithms:
 
