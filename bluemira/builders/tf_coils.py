@@ -218,8 +218,6 @@ class RipplePointSelector(ABC):
         ----------
         parameterisation:
             Geometry parameterisation
-        ad_args:
-            TODO
         """
         wire = parameterisation.create_shape()
         self.solver.update_cage(wire)
