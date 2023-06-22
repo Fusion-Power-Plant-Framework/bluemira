@@ -64,19 +64,19 @@ class Optimiser(abc.ABC):
         tolerance: np.ndarray,
         df_constraint: Optional[OptimiserCallable] = None,
     ) -> None:
-        """
+        r"""
         Add an equality constraint to the optimiser.
 
         The constraint is a vector-valued, non-linear, equality
-        constraint of the form $h(x) = 0$.
+        constraint of the form :math:`f_{c}(x) = 0`.
 
-        The constraint function must have the form `f(x) -> y`,
-        where:
+        The constraint function should have the form
+        :math:`f(x) \rightarrow y`, where:
 
-            * `x` is a numpy array of the optimisation parameters.
-            * `y` is a numpy array containing the values of the
-              constraint at `x`, with size $m$, where $m$ is the
-              dimensionality of the constraint.
+            * :math:`x` is a numpy array of the optimisation parameters.
+            * :math:`y` is a numpy array containing the values of the
+              constraint at :math:`x`, with size :math:`m`, where
+              :math:`m` is the dimensionality of the constraint.
 
         Parameters
         ----------
@@ -85,14 +85,15 @@ class Optimiser(abc.ABC):
         tolerance:
             The tolerances for each optimisation parameter.
         df_constraint:
-            The gradient of the constraint function. This should have the
-            same form as the constraint function, however its output
-            array should have dimensions `m x n_variables` where `m` is
-            the dimensionality of the constraint.
+            The gradient of the constraint function. This should have
+            the same form as the constraint function, however its output
+            array should have dimensions :math:`m \times n` where
+            :math`m` is the dimensionality of the constraint, and
+            :math:`n` is the number of optimisation parameters.
 
         Notes
         -----
-        Equality constraints are only supported by algorithms:
+        Inequality constraints are only supported by algorithms:
 
             * SLSQP
             * COBYLA
@@ -111,15 +112,15 @@ class Optimiser(abc.ABC):
         Add an inequality constrain to the optimiser.
 
         The constraint is a vector-valued, non-linear, inequality
-        constraint of the form $f_{c}(x) \le 0$.
+        constraint of the form :math:`f_{c}(x) \le 0`.
 
-        The constraint function should have the form `f(x) -> y`,
-        where:
+        The constraint function should have the form
+        :math:`f(x) \rightarrow y`, where:
 
-            * `x` is a numpy array of the optimisation parameters.
-            * `y` is a numpy array containing the values of the
-              constraint at `x`, with size $m$, where $m$ is the
-              dimensionality of the constraint.
+            * :math:`x` is a numpy array of the optimisation parameters.
+            * :math:`y` is a numpy array containing the values of the
+              constraint at :math:`x`, with size :math:`m`, where
+              :math:`m` is the dimensionality of the constraint.
 
         Parameters
         ----------
@@ -128,10 +129,11 @@ class Optimiser(abc.ABC):
         tolerance:
             The tolerances for each optimisation parameter.
         df_constraint:
-            The gradient of the constraint function. This should have the
-            same form as the constraint function, however its output
-            array should have dimensions `m x n_variables` where `m` is
-            the dimensionality of the constraint.
+            The gradient of the constraint function. This should have
+            the same form as the constraint function, however its output
+            array should have dimensions :math:`m \times n` where
+            :math`m` is the dimensionality of the constraint, and
+            :math:`n` is the number of optimisation parameters.
 
         Notes
         -----
@@ -159,7 +161,7 @@ class Optimiser(abc.ABC):
         Returns
         -------
         The result of the optimisation, containing the optimised
-        parameters `x`, as well as other information about the
+        parameters ``x``, as well as other information about the
         optimisation.
         """
 

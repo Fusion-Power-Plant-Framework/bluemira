@@ -127,10 +127,10 @@ def optimise_geometry(
         optimisation.
     f_objective:
         The objective function to minimise. Must take as an argument a
-        `GeometryParameterisation` and return a float.
+        ``GeometryParameterisation`` and return a ``float``.
     df_objective:
-        The derivative of the objective function, by default None. If
-        not given, an approximation of the derivative is made using
+        The derivative of the objective function, by default ``None``.
+        If not given, an approximation of the derivative is made using
         the 'central differences' method.
         This argument is ignored if a non-gradient based algorithm is
         used.
@@ -141,7 +141,7 @@ def optimise_geometry(
         dictionary with keys the same as the properties of the
         `:class:`.KeepOutZone` class, or just a :class:`.BluemiraWire`.
     algorithm:
-        The optimisation algorithm to use, by default ``Algorithm.SLSQP``.
+        The optimisation algorithm to use, by default :obj:`.Algorithm.SLSQP`.
     opt_conditions:
         The stopping conditions for the optimiser. Supported conditions
         are:
@@ -167,24 +167,26 @@ def optimise_geometry(
             function. If not given, a numerical approximation of the
             gradient is made (if a gradient is required).
 
-        A constraint is a vector-valued, non-linear, equality
-        constraint of the form $f_{c}(x) \eq 0$.
+        The constraint is a vector-valued, non-linear, equality
+        constraint of the form :math:`f_{c}(g) = 0`.
 
-        The constraint function should have the form ``f(g) -> y``,
-        where:
+        The constraint function should have the form
+        :math:`f(g) \rightarrow y`, where:
 
-            * `g` is a geometry parameterisation.
-            * `y` is a numpy array containing the values of the
-                constraint at the current parameterisation of ``g``.
-                It must have size $m$, where $m$ is the dimensionality of
-                the constraint.
+            * :math:`g` is a geometry parameterisation.
+            * :math:`y` is a numpy array containing the values of the
+              constraint at :math:`g`, with size :math:`m`, where
+              :math:`m` is the dimensionality of the constraint.
+
 
         The tolerance array must have the same dimensionality as the
         constraint.
 
         The gradient function should have the same form as the
         constraint function, however its output should have size
-        $n \cross m$ where $m$ is the dimensionality of the constraint.
+        :math:`n \times m` where, again, :math:`m` is the dimensionality
+        of the constraint and :math:`n` is the number of parameters in
+        the geometry parameterisation.
 
         Equality constraints are only supported by algorithms:
 
@@ -194,8 +196,9 @@ def optimise_geometry(
 
     ineq_constraints:
         The geometric inequality constraints for the optimiser.
-        This argument has the same form as the `eq_constraint` argument,
-        but each constraint is of the form $f_{c}(x) \le 0$.
+        This argument has the same form as the ``eq_constraint``
+        argument, but each constraint is of the form
+        :math:`f_{c}(g) \le 0`.
 
         Inequality constraints are only supported by algorithms:
 
@@ -207,7 +210,7 @@ def optimise_geometry(
         Whether or not to record the history of the optimisation
         parameters at each iteration. Note that this can significantly
         impact the performance of the optimisation.
-        (default: False)
+        (default: ``False``)
     check_constraints:
         Whether to check all constraints have been satisfied at the end
         of the optimisation, and warn if they have not. Note that, if
