@@ -359,8 +359,7 @@ def interpolate_bspline(
     if np.allclose(pntslist[0], pntslist[-1], rtol=0, atol=EPS):
         if len(pntslist) > 2:
             if not closed:
-                _err = "interpolate_bspline: equal endpoints forced Closed"
-                bluemira_warn(_err)
+                bluemira_warn("interpolate_bspline: equal endpoints forced Closed")
             closed = True
             pntslist.pop()
         else:

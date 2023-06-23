@@ -430,9 +430,7 @@ def force_wire_to_spline(
 
     original_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=False)
 
-    n_discrs = np.array(original_n_edges * np.linspace(0.8, 0.1, 8), dtype=int)
-
-    for n_discr in n_discrs:
+    for n_discr in np.array(original_n_edges * np.linspace(0.8, 0.1, 8), dtype=int):
         points = wire.discretize(ndiscr=int(n_discr), byedges=False)
         try:
             wire = BluemiraWire(
