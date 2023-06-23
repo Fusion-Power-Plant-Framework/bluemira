@@ -358,10 +358,10 @@ def interpolate_bspline(
         raise InvalidCADInputsError(_err + "\n")
     if np.allclose(pntslist[0], pntslist[-1], rtol=0, atol=EPS):
         if len(pntslist) > 2:
+            if not closed:
+                bluemira_warn("interpolate_bspline: equal endpoints forced Closed")
             closed = True
             pntslist.pop()
-            _err = "interpolate_bspline: equal endpoints forced Closed"
-            bluemira_warn(_err)
         else:
             # len == 2 and first == last
             _err = "interpolate_bspline: Invalid pointslist (len == 2 and first == last)"

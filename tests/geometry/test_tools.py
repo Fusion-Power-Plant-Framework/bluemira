@@ -52,6 +52,7 @@ from bluemira.geometry.tools import (
     fallback_to,
     fillet_wire_2D,
     find_clockwise_angle_2d,
+    force_wire_to_spline,
     interpolate_bspline,
     log_geometry_on_failure,
     make_circle,
@@ -846,3 +847,49 @@ class TestBooleanFragments:
                 if sol.is_same(sol_2):
                     count += 1
         return count
+
+
+class TestForceWireToSpline:
+    filename = "vvts_face_polygon_test.json"
+
+    @classmethod
+    def setup_class(cls):
+        path = get_bluemira_path("geometry/test_data", subfolder="tests")
+        filename = os.path.join(path, cls.filename)
+        wires = []
+        with open(filename, "r") as file:
+            data = json.load(file)
+
+        for wire in data["BluemiraFace"]["boundary"]:
+            wires.append(deserialize_shape(wire))
+        cls.wires = wires
+
+    @mock.patch("bluemira.geometry.tools.bluemira_warn")
+    def test_force_spline(self, bm_warn):
+        new_wires = []
+        n_edges_max = 200
+        for wire in self.wires:
+            new_wire = force_wire_to_spline(wire, n_edges_max=n_edges_max)
+            new_wires.append(new_wire)
+            assert len(new_wire.edges) < n_edges_max
+        bm_warn.assert_not_called()
+
+        wires = self.wires
+        wires.sort(key=lambda wire: -wire.length)
+        new_wires.sort(key=lambda wire: -wire.length)
+        for w, nw in zip(wires, new_wires):
+            np.testing.assert_almost_equal(w.length, nw.length, decimal=3)
+
+    @mock.patch("bluemira.geometry.tools.bluemira_warn")
+    def test_warning_raised(self, bm_warn):
+        new_wire = force_wire_to_spline(
+            self.wires[0], n_edges_max=200, l2_tolerance=1e-10
+        )
+        bm_warn.assert_called_once()
+
+    @mock.patch("bluemira.geometry.tools.bluemira_debug")
+    def test_simple_wire_returns_itself(self, bm_debug):
+        p = make_circle(radius=1.0)
+        p2 = force_wire_to_spline(p)
+        assert p2 == p
+        bm_debug.assert_called_once()

@@ -392,6 +392,66 @@ def interpolate_bspline(
     )
 
 
+def force_wire_to_spline(
+    wire: BluemiraWire,
+    n_edges_max: int = 200,
+    l2_tolerance: float = 5e-3,
+) -> BluemiraWire:
+    """
+    Force a wire to be a spline wire.
+
+    Parameters
+    ----------
+    wire:
+        The BluemiraWire to be turned into a splined wire
+    n_edges_max:
+        The maximum number of edges in the wire, below which this operation
+        does nothing
+    l2_tolerance:
+        The L2-norm difference w.r.t. the original wire, above which this
+        operation will warn that the desired tolerance was not achieved.
+
+    Returns
+    -------
+    A new spline version of the wire
+
+    Notes
+    -----
+    This is intended for use with wires that consist of large polygons, often resulting
+    from operations that failed with primitives and fallback methods making use of
+    of polygons. This can be relatively stubborn to transform back to splines.
+    """
+    original_n_edges = len(wire.edges)
+    if original_n_edges < n_edges_max:
+        bluemira_debug(
+            f"Wire already has {original_n_edges} < {n_edges_max=}. No point forcing to a spline."
+        )
+        return wire
+
+    original_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=False)
+
+    for n_discr in np.array(original_n_edges * np.linspace(0.8, 0.1, 8), dtype=int):
+        points = wire.discretize(ndiscr=int(n_discr), byedges=False)
+        try:
+            wire = BluemiraWire(
+                cadapi.interpolate_bspline(points.T, closed=wire.is_closed()),
+                label=wire.label,
+            )
+            break
+        except cadapi.FreeCADError:
+            continue
+
+    new_points = wire.discretize(ndiscr=2 * original_n_edges, byedges=False)
+
+    delta = np.linalg.norm(original_points.xyz - new_points.xyz, ord=2)
+    if delta > l2_tolerance:
+        bluemira_warn(
+            f"Forcing wire to spline with {n_discr} interpolation points did not achieve the desired tolerance: {delta} > {l2_tolerance}"
+        )
+
+    return wire
+
+
 def make_circle(
     radius: float = 1.0,
     center: Tuple[float, float, float] = (0.0, 0.0, 0.0),
