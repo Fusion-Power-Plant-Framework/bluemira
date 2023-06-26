@@ -26,7 +26,6 @@ Tools for simple solenoid calculations.
 import numpy as np
 
 from bluemira.base.constants import MU_0
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 
 
@@ -54,16 +53,16 @@ def calculate_B_max(
 
     Notes
     -----
-    Cross-checked graphically with data from Boom and Livingstone, "Superconducting solenoids",
-    1962
+    Cross-checked graphically with k data from Boom and Livingstone, "Superconducting
+    solenoids", 1962, Fig. 6
     """
     dxc = 0.5 * (r_outer - r_inner)
     xc = r_inner + dxc
     dzc = 0.5 * height
     x_bmax = r_inner
-    I = rho_j * (height * (r_outer - r_inner))
-    Bx_max = I * semianalytic_Bx(xc, z_0, x_bmax, z_0, dxc, dzc)
-    Bz_max = I * semianalytic_Bz(xc, z_0, x_bmax, z_0, dxc, dzc)
+    current = rho_j * (height * (r_outer - r_inner))
+    Bx_max = current * semianalytic_Bx(xc, z_0, x_bmax, z_0, dxc, dzc)
+    Bz_max = current * semianalytic_Bz(xc, z_0, x_bmax, z_0, dxc, dzc)
     return np.hypot(Bx_max, Bz_max)
 
 
