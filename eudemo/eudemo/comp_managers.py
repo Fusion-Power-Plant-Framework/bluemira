@@ -72,6 +72,10 @@ class CryostatThermalShield(ComponentManager):
 
 
 class PortManagerMixin:
+    """
+    Mixin class for miscellaneous port component integration utilities.
+    """
+
     @staticmethod
     def _orphan_old_components(components):
         """
