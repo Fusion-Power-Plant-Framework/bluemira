@@ -23,7 +23,7 @@ EUDEMO thermal shield classes
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Tuple
+from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
@@ -38,6 +38,7 @@ from bluemira.geometry.tools import boolean_cut, boolean_fuse
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials import Void
 from eudemo.maintenance.duct_connection import pipe_pipe_join
+from eudemo.tools import make_2d_view_components
 
 
 class VacuumVesselThermalShield(ComponentManager):
@@ -70,7 +71,33 @@ class CryostatThermalShield(ComponentManager):
         )
 
 
-class ThermalShield(ComponentManager):
+class PortManagerMixin:
+    @staticmethod
+    def _orphan_old_components(components):
+        """
+        Orphan and delete previous components
+        """
+        if not isinstance(components, Iterable):
+            components = [components]
+        for comp in components:
+            for view in ["xyz", "xz", "xy"]:
+                comp_view = comp.get_component(view)
+                comp_view.parent = None
+                del comp_view
+
+    @staticmethod
+    def _make_2d_view(parent, solid_comp, void_comp, view, angle, color, void_color):
+        solid_comps, void_comps = make_2d_view_components(
+            view, azimuthal_angle=angle, components=[solid_comp, void_comp]
+        )
+        for solid in solid_comps:
+            apply_component_display_options(solid, color=color)
+        for void in void_comps:
+            apply_component_display_options(void, color=void_color)
+        Component(view, children=solid_comps + void_comps, parent=parent)
+
+
+class ThermalShield(PortManagerMixin, ComponentManager):
     """
     Wrapper around a Thermal Shield component tree.
     """
@@ -150,22 +177,32 @@ class ThermalShield(ComponentManager):
         vvts_sector_void = PhysicalComponent(
             vvts_void_name, final_void, material=Void("vacuum")
         )
-        apply_component_display_options(vvts_sector_body, color=BLUE_PALETTE["TS"][0])
-        apply_component_display_options(vvts_sector_void, color=(0, 0, 0))
 
         cts_sector_body = PhysicalComponent(cts_target_name, cts_target_shape)
         cts_sector_void = PhysicalComponent(
             cts_void_name, cts_target_void, material=Void("vacuum")
         )
+
+        self._orphan_old_components([vvts, cts])
+        self._create_new_components(
+            vvts_sector_body, vvts_sector_void, cts_sector_body, cts_sector_void, n_TF
+        )
+
+    def _create_new_components(
+        self,
+        vvts_sector_body,
+        vvts_sector_void,
+        cts_sector_body,
+        cts_sector_void,
+        n_TF: int,
+    ):
+        vvts = self.vacuum_vessel_thermal_shield()
+        cts = self.cryostat_thermal_shield()
+        angle = 180 / n_TF
+        apply_component_display_options(vvts_sector_body, color=BLUE_PALETTE["TS"][0])
+        apply_component_display_options(vvts_sector_void, color=(0, 0, 0))
         apply_component_display_options(cts_sector_body, color=BLUE_PALETTE["TS"][0])
         apply_component_display_options(cts_sector_void, color=(0, 0, 0))
-
-        # Orphan and kill old shapes
-        vvts_xyz.parent = None
-        del vvts_xyz
-        cts_xyz.parent = None
-        del cts_xyz
-        # Replace xyz components
         Component(
             "xyz",
             children=[
@@ -180,8 +217,44 @@ class ThermalShield(ComponentManager):
             ],
             parent=cts,
         )
-        # TODO: 2-D views
-        n_TF *= 1
+
+        self._make_2d_view(
+            vvts,
+            vvts_sector_body,
+            vvts_sector_void,
+            "xz",
+            angle,
+            BLUE_PALETTE["TS"][0],
+            void_color=(0, 0, 0),
+        )
+        self._make_2d_view(
+            vvts,
+            vvts_sector_body,
+            vvts_sector_void,
+            "xy",
+            angle,
+            BLUE_PALETTE["TS"][0],
+            void_color=(0, 0, 0),
+        )
+
+        self._make_2d_view(
+            cts,
+            cts_sector_body,
+            cts_sector_void,
+            "xz",
+            angle,
+            BLUE_PALETTE["TS"][0],
+            void_color=(0, 0, 0),
+        )
+        self._make_2d_view(
+            cts,
+            cts_sector_body,
+            cts_sector_void,
+            "xy",
+            angle,
+            BLUE_PALETTE["TS"][0],
+            void_color=(0, 0, 0),
+        )
 
 
 class Cryostat(ComponentManager):
