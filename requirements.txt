@@ -1,4 +1,4 @@
-anytree==2.8.0
+anytree==2.9.0
 asteval==0.9.30
 Babel==2.12.1
 click==8.1.3
