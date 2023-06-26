@@ -203,10 +203,39 @@ class UpperPortOP(OptimisationProblem):
         return self.opt.optimise(x0)
 
 
-class UpperPortDesigner(Designer):
-    """Upper Port Designer"""
+@dataclass
+class UpperPortKOZDesignerParams(ParameterFrame):
+    """Parameters required to run :class:`UpperPortOP`."""
 
-    param_cls = UpperPortOPParameters
+    """VV upper port wall thickness at radial ends"""
+    tk_vv_double_wall: Parameter[float]
+    """Gap between VV and TS"""
+    g_vv_ts: Parameter[float]
+    """TS thickness"""
+    tk_ts: Parameter[float]
+    """Gap between TS and TF (used for short gap to PF)"""
+    g_ts_tf: Parameter[float]
+    """Gap between PF coil and support"""
+    pf_s_g: Parameter[float]
+    """PF coil support thickness"""
+    pf_s_tk_plate: Parameter[float]
+
+    c_rm: Parameter[float]
+    """Remote maintenance clearance [m]."""
+    R_0: Parameter[float]
+    """Major radius [m]."""
+    bb_min_angle: Parameter[float]
+    """Minimum blanket module angle [degrees]."""
+    tk_bb_ib: Parameter[float]
+    """Blanket inboard thickness [m]."""
+    tk_bb_ob: Parameter[float]
+    """Blanket outboard thickness [m]."""
+
+
+class UpperPortKOZDesigner(Designer):
+    """Upper Port keep-out zone designer"""
+
+    param_cls = UpperPortKOZDesignerParams
 
     def __init__(
         self,
@@ -232,6 +261,17 @@ class UpperPortDesigner(Designer):
         )
 
         r_up_inner, r_up_outer, r_cut, cut_angle = design_problem.optimise()
+
+        offset = (
+            self.params.tk_vv_double_wall.value
+            + self.params.g_vv_ts.value
+            + self.params.tk_ts.value
+            + self.params.g_ts_tf.value
+            + self.params.pf_s_tk_plate.value
+            + self.params.pf_s_g.value
+        )
+        r_up_inner -= offset
+        r_up_outer += offset
 
         return (
             build_upper_port_zone(r_up_inner, r_up_outer, z_max=self.upper_port_extrema),

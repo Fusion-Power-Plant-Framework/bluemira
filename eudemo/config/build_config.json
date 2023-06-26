@@ -123,6 +123,78 @@
       }
     }
   },
+  "PF coils": {
+    "run_mode": "run",
+    "file_path": "config/PFCoilDesign.json",
+    "verbose": false,
+    "plot": true,
+    "grid_settings": {
+      "nx": 127,
+      "nz": 127,
+      "grid_scale_x": 2.0,
+      "grid_scale_z": 2.0
+    },
+    "breakdown_settings": {
+      "param_class": "bluemira.equilibria.opt_problems::OutboardBreakdownZoneStrategy",
+      "problem_class": "bluemira.equilibria.opt_problems::BreakdownCOP",
+      "B_stray_con_tol": 1e-6,
+      "n_B_stray_points": 10,
+      "optimisation_settings": {
+        "algorithm_name": "COBYLA",
+        "conditions": {
+          "max_eval": 5000,
+          "ftol_rel": 1e-10
+        }
+      }
+    },
+    "equilibrium_settings": {
+      "problem_class": "bluemira.equilibria.opt_problems::TikhonovCurrentCOP",
+      "convergence_class": "bluemira.equilibria.solve::DudsonConvergence",
+      "conv_limit": 1e-4,
+      "gamma": 1e-12,
+      "relaxation": 0.2,
+      "peak_PF_current_factor": 1.5,
+      "optimisation_settings": {
+        "algorithm_name": "SLSQP",
+        "conditions": {
+          "max_eval": 5000,
+          "ftol_rel": 1e-6
+        }
+      }
+    },
+    "position_settings": {
+      "optimisation_settings": {
+        "algorithm_name": "COBYLA",
+        "conditions": {
+          "max_eval": 50,
+          "ftol_rel": 1e-10
+        }
+      }
+    }
+  },
+  "Upper Port": {},
+  "Equatorial Port": {
+    "params": {
+      "ep_width": {
+        "value": 2.0,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Equatorial port width (void width)"
+      },
+      "ep_height": {
+        "value": 2.0,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Equatorial port height (void height)"
+      },
+      "ep_z_position": {
+        "value": 0.0,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Equatorial port central axis z coordinate"
+      }
+    }
+  },
   "Lower Port": {
     "params": {
       "lp_duct_tf_offset": {
@@ -172,55 +244,6 @@
         "unit": "m",
         "source": "Input",
         "long_name": "Lower port duct wall thickness."
-      }
-    }
-  },
-  "PF coils": {
-    "run_mode": "run",
-    "file_path": "config/PFCoilDesign.json",
-    "verbose": false,
-    "plot": true,
-    "grid_settings": {
-      "nx": 127,
-      "nz": 127,
-      "grid_scale_x": 2.0,
-      "grid_scale_z": 2.0
-    },
-    "breakdown_settings": {
-      "param_class": "bluemira.equilibria.opt_problems::OutboardBreakdownZoneStrategy",
-      "problem_class": "bluemira.equilibria.opt_problems::BreakdownCOP",
-      "B_stray_con_tol": 1e-6,
-      "n_B_stray_points": 10,
-      "optimisation_settings": {
-        "algorithm_name": "COBYLA",
-        "conditions": {
-          "max_eval": 5000,
-          "ftol_rel": 1e-10
-        }
-      }
-    },
-    "equilibrium_settings": {
-      "problem_class": "bluemira.equilibria.opt_problems::TikhonovCurrentCOP",
-      "convergence_class": "bluemira.equilibria.solve::DudsonConvergence",
-      "conv_limit": 1e-4,
-      "gamma": 1e-12,
-      "relaxation": 0.2,
-      "peak_PF_current_factor": 1.5,
-      "optimisation_settings": {
-        "algorithm_name": "SLSQP",
-        "conditions": {
-          "max_eval": 5000,
-          "ftol_rel": 1e-6
-        }
-      }
-    },
-    "position_settings": {
-      "optimisation_settings": {
-        "algorithm_name": "COBYLA",
-        "conditions": {
-          "max_eval": 50,
-          "ftol_rel": 1e-10
-        }
       }
     }
   }

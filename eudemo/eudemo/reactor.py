@@ -41,6 +41,7 @@ from typing import Dict
 
 import matplotlib.pyplot as plt
 
+from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
 from bluemira.base.reactor import Reactor
@@ -60,6 +61,7 @@ from eudemo.comp_managers import (
     Cryostat,
     CryostatThermalShield,
     RadiationShield,
+    ThermalShield,
     VacuumVesselThermalShield,
 )
 from eudemo.equilibria import (
@@ -69,8 +71,15 @@ from eudemo.equilibria import (
 )
 from eudemo.ivc import design_ivc
 from eudemo.ivc.divertor_silhouette import Divertor
+from eudemo.maintenance.duct_connection import (
+    TSEquatorialPortDuctBuilder,
+    TSUpperPortDuctBuilder,
+    VVEquatorialPortDuctBuilder,
+    VVUpperPortDuctBuilder,
+)
+from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
 from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
-from eudemo.maintenance.upper_port import UpperPortDesigner
+from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -87,14 +96,15 @@ class EUDEMO(Reactor):
 
     plasma: Plasma
     vacuum_vessel: VacuumVessel
-    vv_thermal: VacuumVesselThermalShield
+    thermal_shield: ThermalShield
+
     divertor: Divertor
     blanket: Blanket
     tf_coils: TFCoil
     pf_coils: PFCoil
     coil_structures: CoilStructures
     cryostat: Cryostat
-    cryostat_thermal: CryostatThermalShield
+
     radiation_shield: RadiationShield
 
 
@@ -120,30 +130,34 @@ def build_vacuum_vessel_thermal_shield(
     return VacuumVesselThermalShield(vvts_builder.build())
 
 
+def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
+    """
+    Build the Cryostat thermal shield for the reactor.
+    """
+    cts_builder = CryostatTSBuilder(
+        params,
+        build_config,
+        pf_kozs,
+        tf_koz,
+    )
+    return CryostatThermalShield(cts_builder.build())
+
+
+def assemble_thermal_shield(vv_thermal_shield, cryostat_thermal_shield):
+    """
+    Assemble the thermal shield component for the reactor.
+    """
+    component = Component(
+        name="Thermal Shield",
+        children=[vv_thermal_shield.component(), cryostat_thermal_shield.component()],
+    )
+    return ThermalShield(component)
+
+
 def build_divertor(params, build_config, div_silhouette) -> Divertor:
     """Build the divertor given a silhouette of a sector."""
     builder = DivertorBuilder(params, build_config, div_silhouette)
     return Divertor(builder.build())
-
-
-def build_lower_port(params, build_config, divertor_face, tf_coils_outer_boundary):
-    """Builder for the Lower Port and Duct"""
-    (
-        lp_duct_xz_void_space,
-        lp_duct_xz_koz,
-        lp_duct_angled_nowall_extrude_boundary,
-        lp_duct_straight_nowall_extrude_boundary,
-    ) = LowerPortDuctDesigner(
-        params, build_config, divertor_face, tf_coils_outer_boundary
-    ).execute()
-    builder = LowerPortBuilder(
-        params,
-        build_config,
-        lp_duct_xz_koz,
-        lp_duct_angled_nowall_extrude_boundary,
-        lp_duct_straight_nowall_extrude_boundary,
-    )
-    return builder.build(), lp_duct_xz_koz
 
 
 def build_blanket(
@@ -216,18 +230,52 @@ def build_coil_structures(
     return CoilStructures(component)
 
 
-def build_cryots(params, build_config, pf_kozs, tf_koz) -> CryostatThermalShield:
+def build_upper_port(
+    params,
+    build_config,
+    upper_port_koz: BluemiraFace,
+    pf_coils,
+    cryostat_ts_xz_boundary: BluemiraFace,
+):
     """
-    Build the Cryostat thermal shield for the reactor.
+    Build the upper port for the reactor.
     """
-    return CryostatThermalShield(
-        CryostatTSBuilder(
-            params,
-            build_config,
-            pf_kozs,
-            tf_koz,
-        ).build()
+    ts_builder = TSUpperPortDuctBuilder(params, upper_port_koz, cryostat_ts_xz_boundary)
+    ts_upper_port = ts_builder.build()
+    vv_builder = VVUpperPortDuctBuilder(params, upper_port_koz, cryostat_ts_xz_boundary)
+    vv_upper_port = vv_builder.build()
+    return ts_upper_port, vv_upper_port
+
+
+def build_equatorial_port(params, build_config, cryostat_ts_xz_boundary):
+    """
+    Build the equatorial port for the reactor.
+    """
+    builder = VVEquatorialPortDuctBuilder(params, cryostat_ts_xz_boundary)
+    vv_eq_port = builder.build()
+    builder = TSEquatorialPortDuctBuilder(params, cryostat_ts_xz_boundary)
+    ts_eq_port = builder.build()
+    return ts_eq_port, vv_eq_port
+
+
+def build_lower_port(params, build_config, divertor_face, tf_coils_outer_boundary):
+    """Builder for the Lower Port and Duct"""
+    (
+        lp_duct_xz_void_space,
+        lp_duct_xz_koz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
+    ) = LowerPortDuctDesigner(
+        params, build_config, divertor_face, tf_coils_outer_boundary
+    ).execute()
+    builder = LowerPortBuilder(
+        params,
+        build_config,
+        lp_duct_xz_koz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
     )
+    return builder.build(), lp_duct_xz_koz
 
 
 def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
@@ -291,12 +339,20 @@ if __name__ == "__main__":
         equilibrium=reference_eq,
     )
 
-    upper_port_designer = UpperPortDesigner(
+    upper_port_designer = UpperPortKOZDesigner(
         reactor_config.params_for("Upper Port"),
         reactor_config.config_for("Upper Port"),
         ivc_shapes.blanket_face,
     )
-    upper_port_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
+    upper_port_koz_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
+
+    eq_port_designer = EquatorialPortKOZDesigner(
+        reactor_config.params_for("Equatorial Port"),
+        reactor_config.config_for("Equatorial Port"),
+        x_ob=20.0,
+    )
+
+    eq_port_koz_xz = eq_port_designer.execute()
 
     reactor.vacuum_vessel = build_vacuum_vessel(
         reactor_config.params_for("Vacuum vessel"),
@@ -318,7 +374,7 @@ if __name__ == "__main__":
         r_inner_cut,
         cut_angle,
     )
-    reactor.vv_thermal = build_vacuum_vessel_thermal_shield(
+    vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "VVTS"),
         reactor.vacuum_vessel.xz_boundary(),
@@ -328,7 +384,7 @@ if __name__ == "__main__":
         reactor_config.params_for("TF coils"),
         reactor_config.config_for("TF coils"),
         reactor.plasma.lcfs(),
-        reactor.vv_thermal.xz_boundary(),
+        vv_thermal_shield.xz_boundary(),
     )
 
     lower_port, lower_port_duct_xz_koz = build_lower_port(
@@ -344,15 +400,21 @@ if __name__ == "__main__":
         reference_eq,
         reactor.tf_coils.xz_outer_boundary(),
         pf_coil_keep_out_zones=[
+            upper_port_koz_xz,
+            eq_port_koz_xz,
             lower_port_duct_xz_koz,
         ],
     )
 
-    reactor.cryostat_thermal = build_cryots(
+    cryostat_thermal_shield = build_cryots(
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "Cryostat"),
         reactor.pf_coils.xz_boundary(),
         reactor.tf_coils.xz_outer_boundary(),
+    )
+
+    reactor.thermal_shield = assemble_thermal_shield(
+        vv_thermal_shield, cryostat_thermal_shield
     )
 
     reactor.coil_structures = build_coil_structures(
@@ -361,7 +423,8 @@ if __name__ == "__main__":
         tf_coil_xz_face=reactor.tf_coils.xz_face(),
         pf_coil_xz_wires=reactor.pf_coils.PF_xz_boundary(),
         pf_coil_keep_out_zones=[
-            upper_port_xz,
+            upper_port_koz_xz,
+            eq_port_koz_xz,
             lower_port_duct_xz_koz,
         ],
     )
@@ -369,7 +432,7 @@ if __name__ == "__main__":
     reactor.cryostat = build_cryostat(
         reactor_config.params_for("Cryostat"),
         reactor_config.config_for("Cryostat"),
-        reactor.cryostat_thermal.xz_boundary(),
+        cryostat_thermal_shield.xz_boundary(),
     )
 
     reactor.radiation_shield = build_radiation_shield(
@@ -377,6 +440,37 @@ if __name__ == "__main__":
         reactor_config.config_for("RadiationShield"),
         reactor.cryostat.xz_boundary(),
     )
+
+    # Incorporate ports, potentially larger depending on where the PF
+    # coils ended up. Warn if this isn't the case.
+
+    ts_upper_port, vv_upper_port = build_upper_port(
+        reactor_config.params_for("Upper Port"),
+        reactor_config.config_for("Upper Port"),
+        upper_port_koz_xz,
+        reactor.pf_coils,
+        cryostat_thermal_shield.xz_boundary(),
+    )
+    ts_eq_port, vv_eq_port = build_equatorial_port(
+        reactor_config.params_for("Equatorial Port"),
+        reactor_config.config_for("Equatorial Port"),
+        cryostat_thermal_shield.xz_boundary(),
+    )
+
+    reactor.vacuum_vessel.add_ports(
+        [vv_upper_port, vv_eq_port], n_TF=reactor_config.global_params.n_TF.value
+    )
+    reactor.thermal_shield.add_ports(
+        [ts_upper_port, ts_eq_port], n_TF=reactor_config.global_params.n_TF.value
+    )
+
+    from bluemira.display import show_cad
+
+    debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_duct_xz_koz]
+    debug.extend(reactor.pf_coils.xz_boundary())
+    # I know there are clashes, I need to put in dynamic bounds on position opt to
+    # include coil XS.
+    show_cad(debug)
 
     reactor.show_cad("xz")
     reactor.show_cad(n_sectors=2)

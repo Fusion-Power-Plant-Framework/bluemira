@@ -64,6 +64,20 @@ class EquatorialPortKOZDesignerParams(ParameterFrame):
     Equatorial Port Designer parameters
     """
 
+    R_0: Parameter[float]
+    """Gap between VV and TS"""
+    g_vv_ts: Parameter[float]
+    """TS thickness"""
+    tk_ts: Parameter[float]
+    """Gap between TS and TF (used for short gap to PF)"""
+    g_ts_tf: Parameter[float]
+    """Gap between PF coil and support"""
+    pf_s_g: Parameter[float]
+    """PF coil support thickness"""
+    pf_s_tk_plate: Parameter[float]
+    tk_vv_single_wall: Parameter[float]
+
+    ep_z_position: Parameter[float]
     ep_height: Parameter[float]
 
 
@@ -80,10 +94,7 @@ class EquatorialPortKOZDesigner(Designer):
         self,
         params: Union[Dict, ParameterFrame, EquatorialPortKOZDesignerParams],
         build_config: Union[Dict, None],
-        koz_z_offset: float,
-        x_ib: float,
         x_ob: float,
-        z_pos: float = 0.0,
     ):
         """
         Parameters:
@@ -92,26 +103,27 @@ class EquatorialPortKOZDesigner(Designer):
             Parameters for the equatorial port designer
         build_config:
             Build config for the equatorial port designer
-        koz_z_offset:
-            offset distance for the KOZ around the equatorial port
-        x_ib:
-            in-board x-position of the KOZ
         x_ob:
             out-board x-position of the KOZ
-        z_pos:
-            z-positional height of the KOZ x-y midplane, default: 0.0
         """
         super().__init__(params, build_config)
-        self.koz_offset = koz_z_offset
-        self.x_ib = x_ib
+        self.koz_offset = (
+            self.params.tk_vv_single_wall.value
+            + self.params.g_vv_ts.value
+            + self.params.tk_ts.value
+            + self.params.g_ts_tf.value
+            + self.params.pf_s_tk_plate.value
+            + self.params.pf_s_g.value
+        )
+        self.x_ib = self.params.R_0.value
         self.x_ob = x_ob
-        self.z_pos = z_pos
+        self.z_pos = self.params.ep_z_position.value
 
     def run(self) -> BluemiraWire:
         """
         Design the xz keep-out zone profile of the equatorial port
         """
-        z_h = (self.params.ep_height.value / 2.0) + self.koz_offset
+        z_h = 0.5 * self.params.ep_height.value + self.koz_offset
         z_o = self.z_pos
 
         x = (self.x_ib, self.x_ob, self.x_ob, self.x_ib)

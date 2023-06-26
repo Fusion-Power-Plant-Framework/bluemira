@@ -39,8 +39,8 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
 from eudemo.maintenance.duct_connection import (
-    UpperPortDuctBuilder,
-    UpperPortDuctBuilderParams,
+    VVUpperPortDuctBuilder,
+    VVUpperPortDuctBuilderParams,
 )
 from eudemo.maintenance.equatorial_port import (
     CastellationBuilder,
@@ -93,10 +93,15 @@ class TestDuctConnection:
     )
 
     def setup_method(self):
-        self.params = UpperPortDuctBuilderParams(
+        self.params = VVUpperPortDuctBuilderParams(
             Parameter("n_TF", 12, ""),
-            Parameter("tk_upper_port_wall_side", 0.1, "m"),
-            Parameter("tk_upper_port_wall_end", 0.2, "m"),
+            Parameter("tf_wp_depth", 0.0, "m"),
+            Parameter("g_ts_tf", 0.00, "m"),
+            Parameter("tk_ts", 0.00, "m"),
+            Parameter("g_vv_ts", 0.00, "m"),
+            Parameter("g_cr_ts", 0.00, "m"),
+            Parameter("tk_vv_double_wall", 0.1, "m"),
+            Parameter("tk_vv_single_wall", 0.05, "m"),
         )
         self.port_koz = self.port_kozs[0]
 
@@ -128,9 +133,10 @@ class TestDuctConnection:
     def test_extrusion_shape(self, port_koz, n_TF, y_offset, port_wall):
         angle = 2 * np.rad2deg(np.pi / n_TF)
         self.params.n_TF.value = n_TF
-        self.params.tk_upper_port_wall_side.value = port_wall
-        self.params.tk_upper_port_wall_end.value = port_wall * 2
-        builder = UpperPortDuctBuilder(self.params, port_koz, y_offset)
+        self.params.tk_vv_single_wall.value = port_wall
+        self.params.tk_vv_double_wall.value = port_wall * 2
+        self.params.tf_wp_depth.value = y_offset
+        builder = VVUpperPortDuctBuilder(self.params, port_koz, port_koz)
         port = builder.build()
         xy = port.get_component("xy").get_component_properties("shape")
         diff = xy.wires[0].length - xy.wires[1].length
@@ -184,17 +190,18 @@ class TestDuctConnection:
         assert np.allclose(finalshape.volume, cylinder.volume)
 
     def test_ValueError_on_zero_wal_thickness(self):
-        self.params.tk_upper_port_wall_side.value = 0
+        self.params.tk_vv_single_wall.value = 0
 
         with pytest.raises(ValueError):
-            UpperPortDuctBuilder(self.params, self.port_koz, 0)
+            VVUpperPortDuctBuilder(self.params, self.port_koz, self.port_koz)
 
     @pytest.mark.parametrize("end", [1, 5])
     def test_BuilderError_on_too_small_port(self, end):
         # raises an error in two different places
-        self.params.tk_upper_port_wall_side.value = 0.5
-        self.params.tk_upper_port_wall_end.value = end
-        builder = UpperPortDuctBuilder(self.params, self.port_koz, 2)
+        self.params.tk_vv_single_wall.value = 0.5
+        self.params.tk_vv_double_wall.value = end
+        self.params.tf_wp_depth.value = 2.0
+        builder = VVUpperPortDuctBuilder(self.params, self.port_koz, self.port_koz)
 
         with pytest.raises(BuilderError):
             builder.build()
@@ -212,11 +219,20 @@ class TestEquatorialPortKOZDesigner:
     )
     def test_ep_designer(self, xi, xo, zh):
         """Test Equatorial Port KOZ Designer"""
+        R_0 = xi
         self.params = {
+            "R_0": {"value": R_0, "unit": "m"},
             "ep_height": {"value": zh, "unit": "m"},
+            "ep_z_position": {"value": 0.0, "unit": "m"},
+            "g_vv_ts": {"value": 0.0, "unit": "m"},
+            "tk_ts": {"value": 0.0, "unit": "m"},
+            "g_ts_tf": {"value": 0.0, "unit": "m"},
+            "pf_s_g": {"value": 0.0, "unit": "m"},
+            "pf_s_tk_plate": {"value": 0.0, "unit": "m"},
+            "tk_vv_single_wall": {"value": 0.0, "unit": "m"},
         }
-        x_len = xo - xi
-        self.designer = EquatorialPortKOZDesigner(self.params, None, 0.0, xi, xo)
+        x_len = xo - R_0
+        self.designer = EquatorialPortKOZDesigner(self.params, None, xo)
         output = self.designer.execute()
 
         assert np.isclose(output.length, 2 * (x_len + zh))

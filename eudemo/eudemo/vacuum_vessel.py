@@ -36,9 +36,10 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import _offset_wire_discretised
+from bluemira.geometry.tools import _offset_wire_discretised, boolean_fuse
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
+from eudemo.maintenance.duct_connection import pipe_pipe_join
 
 
 class VacuumVessel(ComponentManager):
@@ -54,6 +55,54 @@ class VacuumVessel(ComponentManager):
             .get_component(VacuumVesselBuilder.BODY)
             .shape.boundary[0]
         )
+
+    def add_ports(self, ports: Union[Component, List[Component]], n_TF: int):
+        """
+        Add a series of ports to the vacuum vessel component tree.
+        """
+        component = self.component()
+        xyz = component.get_component("xyz")
+        vv_xyz = xyz.get_component("Sector 1")
+        target_void = vv_xyz.get_component("Vessel voidspace 1").shape
+        target_shape = vv_xyz.get_component("Body 1").shape
+
+        if isinstance(ports, Component):
+            ports = [ports]
+
+        tool_voids = []
+        new_shape_pieces = []
+        for i, port in enumerate(ports):
+            if i > 0:
+                target_shape = boolean_fuse(new_shape_pieces)
+
+            port_xyz = port.get_component("xyz")
+            tool_shape = port_xyz.get_component(port.name).shape
+            tool_void = port_xyz.get_component(port.name + " voidspace").shape
+            tool_voids.append(tool_void)
+            new_shape_pieces = pipe_pipe_join(
+                target_shape, target_void, tool_shape, tool_void
+            )
+
+        final_shape = boolean_fuse(new_shape_pieces)
+        final_void = boolean_fuse([target_void] + tool_voids)
+
+        sector_body = PhysicalComponent(VacuumVesselBuilder.BODY, final_shape)
+        sector_void = PhysicalComponent(
+            VacuumVesselBuilder.VOID, final_void, material=Void("vacuum")
+        )
+        apply_component_display_options(sector_body, color=BLUE_PALETTE["VV"][0])
+        apply_component_display_options(sector_void, color=(0, 0, 0))
+        xyz.parent = None
+        del xyz
+        Component("xyz", children=[sector_body, sector_void], parent=component)
+        # TODO: This doesn't work because slice_shape returns nothing
+        # for view in ["xz", "xy"]:
+        #     view_comp = component.get_component(view)
+        #     view_comp.parent = None
+        #     del view_comp
+        #     new_2d_comps = make_2d_view_components(view, azimuthal_angle=180/n_TF,
+        #                                         components=[sector_body, sector_void])
+        #     Component(view, children=new_2d_comps, parent=component)
 
 
 @dataclass
