@@ -6,7 +6,7 @@
     "fixed": true
   },
   "dz": {
-    "value": -0.4245285775861495,
+    "value": -0.4244364737918872,
     "lower_bound": -1,
     "upper_bound": 1,
     "fixed": false
@@ -18,25 +18,25 @@
     "fixed": false
   },
   "f1": {
-    "value": 7.785858378225619,
+    "value": 7.781329188955184,
     "lower_bound": 2,
     "upper_bound": 12,
     "fixed": false
   },
   "f2": {
-    "value": 4.084991099395334,
+    "value": 4.078804300778263,
     "lower_bound": 2,
     "upper_bound": 12,
     "fixed": false
   },
   "a1": {
-    "value": 28.437557761571604,
+    "value": 28.531941504191817,
     "lower_bound": 5,
     "upper_bound": 120,
     "fixed": false
   },
   "a2": {
-    "value": 65.64259565696987,
+    "value": 65.47864479748185,
     "lower_bound": 10,
     "upper_bound": 120,
     "fixed": false

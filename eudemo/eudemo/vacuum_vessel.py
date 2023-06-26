@@ -36,7 +36,11 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import _offset_wire_discretised, boolean_fuse
+from bluemira.geometry.tools import (
+    _offset_wire_discretised,
+    boolean_fuse,
+    force_wire_to_spline,
+)
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
 from eudemo.maintenance.duct_connection import pipe_pipe_join
@@ -176,6 +180,8 @@ class VacuumVesselBuilder(Builder):
             self.params.vv_out_off_deg.value,
             num_points=300,
         )
+        inner_vv = force_wire_to_spline(inner_vv, n_edges_max=100)
+        outer_vv = force_wire_to_spline(outer_vv, n_edges_max=100)
         face = BluemiraFace([outer_vv, inner_vv])
 
         body = PhysicalComponent(self.BODY, face)
