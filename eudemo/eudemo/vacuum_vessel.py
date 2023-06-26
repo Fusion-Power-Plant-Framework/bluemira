@@ -36,13 +36,18 @@ from bluemira.builders.tools import (
 )
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import _offset_wire_discretised, boolean_fuse
+from bluemira.geometry.tools import (
+    _offset_wire_discretised,
+    boolean_fuse,
+    force_wire_to_spline,
+)
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials.cache import Void
+from eudemo.comp_managers import PortManagerMixin
 from eudemo.maintenance.duct_connection import pipe_pipe_join
 
 
-class VacuumVessel(ComponentManager):
+class VacuumVessel(PortManagerMixin, ComponentManager):
     """
     Wrapper around a Vacuum Vessel component tree.
     """
@@ -90,19 +95,29 @@ class VacuumVessel(ComponentManager):
         sector_void = PhysicalComponent(
             VacuumVesselBuilder.VOID, final_void, material=Void("vacuum")
         )
+
+        self._orphan_old_components(component)
+        self._create_new_components(sector_body, sector_void, n_TF)
+
+    def _create_new_components(self, sector_body, sector_void, n_TF: int):
+        angle = 180 / n_TF
+        component = self.component()
         apply_component_display_options(sector_body, color=BLUE_PALETTE["VV"][0])
         apply_component_display_options(sector_void, color=(0, 0, 0))
-        xyz.parent = None
-        del xyz
-        Component("xyz", children=[sector_body, sector_void], parent=component)
-        # TODO: This doesn't work because slice_shape returns nothing
-        # for view in ["xz", "xy"]:
-        #     view_comp = component.get_component(view)
-        #     view_comp.parent = None
-        #     del view_comp
-        #     new_2d_comps = make_2d_view_components(view, azimuthal_angle=180/n_TF,
-        #                                         components=[sector_body, sector_void])
-        #     Component(view, children=new_2d_comps, parent=component)
+        Component(
+            "xyz",
+            children=[Component("Sector 1", children=[sector_body, sector_void])],
+            parent=component,
+        )
+
+        self._make_2d_views(
+            component,
+            sector_body,
+            sector_void,
+            angle,
+            BLUE_PALETTE["TS"][0],
+            void_color=(0, 0, 0),
+        )
 
 
 @dataclass
@@ -176,6 +191,8 @@ class VacuumVesselBuilder(Builder):
             self.params.vv_out_off_deg.value,
             num_points=300,
         )
+        inner_vv = force_wire_to_spline(inner_vv, n_edges_max=100)
+        outer_vv = force_wire_to_spline(outer_vv, n_edges_max=100)
         face = BluemiraFace([outer_vv, inner_vv])
 
         body = PhysicalComponent(self.BODY, face)

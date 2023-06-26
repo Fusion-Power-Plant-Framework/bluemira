@@ -78,12 +78,17 @@ def make_2d_view_components(
 
     view_comps = []
     for comp in components:
+        comp_slices = []
         pieces = slice_shape(comp.shape, plane)
         # TODO: slice_shape is unreliable for complex shapes...
 
         for i, piece in enumerate(pieces):
+            face = BluemiraFace(piece)
+            if azimuthal_angle != 0:
+                face.rotate(degree=-np.rad2deg(azimuthal_angle))
             new_comp = PhysicalComponent(
-                f"{comp.name} {i}", BluemiraFace(piece), material=comp.material
+                f"{comp.name} {i}", face, material=comp.material
             )
-            view_comps.append(new_comp)
+            comp_slices.append(new_comp)
+        view_comps.append(comp_slices)
     return view_comps
