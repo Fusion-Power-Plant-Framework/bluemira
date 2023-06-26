@@ -21,8 +21,12 @@
 """
 EUDEMO thermal shield classes
 """
+from __future__ import annotations
 
-from typing import List
+from typing import TYPE_CHECKING, List, Tuple
+
+if TYPE_CHECKING:
+    from bluemira.geometry.solid import BluemiraSolid
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
@@ -83,6 +87,34 @@ class ThermalShield(ComponentManager):
         """
         return self.component().get_component("CryostatTS")
 
+    @staticmethod
+    def _join_ports_to_vvts(
+        ports: List[Component],
+        vvts_target_shape: BluemiraSolid,
+        vvts_target_void: BluemiraSolid,
+    ) -> Tuple[BluemiraSolid, BluemiraSolid, List[BluemiraSolid]]:
+        if isinstance(ports, Component):
+            ports = [ports]
+
+        tool_voids = []
+        new_shape_pieces = []
+        for port in ports:
+            port_xyz = port.get_component("xyz")
+            tool_shape = port_xyz.get_component(port.name).shape
+            tool_void = port_xyz.get_component(port.name + " voidspace").shape
+            tool_voids.append(tool_void)
+            result_pieces = pipe_pipe_join(
+                vvts_target_shape, vvts_target_void, tool_shape, tool_void
+            )
+            # Assume the body is the biggest piece
+            result_pieces.sort(key=lambda solid: -solid.volume)
+            vvts_target_shape = result_pieces[0]
+            new_shape_pieces.extend(result_pieces[1:])
+
+        final_shape = boolean_fuse([vvts_target_shape] + new_shape_pieces)
+        final_void = boolean_fuse([vvts_target_void] + tool_voids)
+        return final_shape, final_void, tool_voids
+
     def add_ports(self, ports: List[Component], n_TF: int):
         """
         Add ports to the thermal shield
@@ -104,26 +136,9 @@ class ThermalShield(ComponentManager):
         cts_target_shape = cr_xyz.get_component(cts_target_name).shape
         cts_target_void = cr_xyz.get_component(cts_void_name).shape
 
-        if isinstance(ports, Component):
-            ports = [ports]
-
-        tool_voids = []
-        new_shape_pieces = []
-        for port in ports:
-            port_xyz = port.get_component("xyz")
-            tool_shape = port_xyz.get_component(port.name).shape
-            tool_void = port_xyz.get_component(port.name + " voidspace").shape
-            tool_voids.append(tool_void)
-            result_pieces = pipe_pipe_join(
-                vvts_target_shape, vvts_target_void, tool_shape, tool_void
-            )
-            # Assume the body is the biggest piece
-            result_pieces.sort(key=lambda solid: -solid.volume)
-            vvts_target_shape = result_pieces[0]
-            new_shape_pieces.extend(result_pieces[1:])
-
-        final_shape = boolean_fuse([vvts_target_shape] + new_shape_pieces)
-        final_void = boolean_fuse([vvts_target_void] + tool_voids)
+        final_shape, final_void, tool_voids = self._join_ports_to_vvts(
+            ports, vvts_target_shape, vvts_target_void
+        )
 
         temp = boolean_cut(final_shape, cts_target_shape)
         temp.sort(key=lambda solid: -solid.volume)
