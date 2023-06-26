@@ -34,7 +34,7 @@ python-dateutil==2.8.2
 pytz==2023.3
 rich==13.4.2
 scikit-learn==1.2.2
-scipy==1.7.3
+scipy==1.11.0
 seaborn==0.12.2
 six==1.16.0
 tables==3.8.0
