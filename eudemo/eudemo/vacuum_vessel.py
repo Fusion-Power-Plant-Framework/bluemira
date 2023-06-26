@@ -110,20 +110,10 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
             parent=component,
         )
 
-        self._make_2d_view(
+        self._make_2d_views(
             component,
             sector_body,
             sector_void,
-            "xz",
-            angle,
-            BLUE_PALETTE["TS"][0],
-            void_color=(0, 0, 0),
-        )
-        self._make_2d_view(
-            component,
-            sector_body,
-            sector_void,
-            "xy",
             angle,
             BLUE_PALETTE["TS"][0],
             void_color=(0, 0, 0),

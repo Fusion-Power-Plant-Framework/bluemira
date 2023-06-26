@@ -90,17 +90,18 @@ class PortManagerMixin:
                 del comp_view
 
     @staticmethod
-    def _make_2d_view(parent, solid_comp, void_comp, view, angle, color, void_color):
-        solid_comps, void_comps = make_2d_view_components(
-            view, azimuthal_angle=angle, components=[solid_comp, void_comp]
-        )
-        for solid in solid_comps:
-            apply_component_display_options(solid, color=color)
-        for void in void_comps:
-            apply_component_display_options(void, color=void_color)
-        view_comps = solid_comps + void_comps
+    def _make_2d_views(parent, solid_comp, void_comp, angle, color, void_color):
+        for view in ["xz", "xy"]:
+            solid_comps, void_comps = make_2d_view_components(
+                view, azimuthal_angle=angle, components=[solid_comp, void_comp]
+            )
+            for solid in solid_comps:
+                apply_component_display_options(solid, color=color)
+            for void in void_comps:
+                apply_component_display_options(void, color=void_color)
+            view_comps = solid_comps + void_comps
 
-        Component(view, children=view_comps, parent=parent)
+            Component(view, children=view_comps, parent=parent)
 
 
 class ThermalShield(PortManagerMixin, ComponentManager):
@@ -224,39 +225,19 @@ class ThermalShield(PortManagerMixin, ComponentManager):
             parent=cts,
         )
 
-        self._make_2d_view(
+        self._make_2d_views(
             vvts,
             vvts_sector_body,
             vvts_sector_void,
-            "xz",
-            angle,
-            BLUE_PALETTE["TS"][0],
-            void_color=(0, 0, 0),
-        )
-        self._make_2d_view(
-            vvts,
-            vvts_sector_body,
-            vvts_sector_void,
-            "xy",
             angle,
             BLUE_PALETTE["TS"][0],
             void_color=(0, 0, 0),
         )
 
-        self._make_2d_view(
+        self._make_2d_views(
             cts,
             cts_sector_body,
             cts_sector_void,
-            "xz",
-            angle,
-            BLUE_PALETTE["TS"][0],
-            void_color=(0, 0, 0),
-        )
-        self._make_2d_view(
-            cts,
-            cts_sector_body,
-            cts_sector_void,
-            "xy",
             angle,
             BLUE_PALETTE["TS"][0],
             void_color=(0, 0, 0),
