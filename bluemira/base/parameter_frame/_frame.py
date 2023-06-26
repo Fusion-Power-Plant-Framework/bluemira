@@ -4,6 +4,7 @@ import copy
 import json
 from contextlib import suppress
 from dataclasses import dataclass, fields
+from operator import itemgetter
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -289,6 +290,9 @@ class ParameterFrame:
         -------
         The tabulated data
         """
+        column_widths = dict(
+            zip(list(ParamDictT.__annotations__.keys()), [20, None, 20, 20, 20, 20])
+        )
         columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
         rec_col = copy.deepcopy(columns)
         rec_col.pop(columns.index("name"))
@@ -309,6 +313,7 @@ class ParameterFrame:
             tablefmt=tablefmt,
             showindex=False,
             numalign="right",
+            maxcolwidths=list(itemgetter(*columns)(column_widths)),
         )
 
     def __str__(self) -> str:
