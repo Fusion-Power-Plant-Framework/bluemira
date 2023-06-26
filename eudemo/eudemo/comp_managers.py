@@ -98,7 +98,9 @@ class PortManagerMixin:
             apply_component_display_options(solid, color=color)
         for void in void_comps:
             apply_component_display_options(void, color=void_color)
-        Component(view, children=solid_comps + void_comps, parent=parent)
+        view_comps = solid_comps + void_comps
+
+        Component(view, children=view_comps, parent=parent)
 
 
 class ThermalShield(PortManagerMixin, ComponentManager):
