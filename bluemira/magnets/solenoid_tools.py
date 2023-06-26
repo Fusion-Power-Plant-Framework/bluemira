@@ -27,13 +27,15 @@ import numpy as np
 
 from bluemira.base.constants import MU_0
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 
 
 def calculate_B_max(
-    rho_j: float, r_inner: float, r_outer: float, height: float
+    rho_j: float, r_inner: float, r_outer: float, height: float, z_0: float = 0.0
 ) -> float:
     """
-    Calculate the maximum field in a solenoid
+    Calculate the maximum self-field in a solenoid. This is always located
+    at (r_inner, z_0)
 
     Parameters
     ----------
@@ -52,54 +54,17 @@ def calculate_B_max(
 
     Notes
     -----
-    M. Wilson, Superconducting Magnets, 1983, p22
+    Cross-checked graphically with data from Boom and Livingstone, "Superconducting solenoids",
+    1962
     """
-    half_height = 0.5 * height
-    alpha = r_outer / r_inner
-    beta = half_height / r_inner
-
-    if not (1.0 < alpha < 2.0):
-        bluemira_warn(
-            f"Solenoid B_max calculation parameter alpha is not between 1.0 and 2.0: {alpha=:.2f}"
-        )
-    if beta <= 0.5:
-        bluemira_warn(
-            f"Solenoid B_max calculation parameter beta is not greater than 0.5: {beta=:.2f}"
-        )
-
-    b_0 = (
-        rho_j
-        * MU_0
-        * half_height
-        * np.log((alpha + np.hypot(alpha, beta)) / (1 + np.hypot(1, beta)))
-    )
-
-    tail = 0.0
-    alpha_1 = alpha - 1.0
-    if beta > 3.0:
-        b_c = (3.0 / beta) ** 2
-        factor = b_c * (1.007 + 0.0055 * alpha_1)
-        tail = (1 - b_c) * MU_0 * rho_j * (r_outer - r_inner)
-
-    elif beta > 2.0:
-        b_c = beta - 2.0
-        factor = 1.025 - 0.018 * b_c + (0.01 - 0.0045 * b_c) * alpha_1
-
-    elif beta > 1.0:
-        b_c = beta - 1.0
-        factor = 1.117 - 0.092 * b_c + (0.01 * b_c) * alpha_1
-
-    elif beta > 0.75:
-        b_c = beta - 0.75
-        factor = 1.3 - 0.732 * b_c + (-0.05 + 0.2 * b_c) * alpha_1
-
-    else:
-        b_c = beta - 0.5
-        factor = 1.64 - 1.4 * b_c + (-0.2 + 0.6 * b_c) * alpha_1
-
-    B_max = factor * b_0 + tail
-
-    return B_max
+    dxc = 0.5 * (r_outer - r_inner)
+    xc = r_inner + dxc
+    dzc = 0.5 * height
+    x_bmax = r_inner
+    I = rho_j * (height * (r_outer - r_inner))
+    Bx_max = I * semianalytic_Bx(xc, z_0, x_bmax, z_0, dxc, dzc)
+    Bz_max = I * semianalytic_Bz(xc, z_0, x_bmax, z_0, dxc, dzc)
+    return np.hypot(Bx_max, Bz_max)
 
 
 def calculate_hoop_stress(
@@ -213,3 +178,102 @@ def calculate_flux_max(B_max: float, r_inner: float, r_outer: float) -> float:
     Maximum flux achievable from a solenoid [V.s]
     """
     return np.pi / 3 * B_max * (r_outer**2 + r_inner**2 + r_outer * r_inner)
+
+
+if __name__ == "__main__":
+    import csv
+
+    import matplotlib.pyplot as plt
+    import pandas as pd
+
+    from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
+
+    data_101 = pd.read_csv("1_01.csv")
+    data_1025 = pd.read_csv("1_025.csv")
+    data_11 = pd.read_csv("1_1.csv")
+    data_20 = pd.read_csv("2_0.csv")
+
+    def K_semianalytic(
+        rho_j: float, r_inner: float, r_outer: float, height: float
+    ) -> float:
+        dxc = 0.5 * (r_outer - r_inner)
+        xc = r_inner + dxc
+        zc = 1
+        dzc = 0.5 * height
+        x = r_inner
+        z = 1
+        Bx_max = semianalytic_Bx(xc, zc, x, z, dxc, dzc)
+        Bz_max = semianalytic_Bz(xc, zc, x, z, dxc, dzc)
+        I = rho_j * (height * (r_outer - r_inner))
+        Bx_max *= I
+        Bz_max *= I
+        Bx_0 = semianalytic_Bx(xc, zc, 1e-6, 1, dxc, dzc)
+        Bz_0 = semianalytic_Bz(xc, zc, 1e-6, 1, dxc, dzc)
+        Bx_0 *= I
+        Bz_0 *= I
+        return np.hypot(Bx_max, Bz_max) / np.hypot(Bx_0, Bz_0)
+
+    def K_semianalytic_ab(alpha, beta, rho_j, r_inner):
+        r_outer = alpha * r_inner
+        half_height = beta * r_inner
+        return K_semianalytic(rho_j, r_inner, r_outer, 2 * half_height)
+
+    rho_j = 5e6
+    r_inner = 10.0
+
+    n1, n2 = 50, 60
+    alpha = np.linspace(1.0001, 3.2, n1)
+    beta = np.linspace(0.0001, 3.2, n2)
+    x, y = np.meshgrid(alpha, beta, indexing="ij")
+
+    Kprocess = np.zeros((n1, n2))
+    Ksemi = np.zeros((n1, n2))
+
+    for i, a in enumerate(alpha):
+        for j, b in enumerate(beta):
+            if a <= 2.0 and (0.5 < b < 3.0):
+                Kprocess[i, j] = calculate_K_process(a, b, rho_j, r_inner)
+            else:
+                Kprocess[i, j] = np.nan
+            Ksemi[i, j] = K_semianalytic_ab(a, b, rho_j, r_inner)
+
+    levels = [
+        1.0075,
+        1.00875,
+        1.01,
+        1.0125,
+        1.015,
+        1.02,
+        1.025,
+        1.0325,
+        1.04,
+        1.055,
+        1.07,
+        1.1,
+        1.15,
+        1.2,
+        1.3,
+        1.5,
+        1.75,
+        2.0,
+        2.5,
+        2.8,
+    ]
+    f, ax = plt.subplots()
+    # cm = ax.contour(x, y, Kprocess, cmap="viridis", levels=levels)
+    # cb = f.colorbar(cm, ax=ax, pad=0)
+    # cb.set_label("PROCESS $k = B_{max}/B_{0}$")
+    cm = ax.contour(x, y, Ksemi, cmap="plasma", levels=levels)
+    cb = f.colorbar(cm, ax=ax, pad=0.04)
+    cb.set_label("BLUEMIRA $k = B_{max}/B_{0}$")
+    ax.scatter(data_101["alpha"], data_101["beta"], label="k=1.01")
+    ax.scatter(data_1025["alpha"], data_1025["beta"], label="k=1.025")
+    ax.scatter(data_11["alpha"], data_11["beta"], label="k=1.1")
+    ax.scatter(data_20["alpha"], data_20["beta"], label="k=2.0")
+    leg = ax.legend()
+    leg.set_title("Boom and Livingstone 1962 data")
+    ax.set_xlabel("$\\alpha$")
+    ax.set_xlim([1.0, 3.2])
+    ax.set_ylabel("$\\beta$")
+    ax.set_ylim([0, 3.2])
+    plt.show()
