@@ -39,7 +39,7 @@ pathspec==0.11.1
 pbr==5.11.1
 pep8-naming==0.13.3
 platformdirs==3.6.0
-pluggy==1.0.0
+pluggy==1.2.0
 pre-commit==3.3.3
 pycodestyle==2.10.0
 pydocstyle==6.3.0
