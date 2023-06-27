@@ -33,7 +33,6 @@ from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_constraints import (
     CoilFieldConstraints,
