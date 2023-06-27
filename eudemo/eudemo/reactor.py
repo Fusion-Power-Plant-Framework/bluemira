@@ -496,7 +496,8 @@ if __name__ == "__main__":
         reactor.cryostat.xz_boundary(),
     )
 
-    # Incorporate ports, potentially larger depending on where the PF
+    # Incorporate ports
+    # TODO: Make potentially larger depending on where the PF
     # coils ended up. Warn if this isn't the case.
 
     ts_upper_port, vv_upper_port = build_upper_port(
