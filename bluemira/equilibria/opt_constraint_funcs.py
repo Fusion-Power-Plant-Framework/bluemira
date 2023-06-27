@@ -213,7 +213,7 @@ def current_midplane_constraint(
     -------
     Updated constraint vector
     """
-    eq.coilset.set_control_currents(vector * scale)
+    eq.coilset.get_control_coils().current = vector * scale
     lcfs = eq.get_LCFS()
     if inboard:
         constraint[:] = radius - min(lcfs.x)
