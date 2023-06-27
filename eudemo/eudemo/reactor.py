@@ -81,6 +81,7 @@ from eudemo.maintenance.duct_connection import (
 from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
 from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
+from eudemo.model_managers import EquilibriumManager
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -95,18 +96,20 @@ BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json")
 class EUDEMO(Reactor):
     """EUDEMO reactor definition."""
 
+    # Components
     plasma: Plasma
     vacuum_vessel: VacuumVessel
     thermal_shield: ThermalShield
-
     divertor: Divertor
     blanket: Blanket
     tf_coils: TFCoil
     pf_coils: PFCoil
     coil_structures: CoilStructures
     cryostat: Cryostat
-
     radiation_shield: RadiationShield
+
+    # Models
+    equilibria: EquilibriumManager
 
 
 def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
@@ -196,7 +199,7 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
 def build_pf_coils(
     params,
     build_config,
-    reference_equilibrium,
+    equilibrium_manager,
     tf_coil_boundary,
     pf_coil_keep_out_zones=(),
 ) -> PFCoil:
@@ -218,10 +221,11 @@ def build_pf_coils(
     pf_designer = PFCoilsDesigner(
         params,
         build_config,
-        reference_equilibrium,
+        equilibrium_manager,
         tf_coil_boundary,
         pf_coil_keep_out_zones_new,
     )
+
     coilset = pf_designer.execute()
     component = build_pf_coils_component(params, build_config, coilset)
     return PFCoil(component, coilset)
@@ -332,6 +336,8 @@ if __name__ == "__main__":
         reactor_config.config_for("Dummy fixed boundary equilibrium"),
     )
 
+    reactor.equilibria = EquilibriumManager()
+
     reference_eq = run_designer(
         ReferenceFreeBoundaryEquilibriumDesigner,
         reactor_config.params_for("Free boundary equilibrium"),
@@ -339,6 +345,7 @@ if __name__ == "__main__":
         lcfs_coords=lcfs_coords,
         profiles=profiles,
     )
+    reactor.equilibria.add_state(reactor.equilibria.REFERENCE, reference_eq)
 
     reactor.plasma = build_plasma(
         reactor_config.params_for("Plasma"),
