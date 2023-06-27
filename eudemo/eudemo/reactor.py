@@ -53,6 +53,7 @@ from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import interpolate_bspline, offset_wire
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
@@ -110,6 +111,41 @@ class EUDEMO(Reactor):
 
     # Models
     equilibria: EquilibriumManager
+
+
+def build_reference_equilibrium(
+    params,
+    build_config: Dict,
+    equilibrium_manager: EquilibriumManager,
+    lcfs_coords,
+    profiles,
+):
+    """
+    Build the reference equilibrium for the tokamak and store in
+    the equilibrium manager
+    """
+    designer = ReferenceFreeBoundaryEquilibriumDesigner(
+        params,
+        build_config,
+        lcfs_coords,
+        profiles,
+    )
+    reference_eq = designer.execute()
+    constraints = None
+    optimiser = None
+    if designer.opt_problem is not None:
+        constraints = designer.opt_problem.targets
+        optimiser = designer.opt_problem.opt
+    ref_snapshot = Snapshot(
+        reference_eq,
+        reference_eq.coilset,
+        constraints,
+        reference_eq.profiles,
+        optimiser,
+        reference_eq.limiter,
+    )
+    equilibrium_manager.add_state(equilibrium_manager.REFERENCE, ref_snapshot)
+    return reference_eq
 
 
 def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
@@ -338,14 +374,13 @@ if __name__ == "__main__":
 
     reactor.equilibria = EquilibriumManager()
 
-    reference_eq = run_designer(
-        ReferenceFreeBoundaryEquilibriumDesigner,
+    reference_eq = build_reference_equilibrium(
         reactor_config.params_for("Free boundary equilibrium"),
         reactor_config.config_for("Free boundary equilibrium"),
-        lcfs_coords=lcfs_coords,
-        profiles=profiles,
+        reactor.equilibria,
+        lcfs_coords,
+        profiles,
     )
-    reactor.equilibria.add_state(reactor.equilibria.REFERENCE, reference_eq)
 
     reactor.plasma = build_plasma(
         reactor_config.params_for("Plasma"),
@@ -417,7 +452,7 @@ if __name__ == "__main__":
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
-        reference_eq,
+        reactor.equilibria,
         reactor.tf_coils.xz_outer_boundary(),
         pf_coil_keep_out_zones=[
             upper_port_koz_xz,

@@ -26,7 +26,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
-    from bluemira.equilibria.equilibrium import MHDState
+    from bluemira.equilibria.run import Snapshot
 
 from bluemira.base.look_and_feel import bluemira_warn
 
@@ -49,15 +49,15 @@ class EquilibriumManager:
             self.EOF: None,
         }
 
-    def add_state(self, name: str, equilibrium: MHDState):
+    def add_state(self, name: str, snapshot: Snapshot):
         """
         Add an equilibrium state to the Equilibrium manager.
         """
         if self.states.get(name, None) is not None:
             bluemira_warn(f"Over-writing equilibrium state: {name}!")
-        self.states[name] = equilibrium
+        self.states[name] = snapshot
 
-    def get_state(self, name: str) -> Union[None, MHDState]:
+    def get_state(self, name: str) -> Union[None, Snapshot]:
         """
         Get an equilibrium state from the Equilibrium manager.
         """
