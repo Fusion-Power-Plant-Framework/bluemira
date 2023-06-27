@@ -475,8 +475,6 @@ class OptVariablesFrame:
             Path to save the json file to.
         """
         json_writer(self.as_dict(), file, **kwargs)
-        # with open(path, "w") as f:
-        #     json.dump(self.as_dict(), f)
 
     @classmethod
     def from_json(cls, file: Union[str, TextIO], frozen=False):
