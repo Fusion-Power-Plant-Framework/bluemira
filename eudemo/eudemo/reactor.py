@@ -40,6 +40,7 @@ from pathlib import Path
 from typing import Dict
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
@@ -53,7 +54,7 @@ from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import interpolate_bspline
+from bluemira.geometry.tools import interpolate_bspline, offset_wire
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -202,12 +203,24 @@ def build_pf_coils(
     """
     Design and build the PF coils for the reactor.
     """
+    pf_coil_keep_out_zones_new = []
+    # This is a very crude way of forcing PF coil centrepoints away from the KOZs
+    # to stop clashes between ports and PF coil corners
+    # TODO: Implement adjustable current bounds on sub-opt problems
+    offset_value = np.sqrt(
+        params.global_params.I_p.value / params.global_params.PF_jmax.value
+    )
+    for koz in pf_coil_keep_out_zones:
+        new_wire = offset_wire(koz.boundary[0], offset_value, open_wire=False)
+        new_face = BluemiraFace(new_wire)
+        pf_coil_keep_out_zones_new.append(new_face)
+
     pf_designer = PFCoilsDesigner(
         params,
         build_config,
         reference_equilibrium,
         tf_coil_boundary,
-        pf_coil_keep_out_zones,
+        pf_coil_keep_out_zones_new,
     )
     coilset = pf_designer.execute()
     component = build_pf_coils_component(params, build_config, coilset)
