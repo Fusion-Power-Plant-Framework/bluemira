@@ -67,6 +67,7 @@ Non-Linearly Constrained Optimisation Problem
 # %%
 from typing import List, Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.optimisation import optimise
@@ -94,10 +95,10 @@ def df_constraint(x: np.ndarray, a: float, b: float) -> np.ndarray:
 
 result = optimise(
     f_objective,
-    x0=np.array([1, 1]),
+    x0=np.array([0.8, 2.5]),
     algorithm="SLSQP",
     df_objective=df_objective,
-    opt_conditions={"xtol_rel": 1e-10, "max_eval": 1000},
+    opt_conditions={"ftol_rel": 1e-12, "max_eval": 200},
     keep_history=True,
     bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
     ineq_constraints=[
@@ -113,9 +114,68 @@ result = optimise(
         },
     ],
 )
-for x in result.history:
-    print(x)
 print(result)
+
+# %% [markdown]
+## Visualising the Optimisation
+# Using the history of the optimiser result,
+# we can plot the route the optimiser took to get to the minimum.
+#
+# The code below produces an image of the optimisation space,
+# with the constrained areas shaded in grey.
+# The path the optimiser took is shown by the plotted points,
+# which get smaller and darker at each iteration.
+
+
+# %%
+# %matplotlib inline
+def c1(x1):
+    """Line drawn by limit of first constraint."""
+    return 8 * x1**3
+
+
+def c2(x1):
+    """Line drawn by limit of second constraint."""
+    return (1 - x1) ** 3
+
+
+mesh_resolution = 201  # points per dimension
+x = np.linspace(-0.5, 1, mesh_resolution)
+y = np.linspace(0, 3, mesh_resolution)
+xx, yy = np.meshgrid(x, y)
+zz = f_objective(np.vstack((xx.ravel(), yy.ravel()))).reshape(xx.shape)
+
+fig, ax = plt.subplots()
+color_mesh = ax.pcolormesh(x, y, zz, cmap="viridis_r")
+cbar = fig.colorbar(color_mesh, ax=ax)
+cbar.set_label("$f(x_1, x_2)$")
+ax.fill_between(x, c1(x), color="k", alpha=0.2)
+ax.fill_between(x, c2(x), color="k", alpha=0.2)
+for i, (x0, _) in enumerate(result.history):
+    alpha = 0.5 + (0.5 * (i + 1)) / len(result.history)
+    size = 8 - (8 * i / len(result.history))
+    ax.plot(*x0, "go", markersize=size, alpha=alpha, markeredgecolor="k")
+ax.plot(*result.x, "rx", label="Feasible Minimum")
+ax.set_title("Optimiser History Visualisation")
+ax.set_xlabel("$x_1$")
+ax.set_ylabel("$x_2$")
+ax.set_ylim(0, y.max())
+ax.legend()
+plt.show()
+
+
+# %% [markdown]
+# You'll notice SLSQP reaches the correct area very fast,
+# before searching a smaller area in order to satisfy the tolerance.
+# If you zoom in on the optimum, you will see that it actually lies just
+# inside the infeasible region.
+# This is mostly due to the resolution used in the plotting,
+# but also because the point may lie inside the region
+# within the constraint tolerance.
+# If you significantly increase the resolution of the plot,
+# and shift the region to allow for the constraint tolerance,
+# the point will lie within the feasible region.
+
 
 # %% [markdown]
 # ## Using the `OptimisationProblem` Class
