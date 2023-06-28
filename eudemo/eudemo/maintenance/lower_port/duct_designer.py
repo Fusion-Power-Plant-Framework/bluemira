@@ -87,6 +87,7 @@ class LowerPortDuctDesigner(Designer):
         self.n_TF = self.params.n_TF.value
         self.n_div_cassettes = self.params.n_div_cassettes.value
         self.duct_angle = self.params.lp_duct_angle.value
+        # self.tf_offset = self.params.g_ts_tf.value + self.params.tk_ts.value + self.params.g_vv_ts.value
 
         self.tf_offset = self.params.lp_duct_tf_offset.value
         self.div_pad_ob = self.params.lp_duct_div_pad_ob.value

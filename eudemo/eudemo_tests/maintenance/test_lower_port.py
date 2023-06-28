@@ -77,7 +77,7 @@ class TestLowerPort:
                 "n_TF": {"value": 10, "unit": "dimensionless"},
                 "n_div_cassettes": {"value": 3, "unit": "dimensionless"},
                 "tf_coil_thickness": {"value": 0.65, "unit": "m"},
-                "lp_duct_tf_offset": {"value": 3, "unit": "m"},
+                "lp_duct_tf_offset": {"value": 0.0, "unit": "m"},
                 "lp_duct_div_pad_ob": {"value": 0.3, "unit": "m"},
                 "lp_duct_div_pad_ib": {"value": 0.1, "unit": "m"},
                 "lp_height": {"value": 4.5, "unit": "m"},
@@ -111,6 +111,10 @@ class TestLowerPort:
             lp_duct_straight_nowall_extrude_boundary,
         )
         lp_duct = builder.build()
+        shape = lp_duct.get_component("xz").get_component("Lower Port Duct").shape
+        from bluemira.display import show_cad
+
+        show_cad([self.tf_coils_outer_boundary, shape])
 
         # make angle plane
         x_angled_start = lp_duct_angled_nowall_extrude_boundary.vertexes.x[0]
