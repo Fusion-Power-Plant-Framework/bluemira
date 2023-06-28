@@ -40,6 +40,7 @@ from pathlib import Path
 from typing import Dict
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
@@ -52,8 +53,9 @@ from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import interpolate_bspline
+from bluemira.geometry.tools import interpolate_bspline, offset_wire
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -80,6 +82,7 @@ from eudemo.maintenance.duct_connection import (
 from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
 from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
+from eudemo.model_managers import EquilibriumManager
 from eudemo.params import EUDEMOReactorParams
 from eudemo.pf_coils import PFCoil, PFCoilsDesigner, build_pf_coils_component
 from eudemo.power_cycle import SteadyStatePowerCycleSolver
@@ -94,18 +97,55 @@ BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json")
 class EUDEMO(Reactor):
     """EUDEMO reactor definition."""
 
+    # Components
     plasma: Plasma
     vacuum_vessel: VacuumVessel
     thermal_shield: ThermalShield
-
     divertor: Divertor
     blanket: Blanket
     tf_coils: TFCoil
     pf_coils: PFCoil
     coil_structures: CoilStructures
     cryostat: Cryostat
-
     radiation_shield: RadiationShield
+
+    # Models
+    equilibria: EquilibriumManager
+
+
+def build_reference_equilibrium(
+    params,
+    build_config: Dict,
+    equilibrium_manager: EquilibriumManager,
+    lcfs_coords,
+    profiles,
+):
+    """
+    Build the reference equilibrium for the tokamak and store in
+    the equilibrium manager
+    """
+    designer = ReferenceFreeBoundaryEquilibriumDesigner(
+        params,
+        build_config,
+        lcfs_coords,
+        profiles,
+    )
+    reference_eq = designer.execute()
+    constraints = None
+    optimiser = None
+    if designer.opt_problem is not None:
+        constraints = designer.opt_problem.targets
+        optimiser = designer.opt_problem.opt
+    ref_snapshot = Snapshot(
+        reference_eq,
+        reference_eq.coilset,
+        constraints,
+        reference_eq.profiles,
+        optimiser,
+        reference_eq.limiter,
+    )
+    equilibrium_manager.add_state(equilibrium_manager.REFERENCE, ref_snapshot)
+    return reference_eq
 
 
 def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
@@ -195,20 +235,33 @@ def build_tf_coils(params, build_config, separatrix, vvts_cross_section) -> TFCo
 def build_pf_coils(
     params,
     build_config,
-    reference_equilibrium,
+    equilibrium_manager,
     tf_coil_boundary,
     pf_coil_keep_out_zones=(),
 ) -> PFCoil:
     """
     Design and build the PF coils for the reactor.
     """
+    pf_coil_keep_out_zones_new = []
+    # This is a very crude way of forcing PF coil centrepoints away from the KOZs
+    # to stop clashes between ports and PF coil corners
+    # TODO: Implement adjustable current bounds on sub-opt problems
+    offset_value = np.sqrt(
+        params.global_params.I_p.value / params.global_params.PF_jmax.value
+    )
+    for koz in pf_coil_keep_out_zones:
+        new_wire = offset_wire(koz.boundary[0], offset_value, open_wire=False)
+        new_face = BluemiraFace(new_wire)
+        pf_coil_keep_out_zones_new.append(new_face)
+
     pf_designer = PFCoilsDesigner(
         params,
         build_config,
-        reference_equilibrium,
+        equilibrium_manager,
         tf_coil_boundary,
-        pf_coil_keep_out_zones,
+        pf_coil_keep_out_zones_new,
     )
+
     coilset = pf_designer.execute()
     component = build_pf_coils_component(params, build_config, coilset)
     return PFCoil(component, coilset)
@@ -319,12 +372,14 @@ if __name__ == "__main__":
         reactor_config.config_for("Dummy fixed boundary equilibrium"),
     )
 
-    reference_eq = run_designer(
-        ReferenceFreeBoundaryEquilibriumDesigner,
+    reactor.equilibria = EquilibriumManager()
+
+    reference_eq = build_reference_equilibrium(
         reactor_config.params_for("Free boundary equilibrium"),
         reactor_config.config_for("Free boundary equilibrium"),
-        lcfs_coords=lcfs_coords,
-        profiles=profiles,
+        reactor.equilibria,
+        lcfs_coords,
+        profiles,
     )
 
     reactor.plasma = build_plasma(
@@ -397,7 +452,7 @@ if __name__ == "__main__":
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
-        reference_eq,
+        reactor.equilibria,
         reactor.tf_coils.xz_outer_boundary(),
         pf_coil_keep_out_zones=[
             upper_port_koz_xz,

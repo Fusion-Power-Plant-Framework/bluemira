@@ -33,7 +33,6 @@ from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.opt_constraints import (
     CoilFieldConstraints,
@@ -50,6 +49,7 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import get_class_from_module, json_writer
 from eudemo.equilibria.tools import make_grid
+from eudemo.model_managers import EquilibriumManager
 from eudemo.pf_coils.tools import make_coil_mapper, make_coilset, make_pf_coil_path
 
 
@@ -117,15 +117,16 @@ class PFCoilsDesigner(Designer[CoilSet]):
         self,
         params: Union[Dict, ParameterFrame],
         build_config: Dict,
-        reference_equilibrium: Equilibrium,
+        equilibrium_manager: EquilibriumManager,
         tf_coil_boundary: BluemiraWire,
         keep_out_zones: Iterable[BluemiraFace],
     ):
         super().__init__(params, build_config)
-        self.ref_eq = reference_equilibrium
+        self.ref_eq = equilibrium_manager.get_state(equilibrium_manager.REFERENCE)
         self.tf_coil_boundary = tf_coil_boundary
         self.keep_out_zones = keep_out_zones
         self.file_path = self.build_config.get("file_path", None)
+        self.eq_manager = equilibrium_manager
 
     def read(self) -> CoilSet:
         """
@@ -136,6 +137,8 @@ class PFCoilsDesigner(Designer[CoilSet]):
 
         with open(self.file_path, "r") as file:
             data = json.load(file)
+
+        # TODO: Load up equilibria from files and add states to manager
 
         eqdsk = EQDSKInterface(**data[next(iter(data))])
         return CoilSet.from_group_vecs(eqdsk)
@@ -175,6 +178,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         result_dict = {}
         for k, v in opt_problem.snapshots.items():
             if k in [opt_problem.SOF, opt_problem.EOF]:
+                self.eq_manager.add_state(k, v)
                 result_dict[k] = v.eq.to_dict()
                 result_dict[k]["name"] = f"bluemira {timestamp} {k}"
 

@@ -587,6 +587,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
                 f"Cannot execute {type(self).__name__} in 'read' mode: "
                 "'file_path' missing from build config."
             )
+        self.opt_problem = None
 
         if self.run_mode == "run" and (
             (self.lcfs_coords is None) or (self.profiles is None)
@@ -627,7 +628,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         # eq.coilset.discretisation = settings.pop("coil_discretisation")
         eq.coilset.get_coiltype("CS").discretisation = discretisation
 
-        opt_problem = self._make_fbe_opt_problem(
+        self.opt_problem = self._make_fbe_opt_problem(
             eq, lcfs_shape, len(self.lcfs_coords.x), settings.pop("gamma")
         )
 
@@ -636,7 +637,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
         settings["maxiter"] = max_iter  # TODO: Standardise name in PicardIterator
         iterator_program = PicardIterator(
             eq,
-            opt_problem,
+            self.opt_problem,
             convergence=DudsonConvergence(iter_err_max),
             plot=self.build_config.get("plot", False),
             fixed_coils=True,
@@ -649,7 +650,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             eq.plot(ax=ax)
             eq.coilset.plot(ax=ax, label=True)
             ax.plot(self.lcfs_coords.x, self.lcfs_coords.z, "", marker="o")
-            opt_problem.targets.plot(ax=ax)
+            self.opt_problem.targets.plot(ax=ax)
             plt.show()
 
         self._update_params_from_eq(eq)
