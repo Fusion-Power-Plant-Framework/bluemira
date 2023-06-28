@@ -98,7 +98,7 @@ jobs:
         black --check .
         if [ $COPYRIGHT ]; then
            git fetch origin $GITHUB_BASE_REF $GITHUB_REF
-           pre-commit run update_copyright --from-ref origin/$GITHUB_BASE_REF --to-ref origin/$GITHUB_REF
+           pre-commit run update_copyright --from-ref origin/$GITHUB_BASE_REF --to-ref FETCH_HEAD
         fi
 
     - name: Build Documentation bluemira
