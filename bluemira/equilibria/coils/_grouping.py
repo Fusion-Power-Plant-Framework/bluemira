@@ -905,9 +905,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """Set control coils"""
         names = self.name
         if isinstance(control_names, List):
-            self._control_ind = np.arange(
-                len([names.index(c) for c in control_names])
-            ).tolist()
+            self._control_ind = [names.index(c) for c in control_names]
         elif control_names or control_names is None:
             self._control_ind = np.arange(len(names)).tolist()
         else:
