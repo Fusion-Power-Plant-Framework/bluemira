@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-EUDEMO Lower Port Duct Builder
+EUDEMO Lower Port Builder
 """
 
 from dataclasses import dataclass

@@ -216,7 +216,7 @@
         "long_name": "Padding applied towards the inboard from the divertor."
       },
       "lp_height": {
-        "value": 3,
+        "value": 4.5,
         "unit": "m",
         "source": "Input",
         "long_name": "Height of the lower port"
