@@ -343,7 +343,6 @@ class LowerPortDuctDesigner(Designer):
         x_duct_extent = 30  # must extend past the outer rad. shield
         tf_offset_boundary = offset_wire(self.tf_coil_xz_boundary, self.tf_offset)
 
-        # angled_inner_cut = boolean_cut(angled_duct_boundary, [tf_offset_boundary])[0]
         itc_pts = self._intersection_points(angled_duct_boundary, tf_offset_boundary)
 
         if len(itc_pts) < 2:
