@@ -97,7 +97,7 @@ jobs:
         flake8 --count
         black --check .
         if [ $COPYRIGHT ]; then
-           git fetch origin $GITHUB_BASE_REF $GITHUB_REF
+           git fetch origin $GITHUB_REF $GITHUB_BASE_REF
            pre-commit run update_copyright --from-ref origin/$GITHUB_BASE_REF --to-ref FETCH_HEAD
         fi
 
