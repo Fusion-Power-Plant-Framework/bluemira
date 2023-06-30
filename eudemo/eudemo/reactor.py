@@ -319,43 +319,47 @@ def build_equatorial_port(params, build_config, cryostat_ts_xz_boundary):
 def build_lower_port(
     params,
     build_config,
-    lp_duct_xz_koz,
+    lp_duct_koz_xz,
     lp_duct_angled_nowall_extrude_boundary,
     lp_duct_straight_nowall_extrude_boundary,
 ):
     """Builder for the Lower Port and Duct"""
-    params = LowerPortBuilderParams(
+    new_params = LowerPortBuilderParams(
         params.global_params.n_TF,
-        params.local_params["lp_duct_angle"],
+        params.global_params.lower_port_angle,
         Parameter("lp_duct_wall_tk", params.global_params.tk_ts.value, "m"),
     )
     builder = LowerPortBuilder(
-        params,
+        new_params,
         build_config,
-        lp_duct_xz_koz,
+        lp_duct_koz_xz,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )
     builder.name = "Thermal shield lower port"
     ts_lower_port = builder.build()
-    params = LowerPortBuilderParams(
+    new_params = LowerPortBuilderParams(
         params.global_params.n_TF,
-        params.local_params["lp_duct_angle"],
+        params.global_params.lower_port_angle,
         Parameter("lp_duct_wall_tk", params.global_params.tk_vv_double_wall.value, "m"),
     )
-    offset_value = 0.0
-    lp_duct_xz_koz = offset_wire(lp_duct_koz_xz, offset_value)
+    offset_value = -(
+        params.global_params.tk_ts.value + params.global_params.g_vv_ts.value
+    )
+    lp_duct_koz_xz = BluemiraFace(offset_wire(lp_duct_koz_xz.boundary[0], offset_value))
     lp_duct_angled_nowall_extrude_boundary = offset_wire(
         lp_duct_angled_nowall_extrude_boundary, offset_value
     )
     lp_duct_straight_nowall_extrude_boundary = offset_wire(
         lp_duct_straight_nowall_extrude_boundary, offset_value
     )
-    lp_duct_straight_nowall_extrude_boundary.translate((offset_value, 0, 0))
+    lp_duct_straight_nowall_extrude_boundary.translate(
+        (params.global_params.tk_ts.value, 0, 0)
+    )
     builder = LowerPortBuilder(
-        params,
+        new_params,
         build_config,
-        lp_duct_xz_koz,
+        lp_duct_koz_xz,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )

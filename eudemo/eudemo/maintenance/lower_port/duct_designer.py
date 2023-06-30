@@ -49,7 +49,7 @@ class LowerPortDuctDesignerParams(ParameterFrame):
 
     n_TF: Parameter[int]
     n_div_cassettes: Parameter[int]
-    lp_duct_angle: Parameter[float]
+    lower_port_angle: Parameter[float]
 
     # Pseudo - local
     tf_coil_thickness: Parameter[float]
@@ -90,7 +90,7 @@ class LowerPortDuctDesigner(Designer):
         self.tf_coil_thickness = self.params.tf_coil_thickness.value
         self.n_TF = self.params.n_TF.value
         self.n_div_cassettes = self.params.n_div_cassettes.value
-        self.duct_angle = self.params.lp_duct_angle.value
+        self.duct_angle = self.params.lower_port_angle.value
         # self.tf_offset = self.params.g_ts_tf.value + self.params.tk_ts.value + self.params.g_vv_ts.value
 
         self.tf_offset = self.params.lp_duct_tf_offset.value

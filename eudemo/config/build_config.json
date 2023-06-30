@@ -227,12 +227,6 @@
         "source": "Input",
         "long_name": "Width of the lower port"
       },
-      "lp_duct_angle": {
-        "value": -30,
-        "unit": "degrees",
-        "source": "Input",
-        "long_name": "Angle of the lower port duct to the divertor."
-      },
       "tf_coil_thickness": {
         "value": 0.65,
         "unit": "m",

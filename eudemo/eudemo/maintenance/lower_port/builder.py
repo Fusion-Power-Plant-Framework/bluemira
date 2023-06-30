@@ -44,7 +44,7 @@ class LowerPortBuilderParams(ParameterFrame):
 
     n_TF: Parameter[int]
 
-    lp_duct_angle: Parameter[float]
+    lower_port_angle: Parameter[float]
     lp_duct_wall_tk: Parameter[float]
 
 
@@ -70,7 +70,7 @@ class LowerPortBuilder(Builder):
         self.duct_straight_boundary = duct_straight_nowall_extrude_boundary
 
         self.n_TF = self.params.n_TF.value
-        self.duct_angle = self.params.lp_duct_angle.value
+        self.duct_angle = self.params.lower_port_angle.value
         self.duct_wall_tk = self.params.lp_duct_wall_tk.value
 
     def build(self) -> Component:
@@ -174,7 +174,6 @@ class LowerPortBuilder(Builder):
         inner_boundary: BluemiraWire,
         face_thickness: float,
     ) -> BluemiraFace:
-        return boolean_cut(
-            BluemiraFace(offset_wire(inner_boundary, face_thickness)),
-            [BluemiraFace(inner_boundary)],
-        )[0]
+        outer_boundary = inner_boundary
+        inner_boundary = offset_wire(outer_boundary, -face_thickness)
+        return BluemiraFace([outer_boundary, inner_boundary])
