@@ -47,18 +47,22 @@ from bluemira.geometry.wire import BluemiraWire
 class LowerPortDuctDesignerParams(ParameterFrame):
     """Lower Port Duct Designer ParameterFrame"""
 
-    tf_coil_thickness: Parameter[float]
     n_TF: Parameter[int]
     n_div_cassettes: Parameter[int]
     lp_duct_angle: Parameter[float]
+
+    # Pseudo - local
+    tf_coil_thickness: Parameter[float]
+    lp_height: Parameter[
+        float
+    ]  # VV: Void (+ thickess_), TS: Void + VV thickness + gap VV-TS (+TS thickness)
+    lp_width: Parameter[float]
+    # Local (varying)
 
     lp_duct_tf_offset: Parameter[float]
     lp_duct_wall_tk: Parameter[float]
     lp_duct_div_pad_ob: Parameter[float]
     lp_duct_div_pad_ib: Parameter[float]
-
-    lp_height: Parameter[float]
-    lp_width: Parameter[float]
 
 
 class LowerPortDuctDesigner(Designer):
