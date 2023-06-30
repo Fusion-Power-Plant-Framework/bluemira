@@ -190,10 +190,70 @@ def _hollow_face_from_outer_boundary(
 
 def build_lower_port_xyz(
     duct_xz_koz,
-    duct_angled_nowall_extrude_boundary,
-    duct_straight_nowall_extrude_boundary,
+    duct_angled_boundary,
+    duct_straight_boundary,
     n_TF: int,
     duct_angle: float,
     wall_tk: float,
 ) -> Tuple[BluemiraSolid]:
-    return
+    straight_duct_extrude_extent = 20
+    duct_angle = np.deg2rad(duct_angle)
+
+    angled_duct_hollow_face = _hollow_face_from_outer_boundary(
+        duct_angled_boundary, wall_tk
+    )
+    straight_duct_hollow_face = _hollow_face_from_outer_boundary(
+        duct_straight_boundary, wall_tk
+    )
+    straight_duct_backwall_face = BluemiraFace(
+        offset_wire(duct_straight_boundary, wall_tk)
+    )
+
+    angled_bb = duct_angled_boundary.bounding_box
+    strait_bb = duct_straight_boundary.bounding_box
+    if duct_angle < -45:
+        # -1 to make sure it goes through
+        angled_duct_extrude_extent = abs(
+            (angled_bb.z_max - (strait_bb.z_max - 1)) / np.sin(duct_angle)
+        )
+    else:
+        # +1 to make sure it goes through
+        angled_duct_extrude_extent = abs(
+            (angled_bb.x_min - (strait_bb.x_min + 1)) / np.cos(duct_angle)
+        )
+
+    ext_vector = angled_duct_extrude_extent * np.array(
+        [np.cos(duct_angle), 0, np.sin(duct_angle)]
+    )
+    angled_duct = extrude_shape(angled_duct_hollow_face, ext_vector)
+    void_face = angled_duct_hollow_face.boundary[1]
+    angled_void = extrude_shape(void_face, ext_vector)
+
+    straight_duct_backwall = extrude_shape(
+        straight_duct_backwall_face,
+        straight_duct_backwall_face.normal_at() * wall_tk,
+    )
+
+    ext_vector = straight_duct_hollow_face.normal_at() * -straight_duct_extrude_extent
+    straight_duct_length = extrude_shape(straight_duct_hollow_face, ext_vector)
+    void_face = straight_duct_hollow_face.boundary[1]
+    straight_duct_void = extrude_shape(void_face, ext_vector)
+
+    straight_duct = boolean_fuse([straight_duct_backwall, straight_duct_length])
+
+    angled_pieces = boolean_cut(angled_duct, [straight_duct])
+    angled_top = (
+        angled_pieces[0]
+        if len(angled_pieces) == 1
+        else boolean_cut(angled_duct, [angled_pieces[1]])[0]
+    )
+
+    straight_with_hole = boolean_cut(straight_duct, [angled_top])[0]
+
+    duct = boolean_fuse([angled_top, straight_with_hole])
+    void = boolean_fuse([angled_void, straight_duct_void])
+
+    # rotate pieces to correct positions
+    duct.rotate(degree=180 / n_TF)
+    void.rotate(degree=180 / n_TF)
+    return duct, void
