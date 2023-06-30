@@ -377,14 +377,16 @@ class LowerPortDuctDesigner(Designer):
             topleft_corner_pt[1] - self.port_height,
         )
 
-        # check if the left edge goes below the angled duct
-        left_e = self._make_xz_wire_from_points(topleft_corner_pt, botleft_corner_pt)
-        l_e_itc_pts = self._intersection_points(left_e, angled_duct_boundary)
-        if len(l_e_itc_pts) == 1:
-            raise GeometryError(
-                "LowerPortDesigner: port height is too small "
-                "at this angle and will not meet the angled duct."
-            )
+        # check if the left edge goes below the angled duct when
+        # the corner point is the top itc point (i.e. angle > -45)
+        if topleft_corner_pt == itc_top_pt:
+            left_e = self._make_xz_wire_from_points(topleft_corner_pt, botleft_corner_pt)
+            l_e_itc_pts = self._intersection_points(left_e, angled_duct_boundary)
+            if len(l_e_itc_pts) == 1:
+                raise GeometryError(
+                    "LowerPortDesigner: port height is too small "
+                    "at this angle and will not meet the angled duct."
+                )
 
         straight_boundary = make_polygon(
             [

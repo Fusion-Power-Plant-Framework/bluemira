@@ -80,7 +80,7 @@ class TestLowerPort:
                 "lp_duct_tf_offset": {"value": 3, "unit": "m"},
                 "lp_duct_div_pad_ob": {"value": 0.3, "unit": "m"},
                 "lp_duct_div_pad_ib": {"value": 0.1, "unit": "m"},
-                "lp_height": {"value": 3, "unit": "m"},
+                "lp_height": {"value": 4.5, "unit": "m"},
                 "lp_width": {"value": 3, "unit": "m"},
                 "lp_duct_angle": {"value": -30, "unit": "degrees"},
                 "lp_duct_wall_tk": {"value": 0.02, "unit": "m"},
