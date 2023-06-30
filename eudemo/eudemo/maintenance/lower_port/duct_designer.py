@@ -106,12 +106,11 @@ class LowerPortDuctDesigner(Designer):
         ib_div_pt_padded, ob_div_pt_padded = self._pad_points(ib_div_pt, ob_div_pt)
 
         (
-            duct_inner_xz_boundary,
-            duct_outer_xz_boundary,
+            duct_inner_xz,
+            duct_outer_xz,
             straight_top_inner_pt,
             straight_bot_inner_pt,
         ) = self._duct_xz_shapes(ib_div_pt_padded, ob_div_pt_padded)
-        duct_w_wall_xz_koz = BluemiraFace(duct_outer_xz_boundary)
 
         duct_angled_inner_extrude_boundary = self._angled_duct_inner_xy_boundary(
             ib_div_pt_padded, ob_div_pt_padded
@@ -122,8 +121,8 @@ class LowerPortDuctDesigner(Designer):
         )
 
         return (
-            duct_inner_xz_boundary,
-            duct_w_wall_xz_koz,
+            duct_inner_xz,
+            duct_outer_xz,
             duct_angled_inner_extrude_boundary,
             duct_straight_inner_extrude_boundary,
         )
@@ -276,21 +275,31 @@ class LowerPortDuctDesigner(Designer):
             ib_div_pt_padded, ob_div_pt_padded
         )
 
-        offset_tf_boundary = offset_wire(self.tf_coil_xz_boundary, self.tf_offset)
-
         (
-            duct_inner_boundary,
+            straight_duct_boundary,
             straight_top_inner_pt,
             straight_bot_inner_pt,
-        ) = self._duct_combined_inner_xz_boundary(
-            angled_duct_boundary, offset_tf_boundary
+        ) = self._straight_duct_xz_boundary(angled_duct_boundary)
+
+        angled_cuts = boolean_cut(angled_duct_boundary, [straight_duct_boundary])
+
+        angled_duct_top_xz = angled_cuts[0]
+        angled_duct_top_xz.close()
+        angled_duct_top_xz = BluemiraFace(angled_duct_top_xz)
+
+        straight_duct_xz = BluemiraFace(straight_duct_boundary)
+
+        duct_inner_xz: BluemiraFace = boolean_fuse(
+            [angled_duct_top_xz, straight_duct_xz]
         )
+        duct_inner_boundary = duct_inner_xz.boundary[0]
 
         duct_outer_boundary = offset_wire(duct_inner_boundary, self.wall_tk)
+        duct_outer_xz = BluemiraFace(duct_outer_boundary)
 
         return (
-            duct_inner_boundary,
-            duct_outer_boundary,
+            duct_inner_xz,
+            duct_outer_xz,
             straight_top_inner_pt,
             straight_bot_inner_pt,
         )
@@ -301,14 +310,13 @@ class LowerPortDuctDesigner(Designer):
         starting at the inboard and outboard points
         of the padded points from the divertor.
         """
-        r_search = 50  # must just be large
+        r_search = 40  # must just be large
 
-        # get "search" points to construct a really long angle duct
-        # that will intersect the straight duct and be cut
-        _, ib_intc_search_point = self._xz_points_dist_away_from(
+        # construct a really long angle duct
+        _, ib_end_pt = self._xz_points_dist_away_from(
             ib_pt, self._duct_angle_gradient, r_search
         )
-        _, ob_intc_search_point = self._xz_points_dist_away_from(
+        _, ob_end_pt = self._xz_points_dist_away_from(
             ob_pt, self._duct_angle_gradient, r_search
         )
 
@@ -316,77 +324,90 @@ class LowerPortDuctDesigner(Designer):
             [
                 [
                     ob_pt[0],
-                    ob_intc_search_point[0],
-                    ib_intc_search_point[0],
+                    ob_end_pt[0],
+                    ib_end_pt[0],
                     ib_pt[0],
                 ],
                 [0, 0, 0, 0],
                 [
                     ob_pt[1],
-                    ob_intc_search_point[1],
-                    ib_intc_search_point[1],
+                    ob_end_pt[1],
+                    ib_end_pt[1],
                     ib_pt[1],
                 ],
             ],
             closed=True,
         )
 
-    def _duct_combined_inner_xz_boundary(
-        self, angled_duct_boundary: BluemiraWire, tf_boundary: BluemiraWire
-    ):
+    def _straight_duct_xz_boundary(self, angled_duct_boundary: BluemiraWire):
         x_duct_extent = 30  # must extend past the outer rad. shield
+        tf_offset_boundary = offset_wire(self.tf_coil_xz_boundary, self.tf_offset)
 
-        angled_inner_cut = boolean_cut(angled_duct_boundary, [tf_boundary])[0]
-        itc_pts = self._intersection_points(angled_inner_cut, tf_boundary)
+        itc_pts = self._intersection_points(angled_duct_boundary, tf_offset_boundary)
 
         if len(itc_pts) < 2:
             raise GeometryError(
-                "LowerPortDesigner: angled duct does not intersect "
-                "TF coil boundary sufficiently."
+                "LowerPortDesigner: angled duct must be made larger (increase r_search)"
             )
 
+        # find the top and bottom itc points
         itc_top_pt = max(itc_pts, key=lambda p: p[2])
         itc_bot_pt = min(itc_pts, key=lambda p: p[2])
         # remap to 2D point
         itc_top_pt = (itc_top_pt[0], itc_top_pt[2])
         itc_bot_pt = (itc_bot_pt[0], itc_bot_pt[2])
 
-        port_z_bot = itc_top_pt[1] - self.port_height
+        # choose corner point
+        topleft_corner_pt = itc_bot_pt
+        if self.duct_angle > -45:
+            topleft_corner_pt = itc_top_pt
 
-        if itc_bot_pt[1] < port_z_bot:
-            raise GeometryError(
-                "LowerPortDesigner: port height is too small "
-                "for the divertor at this angle"
-            )
+        topright_corner_pt = (
+            x_duct_extent,
+            topleft_corner_pt[1],
+        )
 
-        # these have x's of of the btm itc point,
-        # the leftmost point of the straight duct,
-        # which are needed when building the cad for straight duct
-        straight_top_pt = (itc_bot_pt[0], itc_top_pt[1])
-        straight_bot_pt = (itc_bot_pt[0], port_z_bot)
+        botright_corner_pt = (
+            x_duct_extent,
+            topleft_corner_pt[1] - self.port_height,
+        )
+
+        botleft_corner_pt = (
+            topleft_corner_pt[0],
+            topleft_corner_pt[1] - self.port_height,
+        )
+
+        # check if the left edge goes below the angled duct when
+        # the corner point is the top itc point (i.e. angle > -45)
+        if topleft_corner_pt == itc_top_pt:
+            left_e = self._make_xz_wire_from_points(topleft_corner_pt, botleft_corner_pt)
+            l_e_itc_pts = self._intersection_points(left_e, angled_duct_boundary)
+            if len(l_e_itc_pts) == 1:
+                raise GeometryError(
+                    "LowerPortDesigner: port height is too small "
+                    "at this angle and will not meet the angled duct."
+                )
 
         straight_boundary = make_polygon(
             [
                 [
-                    itc_bot_pt[0],
-                    straight_bot_pt[0],
-                    x_duct_extent,
-                    x_duct_extent,
-                    itc_top_pt[0],
+                    topleft_corner_pt[0],
+                    topright_corner_pt[0],
+                    botright_corner_pt[0],
+                    botleft_corner_pt[0],
                 ],
-                [0] * 5,
+                [0] * 4,
                 [
-                    itc_bot_pt[1],
-                    straight_bot_pt[1],
-                    straight_bot_pt[1],
-                    itc_top_pt[1],
-                    itc_top_pt[1],
+                    topleft_corner_pt[1],
+                    topright_corner_pt[1],
+                    botright_corner_pt[1],
+                    botleft_corner_pt[1],
                 ],
-            ]
+            ],
+            closed=True,
         )
-        combined_boundary = boolean_fuse([angled_inner_cut, straight_boundary])
 
-        return combined_boundary, straight_top_pt, straight_bot_pt
+        return straight_boundary, topleft_corner_pt, botleft_corner_pt
 
     @staticmethod
     def _xz_points_dist_away_from(
