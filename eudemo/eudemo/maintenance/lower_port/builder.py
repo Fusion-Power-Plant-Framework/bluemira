@@ -22,9 +22,13 @@
 """
 EUDEMO Lower Port Builder
 """
+from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+
+if TYPE_CHECKING:
+    from bluemira.geometry.solid import BluemiraSolid
 
 import numpy as np
 
@@ -36,6 +40,7 @@ from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, extrude_shape, offset_wire
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.materials import Void
 
 
 @dataclass
@@ -54,7 +59,6 @@ class LowerPortBuilder(Builder):
     """
 
     param_cls = LowerPortBuilderParams
-    DUCT = "Lower Port Duct"
 
     def __init__(
         self,
@@ -83,22 +87,19 @@ class LowerPortBuilder(Builder):
             xyz=self.build_xyz(),
         )
 
-    def build_xz(self) -> List[Component]:
+    def build_xz(self) -> List[PhysicalComponent]:
         """
         Build the Lower Port in XZ.
         """
-        duct_xz = PhysicalComponent(self.DUCT, self.duct_xz_koz)
+        duct_xz = PhysicalComponent(self.name, self.duct_xz_koz)
         apply_component_display_options(duct_xz, color=BLUE_PALETTE["BB"][0])
 
         return [duct_xz]
 
-    def build_xyz(self) -> List[Component]:
+    def build_xyz(self) -> List[PhysicalComponent]:
         """
         Build the Lower Port in XYZ.
         """
-        return [self._build_duct()]
-
-    def _build_duct(self) -> PhysicalComponent:
         angled_duct_hollow_face = self._hollow_face_from_inner_boundary(
             self.duct_angled_boundary,
             face_thickness=self.duct_wall_tk,
@@ -164,10 +165,11 @@ class LowerPortBuilder(Builder):
         # rotate duct to correct position
         duct.rotate(degree=np.rad2deg(np.pi / self.n_TF))
 
-        pc = PhysicalComponent(self.DUCT, duct)
+        pc = PhysicalComponent(self.name, duct)
+        void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
         apply_component_display_options(pc, color=BLUE_PALETTE["VV"][0])
 
-        return pc
+        return [pc, void]
 
     @staticmethod
     def _hollow_face_from_inner_boundary(
@@ -177,3 +179,21 @@ class LowerPortBuilder(Builder):
         outer_boundary = inner_boundary
         inner_boundary = offset_wire(outer_boundary, -face_thickness)
         return BluemiraFace([outer_boundary, inner_boundary])
+
+
+def _hollow_face_from_outer_boundary(
+    outer_boundary: BluemiraWire, thickness: float
+) -> BluemiraFace:
+    inner_boundary = offset_wire(outer_boundary, -thickness)
+    return BluemiraFace([outer_boundary, inner_boundary])
+
+
+def build_lower_port_xyz(
+    duct_xz_koz,
+    duct_angled_nowall_extrude_boundary,
+    duct_straight_nowall_extrude_boundary,
+    n_TF: int,
+    duct_angle: float,
+    wall_tk: float,
+) -> Tuple[BluemiraSolid]:
+    return
