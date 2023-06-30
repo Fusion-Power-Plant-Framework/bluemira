@@ -67,7 +67,7 @@ class LowerPortDuctDesignerParams(ParameterFrame):
 
 class LowerPortDuctDesigner(Designer):
     """
-    Lower Port Duct Designer
+    Lower Port keep-out-zone designer
 
     Notes
     -----

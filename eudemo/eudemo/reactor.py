@@ -311,16 +311,14 @@ def build_equatorial_port(params, build_config, cryostat_ts_xz_boundary):
     return ts_eq_port, vv_eq_port
 
 
-def build_lower_port(params, build_config, divertor_face, tf_coils_outer_boundary):
+def build_lower_port(
+    params,
+    build_config,
+    lp_duct_xz_koz,
+    lp_duct_angled_nowall_extrude_boundary,
+    lp_duct_straight_nowall_extrude_boundary,
+):
     """Builder for the Lower Port and Duct"""
-    (
-        lp_duct_xz_void_space,
-        lp_duct_xz_koz,
-        lp_duct_angled_nowall_extrude_boundary,
-        lp_duct_straight_nowall_extrude_boundary,
-    ) = LowerPortDuctDesigner(
-        params, build_config, divertor_face, tf_coils_outer_boundary
-    ).execute()
     builder = LowerPortBuilder(
         params,
         build_config,
@@ -328,7 +326,7 @@ def build_lower_port(params, build_config, divertor_face, tf_coils_outer_boundar
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )
-    return builder.build(), lp_duct_xz_koz
+    return builder.build()
 
 
 def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
@@ -409,6 +407,18 @@ if __name__ == "__main__":
 
     eq_port_koz_xz = eq_port_designer.execute()
 
+    (
+        lp_duct_xz_void_space,
+        lp_duct_koz_xz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
+    ) = LowerPortDuctDesigner(
+        reactor_config.params_for("Lower Port"),
+        reactor_config.config_for("Lower Port"),
+        ivc_shapes.divertor_face,
+        reactor.tf_coils.xz_outer_boundary(),
+    ).execute()
+
     reactor.vacuum_vessel = build_vacuum_vessel(
         reactor_config.params_for("Vacuum vessel"),
         reactor_config.config_for("Vacuum vessel"),
@@ -442,13 +452,6 @@ if __name__ == "__main__":
         vv_thermal_shield.xz_boundary(),
     )
 
-    lower_port, lower_port_duct_xz_koz = build_lower_port(
-        reactor_config.params_for("Lower Port"),
-        reactor_config.config_for("Lower Port"),
-        ivc_shapes.divertor_face,
-        reactor.tf_coils.xz_outer_boundary(),
-    )
-
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
         reactor_config.config_for("PF coils"),
@@ -457,7 +460,7 @@ if __name__ == "__main__":
         pf_coil_keep_out_zones=[
             upper_port_koz_xz,
             eq_port_koz_xz,
-            lower_port_duct_xz_koz,
+            lp_duct_koz_xz,
         ],
     )
 
@@ -480,7 +483,7 @@ if __name__ == "__main__":
         pf_coil_keep_out_zones=[
             upper_port_koz_xz,
             eq_port_koz_xz,
-            lower_port_duct_xz_koz,
+            lp_duct_koz_xz,
         ],
     )
 
@@ -522,7 +525,7 @@ if __name__ == "__main__":
 
     from bluemira.display import show_cad
 
-    debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_duct_xz_koz]
+    debug = [upper_port_koz_xz, eq_port_koz_xz, lp_duct_koz_xz]
     debug.extend(reactor.pf_coils.xz_boundary())
     # I know there are clashes, I need to put in dynamic bounds on position opt to
     # include coil XS.
