@@ -100,109 +100,60 @@ class LowerPortBuilder(Builder):
         """
         Build the Lower Port in XYZ.
         """
-        angled_duct_hollow_face = self._hollow_face_from_inner_boundary(
+        duct, void = build_lower_port_xyz(
             self.duct_angled_boundary,
-            face_thickness=self.duct_wall_tk,
-        )
-        straight_duct_backwall_face = BluemiraFace(
-            offset_wire(self.duct_straight_boundary, self.duct_wall_tk)
-        )
-        straight_duct_hollow_face = self._hollow_face_from_inner_boundary(
             self.duct_straight_boundary,
-            face_thickness=self.duct_wall_tk,
+            self.params.n_TF.value,
+            self.params.lower_port_angle.value,
+            self.params.lp_duct_wall_tk.value,
         )
-
-        if self.duct_angle < -45:
-            angled_duct_extrude_extent = abs(
-                (
-                    self.duct_angled_boundary.bounding_box.z_max
-                    - (
-                        self.duct_straight_boundary.bounding_box.z_max - 1
-                    )  # -1 to make sure it goes through
-                )
-                / np.sin(np.deg2rad(self.duct_angle))
-            )
-        else:
-            angled_duct_extrude_extent = abs(
-                (
-                    self.duct_angled_boundary.bounding_box.x_min
-                    - (
-                        self.duct_straight_boundary.bounding_box.x_min + 1
-                    )  # +1 to make sure it goes through
-                )
-                / np.cos(np.deg2rad(self.duct_angle))
-            )
-        straight_duct_extrude_extent = 20
-
-        duct_heading_x = np.cos(np.deg2rad(self.duct_angle)) * angled_duct_extrude_extent
-        duct_heading_z = np.sin(np.deg2rad(self.duct_angle)) * angled_duct_extrude_extent
-        angled_duct = extrude_shape(
-            angled_duct_hollow_face,
-            (duct_heading_x, 0, duct_heading_z),
-        )
-
-        straight_duct_backwall = extrude_shape(
-            straight_duct_backwall_face,
-            straight_duct_backwall_face.normal_at() * self.duct_wall_tk,
-        )
-        straight_duct_length = extrude_shape(
-            straight_duct_hollow_face,
-            straight_duct_hollow_face.normal_at() * -straight_duct_extrude_extent,
-        )
-        straight_duct = boolean_fuse([straight_duct_backwall, straight_duct_length])
-
-        angled_pieces = boolean_cut(angled_duct, [straight_duct])
-        angled_top = (
-            angled_pieces[0]
-            if len(angled_pieces) == 1
-            else boolean_cut(angled_duct, [angled_pieces[1]])[0]
-        )
-
-        straight_with_hole = boolean_cut(straight_duct, [angled_top])[0]
-
-        duct = boolean_fuse([angled_top, straight_with_hole])
-
-        # rotate duct to correct position
-        duct.rotate(degree=np.rad2deg(np.pi / self.n_TF))
 
         pc = PhysicalComponent(self.name, duct)
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
         apply_component_display_options(pc, color=BLUE_PALETTE["VV"][0])
+        apply_component_display_options(void, color=(0, 0, 0))
 
         return [pc, void]
 
-    @staticmethod
-    def _hollow_face_from_inner_boundary(
-        inner_boundary: BluemiraWire,
-        face_thickness: float,
-    ) -> BluemiraFace:
-        outer_boundary = inner_boundary
-        inner_boundary = offset_wire(outer_boundary, -face_thickness)
-        return BluemiraFace([outer_boundary, inner_boundary])
 
-
-def _hollow_face_from_outer_boundary(
+def _face_and_void_from_outer_boundary(
     outer_boundary: BluemiraWire, thickness: float
-) -> BluemiraFace:
+) -> Tuple[BluemiraFace]:
     inner_boundary = offset_wire(outer_boundary, -thickness)
-    return BluemiraFace([outer_boundary, inner_boundary])
+    return BluemiraFace([outer_boundary, inner_boundary]), BluemiraFace(inner_boundary)
 
 
 def build_lower_port_xyz(
-    duct_xz_koz,
-    duct_angled_boundary,
-    duct_straight_boundary,
+    duct_angled_boundary: BluemiraWire,
+    duct_straight_boundary: BluemiraWire,
     n_TF: int,
     duct_angle: float,
     wall_tk: float,
 ) -> Tuple[BluemiraSolid]:
+    """
+    Build lower port solid geometry, including void (estimate)
+
+    Parameters
+    ----------
+    duct_angled_boundary:
+        Outer x-y boundary wire of the angled port cross-section
+    duct_straight_boundary:
+        Outer x-y boundary wire of the straight port cross-section
+
+    Returns
+    -------
+    duct:
+        Solid of the lower port duct
+    void:
+        Solid of the lower port void (estimate)
+    """
     straight_duct_extrude_extent = 20
     duct_angle = np.deg2rad(duct_angle)
 
-    angled_duct_hollow_face = _hollow_face_from_outer_boundary(
+    angled_duct_face, angled_void_face = _face_and_void_from_outer_boundary(
         duct_angled_boundary, wall_tk
     )
-    straight_duct_hollow_face = _hollow_face_from_outer_boundary(
+    straight_duct_face, straight_void_face = _face_and_void_from_outer_boundary(
         duct_straight_boundary, wall_tk
     )
     straight_duct_backwall_face = BluemiraFace(
@@ -225,19 +176,17 @@ def build_lower_port_xyz(
     ext_vector = angled_duct_extrude_extent * np.array(
         [np.cos(duct_angle), 0, np.sin(duct_angle)]
     )
-    angled_duct = extrude_shape(angled_duct_hollow_face, ext_vector)
-    void_face = angled_duct_hollow_face.boundary[1]
-    angled_void = extrude_shape(void_face, ext_vector)
+    angled_duct = extrude_shape(angled_duct_face, ext_vector)
+    angled_void = extrude_shape(angled_void_face, ext_vector)
 
     straight_duct_backwall = extrude_shape(
         straight_duct_backwall_face,
         straight_duct_backwall_face.normal_at() * wall_tk,
     )
 
-    ext_vector = straight_duct_hollow_face.normal_at() * -straight_duct_extrude_extent
-    straight_duct_length = extrude_shape(straight_duct_hollow_face, ext_vector)
-    void_face = straight_duct_hollow_face.boundary[1]
-    straight_duct_void = extrude_shape(void_face, ext_vector)
+    ext_vector = straight_duct_face.normal_at() * -straight_duct_extrude_extent
+    straight_duct_length = extrude_shape(straight_duct_face, ext_vector)
+    straight_duct_void = extrude_shape(straight_void_face, ext_vector)
 
     straight_duct = boolean_fuse([straight_duct_backwall, straight_duct_length])
 
@@ -251,6 +200,8 @@ def build_lower_port_xyz(
     straight_with_hole = boolean_cut(straight_duct, [angled_top])[0]
 
     duct = boolean_fuse([angled_top, straight_with_hole])
+    # TODO: Remember that you got lazy here. There can be an overshoot of the
+    # angled void
     void = boolean_fuse([angled_void, straight_duct_void])
 
     # rotate pieces to correct positions
