@@ -28,6 +28,7 @@ from __future__ import annotations
 import abc
 import json
 import warnings
+from dataclasses import dataclass
 from enum import Enum
 from functools import partial
 from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, Union
@@ -48,7 +49,7 @@ from bluemira.geometry.tools import (
     wire_closure,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame
 from bluemira.utilities.plot_tools import str_to_latex
 
 __all__ = [
@@ -74,11 +75,9 @@ class GeometryParameterisation(abc.ABC):
     variables with initial values, and override the create_shape method.
     """
 
-    __slots__ = ("name", "variables")
+    __slots__ = ("name", "variables", "n_ineq_constraints")
 
-    n_ineq_constraints = 0
-
-    def __init__(self, variables: OptVariables):
+    def __init__(self, variables: OptVariablesFrame):
         """
         Parameters
         ----------
@@ -384,6 +383,23 @@ class GeometryParameterisation(abc.ABC):
         return ax
 
 
+@dataclass
+class PrincetonDOptVariables(OptVariablesFrame):
+    x1: OptVariable = OptVariable(
+        "x1", 4, lower_bound=2, upper_bound=6, description="Inboard limb radius"
+    )
+    x2: OptVariable = OptVariable(
+        "x2",
+        14,
+        lower_bound=10,
+        upper_bound=18,
+        description="Outboard limb radius",
+    )
+    dz: OptVariable = OptVariable(
+        "dz", 0.5, lower_bound=0.1, upper_bound=1, description="Vertical offset from z=0"
+    )
+
+
 class PrincetonD(GeometryParameterisation):
     """
     Princeton D geometry parameterisation.
@@ -416,28 +432,7 @@ class PrincetonD(GeometryParameterisation):
     n_ineq_constraints = 1
 
     def __init__(self, var_dict: Optional[Dict[str, float]] = None):
-        variables = OptVariables(
-            [
-                BoundedVariable(
-                    "x1", 4, lower_bound=2, upper_bound=6, descr="Inboard limb radius"
-                ),
-                BoundedVariable(
-                    "x2",
-                    14,
-                    lower_bound=10,
-                    upper_bound=18,
-                    descr="Outboard limb radius",
-                ),
-                BoundedVariable(
-                    "dz",
-                    0,
-                    lower_bound=-0.5,
-                    upper_bound=0.5,
-                    descr="Vertical offset from z=0",
-                ),
-            ],
-            frozen=True,
-        )
+        variables = PrincetonDOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
 
         super().__init__(variables)
@@ -601,6 +596,44 @@ class PrincetonD(GeometryParameterisation):
         return x, z
 
 
+@dataclass
+class TripleArcOptVaribles(OptVariablesFrame):
+    x1: OptVariable = OptVariable(
+        "x1", 4.486, lower_bound=4, upper_bound=5, description="Inner limb radius"
+    )
+    dz: OptVariable = OptVariable(
+        "dz",
+        0,
+        lower_bound=-1,
+        upper_bound=1,
+        description="Vertical offset from z=0",
+    )
+    sl: OptVariable = OptVariable(
+        "sl", 6.428, lower_bound=5, upper_bound=10, description="Straight length"
+    )
+    f1: OptVariable = OptVariable(
+        "f1", 3, lower_bound=2, upper_bound=12, description="rs == f1*z small"
+    )
+    f2: OptVariable = OptVariable(
+        "f2", 4, lower_bound=2, upper_bound=12, description="rm == f2*rs mid"
+    )
+
+    a1: OptVariable = OptVariable(
+        "a1",
+        20,
+        lower_bound=5,
+        upper_bound=120,
+        description="Small arc angle [degrees]",
+    )
+    a2: OptVariable = OptVariable(
+        "a2",
+        40,
+        lower_bound=10,
+        upper_bound=120,
+        description="Middle arc angle [degrees]",
+    )
+
+
 class TripleArc(GeometryParameterisation):
     """
     Triple-arc up-down symmetric geometry parameterisation.
@@ -641,44 +674,7 @@ class TripleArc(GeometryParameterisation):
     n_ineq_constraints = 1
 
     def __init__(self, var_dict: Optional[Dict[str, float]] = None):
-        variables = OptVariables(
-            [
-                BoundedVariable(
-                    "x1", 4.486, lower_bound=4, upper_bound=5, descr="Inner limb radius"
-                ),
-                BoundedVariable(
-                    "dz",
-                    0,
-                    lower_bound=-1,
-                    upper_bound=1,
-                    descr="Vertical offset from z=0",
-                ),
-                BoundedVariable(
-                    "sl", 6.428, lower_bound=5, upper_bound=10, descr="Straight length"
-                ),
-                BoundedVariable(
-                    "f1", 3, lower_bound=2, upper_bound=12, descr="rs == f1*z small"
-                ),
-                BoundedVariable(
-                    "f2", 4, lower_bound=2, upper_bound=12, descr="rm == f2*rs mid"
-                ),
-                BoundedVariable(
-                    "a1",
-                    20,
-                    lower_bound=5,
-                    upper_bound=120,
-                    descr="Small arc angle [degrees]",
-                ),
-                BoundedVariable(
-                    "a2",
-                    40,
-                    lower_bound=10,
-                    upper_bound=120,
-                    descr="Middle arc angle [degrees]",
-                ),
-            ],
-            frozen=True,
-        )
+        variables = TripleArcOptVaribles()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
@@ -834,6 +830,78 @@ class TripleArc(GeometryParameterisation):
         offset_x, offset_z = super()._label_function(ax, shape)
 
 
+@dataclass
+class SextupleArcOptVariables(OptVariablesFrame):
+    x1: OptVariable = OptVariable(
+        "x1",
+        4.486,
+        lower_bound=4,
+        upper_bound=5,
+        description="Inner limb radius",
+    )
+    z1: OptVariable = OptVariable(
+        "z1",
+        5,
+        lower_bound=0,
+        upper_bound=10,
+        description="Inboard limb height",
+    )
+    r1: OptVariable = OptVariable(
+        "r1", 4, lower_bound=4, upper_bound=12, description="1st arc radius"
+    )
+    r2: OptVariable = OptVariable(
+        "r2", 5, lower_bound=4, upper_bound=12, description="2nd arc radius"
+    )
+    r3: OptVariable = OptVariable(
+        "r3", 6, lower_bound=4, upper_bound=12, description="3rd arc radius"
+    )
+    r4: OptVariable = OptVariable(
+        "r4", 7, lower_bound=4, upper_bound=12, description="4th arc radius"
+    )
+    r5: OptVariable = OptVariable(
+        "r5", 8, lower_bound=4, upper_bound=12, description="5th arc radius"
+    )
+    a1: OptVariable = OptVariable(
+        "a1",
+        45,
+        lower_bound=5,
+        upper_bound=50,
+        description="1st arc angle [degrees]",
+    )
+    a2: OptVariable = (
+        OptVariable(
+            "a2",
+            60,
+            lower_bound=10,
+            upper_bound=80,
+            description="2nd arc angle [degrees]",
+        ),
+    )
+    d3: OptVariable = (
+        OptVariable(
+            "a3",
+            90,
+            lower_bound=10,
+            upper_bound=100,
+            description="3rd arc angle [degrees]",
+        ),
+    )
+    a4: OptVariable = OptVariable(
+        "a4",
+        40,
+        lower_bound=10,
+        upper_bound=80,
+        description="4th arc angle [degrees]",
+    )
+    a5: OptVariable = OptVariable(
+        "a5",
+        30,
+        lower_bound=10,
+        upper_bound=80,
+        description="5th arc angle [degrees]",
+    )
+
+
 class SextupleArc(GeometryParameterisation):
     """
     Sextuple-arc up-down asymmetric geometry parameterisation.
@@ -866,67 +934,7 @@ class SextupleArc(GeometryParameterisation):
     n_ineq_constraints = 1
 
     def __init__(self, var_dict: Optional[Dict[str, float]] = None):
-        variables = OptVariables(
-            [
-                BoundedVariable(
-                    "x1", 4.486, lower_bound=4, upper_bound=5, descr="Inner limb radius"
-                ),
-                BoundedVariable(
-                    "z1", 5, lower_bound=0, upper_bound=10, descr="Inboard limb height"
-                ),
-                BoundedVariable(
-                    "r1", 4, lower_bound=4, upper_bound=12, descr="1st arc radius"
-                ),
-                BoundedVariable(
-                    "r2", 5, lower_bound=4, upper_bound=12, descr="2nd arc radius"
-                ),
-                BoundedVariable(
-                    "r3", 6, lower_bound=4, upper_bound=12, descr="3rd arc radius"
-                ),
-                BoundedVariable(
-                    "r4", 7, lower_bound=4, upper_bound=12, descr="4th arc radius"
-                ),
-                BoundedVariable(
-                    "r5", 8, lower_bound=4, upper_bound=12, descr="5th arc radius"
-                ),
-                BoundedVariable(
-                    "a1",
-                    45,
-                    lower_bound=5,
-                    upper_bound=50,
-                    descr="1st arc angle [degrees]",
-                ),
-                BoundedVariable(
-                    "a2",
-                    60,
-                    lower_bound=10,
-                    upper_bound=80,
-                    descr="2nd arc angle [degrees]",
-                ),
-                BoundedVariable(
-                    "a3",
-                    90,
-                    lower_bound=10,
-                    upper_bound=100,
-                    descr="3rd arc angle [degrees]",
-                ),
-                BoundedVariable(
-                    "a4",
-                    40,
-                    lower_bound=10,
-                    upper_bound=80,
-                    descr="4th arc angle [degrees]",
-                ),
-                BoundedVariable(
-                    "a5",
-                    30,
-                    lower_bound=10,
-                    upper_bound=80,
-                    descr="5th arc angle [degrees]",
-                ),
-            ],
-            frozen=True,
-        )
+        variables = SextupleArcOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
@@ -1086,6 +1094,143 @@ class SextupleArc(GeometryParameterisation):
         offset_x, offset_z = super()._label_function(ax, shape)
 
 
+@dataclass
+class PolySplineOptVariables(OptVariablesFrame):
+    x1: OptVariable = OptVariable(
+        "x1",
+        4.3,
+        lower_bound=4,
+        upper_bound=5,
+        description="Inner limb radius",
+    )
+    x2: OptVariable = OptVariable(
+        "x2",
+        16.56,
+        lower_bound=5,
+        upper_bound=25,
+        description="Outer limb radius",
+    )
+    z2: OptVariable = OptVariable(
+        "z2",
+        0.03,
+        lower_bound=-2,
+        upper_bound=2,
+        description="Outer note vertical shift",
+    )
+    height: OptVariable = OptVariable(
+        "height",
+        15.5,
+        lower_bound=10,
+        upper_bound=50,
+        description="Full height",
+    )
+    top: OptVariable = OptVariable(
+        "top",
+        0.52,
+        lower_bound=0.2,
+        upper_bound=1,
+        description="Horizontal shift",
+    )
+    upper: OptVariable = OptVariable(
+        "upper",
+        0.67,
+        lower_bound=0.2,
+        upper_bound=1,
+        description="Vertical shift",
+    )
+    dz: OptVariable = OptVariable(
+        "dz",
+        -0.6,
+        lower_bound=-5,
+        upper_bound=5,
+        description="Vertical offset",
+    )
+    flat: OptVariable = OptVariable(
+        "flat",
+        0,
+        lower_bound=0,
+        upper_bound=1,
+        description="Fraction of straight outboard leg",
+    )
+    tilt: OptVariable = OptVariable(
+        "tilt",
+        4,
+        lower_bound=-45,
+        upper_bound=45,
+        description="Outboard angle [degrees]",
+    )
+    bottom: OptVariable = OptVariable(
+        "bottom",
+        0.4,
+        lower_bound=0,
+        upper_bound=1,
+        description="Lower horizontal shift",
+    )
+    lower: OptVariable = OptVariable(
+        "lower",
+        0.67,
+        lower_bound=0.2,
+        upper_bound=1,
+        description="Lower vertical shift",
+    )
+    l0s: OptVariable = OptVariable(
+        "l0s",
+        0.8,
+        lower_bound=0.1,
+        upper_bound=1.9,
+        description="Tension variable first segment start",
+    )
+    l1s: OptVariable = OptVariable(
+        "l1s",
+        0.8,
+        lower_bound=0.1,
+        upper_bound=1.9,
+        description="Tension variable second segment start",
+    )
+    l2s: OptVariable = OptVariable(
+        "l2s",
+        0.8,
+        lower_bound=0.1,
+        upper_bound=1.9,
+        description="Tension variable third segment start",
+    )
+    l3s: OptVariable = OptVariable(
+        "l3s",
+        0.8,
+        lower_bound=0.1,
+        upper_bound=1.9,
+        description="Tension variable fourth segment start",
+    )
+    l0e: OptVariable = OptVariable(
+        "l0e",
+        0.8,
+        lower_bound=0.1,
+        upper_bound=1.9,
+        description="Tension variable first segment end",
+    )
+    l1e: OptVariable = OptVariable(
+        "l1e",
+        0.8,
+        lower_bound=0.1,
+        upper_bound=1.9,
+        description="Tension variable second segment end",
+    )
+    l2e: OptVariable = OptVariable(
+        "l2e",
+        0.8,
+        lower_bound=0.1,
+        upper_bound=1.9,
+        description="Tension variable third segment end",
+    )
+    l3e: OptVariable = OptVariable(
+        "l3e",
+        0.8,
+        lower_bound=0.1,
+        upper_bound=1.9,
+        description="Tension variable fourth segment end",
+    )
+
+
 class PolySpline(GeometryParameterisation):
     """
     Simon McIntosh's Poly-Bézier-spline geometry parameterisation (19 variables).
@@ -1136,120 +1281,7 @@ class PolySpline(GeometryParameterisation):
     __slots__ = ()
 
     def __init__(self, var_dict: Optional[Dict[str, float]] = None):
-        variables = OptVariables(
-            [
-                BoundedVariable(
-                    "x1", 4.3, lower_bound=4, upper_bound=5, descr="Inner limb radius"
-                ),
-                BoundedVariable(
-                    "x2", 16.56, lower_bound=5, upper_bound=25, descr="Outer limb radius"
-                ),
-                BoundedVariable(
-                    "z2",
-                    0.03,
-                    lower_bound=-2,
-                    upper_bound=2,
-                    descr="Outer note vertical shift",
-                ),
-                BoundedVariable(
-                    "height", 15.5, lower_bound=10, upper_bound=50, descr="Full height"
-                ),
-                BoundedVariable(
-                    "top", 0.52, lower_bound=0.2, upper_bound=1, descr="Horizontal shift"
-                ),
-                BoundedVariable(
-                    "upper", 0.67, lower_bound=0.2, upper_bound=1, descr="Vertical shift"
-                ),
-                BoundedVariable(
-                    "dz", -0.6, lower_bound=-5, upper_bound=5, descr="Vertical offset"
-                ),
-                BoundedVariable(
-                    "flat",
-                    0,
-                    lower_bound=0,
-                    upper_bound=1,
-                    descr="Fraction of straight outboard leg",
-                ),
-                BoundedVariable(
-                    "tilt",
-                    4,
-                    lower_bound=-45,
-                    upper_bound=45,
-                    descr="Outboard angle [degrees]",
-                ),
-                BoundedVariable(
-                    "bottom",
-                    0.4,
-                    lower_bound=0,
-                    upper_bound=1,
-                    descr="Lower horizontal shift",
-                ),
-                BoundedVariable(
-                    "lower",
-                    0.67,
-                    lower_bound=0.2,
-                    upper_bound=1,
-                    descr="Lower vertical shift",
-                ),
-                BoundedVariable(
-                    "l0s",
-                    0.8,
-                    lower_bound=0.1,
-                    upper_bound=1.9,
-                    descr="Tension variable first segment start",
-                ),
-                BoundedVariable(
-                    "l1s",
-                    0.8,
-                    lower_bound=0.1,
-                    upper_bound=1.9,
-                    descr="Tension variable second segment start",
-                ),
-                BoundedVariable(
-                    "l2s",
-                    0.8,
-                    lower_bound=0.1,
-                    upper_bound=1.9,
-                    descr="Tension variable third segment start",
-                ),
-                BoundedVariable(
-                    "l3s",
-                    0.8,
-                    lower_bound=0.1,
-                    upper_bound=1.9,
-                    descr="Tension variable fourth segment start",
-                ),
-                BoundedVariable(
-                    "l0e",
-                    0.8,
-                    lower_bound=0.1,
-                    upper_bound=1.9,
-                    descr="Tension variable first segment end",
-                ),
-                BoundedVariable(
-                    "l1e",
-                    0.8,
-                    lower_bound=0.1,
-                    upper_bound=1.9,
-                    descr="Tension variable second segment end",
-                ),
-                BoundedVariable(
-                    "l2e",
-                    0.8,
-                    lower_bound=0.1,
-                    upper_bound=1.9,
-                    descr="Tension variable third segment end",
-                ),
-                BoundedVariable(
-                    "l3e",
-                    0.8,
-                    lower_bound=0.1,
-                    upper_bound=1.9,
-                    descr="Tension variable fourth segment end",
-                ),
-            ],
-            frozen=True,
-        )
+        variables = PolySplineOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 
@@ -1859,70 +1891,90 @@ class PictureFrame(
 
     def __init__(self, var_dict: Optional[Dict[str, float]] = None):
         bounded_vars = [
-            BoundedVariable(
-                "x1", 0.4, lower_bound=0.3, upper_bound=0.5, descr="Inner limb radius"
+            OptVariable(
+                "x1",
+                0.4,
+                lower_bound=0.3,
+                upper_bound=0.5,
+                description="Inner limb radius",
             ),
-            BoundedVariable(
-                "x2", 9.5, lower_bound=9.4, upper_bound=9.8, descr="Outer limb radius"
+            OptVariable(
+                "x2",
+                9.5,
+                lower_bound=9.4,
+                upper_bound=9.8,
+                description="Outer limb radius",
             ),
-            BoundedVariable(
-                "z1", 9.5, lower_bound=8, upper_bound=10.5, descr="Upper limb height"
+            OptVariable(
+                "z1",
+                9.5,
+                lower_bound=8,
+                upper_bound=10.5,
+                description="Upper limb height",
             ),
-            BoundedVariable(
-                "z2", -9.5, lower_bound=-10.5, upper_bound=-8, descr="Lower limb height"
+            OptVariable(
+                "z2",
+                -9.5,
+                lower_bound=-10.5,
+                upper_bound=-8,
+                description="Lower limb height",
             ),
-            BoundedVariable(
+            OptVariable(
                 "ri",
                 0.1,
                 lower_bound=0,
                 upper_bound=2,
-                descr="Inboard corner radius",
+                description="Inboard corner radius",
             ),
-            BoundedVariable(
-                "ro", 2, lower_bound=1, upper_bound=5, descr="Outboard corner radius"
+            OptVariable(
+                "ro",
+                2,
+                lower_bound=1,
+                upper_bound=5,
+                description="Outboard corner radius",
             ),
         ]
 
         if PFrameSection.CURVED in [self.upper, self.lower]:
             bounded_vars += [
-                BoundedVariable(
+                OptVariable(
                     "x3",
                     2.5,
                     lower_bound=2.4,
                     upper_bound=2.6,
-                    descr="Curve start radius",
+                    description="Curve start radius",
                 ),
-                BoundedVariable(
+                OptVariable(
                     "z1_peak",
                     11,
                     lower_bound=6,
                     upper_bound=12,
-                    descr="Upper limb curve height",
+                    description="Upper limb curve height",
                 ),
-                BoundedVariable(
+                OptVariable(
                     "z2_peak",
                     -11,
                     lower_bound=-12,
                     upper_bound=-6,
-                    descr="Lower limb curve height",
+                    description="Lower limb curve height",
                 ),
             ]
 
         if self.inner == PFrameSection.TAPERED_INNER:
             bounded_vars += [
-                BoundedVariable(
+                OptVariable(
                     "x4",
                     1.1,
                     lower_bound=1,
                     upper_bound=1.3,
-                    descr="Middle limb radius",
+                    description="Middle limb radius",
                 ),
-                BoundedVariable(
+                OptVariable(
                     "z3",
                     6.5,
                     lower_bound=6,
                     upper_bound=8,
-                    descr="Taper angle stop height",
+                    description="Taper angle stop height",
                 ),
             ]
 

@@ -23,20 +23,9 @@
 Optimisation variable class.
 """
 
-from __future__ import annotations
-
 import json
 from dataclasses import dataclass
-from typing import (
-    Any,
-    Dict,
-    Generator,
-    Optional,
-    TextIO,
-    TypedDict,
-    Union,
-    get_type_hints,
-)
+from typing import Any, Dict, Generator, Optional, TextIO, TypedDict, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -280,11 +269,11 @@ class OptVariablesFrame:
             )
         if not cls.__dataclass_fields__:
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
-        field_types = get_type_hints(cls)
-        for field_name in field_types:
-            if field_types[field_name] != OptVariable:
+        for field_name in cls.__dataclass_fields__:
+            t = cls.__dataclass_fields__[field_name].type
+            if t != "OptVariable":
                 raise TypeError(
-                    f"OptVariablesFrame contains non-OptVariable object '{field_name}: {field_types[field_name]}'"
+                    f"OptVariablesFrame contains non-OptVariable object '{field_name}: {t}'"
                 )
         return super().__new__(cls)
 
@@ -295,8 +284,7 @@ class OptVariablesFrame:
         The order is based on the order in which the parameters were
         declared.
         """
-        field_types = get_type_hints(self)
-        for field_name in field_types:
+        for field_name in self.__dataclass_fields__:
             yield getattr(self, field_name)
 
     def __getitem__(self, name: str) -> OptVariable:
@@ -446,7 +434,7 @@ class OptVariablesFrame:
         """
         All variable names of the variable set.
         """
-        return [v for v in self._var_dict.keys()]
+        return [opv.name for opv in self]
 
     @property
     def values(self):
@@ -454,7 +442,7 @@ class OptVariablesFrame:
         All un-normalised values of the variable set (including fixed variable values).
         """
         # todo: does this need to be an np.array?
-        return np.array([v.value for v in self])
+        return [v.value for v in self]
 
     @property
     def n_free_variables(self) -> int:
@@ -552,15 +540,11 @@ class OptVariablesFrame:
         Plot the OptVariablesFrame.
         """
         _, ax = plt.subplots()
-        left_labels = [
-            f"{v.name}: {v.lower_bound:.2f} " for v in self._var_dict.values()
-        ]
-        right_labels = [f"{v.upper_bound:.2f}" for v in self._var_dict.values()]
+        left_labels = [f"{opv.name}: {opv.lower_bound:.2f} " for opv in self]
+        right_labels = [f"{opv.upper_bound:.2f}" for opv in self]
         y_pos = np.arange(len(left_labels))
 
-        x_norm = [
-            v.normalised_value if not v.fixed else 0.5 for v in self._var_dict.values()
-        ]
+        x_norm = [opv.normalised_value if not opv.fixed else 0.5 for opv in self]
         colors = [
             BLUEMIRA_PALETTE["red"] if v.fixed else BLUEMIRA_PALETTE["blue"]
             for v in self._var_dict.values()
