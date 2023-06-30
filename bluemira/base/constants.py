@@ -254,7 +254,7 @@ ANGLE_UNITS = [
     "arcsecond",
     "milliarcsecond",
     "grade",
-    "mil",
+    # "mil",  # this break milli conversion with current implementation
     "steradian",
     "square_degree",
 ]
