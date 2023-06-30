@@ -45,6 +45,7 @@ import numpy as np
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
+from bluemira.base.parameter_frame import Parameter
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
@@ -80,7 +81,11 @@ from eudemo.maintenance.duct_connection import (
     VVUpperPortDuctBuilder,
 )
 from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
-from eudemo.maintenance.lower_port import LowerPortBuilder, LowerPortDuctDesigner
+from eudemo.maintenance.lower_port import (
+    LowerPortBuilder,
+    LowerPortBuilderParams,
+    LowerPortDuctDesigner,
+)
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager
 from eudemo.params import EUDEMOReactorParams
@@ -319,6 +324,11 @@ def build_lower_port(
     lp_duct_straight_nowall_extrude_boundary,
 ):
     """Builder for the Lower Port and Duct"""
+    params = LowerPortBuilderParams(
+        params.global_params.n_TF,
+        params.local_params["lp_duct_angle"],
+        Parameter("lp_duct_wall_tk", params.global_params.tk_ts.value, "m"),
+    )
     builder = LowerPortBuilder(
         params,
         build_config,
@@ -326,7 +336,32 @@ def build_lower_port(
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )
-    return builder.build()
+    builder.name = "Thermal shield lower port"
+    ts_lower_port = builder.build()
+    params = LowerPortBuilderParams(
+        params.global_params.n_TF,
+        params.local_params["lp_duct_angle"],
+        Parameter("lp_duct_wall_tk", params.global_params.tk_vv_double_wall.value, "m"),
+    )
+    offset_value = 0.0
+    lp_duct_xz_koz = offset_wire(lp_duct_koz_xz, offset_value)
+    lp_duct_angled_nowall_extrude_boundary = offset_wire(
+        lp_duct_angled_nowall_extrude_boundary, offset_value
+    )
+    lp_duct_straight_nowall_extrude_boundary = offset_wire(
+        lp_duct_straight_nowall_extrude_boundary, offset_value
+    )
+    lp_duct_straight_nowall_extrude_boundary.translate((offset_value, 0, 0))
+    builder = LowerPortBuilder(
+        params,
+        build_config,
+        lp_duct_xz_koz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
+    )
+    builder.name = "Vacuum vessel lower port"
+    vv_lower_port = builder.build()
+    return ts_lower_port, vv_lower_port
 
 
 def build_cryostat(params, build_config, cryostat_thermal_koz) -> Cryostat:
@@ -392,33 +427,6 @@ if __name__ == "__main__":
         equilibrium=reference_eq,
     )
 
-    upper_port_designer = UpperPortKOZDesigner(
-        reactor_config.params_for("Upper Port"),
-        reactor_config.config_for("Upper Port"),
-        ivc_shapes.blanket_face,
-    )
-    upper_port_koz_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
-
-    eq_port_designer = EquatorialPortKOZDesigner(
-        reactor_config.params_for("Equatorial Port"),
-        reactor_config.config_for("Equatorial Port"),
-        x_ob=20.0,
-    )
-
-    eq_port_koz_xz = eq_port_designer.execute()
-
-    (
-        lp_duct_xz_void_space,
-        lp_duct_koz_xz,
-        lp_duct_angled_nowall_extrude_boundary,
-        lp_duct_straight_nowall_extrude_boundary,
-    ) = LowerPortDuctDesigner(
-        reactor_config.params_for("Lower Port"),
-        reactor_config.config_for("Lower Port"),
-        ivc_shapes.divertor_face,
-        reactor.tf_coils.xz_outer_boundary(),
-    ).execute()
-
     reactor.vacuum_vessel = build_vacuum_vessel(
         reactor_config.params_for("Vacuum vessel"),
         reactor_config.config_for("Vacuum vessel"),
@@ -430,6 +438,13 @@ if __name__ == "__main__":
         reactor_config.config_for("Divertor"),
         ivc_shapes.divertor_face,
     )
+
+    upper_port_designer = UpperPortKOZDesigner(
+        reactor_config.params_for("Upper Port"),
+        reactor_config.config_for("Upper Port"),
+        ivc_shapes.blanket_face,
+    )
+    upper_port_koz_xz, r_inner_cut, cut_angle = upper_port_designer.execute()
 
     reactor.blanket = build_blanket(
         reactor_config.params_for("Blanket"),
@@ -451,6 +466,26 @@ if __name__ == "__main__":
         reactor.plasma.lcfs(),
         vv_thermal_shield.xz_boundary(),
     )
+
+    eq_port_designer = EquatorialPortKOZDesigner(
+        reactor_config.params_for("Equatorial Port"),
+        reactor_config.config_for("Equatorial Port"),
+        x_ob=20.0,
+    )
+
+    eq_port_koz_xz = eq_port_designer.execute()
+
+    (
+        lp_duct_xz_void_space,
+        lp_duct_koz_xz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
+    ) = LowerPortDuctDesigner(
+        reactor_config.params_for("Lower Port"),
+        reactor_config.config_for("Lower Port"),
+        ivc_shapes.divertor_face,
+        reactor.tf_coils.xz_outer_boundary(),
+    ).execute()
 
     reactor.pf_coils = build_pf_coils(
         reactor_config.params_for("PF coils"),
@@ -514,6 +549,14 @@ if __name__ == "__main__":
         reactor_config.params_for("Equatorial Port"),
         reactor_config.config_for("Equatorial Port"),
         cryostat_thermal_shield.xz_boundary(),
+    )
+
+    ts_lower_port, vv_lower_port = build_lower_port(
+        reactor_config.params_for("Lower Port"),
+        reactor_config.config_for("Lower Port"),
+        lp_duct_koz_xz,
+        lp_duct_angled_nowall_extrude_boundary,
+        lp_duct_straight_nowall_extrude_boundary,
     )
 
     reactor.vacuum_vessel.add_ports(
