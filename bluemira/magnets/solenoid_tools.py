@@ -23,6 +23,8 @@
 Tools for simple solenoid calculations.
 """
 
+from typing import Tuple
+
 import numpy as np
 
 from bluemira.base.constants import MU_0
@@ -66,7 +68,7 @@ def calculate_B_max(
     return np.hypot(Bx_max, Bz_max)
 
 
-def calculate_hoop_stress(
+def calculate_hoop_radial_stress(
     B_in: float,
     B_out: float,
     rho_j: float,
@@ -74,9 +76,9 @@ def calculate_hoop_stress(
     r_outer: float,
     r: float,
     poisson_ratio: float = 0.3,
-) -> float:
+) -> Tuple[float]:
     """
-    Calculate the hoop stress at a radial location in a solenoid
+    Calculate the hoop and radial stress at a radial location in a solenoid
 
     Parameters
     ----------
@@ -97,66 +99,39 @@ def calculate_hoop_stress(
 
     Returns
     -------
-    Hoop stress at the radial location [Pa]
+    hoop_stress:
+        Hoop stress at the radial location [Pa]
+    radial_stress:
+        Radial stress at the radial location [Pa]
 
     Notes
     -----
+    Wilson, Superconducting Magnets, 1982, equations 4.10 and 4.11
     Must still factor in the fraction of load-bearing material
     """
     alpha = r_outer / r_inner
     eps = r / r_inner
     nu = poisson_ratio
+    alpha2 = alpha**2
+    eps2 = eps**2
+    ratio2 = alpha2 / eps2
 
     K = (alpha * B_in - B_out) * rho_j * r_inner / (alpha - 1)  # noqa: N806
     M = (B_in - B_out) * rho_j * r_inner / (alpha - 1)  # noqa: N806
     a = K * (2 + nu) / (3 * (alpha + 1))
-    b = (
-        1.0
-        + alpha
-        + alpha**2 * (1 + 1 / eps**2)
-        - eps * (1 + 2 * nu) * (alpha + 1) / (2 + nu)
-    )
     c = M * (3 + nu) / 8
-    d = 1.0 + alpha**2 * (1 + 1 / eps**2) - eps**2 * (1 + 3 * nu) / (3 + nu)
-    hoop_stress = a * b - c * d
 
-    return hoop_stress
+    b = alpha2 + alpha + 1
+    b1 = ratio2 - eps * (1 + 2 * nu) * (alpha + 1) / (2 + nu)
+    b2 = -ratio2 - eps * (alpha + 1)
 
+    d = alpha2 + 1 + ratio2 - eps2 * (1 + 3 * nu) / (3 + nu)
+    e = alpha2 + 1 - ratio2 - eps2
 
-def calculate_axial_stress(
-    r_inner: float, r_outer: float, height: float, current: float
-) -> float:
-    """
-    Calculate the axial stress in a solenoid
+    hoop_stress = a * (b + b1) - c * d
+    radial_stress = a * (b + b2) - c * e
 
-    Parameters
-    ----------
-    r_inner:
-        Solenoid inner radius [m]
-    r_outer:
-        Solenoid outer radius [m]
-    height:
-        Solenoid vertical extent [m]
-    current:
-        Current in the solenoid [A]
-
-    Returns
-    -------
-    Axial stress [Pa]
-
-    Notes
-    -----
-    Must still factor in the fraction of load-bearing material
-    """
-    hh = 0.5 * height
-    a = -0.5 * MU_0 * current**2
-    # TODO: I don't trust things without pi
-    b = 0
-    c = 0
-
-    force = a * (b - c)
-    area = np.pi * (r_outer**2 - r_inner**2)
-    return force / area
+    return hoop_stress, radial_stress
 
 
 def calculate_flux_max(B_max: float, r_inner: float, r_outer: float) -> float:
