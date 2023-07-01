@@ -27,7 +27,6 @@ from typing import Tuple
 
 import numpy as np
 
-from bluemira.base.constants import MU_0
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
 
 
