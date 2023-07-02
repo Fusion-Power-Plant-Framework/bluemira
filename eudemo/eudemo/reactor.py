@@ -45,7 +45,6 @@ import numpy as np
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
-from bluemira.base.parameter_frame import Parameter
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
@@ -84,7 +83,6 @@ from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
 from eudemo.maintenance.lower_port import (
     LowerPortKOZDesigner,
     TSLowerPortDuctBuilder,
-    TSLowerPortDuctBuilderParams,
     VVLowerPortDuctBuilder,
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
