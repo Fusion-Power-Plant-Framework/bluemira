@@ -54,12 +54,10 @@ class LowerPortKOZDesignerParams(ParameterFrame):
     tk_ts: Parameter[float]
     g_vv_ts: Parameter[float]
     tk_vv_single_wall: Parameter[float]
+    tf_wp_depth: Parameter[float]
 
     # Pseudo - local
-    tf_coil_thickness: Parameter[float]
-    lp_height: Parameter[
-        float
-    ]  # VV: Void (+ thickess_), TS: Void + VV thickness + gap VV-TS (+TS thickness)
+    lp_height: Parameter[float]
     lp_width: Parameter[float]
     # Local (varying)
 
@@ -89,7 +87,8 @@ class LowerPortKOZDesigner(Designer):
         self.divertor_face = divertor_xz
         self.tf_coil_xz_boundary = tf_coil_xz_boundary
 
-        self.tf_coil_thickness = self.params.tf_coil_thickness.value
+        # TODO: Cross-check with upper port handling and add casing sidewall thickness + gaps?
+        self.tf_coil_thickness = 0.5 * self.params.tf_wp_depth.value
 
         self.tf_offset = (
             self.params.g_ts_tf.value

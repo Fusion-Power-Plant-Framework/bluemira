@@ -220,12 +220,6 @@
         "unit": "m",
         "source": "Input",
         "long_name": "Width of the lower port"
-      },
-      "tf_coil_thickness": {
-        "value": 0.65,
-        "unit": "m",
-        "source": "Input",
-        "long_name": "TF Coil thickness (temporary)."
       }
     }
   }
