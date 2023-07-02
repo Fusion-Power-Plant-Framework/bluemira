@@ -527,6 +527,7 @@ if __name__ == "__main__":
         cryostat_thermal_shield.xz_boundary(),
     )
 
+    # TODO: Incorporate proper sizing of VV port up to cryostat VV
     ts_lower_port, vv_lower_port = build_lower_port(
         reactor_config.params_for("Lower Port"),
         reactor_config.config_for("Lower Port"),
