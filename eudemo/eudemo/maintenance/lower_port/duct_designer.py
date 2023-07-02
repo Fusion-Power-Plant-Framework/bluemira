@@ -249,29 +249,17 @@ class LowerPortKOZDesigner(Designer):
                 "duct wall thickness would help."
             )
 
-        return make_polygon(
-            [
-                [
-                    ib_div_pt_padded[0],
-                    ib_div_pt_padded[0],
-                    ob_div_pt_padded[0],
-                    ob_div_pt_padded[0],
-                ],
-                [
-                    ib_inner_y,
-                    -ib_inner_y,
-                    -ob_inner_y,
-                    ob_inner_y,
-                ],
-                [
-                    ib_div_pt_padded[1],
-                    ib_div_pt_padded[1],
-                    ob_div_pt_padded[1],
-                    ob_div_pt_padded[1],
-                ],
-            ],
-            closed=True,
-        )
+        ib_div_pt_x, ib_div_pt_z = ib_div_pt_padded
+        ob_div_pt_x, ob_div_pt_z = ob_div_pt_padded
+
+        x = [ib_div_pt_x, ib_div_pt_x, ob_div_pt_x, ob_div_pt_x]
+        y = [ib_inner_y, -ib_inner_y, -ob_inner_y, ob_inner_y]
+        z = [ib_div_pt_z, ib_div_pt_z, ob_div_pt_z, ob_div_pt_z]
+        duct_inner_xy = make_polygon({"x": x, "y": y, "z": z}, closed=True)
+        angle = np.deg2rad(self.params.lower_port_angle.value)
+        direction = np.array([np.cos(angle), 0, np.sin(angle)])
+        duct_inner_xy.translate(-1 * direction)
+        return duct_inner_xy
 
     def _duct_xz_shapes(self, ib_div_pt_padded: Tuple, ob_div_pt_padded: Tuple):
         angled_duct_boundary = self._angled_duct_xz_boundary(
