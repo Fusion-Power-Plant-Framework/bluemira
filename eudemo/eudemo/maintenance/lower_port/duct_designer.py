@@ -53,6 +53,7 @@ class LowerPortKOZDesignerParams(ParameterFrame):
     g_ts_tf: Parameter[float]
     tk_ts: Parameter[float]
     g_vv_ts: Parameter[float]
+    tk_vv_single_wall: Parameter[float]
 
     # Pseudo - local
     tf_coil_thickness: Parameter[float]
@@ -62,7 +63,6 @@ class LowerPortKOZDesignerParams(ParameterFrame):
     lp_width: Parameter[float]
     # Local (varying)
 
-    lp_duct_wall_tk: Parameter[float]
     lp_duct_div_pad_ob: Parameter[float]
     lp_duct_div_pad_ib: Parameter[float]
 
@@ -99,7 +99,7 @@ class LowerPortKOZDesigner(Designer):
 
         self.div_pad_ob = self.params.lp_duct_div_pad_ob.value
         self.div_pad_ib = self.params.lp_duct_div_pad_ib.value
-        self.wall_tk = self.params.lp_duct_wall_tk.value
+        self.wall_tk = self.params.tk_vv_single_wall.value
         self.port_height = self.params.lp_height.value
         self.port_width = self.params.lp_width.value
 

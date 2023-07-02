@@ -107,7 +107,7 @@ class VVLowerPortDuctBuilderParams(ParameterFrame):
     n_TF: Parameter[int]
     lower_port_angle: Parameter[float]
     tk_ts: Parameter[float]
-    tk_vv_double_wall: Parameter[float]
+    tk_vv_single_wall: Parameter[float]
     g_vv_ts: Parameter[float]
 
 
@@ -154,7 +154,7 @@ class VVLowerPortDuctBuilder(Builder):
             self.duct_straight_boundary,
             self.params.n_TF.value,
             self.params.lower_port_angle.value,
-            self.params.tk_ts.value,
+            self.params.tk_vv_single_wall.value,
         )
 
         pc = PhysicalComponent(self.name, duct)
