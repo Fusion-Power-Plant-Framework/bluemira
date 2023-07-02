@@ -85,6 +85,7 @@ from eudemo.maintenance.lower_port import (
     LowerPortKOZDesigner,
     TSLowerPortDuctBuilder,
     TSLowerPortDuctBuilderParams,
+    VVLowerPortDuctBuilder,
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager
@@ -319,7 +320,6 @@ def build_equatorial_port(params, build_config, cryostat_ts_xz_boundary):
 def build_lower_port(
     params,
     build_config,
-    lp_duct_koz_xz,
     lp_duct_angled_nowall_extrude_boundary,
     lp_duct_straight_nowall_extrude_boundary,
 ):
@@ -327,38 +327,17 @@ def build_lower_port(
     builder = TSLowerPortDuctBuilder(
         params,
         build_config,
-        lp_duct_koz_xz,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )
     ts_lower_port = builder.build()
 
-    new_params = TSLowerPortDuctBuilderParams(
-        params.global_params.n_TF,
-        params.global_params.lower_port_angle,
-        Parameter("lp_duct_wall_tk", params.global_params.tk_vv_double_wall.value, "m"),
-    )
-    offset_value = -(
-        params.global_params.tk_ts.value + params.global_params.g_vv_ts.value
-    )
-    lp_duct_koz_xz = BluemiraFace(offset_wire(lp_duct_koz_xz.boundary[0], offset_value))
-    lp_duct_angled_nowall_extrude_boundary = offset_wire(
-        lp_duct_angled_nowall_extrude_boundary, offset_value
-    )
-    lp_duct_straight_nowall_extrude_boundary = offset_wire(
-        lp_duct_straight_nowall_extrude_boundary, offset_value
-    )
-    lp_duct_straight_nowall_extrude_boundary.translate(
-        (params.global_params.tk_ts.value, 0, 0)
-    )
-    builder = TSLowerPortDuctBuilder(
-        new_params,
+    builder = VVLowerPortDuctBuilder(
+        params,
         build_config,
-        lp_duct_koz_xz,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )
-    builder.name = "Vacuum vessel lower port"
     vv_lower_port = builder.build()
     return ts_lower_port, vv_lower_port
 
@@ -553,7 +532,6 @@ if __name__ == "__main__":
     ts_lower_port, vv_lower_port = build_lower_port(
         reactor_config.params_for("Lower Port"),
         reactor_config.config_for("Lower Port"),
-        lower_port_koz_xz,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )

@@ -63,37 +63,26 @@ class TSLowerPortDuctBuilder(Builder):
         self,
         params: Union[ParameterFrame, Dict],
         build_config: Dict,
-        duct_xz_koz: BluemiraFace,
         duct_angled_nowall_extrude_boundary: BluemiraWire,
         duct_straight_nowall_extrude_boundary: BluemiraWire,
     ):
         super().__init__(params, build_config)
-        self.duct_xz_koz = duct_xz_koz
         self.duct_angled_boundary = duct_angled_nowall_extrude_boundary
         self.duct_straight_boundary = duct_straight_nowall_extrude_boundary
 
     def build(self) -> Component:
         """
-        Build the Lower Port.
+        Build the thermal shield lower port.
         """
         return self.component_tree(
-            xz=self.build_xz(),
+            xz=None,
             xy=None,
             xyz=self.build_xyz(),
         )
 
-    def build_xz(self) -> List[PhysicalComponent]:
-        """
-        Build the Lower Port in XZ.
-        """
-        duct_xz = PhysicalComponent(self.name, self.duct_xz_koz)
-        apply_component_display_options(duct_xz, color=BLUE_PALETTE["TS"][0])
-
-        return [duct_xz]
-
     def build_xyz(self) -> List[PhysicalComponent]:
         """
-        Build the Lower Port in XYZ.
+        Build the thermal shield lower port in x-y-z.
         """
         duct, void = build_lower_port_xyz(
             self.duct_angled_boundary,
@@ -106,6 +95,71 @@ class TSLowerPortDuctBuilder(Builder):
         pc = PhysicalComponent(self.name, duct)
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
         apply_component_display_options(pc, color=BLUE_PALETTE["TS"][0])
+        apply_component_display_options(void, color=(0, 0, 0))
+
+        return [pc, void]
+
+
+@dataclass
+class VVLowerPortDuctBuilderParams(ParameterFrame):
+    """Vacuum Vessel Lower Port Duct Builder Parameters"""
+
+    n_TF: Parameter[int]
+    lower_port_angle: Parameter[float]
+    tk_ts: Parameter[float]
+    tk_vv_double_wall: Parameter[float]
+    g_vv_ts: Parameter[float]
+
+
+class VVLowerPortDuctBuilder(Builder):
+    """
+    Vacuum Vessel Lower Port Duct Builder
+    """
+
+    param_cls = VVLowerPortDuctBuilderParams
+
+    def __init__(
+        self,
+        params: Union[ParameterFrame, Dict],
+        build_config: Dict,
+        duct_angled_nowall_extrude_boundary: BluemiraWire,
+        duct_straight_nowall_extrude_boundary: BluemiraWire,
+    ):
+        super().__init__(params, build_config)
+        offset_value = -(self.params.tk_ts.value + self.params.g_vv_ts.value)
+        self.duct_angled_boundary = offset_wire(
+            duct_angled_nowall_extrude_boundary, offset_value
+        )
+        self.duct_straight_boundary = offset_wire(
+            duct_straight_nowall_extrude_boundary, offset_value
+        )
+        self.duct_straight_boundary.translate((self.params.tk_ts.value, 0, 0))
+
+    def build(self) -> Component:
+        """
+        Build the vacuum vessel lower port.
+        """
+        return self.component_tree(
+            xz=None,
+            xy=None,
+            xyz=self.build_xyz(),
+        )
+
+    def build_xyz(self) -> List[PhysicalComponent]:
+        """
+        Build the vacuum vessel lower port in x-y-z.
+        """
+        duct, void = build_lower_port_xyz(
+            self.duct_angled_boundary,
+            self.duct_straight_boundary,
+            self.params.n_TF.value,
+            self.params.lower_port_angle.value,
+            self.params.tk_ts.value,
+        )
+
+        pc = PhysicalComponent(self.name, duct)
+        void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
+        apply_component_display_options(pc, color=BLUE_PALETTE["VV"][0])
         apply_component_display_options(void, color=(0, 0, 0))
 
         return [pc, void]
