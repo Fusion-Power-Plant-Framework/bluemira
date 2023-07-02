@@ -44,21 +44,20 @@ from bluemira.materials import Void
 
 
 @dataclass
-class LowerPortBuilderParams(ParameterFrame):
-    """Lower Port Duct Builder Parameters"""
+class TSLowerPortDuctBuilderParams(ParameterFrame):
+    """Thermal Shield Lower Port Duct Builder Parameters"""
 
     n_TF: Parameter[int]
-
     lower_port_angle: Parameter[float]
-    lp_duct_wall_tk: Parameter[float]
+    tk_ts: Parameter[float]
 
 
-class LowerPortBuilder(Builder):
+class TSLowerPortDuctBuilder(Builder):
     """
-    Lower Port Duct Builder
+    Thermal Shield Lower Port Duct Builder
     """
 
-    param_cls = LowerPortBuilderParams
+    param_cls = TSLowerPortDuctBuilderParams
 
     def __init__(
         self,
@@ -72,10 +71,6 @@ class LowerPortBuilder(Builder):
         self.duct_xz_koz = duct_xz_koz
         self.duct_angled_boundary = duct_angled_nowall_extrude_boundary
         self.duct_straight_boundary = duct_straight_nowall_extrude_boundary
-
-        self.n_TF = self.params.n_TF.value
-        self.duct_angle = self.params.lower_port_angle.value
-        self.duct_wall_tk = self.params.lp_duct_wall_tk.value
 
     def build(self) -> Component:
         """
@@ -92,7 +87,7 @@ class LowerPortBuilder(Builder):
         Build the Lower Port in XZ.
         """
         duct_xz = PhysicalComponent(self.name, self.duct_xz_koz)
-        apply_component_display_options(duct_xz, color=BLUE_PALETTE["BB"][0])
+        apply_component_display_options(duct_xz, color=BLUE_PALETTE["TS"][0])
 
         return [duct_xz]
 
@@ -105,12 +100,12 @@ class LowerPortBuilder(Builder):
             self.duct_straight_boundary,
             self.params.n_TF.value,
             self.params.lower_port_angle.value,
-            self.params.lp_duct_wall_tk.value,
+            self.params.tk_ts.value,
         )
 
         pc = PhysicalComponent(self.name, duct)
         void = PhysicalComponent(self.name + " voidspace", void, material=Void("vacuum"))
-        apply_component_display_options(pc, color=BLUE_PALETTE["VV"][0])
+        apply_component_display_options(pc, color=BLUE_PALETTE["TS"][0])
         apply_component_display_options(void, color=(0, 0, 0))
 
         return [pc, void]

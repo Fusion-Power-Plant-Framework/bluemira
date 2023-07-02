@@ -226,12 +226,6 @@
         "unit": "m",
         "source": "Input",
         "long_name": "TF Coil thickness (temporary)."
-      },
-      "lp_duct_wall_tk": {
-        "value": 0.02,
-        "unit": "m",
-        "source": "Input",
-        "long_name": "Lower port duct wall thickness."
       }
     }
   }

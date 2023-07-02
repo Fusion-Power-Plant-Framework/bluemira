@@ -82,9 +82,9 @@ from eudemo.maintenance.duct_connection import (
 )
 from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
 from eudemo.maintenance.lower_port import (
-    LowerPortBuilder,
-    LowerPortBuilderParams,
     LowerPortKOZDesigner,
+    TSLowerPortDuctBuilder,
+    TSLowerPortDuctBuilderParams,
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager
@@ -324,21 +324,16 @@ def build_lower_port(
     lp_duct_straight_nowall_extrude_boundary,
 ):
     """Builder for the Lower Port and Duct"""
-    new_params = LowerPortBuilderParams(
-        params.global_params.n_TF,
-        params.global_params.lower_port_angle,
-        Parameter("lp_duct_wall_tk", params.global_params.tk_ts.value, "m"),
-    )
-    builder = LowerPortBuilder(
-        new_params,
+    builder = TSLowerPortDuctBuilder(
+        params,
         build_config,
         lp_duct_koz_xz,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )
-    builder.name = "Thermal shield lower port"
     ts_lower_port = builder.build()
-    new_params = LowerPortBuilderParams(
+
+    new_params = TSLowerPortDuctBuilderParams(
         params.global_params.n_TF,
         params.global_params.lower_port_angle,
         Parameter("lp_duct_wall_tk", params.global_params.tk_vv_double_wall.value, "m"),
@@ -356,7 +351,7 @@ def build_lower_port(
     lp_duct_straight_nowall_extrude_boundary.translate(
         (params.global_params.tk_ts.value, 0, 0)
     )
-    builder = LowerPortBuilder(
+    builder = TSLowerPortDuctBuilder(
         new_params,
         build_config,
         lp_duct_koz_xz,

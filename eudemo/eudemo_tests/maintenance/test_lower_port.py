@@ -30,7 +30,7 @@ from bluemira.base.parameter_frame import make_parameter_frame
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
-from eudemo.maintenance.lower_port.builder import LowerPortBuilder
+from eudemo.maintenance.lower_port.builder import TSLowerPortDuctBuilder
 from eudemo.maintenance.lower_port.duct_designer import (
     LowerPortKOZDesigner,
     LowerPortKOZDesignerParams,
@@ -103,7 +103,7 @@ class TestLowerPort:
             self.divertor_xz_silhouette,
             self.tf_coils_outer_boundary,
         ).execute()
-        builder = LowerPortBuilder(
+        builder = TSLowerPortDuctBuilder(
             self.duct_des_params,
             {},
             lp_duct_xz_koz,
@@ -142,7 +142,7 @@ class TestLowerPort:
         pl.rotate(degree=np.rad2deg(np.pi / self.duct_des_params.n_TF.value))
 
         duct_xyz_cad = (
-            lp_duct.get_component("xyz").get_component(LowerPortBuilder.DUCT).shape
+            lp_duct.get_component("xyz").get_component(TSLowerPortDuctBuilder.DUCT).shape
         )
         angled_face = (
             duct_xyz_cad.faces[0] if duct_angle != -90 else duct_xyz_cad.faces[4]
