@@ -564,7 +564,8 @@ if __name__ == "__main__":
     )
 
     reactor.vacuum_vessel.add_ports(
-        [vv_upper_port, vv_eq_port], n_TF=reactor_config.global_params.n_TF.value
+        [vv_upper_port, vv_eq_port, vv_lower_port],
+        n_TF=reactor_config.global_params.n_TF.value,
     )
     reactor.thermal_shield.add_ports(
         [ts_upper_port, ts_eq_port], n_TF=reactor_config.global_params.n_TF.value
