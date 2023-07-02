@@ -197,12 +197,6 @@
   },
   "Lower Port": {
     "params": {
-      "lp_duct_tf_offset": {
-        "value": 3.0,
-        "unit": "m",
-        "source": "Input",
-        "long_name": "DUMMY."
-      },
       "lp_duct_div_pad_ob": {
         "value": 0.3,
         "unit": "m",
