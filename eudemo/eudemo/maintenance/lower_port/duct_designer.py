@@ -44,12 +44,15 @@ from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
-class LowerPortDuctDesignerParams(ParameterFrame):
-    """Lower Port Duct Designer ParameterFrame"""
+class LowerPortKOZDesignerParams(ParameterFrame):
+    """Lower Port KOZ Designer ParameterFrame"""
 
     n_TF: Parameter[int]
     n_div_cassettes: Parameter[int]
     lower_port_angle: Parameter[float]
+    g_ts_tf: Parameter[float]
+    tk_ts: Parameter[float]
+    g_vv_ts: Parameter[float]
 
     # Pseudo - local
     tf_coil_thickness: Parameter[float]
@@ -59,13 +62,12 @@ class LowerPortDuctDesignerParams(ParameterFrame):
     lp_width: Parameter[float]
     # Local (varying)
 
-    lp_duct_tf_offset: Parameter[float]
     lp_duct_wall_tk: Parameter[float]
     lp_duct_div_pad_ob: Parameter[float]
     lp_duct_div_pad_ib: Parameter[float]
 
 
-class LowerPortDuctDesigner(Designer):
+class LowerPortKOZDesigner(Designer):
     """
     Lower Port keep-out-zone designer
 
@@ -74,7 +76,7 @@ class LowerPortDuctDesigner(Designer):
     Retractions on the lower_duct_angle are between [-90, 0] degrees.
     """
 
-    param_cls: Type[ParameterFrame] = LowerPortDuctDesignerParams
+    param_cls: Type[ParameterFrame] = LowerPortKOZDesignerParams
 
     def __init__(
         self,
@@ -88,12 +90,13 @@ class LowerPortDuctDesigner(Designer):
         self.tf_coil_xz_boundary = tf_coil_xz_boundary
 
         self.tf_coil_thickness = self.params.tf_coil_thickness.value
-        self.n_TF = self.params.n_TF.value
-        self.n_div_cassettes = self.params.n_div_cassettes.value
-        self.duct_angle = self.params.lower_port_angle.value
-        # self.tf_offset = self.params.g_ts_tf.value + self.params.tk_ts.value + self.params.g_vv_ts.value
 
-        self.tf_offset = self.params.lp_duct_tf_offset.value
+        self.tf_offset = (
+            self.params.g_ts_tf.value
+            + self.params.tk_ts.value
+            + self.params.g_vv_ts.value
+        )
+
         self.div_pad_ob = self.params.lp_duct_div_pad_ob.value
         self.div_pad_ib = self.params.lp_duct_div_pad_ib.value
         self.wall_tk = self.params.lp_duct_wall_tk.value
@@ -135,11 +138,11 @@ class LowerPortDuctDesigner(Designer):
 
     @property
     def _duct_angle_gradient(self) -> float:
-        return np.tan(np.deg2rad(self.duct_angle))
+        return np.tan(np.deg2rad(self.params.lower_port_angle.value))
 
     @property
     def _half_beta(self) -> float:
-        return np.pi / self.n_TF
+        return np.pi / self.params.n_TF.value
 
     def _get_div_pts_at_angle(self) -> Tuple[Tuple, Tuple]:
         div_z_top = self.divertor_face.bounding_box.z_max
@@ -232,16 +235,10 @@ class LowerPortDuctDesigner(Designer):
         # This uses an approx. of the divertor width at an x-point (ib or ob).
         # The approx. is valid because the angle is small and tf_coil's
         # have straight edges.
-        div_half_width_at_ib = ib_div_pt_padded[0] * np.tan(
-            # half sector degree
-            np.deg2rad((360 / self.n_TF) / self.n_div_cassettes)
-            / 2
-        )
-        div_half_width_at_ob = ob_div_pt_padded[0] * np.tan(
-            # half sector degree
-            np.deg2rad((360 / self.n_TF) / self.n_div_cassettes)
-            / 2
-        )
+        # Half-sector degree
+        angle = np.pi / self.params.n_TF.value / self.params.n_div_cassettes.value
+        div_half_width_at_ib = ib_div_pt_padded[0] * np.tan(angle)
+        div_half_width_at_ob = ob_div_pt_padded[0] * np.tan(angle)
         # half sector degree is used because ib_inner_y, ob_inner_y are for
         # the upper half space available for the divertor.
         if div_half_width_at_ib > ib_inner_y or div_half_width_at_ob > ob_inner_y:
@@ -365,7 +362,7 @@ class LowerPortDuctDesigner(Designer):
 
         # choose corner point
         topleft_corner_pt = itc_bot_pt
-        if self.duct_angle > -45:
+        if self.params.lower_port_angle.value > -45:
             topleft_corner_pt = itc_top_pt
 
         topright_corner_pt = (
@@ -465,7 +462,7 @@ class LowerPortDuctDesigner(Designer):
     ) -> List[Tuple]:
         dist, vects = distance_to(shape_a, shape_b)
         if dist < D_TOLERANCE:  # intersecting, return intersection points
-            return LowerPortDuctDesigner._intersection_points(shape_a, shape_b)
+            return LowerPortKOZDesigner._intersection_points(shape_a, shape_b)
         points = []
         vect_pairs = vects[0]
         for v in vect_pairs:

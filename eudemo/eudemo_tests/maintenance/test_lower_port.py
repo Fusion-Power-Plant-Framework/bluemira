@@ -32,8 +32,8 @@ from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.maintenance.lower_port.builder import LowerPortBuilder
 from eudemo.maintenance.lower_port.duct_designer import (
-    LowerPortDuctDesigner,
-    LowerPortDuctDesignerParams,
+    LowerPortKOZDesigner,
+    LowerPortKOZDesignerParams,
 )
 
 
@@ -85,7 +85,7 @@ class TestLowerPort:
                 "lp_duct_angle": {"value": -30, "unit": "degrees"},
                 "lp_duct_wall_tk": {"value": 0.02, "unit": "m"},
             },
-            LowerPortDuctDesignerParams,
+            LowerPortKOZDesignerParams,
         )
 
     @pytest.mark.parametrize("duct_angle", [0, -30, -45, -60, -90])
@@ -97,7 +97,7 @@ class TestLowerPort:
             lp_duct_xz_koz,
             lp_duct_angled_nowall_extrude_boundary,
             lp_duct_straight_nowall_extrude_boundary,
-        ) = LowerPortDuctDesigner(
+        ) = LowerPortKOZDesigner(
             self.duct_des_params,
             {},
             self.divertor_xz_silhouette,

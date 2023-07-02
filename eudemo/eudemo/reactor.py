@@ -84,7 +84,7 @@ from eudemo.maintenance.equatorial_port import EquatorialPortKOZDesigner
 from eudemo.maintenance.lower_port import (
     LowerPortBuilder,
     LowerPortBuilderParams,
-    LowerPortDuctDesigner,
+    LowerPortKOZDesigner,
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager
@@ -481,10 +481,10 @@ if __name__ == "__main__":
 
     (
         lp_duct_xz_void_space,
-        lp_duct_koz_xz,
+        lower_port_koz_xz,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
-    ) = LowerPortDuctDesigner(
+    ) = LowerPortKOZDesigner(
         reactor_config.params_for("Lower Port"),
         reactor_config.config_for("Lower Port"),
         ivc_shapes.divertor_face,
@@ -499,7 +499,7 @@ if __name__ == "__main__":
         pf_coil_keep_out_zones=[
             upper_port_koz_xz,
             eq_port_koz_xz,
-            lp_duct_koz_xz,
+            lower_port_koz_xz,
         ],
     )
 
@@ -522,7 +522,7 @@ if __name__ == "__main__":
         pf_coil_keep_out_zones=[
             upper_port_koz_xz,
             eq_port_koz_xz,
-            lp_duct_koz_xz,
+            lower_port_koz_xz,
         ],
     )
 
@@ -558,7 +558,7 @@ if __name__ == "__main__":
     ts_lower_port, vv_lower_port = build_lower_port(
         reactor_config.params_for("Lower Port"),
         reactor_config.config_for("Lower Port"),
-        lp_duct_koz_xz,
+        lower_port_koz_xz,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
     )
@@ -572,7 +572,7 @@ if __name__ == "__main__":
 
     from bluemira.display import show_cad
 
-    debug = [upper_port_koz_xz, eq_port_koz_xz, lp_duct_koz_xz]
+    debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
     debug.extend(reactor.pf_coils.xz_boundary())
     # I know there are clashes, I need to put in dynamic bounds on position opt to
     # include coil XS.

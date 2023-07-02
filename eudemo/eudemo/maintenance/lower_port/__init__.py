@@ -27,4 +27,4 @@ from eudemo.maintenance.lower_port.builder import (
     LowerPortBuilder,
     LowerPortBuilderParams,
 )
-from eudemo.maintenance.lower_port.duct_designer import LowerPortDuctDesigner
+from eudemo.maintenance.lower_port.duct_designer import LowerPortKOZDesigner

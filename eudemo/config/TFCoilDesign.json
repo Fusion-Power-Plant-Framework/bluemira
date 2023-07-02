@@ -6,37 +6,37 @@
     "fixed": true
   },
   "dz": {
-    "value": -0.4244364737918872,
+    "value": -0.4245423030977593,
     "lower_bound": -1,
     "upper_bound": 1,
     "fixed": false
   },
   "sl": {
-    "value": 5.0,
+    "value": 5.000000098845895,
     "lower_bound": 5,
     "upper_bound": 10,
     "fixed": false
   },
   "f1": {
-    "value": 7.781329188955184,
+    "value": 7.772016752045336,
     "lower_bound": 2,
     "upper_bound": 12,
     "fixed": false
   },
   "f2": {
-    "value": 4.078804300778263,
+    "value": 4.076440323192815,
     "lower_bound": 2,
     "upper_bound": 12,
     "fixed": false
   },
   "a1": {
-    "value": 28.531941504191817,
+    "value": 28.634015954608387,
     "lower_bound": 5,
     "upper_bound": 120,
     "fixed": false
   },
   "a2": {
-    "value": 65.47864479748185,
+    "value": 65.37530589283784,
     "lower_bound": 10,
     "upper_bound": 120,
     "fixed": false
