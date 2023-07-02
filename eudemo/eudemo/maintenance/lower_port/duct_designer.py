@@ -256,6 +256,9 @@ class LowerPortKOZDesigner(Designer):
         y = [ib_inner_y, -ib_inner_y, -ob_inner_y, ob_inner_y]
         z = [ib_div_pt_z, ib_div_pt_z, ob_div_pt_z, ob_div_pt_z]
         duct_inner_xy = make_polygon({"x": x, "y": y, "z": z}, closed=True)
+
+        # Translate a little inwards and upwards to ensure penetration to
+        # main body
         angle = np.deg2rad(self.params.lower_port_angle.value)
         direction = np.array([np.cos(angle), 0, np.sin(angle)])
         duct_inner_xy.translate(-1 * direction)
