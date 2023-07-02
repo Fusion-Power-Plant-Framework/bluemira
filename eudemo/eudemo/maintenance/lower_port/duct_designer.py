@@ -87,7 +87,8 @@ class LowerPortKOZDesigner(Designer):
         self.divertor_face = divertor_xz
         self.tf_coil_xz_boundary = tf_coil_xz_boundary
 
-        # TODO: Cross-check with upper port handling and add casing sidewall thickness + gaps?
+        # TODO: Cross-check with upper port handling and add casing
+        # sidewall thickness + gaps?
         self.tf_coil_thickness = 0.5 * self.params.tf_wp_depth.value
 
         self.tf_offset = (
