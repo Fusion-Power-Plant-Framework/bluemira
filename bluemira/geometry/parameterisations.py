@@ -31,12 +31,23 @@ import warnings
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial
-from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, Union
+from typing import (
+    Any,
+    Dict,
+    Generic,
+    Iterable,
+    List,
+    Optional,
+    TextIO,
+    Tuple,
+    TypeVar,
+    Union,
+)
 
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-from scipy.special import iv as bessel
+from scipy.special import iv as bessel  # type: ignore
 
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
@@ -49,7 +60,11 @@ from bluemira.geometry.tools import (
     wire_closure,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame
+from bluemira.utilities.opt_variables import (
+    OptVariable,
+    OptVariablesFrame,
+    OptVarVarDictValueT,
+)
 from bluemira.utilities.plot_tools import str_to_latex
 
 __all__ = [
@@ -64,8 +79,10 @@ __all__ = [
     "TripleArc",
 ]
 
+OptVariablesFrameT = TypeVar("OptVariablesFrameT", bound=OptVariablesFrame)
 
-class GeometryParameterisation(abc.ABC):
+
+class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
     """
     A geometry parameterisation class facilitating geometry optimisation.
 
@@ -75,17 +92,24 @@ class GeometryParameterisation(abc.ABC):
     variables with initial values, and override the create_shape method.
     """
 
-    __slots__ = ("name", "variables", "n_ineq_constraints")
+    __slots__ = ("name", "_variables", "n_ineq_constraints")
 
-    def __init__(self, variables: OptVariablesFrame):
+    def __init__(self, variables: OptVariablesFrameT):
         """
         Parameters
         ----------
         variables:
             Set of optimisation variables of the GeometryParameterisation
         """
-        self.name = type(self).__name__
-        self.variables = variables
+        self.name = self.__class__.__name__
+        self._variables = variables
+        self.n_ineq_constraints = 0
+        super().__init__()
+
+    @property
+    def variables(self) -> OptVariablesFrameT:
+        """The variables of the GeometryParameterisation"""
+        return self._variables
 
     def adjust_variable(
         self,
@@ -329,31 +353,31 @@ class GeometryParameterisation(abc.ABC):
         """
         offset_ar_x = 0
         offset_ar_z = 0
-        for key, var in self.variables.as_dict().items():
-            if key.startswith("x"):
+        for v in self.variables:
+            if v.name.startswith("x"):
                 self._annotator(
                     ax,
-                    key,
+                    v.name,
                     (0, offset_ar_x),
-                    (var["_value"], offset_ar_x),
-                    (var["_value"] * 0.4, offset_ar_x),
+                    (v.value, offset_ar_x),
+                    (v.value * 0.4, offset_ar_x),
                 )
                 ax.plot([0, 0], [0, offset_ar_x], color="k")
-                ax.plot([var["_value"], var["_value"]], [0, offset_ar_x], color="k")
+                ax.plot([v.value, v.value], [0, offset_ar_x], color="k")
                 offset_ar_x += 2
-            elif key.startswith("z") or key[1] == "z":
+            elif v.name.startswith("z") or v.name[1] == "z":
                 xcor = shape.center_of_mass[0] + offset_ar_z
                 self._annotator(
                     ax,
-                    key,
+                    v.name,
                     (xcor, 0),
-                    (xcor, var["_value"]),
-                    (xcor, var["_value"] * 0.4),
+                    (xcor, v.value),
+                    (xcor, v.value * 0.4),
                 )
                 ax.plot([shape.center_of_mass[0], xcor], [0, 0], color="k")
                 ax.plot(
                     [shape.center_of_mass[0], xcor],
-                    [var["_value"], var["_value"]],
+                    [v.value, v.value],
                     color="k",
                 )
                 offset_ar_z += 1.5
@@ -400,7 +424,7 @@ class PrincetonDOptVariables(OptVariablesFrame):
     )
 
 
-class PrincetonD(GeometryParameterisation):
+class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     """
     Princeton D geometry parameterisation.
 
@@ -429,13 +453,13 @@ class PrincetonD(GeometryParameterisation):
 
     __slots__ = ()
 
-    n_ineq_constraints = 1
-
-    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
+    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
         variables = PrincetonDOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
 
         super().__init__(variables)
+        # todo: why is this here?
+        self.n_ineq_constraints = 1
 
     def create_shape(self, label: str = "", n_points: int = 2000) -> BluemiraWire:
         """
@@ -454,7 +478,9 @@ class PrincetonD(GeometryParameterisation):
         CAD Wire of the geometry
         """
         x, z = self._princeton_d(
-            *self.variables.values,
+            self.variables.x1.value,
+            self.variables.x2.value,
+            self.variables.dz.value,
             n_points,
         )
         xyz = np.array([x, np.zeros(len(x)), z])
@@ -670,10 +696,9 @@ class TripleArc(GeometryParameterisation):
     """
 
     __slots__ = ()
-
     n_ineq_constraints = 1
 
-    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
+    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
         variables = TripleArcOptVaribles()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -868,23 +893,20 @@ class SextupleArcOptVariables(OptVariablesFrame):
         upper_bound=50,
         description="1st arc angle [degrees]",
     )
-    a2: OptVariable = (
-        OptVariable(
-            "a2",
-            60,
-            lower_bound=10,
-            upper_bound=80,
-            description="2nd arc angle [degrees]",
-        ),
+    a2: OptVariable = OptVariable(
+        "a2",
+        60,
+        lower_bound=10,
+        upper_bound=80,
+        description="2nd arc angle [degrees]",
     )
-    d3: OptVariable = (
-        OptVariable(
-            "a3",
-            90,
-            lower_bound=10,
-            upper_bound=100,
-            description="3rd arc angle [degrees]",
-        ),
+
+    d3: OptVariable = OptVariable(
+        "a3",
+        90,
+        lower_bound=10,
+        upper_bound=100,
+        description="3rd arc angle [degrees]",
     )
     a4: OptVariable = OptVariable(
         "a4",
@@ -933,7 +955,7 @@ class SextupleArc(GeometryParameterisation):
     __slots__ = ()
     n_ineq_constraints = 1
 
-    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
+    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
         variables = SextupleArcOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1231,7 +1253,7 @@ class PolySplineOptVariables(OptVariablesFrame):
     )
 
 
-class PolySpline(GeometryParameterisation):
+class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
     """
     Simon McIntosh's Poly-Bézier-spline geometry parameterisation (19 variables).
 
@@ -1280,7 +1302,7 @@ class PolySpline(GeometryParameterisation):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
+    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
         variables = PolySplineOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1810,6 +1832,7 @@ class PictureFrameMeta(type(GeometryParameterisation), type(PictureFrameTools)):
         else:
             raise ValueError(f"The lower leg cannot be {cls.lower}")
 
+        # todo: what is this?
         cls.outer = cls._connect_to_outer_limb
 
         cls.outer_vars = lambda self, top_leg, bot_leg, v: (
@@ -1822,6 +1845,87 @@ class PictureFrameMeta(type(GeometryParameterisation), type(PictureFrameTools)):
         obj = cls.__new__(cls)
         obj.__init__(var_dict)
         return obj
+
+
+@dataclass
+class PictureFrameOptVariables(OptVariablesFrame):
+    x1: OptVariable = OptVariable(
+        "x1",
+        0.4,
+        lower_bound=0.3,
+        upper_bound=0.5,
+        description="Inner limb radius",
+    )
+    x2: OptVariable = OptVariable(
+        "x2",
+        9.5,
+        lower_bound=9.4,
+        upper_bound=9.8,
+        description="Outer limb radius",
+    )
+    z1: OptVariable = OptVariable(
+        "z1",
+        9.5,
+        lower_bound=8,
+        upper_bound=10.5,
+        description="Upper limb height",
+    )
+    z2: OptVariable = OptVariable(
+        "z2",
+        -9.5,
+        lower_bound=-10.5,
+        upper_bound=-8,
+        description="Lower limb height",
+    )
+    ri: OptVariable = OptVariable(
+        "ri",
+        0.1,
+        lower_bound=0,
+        upper_bound=2,
+        description="Inboard corner radius",
+    )
+    ro: OptVariable = OptVariable(
+        "ro",
+        2,
+        lower_bound=1,
+        upper_bound=5,
+        description="Outboard corner radius",
+    )
+    x3: OptVariable = OptVariable(
+        "x3",
+        2.5,
+        lower_bound=2.4,
+        upper_bound=2.6,
+        description="Curve start radius",
+    )
+    z1_peak: OptVariable = OptVariable(
+        "z1_peak",
+        11,
+        lower_bound=6,
+        upper_bound=12,
+        description="Upper limb curve height",
+    )
+    z2_peak: OptVariable = OptVariable(
+        "z2_peak",
+        -11,
+        lower_bound=-12,
+        upper_bound=-6,
+        description="Lower limb curve height",
+    )
+    x4: OptVariable = OptVariable(
+        "x4",
+        1.1,
+        lower_bound=1,
+        upper_bound=1.3,
+        description="Middle limb radius",
+    )
+    z3: OptVariable = OptVariable(
+        "z3",
+        6.5,
+        lower_bound=6,
+        upper_bound=8,
+        description="Taper angle stop height",
+    )
 
 
 class PictureFrame(
@@ -1889,96 +1993,8 @@ class PictureFrame(
         ]
     )
 
-    def __init__(self, var_dict: Optional[Dict[str, float]] = None):
-        bounded_vars = [
-            OptVariable(
-                "x1",
-                0.4,
-                lower_bound=0.3,
-                upper_bound=0.5,
-                description="Inner limb radius",
-            ),
-            OptVariable(
-                "x2",
-                9.5,
-                lower_bound=9.4,
-                upper_bound=9.8,
-                description="Outer limb radius",
-            ),
-            OptVariable(
-                "z1",
-                9.5,
-                lower_bound=8,
-                upper_bound=10.5,
-                description="Upper limb height",
-            ),
-            OptVariable(
-                "z2",
-                -9.5,
-                lower_bound=-10.5,
-                upper_bound=-8,
-                description="Lower limb height",
-            ),
-            OptVariable(
-                "ri",
-                0.1,
-                lower_bound=0,
-                upper_bound=2,
-                description="Inboard corner radius",
-            ),
-            OptVariable(
-                "ro",
-                2,
-                lower_bound=1,
-                upper_bound=5,
-                description="Outboard corner radius",
-            ),
-        ]
-
-        if PFrameSection.CURVED in [self.upper, self.lower]:
-            bounded_vars += [
-                OptVariable(
-                    "x3",
-                    2.5,
-                    lower_bound=2.4,
-                    upper_bound=2.6,
-                    description="Curve start radius",
-                ),
-                OptVariable(
-                    "z1_peak",
-                    11,
-                    lower_bound=6,
-                    upper_bound=12,
-                    description="Upper limb curve height",
-                ),
-                OptVariable(
-                    "z2_peak",
-                    -11,
-                    lower_bound=-12,
-                    upper_bound=-6,
-                    description="Lower limb curve height",
-                ),
-            ]
-
-        if self.inner == PFrameSection.TAPERED_INNER:
-            bounded_vars += [
-                OptVariable(
-                    "x4",
-                    1.1,
-                    lower_bound=1,
-                    upper_bound=1.3,
-                    description="Middle limb radius",
-                ),
-                OptVariable(
-                    "z3",
-                    6.5,
-                    lower_bound=6,
-                    upper_bound=8,
-                    description="Taper angle stop height",
-                ),
-            ]
-
-        variables = OptVariables(bounded_vars, frozen=True)
+    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
+        variables = PictureFrameOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 

@@ -22,6 +22,7 @@
 import os
 import shutil
 import tempfile
+from dataclasses import dataclass
 from typing import Type
 
 import numpy as np
@@ -40,8 +41,7 @@ from bluemira.geometry.parameterisations import (
 )
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.error import OptVariablesError
-from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame
 
 
 @pytest.mark.parametrize(
@@ -70,28 +70,28 @@ def test_read_write(param_class: Type[GeometryParameterisation]):
         shutil.rmtree(tempdir)
 
 
+@dataclass
+class TGeometryParameterisationOptVariables(OptVariablesFrame):
+    a: OptVariable = OptVariable("a", 0, -1, 1)
+    b: OptVariable = OptVariable("b", 2, 0, 4)
+    c: OptVariable = OptVariable("c", 4, 2, 6, fixed=True)
+
+
 class TestGeometryParameterisation:
     def test_subclass(self):
-        class TestPara(GeometryParameterisation):
+        class TestPara(GeometryParameterisation[TGeometryParameterisationOptVariables]):
             def __init__(self):
-                variables = OptVariables(
-                    [
-                        BoundedVariable("a", 0, -1, 1),
-                        BoundedVariable("b", 2, 0, 4),
-                        BoundedVariable("c", 4, 2, 6, fixed=True),
-                    ],
-                    frozen=True,
-                )
+                variables = TGeometryParameterisationOptVariables()
                 super().__init__(variables)
 
             def create_shape(self, **kwargs):
                 return BluemiraWire(
                     make_polygon(
                         [
-                            [self.variables["a"], 0, 0],
-                            [self.variables["b"], 0, 0],
-                            [self.variables["c"], 0, 1],
-                            [self.variables["a"], 0, 1],
+                            [self.variables.a, 0, 0],
+                            [self.variables.b, 0, 0],
+                            [self.variables.c, 0, 1],
+                            [self.variables.a, 0, 1],
                         ]
                     )
                 )
@@ -117,14 +117,6 @@ class TestPrincetonD:
     def test_error(self):
         with pytest.raises(GeometryParameterisationError):
             PrincetonD._princeton_d(10, 3, 0)
-
-    def test_bad_behaviour(self):
-        p = PrincetonD()
-        with pytest.raises(OptVariablesError):
-            p.variables.add_variable(BoundedVariable("new", 0, 0, 0))
-
-        with pytest.raises(OptVariablesError):
-            p.variables.remove_variable("x1")
 
     def test_instantiation_fixed(self):
         p = PrincetonD(

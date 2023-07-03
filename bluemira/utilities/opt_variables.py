@@ -25,7 +25,7 @@ Optimisation variable class.
 
 import json
 from dataclasses import dataclass
-from typing import Any, Dict, Generator, Optional, TextIO, TypedDict, Union
+from typing import Dict, Generator, Optional, TextIO, TypedDict, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,9 +37,19 @@ from bluemira.utilities.error import OptVariablesError
 from bluemira.utilities.tools import json_writer
 
 
-class OptVarVarDictT(TypedDict, total=False):
-    """Typed dictionary for an OptVariable from a var_dict."""
+class OptVarVarDictValueT(TypedDict, total=False):
+    """Typed dictionary for a the values of an OptVariable from a var_dict."""
 
+    value: float
+    lower_bound: float
+    upper_bound: float
+    fixed: bool
+
+
+class OptVarDictT(TypedDict):
+    """Typed dictionary representation of an OptVariable."""
+
+    name: str
     value: float
     lower_bound: float
     upper_bound: float
@@ -47,8 +57,8 @@ class OptVarVarDictT(TypedDict, total=False):
     description: str
 
 
-class OptVarDictT(TypedDict):
-    """Typed dictionary for an OptVariable."""
+class OptVarSerializedT(TypedDict):
+    """Typed dictionary for a serialised OptVariable."""
 
     value: float
     lower_bound: float
@@ -100,7 +110,7 @@ class OptVariable:
         self._validate_value(value)
 
     @property
-    def value(self):
+    def value(self) -> float:
         """
         The value of the variable.
         """
@@ -181,24 +191,38 @@ class OptVariable:
 
         self._validate_bounds()
 
-    def as_dict(self, with_name: bool = True) -> Dict[str, Any]:
-        """Dictionary representation of OptVariable"""
-        n = {"name": self.name}
-        d = {
+    def as_dict(self) -> OptVarDictT:
+        """Dictionary representation of OptVariable, can be used for serialisation"""
+        return {
+            "name": self.name,
             "value": self.value,
             "lower_bound": self.lower_bound,
             "upper_bound": self.upper_bound,
             "fixed": self.fixed,
-            "description": self.description,
+            "description": self.description or "",
         }
-        if with_name:
-            return {**n, **d}
-        return d
+
+    def as_serializable(self) -> OptVarSerializedT:
+        """Dictionary representation of OptVariable"""
+        return {
+            "value": self.value,
+            "lower_bound": self.lower_bound,
+            "upper_bound": self.upper_bound,
+            "fixed": self.fixed,
+            "description": self.description or "",
+        }
 
     @classmethod
-    def from_dict(cls, name: str, var_dict: OptVarDictT):
+    def from_serialized(cls, name: str, data: OptVarSerializedT):
         """Create an OptVariable from a dictionary"""
-        return cls(name=name, **var_dict)
+        return cls(
+            name=name,
+            value=data["value"],
+            lower_bound=data["lower_bound"],
+            upper_bound=data["upper_bound"],
+            fixed=data["fixed"],
+            description=data["description"],
+        )
 
     def _adjust_bounds_to(self, value):
         """
@@ -252,6 +276,18 @@ class OptVariable:
 
         return f"{self.name} = {self.value}{bound}{descr}"
 
+    def __add__(self, other: "OptVariable"):
+        """The sum of two OptVariables is the sum of their values"""
+        if isinstance(other, OptVariable):
+            return self.value + other.value
+        raise TypeError(f"Cannot add {type(other)} to OptVariable")
+
+    def __sub__(self, other: "OptVariable"):
+        """The sum of two OptVariables is the sum of their values"""
+        if isinstance(other, OptVariable):
+            return self.value - other.value
+        raise TypeError(f"Cannot subtract {type(other)} from OptVariable")
+
 
 @dataclass
 class OptVariablesFrame:
@@ -271,10 +307,17 @@ class OptVariablesFrame:
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
         for field_name in cls.__dataclass_fields__:
             t = cls.__dataclass_fields__[field_name].type
-            if t != "OptVariable":
+            # the type can come out as string sometimes
+            if not (t == OptVariable or type(t) is str and t == "OptVariable"):
                 raise TypeError(
                     f"OptVariablesFrame contains non-OptVariable object '{field_name}: {t}'"
                 )
+            df: OptVariable = cls.__dataclass_fields__[field_name].default
+            if df and field_name != df.name:
+                raise TypeError(
+                    f"OptVariablesFrame contains OptVariable with incorrect name '{df.name}', defined as '{field_name}'"
+                )
+
         return super().__new__(cls)
 
     def __iter__(self) -> Generator[OptVariable, None, None]:
@@ -340,7 +383,9 @@ class OptVariablesFrame:
             opt_var.adjust(value, lower_bound, upper_bound, strict_bounds)
 
     def adjust_variables(
-        self, var_dict: Optional[Dict[str, OptVarVarDictT]] = None, strict_bounds=True
+        self,
+        var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None,
+        strict_bounds=True,
     ):
         """
         Adjust multiple variables in the frame.
@@ -442,7 +487,7 @@ class OptVariablesFrame:
         All un-normalised values of the variable set (including fixed variable values).
         """
         # todo: does this need to be an np.array?
-        return [v.value for v in self]
+        return np.array([v.value for v in self])
 
     @property
     def n_free_variables(self) -> int:
@@ -470,15 +515,13 @@ class OptVariablesFrame:
         """
         Dictionary Representation of the frame
         """
-        return {opv.name: opv.as_dict(with_name=False) for opv in self}
+        return {opv.name: opv.as_dict() for opv in self}
 
-    @classmethod
-    def from_dict(cls, data: Dict[str, OptVarDictT]):
+    def as_serializable(self) -> Dict[str, OptVarSerializedT]:
         """
-        Create an OptVariablesFrame instance from a dictionary.
+        Dictionary Representation of the frame
         """
-        opt_vars = {name: OptVariable.from_dict(name, val) for name, val in data.items()}
-        return cls(**opt_vars)
+        return {opv.name: opv.as_serializable() for opv in self}
 
     def to_json(self, file: str, **kwargs):
         """
@@ -489,7 +532,7 @@ class OptVariablesFrame:
         path: str
             Path to save the json file to.
         """
-        json_writer(self.as_dict(), file, **kwargs)
+        json_writer(self.as_serializable(), file, **kwargs)
 
     @classmethod
     def from_json(cls, file: Union[str, TextIO], frozen=False):
@@ -506,7 +549,10 @@ class OptVariablesFrame:
                 return cls.from_json(fh)
 
         d = json.load(file)
-        return cls.from_dict(d)
+        opt_vars = {
+            name: OptVariable.from_serialized(name, val) for name, val in d.items()
+        }
+        return cls(**opt_vars)
 
     def tabulate(self, tablefmt: str = "fancy_grid") -> str:
         """
@@ -547,7 +593,7 @@ class OptVariablesFrame:
         x_norm = [opv.normalised_value if not opv.fixed else 0.5 for opv in self]
         colors = [
             BLUEMIRA_PALETTE["red"] if v.fixed else BLUEMIRA_PALETTE["blue"]
-            for v in self._var_dict.values()
+            for v in self
         ]
 
         values = [f"{v:.2f}" for v in self.values]
