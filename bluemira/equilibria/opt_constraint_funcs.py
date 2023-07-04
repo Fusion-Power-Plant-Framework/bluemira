@@ -381,21 +381,29 @@ def field_constraints(
 
 
 def spherical_harmonics_constraint(
-    constraint, vector, grad, eq, r_t, ref_harmonics, max_degree, scale
-):
+    constraint: np.ndarray,
+    vector: np.ndarray,
+    grad: np.ndarray,
+    a_mat: np.ndarray,
+    b_vec: np.ndarray,
+    scale: float,
+    eq: Equilibrium,
+    r_t: float,
+    max_degree: int,
+) -> np.ndarray:
     """
     Constraint function to constrain spherical harmonics starting from initial
     coil currents and associated core plasma.
 
     Parameters
     ----------
-    eq: Equilibrium
+    eq:
         Equilibrium used to for coilset.
     r_t: float
         Typical length scale of the problem (e.g. radius at outer midplane)
-    ref_harmonics: np.ndarry
+    ref_harmonics:
         Initial harmonic amplitudes obtained from desired core plasma
-    max_degree: float
+    max_degree:
         Maximum degree of spherical harmonics desired to constrain.
     """
     currents = scale * vector
@@ -407,8 +415,12 @@ def spherical_harmonics_constraint(
     # SH coefficients from function of the current distribution outside of the sphere
     # containing the plasma, i.e., LCFS (r_lcfs)
     # N.B., cannot use coil located within r_lcfs as part of this method.
-    vector_harmonics = vector_harmonics_matrix @ currents
+    a_mat = vector_harmonics_matrix
+    vector_harmonics = a_mat @ currents
+    constraint[:] = vector_harmonics - b_vec
 
-    constraint[:] = ref_harmonics - vector_harmonics
+    # calculate constraint jacobian
+    if grad.size > 0:
+        grad[:] = -scale * vector_harmonics_matrix
 
     return constraint
