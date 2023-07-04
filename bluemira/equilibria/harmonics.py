@@ -313,7 +313,7 @@ def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> float:
 
     """
     # Test to see if the LCFS for the SH approx is not closed for some reason
-    if coords2.x[0] != coords2.x[-1] or coords2.z[0] != coords2.z[-1]:
+    if not coords2.closed:
         # If not closed then go back and try again
         bluemira_print(
             "The approximate LCFS is not closed. Trying again with more degrees."
