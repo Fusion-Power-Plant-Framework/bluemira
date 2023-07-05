@@ -70,7 +70,6 @@ from bluemira.utilities.plot_tools import str_to_latex
 __all__ = [
     "GeometryParameterisation",
     "PictureFrame",
-    "PictureFrameMeta",
     "PictureFrameTools",
     "PFrameSection",
     "PolySpline",
@@ -660,7 +659,7 @@ class TripleArcOptVaribles(OptVariablesFrame):
     )
 
 
-class TripleArc(GeometryParameterisation):
+class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     """
     Triple-arc up-down symmetric geometry parameterisation.
 
@@ -901,7 +900,7 @@ class SextupleArcOptVariables(OptVariablesFrame):
         description="2nd arc angle [degrees]",
     )
 
-    d3: OptVariable = OptVariable(
+    a3: OptVariable = OptVariable(
         "a3",
         90,
         lower_bound=10,
@@ -924,7 +923,7 @@ class SextupleArcOptVariables(OptVariablesFrame):
     )
 
 
-class SextupleArc(GeometryParameterisation):
+class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
     """
     Sextuple-arc up-down asymmetric geometry parameterisation.
 
@@ -1750,103 +1749,6 @@ class PFrameSection(Enum):
         return self.value(*args, **kwargs)
 
 
-class PictureFrameMeta(type(GeometryParameterisation), type(PictureFrameTools)):
-    """
-    A Metaclass to define the customisations on a given PictureFrame parameterisation
-
-    The methods required to create modified upper, lower or inner legs
-    are set here
-
-    """
-
-    def __call__(
-        cls,  # noqa: N805
-        var_dict: Optional[Dict] = None,
-        *,
-        upper: Union[str, PFrameSection] = PFrameSection.FLAT,
-        lower: Union[str, PFrameSection] = PFrameSection.FLAT,
-        inner: Optional[Union[str, PFrameSection]] = None,
-    ) -> PictureFrame:
-        """
-        Set up the modified PictureFrame class
-        """
-        cls.upper = upper if isinstance(upper, PFrameSection) else PFrameSection[upper]
-        cls.lower = lower if isinstance(lower, PFrameSection) else PFrameSection[lower]
-
-        if isinstance(inner, str):
-            inner = PFrameSection[inner]
-
-        if isinstance(inner, PFrameSection):
-            cls.inner = inner
-            cls.inner_vars = lambda self, v: (v.x1, v.x4, v.z3, v.z1 - v.ri, v.z2 + v.ri)
-        elif inner is None:
-            cls.inner = cls._connect_straight_to_inner_limb
-            cls.inner_vars = lambda self, v: (
-                [v.x1, 0, v.z2 + v.ri],
-                [v.x1, 0, v.z1 - v.ri],
-            )
-
-        if (
-            isinstance(cls.inner, PFrameSection)
-            and cls.inner != PFrameSection.TAPERED_INNER
-        ):
-            raise ValueError(f"The inner leg cannot be {cls.inner}")
-
-        if cls.upper == PFrameSection.CURVED:
-            cls.upper_vars = lambda self, v: (
-                v.x2,
-                v.x3,
-                v.x4 if self.inner is PFrameSection.TAPERED_INNER else v.x1,
-                v.z1_peak,
-                v.z1,
-                v.ri,
-            )
-        elif cls.upper == PFrameSection.FLAT:
-            cls.upper_vars = lambda self, v: (
-                v.x4 if self.inner is PFrameSection.TAPERED_INNER else v.x1,
-                v.x2,
-                v.z1,
-                v.ri,
-                v.ro,
-            )
-        else:
-            raise ValueError(f"The upper leg cannot be {cls.upper}")
-
-        if cls.lower == PFrameSection.CURVED:
-            cls.lower_vars = lambda self, v: (
-                v.x2,
-                v.x3,
-                v.x4 if self.inner is PFrameSection.TAPERED_INNER else v.x1,
-                v.z2_peak,
-                v.z2,
-                v.ri,
-            )
-        elif cls.lower == PFrameSection.FLAT:
-            cls.lower_vars = lambda self, v: (
-                v.x4 if self.inner is PFrameSection.TAPERED_INNER else v.x1,
-                v.x2,
-                v.z2,
-                v.ri,
-                v.ro,
-            )
-        else:
-            raise ValueError(f"The lower leg cannot be {cls.lower}")
-
-        # todo: what is this?
-        cls.outer = cls._connect_to_outer_limb
-
-        cls.outer_vars = lambda self, top_leg, bot_leg, v: (
-            top_leg if self.upper is PFrameSection.CURVED else [v.x2, 0, v.z1 - v.ro],
-            bot_leg if self.lower is PFrameSection.CURVED else [v.x2, 0, v.z2 + v.ro],
-            self.upper is PFrameSection.CURVED,
-            self.lower is PFrameSection.CURVED,
-        )
-
-        obj = cls.__new__(cls)
-        obj.__init__(var_dict)
-        return obj
-
-
 @dataclass
 class PictureFrameOptVariables(OptVariablesFrame):
     x1: OptVariable = OptVariable(
@@ -1929,7 +1831,7 @@ class PictureFrameOptVariables(OptVariablesFrame):
 
 
 class PictureFrame(
-    GeometryParameterisation, PictureFrameTools, metaclass=PictureFrameMeta
+    GeometryParameterisation[PictureFrameOptVariables], PictureFrameTools
 ):
     """
     Picture-frame geometry parameterisation.
@@ -1993,10 +1895,24 @@ class PictureFrame(
         ]
     )
 
-    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
+    def __init__(
+        self,
+        var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None,
+        *,
+        upper: Union[str, PFrameSection] = PFrameSection.FLAT,
+        lower: Union[str, PFrameSection] = PFrameSection.FLAT,
+        inner: Optional[Union[str, PFrameSection]] = None,
+    ):
         variables = PictureFrameOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
+
+        self.upper = upper if isinstance(upper, PFrameSection) else PFrameSection[upper]
+        self.lower = lower if isinstance(lower, PFrameSection) else PFrameSection[lower]
+
+        if isinstance(inner, str):
+            inner = PFrameSection[inner]
+        self.inner = inner
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
@@ -2011,21 +1927,103 @@ class PictureFrame(
         -------
         CAD Wire of the Picture Frame geometry
         """
-        inb_leg = self.inner(*self.inner_vars(self.variables))
-        top_leg = self.upper(*self.upper_vars(self.variables), flip=False)
-        bot_leg = self.lower(*self.lower_vars(self.variables), flip=True)
-        out_leg = self.outer(*self.outer_vars(top_leg, bot_leg, self.variables))
+        inb_leg = self._make_inb_leg()
+        top_leg = self._make_top_leg(flip=False)
+        bot_leg = self._make_bot_leg(flip=True)
+        out_leg = self._make_out_leg(top_leg, bot_leg)
 
         return BluemiraWire([inb_leg, top_leg, out_leg, bot_leg], label=label)
+
+    def _make_inb_leg(self):
+        v = self.variables
+        if isinstance(self.inner, PFrameSection):
+            if self.inner != PFrameSection.TAPERED_INNER:
+                raise ValueError(f"The inner leg cannot be {self.inner}")
+            return self.inner(
+                v.x1.value,
+                v.x4.value,
+                v.z3.value,
+                v.z1 - v.ri,
+                v.z2 + v.ri,
+            )
+        elif self.inner is None:
+            return self._connect_straight_to_inner_limb(
+                [v.x1.value, 0, v.z2 + v.ri],
+                [v.x1.value, 0, v.z1 - v.ri],
+            )
+
+    def _make_top_leg(self, flip):
+        v = self.variables
+        if self.upper == PFrameSection.CURVED:
+            return self.upper(
+                v.x2.value,
+                v.x3.value,
+                v.x4.value if self.inner is PFrameSection.TAPERED_INNER else v.x1.value,
+                v.z1_peak.value,
+                v.z1.value,
+                v.ri.value,
+                flip=flip,
+            )
+        elif self.upper == PFrameSection.FLAT:
+            return self.upper(
+                v.x4.value if self.inner is PFrameSection.TAPERED_INNER else v.x1.value,
+                v.x2.value,
+                v.z1.value,
+                v.ri.value,
+                v.ro.value,
+                flip=flip,
+            )
+        else:
+            raise ValueError(f"The upper leg cannot be {self.upper}")
+
+    def _make_bot_leg(self, flip):
+        v = self.variables
+        if self.lower == PFrameSection.CURVED:
+            return self.lower(
+                v.x2.value,
+                v.x3.value,
+                v.x4.value if self.inner is PFrameSection.TAPERED_INNER else v.x1.value,
+                v.z2_peak.value,
+                v.z2.value,
+                v.ri.value,
+                flip=flip,
+            )
+        elif self.lower == PFrameSection.FLAT:
+            return self.lower(
+                v.x4.value if self.inner is PFrameSection.TAPERED_INNER else v.x1.value,
+                v.x2.value,
+                v.z2.value,
+                v.ri.value,
+                v.ro.value,
+                flip=flip,
+            )
+        else:
+            raise ValueError(f"The lower leg cannot be {self.lower}")
+
+    def _make_out_leg(self, top_leg, bot_leg):
+        v = self.variables
+        return self._connect_to_outer_limb(
+            top_leg
+            if self.upper is PFrameSection.CURVED
+            else [v.x2.value, 0, v.z1 - v.ro],
+            bot_leg
+            if self.lower is PFrameSection.CURVED
+            else [v.x2.value, 0, v.z2 + v.ro],
+            self.upper is PFrameSection.CURVED,
+            self.lower is PFrameSection.CURVED,
+        )
 
     def _label_function(self, ax, shape):
         super()._label_function(ax, shape)
         ro = self.variables.ro
         ri = self.variables.ri
         z = self.variables.z1
-        x_in = getattr(
-            self.variables, "x4" if "x4" in self.variables._var_dict else "x1"
+        x_in = (
+            self.variables.x4
+            if self.inner is PFrameSection.TAPERED_INNER
+            else self.variables.x1
         )
+
         x_out = self.variables.x2
         _r1 = ri * (1 - np.sqrt(0.5))
         _r2 = ro * (1 - np.sqrt(0.5))

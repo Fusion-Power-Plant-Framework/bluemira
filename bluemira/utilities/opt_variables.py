@@ -278,15 +278,18 @@ class OptVariable:
 
     def __add__(self, other: "OptVariable"):
         """The sum of two OptVariables is the sum of their values"""
-        if isinstance(other, OptVariable):
-            return self.value + other.value
-        raise TypeError(f"Cannot add {type(other)} to OptVariable")
+        return self.value + other.value
 
     def __sub__(self, other: "OptVariable"):
-        """The sum of two OptVariables is the sum of their values"""
-        if isinstance(other, OptVariable):
-            return self.value - other.value
-        raise TypeError(f"Cannot subtract {type(other)} from OptVariable")
+        """The subtraction of two OptVariables is the subtraction of their values"""
+        return self.value - other.value
+
+    def __mul__(self, other: "OptVariable"):
+        """
+        The multiplication of two OptVariables is
+        the multiplication of their values
+        """
+        return self.value * other.value
 
 
 @dataclass
@@ -490,6 +493,25 @@ class OptVariablesFrame:
         return np.array([v.value for v in self])
 
     @property
+    def values_obj(self):
+        """
+        Return an object with attributes corresponding to the OptVariables names
+        and their values.
+
+
+        """
+
+        class DictClass(object):
+            def __init__(self, my_dict):
+                for key in my_dict:
+                    setattr(self, key, my_dict[key])
+
+            def __getitem__(self, name: str) -> float:
+                return getattr(self, name)
+
+        return DictClass({v.name: v.value for v in self})
+
+    @property
     def n_free_variables(self) -> int:
         """
         Number of free variables in the set.
@@ -509,7 +531,9 @@ class OptVariablesFrame:
         """
         Indices of fixed variables in the set.
         """
-        return [i for i, _ in enumerate(self._fixed_vars)]
+        # specfically not useing self._fixed_vars here
+        # as you need the correct index for the variable
+        return [i for i, v in enumerate(self) if v.fixed]
 
     def as_dict(self) -> Dict[str, OptVarDictT]:
         """
