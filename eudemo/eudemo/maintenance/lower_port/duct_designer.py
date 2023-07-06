@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-EU-DEMO Lower Port Duct Designer
+EU-DEMO Lower Port Duct KOZ Designer
 """
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Type, Union
@@ -74,6 +74,7 @@ class LowerPortKOZDesigner(Designer):
     Retractions on the lower_duct_angle are between [-90, 0] degrees.
     """
 
+    params: LowerPortKOZDesignerParams
     param_cls: Type[ParameterFrame] = LowerPortKOZDesignerParams
 
     def __init__(
@@ -103,7 +104,7 @@ class LowerPortKOZDesigner(Designer):
         self.port_height = self.params.lp_height.value
         self.port_width = self.params.lp_width.value
 
-    def run(self) -> Tuple[BluemiraFace, BluemiraWire]:
+    def run(self) -> Tuple[BluemiraFace, BluemiraFace, BluemiraWire, BluemiraWire]:
         """Run method of Designer"""
         # ib -> inboard
         # ob -> outboard
@@ -187,7 +188,7 @@ class LowerPortKOZDesigner(Designer):
         self,
         straight_top_inner_pt: Tuple,
         straight_bot_inner_pt: Tuple,
-    ) -> BluemiraFace:
+    ) -> BluemiraWire:
         """
         Make the inner yz boundary of the straight duct.
 
