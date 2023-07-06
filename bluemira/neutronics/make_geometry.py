@@ -3,7 +3,8 @@ import copy
 
 import numpy as np
 import openmc
-import volume_functions as vf
+
+import bluemira.neutronics.volume_functions as vf
 
 cells = {}
 surfaces = {}

@@ -3,6 +3,10 @@ TODO:
 []make_materials
     []remove CheckedDict
         []MaterialsLibrary export in real time instead
+            []why the Material(material_id=102).mix_materials(...); ....id=102????
+            []Fix the whole self["..."]
+                []by converting them to self....
+            [](Deal with the whole ...+"_mats" problem (which motivated the str_to_componet method) later)
     []AutoPopulatingMaterialsLibrary: see if it needs to have 3 methods?
         []BlanketType should then be fixed by it
         - possibly need to use multiple ways of getting
@@ -29,7 +33,6 @@ TODO:
 [ ]Some parameters are locked up inside functions:
     [ ]create_parametric_source
 [ ]Integration into our logging system (print should go through bluemira_print etc.)
-[ ]Unit: cgs -> metric
 ____
 [ ]Tests?
 """
@@ -49,6 +52,7 @@ import bluemira.neutronics.pandas_df_functions as pdf
 
 # Constants
 from bluemira.base.constants import BMUnitRegistry, raw_uc
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.neutronics.constants import (
     S_TO_YEAR,
     DPACoefficients,
@@ -61,35 +65,29 @@ os.environ[
 ] = "/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml"
 
 
-class ParameterHolder:
-    """Parent class to all classes that only hold parameters"""
-
-    def to_dict(self):
-        """Convert the parameters held into a dictionary."""
-        return dataclasses.asdict(self)
-
-
 @dataclass
-class OpenMCSimulationRuntimeParameters(ParameterHolder):
+class OpenMCSimulationRuntimeParameters(ParameterFrame):
     """Parameters used in the actual simulation"""
 
     # parameters used in setup_openmc()
-    particles: int  # number of particles used in the neutronics simulation
-    batches: int
-    photon_transport: bool
-    electron_treatment: str
-    run_mode: str
-    openmc_write_summary: str
+    particles: Parameter[int]  # number of particles used in the neutronics simulation
+    batches: Parameter[int]
+    photon_transport: Parameter[bool]
+    electron_treatment: Parameter[str]
+    run_mode: Parameter[str]
+    openmc_write_summary: Parameter[str]
     # Parameters used elsewhere
-    parametric_source: bool
-    volume_calc_particles: int  # number of particles used in the volume calculation.
+    parametric_source: Parameter[bool]
+    volume_calc_particles: Parameter[
+        int
+    ]  # number of particles used in the volume calculation.
 
 
 @dataclass
-class TokamakOperationParameters(ParameterHolder):
+class TokamakOperationParameters(ParameterFrame):
     """The tokamak's operational parameter, such as its power"""
 
-    reactor_power_MW: float  # MW
+    reactor_power_MW: Parameter[float]  # MW
 
     def calculate_total_neutron_rate(self):
         """Convert the reactor power to neutron rate
@@ -101,34 +99,34 @@ class TokamakOperationParameters(ParameterHolder):
 
 
 @dataclass
-class BreederTypeParameters(ParameterHolder):
+class BreederTypeParameters(ParameterFrame):
     """Dataclass to hold information about the breeder blanket material
     and design choices.
     """
 
-    li_enrich_ao: float  # [dimensionless]
-    blanket_type: mm.BlanketType
+    li_enrich_ao: Parameter[float]
+    blanket_type: Parameter[mm.BlanketType]
 
 
 @dataclass
-class TokamakGeometry(ParameterHolder):
+class TokamakGeometry(ParameterFrame):
     """The measurements for all of the geneic components of the tokamak"""
 
-    minor_r: float  # [cm]
-    major_r: float  # [cm]
-    elong: float  # [dimensionless]
-    shaf_shift: float  # [cm]
-    inb_fw_thick: float  # [cm]
-    inb_bz_thick: float  # [cm]
-    inb_mnfld_thick: float  # [cm]
-    inb_vv_thick: float  # [cm]
-    tf_thick: float  # [cm]
-    outb_fw_thick: float  # [cm]
-    outb_bz_thick: float  # [cm]
-    outb_mnfld_thick: float  # [cm]
-    outb_vv_thick: float  # [cm]
-    triang: float = 0.333  # [dimensionless]
-    inb_gap: float = 20.0  # [cm]
+    minor_r: Parameter[float]  # [cm]
+    major_r: Parameter[float]  # [cm]
+    elong: Parameter[float]  # [dimensionless]
+    shaf_shift: Parameter[float]  # [cm]
+    inb_fw_thick: Parameter[float]  # [cm]
+    inb_bz_thick: Parameter[float]  # [cm]
+    inb_mnfld_thick: Parameter[float]  # [cm]
+    inb_vv_thick: Parameter[float]  # [cm]
+    tf_thick: Parameter[float]  # [cm]
+    outb_fw_thick: Parameter[float]  # [cm]
+    outb_bz_thick: Parameter[float]  # [cm]
+    outb_mnfld_thick: Parameter[float]  # [cm]
+    outb_vv_thick: Parameter[float]  # [cm]
+    triang: Parameter[float] = 0.333  # [dimensionless]
+    inb_gap: Parameter[float] = 20.0  # [cm]
 
 
 # ----------------------------------------------------------------------------------------
@@ -441,7 +439,7 @@ def setup_openmc(
 # ----------------------------------------------------------------------------------------
 
 
-def create_materials(breeder_materials):
+def create_materials(breeder_materials: BreederTypeParameters):
     """
     Parameters
     ----------
