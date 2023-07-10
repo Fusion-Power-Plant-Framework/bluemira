@@ -475,7 +475,14 @@ class PicardIterator:
 
     def _optimise_coilset(self):
         try:
-            coilset = self.opt_prob.optimise(fixed_coils=self.fixed_coils)
+            from bluemira.equilibria.opt_problems import CoilsetOptimisationProblem
+
+            if isinstance(self.opt_prob, CoilsetOptimisationProblem):
+                # Old optimiser interface
+                coilset = self.opt_prob.optimise(fixed_coils=self.fixed_coils)
+            else:
+                # New optimiser interface
+                coilset = self.opt_prob.optimise(self.coilset).coilset
             self.store.append(coilset)
         except ExternalOptError:
             coilset = self.store[-1]

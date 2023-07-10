@@ -247,6 +247,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
             scaled_input_current_limits, coilset_current_limits
         )
         current_bounds = (-control_current_limits, control_current_limits)
+        print(f"{control_current_limits=}")
 
         return current_bounds
 
@@ -822,6 +823,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             _, _, initial_currents = np.array_split(initial_state, n_states)
 
             x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
+        print(f"{x0=}")
         currents = self.opt.optimise(x0=x0)
         self.coilset.get_control_coils().current = currents * self.scale
         return self.coilset

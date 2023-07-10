@@ -135,6 +135,7 @@ def regularised_lsq_objective(
         raise EquilibriaError(
             "Optimiser least-squares objective function less than zero or nan."
         )
+    print(f"{fom=}")
     return fom
 
 
