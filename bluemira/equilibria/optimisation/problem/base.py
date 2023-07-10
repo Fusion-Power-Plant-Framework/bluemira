@@ -49,6 +49,47 @@ class CoilSetOptimiserResult:
 
 
 class CoilSetOptimisationProblem(abc.ABC):
+    """
+    Base class for coilset optimisations.
+
+    When implementing a ``CoilSetOptimisationProblem``, you must
+    override:
+
+    * ``objective``
+
+    You may optionally override:
+
+    * ``df_objective``
+        The derivative of the objective function. If not overridden,
+        a numerical approximation is calculated.
+    * ``constraints``
+        Define some constraints on the optimisation
+    * ``lower_bounds``
+        The lower bounds on the coilset optimisation parameters. Default
+        is ``-inf``.
+    * ``upper_bounds``
+        The upper bounds on the coilset optimisation parameters. Default
+        is ``inf``.
+    * ``pre_optimise``
+        This is called at the beginning of each invocation of
+        ``optimise``. And can be useful for setting some state before
+        calling ``optimise`` for a second time.
+    * ``read_coil_state``
+        Defines how the coilset is serialised into optimisation
+        parameters. By default, this concatenates the x and z positions,
+        and the currents of each coil (given a (3*N, ) shape array,
+        where N is the number of coils). This must return a 1D numpy
+        array of floats. When overriding, you will generally also need
+        to override ``set_coil_state``.
+    * ``set_coil_state``
+        Defines how the optimisation parameters are deserialised into
+        the coilset. When overriding, you will generally also need to
+        override ``read_coil_state``.
+    * ``scale``
+        Set a value with which to scale the optimisation parameters
+        before (and after) they are passed into the optimiser.
+    """
+
     @abc.abstractmethod
     def objective(self, coilset: CoilSet) -> float:
         pass
@@ -57,6 +98,10 @@ class CoilSetOptimisationProblem(abc.ABC):
         pass
 
     def constraints(self) -> CoilSetConstraintSet:
+        # TODO(hsaunders1904): this needs to be optionally set
+        #  I think this should really be overridden to return a list
+        #  of constraints. We could add a ``constraint_set`` function
+        #  to return the ``CoilSetConstraintSet``.
         raise NotImplementedError
 
     def lower_bounds(self, coilset: CoilSet = None) -> npt.ArrayLike:
