@@ -6,17 +6,8 @@ import numpy as np
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import (
-    FieldNullConstraint,
-)
-
-# IsofluxConstraint,
-# MagneticConstraintSet,
-from bluemira.equilibria.optimisation.constraint import (
-    CoilSetConstraintSet,
-    IsofluxConstraint,
-    TikhonovCurrentCOP,
-)
+from bluemira.equilibria.optimisation.constraint import IsofluxConstraint
+from bluemira.equilibria.optimisation.problem import TikhonovCurrentCOP
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardIterator
 from bluemira.utilities.tools import NumpyJSONEncoder

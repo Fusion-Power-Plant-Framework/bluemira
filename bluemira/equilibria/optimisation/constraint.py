@@ -19,21 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import abc
-from dataclasses import dataclass
-from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
+from typing import List
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.error import EquilibriaError
-from bluemira.optimisation import Algorithm, optimise
-from bluemira.optimisation.typing import (
-    ConstraintT,
-    ObjectiveCallable,
-    OptimiserCallable,
-)
 
 
 # TODO(hsaunders1904): should probably move this to optimisation module
@@ -69,12 +61,10 @@ class L2NormConstraint(Constraint):
         vector = self.scale * x
         residual = self.a @ vector - self.b
         constraint = residual.T @ residual - self.target_value
-        print(f"{constraint=}")
         return constraint
 
     def df_constraint(self, x: npt.NDArray) -> npt.NDArray:
         df_c = 2 * self.scale * (self.a.T @ self.a @ x - self.a.T @ self.b)
-        print(f"{df_c=}")
         return df_c
 
     def tolerance(self) -> npt.NDArray:
@@ -150,24 +140,6 @@ class CoilSetConstraintSet:
         """The background value vector."""
         return np.concatenate([c.evaluate() for c in self._constraints])
 
-    # def update_psi_boundary(self, psi_boundary: npt.ArrayLike) -> None:
-    #     """
-    #     Update the target value for all `PsiBoundaryConstraint`s.
-
-    #     Parameters
-    #     ----------
-    #     psi_bndry:
-    #         The target psi boundary value [V.s/rad]
-    #     """
-    #     boundary_array = np.array(psi_boundary)
-    #     for constraint in self._constraints:
-    #         if isinstance(constraint, PsiBoundaryConstraint):
-    #             constraint.set_constraint_target(boundary_array)
-
-
-# class PsiBoundaryConstraint(CoilSetConstraint):
-#     pass
-
 
 class IsofluxConstraint(CoilSetConstraint):
     def __init__(
@@ -193,8 +165,6 @@ class IsofluxConstraint(CoilSetConstraint):
             else np.atleast_1d(weights)
         )
         self.tolerance = np.atleast_1d(tolerance)
-        # self.constraint = L2NormConstraint
-
         # TODO: validate x, z and weights have equal length
 
     def control_response(self, coilset: CoilSet):
@@ -231,224 +201,3 @@ class IsofluxConstraint(CoilSetConstraint):
             tolerance=self.tolerance,
             scale=1,
         )
-
-
-@dataclass
-class CoilSetOptimiserResult:
-    # eq: Equilibrium
-    coilset: CoilSet
-    n_evals: int
-    history: List[Tuple[float, np.ndarray]]
-    constraints_satisfied: Optional[bool]
-    f_x: float
-
-
-class CoilSetOptimisationProblem(abc.ABC):
-    @abc.abstractmethod
-    def objective(self, coilset) -> float:
-        pass
-
-    def df_objective(self, coilset) -> npt.NDArray:
-        pass
-
-    def constraints(self) -> CoilSetConstraintSet:
-        raise NotImplementedError
-
-    def lower_bounds(self, coilset: CoilSet = None) -> npt.ArrayLike:
-        return -np.inf
-
-    def upper_bounds(self, coilset: CoilSet = None) -> npt.ArrayLike:
-        return np.inf
-
-    def pre_optimise(self):
-        return None
-
-    def optimise(
-        self,
-        coilset: CoilSet,
-        *,
-        algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-        opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-        opt_parameters: Optional[Mapping[str, Any]] = None,
-        keep_history: bool = False,
-        check_constraints: bool = True,
-        check_constraints_warn: bool = True,
-    ) -> CoilSetOptimiserResult:
-        self.pre_optimise()
-        print(f"{self.a_mat=}")
-        print(f"{self.b_vec=}")
-        bounds = (self.lower_bounds(coilset), self.upper_bounds(coilset))
-        bounds = tuple(b / 1e6 for b in bounds)
-        print(f"{bounds=}")
-        initial_currents = np.clip(coilset.current, *bounds) / 1e6
-        print(f"{initial_currents=}")
-        opt_conditions = {
-            "xtol_rel": 1e-4,
-            "xtol_abs": 1e-4,
-            "ftol_rel": 1e-4,
-            "ftol_abs": 1e-4,
-            "max_eval": 100,
-        }
-        opt_parameters = {"initial_step": 0.03}
-        result = optimise(
-            _to_objective(self.objective, coilset),
-            x0=initial_currents,
-            df_objective=_to_df_objective(self.df_objective, coilset),
-            bounds=bounds,
-            # ineq_constraints=[
-            #     _to_constraint(c, coilset) for c in self.constraints()._constraints
-            # ],
-            algorithm=algorithm,
-            opt_conditions=opt_conditions,
-            opt_parameters=opt_parameters,
-            keep_history=keep_history,
-            check_constraints=check_constraints,
-            check_constraints_warn=check_constraints_warn,
-        )
-
-        coilset.get_control_coils().current = result.x * 1e6
-        return CoilSetOptimiserResult(
-            coilset=coilset,
-            n_evals=result.n_evals,
-            f_x=result.f_x,
-            history=result.history,
-            constraints_satisfied=result.constraints_satisfied,
-        )
-
-    def update_magnetic_constraint(
-        self, I_not_dI: bool = True, fixed_coils: bool = True
-    ):
-        pass
-
-    @staticmethod
-    def read_state(coilset: CoilSet) -> npt.NDArray:
-        x, z = coilset.position
-        currents = coilset.current
-        return np.concatenate((x, z, currents))
-
-    def bounds_of_currents(
-        self, coilset: CoilSet, max_currents: npt.ArrayLike
-    ) -> npt.NDArray:
-        n_control_currents = len(coilset.current[coilset._control_ind])
-        scaled_input_current_limits = np.inf * np.ones(n_control_currents)
-
-        if max_currents is not None:
-            input_current_limits = np.asarray(max_currents)
-            input_size = np.size(np.asarray(input_current_limits))
-            if input_size == 1 or input_size == n_control_currents:
-                scaled_input_current_limits = input_current_limits
-            else:
-                raise EquilibriaError(
-                    "Length of max_currents array provided to optimiser is not"
-                    "equal to the number of control currents present."
-                )
-
-        # Get the current limits from coil current densities
-        coilset_current_limits = np.infty * np.ones(n_control_currents)
-        coilset_current_limits[coilset._flag_sizefix] = coilset.get_max_current()[
-            coilset._flag_sizefix
-        ]
-
-        # Limit the control current magnitude by the smaller of the two limits
-        control_current_limits = np.minimum(
-            scaled_input_current_limits, coilset_current_limits
-        )
-        return control_current_limits
-
-
-def _set_coil_state(coilset: CoilSet, state: npt.NDArray) -> CoilSet:
-    x, z, currents = np.array_split(state, 3)
-    coilset.x = x
-    coilset.z = z
-    coilset.current = currents
-    return coilset
-
-
-def _to_objective(f: Callable[[CoilSet], float], coilset: CoilSet) -> ObjectiveCallable:
-    """Convert a coilset objective function to a normal one."""
-
-    def objective(x: npt.NDArray) -> float:
-        state = TikhonovCurrentCOP.read_state(coilset)
-        state[-11:] = x * 1e6
-        _set_coil_state(coilset, state)
-        return f(coilset)
-
-    return objective
-
-
-def _to_df_objective(
-    df: Callable[[CoilSet], npt.NDArray], coilset: CoilSet
-) -> OptimiserCallable:
-    """Convert a coilset objective gradient to a normal one."""
-
-    def df_objective(x: npt.NDArray) -> npt.NDArray:
-        state = TikhonovCurrentCOP.read_state(coilset)
-        state[-11:] = x * 1e6
-        _set_coil_state(coilset, state)
-        return df(coilset)
-
-    return df_objective
-
-
-def _to_constraint(coil_constraint: CoilSetConstraint, coilset: CoilSet) -> ConstraintT:
-    constraint = coil_constraint.constraint(coilset)
-    return {
-        "f_constraint": constraint.f_constraint,
-        "df_constraint": constraint.df_constraint,
-        "tolerance": constraint.tolerance(),
-    }
-
-
-class TikhonovCurrentCOP(CoilSetOptimisationProblem):
-    hack_ctr = 0
-
-    def __init__(
-        self,
-        eq: Equilibrium,
-        coilset: CoilSet,
-        targets: List[CoilSetConstraint],
-        gamma: float,
-    ):
-        self.gamma = gamma
-        self.eq = eq
-        self.coilset = coilset
-        self._targets = targets
-        self.a_mat, self.b_vec = self.get_a_mat_b_vec()
-        print(f"{self.a_mat=}, {self.b_vec=}")
-        self.hack_ctr += 1
-
-    def pre_optimise(self):
-        self.a_mat, self.b_vec = self.get_a_mat_b_vec()
-
-    def objective(self, coilset) -> float:
-        from bluemira.equilibria.opt_objectives import regularised_lsq_fom
-
-        x = self.read_state(coilset)[-11:]  # TODO(hsaunders1904): normalize/scaling
-        print(f"{x=}")
-        a_mat, b_vec = self.a_mat, self.b_vec
-        fom = regularised_lsq_fom(x, a_mat, b_vec, self.gamma)[0]
-        print(f"{fom=}")
-        return fom
-
-    def df_objective(self, coilset) -> npt.NDArray:
-        x = self.read_state(coilset)[-11:]
-        a_mat, b_vec = self.a_mat, self.b_vec
-        jac = 2 * a_mat.T @ a_mat @ x / len(b_vec)
-        jac -= 2 * a_mat.T @ b_vec / len(b_vec)
-        jac += 2 * self.gamma * self.gamma * x
-        jac *= 1e6
-        print(f"{jac=}")
-        return jac
-
-    def lower_bounds(self, coilset: CoilSet) -> npt.NDArray:
-        return -self.upper_bounds(coilset)
-
-    def upper_bounds(self, coilset: CoilSet) -> npt.NDArray:
-        return self.bounds_of_currents(coilset, coilset.get_max_current())
-
-    def get_a_mat_b_vec(self):
-        constraint_set = self.constraints()
-        return constraint_set.get_weighted_arrays(self.coilset, self.eq)[1:]
-
-    def constraints(self) -> CoilSetConstraintSet:
-        return CoilSetConstraintSet(self._targets)
