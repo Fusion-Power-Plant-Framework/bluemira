@@ -26,7 +26,7 @@ import json
 import os
 import time
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import fortranformat as ff
 import numpy as np
@@ -142,7 +142,7 @@ class EQDSKInterface:
             self.psinorm = _derive_psinorm(self.fpol)
 
     @classmethod
-    def from_file(cls, file_path: str):
+    def from_file(cls, file_path: Union[str, os.PathLike]):
         """
         Create an EQDSKInterface object from a file.
 
@@ -226,7 +226,7 @@ class EQDSKInterface:
 
 
 def _read_json(file) -> Dict[str, Any]:
-    if isinstance(file, str):
+    if isinstance(file, (str, os.PathLike)):
         with open(file, "r") as f_h:
             return _read_json(f_h)
 
@@ -302,7 +302,7 @@ def _eqdsk_generator(file):
 
 
 def _read_eqdsk(file) -> Dict:
-    if isinstance(file, str):
+    if isinstance(file, (str, os.PathLike)):
         with open(file, "r") as f_handle:
             return _read_eqdsk(f_handle)
 
