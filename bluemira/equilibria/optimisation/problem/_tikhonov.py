@@ -33,8 +33,6 @@ from bluemira.equilibria.optimisation.problem.base import CoilSetOptimisationPro
 
 
 class TikhonovCurrentCOP(CoilSetOptimisationProblem):
-    hack_ctr = 0
-
     def __init__(
         self,
         eq: Equilibrium,
@@ -47,18 +45,14 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
         self.coilset = coilset
         self._targets = targets
         self.a_mat, self.b_vec = self.get_a_mat_b_vec()
-        print(f"{self.a_mat=}, {self.b_vec=}")
-        self.hack_ctr += 1
 
     def pre_optimise(self):
         self.a_mat, self.b_vec = self.get_a_mat_b_vec()
 
     def objective(self, coilset) -> float:
         x = self.read_state(coilset)[-11:]
-        print(f"{x=}")
         a_mat, b_vec = self.a_mat, self.b_vec
         fom = regularised_lsq_fom(x, a_mat, b_vec, self.gamma)[0]
-        print(f"{fom=}")
         return fom
 
     def df_objective(self, coilset) -> npt.NDArray:
@@ -68,7 +62,6 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
         jac -= 2 * a_mat.T @ b_vec / len(b_vec)
         jac += 2 * self.gamma * self.gamma * x
         jac *= 1e6
-        print(f"{jac=}")
         return jac
 
     def lower_bounds(self, coilset: CoilSet) -> npt.NDArray:

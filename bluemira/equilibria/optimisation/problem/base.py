@@ -82,9 +82,7 @@ class CoilSetOptimisationProblem(abc.ABC):
         self.pre_optimise()
         bounds = (self.lower_bounds(coilset), self.upper_bounds(coilset))
         bounds = tuple(b / 1e6 for b in bounds)
-        print(f"{bounds=}")
         initial_currents = np.clip(coilset.current, *bounds) / 1e6
-        print(f"{initial_currents=}")
         opt_conditions = {
             "xtol_rel": 1e-4,
             "xtol_abs": 1e-4,

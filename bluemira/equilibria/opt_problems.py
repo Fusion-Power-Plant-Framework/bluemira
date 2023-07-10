@@ -247,7 +247,6 @@ class CoilsetOptimisationProblem(OptimisationProblem):
             scaled_input_current_limits, coilset_current_limits
         )
         current_bounds = (-control_current_limits, control_current_limits)
-        print(f"{control_current_limits=}")
 
         return current_bounds
 
@@ -790,7 +789,6 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         super().__init__(coilset, optimiser, objective, constraints=constraints)
 
         bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
-        print(f"{bounds=}")
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
@@ -811,8 +809,6 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         # Scale the control matrix and magnetic field targets vector by weights.
         self.targets(self.eq, I_not_dI=True, fixed_coils=fixed_coils)
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
-        print(f"{a_mat=}")
-        print(f"{b_vec=}")
 
         self._objective._args["scale"] = self.scale
         self._objective._args["a_mat"] = a_mat
@@ -826,7 +822,6 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             _, _, initial_currents = np.array_split(initial_state, n_states)
 
             x0 = np.clip(initial_currents, self.opt.lower_bounds, self.opt.upper_bounds)
-        print(f"{x0=}")
         currents = self.opt.optimise(x0=x0)
         self.coilset.get_control_coils().current = currents * self.scale
         return self.coilset
