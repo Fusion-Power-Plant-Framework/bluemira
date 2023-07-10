@@ -135,7 +135,10 @@ def regularised_lsq_objective(
         raise EquilibriaError(
             "Optimiser least-squares objective function less than zero or nan."
         )
+    print(f"{vector=}")
     print(f"{fom=}")
+    if grad.size > 0:
+        print(f"{grad=}")
     return fom
 
 

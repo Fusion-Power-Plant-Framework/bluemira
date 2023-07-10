@@ -70,10 +70,14 @@ class L2NormConstraint(Constraint):
     def f_constraint(self, x: npt.NDArray) -> npt.NDArray:
         vector = self.scale * x
         residual = self.a @ vector - self.b
-        return residual.T @ residual - self.target_value
+        constraint = residual.T @ residual - self.target_value
+        print(f"{constraint=}")
+        return constraint
 
     def df_constraint(self, x: npt.NDArray) -> npt.NDArray:
-        return 2 * self.scale * (self.a.T @ self.a @ x - self.a.T @ self.b)
+        df_c =  2 * self.scale * (self.a.T @ self.a @ x - self.a.T @ self.b)
+        print(f"{df_c=}")
+        return df_c
 
     def tolerance(self) -> npt.NDArray:
         return self._tolerance
@@ -225,6 +229,7 @@ class IsofluxConstraint(CoilSetConstraint):
             tolerance=self.tolerance,
             scale=1,
         )
+        
 
 
 @dataclass
@@ -266,15 +271,25 @@ class CoilSetOptimisationProblem(abc.ABC):
         check_constraints_warn: bool = True,
     ) -> CoilSetOptimiserResult:
         bounds = (self.lower_bounds(coilset), self.upper_bounds(coilset))
+        print(f"{bounds=}")
         initial_currents = np.clip(coilset.current, *bounds)
+        print(f"{initial_currents=}")
+        opt_conditions = {
+            "xtol_rel": 1e-4,
+            "xtol_abs": 1e-4,
+            "ftol_rel": 1e-4,
+            "ftol_abs": 1e-4,
+            "max_eval": 100,
+        }
+        opt_parameters = {"initial_step": 0.03}
         result = optimise(
             _to_objective(self.objective, coilset),
             x0=initial_currents,
             df_objective=_to_df_objective(self.df_objective, coilset),
             bounds=bounds,
-            ineq_constraints=[
-                _to_constraint(c, coilset) for c in self.constraints()._constraints
-            ],
+            # ineq_constraints=[
+            #     _to_constraint(c, coilset) for c in self.constraints()._constraints
+            # ],
             algorithm=algorithm,
             opt_conditions=opt_conditions,
             opt_parameters=opt_parameters,
@@ -345,6 +360,7 @@ def _to_objective(f: Callable[[CoilSet], float], coilset: CoilSet) -> ObjectiveC
     """Convert a coilset objective function to a normal one."""
 
     def objective(x: npt.NDArray) -> float:
+        print(f"{x=}")
         state = TikhonovCurrentCOP.read_state(coilset)
         state[-11:] = x
         _set_coil_state(coilset, state)
@@ -388,22 +404,28 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
         self.eq = eq
         self.coilset = coilset
         self._targets = targets
+        self.a_mat, self.b_vec = self.get_a_mat_b_vec()
+        print(f"{self.a_mat=}, {self.b_vec=}")
 
     def objective(self, coilset) -> float:
         from bluemira.equilibria.opt_objectives import regularised_lsq_fom
 
         x = self.read_state(coilset)[-11:]  # TODO(hsaunders1904): normalize/scaling
-        a_mat, b_vec = self.get_a_mat_b_vec()
+        x = x * 1e6
+        a_mat, b_vec = self.a_mat, self.b_vec
         fom = regularised_lsq_fom(x, a_mat, b_vec, self.gamma)[0]
         print(f"{fom=}")
         return fom
 
     def df_objective(self, coilset) -> npt.NDArray:
         x = self.read_state(coilset)[-11:]
-        a_mat, b_vec = self.get_a_mat_b_vec()
+        x = x * 1e6
+        a_mat, b_vec = self.a_mat, self.b_vec
         jac = 2 * a_mat.T @ a_mat @ x / len(b_vec)
         jac -= 2 * a_mat.T @ b_vec / len(b_vec)
         jac += 2 * self.gamma * self.gamma * x
+        jac *= 1e6
+        print(f"{jac=}")
         return jac
 
     def lower_bounds(self, coilset: CoilSet) -> npt.NDArray:

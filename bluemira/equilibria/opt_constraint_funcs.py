@@ -171,10 +171,11 @@ def L2_norm_constraint(  # noqa: N802
     vector = scale * vector
     residual = a_mat @ vector - b_vec
     constraint[:] = residual.T @ residual - value
+    print(f"{constraint=}")
 
     if grad.size > 0:
         grad[:] = 2 * scale * (a_mat.T @ a_mat @ vector - a_mat.T @ b_vec)
-
+        print(f"constraint_{grad=}")
     return constraint
 
 

@@ -790,6 +790,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         super().__init__(coilset, optimiser, objective, constraints=constraints)
 
         bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
+        print(f"{bounds=}")
         dimension = len(bounds[0])
         self.set_up_optimiser(dimension, bounds)
 
