@@ -24,6 +24,7 @@ import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.opt_objectives import regularised_lsq_fom
 from bluemira.equilibria.optimisation.constraint import (
     CoilSetConstraint,
     CoilSetConstraintSet,
@@ -53,9 +54,7 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
         self.a_mat, self.b_vec = self.get_a_mat_b_vec()
 
     def objective(self, coilset) -> float:
-        from bluemira.equilibria.opt_objectives import regularised_lsq_fom
-
-        x = self.read_state(coilset)[-11:]  # TODO(hsaunders1904): normalize/scaling
+        x = self.read_state(coilset)[-11:]
         print(f"{x=}")
         a_mat, b_vec = self.a_mat, self.b_vec
         fom = regularised_lsq_fom(x, a_mat, b_vec, self.gamma)[0]

@@ -42,35 +42,6 @@ class Constraint(abc.ABC):
         raise NotImplementedError
 
 
-class L2NormConstraint(Constraint):
-    def __init__(
-        self,
-        tolerance: npt.NDArray,
-        a_mat: npt.NDArray,
-        b_vec: npt.NDArray,
-        scale: float,
-        target_value: float,
-    ) -> None:
-        self._tolerance = tolerance
-        self.a = a_mat
-        self.b = b_vec
-        self.scale = scale
-        self.target_value = target_value
-
-    def f_constraint(self, x: npt.NDArray) -> npt.NDArray:
-        vector = self.scale * x
-        residual = self.a @ vector - self.b
-        constraint = residual.T @ residual - self.target_value
-        return constraint
-
-    def df_constraint(self, x: npt.NDArray) -> npt.NDArray:
-        df_c = 2 * self.scale * (self.a.T @ self.a @ x - self.a.T @ self.b)
-        return df_c
-
-    def tolerance(self) -> npt.NDArray:
-        return self._tolerance
-
-
 class CoilSetConstraint(abc.ABC):
     @abc.abstractmethod
     def control_response(self, coilset: CoilSet):
@@ -123,81 +94,27 @@ class CoilSetConstraintSet:
 
         This is assumed to be diagonal.
         """
+        if not self._constraints:
+            return np.array([])
         # TODO(hsaunders1904): how can this be diagonal if it's 1D?
         return np.concatenate([c.weights for c in self._constraints])
 
     def control_matrix(self, coilset: CoilSet) -> npt.NDArray:
         """Build the control response matrix used in optimisation."""
+        if not self._constraints:
+            return np.array([])
         return np.vstack([c.control_response(coilset) for c in self._constraints])
 
     def target(self, eq: Equilibrium) -> npt.NDArray:
         """The constraint target value vector."""
+        if not self._constraints:
+            return np.array([])
         return np.concatenate(
             [np.full(c.length, c.constraint_target()) for c in self._constraints]
         )
 
     def background(self, eq: Equilibrium) -> npt.NDArray:
         """The background value vector."""
+        if not self._constraints:
+            return np.array([])
         return np.concatenate([c.evaluate() for c in self._constraints])
-
-
-class IsofluxConstraint(CoilSetConstraint):
-    def __init__(
-        self,
-        x: npt.ArrayLike,
-        z: npt.ArrayLike,
-        ref_x: float,
-        ref_z: float,
-        eq: Equilibrium,
-        constraint_value: float = 0.0,
-        weights: npt.ArrayLike = 1.0,
-        tolerance: float = 1e-6,
-    ):
-        self.x = np.atleast_1d(x)
-        self.z = np.atleast_1d(z)
-        self.ref_x = ref_x
-        self.ref_z = ref_z
-        self.eq = eq
-        self.constraint_value = constraint_value
-        self._weights = (
-            np.full_like(self.x, weights)
-            if np.isscalar(weights)
-            else np.atleast_1d(weights)
-        )
-        self.tolerance = np.atleast_1d(tolerance)
-        # TODO: validate x, z and weights have equal length
-
-    def control_response(self, coilset: CoilSet):
-        return coilset.psi_response(self.x, self.z, control=True) - coilset.psi_response(
-            self.ref_x, self.ref_z, control=True
-        )
-
-    def evaluate(self, I_not_dI: bool = True) -> npt.NDArray:
-        if I_not_dI:
-            return np.atleast_1d(self.eq.plasma.psi(self.x, self.z))
-        return np.atleast_1d(self.eq.psi(self.x, self.z))
-
-    def constraint_target(self, I_not_dI: bool = True) -> float:
-        if I_not_dI:
-            return float(self.eq.plasma.psi(self.ref_x, self.ref_z))
-        return float(self.eq.psi(self.ref_x, self.ref_z))
-
-    @property
-    def length(self) -> int:
-        """The size of the constraint vector."""
-        return len(self.x) if hasattr(self.x, "__len__") else 1
-
-    @property
-    def weights(self) -> npt.NDArray:
-        return self._weights
-
-    def constraint(self, coilset: CoilSet) -> Constraint:
-        a_mat = self.control_response(coilset)
-        b_vec = self.constraint_target() - self.evaluate()
-        return L2NormConstraint(
-            a_mat=a_mat,
-            b_vec=b_vec,
-            target_value=0,
-            tolerance=self.tolerance,
-            scale=1,
-        )
