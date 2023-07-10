@@ -811,6 +811,8 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         # Scale the control matrix and magnetic field targets vector by weights.
         self.targets(self.eq, I_not_dI=True, fixed_coils=fixed_coils)
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
+        print(f"{a_mat=}")
+        print(f"{b_vec=}")
 
         self._objective._args["scale"] = self.scale
         self._objective._args["a_mat"] = a_mat

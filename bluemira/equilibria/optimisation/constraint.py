@@ -28,8 +28,6 @@ import numpy.typing as npt
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
-
-# from bluemira.equilibria.optimisation.constraint import Constraint
 from bluemira.optimisation import Algorithm, optimise
 from bluemira.optimisation.typing import (
     ConstraintT,
@@ -75,7 +73,7 @@ class L2NormConstraint(Constraint):
         return constraint
 
     def df_constraint(self, x: npt.NDArray) -> npt.NDArray:
-        df_c =  2 * self.scale * (self.a.T @ self.a @ x - self.a.T @ self.b)
+        df_c = 2 * self.scale * (self.a.T @ self.a @ x - self.a.T @ self.b)
         print(f"{df_c=}")
         return df_c
 
@@ -204,10 +202,14 @@ class IsofluxConstraint(CoilSetConstraint):
             self.ref_x, self.ref_z, control=True
         )
 
-    def evaluate(self) -> npt.NDArray:
+    def evaluate(self, I_not_dI: bool = True) -> npt.NDArray:
+        if I_not_dI:
+            return np.atleast_1d(self.eq.plasma.psi(self.x, self.z))
         return np.atleast_1d(self.eq.psi(self.x, self.z))
 
-    def constraint_target(self) -> float:
+    def constraint_target(self, I_not_dI: bool = True) -> float:
+        if I_not_dI:
+            return float(self.eq.plasma.psi(self.ref_x, self.ref_z))
         return float(self.eq.psi(self.ref_x, self.ref_z))
 
     @property
@@ -229,7 +231,6 @@ class IsofluxConstraint(CoilSetConstraint):
             tolerance=self.tolerance,
             scale=1,
         )
-        
 
 
 @dataclass
@@ -259,6 +260,9 @@ class CoilSetOptimisationProblem(abc.ABC):
     def upper_bounds(self, coilset: CoilSet = None) -> npt.ArrayLike:
         return np.inf
 
+    def pre_optimise(self):
+        return None
+
     def optimise(
         self,
         coilset: CoilSet,
@@ -270,9 +274,13 @@ class CoilSetOptimisationProblem(abc.ABC):
         check_constraints: bool = True,
         check_constraints_warn: bool = True,
     ) -> CoilSetOptimiserResult:
+        self.pre_optimise()
+        print(f"{self.a_mat=}")
+        print(f"{self.b_vec=}")
         bounds = (self.lower_bounds(coilset), self.upper_bounds(coilset))
+        bounds = tuple(b / 1e6 for b in bounds)
         print(f"{bounds=}")
-        initial_currents = np.clip(coilset.current, *bounds)
+        initial_currents = np.clip(coilset.current, *bounds) / 1e6
         print(f"{initial_currents=}")
         opt_conditions = {
             "xtol_rel": 1e-4,
@@ -297,8 +305,8 @@ class CoilSetOptimisationProblem(abc.ABC):
             check_constraints=check_constraints,
             check_constraints_warn=check_constraints_warn,
         )
-        # _set_coil_state(coilset, result.x)
-        # coilset.get_control_coils().current =
+
+        coilset.get_control_coils().current = result.x * 1e6
         return CoilSetOptimiserResult(
             coilset=coilset,
             n_evals=result.n_evals,
@@ -360,9 +368,8 @@ def _to_objective(f: Callable[[CoilSet], float], coilset: CoilSet) -> ObjectiveC
     """Convert a coilset objective function to a normal one."""
 
     def objective(x: npt.NDArray) -> float:
-        print(f"{x=}")
         state = TikhonovCurrentCOP.read_state(coilset)
-        state[-11:] = x
+        state[-11:] = x * 1e6
         _set_coil_state(coilset, state)
         return f(coilset)
 
@@ -376,7 +383,7 @@ def _to_df_objective(
 
     def df_objective(x: npt.NDArray) -> npt.NDArray:
         state = TikhonovCurrentCOP.read_state(coilset)
-        state[-11:] = x
+        state[-11:] = x * 1e6
         _set_coil_state(coilset, state)
         return df(coilset)
 
@@ -393,6 +400,8 @@ def _to_constraint(coil_constraint: CoilSetConstraint, coilset: CoilSet) -> Cons
 
 
 class TikhonovCurrentCOP(CoilSetOptimisationProblem):
+    hack_ctr = 0
+
     def __init__(
         self,
         eq: Equilibrium,
@@ -406,12 +415,16 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
         self._targets = targets
         self.a_mat, self.b_vec = self.get_a_mat_b_vec()
         print(f"{self.a_mat=}, {self.b_vec=}")
+        self.hack_ctr += 1
+
+    def pre_optimise(self):
+        self.a_mat, self.b_vec = self.get_a_mat_b_vec()
 
     def objective(self, coilset) -> float:
         from bluemira.equilibria.opt_objectives import regularised_lsq_fom
 
         x = self.read_state(coilset)[-11:]  # TODO(hsaunders1904): normalize/scaling
-        x = x * 1e6
+        print(f"{x=}")
         a_mat, b_vec = self.a_mat, self.b_vec
         fom = regularised_lsq_fom(x, a_mat, b_vec, self.gamma)[0]
         print(f"{fom=}")
@@ -419,7 +432,6 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
 
     def df_objective(self, coilset) -> npt.NDArray:
         x = self.read_state(coilset)[-11:]
-        x = x * 1e6
         a_mat, b_vec = self.a_mat, self.b_vec
         jac = 2 * a_mat.T @ a_mat @ x / len(b_vec)
         jac -= 2 * a_mat.T @ b_vec / len(b_vec)

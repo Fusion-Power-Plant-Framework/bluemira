@@ -628,6 +628,14 @@ class IsofluxConstraint(RelativeMagneticConstraint):
             constraint_type="inequality",
         )
 
+    @property
+    def target_value(self):
+        return self._target_value
+
+    @target_value.setter
+    def target_value(self, v):
+        self._target_value = v
+
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
