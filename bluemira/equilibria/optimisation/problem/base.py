@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import abc
 from dataclasses import dataclass
-from typing import Any, Callable, List, Mapping, Optional, Tuple, Union
+from typing import Any, List, Mapping, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -66,6 +66,7 @@ class CoilSetOptimisationProblem(abc.ABC):
         return np.inf
 
     def pre_optimise(self):
+        """Method to call before each call to ``optimise``."""
         return None
 
     def optimise(
@@ -92,9 +93,9 @@ class CoilSetOptimisationProblem(abc.ABC):
         }
         opt_parameters = {"initial_step": 0.03}
         result = optimise(
-            _to_objective(self.objective, coilset),
+            self._make_objective(coilset),
             x0=initial_currents,
-            df_objective=_to_df_objective(self.df_objective, coilset),
+            df_objective=self._make_df_objective(coilset),
             bounds=bounds,
             # ineq_constraints=[
             #     _to_constraint(c, coilset) for c in self.constraints()._constraints
@@ -116,16 +117,36 @@ class CoilSetOptimisationProblem(abc.ABC):
             constraints_satisfied=result.constraints_satisfied,
         )
 
-    def update_magnetic_constraint(
-        self, I_not_dI: bool = True, fixed_coils: bool = True
-    ):
-        pass
+    def read_coil_state(self, coilset: CoilSet) -> npt.NDArray:
+        """
+        Serialise the state of the given coilset.
 
-    @staticmethod
-    def read_state(coilset: CoilSet) -> npt.NDArray:
+        This can be overridden to change the features of the coilset you
+        wish to optimise on. For example, you may wish to optimise just
+        the current, rather than position and current (the default).
+
+        Remember to also override ``set_coil_state`` so these are
+        consistent!
+        """
         x, z = coilset.position
         currents = coilset.current
         return np.concatenate((x, z, currents))
+
+    def set_coil_state(self, coilset: CoilSet, state: npt.NDArray) -> None:
+        """
+        Set the state of the given coilset.
+
+        This can be overridden to change the features of the coilset you
+        wish to optimise on. For example, you may wish to optimise just
+        the current, rather than position and current (the default).
+
+        Remember to also override ``read_coil_state`` so these are
+        consistent!
+        """
+        x, z, currents = np.array_split(state, 3)
+        coilset.x = x
+        coilset.z = z
+        coilset.current = currents
 
     def bounds_of_currents(
         self, coilset: CoilSet, max_currents: npt.ArrayLike
@@ -156,39 +177,27 @@ class CoilSetOptimisationProblem(abc.ABC):
         )
         return control_current_limits
 
+    def _make_objective(self, coilset: CoilSet) -> ObjectiveCallable:
+        """Convert a coilset objective function to a normal one."""
 
-def _set_coil_state(coilset: CoilSet, state: npt.NDArray) -> CoilSet:
-    x, z, currents = np.array_split(state, 3)
-    coilset.x = x
-    coilset.z = z
-    coilset.current = currents
-    return coilset
+        def objective(x: npt.NDArray) -> float:
+            state = self.read_coil_state(coilset)
+            state = x * 1e6
+            self.set_coil_state(coilset, state)
+            return self.objective(coilset)
 
+        return objective
 
-def _to_objective(f: Callable[[CoilSet], float], coilset: CoilSet) -> ObjectiveCallable:
-    """Convert a coilset objective function to a normal one."""
+    def _make_df_objective(self, coilset: CoilSet) -> OptimiserCallable:
+        """Convert a coilset objective gradient to a normal one."""
 
-    def objective(x: npt.NDArray) -> float:
-        state = CoilSetOptimisationProblem.read_state(coilset)
-        state[-11:] = x * 1e6
-        _set_coil_state(coilset, state)
-        return f(coilset)
+        def df_objective(x: npt.NDArray) -> npt.NDArray:
+            state = self.read_coil_state(coilset)
+            state = x * 1e6
+            self.set_coil_state(coilset, state)
+            return self.df_objective(coilset)
 
-    return objective
-
-
-def _to_df_objective(
-    df: Callable[[CoilSet], npt.NDArray], coilset: CoilSet
-) -> OptimiserCallable:
-    """Convert a coilset objective gradient to a normal one."""
-
-    def df_objective(x: npt.NDArray) -> npt.NDArray:
-        state = CoilSetOptimisationProblem.read_state(coilset)
-        state[-11:] = x * 1e6
-        _set_coil_state(coilset, state)
-        return df(coilset)
-
-    return df_objective
+        return df_objective
 
 
 def _to_constraint(coil_constraint: CoilSetConstraint, coilset: CoilSet) -> ConstraintT:

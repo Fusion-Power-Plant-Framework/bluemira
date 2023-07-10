@@ -50,13 +50,13 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
         self.a_mat, self.b_vec = self.get_a_mat_b_vec()
 
     def objective(self, coilset) -> float:
-        x = self.read_state(coilset)[-11:]
+        x = self.read_coil_state(coilset)
         a_mat, b_vec = self.a_mat, self.b_vec
         fom = regularised_lsq_fom(x, a_mat, b_vec, self.gamma)[0]
         return fom
 
     def df_objective(self, coilset) -> npt.NDArray:
-        x = self.read_state(coilset)[-11:]
+        x = self.read_coil_state(coilset)
         a_mat, b_vec = self.a_mat, self.b_vec
         jac = 2 * a_mat.T @ a_mat @ x / len(b_vec)
         jac -= 2 * a_mat.T @ b_vec / len(b_vec)
@@ -76,3 +76,9 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
 
     def constraints(self) -> CoilSetConstraintSet:
         return CoilSetConstraintSet(self._targets)
+
+    def read_coil_state(self, coilset: CoilSet) -> npt.NDArray:
+        return coilset.current
+
+    def set_coil_state(self, coilset: CoilSet, state: npt.NDArray) -> None:
+        coilset.current = state
