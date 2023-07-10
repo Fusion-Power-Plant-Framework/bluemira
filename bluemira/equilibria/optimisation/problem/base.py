@@ -43,7 +43,7 @@ from bluemira.optimisation.typing import (
 class CoilSetOptimiserResult:
     coilset: CoilSet
     n_evals: int
-    history: List[Tuple[float, np.ndarray]]
+    history: List[Tuple[np.ndarray, float]]
     constraints_satisfied: Optional[bool]
     f_x: float
 
@@ -81,9 +81,11 @@ class CoilSetOptimisationProblem(abc.ABC):
         check_constraints_warn: bool = True,
     ) -> CoilSetOptimiserResult:
         self.pre_optimise()
-        bounds = (self.lower_bounds(coilset), self.upper_bounds(coilset))
-        bounds = tuple(b / 1e6 for b in bounds)
-        initial_currents = np.clip(coilset.current, *bounds) / 1e6
+        bounds = (
+            self.lower_bounds(coilset) / self.scale,
+            self.upper_bounds(coilset) / self.scale,
+        )
+        x0 = np.clip(self.read_coil_state(coilset), *bounds) / self.scale
         opt_conditions = {
             "xtol_rel": 1e-4,
             "xtol_abs": 1e-4,
@@ -94,9 +96,16 @@ class CoilSetOptimisationProblem(abc.ABC):
         opt_parameters = {"initial_step": 0.03}
         result = optimise(
             self._make_objective(coilset),
-            x0=initial_currents,
+            x0=x0,
             df_objective=self._make_df_objective(coilset),
             bounds=bounds,
+            # TODO(hsaunders1904): cannot apply this constraint as it
+            #  breaks the tikhonov example. In that particular example,
+            #  only an analytical constraint is applied (matrix inversion)
+            #  from the constraint set - the numerical L2Norm constraint
+            #  should not actually be applied.
+            #  Need to work out why these constraints are grouped in the
+            #  old optimiser, and if/how we should separate them.
             # ineq_constraints=[
             #     _to_constraint(c, coilset) for c in self.constraints()._constraints
             # ],
@@ -107,8 +116,7 @@ class CoilSetOptimisationProblem(abc.ABC):
             check_constraints=check_constraints,
             check_constraints_warn=check_constraints_warn,
         )
-
-        coilset.get_control_coils().current = result.x * 1e6
+        self.set_coil_state(coilset, result.x * self.scale)
         return CoilSetOptimiserResult(
             coilset=coilset,
             n_evals=result.n_evals,
@@ -148,6 +156,11 @@ class CoilSetOptimisationProblem(abc.ABC):
         coilset.z = z
         coilset.current = currents
 
+    @property
+    def scale(self) -> float:
+        """Value with which to scale the coilset-state when optimising."""
+        return 1.0
+
     def bounds_of_currents(
         self, coilset: CoilSet, max_currents: npt.ArrayLike
     ) -> npt.NDArray:
@@ -182,7 +195,7 @@ class CoilSetOptimisationProblem(abc.ABC):
 
         def objective(x: npt.NDArray) -> float:
             state = self.read_coil_state(coilset)
-            state = x * 1e6
+            state = x * self.scale
             self.set_coil_state(coilset, state)
             return self.objective(coilset)
 
@@ -193,7 +206,7 @@ class CoilSetOptimisationProblem(abc.ABC):
 
         def df_objective(x: npt.NDArray) -> npt.NDArray:
             state = self.read_coil_state(coilset)
-            state = x * 1e6
+            state = x * self.scale
             self.set_coil_state(coilset, state)
             return self.df_objective(coilset)
 

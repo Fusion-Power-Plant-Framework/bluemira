@@ -82,3 +82,7 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
 
     def set_coil_state(self, coilset: CoilSet, state: npt.NDArray) -> None:
         coilset.current = state
+
+    @property
+    def scale(self) -> float:
+        return 1e6
