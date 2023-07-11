@@ -34,6 +34,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimiserResult,
 )
 from bluemira.optimisation import optimise
+from bluemira.utilities.opt_tools import tikhonov
 
 
 class TikhonovCurrentCOP(CoilsetOptimisationProblem):
@@ -136,3 +137,64 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         currents = opt_result.x
         self.coilset.get_control_coils().current = currents * self.scale
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
+
+
+class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
+    """
+    Unbounded, unconstrained, analytically optimised current gradient vector for minimal
+    error to the L2-norm of a set of magnetic constraints (used here as targets).
+
+    This is useful for getting a preliminary Equilibrium
+
+    Parameters
+    ----------
+    coilset:
+        CoilSet object to optimise with
+    eq:
+        Equilibrium object to optimise for
+    targets:
+        Set of magnetic constraints to minimise the error for
+    gamma:
+        Tikhonov regularisation parameter [1/A]
+    """
+
+    def __init__(
+        self,
+        coilset: CoilSet,
+        eq: Equilibrium,
+        targets: MagneticConstraintSet,
+        gamma: float,
+    ):
+        self.coilset = coilset
+        self.eq = eq
+        self.targets = targets
+        self.gamma = gamma
+
+    def optimise(self) -> CoilsetOptimiserResult:
+        """
+        Optimise the prescribed problem.
+
+        Notes
+        -----
+        The weight vector is used to scale the response matrix and
+        constraint vector. The weights are assumed to be uncorrelated, such that the
+        weight matrix W_ij used to define (for example) the least-squares objective
+        function (Ax - b)ᵀ W (Ax - b), is diagonal, such that
+        weights[i] = w[i] = sqrt(W[i,i]).
+        """
+        # Scale the control matrix and magnetic field targets vector by weights.
+        self.targets(self.eq, I_not_dI=False)
+        _, a_mat, b_vec = self.targets.get_weighted_arrays()
+
+        # Optimise currents using analytic expression for optimum.
+        current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
+
+        # Update parameterisation (coilset).
+        self.coilset.current = self.coilset.current + current_adjustment
+        return CoilsetOptimiserResult(
+            coilset=self.coilset,
+            f_x=self.coilset.current,
+            n_evals=0,
+            history=[],
+            constraints_satisfied=True,
+        )

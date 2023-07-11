@@ -25,7 +25,10 @@ from bluemira.equilibria.optimisation.problem._nested_position import (
     NestedCoilsetPositionCOP,
 )
 from bluemira.equilibria.optimisation.problem._position import CoilsetPositionCOP
-from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP
+from bluemira.equilibria.optimisation.problem._tikhonov import (
+    TikhonovCurrentCOP,
+    UnconstrainedTikhonovCurrentGradientCOP,
+)
 from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
 
 __all__ = [
@@ -34,4 +37,5 @@ __all__ = [
     "MinimalCurrentCOP",
     "NestedCoilsetPositionCOP",
     "TikhonovCurrentCOP",
+    "UnconstrainedTikhonovCurrentGradientCOP",
 ]
