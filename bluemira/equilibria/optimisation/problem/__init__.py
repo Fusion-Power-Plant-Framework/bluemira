@@ -18,6 +18,11 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""Coilset optimisation problem classes and tools."""
+
+from bluemira.equilibria.optimisation.problem._nested_position import (
+    NestedCoilsetPositionCOP,
+)
 from bluemira.equilibria.optimisation.problem._position import CoilsetPositionCOP
 from bluemira.equilibria.optimisation.problem._tikhonov import TikhonovCurrentCOP
 from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
@@ -25,5 +30,6 @@ from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationPro
 __all__ = [
     "CoilsetOptimisationProblem",
     "CoilsetPositionCOP",
+    "NestedCoilsetPositionCOP",
     "TikhonovCurrentCOP",
 ]

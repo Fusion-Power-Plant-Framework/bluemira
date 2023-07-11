@@ -59,6 +59,7 @@ class CoilsetOptimiserResult:
     def from_opt_result(
         cls, coilset: CoilSet, opt_result: OptimiserResult
     ) -> CoilsetOptimiserResult:
+        """Make a coilset optimisation result from a normal optimisation result."""
         return cls(
             coilset=coilset,
             f_x=opt_result.f_x,
@@ -76,6 +77,10 @@ class CoilsetOptimisationProblem(abc.ABC):
     returns an optimised coilset object, optimised according
     to a specific objective function for that subclass.
     """
+
+    @abc.abstractmethod
+    def optimise(self) -> CoilsetOptimiserResult:
+        """Run the coilset optimisation."""
 
     @property
     def coilset(self) -> CoilSet:
