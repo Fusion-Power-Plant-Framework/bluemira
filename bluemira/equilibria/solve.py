@@ -475,7 +475,7 @@ class PicardIterator:
 
     def _optimise_coilset(self):
         try:
-            coilset = self.opt_prob.optimise(fixed_coils=self.fixed_coils)
+            coilset = self.opt_prob.optimise(fixed_coils=self.fixed_coils).coilset
             self.store.append(coilset)
         except ExternalOptError:
             coilset = self.store[-1]

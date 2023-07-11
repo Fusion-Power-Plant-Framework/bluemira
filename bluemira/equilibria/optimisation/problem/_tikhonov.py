@@ -29,7 +29,10 @@ from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.opt_constraints import MagneticConstraintSet
 from bluemira.equilibria.optimisation.constraints import ConstraintFunction
 from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective
-from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
+from bluemira.equilibria.optimisation.problem.base import (
+    CoilsetOptimisationProblem,
+    CoilsetOptimiserResult,
+)
 from bluemira.optimisation import optimise
 
 
@@ -81,7 +84,6 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         max_currents: Optional[npt.ArrayLike] = None,
         constraints: Optional[List[ConstraintFunction]] = None,
     ):
-        self.scale = 1e6  # current_scale
         self.coilset = coilset
         self.eq = eq
         self.targets = targets
@@ -92,7 +94,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self.opt_parameters = opt_parameters
         self._constraints = constraints
 
-    def optimise(self, x0=None, fixed_coils=True):
+    def optimise(self, x0=None, fixed_coils=True) -> CoilsetOptimiserResult:
         """
         Solve the optimisation problem
 
@@ -133,4 +135,4 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         )
         currents = opt_result.x
         self.coilset.get_control_coils().current = currents * self.scale
-        return self.coilset
+        return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

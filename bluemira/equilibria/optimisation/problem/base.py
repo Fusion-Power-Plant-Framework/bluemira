@@ -18,9 +18,11 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 
 import abc
-from typing import Tuple
+from dataclasses import dataclass, field
+from typing import List, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -28,6 +30,42 @@ import numpy.typing as npt
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.opt_constraints import UpdateableConstraint
+from bluemira.optimisation._optimiser import OptimiserResult
+
+
+@dataclass
+class CoilsetOptimiserResult:
+    coilset: CoilSet
+    """The optimised coilset."""
+    f_x: float
+    """The evaluation of the optimised parameterisation."""
+    n_evals: int
+    """The number of evaluations of the objective function in the optimisation."""
+    history: List[Tuple[np.ndarray, float]] = field(repr=False)
+    """
+    The history of the parametrisation at each iteration.
+
+    The first element of each tuple is the parameterisation (x), the
+    second is the evaluation of the objective function at x (f(x)).
+    """
+    constraints_satisfied: Union[bool, None] = None
+    """
+    Whether all constraints have been satisfied to within the required tolerance.
+
+    Is ``None`` if constraints have not been checked.
+    """
+
+    @classmethod
+    def from_opt_result(
+        cls, coilset: CoilSet, opt_result: OptimiserResult
+    ) -> CoilsetOptimiserResult:
+        return cls(
+            coilset=coilset,
+            f_x=opt_result.f_x,
+            n_evals=opt_result.n_evals,
+            history=opt_result.history,
+            constraints_satisfied=opt_result.constraints_satisfied,
+        )
 
 
 class CoilsetOptimisationProblem(abc.ABC):

@@ -28,7 +28,10 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.opt_constraints import MagneticConstraintSet
 from bluemira.equilibria.optimisation.objectives import regularised_lsq_fom
-from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
+from bluemira.equilibria.optimisation.problem.base import (
+    CoilsetOptimisationProblem,
+    CoilsetOptimiserResult,
+)
 from bluemira.equilibria.positioner import RegionMapper
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation import optimise
@@ -96,13 +99,13 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.opt_algorithm = opt_algorithm
         self.opt_conditions = opt_conditions
 
-    def optimise(self) -> CoilSet:
+    def optimise(self) -> CoilsetOptimiserResult:
         """
         Run the optimisation.
 
         Returns
         -------
-        Optimised CoilSet object.
+        The result of the optimisation.
         """
         # Get initial state and apply region mapping to coil positions.
         initial_state, _ = self.read_coilset_state(self.coilset, self.scale)
@@ -114,14 +117,12 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
         opt_result = optimise(
             f_objective=self.objective,
-            df_objective=None,  # numerical approximation
             x0=initial_mapped_state,
             opt_conditions=self.opt_conditions,
             algorithm=self.opt_algorithm,
         )
-        state = opt_result.x
-        self.set_coilset_state(self.coilset, state, self.scale)
-        return self.coilset
+        self.set_coilset_state(self.coilset, opt_result.x, self.scale)
+        return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
     def objective(self, vector: npt.NDArray) -> float:
         """
