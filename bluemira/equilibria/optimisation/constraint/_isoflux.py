@@ -53,8 +53,16 @@ class IsofluxConstraint(CoilSetConstraint):
             if np.isscalar(weights)
             else np.atleast_1d(weights)
         )
-        self.tolerance = np.atleast_1d(tolerance)
-        # TODO: validate x, z and weights have equal length
+        self.tolerance = (
+            np.full_like(self.x, tolerance)
+            if np.isscalar(tolerance)
+            else np.atleast_1d(tolerance)
+        )
+        if shapes := self._arrays_not_1d_and_equal():
+            raise ValueError(
+                "x, z, weights, and tolerance must be 1D and have equal length. "
+                f"Found shapes {str(shapes)[1:-1]}."
+            )
 
     def control_response(self, coilset: CoilSet):
         return coilset.psi_response(self.x, self.z, control=True) - coilset.psi_response(
@@ -90,3 +98,10 @@ class IsofluxConstraint(CoilSetConstraint):
             tolerance=self.tolerance,
             scale=1,
         )
+
+    def _arrays_not_1d_and_equal(self):
+        shapes = [a.shape for a in [self.x, self.z, self.weights, self.tolerance]]
+        shapes_equal = shapes.count(shapes[0]) == len(shapes)
+        if shapes_equal and np.ndim(self.x) == 1:
+            return []
+        return shapes
