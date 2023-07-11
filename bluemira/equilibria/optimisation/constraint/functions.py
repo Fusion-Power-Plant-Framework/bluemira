@@ -18,9 +18,31 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from typing import Type, TypeVar
+
 import numpy.typing as npt
 
 from bluemira.equilibria.optimisation.constraint.base import Constraint
+
+_ConstraintT = TypeVar("_ConstraintT", bound=Constraint)
+
+
+def make_constraint(
+    constraint_cls: Type[_ConstraintT],
+    tolerance: npt.NDArray,
+    a_mat: npt.NDArray,
+    b_vec: npt.NDArray,
+    scale: float,
+    target_value: float,
+) -> _ConstraintT:
+    """Factory function to initialise a numerical constraint function class."""
+    return constraint_cls(
+        tolerance=tolerance,
+        a_mat=a_mat,
+        b_vec=b_vec,
+        scale=scale,
+        target_value=target_value,
+    )
 
 
 class L2NormConstraint(Constraint):

@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""Base class for coilset optimisation problems."""
 import abc
 from dataclasses import dataclass
 from typing import Any, List, Mapping, Optional, Tuple, Union

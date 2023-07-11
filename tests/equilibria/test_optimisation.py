@@ -23,7 +23,10 @@ import numpy as np
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.optimisation.constraint import IsofluxConstraint
+from bluemira.equilibria.optimisation.constraint import (
+    FieldNullConstraint,
+    IsofluxConstraint,
+)
 from bluemira.equilibria.optimisation.problem import TikhonovCurrentCOP
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardIterator
@@ -68,10 +71,11 @@ def test_isoflux_constrained_tikhonov_current_optimisation():
         eq=eq,
         constraint_value=0,
     )
+    x_point = FieldNullConstraint(x=8, z=-8, eq=eq)
     opt_problem = TikhonovCurrentCOP(
         coilset=eq.coilset,
         eq=eq,
-        targets=[isoflux],
+        targets=[isoflux, x_point],
         gamma=1e-8,
     )
 
@@ -81,16 +85,16 @@ def test_isoflux_constrained_tikhonov_current_optimisation():
     np.testing.assert_almost_equal(
         eq.coilset.current,
         [
-            1982179.53088765,
-            -121203.60795153,
-            -2839571.96854806,
-            -2943217.34295505,
-            177806.25584865,
-            5594229.40661133,
-            122583.862486,
-            -1104521.97012739,
-            -2837929.5272344,
-            257505.83688262,
-            1926902.09303797,
+            505197.01488488,
+            -1092264.98585842,
+            -1851426.77731742,
+            -1585689.72567825,
+            -2948303.95253702,
+            2311264.5506412,
+            -905378.73231687,
+            -3559171.95768298,
+            -6874525.64303931,
+            3426784.3344097,
+            7551499.69197691,
         ],
     )

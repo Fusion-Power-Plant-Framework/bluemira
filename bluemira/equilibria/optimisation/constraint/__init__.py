@@ -18,10 +18,16 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from bluemira.equilibria.optimisation.constraint._field_null import FieldNullConstraint
 from bluemira.equilibria.optimisation.constraint._isoflux import IsofluxConstraint
 from bluemira.equilibria.optimisation.constraint.base import (
     CoilSetConstraint,
     CoilSetConstraintSet,
 )
 
-__all__ = ["CoilSetConstraint", "CoilSetConstraintSet", "IsofluxConstraint"]
+__all__ = [
+    "CoilSetConstraint",
+    "CoilSetConstraintSet",
+    "FieldNullConstraint",
+    "IsofluxConstraint",
+]
