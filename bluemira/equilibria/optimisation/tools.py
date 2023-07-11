@@ -18,6 +18,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from typing import Optional
+
 import numpy as np
 import numpy.typing as npt
 
@@ -25,7 +27,9 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 
 
-def bounds_of_currents(coilset: CoilSet, max_currents: npt.ArrayLike) -> npt.NDArray:
+def bounds_of_currents(
+    coilset: CoilSet, max_currents: Optional[npt.ArrayLike] = None
+) -> npt.NDArray:
     """Calculate the bounds on the currents in the coils."""
     n_control_currents = len(coilset.current[coilset._control_ind])
     scaled_input_current_limits = np.inf * np.ones(n_control_currents)
