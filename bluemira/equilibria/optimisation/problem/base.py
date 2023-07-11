@@ -19,63 +19,20 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-"""
-OptimisationProblems for coilset design.
-
-New optimisation schemes for the coilset can be provided by subclassing
-from CoilsetOP, which is an abstract base class for OptimisationProblems
-that use a coilset as their parameterisation object.
-
-Subclasses must provide an optimise() method that returns an optimised
-coilset according to a given optimisation objective function.
-As the exact form of the state vector that is optimised is often
-specific to each objective function, each subclass of CoilsetOP is
-generally also specific to a given objective function, since
-the method used to map the coilset object to the state vector
-(and additional required arguments) will generally differ in each case.
-
-"""
-
 import abc
-from typing import Any, Dict, List, Optional, Tuple, Union
+from typing import Tuple
 
 import numpy as np
 import numpy.typing as npt
 
-import bluemira.equilibria.opt_objectives as objectives
-from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.opt_constraints import (
-    FieldConstraints,
-    MagneticConstraintSet,
-    UpdateableConstraint,
-)
-from bluemira.equilibria.optimisation.constraints import ConstraintFunction
-from bluemira.equilibria.optimisation.objectives import (
-    ObjectiveFunction,
-    RegularisedLsqObjective,
-)
-from bluemira.equilibria.positioner import RegionMapper
-from bluemira.optimisation import optimise
-from bluemira.utilities.opt_tools import regularised_lsq_fom, tikhonov
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
-from bluemira.utilities.positioning import PositionMapper
-
-__all__ = [
-    "UnconstrainedTikhonovCurrentGradientCOP",
-    "TikhonovCurrentCOP",
-    "CoilsetPositionCOP",
-    "NestedCoilsetPositionCOP",
-]
+from bluemira.equilibria.opt_constraints import UpdateableConstraint
 
 
-class CoilsetOptimisationProblem:
+class CoilsetOptimisationProblem(abc.ABC):
     """
-    Abstract base class for OptimisationProblems for the coilset.
-    Provides helper methods and utilities for OptimisationProblems
-    using a coilset as their parameterisation object.
+    Abstract base class for coilset optimisation problems.
 
     Subclasses should provide an optimise() method that
     returns an optimised coilset object, optimised according
@@ -83,15 +40,17 @@ class CoilsetOptimisationProblem:
     """
 
     @property
-    def coilset(self):
-        return self._parameterisation
+    def coilset(self) -> CoilSet:
+        return self._coilset
 
     @coilset.setter
     def coilset(self, value: CoilSet):
-        self._parameterisation = value
+        self._coilset = value
 
     @staticmethod
-    def read_coilset_state(coilset, current_scale):
+    def read_coilset_state(
+        coilset: CoilSet, current_scale: float
+    ) -> Tuple[npt.NDArray, int]:
         """
         Reads the input coilset and generates the state vector as an array to represent
         it.
@@ -106,11 +65,10 @@ class CoilsetOptimisationProblem:
 
         Returns
         -------
-        coilset_state: np.array
-            State vector containing substate (position and current)
-            information for each coil.
-        substates: int
-            Number of substates (blocks) in the state vector.
+        State vector containing substate (position and current)
+        information for each coil.
+
+        Number of substates (blocks) in the state vector.
         """
         substates = 3
         x, z = coilset.position
@@ -120,18 +78,20 @@ class CoilsetOptimisationProblem:
         return coilset_state, substates
 
     @staticmethod
-    def set_coilset_state(coilset, coilset_state, current_scale):
+    def set_coilset_state(
+        coilset: CoilSet, coilset_state: npt.NDArray, current_scale: float
+    ):
         """
         Set the optimiser coilset from a provided state vector.
 
         Parameters
         ----------
-        coilset: Coilset
+        coilset:
             Coilset to set from state vector.
-        coilset_state: np.array
+        coilset_state:
             State vector representing degrees of freedom of the coilset,
             to be used to update the coilset.
-        current_scale: float
+        current_scale:
             Factor to scale state vector currents up by when setting
             coilset currents.
             Used to minimise round-off errors in optimisation.
@@ -143,24 +103,27 @@ class CoilsetOptimisationProblem:
         coilset.current = currents * current_scale
 
     @staticmethod
-    def get_state_bounds(x_bounds, z_bounds, current_bounds):
+    def get_state_bounds(
+        x_bounds: Tuple[npt.NDArray, npt.NDArray],
+        z_bounds: Tuple[npt.NDArray, npt.NDArray],
+        current_bounds: Tuple[npt.NDArray, npt.NDArray],
+    ) -> Tuple[npt.NDArray, npt.NDArray]:
         """
         Get bounds on the state vector from provided bounds on the substates.
 
         Parameters
         ----------
-        x_bounds: tuple
+        x_bounds:
             Tuple containing lower and upper bounds on the radial coil positions.
-        z_bounds: tuple
+        z_bounds:
             Tuple containing lower and upper bounds on the vertical coil positions.
-        current_bounds: tuple
+        current_bounds:
             Tuple containing bounds on the coil currents.
 
         Returns
         -------
-        bounds: np.array
-            Array containing state vectors representing lower and upper bounds
-            for coilset state degrees of freedom.
+        Array containing state vectors representing lower and upper bounds
+        for coilset state degrees of freedom.
         """
         lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
         upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
@@ -168,22 +131,24 @@ class CoilsetOptimisationProblem:
         return bounds
 
     @staticmethod
-    def get_current_bounds(coilset, max_currents, current_scale):
+    def get_current_bounds(
+        coilset: CoilSet, max_currents: npt.ArrayLike, current_scale: float
+    ):
         """
         Gets the scaled current vector bounds. Must be called prior to optimise.
 
         Parameters
         ----------
-        coilset: Coilset
+        coilset:
             Coilset to fetch current bounds for.
-        max_currents: float or np.ndarray
+        max_currents:
             Maximum magnitude of currents in each coil [A] permitted during optimisation.
             If max_current is supplied as a float, the float will be set as the
             maximum allowed current magnitude for all coils.
             If the coils have current density limits that are more restrictive than these
             coil currents, the smaller current limit of the two will be used for each
             coil.
-        current_scale: float
+        current_scale:
             Factor to scale coilset currents down when returning scaled current limits.
 
         Returns
@@ -220,7 +185,7 @@ class CoilsetOptimisationProblem:
 
         return current_bounds
 
-    def set_current_bounds(self, max_currents: np.ndarray):
+    def set_current_bounds(self, max_currents: npt.NDArray) -> None:
         """
         Set the current bounds on this instance.
 
@@ -254,106 +219,3 @@ class CoilsetOptimisationProblem:
                     )
                 if "scale" in constraint._args:
                     constraint._args["scale"] = self.scale
-
-
-class TikhonovCurrentCOP(CoilsetOptimisationProblem):
-    """
-    Coilset OptimisationProblem for coil currents subject to maximum current bounds.
-
-    Coilset currents optimised using objectives.regularised_lsq_objective as
-    objective function.
-
-    Parameters
-    ----------
-    coilset: CoilSet
-        Coilset to optimise.
-    eq: Equilibrium
-        Equilibrium object used to update magnetic field targets.
-    targets: MagneticConstraintSet
-        Set of magnetic field targets to use in objective function.
-    gamma: float (default = 1e-8)
-        Tikhonov regularisation parameter in units of [A⁻¹].
-    max_currents Union[float, np.ndarray] (default = None)
-        Maximum allowed current for each independent coil current in coilset [A].
-        If specified as a float, the float will set the maximum allowed current
-        for all coils.
-    optimiser: bluemira.utilities.optimiser.Optimiser
-        Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: None)
-        Optional list of OptimisationConstraint objects storing
-        information about constraints that must be satisfied
-        during the coilset optimisation, to be provided to the
-        optimiser.
-    """
-
-    def __init__(
-        self,
-        coilset: CoilSet,
-        eq: Equilibrium,
-        targets: MagneticConstraintSet,
-        gamma: float,
-        opt_algorithm: str = "SLSQP",
-        opt_conditions: Dict[str, Union[float, int]] = {
-            "xtol_rel": 1e-4,
-            "xtol_abs": 1e-4,
-            "ftol_rel": 1e-4,
-            "ftol_abs": 1e-4,
-            "max_eval": 100,
-        },
-        opt_parameters: Dict[str, Any] = {"initial_step": 0.03},
-        max_currents: Optional[npt.ArrayLike] = None,
-        constraints: Optional[List[ConstraintFunction]] = None,
-    ):
-        self.scale = 1e6  # current_scale
-        self.coilset = coilset
-        self.eq = eq
-        self.targets = targets
-        self.gamma = gamma
-        self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
-        self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
-        self.opt_parameters = opt_parameters
-        self._constraints = constraints
-
-    def optimise(self, x0=None, fixed_coils=True):
-        """
-        Solve the optimisation problem
-
-        Parameters
-        ----------
-        fixed_coils: True
-            Whether or not to update to coilset response matrices
-
-        Returns
-        -------
-        coilset: CoilSet
-            Optimised CoilSet
-        """
-        # Scale the control matrix and magnetic field targets vector by weights.
-        self.targets(self.eq, I_not_dI=True, fixed_coils=fixed_coils)
-        _, a_mat, b_vec = self.targets.get_weighted_arrays()
-        self.update_magnetic_constraints(I_not_dI=True, fixed_coils=fixed_coils)
-
-        if x0 is None:
-            initial_state, n_states = self.read_coilset_state(self.coilset, self.scale)
-            _, _, initial_currents = np.array_split(initial_state, n_states)
-            x0 = np.clip(initial_currents, *self.bounds)
-
-        objective = RegularisedLsqObjective(
-            scale=self.scale,
-            a_mat=a_mat,
-            b_vec=b_vec,
-            gamma=self.gamma,
-        )
-        opt_result = optimise(
-            f_objective=objective.f_objective,
-            df_objective=getattr(objective, "df_objective", None),
-            x0=x0,
-            bounds=self.bounds,
-            opt_conditions=self.opt_conditions,
-            algorithm=self.opt_algorithm,
-            opt_parameters=self.opt_parameters,
-        )
-        currents = opt_result.x
-        self.coilset.get_control_coils().current = currents * self.scale
-        return self.coilset
