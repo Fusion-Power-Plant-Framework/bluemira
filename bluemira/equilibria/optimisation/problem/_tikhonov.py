@@ -73,7 +73,8 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
 
     def get_a_mat_b_vec(self):
         constraint_set = self.constraints()
-        return constraint_set.get_weighted_arrays(self.coilset, self.eq)[1:]
+        arrays = constraint_set.get_weighted_arrays(self.coilset)
+        return arrays.a_mat, arrays.b_vec
 
     def constraints(self) -> CoilSetConstraintSet:
         return CoilSetConstraintSet(self._targets)

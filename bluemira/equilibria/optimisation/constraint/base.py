@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import abc
+from dataclasses import dataclass
 from typing import List, Tuple
 
 import numpy as np
@@ -45,11 +46,11 @@ class Constraint(abc.ABC):
 class CoilSetConstraint(abc.ABC):
     @abc.abstractmethod
     def control_response(self, coilset: CoilSet) -> npt.NDArray:
-        pass
+        """Get the response matrix of the constraint."""
 
     @abc.abstractmethod
     def evaluate(self) -> npt.NDArray:
-        pass
+        """Evaluate the constraint equation."""
 
     @abc.abstractmethod
     def constraint(self, coilset: CoilSet) -> Constraint:
@@ -69,22 +70,30 @@ class CoilSetConstraint(abc.ABC):
         return 0.0
 
 
+@dataclass
+class ConstraintArrays:
+    """Arrays defining a coilset optimisation constraint system of equations."""
+
+    weights: npt.NDArray
+    a_mat: npt.NDArray
+    b_vec: npt.NDArray
+
+
 class CoilSetConstraintSet:
     r"""Wrapper around a list of :class:`.CoilSetConstraint`\s"""
 
     def __init__(self, constraints: List[CoilSetConstraint]) -> None:
         self._constraints = constraints
 
-    def get_weighted_arrays(
-        self, coilset: CoilSet, eq: Equilibrium
-    ) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
+    def get_weighted_arrays(self, coilset: CoilSet) -> ConstraintArrays:
+        """Calculate the weighted A matrix and b vector defining the constraint."""
         weights = self.weight_matrix()
         weighted_a = weights[:, np.newaxis] * self.control_matrix(coilset)
-        weighted_b = weights * self.b(eq)
-        return weights, weighted_a, weighted_b
+        weighted_b = weights * self.b()
+        return ConstraintArrays(weights=weights, a_mat=weighted_a, b_vec=weighted_b)
 
-    def b(self, eq: Equilibrium) -> npt.NDArray:
-        return self.target(eq) - self.background(eq)
+    def b(self) -> npt.NDArray:
+        return self.target() - self.background()
 
     @property
     def constraint_length(self) -> int:
@@ -108,7 +117,7 @@ class CoilSetConstraintSet:
             return np.array([])
         return np.vstack([c.control_response(coilset) for c in self._constraints])
 
-    def target(self, eq: Equilibrium) -> npt.NDArray:
+    def target(self) -> npt.NDArray:
         """The constraint target value vector."""
         if not self._constraints:
             return np.array([])
@@ -116,7 +125,7 @@ class CoilSetConstraintSet:
             [np.full(c.length, c.constraint_target) for c in self._constraints]
         )
 
-    def background(self, eq: Equilibrium) -> npt.NDArray:
+    def background(self) -> npt.NDArray:
         """The background value vector."""
         if not self._constraints:
             return np.array([])
