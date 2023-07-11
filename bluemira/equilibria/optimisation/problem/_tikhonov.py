@@ -30,6 +30,7 @@ from bluemira.equilibria.optimisation.constraint import (
     CoilSetConstraintSet,
 )
 from bluemira.equilibria.optimisation.problem.base import CoilSetOptimisationProblem
+from bluemira.equilibria.optimisation.tools import bounds_of_currents
 
 
 class TikhonovCurrentCOP(CoilSetOptimisationProblem):
@@ -68,7 +69,7 @@ class TikhonovCurrentCOP(CoilSetOptimisationProblem):
         return -self.upper_bounds(coilset)
 
     def upper_bounds(self, coilset: CoilSet) -> npt.NDArray:
-        return self.bounds_of_currents(coilset, coilset.get_max_current())
+        return bounds_of_currents(coilset, coilset.get_max_current())
 
     def get_a_mat_b_vec(self):
         constraint_set = self.constraints()

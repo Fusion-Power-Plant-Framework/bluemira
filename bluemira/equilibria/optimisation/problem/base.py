@@ -26,7 +26,6 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraint import (
     CoilSetConstraint,
     CoilSetConstraintSet,
@@ -206,36 +205,6 @@ class CoilSetOptimisationProblem(abc.ABC):
     def scale(self) -> float:
         """Value with which to scale the coilset-state when optimising."""
         return 1.0
-
-    def bounds_of_currents(
-        self, coilset: CoilSet, max_currents: npt.ArrayLike
-    ) -> npt.NDArray:
-        """Calculate the bounds on the currents in the coils."""
-        n_control_currents = len(coilset.current[coilset._control_ind])
-        scaled_input_current_limits = np.inf * np.ones(n_control_currents)
-
-        if max_currents is not None:
-            input_current_limits = np.asarray(max_currents)
-            input_size = np.size(np.asarray(input_current_limits))
-            if input_size == 1 or input_size == n_control_currents:
-                scaled_input_current_limits = input_current_limits
-            else:
-                raise EquilibriaError(
-                    "Length of max_currents array provided to optimiser is not"
-                    "equal to the number of control currents present."
-                )
-
-        # Get the current limits from coil current densities
-        coilset_current_limits = np.infty * np.ones(n_control_currents)
-        coilset_current_limits[coilset._flag_sizefix] = coilset.get_max_current()[
-            coilset._flag_sizefix
-        ]
-
-        # Limit the control current magnitude by the smaller of the two limits
-        control_current_limits = np.minimum(
-            scaled_input_current_limits, coilset_current_limits
-        )
-        return control_current_limits
 
     def _make_objective(self, coilset: CoilSet) -> ObjectiveCallable:
         """Convert a coilset objective function to a normal one."""
