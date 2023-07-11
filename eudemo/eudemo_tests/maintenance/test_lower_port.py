@@ -105,6 +105,7 @@ class TestLowerPort:
             self.divertor_xz_silhouette,
             self.tf_coils_outer_boundary,
         ).execute()
+
         builder = TSLowerPortDuctBuilder(
             self.duct_des_params,
             {},
@@ -137,12 +138,11 @@ class TestLowerPort:
             base=(x_angled_start, 0, z_angled_start),
             direction=(0, -1, 0),
         )
-        pl.rotate(degree=np.rad2deg(np.pi / self.duct_des_params.n_TF.value))
+        pl.rotate(degree=180 / self.duct_des_params.n_TF.value)
 
         duct_xyz_cad = lp_duct.get_component("xyz").get_component(builder.name).shape
-        angled_face = (
-            duct_xyz_cad.faces[0] if duct_angle != -90 else duct_xyz_cad.faces[4]
-        )  # this was an angled face when I tested it
+
+        angled_face = duct_xyz_cad.faces[0]  # this was an angled face when I tested it
 
         assert np.allclose(
             angled_face.normal_at() if duct_angle != -90 else -angled_face.normal_at(),

@@ -232,7 +232,7 @@ def build_lower_port_xyz(
 
     angled_bb = duct_angled_boundary.bounding_box
     strait_bb = duct_straight_boundary.bounding_box
-    if duct_angle < -45:
+    if duct_angle < -0.25 * np.pi:
         # -1 to make sure it goes through
         angled_duct_extrude_extent = abs(
             (angled_bb.z_max - (strait_bb.z_max - 1)) / np.sin(duct_angle)
