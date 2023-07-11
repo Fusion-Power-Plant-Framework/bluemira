@@ -138,7 +138,7 @@ class VVLowerPortDuctBuilder(Builder):
         self.duct_straight_boundary = offset_wire(
             duct_straight_nowall_extrude_boundary, offset_value
         )
-        self.duct_straight_boundary.translate((self.params.tk_ts.value, 0, 0))
+        self.duct_straight_boundary.translate((-offset_value, 0, 0))
         self.x_straight_end = x_straight_end
 
     def build(self) -> Component:
