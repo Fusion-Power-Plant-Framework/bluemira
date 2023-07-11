@@ -44,11 +44,11 @@ class Constraint(abc.ABC):
 
 class CoilSetConstraint(abc.ABC):
     @abc.abstractmethod
-    def control_response(self, coilset: CoilSet):
+    def control_response(self, coilset: CoilSet) -> npt.NDArray:
         pass
 
     @abc.abstractmethod
-    def evaluate(self):
+    def evaluate(self) -> npt.NDArray:
         pass
 
     @abc.abstractmethod
@@ -118,3 +118,7 @@ class CoilSetConstraintSet:
         if not self._constraints:
             return np.array([])
         return np.concatenate([c.evaluate() for c in self._constraints])
+
+    def is_empty(self) -> bool:
+        """Return ``True`` if the constraint set contains no constraints."""
+        return len(self._constraints) == 0
