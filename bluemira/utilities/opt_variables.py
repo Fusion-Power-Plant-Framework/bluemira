@@ -24,7 +24,7 @@ Optimisation variable class.
 """
 
 import json
-from dataclasses import dataclass
+from dataclasses import MISSING, Field, dataclass, field
 from typing import Dict, Generator, Optional, TextIO, TypedDict, Union
 
 import matplotlib.pyplot as plt
@@ -44,6 +44,9 @@ class OptVarVarDictValueT(TypedDict, total=False):
     lower_bound: float
     upper_bound: float
     fixed: bool
+
+
+VarDictT = Dict[str, OptVarVarDictValueT]
 
 
 class OptVarDictT(TypedDict):
@@ -292,6 +295,22 @@ class OptVariable:
         return self.value * other.value
 
 
+def ov(
+    name: str,
+    value: float,
+    lower_bound: float,
+    upper_bound: float,
+    fixed: bool = False,
+    description: Optional[str] = None,
+):
+    """Field factory for OptVariable"""
+    return field(
+        default_factory=lambda: OptVariable(
+            name, value, lower_bound, upper_bound, fixed, description
+        )
+    )
+
+
 @dataclass
 class OptVariablesFrame:
     """
@@ -309,16 +328,19 @@ class OptVariablesFrame:
         if not cls.__dataclass_fields__:
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
         for field_name in cls.__dataclass_fields__:
-            t = cls.__dataclass_fields__[field_name].type
-            # the type can come out as string sometimes
-            if not (t == OptVariable or type(t) is str and t == "OptVariable"):
+            dcf: Field = cls.__dataclass_fields__[field_name]
+            fact_inst = dcf.default_factory() if dcf.default_factory != MISSING else None
+            if fact_inst is None:
                 raise TypeError(
-                    f"OptVariablesFrame contains non-OptVariable object '{field_name}: {t}'"
+                    f"{field_name} must be wrapped in with 'ov' field factory"
                 )
-            df: OptVariable = cls.__dataclass_fields__[field_name].default
-            if df and field_name != df.name:
+            if type(fact_inst) != OptVariable:
                 raise TypeError(
-                    f"OptVariablesFrame contains OptVariable with incorrect name '{df.name}', defined as '{field_name}'"
+                    f"OptVariablesFrame contains non-OptVariable object '{field_name}: {type(fact_inst)}'"
+                )
+            if field_name != fact_inst.name:
+                raise TypeError(
+                    f"OptVariablesFrame contains OptVariable with incorrect name '{fact_inst.name}', defined as '{field_name}'"
                 )
 
         return super().__new__(cls)

@@ -32,7 +32,7 @@ from bluemira.geometry.coordinates import Coordinates, interpolate_points
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 
 __all__ = [
     "flux_surface_cunningham",
@@ -162,23 +162,23 @@ def flux_surface_zakharov(
 
 @dataclass
 class ZakharovLCFSOptVariables(OptVariablesFrame):
-    r_0: OptVariable = OptVariable(
+    r_0: OptVariable = ov(
         "r_0", 9, lower_bound=0, upper_bound=np.inf, description="Major radius"
     )
-    Z_0: OptVariable = OptVariable(
+    Z_0: OptVariable = ov(
         "z_0",
         0,
         lower_bound=-np.inf,
         upper_bound=np.inf,
         description="Vertical coordinate at geometry centroid",
     )
-    a: OptVariable = OptVariable(
+    a: OptVariable = ov(
         "a", 3, lower_bound=0, upper_bound=np.inf, description="Minor radius"
     )
-    kappa: OptVariable = OptVariable(
+    kappa: OptVariable = ov(
         "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, description="Elongation"
     )
-    delta: OptVariable = OptVariable(
+    delta: OptVariable = ov(
         "delta",
         0.4,
         lower_bound=0.0,
@@ -264,30 +264,30 @@ def flux_surface_cunningham(
 
 @dataclass
 class CunninghamLCFSOptVariables(OptVariablesFrame):
-    r_0: OptVariable = OptVariable(
+    r_0: OptVariable = ov(
         "r_0", 9, lower_bound=0, upper_bound=np.inf, description="Major radius"
     )
-    Z_0: OptVariable = OptVariable(
+    Z_0: OptVariable = ov(
         "z_0",
         0,
         lower_bound=-np.inf,
         upper_bound=np.inf,
         description="Vertical coordinate at geometry centroid",
     )
-    a: OptVariable = OptVariable(
+    a: OptVariable = ov(
         "a", 3, lower_bound=0, upper_bound=np.inf, description="Minor radius"
     )
-    kappa: OptVariable = OptVariable(
+    kappa: OptVariable = ov(
         "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, description="Elongation"
     )
-    delta: OptVariable = OptVariable(
+    delta: OptVariable = ov(
         "delta",
         0.4,
         lower_bound=0.0,
         upper_bound=1.0,
         description="Triangularity",
     )
-    delta2: OptVariable = OptVariable(
+    delta2: OptVariable = ov(
         "delta2",
         0.0,
         lower_bound=0.0,
@@ -373,30 +373,30 @@ def flux_surface_manickam(
 
 @dataclass
 class ManickamLCFSOptVariables(OptVariablesFrame):
-    r_0: OptVariable = OptVariable(
+    r_0: OptVariable = ov(
         "r_0", 9, lower_bound=0, upper_bound=np.inf, description="Major radius"
     )
-    Z_0: OptVariable = OptVariable(
+    Z_0: OptVariable = ov(
         "z_0",
         0,
         lower_bound=-np.inf,
         upper_bound=np.inf,
         description="Vertical coordinate at geometry centroid",
     )
-    a: OptVariable = OptVariable(
+    a: OptVariable = ov(
         "a", 3, lower_bound=0, upper_bound=np.inf, description="Minor radius"
     )
-    kappa: OptVariable = OptVariable(
+    kappa: OptVariable = ov(
         "kappa", 1.5, lower_bound=1.0, upper_bound=np.inf, description="Elongation"
     )
-    delta: OptVariable = OptVariable(
+    delta: OptVariable = ov(
         "delta",
         0.4,
         lower_bound=0.0,
         upper_bound=1.0,
         description="Triangularity",
     )
-    indent: OptVariable = OptVariable(
+    indent: OptVariable = ov(
         "indent",
         0.0,
         lower_bound=0.0,
@@ -624,52 +624,52 @@ def flux_surface_kuiroukidis(
 
 @dataclass
 class KuiroukidisLCFSOptVariables(OptVariablesFrame):
-    r_0: OptVariable = OptVariable(
+    r_0: OptVariable = ov(
         "r_0",
         9,
         lower_bound=0,
         upper_bound=np.inf,
         description="Major radius",
     )
-    z_0: OptVariable = OptVariable(
+    z_0: OptVariable = ov(
         "z_0",
         0,
         lower_bound=-np.inf,
         upper_bound=np.inf,
         description="Vertical coordinate at geometry centroid",
     )
-    a: OptVariable = OptVariable(
+    a: OptVariable = ov(
         "a", 3, lower_bound=0, upper_bound=np.inf, description="Minor radius"
     )
-    kappa_u: OptVariable = OptVariable(
+    kappa_u: OptVariable = ov(
         "kappa_u",
         1.6,
         lower_bound=1.0,
         upper_bound=np.inf,
         description="Upper elongation",
     )
-    kappa_l: OptVariable = OptVariable(
+    kappa_l: OptVariable = ov(
         "kappa_l",
         1.8,
         lower_bound=1.0,
         upper_bound=np.inf,
         description="Lower elongation",
     )
-    delta_u: OptVariable = OptVariable(
+    delta_u: OptVariable = ov(
         "delta_u",
         0.4,
         lower_bound=0.0,
         upper_bound=1.0,
         description="Upper triangularity",
     )
-    delta_l: OptVariable = OptVariable(
+    delta_l: OptVariable = ov(
         "delta_l",
         0.4,
         lower_bound=0.0,
         upper_bound=1.0,
         description="Lower triangularity",
     )
-    n_power: OptVariable = OptVariable(
+    n_power: OptVariable = ov(
         "n_power",
         8,
         lower_bound=2,
@@ -1001,69 +1001,67 @@ def flux_surface_johner(
 
 @dataclass
 class JohnerLCFSOptVariables(OptVariablesFrame):
-    r_0: OptVariable = OptVariable(
+    r_0: OptVariable = ov(
         "r_0", 9, lower_bound=6, upper_bound=12, description="Major radius"
     )
-    z_0: OptVariable = OptVariable(
+    z_0: OptVariable = ov(
         "z_0",
         0,
         lower_bound=-1,
         upper_bound=1,
         description="Vertical coordinate at geometry centroid",
     )
-    a: OptVariable = OptVariable(
-        "a", 6, lower_bound=1, upper_bound=6, description="Minor radius"
-    )
-    kappa_u: OptVariable = OptVariable(
+    a: OptVariable = ov("a", 6, lower_bound=1, upper_bound=6, description="Minor radius")
+    kappa_u: OptVariable = ov(
         "kappa_u",
         1.6,
         lower_bound=1.0,
         upper_bound=3.0,
         description="Upper elongation",
     )
-    kappa_l: OptVariable = OptVariable(
+    kappa_l: OptVariable = ov(
         "kappa_l",
         1.8,
         lower_bound=1.0,
         upper_bound=3.0,
         description="Lower elongation",
     )
-    delta_u: OptVariable = OptVariable(
+    delta_u: OptVariable = ov(
         "delta_u",
         0.4,
         lower_bound=0.0,
         upper_bound=1.0,
         description="Upper triangularity",
     )
-    delta_l: OptVariable = OptVariable(
+    delta_l: OptVariable = ov(
         "delta_l",
         0.4,
         lower_bound=0.0,
         upper_bound=1.0,
         description="Lower triangularity",
     )
-    phi_u_neg: OptVariable = OptVariable(
+    phi_u_neg: OptVariable = ov(
         "phi_u_neg",
         180,
         lower_bound=0,
         upper_bound=190,
         description="Upper inner angle [°]",
     )
-    phi_u_pos: OptVariable = OptVariable(
+    phi_u_pos: OptVariable = ov(
         "phi_u_pos",
         10,
         lower_bound=0,
         upper_bound=20,
         description="Upper outer angle [°]",
     )
-    phi_l_neg: OptVariable = OptVariable(
+    phi_l_neg: OptVariable = ov(
         "phi_l_neg",
         -120,
         lower_bound=-130,
         upper_bound=45,
         description="Lower inner angle [°]",
     )
-    phi_l_pos: OptVariable = OptVariable(
+    phi_l_pos: OptVariable = ov(
         "phi_l_pos",
         30,
         lower_bound=0,

@@ -41,7 +41,7 @@ from bluemira.geometry.parameterisations import (
 )
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 
 
 @pytest.mark.parametrize(
@@ -62,7 +62,7 @@ def test_read_write(param_class: Type[GeometryParameterisation]):
         param.to_json(the_path)
         new_param = param_class.from_json(the_path)
         for attr in GeometryParameterisation.__slots__:
-            if attr == "variables":
+            if attr == "_variables":
                 assert new_param.variables.as_dict() == param.variables.as_dict()
             else:
                 assert getattr(new_param, attr) == getattr(param, attr)
@@ -72,9 +72,9 @@ def test_read_write(param_class: Type[GeometryParameterisation]):
 
 @dataclass
 class TGeometryParameterisationOptVariables(OptVariablesFrame):
-    a: OptVariable = OptVariable("a", 0, -1, 1)
-    b: OptVariable = OptVariable("b", 2, 0, 4)
-    c: OptVariable = OptVariable("c", 4, 2, 6, fixed=True)
+    a: OptVariable = ov("a", 0, -1, 1)
+    b: OptVariable = ov("b", 2, 0, 4)
+    c: OptVariable = ov("c", 4, 2, 6, fixed=True)
 
 
 class TestGeometryParameterisation:

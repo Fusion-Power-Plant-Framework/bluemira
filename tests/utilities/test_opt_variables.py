@@ -32,6 +32,7 @@ from bluemira.utilities.opt_variables import (
     OptVariable,
     OptVariablesError,
     OptVariablesFrame,
+    ov,
 )
 
 
@@ -87,9 +88,9 @@ class TestBoundedVariable:
 
 @dataclass
 class TOptVariablesOptVariables(OptVariablesFrame):
-    a: OptVariable = OptVariable("a", 2, 0, 3)
-    b: OptVariable = OptVariable("b", 0, -1, 1)
-    c: OptVariable = OptVariable("c", -1, -10, 10)
+    a: OptVariable = ov("a", 2, 0, 3)
+    b: OptVariable = ov("b", 0, -1, 1)
+    c: OptVariable = ov("c", -1, -10, 10)
 
 
 class TestOptVariables:
