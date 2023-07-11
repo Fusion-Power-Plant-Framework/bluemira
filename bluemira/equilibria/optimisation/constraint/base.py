@@ -52,10 +52,6 @@ class CoilSetConstraint(abc.ABC):
         pass
 
     @abc.abstractmethod
-    def constraint_target(self) -> float:
-        pass
-
-    @abc.abstractmethod
     def constraint(self, coilset: CoilSet) -> Constraint:
         """The constraint object to pass to the optimiser."""
 
@@ -66,6 +62,11 @@ class CoilSetConstraint(abc.ABC):
     @abc.abstractproperty
     def weights(self) -> npt.NDArray:
         """The weights for each element in the constraint array."""
+
+    @property
+    def constraint_target(self) -> float:
+        """The target value for the constraint."""
+        return 0.0
 
 
 class CoilSetConstraintSet:
@@ -112,7 +113,7 @@ class CoilSetConstraintSet:
         if not self._constraints:
             return np.array([])
         return np.concatenate(
-            [np.full(c.length, c.constraint_target()) for c in self._constraints]
+            [np.full(c.length, c.constraint_target) for c in self._constraints]
         )
 
     def background(self, eq: Equilibrium) -> npt.NDArray:

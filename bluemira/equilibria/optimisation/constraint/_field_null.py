@@ -84,7 +84,7 @@ class FieldNullConstraint(CoilSetConstraint):
 
     def constraint(self, coilset: CoilSet) -> Constraint:
         a_mat = self.control_response(coilset)
-        b_vec = self.constraint_target() - self.evaluate()
+        b_vec = self.constraint_target - self.evaluate()
         return make_constraint(
             constraint_cls=self._constraint_cls,
             tolerance=self.tolerance,
@@ -101,6 +101,3 @@ class FieldNullConstraint(CoilSetConstraint):
     @property
     def length(self) -> int:
         return 2
-
-    def constraint_target(self) -> float:
-        return 0.0

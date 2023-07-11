@@ -74,6 +74,7 @@ class IsofluxConstraint(CoilSetConstraint):
             return np.atleast_1d(self.eq.plasma.psi(self.x, self.z))
         return np.atleast_1d(self.eq.psi(self.x, self.z))
 
+    @property
     def constraint_target(self, I_not_dI: bool = True) -> float:
         if I_not_dI:
             return float(self.eq.plasma.psi(self.ref_x, self.ref_z))
@@ -90,7 +91,7 @@ class IsofluxConstraint(CoilSetConstraint):
 
     def constraint(self, coilset: CoilSet) -> Constraint:
         a_mat = self.control_response(coilset)
-        b_vec = self.constraint_target() - self.evaluate()
+        b_vec = self.constraint_target - self.evaluate()
         return L2NormConstraint(
             a_mat=a_mat,
             b_vec=b_vec,
