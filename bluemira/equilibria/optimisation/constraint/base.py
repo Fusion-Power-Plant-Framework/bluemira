@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import abc
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -74,7 +74,9 @@ class CoilSetConstraintSet:
     def __init__(self, constraints: List[CoilSetConstraint]) -> None:
         self._constraints = constraints
 
-    def get_weighted_arrays(self, coilset: CoilSet, eq: Equilibrium):
+    def get_weighted_arrays(
+        self, coilset: CoilSet, eq: Equilibrium
+    ) -> Tuple[npt.NDArray, npt.NDArray, npt.NDArray]:
         weights = self.weight_matrix()
         weighted_a = weights[:, np.newaxis] * self.control_matrix(coilset)
         weighted_b = weights * self.b(eq)

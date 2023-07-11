@@ -92,22 +92,23 @@ class CoilSetOptimisationProblem(abc.ABC):
 
     @abc.abstractmethod
     def objective(self, coilset: CoilSet) -> float:
+        """The objective of the optimisation."""
         pass
 
     def df_objective(self, coilset: CoilSet) -> npt.NDArray:
+        """The gradient of the optimisation objective."""
         pass
 
     def constraints(self) -> CoilSetConstraintSet:
-        # TODO(hsaunders1904): this needs to be optionally set
-        #  I think this should really be overridden to return a list
-        #  of constraints. We could add a ``constraint_set`` function
-        #  to return the ``CoilSetConstraintSet``.
+        """The set of constraints to apply to the optimisation."""
         raise NotImplementedError
 
-    def lower_bounds(self, coilset: CoilSet = None) -> npt.ArrayLike:
+    def lower_bounds(self, coilset: Optional[CoilSet] = None) -> npt.ArrayLike:
+        """The lower bounds of the optimisation parameters."""
         return -np.inf
 
-    def upper_bounds(self, coilset: CoilSet = None) -> npt.ArrayLike:
+    def upper_bounds(self, coilset: Optional[CoilSet] = None) -> npt.ArrayLike:
+        """The upper bounds of the optimisation parameters."""
         return np.inf
 
     def pre_optimise(self):
@@ -209,6 +210,7 @@ class CoilSetOptimisationProblem(abc.ABC):
     def bounds_of_currents(
         self, coilset: CoilSet, max_currents: npt.ArrayLike
     ) -> npt.NDArray:
+        """Calculate the bounds on the currents in the coils."""
         n_control_currents = len(coilset.current[coilset._control_ind])
         scaled_input_current_limits = np.inf * np.ones(n_control_currents)
 
