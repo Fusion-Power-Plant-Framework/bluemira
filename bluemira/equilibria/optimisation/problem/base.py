@@ -219,3 +219,7 @@ class CoilsetOptimisationProblem(abc.ABC):
                     )
                 if "scale" in constraint._args:
                     constraint._args["scale"] = self.scale
+
+    @property
+    def scale(self) -> float:
+        return 1e6
