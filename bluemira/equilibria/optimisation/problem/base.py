@@ -32,6 +32,7 @@ from bluemira.equilibria.optimisation.constraint import (
     CoilSetConstraintSet,
 )
 from bluemira.optimisation import Algorithm, optimise
+from bluemira.optimisation.problem import OptimisationProblemBase
 from bluemira.optimisation.typing import (
     ConstraintT,
     ObjectiveCallable,
@@ -48,7 +49,7 @@ class CoilSetOptimiserResult:
     f_x: float
 
 
-class CoilSetOptimisationProblem(abc.ABC):
+class CoilSetOptimisationProblem(abc.ABC, OptimisationProblemBase):
     """
     Base class for coilset optimisations.
 
@@ -127,6 +128,9 @@ class CoilSetOptimisationProblem(abc.ABC):
         check_constraints_warn: bool = True,
     ) -> CoilSetOptimiserResult:
         self.pre_optimise()
+        df_objective = self._overridden_or_default(
+            self._make_df_objective(self.df_objective), CoilSetOptimisationProblem, None
+        )
         bounds = (
             self.lower_bounds(coilset) / self.scale,
             self.upper_bounds(coilset) / self.scale,
@@ -143,7 +147,7 @@ class CoilSetOptimisationProblem(abc.ABC):
         result = optimise(
             self._make_objective(coilset),
             x0=x0,
-            df_objective=self._make_df_objective(coilset),
+            df_objective=df_objective,
             bounds=bounds,
             # TODO(hsaunders1904): cannot apply this constraint as it
             #  breaks the tikhonov example. In that particular example,
