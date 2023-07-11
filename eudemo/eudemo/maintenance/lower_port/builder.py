@@ -34,6 +34,7 @@ import numpy as np
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
@@ -65,10 +66,12 @@ class TSLowerPortDuctBuilder(Builder):
         build_config: Dict,
         duct_angled_nowall_extrude_boundary: BluemiraWire,
         duct_straight_nowall_extrude_boundary: BluemiraWire,
+        x_straight_end: float,
     ):
         super().__init__(params, build_config)
         self.duct_angled_boundary = duct_angled_nowall_extrude_boundary
         self.duct_straight_boundary = duct_straight_nowall_extrude_boundary
+        self.x_straight_end = x_straight_end
 
     def build(self) -> Component:
         """
@@ -90,6 +93,7 @@ class TSLowerPortDuctBuilder(Builder):
             self.params.n_TF.value,
             self.params.lower_port_angle.value,
             self.params.tk_ts.value,
+            self.x_straight_end,
         )
 
         pc = PhysicalComponent(self.name, duct)
@@ -124,6 +128,7 @@ class VVLowerPortDuctBuilder(Builder):
         build_config: Dict,
         duct_angled_nowall_extrude_boundary: BluemiraWire,
         duct_straight_nowall_extrude_boundary: BluemiraWire,
+        x_straight_end: float,
     ):
         super().__init__(params, build_config)
         offset_value = -(self.params.tk_ts.value + self.params.g_vv_ts.value)
@@ -134,6 +139,7 @@ class VVLowerPortDuctBuilder(Builder):
             duct_straight_nowall_extrude_boundary, offset_value
         )
         self.duct_straight_boundary.translate((self.params.tk_ts.value, 0, 0))
+        self.x_straight_end = x_straight_end
 
     def build(self) -> Component:
         """
@@ -155,6 +161,7 @@ class VVLowerPortDuctBuilder(Builder):
             self.params.n_TF.value,
             self.params.lower_port_angle.value,
             self.params.tk_vv_single_wall.value,
+            self.x_straight_end,
         )
 
         pc = PhysicalComponent(self.name, duct)
@@ -178,6 +185,7 @@ def build_lower_port_xyz(
     n_TF: int,
     duct_angle: float,
     wall_tk: float,
+    x_straight_end: float,
 ) -> Tuple[BluemiraSolid]:
     """
     Build lower port solid geometry, including void (estimate)
@@ -188,6 +196,14 @@ def build_lower_port_xyz(
         Outer x-y boundary wire of the angled port cross-section
     duct_straight_boundary:
         Outer x-y boundary wire of the straight port cross-section
+    n_TF:
+        Number of TF coils
+    duct_angle:
+        Angle of the lower port duct [degrees]
+    wall_tk:
+        Wall thickness of the lower port
+    x_straight_end:
+        Radial coordinate of the end point of the straight duct
 
     Returns
     -------
@@ -196,7 +212,14 @@ def build_lower_port_xyz(
     void:
         Solid of the lower port void (estimate)
     """
-    straight_duct_extrude_extent = 20
+    straight_duct_extrude_extent = (
+        x_straight_end - duct_straight_boundary.bounding_box.x_min
+    )
+    if straight_duct_extrude_extent <= 0:
+        BuilderError(
+            "End radial coordinates of the straight duct is lower than it's start coordinate."
+        )
+
     duct_angle = np.deg2rad(duct_angle)
 
     angled_duct_face, angled_void_face = _face_and_void_from_outer_boundary(
@@ -205,9 +228,7 @@ def build_lower_port_xyz(
     straight_duct_face, straight_void_face = _face_and_void_from_outer_boundary(
         duct_straight_boundary, wall_tk
     )
-    straight_duct_backwall_face = BluemiraFace(
-        offset_wire(duct_straight_boundary, wall_tk)
-    )
+    straight_duct_backwall_face = BluemiraFace(duct_straight_boundary)
 
     angled_bb = duct_angled_boundary.bounding_box
     strait_bb = duct_straight_boundary.bounding_box

@@ -320,13 +320,17 @@ def build_lower_port(
     build_config,
     lp_duct_angled_nowall_extrude_boundary,
     lp_duct_straight_nowall_extrude_boundary,
+    cryostat_xz_boundary,
 ):
     """Builder for the Lower Port and Duct"""
+    offset = params.global_params.tk_cr_vv.value + params.global_params.g_cr_ts.value
+    x_straight_end = cryostat_xz_boundary.bounding_box.x_max - offset
     builder = TSLowerPortDuctBuilder(
         params,
         build_config,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
+        x_straight_end,
     )
     ts_lower_port = builder.build()
 
@@ -335,6 +339,7 @@ def build_lower_port(
         build_config,
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
+        x_straight_end,
     )
     vv_lower_port = builder.build()
     return ts_lower_port, vv_lower_port
@@ -533,6 +538,7 @@ if __name__ == "__main__":
         reactor_config.config_for("Lower Port"),
         lp_duct_angled_nowall_extrude_boundary,
         lp_duct_straight_nowall_extrude_boundary,
+        reactor.cryostat.xz_boundary(),
     )
 
     reactor.vacuum_vessel.add_ports(
