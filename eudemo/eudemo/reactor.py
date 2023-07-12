@@ -363,10 +363,16 @@ def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShiel
 
 
 def build_cryostat_plugs(params, build_config, ts_ports, cryostat_xz_boundary):
+    """
+    Build the port plugs for the cryostat.
+    """
     pass
 
 
-def build_radiation_plugs(params, build_config, ts_ports, radiation_xz_boundary):
+def build_radiation_plugs(params, build_config, cr_ports, radiation_xz_boundary):
+    """
+    Build the port plugs for the radiation shield.
+    """
     pass
 
 
