@@ -24,13 +24,18 @@ Port plugs
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, Optional, Tuple, Type, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
 
+from dataclasses import dataclass
+
 import numpy as np
 
+from bluemira.base.builder import Builder
+from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_fuse, extrude_shape, offset_wire
 from bluemira.geometry.wire import BluemiraWire
@@ -100,4 +105,37 @@ def make_castellated_plug(
         base.translate(ext_vec)
         base = BluemiraFace(offset_wire(BluemiraWire(base.wires), off))
         _prev_dist = dist
+
     return boolean_fuse(sections)
+
+
+@dataclass
+class CryostatPortPlugBuilderParams(ParameterFrame):
+    """
+    Cryostat port plug builder parameters
+    """
+
+    plug_gap: Parameter[float]
+    n_plug_castellations: Parameter[float]
+
+
+class CryostatPortPlugBuilder(Builder):
+    """
+    Cryostat port plug builder.
+    """
+
+    param_cls: Type[CryostatPortPlugBuilderParams] = CryostatPortPlugBuilderParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame, CryostatPortPlugBuilderParams],
+        build_config: Optional[Dict],
+        outer_profiles: Iterable[BluemiraWire],
+        cryostat_xz_boundary: BluemiraFace,
+    ):
+        super().__init__(params, build_config)
+        self.outer_profiles = outer_profiles
+        self.cryostat_xz_boundary = cryostat_xz_boundary
+
+    def build(self) -> Component:
+        """Build the Equatorial Port"""

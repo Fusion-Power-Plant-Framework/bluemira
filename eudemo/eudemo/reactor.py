@@ -55,7 +55,7 @@ from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import interpolate_bspline, offset_wire
+from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -85,6 +85,7 @@ from eudemo.maintenance.lower_port import (
     TSLowerPortDuctBuilder,
     VVLowerPortDuctBuilder,
 )
+from eudemo.maintenance.port_plug import make_castellated_plug
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager
 from eudemo.params import EUDEMOReactorParams
@@ -362,11 +363,57 @@ def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShiel
     )
 
 
-def build_cryostat_plugs(params, build_config, ts_ports, cryostat_xz_boundary):
+def build_cryostat_plugs(
+    params, build_config, ts_ports, cryostat_xz_boundary: BluemiraFace
+):
     """
     Build the port plugs for the cryostat.
     """
-    pass
+    closest_faces = []
+    for port in ts_ports:
+        xyz = port.get_component("xyz")
+        for child in xyz.children:
+            if not "voidspace" in child.name:
+                port_xyz = child.shape.deepcopy()
+                port_xyz.rotate(degree=-180 / params.global_params.n_TF.value)
+        faces = port_xyz.faces
+        distances = [
+            distance_to(f.center_of_mass, cryostat_xz_boundary)[0] for f in faces
+        ]
+        closest_face = faces[np.argmin(distances)]
+        closest_faces.append(closest_face)
+
+    outer_wires = [cf.boundary[0].deepcopy() for cf in closest_faces]
+    cr_bb = cryostat_xz_boundary.bounding_box
+    x_max = cr_bb.x_max
+    z_max = cr_bb.z_max
+    cr_tk = params.global_params.tk_cr_vv.value
+    offset = params.global_params.g_cr_ts.value
+
+    plugs = []
+    for wire in outer_wires:
+        bb = wire.bounding_box
+        dx = abs(bb.x_max - x_max)
+        dz = abs(bb.z_max - z_max)
+        if dx < dz:
+            # Horizontal connection
+            dy = 0.5 * abs(bb.y_max - bb.y_min) + offset
+            radius = np.hypot(x_max - cr_tk, -dy)
+            length = x_max - radius
+            vector = (radius - bb.x_max, 0, 0)
+
+        else:
+            # Vertical connection
+            length = cr_tk
+            vector = (0, 0, dz - cr_tk)
+
+        wire.translate(vector)
+
+        plug = make_castellated_plug(
+            BluemiraFace(wire), vector, length, offsets=0.3, n_castellations=2
+        )
+        plugs.append(plug)
+    return plugs
 
 
 def build_radiation_plugs(params, build_config, cr_ports, radiation_xz_boundary):
@@ -564,7 +611,7 @@ if __name__ == "__main__":
         n_TF=reactor_config.global_params.n_TF.value,
     )
 
-    cr_up_plug, cr_eq_plug, cr_lp_plug = build_cryostat_plugs(
+    cr_plugs = build_cryostat_plugs(
         reactor_config.params_for("Cryostat"),
         reactor_config.config_for("Cryostat"),
         [ts_upper_port, ts_eq_port],
@@ -574,12 +621,12 @@ if __name__ == "__main__":
     rs_up_plug, rs_eq_plug, rs_lp_plug = build_radiation_plugs(
         reactor_config.params_for("RadiationShield"),
         reactor_config.config_for("RadiationShield"),
-        [cr_up_plug, cr_eq_plug, cr_lp_plug],
+        cr_plugs,
         reactor.radiation_shield.xz_boundary(),
     )
 
     reactor.cryostat.add_plugs(
-        [cr_up_plug, cr_eq_plug, cr_lp_plug],
+        cr_plugs,
         n_TF=reactor_config.global_params.n_TF.value,
     )
     reactor.radiation_shield.add_plugs(
