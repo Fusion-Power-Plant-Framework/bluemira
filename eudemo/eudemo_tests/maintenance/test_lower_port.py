@@ -144,7 +144,4 @@ class TestLowerPort:
 
         angled_face = duct_xyz_cad.faces[0]  # this was an angled face when I tested it
 
-        assert np.allclose(
-            angled_face.normal_at() if duct_angle != -90 else -angled_face.normal_at(),
-            pl.normal_at(),
-        )
+        np.testing.assert_allclose(angled_face.normal_at(), pl.normal_at(), atol=1e-8)
