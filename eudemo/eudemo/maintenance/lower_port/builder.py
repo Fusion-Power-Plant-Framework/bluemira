@@ -248,6 +248,9 @@ def build_lower_port_xyz(
     )
     angled_duct = extrude_shape(angled_duct_face, ext_vector)
     angled_void = extrude_shape(angled_void_face, ext_vector)
+    from bluemira.display import show_cad
+
+    show_cad([angled_duct_face, angled_duct])
 
     straight_duct_backwall = extrude_shape(
         straight_duct_backwall_face,
@@ -261,18 +264,16 @@ def build_lower_port_xyz(
     straight_duct = boolean_fuse([straight_duct_backwall, straight_duct_length])
 
     angled_pieces = boolean_cut(angled_duct, [straight_duct])
-    angled_top = (
-        angled_pieces[0]
-        if len(angled_pieces) == 1
-        else boolean_cut(angled_duct, [angled_pieces[1]])[0]
-    )
+    angled_top = sorted(angled_pieces, key=lambda s: -s.center_of_mass[2])[0]
+    angled_void_pieces = boolean_cut(angled_void, [straight_duct_void])
+    angled_void_piece = sorted(angled_void_pieces, key=lambda s: -s.center_of_mass[2])[0]
+    void = boolean_fuse([angled_void_piece, straight_duct_void])
 
     straight_with_hole = boolean_cut(straight_duct, [angled_top])[0]
 
     duct = boolean_fuse([angled_top, straight_with_hole])
-    # TODO: Remember that you got lazy here. There can be an overshoot of the
-    # angled void
-    void = boolean_fuse([angled_void, straight_duct_void])
+    duct = boolean_cut(duct, [angled_void_piece])[0]
+    show_cad(duct)
 
     # rotate pieces to correct positions
     duct.rotate(degree=180 / n_TF)
