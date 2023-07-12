@@ -71,6 +71,14 @@ class CryostatThermalShield(ComponentManager):
         )
 
 
+class PlugManagerMixin:
+    """
+    Mixin class for miscellaneous plug component integration utilities.
+    """
+
+    pass
+
+
 class PortManagerMixin:
     """
     Mixin class for miscellaneous port component integration utilities.
@@ -244,13 +252,13 @@ class ThermalShield(PortManagerMixin, ComponentManager):
         )
 
 
-class Cryostat(ComponentManager):
+class Cryostat(PlugManagerMixin, ComponentManager):
     """
-    Wrapper around a VVTS component tree.
+    Wrapper around a Cryostat component tree.
     """
 
     def xz_boundary(self) -> BluemiraWire:
-        """Return a wire representing the VVTS poloidal silhouette."""
+        """Return a wire representing the Cryostat poloidal silhouette."""
         return (
             self.component()
             .get_component("xz")
@@ -259,13 +267,13 @@ class Cryostat(ComponentManager):
         )
 
 
-class RadiationShield(ComponentManager):
+class RadiationShield(PlugManagerMixin, ComponentManager):
     """
-    Wrapper around a VVTS component tree.
+    Wrapper around a RadiationShield component tree.
     """
 
     def xz_boundary(self) -> BluemiraWire:
-        """Return a wire representing the VVTS poloidal silhouette."""
+        """Return a wire representing the RadiationShield poloidal silhouette."""
         return self.component().get_component("xz").shape.boundary[0]
 
 
