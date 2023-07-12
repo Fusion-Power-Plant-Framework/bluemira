@@ -30,12 +30,6 @@ from eudemo.maintenance.port_plug import make_castellated_plug
 class TestCastellationBuilder:
     """Tests the Castellation Builder"""
 
-    def setup_method(self) -> None:
-        """Set-up Castellation Builder"""
-        self.params = {
-            "cst_r_corner": {"value": 0, "unit": "m"},
-        }
-
     @pytest.mark.parametrize(
         "xi, xo, zh, yw, vec, x_offsets, c_offsets, exp_v",
         zip(

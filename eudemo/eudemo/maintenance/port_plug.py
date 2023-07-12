@@ -66,13 +66,8 @@ def make_castellated_plug(
     -------
     BluemiraSolid of a castellated port plug
     """
-    base = face
-    sections = []
-
     # Normalise vec
-    vec_mag = np.linalg.norm(vec)
-    if vec_mag != 1.0:
-        vec /= vec_mag
+    vec = np.array(vec) / np.linalg.norm(vec)
 
     # Check/Set-up distances iterable
     if not ((n_castellations is None) or (n_castellations == 0)):
@@ -95,9 +90,12 @@ def make_castellated_plug(
 
     parameter_array = list(zip(dist_iter, off_iter))
     parameter_array.append((length, 0.0))
+
+    base = face
+    sections = []
     _prev_dist = 0
     for dist, off in parameter_array:
-        ext_vec = np.array(vec) * (dist - _prev_dist)
+        ext_vec = vec * (dist - _prev_dist)
         sections.append(extrude_shape(base, ext_vec))
         base.translate(ext_vec)
         base = BluemiraFace(offset_wire(BluemiraWire(base.wires), off))
