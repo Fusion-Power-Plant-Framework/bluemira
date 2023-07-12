@@ -117,7 +117,7 @@ result = optimise(
 print(result)
 
 # %% [markdown]
-## Visualising the Optimisation
+# ## Visualising the Optimisation
 # Using the history of the optimiser result,
 # we can plot the route the optimiser took to get to the minimum.
 #
