@@ -152,9 +152,6 @@ class TestGeometryOptimisationProblem:
         problem = GeometryOptimisationProblem(parameterisation, optimiser, objective)
 
         assert problem._parameterisation.variables.n_free_variables == 5
-        # todo: is this test correct?
-        # Is there a reason it needs be 5?
-        # Which is the position in the full list of var?
         assert problem._parameterisation.variables._fixed_variable_indices == [0, 5]
 
         problem.optimise()

@@ -28,7 +28,7 @@ from __future__ import annotations
 import abc
 import json
 import warnings
-from dataclasses import dataclass
+from dataclasses import InitVar, dataclass
 from enum import Enum
 from functools import partial
 from typing import (
@@ -548,9 +548,9 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         opt_vars = self.variables
         free_vars = opt_vars.get_normalised_values()
         grad = np.zeros((1, len(free_vars)))
-        if not self.variables["x1"].fixed:
+        if not self.variables.x1.fixed:
             grad[0][self.get_x_norm_index("x1")] = 1
-        if not self.variables["x2"].fixed:
+        if not self.variables.x2.fixed:
             grad[0][self.get_x_norm_index("x2")] = -1
         return grad
 
@@ -758,10 +758,10 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         """Inequality constraint gradient for TripleArc."""
         free_vars = self.variables.get_normalised_values()
         g = np.zeros((1, len(free_vars)))
-        if not self.variables["a1"].fixed:
+        if not self.variables.a1.fixed:
             idx_a1 = self.get_x_norm_index("a1")
             g[0][idx_a1] = 1
-        if not self.variables["a2"].fixed:
+        if not self.variables.a2.fixed:
             idx_a2 = self.get_x_norm_index("a2")
             g[0][idx_a2] = 1
         return g
@@ -1832,6 +1832,24 @@ class PictureFrameOptVariables(OptVariablesFrame):
         upper_bound=8,
         description="Taper angle stop height",
     )
+    # for configuring the PF
+    upper: InitVar[Union[str, PFrameSection]] = PFrameSection.FLAT
+    lower: InitVar[Union[str, PFrameSection]] = PFrameSection.FLAT
+    inner: InitVar[Optional[Union[str, PFrameSection]]] = None
+
+    def __post_init__(self, upper, lower, inner):
+        both_curved = upper == PFrameSection.CURVED and lower == PFrameSection.CURVED
+        both_flat = upper == PFrameSection.FLAT and lower == PFrameSection.FLAT
+        if both_curved:
+            self.ro.fixed = True
+        elif both_flat:
+            self.z1_peak.fixed = True
+            self.z2_peak.fixed = True
+            self.x3.fixed = True
+        inner_not_tapered = inner is PFrameSection.TAPERED_INNER
+        if inner_not_tapered:
+            self.x4.fixed = True
+            self.z3.fixed = True
 
 
 class PictureFrame(
@@ -1909,7 +1927,7 @@ class PictureFrame(
         lower: Union[str, PFrameSection] = PFrameSection.FLAT,
         inner: Optional[Union[str, PFrameSection]] = None,
     ):
-        variables = PictureFrameOptVariables()
+        variables = PictureFrameOptVariables(upper=upper, lower=lower, inner=inner)
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
 

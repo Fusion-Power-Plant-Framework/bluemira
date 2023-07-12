@@ -55,25 +55,25 @@ class TFCoilPolySpline(PolySpline):
         defaults.update(var_dict)
         super().__init__(defaults)
 
-        ib_radius = self.variables["x1"].value
-        ob_radius = self.variables["x2"].value
-        z2 = self.variables["z2"].value
-        height = self.variables["height"].value
-        top = self.variables["top"].value
-        upper = self.variables["upper"].value
-        dz = self.variables["dz"].value
-        tilt = self.variables["tilt"].value
-        lower = self.variables["lower"].value
-        bottom = self.variables["bottom"].value
+        ib_radius = self.variables.x1.value
+        ob_radius = self.variables.x2.value
+        z2 = self.variables.z2.value
+        height = self.variables.height.value
+        top = self.variables.top.value
+        upper = self.variables.upper.value
+        dz = self.variables.dz.value
+        tilt = self.variables.tilt.value
+        lower = self.variables.lower.value
+        bottom = self.variables.bottom.value
 
-        if not self.variables["x1"].fixed:
+        if not self.variables.x1.fixed:
             self.adjust_variable(
                 "x1",
                 ib_radius,
                 lower_bound=ib_radius - 2,
                 upper_bound=ib_radius * 1.1,
             )
-        if not self.variables["x2"].fixed:
+        if not self.variables.x2.fixed:
             self.adjust_variable(
                 "x2",
                 value=ob_radius,

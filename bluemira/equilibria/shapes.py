@@ -214,7 +214,14 @@ class ZakharovLCFS(GeometryParameterisation[ZakharovLCFSOptVariables]):
         -------
         CAD Wire of the geometry
         """
-        coordinates = flux_surface_zakharov(*self.variables.values, n=n_points)
+        coordinates = flux_surface_zakharov(
+            self.variables.r_0.value,
+            self.variables.Z_0.value,
+            self.variables.a.value,
+            self.variables.kappa.value,
+            self.variables.delta.value,
+            n=n_points,
+        )
         return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
@@ -323,7 +330,15 @@ class CunninghamLCFS(GeometryParameterisation[CunninghamLCFSOptVariables]):
         -------
         CAD Wire of the geometry
         """
-        coordinates = flux_surface_cunningham(*self.variables.values, n=n_points)
+        coordinates = flux_surface_cunningham(
+            self.variables.r_0.value,
+            self.variables.Z_0.value,
+            self.variables.a.value,
+            self.variables.kappa.value,
+            self.variables.delta.value,
+            self.variables.delta2.value,
+            n=n_points,
+        )
         return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
@@ -706,7 +721,15 @@ class KuiroukidisLCFS(GeometryParameterisation[KuiroukidisLCFSOptVariables]):
         CAD Wire of the geometry
         """
         x_quadrants, z_quadrants = flux_surface_kuiroukidis_quadrants(
-            *self.variables.values, n_points=n_points
+            self.variables.r_0.value,
+            self.variables.z_0.value,
+            self.variables.a.value,
+            self.variables.kappa_u.value,
+            self.variables.kappa_l.value,
+            self.variables.delta_u.value,
+            self.variables.delta_l.value,
+            int(self.variables.n_power.value),
+            n_points=n_points,
         )
 
         labels = ["upper_outer", "upper_inner", "lower_inner", "lower_outer"]

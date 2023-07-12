@@ -329,6 +329,8 @@ class OptVariablesFrame:
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
         for field_name in cls.__dataclass_fields__:
             dcf: Field = cls.__dataclass_fields__[field_name]
+            if "InitVar" in dcf.type:
+                continue  # special case for InitVar's
             fact_inst = dcf.default_factory() if dcf.default_factory != MISSING else None
             if fact_inst is None:
                 raise TypeError(
@@ -511,27 +513,7 @@ class OptVariablesFrame:
         """
         All un-normalised values of the variable set (including fixed variable values).
         """
-        # todo: does this need to be an np.array?
         return np.array([v.value for v in self])
-
-    @property
-    def values_obj(self):
-        """
-        Return an object with attributes corresponding to the OptVariables names
-        and their values.
-
-
-        """
-
-        class DictClass(object):
-            def __init__(self, my_dict):
-                for key in my_dict:
-                    setattr(self, key, my_dict[key])
-
-            def __getitem__(self, name: str) -> float:
-                return getattr(self, name)
-
-        return DictClass({v.name: v.value for v in self})
 
     @property
     def n_free_variables(self) -> int:
