@@ -71,7 +71,7 @@ from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import (
+from bluemira.equilibria.optimisation.constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
     FieldNullConstraint,
@@ -79,7 +79,7 @@ from bluemira.equilibria.opt_constraints import (
     MagneticConstraintSet,
     PsiConstraint,
 )
-from bluemira.equilibria.opt_problems import (
+from bluemira.equilibria.optimisation.problem import (
     MinimalCurrentCOP,
     PulsedNestedPositionCOP,
     TikhonovCurrentCOP,
@@ -89,7 +89,6 @@ from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.tools import make_polygon
-from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PositionMapper, RegionInterpolator
 
 plot_defaults()
@@ -255,7 +254,6 @@ program = PicardIterator(
 )
 program()
 
-
 # %% [markdown]
 #
 # Now say we want to use bounds on our current vector, and that we want to solve a
@@ -291,7 +289,9 @@ current_opt_problem = TikhonovCurrentCOP(
     eq,
     targets=MagneticConstraintSet([isoflux]),
     gamma=0.0,
-    optimiser=Optimiser("SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6}),
+    opt_algorithm="SLSQP",
+    opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6},
+    opt_parameters={},
     max_currents=coilset.get_max_current(0.0),
     constraints=[x_point, field_constraints, force_constraints],
 )
@@ -305,7 +305,6 @@ program = PicardIterator(
     plot=False,
 )
 program()
-
 
 # %% [markdown]
 #
@@ -326,9 +325,8 @@ minimal_current_coilset = deepcopy(coilset)
 minimal_current_opt_problem = MinimalCurrentCOP(
     minimal_current_coilset,
     minimal_current_eq,
-    Optimiser(
-        "SLSQP", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
-    ),
+    opt_algorithm="SLSQP",
+    opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
     max_currents=coilset.get_max_current(0.0),
     constraints=[isoflux, x_point, field_constraints, force_constraints],
 )
@@ -352,7 +350,6 @@ print(
 print(
     f"Total currents from minimal current optimisation problem: {raw_uc(np.sum(np.abs(min_control_coils.current)), 'A', 'MA'):.2f} MA"
 )
-
 
 # %% [markdown]
 #
@@ -408,9 +405,9 @@ current_opt_problem_sof = TikhonovCurrentCOP(
     sof,
     targets=MagneticConstraintSet([isoflux]),
     gamma=1e-12,
-    optimiser=Optimiser(
-        "SLSQP", opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
-    ),
+    opt_algorithm="SLSQP",
+    opt_conditions={"max_eval": 2000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
+    opt_parameters={},
     max_currents=coilset.get_max_current(I_p),
     constraints=[sof_psi_boundary, x_point, field_constraints, force_constraints],
 )
@@ -420,9 +417,9 @@ current_opt_problem_eof = TikhonovCurrentCOP(
     eof,
     targets=MagneticConstraintSet([isoflux]),
     gamma=1e-12,
-    optimiser=Optimiser(
-        "COBYLA", opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
-    ),
+    opt_algorithm="COBYLA",
+    opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
+    opt_parameters={},
     max_currents=coilset.get_max_current(I_p),
     constraints=[eof_psi_boundary, x_point, field_constraints, force_constraints],
 )
@@ -473,13 +470,12 @@ position_opt_problem = PulsedNestedPositionCOP(
     coilset,
     position_mapper,
     sub_opt_problems=[current_opt_problem_sof, current_opt_problem_eof],
-    optimiser=Optimiser(
-        "COBYLA", opt_conditions={"max_eval": 100, "ftol_rel": 1e-6, "xtol_rel": 1e-6}
-    ),
+    opt_algorithm="COBYLA",
+    opt_conditions={"max_eval": 100, "ftol_rel": 1e-6, "xtol_rel": 1e-6},
     debug=False,
 )
 
-optimised_coilset = position_opt_problem.optimise(verbose=True)
+optimised_coilset = position_opt_problem.optimise(verbose=True).coilset
 
 # %% [markdown]
 #
