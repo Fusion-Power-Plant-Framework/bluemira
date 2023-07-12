@@ -76,7 +76,11 @@ class PlugManagerMixin:
     Mixin class for miscellaneous plug component integration utilities.
     """
 
-    pass
+    def add_plugs(self, plugs: List[Component], n_TF: int):
+        """
+        Add plugs to the component.
+        """
+        pass
 
 
 class PortManagerMixin:

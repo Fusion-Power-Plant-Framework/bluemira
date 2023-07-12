@@ -362,6 +362,14 @@ def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShiel
     )
 
 
+def build_cryostat_plugs(params, build_config, ts_ports, cryostat_xz_boundary):
+    pass
+
+
+def build_radiation_plugs(params, build_config, ts_ports, radiation_xz_boundary):
+    pass
+
+
 if __name__ == "__main__":
     set_log_level("INFO")
     reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
@@ -549,6 +557,23 @@ if __name__ == "__main__":
         [ts_upper_port, ts_eq_port, ts_lower_port],
         n_TF=reactor_config.global_params.n_TF.value,
     )
+
+    cr_up_plug, cr_eq_plug, cr_lp_plug = build_cryostat_plugs(
+        reactor_config.params_for("Cryostat"),
+        reactor_config.config_for("Cryostat"),
+        [ts_upper_port, ts_eq_port],
+        reactor.cryostat.xz_boundary(),
+    )
+
+    rs_up_plug, rs_eq_plug, rs_lp_plug = build_radiation_plugs(
+        reactor_config.params_for("RadiationShield"),
+        reactor_config.config_for("RadiationShield"),
+        [cr_up_plug, cr_eq_plug, cr_lp_plug],
+        reactor.radiation_shield.xz_boundary(),
+    )
+
+    reactor.cryostat.add_plugs([cr_up_plug, cr_eq_plug, cr_lp_plug])
+    reactor.radiation_shield.add_plugs([rs_up_plug, rs_eq_plug, rs_lp_plug])
 
     from bluemira.display import show_cad
 
