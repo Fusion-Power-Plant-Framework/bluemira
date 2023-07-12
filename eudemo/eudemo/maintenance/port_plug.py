@@ -119,13 +119,14 @@ class CryostatPortPlugBuilderParams(ParameterFrame):
     """
 
     # Global
+    n_TF: Parameter[int]
     tk_cr_vv: Parameter[float]
     g_cr_ts: Parameter[float]
 
     # Local
     g_plug: Parameter[float]
     tk_castellation: Parameter[float]
-    n_plug_castellations: Parameter[float]
+    n_plug_castellations: Parameter[int]
 
 
 class CryostatPortPlugBuilder(Builder):
@@ -163,6 +164,7 @@ class CryostatPortPlugBuilder(Builder):
         z_max = cr_bb.z_max
         cr_tk = self.params.tk_cr_vv.value
         offset = self.params.g_cr_ts.value
+        degree = 180 / self.params.n_TF.value
 
         plugs = []
         voids = []
@@ -199,6 +201,9 @@ class CryostatPortPlugBuilder(Builder):
                 offsets=self.params.tk_castellation.value,
                 n_castellations=self.params.n_plug_castellations.value,
             )
+
+            plug.rotate(degree=degree)
+            void.rotate(degree=degree)
 
             plug = PhysicalComponent(f"{self.name} {i}", plug)
             void = PhysicalComponent(

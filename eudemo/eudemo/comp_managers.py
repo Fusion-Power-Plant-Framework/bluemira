@@ -71,23 +71,7 @@ class CryostatThermalShield(ComponentManager):
         )
 
 
-class PlugManagerMixin:
-    """
-    Mixin class for miscellaneous plug component integration utilities.
-    """
-
-    def add_plugs(self, plugs: List[Component], n_TF: int):
-        """
-        Add plugs to the component.
-        """
-        pass
-
-
-class PortManagerMixin:
-    """
-    Mixin class for miscellaneous port component integration utilities.
-    """
-
+class OrphanerMixin:
     @staticmethod
     def _orphan_old_components(components):
         """
@@ -100,6 +84,20 @@ class PortManagerMixin:
                 comp_view = comp.get_component(view)
                 comp_view.parent = None
                 del comp_view
+
+
+class PlugManagerMixin(OrphanerMixin):
+    """
+    Mixin class for miscellaneous plug component integration utilities.
+    """
+
+    pass
+
+
+class PortManagerMixin(OrphanerMixin):
+    """
+    Mixin class for miscellaneous port component integration utilities.
+    """
 
     @staticmethod
     def _make_2d_views(parent, solid_comp, void_comp, angle, color, void_color):
@@ -269,6 +267,23 @@ class Cryostat(PlugManagerMixin, ComponentManager):
             .get_component(CryostatBuilder.CRYO)
             .shape.boundary[0]
         )
+
+    def add_plugs(self, plugs: List[Component], n_TF: int):
+        """
+        Add plugs to the component.
+        """
+        void_shapes = []
+        plug_shapes = []
+        for comp in plugs:
+            comp = comp.get_component("xyz")
+            if "voidspace" in comp.name:
+                void_shapes.append(comp.shape)
+            else:
+                plug_shapes.append(comp.shape)
+
+        xyz = self.component().get_component("xyz")
+
+        pass
 
 
 class RadiationShield(PlugManagerMixin, ComponentManager):
