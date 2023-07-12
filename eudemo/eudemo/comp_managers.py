@@ -31,6 +31,7 @@ if TYPE_CHECKING:
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.builders.cryostat import CryostatBuilder
+from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
@@ -91,7 +92,24 @@ class PlugManagerMixin(OrphanerMixin):
     Mixin class for miscellaneous plug component integration utilities.
     """
 
-    pass
+    @staticmethod
+    def _make_2d_views(parent, solid_comp, plug_comps, angle, color, plug_color):
+        for view in ["xz", "xy"]:
+            solid_comps = make_2d_view_components(
+                view, azimuthal_angle=angle, components=[solid_comp]
+            )
+            for solid in solid_comps:
+                apply_component_display_options(solid, color=color)
+
+            view_plug_comps = make_2d_view_components(
+                view, azimuthal_angle=angle, components=plug_comps
+            )
+            for plug in plug_comps:
+                apply_component_display_options(plug, plug_color)
+
+            view_comps = solid_comps + view_plug_comps
+
+            Component(view, children=view_comps, parent=parent)
 
 
 class PortManagerMixin(OrphanerMixin):
@@ -100,7 +118,9 @@ class PortManagerMixin(OrphanerMixin):
     """
 
     @staticmethod
-    def _make_2d_views(parent, solid_comp, void_comp, angle, color, void_color):
+    def _make_2d_views(
+        parent, solid_comp, void_comp, angle, color, void_color=(0, 0, 0)
+    ):
         for view in ["xz", "xy"]:
             solid_comps, void_comps = make_2d_view_components(
                 view, azimuthal_angle=angle, components=[solid_comp, void_comp]
@@ -273,17 +293,40 @@ class Cryostat(PlugManagerMixin, ComponentManager):
         Add plugs to the component.
         """
         void_shapes = []
-        plug_shapes = []
+        plugs = []
         for comp in plugs:
             comp = comp.get_component("xyz")
             if "voidspace" in comp.name:
                 void_shapes.append(comp.shape)
             else:
-                plug_shapes.append(comp.shape)
+                plugs.append(comp)
 
-        xyz = self.component().get_component("xyz")
+        component = self.component()
+        parent = component.parent
+        name = f"{CryostatBuilder.CRYO} 1"
+        xyz_shape = (
+            component.get_component("xyz")
+            .get_component("Sector 1")
+            .get_component(name)
+            .shape
+        )
+        xyz_shape = boolean_cut(xyz_shape, void_shapes)[0]
+        xyz_comp = PhysicalComponent(name, xyz_shape)
+        apply_component_display_options(xyz_comp, color=BLUE_PALETTE["CR"][0])
+        self._orphan_old_components(component)
 
-        pass
+        new_components = [xyz_comp] + plugs
+
+        Component(
+            "xyz",
+            parent=parent,
+            children=[Component("Sector 1", children=new_components)],
+        )
+
+        angle = 180 / n_TF
+        self._make_2d_views(
+            parent, xyz_comp, plugs, angle, BLUE_PALETTE["CR"][0], BLUE_PALETTE["CR"][1]
+        )
 
 
 class RadiationShield(PlugManagerMixin, ComponentManager):
@@ -293,7 +336,12 @@ class RadiationShield(PlugManagerMixin, ComponentManager):
 
     def xz_boundary(self) -> BluemiraWire:
         """Return a wire representing the RadiationShield poloidal silhouette."""
-        return self.component().get_component("xz").shape.boundary[0]
+        return (
+            self.component()
+            .get_component("xz")
+            .get_component(RadiationShieldBuilder.BODY)
+            .shape.boundary[0]
+        )
 
 
 class CoilStructures(ComponentManager):

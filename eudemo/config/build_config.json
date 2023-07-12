@@ -233,12 +233,34 @@
       },
       "n_plug_castellations": {
         "value": 2,
-        "unit": "n/a",
+        "unit": "dimensionless",
         "source": "Input",
         "long_name": "Number of castellations in port plugs."
       },
       "tk_castellation": {
         "value": 0.2,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Castellation offset value."
+      }
+    }
+  },
+  "RadiationShield": {
+    "params": {
+      "g_plug": {
+        "value": 0.05,
+        "unit": "m",
+        "source": "Input",
+        "long_name": "Gap around the cryostat port plugs."
+      },
+      "n_plug_castellations": {
+        "value": 4,
+        "unit": "dimensionless",
+        "source": "Input",
+        "long_name": "Number of castellations in port plugs."
+      },
+      "tk_castellation": {
+        "value": 0.1,
         "unit": "m",
         "source": "Input",
         "long_name": "Castellation offset value."
