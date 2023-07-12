@@ -8,7 +8,7 @@
         "module": null,
         "variables_map": {
           "phases": ["dwl", "d2f", "ftt", "f2d"],
-          "normalize": [true, true, true, true],
+          "normalise": [true, true, true, true],
           "unit": "MW",
           "consumption": true,
           "efficiencies": {},
@@ -31,7 +31,7 @@
         "module": null,
         "variables_map": {
           "phases": ["dwl"],
-          "normalize": [false],
+          "normalise": [false],
           "unit": "kW",
           "consumption": true,
           "efficiencies": {

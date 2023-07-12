@@ -94,7 +94,7 @@ def print_manager_config_file(manager_config):
 #
 # For the `upk` load, in the order displayed below:
 # - "phases" indicates in which phase that load must be maintained;
-# - "normalize" indicates whether its time length must be normalized to
+# - "normalise" indicates whether its time length must be normalised to
 #   the duration of that phase;
 # - "unit" indicates the unit of the values in "data";
 # - "consumption" indicates whether those values will be considered
