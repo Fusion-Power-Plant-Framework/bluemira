@@ -41,6 +41,8 @@ from typing import Dict, List, Optional
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.base.look_and_feel import bluemira_print_flush
+from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraintSet,
@@ -53,6 +55,7 @@ from bluemira.equilibria.optimisation.problem.base import (
 from bluemira.equilibria.positioner import RegionMapper
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation import optimise
+from bluemira.utilities.positioning import PositionMapper
 
 
 class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
@@ -161,3 +164,162 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         # Run the sub-optimisation
         sub_opt_result = self.sub_opt.optimise()
         return sub_opt_result.f_x
+
+
+class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
+    """
+    Coilset position optimisation problem for multiple sub-optimisation problems.
+
+    Parameters
+    ----------
+    coilset:
+        Coilset for which to optimise positions
+    position_mapper:
+        Position mapper tool to parameterise coil positions
+    sub_opt_problems:
+        The list of sub-optimisation problems to solve
+    optimiser:
+        Optimiser object to use
+    constraints:
+        Constraints to use. Note these should be applicable to the parametric position
+        vector
+    initial_currents:
+        Initial currents to use when solving the current sub-optimisation problems
+    debug:
+        Whether or not to run in debug mode (will affect run-time noticeably)
+    """
+
+    def __init__(
+        self,
+        coilset: CoilSet,
+        position_mapper: PositionMapper,
+        sub_opt_problems: List[CoilsetOptimisationProblem],
+        opt_algorithm="COBYLA",
+        opt_conditions={"max_eval": 100, "ftol_rel": 1e-6},
+        constraints=None,
+        initial_currents=None,
+        debug=False,
+    ):
+        self.coilset = coilset
+        self.position_mapper = position_mapper
+        self.sub_opt_problems = sub_opt_problems
+        self.opt_algorithm = opt_algorithm
+        self.opt_conditions = opt_conditions
+        self._constraints = constraints
+
+        if initial_currents:
+            self.initial_currents = initial_currents / self.sub_opt_problems[0].scale
+        else:
+            self.initial_currents = np.zeros(coilset.get_control_coils().n_coils())
+        self.debug = {0: debug}
+        self.iter = {0: 0.0}
+        opt_dimension = self.position_mapper.dimension
+        self.bounds = (np.zeros(opt_dimension), np.ones(opt_dimension))
+
+    @staticmethod
+    def _run_reporting(itern, max_fom, verbose):
+        """
+        Keep track of objective function value over iterations.
+        """
+        i = max(list(itern.keys())) + 1
+        itern[i] = max_fom
+
+        if verbose:
+            bluemira_print_flush(f"Coil position iteration {i} FOM value: {max_fom:.6e}")
+
+    @staticmethod
+    def _run_diagnostics(
+        debug,
+        sub_opt_prob: CoilsetOptimisationProblem,
+        opt_result: CoilsetOptimiserResult,
+    ):
+        """
+        In debug mode, store the LCFS at each iteration for each of the sub-optimisation
+        problems.
+
+        Notes
+        -----
+        This can significantly impact run-time.
+        """
+        if debug[0]:
+            entry = max(list(debug.keys()))
+            value = opt_result.f_x
+            sub_opt_prob.eq._remap_greens()
+            sub_opt_prob.eq._clear_OX_points()
+            lcfs = sub_opt_prob.eq.get_LCFS()
+            debug[entry].append([lcfs, value])
+
+    def sub_opt_objective(self, vector: npt.NDArray, verbose: bool = False) -> float:
+        """Run the sub-optimisations and return the largest figure of merit."""
+        positions = self.position_mapper.to_xz_dict(vector)
+
+        if self.debug[0]:
+            # Increment debug dictionary
+            i = max(list(self.debug.keys())) + 1
+            self.debug[i] = []
+
+        fom_values = []
+        for sub_opt_prob in self.sub_opt_problems:
+            for coil, position in positions.items():
+                sub_opt_prob.coilset[coil].position = position
+            result = sub_opt_prob.optimise(x0=self.initial_currents, fixed_coils=False)
+            self._run_diagnostics(self.debug, sub_opt_prob, result)
+            fom_values.append(result.f_x)
+        max_fom = max(fom_values)
+
+        self._run_reporting(self.iter, max_fom, verbose)
+        return max_fom
+
+    def objective(self, vector: npt.NDArray, verbose: bool = False) -> float:
+        """The objective function of the parent optimisation."""
+        return self.sub_opt_objective(vector, verbose=verbose)
+
+    def _get_initial_vector(self):
+        """
+        Get a vector representation of the initial coilset state from the PositionMapper.
+        """
+        x, z = [], []
+        for name in self.position_mapper.interpolators:
+            x.append(self.coilset[name].x)
+            z.append(self.coilset[name].z)
+        return self.position_mapper.to_L(x, z)
+
+    def optimise(self, x0=None, verbose=False):
+        """
+        Run the PulsedNestedPositionCOP
+
+        Parameters
+        ----------
+        x0: Optional[np.ndarray]
+            Initial solution vector (parameterised positions)
+        verbose: bool
+            Whether or not to print progress information
+
+        Returns
+        -------
+        coilset: CoilSet
+            Optimised CoilSet
+        """
+        if x0 is None:
+            x0 = self._get_initial_vector()
+
+        eq_constraints, ineq_constraints = self._make_numerical_constraints()
+        opt_result = optimise(
+            f_objective=lambda x: self.objective(x, verbose=verbose),
+            x0=x0,
+            df_objective=None,  # use a numerical approximation if needed
+            algorithm=self.opt_algorithm,
+            opt_conditions=self.opt_conditions,
+            bounds=self.bounds,
+            eq_constraints=eq_constraints,
+            ineq_constraints=ineq_constraints,
+        )
+        optimal_positions = opt_result.x
+        # Call the objective one last time
+        self.sub_opt_objective(optimal_positions)
+
+        # Clean up state of Equilibrium objects
+        for sub_opt in self.sub_opt_problems:
+            sub_opt.eq._remap_greens()
+            sub_opt.eq._clear_OX_points()
+        return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
