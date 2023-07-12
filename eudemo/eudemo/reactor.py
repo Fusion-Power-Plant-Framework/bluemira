@@ -578,8 +578,14 @@ if __name__ == "__main__":
         reactor.radiation_shield.xz_boundary(),
     )
 
-    reactor.cryostat.add_plugs([cr_up_plug, cr_eq_plug, cr_lp_plug])
-    reactor.radiation_shield.add_plugs([rs_up_plug, rs_eq_plug, rs_lp_plug])
+    reactor.cryostat.add_plugs(
+        [cr_up_plug, cr_eq_plug, cr_lp_plug],
+        n_TF=reactor_config.global_params.n_TF.value,
+    )
+    reactor.radiation_shield.add_plugs(
+        [rs_up_plug, rs_eq_plug, rs_lp_plug],
+        n_TF=reactor_config.global_params.n_TF.value,
+    )
 
     from bluemira.display import show_cad
 
