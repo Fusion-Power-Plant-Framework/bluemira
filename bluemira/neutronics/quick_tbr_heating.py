@@ -45,6 +45,7 @@ import numpy as np
 import openmc
 import pandas as pd
 from numpy import pi
+from openmc.config import config
 
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.make_materials as mm
@@ -60,34 +61,32 @@ from bluemira.neutronics.constants import (
     energy_per_dt_MeV,
 )
 
-os.environ[
-    "OPENMC_CROSS_SECTIONS"
+config[
+    "cross_sections"
 ] = "/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml"
 
 
 @dataclass
-class OpenMCSimulationRuntimeParameters(ParameterFrame):
+class OpenMCSimulationRuntimeParameters:
     """Parameters used in the actual simulation"""
 
     # parameters used in setup_openmc()
-    particles: Parameter[int]  # number of particles used in the neutronics simulation
-    batches: Parameter[int]
-    photon_transport: Parameter[bool]
-    electron_treatment: Parameter[str]
-    run_mode: Parameter[str]
-    openmc_write_summary: Parameter[str]
+    particles: int  # number of particles used in the neutronics simulation
+    batches: int
+    photon_transport: bool
+    electron_treatment: str
+    run_mode: str
+    openmc_write_summary: str
     # Parameters used elsewhere
-    parametric_source: Parameter[bool]
-    volume_calc_particles: Parameter[
-        int
-    ]  # number of particles used in the volume calculation.
+    parametric_source: bool
+    volume_calc_particles: int  # number of particles used in the volume calculation.
 
 
 @dataclass
-class TokamakOperationParameters(ParameterFrame):
+class TokamakOperationParameters:
     """The tokamak's operational parameter, such as its power"""
 
-    reactor_power_MW: Parameter[float]  # MW
+    reactor_power_MW: float  # MW
 
     def calculate_total_neutron_rate(self):
         """Convert the reactor power to neutron rate
@@ -99,34 +98,34 @@ class TokamakOperationParameters(ParameterFrame):
 
 
 @dataclass
-class BreederTypeParameters(ParameterFrame):
+class BreederTypeParameters:
     """Dataclass to hold information about the breeder blanket material
     and design choices.
     """
 
-    li_enrich_ao: Parameter[float]
-    blanket_type: Parameter[mm.BlanketType]
+    li_enrich_ao: float
+    blanket_type: mm.BlanketType
 
 
 @dataclass
-class TokamakGeometry(ParameterFrame):
+class TokamakGeometry:
     """The measurements for all of the geneic components of the tokamak"""
 
-    minor_r: Parameter[float]  # [cm]
-    major_r: Parameter[float]  # [cm]
-    elong: Parameter[float]  # [dimensionless]
-    shaf_shift: Parameter[float]  # [cm]
-    inb_fw_thick: Parameter[float]  # [cm]
-    inb_bz_thick: Parameter[float]  # [cm]
-    inb_mnfld_thick: Parameter[float]  # [cm]
-    inb_vv_thick: Parameter[float]  # [cm]
-    tf_thick: Parameter[float]  # [cm]
-    outb_fw_thick: Parameter[float]  # [cm]
-    outb_bz_thick: Parameter[float]  # [cm]
-    outb_mnfld_thick: Parameter[float]  # [cm]
-    outb_vv_thick: Parameter[float]  # [cm]
-    triang: Parameter[float] = 0.333  # [dimensionless]
-    inb_gap: Parameter[float] = 20.0  # [cm]
+    minor_r: float  # [cm]
+    major_r: float  # [cm]
+    elong: float  # [dimensionless]
+    shaf_shift: float  # [cm]
+    inb_fw_thick: float  # [cm]
+    inb_bz_thick: float  # [cm]
+    inb_mnfld_thick: float  # [cm]
+    inb_vv_thick: float  # [cm]
+    tf_thick: float  # [cm]
+    outb_fw_thick: float  # [cm]
+    outb_bz_thick: float  # [cm]
+    outb_mnfld_thick: float  # [cm]
+    outb_vv_thick: float  # [cm]
+    triang: float = 0.333  # [dimensionless]
+    inb_gap: float = 20.0  # [cm]
 
 
 # ----------------------------------------------------------------------------------------
@@ -446,9 +445,11 @@ def create_materials(breeder_materials: BreederTypeParameters):
     breeder_materials: BreederTypeParameters
         dataclass containing attributes: 'blanket_type', 'li_enrich_ao'
     """
-    material_lib = mm.AutoPopulatingMaterialsLibrary.create_complete_material_library(
+
+    material_lib = mm.MaterialsLibrary.create_from_blanket_type(
         breeder_materials.blanket_type, breeder_materials.li_enrich_ao
     )
+    material_lib.export()
     return material_lib
 
 
@@ -1085,7 +1086,7 @@ if __name__ == "__main__":
         breeder_materials: BreederTypeParameters
         tokamak_geometry: TokamakGeometry
 
-    def get_preset_physical_properties(blanket_type):
+    def get_preset_physical_properties(blanket_type: str):
         """
         Works as a switch-case for choosing the tokamak geometry and blankets for a given blanket type.
         The allowed list of blanket types are specified in mm.BlanketType.
@@ -1093,7 +1094,7 @@ if __name__ == "__main__":
             {'wcll', 'dcll', 'hcpb'}
         """
         breeder_materials = BreederTypeParameters(
-            blanket_type=blanket_type,
+            blanket_type=mm.BlanketType[blanket_type.upper()],
             li_enrich_ao=60.0,  # atomic fraction percentage of lithium
         )
 
@@ -1119,7 +1120,7 @@ if __name__ == "__main__":
             "elong": 1.65,
             "shaf_shift": 0.0,
         }  # The shafranov shift of the plasma
-        if blanket_type == "wcll":
+        if breeder_materials.blanket_type is mm.BlanketType.WCLL:
             tokamak_geometry = TokamakGeometry(
                 **plasma_shape,
                 inb_fw_thick=2.7,
@@ -1132,7 +1133,7 @@ if __name__ == "__main__":
                 outb_mnfld_thick=42.9,
                 outb_vv_thick=60.0,
             )
-        elif blanket_type == "dcll":
+        elif breeder_materials.blanket_type is mm.BlanketType.DCLL:
             tokamak_geometry = TokamakGeometry(
                 **plasma_shape,
                 inb_fw_thick=2.2,
@@ -1145,7 +1146,7 @@ if __name__ == "__main__":
                 outb_mnfld_thick=24.8,
                 outb_vv_thick=60.0,
             )
-        elif blanket_type == "hcpb":
+        elif breeder_materials.blanket_type is mm.BlanketType.HCPB:
             # HCPB Design Report, 26/07/2019
             tokamak_geometry = TokamakGeometry(
                 **plasma_shape,
@@ -1159,17 +1160,11 @@ if __name__ == "__main__":
                 outb_mnfld_thick=56.0,
                 outb_vv_thick=60.0,
             )
-        elif blanket_type in mm.BlanketType.allowed_types():
-            raise Exception(
-                f"Programmer error: {blanket_type} is a valid BlanketType but is not implemented in {sys._getframe().f_code.co_name}."
-            )
-        else:
-            raise ValueError(f"{blanket_type} is not a supported material!")
 
         return SimulatedBluemiraOutputVariables(breeder_materials, tokamak_geometry)
 
     # implemented blanket_type:{'wcll', 'dcll', 'hcpb'}
-    properties = get_preset_physical_properties("hcpb")
+    properties = get_preset_physical_properties("wcll")
     breeder_materials = properties.breeder_materials
     tokamak_geometry = properties.tokamak_geometry
 

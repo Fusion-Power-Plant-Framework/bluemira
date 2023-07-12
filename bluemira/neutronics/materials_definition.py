@@ -45,7 +45,7 @@ Be12Ti_mat.set_density("g/cm3", 2.25)
 
 
 # Lithium-containing materials
-def make_PbLi_mat(li_enrich_ao):
+def make_PbLi_mat(li_enrich_ao) -> Material:
     PbLi_mat = Material(name="PbLi")
     PbLi_mat.add_element("Pb", 0.83, percent_type="ao")
     PbLi_mat.add_element(
@@ -62,7 +62,7 @@ def make_PbLi_mat(li_enrich_ao):
     return PbLi_mat
 
 
-def make_Li4SiO4_mat(li_enrich_ao):
+def make_Li4SiO4_mat(li_enrich_ao) -> Material:
     """Making enriched Li4SiO4 from elements with enrichment of Li6 enrichment"""
     Li4SiO4_mat = Material(name="lithium_orthosilicate")
     Li4SiO4_mat.add_element(
@@ -79,7 +79,7 @@ def make_Li4SiO4_mat(li_enrich_ao):
     return Li4SiO4_mat
 
 
-def make_Li2TiO3_mat(li_enrich_ao):
+def make_Li2TiO3_mat(li_enrich_ao) -> Material:
     """Li2TiO3"""
     Li2TiO3_mat = Material(name="lithium_titanate")
     Li2TiO3_mat.add_element(
@@ -106,9 +106,9 @@ lined_euro_mat = Material.mix_materials(
 
 
 # Lithium-containing material that is also a mixture of existing materials
-def make_KALOS_ACB_mat(li_enrich_ao):
+def make_KALOS_ACB_mat(li_enrich_ao) -> Material:
     """Ref: Current status and future perspectives of EU ceramic breeder development"""
-    KALOS_ACB_mat = openmc.Material.mix_materials(
+    KALOS_ACB_mat = Material.mix_materials(
         name="kalos_acb",  # optional name of homogeneous material
         materials=[make_Li4SiO4_mat(li_enrich_ao), make_Li2TiO3_mat(li_enrich_ao)],
         fracs=[
@@ -118,3 +118,4 @@ def make_KALOS_ACB_mat(li_enrich_ao):
         percent_type="ao",
     )  # combination fraction type is by atom fraction
     KALOS_ACB_mat.set_density("g/cm3", 2.52 * 0.642)  #  applying packing fraction
+    return KALOS_ACB_mat

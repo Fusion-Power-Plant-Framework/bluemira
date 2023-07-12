@@ -552,17 +552,17 @@ def create_divertor(div_points, outer_points, inner_points, material_lib):
     div_inb = openmc.Cell(
         region=divertor_region_inner,
         name="Divertor Inner",
-        fill=material_lib["divertor_mat"],
+        fill=material_lib.divertor_mat,
     )
     div_mid = openmc.Cell(
         region=divertor_region_mid,
         name="Divertor Mid",
-        fill=material_lib["divertor_mat"],
+        fill=material_lib.divertor_mat,
     )
     div_out = openmc.Cell(
         region=divertor_region_outer,
         name="Divertor Outer",
-        fill=material_lib["divertor_mat"],
+        fill=material_lib.divertor_mat,
     )
     cells["divertor_cells"] = [div_inb, div_mid, div_out]
 
@@ -570,7 +570,7 @@ def create_divertor(div_points, outer_points, inner_points, material_lib):
     cells["divertor_fw"] = openmc.Cell(
         region=div_fw_region_inner | div_fw_region_mid | div_fw_region_outer,
         name="Divertor PFC",
-        fill=material_lib["div_fw_mat"],
+        fill=material_lib.div_fw_mat,
     )
     cells["divertor_fw"].volume = vf.get_div_fw_vol(
         [
@@ -592,7 +592,7 @@ def create_divertor(div_points, outer_points, inner_points, material_lib):
     cells["divertor_fw_sf"] = openmc.Cell(
         region=div_sf_region_inner | div_sf_region_mid | div_sf_region_outer,
         name="Divertor PFC Surface",
-        fill=material_lib["div_sf_mat"],
+        fill=material_lib.div_sf_mat,
     )
     cells["divertor_fw_sf"].volume = vf.get_div_fw_vol(
         [
@@ -999,7 +999,7 @@ def make_geometry(
         & -surfaces["inb_top"]
         & +surfaces["inb_bot"],
         name="TF Coils",
-        fill=material_lib["tf_coil_mat"],
+        fill=material_lib.tf_coil_mat,
     )
 
     ### Divertor
@@ -1052,7 +1052,7 @@ def make_geometry(
         & -surfaces["graveyard_top"]
         & +surfaces["graveyard_bot"],
         name="Container steel",
-        fill=material_lib["container_mat"],
+        fill=material_lib.container_mat,
     )
 
     #################################################
