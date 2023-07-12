@@ -118,7 +118,6 @@ def circular_coil_inductance_elliptic(radius: float, rc: float) -> float:
     The self-inductance of the circular coil [H]
     """
     k = 4 * radius * (radius - rc) / (2 * radius - rc) ** 2
-    args = (np.array(arg, dtype=float) for arg in (k, GREENS_ZERO, 1.0 - GREENS_ZERO))
     k = np.clip(k, GREENS_ZERO, 1.0 - GREENS_ZERO)
     return MU_0 * (2 * radius - rc) * ((1 - k**2 / 2) * ellipk(k) - ellipe(k))
 

@@ -21,7 +21,6 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
-import pytest
 
 from bluemira.base.constants import MU_0
 from bluemira.display.auto_config import plot_defaults
