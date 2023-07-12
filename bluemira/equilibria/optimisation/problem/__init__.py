@@ -20,6 +20,14 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Coilset optimisation problem classes and tools."""
 
+from bluemira.equilibria.optimisation.problem._breakdown import (
+    BreakdownCOP,
+    BreakdownZoneStrategy,
+    CircularZoneStrategy,
+    InboardBreakdownZoneStrategy,
+    InputBreakdownZoneStrategy,
+    OutboardBreakdownZoneStrategy,
+)
 from bluemira.equilibria.optimisation.problem._minimal_current import MinimalCurrentCOP
 from bluemira.equilibria.optimisation.problem._nested_position import (
     NestedCoilsetPositionCOP,
@@ -33,10 +41,16 @@ from bluemira.equilibria.optimisation.problem._tikhonov import (
 from bluemira.equilibria.optimisation.problem.base import CoilsetOptimisationProblem
 
 __all__ = [
+    "BreakdownCOP",
+    "BreakdownZoneStrategy",
+    "CircularZoneStrategy",
     "CoilsetOptimisationProblem",
     "CoilsetPositionCOP",
+    "InboardBreakdownZoneStrategy",
+    "InputBreakdownZoneStrategy",
     "MinimalCurrentCOP",
     "NestedCoilsetPositionCOP",
+    "OutboardBreakdownZoneStrategy",
     "PulsedNestedPositionCOP",
     "TikhonovCurrentCOP",
     "UnconstrainedTikhonovCurrentGradientCOP",

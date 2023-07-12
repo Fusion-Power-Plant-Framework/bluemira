@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -256,22 +256,20 @@ class CoilsetOptimisationProblem(abc.ABC):
         """
         Update the magnetic optimisation constraints with the state of the Equilibrium
         """
-        if getattr(self, "_constraints", None) is not None:
-            for constraint in self._constraints:
-                if isinstance(constraint, UpdateableConstraint):
-                    constraint.prepare(
-                        self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils
-                    )
-                if "scale" in constraint._args:
-                    constraint._args["scale"] = self.scale
+        if not hasattr(self, "_constraints"):
+            return
+        for constraint in self._constraints:
+            if isinstance(constraint, UpdateableConstraint):
+                constraint.prepare(self.eq, I_not_dI=I_not_dI, fixed_coils=fixed_coils)
+            if "scale" in constraint._args:
+                constraint._args["scale"] = self.scale
 
     def _make_numerical_constraints(
         self,
-    ) -> Tuple[ConstraintT, ConstraintT]:
+    ) -> Tuple[List[ConstraintT], List[ConstraintT]]:
         """Build the numerical equality and inequality constraint dictionaries."""
         if (constraints := getattr(self, "_constraints", None)) is None:
             return [], []
-        constraints: List[ConstraintFunction]
         equality = []
         inequality = []
         for constraint in constraints:
