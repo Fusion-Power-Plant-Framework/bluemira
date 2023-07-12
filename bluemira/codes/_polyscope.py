@@ -32,9 +32,7 @@ class DefaultDisplayOptions:
         return self.colour
 
     @color.setter
-    def color(
-        self, value: Union[str, Tuple[float, float, float], ColorPalette]  # noqa: F821
-    ):
+    def color(self, value: Union[str, Tuple[float, float, float], ColorPalette]):
         """See colour"""
         self.colour = value
 
