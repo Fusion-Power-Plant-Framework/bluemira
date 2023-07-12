@@ -156,7 +156,7 @@ markers = [
     "reactor",
     "private"
 ]
-addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
+addopts = "--html=report.html --plotting-on --self-contained-html --strict-markers -r fEX"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']
 
 [tool.versioneer]

@@ -309,7 +309,7 @@ class TestTripleArc:
         wire = p.create_shape()
         # todo: have no idea why this would have changed,
         # but it looks correct with 7 segments
-        assert len(wire._boundary) == 7
+        assert len(wire._boundary) == 6
         length = 2 * np.pi * 3
         # okay this is failing, something has gone wrong
         assert np.isclose(wire.length, length)

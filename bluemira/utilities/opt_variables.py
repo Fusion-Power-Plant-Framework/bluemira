@@ -153,7 +153,7 @@ class OptVariable:
             Value at which to fix the variable.
         """
         self.fixed = True
-        if value:
+        if value is not None:
             self._value = value
 
     def adjust(
@@ -181,13 +181,13 @@ class OptVariable:
         if self.fixed:
             raise OptVariablesError(f"'{self.name}' is fixed and cannot be adjusted.")
 
-        if lower_bound:
+        if lower_bound is not None:
             self.lower_bound = lower_bound
 
-        if upper_bound:
+        if upper_bound is not None:
             self.upper_bound = upper_bound
 
-        if value:
+        if value is not None:
             if not strict_bounds:
                 self._adjust_bounds_to(value)
             self.value = value
@@ -424,7 +424,7 @@ class OptVariablesFrame:
             If True, will raise errors if values are outside the bounds. If False, the
             bounds are dynamically adjusted to match the value.
         """
-        if var_dict:
+        if var_dict is not None:
             for k, v in var_dict.items():
                 args = [
                     v.get("value", None),

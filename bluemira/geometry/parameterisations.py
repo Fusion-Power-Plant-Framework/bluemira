@@ -424,7 +424,11 @@ class PrincetonDOptVariables(OptVariablesFrame):
         description="Outboard limb radius",
     )
     dz: OptVariable = ov(
-        "dz", 0.5, lower_bound=0.1, upper_bound=1, description="Vertical offset from z=0"
+        "dz",
+        0,
+        lower_bound=-0.5,
+        upper_bound=0.5,
+        description="Vertical offset from z=0",
     )
 
 
