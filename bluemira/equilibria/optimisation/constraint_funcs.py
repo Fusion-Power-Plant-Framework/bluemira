@@ -57,7 +57,9 @@ in derivative based algorithms, such as those utilising gradient descent.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
+
+from bluemira.base.look_and_feel import bluemira_warn
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -72,6 +74,22 @@ class ConstraintFunction(abc.ABC):
     @abc.abstractmethod
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """The constraint function."""
+
+    @property
+    def constraint_type(self) -> Literal["inequality", "equality"]:
+        try:
+            return self._constraint_type
+        except AttributeError:
+            return "inequality"
+
+    @constraint_type.setter
+    def constraint_type(self, constraint_t: Literal["inequality", "equality"]) -> None:
+        if constraint_t not in ["inequality", "equality"]:
+            bluemira_warn(
+                f"Unknown nonlinear constraint type '{constraint_t}', "
+                "defaulting to 'inequality'."
+            )
+        self._constraint_type = constraint_t
 
 
 class AxBConstraint(ConstraintFunction):
@@ -140,11 +158,12 @@ class L2NormConstraint(ConstraintFunction):
         return residual.T @ residual - self.value
 
     def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+        vector = self.scale * vector
         df = 2 * (self.a_mat.T @ self.a_mat @ vector - self.a_mat.T @ self.b_vec)
         return df * self.scale
 
 
-class FieldConstraints(ConstraintFunction):
+class FieldConstraintFunction(ConstraintFunction):
     """
     Current optimisation poloidal field constraints at prescribed locations
 
@@ -265,18 +284,18 @@ class CoilForceConstraint(ConstraintFunction):
 
         # get coil force and jacobian
         F = np.zeros((n_coils, 2))
-        self.PF_Fz_max /= self.scale
-        self.CS_Fz_sep_max /= self.scale
-        self.CS_Fz_sum_max /= self.scale
+        PF_Fz_max = self.PF_Fz_max / self.scale
+        CS_Fz_sep_max = self.CS_Fz_sep_max / self.scale
+        CS_Fz_sum_max = self.CS_Fz_sum_max / self.scale
 
         for i in range(2):  # coil force
             # NOTE: * Hadamard matrix product
-            F[:, i] = currents * (self.a_mat[:, :, i] @ self.currents + self.b_vec[:, i])
+            F[:, i] = currents * (self.a_mat[:, :, i] @ currents + self.b_vec[:, i])
 
         F /= self.scale  # Scale down to MN
 
         # Absolute vertical force constraint on PF coils
-        constraint[: self.n_PF] = F[: self.n_PF, 1] ** 2 - self.PF_Fz_max**2
+        constraint[: self.n_PF] = F[: self.n_PF, 1] ** 2 - PF_Fz_max**2
 
         if self.n_CS != 0:
             # vertical forces on CS coils
@@ -284,13 +303,14 @@ class CoilForceConstraint(ConstraintFunction):
             # vertical force on CS stack
             cs_z_sum = np.sum(cs_fz)
             # Absolute sum of vertical force constraint on entire CS stack
-            constraint[self.n_PF] = cs_z_sum**2 - self.CS_Fz_sum_max**2
+            constraint[self.n_PF] = cs_z_sum**2 - CS_Fz_sum_max**2
             for i in range(self.n_CS - 1):  # evaluate each gap in CS stack
                 # CS separation constraints
                 f_sep = np.sum(cs_fz[: i + 1]) - np.sum(cs_fz[i + 1 :])
-                constraint[self.n_PF + 1 + i] = f_sep - self.CS_Fz_sep_max
+                constraint[self.n_PF + 1 + i] = f_sep - CS_Fz_sep_max
+        return constraint
 
-    def df_objective(self, vector: npt.NDArray) -> npt.NDArray:
+    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         n_coils = vector.size
         grad = np.zeros((n_coils, n_coils))
         dF = np.zeros((n_coils, n_coils, 2))  # noqa: N806
@@ -318,3 +338,4 @@ class CoilForceConstraint(ConstraintFunction):
                 f_up = np.sum(dF[self.n_PF : self.n_PF + i + 1, :, 1], axis=0)
                 f_down = np.sum(dF[self.n_PF + i + 1 :, :, 1], axis=0)
                 grad[self.n_PF + 1 + i] = f_up - f_down
+        return grad

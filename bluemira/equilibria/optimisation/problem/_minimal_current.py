@@ -19,13 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.opt_constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import CoilCurrentsObjective
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
@@ -54,15 +55,17 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self,
         coilset: CoilSet,
         eq: Equilibrium,
-        max_currents: npt.ArrayLike = None,
+        max_currents: Optional[npt.ArrayLike] = None,
         opt_conditions: Optional[Dict[str, float]] = None,
         opt_algorithm: str = "SLSQP",
+        constraints: Optional[List[UpdateableConstraint]] = None,
     ):
+        self.coilset = coilset
         self.eq = eq
         self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
-        self.coilset = coilset
         self.opt_conditions = opt_conditions
         self.opt_algorithm = opt_algorithm
+        self._constraints = [] if constraints is None else constraints
 
     def optimise(self, x0: Optional[npt.NDArray] = None, fixed_coils: bool = True):
         """
@@ -88,12 +91,15 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
             x0 = np.clip(initial_currents, *self.bounds)
 
         objective = CoilCurrentsObjective()
+        eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=objective.f_objective,
             df_objective=objective.df_objective,
             x0=x0,
             algorithm=self.opt_algorithm,
             opt_conditions=self.opt_conditions,
+            eq_constraints=eq_constraints,
+            ineq_constraints=ineq_constraints,
         )
         currents = opt_result.x
         self.coilset.get_control_coils().current = currents * self.scale

@@ -27,7 +27,7 @@ import numpy.typing as npt
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.opt_constraints import MagneticConstraintSet
-from bluemira.equilibria.optimisation.constraints import ConstraintFunction
+from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
@@ -83,7 +83,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         },
         opt_parameters: Dict[str, Any] = {"initial_step": 0.03},
         max_currents: Optional[npt.ArrayLike] = None,
-        constraints: Optional[List[ConstraintFunction]] = None,
+        constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.coilset = coilset
         self.eq = eq
@@ -93,7 +93,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self.opt_algorithm = opt_algorithm
         self.opt_conditions = opt_conditions
         self.opt_parameters = opt_parameters
-        self._constraints = constraints
+        self._constraints = [] if constraints is None else constraints
 
     def optimise(self, x0=None, fixed_coils=True) -> CoilsetOptimiserResult:
         """
@@ -125,6 +125,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             b_vec=b_vec,
             gamma=self.gamma,
         )
+        eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=objective.f_objective,
             df_objective=getattr(objective, "df_objective", None),
@@ -133,6 +134,8 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             opt_conditions=self.opt_conditions,
             algorithm=self.opt_algorithm,
             opt_parameters=self.opt_parameters,
+            eq_constraints=eq_constraints,
+            ineq_constraints=ineq_constraints,
         )
         currents = opt_result.x
         self.coilset.get_control_coils().current = currents * self.scale
@@ -170,7 +173,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         self.targets = targets
         self.gamma = gamma
 
-    def optimise(self) -> CoilsetOptimiserResult:
+    def optimise(self, **_) -> CoilsetOptimiserResult:
         """
         Optimise the prescribed problem.
 

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Type, Union
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
@@ -34,15 +34,13 @@ if TYPE_CHECKING:
 
 import numpy as np
 
-from bluemira.equilibria.opt_constraint_funcs import (
-    Ax_b_constraint,
-    L2_norm_constraint,
-    coil_force_constraints,
-    field_constraints,
+from bluemira.equilibria.optimisation.constraint_funcs import AxBConstraint
+from bluemira.equilibria.optimisation.constraint_funcs import (
+    CoilForceConstraint as CoilForceConstraintFunction,
 )
 from bluemira.equilibria.optimisation.constraint_funcs import (
-    AxBConstraint,
     ConstraintFunction,
+    FieldConstraintFunction,
     L2NormConstraint,
 )
 from bluemira.equilibria.plotting import ConstraintPlotter
@@ -96,6 +94,11 @@ class UpdateableConstraint(ABC):
         """
         pass
 
+    @abstractmethod
+    def f_constraint(self) -> ConstraintFunction:
+        """The numerical non-linear part of the constraint."""
+        pass
+
 
 class FieldConstraints(UpdateableConstraint):
     """
@@ -142,19 +145,16 @@ class FieldConstraints(UpdateableConstraint):
 
         self.x = x
         self.z = z
-        super().__init__(
-            f_constraint=field_constraints,
-            f_constraint_args={
-                "ax_mat": None,
-                "az_mat": None,
-                "bxp_vec": None,
-                "bzp_vec": None,
-                "B_max": B_max,
-                "scale": 1.0,
-            },
-            tolerance=tolerance,
-            constraint_type=constraint_type,
-        )
+        self._args = {
+            "ax_mat": None,
+            "az_mat": None,
+            "bxp_vec": None,
+            "bzp_vec": None,
+            "B_max": B_max,
+            "scale": 1.0,
+        }
+        self.tolerance = tolerance
+        self.f_constraint_type = constraint_type
 
     def prepare(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
@@ -188,10 +188,14 @@ class FieldConstraints(UpdateableConstraint):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        Bx, Bz = np.zeros(len(self)), np.zeros(len(self))
-        Bx = equilibrium.Bx(self.x, self.z)
-        Bz = equilibrium.Bz(self.x, self.z)
+        Bx = np.atleast_1d(equilibrium.Bx(self.x, self.z))
+        Bz = np.atleast_1d(equilibrium.Bz(self.x, self.z))
         return Bx, Bz
+
+    def f_constraint(self) -> FieldConstraintFunction:
+        f_constraint = FieldConstraintFunction(**self._args)
+        f_constraint.constraint_type = self.f_constraint_type
+        return f_constraint
 
     def __len__(self) -> int:
         """
@@ -313,20 +317,17 @@ class CoilForceConstraints(UpdateableConstraint):
         elif len(tolerance) != n_f_constraints:
             raise ValueError(f"Tolerance vector not of length {n_f_constraints}")
 
-        super().__init__(
-            f_constraint=coil_force_constraints,
-            f_constraint_args={
-                "a_mat": None,
-                "b_vec": None,
-                "scale": 1.0,
-                "PF_Fz_max": PF_Fz_max,
-                "CS_Fz_sum_max": CS_Fz_sum_max,
-                "CS_Fz_sep_max": CS_Fz_sep_max,
-                "n_PF": n_PF,
-                "n_CS": n_CS,
-            },
-            tolerance=tolerance,
-        )
+        self._args = {
+            "a_mat": None,
+            "b_vec": None,
+            "scale": 1.0,
+            "PF_Fz_max": PF_Fz_max,
+            "CS_Fz_sum_max": CS_Fz_sum_max,
+            "CS_Fz_sep_max": CS_Fz_sep_max,
+            "n_PF": n_PF,
+            "n_CS": n_CS,
+        }
+        self.tolerance = tolerance
 
     def prepare(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
@@ -362,6 +363,9 @@ class CoilForceConstraints(UpdateableConstraint):
             )
         return fp
 
+    def f_constraint(self) -> CoilForceConstraintFunction:
+        return CoilForceConstraintFunction(**self._args)
+
 
 class MagneticConstraint(UpdateableConstraint):
     """
@@ -388,7 +392,7 @@ class MagneticConstraint(UpdateableConstraint):
             else:
                 tolerance = tolerance * np.ones(len(self))
         self.weights = weights
-        self.f_constraint = f_constraint
+        self._f_constraint = f_constraint
         self._args = {"a_mat": None, "b_vec": None, "value": 0.0, "scale": 1.0}
         self.tolerance = tolerance
         self.constraint_type = constraint_type
@@ -431,6 +435,12 @@ class MagneticConstraint(UpdateableConstraint):
         Length of the array if an array is specified, otherwise 1 for a float.
         """
         return len(self.x) if hasattr(self.x, "__len__") else 1
+
+    def f_constraint(self) -> ConstraintFunction:
+        """Return the non-linear, numerical, part of the constraint."""
+        f_constraint = self._f_constraint(**self._args)
+        f_constraint.constraint_type = self.constraint_type
+        return f_constraint
 
 
 class AbsoluteMagneticConstraint(MagneticConstraint):
@@ -519,7 +529,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
             weights=weights,
             tolerance=tolerance,
             constraint_type="inequality",
-            f_constraint=L2_norm_constraint,
+            f_constraint=L2NormConstraint,
         )
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
@@ -578,7 +588,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
             target_value,
             weights=weights,
             tolerance=tolerance,
-            f_constraint=Ax_b_constraint,
+            f_constraint=AxBConstraint,
             constraint_type="equality",
         )
 
@@ -687,7 +697,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
             target_value,
             weights,
             tolerance,
-            f_constraint=L2_norm_constraint,
+            f_constraint=L2NormConstraint,
             constraint_type="inequality",
         )
 
@@ -745,7 +755,7 @@ class MagneticConstraintSet(ABC):
 
     def __call__(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
-    ):  # noqa :N803
+    ):
         """
         Update the MagneticConstraintSet
         """

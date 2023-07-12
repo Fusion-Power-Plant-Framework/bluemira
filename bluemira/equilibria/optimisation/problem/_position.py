@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -27,6 +27,7 @@ import numpy.typing as npt
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.opt_constraints import MagneticConstraintSet
+from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import regularised_lsq_fom
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
@@ -89,6 +90,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
             "stop_val": 1.0,
             "max_eval": 100,
         },
+        constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.coilset = coilset
         self.eq = eq
@@ -98,8 +100,9 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.gamma = gamma
         self.opt_algorithm = opt_algorithm
         self.opt_conditions = opt_conditions
+        self._constraints = [] if constraints is None else constraints
 
-    def optimise(self) -> CoilsetOptimiserResult:
+    def optimise(self, **_) -> CoilsetOptimiserResult:
         """
         Run the optimisation.
 
@@ -114,12 +117,14 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         initial_mapped_state = np.concatenate(
             (initial_mapped_positions, initial_currents)
         )
-
+        eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=self.objective,
             x0=initial_mapped_state,
             opt_conditions=self.opt_conditions,
             algorithm=self.opt_algorithm,
+            eq_constraints=eq_constraints,
+            ineq_constraints=ineq_constraints,
         )
         self.set_coilset_state(self.coilset, opt_result.x, self.scale)
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

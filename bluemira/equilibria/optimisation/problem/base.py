@@ -29,8 +29,10 @@ import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.opt_constraints import UpdateableConstraint
+from bluemira.equilibria.optimisation.constraint_funcs import ConstraintFunction
+from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.optimisation._optimiser import OptimiserResult
+from bluemira.optimisation.typing import ConstraintT
 
 
 @dataclass
@@ -79,7 +81,7 @@ class CoilsetOptimisationProblem(abc.ABC):
     """
 
     @abc.abstractmethod
-    def optimise(self) -> CoilsetOptimiserResult:
+    def optimise(self, **kwargs) -> CoilsetOptimiserResult:
         """Run the coilset optimisation."""
 
     @property
@@ -254,7 +256,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         """
         Update the magnetic optimisation constraints with the state of the Equilibrium
         """
-        if self._constraints is not None:
+        if getattr(self, "_constraints", None) is not None:
             for constraint in self._constraints:
                 if isinstance(constraint, UpdateableConstraint):
                     constraint.prepare(
@@ -262,6 +264,29 @@ class CoilsetOptimisationProblem(abc.ABC):
                     )
                 if "scale" in constraint._args:
                     constraint._args["scale"] = self.scale
+
+    def _make_numerical_constraints(
+        self,
+    ) -> Tuple[ConstraintT, ConstraintT]:
+        """Build the numerical equality and inequality constraint dictionaries."""
+        if (constraints := getattr(self, "_constraints", None)) is None:
+            return [], []
+        constraints: List[ConstraintFunction]
+        equality = []
+        inequality = []
+        for constraint in constraints:
+            f_constraint = constraint.f_constraint()
+            d: ConstraintT = {
+                "f_constraint": f_constraint.f_constraint,
+                "df_constraint": getattr(f_constraint, "df_constraint", None),
+                "tolerance": constraint.tolerance,
+            }
+            # TODO: tidy this up, so the interface guarantees this works!
+            if getattr(constraint, "constraint_type", "inequality") == "equality":
+                equality.append(d)
+            else:
+                inequality.append(d)
+        return equality, inequality
 
     @property
     def scale(self) -> float:
