@@ -156,16 +156,16 @@ def plot_errors(x, z, Bx, Bz, Bp, Bx2, Bz2, Bp2):
     plt.close(f)
 
 
-@pytest.mark.longrun
 def test_inductance():
-    radii = np.linspace(1, 100, 100)
-    rci = np.linspace(0.0001, 1, 100)
-    ind, ind2 = np.zeros((100, 100)), np.zeros((100, 100))
+    n = 25
+    radii = np.linspace(1, 100, n)
+    rci = np.linspace(0.0001, 1, n)
+    ind, ind2 = np.zeros((n, n)), np.zeros((n, n))
+    ind3 = np.zeros((n, n))
 
-    ind3 = np.zeros((100, 100))
     for i, r in enumerate(radii):
         circle = make_circle(r, center=(0, 0, 0), axis=(0, 1, 0))
-        filament = circle.discretize(ndiscr=200)
+        filament = circle.discretize(dl=circle.length / 50)
         for j, rc in enumerate(rci):
             bsf = BiotSavartFilament(filament, rc)
             ind[i, j] = circular_coil_inductance_elliptic(r, rc)
@@ -178,8 +178,13 @@ def test_inductance():
     ax[0].contourf(xx, yy, ind, levels=levels)
     ax[1].contourf(xx, yy, ind2, levels=levels)
     ax[2].contourf(xx, yy, ind3, levels=levels)
-    diff = 100 * (ind - ind3) / ind
-    cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-10, 10, 100))
-    f.colorbar(cm)
+    diff = 100 * (ind2 - ind3) / ind2
+    cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-5, 5, 100))
+    cb = f.colorbar(cm)
+    cb.set_label("%")
     plt.show()
     plt.close(f)
+    res = np.sum((ind2 - ind3) ** 2)
+    tot = np.sum((ind2 - np.average(ind2)) ** 2)
+    r2 = 1 - res / tot
+    assert r2 > 0.998
