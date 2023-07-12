@@ -248,9 +248,6 @@ def build_lower_port_xyz(
     )
     angled_duct = extrude_shape(angled_duct_face, ext_vector)
     angled_void = extrude_shape(angled_void_face, ext_vector)
-    from bluemira.display import show_cad
-
-    show_cad([angled_duct_face, angled_duct])
 
     straight_duct_backwall = extrude_shape(
         straight_duct_backwall_face,
@@ -273,7 +270,6 @@ def build_lower_port_xyz(
 
     duct = boolean_fuse([angled_top, straight_with_hole])
     duct = boolean_cut(duct, [angled_void_piece])[0]
-    show_cad(duct)
 
     # rotate pieces to correct positions
     duct.rotate(degree=180 / n_TF)
