@@ -77,8 +77,6 @@ but note that it could be any closed wire.
 
     plot_2d([circle.create_shape(), zone])
 
-.. image:: images/semi-circle.svg
-
 As we are trying to maximise the perimeter of our circle,
 the objective function will be the negative of the perimeter.
 

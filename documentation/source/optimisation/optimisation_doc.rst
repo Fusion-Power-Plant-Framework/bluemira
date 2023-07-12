@@ -213,7 +213,7 @@ history of the optimisation parameters
     OptimiserResult(x=array([0.33333528, 0.29629148]), n_evals=18)
 
 The Optimisation Problem Class
------------------------------
+------------------------------
 
 As an alternative to the :py:func:`~bluemira.optimisation._optimise.optimise`
 function,

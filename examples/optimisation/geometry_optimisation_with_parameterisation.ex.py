@@ -37,6 +37,9 @@
 
 """Geometry Optimisation With a Geometry Parameterisation"""
 
+# %% [markdown]
+# # Geometry Optimisation with a New Parameterisation
+
 # %%
 from typing import Dict, Optional, Union
 
