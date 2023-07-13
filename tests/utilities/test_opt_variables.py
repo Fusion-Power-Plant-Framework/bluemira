@@ -87,7 +87,9 @@ class TestBoundedVariable:
 
 
 @dataclass
-class TOptVariablesOptVariables(OptVariablesFrame):
+class TestOptVariablesOptVariables(OptVariablesFrame):
+    __test__ = False
+
     a: OptVariable = ov("a", 2, 0, 3)
     b: OptVariable = ov("b", 0, -1, 1)
     c: OptVariable = ov("c", -1, -10, 10)
@@ -95,7 +97,7 @@ class TOptVariablesOptVariables(OptVariablesFrame):
 
 class TestOptVariables:
     def setup_method(self):
-        self.vars = TOptVariablesOptVariables()
+        self.vars = TestOptVariablesOptVariables()
 
     def test_init(self):
         assert self.vars.n_free_variables == 3
@@ -132,7 +134,7 @@ class TestOptVariables:
         with pytest.raises(OptVariablesError):
             self.vars.adjust_variables(
                 {"a": {"value": -2, "lower_bound": -1, "upper_bound": -3}},
-                strict_bounds=False,
+                strict_bounds=True,
             )
 
     def test_read_write(self):
@@ -140,7 +142,7 @@ class TestOptVariables:
         try:
             the_path = os.sep.join([tempdir, "opt_var_test.json"])
             self.vars.to_json(the_path)
-            new_vars = TOptVariablesOptVariables.from_json(the_path)
+            new_vars = TestOptVariablesOptVariables.from_json(the_path)
             assert new_vars.as_dict() == self.vars.as_dict()
         finally:
             shutil.rmtree(tempdir)
@@ -150,16 +152,17 @@ class TestOptVariables:
 
         table_pattern = "\n".join(
             [
-                ".*",
-                ".*Name.*Value.*Lower Bound.*Upper Bound.*Fixed.*Description.*",
-                ".*",
-                ".*a.*2.*0.*3.*False.*var a.*",
-                ".*",
-                ".*b.*0.*-1.*1.*True.* .*",
-                ".*",
-                ".*c.*-1.*-10.*10.*False.* .*",
-                ".*",
+                "TestOptVariablesOptVariables",
+                "╒════════╤═════════╤═══════════════╤═══════════════╤═════════╤═══════════════╕",
+                "│ name   │   value │   lower_bound │   upper_bound │ fixed   │ description   │",
+                "╞════════╪═════════╪═══════════════╪═══════════════╪═════════╪═══════════════╡",
+                "│ a      │       2 │             0 │             3 │ False   │               │",
+                "├────────┼─────────┼───────────────┼───────────────┼─────────┼───────────────┤",
+                "│ b      │       0 │            -1 │             1 │ False   │               │",
+                "├────────┼─────────┼───────────────┼───────────────┼─────────┼───────────────┤",
+                "│ c      │      -1 │           -10 │            10 │ False   │               │",
+                "╘════════╧═════════╧═══════════════╧═══════════════╧═════════╧═══════════════╛",
             ]
         )
-        assert len(table.split("\n")) == 9
+        assert len(table.split("\n")) == 10
         assert re.match(table_pattern, table, flags=re.MULTILINE)

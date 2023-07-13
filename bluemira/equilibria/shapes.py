@@ -165,7 +165,7 @@ class ZakharovLCFSOptVariables(OptVariablesFrame):
     r_0: OptVariable = ov(
         "r_0", 9, lower_bound=0, upper_bound=np.inf, description="Major radius"
     )
-    Z_0: OptVariable = ov(
+    z_0: OptVariable = ov(
         "z_0",
         0,
         lower_bound=-np.inf,
@@ -216,7 +216,7 @@ class ZakharovLCFS(GeometryParameterisation[ZakharovLCFSOptVariables]):
         """
         coordinates = flux_surface_zakharov(
             self.variables.r_0.value,
-            self.variables.Z_0.value,
+            self.variables.z_0.value,
             self.variables.a.value,
             self.variables.kappa.value,
             self.variables.delta.value,
@@ -274,7 +274,7 @@ class CunninghamLCFSOptVariables(OptVariablesFrame):
     r_0: OptVariable = ov(
         "r_0", 9, lower_bound=0, upper_bound=np.inf, description="Major radius"
     )
-    Z_0: OptVariable = ov(
+    z_0: OptVariable = ov(
         "z_0",
         0,
         lower_bound=-np.inf,
@@ -332,7 +332,7 @@ class CunninghamLCFS(GeometryParameterisation[CunninghamLCFSOptVariables]):
         """
         coordinates = flux_surface_cunningham(
             self.variables.r_0.value,
-            self.variables.Z_0.value,
+            self.variables.z_0.value,
             self.variables.a.value,
             self.variables.kappa.value,
             self.variables.delta.value,
@@ -391,7 +391,7 @@ class ManickamLCFSOptVariables(OptVariablesFrame):
     r_0: OptVariable = ov(
         "r_0", 9, lower_bound=0, upper_bound=np.inf, description="Major radius"
     )
-    Z_0: OptVariable = ov(
+    z_0: OptVariable = ov(
         "z_0",
         0,
         lower_bound=-np.inf,
@@ -447,7 +447,15 @@ class ManickamLCFS(GeometryParameterisation[ManickamLCFSOptVariables]):
         -------
         CAD Wire of the geometry
         """
-        coordinates = flux_surface_manickam(*self.variables.values, n=n_points)
+        coordinates = flux_surface_manickam(
+            self.variables.r_0.value,
+            self.variables.z_0.value,
+            self.variables.a.value,
+            self.variables.kappa.value,
+            self.variables.delta.value,
+            self.variables.indent.value,
+            n=n_points,
+        )
         return interpolate_bspline(coordinates.xyz, closed=True, label=label)
 
 
