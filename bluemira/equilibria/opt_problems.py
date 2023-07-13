@@ -296,25 +296,25 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         Coilset to optimise.
     eq: Equilibrium
         Equilibrium object used to update magnetic field targets.
-    targets: MagneticConstraintSet
+    targets:
         Set of magnetic field targets to use in objective function.
-    pfregions: dict(coil_name:Coordinates, coil_name:Coordinates, ...)
+    pfregions:
         Dictionary of Coordinates that specify convex hull regions inside which
         each PF control coil position is to be optimised.
         The Coordinates must be 2d in x,z in units of [m].
-    max_currents: float or np.ndarray (default = None)
+    max_currents:
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    gamma: float (default = 1e-8)
+    gamma:
         Tikhonov regularisation parameter in units of [A⁻¹].
-    optimiser: bluemira.utilities.optimiser.Optimiser
+    optimiser:
         Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: None)
+    constraints:
         Optional list of OptimisationConstraint objects storing
         information about constraints that must be satisfied
         during the coilset optimisation, to be provided to the
@@ -454,25 +454,25 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
         Parameters
         ----------
-        vector: np.array
+        vector:
             State vector. Numpy array formed by concatenation of coil radial
             coordinates, coil vertical coordinates, and (scaled) coil currents.
-        grad: np.array
+        grad:
             Dummy variable for NLOpt calls. Not updated.
-        coilset: CoilSet
+        coilset:
             CoilSet to update using state vector.
-        eq: Equilibrium
+        eq:
             Equilibrium object used to update magnetic field targets.
-        targets: MagneticConstraintSet
+        targets:
             Set of magnetic field targets to optimise Equilibrium towards,
             using least-squares objective with Tikhonov regularisation.
-        region_mapper: RegionMapper
+        region_mapper
             RegionMapper mapping coil positions within the allowed optimisation
             regions.
-        current_scale: float
+        current_scale:
             Scale factor to scale currents in state vector up by to
             give currents in [A].
-        gamma: float
+        gamma:
             Tikhonov regularisation parameter in units of [A⁻¹].
 
         Returns
@@ -512,22 +512,22 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
-    sub_opt: CoilsetOP
+    sub_opt:
         Coilset OptimisationProblem to use for the optimisation of
         coil currents at each trial set of coil positions.
         sub_opt.coilset must exist, and will be modified
         during the optimisation.
-    eq: Equilibrium
+    eq:
         Equilibrium object used to update magnetic field targets.
-    targets: MagneticConstraintSet
+    targets:
         Set of magnetic field targets to use in objective function.
-    pfregions: dict(coil_name:Coordinates, coil_name:Coordinates, ...)
+    pfregions:
         Dictionary of Coordinates that specify convex hull regions inside which
         each PF control coil position is to be optimised.
         The Coordinates must be 2d in x,z in units of [m].
-    optimiser: bluemira.utilities.optimiser.Optimiser
+    optimiser:
         Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: None)
+    constraints:
         Optional list of OptimisationConstraint objects storing
         information about constraints that must be satisfied
         during the coilset optimisation, to be provided to the
@@ -634,32 +634,32 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 
         Parameters
         ----------
-        vector: np.array(n_C)
+        vector:
             State vector of the array of coil positions.
-        grad: np.array
+        grad:
             Dummy variable for NLOpt calls. Not updated.
         coilset: CoilSet
             CoilSet to update using state vector.
-        eq: Equilibrium
+        eq:
             Equilibrium object used to update magnetic field targets.
-        targets: MagneticConstraintSet
+        targets:
             Set of magnetic field targets to update for use in sub_opt.
-        region_mapper: RegionMapper
+        region_mapper:
             RegionMapper mapping coil positions within the allowed optimisation
             regions.
-        current_scale: float
+        current_scale:
             Scale factor to scale currents in state vector up by to
             give currents in [A].
-        initial_currents: np.array
+        initial_currents:
             Array containing initial (scaled) coil currents prior to passing
             to sub_opt
-        sub_opt: CoilsetOP
+        sub_opt:
             Coilset OptimisationProblem used to optimise the array of coil
             currents at each trial position.
 
         Returns
         -------
-        fom: float
+        fom:
             Value of objective function (figure of merit).
         """
         region_mapper.set_Lmap(vector)
@@ -689,13 +689,13 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         CoilSet object to optimise with
-    eq: Equilibrium
+    eq:
         Equilibrium object to optimise for
-    targets: MagneticConstraintSet
+    targets:
         Set of magnetic constraints to minimise the error for
-    gamma: float
+    gamma:
         Tikhonov regularisation parameter [1/A]
     """
 
@@ -739,21 +739,21 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         Coilset to optimise.
     eq: Equilibrium
         Equilibrium object used to update magnetic field targets.
-    targets: MagneticConstraintSet
+    targets:
         Set of magnetic field targets to use in objective function.
-    gamma: float (default = 1e-8)
+    gamma:
         Tikhonov regularisation parameter in units of [A⁻¹].
     max_currents Union[float, np.ndarray] (default = None)
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    optimiser: bluemira.utilities.optimiser.Optimiser
+    optimiser:
         Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: None)
+    constraints:
         Optional list of OptimisationConstraint objects storing
         information about constraints that must be satisfied
         during the coilset optimisation, to be provided to the

@@ -22,7 +22,7 @@
 import numpy as np
 
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
-from bluemira.equilibria.opt_problems import CoilsetPositionCOP
+from bluemira.equilibria.optimisation.problem import CoilsetPositionCOP
 from bluemira.geometry.coordinates import Coordinates
 
 
