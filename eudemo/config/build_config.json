@@ -226,7 +226,7 @@
   "Cryostat": {
     "params": {
       "g_plug": {
-        "value": 0.05,
+        "value": 0.025,
         "unit": "m",
         "source": "Input",
         "long_name": "Gap around the cryostat port plugs."

@@ -395,7 +395,20 @@ def build_radiation_plugs(params, build_config, cr_ports, radiation_xz_boundary)
     """
     Build the port plugs for the radiation shield.
     """
-    pass
+    closest_faces = []
+    for port in cr_ports:
+        xyz = port.get_component("xyz")
+        for child in xyz.children:
+            if "voidspace" not in child.name:
+                port_xyz = child.shape.deepcopy()
+                port_xyz.rotate(degree=-180 / params.global_params.n_TF.value)
+        faces = port_xyz.faces
+        distances = [
+            distance_to(f.center_of_mass, radiation_xz_boundary)[0] for f in faces
+        ]
+        closest_face = faces[np.argmin(distances)]
+        closest_faces.append(closest_face)
+    outer_wires = [cf.boundary[0].deepcopy() for cf in closest_faces]
 
 
 if __name__ == "__main__":

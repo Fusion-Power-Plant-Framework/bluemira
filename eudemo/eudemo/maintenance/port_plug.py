@@ -175,7 +175,7 @@ class CryostatPortPlugBuilder(Builder):
             if dx < dz:
                 # Horizontal connection
                 dy = 0.5 * abs(bb.y_max - bb.y_min) + offset
-                radius = np.hypot(x_max - cr_tk, -dy)
+                radius = np.sqrt((x_max - cr_tk) ** 2 - dy**2)
                 length = x_max - radius
                 vector = (radius - bb.x_max, 0, 0)
 
@@ -216,3 +216,39 @@ class CryostatPortPlugBuilder(Builder):
             plugs.append(plug)
             voids.append(void)
         return plugs + voids
+
+
+@dataclass
+class RadiationPortPlugBuilderParams(ParameterFrame):
+    """
+    Radiation shield port plug builder parameters
+    """
+
+    # Global
+    n_TF: Parameter[int]
+    tk_rs: Parameter[float]
+    g_cr_ts: Parameter[float]
+
+    # Local
+    g_plug: Parameter[float]
+    tk_castellation: Parameter[float]
+    n_plug_castellations: Parameter[int]
+
+
+class RadiationPortPlugBuilder(Builder):
+    """
+    Radiation shield port plug builder.
+    """
+
+    param_cls: Type[RadiationPortPlugBuilderParams] = RadiationPortPlugBuilderParams
+
+    def __init__(
+        self,
+        params: Union[Dict, ParameterFrame, RadiationPortPlugBuilderParams],
+        build_config: Optional[Dict],
+        outer_profiles: Iterable[BluemiraWire],
+        radiation_xz_boundary: BluemiraFace,
+    ):
+        super().__init__(params, build_config)
+        self.outer_profiles = outer_profiles
+        self.radiation_xz_boundary = radiation_xz_boundary

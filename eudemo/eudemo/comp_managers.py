@@ -308,7 +308,6 @@ class Cryostat(PlugManagerMixin, ComponentManager):
                 plugs.append(child)
 
         component = self.component()
-        parent = component.parent
         name = f"{CryostatBuilder.CRYO} 1"
         xyz_shape = (
             component.get_component("xyz")
@@ -316,9 +315,7 @@ class Cryostat(PlugManagerMixin, ComponentManager):
             .get_component(name)
             .shape
         )
-        from bluemira.display import show_cad
 
-        show_cad([xyz_shape] + void_shapes)
         xyz_shape = boolean_cut(xyz_shape, void_shapes)[0]
         xyz_comp = PhysicalComponent(name, xyz_shape)
         apply_component_display_options(xyz_comp, color=BLUE_PALETTE["CR"][0])
@@ -328,13 +325,18 @@ class Cryostat(PlugManagerMixin, ComponentManager):
 
         Component(
             "xyz",
-            parent=parent,
+            parent=component,
             children=[Component("Sector 1", children=new_components)],
         )
 
         angle = 180 / n_TF
         self._make_2d_views(
-            parent, xyz_comp, plugs, angle, BLUE_PALETTE["CR"][0], BLUE_PALETTE["CR"][1]
+            component,
+            xyz_comp,
+            plugs,
+            angle,
+            BLUE_PALETTE["CR"][0],
+            BLUE_PALETTE["CR"][1],
         )
 
 
