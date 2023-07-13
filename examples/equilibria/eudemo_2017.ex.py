@@ -58,7 +58,7 @@ from bluemira.display import plot_defaults
 from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import (
+from bluemira.equilibria.optimisation.constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
     FieldNullConstraint,
@@ -66,7 +66,7 @@ from bluemira.equilibria.opt_constraints import (
     MagneticConstraintSet,
     PsiBoundaryConstraint,
 )
-from bluemira.equilibria.opt_problems import (
+from bluemira.equilibria.optimisation.problem import (
     BreakdownCOP,
     MinimalCurrentCOP,
     OutboardBreakdownZoneStrategy,
@@ -80,7 +80,6 @@ from bluemira.equilibria.profiles import (
     DoublePowerFunc,
 )
 from bluemira.equilibria.solve import PicardIterator
-from bluemira.utilities.optimiser import Optimiser
 
 # %% [markdown]
 #
@@ -198,7 +197,8 @@ bd_opt_problem = BreakdownCOP(
     breakdown.coilset,
     breakdown,
     OutboardBreakdownZoneStrategy(R_0, A, 0.225),
-    optimiser=Optimiser("COBYLA", opt_conditions={"max_eval": 3000, "ftol_rel": 1e-6}),
+    opt_algorithm="COBYLA",
+    opt_conditions={"max_eval": 3000, "ftol_rel": 1e-6},
     max_currents=max_currents,
     B_stray_max=1e-3,
     B_stray_con_tol=1e-6,
@@ -206,10 +206,9 @@ bd_opt_problem = BreakdownCOP(
     constraints=[field_constraints, force_constraints],
 )
 
-coilset = bd_opt_problem.optimise(x0=max_currents)
+coilset = bd_opt_problem.optimise(x0=max_currents).coilset
 
 bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
-
 # %% [markdown]
 #
 # Calculate SOF and EOF plasma boundary fluxes
@@ -305,13 +304,13 @@ sof_psi_boundary = PsiBoundaryConstraint(
     tolerance=0.5,
 )
 
-optimiser = Optimiser("SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6})
 sof = deepcopy(reference_eq)
 
 sof_opt_problem = MinimalCurrentCOP(
     sof.coilset,
     sof,
-    optimiser=optimiser,
+    opt_algorithm="SLSQP",
+    opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
     max_currents=max_currents,
     constraints=[sof_psi_boundary, x_point],
 )
@@ -333,7 +332,8 @@ eof = deepcopy(reference_eq)
 eof_opt_problem = MinimalCurrentCOP(
     eof.coilset,
     eof,
-    optimiser=optimiser,
+    opt_algorithm="SLSQP",
+    opt_conditions={"max_eval": 1000, "ftol_rel": 1e-6},
     max_currents=max_currents,
     constraints=[eof_psi_boundary, x_point],
 )
