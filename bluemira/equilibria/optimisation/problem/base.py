@@ -18,18 +18,22 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+"""
+Equilibria Optimisation base module
+"""
+
 from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import List, Optional, Tuple, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.optimisation.constraint_funcs import ConstraintFunction
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.optimisation._optimiser import OptimiserResult
 from bluemira.optimisation.typing import ConstraintT
@@ -37,6 +41,8 @@ from bluemira.optimisation.typing import ConstraintT
 
 @dataclass
 class CoilsetOptimiserResult:
+    """Coilset optimisation result object"""
+
     coilset: CoilSet
     """The optimised coilset."""
     f_x: float
@@ -86,6 +92,7 @@ class CoilsetOptimisationProblem(abc.ABC):
 
     @property
     def coilset(self) -> CoilSet:
+        """The optimisation problem coilset"""
         return self._coilset
 
     @coilset.setter
@@ -288,4 +295,5 @@ class CoilsetOptimisationProblem(abc.ABC):
 
     @property
     def scale(self) -> float:
+        """Problem scaling value"""
         return 1e6

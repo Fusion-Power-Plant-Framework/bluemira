@@ -193,6 +193,7 @@ class FieldConstraints(UpdateableConstraint):
         return Bx, Bz
 
     def f_constraint(self) -> FieldConstraintFunction:
+        """Calculate the constraint function"""
         f_constraint = FieldConstraintFunction(**self._args)
         f_constraint.constraint_type = self.f_constraint_type
         return f_constraint
@@ -364,6 +365,7 @@ class CoilForceConstraints(UpdateableConstraint):
         return fp
 
     def f_constraint(self) -> CoilForceConstraintFunction:
+        """Calculate the constraint function"""
         return CoilForceConstraintFunction(**self._args)
 
 

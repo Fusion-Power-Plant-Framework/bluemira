@@ -48,6 +48,8 @@ from bluemira.equilibria.error import EquilibriaError
 
 
 class ObjectiveFunction(abc.ABC):
+    """Base class for ObjectiveFunctions"""
+
     @abc.abstractmethod
     def f_objective(self, vector: npt.NDArray) -> float:
         """Objective function for an optimisation."""
@@ -85,6 +87,7 @@ class RegularisedLsqObjective(ObjectiveFunction):
         self.gamma = gamma
 
     def f_objective(self, x: npt.NDArray) -> float:
+        """Objective function for an optimisation."""
         x = x * self.scale
         fom, _ = regularised_lsq_fom(x, self.a_mat, self.b_vec, self.gamma)
         if fom <= 0:
@@ -94,6 +97,7 @@ class RegularisedLsqObjective(ObjectiveFunction):
         return fom
 
     def df_objective(self, x: npt.NDArray) -> npt.NDArray:
+        """Gradient of the objective function for an optimisation."""
         x = x * self.scale
         jac = 2 * self.a_mat.T @ self.a_mat @ x / float(len(self.b_vec))
         jac -= 2 * self.a_mat.T @ self.b_vec / float(len(self.b_vec))
@@ -105,9 +109,11 @@ class CoilCurrentsObjective(ObjectiveFunction):
     """Objective function for the minimisation of the sum of coil currents squared."""
 
     def f_objective(self, vector: npt.NDArray) -> float:
+        """Objective function for an optimisation."""
         return np.sum(vector**2)
 
     def df_objective(self, vector: npt.NDArray) -> npt.NDArray:
+        """Gradient of the objective function for an optimisation."""
         return 2 * vector
 
 
@@ -129,9 +135,11 @@ class MaximiseFluxObjective(ObjectiveFunction):
         self.scale = scale
 
     def f_objective(self, vector: npt.NDArray) -> float:
+        """Objective function for an optimisation."""
         return -self.scale * self.c_psi_mat @ vector
 
     def df_objective(self, vector: npt.NDArray) -> npt.NDArray:
+        """Gradient of the objective function for an optimisation."""
         return -self.scale * self.c_psi_mat
 
 
