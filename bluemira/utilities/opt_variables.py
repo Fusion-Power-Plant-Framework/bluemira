@@ -329,8 +329,6 @@ class OptVariablesFrame:
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
         for field_name in cls.__dataclass_fields__:
             dcf: Field = cls.__dataclass_fields__[field_name]
-            if "InitVar" in dcf.type:
-                continue  # special case for InitVar's
             fact_inst = dcf.default_factory() if dcf.default_factory != MISSING else None
             if fact_inst is None:
                 raise TypeError(

@@ -1832,12 +1832,14 @@ class PictureFrameOptVariables(OptVariablesFrame):
         upper_bound=8,
         description="Taper angle stop height",
     )
-    # for configuring the PF
-    upper: InitVar[Union[str, PFrameSection]] = PFrameSection.FLAT
-    lower: InitVar[Union[str, PFrameSection]] = PFrameSection.FLAT
-    inner: InitVar[Optional[Union[str, PFrameSection]]] = None
 
-    def __post_init__(self, upper, lower, inner):
+    def configure(
+        self,
+        upper: Union[str, PFrameSection],
+        lower: Union[str, PFrameSection],
+        inner: Optional[Union[str, PFrameSection]],
+    ):
+        """Fix variables based on the upper, lower and inner limbs."""
         both_curved = upper == PFrameSection.CURVED and lower == PFrameSection.CURVED
         both_flat = upper == PFrameSection.FLAT and lower == PFrameSection.FLAT
         if both_curved:
@@ -1927,8 +1929,9 @@ class PictureFrame(
         lower: Union[str, PFrameSection] = PFrameSection.FLAT,
         inner: Optional[Union[str, PFrameSection]] = None,
     ):
-        variables = PictureFrameOptVariables(upper=upper, lower=lower, inner=inner)
+        variables = PictureFrameOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
+        variables.configure(upper, lower, inner)
         super().__init__(variables)
 
         self.upper = upper if isinstance(upper, PFrameSection) else PFrameSection[upper]
