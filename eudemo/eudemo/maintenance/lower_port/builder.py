@@ -233,14 +233,14 @@ def build_lower_port_xyz(
     angled_bb = duct_angled_boundary.bounding_box
     strait_bb = duct_straight_boundary.bounding_box
     if duct_angle < -0.25 * np.pi:
-        # -1 to make sure it goes through
+        # -2 to make sure it goes through
         angled_duct_extrude_extent = abs(
-            (angled_bb.z_max - (strait_bb.z_max - 1)) / np.sin(duct_angle)
+            (angled_bb.z_max - (strait_bb.z_max - 2.0)) / np.sin(duct_angle)
         )
     else:
-        # +1 to make sure it goes through
+        # +2 to make sure it goes through
         angled_duct_extrude_extent = abs(
-            (angled_bb.x_min - (strait_bb.x_min + 1)) / np.cos(duct_angle)
+            (angled_bb.x_min - (strait_bb.x_min + 2.0)) / np.cos(duct_angle)
         )
 
     ext_vector = angled_duct_extrude_extent * np.array(
@@ -261,7 +261,9 @@ def build_lower_port_xyz(
     straight_duct = boolean_fuse([straight_duct_backwall, straight_duct_length])
 
     angled_pieces = boolean_cut(angled_duct, [straight_duct])
-    angled_top = sorted(angled_pieces, key=lambda s: -s.center_of_mass[2])[0]
+    angled_top = sorted(
+        angled_pieces, key=lambda s: np.hypot(s.center_of_mass[0], s.center_of_mass[2])
+    )[0]
     angled_void_pieces = boolean_cut(angled_void, [straight_duct_void])
     angled_void_piece = sorted(angled_void_pieces, key=lambda s: -s.center_of_mass[2])[0]
     void = boolean_fuse([angled_void_piece, straight_duct_void])
