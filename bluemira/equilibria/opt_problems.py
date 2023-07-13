@@ -296,25 +296,25 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
-    coilset: CoilSet
+    coilset:
         Coilset to optimise.
     eq: Equilibrium
         Equilibrium object used to update magnetic field targets.
-    targets: MagneticConstraintSet
+    targets:
         Set of magnetic field targets to use in objective function.
-    pfregions: dict(coil_name:Coordinates, coil_name:Coordinates, ...)
+    pfregions:
         Dictionary of Coordinates that specify convex hull regions inside which
         each PF control coil position is to be optimised.
         The Coordinates must be 2d in x,z in units of [m].
-    max_currents: float or np.ndarray (default = None)
+    max_currents:
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    gamma: float (default = 1e-8)
+    gamma:
         Tikhonov regularisation parameter in units of [A⁻¹].
-    optimiser: bluemira.utilities.optimiser.Optimiser
+    optimiser:
         Optimiser object to use for constrained optimisation.
-    constraints: List[OptimisationConstraint] (default: None)
+    constraints:
         Optional list of OptimisationConstraint objects storing
         information about constraints that must be satisfied
         during the coilset optimisation, to be provided to the
