@@ -19,10 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import numpy as np
 
+import numpy as np
+import pytest
+
+from bluemira.base.constants import MU_0
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_Bx, semianalytic_Bz
-from bluemira.magnets.solenoid_tools import calculate_hoop_radial_stress
+from bluemira.magnets.solenoid_tools import calculate_B_max, calculate_hoop_radial_stress
 
 
 class TestHoopRadialStress:
@@ -47,3 +50,28 @@ class TestHoopRadialStress:
         )
         np.testing.assert_almost_equal(sigma_r_out, 0.0)
         assert sigma_theta_in > sigma_theta_out
+
+
+class TestCalculateBmax:
+    @pytest.mark.parametrize(
+        "alpha,beta,k_expected",
+        [[1.375, 1.2, 1.12], [1.322, 1.5, 1.07], [1.287, 2.0, 1.03]],
+    )
+    def test_Bmax(self, alpha, beta, k_expected):
+        """
+        Expected values from Boom and Livingstone, 1962, Example 4 table (unlabelled)
+        """
+        r_inner = 3
+        r_outer = alpha * r_inner
+        dz = beta * r_inner
+        rho_j = 1e6
+        B_max = calculate_B_max(rho_j, r_inner, r_outer, 2 * dz, 0)
+        B_0 = (
+            rho_j
+            * r_inner
+            * MU_0
+            * beta
+            * np.log((alpha + np.hypot(alpha, beta)) / (1 + np.hypot(1, beta)))
+        )
+        k_calc = B_max / B_0
+        np.testing.assert_almost_equal(k_calc, k_expected, decimal=2)
