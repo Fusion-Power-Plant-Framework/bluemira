@@ -48,14 +48,22 @@ from bluemira.equilibria.error import EquilibriaError
 
 
 class ObjectiveFunction(abc.ABC):
-    """Base class for ObjectiveFunctions"""
+    """
+    Base class for ObjectiveFunctions
+
+    Notes
+    -----
+    Optionally the function 'df_objective' can be implemented on any child
+    classes to calculate the gradient of the objective function.
+    The function should take an `npt.NDArray` as its only argument and
+    return only an `npt.NDArray`.
+    If the `df_objective` function is not provided and the optimisation algorithm
+    is gradient based the approximate derivate is calculated.
+    """
 
     @abc.abstractmethod
     def f_objective(self, vector: npt.NDArray) -> float:
         """Objective function for an optimisation."""
-
-    def df_objective(self, vector: npt.NDArray) -> npt.NDArray:
-        """Gradient of the objective function for an optimisation."""
 
 
 class RegularisedLsqObjective(ObjectiveFunction):
