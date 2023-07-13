@@ -38,7 +38,6 @@ from scipy.special import iv as bessel
 
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
-from bluemira.geometry.optimisation.parameterisations import tools
 from bluemira.geometry.tools import (
     interpolate_bspline,
     make_bezier,
@@ -145,37 +144,14 @@ class GeometryParameterisation(abc.ABC):
         """
         return np.array([np.finfo(float).eps])
 
-    def _process_x_norm_fixed(self, x_norm: np.ndarray) -> List[float]:
-        """
-        Utility for processing a set of free, normalised variables, and folding the fixed
-        un-normalised variables back into a single list of all actual values.
-
-        Parameters
-        ----------
-        x_norm:
-            Normalised vector of variable values
-
-        Returns
-        -------
-        List of ordered actual (un-normalised) values
-        """
-        fixed_idx = self.variables._fixed_variable_indices
-
-        # Note that we are dealing with normalised values when coming from the optimiser
-        x_actual = list(self.variables.get_values_from_norm(x_norm))
-
-        if fixed_idx:
-            x_fixed = self.variables.values
-            for i in fixed_idx:
-                x_actual.insert(i, x_fixed[i])
-        return x_actual
-
-    def _get_x_norm_index(self, name: str) -> int:
+    def get_x_norm_index(self, name: str) -> int:
         """
         Get the index of a variable name in the modified-length x_norm vector
 
         Parameters
         ----------
+        variables:
+            Bounded optimisation variables
         name:
             Variable name for which to get the index
 
@@ -194,6 +170,33 @@ class GeometryParameterisation(abc.ABC):
             if idx_actual > idx_fx:
                 count += 1
         return idx_actual - count
+
+    def process_x_norm_fixed(self, x_norm: np.ndarray) -> List[float]:
+        """
+        Utility for processing a set of free, normalised variables, and folding the fixed
+        un-normalised variables back into a single list of all actual values.
+
+        Parameters
+        ----------
+        variables:
+            Bounded optimisation variables
+        x_norm:
+            Normalised vector of variable values
+
+        Returns
+        -------
+        List of ordered actual (un-normalised) values
+        """
+        fixed_idx = self.variables._fixed_variable_indices
+
+        # Note that we are dealing with normalised values when coming from the optimiser
+        x_actual = list(self.variables.get_values_from_norm(x_norm))
+
+        if fixed_idx:
+            x_fixed = self.variables.values
+            for i in fixed_idx:
+                x_actual.insert(i, x_fixed[i])
+        return x_actual
 
     @abc.abstractmethod
     def create_shape(self, label: str = "", **kwargs: Dict[str, Any]) -> BluemiraWire:
@@ -441,7 +444,7 @@ class PrincetonD(GeometryParameterisation):
     def f_ineq_constraint(self) -> np.ndarray:
         """Inequality constraint for PrincetonD."""
         free_vars = self.variables.get_normalised_values()
-        x1, x2, _ = tools.process_x_norm_fixed(self.variables, free_vars)
+        x1, x2, _ = self.process_x_norm_fixed(free_vars)
         return np.array([x1 - x2])
 
     def df_ineq_constraint(self) -> np.ndarray:
@@ -450,9 +453,9 @@ class PrincetonD(GeometryParameterisation):
         free_vars = opt_vars.get_normalised_values()
         grad = np.zeros((1, len(free_vars)))
         if not self.variables["x1"].fixed:
-            grad[0][tools.get_x_norm_index(opt_vars, "x1")] = 1
+            grad[0][self.get_x_norm_index("x1")] = 1
         if not self.variables["x2"].fixed:
-            grad[0][tools.get_x_norm_index(opt_vars, "x2")] = -1
+            grad[0][self.get_x_norm_index("x2")] = -1
         return grad
 
     @staticmethod
@@ -616,7 +619,7 @@ class TripleArc(GeometryParameterisation):
         Constrain such that a1 + a2 is less than or equal to 180 degrees.
         """
         norm_vals = self.variables.get_normalised_values()
-        x_actual = tools.process_x_norm_fixed(self.variables, norm_vals)
+        x_actual = self.process_x_norm_fixed(norm_vals)
         _, _, _, _, _, a1, a2 = x_actual
         return np.array([a1 + a2 - 180])
 
@@ -625,10 +628,10 @@ class TripleArc(GeometryParameterisation):
         free_vars = self.variables.get_normalised_values()
         g = np.zeros((1, len(free_vars)))
         if not self.variables["a1"].fixed:
-            idx_a1 = tools.get_x_norm_index(self.variables, "a1")
+            idx_a1 = self.get_x_norm_index("a1")
             g[0][idx_a1] = 1
         if not self.variables["a2"].fixed:
-            idx_a2 = tools.get_x_norm_index(self.variables, "a2")
+            idx_a2 = self.get_x_norm_index("a2")
             g[0][idx_a2] = 1
         return g
 
@@ -829,7 +832,7 @@ class SextupleArc(GeometryParameterisation):
         degrees.
         """
         x_norm = self.variables.get_normalised_values()
-        x_actual = tools.process_x_norm_fixed(self.variables, x_norm)
+        x_actual = self.process_x_norm_fixed(x_norm)
         _, _, _, _, _, _, _, a1, a2, a3, a4, a5 = x_actual
         return np.array([a1 + a2 + a3 + a4 + a5 - 360])
 
@@ -839,7 +842,7 @@ class SextupleArc(GeometryParameterisation):
         gradient = np.zeros((1, len(x_norm)))
         for var in ["a1", "a2", "a3", "a4", "a5"]:
             if not self.variables[var].fixed:
-                var_idx = tools.get_x_norm_index(self.variables, var)
+                var_idx = self.get_x_norm_index(var)
                 gradient[0][var_idx] = 1
         return gradient
 

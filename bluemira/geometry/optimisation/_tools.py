@@ -40,6 +40,7 @@ from bluemira.optimisation.typing import (
     ObjectiveCallable,
     OptimiserCallable,
 )
+from bluemira.utilities.opt_variables import OptVariabls
 
 
 @dataclass
