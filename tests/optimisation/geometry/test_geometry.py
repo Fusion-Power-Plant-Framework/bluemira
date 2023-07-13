@@ -23,6 +23,7 @@ from unittest import mock
 import numpy as np
 import pytest
 
+from bluemira.geometry.optimisation import KeepOutZone, optimise_geometry
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PictureFrame,
@@ -31,8 +32,6 @@ from bluemira.geometry.parameterisations import (
     TripleArc,
 )
 from bluemira.geometry.tools import make_circle, make_polygon, signed_distance
-from bluemira.optimisation import optimise_geometry
-from bluemira.optimisation._geometry.optimise import KeepOutZone
 from bluemira.optimisation.error import GeometryOptimisationError
 
 
@@ -60,14 +59,9 @@ class TestGeometry:
     )
     def test_GeometryOptimisationError_given_unclosed_koz(self, kozs):
         with pytest.raises(GeometryOptimisationError):
-            optimise_geometry(
-                PictureFrame(), f_objective=lambda _: 1, keep_out_zones=kozs
-            )
+            optimise_geometry(PictureFrame(), f_objective=lambda: 1, keep_out_zones=kozs)
 
     def test_simple_optimisation_with_keep_out_zone(self):
-        def length(geom: GeometryParameterisation):
-            return geom.create_shape().length
-
         # Create a PictureFrame with un-rounded edges (a rectangle) and
         # a circular keep-out zone within it.
         # We expect the rectangle to contract such that the distance
@@ -88,6 +82,9 @@ class TestGeometry:
                 "ro": {"value": 0, "fixed": True},
             }
         )
+
+        def length():
+            return parameterisation.create_shape().length
 
         opt_result = optimise_geometry(
             parameterisation,
@@ -123,7 +120,7 @@ class TestGeometry:
 
         opt_result = optimise_geometry(
             parameterisation,
-            lambda geom: geom.create_shape().length,
+            lambda: parameterisation.create_shape().length,
             keep_out_zones=[keep_out_zone],
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
         )
@@ -154,16 +151,16 @@ class TestGeometry:
 
         def d_sum_angles(geom: TripleArc) -> np.ndarray:
             grad = np.zeros(len(geom.variables.get_normalised_values()))
-            grad[geom._get_x_norm_index("a1")] = 1
-            grad[geom._get_x_norm_index("a2")] = 1
+            grad[geom.get_x_norm_index("a1")] = 1
+            grad[geom.get_x_norm_index("a2")] = 1
             return grad
 
         arc = TripleArc()
 
         result = optimise_geometry(
             arc,
-            f_objective=lambda geom: -sum_angles(geom),
-            df_objective=lambda geom: -d_sum_angles(geom),
+            f_objective=lambda: -sum_angles(arc),
+            df_objective=lambda: -d_sum_angles(arc),
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
         )
 
@@ -187,7 +184,7 @@ class TestGeometry:
 
         result = optimise_geometry(
             arc,
-            f_objective=lambda geom: -sum_angles(geom),
+            f_objective=lambda: -sum_angles(arc),
             opt_conditions={"max_eval": 5000, "ftol_rel": 1e-6},
             algorithm="SLSQP",
         )
@@ -206,7 +203,7 @@ class TestGeometry:
         with mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock:
             optimise_geometry(
                 parameterisation,
-                lambda _: 1.0,
+                lambda: 1.0,
                 keep_out_zones=[
                     {
                         "wire": zone,
@@ -235,7 +232,7 @@ class TestGeometry:
                 ) as shape_discr_mock:
                     optimise_geometry(
                         parameterisation,
-                        lambda x: x.create_shape().length,
+                        lambda: parameterisation.create_shape().length,
                         keep_out_zones=[koz],
                         opt_conditions={"max_eval": 1},
                     )
@@ -258,15 +255,15 @@ class TestGeometry:
         with pytest.raises(TypeError):
             optimise_geometry(
                 parameterisation,
-                lambda _: 1,
+                lambda: 1,
                 keep_out_zones=[bad_koz],
                 opt_conditions={"max_eval": 1},
             )
 
     def test_eq_constraint(self):
-        def square_constraint(geom: PictureFrame) -> np.ndarray:
+        def square_constraint() -> np.ndarray:
             """Constraint to make a PictureFrame a square."""
-            x1, x2, z1, z2, _, _ = geom.variables.values
+            x1, x2, z1, z2, _, _ = pf.variables.values
             return np.array([abs(x2 - x1) - abs(z2 - z1)])
 
         pf = PictureFrame(
@@ -287,9 +284,9 @@ class TestGeometry:
 
         result = optimise_geometry(
             pf,
-            f_objective=lambda g: g.create_shape().length,
+            f_objective=lambda: pf.create_shape().length,
             eq_constraints=[eq_constraint],
             opt_conditions={"ftol_rel": 1e-5},
         )
 
-        assert square_constraint(result.geom)[0] == pytest.approx(0, abs=1e-8)
+        assert square_constraint()[0] == pytest.approx(0, abs=1e-8)

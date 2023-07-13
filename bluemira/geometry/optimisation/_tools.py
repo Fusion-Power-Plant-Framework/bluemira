@@ -25,7 +25,6 @@ from typing import List, Optional
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.optimisation.parameterisations import INEQ_CONSTRAINT_REGISTRY
 from bluemira.geometry.optimisation.typing import (
     GeomConstraintT,
     GeomOptimiserCallable,
@@ -40,7 +39,7 @@ from bluemira.optimisation.typing import (
     ObjectiveCallable,
     OptimiserCallable,
 )
-from bluemira.utilities.opt_variables import OptVariabls
+from bluemira.utilities.opt_variables import OptVariables
 
 
 @dataclass
@@ -72,7 +71,7 @@ def to_objective(
 
     def f(x):
         geom.variables.set_values_from_norm(x)
-        return geom_objective(geom)
+        return geom_objective()
 
     return f
 
@@ -89,7 +88,7 @@ def to_optimiser_callable(
 
     def f(x):
         geom.variables.set_values_from_norm(x)
-        return geom_callable(geom)
+        return geom_callable()
 
     return f
 
@@ -154,11 +153,13 @@ def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstr
     If no constraints are registered, return an empty list.
     """
     try:
-        return {
-            "f_constraint": getattr(geom, "f_ineq_constraint"),
-            "df_constraint": getattr(geom, "df_ineq_constraint", None),
-            "tolerance": geom.tolerance,
-        }
+        return [
+            {
+                "f_constraint": getattr(geom, "f_ineq_constraint"),
+                "df_constraint": getattr(geom, "df_ineq_constraint", None),
+                "tolerance": geom.tolerance,
+            }
+        ]
     except AttributeError:
         bluemira_warn(f"No inequality constraints found for {geom.name}")
         return []

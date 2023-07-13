@@ -44,11 +44,12 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parame
 from bluemira.display import plot_2d
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.optimisation import GeomOptimisationProblem, KeepOutZone
 from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
-from bluemira.optimisation import GeomOptimisationProblem, KeepOutZone, optimise
+from bluemira.optimisation import optimise
 
 
 class ParameterisedRippleSolver:
@@ -208,9 +209,7 @@ class RipplePointSelector(ABC):
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
 
-    def _constrain_ripple(
-        self, parameterisation: GeometryParameterisation
-    ) -> np.ndarray:
+    def _constrain_ripple(self) -> np.ndarray:
         """
         Ripple constraint function
 
@@ -219,7 +218,7 @@ class RipplePointSelector(ABC):
         parameterisation:
             Geometry parameterisation
         """
-        wire = parameterisation.create_shape()
+        wire = self.parameterisation.create_shape()
         self.solver.update_cage(wire)
         ripple = self.solver.ripple(*self.points)
         # TODO: This print will call every time now, Might be a case of explicitly
@@ -356,7 +355,7 @@ class MaximiseSelector(RipplePointSelector):
             "tolerance": np.full(2, rip_con_tol),
         }
 
-    def _constrain_max_ripple(self, parameterisation: GeometryParameterisation) -> float:
+    def _constrain_max_ripple(self) -> float:
         """
         Ripple constraint function
 
@@ -365,7 +364,7 @@ class MaximiseSelector(RipplePointSelector):
         parameterisation:
             Geometry parameterisation
         """
-        tf_wire = parameterisation.create_shape()
+        tf_wire = self.parameterisation.create_shape()
         self.solver.update_cage(tf_wire)
 
         def f_max_ripple(alpha):
@@ -515,11 +514,11 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         )
         self.ripple_selector = ripple_selector
 
-    def objective(self, parameterisation: GeometryParameterisation) -> float:
+    def objective(self) -> float:
         """
         Objective function (minimise length)
         """
-        return parameterisation.create_shape().length
+        return self.parameterisation.create_shape().length
 
     def keep_out_zones(self):
         """

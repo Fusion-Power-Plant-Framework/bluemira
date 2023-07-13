@@ -23,10 +23,10 @@ from typing import Tuple
 
 import pytest
 
+from bluemira.geometry.optimisation import GeomOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation import GeomOptimisationProblem
 from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
 

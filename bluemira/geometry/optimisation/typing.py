@@ -29,7 +29,7 @@ from bluemira.geometry.parameterisations import GeometryParameterisation
 class GeomOptimiserObjective(Protocol):
     """Form for a geometry optimisation objective function."""
 
-    def __call__(self, geom: GeometryParameterisation) -> float:
+    def __call__(self) -> float:
         """Call the geometry optimiser objective function."""
         ...
 
@@ -37,7 +37,7 @@ class GeomOptimiserObjective(Protocol):
 class GeomOptimiserCallable(Protocol):
     """Form for a geometry optimiser function (derivative, constraint, etc.)."""
 
-    def __call__(self, geom: GeometryParameterisation) -> np.ndarray:
+    def __call__(self) -> np.ndarray:
         """Call the geometry optimiser function."""
         ...
 

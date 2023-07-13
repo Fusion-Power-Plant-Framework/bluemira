@@ -21,16 +21,11 @@
 """Public functions and classes for the optimisation module."""
 
 from bluemira.optimisation._algorithm import Algorithm
-from bluemira.optimisation._geometry.optimise import KeepOutZone, optimise_geometry
-from bluemira.optimisation._geometry.problem import GeomOptimisationProblem
 from bluemira.optimisation._optimise import optimise
 from bluemira.optimisation.problem import OptimisationProblem
 
 __all__ = [
     "Algorithm",
-    "GeomOptimisationProblem",
-    "KeepOutZone",
     "OptimisationProblem",
     "optimise",
-    "optimise_geometry",
 ]
