@@ -85,7 +85,10 @@ from eudemo.maintenance.lower_port import (
     TSLowerPortDuctBuilder,
     VVLowerPortDuctBuilder,
 )
-from eudemo.maintenance.port_plug import CryostatPortPlugBuilder
+from eudemo.maintenance.port_plug import (
+    CryostatPortPlugBuilder,
+    RadiationPortPlugBuilder,
+)
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager
 from eudemo.params import EUDEMOReactorParams
@@ -396,19 +399,23 @@ def build_radiation_plugs(params, build_config, cr_ports, radiation_xz_boundary)
     Build the port plugs for the radiation shield.
     """
     closest_faces = []
-    for port in cr_ports:
-        xyz = port.get_component("xyz")
-        for child in xyz.children:
-            if "voidspace" not in child.name:
-                port_xyz = child.shape.deepcopy()
-                port_xyz.rotate(degree=-180 / params.global_params.n_TF.value)
-        faces = port_xyz.faces
-        distances = [
-            distance_to(f.center_of_mass, radiation_xz_boundary)[0] for f in faces
-        ]
-        closest_face = faces[np.argmin(distances)]
-        closest_faces.append(closest_face)
+    xyz = cr_ports.get_component("xyz")
+    for child in xyz.children:
+        if "voidspace" not in child.name:
+            port_xyz = child.shape.deepcopy()
+            port_xyz.rotate(degree=-180 / params.global_params.n_TF.value)
+            faces = port_xyz.faces
+            distances = [
+                distance_to(f.center_of_mass, radiation_xz_boundary)[0] for f in faces
+            ]
+            closest_face = faces[np.argmin(distances)]
+            closest_faces.append(closest_face)
     outer_wires = [cf.boundary[0].deepcopy() for cf in closest_faces]
+
+    builder = RadiationPortPlugBuilder(
+        params, build_config, outer_wires, radiation_xz_boundary
+    )
+    return builder.build()
 
 
 if __name__ == "__main__":
@@ -606,16 +613,16 @@ if __name__ == "__main__":
         reactor.cryostat.xz_boundary(),
     )
 
-    reactor.cryostat.add_plugs(
-        cr_plugs,
-        n_TF=reactor_config.global_params.n_TF.value,
-    )
-
     rs_up_plug, rs_eq_plug, rs_lp_plug = build_radiation_plugs(
         reactor_config.params_for("RadiationShield"),
         reactor_config.config_for("RadiationShield"),
         cr_plugs,
         reactor.radiation_shield.xz_boundary(),
+    )
+
+    reactor.cryostat.add_plugs(
+        cr_plugs,
+        n_TF=reactor_config.global_params.n_TF.value,
     )
 
     reactor.radiation_shield.add_plugs(

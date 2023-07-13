@@ -24,7 +24,7 @@ Port plugs
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterable, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
@@ -112,6 +112,62 @@ def make_castellated_plug(
     return boolean_fuse(sections)
 
 
+def make_onion_layer_plug_void(
+    outer_profiles: Iterable[BluemiraWire],
+    target_profile: BluemiraFace,
+    thickness: float,
+    offset: float,
+    gap: float,
+    tk_castellation: float,
+    n_castellations: int,
+    n_TF: int,
+) -> Tuple[List[BluemiraSolid], List[BluemiraSolid]]:
+    degree = 180 / n_TF
+    x_max = target_profile.bounding_box.x_max
+    z_max = target_profile.bounding_box.z_max
+    plugs = []
+    voids = []
+    for wire in outer_profiles:
+        bb = wire.bounding_box
+        dx = abs(bb.x_max - x_max)
+        dz = abs(bb.z_max - z_max)
+        if dx < dz:
+            # Horizontal connection
+            dy = 0.5 * abs(bb.y_max - bb.y_min) + offset
+            radius = np.sqrt((x_max - thickness) ** 2 - dy**2)
+            length = x_max - radius
+            vector = (radius - bb.x_max, 0, 0)
+
+        else:
+            # Vertical connection
+            length = thickness
+            vector = (0, 0, dz - thickness)
+
+        wire.translate(vector)
+        void_wire = offset_wire(wire, gap)
+
+        plug = make_castellated_plug(
+            BluemiraFace(wire),
+            vector,
+            length,
+            offsets=tk_castellation,
+            n_castellations=n_castellations,
+        )
+        void = make_castellated_plug(
+            BluemiraFace(void_wire),
+            vector,
+            length,
+            offsets=tk_castellation,
+            n_castellations=n_castellations,
+        )
+
+        plug.rotate(degree=degree)
+        void.rotate(degree=degree)
+        plugs.append(plug)
+        voids.append(void)
+    return plugs, voids
+
+
 @dataclass
 class CryostatPortPlugBuilderParams(ParameterFrame):
     """
@@ -155,67 +211,33 @@ class CryostatPortPlugBuilder(Builder):
             xyz=self.build_xyz(),
         )
 
-    def build_xyz(self) -> PhysicalComponent:
+    def build_xyz(self) -> List[PhysicalComponent]:
         """
         Build the 3D representation of the Cryostat port plugs
         """
-        cr_bb = self.cryostat_xz_boundary.bounding_box
-        x_max = cr_bb.x_max
-        z_max = cr_bb.z_max
-        cr_tk = self.params.tk_cr_vv.value
-        offset = self.params.g_cr_ts.value
-        degree = 180 / self.params.n_TF.value
+        plugs, voids = make_onion_layer_plug_void(
+            self.outer_profiles,
+            self.cryostat_xz_boundary,
+            self.params.tk_cr_vv.value,
+            self.params.g_cr_ts.value,
+            self.params.g_plug.value,
+            self.params.tk_castellation.value,
+            self.params.n_plug_castellations.value,
+            self.params.n_TF.value,
+        )
 
-        plugs = []
-        voids = []
-        for i, wire in enumerate(self.outer_profiles):
-            bb = wire.bounding_box
-            dx = abs(bb.x_max - x_max)
-            dz = abs(bb.z_max - z_max)
-            if dx < dz:
-                # Horizontal connection
-                dy = 0.5 * abs(bb.y_max - bb.y_min) + offset
-                radius = np.sqrt((x_max - cr_tk) ** 2 - dy**2)
-                length = x_max - radius
-                vector = (radius - bb.x_max, 0, 0)
-
-            else:
-                # Vertical connection
-                length = cr_tk
-                vector = (0, 0, dz - cr_tk)
-
-            wire.translate(vector)
-            void_wire = offset_wire(wire, self.params.g_plug.value)
-
-            plug = make_castellated_plug(
-                BluemiraFace(wire),
-                vector,
-                length,
-                offsets=self.params.tk_castellation.value,
-                n_castellations=self.params.n_plug_castellations.value,
-            )
-            void = make_castellated_plug(
-                BluemiraFace(void_wire),
-                vector,
-                length,
-                offsets=self.params.tk_castellation.value,
-                n_castellations=self.params.n_plug_castellations.value,
-            )
-
-            plug.rotate(degree=degree)
-            void.rotate(degree=degree)
-
+        plug_comps, void_comps = [], []
+        for i, (plug, void) in enumerate(zip(plugs, voids)):
             plug = PhysicalComponent(f"{self.name} {i}", plug)
             void = PhysicalComponent(
                 f"{self.name} {i} voidspace", void, material=Void("air")
             )
-
             apply_component_display_options(plug, BLUE_PALETTE["CR"][1])
             apply_component_display_options(void, (0, 0, 0))
+            plug_comps.append(plug)
+            void_comps.append(void)
 
-            plugs.append(plug)
-            voids.append(void)
-        return plugs + voids
+        return plug_comps + void_comps
 
 
 @dataclass
@@ -227,7 +249,7 @@ class RadiationPortPlugBuilderParams(ParameterFrame):
     # Global
     n_TF: Parameter[int]
     tk_rs: Parameter[float]
-    g_cr_ts: Parameter[float]
+    g_cr_rs: Parameter[float]
 
     # Local
     g_plug: Parameter[float]
@@ -252,3 +274,38 @@ class RadiationPortPlugBuilder(Builder):
         super().__init__(params, build_config)
         self.outer_profiles = outer_profiles
         self.radiation_xz_boundary = radiation_xz_boundary
+
+    def build(self) -> Component:
+        """Build the radiation shield port plugs"""
+        return self.component_tree(
+            xz=None,
+            xy=None,
+            xyz=self.build_xyz(),
+        )
+
+    def build_xyz(self) -> List[PhysicalComponent]:
+        """
+        Build the 3D representation of the radiation shield port plugs
+        """
+        plugs, voids = make_onion_layer_plug_void(
+            self.outer_profiles,
+            self.radiation_xz_boundary,
+            self.params.tk_rs.value,
+            self.params.g_cr_rs.value,
+            self.params.g_plug.value,
+            self.params.tk_castellation.value,
+            self.params.n_plug_castellations.value,
+            self.params.n_TF.value,
+        )
+        plug_comps, void_comps = [], []
+        for i, (plug, void) in enumerate(zip(plugs, voids)):
+            plug = PhysicalComponent(f"{self.name} {i}", plug)
+            void = PhysicalComponent(
+                f"{self.name} {i} voidspace", void, material=Void("air")
+            )
+            apply_component_display_options(plug, BLUE_PALETTE["RS"][1])
+            apply_component_display_options(void, (0, 0, 0))
+            plug_comps.append(plug)
+            void_comps.append(void)
+
+        return plug_comps + void_comps
