@@ -59,8 +59,8 @@ representing our circle.
     :py:class:`~bluemira.geometry.parameterisations.GeometryParameterisation`\s
     see :doc:`here <../geometry/parameterisation>`.
 
-Next step is to create our zone in which our circle must remain outside.
-Let's make this is a square,
+Next step is to create a zone which our circle must not intersect.
+Let's make this a rectangle,
 but note that it could be any closed wire.
 
 .. code-block:: python
