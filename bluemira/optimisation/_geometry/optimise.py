@@ -66,8 +66,6 @@ class GeomOptimiserResult(Generic[_GeomT]):
     """The geometry parameterisation with optimised parameters."""
     f_x: float
     """The evaluation of the optimised parameterisation."""
-    x: np.ndarray
-    """The optimised parameterisation."""
     n_evals: int
     """The number of evaluations of the objective function in the optimisation."""
     history: List[Tuple[np.ndarray, float]] = field(repr=False)
@@ -255,7 +253,10 @@ def optimise_geometry(
     # Make sure we update the geometry with the result, the last
     # geometry update may not have been with the optimum result
     geom.variables.set_values_from_norm(result.x)
-    return GeomOptimiserResult(**asdict(result), geom=geom)
+
+    result_dict = asdict(result)
+    result_dict.pop("x")
+    return GeomOptimiserResult(**result_dict, geom=geom)
 
 
 def _to_koz(koz: Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]) -> KeepOutZone:
