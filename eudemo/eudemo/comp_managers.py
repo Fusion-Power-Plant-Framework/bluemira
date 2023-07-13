@@ -73,6 +73,10 @@ class CryostatThermalShield(ComponentManager):
 
 
 class OrphanerMixin:
+    """
+    Component orphanage mixin class
+    """
+
     @staticmethod
     def _orphan_old_components(components):
         """
