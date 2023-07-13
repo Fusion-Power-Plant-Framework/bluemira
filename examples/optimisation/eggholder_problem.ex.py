@@ -117,13 +117,13 @@ ax = fig.add_subplot(projection="3d")
 ax.plot_surface(xx, yy, zz, cmap="viridis", linewidth=0.0)
 
 for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
-    z = f_eggholder(results[algorithm].x)
-    ax.plot(*results[algorithm].x, zs=z, marker="o", color="red")
-    ax.text(*results[algorithm].x, z, algorithm)
+    result = results[algorithm]
+    ax.plot(*result.x, zs=result.f_x, marker="o", color="red")
+    ax.text(*result.x, result.f_x, algorithm)
 
 ax.set_title("Eggholder function")
 ax.set_xlabel("\n\nx")
 ax.set_ylabel("\n\ny")
 ax.set_zlabel("\n\nz")
-ax.view_init(elev=50, azim=-45)
+ax.view_init(elev=0, azim=-45)
 plt.show()
