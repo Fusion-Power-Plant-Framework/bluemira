@@ -67,24 +67,23 @@ but note that it could be any closed wire.
 
     from bluemira.display import plot_2d
 
-    zone = make_polygon()
-    zone.close()
+    zone = make_polygon({"x": [-2, -2, 3, 3], "z": [0, 1, 1, 0]}, closed=True)
 
     # Now lets create our circle within the shape
     circle = Circle(
-        {"radius": {"value": 0.5}, "centre_x": {"value": -5}, "centre_z": {"value": 1}}
+        {"radius": {"value": 10}, "centre_x": {"value": -2}, "centre_z": {"value": 1.5}}
     )
 
     plot_2d([circle.create_shape(), zone])
 
-As we are trying to maximise the perimeter of our circle,
-the objective function will be the negative of the perimeter.
+As we are trying to minimise the perimeter of our circle,
+the objective function will simply return the perimeter of the circle.
 
 .. code-block:: python
 
     def objective(geom: Circle) -> float:
-        """Objective function for maximising the perimeter of a circle."""
-        return -geom.create_shape().length
+        """Objective function to minimise the perimeter of a circle."""
+        return geom.create_shape().length
 
 The ``optimise_geometry`` Function
 ----------------------------------
@@ -103,5 +102,7 @@ function to run the optimisation.
         f_objective=objective,
         keep_out_zones=[zone],
         algorithm="SLSQP",
-        opt_conditions={"ftol_rel": 1e-8},
+        opt_conditions={"ftol_rel": 1e-8, "max_eval": 200},
     )
+
+    plot_2d([result.geom.create_shape(), zone])

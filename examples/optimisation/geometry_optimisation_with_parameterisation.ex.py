@@ -44,8 +44,9 @@
 from typing import Dict, Optional, Union
 
 from bluemira.display import plot_2d
+from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.tools import make_circle
+from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation import optimise_geometry
 from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
@@ -81,30 +82,29 @@ class Circle(GeometryParameterisation):
         )
 
 
-zone = make_circle(10, start_angle=180, end_angle=0, axis=(0, 1, 0))
-zone.close()
+zone = make_polygon({"x": [-2, -2, 3, 3], "z": [0, 1, 1, 0]}, closed=True)
 
 # Now lets create our circle within the shape
 circle = Circle(
-    {"radius": {"value": 0.5}, "centre_x": {"value": -5}, "centre_z": {"value": 1}}
+    {"radius": {"value": 10}, "centre_x": {"value": -2}, "centre_z": {"value": 1.5}}
 )
 
 plot_2d([circle.create_shape(), zone])
 
 
 def objective(geom: GeometryParameterisation) -> float:
-    """Objective function for maximising the perimeter of a circle."""
-    return -geom.create_shape().length
+    """Objective function to minimise the perimeter of a circle."""
+    return geom.create_shape().length
 
 
 result = optimise_geometry(
     geom=circle,
     f_objective=objective,
-    keep_out_zones=[zone],
-    algorithm="COBYLA",
-    opt_conditions={"xtol_rel": 1e-12, "max_eval": 2000},
-    koz_discretisation=200,
+    keep_out_zones=[{"wire": zone, "n_discr": 300, "tol": 1e-12}],
+    algorithm="SLSQP",
+    opt_conditions={"ftol_rel": 1e-8, "max_eval": 200},
 )
 print(result)
+print(result.geom.variables)
 
-plot_2d([result.geom.create_shape(), zone])
+plot_2d([result.geom.create_shape(), zone], PlotOptions(ndiscr=500))
