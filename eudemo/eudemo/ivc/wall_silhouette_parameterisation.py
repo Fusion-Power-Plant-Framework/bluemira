@@ -25,7 +25,7 @@ import copy
 from typing import Dict, Optional
 
 from bluemira.geometry.parameterisations import PolySpline, PrincetonD
-from bluemira.utilities.opt_variables import OptVarVarDictValueT
+from bluemira.utilities.opt_variables import OptVarVarDictValueT, VarDictT
 
 
 class WallPolySpline(PolySpline):
@@ -47,7 +47,7 @@ class WallPolySpline(PolySpline):
         "bottom": {"value": 0.2},
     }
 
-    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
+    def __init__(self, var_dict: Optional[VarDictT] = None):
         defaults = copy.deepcopy(self._defaults)
         if var_dict:
             defaults.update(var_dict)
@@ -107,7 +107,7 @@ class WallPrincetonD(PrincetonD):
         "dz": {"value": -0.5},
     }
 
-    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
+    def __init__(self, var_dict: Optional[VarDictT] = None):
         defaults = copy.deepcopy(self._defaults)
         if var_dict:
             defaults.update(var_dict)

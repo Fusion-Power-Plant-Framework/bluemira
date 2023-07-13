@@ -424,7 +424,7 @@ class OptVariablesFrame:
 
     def adjust_variables(
         self,
-        var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None,
+        var_dict: Optional[VarDictT] = None,
         strict_bounds=True,
     ):
         """

@@ -60,13 +60,7 @@ from bluemira.geometry.tools import (
     wire_closure,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import (
-    OptVariable,
-    OptVariablesFrame,
-    OptVarVarDictValueT,
-    VarDictT,
-    ov,
-)
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 from bluemira.utilities.plot_tools import str_to_latex
 
 __all__ = [
@@ -958,7 +952,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
+    def __init__(self, var_dict: Optional[VarDictT] = None):
         variables = SextupleArcOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1305,7 +1299,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None):
+    def __init__(self, var_dict: Optional[VarDictT] = None):
         variables = PolySplineOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1923,7 +1917,7 @@ class PictureFrame(
 
     def __init__(
         self,
-        var_dict: Optional[Dict[str, OptVarVarDictValueT]] = None,
+        var_dict: Optional[VarDictT] = None,
         *,
         upper: Union[str, PFrameSection] = PFrameSection.FLAT,
         lower: Union[str, PFrameSection] = PFrameSection.FLAT,

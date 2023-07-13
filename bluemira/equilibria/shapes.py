@@ -24,7 +24,7 @@ Useful parameterisations for plasma flux surface shapes.
 """
 
 from dataclasses import dataclass
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -32,7 +32,7 @@ from bluemira.geometry.coordinates import Coordinates, interpolate_points
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import interpolate_bspline
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 
 __all__ = [
     "flux_surface_cunningham",
@@ -194,7 +194,7 @@ class ZakharovLCFS(GeometryParameterisation[ZakharovLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[VarDictT] = None):
         variables = ZakharovLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -310,7 +310,7 @@ class CunninghamLCFS(GeometryParameterisation[CunninghamLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[VarDictT] = None):
         variables = CunninghamLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -427,7 +427,7 @@ class ManickamLCFS(GeometryParameterisation[ManickamLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[VarDictT] = None):
         variables = ManickamLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -700,7 +700,7 @@ class KuiroukidisLCFS(GeometryParameterisation[KuiroukidisLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[VarDictT] = None):
         variables = KuiroukidisLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1100,7 +1100,7 @@ class JohnerLCFS(GeometryParameterisation[JohnerLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict=None):
+    def __init__(self, var_dict: Optional[VarDictT] = None):
         variables = JohnerLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
