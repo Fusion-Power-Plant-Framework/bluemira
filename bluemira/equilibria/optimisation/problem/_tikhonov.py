@@ -101,12 +101,12 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
 
         Parameters
         ----------
-        fixed_coils: True
+        fixed_coils:
             Whether or not to update to coilset response matrices
 
         Returns
         -------
-        coilset: CoilSet
+        coilset:
             Optimised CoilSet
         """
         # Scale the control matrix and magnetic field targets vector by weights.

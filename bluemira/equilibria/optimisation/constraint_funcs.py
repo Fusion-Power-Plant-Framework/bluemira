@@ -59,13 +59,13 @@ from __future__ import annotations
 import abc
 from typing import TYPE_CHECKING, Literal
 
+import numpy as np
+import numpy.typing as npt
+
 from bluemira.base.look_and_feel import bluemira_warn
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
-
-import numpy as np
-import numpy.typing as npt
 
 
 class ConstraintFunction(abc.ABC):
