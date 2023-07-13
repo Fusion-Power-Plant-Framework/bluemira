@@ -36,13 +36,7 @@ from bluemira.utilities.optimiser import Optimiser
 class TestGeometryOptimisationProblem:
     @classmethod
     def setup_class(cls):
-        cls.opt_conditions = {
-            "max_eval": 1000,
-            "ftol_rel": 1e-6,
-            "xtol_rel": 1e-12,
-            "xtol_abs": 1e-12,
-        }
-        p = TripleArc(
+        parameterisation = TripleArc(
             {
                 "x1": {
                     "value": 3.2,
@@ -53,6 +47,12 @@ class TestGeometryOptimisationProblem:
                 "dz": {"value": -0.5, "upper_bound": -0.3},
             }
         )
+        cls.opt_conditions = {
+            "max_eval": 1000,
+            "ftol_rel": 1e-6,
+            "xtol_rel": 1e-12,
+            "xtol_abs": 1e-12,
+        }
         optimiser = Optimiser(
             "SLSQP",
             opt_conditions=cls.opt_conditions,
@@ -60,12 +60,12 @@ class TestGeometryOptimisationProblem:
 
         objective = OptimisationObjective(
             minimise_length,
-            f_objective_args={"parameterisation": p},
+            f_objective_args={"parameterisation": parameterisation},
         )
-        problem = GeometryOptimisationProblem(p, optimiser, objective)
+        problem = GeometryOptimisationProblem(parameterisation, optimiser, objective)
         problem.apply_shape_constraints()
         problem.optimise()
-        cls.ref_length = p.create_shape().length
+        cls.ref_length = parameterisation.create_shape().length
 
     def test_repetition(self):
         parameterisation = TripleArc(
