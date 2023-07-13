@@ -28,7 +28,7 @@ from __future__ import annotations
 import abc
 import json
 import warnings
-from dataclasses import InitVar, dataclass
+from dataclasses import dataclass
 from enum import Enum
 from functools import partial
 from typing import (
