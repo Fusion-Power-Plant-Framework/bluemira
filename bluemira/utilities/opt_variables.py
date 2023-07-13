@@ -281,18 +281,33 @@ class OptVariable:
 
     def __add__(self, other: "OptVariable"):
         """The sum of two OptVariables is the sum of their values"""
-        return self.value + other.value
+        if isinstance(other, OptVariable):
+            return self.value + other.value
+        elif isinstance(other, (int, float, np.floating)):
+            return self.value + other
+        else:
+            raise TypeError(f"Cannot add OptVariable with {type(other)}")
 
     def __sub__(self, other: "OptVariable"):
         """The subtraction of two OptVariables is the subtraction of their values"""
-        return self.value - other.value
+        if isinstance(other, OptVariable):
+            return self.value - other.value
+        elif isinstance(other, (int, float, np.floating)):
+            return self.value - other
+        else:
+            raise TypeError(f"Cannot subtract OptVariable with {type(other)}")
 
     def __mul__(self, other: "OptVariable"):
         """
         The multiplication of two OptVariables is
         the multiplication of their values
         """
-        return self.value * other.value
+        if isinstance(other, OptVariable):
+            return self.value * other.value
+        elif isinstance(other, (int, float, np.floating)):
+            return self.value * other
+        else:
+            raise TypeError(f"Cannot multiply OptVariable with {type(other)}")
 
 
 def ov(
