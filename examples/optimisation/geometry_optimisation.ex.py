@@ -155,6 +155,8 @@ plot_2d(boundary, ax=ax, show=True)
 # Alternatively, we can take a class-based approach to defining this
 # optimisation problem, using the `GeomOptimisationProblem` base class.
 
+# %%
+
 from bluemira.optimisation import GeomOptimisationProblem
 from bluemira.optimisation._geometry.typing import GeomConstraintT
 
