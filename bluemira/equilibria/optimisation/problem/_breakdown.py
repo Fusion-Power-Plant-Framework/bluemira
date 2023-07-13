@@ -44,11 +44,11 @@ class BreakdownZoneStrategy(abc.ABC):
 
     Parameters
     ----------
-    R_0: float
+    R_0:
         Major radius of the reference plasma
-    A: float
+    A:
         Aspect ratio of the reference plasma
-    tk_sol: float
+    tk_sol:
         Thickness of the scrape-off layer
     """
 
@@ -58,15 +58,15 @@ class BreakdownZoneStrategy(abc.ABC):
         self.tk_sol = tk_sol
 
     @abc.abstractproperty
-    def breakdown_point(self) -> Tuple[float]:
+    def breakdown_point(self) -> Tuple[float, float]:
         """
         The location of the breakdown point.
 
         Returns
         -------
-        x_c: float
+        x_c:
             Radial coordinate of the breakdown point
-        z_c: float
+        z_c:
             Vertical coordinate of the breakdown point
         """
         pass
@@ -111,7 +111,17 @@ class InboardBreakdownZoneStrategy(CircularZoneStrategy):
     """
 
     @property
-    def breakdown_point(self) -> Tuple[float]:
+    def breakdown_point(self) -> Tuple[float, float]:
+        """
+        The location of the breakdown point.
+
+        Returns
+        -------
+        x_c:
+            Radial coordinate of the breakdown point
+        z_c:
+            Vertical coordinate of the breakdown point
+        """
         r_c = self.breakdown_radius
         x_c = self.R_0 - self.R_0 / self.A - self.tk_sol + r_c
         z_c = 0.0
@@ -119,6 +129,9 @@ class InboardBreakdownZoneStrategy(CircularZoneStrategy):
 
     @property
     def breakdown_radius(self) -> float:
+        """
+        The radius of the breakdown zone.
+        """
         return 0.5 * self.R_0 / self.A
 
 
@@ -128,7 +141,17 @@ class OutboardBreakdownZoneStrategy(CircularZoneStrategy):
     """
 
     @property
-    def breakdown_point(self) -> Tuple[float]:
+    def breakdown_point(self) -> Tuple[float, float]:
+        """
+        The location of the breakdown point.
+
+        Returns
+        -------
+        x_c:
+            Radial coordinate of the breakdown point
+        z_c:
+            Vertical coordinate of the breakdown point
+        """
         r_c = self.breakdown_radius
         x_c = self.R_0 + self.R_0 / self.A + self.tk_sol - r_c
         z_c = 0.0
@@ -136,6 +159,9 @@ class OutboardBreakdownZoneStrategy(CircularZoneStrategy):
 
     @property
     def breakdown_radius(self) -> float:
+        """
+        The radius of the breakdown zone.
+        """
         return 0.7 * self.R_0 / self.A
 
 
@@ -144,20 +170,30 @@ class InputBreakdownZoneStrategy(CircularZoneStrategy):
     User input breakdown zone strategy.
     """
 
-    def __call__(self, *args, **kwargs):
-        return self
-
     def __init__(self, x_c, z_c, r_c):
         self.x_c = x_c
         self.z_c = z_c
         self.r_c = r_c
 
     @property
-    def breakdown_point(self) -> Tuple[float]:
+    def breakdown_point(self) -> Tuple[float, float]:
+        """
+        The location of the breakdown point.
+
+        Returns
+        -------
+        x_c:
+            Radial coordinate of the breakdown point
+        z_c:
+            Vertical coordinate of the breakdown point
+        """
         return self.x_c, self.z_c
 
     @property
     def breakdown_radius(self) -> float:
+        """
+        The radius of the breakdown zone.
+        """
         return self.r_c
 
 

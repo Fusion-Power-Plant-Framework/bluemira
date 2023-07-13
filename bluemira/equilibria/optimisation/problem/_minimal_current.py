@@ -41,13 +41,13 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
-    eq: Equilibrium
+    eq:
         Equilibrium object to optimise the currents for
-    optimiser: Optimiser
+    optimiser:
         Optimiser object to use
-    max_currents: np.ndarray
+    max_currents:
         Current bounds vector [A]
-    constraints: Optional[List[OptimisationConstraint]]
+    constraints:
         List of optimisation constraints to apply to the optimisation problem
     """
 

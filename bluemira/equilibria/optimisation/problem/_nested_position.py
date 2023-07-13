@@ -274,7 +274,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         """The objective function of the parent optimisation."""
         return self.sub_opt_objective(vector, verbose=verbose)
 
-    def _get_initial_vector(self):
+    def _get_initial_vector(self) -> npt.NDArray:
         """
         Get a vector representation of the initial coilset state from the PositionMapper.
         """
@@ -284,20 +284,22 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             z.append(self.coilset[name].z)
         return self.position_mapper.to_L(x, z)
 
-    def optimise(self, x0=None, verbose=False):
+    def optimise(
+        self, x0: Optional[npt.NDArray] = None, verbose: bool = False
+    ) -> CoilsetOptimiserResult:
         """
         Run the PulsedNestedPositionCOP
 
         Parameters
         ----------
-        x0: Optional[np.ndarray]
+        x0:
             Initial solution vector (parameterised positions)
-        verbose: bool
+        verbose:
             Whether or not to print progress information
 
         Returns
         -------
-        coilset: CoilSet
+        coilset:
             Optimised CoilSet
         """
         if x0 is None:
