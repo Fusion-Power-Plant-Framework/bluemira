@@ -97,14 +97,16 @@ class PlugManagerMixin(OrphanerMixin):
         for view in ["xz", "xy"]:
             solid_comps = make_2d_view_components(
                 view, azimuthal_angle=angle, components=[solid_comp]
-            )
+            )[0]
             for solid in solid_comps:
                 apply_component_display_options(solid, color=color)
 
             view_plug_comps = make_2d_view_components(
                 view, azimuthal_angle=angle, components=plug_comps
             )
-            for plug in plug_comps:
+            view_plug_comps = [item for row in view_plug_comps for item in row]
+
+            for plug in view_plug_comps:
                 apply_component_display_options(plug, plug_color)
 
             view_comps = solid_comps + view_plug_comps
@@ -288,18 +290,18 @@ class Cryostat(PlugManagerMixin, ComponentManager):
             .shape.boundary[0]
         )
 
-    def add_plugs(self, plugs: List[Component], n_TF: int):
+    def add_plugs(self, plug_component: Component, n_TF: int):
         """
         Add plugs to the component.
         """
+        comp = plug_component.get_component("xyz")
         void_shapes = []
         plugs = []
-        for comp in plugs:
-            comp = comp.get_component("xyz")
-            if "voidspace" in comp.name:
-                void_shapes.append(comp.shape)
+        for child in comp.children:
+            if "voidspace" in child.name:
+                void_shapes.append(child.shape)
             else:
-                plugs.append(comp)
+                plugs.append(child)
 
         component = self.component()
         parent = component.parent
@@ -310,6 +312,9 @@ class Cryostat(PlugManagerMixin, ComponentManager):
             .get_component(name)
             .shape
         )
+        from bluemira.display import show_cad
+
+        show_cad([xyz_shape] + void_shapes)
         xyz_shape = boolean_cut(xyz_shape, void_shapes)[0]
         xyz_comp = PhysicalComponent(name, xyz_shape)
         apply_component_display_options(xyz_comp, color=BLUE_PALETTE["CR"][0])
