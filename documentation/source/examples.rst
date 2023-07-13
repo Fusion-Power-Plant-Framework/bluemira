@@ -48,6 +48,7 @@ Optimisation Examples
     :maxdepth: 1
 
     examples/optimisation/geometry_optimisation
+    examples/optimisation/geometry_optimisation_with_parameterisation
     examples/optimisation/nonlinearly_constrained_problem
     examples/optimisation/rosenbrock_problem
     examples/optimisation/eggholder_problem

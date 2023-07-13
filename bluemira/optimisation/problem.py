@@ -103,7 +103,14 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         return []
 
     def bounds(self) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
-        """The lower and upper bounds of the optimisation parameters."""
+        """
+        The lower and upper bounds of the optimisation parameters.
+
+        Each set of bounds must be convertible to a numpy array of
+        floats. If the lower or upper bound is a scalar value, that
+        value is set as the bound for each of the optimisation
+        parameters.
+        """
         return -np.inf, np.inf
 
     def optimise(
