@@ -613,7 +613,7 @@ if __name__ == "__main__":
         reactor.cryostat.xz_boundary(),
     )
 
-    rs_up_plug, rs_eq_plug, rs_lp_plug = build_radiation_plugs(
+    rs_plugs = build_radiation_plugs(
         reactor_config.params_for("RadiationShield"),
         reactor_config.config_for("RadiationShield"),
         cr_plugs,
@@ -626,7 +626,7 @@ if __name__ == "__main__":
     )
 
     reactor.radiation_shield.add_plugs(
-        [rs_up_plug, rs_eq_plug, rs_lp_plug],
+        rs_plugs,
         n_TF=reactor_config.global_params.n_TF.value,
     )
 

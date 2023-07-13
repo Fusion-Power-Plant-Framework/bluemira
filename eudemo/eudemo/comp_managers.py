@@ -117,6 +117,53 @@ class PlugManagerMixin(OrphanerMixin):
 
             Component(view, children=view_comps, parent=parent)
 
+    def _add_plugs(
+        self,
+        plug_component: Component,
+        n_TF: int,
+        name: str,
+        color_list: List[Tuple[float, float, float]],
+    ):
+        comp = plug_component.get_component("xyz")
+        void_shapes = []
+        plugs = []
+        for child in comp.children:
+            if "voidspace" in child.name:
+                void_shapes.append(child.shape)
+            else:
+                plugs.append(child)
+
+        component = self.component()
+        xyz_shape = (
+            component.get_component("xyz")
+            .get_component("Sector 1")
+            .get_component(name)
+            .shape
+        )
+
+        xyz_shape = boolean_cut(xyz_shape, void_shapes)[0]
+        xyz_comp = PhysicalComponent(name, xyz_shape)
+        apply_component_display_options(xyz_comp, color=color_list[0])
+        self._orphan_old_components(component)
+
+        new_components = [xyz_comp] + plugs
+
+        Component(
+            "xyz",
+            parent=component,
+            children=[Component("Sector 1", children=new_components)],
+        )
+
+        angle = 180 / n_TF
+        self._make_2d_views(
+            component,
+            xyz_comp,
+            plugs,
+            angle,
+            color_list[0],
+            color_list[1],
+        )
+
 
 class PortManagerMixin(OrphanerMixin):
     """
@@ -296,47 +343,10 @@ class Cryostat(PlugManagerMixin, ComponentManager):
 
     def add_plugs(self, plug_component: Component, n_TF: int):
         """
-        Add plugs to the component.
+        Add plugs to the cryostat component.
         """
-        comp = plug_component.get_component("xyz")
-        void_shapes = []
-        plugs = []
-        for child in comp.children:
-            if "voidspace" in child.name:
-                void_shapes.append(child.shape)
-            else:
-                plugs.append(child)
-
-        component = self.component()
-        name = f"{CryostatBuilder.CRYO} 1"
-        xyz_shape = (
-            component.get_component("xyz")
-            .get_component("Sector 1")
-            .get_component(name)
-            .shape
-        )
-
-        xyz_shape = boolean_cut(xyz_shape, void_shapes)[0]
-        xyz_comp = PhysicalComponent(name, xyz_shape)
-        apply_component_display_options(xyz_comp, color=BLUE_PALETTE["CR"][0])
-        self._orphan_old_components(component)
-
-        new_components = [xyz_comp] + plugs
-
-        Component(
-            "xyz",
-            parent=component,
-            children=[Component("Sector 1", children=new_components)],
-        )
-
-        angle = 180 / n_TF
-        self._make_2d_views(
-            component,
-            xyz_comp,
-            plugs,
-            angle,
-            BLUE_PALETTE["CR"][0],
-            BLUE_PALETTE["CR"][1],
+        self._add_plugs(
+            plug_component, n_TF, f"{CryostatBuilder.CRYO} 1", BLUE_PALETTE["CR"]
         )
 
 
@@ -352,6 +362,14 @@ class RadiationShield(PlugManagerMixin, ComponentManager):
             .get_component("xz")
             .get_component(RadiationShieldBuilder.BODY)
             .shape.boundary[0]
+        )
+
+    def add_plugs(self, plug_component: Component, n_TF: int):
+        """
+        Add plugs to the radiation shield component.
+        """
+        self._add_plugs(
+            plug_component, n_TF, f"{RadiationShieldBuilder.BODY} 1", BLUE_PALETTE["RS"]
         )
 
 

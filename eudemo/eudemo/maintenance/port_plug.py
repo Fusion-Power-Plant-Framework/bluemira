@@ -122,6 +122,33 @@ def make_onion_layer_plug_void(
     n_castellations: int,
     n_TF: int,
 ) -> Tuple[List[BluemiraSolid], List[BluemiraSolid]]:
+    """
+    Make geometries for castellated port plugs and voids for all ports.
+
+    Parameters
+    ----------
+    outer_profiles:
+        Outer profiles of the inner port plug imprint
+    target_profile:
+        Face onto which to project the port
+    thickness:
+        Thickness of the part through which the port opening must go through
+    offset:
+        Offset value from the outer profile
+    tk_castellation:
+        Thickness of the castellation offsets
+    n_castellations:
+        Number of castellations in the port plugs
+    n_TF:
+        Number of TF coils
+
+    Returns
+    -------
+    plugs:
+        BluemiraSolids of the port plugs
+    voids:
+        BluemiraSolids of the voids to cut away from the target
+    """
     degree = 180 / n_TF
     x_max = target_profile.bounding_box.x_max
     z_max = target_profile.bounding_box.z_max
