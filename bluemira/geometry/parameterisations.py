@@ -33,10 +33,12 @@ from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from scipy.special import iv as bessel
 
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
+from bluemira.geometry.optimisation.parameterisations import tools
 from bluemira.geometry.tools import (
     interpolate_bspline,
     make_bezier,
@@ -72,7 +74,9 @@ class GeometryParameterisation(abc.ABC):
     variables with initial values, and override the create_shape method.
     """
 
-    __slots__ = ("name", "variables", "n_ineq_constraints")
+    __slots__ = ("name", "variables")
+
+    n_ineq_constraints = 0
 
     def __init__(self, variables: OptVariables):
         """
@@ -81,10 +85,8 @@ class GeometryParameterisation(abc.ABC):
         variables:
             Set of optimisation variables of the GeometryParameterisation
         """
-        self.name = self.__class__.__name__
+        self.name = type(self).__name__
         self.variables = variables
-        self.n_ineq_constraints = 0
-        super().__init__()
 
     def adjust_variable(
         self,
@@ -123,28 +125,25 @@ class GeometryParameterisation(abc.ABC):
         """
         self.variables.fix_variable(name, value)
 
-    def shape_ineq_constraints(
-        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
-    ):
+    def f_ineq_constraints(self):
         """
         Inequality constraint function for the variable vector of the geometry
         parameterisation. This is used when internal consistency between different
         un-fixed variables is required.
 
-        Parameters
-        ----------
-        constraint:
-            Constraint vector (assign in place)
-        x:
-            Normalised vector of free variables
-        grad:
-            Gradient matrix of the constraint (assign in place)
         """
         if self.n_ineq_constraints < 1:
             raise GeometryParameterisationError(
-                f"Cannot apply shape_ineq_constraints to {self.__class__.__name__}: it"
+                f"Cannot apply shape_ineq_constraints to {type(self).__name__}: it"
                 "has no inequality constraints."
             )
+
+    @property
+    def tolerance(self) -> npt.NDArray:
+        """
+        Optimisation tolerance for the geometry parameterisation.
+        """
+        return np.array([np.finfo(float).eps])
 
     def _process_x_norm_fixed(self, x_norm: np.ndarray) -> List[float]:
         """
@@ -377,6 +376,8 @@ class PrincetonD(GeometryParameterisation):
 
     __slots__ = ()
 
+    n_ineq_constraints = 1
+
     def __init__(self, var_dict: Optional[Dict[str, float]] = None):
         variables = OptVariables(
             [
@@ -403,7 +404,6 @@ class PrincetonD(GeometryParameterisation):
         variables.adjust_variables(var_dict, strict_bounds=False)
 
         super().__init__(variables)
-        self.n_ineq_constraints = 1
 
     def create_shape(self, label: str = "", n_points: int = 2000) -> BluemiraWire:
         """
@@ -438,39 +438,22 @@ class PrincetonD(GeometryParameterisation):
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
-    def shape_ineq_constraints(
-        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
-    ) -> np.ndarray:
-        """
-        Inequality constraint function for the variable vector of the geometry
-        parameterisation.
+    def f_ineq_constraint(self) -> np.ndarray:
+        """Inequality constraint for PrincetonD."""
+        free_vars = self.variables.get_normalised_values()
+        x1, x2, _ = tools.process_x_norm_fixed(self.variables, free_vars)
+        return np.array([x1 - x2])
 
-        Parameters
-        ----------
-        constraint:
-            Constraint vector (assign in place)
-        x_norm:
-            Normalised vector of free variables
-        grad:
-            Gradient matrix of the constraint (assign in place)
-        """
-        x_actual = self._process_x_norm_fixed(x_norm)
-
-        x1, x2, _ = x_actual
-
-        constraint[0] = x1 - x2
-
-        idx_x1 = self._get_x_norm_index("x1")
-        idx_x2 = self._get_x_norm_index("x2")
-
-        if grad.size > 0:
-            grad[:] = np.zeros(len(x_norm))
-            if not self.variables["x1"].fixed:
-                grad[0, idx_x1] = 1
-            if not self.variables["x2"].fixed:
-                grad[0, idx_x2] = -1
-
-        return constraint
+    def df_ineq_constraint(self) -> np.ndarray:
+        """Inequality constraint gradient for PrincetonD."""
+        opt_vars = self.variables
+        free_vars = opt_vars.get_normalised_values()
+        grad = np.zeros((1, len(free_vars)))
+        if not self.variables["x1"].fixed:
+            grad[0][tools.get_x_norm_index(opt_vars, "x1")] = 1
+        if not self.variables["x2"].fixed:
+            grad[0][tools.get_x_norm_index(opt_vars, "x2")] = -1
+        return grad
 
     @staticmethod
     def _princeton_d(
@@ -582,6 +565,8 @@ class TripleArc(GeometryParameterisation):
 
     __slots__ = ()
 
+    n_ineq_constraints = 1
+
     def __init__(self, var_dict: Optional[Dict[str, float]] = None):
         variables = OptVariables(
             [
@@ -623,42 +608,29 @@ class TripleArc(GeometryParameterisation):
         )
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
-        self.n_ineq_constraints = 1
 
-    def shape_ineq_constraints(
-        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
-    ) -> np.ndarray:
+    def f_ineq_constraint(self) -> np.ndarray:
         """
-        Inequality constraint function for the variable vector of the geometry
-        parameterisation.
+        Inequality constraint for TripleArc.
 
-        Parameters
-        ----------
-        constraint:
-            Constraint vector (assign in place)
-        x_norm:
-            Normalised vector of free variables
-        grad:
-            Gradient matrix of the constraint (assign in place)
+        Constrain such that a1 + a2 is less than or equal to 180 degrees.
         """
-        x_actual = self._process_x_norm_fixed(x_norm)
-
+        norm_vals = self.variables.get_normalised_values()
+        x_actual = tools.process_x_norm_fixed(self.variables, norm_vals)
         _, _, _, _, _, a1, a2 = x_actual
+        return np.array([a1 + a2 - 180])
 
-        constraint[0] = a1 + a2 - 180
-
-        idx_a1 = self._get_x_norm_index("a1")
-        idx_a2 = self._get_x_norm_index("a2")
-
-        if grad.size > 0:
-            g = np.zeros(len(x_norm))
-            if not self.variables["a1"].fixed:
-                g[idx_a1] = 1
-            if not self.variables["a2"].fixed:
-                g[idx_a2] = 1
-            grad[0, :] = g
-
-        return constraint
+    def df_ineq_constraint(self) -> np.ndarray:
+        """Inequality constraint gradient for TripleArc."""
+        free_vars = self.variables.get_normalised_values()
+        g = np.zeros((1, len(free_vars)))
+        if not self.variables["a1"].fixed:
+            idx_a1 = tools.get_x_norm_index(self.variables, "a1")
+            g[0][idx_a1] = 1
+        if not self.variables["a2"].fixed:
+            idx_a2 = tools.get_x_norm_index(self.variables, "a2")
+            g[0][idx_a2] = 1
+        return g
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
@@ -782,6 +754,7 @@ class SextupleArc(GeometryParameterisation):
     """
 
     __slots__ = ()
+    n_ineq_constraints = 1
 
     def __init__(self, var_dict: Optional[Dict[str, float]] = None):
         variables = OptVariables(
@@ -847,40 +820,28 @@ class SextupleArc(GeometryParameterisation):
         )
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
-        self.n_ineq_constraints = 1
 
-    def shape_ineq_constraints(
-        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
-    ) -> np.ndarray:
+    def f_ineq_constraint(self) -> np.ndarray:
         """
-        Inequality constraint function for the variable vector of the geometry
-        parameterisation.
+        Inequality constraint for TripleArc.
 
-        Parameters
-        ----------
-        constraint:
-            Constraint vector (assign in place)
-        x_norm:
-            Normalised vector of free variables
-        grad:
-            Gradient matrix of the constraint (assign in place)
+        Constrain such that sum of the 5 angles is less than or equal to 360
+        degrees.
         """
-        x_actual = self._process_x_norm_fixed(x_norm)
-
+        x_norm = self.variables.get_normalised_values()
+        x_actual = tools.process_x_norm_fixed(self.variables, x_norm)
         _, _, _, _, _, _, _, a1, a2, a3, a4, a5 = x_actual
+        return np.array([a1 + a2 + a3 + a4 + a5 - 360])
 
-        constraint[0] = a1 + a2 + a3 + a4 + a5 - 360
-        var_strings = ["a1", "a2", "a3", "a4", "a5"]
-
-        if grad.size > 0:
-            g = np.zeros(len(x_norm))
-            for var in var_strings:
-                if not self.variables[var].fixed:
-                    g[self._get_x_norm_index(var)] = 1
-
-            grad[0, :] = g
-
-        return constraint
+    def df_ineq_constraint(self) -> np.ndarray:
+        """Inequality constraint gradient for TripleArc."""
+        x_norm = self.variables.get_normalised_values()
+        gradient = np.zeros((1, len(x_norm)))
+        for var in ["a1", "a2", "a3", "a4", "a5"]:
+            if not self.variables[var].fixed:
+                var_idx = tools.get_x_norm_index(self.variables, var)
+                gradient[0][var_idx] = 1
+        return gradient
 
     @staticmethod
     def _project_centroid(xc, zc, xi, zi, ri):

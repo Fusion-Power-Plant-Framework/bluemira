@@ -35,16 +35,16 @@ from typing import (
 import numpy as np
 from typing_extensions import NotRequired
 
-from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation._algorithm import Algorithm
-from bluemira.optimisation._geometry import _tools
-from bluemira.optimisation._geometry._tools import KeepOutZone
-from bluemira.optimisation._geometry.typing import (
+from bluemira.geometry.optimisation import _tools
+from bluemira.geometry.optimisation._tools import KeepOutZone
+from bluemira.geometry.optimisation.typing import (
     GeomConstraintT,
     GeomOptimiserCallable,
     GeomOptimiserObjective,
 )
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.wire import BluemiraWire
+from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._optimise import optimise
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)

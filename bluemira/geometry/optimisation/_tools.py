@@ -24,15 +24,16 @@ from typing import List, Optional
 
 import numpy as np
 
-from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.tools import signed_distance_2D_polygon
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation._geometry.parameterisations import INEQ_CONSTRAINT_REGISTRY
-from bluemira.optimisation._geometry.typing import (
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.optimisation.parameterisations import INEQ_CONSTRAINT_REGISTRY
+from bluemira.geometry.optimisation.typing import (
     GeomConstraintT,
     GeomOptimiserCallable,
     GeomOptimiserObjective,
 )
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.tools import signed_distance_2D_polygon
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation.error import GeometryOptimisationError
 from bluemira.optimisation.typing import (
     ConstraintT,
@@ -151,6 +152,12 @@ def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstr
 
     If no constraints are registered, return an empty list.
     """
-    if constraints := INEQ_CONSTRAINT_REGISTRY.get(type(geom), []):
-        return copy.deepcopy(constraints)
-    return constraints
+    try:
+        return {
+            "f_constraint": getattr(geom, "f_ineq_constraint"),
+            "df_constraint": getattr(geom, "df_ineq_constraint", None),
+            "tolerance": geom.tolerance,
+        }
+    except AttributeError:
+        bluemira_warn(f"No inequality constraints found for {geom.name}")
+        return []
