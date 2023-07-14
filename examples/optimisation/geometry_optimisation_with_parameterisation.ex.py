@@ -45,10 +45,10 @@ from typing import Dict, Optional, Union
 
 from bluemira.display import plot_2d
 from bluemira.display.plotter import PlotOptions
+from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation import optimise_geometry
 from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
 
 

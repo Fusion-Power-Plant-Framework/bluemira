@@ -24,7 +24,7 @@ from typing import List, Optional
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.optimisation._typing import (
+from bluemira.geometry.optimisation.typing import (
     GeomClsOptimiserCallable,
     GeomConstraintT,
     GeomOptimiserCallable,

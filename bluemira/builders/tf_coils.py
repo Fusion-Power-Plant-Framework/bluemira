@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.parameterisations import GeometryParameterisation
-    from bluemira.geometry.optimisation._typing import GeomConstraintT
+    from bluemira.geometry.optimisation.typing import GeomConstraintT
 
 import matplotlib
 import matplotlib.pyplot as plt
