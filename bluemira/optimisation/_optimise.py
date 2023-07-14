@@ -95,7 +95,10 @@ def optimise(
             * max_time: float
             * stop_val: float
 
-        (default: ``{"max_eval": 2000}``\)
+        In addition to the default ``{"max_eval": 2000}``\ algorithms have
+        specific tolerance defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithmDefaultTolerances`.
+
     opt_parameters:
         The algorithm-specific optimisation parameters.
     bounds:
