@@ -60,17 +60,22 @@ class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):
 
 @dataclass
 class AlgorithmTolerance:
+    """Algorithm tolerances container"""
+
     ftol_abs: Optional[float] = None
     ftol_rel: Optional[float] = None
     xtol_abs: Optional[float] = None
     xtol_rel: Optional[float] = None
 
     def to_dict(self) -> Dict[str, float]:
+        """Convert to dictionary with Nones"""
         return {k: v for k, v in asdict(self).items() if v is not None}
 
 
 @dataclass
 class AlgorithmDefaultTolerances:
+    """Default Algorithm tolerances"""
+
     SLSQP: AlgorithmTolerance = field(
         default_factory=lambda: AlgorithmTolerance(ftol_abs=1e-6)
     )
