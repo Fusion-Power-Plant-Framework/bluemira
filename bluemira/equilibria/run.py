@@ -719,7 +719,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         max_pf_currents = np.max(pf_currents, axis=0)
         # Relax the max currents a bit to avoid oscillation
         max_pf_current = self._eq_settings.peak_PF_current_factor * self.params.I_p.value
-        max_pf_currents = np.clip(1.05 * max_pf_currents, 0, max_pf_current)
+        max_pf_currents = np.clip(1.1 * max_pf_currents, 0, max_pf_current)
 
         for problem in sub_opt_problems:
             pf_coils = problem.eq.coilset.get_coiltype("PF").get_control_coils()

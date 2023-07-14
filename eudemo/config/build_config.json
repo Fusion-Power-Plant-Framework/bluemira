@@ -124,7 +124,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "config/PFCoilDesign.json",
     "verbose": false,
     "plot": true,
@@ -210,7 +210,7 @@
         "long_name": "Padding applied towards the inboard from the divertor."
       },
       "lp_height": {
-        "value": 4.5,
+        "value": 5.5,
         "unit": "m",
         "source": "Input",
         "long_name": "Height of the lower port"
