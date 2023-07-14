@@ -609,7 +609,7 @@ if __name__ == "__main__":
     cr_plugs = build_cryostat_plugs(
         reactor_config.params_for("Cryostat"),
         reactor_config.config_for("Cryostat"),
-        [ts_upper_port, ts_eq_port],
+        [ts_upper_port, ts_eq_port, ts_lower_port],
         reactor.cryostat.xz_boundary(),
     )
 
