@@ -191,6 +191,7 @@ class EUDEMOReactorParams(ParameterFrame):
     # Ports
     tk_vv_single_wall: Parameter[float]
     tk_vv_double_wall: Parameter[float]
+    lower_port_angle: Parameter[float]
 
     # Powercycle
     bb_p_inlet: Parameter[float]

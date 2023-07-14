@@ -56,7 +56,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "plot": true,
     "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
     "file_path": "config/equilibrium_eqdsk.json",
@@ -85,7 +85,7 @@
           "value": "r_fw_ob_in"
         }
       },
-      "run_mode": "run",
+      "run_mode": "read",
       "name": "First Wall",
       "file_path": "config/FirstWallDesign.json",
       "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
@@ -103,7 +103,7 @@
     "Divertor silhouette": {}
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "config/TFCoilDesign.json",
     "plot": true,
     "param_class": "TripleArc",
@@ -124,7 +124,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "config/PFCoilDesign.json",
     "verbose": false,
     "plot": true,
@@ -197,12 +197,6 @@
   },
   "Lower Port": {
     "params": {
-      "lp_duct_tf_offset": {
-        "value": 3,
-        "unit": "m",
-        "source": "Input",
-        "long_name": "Lower duct TF Coil offset."
-      },
       "lp_duct_div_pad_ob": {
         "value": 0.3,
         "unit": "m",
@@ -226,24 +220,6 @@
         "unit": "m",
         "source": "Input",
         "long_name": "Width of the lower port"
-      },
-      "lp_duct_angle": {
-        "value": -30,
-        "unit": "degrees",
-        "source": "Input",
-        "long_name": "Angle of the lower port duct to the divertor."
-      },
-      "tf_coil_thickness": {
-        "value": 0.65,
-        "unit": "m",
-        "source": "Input",
-        "long_name": "TF Coil thickness (temporary)."
-      },
-      "lp_duct_wall_tk": {
-        "value": 0.02,
-        "unit": "m",
-        "source": "Input",
-        "long_name": "Lower port duct wall thickness."
       }
     }
   }
