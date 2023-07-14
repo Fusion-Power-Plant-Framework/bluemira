@@ -1297,8 +1297,6 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
     """
 
-    n_ineq_constraints: int = 1
-
     def __init__(self, var_dict: Optional[VarDictT] = None):
         variables = PolySplineOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
@@ -1912,8 +1910,6 @@ class PictureFrame(
             for var in ["", "_vars"]
         ]
     )
-
-    n_ineq_constraints: int = 1
 
     def __init__(
         self,
