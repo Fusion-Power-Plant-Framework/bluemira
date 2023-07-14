@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import abc
 import json
+import warnings
 from enum import Enum
 from functools import partial
 from typing import Any, Dict, Iterable, List, Optional, TextIO, Tuple, Union
@@ -124,7 +125,40 @@ class GeometryParameterisation(abc.ABC):
         """
         self.variables.fix_variable(name, value)
 
-    def f_ineq_constraints(self):
+    def shape_ineq_constraints(
+        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
+    ):
+        """
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation. This is used when internal consistency between different
+        un-fixed variables is required.
+
+        Parameters
+        ----------
+        constraint:
+            Constraint vector (assign in place)
+        x:
+            Normalised vector of free variables
+        grad:
+            Gradient matrix of the constraint (assign in place)
+
+        Notes
+        -----
+        Deprecated please use `f_ineq_constraint` and `df_ineq_constraint`
+        """
+        warnings.warn(
+            "Use of 'shape_ineq_constraints' method is "
+            "deprecated and it will be removed in version 2.0.0.\n"
+            "See "
+            "https://bluemira.readthedocs.io/en/latest/optimisation/"
+            "optimisation.html "
+            "for documentation of the new optimisation module.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self.f_ineq_constraint()
+
+    def f_ineq_constraint(self):
         """
         Inequality constraint function for the variable vector of the geometry
         parameterisation. This is used when internal consistency between different
@@ -441,6 +475,42 @@ class PrincetonD(GeometryParameterisation):
         straight_segment = wire_closure(outer_arc, label="straight_segment")
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
+    def shape_ineq_constraints(
+        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+    ) -> np.ndarray:
+        """
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation. This is used when internal consistency between different
+        un-fixed variables is required.
+
+        Parameters
+        ----------
+        constraint:
+            Constraint vector (assign in place)
+        x:
+            Normalised vector of free variables
+        grad:
+            Gradient matrix of the constraint (assign in place)
+
+        Notes
+        -----
+        Deprecated please use `f_ineq_constraint` and `df_ineq_constraint`
+        """
+        warnings.warn(
+            "Use of 'shape_ineq_constraints' method is "
+            "deprecated and it will be removed in version 2.0.0.\n"
+            "See "
+            "https://bluemira.readthedocs.io/en/latest/optimisation/"
+            "optimisation.html "
+            "for documentation of the new optimisation module.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        constraint[:] = self.f_ineq_constraint()
+        grad[:] = self.df_ineq_constraint()
+
+        return constraint
+
     def f_ineq_constraint(self) -> np.ndarray:
         """Inequality constraint for PrincetonD."""
         free_vars = self.variables.get_normalised_values()
@@ -611,6 +681,42 @@ class TripleArc(GeometryParameterisation):
         )
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
+
+    def shape_ineq_constraints(
+        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+    ) -> np.ndarray:
+        """
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation. This is used when internal consistency between different
+        un-fixed variables is required.
+
+        Parameters
+        ----------
+        constraint:
+            Constraint vector (assign in place)
+        x:
+            Normalised vector of free variables
+        grad:
+            Gradient matrix of the constraint (assign in place)
+
+        Notes
+        -----
+        Deprecated please use `f_ineq_constraint` and `df_ineq_constraint`
+        """
+        warnings.warn(
+            "Use of 'shape_ineq_constraints' method is "
+            "deprecated and it will be removed in version 2.0.0.\n"
+            "See "
+            "https://bluemira.readthedocs.io/en/latest/optimisation/"
+            "optimisation.html "
+            "for documentation of the new optimisation module.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        constraint[:] = self.f_ineq_constraint()
+        grad[:] = self.df_ineq_constraint()
+
+        return constraint
 
     def f_ineq_constraint(self) -> np.ndarray:
         """
@@ -823,6 +929,42 @@ class SextupleArc(GeometryParameterisation):
         )
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
+
+    def shape_ineq_constraints(
+        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+    ) -> np.ndarray:
+        """
+        Inequality constraint function for the variable vector of the geometry
+        parameterisation. This is used when internal consistency between different
+        un-fixed variables is required.
+
+        Parameters
+        ----------
+        constraint:
+            Constraint vector (assign in place)
+        x:
+            Normalised vector of free variables
+        grad:
+            Gradient matrix of the constraint (assign in place)
+
+        Notes
+        -----
+        Deprecated please use `f_ineq_constraint` and `df_ineq_constraint`
+        """
+        warnings.warn(
+            "Use of 'shape_ineq_constraints' method is "
+            "deprecated and it will be removed in version 2.0.0.\n"
+            "See "
+            "https://bluemira.readthedocs.io/en/latest/optimisation/"
+            "optimisation.html "
+            "for documentation of the new optimisation module.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        constraint[:] = self.f_ineq_constraint()
+        grad[:] = self.df_ineq_constraint()
+
+        return constraint
 
     def f_ineq_constraint(self) -> np.ndarray:
         """
