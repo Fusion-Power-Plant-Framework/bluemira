@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Definition of the generic `optimise` function."""
 
-from dataclasses import asdict
 from pprint import pformat
 from typing import (
     Any,
@@ -368,4 +367,4 @@ def _set_default_termination_conditions(
     if not isinstance(algorithm, Algorithm):
         return opt_conditions
 
-    return {**asdict(getattr(tols, algorithm.name)), **opt_conditions}
+    return {**getattr(tols, algorithm.name).to_dict(), **opt_conditions}

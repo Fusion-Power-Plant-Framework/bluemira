@@ -29,7 +29,8 @@ algorithms it supports.
 from __future__ import annotations
 
 import enum
-from dataclasses import dataclass, field
+from dataclasses import asdict, dataclass, field
+from typing import Dict, Optional
 
 
 class _AlgorithmMeta(enum.EnumMeta):
@@ -59,16 +60,21 @@ class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):
 
 @dataclass
 class AlgorithmTolerance:
-    ftol_abs: float
-    ftol_rel: float
-    xtol_abs: float
-    xtol_rel: float
+    ftol_abs: Optional[float] = None
+    ftol_rel: Optional[float] = None
+    xtol_abs: Optional[float] = None
+    xtol_rel: Optional[float] = None
+
+    def to_dict(self) -> Dict[str, float]:
+        return {k: v for k, v in asdict(self).items() if v is not None}
 
 
 @dataclass
 class AlgorithmDefaultTolerances:
     SLSQP: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
-    COBYLA: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    COBYLA: AlgorithmTolerance = field(
+        default_factory=lambda: AlgorithmTolerance(xtol_abs=1e-4)
+    )
     SBPLX: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
     MMA: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
     BFGS: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
