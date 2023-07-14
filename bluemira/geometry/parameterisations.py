@@ -1840,7 +1840,7 @@ class PictureFrameOptVariables(OptVariablesFrame):
             self.z1_peak.fixed = True
             self.z2_peak.fixed = True
             self.x3.fixed = True
-        inner_not_tapered = inner is PFrameSection.TAPERED_INNER
+        inner_not_tapered = inner != PFrameSection.TAPERED_INNER
         if inner_not_tapered:
             self.x4.fixed = True
             self.z3.fixed = True
@@ -1919,17 +1919,17 @@ class PictureFrame(
         lower: Union[str, PFrameSection] = PFrameSection.FLAT,
         inner: Optional[Union[str, PFrameSection]] = None,
     ):
-        variables = PictureFrameOptVariables()
-        variables.adjust_variables(var_dict, strict_bounds=False)
-        variables.configure(upper, lower, inner)
-        super().__init__(variables)
-
         self.upper = upper if isinstance(upper, PFrameSection) else PFrameSection[upper]
         self.lower = lower if isinstance(lower, PFrameSection) else PFrameSection[lower]
 
         if isinstance(inner, str):
             inner = PFrameSection[inner]
         self.inner = inner
+
+        variables = PictureFrameOptVariables()
+        variables.adjust_variables(var_dict, strict_bounds=False)
+        variables.configure(self.upper, self.lower, self.inner)
+        super().__init__(variables)
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """

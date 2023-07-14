@@ -217,6 +217,15 @@ class TestComplexPictureFrame:
         p = PictureFrame(upper=upper, lower=lower, inner=inner)
         wire = p.create_shape()
         assert np.isclose(wire.length, result, rtol=1e-4, atol=1e-5)
+        if p.upper == PFrameSection.CURVED and p.lower == PFrameSection.CURVED:
+            assert p.variables.ro.fixed
+        if p.upper == PFrameSection.FLAT and p.lower == PFrameSection.FLAT:
+            assert p.variables.x3.fixed
+            assert p.variables.z1_peak.fixed
+            assert p.variables.z2_peak.fixed
+        if p.inner != PFrameSection.TAPERED_INNER:
+            assert p.variables.x4.fixed
+            assert p.variables.z3.fixed
 
     @pytest.mark.parametrize(
         "upper, lower, inner",
