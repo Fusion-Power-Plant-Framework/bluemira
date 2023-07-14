@@ -29,6 +29,7 @@ algorithms it supports.
 from __future__ import annotations
 
 import enum
+from dataclasses import dataclass, field
 
 
 class _AlgorithmMeta(enum.EnumMeta):
@@ -54,3 +55,24 @@ class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):
     DIRECT_L = enum.auto()
     CRS = enum.auto()
     ISRES = enum.auto()
+
+
+@dataclass
+class AlgorithmTolerance:
+    ftol_abs: float
+    ftol_rel: float
+    xtol_abs: float
+    xtol_rel: float
+
+
+@dataclass
+class AlgorithmDefaultTolerances:
+    SLSQP: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    COBYLA: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    SBPLX: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    MMA: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    BFGS: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    DIRECT: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    DIRECT_L: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    CRS: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    ISRES: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
