@@ -25,7 +25,7 @@ from typing import List, Tuple
 import numpy as np
 
 from bluemira.optimisation import OptimisationProblem
-from bluemira.optimisation.typing import ConstraintT
+from bluemira.optimisation._typing import ConstraintT
 from eudemo.blanket.panelling._paneller import Paneller
 
 

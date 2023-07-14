@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import copy
 from dataclasses import dataclass
 from typing import List, Optional
 
@@ -26,6 +25,7 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.optimisation.typing import (
+    GeomClsOptimiserCallable,
     GeomConstraintT,
     GeomOptimiserCallable,
     GeomOptimiserObjective,
@@ -33,13 +33,12 @@ from bluemira.geometry.optimisation.typing import (
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation.error import GeometryOptimisationError
-from bluemira.optimisation.typing import (
+from bluemira.optimisation._typing import (
     ConstraintT,
     ObjectiveCallable,
     OptimiserCallable,
 )
-from bluemira.utilities.opt_variables import OptVariables
+from bluemira.optimisation.error import GeometryOptimisationError
 
 
 @dataclass
@@ -71,13 +70,30 @@ def to_objective(
 
     def f(x):
         geom.variables.set_values_from_norm(x)
-        return geom_objective()
+        return geom_objective(geom)
 
     return f
 
 
 def to_optimiser_callable(
     geom_callable: GeomOptimiserCallable,
+    geom: GeometryParameterisation,
+) -> OptimiserCallable:
+    """
+    Convert a geometry optimiser function to a normal optimiser function.
+
+    For example, a gradient or constraint.
+    """
+
+    def f(x):
+        geom.variables.set_values_from_norm(x)
+        return geom_callable(geom)
+
+    return f
+
+
+def to_optimiser_callable_from_cls(
+    geom_callable: GeomClsOptimiserCallable,
     geom: GeometryParameterisation,
 ) -> OptimiserCallable:
     """
@@ -146,17 +162,21 @@ def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
     return {"f_constraint": _f_constraint, "tolerance": np.full(shape_n_discr, koz.tol)}
 
 
-def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstraintT]:
+def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[ConstraintT]:
     """
     Retrieve the inequality constraints registered for the given parameterisation.
 
     If no constraints are registered, return an empty list.
     """
     try:
+        if df_constraint := getattr(geom, "df_ineq_constraint", None):
+            df_constraint = to_optimiser_callable_from_cls(df_constraint, geom)
         return [
             {
-                "f_constraint": getattr(geom, "f_ineq_constraint"),
-                "df_constraint": getattr(geom, "df_ineq_constraint", None),
+                "f_constraint": to_optimiser_callable_from_cls(
+                    getattr(geom, "f_ineq_constraint"), geom
+                ),
+                "df_constraint": df_constraint,
                 "tolerance": geom.tolerance,
             }
         ]

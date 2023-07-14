@@ -35,7 +35,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import make_polygon, slice_shape
 from bluemira.optimisation import OptimisationProblem
-from bluemira.optimisation.typing import ConstraintT
+from bluemira.optimisation._typing import ConstraintT
 from eudemo.tools import get_inner_cut_point
 
 

@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.parameterisations import GeometryParameterisation
-    from bluemira.optimisation._geometry.typing import GeomConstraintT
+    from bluemira.geometry.optimisation.typing import GeomConstraintT
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -209,7 +209,7 @@ class RipplePointSelector(ABC):
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
 
-    def _constrain_ripple(self) -> np.ndarray:
+    def _constrain_ripple(self, parameterisation) -> np.ndarray:
         """
         Ripple constraint function
 
@@ -218,7 +218,7 @@ class RipplePointSelector(ABC):
         parameterisation:
             Geometry parameterisation
         """
-        wire = self.parameterisation.create_shape()
+        wire = parameterisation.create_shape()
         self.solver.update_cage(wire)
         ripple = self.solver.ripple(*self.points)
         # TODO: This print will call every time now, Might be a case of explicitly
@@ -355,7 +355,7 @@ class MaximiseSelector(RipplePointSelector):
             "tolerance": np.full(2, rip_con_tol),
         }
 
-    def _constrain_max_ripple(self) -> float:
+    def _constrain_max_ripple(self, parameterisation) -> float:
         """
         Ripple constraint function
 
@@ -364,7 +364,7 @@ class MaximiseSelector(RipplePointSelector):
         parameterisation:
             Geometry parameterisation
         """
-        tf_wire = self.parameterisation.create_shape()
+        tf_wire = parameterisation.create_shape()
         self.solver.update_cage(tf_wire)
 
         def f_max_ripple(alpha):
@@ -514,11 +514,11 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         )
         self.ripple_selector = ripple_selector
 
-    def objective(self) -> float:
+    def objective(self, parameterisation) -> float:
         """
         Objective function (minimise length)
         """
-        return self.parameterisation.create_shape().length
+        return parameterisation.create_shape().length
 
     def keep_out_zones(self):
         """

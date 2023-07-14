@@ -184,7 +184,7 @@ plt.show()
 
 # %%
 from bluemira.optimisation import OptimisationProblem
-from bluemira.optimisation.typing import ConstraintT
+from bluemira.optimisation._typing import ConstraintT
 
 
 class NonLinearConstraintOP(OptimisationProblem):

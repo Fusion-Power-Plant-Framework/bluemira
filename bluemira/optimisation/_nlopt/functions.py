@@ -25,7 +25,7 @@ from typing import Callable, List, Optional, Tuple, Union
 import numpy as np
 
 from bluemira.optimisation._tools import approx_derivative
-from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
+from bluemira.optimisation._typing import ObjectiveCallable, OptimiserCallable
 
 _FloatOrArrayT = Union[np.ndarray, float]
 
