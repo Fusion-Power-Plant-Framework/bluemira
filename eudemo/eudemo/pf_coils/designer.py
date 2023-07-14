@@ -178,9 +178,9 @@ class PFCoilsDesigner(Designer[CoilSet]):
         result_dict = {}
         for k, v in opt_problem.snapshots.items():
             if k in [opt_problem.SOF, opt_problem.EOF]:
-                self.eq_manager.add_state(k, v)
                 result_dict[k] = v.eq.to_dict()
                 result_dict[k]["name"] = f"bluemira {timestamp} {k}"
+            self.eq_manager.add_state(k, v)
 
         json_writer(result_dict, self.file_path)
 
