@@ -209,7 +209,9 @@ class RipplePointSelector(ABC):
             "tolerance": np.full(len(self.points), rip_con_tol),
         }
 
-    def _constrain_ripple(self, parameterisation) -> np.ndarray:
+    def _constrain_ripple(
+        self, parameterisation: GeometryParameterisation
+    ) -> np.ndarray:
         """
         Ripple constraint function
 
@@ -355,7 +357,7 @@ class MaximiseSelector(RipplePointSelector):
             "tolerance": np.full(2, rip_con_tol),
         }
 
-    def _constrain_max_ripple(self, parameterisation) -> float:
+    def _constrain_max_ripple(self, parameterisation: GeometryParameterisation) -> float:
         """
         Ripple constraint function
 
@@ -514,7 +516,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         )
         self.ripple_selector = ripple_selector
 
-    def objective(self, parameterisation) -> float:
+    def objective(self, parameterisation: GeometryParameterisation) -> float:
         """
         Objective function (minimise length)
         """
