@@ -26,7 +26,7 @@ from typing import List, Optional, Tuple, Union
 
 import numpy as np
 
-from bluemira.optimisation._typing import OptimiserCallable
+from bluemira.optimisation.typing import OptimiserCallable
 
 
 @dataclass

@@ -25,12 +25,12 @@ from typing import Any, List, Mapping, Optional, TypeVar, Union
 
 import numpy as np
 
-from bluemira.geometry.optimisation.optimise import (
+from bluemira.geometry.optimisation._optimise import (
     GeomOptimiserResult,
     KeepOutZone,
     optimise_geometry,
 )
-from bluemira.geometry.optimisation.typing import GeomConstraintT
+from bluemira.geometry.optimisation._typing import GeomConstraintT
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation.problem import OptimisationProblemBase

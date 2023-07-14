@@ -37,7 +37,7 @@ from typing_extensions import NotRequired
 
 from bluemira.geometry.optimisation import _tools
 from bluemira.geometry.optimisation._tools import KeepOutZone
-from bluemira.geometry.optimisation.typing import (
+from bluemira.geometry.optimisation._typing import (
     GeomConstraintT,
     GeomOptimiserCallable,
     GeomOptimiserObjective,

@@ -18,7 +18,8 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from bluemira.geometry.optimisation.optimise import KeepOutZone, optimise_geometry
+"""Optimisation for geometry"""
+from bluemira.geometry.optimisation._optimise import KeepOutZone, optimise_geometry
 from bluemira.geometry.optimisation.problem import GeomOptimisationProblem
 
 __all__ = [

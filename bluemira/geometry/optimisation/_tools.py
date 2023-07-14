@@ -24,7 +24,7 @@ from typing import List, Optional
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.geometry.optimisation.typing import (
+from bluemira.geometry.optimisation._typing import (
     GeomClsOptimiserCallable,
     GeomConstraintT,
     GeomOptimiserCallable,
@@ -33,12 +33,12 @@ from bluemira.geometry.optimisation.typing import (
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import signed_distance_2D_polygon
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation._typing import (
+from bluemira.optimisation.error import GeometryOptimisationError
+from bluemira.optimisation.typing import (
     ConstraintT,
     ObjectiveCallable,
     OptimiserCallable,
 )
-from bluemira.optimisation.error import GeometryOptimisationError
 
 
 @dataclass

@@ -24,7 +24,7 @@ import numpy as np
 import pytest
 
 from bluemira.geometry.optimisation import optimise_geometry
-from bluemira.geometry.optimisation.optimise import KeepOutZone
+from bluemira.geometry.optimisation._optimise import KeepOutZone
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PictureFrame,

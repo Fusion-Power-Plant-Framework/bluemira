@@ -36,7 +36,7 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.optimisation._optimiser import OptimiserResult
-from bluemira.optimisation._typing import ConstraintT
+from bluemira.optimisation.typing import ConstraintT
 
 
 @dataclass

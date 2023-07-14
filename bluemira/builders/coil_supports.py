@@ -55,7 +55,7 @@ from bluemira.geometry.tools import (
 )
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation import OptimisationProblem
-from bluemira.optimisation._typing import ConstraintT
+from bluemira.optimisation.typing import ConstraintT
 
 
 @dataclass

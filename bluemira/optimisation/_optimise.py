@@ -40,7 +40,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
-from bluemira.optimisation._typing import (
+from bluemira.optimisation.typing import (
     ConstraintT,
     ObjectiveCallable,
     OptimiserCallable,
