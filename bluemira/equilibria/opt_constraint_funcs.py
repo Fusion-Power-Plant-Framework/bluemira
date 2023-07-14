@@ -56,12 +56,22 @@ in derivative based algorithms, such as those utilising gradient descent.
 
 from __future__ import annotations
 
+import warnings
 from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
 
 import numpy as np
+
+warnings.warn(
+    f"The module '{__name__}' is deprecated and will be removed in v2.0.0.\n"
+    "See "
+    "https://bluemira.readthedocs.io/en/latest/optimisation/optimisation.html "
+    "for documentation of the new optimisation module.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def objective_constraint(
