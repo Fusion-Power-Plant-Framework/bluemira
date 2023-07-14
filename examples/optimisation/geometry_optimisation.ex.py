@@ -62,10 +62,10 @@ import numpy as np
 
 from bluemira.display import plot_2d
 from bluemira.display.plotter import PlotOptions
+from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.tools import distance_to, make_circle
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation import optimise_geometry
 
 min_distance = 0.5
 plasma = make_circle(radius=2, center=(8, 0, 0.25), axis=(0, 1, 0))
