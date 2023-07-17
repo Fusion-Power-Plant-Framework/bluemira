@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import os
-import re
 import shutil
 import tempfile
 from dataclasses import dataclass
@@ -165,4 +164,4 @@ class TestOptVariables:
             ]
         )
         assert len(table.split("\n")) == 10
-        assert re.match(table_pattern, table, flags=re.MULTILINE)
+        assert table == table_pattern

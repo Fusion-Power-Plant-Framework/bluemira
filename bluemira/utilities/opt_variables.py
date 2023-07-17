@@ -22,6 +22,7 @@
 """
 Optimisation variable class.
 """
+from __future__ import annotations
 
 import json
 from dataclasses import MISSING, Field, dataclass, field
@@ -279,7 +280,7 @@ class OptVariable:
 
         return f"{self.name} = {self.value}{bound}{descr}"
 
-    def __add__(self, other: "OptVariable"):
+    def __add__(self, other: OptVariable):
         """The sum of two OptVariables is the sum of their values"""
         if isinstance(other, OptVariable):
             return self.value + other.value
@@ -288,7 +289,7 @@ class OptVariable:
         else:
             raise TypeError(f"Cannot add OptVariable with {type(other)}")
 
-    def __sub__(self, other: "OptVariable"):
+    def __sub__(self, other: OptVariable):
         """The subtraction of two OptVariables is the subtraction of their values"""
         if isinstance(other, OptVariable):
             return self.value - other.value
@@ -297,7 +298,7 @@ class OptVariable:
         else:
             raise TypeError(f"Cannot subtract OptVariable with {type(other)}")
 
-    def __mul__(self, other: "OptVariable"):
+    def __mul__(self, other: OptVariable):
         """
         The multiplication of two OptVariables is
         the multiplication of their values
@@ -349,7 +350,7 @@ class OptVariablesFrame:
                 raise TypeError(
                     f"{field_name} must be wrapped in with 'ov' field factory"
                 )
-            if type(fact_inst) != OptVariable:
+            if not isinstance(fact_inst, OptVariable):
                 raise TypeError(
                     f"OptVariablesFrame contains non-OptVariable object '{field_name}: {type(fact_inst)}'"
                 )
@@ -409,7 +410,6 @@ class OptVariablesFrame:
             If True, will raise errors if values are outside the bounds. If False, the
             bounds are dynamically adjusted to match the value.
         """
-        # todo: once a var is fixed, it cannot be unfixed is that what we want?
         opt_var = self[name]
         if fixed:
             # sets the bounds and fixes the var ignoring them
