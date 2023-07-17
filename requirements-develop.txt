@@ -2,7 +2,7 @@ alabaster==0.7.13
 astroid==2.15.6
 attrs==23.1.0
 bandit==1.7.5
-black==23.3.0
+black==23.7.0
 certifi==2023.5.7
 cfgv==3.3.1
 charset-normalizer==3.2.0
