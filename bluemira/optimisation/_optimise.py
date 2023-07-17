@@ -55,7 +55,7 @@ def optimise(
     x0: Optional[np.ndarray] = None,
     dimensions: Optional[int] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
+    opt_conditions: Optional[Mapping[str, Optional[Union[int, float]]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
     bounds: Optional[Tuple[npt.ArrayLike, npt.ArrayLike]] = None,
     eq_constraints: Iterable[ConstraintT] = (),
@@ -256,7 +256,7 @@ def _make_optimiser(
     dimensions: int,
     df_objective: Optional[OptimiserCallable] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
+    opt_conditions: Optional[Mapping[str, Optional[Union[int, float]]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
     bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
     eq_constraints: Iterable[ConstraintT] = (),
@@ -357,7 +357,7 @@ def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndar
 
 def _set_default_termination_conditions(
     algorithm: Union[str, Algorithm],
-    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
+    opt_conditions: Optional[Mapping[str, Optional[Union[int, float]]]] = None,
 ) -> Dict[str, Union[int, float]]:
     tols = AlgorithmDefaultTolerances()
 
@@ -370,4 +370,9 @@ def _set_default_termination_conditions(
     if not isinstance(algorithm, Algorithm):
         return opt_conditions
 
-    return {**getattr(tols, algorithm.name).to_dict(), **opt_conditions}
+    # If the value of any condition is None it is dropped
+    return {
+        k: v
+        for k, v in {**getattr(tols, algorithm.name).to_dict(), **opt_conditions}.items()
+        if v is not None
+    }

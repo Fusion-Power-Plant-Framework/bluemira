@@ -37,7 +37,7 @@ class TestOptimise:
             algorithm=algorithm,
             df_objective=d_rosenbrock,
             dimensions=2,
-            opt_conditions={"ftol_rel": 1e-6},
+            opt_conditions={"ftol_rel": 1e-6, "ftol_abs": None},
         )
 
         np.testing.assert_allclose(result.x, [1, 1])

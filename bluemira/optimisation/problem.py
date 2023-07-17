@@ -118,7 +118,7 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         x0: np.ndarray,
         *,
         algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-        opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
+        opt_conditions: Optional[Mapping[str, Optional[Union[int, float]]]] = None,
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,
         check_constraints: bool = True,
