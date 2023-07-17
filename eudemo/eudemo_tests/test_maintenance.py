@@ -37,7 +37,6 @@ from bluemira.geometry.tools import (
     make_polygon,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.optimiser import Optimiser
 from eudemo.maintenance.duct_connection import (
     VVUpperPortDuctBuilder,
     VVUpperPortDuctBuilderParams,
@@ -46,13 +45,13 @@ from eudemo.maintenance.equatorial_port import (
     EquatorialPortDuctBuilder,
     EquatorialPortKOZDesigner,
 )
-from eudemo.maintenance.upper_port import UpperPortOP
+from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 
 
-class TestUpperPortOP:
+class TestUpperPortDesigner:
     """Test Upper Port"""
 
-    def test_dummy_blanket_port_opt(self):
+    def test_dummy_blanket_port_design(self):
         """Test Upper Port Optimiser"""
         params = {
             "c_rm": {"value": 0.02, "unit": "m"},
@@ -60,25 +59,33 @@ class TestUpperPortOP:
             "bb_min_angle": {"value": 70, "unit": "degrees"},
             "tk_bb_ib": {"value": 0.8, "unit": "m"},
             "tk_bb_ob": {"value": 1.1, "unit": "m"},
+            "tk_vv_double_wall": {"value": 0.04, "unit": "m"},
+            "g_vv_ts": {"value": 0.05, "unit": "m"},
+            "tk_ts": {"value": 0.06, "unit": "m"},
+            "g_ts_tf": {"value": 0.07, "unit": "m"},
+            "pf_s_g": {"value": 0.08, "unit": "m"},
+            "pf_s_tk_plate": {"value": 0.09, "unit": "m"},
         }
         bb = make_polygon(
             {
                 "x": [5, 6, 6, 11, 11, 12, 12, 5],
-                "y": 0,
                 "z": [-5, -5, 5, 5, -5, -5, 6, 6],
             },
             closed=True,
         )
         bb = BluemiraFace(bb)
-        optimiser = Optimiser(
-            "SLSQP", opt_conditions={"max_eval": 1000, "ftol_rel": 1e-8}
-        )
+        designer = UpperPortKOZDesigner(params, {}, bb)
 
-        design_problem = UpperPortOP(params, optimiser, bb)
+        up_zone, r_cut, cut_angle = designer.run()
 
-        solution = design_problem.optimise()
-
-        assert design_problem.opt.check_constraints(solution)
+        bbox = up_zone.bounding_box
+        assert bbox.x_min == pytest.approx(6.37)
+        assert bbox.x_max == pytest.approx(12.41)
+        assert bbox.y_min == pytest.approx(bbox.y_max) == pytest.approx(0)
+        assert bbox.z_min == pytest.approx(0)
+        assert bbox.z_max == pytest.approx(10)
+        assert r_cut == pytest.approx(8.52)
+        assert cut_angle == pytest.approx(0)
 
 
 class TestDuctConnection:

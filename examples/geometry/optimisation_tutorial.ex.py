@@ -40,10 +40,17 @@ A quick tutorial on the optimisation of geometry in bluemira
 
 # %% [markdown]
 # # Optimisation of Geometry
+
+# %% [markdown]
+# ## ⚠️ This method of defining optimisations is deprecated ⚠️
+# See
+# [examples/optimisation/geometry_optimisation](../optimisation/geometry_optimisation.ex.py)
+
+# %% [markdown]
 # ## Introduction
 #
-# We're going to set up some geometry optimisation problems and solve them with different
-# optimisation algorithms.
+# We're going to set up some geometry optimisation problems and solve them with
+# different optimisation algorithms.
 
 # %%
 import numpy as np

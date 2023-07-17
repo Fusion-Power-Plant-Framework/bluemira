@@ -23,7 +23,7 @@
 Geometry optimisation classes and tools
 """
 
-
+import warnings
 from typing import List
 
 import numpy as np
@@ -40,7 +40,16 @@ from bluemira.utilities.opt_problems import (
 )
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
-__all__ = ["GeometryOptimisationProblem", "minimise_length"]
+__all__ = ["GeometryOptimisationProblem", "minimise_length", "MinimiseLengthGOP"]
+
+warnings.warn(
+    f"The module '{__name__}' is deprecated and will be removed in v2.0.0.\n"
+    "See "
+    "https://bluemira.readthedocs.io/en/latest/optimisation/optimisation.html "
+    "for documentation of the new optimisation module.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def calculate_length(vector, parameterisation):
@@ -120,7 +129,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
     ----------
     parameterisation: GeometryParameterisation
         Geometry parameterisation instance to use in the optimisation problem
-    optimiser: Optimiser
+    optimiser: bluemira.utilities.optimiser.Optimiser
         Optimiser instance to use in the optimisation problem
     """
 

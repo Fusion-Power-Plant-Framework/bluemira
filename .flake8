@@ -94,7 +94,17 @@ per-file-ignores =
     documentation/source/*:
         D100,
         D101,
-
+    examples/geometry/optimisation_tutorial.ex.py:
+        # Contains a URL that's too long for a single line
+        W505,
+    examples/optimisation/nonlinearly_constrained_problem.ex.py:
+        # Has module level imports not at the top of the file
+        E402,
+        # Contains a URL that's too long for a single line
+        W505,
+    examples/optimisation/geometry_optimisation.ex.py:
+        # Has module level imports not at the top of the file
+        E402
 
 exclude =
     # No need to traverse our git directory

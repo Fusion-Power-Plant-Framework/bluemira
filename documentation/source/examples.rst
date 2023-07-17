@@ -12,7 +12,6 @@ Introductory Examples
     examples/base/components_tutorial
     examples/geometry/geometry_tutorial
     examples/geometry/plotting_tutorial
-    examples/utilities/optimisation_example
 
 Equilibria Examples
 ^^^^^^^^^^^^^^^^^^^
@@ -43,6 +42,18 @@ Magnetostatics Examples
 
     examples/magnetostatics/helmholtz_example
     examples/magnetostatics/finite_element_2D_single_coil
+
+Optimisation Examples
+^^^^^^^^^^^^^^^^^^^^^
+
+.. toctree::
+    :maxdepth: 1
+
+    examples/optimisation/geometry_optimisation
+    examples/optimisation/geometry_optimisation_with_parameterisation
+    examples/optimisation/nonlinearly_constrained_problem
+    examples/optimisation/rosenbrock_problem
+    examples/optimisation/eggholder_problem
 
 External Code Examples
 ^^^^^^^^^^^^^^^^^^^^^^

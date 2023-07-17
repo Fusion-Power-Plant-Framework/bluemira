@@ -23,8 +23,9 @@
 Coil support builders
 """
 
+import warnings
 from dataclasses import dataclass
-from typing import Dict, List, Type, Union
+from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
 
@@ -54,12 +55,9 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_problems import (
-    OptimisationConstraint,
-    OptimisationObjective,
-    OptimisationProblem,
-)
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.optimisation import OptimisationProblem
+from bluemira.optimisation.typing import ConstraintT
+from bluemira.utilities.optimiser import Optimiser as _DeprecatedOptimiser
 
 
 @dataclass
@@ -571,9 +569,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         Sub wire along which to place the OIS
     keep_out_zone:
         Region in which the OIS cannot be
-    optimiser: Optimiser
-        Optimiser to use when solving the problem
-    n_koz_discr: int
+    n_koz_discr:
         Number of discretisation points to use when checking the keep-out zone constraint
     """
 
@@ -581,43 +577,47 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         self,
         wire: BluemiraWire,
         keep_out_zone: BluemiraFace,
-        optimiser=None,
+        optimiser: Optional[_DeprecatedOptimiser] = None,
         n_koz_discr: int = 100,
     ):
-        if optimiser is None:
-            optimiser = Optimiser(
-                "COBYLA",
-                n_variables=2,
-                opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
-            )
-
-        koz_points = (
+        self.wire = wire
+        self.n_koz_discr = n_koz_discr
+        self.koz_points = (
             keep_out_zone.boundary[0].discretize(byedges=True, ndiscr=n_koz_discr).xz.T
         )
+        if optimiser is not None:
+            warnings.warn(
+                "Use of StraightOISOptimisationProblem's 'optimiser' argument is "
+                "deprecated and it will be removed in version 2.0.0.\n"
+                "See "
+                "https://bluemira.readthedocs.io/en/latest/optimisation/"
+                "optimisation.html "
+                "for documentation of the new optimisation module.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
-        objective = OptimisationObjective(
-            self.f_objective_ois, f_objective_args={"wire": wire}
-        )
-        koz_constraint = OptimisationConstraint(
-            self.f_constraint_ois,
-            f_constraint_args={"wire": wire, "koz_points": koz_points},
-            tolerance=1e-6 * np.ones(n_koz_discr),
-        )
-        x_constraint = OptimisationConstraint(self.f_constraint_x, f_constraint_args={})
+    def objective(self, x: np.ndarray) -> float:
+        """Objective function to maximise length."""
+        return self.negative_length(x)
 
-        super().__init__(
-            np.array([0, 1]),
-            optimiser,
-            objective,
-            [x_constraint, koz_constraint],
-        )
-        self.set_up_optimiser(2, [[0, 0], [1, 1]])
+    def ineq_constraints(self) -> List[ConstraintT]:
+        """The inequality constraints for the problem."""
+        return [
+            {
+                "f_constraint": self.constrain_koz,
+                "tolerance": np.full(self.n_koz_discr, 1e-6),
+            },
+            {
+                "f_constraint": self.constrain_x,
+                "df_constraint": self.df_constrain_x,
+                "tolerance": np.array([1e-6]),
+            },
+        ]
 
-    def optimise(self):
-        """
-        Run the straight OIS optimisation problem.
-        """
-        return super().optimise()
+    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+        """The optimisation parameter bounds."""
+        return np.array([0, 0]), np.array([1, 1])
 
     @staticmethod
     def f_L_to_wire(wire: BluemiraWire, x_norm: List[float]):  # noqa: N802
@@ -636,77 +636,51 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         point = wire.value_at(value)
         return np.array([point[0], point[2]])
 
-    @staticmethod
-    def _f_objective_ois(x_norm: np.ndarray, wire: BluemiraWire) -> float:
-        p1 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[0])
-        p2 = StraightOISOptimisationProblem.f_L_to_xz(wire, x_norm[1])
+    def negative_length(self, x_norm: np.ndarray) -> float:
+        """
+        Calculate the negative length of the straight OIS
+
+        Parameters
+        ----------
+        x_norm:
+            Normalised solution vector
+
+        Returns
+        -------
+        Negative length from the normalised solution vector
+        """
+        p1 = self.f_L_to_xz(self.wire, x_norm[0])
+        p2 = self.f_L_to_xz(self.wire, x_norm[1])
         return -np.hypot(*(p2 - p1))
 
-    @staticmethod
-    def f_objective_ois(
-        x_norm: np.ndarray, grad: np.ndarray, wire: BluemiraWire
-    ) -> float:
+    def constrain_koz(self, x_norm: np.ndarray) -> np.ndarray:
         """
-        Maximise the length of a straight line
+        Constrain the straight OIS to be outside a keep-out-zone
+
+        Parameters
+        ----------
+        x_norm:
+            Normalised solution vector
+
+        Returns
+        -------
+        KOZ constraint array
         """
-        value = StraightOISOptimisationProblem._f_objective_ois(x_norm, wire)
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                StraightOISOptimisationProblem._f_objective_ois,
-                x_norm,
-                f0=value,
-                bounds=[(0, 0), (1, 1)],
-                args=(wire,),
-            )
+        straight_line = self.f_L_to_wire(self.wire, x_norm)
+        straight_points = straight_line.discretize(ndiscr=self.n_koz_discr).xz.T
+        return signed_distance_2D_polygon(straight_points, self.koz_points)
 
-        return value
-
-    @staticmethod
-    def _f_constraint_ois(
-        x_norm: np.ndarray, wire: BluemiraWire, koz_points: np.ndarray
-    ) -> np.ndarray:
-        straight_line = StraightOISOptimisationProblem.f_L_to_wire(wire, x_norm)
-        straight_points = straight_line.discretize(ndiscr=100).xz.T
-        return signed_distance_2D_polygon(straight_points, koz_points)
-
-    @staticmethod
-    def f_constraint_ois(
-        constraint: np.ndarray,
-        x_norm: np.ndarray,
-        grad: np.ndarray,
-        wire: BluemiraWire,
-        koz_points: np.ndarray,
-    ) -> np.ndarray:
-        """
-        Constraint the OIS to be outside of a keep out zone
-        """
-        constraint[:] = StraightOISOptimisationProblem._f_constraint_ois(
-            x_norm, wire, koz_points
-        )
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                StraightOISOptimisationProblem._f_constraint_ois,
-                x_norm,
-                f0=constraint,
-                bounds=[(0, 0), (1, 1)],
-                args=(wire, koz_points),
-            )
-        return constraint
-
-    @staticmethod
-    def f_constraint_x(
-        constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
-    ) -> np.ndarray:
+    def constrain_x(self, x_norm: np.ndarray) -> np.ndarray:
         """
         Constrain the second normalised value to be always greater than the first.
         """
-        constraint[0] = x_norm[0] - x_norm[1]
+        return x_norm[0] - x_norm[1]
 
-        if grad.size > 0:
-            grad[:, 0] = 1.0
-            grad[:, 1] = -1.0
-
-        return constraint
+    def df_constrain_x(self, x_norm: np.ndarray) -> np.ndarray:
+        """
+        Gradient of the constraint on  the solution vector
+        """
+        return np.array([1.0, -1.0])
 
 
 @dataclass
@@ -776,7 +750,11 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
         ois_wires = []
         for region in ois_regions:
             opt_problem = StraightOISOptimisationProblem(region, koz)
-            result = opt_problem.optimise()
+            result = opt_problem.optimise(
+                x0=np.array([0.0, 1.0]),
+                algorithm="COBYLA",
+                opt_conditions={"ftol_rel": 1e-6, "max_eval": 1000},
+            ).x
             p1 = region.value_at(result[0])
             p2 = region.value_at(result[1])
             wire = self._make_ois_wire(p1, p2)
