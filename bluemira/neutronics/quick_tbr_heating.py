@@ -6,9 +6,12 @@ TODO:
     [x]quick_tbr_heating.print_df_decorator_with_title_string, quick_tbr_heating.OpenMCResult -> result_presentation
     [x]Normalize the methods in result_presentation.py
     [x]pandas_df_functions -> result_presentation
-    [ ]quick_tbr_heating.geometry_plotter -> result_presentation
+    [x]quick_tbr_heating.geometry_plotter -> result_presentation
     [ ]All openmc setting up -> stay here at quick_btr_heating.py
     [ ]quick_tbr_heating.filter_cells -> filter_cells.py
+        [ ]_load_fw_points -> somewhere??
+        - create_tallies
+        - stochastic_volume_calculation
     [ ]create_parametric_source
         [ ]Its magic numbers/ strings -> constants.py
 [ ]compare the pps_api with open-radiation-source/parametric-plasma-source/.git
@@ -48,6 +51,7 @@ config[
 ] = "/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml"
 
 
+# dataclasses containing parameters used to set up the openmc model.
 @dataclass
 class OpenMCSimulationRuntimeParameters:
     """Parameters used in the actual simulation"""
@@ -110,10 +114,7 @@ class TokamakGeometry:
     inb_gap: float = 20.0  # [cm]
 
 
-# ----------------------------------------------------------------------------------------
 # openmc source maker
-
-
 def create_ring_source(tokamak_geometry):
     """
     Creating simple ring source.
@@ -442,20 +443,20 @@ def filter_cells(cells_and_cell_lists, material_lib, src_rate):
 
     mat_filter = openmc.MaterialFilter(
         [
-            material_lib["inb_fw_mat"],
-            material_lib["outb_fw_mat"],
-            material_lib["inb_bz_mat"],
-            material_lib["outb_bz_mat"],
-            material_lib["inb_mani_mat"],
-            material_lib["outb_mani_mat"],
-            material_lib["inb_vv_mat"],
-            material_lib["outb_vv_mat"],
-            material_lib["divertor_mat"],
-            material_lib["div_fw_mat"],
-            material_lib["tf_coil_mat"],
-            material_lib["inb_sf_mat"],  # sf = surface
-            material_lib["outb_sf_mat"],  # sf = surface
-            material_lib["div_sf_mat"],  # sf = surface
+            material_lib.inb_fw_mat,
+            material_lib.outb_fw_mat,
+            material_lib.inb_bz_mat,
+            material_lib.outb_bz_mat,
+            material_lib.inb_mani_mat,
+            material_lib.outb_mani_mat,
+            material_lib.inb_vv_mat,
+            material_lib.outb_vv_mat,
+            material_lib.divertor_mat,
+            material_lib.div_fw_mat,
+            material_lib.tf_coil_mat,
+            material_lib.inb_sf_mat,  # sf = surface
+            material_lib.outb_sf_mat,  # sf = surface
+            material_lib.div_sf_mat,  # sf = surface
         ]
     )
 
@@ -597,7 +598,7 @@ def stochastic_volume_calculation(tokamak_geometry, cells_and_cell_lists, partic
 
     import os
 
-    # quietly delete the unused .hf files
+    # quietly delete the unused .hf files: bad practice, fix later?
     try:
         os.remove("summary.h5")
         os.remove("statepoint.1.h5")
@@ -729,7 +730,6 @@ class TBRHeatingSimulation:
 
 
 if __name__ == "__main__":
-    import sys
 
     @dataclass
     class SimulatedBluemiraOutputVariables:
@@ -813,10 +813,12 @@ if __name__ == "__main__":
 
         return SimulatedBluemiraOutputVariables(breeder_materials, tokamak_geometry)
 
-    # implemented blanket_type:{'wcll', 'dcll', 'hcpb'}
-    properties = get_preset_physical_properties("wcll")
-    breeder_materials = properties.breeder_materials
-    tokamak_geometry = properties.tokamak_geometry
+    # set up the variables to be used for the openmc simulation
+
+    tokamak_properties = get_preset_physical_properties("wcll")
+    # allowed blanket_type so far = {'wcll', 'dcll', 'hcpb'}
+    breeder_materials = tokamak_properties.breeder_materials
+    tokamak_geometry = tokamak_properties.tokamak_geometry
 
     runtime_variables = OpenMCSimulationRuntimeParameters(
         particles=16800,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
@@ -835,7 +837,6 @@ if __name__ == "__main__":
     tbr_heat_sim = TBRHeatingSimulation(
         runtime_variables, operation_variable, breeder_materials, tokamak_geometry
     )
-    # import sys; sys.exit()
     tbr_heat_sim.setup(True)
     tbr_heat_sim.run()
     # get the TBR, component heating, first wall dpa, and photon heat flux

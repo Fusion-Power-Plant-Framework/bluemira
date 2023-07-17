@@ -291,9 +291,6 @@ class MaterialsLibrary:
         material_list = openmc.Materials(dataclasses.asdict(self).values())
         return material_list.export_to_xml(path)
 
-    def __getitem__(self, attr):
-        return getattr(self, attr)
-
 
 class BlanketType(Enum):
     DCLL = auto()

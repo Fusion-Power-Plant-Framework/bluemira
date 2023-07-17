@@ -244,7 +244,7 @@ def create_inboard_layer(
 
         inb_cell = openmc.Cell(
             region=-surfaces[prefix_for_layer + "_surfs"]["cones"][-1],
-            fill=material_lib[prefix_for_layer + "_mat"],
+            fill=getattr(material_lib, prefix_for_layer + "_mat"),
             name=layer_name + " " + str(inb_i),
         )
 
@@ -347,7 +347,7 @@ def create_outboard_layer(
         # Making cell
         outb_cell = openmc.Cell(
             region=+surfaces[prefix_for_layer + "_surfs"]["cones"][-1],
-            fill=material_lib[prefix_for_layer + "_mat"],
+            fill=getattr(material_lib, prefix_for_layer + "_mat"),
             name=layer_name + " " + str(outb_i),
         )
 
