@@ -37,7 +37,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._algorithm import Algorithm, AlgorithmDefaultTolerances
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation.typing import (
@@ -94,7 +94,10 @@ def optimise(
             * max_time: float
             * stop_val: float
 
-        (default: ``{"max_eval": 2000}``\)
+        In addition to the default ``{"max_eval": 2000}``\ algorithms have
+        specific tolerance defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithmDefaultTolerances`.
+
     opt_parameters:
         The algorithm-specific optimisation parameters.
     bounds:
@@ -178,8 +181,8 @@ def optimise(
         if x0 is not None and x0.size != dimensions:
             raise ValueError("Size of 'x0' and 'dimensions' must agree.")
 
-    if opt_conditions is None:
-        opt_conditions = {"max_eval": 2000}
+    opt_conditions = _set_default_termination_conditions(algorithm, opt_conditions)
+
     bounds = _process_bounds(bounds, dimensions)
     # Convert to lists, as these could be generators, and we may need to
     # consume them more than once.
@@ -349,3 +352,21 @@ def _eq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndarra
 def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndarray:
     """Condition under which an inequality constraint is violated."""
     return c_value > tols
+
+
+def _set_default_termination_conditions(
+    algorithm: Union[str, Algorithm],
+    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
+) -> Optional[Mapping[str, Union[int, float]]]:
+    if opt_conditions is None:
+        if isinstance(algorithm, str):
+            algorithm = Algorithm[algorithm]
+
+        if not isinstance(algorithm, Algorithm):
+            return opt_conditions
+
+        return {
+            **getattr(AlgorithmDefaultTolerances(), algorithm.name).to_dict(),
+            "max_eval": 2000,
+        }
+    return opt_conditions

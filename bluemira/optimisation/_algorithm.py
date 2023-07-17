@@ -29,6 +29,8 @@ algorithms it supports.
 from __future__ import annotations
 
 import enum
+from dataclasses import asdict, dataclass, field
+from typing import Dict, Optional
 
 
 class _AlgorithmMeta(enum.EnumMeta):
@@ -54,3 +56,40 @@ class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):
     DIRECT_L = enum.auto()
     CRS = enum.auto()
     ISRES = enum.auto()
+
+
+@dataclass
+class AlgorithmTolerance:
+    """Algorithm tolerances container"""
+
+    ftol_abs: Optional[float] = None
+    ftol_rel: Optional[float] = None
+    xtol_abs: Optional[float] = None
+    xtol_rel: Optional[float] = None
+
+    def to_dict(self) -> Dict[str, float]:
+        """Convert to dictionary without Nones"""
+        return {k: v for k, v in asdict(self).items() if v is not None}
+
+
+@dataclass
+class AlgorithmDefaultTolerances:
+    """Default Algorithm tolerances"""
+
+    SLSQP: AlgorithmTolerance = field(
+        default_factory=lambda: AlgorithmTolerance(ftol_abs=1e-6)
+    )
+    COBYLA: AlgorithmTolerance = field(
+        default_factory=lambda: AlgorithmTolerance(ftol_abs=1e-4, xtol_abs=1e-4)
+    )
+    SBPLX: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
+    MMA: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
+    BFGS: AlgorithmTolerance = field(
+        default_factory=lambda: AlgorithmTolerance(xtol_rel=0)
+    )
+    DIRECT: AlgorithmTolerance = field(
+        default_factory=lambda: AlgorithmTolerance(ftol_rel=1e-4)
+    )
+    DIRECT_L: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
+    CRS: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
+    ISRES: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
