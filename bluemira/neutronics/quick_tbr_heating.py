@@ -1,26 +1,11 @@
 """
 TODO:
-[]make_materials
-    []remove CheckedDict
-        []MaterialsLibrary export in real time instead
-            []why the Material(material_id=102).mix_materials(...); ....id=102????
-            []Fix the whole self["..."]
-                []by converting them to self....
-            [](Deal with the whole ...+"_mats" problem (which motivated the str_to_componet method) later)
-    []AutoPopulatingMaterialsLibrary: see if it needs to have 3 methods?
-        []BlanketType should then be fixed by it
-        - possibly need to use multiple ways of getting
-[]Change ParamHolder etc. into bluemira.ParameterFrame/ make_parameter_frame
-[]Unit: cgs -> metric
-    [x]Try the conversion thing that James spoke about
-    [ ]Check other files (other than quick_tbr_heating.py) as well
-[]Replace parametric-plasma-source/parametric_plasma_source/fortran_api/* and src/ vs pps_api
-    - `pip install git+https://github.com/open-radiation-source/parametric-plasma-source.git@main`
 [ ]Break quick_tbr_heating into multiple
     [x]get_dpa_coefs -> constants
-    [ ]quick_tbr_heating.PoloidalXSPlot -> result_presentation
-    [ ]quick_tbr_heating.print_df_decorator_with_title_string, quick_tbr_heating.OpenMCResult -> result_presentation
-    [ ]pandas_df_functions -> result_presentation
+    [x]quick_tbr_heating.PoloidalXSPlot -> result_presentation
+    [x]quick_tbr_heating.print_df_decorator_with_title_string, quick_tbr_heating.OpenMCResult -> result_presentation
+    [x]Normalize the methods in result_presentation.py
+    [x]pandas_df_functions -> result_presentation
     [ ]quick_tbr_heating.geometry_plotter -> result_presentation
     [ ]All openmc setting up -> stay here at quick_btr_heating.py
     [ ]quick_tbr_heating.filter_cells -> filter_cells.py
@@ -30,9 +15,13 @@ TODO:
     [ ]find the units and documentations for creating source_params_dict
         - See details in PPS_OpenMC.so library
         - why parametric source mode=2: need to dig open the PPS_OpenMC.so
+[]Unit: cgs -> metric
+    [ ]Check other files (other than quick_tbr_heating.py) as well
+[]Replace parametric-plasma-source/parametric_plasma_source/fortran_api/* and src/ vs pps_api
+    - `pip install git+https://github.com/open-radiation-source/parametric-plasma-source.git@main`
+[ ]Integration into our logging system (print should go through bluemira_print etc.)
 [ ]Some parameters are locked up inside functions:
     [ ]create_parametric_source
-[ ]Integration into our logging system (print should go through bluemira_print etc.)
 ____
 [ ]Tests?
 """
@@ -40,26 +29,19 @@ import dataclasses
 import os
 from dataclasses import dataclass
 
-import matplotlib.pyplot as plt
 import numpy as np
 import openmc
-import pandas as pd
 from numpy import pi
 from openmc.config import config
 
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.make_materials as mm
-import bluemira.neutronics.pandas_df_functions as pdf
+import bluemira.neutronics.result_presentation as present
 
 # Constants
 from bluemira.base.constants import BMUnitRegistry, raw_uc
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.neutronics.constants import (
-    S_TO_YEAR,
-    DPACoefficients,
-    dt_neutron_energy_MeV,
-    energy_per_dt_MeV,
-)
+from bluemira.neutronics.constants import dt_neutron_energy_MeV, energy_per_dt_MeV
 
 config[
     "cross_sections"
@@ -192,35 +174,6 @@ def create_parametric_source(tokamak_geometry):
     )
 
     return parametric_source
-
-
-# ----------------------------------------------------------------------------------------
-
-
-class PoloidalXSPlot(object):
-    """Context manager so that we can save the plot as soon as we exit.
-    Using the 'with' statement (i.e. in the syntax of context manager in python)
-    also improves readability, as the save_name is written at the top of the indented
-    block, so it's obvious what's the indented block plotting.
-    """
-
-    def __init__(self, save_name, title=None):
-        self.save_name = save_name
-        self.ax = plt.subplot()
-        self.ax.axis("equal")
-        if title:
-            self.ax.set_title(title)
-
-    def __enter__(self):
-        """Return the initialized matplotlib axes object"""
-        return self.ax
-
-    def __exit__(self, exception_type, value, traceback):
-        """Save and close upon exit."""
-        plt.savefig(self.save_name)
-        # self.ax.cla() # not necessary to clear axes or clear figure
-        # self.ax.figure.clf()
-        plt.close()
 
 
 def _load_fw_points(tokamak_geometry, save_plots=True):
@@ -366,10 +319,10 @@ def _load_fw_points(tokamak_geometry, save_plots=True):
         tri = tokamak_geometry.triang  # triangularity
         t = np.linspace(0, 2 * pi, 100)
 
-        with PoloidalXSPlot("blanket_face.svg", "Blanket Face") as ax:
+        with present.PoloidalXSPlot("blanket_face.svg", "Blanket Face") as ax:
             ax.scatter(full_blanket_2d_outline[:, 0], full_blanket_2d_outline[:, 2])
 
-        with PoloidalXSPlot(
+        with present.PoloidalXSPlot(
             "all_points_before_after.svg", "Points sampled for making the MCNP model"
         ) as ax:
             ax.plot(old_points[:, 0], old_points[:, 2], label="Initial fw points")
@@ -381,20 +334,17 @@ def _load_fw_points(tokamak_geometry, save_plots=True):
             )  # source envelope
             ax.legend(loc="upper right")
 
-        with PoloidalXSPlot(
+        with present.PoloidalXSPlot(
             "selected_pts_inner_blanket_face.svg", "Selected points on the inner blanket"
         ) as ax:
             ax.scatter(new_downsampled_fw[:, 0], new_downsampled_fw[:, 2])
 
-        with PoloidalXSPlot(
+        with present.PoloidalXSPlot(
             "selected_pts_divertor_face.svg", "Selected points on the divertor face"
         ) as ax:
             ax.scatter(new_downsampled_div[:, 0], new_downsampled_div[:, 2])
 
     return new_downsampled_fw, new_downsampled_div, num_inboard_points
-
-
-# ----------------------------------------------------------------------------------------
 
 
 def setup_openmc(
@@ -435,9 +385,6 @@ def setup_openmc(
     settings.export_to_xml()
 
 
-# ----------------------------------------------------------------------------------------
-
-
 def create_materials(breeder_materials: BreederTypeParameters):
     """
     Parameters
@@ -451,9 +398,6 @@ def create_materials(breeder_materials: BreederTypeParameters):
     )
     material_lib.export()
     return material_lib
-
-
-# ----------------------------------------------------------------------------------------
 
 
 def filter_cells(cells_and_cell_lists, material_lib, src_rate):
@@ -560,9 +504,6 @@ def filter_cells(cells_and_cell_lists, material_lib, src_rate):
     )
 
 
-# ----------------------------------------------------------------------------------------
-
-
 def create_tallies(
     cell_filter,
     mat_filter,
@@ -637,201 +578,7 @@ def create_tallies(
     tallies.export_to_xml()
 
 
-# ----------------------------------------------------------------------------------------
 # result processing
-
-
-def print_df_decorator_with_title_string(title_string):
-    """
-    Decorator for methods inside OpenMCResult,
-        so that the method has an added option to print the dataframe before exiting.
-    Parameter
-    ---------
-    title_string: bool, default=True
-    """
-
-    def print_dataframe_decorator(method):
-        def dataframe_method_wrapper(self, print_df: bool = True):
-            method_output = method(self)
-            if print_df:
-                if isinstance(method_output, pd.DataFrame):
-                    output_str = method_output.to_string()
-                else:
-                    output_str = str(method_output)
-                print("\n{}\n".format(title_string) + output_str)
-            return method_output
-
-        return dataframe_method_wrapper
-
-    return print_dataframe_decorator
-
-
-class OpenMCResult:
-    """
-    Class that looks opens up the openmc universe from the statepoint file,
-        so that the dataframes containing the relevant results
-        can be generated and reformatted by its methods.
-    """
-
-    def __init__(self, universe, src_rate, statepoint_file="statepoint.2.h5"):
-        self.universe = universe
-        self.src_rate = src_rate
-        self.statepoint_file = statepoint_file
-        # Creating cell name dictionary to allow easy mapping to dataframe
-        self.cell_names = {}
-        for cell_id in self.universe.cells:
-            self.cell_names[cell_id] = self.universe.cells[cell_id].name
-
-        # Creating material dictionary to allow easy mapping to dataframe
-        self.mat_names = {}
-        for cell_id in self.universe.cells:
-            try:
-                self.mat_names[
-                    self.universe.cells[cell_id].fill.id
-                ] = self.universe.cells[cell_id].fill.name
-            except:
-                pass
-
-        # Creating cell volume dictionary to allow easy mapping to dataframe
-        self.cell_vols = {}
-        for cell_id in self.universe.cells:
-            self.cell_vols[cell_id] = self.universe.cells[cell_id].volume
-        # Loads up the output file from the simulation
-        self.statepoint = openmc.StatePoint(self.statepoint_file)
-
-    @print_df_decorator_with_title_string("TBR")
-    def load_tbr(self):
-        """load the TBR value and uncertainty"""
-        tally = "TBR"
-        self.tbr_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
-        self.tbr = "{:.2f}".format(self.tbr_df["mean"].sum())
-        self.tbr_e = "{:.2f}".format(self.tbr_df["std. dev."].sum())
-        return self.tbr, self.tbr_e
-
-    @print_df_decorator_with_title_string("Heating (MW)")
-    def load_heating_in_MW(self):
-        """load the heating (sorted by material) dataframe"""
-        tally = "MW heating"  # 'mean' units are MW
-        selected_columns = [
-            "material",
-            "material_name",
-            "nuclide",
-            "score",
-            "mean",
-            "std. dev.",
-            "%err.",
-        ]
-        heating_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
-        heating_df["material_name"] = heating_df["material"].map(self.mat_names)
-        heating_df["%err."] = heating_df.apply(pdf.get_percent_err, axis=1).apply(
-            lambda x: "%.1f" % x
-        )
-        heating_df = heating_df[
-            selected_columns
-        ]  # rearrange dataframe into this desired order
-        self.heating_df = heating_df
-        return self.heating_df
-
-    @print_df_decorator_with_title_string("Neutron Wall Load (eV)")
-    def load_neutron_wall_loading(self):
-        """load the neutron wall load dataframe"""
-        dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
-        tally = "neutron wall load"  # 'mean' units are eV per source particle
-        n_wl_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
-        n_wl_df["cell_name"] = n_wl_df["cell"].map(self.cell_names)
-        n_wl_df["vol(cc)"] = n_wl_df["cell"].map(self.cell_vols)
-        n_wl_df["dpa/fpy"] = (
-            n_wl_df["mean"]
-            * dfa_coefs.displacements_per_damage_eV
-            / (n_wl_df["vol(cc)"] * dfa_coefs.atoms_per_cc)
-            / S_TO_YEAR
-            * self.src_rate
-        )
-        n_wl_df["dpa/fpy"] = n_wl_df["dpa/fpy"].apply(lambda x: "%.1f" % x)
-        n_wl_df["%err."] = n_wl_df.apply(pdf.get_percent_err, axis=1).apply(
-            lambda x: "%.1f" % x
-        )
-        n_wl_df = n_wl_df.drop(
-            n_wl_df[~n_wl_df["cell_name"].str.contains("Surface")].index
-        )  # ~ invert operator = doesnt contain
-        n_wl_df = n_wl_df.reindex([12, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
-        n_wl_df = n_wl_df[
-            [
-                "cell",
-                "cell_name",
-                "particle",
-                "nuclide",
-                "score",
-                "vol(cc)",
-                "mean",
-                "std. dev.",
-                "dpa/fpy",
-                "%err.",
-            ]
-        ]
-
-        self.neutron_wall_load = n_wl_df
-        return self.neutron_wall_load
-
-    @print_df_decorator_with_title_string("Photon Heat Flux MW m-2")
-    def load_photon_heat_flux(self):
-        """load the photon heaat flux dataframe"""
-        tally = "photon heat flux"  # 'mean' units are MW cm
-        p_hf_df = self.statepoint.get_tally(name=tally).get_pandas_dataframe()
-        p_hf_df["cell_name"] = p_hf_df["cell"].map(self.cell_names)
-        p_hf_df["vol(cc)"] = p_hf_df["cell"].map(self.cell_vols)
-        _MW_per_cm_2 = p_hf_df["mean"] / p_hf_df["vol(cc)"]
-        p_hf_df["MW_m-2"] = raw_uc(_MW_per_cm_2.to_numpy(), "1/cm^2", "1/m^2")
-        p_hf_df["%err."] = p_hf_df.apply(pdf.get_percent_err, axis=1).apply(
-            lambda x: "%.1f" % x
-        )
-        # Scaling first wall results by factor to surface results
-        surface_total = p_hf_df.loc[
-            p_hf_df["cell_name"].str.contains("FW Surface"), "MW_m-2"
-        ].sum()
-        cell_total = p_hf_df.loc[
-            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"), "MW_m-2"
-        ].sum()  # ~ invert operator = doesnt contain
-        surface_factor = surface_total / cell_total
-        p_hf_df["MW_m-2"] = np.where(
-            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
-            p_hf_df["MW_m-2"] * surface_factor,
-            p_hf_df["MW_m-2"],
-        )
-        p_hf_df = p_hf_df.drop(
-            p_hf_df[p_hf_df["cell_name"].str.contains("FW Surface")].index
-        )
-        p_hf_df = p_hf_df.drop(p_hf_df[p_hf_df["cell_name"] == "Divertor PFC"].index)
-        p_hf_df = p_hf_df.replace(
-            "FW", "FW Surface", regex=True
-        )  # df.replace('Py','Python with ', regex=True)
-        p_hf_df = p_hf_df[
-            [
-                "cell",
-                "cell_name",
-                "particle",
-                "nuclide",
-                "score",
-                "vol(cc)",
-                "mean",
-                "std. dev.",
-                "MW_m-2",
-                "%err.",
-            ]
-        ]
-
-        self.photon_heat_flux = p_hf_df
-        return self.photon_heat_flux
-
-    def summarize(self, print_dfs):
-        """Run all of the results formatting method available in this class."""
-        self.load_tbr(print_dfs)
-        self.load_heating_in_MW(print_dfs)
-        self.load_neutron_wall_loading(print_dfs)
-        self.load_photon_heat_flux(print_dfs)
-
-
-# ----------------------------------------------------------------------------------------
 
 
 def stochastic_volume_calculation(tokamak_geometry, cells_and_cell_lists, particles=4e7):
@@ -892,101 +639,6 @@ def stochastic_volume_calculation(tokamak_geometry, cells_and_cell_lists, partic
     openmc.calculate_volumes()
 
 
-# ----------------------------------------------------------------------------------------
-
-
-def geometry_plotter(cells_and_cell_lists, tokamak_geometry):
-    """
-    Uses the OpenMC plotter to produce an image of the modelled geometry
-
-    Parameters
-    ----------
-    cells_and_cell_lists:
-        dictionary where each item is either a single openmc.Cell,
-            or a list of openmc.Cell.
-    tokamak_geometry : TokamakGeometry
-    """
-    # Assigning colours for plots
-    cell_color_assignment = {
-        cells_and_cell_lists["tf_coil_cell"]: "brown",
-        cells_and_cell_lists["plasma_inner1"]: "dimgrey",
-        cells_and_cell_lists["plasma_inner2"]: "grey",
-        cells_and_cell_lists["plasma_outer1"]: "darkgrey",
-        cells_and_cell_lists["plasma_outer2"]: "dimgrey",
-        cells_and_cell_lists["divertor_inner1"]: "grey",
-        cells_and_cell_lists["divertor_inner2"]: "dimgrey",
-        cells_and_cell_lists["outer_vessel_cell"]: "white",
-        cells_and_cell_lists["inb_vv_cells"][0]: "red",
-        cells_and_cell_lists["outb_vv_cells"][1]: "orange",
-        cells_and_cell_lists["outb_vv_cells"][2]: "yellow",
-    }
-
-    mat_color_assignment = {
-        cells_and_cell_lists["bore_cell"]: "blue",
-        cells_and_cell_lists["tf_coil_cell"]: "brown",
-        cells_and_cell_lists["plasma_inner1"]: "white",
-        cells_and_cell_lists["plasma_inner2"]: "white",
-        cells_and_cell_lists["plasma_outer1"]: "white",
-        cells_and_cell_lists["plasma_outer2"]: "white",
-        cells_and_cell_lists["divertor_inner1"]: "white",
-        cells_and_cell_lists["divertor_inner2"]: "white",
-        cells_and_cell_lists["divertor_fw"]: "red",
-        cells_and_cell_lists["outer_vessel_cell"]: "white",
-        cells_and_cell_lists["outer_container"]: "darkgrey",
-    }
-
-    def color_cells(prefixed_cell_type, color):
-        for i in range(len(cells_and_cell_lists[prefixed_cell_type + "_cells"])):
-            mat_color_assignment[
-                cells_and_cell_lists[prefixed_cell_type + "_cells"][i]
-            ] = color
-
-    # first wall: red
-    color_cells("outb_fw", "red")
-    color_cells("inb_fw", "red")
-    # breeding zone: yellow
-    color_cells("outb_bz", "yellow")
-    color_cells("inb_bz", "yellow")
-    # manifold: green
-    color_cells("outb_mani", "green")
-    color_cells("inb_mani", "green")
-    # vacuum vessel: grey
-    color_cells("outb_vv", "grey")
-    color_cells("inb_vv", "grey")
-    # divertor: cyan
-    color_cells("divertor", "cyan")
-
-    plot_width = 2 * (
-        tokamak_geometry.major_r
-        + tokamak_geometry.minor_r * tokamak_geometry.elong
-        + tokamak_geometry.outb_fw_thick
-        + tokamak_geometry.outb_bz_thick
-        + tokamak_geometry.outb_mnfld_thick
-        + tokamak_geometry.outb_vv_thick
-        + 200.0  # margin
-    )
-
-    plot_list = []
-    for _, basis in enumerate(["xz", "xy", "yz"]):
-        plot = openmc.Plot()
-        plot.basis = basis
-        plot.pixels = [400, 400]
-        plot.width = (plot_width, plot_width)
-        if basis == "yz":
-            plot.colors = cell_color_assignment
-        else:
-            plot.colors = mat_color_assignment
-        plot.filename = f"./plots_{basis}"
-
-        plot_list.append(plot)
-
-    openmc.Plots(plot_list).export_to_xml()
-    openmc.plot_geometry()
-
-
-# ----------------------------------------------------------------------------------------
-
-
 class TBRHeatingSimulation:
     """
     Contains all the data necessary to run the openmc simulation of the tbr,
@@ -1043,7 +695,7 @@ class TBRHeatingSimulation:
         create_tallies(*filter_cells(self.cells, self.material_lib, self.src_rate))
 
         if plot_geometry:
-            geometry_plotter(self.cells, self.tokamak_geometry)
+            present.geometry_plotter(self.cells, self.tokamak_geometry)
         return
 
     def run(self, *args, **kwargs):
@@ -1061,7 +713,7 @@ class TBRHeatingSimulation:
         assert (
             self.universe is not None
         ), "The self.universe variable must have been first populated by self.run()!"
-        self.result = OpenMCResult(self.universe, self.src_rate)
+        self.result = present.OpenMCResult(self.universe, self.src_rate)
         self.result.summarize(print_summary)
         return self.result
 
@@ -1075,8 +727,6 @@ class TBRHeatingSimulation:
             self.runtime_variables.volume_calc_particles,
         )
 
-
-#########################################################################################
 
 if __name__ == "__main__":
     import sys

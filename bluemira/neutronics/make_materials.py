@@ -60,10 +60,10 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_fw_mat.id = 101
 
     # Making blanket
-    PbLi_mat = md.make_PbLi_mat(li_enrich_ao)
+    _PbLi_mat = md.make_PbLi_mat(li_enrich_ao)
     inb_bz_mat = Material.mix_materials(
         name="inb_breeder_zone",
-        materials=[md.lined_euro_mat, PbLi_mat],
+        materials=[md.lined_euro_mat, _PbLi_mat],
         fracs=[0.0605 + 0.9395 * 0.05, 0.9395 * 0.95],
         percent_type="vo",
     )
@@ -174,7 +174,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         WPBB-DEL-BB-3.2.1-T005-D001, June 2019.
     """
 
-    PbLi_mat = md.make_PbLi_mat(li_enrich_ao)
+    _PbLi_mat = md.make_PbLi_mat(li_enrich_ao)
 
     # Divertor definition from Neutronic analyses of the preliminary
     #  design of a DCLL blanket for the EUROfusion DEMO power, 24 March 2016
@@ -201,7 +201,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         name="inb_breeder_zone",
         materials=[
             md.tungsten_mat,
-            PbLi_mat,
+            _PbLi_mat,
             md.water_mat,
             md.eurofer_mat,
         ],
@@ -212,7 +212,7 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
 
     inb_mani_mat = Material.mix_materials(
         name="inb_manifold",
-        materials=[PbLi_mat, md.water_mat, md.eurofer_mat],
+        materials=[_PbLi_mat, md.water_mat, md.eurofer_mat],
         fracs=[0.2129, 0.2514, 0.5357],
         percent_type="vo",
     )
