@@ -166,7 +166,29 @@ The density is calculated considering the local temperature-gradient factor, :ma
 .. math::
    n_{recycling} = n_u f_T
 
-At the **target location**,
+At the **target location**, for sufficiently high temperature (:math:`T_t > 10eV`), friction processes
+can be neglected. Thus, the fractional loss of pressure due to friction, :math:`f_m`, is assumed to be 1.
+On the other hand, for temperatures lower than 10 eV, detachment conditions occur. In this condition,
+:math:`f_m` is assigned to be 0.1, and the target temperature 1.5 eV.
+Following the calculated temperature at the recycling region start (:math:`T_{recycling}`), target
+temperature and target density are assigned as:
+
+.. math::
+
+   T_t = \begin{cases}
+   T_{recycling} &\text{if $T_{recycling} > 10eV$}\\
+   1.5eV &\text{if $T_{recycling} < 10eV$}
+   \end{cases}
+
+and
+
+.. math::
+
+   n_t = \begin{cases}
+   1 \cdot n_{recycling}/2 &\text{if $T_{recycling} > 10eV$}\\
+   n_t = 0.1 \cdot n_{recycling}/2 &\text{if $T_{recycling} < 10eV$}
+   \end{cases}
+
 
 .. rubric:: References
 
