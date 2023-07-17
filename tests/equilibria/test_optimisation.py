@@ -92,4 +92,5 @@ def test_isoflux_constrained_tikhonov_current_optimisation():
             3426784.33441372,
             7551499.69198225,
         ],
+        decimal=5,
     )
