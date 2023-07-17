@@ -71,31 +71,25 @@ def test_isoflux_constrained_tikhonov_current_optimisation():
         ref_z=0,
         constraint_value=0,
     )
-    x_point = FieldNullConstraint(x=8, z=-8)
-    opt_problem = TikhonovCurrentCOP(
-        coilset=eq.coilset,
-        eq=eq,
-        targets=MagneticConstraintSet([isoflux]),  # , x_point]),
-        gamma=1e-8,
-        opt_conditions={"max_eval": 2000},
-    )
 
+    x_point = FieldNullConstraint(8, -8)
+    targets = MagneticConstraintSet([isoflux, x_point])
+    opt_problem = TikhonovCurrentCOP(eq.coilset, eq, targets, gamma=1e-8)
     program = PicardIterator(eq, opt_problem, relaxation=0.1, plot=True)
     program()
-
     np.testing.assert_almost_equal(
         eq.coilset.current,
         [
-            505197.01488488,
-            -1092264.98585842,
-            -1851426.77731742,
-            -1585689.72567825,
-            -2948303.95253702,
-            2311264.5506412,
-            -905378.73231687,
-            -3559171.95768298,
-            -6874525.64303931,
-            3426784.3344097,
-            7551499.69197691,
+            505197.01488516,
+            -1092264.98586219,
+            -1851426.77731549,
+            -1585689.72567114,
+            -2948303.9525497,
+            2311264.55064226,
+            -905378.73231966,
+            -3559171.95768416,
+            -6874525.64304157,
+            3426784.33441372,
+            7551499.69198225,
         ],
     )
