@@ -82,14 +82,14 @@ class AlgorithmDefaultTolerances:
     COBYLA: AlgorithmTolerance = field(
         default_factory=lambda: AlgorithmTolerance(ftol_abs=1e-4, xtol_abs=1e-4)
     )
-    SBPLX: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
-    MMA: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    SBPLX: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
+    MMA: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
     BFGS: AlgorithmTolerance = field(
         default_factory=lambda: AlgorithmTolerance(xtol_rel=0)
     )
     DIRECT: AlgorithmTolerance = field(
         default_factory=lambda: AlgorithmTolerance(ftol_rel=1e-4)
     )
-    DIRECT_L: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
-    CRS: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
-    ISRES: AlgorithmTolerance = field(default_factory=lambda: AlgorithmTolerance())
+    DIRECT_L: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
+    CRS: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
+    ISRES: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)

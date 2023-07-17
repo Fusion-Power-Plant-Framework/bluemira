@@ -106,7 +106,7 @@ def optimise_geometry(
     *,
     keep_out_zones: Iterable[Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]] = (),
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-    opt_conditions: Optional[Mapping[str, Optional[Union[int, float]]]] = None,
+    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
     eq_constraints: Iterable[GeomConstraintT] = (),
     ineq_constraints: Iterable[GeomConstraintT] = (),

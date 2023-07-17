@@ -37,7 +37,7 @@ class TestOptimise:
             algorithm=algorithm,
             df_objective=d_rosenbrock,
             dimensions=2,
-            opt_conditions={"ftol_rel": 1e-6, "ftol_abs": None},
+            opt_conditions={"ftol_rel": 1e-6},
         )
 
         np.testing.assert_allclose(result.x, [1, 1])
@@ -118,7 +118,7 @@ class TestOptimise:
             x0=np.array([1, 1]),
             algorithm=alg,
             df_objective=NonLinearExample.df_objective,
-            opt_conditions={"xtol_rel": 1e-8, "max_eval": 1000, "ftol_abs": None},
+            opt_conditions={"xtol_rel": 1e-8, "max_eval": 1000},
             bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
             ineq_constraints=[
                 {

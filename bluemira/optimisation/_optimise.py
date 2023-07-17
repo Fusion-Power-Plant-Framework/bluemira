@@ -24,7 +24,6 @@ from pprint import pformat
 from typing import (
     Any,
     Callable,
-    Dict,
     Iterable,
     List,
     Literal,
@@ -55,7 +54,7 @@ def optimise(
     x0: Optional[np.ndarray] = None,
     dimensions: Optional[int] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-    opt_conditions: Optional[Mapping[str, Optional[Union[int, float]]]] = None,
+    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
     bounds: Optional[Tuple[npt.ArrayLike, npt.ArrayLike]] = None,
     eq_constraints: Iterable[ConstraintT] = (),
@@ -256,7 +255,7 @@ def _make_optimiser(
     dimensions: int,
     df_objective: Optional[OptimiserCallable] = None,
     algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
-    opt_conditions: Optional[Mapping[str, Optional[Union[int, float]]]] = None,
+    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
     bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
     eq_constraints: Iterable[ConstraintT] = (),
@@ -357,22 +356,17 @@ def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndar
 
 def _set_default_termination_conditions(
     algorithm: Union[str, Algorithm],
-    opt_conditions: Optional[Mapping[str, Optional[Union[int, float]]]] = None,
-) -> Dict[str, Union[int, float]]:
-    tols = AlgorithmDefaultTolerances()
-
+    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
+) -> Optional[Mapping[str, Union[int, float]]]:
     if opt_conditions is None:
-        opt_conditions = {"max_eval": 2000}
+        if isinstance(algorithm, str):
+            algorithm = Algorithm[algorithm]
 
-    if isinstance(algorithm, str):
-        algorithm = Algorithm[algorithm]
+        if not isinstance(algorithm, Algorithm):
+            return opt_conditions
 
-    if not isinstance(algorithm, Algorithm):
-        return opt_conditions
-
-    # If the value of any condition is None it is dropped
-    return {
-        k: v
-        for k, v in {**getattr(tols, algorithm.name).to_dict(), **opt_conditions}.items()
-        if v is not None
-    }
+        return {
+            **getattr(AlgorithmDefaultTolerances(), algorithm.name).to_dict(),
+            "max_eval": 2000,
+        }
+    return opt_conditions
