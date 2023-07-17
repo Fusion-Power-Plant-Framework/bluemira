@@ -23,7 +23,6 @@ from typing import List, Optional
 
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.optimisation.typing import (
     GeomClsOptimiserCallable,
     GeomConstraintT,
@@ -168,18 +167,16 @@ def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[Constraint
 
     If no constraints are registered, return an empty list.
     """
-    try:
-        if df_constraint := getattr(geom, "df_ineq_constraint", None):
-            df_constraint = to_optimiser_callable_from_cls(df_constraint, geom)
-        return [
-            {
-                "f_constraint": to_optimiser_callable_from_cls(
-                    getattr(geom, "f_ineq_constraint"), geom
-                ),
-                "df_constraint": df_constraint,
-                "tolerance": geom.tolerance,
-            }
-        ]
-    except AttributeError:
-        bluemira_warn(f"No inequality constraints found for {geom.name}")
+    if geom.n_ineq_constraints < 1:
         return []
+    if df_constraint := getattr(geom, "df_ineq_constraint", None):
+        df_constraint = to_optimiser_callable_from_cls(df_constraint, geom)
+    return [
+        {
+            "f_constraint": to_optimiser_callable_from_cls(
+                getattr(geom, "f_ineq_constraint"), geom
+            ),
+            "df_constraint": df_constraint,
+            "tolerance": geom.tolerance,
+        }
+    ]
