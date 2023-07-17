@@ -1124,6 +1124,8 @@ def save_cad(
         Full path filename of the STP assembly
     cad_format:
         file format to save as
+    names:
+        Names of shapes to save
     kwargs:
         arguments passed to cadapi save function
     """

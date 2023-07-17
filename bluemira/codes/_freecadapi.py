@@ -33,7 +33,17 @@ from copy import deepcopy
 from dataclasses import dataclass
 from functools import wraps
 from types import DynamicClassAttribute
-from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+    Union,
+)
 from warnings import warn
 
 import FreeCAD
