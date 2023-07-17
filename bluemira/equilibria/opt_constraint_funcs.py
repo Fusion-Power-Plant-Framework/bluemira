@@ -63,6 +63,8 @@ if TYPE_CHECKING:
 
 import numpy as np
 
+import bluemira.equilibria.harmonics as harmonics
+
 
 def objective_constraint(
     constraint: np.ndarray,
@@ -130,7 +132,7 @@ def Ax_b_constraint(  # noqa: N802
     -------
     Updated constraint vector
     """
-    constraint[:] = np.dot(a_mat, scale * vector) - b_vec - value
+    constraint[:] = a_mat @ (scale * vector) - b_vec - value
     if grad.size > 0:
         grad[:] = scale * a_mat
     return constraint
@@ -375,4 +377,56 @@ def field_constraints(
         ) / (B * scale**2)
 
     constraint[:] = B - B_max
+    return constraint
+
+
+def spherical_harmonics_constraint(
+    constraint: np.ndarray,
+    vector: np.ndarray,
+    grad: np.ndarray,
+    ref_harmonics: np.ndarray,
+    scale: float,
+    eq: Equilibrium,
+    r_t: float,
+    max_degree: int,
+) -> np.ndarray:
+    """
+    Constraint function to constrain spherical harmonics starting from initial
+    coil currents and associated core plasma.
+
+    Parameters
+    ----------
+    constraint:
+        Constraint array (modified in place)
+    vector:
+        Current vector
+    grad:
+        Constraint Jacobian (modified in place)
+    ref_harmonics:
+        Initial harmonic amplitudes obtained from desired core plasma
+    scale:
+        Current scale with which to calculate the constraints
+    eq:
+        Equilibrium used to for coilset.
+    r_t: float
+        Typical length scale of the problem (e.g. radius at outer midplane)
+    max_degree:
+        Maximum degree of spherical harmonics desired to constrain
+    """
+    currents = scale * vector
+
+    vector_harmonics_matrix = harmonics.coil_harmonic_amplitude_matrix(
+        eq.coilset, max_degree, r_t
+    )
+
+    # SH coefficients from function of the current distribution outside of the sphere
+    # containing the plasma, i.e., LCFS (r_lcfs)
+    # N.B., cannot use coil located within r_lcfs as part of this method.
+    vector_harmonics = vector_harmonics_matrix @ currents
+    constraint[:] = vector_harmonics - ref_harmonics
+
+    # calculate constraint jacobian
+    if grad.size > 0:
+        grad[:] = -scale * vector_harmonics_matrix
+
     return constraint

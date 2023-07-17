@@ -108,7 +108,7 @@ class ScalarSubFunc(dolfin.UserExpression):
         self,
         functions: Union[Iterable[Union[float, Callable]], float, Callable],
     ) -> Iterable[Union[float, Callable]]:
-        """Check if the argument is a function or a list of fuctions"""
+        """Check if the argument is a function or a list of functions"""
         if not isinstance(functions, Iterable):
             functions = [functions]
         if all(isinstance(f, (float, Callable)) for f in functions):
