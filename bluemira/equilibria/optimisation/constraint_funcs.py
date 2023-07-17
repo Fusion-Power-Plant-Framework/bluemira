@@ -120,7 +120,7 @@ class AxBConstraint(ConstraintFunction):
 
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""
-        return np.dot(self.a_mat, self.scale * vector) - self.b_vec - self.value
+        return self.a_mat @ (self.scale * vector) - self.b_vec - self.value
 
     def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint derivative"""
@@ -257,7 +257,7 @@ class CurrentMidplanceConstraint(ConstraintFunction):
 
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""
-        self.eq.coilset.set_control_currents(vector * self.scale)
+        self.eq.coilset.get_control_coils().current = vector * self.scale
         lcfs = self.eq.get_LCFS()
         if self.inboard:
             return self.radius - min(lcfs.x)
