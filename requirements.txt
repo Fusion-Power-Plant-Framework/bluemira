@@ -39,5 +39,5 @@ seaborn==0.12.2
 six==1.16.0
 tables==3.8.0
 tabulate==0.9.0
-threadpoolctl==3.1.0
+threadpoolctl==3.2.0
 typeguard==4.0.0
