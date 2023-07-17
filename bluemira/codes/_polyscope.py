@@ -10,6 +10,7 @@ import polyscope as ps
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.display.palettes import ColorPalette
 from bluemira.utilities.tools import ColourDescriptor
 
 
@@ -26,12 +27,12 @@ class DefaultDisplayOptions:
     smooth: bool = True
 
     @property
-    def color(self):
+    def color(self) -> str:
         """See colour"""
         return self.colour
 
     @color.setter
-    def color(self, value):
+    def color(self, value: Union[str, Tuple[float, float, float], ColorPalette]):
         """See colour"""
         self.colour = value
 

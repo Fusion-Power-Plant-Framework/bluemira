@@ -27,6 +27,8 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
+from bluemira.display.palettes import ColorPalette
+
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
@@ -71,12 +73,14 @@ __all__ = [
 
 def apply_component_display_options(
     phys_component: PhysicalComponent,
-    color: Iterable,
+    color: Union[Iterable, ColorPalette],
     transparency: Optional[float] = None,
 ):
     """
     Apply color and transparency to a PhysicalComponent for both plotting and CAD.
     """
+    if isinstance(color, ColorPalette):
+        color = color.as_hex()
     phys_component.plot_options.face_options["color"] = color
     phys_component.display_cad_options.color = color
     if transparency:

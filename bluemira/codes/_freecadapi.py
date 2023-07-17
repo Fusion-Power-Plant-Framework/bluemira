@@ -32,7 +32,7 @@ import sys
 from copy import deepcopy
 from dataclasses import dataclass
 from types import DynamicClassAttribute
-from typing import Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
 from warnings import warn
 
 import FreeCAD
@@ -60,6 +60,9 @@ from bluemira.codes._freecadconfig import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor
+
+if TYPE_CHECKING:
+    from bluemira.display.palettes import ColorPalette
 
 apiVertex = Part.Vertex  # noqa :N816
 apiVector = Base.Vector  # noqa :N816
@@ -2306,7 +2309,7 @@ class DefaultDisplayOptions:
         return self.colour
 
     @color.setter
-    def color(self, value):
+    def color(self, value: Union[str, Tuple[float, float, float], ColorPalette]):
         """See colour"""
         self.colour = value
 

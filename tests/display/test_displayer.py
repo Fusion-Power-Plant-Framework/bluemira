@@ -33,6 +33,7 @@ import bluemira.codes._freecadapi as cadapi
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import displayer
 from bluemira.display.error import DisplayError
+from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import extrude_shape, make_circle, make_polygon
 
@@ -95,6 +96,7 @@ class TestDisplayCADOptions:
 
 
 class TestComponentDisplayer:
+    @pytest.mark.parametrize("colour", [(1.0, 0.0, 0.0), BLUE_PALETTE["VV"]])
     @pytest.mark.parametrize(
         "viewer",
         [
@@ -105,7 +107,7 @@ class TestComponentDisplayer:
             ),
         ],
     )
-    def test_display(self, viewer):
+    def test_display(self, colour, viewer):
         square_points = np.array(
             [
                 (0.0, 0.0, 0.0),
@@ -125,12 +127,10 @@ class TestComponentDisplayer:
 
         child1.show_cad(backend=viewer)
         group.show_cad(backend=viewer)
-        child2.display_cad_options = displayer.DisplayCADOptions(colour=(1.0, 0.0, 0.0))
+        child2.display_cad_options = displayer.DisplayCADOptions(colour=colour)
         group.show_cad(backend=viewer)
         group.show_cad(colour=(0.0, 0.0, 1.0), backend=viewer)
-        displayer.ComponentDisplayer().show_cad(
-            group, color=(1.0, 0.0, 0.0), backend=viewer
-        )
+        displayer.ComponentDisplayer().show_cad(group, color=colour, backend=viewer)
 
         with pytest.raises(DisplayError):
             child2.display_cad_options = (0.0, 0.0, 1.0)
