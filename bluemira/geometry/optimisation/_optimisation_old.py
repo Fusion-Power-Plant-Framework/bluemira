@@ -40,7 +40,7 @@ from bluemira.utilities.opt_problems import (
 )
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
-__all__ = ["GeometryOptimisationProblem", "minimise_length"]
+__all__ = ["GeometryOptimisationProblem", "minimise_length", "MinimiseLengthGOP"]
 
 
 def calculate_length(vector, parameterisation):

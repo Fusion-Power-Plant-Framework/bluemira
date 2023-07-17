@@ -18,21 +18,20 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import copy
 from dataclasses import dataclass
 from typing import List, Optional
 
 import numpy as np
 
-from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.geometry.tools import signed_distance_2D_polygon
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation._geometry.parameterisations import INEQ_CONSTRAINT_REGISTRY
-from bluemira.optimisation._geometry.typing import (
+from bluemira.geometry.optimisation.typing import (
+    GeomClsOptimiserCallable,
     GeomConstraintT,
     GeomOptimiserCallable,
     GeomOptimiserObjective,
 )
+from bluemira.geometry.parameterisations import GeometryParameterisation
+from bluemira.geometry.tools import signed_distance_2D_polygon
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation.error import GeometryOptimisationError
 from bluemira.optimisation.typing import (
     ConstraintT,
@@ -92,6 +91,23 @@ def to_optimiser_callable(
     return f
 
 
+def to_optimiser_callable_from_cls(
+    geom_callable: GeomClsOptimiserCallable,
+    geom: GeometryParameterisation,
+) -> OptimiserCallable:
+    """
+    Convert a geometry optimiser function to a normal optimiser function.
+
+    For example, a gradient or constraint.
+    """
+
+    def f(x):
+        geom.variables.set_values_from_norm(x)
+        return geom_callable()
+
+    return f
+
+
 def to_constraint(
     geom_constraint: GeomConstraintT, geom: GeometryParameterisation
 ) -> ConstraintT:
@@ -145,12 +161,22 @@ def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
     return {"f_constraint": _f_constraint, "tolerance": np.full(shape_n_discr, koz.tol)}
 
 
-def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[GeomConstraintT]:
+def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[ConstraintT]:
     """
     Retrieve the inequality constraints registered for the given parameterisation.
 
     If no constraints are registered, return an empty list.
     """
-    if constraints := INEQ_CONSTRAINT_REGISTRY.get(type(geom), []):
-        return copy.deepcopy(constraints)
-    return constraints
+    if geom.n_ineq_constraints < 1:
+        return []
+    if df_constraint := getattr(geom, "df_ineq_constraint", None):
+        df_constraint = to_optimiser_callable_from_cls(df_constraint, geom)
+    return [
+        {
+            "f_constraint": to_optimiser_callable_from_cls(
+                getattr(geom, "f_ineq_constraint"), geom
+            ),
+            "df_constraint": df_constraint,
+            "tolerance": geom.tolerance,
+        }
+    ]

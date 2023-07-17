@@ -23,6 +23,8 @@ from unittest import mock
 import numpy as np
 import pytest
 
+from bluemira.geometry.optimisation import optimise_geometry
+from bluemira.geometry.optimisation._optimise import KeepOutZone
 from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PictureFrame,
@@ -31,8 +33,6 @@ from bluemira.geometry.parameterisations import (
     TripleArc,
 )
 from bluemira.geometry.tools import make_circle, make_polygon, signed_distance
-from bluemira.optimisation import optimise_geometry
-from bluemira.optimisation._geometry.optimise import KeepOutZone
 from bluemira.optimisation.error import GeometryOptimisationError
 
 
@@ -154,8 +154,8 @@ class TestGeometry:
 
         def d_sum_angles(geom: TripleArc) -> np.ndarray:
             grad = np.zeros(len(geom.variables.get_normalised_values()))
-            grad[geom._get_x_norm_index("a1")] = 1
-            grad[geom._get_x_norm_index("a2")] = 1
+            grad[geom.get_x_norm_index("a1")] = 1
+            grad[geom.get_x_norm_index("a2")] = 1
             return grad
 
         arc = TripleArc()

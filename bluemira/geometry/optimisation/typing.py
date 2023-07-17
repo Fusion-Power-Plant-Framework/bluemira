@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+"""Typing for the geometry optimisation module"""
 from typing import Optional, Protocol, TypedDict
 
 import numpy as np
@@ -38,6 +39,14 @@ class GeomOptimiserCallable(Protocol):
     """Form for a geometry optimiser function (derivative, constraint, etc.)."""
 
     def __call__(self, geom: GeometryParameterisation) -> np.ndarray:
+        """Call the geometry optimiser function."""
+        ...
+
+
+class GeomClsOptimiserCallable(Protocol):
+    """Form for a geometry optimiser function (derivative, constraint, etc.)."""
+
+    def __call__(self) -> np.ndarray:
         """Call the geometry optimiser function."""
         ...
 
