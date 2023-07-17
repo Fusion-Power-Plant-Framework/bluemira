@@ -85,7 +85,7 @@
           "value": "r_fw_ob_in"
         }
       },
-      "run_mode": "read",
+      "run_mode": "run",
       "name": "First Wall",
       "file_path": "config/FirstWallDesign.json",
       "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",

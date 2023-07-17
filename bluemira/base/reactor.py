@@ -101,11 +101,7 @@ class BaseManager(abc.ABC):
             )
             cad_format = kw_formatt
 
-        shape_name = get_properties_from_components(components, ("shape", "name"))
-        if not isinstance(shape_name[0], tuple):
-            shapes, names = [shape_name[0]], [shape_name[1]]
-        else:
-            shapes, names = shape_name
+        shapes, names = get_properties_from_components(components, ("shape", "name"))
 
         save_cad(shapes, filename, cad_format, names, **kwargs)
 

@@ -1110,7 +1110,7 @@ def save_cad(
     shapes: Union[BluemiraGeo, List[BluemiraGeo]],
     filename: str,
     cad_format: Union[str, cadapi.CADFileType] = "stp",
-    names: Optional[Union[str, Iterable[str]]] = None,
+    names: Optional[Union[str, List[str]]] = None,
     **kwargs,
 ):
     """
@@ -1124,6 +1124,8 @@ def save_cad(
         Full path filename of the STP assembly
     cad_format:
         file format to save as
+    names:
+        Names of shapes to save
     kwargs:
         arguments passed to cadapi save function
     """
@@ -1136,6 +1138,8 @@ def save_cad(
 
     if not isinstance(shapes, list):
         shapes = [shapes]
+    if names is not None and not isinstance(names, list):
+        names = [names]
 
     cadapi.save_cad(
         [s.shape for s in shapes],

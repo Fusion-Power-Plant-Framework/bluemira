@@ -326,7 +326,6 @@ class TestCADFiletype:
             "IGES_2",
             "INVENTOR_V2_1",
             "JSON",
-            "JSON_MESH",
             "OBJ",
             "OBJ_WAVE",
             "OFF",

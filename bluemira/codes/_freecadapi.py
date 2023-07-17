@@ -31,8 +31,19 @@ import os
 import sys
 from copy import deepcopy
 from dataclasses import dataclass
+from functools import wraps
 from types import DynamicClassAttribute
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Protocol,
+    Tuple,
+    Union,
+)
 from warnings import warn
 
 import FreeCAD
@@ -1217,13 +1228,13 @@ class CADFileType(enum.Enum):
     # INP = ("inp", "Fem")
     INVENTOR_V2_1 = ("iv", "Mesh")
     JSON = ("json", "importJSON")
-    JSON_MESH = ("json", "feminout.importYamlJsonMesh")
+    # JSON_MESH = ("$json", "feminout.importYamlJsonMesh")
     # MED = ("med", "Fem")
     # MESHJSON = ("meshjson", "feminout.importYamlJsonMesh")
     # MESHPY = ("meshpy", "feminout.importPyMesh")
     # MESHYAML = ("meshyaml", "feminout.importYamlJsonMesh")
     OBJ = ("obj", "Mesh")
-    OBJ_WAVE = ("obj", "importOBJ")
+    OBJ_WAVE = ("$obj", "importOBJ")
     OFF = ("off", "Mesh")
     OPENSCAD = ("scad", "exportCSG")
     # PCD = ("pcd", "Points")
@@ -1236,7 +1247,7 @@ class CADFileType(enum.Enum):
     STEP_ZIP = ("stpZ", "stepZ")
     STL = ("stl", "Mesh")
     # SVG = ("svg", "DrawingGui")
-    # SVG_FLAT = ("svg", "importSVG")
+    # SVG_FLAT = ("$svg", "importSVG")
     # TETGEN_FEM = ("poly", "feminout.convert2TetGen")
     THREED_MANUFACTURING = ("3mf", "Mesh")
     # UNV = ("unv", "Fem")
@@ -1263,11 +1274,29 @@ class CADFileType(enum.Enum):
     def __init__(self, _, module):
         self.module = module
 
+    @classmethod
+    def unitless_formats(cls) -> Tuple[CADFileType, ...]:
+        """CAD formats that don't need to be converted because they are unitless"""
+        return (cls.OBJ_WAVE, *[form for form in cls if form.module == "Mesh"])
+
+    @classmethod
+    def manual_mesh_formats(cls) -> Tuple[CADFileType, ...]:
+        """CAD formats that need to have meshed objects."""
+        return (
+            cls.GLTRANSMISSION,
+            cls.GLTRANSMISSION_2,
+            cls.PLY_STANFORD,
+            cls.SIMPLE_MODEL,
+        )
+
     @DynamicClassAttribute
-    def exporter(self):
+    def exporter(self) -> ExporterProtocol:
         """Get exporter module for each filetype"""
         try:
-            return __import__(self.module).export
+            export_func = __import__(self.module).export
+            if self in self.manual_mesh_formats():
+                return meshed_exporter(self, export_func)
+            return export_func
         except AttributeError:
             modlist = self.module.split(".")
             if len(modlist) > 1:
@@ -1278,11 +1307,40 @@ class CADFileType(enum.Enum):
                 )
         except TypeError:
             # Assume CADFileType.FREECAD
-            def FreeCADwriter(objs, filename):
+            def FreeCADwriter(objs, filename, **kwargs):
                 doc = objs[0].Document
                 doc.saveAs(filename)
 
             return FreeCADwriter
+
+
+class ExporterProtocol(Protocol):
+    """Typing for CAD exporter"""
+
+    def __call__(self, objs: List[Part.Feature], filename: str, **kwargs):
+        """Export CAD protocol"""
+
+
+def meshed_exporter(
+    cad_format: CADFileType, export_func: Callable[[Part.Feature, str], None]
+) -> ExporterProtocol:
+    """Meshing and then exporting CAD in certain formats."""
+
+    @wraps(export_func)
+    def wrapper(objs: Part.Feature, filename: str, **kwargs):
+        """
+        Tessellation should happen on a copied object
+        """
+        tessellate = kwargs.pop("tessellate", 0.5)
+        if cad_format in CADFileType.unitless_formats():
+            for no, obj in enumerate(objs):
+                objs[no].Shape = obj.Shape.copy()
+        for ob in objs:
+            ob.Shape.tessellate(tessellate)
+
+        export_func(objs, filename, **kwargs)
+
+    return wrapper
 
 
 def save_as_STP(
@@ -1389,20 +1447,33 @@ def save_cad(
         )
         cad_format = kw_formatt
 
-    cad_format = CADFileType(cad_format)
-    filename = force_file_extension(filename, f".{cad_format.value}")
+    try:
+        cad_format = CADFileType(cad_format)
+    except ValueError as ve:
+        try:
+            cad_format = CADFileType[cad_format.upper()]
+        except (KeyError, AttributeError):
+            raise ve
 
-    _freecad_save_config(**kwargs)
+    filename = force_file_extension(filename, f".{cad_format.value.strip('$')}")
+
+    _freecad_save_config(
+        **{
+            k: kwargs.pop(k)
+            for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
+        }
+    )
 
     objs = list(_setup_document(shapes, labels))
 
-    # Part is always built in mm
-    _scale_obj(objs, scale=raw_uc(1, unit_scale, "mm"))
+    # Part is always built in mm but some formats are unitless
+    if cad_format not in CADFileType.unitless_formats():
+        _scale_obj(objs, scale=raw_uc(1, unit_scale, "mm"))
 
     # Some exporters need FreeCADGui to be setup before their import,
     # this is achieved in _setup_document
     try:
-        cad_format.exporter(objs, filename)
+        cad_format.exporter(objs, filename, **kwargs)
     except ImportError as imp_err:
         raise FreeCADError(
             f"Unable to save to {cad_format.value} please try through the main FreeCAD GUI"
@@ -1423,7 +1494,7 @@ def save_cad(
             mesg += " FreeCAD requires `LibreDWG` to save in this format."
 
         raise FreeCADError(
-            f"{mesg} Not able to save object with format: '{cad_format.value}'"
+            f"{mesg} Not able to save object with format: '{cad_format.value.strip('$')}'"
         )
 
 
