@@ -55,6 +55,7 @@ from bluemira.base.reactor_config import ReactorConfig
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import (
     distance_to,
@@ -64,7 +65,6 @@ from bluemira.geometry.tools import (
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation import optimise_geometry
 from bluemira.utilities.tools import get_class_from_module
 
 # %% [markdown]
