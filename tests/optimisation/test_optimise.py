@@ -118,7 +118,7 @@ class TestOptimise:
             x0=np.array([1, 1]),
             algorithm=alg,
             df_objective=NonLinearExample.df_objective,
-            opt_conditions={"xtol_rel": 1e-8, "max_eval": 1000},
+            opt_conditions={"xtol_rel": 1e-8, "max_eval": 1000, "ftol_abs": None},
             bounds=(np.array([-np.inf, 0]), np.array([np.inf, np.inf])),
             ineq_constraints=[
                 {
