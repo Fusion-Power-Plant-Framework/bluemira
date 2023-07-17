@@ -32,7 +32,7 @@ from typing import TYPE_CHECKING, Dict, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.parameterisations import GeometryParameterisation
-    from bluemira.optimisation._geometry.typing import GeomConstraintT
+    from bluemira.geometry.optimisation.typing import GeomConstraintT
 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -44,11 +44,12 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parame
 from bluemira.display import plot_2d
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.optimisation import GeomOptimisationProblem, KeepOutZone
 from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
-from bluemira.optimisation import GeomOptimisationProblem, KeepOutZone, optimise
+from bluemira.optimisation import optimise
 
 
 class ParameterisedRippleSolver:
