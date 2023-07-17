@@ -55,7 +55,7 @@ from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.run import Snapshot
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import interpolate_bspline, offset_wire
+from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
 from eudemo.coil_structure import build_coil_structures_component
 from eudemo.comp_managers import (
@@ -84,6 +84,10 @@ from eudemo.maintenance.lower_port import (
     LowerPortKOZDesigner,
     TSLowerPortDuctBuilder,
     VVLowerPortDuctBuilder,
+)
+from eudemo.maintenance.port_plug import (
+    CryostatPortPlugBuilder,
+    RadiationPortPlugBuilder,
 )
 from eudemo.maintenance.upper_port import UpperPortKOZDesigner
 from eudemo.model_managers import EquilibriumManager
@@ -362,6 +366,58 @@ def build_radiation_shield(params, build_config, cryostat_koz) -> RadiationShiel
     )
 
 
+def build_cryostat_plugs(
+    params, build_config, ts_ports, cryostat_xz_boundary: BluemiraFace
+):
+    """
+    Build the port plugs for the cryostat.
+    """
+    closest_faces = []
+    for port in ts_ports:
+        xyz = port.get_component("xyz")
+        for child in xyz.children:
+            if "voidspace" not in child.name:
+                port_xyz = child.shape.deepcopy()
+                port_xyz.rotate(degree=-180 / params.global_params.n_TF.value)
+        faces = port_xyz.faces
+        distances = [
+            distance_to(f.center_of_mass, cryostat_xz_boundary)[0] for f in faces
+        ]
+        closest_face = faces[np.argmin(distances)]
+        closest_faces.append(closest_face)
+
+    outer_wires = [cf.boundary[0].deepcopy() for cf in closest_faces]
+
+    builder = CryostatPortPlugBuilder(
+        params, build_config, outer_wires, cryostat_xz_boundary
+    )
+    return builder.build()
+
+
+def build_radiation_plugs(params, build_config, cr_ports, radiation_xz_boundary):
+    """
+    Build the port plugs for the radiation shield.
+    """
+    closest_faces = []
+    xyz = cr_ports.get_component("xyz")
+    for child in xyz.children:
+        if "voidspace" not in child.name:
+            port_xyz = child.shape.deepcopy()
+            port_xyz.rotate(degree=-180 / params.global_params.n_TF.value)
+            faces = port_xyz.faces
+            distances = [
+                distance_to(f.center_of_mass, radiation_xz_boundary)[0] for f in faces
+            ]
+            closest_face = faces[np.argmin(distances)]
+            closest_faces.append(closest_face)
+    outer_wires = [cf.boundary[0].deepcopy() for cf in closest_faces]
+
+    builder = RadiationPortPlugBuilder(
+        params, build_config, outer_wires, radiation_xz_boundary
+    )
+    return builder.build()
+
+
 if __name__ == "__main__":
     set_log_level("INFO")
     reactor_config = ReactorConfig(BUILD_CONFIG_FILE_PATH, EUDEMOReactorParams)
@@ -547,6 +603,30 @@ if __name__ == "__main__":
 
     reactor.thermal_shield.add_ports(
         [ts_upper_port, ts_eq_port, ts_lower_port],
+        n_TF=reactor_config.global_params.n_TF.value,
+    )
+
+    cr_plugs = build_cryostat_plugs(
+        reactor_config.params_for("Cryostat"),
+        reactor_config.config_for("Cryostat"),
+        [ts_upper_port, ts_eq_port, ts_lower_port],
+        reactor.cryostat.xz_boundary(),
+    )
+
+    rs_plugs = build_radiation_plugs(
+        reactor_config.params_for("RadiationShield"),
+        reactor_config.config_for("RadiationShield"),
+        cr_plugs,
+        reactor.radiation_shield.xz_boundary(),
+    )
+
+    reactor.cryostat.add_plugs(
+        cr_plugs,
+        n_TF=reactor_config.global_params.n_TF.value,
+    )
+
+    reactor.radiation_shield.add_plugs(
+        rs_plugs,
         n_TF=reactor_config.global_params.n_TF.value,
     )
 

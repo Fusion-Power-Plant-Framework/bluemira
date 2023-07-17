@@ -192,7 +192,7 @@
     "long_name": "Gravity support radius. Used for TF and VV supports (assuming a supporting ring)"
   },
   "lower_port_angle": {
-    "value": -30,
+    "value": -15,
     "unit": "degree",
     "source": "Input",
     "long_name": "Lower port angle (downwards from 0 degrees)"
