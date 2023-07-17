@@ -24,6 +24,7 @@ Equilibrium optimisation constraint classes
 """
 from __future__ import annotations
 
+import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
@@ -44,6 +45,15 @@ from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.geometry.coordinates import interpolate_points
 from bluemira.utilities.opt_problems import OptimisationConstraint
 from bluemira.utilities.tools import abs_rel_difference, is_num
+
+warnings.warn(
+    f"The module '{__name__}' is deprecated and will be removed in v2.0.0.\n"
+    "See "
+    "https://bluemira.readthedocs.io/en/latest/optimisation/optimisation.html "
+    "for documentation of the new optimisation module.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def _get_dummy_equilibrium(equilibrium: Equilibrium):

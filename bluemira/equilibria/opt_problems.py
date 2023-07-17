@@ -37,6 +37,7 @@ the method used to map the coilset object to the state vector
 """
 
 import abc
+import warnings
 from typing import List, Tuple
 
 import numpy as np
@@ -67,6 +68,15 @@ __all__ = [
     "CoilsetPositionCOP",
     "NestedCoilsetPositionCOP",
 ]
+
+warnings.warn(
+    f"The module '{__name__}' is deprecated and will be removed in v2.0.0.\n"
+    "See "
+    "https://bluemira.readthedocs.io/en/latest/optimisation/optimisation.html "
+    "for documentation of the new optimisation module.",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 class CoilsetOptimisationProblem(OptimisationProblem):
