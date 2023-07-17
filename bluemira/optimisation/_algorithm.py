@@ -68,7 +68,7 @@ class AlgorithmTolerance:
     xtol_rel: Optional[float] = None
 
     def to_dict(self) -> Dict[str, float]:
-        """Convert to dictionary with Nones"""
+        """Convert to dictionary without Nones"""
         return {k: v for k, v in asdict(self).items() if v is not None}
 
 
