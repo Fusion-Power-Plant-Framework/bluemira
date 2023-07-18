@@ -23,10 +23,22 @@
 Optimisation utilities
 """
 
+import warnings
+
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import InternalOptError
+
+warnings.warn(
+    f"The module '{__name__}' is deprecated and will be removed in v2.0.0.\n"
+    "See "
+    "https://bluemira.readthedocs.io/en/latest/optimisation/optimisation.html "
+    "for documentation of the new optimisation module.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 
 # =============================================================================
 # Analytical objective functions

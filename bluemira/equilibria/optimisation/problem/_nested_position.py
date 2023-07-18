@@ -36,7 +36,7 @@ the method used to map the coilset object to the state vector
 
 """
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -52,8 +52,6 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.equilibria.positioner import RegionMapper
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation import optimise
 from bluemira.utilities.positioning import PositionMapper
 
@@ -98,7 +96,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         sub_opt: CoilsetOptimisationProblem,
         eq: Equilibrium,
         targets: MagneticConstraintSet,
-        pfregions: Dict[str, Coordinates],
+        position_mapper: PositionMapper,
         opt_algorithm="SBPLX",
         opt_conditions={
             "stop_val": 1.0,
@@ -106,11 +104,12 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         },
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
-        self.region_mapper = RegionMapper(pfregions)
         self.eq = eq
         self.targets = targets
-        _, lower_bounds, upper_bounds = self.region_mapper.get_Lmap(self.coilset)
-        self.bounds = (lower_bounds, upper_bounds)
+        self.position_mapper = position_mapper
+
+        opt_dimension = self.position_mapper.dimension
+        self.bounds = (np.zeros(opt_dimension), np.ones(opt_dimension))
         self.coilset = sub_opt.coilset
         self.sub_opt = sub_opt
         self.opt_algorithm = opt_algorithm
@@ -133,7 +132,9 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         # Get initial currents, and trim to within current bounds.
         initial_state, substates = self.read_coilset_state(self.coilset, self.scale)
         _, _, initial_currents = np.array_split(initial_state, substates)
-        initial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
+        initial_mapped_positions = self.position_mapper.to_L(
+            self.coilset.x, self.coilset.z
+        )
 
         # TODO: find more explicit way of passing this to objective?
         self.I0 = initial_currents
@@ -151,10 +152,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 
     def objective(self, vector: npt.NDArray) -> float:
         """Objective function to minimise."""
-        self.region_mapper.set_Lmap(vector)
-        x_vals, z_vals = self.region_mapper.get_xz_arrays()
-        positions = np.concatenate((x_vals, z_vals))
-        coilset_state = np.concatenate((positions, self.I0))
+        coilset_state = np.concatenate((self.position_mapper.to_xz(vector), self.I0))
         self.set_coilset_state(self.coilset, coilset_state, self.scale)
 
         # Update targets

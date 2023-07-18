@@ -21,18 +21,20 @@
 
 """
 Equilibrium optimisation constraint functions.
-for use in NLOpt constrained
-optimisation problems.
 
 Constraint functions must be of the form:
 
 .. code-block:: python
 
-    def f_constraint(constraint, x, grad, args):
-        constraint[:] = my_constraint_calc(x)
-        if grad.size > 0:
-            grad[:] = my_gradient_calc(x)
-        return constraint
+
+    class Constraint(ConstraintFunction):
+
+        def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+            return constraint_calc(vector)
+
+        def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+            return gradient_calc(vector)
+
 
 The constraint function convention is such that c <= 0 is sought. I.e. all constraint
 values must be negative.
@@ -47,11 +49,10 @@ Note that the gradient (Jacobian) of the constraint function is of the form:
             ... & ... & ... \n
             \\end{bmatrix}
 
-The grad and constraint matrices must be assigned in place.
 
-If grad is not updated, the constraint can still be used for derivative-free
-optimisation algorithms, but will need to be updated or approximated for use
-in derivative based algorithms, such as those utilising gradient descent.
+If the `df_constraint` function is not provided, the constraint can still be used for
+derivative-free optimisation algorithms, but will need to be updated or approximated for
+use in derivative based algorithms, such as those utilising gradient descent.
 """  # noqa: W505
 
 from __future__ import annotations

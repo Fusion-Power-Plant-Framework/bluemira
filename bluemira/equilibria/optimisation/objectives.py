@@ -36,7 +36,7 @@ The objective function is minimised, so lower values are "better".
 Note that the gradient of the objective function is of the form:
 
 :math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
-"""  # noqa (W505)
+"""  # noqa: W505
 
 import abc
 from typing import Tuple
@@ -44,6 +44,7 @@ from typing import Tuple
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.error import EquilibriaError
 
 
@@ -154,6 +155,40 @@ class MaximiseFluxObjective(ObjectiveFunction):
 # =============================================================================
 # Figures of merit
 # =============================================================================
+
+
+def tikhonov(a_mat: np.ndarray, b_vec: np.ndarray, gamma: float) -> np.ndarray:
+    """
+    Tikhonov regularisation of Ax-b problem.
+
+    \t:math:`\\textrm{minimise} || Ax - b ||^2 + ||{\\gamma} \\cdot x ||^2`\n
+    \t:math:`x = (A^T A + {\\gamma}^2 I)^{-1}A^T b`
+
+    Parameters
+    ----------
+    a_mat:
+        The 2-D A matrix of responses
+    b_vec:
+        The 1-D b vector of values
+    gamma: float
+        The Tikhonov regularisation parameter
+
+    Returns
+    -------
+    x:
+        The result vector
+    """
+    try:
+        return np.dot(
+            np.linalg.inv(np.dot(a_mat.T, a_mat) + gamma**2 * np.eye(a_mat.shape[1])),
+            np.dot(a_mat.T, b_vec),
+        )
+    except np.linalg.LinAlgError:
+        bluemira_warn("Tikhonov singular matrix..!")
+        return np.dot(
+            np.linalg.pinv(np.dot(a_mat.T, a_mat) + gamma**2 * np.eye(a_mat.shape[1])),
+            np.dot(a_mat.T, b_vec),
+        )
 
 
 def regularised_lsq_fom(

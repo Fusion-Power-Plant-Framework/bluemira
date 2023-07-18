@@ -75,6 +75,7 @@ import numpy as np
 from scipy.interpolate import RectBivariateSpline
 from scipy.special import lpmv
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.harmonics import (
     coil_harmonic_amplitude_matrix,
@@ -97,7 +98,9 @@ from bluemira.equilibria.harmonics import (
 
 # %%
 # Data from EQDSK file
-file_path = Path(__file__).parent / "SH_test_file.json"
+file_path = Path(
+    get_bluemira_path("equilibria", subfolder="examples"), "SH_test_file.json"
+)
 
 # Equilibrium
 eq = Equilibrium.from_eqdsk(file_path.as_posix())

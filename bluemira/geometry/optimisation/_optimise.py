@@ -18,6 +18,7 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+import copy
 from dataclasses import asdict, dataclass, field
 from typing import (
     Any,
@@ -223,6 +224,7 @@ def optimise_geometry(
     -------
     The result of the optimisation.
     """
+    geom = copy.deepcopy(geom)
     dimensions = geom.variables.n_free_variables
     f_obj = _tools.to_objective(f_objective, geom)
     if df_objective is not None:
