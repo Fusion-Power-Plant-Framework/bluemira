@@ -5,20 +5,11 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Optimisation for geometry"""
 
-from bluemira.geometry.optimisation._optimisation_old import (
-    GeometryOptimisationProblem,
-    MinimiseLengthGOP,
-    minimise_length,
-)
 from bluemira.geometry.optimisation._optimise import KeepOutZone, optimise_geometry
 from bluemira.geometry.optimisation.problem import GeomOptimisationProblem
 
 __all__ = [
     "GeomOptimisationProblem",
-    # OLD API
-    "GeometryOptimisationProblem",
     "KeepOutZone",
-    "MinimiseLengthGOP",
-    "minimise_length",
     "optimise_geometry",
 ]
