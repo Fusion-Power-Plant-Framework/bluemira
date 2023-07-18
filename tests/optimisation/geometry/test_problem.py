@@ -35,7 +35,7 @@ from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
 class CircleOptVariables(OptVariablesFrame):
     """Optimisation variables for a circle in the xz-plane."""
 
-    radius: OptVariable = ov("radius", 0, 1e-8, 15)
+    radius: OptVariable = ov("radius", 10, 1e-8, 15)
     centre_x: OptVariable = ov("centre_x", 0, -10, 10)
     centre_z: OptVariable = ov("centre_z", 0, 0, 10)
 
