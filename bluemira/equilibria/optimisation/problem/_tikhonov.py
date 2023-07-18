@@ -28,13 +28,12 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.opt_constraints import MagneticConstraintSet
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
-from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective
+from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective, tikhonov
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
 from bluemira.optimisation import optimise
-from bluemira.utilities.opt_tools import tikhonov
 
 
 class TikhonovCurrentCOP(CoilsetOptimisationProblem):

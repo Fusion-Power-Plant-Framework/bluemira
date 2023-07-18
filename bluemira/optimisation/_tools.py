@@ -25,6 +25,9 @@ from typing import Any, Callable, Iterable, Optional, Tuple, Union
 import numpy as np
 from scipy.optimize._numdiff import approx_derivative as _approx_derivative
 
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.optimisation.error import OptimisationError
+
 _FloatOrArray = Union[float, np.ndarray]
 
 
@@ -60,3 +63,49 @@ def approx_derivative(
     return _approx_derivative(
         func, x0, method=method, rel_step=rel_step, f0=f0, bounds=bounds, args=args
     )
+
+
+def process_scipy_result(res):
+    """
+    Handle a scipy.minimize OptimizeResult object. Process error codes, if any.
+
+    Parameters
+    ----------
+    res:
+        Scipy optimise result
+
+    Returns
+    -------
+    x: np.array
+        The optimal set of parameters (result of the optimisation)
+
+    Raises
+    ------
+    InternalOptError if an error code returned without a usable result.
+    """
+    if res.success:
+        return res.x
+
+    if not hasattr(res, "status"):
+        bluemira_warn("Scipy optimisation was not succesful. Failed without status.")
+        raise OptimisationError("\n".join([res.message, res.__str__()]))
+
+    elif res.status == 8:
+        # This can happen when scipy is not convinced that it has found a minimum.
+        bluemira_warn(
+            "\nOptimiser (scipy) found a positive directional derivative,\n"
+            "returning suboptimal result. \n"
+            "\n".join([res.message, res.__str__()])
+        )
+        return res.x
+
+    elif res.status == 9:
+        bluemira_warn(
+            "\nOptimiser (scipy) exceeded number of iterations, returning "
+            "suboptimal result. \n"
+            "\n".join([res.message, res.__str__()])
+        )
+        return res.x
+
+    else:
+        raise OptimisationError("\n".join([res.message, res.__str__()]))

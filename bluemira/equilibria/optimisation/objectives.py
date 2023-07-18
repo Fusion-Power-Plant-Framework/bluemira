@@ -44,6 +44,7 @@ from typing import Tuple
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.error import EquilibriaError
 
 
@@ -154,6 +155,40 @@ class MaximiseFluxObjective(ObjectiveFunction):
 # =============================================================================
 # Figures of merit
 # =============================================================================
+
+
+def tikhonov(A, b, gamma):
+    """
+    Tikhonov regularisation of Ax-b problem.
+
+    \t:math:`\\textrm{minimise} || Ax - b ||^2 + ||{\\gamma} \\cdot x ||^2`\n
+    \t:math:`x = (A^T A + {\\gamma}^2 I)^{-1}A^T b`
+
+    Parameters
+    ----------
+    A: np.array(n, m)
+        The 2-D A matrix of responses
+    b: np.array(n)
+        The 1-D b vector of values
+    gamma: float
+        The Tikhonov regularisation parameter
+
+    Returns
+    -------
+    x: np.array(m)
+        The result vector
+    """
+    try:
+        return np.dot(
+            np.linalg.inv(np.dot(A.T, A) + gamma**2 * np.eye(A.shape[1])),
+            np.dot(A.T, b),
+        )
+    except np.linalg.LinAlgError:
+        bluemira_warn("Tikhonov singular matrix..!")
+        return np.dot(
+            np.linalg.pinv(np.dot(A.T, A) + gamma**2 * np.eye(A.shape[1])),
+            np.dot(A.T, b),
+        )
 
 
 def regularised_lsq_fom(

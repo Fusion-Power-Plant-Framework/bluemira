@@ -23,11 +23,22 @@
 Optimisation utilities
 """
 
+import warnings
+
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.optimisation.objectives import regularised_lsq_fom  # noqa: F401
 from bluemira.utilities.error import InternalOptError
+
+warnings.warn(
+    f"The module '{__name__}' is deprecated and will be removed in v2.0.0.\n"
+    "See "
+    "https://bluemira.readthedocs.io/en/latest/optimisation/optimisation.html "
+    "for documentation of the new optimisation module.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 
 # =============================================================================
 # Analytical objective functions
@@ -66,6 +77,50 @@ def tikhonov(A, b, gamma):
             np.linalg.pinv(np.dot(A.T, A) + gamma**2 * np.eye(A.shape[1])),
             np.dot(A.T, b),
         )
+
+
+def regularised_lsq_fom(x, A, b, gamma):
+    """
+    Figure of merit for the least squares problem Ax = b, with
+    Tikhonov regularisation term. Normalised for the number of
+    targets.
+
+    ||(Ax - b)||²/ len(b)] + ||Γx||²
+
+    Parameters
+    ----------
+    x : np.array(m)
+        The 1-D x state vector.
+    A: np.array(n, m)
+        The 2-D A control matrix
+    b: np.array(n)
+        The 1-D b vector of target values
+    gamma: float
+        The Tikhonov regularisation parameter.
+
+    Returns
+    -------
+    fom: float
+        Figure of merit, explicitly given by
+        ||(Ax - b)||²/ len(b)] + ||Γx||²
+    residual: np.array(n)
+        Residual vector (Ax - b)
+    """
+    warnings.warn(
+        f"This function '{regularised_lsq_fom.__name__}' is deprecated and will be removed in v2.0.0.\n"
+        "See "
+        "https://bluemira.readthedocs.io/en/latest/optimisation/optimisation.html "
+        "for documentation of the new optimisation module.",
+        DeprecationWarning,
+        stacklevel=2,
+    )
+    residual = np.dot(A, x) - b
+    number_of_targets = np.float(len(residual))
+    fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
+
+    if fom <= 0:
+        raise bluemira_warn("Least-squares objective function less than zero or nan.")
+    return fom, residual
 
 
 def least_squares(A, b):
