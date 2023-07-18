@@ -106,14 +106,6 @@ def regularised_lsq_fom(x, A, b, gamma):
     residual: np.array(n)
         Residual vector (Ax - b)
     """
-    warnings.warn(
-        f"This function '{regularised_lsq_fom.__name__}' is deprecated and will be removed in v2.0.0.\n"
-        "See "
-        "https://bluemira.readthedocs.io/en/latest/optimisation/optimisation.html "
-        "for documentation of the new optimisation module.",
-        DeprecationWarning,
-        stacklevel=2,
-    )
     residual = np.dot(A, x) - b
     number_of_targets = np.float(len(residual))
     fom = residual.T @ residual / number_of_targets + gamma * gamma * x.T @ x
