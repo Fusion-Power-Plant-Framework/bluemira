@@ -33,9 +33,8 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.equilibria.positioner import RegionMapper
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation import optimise
+from bluemira.utilities.positioning import PositionMapper
 
 
 class CoilsetPositionCOP(CoilsetOptimisationProblem):
@@ -82,7 +81,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         coilset: CoilSet,
         eq: Equilibrium,
         targets: MagneticConstraintSet,
-        pfregions: Dict[str, Coordinates],
+        position_mapper: PositionMapper,
         max_currents: Optional[npt.ArrayLike] = None,
         gamma=1e-8,
         opt_algorithm: str = "SBPLX",
@@ -95,8 +94,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.coilset = coilset
         self.eq = eq
         self.targets = targets
-        self.region_mapper = RegionMapper(pfregions)
-        self.bounds = self.get_mapped_state_bounds(self.region_mapper, max_currents)
+        self.position_mapper = position_mapper
+        self.bounds = self.get_mapped_state_bounds(max_currents)
         self.gamma = gamma
         self.opt_algorithm = opt_algorithm
         self.opt_conditions = opt_conditions
@@ -112,15 +111,12 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         """
         # Get initial state and apply region mapping to coil positions.
         initial_state, _ = self.read_coilset_state(self.coilset, self.scale)
-        _, _, initial_currents = np.array_split(initial_state, self.substates)
-        initial_mapped_positions, _, _ = self.region_mapper.get_Lmap(self.coilset)
-        initial_mapped_state = np.concatenate(
-            (initial_mapped_positions, initial_currents)
-        )
+        initial_x, initial_z, initial_currents = np.array_split(initial_state, 3)
+        initial_mapped_positions = self.position_mapper.to_L(initial_x, initial_z)
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=self.objective,
-            x0=initial_mapped_state,
+            x0=np.concatenate((initial_mapped_positions, initial_currents)),
             opt_conditions=self.opt_conditions,
             algorithm=self.opt_algorithm,
             eq_constraints=eq_constraints,
@@ -145,8 +141,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         # Update the coilset with the new state vector
         mapped_x, mapped_z, currents = np.array_split(vector, 3)
         mapped_positions = np.concatenate((mapped_x, mapped_z))
-        self.region_mapper.set_Lmap(mapped_positions)
-        x_vals, z_vals = self.region_mapper.get_xz_arrays()
+        x_vals, z_vals = self.position_mapper.to_xz(mapped_positions)
         coilset_state = np.concatenate((x_vals, z_vals, currents))
         self.set_coilset_state(self.coilset, coilset_state, self.scale)
 
@@ -159,9 +154,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
         return regularised_lsq_fom(currents * self.scale, a_mat, b_vec, self.gamma)[0]
 
-    def get_mapped_state_bounds(
-        self, region_mapper: RegionMapper, max_currents: Optional[npt.ArrayLike] = None
-    ):
+    def get_mapped_state_bounds(self, max_currents: Optional[npt.ArrayLike] = None):
         """
         Get mapped bounds on the coilset state vector from the coil regions and
         maximum coil currents.
@@ -183,10 +176,14 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
             for coilset state degrees of freedom.
         """
         # Get mapped position bounds from RegionMapper
-        _, lower_lmap_bounds, upper_lmap_bounds = region_mapper.get_Lmap(self.coilset)
+        opt_dimension = self.position_mapper.dimension
+        lower_pos_bounds, upper_pos_bounds = (
+            np.zeros(opt_dimension),
+            np.ones(opt_dimension),
+        )
         current_bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
 
-        lower_bounds = np.concatenate((lower_lmap_bounds, current_bounds[0]))
-        upper_bounds = np.concatenate((upper_lmap_bounds, current_bounds[1]))
-        bounds = (lower_bounds, upper_bounds)
-        return bounds
+        return (
+            np.concatenate((lower_pos_bounds, current_bounds[0])),
+            np.concatenate((upper_pos_bounds, current_bounds[1])),
+        )
