@@ -157,7 +157,7 @@ class MaximiseFluxObjective(ObjectiveFunction):
 # =============================================================================
 
 
-def tikhonov(A, b, gamma):
+def tikhonov(a_mat: np.ndarray, b_vec: np.ndarray, gamma: float) -> np.ndarray:
     """
     Tikhonov regularisation of Ax-b problem.
 
@@ -166,28 +166,28 @@ def tikhonov(A, b, gamma):
 
     Parameters
     ----------
-    A: np.array(n, m)
+    a_mat:
         The 2-D A matrix of responses
-    b: np.array(n)
+    b_vec:
         The 1-D b vector of values
     gamma: float
         The Tikhonov regularisation parameter
 
     Returns
     -------
-    x: np.array(m)
+    x:
         The result vector
     """
     try:
         return np.dot(
-            np.linalg.inv(np.dot(A.T, A) + gamma**2 * np.eye(A.shape[1])),
-            np.dot(A.T, b),
+            np.linalg.inv(np.dot(a_mat.T, a_mat) + gamma**2 * np.eye(a_mat.shape[1])),
+            np.dot(a_mat.T, b_vec),
         )
     except np.linalg.LinAlgError:
         bluemira_warn("Tikhonov singular matrix..!")
         return np.dot(
-            np.linalg.pinv(np.dot(A.T, A) + gamma**2 * np.eye(A.shape[1])),
-            np.dot(A.T, b),
+            np.linalg.pinv(np.dot(a_mat.T, a_mat) + gamma**2 * np.eye(a_mat.shape[1])),
+            np.dot(a_mat.T, b_vec),
         )
 
 
