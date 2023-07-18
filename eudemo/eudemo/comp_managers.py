@@ -13,9 +13,9 @@ import abc
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.tools import _timing  # noqa: PLC2701
+from bluemira.base.reactor import ComponentManager
+from bluemira.base.tools import _timing
 from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
