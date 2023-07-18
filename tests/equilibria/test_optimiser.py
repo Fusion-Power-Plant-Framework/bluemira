@@ -23,7 +23,6 @@ import numpy as np
 
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.optimisation.problem import CoilsetPositionCOP
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import make_polygon
 from bluemira.utilities.positioning import PositionMapper, RegionInterpolator
 

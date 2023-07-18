@@ -36,7 +36,7 @@ the method used to map the coilset object to the state vector
 
 """
 
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 import numpy as np
 import numpy.typing as npt
