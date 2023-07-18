@@ -55,6 +55,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import numpy as np
 
+from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.harmonics import spherical_harmonic_approximation
@@ -65,7 +66,9 @@ plot_defaults()
 
 # %%
 # Data from EQDSK file
-file_path = Path(__file__).parent / "SH_test_file.json"
+file_path = Path(
+    get_bluemira_path("equilibria", subfolder="examples"), "SH_test_file.json"
+)
 
 # Plot
 eq = Equilibrium.from_eqdsk(file_path.as_posix())
