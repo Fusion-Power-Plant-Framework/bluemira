@@ -50,6 +50,8 @@ Usage of the 'spherical_harmonic_approximation' function.
 # please see, <TODO add link>
 
 # %%
+from pathlib import Path
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -63,10 +65,10 @@ plot_defaults()
 
 # %%
 # Data from EQDSK file
-file_path = "SH_test_file.json"
+file_path = Path(__file__).parent / "SH_test_file.json"
 
 # Plot
-eq = Equilibrium.from_eqdsk(file_path)
+eq = Equilibrium.from_eqdsk(file_path.as_posix())
 f, ax = plt.subplots()
 eq.plot(ax=ax)
 eq.coilset.plot(ax=ax)

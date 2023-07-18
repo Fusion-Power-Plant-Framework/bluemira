@@ -437,6 +437,6 @@ def spherical_harmonics_constraint(
 
     # calculate constraint jacobian
     if grad.size > 0:
-        grad[:] = -scale * vector_harmonics_matrix
+        grad[:] = scale * vector_harmonics_matrix
 
     return constraint

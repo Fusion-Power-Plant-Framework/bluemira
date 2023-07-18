@@ -67,6 +67,7 @@ An example that shows how the Spherical Harmonic Approximation works
 # %%
 
 from copy import deepcopy
+from pathlib import Path
 
 import matplotlib.patches as patch
 import matplotlib.pyplot as plt
@@ -96,10 +97,10 @@ from bluemira.equilibria.harmonics import (
 
 # %%
 # Data from EQDSK file
-file_path = "SH_test_file.json"
+file_path = Path(__file__).parent / "SH_test_file.json"
 
 # Equilibrium
-eq = Equilibrium.from_eqdsk(file_path)
+eq = Equilibrium.from_eqdsk(file_path.as_posix())
 
 # Profiles
 profiles = eq.profiles
