@@ -31,8 +31,8 @@ if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
 
-from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.reactor import ComponentManager
 from bluemira.base.tools import _timing
 from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
