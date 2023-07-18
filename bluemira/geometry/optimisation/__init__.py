@@ -20,11 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Optimisation for geometry"""
 
-from bluemira.geometry.optimisation._optimisation_old import (
-    GeometryOptimisationProblem,
-    MinimiseLengthGOP,
-    minimise_length,
-)
 from bluemira.geometry.optimisation._optimise import KeepOutZone, optimise_geometry
 from bluemira.geometry.optimisation.problem import GeomOptimisationProblem
 
@@ -32,8 +27,4 @@ __all__ = [
     "GeomOptimisationProblem",
     "KeepOutZone",
     "optimise_geometry",
-    # OLD API
-    "GeometryOptimisationProblem",
-    "minimise_length",
-    "MinimiseLengthGOP",
 ]
