@@ -36,7 +36,7 @@ The objective function is minimised, so lower values are "better".
 Note that the gradient of the objective function is of the form:
 
 :math:`\\nabla f = \\bigg[\\dfrac{\\partial f}{\\partial x_0}, \\dfrac{\\partial f}{\\partial x_1}, ...\\bigg]`
-"""  # noqa (W505)
+"""  # noqa: W505
 
 import abc
 from typing import Tuple
