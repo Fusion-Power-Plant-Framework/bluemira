@@ -70,7 +70,7 @@ def coil_harmonic_amplitude_matrix(
         (\\frac{r_{t}}{r_{f}})^l
         \\frac{P_{l} \\cos{\\theta_{f}}}{\\sqrt{l(l+1)}}
 
-    Where l = degree, and math: P_{l} \\cos{\\theta_{f}} are the associated
+    Where l = degree, and :math: P_{l} \\cos{\\theta_{f}} are the associated
     Legendre polynomials of degree l and order (m) = 1.
 
     Parameters
@@ -131,7 +131,7 @@ def harmonic_amplitude_marix(
         \\frac{P_{l} \\cos{\\theta_{f}}}{\\sqrt{l(l+1)}}}
 
     Where l = degree, A_l are the spherical harmonic coefficients/amplitudes,
-    and math: P_{l} \\cos{\\theta_{f}} are the associated Legendre polynomials of
+    and :math: P_{l} \\cos{\\theta_{f}} are the associated Legendre polynomials of
     degree l and order (m) = 1.
 
     N.B. Vacuum Psi = Total Psi - Plasma Psi.
