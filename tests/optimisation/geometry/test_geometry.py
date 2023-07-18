@@ -266,7 +266,12 @@ class TestGeometry:
     def test_eq_constraint(self):
         def square_constraint(geom: PictureFrame) -> np.ndarray:
             """Constraint to make a PictureFrame a square."""
-            x1, x2, z1, z2, _, _ = geom.variables.values
+            x1, x2, z1, z2 = (
+                geom.variables.x1,
+                geom.variables.x2,
+                geom.variables.z1,
+                geom.variables.z2,
+            )
             return np.array([abs(x2 - x1) - abs(z2 - z1)])
 
         pf = PictureFrame(

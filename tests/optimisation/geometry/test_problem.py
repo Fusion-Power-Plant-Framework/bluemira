@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from dataclasses import dataclass
 from typing import Tuple
 
 import pytest
@@ -27,17 +28,28 @@ from bluemira.geometry.optimisation import GeomOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.opt_variables import BoundedVariable, OptVariables
+from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
+
+
+@dataclass
+class CircleOptVariables(OptVariablesFrame):
+    """Optimisation variables for a circle in the xz-plane."""
+
+    radius: OptVariable = ov("radius", 10, 1e-8, 15)
+    centre_x: OptVariable = ov("centre_x", 0, -10, 10)
+    centre_z: OptVariable = ov("centre_z", 0, 0, 10)
 
 
 class Circle(GeometryParameterisation):
     def __init__(self, radius: float, centre: Tuple[float, float]):
-        opt_vars = OptVariables(
-            [
-                BoundedVariable("radius", radius, 1e-8, 15),
-                BoundedVariable("centre_x", centre[0], -10, 10),
-                BoundedVariable("centre_z", centre[1], -10, 10),
-            ]
+        opt_vars = CircleOptVariables()
+        opt_vars.adjust_variables(
+            {
+                "radius": {"value": radius},
+                "centre_x": {"value": centre[0]},
+                "centre_z": {"value": centre[1]},
+            },
+            strict_bounds=False,
         )
         super().__init__(opt_vars)
 
