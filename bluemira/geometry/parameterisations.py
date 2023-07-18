@@ -26,8 +26,10 @@ Geometry parameterisations
 from __future__ import annotations
 
 import abc
+import copy
 import json
 import warnings
+from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial
@@ -1932,6 +1934,21 @@ class PictureFrame(
         variables.adjust_variables(var_dict, strict_bounds=False)
         variables.configure(self.upper, self.lower, self.inner)
         super().__init__(variables)
+
+    def __deepcopy__(self, memo) -> PictureFrame:
+        """Picture Frame deepcopy"""
+        cls = type(self)
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k in (*self.__slots__, *super().__slots__):
+            with suppress(AttributeError):
+                v = getattr(self, k)
+                setattr(
+                    result,
+                    k,
+                    v if isinstance(v, PFrameSection) else copy.deepcopy(v, memo),
+                )
+        return result
 
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
