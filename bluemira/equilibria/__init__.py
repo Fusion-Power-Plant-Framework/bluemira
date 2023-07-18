@@ -17,20 +17,6 @@ from bluemira.equilibria.find import (
 )
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.limiter import Limiter
-from bluemira.equilibria.opt_constraints import (
-    AutoConstraints,
-    FieldNullConstraint,
-    IsofluxConstraint,
-    MagneticConstraintSet,
-    PsiBoundaryConstraint,
-    PsiConstraint,
-)
-from bluemira.equilibria.opt_problems import (
-    CoilsetPositionCOP,
-    NestedCoilsetPositionCOP,
-    TikhonovCurrentCOP,
-    UnconstrainedTikhonovCurrentGradientCOP,
-)
 from bluemira.equilibria.profiles import BetaIpProfile, CustomProfile
 from bluemira.equilibria.shapes import (
     flux_surface_cunningham,
