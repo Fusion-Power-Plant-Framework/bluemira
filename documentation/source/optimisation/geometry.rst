@@ -20,25 +20,26 @@ representing our circle.
     from typing import Dict, Optional, Union
 
     from bluemira.geometry.parameterisations import GeometryParameterisation
-    from bluemira.utilities.opt_variables import OptVariables, BoundedVariable
     from bluemira.geometry.tools import make_circle
     from bluemira.geometry.wire import BluemiraWire
+    from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
+
+
+    @dataclass
+    class CircleOptVariables(OptVariablesFrame):
+        """Optimisation variables for a circle in the xz-plane."""
+
+        radius: OptVariable = ov("radius", 10, 1e-5, 15)
+        centre_x: OptVariable = ov("centre_x", 0, -10, 10)
+        centre_z: OptVariable = ov("centre_z", 0, 0, 10)
 
 
     class Circle(GeometryParameterisation):
         """Geometry parameterisation for a circle in the xz-plane."""
 
-        def __init__(
-            self, var_dict: Optional[Dict[str, Union[float, Dict[str, float]]]] = None
-        ):
-            opt_variables = OptVariables(
-                [
-                    BoundedVariable("radius", 10, 1e-5, 15),
-                    BoundedVariable("centre_x", 0, -10, 10),
-                    BoundedVariable("centre_z", 0, 0, 10),
-                ]
-            )
-            opt_variables.adjust_variables(var_dict, strict_bounds=True)
+        def __init__(self, var_dict: Optional[VarDictT] = None):
+            opt_variables = CircleOptVariables()
+            opt_variables.adjust_variables(var_dict, strict_bounds=False)
             super().__init__(opt_variables)
 
         def create_shape(self, label: str = "") -> BluemiraWire:

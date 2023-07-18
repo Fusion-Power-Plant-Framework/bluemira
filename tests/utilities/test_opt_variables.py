@@ -35,7 +35,7 @@ from bluemira.utilities.opt_variables import (
 )
 
 
-class TestBoundedVariable:
+class TestOptVariable:
     def test_initialisation(self):
         v1 = OptVariable("a", 2, 0, 3, description="test")
         assert v1.name == "a"
