@@ -9,11 +9,9 @@ TODO:
     [x]quick_tbr_heating.geometry_plotter -> result_presentation
     [ ]All openmc setting up -> stay here at quick_btr_heating.py
     [ ]quick_tbr_heating.filter_cells -> filter_cells.py
-        [ ]_load_fw_points -> somewhere??
+        [x]_load_fw_points -> somewhere??
         - create_tallies
-        - stochastic_volume_calculation
-    [ ]create_parametric_source
-        [ ]Its magic numbers/ strings -> constants.py
+        [x]stochastic_volume_calculation
 [ ]compare the pps_api with open-radiation-source/parametric-plasma-source/.git
     [ ]find the units and documentations for creating source_params_dict
         - See details in PPS_OpenMC.so library
@@ -98,13 +96,13 @@ def create_parametric_source(tokamak_geometry):
     """
     source_params_dict = {
         "mode": 2,
-        "temperature": 15.4,  # turn this into a constant and put it in constants.py!
+        "temperature": 15.4,  # put this magic number in constants.py!
         "major_r": tokamak_geometry.major_r,
         "minor_r": tokamak_geometry.minor_r,
         "elongation": tokamak_geometry.elong,
         "triangulation": tokamak_geometry.triang,
         "radial_shift": tokamak_geometry.shaf_shift,
-        "peaking_factor": 1.508,  # turn this into a constant and put it in constants.py!
+        "peaking_factor": 1.508,  # put this magic number in constants.py!
         "vertical_shift": 0.0,
         "start_angle": 0.0,
         "angle_range": 360.0,
@@ -117,177 +115,6 @@ def create_parametric_source(tokamak_geometry):
     )
 
     return parametric_source
-
-
-def _load_fw_points(tokamak_geometry, save_plots=True):
-    """
-    Load given first wall points,
-        scale them according to the given major and minor radii,
-        then downsample them so that a simplified geometry can be made.
-
-    Currently these are full of magic numbers (e.g. manually chosen integer indices)
-        because it was tailored for one specific model.
-
-    Parameters
-    ----------
-    tokamak_geometry: TokamakGeometry
-
-    Returns
-    -------
-    new_downsampled_fw: points belonging to the first wall
-    new_downsampled_div: points belonging to the divertor
-    num_inboard_points: Number of points in new_downsampled_fw
-                        that belongs to the inboard section.
-
-    Dataflow diagram for this function
-    ----------------------------------
-    blanket_face.npy                divertor_face.npy
-            ↓                           ↓
-    full_blanket_2d_outline         divertor_2d_outline
-            ↓                           ↓
-    (select plasma-facing part)         ↓
-            ↓                           ↓
-    inner_blanket_face(ibf)             ↓
-            ↓                           ↓
-    (downsampling)                  (downsampling)
-            ↓                           ↓
-    downsampled_ibf                 divertor_2d_outline
-            ↓                           ↓
-            →           old_points      ←
-                            ↓
-        (expand points outwards using 'shift_cm')
-                            ↓
-                        new_points
-                            ↓
-                    (elongate, stretch)
-                            ↓
-                        new_points
-                        ↓       ↓
-    new_downsampled_fw  ←       →  new_downsampled_div
-
-    Units
-    -----
-    All units for the diagram above are in cgs
-    """
-    ######## get data ########
-    # Get the geometry from existing .npy files, each is an array of
-    # 3D coordinates of points sampled along the divertor first wall outline.
-    full_blanket_2d_outline = np.load("blanket_face.npy")[0]
-    divertor_2d_outline = np.load("divertor_face.npy")[0]
-    ######## <magic numbers and magic function> ########
-    # that fits only these npy model.
-    # The plasma geometry
-    ex_pts_maj_r = 900.0
-    ex_pts_min_r = 290.0
-    ex_pts_elong = 1.792
-    # Specifying the number of the selected points that define the inboard.
-    num_inboard_points = 6
-    # indices
-    selected_fw_samples = [
-        0,
-        4,
-        8,
-        11,
-        14,
-        17,
-        21,
-        25,
-        28,
-        33,
-        39,
-        42,
-        -1,
-    ]  # sample points
-    selected_div_samples = [
-        72,
-        77,
-        86,
-    ]  # also going to use first and last points from first wall
-    num_points_belongong_to_divertor = len(selected_div_samples)
-
-    def _fix_downsampled_ibf(ds_ibf):
-        """Move the point that is too close to plasma
-        by moving it closer to the central column instead.
-        """
-        ds_ibf[-5][0] = ds_ibf[-5][0] - 25.0
-        return ds_ibf
-
-    ######## </magic numbers and magic function> ########
-    # we will get rid of this whole function later on anyways.
-
-    ######## select the part of the outline facing the plasma ########
-    ibf = inner_blanket_face = full_blanket_2d_outline[52:-2]
-
-    ######## (down)sample existing data ########
-    # blanket
-    downsampled_ibf = raw_uc(ibf[selected_fw_samples], "m", "cm")
-    downsampled_ibf = _fix_downsampled_ibf(downsampled_ibf)
-    # divertor
-    downsampled_divf = raw_uc(divertor_2d_outline[selected_div_samples], "m", "cm")
-
-    ######## Create the full plasma-facing outline by concatenating existing var ########
-    old_points = np.concatenate((downsampled_ibf, downsampled_divf), axis=0)
-
-    print("FW points before adjustment\n", old_points)
-
-    ######## rescale data to fit new geometry. ########
-    # Expand point outwards according to new major radius
-    shift_cm = tokamak_geometry.major_r - ex_pts_maj_r
-    new_points = mg.shift_points(old_points, shift_cm)
-
-    # Adjusting points for elongation and minor radius
-    # This elongation also include an allowance for the minor radius
-    elong_w_minor_r = tokamak_geometry.minor_r / ex_pts_min_r * tokamak_geometry.elong
-    stretch_r_val = tokamak_geometry.minor_r / ex_pts_min_r
-    new_points = mg.elongate(new_points, elong_w_minor_r / ex_pts_elong)
-    new_points = mg.stretch_r(new_points, tokamak_geometry, stretch_r_val)
-
-    ######## split 'new_points' into new_downsampled_* variables ########
-    new_downsampled_fw = new_points[:-num_points_belongong_to_divertor]
-    new_downsampled_div = np.concatenate(
-        (new_points[-(num_points_belongong_to_divertor + 1) :], new_points[:1]), axis=0
-    )
-
-    ######## plotting. ########
-    if save_plots:
-        ######## create parametric variables for plotting smoother lines ########
-        # https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf pg. 239 # noqa: W505
-        # R = R0 + a cos(θ + δ sin θ)
-        # where a = minor radius
-        #       δ = triangularity
-        u = tokamak_geometry.major_r  # x-position of the center
-        v = 0.0  # y-position of the center
-        a = tokamak_geometry.minor_r  # radius on the x-axis
-        b = tokamak_geometry.elong * tokamak_geometry.minor_r  # radius on the y-axis
-        tri = tokamak_geometry.triang  # triangularity
-        t = np.linspace(0, 2 * pi, 100)
-
-        with present.PoloidalXSPlot("blanket_face.svg", "Blanket Face") as ax:
-            ax.scatter(full_blanket_2d_outline[:, 0], full_blanket_2d_outline[:, 2])
-
-        with present.PoloidalXSPlot(
-            "all_points_before_after.svg", "Points sampled for making the MCNP model"
-        ) as ax:
-            ax.plot(old_points[:, 0], old_points[:, 2], label="Initial fw points")
-            ax.plot(new_points[:, 0], new_points[:, 2], label="Adjusted fw points")
-            ax.plot(
-                u + a * np.cos(t + tri * np.sin(t)),
-                v + b * np.sin(t),
-                label="Plasma envelope",
-            )  # source envelope
-            ax.legend(loc="upper right")
-
-        with present.PoloidalXSPlot(
-            "selected_pts_inner_blanket_face.svg", "Selected points on the inner blanket"
-        ) as ax:
-            ax.scatter(new_downsampled_fw[:, 0], new_downsampled_fw[:, 2])
-
-        with present.PoloidalXSPlot(
-            "selected_pts_divertor_face.svg", "Selected points on the divertor face"
-        ) as ax:
-            ax.scatter(new_downsampled_div[:, 0], new_downsampled_div[:, 2])
-
-    return new_downsampled_fw, new_downsampled_div, num_inboard_points
 
 
 def setup_openmc(
@@ -521,9 +348,6 @@ def create_tallies(
     tallies.export_to_xml()
 
 
-# result processing
-
-
 class TBRHeatingSimulation:
     """
     Contains all the data necessary to run the openmc simulation of the tbr,
@@ -562,7 +386,7 @@ class TBRHeatingSimulation:
             self.runtime_variables.openmc_write_summary,
         )
 
-        blanket_points, div_points, num_inboard_points = _load_fw_points(
+        blanket_points, div_points, num_inboard_points = mg.load_fw_points(
             self.tokamak_geometry, True
         )
         self.cells, self.universe = mg.make_geometry(
