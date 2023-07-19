@@ -28,7 +28,6 @@ TODO:
 ____
 [ ]Tests?
 """
-import dataclasses
 import os
 from dataclasses import dataclass
 
@@ -42,76 +41,19 @@ import bluemira.neutronics.make_materials as mm
 import bluemira.neutronics.result_presentation as present
 
 # Constants
-from bluemira.base.constants import BMUnitRegistry, raw_uc
-from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.neutronics.constants import dt_neutron_energy_MeV, energy_per_dt_MeV
+from bluemira.base.constants import raw_uc
+from bluemira.neutronics.constants import dt_neutron_energy_MeV
+from bluemira.neutronics.params import (
+    BreederTypeParameters,
+    OpenMCSimulationRuntimeParameters,
+    TokamakGeometry,
+    TokamakOperationParameters,
+)
+from bluemira.neutronics.volume_functions import stochastic_volume_calculation
 
 config[
     "cross_sections"
 ] = "/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml"
-
-
-# dataclasses containing parameters used to set up the openmc model.
-@dataclass
-class OpenMCSimulationRuntimeParameters:
-    """Parameters used in the actual simulation"""
-
-    # parameters used in setup_openmc()
-    particles: int  # number of particles used in the neutronics simulation
-    batches: int
-    photon_transport: bool
-    electron_treatment: str
-    run_mode: str
-    openmc_write_summary: str
-    # Parameters used elsewhere
-    parametric_source: bool
-    volume_calc_particles: int  # number of particles used in the volume calculation.
-
-
-@dataclass
-class TokamakOperationParameters:
-    """The tokamak's operational parameter, such as its power"""
-
-    reactor_power_MW: float  # MW
-
-    def calculate_total_neutron_rate(self):
-        """Convert the reactor power to neutron rate
-        (number of neutrons produced per second)
-        """
-        reactor_power_in_MeV_per_s = raw_uc(self.reactor_power_MW, "MW", "MeV/s")
-        num_dt_per_second = reactor_power_in_MeV_per_s / energy_per_dt_MeV
-        return num_dt_per_second
-
-
-@dataclass
-class BreederTypeParameters:
-    """Dataclass to hold information about the breeder blanket material
-    and design choices.
-    """
-
-    li_enrich_ao: float
-    blanket_type: mm.BlanketType
-
-
-@dataclass
-class TokamakGeometry:
-    """The measurements for all of the geneic components of the tokamak"""
-
-    minor_r: float  # [cm]
-    major_r: float  # [cm]
-    elong: float  # [dimensionless]
-    shaf_shift: float  # [cm]
-    inb_fw_thick: float  # [cm]
-    inb_bz_thick: float  # [cm]
-    inb_mnfld_thick: float  # [cm]
-    inb_vv_thick: float  # [cm]
-    tf_thick: float  # [cm]
-    outb_fw_thick: float  # [cm]
-    outb_bz_thick: float  # [cm]
-    outb_mnfld_thick: float  # [cm]
-    outb_vv_thick: float  # [cm]
-    triang: float = 0.333  # [dimensionless]
-    inb_gap: float = 20.0  # [cm]
 
 
 # openmc source maker
@@ -580,64 +522,6 @@ def create_tallies(
 
 
 # result processing
-
-
-def stochastic_volume_calculation(tokamak_geometry, cells_and_cell_lists, particles=4e7):
-    """
-    Parameters
-    ----------
-    tokamak_geometry: TokamakGeometry
-    cells_and_cell_lists: dict
-        dictionary where each item is either a single openmc.Cell,
-            or a list of openmc.Cell.
-    particles:
-        how many randomly generated particle to use
-        for the stochastic volume calculation.
-    """
-    # Performs a stochastic volume calculation for the cells
-
-    import os
-
-    # quietly delete the unused .hf files: bad practice, fix later?
-    try:
-        os.remove("summary.h5")
-        os.remove("statepoint.1.h5")
-    except OSError:
-        pass
-
-    # maximum radii and heigth reached by all of the tokamak's breeder zone component
-    maxr = (
-        tokamak_geometry.major_r
-        + tokamak_geometry.minor_r
-        + tokamak_geometry.outb_fw_thick
-        + tokamak_geometry.outb_bz_thick
-    )
-    maxz = (
-        # height of plasma = 2 * elong * minor
-        tokamak_geometry.elong * tokamak_geometry.minor_r
-        + tokamak_geometry.outb_fw_thick
-        + tokamak_geometry.outb_bz_thick
-        + tokamak_geometry.outb_mnfld_thick
-        + tokamak_geometry.outb_vv_thick
-    )
-    # draw the bounding box for the simulation.
-    lower_left = (-maxr, -maxr, -maxz)
-    upper_right = (maxr, maxr, maxz)
-    cell_vol_calc = openmc.VolumeCalculation(
-        cells_and_cell_lists["inb_fw_cells"]
-        + [cells_and_cell_lists["divertor_fw"]]
-        + cells_and_cell_lists["outb_fw_cells"],
-        int(particles),
-        lower_left,
-        upper_right,
-    )
-    settings = openmc.Settings()
-    settings.volume_calculations = [cell_vol_calc]
-
-    settings.export_to_xml()
-    # within this bounding box, use naive Monte Carlo to find
-    # the volumes of the cells representing the tokamak components.
-    openmc.calculate_volumes()
 
 
 class TBRHeatingSimulation:

@@ -7,6 +7,7 @@ import pandas as pd
 
 from bluemira.base.constants import raw_uc
 from bluemira.neutronics.constants import S_TO_YEAR, DPACoefficients
+from bluemira.neutronics.params import TokamakGeometry
 
 
 def print_df_decorator_with_title_string(title_string):
@@ -251,7 +252,8 @@ class OpenMCResult:
 
 
 def geometry_plotter(
-    cells_and_cell_lists: Union[List[openmc.Cell], openmc.Cell], tokamak_geometry
+    cells_and_cell_lists: Union[List[openmc.Cell], openmc.Cell],
+    tokamak_geometry: TokamakGeometry,
 ) -> None:
     """
     Uses the OpenMC plotter to produce an image of the modelled geometry
