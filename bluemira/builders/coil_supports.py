@@ -8,7 +8,6 @@
 Coil support builders
 """
 
-import warnings
 from dataclasses import dataclass
 
 import numpy as np
@@ -42,7 +41,6 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation import OptimisationProblem
 from bluemira.optimisation.typing import ConstraintT
-from bluemira.utilities.optimiser import Optimiser as _DeprecatedOptimiser
 from bluemira.utilities.tools import floatify
 
 
@@ -563,7 +561,6 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         self,
         wire: BluemiraWire,
         keep_out_zone: BluemiraFace,
-        optimiser: _DeprecatedOptimiser | None = None,
         n_koz_discr: int = 100,
     ):
         self.wire = wire
@@ -571,17 +568,6 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         self.koz_points = (
             keep_out_zone.boundary[0].discretize(byedges=True, ndiscr=n_koz_discr).xz.T
         )
-        if optimiser is not None:
-            warnings.warn(
-                "Use of StraightOISOptimisationProblem's 'optimiser' argument is "
-                "deprecated and it will be removed in version 2.0.0.\n"
-                "See "
-                "https://bluemira.readthedocs.io/en/latest/optimisation/"
-                "optimisation.html "
-                "for documentation of the new optimisation module.",
-                DeprecationWarning,
-                stacklevel=2,
-            )
 
     def objective(self, x: np.ndarray) -> float:
         """Objective function to maximise length."""
