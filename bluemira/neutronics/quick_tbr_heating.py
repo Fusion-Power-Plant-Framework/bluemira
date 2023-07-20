@@ -1,17 +1,5 @@
 """
 TODO:
-[ ]Break quick_tbr_heating into multiple
-    [x]get_dpa_coefs -> constants
-    [x]quick_tbr_heating.PoloidalXSPlot -> result_presentation
-    [x]quick_tbr_heating.print_df_decorator_with_title_string, quick_tbr_heating.OpenMCResult -> result_presentation
-    [x]Normalize the methods in result_presentation.py
-    [x]pandas_df_functions -> result_presentation
-    [x]quick_tbr_heating.geometry_plotter -> result_presentation
-    [ ]All openmc setting up -> stay here at quick_btr_heating.py
-    [ ]quick_tbr_heating.filter_cells -> filter_cells.py
-        [x]_load_fw_points -> somewhere??
-        - create_tallies
-        [x]stochastic_volume_calculation
 [ ]compare the pps_api with open-radiation-source/parametric-plasma-source/.git
     [ ]find the units and documentations for creating source_params_dict
         - See details in PPS_OpenMC.so library
@@ -28,8 +16,8 @@ ____
 """
 import os
 from dataclasses import dataclass
+from typing import Literal
 
-import numpy as np
 import openmc
 from numpy import pi
 from openmc.config import config
@@ -47,6 +35,7 @@ from bluemira.neutronics.params import (
     TokamakGeometry,
     TokamakOperationParameters,
 )
+from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
 
 config[
@@ -55,7 +44,7 @@ config[
 
 
 # openmc source maker
-def create_ring_source(tokamak_geometry):
+def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
     """
     Creating simple ring source.
     A more accurate source will slightly affect the wall loadings and dpa profiles.
@@ -85,7 +74,7 @@ def create_ring_source(tokamak_geometry):
     return ring_source
 
 
-def create_parametric_source(tokamak_geometry):
+def create_parametric_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
     """
     Create a parametric plasma source using the PPS_OpenMC.so library
         and the relevant parameters.
@@ -118,31 +107,46 @@ def create_parametric_source(tokamak_geometry):
 
 
 def setup_openmc(
-    plasma_source,
-    particles,
-    batches=2,
+    plasma_source: openmc.Source,
+    particles: int,
+    batches: int = 2,
     photon_transport=True,
-    electron_treatment="ttb",
+    electron_treatment: Literal["ttb", "led"] = "ttb",
     run_mode="fixed source",
     output_summary=False,
-):
+) -> None:
     """Configure openmc.Settings, so that it's ready for the run() step.
+    Assumptions
+    -----------
+    We run the simulation with the assumption that temperature = 293K,
+    as the nuclear cross-section values are evaluated at this temperature
 
     Parameters (all of which are arguments parsed to openmc.Settings)
     ----------
-    plasma_source: openmc.Source
-    particles: int
+    plasma_source:
+        Openmc.Source used to emulate the neutron emission of the plasma.
+    particles:
+        Number of neutrons emitted by the plasma source per batch.
     batches: int, default=2
+        How many batches to simulate.
     photon_transport: bool, default=True
+        Whether to simulate the transport of photons (i.e. gamma-rays created) or not.
     electron_treatment: {'ttb', 'led'}
+        The way in which OpenMC handles secondary charged particles.
+        'thick-target bremsstrahlung' or 'local energy deposition'
+        'thick-target bremsstrahlung' accounts for the energy carried away by
+            bremsstrahlung photons and deposited elsewhere, whereas 'local energy
+            deposition' assumes electrons deposit all energies locally.
+        (the latter is expected to be computationally faster.)
     run_mode: {'fixed source', 'eigenvalue', 'plot', 'volume', 'particle restart'}
-    output_summary: bool , default=False
-    """
-    #######################
-    ### OPENMC SETTINGS ###
-    #######################
+        see below for details:
+        https://docs.openmc.org/en/stable/usersguide/settings.html#run-modes
+    output_summary: whether a 'summary.h5' file is written or not.
 
-    # Assuming 293K temperature for nuclear cross-sections for calculation speed
+    Returns
+    -------
+    Exports the settings to an xml file.
+    """
     settings = openmc.Settings()
     settings.source = plasma_source
     settings.particles = particles
@@ -155,11 +159,13 @@ def setup_openmc(
     settings.export_to_xml()
 
 
-def create_materials(breeder_materials: BreederTypeParameters):
+def create_and_export_materials(
+    breeder_materials: BreederTypeParameters,
+) -> mm.MaterialsLibrary:
     """
     Parameters
     ----------
-    breeder_materials: BreederTypeParameters
+    breeder_materials:
         dataclass containing attributes: 'blanket_type', 'li_enrich_ao'
     """
 
@@ -170,184 +176,6 @@ def create_materials(breeder_materials: BreederTypeParameters):
     return material_lib
 
 
-def filter_cells(cells_and_cell_lists, material_lib, src_rate):
-    """
-    Requests cells for scoring.
-    Parameters
-    ----------
-    cells_and_cell_lists:
-        dictionary where each item is either a single openmc.Cell,
-            or a list of openmc.Cell.
-    material_lib: (dict)
-        A dictionary (or an instance of MaterialsLibrary,
-            which is an offspring class of dict)
-        with all of the material definitions stored.
-    src_rate: float
-        number of neutrons produced by the source (plasma) per second.
-    """
-    cell_filter = openmc.CellFilter(
-        # the single cells
-        [
-            cells_and_cell_lists["tf_coil_cell"],
-            cells_and_cell_lists["plasma_inner1"],
-            cells_and_cell_lists["plasma_inner2"],
-            cells_and_cell_lists["plasma_outer1"],
-            cells_and_cell_lists["plasma_outer2"],
-            cells_and_cell_lists["divertor_fw"],
-            cells_and_cell_lists["divertor_fw_sf"],  # sf = surface
-        ]
-        # the cell lists
-        + cells_and_cell_lists["inb_vv_cells"]
-        + cells_and_cell_lists["inb_mani_cells"]
-        + cells_and_cell_lists["inb_bz_cells"]
-        + cells_and_cell_lists["inb_fw_cells"]
-        + cells_and_cell_lists["inb_sf_cells"]  # sf = surface
-        + cells_and_cell_lists["outb_vv_cells"]
-        + cells_and_cell_lists["outb_mani_cells"]
-        + cells_and_cell_lists["outb_bz_cells"]
-        + cells_and_cell_lists["outb_fw_cells"]
-        + cells_and_cell_lists["outb_sf_cells"]  # sf = surface
-        + cells_and_cell_lists["divertor_cells"],
-    )
-
-    mat_filter = openmc.MaterialFilter(
-        [
-            material_lib.inb_fw_mat,
-            material_lib.outb_fw_mat,
-            material_lib.inb_bz_mat,
-            material_lib.outb_bz_mat,
-            material_lib.inb_mani_mat,
-            material_lib.outb_mani_mat,
-            material_lib.inb_vv_mat,
-            material_lib.outb_vv_mat,
-            material_lib.divertor_mat,
-            material_lib.div_fw_mat,
-            material_lib.tf_coil_mat,
-            material_lib.inb_sf_mat,  # sf = surface
-            material_lib.outb_sf_mat,  # sf = surface
-            material_lib.div_sf_mat,  # sf = surface
-        ]
-    )
-
-    fw_surf_filter = openmc.CellFilter(
-        cells_and_cell_lists["inb_sf_cells"]  # sf = surface
-        + cells_and_cell_lists["outb_sf_cells"]  # sf = surface
-        + [cells_and_cell_lists["divertor_fw_sf"]]  # sf = surface
-        + cells_and_cell_lists["inb_fw_cells"]
-        + cells_and_cell_lists["outb_fw_cells"]
-        + [cells_and_cell_lists["divertor_fw"]]
-    )
-
-    neutron_filter = openmc.ParticleFilter(["neutron"])
-    photon_filter = openmc.ParticleFilter(["photon"])
-
-    # eV per source particle to MW coefficients
-    # SOMETHING SEEMS WRONG @ JAMES HAGUE (original file line L.313)
-    eV_per_sp_to_MW = raw_uc(src_rate, "eV/s", "MW")
-
-    MW_energy_bins = [0.0, 100.0e6]  # Up to 100 MeV
-    MW_dose_coeffs = [eV_per_sp_to_MW, eV_per_sp_to_MW]
-    # makes a flat line function
-    MW_mult_filter = openmc.EnergyFunctionFilter(MW_energy_bins, MW_dose_coeffs)
-
-    # photon heat flux coefficients (cm per source particle to MW cm)
-    # Tally heat flux
-    energy_bins = [0.0, 100.0e6]  # Up to 100 MeV
-    dose_coeffs = [0.0 * eV_per_sp_to_MW, 100.0e6 * eV_per_sp_to_MW]
-    # simply modify the energy by multiplying by the constant
-    energy_mult_filter = openmc.EnergyFunctionFilter(energy_bins, dose_coeffs)
-
-    cyl_mesh = openmc.CylindricalMesh(mesh_id=1)
-    cyl_mesh.r_grid = np.linspace(400, 1400, 100 + 1)
-    cyl_mesh.z_grid = np.linspace(-800.0, 800.0, 160 + 1)
-    cyl_mesh_filter = openmc.MeshFilter(cyl_mesh)
-
-    return (
-        cell_filter,
-        mat_filter,
-        fw_surf_filter,
-        neutron_filter,
-        photon_filter,
-        MW_mult_filter,
-        energy_mult_filter,
-        cyl_mesh_filter,
-    )
-
-
-def create_tallies(
-    cell_filter,
-    mat_filter,
-    fw_surf_filter,
-    neutron_filter,
-    photon_filter,
-    MW_mult_filter,
-    energy_mult_filter,
-    cyl_mesh_filter,
-):
-    """
-    Produces tallies for OpenMC scoring.
-
-    Parameters
-    ----------
-    cell_filter:        openmc.CellFilter
-        tally binned by cell
-    mat_filter:         openmc.MaterialFilter
-        tally binned by materials
-        # wait you should provide cells, not materials??!
-    fw_surf_filter:     openmc.CellFilter
-        tally binned by first wall surface
-    neutron_filter:     openmc.ParticleFilter
-        tally binned by neutron
-    photon_filter:      openmc.ParticleFilter
-        tally binned by photon
-    MW_mult_filter:     openmc.EnergyFunctionFilter
-        tally binned by energy so that it can be used to obtain the MW rate
-    energy_mult_filter: openmc.EnergyFunctionFilter
-        tally binned by energy so that it can calculate the spectrum
-    cyl_mesh_filter:    openmc.MeshFilter
-        tally binned spatially: the tokamak is cut into stacks of concentric rings
-    """
-    tally_tbr = openmc.Tally(name="TBR")
-    tally_tbr.scores = ["(n,Xt)"]
-
-    tally_heating = openmc.Tally(name="heating")  # eV per sp
-    tally_heating.scores = ["heating"]
-    tally_heating.filters = [mat_filter]
-
-    tally_heating_MW = openmc.Tally(name="MW heating")  # MW
-    tally_heating_MW.scores = ["heating"]
-    tally_heating_MW.filters = [mat_filter, MW_mult_filter]
-
-    tally_n_wall_load = openmc.Tally(name="neutron wall load")
-    tally_n_wall_load.scores = ["damage-energy"]
-    tally_n_wall_load.filters = [fw_surf_filter, neutron_filter]
-
-    tally_p_heat_flux = openmc.Tally(name="photon heat flux")
-    tally_p_heat_flux.scores = ["flux"]
-    tally_p_heat_flux.filters = [fw_surf_filter, photon_filter, energy_mult_filter]
-
-    tally_n_flux = openmc.Tally(name="neutron flux in every cell")
-    tally_n_flux.scores = ["flux"]
-    tally_n_flux.filters = [cell_filter, neutron_filter]
-
-    tally_n_flux_mesh = openmc.Tally(name="neutron flux in 2d mesh")
-    tally_n_flux_mesh.scores = ["flux"]
-    tally_n_flux_mesh.filters = [cyl_mesh_filter, neutron_filter]
-
-    tallies = openmc.Tallies(
-        [
-            tally_tbr,
-            tally_heating,
-            tally_heating_MW,
-            tally_n_wall_load,
-            tally_p_heat_flux,
-            # tally_n_flux, # skipped
-            # tally_n_flux_mesh, # skipped
-        ]
-    )
-    tallies.export_to_xml()
-
-
 class TBRHeatingSimulation:
     """
     Contains all the data necessary to run the openmc simulation of the tbr,
@@ -355,7 +183,11 @@ class TBRHeatingSimulation:
     """
 
     def __init__(
-        self, runtime_variables, operation_variable, breeder_materials, tokamak_geometry
+        self,
+        runtime_variables: OpenMCSimulationRuntimeParameters,
+        operation_variable: TokamakOperationParameters,
+        breeder_materials: BreederTypeParameters,
+        tokamak_geometry: TokamakGeometry,
     ):
         self.runtime_variables = runtime_variables
         self.operation_variable = operation_variable
@@ -366,9 +198,9 @@ class TBRHeatingSimulation:
         self.material_lib = None
         self.universe = None
 
-    def setup(self, plot_geometry=True):
+    def setup(self, plot_geometry: bool = True) -> None:
         """plot the geometry and saving them as .png files with hard-coded names."""
-        material_lib = create_materials(self.breeder_materials)
+        material_lib = create_and_export_materials(self.breeder_materials)
         self.material_lib = material_lib
         mg.check_geometry(self.tokamak_geometry)
         if self.runtime_variables.parametric_source:
@@ -401,22 +233,21 @@ class TBRHeatingSimulation:
         # by assuming 100% of reactor power comes from DT fusion
         self.src_rate = self.operation_variable.calculate_total_neutron_rate()
 
-        create_tallies(*filter_cells(self.cells, self.material_lib, self.src_rate))
+        create_tallies(self.cells, self.material_lib, self.src_rate)
 
         if plot_geometry:
             present.geometry_plotter(self.cells, self.tokamak_geometry)
-        return
 
-    def run(self, *args, **kwargs):
+    def run(self, *args, **kwargs) -> None:
         """Run the actual openmc simulation."""
         openmc.run(*args, **kwargs)
 
-    def get_result(self, print_summary: bool):
+    def get_result(self, print_summary: bool) -> present.OpenMCResult:
         """
         Create a summary object, attach it to self, and then return it.
         Parameters
         ----------
-        print_summary: bool
+        print_summary:
             print the summary to stdout or not.
         """
         assert (
@@ -444,33 +275,38 @@ if __name__ == "__main__":
         breeder_materials: BreederTypeParameters
         tokamak_geometry: TokamakGeometry
 
-    def get_preset_physical_properties(blanket_type: str):
+    def get_preset_physical_properties(blanket_type: mm.BlanketType):
         """
         Works as a switch-case for choosing the tokamak geometry and blankets for a given blanket type.
         The allowed list of blanket types are specified in mm.BlanketType.
         Currently, the blanket types with pre-populated data in this function are:
             {'wcll', 'dcll', 'hcpb'}
         """
+        if not isinstance(blanket_type, mm.BlanketType):
+            raise KeyError(f"{blanket_type} is not an accepted blanket type.")
         breeder_materials = BreederTypeParameters(
-            blanket_type=mm.BlanketType[blanket_type.upper()],
+            blanket_type=blanket_type,
             li_enrich_ao=60.0,  # atomic fraction percentage of lithium
         )
 
         # Geometry variables
 
         # Break down from here.
-        # Paper inboard build --- Nuclear analyses of solid breeder blanket options for DEMO: Status,challenges and outlook,
-        #                         Pereslavtsev, 2019
-        #                        40.0,      # TF Coil inner
-        #                        20.0,      # gap                  from figures
-        #                        6.0,       # VV steel wall
-        #                        48.0,      # VV
-        #                        6.0,       # VV steel wall
-        #                        2.0,       # gap                  from figures
-        #                        35.0,      # Back Supporting Structure
-        #                        6.0,       # Back Wall and Gas Collectors   Back wall = 3.0
-        #                        35.0,      # breeder zone
-        #                        2.2        # fw and armour
+        # Paper inboard build ---
+        # Nuclear analyses of solid breeder blanket options for DEMO:
+        # Status,challenges and outlook,
+        # Pereslavtsev, 2019
+        #
+        # 40.0,      # TF Coil inner
+        # 20.0,      # gap                  from figures
+        # 6.0,       # VV steel wall
+        # 48.0,      # VV
+        # 6.0,       # VV steel wall
+        # 2.0,       # gap                  from figures
+        # 35.0,      # Back Supporting Structure
+        # 6.0,       # Back Wall and Gas Collectors   Back wall = 3.0
+        # 35.0,      # breeder zone
+        # 2.2        # fw and armour
 
         plasma_shape = {
             "minor_r": 288.3,
@@ -478,7 +314,7 @@ if __name__ == "__main__":
             "elong": 1.65,
             "shaf_shift": 0.0,
         }  # The shafranov shift of the plasma
-        if breeder_materials.blanket_type is mm.BlanketType.WCLL:
+        if blanket_type is mm.BlanketType.WCLL:
             tokamak_geometry = TokamakGeometry(
                 **plasma_shape,
                 inb_fw_thick=2.7,
@@ -491,7 +327,7 @@ if __name__ == "__main__":
                 outb_mnfld_thick=42.9,
                 outb_vv_thick=60.0,
             )
-        elif breeder_materials.blanket_type is mm.BlanketType.DCLL:
+        elif blanket_type is mm.BlanketType.DCLL:
             tokamak_geometry = TokamakGeometry(
                 **plasma_shape,
                 inb_fw_thick=2.2,
@@ -504,7 +340,7 @@ if __name__ == "__main__":
                 outb_mnfld_thick=24.8,
                 outb_vv_thick=60.0,
             )
-        elif breeder_materials.blanket_type is mm.BlanketType.HCPB:
+        elif blanket_type is mm.BlanketType.HCPB:
             # HCPB Design Report, 26/07/2019
             tokamak_geometry = TokamakGeometry(
                 **plasma_shape,
@@ -523,7 +359,7 @@ if __name__ == "__main__":
 
     # set up the variables to be used for the openmc simulation
 
-    tokamak_properties = get_preset_physical_properties("wcll")
+    tokamak_properties = get_preset_physical_properties(mm.BlanketType.WCLL)
     # allowed blanket_type so far = {'wcll', 'dcll', 'hcpb'}
     breeder_materials = tokamak_properties.breeder_materials
     tokamak_geometry = tokamak_properties.tokamak_geometry

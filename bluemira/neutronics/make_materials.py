@@ -7,12 +7,13 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import Union
 
-import materials_definition as md
 import openmc
 from openmc import Material
 
+import bluemira.neutronics.materials_definition as md
 
-def duplicate_mat_as(mat_to_clone, new_id, new_name):
+
+def duplicate_mat_as(mat_to_clone, new_id, new_name) -> Material:
     """Clones and renames an OpenMC material"""
     new_mat = mat_to_clone.clone()
     new_mat.id = new_id
@@ -232,6 +233,12 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     )
 
 
+class BlanketType(Enum):
+    DCLL = auto()
+    HCPB = auto()
+    WCLL = auto()
+
+
 @dataclass
 class MaterialsLibrary:
     """A dictionary of materials according to the type of blanket used"""
@@ -253,7 +260,9 @@ class MaterialsLibrary:
     div_sf_mat: Material
 
     @classmethod
-    def create_from_blanket_type(cls, blanket_type: BlanketType, li_enrich_ao: float):
+    def create_from_blanket_type(
+        cls, blanket_type: BlanketType, li_enrich_ao: float
+    ) -> MaterialsLibrary:
         if blanket_type is BlanketType.DCLL:
             base_materials = _make_dcll_mats(li_enrich_ao)
         elif blanket_type is BlanketType.HCPB:
@@ -291,16 +300,3 @@ class MaterialsLibrary:
         """Exports material defintions to xml"""
         material_list = openmc.Materials(dataclasses.asdict(self).values())
         return material_list.export_to_xml(path)
-
-
-class BlanketType(Enum):
-    DCLL = auto()
-    HCPB = auto()
-    WCLL = auto()
-
-
-# class BlanketType(BlanketTypeRaw):
-# @classmethod
-# def get_allowed_types(cls):
-#     """Give an alias to _member_map_ so that the enumerated members are more explicit and easier to extract."""
-#     return cls._member_map_

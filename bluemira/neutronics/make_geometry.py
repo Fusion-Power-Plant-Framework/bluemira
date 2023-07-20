@@ -1,23 +1,25 @@
 """Make the entire tokamak from scratch using user-provided variables."""
 import copy
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import openmc
 from numpy import pi
 
+import bluemira.neutronics.make_materials as mm
 import bluemira.neutronics.result_presentation as present
 import bluemira.neutronics.volume_functions as vf
 from bluemira.base.constants import raw_uc
 from bluemira.neutronics.params import TokamakGeometry
 
-cells = {}
+cells = {}  # is actually a dictionary of cells and cell lists
 surfaces = {}
 
 # Setting the thickness of divertor below the first wall
 div_clearance = 49.0
 
 
-def check_geometry(tokamak_geometry):
+def check_geometry(tokamak_geometry: TokamakGeometry) -> None:
     """Some basic geometry checks"""
 
     if tokamak_geometry.elong < 1.0:
@@ -153,7 +155,7 @@ def elongate(points, adjust_elong):
     return points
 
 
-def stretch_r(points, tokamak_geometry: TokamakGeometry, stretch_r_val):
+def stretch_r(points, tokamak_geometry: TokamakGeometry, stretch_r_val) -> np.ndarray:
     """Moves the points in the r dimension away from the major radius by extra_r_cm"""
 
     tokamak_geometry.major_r
@@ -184,12 +186,12 @@ def get_min_max_z_r_of_points(points):
 
 
 def create_inboard_layer(
-    prefix_for_layer,
-    prefix_for_layer_behind,
-    layer_points,
-    num_inboard_points,
-    layer_name,
-    material_lib,
+    prefix_for_layer: str,
+    prefix_for_layer_behind: str,
+    layer_points: np.ndarray,
+    num_inboard_points: int,
+    layer_name: str,
+    material_lib: mm.MaterialsLibrary,
 ):
     """Creates a layer of inboard cells for scoring"""
 
@@ -283,12 +285,12 @@ def create_inboard_layer(
 
 
 def create_outboard_layer(
-    prefix_for_layer,
-    prefix_for_layer_behind,
-    layer_points,
-    num_outboard_points,
-    layer_name,
-    material_lib,
+    prefix_for_layer: str,
+    prefix_for_layer_behind: str,
+    layer_points: np.ndarray,
+    num_outboard_points: int,
+    layer_name: str,
+    material_lib: mm.MaterialsLibrary,
 ):
     """Creates a layer of outboard cells for scoring"""
 
@@ -371,7 +373,12 @@ def create_outboard_layer(
     return
 
 
-def create_divertor(div_points, outer_points, inner_points, material_lib):
+def create_divertor(
+    div_points: np.ndarray,
+    outer_points: np.ndarray,
+    inner_points: np.ndarray,
+    material_lib: mm.MaterialsLibrary,
+):
     """This creates the divertors cells
     outer_points gives the bottom of the VV
     """
@@ -642,11 +649,11 @@ def create_plasma_chamber():
 
 def make_geometry(
     tokamak_geometry: TokamakGeometry,
-    fw_points,
-    div_points,
-    num_inboard_points,
-    material_lib,
-):
+    fw_points: np.ndarray,
+    div_points: np.ndarray,
+    num_inboard_points: int,
+    material_lib: mm.MaterialsLibrary,
+) -> Tuple[Dict[str, Union[List[openmc.Cell], openmc.Cell]], openmc.Universe]:
     """
     Create a dictionary of cells
     Parameters
@@ -1059,7 +1066,9 @@ def make_geometry(
     return cells, universe
 
 
-def load_fw_points(tokamak_geometry: TokamakGeometry, save_plots: bool = True):
+def load_fw_points(
+    tokamak_geometry: TokamakGeometry, save_plots: bool = True
+) -> Tuple[float, float, int]:
     """
     Load given first wall points,
         scale them according to the given major and minor radii,

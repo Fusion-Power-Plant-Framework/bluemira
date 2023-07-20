@@ -29,7 +29,7 @@ class TokamakOperationParameters:
 
     reactor_power_MW: float  # MW
 
-    def calculate_total_neutron_rate(self):
+    def calculate_total_neutron_rate(self) -> float:
         """Convert the reactor power to neutron rate
         (number of neutrons produced per second)
         """

@@ -1,16 +1,17 @@
-from typing import List, Tuple, Union
+from typing import Any, Callable, Dict, List, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import openmc
-import pandas as pd
 
 from bluemira.base.constants import raw_uc
 from bluemira.neutronics.constants import S_TO_YEAR, DPACoefficients
 from bluemira.neutronics.params import TokamakGeometry
 
 
-def print_df_decorator_with_title_string(title_string):
+def print_df_decorator_with_title_string(
+    title_string,
+) -> Callable[[Callable[[bool], Any]], Callable[[bool], Any]]:
     """
     Decorator for methods inside OpenMCResult,
         so that the method has an added option to print the dataframe before exiting.
@@ -19,11 +20,11 @@ def print_df_decorator_with_title_string(title_string):
     title_string: bool, default=True
     """
 
-    def print_dataframe_decorator(method):
-        def dataframe_method_wrapper(self, print_df: bool = True):
+    def print_dataframe_decorator(method) -> Callable[[bool], Any]:
+        def dataframe_method_wrapper(self, print_df: bool = True) -> Any:
             method_output = method(self)
             if print_df:
-                if isinstance(method_output, pd.DataFrame):
+                if hasattr(method_output, "to_string"):
                     output_str = method_output.to_string()
                 else:
                     output_str = str(method_output)
@@ -115,11 +116,11 @@ class OpenMCResult:
         # Loads up the output file from the simulation
         self.statepoint = openmc.StatePoint(self.statepoint_file)
 
-    def _load_dataframe_from_statepoint(self, tally_name: str) -> pd.DataFrame:
+    def _load_dataframe_from_statepoint(self, tally_name: str):  # -> pd.DataFrame
         return self.statepoint.get_tally(name=tally_name).get_pandas_dataframe()
 
     @print_df_decorator_with_title_string("TBR")
-    def load_tbr(self) -> Tuple[pd.Series, pd.Series]:
+    def load_tbr(self):  # -> Tuple[pd.Series, pd.Series]
         """load the TBR value and uncertainty"""
         self.tbr_df = self._load_dataframe_from_statepoint("TBR")
         self.tbr = "{:.2f}".format(self.tbr_df["mean"].sum())
@@ -127,7 +128,7 @@ class OpenMCResult:
         return self.tbr, self.tbr_e
 
     @print_df_decorator_with_title_string("Heating (MW)")
-    def load_heating_in_MW(self) -> pd.DataFrame:
+    def load_heating_in_MW(self):  # -> pd.DataFrame
         """load the heating (sorted by material) dataframe"""
         heating_df = self._load_dataframe_from_statepoint("MW heating")
         # additional columns
@@ -151,7 +152,7 @@ class OpenMCResult:
         return self.heating_df
 
     @print_df_decorator_with_title_string("Neutron Wall Load (eV)")
-    def load_neutron_wall_loading(self) -> pd.DataFrame:
+    def load_neutron_wall_loading(self):  # -> pd.DataFrame
         """load the neutron wall load dataframe"""
         dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
         n_wl_df = self._load_dataframe_from_statepoint("neutron wall load")
@@ -193,7 +194,7 @@ class OpenMCResult:
         return self.neutron_wall_load
 
     @print_df_decorator_with_title_string("Photon Heat Flux MW m-2")
-    def load_photon_heat_flux(self) -> pd.DataFrame:
+    def load_photon_heat_flux(self):  # -> pd.DataFrame
         """load the photon heaat flux dataframe"""
         p_hf_df = self._load_dataframe_from_statepoint("photon heat flux")
         # additional columns
@@ -245,6 +246,7 @@ class OpenMCResult:
 
     def summarize(self, print_dfs):
         """Run all of the results formatting method available in this class."""
+        # change to logging here?
         self.load_tbr(print_dfs)
         self.load_heating_in_MW(print_dfs)
         self.load_neutron_wall_loading(print_dfs)
@@ -252,7 +254,7 @@ class OpenMCResult:
 
 
 def geometry_plotter(
-    cells_and_cell_lists: Union[List[openmc.Cell], openmc.Cell],
+    cells_and_cell_lists: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
     tokamak_geometry: TokamakGeometry,
 ) -> None:
     """
@@ -264,6 +266,12 @@ def geometry_plotter(
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
     tokamak_geometry : TokamakGeometry
+
+    Returns
+    -------
+    Saves the plots to png files.
+    Saves the plots to xml files.
+
     """
     # Assigning colours for plots
     cell_color_assignment = {

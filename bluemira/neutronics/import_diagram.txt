@@ -1,17 +1,22 @@
 quick_tbr_heating
         | <--------------------- params.py
-        |                        |  |  |
-        | <-- constants.py       |  |  |
-        |           |            |  |  |
-        |           V            V  |  |
-        | <-- result_presentation.py|  |
-        |           |               |  |
-        |           V               V  |
-        | <-- -------make_geometry.py  |
-        |                              V
-        | <------------------------ volume_functions.py
+        |                        |   |   |
+        | <-- constants.py       |   |   |
+        |            |           |   |   |
+        |            V           V   |   |
+        | <-- result_presentation.py |   |
+        |            |               |   |
+        |            V               V   |
+        | <----------[make_geometry.py]  |
+        |                            ^   |
+        |                            |   V
+        | <------------------------[volume_functions.py]
         |
         | <-- make_materials.py <-- materials_definition.py
-        |
+        |                               |
+        |                               V
+        | <------------------------ tallying.py
         V
 < end of program >
+
+[square bracket] = should probably be omitted in the release
