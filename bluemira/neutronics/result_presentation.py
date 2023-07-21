@@ -97,20 +97,13 @@ class OpenMCResult:
         self.universe = universe
         self.src_rate = src_rate
         self.statepoint_file = statepoint_file
-        # Creating cell name dictionary to allow easy mapping to dataframe
+        # Create cell and material name dictionaries to allow easy mapping to dataframe
         self.cell_names = {}
-        for cell_id in self.universe.cells:
-            self.cell_names[cell_id] = self.universe.cells[cell_id].name
-
-        # Creating material dictionary to allow easy mapping to dataframe
         self.mat_names = {}
-        for cell_id in self.universe.cells:
-            try:
-                self.mat_names[
-                    self.universe.cells[cell_id].fill.id
-                ] = self.universe.cells[cell_id].fill.name
-            except:
-                pass
+        for cell_id, _cell in self.universe.cells.items():
+            self.cell_names[cell_id] = _cell.name
+            if _cell.fill:  # if this cell is not a void
+                self.mat_names[cell_id] = _cell.fill.name
 
         # Creating cell volume dictionary to allow easy mapping to dataframe
         self.cell_vols = {}

@@ -6,8 +6,11 @@ TODO:
         - why parametric source mode=2: need to dig open the PPS_OpenMC.so
 []Unit: cgs -> metric
     [ ]Check other files (other than quick_tbr_heating.py) as well
-[]Replace parametric-plasma-source/parametric_plasma_source/fortran_api/* and src/ vs pps_api
-    - `pip install git+https://github.com/open-radiation-source/parametric-plasma-source.git@main`
+[]Replace the following:
+    - parametric-plasma-source/parametric_plasma_source/fortran_api/*src/
+    - parametric-plasma-source/parametric_plasma_source/pps_api
+    - `pip install
+        git+https://github.com/open-radiation-source/parametric-plasma-source.git@main`
 [ ]Integration into our logging system (print should go through bluemira_print etc.)
 [ ]Some parameters are locked up inside functions:
     [ ]create_parametric_source
@@ -249,9 +252,10 @@ class TBRHeatingSimulation:
         print_summary:
             print the summary to stdout or not.
         """
-        assert (
-            self.universe is not None
-        ), "The self.universe variable must have been first populated by self.run()!"
+        if self.universe is None:
+            raise RuntimeError(
+                "The self.universe variable must first be populated by self.run()!"
+            )
         self.result = present.OpenMCResult(self.universe, self.src_rate)
         self.result.summarize(print_summary)
         return self.result
