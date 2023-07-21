@@ -1,3 +1,4 @@
+"""Create specific materials that will be imported by other modules."""
 from openmc import Material
 
 # Elements
@@ -46,6 +47,7 @@ Be12Ti_mat.set_density("g/cm3", 2.25)
 
 # Lithium-containing materials
 def make_PbLi_mat(li_enrich_ao) -> Material:
+    """Make PbLi according to the enrichment fraction inputted."""
     PbLi_mat = Material(name="PbLi")
     PbLi_mat.add_element("Pb", 0.83, percent_type="ao")
     PbLi_mat.add_element(
@@ -80,7 +82,7 @@ def make_Li4SiO4_mat(li_enrich_ao) -> Material:
 
 
 def make_Li2TiO3_mat(li_enrich_ao) -> Material:
-    """Li2TiO3"""
+    """Make Li2TiO3 according to the enrichment fraction inputted."""
     Li2TiO3_mat = Material(name="lithium_titanate")
     Li2TiO3_mat.add_element(
         "Li",
@@ -117,5 +119,5 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> Material:
         ],  # molar combination adjusted to atom fractions
         percent_type="ao",
     )  # combination fraction type is by atom fraction
-    KALOS_ACB_mat.set_density("g/cm3", 2.52 * 0.642)  #  applying packing fraction
+    KALOS_ACB_mat.set_density("g/cm3", 2.52 * 0.642)  # applying packing fraction
     return KALOS_ACB_mat

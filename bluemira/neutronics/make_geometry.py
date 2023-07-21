@@ -21,7 +21,6 @@ div_clearance = 49.0
 
 def check_geometry(tokamak_geometry: TokamakGeometry) -> None:
     """Some basic geometry checks"""
-
     if tokamak_geometry.elong < 1.0:
         raise ValueError("Elongation must be at least 1.0")
 
@@ -42,20 +41,17 @@ def check_geometry(tokamak_geometry: TokamakGeometry) -> None:
         )
 
 
-def normalizeVec(bisX, bisY):
+def normalize_vec(bis_x, bis_y):
     """Normalises a vector"""
+    length = (bis_x**2 + bis_y**2) ** 0.5
 
-    length = (bisX**2 + bisY**2) ** 0.5
-
-    return bisX / length, bisY / length
+    return bis_x / length, bis_y / length
 
 
 def get_cone_eqn_from_two_points(p1, p2):
     """Gets the equation of the OpenMC cone surface from two points
-    Assumes x0 = 0 and y0 = 0"""
-
-    # print("p1, p2:", p1, p2)
-
+    Assumes x0 = 0 and y0 = 0
+    """
     if p2[2] > p1[2]:
         r1 = p1[0]
         z1 = p1[2]
@@ -67,62 +63,57 @@ def get_cone_eqn_from_two_points(p1, p2):
         r2 = p1[0]
         z2 = p1[2]
 
-    # print("r1, r2, z1, z2:", r1, r2, z1, z2)
-
     a = r1**2 - r2**2
     b = 2 * (z1 * r2**2 - z2 * r1**2)
     c = r1**2 * z2**2 - r2**2 * z1**2
 
-    # print("a, b, c:", a, b, c)
-
     z0 = (-b + (b**2 - 4 * a * c) ** 0.5) / (2 * a)
     r02 = r1**2 / (z1 - z0) ** 2
-
-    # print("z0, r02:", z0, r02)
 
     return z0, r02
 
 
-def makeOffsetPoly(oldX, oldY, offset, outer_ccw):
+def make_offset_poly(old_x, old_y, offset, outer_ccw):
     """Makes a larger polygon with the same angle from a specified offset
-    Not mathematically robust for all polygons"""
+    Not mathematically robust for all polygons
+    """
+    num_points = len(old_x)
 
-    num_points = len(oldX)
-
-    newX = []
-    newY = []
+    new_x = []
+    new_y = []
 
     for curr in range(num_points):
         prev = (curr + num_points - 1) % num_points
         next = (curr + 1) % num_points
 
-        vnX = oldX[next] - oldX[curr]
-        vnY = oldY[next] - oldY[curr]
-        vnnX, vnnY = normalizeVec(vnX, vnY)
-        nnnX = vnnY
-        nnnY = -vnnX
+        vn_x = old_x[next] - old_x[curr]
+        vn_y = old_y[next] - old_y[curr]
+        vnn_x, vnn_y = normalize_vec(vn_x, vn_y)
+        nnn_x = vnn_y
+        nnn_y = -vnn_x
 
-        vpX = oldX[curr] - oldX[prev]
-        vpY = oldY[curr] - oldY[prev]
-        vpnX, vpnY = normalizeVec(vpX, vpY)
-        npnX = vpnY * outer_ccw
-        npnY = -vpnX * outer_ccw
+        vp_x = old_x[curr] - old_x[prev]
+        vp_y = old_y[curr] - old_y[prev]
+        vpn_x, vpn_y = normalize_vec(vp_x, vp_y)
+        npn_x = vpn_y * outer_ccw
+        npn_y = -vpn_x * outer_ccw
 
-        bisX = (nnnX + npnX) * outer_ccw
-        bisY = (nnnY + npnY) * outer_ccw
+        bis_x = (nnn_x + npn_x) * outer_ccw
+        bis_y = (nnn_y + npn_y) * outer_ccw
 
-        bisnX, bisnY = normalizeVec(bisX, bisY)
-        bislen = offset / np.sqrt((1 + nnnX * npnX + nnnY * npnY) / 2)
+        bisn_x, bisn_y = normalize_vec(bis_x, bis_y)
+        bislen = offset / np.sqrt((1 + nnn_x * npn_x + nnn_y * npn_y) / 2)
 
-        newX.append(oldX[curr] + bislen * bisnX)
-        newY.append(oldY[curr] + bislen * bisnY)
+        new_x.append(old_x[curr] + bislen * bisn_x)
+        new_y.append(old_y[curr] + bislen * bisn_y)
 
-    return (newX, newY)
+    return (new_x, new_y)
 
 
 def offset_points(points, offset_cm):
-    """Calls makeOffsetPoly with points in the format it expects to get the points of an offset polygon"""
-
+    """Calls make_offset_poly with points in the format it expects
+    to get the points of an offset polygon
+    """
     old_rs = []
     old_zs = []
 
@@ -130,7 +121,7 @@ def offset_points(points, offset_cm):
         old_rs.append(point[0])
         old_zs.append(point[2])
 
-    new_rs, new_zs = makeOffsetPoly(old_rs, old_zs, offset_cm, 1)
+    new_rs, new_zs = make_offset_poly(old_rs, old_zs, offset_cm, 1)
 
     layer_points = []
     for i, point in enumerate(points):
@@ -141,7 +132,6 @@ def offset_points(points, offset_cm):
 
 def shift_points(points, shift_cm):
     """Moves all radii of points outwards by shift_cm"""
-
     points[:, 0] += shift_cm
 
     return points
@@ -149,7 +139,6 @@ def shift_points(points, shift_cm):
 
 def elongate(points, adjust_elong):
     """Adjusts the elongation of the points"""
-
     points[:, 2] *= adjust_elong
 
     return points
@@ -157,7 +146,6 @@ def elongate(points, adjust_elong):
 
 def stretch_r(points, tokamak_geometry: TokamakGeometry, stretch_r_val) -> np.ndarray:
     """Moves the points in the r dimension away from the major radius by extra_r_cm"""
-
     tokamak_geometry.major_r
 
     points[:, 0] = (
@@ -169,7 +157,6 @@ def stretch_r(points, tokamak_geometry: TokamakGeometry, stretch_r_val) -> np.nd
 
 def get_min_r_of_points(points):
     """Adjusts the elongation of the points"""
-
     min_r = np.amin(points, axis=0)[0]
 
     return min_r
@@ -177,7 +164,6 @@ def get_min_r_of_points(points):
 
 def get_min_max_z_r_of_points(points):
     """Adjusts the elongation of the points"""
-
     min_z = np.amin(points, axis=0)[2]
     max_z = np.amax(points, axis=0)[2]
     max_r = np.amax(points, axis=0)[0]
@@ -194,7 +180,6 @@ def create_inboard_layer(
     material_lib: mm.MaterialsLibrary,
 ):
     """Creates a layer of inboard cells for scoring"""
-
     cells[prefix_for_layer + "_cells"] = []
     surfaces[prefix_for_layer + "_surfs"] = {}
     surfaces[prefix_for_layer + "_surfs"]["cones"] = []  # runs bottom to top
@@ -293,7 +278,6 @@ def create_outboard_layer(
     material_lib: mm.MaterialsLibrary,
 ):
     """Creates a layer of outboard cells for scoring"""
-
     cells[prefix_for_layer + "_cells"] = []
     surfaces[prefix_for_layer + "_surfs"] = {}
     surfaces[prefix_for_layer + "_surfs"]["cones"] = []  # runs bottom to top
@@ -379,7 +363,7 @@ def create_divertor(
     inner_points: np.ndarray,
     material_lib: mm.MaterialsLibrary,
 ):
-    """This creates the divertors cells
+    """Creates the divertors cells
     outer_points gives the bottom of the VV
     """
     div_fw_thick = 2.5  # Divertor first wall thickness
@@ -611,7 +595,6 @@ def create_divertor(
 
 def create_plasma_chamber():
     """Creating the cells that live inside the first wall"""
-
     cells["plasma_inner1"] = openmc.Cell(
         region=-surfaces["meeting_r_cyl"] & +surfaces["divertor_surfs"]["top_surface"],
         name="Plasma inner 1",
@@ -689,9 +672,11 @@ def make_geometry(
     print("fw_points", fw_points)
     print("div_points", div_points)
 
-    minor_r = tokamak_geometry.minor_r
-    major_r = tokamak_geometry.major_r
-    elong = tokamak_geometry.elong
+    # minor_r = tokamak_geometry.minor_r
+    # major_r = tokamak_geometry.major_r
+    # elong = tokamak_geometry.elong
+    # inner_plasma_r = major_r - minor_r
+    # outer_plasma_r = major_r + minor_r
 
     inb_fw_thick = tokamak_geometry.inb_fw_thick
     inb_bz_thick = tokamak_geometry.inb_bz_thick
@@ -704,9 +689,6 @@ def make_geometry(
     outb_mnfld_thick = tokamak_geometry.outb_mnfld_thick
     outb_vv_thick = tokamak_geometry.outb_vv_thick
 
-    inner_plasma_r = major_r - minor_r
-    outer_plasma_r = major_r + minor_r
-
     # This is a thin geometry layer to score peak surface values
     fw_surf_score_depth = 0.01
 
@@ -717,7 +699,7 @@ def make_geometry(
     print("Number of outboard points", num_outboard_points, "\n")
 
     #########################################
-    ### Inboard surfaces behind breeder zone
+    # Inboard surfaces behind breeder zone
     #########################################
 
     # Getting layer points
@@ -790,11 +772,11 @@ def make_geometry(
         x0=0.0, y0=0.0, z0=div_o_z0, r2=div_o_r2
     )
 
-    #############################################################################################
-    #############################################################################################
-    ### Making inboard vv, manifold, breeder zone, and first wall
-    #############################################################################################
-    #############################################################################################
+    #############################################################
+    #############################################################
+    # Making inboard vv, manifold, breeder zone, and first wall
+    #############################################################
+    #############################################################
 
     # Meeting point between inboard and outboard
     surfaces["meeting_r_cyl"] = openmc.ZCylinder(r=fw_points[-num_inboard_points][0])
@@ -818,14 +800,14 @@ def make_geometry(
         surfaces["inner_surfs"]["cones"].append(cone_surface)
 
     ##################################
-    ### Making inboard vacuum vessel
+    # Making inboard vacuum vessel
 
     create_inboard_layer(
         "inb_vv", "inner", inb_vv_points, num_inboard_points, "Inboard VV", material_lib
     )
 
     ##################################
-    ### Making inboard manifold
+    # Making inboard manifold
 
     create_inboard_layer(
         "inb_mani",
@@ -837,7 +819,7 @@ def make_geometry(
     )
 
     ##################################
-    ### Making inboard breeder zone
+    # Making inboard breeder zone
 
     create_inboard_layer(
         "inb_bz",
@@ -849,14 +831,14 @@ def make_geometry(
     )
 
     ##################################
-    ### Making inboard first wall
+    # Making inboard first wall
 
     create_inboard_layer(
         "inb_fw", "inb_bz", fw_points, num_inboard_points, "Inboard FW", material_lib
     )
 
     ##################################
-    ### Making inboard scoring pionts
+    # Making inboard scoring pionts
 
     create_inboard_layer(
         "inb_sf",
@@ -867,11 +849,11 @@ def make_geometry(
         material_lib,
     )
 
-    #############################################################################################
-    #############################################################################################
-    ### Making outboard vv, manifold, breeder zone, and first wall
-    #############################################################################################
-    #############################################################################################
+    ##############################################################
+    ##############################################################
+    # Making outboard vv, manifold, breeder zone, and first wall
+    ##############################################################
+    ##############################################################
 
     # Generating outboard cone surfaces (back of vv)
     surfaces["outer_surfs"] = {}
@@ -886,7 +868,7 @@ def make_geometry(
         surfaces["outer_surfs"]["cones"].append(cone_surface)
 
     ##################################
-    ### Making outboard vv
+    # Making outboard vv
 
     create_outboard_layer(
         "outb_vv",
@@ -898,7 +880,7 @@ def make_geometry(
     )
 
     ##################################
-    ### Making outboard manifold
+    # Making outboard manifold
 
     create_outboard_layer(
         "outb_mani",
@@ -910,7 +892,7 @@ def make_geometry(
     )
 
     ##################################
-    ### Making outboard breeder zone
+    # Making outboard breeder zone
 
     create_outboard_layer(
         "outb_bz",
@@ -922,14 +904,14 @@ def make_geometry(
     )
 
     ##################################
-    ### Making outboard first wall
+    # Making outboard first wall
 
     create_outboard_layer(
         "outb_fw", "outb_bz", fw_points, num_outboard_points, "Outboard FW", material_lib
     )
 
     #######################################
-    ### Making outboard first wall surface
+    # Making outboard first wall surface
 
     create_outboard_layer(
         "outb_sf",
@@ -941,7 +923,7 @@ def make_geometry(
     )
 
     ######################
-    ### Outboard surfaces
+    # Outboard surfaces
     ######################
 
     # Currently it is not possible to tally on boundary_type='vacuum' surfaces
@@ -956,10 +938,10 @@ def make_geometry(
     )
 
     ######################
-    ### Cells
+    # Cells
     ######################
 
-    ### Inboard cells
+    # Inboard cells
     cells["bore_cell"] = openmc.Cell(
         region=-surfaces["bore_surface"] & -surfaces["inb_top"] & +surfaces["inb_bot"],
         name="Inner bore",
@@ -973,13 +955,13 @@ def make_geometry(
         fill=material_lib.tf_coil_mat,
     )
 
-    ### Divertor
+    # Divertor
     create_divertor(div_points, outer_points, inner_points, material_lib)
 
-    ### Plasma chamber
+    # Plasma chamber
     create_plasma_chamber()
 
-    ### Container cells
+    # Container cells
     cells["outer_vessel_cell"] = openmc.Cell(
         region=-surfaces["outer_surface_cyl"]
         & -surfaces["inb_top"]
@@ -1027,7 +1009,7 @@ def make_geometry(
     )
 
     #################################################
-    ### Creating Universe
+    # Creating Universe
     #################################################
 
     # Note that the order in the universe list doesn't define the order in the output,
@@ -1118,12 +1100,12 @@ def load_fw_points(
     -----
     All units for the diagram above are in cgs
     """
-    ######## get data ########
+    # Get data:
     # Get the geometry from existing .npy files, each is an array of
     # 3D coordinates of points sampled along the divertor first wall outline.
     full_blanket_2d_outline = np.load("blanket_face.npy")[0]
     divertor_2d_outline = np.load("divertor_face.npy")[0]
-    ######## <magic numbers and magic function> ########
+    # <magic numbers and magic function>
     # that fits only these npy model.
     # The plasma geometry
     ex_pts_maj_r = 900.0
@@ -1161,25 +1143,25 @@ def load_fw_points(
         ds_ibf[-5][0] = ds_ibf[-5][0] - 25.0
         return ds_ibf
 
-    ######## </magic numbers and magic function> ########
+    # </magic numbers and magic function>
     # we will get rid of this whole function later on anyways.
 
-    ######## select the part of the outline facing the plasma ########
-    ibf = inner_blanket_face = full_blanket_2d_outline[52:-2]
+    # select the part of the outline facing the plasma
+    ibf = inner_blanket_face = full_blanket_2d_outline[52:-2]  # noqa: F841
 
-    ######## (down)sample existing data ########
+    # (down)sample existing data
     # blanket
     downsampled_ibf = raw_uc(ibf[selected_fw_samples], "m", "cm")
     downsampled_ibf = _fix_downsampled_ibf(downsampled_ibf)
     # divertor
     downsampled_divf = raw_uc(divertor_2d_outline[selected_div_samples], "m", "cm")
 
-    ######## Create the full plasma-facing outline by concatenating existing var ########
+    # Create the full plasma-facing outline by concatenating existing var
     old_points = np.concatenate((downsampled_ibf, downsampled_divf), axis=0)
 
     print("FW points before adjustment\n", old_points)
 
-    ######## rescale data to fit new geometry. ########
+    # rescale data to fit new geometry.
     # Expand point outwards according to new major radius
     shift_cm = tokamak_geometry.major_r - ex_pts_maj_r
     new_points = shift_points(old_points, shift_cm)
@@ -1191,15 +1173,15 @@ def load_fw_points(
     new_points = elongate(new_points, elong_w_minor_r / ex_pts_elong)
     new_points = stretch_r(new_points, tokamak_geometry, stretch_r_val)
 
-    ######## split 'new_points' into new_downsampled_* variables ########
+    # split 'new_points' into new_downsampled_* variables
     new_downsampled_fw = new_points[:-num_points_belongong_to_divertor]
     new_downsampled_div = np.concatenate(
         (new_points[-(num_points_belongong_to_divertor + 1) :], new_points[:1]), axis=0
     )
 
-    ######## plotting. ########
+    # plotting.
     if save_plots:
-        ######## create parametric variables for plotting smoother lines ########
+        # create parametric variables for plotting smoother lines
         # https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf pg. 239 # noqa: W505
         # R = R0 + a cos(θ + δ sin θ)
         # where a = minor radius

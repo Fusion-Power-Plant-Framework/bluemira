@@ -1,4 +1,7 @@
-from typing import Any, Callable, Dict, List, Tuple, Union
+"""Functions to present the results prettily
+(Including both printed/logged texts and images)
+"""
+from typing import Any, Callable, Dict, List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -121,7 +124,7 @@ class OpenMCResult:
 
     @print_df_decorator_with_title_string("TBR")
     def load_tbr(self):  # -> Tuple[pd.Series, pd.Series]
-        """load the TBR value and uncertainty"""
+        """Load the TBR value and uncertainty."""
         self.tbr_df = self._load_dataframe_from_statepoint("TBR")
         self.tbr = "{:.2f}".format(self.tbr_df["mean"].sum())
         self.tbr_e = "{:.2f}".format(self.tbr_df["std. dev."].sum())
@@ -129,7 +132,7 @@ class OpenMCResult:
 
     @print_df_decorator_with_title_string("Heating (MW)")
     def load_heating_in_MW(self):  # -> pd.DataFrame
-        """load the heating (sorted by material) dataframe"""
+        """Load the heating (sorted by material) dataframe"""
         heating_df = self._load_dataframe_from_statepoint("MW heating")
         # additional columns
         heating_df["material_name"] = heating_df["material"].map(self.mat_names)
@@ -153,7 +156,7 @@ class OpenMCResult:
 
     @print_df_decorator_with_title_string("Neutron Wall Load (eV)")
     def load_neutron_wall_loading(self):  # -> pd.DataFrame
-        """load the neutron wall load dataframe"""
+        """Load the neutron wall load dataframe"""
         dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
         n_wl_df = self._load_dataframe_from_statepoint("neutron wall load")
         # additional columns
@@ -195,7 +198,7 @@ class OpenMCResult:
 
     @print_df_decorator_with_title_string("Photon Heat Flux MW m-2")
     def load_photon_heat_flux(self):  # -> pd.DataFrame
-        """load the photon heaat flux dataframe"""
+        """Load the photon heaat flux dataframe"""
         p_hf_df = self._load_dataframe_from_statepoint("photon heat flux")
         # additional columns
         p_hf_df["cell_name"] = p_hf_df["cell"].map(self.cell_names)

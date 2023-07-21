@@ -14,7 +14,6 @@ TODO:
 ____
 [ ]Tests?
 """
-import os
 from dataclasses import dataclass
 from typing import Literal
 
@@ -168,7 +167,6 @@ def create_and_export_materials(
     breeder_materials:
         dataclass containing attributes: 'blanket_type', 'li_enrich_ao'
     """
-
     material_lib = mm.MaterialsLibrary.create_from_blanket_type(
         breeder_materials.blanket_type, breeder_materials.li_enrich_ao
     )
@@ -199,7 +197,7 @@ class TBRHeatingSimulation:
         self.universe = None
 
     def setup(self, plot_geometry: bool = True) -> None:
-        """plot the geometry and saving them as .png files with hard-coded names."""
+        """Plot the geometry and saving them as .png files with hard-coded names."""
         material_lib = create_and_export_materials(self.breeder_materials)
         self.material_lib = material_lib
         mg.check_geometry(self.tokamak_geometry)
@@ -245,6 +243,7 @@ class TBRHeatingSimulation:
     def get_result(self, print_summary: bool) -> present.OpenMCResult:
         """
         Create a summary object, attach it to self, and then return it.
+
         Parameters
         ----------
         print_summary:
@@ -258,8 +257,8 @@ class TBRHeatingSimulation:
         return self.result
 
     def calculate_volume_stochastically(self):
-        """Using openmc's built-in stochastic volume calculation function to calculate
-        the volume
+        """
+        Using openmc's built-in stochastic volume calculation function to get the volume.
         """
         stochastic_volume_calculation(
             self.tokamak_geometry,
@@ -272,12 +271,18 @@ if __name__ == "__main__":
 
     @dataclass
     class SimulatedBluemiraOutputVariables:
+        """
+        A quick dataclass consisting of two sub-dataclasses,
+        both of which shares the commonality of being reactor-design specific.
+        """
+
         breeder_materials: BreederTypeParameters
         tokamak_geometry: TokamakGeometry
 
     def get_preset_physical_properties(blanket_type: mm.BlanketType):
         """
-        Works as a switch-case for choosing the tokamak geometry and blankets for a given blanket type.
+        Works as a switch-case for choosing the tokamak geometry
+            and blankets for a given blanket type.
         The allowed list of blanket types are specified in mm.BlanketType.
         Currently, the blanket types with pre-populated data in this function are:
             {'wcll', 'dcll', 'hcpb'}
@@ -385,4 +390,5 @@ if __name__ == "__main__":
     tbr_heat_sim.run()
     # get the TBR, component heating, first wall dpa, and photon heat flux
     tbr_heat_sim.get_result(True)
-    # tbr_heat_sim.calculate_volume_stochastically() # don't do this because it takes a long time.
+    # tbr_heat_sim.calculate_volume_stochastically()
+    # # don't do this because it takes a long time.

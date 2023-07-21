@@ -1,3 +1,4 @@
+"""Functions related to the calculation of volumes of openmc cells."""
 import os
 from typing import List, Union
 
@@ -9,8 +10,8 @@ from bluemira.neutronics.params import TokamakGeometry
 
 def get_vol_of_truncated_cone(cone, top_z, bot_z):
     """Calculates the volume of a truncated cone from an OpenMC cone surface and z bounds
-    Assumes it is centred on the origin."""
-
+    Assumes it is centred on the origin.
+    """
     # Get cone parameters
     top_r = (cone.r2 * (top_z - cone.z0) ** 2) ** 0.5
     bot_r = (cone.r2 * (bot_z - cone.z0) ** 2) ** 0.5
@@ -23,8 +24,8 @@ def get_vol_of_truncated_cone(cone, top_z, bot_z):
 
 def get_fw_vol(outer_cone, inner_cone, top_plane, bottom_plane):
     """Takes the bounding OpenMC surface objects and calculates the first wall volume
-    This is only approximate but accurate as long as the first wall is thin"""
-
+    This is only approximate but accurate as long as the first wall is thin
+    """
     top_z = top_plane.z0
     bottom_z = bottom_plane.z0
 
@@ -41,8 +42,8 @@ def get_div_fw_section_vol(outer_cone, inner_cone, outer_r, inner_r):
     This is only approximate but accurate as long as the first wall is thin
 
     Getting z coord at radial limits for outer zone
-    Squareroot in function so have two roots"""
-
+    Squareroot in function so have two roots
+    """
     z1a = outer_cone.z0 - inner_r / outer_cone.r2**0.5
     z1b = outer_cone.z0 + inner_r / outer_cone.r2**0.5
     z2a = outer_cone.z0 - outer_r / outer_cone.r2**0.5
@@ -65,8 +66,8 @@ def get_div_fw_section_vol(outer_cone, inner_cone, outer_r, inner_r):
 
 def get_div_fw_vol(outer_cones, inner_cones, rs):
     """Calculates the volume for each section of the divertor first wall
-    This is only approximate but accurate as long as the first wall is thin"""
-
+    This is only approximate but accurate as long as the first wall is thin
+    """
     volumes = []
     for i, outer_cone in enumerate(outer_cones):
         vol = get_div_fw_section_vol(outer_cone, inner_cones[i], rs[i + 1], rs[i])

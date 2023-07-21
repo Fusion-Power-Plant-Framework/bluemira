@@ -1,6 +1,6 @@
+"""Create the material sets for each type of reactor."""
 from __future__ import annotations
 
-import copy
 import dataclasses
 import os
 from dataclasses import dataclass
@@ -24,6 +24,11 @@ def duplicate_mat_as(mat_to_clone, new_id, new_name) -> Material:
 
 @dataclass
 class ReactorBaseMaterials:
+    """Minimum set of materials that can create a tokamak.
+    The rest can be populated by duplication using a priori knowledge,
+    e.g. inobard material = outboard material etc.
+    """
+
     inb_vv_mat: Material
     inb_fw_mat: Material
     inb_bz_mat: Material
@@ -33,12 +38,11 @@ class ReactorBaseMaterials:
 
 
 def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
-    """This function creates openmc material definitions for a dcll blanket.
+    """Creates openmc material definitions for a dcll blanket.
     Divertor definition from Neutronic analyses of the preliminary
     design of a DCLL blanket for the EUROfusion DEMO power, 24 March 2016
     Using Eurofer instead of SS316LN
     """
-
     inb_vv_mat = Material.mix_materials(
         name="inb_vacuum_vessel",
         materials=[md.eurofer_mat, md.water_mat],
@@ -93,7 +97,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
 
 
 def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
-    """creates openmc material definitions for an hcpb blanket.
+    """Creates openmc material definitions for an hcpb blanket.
     HCPB Design Report, 26/07/2019
     WPBB-DEL-BB-1.2.1-T005-D001
     """
@@ -170,12 +174,10 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
 
 
 def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
-    """
-    This function creates openmc material definitions for a wcll blanket
+    """Creates openmc material definitions for a wcll blanket
     Ref. D. Nevo and M. Oron-Carl, WCLL Design Report 2018, Eurofusion,
         WPBB-DEL-BB-3.2.1-T005-D001, June 2019.
     """
-
     _PbLi_mat = md.make_PbLi_mat(li_enrich_ao)
 
     # Divertor definition from Neutronic analyses of the preliminary
@@ -234,6 +236,8 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
 
 
 class BlanketType(Enum):
+    """Types of allowed blankets, named by their acronyms."""
+
     DCLL = auto()
     HCPB = auto()
     WCLL = auto()
@@ -263,6 +267,7 @@ class MaterialsLibrary:
     def create_from_blanket_type(
         cls, blanket_type: BlanketType, li_enrich_ao: float
     ) -> MaterialsLibrary:
+        """Create from blanket type"""
         if blanket_type is BlanketType.DCLL:
             base_materials = _make_dcll_mats(li_enrich_ao)
         elif blanket_type is BlanketType.HCPB:

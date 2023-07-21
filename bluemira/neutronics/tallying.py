@@ -1,3 +1,4 @@
+"""Functions for creating the openmc tallies."""
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
@@ -23,6 +24,7 @@ def filter_cells(
 ]:
     """
     Requests cells for scoring.
+
     Parameters
     ----------
     cells_and_cell_lists:
@@ -207,7 +209,8 @@ def create_tallies(
     src_rate: float,
 ) -> None:
     """First create the filters (list of cells to be tallied),
-    then create create the tallies from those filters."""
+    then create create the tallies from those filters.
+    """
     _create_tallies_from_filters(
         *filter_cells(cells_and_cell_lists, material_lib, src_rate)
     )

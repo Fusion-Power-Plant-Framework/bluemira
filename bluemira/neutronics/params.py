@@ -1,10 +1,9 @@
+"""dataclasses containing parameters used to set up the openmc model."""
 from dataclasses import dataclass
 
 import bluemira.neutronics.make_materials as mm
 from bluemira.base.constants import raw_uc
 from bluemira.neutronics.constants import energy_per_dt_MeV
-
-"""dataclasses containing parameters used to set up the openmc model."""
 
 
 @dataclass
