@@ -34,19 +34,23 @@ from bluemira.base.look_and_feel import bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.opt_constraints import (
+from bluemira.equilibria.optimisation.constraints import (
     CoilFieldConstraints,
     CoilForceConstraints,
     FieldNullConstraint,
     IsofluxConstraint,
     PsiConstraint,
 )
-from bluemira.equilibria.opt_problems import PulsedNestedPositionCOP
-from bluemira.equilibria.run import OptimisedPulsedCoilsetDesign
+from bluemira.equilibria.optimisation.problem import PulsedNestedPositionCOP
+from bluemira.equilibria.run import (
+    BreakdownCOPSettings,
+    EQSettings,
+    OptimisedPulsedCoilsetDesign,
+    PositionSettings,
+)
 from bluemira.equilibria.shapes import JohnerLCFS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import get_class_from_module, json_writer
 from eudemo.equilibria.tools import make_grid
 from eudemo.model_managers import EquilibriumManager
@@ -129,9 +133,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         self.eq_manager = equilibrium_manager
 
     def read(self) -> CoilSet:
-        """
-        Read in a coilset
-        """
+        """Read in a coilset."""
         if self.file_path is None:
             raise ValueError("No file path to read from!")
 
@@ -144,8 +146,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         return CoilSet.from_group_vecs(eqdsk)
 
     def run(self) -> CoilSet:
-        """
-        Create and run the design optimisation problem.
+        """Create and run the design optimisation problem.
 
         Create an initial coilset, grid and equilibria profile, and use
         these to solve an :class:`OptimisedPulsedCoilsetDesign` problem.
@@ -188,8 +189,8 @@ class PFCoilsDesigner(Designer[CoilSet]):
         self, coilset, grid, profiles, position_mapper, constraints
     ):
         breakdown_defaults = {
-            "param_class": "bluemira.equilibria.opt_problems::OutboardBreakdownZoneStrategy",
-            "problem_class": "bluemira.equilibria.opt_problems::BreakdownCOP",
+            "param_class": "bluemira.equilibria.optimisation.problem::OutboardBreakdownZoneStrategy",
+            "problem_class": "bluemira.equilibria.optimisation.problem::BreakdownCOP",
             "optimisation_settings": {
                 "algorithm_name": "COBYLA",
                 "conditions": {
@@ -200,17 +201,13 @@ class PFCoilsDesigner(Designer[CoilSet]):
             "B_stray_con_tol": 1e-6,
             "n_B_stray_points": 10,
         }
-        breakdown_settings = self.build_config.get("breakdown_settings", {})
-        breakdown_settings = {**breakdown_defaults, **breakdown_settings}
-        breakdown_strategy = get_class_from_module(breakdown_settings["param_class"])
-        breakdown_problem = get_class_from_module(breakdown_settings["problem_class"])
-        breakdown_optimiser = Optimiser(
-            breakdown_settings["optimisation_settings"]["algorithm_name"],
-            opt_conditions=breakdown_settings["optimisation_settings"]["conditions"],
-        )
+        breakdown_settings = {
+            **breakdown_defaults,
+            **self.build_config.get("breakdown_settings", {}),
+        }
 
         eq_defaults = {
-            "problem_class": "bluemira.equilibria.opt_problems::TikhonovCurrentCOP",
+            "problem_class": "bluemira.equilibria.optimisation.problem::TikhonovCurrentCOP",
             "convergence_class": "bluemira.equilibria.solve::DudsonConvergence",
             "conv_limit": 1e-4,
             "gamma": 1e-12,
@@ -224,15 +221,11 @@ class PFCoilsDesigner(Designer[CoilSet]):
                 },
             },
         }
-        eq_settings = self.build_config.get("equilibrium_settings", {})
-        eq_settings = {**eq_defaults, **eq_settings}
-        eq_problem = get_class_from_module(eq_settings["problem_class"])
-        eq_optimiser = Optimiser(
-            eq_settings["optimisation_settings"]["algorithm_name"],
-            opt_conditions=eq_settings["optimisation_settings"]["conditions"],
-        )
+        eq_settings = {
+            **eq_defaults,
+            **self.build_config.get("equilibrium_settings", {}),
+        }
         eq_converger = get_class_from_module(eq_settings["convergence_class"])
-        eq_convergence = eq_converger(eq_settings["conv_limit"])
 
         pos_defaults = {
             "optimisation_settings": {
@@ -244,12 +237,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
                 },
             },
         }
-        pos_settings = self.build_config.get("position_settings", {})
-        pos_settings = {**pos_defaults, **pos_settings}
-        pos_optimiser = Optimiser(
-            pos_settings["optimisation_settings"]["algorithm_name"],
-            opt_conditions=pos_settings["optimisation_settings"]["conditions"],
-        )
+        pos_settings = {**pos_defaults, **self.build_config.get("position_settings", {})}
 
         return OptimisedPulsedCoilsetDesign(
             self.params,
@@ -260,23 +248,28 @@ class PFCoilsDesigner(Designer[CoilSet]):
             coil_constraints=constraints["coil_field"],
             equilibrium_constraints=[constraints["isoflux"], constraints["x_point"]],
             profiles=profiles,
-            breakdown_strategy_cls=breakdown_strategy,
-            breakdown_problem_cls=breakdown_problem,
-            breakdown_optimiser=breakdown_optimiser,
-            breakdown_settings={
-                "B_stray_con_tol": breakdown_settings["B_stray_con_tol"],
-                "n_B_stray_points": breakdown_settings["n_B_stray_points"],
-            },
-            equilibrium_problem_cls=eq_problem,
-            equilibrium_optimiser=eq_optimiser,
-            equilibrium_convergence=eq_convergence,
-            equilibrium_settings={
-                "gamma": eq_settings["gamma"],
-                "relaxation": eq_settings["relaxation"],
-                "peak_PF_current_factor": eq_settings["peak_PF_current_factor"],
-            },
-            position_problem_cls=PulsedNestedPositionCOP,
-            position_optimiser=pos_optimiser,
+            breakdown_settings=BreakdownCOPSettings(
+                strategy=get_class_from_module(breakdown_settings["param_class"]),
+                problem=get_class_from_module(breakdown_settings["problem_class"]),
+                algorithm=breakdown_settings["optimisation_settings"]["algorithm_name"],
+                opt_conditions=breakdown_settings["optimisation_settings"]["conditions"],
+                B_stray_con_tol=breakdown_settings["B_stray_con_tol"],
+                n_B_stray_points=breakdown_settings["n_B_stray_points"],
+            ),
+            equilibrium_settings=EQSettings(
+                problem=get_class_from_module(eq_settings["problem_class"]),
+                convergence=eq_converger(eq_settings["conv_limit"]),
+                algorithm=eq_settings["optimisation_settings"]["algorithm_name"],
+                opt_conditions=eq_settings["optimisation_settings"]["conditions"],
+                gamma=eq_settings["gamma"],
+                relaxation=eq_settings["relaxation"],
+                peak_PF_current_factor=eq_settings["peak_PF_current_factor"],
+            ),
+            position_settings=PositionSettings(
+                problem=PulsedNestedPositionCOP,
+                algorithm=pos_settings["optimisation_settings"]["algorithm_name"],
+                opt_conditions=pos_settings["optimisation_settings"]["conditions"],
+            ),
             limiter=None,
         )
 
