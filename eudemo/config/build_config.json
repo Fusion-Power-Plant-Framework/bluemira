@@ -110,7 +110,10 @@
     "variables_map": {},
     "problem_class": "bluemira.builders.tf_coils::RippleConstrainedLengthGOP",
     "problem_settings": {
-      "n_rip_points": 10,
+      "ripple_selector": {
+        "cls": "bluemira.builders.tf_coils::EquispacedSelector",
+        "args": { "n_rip_points": 10 }
+      },
       "n_koz_points": 50,
       "nx": 1,
       "ny": 1
