@@ -5,7 +5,7 @@ gmsh-interop==2021.1.1
 h5py==3.7.0
 importlib-metadata==6.8.0
 pybind11==2.11.0
-pybind11-global==2.11.0
+pybind11-global==2.11.1
 PySide2==5.15.5
 pytools==2023.1
 PyYAML==6.0
