@@ -42,7 +42,7 @@ class PowerCyclePhase(PowerCycleTimeABC):
         else:
             duration_breakdown = [(name, duration_breakdown)]
 
-        duration_breakdown = [Breakdown(*db) for db in duration_breakdown]
+        duration_breakdown = [PowerCycleBreakdown(*db) for db in duration_breakdown]
         duration = np.array([db.duration for db in duration_breakdown])
         super().__init__(name, duration, label=label)
         if None in [db.duration for db in duration_breakdown]:
@@ -151,7 +151,7 @@ class BreakdownConfig(BaseConfig):
 
 
 @dataclass
-class Breakdown:
+class PowerCycleBreakdown:
     name: str
     duration: ArrayLike
 
@@ -252,7 +252,7 @@ class ScenarioBuilder:
 
     def _build_breakdown_library(self):
         self._breakdown_library = {
-            k: Breakdown(
+            k: PowerCycleBreakdown(
                 v.name,
                 self.import_duration(v.module, v.variables_map),
             )
