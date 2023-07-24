@@ -296,7 +296,7 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
             )
         return plot_object
 
-    def plot_obj(self, ax, x, y, name, kwargs, plot_or_scatter=True):
+    def _plot_load(self, ax, x, y, name, kwargs, plot_or_scatter=True):
         if plot_or_scatter:
             plot = getattr(ax, "plot")
             lab = "(curve)"

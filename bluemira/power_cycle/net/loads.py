@@ -153,7 +153,7 @@ class LoadData(PowerCycleLoadABC):
         ax = validate_axes(ax)
 
         # Set each default options in kwargs, if not specified
-        return ax, self.plot_obj(ax, self.time, self.data, self.name, kwargs, False)
+        return ax, self._plot_load(ax, self.time, self.data, self.name, kwargs, False)
 
 
 class LoadModel(Enum):
@@ -385,7 +385,7 @@ class PowerLoad(PowerCycleLoadABC):
             self.intrinsic_time, self._validate_n_points(n_points)
         )
 
-        list_of_plot_objects = self.plot_obj(
+        list_of_plot_objects = self._plot_load(
             ax, computed_time, self.curve(computed_time), self.name, kwargs, True
         )
 
@@ -628,7 +628,7 @@ class PhaseLoad(PowerCycleLoadABC):
             self._validate_n_points(n_points),
         )
 
-        return ax, self.plot_obj(
+        return ax, self._plot_load(
             ax,
             computed_time,
             self._curve(computed_time, primary=primary),
@@ -1022,7 +1022,7 @@ class PulseLoad(PowerCycleLoadABC):
             self._refine_vector(self.shifted_time, self._validate_n_points(n_points))
         )
 
-        list_of_plot_objects = self.plot_obj(
+        list_of_plot_objects = self._plot_load(
             ax, modified_time, computed_curve, self.name, kwargs
         )
 
