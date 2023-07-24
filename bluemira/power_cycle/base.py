@@ -11,6 +11,7 @@ from typing import Any, Iterable, Union
 import numpy as np
 from numpy.typing import ArrayLike
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.power_cycle.errors import PowerCycleError
 
 
@@ -287,6 +288,7 @@ class PowerCycleLoadABC(PowerCycleABC, metaclass=ABCMeta):
                 **{**self._text_kwargs, **kwargs},
             )
         except AttributeError:
+            bluemira_warn("Unknown key word argument falling back to plot defaults")
             plot_object = axes.text(
                 x_list[self._text_index],
                 y_list[self._text_index],
