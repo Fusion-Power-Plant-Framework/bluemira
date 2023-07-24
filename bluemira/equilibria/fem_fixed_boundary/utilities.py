@@ -40,8 +40,7 @@ from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
-from bluemira.utilities.opt_problems import OptimisationObjective
-from bluemira.utilities.optimiser import Optimiser, approx_derivative
+from bluemira.optimisation import optimise
 from bluemira.utilities.tools import is_num
 
 
@@ -220,35 +219,25 @@ def find_flux_surface(
     def theta_line(d, theta_i):
         return float(x_axis + d * np.cos(theta_i)), float(z_axis + d * np.sin(theta_i))
 
-    def psi_line_match(d, grad, theta):
-        result = psi_norm_match(theta_line(d, theta))
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                lambda x: psi_norm_match(theta_line(x, theta)),
-                d,
-                f0=result,
-                bounds=[lower_bound(d), upper_bound(d)],
-            )
-
-        return result
+    def psi_line_match(d, theta):
+        return psi_norm_match(theta_line(d, theta))
 
     theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False, dtype=float)
     points = np.zeros((2, n_points), dtype=float)
     distances = np.zeros(n_points)
-    for i in range(len(theta)):
-        optimiser = Optimiser(
-            "SLSQP", 1, opt_conditions={"ftol_abs": 1e-14, "max_eval": 1000}
-        )
-        optimiser.set_lower_bounds(lower_bound(d_guess))
-        optimiser.set_upper_bounds(upper_bound(d_guess))
-        optimiser.set_objective_function(
-            OptimisationObjective(psi_line_match, f_objective_args={"theta": theta[i]})
-        )
-        result = optimiser.optimise(d_guess)
 
-        points[:, i] = theta_line(result, theta[i])
-        distances[i] = result
-        d_guess = result
+    for i in range(len(theta)):
+        result = optimise(
+            f_objective=lambda d: psi_line_match(d, theta[i]),
+            x0=d_guess,
+            dimensions=1,
+            algorithm="SLSQP",
+            opt_conditions={"ftol_abs": 1e-14, "max_eval": 1000},
+            bounds=(lower_bound(d_guess), upper_bound(d_guess)),
+        )
+        points[:, i] = theta_line(result.x, theta[i])
+        distances[i] = result.x
+        d_guess = result.x
 
     points[:, -1] = points[:, 0]
 
@@ -456,10 +445,6 @@ def find_magnetic_axis(
     -------
     Position vector (2) of the magnetic axis [m]
     """
-    optimiser = Optimiser(
-        "SLSQP", 2, opt_conditions={"ftol_abs": 1e-6, "max_eval": 1000}
-    )
-
     if mesh:
         points = mesh.coordinates()
         psi_array = [psi_func(x) for x in points]
@@ -474,24 +459,19 @@ def find_magnetic_axis(
         lower_bounds = np.array([0, -2.0])
         upper_bounds = np.array([20.0, 2.0])
 
-    def maximise_psi(x, grad):
-        result = -psi_func(x)
-        if grad.size > 0:
-            grad[:] = approx_derivative(
-                lambda x: -psi_func(x),
-                x,
-                f0=result,
-                bounds=[lower_bounds, upper_bounds],
-            )
+    def maximise_psi(x):
+        return -psi_func(x)
 
-        return result
+    x_star = optimise(
+        f_objective=maximise_psi,
+        x0=x0,
+        dimensions=2,
+        algorithm="SLSQP",
+        opt_conditions={"ftol_abs": 1e-6, "max_eval": 1000},
+        bounds=(lower_bounds, upper_bounds),
+    )
 
-    optimiser.set_objective_function(maximise_psi)
-
-    optimiser.set_lower_bounds(lower_bounds)
-    optimiser.set_upper_bounds(upper_bounds)
-    x_star = optimiser.optimise(x0)
-    return np.array(x_star, dtype=float)
+    return x_star.x
 
 
 def _interpolate_profile(
