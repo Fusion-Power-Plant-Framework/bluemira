@@ -189,7 +189,11 @@ class LibraryConfigDescriptor:
         """Get the scenario config"""
         return getattr(obj, self._name)
 
-    def __set__(self, obj: Any, value: Dict[str, Union[PulseConfig, Dict]]):
+    def __set__(
+        self,
+        obj: Any,
+        value: Dict[str, Union[PulseConfig, PhaseConfig, BreakdownConfig, Dict]],
+    ):
         """Set the scenario config"""
         for k, v in value.items():
             if not isinstance(v, self.library_config):
