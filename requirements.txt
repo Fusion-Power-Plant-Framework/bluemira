@@ -1,7 +1,7 @@
 anytree==2.9.0
 asteval==0.9.31
 Babel==2.12.1
-click==8.1.5
+click==8.1.6
 contourpy==1.1.0
 CoolProp==6.4.3.post1
 cycler==0.11.0
