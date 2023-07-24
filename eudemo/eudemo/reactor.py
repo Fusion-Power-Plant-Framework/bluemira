@@ -37,7 +37,7 @@ The EUDEMO reactor design routine.
 
 import os
 from pathlib import Path
-from typing import Dict
+from typing import Dict, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -45,6 +45,7 @@ import numpy as np
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
@@ -53,7 +54,9 @@ from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
@@ -122,12 +125,12 @@ class EUDEMO(Reactor):
 
 
 def build_reference_equilibrium(
-    params,
+    params: Union[Dict, ParameterFrame],
     build_config: Dict,
     equilibrium_manager: EquilibriumManager,
-    lcfs_coords,
-    profiles,
-):
+    lcfs_coords: Optional[Coordinates],
+    profiles: Optional[Profile],
+) -> Equilibrium:
     """
     Build the reference equilibrium for the tokamak and store in
     the equilibrium manager
@@ -140,16 +143,16 @@ def build_reference_equilibrium(
     )
     reference_eq = designer.execute()
     constraints = None
-    optimiser = None
+    result = None
     if designer.opt_problem is not None:
         constraints = designer.opt_problem.targets
-        optimiser = designer.opt_problem.opt
+        result = designer._result
     ref_snapshot = Snapshot(
         reference_eq,
         reference_eq.coilset,
         constraints,
         reference_eq.profiles,
-        optimiser,
+        result,
         reference_eq.limiter,
     )
     equilibrium_manager.add_state(equilibrium_manager.REFERENCE, ref_snapshot)
@@ -491,6 +494,7 @@ if __name__ == "__main__":
         r_inner_cut,
         cut_angle,
     )
+
     vv_thermal_shield = build_vacuum_vessel_thermal_shield(
         reactor_config.params_for("Thermal shield"),
         reactor_config.config_for("Thermal shield", "VVTS"),
