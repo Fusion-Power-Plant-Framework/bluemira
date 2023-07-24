@@ -489,17 +489,12 @@ class PicardIterator:
             self.f, self.ax = plt.subplots()
 
     def _optimise_coilset(self):
+        self.result = None
         try:
-            result = self.opt_prob.optimise(fixed_coils=self.fixed_coils)
-            try:
-                coilset = result.coilset
-            except AttributeError:
-                coilset = result
-            self.store.append(coilset)
+            self.result = self.opt_prob.optimise(fixed_coils=self.fixed_coils)
+            self.coilset = self.result.coilset
         except ExternalOptError:
-            coilset = self.store[-1]
-        self.result = result
-        self.coilset = coilset
+            self.coilset = self.store[-1]
 
     @property
     def psi(self) -> npt.NDArray[np.float64]:
