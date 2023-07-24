@@ -36,7 +36,7 @@ the method used to map the coilset object to the state vector
 
 """
 
-from typing import List, Optional
+from typing import Dict, List, Optional
 
 import numpy as np
 import numpy.typing as npt
@@ -74,10 +74,8 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         Equilibrium object used to update magnetic field targets.
     targets:
         Set of magnetic field targets to use in objective function.
-    pfregions:
-        Dictionary of Coordinates that specify convex hull regions inside which
-        each PF control coil position is to be optimised.
-        The Coordinates must be 2d in x,z in units of [m].
+    position_mapper:
+        position mapper object of the regions to optimise the coil positions within
     opt_algorithm:
         The optimisation algorithm to use (e.g. SLSQP)
     opt_conditions:
@@ -98,10 +96,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         targets: MagneticConstraintSet,
         position_mapper: PositionMapper,
         opt_algorithm="SBPLX",
-        opt_conditions={
-            "stop_val": 1.0,
-            "max_eval": 100,
-        },
+        opt_conditions: Optional[Dict[str, float]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.eq = eq
@@ -113,7 +108,11 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.coilset = sub_opt.coilset
         self.sub_opt = sub_opt
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
+        self.opt_conditions = (
+            {"stop_val": 1.0, "max_eval": 100}
+            if opt_conditions is None
+            else opt_conditions
+        )
         self._constraints = [] if constraints is None else constraints
 
         self.initial_state, self.substates = self.read_coilset_state(
@@ -192,16 +191,21 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         coilset: CoilSet,
         position_mapper: PositionMapper,
         sub_opt_problems: List[CoilsetOptimisationProblem],
-        opt_algorithm="COBYLA",
-        opt_conditions={"max_eval": 100, "ftol_rel": 1e-6},
+        opt_algorithm: str = "COBYLA",
+        opt_conditions: Optional[Dict[str, float]] = None,
         constraints=None,
         initial_currents=None,
-        debug=False,
+        debug: bool = False,
     ):
         self.coilset = coilset
         self.position_mapper = position_mapper
         self.sub_opt_problems = sub_opt_problems
         self.opt_algorithm = opt_algorithm
+        self.opt_conditions = (
+            {"max_eval": 100, "ftol_rel": 1e-6}
+            if opt_conditions is None
+            else opt_conditions
+        )
         self.opt_conditions = opt_conditions
         self._constraints = constraints
 

@@ -19,15 +19,17 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.opt_constraints import MagneticConstraintSet
-from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
+from bluemira.equilibria.optimisation.constraints import (
+    MagneticConstraintSet,
+    UpdateableConstraint,
+)
 from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective, tikhonov
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
@@ -53,14 +55,18 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         Set of magnetic field targets to use in objective function.
     gamma:
         Tikhonov regularisation parameter in units of [A⁻¹].
+    opt_algorithm:
+        Optimiser algorithm
+    opt_conditions:
+        optimiser conditions
+    opt_parameters:
+        optimisation parameters
     max_currents:
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
         for all coils.
-    optimiser:
-        Optimiser object to use for constrained optimisation.
     constraints:
-        Optional list of OptimisationConstraint objects storing
+        Optional list of UpdatableConstraint objects storing
         information about constraints that must be satisfied
         during the coilset optimisation, to be provided to the
         optimiser.
@@ -73,14 +79,8 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         targets: MagneticConstraintSet,
         gamma: float,
         opt_algorithm: str = "SLSQP",
-        opt_conditions: Dict[str, Union[float, int]] = {
-            "xtol_rel": 1e-4,
-            "xtol_abs": 1e-4,
-            "ftol_rel": 1e-4,
-            "ftol_abs": 1e-4,
-            "max_eval": 100,
-        },
-        opt_parameters: Dict[str, Any] = {"initial_step": 0.03},
+        opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
+        opt_parameters: Optional[Dict[str, float]] = None,
         max_currents: Optional[npt.ArrayLike] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
@@ -90,8 +90,20 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self.gamma = gamma
         self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
-        self.opt_parameters = opt_parameters
+        self.opt_conditions = (
+            {
+                "xtol_rel": 1e-4,
+                "xtol_abs": 1e-4,
+                "ftol_rel": 1e-4,
+                "ftol_abs": 1e-4,
+                "max_eval": 100,
+            }
+            if opt_conditions is None
+            else opt_conditions
+        )
+        self.opt_parameters = (
+            {"initial_step": 0.03} if opt_parameters is None else opt_parameters
+        )
         self._constraints = [] if constraints is None else constraints
 
     def optimise(self, x0=None, fixed_coils=True) -> CoilsetOptimiserResult:

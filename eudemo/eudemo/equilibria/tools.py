@@ -32,7 +32,7 @@ import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.opt_constraints import (
+from bluemira.equilibria.optimisation.constraints import (
     FieldNullConstraint,
     IsofluxConstraint,
     MagneticConstraintSet,

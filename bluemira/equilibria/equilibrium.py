@@ -65,7 +65,7 @@ from bluemira.equilibria.plotting import (
 )
 from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.utilities.opt_tools import process_scipy_result
+from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
 

@@ -60,7 +60,7 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.utilities.optimiser import approx_derivative
+from bluemira.optimisation._tools import approx_derivative
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
 __all__ = ["solve_transport_fixed_boundary"]

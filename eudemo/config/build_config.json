@@ -135,8 +135,8 @@
       "grid_scale_z": 2.0
     },
     "breakdown_settings": {
-      "param_class": "bluemira.equilibria.opt_problems::OutboardBreakdownZoneStrategy",
-      "problem_class": "bluemira.equilibria.opt_problems::BreakdownCOP",
+      "param_class": "bluemira.equilibria.optimisation.problem::OutboardBreakdownZoneStrategy",
+      "problem_class": "bluemira.equilibria.optimisation.problem::BreakdownCOP",
       "B_stray_con_tol": 1e-6,
       "n_B_stray_points": 10,
       "optimisation_settings": {
@@ -148,7 +148,7 @@
       }
     },
     "equilibrium_settings": {
-      "problem_class": "bluemira.equilibria.opt_problems::TikhonovCurrentCOP",
+      "problem_class": "bluemira.equilibria.optimisation.problem::TikhonovCurrentCOP",
       "convergence_class": "bluemira.equilibria.solve::DudsonConvergence",
       "conv_limit": 1e-4,
       "gamma": 1e-12,
