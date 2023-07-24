@@ -192,7 +192,7 @@ class TestLoadData:
 
     def test_addition(self):
         with pytest.raises(PowerCycleError):
-            sum(self.all_samples)
+            _ = sum(self.all_samples)
 
 
 class TestLoadModel:
@@ -725,7 +725,7 @@ class TestPhaseLoad:
 
         # adding_phaseloads_with_different_phases
         with pytest.raises(PhaseLoadError):
-            sum(all_results)
+            _ = sum(all_results)
 
 
 class TestPulseLoad:
