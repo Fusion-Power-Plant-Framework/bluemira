@@ -25,7 +25,6 @@ Interface for building and loading equilibria and coilset designs
 
 from __future__ import annotations
 
-import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
@@ -70,7 +69,6 @@ if TYPE_CHECKING:
     from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
     from bluemira.equilibria.profiles import Profile
     from bluemira.geometry.coordinates import Coordinates
-    from bluemira.utilities.optimiser import Optimiser
     from bluemira.utilities.positioning import PositionMapper
 
 
@@ -194,23 +192,8 @@ class PulsedCoilsetDesign(ABC):
         problem, these may be used in the objective function or constraints
     profiles:
         Plasma profile object to use when solving equilibria
-    breakdown_strategy_cls:
-        BreakdownZoneStrategy class to use when determining breakdown constraints
-    breakdown_problem_cls:
-        Coilset optimisation problem class for the breakdown phase
-    breakdown_optimiser:
-        Optimiser for the breakdown,
-        default is COBYLA with ftol_rel=1e-10 and max_eval=5000
     breakdown_settings:
         Breakdown optimiser settings
-    equilibrium_problem_cls:
-        Coilset optimisation problem class for the equilibria and current vector
-    equilibrium_optimiser:
-        Optimiser for the equilibria and current vector
-        default is SLSQP with ftol_rel=1e-6 and max_eval=1000
-    equilibrium_convergence:
-        Convergence criteria to use when solving equilibria
-        default is 1e-2 DudsonConvergence
     equilibrium_settings:
         Settings for the solution of equilibria
     current_opt_constraints:
@@ -236,14 +219,6 @@ class PulsedCoilsetDesign(ABC):
         profiles: Profile,
         breakdown_settings: Optional[Union[Dict, BreakdownCOPSettings]] = None,
         equilibrium_settings: Optional[Union[Dict, EQSettings]] = None,
-        # Remove in v2
-        breakdown_strategy_cls: Optional[Type[BreakdownZoneStrategy]] = None,
-        breakdown_problem_cls: Optional[Type[BreakdownCOP]] = None,
-        breakdown_optimiser: Optional[Optimiser] = None,
-        equilibrium_problem_cls: Optional[Type[CoilsetOptimisationProblem]] = None,
-        equilibrium_optimiser: Optional[Optimiser] = None,
-        equilibrium_convergence: Optional[ConvergenceCriterion] = None,
-        # eos
         current_opt_constraints: Optional[List[UpdateableConstraint]] = None,
         coil_constraints: Optional[List[UpdateableConstraint]] = None,
         limiter: Optional[Limiter] = None,
@@ -259,89 +234,6 @@ class PulsedCoilsetDesign(ABC):
         self.bd_settings = breakdown_settings
         self.eq_settings = equilibrium_settings
 
-        # Remove in v2
-        warn_string = (
-            f"Use of {type(self).__name__}'s '{{}}' argument is "
-            "deprecated and it will be removed in version 2.0.0.\n"
-            "See "
-            "https://bluemira.readthedocs.io/en/latest/optimisation/"
-            "optimisation.html "
-            "for documentation of the new optimisation module."
-        )
-        if breakdown_optimiser is not None:
-            warnings.warn(
-                warn_string.format("breakdown_optimiser"),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            # warn
-            self.bd_settings.opt_conditions = {
-                **(
-                    {}
-                    if breakdown_optimiser.opt_conditions is None
-                    else breakdown_optimiser.opt_conditions
-                ),
-                **self.bd_settings.opt_conditions,
-            }
-
-            self.bd_settings.algorithm = breakdown_optimiser.algorithm_name
-        if breakdown_problem_cls is not None:
-            warnings.warn(
-                warn_string.format("breakdown_problem_cls"),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.bd_settings.problem = breakdown_problem_cls
-
-        if breakdown_strategy_cls is not None:
-            warnings.warn(
-                warn_string.format("breakdown_strategy_cls"),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.bd_settings.strategy = breakdown_strategy_cls
-
-        if equilibrium_optimiser is not None:
-            warnings.warn(
-                warn_string.format("equilibrium_optimiser"),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.eq_settings.opt_conditions = {
-                **(
-                    {}
-                    if equilibrium_optimiser.opt_conditions is None
-                    else equilibrium_optimiser.opt_conditions
-                ),
-                **self.eq_settings.opt_conditions,
-            }
-
-            self.eq_settings.algorithm = equilibrium_optimiser.algorithm_name
-            self.eq_settings.opt_parameters = {
-                **(
-                    {}
-                    if equilibrium_optimiser.opt_parameters is None
-                    else equilibrium_optimiser.opt_parameters
-                ),
-                **self.eq_settings.opt_parameters,
-            }
-
-        if equilibrium_convergence is not None:
-            warnings.warn(
-                warn_string.format("equilibrium_convergence"),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.eq_settings.convergence = equilibrium_convergence
-        if equilibrium_problem_cls is not None:
-            warnings.warn(
-                warn_string.format("equilibrium_problem_cls"),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.eq_settings.problem = equilibrium_problem_cls
-        # eos
-
         self._coil_cons = [] if coil_constraints is None else coil_constraints
         self.limiter = limiter
 
@@ -352,40 +244,32 @@ class PulsedCoilsetDesign(ABC):
     @property
     def bd_settings(self) -> BreakdownCOPSettings:
         """Breakdown COP settings."""
-        return self.__bd_settings
-
-    @property
-    def _bd_settings(self) -> BreakdownCOPSettings:
-        return self.__bd_settings
+        return self._bd_settings
 
     @bd_settings.setter
     def bd_settings(self, value: Optional[Union[Dict, BreakdownCOPSettings]] = None):
         """Breakdown COP settings."""
         if value is None:
-            self.__bd_settings = BreakdownCOPSettings()
+            self._bd_settings = BreakdownCOPSettings()
         elif isinstance(value, BreakdownCOPSettings):
-            self.__bd_settings = value
+            self._bd_settings = value
         else:
-            self.__bd_settings = BreakdownCOPSettings(**value)
+            self._bd_settings = BreakdownCOPSettings(**value)
 
     @property
     def eq_settings(self) -> EQSettings:
         """Equilibrium COP settings."""
-        return self.__eq_settings
-
-    @property
-    def _eq_settings(self) -> EQSettings:
-        return self.__eq_settings
+        return self._eq_settings
 
     @eq_settings.setter
     def eq_settings(self, value: Optional[Union[EQSettings, Dict]] = None):
         """Equilibrium COP settings."""
         if value is None:
-            self.__eq_settings = EQSettings()
+            self._eq_settings = EQSettings()
         elif isinstance(value, EQSettings):
-            self.__eq_settings = value
+            self._eq_settings = value
         else:
-            self.__eq_settings = EQSettings(**value)
+            self._eq_settings = EQSettings(**value)
 
     def take_snapshot(
         self,
@@ -675,23 +559,8 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         problem, these may be used in the objective function or constraints
     profiles:
         Plasma profile object to use when solving equilibria
-    breakdown_strategy_cls:
-        BreakdownZoneStrategy class to use when determining breakdown constraints
-    breakdown_problem_cls:
-        Coilset optimisation problem class for the breakdown phase
-    breakdown_optimiser:
-        Optimiser for the breakdown,
-        default is COBYLA with ftol_rel=1e-10 and max_eval=5000
     breakdown_settings:
         Breakdown optimiser settings
-    equilibrium_problem_cls:
-        Coilset optimisation problem class for the equilibria and current vector
-    equilibrium_optimiser:
-        Optimiser for the equilibria and current vector
-        default is SLSQP with ftol_rel=1e-6 and max_eval=1000
-    equilibrium_convergence:
-        Convergence criteria to use when solving equilibria
-        default is 1e-2 DudsonConvergence
     equilibrium_settings:
         Settings for the solution of equilibria
     current_opt_constraints:
@@ -701,11 +570,6 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         breakdown)
     limiter:
         Limiter to use when solving equilibria
-    position_problem_cls:
-        Coilset optimisation problem class for the coil positions
-    position_optimiser:
-        Optimiser for the coil positions
-        default is COBYLA with ftol_rel=1e-4 and max_eval=100
     """
 
     def __init__(
@@ -718,21 +582,10 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         profiles: Profile,
         breakdown_settings: Optional[Union[Dict, BreakdownCOPSettings]] = None,
         equilibrium_settings: Optional[Union[Dict, EQSettings]] = None,
-        # Remove in v2
-        breakdown_strategy_cls: Optional[Type[BreakdownZoneStrategy]] = None,
-        breakdown_problem_cls: Optional[Type[BreakdownCOP]] = None,
-        breakdown_optimiser: Optional[Optimiser] = None,
-        equilibrium_problem_cls: Optional[Type[CoilsetOptimisationProblem]] = None,
-        equilibrium_optimiser: Optional[Optimiser] = None,
-        equilibrium_convergence: Optional[ConvergenceCriterion] = None,
-        # eos
         current_opt_constraints: Optional[List[UpdateableConstraint]] = None,
         coil_constraints: Optional[List[UpdateableConstraint]] = None,
         limiter: Optional[Limiter] = None,
         position_settings: Optional[Union[Dict, PositionSettings]] = None,
-        # Remove in v2
-        position_problem_cls: Optional[Type[PulsedNestedPositionCOP]] = None,
-        position_optimiser: Optional[Optimiser] = None,
     ):
         super().__init__(
             params,
@@ -742,52 +595,13 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
             profiles,
             breakdown_settings,
             equilibrium_settings,
-            breakdown_strategy_cls,
-            breakdown_problem_cls,
-            breakdown_optimiser,
-            equilibrium_problem_cls,
-            equilibrium_optimiser,
-            equilibrium_convergence,
             current_opt_constraints,
             coil_constraints,
             limiter,
         )
         self.coilset = self._prepare_coilset(self.coilset)
         self.position_mapper = position_mapper
-
         self.pos_settings = position_settings
-
-        warn_string = (
-            f"Use of {type(self).__name__}'s '{{}}' argument is "
-            "deprecated and it will be removed in version 2.0.0.\n"
-            "See "
-            "https://bluemira.readthedocs.io/en/latest/optimisation/"
-            "optimisation.html "
-            "for documentation of the new optimisation module."
-        )
-
-        if position_problem_cls is not None:
-            warnings.warn(
-                warn_string.format("position_problem_cls"),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.pos_settings.problem = position_problem_cls
-        if position_optimiser is not None:
-            warnings.warn(
-                warn_string.format("position_optimiser"),
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            self.pos_settings.algorithm = position_optimiser.algorithm_name
-            self.pos_settings.opt_conditions = {
-                **(
-                    {}
-                    if position_optimiser.opt_conditions is None
-                    else position_optimiser.opt_conditions
-                ),
-                **self.pos_settings.opt_conditions,
-            }
 
     @property
     def pos_settings(self) -> PositionSettings:
