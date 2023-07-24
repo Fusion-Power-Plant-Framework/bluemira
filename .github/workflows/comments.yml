@@ -35,7 +35,7 @@ jobs:
       if: env.RESULT == 'success' && steps.workflow-run-info.outputs.pullRequestNumber != ''
       run: |
         artifact_url="$( \
-          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ steps.base_sha.outputs.base_sha }}") | .archive_download_url')"
+          gh api repos/${{ github.repository }}/actions/artifacts --jq '.artifacts[] | select(.name == "report-json") | select(.workflow_run.head_sha == "${{ steps.base_sha.outputs.base_sha}}") | .archive_download_url' | head -1)"
         if [ ! -z "${artifact_url}" ]; then
           gh api ${artifact_url} > report-json.zip
           mkdir ref_report
