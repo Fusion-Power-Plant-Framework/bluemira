@@ -30,7 +30,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points, get_legs
-from bluemira.geometry.optimisation import optimise_geometry
+from bluemira.geometry.optimisation import KeepOutZone, optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation, PolySpline
 from bluemira.geometry.tools import convex_hull_wires_2d, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
@@ -155,9 +155,13 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             f_objective=f_objective,
             opt_conditions=self.opt_conditions,
             opt_parameters=self.opt_parameters,
-            keep_out_zones=[self._make_wall_keep_out_zone()],
+            keep_out_zones=[
+                KeepOutZone(
+                    self._make_wall_keep_out_zone(),
+                    n_discr=self.problem_settings.get("n_koz_points", 100),
+                )
+            ],
         )
-
         return result.geom
 
     def _get_parameterisation(self) -> GeometryParameterisation:

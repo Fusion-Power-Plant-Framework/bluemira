@@ -86,9 +86,7 @@
         }
       },
       "run_mode": "run",
-      "name": "First Wall",
       "file_path": "config/FirstWallDesign.json",
-      "problem_class": "bluemira.geometry.optimisation::MinimiseLengthGOP",
       "problem_settings": {
         "n_koz_points": 100
       },
