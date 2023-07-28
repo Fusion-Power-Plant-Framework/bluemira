@@ -65,7 +65,8 @@ from bluemira.equilibria.solve import (
     DudsonConvergence,
     PicardIterator,
 )
-from bluemira.optimisation import Algorithm
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.optimisation import AlgorithmType
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PositionMapper
 
@@ -97,9 +98,9 @@ class Snapshot:
     coilset: CoilSet
     constraints: Optional[CoilsetOptimisationProblem] = None
     profiles: Optional[Profile] = None
-    optimisation_result: [CoilsetOptimiserResult] = None
+    optimisation_result: Optional[CoilsetOptimiserResult] = None
     limiter: Optional[Limiter] = None
-    tfcoil: Optional[Coordinates] = None  # noqa: F821
+    tfcoil: Optional[Coordinates] = None
 
     def __post_init__(self):
         """Copy some variables on initialisation"""
@@ -117,7 +118,7 @@ class BreakdownCOPSettings:
 
     problem: Type[BreakdownCOP] = BreakdownCOP
     strategy: Type[BreakdownZoneStrategy] = CircularZoneStrategy
-    algorithm: Union[str, Algorithm] = "COBYLA"
+    algorithm: AlgorithmType = "COBYLA"
     opt_conditions: Dict[str, Union[float, int]] = field(
         default_factory=lambda: {"max_eval": 5000, "ftol_rel": 1e-10}
     )
@@ -133,7 +134,7 @@ class EQSettings:
     convergence: ConvergenceCriterion = field(
         default_factory=lambda: DudsonConvergence(1e-2)
     )
-    algorithm: Union[str, Algorithm] = "SLSQP"
+    algorithm: AlgorithmType = "SLSQP"
     opt_conditions: Dict[str, Union[float, int]] = field(
         default_factory=lambda: {"max_eval": 1000, "ftol_rel": 1e-6}
     )
@@ -151,7 +152,7 @@ class PositionSettings:
     """Position optimiser settings"""
 
     problem: Type[PulsedNestedPositionCOP] = PulsedNestedPositionCOP
-    algorithm: Union[str, Algorithm] = "COBYLA"
+    algorithm: AlgorithmType = "COBYLA"
     opt_conditions: Dict[str, Union[float, int]] = field(
         default_factory=lambda: {"max_eval": 100, "ftol_rel": 1e-4}
     )

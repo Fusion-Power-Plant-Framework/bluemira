@@ -25,7 +25,7 @@ from typing import Any, Callable, List, Mapping, Optional, Tuple, Type, TypeVar,
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimise import (
     OptimiserResult,
     optimise,
@@ -117,7 +117,7 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
         self,
         x0: np.ndarray,
         *,
-        algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
+        algorithm: AlgorithmType = Algorithm.SLSQP,
         opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,

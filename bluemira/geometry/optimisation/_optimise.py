@@ -45,7 +45,7 @@ from bluemira.geometry.optimisation.typing import (
 )
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimise import optimise
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
@@ -106,7 +106,7 @@ def optimise_geometry(
     df_objective: Optional[GeomOptimiserCallable] = None,
     *,
     keep_out_zones: Iterable[Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]] = (),
-    algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
+    algorithm: AlgorithmType = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
     eq_constraints: Iterable[GeomConstraintT] = (),

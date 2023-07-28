@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import asdict, dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 
 class _AlgorithmMeta(enum.EnumMeta):
@@ -56,6 +56,9 @@ class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):
     DIRECT_L = enum.auto()
     CRS = enum.auto()
     ISRES = enum.auto()
+
+
+AlgorithmType = Union[str, Algorithm]
 
 
 @dataclass
