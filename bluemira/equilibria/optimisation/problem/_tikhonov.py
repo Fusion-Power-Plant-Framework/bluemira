@@ -59,11 +59,8 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         Optimiser algorithm
     opt_conditions:
         optimiser conditions
-        defaults:
-
-            {"xtol_rel": 1e-4, "xtol_abs": 1e-4, "ftol_rel": 1e-4,
-             "ftol_abs": 1e-4, "max_eval": 100}
-
+        for defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
     opt_parameters:
         optimisation parameters
     max_currents:
@@ -95,17 +92,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self.gamma = gamma
         self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = (
-            {
-                "xtol_rel": 1e-4,
-                "xtol_abs": 1e-4,
-                "ftol_rel": 1e-4,
-                "ftol_abs": 1e-4,
-                "max_eval": 100,
-            }
-            if opt_conditions is None
-            else opt_conditions
-        )
+        self.opt_conditions = opt_conditions
         self.opt_parameters = (
             {"initial_step": 0.03} if opt_parameters is None else opt_parameters
         )

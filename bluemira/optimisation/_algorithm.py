@@ -80,12 +80,16 @@ class AlgorithmDefaultTolerances:
     """Default Algorithm tolerances"""
 
     SLSQP: AlgorithmTolerance = field(
-        default_factory=lambda: AlgorithmTolerance(ftol_abs=1e-6)
+        default_factory=lambda: AlgorithmTolerance(
+            xtol_rel=1e-4, xtol_abs=1e-4, ftol_rel=1e-4, ftol_abs=1e-4, max_eval=100
+        )
     )
     COBYLA: AlgorithmTolerance = field(
-        default_factory=lambda: AlgorithmTolerance(ftol_abs=1e-4, xtol_abs=1e-4)
+        default_factory=lambda: AlgorithmTolerance(max_eval=100, ftol_rel=1e-6)
     )
-    SBPLX: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
+    SBPLX: AlgorithmTolerance = field(
+        default_factory=lambda: AlgorithmTolerance(stop_val=1.0, max_eval=100)
+    )
     MMA: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
     BFGS: AlgorithmTolerance = field(
         default_factory=lambda: AlgorithmTolerance(xtol_rel=0)

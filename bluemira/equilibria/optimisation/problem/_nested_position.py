@@ -80,7 +80,8 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         The optimisation algorithm to use (e.g. SLSQP)
     opt_conditions:
         The stopping conditions for the optimiser.
-        defaults: `{"stop_val": 1.0, "max_eval": 100}`
+        for defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
 
     Notes
     -----
@@ -109,11 +110,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.coilset = sub_opt.coilset
         self.sub_opt = sub_opt
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = (
-            {"stop_val": 1.0, "max_eval": 100}
-            if opt_conditions is None
-            else opt_conditions
-        )
+        self.opt_conditions = opt_conditions
         self._constraints = [] if constraints is None else constraints
 
         self.initial_state, self.substates = self.read_coilset_state(
@@ -180,7 +177,8 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         The optimisation algorithm to use (e.g. SLSQP)
     opt_conditions:
         The stopping conditions for the optimiser.
-        defaults: `{"max_eval": 100, "ftol_rel": 1e-6}`
+        for defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
     constraints:
         Constraints to use. Note these should be applicable to the parametric position
         vector
@@ -205,11 +203,6 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.position_mapper = position_mapper
         self.sub_opt_problems = sub_opt_problems
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = (
-            {"max_eval": 100, "ftol_rel": 1e-6}
-            if opt_conditions is None
-            else opt_conditions
-        )
         self.opt_conditions = opt_conditions
         self._constraints = constraints
 

@@ -67,8 +67,9 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         The optimisation algorithm to use (e.g. SLSQP)
     opt_conditions:
         The stopping conditions for the optimiser.
-        defaults: `{"stop_val": 1.0, "max_eval": 100}`
-    cnstraints:
+        for defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
+    constraints:
         contraints on the problem
 
     Notes
@@ -98,11 +99,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.bounds = self.get_mapped_state_bounds(max_currents)
         self.gamma = gamma
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = (
-            {"stop_val": 1.0, "max_eval": 100}
-            if opt_conditions is None
-            else opt_conditions
-        )
+        self.opt_conditions = opt_conditions
         self._constraints = [] if constraints is None else constraints
 
     def optimise(self, **_) -> CoilsetOptimiserResult:
