@@ -20,12 +20,13 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Public functions and classes for the optimisation module."""
 
-from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimise import optimise
 from bluemira.optimisation.problem import OptimisationProblem
 
 __all__ = [
     "Algorithm",
+    "AlgorithmType",
     "OptimisationProblem",
     "optimise",
 ]

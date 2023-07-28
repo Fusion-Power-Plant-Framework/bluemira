@@ -23,6 +23,7 @@ EUDEMO component manager classes
 """
 from __future__ import annotations
 
+import abc
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 if TYPE_CHECKING:
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.tools import _timing
 from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
@@ -165,10 +167,19 @@ class PlugManagerMixin(OrphanerMixin):
         )
 
 
-class PortManagerMixin(OrphanerMixin):
+class PortManagerMixin(OrphanerMixin, abc.ABC):
     """
     Mixin class for miscellaneous port component integration utilities.
     """
+
+    def __init__(self, *args, verbose: bool = True, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.add_ports = _timing(
+            self.add_ports,
+            "Built in",
+            f"Adding ports to {type(self).__name__}",
+            debug_info_str=not verbose,
+        )
 
     @staticmethod
     def _make_2d_views(
@@ -185,6 +196,10 @@ class PortManagerMixin(OrphanerMixin):
             view_comps = solid_comps + void_comps
 
             Component(view, children=view_comps, parent=parent)
+
+    @abc.abstractmethod
+    def add_ports(self, ports: List[Component], n_TF: int):
+        """Add ports to Component"""
 
 
 class ThermalShield(PortManagerMixin, ComponentManager):

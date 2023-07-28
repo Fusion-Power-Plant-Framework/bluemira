@@ -37,7 +37,11 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.optimisation._algorithm import Algorithm, AlgorithmDefaultTolerances
+from bluemira.optimisation._algorithm import (
+    Algorithm,
+    AlgorithmDefaultConditions,
+    AlgorithmType,
+)
 from bluemira.optimisation._nlopt import NloptOptimiser
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation.typing import (
@@ -53,7 +57,7 @@ def optimise(
     *,
     x0: Optional[np.ndarray] = None,
     dimensions: Optional[int] = None,
-    algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
+    algorithm: AlgorithmType = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
     bounds: Optional[Tuple[npt.ArrayLike, npt.ArrayLike]] = None,
@@ -94,9 +98,8 @@ def optimise(
             * max_time: float
             * stop_val: float
 
-        In addition to the default ``{"max_eval": 2000}``\ algorithms have
-        specific tolerance defaults see
-        :class:`~bluemira.optimisation._algorithm.AlgorithmDefaultTolerances`.
+        for defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithmDefaultConditions`.
 
     opt_parameters:
         The algorithm-specific optimisation parameters.
@@ -254,7 +257,7 @@ def _make_optimiser(
     f_objective: ObjectiveCallable,
     dimensions: int,
     df_objective: Optional[OptimiserCallable] = None,
-    algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
+    algorithm: AlgorithmType = Algorithm.SLSQP,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
     opt_parameters: Optional[Mapping[str, Any]] = None,
     bounds: Optional[Tuple[np.ndarray, np.ndarray]] = None,
@@ -355,7 +358,7 @@ def _ineq_constraint_condition(c_value: np.ndarray, tols: np.ndarray) -> np.ndar
 
 
 def _set_default_termination_conditions(
-    algorithm: Union[str, Algorithm],
+    algorithm: AlgorithmType,
     opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
 ) -> Optional[Mapping[str, Union[int, float]]]:
     if opt_conditions is None:
@@ -365,8 +368,5 @@ def _set_default_termination_conditions(
         if not isinstance(algorithm, Algorithm):
             return opt_conditions
 
-        return {
-            **getattr(AlgorithmDefaultTolerances(), algorithm.name).to_dict(),
-            "max_eval": 2000,
-        }
+        return getattr(AlgorithmDefaultConditions(), algorithm.name).to_dict()
     return opt_conditions

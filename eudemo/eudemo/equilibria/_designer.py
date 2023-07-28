@@ -45,7 +45,9 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
 from bluemira.equilibria.fem_fixed_boundary.utilities import get_mesh_boundary
 from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.opt_problems import UnconstrainedTikhonovCurrentGradientCOP
+from bluemira.equilibria.optimisation.problem import (
+    UnconstrainedTikhonovCurrentGradientCOP,
+)
 from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
 from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 from bluemira.geometry.coordinates import Coordinates
@@ -149,7 +151,7 @@ class EquilibriumDesigner(Designer[Equilibrium]):
             fixed_coils=True,
             plot=self.plot_optimisation,
         )
-        iterator_program()
+        self._result = iterator_program()
         self._update_params_from_eq(eq)
         return eq
 
@@ -643,7 +645,7 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             fixed_coils=True,
             **settings,
         )
-        iterator_program()
+        self._result = iterator_program()
 
         if self.build_config.get("plot", False):
             _, ax = plt.subplots()

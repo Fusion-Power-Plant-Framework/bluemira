@@ -27,7 +27,7 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._nlopt.conditions import NLOptConditions
 from bluemira.optimisation._nlopt.functions import (
     Constraint,
@@ -106,7 +106,7 @@ class NloptOptimiser(Optimiser):
 
     def __init__(
         self,
-        algorithm: Union[str, Algorithm],
+        algorithm: AlgorithmType,
         n_variables: int,
         f_objective: ObjectiveCallable,
         df_objective: Optional[OptimiserCallable] = None,
@@ -295,7 +295,7 @@ class NloptOptimiser(Optimiser):
         f_x = self._objective.f(x_star) if x_star.size else np.inf
         return x_star, f_x
 
-    def _set_algorithm(self, alg: Union[str, Algorithm]) -> None:
+    def _set_algorithm(self, alg: AlgorithmType) -> None:
         """Set the optimiser's algorithm."""
         self._algorithm = _check_algorithm(alg)
 
@@ -351,7 +351,7 @@ class NloptOptimiser(Optimiser):
             )
 
 
-def _check_algorithm(algorithm: Union[str, Algorithm]) -> Algorithm:
+def _check_algorithm(algorithm: AlgorithmType) -> Algorithm:
     """Validate, and convert, the given algorithm."""
     if isinstance(algorithm, str):
         return Algorithm[algorithm]

@@ -31,7 +31,7 @@ from bluemira.codes.plasmod.equilibrium_2d_coupling import (
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.equilibria.shapes import flux_surface_zakharov
 from bluemira.geometry._private_tools import offset
-from bluemira.utilities.optimiser import approx_derivative
+from bluemira.optimisation._tools import approx_derivative
 
 
 class PLASMODVerificationRawData:

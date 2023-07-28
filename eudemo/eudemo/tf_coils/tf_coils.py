@@ -36,6 +36,7 @@ from bluemira.base.designer import Designer
 from bluemira.base.error import BuilderError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
+from bluemira.builders.tf_coils import EquispacedSelector
 from bluemira.builders.tools import (
     apply_component_display_options,
     circular_pattern_component,
@@ -335,6 +336,17 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         if self.problem_settings != {}:
             bluemira_debug(
                 f"Applying non-default settings to problem: {self.problem_settings}"
+            )
+        if "ripple_selector" not in self.problem_settings:
+            self.problem_settings["ripple_selector"] = EquispacedSelector(100)
+        else:
+            rs_config = self.problem_settings["ripple_selector"]
+            ripple_selector = get_class_from_module(
+                rs_config["cls"],
+                default_module="bluemira.builders.tf_coils",
+            )
+            self.problem_settings["ripple_selector"] = ripple_selector(
+                **rs_config.get("args", {})
             )
         design_problem = self.problem_class(
             parameterisation,

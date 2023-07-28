@@ -26,14 +26,16 @@ import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.opt_constraints import MagneticConstraintSet
-from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
+from bluemira.equilibria.optimisation.constraints import (
+    MagneticConstraintSet,
+    UpdateableConstraint,
+)
 from bluemira.equilibria.optimisation.objectives import regularised_lsq_fom
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import optimise
+from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 from bluemira.utilities.positioning import PositionMapper
 
 
@@ -53,10 +55,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         Equilibrium object used to update magnetic field targets.
     targets:
         Set of magnetic field targets to use in objective function.
-    pfregions:
-        Dictionary of Coordinates that specify convex hull regions inside which
-        each PF control coil position is to be optimised.
-        The Coordinates must be 2d in x,z in units of [m].
+    position_mapper:
+        Position mappings of coil regions
     max_currents:
         Maximum allowed current for each independent coil current in coilset [A].
         If specified as a float, the float will set the maximum allowed current
@@ -67,6 +67,12 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         The optimisation algorithm to use (e.g. SLSQP)
     opt_conditions:
         The stopping conditions for the optimiser.
+        for defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
+        along with `max_eval=100`
+
+    constraints:
+        contraints on the problem
 
     Notes
     -----
@@ -84,11 +90,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         position_mapper: PositionMapper,
         max_currents: Optional[npt.ArrayLike] = None,
         gamma=1e-8,
-        opt_algorithm: str = "SBPLX",
-        opt_conditions: Dict[str, float] = {
-            "stop_val": 1.0,
-            "max_eval": 100,
-        },
+        opt_algorithm: AlgorithmType = Algorithm.SBPLX,
+        opt_conditions: Optional[Dict[str, float]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.coilset = coilset
@@ -98,7 +101,9 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.bounds = self.get_mapped_state_bounds(max_currents)
         self.gamma = gamma
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
+        self.opt_conditions = opt_conditions or self._opt_condition_defaults(
+            {"max_eval": 100}
+        )
         self._constraints = [] if constraints is None else constraints
 
     def optimise(self, **_) -> CoilsetOptimiserResult:

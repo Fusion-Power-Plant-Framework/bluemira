@@ -32,7 +32,7 @@ from bluemira.geometry.optimisation._optimise import (
 )
 from bluemira.geometry.optimisation.typing import GeomConstraintT
 from bluemira.geometry.parameterisations import GeometryParameterisation
-from bluemira.optimisation._algorithm import Algorithm
+from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation.problem import OptimisationProblemBase
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
@@ -92,7 +92,7 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         self,
         geom: _GeomT,
         *,
-        algorithm: Union[Algorithm, str] = Algorithm.SLSQP,
+        algorithm: AlgorithmType = Algorithm.SLSQP,
         opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,

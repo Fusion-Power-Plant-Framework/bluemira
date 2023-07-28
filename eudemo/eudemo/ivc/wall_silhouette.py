@@ -30,10 +30,10 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points, get_legs
+from bluemira.geometry.optimisation import KeepOutZone, optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation, PolySpline
 from bluemira.geometry.tools import convex_hull_wires_2d, make_polygon, offset_wire
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.tools import get_class_from_module
 
 
@@ -86,14 +86,12 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
         self.variables_map = self.build_config.get("variables_map", {})
         self.file_path = self.build_config.get("file_path", None)
-        problem_class = self.build_config.get("problem_class", None)
-        if problem_class is not None:
-            self.problem_class = get_class_from_module(problem_class)
-            self.problem_settings = self.build_config.get("problem_settings", {})
-            self.opt_config = self.build_config.get("optimisation_settings", {})
-            self.algorithm_name = self.opt_config.get("algorithm_name", "SLSQP")
-            self.opt_conditions = self.opt_config.get("conditions", {"max_eval": 100})
-            self.opt_parameters = self.opt_config.get("parameters", {})
+
+        self.problem_settings = self.build_config.get("problem_settings", {})
+        self.opt_config = self.build_config.get("optimisation_settings", {})
+        self.algorithm_name = self.opt_config.get("algorithm_name", "SLSQP")
+        self.opt_conditions = self.opt_config.get("conditions", {"max_eval": 100})
+        self.opt_parameters = self.opt_config.get("parameters", {})
 
         self.equilibrium = equilibrium
 
@@ -134,11 +132,11 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         """
         parameterisation = self._get_parameterisation()
 
-        if not hasattr(self, "problem_class"):
-            raise ValueError(
-                f"Cannot execute {type(self).__name__} in 'run' mode: no problem_class specified."
-            )
+        def f_objective(geom: GeometryParameterisation) -> float:
+            """Objective function to minimise a shape's length."""
+            return geom.create_shape().length
 
+        bluemira_print("Solving WallSilhouette optimisation")
         bluemira_debug(
             f"Setting up design problem with:\n"
             f"algorithm_name: {self.algorithm_name}\n"
@@ -147,35 +145,26 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
             f"opt_parameters: {self.opt_parameters}"
         )
 
-        optimiser = Optimiser(
-            self.algorithm_name,
-            parameterisation.variables.n_free_variables,
-            self.opt_conditions,
-            self.opt_parameters,
-        )
-
         if self.problem_settings != {}:
             bluemira_debug(
                 f"Applying non-default settings to problem: {self.problem_settings}"
             )
-        design_problem = self.problem_class(
+        result = optimise_geometry(
             parameterisation,
-            optimiser,
-            self._make_wall_keep_out_zone(),
-            **self.problem_settings,
+            algorithm=self.algorithm_name,
+            f_objective=f_objective,
+            opt_conditions=self.opt_conditions,
+            opt_parameters=self.opt_parameters,
+            keep_out_zones=[
+                KeepOutZone(
+                    self._make_wall_keep_out_zone(),
+                    n_discr=self.problem_settings.get("n_koz_points", 100),
+                )
+            ],
         )
+        return result.geom
 
-        bluemira_print(f"Solving design problem: {design_problem.__class__.__name__}")
-        if parameterisation.n_ineq_constraints > 0:
-            bluemira_debug("Applying shape constraints")
-            design_problem.apply_shape_constraints()
-
-        bluemira_debug("Solving...")
-        result = design_problem.optimise()
-        result.to_json(self.file_path)
-        return result
-
-    def _get_parameterisation(self):
+    def _get_parameterisation(self) -> GeometryParameterisation:
         return self.parameterisation_cls(self._derive_shape_params())
 
     def _derive_shape_params(self) -> Dict:

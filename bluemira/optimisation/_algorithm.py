@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import asdict, dataclass, field
-from typing import Dict, Optional
+from typing import Dict, Optional, Union
 
 
 class _AlgorithmMeta(enum.EnumMeta):
@@ -58,14 +58,20 @@ class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):
     ISRES = enum.auto()
 
 
+AlgorithmType = Union[str, Algorithm]
+
+
 @dataclass
-class AlgorithmTolerance:
-    """Algorithm tolerances container"""
+class AlgorithmConditions:
+    """Algorithm conditions container"""
 
     ftol_abs: Optional[float] = None
     ftol_rel: Optional[float] = None
     xtol_abs: Optional[float] = None
     xtol_rel: Optional[float] = None
+    max_eval: int = 2000
+    max_time: Optional[float] = None
+    stop_val: Optional[float] = None
 
     def to_dict(self) -> Dict[str, float]:
         """Convert to dictionary without Nones"""
@@ -73,23 +79,27 @@ class AlgorithmTolerance:
 
 
 @dataclass
-class AlgorithmDefaultTolerances:
-    """Default Algorithm tolerances"""
+class AlgorithmDefaultConditions:
+    """Default Algorithm conditions"""
 
-    SLSQP: AlgorithmTolerance = field(
-        default_factory=lambda: AlgorithmTolerance(ftol_abs=1e-6)
+    SLSQP: AlgorithmConditions = field(
+        default_factory=lambda: AlgorithmConditions(
+            xtol_rel=1e-4, xtol_abs=1e-4, ftol_rel=1e-4, ftol_abs=1e-4
+        )
     )
-    COBYLA: AlgorithmTolerance = field(
-        default_factory=lambda: AlgorithmTolerance(ftol_abs=1e-4, xtol_abs=1e-4)
+    COBYLA: AlgorithmConditions = field(
+        default_factory=lambda: AlgorithmConditions(ftol_rel=1e-6)
     )
-    SBPLX: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
-    MMA: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
-    BFGS: AlgorithmTolerance = field(
-        default_factory=lambda: AlgorithmTolerance(xtol_rel=0)
+    SBPLX: AlgorithmConditions = field(
+        default_factory=lambda: AlgorithmConditions(stop_val=1)
     )
-    DIRECT: AlgorithmTolerance = field(
-        default_factory=lambda: AlgorithmTolerance(ftol_rel=1e-4)
+    MMA: AlgorithmConditions = field(default_factory=AlgorithmConditions)
+    BFGS: AlgorithmConditions = field(
+        default_factory=lambda: AlgorithmConditions(xtol_rel=0)
     )
-    DIRECT_L: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
-    CRS: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
-    ISRES: AlgorithmTolerance = field(default_factory=AlgorithmTolerance)
+    DIRECT: AlgorithmConditions = field(
+        default_factory=lambda: AlgorithmConditions(ftol_rel=1e-4)
+    )
+    DIRECT_L: AlgorithmConditions = field(default_factory=AlgorithmConditions)
+    CRS: AlgorithmConditions = field(default_factory=AlgorithmConditions)
+    ISRES: AlgorithmConditions = field(default_factory=AlgorithmConditions)

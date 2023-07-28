@@ -26,10 +26,13 @@ Objective functions must be of the form:
 
 .. code-block:: python
 
-    def f_objective(x, grad, args):
-        if grad.size > 0:
-            grad[:] = my_gradient_calc(x)
-        return my_objective_calc(x)
+    class Objective(ObjectiveFunction):
+
+        def f_objective(self, vector: npt.NDArray) -> npt.NDArray:
+            return objective_calc(vector)
+
+        def df_objective(self, vector: npt.NDArray) -> npt.NDArray:
+            return gradient_calc(vector)
 
 The objective function is minimised, so lower values are "better".
 

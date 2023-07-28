@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 import abc
-from typing import List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -35,7 +35,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import optimise
+from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 
 class BreakdownZoneStrategy(abc.ABC):
@@ -207,12 +207,12 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         coilset: CoilSet,
         breakdown: Breakdown,
         breakdown_strategy: BreakdownZoneStrategy,
-        B_stray_max,
-        B_stray_con_tol,
-        n_B_stray_points,
+        B_stray_max: float,
+        B_stray_con_tol: float,
+        n_B_stray_points: int,
         max_currents: npt.ArrayLike,
-        opt_algorithm="SLSQP",
-        opt_conditions=None,
+        opt_algorithm: AlgorithmType = Algorithm.SLSQP,
+        opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.coilset = coilset

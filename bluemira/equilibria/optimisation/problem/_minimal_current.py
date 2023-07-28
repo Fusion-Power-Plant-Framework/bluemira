@@ -26,13 +26,13 @@ import numpy.typing as npt
 
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.opt_constraints import UpdateableConstraint
+from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import CoilCurrentsObjective
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import optimise
+from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 
 class MinimalCurrentCOP(CoilsetOptimisationProblem):
@@ -41,12 +41,16 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
 
     Parameters
     ----------
+    coilset:
+        Coilset to optimise
     eq:
         Equilibrium object to optimise the currents for
-    optimiser:
-        Optimiser object to use
     max_currents:
         Current bounds vector [A]
+    opt_conditions:
+        Optimiser conditions
+    opt_algorithm:
+        optimiser algorithm
     constraints:
         List of optimisation constraints to apply to the optimisation problem
     """
@@ -57,7 +61,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         max_currents: Optional[npt.ArrayLike] = None,
         opt_conditions: Optional[Dict[str, float]] = None,
-        opt_algorithm: str = "SLSQP",
+        opt_algorithm: AlgorithmType = Algorithm.SLSQP,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.coilset = coilset

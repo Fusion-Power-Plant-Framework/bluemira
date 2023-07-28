@@ -100,18 +100,6 @@ class TestWallSilhouetteDesigner:
         with pytest.raises(ValueError):
             designer.execute()
 
-    def test_run_no_problem_class(self):
-        config = copy.deepcopy(CONFIG)
-        config.update({"run_mode": "run"})
-        del config["problem_class"]
-
-        designer = WallSilhouetteDesigner(
-            PARAMS, build_config=config, equilibrium=self.eq
-        )
-
-        with pytest.raises(ValueError):
-            designer.execute()
-
     def test_run_check_parameters(self):
         config = copy.deepcopy(CONFIG)
         config["run_mode"] = "run"
