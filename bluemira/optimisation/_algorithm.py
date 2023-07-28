@@ -79,7 +79,7 @@ class AlgorithmConditions:
 
 
 @dataclass
-class AlgorithmDefaultConditionss:
+class AlgorithmDefaultConditions:
     """Default Algorithm conditions"""
 
     SLSQP: AlgorithmConditions = field(
