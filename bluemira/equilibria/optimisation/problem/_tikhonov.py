@@ -93,7 +93,9 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self.gamma = gamma
         self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = {"max_eval": 100, **(opt_conditions or {})}
+        self.opt_conditions = opt_conditions or self._opt_condition_defaults(
+            {"max_eval": 100}
+        )
         self.opt_parameters = (
             {"initial_step": 0.03} if opt_parameters is None else opt_parameters
         )

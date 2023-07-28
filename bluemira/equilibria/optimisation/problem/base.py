@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import List, Tuple, Union
+from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -35,6 +35,7 @@ import numpy.typing as npt
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
+from bluemira.optimisation._algorithm import Algorithm, AlgorithmDefaultConditions
 from bluemira.optimisation._optimiser import OptimiserResult
 from bluemira.optimisation.typing import ConstraintT
 
@@ -85,6 +86,20 @@ class CoilsetOptimisationProblem(abc.ABC):
     returns an optimised coilset object, optimised according
     to a specific objective function for that subclass.
     """
+
+    def _opt_condition_defaults(
+        self, default_cond=Dict[str, Union[float, int]]
+    ) -> Dict[str, Union[float, int]]:
+        algorithm = (
+            Algorithm[self.opt_algorithm]
+            if not isinstance(self.opt_algorithm, Algorithm)
+            else self.opt_algorithm
+        )
+
+        return {
+            **getattr(AlgorithmDefaultConditions(), algorithm.name).to_dict(),
+            **default_cond,
+        }
 
     @abc.abstractmethod
     def optimise(self, **kwargs) -> CoilsetOptimiserResult:

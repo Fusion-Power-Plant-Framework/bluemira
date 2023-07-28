@@ -39,7 +39,7 @@ import numpy.typing as npt
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation._algorithm import (
     Algorithm,
-    AlgorithmDefaultTolerances,
+    AlgorithmDefaultConditions,
     AlgorithmType,
 )
 from bluemira.optimisation._nlopt import NloptOptimiser
@@ -98,9 +98,8 @@ def optimise(
             * max_time: float
             * stop_val: float
 
-        In addition to the default ``{"max_eval": 2000}``\ algorithms have
-        specific tolerance defaults see
-        :class:`~bluemira.optimisation._algorithm.AlgorithmDefaultTolerances`.
+        for defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithmDefaultConditions`.
 
     opt_parameters:
         The algorithm-specific optimisation parameters.
@@ -369,8 +368,5 @@ def _set_default_termination_conditions(
         if not isinstance(algorithm, Algorithm):
             return opt_conditions
 
-        return {
-            **getattr(AlgorithmDefaultTolerances(), algorithm.name).to_dict(),
-            "max_eval": 2000,
-        }
+        return getattr(AlgorithmDefaultConditions(), algorithm.name).to_dict()
     return opt_conditions

@@ -153,7 +153,8 @@ def optimise_geometry(
             * max_time: float
             * stop_val: float
 
-        (default: {"max_eval": 2000})
+        for defaults see
+        :class:`~bluemira.optimisation._algorithm.AlgorithmDefaultConditions`.
     opt_parameters:
         The algorithm-specific optimisation parameters.
     eq_constraints:
