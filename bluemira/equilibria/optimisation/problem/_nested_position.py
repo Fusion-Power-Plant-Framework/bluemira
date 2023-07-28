@@ -52,7 +52,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import optimise
+from bluemira.optimisation import AlgorithmType, optimise
 from bluemira.utilities.positioning import PositionMapper
 
 
@@ -82,6 +82,8 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         The stopping conditions for the optimiser.
         for defaults see
         :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
+        along with `max_eval=100`
+
 
     Notes
     -----
@@ -97,7 +99,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         position_mapper: PositionMapper,
-        opt_algorithm="SBPLX",
+        opt_algorithm: AlgorithmType = "SBPLX",
         opt_conditions: Optional[Dict[str, float]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
@@ -110,7 +112,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.coilset = sub_opt.coilset
         self.sub_opt = sub_opt
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
+        self.opt_conditions = {"max_eval": 100, **(opt_conditions or {})}
         self._constraints = [] if constraints is None else constraints
 
         self.initial_state, self.substates = self.read_coilset_state(
@@ -179,6 +181,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         The stopping conditions for the optimiser.
         for defaults see
         :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
+        along with `max_eval=100`
     constraints:
         Constraints to use. Note these should be applicable to the parametric position
         vector
@@ -193,7 +196,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         coilset: CoilSet,
         position_mapper: PositionMapper,
         sub_opt_problems: List[CoilsetOptimisationProblem],
-        opt_algorithm: str = "COBYLA",
+        opt_algorithm: AlgorithmType = "COBYLA",
         opt_conditions: Optional[Dict[str, float]] = None,
         constraints=None,
         initial_currents=None,
@@ -203,7 +206,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.position_mapper = position_mapper
         self.sub_opt_problems = sub_opt_problems
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
+        self.opt_conditions = {"max_eval": 100, **(opt_conditions or {})}
         self._constraints = constraints
 
         if initial_currents:

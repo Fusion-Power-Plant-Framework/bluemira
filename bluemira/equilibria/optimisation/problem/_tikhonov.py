@@ -35,7 +35,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import optimise
+from bluemira.optimisation import AlgorithmType, optimise
 
 
 class TikhonovCurrentCOP(CoilsetOptimisationProblem):
@@ -61,6 +61,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         optimiser conditions
         for defaults see
         :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
+        along with `max_eval=100`
     opt_parameters:
         optimisation parameters
     max_currents:
@@ -80,7 +81,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         gamma: float,
-        opt_algorithm: str = "SLSQP",
+        opt_algorithm: AlgorithmType = "SLSQP",
         opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
         opt_parameters: Optional[Dict[str, float]] = None,
         max_currents: Optional[npt.ArrayLike] = None,
@@ -92,7 +93,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         self.gamma = gamma
         self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
+        self.opt_conditions = {"max_eval": 100, **(opt_conditions or {})}
         self.opt_parameters = (
             {"initial_step": 0.03} if opt_parameters is None else opt_parameters
         )

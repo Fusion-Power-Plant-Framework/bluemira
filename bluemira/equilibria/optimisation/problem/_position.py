@@ -35,7 +35,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import optimise
+from bluemira.optimisation import AlgorithmType, optimise
 from bluemira.utilities.positioning import PositionMapper
 
 
@@ -69,6 +69,8 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         The stopping conditions for the optimiser.
         for defaults see
         :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
+        along with `max_eval=100`
+
     constraints:
         contraints on the problem
 
@@ -88,7 +90,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         position_mapper: PositionMapper,
         max_currents: Optional[npt.ArrayLike] = None,
         gamma=1e-8,
-        opt_algorithm: str = "SBPLX",
+        opt_algorithm: AlgorithmType = "SBPLX",
         opt_conditions: Optional[Dict[str, float]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
@@ -99,7 +101,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.bounds = self.get_mapped_state_bounds(max_currents)
         self.gamma = gamma
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions
+        self.opt_conditions = {"max_eval": 100, **(opt_conditions or {})}
         self._constraints = [] if constraints is None else constraints
 
     def optimise(self, **_) -> CoilsetOptimiserResult:
