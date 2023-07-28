@@ -35,7 +35,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import AlgorithmType, optimise
+from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 
 class BreakdownZoneStrategy(abc.ABC):
@@ -211,7 +211,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         B_stray_con_tol: float,
         n_B_stray_points: int,
         max_currents: npt.ArrayLike,
-        opt_algorithm: AlgorithmType = "SLSQP",
+        opt_algorithm: AlgorithmType = Algorithm.SLSQP,
         opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):

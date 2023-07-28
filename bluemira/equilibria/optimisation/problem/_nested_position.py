@@ -52,7 +52,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import AlgorithmType, optimise
+from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 from bluemira.utilities.positioning import PositionMapper
 
 
@@ -99,7 +99,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         position_mapper: PositionMapper,
-        opt_algorithm: AlgorithmType = "SBPLX",
+        opt_algorithm: AlgorithmType = Algorithm.SBPLX,
         opt_conditions: Optional[Dict[str, float]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
@@ -198,7 +198,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         coilset: CoilSet,
         position_mapper: PositionMapper,
         sub_opt_problems: List[CoilsetOptimisationProblem],
-        opt_algorithm: AlgorithmType = "COBYLA",
+        opt_algorithm: AlgorithmType = Algorithm.COBYLA,
         opt_conditions: Optional[Dict[str, float]] = None,
         constraints=None,
         initial_currents=None,

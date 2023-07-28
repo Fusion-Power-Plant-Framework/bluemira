@@ -32,7 +32,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import optimise
+from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 
 class MinimalCurrentCOP(CoilsetOptimisationProblem):
@@ -61,7 +61,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         max_currents: Optional[npt.ArrayLike] = None,
         opt_conditions: Optional[Dict[str, float]] = None,
-        opt_algorithm: str = "SLSQP",
+        opt_algorithm: AlgorithmType = Algorithm.SLSQP,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.coilset = coilset

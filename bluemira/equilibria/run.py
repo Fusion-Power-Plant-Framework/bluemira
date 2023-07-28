@@ -66,7 +66,7 @@ from bluemira.equilibria.solve import (
     PicardIterator,
 )
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.optimisation import AlgorithmType
+from bluemira.optimisation import Algorithm, AlgorithmType
 from bluemira.utilities.optimiser import Optimiser
 from bluemira.utilities.positioning import PositionMapper
 
@@ -118,7 +118,7 @@ class BreakdownCOPSettings:
 
     problem: Type[BreakdownCOP] = BreakdownCOP
     strategy: Type[BreakdownZoneStrategy] = CircularZoneStrategy
-    algorithm: AlgorithmType = "COBYLA"
+    algorithm: AlgorithmType = Algorithm.COBYLA
     opt_conditions: Dict[str, Union[float, int]] = field(
         default_factory=lambda: {"max_eval": 5000, "ftol_rel": 1e-10}
     )
@@ -134,7 +134,7 @@ class EQSettings:
     convergence: ConvergenceCriterion = field(
         default_factory=lambda: DudsonConvergence(1e-2)
     )
-    algorithm: AlgorithmType = "SLSQP"
+    algorithm: AlgorithmType = Algorithm.SLSQP
     opt_conditions: Dict[str, Union[float, int]] = field(
         default_factory=lambda: {"max_eval": 1000, "ftol_rel": 1e-6}
     )
@@ -152,7 +152,7 @@ class PositionSettings:
     """Position optimiser settings"""
 
     problem: Type[PulsedNestedPositionCOP] = PulsedNestedPositionCOP
-    algorithm: AlgorithmType = "COBYLA"
+    algorithm: AlgorithmType = Algorithm.COBYLA
     opt_conditions: Dict[str, Union[float, int]] = field(
         default_factory=lambda: {"max_eval": 100, "ftol_rel": 1e-4}
     )

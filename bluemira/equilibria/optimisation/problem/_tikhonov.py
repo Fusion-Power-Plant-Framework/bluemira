@@ -35,7 +35,7 @@ from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
-from bluemira.optimisation import AlgorithmType, optimise
+from bluemira.optimisation import Algorithm, AlgorithmType, optimise
 
 
 class TikhonovCurrentCOP(CoilsetOptimisationProblem):
@@ -81,7 +81,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         gamma: float,
-        opt_algorithm: AlgorithmType = "SLSQP",
+        opt_algorithm: AlgorithmType = Algorithm.SLSQP,
         opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
         opt_parameters: Optional[Dict[str, float]] = None,
         max_currents: Optional[npt.ArrayLike] = None,
