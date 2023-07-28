@@ -59,6 +59,11 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         Optimiser algorithm
     opt_conditions:
         optimiser conditions
+        defaults:
+
+            {"xtol_rel": 1e-4, "xtol_abs": 1e-4, "ftol_rel": 1e-4,
+             "ftol_abs": 1e-4, "max_eval": 100}
+
     opt_parameters:
         optimisation parameters
     max_currents:

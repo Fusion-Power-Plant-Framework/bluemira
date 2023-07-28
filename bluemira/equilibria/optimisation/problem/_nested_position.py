@@ -80,6 +80,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         The optimisation algorithm to use (e.g. SLSQP)
     opt_conditions:
         The stopping conditions for the optimiser.
+        defaults: `{"stop_val": 1.0, "max_eval": 100}`
 
     Notes
     -----
@@ -175,8 +176,11 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         Position mapper tool to parameterise coil positions
     sub_opt_problems:
         The list of sub-optimisation problems to solve
-    optimiser:
-        Optimiser object to use
+    opt_algorithm:
+        The optimisation algorithm to use (e.g. SLSQP)
+    opt_conditions:
+        The stopping conditions for the optimiser.
+        defaults: `{"max_eval": 100, "ftol_rel": 1e-6}`
     constraints:
         Constraints to use. Note these should be applicable to the parametric position
         vector

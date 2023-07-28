@@ -67,6 +67,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         The optimisation algorithm to use (e.g. SLSQP)
     opt_conditions:
         The stopping conditions for the optimiser.
+        defaults: `{"stop_val": 1.0, "max_eval": 100}`
     cnstraints:
         contraints on the problem
 
