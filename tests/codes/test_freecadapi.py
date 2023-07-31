@@ -147,13 +147,13 @@ class TestFreecadapi:
     def test_make_bezier(self):
         bezier: Part.Wire = cadapi.make_bezier(self.square_points)
         curve = bezier.Edges[0].Curve
-        assert type(curve) == Part.BezierCurve
+        assert type(curve) is Part.BezierCurve
 
     def test_interpolate_bspline(self):
         pntslist = self.square_points
         bspline: Part.Wire = cadapi.interpolate_bspline(pntslist)
         curve = bspline.Edges[0].Curve
-        assert type(curve) == Part.BSplineCurve
+        assert type(curve) is Part.BSplineCurve
         # assert that the bspline pass through the points
         # get the points parameter
         params = [curve.parameter(Base.Vector(p)) for p in pntslist]
