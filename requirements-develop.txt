@@ -10,7 +10,7 @@ coverage[toml]==7.2.7
 distlib==0.3.7
 docutils==0.18.1
 filelock==3.12.2
-flake8==6.0.0
+flake8==6.1.0
 flake8-absolute-import==1.0.0.1
 flake8-bandit==4.1.1
 flake8-docstrings==1.7.0
