@@ -83,7 +83,7 @@ class TestMaterials:
         self.beryllium.temperature = 300
         assert hasattr(self.beryllium, "density")
         assert is_num(self.beryllium.density)
-        assert type(self.beryllium.density) == float
+        assert type(self.beryllium.density) is float
 
     def test_material_card(self):
         pytest.importorskip("openmc")

@@ -88,7 +88,7 @@ def make_castellated_plug(
             raise ValueError("Both distance and n_castellations parameters are None")
 
     # Check/Set-up offsets iterable
-    if type(offsets) == float:
+    if type(offsets) is float:
         off_iter = [offsets] * len(dist_iter)
     else:
         if len(offsets) == len(dist_iter):
