@@ -370,6 +370,9 @@ class CoreRadiation(Radiation):
         eq: Equilibrium,
         flux_surf_solver: TempFsSolver,
         params: ParameterFrame,
+        psi_n,
+        ne_mp,
+        te_mp,
         impurity_content,
         impurity_data,
     ):
@@ -387,96 +390,10 @@ class CoreRadiation(Radiation):
         ]
         self.impurity_symbols = impurity_content.keys()
 
-        # Adimensional radius at the mid-plane.
-        # From the core to the last closed flux surface
-        self.rho_core = self.collect_rho_core_values()
-
-        # For each flux tube, density and temperature at the mid-plane
-        self.ne_mp, self.te_mp = self.core_electron_density_temperature_profile(
-            self.rho_core
-        )
-
-    def collect_rho_core_values(self):
-        """
-        Calculation of core dimensionless radial coordinate rho.
-
-        Returns
-        -------
-        rho_core: np.array
-            dimensionless core radius. Values between 0 and 1
-        """
-        # The plasma bulk is divided into plasma core and plasma mantle according to rho
-        # rho is a nondimensional radial coordinate: rho = r/a (r varies from 0 to a)
-        self.rho_ped = (self.params.rho_ped_n + self.params.rho_ped_t) / 2.0
-
-        # Plasma core for rho < rho_core
-        rho_core1 = np.linspace(0.01, 0.95 * self.rho_ped, 30)
-        rho_core2 = np.linspace(0.95 * self.rho_ped, self.rho_ped, 15)
-        rho_core = np.append(rho_core1, rho_core2)
-
-        # Plasma mantle for rho_core < rho < 1
-        rho_sep = np.linspace(self.rho_ped, 0.99, 10)
-
-        rho_core = np.append(rho_core, rho_sep)
-
-        return rho_core
-
-    def core_electron_density_temperature_profile(self, rho_core):
-        """
-        Calculation of electron density and electron temperature,
-        as function of rho, from the magnetic axis to the separatrix,
-        along the midplane.
-        The region that extends through the plasma core until its
-        outer layer, named pedestal, is referred as "interior".
-        The region that extends from the pedestal to the separatrix
-        is referred as "exterior".
-
-        Parameters
-        ----------
-        rho_core: np.array
-            dimensionless core radius. Values between 0 and 1
-
-        Returns
-        -------
-        ne: np.array
-            electron densities at the mid-plane. Unit [1/m^3]
-        te: np.array
-            electron temperature at the mid-plane. Unit [keV]
-        """
-        i_interior = np.where((rho_core >= 0) & (rho_core <= self.rho_ped))[0]
-
-        n_grad_ped0 = self.params.n_e_0 - self.params.n_e_ped
-        t_grad_ped0 = self.params.T_e_0 - self.params.T_e_ped
-
-        rho_ratio_n = (
-            1 - ((rho_core[i_interior] ** 2) / (self.rho_ped**2))
-        ) ** self.params.alpha_n
-
-        rho_ratio_t = (
-            1
-            - (
-                (rho_core[i_interior] ** self.params.t_beta)
-                / (self.rho_ped**self.params.t_beta)
-            )
-        ) ** self.params.alpha_t
-
-        ne_i = self.params.n_e_ped + (n_grad_ped0 * rho_ratio_n)
-        te_i = self.params.T_e_ped + (t_grad_ped0 * rho_ratio_t)
-
-        i_exterior = np.where((rho_core > self.rho_ped) & (rho_core <= 1))[0]
-
-        n_grad_sepped = self.params.n_e_ped - self.params.n_e_sep
-        t_grad_sepped = self.params.T_e_ped - self.params.T_e_sep
-
-        rho_ratio = (1 - rho_core[i_exterior]) / (1 - self.rho_ped)
-
-        ne_e = self.params.n_e_sep + (n_grad_sepped * rho_ratio)
-        te_e = self.params.T_e_sep + (t_grad_sepped * rho_ratio)
-
-        ne_core = np.append(ne_i, ne_e)
-        te_core = np.append(te_i, te_e)
-
-        return ne_core, te_core
+        # Midplane profiles
+        self.psi_n = psi_n
+        self.ne_mp = ne_mp
+        self.te_mp = te_mp
 
     def build_mp_radiation_profile(self):
         """
@@ -490,7 +407,7 @@ class CoreRadiation(Radiation):
         ]
 
         # Line radiation loss. Mid-plane distribution through the SoL
-        self.rad = [
+        self.rad_mp = [
             calculate_line_radiation_loss(self.ne_mp, loss, fi)
             for loss, fi in zip(loss_f, self.impurities_content)
         ]
@@ -500,7 +417,7 @@ class CoreRadiation(Radiation):
         Plot one dimensional behaviour of line radiation
         against the adimensional radius
         """
-        self.mp_profile_plot(self.rho_core, self.rad, self.impurity_symbols)
+        self.mp_profile_plot(self.psi_n, self.rad_mp, self.impurity_symbols)
 
     def build_core_distribution(self):
         """
@@ -514,8 +431,7 @@ class CoreRadiation(Radiation):
             For specie and each closed flux line in the core
         """
         # Closed flux tubes within the separatrix
-        psi_n = self.rho_core**2
-        self.flux_tubes = self.collect_flux_tubes(psi_n)
+        self.flux_tubes = self.collect_flux_tubes(self.psi_n)
 
         # For each flux tube, poloidal density profile.
         self.ne_pol = [
@@ -1867,6 +1783,9 @@ class RadiationSolver:
         eq: Equilibrium,
         flux_surf_solver: TempFsSolver,
         params: ParameterFrame,
+        psi_n,
+        ne_mp,
+        te_mp,
         impurity_content_core,
         impurity_data_core,
         impurity_content_sol,
@@ -1881,6 +1800,11 @@ class RadiationSolver:
         self.imp_content_sol = impurity_content_sol
         self.imp_data_sol = impurity_data_sol
         self.lcfs = self.eq.get_LCFS()
+
+        # Midplane parameters
+        self.psi_n = psi_n
+        self.ne_mp = ne_mp
+        self.te_mp = te_mp
 
         # To be calculated calling analyse
         self.core_rad = None
@@ -1915,6 +1839,9 @@ class RadiationSolver:
             self.eq,
             self.flux_surf_solver,
             self.params,
+            self.psi_n,
+            self.ne_mp,
+            self.te_mp,
             self.imp_content_core,
             self.imp_data_core,
         )
@@ -1958,6 +1885,9 @@ class RadiationSolver:
             self.eq,
             self.flux_surf_solver,
             self.params,
+            self.psi_n,
+            self.ne_mp,
+            self.te_mp,
             self.imp_content_core,
             self.imp_data_core,
         )
