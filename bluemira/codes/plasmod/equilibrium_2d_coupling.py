@@ -41,7 +41,7 @@ from scipy.interpolate import interp1d
 from tabulate import tabulate
 
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import EPS, MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -484,7 +484,7 @@ def solve_transport_fixed_boundary(
 
 def calc_metric_coefficients(
     flux_surfaces: List[ClosedFluxSurface],
-    grad_psi_2D_func: Callable[[float, float], float],
+    grad_psi_2D_func: Callable[[np.ndarray], np.ndarray],
     psi_norm_1D: np.ndarray,
     psi_ax: float,
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
@@ -526,7 +526,7 @@ def calc_metric_coefficients(
     volume_func = interp1d(psi_norm_1D, volume, fill_value="extrapolate")
     grad_vol_1D_array = approx_derivative(volume_func, psi_norm_1D).diagonal()
 
-    def grad_psi_norm(x):
+    def grad_psi_norm(x: np.ndarray) -> np.ndarray:
         return np.hypot(*grad_psi_2D_func(x))
 
     for i, fs in enumerate(flux_surfaces):
@@ -641,7 +641,8 @@ def calc_curr_dens_profiles(
     psi_1D = psi_ax - psi_norm_1D**2 * (psi_ax - psi_b)
 
     psi_1D_0 = psi_1D
-    for i in range(50):
+    no_iter = 50
+    for _ in range(no_iter):
         # calculate pprime profile from p
         p_fun_psi1D = interp1d(psi_1D, p, "linear", fill_value="extrapolate")
         pprime = approx_derivative(p_fun_psi1D, psi_1D).diagonal()
@@ -666,7 +667,10 @@ def calc_curr_dens_profiles(
         dum3 = np.gradient(dum2, psi_1D)
         betahat = dum3 / q3 / AA
         chat = -4 * np.pi**2 * MU_0 * pprime / AA
-        FF = np.sqrt(2.0 * y)  # noqa: N806
+        #  or np.where(y >= 0, np.sqrt(2.0 * y), -np.sqrt(2.0 * abs(y)))
+        #  or np.sqrt(2.0 * abs(y))
+        FF = np.sqrt(2.0 * np.clip(y, EPS, None))  # noqa: N806
+
         ff_prime = 4 * np.pi**2 * (chat - betahat * FF**2)
 
         phi_1D = -cumulative_trapezoid(q, psi_1D, initial=0)
@@ -678,6 +682,7 @@ def calc_curr_dens_profiles(
         )
 
         rms_error = np.sqrt(np.mean((psi_1D - psi_1D_0) ** 2))
+
         psi_1D_0 = psi_1D
 
         if rms_error <= 1e-5:
@@ -685,7 +690,7 @@ def calc_curr_dens_profiles(
     else:
         bluemira_warn(
             f"Jackpot, you've somehow found a set of inputs for which this calculation does not converge almost immediately."
-            f"{rms_error=} after {i} iterations."
+            f"{rms_error=} after {no_iter} iterations."
         )
 
     if I_p == 0:
