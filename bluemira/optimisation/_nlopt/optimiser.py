@@ -408,7 +408,7 @@ def _process_nlopt_result(opt: nlopt.opt, algorithm: Algorithm) -> None:
         message = "optimiser succeeded but stopped at the maximum number of evaluations."
         if algorithm is Algorithm.ISRES:
             log_func = bluemira_debug
-            message += "\nThis is expected for the {Algorithm.ISRES.name} algorithm."
+            message += f"\nThis is expected for the {Algorithm.ISRES.name} algorithm."
     elif result == nlopt.MAXTIME_REACHED:
         message = "optimiser succeeded but stopped at the maximum duration."
     elif result == nlopt.ROUNDOFF_LIMITED:
