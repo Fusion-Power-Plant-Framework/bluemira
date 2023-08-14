@@ -88,24 +88,21 @@ def process_scipy_result(res):
 
     if not hasattr(res, "status"):
         bluemira_warn("Scipy optimisation was not succesful. Failed without status.")
-        raise OptimisationError("\n".join([res.message, res.__str__()]))
+        raise OptimisationError(f"{res.message}\n{res.__str__()}")
 
-    elif res.status == 8:
+    if res.status == 8:  # noqa: PLR2004
         # This can happen when scipy is not convinced that it has found a minimum.
         bluemira_warn(
             "\nOptimiser (scipy) found a positive directional derivative,\n"
-            "returning suboptimal result. \n"
-            "\n".join([res.message, res.__str__()])
+            f"returning suboptimal result. \n\n{res.message}{res.__str__()}"
         )
         return res.x
 
-    elif res.status == 9:
+    if res.status == 9:  # noqa: PLR2004
         bluemira_warn(
-            "\nOptimiser (scipy) exceeded number of iterations, returning "
-            "suboptimal result. \n"
-            "\n".join([res.message, res.__str__()])
+            "\nOptimiser (scipy) exceeded number of iterations, returning"
+            f"suboptimal result. \n\n{res.message}{res.__str__()}"
         )
         return res.x
 
-    else:
-        raise OptimisationError("\n".join([res.message, res.__str__()]))
+    raise OptimisationError(f"{res.message}\n{res.__str__()}")

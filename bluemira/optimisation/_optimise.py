@@ -180,9 +180,8 @@ def optimise(
             dimensions = x0.size
         else:
             raise ValueError("Must give argument 'dimension' or 'x0'.")
-    else:
-        if x0 is not None and x0.size != dimensions:
-            raise ValueError("Size of 'x0' and 'dimensions' must agree.")
+    elif x0 is not None and x0.size != dimensions:
+        raise ValueError("Size of 'x0' and 'dimensions' must agree.")
 
     opt_conditions = _set_default_termination_conditions(algorithm, opt_conditions)
 
@@ -292,7 +291,7 @@ def _process_bounds(
     if bounds is None:
         return (np.full(dims, -np.inf), np.full(dims, np.inf))
     bounds = tuple(bounds)
-    if len(bounds) != 2:
+    if len(bounds) != 2:  # noqa: PLR2004
         raise ValueError(f"Bounds must have exactly 2 elements, found '{len(bounds)}'")
     new_bounds = [np.full(dims, b) if np.isscalar(b) else np.array(b) for b in bounds]
     return new_bounds[0], new_bounds[1]

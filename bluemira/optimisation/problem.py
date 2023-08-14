@@ -56,7 +56,8 @@ class OptimisationProblemBase:
             return f
         return default
 
-    def __is_method(self, f: __MethodT, cls: Type[Any]) -> bool:
+    @staticmethod
+    def __is_method(f: __MethodT, cls: Type[Any]) -> bool:
         """
         Determine if the given method is a member of this base class or not.
 
@@ -94,15 +95,18 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
     def df_objective(self, x: np.ndarray) -> np.ndarray:
         """The gradient of the objective function at ``x``."""
 
-    def eq_constraints(self) -> List[ConstraintT]:
+    @staticmethod
+    def eq_constraints() -> List[ConstraintT]:
         """The equality constraints on the optimisation."""
         return []
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    @staticmethod
+    def ineq_constraints() -> List[ConstraintT]:
         """The inequality constraints on the optimisation."""
         return []
 
-    def bounds(self) -> Tuple[npt.ArrayLike, npt.ArrayLike]:
+    @staticmethod
+    def bounds() -> Tuple[npt.ArrayLike, npt.ArrayLike]:
         """
         The lower and upper bounds of the optimisation parameters.
 

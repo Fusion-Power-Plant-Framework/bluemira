@@ -18,7 +18,6 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-import abc
 import enum
 from typing import Callable, List, Optional, Tuple, Union
 
@@ -37,7 +36,7 @@ class ConstraintType(enum.Enum):
     INEQUALITY = enum.auto()
 
 
-class _NloptFunction(abc.ABC):
+class _NloptFunction:
     """
     Base class for NLOpt objective/constraint functions.
 
