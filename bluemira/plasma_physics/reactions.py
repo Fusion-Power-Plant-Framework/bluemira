@@ -23,11 +23,12 @@
 Fusion reactions
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Union
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.constants import (
     AMU_TO_KG,
@@ -197,8 +198,16 @@ class Reactions(Enum):
     D_He3 = auto()  # D + 3He --> 4He + p reaction
 
 
+class ReactivityMethod(Enum):
+    BOSCH_HALE = auto()
+    PLASMOD = auto()
+    JOHNER = auto()
+
+
 def reactivity(
-    temp_k: Union[float, np.ndarray], reaction="D-T", method="Bosch-Hale"
+    temp_k: Union[float, np.ndarray],
+    reaction: Union[str, Reactions] = Reactions.D_T,
+    method: Union[str, ReactivityMethod] = ReactivityMethod.BOSCH_HALE,
 ) -> Union[float, np.ndarray]:
     """
     Calculate the thermal reactivity of a fusion reaction in Maxwellian plasmas,
@@ -217,19 +226,17 @@ def reactivity(
     -------
     Reactivity of the reaction at the specified temperature(s) [m^3/s]
     """
-    temp_kev = raw_uc(temp_k, "K", "keV")
-    reaction = Reactions[reaction.replace("-", "_")]
-
+    if not isinstance(reaction, Reactions):
+        reaction = Reactions[reaction.replace("-", "_")]
+    if not isinstance(method, ReactivityMethod):
+        method = ReactivityMethod[method.replace("-", "_").upper()]
     mapping = {
-        "Bosch-Hale": _reactivity_bosch_hale,
-        "PLASMOD": _reactivity_plasmod,
-        "Johner": _reactivity_johner,
+        ReactivityMethod.BOSCH_HALE: _reactivity_bosch_hale,
+        ReactivityMethod.PLASMOD: _reactivity_plasmod,
+        ReactivityMethod.JOHNER: _reactivity_johner,
     }
-    if method not in mapping:
-        raise ValueError(f"Unknown method: {method}")
 
-    func = mapping[method]
-    return func(temp_kev, reaction)
+    return mapping[method](raw_uc(temp_k, "K", "keV"), reaction)
 
 
 @dataclass
@@ -243,20 +250,22 @@ class BoschHale_DT_4Hen:
     DOI 10.1088/0029-5515/32/4/I07
     """
 
-    t_min = 0.2  # [keV]
-    t_max = 100  # [keV]
-    bg = 34.3827  # [keV**0.5]
-    mrc2 = 1.124656e6  # [keV]
-    c = np.array(
-        [
-            1.17302e-9,
-            1.51361e-2,
-            7.51886e-2,
-            4.60643e-3,
-            1.35000e-2,
-            -1.06750e-4,
-            1.36600e-5,
-        ]
+    t_min: float = 0.2  # [keV]
+    t_max: float = 100  # [keV]
+    bg: float = 34.3827  # [keV**0.5]
+    mrc2: float = 1.124656e6  # [keV]
+    c: npt.NDArray = field(
+        default_factory=lambda: np.array(
+            [
+                1.17302e-9,
+                1.51361e-2,
+                7.51886e-2,
+                4.60643e-3,
+                1.35000e-2,
+                -1.06750e-4,
+                1.36600e-5,
+            ]
+        )
     )
 
 
@@ -271,20 +280,22 @@ class BoschHale_DD_3Hen:
     DOI 10.1088/0029-5515/32/4/I07
     """
 
-    t_min = 0.2  # [keV]
-    t_max = 100  # [keV]
-    bg = 31.3970  # [keV**0.5]
-    mrc2 = 0.937814e6  # [keV]
-    c = np.array(
-        [
-            5.43360e-12,
-            5.85778e-3,
-            7.68222e-3,
-            0.0,
-            -2.96400e-6,
-            0.0,
-            0.0,
-        ]
+    t_min: float = 0.2  # [keV]
+    t_max: float = 100  # [keV]
+    bg: float = 31.3970  # [keV**0.5]
+    mrc2: float = 0.937814e6  # [keV]
+    c: npt.NDArray = field(
+        default_factory=lambda: np.array(
+            [
+                5.43360e-12,
+                5.85778e-3,
+                7.68222e-3,
+                0.0,
+                -2.96400e-6,
+                0.0,
+                0.0,
+            ]
+        )
     )
 
 
@@ -299,20 +310,22 @@ class BoschHale_DD_Tp:
     DOI 10.1088/0029-5515/32/4/I07
     """
 
-    t_min = 0.2  # [keV]
-    t_max = 100  # [keV]
-    bg = 31.3970  # [keV**0.5]
-    mrc2 = 0.937814e6  # [keV]
-    c = np.array(
-        [
-            5.65718e-12,
-            3.41267e-3,
-            1.99167e-3,
-            0.0,
-            1.05060e-5,
-            0.0,
-            0.0,
-        ]
+    t_min: float = 0.2  # [keV]
+    t_max: float = 100  # [keV]
+    bg: float = 31.3970  # [keV**0.5]
+    mrc2: float = 0.937814e6  # [keV]
+    c: npt.NDArray = field(
+        default_factory=lambda: np.array(
+            [
+                5.65718e-12,
+                3.41267e-3,
+                1.99167e-3,
+                0.0,
+                1.05060e-5,
+                0.0,
+                0.0,
+            ]
+        )
     )
 
 
@@ -327,20 +340,22 @@ class BoschHale_DHe3_4Hep:
     DOI 10.1088/0029-5515/32/4/I07
     """
 
-    t_min = 0.5  # [keV]
-    t_max = 190  # [keV]
-    bg = 68.7508  # [keV**0.5]
-    mrc2 = 1.124572e6  # [keV]
-    c = np.array(
-        [
-            5.51036e-10,
-            6.41918e-3,
-            -2.02896e-3,
-            -1.91080e-5,
-            1.35776e-4,
-            0.0,
-            0.0,
-        ]
+    t_min: float = 0.5  # [keV]
+    t_max: float = 190  # [keV]
+    bg: float = 68.7508  # [keV**0.5]
+    mrc2: float = 1.124572e6  # [keV]
+    c: npt.NDArray = field(
+        default_factory=lambda: np.array(
+            [
+                5.51036e-10,
+                6.41918e-3,
+                -2.02896e-3,
+                -1.91080e-5,
+                1.35776e-4,
+                0.0,
+                0.0,
+            ]
+        )
     )
 
 
@@ -372,10 +387,10 @@ def _reactivity_bosch_hale(
             + _reactivity_bosch_hale(temp_kev, Reactions.D_D2)
         )
     mapping = {
-        Reactions.D_T: BoschHale_DT_4Hen,
-        Reactions.D_D1: BoschHale_DD_3Hen,
-        Reactions.D_D2: BoschHale_DD_Tp,
-        Reactions.D_He3: BoschHale_DHe3_4Hep,
+        Reactions.D_T: BoschHale_DT_4Hen(),
+        Reactions.D_D1: BoschHale_DD_3Hen(),
+        Reactions.D_D2: BoschHale_DD_Tp(),
+        Reactions.D_He3: BoschHale_DHe3_4Hep(),
     }
     data = mapping[reaction]
 
