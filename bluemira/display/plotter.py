@@ -117,7 +117,7 @@ class DictOptionsDescriptor:
     """
 
     def __init__(self, default_factory: Optional[Callable[[], Dict[str, Any]]] = None):
-        self.default_factory = {} if default_factory is None else default_factory()
+        self.default = {} if default_factory is None else default_factory()
 
     def __set_name__(self, _, name: str):
         """Set the attribute name from a dataclass"""
@@ -128,9 +128,9 @@ class DictOptionsDescriptor:
     ) -> Union[Callable[[], Dict[str, Any]], Dict[str, Any]]:
         """Get the options dictionary"""
         if obj is None:
-            return lambda: self.default_factory
+            return lambda: self.default
 
-        return getattr(obj, self._name, self.default_factory)
+        return getattr(obj, self._name, self.default)
 
     def __set__(
         self, obj: Any, value: Union[Callable[[], Dict[str, Any]], Dict[str, Any]]
@@ -138,10 +138,7 @@ class DictOptionsDescriptor:
         """Set the options dictionary"""
         if callable(value):
             value = value()
-        default = getattr(obj, self._name, self.default_factory)
-        if callable(default):
-            default = default()
-        setattr(obj, self._name, {**default, **value})
+        setattr(obj, self._name, {**getattr(obj, self._name, self.default), **value})
 
 
 @dataclass
