@@ -29,3 +29,12 @@ from bluemira.equilibria.optimisation.constraints import (
     PsiBoundaryConstraint,
     PsiConstraint,
 )
+
+__all__ = [
+    "AutoConstraints",
+    "FieldNullConstraint",
+    "IsofluxConstraint",
+    "MagneticConstraintSet",
+    "PsiBoundaryConstraint",
+    "PsiConstraint",
+]

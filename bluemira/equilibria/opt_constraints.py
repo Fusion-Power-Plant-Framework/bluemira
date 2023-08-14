@@ -86,21 +86,18 @@ class UpdateableConstraint(ABC):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
-        pass
 
     @abstractmethod
     def control_response(self, coilset: CoilSet):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        pass
 
     @abstractmethod
     def evaluate(self, equilibrium: Equilibrium):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        pass
 
 
 class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
@@ -404,7 +401,7 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
 
     def prepare(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
-    ):  # noqa :N803
+    ):  # noqa: N803
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -422,14 +419,12 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
         """
         Update the target value of the magnetic constraint.
         """
-        pass
 
     @abstractmethod
     def plot(self, ax):
         """
         Plot the constraint onto an Axes.
         """
-        pass
 
     def __len__(self) -> int:
         """
@@ -505,7 +500,6 @@ class RelativeMagneticConstraint(MagneticConstraint):
         """
         Update the target value of the magnetic constraint.
         """
-        pass
 
 
 class FieldNullConstraint(AbsoluteMagneticConstraint):
@@ -754,7 +748,7 @@ class MagneticConstraintSet(ABC):
 
     def __call__(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
-    ):  # noqa :N803
+    ):  # noqa: N803
         """
         Update the MagneticConstraintSet
         """

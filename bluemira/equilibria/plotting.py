@@ -301,10 +301,11 @@ class CoilGroupPlotter(Plotter):
             x, z = self._cg.get_control_coils().position
             xc = (max(x) + min(x)) / 2
             zc = (max(z) + min(z)) / 2
-            return xc, zc
         except AttributeError:
             # Not a coilset
             return None
+        else:
+            return xc, zc
 
     def _annotate_coil(self, x, z, dx, name, current, ctype, force=None, centre=None):
         """
@@ -523,14 +524,11 @@ class EquilibriumPlotter(Plotter):
         """
         try:
             separatrix = self.eq.get_separatrix()
-        except Exception:
+        except Exception:  # noqa: BLE001
             bluemira_warn("Unable to plot separatrix")
             return
 
-        if isinstance(separatrix, list):
-            coords = separatrix
-        else:
-            coords = [separatrix]
+        coords = separatrix if isinstance(separatrix, list) else [separatrix]
 
         for coord in coords:
             x, z = coord.xz
@@ -542,7 +540,7 @@ class EquilibriumPlotter(Plotter):
                 zorder=9,
             )
 
-    def plot_X_points(self):  # noqa :N802
+    def plot_X_points(self):  # noqa: N802
         """
         Plot X-points.
         """
@@ -556,7 +554,7 @@ class EquilibriumPlotter(Plotter):
                     zorder=10,
                 )
 
-    def plot_O_points(self):  # noqa :N802
+    def plot_O_points(self):  # noqa: N802
         """
         Plot O-points.
         """

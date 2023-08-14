@@ -38,14 +38,14 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.equilibria.harmonics import coil_harmonic_amplitude_matrix
-from bluemira.equilibria.optimisation.constraint_funcs import AxBConstraint
 from bluemira.equilibria.optimisation.constraint_funcs import (
-    CoilForceConstraint as CoilForceConstraintFunction,
-)
-from bluemira.equilibria.optimisation.constraint_funcs import (
+    AxBConstraint,
     ConstraintFunction,
     FieldConstraintFunction,
     L2NormConstraint,
+)
+from bluemira.equilibria.optimisation.constraint_funcs import (
+    CoilForceConstraint as CoilForceConstraintFunction,
 )
 from bluemira.equilibria.plotting import ConstraintPlotter
 from bluemira.geometry.coordinates import interpolate_points
@@ -82,26 +82,22 @@ class UpdateableConstraint(ABC):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
-        pass
 
     @abstractmethod
     def control_response(self, coilset: CoilSet):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        pass
 
     @abstractmethod
     def evaluate(self, equilibrium: Equilibrium):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        pass
 
     @abstractmethod
     def f_constraint(self) -> ConstraintFunction:
         """The numerical non-linear part of the constraint."""
-        pass
 
 
 class FieldConstraints(UpdateableConstraint):
@@ -349,13 +345,15 @@ class CoilForceConstraints(UpdateableConstraint):
 
         self._args["b_vec"] = self.evaluate(equilibrium)
 
-    def control_response(self, coilset: CoilSet) -> np.ndarray:
+    @staticmethod
+    def control_response(coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
         """
         return coilset.control_F(coilset)
 
-    def evaluate(self, equilibrium: Equilibrium) -> np.ndarray:
+    @staticmethod
+    def evaluate(equilibrium: Equilibrium) -> np.ndarray:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -405,7 +403,7 @@ class MagneticConstraint(UpdateableConstraint):
 
     def prepare(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
-    ):  # noqa :N803
+    ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -423,14 +421,12 @@ class MagneticConstraint(UpdateableConstraint):
         """
         Update the target value of the magnetic constraint.
         """
-        pass
 
     @abstractmethod
     def plot(self, ax):
         """
         Plot the constraint onto an Axes.
         """
-        pass
 
     def __len__(self) -> int:
         """
@@ -577,7 +573,6 @@ class RelativeMagneticConstraint(MagneticConstraint):
         """
         Update the target value of the magnetic constraint.
         """
-        pass
 
 
 class FieldNullConstraint(AbsoluteMagneticConstraint):
@@ -975,7 +970,7 @@ class AutoConstraints(MagneticConstraintSet):
         x_z_min = x[np.argmin(z)]
 
         # Determine if we are dealing with SN or DN
-        single_null = abs_rel_difference(abs(z_min), z_max) > 0.05
+        single_null = abs_rel_difference(abs(z_min), z_max) > 0.05  # noqa: PLR2004
 
         if single_null:
             # Determine if it is an upper or lower SN

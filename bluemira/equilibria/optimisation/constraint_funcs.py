@@ -123,7 +123,7 @@ class AxBConstraint(ConstraintFunction):
         """Constraint function"""
         return self.a_mat @ (self.scale * vector) - self.b_vec - self.value
 
-    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
         """Constraint derivative"""
         return self.scale * self.a_mat
 

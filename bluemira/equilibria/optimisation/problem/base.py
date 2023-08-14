@@ -27,17 +27,19 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass, field
-from typing import Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmDefaultConditions
-from bluemira.optimisation._optimiser import OptimiserResult
-from bluemira.optimisation.typing import ConstraintT
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.optimisation._optimiser import OptimiserResult
+    from bluemira.optimisation.typing import ConstraintT
 
 
 @dataclass
@@ -194,8 +196,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         """
         lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
         upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
-        bounds = np.array([lower_bounds, upper_bounds])
-        return bounds
+        return np.array([lower_bounds, upper_bounds])
 
     @staticmethod
     def get_current_bounds(
@@ -230,7 +231,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         if max_currents is not None:
             input_current_limits = np.asarray(max_currents)
             input_size = np.size(np.asarray(input_current_limits))
-            if input_size == 1 or input_size == n_control_currents:
+            if input_size in (1, n_control_currents):
                 scaled_input_current_limits = input_current_limits / current_scale
             else:
                 raise EquilibriaError(
@@ -248,9 +249,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         control_current_limits = np.minimum(
             scaled_input_current_limits, coilset_current_limits
         )
-        current_bounds = (-control_current_limits, control_current_limits)
-
-        return current_bounds
+        return (-control_current_limits, control_current_limits)
 
     def set_current_bounds(self, max_currents: npt.NDArray) -> None:
         """
@@ -264,7 +263,8 @@ class CoilsetOptimisationProblem(abc.ABC):
         n_control_currents = len(self.coilset.current[self.coilset._control_ind])
         if len(max_currents) != n_control_currents:
             raise ValueError(
-                "Length of maximum current vector must be equal to the number of controls."
+                "Length of maximum current vector must be equal to the number of"
+                " controls."
             )
 
         # TODO: sort out this interface

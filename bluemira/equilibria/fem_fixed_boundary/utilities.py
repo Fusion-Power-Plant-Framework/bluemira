@@ -21,7 +21,7 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
-import os
+from pathlib import Path
 from typing import Callable, Iterable, List, Optional, Tuple, Union
 
 import dolfin
@@ -208,10 +208,10 @@ def find_flux_surface(
     else:
         d_guess = np.array([0.5])
 
-        def lower_bound(x):
+        def lower_bound(_x):
             return 0.1
 
-        def upper_bound(x):
+        def upper_bound(_x):
             return np.inf
 
     def psi_norm_match(x):
@@ -229,7 +229,7 @@ def find_flux_surface(
 
     for i in range(len(theta)):
         result = optimise(
-            f_objective=lambda d: psi_line_match(d, theta[i]),
+            f_objective=lambda d, i=i: psi_line_match(d, theta[i]),
             x0=d_guess,
             dimensions=1,
             algorithm="SLSQP",
@@ -267,21 +267,17 @@ def get_mesh_boundary(mesh: dolfin.Mesh) -> Tuple[np.ndarray, np.ndarray]:
 
     index = 0
     temp_edge = edges[index]
-    sorted_v = []
-    sorted_v.append(temp_edge[0])
+    sorted_v = [temp_edge[0]]
 
-    for i in range(len(edges) - 1):
-        temp_v = [v for v in temp_edge if v not in sorted_v][0]
+    for _i in range(len(edges) - 1):
+        temp_v = next(v for v in temp_edge if v not in sorted_v)
         sorted_v.append(temp_v)
         check_edge[index] = 0
         connected = np.where(edges == temp_v)[0]
-        index = [e for e in connected if check_edge[e] == 1][0]
+        index = next(e for e in connected if check_edge[e] == 1)
         temp_edge = edges[index]
 
-    points_sorted = []
-    for v in sorted_v:
-        points_sorted.append(Vertex(boundary, v).point().array())
-    points_sorted = np.array(points_sorted)
+    points_sorted = np.array([Vertex(boundary, v).point().array() for v in sorted_v])
     return points_sorted[:, 0], points_sorted[:, 1]
 
 
@@ -330,11 +326,9 @@ def get_flux_surfaces_from_mesh(
     if x_1d is None:
         if nx is None:
             raise ValueError("Please input either x_1d: np.ndarray or nx: int.")
-        else:
-            x_1d = np.linspace(0, 1, nx)
-    else:
-        if nx is not None:
-            bluemira_warn("x_1d and nx specified, discarding nx.")
+        x_1d = np.linspace(0, 1, nx)
+    elif nx is not None:
+        bluemira_warn("x_1d and nx specified, discarding nx.")
 
     mesh_points = mesh.coordinates()
     x = mesh_points[:, 0]
@@ -500,6 +494,7 @@ def _cell_near_point(cell: dolfin.Cell, refine_point: Iterable, distance: float)
         Point from which to determine vicinity to a cell
     distance:
         Distance away from the midpoint of the cell to determine vicinity
+
     Returns
     -------
     Whether or not the cell is in the vicinity of a point
@@ -554,6 +549,6 @@ def create_mesh(
     """
     Create mesh
     """
-    meshing.Mesh(meshfile=os.path.join(directory, mesh_name_msh))(plasma)
+    meshing.Mesh(meshfile=Path(directory, mesh_name_msh).as_posix())(plasma)
     msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
     return import_mesh(mesh_filename, directory=directory, subdomains=True)[0]

@@ -28,18 +28,15 @@ import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
-from typing import Any, Dict, Iterable, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Breakdown, Equilibrium, MHDState
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.limiter import Limiter
 from bluemira.equilibria.optimisation.constraints import (
     MagneticConstraint,
     MagneticConstraintSet,
@@ -57,18 +54,23 @@ from bluemira.equilibria.optimisation.problem import (
     TikhonovCurrentCOP,
     UnconstrainedTikhonovCurrentGradientCOP,
 )
-from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
 from bluemira.equilibria.physics import calc_psib
-from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.solve import (
     ConvergenceCriterion,
     DudsonConvergence,
     PicardIterator,
 )
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation import Algorithm, AlgorithmType
-from bluemira.utilities.optimiser import Optimiser
-from bluemira.utilities.positioning import PositionMapper
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.grid import Grid
+    from bluemira.equilibria.limiter import Limiter
+    from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
+    from bluemira.equilibria.profiles import Profile
+    from bluemira.geometry.coordinates import Coordinates
+    from bluemira.utilities.optimiser import Optimiser
+    from bluemira.utilities.positioning import PositionMapper
 
 
 @dataclass
