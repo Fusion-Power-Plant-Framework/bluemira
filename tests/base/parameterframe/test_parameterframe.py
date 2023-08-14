@@ -113,7 +113,11 @@ class TestParameterFrame:
             BadFrame.from_dict({"x": {"value": 10}})
 
     def test_a_default_frame_is_empty(self):
-        assert len(ParameterFrame().to_dict()) == 0
+        @dataclass
+        class GenericFrame(ParameterFrame):
+            ...
+
+        assert len(GenericFrame().to_dict()) == 0
 
     def test_from_json_reads_json_string(self):
         json_str = """{
@@ -402,6 +406,50 @@ class TestParameterFrame:
         with pytest.raises(ValueError) as error:
             BasicFrame.from_json(["x"])
         assert "Cannot read JSON" in str(error)
+
+    def test_init_of_ParameterFrame_raises_TypeError(self):
+        with pytest.raises(TypeError):
+            ParameterFrame()
+
+    def test_init_with_non_Parameters_raises_TypeError(self):
+        @dataclass
+        class GenericFrame(ParameterFrame):
+            A: float
+
+        with pytest.raises(TypeError):
+            GenericFrame(5)
+
+    def test_definition_with_non_Parameters_raises_TypeError(self):
+        @dataclass
+        class GenericFrame(ParameterFrame):
+            A: float
+
+        with pytest.raises(TypeError):
+            GenericFrame(Parameter("A", 5))
+
+    def test_init_Parameter_has_wrong_name_raises_TypeError(self):
+        @dataclass
+        class GenericFrame(ParameterFrame):
+            A: Parameter[float]
+
+        with pytest.raises(TypeError):
+            GenericFrame(Parameter("B", 5))
+
+    def test_init_SI_unit_enforcement(self):
+        @dataclass
+        class GenericFrame(ParameterFrame):
+            A: Parameter[float]
+
+        frm = GenericFrame(Parameter("A", 5, "cm"))
+
+        assert frm.A.unit == "m"
+        assert frm.A.value == pytest.approx(0.05)
+        assert frm.A.source == "unit enforcement"
+
+        frm = GenericFrame(Parameter("A", 5, "m"))
+        assert frm.A.unit == "m"
+        assert frm.A.value == pytest.approx(5)
+        assert frm.A.source == ""
 
 
 @dataclass

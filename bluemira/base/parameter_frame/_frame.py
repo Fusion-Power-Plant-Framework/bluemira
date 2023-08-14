@@ -60,9 +60,45 @@ class ParameterFrame:
 
     """
 
+    def __new__(cls, *args, **kwargs):
+        """
+        Prevent instantiation of this class.
+        """
+        if cls == ParameterFrame:
+            raise TypeError(
+                f"Cannot instantiate a {cls} directly. It must be subclassed."
+            )
+
+        return super().__new__(cls)
+
     def __post_init__(self):
         """Get types from frame"""
         self._types = self._get_types()
+
+        for field, field_name, value_type in zip(
+            self, self.__dataclass_fields__, self._types.values()
+        ):
+            if not isinstance(field, Parameter):
+                raise TypeError(
+                    f"ParameterFrame contains non-Parameter object '{field_name}: {type(field)}'"
+                )
+            if field_name != field.name:
+                raise TypeError(
+                    f"ParameterFrame contains Parameter with incorrect name '{field.name}', defined as '{field_name}'"
+                )
+            vt = _validate_parameter_field(field, value_type)
+
+            val_unit = {
+                "value": Parameter._type_check(field.value, vt),
+                "unit": field.unit,
+            }
+            _validate_units(val_unit, vt)
+            if field.unit != val_unit["unit"]:
+                field.set_value(val_unit["value"], "unit enforcement")
+                field._unit = pint.Unit(val_unit["unit"])
+            else:
+                # ensure int-> float conversion
+                field._value = val_unit["value"]
 
     @classmethod
     def _get_types(cls) -> Dict[str, GenericAlias]:
@@ -177,7 +213,7 @@ class ParameterFrame:
                 kwargs[field] = getattr(frame, field)
             except AttributeError:
                 raise ValueError(
-                    f"Cannot create ParameterFrame from other. "
+                    "Cannot create ParameterFrame from other. "
                     f"Other frame does not contain field '{field}'."
                 )
         return cls(**kwargs)
