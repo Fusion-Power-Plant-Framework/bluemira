@@ -25,8 +25,8 @@ api for plotting using matplotlib
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Union
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
@@ -78,21 +78,67 @@ class ViewDescriptor:
     def __set__(self, obj: Any, value: Union[str, _placement.BluemiraPlacement]):
         """Set the view"""
         if isinstance(value, str):
-            if value == "xy":
+            if value.startswith("xy"):
                 value = _placement.XYZ
-            elif value == "xz":
+            elif value.startswith("xz"):
                 value = _placement.XZY
-            elif value == "yz":
+            elif value.startswith("yz"):
                 value = _placement.YZX
             else:
-                DisplayError(f"{value} is not a valid view")
+                raise DisplayError(f"{value} is not a valid view")
 
-        if isinstance(value, _placement.BluemiraPlacement):
-            value = tuple(
-                getattr(value, attr) for attr in ("base", "axis", "angle", "label")
-            )
+        setattr(
+            obj,
+            self._name,
+            tuple(getattr(value, attr) for attr in ("base", "axis", "angle", "label")),
+        )
 
-        setattr(obj, self._name, value)
+
+class DictOptionsDescriptor:
+    """Keep defaults for options unless explicitly overwritten
+
+    Notes
+    -----
+    The default will be reinforced if value set to new dictionary.
+    Otherwise as a dictionary is mutable will act in the normal way.
+
+    .. code-block:: python
+
+      po = PlotOptions()
+      po.wire_options["linewidth"] = 0.1  # overrides default
+      po.wire_options = {'zorder': 1}  # default linewidth reset
+      del po.wire_options["linewidth"]  # linewidth unset
+
+    No checks are done on the contents of the dictionary.
+
+    """
+
+    def __init__(self, default_factory: Optional[Callable[[], Dict[str, Any]]] = None):
+        self.default_factory = {} if default_factory is None else default_factory()
+
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
+
+    def __get__(
+        self, obj: Any, _
+    ) -> Union[Callable[[], Dict[str, Any]], Dict[str, Any]]:
+        """Get the options dictionary"""
+        if obj is None:
+            return lambda: self.default_factory
+
+        return getattr(obj, self._name, self.default_factory)
+
+    def __set__(
+        self, obj: Any, value: Union[Callable[[], Dict[str, Any]], Dict[str, Any]]
+    ):
+        """Set the options dictionary"""
+        if callable(value):
+            value = value()
+        default = getattr(obj, self._name, self.default_factory)
+        if callable(default):
+            default = default()
+        setattr(obj, self._name, {**default, **value})
 
 
 @dataclass
@@ -131,18 +177,20 @@ class DefaultPlotOptions:
     show_faces: bool = True
     # matplotlib set of options to plot points, wires, and faces. If an empty dictionary
     # is specified, the default color plot of matplotlib is used.
-    point_options: dict = field(
-        default_factory=lambda: {
+    point_options: DictOptionsDescriptor = DictOptionsDescriptor(
+        lambda: {
             "s": 10,
             "facecolors": "red",
             "edgecolors": "black",
             "zorder": 30,
         }
     )
-    wire_options: dict = field(
-        default_factory=lambda: {"color": "black", "linewidth": 0.5, "zorder": 20}
+    wire_options: DictOptionsDescriptor = DictOptionsDescriptor(
+        lambda: {"color": "black", "linewidth": 0.5, "zorder": 20}
     )
-    face_options: dict = field(default_factory=lambda: {"color": "blue", "zorder": 10})
+    face_options: DictOptionsDescriptor = DictOptionsDescriptor(
+        lambda: {"color": "blue", "zorder": 10}
+    )
     # discretization properties for plotting wires (and faces)
     ndiscr: int = 100
     byedges: bool = True
