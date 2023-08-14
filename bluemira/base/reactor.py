@@ -37,7 +37,6 @@ from typing import (
 )
 from warnings import warn
 
-import anytree
 from rich.progress import track
 
 from bluemira.base.components import Component, get_properties_from_components
@@ -50,6 +49,8 @@ from bluemira.geometry.tools import save_cad
 from bluemira.materials.material import SerialisedMaterial, Void
 
 if TYPE_CHECKING:
+    import anytree
+
     import bluemira.codes._freecadapi as cadapi
 
 _PLOT_DIMS = ["xy", "xz"]
@@ -95,9 +96,9 @@ class BaseManager(abc.ABC):
         """
         if kw_formatt := kwargs.pop("formatt", None):
             warn(
-                "Using kwarg 'formatt' is no longer supported. "
-                "Use cad_format instead.",
+                "Using kwarg 'formatt' is no longer supported. Use cad_format instead.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
             cad_format = kw_formatt
 
@@ -146,7 +147,8 @@ class BaseManager(abc.ABC):
         """
         return self.component().tree()
 
-    def _validate_cad_dims(self, *dims: str, **kwargs) -> Tuple[str, ...]:
+    @staticmethod
+    def _validate_cad_dims(*dims: str, **kwargs) -> Tuple[str, ...]:
         """
         Validate showable CAD dimensions
         """
@@ -156,21 +158,22 @@ class BaseManager(abc.ABC):
         # if a kw "dim" is given, it is only used
         if kw_dim := kwargs.pop("dim", None):
             warn(
-                "Using kwarg 'dim' is no longer supported. "
-                "Simply pass in the dimensions you would like to show, e.g. show_cad('xz')",
+                "Using kwarg 'dim' is no longer supported. Simply pass in the dimensions"
+                " you would like to show, e.g. show_cad('xz')",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
             dims_to_show = (kw_dim,)
         for dim in dims_to_show:
             if dim not in _CAD_DIMS:
                 raise ComponentError(
-                    f"Invalid plotting dimension '{dim}'."
-                    f"Must be one of {str(_CAD_DIMS)}"
+                    f"Invalid plotting dimension '{dim}'. Must be one of {_CAD_DIMS!s}"
                 )
 
         return dims_to_show
 
-    def _validate_plot_dims(self, *dims) -> Tuple[str, ...]:
+    @staticmethod
+    def _validate_plot_dims(*dims) -> Tuple[str, ...]:
         """
         Validate showable plot dimensions
         """
@@ -180,14 +183,13 @@ class BaseManager(abc.ABC):
         for dim in dims_to_show:
             if dim not in _PLOT_DIMS:
                 raise ComponentError(
-                    f"Invalid plotting dimension '{dim}'."
-                    f"Must be one of {str(_PLOT_DIMS)}"
+                    f"Invalid plotting dimension '{dim}'. Must be one of {_PLOT_DIMS!s}"
                 )
 
         return dims_to_show
 
+    @staticmethod
     def _filter_tree(
-        self,
         comp: Component,
         dims_to_show: Tuple[str, ...],
         component_filter: Optional[Callable[[Component], bool]],
@@ -229,6 +231,8 @@ class FilterMaterial:
        materials to exclude
 
     """
+
+    slots = ("keep_material", "reject_material")
 
     def __init__(
         self,
@@ -340,6 +344,7 @@ class ComponentManager(BaseManager):
                 "Using kwarg 'filter_' is no longer supported. "
                 "Use component_filter instead.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
             component_filter = kw_filter_
 
@@ -381,6 +386,7 @@ class ComponentManager(BaseManager):
                 "Using kwarg 'filter_' is no longer supported. "
                 "Use component_filter instead.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
             component_filter = kw_filter_
 
@@ -416,6 +422,7 @@ class ComponentManager(BaseManager):
                 "Using kwarg 'filter_' is no longer supported. "
                 "Use component_filter instead.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
             component_filter = kw_filter_
 
@@ -533,7 +540,8 @@ class Reactor(BaseManager):
             else ", ".join([cm.component().name for cm in with_components])
         )
         bluemira_print(
-            f"Constructing xyz CAD for display with {n_sectors} sectors and components: {comp_names}"
+            f"Constructing xyz CAD for display with {n_sectors} sectors and components:"
+            f" {comp_names}"
         )
         for xyz in track(xyzs):
             xyz.children = circular_pattern_component(
@@ -548,7 +556,6 @@ class Reactor(BaseManager):
         with_components: Optional[List[ComponentManager]],
         n_sectors: Optional[int],
         component_filter: Optional[Callable[[Component], bool]],
-        **kwargs,
     ) -> Component:
         # We filter because self.component (above) only creates
         # a new root node for this reactor, not a new component tree.
@@ -609,6 +616,7 @@ class Reactor(BaseManager):
                 "Using kwarg 'filter_' is no longer supported. "
                 "Use component_filter instead.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
             component_filter = kw_filter_
 
@@ -660,6 +668,7 @@ class Reactor(BaseManager):
                 "Using kwarg 'filter_' is no longer supported. "
                 "Use component_filter instead.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
             component_filter = kw_filter_
 
@@ -700,6 +709,7 @@ class Reactor(BaseManager):
                 "Using kwarg 'filter_' is no longer supported. "
                 "Use component_filter instead.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
             component_filter = kw_filter_
 

@@ -374,9 +374,10 @@ def units_compatible(unit_1: str, unit_2: str) -> bool:
     """
     try:
         raw_uc(1, unit_1, unit_2)
-        return True
     except PintError:
         return False
+    else:
+        return True
 
 
 def raw_uc(
@@ -497,7 +498,7 @@ def to_kelvin(
     return converted_val
 
 
-def _temp_check(unit: Unit, val: Union[float, int, complex, Quantity]):
+def _temp_check(unit: Unit, val: Union[complex, Quantity]):
     """
     Check temperature is above absolute zero
 

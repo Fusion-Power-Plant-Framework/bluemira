@@ -1,3 +1,23 @@
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                         J. Morris, D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import copy
@@ -17,9 +37,10 @@ from typing import (
     Type,
     TypeVar,
     Union,
+    get_args,
+    get_type_hints,
 )
 from typing import _GenericAlias as GenericAlias  # TODO python >=3.9 import from types
-from typing import get_args, get_type_hints
 
 import pint
 from tabulate import tabulate
@@ -61,7 +82,7 @@ class ParameterFrame:
 
     """
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # noqa: ARG003
         """
         Prevent instantiation of this class.
         """
@@ -84,11 +105,13 @@ class ParameterFrame:
         ):
             if not isinstance(field, Parameter):
                 raise TypeError(
-                    f"ParameterFrame contains non-Parameter object '{field_name}: {type(field)}'"
+                    f"ParameterFrame contains non-Parameter object '{field_name}:"
+                    f" {type(field)}'"
                 )
             if field_name != field.name:
                 raise TypeError(
-                    f"ParameterFrame contains Parameter with incorrect name '{field.name}', defined as '{field_name}'"
+                    "ParameterFrame contains Parameter with incorrect name"
+                    f" '{field.name}', defined as '{field_name}'"
                 )
             vt = _validate_parameter_field(field, value_type)
 
@@ -137,10 +160,11 @@ class ParameterFrame:
         """Get values of a set of Parameters"""
         try:
             return tuple(getattr(self, n).value for n in names)
-        except AttributeError:
+        except AttributeError as ae:
             raise AttributeError(
-                f"Parameters {[n for n in names if not hasattr(self, n)]} not in ParameterFrame"
-            )
+                f"Parameters {[n for n in names if not hasattr(self, n)]} not in"
+                " ParameterFrame"
+            ) from ae
 
     def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values."""
@@ -174,14 +198,16 @@ class ParameterFrame:
         """
         param = getattr(self, name)
         param.set_value(
-            o_param.value
-            if param.unit == "" or o_param.value is None
-            else o_param.value_as(param.unit),
+            (
+                o_param.value
+                if not param.unit or o_param.value is None
+                else o_param.value_as(param.unit)
+            ),
             o_param.source,
         )
-        if o_param.long_name != "":
+        if o_param.long_name:
             param._long_name = o_param.long_name
-        if o_param.description != "":
+        if o_param.description:
             param._description = o_param.description
 
     @classmethod
@@ -215,11 +241,11 @@ class ParameterFrame:
         for field in cls.__dataclass_fields__:
             try:
                 kwargs[field] = getattr(frame, field)
-            except AttributeError:
+            except AttributeError:  # noqa: PERF203
                 raise ValueError(
                     "Cannot create ParameterFrame from other. "
                     f"Other frame does not contain field '{field}'."
-                )
+                ) from None
         return cls(**kwargs)
 
     @classmethod
@@ -228,11 +254,11 @@ class ParameterFrame:
         if hasattr(json_in, "read"):
             # load from file stream
             return cls.from_dict(json.load(json_in))
-        elif not isinstance(json_in, str):
-            raise ValueError(f"Cannot read JSON from type '{type(json_in).__name__}'.")
-        elif not json_in.startswith("{"):
+        if not isinstance(json_in, str):
+            raise TypeError(f"Cannot read JSON from type '{type(json_in).__name__}'.")
+        if not json_in.startswith("{"):
             # load from file
-            with open(json_in, "r") as f:
+            with open(json_in) as f:
                 return cls.from_dict(json.load(f))
         # load from a JSON string
         return cls.from_dict(json.loads(json_in))
@@ -274,7 +300,7 @@ class ParameterFrame:
         for member in cls.__dataclass_fields__:
             try:
                 kwargs[member]
-            except KeyError as e:
+            except KeyError as e:  # noqa: PERF203
                 raise ValueError(f"Data for parameter '{member}' not found.") from e
 
         return cls(**kwargs)
@@ -376,7 +402,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
     except KeyError as ke:
         raise ValueError("Parameters need a value and a unit") from ke
-    except TypeError as te:
+    except TypeError:
         if param_data["value"] is None:
             # dummy for None values
             quantity = pint.Quantity(
@@ -386,7 +412,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
             param_data["unit"] = "dimensionless"
             return
         else:
-            raise te
+            raise
 
     if dimensionality := quantity.units.dimensionality:
         unit = _fix_combined_units(_remake_units(dimensionality))
@@ -475,10 +501,7 @@ def _fix_weird_units(modified_unit: pint.Unit, orig_unit: pint.Unit) -> pint.Uni
     ang_unit = [ang for ang in ANGLE_UNITS if ang in unit_str]
     if len(ang_unit) > 1:
         raise ValueError(f"More than one angle unit not supported...🤯 {orig_unit}")
-    elif len(ang_unit) == 1:
-        ang_unit = ang_unit[0]
-    else:
-        ang_unit = None
+    ang_unit = ang_unit[0] if len(ang_unit) == 1 else None
 
     fpy = "full_power_year" in unit_str
     dpa = "displacements_per_atom" in unit_str
@@ -589,14 +612,14 @@ def make_parameter_frame(
             # Case for where there are no parameters associated with the object
             return params
         raise ValueError("Cannot process parameters, 'param_cls' is None.")
-    elif isinstance(params, dict):
+    if isinstance(params, dict):
         return param_cls.from_dict(params)
-    elif isinstance(params, param_cls):
+    if isinstance(params, param_cls):
         return params
-    elif isinstance(params, str):
+    if isinstance(params, str):
         return param_cls.from_json(params)
-    elif isinstance(params, ParameterFrame):
+    if isinstance(params, ParameterFrame):
         return param_cls.from_frame(params)
-    elif isinstance(params, ConfigParams):
+    if isinstance(params, ConfigParams):
         return param_cls.from_config_params(params)
     raise TypeError(f"Cannot interpret type '{type(params)}' as {param_cls.__name__}.")

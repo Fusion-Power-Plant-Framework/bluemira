@@ -273,12 +273,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             if len(properties) == 1:
                 return getattr(found_nodes, properties[0])
             return [getattr(found_nodes, prop) for prop in properties]
-        else:
-            # Collect values by property instead of by node
-            node_properties = [
-                [getattr(node, prop) for prop in properties] for node in found_nodes
-            ]
-            return tuple(map(list, zip(*node_properties)))
+        # Collect values by property instead of by node
+        node_properties = [
+            [getattr(node, prop) for prop in properties] for node in found_nodes
+        ]
+        return tuple(map(list, zip(*node_properties)))
 
     def _get_thing(
         self, filter_: Union[Callable, None], first: bool, full_tree: bool
@@ -308,7 +307,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         # TODO: Support merge_trees here too.
         if child in self.children or child.name in (ch.name for ch in self.children):
             raise ComponentError(f"Component {child} is already a child of {self}")
-        self.children = list(self.children) + [child]
+        self.children = [*list(self.children), child]
 
         return self
 
@@ -330,13 +329,13 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         This component.
         """
         if children is None:
-            return
+            return None
         if isinstance(children, Component):
             return self.add_child(children)
         if not isinstance(children, list):
-            return
+            return None
         if len(children) == 0:
-            return
+            return None
 
         duplicates = []
         for idx, child in reversed(list(enumerate(children))):
