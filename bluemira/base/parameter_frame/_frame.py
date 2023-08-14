@@ -376,7 +376,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
         if param_data["value"] is None:
             # dummy for None values
             quantity = pint.Quantity(
-                1 if param_data["unit"] is None else param_data["unit"]
+                1 if param_data["unit"] in (None, "") else param_data["unit"]
             )
         elif isinstance(param_data["value"], (bool, str)):
             param_data["unit"] = "dimensionless"
