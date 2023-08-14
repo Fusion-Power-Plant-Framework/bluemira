@@ -75,7 +75,7 @@ class ViewDescriptor:
 
         return getattr(obj, self._name, self._default)
 
-    def __set__(self, obj: Any, value: Union[str, _placement.BluemiraPlacement]):
+    def __set__(self, obj: Any, value: Union[str, tuple, _placement.BluemiraPlacement]):
         """Set the view"""
         if isinstance(value, str):
             if value.startswith("xy"):
@@ -86,6 +86,9 @@ class ViewDescriptor:
                 value = _placement.YZX
             else:
                 raise DisplayError(f"{value} is not a valid view")
+
+        if isinstance(value, tuple):
+            value = _placement.BluemiraPlacement(*value)
 
         setattr(
             obj,
