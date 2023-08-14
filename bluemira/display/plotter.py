@@ -26,7 +26,17 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import matplotlib.pyplot as plt
 import mpl_toolkits.mplot3d as a3
@@ -37,9 +47,8 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.tools import Options
-from bluemira.geometry import bound_box, face
+from bluemira.geometry import bound_box, face, wire
 from bluemira.geometry import placement as _placement
-from bluemira.geometry import wire
 from bluemira.geometry.coordinates import (
     Coordinates,
     _parse_to_xyz_array,
@@ -232,7 +241,7 @@ class BasePlotter(ABC):
     Base utility plotting class
     """
 
-    _CLASS_PLOT_OPTIONS = {}
+    _CLASS_PLOT_OPTIONS: ClassVar = {}
 
     def __init__(self, options: Optional[PlotOptions] = None, **kwargs):
         # discretization points representing the shape in global coordinate system
@@ -256,12 +265,10 @@ class BasePlotter(ABC):
     @abstractmethod
     def _check_obj(self, obj):
         """Internal function that check if obj is an instance of the correct class"""
-        pass
 
     @abstractmethod
     def _check_options(self):
         """Internal function that check if it is needed to plot something"""
-        pass
 
     def initialize_plot_2d(self, ax=None):
         """Initialize the plot environment"""
@@ -271,7 +278,8 @@ class BasePlotter(ABC):
         else:
             self.ax = ax
 
-    def show(self):
+    @staticmethod
+    def show():
         """Function to show a plot"""
         plt.show(block=True)
 
@@ -281,7 +289,6 @@ class BasePlotter(ABC):
         Internal function that makes the plot. It fills self._data and
         self._data_to_plot
         """
-        pass
 
     @abstractmethod
     def _make_plot_2d(self):
@@ -289,7 +296,6 @@ class BasePlotter(ABC):
         Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
-        pass
 
     def _set_aspect_2d(self):
         self.ax.set_aspect("equal")
@@ -355,7 +361,6 @@ class BasePlotter(ABC):
         """Internal function that makes the plot. It should use self._data and
         self._data_to_plot, so _populate_data should be called before.
         """
-        pass
 
     def plot_3d(self, obj, ax=None, show: bool = True):
         """3D plotting method"""
@@ -386,9 +391,10 @@ class PointsPlotter(BasePlotter):
     Base utility plotting class for points
     """
 
-    _CLASS_PLOT_OPTIONS = {"show_points": True}
+    _CLASS_PLOT_OPTIONS: ClassVar = {"show_points": True}
 
-    def _check_obj(self, obj):
+    @staticmethod
+    def _check_obj(obj):  # noqa: ARG004
         # TODO: create a function that checks if the obj is a cloud of 3D or 2D points
         return True
 
@@ -412,7 +418,7 @@ class PointsPlotter(BasePlotter):
             self.ax.scatter(*self._data_to_plot, **self.options.point_options)
         self._set_aspect_2d()
 
-    def _make_plot_3d(self, *args, **kwargs):
+    def _make_plot_3d(self, *args, **kwargs):  # noqa: ARG002
         if self.options.show_points:
             self.ax.scatter(*self._data.T, **self.options.point_options)
         self._set_aspect_3d()
@@ -423,11 +429,12 @@ class WirePlotter(BasePlotter):
     Base utility plotting class for bluemira wires
     """
 
-    _CLASS_PLOT_OPTIONS = {"show_points": False}
+    _CLASS_PLOT_OPTIONS: ClassVar = {"show_points": False}
 
-    def _check_obj(self, obj):
+    @staticmethod
+    def _check_obj(obj):
         if not isinstance(obj, wire.BluemiraWire):
-            raise ValueError(f"{obj} must be a BluemiraWire")
+            raise TypeError(f"{obj} must be a BluemiraWire")
         return True
 
     def _check_options(self):
@@ -472,11 +479,12 @@ class WirePlotter(BasePlotter):
 class FacePlotter(BasePlotter):
     """Base utility plotting class for bluemira faces"""
 
-    _CLASS_PLOT_OPTIONS = {"show_points": False, "show_wires": False}
+    _CLASS_PLOT_OPTIONS: ClassVar = {"show_points": False, "show_wires": False}
 
-    def _check_obj(self, obj):
+    @staticmethod
+    def _check_obj(obj):
         if not isinstance(obj, face.BluemiraFace):
-            raise ValueError(f"{obj} must be a BluemiraFace")
+            raise TypeError(f"{obj} must be a BluemiraFace")
         return True
 
     def _check_options(self):
@@ -506,8 +514,8 @@ class FacePlotter(BasePlotter):
 
         self._data_to_plot = [[], []]
         for w in self._wplotters:
-            self._data_to_plot[0] += w._data_to_plot[0].tolist() + [None]
-            self._data_to_plot[1] += w._data_to_plot[1].tolist() + [None]
+            self._data_to_plot[0] += [*w._data_to_plot[0].tolist(), None]
+            self._data_to_plot[1] += [*w._data_to_plot[1].tolist(), None]
 
     def _make_plot_2d(self):
         if self.options.show_faces:
@@ -532,13 +540,14 @@ class FacePlotter(BasePlotter):
 class ComponentPlotter(BasePlotter):
     """Base utility plotting class for bluemira faces"""
 
-    _CLASS_PLOT_OPTIONS = {"show_points": False, "show_wires": False}
+    _CLASS_PLOT_OPTIONS: ClassVar = {"show_points": False, "show_wires": False}
 
-    def _check_obj(self, obj):
+    @staticmethod
+    def _check_obj(obj):
         import bluemira.base.components
 
         if not isinstance(obj, bluemira.base.components.Component):
-            raise ValueError(f"{obj} must be a BluemiraComponent")
+            raise TypeError(f"{obj} must be a BluemiraComponent")
         return True
 
     def _check_options(self):
@@ -784,7 +793,7 @@ def _get_plan_dims(array):
         temp = []
         for i, k in enumerate(axes):  # both all equal to something
             c = array[i]
-            if c[0] != 0.0:
+            if c[0] != 0.0:  # noqa: PLR2004
                 temp.append(k)
         if len(temp) == 1:
             dims.append(temp[0])
@@ -834,10 +843,10 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
         fill = kwargs.get("fill", False)
         ec = kwargs.get("edgecolor", "r")
 
-    if ndim == 2 and ax is None:
+    if ndim == 2 and ax is None:  # noqa: PLR2004
         ax = kwargs.get("ax", plt.gca())
 
-    if ndim == 3 or (ndim == 2 and hasattr(ax, "zaxis")):
+    if ndim == 3 or (ndim == 2 and hasattr(ax, "zaxis")):  # noqa: PLR2004
         kwargs = {
             "edgecolor": ec,
             "facecolor": fc,
@@ -849,7 +858,7 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
         _plot_3d(coords, ax=ax, **kwargs)
 
     a, b = _get_plan_dims(coords.xyz)
-    x, y = [getattr(coords, c) for c in [a, b]]
+    x, y = (getattr(coords, c) for c in [a, b])
     marker = "o" if points else None
     ax.set_xlabel(a + " [m]")
     ax.set_ylabel(b + " [m]")

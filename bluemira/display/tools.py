@@ -58,9 +58,8 @@ class Options:
                 try:
                     return getattr(self._options, attr)
                 except AttributeError:
-                    raise ae
-            else:
-                raise ae
+                    raise ae from None
+            raise
 
     def modify(self, **kwargs):
         """Modify options"""
