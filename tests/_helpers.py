@@ -24,7 +24,6 @@ A collection of general helper functions for tests.
 """
 
 import contextlib
-import os
 from pathlib import Path
 from unittest import mock
 
@@ -72,7 +71,7 @@ def file_exists(good_file_path: str, isfile_ref: str):
     def new_isfile(path: str) -> bool:
         if Path(good_file_path).resolve() == Path(path).resolve():
             return True
-        return os.path.exists(path) and not os.path.isdir(path)
+        return Path(path).exists and not Path(path).is_dir()
 
     with mock.patch(isfile_ref, new=new_isfile) as is_file_mock:
         yield is_file_mock
@@ -85,7 +84,7 @@ def skipif_import_error(*module_name: str) -> pytest.MarkDecorator:
         try:
             __import__(m)
             skip.append(False)
-        except ImportError:
+        except ImportError:  # noqa: PERF203
             skip.append(True)
 
     if len(module_name) == 1:
