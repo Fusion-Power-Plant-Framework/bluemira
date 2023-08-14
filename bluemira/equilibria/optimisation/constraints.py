@@ -32,6 +32,8 @@ if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.equilibrium import Equilibrium
 
+import matplotlib.patches as patch
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
@@ -502,12 +504,14 @@ class SphericalHarmonicsConstraint(MagneticConstraint):
         """
         return len(self.ref_harmonics)
 
-    def plot(self, ax):
+    def plot(self, ax=None):
         """
         Plot the constraint onto an Axes.
         """
-        # Possibly the r_t semi circle?
-        raise NotImplementedError("TODO")
+        if ax is None:
+            _, ax = plt.subplots()
+
+        ax.add_patch(patch.Circle((0, 0), self.r_t, ec="orange", fill=True, fc="orange"))
 
 
 class AbsoluteMagneticConstraint(MagneticConstraint):
