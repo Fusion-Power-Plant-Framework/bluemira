@@ -376,7 +376,7 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         """
         sign_alpha = np.sign(alpha)
         sign_beta = np.sign(beta)
-        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0.0)
+        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0.0)  # noqa: PLR2004
         if not one_zero and sign_alpha != sign_beta:
             raise MagnetostaticsError(
                 f"{self.__class__.__name__} instantiation error: end-cap angles "
@@ -384,8 +384,8 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
             )
         if not (0 <= abs(alpha) < 0.5 * np.pi):
             raise MagnetostaticsError(
-                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside "
-                "bounds of [0, 180°)."
+                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside"
+                " bounds of [0, 180°)."
             )
         if not (0 <= abs(beta) < 0.5 * np.pi):
             raise MagnetostaticsError(
@@ -482,7 +482,6 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         p7 = np.array([d, b + d * np.tan(self.alpha), c])
         p8 = np.array([-d, b - d * np.tan(self.alpha), c])
 
-        points_array = []
         points = [
             np.vstack([p1, p2, p3, p4, p1]),
             np.vstack([p5, p6, p7, p8, p5]),
@@ -493,7 +492,4 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
             np.vstack([p4, p8]),
         ]
 
-        for p in points:
-            points_array.append(self._local_to_global(p))
-
-        return np.array(points_array, dtype=object)
+        return np.array([self._local_to_global(p) for p in points], dtype=object)

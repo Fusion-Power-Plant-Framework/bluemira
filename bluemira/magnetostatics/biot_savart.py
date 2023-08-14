@@ -30,6 +30,7 @@ import numpy as np
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
+
     from bluemira.geometry.coordinates import Coordinates
 
 from bluemira.base.constants import EPS, MU_0_4PI, ONE_4PI
@@ -100,7 +101,8 @@ class BiotSavartFilament(CurrentSource):
         self.radius = radius
         self.current = current
 
-    def _check_discretisation(self, d_l: np.ndarray):
+    @staticmethod
+    def _check_discretisation(d_l: np.ndarray):
         """
         Check the discretisation of the array.
         """
@@ -177,7 +179,7 @@ class BiotSavartFilament(CurrentSource):
 
         This is the original Biot-Savart equation, without centre-averaged
         smoothing. Do not use for values near the coil current centreline.
-        """  # noqa :W505
+        """  # noqa: W505
         point = np.array([x, y, z])
         r = point - self.mid_points
         r3 = np.linalg.norm(r, axis=1) ** 3
@@ -209,11 +211,11 @@ class BiotSavartFilament(CurrentSource):
 
         You probably shouldn't use this if you are actually interested in the
         inductance of an arbitrarily shaped Coordinates...
-        """  # noqa :W505
+        """  # noqa: W505
         # TODO: Validate inductance calculate properly and compare stored
         # energy of systems
         inductance = 0
-        for i, (x1, dx1) in enumerate(zip(self.ref_mid_points, self.ref_d_l)):
+        for _i, (x1, dx1) in enumerate(zip(self.ref_mid_points, self.ref_d_l)):
             # We create a mask to drop the point where x1 == x2
             r = x1 - self.mid_points
             mask = np.sum(r**2, axis=1) > self.radius
