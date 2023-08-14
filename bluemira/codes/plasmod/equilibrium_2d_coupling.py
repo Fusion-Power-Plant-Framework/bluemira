@@ -45,7 +45,7 @@ from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.codes.interface import CodesSolver, RunMode
+from bluemira.codes.interface import BaseRunMode, CodesSolver
 from bluemira.codes.plasmod import plot_default_profiles
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
@@ -159,7 +159,7 @@ def create_plasma_xz_cross_section(
 def _run_transport_solver(
     transport_solver: CodesSolver,
     transport_params: ParameterFrame,
-    transport_run_mode: Union[str, RunMode],
+    transport_run_mode: Union[str, BaseRunMode],
 ) -> Tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
     """Run transport solver"""
     transport_solver.params.update_from_frame(transport_params)
@@ -225,7 +225,7 @@ def solve_transport_fixed_boundary(
     max_inner_iter: int = 20,
     inner_iter_err_max: float = 1e-4,
     relaxation: float = 0.2,
-    transport_run_mode: Union[str, RunMode] = "run",
+    transport_run_mode: Union[str, BaseRunMode] = "run",
     mesh_filename: str = "FixedBoundaryEquilibriumMesh",
     plot: bool = False,
     debug: bool = False,
