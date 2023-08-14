@@ -4,7 +4,7 @@ attrs==23.1.0
 bandit==1.7.5
 black==23.7.0
 certifi==2023.7.22
-cfgv==3.3.1
+cfgv==3.4.0
 charset-normalizer==3.2.0
 coverage[toml]==7.3.0
 distlib==0.3.7
