@@ -1,17 +1,39 @@
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                         J. Morris, D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
 import functools
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
-import matplotlib.colors as colors
 import numpy as np
 import polyscope as ps
+from matplotlib import colors
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.display.palettes import ColorPalette
 from bluemira.utilities.tools import ColourDescriptor
+
+if TYPE_CHECKING:
+    from bluemira.display.palettes import ColorPalette
 
 
 @dataclass
@@ -220,5 +242,4 @@ def clean_name(label: str, index_label: str) -> str:
     index_label = index_label.replace("#", "_")
     if len(label) == 0 or label == "_":
         return f"{index_label}: NO LABEL"
-    else:
-        return f"{index_label}: {label}"
+    return f"{index_label}: {label}"

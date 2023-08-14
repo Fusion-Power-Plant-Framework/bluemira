@@ -32,7 +32,12 @@ from dataclasses import asdict, dataclass, fields
 from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Union
 
 if TYPE_CHECKING:
+    from bluemira.codes.interface import BaseRunMode, CodesSolver
+    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+        FemGradShafranovFixedBoundary,
+    )
     from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
+    from bluemira.geometry.parameterisations import GeometryParameterisation
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -45,12 +50,8 @@ from bluemira.base.constants import EPS, MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.codes.interface import BaseRunMode, CodesSolver
 from bluemira.codes.plasmod import plot_default_profiles
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
-from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-    FemGradShafranovFixedBoundary,
-)
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
     create_mesh,
@@ -58,8 +59,8 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
     get_flux_surfaces_from_mesh,
     refine_mesh,
 )
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.optimisation._tools import approx_derivative
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
@@ -148,9 +149,9 @@ def create_plasma_xz_cross_section(
     lcfs.mesh_options = lcfs_options["face"]
 
     bluemira_debug(
-        f"FB Params\n\n"
+        "FB Params\n\n"
         f"{params.tabulate()}\n\n"
-        f"Transport Params\n\n"
+        "Transport Params\n\n"
         f"{transport_params.tabulate(keys=['name', 'value', 'unit'], tablefmt='simple')}"
     )
     return plasma
@@ -384,7 +385,8 @@ def solve_transport_fixed_boundary(
             )
 
             bluemira_print(
-                f"Solving fixed boundary Grad-Shafranov...[inner iteration: {n_iter_inner}]"
+                "Solving fixed boundary Grad-Shafranov...[inner iteration:"
+                f" {n_iter_inner}]"
             )
 
             equilibrium = gs_solver.solve(
@@ -429,15 +431,15 @@ def solve_transport_fixed_boundary(
 
             if eps_psi2d < inner_iter_err_max:
                 break
-            else:
-                bluemira_print(f"Error on psi2d = {eps_psi2d} > {inner_iter_err_max}")
-                psi2d_0 = psi2d
-                if refine:
-                    magnetic_axis = find_magnetic_axis(gs_solver.psi, gs_solver.mesh)
-                    magnetic_axis = np.array([magnetic_axis[0], magnetic_axis[1], 0])
-                    mesh = refine_mesh(coarse_mesh, magnetic_axis, distance, num_levels)
-                    bluemira_print(f"Mesh refined on magnetic axis {magnetic_axis[:2]}")
-                    gs_solver.set_mesh(mesh)
+
+            bluemira_print(f"Error on psi2d = {eps_psi2d} > {inner_iter_err_max}")
+            psi2d_0 = psi2d
+            if refine:
+                magnetic_axis = find_magnetic_axis(gs_solver.psi, gs_solver.mesh)
+                magnetic_axis = np.array([magnetic_axis[0], magnetic_axis[1], 0])
+                mesh = refine_mesh(coarse_mesh, magnetic_axis, distance, num_levels)
+                bluemira_print(f"Mesh refined on magnetic axis {magnetic_axis[:2]}")
+                gs_solver.set_mesh(mesh)
 
         _, kappa_95, delta_95 = calculate_plasma_shape_params(
             gs_solver.psi_norm_2d,
@@ -455,7 +457,8 @@ def solve_transport_fixed_boundary(
         )
 
         bluemira_print(
-            f"{transport_solver.name} <-> Fixed boundary G-S iter {n_iter} : {iter_err:.3E}"
+            f"{transport_solver.name} <-> Fixed boundary G-S iter {n_iter} :"
+            f" {iter_err:.3E}"
         )
 
         if iter_err <= iter_err_max:
@@ -659,7 +662,7 @@ def calc_curr_dens_profiles(
         C = -4 * np.pi**2 * MU_0 * np.gradient(p, psi_norm_1D) / AA  # noqa: N806
         dum3 = g2 / q3
         dum2 = np.gradient(dum3, psi_norm_1D)
-        B = -dum2 / q3 / AA  # noqa: N806
+        B = -dum2 / q3 / AA
         Fb = -R_0 * B_0 / (2 * np.pi)  # noqa: N806
 
         dum2 = cumulative_trapezoid(B, psi_norm_1D, initial=0)
@@ -690,12 +693,13 @@ def calc_curr_dens_profiles(
 
         psi_1D_0 = psi_1D
 
-        if rms_error <= 1e-5:
+        if rms_error <= D_TOLERANCE:
             break
     else:
         bluemira_warn(
-            f"Jackpot, you've somehow found a set of inputs for which this calculation does not converge almost immediately."
-            f"{rms_error=} after {no_iter} iterations."
+            "Jackpot, you've somehow found a set of inputs for which this calculation"
+            f" does not converge almost immediately.{rms_error=} after"
+            f" {no_iter} iterations."
         )
 
     if I_p == 0:

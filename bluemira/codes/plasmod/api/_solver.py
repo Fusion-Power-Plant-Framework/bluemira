@@ -22,7 +22,7 @@
 
 from enum import auto
 from pathlib import Path
-from typing import Any, Dict, Iterable, Union
+from typing import Any, Dict, Iterable, Optional, Union
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -87,7 +87,7 @@ class Solver(CodesSolver):
     def __init__(
         self,
         params: Union[Dict, ParameterFrame],
-        build_config: Dict[str, Any] = None,
+        build_config: Optional[Dict[str, Any]] = None,
     ):
         # Init task objects on execution so parameters can be edited
         # between separate 'execute' calls.
