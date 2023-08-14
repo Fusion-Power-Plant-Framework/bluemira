@@ -109,7 +109,8 @@ class ITERGravitySupportBuilder(Builder):
         xyz = self.build_xyz()
         return self.component_tree([self.build_xz(xyz)], self.build_xy(), [xyz])
 
-    def build_xz(self, xyz_component):
+    @staticmethod
+    def build_xz(xyz_component):
         """
         Build the x-z component of the ITER-like gravity support.
         """
@@ -130,7 +131,6 @@ class ITERGravitySupportBuilder(Builder):
         """
         Build the x-y component of the ITER-like gravity support.
         """
-        pass
 
     def _get_intersection_wire(self, width):
         x_g_support = self.params.x_g_support.value
@@ -142,7 +142,8 @@ class ITERGravitySupportBuilder(Builder):
         x_max = self.tf_xz_keep_out_zone.bounding_box.x_max - 0.5 * width
         if (x_g_support < x_min) | (x_g_support > x_max):
             raise BuilderError(
-                "The gravity support footprint is not contained within the provided TF coil geometry!"
+                "The gravity support footprint is not contained within the provided TF"
+                " coil geometry!"
             )
 
         if (self.params.z_gs.value - 6 * self.params.tf_gs_tk_plate.value) > z_min:
@@ -335,7 +336,6 @@ class PFCoilSupportBuilder(Builder):
         """
         Build the x-y components of the PF coil support.
         """
-        pass
 
     def build_xz(self, xyz):
         """
@@ -375,8 +375,7 @@ class PFCoilSupportBuilder(Builder):
             closed=True,
         )
         box_outer = offset_wire(box_inner, self.params.pf_s_tk_plate.value)
-        face = BluemiraFace([box_outer, box_inner])
-        return face
+        return BluemiraFace([box_outer, box_inner])
 
     @staticmethod
     def _get_first_intersection(point, angle, wire):
@@ -411,8 +410,8 @@ class PFCoilSupportBuilder(Builder):
 
         if len(directed_intersections) > 0:
             i_min = np.argmin(distances)
-            p_inter = directed_intersections[i_min]
-            return p_inter
+            return directed_intersections[i_min]
+        return None
 
     def _get_support_point_angle(self, support_face: BluemiraFace):
         bb = support_face.boundary[0].bounding_box
@@ -437,7 +436,7 @@ class PFCoilSupportBuilder(Builder):
                         p_inters.append(p_inter)
                         distances.append(d)
 
-                if len(p_inters) == 2:
+                if len(p_inters) == 2:  # noqa: PLR2004
                     avg_distance = np.average(distances)
                     if avg_distance <= distance:
                         distance = avg_distance
@@ -459,10 +458,9 @@ class PFCoilSupportBuilder(Builder):
 
         cut_box = make_polygon([v1, v2, v3, v4], closed=True)
 
-        intersection_wire = sorted(
+        return sorted(
             boolean_cut(self.tf_xz_keep_out_zone, cut_box), key=lambda wire: wire.length
         )[0]
-        return intersection_wire
 
     def _make_rib_profile(self, support_face):
         # Then, project sideways to find the minimum distance from a support point
@@ -509,7 +507,8 @@ class PFCoilSupportBuilder(Builder):
         total_rib_tk = self.params.pf_s_n_plate.value * self.params.pf_s_tk_plate.value
         if total_rib_tk >= width:
             bluemira_warn(
-                "PF coil support rib thickness and number exceed available thickness! You're getting a solid block instead"
+                "PF coil support rib thickness and number exceed available thickness!"
+                " You're getting a solid block instead"
             )
             gap_size = 0
             rib_block = extrude_shape(xz_profile, vec=(0, width, 0))
@@ -549,7 +548,8 @@ class PFCoilSupportBuilder(Builder):
             shape = boolean_fuse(shape_list)
         except GeometryError:
             bluemira_warn(
-                "PFCoilSupportBuilder boolean_fuse failed, getting a BluemiraCompound instead of a BluemiraSolid, please check!"
+                "PFCoilSupportBuilder boolean_fuse failed, getting a BluemiraCompound"
+                " instead of a BluemiraSolid, please check!"
             )
             shape = BluemiraCompound(shape_list)
 
@@ -615,7 +615,8 @@ class StraightOISOptimisationProblem(OptimisationProblem):
             },
         ]
 
-    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+    @staticmethod
+    def bounds() -> Tuple[np.ndarray, np.ndarray]:
         """The optimisation parameter bounds."""
         return np.array([0, 0]), np.array([1, 1])
 
@@ -629,7 +630,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         return make_polygon([p1, p2])
 
     @staticmethod
-    def f_L_to_xz(wire: BluemiraWire, value: float) -> np.ndarray:  # noqa: N802
+    def f_L_to_xz(wire: BluemiraWire, value: float) -> np.ndarray:
         """
         Convert a normalised L value to an x, z pair.
         """
@@ -670,13 +671,15 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         straight_points = straight_line.discretize(ndiscr=self.n_koz_discr).xz.T
         return signed_distance_2D_polygon(straight_points, self.koz_points)
 
-    def constrain_x(self, x_norm: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def constrain_x(x_norm: np.ndarray) -> np.ndarray:
         """
         Constrain the second normalised value to be always greater than the first.
         """
         return x_norm[0] - x_norm[1]
 
-    def df_constrain_x(self, x_norm: np.ndarray) -> np.ndarray:
+    @staticmethod
+    def df_constrain_x(x_norm: np.ndarray) -> np.ndarray:  # noqa: ARG004
         """
         Gradient of the constraint on  the solution vector
         """
@@ -786,7 +789,7 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
         ]
         koz_faces = [BluemiraFace(koz) for koz in koz_wires]
 
-        return boolean_fuse([BluemiraFace(koz_centreline)] + koz_faces)
+        return boolean_fuse([BluemiraFace(koz_centreline), *koz_faces])
 
     def _make_ois_regions(self, ois_centreline, koz_centreline):
         """
@@ -806,7 +809,7 @@ class StraightOISDesigner(Designer[List[BluemiraWire]]):
             )
         )
         cutter = BluemiraFace(koz_centreline)
-        cutter = boolean_fuse([cutter, inboard_cutter] + self.keep_out_zones)
+        cutter = boolean_fuse([cutter, inboard_cutter, *self.keep_out_zones])
 
         ois_regions = boolean_cut(ois_centreline, cutter)
 
@@ -863,7 +866,6 @@ class OISBuilder(Builder):
         """
         Build the x-y component of the OIS
         """
-        pass
 
     def build_xz(self):
         """

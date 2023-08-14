@@ -111,11 +111,11 @@ class VVTSBuilder(Builder):
         # _offset_wire_discretised used because
         # the cad offset regularly doesn't work properly here.
         # due to topology but unknown why here particularly
-        ex_args = dict(
-            join="intersect",
-            open_wire=False,
-            ndiscr=600,
-        )
+        ex_args = {
+            "join": "intersect",
+            "open_wire": False,
+            "ndiscr": 600,
+        }
         vvts_inner_wire = _offset_wire_discretised(
             koz, self.params.g_vv_ts.value, **ex_args
         )
@@ -136,7 +136,8 @@ class VVTSBuilder(Builder):
         apply_component_display_options(vvts_void, color=(0, 0, 0))
         return vvts, vvts_void
 
-    def build_xy(self, vvts_face: BluemiraFace) -> List[PhysicalComponent]:
+    @staticmethod
+    def build_xy(vvts_face: BluemiraFace) -> List[PhysicalComponent]:
         """
         Build the x-y components of the vacuum vessel thermal shield.
 
