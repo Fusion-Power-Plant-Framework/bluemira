@@ -39,8 +39,8 @@ from bluemira.base.constants import (
     HE3_MOLAR_MASS,
     HE_MOLAR_MASS,
     J_TO_EV,
-    N_AVOGADRO,
     NEUTRON_MOLAR_MASS,
+    N_AVOGADRO,
     PROTON_MOLAR_MASS,
     T_MOLAR_MASS,
     raw_uc,
@@ -58,7 +58,7 @@ __all__ = [
 ]
 
 
-def E_DT_fusion() -> float:  # noqa :N802
+def E_DT_fusion() -> float:
     """
     Calculates the total energy released from the D-T fusion reaction
 
@@ -77,7 +77,7 @@ def E_DT_fusion() -> float:  # noqa :N802
     return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
-def E_DD_fusion() -> float:  # noqa :N802
+def E_DD_fusion() -> float:
     """
     Calculates the total energy released from the D-D fusion reaction
 
@@ -92,7 +92,7 @@ def E_DD_fusion() -> float:  # noqa :N802
         (1.01 ~\\text{MeV})+\\text{p} (3.02~\\text{MeV})~~[50 \\textrm{\\%}]
         ~~~~~~~~~~\\rightarrow~{^{3}_{2}He} (0.82~\\text{MeV})+\\text{n}^{0} (2.45~\\text{MeV})~~[50 \\text{\\%}]\n
         \\Delta E = \\Delta m c^2
-    """  # noqa :W505
+    """  # noqa: W505
     # NOTE: Electron mass must be included with proton mass
     delta_m = np.array(
         [
@@ -126,7 +126,7 @@ def n_DT_reactions(p_fus: float) -> float:
     return raw_uc(p_fus, "MW", "W") / (e_dt * EV_TO_J)
 
 
-def n_DD_reactions(p_fus: float) -> float:  # noqa :N802
+def n_DD_reactions(p_fus: float) -> float:
     """
     Calculates the number of D-D fusion reactions per s for a given D-D fusion
     power
@@ -146,7 +146,7 @@ def n_DD_reactions(p_fus: float) -> float:  # noqa :N802
     return p_fus / (e_dd * EV_TO_J)
 
 
-def r_T_burn(p_fus: float) -> float:  # noqa :N802
+def r_T_burn(p_fus: float) -> float:  # noqa: N802
     """
     Calculates the tritium burn rate for a given fusion power
 
@@ -160,11 +160,11 @@ def r_T_burn(p_fus: float) -> float:  # noqa :N802
     Returns
     -------
     T burn rate in the plasma [g/s]
-    """  # noqa :W505
+    """  # noqa: W505
     return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
 
 
-def r_D_burn_DT(p_fus: float) -> float:  # noqa :N802
+def r_D_burn_DT(p_fus: float) -> float:
     """
     Calculates the deuterium burn rate for a given fusion power in D-T
 
@@ -446,16 +446,16 @@ def _reactivity_plasmod(
         term_3 = 1.877 * np.exp(-0.16176 * temp_kev * np.sqrt(temp_kev))
         return 1e-19 * term_1 * (term_2 + term_3)
 
-    elif reaction == Reactions.D_D:
+    if reaction == Reactions.D_D:
         term_1 = (
             0.16247 + 0.001741 * temp_kev - 0.029 * np.exp(-0.3843 * np.sqrt(temp_kev))
         )
         term_2 = np.exp(-18.8085 / (temp_kev ** (1 / 3))) / (temp_kev ** (1 / 3)) ** 2
         return 1e-19 * term_1 * term_2
-    else:
-        raise ValueError(
-            f"This function only supports D-D and D-T, not {reaction.name.replace('_','-')}"
-        )
+
+    raise ValueError(
+        f"This function only supports D-D and D-T, not {reaction.name.replace('_','-')}"
+    )
 
 
 def _reactivity_johner(
@@ -485,16 +485,16 @@ def _reactivity_johner(
             f"This function only supports D-T, not {reaction.name.replace('_','-')}"
         )
 
-    if np.max(temp_kev) > 100:
+    if np.max(temp_kev) > 100:  # noqa: PLR2004
         bluemira_warn("The Johner parameterisation is not valid for T > 100 keV")
-    if np.min(temp_kev) < 5.3:
+    if np.min(temp_kev) < 5.3:  # noqa: PLR2004
         bluemira_warn("The Johner parameterisation is not valid for T < 5.3 keV")
 
     sigma_v = np.zeros_like(temp_kev)
-    idx_1 = np.where((5.3 <= temp_kev) & (temp_kev <= 10.3))[0]
-    idx_2 = np.where((10.3 <= temp_kev) & (temp_kev <= 18.5))[0]
-    idx_3 = np.where((18.5 <= temp_kev) & (temp_kev <= 39.9))[0]
-    idx_4 = np.where((39.9 <= temp_kev) & (temp_kev <= 100.0))[0]
+    idx_1 = np.where((temp_kev >= 5.3) & (temp_kev <= 10.3))[0]  # noqa: PLR2004
+    idx_2 = np.where((temp_kev >= 10.3) & (temp_kev <= 18.5))[0]  # noqa: PLR2004
+    idx_3 = np.where((temp_kev >= 18.5) & (temp_kev <= 39.9))[0]  # noqa: PLR2004
+    idx_4 = np.where((temp_kev >= 39.9) & (temp_kev <= 100.0))[0]  # noqa: PLR2004
     t1 = temp_kev[idx_1]
     t2 = temp_kev[idx_2]
     t3 = temp_kev[idx_3]

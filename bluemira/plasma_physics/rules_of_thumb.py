@@ -74,8 +74,7 @@ def estimate_loop_voltage(
 
     # Current density on axis
     j_0 = 2 * B_t / (MU_0 * q_0 * R_0)
-    v_loop = 2 * np.pi * R_0 * j_0 / sigma
-    return v_loop
+    return 2 * np.pi * R_0 * j_0 / sigma
 
 
 def estimate_Le(A: float, kappa: float) -> float:  # noqa: N802
