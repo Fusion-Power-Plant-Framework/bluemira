@@ -26,7 +26,7 @@ import nlopt
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._nlopt.conditions import NLOptConditions
 from bluemira.optimisation._nlopt.functions import (
@@ -225,16 +225,16 @@ class NloptOptimiser(Optimiser):
             x_star, f_x = self._get_previous_iter_result()
         except RuntimeError as error:
             # Usually "more than iter SQP iterations"
-            _process_nlopt_result(self._opt)
+            _process_nlopt_result(self._opt, self.algorithm)
             raise OptimisationError(str(error))
         except KeyboardInterrupt:
-            _process_nlopt_result(self._opt)
+            _process_nlopt_result(self._opt, self.algorithm)
             raise KeyboardInterrupt(
                 "The optimisation was halted by the user. Please check "
                 "your optimisation problem and termination conditions."
             )
 
-        _process_nlopt_result(self._opt)
+        _process_nlopt_result(self._opt, self.algorithm)
         return OptimiserResult(
             f_x=f_x,
             x=x_star,
@@ -387,7 +387,7 @@ def _initial_guess_from_bounds(lower: np.ndarray, upper: np.ndarray) -> np.ndarr
     return np.mean(bounds, axis=0)
 
 
-def _process_nlopt_result(opt: nlopt.opt) -> None:
+def _process_nlopt_result(opt: nlopt.opt, algorithm: Algorithm) -> None:
     """
     Communicate to the user the NLopt optimisation result.
 
@@ -398,11 +398,17 @@ def _process_nlopt_result(opt: nlopt.opt) -> None:
     ----------
     opt:
         The optimiser to check
+    algorithm:
+        The optimisation algorithm
     """
     result = opt.last_optimize_result()
     message = None
+    log_func = bluemira_warn
     if result == nlopt.MAXEVAL_REACHED:
         message = "optimiser succeeded but stopped at the maximum number of evaluations."
+        if algorithm is Algorithm.ISRES:
+            log_func = bluemira_debug
+            message += f"\nThis is expected for the {Algorithm.ISRES.name} algorithm."
     elif result == nlopt.MAXTIME_REACHED:
         message = "optimiser succeeded but stopped at the maximum duration."
     elif result == nlopt.ROUNDOFF_LIMITED:
@@ -419,4 +425,4 @@ def _process_nlopt_result(opt: nlopt.opt) -> None:
     elif result == nlopt.FORCED_STOP:
         message = "optimiser failed because of a forced stop."
     if message:
-        bluemira_warn(f"\n{message}\n")
+        log_func(f"\n{message}\n")
