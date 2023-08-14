@@ -458,7 +458,7 @@ class SphericalHarmonicsConstraint(MagneticConstraint):
     ----------
     r_t:
         Typical length scale of the problem (e.g. radius at outer midplane)
-    ref_harmonics:
+    ref_coil_psi_amplitudes:
         Initial harmonic amplitudes obtained from desired core plasma
     max_degree:
         Maximum degree of spherical harmonics desired to constrain.
@@ -467,7 +467,7 @@ class SphericalHarmonicsConstraint(MagneticConstraint):
     def __init__(
         self,
         r_t: float,
-        ref_harmonics: npt.NDArray,
+        ref_coil_psi_amplitudes: npt.NDArray,
         max_degree: int,
         target_value: float = 0.0,
         weights: Union[float, npt.NDArray] = 1.0,
@@ -484,7 +484,7 @@ class SphericalHarmonicsConstraint(MagneticConstraint):
         )
         self.max_degree = max_degree
         self.r_t = r_t
-        self.ref_harmonics = ref_harmonics
+        self.ref_coil_psi_amplitudes = ref_coil_psi_amplitudes
 
     def control_response(self, coilset: CoilSet) -> npt.NDArray:
         """
@@ -496,13 +496,13 @@ class SphericalHarmonicsConstraint(MagneticConstraint):
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        return self.ref_harmonics
+        return self.ref_coil_psi_amplitudes
 
     def __len__(self) -> int:
         """
         The mathematical size of the constraint.
         """
-        return len(self.ref_harmonics)
+        return len(self.ref_coil_psi_amplitudes)
 
     def plot(self, ax=None):
         """
