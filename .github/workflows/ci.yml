@@ -97,9 +97,7 @@ jobs:
       env:
          COPYRIGHT: ${{ github.event_name == 'pull_request' && 'PR' || '' }}
       run: |
-        SKIP=flake8,black,update_copyright pre-commit run --all-files
-        flake8 --count
-        black --check .
+        SKIP=update_copyright pre-commit run --all-files
         if [ $COPYRIGHT ]; then
            git fetch origin $GITHUB_REF $GITHUB_BASE_REF
            pre-commit run update_copyright --from-ref origin/$GITHUB_BASE_REF --to-ref FETCH_HEAD
