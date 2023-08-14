@@ -48,8 +48,13 @@ from ext_code_script import get_filename
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.codes.interface import CodesSetup, CodesSolver, CodesTask, CodesTeardown
-from bluemira.codes.interface import RunMode as BaseRunMode
+from bluemira.codes.interface import (
+    BaseRunMode,
+    CodesSetup,
+    CodesSolver,
+    CodesTask,
+    CodesTeardown,
+)
 from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.utilities import ParameterMapping
 
