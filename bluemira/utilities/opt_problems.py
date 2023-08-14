@@ -227,16 +227,14 @@ class OptimisationProblem(ABC):
         in parameterisation, at each optimise() call.
         To be overridden as needed.
         """
-        initial_state = parameterisation
-        return initial_state
+        return parameterisation
 
     def update_parametrisation(self, state: np.ndarray):
         """
         Update parameterisation object using the state vector.
         To be overridden as needed.
         """
-        parameterisation = state
-        return parameterisation
+        return state
 
     @abstractmethod
     def optimise(self):
