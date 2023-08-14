@@ -28,8 +28,8 @@ from typing import (
     Mapping,
     Optional,
     Tuple,
-    TypedDict,
     TypeVar,
+    TypedDict,
     Union,
 )
 
@@ -232,11 +232,10 @@ def optimise_geometry(
         df_obj = _tools.to_optimiser_callable(df_objective, geom)
     else:
         df_obj = None
-    ineq_constraints_list = []
-    for constraint in ineq_constraints:
-        ineq_constraints_list.append(constraint)
-    for zone in keep_out_zones:
-        ineq_constraints_list.append(_tools.make_keep_out_zone_constraint(_to_koz(zone)))
+    ineq_constraints_list = list(ineq_constraints)
+    ineq_constraints_list.extend(
+        [_tools.make_keep_out_zone_constraint(_to_koz(zone)) for zone in keep_out_zones]
+    )
 
     ineq_constraints = _tools.get_shape_ineq_constraint(geom) + [
         _tools.to_constraint(c, geom) for c in ineq_constraints_list

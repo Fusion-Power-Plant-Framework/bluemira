@@ -27,9 +27,8 @@ import datetime
 import functools
 import inspect
 import json
-import os
 from copy import deepcopy
-from logging import warn
+from pathlib import Path
 from typing import (
     Any,
     Callable,
@@ -42,12 +41,12 @@ from typing import (
     Type,
     Union,
 )
+from warnings import warn
 
 import numba as nb
 import numpy as np
 from scipy.spatial import ConvexHull
 
-import bluemira.mesh.meshing as meshing
 from bluemira.base.constants import EPS
 from bluemira.base.file import force_file_extension, get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
@@ -62,6 +61,7 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.shell import BluemiraShell
 from bluemira.geometry.solid import BluemiraSolid
 from bluemira.geometry.wire import BluemiraWire
+from bluemira.mesh import meshing
 
 
 @cadapi.catch_caderr(GeometryError)
@@ -78,7 +78,7 @@ def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
     elif isinstance(apiobj, cadapi.apiCompound):
         output = BluemiraCompound._create(apiobj, label)
     else:
-        raise ValueError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
+        raise TypeError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
     return output
 
 
@@ -87,7 +87,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     JSON Encoder for BluemiraGeo.
     """
 
-    def default(self, obj: Union[BluemiraGeo, np.ndarray, Any]):
+    def default(self, obj: Union[BluemiraGeo, np.ndarray, Any]):  # noqa: PLR6301
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
         """
@@ -108,13 +108,12 @@ def _reconstruct_function_call(signature, *args, **kwargs) -> dict:
     for i, key in enumerate(signature.parameters.keys()):
         if i < len(args):
             data[key] = args[i]
+        elif key not in kwargs:
+            value = signature.parameters[key].default
+            if value != inspect._empty:
+                data[key] = value
         else:
-            if key not in kwargs:
-                value = signature.parameters[key].default
-                if value != inspect._empty:
-                    data[key] = value
-            else:
-                data[key] = kwargs[key]
+            data[key] = kwargs[key]
 
     # Catch any kwargs not in signature
     for k, v in kwargs.items():
@@ -123,7 +122,7 @@ def _reconstruct_function_call(signature, *args, **kwargs) -> dict:
     return data
 
 
-def _make_debug_file(name: str) -> str:
+def _make_debug_file(name: str) -> Path:
     """
     Make a new file in the geometry debugging folder.
     """
@@ -131,15 +130,15 @@ def _make_debug_file(name: str) -> str:
     now = datetime.datetime.now()
     timestamp = now.strftime("%m-%d-%Y-%H-%M")
     fmt_string = "{}-{}{}.json"
-    name = fmt_string.format(name, timestamp, "")
-    filename = os.path.join(path, name)
+    ts_name = fmt_string.format(name, timestamp, "")
+    filename = Path(path, ts_name)
 
     i = 0
-    while os.path.isfile(filename):
+    while filename.exists():
         i += 1
         increment = f"_{i}"
-        name = fmt_string.format(name, timestamp, increment)
-        filename = os.path.join(path, name)
+        ts_name = fmt_string.format(name, timestamp, increment)
+        filename = Path(path, ts_name)
     return filename
 
 
@@ -153,7 +152,7 @@ def log_geometry_on_failure(func):
     def wrapper(*args, **kwargs):
         try:
             return func(*args, **kwargs)
-        except cadapi.FreeCADError as error:
+        except cadapi.FreeCADError:
             data = _reconstruct_function_call(signature, *args, **kwargs)
             filename = _make_debug_file(func_name)
 
@@ -163,14 +162,15 @@ def log_geometry_on_failure(func):
                     json.dump(data, file, indent=4, cls=BluemiraGeoEncoder)
 
                 bluemira_debug(
-                    f"Function call {func_name} failed. Debugging information was saved to: {filename}"
+                    f"Function call {func_name} failed. Debugging information was saved"
+                    f" to: {filename}"
                 )
-            except Exception:
+            except Exception:  # noqa: BLE001
                 bluemira_warn(
                     f"Failed to save the failed geometry operation {func_name} to JSON."
                 )
 
-            raise error
+            raise
 
     return wrapper
 
@@ -211,7 +211,7 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     -------
     Vertex at the point
     """
-    if len(point) != 3:
+    if len(point) != 3:  # noqa: PLR2004
         raise GeometryError("Points must be of dimension 3.")
 
     return cadapi.apiVertex(*point)
@@ -230,7 +230,8 @@ def closed_wire_wrapper(drop_closure_point: bool):
             if points.closed:
                 if closed is False:
                     bluemira_warn(
-                        f"{func.__name__}: input points are closed but closed=False, defaulting to closed=True."
+                        f"{func.__name__}: input points are closed but closed=False,"
+                        " defaulting to closed=True."
                     )
                 closed = True
                 if drop_closure_point:
@@ -248,7 +249,9 @@ def closed_wire_wrapper(drop_closure_point: bool):
 
 @closed_wire_wrapper(drop_closure_point=True)
 def make_polygon(
-    points: Union[list, np.ndarray], label: str = "", closed: bool = False
+    points: Union[list, np.ndarray],
+    label: str = "",  # noqa: ARG001
+    closed: bool = False,  # noqa: ARG001
 ) -> BluemiraWire:
     """
     Make a polygon from a set of points.
@@ -278,7 +281,9 @@ def make_polygon(
 
 @closed_wire_wrapper(drop_closure_point=False)
 def make_bezier(
-    points: Union[list, np.ndarray], label: str = "", closed: bool = False
+    points: Union[list, np.ndarray],
+    label: str = "",  # noqa: ARG001
+    closed: bool = False,  # noqa: ARG001
 ) -> BluemiraWire:
     """Make a bspline from a set of points.
 
@@ -347,7 +352,9 @@ def make_bspline(
     )
 
 
-def _make_polygon_fallback(points, label="", closed=False, **kwargs) -> BluemiraWire:
+def _make_polygon_fallback(
+    points, label="", closed=False, **kwargs  # noqa: ARG001
+) -> BluemiraWire:
     """
     Overloaded function signature for fallback option from interpolate_bspline
     """
@@ -424,7 +431,8 @@ def force_wire_to_spline(
     original_n_edges = len(wire.edges)
     if original_n_edges < n_edges_max:
         bluemira_debug(
-            f"Wire already has {original_n_edges} < {n_edges_max=}. No point forcing to a spline."
+            f"Wire already has {original_n_edges} < {n_edges_max=}. No point forcing to"
+            " a spline."
         )
         return wire
 
@@ -446,7 +454,8 @@ def force_wire_to_spline(
     delta = np.linalg.norm(original_points.xyz - new_points.xyz, ord=2)
     if delta > l2_tolerance:
         bluemira_warn(
-            f"Forcing wire to spline with {n_discr} interpolation points did not achieve the desired tolerance: {delta} > {l2_tolerance}"
+            f"Forcing wire to spline with {n_discr} interpolation points did not achieve"
+            f" the desired tolerance: {delta} > {l2_tolerance}"
         )
 
     return wire
@@ -577,15 +586,14 @@ def wire_closure(bmwire: BluemiraWire, label="closure") -> BluemiraWire:
     Closure wire
     """
     wire = bmwire.shape
-    closure = BluemiraWire(cadapi.wire_closure(wire), label=label)
-    return closure
+    return BluemiraWire(cadapi.wire_closure(wire), label=label)
 
 
 def _offset_wire_discretised(
     wire,
     thickness,
     /,
-    join: str = "intersect",
+    join: str = "intersect",  # noqa: ARG001
     open_wire: bool = True,
     label="",
     *,
@@ -632,10 +640,10 @@ def offset_wire(
     open_wire: bool = True,
     label: str = "",
     *,
-    fallback_method="square",
-    byedges=True,
-    ndiscr=400,
-    **fallback_kwargs,
+    fallback_method="square",  # noqa: ARG001
+    byedges=True,  # noqa: ARG001
+    ndiscr=400,  # noqa: ARG001
+    **fallback_kwargs,  # noqa: ARG001
 ) -> BluemiraWire:
     """
     Make a planar offset from a planar wire.
@@ -753,11 +761,11 @@ def revolve_shape(
     -------
     The revolved shape.
     """
-    if degree > 360:
+    if degree > 360:  # noqa: PLR2004
         bluemira_warn("Cannot revolve a shape by more than 360 degrees.")
         degree = 360
 
-    if degree == 360:
+    if degree == 360:  # noqa: PLR2004
         # We split into two separate revolutions of 180 degree and fuse them
         if isinstance(shape, BluemiraWire):
             shape = BluemiraFace(shape).shape
@@ -851,7 +859,7 @@ def fillet_chamfer_decorator(chamfer: bool):
         def wrapper(wire, radius):
             edges = wire.shape.OrderedEdges
             func_name = "chamfer" if chamfer else "fillet"
-            if len(edges) < 2:
+            if len(edges) < 2:  # noqa: PLR2004
                 raise GeometryError(f"Cannot {func_name} a wire with less than 2 edges!")
             if not cadapi._wire_is_planar(wire.shape):
                 raise GeometryError(f"Cannot {func_name} a non-planar wire!")
@@ -928,14 +936,8 @@ def distance_to(
         distance between those points is the minimum distance given by dist.
     """
     # Check geometry for vertices
-    if isinstance(geo1, Iterable):
-        shape1 = _make_vertex(geo1)
-    else:
-        shape1 = geo1.shape
-    if isinstance(geo2, Iterable):
-        shape2 = _make_vertex(geo2)
-    else:
-        shape2 = geo2.shape
+    shape1 = _make_vertex(geo1) if isinstance(geo1, Iterable) else geo1.shape
+    shape2 = _make_vertex(geo2) if isinstance(geo2, Iterable) else geo2.shape
     return cadapi.dist_to_shape(shape1, shape2)
 
 
@@ -1010,6 +1012,7 @@ def slice_shape(
 
     if len(_slice) > 0:
         return _slice
+    return None
 
 
 def circular_pattern(
@@ -1133,6 +1136,7 @@ def save_cad(
         warn(
             "Using kwarg 'formatt' is no longer supported. Use cad_format instead.",
             category=DeprecationWarning,
+            stacklevel=2,
         )
         cad_format = kw_formatt
 
@@ -1283,30 +1287,28 @@ def signed_distance(wire_1: BluemiraWire, wire_2: BluemiraWire) -> float:
     enables the use of such a function as a constraint in gradient-based optimisers.
     """
     d, vectors = distance_to(wire_1, wire_2)
-
-    if d == 0.0:  # Intersections are exactly 0.0
+    # Intersections are exactly 0.0
+    if d == 0.0:  # noqa: PLR2004
         if len(vectors) <= 1:
             # There is only one intersection: the wires are touching but not overlapping
             return 0.0
-        else:
-            # There are multiple intersections: the wires are overlapping
-            # For now, without boolean operations, get an estimate of the intersection
-            # length
-            length = 0
-            for i in range(1, len(vectors)):
-                p1 = vectors[i - 1][0]
-                p2 = vectors[i][0]
+        # There are multiple intersections: the wires are overlapping
+        # For now, without boolean operations, get an estimate of the intersection
+        # length
+        length = 0
+        for i in range(1, len(vectors)):
+            p1 = vectors[i - 1][0]
+            p2 = vectors[i][0]
 
-                length += np.sqrt(
-                    (p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2
-                )
+            length += np.sqrt(
+                (p2[0] - p1[0]) ** 2 + (p2[1] - p1[1]) ** 2 + (p2[2] - p1[2]) ** 2
+            )
 
-            # TODO: Use a boolean difference operation to get the lengths of the
-            # overlapping wire segment(s)
-            return length
-    else:
-        # There are no intersections, return minimum distance
-        return -d
+        # TODO: Use a boolean difference operation to get the lengths of the
+        # overlapping wire segment(s)
+        return length
+    # There are no intersections, return minimum distance
+    return -d
 
 
 # ======================================================================================
@@ -1333,9 +1335,9 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
         In case the boolean operation fails.
     """
     if not isinstance(shapes, list):
-        raise ValueError(f"{shapes} is not a list.")
+        raise TypeError(f"{shapes} is not a list.")
 
-    if len(shapes) < 2:
+    if len(shapes) < 2:  # noqa: PLR2004
         raise ValueError("At least 2 shapes must be given")
 
     # check that all the shapes are of the same time
@@ -1348,8 +1350,8 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
         merged_shape = cadapi.boolean_fuse(api_shapes)
         return convert(merged_shape, label)
 
-    except Exception as e:
-        raise GeometryError(f"Boolean fuse operation failed: {e}")
+    except Exception as e:  # noqa: BLE001
+        raise GeometryError(f"Boolean fuse operation failed: {e}") from None
 
 
 def boolean_cut(
@@ -1415,9 +1417,7 @@ def boolean_fragments(
     compound, fragment_map = cadapi.boolean_fragments(
         [s.shape for s in shapes], tolerance
     )
-    converted = []
-    for group in fragment_map:
-        converted.append([convert(s) for s in group])
+    converted = [[convert(s) for s in group] for group in fragment_map]
 
     return convert(compound), converted
 
@@ -1489,10 +1489,9 @@ def serialize_shape(shape: BluemiraGeo):
                 if shape.mesh_options.physical_group is not None:
                     sdict["physical_group"] = shape.mesh_options.physical_group
         return {str(type(shape).__name__): sdict}
-    elif isinstance(shape, cadapi.apiWire):
+    if isinstance(shape, cadapi.apiWire):
         return cadapi.serialize_shape(shape)
-    else:
-        raise NotImplementedError(f"Serialization non implemented for {type_}")
+    raise NotImplementedError(f"Serialization non implemented for {type_}")
 
 
 def deserialize_shape(buffer: dict):
@@ -1544,11 +1543,12 @@ def deserialize_shape(buffer: dict):
         return shape
 
     for type_, v in buffer.items():
-        for supported_types in supported_types:
-            if type_ == supported_types.__name__:
+        for supported_type in supported_types:
+            if type_ == supported_type.__name__:
                 return _extract_shape(v, BluemiraWire)
 
         raise NotImplementedError(f"Deserialization non implemented for {type_}")
+    return None
 
 
 # # =============================================================================
@@ -1604,7 +1604,7 @@ def find_clockwise_angle_2d(base: np.ndarray, vector: np.ndarray) -> np.ndarray:
             f"Input vectors must have type np.ndarray, found '{type(base)}' and "
             f"'{type(vector)}'."
         )
-    if base.shape[0] != 2 or vector.shape[0] != 2:
+    if base.shape[0] != 2 or vector.shape[0] != 2:  # noqa: PLR2004
         raise ValueError(
             f"Input vectors' axis 0 length must be 2, found shapes '{base.shape}' and "
             f"'{vector.shape}'."

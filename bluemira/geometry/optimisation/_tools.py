@@ -173,9 +173,7 @@ def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[Constraint
         df_constraint = to_optimiser_callable_from_cls(df_constraint, geom)
     return [
         {
-            "f_constraint": to_optimiser_callable_from_cls(
-                getattr(geom, "f_ineq_constraint"), geom
-            ),
+            "f_constraint": to_optimiser_callable_from_cls(geom.f_ineq_constraint, geom),
             "df_constraint": df_constraint,
             "tolerance": geom.tolerance,
         }

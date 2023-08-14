@@ -24,9 +24,7 @@ Wrapper for FreeCAD Part.Wire objects
 """
 from __future__ import annotations
 
-from typing import Iterable, List, Optional, Tuple, Union
-
-import numpy as np
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
@@ -37,8 +35,11 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import (
     GeometryError,
     MixedOrientationWireError,
-    NotClosedWire,
+    NotClosedWireError,
 )
+
+if TYPE_CHECKING:
+    import numpy as np
 
 __all__ = ["BluemiraWire"]
 
@@ -73,7 +74,8 @@ class BluemiraWire(BluemiraGeo):
 
         if orientations.count(orientations[0]) != len(orientations):
             raise MixedOrientationWireError(
-                f"Cannot make a BluemiraWire from wires of mixed orientations: {orientations}"
+                "Cannot make a BluemiraWire from wires of mixed orientations:"
+                f" {orientations}"
             )
         self._orientation = orientations[0]
         if self._orientation != _Orientation(self.shape.Orientation):
@@ -97,8 +99,7 @@ class BluemiraWire(BluemiraGeo):
         wire = cadapi.apiWire(self._get_wires())
         if check_reverse:
             return self._check_reverse(wire)
-        else:
-            return wire
+        return wire
 
     def _get_wires(self) -> List[cadapi.apiWire]:
         """list(apiWire): list of wires of which the shape consists of."""
@@ -135,7 +136,7 @@ class BluemiraWire(BluemiraGeo):
 
         # check that the new boundary is closed
         if not self.is_closed():
-            raise NotClosedWire("The open boundary has not been closed.")
+            raise NotClosedWireError("The open boundary has not been closed.")
 
     def discretize(
         self, ndiscr: int = 100, byedges: bool = False, dl: Optional[float] = None
@@ -189,12 +190,12 @@ class BluemiraWire(BluemiraGeo):
             raise GeometryError("Must specify either alpha or distance, not both.")
 
         if distance is None:
-            if alpha < 0.0:
+            if alpha < 0.0:  # noqa: PLR2004
                 bluemira_warn(
                     f"alpha must be between 0 and 1, not: {alpha}, setting to 0.0"
                 )
                 alpha = 0
-            elif alpha > 1.0:
+            elif alpha > 1.0:  # noqa: PLR2004
                 bluemira_warn(
                     f"alpha must be between 0 and 1, not: {alpha}, setting to 1.0"
                 )
@@ -230,7 +231,7 @@ class BluemiraWire(BluemiraGeo):
                 self.shape, vertex=vertex, tolerance=tolerance
             )
         except FreeCADError as e:
-            raise GeometryError(e.args[0])
+            raise GeometryError(e.args[0]) from None
 
     def start_point(self) -> Coordinates:
         """
@@ -250,7 +251,7 @@ class BluemiraWire(BluemiraGeo):
         The ordered vertexes of the wire.
         """
         vertexes = cadapi.ordered_vertexes(self.shape)
-        if len(vertexes) == 3:
+        if len(vertexes) == 3:  # noqa: PLR2004
             LOGGER.disabled = True
             coords = Coordinates(vertexes.T)
             LOGGER.disabled = False
@@ -272,7 +273,7 @@ class BluemiraWire(BluemiraGeo):
         """
         The wires of the wire. By definition a tuple of itself.
         """
-        return tuple([self])
+        return (self,)
 
     @property
     def faces(self) -> tuple:
