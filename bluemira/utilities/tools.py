@@ -26,7 +26,9 @@ from __future__ import annotations
 
 import operator
 import string
+import warnings
 from collections.abc import Iterable
+from functools import wraps
 from importlib import import_module as imp
 from importlib import machinery as imp_mach
 from importlib import util as imp_u
@@ -34,7 +36,7 @@ from itertools import permutations
 from json import JSONEncoder, dumps
 from os import listdir
 from types import ModuleType
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union
 
 import matplotlib.colors as colors
 import nlopt
@@ -847,3 +849,42 @@ def array_or_num(array: Any) -> Union[np.ndarray, float]:
         return array
     else:
         raise TypeError
+
+
+def deprecation_wrapper(
+    message: Union[Optional[Callable[[Any], Any]], Optional[str]]
+) -> Callable[[Any], Any]:
+    """Deprecate any callable.
+
+    Parameters
+    ----------
+    message:
+        The callable to deprecate or the message to show
+    """
+
+    def _decorate(func: Callable[[Any], Any]) -> Callable[[Any], Any]:
+        """Deprecate any callable.
+
+        Parameters
+        ----------
+        func:
+            The callable to deprecate
+        """
+
+        @wraps(func)
+        def deprecator(*args, **kwargs) -> Any:
+            warnings.warn(
+                message
+                if isinstance(message, str)
+                else f"'{func.__name__}' is deprecated and will be removed in the next major release",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            return func(*args, **kwargs)
+
+        return deprecator
+
+    if callable(message):
+        return _decorate(message)
+
+    return _decorate
