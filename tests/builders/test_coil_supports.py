@@ -111,8 +111,8 @@ class TestITERGravitySupportBuilder:
 
 class TestPFCoilSupportBuilder:
     my_test_params = PFCoilSupportBuilderParams(
-        Parameter("tf_wp_depth", 1.4, unit="m"),
         Parameter("tf_wp_width", 0.8, unit="m"),
+        Parameter("tf_wp_depth", 1.4, unit="m"),
         Parameter("tk_tf_side", 0.05, unit="m"),
         Parameter("pf_s_tk_plate", 0.15, unit="m"),
         Parameter("pf_s_n_plate", 4, unit=""),
