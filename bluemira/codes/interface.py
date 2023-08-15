@@ -31,7 +31,7 @@ from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.utilities import run_subprocess
 
 
-class RunMode(enum.Enum):
+class BaseRunMode(enum.Enum):
     """
     Base enum class for defining run modes within a solver.
 
@@ -319,7 +319,7 @@ class CodesSolver(abc.ABC):
         pass
 
     @abc.abstractproperty
-    def run_mode_cls(self) -> Type[RunMode]:
+    def run_mode_cls(self) -> Type[BaseRunMode]:
         """
         Class enumerating the run modes for this solver.
 
@@ -327,7 +327,7 @@ class CodesSolver(abc.ABC):
         """
         pass
 
-    def execute(self, run_mode: Union[str, RunMode]) -> Any:
+    def execute(self, run_mode: Union[str, BaseRunMode]) -> Any:
         """Execute the setup, run, and teardown tasks, in order."""
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
@@ -375,7 +375,7 @@ class CodesSolver(abc.ABC):
                     setattr(p_map, sr_key, sr_val)
 
     def _get_execution_method(
-        self, task: CodesTask, run_mode: RunMode
+        self, task: CodesTask, run_mode: BaseRunMode
     ) -> Optional[Callable]:
         """
         Return the method on the task corresponding to this solver's run

@@ -23,11 +23,11 @@ from dataclasses import dataclass
 
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes import interface
-from bluemira.codes.interface import NoOpTask, RunMode
+from bluemira.codes.interface import BaseRunMode, NoOpTask
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 
 
-class NoOpRunMode(RunMode):
+class NoOpRunMode(BaseRunMode):
     RUN = 0
 
 
