@@ -32,8 +32,12 @@ if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.equilibrium import Equilibrium
 
+import matplotlib.patches as patch
+import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 
+from bluemira.equilibria.harmonics import coil_harmonic_amplitude_matrix
 from bluemira.equilibria.optimisation.constraint_funcs import AxBConstraint
 from bluemira.equilibria.optimisation.constraint_funcs import (
     CoilForceConstraint as CoilForceConstraintFunction,
@@ -443,6 +447,71 @@ class MagneticConstraint(UpdateableConstraint):
         f_constraint = self._f_constraint(**self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
+
+
+class SphericalHarmonicsConstraint(MagneticConstraint):
+    """
+    Constraint function to constrain spherical harmonics starting from initial
+    coil currents and associated core plasma.
+
+    Parameters
+    ----------
+    r_t:
+        Typical length scale of the problem (e.g. radius at outer midplane)
+    ref_coil_psi_amplitudes:
+        Initial harmonic amplitudes obtained from desired core plasma
+    max_degree:
+        Maximum degree of spherical harmonics desired to constrain.
+    """
+
+    def __init__(
+        self,
+        r_t: float,
+        ref_coil_psi_amplitudes: npt.NDArray,
+        max_degree: int,
+        target_value: float = 0.0,
+        weights: Union[float, npt.NDArray] = 1.0,
+        tolerance: Union[float, npt.NDArray] = 1e-6,
+        f_constraint: Type[ConstraintFunction] = AxBConstraint,
+        constraint_type: str = "inequality",
+    ):
+        super().__init__(
+            target_value,
+            weights,
+            tolerance=tolerance,
+            f_constraint=f_constraint,
+            constraint_type=constraint_type,
+        )
+        self.max_degree = max_degree
+        self.r_t = r_t
+        self.ref_coil_psi_amplitudes = ref_coil_psi_amplitudes
+
+    def control_response(self, coilset: CoilSet) -> npt.NDArray:
+        """
+        Calculate control response of a CoilSet to the constraint.
+        """
+        return coil_harmonic_amplitude_matrix(coilset, self.max_degree, self.r_t)
+
+    def evaluate(self, _: Equilibrium) -> npt.NDArray:
+        """
+        Calculate the value of the constraint in an Equilibrium.
+        """
+        return self.ref_coil_psi_amplitudes
+
+    def __len__(self) -> int:
+        """
+        The mathematical size of the constraint.
+        """
+        return len(self.ref_coil_psi_amplitudes)
+
+    def plot(self, ax=None):
+        """
+        Plot the constraint onto an Axes.
+        """
+        if ax is None:
+            _, ax = plt.subplots()
+
+        ax.add_patch(patch.Circle((0, 0), self.r_t, ec="orange", fill=True, fc="orange"))
 
 
 class AbsoluteMagneticConstraint(MagneticConstraint):
