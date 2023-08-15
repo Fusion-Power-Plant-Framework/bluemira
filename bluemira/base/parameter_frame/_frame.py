@@ -77,7 +77,7 @@ class ParameterFrame:
         self._types = self._get_types()
 
         for field, field_name, value_type in zip(
-            self, self.__dataclass_fields__, self._types.values()
+            self, self.__dataclass_fields__, self._types.values()  # type: ignore
         ):
             if not isinstance(field, Parameter):
                 raise TypeError(
@@ -190,7 +190,7 @@ class ParameterFrame:
         """Initialize an instance from a dictionary."""
         data = copy.deepcopy(data)
         kwargs: Dict[str, Parameter] = {}
-        for member in cls.__dataclass_fields__:
+        for member in cls.__dataclass_fields__:  # type: ignore
             try:
                 param_data = data.pop(member)
             except KeyError as e:
@@ -209,7 +209,7 @@ class ParameterFrame:
     def from_frame(cls: Type[_PfT], frame: ParameterFrame) -> _PfT:
         """Initialise an instance from another ParameterFrame."""
         kwargs = {}
-        for field in cls.__dataclass_fields__:
+        for field in cls.__dataclass_fields__:  # type: ignore
             try:
                 kwargs[field] = getattr(frame, field)
             except AttributeError:
@@ -252,7 +252,7 @@ class ParameterFrame:
         kwargs = {}
 
         lp = config_params.local_params
-        for member in cls.__dataclass_fields__:
+        for member in cls.__dataclass_fields__:  # type: ignore
             if member not in lp:
                 continue
             kwargs[member] = cls._member_data_to_parameter(
@@ -261,14 +261,14 @@ class ParameterFrame:
             )
 
         gp = config_params.global_params
-        for member in cls.__dataclass_fields__:
-            if member not in gp.__dataclass_fields__:
+        for member in cls.__dataclass_fields__:  # type: ignore
+            if member not in gp.__dataclass_fields__:  # type: ignore
                 continue
             kwargs[member] = getattr(gp, member)
 
         # now validate all dataclass_fields are in kwargs
         # (which could be super set)
-        for member in cls.__dataclass_fields__:
+        for member in cls.__dataclass_fields__:  # type: ignore
             try:
                 kwargs[member]
             except KeyError as e:
@@ -296,7 +296,7 @@ class ParameterFrame:
     def to_dict(self) -> Dict[str, Dict[str, Any]]:
         """Serialize this ParameterFrame to a dictionary."""
         out = {}
-        for param_name in self.__dataclass_fields__:
+        for param_name in self.__dataclass_fields__:  # type: ignore
             param_data = getattr(self, param_name).to_dict()
             # We already have the name of the param, and use it as a
             # key. No need to repeat the name in the data, so pop it.
@@ -401,7 +401,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
     param_data["unit"] = f"{unit:~P}"
 
 
-def _remake_units(dimensionality: Union[Dict, pint.unit.UnitsContainer]) -> pint.Unit:
+def _remake_units(dimensionality: Union[Dict, pint.util.UnitsContainer]) -> pint.Unit:
     """Reconstruct unit from its dimensionality"""
     dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
     dim_pow = list(dimensionality.values())

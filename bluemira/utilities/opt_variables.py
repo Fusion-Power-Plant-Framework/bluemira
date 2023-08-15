@@ -342,8 +342,8 @@ class OptVariablesFrame:
             )
         if not hasattr(cls, "__dataclass_fields__"):
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
-        for field_name in cls.__dataclass_fields__:
-            dcf: Field = cls.__dataclass_fields__[field_name]
+        for field_name in cls.__dataclass_fields__:  # type: ignore
+            dcf: Field = cls.__dataclass_fields__[field_name]  # type: ignore
             fact_inst = dcf.default_factory() if dcf.default_factory != MISSING else None
             if fact_inst is None:
                 raise TypeError(
@@ -367,7 +367,7 @@ class OptVariablesFrame:
         The order is based on the order in which the parameters were
         declared.
         """
-        for field_name in self.__dataclass_fields__:
+        for field_name in self.__dataclass_fields__:  # type: ignore
             yield getattr(self, field_name)
 
     def __getitem__(self, name: str) -> OptVariable:
