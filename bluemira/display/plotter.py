@@ -109,7 +109,9 @@ class DictOptionsDescriptor:
 
       po = PlotOptions()
       po.wire_options["linewidth"] = 0.1  # overrides default
-      po.wire_options = {'zorder': 1}  # default linewidth reset
+      po.wire_options["zorder"] = 2  # adds new zorder option
+      # setting a new dictionary resets the defaults with zorder overridden
+      po.wire_options = {'zorder': 1}
       del po.wire_options["linewidth"]  # linewidth unset
 
     No checks are done on the contents of the dictionary.
@@ -138,7 +140,8 @@ class DictOptionsDescriptor:
         """Set the options dictionary"""
         if callable(value):
             value = value()
-        setattr(obj, self._name, {**getattr(obj, self._name, self.default), **value})
+        default = getattr(obj, self._name, self.default)
+        setattr(obj, self._name, {**default, **value})
 
 
 @dataclass
