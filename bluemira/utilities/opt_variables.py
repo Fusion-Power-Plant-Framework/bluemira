@@ -327,7 +327,6 @@ def ov(
     )
 
 
-@dataclass
 class OptVariablesFrame:
     """
     Class to model the variables for an optimisation
@@ -341,7 +340,7 @@ class OptVariablesFrame:
             raise TypeError(
                 "Cannot instantiate an OptVariablesFrame directly. It must be subclassed."
             )
-        if not cls.__dataclass_fields__:
+        if not hasattr(cls, "__dataclass_fields__"):
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
         for field_name in cls.__dataclass_fields__:
             dcf: Field = cls.__dataclass_fields__[field_name]

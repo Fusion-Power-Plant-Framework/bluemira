@@ -44,7 +44,6 @@ if TYPE_CHECKING:
 _PfT = TypeVar("_PfT", bound="ParameterFrame")
 
 
-@dataclass
 class ParameterFrame:
     """
     A data class to hold a collection of `Parameter` objects.
@@ -68,6 +67,8 @@ class ParameterFrame:
             raise TypeError(
                 "Cannot instantiate a ParameterFrame directly. It must be subclassed."
             )
+        if not hasattr(cls, "__dataclass_fields__"):
+            raise TypeError(f"{cls} must be annotated with '@dataclass'")
 
         return super().__new__(cls)
 
