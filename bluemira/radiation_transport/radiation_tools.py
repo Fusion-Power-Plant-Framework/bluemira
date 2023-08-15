@@ -25,6 +25,7 @@
 
 from __future__ import annotations
 from typing import TYPE_CHECKING
+from dataclasses import dataclass
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -52,10 +53,12 @@ from raysect.primitive import Cylinder
 # Scipy import
 from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
-
-SEP_CORRECTOR = 5e-3  # [m] DN: 5e-3, SN: 5e-2
 E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
 
+@dataclass
+class SeparationCorrector:
+    DN: float = 5e-3
+    SN: float = 5e-2
 
 def upstream_temperature(
     b_pol: float,
@@ -306,10 +309,8 @@ def random_point_temperature(
     q_par = p_sol / a_par
 
     # Distinction between lfs and hfs
-    if lfs:
-        d = SEP_CORRECTOR
-    else:
-        d = -SEP_CORRECTOR
+    sep_corrector = SeparationCorrector.DN if eq.is_double_null else SeparationCorrector.SN
+    d =sep_corrector if lfs else -sep_corrector
 
     # Distance between the chosen point and the the target
     if lfs:
@@ -338,13 +339,8 @@ def random_point_temperature(
     s_p = l_tot - l_p
     if round(abs(z_p)) == 0:
         s_p = 0
-    # Local temperature
-    t_p = ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
 
-    # From eV to keV
-    t_p = constants.raw_uc(t_p, "eV", "keV")
-
-    return t_p
+    return  constants.raw_uc(((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7), "eV", "keV")
 
 
 def electron_density_and_temperature_sol_decay(
