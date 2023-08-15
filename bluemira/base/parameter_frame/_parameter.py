@@ -78,14 +78,7 @@ class Parameter(Generic[ParameterValueType]):
         long_name: str = "",
         _value_types: Optional[Tuple[Type, ...]] = None,
     ):
-        if _value_types and value is not None:
-            if float in _value_types and isinstance(value, int):
-                value = float(value)
-            elif not isinstance(value, _value_types):
-                raise TypeError(
-                    f'type of argument "value" must be one of {_value_types}; '
-                    f"got {type(value)} instead."
-                )
+        value = self._type_check(value, _value_types)
         self._name = name
         self._value = value
         self._unit = pint.Unit(unit)
@@ -95,6 +88,20 @@ class Parameter(Generic[ParameterValueType]):
 
         self._history: List[ParameterValue[ParameterValueType]] = []
         self._add_history_record()
+
+    @staticmethod
+    def _type_check(
+        value: ParameterValueType, value_types: Optional[Tuple[Type, ...]]
+    ) -> ParameterValueType:
+        if value_types and value is not None:
+            if float in value_types and isinstance(value, int):
+                value = float(value)
+            elif not isinstance(value, value_types):
+                raise TypeError(
+                    f'type of argument "value" must be one of {value_types}; '
+                    f"got {type(value)} instead."
+                )
+        return value
 
     def __repr__(self) -> str:
         """String repr of class instance."""
