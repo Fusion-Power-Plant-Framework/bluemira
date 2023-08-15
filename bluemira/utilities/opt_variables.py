@@ -25,7 +25,7 @@ Optimisation variable class.
 from __future__ import annotations
 
 import json
-from dataclasses import MISSING, Field, dataclass, field
+from dataclasses import MISSING, Field, field
 from typing import Dict, Generator, Optional, TextIO, TypedDict, Union
 
 import matplotlib.pyplot as plt
