@@ -66,7 +66,7 @@ class ParameterFrame:
         """
         if cls == ParameterFrame:
             raise TypeError(
-                f"Cannot instantiate a {cls} directly. It must be subclassed."
+                "Cannot instantiate a ParameterFrame directly. It must be subclassed."
             )
 
         return super().__new__(cls)
