@@ -27,12 +27,14 @@ from dataclasses import asdict
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 import bluemira.geometry.face as face
 import bluemira.geometry.placement as placement
 import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import plot_3d, plotter
+from bluemira.display.error import DisplayError
 from bluemira.utilities.plot_tools import Plot3D
 
 SQUARE_POINTS = np.array(
@@ -121,6 +123,25 @@ class TestPlotOptions:
             else:
                 assert val == getattr(self.default, key)
 
+    def test_dictionary_options_allow_modification(self):
+        the_options = plotter.PlotOptions()
+        the_options.wire_options["color"] = "blue"
+        assert the_options.wire_options["color"] == "blue"
+
+        dupe = plotter.PlotOptions()
+        assert dupe.wire_options["color"] == "black"
+
+    def test_dictionary_options_reset_defaults(self):
+        the_options = plotter.PlotOptions()
+        the_options.wire_options = {"color": "blue"}
+        assert the_options.wire_options["color"] == "blue"
+        assert the_options.wire_options["linewidth"] == 0.5
+
+    def test_wrong_view_str_raises_DisplayError(self):
+        the_options = plotter.PlotOptions()
+        with pytest.raises(DisplayError):
+            the_options.view = "string"
+
     def test_properties(self):
         """
         Check the display option properties can be accessed
@@ -155,6 +176,8 @@ class TestPlotOptions:
                         assert val[no] == d
                     except ValueError:
                         assert all(val[no] == d)
+            elif key.endswith("options"):
+                assert getattr(the_options, key) == val
             else:
                 assert getattr(the_options, key) != val
 

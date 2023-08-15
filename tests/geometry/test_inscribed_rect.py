@@ -79,7 +79,8 @@ class TestInscribedRectangle:
             shape_face,
             self.po,
             ax=ax,
-            wire_options=dict(linewidth=0.1, zorder=-10),
+            face_options={"zorder": -10},
+            wire_options={"linewidth": 0.1},
             show=False,
         )
         for i in range(x):
