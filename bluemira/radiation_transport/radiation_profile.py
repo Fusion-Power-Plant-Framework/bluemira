@@ -63,7 +63,10 @@ if TYPE_CHECKING:
     from step_reactor.temp_flux_surface_maker import TempFsSolver
 
 
-SEP_CORRECTOR = 5e-3  # [m] DN: 5e-3, SN: 5e-2
+@dataclass
+class SeparationCorrector:
+    DN: float = 5e-3
+    SN: float = 5e-2
 
 
 class Radiation:
@@ -126,17 +129,18 @@ class Radiation:
             # The two halves
             self.sep_lfs = self.separatrix[0]
             self.sep_hfs = self.separatrix[1]
+            sep_corrector = SeparationCorrector.DN
         else:
             ob_ind = np.where(self.separatrix.x > self.points["x_point"]["x"])
             ib_ind = np.where(self.separatrix.x < self.points["x_point"]["x"])
             self.sep_ob = Coordinates({"x": self.separatrix.x[ob_ind], "z": self.separatrix.z[ob_ind]})
             self.sep_ib = Coordinates({"x": self.separatrix.x[ib_ind], "z": self.separatrix.z[ib_ind]})
-
+            sep_corrector = SeparationCorrector.SN
         # The mid-plane radii
         self.x_sep_omp = self.flux_surf_solver.x_sep_omp
         # To move away from the mathematical separatrix which would
         # give infinite connection length
-        self.r_sep_omp = self.x_sep_omp + SEP_CORRECTOR
+        self.r_sep_omp = self.x_sep_omp + sep_corrector
         # magnetic field components at the midplane
         self.b_pol_sep_omp = self.eq.Bp(self.x_sep_omp, self.z_mp)
         b_tor_sep_omp = self.eq.Bt(self.x_sep_omp)
@@ -144,7 +148,7 @@ class Radiation:
 
         if self.eq.is_double_null:
             self.x_sep_imp = self.flux_surf_solver.x_sep_imp
-            self.r_sep_imp = self.x_sep_imp - SEP_CORRECTOR
+            self.r_sep_imp = self.x_sep_imp - sep_corrector
             self.b_pol_sep_imp = self.eq.Bp(self.x_sep_imp, self.z_mp)
             b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
             self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, b_tor_sep_imp)

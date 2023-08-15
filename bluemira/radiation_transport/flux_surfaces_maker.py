@@ -45,14 +45,10 @@ __all__ = ["FluxSurfaceMaker"]
 
 class FluxSurfaceMaker:
     """
-    A simplified charged particle transport model along open field lines.
+    A class to extract flux surfaces from a given equilibrium.
 
     Parameters
     ----------
-    config: Dict[str, float]
-        The parameters for running the transport model. See
-        :class:`ChargedParticleSolverParams` for available parameters
-        and their defaults.
     equilibrium: Equilibrium
         The equilibrium defining flux surfaces.
     dx_mp: float (optional)
@@ -262,9 +258,11 @@ class FluxSurfaceMaker:
         self.first_wall = self._process_first_wall(first_wall)
 
         if self.eq.is_double_null:
-            self._analyse_DN(first_wall)
+            self.dx_omp = self._analyse_DN(first_wall)
+            return self.dx_omp
         else:
-            self._analyse_SN(first_wall)
+            self.dx_omp, self.dx_imp = self._analyse_SN(first_wall)
+            return self.dx_omp, self.dx_imp
 
     def _analyse_SN(self, first_wall):
         """
@@ -280,7 +278,7 @@ class FluxSurfaceMaker:
         )
 
         # Calculate values at OMP
-        self.dx_omp = x_omp - self.x_sep_omp
+        return x_omp - self.x_sep_omp
 
     def _analyse_DN(self, first_wall):
         """
@@ -297,7 +295,8 @@ class FluxSurfaceMaker:
         x_imp = self._get_array_x_mp(self.flux_surfaces_ib_lfs)
 
         # Calculate values at OMP
-        self.dx_omp = x_omp - self.x_sep_omp
-
+        dx_omp = x_omp - self.x_sep_omp
         # Calculate values at IMP
-        self.dx_imp = abs(x_imp - self.x_sep_imp)
+        dx_imp = abs(x_imp - self.x_sep_imp)
+        
+        return dx_omp, dx_imp
