@@ -89,7 +89,7 @@ IN_mappings = {
     "tk_vv_top": ("d_vv_top", "m"),
     "tk_vv_bot": ("d_vv_bot", "m"),
     "tk_cr_vv": ("ddwex", "m"),
-    "tk_tf_front_ib": ("dr_tf_case_out", "m"),
+    "tk_tf_front_ib": ("casthi", "m"),
     "tk_tf_side": ("casths", "m"),
     "PsepB_qAR_max": ("psepbqarmax", "MW.T/m"),
 }
@@ -108,8 +108,8 @@ OUT_mappings = {
     "P_fus_DD": ("pdd", "MW"),
     "H_star": ("hfact", "dimensionless"),
     "P_sep": ("pdivt", "MW"),
-    "P_rad_core": ("pcoreradmw", "MW"),
-    "P_rad_edge": ("pedgeradmw", "MW"),
+    "P_rad_core": ("pinnerzoneradmw", "MW"),
+    "P_rad_edge": ("pouterzoneradmw", "MW"),
     "P_rad": ("pradmw", "MW"),
     "P_line": ("plinepv*vol", "MW"),
     "P_sync": ("psyncpv*vol", "MW"),
@@ -122,7 +122,7 @@ OUT_mappings = {
     "tk_fw_in": ("fwith", "m"),
     "tk_fw_out": ("fwoth", "m"),
     "tk_tf_inboard": ("tfcth", "m"),
-    "tk_tf_nose": ("dr_tf_case_in", "m"),
+    "tk_tf_nose": ("thkcas", "m"),
     "tf_wp_width": ("dr_tf_wp", "m"),
     "tf_wp_depth": ("wwp1", "m"),
     "tk_tf_ins": ("tinstf", "m"),
@@ -145,7 +145,7 @@ OUT_mappings = {
     "TF_respc_ob": ("tflegres", "ohm"),
     "TF_currpt_ob": ("cpttf", "A"),
     "P_bd_in": ("pinjmw", "MW"),
-    "condrad_cryo_heat": ("qss/1.0D6", "MW"),
+    "condrad_cryo_heat": ("qss/1.0d6", "MW"),
 }
 
 IO_mappings = {
@@ -156,7 +156,9 @@ IO_mappings = {
     "tk_vv_in": ("d_vv_in", "m"),
     "tk_sol_ib": ("scrapli", "m"),
     "tk_sol_ob": ("scraplo", "m"),
-    "tk_ts": ("thshield", "m"),
+    "tk_ts": ("thshield_ob", "m"),
+    "tk_ts": ("thshield_vb", "m"),
+    "tk_ts": ("thshield_ib", "m"),
     "g_cs_tf": ("gapoh", "m"),
     "g_ts_tf": ("tftsgap", "m"),
     "g_vv_bb": ("vvblgap", "m"),
