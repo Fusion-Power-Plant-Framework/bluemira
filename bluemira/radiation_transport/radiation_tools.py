@@ -313,15 +313,11 @@ def random_point_temperature(
     d =sep_corrector if lfs else -sep_corrector
 
     # Distance between the chosen point and the the target
-    if lfs:
-        forward = True
-    else:
-        forward = False
     l_p = calculate_connection_length_flt(
         eq,
         x_p + (d * f_exp),
         z_p,
-        forward=forward,
+        forward=lfs,
         first_wall=firstwall_geom,
     )
     # connection length from the midplane to the target
@@ -330,7 +326,7 @@ def random_point_temperature(
             eq,
             r_sep_mp,
             z_mp,
-            forward=forward,
+            forward=lfs,
             first_wall=firstwall_geom,
         )
     else:
@@ -339,7 +335,7 @@ def random_point_temperature(
     s_p = l_tot - l_p
     if round(abs(z_p)) == 0:
         s_p = 0
-
+    # Return local temperature
     return  constants.raw_uc(((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7), "eV", "keV")
 
 

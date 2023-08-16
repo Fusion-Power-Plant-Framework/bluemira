@@ -24,21 +24,16 @@ A simplified 2-D solver for calculating charged particle heat loads.
 """
 
 from copy import deepcopy
-from dataclasses import dataclass, fields
 from typing import Dict
 
-import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes import Axes
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.radiation_transport.error import AdvectionTransportError
 
 __all__ = ["FluxSurfaceMaker"]
 
@@ -57,25 +52,32 @@ class FluxSurfaceMaker:
     """
 
     def __init__(self, equilibrium, dx_mp: float = 0.001):
-        self.eq = equilibrium
         self.dx_mp = dx_mp
-
+        self.eq = equilibrium
         # Constructors
         self.first_wall = None
-        self.flux_surfaces_ob_lfs = None
-        self.flux_surfaces_ob_hfs = None
-        self.flux_surfaces_ib_lfs = None
-        self.flux_surfaces_ib_hfs = None
         self.x_sep_omp = None
         self.x_sep_imp = None
         self.result = None
 
+    @property
+    def eq(self):
+        return self._eq
+    
+    @eq.setter
+    def eq(self, equilibrium):
         # Pre-processing
-        o_points, _ = self.eq.get_OX_points()
+        o_points, _ = equilibrium.get_OX_points()
         self._o_point = o_points[0]
         z = self._o_point.z
         self._yz_plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [1, 1, z])
+        self._eq = equilibrium
 
+        # Caculate flux surfaces
+        self._make_flux_surfaces_ob()
+        if self.eq.is_double_null:
+            self._make_flux_surfaces_ib()
+    
     @property
     def flux_surfaces(self):
         """
@@ -258,18 +260,14 @@ class FluxSurfaceMaker:
         self.first_wall = self._process_first_wall(first_wall)
 
         if self.eq.is_double_null:
-            self.dx_omp = self._analyse_DN(first_wall)
-            return self.dx_omp
+            return self._analyse_DN(first_wall)
         else:
-            self.dx_omp, self.dx_imp = self._analyse_SN(first_wall)
-            return self.dx_omp, self.dx_imp
+            return self._analyse_SN(first_wall)
 
     def _analyse_SN(self, first_wall):
         """
         Calculation for the case of single nulls.
         """
-        self._make_flux_surfaces_ob()
-
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(first_wall)
 
@@ -278,15 +276,13 @@ class FluxSurfaceMaker:
         )
 
         # Calculate values at OMP
-        return x_omp - self.x_sep_omp
+        self.dx_omp = x_omp - self.x_sep_omp
+        return self.dx_omp
 
     def _analyse_DN(self, first_wall):
         """
         Calculation for the case of double nulls.
         """
-        self._make_flux_surfaces_ob()
-        self._make_flux_surfaces_ib()
-
         # Find the intersections of the flux surfaces with the first wall
         self._clip_flux_surfaces(first_wall)
 
@@ -295,8 +291,8 @@ class FluxSurfaceMaker:
         x_imp = self._get_array_x_mp(self.flux_surfaces_ib_lfs)
 
         # Calculate values at OMP
-        dx_omp = x_omp - self.x_sep_omp
+        self.dx_omp = x_omp - self.x_sep_omp
         # Calculate values at IMP
-        dx_imp = abs(x_imp - self.x_sep_imp)
+        self.dx_imp = abs(x_imp - self.x_sep_imp)
         
-        return dx_omp, dx_imp
+        return self.dx_omp, self.dx_imp
