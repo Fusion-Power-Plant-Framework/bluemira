@@ -34,7 +34,7 @@ from typing import Dict, Union
 from bluemira.base import constants
 from bluemira.base.constants import ureg
 from bluemira.base.error import BuilderError
-from bluemira.base.parameter_frame import ParameterFrame
+from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.physics import calc_psi_norm
@@ -58,16 +58,46 @@ from bluemira.radiation_transport.radiation_tools import (
     
 )
 
-
 if TYPE_CHECKING:
-    from step_reactor.temp_flux_surface_maker import TempFsSolver
-
+    from radiation_transport.flux_surfaces_maker import FluxSurfaceMaker
 
 @dataclass
 class SeparationCorrector:
     DN: float = 5e-3
     SN: float = 5e-2
 
+@dataclass
+class RadiationParameterFrame(ParameterFrame):
+    n_e_sep: Parameter[float] = Parameter(name="n_e_sep", long_name="Electron density at separatrix", value=3e19, unit='1/m^3', source="default")
+    T_e_sep: Parameter[float] = Parameter(name="T_e_sep", long_name="Electron temperature at separatrix", value=2e-01, unit="keV", source="default")
+
+@dataclass
+class CoreRadiationParameterFrame(RadiationParameterFrame):
+    n_e_0: Parameter[float] =  Parameter(name="n_e_0", long_name="Electron density on axis", value=1.81e+20, unit="1/m^3", source="default")
+    T_e_0: Parameter[float] =  Parameter(name="T_e_0", long_name="Electron temperature on axis", value=2.196e+01, unit="keV", source="default")
+    rho_ped_n: Parameter[float] =  Parameter(name="rho_ped_n", long_name="Density pedestal r/a location", value=9.4e-01, unit="dimensionless", source="default")
+    rho_ped_t: Parameter[float] =  Parameter(name="rho_ped_t", long_name="Temperature pedestal r/a location", value=9.76e-01 , unit="dimensionless", source="default")
+    n_e_ped: Parameter[float] =  Parameter(name="n_e_ped", long_name="Electron density pedestal height", value=1.086e+20, unit="1/m^3", source="default")
+    T_e_ped: Parameter[float] =  Parameter(name="T_e_ped", long_name="Electron temperature pedestal height", value=3.74, unit="keV", source="default")
+    alpha_n: Parameter[float] =  Parameter(name="alpha_n", long_name="Density profile factor", value=1.15, unit="dimensionless", source="default")
+    alpha_t: Parameter[float] =  Parameter(name="alpha_t", long_name="Temperature profile index", value=1.905, unit="dimensionless", source="default")
+    t_beta: Parameter[float] =  Parameter(name="t_beta", long_name="Temperature profile index beta", value=2, unit="dimensionless", source="default")
+
+@dataclass
+class SolRadiationParameterFrame(RadiationParameterFrame):
+    P_sep: Parameter[float] =  Parameter(name='P_sep', long_name='Radiation power', value=150, unit='MW', source="default")
+    fw_lambda_q_near_omp: Parameter[float] =  Parameter(name='fw_lambda_q_near_omp', long_name='Lambda_q near SOL omp', value=0.002, unit='m', source="default")
+    fw_lambda_q_far_omp: Parameter[float] =  Parameter(name='fw_lambda_q_far_omp', long_name='Lambda_q far SOL omp', value=0.10, unit='m', source="default")
+    fw_lambda_q_near_imp: Parameter[float] =  Parameter(name='fw_lambda_q_near_imp', long_name='Lambda_q near SOL imp', value=0.002, unit='m', source="default")
+    fw_lambda_q_far_imp: Parameter[float] =  Parameter(name='fw_lambda_q_far_imp', long_name='Lambda_q far SOL imp', value=0.10, unit='m', source="default")
+    k_0: Parameter[float] =  Parameter(name="k_0", long_name="material's conductivity", value=2000, unit="dimensionless", source="default")
+    gamma_sheath: Parameter[float] =  Parameter(name="gamma_sheath", long_name="sheath heat transmission coefficient", value=7, unit="dimensionless", source="default")
+    eps_cool: Parameter[float] =  Parameter(name="eps_cool", long_name="electron energy loss", value=25, unit="eV", source="default")
+    f_ion_t: Parameter[float] =  Parameter(name="f_ion_t", long_name="Hydrogen first ionization", value=0.01, unit="keV", source="default")
+    det_t: Parameter[float] =  Parameter(name="det_t", long_name="Detachment target temperature", value=0.0015, unit="keV", source="default")
+    lfs_p_fraction: Parameter[float] =  Parameter(name="lfs_p_fraction", long_name="lfs fraction of SoL power", value=0.9, unit="dimensionless", source="default")
+    theta_outer_target: Parameter[float] =  Parameter(name="theta_outer_target", long_name="Outer divertor poloidal angle with the separatrix flux line", value=5, unit="deg", source="default")
+    theta_inner_target: Parameter[float] =  Parameter(name="theta_inner_target", long_name="Inner divertor poloidal angle with the separatrix flux line", value=5, unit="deg", source="default")
 
 class Radiation:
     """
@@ -75,17 +105,10 @@ class Radiation:
     to calculate radiation source within the flux tubes.
     """
 
-    # fmt: off
-    default_params = [
-        ["n_e_sep", "Electron density at separatrix", 3e+19, "1/m^3", None, "Input"],
-        ["T_e_sep", "Electron temperature at separatrix", 2e-01, "keV", None, "Input"],
-    ]
-    # fmt: on
-
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: TempFsSolver,
+        flux_surf_solver: FluxSurfaceMaker,
         params: Union[Dict, ParameterFrame],
     ):
         self.params = params
@@ -355,24 +378,10 @@ class CoreRadiation(Radiation):
     single flux tube.
     """
 
-    # fmt: off
-    default_params = Radiation.default_params + [
-        ["n_e_0", "Electron density on axis", 1.81e+20, "1/m^3", None, "Input"],
-        ["T_e_0", "Electron temperature on axis", 2.196e+01, "keV", None, "Input"],
-        ["rho_ped_n", "Density pedestal r/a location", 9.4e-01, "dimensionless", None, "Input"],
-        ["rho_ped_t", "Temperature pedestal r/a location", 9.76e-01 , "dimensionless", None, "Input"],
-        ["n_e_ped", "Electron density pedestal height", 1.086e+20, "1/m^3", None, "Input"],
-        ["T_e_ped", "Electron temperature pedestal height", 3.74, "keV", None, "Input"],
-        ["alpha_n", "Density profile factor", 1.15, "dimensionless", None, "Input"],
-        ["alpha_t", "Temperature profile index", 1.905, "dimensionless", None, "Input"],
-        ["t_beta", "Temperature profile index beta", 2, "dimensionless", None, "Input"],
-    ]
-    # fmt: on
-
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: TempFsSolver,
+        flux_surf_solver: FluxSurfaceMaker,
         params: ParameterFrame,
         psi_n,
         ne_mp,
@@ -545,24 +554,6 @@ class ScrapeOffLayerRadiation(Radiation):
     x-point, with no heat sinks, and a convection dominated regime
     between x-point and target.
     """
-
-    # fmt: off
-    default_params = Radiation.default_params + [
-        ['P_sep', 'Radiation power', 150, 'MW', None, 'Input'],
-        ['fw_lambda_q_near_omp', 'Lambda_q near SOL omp', 0.002, 'm', None, 'Input'],
-        ['fw_lambda_q_far_omp', 'Lambda_q far SOL omp', 0.10, 'm', None, 'Input'],
-        ['fw_lambda_q_near_imp', 'Lambda_q near SOL imp', 0.002, 'm', None, 'Input'],
-        ['fw_lambda_q_far_imp', 'Lambda_q far SOL imp', 0.10, 'm', None, 'Input'],
-        ["k_0", "material's conductivity", 2000, "dimensionless", None, "Input"],
-        ["gamma_sheath", "sheath heat transmission coefficient", 7, "dimensionless", None, "Input"],
-        ["eps_cool", "electron energy loss", 25, "eV", None, "Input"],
-        ["f_ion_t", "Hydrogen first ionization", 0.01, "keV", None, "Input"],
-        ["det_t", "Detachment target temperature", 0.0015, "keV", None, "Input"],
-        ["lfs_p_fraction", "lfs fraction of SoL power", 0.9, "dimensionless", None, "Input"],
-        ["theta_outer_target", "Outer divertor poloidal angle with the separatrix flux line", 5, "deg", None, "Input"],
-        ["theta_inner_target", "Inner divertor poloidal angle with the separatrix flux line", 5, "deg", None, "Input"],
-    ]
-    # fmt: on
 
     def collect_rho_sol_values(self):
         """
@@ -1235,7 +1226,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: TempFsSolver,
+        flux_surf_solver: FluxSurfaceMaker,
         params: ParameterFrame,
         impurity_content,
         impurity_data,
@@ -1531,7 +1522,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: TempFsSolver,
+        flux_surf_solver: FluxSurfaceMaker,
         params: ParameterFrame,
         impurity_content,
         impurity_data,
@@ -1785,7 +1776,7 @@ class RadiationSolver:
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: TempFsSolver,
+        flux_surf_solver: FluxSurfaceMaker,
         params: ParameterFrame,
         psi_n,
         ne_mp,
@@ -1896,11 +1887,9 @@ class RadiationSolver:
             self.imp_data_core,
         )
         core_rad.build_mp_rad_profile()
-        rad_tot = np.sum(np.array(core_rad.rad, dtype=object), axis=0).tolist()
+        rad_tot = np.sum(np.array(core_rad.rad, dtype=object), axis=0)
         f_rad = interp1d(core_rad.rho_core, rad_tot)
-        rho_new = np.sqrt(psi_n)
-        rad_new = f_rad(rho_new)
-        return rad_new
+        return f_rad(np.sqrt(psi_n))
 
     def rad_core_by_points(self, x, z):
         """
