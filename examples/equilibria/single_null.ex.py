@@ -59,6 +59,7 @@ Equilibrium and coilset optimisation - developer tutorial
 # one wants to optimise coil positions without affecting the plasma too much.
 
 # %%
+import contextlib
 from copy import deepcopy
 
 import matplotlib.pyplot as plt
@@ -93,10 +94,9 @@ from bluemira.utilities.positioning import PositionMapper, RegionInterpolator
 
 plot_defaults()
 
-try:
+with contextlib.suppress(AttributeError):
     get_ipython().run_line_magic("matplotlib", "qt")
-except AttributeError:
-    pass
+
 
 # %% [markdown]
 #
@@ -112,9 +112,9 @@ dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99
 coils = []
 j = 1
 for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
-    if j > 6:
+    if j > 6:  # noqa: PLR2004
         j = 1
-    ctype = "PF" if i < 6 else "CS"
+    ctype = "PF" if i < 6 else "CS"  # noqa: PLR2004
     coil = Coil(
         xi,
         zi,
@@ -345,10 +345,12 @@ control_coils = coilset.get_control_coils()
 min_control_coils = minimal_current_coilset.get_control_coils()
 
 print(
-    f"Total currents from minimal error optimisation problem: {raw_uc(np.sum(np.abs(control_coils.current)), 'A', 'MA'):.2f} MA"
+    "Total currents from minimal error optimisation problem:"
+    f" {raw_uc(np.sum(np.abs(control_coils.current)), 'A', 'MA'):.2f} MA"
 )
 print(
-    f"Total currents from minimal current optimisation problem: {raw_uc(np.sum(np.abs(min_control_coils.current)), 'A', 'MA'):.2f} MA"
+    "Total currents from minimal current optimisation problem:"
+    f" {raw_uc(np.sum(np.abs(min_control_coils.current)), 'A', 'MA'):.2f} MA"
 )
 
 # %% [markdown]

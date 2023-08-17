@@ -61,8 +61,7 @@ from bluemira.optimisation import optimise
 
 def f_rosenbrock(x, a, b):
     """The Rosenbrock function."""
-    value = (a - x[0]) ** 2 + b * (x[1] - x[0] ** 2) ** 2
-    return value
+    return (a - x[0]) ** 2 + b * (x[1] - x[0] ** 2) ** 2
 
 
 def df_rosenbrock(x, a, b):
@@ -134,7 +133,7 @@ def f_constraint(x):
     return constraint
 
 
-def df_constraint(x):
+def df_constraint(x):  # noqa: ARG001
     """Constraint Jacobian"""
     jac = np.zeros((2, 2))
     jac[0, 0] = 1

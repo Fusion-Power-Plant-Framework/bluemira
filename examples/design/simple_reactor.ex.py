@@ -233,7 +233,8 @@ class PlasmaBuilder(Builder):
         component.display_cad_options.transparency = 0.5
         return component
 
-    def build_xyz(self, lcfs: BluemiraFace) -> PhysicalComponent:
+    @staticmethod
+    def build_xyz(lcfs: BluemiraFace) -> PhysicalComponent:
         """
         Build the 3D (xyz) Component of the plasma by revolving the given face
         360 degrees.
@@ -331,7 +332,7 @@ class TFCoilBuilder(Builder):
         """
         width = 0.5 * self.params.tf_wp_width.value
         depth = 0.5 * self.params.tf_wp_depth.value
-        wire = make_polygon(
+        return make_polygon(
             {
                 "x": [-width, width, width, -width],
                 "y": [-depth, -depth, depth, depth],
@@ -339,7 +340,6 @@ class TFCoilBuilder(Builder):
             },
             closed=True,
         )
-        return wire
 
     def build(self) -> Component:
         """

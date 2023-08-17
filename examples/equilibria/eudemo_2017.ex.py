@@ -44,9 +44,10 @@ Attempt at recreating the EU-DEMO 2017 reference equilibria from a known coilset
 # # EU-DEMO 2017 reference breakdown and equilibrium benchmark
 
 # %%
+import contextlib
 import json
-import os
 from copy import deepcopy
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -88,15 +89,13 @@ from bluemira.equilibria.solve import PicardIterator
 # %%
 plot_defaults()
 
-try:
+with contextlib.suppress(AttributeError):
     get_ipython().run_line_magic("matplotlib", "qt")
-except AttributeError:
-    pass
+
 
 path = get_bluemira_path("equilibria", subfolder="examples")
 name = "EUDEMO_2017_CREATE_SOF_separatrix.json"
-filename = os.sep.join([path, name])
-with open(filename, "r") as file:
+with open(Path(path, name)) as file:
     data = json.load(file)
 
 sof_xbdry = data["xbdry"]
@@ -115,9 +114,9 @@ dz = [0.6, 0.7, 0.5, 0.5, 0.7, 1.0, 2.99 / 2, 2.99 / 2, 5.97 / 2, 2.99 / 2, 2.99
 coils = []
 j = 1
 for i, (xi, zi, dxi, dzi) in enumerate(zip(x, z, dx, dz)):
-    if j > 6:
+    if j > 6:  # noqa: PLR2004
         j = 1
-    ctype = "PF" if i < 6 else "CS"
+    ctype = "PF" if i < 6 else "CS"  # noqa: PLR2004
     coil = Coil(
         xi,
         zi,

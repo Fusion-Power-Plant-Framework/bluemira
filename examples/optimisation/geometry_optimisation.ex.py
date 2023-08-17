@@ -168,7 +168,8 @@ class ContractLengthGOP(GeomOptimisationProblem):
         self.plasma = plasma
         self.min_distance = min_distance
 
-    def objective(self, geom: GeometryParameterisation) -> float:
+    @staticmethod
+    def objective(geom: GeometryParameterisation) -> float:
         """Objective function to minimise."""
         return geom.create_shape().length
 
@@ -183,8 +184,9 @@ class ContractLengthGOP(GeomOptimisationProblem):
             }
         ]
 
+    @staticmethod
     def _distance_constraint(
-        self, geom: GeometryParameterisation, boundary: BluemiraWire, min_distance: float
+        geom: GeometryParameterisation, boundary: BluemiraWire, min_distance: float
     ) -> float:
         """A constraint to keep a minimum distance between two shapes."""
         shape = geom.create_shape()
