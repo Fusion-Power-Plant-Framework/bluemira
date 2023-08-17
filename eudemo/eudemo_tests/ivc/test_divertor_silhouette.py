@@ -22,7 +22,8 @@
 Test divertor silhouette designer.
 """
 import copy
-import os
+from pathlib import Path
+from typing import ClassVar
 from unittest import mock
 
 import numpy as np
@@ -43,7 +44,7 @@ def get_turning_point_idxs(z: np.ndarray):
 
 
 class TestDivertorSilhouetteDesigner:
-    _default_params = {
+    _default_params: ClassVar = {
         "div_type": {"value": "SN", "unit": ""},
         "div_L2D_ib": {"value": 1.1, "unit": "m"},
         "div_L2D_ob": {"value": 1.45, "unit": "m"},
@@ -53,7 +54,7 @@ class TestDivertorSilhouetteDesigner:
 
     @classmethod
     def setup_class(cls):
-        cls.eq = Equilibrium.from_eqdsk(os.path.join(DATA, "eqref_OOB.json"))
+        cls.eq = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"))
         cls.separatrix = make_polygon(cls.eq.get_separatrix().xyz.T)
         _, cls.x_points = find_OX_points(cls.eq.x, cls.eq.z, cls.eq.psi())
 

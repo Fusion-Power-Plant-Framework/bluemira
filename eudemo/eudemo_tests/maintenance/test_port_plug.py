@@ -31,7 +31,7 @@ class TestCastellationBuilder:
     """Tests the Castellation Builder"""
 
     @pytest.mark.parametrize(
-        "xi, xo, zh, yw, vec, x_offsets, c_offsets, exp_v",
+        ("xi", "xo", "zh", "yw", "vec", "x_offsets", "c_offsets", "exp_v"),
         zip(
             [9.0, 9.0, 6.0],  # x_inboard
             [16.0, 15.0, 9.0],  # x_outboard
