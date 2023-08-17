@@ -23,7 +23,7 @@
 EU-DEMO parameterisations classes for TF Coils.
 """
 import copy
-from typing import Optional
+from typing import ClassVar, Optional
 
 from bluemira.geometry.parameterisations import PolySpline
 from bluemira.utilities.opt_variables import VarDictT
@@ -35,7 +35,7 @@ class TFCoilPolySpline(PolySpline):
      parameterisation.
     """
 
-    _defaults = {
+    _defaults: ClassVar = {
         "x1": {"value": 3.8},
         "x2": {"value": 16},
         "z2": {"value": 0},

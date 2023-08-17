@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, List, Union
 
 if TYPE_CHECKING:
+    from bluemira.base.reactor_config import ConfigParams
     from bluemira.geometry.solid import BluemiraSolid
     from bluemira.geometry.wire import BluemiraWire
 
@@ -37,7 +38,6 @@ from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.error import BuilderError
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.base.reactor_config import ConfigParams
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
@@ -546,9 +546,13 @@ def pipe_pipe_join(
         if not point_inside_shape(com, target_void):
             new_shape_pieces.append(tool_frag)
         else:
-            for targ_frag in target_fragments:
-                # Find the union piece(s)
-                if tool_frag.is_same(targ_frag):
-                    new_shape_pieces.append(tool_frag)
+            # Find the union piece(s)
+            new_shape_pieces.extend(
+                [
+                    tool_frag
+                    for targ_frag in target_fragments
+                    if tool_frag.is_same(targ_frag)
+                ]
+            )
 
     return new_shape_pieces

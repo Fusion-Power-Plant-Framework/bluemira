@@ -89,7 +89,7 @@ class VacuumVessel(PortManagerMixin, ComponentManager):
             )
 
         final_shape = boolean_fuse(new_shape_pieces)
-        final_void = boolean_fuse([target_void] + tool_voids)
+        final_void = boolean_fuse([target_void, *tool_voids])
 
         sector_body = PhysicalComponent(VacuumVesselBuilder.BODY, final_shape)
         sector_void = PhysicalComponent(

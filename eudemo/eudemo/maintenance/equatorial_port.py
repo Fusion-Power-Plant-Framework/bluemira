@@ -90,8 +90,8 @@ class EquatorialPortKOZDesigner(Designer):
         x_ob: float,
     ):
         """
-        Parameters:
-        -----------
+        Parameters
+        ----------
         params:
             Parameters for the equatorial port designer
         build_config:
@@ -122,11 +122,10 @@ class EquatorialPortKOZDesigner(Designer):
         x = (self.x_ib, self.x_ob, self.x_ob, self.x_ib)
         z = (z_o - z_h, z_o - z_h, z_o + z_h, z_o + z_h)
 
-        ep_boundary = BluemiraFace(
+        return BluemiraFace(
             make_polygon({"x": x, "y": 0, "z": z}, closed=True),
             label="equatorial_port_koz",
         )
-        return ep_boundary
 
 
 @dataclass

@@ -81,20 +81,18 @@ def make_castellated_plug(
     if not ((n_castellations is None) or (n_castellations == 0)):
         interval = length / (n_castellations + 1)
         dist_iter = [interval * i for i in range(1, n_castellations + 1)]
+    elif distances is not None:
+        dist_iter = distances
     else:
-        if distances is not None:
-            dist_iter = distances
-        else:
-            raise ValueError("Both distance and n_castellations parameters are None")
+        raise ValueError("Both distance and n_castellations parameters are None")
 
     # Check/Set-up offsets iterable
-    if type(offsets) is float:
+    if type(offsets) is float:  # noqa: E721
         off_iter = [offsets] * len(dist_iter)
+    elif len(offsets) == len(dist_iter):
+        off_iter = offsets
     else:
-        if len(offsets) == len(dist_iter):
-            off_iter = offsets
-        else:
-            raise ValueError("Length of offsets doesn't match distances/n_cast")
+        raise ValueError("Length of offsets doesn't match distances/n_cast")
 
     parameter_array = list(zip(dist_iter, off_iter))
     parameter_array.append((length, 0.0))
@@ -255,8 +253,8 @@ class CryostatPortPlugBuilder(Builder):
 
         plug_comps, void_comps = [], []
         for i, (plug, void) in enumerate(zip(plugs, voids)):
-            plug = PhysicalComponent(f"{self.name} {i}", plug)
-            void = PhysicalComponent(
+            plug = PhysicalComponent(f"{self.name} {i}", plug)  # noqa: PLW2901
+            void = PhysicalComponent(  # noqa: PLW2901
                 f"{self.name} {i} voidspace", void, material=Void("air")
             )
             apply_component_display_options(plug, BLUE_PALETTE["CR"][1])
@@ -326,8 +324,8 @@ class RadiationPortPlugBuilder(Builder):
         )
         plug_comps, void_comps = [], []
         for i, (plug, void) in enumerate(zip(plugs, voids)):
-            plug = PhysicalComponent(f"{self.name} {i}", plug)
-            void = PhysicalComponent(
+            plug = PhysicalComponent(f"{self.name} {i}", plug)  # noqa: PLW2901
+            void = PhysicalComponent(  # noqa: PLW2901
                 f"{self.name} {i} voidspace", void, material=Void("air")
             )
             apply_component_display_options(plug, BLUE_PALETTE["RS"][1])

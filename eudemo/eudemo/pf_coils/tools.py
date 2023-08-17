@@ -102,7 +102,8 @@ def make_solenoid(
     total_gaps = (n_CS - 1) * g_cs + n_CS * 2 * tk_inscas
     if total_gaps >= total_height:
         raise BuilderError(
-            "Cannot make a solenoid where the gaps and insulation + casing are larger than the height available."
+            "Cannot make a solenoid where the gaps and insulation + casing are larger"
+            " than the height available."
         )
 
     coils = []
@@ -313,14 +314,11 @@ def make_coil_mapper(
     TODO use coilset directly instead of list of coils
     """
     # Break down the track into subsegments
-    if exclusion_zones:
-        segments = boolean_cut(track, exclusion_zones)
-    else:
-        segments = [track]
+    segments = boolean_cut(track, exclusion_zones) if exclusion_zones else [track]
 
     # Sort the coils into the segments
     coil_bins = [[] for _ in range(len(segments))]
-    for i, coil in enumerate(coils):
+    for coil in coils:
         distances = [distance_to([coil.x, 0, coil.z], seg)[0] for seg in segments]
         coil_bins[np.argmin(distances)].append(coil)
 
@@ -343,14 +341,10 @@ def make_coil_mapper(
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)
             split_positions = [segment.value_at(alpha=split) for split in split_values]
 
-            sorted_coils = []
-            for i in idx:
-                sorted_coils.append(coils[i])
-            coils = sorted_coils
-
             sub_segs = _split_segment(segment, split_positions)
 
-            for coil, sub_seg in zip(coils, sub_segs):
+            # Sorted coils
+            for coil, sub_seg in zip([coils[i] for i in idx], sub_segs):
                 interpolator_dict[coil.name] = PathInterpolator(sub_seg)
 
     return PositionMapper(interpolator_dict)
@@ -414,8 +408,8 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
     result = boolean_cut(tf_offset, cutter)
     if len(result) > 1:
         bluemira_warn(
-            "Boolean cut of the TF boundary resulted in more than one wire.. returning the longest one. Fingers crossed."
+            "Boolean cut of the TF boundary resulted in more than one wire.. returning"
+            " the longest one. Fingers crossed."
         )
         result.sort(key=lambda wire: -wire.length)
-    pf_coil_path = result[0]
-    return pf_coil_path
+    return result[0]

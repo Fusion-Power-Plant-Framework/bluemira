@@ -29,6 +29,7 @@ from typing import TYPE_CHECKING, Dict, List, Tuple, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
+    from bluemira.geometry.wire import BluemiraWire
 
 import numpy as np
 
@@ -40,7 +41,6 @@ from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, extrude_shape, offset_wire
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials import Void
 
 
@@ -217,7 +217,8 @@ def build_lower_port_xyz(
     )
     if straight_duct_extrude_extent <= 0:
         BuilderError(
-            "End radial coordinates of the straight duct is lower than it's start coordinate."
+            "End radial coordinates of the straight duct is lower than it's start"
+            " coordinate."
         )
 
     duct_angle = np.deg2rad(duct_angle)

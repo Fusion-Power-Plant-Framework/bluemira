@@ -191,7 +191,8 @@ class SteadyStatePowerCycleTeardown(Task):
     Teardown task for the steady-state power cycle model.
     """
 
-    def run(self, run_result):
+    @staticmethod
+    def run(run_result):
         """
         Run the teardown task.
         """

@@ -22,7 +22,7 @@
 Wall Silhouette Parameterisations
 """
 import copy
-from typing import Dict, Optional
+from typing import ClassVar, Dict, Optional
 
 from bluemira.geometry.parameterisations import PolySpline, PrincetonD
 from bluemira.utilities.opt_variables import OptVarVarDictValueT, VarDictT
@@ -34,7 +34,7 @@ class WallPolySpline(PolySpline):
     based on the PolySpline parameterisation.
     """
 
-    _defaults = {
+    _defaults: ClassVar = {
         "x1": {"value": 5.8},
         "x2": {"value": 12.1},
         "z2": {"value": 0},
@@ -101,7 +101,7 @@ class WallPrincetonD(PrincetonD):
     based on the PrincetonD parameterisation.
     """
 
-    _defaults: Dict[str, OptVarVarDictValueT] = {
+    _defaults: ClassVar[Dict[str, OptVarVarDictValueT]] = {
         "x1": {"value": 5.8},
         "x2": {"value": 12.1},
         "dz": {"value": -0.5},

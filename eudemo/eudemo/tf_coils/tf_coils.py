@@ -240,8 +240,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         x_c[[0, -1]] -= d_xc
         x_c[[1, 2]] += d_xc
 
-        wp_xs = make_polygon([x_c, d_yc, np.zeros(4)], closed=True)
-        return wp_xs
+        return make_polygon([x_c, d_yc, np.zeros(4)], closed=True)
 
     def _make_centreline_koz(self, keep_out_zone: BluemiraWire) -> BluemiraWire:
         """
@@ -318,15 +317,17 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
 
         if not hasattr(self, "problem_class"):
             raise ValueError(
-                f"Cannot execute {type(self).__name__} in 'run' mode: no problem_class specified."
+                f"Cannot execute {type(self).__name__} in 'run' mode: no problem_class"
+                " specified."
             )
         if self.separatrix is None:
             raise ValueError(
-                f"Cannot execute {type(self).__name__} in 'run' mode: no separatrix specified"
+                f"Cannot execute {type(self).__name__} in 'run' mode: no separatrix"
+                " specified"
             )
 
         bluemira_debug(
-            f"Setting up design problem with:\n"
+            "Setting up design problem with:\n"
             f"algorithm_name: {self.algorithm_name}\n"
             f"n_variables: {parameterisation.variables.n_free_variables}\n"
             f"opt_conditions: {self.opt_conditions}\n"
@@ -356,9 +357,11 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self.params,
             wp_cross_section=wp_cross_section,
             separatrix=self.separatrix,
-            keep_out_zone=None
-            if self.keep_out_zone is None
-            else self._make_centreline_koz(self.keep_out_zone),
+            keep_out_zone=(
+                None
+                if self.keep_out_zone is None
+                else self._make_centreline_koz(self.keep_out_zone)
+            ),
             **self.problem_settings,
         )
 
@@ -378,7 +381,8 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
         """
         if not self.file_path:
             raise ValueError(
-                f"Cannot execute {type(self).__name__} in 'read' mode: no file path specified."
+                f"Cannot execute {type(self).__name__} in 'read' mode: no file path"
+                " specified."
             )
 
         parameterisation = self.parameterisation_cls.from_json(file=self.file_path)
@@ -791,7 +795,8 @@ class TFCoilBuilder(Builder):
 
         return y_in, inboard_wire, outboard_wire
 
-    def _make_cas_xz(self, solid: BluemiraSolid) -> Tuple[BluemiraFace, BluemiraFace]:
+    @staticmethod
+    def _make_cas_xz(solid: BluemiraSolid) -> Tuple[BluemiraFace, BluemiraFace]:
         """
         Make the casing x-z cross-section from a 3-D volume.
         """
@@ -799,7 +804,7 @@ class TFCoilBuilder(Builder):
             solid, BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         )
         wires.sort(key=lambda wire: wire.length)
-        if len(wires) != 4:
+        if len(wires) != 4:  # noqa: PLR2004
             raise BuilderError(
                 "Unexpected TF coil x-z cross-section. It is likely that a previous "
                 "boolean cutting operation failed to create a hollow solid."
@@ -841,12 +846,13 @@ class TFCoilBuilder(Builder):
             [inner_xs_rect_top, outer_xs, inner_xs_rect_bot], self.centreline
         )
 
-    def _make_casing_xz_face(self, casing_solid):
+    @staticmethod
+    def _make_casing_xz_face(casing_solid):
         # Get the outer casing wire
         xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [1, 0, 1])
         cut_wires = slice_shape(casing_solid, xz_plane)
         cut_wires.sort(key=lambda wire: wire.length)
-        if len(cut_wires) != 2:
+        if len(cut_wires) != 2:  # noqa: PLR2004
             raise BuilderError(
                 f"Expecting 2 wires here but there are: {len(cut_wires)} of them"
             )
