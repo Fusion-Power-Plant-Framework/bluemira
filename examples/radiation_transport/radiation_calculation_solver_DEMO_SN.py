@@ -33,6 +33,7 @@ import bluemira.codes.process as process
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.radiation_transport.midplane_temperature_density import MidplaneProfiles
 from bluemira.radiation_transport.radiation_profile import (
     RadiationSolver, 
     linear_interpolator, 
@@ -44,7 +45,7 @@ from bluemira.radiation_transport.radiation_tools import (
     grid_interpolator,
     calculate_fw_rad_loads,
 )
-from bluemira.radiation_transport.flux_surfaces_maker import FluxSurfaceMaker
+from bluemira.radiation_transport.flux_surfaces_maker import analyse_first_wall_flux_surfaces
 
 
 # %% [markdown]
@@ -125,8 +126,8 @@ config = {
 # Initialising the `FluxSurfaceMaker` and run it.
 
 # %%
-flux_surface_solver = FluxSurfaceMaker(equilibrium=eq, dx_mp=0.001)
-flux_surface_solver.analyse(first_wall=fw_shape)
+dx_omp, _, flux_surfaces, x_sep_omp, _ = analyse_first_wall_flux_surfaces(equilibrium=eq, first_wall=fw_shape, dx_mp=0.001)
+
 
 # %% [markdown]
 #
@@ -158,6 +159,11 @@ impurities_list_sol = [imp for imp in f_impurities_sol]
 # Get the impurities data
 impurity_data_core = get_impurity_data(impurities_list=impurities_list_core)
 impurity_data_sol = get_impurity_data(impurities_list=impurities_list_sol)
+# Get core midplane profiles
+Profiles = MidplaneProfiles(params=params)
+psi_n = Profiles.psi_n
+ne_mp = Profiles.ne_mp
+te_mp = Profiles.te_mp
 
 # %% [markdown]
 #
@@ -166,12 +172,17 @@ impurity_data_sol = get_impurity_data(impurities_list=impurities_list_sol)
 # %%
 rad_solver = RadiationSolver(
         eq=eq,
-        flux_surf_solver=flux_surface_solver,
         params=params,
+        flux_surfaces=flux_surfaces,
+        psi_n = psi_n,
+        ne_mp = ne_mp,
+        te_mp = te_mp,
         impurity_content_core=f_impurities_core,
         impurity_data_core=impurity_data_core,
         impurity_content_sol=f_impurities_sol,
         impurity_data_sol=impurity_data_sol,
+        x_sep_omp = x_sep_omp,
+        dx_omp = dx_omp,
     )
 rad_solver.analyse(firstwall_geom=fw_shape)
 rad_solver.rad_map(fw_shape)
