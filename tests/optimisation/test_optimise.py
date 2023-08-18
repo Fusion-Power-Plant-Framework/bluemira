@@ -90,11 +90,11 @@ class TestOptimise:
         )
 
     def test_ValueError_given_invalid_algorithm(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             optimise(lambda: None, algorithm="NOT_AN_ALG")
 
     def test_ValueError_given_x0_and_dimensions_not_consistent(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             optimise(
                 rosenbrock,
                 dimensions=3,
