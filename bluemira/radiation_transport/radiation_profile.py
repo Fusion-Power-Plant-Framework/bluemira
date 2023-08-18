@@ -40,6 +40,7 @@ from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.display.plotter import plot_coordinates
 from bluemira.geometry.coordinates import Coordinates
+
 from scipy.interpolate import interp1d
 
 from bluemira.radiation_transport.radiation_tools import (
@@ -57,9 +58,6 @@ from bluemira.radiation_transport.radiation_tools import (
     interpolated_field_values,
     
 )
-
-if TYPE_CHECKING:
-    from radiation_transport.flux_surfaces_maker import FluxSurfaceMaker
 
 @dataclass
 class SeparationCorrector:
@@ -108,73 +106,10 @@ class Radiation:
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: FluxSurfaceMaker,
-        params: Union[Dict, ParameterFrame],
+        params: Union[Dict, ParameterFrame]
     ):
         self.params = params
-        
-        self.flux_surf_solver = flux_surf_solver
         self.eq = eq
-
-        # Constructors
-        self.x_sep_omp = None
-        self.x_sep_imp = None
-
-        self.collect_x_and_o_point_coordinates()
-
-        # Separatrix parameters
-        self.collect_separatrix_parameters()
-
-    def collect_x_and_o_point_coordinates(self):
-        """
-        Magnetic axis coordinates and x-point(s) coordinates.
-        """
-        o_point, x_point = self.eq.get_OX_points()
-        self.points = {
-            "x_point": {
-                "x": x_point[0][0],
-                "z_low": x_point[0][1],
-                "z_up": x_point[1][1],
-            },
-            "o_point": {"x": o_point[0][0], "z": round(o_point[0][1], 5)},
-        }
-        if self.points["x_point"]["z_low"] > self.points["x_point"]["z_up"]:
-            self.points["x_point"]["z_low"] = x_point[1][1]
-            self.points["x_point"]["z_up"] = x_point[0][1]
-
-    def collect_separatrix_parameters(self):
-        """
-        Radiation source relevant parameters at the separatrix
-        """
-        self.separatrix = self.eq.get_separatrix()
-        self.z_mp = self.points["o_point"]["z"]
-        if self.eq.is_double_null:
-            # The two halves
-            self.sep_lfs = self.separatrix[0]
-            self.sep_hfs = self.separatrix[1]
-            sep_corrector = SeparationCorrector.DN
-        else:
-            ob_ind = np.where(self.separatrix.x > self.points["x_point"]["x"])
-            ib_ind = np.where(self.separatrix.x < self.points["x_point"]["x"])
-            self.sep_ob = Coordinates({"x": self.separatrix.x[ob_ind], "z": self.separatrix.z[ob_ind]})
-            self.sep_ib = Coordinates({"x": self.separatrix.x[ib_ind], "z": self.separatrix.z[ib_ind]})
-            sep_corrector = SeparationCorrector.SN
-        # The mid-plane radii
-        self.x_sep_omp = self.flux_surf_solver.x_sep_omp
-        # To move away from the mathematical separatrix which would
-        # give infinite connection length
-        self.r_sep_omp = self.x_sep_omp + sep_corrector
-        # magnetic field components at the midplane
-        self.b_pol_sep_omp = self.eq.Bp(self.x_sep_omp, self.z_mp)
-        b_tor_sep_omp = self.eq.Bt(self.x_sep_omp)
-        self.b_tot_sep_omp = np.hypot(self.b_pol_sep_omp, b_tor_sep_omp)
-
-        if self.eq.is_double_null:
-            self.x_sep_imp = self.flux_surf_solver.x_sep_imp
-            self.r_sep_imp = self.x_sep_imp - sep_corrector
-            self.b_pol_sep_imp = self.eq.Bp(self.x_sep_imp, self.z_mp)
-            b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
-            self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, b_tor_sep_imp)
 
     def collect_flux_tubes(self, psi_n):
         """
@@ -381,7 +316,6 @@ class CoreRadiation(Radiation):
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: FluxSurfaceMaker,
         params: ParameterFrame,
         psi_n,
         ne_mp,
@@ -389,7 +323,7 @@ class CoreRadiation(Radiation):
         impurity_content,
         impurity_data,
     ):
-        super().__init__(eq, flux_surf_solver, params)
+        super().__init__(eq, params)
 
         self.H_content = impurity_content["H"]
         self.impurities_content = [
@@ -555,22 +489,75 @@ class ScrapeOffLayerRadiation(Radiation):
     between x-point and target.
     """
 
-    def collect_rho_sol_values(self):
-        """
-        Calculation of SoL dimensionless radial coordinate rho.
+    def __init__(
+        self,
+        eq: Equilibrium,
+        params: ParameterFrame,
+        x_sep_omp = None,
+        x_sep_imp = None,
+        dx_omp = None,
+        dx_imp = None
+    ):
+        super().__init__(eq, params)
 
-        Returns
-        -------
-        rho_sol: np.array
-            dimensionless sol radius. Values higher than 1
-        """
-        # The dimensionless radius has plasma-core upper limit equal 1.
-        # Such limit is the bottom one for the SoL
-        r_o_point = self.points["o_point"]["x"]
-        a = self.flux_surf_solver.x_sep_omp - r_o_point
-        rho_sol = (a + self.flux_surf_solver.dx_omp) / a
+        # Constructors - The mid-plane radii
+        self.x_sep_omp = x_sep_omp
+        self.x_sep_imp = x_sep_imp
+        self.dx_omp = dx_omp
+        self.dx_imp = dx_imp
 
-        return rho_sol
+        self.collect_x_and_o_point_coordinates()
+
+        # Separatrix parameters
+        self.collect_separatrix_parameters()
+
+    def collect_x_and_o_point_coordinates(self):
+        """
+        Magnetic axis coordinates and x-point(s) coordinates.
+        """
+        o_point, x_point = self.eq.get_OX_points()
+        self.points = {
+            "x_point": {
+                "x": x_point[0][0],
+                "z_low": x_point[0][1],
+                "z_up": x_point[1][1],
+            },
+            "o_point": {"x": o_point[0][0], "z": round(o_point[0][1], 5)},
+        }
+        if self.points["x_point"]["z_low"] > self.points["x_point"]["z_up"]:
+            self.points["x_point"]["z_low"] = x_point[1][1]
+            self.points["x_point"]["z_up"] = x_point[0][1]
+
+    def collect_separatrix_parameters(self):
+        """
+        Radiation source relevant parameters at the separatrix
+        """
+        self.separatrix = self.eq.get_separatrix()
+        self.z_mp = self.points["o_point"]["z"]
+        if self.eq.is_double_null:
+            # The two halves
+            self.sep_lfs = self.separatrix[0]
+            self.sep_hfs = self.separatrix[1]
+            sep_corrector = SeparationCorrector.DN
+        else:
+            ob_ind = np.where(self.separatrix.x > self.points["x_point"]["x"])
+            ib_ind = np.where(self.separatrix.x < self.points["x_point"]["x"])
+            self.sep_ob = Coordinates({"x": self.separatrix.x[ob_ind], "z": self.separatrix.z[ob_ind]})
+            self.sep_ib = Coordinates({"x": self.separatrix.x[ib_ind], "z": self.separatrix.z[ib_ind]})
+            sep_corrector = SeparationCorrector.SN
+        # To move away from the mathematical separatrix which would
+        # give infinite connection length
+        self.r_sep_omp = self.x_sep_omp + sep_corrector
+        # magnetic field components at the midplane
+        self.b_pol_sep_omp = self.eq.Bp(self.x_sep_omp, self.z_mp)
+        b_tor_sep_omp = self.eq.Bt(self.x_sep_omp)
+        self.b_tot_sep_omp = np.hypot(self.b_pol_sep_omp, b_tor_sep_omp)
+
+        if self.eq.is_double_null:
+            self.r_sep_imp = self.x_sep_imp - sep_corrector
+            self.b_pol_sep_imp = self.eq.Bp(self.x_sep_imp, self.z_mp)
+            b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
+            self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, b_tor_sep_imp)
 
     def x_point_radiation_z_ext(self, main_ext=None, pfr_ext=0.3, low_div=True):
         """
@@ -711,11 +698,11 @@ class ScrapeOffLayerRadiation(Radiation):
         if omp or not self.eq.is_double_null:
             fw_lambda_q_near = self.params.fw_lambda_q_near_omp
             fw_lambda_q_far = self.params.fw_lambda_q_far_omp
-            dx = self.flux_surf_solver.dx_omp
+            dx = self.dx_omp
         else:
             fw_lambda_q_near = self.params.fw_lambda_q_near_imp
             fw_lambda_q_far = self.params.fw_lambda_q_far_imp
-            dx = self.flux_surf_solver.dx_imp
+            dx = self.dx_imp
 
         if te_sep is None:
             te_sep = self.params.T_e_sep
@@ -772,13 +759,13 @@ class ScrapeOffLayerRadiation(Radiation):
             b_pol_sep_mp = self.b_pol_sep_omp
             fw_lambda_q_near = self.params.fw_lambda_q_near_omp
             fw_lambda_q_far = self.params.fw_lambda_q_far_omp
-            dx = self.flux_surf_solver.dx_omp
+            dx = self.dx_omp
         else:
             r_sep_mp = self.r_sep_imp
             b_pol_sep_mp = self.b_pol_sep_imp
             fw_lambda_q_near = self.params.fw_lambda_q_near_imp
             fw_lambda_q_far = self.params.fw_lambda_q_far_imp
-            dx = self.flux_surf_solver.dx_imp
+            dx = self.dx_imp
 
         # magnetic field components at the local point
         b_pol_p = self.eq.Bp(x_p, z_p)
@@ -915,7 +902,7 @@ class ScrapeOffLayerRadiation(Radiation):
             ion_front_z = ion_front_distance(
                 x_strike,
                 z_strike,
-                self.flux_surf_solver.eq,
+                self.eq,
                 self.points["x_point"]["z_low"],
                 rec_ext=2,
             )
@@ -925,7 +912,7 @@ class ScrapeOffLayerRadiation(Radiation):
             ion_front_z = ion_front_distance(
                 x_strike,
                 z_strike,
-                self.flux_surf_solver.eq,
+                self.eq,
                 self.points["x_point"]["z_low"],
                 rec_ext=0.4,
             )
@@ -1226,13 +1213,17 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: FluxSurfaceMaker,
         params: ParameterFrame,
+        flux_surfaces,
         impurity_content,
         impurity_data,
         firstwall_geom,
+        x_sep_omp = None,
+        x_sep_imp = None,
+        dx_omp = None,
+        dx_imp = None
     ):
-        super().__init__(eq, flux_surf_solver, params)
+        super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp)
 
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
@@ -1248,13 +1239,13 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         # Flux tubes from the particle solver
         # partial flux tube from the mp to the target at the
         # outboard and inboard - lower divertor
-        self.flux_tubes_lfs_low = self.flux_surf_solver.flux_surfaces_ob_lfs
-        self.flux_tubes_hfs_low = self.flux_surf_solver.flux_surfaces_ib_lfs
+        self.flux_tubes_lfs_low = flux_surfaces[0]
+        self.flux_tubes_hfs_low = flux_surfaces[2]
 
         # partial flux tube from the mp to the target at the
         # outboard and inboard - upper divertor
-        self.flux_tubes_lfs_up = self.flux_surf_solver.flux_surfaces_ob_hfs
-        self.flux_tubes_hfs_up = self.flux_surf_solver.flux_surfaces_ib_hfs
+        self.flux_tubes_lfs_up = flux_surfaces[1]
+        self.flux_tubes_hfs_up = flux_surfaces[3]
 
         # strike points from the first open flux tube
         self.x_strike_lfs = self.flux_tubes_lfs_low[0].coords.x[-1]
@@ -1474,10 +1465,10 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         power = sum(rads, [])
 
         flux_tubes = [
-            self.flux_surf_solver.flux_surfaces_ob_lfs,
-            self.flux_surf_solver.flux_surfaces_ib_lfs,
-            self.flux_surf_solver.flux_surfaces_ob_hfs,
-            self.flux_surf_solver.flux_surfaces_ib_hfs,
+            self.flux_tubes_lfs_low,
+            self.flux_tubes_hfs_low,
+            self.flux_tubes_lfs_up,
+            self.flux_tubes_hfs_up,
         ]
         flux_tubes = sum(flux_tubes, [])
     
@@ -1522,13 +1513,15 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: FluxSurfaceMaker,
         params: ParameterFrame,
+        flux_surfaces,
         impurity_content,
         impurity_data,
         firstwall_geom,
+        x_sep_omp,
+        dx_omp
     ):
-        super().__init__(eq, flux_surf_solver, params)
+        super().__init__(eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp)
 
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
@@ -1544,8 +1537,8 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         # Flux tubes from the particle solver
         # partial flux tube from the mp to the target at the
         # outboard and inboard - lower divertor
-        self.flux_tubes_lfs = self.flux_surf_solver.flux_surfaces_ob_lfs
-        self.flux_tubes_hfs = self.flux_surf_solver.flux_surfaces_ob_hfs
+        self.flux_tubes_lfs = flux_surfaces[0]
+        self.flux_tubes_hfs = flux_surfaces[1]
 
         # strike points from the first open flux tube
         self.x_strike_lfs = self.flux_tubes_lfs[0].coords.x[-1]
@@ -1776,8 +1769,8 @@ class RadiationSolver:
     def __init__(
         self,
         eq: Equilibrium,
-        flux_surf_solver: FluxSurfaceMaker,
         params: ParameterFrame,
+        flux_surfaces,
         psi_n,
         ne_mp,
         te_mp,
@@ -1785,10 +1778,14 @@ class RadiationSolver:
         impurity_data_core,
         impurity_content_sol,
         impurity_data_sol,
+        x_sep_omp = None,
+        x_sep_imp = None,
+        dx_omp = None,
+        dx_imp = None
     ):
 
         self.eq = eq
-        self.flux_surf_solver = flux_surf_solver
+        self.flux_surfaces = flux_surfaces
         self.params = self._make_params(params)
         self.imp_content_core = impurity_content_core
         self.imp_data_core = impurity_data_core
@@ -1800,6 +1797,10 @@ class RadiationSolver:
         self.psi_n = psi_n
         self.ne_mp = ne_mp
         self.te_mp = te_mp
+        self.x_sep_omp = x_sep_omp
+        self.x_sep_imp = x_sep_imp
+        self.dx_omp = dx_omp
+        self.dx_imp = dx_imp
 
         # To be calculated calling analyse
         self.core_rad = None
@@ -1832,7 +1833,6 @@ class RadiationSolver:
         """
         self.core_rad = CoreRadiation(
             self.eq,
-            self.flux_surf_solver,
             self.params,
             self.psi_n,
             self.ne_mp,
@@ -1844,20 +1844,26 @@ class RadiationSolver:
         if self.eq.is_double_null:
             self.sol_rad = DNScrapeOffLayerRadiation(
                 self.eq,
-                self.flux_surf_solver,
                 self.params,
+                self.flux_surfaces,
                 self.imp_content_sol,
                 self.imp_data_sol,
                 firstwall_geom,
+                self.x_sep_omp,
+                self.x_sep_imp,
+                self.dx_omp,
+                self.dx_imp
             )
         else:
             self.sol_rad = SNScrapeOffLayerRadiation(
                 self.eq,
-                self.flux_surf_solver,
                 self.params,
+                self.flux_surfaces,
                 self.imp_content_sol,
                 self.imp_data_sol,
                 firstwall_geom,
+                self.x_sep_omp,
+                self.dx_omp
             )
 
         return self.core_rad, self.sol_rad
@@ -1878,7 +1884,6 @@ class RadiationSolver:
         """
         core_rad = CoreRadiation(
             self.eq,
-            self.flux_surf_solver,
             self.params,
             self.psi_n,
             self.ne_mp,

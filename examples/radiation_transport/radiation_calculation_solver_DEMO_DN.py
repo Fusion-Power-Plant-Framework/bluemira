@@ -45,7 +45,7 @@ from bluemira.radiation_transport.radiation_tools import (
     grid_interpolator,
     calculate_fw_rad_loads,
 )
-from bluemira.radiation_transport.flux_surfaces_maker import FluxSurfaceMaker
+from bluemira.radiation_transport.flux_surfaces_maker import analyse_first_wall_flux_surfaces
 
 
 # %% [markdown]
@@ -126,8 +126,7 @@ config = {
 # Initialising the `FluxSurfaceMaker` and run it.
 
 # %%
-flux_surface_solver = FluxSurfaceMaker(equilibrium=eq, dx_mp=0.001)
-flux_surface_solver.analyse(first_wall=fw_shape)
+dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp = analyse_first_wall_flux_surfaces(equilibrium=eq, first_wall=fw_shape, dx_mp=0.001)
 
 # %% [markdown]
 #
@@ -171,8 +170,8 @@ te_mp = Profiles.te_mp
 # %%
 rad_solver = RadiationSolver(
         eq=eq,
-        flux_surf_solver=flux_surface_solver,
         params=params,
+        flux_surfaces=flux_surfaces,
         psi_n = psi_n,
         ne_mp = ne_mp,
         te_mp = te_mp,
@@ -180,6 +179,10 @@ rad_solver = RadiationSolver(
         impurity_data_core=impurity_data_core,
         impurity_content_sol=f_impurities_sol,
         impurity_data_sol=impurity_data_sol,
+        x_sep_omp = x_sep_omp,
+        x_sep_imp = x_sep_imp,
+        dx_omp = dx_omp,
+        dx_imp = dx_imp,
     )
 rad_solver.analyse(firstwall_geom=fw_shape)
 rad_solver.rad_map(fw_shape)
