@@ -57,7 +57,6 @@ PROCESS_DICT = {}
 imp_data = None  # placeholder for PROCESS module
 
 try:
-    import process.data.impuritydata as imp_data
     from process.io.in_dat import InDat  # noqa: F401, F811
     from process.io.mfile import MFile  # noqa: F401, F811
     from process.io.python_fortran_dicts import get_dicts
@@ -145,6 +144,9 @@ class Impurities(Enum):
         """
         Get PROCESS impurity data file path
         """
+        # TODO(je-cook) fixme process data has moved/ been removed
+        import process.data.impuritydata as imp_data  # noqa: F401, F811
+
         try:
             return Path(Path(imp_data.__file__).parent, f"{self.name:_<2}Lzdata.dat")
         except NameError:
