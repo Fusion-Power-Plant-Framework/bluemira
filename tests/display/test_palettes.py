@@ -24,8 +24,8 @@ Tests for palettes module
 """
 from copy import copy
 
-import matplotlib.colors as colors
 import pytest
+from matplotlib import colors
 
 from bluemira.display.palettes import (
     ColorPalette,
@@ -45,7 +45,7 @@ class TestColorPalette:
         self.pal = ColorPalette({"C1": "#000000", "C2": "#ffffff"})
 
     def test_keys(self):
-        assert self.pal.keys() == set(("C1", "C2"))
+        assert self.pal.keys() == {"C1", "C2"}
 
     def test_next(self):
         assert next(self.pal) == "#000000"
