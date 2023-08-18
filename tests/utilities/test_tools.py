@@ -21,6 +21,7 @@
 
 import copy
 import json
+from unittest.mock import patch
 
 import numpy as np
 import pytest
@@ -34,6 +35,7 @@ from bluemira.utilities.tools import (
     compare_dicts,
     consec_repeat_elem,
     cross,
+    deprecation_wrapper,
     dot,
     get_class_from_module,
     get_module,
@@ -347,3 +349,38 @@ class TestGetModule:
         # Class not in module
         with pytest.raises(ImportError):
             get_class_from_module("Spam", default_module=self.test_mod)
+
+
+class TestDeprecationWrapper:
+    def test_no_message_wrap(self):
+        with patch("warnings.warn") as w_patch:
+            deprecation_wrapper(lambda x: 1)(1)
+
+        assert w_patch.call_args_list[0][0][1] is DeprecationWarning
+
+        @deprecation_wrapper
+        def func(x, *, xx):
+            return
+
+        with patch("warnings.warn") as w_patch:
+            func(1, xx=1)
+
+        assert w_patch.call_args_list[0][0][1] is DeprecationWarning
+
+    def test_message_wrap(self):
+        message = "message"
+        with patch("warnings.warn") as w_patch:
+            deprecation_wrapper(message)(lambda x: 1)(1)
+
+        assert w_patch.call_args_list[0][0][0] == message
+        assert w_patch.call_args_list[0][0][1] is DeprecationWarning
+
+        @deprecation_wrapper(message)
+        def func(x, *, xx):
+            return
+
+        with patch("warnings.warn") as w_patch:
+            func(1, xx=1)
+
+        assert w_patch.call_args_list[0][0][0] == message
+        assert w_patch.call_args_list[0][0][1] is DeprecationWarning
