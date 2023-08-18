@@ -99,8 +99,9 @@ class TestColorPalette:
         pal["C1"] = make_alpha_palette(pal["C1"], 8)
         pal["C2"] = make_alpha_palette(pal["C2"], 3)
 
-        assert pal._repr_colour_str(pal._hex_horizontal()) == (
-            "\x1b[48:2::0:0:0m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
+        assert (
+            pal._repr_colour_str(pal._hex_horizontal())
+            == "\x1b[48:2::0:0:0m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
             "\x1b[48:2::32:32:32m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
             "\x1b[48:2::64:64:64m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
             "\x1b[48:2::96:96:96m  \x1b[49m  \n"

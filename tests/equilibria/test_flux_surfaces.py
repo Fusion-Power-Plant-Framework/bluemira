@@ -19,8 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
 from copy import deepcopy
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -52,8 +52,7 @@ class TestOpenFluxSurfaceStuff:
     @classmethod
     def setup_class(cls):
         eq_name = "eqref_OOB.json"
-        filename = os.sep.join([TEST_PATH, eq_name])
-        cls.eq = Equilibrium.from_eqdsk(filename)
+        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name))
 
     def test_bad_geometry(self):
         closed_coords = Coordinates({"x": [0, 4, 5, 8, 0], "z": [1, 2, 3, 4, 1]})
@@ -160,8 +159,7 @@ class TestFieldLine:
     @classmethod
     def setup_class(cls):
         eq_name = "eqref_OOB.json"
-        filename = os.sep.join([TEST_PATH, eq_name])
-        cls.eq = Equilibrium.from_eqdsk(filename)
+        cls.eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name))
         cls.flt = FieldLineTracer(cls.eq)
         cls.field_line = cls.flt.trace_field_line(13, 0, n_points=1000)
 
@@ -232,13 +230,12 @@ class TestFieldLine:
         angle = np.linspace(0, 2 * np.pi, 1000)
         circle = Coordinates({"x": r * np.cos(angle), "y": r * np.sin(angle), "z": z})
         inters = coords_plane_intersect(circle, BluemiraPlane(axis=(0, 1, 0)))
-        return [i for i in inters if i[0] > 0][0]
+        return next(i for i in inters if i[0] > 0)
 
 
 def test_poloidal_angle():
     eq_name = "DN-DEMO_eqref.json"
-    filename = os.path.join(TEST_PATH, eq_name)
-    eq = Equilibrium.from_eqdsk(filename)
+    eq = Equilibrium.from_eqdsk(Path(TEST_PATH, eq_name))
     # Building inputs
     x_strike = 10.0
     z_strike = -7.5

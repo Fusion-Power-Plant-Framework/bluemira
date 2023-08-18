@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -142,8 +142,7 @@ def test_collocation_points():
 
 def test_coils_outside_sphere_vacuum_psi():
     path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-    fn = os.sep.join([path, "SH_test_file.json"])
-    eq = Equilibrium.from_eqdsk(fn)
+    eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
 
     test_v_psi, test_p_psi, test_coilset = coils_outside_sphere_vacuum_psi(eq)
 
@@ -160,8 +159,7 @@ def test_coils_outside_sphere_vacuum_psi():
 
 def test_get_psi_harmonic_amplitudes():
     path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-    fn = os.sep.join([path, "SH_test_file.json"])
-    eq = Equilibrium.from_eqdsk(fn)
+    eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
 
     test_colocation = collocation_points(
         n_points=18, plasma_boundary=eq.get_LCFS(), point_type="arc"
@@ -196,8 +194,7 @@ def test_get_psi_harmonic_amplitudes():
 
 def test_spherical_harmonic_approximation():
     path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-    fn = os.sep.join([path, "SH_test_file.json"])
-    eq = Equilibrium.from_eqdsk(fn)
+    eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
 
     (
         test_sh_coilset,
