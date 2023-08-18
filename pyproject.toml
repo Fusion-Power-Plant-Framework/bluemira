@@ -97,6 +97,9 @@ process = [
 ]
 polyscope = ["polyscope"]
 
+[tool.setuptools.dynamic]
+version = {attr = "bluemira.__version__"}
+
 [build-system]
 requires = ["setuptools", "versioneer[toml]>=0.26"]
 build-backend = "setuptools.build_meta"
