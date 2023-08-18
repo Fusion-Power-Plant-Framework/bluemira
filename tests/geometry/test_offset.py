@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import json
-import os
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -141,9 +141,8 @@ class TestFallBackOffset:
     @classmethod
     def setup_class(cls):
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
-        fn = os.sep.join([fp, "offset_wire2022-04-08_10-19-27.json"])
 
-        with open(fn, "r") as file:
+        with open(Path(fp, "offset_wire2022-04-08_10-19-27.json")) as file:
             data = json.load(file)
 
         cls.wire = deserialize_shape(data)
