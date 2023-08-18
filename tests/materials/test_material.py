@@ -48,11 +48,11 @@ class TestProperty:
 
     def test_array_limits(self):
         a = self.tungsten.k(to_kelvin([20, 30, 400, 1000, 1000]))
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             a = self.tungsten.k(to_kelvin([20, 30, 400, 1000, 1001]))
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             a = self.tungsten.k(to_kelvin([19, 30, 400, 1000, 1000]))
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             a = self.tungsten.k(to_kelvin([19, 30, 400, 1000, 1001]))
         del a
 
@@ -83,7 +83,7 @@ class TestMaterials:
         self.beryllium.temperature = 300
         assert hasattr(self.beryllium, "density")
         assert is_num(self.beryllium.density)
-        assert type(self.beryllium.density) is float
+        assert type(self.beryllium.density) is float  # noqa: E721
 
     def test_material_card(self):
         pytest.importorskip("openmc")
