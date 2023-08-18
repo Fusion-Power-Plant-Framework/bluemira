@@ -64,7 +64,7 @@ class TestITERGravitySupportBuilder:
     ta.adjust_variable("f2", value=2, lower_bound=2, upper_bound=4)
     ta_xz_koz = ta.create_shape()
 
-    tf_kozs = [pd_xz_koz, pf_xz_koz, ta_xz_koz]
+    tf_kozs = (pd_xz_koz, pf_xz_koz, ta_xz_koz)
 
     @staticmethod
     def _make_builder(tf, **kwargs):
@@ -148,7 +148,7 @@ class TestPFCoilSupportBuilder:
         return my_dummy_pf.create_shape()
 
     @pytest.mark.parametrize(
-        "x, z, dx, dz",
+        ("x", "z", "dx", "dz"),
         [
             (2.5, 10, 0.4, 0.5),
             (6, 12.5, 0.5, 0.5),
@@ -179,7 +179,7 @@ class TestPFCoilSupportBuilder:
         )
 
     @pytest.mark.parametrize(
-        "x, z, dx, dz",
+        ("x", "z", "dx", "dz"),
         [
             (100, 0, 0.3, 0.3),
             (0.3, 0.3, 0.3, 0.3),
@@ -279,22 +279,22 @@ class TestStraightOISDesigner:
     pd = PrincetonD().create_shape()
     pd2 = offset_wire(pd, 1.0)
     tf_xz_face = BluemiraFace([pd2, pd])
-    keep_out_zones = [
+    keep_out_zones = (
         BluemiraFace(
             make_polygon({"x": [6, 12, 12, 6], "z": [0, 0, 15, 15]}, closed=True)
         ),
         BluemiraFace(
             make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True)
         ),
-    ]
-    keep_out_zones2 = [
+    )
+    keep_out_zones2 = (
         BluemiraFace(
             make_polygon({"x": [4, 12, 12, 4], "z": [0, 0, 15, 15]}, closed=True)
         ),
         BluemiraFace(
             make_polygon({"x": [0, 20, 20, 0], "z": [-1, -1, 1, 1]}, closed=True)
         ),
-    ]
+    )
 
     params = StraightOISDesignerParams(
         tk_ois=Parameter("tk_ois", 0.3),
@@ -302,7 +302,9 @@ class TestStraightOISDesigner:
         min_OIS_length=Parameter("min_OIS_length", 1),
     )
 
-    @pytest.mark.parametrize("koz, n_ois", [[keep_out_zones, 3], [keep_out_zones2, 2]])
+    @pytest.mark.parametrize(
+        ("koz", "n_ois"), [(keep_out_zones, 3), (keep_out_zones2, 2)]
+    )
     def test_that_the_right_number_of_OIS_are_made(self, koz, n_ois):
         designer = StraightOISDesigner(self.params, {}, self.tf_xz_face, koz)
         ois_wires = designer.run()
