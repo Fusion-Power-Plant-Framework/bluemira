@@ -44,7 +44,7 @@ class Params(MappedParameterFrame):
     param1: Parameter[float]
     param2: Parameter[int]
 
-    _mappings = {
+    _mappings = {  # noqa: RUF012
         "param1": ParameterMapping("ext1", send=True, recv=True, unit="MW"),
         "param2": ParameterMapping("ext2", send=False, recv=False),
     }

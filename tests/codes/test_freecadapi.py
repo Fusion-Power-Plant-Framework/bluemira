@@ -19,12 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
+from pathlib import Path
 from unittest.mock import patch
 
 import freecad  # noqa: F401
-import numpy as np
 import Part
+import numpy as np
 import pytest
 from FreeCAD import Base, newDocument
 
@@ -82,7 +82,10 @@ class TestFreecadapi:
         """
 
         circ = cadapi.make_circle(10)
-        with patch("bluemira.codes._freecadapi.arrange_edges", new=lambda a, b: b):
+        with patch(
+            "bluemira.codes._freecadapi.arrange_edges",
+            new=lambda a, b: b,  # noqa: ARG005
+        ):
             wire1 = self.offsetter(circ)
             wire2 = self.offsetter(wire1)
 
@@ -100,10 +103,10 @@ class TestFreecadapi:
             arr = cadapi.point_to_numpy(self.square_points)
 
     def test_single_vector_to_numpy(self):
-        input = np.array((1.0, 0.5, 2.0))
-        vector = Base.Vector(input)
+        inp = np.array((1.0, 0.5, 2.0))
+        vector = Base.Vector(inp)
         arr = cadapi.vector_to_numpy(vector)
-        comparison = arr == input
+        comparison = arr == inp
         assert comparison.all()
 
     def test_vector_to_numpy(self):
@@ -254,7 +257,7 @@ class TestFreecadapi:
         def func():
             raise FreeCADError("Error")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             func()
 
     def test_save_cad(self, tmp_path):
@@ -262,8 +265,9 @@ class TestFreecadapi:
         filename = f"{tmp_path}/tst.stp"
 
         cadapi.save_cad([shape], filename)
-        assert os.path.exists(filename)
-        stp_content = open(filename).read()
+        assert Path(filename).exists
+        with open(filename) as fh:
+            stp_content = fh.read()
         assert "myshape" not in stp_content
         assert "Bluemira" in stp_content
         assert (
@@ -278,8 +282,9 @@ class TestFreecadapi:
             author="myfile",
             stp_file_scheme="AP214IS",
         )
-        assert os.path.exists(filename)
-        stp_content = open(filename).read()
+        assert Path(filename).exists()
+        with open(filename) as fh:
+            stp_content = fh.read()
         assert "myshape" in stp_content  # shape label in file
         assert "Bluemira" in stp_content  # bluemira still in file if author changed
         assert "myfile" in stp_content  # author change
@@ -302,7 +307,7 @@ class TestCADFiletype:
         if not hasattr(FreeCADGui, "subgraphFromObject"):
             FreeCADGui.setupWithoutGUI()
 
-    @pytest.mark.parametrize("name, ftype", cadapi.CADFileType.__members__.items())
+    @pytest.mark.parametrize(("name", "ftype"), cadapi.CADFileType.__members__.items())
     def test_init(self, name, ftype):
         assert cadapi.CADFileType[name] == ftype
         assert cadapi.CADFileType(ftype.value) == ftype
@@ -311,7 +316,7 @@ class TestCADFiletype:
     # FreeCAD imported, should be reviewed in future
     @pytest.mark.parametrize(
         "name",
-        (
+        [
             "ASCII_STEREO_MESH",
             "ADDITIVE_MANUFACTURING",
             "AUTOCAD_DXF",
@@ -355,7 +360,7 @@ class TestCADFiletype:
             # # Requires TechDrawGui import which requires a GUI
             # "PDF", "VRML", "VRML_2", "VRML_ZIP", "VRML_ZIP_2",
             # "WEBGL_X3D", "X3D", "X3DZ"
-        ),
+        ],
     )
     def test_exporter_function_exists_and_creates_a_file(self, name, tmp_path):
         filetype = cadapi.CADFileType[name]
@@ -364,4 +369,4 @@ class TestCADFiletype:
             assert filetype.exporter.__name__ == "export"
 
         cadapi.CADFileType[name].exporter([self.shape], filename)
-        assert os.path.exists(filename)
+        assert Path(filename).exists()
