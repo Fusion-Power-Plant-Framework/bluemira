@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from typing import ClassVar
+
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component
 
@@ -41,7 +43,7 @@ class StubBuilder(Builder):
 
 
 class TestBuilder:
-    _params = {
+    _params: ClassVar = {
         "param_1": {"unit": "m", "value": 1},
         "param_2": {"unit": "T", "value": 2},
     }

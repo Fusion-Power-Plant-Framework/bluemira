@@ -130,11 +130,10 @@ class TestReactor:
                 else:
                     reactor.show_cad(*dim, _filter=None)
 
+            elif material_filter:
+                reactor.show_cad(dim)
             else:
-                if material_filter:
-                    reactor.show_cad(dim)
-                else:
-                    reactor.show_cad(dim, _filter=None)
+                reactor.show_cad(dim, _filter=None)
 
         assert (
             len(mock_show.call_args[0][0]) == 0
@@ -219,11 +218,10 @@ class TestComponentMananger:
                 else:
                     plasma.show_cad(*dim, _filter=None)
 
+            elif material_filter:
+                plasma.show_cad(dim)
             else:
-                if material_filter:
-                    plasma.show_cad(dim)
-                else:
-                    plasma.show_cad(dim, _filter=None)
+                plasma.show_cad(dim, _filter=None)
 
         assert (
             len(mock_show.call_args[0][0]) == 0
