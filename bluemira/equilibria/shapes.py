@@ -24,6 +24,7 @@ Useful parameterisations for plasma flux surface shapes.
 """
 
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -788,6 +789,72 @@ def calc_angles_pos_above(delta, kappa, t_pos):
     return alpha_0_pos, alpha_pos, beta_pos
 
 
+class _UpLow(Enum):
+    UPPER = auto()
+    LOWER = auto()
+
+
+class _InOut(Enum):
+    INNER = auto()
+    OUTER = auto()
+
+
+def _johner_quadrant(
+    delta: float, kappa: float, psi: float, n_pts: int, ul: _UpLow, io: _InOut
+) -> Tuple[float, float]:
+    calc_t = calc_t_neg if io is _InOut.INNER else calc_t_pos
+    t = calc_t(delta, kappa, psi)
+    if t < 0.5:
+        calc_angles = (
+            calc_angles_neg_below if io is _InOut.INNER else calc_angles_pos_below
+        )
+        alpha_0, alpha, beta = calc_angles(delta, kappa, t)
+
+        theta = np.arcsin(np.sqrt(1 - 2 * t) / (1 - t))
+        ls = (0, theta) if ul is _UpLow.UPPER else (-theta, 0)
+        theta = np.linspace(*ls, n_pts)
+
+        x = (
+            (alpha_0 - alpha * np.cos(theta))
+            if io is _InOut.INNER
+            else (alpha_0 + alpha * np.cos(theta))
+        )
+        z = beta * np.sin(theta)
+
+    elif t == 0.5:
+        ls = (0, kappa) if ul is _UpLow.UPPER else (-kappa, 0)
+        z = np.linspace(*ls, n_pts)
+        x = (
+            -1 + z**2 * (1 - delta) / kappa**2
+            if io is _InOut.INNER
+            else -1 - z**2 * (1 + delta) / kappa**2
+        )
+
+    elif t == 1:
+        ls = (0, kappa) if ul is _UpLow.UPPER else (-kappa, 0)
+        z = np.linspace(*ls, n_pts)
+        x = (
+            -1 + z * (1 - delta) / kappa
+            if io is _InOut.INNER
+            else 1 - z * (1 + delta) / kappa
+        )
+    elif t > 0.5:
+        calc_angles = (
+            calc_angles_neg_above if io is _InOut.INNER else calc_angles_pos_above
+        )
+
+        alpha_0, alpha, beta = calc_angles(delta, kappa, t)
+        phi = np.arcsinh(np.sqrt(2 * t - 1) / (1 - t))
+        ls = (0, phi) if ul is _UpLow.UPPER else (-phi, 0)
+        phi = np.linspace(*ls, n_pts)
+
+        x = alpha_0 + alpha * np.cosh(phi)
+        z = beta * np.sinh(phi)
+    else:
+        raise ValueError("Something is wrong with the Johner parameterisation.")
+    return x, z
+
+
 def flux_surface_johner_quadrants(
     r_0: float,
     z_0: float,
@@ -844,7 +911,6 @@ def flux_surface_johner_quadrants(
     z_quadrants:
         Plasma flux surface shape z quadrants
     """
-    # May appear tempting to refactor, but equations subtly different
     # Careful of bad angles or invalid plasma shape parameters
     if delta_u < 0 and delta_l < 0:
         delta_u *= -1
@@ -858,93 +924,21 @@ def flux_surface_johner_quadrants(
 
     n_pts = int(n / 4)
     # inner upper
-    t_neg = calc_t_neg(delta_u, kappa_u, psi_u_neg)
-    if t_neg < 0.5:
-        theta_u_neg = np.arcsin(np.sqrt(1 - 2 * t_neg) / (1 - t_neg))
-        alpha_0_neg, alpha_neg, beta_neg = calc_angles_neg_below(delta_u, kappa_u, t_neg)
-        theta = np.linspace(0, theta_u_neg, n_pts)
-        x_ui = alpha_0_neg - alpha_neg * np.cos(theta)
-        z_ui = beta_neg * np.sin(theta)
-    elif t_neg == 0.5:
-        z_ui = np.linspace(0, kappa_u, n_pts)
-        x_ui = -1 + z_ui**2 * (1 - delta_u) / kappa_u**2
-    elif t_neg == 1:
-        z_ui = np.linspace(0, kappa_u, n_pts)
-        x_ui = -1 + z_ui * (1 - delta_u) / kappa_u
-    elif t_neg > 0.5:
-        phi_u_neg = np.arcsinh(np.sqrt(2 * t_neg - 1) / (1 - t_neg))
-        alpha_0_neg, alpha_neg, beta_neg = calc_angles_neg_above(delta_u, kappa_u, t_neg)
-        phi = np.linspace(0, phi_u_neg, n_pts)
-        x_ui = alpha_0_neg + alpha_neg * np.cosh(phi)
-        z_ui = beta_neg * np.sinh(phi)
-    else:
-        raise ValueError("Something is wrong with the Johner parameterisation.")
+    x_ui, z_ui = _johner_quadrant(
+        delta_u, kappa_u, psi_u_neg, n_pts, ul=_UpLow.UPPER, io=_InOut.INNER
+    )
     # inner lower
-    t_neg = calc_t_neg(delta_l, kappa_l, psi_l_neg)
-    if t_neg < 0.5:
-        theta_u_neg = np.arcsin(np.sqrt(1 - 2 * t_neg) / (1 - t_neg))
-        alpha_0_neg, alpha_neg, beta_neg = calc_angles_neg_below(delta_l, kappa_l, t_neg)
-        theta = np.linspace(-theta_u_neg, 0, n_pts)
-        x_li = alpha_0_neg - alpha_neg * np.cos(theta)
-        z_li = beta_neg * np.sin(theta)
-    elif t_neg == 0.5:
-        z_li = np.linspace(-kappa_u, 0, n_pts)
-        x_li = -1 + z_li**2 * (1 - delta_l) / kappa_l**2
-    elif t_neg == 1:
-        z_li = np.linspace(-kappa_l, 0, n_pts)
-        x_li = -1 + z_li * (1 - delta_l) / kappa_l
-    elif t_neg > 0.5:
-        phi_u_neg = np.arcsinh(np.sqrt(2 * t_neg - 1) / (1 - t_neg))
-        alpha_0_neg, alpha_neg, beta_neg = calc_angles_neg_above(delta_l, kappa_l, t_neg)
-        phi = np.linspace(-phi_u_neg, 0, n_pts)
-        x_li = alpha_0_neg + alpha_neg * np.cosh(phi)
-        z_li = beta_neg * np.sinh(phi)
-    else:
-        raise ValueError("Something is wrong with the Johner parameterisation.")
+    x_li, z_li = _johner_quadrant(
+        delta_l, kappa_l, psi_l_neg, n_pts, ul=_UpLow.LOWER, io=_InOut.INNER
+    )
     # outer upper
-    t_pos = calc_t_pos(delta_u, kappa_u, psi_u_pos)
-    if t_pos < 0.5:
-        theta_u_pos = np.arcsin(np.sqrt(1 - 2 * t_pos) / (1 - t_pos))
-        alpha_0_pos, alpha_pos, beta_pos = calc_angles_pos_below(delta_u, kappa_u, t_pos)
-        theta = np.linspace(0, theta_u_pos, n_pts)
-        x_uo = alpha_0_pos + alpha_pos * np.cos(theta)
-        z_uo = beta_pos * np.sin(theta)
-    elif t_pos == 0.5:
-        z_uo = np.linspace(0, kappa_u, n_pts)
-        x_uo = -1 - z_uo**2 * (1 + delta_u) / kappa_u**2
-    elif t_pos == 1:
-        z_uo = np.linspace(0, kappa_u, n_pts)
-        x_uo = 1 - z_uo * (1 + delta_u) / kappa_u
-    elif t_pos > 0.5:
-        phi_u_pos = np.arcsinh(np.sqrt(2 * t_pos - 1) / (1 - t_pos))
-        alpha_0_pos, alpha_pos, beta_pos = calc_angles_pos_above(delta_u, kappa_u, t_pos)
-        phi = np.linspace(0, phi_u_pos, n_pts)
-        x_uo = alpha_0_pos + alpha_pos * np.cosh(phi)
-        z_uo = beta_pos * np.sinh(phi)
-    else:
-        raise ValueError("Something is wrong with the Johner parameterisation.")
+    x_uo, z_uo = _johner_quadrant(
+        delta_u, kappa_u, psi_u_pos, n_pts, ul=_UpLow.UPPER, io=_InOut.OUTER
+    )
     # outer lower
-    t_pos = calc_t_pos(delta_l, kappa_l, psi_l_pos)
-    if t_pos < 0.5:
-        theta_l_pos = np.arcsin(np.sqrt(1 - 2 * t_pos) / (1 - t_pos))
-        alpha_0_pos, alpha_pos, beta_pos = calc_angles_pos_below(delta_l, kappa_l, t_pos)
-        theta = np.linspace(-theta_l_pos, 0, n_pts)
-        x_lo = alpha_0_pos + alpha_pos * np.cos(theta)
-        z_lo = beta_pos * np.sin(theta)
-    elif t_pos == 0.5:
-        z_lo = np.linspace(-kappa_l, 0, n_pts)
-        x_lo = -1 - z_lo**2 * (1 + delta_l) / kappa_l**2
-    elif t_pos == 1:
-        z_lo = np.linspace(-kappa_l, 0, n_pts)
-        x_lo = 1 - z_lo * (1 + delta_l) / kappa_l
-    elif t_pos > 0.5:
-        phi_l_pos = np.arcsinh(np.sqrt(2 * t_pos - 1) / (1 - t_pos))
-        alpha_0_pos, alpha_pos, beta_pos = calc_angles_pos_above(delta_l, kappa_l, t_pos)
-        phi = np.linspace(-phi_l_pos, 0, n_pts)
-        x_lo = alpha_0_pos + alpha_pos * np.cosh(phi)
-        z_lo = beta_pos * np.sinh(phi)
-    else:
-        raise ValueError("Something is wrong with the Johner parameterisation.")
+    x_lo, z_lo = _johner_quadrant(
+        delta_l, kappa_l, psi_l_pos, n_pts, ul=_UpLow.LOWER, io=_InOut.OUTER
+    )
 
     x_quadrants = [x_ui, x_uo[::-1], x_lo[::-1], x_li]
     z_quadrants = [z_ui, z_uo[::-1], z_lo[::-1], z_li]
