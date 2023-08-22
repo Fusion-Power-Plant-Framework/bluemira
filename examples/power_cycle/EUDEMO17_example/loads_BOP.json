@@ -34,8 +34,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["(HCPB) Breeding Blanket (BB) - peak value"],
-            "time": [0, 1],
-            "data": [54.4, 54.4],
+            "time": [[0, 1]],
+            "data": [[54.4, 54.4]],
             "model": ["RAMP"]
           }
         }
@@ -53,8 +53,8 @@
           },
           "loads": {
             "description": ["(HCPB) Breeding Blanket (BB) - peak value"],
-            "time": [0, 1],
-            "data": [54.4, 54.4],
+            "time": [[0, 1]],
+            "data": [[54.4, 54.4]],
             "model": ["RAMP"]
           }
         }
@@ -93,8 +93,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["(HCPB) Breeding Blanket (BB) - peak value"],
-            "time": [0, 1],
-            "data": [165.6, 165.6],
+            "time": [[0, 1]],
+            "data": [[165.6, 165.6]],
             "model": ["RAMP"]
           }
         }
@@ -112,8 +112,8 @@
           },
           "loads": {
             "description": ["(HCPB) Breeding Blanket (BB) - peak value"],
-            "time": [0, 1],
-            "data": [165.6, 165.6],
+            "time": [[0, 1]],
+            "data": [[165.6, 165.6]],
             "model": ["RAMP"]
           }
         }
@@ -175,8 +175,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["(HCPB) Hirn Cycle components"],
-            "time": [0, 1],
-            "data": [5.8, 5.8],
+            "time": [[0, 1]],
+            "data": [[5.8, 5.8]],
             "model": ["RAMP"]
           }
         }
@@ -195,8 +195,8 @@
           },
           "loads": {
             "description": ["nominal active turbine power for direct concept"],
-            "time": [0, 1],
-            "data": [750, 750],
+            "time": [[0, 1]],
+            "data": [[750, 750]],
             "model": ["RAMP"]
           }
         }
@@ -214,8 +214,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["(HCPB) Hirn Cycle components"],
-            "time": [0, 1],
-            "data": [12, 12],
+            "time": [[0, 1]],
+            "data": [[12, 12]],
             "model": ["RAMP"]
           }
         }
@@ -233,8 +233,8 @@
           },
           "loads": {
             "description": ["nominal active turbine power for direct concept"],
-            "time": [0, 1],
-            "data": [750, 750],
+            "time": [[0, 1]],
+            "data": [[750, 750]],
             "model": ["RAMP"]
           }
         }

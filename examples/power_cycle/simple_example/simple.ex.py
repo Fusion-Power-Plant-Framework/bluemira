@@ -177,7 +177,7 @@ def plot_phaseload_set(phaseload_set, color):
         phase_name = phaseload.phase.name
         title = f"Load in phase {phase_name}"
         ax = DisplayKit.prepare_plot(title)
-        ax, _ = phaseload.plot(ax=ax, c=color)
+        ax, _ = phaseload.plot(ax=ax, color=color)
         ax = DisplayKit.finalize_plot(ax)
 
 
@@ -236,7 +236,7 @@ def plot_detailed_powerload(powerload):
     """
     load_name = powerload.name
     ax = DisplayKit.prepare_plot(f"Detailed plot of load for {load_name!r}")
-    ax, _ = powerload.plot(ax=ax, c="m", detailed=True)
+    ax, _ = powerload.plot(ax=ax, color="m", detailed=True)
     ax = DisplayKit.finalize_plot(ax)
 
 

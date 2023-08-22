@@ -13,8 +13,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [2.9, 2.9],
+            "time": [[0, 1]],
+            "data": [[2.9, 2.9]],
             "model": ["RAMP"]
           }
         }
@@ -30,8 +30,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["peak value extrapolated to whole burn"],
-            "time": [0, 1],
-            "data": [60.5, 60.5],
+            "time": [[0, 1]],
+            "data": [[60.5, 60.5]],
             "model": ["STEP"]
           }
         }
@@ -49,8 +49,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [6, 6],
+            "time": [[0, 1]],
+            "data": [[6, 6]],
             "model": ["RAMP"]
           }
         }
@@ -68,8 +68,8 @@
           },
           "loads": {
             "description": ["peak value extrapolated to whole burn"],
-            "time": [0, 1],
-            "data": [50, 50],
+            "time": [[0, 1]],
+            "data": [[50, 50]],
             "model": ["STEP"]
           }
         }
@@ -90,8 +90,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [2.9, 2.9],
+            "time": [[0, 1]],
+            "data": [[2.9, 2.9]],
             "model": ["RAMP"]
           }
         }
@@ -107,8 +107,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["peak value extrapolated to whole burn"],
-            "time": [0, 1],
-            "data": [60.5, 60.5],
+            "time": [[0, 1]],
+            "data": [[60.5, 60.5]],
             "model": ["STEP"]
           }
         }
@@ -126,8 +126,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [6, 6],
+            "time": [[0, 1]],
+            "data": [[6, 6]],
             "model": ["RAMP"]
           }
         }
@@ -145,8 +145,8 @@
           },
           "loads": {
             "description": ["peak value extrapolated to whole burn"],
-            "time": [0, 1],
-            "data": [50, 50],
+            "time": [[0, 1]],
+            "data": [[50, 50]],
             "model": ["STEP"]
           }
         }
@@ -167,8 +167,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [2.9, 2.9],
+            "time": [[0, 1]],
+            "data": [[2.9, 2.9]],
             "model": ["RAMP"]
           }
         }
@@ -184,8 +184,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["peak value extrapolated to whole burn"],
-            "time": [0, 1],
-            "data": [60.5, 60.5],
+            "time": [[0, 1]],
+            "data": [[60.5, 60.5]],
             "model": ["STEP"]
           }
         }
@@ -203,8 +203,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [6, 6],
+            "time": [[0, 1]],
+            "data": [[6, 6]],
             "model": ["RAMP"]
           }
         }
@@ -222,8 +222,8 @@
           },
           "loads": {
             "description": ["peak value extrapolated to whole burn"],
-            "time": [0, 1],
-            "data": [50, 50],
+            "time": [[0, 1]],
+            "data": [[50, 50]],
             "model": ["STEP"]
           }
         }
