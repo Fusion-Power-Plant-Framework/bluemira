@@ -4,7 +4,7 @@ import pytest
 
 from bluemira.power_cycle.errors import PowerCycleError, PowerCyclePhaseError
 from bluemira.power_cycle.time import (
-    Breakdown,
+    PowerCycleBreakdown,
     PowerCyclePhase,
     PowerCyclePulse,
     PowerCycleScenario,
@@ -163,7 +163,7 @@ class TestScenarioBuilder:
 
         for element, value in breakdown_library.items():
             assert isinstance(element, str)
-            assert isinstance(value, Breakdown)
+            assert isinstance(value, PowerCycleBreakdown)
 
             assert isinstance(value.name, str)
             assert_value_is_nonnegative(value.duration)
