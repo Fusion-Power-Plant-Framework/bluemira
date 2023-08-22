@@ -13,8 +13,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["first guess projected from ITER solution"],
-            "time": [0, 1],
-            "data": [7.7, 7.7],
+            "time": [[0, 1]],
+            "data": [[7.7, 7.7]],
             "model": ["RAMP"]
           }
         }
@@ -32,8 +32,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["first guess projected from ITER solution"],
-            "time": [0, 1],
-            "data": [12.2, 12.2],
+            "time": [[0, 1]],
+            "data": [[12.2, 12.2]],
             "model": ["RAMP"]
           }
         }
@@ -54,8 +54,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["first guess extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [1.9, 1.9],
+            "time": [[0, 1]],
+            "data": [[1.9, 1.9]],
             "model": ["RAMP"]
           }
         }
@@ -73,8 +73,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["first guess extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [3, 3],
+            "time": [[0, 1]],
+            "data": [[3, 3]],
             "model": ["RAMP"]
           }
         }

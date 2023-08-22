@@ -13,8 +13,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["estimated from ITER data (with air conditioning)"],
-            "time": [0, 1],
-            "data": [3, 3],
+            "time": [[0, 1]],
+            "data": [[3, 3]],
             "model": ["RAMP"]
           }
         }
@@ -32,8 +32,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["estimated from ITER data (with air conditioning)"],
-            "time": [0, 1],
-            "data": [6.1, 6.1],
+            "time": [[0, 1]],
+            "data": [[6.1, 6.1]],
             "model": ["RAMP"]
           }
         }
@@ -54,8 +54,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["estimated from CODAC, CIS & CSS in ITER"],
-            "time": [0, 1],
-            "data": [1.7, 1.7],
+            "time": [[0, 1]],
+            "data": [[1.7, 1.7]],
             "model": ["RAMP"]
           }
         }
@@ -73,8 +73,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["estimated from CODAC, CIS & CSS in ITER"],
-            "time": [0, 1],
-            "data": [3.6, 3.6],
+            "time": [[0, 1]],
+            "data": [[3.6, 3.6]],
             "model": ["RAMP"]
           }
         }

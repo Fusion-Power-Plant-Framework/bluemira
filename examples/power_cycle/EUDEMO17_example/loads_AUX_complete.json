@@ -13,8 +13,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["peak value extrapolated to all relevant phases"],
-            "time": [0, 1],
-            "data": [300, 300],
+            "time": [[0, 1]],
+            "data": [[300, 300]],
             "model": ["STEP"]
           }
         }
@@ -30,8 +30,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["EPS upkeep"],
-            "time": [0, 1],
-            "data": [10.2, 10.2],
+            "time": [[0, 1]],
+            "data": [[10.2, 10.2]],
             "model": ["RAMP"]
           }
         }
@@ -49,8 +49,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["peak value extrapolated to all relevant phases"],
-            "time": [0, 1],
-            "data": [300, 300],
+            "time": [[0, 1]],
+            "data": [[300, 300]],
             "model": ["STEP"]
           }
         }
@@ -66,8 +66,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["EPS upkeep"],
-            "time": [0, 1],
-            "data": [21, 21],
+            "time": [[0, 1]],
+            "data": [[21, 21]],
             "model": ["RAMP"]
           }
         }
@@ -137,8 +137,8 @@
             "description": [
               "ITER extrapolation for: SF6 & compressed air distribution, CCWS, CHWS"
             ],
-            "time": [0, 1],
-            "data": [56.4, 56.4],
+            "time": [[0, 1]],
+            "data": [[56.4, 56.4]],
             "model": ["RAMP"]
           }
         }
@@ -158,8 +158,8 @@
             "description": [
               "ITER extrapolation for: SF6 & compressed air distribution, CCWS, CHWS"
             ],
-            "time": [0, 1],
-            "data": [90.9, 90.9],
+            "time": [[0, 1]],
+            "data": [[90.9, 90.9]],
             "model": ["RAMP"]
           }
         }

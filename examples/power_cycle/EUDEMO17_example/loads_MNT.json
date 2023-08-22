@@ -13,8 +13,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["not operational during standard pulses"],
-            "time": [0, 1],
-            "data": [3.1, 3.1],
+            "time": [[0, 1]],
+            "data": [[3.1, 3.1]],
             "model": ["RAMP"]
           }
         }
@@ -32,8 +32,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["not operational during standard pulses"],
-            "time": [0, 1],
-            "data": [5, 5],
+            "time": [[0, 1]],
+            "data": [[5, 5]],
             "model": ["RAMP"]
           }
         }
@@ -54,8 +54,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["from Active Maintenance Facility building"],
-            "time": [0, 1],
-            "data": [2.2, 2.2],
+            "time": [[0, 1]],
+            "data": [[2.2, 2.2]],
             "model": ["RAMP"]
           }
         }
@@ -73,8 +73,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["from Active Maintenance Facility building"],
-            "time": [0, 1],
-            "data": [4.6, 4.6],
+            "time": [[0, 1]],
+            "data": [[4.6, 4.6]],
             "model": ["RAMP"]
           }
         }
@@ -95,8 +95,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["assumed continuous"],
-            "time": [0, 1],
-            "data": [1.5, 1.5],
+            "time": [[0, 1]],
+            "data": [[1.5, 1.5]],
             "model": ["RAMP"]
           }
         }
@@ -114,8 +114,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["assumed continuous"],
-            "time": [0, 1],
-            "data": [3, 3],
+            "time": [[0, 1]],
+            "data": [[3, 3]],
             "model": ["RAMP"]
           }
         }

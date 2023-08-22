@@ -13,8 +13,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["estimate from ITER by scaling cooled volumes"],
-            "time": [0, 1],
-            "data": [63.1, 63.1],
+            "time": [[0, 1]],
+            "data": [[63.1, 63.1]],
             "model": ["RAMP"]
           }
         }
@@ -32,8 +32,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["estimate from ITER by scaling cooled volumes"],
-            "time": [0, 1],
-            "data": [101.8, 101.8],
+            "time": [[0, 1]],
+            "data": [[101.8, 101.8]],
             "model": ["RAMP"]
           }
         }

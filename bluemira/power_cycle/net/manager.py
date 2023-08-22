@@ -214,7 +214,10 @@ class PowerCycleSystem(PowerCycleABC):
                     load_name,
                     valid_phases[phase_label],
                     phaseload_inputs.powerload_list,
-                    [normalisation_choice] * len(phaseload_inputs.powerload_list),
+                    np.array(
+                        [normalisation_choice] * len(phaseload_inputs.powerload_list),
+                        dtype=bool,
+                    ),
                 )
             except KeyError:
                 raise PowerCycleSystemError(
