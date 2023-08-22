@@ -13,8 +13,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [2.9, 2.9],
+            "time": [[0, 1]],
+            "data": [[2.9, 2.9]],
             "model": ["RAMP"]
           }
         }
@@ -32,8 +32,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [6, 6],
+            "time": [[0, 1]],
+            "data": [[6, 6]],
             "model": ["RAMP"]
           }
         }
@@ -54,8 +54,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [2.9, 2.9],
+            "time": [[0, 1]],
+            "data": [[2.9, 2.9]],
             "model": ["RAMP"]
           }
         }
@@ -73,8 +73,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [6, 6],
+            "time": [[0, 1]],
+            "data": [[6, 6]],
             "model": ["RAMP"]
           }
         }
@@ -95,8 +95,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [2.9, 2.9],
+            "time": [[0, 1]],
+            "data": [[2.9, 2.9]],
             "model": ["RAMP"]
           }
         }
@@ -114,8 +114,8 @@
           "efficiencies": {},
           "loads": {
             "description": ["power extrapolated from ITER solution"],
-            "time": [0, 1],
-            "data": [6, 6],
+            "time": [[0, 1]],
+            "data": [[6, 6]],
             "model": ["RAMP"]
           }
         }

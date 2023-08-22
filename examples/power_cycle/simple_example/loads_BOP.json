@@ -52,8 +52,8 @@
           },
           "loads": {
             "description": ["IHTS-to-PCS"],
-            "time": [0, 1],
-            "data": [2000, 2000],
+            "time": [[0, 1]],
+            "data": [[2000, 2000]],
             "model": ["RAMP"]
           }
         }

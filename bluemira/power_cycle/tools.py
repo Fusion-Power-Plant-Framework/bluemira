@@ -11,6 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.file import get_bluemira_root
+from bluemira.utilities.tools import flatten_iterable
 
 
 def validate_list(argument):
@@ -145,7 +146,20 @@ def read_json(file_path):
         raise TypeError(
             "The file could not be read as a 'json' file.",
         )
-    return contents_dict
+    return _array_converter(contents_dict)
+
+
+def _array_converter(contents):
+    for k, v in contents.items():
+        if isinstance(v, dict):
+            contents[k] = _array_converter(v)
+        elif isinstance(v, list):
+            if all(isinstance(val, (int, float)) for val in flatten_iterable(v)):
+                contents[k] = np.array(v)
+            elif all(isinstance(val, bool) for val in flatten_iterable(v)):
+                contents[k] = np.array(v, bool)
+
+    return contents
 
 
 def validate_axes(ax=None):
