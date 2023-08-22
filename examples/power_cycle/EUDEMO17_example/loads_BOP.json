@@ -17,8 +17,16 @@
               "(HCPB) Vacuum Vessel pressure suppression (VVPS)",
               "Divertor & Limiter (DV & LM)"
             ],
-            "time": [[0, 1], [0, 1], [0, 1]],
-            "data": [[4.7, 4.7], [0, 0], [12.1, 12.1]],
+            "time": [
+              [0, 1],
+              [0, 1],
+              [0, 1]
+            ],
+            "data": [
+              [4.7, 4.7],
+              [0, 0],
+              [12.1, 12.1]
+            ],
             "model": ["RAMP", "RAMP", "RAMP"]
           }
         }
@@ -76,8 +84,16 @@
               "(HCPB) Vacuum Vessel pressure suppression (VVPS)",
               "Divertor & Limiter (DV & LM)"
             ],
-            "time": [[0, 1], [0, 1], [0, 1]],
-            "data": [[9.7, 9.7], [2.3, 2.3], [19.5, 19.5]],
+            "time": [
+              [0, 1],
+              [0, 1],
+              [0, 1]
+            ],
+            "data": [
+              [9.7, 9.7],
+              [2.3, 2.3],
+              [19.5, 19.5]
+            ],
             "model": ["RAMP", "RAMP", "RAMP"]
           }
         }
@@ -204,7 +220,7 @@
     },
     "active": {
       "abc": {
-        "name": "reactive 'balance-of-plant' consumption (SSEN)",
+        "name": "active 'balance-of-plant' consumption (SSEN)",
         "module": null,
         "variables_map": {
           "phases": ["dwl", "d2f", "ftt", "f2d"],
@@ -221,7 +237,7 @@
         }
       },
       "abp": {
-        "name": "reactive 'balance-of-plant' production (SSEN)",
+        "name": "active 'balance-of-plant' production (SSEN)",
         "module": null,
         "variables_map": {
           "phases": ["dwl", "d2f", "ftt", "f2d"],
