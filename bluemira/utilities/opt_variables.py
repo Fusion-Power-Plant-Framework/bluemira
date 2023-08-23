@@ -28,12 +28,10 @@ import json
 from dataclasses import MISSING, Field, dataclass, field
 from typing import Dict, Generator, Optional, TextIO, TypedDict, Union
 
-import matplotlib.pyplot as plt
 import numpy as np
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.display.palettes import BLUEMIRA_PALETTE
 from bluemira.utilities.error import OptVariablesError
 from bluemira.utilities.tools import json_writer
 
@@ -621,38 +619,6 @@ class OptVariablesFrame:
             showindex=False,
             numalign="right",
         )
-
-    def plot(self):
-        """
-        Plot the OptVariablesFrame.
-        """
-        _, ax = plt.subplots()
-        left_labels = [f"{opv.name}: {opv.lower_bound:.2f} " for opv in self]
-        right_labels = [f"{opv.upper_bound:.2f}" for opv in self]
-        y_pos = np.arange(len(left_labels))
-
-        x_norm = [opv.normalised_value if not opv.fixed else 0.5 for opv in self]
-        colors = [
-            BLUEMIRA_PALETTE["red"] if v.fixed else BLUEMIRA_PALETTE["blue"]
-            for v in self
-        ]
-
-        values = [f"{v:.2f}" for v in self.values]
-        ax2 = ax.twinx()
-        ax.barh(y_pos, x_norm, color="w")
-        ax2.barh(y_pos, x_norm, color=colors)
-        ax.set_yticks(y_pos)
-        ax.set_yticklabels(left_labels)
-        ax.invert_yaxis()
-
-        ax2.set_yticks(y_pos)
-        ax2.set_yticklabels(right_labels)
-        ax2.invert_yaxis()
-        ax.set_xlim([-0.1, 1.1])
-        ax.set_xlabel("$x_{norm}$")
-
-        for xi, yi, vi in zip(x_norm, y_pos, values):
-            ax.text(xi, yi, vi)
 
     def __str__(self) -> str:
         """
