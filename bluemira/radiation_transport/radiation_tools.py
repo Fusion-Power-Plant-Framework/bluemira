@@ -55,10 +55,6 @@ from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
 E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
 
-@dataclass
-class SeparationCorrector:
-    DN: float = 5e-3
-    SN: float = 5e-2
 
 def upstream_temperature(
     b_pol: float,
@@ -254,6 +250,7 @@ def random_point_temperature(
     r_sep_mp: float,
     z_mp: float,
     k_0: float,
+    sep_corrector: float,
     firstwall_geom: Grid,
     lfs=True,
     connection_length=None,
@@ -309,7 +306,6 @@ def random_point_temperature(
     q_par = p_sol / a_par
 
     # Distinction between lfs and hfs
-    sep_corrector = SeparationCorrector.DN if eq.is_double_null else SeparationCorrector.SN
     d =sep_corrector if lfs else -sep_corrector
 
     # Distance between the chosen point and the the target

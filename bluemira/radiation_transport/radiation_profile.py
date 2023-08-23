@@ -496,7 +496,8 @@ class ScrapeOffLayerRadiation(Radiation):
         x_sep_omp = None,
         x_sep_imp = None,
         dx_omp = None,
-        dx_imp = None
+        dx_imp = None,
+        sep_corrector = None
     ):
         super().__init__(eq, params)
 
@@ -509,7 +510,7 @@ class ScrapeOffLayerRadiation(Radiation):
         self.collect_x_and_o_point_coordinates()
 
         # Separatrix parameters
-        self.collect_separatrix_parameters()
+        self.collect_separatrix_parameters(sep_corrector)
 
     def collect_x_and_o_point_coordinates(self):
         """
@@ -528,7 +529,7 @@ class ScrapeOffLayerRadiation(Radiation):
             self.points["x_point"]["z_low"] = x_point[1][1]
             self.points["x_point"]["z_up"] = x_point[0][1]
 
-    def collect_separatrix_parameters(self):
+    def collect_separatrix_parameters(self, sep_corrector):
         """
         Radiation source relevant parameters at the separatrix
         """
@@ -538,13 +539,11 @@ class ScrapeOffLayerRadiation(Radiation):
             # The two halves
             self.sep_lfs = self.separatrix[0]
             self.sep_hfs = self.separatrix[1]
-            sep_corrector = SeparationCorrector.DN
         else:
             ob_ind = np.where(self.separatrix.x > self.points["x_point"]["x"])
             ib_ind = np.where(self.separatrix.x < self.points["x_point"]["x"])
             self.sep_ob = Coordinates({"x": self.separatrix.x[ob_ind], "z": self.separatrix.z[ob_ind]})
             self.sep_ib = Coordinates({"x": self.separatrix.x[ib_ind], "z": self.separatrix.z[ib_ind]})
-            sep_corrector = SeparationCorrector.SN
         # To move away from the mathematical separatrix which would
         # give infinite connection length
         self.r_sep_omp = self.x_sep_omp + sep_corrector
@@ -836,6 +835,7 @@ class ScrapeOffLayerRadiation(Radiation):
         z_strike,
         main_ext,
         firstwall_geom,
+        sep_corrector,
         pfr_ext=None,
         rec_ext=None,
         x_point_rad=False,
@@ -977,6 +977,7 @@ class ScrapeOffLayerRadiation(Radiation):
             r_sep_mp,
             self.points["o_point"]["z"],
             self.params.k_0,
+            sep_corrector,
             firstwall_geom,
             lfs,
         )
@@ -1221,9 +1222,10 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         x_sep_omp = None,
         x_sep_imp = None,
         dx_omp = None,
-        dx_imp = None
+        dx_imp = None,
+        sep_corrector = None
     ):
-        super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp)
+        super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp, sep_corrector)
 
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
@@ -1293,7 +1295,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             firstwall_geom=firstwall_geom,
         )
 
-    def build_sol_distribution(self, firstwall_geom: Grid):
+    def build_sol_distribution(self, sep_corrector, firstwall_geom: Grid):
         """
         Temperature and density profiles builder.
         For each scrape-off layer sector, it gives temperature
@@ -1326,6 +1328,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 "z_strike": getattr(self, f"z_strike_{side}"),
                 "main_ext": None,
                 "firstwall_geom": firstwall_geom,
+                "sep_corrector": sep_corrector,
                 "pfr_ext": None,
                 "rec_ext": 2,
                 "x_point_rad": False,
@@ -1519,9 +1522,10 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         impurity_data,
         firstwall_geom,
         x_sep_omp,
-        dx_omp
+        dx_omp,
+        sep_corrector
     ):
-        super().__init__(eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp)
+        super().__init__(eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp, sep_corrector=sep_corrector)
 
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
@@ -1572,7 +1576,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             firstwall_geom=firstwall_geom,
         )
 
-    def build_sol_distribution(self, firstwall_geom: Grid):
+    def build_sol_distribution(self, sep_corrector, firstwall_geom: Grid):
         """
         Temperature and density profiles builder.
         For each scrape-off layer sector, it gives temperature
@@ -1605,6 +1609,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 "z_strike": getattr(self, f"z_strike_{side}"),
                 "main_ext": 1,
                 "firstwall_geom": firstwall_geom,
+                "sep_corrector": sep_corrector,
                 "pfr_ext": None,
                 "rec_ext": 2,
                 "x_point_rad": False,
@@ -1781,7 +1786,8 @@ class RadiationSolver:
         x_sep_omp = None,
         x_sep_imp = None,
         dx_omp = None,
-        dx_imp = None
+        dx_imp = None,
+        sep_corrector = None
     ):
 
         self.eq = eq
@@ -1801,6 +1807,9 @@ class RadiationSolver:
         self.x_sep_imp = x_sep_imp
         self.dx_omp = dx_omp
         self.dx_imp = dx_imp
+        if sep_corrector is None:
+            sep_corrector = SeparationCorrector.DN if eq.is_double_null else SeparationCorrector.SN
+        self.sep_corrector = sep_corrector
 
         # To be calculated calling analyse
         self.core_rad = None
@@ -1852,7 +1861,8 @@ class RadiationSolver:
                 self.x_sep_omp,
                 self.x_sep_imp,
                 self.dx_omp,
-                self.dx_imp
+                self.dx_imp,
+                self.sep_corrector
             )
         else:
             self.sol_rad = SNScrapeOffLayerRadiation(
@@ -1863,7 +1873,8 @@ class RadiationSolver:
                 self.imp_data_sol,
                 firstwall_geom,
                 self.x_sep_omp,
-                self.dx_omp
+                self.dx_omp,
+                self.sep_corrector
             )
 
         return self.core_rad, self.sol_rad
@@ -2003,7 +2014,7 @@ class RadiationSolver:
         """
         self.core_rad.build_core_radiation_map()
 
-        t_and_n_sol_profiles = self.sol_rad.build_sol_distribution(firstwall_geom)
+        t_and_n_sol_profiles = self.sol_rad.build_sol_distribution(self.sep_corrector, firstwall_geom)
         rad_sector_profiles = self.sol_rad.build_sol_radiation_distribution(
             *t_and_n_sol_profiles.values()
         )
