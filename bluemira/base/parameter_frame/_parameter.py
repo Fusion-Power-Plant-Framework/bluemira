@@ -4,6 +4,7 @@ import copy
 from dataclasses import dataclass
 from typing import Dict, Generic, List, Optional, Tuple, Type, TypedDict, TypeVar, Union
 
+import numpy as np
 import pint
 from typeguard import config, typechecked
 
@@ -78,7 +79,7 @@ class Parameter(Generic[ParameterValueType]):
         long_name: str = "",
         _value_types: Optional[Tuple[Type, ...]] = None,
     ):
-        value = self._type_check(value, _value_types)
+        value = self._type_check(name, value, _value_types)
         self._name = name
         self._value = value
         self._unit = pint.Unit(unit)
@@ -91,15 +92,21 @@ class Parameter(Generic[ParameterValueType]):
 
     @staticmethod
     def _type_check(
-        value: ParameterValueType, value_types: Optional[Tuple[Type, ...]]
+        name: str, value: ParameterValueType, value_types: Optional[Tuple[Type, ...]]
     ) -> ParameterValueType:
         if value_types and value is not None:
             if float in value_types and isinstance(value, int):
                 value = float(value)
+            elif (
+                int in value_types
+                and isinstance(value, float)
+                and np.isclose(value, int(value), rtol=0)
+            ):
+                value = int(value)
             elif not isinstance(value, value_types):
                 raise TypeError(
-                    f'type of argument "value" must be one of {value_types}; '
-                    f"got {type(value)} instead."
+                    f'{name}: type of "value" must be one of {value_types}; '
+                    f"got {type(value)} (value: {value}) instead"
                 )
         return value
 

@@ -31,6 +31,7 @@ from bluemira.base.constants import (
     combined_unit_dimensions,
     raw_uc,
 )
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame._parameter import (
     ParamDictT,
     Parameter,
@@ -69,6 +70,9 @@ class ParameterFrame:
                 "Cannot instantiate a ParameterFrame directly. It must be subclassed."
             )
 
+        if cls != EmptyFrame and not cls.__dataclass_fields__:
+            bluemira_warn(f"{cls} is empty, @dataclass is possibly missing")
+
         return super().__new__(cls)
 
     def __post_init__(self):
@@ -89,7 +93,7 @@ class ParameterFrame:
             vt = _validate_parameter_field(field, value_type)
 
             val_unit = {
-                "value": Parameter._type_check(field.value, vt),
+                "value": Parameter._type_check(field.name, field.value, vt),
                 "unit": field.unit,
             }
             _validate_units(val_unit, vt)
@@ -400,7 +404,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
     param_data["unit"] = f"{unit:~P}"
 
 
-def _remake_units(dimensionality: Union[Dict, pint.unit.UnitsContainer]) -> pint.Unit:
+def _remake_units(dimensionality: Union[Dict, pint.util.UnitsContainer]) -> pint.Unit:
     """Reconstruct unit from its dimensionality"""
     dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
     dim_pow = list(dimensionality.values())
