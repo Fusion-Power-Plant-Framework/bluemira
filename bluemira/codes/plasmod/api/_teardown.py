@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Union
 
 import numpy as np
+from scipy.interpolate import interp1d
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
@@ -175,16 +176,31 @@ class Teardown(CodesTeardown):
         else:
             raise CodesError(f"plasmod error: Unknown error code '{exit_code}'.")
 
+    def _scale_x_profile(self):
+        self._x_phi = getattr(self.outputs, Profiles.x.name)
+        self._x_phi /= np.max(self._x_phi)
+        psi = getattr(self.outputs, Profiles.psi.name)
+        self._x_psi = np.sqrt(psi / psi[-1])
+
+    def _from_phi_to_psi(self, profile_data):
+        """
+        Convert the profile to the magnetic coordinate sqrt((psi - psi_ax)/(psi_b -
+        psi_ax))
+        """
+        return interp1d(self._x_psi, profile_data, kind="linear")(self._x_phi)
+
     def _convert_profiles(self):
+        self._scale_x_profile()
+
         self.profiles.update_values(
             {
-                prof.value: raw_uc(
-                    getattr(self.outputs, prof.name),
-                    prof.unit,
-                    getattr(self.profiles, prof.value).unit,
+                name: raw_uc(
+                    self._from_phi_to_psi(getattr(self.outputs, mapping.name)),
+                    mapping.unit,
+                    getattr(self.profiles, name).unit,
                 )
-                for prof in Profiles
-                if getattr(self.outputs, prof.name) is not None
+                for name, mapping in self.profiles.mappings.items()
+                if getattr(self.outputs, mapping.name) is not None
             },
-            self._name,
+            source=self._name,
         )

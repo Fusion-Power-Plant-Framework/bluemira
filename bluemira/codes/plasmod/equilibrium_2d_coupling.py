@@ -163,14 +163,9 @@ def _run_transport_solver(
 ) -> Tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
     """Run transport solver"""
     transport_solver.params.update_from_frame(transport_params)
-    transp_out_params = transport_solver.execute(transport_run_mode)
+    transp_out_params, transp_profiles = transport_solver.execute(transport_run_mode)
 
-    return (
-        transp_out_params,
-        transport_solver.get_profile("x"),
-        transport_solver.get_profile("pprime"),
-        transport_solver.get_profile("ffprime"),
-    )
+    return transp_out_params, transp_profiles
 
 
 def _update_delta_kappa(
@@ -314,20 +309,17 @@ def solve_transport_fixed_boundary(
     f, ax = None, None
 
     for n_iter in range(max_iter):
-        transp_out_params, x, pprime, ffprime = _run_transport_solver(
+        transp_out_params, transp_profiles = _run_transport_solver(
             transport_solver, transport_params, transport_run_mode
         )
+        x = transp_profiles.x
+        psi_plasmod = transp_profiles.psi
 
-        f_pprime = interp1d(x, pprime, fill_value="extrapolate")
-        f_ffprime = interp1d(x, ffprime, fill_value="extrapolate")
-
-        psi_plasmod = transport_solver.get_profile("psi")
+        f_pprime = interp1d(x, transp_profiles.pprime, fill_value="extrapolate")
+        f_ffprime = interp1d(x, transp_profiles.ffprime, fill_value="extrapolate")
         x_psi_plasmod = np.sqrt(psi_plasmod / psi_plasmod[-1])
-
-        q = transport_solver.get_profile("q")
-        press = transport_solver.get_profile("pressure")
-        q_func = interp1d(x, q, fill_value="extrapolate")
-        p_func = interp1d(x, press, fill_value="extrapolate")
+        q_func = interp1d(x, transp_profiles.q, fill_value="extrapolate")
+        p_func = interp1d(x, transp_profiles.pressure, fill_value="extrapolate")
 
         if plot:
             if ax is not None:

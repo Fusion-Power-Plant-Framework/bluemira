@@ -23,6 +23,7 @@
 PLASMOD mappings
 """
 
+from bluemira.codes.params import ParameterMapping
 from bluemira.codes.utilities import Model, create_mapping
 
 
@@ -207,6 +208,14 @@ class Profiles(Model):
     def __repr__(self):
         """Modified repr to only show value"""
         return f"<{type(self).__name__}.{self.name}: {self.value}{self.unit}>"
+
+    @classmethod
+    def create_mapping(cls):
+        """Creates mappings for Plasmod profiles"""
+        return {
+            k.value: ParameterMapping(k.name, send=False, recv=True, unit=k.unit)
+            for k in cls
+        }
 
 
 PLASMOD_INPUTS = {

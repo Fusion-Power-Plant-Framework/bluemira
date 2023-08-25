@@ -32,7 +32,7 @@ import numpy as np
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.plasmod.api._inputs import PlasmodInputs
-from bluemira.codes.plasmod.mapping import mappings
+from bluemira.codes.plasmod.mapping import Profiles, mappings
 from bluemira.codes.utilities import ParameterMapping
 
 
@@ -161,7 +161,7 @@ class PlasmodSolverProfiles(MappedParameterFrame):
     psi: Parameter[np.ndarray] = Parameter(name="psi", value=np.array([]), unit="Wb")
     phi: Parameter[np.ndarray] = Parameter(name="phi", value=np.array([]), unit="Wb")
     pressure: Parameter[np.ndarray] = Parameter(
-        name="pressue", value=np.array([]), unit="Pa"
+        name="pressure", value=np.array([]), unit="Pa"
     )
     pprime: Parameter[np.ndarray] = Parameter(
         name="pprime", value=np.array([]), unit="Pa/Wb"
@@ -202,3 +202,10 @@ class PlasmodSolverProfiles(MappedParameterFrame):
     n_He: Parameter[np.ndarray] = Parameter(  # noqa: N815
         name="n_He", value=np.array([]), unit="1/m^3"
     )
+
+    _mappings = deepcopy(Profiles.create_mapping())
+
+    @property
+    def mappings(self) -> Dict[str, ParameterMapping]:
+        """Define mappings between these parameters and Plasmod's."""
+        return self._mappings
