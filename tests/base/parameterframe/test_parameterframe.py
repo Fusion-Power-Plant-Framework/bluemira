@@ -22,6 +22,11 @@ class BasicFrame(ParameterFrame):
     age: Parameter[int]
 
 
+class NoDataclassFrame(ParameterFrame):
+    height: Parameter[float]
+    age: Parameter[int]
+
+
 @dataclass
 class BrokenFrame(ParameterFrame):
     height: float
@@ -30,6 +35,10 @@ class BrokenFrame(ParameterFrame):
 class TestParameterFrame:
     def setup_method(self):
         self.frame = BasicFrame.from_dict(deepcopy(FRAME_DATA))
+
+    def test_frame_defined_with_dataclass_annotation(self):
+        with pytest.raises(AttributeError):
+            NoDataclassFrame.from_dict(FRAME_DATA)
 
     def test_init_from_dict_sets_valid_entries(self):
         assert self.frame.height.value == 1.805
