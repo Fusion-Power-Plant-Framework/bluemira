@@ -61,6 +61,8 @@ class BluemiraWire(BluemiraGeo):
         self, boundary: List[Union[cadapi.apiWire, BluemiraWire]], label: str = ""
     ):
         boundary_classes = [self.__class__, cadapi.apiWire]
+        if isinstance(boundary, cadapi.apiWire):
+            cadapi.fix_wire(boundary)
         super().__init__(boundary, label, boundary_classes)
         self._check_orientations()
 
