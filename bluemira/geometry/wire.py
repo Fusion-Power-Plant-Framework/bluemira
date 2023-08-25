@@ -207,7 +207,9 @@ class BluemiraWire(BluemiraGeo):
 
         return cadapi.wire_value_at(self.shape, distance)
 
-    def parameter_at(self, vertex: Iterable[float], tolerance: float = EPS) -> float:
+    def parameter_at(
+        self, vertex: Iterable[float], tolerance: float = EPS * 10
+    ) -> float:
         """
         Get the parameter value at a vertex along a wire.
 
