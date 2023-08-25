@@ -22,7 +22,8 @@ and is not intended to perform any complex calculations.
 Designers
 ^^^^^^^^^
 
-:py:class:`~bluemira.base.designer.Designer`\s solve the minimal design problem of a :py:class:`~bluemira.base.components.Component`.
+:py:class:`~bluemira.base.designer.Designer`\s solve the minimal design problem of a
+:py:class:`~bluemira.base.components.Component` or any other object that requires calculation or optimisation.
 The minimal design problem could result in, for instance, a geometric wire
 or some relevant values that allow the :py:class:`~bluemira.base.builder.Builder` to build
 the :py:class:`~bluemira.base.components.Component` CAD.
