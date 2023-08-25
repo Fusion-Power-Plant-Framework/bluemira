@@ -31,6 +31,7 @@ from bluemira.base.constants import (
     combined_unit_dimensions,
     raw_uc,
 )
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame._parameter import (
     ParamDictT,
     Parameter,
@@ -44,6 +45,7 @@ if TYPE_CHECKING:
 _PfT = TypeVar("_PfT", bound="ParameterFrame")
 
 
+@dataclass
 class ParameterFrame:
     """
     A data class to hold a collection of `Parameter` objects.
@@ -67,8 +69,9 @@ class ParameterFrame:
             raise TypeError(
                 "Cannot instantiate a ParameterFrame directly. It must be subclassed."
             )
-        if not hasattr(cls, "__dataclass_fields__"):
-            raise TypeError(f"{cls} must be annotated with '@dataclass'")
+
+        if cls != EmptyFrame and not cls.__dataclass_fields__:
+            bluemira_warn(f"{cls} is empty, @dataclass is possibly missing")
 
         return super().__new__(cls)
 
@@ -77,7 +80,7 @@ class ParameterFrame:
         self._types = self._get_types()
 
         for field, field_name, value_type in zip(
-            self, self.__dataclass_fields__, self._types.values()  # type: ignore
+            self, self.__dataclass_fields__, self._types.values()
         ):
             if not isinstance(field, Parameter):
                 raise TypeError(
@@ -190,7 +193,7 @@ class ParameterFrame:
         """Initialize an instance from a dictionary."""
         data = copy.deepcopy(data)
         kwargs: Dict[str, Parameter] = {}
-        for member in cls.__dataclass_fields__:  # type: ignore
+        for member in cls.__dataclass_fields__:
             try:
                 param_data = data.pop(member)
             except KeyError as e:
@@ -209,7 +212,7 @@ class ParameterFrame:
     def from_frame(cls: Type[_PfT], frame: ParameterFrame) -> _PfT:
         """Initialise an instance from another ParameterFrame."""
         kwargs = {}
-        for field in cls.__dataclass_fields__:  # type: ignore
+        for field in cls.__dataclass_fields__:
             try:
                 kwargs[field] = getattr(frame, field)
             except AttributeError:
@@ -252,7 +255,7 @@ class ParameterFrame:
         kwargs = {}
 
         lp = config_params.local_params
-        for member in cls.__dataclass_fields__:  # type: ignore
+        for member in cls.__dataclass_fields__:
             if member not in lp:
                 continue
             kwargs[member] = cls._member_data_to_parameter(
@@ -261,14 +264,14 @@ class ParameterFrame:
             )
 
         gp = config_params.global_params
-        for member in cls.__dataclass_fields__:  # type: ignore
-            if member not in gp.__dataclass_fields__:  # type: ignore
+        for member in cls.__dataclass_fields__:
+            if member not in gp.__dataclass_fields__:
                 continue
             kwargs[member] = getattr(gp, member)
 
         # now validate all dataclass_fields are in kwargs
         # (which could be super set)
-        for member in cls.__dataclass_fields__:  # type: ignore
+        for member in cls.__dataclass_fields__:
             try:
                 kwargs[member]
             except KeyError as e:
@@ -296,7 +299,7 @@ class ParameterFrame:
     def to_dict(self) -> Dict[str, Dict[str, Any]]:
         """Serialize this ParameterFrame to a dictionary."""
         out = {}
-        for param_name in self.__dataclass_fields__:  # type: ignore
+        for param_name in self.__dataclass_fields__:
             param_data = getattr(self, param_name).to_dict()
             # We already have the name of the param, and use it as a
             # key. No need to repeat the name in the data, so pop it.

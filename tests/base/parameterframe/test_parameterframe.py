@@ -36,9 +36,10 @@ class TestParameterFrame:
     def setup_method(self):
         self.frame = BasicFrame.from_dict(deepcopy(FRAME_DATA))
 
-    def test_frame_defined_with_dataclass_annotation(self):
-        with pytest.raises(AttributeError):
-            NoDataclassFrame.from_dict(FRAME_DATA)
+    def test_frame_defined_with_dataclass_annotation(self, caplog):
+        NoDataclassFrame()
+        assert len(caplog.records) == 1
+        assert caplog.records[0].levelname == "WARNING"
 
     def test_init_from_dict_sets_valid_entries(self):
         assert self.frame.height.value == 1.805
@@ -53,7 +54,12 @@ class TestParameterFrame:
 
     @pytest.mark.parametrize(
         "name, value",
-        [("name", 100), ("value", "wrong type"), ("value", 30.5), ("unit", 0.5)],
+        [
+            ("name", 100),
+            ("value", "wrong type"),
+            ("value", 30.532423),
+            ("unit", 0.5),
+        ],
     )
     def test_from_dict_TypeError_given_invalid_type(self, name, value):
         data = {
