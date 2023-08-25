@@ -90,7 +90,7 @@ class ParameterFrame:
             vt = _validate_parameter_field(field, value_type)
 
             val_unit = {
-                "value": Parameter._type_check(field.value, vt),
+                "value": Parameter._type_check(field.name, field.value, vt),
                 "unit": field.unit,
             }
             _validate_units(val_unit, vt)
