@@ -49,7 +49,7 @@ in this instance you would just have a :py:class:`~bluemira.base.builder.Builder
         A: Parameter[float]
 
 
-    class MyDesigner(Designer)
+    class MyDesigner(Designer[float])
 
         param_cls = DesignerPF
 
@@ -66,7 +66,7 @@ and `run_mode` is specified in the `build_config` the :py:meth:`execute` method 
 
 .. code-block:: python
 
-    class MyOtherDesigner(Designer):
+    class MyOtherDesigner(Designer[float]):
 
         param_cls = DesignerPF
 
