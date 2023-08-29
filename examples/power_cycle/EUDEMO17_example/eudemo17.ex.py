@@ -89,7 +89,6 @@ def plot_ssen_net_loads(ssen_manager):
 # `systems` field of the `BOP` group. This can be useful for coupling
 # `bluemira` to an external BOP model, for example.
 #
-#
 
 
 # %%
