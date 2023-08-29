@@ -14,7 +14,10 @@ Energies. 13 (2020) 2269. https://doi.org/10.3390/en13092269.
 """
 
 # Run with:
-# python examples/power_cycle/EUDEMO17_example/eudemo17.ex.py
+# `python examples/power_cycle/EUDEMO17_example/eudemo17.ex.py`
+#
+# or start notebook with:
+# `jupyter notebook`
 
 # %%
 try:
@@ -43,9 +46,15 @@ except ImportError:
 # - Heating & Current Drive (`loads_HCD_onlySSEN.json` file);
 # - Auxiliaries (`loads_AUX_onlySSEN.json` file).
 #
-# This allows us to visualize the same results presented in the
-# reference article.
+# All values in these files come from the expected powers for each Plant
+# Breakdown Structure item reported in the article (Table 2), in
+# particular for the plant design for the HCPB blanket concept.
 #
+# Notice how the net loads plotted by `ssen_manager` match the
+# difference between active/reactive loads to the grid reported in the
+# article (800 MVAR and 640 MW; Section 4, last paragraph) and the SSEN
+# consumption values reported in the article (~270 MVAR and 540 MW
+# during flat-top; Figure 7a).
 
 
 # %%
@@ -96,6 +105,10 @@ def extract_phaseload_for_single_phase(pulseload, phase_label):
 # the manager, plus the following groups with both SSEN and PPEN loads:
 # - Heating & Current Drive (`loads_HCD_complete.json` file);
 # - Auxiliaries (`loads_AUX_complete.json` file).
+#
+# Notice that the article reports **peak** values for PPEN loads, which
+# inevitably leads to a _negative_ net active power load by the power
+# plant.
 #
 # This differentiation between cases could have been made in alternative
 # ways. For example by defining different systems in a single input
