@@ -11,7 +11,11 @@ from bluemira.power_cycle.net.manager import (
     PowerCycleSystemConfig,
 )
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list
-from tests.power_cycle.kits_for_tests import NetManagerTestKit, ToolsTestKit
+from tests.power_cycle.kits_for_tests import (
+    NetManagerTestKit,
+    ToolsTestKit,
+    test_data_folder_path,
+)
 
 tools_testkit = ToolsTestKit()
 # time_testkit = TimeTestKit()
@@ -209,8 +213,17 @@ class TestPowerCycleManager:
     #     assert hasattr(sample, "net_reactive")
 
     def test_plot(self):
-        ax = tools_testkit.prepare_figure("PowerCycleManager")
+        sample = self.construct_sample()
 
-        ax, _ = self.construct_sample().plot(ax=ax)
+        ax = tools_testkit.prepare_figure("PowerCycleManager")
+        ax, _ = sample.plot(ax=ax)
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
+
+    def test_export_net_loads(self):
+        sample = self.construct_sample()
+
+        filename = "test_export"
+        test_file_crumbs = (*test_data_folder_path, filename)
+
+        sample.export_net_loads(test_file_crumbs)

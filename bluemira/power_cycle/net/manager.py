@@ -3,12 +3,14 @@
 """
 Classes for the calculation of net power in the Power Cycle model.
 """
+import os
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
 from bluemira.base.constants import raw_uc
+from bluemira.base.file import get_bluemira_root
 from bluemira.power_cycle.base import (
     BaseConfig,
     LoadType,
@@ -401,3 +403,57 @@ class PowerCycleManager:
         )
 
         return ax, (active_plot_objects, reactive_plot_objects)
+
+    def export_net_loads(self, file_crumbs):
+        """
+        Export net active and reactive loads to a TXT file.
+
+        Parameters
+        ----------
+        file_crumbs: tuple
+            Tuple of strings that contains the folder names and file
+            name for the path relative to the BLUEMIRA root for saving
+            the TXT file.
+        """
+        folder_crumbs = file_crumbs[:-1]
+        file_name = file_crumbs[-1]
+        txt_name = file_name + ".txt"
+        txt_crumbs = (*folder_crumbs, txt_name)
+
+        bluemira_root = get_bluemira_root()
+        absolute_path = os.path.join(bluemira_root, *txt_crumbs)
+
+        net_active = self.net_active
+        active_time, active_curve = net_active.curve(
+            net_active._refine_vector(
+                net_active.shifted_time,
+                net_active._validate_n_points(None),
+            )
+        )
+        active_n_elements = len(active_curve)
+
+        net_reactive = self.net_reactive
+        reactive_time, reactive_curve = net_reactive.curve(
+            net_reactive._refine_vector(
+                net_reactive.shifted_time,
+                net_reactive._validate_n_points(None),
+            )
+        )
+        reactive_n_elements = len(reactive_curve)
+
+        n_lines = max(active_n_elements, reactive_n_elements)
+        with open(absolute_path, "w") as file:
+            active_header = "Time (active), Power (active)"
+            reactive_header = "Time (reactive), Power (reactive)"
+            file.write(f"{active_header}, {reactive_header}, \n")
+            for i in range(n_lines):
+                if i < active_n_elements:
+                    file.write(f"{active_time[i]}, {active_curve[i]}")
+                else:
+                    file.write(", ")
+                file.write(", ")
+                if i < reactive_n_elements:
+                    file.write(f"{reactive_time[i]}, {reactive_curve[i]}")
+                else:
+                    file.write(", ")
+                file.write("\n")
