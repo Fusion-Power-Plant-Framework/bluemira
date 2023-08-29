@@ -3,7 +3,6 @@
 """
 Classes for the calculation of net power in the Power Cycle model.
 """
-import os
 from dataclasses import dataclass
 from typing import Any
 
@@ -29,6 +28,7 @@ from bluemira.power_cycle.net.loads import (
 )
 from bluemira.power_cycle.time import PowerCycleScenario, ScenarioBuilder
 from bluemira.power_cycle.tools import (
+    path_from_crumbs,
     read_json,
     unnest_list,
     validate_axes,
@@ -81,6 +81,10 @@ class LoadDescriptor:
 
 @dataclass
 class PowerCycleSystemConfig:
+    """
+    TBD
+    """
+
     name: str
     reactive: LoadDescriptor = LoadDescriptor()
     active: LoadDescriptor = LoadDescriptor()
@@ -88,6 +92,10 @@ class PowerCycleSystemConfig:
 
 @dataclass
 class PowerCycleManagerConfig:
+    """
+    TBD
+    """
+
     name: str
     config_path: str
     systems: list
@@ -404,24 +412,21 @@ class PowerCycleManager:
 
         return ax, (active_plot_objects, reactive_plot_objects)
 
-    def export_net_loads(self, file_crumbs):
+    def export_net_loads(self, file_path):
         """
-        Export net active and reactive loads to a TXT file.
+        Export net active and reactive loads to a comma-delimited TXT
+        file.
 
         Parameters
         ----------
-        file_crumbs: tuple
-            Tuple of strings that contains the folder names and file
-            name for the path relative to the BLUEMIRA root for saving
-            the TXT file.
+        file_path: str
+            Strings that contains the path relative to the BLUEMIRA root
+            and file name (with no extension) for saving the TXT file.
         """
-        folder_crumbs = file_crumbs[:-1]
-        file_name = file_crumbs[-1]
-        txt_name = file_name + ".txt"
-        txt_crumbs = (*folder_crumbs, txt_name)
+        txt_path = file_path + ".txt"
 
         bluemira_root = get_bluemira_root()
-        absolute_path = os.path.join(bluemira_root, *txt_crumbs)
+        absolute_path = path_from_crumbs(bluemira_root, txt_path)
 
         net_active = self.net_active
         active_time, active_curve = net_active.curve(
@@ -443,8 +448,8 @@ class PowerCycleManager:
 
         n_lines = max(active_n_elements, reactive_n_elements)
         with open(absolute_path, "w") as file:
-            active_header = "Time (active), Power (active)"
-            reactive_header = "Time (reactive), Power (reactive)"
+            active_header = "Time (active) [s], Power (active) [W]"
+            reactive_header = "Time (reactive) [s], Power (reactive) [VAR]"
             file.write(f"{active_header}, {reactive_header}, \n")
             for i in range(n_lines):
                 if i < active_n_elements:

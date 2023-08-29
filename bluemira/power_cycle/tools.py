@@ -3,7 +3,6 @@
 """
 Utility functions for the power cycle model.
 """
-import copy
 import json
 import os
 
@@ -12,6 +11,19 @@ import numpy as np
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.utilities.tools import flatten_iterable
+
+
+def path_from_crumbs(*args):
+    """Return file path from directory elements."""
+    crumbs = []
+    for element in args:
+        if isinstance(element, str):
+            crumbs.append(element)
+        elif isinstance(element, tuple):
+            crumbs = crumbs + list(element)
+        elif isinstance(element, list):
+            crumbs = crumbs + element
+    return os.path.join(*tuple(crumbs))
 
 
 def validate_list(argument):
@@ -55,7 +67,6 @@ def validate_vector(argument):
     """
     Validate an argument to be a numerical list.
     """
-
     argument = validate_list(argument)
     for element in argument:
         element = validate_numerical(element)
@@ -68,11 +79,10 @@ def validate_file(file_path):
     function returns its absolute path. If not, 'FileNotFoundError'
     is issued.
     """
-    absolute_path = (
-        os.path.join(get_bluemira_root(), file_path)
-        if not os.path.isabs(file_path)
-        else file_path
-    )
+    if not os.path.isabs(file_path):
+        absolute_path = path_from_crumbs(get_bluemira_root(), file_path)
+    else:
+        absolute_path = file_path
 
     if not os.path.isfile(absolute_path):
         raise FileNotFoundError(

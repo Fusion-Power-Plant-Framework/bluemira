@@ -4,14 +4,17 @@
 Useful variables and functions for running examples in the Power Cycle module.
 """
 
-import os
 from pprint import pprint
 
 import matplotlib.pyplot as plt
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.power_cycle.net.manager import PowerCycleManager
-from bluemira.power_cycle.tools import adjust_2d_graph_ranges, validate_axes
+from bluemira.power_cycle.tools import (
+    adjust_2d_graph_ranges,
+    path_from_crumbs,
+    validate_axes,
+)
 
 
 class PathKit:
@@ -31,25 +34,19 @@ class PathKit:
     scenario_config_filename = "scenario_config.json"
     manager_config_filename = "manager_config.json"
 
-    @staticmethod
+    @classmethod
     def path_from_crumbs(*args):
-        """Return file path from directory elements."""
-        crumbs = []
-        for element in args:
-            if isinstance(element, str):
-                crumbs.append(element)
-            elif isinstance(element, tuple):
-                crumbs = crumbs + list(element)
-            elif isinstance(element, list):
-                crumbs = crumbs + element
-        return os.path.join(*tuple(crumbs))
+        """
+        Import `path_from_crums` from `power_cycle.tools`.
+        """
+        return path_from_crumbs(*args)
 
     @classmethod
     def build_scenario_config_path(cls):
         """
         Build scenario configuration path.
         """
-        scenario_config_path = cls.path_from_crumbs(
+        scenario_config_path = PathKit.path_from_crumbs(
             cls.examples_crumbs,
             cls.scenario_config_filename,
         )
@@ -60,7 +57,7 @@ class PathKit:
         """
         Build manager configuration file path.
         """
-        manager_config_path = cls.path_from_crumbs(
+        manager_config_path = PathKit.path_from_crumbs(
             cls.examples_crumbs,
             cls.eudemo17_folder,
             manager_config_filename,

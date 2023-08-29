@@ -1,4 +1,4 @@
-Time (active), Power (active), Time (reactive), Power (reactive), 
+Time (active) [s], Power (active) [W], Time (reactive) [s], Power (reactive) [VAR], 
 0.0, 794000000.0, 0.0, 0.0
 4.9504950495049505, 793999207.9207921, 5.9405940594059405, 0.0
 9.900990099009901, 793998415.8415842, 11.881188118811881, 0.0

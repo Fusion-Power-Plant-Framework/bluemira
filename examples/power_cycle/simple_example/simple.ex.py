@@ -12,6 +12,9 @@ Reference for load inputs:
 
 # Run with:
 # python examples/power_cycle/simple_example/simple.ex.py
+#
+# or start notebook with:
+# `jupyter notebook`
 
 # %%
 from bluemira.power_cycle.tools import read_json
@@ -240,6 +243,35 @@ def plot_detailed_powerload(powerload):
     ax = DisplayKit.finalize_plot(ax)
 
 
+# %% [markdown]
+# # Export net loads
+#
+# Both active and reactive net loads computed by the Power Cycle manager
+# can be exported to a text file using the `export_net_loads` method.
+#
+
+
+# %%
+def build_export_file_path():
+    """
+    Read Power Cycle manager configuration file.
+    """
+    export_file_filename = "exported_net_loads"
+    export_file_crumbs = PathKit.path_from_crumbs(
+        PathKit.examples_crumbs,
+        PathKit.simple_folder,
+        export_file_filename,
+    )
+    return export_file_crumbs
+
+
+def export_net_loads_to_txt(manager, file_path):
+    """
+    Export net loads computed by the Power Cycle manager.
+    """
+    manager.export_net_loads(file_path)
+
+
 # %%
 if __name__ == "__main__":
     # Set up Power Cycle Manager to compute net power loads
@@ -274,3 +306,7 @@ if __name__ == "__main__":
         "island control",
     )
     plot_detailed_powerload(island_control_ftt_active_powerload)
+
+    # Export results to TXT file
+    export_file_path = build_export_file_path()
+    export_net_loads_to_txt(manager, export_file_path)
