@@ -12,12 +12,16 @@ Fusion Reactors' System Analysis, Karlsruher Institut für Technologie,
 """
 
 from kits_for_examples import DisplayKit, PathKit
-
-# Run with:
-# python examples/power_cycle/scenario.ex.py
 from tabulate import tabulate
 
 from bluemira.power_cycle.time import ScenarioBuilder
+
+# Run with:
+# `python examples/power_cycle/scenario.ex.py`
+#
+# or start notebook with:
+# `jupyter notebook`
+
 
 # %% [markdown]
 # # Build a scenario
