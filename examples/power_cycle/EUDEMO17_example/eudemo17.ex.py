@@ -78,6 +78,41 @@ def plot_ssen_net_loads(ssen_manager):
 
 
 # %% [markdown]
+# # Build & plot Power Cycle Manager (only with SSEN loads & no BOP)
+#
+# If only partial results are desired, the manager can be initialized
+# using a configuration file that does not include any systems of any
+# groups.
+#
+# For example, if net loads should not include systems of the Balance-
+# of-Plant group, the configuration file can omit those systems in the
+# `systems` field of the `BOP` group.
+#
+
+
+# %%
+def build_bopless_manager_config_path():
+    """
+    Build manager configuration file path for SSEN-only, no BOP systems
+    plant case.
+    """
+    manager_config_filename = "manager_config_onlySSENnoBOP.json"
+    manager_config_path = PathKit.build_eudemo_manager_config_path(
+        manager_config_filename,
+    )
+    return manager_config_path
+
+
+def plot_bopless_net_loads(bopless_manager):
+    """
+    Plot SSEN net loads (excluding BOP systems) computed by the Power
+    Cycle manager.
+    """
+    title = "EUDEMO 2017 Baseline, SSEN (no BOP systems) Net Power Loads"
+    return ManagerKit.plot_manager(title, bopless_manager)
+
+
+# %% [markdown]
 # # Analyze load in particular phase
 #
 # By studying a particular phase load, we can find which systems
@@ -138,11 +173,14 @@ def plot_complete_net_loads(complete_manager):
 
 
 # %% [markdown]
-# Export both SSEN and complete Net Loads for the EU-DEMO 2017 Baseline
+# # Export all manager versions Net Loads for the EU-DEMO 2017 Baseline
 #
-# The active and reactive net loads computed with managers initialized
-# both with and without PPEN loads can be exported to text files using
-# the `export_net_loads` method applied to each respective manager.
+# The active and reactive net loads can be exported to text files using
+# the `export_net_loads` method applied to each initilized version of
+# the manager:
+# - SSEN-only plant case (without PPEN loads);
+# - no BOP, SSEN-only plant case;
+# - complete plant case (with PPEN loads).
 #
 
 
@@ -166,7 +204,12 @@ if __name__ == "__main__":
     ssen_manager = ManagerKit.build_manager(ssen_manager_config_path)
     plot_ssen_net_loads(ssen_manager)
 
-    # Analyze active load in particular phase
+    # Build SSEN-only (no BOP systems) Power Cycle Manager
+    bopless_manager_config_path = build_bopless_manager_config_path()
+    bopless_manager = ManagerKit.build_manager(bopless_manager_config_path)
+    plot_bopless_net_loads(bopless_manager)
+
+    # Analyze active load in particular phase of SSEN-only case
     active_pulseload = ssen_manager.net_active
     ftt_active_phaseload = extract_phaseload_for_single_phase(
         active_pulseload,
@@ -174,7 +217,7 @@ if __name__ == "__main__":
     )
     ManagerKit.plot_detailed_phaseload(ftt_active_phaseload)
 
-    # Analyze reactive load in particular phase
+    # Analyze reactive load in particular phase of SSEN-only case
     reactive_pulseload = ssen_manager.net_reactive
     ftt_reactive_phaseload = extract_phaseload_for_single_phase(
         reactive_pulseload,
@@ -189,6 +232,8 @@ if __name__ == "__main__":
 
     # Export net loads into text files
     filepath_ssen = build_export_file_path("exported_net_onlySSEN")
+    filepath_bopless = build_export_file_path("exported_net_onlySSENnoBOP")
     filepath_complete = build_export_file_path("exported_net_complete")
     ssen_manager.export_net_loads(filepath_ssen)
+    bopless_manager.export_net_loads(filepath_bopless)
     complete_manager.export_net_loads(filepath_complete)
