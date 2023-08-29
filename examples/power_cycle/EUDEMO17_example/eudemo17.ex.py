@@ -137,6 +137,28 @@ def plot_complete_net_loads(complete_manager):
     return ManagerKit.plot_manager(title, complete_manager)
 
 
+# %% [markdown]
+# Export both SSEN and complete Net Loads for the EU-DEMO 2017 Baseline
+#
+# The active and reactive net loads computed with managers initialized
+# both with and without PPEN loads can be exported to text files using
+# the `export_net_loads` method applied to each respective manager.
+#
+
+
+# %%
+def build_export_file_path(export_file_filename):
+    """
+    Read Power Cycle manager configuration file.
+    """
+    export_file_crumbs = PathKit.path_from_crumbs(
+        PathKit.examples_crumbs,
+        PathKit.eudemo17_folder,
+        export_file_filename,
+    )
+    return export_file_crumbs
+
+
 # %%
 if __name__ == "__main__":
     # Build SSEN-only Power Cycle Manager
@@ -164,3 +186,9 @@ if __name__ == "__main__":
     complete_manager_config_path = build_complete_manager_config_path()
     complete_manager = ManagerKit.build_manager(complete_manager_config_path)
     plot_complete_net_loads(complete_manager)
+
+    # Export net loads into text files
+    filepath_ssen = build_export_file_path("exported_net_onlySSEN")
+    filepath_complete = build_export_file_path("exported_net_complete")
+    ssen_manager.export_net_loads(filepath_ssen)
+    complete_manager.export_net_loads(filepath_complete)
