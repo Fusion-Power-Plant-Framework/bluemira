@@ -139,11 +139,18 @@ class PlasmodOutputs:
     @classmethod
     def from_files(cls, scalar_stream: TextIO, profile_stream: TextIO) -> PlasmodOutputs:
         """
-        Initialize outputs from a scalar and a profiles file.
+        Initialise outputs from a scalar and a profiles file.
         """
-        scalars = read_plasmod_output(scalar_stream)
-        profiles = read_plasmod_output(profile_stream)
-        return cls(**scalars, **profiles)
+        return cls.from_dict(
+            read_plasmod_output(scalar_stream), read_plasmod_output(profile_stream)
+        )
+
+    @classmethod
+    def from_dict(cls, scalar_dict: Dict, profile_dict: Dict):
+        """
+        Initialise outputs from scalar and profile dictionaries
+        """
+        return cls(**scalar_dict, **profile_dict)
 
 
 def read_plasmod_output(io_stream: TextIO) -> Dict[str, Union[np.ndarray, float]]:

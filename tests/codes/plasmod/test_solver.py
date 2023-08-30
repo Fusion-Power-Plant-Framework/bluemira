@@ -219,6 +219,8 @@ class TestPlasmodTeardown:
         assert teardown.params.f_bs.value == pytest.approx(0.14366031154e2)
         assert teardown.params.l_i.value == pytest.approx(0.16682353334e2)
 
+        assert np.allclose(teardown.profiles.n_T.value, np.array([0, 2.5e17, 5e17]))
+
     def test_mock_leaves_plasmod_params_with_defaults(self):
         default_pf_copy = copy.deepcopy(self.default_pf)
         teardown = Teardown(self.default_pf, "file.csv", "file.csv", DATA_DIR, DATA_DIR)
@@ -229,6 +231,8 @@ class TestPlasmodTeardown:
         assert teardown.params.beta_N.value == pytest.approx(3.109, rel=1e-3)
         assert teardown.params.f_bs.value == pytest.approx(0.369, rel=1e-3)
         assert teardown.params.l_i.value == pytest.approx(2.423, rel=1e-3)
+
+        assert teardown.profiles.x.value.size > 0
 
     @pytest.mark.parametrize("run_mode_func", ["run", "read"])
     def test_CodesError_if_output_files_cannot_be_read(self, run_mode_func):
