@@ -150,7 +150,6 @@ class Impurities(Enum):
             "process.data.lz_non_corona_14_elements", "Ar_lz_tau.dat"
         ) as dp:
             data_path = dp.parent
-        import process.data.impuritydata as imp_data  # noqa: F401, F811
 
         try:
             return Path(data_path, f"{self.name:_<2}lz_tau.dat")
