@@ -24,6 +24,7 @@ PROCESS api
 """
 from dataclasses import dataclass
 from enum import Enum
+from importlib import resources
 from pathlib import Path
 from typing import Dict, List, TypeVar, Union
 
@@ -145,10 +146,13 @@ class Impurities(Enum):
         Get PROCESS impurity data file path
         """
         # TODO(je-cook) fixme process data has moved/ been removed
-        import process.data.impuritydata as imp_data  # noqa: F401, F811
+        with resources.path(
+            "process.data.lz_non_corona_14_elements", "Ar_lz_tau.dat"
+        ) as dp:
+            data_path = dp.parent
 
         try:
-            return Path(Path(imp_data.__file__).parent, f"{self.name:_<2}Lzdata.dat")
+            return Path(data_path, f"{self.name:_<2}lz_tau.dat")
         except NameError:
             raise CodesError("PROCESS impurity data directory not found") from None
 
