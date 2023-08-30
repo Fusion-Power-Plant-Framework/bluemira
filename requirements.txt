@@ -3,7 +3,7 @@ asteval==0.9.31
 Babel==2.12.1
 click==8.1.7
 contourpy==1.1.0
-CoolProp==6.5.0
+CoolProp==6.5.0.post1
 cycler==0.11.0
 fonttools==4.41.1
 fortranformat==2.0.0
