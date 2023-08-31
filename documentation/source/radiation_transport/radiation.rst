@@ -189,6 +189,48 @@ and
    n_t = 0.1 \cdot n_{recycling}/2 &\text{if $T_{recycling} < 10eV$}
    \end{cases}
 
+Having calculated the four key density and temperature values in proximity of the separatrix,
+the same parameters are calculated for each SOL flux surface applying a radial exponential decay,
+with temperature decay length and density decay length proportional to the power decay length.
+For the conduction limited regime, the relations are [Stangeby_2000]_:
+
+.. math::
+   \lambda_{q_{\parallel}} = \frac{2}{7} \lambda_T
+
+and,
+
+.. math::
+   T(r) = T_0 e^{(-r/\lambda_T)}
+.. math::
+   n(r) = n_0 e^{(-r/\lambda_n)}
+
+Once defined the key location values of electron temperature and electron density
+for every SOL flux surface, the poloidal profiles are defined by interpolation.
+In the :math:`recycle` region, if :math:`T_{recycling} > 10eV`,
+the electron temperature remains constant, and the electron density drop is weaker.
+
+.. figure:: no_detachment.png
+   :scale: 50 %
+   :name: fig:no_detachment
+   :align: center
+
+   In case of :math:`T_{recycling} > 10eV`, the temperature within the recycle
+   region remains constant, and the density drop is less strong.
+
+In contrast, if :math:`T_{recycling} < 10eV`, the electron temperature drops,
+and the electron density drop is larger.
+
+.. figure:: exp_detachment.png
+   :scale: 50 %
+   :name: fig:exp_detachment
+   :align: center
+
+   The exponential profile makes the temperature decay and density increase faster.
+
+As final result, each point of each SOL flux surface is assigned with an electron
+temperature value and an electron density value. Having access to an atomic database
+for impurities (e.g., ADAS) for the radiative power loss rates, it is possible to
+calculate the 2-D distribution of the total radiated power density :math:`[MW/m^3]`.
 
 .. rubric:: References
 
