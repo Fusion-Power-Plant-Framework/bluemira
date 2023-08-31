@@ -352,8 +352,7 @@ def get_flux_surfaces_from_mesh(
                 index.append(i)
 
     mask = np.ones_like(x_1d, dtype=bool)
-    mask_index = index + np.arange(len(index))
-    mask[mask_index[mask_index < len(x_1d)]] = False
+    mask[index] = False
     return x_1d[mask], flux_surfaces
 
 
