@@ -344,7 +344,7 @@ def get_flux_surfaces_from_mesh(
             flux_surfaces.append(ClosedFluxSurface(fs))
         else:
             path = get_tricontours(x, z, psi_norm_data, xi)[0]
-            if path is not None:
+            if path is not None and len(path.T[0]) > 40:
                 fs = Coordinates({"x": path.T[0], "z": path.T[1]})
                 fs.close()
                 flux_surfaces.append(ClosedFluxSurface(fs))
