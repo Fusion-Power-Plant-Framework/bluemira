@@ -32,7 +32,11 @@
       "p_order": 2,
       "max_iter": 30,
       "iter_err_max": 1e-4,
-      "relaxation": 0.05
+      "relaxation": 0.05,
+      "refine": true,
+      "num_levels": 2,
+      "distance": 1.0,
+      "ny_fs_min": 40
     },
     "transport_eq_settings": {
       "lcar_mesh": 0.3,
