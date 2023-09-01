@@ -41,7 +41,7 @@ from scipy.interpolate import interp1d
 from tabulate import tabulate
 
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import EPS, MU_0
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -667,7 +667,8 @@ def calc_curr_dens_profiles(
         dum3 = np.gradient(dum2, psi_1D)
         betahat = dum3 / q3 / AA
         chat = -4 * np.pi**2 * MU_0 * pprime / AA
-        FF = np.sqrt(2.0 * np.clip(y, 0, None))  # noqa: N806
+        # EPS clipping here otherwise DOLFIN crashes with index error in MeshEntity.cpp
+        FF = np.sqrt(2.0 * np.clip(y, EPS, None))  # noqa: N806
 
         ff_prime = 4 * np.pi**2 * (chat - betahat * FF**2)
 
