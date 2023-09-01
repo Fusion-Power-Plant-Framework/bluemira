@@ -27,6 +27,7 @@ from typing import Callable, Iterable, List, Optional, Tuple, Union
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 from dolfin import BoundaryMesh, Mesh, Vertex
 from matplotlib._tri import TriContourGenerator
 from matplotlib.pyplot import Axes
@@ -350,11 +351,9 @@ def get_flux_surfaces_from_mesh(
             else:
                 index.append(i)
 
-    n = len(index)
-    for xi in range(n):
-        x_1d = np.delete(x_1d, index[xi])
-
-    return x_1d, flux_surfaces
+    mask = np.ones_like(x_1d, dtype=bool)
+    mask[index] = False
+    return x_1d[mask], flux_surfaces
 
 
 def calculate_plasma_shape_params(
@@ -459,7 +458,7 @@ def find_magnetic_axis(
         lower_bounds = np.array([0, -2.0])
         upper_bounds = np.array([20.0, 2.0])
 
-    def maximise_psi(x):
+    def maximise_psi(x: npt.NDArray) -> float:
         return -psi_func(x)
 
     x_star = optimise(
@@ -498,16 +497,9 @@ def _cell_near_point(cell: dolfin.Cell, refine_point: Iterable, distance: float)
     Whether or not the cell is in the vicinity of a point
     """
     # Get the center of the cell
-    cell_center = cell.midpoint()[:]
-
     # Calculate the distance between the cell center and the refinement point
-    d = np.linalg.norm(cell_center - np.array(refine_point))
-
     # Refine the cell if it is close to the refinement point
-    if d < distance:
-        return True
-    else:
-        return False
+    return np.linalg.norm(cell.midpoint()[:] - np.array(refine_point)) < distance
 
 
 def refine_mesh(

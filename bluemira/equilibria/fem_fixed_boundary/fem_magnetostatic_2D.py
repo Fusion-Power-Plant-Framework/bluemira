@@ -168,7 +168,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         return self._grad_psi(point)
 
     @property
-    def psi_norm_2d(self) -> Callable[[np.ndarray], float]:
+    def psi_norm_2d(self) -> Callable[[np.ndarray], np.ndarray]:
         """Normalized flux function in 2-D"""
         return lambda x: np.sqrt(
             np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
