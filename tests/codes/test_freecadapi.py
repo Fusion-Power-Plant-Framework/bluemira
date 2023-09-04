@@ -292,7 +292,7 @@ class TestCADFiletype:
     @classmethod
     def setup_class(cls):
         doc = newDocument()
-        cls.shape = doc.addObject("Part::Feature")
+        cls.shape = doc.addObject("Part::FeaturePython")
         cls.shape.Shape = cadapi.extrude_shape(cadapi.make_circle(), (0, 0, 1))
         doc.recompute()
 
