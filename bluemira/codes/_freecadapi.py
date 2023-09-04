@@ -1178,13 +1178,13 @@ def _setup_document(
 
     elif len(labels) != len(parts):
         raise ValueError(
-            f"Number of labels ({len(labels)}) != number of objects ({len(parts)}"
+            f"Number of labels ({len(labels)}) != number of objects ({len(parts)})"
         )
 
     for part, label in zip(parts, labels):
         new_part = part.copy()
         new_part.rotate((0.0, 0.0, 0.0), (1.0, 0.0, 0.0), -90.0)
-        obj = doc.addObject("Part::Feature", label)
+        obj = doc.addObject("Part::FeaturePython", label)
         obj.Shape = new_part
         doc.recompute()
         yield obj
@@ -1271,7 +1271,7 @@ class CADFileType(enum.Enum):
         obj._value_ = args[0]
         return obj
 
-    def __init__(self, _, module):
+    def __init__(self, _, module: str = ""):
         self.module = module
 
     @classmethod
@@ -1327,11 +1327,10 @@ def meshed_exporter(
     """Meshing and then exporting CAD in certain formats."""
 
     @wraps(export_func)
-    def wrapper(objs: Part.Feature, filename: str, **kwargs):
+    def wrapper(objs: Part.Feature, filename: str, *, tessellate: float = 0.5, **kwargs):
         """
         Tessellation should happen on a copied object
         """
-        tessellate = kwargs.pop("tessellate", 0.5)
         if cad_format in CADFileType.unitless_formats():
             for no, obj in enumerate(objs):
                 objs[no].Shape = obj.Shape.copy()
