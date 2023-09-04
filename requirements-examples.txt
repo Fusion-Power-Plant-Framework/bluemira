@@ -45,7 +45,7 @@ Pygments==2.16.1
 pyrsistent==0.19.3
 pyzmq==25.1.1
 Send2Trash==1.8.2
-soupsieve==2.4.1
+soupsieve==2.5
 stack-data==0.6.2
 terminado==0.17.1
 tinycss2==1.2.1
