@@ -5,25 +5,13 @@ Utility functions for the power cycle model.
 """
 import json
 import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.file import get_bluemira_root
 from bluemira.utilities.tools import flatten_iterable
-
-
-def path_from_crumbs(*args):
-    """Return file path from directory elements."""
-    crumbs = []
-    for element in args:
-        if isinstance(element, str):
-            crumbs.append(element)
-        elif isinstance(element, tuple):
-            crumbs = crumbs + list(element)
-        elif isinstance(element, list):
-            crumbs = crumbs + element
-    return os.path.join(*tuple(crumbs))
 
 
 def validate_list(argument):
@@ -80,9 +68,9 @@ def validate_file(file_path):
     is issued.
     """
     if not os.path.isabs(file_path):
-        absolute_path = path_from_crumbs(get_bluemira_root(), file_path)
+        absolute_path = Path(get_bluemira_root(), file_path)
     else:
-        absolute_path = file_path
+        absolute_path = Path(file_path)
 
     if not os.path.isfile(absolute_path):
         raise FileNotFoundError(

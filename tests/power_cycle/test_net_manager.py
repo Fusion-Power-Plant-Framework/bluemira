@@ -1,4 +1,5 @@
 # COPYRIGHT PLACEHOLDER
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
@@ -10,11 +11,7 @@ from bluemira.power_cycle.net.manager import (
     PowerCycleSystem,
     PowerCycleSystemConfig,
 )
-from bluemira.power_cycle.tools import (
-    adjust_2d_graph_ranges,
-    path_from_crumbs,
-    unnest_list,
-)
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list
 from tests.power_cycle.kits_for_tests import (
     NetManagerTestKit,
     ToolsTestKit,
@@ -229,5 +226,5 @@ class TestPowerCycleManager:
 
         filename = "test_export"
         test_file_crumbs = (*test_data_folder_path, filename)
-        test_file_path = path_from_crumbs(test_file_crumbs)
+        test_file_path = Path(*test_file_crumbs)
         sample.export_net_loads(test_file_path)

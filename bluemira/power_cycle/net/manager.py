@@ -4,6 +4,7 @@
 Classes for the calculation of net power in the Power Cycle model.
 """
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 import numpy as np
@@ -28,7 +29,6 @@ from bluemira.power_cycle.net.loads import (
 )
 from bluemira.power_cycle.time import PowerCycleScenario, ScenarioBuilder
 from bluemira.power_cycle.tools import (
-    path_from_crumbs,
     read_json,
     unnest_list,
     validate_axes,
@@ -414,19 +414,18 @@ class PowerCycleManager:
 
     def export_net_loads(self, file_path):
         """
-        Export net active and reactive loads to a comma-delimited TXT
-        file.
+        Export net active and reactive loads to a JSON file.
 
         Parameters
         ----------
-        file_path: str
-            Strings that contains the path relative to the BLUEMIRA root
-            and file name (with no extension) for saving the TXT file.
+        file_path: pathlib.Path
+            Object that contains the path relative to the BLUEMIRA root
+            and file name (with no extension) for saving the JSON file.
         """
-        txt_path = file_path + ".txt"
+        txt_path = file_path.with_suffix(".txt")
 
         bluemira_root = get_bluemira_root()
-        absolute_path = path_from_crumbs(bluemira_root, txt_path)
+        abs_file_path = Path(bluemira_root, txt_path)
 
         net_active = self.net_active
         active_time, active_curve = net_active.curve(
@@ -447,7 +446,7 @@ class PowerCycleManager:
         reactive_n_elements = len(reactive_curve)
 
         n_lines = max(active_n_elements, reactive_n_elements)
-        with open(absolute_path, "w") as file:
+        with abs_file_path.open(mode="w") as file:
             active_header = "Time (active) [s], Power (active) [W]"
             reactive_header = "Time (reactive) [s], Power (reactive) [VAR]"
             file.write(f"{active_header}, {reactive_header}, \n")
