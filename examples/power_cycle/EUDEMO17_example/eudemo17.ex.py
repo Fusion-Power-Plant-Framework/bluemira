@@ -22,7 +22,7 @@ Energies. 13 (2020) 2269. https://doi.org/10.3390/en13092269.
 # %%
 try:
     import kits_import
-    from kits_for_examples import ManagerKit, PathKit
+    from kits_for_examples import ManagerKit, Path, PathKit
 
     kits_import.successfull_import()
 
@@ -190,8 +190,8 @@ def build_export_file_path(export_file_filename):
     """
     Read Power Cycle manager configuration file.
     """
-    export_file_crumbs = PathKit.path_from_crumbs(
-        PathKit.examples_crumbs,
+    export_file_crumbs = Path(
+        *PathKit.examples_crumbs,
         PathKit.eudemo17_folder,
         export_file_filename,
     )

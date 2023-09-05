@@ -21,7 +21,7 @@ from bluemira.power_cycle.tools import read_json
 
 try:
     import kits_import
-    from kits_for_examples import DisplayKit, ManagerKit, PathKit
+    from kits_for_examples import DisplayKit, ManagerKit, Path, PathKit
 
     kits_import.successfull_import()
 
@@ -57,8 +57,8 @@ def build_manager_config_path():
     Read Power Cycle manager configuration file.
     """
     manager_config_filename = "manager_config.json"
-    manager_config_path = PathKit.path_from_crumbs(
-        PathKit.examples_crumbs,
+    manager_config_path = Path(
+        *PathKit.examples_crumbs,
         PathKit.simple_folder,
         manager_config_filename,
     )
@@ -119,7 +119,7 @@ def read_hcd_config_from_manager_config(manager_config):
     Read Heating & Current Drive group configuration file.
     """
     hcd_config_path = manager_config["HCD"]["config_path"]
-    hcd_config_path = PathKit.path_from_crumbs(
+    hcd_config_path = Path(
         PathKit.project_path,
         hcd_config_path,
     )
@@ -257,8 +257,8 @@ def build_export_file_path():
     Read Power Cycle manager configuration file.
     """
     export_file_filename = "exported_net_loads"
-    export_file_crumbs = PathKit.path_from_crumbs(
-        PathKit.examples_crumbs,
+    export_file_crumbs = Path(
+        *PathKit.examples_crumbs,
         PathKit.simple_folder,
         export_file_filename,
     )
