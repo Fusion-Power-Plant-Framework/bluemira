@@ -43,8 +43,8 @@ def test_paper_example():
         np.array([0, 0, 1]),
         1,
         1,
-        np.pi / 3,
-        np.pi / 6,
+        60.0,
+        30.0,
         4e5,
     )
     field = source.field(2, 2, 2)
@@ -65,7 +65,7 @@ def test_paper_example():
 
 
 class TestTrapezoidalPrismCurrentSource:
-    @pytest.mark.parametrize("angle", [np.pi * 0.3, 0.7853981633974485])
+    @pytest.mark.parametrize("angle", [54, 45.0001])
     def test_error_on_self_intersect(self, angle):
         with pytest.raises(MagnetostaticsError):
             TrapezoidalPrismCurrentSource(
@@ -88,12 +88,12 @@ class TestTrapezoidalPrismCurrentSource:
             np.array([0, 1, 0]),
             0.5,
             0.1,
-            0.7853981633974483,
-            0.7853981633974483,
+            45,
+            45,
             current=1.0,
         )
 
-    @pytest.mark.parametrize("angle", [np.pi / 2, np.pi, 3 * np.pi / 2])
+    @pytest.mark.parametrize("angle", [90, 180, 270, 360])
     def test_error_on_angle_limits(self, angle):
         with pytest.raises(MagnetostaticsError):
             TrapezoidalPrismCurrentSource(
@@ -108,7 +108,7 @@ class TestTrapezoidalPrismCurrentSource:
                 current=1.0,
             )
 
-    @pytest.mark.parametrize("angle1,angle2", [[0.1, -0.1], [-0.2, 0.3]])
+    @pytest.mark.parametrize("angle1,angle2", [[10, -10], [-20, 30]])
     def test_error_on_mixed_sign_angles(self, angle1, angle2):
         with pytest.raises(MagnetostaticsError):
             TrapezoidalPrismCurrentSource(
@@ -123,9 +123,7 @@ class TestTrapezoidalPrismCurrentSource:
                 current=1.0,
             )
 
-    @pytest.mark.parametrize(
-        "angle1,angle2", [[0.1, 0.1], [0.2, 0.3], [0, 0.2], [-0.2, 0]]
-    )
+    @pytest.mark.parametrize("angle1,angle2", [[1, 1], [2, 3], [0, 2], [-2, 0]])
     def test_no_error_on_double_sign_angles(self, angle1, angle2):
         TrapezoidalPrismCurrentSource(
             np.array([0, 0, 0]),

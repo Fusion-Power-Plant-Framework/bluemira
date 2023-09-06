@@ -329,9 +329,9 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
     depth:
         The depth of the current source (half-height) [m]
     alpha:
-        The first angle of the trapezoidal prism [degree] [0, 180)
+        The first angle of the trapezoidal prism [°] [0, 180)
     beta:
-        The second angle of the trapezoidal prism [degree] [0, 180)
+        The second angle of the trapezoidal prism [°] [0, 180)
     current:
         The current flowing through the source [A]
 
@@ -385,12 +385,12 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         if not (0 <= abs(alpha) < 0.5 * np.pi):
             raise MagnetostaticsError(
                 f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside "
-                "bounds of [0, pi/2)."
+                "bounds of [0, 180°)."
             )
         if not (0 <= abs(beta) < 0.5 * np.pi):
             raise MagnetostaticsError(
                 f"{self.__class__.__name__} instantiation error: {beta=:.3f} is outside "
-                "bounds of [0, pi/2)."
+                "bounds of [0, 180°)."
             )
 
     def _check_raise_self_intersection(
