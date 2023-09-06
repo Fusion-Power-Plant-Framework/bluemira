@@ -33,7 +33,7 @@ def test_paper_example():
 
     Babic and Aykel example
 
-    https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594?saml_referrer=
+    https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
     """
     # Babic and Aykel example (single trapezoidal prism)
     source = TrapezoidalPrismCurrentSource(
