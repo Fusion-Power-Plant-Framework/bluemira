@@ -123,7 +123,9 @@ class TestTrapezoidalPrismCurrentSource:
                 current=1.0,
             )
 
-    @pytest.mark.parametrize("angle1,angle2", [[0.1, 0.1], [0.2, 0.3]])
+    @pytest.mark.parametrize(
+        "angle1,angle2", [[0.1, 0.1], [0.2, 0.3], [0, 0.2], [-0.2, 0]]
+    )
     def test_no_error_on_double_sign_angles(self, angle1, angle2):
         TrapezoidalPrismCurrentSource(
             np.array([0, 0, 0]),
