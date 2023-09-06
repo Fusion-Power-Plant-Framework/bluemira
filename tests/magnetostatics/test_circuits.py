@@ -278,12 +278,6 @@ class TestCariddiBenchmark:
         coil_loop = Coordinates({"x": x[10:-10], "y": 0, "z": z[10:-10]})
         coil_loop.close()
         cls.coil_loop = coil_loop
-        from bluemira.display import plot_2d
-
-        plot_2d(coil_loop)
-        import matplotlib.pyplot as plt
-
-        plt.show()
 
         circuit = ArbitraryPlanarRectangularXSCircuit(
             coil_loop, width / 2, depth / 2, current=1.0
