@@ -379,13 +379,13 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
             )
         if not (0 <= abs(alpha) < 0.5 * np.pi):
             raise MagnetostaticsError(
-                f"{self.__class__.__name__} instantiation error: {alpha=} is outside "
-                "bounds of [0, pi/2)"
+                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside "
+                "bounds of [0, pi/2)."
             )
         if not (0 <= abs(beta) < 0.5 * np.pi):
             raise MagnetostaticsError(
-                f"{self.__class__.__name__} instantiation error: {beta=} is outside "
-                "bounds of [0, pi/2)"
+                f"{self.__class__.__name__} instantiation error: {beta=:.3f} is outside "
+                "bounds of [0, pi/2)."
             )
 
     def _check_raise_self_intersection(
