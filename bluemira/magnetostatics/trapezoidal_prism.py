@@ -329,11 +329,15 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
     depth:
         The depth of the current source (half-height) [m]
     alpha:
-        The first angle of the trapezoidal prism [rad]
+        The first angle of the trapezoidal prism [degree] [0, 180)
     beta:
-        The second angle of the trapezoidal prism [rad]
+        The second angle of the trapezoidal prism [degree] [0, 180)
     current:
         The current flowing through the source [A]
+
+    Notes
+    -----
+    Negative angles are allowed, but both angles must be either 0 or negative.
     """
 
     def __init__(
@@ -348,6 +352,7 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         beta: float,
         current: float,
     ):
+        alpha, beta = np.deg2rad(alpha), np.deg2rad(beta)
         self.origin = origin
 
         length = np.linalg.norm(ds)
