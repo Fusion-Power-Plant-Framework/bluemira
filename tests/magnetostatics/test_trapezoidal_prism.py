@@ -20,8 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import numpy as np
+import pytest
 
 from bluemira.base.constants import raw_uc
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
 
@@ -60,3 +62,19 @@ def test_paper_example():
     field_9decimals = np.trunc(abs_field * 10**9) / 10**9
     field_9true = 53.581000397
     assert field_9decimals == field_9true
+
+
+class TestTrapezoidalPrismCurrentSource:
+    def test_error_on_self_intersect(self):
+        with pytest.raises(MagnetostaticsError):
+            source = TrapezoidalPrismCurrentSource(
+                np.array([0, 0, 0]),
+                np.array([0, 0, 1]),
+                np.array([1, 0, 0]),
+                np.array([0, 1, 0]),
+                0.5,
+                0.1,
+                np.pi / 2,
+                np.pi / 2,
+                current=1.0,
+            )

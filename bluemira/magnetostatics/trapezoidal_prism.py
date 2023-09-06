@@ -34,6 +34,7 @@ import numpy as np
 
 from bluemira.base.constants import MU_0_4PI
 from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 
 __all__ = ["TrapezoidalPrismCurrentSource"]
@@ -350,6 +351,7 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         self.origin = origin
 
         length = np.linalg.norm(ds)
+        self._check_raise_self_intersection(length, breadth, alpha, beta)
         self._halflength = 0.5 * length
         # Normalised direction cosine matrix
         self.dcm = np.array([t_vec, ds / length, normal])
@@ -361,6 +363,20 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         # Current density
         self.rho = current / (4 * breadth * depth)
         self.points = self._calculate_points()
+
+    def _check_raise_self_intersection(
+        self, length: float, breadth: float, alpha: float, beta: float
+    ):
+        """
+        Check for bad combinations of source length and end-cap angles.
+        """
+        a = abs(np.tan(alpha) * breadth)
+        b = abs(np.tan(beta) * breadth)
+        if (a + b) > length:
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: source length and "
+                "angles imply a self-intersecting trapezoidal prism."
+            )
 
     def _xyzlocal_to_rql(self, x_local, y_local, z_local):
         """
