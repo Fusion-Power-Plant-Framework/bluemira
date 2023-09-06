@@ -74,7 +74,7 @@ class TestTrapezoidalPrismCurrentSource:
                 np.array([0, 1, 0]),
                 0.5,
                 0.1,
-                np.pi / 2,
-                np.pi / 2,
+                np.pi * 0.3,
+                np.pi * 0.3,
                 current=1.0,
             )
