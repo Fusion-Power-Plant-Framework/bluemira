@@ -68,7 +68,7 @@ class TestTrapezoidalPrismCurrentSource:
     @pytest.mark.parametrize("angle", [np.pi * 0.3, 0.7853981633974485])
     def test_error_on_self_intersect(self, angle):
         with pytest.raises(MagnetostaticsError):
-            source = TrapezoidalPrismCurrentSource(
+            TrapezoidalPrismCurrentSource(
                 np.array([0, 0, 0]),
                 np.array([0, 0, 1]),
                 np.array([1, 0, 0]),
@@ -81,7 +81,7 @@ class TestTrapezoidalPrismCurrentSource:
             )
 
     def test_no_error_on_triangle(self):
-        source = TrapezoidalPrismCurrentSource(
+        TrapezoidalPrismCurrentSource(
             np.array([0, 0, 0]),
             np.array([0, 0, 1]),
             np.array([1, 0, 0]),
