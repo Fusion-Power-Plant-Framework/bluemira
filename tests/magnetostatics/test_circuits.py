@@ -271,13 +271,19 @@ class TestCariddiBenchmark:
 
         # Smooth out graphically determined TF centreline...
         length_norm = vector_lengthnorm(x, z)
-        l_interp = np.linspace(0, 1, 150)
+        l_interp = np.linspace(0, 1, 100)
         x = UnivariateSpline(length_norm, x, s=0.02)(l_interp)
         z = UnivariateSpline(length_norm, z, s=0.02)(l_interp)
 
-        coil_loop = Coordinates({"x": x[:-10], "y": 0, "z": z[:-10]})
+        coil_loop = Coordinates({"x": x[10:-10], "y": 0, "z": z[10:-10]})
         coil_loop.close()
         cls.coil_loop = coil_loop
+        from bluemira.display import plot_2d
+
+        plot_2d(coil_loop)
+        import matplotlib.pyplot as plt
+
+        plt.show()
 
         circuit = ArbitraryPlanarRectangularXSCircuit(
             coil_loop, width / 2, depth / 2, current=1.0
