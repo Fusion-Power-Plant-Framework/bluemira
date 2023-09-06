@@ -120,7 +120,7 @@ analytical_circuit2 = CircularArcCurrentSource(
     breadth=breadth,
     depth=depth,
     radius=radius,
-    dtheta=2 * np.pi,
+    dtheta=360,
     current=current,
 )
 
