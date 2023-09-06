@@ -141,7 +141,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
             beta = alpha
             betas.append(beta)
 
-        return betas, alphas
+        return np.rad2deg(betas), np.rad2deg(alphas)
 
     def _transform_to_xz(self, shape):
         normal_vector = shape.normal_vector
