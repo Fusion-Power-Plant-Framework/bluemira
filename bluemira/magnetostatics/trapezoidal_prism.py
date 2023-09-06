@@ -23,7 +23,7 @@
 Analytical expressions for the field inside an arbitrarily shaped winding pack
 of rectangular cross-section, following equations as described in:
 
-https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594?saml_referrer=
+https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
 including corrections from:
 https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
