@@ -54,7 +54,7 @@ class BiotSavartFilament(CurrentSource):
         The arbitrarily shaped closed current Coordinates. Alternatively provide the
         list of Coordinates objects.
     radius:
-        The nominal radius of the coil
+        The nominal radius of the coil [m].
     current:
         The current flowing through the filament [A]. Defaults to 1 A to enable
         current to be optimised separately from the field response.
@@ -69,13 +69,12 @@ class BiotSavartFilament(CurrentSource):
         if not isinstance(arrays, list):
             # Handle single Coordinates/array
             arrays = [arrays]
+        arrays = [process_coords_array(array) for array in arrays]
 
         # Handle list of Coordinates/arrays (potentially of different sizes)
         d_ls, mids_points = [], []
         points = []
-        for i, array in enumerate(arrays):
-            xyz = process_coords_array(array)
-
+        for i, xyz in enumerate(arrays):
             d_l = np.diff(xyz, axis=0)
             self._check_discretisation(d_l)
 
@@ -97,7 +96,7 @@ class BiotSavartFilament(CurrentSource):
         self.d_l_hat = np.linalg.norm(self.d_l, axis=1)
         self.mid_points = np.vstack(mids_points)
         self.points = np.vstack(points)
-        self._array_lengths = [len(p) for p in points]
+        self._arrays = arrays
         self.radius = radius
         self.current = current
 
@@ -246,6 +245,7 @@ class BiotSavartFilament(CurrentSource):
         self.mid_points = self.mid_points @ r
         self.ref_d_l = self.ref_d_l @ r
         self.ref_mid_points = self.ref_mid_points @ r
+        self._arrays = [array @ r for array in self._arrays]
 
     def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
         """
@@ -266,11 +266,8 @@ class BiotSavartFilament(CurrentSource):
             xbox, ybox, zbox = BoundingBox.from_xyz(*self.points.T).get_box_arrays()
             ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
 
-        # Split sub-filaments up for plotting purposes
-        i = 0
-        for length in self._array_lengths:
-            ax.plot(*self.points[i : i + length].T, color="b", linewidth=1)
-            i += length
+        for array in self._arrays:
+            ax.plot(*array.T, color="b", linewidth=1)
 
         # Plot local coordinate system
         if show_coord_sys:
