@@ -351,6 +351,7 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         self.origin = origin
 
         length = np.linalg.norm(ds)
+        self._check_angle_values(alpha, beta)
         self._check_raise_self_intersection(length, breadth, alpha, beta)
         self._halflength = 0.5 * length
         # Normalised direction cosine matrix
@@ -364,14 +365,37 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         self.rho = current / (4 * breadth * depth)
         self.points = self._calculate_points()
 
+    def _check_angle_values(self, alpha, beta):
+        """
+        Check that end-cap angles are acceptable.
+        """
+        sign_alpha = np.sign(alpha)
+        sign_beta = np.sign(beta)
+        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0.0)
+        if not one_zero and sign_alpha != sign_beta:
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: end-cap angles "
+                f"must have the same sign {alpha=:.3f}, {beta=:.3f}."
+            )
+        if not (0 <= abs(alpha) < 0.5 * np.pi):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {alpha=} is outside "
+                "bounds of [0, pi/2)"
+            )
+        if not (0 <= abs(beta) < 0.5 * np.pi):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {beta=} is outside "
+                "bounds of [0, pi/2)"
+            )
+
     def _check_raise_self_intersection(
         self, length: float, breadth: float, alpha: float, beta: float
     ):
         """
         Check for bad combinations of source length and end-cap angles.
         """
-        a = abs(np.tan(alpha) * breadth)
-        b = abs(np.tan(beta) * breadth)
+        a = np.tan(alpha) * breadth
+        b = np.tan(beta) * breadth
         if (a + b) > length:
             raise MagnetostaticsError(
                 f"{self.__class__.__name__} instantiation error: source length and "
