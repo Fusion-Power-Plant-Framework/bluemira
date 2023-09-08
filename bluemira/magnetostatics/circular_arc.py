@@ -623,7 +623,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
     radius:
         The radius of the circular arc from the origin [m]
     dtheta:
-        The azimuthal width of the arc [rad]
+        The azimuthal width of the arc [°]
     current:
         The current flowing through the source [A]
 
@@ -654,7 +654,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         self._radius = radius
         self._update_r1r2()
 
-        self.dtheta = dtheta
+        self.dtheta = np.deg2rad(dtheta)
         self.rho = current / (4 * breadth * depth)
         self.dcm = np.array([ds, normal, t_vec])
         self.points = self._calculate_points()

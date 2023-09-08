@@ -96,16 +96,16 @@ def test_mixedsourcesolver():
     )
 
     arc_1 = CircularArcCurrentSource(
-        [-1, 0, 1], [0, 0, 1], [-1, 0, 0], [0, 1, 0], dz, dx, 1, np.pi / 2, current
+        [-1, 0, 1], [0, 0, 1], [-1, 0, 0], [0, 1, 0], dz, dx, 1, 90, current
     )
     arc_2 = CircularArcCurrentSource(
-        [-1, 0, -1], [-1, 0, 0], [0, 0, -1], [0, 1, 0], dz, dx, 1, np.pi / 2, current
+        [-1, 0, -1], [-1, 0, 0], [0, 0, -1], [0, 1, 0], dz, dx, 1, 90, current
     )
     arc_3 = CircularArcCurrentSource(
-        [1, 0, -1], [0, 0, -1], [1, 0, 0], [0, 1, 0], dz, dx, 1, np.pi / 2, current
+        [1, 0, -1], [0, 0, -1], [1, 0, 0], [0, 1, 0], dz, dx, 1, 90, current
     )
     arc_4 = CircularArcCurrentSource(
-        [1, 0, 1], [1, 0, 0], [0, 0, 1], [0, 1, 0], dz, dx, 1, np.pi / 2, current
+        [1, 0, 1], [1, 0, 0], [0, 0, 1], [0, 1, 0], dz, dx, 1, 90, current
     )
 
     solver = SourceGroup([bar_1, bar_2, bar_3, bar_4, arc_1, arc_2, arc_3, arc_4])
