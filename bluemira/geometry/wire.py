@@ -247,14 +247,14 @@ class BluemiraWire(BluemiraGeo):
         """
         The ordered vertexes of the wire.
         """
-        verteces = cadapi.ordered_vertexes(self.shape)
-        if len(verteces) == 3:
+        vertexes = cadapi.ordered_vertexes(self.shape)
+        if len(vertexes) == 3:
             LOGGER.disabled = True
-            coords = Coordinates(verteces.T)
+            coords = Coordinates(vertexes.T)
             LOGGER.disabled = False
             return coords
 
-        return Coordinates(cadapi.ordered_vertexes(self.shape))
+        return Coordinates(vertexes)
 
     @property
     def edges(self) -> Tuple[BluemiraWire]:
