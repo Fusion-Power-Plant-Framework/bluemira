@@ -271,11 +271,11 @@ class TestCariddiBenchmark:
 
         # Smooth out graphically determined TF centreline...
         length_norm = vector_lengthnorm(x, z)
-        l_interp = np.linspace(0, 1, 150)
+        l_interp = np.linspace(0, 1, 100)
         x = UnivariateSpline(length_norm, x, s=0.02)(l_interp)
         z = UnivariateSpline(length_norm, z, s=0.02)(l_interp)
 
-        coil_loop = Coordinates({"x": x[:-10], "y": 0, "z": z[:-10]})
+        coil_loop = Coordinates({"x": x[10:-10], "y": 0, "z": z[10:-10]})
         coil_loop.close()
         cls.coil_loop = coil_loop
 

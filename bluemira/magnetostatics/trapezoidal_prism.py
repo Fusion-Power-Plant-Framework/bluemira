@@ -23,7 +23,7 @@
 Analytical expressions for the field inside an arbitrarily shaped winding pack
 of rectangular cross-section, following equations as described in:
 
-https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594?saml_referrer=
+https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
 including corrections from:
 https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
@@ -34,6 +34,7 @@ import numpy as np
 
 from bluemira.base.constants import MU_0_4PI
 from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 
 __all__ = ["TrapezoidalPrismCurrentSource"]
@@ -328,11 +329,15 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
     depth:
         The depth of the current source (half-height) [m]
     alpha:
-        The first angle of the trapezoidal prism [rad]
+        The first angle of the trapezoidal prism [°] [0, 180)
     beta:
-        The second angle of the trapezoidal prism [rad]
+        The second angle of the trapezoidal prism [°] [0, 180)
     current:
         The current flowing through the source [A]
+
+    Notes
+    -----
+    Negative angles are allowed, but both angles must be either 0 or negative.
     """
 
     def __init__(
@@ -347,9 +352,12 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         beta: float,
         current: float,
     ):
+        alpha, beta = np.deg2rad(alpha), np.deg2rad(beta)
         self.origin = origin
 
         length = np.linalg.norm(ds)
+        self._check_angle_values(alpha, beta)
+        self._check_raise_self_intersection(length, breadth, alpha, beta)
         self._halflength = 0.5 * length
         # Normalised direction cosine matrix
         self.dcm = np.array([t_vec, ds / length, normal])
@@ -361,6 +369,43 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         # Current density
         self.rho = current / (4 * breadth * depth)
         self.points = self._calculate_points()
+
+    def _check_angle_values(self, alpha, beta):
+        """
+        Check that end-cap angles are acceptable.
+        """
+        sign_alpha = np.sign(alpha)
+        sign_beta = np.sign(beta)
+        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0.0)
+        if not one_zero and sign_alpha != sign_beta:
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: end-cap angles "
+                f"must have the same sign {alpha=:.3f}, {beta=:.3f}."
+            )
+        if not (0 <= abs(alpha) < 0.5 * np.pi):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside "
+                "bounds of [0, 180°)."
+            )
+        if not (0 <= abs(beta) < 0.5 * np.pi):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {beta=:.3f} is outside "
+                "bounds of [0, 180°)."
+            )
+
+    def _check_raise_self_intersection(
+        self, length: float, breadth: float, alpha: float, beta: float
+    ):
+        """
+        Check for bad combinations of source length and end-cap angles.
+        """
+        a = np.tan(alpha) * breadth
+        b = np.tan(beta) * breadth
+        if (a + b) > length:
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: source length and "
+                "angles imply a self-intersecting trapezoidal prism."
+            )
 
     def _xyzlocal_to_rql(self, x_local, y_local, z_local):
         """
