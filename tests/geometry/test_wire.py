@@ -93,6 +93,18 @@ class TestWire:
         vertices.set_ccw([0, 0, -1])
         np.testing.assert_allclose(points.xyz[:, :-1], vertices.xyz)
 
+    def test_3_vertices_correct(self):
+        p1 = [0, 1, 2]
+        p2 = [4, 5, 6]
+        p3 = [7, 8, 9]
+        w1 = make_polygon([p1, p2])
+        w2 = make_polygon([p2, p3])
+        wire = BluemiraWire([w1, w2])
+        vertexes = wire.vertexes
+        np.testing.assert_allclose(vertexes[:, 0], p1)
+        np.testing.assert_allclose(vertexes[:, 1], p2)
+        np.testing.assert_allclose(vertexes[:, 2], p3)
+
 
 class ValueParameterBase:
     @classmethod
