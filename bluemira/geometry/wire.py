@@ -30,10 +30,8 @@ import numpy as np
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.look_and_feel import LOGGER, bluemira_warn
 from bluemira.codes.error import FreeCADError
-
-# import from bluemira
 from bluemira.geometry.base import BluemiraGeo, _Orientation
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import (
@@ -249,7 +247,14 @@ class BluemiraWire(BluemiraGeo):
         """
         The ordered vertexes of the wire.
         """
-        return Coordinates(cadapi.ordered_vertexes(self.shape))
+        vertexes = cadapi.ordered_vertexes(self.shape)
+        if len(vertexes) == 3:
+            LOGGER.disabled = True
+            coords = Coordinates(vertexes.T)
+            LOGGER.disabled = False
+            return coords
+
+        return Coordinates(vertexes)
 
     @property
     def edges(self) -> Tuple[BluemiraWire]:
