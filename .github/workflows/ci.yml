@@ -23,10 +23,10 @@ jobs:
 
     steps:
     - name: Checkout
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
 
     - name: Checkout bluemira-private-data
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       if: ${{ !github.event.pull_request.head.repo.fork }}
       with:
         repository: 'Fusion-Power-Plant-Framework/bluemira-private-data'
