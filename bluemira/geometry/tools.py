@@ -940,7 +940,7 @@ def distance_to(
 
 
 def split_wire(
-    wire: BluemiraWire, vertex: Iterable[float], tolerance: float = EPS
+    wire: BluemiraWire, vertex: Iterable[float], tolerance: float = EPS * 10
 ) -> Tuple[Union[None, BluemiraWire], Union[None, BluemiraWire]]:
     """
     Split a wire at a given vertex.
