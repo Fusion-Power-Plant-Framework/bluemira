@@ -74,7 +74,6 @@ dev = [
     "sphinx-autoapi",
     "sphinx_copybutton",
     "sphinx-rtd-theme",
-    "versioneer",
 ]
 examples = ["notebook", "jupytext"]
 pinned = [
@@ -98,13 +97,14 @@ process = [
 polyscope = ["polyscope"]
 
 [build-system]
-requires = ["setuptools", "versioneer[toml]>=0.26"]
-build-backend = "setuptools.build_meta"
+requires = ["setuptools>=62", "setuptools_scm[toml]>=7.0"]
 
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["bluemira*"]
 exclude = ["tests*"]
+
+[tool.setuptools_scm]
 
 [tool.black]
 line-length = 89
@@ -114,9 +114,6 @@ extend-exclude = '\.env'
 [tool.coverage.report]
 "exclude_lines" = [
   "if __name__ == .__main__.:"
-]
-"omit" = [
-  "bluemira/_version.py"
 ]
 
 [tool.isort]
@@ -158,11 +155,3 @@ markers = [
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']
-
-[tool.versioneer]
-VCS = "git"
-style = "pep440"
-versionfile_source = "bluemira/_version.py"
-versionfile_build = "bluemira/_version.py"
-tag_prefix = "v"
-parentdir_prefix = "bluemira-"
