@@ -427,6 +427,7 @@ class Profile:
         psi: np.ndarray,
         o_points: List[Opoint],
         x_points: List[Xpoint],
+        psi_n_tol: Optional[float] = None,
     ) -> Tuple[float, float, np.ndarray]:
         """
         Do-not-repeat-yourself utility
@@ -466,7 +467,7 @@ class Profile:
             psio = o_points[0][2]
         if x_points:
             psix = x_points[0][2]
-            mask = in_plasma(x, z, psi, o_points, x_points)
+            mask = in_plasma(x, z, psi, o_points, x_points, psi_n_tol)
         else:
             psix = psi[0, 0]
             mask = None
@@ -557,6 +558,7 @@ class BetaIpProfile(Profile):
         psi: np.ndarray,
         o_points: List[Opoint],
         x_points: List[Xpoint],
+        psi_n_tol: Optional[float] = None,
     ) -> np.ndarray:
         """
         Calculate toroidal plasma current array.
@@ -577,7 +579,7 @@ class BetaIpProfile(Profile):
         """  # noqa :W505
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
-        psix, psio, mask = self._jtor(x, z, psi, o_points, x_points)
+        psix, psio, mask = self._jtor(x, z, psi, o_points, x_points, psi_n_tol)
         psi_norm = (psi - psio) / (psix - psio)
         self.psisep = psix
         self.psiax = psio
@@ -597,7 +599,7 @@ class BetaIpProfile(Profile):
             # More accurate beta_p constraint calculation
             # This is the Freidberg approximation
             lcfs, _ = find_LCFS_separatrix(
-                x, z, psi, o_points=o_points, x_points=x_points
+                x, z, psi, o_points=o_points, x_points=x_points, psi_n_tol=psi_n_tol
             )
             v_plasma = revolved_volume(*lcfs.xz)
             Bp = MU_0 * self.I_p / lcfs.length
@@ -761,6 +763,7 @@ class CustomProfile(Profile):
         psi: np.ndarray,
         o_points: List[Opoint],
         x_points: List[Xpoint],
+        psi_n_tol: Optional[float] = None,
     ) -> np.ndarray:
         """
         Calculate toroidal plasma current
@@ -769,7 +772,7 @@ class CustomProfile(Profile):
         """
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
-        psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points)
+        psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points, psi_n_tol)
         self.psisep = psisep
         self.psiax = psiax
         psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0, 1)

@@ -223,7 +223,7 @@ def calc_energy(eq: Equilibrium) -> float:
 
     \t:math:`W=\\dfrac{LI^2}{2}`
     """
-    mask = in_plasma(eq.x, eq.z, eq.psi())
+    mask = in_plasma(eq.x, eq.z, eq.psi(), eq.psi_n_tol)
     Bp = eq.Bp()
     return volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
 
@@ -262,7 +262,7 @@ def calc_li3(eq: Equilibrium) -> float:
 
     where: Bp is the poloidal magnetic field and V is the plasma volume
     """
-    mask = in_plasma(eq.x, eq.z, eq.psi())
+    mask = in_plasma(eq.x, eq.z, eq.psi(), eq.psi_n_tol)
     Bp = eq.Bp()
     bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
     return 2 * bpavg / (eq.profiles.R_0 * (MU_0 * eq.profiles.I_p) ** 2)
@@ -280,6 +280,7 @@ def calc_li3minargs(
     mask: Optional[np.ndarray] = None,
     o_points: Optional[Iterable[Opoint]] = None,
     x_points: Optional[Iterable[Xpoint]] = None,
+    psi_n_tol: Optional[float] = None,
 ) -> float:
     """
     Calculate the normalised plasma internal inductance with arguments only.
@@ -287,7 +288,9 @@ def calc_li3minargs(
     Used in the optimisation of the plasma profiles.
     """
     if mask is None:
-        mask = in_plasma(x, z, psi, o_points=o_points, x_points=x_points)
+        mask = in_plasma(
+            x, z, psi, o_points=o_points, x_points=x_points, psi_n_tol=psi_n_tol
+        )
     bpavg = volume_integral(Bp**2 * mask, x, dx, dz)
     return 2 * bpavg / (R_0 * (MU_0 * I_p) ** 2)
 
@@ -382,7 +385,7 @@ def calc_summary(eq: Equilibrium) -> Dict[str, float]:
     Calculates interesting values in one go
     """
     R_0, I_p = eq.profiles.R_0, eq.profiles.I_p
-    mask = in_plasma(eq.x, eq.z, eq.psi())
+    mask = in_plasma(eq.x, eq.z, eq.psi(), eq.psi_n_tol)
     Bp = eq.Bp()
     bpavg = volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz)
     energy = bpavg / (2 * MU_0)

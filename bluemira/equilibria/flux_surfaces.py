@@ -554,7 +554,12 @@ def analyse_plasma_core(eq: Equilibrium, n_points: int = 50) -> CoreResults:
     -------
     Results dataclass
     """
-    psi_n = np.linspace(PSI_NORM_TOL, 1 - PSI_NORM_TOL, n_points, endpoint=False)
+    if eq.psi_n_tol is None:
+        psi_n_tol = PSI_NORM_TOL
+    else:
+        psi_n_tol = eq.psi_n_tol
+
+    psi_n = np.linspace(psi_n_tol, 1 - psi_n_tol, n_points, endpoint=False)
     coords = [eq.get_flux_surface(pn) for pn in psi_n]
     coords.append(eq.get_LCFS())
     psi_n = np.append(psi_n, 1.0)

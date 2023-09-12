@@ -37,7 +37,7 @@ from contourpy import LineType, contour_generator
 from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.constants import B_TOLERANCE, X_TOLERANCE
+from bluemira.equilibria.constants import B_TOLERANCE, PSI_NORM_TOL, X_TOLERANCE
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -671,7 +671,7 @@ def find_LCFS_separatrix(
     o_points: Optional[List[Opoint]] = None,
     x_points: Optional[List[Xpoint]] = None,
     double_null: bool = False,
-    psi_n_tol: float = 1e-6,
+    psi_n_tol: Optional[float] = None,
 ) -> Tuple[Coordinates, Union[Coordinates, List[Coordinates]]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
@@ -715,14 +715,20 @@ def find_LCFS_separatrix(
         f_s = find_flux_surf(x, z, psi, psi_norm, o_points=o_points, x_points=x_points)
         return Coordinates({"x": f_s[0], "z": f_s[1]})
 
-    low = 0.99  # Guaranteed (?) to be a closed flux surface
-    high = 1.01  # Guaranteed (?) to be an open flux surface
+    low = 1 - PSI_NORM_TOL  # Guaranteed (?) to be a closed flux surface
+    high = 1 + PSI_NORM_TOL  # Guaranteed (?) to be an open flux surface
+    # PSI_NORM_TOL = constant = 1e-2 (low to high = 0.99 to 1.01)
+    # PSI_NORM_TOL is max value allowed for psi_n_tol
 
     # Speed optimisations (avoid recomputing psi and O, X points)
     if o_points is None or x_points is None:
         o_points, x_points = find_OX_points(x, z, psi)
 
     delta = high - low
+
+    # If tolerence is not spesified then set to default
+    if psi_n_tol is None:
+        psi_n_tol = PSI_NORM_TOL
 
     while delta > psi_n_tol:
         middle = low + delta / 2
@@ -956,6 +962,7 @@ def in_plasma(
     psi: np.ndarray,
     o_points: Optional[List[Opoint]] = None,
     x_points: Optional[List[Xpoint]] = None,
+    psi_n_tol: Optional[float] = None,
 ) -> np.ndarray:
     """
     Get a psi-shaped mask of psi where 1 is inside the plasma, 0 outside.
@@ -979,7 +986,9 @@ def in_plasma(
     Masking matrix for the location of the plasma [0 outside/1 inside]
     """
     mask = np.zeros_like(psi)
-    lcfs, _ = find_LCFS_separatrix(x, z, psi, o_points=o_points, x_points=x_points)
+    lcfs, _ = find_LCFS_separatrix(
+        x, z, psi, o_points=o_points, x_points=x_points, psi_n_tol=psi_n_tol
+    )
     return _in_plasma(x, z, mask, lcfs.xz.T)
 
 

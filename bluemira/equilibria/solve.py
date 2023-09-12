@@ -638,5 +638,5 @@ class PicardIterator:
         """
         o_points, x_points = self.eq.get_OX_points(force_update=True)
         self.eq._jtor = self.eq.profiles.jtor(
-            self.eq.x, self.eq.z, self.eq.psi(), o_points, x_points
+            self.eq.x, self.eq.z, self.eq.psi(), o_points, x_points, self.eq.psi_n_tol
         )

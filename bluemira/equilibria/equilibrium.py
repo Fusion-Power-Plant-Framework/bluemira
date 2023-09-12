@@ -33,7 +33,7 @@ from scipy.optimize import minimize
 
 from bluemira.base.constants import MU_0
 from bluemira.base.file import get_bluemira_path
-from bluemira.base.look_and_feel import bluemira_print_flush
+from bluemira.base.look_and_feel import bluemira_print, bluemira_print_flush
 from bluemira.equilibria.boundary import FreeBoundary, apply_boundary
 from bluemira.equilibria.coils import CoilSet, symmetrise_coilset
 from bluemira.equilibria.constants import PSI_NORM_TOL
@@ -573,7 +573,10 @@ class Equilibrium(MHDState):
         Limiter conditions to apply to equilibrium
     psi:
         Magnetic flux [V.s] applied to X, Z grid
-    jtor:
+    psi_n_tol: Float, optional value with default = PSI_NORM_TOL (constants.py)
+        The normalised psi tolerance to use when finding
+        the LCFS and separatrix(-ices) in an Equilibrium.
+    jtor: np.array or None
         The toroidal current density array of the plasma. Default = None will
         cause the jtor array to be constructed later as necessary.
     filename:
@@ -589,6 +592,7 @@ class Equilibrium(MHDState):
         vcontrol: Optional[str] = None,
         limiter: Optional[Limiter] = None,
         psi: Optional[np.ndarray] = None,
+        psi_n_tol: Optional[float] = None,
         jtor: Optional[np.ndarray] = None,
         filename: Optional[str] = None,
     ):
@@ -619,12 +623,22 @@ class Equilibrium(MHDState):
         self.boundary = FreeBoundary(self.grid)
         self.set_vcontrol(vcontrol)
         self.limiter = limiter
-        self.filename = filename
 
-        self._kwargs = {"vcontrol": vcontrol}
+        if (psi_n_tol is not None) and (psi_n_tol > PSI_NORM_TOL):
+            psi_n_tol = PSI_NORM_TOL
+            bluemira_print(
+                f"'psi_n_tol' must be <= {PSI_NORM_TOL}, psi_n_tol value has been set to {PSI_NORM_TOL}."
+            )
+
+        self.psi_n_tol = psi_n_tol
+
+        self.filename = filename
+        self._kwargs = {"vcontrol": vcontrol, "psi_n_tol": psi_n_tol}
 
     @classmethod
-    def from_eqdsk(cls, filename: str, force_symmetry: bool = False):
+    def from_eqdsk(
+        cls, filename: str, force_symmetry: bool = False, psi_n_tol: float = None
+    ):
         """
         Initialises an Equilibrium Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux. Because of the nature
@@ -639,7 +653,18 @@ class Equilibrium(MHDState):
             Filename
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
+        psi_n_tol: Float, optional value with default = PSI_NORM_TOL (constants.py)
+            The normalised psi tolerance to use when finding
+            the LCFS and separatrix(-ices) in an Equilibrium.
         """
+        if psi_n_tol is None:
+            psi_n_tol = PSI_NORM_TOL
+        if (psi_n_tol is not None) and (psi_n_tol > PSI_NORM_TOL):
+            psi_n_tol = PSI_NORM_TOL
+            bluemira_print(
+                f"'psi_n_tol' must be <= {PSI_NORM_TOL}, psi_n_tol value has been set to {PSI_NORM_TOL}."
+            )
+
         e, psi, coilset, grid, limiter = super()._get_eqdsk(
             filename, force_symmetry=force_symmetry
         )
@@ -649,7 +674,14 @@ class Equilibrium(MHDState):
         cls._eqdsk = e
 
         o_points, x_points = find_OX_points(grid.x, grid.z, psi, limiter=limiter)
-        jtor = profiles.jtor(grid.x, grid.z, psi, o_points=o_points, x_points=x_points)
+        jtor = profiles.jtor(
+            grid.x,
+            grid.z,
+            psi,
+            o_points=o_points,
+            x_points=x_points,
+            psi_n_tol=psi_n_tol,
+        )
 
         return cls(
             coilset,
@@ -658,6 +690,7 @@ class Equilibrium(MHDState):
             vcontrol=None,
             limiter=limiter,
             psi=psi,
+            psi_n_tol=psi_n_tol,
             jtor=jtor,
             filename=filename,
         )
@@ -871,7 +904,9 @@ class Equilibrium(MHDState):
 
             if not o_points:
                 raise EquilibriaError("No O-point found in equilibrium.")
-            jtor = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            jtor = self.profiles.jtor(
+                self.x, self.z, psi, o_points, x_points, self.psi_n_tol
+            )
 
         plasma_psi = self.plasma.psi()
         self.boundary(plasma_psi, jtor)
@@ -917,7 +952,14 @@ class Equilibrium(MHDState):
             psi = self.psi()
         # Speed optimisations
         o_points, x_points = self.get_OX_points(psi=psi, force_update=True)
-        mask = in_plasma(self.x, self.z, psi, o_points=o_points, x_points=x_points)
+        mask = in_plasma(
+            self.x,
+            self.z,
+            psi,
+            o_points=o_points,
+            x_points=x_points,
+            psi_n_tol=self.psi_n_tol,
+        )
         print("")  # flusher
 
         def minimise_dli(x):
@@ -925,7 +967,9 @@ class Equilibrium(MHDState):
             The minimisation function to obtain the correct l_i
             """
             self.profiles.shape.adjust_parameters(x)
-            jtor_opt = self.profiles.jtor(self.x, self.z, psi, o_points, x_points)
+            jtor_opt = self.profiles.jtor(
+                self.x, self.z, psi, o_points, x_points, self.psi_n_tol
+            )
             plasma_psi = self.plasma.psi()
             self.boundary(plasma_psi, jtor_opt)
             rhs = -MU_0 * self.x * jtor_opt  # RHS of GS equation
@@ -1156,7 +1200,12 @@ class Equilibrium(MHDState):
         """
         o_points, x_points = self.get_OX_points()
         return in_plasma(
-            self.x, self.z, self.psi(), o_points=o_points, x_points=x_points
+            self.x,
+            self.z,
+            self.psi(),
+            o_points=o_points,
+            x_points=x_points,
+            psi_n_tol=self.psi_n_tol,
         )
 
     def q(
@@ -1174,12 +1223,17 @@ class Equilibrium(MHDState):
             psinorm = [psinorm]
         psinorm = sorted(psinorm)
 
+        if self.psi_n_tol is None:
+            psi_n_tol = PSI_NORM_TOL
+        else:
+            psi_n_tol = self.psi_n_tol
+
         psi = self.psi()
         flux_surfaces = []
         for psi_n in psinorm:
-            if psi_n < PSI_NORM_TOL:
-                psi_n = PSI_NORM_TOL
-            if psi_n > 1 - PSI_NORM_TOL:
+            if psi_n < psi_n_tol:
+                psi_n = psi_n_tol
+            if psi_n > 1 - psi_n_tol:
                 f_s = ClosedFluxSurface(self.get_LCFS(psi))
             else:
                 f_s = ClosedFluxSurface(
@@ -1276,7 +1330,7 @@ class Equilibrium(MHDState):
             psi = self.psi()
         o_points, x_points = self.get_OX_points(psi=psi)
         return find_LCFS_separatrix(
-            self.x, self.z, psi, o_points, x_points, psi_n_tol=psi_n_tol
+            self.x, self.z, psi, o_points, x_points, psi_n_tol=self.psi_n_tol
         )[0]
 
     def get_separatrix(
@@ -1306,7 +1360,7 @@ class Equilibrium(MHDState):
             o_points,
             x_points,
             double_null=self.is_double_null,
-            psi_n_tol=psi_n_tol,
+            psi_n_tol=self.psi_n_tol,
         )[1]
 
     def _clear_OX_points(self):  # noqa :N802
@@ -1473,7 +1527,13 @@ class Equilibrium(MHDState):
 
         psi_1 = x_points[0].psi
         psi_2 = x_points[1].psi
-        return abs(psi_1 - psi_2) < PSI_NORM_TOL
+
+        if self.psi_n_tol is None:
+            psi_n_tol = PSI_NORM_TOL
+        else:
+            psi_n_tol = self.psi_n_tol
+
+        return abs(psi_1 - psi_2) < psi_n_tol
 
     def plot(
         self, ax: Optional[plt.Axes] = None, plasma: bool = False, show_ox: bool = True
