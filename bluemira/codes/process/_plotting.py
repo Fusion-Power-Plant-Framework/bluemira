@@ -208,7 +208,9 @@ def process_RB_fromOUT(f):
 
     def read_radial_build(num):  # Be careful that the numbers don't change
         rb = []
-        num += 1
+        # Used to be +1, but they added this line at the start of the radial build
+        # TF coil radial placement switch ... (tf_in_cs)  ....           0
+        num += 3
         while "***" not in raw[num]:
             if read_rb_line(raw[num]) is None:
                 pass
