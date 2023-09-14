@@ -75,7 +75,7 @@ CONSTRAINT_EQS = (
         # JUSTIFICATION: Used to constrain helium fraction
         65,  # dump time by VV stresses
         # JUSTIFICATION: Quench protection constraint
-        68,  #  Pseparatrix Bt / q A R upper limit
+        68,  # Pseparatrix Bt / q A R upper limit
         # JUSTIICATION: Divertor protection
         72,  # OH stress limit
         # JUSTIFICATION: CS coil structure must hold
@@ -137,8 +137,10 @@ ITERATION_VARS = [
     167,  # f-value for constraint n_cycle > n_cycle_min
 ]
 
+BOUNDS = {}
+
 EUDEMO_PROCESS_INPUTS = ProcessInputs(
-    bounds={"k": "v"},
+    bounds=BOUNDS,
     icc=CONSTRAINT_EQS,
     ixc=ITERATION_VARS,
     # fimp = [1.0, 0.1, *([0.0] * 10), 0.00044, 5e-05]
