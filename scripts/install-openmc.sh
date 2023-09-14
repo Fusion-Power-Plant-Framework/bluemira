@@ -23,7 +23,7 @@ set -euxo pipefail
 
 cd $tmp_dir
 
-sudo apt install libhdf5-serial-dev -y
+sudo apt install g++ cmake libhdf5-dev libpng-dev -y
 
 git clone --recurse-submodules https://github.com/openmc-dev/openmc.git
 mkdir build && cd build
