@@ -170,7 +170,7 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     run_mode = build_config.pop("run_mode", "mock")
     plot = build_config.pop("plot", False)
     if run_mode == "run":
-        build_config["template_in_dat"] = EUDEMO_PROCESS_INPUTS
+        build_config["template_in_dat"] = EUDEMO_PROCESS_INPUTS.to_invariable()
     solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
 
