@@ -28,6 +28,36 @@ from bluemira.codes.process._inputs import ProcessInputs
 
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
+
+CONSTRAINT_EQS = (
+    [
+        1,  # DESCRIPTION:   Beta Consistency
+        # JUSTIFICATION: Consistency equations should always be on
+        2,
+        5,
+        8,
+        11,
+        13,
+        15,
+        16,
+        24,
+        25,
+        26,
+        27,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        60,
+        62,
+        65,
+        68,
+        72,
+    ],
+)
 EUDEMO_PROCESS_INPUTS = ProcessInputs(
     bounds={"k": "v"},
     icc=[
