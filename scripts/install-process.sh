@@ -14,7 +14,7 @@ if [[ $(basename $PWD) == *"bluemira"* ]]; then
 fi
 
 if [ ! -d process ]; then
-  git clone git@git.ccfe.ac.uk:process/process.git
+  git clone git@github.com:ukaea/process.git
 fi
 
 cd process
