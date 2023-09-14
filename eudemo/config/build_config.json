@@ -4,7 +4,7 @@
     "run_mode": "run",
     "read_dir": "config/",
     "run_dir": "config/",
-    "plot": false
+    "plot": true
   },
   "Fixed boundary equilibrium": {
     "run_mode": "read",

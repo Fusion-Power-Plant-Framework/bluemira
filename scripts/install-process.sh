@@ -39,6 +39,21 @@ fi
 cmake -S . -B build -DRELEASE=TRUE
 cmake --build build
 
+# Deactivate build environment and reactivate bluemira
+conda deactivate && conda activate bluemira
+
+# Install PROCESS dependencies into bluemira environment
+pip install -r requirements.txt --no-cache-dir
+pip install --upgrade --no-cache-dir -e ../bluemira/'[process]'
+
+# Install PROCESS into bluemira environment
+pip install .
+
+# Clean up our build environment
+conda env remove -n bluemira-process-build || true
+
+pip install -U 'nlopt<2.7.1'  # TODO: remove this when necessary
+
 # The following suggests how to install PROCESS via a manylinux wheel, if you have docker
 # installed.
 
