@@ -31,130 +31,116 @@ _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
 CONSTRAINT_EQS = (
     [
-        1,  # DESCRIPTION:   Beta Consistency
+        1,  # Beta Consistency
         # JUSTIFICATION: Consistency equations should always be on
-        2,  # DESCRIPTION:   Global Power Balance Consistency
+        2,  #  Global Power Balance Consistency
         # JUSTIFICATION: Consistency equations should always be on
-        5,  # DESCRIPTION:   Density Upper Limit
+        5,  # Density Upper Limit
         # JUSTIFICATION: Used to enforce Greenwald limit
-        8,  # DESCRIPTION:   Neutron wall load upper limit
+        8,  # Neutron wall load upper limit
         # JUSTIFICATION: To keep component lifetime acceptable
-        11,  # DESCRIPTION:   Radial Build Consistency
+        11,  # Radial Build Consistency
         # JUSTIFICATION: Consistency equations should always be on
-        13,  # DESCRIPTION:   Burn time lower limit
+        13,  #  Burn time lower limit
         # JUSTIFICATION: Required minimum burn time
-        15,  # DESCRIPTION:   L-H Power Threshold Limit
+        15,  #  L-H Power Threshold Limit
         # JUSTIFICATION: Required to be in H-mode
-        16,  # DESCRIPTION:   Net electric power lower limit
+        16,  #  Net electric power lower limit
         # JUSTIFICATION: Required to generate net electricity
-        24,  # DESCRIPTION:   Beta Upper Limit
+        24,  #  Beta Upper Limit
         # JUSTIFICATION: Limit for plasma stability
-        # 25, # DESCRIPTION:   Max TF field
+        # 25, #  Max TF field
         # JUSTIFICATION: switch off
-        26,  # DESCRIPTION:   Central solenoid EOF current density upper limit
+        26,  #  Central solenoid EOF current density upper limit
         # JUSTIFICATION: enforce current limits on inductive current drive
-        27,  # DESCRIPTION:   Central solenoid BOP current density upper limit
+        27,  #  Central solenoid BOP current density upper limit
         # JUSTIFICATION: enforce current limits on inductive current drive
-        30,  # DESCRIPTION:   Injection Power Upper Limit
+        30,  #  Injection Power Upper Limit
         # JUSTIFICATION: Limit for plasma stability
-        31,  # DESCRIPTION:   TF coil case stress upper limit
+        31,  #  TF coil case stress upper limit
         # JUSTIFICATION: The support structure must hold
-        32,  # DESCRIPTION:   TF WP steel jacket/conduit stress upper limit
+        32,  #  TF WP steel jacket/conduit stress upper limit
         # JUSTIFICATION: The turn support structure must hold
-        33,  # DESCRIPTION:   TF superconductor operating current / critical current density
+        33,  #  TF superconductor operating current / critical current density
         # JUSTIFICATION: A quench must be avoided
-        34,  # DESCRIPTION:   Dump voltage upper limit
+        34,  #  Dump voltage upper limit
         # JUSTIFICATION: Quench protection constraint
-        35,  # DESCRIPTION:   J_winding pack
+        35,  #  J_winding pack
         # JUSTIFICATION: Constraint of TF engineering desgin
-        36,  # DESCRIPTION:   TF temperature marg
+        36,  #  TF temperature marg
         # JUSTIFICATION: Constraint of TF engineering desgin
-        60,  # DESCRIPTION:   OH coil temp margin
+        60,  #  OH coil temp margin
         # JUSTIFICATION: Constraint of CS engineering desgin
-        62,  # DESCRIPTION:   taup/taueff ratio of particle to energy confinement times
+        62,  #  taup/taueff ratio of particle to energy confinement times
         # JUSTIFICATION: Used to constrain helium fraction
-        65,  # DESCRIPTION:   dump time by VV stresses
+        65,  #  dump time by VV stresses
         # JUSTIFICATION: Quench protection constraint
-        68,  # DESCRIPTION:   Pseparatrix Bt / q A R upper limit
+        68,  #  Pseparatrix Bt / q A R upper limit
         # JUSTIFICATION: Divertor protection
-        72,  # DESCRIPTION:   OH stress limit
+        72,  #  OH stress limit
         # JUSTIFICATION: CS coil structure must hold
-        81,  # DESCRIPTION:   ne(0) > ne(ped) constraint
+        81,  #  ne(0) > ne(ped) constraint
         # JUSTIFICATION: Prevents unrealistic density profiles
-        90,  # DESCRIPTION:   CS fatigue constraints
+        90,  #  CS fatigue constraints
         # JUSTIFICATION: Enforce number of cycles over lifetime
     ],
 )
+
+ITERATION_VARS = [
+    2,  #  Toroidal field on axis (T)
+    3,  #  Plasma major radius
+    4,  #  Volume averaged electron temperature (keV)
+    5,  #  Total Plasma Beta
+    6,  #  Electron density (/m3)
+    9,  #  f-value for density limit
+    # 11, #  heating power not used for current drive (MW)
+    13,  #  inboard TF coil thickness
+    14,  #  f-value for neutron wall load limit
+    # 15, #  F-value for volt-sec consistency (icc=12)
+    16,  #  Central solenoid thickness (m)
+    18,  #  Safety factor at 95% flux surface
+    # TODO: Figure out how bounds are actually changed in this shit
+    # 21, #  F-value for minimum burn time (icc=13)
+    25,  #  F-value for net electric power (icc=16)
+    29,  #  central solenoid inboard radius (m)
+    36,  #  f-value for Beta Limit
+    37,  #  Central solenoid overall current density at end of flat-top (A/m2)
+    38,  #  f-value for central solenoid current at end-of-flattop
+    39,  #  f-value for central solenoid current at beginning of pulse
+    41,  #  ratio of central solenoid overall current density at beginning of pulse / end of flat-top
+    42,  #  gap between central solenoid and TF coil (m)
+    44,  #  fraction of the plasma current produced by non-inductive means
+    # 46, #  value for injection power
+    48,  #  f-value for Maxiumum TF Coil case (bucking) TRESCA stress
+    49,  #  f-value for Maxiumum TF Coil Conduit Tresca Stress
+    50,  #  f-value for TF coil operating current / critical current density ratio
+    51,  #  f-value for dump voltage
+    52,  #  Max voltage across TF coil during quench (kV)
+    53,  #  f-value for TF coil winding pack current density
+    54,  #  f-value for TF coil temperature margin
+    56,  #  fast discharge time for TF coil in event of quench (s)
+    57,  #  inboard TF coil case outer (non-plasma side) thickness (m)
+    58,  #  TF coil conduit case thickness (m)
+    59,  #  copper fraction of cable conductor (TF coils)
+    60,  #  Max TF coil current per turn [A]
+    61,  #  gap between inboard vacuum vessel and thermal shield (m)
+    103,  #  f-value for L-H Power Threshold
+    106,  #  f-value for central solenoid temperature margin
+    109,  #  Thermal alpha density / electron density
+    110,  #  f-falue for the He/energy confinement time ratio
+    113,  #  f-value for calculated minimum TF quench time
+    117,  #  f-value for upper limit on psepbqar, maximum Psep*Bt/qAR limits
+    122,  #  central solenoid steel fraction
+    123,  #  f-value for Tresca yield criterion in Central Solenoid
+    135,  #  Xenon Impurity Concentration
+    154,  #  f-value for ne(0) > ne(sep) (icc=81)
+    167,  #  f-value for constraint n_cycle > n_cycle_min
+]
+
 EUDEMO_PROCESS_INPUTS = ProcessInputs(
     bounds={"k": "v"},
-    icc=[
-        1,
-        2,
-        5,
-        8,
-        11,
-        13,
-        15,
-        16,
-        24,
-        25,
-        26,
-        27,
-        30,
-        31,
-        32,
-        33,
-        34,
-        35,
-        36,
-        60,
-        62,
-        65,
-        68,
-        72,
-    ],
-    ixc=[
-        2,
-        3,
-        4,
-        5,
-        6,
-        9,
-        13,
-        14,
-        16,
-        18,
-        29,
-        36,
-        37,
-        38,
-        39,
-        41,
-        42,
-        44,
-        48,
-        49,
-        50,
-        51,
-        52,
-        53,
-        54,
-        56,
-        57,
-        58,
-        59,
-        60,
-        61,
-        102,
-        103,
-        106,
-        109,
-        110,
-        113,
-        117,
-        122,
-        123,
-    ]
+    icc=CONSTRAINT_EQS,
+    ixc=ITERATION_VARS,
     # fimp = [1.0, 0.1, *([0.0] * 10), 0.00044, 5e-05]
     # ipfloc =[2, 2, 3, 3]
     # ncls=[1, 1, 2, 2]
