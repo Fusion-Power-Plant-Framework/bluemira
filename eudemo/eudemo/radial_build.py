@@ -24,8 +24,85 @@ from typing import Dict, TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes import plot_radial_build, systems_code_solver
+from bluemira.codes.process._inputs import ProcessInputs
 
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
+
+EUDEMO_PROCESS_INPUTS = ProcessInputs(
+    {"k": "v"}[
+        1,
+        2,
+        5,
+        8,
+        11,
+        13,
+        15,
+        16,
+        24,
+        25,
+        26,
+        27,
+        30,
+        31,
+        32,
+        33,
+        34,
+        35,
+        36,
+        60,
+        62,
+        65,
+        68,
+        72,
+    ][
+        2,
+        3,
+        4,
+        5,
+        6,
+        9,
+        13,
+        14,
+        16,
+        18,
+        29,
+        36,
+        37,
+        38,
+        39,
+        41,
+        42,
+        44,
+        48,
+        49,
+        50,
+        51,
+        52,
+        53,
+        54,
+        56,
+        57,
+        58,
+        59,
+        60,
+        61,
+        102,
+        103,
+        106,
+        109,
+        110,
+        113,
+        117,
+        122,
+        123,
+    ]
+    # fimp = [1.0, 0.1, *([0.0] * 10), 0.00044, 5e-05]
+    # ipfloc =[2, 2, 3, 3]
+    # ncls=[1, 1, 2, 2]
+    # cptdin = [*([42200.0] * 4), *([43000.0] * 4)]
+    # rjconpf=[1.1e7, 1.1e7, 6e6, 6e6, 8e6, 8e6, 8e6, 8e6]
+    # zref=[3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+)
 
 
 def radial_build(params: _PfT, build_config: Dict) -> _PfT:
@@ -45,6 +122,8 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     """
     run_mode = build_config.pop("run_mode", "mock")
     plot = build_config.pop("plot", False)
+    if run_mode == "run":
+        build_config["template_in_dat"] = EUDEMO_PROCESS_INPUTS
     solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
 
