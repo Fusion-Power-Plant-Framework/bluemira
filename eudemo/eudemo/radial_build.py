@@ -29,7 +29,8 @@ from bluemira.codes.process._inputs import ProcessInputs
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
 EUDEMO_PROCESS_INPUTS = ProcessInputs(
-    {"k": "v"}[
+    bounds={"k": "v"},
+    icc=[
         1,
         2,
         5,
@@ -54,7 +55,8 @@ EUDEMO_PROCESS_INPUTS = ProcessInputs(
         65,
         68,
         72,
-    ][
+    ],
+    ixc=[
         2,
         3,
         4,
