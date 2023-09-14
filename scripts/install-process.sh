@@ -18,7 +18,7 @@ if [ ! -d process ]; then
 fi
 
 cd process
-git checkout develop
+git checkout main
 git pull
 
 if [ "$1" ]
