@@ -33,7 +33,7 @@ CONSTRAINT_EQS = (
     [
         1,  # Beta Consistency
         # JUSTIFICATION: Consistency equations should always be on
-        2,  #  Global Power Balance Consistency
+        2,  # Global Power Balance Consistency
         # JUSTIFICATION: Consistency equations should always be on
         5,  # Density Upper Limit
         # JUSTIFICATION: Used to enforce Greenwald limit
@@ -41,47 +41,47 @@ CONSTRAINT_EQS = (
         # JUSTIFICATION: To keep component lifetime acceptable
         11,  # Radial Build Consistency
         # JUSTIFICATION: Consistency equations should always be on
-        13,  #  Burn time lower limit
+        13,  # Burn time lower limit
         # JUSTIFICATION: Required minimum burn time
-        15,  #  L-H Power Threshold Limit
+        15,  # L-H Power Threshold Limit
         # JUSTIFICATION: Required to be in H-mode
-        16,  #  Net electric power lower limit
+        16,  # Net electric power lower limit
         # JUSTIFICATION: Required to generate net electricity
-        24,  #  Beta Upper Limit
+        24,  # Beta Upper Limit
         # JUSTIFICATION: Limit for plasma stability
-        # 25, #  Max TF field
+        # 25, # Max TF field
         # JUSTIFICATION: switch off
-        26,  #  Central solenoid EOF current density upper limit
+        26,  # Central solenoid EOF current density upper limit
         # JUSTIFICATION: enforce current limits on inductive current drive
-        27,  #  Central solenoid BOP current density upper limit
+        27,  # Central solenoid BOP current density upper limit
         # JUSTIFICATION: enforce current limits on inductive current drive
-        30,  #  Injection Power Upper Limit
+        30,  # Injection Power Upper Limit
         # JUSTIFICATION: Limit for plasma stability
-        31,  #  TF coil case stress upper limit
+        31,  # TF coil case stress upper limit
         # JUSTIFICATION: The support structure must hold
-        32,  #  TF WP steel jacket/conduit stress upper limit
+        32,  # TF WP steel jacket/conduit stress upper limit
         # JUSTIFICATION: The turn support structure must hold
-        33,  #  TF superconductor operating current / critical current density
+        33,  # TF superconductor operating current / critical current density
         # JUSTIFICATION: A quench must be avoided
-        34,  #  Dump voltage upper limit
+        34,  # Dump voltage upper limit
         # JUSTIFICATION: Quench protection constraint
-        35,  #  J_winding pack
+        35,  # J_winding pack
         # JUSTIFICATION: Constraint of TF engineering desgin
-        36,  #  TF temperature marg
+        36,  # TF temperature marg
         # JUSTIFICATION: Constraint of TF engineering desgin
-        60,  #  OH coil temp margin
+        60,  # OH coil temp margin
         # JUSTIFICATION: Constraint of CS engineering desgin
-        62,  #  taup/taueff ratio of particle to energy confinement times
+        62,  # taup/taueff ratio of particle to energy confinement times
         # JUSTIFICATION: Used to constrain helium fraction
-        65,  #  dump time by VV stresses
+        65,  # dump time by VV stresses
         # JUSTIFICATION: Quench protection constraint
         68,  #  Pseparatrix Bt / q A R upper limit
-        # JUSTIFICATION: Divertor protection
-        72,  #  OH stress limit
+        # JUSTIICATION: Divertor protection
+        72,  # OH stress limit
         # JUSTIFICATION: CS coil structure must hold
-        81,  #  ne(0) > ne(ped) constraint
+        81,  # ne(0) > ne(ped) constraint
         # JUSTIFICATION: Prevents unrealistic density profiles
-        90,  #  CS fatigue constraints
+        90,  # CS fatigue constraints
         # JUSTIFICATION: Enforce number of cycles over lifetime
     ],
 )
