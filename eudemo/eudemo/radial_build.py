@@ -87,54 +87,54 @@ CONSTRAINT_EQS = (
 )
 
 ITERATION_VARS = [
-    2,  #  Toroidal field on axis (T)
-    3,  #  Plasma major radius
-    4,  #  Volume averaged electron temperature (keV)
-    5,  #  Total Plasma Beta
-    6,  #  Electron density (/m3)
-    9,  #  f-value for density limit
-    # 11, #  heating power not used for current drive (MW)
-    13,  #  inboard TF coil thickness
-    14,  #  f-value for neutron wall load limit
-    # 15, #  F-value for volt-sec consistency (icc=12)
-    16,  #  Central solenoid thickness (m)
-    18,  #  Safety factor at 95% flux surface
+    2,  # Toroidal field on axis (T)
+    3,  # Plasma major radius
+    4,  # Volume averaged electron temperature (keV)
+    5,  # Total Plasma Beta
+    6,  # Electron density (/m3)
+    9,  # f-value for density limit
+    # 11, # heating power not used for current drive (MW)
+    13,  # inboard TF coil thickness
+    14,  # f-value for neutron wall load limit
+    # 15, # F-value for volt-sec consistency (icc=12)
+    16,  # Central solenoid thickness (m)
+    18,  # Safety factor at 95% flux surface
     # TODO: Figure out how bounds are actually changed in this shit
-    # 21, #  F-value for minimum burn time (icc=13)
-    25,  #  F-value for net electric power (icc=16)
-    29,  #  central solenoid inboard radius (m)
-    36,  #  f-value for Beta Limit
-    37,  #  Central solenoid overall current density at end of flat-top (A/m2)
-    38,  #  f-value for central solenoid current at end-of-flattop
-    39,  #  f-value for central solenoid current at beginning of pulse
-    41,  #  ratio of central solenoid overall current density at beginning of pulse / end of flat-top
-    42,  #  gap between central solenoid and TF coil (m)
-    44,  #  fraction of the plasma current produced by non-inductive means
-    # 46, #  value for injection power
-    48,  #  f-value for Maxiumum TF Coil case (bucking) TRESCA stress
-    49,  #  f-value for Maxiumum TF Coil Conduit Tresca Stress
-    50,  #  f-value for TF coil operating current / critical current density ratio
-    51,  #  f-value for dump voltage
-    52,  #  Max voltage across TF coil during quench (kV)
-    53,  #  f-value for TF coil winding pack current density
-    54,  #  f-value for TF coil temperature margin
-    56,  #  fast discharge time for TF coil in event of quench (s)
-    57,  #  inboard TF coil case outer (non-plasma side) thickness (m)
-    58,  #  TF coil conduit case thickness (m)
-    59,  #  copper fraction of cable conductor (TF coils)
-    60,  #  Max TF coil current per turn [A]
-    61,  #  gap between inboard vacuum vessel and thermal shield (m)
-    103,  #  f-value for L-H Power Threshold
-    106,  #  f-value for central solenoid temperature margin
-    109,  #  Thermal alpha density / electron density
-    110,  #  f-falue for the He/energy confinement time ratio
-    113,  #  f-value for calculated minimum TF quench time
-    117,  #  f-value for upper limit on psepbqar, maximum Psep*Bt/qAR limits
-    122,  #  central solenoid steel fraction
-    123,  #  f-value for Tresca yield criterion in Central Solenoid
-    135,  #  Xenon Impurity Concentration
-    154,  #  f-value for ne(0) > ne(sep) (icc=81)
-    167,  #  f-value for constraint n_cycle > n_cycle_min
+    # 21, # F-value for minimum burn time (icc=13)
+    25,  # F-value for net electric power (icc=16)
+    29,  # central solenoid inboard radius (m)
+    36,  # f-value for Beta Limit
+    37,  # Central solenoid overall current density at end of flat-top (A/m2)
+    38,  # f-value for central solenoid current at end-of-flattop
+    39,  # f-value for central solenoid current at beginning of pulse
+    41,  # ratio of central solenoid overall current density at beginning of pulse / end of flat-top
+    42,  # gap between central solenoid and TF coil (m)
+    44,  # fraction of the plasma current produced by non-inductive means
+    # 46, # value for injection power
+    48,  # f-value for Maxiumum TF Coil case (bucking) TRESCA stress
+    49,  # f-value for Maxiumum TF Coil Conduit Tresca Stress
+    50,  # f-value for TF coil operating current / critical current density ratio
+    51,  # f-value for dump voltage
+    52,  # Max voltage across TF coil during quench (kV)
+    53,  # f-value for TF coil winding pack current density
+    54,  # f-value for TF coil temperature margin
+    56,  # fast discharge time for TF coil in event of quench (s)
+    57,  # inboard TF coil case outer (non-plasma side) thickness (m)
+    58,  # TF coil conduit case thickness (m)
+    59,  # copper fraction of cable conductor (TF coils)
+    60,  # Max TF coil current per turn [A]
+    61,  # gap between inboard vacuum vessel and thermal shield (m)
+    103,  # f-value for L-H Power Threshold
+    106,  # f-value for central solenoid temperature margin
+    109,  # Thermal alpha density / electron density
+    110,  # f-falue for the He/energy confinement time ratio
+    113,  # f-value for calculated minimum TF quench time
+    117,  # f-value for upper limit on psepbqar, maximum Psep*Bt/qAR limits
+    122,  # central solenoid steel fraction
+    123,  # f-value for Tresca yield criterion in Central Solenoid
+    135,  # Xenon Impurity Concentration
+    154,  # f-value for ne(0) > ne(sep) (icc=81)
+    167,  # f-value for constraint n_cycle > n_cycle_min
 ]
 
 EUDEMO_PROCESS_INPUTS = ProcessInputs(
