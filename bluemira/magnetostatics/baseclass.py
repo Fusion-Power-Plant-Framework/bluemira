@@ -289,14 +289,13 @@ class SourceGroup(ABC):
     Abstract base class for multiple current sources.
     """
 
-    sources: List[CurrentSource]
     points: np.array
 
     def __init__(self, sources):
         self.sources = sources
 
     @property
-    def sources(self):
+    def sources(self) -> List[CurrentSource]:
         """
         Defines sources with getter
         """
