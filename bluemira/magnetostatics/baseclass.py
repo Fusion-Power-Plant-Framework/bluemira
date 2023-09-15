@@ -298,7 +298,7 @@ class SourceGroup(ABC):
     @property
     def sources(self):
         """
-        defines sources with getter
+        Defines sources with getter
         """
         return self._sources
 
