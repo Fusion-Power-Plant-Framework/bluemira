@@ -137,7 +137,27 @@ ITERATION_VARS = [
     167,  # f-value for constraint n_cycle > n_cycle_min
 ]
 
-BOUNDS = {}
+BOUNDS = {
+    "2": {"u": "20.0"},  # bt
+    "3": {"u": "13"},  # rmajor
+    "4": {"u": "150.0"},  # te
+    "9": {"u": "1.2"},  # fdene
+    # "13": {"l": 1.4},  # tfcth
+    "16": {"l": "0.1"},  # ohcth
+    "18": {"l": "3.5"},  # q_95  (!!)
+    "29": {"l": "0.1"},  # bore
+    "38": {"u": "1.0"},  # fjohc
+    "39": {"u": "1.0"},  # fjohc0
+    "42": {"l": "0.05", "u": "0.1"},  # gapoh
+    "50": {"u": "1.0"},  # fiooic
+    "52": {"u": "10.0"},  # vdalw
+    "58": {"l": "8.0e-3"},  # thwcndut
+    "59": {"l": "0.50", "u": "0.94"},  # fcutfsu
+    "60": {"l": "6.0e4", "u": "9.0e4"},  # cpttf
+    "61": {"l": "0.02"},  # gapds
+    "103": {"l": "1.1", "u": "1.2"},  # flhthresh  (!!)
+    "154": {"u": "0.95"},  # fne0
+}
 
 EUDEMO_PROCESS_INPUTS = ProcessInputs(
     bounds=BOUNDS,
