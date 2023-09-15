@@ -38,6 +38,7 @@ from bluemira.base.look_and_feel import bluemira_error
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, make_polygon
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.baseclass import (
     ArbitraryCrossSectionCurrentSource,
     SourceGroup,
@@ -52,7 +53,19 @@ __all__ = ["PolyhedralPrismCurrentSource"]
 
 def trap_dist(theta, pos, min_pos, vec):
     """
-    func to produce distance between centre and trap end
+    Function to calculate distance betwen squared end and trapezoidal end at the position pos
+
+    Parameters
+    ----------
+    theta:
+        the angle of the trapezoidal end (either upper or lower) [rad]
+    pos:
+        the (x, y, z) coordinates the function is evaluated at
+    min_pos:
+        the starting point of the sloped end (minimum point along trapezoidal vector)
+    vec:
+        the trapezoidal vector
+
     """
     dy = np.dot((pos - min_pos), vec)
     dz = dy * np.tan(theta)
@@ -61,33 +74,66 @@ def trap_dist(theta, pos, min_pos, vec):
 
 class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
     """
-    prism current source
+    3-D polyhedral prism current source with an arbitrary cross-section and
+    uniform current distribution.
+
+    Current is acting in the local z direction.
+
+    Parameters
+    ----------
+    origin:
+        The origin of the current source in global coordinates [m]
+    ds:
+        The direction vector of the current source in global coordinates [m]
+    normal:
+        The normalised normal vector of the current source in global coordinates [m]
+    t_vec:
+        The normalised tangent vector of the current source in global coordinates [m]
+    trap_vec:
+        The normalised vector to apply the trapezoidal slope along [m]
+    n:
+        The number of sides to the polyhedral (when coords=None)
+    length:
+        The length of the current source (excluding the trapezoidal ends) [m]
+    width:
+        The distance between the origin and the vertices (when coords=None) [m]
+    alpha:
+        The first angle of the trapezoidal prism [°] [0, 180)
+    beta:
+        The second angle of the trapezoidal prism [°] [0, 180)
+    current:
+        The current flowing through the source [A]
+    nrows:
+        The number of rows used for segmentation when calculating the magnetic field for the current source
+    coords:
+        The input coordinates for the current source as a cross section slice centred at the origin point for z
+        By default is None so the vertices of the cross section are created using n and width
+        When used input needs to be a closed bluemira wire.
     """
 
     def __init__(
         self,
-        origin,
-        ds,
-        normal,
-        t_vec,
-        trap_vec,
-        n,
-        length,
-        width,
-        alpha,
-        beta,
-        current,
-        nrows,
-        coords=None,
+        origin: np.ndarray,
+        ds: np.ndarray,
+        normal: np.ndarray,
+        t_vec: np.ndarray,
+        trap_vec: np.ndarray,
+        n: int,
+        length: float,
+        width: float,
+        alpha: float,
+        beta: float,
+        current: float,
+        nrows: int,
+        wire: BluemiraWire = None,
     ):
-        """
-        initialisation
-        """
         self.origin = origin
-        if coords == None:
+        self.wire = wire
+        if wire == None:
             self.n = n
         else:
-            self.n = np.shape(coords)[1]
+            self.n = np.shape(self.wire.vertexes)[1]
+        # ensure normal vector is normalised
         self.normal = normal / np.linalg.norm(normal)
         self.length = np.linalg.norm(ds)
         self.dcm = np.array([t_vec, ds / self.length, normal])
@@ -96,21 +142,24 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         self.theta = 2 * np.pi / self.n
         self.nrows = nrows
         vec = trap_vec
+        # ensure trapezoidal vector is normalised
         self.trap_vec = vec / np.linalg.norm(vec)
         perp_vec = np.cross(normal, self.trap_vec)
+        # ensure vector perpendicular to trapezoidal is normalised
         self.perp_vec = perp_vec / np.linalg.norm(perp_vec)
         self.theta_l = np.deg2rad(beta)
         self.theta_u = np.deg2rad(alpha)
-        self.points = self._calc_points(coords)
+        self.points = self._calc_points(self.wire)
         self.area = self._cross_section_area()
+        # current density
         self.J = current / self.area
+        # trapezoidal sources for field calculation
         self.sources = self._segmentation_setup(self.nrows)
 
     def _cross_section_area(self):
         """
-        Function to calculate cross sectional area of prism
+        Function to calculate cross sectional area of prism.
         """
-
         points = self.points[0]
         x = points[:, 0]
         y = points[:, 1]
@@ -122,7 +171,7 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
 
     def _shape_min_max(self, points, vector):
         """
-        Function to calculate min and max points of prism cross section along vector
+        Function to calculate min and max points of prism cross section along vector.
         """
         vals = []
         for p in points:
@@ -131,11 +180,12 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         pmax = points[vals.index(max(vals)), :]
         return pmin, pmax
 
-    def _calc_points(self, coords=None):
+    def _calc_points(self, wire):
         """
-        Function to calculate all the points of the prism in local coords
+        Function to calculate all the points of the prism in local coords and return in global.
         """
-        if coords == None:
+        # no coordinated provided so calculates central cross section using width, n and theta
+        if wire == None:
             c_points = []
             for i in range(self.n + 1):
                 c_points += [
@@ -148,8 +198,9 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
                     )
                 ]
             c_points = np.vstack([np.array(c_points)])
+        # coordinates provided as a closed wire so need to extract and format as desired
         else:
-            points = coords.T
+            points = wire.vertexes.T
             c_points = []
             for p in points:
                 c_points += [np.array(p)]
@@ -183,18 +234,22 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
 
     def _segmentation_setup(self, nrows):
         """
-        Function to break up shape into series of segments of trapezoidal shapes
-        Method of segmentation is to bound the central line of each segsment
+        Function to break up current source into a series of trapezoidal prism segments.
+        Method of segmentation is to bound the central line of each segment
         with the edge of the prism, with top of first segment (and bot of last
         segment) matching the top (and bot) vertex.
-        n is number of segments
+        nrows is number of segments.
         """
-        points = self.points[0]
-        x = points[:, 0]
-        y = points[:, 1]
-        z = points[:, 2]
-        coords = Coordinates({"x": x, "y": y, "z": z})
-        main_wire = make_polygon(coords, closed=True)
+        if self.wire is None:
+            points = self.points[0]
+            x = points[:, 0]
+            y = points[:, 1]
+            z = points[:, 2]
+            coords = Coordinates({"x": x, "y": y, "z": z})
+            main_wire = make_polygon(coords, closed=True)
+        else:
+            main_wire = self.wire
+            points = self.wire.vertexes.T
         par_min, par_max = self._shape_min_max(points, self.trap_vec)
         b = np.dot(par_max - par_min, self.trap_vec) / nrows
         perp_min, perp_max = self._shape_min_max(points, self.perp_vec)
@@ -242,6 +297,22 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
 
     @process_xyz_array
     def field(self, x, y, z):
+        """
+        Calculate the magnetic field at a point due to the current source.
+
+        Parameters
+        ----------
+        x:
+            The x coordinate(s) of the points at which to calculate the field
+        y:
+            The y coordinate(s) of the points at which to calculate the field
+        z:
+            The z coordinate(s) of the points at which to calculate the field
+
+        Returns
+        -------
+        The magnetic field vector {Bx, By, Bz} in [T]
+        """
         point = np.array([x, y, z])
         Bx, By, Bz = self.sources.field(*point)
         return Bx, By, Bz
