@@ -140,8 +140,8 @@ class CoilsetOptimisationProblem(abc.ABC):
         Number of substates (blocks) in the state vector.
         """
         substates = 3
-        x, z = coilset.position
-        currents = coilset.current / current_scale
+        x, z = coilset.get_control_coils().position
+        currents = coilset.get_control_coils().current / current_scale
 
         coilset_state = np.concatenate((x, z, currents))
         return coilset_state, substates
@@ -241,8 +241,10 @@ class CoilsetOptimisationProblem(abc.ABC):
 
         # Get the current limits from coil current densities
         coilset_current_limits = np.infty * np.ones(n_control_currents)
-        coilset_current_limits[coilset._flag_sizefix] = coilset.get_max_current()[
-            coilset._flag_sizefix
+        coilset_current_limits[
+            coilset.get_control_coils()._flag_sizefix
+        ] = coilset.get_control_coils().get_max_current()[
+            coilset.get_control_coils()._flag_sizefix
         ]
 
         # Limit the control current magnitude by the smaller of the two limits
