@@ -186,4 +186,5 @@ def main(*args):
     xml_handle[0].write(root_folder / "cross_sections.xml")
 
 
-main()
+if __name__ == "__main__":
+    main()
