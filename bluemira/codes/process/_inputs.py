@@ -279,6 +279,7 @@ class ProcessInputs:
     paris_power_law: float = 2.394
     walker_coefficient: float = 0.5
     fracture_toughness: float = 150.0
+    m_s_limit: float = 0.2
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
