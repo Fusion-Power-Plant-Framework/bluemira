@@ -84,13 +84,13 @@ async def download(run, url, output, chunk_size=10000000, **kwargs):
 
         await asyncio.wait(tasks)
 
-        with open(output, "wb") as o:
-            for i in range(len(chunks)):
-                chunk_path = Path(f"{output}.part{i}")
-                with open(chunk_path, "rb") as s:
-                    o.write(s.read())
+    with open(output, "wb") as o:
         for i in range(len(chunks)):
-            chunk_path = Path(f"{output}.part{i}").unlink()
+            chunk_path = Path(f"{output}.part{i}")
+            with open(chunk_path, "rb") as s:
+                o.write(s.read())
+    for i in range(len(chunks)):
+        chunk_path = Path(f"{output}.part{i}").unlink()
 
 
 def downloader(
