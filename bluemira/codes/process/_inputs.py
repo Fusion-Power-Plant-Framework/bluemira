@@ -138,6 +138,7 @@ class ProcessInputs:
     fkind: float = 1.0
     fkzohm: float = 1.0245
     flhthresh: float = 1.4972
+    fncycle: float = 1.0
     fne0: float = 0.9
     foh_stress: float = 1.0
     fpeakb: float = 1.0
@@ -247,7 +248,9 @@ class ProcessInputs:
     tftmp: float = 4.75
     tftsgap: float = 0.05
     thicndut: float = 0.002
-    thshield: float = 0
+    thshield_ib: float = 0
+    thshield_ob: float = 0
+    thshield_vb: float = 0
     thwcndut: float = 0.008
     tinstf: float = 0.008
     tlife: float = 40.0
@@ -267,6 +270,15 @@ class ProcessInputs:
     zref: List[float] = field(
         default_factory=lambda: [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     )
+    t_crack_vertical: float = 0.65e-3
+    sf_vertical_crack: float = 1.0
+    sf_radial_crack: float = 1.0
+    sf_fast_fracture: float = 1.0
+    residual_sig_hoop: float = 1.50e8
+    paris_coefficient: float = 3.86e-11
+    paris_power_law: float = 2.394
+    walker_coefficient: float = 0.5
+    fracture_toughness: float = 150.0
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
