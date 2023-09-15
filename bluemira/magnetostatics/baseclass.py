@@ -297,6 +297,9 @@ class SourceGroup(ABC):
 
     @property
     def sources(self):
+        """
+        defines sources with getter
+        """
         return self._sources
 
     @sources.setter
@@ -306,6 +309,9 @@ class SourceGroup(ABC):
             self.points = np.vstack([np.vstack(s.points) for s in self._sources])
 
     def add_to_group(self, value: List[CurrentSource]):
+        """
+        Adds sources to the group
+        """
         self.sources = [*self.sources, *value]
 
     def set_current(self, current):
