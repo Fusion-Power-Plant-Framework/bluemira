@@ -293,8 +293,7 @@ class SourceGroup(ABC):
     points: np.array
 
     def __init__(self, sources):
-        self._sources = sources
-        # self.points = np.vstack([np.vstack(s.points) for s in self.sources])
+        self.sources = sources
 
     @property
     def sources(self):
@@ -303,7 +302,8 @@ class SourceGroup(ABC):
     @sources.setter
     def sources(self, value):
         self._sources = value
-        self.points = np.vstack([np.vstack(s.points) for s in self._sources])
+        if value:
+            self.points = np.vstack([np.vstack(s.points) for s in self._sources])
 
     def add_to_group(self, value: List[CurrentSource]):
         self.sources = [*self.sources, *value]
