@@ -42,6 +42,7 @@ Magnetostatics Examples
 
     examples/magnetostatics/helmholtz_example
     examples/magnetostatics/finite_element_2D_single_coil
+    examples/magnetostatics/polyhedral_benchmark
 
 Optimisation Examples
 ^^^^^^^^^^^^^^^^^^^^^
