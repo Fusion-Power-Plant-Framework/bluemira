@@ -27,6 +27,7 @@ with arbitrarily shaped cross-section, following equations as described in:
 """
 import numpy as np
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, make_polygon
@@ -35,6 +36,7 @@ from bluemira.magnetostatics.baseclass import (
     ArbitraryCrossSectionCurrentSource,
     SourceGroup,
 )
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
@@ -89,9 +91,9 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
     width:
         The distance between the origin and the vertices (when coords=None) [m]
     alpha:
-        The first angle of the trapezoidal prism [°] [0, 180)
+        The first angle of the trapezoidal prism [°] [0, 90)
     beta:
-        The second angle of the trapezoidal prism [°] [0, 180)
+        The second angle of the trapezoidal prism [°] [0, 90)
     current:
         The current flowing through the source [A]
     nrows:
@@ -103,6 +105,10 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         By default is None so the vertices of the cross section are created using n
         and width.
         When used input needs to be a closed bluemira wire.
+
+    Notes
+    -----
+    Negative angles are allowed, but both angles must be either 0 or negative.
     """
 
     def __init__(
@@ -143,12 +149,61 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         self.perp_vec = perp_vec / np.linalg.norm(perp_vec)
         self.theta_l = np.deg2rad(beta)
         self.theta_u = np.deg2rad(alpha)
+        self._check_angle_values(self.theta_u, self.theta_l)
         self.points = self._calc_points(self.wire)
         self.area = self._cross_section_area()
+        self._check_raise_self_intersection(self.length, self.theta_u, self.theta_l)
         # current density
         self.J = current / self.area
         # trapezoidal sources for field calculation
         self.sources = self._segmentation_setup(self.nrows)
+        if not round(self.area, 6) == round(self.seg_area, 6):
+            bluemira_warn(
+                "Difference between prism area and total segment area."
+                f"Prism area = {self.area} and Segment area = {self.seg_area}."
+                "Try using more segments by increasing nrows."
+            )
+
+    def _check_angle_values(self, alpha, beta):
+        """
+        Check that end-cap angles are acceptable.
+        """
+        sign_alpha = np.sign(alpha)
+        sign_beta = np.sign(beta)
+        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0.0)
+        if not one_zero and sign_alpha != sign_beta:
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: end-cap angles "
+                f"must have the same sign {alpha=:.3f}, {beta=:.3f}."
+            )
+        if not (0 <= abs(alpha) < 0.5 * np.pi):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside "
+                "bounds of [0, 90°)."
+            )
+        if not (0 <= abs(beta) < 0.5 * np.pi):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {beta=:.3f} is outside "
+                "bounds of [0, 90°)."
+            )
+
+    def _check_raise_self_intersection(self, length: float, alpha: float, beta: float):
+        """
+        Check for bad combinations of source length and end-cap angles.
+        """
+        if self.wire is None:
+            points = self.points[0]
+        else:
+            points = self.wire.vertexes.T
+        min, max = self._shape_min_max(points, self.trap_vec)
+        dist = np.dot(max - min, self.trap_vec)
+        a = np.tan(alpha) * dist
+        b = np.tan(beta) * dist
+        if (a + b) > length:
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: source length and "
+                "angles imply a self-intersecting prism."
+            )
 
     def _cross_section_area(self):
         """
@@ -312,4 +367,4 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         """
         point = np.array([x, y, z])
         Bx, By, Bz = self.sources.field(*point)
-        return Bx, By, Bz
+        return np.array([Bx, By, Bz])
