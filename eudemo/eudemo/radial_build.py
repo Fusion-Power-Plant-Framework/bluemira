@@ -142,7 +142,7 @@ BOUNDS = {
     "9": {"u": "1.2"},  # fdene
     # "13": {"l": 1.4},  # tfcth
     "16": {"l": "0.1"},  # ohcth
-    "18": {"l": "3.5"},  # q_95  (!!)
+    "18": {"l": "3.8"},  # q_95  (!!)
     "29": {"l": "0.1"},  # bore
     "38": {"u": "1.0"},  # fjohc
     "39": {"u": "1.0"},  # fjohc0
@@ -205,7 +205,7 @@ EUDEMO_PROCESS_INPUTS = ProcessInputs(
     nesep=0.2e20,
     rhopedn=0.94,
     rhopedt=0.94,
-    q=3.5,
+    q=3.8,
     m_s_limit=0.2,
     hfact=1.1,
     ishape=10,

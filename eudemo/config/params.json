@@ -778,7 +778,7 @@
     "long_name": "Maximum peak field to use in CS modules"
   },
   "CS_jmax": {
-    "value": 16,
+    "value": 16.5,
     "unit": "megaampere / meter ** 2",
     "source": "Input",
     "long_name": "Maximum current density to use in CS modules"
