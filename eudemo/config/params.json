@@ -969,7 +969,7 @@
   },
   "bb_pump_eta_isen": {
     "value": 0.9,
-    "unit": "MN",
+    "unit": "",
     "long_name": "Breeding blanket pumping isentropic efficiency"
   },
   "bb_t_inlet": {
