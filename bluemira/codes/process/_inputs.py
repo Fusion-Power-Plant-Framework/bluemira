@@ -270,9 +270,9 @@ class ProcessInputs:
     zref: List[float] = field(
         default_factory=lambda: [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     )
-    iblkt_life: int = (1,)
-    life_dpa: float = (70.0,)  # Not used??
-    n_cycle_min: int = (30000,)
+    iblkt_life: int = 1
+    life_dpa: float = 70.0  # Not used??
+    n_cycle_min: int = 20000
     t_crack_vertical: float = 0.65e-3
     sf_vertical_crack: float = 1.0
     sf_radial_crack: float = 1.0
