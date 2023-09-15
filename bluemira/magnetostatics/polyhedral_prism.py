@@ -43,7 +43,8 @@ __all__ = ["PolyhedralPrismCurrentSource"]
 
 def trap_dist(theta, pos, min_pos, vec):
     """
-    Function to calculate distance betwen squared end and trapezoidal end at the position pos
+    Function to calculate distance betwen squared end and trapezoidal
+    end at the position pos
 
     Parameters
     ----------
@@ -94,10 +95,13 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
     current:
         The current flowing through the source [A]
     nrows:
-        The number of rows used for segmentation when calculating the magnetic field for the current source
+        The number of rows used for segmentation when calculating the magnetic field
+        for the current source.
     coords:
-        The input coordinates for the current source as a cross section slice centred at the origin point for z
-        By default is None so the vertices of the cross section are created using n and width
+        The input coordinates for the current source as a cross section slice centred
+        at the origin point for z.
+        By default is None so the vertices of the cross section are created using n
+        and width.
         When used input needs to be a closed bluemira wire.
     """
 
@@ -161,7 +165,8 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
 
     def _shape_min_max(self, points, vector):
         """
-        Function to calculate min and max points of prism cross section along vector.
+        Function to calculate min and max points of prism cross section
+        along vector.
         """
         vals = []
         for p in points:
@@ -172,9 +177,11 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
 
     def _calc_points(self, wire):
         """
-        Function to calculate all the points of the prism in local coords and return in global.
+        Function to calculate all the points of the prism in local coords
+        and return in global.
         """
-        # no coordinated provided so calculates central cross section using width, n and theta
+        # no coordinated provided so calculates central cross section using
+        # width, n and theta
         if wire is None:
             c_points = []
             for i in range(self.n + 1):
