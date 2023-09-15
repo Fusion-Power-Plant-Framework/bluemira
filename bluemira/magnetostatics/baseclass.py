@@ -197,6 +197,93 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
             ax.quiver(*self.origin, *self.dcm[2], length=self.depth, color="r")
 
 
+class ArbitraryCrossSectionCurrentSource(CurrentSource):
+    """
+    Abstract base class for a current source with a arbitrary cross-section.
+    """
+
+    origin: np.array
+    dcm: np.array
+    points: np.array
+    theta: np.array
+    length: np.array
+    n: float
+
+    def set_current(self, current):
+        """
+        Set the current inside the source, adjusting current density.
+
+        Parameters
+        ----------
+        current: float
+            The current of the source [A]
+        """
+        super().set_current(current)
+        self.rho = current / (4 * self.breadth * self.depth)
+
+    def rotate(self, angle, axis):
+        """
+        Rotate the CurrentSource about an axis.
+
+        Parameters
+        ----------
+        angle: float
+            The rotation degree [degree]
+        axis: Union[np.array(3), str]
+            The axis of rotation
+        """
+        r = rotation_matrix(np.deg2rad(angle), axis).T
+        self.origin = self.origin @ r
+        self.points = np.array([p @ r for p in self.points], dtype=object)
+        self.dcm = self.dcm @ r
+        self.trap_vec = self.trap_vec @ r
+        self.perp_vec = self.perp_vec @ r
+        self.sources = self.sources.rotate(angle, axis)
+
+    def _local_to_global(self, points):
+        """
+        Convert local x', y', z' point coordinates to global x, y, z point coordinates.
+        """
+        return np.array([self.origin + self.dcm.T @ p for p in points])
+
+    def _global_to_local(self, points):
+        """
+        Convert global x, y, z point coordinates to local x', y', z' point coordinates.
+        """
+        return np.array([(self.dcm @ (p - self.origin)) for p in points])
+
+    def plot(self, ax=None, show_coord_sys=False, color="b"):
+        """
+        Plot the CurrentSource.
+
+        Parameters
+        ----------
+        ax: Union[None, Axes]
+            The matplotlib axes to plot on
+        show_coord_sys: bool
+            Whether or not to plot the coordinate systems
+        """
+        if ax is None:
+            ax = Plot3D()
+            # If no ax provided, we assume that we want to plot only this source,
+            # and thus set aspect ratio equality on this term only
+            edge_points = np.concatenate(self.points)
+
+            # Invisible bounding box to set equal aspect ratio plot
+            xbox, ybox, zbox = BoundingBox.from_xyz(*edge_points.T).get_box_arrays()
+            ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
+
+        for points in self.points:
+            ax.plot(*points.T, color=f"{color}", linewidth=1)
+
+        # Plot local coordinate system
+        if show_coord_sys:
+            ax.scatter(*self.origin, color="k")
+            ax.quiver(*self.origin, *self.dcm[0], length=self.breadth, color="r")
+            ax.quiver(*self.origin, *self.dcm[1], length=self.length, color="r")
+            ax.quiver(*self.origin, *self.dcm[2], length=self.depth, color="r")
+
+
 class SourceGroup(ABC):
     """
     Abstract base class for multiple current sources.
