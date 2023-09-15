@@ -99,8 +99,8 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         self.trap_vec = vec / np.linalg.norm(vec)
         perp_vec = np.cross(normal, self.trap_vec)
         self.perp_vec = perp_vec / np.linalg.norm(perp_vec)
-        self.theta_l = beta
-        self.theta_u = alpha
+        self.theta_l = np.deg2rad(beta)
+        self.theta_u = np.deg2rad(alpha)
         self.points = self._calc_points(coords)
         self.area = self._cross_section_area()
         self.J = current / self.area
