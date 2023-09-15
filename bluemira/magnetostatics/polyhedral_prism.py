@@ -196,9 +196,9 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         else:
             points = self.wire.vertexes.T
         min, max = self._shape_min_max(points, self.trap_vec)
-        dist = np.dot(max - min, self.trap_vec)
-        a = np.tan(alpha) * dist
-        b = np.tan(beta) * dist
+        dist = round(np.dot(max - min, self.trap_vec), 10)
+        a = np.tan(np.abs(alpha)) * dist
+        b = np.tan(np.abs(beta)) * dist
         if (a + b) > length:
             raise MagnetostaticsError(
                 f"{self.__class__.__name__} instantiation error: source length and "
@@ -303,9 +303,9 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
             main_wire = self.wire
             points = self.wire.vertexes.T
         par_min, par_max = self._shape_min_max(points, self.trap_vec)
-        b = np.dot(par_max - par_min, self.trap_vec) / nrows
+        b = round(np.dot(par_max - par_min, self.trap_vec), 10) / nrows
         perp_min, perp_max = self._shape_min_max(points, self.perp_vec)
-        perp_dist = np.dot(perp_max - perp_min, self.perp_vec)
+        perp_dist = round(np.dot(perp_max - perp_min, self.perp_vec), 10)
         sources = SourceGroup([])
         c_area = 0
         for i in range(nrows):
