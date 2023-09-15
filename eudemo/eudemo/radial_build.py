@@ -142,7 +142,7 @@ BOUNDS = {
     "9": {"u": "1.2"},  # fdene
     # "13": {"l": 1.4},  # tfcth
     "16": {"l": "0.1"},  # ohcth
-    "18": {"l": "3.5"},  # q_95  (!!)
+    "18": {"l": "3.8"},  # q_95  (!!)
     "29": {"l": "0.1"},  # bore
     "38": {"u": "1.0"},  # fjohc
     "39": {"u": "1.0"},  # fjohc0
@@ -160,7 +160,37 @@ BOUNDS = {
 EUDEMO_PROCESS_INPUTS = ProcessInputs(
     bounds=BOUNDS,
     icc=CONSTRAINT_EQS,
-    ixc=ITERATION_VARS
+    ixc=ITERATION_VARS,
+    flhthresh=1.2,
+    bt=5.3,
+    rmajor=9.0,
+    te=12.5,
+    dene=7.4321e19,
+    fdene=1.2,
+    beta=3.1421e-02,
+    tfcth=1.2,
+    bore=2.3322,
+    fwalld=0.131,
+    ohcth=0.55242,
+    fpnetel=1.0,
+    fbetatry=0.48251,
+    coheof=2.0726e07,
+    fjohc=0.57941,
+    fjohc0=0.53923,
+    fcohbop=0.93176,
+    fvsbrnni=0.39566,
+    fstrcase=1.0,
+    fstrcond=0.92007,
+    fiooic=0.63437,
+    fvdump=1.0,
+    vdalw=10.0,
+    fjprot=1.0,
+    ftmargtf=1.0,
+    tdmptf=2.5829e01,
+    thkcas=0.52465,
+    thwcndut=8.0e-3,
+    fcutfsu=0.80884,
+    q=3.8,
     # fimp = [1.0, 0.1, *([0.0] * 10), 0.00044, 5e-05]
     # ipfloc =[2, 2, 3, 3]
     # ncls=[1, 1, 2, 2]

@@ -106,8 +106,8 @@ class ProcessInputs:
     divdum: int = 1
     divfix: float = 0.621
     dnbeta: float = 3.0
-    dr_tf_case_in: float = 0.52465
-    dr_tf_case_out: float = 0.06
+    thkcas: float = 0.52465
+    casthi: float = 0.06
     emult: float = 1.35
     enbeam: float = 1e3
     epsvmc: float = 1e-08
@@ -138,6 +138,7 @@ class ProcessInputs:
     fkind: float = 1.0
     fkzohm: float = 1.0245
     flhthresh: float = 1.4972
+    fne0: float = 0.9
     foh_stress: float = 1.0
     fpeakb: float = 1.0
     fpinj: float = 1.0
