@@ -157,9 +157,9 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         self.J = current / self.area
         # trapezoidal sources for field calculation
         self.sources = self._segmentation_setup(self.nrows)
-        if not round(self.area, 6) == round(self.seg_area, 6):
+        if not round(self.area, 4) == round(self.seg_area, 4):
             bluemira_warn(
-                "Difference between prism area and total segment area."
+                "Difference between prism area and total segment area at 4dp."
                 f"Prism area = {self.area} and Segment area = {self.seg_area}."
                 "Try using more segments by increasing nrows."
             )
