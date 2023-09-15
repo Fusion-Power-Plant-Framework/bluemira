@@ -383,13 +383,13 @@
     "long_name": "Normalised internal plasma inductance"
   },
   "n_TF": {
-    "value": 18,
+    "value": 16,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Number of TF coils"
   },
   "q_95": {
-    "value": 3.5,
+    "value": 3.8,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Plasma safety factor"
