@@ -292,70 +292,78 @@ class SourceGroup(ABC):
     sources: List[CurrentSource]
     points: np.array
 
-    def __init__(self, sources: List[CurrentSource]):
-        self.sources = sources
-        self.points = np.vstack([np.vstack(s.points) for s in self.sources])
+    def __init__(self, sources):
+        self._sources = sources
+        # self.points = np.vstack([np.vstack(s.points) for s in self.sources])
 
-    def set_current(self, current: float):
+    @property
+    def sources(self):
+        return self._sources
+
+    @sources.setter
+    def sources(self, value):
+        self._sources = value
+        self.points = np.vstack([np.vstack(s.points) for s in self._sources])
+
+    def add_to_group(self, value: List[CurrentSource]):
+        self.sources = [*self.sources, *value]
+
+    def set_current(self, current):
         """
         Set the current inside each of the circuits.
 
         Parameters
         ----------
-        current:
+        current: float
             The current of each circuit [A]
         """
         for source in self.sources:
             source.set_current(current)
 
-    def field(
-        self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
-    ) -> np.ndarray:
+    def field(self, x, y, z):
         """
         Calculate the magnetic field at a point.
 
         Parameters
         ----------
-        x:
+        x: Union[float, np.array]
             The x coordinate(s) of the points at which to calculate the field
-        y:
+        y: Union[float, np.array]
             The y coordinate(s) of the points at which to calculate the field
-        z:
+        z: Union[float, np.array]
             The z coordinate(s) of the points at which to calculate the field
 
         Returns
         -------
-        The magnetic field vector {Bx, By, Bz} in [T]
+        field: np.array
+            The magnetic field vector {Bx, By, Bz} in [T]
         """
         return np.sum([source.field(x, y, z) for source in self.sources], axis=0)
 
-    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
+    def rotate(self, angle, axis):
         """
         Rotate the CurrentSource about an axis.
 
         Parameters
         ----------
-        angle:
+        angle: float
             The rotation degree [rad]
-        axis:
+        axis: Union[np.array(3), str]
             The axis of rotation
         """
         for source in self.sources:
             source.rotate(angle, axis)
         self.points = self.points @ rotation_matrix(angle, axis)
 
-    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
+    def plot(self, ax=None, show_coord_sys=False):
         """
         Plot the MultiCurrentSource.
 
         Parameters
         ----------
-        ax:
+        ax: Union[None, Axes]
             The matplotlib axes to plot on
-        show_coord_sys:
+        show_coord_sys: bool
             Whether or not to plot the coordinate systems
         """
         if ax is None:
