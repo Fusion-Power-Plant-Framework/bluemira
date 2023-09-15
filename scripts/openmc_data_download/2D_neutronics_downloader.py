@@ -129,8 +129,8 @@ def parse_args(*args):
 
     parser.add_argument("-l", "--location", default=Path.cwd() / "bluemira_openmc_data")
     parser.add_argument("--download_threads", type=int, default=5)
-    p = parser.parse_args()
-    sys.argv = sys.argv[:1]
+    p, unknown = parser.parse_known_args()
+    sys.argv = [sys.argv[0], *unknown]
     return p
 
 
