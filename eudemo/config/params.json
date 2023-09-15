@@ -832,7 +832,7 @@
     "long_name": "Shafranov shift of plasma (geometric=>magnetic)"
   },
   "tk_cs_casing": {
-    "value": 0.07,
+    "value": 0.02,
     "unit": "meter",
     "source": "Input",
     "long_name": "Thickness of the CS coil casing"

@@ -106,7 +106,7 @@ ITERATION_VARS = [
     38,  # f-value for central solenoid current at end-of-flattop
     39,  # f-value for central solenoid current at beginning of pulse
     41,  # ratio of central solenoid overall current density at beginning of pulse / end of flat-top
-    42,  # gap between central solenoid and TF coil (m)
+    # 42,  # gap between central solenoid and TF coil (m)
     44,  # fraction of the plasma current produced by non-inductive means
     # 46, # value for injection power
     48,  # f-value for Maxiumum TF Coil case (bucking) TRESCA stress
@@ -121,7 +121,7 @@ ITERATION_VARS = [
     58,  # TF coil conduit case thickness (m)
     59,  # copper fraction of cable conductor (TF coils)
     60,  # Max TF coil current per turn [A]
-    61,  # gap between inboard vacuum vessel and thermal shield (m)
+    # 61,  # gap between inboard vacuum vessel and thermal shield (m)
     103,  # f-value for L-H Power Threshold
     106,  # f-value for central solenoid temperature margin
     109,  # Thermal alpha density / electron density
@@ -142,7 +142,7 @@ BOUNDS = {
     "9": {"u": "1.2"},  # fdene
     # "13": {"l": 1.4},  # tfcth
     "16": {"l": "0.1"},  # ohcth
-    "18": {"l": "3.8"},  # q_95  (!!)
+    "18": {"l": "3.5"},  # q_95  (!!)
     "29": {"l": "0.1"},  # bore
     "38": {"u": "1.0"},  # fjohc
     "39": {"u": "1.0"},  # fjohc0
@@ -162,26 +162,26 @@ EUDEMO_PROCESS_INPUTS = ProcessInputs(
     icc=CONSTRAINT_EQS,
     ixc=ITERATION_VARS,
     flhthresh=1.2,
-    bt=5.6,
-    rmajor=9.0,
-    te=12.0,
-    dene=8.0228e19,
+    bt=5.2652e00,
+    rmajor=8.7438e00,
+    te=1.2188e01,
+    dene=7.8505e19,
     fdene=1.2,
-    beta=2.8732e-02,
+    beta=3.2792e-02,
     tfcth=1.3825e00,
-    bore=1.8933e00,
-    fwalld=0.131,
-    ohcth=6.2566e-01,
+    bore=2.1200e00,
+    fwalld=1.3291e-01,
+    ohcth=6.6632e-01,
     fpnetel=1.0,
-    fbetatry=0.48251,
-    coheof=2.0726e07,
-    fjohc=0.57941,
-    fjohc0=0.53923,
-    fcohbop=0.93176,
-    fvsbrnni=0.39566,
+    fbetatry=4.8122e-01,
+    coheof=1.6025e07,
+    fjohc=6.2232e-01,
+    fjohc0=5.5465e-01,
+    fcohbop=9.1715e-01,
+    fvsbrnni=4.8711e-01,
     fstrcase=1.0,
-    fstrcond=0.92007,
-    fiooic=0.63437,
+    fstrcond=7.6710e-01,
+    fiooic=7.1982e-01,
     fvdump=1.0,
     vdalw=10.0,
     fjprot=1.0,
@@ -189,16 +189,15 @@ EUDEMO_PROCESS_INPUTS = ProcessInputs(
     tdmptf=2.6933e01,
     thkcas=5.3165e-01,
     thwcndut=8.0e-3,
-    fcutfsu=0.80884,
+    fcutfsu=8.7819e-01,
     cpttf=6.5e4,
-    gapds=0.02,
     ftmargoh=1.0,
     ralpne=6.8940e-02,
     ftaulimit=1.0,
     ftaucq=9.2751e-01,
     fpsepbqar=8.5689e-01,
-    oh_steel_frac=7.2391e-01,
-    foh_stress=4.2644e-01,
+    oh_steel_frac=7.6206e-01,
+    foh_stress=5.1706e-01,
     fne0=5.9638e-01,
     fncycle=1.0,
     pinjalw=50.0,
@@ -206,10 +205,16 @@ EUDEMO_PROCESS_INPUTS = ProcessInputs(
     nesep=0.2e20,
     rhopedn=0.94,
     rhopedt=0.94,
-    q=3.8,
+    q=3.5,
     m_s_limit=0.2,
     hfact=1.1,
     ishape=10,
+    life_dpa=70.0,
+    pheat=10,
+    gapds=0.02,
+    tbrnmn=7200.0,
+    tburn=7200.0,
+    n_cycle_min=20000,
     # fimp = [1.0, 0.1, *([0.0] * 10), 0.00044, 5e-05]
     # ipfloc =[2, 2, 3, 3]
     # ncls=[1, 1, 2, 2]
