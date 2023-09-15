@@ -89,7 +89,8 @@ async def download(run, url, output, chunk_size=10000000, **kwargs):
                 chunk_path = Path(f"{output}.part{i}")
                 with open(chunk_path, "rb") as s:
                     o.write(s.read())
-                chunk_path.unlink()
+        for i in range(len(chunks)):
+            chunk_path = Path(f"{output}.part{i}").unlink()
 
 
 def downloader(
