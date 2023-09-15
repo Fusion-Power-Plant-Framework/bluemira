@@ -25,16 +25,8 @@ with arbitrarily shaped cross-section, following equations as described in:
 
 
 """
-import math
-import sys
-
-import matplotlib.collections as col
-import matplotlib.path as pltpath
-import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.base.constants import MU_0, MU_0_2PI
-from bluemira.base.look_and_feel import bluemira_error
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, make_polygon
@@ -43,10 +35,8 @@ from bluemira.magnetostatics.baseclass import (
     ArbitraryCrossSectionCurrentSource,
     SourceGroup,
 )
-from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.tools import process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
-from bluemira.utilities.plot_tools import Plot3D
 
 __all__ = ["PolyhedralPrismCurrentSource"]
 
@@ -129,7 +119,7 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
     ):
         self.origin = origin
         self.wire = wire
-        if wire == None:
+        if wire is None:
             self.n = n
         else:
             self.n = np.shape(self.wire.vertexes)[1]
@@ -185,7 +175,7 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         Function to calculate all the points of the prism in local coords and return in global.
         """
         # no coordinated provided so calculates central cross section using width, n and theta
-        if wire == None:
+        if wire is None:
             c_points = []
             for i in range(self.n + 1):
                 c_points += [
@@ -259,11 +249,11 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         for i in range(nrows):
             d = i * b + b / 2
             c = par_min + d * self.trap_vec
-            u = c + perp_dist * self.perp_vec
-            l = c - perp_dist * self.perp_vec
-            x = np.array([l[0], u[0]])
-            y = np.array([l[1], u[1]])
-            z = np.array([l[2], u[2]])
+            up = c + perp_dist * self.perp_vec
+            low = c - perp_dist * self.perp_vec
+            x = np.array([low[0], up[0]])
+            y = np.array([low[1], up[1]])
+            z = np.array([low[2], up[2]])
             coords = Coordinates({"x": x, "y": y, "z": z})
             wire = make_polygon(coords, closed=False)
             dist, vectors = distance_to(main_wire, wire)
