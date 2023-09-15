@@ -299,6 +299,8 @@ class CoilGroup(CoilGroupFieldsMixin):
                     dx=0,
                     dz=0,
                     ctype="PF",
+                    j_max=0,
+                    b_max=0,
                 )
                 coil.fix_size()  # Oh ja
                 pfcoils.append(coil)
