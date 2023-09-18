@@ -109,7 +109,7 @@ def _filter(
     datakeys: List[str],
     filt: Callable,
 ) -> Union[List[tarfile.TarInfo], List[zipfile.ZipInfo]]:
-    """Filter archive memebers"""
+    """Filter archive members"""
     filtered_members = []
     mem_keys = members.keys()
     for m in datakeys:
