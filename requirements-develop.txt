@@ -9,7 +9,7 @@ charset-normalizer==3.2.0
 coverage[toml]==7.3.1
 distlib==0.3.7
 docutils==0.18.1
-filelock==3.12.3
+filelock==3.12.4
 gitdb==4.0.10
 GitPython==3.1.36
 greenlet==2.0.2
