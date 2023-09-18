@@ -5,6 +5,7 @@ import json
 import sys
 import tarfile
 import zipfile
+from os import chdir
 from pathlib import Path
 from shutil import rmtree
 from types import ModuleType
@@ -74,13 +75,13 @@ def extractor(
 
 
 def filter_members(
-    filename: str, members: Dict[str, Union[tarfile.TarInfo, zipfile.ZipInfo]]
+    file: str, filename: str, members: Dict[str, Union[tarfile.TarInfo, zipfile.ZipInfo]]
 ) -> Union[List[tarfile.TarInfo], List[zipfile.ZipInfo]]:
     """Filter archive contents to only extract wanted files"""
     import openmc_data.convert.convert_tendl as tendl
     from openmc_data import all_release_details as ard
 
-    with open(Path(Path(__file__).parent, "nuclear_data_isotopes.json")) as fh:
+    with open(Path(Path(file).parent, "nuclear_data_isotopes.json")) as fh:
         isotope_data = json.load(fh)
     if filename in ard["tendl"][tendl.args.release]["neutron"]["compressed_files"]:
         return _filter(
@@ -125,7 +126,6 @@ def _convertion_progress(*string, **_kwargs):
 
 
 def combine_xml(
-    root_folder: Path,
     lib_names: Tuple[str, ...],
     thermal_files: Tuple[str, ...],
     thermal_prefix: Path,
@@ -134,11 +134,12 @@ def combine_xml(
     bluemira_print("Removing uneeded files")
     for i in thermal_files:
         Path(thermal_prefix / f"{i}.h5").unlink()
+    for file in ["bebeo", "obeo"]:
+        Path("endf-b7.1-ace", f"{file}.acer").unlink()
 
     bluemira_print("Combining cross section xml files")
     xml_handle = [
-        ElementTree.parse(root_folder / name / "cross_sections.xml")
-        for name in lib_names
+        ElementTree.parse(Path(name, "cross_sections.xml")) for name in lib_names
     ]
     for name, xml in zip(lib_names, xml_handle):
         data = xml.getroot()
@@ -156,11 +157,10 @@ def combine_xml(
     for xml in xml_handle[1:]:
         data.extend(list(xml.getroot().iter())[1:])
 
-    xml_handle[0].write(root_folder / "cross_sections.xml")
+    xml_handle[0].write("cross_sections.xml")
 
 
 def download_data(
-    root_folder: Path,
     download: Callable,
     libs: Tuple[ModuleType, ...],
     lib_names: Tuple[str, ...],
@@ -171,7 +171,7 @@ def download_data(
         lib.state_download_size = state_download_size
         lib.download = download
         lib.extract = extractor
-        lib.args.destination = root_folder / name
+        lib.args.destination = Path(name)
         with patch("builtins.print", new=_convertion_progress):
             lib.main()
         print()
@@ -189,10 +189,28 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     return p
 
 
+class ChgDir:
+    """Change directory context manager"""
+
+    def __init__(self, path: Path):
+        self.path = path
+        self.origin = Path().absolute()
+
+    def __enter__(self):
+        """Change directory"""
+        chdir(self.path)
+
+    def __exit__(self, typ, exc, tb):
+        """Revert directory change"""
+        chdir(self.origin)
+
+
 def main(args: Optional[List[str]] = None):
     """Main function"""
     p = parse_args(args)
     root_folder = p.location
+    root_folder.mkdir(parents=True, exist_ok=True)
+
     download = functools.partial(downloader, max_workers=p.download_threads)
 
     # Imported after parsing arguments because argparse is called on import here...
@@ -201,13 +219,17 @@ def main(args: Optional[List[str]] = None):
 
     libs = (tendl, endf)
     lib_names = tuple(lib.__name__.split("_")[-1] for lib in libs)
-    # convert_endf crashes if you dont have these available...
-    thermal_files = ("c_O_in_BeO", "c_Be_in_BeO")
-    thermal_prefix = endf.args.destination / "neutron"
 
-    download_data(root_folder, download, libs, lib_names)
-    combine_xml(root_folder, lib_names, thermal_files, thermal_prefix)
+    with ChgDir(root_folder):
+        download_data(download, libs, lib_names)
+
+        # convert_endf crashes if you dont have these available...
+        thermal_files = ("c_O_in_BeO", "c_Be_in_BeO")
+        thermal_prefix = endf.args.destination / "neutron"
+
+        combine_xml(lib_names, thermal_files, thermal_prefix)
 
 
 if __name__ == "__main__":
+    filter_members = functools.partial(filter_members, str(Path(__file__).resolve()))
     main()
