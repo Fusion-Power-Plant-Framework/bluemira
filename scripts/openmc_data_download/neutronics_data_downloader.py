@@ -80,9 +80,7 @@ def filter_members(
     import openmc_data.convert.convert_tendl as tendl
     from openmc_data import all_release_details as ard
 
-    with open(
-        Path(Path(__file__).parent, "openmc_data_download/nuclear_data_isotopes.json")
-    ) as fh:
+    with open(Path(Path(__file__).parent, "nuclear_data_isotopes.json")) as fh:
         isotope_data = json.load(fh)
     if filename in ard["tendl"][tendl.args.release]["neutron"]["compressed_files"]:
         return _filter(
