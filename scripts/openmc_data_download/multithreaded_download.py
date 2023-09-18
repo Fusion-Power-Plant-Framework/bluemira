@@ -84,7 +84,7 @@ async def _download(
 
     # Write all before deleting
     for i in range(len(chunks)):
-        chunk_path = Path(f"{output}.part{i}").unlink()
+        Path(f"{output}.part{i}").unlink()
 
 
 def downloader(
