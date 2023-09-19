@@ -233,6 +233,7 @@ def solve_transport_fixed_boundary(
     refine: bool = False,
     num_levels: int = 2,
     distance: float = 1.0,
+    ny_fs_min: int = 40,
 ):
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
@@ -273,9 +274,11 @@ def solve_transport_fixed_boundary(
     refine:
         Whether or not the mesh should be refined around the magnetic axis
     num_levels:
-        number of refinement levels
+        Number of refinement levels
     distance:
-        maximum distance from the magnetic axis to which the refinement will be applied
+        Maximum distance from the magnetic axis to which the refinement will be applied
+    ny_fs_min:
+        Minimum number of points in a flux surface extracted from the mesh.
 
     Returns
     -------
@@ -392,7 +395,10 @@ def solve_transport_fixed_boundary(
             )
 
             x1d, flux_surfaces = get_flux_surfaces_from_mesh(
-                mesh, gs_solver.psi_norm_2d, x_1d=x_psi_plasmod
+                mesh,
+                gs_solver.psi_norm_2d,
+                x_1d=x_psi_plasmod,
+                ny_fs_min=ny_fs_min,
             )
 
             x1d, volume, _, g2, g3 = calc_metric_coefficients(

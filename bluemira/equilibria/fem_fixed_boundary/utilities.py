@@ -290,6 +290,7 @@ def get_flux_surfaces_from_mesh(
     psi_norm_func: Callable[[float, float], float],
     x_1d: Optional[np.ndarray] = None,
     nx: Optional[int] = None,
+    ny_fs_min: int = 40,
 ) -> Tuple[np.ndarray, List[ClosedFluxSurface]]:
     """
     Get a list of flux surfaces from a mesh and normalised psi callable.
@@ -306,6 +307,9 @@ def get_flux_surfaces_from_mesh(
     nx:
         Number of points to linearly space along [0..1]. If x_1d is
         defined, not used.
+    ny_fs_min:
+        Minimum number of points in a flux surface retrieved from mesh. Below
+        this, flux surfaces will be discarded.
 
     Returns
     -------
@@ -319,6 +323,9 @@ def get_flux_surfaces_from_mesh(
     -----
     x_1d is returned, as it is not always possible to return a flux surface for
     small values of normalised psi.
+    Some flux surfaces near the axis can have few points and be relatively
+    distorted, causing convergence issues. Make sure to change the cut-off
+    when changing the mesh discretisation.
     """
     if x_1d is None:
         if nx is None:
@@ -344,7 +351,8 @@ def get_flux_surfaces_from_mesh(
             flux_surfaces.append(ClosedFluxSurface(fs))
         else:
             path = get_tricontours(x, z, psi_norm_data, xi)[0]
-            if path is not None:
+            if path is not None and len(path.T[0]) > ny_fs_min:
+                # Only capture flux surfaces with sufficient points
                 fs = Coordinates({"x": path.T[0], "z": path.T[1]})
                 fs.close()
                 flux_surfaces.append(ClosedFluxSurface(fs))
