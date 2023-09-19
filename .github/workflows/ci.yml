@@ -78,6 +78,10 @@ jobs:
         miniforge-variant: Mambaforge
         use-mamba: true
 
+    - name: Install bluemira
+      shell: bash -l {0}
+      run: pip install -U -e .
+
     - name: Freeze conda env
       shell: bash -l {0}
       run: |
