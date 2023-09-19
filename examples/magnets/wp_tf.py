@@ -2,7 +2,7 @@ import math
 
 import matplotlib.pyplot as plt
 import numpy as np
-from sympy import symbols
+from sympy import Eq, solve, symbols
 
 
 def find_TF_thickness(n_TF, Ri, Re, R0, B0, A, d):
@@ -309,17 +309,15 @@ def Ths_TF_Nb3Sn(Iop, Bp, Cus, Cuin, NB3SN, Tau_discharge):
             + 0.4531 * ((1.69 * (10**-8) * rho1) / (RRR * rho1 + 1.69 * (10**-8)))
         )
 
-        for j in range(T.shape[0]):
-            for k in range(t.shape[0]):
-                A = np.log10(1.553 * (10**-8) * B[k] / rho2[j])
-                a = (
-                    -2.662
-                    + 0.3168 * A
-                    + 0.6229 * (A**2)
-                    - 0.1839 * (A**3)
-                    + 0.01827 * (A**4)
-                )
-                rhoCu[k, j] = rho2[j] * (1 + (10**a))
+        A = np.log10(1.553 * (10**-8) * B / rho2)
+        a = (
+            -2.662
+            + 0.3168 * A
+            + 0.6229 * (A**2)
+            - 0.1839 * (A**3)
+            + 0.01827 * (A**4)
+        )
+        rhoCu = rho2 * (1 + (10**a))
 
         return rhoCu
 
@@ -335,7 +333,6 @@ def Ths_TF_Nb3Sn(Iop, Bp, Cus, Cuin, NB3SN, Tau_discharge):
         return Cp_Cu
 
     def Nb3Sn_spec_heat_calculationB(T, NB3SN):
-        Cp_Nb3Sn = np.zeros(T.shape)
         gamma_Nb = 0.1  # J/K^2/Kg
         beta_Nb = 0.001  # J/K^4/Kg
         density_Nb = 8040  # Kg/m^3
@@ -343,8 +340,7 @@ def Ths_TF_Nb3Sn(Iop, Bp, Cus, Cuin, NB3SN, Tau_discharge):
 
         Cp_low_NC = (beta_Nb * (T**3)) + (gamma_Nb * T)  # J/K/Kg NORMAL
 
-        for kk in range(T.shape[0]):
-            Cp_Nb3Sn[kk] = 1 / ((1 / Cp300_Nb) + (1 / Cp_low_NC[kk]))
+        Cp_Nb3Sn = 1 / ((1 / Cp300_Nb) + (1 / Cp_low_NC))
 
         Cp_Nb3Sn = Cp_Nb3Sn * density_Nb * NB3SN
         return Cp_Nb3Sn
@@ -372,6 +368,8 @@ def Ths_TF_Nb3Sn(Iop, Bp, Cus, Cuin, NB3SN, Tau_discharge):
 
         deltaT[t_ind + 1] = energy[t_ind] / f[t_ind]
         T_calc[t_ind + 1] = T_calc[t_ind] + deltaT[t_ind + 1]
+
+    print(T_calc)
 
     Ths = round(np.max(T_calc))
     return Ths
