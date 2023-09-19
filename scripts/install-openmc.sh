@@ -13,7 +13,7 @@ echo Installing...
 echo
 
 clean_up() {
-  test -d "$tmp_dir" && rm -fr "$tmp_dir"
+  test -d "$tmp_dir" && rm -rf "$tmp_dir"
 }
 
 tmp_dir=$( mktemp -d -t install-openmc.XXX)
@@ -26,11 +26,13 @@ cd $tmp_dir
 sudo apt install g++ cmake libhdf5-dev libpng-dev -y
 
 git clone --recurse-submodules https://github.com/openmc-dev/openmc.git
+cd openmc
 mkdir build && cd build
-cmake -DOPENMC_USE_MPI=ON ..
+cmake -DCMAKE_INSTALL_PREFIX=$HOME/.local -DOPENMC_USE_MPI=ON ..
 make
-sudo make install
+make install
 
+cd ..
 pip install .
 
 echo Finished
