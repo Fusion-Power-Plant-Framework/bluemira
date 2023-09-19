@@ -95,18 +95,15 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
     def df_objective(self, x: np.ndarray) -> np.ndarray:
         """The gradient of the objective function at ``x``."""
 
-    @staticmethod
-    def eq_constraints() -> List[ConstraintT]:
+    def eq_constraints(self) -> List[ConstraintT]:  # noqa: PLR6301
         """The equality constraints on the optimisation."""
         return []
 
-    @staticmethod
-    def ineq_constraints() -> List[ConstraintT]:
+    def ineq_constraints(self) -> List[ConstraintT]:  # noqa: PLR6301
         """The inequality constraints on the optimisation."""
         return []
 
-    @staticmethod
-    def bounds() -> Tuple[npt.ArrayLike, npt.ArrayLike]:
+    def bounds(self) -> Tuple[npt.ArrayLike, npt.ArrayLike]:  # noqa: PLR6301
         """
         The lower and upper bounds of the optimisation parameters.
 

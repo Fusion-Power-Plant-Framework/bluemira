@@ -196,18 +196,15 @@ class NonLinearConstraintOP(OptimisationProblem):
         self.b1 = b1
         self.b2 = b2
 
-    @staticmethod
-    def objective(x: np.ndarray) -> float:
+    def objective(self, x: np.ndarray) -> float:  # noqa: PLR6301
         """Objective function to minimise."""
         return np.sqrt(x[1])
 
-    @staticmethod
-    def df_objective(x: np.ndarray) -> np.ndarray:
+    def df_objective(self, x: np.ndarray) -> np.ndarray:  # noqa: PLR6301
         """Gradient of the objective function."""
         return np.array([0.0, 0.5 / np.sqrt(x[1])])
 
-    @staticmethod
-    def bounds() -> Tuple[np.ndarray, np.ndarray]:
+    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:  # noqa: PLR6301
         """
         The lower and upper bounds of the optimisation parameters.
 
@@ -233,8 +230,9 @@ class NonLinearConstraintOP(OptimisationProblem):
             },
         ]
 
-    @staticmethod
-    def f_constraint(x: np.ndarray, a: float, b: float) -> np.ndarray:
+    def f_constraint(
+        self, x: np.ndarray, a: float, b: float  # noqa: PLR6301
+    ) -> np.ndarray:
         """Inequality constraint function."""
         return (a * x[0] + b) ** 3 - x[1]
 

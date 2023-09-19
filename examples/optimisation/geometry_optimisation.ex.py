@@ -168,8 +168,7 @@ class ContractLengthGOP(GeomOptimisationProblem):
         self.plasma = plasma
         self.min_distance = min_distance
 
-    @staticmethod
-    def objective(geom: GeometryParameterisation) -> float:
+    def objective(self, geom: GeometryParameterisation) -> float:  # noqa: PLR6301
         """Objective function to minimise."""
         return geom.create_shape().length
 
