@@ -175,12 +175,22 @@ def test_inductance():
     f, ax = plt.subplots(1, 4)
     xx, yy = np.meshgrid(radii, rci)
     ax[0].contourf(xx, yy, ind, levels=levels)
+    ax[0].set_title("Elliptic")
     ax[1].contourf(xx, yy, ind2, levels=levels)
+    ax[1].set_title("Kirchoff")
     ax[2].contourf(xx, yy, ind3, levels=levels)
+    ax[2].set_title("Biot-Savart")
+
+    for a in ax:
+        a.set_xlabel("radius [m]")
+        a.set_ylabel("filament radius [m]")
+
     diff = 100 * (ind2 - ind3) / ind2
     cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-5, 5, 100))
+    ax[3].set_title("K - BS / K")
     cb = f.colorbar(cm)
     cb.set_label("%")
+    plt.subplots_adjust(wspace=0.5)
     plt.show()
     plt.close(f)
     res = np.sum((ind2 - ind3) ** 2)
