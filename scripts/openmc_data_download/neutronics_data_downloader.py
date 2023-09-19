@@ -74,7 +74,7 @@ def extractor(
         rmtree(compressed_files, ignore_errors=True)
 
 
-def filter_members(
+def _filter_members(
     file: str, filename: str, members: Dict[str, Union[tarfile.TarInfo, zipfile.ZipInfo]]
 ) -> Union[List[tarfile.TarInfo], List[zipfile.ZipInfo]]:
     """Filter archive contents to only extract wanted files"""
@@ -231,5 +231,5 @@ def main(args: Optional[List[str]] = None):
 
 
 if __name__ == "__main__":
-    filter_members = functools.partial(filter_members, str(Path(__file__).resolve()))
+    filter_members = functools.partial(_filter_members, str(Path(__file__).resolve()))
     main()
