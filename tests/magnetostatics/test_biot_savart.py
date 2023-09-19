@@ -187,7 +187,7 @@ def test_inductance():
 
     diff = 100 * (ind2 - ind3) / ind2
     cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-5, 5, 100))
-    ax[3].set_title("K - BS / K")
+    ax[3].set_title("K - (BS / K)")
     cb = f.colorbar(cm)
     cb.set_label("%")
     plt.subplots_adjust(wspace=0.5)
