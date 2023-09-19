@@ -32,9 +32,8 @@ project = "bluemira"
 copyright = "2021-2023, M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short"
 author = "M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short, UKAEA & contributors"
 
-release: str = get_version("setuptools_scm")
+release: str = get_version(project)
 version: str = ".".join(release.split(".")[:2])
-
 
 # -- General configuration ---------------------------------------------------
 
