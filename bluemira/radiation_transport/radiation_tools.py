@@ -940,7 +940,7 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
 
             # Check if the wall element is small enough
             if y_width > max_wall_len:
-                n_split = np.int(np.ceil(y_width / max_wall_len))
+                n_split = int(np.ceil(y_width / max_wall_len))
 
                 # evaluate normal_vector
                 normal_vector = Vector3D(p1y - p2y, 0.0, p2x - p1x).normalise()
@@ -1027,6 +1027,7 @@ def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_ti
         np.squeeze(t_samples).transpose() * 1.0e-6,
         extent=[min_r, max_r, min_z, max_z],
         clim=(0.0, np.amax(t_samples) * 1.0e-6),
+        origin='lower'  # Set the origin to 'lower' to flip the image
     )
 
     segs = []
@@ -1048,7 +1049,7 @@ def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_ti
 
     ax1.add_collection(line_segments)
 
-    norm = mpl.colors.Normalize(vmin=0.0, vmax=np.max(t_samples) * 1.0e-6)
+    norm = mpl.colors.Normalize(vmin=0.0, vmax=np.max(wall_powerload) * 1.0e-6)
     cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.hot)
     cmap.set_array([])
 
@@ -1092,7 +1093,7 @@ def calculate_fw_rad_loads(rad_source, fw_shape, plot=True):
     Cylinder(
         np.max(fw_shape.x),
         2.0 * np.max(fw_shape.z),
-        transform=translate(0, 0, np.max(fw_shape.z)),
+        transform=translate(0, 0, np.min(fw_shape.z)),
         parent=world,
         material=emitter,
     )
