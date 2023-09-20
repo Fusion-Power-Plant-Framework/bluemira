@@ -1,3 +1,4 @@
+"""Asynchronous multithreaded file downloader"""
 import asyncio
 import concurrent.futures
 import functools

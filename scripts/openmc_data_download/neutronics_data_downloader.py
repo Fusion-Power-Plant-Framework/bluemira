@@ -1,3 +1,4 @@
+"""Neutronics data downloader main script"""
 import argparse
 import fnmatch
 import functools
@@ -139,7 +140,8 @@ def combine_xml(
 
     bluemira_print("Combining cross section xml files")
     xml_handle = [
-        ElementTree.parse(Path(name, "cross_sections.xml")) for name in lib_names
+        ElementTree.parse(Path(name, "cross_sections.xml"))  # noqa: S314
+        for name in lib_names
     ]
     for name, xml in zip(lib_names, xml_handle):
         data = xml.getroot()
