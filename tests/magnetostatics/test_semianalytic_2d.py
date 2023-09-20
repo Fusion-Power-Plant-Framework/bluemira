@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 import json
-import os
+from pathlib import Path
 
 import numpy as np
 from matplotlib import pyplot as plt
@@ -169,7 +169,7 @@ class TestPoloidalFieldBenchmark:
 
     @staticmethod
     def load_data(filename):
-        with open(filename, "r") as file:
+        with open(filename) as file:
             data = json.load(file)
             x = np.array(data["x"], dtype=float)
             z = np.array(data["z"], dtype=float)
@@ -178,8 +178,7 @@ class TestPoloidalFieldBenchmark:
         return x, z, B
 
     def test_field_inside_coil_z_z(self):
-        filename = os.sep.join([self.path, "new_B_along_z-z.json"])
-        x, z, B = self.load_data(filename)
+        x, z, B = self.load_data(Path(self.path, "new_B_along_z-z.json"))
 
         fig, ax = plt.subplots()
 
@@ -210,8 +209,7 @@ class TestPoloidalFieldBenchmark:
         plt.close(fig)
 
     def test_field_inside_coil_x_x(self):
-        filename = os.sep.join([self.path, "new_B_along_x-x.json"])
-        x, z, B = self.load_data(filename)
+        x, z, B = self.load_data(Path(self.path, "new_B_along_x-x.json"))
 
         fig, ax = plt.subplots()
 

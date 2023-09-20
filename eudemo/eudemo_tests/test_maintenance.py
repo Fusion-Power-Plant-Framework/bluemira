@@ -198,7 +198,7 @@ class TestDuctConnection:
     def test_ValueError_on_zero_wal_thickness(self):
         self.params.tk_vv_single_wall.value = 0
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             VVUpperPortDuctBuilder(self.params, self.port_koz, self.port_koz)
 
     @pytest.mark.parametrize("end", [1, 5])
@@ -218,10 +218,9 @@ class TestEquatorialPortKOZDesigner:
 
     def setup_method(self) -> None:
         """Set-up Equatorial Port Designer"""
-        pass
 
     @pytest.mark.parametrize(
-        "xi, xo, zh", zip([9.0, 9.0, 6.0], [16.0, 15.0, 9.0], [5.0, 4.0, 2.0])
+        ("xi", "xo", "zh"), zip([9.0, 9.0, 6.0], [16.0, 15.0, 9.0], [5.0, 4.0, 2.0])
     )
     def test_ep_designer(self, xi, xo, zh):
         """Test Equatorial Port KOZ Designer"""
@@ -250,10 +249,9 @@ class TestEquatorialPortDuctBuilder:
 
     def setup_method(self) -> None:
         """Set-up to Equatorial Port Duct Builder"""
-        pass
 
     @pytest.mark.parametrize(
-        "xi, xo, z, y, th",
+        ("xi", "xo", "z", "y", "th"),
         zip(
             [9.0, 9.0, 6.0],  # x_inboard
             [16.0, 15.0, 9.0],  # x_outboard

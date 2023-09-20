@@ -121,7 +121,7 @@ class Optimiser(NLOPTOptimiser):
 
 
     The grad and constraint matrices must be assigned in place.
-    """  # noqa :W505
+    """  # noqa: W505
 
     def optimise(self, x0=None, check_constraints: bool = True):
         """
@@ -253,7 +253,7 @@ class Optimiser(NLOPTOptimiser):
                     ]
                 )
                 bluemira_warn(
-                    "Some constraints have not been adequately satisfied.\n" f"{message}"
+                    f"Some constraints have not been adequately satisfied.\n{message}"
                 )
             return False
         return True

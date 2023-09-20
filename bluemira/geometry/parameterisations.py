@@ -33,6 +33,7 @@ from contextlib import suppress
 from dataclasses import dataclass
 from enum import Enum
 from functools import partial
+from pathlib import Path
 from typing import (
     Any,
     Dict,
@@ -49,7 +50,7 @@ from typing import (
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-from scipy.special import iv as bessel  # type: ignore
+from scipy.special import iv as bessel
 
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
@@ -149,7 +150,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         self.variables.fix_variable(name, value)
 
     def shape_ineq_constraints(
-        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray
+        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray  # noqa: ARG002
     ):
         """
         Inequality constraint function for the variable vector of the geometry
@@ -269,7 +270,6 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         -------
         CAD Wire of the geometry
         """
-        pass
 
     def to_json(self, file: str):
         """
@@ -283,7 +283,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         self.variables.to_json(file)
 
     @classmethod
-    def from_json(cls, file: Union[str, TextIO]) -> GeometryParameterisation:
+    def from_json(cls, file: Union[Path, str, TextIO]) -> GeometryParameterisation:
         """
         Create the GeometryParameterisation from a json file.
 
@@ -292,14 +292,15 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         file:
             The path to the file, or an open file handle that supports reading.
         """
-        if isinstance(file, str):
-            with open(file, "r") as fh:
+        if isinstance(file, (Path, str)):
+            with open(file) as fh:
                 return cls.from_json(fh)
 
         var_dict = json.load(file)
         return cls(var_dict)
 
-    def _annotator(self, ax, key: str, xy1: Tuple, xy2: Tuple, xy3: Tuple):
+    @staticmethod
+    def _annotator(ax, key: str, xy1: Tuple, xy2: Tuple, xy3: Tuple):
         """
         Create annotation arrow with label
 
@@ -332,7 +333,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             },
         )
         ax.annotate(
-            r"$\it{" f"{str_to_latex(key).strip('$')}" "}$",
+            r"$\it{" f"{str_to_latex(key).strip('$')}" "}$",  # noqa: ISC001
             xy=xy3,
             xycoords="data",
             xytext=(0, 5),
@@ -499,7 +500,10 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         return BluemiraWire([outer_arc, straight_segment], label=label)
 
     def shape_ineq_constraints(
-        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+        self,
+        constraint: np.ndarray,
+        x_norm: np.ndarray,  # noqa: ARG002
+        grad: np.ndarray,
     ) -> np.ndarray:
         """
         Inequality constraint function for the variable vector of the geometry
@@ -594,7 +598,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
             :math:`I_{n}` is the n-th order modified Bessel function
             :math:`x_{1}` is the inner radial position of the shape
             :math:`x_{2}` is the outer radial position of the shape
-        """  # noqa :W505
+        """
         if x2 <= x1:
             raise GeometryParameterisationError(
                 "Princeton D parameterisation requires an x2 value "
@@ -606,7 +610,10 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
         theta = np.linspace(-0.5 * np.pi, 1.5 * np.pi, npoints)
         s = np.zeros(npoints, dtype="complex128")
         n = 0
-        while True:  # sum convergent series
+        ds = 1
+
+        # sum convergent series
+        while np.max(abs(ds)) >= 1e-14:  # noqa: PLR2004
             n += 1
 
             ds = 1j / n * (np.exp(-1j * n * theta) - 1)
@@ -614,8 +621,6 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
             ds *= np.exp(1j * n * np.pi / 2)
             ds *= (bessel(n - 1, k) + bessel(n + 1, k)) / 2
             s += ds
-            if np.max(abs(ds)) < 1e-14:
-                break
 
         z = abs(xo * k * (bessel(1, k) * theta + s))
         x = xo * np.exp(k * np.sin(theta))
@@ -706,7 +711,10 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         super().__init__(variables)
 
     def shape_ineq_constraints(
-        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+        self,
+        constraint: np.ndarray,
+        x_norm: np.ndarray,  # noqa: ARG002
+        grad: np.ndarray,
     ) -> np.ndarray:
         """
         Inequality constraint function for the variable vector of the geometry
@@ -830,7 +838,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             make_circle_arc_3P(p6, p65, p7, label="lower_inner_arc"),
         ]
 
-        if sl != 0.0:
+        if sl != 0.0:  # noqa: PLR2004
             straight_segment = wire_closure(
                 BluemiraWire(wires), label="straight_segment"
             )
@@ -840,7 +848,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         wire.translate((0, 0, dz))
         return wire
 
-    def _label_function(self, ax, shape: BluemiraWire):
+    def _label_function(self, ax, shape: BluemiraWire):  # noqa: PLR6301
         """
         Adds labels to parameterisation plots
 
@@ -963,7 +971,10 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         super().__init__(variables)
 
     def shape_ineq_constraints(
-        self, constraint: np.ndarray, x_norm: np.ndarray, grad: np.ndarray
+        self,
+        constraint: np.ndarray,
+        x_norm: np.ndarray,  # noqa: ARG002
+        grad: np.ndarray,
     ) -> np.ndarray:
         """
         Inequality constraint function for the variable vector of the geometry
@@ -1101,7 +1112,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         return BluemiraWire(wires, label=label)
 
-    def _label_function(self, ax, shape: BluemiraWire):
+    def _label_function(self, ax, shape: BluemiraWire):  # noqa: PLR6301
         """
         Adds labels to parameterisation plots
 
@@ -1401,7 +1412,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
         return p1, p2
 
-    def _label_function(self, ax, shape: BluemiraWire):
+    def _label_function(self, ax, shape: BluemiraWire):  # noqa: PLR6301
         """
         Adds labels to parameterisation plots
 
@@ -1622,7 +1633,7 @@ class PictureFrameTools:
         c_o = [x_out - r_o, 0.0, z + r_o if flip else z - r_o]
 
         # Inner Corner
-        if r_i != 0.0:
+        if r_i != 0.0:  # noqa: PLR2004
             wires.append(
                 make_circle(
                     r_i,
@@ -1639,7 +1650,7 @@ class PictureFrameTools:
         wires.append(make_polygon([p2, p1] if flip else [p1, p2], label=f"{label}_limb"))
 
         # Outer corner
-        if r_o != 0.0:
+        if r_o != 0.0:  # noqa: PLR2004
             wires.append(
                 make_circle(
                     r_o,
@@ -1982,11 +1993,12 @@ class PictureFrame(
                 v.z1 - v.ri,
                 v.z2 + v.ri,
             )
-        elif self.inner is None:
+        if self.inner is None:
             return self._connect_straight_to_inner_limb(
                 [v.x1.value, 0, v.z2 + v.ri],
                 [v.x1.value, 0, v.z1 - v.ri],
             )
+        return None
 
     def _make_upper_lower_leg(self, make_upper_section: bool, flip: bool):
         v = self.variables
@@ -2001,7 +2013,7 @@ class PictureFrame(
                 v.ri.value,
                 flip=flip,
             )
-        elif section_func == PFrameSection.FLAT:
+        if section_func == PFrameSection.FLAT:
             return section_func(
                 v.x4.value if self.inner is PFrameSection.TAPERED_INNER else v.x1.value,
                 v.x2.value,
@@ -2010,18 +2022,21 @@ class PictureFrame(
                 v.ro.value,
                 flip=flip,
             )
-        else:
-            raise ValueError(f"The leg cannot be {section_func}")
+        raise ValueError(f"The leg cannot be {section_func}")
 
     def _make_out_leg(self, top_leg, bot_leg):
         v = self.variables
         return self._connect_to_outer_limb(
-            top_leg
-            if self.upper is PFrameSection.CURVED
-            else [v.x2.value, 0, v.z1 - v.ro],
-            bot_leg
-            if self.lower is PFrameSection.CURVED
-            else [v.x2.value, 0, v.z2 + v.ro],
+            (
+                top_leg
+                if self.upper is PFrameSection.CURVED
+                else [v.x2.value, 0, v.z1 - v.ro]
+            ),
+            (
+                bot_leg
+                if self.lower is PFrameSection.CURVED
+                else [v.x2.value, 0, v.z2 + v.ro]
+            ),
             self.upper is PFrameSection.CURVED,
             self.lower is PFrameSection.CURVED,
         )

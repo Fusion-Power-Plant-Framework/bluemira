@@ -43,10 +43,10 @@ _FREECAD_REF = "bluemira.codes._freecadapi"
 def _skip_polyscope():
     try:
         import polyscope  # noqa: F401
-
-        return False
     except ImportError:
         return True
+    else:
+        return False
 
 
 class TestDisplayCADOptions:
@@ -137,12 +137,12 @@ class TestComponentDisplayer:
 
 
 class TestGeometryDisplayer:
-    square_points = [
+    square_points = (
         (0.0, 0.0, 0.0),
         (1.0, 0.0, 0.0),
         (1.0, 1.0, 0.0),
         (0.0, 1.0, 0.0),
-    ]
+    )
 
     def setup_method(self):
         displayer.ViewerBackend.get_module.cache_clear()
@@ -205,7 +205,7 @@ class TestGeometryDisplayer:
         return extrude_shape(circle_face, vec=(0, 0, 10), label="my_solid")
 
     @pytest.mark.parametrize(
-        "labels, result",
+        ("labels", "result"),
         [
             ("name", ["name", "name"]),
             (["name", "name"], ["name", "name"]),

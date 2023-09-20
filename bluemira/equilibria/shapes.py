@@ -55,21 +55,21 @@ def _generate_theta(n: int) -> np.ndarray:
     Generate a poloidal angle vector that encompasses all extrema
     """
     quart_values = np.array([0, 0.5 * np.pi, np.pi, 1.5 * np.pi, 2 * np.pi])
-    if n <= 4:
+    if n <= 4:  # noqa: PLR2004
         return quart_values[:n]
 
     n_leftover = n % 4
     n_chunk = n // 4
 
     thetas = []
-    for i in range(0, 4):
+    for i in range(4):
         if n_leftover != 0:
             n_quart = n_chunk + 1
             n_leftover -= 1
         else:
             n_quart = n_chunk
         if n_quart > 1:
-            if i != 3:
+            if i != 3:  # noqa: PLR2004
                 theta = np.linspace(
                     quart_values[i], quart_values[i + 1], n_quart + 1, endpoint=True
                 )[:-1]
@@ -80,7 +80,7 @@ def _generate_theta(n: int) -> np.ndarray:
         else:
             theta = np.array([quart_values[i]])
         thetas.append(theta)
-    if n > 7:
+    if n > 7:  # noqa: PLR2004
         thetas.append(np.array([2 * np.pi]))
     return np.concatenate(thetas)
 
@@ -541,15 +541,15 @@ def flux_surface_kuiroukidis_quadrants(
     # The lower X-point does not match up with the input kappa_l and delta_l...
     corr_ratio = x_x_true / x_x_actual
     corr_power = 2
-    if corr_ratio == 1.0:
+    if corr_ratio == 1.0:  # noqa: PLR2004
         # For good measure, but the maths is wrong...
         correction = np.ones(n_quart)
-    elif corr_ratio < 1.0:
+    elif corr_ratio < 1.0:  # noqa: PLR2004
         correction = (
             1
             - np.linspace(0, (1 - corr_ratio) ** (1 / corr_power), n_quart) ** corr_power
         )
-    elif corr_ratio > 1.0:
+    elif corr_ratio > 1.0:  # noqa: PLR2004
         correction = (
             1
             + np.linspace(0, (corr_ratio - 1) ** (1 / corr_power), n_quart) ** corr_power
@@ -804,7 +804,8 @@ def _johner_quadrant(
 ) -> Tuple[float, float]:
     calc_t = calc_t_neg if io is _InOut.INNER else calc_t_pos
     t = calc_t(delta, kappa, psi)
-    if t < 0.5:
+    conditional_point = 0.5
+    if t < conditional_point:
         calc_angles = (
             calc_angles_neg_below if io is _InOut.INNER else calc_angles_pos_below
         )
@@ -821,7 +822,7 @@ def _johner_quadrant(
         )
         z = beta * np.sin(theta)
 
-    elif t == 0.5:
+    elif t == conditional_point:
         ls = (0, kappa) if ul is _UpLow.UPPER else (-kappa, 0)
         z = np.linspace(*ls, n_pts)
         x = (
@@ -838,7 +839,7 @@ def _johner_quadrant(
             if io is _InOut.INNER
             else 1 - z * (1 + delta) / kappa
         )
-    elif t > 0.5:
+    elif t > conditional_point:
         calc_angles = (
             calc_angles_neg_above if io is _InOut.INNER else calc_angles_pos_above
         )
@@ -918,9 +919,9 @@ def flux_surface_johner_quadrants(
         negative = True
     else:
         negative = False
-    psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos = [
+    psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos = (
         np.deg2rad(i) for i in [psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos]
-    ]
+    )
 
     n_pts = int(n / 4)
     # inner upper

@@ -25,14 +25,15 @@ A collection of plotting tools.
 
 import os
 import re
-from logging import warn
+from pathlib import Path
 from typing import Optional, Union
+from warnings import warn
 
 import imageio
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.patches import Patch, PathPatch
-from matplotlib.path import Path
+from matplotlib.path import Path as Path_mpl
 from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 
@@ -68,8 +69,7 @@ def gsymbolify(string: str) -> str:
     """
     if string in GREEK_ALPHABET or string in GREEK_ALPHABET_CAPS:
         return "\\" + string
-    else:
-        return string
+    return string
 
 
 def str_to_latex(string: str) -> str:
@@ -118,13 +118,14 @@ def make_gif(
         warn(
             "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
             category=DeprecationWarning,
+            stacklevel=2,
         )
         file_format = kw_formatt
 
     ims = []
     for filename in os.listdir(folder):
         if filename.startswith(figname) and filename.endswith(file_format):
-            fp = os.path.join(folder, filename)
+            fp = Path(folder, filename)
             ims.append(fp)
 
     find_digit = re.compile("(\\d+)")
@@ -132,10 +133,9 @@ def make_gif(
     images = [imageio.imread(fp) for fp in ims]
     if clean:
         for fp in ims:
-            os.remove(fp)
-    gifname = os.path.join(folder, figname) + ".gif"
+            fp.unlink()
     kwargs = {"duration": 0.5, "loop": 3}
-    imageio.mimsave(gifname, images, "GIF-FI", **kwargs)
+    imageio.mimsave(Path(folder, f"{figname}.gif"), images, "GIF-FI", **kwargs)
 
 
 def save_figure(
@@ -148,15 +148,16 @@ def save_figure(
         warn(
             "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
             category=DeprecationWarning,
+            stacklevel=2,
         )
         file_format = kw_formatt
 
     if save is True:
         if folder is None:
             folder = get_bluemira_path("plots", subfolder="data")
-        name = os.sep.join([folder, name]) + "." + file_format
-        if os.path.isfile(name):
-            os.remove(name)  # f.savefig will otherwise not overwrite
+        name = Path(folder, f"{name}.{file_format}")
+        if name.is_file():
+            name.unlink()  # f.savefig will otherwise not overwrite
         fig.savefig(name, dpi=dpi, bbox_inches="tight", format=file_format, **kwargs)
 
 
@@ -165,12 +166,12 @@ def ring_coding(n: int) -> np.ndarray:
     The codes will be all "LINETO" commands, except for "MOVETO"s at the
     beginning of each subpath
     """
-    codes = np.ones(n, dtype=Path.code_type) * Path.LINETO
-    codes[0] = Path.MOVETO
+    codes = np.ones(n, dtype=Path_mpl.code_type) * Path_mpl.LINETO
+    codes[0] = Path_mpl.MOVETO
     return codes
 
 
-def coordinates_to_path(x: np.ndarray, z: np.ndarray) -> Path:
+def coordinates_to_path(x: np.ndarray, z: np.ndarray) -> Path_mpl:
     """
     Convert coordinates to path vertices.
     """
@@ -179,7 +180,7 @@ def coordinates_to_path(x: np.ndarray, z: np.ndarray) -> Path:
         z = z[::-1]
     vertices = np.array([x, z]).T
     codes = ring_coding(len(x))
-    return Path(vertices, codes)
+    return Path_mpl(vertices, codes)
 
 
 def set_component_view(comp: Component, placement: Union[str, BluemiraPlacement]):
@@ -188,7 +189,7 @@ def set_component_view(comp: Component, placement: Union[str, BluemiraPlacement]
     ):
         raise bm_display_error.DisplayError(
             f"Not a valid view {placement} - select either xy, xz, yz, "
-            f"or a BluemiraPlacement"
+            "or a BluemiraPlacement"
         )
 
     comp.plot_options.view = placement
@@ -231,7 +232,7 @@ class BluemiraPathPatch3D(PathPatch3D):
     # https://stackoverflow.com/questions/18228966/how-can-matplotlib-2d-patches-be-transformed-to-3d-with-arbitrary-normals
     def __init__(
         self,
-        path: Path,
+        path: Path_mpl,
         normal: np.ndarray,
         translation: Optional[np.ndarray] = None,
         color: str = "b",

@@ -40,7 +40,7 @@ Example single null first wall particle heat flux
 """
 
 # %%
-import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 
@@ -59,7 +59,7 @@ from bluemira.radiation_transport.advective_transport import ChargedParticleSolv
 DOUBLE_NULL = False
 read_path = get_bluemira_path("equilibria", subfolder="data")
 eq_name = "DN-DEMO_eqref.json" if DOUBLE_NULL else "EU-DEMO_EOF.json"
-eq_name = os.path.join(read_path, eq_name)
+eq_name = Path(read_path, eq_name)
 eq = Equilibrium.from_eqdsk(eq_name)
 
 # %% [markdown]
@@ -70,7 +70,7 @@ eq = Equilibrium.from_eqdsk(eq_name)
 # %%
 read_path = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
 fw_name = "DN_fw_shape.json" if DOUBLE_NULL else "first_wall.json"
-fw_name = os.path.join(read_path, fw_name)
+fw_name = Path(read_path, fw_name)
 fw_shape = Coordinates.from_json(fw_name)
 
 # %% [markdown]

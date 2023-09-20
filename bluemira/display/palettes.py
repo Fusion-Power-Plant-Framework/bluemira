@@ -26,9 +26,9 @@ Colour palettes
 from itertools import cycle, zip_longest
 from typing import List, Tuple, Union
 
-import matplotlib.colors as colors
 import numpy as np
 import seaborn as sns
+from matplotlib import colors
 
 
 class ColorPalette:
@@ -99,13 +99,14 @@ class ColorPalette:
         """
         if isinstance(idx_or_key, int):
             return self._palette[idx_or_key]
-        elif isinstance(idx_or_key, str):
+        if isinstance(idx_or_key, str):
             item = self._dict[idx_or_key]
             return (
                 item
                 if isinstance(item, type(self))
                 else type(self)({idx_or_key: self._dict[idx_or_key]})
             )
+        return None
 
     def _hex_horizontal(self) -> Union[List[str], List[List[str]]]:
         _hex = self.as_hex()
@@ -196,7 +197,7 @@ class ColorPalette:
 def background_colour_string(hexstring: str, sqlen=2) -> str:
     """Create ANSI background colour string for hex colour"""
     hexstring = hexstring.strip("#")
-    a, b, c = (1, 2, 3) if len(hexstring) == 3 else (2, 4, 6)
+    a, b, c = (1, 2, 3) if len(hexstring) == 3 else (2, 4, 6)  # noqa: PLR2004
     return (
         f"\033[48:2::{int(hexstring[:a], 16)}:"
         f"{int(hexstring[a:b], 16)}:"

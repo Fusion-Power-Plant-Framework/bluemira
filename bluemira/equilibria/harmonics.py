@@ -25,7 +25,7 @@ Spherical harmonics classes and calculations.
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Tuple
+from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -247,9 +247,10 @@ def collocation_points(
 
     if point_type in (PointType.RANDOM, PointType.RANDOM_PLUS_EXTREMA):
         # Random sample within a circle enclosed by the LCFS
+        rng = np.random.default_rng()
         half_sample_x_range = 0.5 * (np.max(x_bdry) - np.min(x_bdry))
-        sample_r = half_sample_x_range * np.random.rand(n_points)
-        sample_theta = (np.random.rand(n_points) * 2 * np.pi) - np.pi
+        sample_r = half_sample_x_range * rng.random(n_points)
+        sample_theta = (rng.random(n_points) * 2 * np.pi) - np.pi
 
         # Cartesian coordinates
         collocation_x = (
@@ -335,7 +336,8 @@ def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> float:
     # Check there are an even number of intersections
     if np.mod(len(xcross), 2) != 0:
         bluemira_print(
-            "Odd number of intersections for input and SH approx LCFS: this shouldn''t be possible. Trying again with more degrees."
+            "Odd number of intersections for input and SH approx LCFS: this shouldn''t"
+            " be possible. Trying again with more degrees."
         )
         return 1
 
@@ -347,12 +349,12 @@ def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> float:
         if all(test_1_in_2) or all(test_2_in_1):
             # Calculate the metric if one is inside the other
             return (np.max([area1, area2]) - np.min([area1, area2])) / (area1 + area2)
-        else:
-            # Otherwise they are in entirely different places
-            bluemira_print(
-                "The approximate LCFS does not overlap with the original. Trying again with more degrees."
-            )
-            return 1
+        # Otherwise they are in entirely different places
+        bluemira_print(
+            "The approximate LCFS does not overlap with the original. Trying again with"
+            " more degrees."
+        )
+        return 1
 
     # Calculate the area between the intersections of the two LCFSs,
     # i.e., area within one but not both LCFSs.
@@ -411,14 +413,14 @@ def coils_outside_sphere_vacuum_psi(
         too_close_coils = c_names[coil_r <= max_bdry_r]
         not_too_close_coils = c_names[coil_r > max_bdry_r].tolist()
         bluemira_print(
-            f"One or more of your coils is too close to the LCFS to be used in the SH approximation. Coil names: {too_close_coils}."
+            "One or more of your coils is too close to the LCFS to be used in the SH"
+            f" approximation. Coil names: {too_close_coils}."
         )
 
         # Need a coilset with control coils outside sphere
-        new_coils = []
-        for n in eq.coilset.name:
-            new_coils.append(eq.coilset[n])
-        new_coilset = CoilSet(*new_coils, control_names=not_too_close_coils)
+        new_coilset = CoilSet(
+            *[eq.coilset[n] for n in eq.coilset.name], control_names=not_too_close_coils
+        )
     else:
         new_coilset = deepcopy(eq.coilset)
 
@@ -483,10 +485,10 @@ def get_psi_harmonic_amplitudes(
 
 def spherical_harmonic_approximation(
     eq: Equilibrium,
-    n_points: int = None,
-    point_type: str = None,
-    acceptable_fit_metric: float = None,
-    r_t: float = None,
+    n_points: Optional[int] = None,
+    point_type: Optional[str] = None,
+    acceptable_fit_metric: Optional[float] = None,
+    r_t: Optional[float] = None,
     plot: bool = False,
     nlevels: int = 50,
 ) -> Tuple[CoilSet, float, np.ndarray, int, float, np.ndarray]:
@@ -624,12 +626,15 @@ def spherical_harmonic_approximation(
 
         if fit_metric_value <= acceptable_fit_metric:
             bluemira_print(
-                f"The fit metric value acheived is {fit_metric_value} using {degree} degrees."
+                f"The fit metric value acheived is {fit_metric_value} using"
+                f" {degree} degrees."
             )
             break
-        elif degree == max_degree:
+        if degree == max_degree:
             raise BluemiraError(
-                f"Uh oh, you may need to use more degrees for a fit metric of {acceptable_fit_metric}! Use a greater number of collocation points please."
+                "Uh oh, you may need to use more degrees for a fit metric of"
+                f" {acceptable_fit_metric}! Use a greater number of collocation points"
+                " please."
             )
 
     # plot comparing original psi to the SH approximation

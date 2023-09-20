@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Tuple, Union
 
 import nlopt
 import numpy as np
@@ -36,8 +36,10 @@ from bluemira.optimisation._nlopt.functions import (
 )
 from bluemira.optimisation._optimiser import Optimiser, OptimiserResult
 from bluemira.optimisation.error import OptimisationError, OptimisationParametersError
-from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
 from bluemira.utilities.error import OptVariablesError
+
+if TYPE_CHECKING:
+    from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
 
 _NLOPT_ALG_MAPPING = {
     Algorithm.SLSQP: nlopt.LD_SLSQP,
@@ -165,7 +167,7 @@ class NloptOptimiser(Optimiser):
         if self.algorithm not in [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES]:
             raise OptimisationError(
                 f"Algorithm '{self.algorithm.name}' does not support equality "
-                f"constraints."
+                "constraints."
             )
         constraint = Constraint(
             ConstraintType.EQUALITY,
@@ -191,7 +193,7 @@ class NloptOptimiser(Optimiser):
         if self.algorithm not in [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES]:
             raise OptimisationError(
                 f"Algorithm '{self.algorithm.name}' does not support inequality "
-                f"constraints."
+                "constraints."
             )
         constraint = Constraint(
             ConstraintType.INEQUALITY,
@@ -226,13 +228,13 @@ class NloptOptimiser(Optimiser):
         except RuntimeError as error:
             # Usually "more than iter SQP iterations"
             _process_nlopt_result(self._opt, self.algorithm)
-            raise OptimisationError(str(error))
+            raise OptimisationError(str(error)) from None
         except KeyboardInterrupt:
             _process_nlopt_result(self._opt, self.algorithm)
             raise KeyboardInterrupt(
                 "The optimisation was halted by the user. Please check "
                 "your optimisation problem and termination conditions."
-            )
+            ) from None
 
         _process_nlopt_result(self._opt, self.algorithm)
         return OptimiserResult(
@@ -355,7 +357,7 @@ def _check_algorithm(algorithm: AlgorithmType) -> Algorithm:
     """Validate, and convert, the given algorithm."""
     if isinstance(algorithm, str):
         return Algorithm[algorithm]
-    elif isinstance(algorithm, Algorithm):
+    if isinstance(algorithm, Algorithm):
         return algorithm
     raise TypeError(f"Cannot set algorithm with object of type '{type(algorithm)}'.")
 

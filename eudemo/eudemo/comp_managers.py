@@ -28,6 +28,7 @@ from typing import TYPE_CHECKING, Iterable, List, Tuple
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
+    from bluemira.geometry.wire import BluemiraWire
 
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
@@ -38,7 +39,6 @@ from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.tools import boolean_cut, boolean_fuse
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.materials import Void
 from eudemo.maintenance.duct_connection import pipe_pipe_join
 from eudemo.tools import make_2d_view_components
@@ -148,7 +148,7 @@ class PlugManagerMixin(OrphanerMixin):
         apply_component_display_options(xyz_comp, color=color_list[0])
         self._orphan_old_components(component)
 
-        new_components = [xyz_comp] + plugs
+        new_components = [xyz_comp, *plugs]
 
         Component(
             "xyz",
@@ -243,8 +243,8 @@ class ThermalShield(PortManagerMixin, ComponentManager):
             vvts_target_shape = result_pieces[0]
             new_shape_pieces.extend(result_pieces[1:])
 
-        final_shape = boolean_fuse([vvts_target_shape] + new_shape_pieces)
-        final_void = boolean_fuse([vvts_target_void] + tool_voids)
+        final_shape = boolean_fuse([vvts_target_shape, *new_shape_pieces])
+        final_void = boolean_fuse([vvts_target_void, *tool_voids])
         return final_shape, final_void, tool_voids
 
     def add_ports(self, ports: List[Component], n_TF: int):
@@ -392,5 +392,3 @@ class CoilStructures(ComponentManager):
     """
     Wrapper around the coil structures component tree
     """
-
-    pass

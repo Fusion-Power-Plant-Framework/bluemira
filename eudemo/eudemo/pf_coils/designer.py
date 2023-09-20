@@ -137,7 +137,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         if self.file_path is None:
             raise ValueError("No file path to read from!")
 
-        with open(self.file_path, "r") as file:
+        with open(self.file_path) as file:
             data = json.load(file)
 
         # TODO: Load up equilibria from files and add states to manager
@@ -189,7 +189,9 @@ class PFCoilsDesigner(Designer[CoilSet]):
         self, coilset, grid, profiles, position_mapper, constraints
     ):
         breakdown_defaults = {
-            "param_class": "bluemira.equilibria.optimisation.problem::OutboardBreakdownZoneStrategy",
+            "param_class": (
+                "bluemira.equilibria.optimisation.problem::OutboardBreakdownZoneStrategy"
+            ),
             "problem_class": "bluemira.equilibria.optimisation.problem::BreakdownCOP",
             "optimisation_settings": {
                 "algorithm_name": "COBYLA",
@@ -207,7 +209,9 @@ class PFCoilsDesigner(Designer[CoilSet]):
         }
 
         eq_defaults = {
-            "problem_class": "bluemira.equilibria.optimisation.problem::TikhonovCurrentCOP",
+            "problem_class": (
+                "bluemira.equilibria.optimisation.problem::TikhonovCurrentCOP"
+            ),
             "convergence_class": "bluemira.equilibria.solve::DudsonConvergence",
             "conv_limit": 1e-4,
             "gamma": 1e-12,

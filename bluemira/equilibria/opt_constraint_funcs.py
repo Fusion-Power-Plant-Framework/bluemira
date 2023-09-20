@@ -64,7 +64,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 
-import bluemira.equilibria.harmonics as harmonics
+from bluemira.equilibria import harmonics
 
 warnings.warn(
     f"The module '{__name__}' is deprecated and will be removed in v2.0.0.\n"

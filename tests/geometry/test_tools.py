@@ -21,9 +21,9 @@
 
 import difflib
 import json
-import os
 import re
 from datetime import datetime
+from pathlib import Path
 from unittest import mock
 
 import numpy as np
@@ -321,7 +321,7 @@ class TestSolidFacePlaneIntersect:
     yz_plane = BluemiraPlane(axis=[1, 0, 0])
 
     @pytest.mark.parametrize(
-        "plane, length, hollow",
+        ("plane", "length", "hollow"),
         [
             # hollow
             (xz_plane, offset, True),
@@ -345,7 +345,7 @@ class TestSolidFacePlaneIntersect:
         cylinder = extrude_shape(circ, (0, 0, self.offset))
         _slice = slice_shape(cylinder, plane)
         assert _slice is not None
-        assert all([np.isclose(sl.length, length) for sl in _slice]), [
+        assert all(np.isclose(sl.length, length) for sl in _slice), [
             f"{sl.length}, {length}" for sl in _slice
         ]
 
@@ -366,7 +366,7 @@ class TestSolidFacePlaneIntersect:
             try:
                 assert np.isclose(sl.length / self.twopi, self.big)
                 no_big += 1
-            except AssertionError:
+            except AssertionError:  # noqa: PERF203
                 assert np.isclose(sl.length / self.twopi, self.small)
                 no_small += 1
         assert no_big == 2
@@ -433,7 +433,7 @@ class TestPointInside:
 
 class TestConvexHullWires2d:
     def test_ValueError_given_wires_empty(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             convex_hull_wires_2d([], 10)
 
     def test_hull_around_two_circles_xz_plane(self):
@@ -466,20 +466,20 @@ class TestConvexHullWires2d:
     def test_ValueError_if_invalid_plane(self, bad_plane):
         circle = make_circle(radius=1)
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             convex_hull_wires_2d([circle], 10, plane=bad_plane)
 
 
 class TestMakeBSpline:
-    fixture = [
+    fixture = (
         (None, None),
         ([0, 0, 1], [0, 0, 1]),
         ([0, 0, -1], [0, 0, -1]),
         ([0, 0, -1], [0, 0, 1]),
         ([0, 0, 1], [0, 0, -1]),
-    ]
+    )
 
-    @pytest.mark.parametrize("st, et", fixture)
+    @pytest.mark.parametrize(("st", "et"), fixture)
     def test_tangencies_open(self, st, et):
         """
         Open spline start and end tangencies.
@@ -501,7 +501,7 @@ class TestMakeBSpline:
         else:
             np.testing.assert_allclose(spline.length, 1.0)
 
-    @pytest.mark.parametrize("st, et", fixture)
+    @pytest.mark.parametrize(("st", "et"), fixture)
     def test_tangencies_closed(self, st, et):
         points = {"x": [0, 1, 2, 1], "y": 0, "z": [0, -1, 0, 1]}
         spline = interpolate_bspline(
@@ -574,27 +574,27 @@ class TestFindClockwiseAngle2d:
         }
         params[vector_name] = np.zeros((size, 1))
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             find_clockwise_angle_2d(**params)
 
 
 @log_geometry_on_failure
-def naughty_function(wire, var=1, *, var2=[1, 2], **kwargs):
+def naughty_function(wire, var=1, *, var2=(1, 2), **kwargs):  # noqa: ARG001
     raise cadapi.FreeCADError
 
 
-def naughty_function_result(wire, *, var2=[1, 2], **kwargs):
+def naughty_function_result(wire, *, var2=(1, 2), **kwargs):  # noqa: ARG001
     return 41 + kwargs["missing_piece"]
 
 
 @fallback_to(naughty_function_result, cadapi.FreeCADError)
 @log_geometry_on_failure
-def naughty_function_fallback(wire, var=1, *, var2=[1, 2], **kwargs):
+def naughty_function_fallback(wire, var=1, *, var2=(1, 2), **kwargs):  # noqa: ARG001
     raise cadapi.FreeCADError
 
 
 class TestLogFailedGeometryOperationSerialisation:
-    wires = [
+    wires = (
         make_polygon({"x": [0, 2, 2, 0], "y": [-1, -1, 1, 1]}, closed=True),
         make_circle(),
         make_ellipse(),
@@ -602,7 +602,7 @@ class TestLogFailedGeometryOperationSerialisation:
         PolySpline().create_shape(),
         PictureFrame().create_shape(),
         TripleArc().create_shape(),
-    ]
+    )
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
     @pytest.mark.parametrize("wire", wires)
@@ -632,7 +632,7 @@ class TestLogFailedGeometryOperationSerialisation:
 
         open_mock.assert_called_once()
         call_args = open_mock.call_args[0]
-        assert os.path.basename(call_args[0]).startswith("naughty_function_fallback")
+        assert Path(call_args[0]).name.startswith("naughty_function_fallback")
         assert call_args[1] == "w"
         assert result == 42
 
@@ -654,7 +654,7 @@ class TestSavingCAD:
 
     def setup_method(self):
         fp = get_bluemira_path("geometry/test_data", subfolder="tests")
-        self.test_file = os.path.join(fp, "test_circ.stp")
+        self.test_file = Path(fp, "test_circ.stp")
         self.generated_file = "test_generated_circ.stp"
         self.obj = make_circle(5, axis=(1, 1, 1))
 
@@ -670,10 +670,10 @@ class TestSavingCAD:
         self.generated_file = tmpdir.join(self.generated_file)
         save_func(obj, filename=str(self.generated_file).split(".")[0])
 
-        with open(self.test_file, "r") as tf:
+        with open(self.test_file) as tf:
             lines1 = tf.readlines()
 
-        with open(self.generated_file, "r") as gf:
+        with open(self.generated_file) as gf:
             lines2 = gf.readlines()
 
         # Dont care about date/time differences
@@ -700,7 +700,7 @@ class TestMirrorShape:
     solid = extrude_shape(face, (0, 3, 0))
     shell = solid.boundary[0]
 
-    shapes = [wire, face, solid, shell]
+    shapes = (wire, face, solid, shell)
 
     @pytest.mark.parametrize("shape", shapes)
     @pytest.mark.parametrize(
@@ -796,7 +796,7 @@ class TestBooleanFragments:
         return pipe_1, pipe_2
 
     @pytest.mark.parametrize(
-        "r1,r2,n_expected,n_unique", [(1.0, 1.0, 1, 9), (2.0, 1.0, 2, 8)]
+        ("r1", "r2", "n_expected", "n_unique"), [(1.0, 1.0, 1, 9), (2.0, 1.0, 2, 8)]
     )
     def test_pipe_pipe_fragments(self, r1, r2, n_expected, n_unique):
         pipes = self._make_pipes(r1, 0.3, r2, 0.3, 0, 0, 5, -5)
@@ -809,7 +809,7 @@ class TestBooleanFragments:
         n_unique_actual = len(compound.solids)
         assert n_unique_actual == n_unique
 
-    @pytest.mark.parametrize("r1,r2", [(2.0, 1.0), (4.0, 2.0)])
+    @pytest.mark.parametrize(("r1", "r2"), [(2.0, 1.0), (4.0, 2.0)])
     def test_pipe_half_pipe_fragments(self, r1, r2):
         pipes = self._make_pipes(r1, 0.3, r2, 0.3, 0, 0, 5, -10)
         compound, mapping = boolean_fragments(pipes, tolerance=0.0)
@@ -855,14 +855,12 @@ class TestForceWireToSpline:
     @classmethod
     def setup_class(cls):
         path = get_bluemira_path("geometry/test_data", subfolder="tests")
-        filename = os.path.join(path, cls.filename)
-        wires = []
-        with open(filename, "r") as file:
+        with open(Path(path, cls.filename)) as file:
             data = json.load(file)
 
-        for wire in data["BluemiraFace"]["boundary"]:
-            wires.append(deserialize_shape(wire))
-        cls.wires = wires
+        cls.wires = [
+            deserialize_shape(wire) for wire in data["BluemiraFace"]["boundary"]
+        ]
 
     @mock.patch("bluemira.geometry.tools.bluemira_warn")
     def test_force_spline(self, bm_warn):

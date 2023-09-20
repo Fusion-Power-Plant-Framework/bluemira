@@ -27,14 +27,16 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import lru_cache
-from typing import List, Optional, Union
+from typing import TYPE_CHECKING, ClassVar, List, Optional, Union
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.display.error import DisplayError
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.display.tools import Options
-from bluemira.geometry.base import BluemiraGeo
 from bluemira.utilities.tools import get_module
+
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 
 class ViewerBackend(Enum):
@@ -118,7 +120,7 @@ def _validate_display_inputs(parts, options, labels):
 
 def show_cad(
     parts: Optional[
-        Union[BluemiraGeo, List[BluemiraGeo]]  # noqa: F821
+        Union[BluemiraGeo, List[BluemiraGeo]]
     ] = None,  # avoiding circular deps
     options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
     labels: Optional[Union[str, List[str]]] = None,
@@ -172,7 +174,7 @@ class BaseDisplayer(ABC):
     Displayer abstract class
     """
 
-    _CLASS_DISPLAY_OPTIONS = {}
+    _CLASS_DISPLAY_OPTIONS: ClassVar = {}
 
     def __init__(self, options: Optional[DisplayCADOptions] = None, **kwargs):
         self.options = (
@@ -187,7 +189,6 @@ class BaseDisplayer(ABC):
         """
         Display a CAD object
         """
-        pass
 
 
 def _get_displayer_class(part):
@@ -254,8 +255,8 @@ class ComponentDisplayer(BaseDisplayer):
     CAD displayer for Components
     """
 
+    @staticmethod
     def show_cad(
-        self,
         comps,
         **kwargs,
     ):

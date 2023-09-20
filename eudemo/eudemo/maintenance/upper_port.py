@@ -103,7 +103,8 @@ class UpperPortOP(OptimisationProblem):
         ]
         return np.array(lower), np.array(upper)
 
-    def port_size(self, x: np.ndarray) -> float:
+    @staticmethod
+    def port_size(x: np.ndarray) -> float:
         """Return the port size given parameterisation ``x``."""
         ri, ro, _, gamma = x
         return ro - ri + gamma
@@ -163,8 +164,7 @@ class UpperPortOP(OptimisationProblem):
         # Get the last intersection with the angled cut plane and the outer
         intersections = slice_shape(self.bb.boundary[0], angled_cut_plane)
         intersections = intersections[intersections[:, -1] > z + EPS]
-        intersection = min(intersections, key=lambda x: x[-1])
-        return intersection
+        return min(intersections, key=lambda x: x[-1])
 
 
 @dataclass
@@ -212,7 +212,8 @@ class UpperPortKOZDesigner(Designer[Tuple[BluemiraFace, float, float]]):
         self.blanket_face = blanket_face
         self.opt_algorithm = self.build_config.get("opt_algorithm", "SLSQP")
         self.opt_conditions = {
-            **{"max_eval": 1000, "ftol_rel": 1e-8},
+            "max_eval": 1000,
+            "ftol_rel": 1e-8,
             **self.build_config.get("opt_conditions", {}),
         }
         self.upper_port_extrema = upper_port_extrema

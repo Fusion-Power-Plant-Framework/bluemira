@@ -41,8 +41,8 @@ Plotting module examples
 # %%
 import matplotlib.pyplot as plt
 
-import bluemira.display as display
 import bluemira.geometry.tools
+from bluemira import display
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display.plotter import FacePlotter, WirePlotter
 from bluemira.geometry.face import BluemiraFace
@@ -483,8 +483,8 @@ group.show_cad()
 # Colours can be specified as an R-G-B tuple, string, or hex-string.
 
 # %%
-c1.display_cad_options.modify(**{"color": (0.1, 0.2, 0.4)})
-c2.display_cad_options.modify(**{"color": "g"})
-c3.display_cad_options.modify(**{"color": "#FF3450", "transparency": 0.5})
+c1.display_cad_options.modify(color=(0.1, 0.2, 0.4))
+c2.display_cad_options.modify(color="g")
+c3.display_cad_options.modify(color="#FF3450", transparency=0.5)
 
 group.show_cad()

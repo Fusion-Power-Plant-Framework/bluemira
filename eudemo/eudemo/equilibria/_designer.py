@@ -23,9 +23,9 @@ Designer for an `Equilibrium` solving an unconstrained Tikhnov current
 gradient coil-set optimisation problem.
 """
 
-import os
 import shutil
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Dict, Optional, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
@@ -267,11 +267,10 @@ def get_plasmod_binary_path():
     Get the path to the PLASMOD binary.
     """
     if plasmod_binary := shutil.which("plasmod"):
-        PLASMOD_PATH = os.path.dirname(plasmod_binary)
+        PLASMOD_PATH = Path(plasmod_binary).parent
     else:
-        PLASMOD_PATH = os.path.join(os.path.dirname(get_bluemira_root()), "plasmod/bin")
-    binary = os.path.join(PLASMOD_PATH, "plasmod")
-    return binary
+        PLASMOD_PATH = Path(Path(get_bluemira_root()).parent, "plasmod/bin")
+    return Path(PLASMOD_PATH, "plasmod").as_posix()
 
 
 @dataclass
@@ -696,8 +695,9 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
 
         return BluemiraWire([lower_wire, semi_circle, upper_wire])
 
+    @staticmethod
     def _make_fbe_opt_problem(
-        self, eq: Equilibrium, lcfs_shape: BluemiraWire, n_points: int, gamma: float
+        eq: Equilibrium, lcfs_shape: BluemiraWire, n_points: int, gamma: float
     ):
         """
         Create the `UnconstrainedTikhonovCurrentGradientCOP` optimisation problem.

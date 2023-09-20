@@ -25,16 +25,16 @@ Built-in build steps for making parameterised TF coils.
 from __future__ import annotations
 
 import warnings
-from abc import ABC
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Dict, Optional, Union
 
 if TYPE_CHECKING:
-    from bluemira.geometry.parameterisations import GeometryParameterisation
     from bluemira.geometry.optimisation.typing import GeomConstraintT
+    from bluemira.geometry.parameterisations import GeometryParameterisation
+    from bluemira.geometry.wire import BluemiraWire
 
-import matplotlib
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -46,7 +46,6 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeomOptimisationProblem, KeepOutZone
 from bluemira.geometry.tools import boolean_cut, make_polygon, offset_wire
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.circuits import HelmholtzCage
 from bluemira.optimisation import optimise
@@ -145,10 +144,9 @@ class ParameterisedRippleSolver:
             c.set_ccw((0, 1, 0))
 
         radius = 0.5 * BluemiraFace(self.wp_xs).area / (self.nx * self.ny)
-        filament = BiotSavartFilament(
+        return BiotSavartFilament(
             current_arrays, radius=radius, current=1 / (self.nx * self.ny)
         )
-        return filament
 
     def ripple(
         self,
@@ -175,9 +173,9 @@ class ParameterisedRippleSolver:
         return self.cage.ripple(x, y, z)
 
 
-class RipplePointSelector(ABC):
+class RipplePointSelector:
     """
-    ABC for ripple point selection strategies.
+    Baseclass for ripple point selection strategies.
     """
 
     def __init__(self):
@@ -492,10 +490,12 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
 
         if ripple_selector is None:
             warnings.warn(
-                "RippleConstrainedLengthGOP API has changed, please specify how you want "
-                "to constrain TF ripple by using one of the available RipplePointSelector "
-                f"classes. Defaulting to an EquispacedSelector with {n_rip_points=} for now.",
+                "RippleConstrainedLengthGOP API has changed, please specify how you"
+                " want to constrain TF ripple by using one of the available"
+                " RipplePointSelector classes. Defaulting to an EquispacedSelector with"
+                f" {n_rip_points=} for now.",
                 category=DeprecationWarning,
+                stacklevel=2,
             )
             ripple_selector = EquispacedSelector(n_rip_points)
 
@@ -516,7 +516,8 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         )
         self.ripple_selector = ripple_selector
 
-    def objective(self, parameterisation: GeometryParameterisation) -> float:
+    @staticmethod
+    def objective(parameterisation: GeometryParameterisation) -> float:
         """
         Objective function (minimise length)
         """
@@ -590,10 +591,10 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             )
 
         rv = self.ripple_values
-        norm = matplotlib.colors.Normalize()
+        norm = mpl.colors.Normalize()
         norm.autoscale(rv)
-        cm = matplotlib.cm.viridis
-        sm = matplotlib.cm.ScalarMappable(cmap=cm, norm=norm)
+        cm = mpl.cm.viridis
+        sm = mpl.cm.ScalarMappable(cmap=cm, norm=norm)
         vmin, vmax = np.min(rv) - 1e-6, np.max(rv) + 1e-6
         sm.set_clim(vmin, vmax)
         ax.scatter(

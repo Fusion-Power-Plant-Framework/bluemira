@@ -29,12 +29,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-import bluemira.geometry.face as face
-import bluemira.geometry.placement as placement
-import bluemira.geometry.tools as tools
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.display import plot_3d, plotter
 from bluemira.display.error import DisplayError
+from bluemira.geometry import face, placement, tools
 from bluemira.utilities.plot_tools import Plot3D
 
 SQUARE_POINTS = np.array(
@@ -64,7 +62,7 @@ class TestPlotOptions:
         for no, d in enumerate(d_view):
             try:
                 assert o_view[no] == d
-            except ValueError:
+            except ValueError:  # noqa: PERF203
                 assert all(o_view[no] == d)
 
     def test_options(self):
@@ -81,7 +79,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] == d
-                    except ValueError:
+                    except ValueError:  # noqa: PERF203
                         assert all(val[no] == d)
             else:
                 assert val == getattr(self.default, key)
@@ -98,7 +96,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] != d
-                    except ValueError:
+                    except ValueError:  # noqa: PERF203
                         assert all(val[no] == d)
                 assert val is not the_placement
             else:
@@ -118,7 +116,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] == d
-                    except ValueError:
+                    except ValueError:  # noqa: PERF203
                         assert all(val[no] == d)
             else:
                 assert val == getattr(self.default, key)
@@ -153,7 +151,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] == d
-                    except ValueError:
+                    except ValueError:  # noqa: PERF203
                         assert all(val[no] == d)
             else:
                 assert getattr(the_options, key) == val
@@ -174,7 +172,7 @@ class TestPlotOptions:
                 for no, d in enumerate(getattr(self.default, key)):
                     try:
                         assert val[no] == d
-                    except ValueError:
+                    except ValueError:  # noqa: PERF203
                         assert all(val[no] == d)
             elif key.endswith("options"):
                 assert getattr(the_options, key) == val

@@ -34,7 +34,7 @@ class TestPipePipeJoin:
     target = extrude_shape(face, vec=(0, 10, 0))
     target_void = extrude_shape(void_face, vec=(0, 10, 0))
 
-    @pytest.mark.parametrize("tool_length, n_faces", [(5, 7), (10, 10)])
+    @pytest.mark.parametrize(("tool_length", "n_faces"), [(5, 7), (10, 10)])
     def test_pipe_pipe_join(self, tool_length, n_faces):
         c1 = make_circle(radius=1.0, center=(5, 0, 5), axis=(0, 0, 1))
         c2 = make_circle(radius=1.1, center=(5, 0, 5), axis=(0, 0, 1))

@@ -50,7 +50,7 @@ Plane placement example
 # %%
 import numpy as np
 
-import bluemira.display as display
+from bluemira import display
 from bluemira.geometry.plane import BluemiraPlane
 
 # %% [markdown]

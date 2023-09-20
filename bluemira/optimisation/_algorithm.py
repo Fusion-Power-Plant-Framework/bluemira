@@ -41,7 +41,7 @@ class _AlgorithmMeta(enum.EnumMeta):
             if s == "DIRECT-L":
                 # special case for backward compatibility
                 return super().__getitem__("DIRECT_L")
-            raise ValueError(f"No such Algorithm value '{s}'.")
+            raise ValueError(f"No such Algorithm value '{s}'.") from None
 
 
 class Algorithm(enum.Enum, metaclass=_AlgorithmMeta):

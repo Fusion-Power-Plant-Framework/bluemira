@@ -38,7 +38,7 @@ the method used to map the coilset object to the state vector
 
 import abc
 import warnings
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -113,7 +113,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         coilset: CoilSet,
         optimiser: Optimiser = None,
         objective: OptimisationObjective = None,
-        constraints: List[OptimisationConstraint] = None,
+        constraints: Optional[List[OptimisationConstraint]] = None,
     ):
         super().__init__(coilset, optimiser, objective, constraints)
         self.scale = 1e6  # current_scale
@@ -204,8 +204,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         """
         lower_bounds = np.concatenate((x_bounds[0], z_bounds[0], current_bounds[0]))
         upper_bounds = np.concatenate((x_bounds[1], z_bounds[1], current_bounds[1]))
-        bounds = np.array([lower_bounds, upper_bounds])
-        return bounds
+        return np.array([lower_bounds, upper_bounds])
 
     @staticmethod
     def get_current_bounds(coilset, max_currents, current_scale):
@@ -256,9 +255,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         control_current_limits = np.minimum(
             scaled_input_current_limits, coilset_current_limits
         )
-        current_bounds = (-control_current_limits, control_current_limits)
-
-        return current_bounds
+        return (-control_current_limits, control_current_limits)
 
     def set_current_bounds(self, max_currents: np.ndarray):
         """
@@ -272,7 +269,8 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         n_control_currents = len(self.coilset.current[self.coilset._control_ind])
         if len(max_currents) != n_control_currents:
             raise ValueError(
-                "Length of maximum current vector must be equal to the number of controls."
+                "Length of maximum current vector must be equal to the number of"
+                " controls."
             )
 
         upper_bounds = np.abs(max_currents) / self.scale
@@ -355,7 +353,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         ),
         constraints=None,
     ):
-        # noqa :N803
+        # noqa: N803
 
         # Create region map
         self.region_mapper = RegionMapper(pfregions)
@@ -416,8 +414,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
         lower_bounds = np.concatenate((lower_lmap_bounds, current_bounds[0]))
         upper_bounds = np.concatenate((upper_lmap_bounds, current_bounds[1]))
-        bounds = (lower_bounds, upper_bounds)
-        return bounds
+        return (lower_bounds, upper_bounds)
 
     def optimise(self):
         """
@@ -564,9 +561,9 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
                 "max_eval": 100,
             },
         ),
-        constraints: List[OptimisationConstraint] = None,
+        constraints: Optional[List[OptimisationConstraint]] = None,
     ):
-        # noqa :N803
+        # noqa: N803
 
         # Create region map
         self.region_mapper = RegionMapper(pfregions)
@@ -686,8 +683,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
 
         # Calculate objective function
         sub_opt()
-        fom = sub_opt.opt.optimum_value
-        return fom
+        return sub_opt.opt.optimum_value
 
 
 class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
@@ -1136,21 +1132,18 @@ class BreakdownZoneStrategy(abc.ABC):
         z_c: float
             Vertical coordinate of the breakdown point
         """
-        pass
 
     @abc.abstractproperty
     def breakdown_radius(self) -> float:
         """
         The radius of the breakdown zone.
         """
-        pass
 
     @abc.abstractmethod
     def calculate_zone_points(self, n_points: int) -> Tuple[np.ndarray]:
         """
         Calculate the discretised set of points representing the breakdown zone.
         """
-        pass
 
 
 class CircularZoneStrategy(BreakdownZoneStrategy):
@@ -1243,7 +1236,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         n_B_stray_points,
         optimiser: Optimiser = None,
         max_currents=None,
-        constraints: List[OptimisationConstraint] = None,
+        constraints: Optional[List[OptimisationConstraint]] = None,
     ):
         self.eq = breakdown
         self.scale = 1e6  # current_scale

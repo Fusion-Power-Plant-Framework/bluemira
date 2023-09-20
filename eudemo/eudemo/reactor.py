@@ -35,7 +35,6 @@ The EUDEMO reactor design routine.
 11. Produce power cycle report
 """
 
-import os
 from pathlib import Path
 from typing import Dict, Optional, Union
 
@@ -102,7 +101,7 @@ from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
 CONFIG_DIR = Path(__file__).parent.parent / "config"
-BUILD_CONFIG_FILE_PATH = os.path.join(CONFIG_DIR, "build_config.json")
+BUILD_CONFIG_FILE_PATH = Path(CONFIG_DIR, "build_config.json").as_posix()
 
 
 class EUDEMO(Reactor):

@@ -41,9 +41,8 @@ def get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
     )
     # Get the first intersection with the vertical inner cut plane
     intersections = slice_shape(breeding_blanket_xz.boundary[0], cut_plane)
-    intersections = intersections[intersections[:, -1] > 0.0]
-    intersection = sorted(intersections, key=lambda x: x[-1])[0]
-    return intersection
+    intersections = intersections[intersections[:, -1] > 0.0]  # noqa: PLR2004
+    return sorted(intersections, key=lambda x: x[-1])[0]
 
 
 def make_2d_view_components(

@@ -38,7 +38,7 @@ from tests.optimisation.tools import rosenbrock
 NLOPT_OPT_REF = "bluemira.optimisation._nlopt.optimiser.nlopt.opt"
 
 
-def no_op(x):
+def no_op(x):  # noqa: ARG001
     # No op for use as a dummy function within tests
     pass
 
@@ -73,7 +73,7 @@ class TestNloptOptimiser:
         opt_mock.set_stopval.assert_called_once_with(7)
 
     @pytest.mark.parametrize(
-        "stop_condition, setter",
+        ("stop_condition", "setter"),
         [
             ("ftol_abs", "set_ftol_abs"),
             ("ftol_rel", "set_ftol_rel"),
@@ -114,7 +114,7 @@ class TestNloptOptimiser:
         assert len(caplog.records) == 1
 
     @pytest.mark.parametrize(
-        "string, enum_value, nlopt_enum",
+        ("string", "enum_value", "nlopt_enum"),
         [
             ("SLSQP", Algorithm.SLSQP, nlopt.LD_SLSQP),
             ("COBYLA", Algorithm.COBYLA, nlopt.LN_COBYLA),
@@ -371,13 +371,13 @@ class TestNloptOptimiser:
     def test_ValueError_setting_lower_bounds_with_wrong_dims(self):
         opt = NloptOptimiser("SLSQP", 2, no_op, opt_conditions={"max_eval": 200})
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             opt.set_lower_bounds(np.array([1, 2, 3]))
 
     def test_ValueError_setting_upper_bounds_with_wrong_dims(self):
         opt = NloptOptimiser("SLSQP", 4, no_op, opt_conditions={"max_eval": 200})
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             opt.set_upper_bounds(np.array([[1, 2], [3, 4]]))
 
     @pytest.mark.parametrize(

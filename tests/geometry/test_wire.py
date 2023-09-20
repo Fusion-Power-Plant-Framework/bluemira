@@ -136,13 +136,13 @@ wireat_parametrize = (
 
 
 class TestWireValueAt(ValueParameterBase):
-    @pytest.mark.parametrize("alpha, expected_point", wireat_parametrize)
+    @pytest.mark.parametrize(("alpha", "expected_point"), wireat_parametrize)
     def test_square_alpha(self, alpha, expected_point):
         np.testing.assert_allclose(
             self.square.value_at(alpha=alpha), np.array(expected_point)
         )
 
-    @pytest.mark.parametrize("l_frac, expected_point", wireat_parametrize)
+    @pytest.mark.parametrize(("l_frac", "expected_point"), wireat_parametrize)
     def test_square_distance(self, l_frac, expected_point):
         length = self.square.length
         np.testing.assert_allclose(
@@ -150,7 +150,8 @@ class TestWireValueAt(ValueParameterBase):
         )
 
     @pytest.mark.parametrize(
-        "alpha, expected_point", [(0.0, [5, 0, 5]), (0.5, [0, 0, 0]), (1.0, [5, 0, -5])]
+        ("alpha", "expected_point"),
+        [(0.0, [5, 0, 5]), (0.5, [0, 0, 0]), (1.0, [5, 0, -5])],
     )
     def test_circle_alpha(self, alpha, expected_point):
         np.testing.assert_allclose(
@@ -200,7 +201,7 @@ class TestWireValueAt(ValueParameterBase):
 
 class TestWireParameterAt(ValueParameterBase):
     @pytest.mark.parametrize(
-        "point, alpha",
+        ("point", "alpha"),
         [
             ([0, 0, 0], 0),
             ([2, 0, 0], 0.25),
@@ -214,7 +215,7 @@ class TestWireParameterAt(ValueParameterBase):
         assert np.isclose(self.square.parameter_at(point), alpha)
 
     @pytest.mark.parametrize(
-        "point, alpha", [([5, 0, 5], 0), ([0, 0, 0], 0.5), ([5, 0, -5], 1.0)]
+        ("point", "alpha"), [([5, 0, 5], 0), ([0, 0, 0], 0.5), ([5, 0, -5], 1.0)]
     )
     def test_circle_vertex(self, point, alpha):
         assert np.isclose(self.circle.parameter_at(point, tolerance=1e-6), alpha)
@@ -235,8 +236,9 @@ class TestWireParameterAt(ValueParameterBase):
     @pytest.mark.parametrize("tolerance", [1e-5, 1e-7, 1e-16])
     def test_error(self, tolerance):
         with pytest.raises(GeometryError):
-            line = make_polygon([[0, 0, 0], [1, 0, 0]])
-            line.parameter_at([-2 * tolerance, 0, 0], tolerance=tolerance)
+            make_polygon([[0, 0, 0], [1, 0, 0]]).parameter_at(
+                [-2 * tolerance, 0, 0], tolerance=tolerance
+            )
 
 
 class TestWireDiscretize:
@@ -244,12 +246,12 @@ class TestWireDiscretize:
 
     @pytest.mark.parametrize("n", [-1, 0, 1])
     def test_low_ndiscr(self, n):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             self.line.discretize(n, byedges=False)
 
     @pytest.mark.parametrize("dl", [-10.0, 0])
     def test_low_dl(self, dl):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             self.line.discretize(ndiscr=3, dl=dl, byedges=False)
 
     @pytest.mark.parametrize("byedges", [True, False])

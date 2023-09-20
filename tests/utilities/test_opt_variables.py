@@ -19,10 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
 import shutil
 import tempfile
 from dataclasses import dataclass
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -139,7 +139,7 @@ class TestOptVariables:
     def test_read_write(self):
         tempdir = tempfile.mkdtemp()
         try:
-            the_path = os.sep.join([tempdir, "opt_var_test.json"])
+            the_path = Path(tempdir, "opt_var_test.json")
             self.vars.to_json(the_path)
             new_vars = TestOptVariablesOptVariables.from_json(the_path)
             assert new_vars.as_dict() == self.vars.as_dict()
@@ -149,7 +149,7 @@ class TestOptVariables:
     def test_tabulate_displays_column_values(self):
         table = self.vars.tabulate()
 
-        table_pattern = "\n".join(
+        table_pattern = "\n".join(  # noqa: FLY002
             [
                 "TestOptVariablesOptVariables",
                 "╒════════╤═════════╤═══════════════╤═══════════════╤═════════╤═══════════════╕",

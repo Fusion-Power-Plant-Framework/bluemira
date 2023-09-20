@@ -24,8 +24,8 @@ Tests for palettes module
 """
 from copy import copy
 
-import matplotlib.colors as colors
 import pytest
+from matplotlib import colors
 
 from bluemira.display.palettes import (
     ColorPalette,
@@ -45,7 +45,7 @@ class TestColorPalette:
         self.pal = ColorPalette({"C1": "#000000", "C2": "#ffffff"})
 
     def test_keys(self):
-        assert self.pal.keys() == set(("C1", "C2"))
+        assert self.pal.keys() == {"C1", "C2"}
 
     def test_next(self):
         assert next(self.pal) == "#000000"
@@ -99,8 +99,9 @@ class TestColorPalette:
         pal["C1"] = make_alpha_palette(pal["C1"], 8)
         pal["C2"] = make_alpha_palette(pal["C2"], 3)
 
-        assert pal._repr_colour_str(pal._hex_horizontal()) == (
-            "\x1b[48:2::0:0:0m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
+        assert (
+            pal._repr_colour_str(pal._hex_horizontal())
+            == "\x1b[48:2::0:0:0m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
             "\x1b[48:2::32:32:32m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
             "\x1b[48:2::64:64:64m  \x1b[49m\x1b[48:2::255:255:255m  \x1b[49m\n"
             "\x1b[48:2::96:96:96m  \x1b[49m  \n"

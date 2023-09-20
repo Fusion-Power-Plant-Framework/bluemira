@@ -24,7 +24,7 @@ Geometry optimisation classes and tools
 """
 
 import warnings
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 
@@ -138,7 +138,7 @@ class GeometryOptimisationProblem(OptimisationProblem):
         geometry_parameterisation: GeometryParameterisation,
         optimiser: Optimiser = None,
         objective: OptimisationObjective = None,
-        constraints: List[OptimisationConstraint] = None,
+        constraints: Optional[List[OptimisationConstraint]] = None,
     ):
         super().__init__(geometry_parameterisation, optimiser, objective, constraints)
 
@@ -162,8 +162,9 @@ class GeometryOptimisationProblem(OptimisationProblem):
             )
         else:
             bluemira_warn(
-                f"GeometryParameterisation {self._parameterisation.__class.__name__} does"
-                "not have any shape constraints."
+                "GeometryParameterisation"
+                f" {self._parameterisation.__class.__name__} doesnot have any shape"
+                " constraints."
             )
 
     def update_parameterisation(self, x):

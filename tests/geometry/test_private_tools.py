@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import os
+from pathlib import Path
 from typing import Any, Dict
 
 import matplotlib.pyplot as plt
@@ -151,10 +151,10 @@ class TestMixedFaces:
                 expected.append(value)
                 actual.append(result)
         if error:
-            assert False, list(zip(keys, expected, actual))
+            raise AssertionError(list(zip(keys, expected, actual)))
 
     @pytest.mark.parametrize(
-        "filename,degree,true_props",
+        ("filename", "degree", "true_props"),
         [
             (
                 "IB_test.json",
@@ -188,13 +188,13 @@ class TestMixedFaces:
         """
         Tests some blanket faces that combine splines and polygons.
         """
-        coords = Coordinates.from_json(os.sep.join([TEST_PATH, filename]))
+        coords = Coordinates.from_json(Path(TEST_PATH, filename))
         face = make_mixed_face(*coords.xyz)
         part = revolve_shape(face, degree=degree, label=filename)
         self.assert_properties(true_props, part)
 
     @pytest.mark.parametrize(
-        "filename,vec,true_props",
+        ("filename", "vec", "true_props"),
         [
             (
                 "TF_case_in_test.json",
@@ -228,7 +228,7 @@ class TestMixedFaces:
         """
         Tests TF and divertor faces that combine splines and polygons.
         """
-        fn = os.sep.join([TEST_PATH, filename])
+        fn = Path(TEST_PATH, filename)
         coords = Coordinates.from_json(fn)
         face = make_mixed_face(*coords.xyz)
         part = extrude_shape(face, vec=vec, label=filename)
@@ -239,7 +239,7 @@ class TestMixedFaces:
         """
         Tests a particularly tricky face that can result in a seg fault...
         """
-        fn = os.path.join(TEST_PATH, "divertor_seg_fault_LDS.json")
+        fn = Path(TEST_PATH, "divertor_seg_fault_LDS.json")
         coords = Coordinates.from_json(fn)
         face = make_mixed_face(*coords.xyz)
         true_props = {
@@ -248,7 +248,7 @@ class TestMixedFaces:
         self.assert_properties(true_props, face)
 
     @pytest.mark.parametrize(
-        "name,true_props",
+        ("name", "true_props"),
         [
             (
                 "shell_mixed_test",
@@ -274,15 +274,15 @@ class TestMixedFaces:
         """
         Tests some shell mixed faces
         """
-        inner = Coordinates.from_json(os.path.join(TEST_PATH, f"{name}_inner.json"))
-        outer = Coordinates.from_json(os.path.join(TEST_PATH, f"{name}_outer.json"))
+        inner = Coordinates.from_json(Path(TEST_PATH, f"{name}_inner.json"))
+        outer = Coordinates.from_json(Path(TEST_PATH, f"{name}_outer.json"))
         inner_wire = make_mixed_wire(*inner.xyz)
         outer_wire = make_mixed_wire(*outer.xyz)
         face = BluemiraFace([outer_wire, inner_wire])
         self.assert_properties(true_props, face)
 
     def test_coordinate_cleaning(self):
-        fn = os.path.join(TEST_PATH, "bb_ob_bss_test.json")
+        fn = Path(TEST_PATH, "bb_ob_bss_test.json")
         coords = Coordinates.from_json(fn)
         make_mixed_wire(*coords.xyz, allow_fallback=False)
 
@@ -322,7 +322,7 @@ class TestCoordsConversion:
         return wire, converted_wire
 
     @pytest.mark.parametrize(
-        "filename,method",
+        ("filename", "method"),
         [
             ("IB_test.json", generate_face_polygon),
             ("IB_test.json", generate_face_spline),
@@ -330,7 +330,7 @@ class TestCoordsConversion:
         ],
     )
     def test_coordinates_to_face(self, filename, method):
-        fn = os.sep.join([TEST_PATH, filename])
+        fn = Path(TEST_PATH, filename)
         coords = Coordinates.from_json(fn)
         face, converted_face = method(self, *coords.xyz)
         assert face.area == converted_face.area
@@ -338,7 +338,7 @@ class TestCoordsConversion:
         np.testing.assert_equal(face.center_of_mass, converted_face.center_of_mass)
 
     @pytest.mark.parametrize(
-        "filename,method",
+        ("filename", "method"),
         [
             ("IB_test.json", generate_wire_polygon),
             ("IB_test.json", generate_wire_spline),
@@ -346,7 +346,7 @@ class TestCoordsConversion:
         ],
     )
     def test_coordinates_to_wire_polygon(self, filename, method):
-        fn = os.sep.join([TEST_PATH, filename])
+        fn = Path(TEST_PATH, filename)
         coords = Coordinates.from_json(fn)
         wire, converted_wire = method(self, *coords.xyz)
         assert wire.area == converted_wire.area

@@ -23,8 +23,8 @@
 """
 File saving for fixed boundary equilibrium
 """
-from logging import warn
 from typing import Dict, Optional
+from warnings import warn
 
 import numpy as np
 from scipy.integrate import quad, quadrature
@@ -95,6 +95,7 @@ def save_fixed_boundary_to_file(
         warn(
             "Using kwarg 'formatt' is no longer supported. Use file_format instead.",
             category=DeprecationWarning,
+            stacklevel=2,
         )
         file_format = kw_formatt
 
@@ -127,16 +128,16 @@ def save_fixed_boundary_to_file(
 
     if equilibrium.R_0 is None:
         bluemira_warn(
-            "No explicit R_0 information provided when saving fixed boundary equilibrium "
-            "to file. Taking the average of the boundary radial coordinate extrema."
+            "No explicit R_0 information provided when saving fixed boundary equilibrium"
+            " to file. Taking the average of the boundary radial coordinate extrema."
         )
         R_0 = grid.x_mid
     else:
         R_0 = equilibrium.R_0
     if equilibrium.B_0 is None:
         bluemira_warn(
-            "No explicit B_0 information provided when saving fixed boundary equilibrium "
-            "to file. Setting to 0!"
+            "No explicit B_0 information provided when saving fixed boundary equilibrium"
+            " to file. Setting to 0!"
         )
         B_0 = 0.0
     else:
@@ -184,5 +185,5 @@ def save_fixed_boundary_to_file(
         psinorm=psi_norm,
         qpsi=np.array([]),
     )
-    data.write(file_path, format=file_format, json_kwargs=json_kwargs)
+    data.write(file_path, file_format=file_format, json_kwargs=json_kwargs)
     return data

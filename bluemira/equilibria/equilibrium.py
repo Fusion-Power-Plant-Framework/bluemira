@@ -22,8 +22,8 @@
 """
 Plasma MHD equilibrium and state objects
 """
-import os
 from enum import Enum
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -40,9 +40,9 @@ from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import (
-    find_flux_surf,
     find_LCFS_separatrix,
     find_OX_points,
+    find_flux_surf,
     in_plasma,
     in_zone,
 )
@@ -236,7 +236,7 @@ class MHDState:
         grid = Grid.from_eqdsk(e)
         if e.nlim == 0:
             limiter = None
-        elif e.nlim < 5:
+        elif e.nlim < 5:  # noqa: PLR2004
             limiter = Limiter(e.xlim, e.zlim)
         else:
             limiter = None  # CREATE..
@@ -246,7 +246,7 @@ class MHDState:
     def to_eqdsk(
         self,
         data: Dict[str, Any],
-        filename: str,
+        filename: Union[Path, str],
         header: str = "bluemira_equilibria",
         directory: Optional[str] = None,
         filetype: str = "json",
@@ -255,24 +255,26 @@ class MHDState:
         """
         Writes the Equilibrium Object to an eqdsk file
         """
-        data["name"] = "_".join([filename, header])
+        data["name"] = f"{filename}_{header}"
 
         if not filename.endswith(f".{filetype}"):
             filename += f".{filetype}"
 
         if directory is None:
             try:
-                filename = os.sep.join(
-                    [get_bluemira_path("eqdsk/equilibria", subfolder="data"), filename]
+                filename = Path(
+                    get_bluemira_path("eqdsk/equilibria", subfolder="data"), filename
                 )
             except ValueError as error:
-                raise ValueError(f"Unable to find default data directory: {error}")
+                raise ValueError(
+                    f"Unable to find default data directory: {error}"
+                ) from None
         else:
-            filename = os.sep.join([directory, filename])
+            filename = Path(directory, filename)
 
         self.filename = filename  # Convenient
         eqdsk = EQDSKInterface(**data)
-        eqdsk.write(filename, format=filetype, **kwargs)
+        eqdsk.write(filename, file_format=filetype, **kwargs)
 
 
 class Breakdown(MHDState):
@@ -338,7 +340,7 @@ class Breakdown(MHDState):
         A dictionary for the Breakdown object
         """
         xc, zc, dxc, dzc, currents = self.coilset.to_group_vecs()
-        d = {
+        return {
             "nx": self.grid.nx,
             "nz": self.grid.nz,
             "xdim": self.grid.x_size,
@@ -359,7 +361,6 @@ class Breakdown(MHDState):
             "dzc": dzc,
             "Ic": currents,
         }
-        return d
 
     def to_eqdsk(
         self,
@@ -682,11 +683,8 @@ class Equilibrium(MHDState):
         n_x, n_z = psi.shape
         opoints, xpoints = self.get_OX_points(psi)
         opoint = opoints[0]  # Primary points
-        if xpoints:
-            # It is possible to have an EQDSK with no X-point...
-            psi_bndry = xpoints[0][2]
-        else:
-            psi_bndry = np.amin(psi)
+        # It is possible to have an EQDSK with no X-point...
+        psi_bndry = xpoints[0][2] if xpoints else np.amin(psi)
         psinorm = np.linspace(0, 1, n_x)
 
         if qpsi_calcmode is QpsiCalcMode.CALC:
@@ -885,7 +883,9 @@ class Equilibrium(MHDState):
         self._plasmacoil = None
 
     def solve_li(
-        self, jtor: Optional[np.ndarray] = None, psi: Optional[np.ndarray] = None
+        self,
+        jtor: Optional[np.ndarray] = None,  # noqa: ARG002
+        psi: Optional[np.ndarray] = None,
     ):
         """
         Optimises profiles to match input li
@@ -908,6 +908,8 @@ class Equilibrium(MHDState):
             .psi_func
             ._I_p
             ._Jtor
+
+        jtor argument input is not used but kept for consistency with `solve`
         """
         if not self._li_flag:
             raise EquilibriaError("Cannot use solve_li without the BetaLiIpProfile.")
@@ -1005,7 +1007,7 @@ class Equilibrium(MHDState):
             The radial position of the effective current centre
         zcur:
             The vertical position of the effective current centre
-        """  # noqa :W505
+        """  # noqa: W505
         xcur = np.sqrt(1 / self.profiles.I_p * self._int_dxdz(self.x**2 * self._jtor))
         zcur = 1 / self.profiles.I_p * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur
@@ -1172,13 +1174,11 @@ class Equilibrium(MHDState):
             o_points, x_points = self.get_OX_points()
         if not isinstance(psinorm, Iterable):
             psinorm = [psinorm]
-        psinorm = sorted(psinorm)
+        psinorm = np.maximum(sorted(psinorm), PSI_NORM_TOL)
 
         psi = self.psi()
         flux_surfaces = []
         for psi_n in psinorm:
-            if psi_n < PSI_NORM_TOL:
-                psi_n = PSI_NORM_TOL
             if psi_n > 1 - PSI_NORM_TOL:
                 f_s = ClosedFluxSurface(self.get_LCFS(psi))
             else:
@@ -1309,7 +1309,7 @@ class Equilibrium(MHDState):
             psi_n_tol=psi_n_tol,
         )[1]
 
-    def _clear_OX_points(self):  # noqa :N802
+    def _clear_OX_points(self):
         """
         Speed optimisation for storing OX point searches in a single iteration
         of the solve. Large grids can cause OX finding to be expensive..
@@ -1319,7 +1319,7 @@ class Equilibrium(MHDState):
 
     def get_OX_points(
         self, psi: Optional[np.ndarray] = None, force_update: bool = False
-    ) -> Tuple[Iterable, Iterable]:  # noqa :N802
+    ) -> Tuple[Iterable, Iterable]:
         """
         Returns list of [[O-points], [X-points]]
         """
@@ -1334,9 +1334,7 @@ class Equilibrium(MHDState):
             )
         return self._o_points, self._x_points
 
-    def get_OX_psis(
-        self, psi: Optional[np.ndarray] = None
-    ) -> Tuple[float, float]:  # noqa :N802
+    def get_OX_psis(self, psi: Optional[np.ndarray] = None) -> Tuple[float, float]:
         """
         Returns psi at the.base.O-point and X-point
         """
@@ -1442,10 +1440,10 @@ class Equilibrium(MHDState):
         fz = forces.T[1]
         fz_cs = fz[self.coilset.n_coils("PF") :]
         fz_c_stot = sum(fz_cs)
-        fsep = []
-        for j in range(self.coilset.n_coils("CS") - 1):
-            fsep.append(np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1]))
-        fsep = max(fsep)
+        fsep = max(
+            np.sum(fz_cs[j + 1 :]) - np.sum(fz_cs[: j + 1])
+            for j in range(self.coilset.n_coils("CS") - 1)
+        )
         table = {"I [A]": currents, "B [T]": fields, "F [N]": fz}
         print(
             tabulate.tabulate(
@@ -1468,7 +1466,7 @@ class Equilibrium(MHDState):
         """
         _, x_points = self.get_OX_points()
 
-        if len(x_points) < 2:
+        if len(x_points) < 2:  # noqa: PLR2004
             return False
 
         psi_1 = x_points[0].psi

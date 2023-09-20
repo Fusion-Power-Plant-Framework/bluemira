@@ -152,7 +152,7 @@ class DummyTransportSolver:
         self.n = 50
         self.x = np.linspace(0, 1, self.n)
 
-    def execute(self, mode):
+    def execute(self, mode):  # noqa: ARG002
         return self.params
 
     def get_profile(self, prof):
@@ -182,9 +182,9 @@ class TestSolveTransportFixedBoundary:
     )
 
     @pytest.mark.parametrize(
-        "max_iter,message",
+        ("max_iter", "message"),
         [
-            [1, "did not"],
+            (1, "did not"),
         ],
     )
     def test_full_run_through(self, max_iter, message, caplog):

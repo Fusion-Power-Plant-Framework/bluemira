@@ -21,7 +21,7 @@
 """Designer for wall panelling."""
 
 from dataclasses import dataclass
-from typing import Any, Dict, Optional, Tuple, Union
+from typing import Any, ClassVar, Dict, Optional, Tuple, Union
 
 import numpy as np
 
@@ -93,7 +93,7 @@ class PanellingDesigner(Designer[np.ndarray]):
 
     param_cls = PanellingDesignerParams
     params: PanellingDesignerParams
-    _defaults = {
+    _defaults: ClassVar = {
         "algorithm": "SLSQP",
         "opt_conditions": {"max_eval": 500, "ftol_rel": 1e-8},
         "n_panel_increment_attempts": 3,

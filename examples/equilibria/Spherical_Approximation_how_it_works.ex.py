@@ -131,7 +131,8 @@ min_coil_r = np.min(
 )
 if max_bdry_r > min_coil_r:
     print(
-        "One or more of your coils is too close to the plasma to be used in the SH approximation: see plot."
+        "One or more of your coils is too close to the plasma to be used in the SH"
+        " approximation: see plot."
     )
 
 # Plot
@@ -471,7 +472,8 @@ for degree in np.arange(min_degree, max_degree + 1):
         break
     elif degree == max_degree:
         print(
-            "Oh no you need to use more degrees! Add some more collocation points please."
+            "Oh no you need to use more degrees! Add some more collocation points"
+            " please."
         )
         print("fit metric = ", fit_metric_value)
 

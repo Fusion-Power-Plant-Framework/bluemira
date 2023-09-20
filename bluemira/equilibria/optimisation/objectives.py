@@ -120,11 +120,13 @@ class RegularisedLsqObjective(ObjectiveFunction):
 class CoilCurrentsObjective(ObjectiveFunction):
     """Objective function for the minimisation of the sum of coil currents squared."""
 
-    def f_objective(self, vector: npt.NDArray) -> float:
+    @staticmethod
+    def f_objective(vector: npt.NDArray) -> float:
         """Objective function for an optimisation."""
         return np.sum(vector**2)
 
-    def df_objective(self, vector: npt.NDArray) -> npt.NDArray:
+    @staticmethod
+    def df_objective(vector: npt.NDArray) -> npt.NDArray:
         """Gradient of the objective function for an optimisation."""
         return 2 * vector
 
@@ -150,7 +152,7 @@ class MaximiseFluxObjective(ObjectiveFunction):
         """Objective function for an optimisation."""
         return -self.scale * self.c_psi_mat @ vector
 
-    def df_objective(self, vector: npt.NDArray) -> npt.NDArray:
+    def df_objective(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
         """Gradient of the objective function for an optimisation."""
         return -self.scale * self.c_psi_mat
 

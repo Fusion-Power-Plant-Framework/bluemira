@@ -228,17 +228,19 @@ class TestGeometry:
             wire=zone, n_discr=20, byedges=False, dl=None, shape_n_discr=30
         )
 
-        with mock.patch.object(zone, "discretize", wraps=zone.discretize) as discr_mock:
-            with mock.patch.object(parameterisation, "create_shape", return_value=pf):
-                with mock.patch.object(
-                    pf, "discretize", wraps=pf.discretize
-                ) as shape_discr_mock:
-                    optimise_geometry(
-                        parameterisation,
-                        lambda x: x.create_shape().length,
-                        keep_out_zones=[koz],
-                        opt_conditions={"max_eval": 1},
-                    )
+        with mock.patch.object(
+            zone, "discretize", wraps=zone.discretize
+        ) as discr_mock, mock.patch.object(
+            parameterisation, "create_shape", return_value=pf
+        ), mock.patch.object(
+            pf, "discretize", wraps=pf.discretize
+        ) as shape_discr_mock:
+            optimise_geometry(
+                parameterisation,
+                lambda x: x.create_shape().length,
+                keep_out_zones=[koz],
+                opt_conditions={"max_eval": 1},
+            )
 
         discr_mock.assert_called_once_with(20, byedges=False, dl=None)
         # Note we expect more than one call to 'geom.discretize' due to

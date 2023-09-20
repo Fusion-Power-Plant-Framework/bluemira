@@ -791,14 +791,14 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         points = [arc_1, arc_2, arc_3, arc_4]
 
         # Rectangles
-        for s in slices:
-            points.append(np.vstack([arc_1[s], arc_2[s], arc_3[s], arc_4[s], arc_1[s]]))
+        points.extend(
+            [
+                np.vstack([arc_1[s], arc_2[s], arc_3[s], arc_4[s], arc_1[s]])
+                for s in slices
+            ]
+        )
 
-        points_array = []
-        for p in points:
-            points_array.append(self._local_to_global(p))
-
-        return np.array(points_array, dtype=object)
+        return np.array([self._local_to_global(p) for p in points], dtype=object)
 
     def plot(self, ax: Optional[plt.Axes] = None, show_coord_sys: bool = False):
         """

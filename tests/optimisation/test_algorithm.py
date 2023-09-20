@@ -32,5 +32,5 @@ class TestAlgorithm:
         assert Algorithm["DIRECT-L"] == Algorithm.DIRECT_L
 
     def test_ValueError_given_unknown_algorithm_str(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError):  # noqa: PT011
             Algorithm["NOT_AN_ALG"]

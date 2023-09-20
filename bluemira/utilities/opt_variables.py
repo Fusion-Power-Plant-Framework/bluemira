@@ -26,6 +26,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import MISSING, Field, field
+from pathlib import Path
 from typing import Dict, Generator, Optional, TextIO, TypedDict, Union
 
 import numpy as np
@@ -232,13 +233,15 @@ class OptVariable:
         """
         if value < self.lower_bound:
             bluemira_warn(
-                f"OptVariable '{self.name}': value was set to below its lower bound. Adjusting bound."
+                f"OptVariable '{self.name}': value was set to below its lower bound."
+                " Adjusting bound."
             )
             self.lower_bound = value
 
         if value > self.upper_bound:
             bluemira_warn(
-                f"OptVariable '{self.name}': value was set to above its upper bound. Adjusting bound."
+                f"OptVariable '{self.name}': value was set to above its upper bound."
+                " Adjusting bound."
             )
             self.upper_bound = value
 
@@ -251,7 +254,8 @@ class OptVariable:
     def _validate_value(self, value):
         if not self.lower_bound <= value <= self.upper_bound:
             raise OptVariablesError(
-                f"OptVariable '{self.name}' - value {value} is out of bounds: [{self.lower_bound}, {self.upper_bound}]"
+                f"OptVariable '{self.name}' - value {value} is out of bounds:"
+                f" [{self.lower_bound}, {self.upper_bound}]"
             )
 
     def __repr__(self) -> str:
@@ -263,7 +267,10 @@ class OptVariable:
             self.upper_bound,
             self.fixed,
         )
-        return f"{self.__class__.__name__}({self.name}, {self.value}, {lower_bound=}, {upper_bound=}, {fixed=})"
+        return (
+            f"{self.__class__.__name__}({self.name}, {self.value}, {lower_bound=},"
+            f" {upper_bound=}, {fixed=})"
+        )
 
     def __str__(self) -> str:
         """
@@ -282,19 +289,17 @@ class OptVariable:
         """The sum of two OptVariables is the sum of their values"""
         if isinstance(other, OptVariable):
             return self.value + other.value
-        elif isinstance(other, (int, float, np.floating)):
+        if isinstance(other, (int, float, np.floating)):
             return self.value + other
-        else:
-            raise TypeError(f"Cannot add OptVariable with {type(other)}")
+        raise TypeError(f"Cannot add OptVariable with {type(other)}")
 
     def __sub__(self, other: OptVariable):
         """The subtraction of two OptVariables is the subtraction of their values"""
         if isinstance(other, OptVariable):
             return self.value - other.value
-        elif isinstance(other, (int, float, np.floating)):
+        if isinstance(other, (int, float, np.floating)):
             return self.value - other
-        else:
-            raise TypeError(f"Cannot subtract OptVariable with {type(other)}")
+        raise TypeError(f"Cannot subtract OptVariable with {type(other)}")
 
     def __mul__(self, other: OptVariable):
         """
@@ -303,10 +308,9 @@ class OptVariable:
         """
         if isinstance(other, OptVariable):
             return self.value * other.value
-        elif isinstance(other, (int, float, np.floating)):
+        if isinstance(other, (int, float, np.floating)):
             return self.value * other
-        else:
-            raise TypeError(f"Cannot multiply OptVariable with {type(other)}")
+        raise TypeError(f"Cannot multiply OptVariable with {type(other)}")
 
 
 def ov(
@@ -330,18 +334,19 @@ class OptVariablesFrame:
     Class to model the variables for an optimisation
     """
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *_args, **_kwargs):
         """
         Prevent instantiation of this class.
         """
         if cls == OptVariablesFrame:
             raise TypeError(
-                "Cannot instantiate an OptVariablesFrame directly. It must be subclassed."
+                "Cannot instantiate an OptVariablesFrame directly. It must be"
+                " subclassed."
             )
         if not hasattr(cls, "__dataclass_fields__"):
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
-        for field_name in cls.__dataclass_fields__:  # type: ignore
-            dcf: Field = cls.__dataclass_fields__[field_name]  # type: ignore
+        for field_name in cls.__dataclass_fields__:  # type: ignore[attr-defined]
+            dcf: Field = cls.__dataclass_fields__[field_name]  # type: ignore[attr-defined]
             fact_inst = dcf.default_factory() if dcf.default_factory != MISSING else None
             if fact_inst is None:
                 raise TypeError(
@@ -349,11 +354,13 @@ class OptVariablesFrame:
                 )
             if not isinstance(fact_inst, OptVariable):
                 raise TypeError(
-                    f"OptVariablesFrame contains non-OptVariable object '{field_name}: {type(fact_inst)}'"
+                    f"OptVariablesFrame contains non-OptVariable object '{field_name}:"
+                    f" {type(fact_inst)}'"
                 )
             if field_name != fact_inst.name:
                 raise TypeError(
-                    f"OptVariablesFrame contains OptVariable with incorrect name '{fact_inst.name}', defined as '{field_name}'"
+                    "OptVariablesFrame contains OptVariable with incorrect name"
+                    f" '{fact_inst.name}', defined as '{field_name}'"
                 )
 
         return super().__new__(cls)
@@ -365,7 +372,7 @@ class OptVariablesFrame:
         The order is based on the order in which the parameters were
         declared.
         """
-        for field_name in self.__dataclass_fields__:  # type: ignore
+        for field_name in self.__dataclass_fields__:  # type: ignore[attr-defined]
             yield getattr(self, field_name)
 
     def __getitem__(self, name: str) -> OptVariable:
@@ -444,10 +451,11 @@ class OptVariablesFrame:
                     v.get("upper_bound", None),
                     v.get("fixed", None),
                 ]
-                if all([i is None for i in args]):
+                if all(i is None for i in args):
                     raise OptVariablesError(
-                        "When adjusting variables in an OptVariableFrame instance, the dictionary"
-                        " must be of the form: {'var_name': {'value': v, 'lower_bound': lb, 'upper_bound': ub}, ...}"
+                        "When adjusting variables in an OptVariableFrame instance, the"
+                        " dictionary must be of the form: {'var_name': {'value': v,"
+                        " 'lower_bound': lb, 'upper_bound': ub}, ...}"
                     )
                 self.adjust_variable(k, *args, strict_bounds=strict_bounds)
 
@@ -505,7 +513,8 @@ class OptVariablesFrame:
         """
         if len(x_norm) != self.n_free_variables:
             raise OptVariablesError(
-                f"Number of normalised variables {len(x_norm)} != {self.n_free_variables}."
+                f"Number of normalised variables {len(x_norm)} !="
+                f" {self.n_free_variables}."
             )
         return [
             opv.from_normalised(v_norm) for opv, v_norm in zip(self._opt_vars, x_norm)
@@ -573,7 +582,7 @@ class OptVariablesFrame:
         json_writer(self.as_serializable(), file, **kwargs)
 
     @classmethod
-    def from_json(cls, file: Union[str, TextIO], frozen=False):
+    def from_json(cls, file: Union[Path, str, TextIO]):
         """
         Create an OptVariablesFrame instance from a json file.
 
@@ -582,8 +591,8 @@ class OptVariablesFrame:
         file: Union[str, TextIO]
             The path to the file, or an open file handle that supports reading.
         """
-        if isinstance(file, str):
-            with open(file, "r") as fh:
+        if isinstance(file, (Path, str)):
+            with open(file) as fh:
                 return cls.from_json(fh)
 
         d = json.load(file)

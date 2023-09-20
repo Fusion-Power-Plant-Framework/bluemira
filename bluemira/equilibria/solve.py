@@ -94,7 +94,6 @@ class ConvergenceCriterion(ABC):
         -------
         True if the convergence criterion is met, else False.
         """
-        pass
 
     def check_converged(self, value: float) -> bool:
         """
@@ -454,7 +453,8 @@ class PicardIterator:
             self.convergence = DudsonConvergence()
         else:
             raise ValueError(
-                "Optimiser convergence specification must be a sub-class of ConvergenceCriterion."
+                "Optimiser convergence specification must be a sub-class of"
+                " ConvergenceCriterion."
             )
         self.fixed_coils = fixed_coils
 
@@ -508,14 +508,15 @@ class PicardIterator:
         while self.i < self.maxiter:
             try:
                 next(iterator)
-            except StopIteration:
+            except StopIteration:  # noqa: PERF203
                 print()
                 bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
         else:
             print()
             bluemira_warn(
-                f"EQUILIBRIA G-S unable to find converged value after {self.i} iterations."
+                "EQUILIBRIA G-S unable to find converged value after"
+                f" {self.i} iterations."
             )
         self._teardown()
         return self.result

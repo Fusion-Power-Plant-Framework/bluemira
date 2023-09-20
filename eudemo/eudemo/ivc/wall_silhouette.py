@@ -122,7 +122,8 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         """
         if not self.file_path:
             raise ValueError(
-                f"Cannot execute {type(self).__name__} in 'read' mode: no file path specified."
+                f"Cannot execute {type(self).__name__} in 'read' mode: no file path"
+                " specified."
             )
         return self.parameterisation_cls.from_json(file=self.file_path)
 
@@ -138,7 +139,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
         bluemira_print("Solving WallSilhouette optimisation")
         bluemira_debug(
-            f"Setting up design problem with:\n"
+            "Setting up design problem with:\n"
             f"algorithm_name: {self.algorithm_name}\n"
             f"n_variables: {parameterisation.variables.n_free_variables}\n"
             f"opt_conditions: {self.opt_conditions}\n"
@@ -171,13 +172,13 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         shape_params = {}
         for key, val in self.variables_map.items():
             if isinstance(val, str):
-                val = getattr(self.params, val).value
+                val = getattr(self.params, val).value  # noqa: PLW2901
 
             if isinstance(val, dict):
                 if isinstance(val["value"], str):
                     val["value"] = getattr(self.params, val["value"]).value
             else:
-                val = {"value": val}
+                val = {"value": val}  # noqa: PLW2901
 
             shape_params[key] = val
 
@@ -233,8 +234,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         flux_surface_zone = self.equilibrium.get_flux_surface(psi_n)
         # Chop the flux surface to only take the upper half
         indices = flux_surface_zone.z >= o_points[0][1]
-        flux_surface_zone = make_polygon(flux_surface_zone.xyz[:, indices], closed=True)
-        return flux_surface_zone
+        return make_polygon(flux_surface_zone.xyz[:, indices], closed=True)
 
     def _make_divertor_leg_keep_out_zone(
         self, leg_length_ib_2D, leg_length_ob_2D

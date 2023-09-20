@@ -225,8 +225,7 @@ class LowerPortKOZDesigner(Designer):
                     f" space between TF coils at x={x_point}."
                 )
 
-            y_at_x_proj = x_len * np.tan(self._half_beta)
-            return y_at_x_proj
+            return x_len * np.tan(self._half_beta)
 
         ib_inner_y = _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk
         ob_inner_y = _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk
@@ -340,7 +339,7 @@ class LowerPortKOZDesigner(Designer):
 
         itc_pts = self._intersection_points(angled_duct_boundary, tf_offset_boundary)
 
-        if len(itc_pts) < 2:
+        if len(itc_pts) < 2:  # noqa: PLR2004
             raise GeometryError(
                 "LowerPortDesigner: angled duct must be made larger (increase r_search)"
             )
@@ -354,7 +353,7 @@ class LowerPortKOZDesigner(Designer):
 
         # choose corner point
         topleft_corner_pt = itc_bot_pt
-        if self.params.lower_port_angle.value > -45:
+        if self.params.lower_port_angle.value > -45:  # noqa: PLR2004
             topleft_corner_pt = itc_top_pt
 
         topright_corner_pt = (
@@ -455,8 +454,4 @@ class LowerPortKOZDesigner(Designer):
         dist, vects = distance_to(shape_a, shape_b)
         if dist < D_TOLERANCE:  # intersecting, return intersection points
             return LowerPortKOZDesigner._intersection_points(shape_a, shape_b)
-        points = []
-        vect_pairs = vects[0]
-        for v in vect_pairs:
-            points.append((v[0], v[1], v[2]))
-        return points
+        return [(v[0], v[1], v[2]) for v in vects[0]]

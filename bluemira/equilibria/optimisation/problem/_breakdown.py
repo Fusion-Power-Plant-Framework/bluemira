@@ -52,7 +52,7 @@ class BreakdownZoneStrategy(abc.ABC):
         Thickness of the scrape-off layer
     """
 
-    def __init__(self, R_0, A, tk_sol, **kwargs):
+    def __init__(self, R_0, A, tk_sol, **kwargs):  # noqa: ARG002
         self.R_0 = R_0
         self.A = A
         self.tk_sol = tk_sol
@@ -69,21 +69,18 @@ class BreakdownZoneStrategy(abc.ABC):
         z_c:
             Vertical coordinate of the breakdown point
         """
-        pass
 
     @abc.abstractproperty
     def breakdown_radius(self) -> float:
         """
         The radius of the breakdown zone.
         """
-        pass
 
     @abc.abstractmethod
     def calculate_zone_points(self, n_points: int) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calculate the discretised set of points representing the breakdown zone.
         """
-        pass
 
 
 class CircularZoneStrategy(BreakdownZoneStrategy):
@@ -240,7 +237,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         max_currents = np.atleast_1d(max_currents)
         self.bounds = (-max_currents / self.scale, max_currents / self.scale)
 
-    def optimise(self, x0=None, fixed_coils=True):
+    def optimise(self, x0=None, fixed_coils=True):  # noqa: ARG002
         """
         Solve the optimisation problem.
         """

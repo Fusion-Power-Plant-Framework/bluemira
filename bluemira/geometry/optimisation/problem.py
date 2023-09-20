@@ -61,7 +61,7 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         raise NotImplementedError
 
-    def eq_constraints(self) -> List[GeomConstraintT]:
+    def eq_constraints(self) -> List[GeomConstraintT]:  # noqa: PLR6301
         """
         List of equality constraints for the optimisation.
 
@@ -70,7 +70,7 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         return []
 
-    def ineq_constraints(self) -> List[GeomConstraintT]:
+    def ineq_constraints(self) -> List[GeomConstraintT]:  # noqa: PLR6301
         """
         List of inequality constraints for the optimisation.
 
@@ -79,7 +79,7 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         """
         return []
 
-    def keep_out_zones(self) -> List[KeepOutZone]:
+    def keep_out_zones(self) -> List[KeepOutZone]:  # noqa: PLR6301
         """
         List of geometric keep-out zones.
 
