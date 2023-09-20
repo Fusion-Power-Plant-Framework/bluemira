@@ -23,14 +23,13 @@ set -euxo pipefail
 
 cd $tmp_dir
 
-sudo apt install g++ cmake libhdf5-dev libpng-dev -y
+sudo apt install g++ cmake libhdf5-dev libpng-dev libopenmpi-dev ninja-build -y
 
 git clone --recurse-submodules https://github.com/openmc-dev/openmc.git
 cd openmc
 mkdir build && cd build
-cmake -DCMAKE_INSTALL_PREFIX=$HOME/.local -DOPENMC_USE_MPI=ON ..
-make
-make install
+cmake -GNinja -DCMAKE_INSTALL_PREFIX=$HOME/.local -DOPENMC_USE_MPI=ON ..
+ninja install
 
 cd ..
 pip install .
