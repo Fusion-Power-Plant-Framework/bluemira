@@ -1100,16 +1100,6 @@ def load_fw_points(
     -----
     All units for the diagram above are in cgs
     """
-    from bluemira.geometry.tools import (
-        interpolate_bspline,
-        make_bezier,
-        make_circle,
-        make_circle_arc_3P,
-        make_polygon,
-        wire_closure,
-    )
-    from bluemira.geometry.wire import BluemiraWire
-
     # Get data:
     # Get the geometry from existing .npy files, each is an array of
     # 3D coordinates of points sampled along the divertor first wall outline.
