@@ -3,15 +3,19 @@ TODO:
 [ ]compare the pps_api with open-radiation-source/parametric-plasma-source/.git
     [ ]find the units and documentations for creating source_params_dict
         - See details in PPS_OpenMC.so library
-        - why parametric source mode=2: need to dig open the PPS_OpenMC.so
-[]Unit: cgs -> metric
+[ ]Integration into our logging system (print should go through bluemira_print etc.)
+[ ]Use BluemiraWire instead of .npy files
+[ ]Unit: cgs -> metric
     [ ]Check other files (other than quick_tbr_heating.py) as well
+[ ]Find out from the author of plasma_lib.F90:
+    [ ]What is a_array and s_array?
+    [ ]What is with the 629 problem?
+After talking w/ A. Davis:
 []Replace the following:
     - parametric-plasma-source/parametric_plasma_source/fortran_api/*src/
     - parametric-plasma-source/parametric_plasma_source/pps_api
     - `pip install
         git+https://github.com/open-radiation-source/parametric-plasma-source.git@main`
-[ ]Integration into our logging system (print should go through bluemira_print etc.)
 [ ]Some parameters are locked up inside functions:
     [ ]create_parametric_source
 ____
@@ -43,6 +47,8 @@ from bluemira.neutronics.volume_functions import stochastic_volume_calculation
 config[
     "cross_sections"
 ] = "/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml"
+# cross_sections are probably downloaded from here
+# https://github.com/openmc-dev/data/
 
 
 # openmc source maker
@@ -101,9 +107,17 @@ def create_parametric_source(tokamak_geometry: TokamakGeometry) -> openmc.Source
     # Parameter dictionary has to be formatted as string to be provided to the library.
     source_params_str = ",".join(f"{k}={v}" for k, v in source_params_dict.items())
 
-    parametric_source = openmc.Source(
-        library="./PPS_OpenMC.so", parameters=source_params_str
-    )
+    try:
+        from parametric_plasma_source import PlasmaSource
+
+        plasma = PlasmaSource(source_params_dict)
+        parametric_source = openmc.Source(
+            library=SOURCE_SAMPLING_PATH, parameters=plasma
+        )
+    except ImportError:
+        parametric_source = openmc.Source(
+            library="./PPS_OpenMC.so", parameters=source_params_str
+        )
 
     return parametric_source
 
@@ -369,7 +383,7 @@ if __name__ == "__main__":
     # set up the variables to be used for the openmc simulation
 
     tokamak_properties = get_preset_physical_properties(mm.BlanketType.WCLL)
-    # allowed blanket_type so far = {'wcll', 'dcll', 'hcpb'}
+    # allowed blanket_type so far = {'WCLL', 'DCLL', 'HCPB'}
     breeder_materials = tokamak_properties.breeder_materials
     tokamak_geometry = tokamak_properties.tokamak_geometry
 

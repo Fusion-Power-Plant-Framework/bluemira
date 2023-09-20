@@ -27,7 +27,7 @@ def print_df_decorator_with_title_string(
         def dataframe_method_wrapper(self, print_df: bool = True) -> Any:
             method_output = method(self)
             if print_df:
-                if hasattr(method_output, "to_string"):
+                if hasattr(method_output, "to_string"):  # duck-typing
                     output_str = method_output.to_string()
                 else:
                     output_str = str(method_output)
@@ -41,18 +41,24 @@ def print_df_decorator_with_title_string(
 
 def get_percent_err(row):
     """
-    Calculate a percentage error to the required row
+    Calculate a percentage error to the required row,
+    assuming  cells had been filled out.
+
+    Parameters
+    ----------
+    row: pd.Series object
+        It should have the "mean" and "std. dev."
+        row['mean']: scalar
+        row['std. dev.']: scalar
+
+    Returns
+    -------
+    fractional_error: scalar
     """
-    # Adds a column to an OpenMC results dataframe that is the
+    # Returns to an OpenMC results dataframe that is the
     # percentage stochastic uncertainty in the result
 
-    val = 100
-
-    if (hasattr(row["mean"], "all") and (row["mean"] > 0.0).all()) or row["mean"] > 0.0:
-        # For the mesh values the values are in a series but all results are equivalent
-        val *= row["std. dev."] / row["mean"]
-
-    return val
+    return row["std. dev."] / row["mean"] * 100.0
 
 
 class PoloidalXSPlot(object):
@@ -102,8 +108,8 @@ class OpenMCResult:
         self.mat_names = {}
         for cell_id, _cell in self.universe.cells.items():
             self.cell_names[cell_id] = _cell.name
-            if _cell.fill:  # if this cell is not a void
-                self.mat_names[cell_id] = _cell.fill.name
+            if _cell.fill is not None:  # if this cell is not a void
+                self.mat_names[_cell.fill.id] = _cell.fill.name
 
         # Creating cell volume dictionary to allow easy mapping to dataframe
         self.cell_vols = {}
