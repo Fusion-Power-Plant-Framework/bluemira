@@ -225,7 +225,14 @@ class BiotSavartFilament(CurrentSource):
 
         # Self-inductance correction (Y = 0.5 for homogenous current distribution)
         # Equation 6 of https://arxiv.org/pdf/1204.1486.pdf
-        l_hat_0 = self.length * (2 * np.log(self.length_scale / self.radius) + 0.5)
+        error_tail = 0
+        a, b = self.radius, 0.5 * self.length_scale
+        if b > 10 * a:
+            # Equation A.4 of https://arxiv.org/pdf/1204.1486.pdf
+            error_tail = a**2 / b**2 - 3 / (8 * b**4) * (a**4 - 2 * a**2)
+        l_hat_0 = self.length * (
+            2 * np.log(self.length_scale / self.radius) + 0.5 + error_tail
+        )
 
         return MU_0_4PI * (inductance + l_hat_0)
 
