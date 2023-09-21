@@ -425,3 +425,4 @@ class TestFixedPlasmaEquilibrium:
     def test_plotting(self, field):
         self.eq.plot(field=field)
         plt.show()
+        plt.close()
