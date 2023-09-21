@@ -24,7 +24,9 @@ ____
 from dataclasses import dataclass
 from typing import Literal
 
+import numpy as np
 import openmc
+from matplotlib.pyplot import plot
 from numpy import pi
 from openmc.config import config
 
@@ -34,6 +36,8 @@ import bluemira.neutronics.result_presentation as present
 
 # Constants
 from bluemira.base.constants import raw_uc
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.tools import make_polygon
 from bluemira.neutronics.constants import dt_neutron_energy_MeV
 from bluemira.neutronics.params import (
     BreederTypeParameters,
@@ -213,7 +217,9 @@ class TBRHeatingSimulation:
         self.material_lib = None
         self.universe = None
 
-    def setup(self, plot_geometry: bool = True) -> None:
+    def setup(
+        self, blanket_face, divertor_face, R_0, A, kappa, plot_geometry: bool = True
+    ) -> None:
         """Plot the geometry and saving them as .png files with hard-coded names."""
         material_lib = create_and_export_materials(self.breeder_materials)
         self.material_lib = material_lib
@@ -234,7 +240,7 @@ class TBRHeatingSimulation:
         )
 
         blanket_points, div_points, num_inboard_points = mg.load_fw_points(
-            self.tokamak_geometry, True
+            self.tokamak_geometry, blanket_face, divertor_face, R_0, A, kappa, True
         )
         self.cells, self.universe = mg.make_geometry(
             self.tokamak_geometry,
@@ -404,7 +410,11 @@ if __name__ == "__main__":
     tbr_heat_sim = TBRHeatingSimulation(
         runtime_variables, operation_variable, breeder_materials, tokamak_geometry
     )
-    tbr_heat_sim.setup(True)
+    blanket_face = make_polygon(Coordinates(np.load("blanket_face.npy")))
+    divertor_face = make_polygon(Coordinates(np.load("divertor_face.npy")))
+    tbr_heat_sim.setup(
+        blanket_face, divertor_face, R_0=900, A=3.10344, kappa=1.792, plot_geometry=True
+    )
     tbr_heat_sim.run()
     # get the TBR, component heating, first wall dpa, and photon heat flux
     tbr_heat_sim.get_result(True)

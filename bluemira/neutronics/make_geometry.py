@@ -3,6 +3,7 @@ import copy
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
+import numpy.typing as npt
 import openmc
 from numpy import pi
 
@@ -10,6 +11,7 @@ import bluemira.neutronics.make_materials as mm
 import bluemira.neutronics.result_presentation as present
 import bluemira.neutronics.volume_functions as vf
 from bluemira.base.constants import raw_uc
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.params import TokamakGeometry
 
 cells = {}  # is actually a dictionary of cells and cell lists
@@ -84,10 +86,10 @@ def make_offset_poly(old_x, old_y, offset, outer_ccw):
 
     for curr in range(num_points):
         prev = (curr + num_points - 1) % num_points
-        next = (curr + 1) % num_points
+        nxt = (curr + 1) % num_points
 
-        vn_x = old_x[next] - old_x[curr]
-        vn_y = old_y[next] - old_y[curr]
+        vn_x = old_x[nxt] - old_x[curr]
+        vn_y = old_y[nxt] - old_y[curr]
         vnn_x, vnn_y = normalize_vec(vn_x, vn_y)
         nnn_x = vnn_y
         nnn_y = -vnn_x
@@ -146,8 +148,6 @@ def elongate(points, adjust_elong):
 
 def stretch_r(points, tokamak_geometry: TokamakGeometry, stretch_r_val) -> np.ndarray:
     """Moves the points in the r dimension away from the major radius by extra_r_cm"""
-    tokamak_geometry.major_r
-
     points[:, 0] = (
         points[:, 0] - tokamak_geometry.major_r
     ) * stretch_r_val + tokamak_geometry.major_r
@@ -1049,8 +1049,14 @@ def make_geometry(
 
 
 def load_fw_points(
-    tokamak_geometry: TokamakGeometry, save_plots: bool = True
-) -> Tuple[float, float, int]:
+    tokamak_geometry: TokamakGeometry,
+    blanket_face: BluemiraWire,
+    divertor_face: BluemiraWire,
+    R_0: float,
+    A: float,
+    kappa: float,
+    save_plots: bool = True,
+) -> Tuple[npt.NDArray, npt.NDArray, int]:
     """
     Load given first wall points,
         scale them according to the given major and minor radii,
@@ -1072,8 +1078,6 @@ def load_fw_points(
 
     Dataflow diagram for this function
     ----------------------------------
-    blanket_face.npy                divertor_face.npy
-            ↓                           ↓
     full_blanket_2d_outline         divertor_2d_outline
             ↓                           ↓
     (select plasma-facing part)         ↓
@@ -1100,17 +1104,11 @@ def load_fw_points(
     -----
     All units for the diagram above are in cgs
     """
-    # Get data:
-    # Get the geometry from existing .npy files, each is an array of
-    # 3D coordinates of points sampled along the divertor first wall outline.
-    full_blanket_2d_outline = np.load("blanket_face.npy")[0]
-    divertor_2d_outline = np.load("divertor_face.npy")[0]
-    # <magic numbers and magic function>
-    # that fits only these npy model.
-    # The plasma geometry
-    ex_pts_maj_r = 900.0
-    ex_pts_min_r = 290.0
-    ex_pts_elong = 1.792
+    full_blanket_2d_outline = blanket_face.discretize(100).T
+    divertor_2d_outline = divertor_face.discretize(100).T
+    ex_pts_maj_r = R_0
+    ex_pts_min_r = R_0 / A
+    ex_pts_elong = kappa
     # Specifying the number of the selected points that define the inboard.
     num_inboard_points = 6
     # indices
