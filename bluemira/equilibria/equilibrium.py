@@ -390,7 +390,7 @@ class CoilSetMHDState(MHDState):
         limiter:
             Limiter instance if any limiters are in file
         """
-        e, psi, grid = super()._get_eqdsk(filename, force_symmetry)
+        e, psi, grid = super()._get_eqdsk(filename)
         coilset = CoilSet.from_group_vecs(e)
         if force_symmetry:
             coilset = symmetrise_coilset(coilset)
