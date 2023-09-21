@@ -476,7 +476,7 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
     ):
         super().__init__(ax)
         self.eq = equilibrium
-        self.psi = self.eq.psi()
+        self.psi = self.eq.psi(self.eq.x, self.eq.z)
 
         if not field:
             self.plot_plasma_current()

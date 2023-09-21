@@ -269,9 +269,6 @@ class FixedPlasmaEquilibrium(MHDState):
         -------
         Radial magnetic field at x, z
         """
-        if x is None and z is None:
-            return self.plasma._Bx_greens(self._bx_green)
-
         return self.plasma.Bx(x, z)
 
     def Bz(
@@ -295,9 +292,6 @@ class FixedPlasmaEquilibrium(MHDState):
         -------
         Vertical magnetic field at x, z
         """
-        if x is None and z is None:
-            return self.plasma._Bz_greens(self._bz_green)
-
         return self.plasma.Bz(x, z)
 
     def Bp(

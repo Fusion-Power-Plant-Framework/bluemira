@@ -421,6 +421,7 @@ class TestFixedPlasmaEquilibrium:
         path = Path(root, "equilibria", "STEP_SPR_08", "jetto.eqdsk_out")
         cls.eq = FixedPlasmaEquilibrium.from_eqdsk(path)
 
-    def test_plotting(self):
-        self.eq.plot()
+    @pytest.mark.parametrize("field", [False, True])
+    def test_plotting(self, field):
+        self.eq.plot(field=field)
         plt.show()
