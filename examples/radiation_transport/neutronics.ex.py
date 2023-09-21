@@ -54,10 +54,10 @@ def get_preset_physical_properties(
     # 2.2        # fw and armour
 
     plasma_shape = {
-        "minor_r": 288.3,
-        "major_r": 893.8,
-        "elong": 1.65,
-        "shaf_shift": 0.0,
+        "minor_r": raw_uc(2.883, "m", "cm"),  # [cm]
+        "major_r": raw_uc(8.938, "m", "cm"),  # [cm]
+        "elong": 1.65,  # [dimensionless]
+        "shaf_shift": raw_uc(0.0, "cm", "m"),  # [m]
     }  # The shafranov shift of the plasma
     if blanket_type is BlanketType.WCLL:
         tokamak_geometry = TokamakGeometry(

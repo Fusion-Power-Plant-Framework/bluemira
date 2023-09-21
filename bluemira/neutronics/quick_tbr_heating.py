@@ -26,7 +26,7 @@ TODO:
 [ ]Integration into our logging system (print should go through bluemira_print etc.)
 [ ]Use BluemiraWire instead of .npy files
 [ ]Unit: cgs -> metric
-    [ ]Check other files (other than quick_tbr_heating.py) as well
+    - make_geometry: BluemiraWire inputs in metric, but .npy inputs in cgs.
 [ ]Find out from the author of plasma_lib.F90:
     [ ]What is a_array and s_array?
     [ ]What is with the 629 problem?
@@ -48,6 +48,7 @@ from numpy import pi
 from openmc.config import config
 from pps_isotropic.source import create_parametric_plasma_source
 
+import bluemira.neutronics.constants as neutronics_const
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.result_presentation as present
 from bluemira.base.constants import raw_uc
@@ -87,7 +88,7 @@ def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
     )
     ring_source.angle = openmc.stats.Isotropic()
     ring_source.energy = openmc.stats.Discrete(
-        [raw_uc(dt_neutron_energy_MeV, "MeV", "eV")], [1]
+        [raw_uc(neutronics_const.dt_neutron_energy, "J", "eV")], [1]
     )
 
     return ring_source
@@ -155,10 +156,10 @@ def create_and_export_materials(
     Parameters
     ----------
     breeder_materials:
-        dataclass containing attributes: 'blanket_type', 'li_enrich_ao'
+        dataclass containing attributes: 'blanket_type', 'li_enrich_percent'
     """
     material_lib = MaterialsLibrary.create_from_blanket_type(
-        breeder_materials.blanket_type, breeder_materials.li_enrich_ao
+        breeder_materials.blanket_type, breeder_materials.li_enrich_percent
     )
     material_lib.export()
     return material_lib

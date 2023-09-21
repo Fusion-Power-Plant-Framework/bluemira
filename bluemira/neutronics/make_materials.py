@@ -61,6 +61,11 @@ class ReactorBaseMaterials:
 
 def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     """Creates openmc material definitions for a dcll blanket.
+    Parameter
+    ---------
+    li_enrich_ao: float
+        Enrichment of Li-6 as a percentage
+        (to be parsed as argument to openmc.Material.add_element)
     Divertor definition from Neutronic analyses of the preliminary
     design of a DCLL blanket for the EUROfusion DEMO power, 24 March 2016
     Using Eurofer instead of SS316LN
@@ -120,6 +125,11 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
 
 def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     """Creates openmc material definitions for an hcpb blanket.
+    Parameter
+    ---------
+    li_enrich_ao: float
+        Enrichment of Li-6 as a percentage
+        (to be parsed as argument to openmc.Material.add_element)
     HCPB Design Report, 26/07/2019
     WPBB-DEL-BB-1.2.1-T005-D001
     """
@@ -197,6 +207,11 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
 
 def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     """Creates openmc material definitions for a wcll blanket
+    Parameter
+    ---------
+    li_enrich_ao: float
+        Enrichment of Li-6 as a percentage
+        (to be parsed as argument to openmc.Material.add_element)
     Ref. D. Nevo and M. Oron-Carl, WCLL Design Report 2018, Eurofusion,
         WPBB-DEL-BB-3.2.1-T005-D001, June 2019.
     """

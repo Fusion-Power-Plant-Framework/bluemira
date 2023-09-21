@@ -24,14 +24,21 @@ from periodictable import elements
 from bluemira.base.constants import N_AVOGADRO
 
 # Amount of energy released in a single dt fusion reaction, in MeV.
-energy_per_dt_MeV = 17.58
+energy_per_dt = raw_uc(17.58, "MeV", "J")
 # Amount of energy carried away by the neutron
-dt_neutron_energy_MeV = energy_per_dt_MeV * (4 / 5)
+dt_neutron_energy = energy_per_dt * (4 / 5)  # [J]
+
 # Energy required to displace an Fe atom in Fe. See docstring of DPACoefficients
 dpa_Fe_threshold_eV = 40  # Source cites 40 eV.
 
 Fe_molar_mass_g = elements.isotope("Fe").mass
 Fe_density_g_cc = elements.isotope("Fe").density
+
+plasam_params_default = {
+    "temperature": raw_uc(15.4, "keV", "K"),
+    "peaking_factor": 1.508,  # [dimensionless]
+    "vertical_shift": 0.0,  # [m]
+}
 
 
 class DPACoefficients:

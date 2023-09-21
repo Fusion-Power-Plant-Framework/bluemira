@@ -63,7 +63,7 @@ class BreederTypeParameters:
     and design choices.
     """
 
-    li_enrich_ao: float
+    li_enrich_percent: float  # [%]
     blanket_type: mm.BlanketType
 
 
@@ -85,4 +85,4 @@ class TokamakGeometry:
     outb_mnfld_thick: float  # [cm]
     outb_vv_thick: float  # [cm]
     triang: float = 0.333  # [dimensionless]
-    inb_gap: float = 20.0  # [cm]
+    inb_gap: float = 0.2  # [m]
