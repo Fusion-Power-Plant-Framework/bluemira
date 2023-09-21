@@ -20,7 +20,6 @@ def get_vol_of_truncated_cone(cone, top_z, bot_z):
     return pi / 3.0 * height * (top_r**2 + top_r * bot_r + bot_r**2)
 
 
-
 def get_fw_vol(outer_cone, inner_cone, top_plane, bottom_plane):
     """Takes the bounding OpenMC surface objects and calculates the first wall volume
     This is only approximate but accurate as long as the first wall is thin
@@ -32,7 +31,6 @@ def get_fw_vol(outer_cone, inner_cone, top_plane, bottom_plane):
     inner_cone_vol = get_vol_of_truncated_cone(inner_cone, top_z, bottom_z)
 
     return outer_cone_vol - inner_cone_vol
-
 
 
 def get_div_fw_section_vol(outer_cone, inner_cone, outer_r, inner_r):
@@ -60,7 +58,6 @@ def get_div_fw_section_vol(outer_cone, inner_cone, outer_r, inner_r):
     return outer_cone_vol - inner_cone_vol
 
 
-
 def get_div_fw_vol(outer_cones, inner_cones, rs):
     """Calculates the volume for each section of the divertor first wall
     This is only approximate but accurate as long as the first wall is thin
@@ -72,7 +69,6 @@ def get_div_fw_vol(outer_cones, inner_cones, rs):
         volumes.append(vol)
 
     return sum(volumes)
-
 
 
 def stochastic_volume_calculation(
