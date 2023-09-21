@@ -28,7 +28,7 @@ import pytest
 from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
-from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import (
@@ -411,3 +411,14 @@ class TestQBenchmark:
 
         assert 100 * np.median(abs_rel_difference(q, self.q_ref)) < 3.5
         assert 100 * np.mean(abs_rel_difference(q, self.q_ref)) < 4.0
+
+
+@pytest.mark.private
+class TestFixedPlasmaEquilibrium:
+    @classmethod
+    def setup_class(cls):
+        root = try_get_bluemira_private_data_root()
+        cls.path = Path(root, "equilibria", "STEP_SPR_08", "jetto.eqdsk_out")
+
+    def test_init(self):
+        eq = FixedPlasmaEquilibrium.from_eqdsk(self.path)
