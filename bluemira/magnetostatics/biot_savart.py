@@ -230,7 +230,7 @@ class BiotSavartFilament(CurrentSource):
         if b > 10 * a:
             # Equation A.4 of https://arxiv.org/pdf/1204.1486.pdf
             error_tail = a**2 / b**2 - 3 / (8 * b**4) * (a**4 - 2 * a**2)
-        l_hat_0 = self.length * (2 * np.log(2 * b / a) + 0.5 + error_tail)
+        l_hat_0 = self.length * (2 * np.log(2 * b / a) + 0.5) + error_tail
 
         return MU_0_4PI * (inductance + l_hat_0)
 
