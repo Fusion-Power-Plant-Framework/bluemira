@@ -245,5 +245,4 @@ class TestSelfInductance:
                 + a
             )
         )
-        print(inductance / exact)
         assert abs(1 - inductance / exact) < f_error
