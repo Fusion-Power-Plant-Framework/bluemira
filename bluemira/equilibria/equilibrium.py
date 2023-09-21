@@ -22,6 +22,7 @@
 """
 Plasma MHD equilibrium and state objects
 """
+from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -204,6 +205,8 @@ class FixedPlasmaEquilibrium(MHDState):
         j_tor = profiles.jtor(
             grid.x, grid.z, psi, o_points=o_points, x_points=x_points, lcfs=lcfs.xz.T
         )
+        self._psi = psi
+        self._jtor = j_tor
         self.profiles = profiles
         self.plasma = PlasmaCoil(psi, j_tor, self.grid)
         self._lcfs = lcfs
@@ -223,9 +226,9 @@ class FixedPlasmaEquilibrium(MHDState):
             Whether or not to force symmetrisation in the CoilSet
         """
         e, psi, grid = super()._get_eqdsk(filename)
-        psi_ax = e["psimag"]
-        psi_b = e["psibdry"]
-        lcfs = Coordinates({"x": e["xbdry"], "z": e["zbdry"]})
+        psi_ax = e.psimag
+        psi_b = e.psibdry
+        lcfs = Coordinates({"x": e.xbdry, "z": e.zbdry})
         lcfs.close()
 
         profiles = CustomProfile.from_eqdsk(filename)
@@ -234,6 +237,16 @@ class FixedPlasmaEquilibrium(MHDState):
         return cls(
             grid, lcfs, profiles, psi=psi, psi_ax=psi_ax, psi_b=psi_b, filename=filename
         )
+
+    def get_LCFS(self) -> Coordinates:
+        """
+        Get the Last Closed FLux Surface (LCFS).
+
+        Returns
+        -------
+        The Coordinates of the LCFS
+        """
+        return deepcopy(self._lcfs)
 
     def Bx(
         self,
@@ -333,15 +346,15 @@ class FixedPlasmaEquilibrium(MHDState):
         Poloidal magnetic flux at x, z
         """
         if x is None and z is None:
-            return self.plasma._psi_greens(self._psi_green)
+            return self._psi
 
         return self.plasma.psi(x, z)
 
-    def plot(self, ax: Optional[plt.Axes] = None, Bp: bool = False):
+    def plot(self, ax: Optional[plt.Axes] = None, field: bool = False):
         """
         Plots the FixedPlasmaEquilibrium object onto `ax`
         """
-        return FixedPlasmaEquilibriumPlotter(self, ax, Bp=Bp)
+        return FixedPlasmaEquilibriumPlotter(self, ax, field=field)
 
 
 class CoilSetMHDState(MHDState):

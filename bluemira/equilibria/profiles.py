@@ -450,7 +450,7 @@ class Profile:
             The numpy array of 0/1 denoting the out/in points of the plasma in
             the grid
         """
-        if lcfs:
+        if lcfs is not None:
             # This is for fixed boundary equilibrium handling
             if not o_points or not x_points:
                 raise EquilibriaError(

@@ -418,7 +418,9 @@ class TestFixedPlasmaEquilibrium:
     @classmethod
     def setup_class(cls):
         root = try_get_bluemira_private_data_root()
-        cls.path = Path(root, "equilibria", "STEP_SPR_08", "jetto.eqdsk_out")
+        path = Path(root, "equilibria", "STEP_SPR_08", "jetto.eqdsk_out")
+        cls.eq = FixedPlasmaEquilibrium.from_eqdsk(path)
 
-    def test_init(self):
-        eq = FixedPlasmaEquilibrium.from_eqdsk(self.path)
+    def test_plotting(self):
+        self.eq.plot()
+        plt.show()
