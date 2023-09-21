@@ -64,6 +64,7 @@ from bluemira.equilibria.plotting import (
     CorePlotter,
     CorePlotter2,
     EquilibriumPlotter,
+    FixedPlasmaEquilibriumPlotter,
 )
 from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
 from bluemira.geometry.coordinates import Coordinates
@@ -98,6 +99,53 @@ class MHDState:
         self.grid = grid
         self.x, self.z = self.grid.x, self.grid.z
         self.dx, self.dz = self.grid.dx, self.grid.dz
+
+    @classmethod
+    def _get_eqdsk(
+        cls,
+        filename: str,
+    ) -> Tuple[EQDSKInterface, np.ndarray, CoilSet, Grid, Optional[Limiter]]:
+        """
+        Get eqdsk data from file for read in
+
+        Parameters
+        ----------
+        filename:
+            Filename
+        force_symmetry:
+            Whether or not to force symmetrisation in the CoilSet
+
+        Returns
+        -------
+        e:
+            Instance if EQDSKInterface with the EQDSK file read in
+        psi:
+            psi array
+        coilset:
+            Coilset from eqdsk
+        grid:
+            Grid from eqdsk
+        limiter:
+            Limiter instance if any limiters are in file
+        """
+        e = EQDSKInterface.from_file(filename)
+        if "equilibria" in e.name:
+            psi = e.psi
+        elif "SCENE" in e.name and not isinstance(cls, Breakdown):
+            psi = e.psi
+            e.dxc = e.dxc / 2
+            e.dzc = e.dzc / 2
+        elif "fiesta" in e.name.lower():
+            psi = e.psi
+        else:  # CREATE
+            psi = e.psi / (2 * np.pi)  # V.s as opposed to V.s/rad
+            e.dxc = e.dxc / 2
+            e.dzc = e.dzc / 2
+            e.cplasma = abs(e.cplasma)
+
+        grid = Grid.from_eqdsk(e)
+
+        return e, psi, grid
 
     def to_eqdsk(
         self,
@@ -144,17 +192,48 @@ class FixedPlasmaEquilibrium(MHDState):
         lcfs: Coordinates,
         profiles: Profile,
         psi: np.ndarray,
+        psi_ax: float,
+        psi_b: float,
         filename: Optional[str] = None,
     ):
         super().__init__()
         self.set_grid(grid)
-        o_points = [Opoint()]
-        x_points = [Xpoint()]
+        # We just need the flux values, not the locations
+        o_points = [Opoint(0.0, 0.0, psi_ax)]
+        x_points = [Xpoint(0.0, 0.0, psi_b)]
         j_tor = profiles.jtor(
             grid.x, grid.z, psi, o_points=o_points, x_points=x_points, lcfs=lcfs.xz.T
         )
+        self.profiles = profiles
         self.plasma = PlasmaCoil(psi, j_tor, self.grid)
+        self._lcfs = lcfs
         self.filename = filename
+
+    @classmethod
+    def from_eqdsk(cls, filename: str):
+        """
+        Initialises a Breakdown Object from an eqdsk file. Note that this
+        will involve recalculation of the magnetic flux.
+
+        Parameters
+        ----------
+        filename:
+            Filename
+        force_symmetry:
+            Whether or not to force symmetrisation in the CoilSet
+        """
+        e, psi, grid = super()._get_eqdsk(filename)
+        psi_ax = e["psimag"]
+        psi_b = e["psibdry"]
+        lcfs = Coordinates({"x": e["xbdry"], "z": e["zbdry"]})
+        lcfs.close()
+
+        profiles = CustomProfile.from_eqdsk(filename)
+
+        cls._eqdsk = e
+        return cls(
+            grid, lcfs, profiles, psi=psi, psi_ax=psi_ax, psi_b=psi_b, filename=filename
+        )
 
     def Bx(
         self,
@@ -258,6 +337,12 @@ class FixedPlasmaEquilibrium(MHDState):
 
         return self.plasma.psi(x, z)
 
+    def plot(self, ax: Optional[plt.Axes] = None, Bp: bool = False):
+        """
+        Plots the FixedPlasmaEquilibrium object onto `ax`
+        """
+        return FixedPlasmaEquilibriumPlotter(self, ax, Bp=Bp)
+
 
 class CoilSetMHDState(MHDState):
     """
@@ -298,26 +383,11 @@ class CoilSetMHDState(MHDState):
         limiter:
             Limiter instance if any limiters are in file
         """
-        e = EQDSKInterface.from_file(filename)
-        if "equilibria" in e.name:
-            psi = e.psi
-        elif "SCENE" in e.name and not isinstance(cls, Breakdown):
-            psi = e.psi
-            e.dxc = e.dxc / 2
-            e.dzc = e.dzc / 2
-        elif "fiesta" in e.name.lower():
-            psi = e.psi
-        else:  # CREATE
-            psi = e.psi / (2 * np.pi)  # V.s as opposed to V.s/rad
-            e.dxc = e.dxc / 2
-            e.dzc = e.dzc / 2
-            e.cplasma = abs(e.cplasma)
-
+        e, psi, grid = super()._get_eqdsk(filename, force_symmetry)
         coilset = CoilSet.from_group_vecs(e)
         if force_symmetry:
             coilset = symmetrise_coilset(coilset)
 
-        grid = Grid.from_eqdsk(e)
         if e.nlim == 0:
             limiter = None
         elif e.nlim < 5:  # noqa: PLR2004
@@ -666,7 +736,7 @@ class Breakdown(CoilSetMHDState):
 
     def plot(self, ax: Optional[plt.Axes] = None, Bp: bool = False):
         """
-        Plots the equilibrium object onto `ax`
+        Plots the breakdown object onto `ax`
         """
         return BreakdownPlotter(self, ax, Bp=Bp)
 

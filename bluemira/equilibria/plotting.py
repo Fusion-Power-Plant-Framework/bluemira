@@ -411,6 +411,15 @@ class PlasmaCoilPlotter(Plotter):
             self.ax.plot(sq_x, sq_z, linewidth=1.5, color="k")
 
 
+class FixedPlasmaEquilibriumPlotter(Plotter):
+    """
+    Utility class for FixedPlasmaEquilibrium plotting
+    """
+
+    def __init__(self, equilibrium, Bp: bool = False):
+        pass
+
+
 class EquilibriumPlotter(Plotter):
     """
     Utility class for Equilibrium plotting

@@ -765,6 +765,7 @@ class CustomProfile(Profile):
         psi: np.ndarray,
         o_points: List[Opoint],
         x_points: List[Xpoint],
+        lcfs: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """
         Calculate toroidal plasma current
@@ -773,7 +774,7 @@ class CustomProfile(Profile):
         """
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
-        psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points)
+        psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points, lcfs=lcfs)
         self.psisep = psisep
         self.psiax = psiax
         psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0, 1)
