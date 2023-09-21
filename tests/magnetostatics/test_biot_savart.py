@@ -21,9 +21,11 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 from bluemira.base.constants import MU_0
 from bluemira.display.auto_config import plot_defaults
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.greens import (
@@ -197,3 +199,34 @@ def test_inductance():
     tot = np.sum((ind2 - np.average(ind2)) ** 2)
     r2 = 1 - res / tot
     assert r2 > 0.998
+
+
+@pytest.mark.parametrize("a,c,d", [[1, 5, 5], [1, 10, 10], [1, 20, 20], [1, 40, 40]])
+def test_inductance_rectangle(a, c, d):
+    poly = Coordinates(
+        {
+            "x": [-c / 2, c / 2, c / 2, -c / 2],
+            "y": 0,
+            "z": [-d / 2, -d / 2, d / 2, d / 2],
+        }
+    )
+    poly.close()
+    from bluemira.geometry.tools import make_polygon
+
+    poly = make_polygon(poly, closed=True).discretize(ndiscr=1000, byedges=True)
+    filament = BiotSavartFilament(poly, radius=a)
+    inductance = filament.inductance()
+    exact = (
+        MU_0
+        / np.pi
+        * (
+            c * np.log(2 * c / a)
+            + d * np.log(2 * d / a)
+            - (c + d) * (2 - 0.5 / 2)
+            + 2 * np.hypot(c, d)
+            - c * np.arcsinh(c / d)
+            - d * np.arcsinh(d / c)
+            + a
+        )
+    )
+    print(inductance / exact)

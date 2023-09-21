@@ -224,10 +224,10 @@ class BiotSavartFilament(CurrentSource):
             )
 
         # Self-inductance correction (Y = 0.5 for homogenous current distribution)
-        l_hat_0 = 2 * np.log(self.length_scale / self.radius) + 0.5
-        inductance += self.length * l_hat_0
+        # Equation 6 of https://arxiv.org/pdf/1204.1486.pdf
+        l_hat_0 = self.length * (2 * np.log(self.length_scale / self.radius) + 0.5)
 
-        return MU_0_4PI * inductance
+        return MU_0_4PI * (inductance + l_hat_0)
 
     def rotate(self, angle: float, axis: Union[str, np.ndarray]):
         """
