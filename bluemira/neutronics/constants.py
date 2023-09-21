@@ -1,9 +1,7 @@
 """constants used for the neutronics module"""
 from periodictable import elements
 
-from bluemira.base.constants import BMUnitRegistry
-
-S_TO_YEAR = BMUnitRegistry.Quantity("s").to("year").magnitude
+from bluemira.base.constants import N_AVOGADRO, S_TO_YR
 
 # Amount of energy released in a single dt fusion reaction, in MeV.
 energy_per_dt_MeV = 17.58
@@ -12,7 +10,6 @@ dt_neutron_energy_MeV = energy_per_dt_MeV * (4 / 5)
 # Energy required to displace an Fe atom in Fe. See docstring of DPACoefficients
 dpa_Fe_threshold_eV = 40  # Source cites 40 eV.
 
-avogadro = BMUnitRegistry.Quantity("N_A").to_base_units().magnitude
 Fe_molar_mass_g = elements.isotope("Fe").mass
 Fe_density_g_cc = elements.isotope("Fe").density
 
@@ -52,5 +49,5 @@ class DPACoefficients:
             the average amount of energy dispersed
             by displacing one atom in the wall material's lattice.
         """
-        self.atoms_per_cc = avogadro * density_g_cc / molar_mass_g
+        self.atoms_per_cc = N_AVOGADRO * density_g_cc / molar_mass_g
         self.displacements_per_damage_eV = 0.8 / (2 * dpa_threshold_eV)
