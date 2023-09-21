@@ -21,6 +21,7 @@ After talking w/ A. Davis:
 ____
 [ ]Tests?
 """
+from pathlib import Path
 from typing import Literal
 
 import openmc
@@ -106,7 +107,8 @@ def create_parametric_source(tokamak_geometry: TokamakGeometry) -> openmc.Source
         )
     except ImportError:
         parametric_source = openmc.Source(
-            library="./PPS_OpenMC.so", parameters=source_params_str
+            library=str(Path(Path(__file__).parent, "PPS_OpenMC.so")),
+            parameters=source_params_str,
         )
 
     return parametric_source

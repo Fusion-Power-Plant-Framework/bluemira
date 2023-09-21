@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import Tuple
 
 import numpy as np
@@ -11,6 +12,9 @@ from bluemira.neutronics.params import (
     TokamakGeometry,
     TokamakOperationParameters,
 )
+from bluemira.neutronics.quick_tbr_heating import TBRHeatingSimulation
+
+CROSS_SECTION_XML = str(Path("~/bluemira_openmc_data/cross_sections.xml").expanduser())
 
 
 def get_preset_physical_properties(
@@ -113,7 +117,7 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     parametric_source=True,
     # only used if stochastic_volume_calculation is turned on.
     volume_calc_particles=int(4e8),
-    cross_section_xml="/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml",
+    cross_section_xml=CROSS_SECTION_XML,
 )
 
 operation_variable = TokamakOperationParameters(reactor_power_MW=1998.0)
