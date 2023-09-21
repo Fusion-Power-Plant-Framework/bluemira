@@ -39,7 +39,7 @@ from scipy.optimize import curve_fit
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
-from bluemira.equilibria.find import find_LCFS_separatrix, in_plasma
+from bluemira.equilibria.find import find_LCFS_separatrix, in_plasma, in_zone
 from bluemira.equilibria.grid import integrate_dx_dz, revolved_volume, volume_integral
 from bluemira.equilibria.plotting import ProfilePlotter
 
@@ -422,6 +422,7 @@ class Profile:
         psi: np.ndarray,
         o_points: List[Opoint],
         x_points: List[Xpoint],
+        lcfs: Optional[np.ndarray] = None,
     ) -> Tuple[float, float, np.ndarray]:
         """
         Do-not-repeat-yourself utility
@@ -449,6 +450,15 @@ class Profile:
             The numpy array of 0/1 denoting the out/in points of the plasma in
             the grid
         """
+        if lcfs is not None:
+            # This is for fixed boundary equilibrium handling
+            if not o_points or not x_points:
+                raise EquilibriaError(
+                    "Need to specify O and X-points when providing an LCFS."
+                )
+
+            return x_points[0][2], o_points[0][2], in_zone(x, z, lcfs)
+
         if not o_points:
             f, ax = plt.subplots()
             ax.contour(x, z, psi, cmap="viridis")
@@ -755,6 +765,7 @@ class CustomProfile(Profile):
         psi: np.ndarray,
         o_points: List[Opoint],
         x_points: List[Xpoint],
+        lcfs: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """
         Calculate toroidal plasma current
@@ -763,7 +774,7 @@ class CustomProfile(Profile):
         """
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
-        psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points)
+        psisep, psiax, mask = self._jtor(x, z, psi, o_points, x_points, lcfs=lcfs)
         self.psisep = psisep
         self.psiax = psiax
         psi_norm = np.clip((psi - psiax) / (psisep - psiax), 0, 1)

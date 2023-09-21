@@ -22,9 +22,18 @@
 """
 Plot utilities for equilibria
 """
+from __future__ import annotations
 
 import warnings
 from itertools import cycle
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import (
+        Equilibrium,
+        FixedPlasmaEquilibrium,
+    )
+    from bluemira.equilibria.grid import Grid
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -124,7 +133,7 @@ class GridPlotter(Plotter):
     Utility class for plotting Grid objects
     """
 
-    def __init__(self, grid, ax=None, edge=False, **kwargs):
+    def __init__(self, grid: Grid, ax=None, edge: bool = False, **kwargs):
         super().__init__(ax)
         self.grid = grid
         self.plot_grid(**kwargs)
@@ -411,14 +420,93 @@ class PlasmaCoilPlotter(Plotter):
             self.ax.plot(sq_x, sq_z, linewidth=1.5, color="k")
 
 
-class EquilibriumPlotter(Plotter):
+class EquilibriumPlotterMixin:
+    """
+    DRY plotting mixin class.
+    """
+
+    def plot_Bp(self, **kwargs):
+        """
+        Plots the poloidal field onto the Axes.
+        """
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["field"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["field"]["cmap"])
+
+        Bp = self.eq.Bp()
+        levels = np.linspace(1e-36, np.amax(Bp), nlevels)
+        c = self.ax.contourf(self.eq.x, self.eq.z, Bp, levels=levels, cmap=cmap)
+        cbar = plt.colorbar(c)
+        cbar.set_label("$B_{p}$ [T]")
+
+    def plot_psi(self, **kwargs):
+        """
+        Plot flux surfaces
+        """
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
+
+        levels = np.linspace(np.amin(self.psi), np.amax(self.psi), nlevels)
+        self.ax.contour(
+            self.eq.x, self.eq.z, self.psi, levels=levels, cmap=cmap, zorder=8
+        )
+
+    def plot_plasma_current(self, **kwargs):
+        """
+        Plots flux surfaces inside plasma
+        """
+        if self.eq._jtor is None:
+            return
+
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["current"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["current"]["cmap"])
+
+        levels = np.linspace(J_TOR_MIN, np.amax(self.eq._jtor), nlevels)
+        self.ax.contourf(
+            self.eq.x, self.eq.z, self.eq._jtor, levels=levels, cmap=cmap, zorder=7
+        )
+
+
+class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
+    """
+    Utility class for FixedPlasmaEquilibrium plotting
+    """
+
+    def __init__(
+        self, equilibrium: FixedPlasmaEquilibrium, ax=None, field: bool = False
+    ):
+        super().__init__(ax)
+        self.eq = equilibrium
+        self.psi = self.eq.psi(self.eq.x, self.eq.z)
+
+        if not field:
+            self.plot_plasma_current()
+            self.plot_psi()
+        else:
+            self.plot_Bp()
+        self.plot_LCFS()
+
+    def plot_LCFS(self):
+        """
+        Plot the last closed flux surface
+        """
+        x, z = self.eq.get_LCFS().xz
+        self.ax.plot(
+            x,
+            z,
+            color=PLOT_DEFAULTS["separatrix"]["color"],
+            linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
+            zorder=9,
+        )
+
+
+class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
     """
     Utility class for Equilibrium plotting
     """
 
     def __init__(
         self,
-        equilibrium,
+        equilibrium: Equilibrium,
         ax=None,
         plasma=False,
         show_ox=True,
@@ -465,46 +553,6 @@ class EquilibriumPlotter(Plotter):
 
         if plasma:
             self.plot_plasma_coil()
-
-    def plot_Bp(self, **kwargs):
-        """
-        Plots the poloidal field onto the Axes.
-        """
-        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["field"]["nlevels"])
-        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["field"]["cmap"])
-
-        Bp = self.eq.Bp()
-        levels = np.linspace(1e-36, np.amax(Bp), nlevels)
-        c = self.ax.contourf(self.eq.x, self.eq.z, Bp, levels=levels, cmap=cmap)
-        cbar = plt.colorbar(c)
-        cbar.set_label("$B_{p}$ [T]")
-
-    def plot_psi(self, **kwargs):
-        """
-        Plot flux surfaces
-        """
-        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
-        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
-
-        levels = np.linspace(np.amin(self.psi), np.amax(self.psi), nlevels)
-        self.ax.contour(
-            self.eq.x, self.eq.z, self.psi, levels=levels, cmap=cmap, zorder=8
-        )
-
-    def plot_plasma_current(self, **kwargs):
-        """
-        Plots flux surfaces inside plasma
-        """
-        if self.eq._jtor is None:
-            return
-
-        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["current"]["nlevels"])
-        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["current"]["cmap"])
-
-        levels = np.linspace(J_TOR_MIN, np.amax(self.eq._jtor), nlevels)
-        self.ax.contourf(
-            self.eq.x, self.eq.z, self.eq._jtor, levels=levels, cmap=cmap, zorder=7
-        )
 
     def plot_flux_surface(self, psi_norm, color="k"):
         """

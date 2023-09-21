@@ -22,6 +22,7 @@
 """
 Plasma MHD equilibrium and state objects
 """
+from copy import deepcopy
 from enum import Enum
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -40,6 +41,8 @@ from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import (
+    Opoint,
+    Xpoint,
     find_LCFS_separatrix,
     find_OX_points,
     find_flux_surf,
@@ -62,6 +65,7 @@ from bluemira.equilibria.plotting import (
     CorePlotter,
     CorePlotter2,
     EquilibriumPlotter,
+    FixedPlasmaEquilibriumPlotter,
 )
 from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
 from bluemira.geometry.coordinates import Coordinates
@@ -76,16 +80,12 @@ class MHDState:
 
     def __init__(self):
         # Constructors
-        self.x = None
-        self.z = None
-        self.dx = None
-        self.dz = None
-        self._psi_green = None
-        self._bx_green = None
-        self._bz_green = None
-        self.grid = None
-        self.coilset = None
-        self.limiter = None
+        self.x: Union[None, np.ndarray] = None
+        self.z: Union[None, np.ndarray] = None
+        self.dx: Union[None, float] = None
+        self.dz: Union[None, float] = None
+        self.grid: Union[None, Grid] = None
+        self.limiter: Union[None, Limiter] = None
 
     def set_grid(self, grid: Grid):
         """
@@ -101,32 +101,308 @@ class MHDState:
         self.x, self.z = self.grid.x, self.grid.z
         self.dx, self.dz = self.grid.dx, self.grid.dz
 
-    def reset_grid(self, grid: Grid, psi: Optional[np.ndarray] = None):
+    @classmethod
+    def _get_eqdsk(
+        cls,
+        filename: str,
+    ) -> Tuple[EQDSKInterface, np.ndarray, CoilSet, Grid, Optional[Limiter]]:
         """
-        Reset the grid for the MHDState.
+        Get eqdsk data from file for read in
 
         Parameters
         ----------
-        grid:
-            The grid to set the MHDState on
+        filename:
+            Filename
+        force_symmetry:
+            Whether or not to force symmetrisation in the CoilSet
+
+        Returns
+        -------
+        e:
+            Instance if EQDSKInterface with the EQDSK file read in
         psi:
-            Initial psi array to use
+            psi array
+        coilset:
+            Coilset from eqdsk
+        grid:
+            Grid from eqdsk
+        limiter:
+            Limiter instance if any limiters are in file
         """
+        e = EQDSKInterface.from_file(filename)
+        if "equilibria" in e.name:
+            psi = e.psi
+        elif "SCENE" in e.name and not isinstance(cls, Breakdown):
+            psi = e.psi
+            e.dxc = e.dxc / 2
+            e.dzc = e.dzc / 2
+        elif "fiesta" in e.name.lower():
+            psi = e.psi
+        else:  # CREATE
+            psi = e.psi / (2 * np.pi)  # V.s as opposed to V.s/rad
+            e.dxc = e.dxc / 2
+            e.dzc = e.dzc / 2
+            e.cplasma = abs(e.cplasma)
+
+        grid = Grid.from_eqdsk(e)
+
+        return e, psi, grid
+
+    def to_eqdsk(
+        self,
+        data: Dict[str, Any],
+        filename: Union[Path, str],
+        header: str = "bluemira_equilibria",
+        directory: Optional[str] = None,
+        filetype: str = "json",
+        **kwargs,
+    ):
+        """
+        Writes the Equilibrium Object to an eqdsk file
+        """
+        data["name"] = f"{filename}_{header}"
+
+        if not filename.endswith(f".{filetype}"):
+            filename += f".{filetype}"
+
+        if directory is None:
+            try:
+                filename = Path(
+                    get_bluemira_path("eqdsk/equilibria", subfolder="data"), filename
+                )
+            except ValueError as error:
+                raise ValueError(
+                    f"Unable to find default data directory: {error}"
+                ) from None
+        else:
+            filename = Path(directory, filename)
+
+        self.filename = filename  # Convenient
+        eqdsk = EQDSKInterface(**data)
+        eqdsk.write(filename, file_format=filetype, **kwargs)
+
+
+class FixedPlasmaEquilibrium(MHDState):
+    """
+    Class for loading a fixed boundary plasma equilibrium.
+    """
+
+    def __init__(
+        self,
+        grid: Grid,
+        lcfs: Coordinates,
+        profiles: Profile,
+        psi: np.ndarray,
+        psi_ax: float,
+        psi_b: float,
+        filename: Optional[str] = None,
+    ):
+        super().__init__()
         self.set_grid(grid)
-        self._set_init_plasma(grid, psi)
+        # We just need the flux values, not the locations
+        o_points = [Opoint(0.0, 0.0, psi_ax)]
+        x_points = [Xpoint(0.0, 0.0, psi_b)]
+        j_tor = profiles.jtor(
+            grid.x, grid.z, psi, o_points=o_points, x_points=x_points, lcfs=lcfs.xz.T
+        )
+        self._psi = psi
+        self._jtor = j_tor
+        self.profiles = profiles
+        self.plasma = PlasmaCoil(psi, j_tor, self.grid)
+        self._lcfs = lcfs
+        self.filename = filename
 
-    def _set_init_plasma(self, grid: Grid, psi: Optional[np.ndarray] = None):
-        zm = 1 - grid.z_max / (grid.z_max - grid.z_min)
-        if psi is None:  # Initial psi guess
-            # Normed 0-1 grid
-            x, z = self.x / grid.x_max, (self.z - grid.z_min) / (grid.z_max - grid.z_min)
-            # Factor has an important effect sometimes... good starting
-            # solutions matter
-            psi = 100 * np.exp(-((x - 0.5) ** 2 + (z - zm) ** 2) / 0.1)
-            apply_boundary(psi, 0)
+    @classmethod
+    def from_eqdsk(cls, filename: str):
+        """
+        Initialises a Breakdown Object from an eqdsk file. Note that this
+        will involve recalculation of the magnetic flux.
 
-        self._remap_greens()
-        return psi
+        Parameters
+        ----------
+        filename:
+            Filename
+        force_symmetry:
+            Whether or not to force symmetrisation in the CoilSet
+        """
+        e, psi, grid = super()._get_eqdsk(filename)
+        psi_ax = e.psimag
+        psi_b = e.psibdry
+        lcfs = Coordinates({"x": e.xbdry, "z": e.zbdry})
+        lcfs.close()
+
+        profiles = CustomProfile.from_eqdsk(filename)
+
+        cls._eqdsk = e
+        return cls(
+            grid, lcfs, profiles, psi=psi, psi_ax=psi_ax, psi_b=psi_b, filename=filename
+        )
+
+    def get_LCFS(self) -> Coordinates:
+        """
+        Get the Last Closed FLux Surface (LCFS).
+
+        Returns
+        -------
+        The Coordinates of the LCFS
+        """
+        return deepcopy(self._lcfs)
+
+    def Bx(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
+        """
+        Total radial magnetic field at point (x, z) from coils
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return Bx. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return Bx. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        Radial magnetic field at x, z
+        """
+        return self.plasma.Bx(x, z)
+
+    def Bz(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
+        """
+        Total vertical magnetic field at point (x, z) from coils
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return Bz. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return Bz. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        Vertical magnetic field at x, z
+        """
+        return self.plasma.Bz(x, z)
+
+    def Bp(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
+        """
+        Total poloidal magnetic field at point(s) (x, z)
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return Bp. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return Bp. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        Poloidal magnetic field at x, z
+        """
+        return np.hypot(self.Bx(x, z), self.Bz(x, z))
+
+    def psi(
+        self,
+        x: Optional[Union[float, np.ndarray]] = None,
+        z: Optional[Union[float, np.ndarray]] = None,
+    ) -> Union[float, np.ndarray]:
+        """
+        Total poloidal magnetic flux, either for the whole grid, or for
+        specified x, z coordinates.
+
+        Parameters
+        ----------
+        x:
+            Radial coordinates for which to return psi. If None, returns values
+            at all grid points
+        z:
+            Vertical coordinates for which to return psi. If None, returns values
+            at all grid points
+
+        Returns
+        -------
+        Poloidal magnetic flux at x, z
+        """
+        if x is None and z is None:
+            return self._psi
+
+        return self.plasma.psi(x, z)
+
+    def plot(self, ax: Optional[plt.Axes] = None, field: bool = False):
+        """
+        Plots the FixedPlasmaEquilibrium object onto `ax`
+        """
+        return FixedPlasmaEquilibriumPlotter(self, ax, field=field)
+
+
+class CoilSetMHDState(MHDState):
+    """
+    Base class for magneto-hydrodynamic states with a CoilSet
+    """
+
+    def __init__(self):
+        super().__init__()
+        self._psi_green = None
+        self._bx_green = None
+        self._bz_green = None
+        self.coilset = None
+
+    @classmethod
+    def _get_eqdsk(
+        cls, filename: str, force_symmetry: bool = False
+    ) -> Tuple[EQDSKInterface, np.ndarray, CoilSet, Grid, Optional[Limiter]]:
+        """
+        Get eqdsk data from file for read in
+
+        Parameters
+        ----------
+        filename:
+            Filename
+        force_symmetry:
+            Whether or not to force symmetrisation in the CoilSet
+
+        Returns
+        -------
+        e:
+            Instance if EQDSKInterface with the EQDSK file read in
+        psi:
+            psi array
+        coilset:
+            Coilset from eqdsk
+        grid:
+            Grid from eqdsk
+        limiter:
+            Limiter instance if any limiters are in file
+        """
+        e, psi, grid = super()._get_eqdsk(filename)
+        coilset = CoilSet.from_group_vecs(e)
+        if force_symmetry:
+            coilset = symmetrise_coilset(coilset)
+
+        if e.nlim == 0:
+            limiter = None
+        elif e.nlim < 5:  # noqa: PLR2004
+            limiter = Limiter(e.xlim, e.zlim)
+        else:
+            limiter = None  # CREATE..
+
+        return e, psi, coilset, grid, limiter
 
     def _remap_greens(self):
         """
@@ -187,97 +463,35 @@ class MHDState:
         """
         return self.Bp(self.coilset.x - self.coilset.dx, self.coilset.z)
 
-    @classmethod
-    def _get_eqdsk(
-        cls, filename: str, force_symmetry: bool = False
-    ) -> Tuple[EQDSKInterface, np.ndarray, CoilSet, Grid, Optional[Limiter]]:
+    def reset_grid(self, grid: Grid, psi: Optional[np.ndarray] = None):
         """
-        Get eqdsk data from file for read in
+        Reset the grid for the MHDState.
 
         Parameters
         ----------
-        filename:
-            Filename
-        force_symmetry:
-            Whether or not to force symmetrisation in the CoilSet
-
-        Returns
-        -------
-        e:
-            Instance if EQDSKInterface with the EQDSK file read in
-        psi:
-            psi array
-        coilset:
-            Coilset from eqdsk
         grid:
-            Grid from eqdsk
-        limiter:
-            Limiter instance if any limiters are in file
+            The grid to set the MHDState on
+        psi:
+            Initial psi array to use
         """
-        e = EQDSKInterface.from_file(filename)
-        if "equilibria" in e.name:
-            psi = e.psi
-        elif "SCENE" in e.name and not isinstance(cls, Breakdown):
-            psi = e.psi
-            e.dxc = e.dxc / 2
-            e.dzc = e.dzc / 2
-        elif "fiesta" in e.name.lower():
-            psi = e.psi
-        else:  # CREATE
-            psi = e.psi / (2 * np.pi)  # V.s as opposed to V.s/rad
-            e.dxc = e.dxc / 2
-            e.dzc = e.dzc / 2
-            e.cplasma = abs(e.cplasma)
+        self.set_grid(grid)
+        self._set_init_plasma(grid, psi)
 
-        coilset = CoilSet.from_group_vecs(e)
-        if force_symmetry:
-            coilset = symmetrise_coilset(coilset)
+    def _set_init_plasma(self, grid: Grid, psi: Optional[np.ndarray] = None):
+        zm = 1 - grid.z_max / (grid.z_max - grid.z_min)
+        if psi is None:  # Initial psi guess
+            # Normed 0-1 grid
+            x, z = self.x / grid.x_max, (self.z - grid.z_min) / (grid.z_max - grid.z_min)
+            # Factor has an important effect sometimes... good starting
+            # solutions matter
+            psi = 100 * np.exp(-((x - 0.5) ** 2 + (z - zm) ** 2) / 0.1)
+            apply_boundary(psi, 0)
 
-        grid = Grid.from_eqdsk(e)
-        if e.nlim == 0:
-            limiter = None
-        elif e.nlim < 5:  # noqa: PLR2004
-            limiter = Limiter(e.xlim, e.zlim)
-        else:
-            limiter = None  # CREATE..
-
-        return e, psi, coilset, grid, limiter
-
-    def to_eqdsk(
-        self,
-        data: Dict[str, Any],
-        filename: Union[Path, str],
-        header: str = "bluemira_equilibria",
-        directory: Optional[str] = None,
-        filetype: str = "json",
-        **kwargs,
-    ):
-        """
-        Writes the Equilibrium Object to an eqdsk file
-        """
-        data["name"] = f"{filename}_{header}"
-
-        if not filename.endswith(f".{filetype}"):
-            filename += f".{filetype}"
-
-        if directory is None:
-            try:
-                filename = Path(
-                    get_bluemira_path("eqdsk/equilibria", subfolder="data"), filename
-                )
-            except ValueError as error:
-                raise ValueError(
-                    f"Unable to find default data directory: {error}"
-                ) from None
-        else:
-            filename = Path(directory, filename)
-
-        self.filename = filename  # Convenient
-        eqdsk = EQDSKInterface(**data)
-        eqdsk.write(filename, file_format=filetype, **kwargs)
+        self._remap_greens()
+        return psi
 
 
-class Breakdown(MHDState):
+class Breakdown(CoilSetMHDState):
     """
     Represents the breakdown state
 
@@ -529,7 +743,7 @@ class Breakdown(MHDState):
 
     def plot(self, ax: Optional[plt.Axes] = None, Bp: bool = False):
         """
-        Plots the equilibrium object onto `ax`
+        Plots the breakdown object onto `ax`
         """
         return BreakdownPlotter(self, ax, Bp=Bp)
 
@@ -553,7 +767,7 @@ class QpsiCalcMode(Enum):
     ZEROS = 2
 
 
-class Equilibrium(MHDState):
+class Equilibrium(CoilSetMHDState):
     """
     Represents the equilibrium state, including plasma and coil currents
 
