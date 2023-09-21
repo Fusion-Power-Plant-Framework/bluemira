@@ -2,15 +2,17 @@
 from __future__ import annotations
 
 import dataclasses
-import os
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Union
+from typing import TYPE_CHECKING, Union
 
 import openmc
 from openmc import Material
 
 import bluemira.neutronics.materials_definition as md
+
+if TYPE_CHECKING:
+    import os
 
 
 def duplicate_mat_as(mat_to_clone, new_id, new_name) -> Material:

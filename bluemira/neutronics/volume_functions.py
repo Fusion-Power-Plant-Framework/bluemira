@@ -17,9 +17,8 @@ def get_vol_of_truncated_cone(cone, top_z, bot_z):
     bot_r = (cone.r2 * (bot_z - cone.z0) ** 2) ** 0.5
     height = top_z - bot_z
 
-    volume = pi / 3.0 * height * (top_r**2 + top_r * bot_r + bot_r**2)
+    return pi / 3.0 * height * (top_r**2 + top_r * bot_r + bot_r**2)
 
-    return volume
 
 
 def get_fw_vol(outer_cone, inner_cone, top_plane, bottom_plane):
@@ -32,9 +31,8 @@ def get_fw_vol(outer_cone, inner_cone, top_plane, bottom_plane):
     outer_cone_vol = get_vol_of_truncated_cone(outer_cone, top_z, bottom_z)
     inner_cone_vol = get_vol_of_truncated_cone(inner_cone, top_z, bottom_z)
 
-    volume = outer_cone_vol - inner_cone_vol
+    return outer_cone_vol - inner_cone_vol
 
-    return volume
 
 
 def get_div_fw_section_vol(outer_cone, inner_cone, outer_r, inner_r):
@@ -59,9 +57,8 @@ def get_div_fw_section_vol(outer_cone, inner_cone, outer_r, inner_r):
     outer_cone_vol = get_vol_of_truncated_cone(outer_cone, top_z, bottom_z)
     inner_cone_vol = get_vol_of_truncated_cone(inner_cone, top_z, bottom_z)
 
-    volume = outer_cone_vol - inner_cone_vol
+    return outer_cone_vol - inner_cone_vol
 
-    return volume
 
 
 def get_div_fw_vol(outer_cones, inner_cones, rs):
@@ -74,9 +71,8 @@ def get_div_fw_vol(outer_cones, inner_cones, rs):
 
         volumes.append(vol)
 
-    volume = sum(volumes)
+    return sum(volumes)
 
-    return volume
 
 
 def stochastic_volume_calculation(

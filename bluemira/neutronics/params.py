@@ -16,10 +16,11 @@ class OpenMCSimulationRuntimeParameters:
     photon_transport: bool
     electron_treatment: str
     run_mode: str
-    openmc_write_summary: str
+    openmc_write_summary: bool
     # Parameters used elsewhere
     parametric_source: bool
     volume_calc_particles: int  # number of particles used in the volume calculation.
+    cross_section_xml: str
 
 
 @dataclass
@@ -33,8 +34,7 @@ class TokamakOperationParameters:
         (number of neutrons produced per second)
         """
         reactor_power_in_MeV_per_s = raw_uc(self.reactor_power_MW, "MW", "MeV/s")
-        num_dt_per_second = reactor_power_in_MeV_per_s / energy_per_dt_MeV
-        return num_dt_per_second
+        return reactor_power_in_MeV_per_s / energy_per_dt_MeV
 
 
 @dataclass

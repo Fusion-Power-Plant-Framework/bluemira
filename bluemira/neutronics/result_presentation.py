@@ -31,7 +31,7 @@ def print_df_decorator_with_title_string(
                     output_str = method_output.to_string()
                 else:
                     output_str = str(method_output)
-                print("\n{}\n".format(title_string) + output_str)
+                print(f"\n{title_string}\n" + output_str)
             return method_output
 
         return dataframe_method_wrapper
@@ -61,7 +61,7 @@ def get_percent_err(row):
     return row["std. dev."] / row["mean"] * 100.0
 
 
-class PoloidalXSPlot(object):
+class PoloidalXSPlot:
     """Context manager so that we can save the plot as soon as we exit.
     Using the 'with' statement (i.e. in the syntax of context manager in python)
     also improves readability, as the save_name is written at the top of the indented

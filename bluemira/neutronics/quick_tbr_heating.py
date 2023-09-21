@@ -21,24 +21,17 @@ After talking w/ A. Davis:
 ____
 [ ]Tests?
 """
-from dataclasses import dataclass
 from typing import Literal
 
-import numpy as np
 import openmc
-from matplotlib.pyplot import plot
 from numpy import pi
 from openmc.config import config
 
 import bluemira.neutronics.make_geometry as mg
-import bluemira.neutronics.make_materials as mm
 import bluemira.neutronics.result_presentation as present
-
-# Constants
 from bluemira.base.constants import raw_uc
-from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.tools import make_polygon
 from bluemira.neutronics.constants import dt_neutron_energy_MeV
+from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.neutronics.params import (
     BreederTypeParameters,
     OpenMCSimulationRuntimeParameters,
@@ -48,14 +41,7 @@ from bluemira.neutronics.params import (
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
 
-config[
-    "cross_sections"
-] = "/home/ocean/Others/cross_section_data/cross_section_data/cross_sections.xml"
-# cross_sections are probably downloaded from here
-# https://github.com/openmc-dev/data/
 
-
-# openmc source maker
 def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
     """
     Creating simple ring source.
@@ -129,10 +115,13 @@ def create_parametric_source(tokamak_geometry: TokamakGeometry) -> openmc.Source
 def setup_openmc(
     plasma_source: openmc.Source,
     particles: int,
+    cross_section_xml: str,
     batches: int = 2,
     photon_transport=True,
     electron_treatment: Literal["ttb", "led"] = "ttb",
-    run_mode="fixed source",
+    run_mode: Literal[
+        "fixed source", "eigenvalue", "plot", "volume", "particle restart"
+    ] = "fixed source",
     output_summary=False,
 ) -> None:
     """Configure openmc.Settings, so that it's ready for the run() step.
@@ -151,14 +140,14 @@ def setup_openmc(
         How many batches to simulate.
     photon_transport: bool, default=True
         Whether to simulate the transport of photons (i.e. gamma-rays created) or not.
-    electron_treatment: {'ttb', 'led'}
+    electron_treatment:
         The way in which OpenMC handles secondary charged particles.
         'thick-target bremsstrahlung' or 'local energy deposition'
         'thick-target bremsstrahlung' accounts for the energy carried away by
             bremsstrahlung photons and deposited elsewhere, whereas 'local energy
             deposition' assumes electrons deposit all energies locally.
         (the latter is expected to be computationally faster.)
-    run_mode: {'fixed source', 'eigenvalue', 'plot', 'volume', 'particle restart'}
+    run_mode:
         see below for details:
         https://docs.openmc.org/en/stable/usersguide/settings.html#run-modes
     output_summary: whether a 'summary.h5' file is written or not.
@@ -167,6 +156,7 @@ def setup_openmc(
     -------
     Exports the settings to an xml file.
     """
+    config["cross_sections"] = cross_section_xml
     settings = openmc.Settings()
     settings.source = plasma_source
     settings.particles = particles
@@ -181,14 +171,14 @@ def setup_openmc(
 
 def create_and_export_materials(
     breeder_materials: BreederTypeParameters,
-) -> mm.MaterialsLibrary:
+) -> MaterialsLibrary:
     """
     Parameters
     ----------
     breeder_materials:
         dataclass containing attributes: 'blanket_type', 'li_enrich_ao'
     """
-    material_lib = mm.MaterialsLibrary.create_from_blanket_type(
+    material_lib = MaterialsLibrary.create_from_blanket_type(
         breeder_materials.blanket_type, breeder_materials.li_enrich_ao
     )
     material_lib.export()
@@ -232,6 +222,7 @@ class TBRHeatingSimulation:
         setup_openmc(
             source,
             self.runtime_variables.particles,
+            self.runtime_variables.cross_section_xml,
             self.runtime_variables.batches,
             self.runtime_variables.photon_transport,
             self.runtime_variables.electron_treatment,

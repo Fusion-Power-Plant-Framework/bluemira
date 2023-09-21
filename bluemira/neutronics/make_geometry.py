@@ -157,9 +157,7 @@ def stretch_r(points, tokamak_geometry: TokamakGeometry, stretch_r_val) -> np.nd
 
 def get_min_r_of_points(points):
     """Adjusts the elongation of the points"""
-    min_r = np.amin(points, axis=0)[0]
-
-    return min_r
+    return np.amin(points, axis=0)[0]
 
 
 def get_min_max_z_r_of_points(points):
@@ -266,8 +264,6 @@ def create_inboard_layer(
 
     print("Created", layer_name)
 
-    return
-
 
 def create_outboard_layer(
     prefix_for_layer: str,
@@ -287,7 +283,7 @@ def create_outboard_layer(
     region_bot = openmc.ZPlane(z0=layer_points[0][2])
     surfaces[prefix_for_layer + "_surfs"]["planes"].append(region_bot)
 
-    for outb_i in range(0, num_outboard_points):
+    for outb_i in range(num_outboard_points):
         # Making surfaces
         outb_z0, outb_r2 = get_cone_eqn_from_two_points(
             layer_points[outb_i], layer_points[outb_i + 1]
@@ -354,8 +350,6 @@ def create_outboard_layer(
 
     print("Created", layer_name)
 
-    return
-
 
 def create_divertor(
     div_points: np.ndarray,
@@ -390,7 +384,7 @@ def create_divertor(
     surfaces["divertor_fw_back_surfs"] = []
     surfaces["divertor_scoring_surfs"] = []
 
-    for x in range(0, len(div_points) - 1):
+    for x in range(len(div_points) - 1):
         # Divertor surface
         div_z0, div_r2 = get_cone_eqn_from_two_points(div_points[x], div_points[x + 1])
 
@@ -590,8 +584,6 @@ def create_divertor(
         region=div_in2_region, name="Divertor Inner 2"
     )
 
-    return
-
 
 def create_plasma_chamber():
     """Creating the cells that live inside the first wall"""
@@ -627,8 +619,6 @@ def create_plasma_chamber():
     for outb_sf_surf in surfaces["outb_sf_surfs"]["cones"]:
         cells["plasma_outer2"].region = cells["plasma_outer2"].region & -outb_sf_surf
 
-    return
-
 
 def make_geometry(
     tokamak_geometry: TokamakGeometry,
@@ -639,6 +629,7 @@ def make_geometry(
 ) -> Tuple[Dict[str, Union[List[openmc.Cell], openmc.Cell]], openmc.Universe]:
     """
     Create a dictionary of cells
+
     Parameters
     ----------
     tokamak_geometry: TokamakGeometry
@@ -859,7 +850,7 @@ def make_geometry(
     surfaces["outer_surfs"] = {}
     surfaces["outer_surfs"]["cones"] = []  # runs bottom to top
 
-    for outb_i in range(0, num_outboard_points):
+    for outb_i in range(num_outboard_points):
         outb_z0, outb_r2 = get_cone_eqn_from_two_points(
             outer_points[outb_i], outer_points[outb_i + 1]
         )
@@ -1111,27 +1102,10 @@ def load_fw_points(
     ex_pts_elong = kappa
     # Specifying the number of the selected points that define the inboard.
     num_inboard_points = 6
-    # indices
-    selected_fw_samples = [
-        0,
-        4,
-        8,
-        11,
-        14,
-        17,
-        21,
-        25,
-        28,
-        33,
-        39,
-        42,
-        -1,
-    ]  # sample points
-    selected_div_samples = [
-        72,
-        77,
-        86,
-    ]  # also going to use first and last points from first wall
+    # sample points indices
+    selected_fw_samples = [0, 4, 8, 11, 14, 17, 21, 25, 28, 33, 39, 42, -1]
+    # also going to use first and last points from first wall
+    selected_div_samples = [72, 77, 86]
     num_points_belongong_to_divertor = len(selected_div_samples)
 
     def _fix_downsampled_ibf(ds_ibf):
@@ -1145,11 +1119,11 @@ def load_fw_points(
     # we will get rid of this whole function later on anyways.
 
     # select the part of the outline facing the plasma
-    ibf = inner_blanket_face = full_blanket_2d_outline[52:-2]  # noqa: F841
+    inner_blanket_face = full_blanket_2d_outline[52:-2]
 
     # (down)sample existing data
     # blanket
-    downsampled_ibf = raw_uc(ibf[selected_fw_samples], "m", "cm")
+    downsampled_ibf = raw_uc(inner_blanket_face[selected_fw_samples], "m", "cm")
     downsampled_ibf = _fix_downsampled_ibf(downsampled_ibf)
     # divertor
     downsampled_divf = raw_uc(divertor_2d_outline[selected_div_samples], "m", "cm")
