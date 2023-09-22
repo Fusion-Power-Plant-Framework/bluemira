@@ -388,4 +388,4 @@ def geometry_plotter(
         plot_list.append(plot)
 
     openmc.Plots(plot_list).export_to_xml()
-    openmc.plot_geometry()
+    openmc.plot_geometry(output=False)

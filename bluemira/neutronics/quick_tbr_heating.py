@@ -20,25 +20,8 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
 TODO:
-[ ]compare the pps_api with open-radiation-source/parametric-plasma-source/.git
-    [ ]find the units and documentations for creating source_params_dict
-        - See details in PPS_OpenMC.so library
 [ ]Integration into our logging system (print should go through bluemira_print etc.)
-[ ]Use BluemiraWire instead of .npy files
 [ ]Unit: cgs -> metric
-    - make_geometry: BluemiraWire inputs in metric, but .npy inputs in cgs.
-[ ]Find out from the author of plasma_lib.F90:
-    [ ]What is a_array and s_array?
-    [ ]What is with the 629 problem?
-After talking w/ A. Davis:
-[]Replace the following:
-    - parametric-plasma-source/parametric_plasma_source/fortran_api/*src/
-    - parametric-plasma-source/parametric_plasma_source/pps_api
-    - `pip install
-        git+https://github.com/open-radiation-source/parametric-plasma-source.git@main`
-[ ]Some parameters are locked up inside functions:
-    [ ]create_parametric_source
-____
 [ ]Tests?
 """
 from typing import Literal
@@ -52,6 +35,7 @@ import bluemira.neutronics.constants as neutronics_const
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.result_presentation as present
 from bluemira.base.constants import raw_uc
+from bluemira.base.tools import _timing
 from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.neutronics.params import (
     BreederTypeParameters,
@@ -270,9 +254,14 @@ class TBRHeatingSimulation:
             present.geometry_plotter(self.cells, self.tokamak_geometry_cgs)
 
     @staticmethod
-    def run(*args, **kwargs) -> None:
+    def run(*args, output=False, **kwargs) -> None:
         """Run the actual openmc simulation."""
-        openmc.run(*args, **kwargs)
+        _timing(
+            openmc.run,
+            "Executed in",
+            "Running OpenMC",
+            debug_info_str=False,
+        )(*args, output=output, **kwargs)
 
     def get_result(self) -> present.OpenMCResult:
         """

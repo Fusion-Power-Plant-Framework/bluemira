@@ -125,6 +125,6 @@ class TokamakGeometryCGS:
             raw_uc(tokamak_geometry.outb_bz_thick, "m", "cm"),
             raw_uc(tokamak_geometry.outb_mnfld_thick, "m", "cm"),
             raw_uc(tokamak_geometry.outb_vv_thick, "m", "cm"),
-            triang,
+            tokamak_geometry.triang,
             raw_uc(tokamak_geometry.inb_gap, "m", "cm"),
         )

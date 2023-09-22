@@ -33,6 +33,7 @@ import bluemira.neutronics.make_materials as mm
 import bluemira.neutronics.result_presentation as present
 import bluemira.neutronics.volume_functions as vf
 from bluemira.base.constants import raw_uc
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.params import TokamakGeometryCGS
 
@@ -288,7 +289,7 @@ def create_inboard_layer(
         # Appending to cell list
         cells[prefix_for_layer + "_cells"].append(inb_cell)
 
-    print("Created", layer_name)
+    bluemira_debug(f"Created {layer_name}")
 
 
 def create_outboard_layer(
@@ -374,7 +375,7 @@ def create_outboard_layer(
                 surfaces[prefix_for_layer + "_surfs"]["planes"][-2],  # bottom
             )
 
-    print("Created", layer_name)
+    bluemira_debug(f"Created {layer_name}")
 
 
 def create_divertor(
@@ -685,9 +686,6 @@ def make_geometry(
         dictionary of materials {name:openmc.Material} used to create cells.
     """
     # Creates an OpenMC CSG geometry for an EU Demo reactor
-    print("fw_points", fw_points)
-    print("div_points", div_points)
-
     # minor_r = tokamak_geometry_cgs.minor_r
     # major_r = tokamak_geometry_cgs.major_r
     # elong = tokamak_geometry_cgs.elong
@@ -711,8 +709,9 @@ def make_geometry(
     # Of the points in fw_points, this specifies the number that define the outboard
     num_outboard_points = len(fw_points) - num_inboard_points
 
-    print("\nNumber of inboard points", num_inboard_points)
-    print("Number of outboard points", num_outboard_points, "\n")
+    bluemira_print(
+        f"OpenMC geometry\nNumber of inboard points {num_inboard_points}\nNumber of outboard points {num_outboard_points}"
+    )
 
     #########################################
     # Inboard surfaces behind breeder zone
@@ -736,9 +735,6 @@ def make_geometry(
     inner_points = offset_points(
         fw_points, inb_fw_thick + inb_bz_thick + inb_mnfld_thick + inb_vv_thick
     )
-
-    print("outb_bz_points\n", outb_bz_points)
-    print("outb_mani_points\n", outb_mani_points)
 
     # Getting surface scoring points
     sf_points = offset_points(fw_points, -fw_surf_score_depth)
@@ -1161,8 +1157,6 @@ def load_fw_points(
 
     # Create the full plasma-facing outline by concatenating existing var
     old_points = np.concatenate((downsampled_ibf, downsampled_divf), axis=0)
-
-    print("FW points before adjustment\n", old_points)
 
     # rescale data to fit new geometry.
     # Expand point outwards according to new major radius

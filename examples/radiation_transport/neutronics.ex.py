@@ -31,7 +31,7 @@ def get_preset_physical_properties(
         raise KeyError(f"{blanket_type} is not an accepted blanket type.")
     breeder_materials = BreederTypeParameters(
         blanket_type=blanket_type,
-        li_enrich_ao=60.0,  # PERCENTAGE of Lithium that is Li-6
+        li_enrich_percent=60.0,  # PERCENTAGE of Lithium that is Li-6
     )
 
     # Geometry variables
@@ -108,7 +108,7 @@ def get_preset_physical_properties(
 breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.WCLL)
 
 runtime_variables = OpenMCSimulationRuntimeParameters(
-    particles=16800,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
+    particles=100000,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
