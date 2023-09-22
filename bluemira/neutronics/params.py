@@ -73,6 +73,7 @@ class TokamakGeometry:
     minor_r: float  # [m]
     major_r: float  # [m]
     elong: float  # [dimensionless]
+    # TODO: Move 'shaf_shift', 'peaking_factor' and 'temperature' into TokamakOperationParameters
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
     peaking_factor: float  # [m]
