@@ -175,7 +175,7 @@ class OpenMCResult:
         hdf = heating_df.to_dict()
         hdf["mean"] = raw_uc(heating_df["mean"].to_numpy(), "MW", "W")
         hdf["std. dev."] = raw_uc(heating_df["std. dev."].to_numpy(), "MW", "W")
-        self._heating_df = self._convert_dict_contents(heating_df.to_dict())
+        self._heating_df = self._convert_dict_contents(hdf)
 
     def _load_neutron_wall_loading(self):
         """Load the neutron wall load dataframe"""
