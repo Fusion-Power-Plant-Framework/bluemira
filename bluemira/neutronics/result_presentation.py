@@ -143,7 +143,7 @@ class OpenMCResult:
     @staticmethod
     def _convert_dict_contents(dataset: Dict[str, Dict[int, List[Union[str, float]]]]):
         for k, v in dataset.items():
-            vals = list(v.values())
+            vals = list(v.values()) if isinstance(v, dict) else v
             dataset[k] = vals if isinstance(vals[0], str) else np.array(vals)
         return dataset
 
