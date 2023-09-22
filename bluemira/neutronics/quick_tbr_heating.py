@@ -37,9 +37,9 @@ from pps_isotropic.source import create_parametric_plasma_source
 import bluemira.neutronics.constants as neutronics_const
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.result_presentation as present
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.base.constants import raw_uc
 from bluemira.base.tools import _timing
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.neutronics.params import (
     BreederTypeParameters,
