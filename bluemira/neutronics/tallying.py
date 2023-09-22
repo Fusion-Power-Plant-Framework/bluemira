@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Functions for creating the openmc tallies."""
+import itertools
+from operator import itemgetter
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
@@ -26,6 +28,10 @@ import openmc
 
 import bluemira.neutronics.make_materials as mm
 from bluemira.base.constants import raw_uc
+
+
+def _join_lists(lists):
+    return list(itertools.chain(*[a if isinstance(a, list) else [a] for a in lists]))
 
 
 def filter_cells(
@@ -55,57 +61,61 @@ def filter_cells(
     src_rate:
         number of neutrons produced by the source (plasma) per second.
     """
-    cell_filter = openmc.CellFilter(
-        # the single cells
-        [
-            cells_and_cell_lists["tf_coil_cell"],
-            cells_and_cell_lists["plasma_inner1"],
-            cells_and_cell_lists["plasma_inner2"],
-            cells_and_cell_lists["plasma_outer1"],
-            cells_and_cell_lists["plasma_outer2"],
-            cells_and_cell_lists["divertor_fw"],
-            cells_and_cell_lists["divertor_fw_sf"],  # sf = surface
-        ]
-        # the cell lists
-        + cells_and_cell_lists["inb_vv_cells"]
-        + cells_and_cell_lists["inb_mani_cells"]
-        + cells_and_cell_lists["inb_bz_cells"]
-        + cells_and_cell_lists["inb_fw_cells"]
-        + cells_and_cell_lists["inb_sf_cells"]  # sf = surface
-        + cells_and_cell_lists["outb_vv_cells"]
-        + cells_and_cell_lists["outb_mani_cells"]
-        + cells_and_cell_lists["outb_bz_cells"]
-        + cells_and_cell_lists["outb_fw_cells"]
-        + cells_and_cell_lists["outb_sf_cells"]  # sf = surface
-        + cells_and_cell_lists["divertor_cells"],
+    # sf = surface
+    cell_lists = (
+        "tf_coil_cell",
+        "plasma_inner1",
+        "plasma_inner2",
+        "plasma_outer1",
+        "plasma_outer2",
+        "divertor_fw",
+        "divertor_fw_sf",
+        "inb_vv_cells",
+        "inb_mani_cells",
+        "inb_bz_cells",
+        "inb_fw_cells",
+        "inb_sf_cells",
+        "outb_vv_cells",
+        "outb_mani_cells",
+        "outb_bz_cells",
+        "outb_fw_cells",
+        "outb_sf_cells",
+        "divertor_cells",
     )
 
-    mat_filter = openmc.MaterialFilter(
-        [
-            material_lib.inb_fw_mat,
-            material_lib.outb_fw_mat,
-            material_lib.inb_bz_mat,
-            material_lib.outb_bz_mat,
-            material_lib.inb_mani_mat,
-            material_lib.outb_mani_mat,
-            material_lib.inb_vv_mat,
-            material_lib.outb_vv_mat,
-            material_lib.divertor_mat,
-            material_lib.div_fw_mat,
-            material_lib.tf_coil_mat,
-            material_lib.inb_sf_mat,  # sf = surface
-            material_lib.outb_sf_mat,  # sf = surface
-            material_lib.div_sf_mat,  # sf = surface
-        ]
+    mats = (
+        "inb_fw_mat",
+        "outb_fw_mat",
+        "inb_bz_mat",
+        "outb_bz_mat",
+        "inb_mani_mat",
+        "outb_mani_mat",
+        "inb_vv_mat",
+        "outb_vv_mat",
+        "divertor_mat",
+        "div_fw_mat",
+        "tf_coil_mat",
+        "inb_sf_mat",
+        "outb_sf_mat",
+        "div_sf_mat",
     )
+    fw_surface = (
+        "inb_sf_cells",
+        "outb_sf_cells",
+        "divertor_fw_sf",
+        "inb_fw_cells",
+        "outb_fw_cells",
+        "divertor_fw",
+    )
+
+    cell_filter = openmc.CellFilter(
+        _join_lists(itemgetter(*cell_lists)(cells_and_cell_lists))
+    )
+
+    mat_filter = openmc.MaterialFilter([getattr(material_lib, mat) for mat in mats])
 
     fw_surf_filter = openmc.CellFilter(
-        cells_and_cell_lists["inb_sf_cells"]  # sf = surface
-        + cells_and_cell_lists["outb_sf_cells"]  # sf = surface
-        + [cells_and_cell_lists["divertor_fw_sf"]]  # sf = surface
-        + cells_and_cell_lists["inb_fw_cells"]
-        + cells_and_cell_lists["outb_fw_cells"]
-        + [cells_and_cell_lists["divertor_fw"]]
+        _join_lists(itemgetter(*fw_surface)(cells_and_cell_lists))
     )
 
     neutron_filter = openmc.ParticleFilter(["neutron"])
