@@ -1,3 +1,23 @@
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                         J. Morris, D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Make the entire tokamak from scratch using user-provided variables."""
 import copy
 from typing import Dict, List, Tuple, Union
@@ -125,11 +145,7 @@ def offset_points(points, offset_cm):
 
     new_rs, new_zs = make_offset_poly(old_rs, old_zs, offset_cm, 1)
 
-    layer_points = []
-    for i, point in enumerate(points):
-        layer_points.append((new_rs[i], 0.0, new_zs[i]))
-
-    return np.array(layer_points)
+    return np.array([(new_rs[i], 0.0, new_zs[i]) for i in range(len(points))])
 
 
 def shift_points(points, shift_cm):
@@ -407,7 +423,6 @@ def create_divertor(
         div_scoring_surface = openmc.ZCone(x0=0.0, y0=0.0, z0=div_z0, r2=div_r2)
         surfaces["divertor_scoring_surfs"].append(div_scoring_surface)
 
-    surfaces["divertor_fw_back_surfs"][1].z0
     surfaces["div_fw_back_surf_1_mid_z"] = openmc.ZPlane(
         z0=surfaces["divertor_fw_back_surfs"][1].z0, boundary_type="vacuum"
     )
