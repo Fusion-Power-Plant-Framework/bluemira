@@ -7,8 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import openmc
 
-from bluemira.base.constants import raw_uc
-from bluemira.neutronics.constants import S_TO_YEAR, DPACoefficients
+from bluemira.base.constants import S_TO_YR, raw_uc
+from bluemira.neutronics.constants import DPACoefficients
 from bluemira.neutronics.params import TokamakGeometry
 
 
@@ -97,7 +97,7 @@ class OpenMCResult:
     def __init__(
         self,
         universe: openmc.Universe,
-        src_rate: Union[int, float],
+        src_rate: float,
         statepoint_file: str = "statepoint.2.h5",
     ):
         self.universe = universe
@@ -165,7 +165,7 @@ class OpenMCResult:
             n_wl_df["mean"]
             * dfa_coefs.displacements_per_damage_eV
             / (n_wl_df["vol(cc)"] * dfa_coefs.atoms_per_cc)
-            / S_TO_YEAR
+            / S_TO_YR
             * self.src_rate
         )
         n_wl_df["dpa/fpy"] = n_wl_df["dpa/fpy"].apply(lambda x: "%.1f" % x)

@@ -1,7 +1,7 @@
 """constants used for the neutronics module"""
 from periodictable import elements
 
-from bluemira.base.constants import N_AVOGADRO, S_TO_YR
+from bluemira.base.constants import N_AVOGADRO
 
 # Amount of energy released in a single dt fusion reaction, in MeV.
 energy_per_dt_MeV = 17.58
