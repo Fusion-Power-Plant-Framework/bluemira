@@ -17,7 +17,9 @@ from bluemira.neutronics.params import (
 )
 from bluemira.neutronics.quick_tbr_heating import TBRHeatingSimulation
 
-CROSS_SECTION_XML = str(Path("/bluemira_openmc_data/cross_sections.xml").expanduser())
+CROSS_SECTION_XML = str(
+    Path("~/Documents/BLUEPRINT/bluemira_openmc_data/cross_sections.xml").expanduser()
+)
 
 
 def get_preset_physical_properties(

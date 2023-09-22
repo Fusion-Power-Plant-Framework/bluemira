@@ -103,9 +103,12 @@ def setup_openmc(
     settings.batches = runtime_variables.batches
     settings.photon_transport = runtime_variables.photon_transport
     settings.electron_treatment = runtime_variables.electron_treatment
-    settings.run_mode = runtime_variables.run_mode
+    settings.run_mode = (
+        runtime_variables.run_mode
+        if isinstance(run_mode, str)
+        else runtime_variables.run_mode.value
+    )
     settings.output = {"summary": runtime_variables.openmc_write_summary}
-
     settings.export_to_xml()
 
 
@@ -120,9 +123,7 @@ def create_and_export_materials(
     """
     material_lib = MaterialsLibrary.create_from_blanket_type(
         breeder_materials.blanket_type,
-        raw_uc(
-            breeder_materials.enrichment_fraction_Li6, "1", "1/100"
-        ),  # convert to percent
+        raw_uc(breeder_materials.enrichment_fraction_Li6, "", "%"),
     )
     material_lib.export()
     return material_lib
