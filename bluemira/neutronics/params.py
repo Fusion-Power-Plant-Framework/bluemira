@@ -23,7 +23,7 @@ from dataclasses import dataclass
 
 import bluemira.neutronics.make_materials as mm
 from bluemira.base.constants import raw_uc
-from bluemira.neutronics.constants import energy_per_dt_MeV
+from bluemira.neutronics.constants import energy_per_dt
 
 
 @dataclass
@@ -47,14 +47,13 @@ class OpenMCSimulationRuntimeParameters:
 class TokamakOperationParameters:
     """The tokamak's operational parameter, such as its power"""
 
-    reactor_power_MW: float  # MW
+    reactor_power: float  # [W]
 
-    def calculate_total_neutron_rate(self) -> float:
+    def calculate_total_neutron_rate(self) -> float:  # [1/s]
         """Convert the reactor power to neutron rate
-        (number of neutrons produced per second)
+        (number of neutrons produced per second) assuming 100% efficiency.
         """
-        reactor_power_in_MeV_per_s = raw_uc(self.reactor_power_MW, "MW", "MeV/s")
-        return reactor_power_in_MeV_per_s / energy_per_dt_MeV
+        return self.reactor_power / energy_per_dt
 
 
 @dataclass
@@ -71,6 +70,29 @@ class BreederTypeParameters:
 class TokamakGeometry:
     """The measurements for all of the geneic components of the tokamak"""
 
+    minor_r: float  # [m]
+    major_r: float  # [m]
+    elong: float  # [dimensionless]
+    shaf_shift: float  # [m]
+    inb_fw_thick: float  # [m]
+    inb_bz_thick: float  # [m]
+    inb_mnfld_thick: float  # [m]
+    inb_vv_thick: float  # [m]
+    tf_thick: float  # [m]
+    outb_fw_thick: float  # [m]
+    outb_bz_thick: float  # [m]
+    outb_mnfld_thick: float  # [m]
+    outb_vv_thick: float  # [m]
+    triang: float = 0.333  # [dimensionless]
+    inb_gap: float = 0.2  # [m]
+
+
+@dataclass
+class TokamakGeometryCGS:
+    """The measurements for all of the geneic components of the tokamak,
+    provided in CGS (Centimeter, Grams, Seconds) units.
+    """
+
     minor_r: float  # [cm]
     major_r: float  # [cm]
     elong: float  # [dimensionless]
@@ -85,4 +107,24 @@ class TokamakGeometry:
     outb_mnfld_thick: float  # [cm]
     outb_vv_thick: float  # [cm]
     triang: float = 0.333  # [dimensionless]
-    inb_gap: float = 0.2  # [m]
+    inb_gap: float = 20  # [cm]
+
+    @classmethod
+    def from_SI(cls, tokamak_geometry: TokamakGeometry):
+        return cls(
+            raw_uc(tokamak_geometry.minor_r, "m", "cm"),
+            raw_uc(tokamak_geometry.major_r, "m", "cm"),
+            tokamak_geometry.elong,
+            raw_uc(tokamak_geometry.shaf_shift, "m", "cm"),
+            raw_uc(tokamak_geometry.inb_fw_thick, "m", "cm"),
+            raw_uc(tokamak_geometry.inb_bz_thick, "m", "cm"),
+            raw_uc(tokamak_geometry.inb_mnfld_thick, "m", "cm"),
+            raw_uc(tokamak_geometry.inb_vv_thick, "m", "cm"),
+            raw_uc(tokamak_geometry.tf_thick, "m", "cm"),
+            raw_uc(tokamak_geometry.outb_fw_thick, "m", "cm"),
+            raw_uc(tokamak_geometry.outb_bz_thick, "m", "cm"),
+            raw_uc(tokamak_geometry.outb_mnfld_thick, "m", "cm"),
+            raw_uc(tokamak_geometry.outb_vv_thick, "m", "cm"),
+            triang,
+            raw_uc(tokamak_geometry.inb_gap, "m", "cm"),
+        )

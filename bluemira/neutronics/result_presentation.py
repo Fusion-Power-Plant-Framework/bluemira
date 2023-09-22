@@ -30,7 +30,7 @@ from tabulate import tabulate
 
 from bluemira.base.constants import S_TO_YR, raw_uc
 from bluemira.neutronics.constants import DPACoefficients
-from bluemira.neutronics.params import TokamakGeometry
+from bluemira.neutronics.params import TokamakGeometryCGS
 
 
 def get_percent_err(row):
@@ -295,7 +295,7 @@ class OpenMCResult:
 
 def geometry_plotter(
     cells_and_cell_lists: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
-    tokamak_geometry: TokamakGeometry,
+    tokamak_geometry_cgs: TokamakGeometryCGS,
 ) -> None:
     """
     Uses the OpenMC plotter to produce an image of the modelled geometry
@@ -305,7 +305,7 @@ def geometry_plotter(
     cells_and_cell_lists:
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
-    tokamak_geometry : TokamakGeometry
+    tokamak_geometry_cgs : TokamakGeometryCGS
 
     Returns
     -------
@@ -364,12 +364,12 @@ def geometry_plotter(
     color_cells("divertor", "cyan")
 
     plot_width = 2 * (
-        tokamak_geometry.major_r
-        + tokamak_geometry.minor_r * tokamak_geometry.elong
-        + tokamak_geometry.outb_fw_thick
-        + tokamak_geometry.outb_bz_thick
-        + tokamak_geometry.outb_mnfld_thick
-        + tokamak_geometry.outb_vv_thick
+        tokamak_geometry_cgs.major_r
+        + tokamak_geometry_cgs.minor_r * tokamak_geometry_cgs.elong
+        + tokamak_geometry_cgs.outb_fw_thick
+        + tokamak_geometry_cgs.outb_bz_thick
+        + tokamak_geometry_cgs.outb_mnfld_thick
+        + tokamak_geometry_cgs.outb_vv_thick
         + 200.0  # margin
     )
 

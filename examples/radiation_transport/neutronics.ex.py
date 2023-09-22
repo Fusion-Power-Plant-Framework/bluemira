@@ -31,7 +31,7 @@ def get_preset_physical_properties(
         raise KeyError(f"{blanket_type} is not an accepted blanket type.")
     breeder_materials = BreederTypeParameters(
         blanket_type=blanket_type,
-        li_enrich_ao=60.0,  # atomic fraction percentage of lithium
+        li_enrich_ao=60.0,  # PERCENTAGE of Lithium that is Li-6
     )
 
     # Geometry variables
@@ -42,62 +42,62 @@ def get_preset_physical_properties(
     # Status,challenges and outlook,
     # Pereslavtsev, 2019
     #
-    # 40.0,      # TF Coil inner
-    # 20.0,      # gap                  from figures
-    # 6.0,       # VV steel wall
-    # 48.0,      # VV
-    # 6.0,       # VV steel wall
-    # 2.0,       # gap                  from figures
-    # 35.0,      # Back Supporting Structure
-    # 6.0,       # Back Wall and Gas Collectors   Back wall = 3.0
-    # 35.0,      # breeder zone
-    # 2.2        # fw and armour
+    # 0.400,      # TF Coil inner
+    # 0.200,      # gap                  from figures
+    # 0.060,       # VV steel wall
+    # 0.480,      # VV
+    # 0.060,       # VV steel wall
+    # 0.020,       # gap                  from figures
+    # 0.350,      # Back Supporting Structure
+    # 0.060,       # Back Wall and Gas Collectors   Back wall = 3.0
+    # 0.350,      # breeder zone
+    # 0.022        # fw and armour
 
     plasma_shape = {
-        "minor_r": raw_uc(2.883, "m", "cm"),  # [cm]
-        "major_r": raw_uc(8.938, "m", "cm"),  # [cm]
+        "minor_r": 2.883,  # [m]
+        "major_r": 8.938,  # [m]
         "elong": 1.65,  # [dimensionless]
-        "shaf_shift": raw_uc(0.0, "cm", "m"),  # [m]
+        "shaf_shift": 0.0,  # [m]
     }  # The shafranov shift of the plasma
     if blanket_type is BlanketType.WCLL:
         tokamak_geometry = TokamakGeometry(
             **plasma_shape,
-            inb_fw_thick=2.7,
-            inb_bz_thick=37.8,
-            inb_mnfld_thick=43.5,
-            inb_vv_thick=60.0,
-            tf_thick=40.0,
-            outb_fw_thick=2.7,
-            outb_bz_thick=53.8,
-            outb_mnfld_thick=42.9,
-            outb_vv_thick=60.0,
+            inb_fw_thick=0.027,  # [m]
+            inb_bz_thick=0.378,  # [m]
+            inb_mnfld_thick=0.435,  # [m]
+            inb_vv_thick=0.600,  # [m]
+            tf_thick=0.400,  # [m]
+            outb_fw_thick=0.027,  # [m]
+            outb_bz_thick=0.538,  # [m]
+            outb_mnfld_thick=0.429,  # [m]
+            outb_vv_thick=0.600,  # [m]
         )
     elif blanket_type is BlanketType.DCLL:
         tokamak_geometry = TokamakGeometry(
             **plasma_shape,
-            inb_fw_thick=2.2,
-            inb_bz_thick=30.0,
-            inb_mnfld_thick=17.8,
-            inb_vv_thick=60.0,
-            tf_thick=40.0,
-            outb_fw_thick=2.2,
-            outb_bz_thick=64.0,
-            outb_mnfld_thick=24.8,
-            outb_vv_thick=60.0,
+            inb_fw_thick=0.022,  # [m]
+            inb_bz_thick=0.300,  # [m]
+            inb_mnfld_thick=0.178,  # [m]
+            inb_vv_thick=0.600,  # [m]
+            tf_thick=0.400,  # [m]
+            outb_fw_thick=0.022,  # [m]
+            outb_bz_thick=0.640,  # [m]
+            outb_mnfld_thick=0.248,  # [m]
+            outb_vv_thick=0.600,  # [m]
         )
     elif blanket_type is BlanketType.HCPB:
         # HCPB Design Report, 26/07/2019
         tokamak_geometry = TokamakGeometry(
             **plasma_shape,
-            inb_fw_thick=2.7,
-            inb_bz_thick=46.0,
-            inb_mnfld_thick=56.0,
-            inb_vv_thick=60.0,
-            tf_thick=40.0,
-            outb_fw_thick=2.7,
-            outb_bz_thick=46.0,
-            outb_mnfld_thick=56.0,
-            outb_vv_thick=60.0,
+            inb_fw_thick=0.027,  # [m]
+            inb_bz_thick=0.460,  # [m]
+            inb_mnfld_thick=0.560,  # [m]
+            inb_vv_thick=0.600,  # [m]
+            tf_thick=0.400,  # [m]
+            outb_fw_thick=0.027,  # [m]
+            outb_bz_thick=0.460,  # [m]
+            outb_mnfld_thick=0.560,  # [m]
+            outb_vv_thick=0.600,  # [m]
         )
 
     return breeder_materials, tokamak_geometry
@@ -120,16 +120,21 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     cross_section_xml=CROSS_SECTION_XML,
 )
 
-operation_variable = TokamakOperationParameters(reactor_power_MW=1998.0)
+operation_variable = TokamakOperationParameters(reactor_power=1998e6)
 
 # set up a DEMO-like reactor, and run OpenMC simualtion
 tbr_heat_sim = TBRHeatingSimulation(
     runtime_variables, operation_variable, breeder_materials, tokamak_geometry
 )
-blanket_face = make_polygon(Coordinates(np.load("blanket_face.npy")))
-divertor_face = make_polygon(Coordinates(np.load("divertor_face.npy")))
+blanket_wire = make_polygon(Coordinates(np.load("blanket_face.npy")))
+divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
 tbr_heat_sim.setup(
-    blanket_face, divertor_face, R_0=900, A=3.10344, kappa=1.792, plot_geometry=True
+    blanket_wire,
+    divertor_wire,
+    major_radius=9.00,
+    aspect_ratio=3.10344,
+    elong=1.792,
+    plot_geometry=True,
 )
 tbr_heat_sim.run()
 # get the TBR, component heating, first wall dpa, and photon heat flux

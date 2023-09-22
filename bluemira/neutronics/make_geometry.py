@@ -18,7 +18,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""Make the entire tokamak from scratch using user-provided variables."""
+"""Make the entire tokamak from scratch using user-provided variables.
+All units used in this file are either [cm] or dimensionless.
+"""
 import copy
 from typing import Dict, List, Tuple, Union
 
@@ -32,32 +34,32 @@ import bluemira.neutronics.result_presentation as present
 import bluemira.neutronics.volume_functions as vf
 from bluemira.base.constants import raw_uc
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.params import TokamakGeometry
+from bluemira.neutronics.params import TokamakGeometryCGS
 
 cells = {}  # is actually a dictionary of cells and cell lists
 surfaces = {}
 
 # Setting the thickness of divertor below the first wall
-div_clearance = 49.0
+div_clearance = 49.0  # [cm]
 
 
-def check_geometry(tokamak_geometry: TokamakGeometry) -> None:
+def check_geometry(tokamak_geometry_cgs: TokamakGeometryCGS) -> None:
     """Some basic geometry checks"""
-    if tokamak_geometry.elong < 1.0:
+    if tokamak_geometry_cgs.elong < 1.0:
         raise ValueError("Elongation must be at least 1.0")
 
     # TODO update this
     inboard_build = (
-        tokamak_geometry.minor_r
-        + tokamak_geometry.inb_fw_thick
-        + tokamak_geometry.inb_bz_thick
-        + tokamak_geometry.inb_mnfld_thick
-        + tokamak_geometry.inb_vv_thick
-        + tokamak_geometry.tf_thick
-        + tokamak_geometry.inb_gap
+        tokamak_geometry_cgs.minor_r
+        + tokamak_geometry_cgs.inb_fw_thick
+        + tokamak_geometry_cgs.inb_bz_thick
+        + tokamak_geometry_cgs.inb_mnfld_thick
+        + tokamak_geometry_cgs.inb_vv_thick
+        + tokamak_geometry_cgs.tf_thick
+        + tokamak_geometry_cgs.inb_gap
     )
 
-    if inboard_build > tokamak_geometry.major_r:
+    if inboard_build > tokamak_geometry_cgs.major_r:
         raise ValueError(
             "The inboard build does not fit within the major radius. Increase the major radius."
         )
@@ -162,11 +164,19 @@ def elongate(points, adjust_elong):
     return points
 
 
-def stretch_r(points, tokamak_geometry: TokamakGeometry, stretch_r_val) -> np.ndarray:
-    """Moves the points in the r dimension away from the major radius by extra_r_cm"""
+def stretch_r(
+    points, tokamak_geometry_cgs: TokamakGeometryCGS, stretch_r_val
+) -> np.ndarray:
+    """Moves the points in the r dimension away from the major radius by extra_r_cm
+
+    Parameters
+    ----------
+    points: np.array of 2D or 3D points
+    stretch_r_val: in cm
+    """
     points[:, 0] = (
-        points[:, 0] - tokamak_geometry.major_r
-    ) * stretch_r_val + tokamak_geometry.major_r
+        points[:, 0] - tokamak_geometry_cgs.major_r
+    ) * stretch_r_val + tokamak_geometry_cgs.major_r
 
     return points
 
@@ -222,7 +232,7 @@ def create_inboard_layer(
         )
 
         # Different top surface for top region
-        if inb_i == num_inboard_points - 1:  # if top segment
+        if inb_i == (num_inboard_points - 1):  # if top segment
             inb_cell.region = inb_cell.region & -surfaces["meeting_cone"]
         else:
             inb_cell.region = (
@@ -376,8 +386,8 @@ def create_divertor(
     """Creates the divertors cells
     outer_points gives the bottom of the VV
     """
-    div_fw_thick = 2.5  # Divertor first wall thickness
-    div_sf_thick = 0.01
+    div_fw_thick = 2.5  # [cm] # Divertor first wall thickness
+    div_sf_thick = 0.01  # [cm]
     div_points_fw_back = offset_points(div_points, div_fw_thick)
     div_sf_points = offset_points(div_points, -div_sf_thick)
 
@@ -636,7 +646,7 @@ def create_plasma_chamber():
 
 
 def make_geometry(
-    tokamak_geometry: TokamakGeometry,
+    tokamak_geometry_cgs: TokamakGeometryCGS,
     fw_points: np.ndarray,
     div_points: np.ndarray,
     num_inboard_points: int,
@@ -647,8 +657,8 @@ def make_geometry(
 
     Parameters
     ----------
-    tokamak_geometry: TokamakGeometry
-        TokamakGeometry (child of dataclass) instance containing the attributes:
+    tokamak_geometry_cgs: TokamakGeometryCGS
+        TokamakGeometryCGS (child of dataclass) instance containing the attributes:
             elong
             inb_bz_thick
             inb_fw_thick
@@ -678,25 +688,25 @@ def make_geometry(
     print("fw_points", fw_points)
     print("div_points", div_points)
 
-    # minor_r = tokamak_geometry.minor_r
-    # major_r = tokamak_geometry.major_r
-    # elong = tokamak_geometry.elong
+    # minor_r = tokamak_geometry_cgs.minor_r
+    # major_r = tokamak_geometry_cgs.major_r
+    # elong = tokamak_geometry_cgs.elong
     # inner_plasma_r = major_r - minor_r
     # outer_plasma_r = major_r + minor_r
 
-    inb_fw_thick = tokamak_geometry.inb_fw_thick
-    inb_bz_thick = tokamak_geometry.inb_bz_thick
-    inb_mnfld_thick = tokamak_geometry.inb_mnfld_thick
-    inb_vv_thick = tokamak_geometry.inb_vv_thick
-    tf_thick = tokamak_geometry.tf_thick
+    inb_fw_thick = tokamak_geometry_cgs.inb_fw_thick
+    inb_bz_thick = tokamak_geometry_cgs.inb_bz_thick
+    inb_mnfld_thick = tokamak_geometry_cgs.inb_mnfld_thick
+    inb_vv_thick = tokamak_geometry_cgs.inb_vv_thick
+    tf_thick = tokamak_geometry_cgs.tf_thick
 
-    outb_fw_thick = tokamak_geometry.outb_fw_thick
-    outb_bz_thick = tokamak_geometry.outb_bz_thick
-    outb_mnfld_thick = tokamak_geometry.outb_mnfld_thick
-    outb_vv_thick = tokamak_geometry.outb_vv_thick
+    outb_fw_thick = tokamak_geometry_cgs.outb_fw_thick
+    outb_bz_thick = tokamak_geometry_cgs.outb_bz_thick
+    outb_mnfld_thick = tokamak_geometry_cgs.outb_mnfld_thick
+    outb_vv_thick = tokamak_geometry_cgs.outb_vv_thick
 
     # This is a thin geometry layer to score peak surface values
-    fw_surf_score_depth = 0.01
+    fw_surf_score_depth = 0.01  # [cm]
 
     # Of the points in fw_points, this specifies the number that define the outboard
     num_outboard_points = len(fw_points) - num_inboard_points
@@ -735,7 +745,7 @@ def make_geometry(
 
     # Getting tf coil r surfaces
     back_of_inb_vv_r = get_min_r_of_points(inner_points)
-    gap_between_vv_tf = tokamak_geometry.inb_gap
+    gap_between_vv_tf = tokamak_geometry_cgs.inb_gap
 
     surfaces["bore_surface"] = openmc.ZCylinder(
         r=back_of_inb_vv_r - gap_between_vv_tf - tf_thick
@@ -751,12 +761,12 @@ def make_geometry(
     dummy, max_z, max_r = get_min_max_z_r_of_points(
         np.concatenate((outer_points, inner_points[-num_inboard_points:]), axis=0)
     )
-    min_z, dummy, dummy = get_min_max_z_r_of_points(
+    min_z, dummy1, dummy2 = get_min_max_z_r_of_points(
         np.concatenate((outer_points, div_points_w_clearance), axis=0)
     )
 
     # Setting clearance between the top of the divertor and the container shell
-    clearance = 5.0
+    clearance = 5.0  # [cm]
 
     surfaces["inb_top"] = openmc.ZPlane(z0=max_z + clearance, boundary_type="vacuum")
     surfaces["inb_bot"] = openmc.ZPlane(z0=min_z - clearance, boundary_type="vacuum")
@@ -1055,12 +1065,12 @@ def make_geometry(
 
 
 def load_fw_points(
-    tokamak_geometry: TokamakGeometry,
-    blanket_face: BluemiraWire,
-    divertor_face: BluemiraWire,
-    R_0: float,
-    A: float,
-    kappa: float,
+    tokamak_geometry_cgs: TokamakGeometryCGS,
+    blanket_wire: BluemiraWire,
+    divertor_wire: BluemiraWire,
+    major_radius: float,
+    aspect_ratio: float,
+    elong: float,
     save_plots: bool = True,
 ) -> Tuple[npt.NDArray, npt.NDArray, int]:
     """
@@ -1073,7 +1083,13 @@ def load_fw_points(
 
     Parameters
     ----------
-    tokamak_geometry: TokamakGeometry
+    tokamak_geometry_cgs: TokamakGeometryCGS
+    blanket_wire: BluemiraWire
+    divertor_wire: BluemiraWire
+    major_radius: major radius of the actual device, in SI units.
+        The geometry variables specificed by
+        tokamak_geometry_cgs will then be modified by major_radius
+    aspect_ratio: aspect ratio of the reactor
 
     Returns
     -------
@@ -1110,11 +1126,11 @@ def load_fw_points(
     -----
     All units for the diagram above are in cgs
     """
-    full_blanket_2d_outline = blanket_face.discretize(100).T
-    divertor_2d_outline = divertor_face.discretize(100).T
-    ex_pts_maj_r = R_0
-    ex_pts_min_r = R_0 / A
-    ex_pts_elong = kappa
+    full_blanket_2d_outline = raw_uc(blanket_wire.discretize(100).T, "m", "cm")
+    divertor_2d_outline = raw_uc(divertor_wire.discretize(100).T, "m", "cm")
+    ex_pts_maj_r = major_radius
+    ex_pts_min_r = major_radius / aspect_ratio
+    ex_pts_elong = elong
     # Specifying the number of the selected points that define the inboard.
     num_inboard_points = 6
     # sample points indices
@@ -1138,10 +1154,10 @@ def load_fw_points(
 
     # (down)sample existing data
     # blanket
-    downsampled_ibf = raw_uc(inner_blanket_face[selected_fw_samples], "m", "cm")
+    downsampled_ibf = inner_blanket_face[selected_fw_samples]
     downsampled_ibf = _fix_downsampled_ibf(downsampled_ibf)
     # divertor
-    downsampled_divf = raw_uc(divertor_2d_outline[selected_div_samples], "m", "cm")
+    downsampled_divf = divertor_2d_outline[selected_div_samples]
 
     # Create the full plasma-facing outline by concatenating existing var
     old_points = np.concatenate((downsampled_ibf, downsampled_divf), axis=0)
@@ -1150,15 +1166,17 @@ def load_fw_points(
 
     # rescale data to fit new geometry.
     # Expand point outwards according to new major radius
-    shift_cm = tokamak_geometry.major_r - ex_pts_maj_r
+    shift_cm = tokamak_geometry_cgs.major_r - ex_pts_maj_r
     new_points = shift_points(old_points, shift_cm)
 
     # Adjusting points for elongation and minor radius
     # This elongation also include an allowance for the minor radius
-    elong_w_minor_r = tokamak_geometry.minor_r / ex_pts_min_r * tokamak_geometry.elong
-    stretch_r_val = tokamak_geometry.minor_r / ex_pts_min_r
+    elong_w_minor_r = (
+        tokamak_geometry_cgs.minor_r / ex_pts_min_r * tokamak_geometry_cgs.elong
+    )
+    stretch_r_val = tokamak_geometry_cgs.minor_r / ex_pts_min_r
     new_points = elongate(new_points, elong_w_minor_r / ex_pts_elong)
-    new_points = stretch_r(new_points, tokamak_geometry, stretch_r_val)
+    new_points = stretch_r(new_points, tokamak_geometry_cgs, stretch_r_val)
 
     # split 'new_points' into new_downsampled_* variables
     new_downsampled_fw = new_points[:-num_points_belongong_to_divertor]
@@ -1173,11 +1191,13 @@ def load_fw_points(
         # R = R0 + a cos(θ + δ sin θ)
         # where a = minor radius
         #       δ = triangularity
-        u = tokamak_geometry.major_r  # x-position of the center
+        u = tokamak_geometry_cgs.major_r  # x-position of the center
         v = 0.0  # y-position of the center
-        a = tokamak_geometry.minor_r  # radius on the x-axis
-        b = tokamak_geometry.elong * tokamak_geometry.minor_r  # radius on the y-axis
-        tri = tokamak_geometry.triang  # triangularity
+        a = tokamak_geometry_cgs.minor_r  # radius on the x-axis
+        b = (
+            tokamak_geometry_cgs.elong * tokamak_geometry_cgs.minor_r
+        )  # radius on the y-axis
+        tri = tokamak_geometry_cgs.triang  # triangularity
         t = np.linspace(0, 2 * pi, 100)
 
         with present.PoloidalXSPlot("blanket_face.svg", "Blanket Face") as ax:

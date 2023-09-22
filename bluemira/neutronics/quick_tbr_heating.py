@@ -52,34 +52,34 @@ import bluemira.neutronics.constants as neutronics_const
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.result_presentation as present
 from bluemira.base.constants import raw_uc
-from bluemira.neutronics.constants import dt_neutron_energy_MeV
 from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.neutronics.params import (
     BreederTypeParameters,
     OpenMCSimulationRuntimeParameters,
     TokamakGeometry,
+    TokamakGeometryCGS,
     TokamakOperationParameters,
 )
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
 
 
-def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
+def create_ring_source(tokamak_geometry_cgs: TokamakGeometryCGS) -> openmc.Source:
     """
     Creating simple ring source.
     A more accurate source will slightly affect the wall loadings and dpa profiles.
 
     Parameters
     ----------
-    tokamak_geometry: TokamakGeometry
+    tokamak_geometry_cgs: TokamakGeometryCGS
         Only the
-            - tokamak_geometry.major_r
-            - tokamak_geometry.shaf_shift
+            - tokamak_geometry_cgs.major_r
+            - tokamak_geometry_cgs.shaf_shift
         variables are used in this function.
     """
     ring_source = openmc.Source()
     source_radii = openmc.stats.Discrete(
-        [tokamak_geometry.major_r + tokamak_geometry.shaf_shift], [1]
+        [tokamak_geometry_cgs.major_r + tokamak_geometry_cgs.shaf_shift], [1]
     )
     source_z_values = openmc.stats.Discrete([0], [1])
     source_angles = openmc.stats.Uniform(a=0.0, b=2 * pi)
@@ -181,29 +181,56 @@ class TBRHeatingSimulation:
         self.runtime_variables = runtime_variables
         self.operation_variable = operation_variable
         self.breeder_materials = breeder_materials
-        self.tokamak_geometry = tokamak_geometry
+        self.tokamak_geometry_cgs = TokamakGeometryCGS.from_SI(tokamak_geometry)
 
         self.cells = None
         self.material_lib = None
         self.universe = None
 
     def setup(
-        self, blanket_face, divertor_face, R_0, A, kappa, plot_geometry: bool = True
+        self,
+        blanket_wire,
+        divertor_wire,
+        major_radius,
+        aspect_ratio,
+        elong,
+        plot_geometry: bool = True,
     ) -> None:
-        """Plot the geometry and saving them as .png files with hard-coded names."""
+        """Plot the geometry and saving them as .png files with hard-coded names.
+        Input parameters' units are still in SI;
+        but after this step everything should be in cgs as data get parsed to openmc.
+
+        Parameters
+        ----------
+        blanket_wire: BluemiraWire
+            units: [m]
+        divertor_wire: BluemiraWire
+            units: [m]
+        major_radius: float
+            (new) major radius in SI units, separate to the one provided in TokamakGeometry
+            unit: [m]
+        aspect_ratio: float
+            scalar denoting the aspect ratio of the device (major/minor radius)
+            unit: [dimensionless]
+        elong: float
+            (new) elongation variable, separate to the one provided in TokamakGeometry
+            unit: [dimensionless]
+        plot_geometry: bool, default=True
+            Should openmc plot the .png files or not.
+        """
         material_lib = create_and_export_materials(self.breeder_materials)
         self.material_lib = material_lib
-        mg.check_geometry(self.tokamak_geometry)
+        mg.check_geometry(self.tokamak_geometry_cgs)
         if self.runtime_variables.parametric_source:
             source = create_parametric_plasma_source(
-                minor_r=self.tokamak_geometry.minor_r,
-                major_r=self.tokamak_geometry.major_r,
-                elongation=self.tokamak_geometry.elong,
-                triangulation=self.tokamak_geometry.triang,
-                radial_shift=self.tokamak_geometry.shaf_shift,
+                minor_r=self.tokamak_geometry_cgs.minor_r,
+                major_r=self.tokamak_geometry_cgs.major_r,
+                elongation=self.tokamak_geometry_cgs.elong,
+                triangulation=self.tokamak_geometry_cgs.triang,
+                radial_shift=self.tokamak_geometry_cgs.shaf_shift,
             )
         else:
-            source = create_ring_source(self.tokamak_geometry)
+            source = create_ring_source(self.tokamak_geometry_cgs)
 
         setup_openmc(
             source,
@@ -217,10 +244,16 @@ class TBRHeatingSimulation:
         )
 
         blanket_points, div_points, num_inboard_points = mg.load_fw_points(
-            self.tokamak_geometry, blanket_face, divertor_face, R_0, A, kappa, True
+            self.tokamak_geometry_cgs,
+            blanket_wire,
+            divertor_wire,
+            raw_uc(major_radius, "m", "cm"),
+            aspect_ratio,
+            elong,
+            True,
         )
         self.cells, self.universe = mg.make_geometry(
-            self.tokamak_geometry,
+            self.tokamak_geometry_cgs,
             blanket_points,
             div_points,
             num_inboard_points,
@@ -234,7 +267,7 @@ class TBRHeatingSimulation:
         create_tallies(self.cells, self.material_lib, self.src_rate)
 
         if plot_geometry:
-            present.geometry_plotter(self.cells, self.tokamak_geometry)
+            present.geometry_plotter(self.cells, self.tokamak_geometry_cgs)
 
     @staticmethod
     def run(*args, **kwargs) -> None:
@@ -261,7 +294,7 @@ class TBRHeatingSimulation:
         Using openmc's built-in stochastic volume calculation function to get the volume.
         """
         stochastic_volume_calculation(
-            self.tokamak_geometry,
+            self.tokamak_geometry_cgs,
             self.cells,
             self.runtime_variables.volume_calc_particles,
         )

@@ -25,7 +25,7 @@ from typing import List, Union
 import openmc
 from numpy import pi
 
-from bluemira.neutronics.params import TokamakGeometry
+from bluemira.neutronics.params import TokamakGeometryCGS
 
 
 def get_vol_of_truncated_cone(cone, top_z, bot_z):
@@ -92,7 +92,7 @@ def get_div_fw_vol(outer_cones, inner_cones, rs):
 
 
 def stochastic_volume_calculation(
-    tokamak_geometry: TokamakGeometry,
+    tokamak_geometry_cgs: TokamakGeometryCGS,
     cells_and_cell_lists: Union[List[openmc.Cell], openmc.Cell],
     particles: int = int(4e7),
 ) -> None:
@@ -101,7 +101,7 @@ def stochastic_volume_calculation(
 
     Parameters
     ----------
-    tokamak_geometry: TokamakGeometry
+    tokamak_geometry_cgs: TokamakGeometryCGS
     cells_and_cell_lists: dict
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
@@ -115,18 +115,18 @@ def stochastic_volume_calculation(
 
     # maximum radii and heigth reached by all of the tokamak's breeder zone component
     maxr = (
-        tokamak_geometry.major_r
-        + tokamak_geometry.minor_r
-        + tokamak_geometry.outb_fw_thick
-        + tokamak_geometry.outb_bz_thick
+        tokamak_geometry_cgs.major_r
+        + tokamak_geometry_cgs.minor_r
+        + tokamak_geometry_cgs.outb_fw_thick
+        + tokamak_geometry_cgs.outb_bz_thick
     )
     maxz = (
         # height of plasma = 2 * elong * minor
-        tokamak_geometry.elong * tokamak_geometry.minor_r
-        + tokamak_geometry.outb_fw_thick
-        + tokamak_geometry.outb_bz_thick
-        + tokamak_geometry.outb_mnfld_thick
-        + tokamak_geometry.outb_vv_thick
+        tokamak_geometry_cgs.elong * tokamak_geometry_cgs.minor_r
+        + tokamak_geometry_cgs.outb_fw_thick
+        + tokamak_geometry_cgs.outb_bz_thick
+        + tokamak_geometry_cgs.outb_mnfld_thick
+        + tokamak_geometry_cgs.outb_vv_thick
     )
     # draw the bounding box for the simulation.
     lower_left = (-maxr, -maxr, -maxz)
