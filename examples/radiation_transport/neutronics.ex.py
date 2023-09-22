@@ -57,24 +57,32 @@ def get_preset_physical_properties(
         "minor_r": 2.883,  # [m]
         "major_r": 8.938,  # [m]
         "elong": 1.65,  # [dimensionless]
+        "peaking_factor": 1.508,  # [dimensionless]
         "shaf_shift": 0.0,  # [m]
-    }  # The shafranov shift of the plasma
+        "vertical_shift": 0.0,  # [m]
+    }
+    shared_geometries = {  # that are identical in all three types of reactors.
+        "triang": 0.333,  # [m]
+        "inb_gap": 0.2,  # [m]
+        "inb_vv_thick": 0.6,  # [m]
+        "tf_thick": 0.4,  # [m]
+        "outb_vv_thick": 0.6,  # [m]
+    }
     if blanket_type is BlanketType.WCLL:
         tokamak_geometry = TokamakGeometry(
             **plasma_shape,
+            **shared_geometries,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.378,  # [m]
             inb_mnfld_thick=0.435,  # [m]
-            inb_vv_thick=0.600,  # [m]
-            tf_thick=0.400,  # [m]
             outb_fw_thick=0.027,  # [m]
             outb_bz_thick=0.538,  # [m]
             outb_mnfld_thick=0.429,  # [m]
-            outb_vv_thick=0.600,  # [m]
         )
     elif blanket_type is BlanketType.DCLL:
         tokamak_geometry = TokamakGeometry(
             **plasma_shape,
+            **shared_geometries,
             inb_fw_thick=0.022,  # [m]
             inb_bz_thick=0.300,  # [m]
             inb_mnfld_thick=0.178,  # [m]
@@ -83,12 +91,12 @@ def get_preset_physical_properties(
             outb_fw_thick=0.022,  # [m]
             outb_bz_thick=0.640,  # [m]
             outb_mnfld_thick=0.248,  # [m]
-            outb_vv_thick=0.600,  # [m]
         )
     elif blanket_type is BlanketType.HCPB:
         # HCPB Design Report, 26/07/2019
         tokamak_geometry = TokamakGeometry(
             **plasma_shape,
+            **shared_geometries,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.460,  # [m]
             inb_mnfld_thick=0.560,  # [m]
@@ -97,7 +105,6 @@ def get_preset_physical_properties(
             outb_fw_thick=0.027,  # [m]
             outb_bz_thick=0.460,  # [m]
             outb_mnfld_thick=0.560,  # [m]
-            outb_vv_thick=0.600,  # [m]
         )
 
     return breeder_materials, tokamak_geometry
@@ -131,9 +138,10 @@ divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
 tbr_heat_sim.setup(
     blanket_wire,
     divertor_wire,
-    major_radius=9.00,
-    aspect_ratio=3.10344,
-    elong=1.792,
+    temperature=raw_uc(15.4, "keV", "K"),
+    major_radius=9.00,  # [m]
+    aspect_ratio=3.10344,  # [dimensionless]
+    elong=1.792,  # [dimensionless]
     plot_geometry=True,
 )
 tbr_heat_sim.run()

@@ -22,6 +22,8 @@
 TODO:
 [ ]Integration into our logging system (print should go through bluemira_print etc.)
 [ ]Unit: cgs -> metric
+[ ]Should we rename `quick_tbr_heating.py` to something else?
+____
 [ ]Tests?
 """
 from typing import Literal
@@ -173,11 +175,12 @@ class TBRHeatingSimulation:
 
     def setup(
         self,
-        blanket_wire,
-        divertor_wire,
-        major_radius,
-        aspect_ratio,
-        elong,
+        blanket_wire: BluemiraWire,
+        divertor_wire: BluemiraWire,
+        major_radius: float,
+        aspect_ratio: float,
+        elong: float,
+        temperature: float,
         plot_geometry: bool = True,
     ) -> None:
         """Plot the geometry and saving them as .png files with hard-coded names.
@@ -191,7 +194,8 @@ class TBRHeatingSimulation:
         divertor_wire: BluemiraWire
             units: [m]
         major_radius: float
-            (new) major radius in SI units, separate to the one provided in TokamakGeometry
+            (new) major radius in SI units,
+                separate to the one provided in TokamakGeometry
             unit: [m]
         aspect_ratio: float
             scalar denoting the aspect ratio of the device (major/minor radius)
@@ -199,9 +203,14 @@ class TBRHeatingSimulation:
         elong: float
             (new) elongation variable, separate to the one provided in TokamakGeometry
             unit: [dimensionless]
+        temperature: float, default=neutronics_const.plasma_params_default["temp"]
+            plasma temperature
+            unit: [K]
         plot_geometry: bool, default=True
             Should openmc plot the .png files or not.
         """
+        temperature_keV = raw_uc(temperature, "K", "keV")
+
         material_lib = create_and_export_materials(self.breeder_materials)
         self.material_lib = material_lib
         mg.check_geometry(self.tokamak_geometry_cgs)
@@ -212,6 +221,9 @@ class TBRHeatingSimulation:
                 elongation=self.tokamak_geometry_cgs.elong,
                 triangulation=self.tokamak_geometry_cgs.triang,
                 radial_shift=self.tokamak_geometry_cgs.shaf_shift,
+                peaking_factor=self.tokamak_geometry_cgs.peaking_factor,
+                vertical_shift=self.tokamak_geometry_cgs.vertical_shift,
+                temperature=round(temperature_keV, 6),
             )
         else:
             source = create_ring_source(self.tokamak_geometry_cgs)

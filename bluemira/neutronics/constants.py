@@ -32,12 +32,6 @@ dt_neutron_energy = energy_per_dt * (4 / 5)  # [J]
 dpa_Fe_threshold_eV = 40  # Source cites 40 eV.
 
 
-plasam_params_default = {
-    "temperature": raw_uc(15.4, "keV", "K"),
-    "peaking_factor": 1.508,  # [dimensionless]
-    "vertical_shift": 0.0,  # [m]
-}
-
 # The following material science constants are in cgs.
 Fe_molar_mass_g = elements.isotope("Fe").mass
 Fe_density_g_cc = elements.isotope("Fe").density

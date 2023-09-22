@@ -74,6 +74,8 @@ class TokamakGeometry:
     major_r: float  # [m]
     elong: float  # [dimensionless]
     shaf_shift: float  # [m]
+    vertical_shift: float  # [m]
+    peaking_factor: float  # [m]
     inb_fw_thick: float  # [m]
     inb_bz_thick: float  # [m]
     inb_mnfld_thick: float  # [m]
@@ -83,8 +85,8 @@ class TokamakGeometry:
     outb_bz_thick: float  # [m]
     outb_mnfld_thick: float  # [m]
     outb_vv_thick: float  # [m]
-    triang: float = 0.333  # [dimensionless]
-    inb_gap: float = 0.2  # [m]
+    triang: float  # [dimensionless]
+    inb_gap: float  # [m]
 
 
 @dataclass
@@ -97,6 +99,8 @@ class TokamakGeometryCGS:
     major_r: float  # [cm]
     elong: float  # [dimensionless]
     shaf_shift: float  # [cm]
+    vertical_shift: float  # [cm]
+    peaking_factor: float  # [cm]
     inb_fw_thick: float  # [cm]
     inb_bz_thick: float  # [cm]
     inb_mnfld_thick: float  # [cm]
@@ -106,8 +110,8 @@ class TokamakGeometryCGS:
     outb_bz_thick: float  # [cm]
     outb_mnfld_thick: float  # [cm]
     outb_vv_thick: float  # [cm]
-    triang: float = 0.333  # [dimensionless]
-    inb_gap: float = 20  # [cm]
+    triang: float  # [dimensionless]
+    inb_gap: float  # [cm]
 
     @classmethod
     def from_SI(cls, tokamak_geometry: TokamakGeometry):
@@ -116,6 +120,8 @@ class TokamakGeometryCGS:
             raw_uc(tokamak_geometry.major_r, "m", "cm"),
             tokamak_geometry.elong,
             raw_uc(tokamak_geometry.shaf_shift, "m", "cm"),
+            raw_uc(tokamak_geometry.vertical_shift, "m", "cm"),
+            raw_uc(tokamak_geometry.peaking_factor, "m", "cm"),
             raw_uc(tokamak_geometry.inb_fw_thick, "m", "cm"),
             raw_uc(tokamak_geometry.inb_bz_thick, "m", "cm"),
             raw_uc(tokamak_geometry.inb_mnfld_thick, "m", "cm"),
