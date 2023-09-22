@@ -1183,10 +1183,6 @@ def load_fw_points(
     # plotting.
     if save_plots:
         # create parametric variables for plotting smoother lines
-        # https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf pg. 239 # noqa: W505
-        # R = R0 + a cos(θ + δ sin θ)
-        # where a = minor radius
-        #       δ = triangularity
         u = tokamak_geometry_cgs.major_r  # x-position of the center
         v = 0.0  # y-position of the center
         a = tokamak_geometry_cgs.minor_r  # radius on the x-axis
@@ -1197,27 +1193,16 @@ def load_fw_points(
         t = np.linspace(0, 2 * pi, 100)
 
         with present.PoloidalXSPlot("blanket_face.svg", "Blanket Face") as ax:
-            ax.scatter(
-                raw_uc(full_blanket_2d_outline[:, 0], "cm", "m"),
-                raw_uc(full_blanket_2d_outline[:, 2], "cm", "m"),
-            )
+            ax.scatter_cm(full_blanket_2d_outline[:, 0], full_blanket_2d_outline[:, 2])
 
         with present.PoloidalXSPlot(
             "all_points_before_after.svg", "Points sampled for making the MCNP model"
         ) as ax:
-            ax.plot(
-                raw_uc(old_points[:, 0], "cm", "m"),
-                raw_uc(old_points[:, 2], "cm", "m"),
-                label="Initial fw points",
-            )
-            ax.plot(
-                raw_uc(new_points[:, 0], "cm", "m"),
-                raw_uc(new_points[:, 2], "cm", "m"),
-                label="Adjusted fw points",
-            )
-            ax.plot(
-                raw_uc(u + a * np.cos(t + tri * np.sin(t)), "cm", "m"),
-                raw_uc(v + b * np.sin(t), "cm", "m"),
+            ax.plot_cm(old_points[:, 0], old_points[:, 2], label="Initial fw points")
+            ax.plot_cm(new_points[:, 0], new_points[:, 2], label="Adjusted fw points")
+            ax.plot_cm(
+                u + a * np.cos(t + tri * np.sin(t)),
+                v + b * np.sin(t),
                 label="Plasma envelope",
             )  # source envelope
             ax.legend(loc="upper right")
@@ -1225,17 +1210,11 @@ def load_fw_points(
         with present.PoloidalXSPlot(
             "selected_pts_inner_blanket_face.svg", "Selected points on the inner blanket"
         ) as ax:
-            ax.scatter(
-                raw_uc(new_downsampled_fw[:, 0], "cm", "m"),
-                raw_uc(new_downsampled_fw[:, 2], "cm", "m"),
-            )
+            ax.scatter_cm(new_downsampled_fw[:, 0], new_downsampled_fw[:, 2])
 
         with present.PoloidalXSPlot(
             "selected_pts_divertor_face.svg", "Selected points on the divertor face"
         ) as ax:
-            ax.scatter(
-                raw_uc(new_downsampled_div[:, 0], "cm", "m"),
-                raw_uc(new_downsampled_div[:, 2], "cm", "m"),
-            )
+            ax.scatter_cm(new_downsampled_div[:, 0], new_downsampled_div[:, 2])
 
     return new_downsampled_fw, new_downsampled_div, num_inboard_points

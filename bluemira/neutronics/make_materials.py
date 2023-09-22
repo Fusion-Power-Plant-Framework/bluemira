@@ -304,7 +304,9 @@ class MaterialsLibrary:
     def create_from_blanket_type(
         cls, blanket_type: BlanketType, li_enrich_ao: float
     ) -> MaterialsLibrary:
-        """Create from blanket type"""
+        """Create Materials Library by specifying just the blanket type
+        li_enrich_ao: PERCENTAGE enrichment of Li6 (float between 0 - 100)
+        """
         if blanket_type is BlanketType.DCLL:
             base_materials = _make_dcll_mats(li_enrich_ao)
         elif blanket_type is BlanketType.HCPB:
