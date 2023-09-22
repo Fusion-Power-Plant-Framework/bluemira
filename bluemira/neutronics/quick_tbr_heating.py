@@ -41,12 +41,12 @@ After talking w/ A. Davis:
 ____
 [ ]Tests?
 """
-from pathlib import Path
 from typing import Literal
 
 import openmc
 from numpy import pi
 from openmc.config import config
+from pps_isotropic.source import create_parametric_plasma_source
 
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.result_presentation as present
@@ -61,6 +61,10 @@ from bluemira.neutronics.params import (
 )
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
+
+config[
+    "cross_sections"
+] = "/home/oliver/development/bluemira/bluemira_openmc_data/cross_sections.xml"
 
 
 def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
@@ -91,47 +95,6 @@ def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
     )
 
     return ring_source
-
-
-def create_parametric_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
-    """
-    Create a parametric plasma source using the PPS_OpenMC.so library
-        and the relevant parameters.
-
-    Parameters
-    ----------
-    tokamak_geometry: TokamakGeometry
-    """
-    source_params_dict = {
-        "mode": 2,
-        "temperature": 15.4,  # put this magic number in constants.py!
-        "major_r": tokamak_geometry.major_r,
-        "minor_r": tokamak_geometry.minor_r,
-        "elongation": tokamak_geometry.elong,
-        "triangulation": tokamak_geometry.triang,
-        "radial_shift": tokamak_geometry.shaf_shift,
-        "peaking_factor": 1.508,  # put this magic number in constants.py!
-        "vertical_shift": 0.0,
-        "start_angle": 0.0,
-        "angle_range": 360.0,
-    }
-    # Parameter dictionary has to be formatted as string to be provided to the library.
-    source_params_str = ",".join(f"{k}={v}" for k, v in source_params_dict.items())
-
-    try:
-        from parametric_plasma_source import PlasmaSource
-
-        plasma = PlasmaSource(source_params_dict)
-        parametric_source = openmc.Source(
-            library=SOURCE_SAMPLING_PATH, parameters=plasma
-        )
-    except ImportError:
-        parametric_source = openmc.Source(
-            library=str(Path(Path(__file__).parent, "PPS_OpenMC.so")),
-            parameters=source_params_str,
-        )
-
-    return parametric_source
 
 
 def setup_openmc(
@@ -237,7 +200,13 @@ class TBRHeatingSimulation:
         self.material_lib = material_lib
         mg.check_geometry(self.tokamak_geometry)
         if self.runtime_variables.parametric_source:
-            source = create_parametric_source(self.tokamak_geometry)
+            source = create_parametric_plasma_source(
+                minor_r=self.tokamak_geometry.minor_r,
+                major_r=self.tokamak_geometry.major_r,
+                elongation=self.tokamak_geometry.elong,
+                triangulation=self.tokamak_geometry.triang,
+                radial_shift=self.tokamak_geometry.shaf_shift,
+            )
         else:
             source = create_ring_source(self.tokamak_geometry)
 
