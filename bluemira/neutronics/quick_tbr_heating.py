@@ -242,7 +242,7 @@ class TBRHeatingSimulation:
         """Run the actual openmc simulation."""
         openmc.run(*args, **kwargs)
 
-    def get_result(self, print_summary: bool) -> present.OpenMCResult:
+    def get_result(self) -> present.OpenMCResult:
         """
         Create a summary object, attach it to self, and then return it.
 
@@ -255,9 +255,7 @@ class TBRHeatingSimulation:
             raise RuntimeError(
                 "The self.universe variable must first be populated by self.run()!"
             )
-        self.result = present.OpenMCResult(self.universe, self.src_rate)
-        self.result.summarize(print_summary)
-        return self.result
+        return present.OpenMCResult(self.universe, self.src_rate)
 
     def calculate_volume_stochastically(self):
         """

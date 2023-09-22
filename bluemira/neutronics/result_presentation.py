@@ -21,42 +21,16 @@
 """Functions to present the results prettily
 (Including both printed/logged texts and images)
 """
-from typing import Any, Callable, Dict, List, Union
+from typing import Dict, List, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
 import openmc
+from tabulate import tabulate
 
 from bluemira.base.constants import S_TO_YR, raw_uc
 from bluemira.neutronics.constants import DPACoefficients
 from bluemira.neutronics.params import TokamakGeometry
-
-
-def print_df_decorator_with_title_string(
-    title_string,
-) -> Callable[[Callable[[bool], Any]], Callable[[bool], Any]]:
-    """
-    Decorator for methods inside OpenMCResult,
-        so that the method has an added option to print the dataframe before exiting.
-    Parameter
-    ---------
-    title_string: bool, default=True
-    """
-
-    def print_dataframe_decorator(method) -> Callable[[bool], Any]:
-        def dataframe_method_wrapper(self, print_df: bool = True) -> Any:
-            method_output = method(self)
-            if print_df:
-                if hasattr(method_output, "to_string"):  # duck-typing
-                    output_str = method_output.to_string()
-                else:
-                    output_str = str(method_output)
-                print(f"\n{title_string}\n" + output_str)
-            return method_output
-
-        return dataframe_method_wrapper
-
-    return print_dataframe_decorator
 
 
 def get_percent_err(row):
@@ -77,8 +51,10 @@ def get_percent_err(row):
     """
     # Returns to an OpenMC results dataframe that is the
     # percentage stochastic uncertainty in the result
-
-    return row["std. dev."] / row["mean"] * 100.0
+    try:
+        return row["std. dev."] / row["mean"] * 100.0
+    except ZeroDivisionError:
+        return np.nan
 
 
 class PoloidalXSPlot:
@@ -138,27 +114,53 @@ class OpenMCResult:
         # Loads up the output file from the simulation
         self.statepoint = openmc.StatePoint(self.statepoint_file)
 
-    def _load_dataframe_from_statepoint(self, tally_name: str):  # -> pd.DataFrame
+    @property
+    def tbr(self):
+        """TBR"""
+        self._load_tbr()
+        return self._tbr, self._tbr_e
+
+    @property
+    def heating(self):
+        """Heating"""
+        self._load_heating()
+        return self._heating_df
+
+    @property
+    def neutron_wall_load(self):
+        """Neutron wall load (eV)"""
+        self._load_neutron_wall_loading()
+        return self._neutron_wall_load
+
+    @property
+    def photon_heat_flux(self):
+        self._load_photon_heat_flux()
+        return self._photon_heat_flux
+
+    def _load_dataframe_from_statepoint(self, tally_name: str):
         return self.statepoint.get_tally(name=tally_name).get_pandas_dataframe()
 
-    @print_df_decorator_with_title_string("TBR")
-    def load_tbr(self):  # -> Tuple[pd.Series, pd.Series]
+    @staticmethod
+    def _convert_dict_contents(dataset: Dict[str, Dict[int, List[Union[str, float]]]]):
+        for k, v in dataset.items():
+            vals = list(v.values())
+            dataset[k] = vals if isinstance(vals[0], str) else np.array(vals)
+        return dataset
+
+    def _load_tbr(self):
         """Load the TBR value and uncertainty."""
         self.tbr_df = self._load_dataframe_from_statepoint("TBR")
-        self.tbr = "{:.2f}".format(self.tbr_df["mean"].sum())
-        self.tbr_e = "{:.2f}".format(self.tbr_df["std. dev."].sum())
-        return self.tbr, self.tbr_e
+        self._tbr = self.tbr_df["mean"].sum()
+        self._tbr_e = self.tbr_df["std. dev."].sum()
 
-    @print_df_decorator_with_title_string("Heating (MW)")
-    def load_heating_in_MW(self):  # -> pd.DataFrame
+    def _load_heating(self):
         """Load the heating (sorted by material) dataframe"""
         heating_df = self._load_dataframe_from_statepoint("MW heating")
         # additional columns
         heating_df["material_name"] = heating_df["material"].map(self.mat_names)
-        heating_df["%err."] = heating_df.apply(get_percent_err, axis=1).apply(
-            lambda x: "%.1f" % x
-        )
+        heating_df["%err."] = heating_df.apply(get_percent_err, axis=1)
         # DataFrame columns rearrangement
+        # rearrange dataframe into this desired order
         heating_df = heating_df[
             [
                 "material",
@@ -169,12 +171,12 @@ class OpenMCResult:
                 "std. dev.",
                 "%err.",
             ]
-        ]  # rearrange dataframe into this desired order
-        self.heating_df = heating_df
-        return self.heating_df
+        ]
+        heating_df["mean"] = raw_uc(heating_df["mean"], "MW", "W")
+        heating_df["std. dev."] = raw_uc(heating_df["std. dev."], "MW", "W")
+        self._heating_df = self._convert_dict_contents(heating_df.to_dict())
 
-    @print_df_decorator_with_title_string("Neutron Wall Load (eV)")
-    def load_neutron_wall_loading(self):  # -> pd.DataFrame
+    def _load_neutron_wall_loading(self):
         """Load the neutron wall load dataframe"""
         dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
         n_wl_df = self._load_dataframe_from_statepoint("neutron wall load")
@@ -188,10 +190,7 @@ class OpenMCResult:
             / S_TO_YR
             * self.src_rate
         )
-        n_wl_df["dpa/fpy"] = n_wl_df["dpa/fpy"].apply(lambda x: "%.1f" % x)
-        n_wl_df["%err."] = n_wl_df.apply(get_percent_err, axis=1).apply(
-            lambda x: "%.1f" % x
-        )
+        n_wl_df["%err."] = n_wl_df.apply(get_percent_err, axis=1)
         n_wl_df = n_wl_df.drop(
             n_wl_df[~n_wl_df["cell_name"].str.contains("Surface")].index
         )  # ~ invert operator = doesnt contain
@@ -212,21 +211,18 @@ class OpenMCResult:
             ]
         ]
 
-        self.neutron_wall_load = n_wl_df
-        return self.neutron_wall_load
+        self._neutron_wall_load = self._convert_dict_contents(n_wl_df.to_dict())
 
-    @print_df_decorator_with_title_string("Photon Heat Flux MW m-2")
-    def load_photon_heat_flux(self):  # -> pd.DataFrame
+    def _load_photon_heat_flux(self):
         """Load the photon heaat flux dataframe"""
         p_hf_df = self._load_dataframe_from_statepoint("photon heat flux")
         # additional columns
         p_hf_df["cell_name"] = p_hf_df["cell"].map(self.cell_names)
         p_hf_df["vol(cc)"] = p_hf_df["cell"].map(self.cell_vols)
-        _MW_per_cm_2 = p_hf_df["mean"] / p_hf_df["vol(cc)"]
-        p_hf_df["MW_m-2"] = raw_uc(_MW_per_cm_2.to_numpy(), "1/cm^2", "1/m^2")
-        p_hf_df["%err."] = p_hf_df.apply(get_percent_err, axis=1).apply(
-            lambda x: "%.1f" % x
+        p_hf_df["MW_m-2"] = raw_uc(
+            (p_hf_df["mean"] / p_hf_df["vol(cc)"]).to_numpy(), "1/cm^2", "1/m^2"
         )
+        p_hf_df["%err."] = p_hf_df.apply(get_percent_err, axis=1)
         # Scaling first wall results by factor to surface results
         surface_total = p_hf_df.loc[
             p_hf_df["cell_name"].str.contains("FW Surface"), "MW_m-2"
@@ -263,16 +259,37 @@ class OpenMCResult:
             ]
         ]
 
-        self.photon_heat_flux = p_hf_df
-        return self.photon_heat_flux
+        self._photon_heat_flux = self._convert_dict_contents(p_hf_df.to_dict())
 
-    def summarize(self, print_dfs):
-        """Run all of the results formatting method available in this class."""
-        # change to logging here?
-        self.load_tbr(print_dfs)
-        self.load_heating_in_MW(print_dfs)
-        self.load_neutron_wall_loading(print_dfs)
-        self.load_photon_heat_flux(print_dfs)
+    def __str__(self):
+        """String representation"""
+        tbr, err = self.tbr
+        ret_str = f"TBR\n{tbr:.3f}±{err:.3f}"
+        for title, data in zip(
+            ("Heating (W)", "Neutron Wall Load (eV)", "Photon Heat Flux MW m-2"),
+            (
+                self.heating,
+                self.neutron_wall_load,
+                self.photon_heat_flux,
+            ),
+        ):
+            ret_str = f"{ret_str}\n{title}\n{self._tabulate(data)}"
+        return ret_str
+
+    @staticmethod
+    def _tabulate(
+        records: Dict[str, Union[str, float]],
+        tablefmt: str = "fancy_grid",
+        floatfmt: str = ".3g",
+    ) -> str:
+        return tabulate(
+            zip(*records.values()),
+            headers=records.keys(),
+            tablefmt=tablefmt,
+            showindex=False,
+            numalign="right",
+            floatfmt=floatfmt,
+        )
 
 
 def geometry_plotter(

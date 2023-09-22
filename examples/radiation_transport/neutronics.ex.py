@@ -133,6 +133,8 @@ tbr_heat_sim.setup(
 )
 tbr_heat_sim.run()
 # get the TBR, component heating, first wall dpa, and photon heat flux
-tbr_heat_sim.get_result(True)
+results = tbr_heat_sim.get_result()
+
+print(results)
 # tbr_heat_sim.calculate_volume_stochastically()
 # # don't do this because it takes a long time.
