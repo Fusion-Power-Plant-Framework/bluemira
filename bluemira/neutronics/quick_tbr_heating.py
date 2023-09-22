@@ -62,10 +62,6 @@ from bluemira.neutronics.params import (
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
 
-config[
-    "cross_sections"
-] = "/home/oliver/development/bluemira/bluemira_openmc_data/cross_sections.xml"
-
 
 def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
     """
