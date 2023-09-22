@@ -192,44 +192,27 @@ def _create_tallies_from_filters(
     Exports the tallies to an xml file.
 
     """
-    tally_tbr = openmc.Tally(name="TBR")
-    tally_tbr.scores = ["(n,Xt)"]
+    tallies_list = []
+    for name, scores, filters in (
+        ("TBR", "(n,Xt)", []),
+        ("heating", "heating", [mat_filter]),  # eV per sp
+        ("MW heating", "heating", [mat_filter, MW_mult_filter]),  # MW
+        ("neutron wall load", "damage-energy", [fw_surf_filter, neutron_filter]),
+        (
+            "photon heat flux",
+            "flux",
+            [fw_surf_filter, photon_filter, energy_mult_filter],
+        ),
+        # skipped
+        # ("neutron flux in every cell", "flux", [cell_filter, neutron_filter]),
+        # ("neutron flux in 2d mesh", "flux", [cyl_mesh_filter, neutron_filter]),
+    ):
+        tally = openmc.Tally(name=name)
+        tally.scores = [scores]
+        tally.filters = filters
+        tallies_list.append(tally)
 
-    tally_heating = openmc.Tally(name="heating")  # eV per sp
-    tally_heating.scores = ["heating"]
-    tally_heating.filters = [mat_filter]
-
-    tally_heating_MW = openmc.Tally(name="MW heating")  # MW
-    tally_heating_MW.scores = ["heating"]
-    tally_heating_MW.filters = [mat_filter, MW_mult_filter]
-
-    tally_n_wall_load = openmc.Tally(name="neutron wall load")
-    tally_n_wall_load.scores = ["damage-energy"]
-    tally_n_wall_load.filters = [fw_surf_filter, neutron_filter]
-
-    tally_p_heat_flux = openmc.Tally(name="photon heat flux")
-    tally_p_heat_flux.scores = ["flux"]
-    tally_p_heat_flux.filters = [fw_surf_filter, photon_filter, energy_mult_filter]
-
-    tally_n_flux = openmc.Tally(name="neutron flux in every cell")
-    tally_n_flux.scores = ["flux"]
-    tally_n_flux.filters = [cell_filter, neutron_filter]
-
-    tally_n_flux_mesh = openmc.Tally(name="neutron flux in 2d mesh")
-    tally_n_flux_mesh.scores = ["flux"]
-    tally_n_flux_mesh.filters = [cyl_mesh_filter, neutron_filter]
-
-    tallies = openmc.Tallies(
-        [
-            tally_tbr,
-            tally_heating,
-            tally_heating_MW,
-            tally_n_wall_load,
-            tally_p_heat_flux,
-            # tally_n_flux, # skipped
-            # tally_n_flux_mesh, # skipped
-        ]
-    )
+    tallies = openmc.Tallies(tallies_list)
     tallies.export_to_xml()
 
 
