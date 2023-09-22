@@ -38,7 +38,7 @@ class OpenMCSimulationRuntimeParameters:
     run_mode: str
     openmc_write_summary: bool
     # Parameters used elsewhere
-    parametric_source: bool
+    parametric_source: bool  # to use the pps_isotropic module or not.
     volume_calc_particles: int  # number of particles used in the volume calculation.
     cross_section_xml: str
 
@@ -62,7 +62,7 @@ class BreederTypeParameters:
     and design choices.
     """
 
-    li_enrich_percent: float  # [%]
+    enrichment_fraction_Li6: float  # [dimensionless]
     blanket_type: mm.BlanketType
 
 
@@ -73,7 +73,7 @@ class TokamakGeometry:
     minor_r: float  # [m]
     major_r: float  # [m]
     elong: float  # [dimensionless]
-    # TODO: Move 'shaf_shift', 'peaking_factor' and 'temperature' into TokamakOperationParameters
+    # TODO: Move shaf_shift, peaking_factor, temperature into TokamakOperationParameters
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
     peaking_factor: float  # [m]
@@ -116,6 +116,7 @@ class TokamakGeometryCGS:
 
     @classmethod
     def from_SI(cls, tokamak_geometry: TokamakGeometry):
+        """Convert from m (SI units) to cm (cgs units)"""
         return cls(
             raw_uc(tokamak_geometry.minor_r, "m", "cm"),
             raw_uc(tokamak_geometry.major_r, "m", "cm"),

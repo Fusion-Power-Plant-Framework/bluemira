@@ -939,10 +939,10 @@ def make_geometry(
     ######################
 
     # Currently it is not possible to tally on boundary_type='vacuum' surfaces
-    clearance_r = 50.0
+    clearance_r = 50.0  # [cm]
     surfaces["outer_surface_cyl"] = openmc.ZCylinder(r=max_r + clearance_r)
 
-    container_steel_thick = 200.0
+    container_steel_thick = 200.0  # [cm]
     surfaces["graveyard_top"] = openmc.ZPlane(z0=max_z + container_steel_thick)
     surfaces["graveyard_bot"] = openmc.ZPlane(z0=min_z - container_steel_thick)
     surfaces["graveyard_cyl"] = openmc.ZCylinder(
@@ -1139,7 +1139,7 @@ def load_fw_points(
         """Move the point that is too close to plasma
         by moving it closer to the central column instead.
         """
-        ds_ibf[-5][0] = ds_ibf[-5][0] - 25.0
+        ds_ibf[-5][0] = ds_ibf[-5][0] - 25.0  # [cm]
         return ds_ibf
 
     # </magic numbers and magic function>
@@ -1178,6 +1178,8 @@ def load_fw_points(
         (new_points[-(num_points_belongong_to_divertor + 1) :], new_points[:1]), axis=0
     )
 
+    # It seems wrong to have the plotting happening within the make_geometry stage?
+    # Just something to consider when refactoring.
     # plotting.
     if save_plots:
         # create parametric variables for plotting smoother lines
@@ -1195,16 +1197,27 @@ def load_fw_points(
         t = np.linspace(0, 2 * pi, 100)
 
         with present.PoloidalXSPlot("blanket_face.svg", "Blanket Face") as ax:
-            ax.scatter(full_blanket_2d_outline[:, 0], full_blanket_2d_outline[:, 2])
+            ax.scatter(
+                raw_uc(full_blanket_2d_outline[:, 0], "cm", "m"),
+                raw_uc(full_blanket_2d_outline[:, 2], "cm", "m"),
+            )
 
         with present.PoloidalXSPlot(
             "all_points_before_after.svg", "Points sampled for making the MCNP model"
         ) as ax:
-            ax.plot(old_points[:, 0], old_points[:, 2], label="Initial fw points")
-            ax.plot(new_points[:, 0], new_points[:, 2], label="Adjusted fw points")
             ax.plot(
-                u + a * np.cos(t + tri * np.sin(t)),
-                v + b * np.sin(t),
+                raw_uc(old_points[:, 0], "cm", "m"),
+                raw_uc(old_points[:, 2], "cm", "m"),
+                label="Initial fw points",
+            )
+            ax.plot(
+                raw_uc(new_points[:, 0], "cm", "m"),
+                raw_uc(new_points[:, 2], "cm", "m"),
+                label="Adjusted fw points",
+            )
+            ax.plot(
+                raw_uc(u + a * np.cos(t + tri * np.sin(t)), "cm", "m"),
+                raw_uc(v + b * np.sin(t), "cm", "m"),
                 label="Plasma envelope",
             )  # source envelope
             ax.legend(loc="upper right")
@@ -1212,11 +1225,17 @@ def load_fw_points(
         with present.PoloidalXSPlot(
             "selected_pts_inner_blanket_face.svg", "Selected points on the inner blanket"
         ) as ax:
-            ax.scatter(new_downsampled_fw[:, 0], new_downsampled_fw[:, 2])
+            ax.scatter(
+                raw_uc(new_downsampled_fw[:, 0], "cm", "m"),
+                raw_uc(new_downsampled_fw[:, 2], "cm", "m"),
+            )
 
         with present.PoloidalXSPlot(
             "selected_pts_divertor_face.svg", "Selected points on the divertor face"
         ) as ax:
-            ax.scatter(new_downsampled_div[:, 0], new_downsampled_div[:, 2])
+            ax.scatter(
+                raw_uc(new_downsampled_div[:, 0], "cm", "m"),
+                raw_uc(new_downsampled_div[:, 2], "cm", "m"),
+            )
 
     return new_downsampled_fw, new_downsampled_div, num_inboard_points

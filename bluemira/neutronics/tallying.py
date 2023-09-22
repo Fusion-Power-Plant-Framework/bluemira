@@ -122,7 +122,7 @@ def filter_cells(
     photon_filter = openmc.ParticleFilter(["photon"])
 
     # eV per source particle to MW coefficients
-    # SOMETHING SEEMS WRONG @ JAMES HAGUE (original file line L.313)
+    # Need to ask @ JAMES HAGUE (original file line L.313)
     eV_per_sp_to_MW = raw_uc(src_rate, "eV/s", "MW")
 
     MW_energy_bins = [0.0, 100.0e6]  # Up to 100 MeV
@@ -219,7 +219,7 @@ def _create_tallies_from_filters(
 def create_tallies(
     cells_and_cell_lists: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
     material_lib: mm.MaterialsLibrary,
-    src_rate: float,
+    src_rate: float,  # [1/s]
 ) -> None:
     """First create the filters (list of cells to be tallied),
     then create create the tallies from those filters.

@@ -26,7 +26,8 @@ TODO:
 ____
 [ ]Tests?
 """
-from typing import Literal
+from pathlib import Path
+from typing import Literal, Union
 
 import openmc
 from numpy import pi
@@ -36,6 +37,7 @@ from pps_isotropic.source import create_parametric_plasma_source
 import bluemira.neutronics.constants as neutronics_const
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.result_presentation as present
+from bluemira.geometry.wire import BluemiraWire
 from bluemira.base.constants import raw_uc
 from bluemira.base.tools import _timing
 from bluemira.neutronics.make_materials import MaterialsLibrary
@@ -83,7 +85,7 @@ def create_ring_source(tokamak_geometry_cgs: TokamakGeometryCGS) -> openmc.Sourc
 def setup_openmc(
     plasma_source: openmc.Source,
     particles: int,
-    cross_section_xml: str,
+    cross_section_xml: Union[str, Path],
     batches: int = 2,
     photon_transport=True,
     electron_treatment: Literal["ttb", "led"] = "ttb",
@@ -98,10 +100,12 @@ def setup_openmc(
 
     Parameters (all of which are arguments parsed to openmc.Settings)
     ----------
-    plasma_source:
+    plasma_source: openmc.Source
         Openmc.Source used to emulate the neutron emission of the plasma.
-    particles:
+    particles: int
         Number of neutrons emitted by the plasma source per batch.
+    cross_section_xml:
+        Where the xml file for cross-section is stored locally.
     batches: int, default=2
         How many batches to simulate.
     photon_transport: bool, default=True
@@ -142,10 +146,13 @@ def create_and_export_materials(
     Parameters
     ----------
     breeder_materials:
-        dataclass containing attributes: 'blanket_type', 'li_enrich_percent'
+        dataclass containing attributes: 'blanket_type', 'enrichment_fraction_Li6'
     """
     material_lib = MaterialsLibrary.create_from_blanket_type(
-        breeder_materials.blanket_type, breeder_materials.li_enrich_percent
+        breeder_materials.blanket_type,
+        raw_uc(
+            breeder_materials.enrichment_fraction_Li6, "1", "1/100"
+        ),  # convert to percent
     )
     material_lib.export()
     return material_lib
@@ -203,7 +210,7 @@ class TBRHeatingSimulation:
         elong: float
             (new) elongation variable, separate to the one provided in TokamakGeometry
             unit: [dimensionless]
-        temperature: float, default=neutronics_const.plasma_params_default["temp"]
+        temperature: float,
             plasma temperature
             unit: [K]
         plot_geometry: bool, default=True

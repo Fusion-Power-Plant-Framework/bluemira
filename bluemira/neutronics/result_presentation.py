@@ -36,7 +36,7 @@ from bluemira.neutronics.params import TokamakGeometryCGS
 def get_percent_err(row):
     """
     Calculate a percentage error to the required row,
-    assuming  cells had been filled out.
+    assuming cells had been filled out.
 
     Parameters
     ----------
@@ -48,6 +48,11 @@ def get_percent_err(row):
     Returns
     -------
     fractional_error: scalar
+
+    Usage
+    -----
+    dataframe.apply(get_percent_err),
+    where dataframe must have one row named "std. dev." and another named "mean".
     """
     # Returns to an OpenMC results dataframe that is the
     # percentage stochastic uncertainty in the result
@@ -55,6 +60,16 @@ def get_percent_err(row):
         return row["std. dev."] / row["mean"] * 100.0
     except ZeroDivisionError:
         return np.nan
+
+
+def _monkey_patch_plot_cm(self, x, y, *arg, **kwargs):
+    """Line plot coodinates (given in cm) in meters."""
+    return self.plot(raw_uc(x, "cm", "m"), raw_uc(y, "cm", "m"), *arg, **kwargs)
+
+
+def _monkey_patch_scatter_cm(self, x, y, *arg, **kwargs):
+    """Scatter plot coodinates (given in cm) in meters."""
+    return self.scatter(raw_uc(x, "cm", "m"), raw_uc(y, "cm", "m"), *arg, **kwargs)
 
 
 class PoloidalXSPlot:
@@ -68,8 +83,13 @@ class PoloidalXSPlot:
         self.save_name = save_name
         self.ax = plt.subplot()
         self.ax.axis("equal")
+        self.ax.set_xlabel("r (m)")
+        self.ax.set_ylabel("z (m)")
         if title:
             self.ax.set_title(title)
+        # monkey patch on two methods that automatically convert
+        self.ax.plot_cm = _monkey_patch_plot_cm
+        self.ax.scatter_cm = _monkey_patch_scatter_cm
 
     def __enter__(self):
         """Return the initialized matplotlib axes object"""
@@ -383,7 +403,7 @@ def geometry_plotter(
             plot.colors = cell_color_assignment
         else:
             plot.colors = mat_color_assignment
-        plot.filename = f"./plots_{basis}"
+        plot.filename = f"./out_plots_{basis}"
 
         plot_list.append(plot)
 

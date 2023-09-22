@@ -32,7 +32,7 @@ from openmc import Material
 import bluemira.neutronics.materials_definition as md
 
 if TYPE_CHECKING:
-    import os
+    from pathlib import Path
 
 
 def duplicate_mat_as(mat_to_clone, new_id, new_name) -> Material:
@@ -338,7 +338,7 @@ class MaterialsLibrary:
             div_sf_mat=duplicate_mat_as(md.eurofer_mat, 603, "div_sf"),
         )
 
-    def export(self, path: Union[str, os.PathLike] = "materials.xml"):
+    def export(self, path: Union[str, Path] = "materials.xml"):
         """Exports material defintions to xml"""
         material_list = openmc.Materials(dataclasses.asdict(self).values())
         return material_list.export_to_xml(path)

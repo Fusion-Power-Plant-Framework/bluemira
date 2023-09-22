@@ -1,8 +1,11 @@
+"""Example of how to use the neutronics module"""
 from pathlib import Path
 from typing import Tuple
 
 import numpy as np
+import openmc
 
+from bluemira.base.constants import raw_uc
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import make_polygon
 from bluemira.neutronics.make_materials import BlanketType
@@ -31,7 +34,7 @@ def get_preset_physical_properties(
         raise KeyError(f"{blanket_type} is not an accepted blanket type.")
     breeder_materials = BreederTypeParameters(
         blanket_type=blanket_type,
-        li_enrich_percent=60.0,  # PERCENTAGE of Lithium that is Li-6
+        enrichment_fraction_Li6=0.60,
     )
 
     # Geometry variables
@@ -119,7 +122,7 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
-    run_mode="fixed source",
+    run_mode=openmc.settings.RunMode.FIXED_SOURCE,
     openmc_write_summary=False,
     parametric_source=True,
     # only used if stochastic_volume_calculation is turned on.
@@ -138,10 +141,10 @@ divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
 tbr_heat_sim.setup(
     blanket_wire,
     divertor_wire,
-    temperature=raw_uc(15.4, "keV", "K"),
     major_radius=9.00,  # [m]
     aspect_ratio=3.10344,  # [dimensionless]
     elong=1.792,  # [dimensionless]
+    temperature=raw_uc(15.4, "keV", "K"),
     plot_geometry=True,
 )
 tbr_heat_sim.run()

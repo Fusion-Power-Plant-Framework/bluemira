@@ -34,19 +34,16 @@ tungsten_mat.add_nuclide("W186", 0.284, percent_type="ao")
 tungsten_mat.set_density("g/cm3", 19.3)
 
 # simple compounds (excluding alloys)
-water_mat = Material(name="water")
-water_mat.add_nuclide("H1", 0.667, percent_type="ao")
-water_mat.add_nuclide("O16", 0.333, percent_type="ao")
-water_mat.set_density("g/cm3", 0.866)
 
 water_mat = Material(name="water")
-water_mat.add_nuclide("H1", 0.667, percent_type="ao")
-water_mat.add_nuclide("O16", 0.333, percent_type="ao")
+water_mat.add_nuclide("H1", 2, percent_type="ao")
+water_mat.add_nuclide("O16", 1, percent_type="ao")
 water_mat.set_density("g/cm3", 0.866)
+
 
 al2o3_mat = Material(name="Aluminium Oxide")
-al2o3_mat.add_nuclide("Al27", 1.0, percent_type="ao")
-al2o3_mat.add_nuclide("O16", 1.0, percent_type="ao")
+al2o3_mat.add_nuclide("Al27", 2, percent_type="ao")
+al2o3_mat.add_nuclide("O16", 3, percent_type="ao")
 al2o3_mat.set_density("g/cm3", 3.95)
 
 # alloys
@@ -60,8 +57,8 @@ eurofer_mat.add_nuclide("W186", 0.0108 * 0.284, percent_type="wo")
 eurofer_mat.set_density("g/cm3", 7.78)
 
 Be12Ti_mat = Material(name="Be12Ti")
-Be12Ti_mat.add_element("Be", 12.0, percent_type="ao")
-Be12Ti_mat.add_element("Ti", 1.0, percent_type="ao")
+Be12Ti_mat.add_element("Be", 12, percent_type="ao")
+Be12Ti_mat.add_element("Ti", 1, percent_type="ao")
 Be12Ti_mat.set_density("g/cm3", 2.25)
 
 
