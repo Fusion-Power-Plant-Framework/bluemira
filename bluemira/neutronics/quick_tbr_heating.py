@@ -100,9 +100,7 @@ def setup_openmc(
     batches: int = 2,
     photon_transport=True,
     electron_treatment: Literal["ttb", "led"] = "ttb",
-    run_mode: Literal[
-        "fixed source", "eigenvalue", "plot", "volume", "particle restart"
-    ] = "fixed source",
+    run_mode: openmc.settings.RunMode = openmc.settings.RunMode.FIXED_SOURCE,
     output_summary=False,
 ) -> None:
     """Configure openmc.Settings, so that it's ready for the run() step.
