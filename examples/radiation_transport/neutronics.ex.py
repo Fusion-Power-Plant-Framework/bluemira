@@ -17,11 +17,7 @@ from bluemira.neutronics.params import (
 )
 from bluemira.neutronics.quick_tbr_heating import TBRHeatingSimulation
 
-CROSS_SECTION_XML = str(
-    Path(
-        "~/Others/cross_section_data/cross_section_data/cross_sections.xml"
-    ).expanduser()
-)
+CROSS_SECTION_XML = str(Path("/bluemira_openmc_data/cross_sections.xml").expanduser())
 
 
 def get_preset_physical_properties(
@@ -112,7 +108,7 @@ def get_preset_physical_properties(
 
 # set up the variables to be used for the openmc simulation
 # allowed blanket_type so far = {'WCLL', 'DCLL', 'HCPB'}
-breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.DCLL)
+breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
 
 runtime_variables = OpenMCSimulationRuntimeParameters(
     particles=100000,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.

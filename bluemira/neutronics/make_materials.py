@@ -105,7 +105,7 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_mani_mat = Material.mix_materials(
         name="inb_manifold",
         materials=[md.eurofer_mat, inb_bz_mat],
-        fracs=[0.573, 0.426],
+        fracs=[0.573, 0.426],  # 1% void
         percent_type="vo",
     )
     inb_mani_mat.id = 103
