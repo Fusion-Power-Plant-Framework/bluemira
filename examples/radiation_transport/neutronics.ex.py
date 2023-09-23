@@ -17,7 +17,11 @@ from bluemira.neutronics.params import (
 )
 from bluemira.neutronics.quick_tbr_heating import TBRHeatingSimulation
 
-CROSS_SECTION_XML = str(Path("~/bluemira_openmc_data/cross_sections.xml").expanduser())
+CROSS_SECTION_XML = str(
+    Path(
+        "~/Others/cross_section_data/cross_section_data/cross_sections.xml"
+    ).expanduser()
+)
 
 
 def get_preset_physical_properties(
@@ -56,16 +60,13 @@ def get_preset_physical_properties(
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
 
-    plasma_shape = {
-        "minor_r": 2.883,  # [m]
+    shared_poloidal_outline = {
         "major_r": 8.938,  # [m]
+        "minor_r": 2.883,  # [m]
         "elong": 1.65,  # [dimensionless]
-        "peaking_factor": 1.508,  # [dimensionless]
-        "shaf_shift": 0.0,  # [m]
-        "vertical_shift": 0.0,  # [m]
-    }
-    shared_geometries = {  # that are identical in all three types of reactors.
         "triang": 0.333,  # [m]
+    }
+    shared_building_geometry = {  # that are identical in all three types of reactors.
         "inb_gap": 0.2,  # [m]
         "inb_vv_thick": 0.6,  # [m]
         "tf_thick": 0.4,  # [m]
@@ -73,8 +74,8 @@ def get_preset_physical_properties(
     }
     if blanket_type is BlanketType.WCLL:
         tokamak_geometry = TokamakGeometry(
-            **plasma_shape,
-            **shared_geometries,
+            **shared_poloidal_outline,
+            **shared_building_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.378,  # [m]
             inb_mnfld_thick=0.435,  # [m]
@@ -84,13 +85,11 @@ def get_preset_physical_properties(
         )
     elif blanket_type is BlanketType.DCLL:
         tokamak_geometry = TokamakGeometry(
-            **plasma_shape,
-            **shared_geometries,
+            **shared_poloidal_outline,
+            **shared_building_geometry,
             inb_fw_thick=0.022,  # [m]
             inb_bz_thick=0.300,  # [m]
             inb_mnfld_thick=0.178,  # [m]
-            inb_vv_thick=0.600,  # [m]
-            tf_thick=0.400,  # [m]
             outb_fw_thick=0.022,  # [m]
             outb_bz_thick=0.640,  # [m]
             outb_mnfld_thick=0.248,  # [m]
@@ -98,13 +97,11 @@ def get_preset_physical_properties(
     elif blanket_type is BlanketType.HCPB:
         # HCPB Design Report, 26/07/2019
         tokamak_geometry = TokamakGeometry(
-            **plasma_shape,
-            **shared_geometries,
+            **shared_poloidal_outline,
+            **shared_building_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.460,  # [m]
             inb_mnfld_thick=0.560,  # [m]
-            inb_vv_thick=0.600,  # [m]
-            tf_thick=0.400,  # [m]
             outb_fw_thick=0.027,  # [m]
             outb_bz_thick=0.460,  # [m]
             outb_mnfld_thick=0.560,  # [m]
@@ -115,14 +112,14 @@ def get_preset_physical_properties(
 
 # set up the variables to be used for the openmc simulation
 # allowed blanket_type so far = {'WCLL', 'DCLL', 'HCPB'}
-breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.WCLL)
+breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.DCLL)
 
 runtime_variables = OpenMCSimulationRuntimeParameters(
     particles=100000,  # 16800 takes 5 seconds,  1000000 takes 280 seconds.
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
-    run_mode=openmc.settings.RunMode.FIXED_SOURCE,
+    run_mode=openmc.settings.RunMode.FIXED_SOURCE.value,
     openmc_write_summary=False,
     parametric_source=True,
     # only used if stochastic_volume_calculation is turned on.
@@ -130,7 +127,13 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     cross_section_xml=CROSS_SECTION_XML,
 )
 
-operation_variable = TokamakOperationParameters(reactor_power=1998e6)
+operation_variable = TokamakOperationParameters(
+    reactor_power=1998e6,  # [W]
+    temperature=round(raw_uc(15.4, "keV", "K"), 5),
+    peaking_factor=1.508,  # [dimensionless]
+    shaf_shift=0.0,  # [m]
+    vertical_shift=0.0,  # [m]
+)
 
 # set up a DEMO-like reactor, and run OpenMC simualtion
 tbr_heat_sim = TBRHeatingSimulation(
@@ -141,10 +144,9 @@ divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
 tbr_heat_sim.setup(
     blanket_wire,
     divertor_wire,
-    major_radius=9.00,  # [m]
-    aspect_ratio=3.10344,  # [dimensionless]
-    elong=1.792,  # [dimensionless]
-    temperature=raw_uc(15.4, "keV", "K"),
+    new_major_radius=9.00,  # [m]
+    new_aspect_ratio=3.10344,  # [dimensionless]
+    new_elong=1.792,  # [dimensionless]
     plot_geometry=True,
 )
 tbr_heat_sim.run()

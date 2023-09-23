@@ -81,11 +81,15 @@ class PoloidalXSPlot:
         # monkey patch on two methods that automatically convert the coordinates to [m].
         def _monkey_patch_plot_cm(x, y, *arg, **kwargs):
             """Line plot coodinates (given in cm) in meters."""
-            return self.ax.plot(raw_uc(x, "cm", "m"), raw_uc(y, "cm", "m"), *arg, **kwargs)
+            return self.ax.plot(
+                raw_uc(x, "cm", "m"), raw_uc(y, "cm", "m"), *arg, **kwargs
+            )
 
         def _monkey_patch_scatter_cm(x, y, *arg, **kwargs):
             """Scatter plot coodinates (given in cm) in meters."""
-            return self.ax.scatter(raw_uc(x, "cm", "m"), raw_uc(y, "cm", "m"), *arg, **kwargs)
+            return self.ax.scatter(
+                raw_uc(x, "cm", "m"), raw_uc(y, "cm", "m"), *arg, **kwargs
+            )
 
         self.ax.plot_cm = _monkey_patch_plot_cm
         self.ax.scatter_cm = _monkey_patch_scatter_cm

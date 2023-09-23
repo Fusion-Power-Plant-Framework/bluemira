@@ -26,9 +26,6 @@ TODO:
 ____
 [ ]Tests?
 """
-from pathlib import Path
-from typing import Literal, Union
-
 import openmc
 from numpy import pi
 from openmc.config import config
@@ -47,6 +44,7 @@ from bluemira.neutronics.params import (
     TokamakGeometry,
     TokamakGeometryCGS,
     TokamakOperationParameters,
+    TokamakOperationParametersCustomUnits,
 )
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
@@ -84,13 +82,7 @@ def create_ring_source(tokamak_geometry_cgs: TokamakGeometryCGS) -> openmc.Sourc
 
 def setup_openmc(
     plasma_source: openmc.Source,
-    particles: int,
-    cross_section_xml: Union[str, Path],
-    batches: int = 2,
-    photon_transport=True,
-    electron_treatment: Literal["ttb", "led"] = "ttb",
-    run_mode: openmc.settings.RunMode = openmc.settings.RunMode.FIXED_SOURCE,
-    output_summary=False,
+    runtime_variables: OpenMCSimulationRuntimeParameters,
 ) -> None:
     """Configure openmc.Settings, so that it's ready for the run() step.
     Assumptions
@@ -102,39 +94,20 @@ def setup_openmc(
     ----------
     plasma_source: openmc.Source
         Openmc.Source used to emulate the neutron emission of the plasma.
-    particles: int
-        Number of neutrons emitted by the plasma source per batch.
-    cross_section_xml:
-        Where the xml file for cross-section is stored locally.
-    batches: int, default=2
-        How many batches to simulate.
-    photon_transport: bool, default=True
-        Whether to simulate the transport of photons (i.e. gamma-rays created) or not.
-    electron_treatment:
-        The way in which OpenMC handles secondary charged particles.
-        'thick-target bremsstrahlung' or 'local energy deposition'
-        'thick-target bremsstrahlung' accounts for the energy carried away by
-            bremsstrahlung photons and deposited elsewhere, whereas 'local energy
-            deposition' assumes electrons deposit all energies locally.
-        (the latter is expected to be computationally faster.)
-    run_mode:
-        see below for details:
-        https://docs.openmc.org/en/stable/usersguide/settings.html#run-modes
-    output_summary: whether a 'summary.h5' file is written or not.
 
     Returns
     -------
     Exports the settings to an xml file.
     """
-    config["cross_sections"] = cross_section_xml
+    config["cross_sections"] = runtime_variables.cross_section_xml
     settings = openmc.Settings()
     settings.source = plasma_source
-    settings.particles = particles
-    settings.batches = batches
-    settings.photon_transport = photon_transport
-    settings.electron_treatment = electron_treatment
-    settings.run_mode = run_mode
-    settings.output = {"summary": output_summary}
+    settings.particles = runtime_variables.particles
+    settings.batches = runtime_variables.batches
+    settings.photon_transport = runtime_variables.photon_transport
+    settings.electron_treatment = runtime_variables.electron_treatment
+    settings.run_mode = runtime_variables.run_mode
+    settings.output = {"summary": runtime_variables.openmc_write_summary}
 
     settings.export_to_xml()
 
@@ -172,7 +145,9 @@ class TBRHeatingSimulation:
         tokamak_geometry: TokamakGeometry,
     ):
         self.runtime_variables = runtime_variables
-        self.operation_variable = operation_variable
+        self.operation_variable_cust_unit = (
+            TokamakOperationParametersCustomUnits.from_SI(operation_variable)
+        )
         self.breeder_materials = breeder_materials
         self.tokamak_geometry_cgs = TokamakGeometryCGS.from_SI(tokamak_geometry)
 
@@ -184,10 +159,9 @@ class TBRHeatingSimulation:
         self,
         blanket_wire: BluemiraWire,
         divertor_wire: BluemiraWire,
-        major_radius: float,
-        aspect_ratio: float,
-        elong: float,
-        temperature: float,
+        new_major_radius: float,
+        new_aspect_ratio: float,
+        new_elong: float,
         plot_geometry: bool = True,
     ) -> None:
         """Plot the geometry and saving them as .png files with hard-coded names.
@@ -200,59 +174,47 @@ class TBRHeatingSimulation:
             units: [m]
         divertor_wire: BluemiraWire
             units: [m]
-        major_radius: float
+        new_major_radius: float
             (new) major radius in SI units,
                 separate to the one provided in TokamakGeometry
             unit: [m]
-        aspect_ratio: float
+        new_aspect_ratio: float
             scalar denoting the aspect ratio of the device (major/minor radius)
             unit: [dimensionless]
-        elong: float
+        new_elong: float
             (new) elongation variable, separate to the one provided in TokamakGeometry
             unit: [dimensionless]
-        temperature: float,
-            plasma temperature
-            unit: [K]
         plot_geometry: bool, default=True
             Should openmc plot the .png files or not.
         """
-        temperature_keV = raw_uc(temperature, "K", "keV")
-
         material_lib = create_and_export_materials(self.breeder_materials)
         self.material_lib = material_lib
         mg.check_geometry(self.tokamak_geometry_cgs)
         if self.runtime_variables.parametric_source:
             source = create_parametric_plasma_source(
-                minor_r=self.tokamak_geometry_cgs.minor_r,
+                # tokamak geometry
                 major_r=self.tokamak_geometry_cgs.major_r,
+                minor_r=self.tokamak_geometry_cgs.minor_r,
                 elongation=self.tokamak_geometry_cgs.elong,
-                triangulation=self.tokamak_geometry_cgs.triang,
-                radial_shift=self.tokamak_geometry_cgs.shaf_shift,
-                peaking_factor=self.tokamak_geometry_cgs.peaking_factor,
-                vertical_shift=self.tokamak_geometry_cgs.vertical_shift,
-                temperature=round(temperature_keV, 6),
+                triang=self.tokamak_geometry_cgs.triang,
+                # plasma geometry
+                peaking_factor=self.operation_variable_cust_unit.peaking_factor,
+                temperature=self.operation_variable_cust_unit.temperature,
+                radial_shift=self.operation_variable_cust_unit.shaf_shift,
+                vertical_shift=self.operation_variable_cust_unit.vertical_shift,
             )
         else:
             source = create_ring_source(self.tokamak_geometry_cgs)
 
-        setup_openmc(
-            source,
-            self.runtime_variables.particles,
-            self.runtime_variables.cross_section_xml,
-            self.runtime_variables.batches,
-            self.runtime_variables.photon_transport,
-            self.runtime_variables.electron_treatment,
-            self.runtime_variables.run_mode,
-            self.runtime_variables.openmc_write_summary,
-        )
+        setup_openmc(source, self.runtime_variables)
 
         blanket_points, div_points, num_inboard_points = mg.load_fw_points(
             self.tokamak_geometry_cgs,
             blanket_wire,
             divertor_wire,
-            raw_uc(major_radius, "m", "cm"),
-            aspect_ratio,
-            elong,
+            raw_uc(new_major_radius, "m", "cm"),
+            new_aspect_ratio,
+            new_elong,
             True,
         )
         self.cells, self.universe = mg.make_geometry(
@@ -265,7 +227,7 @@ class TBRHeatingSimulation:
 
         # deduce source strength (self.src_rate) from the power of the reactor,
         # by assuming 100% of reactor power comes from DT fusion
-        self.src_rate = self.operation_variable.calculate_total_neutron_rate()
+        self.src_rate = self.operation_variable_cust_unit.calculate_total_neutron_rate()
 
         create_tallies(self.cells, self.material_lib, self.src_rate)
 

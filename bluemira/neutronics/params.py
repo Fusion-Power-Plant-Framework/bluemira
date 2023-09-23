@@ -20,6 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """dataclasses containing parameters used to set up the openmc model."""
 from dataclasses import dataclass
+from pathlib import Path
+from typing import Literal, Union
+
+import openmc
 
 import bluemira.neutronics.make_materials as mm
 from bluemira.base.constants import raw_uc
@@ -28,32 +32,43 @@ from bluemira.neutronics.constants import energy_per_dt
 
 @dataclass
 class OpenMCSimulationRuntimeParameters:
-    """Parameters used in the actual simulation"""
+    """Parameters used in the actual simulation
 
-    # parameters used in setup_openmc()
-    particles: int  # number of particles used in the neutronics simulation
-    batches: int
-    photon_transport: bool
-    electron_treatment: str
-    run_mode: str
+    Parameters
+    ----------
+    particles: int
+        Number of neutrons emitted by the plasma source per batch.
+    batches: int, default=2
+        How many batches to simulate.
+    photon_transport: bool, default=True
+        Whether to simulate the transport of photons (i.e. gamma-rays created) or not.
+    electron_treatment: {'ttb','led'}
+        The way in which OpenMC handles secondary charged particles.
+        'thick-target bremsstrahlung' or 'local energy deposition'
+        'thick-target bremsstrahlung' accounts for the energy carried away by
+            bremsstrahlung photons and deposited elsewhere, whereas 'local energy
+            deposition' assumes electrons deposit all energies locally.
+        (the latter is expected to be computationally faster.)
+    run_mode: str, {'eigenvalue', 'fixed source', 'plot', 'volume', 'particle restart'}
+        see below for details:
+        https://docs.openmc.org/en/stable/usersguide/settings.html#run-modes
     openmc_write_summary: bool
-    # Parameters used elsewhere
+        whether openmc should write a 'summary.h5' file or not.
+    cross_section_xml:
+        Where the xml file for cross-section is stored locally.
+    """
+
+    # Parameters used outside of setup_openmc()
+    volume_calc_particles: int  # number of particles used in the stochastic volume calculation.
+    # parameters used inside setup_openmc()
     parametric_source: bool  # to use the pps_isotropic module or not.
-    volume_calc_particles: int  # number of particles used in the volume calculation.
-    cross_section_xml: str
-
-
-@dataclass
-class TokamakOperationParameters:
-    """The tokamak's operational parameter, such as its power"""
-
-    reactor_power: float  # [W]
-
-    def calculate_total_neutron_rate(self) -> float:  # [1/s]
-        """Convert the reactor power to neutron rate
-        (number of neutrons produced per second) assuming 100% efficiency.
-        """
-        return self.reactor_power / energy_per_dt
+    particles: int  # number of particles used in the neutronics simulation
+    cross_section_xml: Union[str, Path]
+    batches: int = 2
+    photon_transport: bool = True
+    electron_treatment: Literal["ttb", "led"] = "ttb"
+    run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
+    openmc_write_summary: bool = False
 
 
 @dataclass
@@ -66,17 +81,123 @@ class BreederTypeParameters:
     blanket_type: mm.BlanketType
 
 
-@dataclass
-class TokamakGeometry:
-    """The measurements for all of the geneic components of the tokamak"""
+class DataclassUnitConverter:
+    def __init__(self, parent, unit_converter_dict):
+        self.parent = parent
+        for attr, in_out_units in unit_converter_dict.items():
+            setattr(self, attr, raw_uc(getattr(self.parent, attr), *in_out_units))
 
-    minor_r: float  # [m]
-    major_r: float  # [m]
-    elong: float  # [dimensionless]
-    # TODO: Move shaf_shift, peaking_factor, temperature into TokamakOperationParameters
+
+@dataclass(frozen=True)
+class TokamakOperationParameters:
+    """Parameters describing how the tokamak is operated,
+    i.e. where the plasma is positioned (and therefore where the power is concentrated),
+    and what temperature the plasma is at.
+
+    Parameters
+    ----------
+    reactor_power: total reactor (thermal) power when operating at 100%
+    peaking_factor: (max. heat flux on fw)/(avg. heat flux on fw)
+    shaf_shift: shafranov shift
+        how far (towards the outboard direction) is the centre of the plasma shifted
+        compared to the geometric center of the poloidal cross-section.
+    vertical_shift: how far (upwards) in the z direction is the centre of the plasma
+        shifted compared to the geometric center of the poloidal cross-section.
+    """
+
+    reactor_power: float  # [W]
+    temperature: float  # [K]
+    peaking_factor: float  # [dimensionless]
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
-    peaking_factor: float  # [m]
+
+    def calculate_total_neutron_rate(self) -> float:  # [1/s]
+        """Convert the reactor power to neutron rate
+        (number of neutrons produced per second) assuming 100% efficiency.
+        """
+        return self.reactor_power / energy_per_dt
+
+    def __post_init__(self):
+        object.__setattr__(
+            self,
+            "plasma_physics_units",  # hack to get around the frozen attributes
+            DataclassUnitConverter(
+                self,
+                {
+                    "reactor_power": ("W", "MW"),
+                    "temperature": ("K", "keV"),
+                    "peaking_factor": ("1", "1"),
+                    "shaf_shift": ("m", "cm"),
+                    "vertical_shift": ("m", "cm"),
+                },
+            ),
+        )
+
+
+@dataclass
+class TokamakOperationParametersCustomUnits:
+    reactor_power: float  # [MW]
+    temperature: float  # [keV]
+    peaking_factor: float  # [dimensionless]
+    shaf_shift: float  # [cm]
+    vertical_shift: float  # [cm]
+
+    def calculate_total_neutron_rate(self) -> float:  # [1/s]
+        """Convert the reactor power to neutron rate
+        (number of neutrons produced per second) assuming 100% efficiency.
+        """
+        return raw_uc(self.reactor_power, "MW", "W") / energy_per_dt
+
+    @classmethod
+    def from_SI(cls, operation_variable: TokamakOperationParameters):
+        """Convert from SI units (m, W, K)
+        to custom (plasma physics) units (cm, MW, keV)
+        """
+        return cls(
+            raw_uc(operation_variable.reactor_power, "W", "MW"),
+            raw_uc(operation_variable.temperature, "K", "keV"),
+            operation_variable.peaking_factor,
+            raw_uc(operation_variable.shaf_shift, "m", "cm"),
+            raw_uc(operation_variable.vertical_shift, "m", "cm"),
+        )
+
+
+@dataclass
+class TokamakGeometry:
+    """The measurements for all of the generic SOLID components of the tokamak.
+
+    Parameters
+    ----------
+    major_r: major radius
+        how far is the origin in the poloidal view from the center of the torus.
+    minor_r: minor radius (R0 in equation referenced below)
+        radius of the poloidal cross-section
+    elong: elongation (a in equation referenced below)
+        how eccentric the poloidal ellipse is
+    triang: triangularity (δ in equation referenced below)
+        second order eccentricity (best visualized by plotting R(θ) wrt.θ in eq. below)
+    Reference
+    ---------
+    R = R0 + a cos(θ + δ sin θ)
+    https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf
+        page.239 # noqa: W505
+
+    Other terminologies
+    -------------------
+    thick: thickness
+    inb: inboard
+    outb: outboard
+    fw: first wall
+    bz: breeding zone
+    mnfld: manifold
+    vv: vacuum vessel
+    tf: toroidal field
+    """
+
+    major_r: float  # [m]
+    minor_r: float  # [m]
+    elong: float  # [dimensionless]
+    triang: float  # [dimensionless]
     inb_fw_thick: float  # [m]
     inb_bz_thick: float  # [m]
     inb_mnfld_thick: float  # [m]
@@ -86,22 +207,40 @@ class TokamakGeometry:
     outb_bz_thick: float  # [m]
     outb_mnfld_thick: float  # [m]
     outb_vv_thick: float  # [m]
-    triang: float  # [dimensionless]
     inb_gap: float  # [m]
+
+    def __post_init__(self):
+        self.cgs = DataclassUnitConverter(
+            self,
+            {
+                "major_r": ("m", "cm"),
+                "minor_r": ("m", "cm"),
+                "elong": ("1", "1"),
+                "triang": ("1", "1"),
+                "inb_fw_thick": ("m", "cm"),
+                "inb_bz_thick": ("m", "cm"),
+                "inb_mnfld_thick": ("m", "cm"),
+                "inb_vv_thick": ("m", "cm"),
+                "tf_thick": ("m", "cm"),
+                "outb_fw_thick": ("m", "cm"),
+                "outb_bz_thick": ("m", "cm"),
+                "outb_mnfld_thick": ("m", "cm"),
+                "outb_vv_thick": ("m", "cm"),
+                "inb_gap": ("m", "cm"),
+            },
+        )
 
 
 @dataclass
 class TokamakGeometryCGS:
-    """The measurements for all of the geneic components of the tokamak,
+    """The measurements for all of the generic components of the tokamak,
     provided in CGS (Centimeter, Grams, Seconds) units.
     """
 
-    minor_r: float  # [cm]
     major_r: float  # [cm]
+    minor_r: float  # [cm]
     elong: float  # [dimensionless]
-    shaf_shift: float  # [cm]
-    vertical_shift: float  # [cm]
-    peaking_factor: float  # [cm]
+    triang: float  # [dimensionless]
     inb_fw_thick: float  # [cm]
     inb_bz_thick: float  # [cm]
     inb_mnfld_thick: float  # [cm]
@@ -111,19 +250,16 @@ class TokamakGeometryCGS:
     outb_bz_thick: float  # [cm]
     outb_mnfld_thick: float  # [cm]
     outb_vv_thick: float  # [cm]
-    triang: float  # [dimensionless]
     inb_gap: float  # [cm]
 
     @classmethod
     def from_SI(cls, tokamak_geometry: TokamakGeometry):
         """Convert from m (SI units) to cm (cgs units)"""
         return cls(
-            raw_uc(tokamak_geometry.minor_r, "m", "cm"),
             raw_uc(tokamak_geometry.major_r, "m", "cm"),
+            raw_uc(tokamak_geometry.minor_r, "m", "cm"),
             tokamak_geometry.elong,
-            raw_uc(tokamak_geometry.shaf_shift, "m", "cm"),
-            raw_uc(tokamak_geometry.vertical_shift, "m", "cm"),
-            raw_uc(tokamak_geometry.peaking_factor, "m", "cm"),
+            tokamak_geometry.triang,
             raw_uc(tokamak_geometry.inb_fw_thick, "m", "cm"),
             raw_uc(tokamak_geometry.inb_bz_thick, "m", "cm"),
             raw_uc(tokamak_geometry.inb_mnfld_thick, "m", "cm"),
@@ -133,6 +269,5 @@ class TokamakGeometryCGS:
             raw_uc(tokamak_geometry.outb_bz_thick, "m", "cm"),
             raw_uc(tokamak_geometry.outb_mnfld_thick, "m", "cm"),
             raw_uc(tokamak_geometry.outb_vv_thick, "m", "cm"),
-            tokamak_geometry.triang,
             raw_uc(tokamak_geometry.inb_gap, "m", "cm"),
         )
