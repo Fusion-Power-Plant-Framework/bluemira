@@ -21,7 +21,6 @@
 """
 TODO:
 [ ]Integration into our logging system (print should go through bluemira_print etc.)
-[ ]Unit: cgs -> metric
 [ ]Should we rename `quick_tbr_heating.py` to something else?
 ____
 [ ]Tests?

@@ -49,7 +49,6 @@ def check_geometry(tokamak_geometry: TokamakGeometry) -> None:
     if tokamak_geometry.cgs.elong < 1.0:
         raise ValueError("Elongation must be at least 1.0")
 
-    # TODO update this
     inboard_build = (
         tokamak_geometry.cgs.minor_r
         + tokamak_geometry.cgs.inb_fw_thick
