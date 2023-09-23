@@ -186,6 +186,7 @@ class TokamakGeometry:
             self,
             "cgs",
             DataclassUnitConverter(
+                self,
                 {
                     "major_r": ("m", "cm"),
                     "minor_r": ("m", "cm"),
