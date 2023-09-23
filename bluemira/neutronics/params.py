@@ -118,9 +118,9 @@ class TokamakOperationParameters:
         return self.reactor_power / energy_per_dt
 
     def __post_init__(self):
-        object.__setattr__(
+        object.__setattr__(  # hack to get around the frozen attributes
             self,
-            "plasma_physics_units",  # hack to get around the frozen attributes
+            "plasma_physics_units",
             DataclassUnitConverter(
                 self,
                 {
@@ -134,35 +134,7 @@ class TokamakOperationParameters:
         )
 
 
-@dataclass
-class TokamakOperationParametersCustomUnits:
-    reactor_power: float  # [MW]
-    temperature: float  # [keV]
-    peaking_factor: float  # [dimensionless]
-    shaf_shift: float  # [cm]
-    vertical_shift: float  # [cm]
-
-    def calculate_total_neutron_rate(self) -> float:  # [1/s]
-        """Convert the reactor power to neutron rate
-        (number of neutrons produced per second) assuming 100% efficiency.
-        """
-        return raw_uc(self.reactor_power, "MW", "W") / energy_per_dt
-
-    @classmethod
-    def from_SI(cls, operation_variable: TokamakOperationParameters):
-        """Convert from SI units (m, W, K)
-        to custom (plasma physics) units (cm, MW, keV)
-        """
-        return cls(
-            raw_uc(operation_variable.reactor_power, "W", "MW"),
-            raw_uc(operation_variable.temperature, "K", "keV"),
-            operation_variable.peaking_factor,
-            raw_uc(operation_variable.shaf_shift, "m", "cm"),
-            raw_uc(operation_variable.vertical_shift, "m", "cm"),
-        )
-
-
-@dataclass
+@dataclass(frozen=True)
 class TokamakGeometry:
     """The measurements for all of the generic SOLID components of the tokamak.
 
@@ -210,64 +182,25 @@ class TokamakGeometry:
     inb_gap: float  # [m]
 
     def __post_init__(self):
-        self.cgs = DataclassUnitConverter(
+        object.__setattr__(  # hack to get around the frozen attributes
             self,
-            {
-                "major_r": ("m", "cm"),
-                "minor_r": ("m", "cm"),
-                "elong": ("1", "1"),
-                "triang": ("1", "1"),
-                "inb_fw_thick": ("m", "cm"),
-                "inb_bz_thick": ("m", "cm"),
-                "inb_mnfld_thick": ("m", "cm"),
-                "inb_vv_thick": ("m", "cm"),
-                "tf_thick": ("m", "cm"),
-                "outb_fw_thick": ("m", "cm"),
-                "outb_bz_thick": ("m", "cm"),
-                "outb_mnfld_thick": ("m", "cm"),
-                "outb_vv_thick": ("m", "cm"),
-                "inb_gap": ("m", "cm"),
-            },
-        )
-
-
-@dataclass
-class TokamakGeometryCGS:
-    """The measurements for all of the generic components of the tokamak,
-    provided in CGS (Centimeter, Grams, Seconds) units.
-    """
-
-    major_r: float  # [cm]
-    minor_r: float  # [cm]
-    elong: float  # [dimensionless]
-    triang: float  # [dimensionless]
-    inb_fw_thick: float  # [cm]
-    inb_bz_thick: float  # [cm]
-    inb_mnfld_thick: float  # [cm]
-    inb_vv_thick: float  # [cm]
-    tf_thick: float  # [cm]
-    outb_fw_thick: float  # [cm]
-    outb_bz_thick: float  # [cm]
-    outb_mnfld_thick: float  # [cm]
-    outb_vv_thick: float  # [cm]
-    inb_gap: float  # [cm]
-
-    @classmethod
-    def from_SI(cls, tokamak_geometry: TokamakGeometry):
-        """Convert from m (SI units) to cm (cgs units)"""
-        return cls(
-            raw_uc(tokamak_geometry.major_r, "m", "cm"),
-            raw_uc(tokamak_geometry.minor_r, "m", "cm"),
-            tokamak_geometry.elong,
-            tokamak_geometry.triang,
-            raw_uc(tokamak_geometry.inb_fw_thick, "m", "cm"),
-            raw_uc(tokamak_geometry.inb_bz_thick, "m", "cm"),
-            raw_uc(tokamak_geometry.inb_mnfld_thick, "m", "cm"),
-            raw_uc(tokamak_geometry.inb_vv_thick, "m", "cm"),
-            raw_uc(tokamak_geometry.tf_thick, "m", "cm"),
-            raw_uc(tokamak_geometry.outb_fw_thick, "m", "cm"),
-            raw_uc(tokamak_geometry.outb_bz_thick, "m", "cm"),
-            raw_uc(tokamak_geometry.outb_mnfld_thick, "m", "cm"),
-            raw_uc(tokamak_geometry.outb_vv_thick, "m", "cm"),
-            raw_uc(tokamak_geometry.inb_gap, "m", "cm"),
+            "cgs",
+            DataclassUnitConverter(
+                {
+                    "major_r": ("m", "cm"),
+                    "minor_r": ("m", "cm"),
+                    "elong": ("1", "1"),
+                    "triang": ("1", "1"),
+                    "inb_fw_thick": ("m", "cm"),
+                    "inb_bz_thick": ("m", "cm"),
+                    "inb_mnfld_thick": ("m", "cm"),
+                    "inb_vv_thick": ("m", "cm"),
+                    "tf_thick": ("m", "cm"),
+                    "outb_fw_thick": ("m", "cm"),
+                    "outb_bz_thick": ("m", "cm"),
+                    "outb_mnfld_thick": ("m", "cm"),
+                    "outb_vv_thick": ("m", "cm"),
+                    "inb_gap": ("m", "cm"),
+                },
+            ),
         )

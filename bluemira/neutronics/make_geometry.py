@@ -35,7 +35,7 @@ import bluemira.neutronics.volume_functions as vf
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.params import TokamakGeometryCGS
+from bluemira.neutronics.params import TokamakGeometry
 
 cells = {}  # is actually a dictionary of cells and cell lists
 surfaces = {}
@@ -44,23 +44,23 @@ surfaces = {}
 div_clearance = 49.0  # [cm]
 
 
-def check_geometry(tokamak_geometry_cgs: TokamakGeometryCGS) -> None:
+def check_geometry(tokamak_geometry: TokamakGeometry) -> None:
     """Some basic geometry checks"""
-    if tokamak_geometry_cgs.elong < 1.0:
+    if tokamak_geometry.cgs.elong < 1.0:
         raise ValueError("Elongation must be at least 1.0")
 
     # TODO update this
     inboard_build = (
-        tokamak_geometry_cgs.minor_r
-        + tokamak_geometry_cgs.inb_fw_thick
-        + tokamak_geometry_cgs.inb_bz_thick
-        + tokamak_geometry_cgs.inb_mnfld_thick
-        + tokamak_geometry_cgs.inb_vv_thick
-        + tokamak_geometry_cgs.tf_thick
-        + tokamak_geometry_cgs.inb_gap
+        tokamak_geometry.cgs.minor_r
+        + tokamak_geometry.cgs.inb_fw_thick
+        + tokamak_geometry.cgs.inb_bz_thick
+        + tokamak_geometry.cgs.inb_mnfld_thick
+        + tokamak_geometry.cgs.inb_vv_thick
+        + tokamak_geometry.cgs.tf_thick
+        + tokamak_geometry.cgs.inb_gap
     )
 
-    if inboard_build > tokamak_geometry_cgs.major_r:
+    if inboard_build > tokamak_geometry.cgs.major_r:
         raise ValueError(
             "The inboard build does not fit within the major radius. Increase the major radius."
         )
@@ -165,9 +165,7 @@ def elongate(points, adjust_elong):
     return points
 
 
-def stretch_r(
-    points, tokamak_geometry_cgs: TokamakGeometryCGS, stretch_r_val
-) -> np.ndarray:
+def stretch_r(points, tokamak_geometry: TokamakGeometry, stretch_r_val) -> np.ndarray:
     """Moves the points in the r dimension away from the major radius by extra_r_cm
 
     Parameters
@@ -176,8 +174,8 @@ def stretch_r(
     stretch_r_val: in cm
     """
     points[:, 0] = (
-        points[:, 0] - tokamak_geometry_cgs.major_r
-    ) * stretch_r_val + tokamak_geometry_cgs.major_r
+        points[:, 0] - tokamak_geometry.cgs.major_r
+    ) * stretch_r_val + tokamak_geometry.cgs.major_r
 
     return points
 
@@ -647,7 +645,7 @@ def create_plasma_chamber():
 
 
 def make_geometry(
-    tokamak_geometry_cgs: TokamakGeometryCGS,
+    tokamak_geometry: TokamakGeometry,
     fw_points: np.ndarray,
     div_points: np.ndarray,
     num_inboard_points: int,
@@ -658,8 +656,8 @@ def make_geometry(
 
     Parameters
     ----------
-    tokamak_geometry_cgs: TokamakGeometryCGS
-        TokamakGeometryCGS (child of dataclass) instance containing the attributes:
+    tokamak_geometry: TokamakGeometry
+        TokamakGeometry (child of dataclass) instance containing the attributes:
             elong
             inb_bz_thick
             inb_fw_thick
@@ -686,22 +684,22 @@ def make_geometry(
         dictionary of materials {name:openmc.Material} used to create cells.
     """
     # Creates an OpenMC CSG geometry for an EU Demo reactor
-    # minor_r = tokamak_geometry_cgs.minor_r
-    # major_r = tokamak_geometry_cgs.major_r
-    # elong = tokamak_geometry_cgs.elong
+    # minor_r = tokamak_geometry.cgs.minor_r
+    # major_r = tokamak_geometry.cgs.major_r
+    # elong = tokamak_geometry.cgs.elong
     # inner_plasma_r = major_r - minor_r
     # outer_plasma_r = major_r + minor_r
 
-    inb_fw_thick = tokamak_geometry_cgs.inb_fw_thick
-    inb_bz_thick = tokamak_geometry_cgs.inb_bz_thick
-    inb_mnfld_thick = tokamak_geometry_cgs.inb_mnfld_thick
-    inb_vv_thick = tokamak_geometry_cgs.inb_vv_thick
-    tf_thick = tokamak_geometry_cgs.tf_thick
+    inb_fw_thick = tokamak_geometry.cgs.inb_fw_thick
+    inb_bz_thick = tokamak_geometry.cgs.inb_bz_thick
+    inb_mnfld_thick = tokamak_geometry.cgs.inb_mnfld_thick
+    inb_vv_thick = tokamak_geometry.cgs.inb_vv_thick
+    tf_thick = tokamak_geometry.cgs.tf_thick
 
-    outb_fw_thick = tokamak_geometry_cgs.outb_fw_thick
-    outb_bz_thick = tokamak_geometry_cgs.outb_bz_thick
-    outb_mnfld_thick = tokamak_geometry_cgs.outb_mnfld_thick
-    outb_vv_thick = tokamak_geometry_cgs.outb_vv_thick
+    outb_fw_thick = tokamak_geometry.cgs.outb_fw_thick
+    outb_bz_thick = tokamak_geometry.cgs.outb_bz_thick
+    outb_mnfld_thick = tokamak_geometry.cgs.outb_mnfld_thick
+    outb_vv_thick = tokamak_geometry.cgs.outb_vv_thick
 
     # This is a thin geometry layer to score peak surface values
     fw_surf_score_depth = 0.01  # [cm]
@@ -741,7 +739,7 @@ def make_geometry(
 
     # Getting tf coil r surfaces
     back_of_inb_vv_r = get_min_r_of_points(inner_points)
-    gap_between_vv_tf = tokamak_geometry_cgs.inb_gap
+    gap_between_vv_tf = tokamak_geometry.cgs.inb_gap
 
     surfaces["bore_surface"] = openmc.ZCylinder(
         r=back_of_inb_vv_r - gap_between_vv_tf - tf_thick
@@ -1061,12 +1059,12 @@ def make_geometry(
 
 
 def load_fw_points(
-    tokamak_geometry_cgs: TokamakGeometryCGS,
+    tokamak_geometry: TokamakGeometry,
     blanket_wire: BluemiraWire,
     divertor_wire: BluemiraWire,
-    major_radius: float,
-    aspect_ratio: float,
-    elong: float,
+    new_major_radius: float,
+    new_aspect_ratio: float,
+    new_elong: float,
     save_plots: bool = True,
 ) -> Tuple[npt.NDArray, npt.NDArray, int]:
     """
@@ -1079,13 +1077,13 @@ def load_fw_points(
 
     Parameters
     ----------
-    tokamak_geometry_cgs: TokamakGeometryCGS
+    tokamak_geometry: TokamakGeometry
     blanket_wire: BluemiraWire
     divertor_wire: BluemiraWire
-    major_radius: major radius of the actual device, in SI units.
-        The geometry variables specificed by
-        tokamak_geometry_cgs will then be modified by major_radius
-    aspect_ratio: aspect ratio of the reactor
+    new_major_radius: major radius of the actual device, in SI units.
+        The geometry variables specificed by tokamak_geometry will then
+        be rescaled by new_major_radius to get the final shape.
+    new_aspect_ratio: aspect ratio of the reactor
 
     Returns
     -------
@@ -1124,9 +1122,9 @@ def load_fw_points(
     """
     full_blanket_2d_outline = raw_uc(blanket_wire.discretize(100).T, "m", "cm")
     divertor_2d_outline = raw_uc(divertor_wire.discretize(100).T, "m", "cm")
-    ex_pts_maj_r = major_radius
-    ex_pts_min_r = major_radius / aspect_ratio
-    ex_pts_elong = elong
+    ex_pts_maj_r = new_major_radius
+    ex_pts_min_r = new_major_radius / new_aspect_ratio
+    ex_pts_elong = new_elong
     # Specifying the number of the selected points that define the inboard.
     num_inboard_points = 6
     # sample points indices
@@ -1160,17 +1158,17 @@ def load_fw_points(
 
     # rescale data to fit new geometry.
     # Expand point outwards according to new major radius
-    shift_cm = tokamak_geometry_cgs.major_r - ex_pts_maj_r
+    shift_cm = tokamak_geometry.cgs.major_r - ex_pts_maj_r
     new_points = shift_points(old_points, shift_cm)
 
     # Adjusting points for elongation and minor radius
     # This elongation also include an allowance for the minor radius
     elong_w_minor_r = (
-        tokamak_geometry_cgs.minor_r / ex_pts_min_r * tokamak_geometry_cgs.elong
+        tokamak_geometry.cgs.minor_r / ex_pts_min_r * tokamak_geometry.cgs.elong
     )
-    stretch_r_val = tokamak_geometry_cgs.minor_r / ex_pts_min_r
+    stretch_r_val = tokamak_geometry.cgs.minor_r / ex_pts_min_r
     new_points = elongate(new_points, elong_w_minor_r / ex_pts_elong)
-    new_points = stretch_r(new_points, tokamak_geometry_cgs, stretch_r_val)
+    new_points = stretch_r(new_points, tokamak_geometry, stretch_r_val)
 
     # split 'new_points' into new_downsampled_* variables
     new_downsampled_fw = new_points[:-num_points_belongong_to_divertor]
@@ -1183,13 +1181,13 @@ def load_fw_points(
     # plotting.
     if save_plots:
         # create parametric variables for plotting smoother lines
-        u = tokamak_geometry_cgs.major_r  # x-position of the center
+        u = tokamak_geometry.cgs.major_r  # x-position of the center
         v = 0.0  # y-position of the center
-        a = tokamak_geometry_cgs.minor_r  # radius on the x-axis
+        a = tokamak_geometry.cgs.minor_r  # radius on the x-axis
         b = (
-            tokamak_geometry_cgs.elong * tokamak_geometry_cgs.minor_r
+            tokamak_geometry.cgs.elong * tokamak_geometry.cgs.minor_r
         )  # radius on the y-axis
-        tri = tokamak_geometry_cgs.triang  # triangularity
+        tri = tokamak_geometry.cgs.triang  # triangularity
         t = np.linspace(0, 2 * pi, 100)
 
         with present.PoloidalXSPlot("blanket_face.svg", "Blanket Face") as ax:

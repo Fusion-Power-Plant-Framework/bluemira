@@ -42,30 +42,28 @@ from bluemira.neutronics.params import (
     BreederTypeParameters,
     OpenMCSimulationRuntimeParameters,
     TokamakGeometry,
-    TokamakGeometryCGS,
     TokamakOperationParameters,
-    TokamakOperationParametersCustomUnits,
 )
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
 
 
-def create_ring_source(tokamak_geometry_cgs: TokamakGeometryCGS) -> openmc.Source:
+def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
     """
     Creating simple ring source.
     A more accurate source will slightly affect the wall loadings and dpa profiles.
 
     Parameters
     ----------
-    tokamak_geometry_cgs: TokamakGeometryCGS
+    tokamak_geometry: TokamakGeometry
         Only the
-            - tokamak_geometry_cgs.major_r
-            - tokamak_geometry_cgs.shaf_shift
+            - tokamak_geometry.cgs.major_r
+            - tokamak_geometry.cgs.shaf_shift
         variables are used in this function.
     """
     ring_source = openmc.Source()
     source_radii = openmc.stats.Discrete(
-        [tokamak_geometry_cgs.major_r + tokamak_geometry_cgs.shaf_shift], [1]
+        [tokamak_geometry.cgs.major_r + tokamak_geometry.cgs.shaf_shift], [1]
     )
     source_z_values = openmc.stats.Discrete([0], [1])
     source_angles = openmc.stats.Uniform(a=0.0, b=2 * pi)
@@ -145,11 +143,9 @@ class TBRHeatingSimulation:
         tokamak_geometry: TokamakGeometry,
     ):
         self.runtime_variables = runtime_variables
-        self.operation_variable_cust_unit = (
-            TokamakOperationParametersCustomUnits.from_SI(operation_variable)
-        )
+        self.operation_variable = operation_variable
         self.breeder_materials = breeder_materials
-        self.tokamak_geometry_cgs = TokamakGeometryCGS.from_SI(tokamak_geometry)
+        self.tokamak_geometry = tokamak_geometry
 
         self.cells = None
         self.material_lib = None
@@ -189,27 +185,27 @@ class TBRHeatingSimulation:
         """
         material_lib = create_and_export_materials(self.breeder_materials)
         self.material_lib = material_lib
-        mg.check_geometry(self.tokamak_geometry_cgs)
+        mg.check_geometry(self.tokamak_geometry)
         if self.runtime_variables.parametric_source:
             source = create_parametric_plasma_source(
                 # tokamak geometry
-                major_r=self.tokamak_geometry_cgs.major_r,
-                minor_r=self.tokamak_geometry_cgs.minor_r,
-                elongation=self.tokamak_geometry_cgs.elong,
-                triang=self.tokamak_geometry_cgs.triang,
+                major_r=self.tokamak_geometry.cgs.major_r,
+                minor_r=self.tokamak_geometry.cgs.minor_r,
+                elongation=self.tokamak_geometry.cgs.elong,
+                triang=self.tokamak_geometry.cgs.triang,
                 # plasma geometry
-                peaking_factor=self.operation_variable_cust_unit.peaking_factor,
-                temperature=self.operation_variable_cust_unit.temperature,
-                radial_shift=self.operation_variable_cust_unit.shaf_shift,
-                vertical_shift=self.operation_variable_cust_unit.vertical_shift,
+                peaking_factor=self.operation_variable.plasma_physics_units.peaking_factor,
+                temperature=self.operation_variable.plasma_physics_units.temperature,
+                radial_shift=self.operation_variable.plasma_physics_units.shaf_shift,
+                vertical_shift=self.operation_variable.plasma_physics_units.vertical_shift,
             )
         else:
-            source = create_ring_source(self.tokamak_geometry_cgs)
+            source = create_ring_source(self.tokamak_geometry)
 
         setup_openmc(source, self.runtime_variables)
 
         blanket_points, div_points, num_inboard_points = mg.load_fw_points(
-            self.tokamak_geometry_cgs,
+            self.tokamak_geometry,
             blanket_wire,
             divertor_wire,
             raw_uc(new_major_radius, "m", "cm"),
@@ -218,7 +214,7 @@ class TBRHeatingSimulation:
             True,
         )
         self.cells, self.universe = mg.make_geometry(
-            self.tokamak_geometry_cgs,
+            self.tokamak_geometry,
             blanket_points,
             div_points,
             num_inboard_points,
@@ -227,12 +223,12 @@ class TBRHeatingSimulation:
 
         # deduce source strength (self.src_rate) from the power of the reactor,
         # by assuming 100% of reactor power comes from DT fusion
-        self.src_rate = self.operation_variable_cust_unit.calculate_total_neutron_rate()
+        self.src_rate = self.operation_variable.calculate_total_neutron_rate()
 
         create_tallies(self.cells, self.material_lib, self.src_rate)
 
         if plot_geometry:
-            present.geometry_plotter(self.cells, self.tokamak_geometry_cgs)
+            present.geometry_plotter(self.cells, self.tokamak_geometry)
 
     @staticmethod
     def run(*args, output=False, **kwargs) -> None:
@@ -264,7 +260,7 @@ class TBRHeatingSimulation:
         Using openmc's built-in stochastic volume calculation function to get the volume.
         """
         stochastic_volume_calculation(
-            self.tokamak_geometry_cgs,
+            self.tokamak_geometry,
             self.cells,
             self.runtime_variables.volume_calc_particles,
         )
