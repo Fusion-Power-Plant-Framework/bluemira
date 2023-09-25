@@ -22,7 +22,9 @@
 All units used in this file are either [cm] or dimensionless.
 """
 import copy
-from typing import Dict, List, Tuple, Union
+from dataclasses import dataclass, field
+import itertools
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -37,16 +39,10 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.params import TokamakGeometry
 
-cells = {}  # is actually a dictionary of cells and cell lists
-surfaces = {}
-
-# Setting the thickness of divertor below the first wall
-div_clearance = 49.0  # [cm]
-
 
 def check_geometry(tokamak_geometry: TokamakGeometry) -> None:
     """Some basic geometry checks"""
-    if tokamak_geometry.cgs.elong < 1.0:
+    if tokamak_geometry.cgs.elong < 1.0:  # noqa: PLR2004
         raise ValueError("Elongation must be at least 1.0")
 
     inboard_build = (
@@ -110,28 +106,25 @@ def make_offset_poly(old_x, old_y, offset, outer_ccw):
         prev = (curr + num_points - 1) % num_points
         nxt = (curr + 1) % num_points
 
-        vn_x = old_x[nxt] - old_x[curr]
-        vn_y = old_y[nxt] - old_y[curr]
-        vnn_x, vnn_y = normalize_vec(vn_x, vn_y)
+        vnn_x, vnn_y = normalize_vec(old_x[nxt] - old_x[curr], old_y[nxt] - old_y[curr])
         nnn_x = vnn_y
         nnn_y = -vnn_x
 
-        vp_x = old_x[curr] - old_x[prev]
-        vp_y = old_y[curr] - old_y[prev]
-        vpn_x, vpn_y = normalize_vec(vp_x, vp_y)
+        vpn_x, vpn_y = normalize_vec(
+            old_x[curr] - old_x[prev], old_y[curr] - old_y[prev]
+        )
         npn_x = vpn_y * outer_ccw
         npn_y = -vpn_x * outer_ccw
 
-        bis_x = (nnn_x + npn_x) * outer_ccw
-        bis_y = (nnn_y + npn_y) * outer_ccw
-
-        bisn_x, bisn_y = normalize_vec(bis_x, bis_y)
+        bisn_x, bisn_y = normalize_vec(
+            (nnn_x + npn_x) * outer_ccw, (nnn_y + npn_y) * outer_ccw
+        )
         bislen = offset / np.sqrt((1 + nnn_x * npn_x + nnn_y * npn_y) / 2)
 
         new_x.append(old_x[curr] + bislen * bisn_x)
         new_y.append(old_y[curr] + bislen * bisn_y)
 
-    return (new_x, new_y)
+    return new_x, new_y
 
 
 def offset_points(points, offset_cm):
@@ -193,186 +186,247 @@ def get_min_max_z_r_of_points(points):
     return min_z, max_z, max_r
 
 
-def create_inboard_layer(
-    prefix_for_layer: str,
-    prefix_for_layer_behind: str,
+def _create_z_cone(point1, point2):
+    return openmc.ZCone(0.0, 0.0, *get_cone_eqn_from_two_points(point1, point2))
+
+
+def _join_lists(lists):
+    return list(itertools.chain(*[a if isinstance(a, list) else [a] for a in lists]))
+
+
+@dataclass
+class Surface:
+    """Suface CSG sections"""
+
+    cones: List = field(default_factory=list)
+    planes: List = field(default_factory=list)
+
+
+@dataclass
+class DivertorSurface:
+    """Divertor suface CSG model"""
+
+    top: openmc.ZCone
+    chop: openmc.ZPlane
+    outer_cone: openmc.ZCone
+    bottom: Optional[openmc.ZPlane] = None
+    inner_r: Optional[openmc.ZCylinder] = None
+    r_chop_in: Optional[openmc.ZCylinder] = None
+    r_chop_out: Optional[openmc.ZCylinder] = None
+    outer_r: Optional[openmc.ZCylinder] = None
+    fw: Optional[List[openmc.ZCone]] = None
+    # Divertor surface
+    fw_back: Optional[List[openmc.ZCone]] = None
+    # Div first wall back
+    scoring: Optional[List[openmc.ZCone]] = None
+    fw_back_mid_z: Optional[openmc.ZPlane] = None
+
+
+@dataclass
+class GraveyardSurface:
+    """Graveyard suface CSG sections"""
+
+    top: openmc.ZPlane
+    bottom: openmc.ZPlane
+    cylinder: openmc.ZCylinder
+
+
+@dataclass
+class SurfaceZones:
+    """Section of CSG model"""
+
+    end: Surface
+    vv: Optional[Surface] = None
+    mani: Optional[Surface] = None
+    bz: Optional[Surface] = None
+    fw: Optional[Surface] = None
+    sf: Optional[Surface] = None
+
+
+@dataclass
+class MeetingPoint:
+    """CSG model for meeting point between inboard and outboard"""
+
+    r_cyl: openmc.ZCylinder
+    cone: openmc.ZCone
+
+
+@dataclass
+class LayerPoints:
+    """Points for each layer of CSG model"""
+
+    bz: np.ndarray
+    mani: np.ndarray
+    vv: np.ndarray
+    end: np.ndarray
+
+
+@dataclass
+class Surfaces:
+    """CGS surfaces"""
+
+    bore: Optional[openmc.ZCylinder] = None
+    div: Optional[DivertorSurface] = None
+    graveyard: Optional[GraveyardSurface] = None
+    inb: Optional[SurfaceZones] = None
+    inb_bot: Optional[openmc.ZPlane] = None
+    inb_top: Optional[openmc.ZPlane] = None
+    meeting: Optional[MeetingPoint] = None
+    outb: Optional[SurfaceZones] = None
+    outer_surface_cyl: Optional[openmc.ZCylinder] = None
+    tf_coil: Optional[openmc.ZCylinder] = None
+
+
+@dataclass
+class PlasmaCells:
+    inner1: openmc.Cell
+    outer1: openmc.Cell
+    inner2: openmc.Cell
+    outer2: openmc.Cell
+
+    def get_cells(self):
+        return self.inner1, self.outer1, self.inner2, self.outer2
+
+
+@dataclass
+class DivertorCells:
+    regions: List[openmc.Cell]
+    fw: openmc.Cell
+    fw_sf: openmc.Cell
+    inner1: openmc.Cell
+    inner2: openmc.Cell
+
+    def get_cells(self):
+        return self.regions, self.fw, self.fw_sf, self.inner1, self.inner2
+
+
+@dataclass
+class LayerCells:
+    bz: Optional[List[openmc.Cell]] = None
+    fw: Optional[List[openmc.Cell]] = None
+    mani: Optional[List[openmc.Cell]] = None
+    sf: Optional[List[openmc.Cell]] = None
+    vv: Optional[List[openmc.Cell]] = None
+
+    def get_cells(self):
+        return _join_lists((a for a in (self.bz, self.fw, self.mani, self.sf, self.vv)))
+
+
+@dataclass
+class Cells:
+    bore: openmc.Cell
+    tf_coil: openmc.Cell
+    outer_vessel: openmc.Cell
+    outer_container: openmc.Cell
+    divertor: DivertorCells
+    plasma: PlasmaCells
+    inboard: LayerCells
+    outboard: LayerCells
+
+    def get_cells(self):
+        d = self.divertor.get_cells()
+        return [
+            self.bore,
+            self.tf_coil,
+            self.outer_vessel,
+            self.outer_container,
+            *d[0],
+            *d[1:],
+            *self.plasma.get_cells(),
+            *self.inboard.get_cells(),
+            *self.outboard.get_cells(),
+        ]
+
+
+def create_layer(
+    short_name: str,
+    short_name_behind: str,
     layer_points: np.ndarray,
-    num_inboard_points: int,
+    num_points: int,
     layer_name: str,
     material_lib: mm.MaterialsLibrary,
+    surfaces: Surfaces,
+    inboard: bool = True,
 ):
-    """Creates a layer of inboard cells for scoring"""
-    cells[prefix_for_layer + "_cells"] = []
-    surfaces[prefix_for_layer + "_surfs"] = {}
-    surfaces[prefix_for_layer + "_surfs"]["cones"] = []  # runs bottom to top
-    surfaces[prefix_for_layer + "_surfs"]["planes"] = []  # runs bottom to top
+    """Creates a layer of cells for scoring"""
+    prefix = "inb" if inboard else "outb"
+    cells = []
 
-    # Generating bottom plane
-    region_bot = openmc.ZPlane(z0=layer_points[-1][2])
-    surfaces[prefix_for_layer + "_surfs"]["planes"].append(region_bot)
+    # Generating bottom plane, runs bottom to top
+    surf = Surface(planes=[openmc.ZPlane(z0=layer_points[-1 if inboard else 0][2])])
+    surface = getattr(surfaces, prefix)
+    b_surf = getattr(surface, short_name_behind)
+    setattr(surface, short_name, surf)
+    sign = -1 if inboard else 1
+    mid_section = 3
 
-    for inb_i in range(1, num_inboard_points):
+    for i in range(1 if inboard else 0, num_points):
         # Making surfaces
-        inb_z0, inb_r2 = get_cone_eqn_from_two_points(
-            layer_points[-inb_i], layer_points[-inb_i - 1]
+
+        surf.cones.append(
+            _create_z_cone(layer_points[sign * i], layer_points[sign * (i + 1)])
         )
+        surf.planes.append(openmc.ZPlane(z0=layer_points[sign * (i + 1)][2]))
 
-        region_cone_surface = openmc.ZCone(x0=0.0, y0=0.0, z0=inb_z0, r2=inb_r2)
-        surfaces[prefix_for_layer + "_surfs"]["cones"].append(region_cone_surface)
-
-        region_top = openmc.ZPlane(z0=layer_points[-inb_i - 1][2])
-        surfaces[prefix_for_layer + "_surfs"]["planes"].append(region_top)
-
-        inb_cell = openmc.Cell(
-            region=-surfaces[prefix_for_layer + "_surfs"]["cones"][-1],
-            fill=getattr(material_lib, prefix_for_layer + "_mat"),
-            name=layer_name + " " + str(inb_i),
+        cell = openmc.Cell(
+            name=f"{layer_name} {i!s}",
+            fill=getattr(material_lib, f"{prefix}_{short_name}_mat"),
+            region=-surf.cones[-1] if inboard else +surf.cones[-1],
         )
 
         # Different top surface for top region
-        if inb_i == (num_inboard_points - 1):  # if top segment
-            inb_cell.region = inb_cell.region & -surfaces["meeting_cone"]
-        else:
-            inb_cell.region = (
-                inb_cell.region & -surfaces[prefix_for_layer + "_surfs"]["planes"][-1]
-            )  # Recently appended top surface
+        # if top segment else Recently appended top surface
+        cell.region &= (
+            (-surfaces.meeting.cone if inboard else +surfaces.meeting.cone)
+            if i == num_points - 1
+            else -surf.planes[-1]
+        )
 
         # Different bottom surface for bottom region
-        if inb_i == 1:  # if bottom segment
-            inb_cell.region = inb_cell.region & +surfaces["divertor_surfs"]["chop_surf"]
-        elif inb_i == 2:
-            inb_cell.region = (
-                inb_cell.region
-                & +surfaces[prefix_for_layer + "_surfs"]["planes"][-2]
-                & +surfaces["divertor_surfs"]["chop_surf"]
-            )
+        if inboard:
+            if i == 1:  # if bottom segment
+                cell.region &= +surfaces.div.chop
+            elif i == 2:  # noqa: PLR2004
+                cell.region &= +surf.planes[-2] & +surfaces.div.chop
+            else:
+                cell.region &= +surf.planes[-2]
         else:
-            inb_cell.region = (
-                inb_cell.region & +surfaces[prefix_for_layer + "_surfs"]["planes"][-2]
-            )
+            cell.region &= +surfaces.div.outer_cone if i == 0 else +surf.planes[-2]
 
         # Adding outside breeder zone surfaces
-        if inb_i == 3:  # Middle section
-            inb_cell.region = (
-                inb_cell.region
-                & +surfaces[prefix_for_layer_behind + "_surfs"]["cones"][inb_i - 2]
-                & +surfaces[prefix_for_layer_behind + "_surfs"]["cones"][inb_i - 1]
-                & +surfaces[prefix_for_layer_behind + "_surfs"]["cones"][inb_i]
-            )
-        elif inb_i < 3:
-            inb_cell.region = (
-                inb_cell.region
-                & +surfaces[prefix_for_layer_behind + "_surfs"]["cones"][inb_i - 1]
-                & +surfaces[prefix_for_layer_behind + "_surfs"]["cones"][inb_i]
-            )
-        elif inb_i > 3:
-            inb_cell.region = (
-                inb_cell.region
-                & +surfaces[prefix_for_layer_behind + "_surfs"]["cones"][inb_i - 2]
-                & +surfaces[prefix_for_layer_behind + "_surfs"]["cones"][inb_i - 1]
+        if inboard:
+            if i == mid_section:  # Middle section
+                cell.region &= (
+                    +b_surf.cones[i - 2] & +b_surf.cones[i - 1] & +b_surf.cones[i]
+                )
+            elif i < mid_section:
+                cell.region &= +b_surf.cones[i - 1] & +b_surf.cones[i]
+            elif i > mid_section:
+                cell.region &= +b_surf.cones[i - 2] & +b_surf.cones[i - 1]
+        else:
+            cell.region &= (
+                -b_surf.cones[i] & -b_surf.cones[i + (1 if i < mid_section else -1)]
             )
 
         # Calculating volume for first wall - not perfect but very close as wall is thin
-        if prefix_for_layer in ["inb_fw", "inb_sf"]:
-            inb_cell.volume = vf.get_fw_vol(
-                surfaces[prefix_for_layer + "_surfs"]["cones"][-1],  # outer_cone
-                surfaces[prefix_for_layer_behind + "_surfs"]["cones"][
-                    inb_i - 1
-                ],  # inner_cone
-                surfaces[prefix_for_layer + "_surfs"]["planes"][-1],  # top
-                surfaces[prefix_for_layer + "_surfs"]["planes"][-2],  # bottom
+        if short_name in ("fw", "sf"):
+            if inboard:
+                inner_cone = b_surf.cones[i - 1]
+                outer_cone = surf.cones[-1]
+            else:
+                inner_cone = surf.cones[-1]
+                outer_cone = b_surf.cones[i]
+            cell.volume = vf.get_fw_vol(
+                outer_cone,
+                inner_cone,
+                surf.planes[-1],  # top
+                surf.planes[-2],  # bottom
             )
 
-        # Appending to cell list
-        cells[prefix_for_layer + "_cells"].append(inb_cell)
+        cells.append(cell)
 
     bluemira_debug(f"Created {layer_name}")
-
-
-def create_outboard_layer(
-    prefix_for_layer: str,
-    prefix_for_layer_behind: str,
-    layer_points: np.ndarray,
-    num_outboard_points: int,
-    layer_name: str,
-    material_lib: mm.MaterialsLibrary,
-):
-    """Creates a layer of outboard cells for scoring"""
-    cells[prefix_for_layer + "_cells"] = []
-    surfaces[prefix_for_layer + "_surfs"] = {}
-    surfaces[prefix_for_layer + "_surfs"]["cones"] = []  # runs bottom to top
-    surfaces[prefix_for_layer + "_surfs"]["planes"] = []  # runs bottom to top
-
-    # Generating bottom plane
-    region_bot = openmc.ZPlane(z0=layer_points[0][2])
-    surfaces[prefix_for_layer + "_surfs"]["planes"].append(region_bot)
-
-    for outb_i in range(num_outboard_points):
-        # Making surfaces
-        outb_z0, outb_r2 = get_cone_eqn_from_two_points(
-            layer_points[outb_i], layer_points[outb_i + 1]
-        )
-
-        region_cone_surface = openmc.ZCone(x0=0.0, y0=0.0, z0=outb_z0, r2=outb_r2)
-        surfaces[prefix_for_layer + "_surfs"]["cones"].append(region_cone_surface)
-
-        region_top = openmc.ZPlane(z0=layer_points[outb_i + 1][2])
-        surfaces[prefix_for_layer + "_surfs"]["planes"].append(region_top)
-
-        # Making cell
-        outb_cell = openmc.Cell(
-            region=+surfaces[prefix_for_layer + "_surfs"]["cones"][-1],
-            fill=getattr(material_lib, prefix_for_layer + "_mat"),
-            name=layer_name + " " + str(outb_i),
-        )
-
-        # Different top surface for top region
-        if outb_i == num_outboard_points - 1:  # if top segment
-            outb_cell.region = outb_cell.region & +surfaces["meeting_cone"]
-        else:
-            outb_cell.region = (
-                outb_cell.region & -surfaces[prefix_for_layer + "_surfs"]["planes"][-1]
-            )  # Recently appended top surface
-
-        # Different bottom surface for bottom region
-        if outb_i == 0:  # if bottom segment
-            outb_cell.region = (
-                outb_cell.region & +surfaces["divertor_surfs"]["outer_cone"]
-            )
-        else:
-            outb_cell.region = (
-                outb_cell.region & +surfaces[prefix_for_layer + "_surfs"]["planes"][-2]
-            )
-
-        # Get outer cone surfaces and add to cell region
-        outer_cone_surf_1 = surfaces[prefix_for_layer_behind + "_surfs"]["cones"][outb_i]
-
-        if outb_i < 3:
-            outer_cone_surf_2 = surfaces[prefix_for_layer_behind + "_surfs"]["cones"][
-                outb_i + 1
-            ]
-        else:
-            outer_cone_surf_2 = surfaces[prefix_for_layer_behind + "_surfs"]["cones"][
-                outb_i - 1
-            ]
-
-        # Completing region
-        outb_cell.region = outb_cell.region & -outer_cone_surf_1 & -outer_cone_surf_2
-
-        cells[prefix_for_layer + "_cells"].append(outb_cell)
-
-        # Calculating volume - not perfect but very close as wall is thin
-        if prefix_for_layer in ["outb_fw", "outb_sf"]:
-            outb_cell.volume = vf.get_fw_vol(
-                surfaces[prefix_for_layer_behind + "_surfs"]["cones"][
-                    outb_i
-                ],  # outer_cone
-                surfaces[prefix_for_layer + "_surfs"]["cones"][-1],  # inner_cone
-                surfaces[prefix_for_layer + "_surfs"]["planes"][-1],  # top
-                surfaces[prefix_for_layer + "_surfs"]["planes"][-2],  # bottom
-            )
-
-    bluemira_debug(f"Created {layer_name}")
+    return cells, surfaces
 
 
 def create_divertor(
@@ -380,267 +434,156 @@ def create_divertor(
     outer_points: np.ndarray,
     inner_points: np.ndarray,
     material_lib: mm.MaterialsLibrary,
+    surfaces,
+    div_clearance=49.0,  # [cm]
+    div_fw_thick=2.5,  # [cm]
+    div_sf_thick=0.01,  # [cm]
 ):
     """Creates the divertors cells
     outer_points gives the bottom of the VV
     """
-    div_fw_thick = 2.5  # [cm] # Divertor first wall thickness
-    div_sf_thick = 0.01  # [cm]
-    div_points_fw_back = offset_points(div_points, div_fw_thick)
-    div_sf_points = offset_points(div_points, -div_sf_thick)
-
-    # Want whichever is lower - 49cm below the divertor fw or the bottom of the vv
-    min_z, dummy1, dummy2 = get_min_max_z_r_of_points(div_points)
-
-    min_z_w_clearance = min_z - div_clearance
-    bot_z = min(min_z_w_clearance, outer_points[0][2])
-
-    surfaces["divertor_bot"] = openmc.ZPlane(
-        z0=bot_z  # Want to finish at bottom of outboard vv
+    # Want whichever is lower - offset below the divertor fw or the bottom of the vv
+    bot_z = min(
+        get_min_max_z_r_of_points(div_points)[0] - div_clearance, outer_points[0][2]
     )
+    ds = surfaces.div
+    # Want to finish at bottom of outboard vv
+    ds.bottom = openmc.ZPlane(z0=bot_z)
+    ds.inner_r = openmc.ZCylinder(r=inner_points[-2][0])
+    ds.r_chop_in = openmc.ZCylinder(r=div_points[1][0])
+    ds.r_chop_out = openmc.ZCylinder(r=div_points[3][0])
+    ds.outer_r = openmc.ZCylinder(r=outer_points[0][0])
 
-    surfaces["divertor_inner_r"] = openmc.ZCylinder(r=inner_points[-2][0])
-    surfaces["divertor_r_chop_in"] = openmc.ZCylinder(r=div_points[1][0])
-    surfaces["divertor_r_chop_out"] = openmc.ZCylinder(r=div_points[3][0])
-    surfaces["divertor_outer_r"] = openmc.ZCylinder(r=outer_points[0][0])
-
-    surfaces["divertor_fw_surfs"] = []
-    surfaces["divertor_fw_back_surfs"] = []
-    surfaces["divertor_scoring_surfs"] = []
-
-    for x in range(len(div_points) - 1):
-        # Divertor surface
-        div_z0, div_r2 = get_cone_eqn_from_two_points(div_points[x], div_points[x + 1])
-
-        div_fw_surface = openmc.ZCone(x0=0.0, y0=0.0, z0=div_z0, r2=div_r2)
-        surfaces["divertor_fw_surfs"].append(div_fw_surface)
-
-        # Divertor back of first wall
-        div_z0, div_r2 = get_cone_eqn_from_two_points(
-            div_points_fw_back[x], div_points_fw_back[x + 1]
+    for name, points in (
+        ("fw", div_points),
+        ("fw_back", offset_points(div_points, div_fw_thick)),
+        ("scoring", offset_points(div_points, -div_sf_thick)),
+    ):
+        setattr(
+            ds,
+            name,
+            [_create_z_cone(points[x], points[x + 1]) for x in range(len(points) - 1)],
         )
 
-        div_fw_surface = openmc.ZCone(x0=0.0, y0=0.0, z0=div_z0, r2=div_r2)
-        surfaces["divertor_fw_back_surfs"].append(div_fw_surface)
-
-        # Scoring surfaces
-        div_z0, div_r2 = get_cone_eqn_from_two_points(
-            div_sf_points[x], div_sf_points[x + 1]
-        )
-
-        div_scoring_surface = openmc.ZCone(x0=0.0, y0=0.0, z0=div_z0, r2=div_r2)
-        surfaces["divertor_scoring_surfs"].append(div_scoring_surface)
-
-    surfaces["div_fw_back_surf_1_mid_z"] = openmc.ZPlane(
-        z0=surfaces["divertor_fw_back_surfs"][1].z0, boundary_type="vacuum"
-    )
+    ds.fw_back_mid_z = openmc.ZPlane(z0=ds.fw_back[1].z0, boundary_type="vacuum")
 
     # Creating divertor regions
+    inner_region = -ds.top & -ds.chop & -ds.r_chop_in
+    mid_region = +ds.r_chop_in & -ds.r_chop_out
+    outer_region = -ds.top & +ds.r_chop_out & -ds.outer_cone
+
     divertor_region_inner = (
-        -surfaces["divertor_surfs"]["top_surface"]
-        & -surfaces["divertor_surfs"]["chop_surf"]
-        & -surfaces["divertor_r_chop_in"]
-        & (
-            -surfaces["divertor_fw_back_surfs"][0]
-            | +surfaces["divertor_fw_back_surfs"][1]
-        )
-        & +surfaces["divertor_inner_r"]
-        & +surfaces["divertor_bot"]
+        inner_region & (-ds.fw_back[0] | +ds.fw_back[1]) & +ds.inner_r & +ds.bottom
     )
-    divertor_region_mid = +surfaces["divertor_r_chop_in"] & -surfaces[
-        "divertor_r_chop_out"
-    ] & +surfaces["divertor_fw_back_surfs"][1] & -surfaces["divertor_fw_back_surfs"][
-        2
-    ] & +surfaces[
-        "divertor_bot"
-    ] | (
-        -surfaces["divertor_fw_back_surfs"][1]
-        & -surfaces["div_fw_back_surf_1_mid_z"]
-        & +surfaces["divertor_r_chop_in"]
-        & -surfaces["divertor_r_chop_out"]
-        & +surfaces["divertor_bot"]
-    )
-    divertor_region_outer = (
-        -surfaces["divertor_surfs"]["top_surface"]
-        & +surfaces["divertor_r_chop_out"]
-        & -surfaces["divertor_surfs"]["outer_cone"]
-        & +surfaces["divertor_fw_back_surfs"][3]
-        & +surfaces["divertor_bot"]
-        & -surfaces["divertor_outer_r"]
-    )
-
     div_fw_region_inner = (
-        -surfaces["divertor_surfs"]["top_surface"]
-        & -surfaces["divertor_surfs"]["chop_surf"]
-        & -surfaces["divertor_r_chop_in"]
-        & -surfaces["divertor_fw_surfs"][0]
-        & +surfaces["divertor_fw_back_surfs"][0]
-        & -surfaces["divertor_fw_back_surfs"][1]
-        & +surfaces["tf_coil_surface"]
+        inner_region & -ds.fw[0] & +ds.fw_back[0] & -ds.fw_back[1] & +surfaces.tf_coil
     )
-    div_fw_region_mid = (
-        +surfaces["divertor_r_chop_in"]
-        & -surfaces["divertor_r_chop_out"]
-        & +surfaces["divertor_fw_surfs"][1]
-        & -surfaces["divertor_fw_surfs"][2]
-        & (
-            -surfaces["divertor_fw_back_surfs"][1]
-            | +surfaces["divertor_fw_back_surfs"][2]
-        )
-    )
-    div_fw_region_outer = (
-        -surfaces["divertor_surfs"]["top_surface"]
-        & +surfaces["divertor_r_chop_out"]
-        & -surfaces["divertor_surfs"]["outer_cone"]
-        & +surfaces["divertor_fw_surfs"][3]
-        & -surfaces["divertor_fw_back_surfs"][3]
-        & +surfaces["divertor_fw_back_surfs"][2]
+    div_sf_region_inner = (
+        inner_region & -ds.scoring[0] & +ds.fw[0] & -ds.fw[1] & +surfaces.tf_coil
     )
 
-    div_sf_region_inner = (
-        -surfaces["divertor_surfs"]["top_surface"]
-        & -surfaces["divertor_surfs"]["chop_surf"]
-        & -surfaces["divertor_r_chop_in"]
-        & -surfaces["divertor_scoring_surfs"][0]
-        & +surfaces["divertor_fw_surfs"][0]
-        & -surfaces["divertor_fw_surfs"][1]
-        & +surfaces["tf_coil_surface"]
+    divertor_region_mid = (mid_region & +ds.fw_back[1] & -ds.fw_back[2] & +ds.bottom) | (
+        -ds.fw_back[1] & -ds.fw_back_mid_z & +ds.r_chop_in & -ds.r_chop_out & +ds.bottom
+    )
+
+    div_fw_region_mid = (
+        mid_region & +ds.fw[1] & -ds.fw[2] & (-ds.fw_back[1] | +ds.fw_back[2])
     )
     div_sf_region_mid = (
-        +surfaces["divertor_r_chop_in"]
-        & -surfaces["divertor_r_chop_out"]
-        & +surfaces["divertor_scoring_surfs"][1]
-        & -surfaces["divertor_scoring_surfs"][2]
-        & (-surfaces["divertor_fw_surfs"][1] | +surfaces["divertor_fw_surfs"][2])
-    )
-    div_sf_region_outer = (
-        -surfaces["divertor_surfs"]["top_surface"]
-        & +surfaces["divertor_r_chop_out"]
-        & -surfaces["divertor_surfs"]["outer_cone"]
-        & +surfaces["divertor_scoring_surfs"][3]
-        & -surfaces["divertor_fw_surfs"][3]
-        & +surfaces["divertor_fw_surfs"][2]
+        mid_region & +ds.scoring[1] & -ds.scoring[2] & (-ds.fw[1] | +ds.fw[2])
     )
 
-    # Making divertor cells
-    div_inb = openmc.Cell(
-        region=divertor_region_inner,
-        name="Divertor Inner",
-        fill=material_lib.divertor_mat,
-    )
-    div_mid = openmc.Cell(
-        region=divertor_region_mid,
-        name="Divertor Mid",
-        fill=material_lib.divertor_mat,
-    )
-    div_out = openmc.Cell(
-        region=divertor_region_outer,
-        name="Divertor Outer",
-        fill=material_lib.divertor_mat,
-    )
-    cells["divertor_cells"] = [div_inb, div_mid, div_out]
+    divertor_region_outer = outer_region & +ds.fw_back[3] & +ds.bottom & -ds.outer_r
+    div_fw_region_outer = outer_region & +ds.fw[3] & -ds.fw_back[3] & +ds.fw_back[2]
+    div_sf_region_outer = outer_region & +ds.scoring[3] & -ds.fw[3] & +ds.fw[2]
 
-    # Making divertor first wall cells
-    cells["divertor_fw"] = openmc.Cell(
-        region=div_fw_region_inner | div_fw_region_mid | div_fw_region_outer,
-        name="Divertor PFC",
-        fill=material_lib.div_fw_mat,
+    cells = DivertorCells(
+        # Making divertor cells
+        [
+            openmc.Cell(
+                name=f"Divertor {name}",
+                fill=material_lib.divertor_mat,
+                region=region,
+            )
+            for name, region in (
+                ("Inner", divertor_region_inner),
+                ("Mid", divertor_region_mid),
+                ("Outer", divertor_region_outer),
+            )
+        ],
+        # Making divertor first wall cells
+        openmc.Cell(
+            name="Divertor PFC",
+            fill=material_lib.div_fw_mat,
+            region=div_fw_region_inner | div_fw_region_mid | div_fw_region_outer,
+        ),
+        # Making divertor first wall surface cells
+        openmc.Cell(
+            name="Divertor PFC Surface",
+            fill=material_lib.div_sf_mat,
+            region=div_sf_region_inner | div_sf_region_mid | div_sf_region_outer,
+        ),
+        # Region inside the divertor first wall, i.e. part of the plasma chamber
+        openmc.Cell(
+            name="Divertor Inner 1",
+            region=(
+                -ds.top
+                & +ds.scoring[0]
+                & -ds.scoring[1]
+                & -ds.scoring[3]
+                & -ds.chop
+                & +ds.bottom
+            ),
+        ),
+        openmc.Cell(
+            name="Divertor Inner 2",
+            region=-ds.top & +ds.scoring[1] & +ds.scoring[2] & -ds.scoring[3],
+        ),
     )
-    cells["divertor_fw"].volume = vf.get_div_fw_vol(
-        [
-            surfaces["divertor_fw_surfs"][0],  # outer_cones
-            surfaces["divertor_fw_back_surfs"][1],
-            surfaces["divertor_fw_surfs"][2],
-            surfaces["divertor_fw_back_surfs"][3],
-        ],
-        [
-            surfaces["divertor_fw_back_surfs"][0],  # inner_cones
-            surfaces["divertor_fw_surfs"][1],
-            surfaces["divertor_fw_back_surfs"][2],
-            surfaces["divertor_fw_surfs"][3],
-        ],
+    cells.fw.volume = vf.get_div_fw_vol(
+        [ds.fw[0], ds.fw_back[1], ds.fw[2], ds.fw_back[3]],  # outer_cones
+        [ds.fw_back[0], ds.fw[1], ds.fw_back[2], ds.fw[3]],  # inner_cones
         list(div_points[:, 0]),  # radii
     )
 
-    # Making divertor first wall surface cells
-    cells["divertor_fw_sf"] = openmc.Cell(
-        region=div_sf_region_inner | div_sf_region_mid | div_sf_region_outer,
-        name="Divertor PFC Surface",
-        fill=material_lib.div_sf_mat,
-    )
-    cells["divertor_fw_sf"].volume = vf.get_div_fw_vol(
-        [
-            surfaces["divertor_scoring_surfs"][0],  # outer_cones
-            surfaces["divertor_fw_surfs"][1],
-            surfaces["divertor_scoring_surfs"][2],
-            surfaces["divertor_fw_surfs"][3],
-        ],
-        [
-            surfaces["divertor_fw_surfs"][0],  # inner_cones
-            surfaces["divertor_scoring_surfs"][1],
-            surfaces["divertor_fw_surfs"][2],
-            surfaces["divertor_scoring_surfs"][3],
-        ],
+    cells.fw_sf.volume = vf.get_div_fw_vol(
+        [ds.scoring[0], ds.fw[1], ds.scoring[2], ds.fw[3]],  # outer_cones
+        [ds.fw[0], ds.scoring[1], ds.fw[2], ds.scoring[3]],  # inner_cones
         list(div_points[:, 0]),  # radii
     )
 
-    # Region inside the divertor first wall, i.e. part of the plasma chamber
-    div_in1_region = (
-        -surfaces["divertor_surfs"]["top_surface"]
-        & +surfaces["divertor_scoring_surfs"][0]
-        & -surfaces["divertor_scoring_surfs"][1]
-        & -surfaces["divertor_scoring_surfs"][3]
-        & -surfaces["divertor_surfs"]["chop_surf"]
-        & +surfaces["divertor_bot"]
-    )
-    div_in2_region = (
-        -surfaces["divertor_surfs"]["top_surface"]
-        & +surfaces["divertor_scoring_surfs"][1]
-        & +surfaces["divertor_scoring_surfs"][2]
-        & -surfaces["divertor_scoring_surfs"][3]
-    )
-
-    cells["divertor_inner1"] = openmc.Cell(
-        region=div_in1_region, name="Divertor Inner 1"
-    )
-    cells["divertor_inner2"] = openmc.Cell(
-        region=div_in2_region, name="Divertor Inner 2"
-    )
+    return cells, surfaces
 
 
-def create_plasma_chamber():
+def create_plasma_chamber(surfaces: Surfaces):
     """Creating the cells that live inside the first wall"""
-    cells["plasma_inner1"] = openmc.Cell(
-        region=-surfaces["meeting_r_cyl"] & +surfaces["divertor_surfs"]["top_surface"],
-        name="Plasma inner 1",
+    cells = PlasmaCells(
+        openmc.Cell(
+            name="Plasma inner 1",
+            region=-surfaces.meeting.r_cyl & +surfaces.div.top,
+        ),
+        openmc.Cell(
+            name="Plasma outer 1",
+            region=+surfaces.meeting.r_cyl & +surfaces.div.top,
+        ),
+        openmc.Cell(
+            name="Plasma inner 2",
+            region=-surfaces.meeting.r_cyl & -surfaces.div.top & +surfaces.div.chop,
+        ),
+        openmc.Cell(
+            name="Plasma outer 2",
+            region=+surfaces.meeting.r_cyl & -surfaces.div.top & +surfaces.div.chop,
+        ),
     )
-    for inb_sf_surf in surfaces["inb_sf_surfs"]["cones"]:
-        cells["plasma_inner1"].region = cells["plasma_inner1"].region & +inb_sf_surf
 
-    cells["plasma_inner2"] = openmc.Cell(
-        region=-surfaces["meeting_r_cyl"]
-        & -surfaces["divertor_surfs"]["top_surface"]
-        & +surfaces["divertor_surfs"]["chop_surf"],
-        name="Plasma inner 2",
-    )
-    for inb_sf_surf in surfaces["inb_sf_surfs"]["cones"]:
-        cells["plasma_inner2"].region = cells["plasma_inner2"].region & +inb_sf_surf
+    for inb_sf_surf in surfaces.inb.sf.cones:
+        cells.inner1.region &= +inb_sf_surf
+        cells.inner2.region &= +inb_sf_surf
 
-    cells["plasma_outer1"] = openmc.Cell(
-        region=+surfaces["meeting_r_cyl"] & +surfaces["divertor_surfs"]["top_surface"],
-        name="Plasma outer 1",
-    )
-    for outb_sf_surf in surfaces["outb_sf_surfs"]["cones"]:
-        cells["plasma_outer1"].region = cells["plasma_outer1"].region & -outb_sf_surf
-
-    cells["plasma_outer2"] = openmc.Cell(
-        region=+surfaces["meeting_r_cyl"]
-        & -surfaces["divertor_surfs"]["top_surface"]
-        & +surfaces["divertor_surfs"]["chop_surf"],
-        name="Plasma outer 2",
-    )
-    for outb_sf_surf in surfaces["outb_sf_surfs"]["cones"]:
-        cells["plasma_outer2"].region = cells["plasma_outer2"].region & -outb_sf_surf
+    for outb_sf_surf in surfaces.outb.sf.cones:
+        cells.outer1.region &= -outb_sf_surf
+        cells.outer2.region &= -outb_sf_surf
+    return cells
 
 
 def make_geometry(
@@ -649,28 +592,22 @@ def make_geometry(
     div_points: np.ndarray,
     num_inboard_points: int,
     material_lib: mm.MaterialsLibrary,
-) -> Tuple[Dict[str, Union[List[openmc.Cell], openmc.Cell]], openmc.Universe]:
+    *,
+    fw_surf_score_depth: float = 0.0001,
+    div_clearance: float = 49.0,  # [cm]
+    clearance_r: float = 50.0,  # [cm]
+    container_steel_thick: float = 200.0,  # [cm]
+    clear_div_to_shell=5.0,  # [cm]
+    div_fw_thick=2.5,  # [cm] # Divertor first wall thickness
+    div_sf_thick=0.01,  # [cm]
+) -> Tuple[Cells, openmc.Universe]:
     """
-    Create a dictionary of cells
+    Creates an OpenMC CSG geometry for a reactor
 
     Parameters
     ----------
-    tokamak_geometry: TokamakGeometry
-        TokamakGeometry (child of dataclass) instance containing the attributes:
-            elong
-            inb_bz_thick
-            inb_fw_thick
-            inb_gap
-            inb_mnfld_thick
-            inb_vv_thick
-            major_r
-            minor_r
-            outb_bz_thick
-            outb_fw_thick
-            outb_mnfld_thick
-            outb_vv_thick
-            tf_thick
-        which are all either floats in cm, or dimensionless.
+    tokamak_geometry:
+        data all either floats in cm, or dimensionless.
     fw_points:
         coordinates of sample points representing the blanket, where
         blanket = first wall MINUS divertor
@@ -679,15 +616,12 @@ def make_geometry(
         coordinates of sample points representing the divertor
     num_inboard_points:
         number of points in fw points that represents the number of inboard points.
-    material_lib: dict
+    material_lib:
         dictionary of materials {name:openmc.Material} used to create cells.
+    fw_surf_score_depth:
+        This is a thin geometry layer to score peak surface values
     """
-    # Creates an OpenMC CSG geometry for an EU Demo reactor
-    # minor_r = tokamak_geometry.cgs.minor_r
-    # major_r = tokamak_geometry.cgs.major_r
-    # elong = tokamak_geometry.cgs.elong
-    # inner_plasma_r = major_r - minor_r
-    # outer_plasma_r = major_r + minor_r
+    surfaces = Surfaces()
 
     inb_fw_thick = tokamak_geometry.cgs.inb_fw_thick
     inb_bz_thick = tokamak_geometry.cgs.inb_bz_thick
@@ -700,357 +634,196 @@ def make_geometry(
     outb_mnfld_thick = tokamak_geometry.cgs.outb_mnfld_thick
     outb_vv_thick = tokamak_geometry.cgs.outb_vv_thick
 
-    # This is a thin geometry layer to score peak surface values
-    fw_surf_score_depth = 0.01  # [cm]
-
     # Of the points in fw_points, this specifies the number that define the outboard
     num_outboard_points = len(fw_points) - num_inboard_points
 
     bluemira_print(
-        f"OpenMC geometry\nNumber of inboard points {num_inboard_points}\nNumber of outboard points {num_outboard_points}"
+        f"OpenMC geometry\nNumber of inboard points {num_inboard_points}\n"
+        f"Number of outboard points {num_outboard_points}"
     )
 
-    #########################################
     # Inboard surfaces behind breeder zone
-    #########################################
-
     # Getting layer points
-    outb_bz_points = offset_points(fw_points, outb_fw_thick)
-    outb_mani_points = offset_points(fw_points, outb_fw_thick + outb_bz_thick)
-    outb_vv_points = offset_points(
-        fw_points, outb_fw_thick + outb_bz_thick + outb_mnfld_thick
+    outb_points = LayerPoints(
+        bz=offset_points(fw_points, outb_fw_thick),
+        mani=offset_points(fw_points, outb_fw_thick + outb_bz_thick),
+        vv=offset_points(fw_points, outb_fw_thick + outb_bz_thick + outb_mnfld_thick),
+        end=offset_points(
+            fw_points, outb_fw_thick + outb_bz_thick + outb_mnfld_thick + outb_vv_thick
+        ),
     )
-    outer_points = offset_points(
-        fw_points, outb_fw_thick + outb_bz_thick + outb_mnfld_thick + outb_vv_thick
-    )
-
-    inb_bz_points = offset_points(fw_points, inb_fw_thick)
-    inb_mani_points = offset_points(fw_points, inb_fw_thick + inb_bz_thick)
-    inb_vv_points = offset_points(
-        fw_points, inb_fw_thick + inb_bz_thick + inb_mnfld_thick
-    )
-    inner_points = offset_points(
-        fw_points, inb_fw_thick + inb_bz_thick + inb_mnfld_thick + inb_vv_thick
+    inb_points = LayerPoints(
+        bz=offset_points(fw_points, inb_fw_thick),
+        mani=offset_points(fw_points, inb_fw_thick + inb_bz_thick),
+        vv=offset_points(fw_points, inb_fw_thick + inb_bz_thick + inb_mnfld_thick),
+        end=offset_points(
+            fw_points, inb_fw_thick + inb_bz_thick + inb_mnfld_thick + inb_vv_thick
+        ),
     )
 
     # Getting surface scoring points
-    sf_points = offset_points(fw_points, -fw_surf_score_depth)
+    sf_points = offset_points(fw_points, -raw_uc(fw_surf_score_depth, "m", "cm"))
 
     # Getting tf coil r surfaces
-    back_of_inb_vv_r = get_min_r_of_points(inner_points)
-    gap_between_vv_tf = tokamak_geometry.cgs.inb_gap
+    back_of_inb_vv_r = get_min_r_of_points(inb_points.end)
+    gap_vv_tf = tokamak_geometry.cgs.inb_gap
 
-    surfaces["bore_surface"] = openmc.ZCylinder(
-        r=back_of_inb_vv_r - gap_between_vv_tf - tf_thick
-    )
-    surfaces["tf_coil_surface"] = openmc.ZCylinder(
-        r=back_of_inb_vv_r - gap_between_vv_tf
-    )
+    surfaces.bore = openmc.ZCylinder(r=back_of_inb_vv_r - gap_vv_tf - tf_thick)
+    surfaces.tf_coil = openmc.ZCylinder(r=back_of_inb_vv_r - gap_vv_tf)
 
     # Getting tf coil top and bottom surfaces
     div_points_w_clearance = copy.deepcopy(div_points)
     div_points_w_clearance[:, 2] -= div_clearance
 
-    dummy, max_z, max_r = get_min_max_z_r_of_points(
-        np.concatenate((outer_points, inner_points[-num_inboard_points:]), axis=0)
+    _, max_z, max_r = get_min_max_z_r_of_points(
+        np.concatenate((outb_points.end, inb_points.end[-num_inboard_points:]), axis=0)
     )
-    min_z, dummy1, dummy2 = get_min_max_z_r_of_points(
-        np.concatenate((outer_points, div_points_w_clearance), axis=0)
+    min_z, _, _ = get_min_max_z_r_of_points(
+        np.concatenate((outb_points.end, div_points_w_clearance), axis=0)
     )
 
     # Setting clearance between the top of the divertor and the container shell
-    clearance = 5.0  # [cm]
-
-    surfaces["inb_top"] = openmc.ZPlane(z0=max_z + clearance, boundary_type="vacuum")
-    surfaces["inb_bot"] = openmc.ZPlane(z0=min_z - clearance, boundary_type="vacuum")
+    surfaces.inb_top = openmc.ZPlane(
+        z0=max_z + clear_div_to_shell, boundary_type="vacuum"
+    )
+    surfaces.inb_bot = openmc.ZPlane(
+        z0=min_z - clear_div_to_shell, boundary_type="vacuum"
+    )
 
     # Making rough divertor surfaces
-    div_z0, div_r2 = get_cone_eqn_from_two_points(fw_points[0], fw_points[-1])
-
-    surfaces["divertor_surfs"] = {}
-    surfaces["divertor_surfs"]["top_surface"] = openmc.ZCone(
-        x0=0.0, y0=0.0, z0=div_z0, r2=div_r2
-    )
-    surfaces["divertor_surfs"]["chop_surf"] = openmc.ZPlane(
-        z0=max(fw_points[0][2], fw_points[-1][2])
+    surfaces.div = DivertorSurface(
+        top=_create_z_cone(fw_points[0], fw_points[-1]),
+        chop=openmc.ZPlane(z0=max(fw_points[0][2], fw_points[-1][2])),
+        outer_cone=_create_z_cone(outb_points.end[0], fw_points[0]),
     )
 
-    div_o_z0, div_o_r2 = get_cone_eqn_from_two_points(outer_points[0], fw_points[0])
-
-    surfaces["divertor_surfs"]["outer_cone"] = openmc.ZCone(
-        x0=0.0, y0=0.0, z0=div_o_z0, r2=div_o_r2
+    # Making vv, manifold, breeder zone, and first wall
+    surfaces.meeting = MeetingPoint(
+        openmc.ZCylinder(r=fw_points[-num_inboard_points][0]),
+        _create_z_cone(
+            fw_points[-num_inboard_points], inb_points.vv[-num_inboard_points]
+        ),
     )
 
-    #############################################################
-    #############################################################
-    # Making inboard vv, manifold, breeder zone, and first wall
-    #############################################################
-    #############################################################
-
-    # Meeting point between inboard and outboard
-    surfaces["meeting_r_cyl"] = openmc.ZCylinder(r=fw_points[-num_inboard_points][0])
-
-    # Meeting cone at top between inboard and outboard
-    z0, r2 = get_cone_eqn_from_two_points(
-        fw_points[-num_inboard_points], inb_vv_points[-num_inboard_points]
-    )
-    surfaces["meeting_cone"] = openmc.ZCone(x0=0.0, y0=0.0, z0=z0, r2=r2)
-
-    # Generating inboard cone surfaces (back of vv)
-    surfaces["inner_surfs"] = {}
-    surfaces["inner_surfs"]["cones"] = []  # runs bottom to top
-
-    for inb_i in range(1, num_inboard_points):
-        inb_z0, inb_r2 = get_cone_eqn_from_two_points(
-            inner_points[-inb_i], inner_points[-inb_i - 1]
+    # Generating inboard cone surfaces (back of vv), runs bottom to top
+    cell_layers = {}
+    for (sign, start), num_points, (i_o, i_o_short, flag), points in zip(
+        ((-1, 1), (1, 0)),
+        (num_inboard_points, num_outboard_points),
+        (("Inboard", "inb", True), ("Outboard", "outb", False)),
+        (inb_points, outb_points),
+    ):
+        setattr(
+            surfaces,
+            i_o_short,
+            SurfaceZones(
+                Surface(
+                    cones=[
+                        _create_z_cone(points.end[sign * i], points.end[sign * (i + 1)])
+                        for i in range(start, num_points)
+                    ]
+                )
+            ),
         )
+        cell_layers[i_o.lower()] = LayerCells()
+        for name, lyr, lyr_b, pnts in (
+            ("VV", "vv", "end", points.vv),
+            ("Manifold", "mani", "vv", points.mani),
+            ("BZ", "bz", "mani", points.bz),
+            ("FW", "fw", "bz", fw_points),
+            ("FW Surface", "sf", "fw", sf_points),
+        ):
+            layer_cell, surfaces = create_layer(
+                lyr,
+                lyr_b,
+                pnts,
+                num_points,
+                f"{i_o} {name}",
+                material_lib,
+                surfaces,
+                inboard=flag,
+            )
+            setattr(cell_layers[i_o.lower()], lyr, layer_cell)
 
-        cone_surface = openmc.ZCone(x0=0.0, y0=0.0, z0=inb_z0, r2=inb_r2)
-        surfaces["inner_surfs"]["cones"].append(cone_surface)
-
-    ##################################
-    # Making inboard vacuum vessel
-
-    create_inboard_layer(
-        "inb_vv", "inner", inb_vv_points, num_inboard_points, "Inboard VV", material_lib
-    )
-
-    ##################################
-    # Making inboard manifold
-
-    create_inboard_layer(
-        "inb_mani",
-        "inb_vv",
-        inb_mani_points,
-        num_inboard_points,
-        "Inboard Manifold",
-        material_lib,
-    )
-
-    ##################################
-    # Making inboard breeder zone
-
-    create_inboard_layer(
-        "inb_bz",
-        "inb_mani",
-        inb_bz_points,
-        num_inboard_points,
-        "Inboard BZ",
-        material_lib,
-    )
-
-    ##################################
-    # Making inboard first wall
-
-    create_inboard_layer(
-        "inb_fw", "inb_bz", fw_points, num_inboard_points, "Inboard FW", material_lib
-    )
-
-    ##################################
-    # Making inboard scoring pionts
-
-    create_inboard_layer(
-        "inb_sf",
-        "inb_fw",
-        sf_points,
-        num_inboard_points,
-        "Inboard FW Surface",
-        material_lib,
-    )
-
-    ##############################################################
-    ##############################################################
-    # Making outboard vv, manifold, breeder zone, and first wall
-    ##############################################################
-    ##############################################################
-
-    # Generating outboard cone surfaces (back of vv)
-    surfaces["outer_surfs"] = {}
-    surfaces["outer_surfs"]["cones"] = []  # runs bottom to top
-
-    for outb_i in range(num_outboard_points):
-        outb_z0, outb_r2 = get_cone_eqn_from_two_points(
-            outer_points[outb_i], outer_points[outb_i + 1]
-        )
-
-        cone_surface = openmc.ZCone(x0=0.0, y0=0.0, z0=outb_z0, r2=outb_r2)
-        surfaces["outer_surfs"]["cones"].append(cone_surface)
-
-    ##################################
-    # Making outboard vv
-
-    create_outboard_layer(
-        "outb_vv",
-        "outer",
-        outb_vv_points,
-        num_outboard_points,
-        "Outboard VV",
-        material_lib,
-    )
-
-    ##################################
-    # Making outboard manifold
-
-    create_outboard_layer(
-        "outb_mani",
-        "outb_vv",
-        outb_mani_points,
-        num_outboard_points,
-        "Outboard Manifold",
-        material_lib,
-    )
-
-    ##################################
-    # Making outboard breeder zone
-
-    create_outboard_layer(
-        "outb_bz",
-        "outb_mani",
-        outb_bz_points,
-        num_outboard_points,
-        "Outboard BZ",
-        material_lib,
-    )
-
-    ##################################
-    # Making outboard first wall
-
-    create_outboard_layer(
-        "outb_fw", "outb_bz", fw_points, num_outboard_points, "Outboard FW", material_lib
-    )
-
-    #######################################
-    # Making outboard first wall surface
-
-    create_outboard_layer(
-        "outb_sf",
-        "outb_fw",
-        sf_points,
-        num_outboard_points,
-        "Outboard FW Surface",
-        material_lib,
-    )
-
-    ######################
     # Outboard surfaces
-    ######################
-
     # Currently it is not possible to tally on boundary_type='vacuum' surfaces
-    clearance_r = 50.0  # [cm]
-    surfaces["outer_surface_cyl"] = openmc.ZCylinder(r=max_r + clearance_r)
-
-    container_steel_thick = 200.0  # [cm]
-    surfaces["graveyard_top"] = openmc.ZPlane(z0=max_z + container_steel_thick)
-    surfaces["graveyard_bot"] = openmc.ZPlane(z0=min_z - container_steel_thick)
-    surfaces["graveyard_cyl"] = openmc.ZCylinder(
-        r=max_r + clearance_r + container_steel_thick, boundary_type="vacuum"
+    surfaces.outer_surface_cyl = openmc.ZCylinder(r=max_r + clearance_r)
+    surfaces.graveyard = GraveyardSurface(
+        openmc.ZPlane(z0=max_z + container_steel_thick),
+        openmc.ZPlane(z0=min_z - container_steel_thick),
+        openmc.ZCylinder(
+            r=max_r + clearance_r + container_steel_thick, boundary_type="vacuum"
+        ),
     )
-
-    ######################
-    # Cells
-    ######################
 
     # Inboard cells
-    cells["bore_cell"] = openmc.Cell(
-        region=-surfaces["bore_surface"] & -surfaces["inb_top"] & +surfaces["inb_bot"],
+    bore = openmc.Cell(
         name="Inner bore",
+        region=-surfaces.bore & -surfaces.inb_top & +surfaces.inb_bot,
     )
-    cells["tf_coil_cell"] = openmc.Cell(
-        region=-surfaces["tf_coil_surface"]
-        & +surfaces["bore_surface"]
-        & -surfaces["inb_top"]
-        & +surfaces["inb_bot"],
+    tf_coil = openmc.Cell(
         name="TF Coils",
         fill=material_lib.tf_coil_mat,
+        region=-surfaces.tf_coil
+        & +surfaces.bore
+        & -surfaces.inb_top
+        & +surfaces.inb_bot,
     )
 
-    # Divertor
-    create_divertor(div_points, outer_points, inner_points, material_lib)
+    # Divertor cells
+    divertor, surfaces = create_divertor(
+        div_points,
+        outb_points.end,
+        inb_points.end,
+        material_lib,
+        surfaces,
+        div_clearance,
+        div_fw_thick,
+        div_sf_thick,
+    )
 
     # Plasma chamber
-    create_plasma_chamber()
+    plasma = create_plasma_chamber(surfaces)
 
     # Container cells
-    cells["outer_vessel_cell"] = openmc.Cell(
-        region=-surfaces["outer_surface_cyl"]
-        & -surfaces["inb_top"]
-        & +surfaces["inb_bot"]
-        & +surfaces["tf_coil_surface"]
-        & ~cells["plasma_inner1"].region
-        & ~cells["plasma_inner2"].region
-        & ~cells["plasma_outer1"].region
-        & ~cells["plasma_outer2"].region
-        & ~cells["divertor_inner1"].region
-        & ~cells["divertor_inner2"].region
-        & ~cells["divertor_fw"].region
-        & ~cells["divertor_fw_sf"].region,
+    outer_vessel = openmc.Cell(
         name="Outer VV Container",
+        region=-surfaces.outer_surface_cyl
+        & -surfaces.inb_top
+        & +surfaces.inb_bot
+        & +surfaces.tf_coil,
     )
 
     for cell in (
-        cells["inb_sf_cells"]
-        + cells["inb_fw_cells"]
-        + cells["inb_bz_cells"]
-        + cells["inb_mani_cells"]
-        + cells["inb_vv_cells"]
-        + cells["outb_sf_cells"]
-        + cells["outb_fw_cells"]
-        + cells["outb_bz_cells"]
-        + cells["outb_mani_cells"]
-        + cells["outb_vv_cells"]
-        + cells["divertor_cells"]
+        *plasma.get_cells(),
+        *divertor.get_cells()[1:],
+        *cell_layers["inboard"].get_cells(),
+        *cell_layers["outboard"].get_cells(),
+        *divertor.regions,
     ):
-        cells["outer_vessel_cell"].region = (
-            cells["outer_vessel_cell"].region & ~cell.region
-        )
+        outer_vessel.region &= ~cell.region
 
-    inner_container_region = (
-        -surfaces["outer_surface_cyl"] & -surfaces["inb_top"] & +surfaces["inb_bot"]
-    )
-
-    cells["outer_container"] = openmc.Cell(
-        region=~inner_container_region
-        & -surfaces["graveyard_cyl"]
-        & -surfaces["graveyard_top"]
-        & +surfaces["graveyard_bot"],
+    outer_container = openmc.Cell(
         name="Container steel",
         fill=material_lib.container_mat,
+        region=~(-surfaces.outer_surface_cyl & -surfaces.inb_top & +surfaces.inb_bot)
+        & -surfaces.graveyard.cylinder
+        & -surfaces.graveyard.top
+        & +surfaces.graveyard.bottom,
+    )
+    cells = Cells(
+        bore=bore,
+        tf_coil=tf_coil,
+        outer_vessel=outer_vessel,
+        outer_container=outer_container,
+        divertor=divertor,
+        plasma=plasma,
+        inboard=cell_layers["inboard"],
+        outboard=cell_layers["outboard"],
     )
 
-    #################################################
-    # Creating Universe
-    #################################################
-
-    # Note that the order in the universe list doesn't define the order in the output,
-    # which is instead defined by the order in which each cell variable is created
-    universe = openmc.Universe(
-        cells=[
-            cells["bore_cell"],  # Cell
-            cells["tf_coil_cell"],  # Cell
-            cells["plasma_inner1"],  # Cell
-            cells["plasma_inner2"],  # Cell
-            cells["plasma_outer1"],  # Cell
-            cells["plasma_outer2"],  # Cell
-            cells["divertor_inner1"],  # Cell
-            cells["divertor_inner2"],  # Cell
-            cells["divertor_fw"],  # Cell
-            cells["divertor_fw_sf"],  # Cell
-            cells["outer_vessel_cell"],  # Cell
-            cells["outer_container"],  # Cell
-        ]
-        + cells["inb_sf_cells"]  # Cells
-        + cells["inb_fw_cells"]  # Cells
-        + cells["inb_bz_cells"]  # Cells
-        + cells["inb_mani_cells"]  # Cells
-        + cells["inb_vv_cells"]  # Cells
-        + cells["outb_sf_cells"]  # Cells
-        + cells["outb_fw_cells"]  # Cells
-        + cells["outb_bz_cells"]  # Cells
-        + cells["outb_mani_cells"]  # Cells
-        + cells["outb_vv_cells"]  # Cells
-        + cells["divertor_cells"]  # Cells
-    )
-
+    # Create universe
+    universe = openmc.Universe(cells=cells.get_cells())
     geometry = openmc.Geometry(universe)
     geometry.export_to_xml()
 
@@ -1076,20 +849,25 @@ def load_fw_points(
 
     Parameters
     ----------
-    tokamak_geometry: TokamakGeometry
-    blanket_wire: BluemiraWire
-    divertor_wire: BluemiraWire
-    new_major_radius: major radius of the actual device, in SI units.
-        The geometry variables specificed by tokamak_geometry will then
-        be rescaled by new_major_radius to get the final shape.
-    new_aspect_ratio: aspect ratio of the reactor
+    tokamak_geometry:
+    blanket_wire:
+    divertor_wire:
+    major_radius:
+        major radius of the actual device.
+        The geometry variables specified by
+        tokamak_geometry will then be modified by major_radius
+    aspect_ratio:
+        aspect ratio of the reactor
 
     Returns
     -------
-    new_downsampled_fw: points belonging to the first wall
-    new_downsampled_div: points belonging to the divertor
-    num_inboard_points: Number of points in new_downsampled_fw
-                        that belongs to the inboard section.
+    new_downsampled_fw:
+        points belonging to the first wall
+    new_downsampled_div:
+        points belonging to the divertor
+    num_inboard_points:
+        Number of points in new_downsampled_fw
+        that belongs to the inboard section.
 
     Dataflow diagram for this function
     ----------------------------------
@@ -1138,9 +916,6 @@ def load_fw_points(
         """
         ds_ibf[-5][0] = ds_ibf[-5][0] - 25.0  # [cm]
         return ds_ibf
-
-    # </magic numbers and magic function>
-    # we will get rid of this whole function later on anyways.
 
     # select the part of the outline facing the plasma
     inner_blanket_face = full_blanket_2d_outline[52:-2]
@@ -1193,7 +968,7 @@ def load_fw_points(
             ax.scatter_cm(full_blanket_2d_outline[:, 0], full_blanket_2d_outline[:, 2])
 
         with present.PoloidalXSPlot(
-            "all_points_before_after.svg", "Points sampled for making the MCNP model"
+            "all_points_before_after.svg", "Points sampled for making the OpenMC model"
         ) as ax:
             ax.plot_cm(old_points[:, 0], old_points[:, 2], label="Initial fw points")
             ax.plot_cm(new_points[:, 0], new_points[:, 2], label="Adjusted fw points")

@@ -66,8 +66,8 @@ def get_div_fw_section_vol(outer_cone, inner_cone, outer_r, inner_r):
     z2b = outer_cone.z0 + outer_r / outer_cone.r2**0.5
 
     # Select correct roots
-    z1 = z1a if z1a < 0.0 and ((z1a > z1b) or z1b > 0.0) else z1b
-    z2 = z2a if z2a < 0.0 and ((z2a > z2b) or z2b > 0.0) else z2b
+    z1 = z1a if z1a < 0 and ((z1a > z1b) or z1b > 0) else z1b
+    z2 = z2a if z2a < 0 and ((z2a > z2b) or z2b > 0) else z2b
 
     top_z = max(z1, z2)
     bottom_z = min(z1, z2)

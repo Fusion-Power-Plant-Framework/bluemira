@@ -19,24 +19,20 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Functions for creating the openmc tallies."""
-import itertools
 from operator import itemgetter
 from typing import Dict, List, Tuple, Union
 
 import numpy as np
 import openmc
+from bluemira.neutronics.make_geometry import Cells, _join_lists
 
-import bluemira.neutronics.make_materials as mm
+from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.base.constants import raw_uc
 
 
-def _join_lists(lists):
-    return list(itertools.chain(*[a if isinstance(a, list) else [a] for a in lists]))
-
-
 def filter_cells(
-    cells_and_cell_lists: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
-    material_lib: mm.MaterialsLibrary,
+    cells: Cells,
+    material_lib: MaterialsLibrary,
     src_rate: float,
 ) -> Tuple[
     openmc.CellFilter,
@@ -61,28 +57,6 @@ def filter_cells(
     src_rate:
         number of neutrons produced by the source (plasma) per second.
     """
-    # sf = surface
-    cell_lists = (
-        "tf_coil_cell",
-        "plasma_inner1",
-        "plasma_inner2",
-        "plasma_outer1",
-        "plasma_outer2",
-        "divertor_fw",
-        "divertor_fw_sf",
-        "inb_vv_cells",
-        "inb_mani_cells",
-        "inb_bz_cells",
-        "inb_fw_cells",
-        "inb_sf_cells",
-        "outb_vv_cells",
-        "outb_mani_cells",
-        "outb_bz_cells",
-        "outb_fw_cells",
-        "outb_sf_cells",
-        "divertor_cells",
-    )
-
     mats = (
         "inb_fw_mat",
         "outb_fw_mat",
@@ -99,23 +73,30 @@ def filter_cells(
         "outb_sf_mat",
         "div_sf_mat",
     )
-    fw_surface = (
-        "inb_sf_cells",
-        "outb_sf_cells",
-        "divertor_fw_sf",
-        "inb_fw_cells",
-        "outb_fw_cells",
-        "divertor_fw",
-    )
 
     cell_filter = openmc.CellFilter(
-        _join_lists(itemgetter(*cell_lists)(cells_and_cell_lists))
+        (
+            cells.tf_coil,
+            *cells.plasma.get_cells(),
+            cells.divertor.fw,
+            cells.divertor.fw_sf,
+            *cells.inboard.get_cells(),
+            *cells.outboard.get_cells(),
+            *cells.divertor.regions,
+        )
     )
 
     mat_filter = openmc.MaterialFilter([getattr(material_lib, mat) for mat in mats])
 
     fw_surf_filter = openmc.CellFilter(
-        _join_lists(itemgetter(*fw_surface)(cells_and_cell_lists))
+        (
+            *cells.inboard.sf,
+            *cells.outboard.sf,
+            cells.divertor.fw_sf,
+            *cells.inboard.fw,
+            *cells.outboard.fw,
+            cells.divertor.fw,
+        )
     )
 
     neutron_filter = openmc.ParticleFilter(["neutron"])
@@ -217,13 +198,11 @@ def _create_tallies_from_filters(
 
 
 def create_tallies(
-    cells_and_cell_lists: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
-    material_lib: mm.MaterialsLibrary,
+    cells: Cells,
+    material_lib: MaterialsLibrary,
     src_rate: float,  # [1/s]
 ) -> None:
     """First create the filters (list of cells to be tallied),
     then create create the tallies from those filters.
     """
-    _create_tallies_from_filters(
-        *filter_cells(cells_and_cell_lists, material_lib, src_rate)
-    )
+    _create_tallies_from_filters(*filter_cells(cells, material_lib, src_rate))

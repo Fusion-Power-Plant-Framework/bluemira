@@ -41,7 +41,9 @@ from bluemira.neutronics.params import (
     BreederTypeParameters,
     OpenMCSimulationRuntimeParameters,
     TokamakGeometry,
+    TokamakGeometryCGS,
     TokamakOperationParameters,
+    TokamakOperationParametersCGS,
 )
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
@@ -79,36 +81,35 @@ def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
 
 def setup_openmc(
     plasma_source: openmc.Source,
-    runtime_variables: OpenMCSimulationRuntimeParameters,
+    variables: OpenMCSimulationRuntimeParameters,
 ) -> None:
     """Configure openmc.Settings, so that it's ready for the run() step.
-    Assumptions
-    -----------
-    We run the simulation with the assumption that temperature = 293K,
-    as the nuclear cross-section values are evaluated at this temperature
 
-    Parameters (all of which are arguments parsed to openmc.Settings)
+    Parameters
     ----------
     plasma_source: openmc.Source
         Openmc.Source used to emulate the neutron emission of the plasma.
 
-    Returns
-    -------
+    Notes
+    -----
     Exports the settings to an xml file.
+
+    We run the simulation with the assumption that temperature = 293K,
+    as the nuclear cross-section values are evaluated at this temperature
     """
-    config["cross_sections"] = runtime_variables.cross_section_xml
+    config["cross_sections"] = variables.cross_section_xml
     settings = openmc.Settings()
     settings.source = plasma_source
-    settings.particles = runtime_variables.particles
-    settings.batches = runtime_variables.batches
-    settings.photon_transport = runtime_variables.photon_transport
-    settings.electron_treatment = runtime_variables.electron_treatment
+    settings.particles = variables.particles
+    settings.batches = variables.batches
+    settings.photon_transport = variables.photon_transport
+    settings.electron_treatment = variables.electron_treatment
     settings.run_mode = (
-        runtime_variables.run_mode
-        if isinstance(run_mode, str)
-        else runtime_variables.run_mode.value
+        variables.run_mode
+        if isinstance(variables.run_mode, str)
+        else variables.run_mode.value
     )
-    settings.output = {"summary": runtime_variables.openmc_write_summary}
+    settings.output = {"summary": variables.openmc_write_summary}
     settings.export_to_xml()
 
 
@@ -166,21 +167,21 @@ class TBRHeatingSimulation:
 
         Parameters
         ----------
-        blanket_wire: BluemiraWire
+        blanket_wire:
             units: [m]
-        divertor_wire: BluemiraWire
+        divertor_wire:
             units: [m]
-        new_major_radius: float
+        new_major_radius:
             (new) major radius in SI units,
                 separate to the one provided in TokamakGeometry
             unit: [m]
-        new_aspect_ratio: float
+        new_aspect_ratio:
             scalar denoting the aspect ratio of the device (major/minor radius)
             unit: [dimensionless]
-        new_elong: float
+        new_elong:
             (new) elongation variable, separate to the one provided in TokamakGeometry
             unit: [dimensionless]
-        plot_geometry: bool, default=True
+        plot_geometry:
             Should openmc plot the .png files or not.
         """
         material_lib = create_and_export_materials(self.breeder_materials)
@@ -192,7 +193,7 @@ class TBRHeatingSimulation:
                 major_r=self.tokamak_geometry.cgs.major_r,
                 minor_r=self.tokamak_geometry.cgs.minor_r,
                 elongation=self.tokamak_geometry.cgs.elong,
-                triang=self.tokamak_geometry.cgs.triang,
+                triangulation=self.tokamak_geometry.cgs.triang,
                 # plasma geometry
                 peaking_factor=self.operation_variable.plasma_physics_units.peaking_factor,
                 temperature=self.operation_variable.plasma_physics_units.temperature,
@@ -233,12 +234,9 @@ class TBRHeatingSimulation:
     @staticmethod
     def run(*args, output=False, **kwargs) -> None:
         """Run the actual openmc simulation."""
-        _timing(
-            openmc.run,
-            "Executed in",
-            "Running OpenMC",
-            debug_info_str=False,
-        )(*args, output=output, **kwargs)
+        _timing(openmc.run, "Executed in", "Running OpenMC", debug_info_str=False)(
+            *args, output=output, **kwargs
+        )
 
     def get_result(self) -> present.OpenMCResult:
         """
@@ -253,7 +251,7 @@ class TBRHeatingSimulation:
             raise RuntimeError(
                 "The self.universe variable must first be populated by self.run()!"
             )
-        return present.OpenMCResult(self.universe, self.src_rate)
+        return present.OpenMCResult.from_run(self.universe, self.src_rate)
 
     def calculate_volume_stochastically(self):
         """

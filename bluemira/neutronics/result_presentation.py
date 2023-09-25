@@ -21,6 +21,7 @@
 """Functions to present the results prettily
 (Including both printed/logged texts and images)
 """
+from dataclasses import dataclass
 from typing import Dict, List, Union
 
 import matplotlib.pyplot as plt
@@ -106,6 +107,7 @@ class PoloidalXSPlot:
         plt.close()
 
 
+@dataclass
 class OpenMCResult:
     """
     Class that looks opens up the openmc universe from the statepoint file,
@@ -113,55 +115,68 @@ class OpenMCResult:
         can be generated and reformatted by its methods.
     """
 
-    def __init__(
-        self,
+    tbr: float
+    tbr_err: float
+    heating: Dict
+    neutron_wall_load: Dict
+    """Neutron wall load (eV)"""
+
+    photon_heat_flux: Dict
+    """Photon heat flux"""
+
+    universe: openmc.Universe
+    src_rate: float
+    statepoint: openmc.StatePoint
+    statepoint_file: str
+    cell_names: Dict
+    cell_vols: Dict
+    mat_names: Dict
+
+    @classmethod
+    def from_run(
+        cls,
         universe: openmc.Universe,
         src_rate: float,
         statepoint_file: str = "statepoint.2.h5",
     ):
-        self.universe = universe
-        self.src_rate = src_rate
-        self.statepoint_file = statepoint_file
         # Create cell and material name dictionaries to allow easy mapping to dataframe
-        self.cell_names = {}
-        self.mat_names = {}
-        for cell_id, _cell in self.universe.cells.items():
-            self.cell_names[cell_id] = _cell.name
+        cell_names = {}
+        mat_names = {}
+        for cell_id, _cell in universe.cells.items():
+            cell_names[cell_id] = _cell.name
             if _cell.fill is not None:  # if this cell is not a void
-                self.mat_names[_cell.fill.id] = _cell.fill.name
+                mat_names[_cell.fill.id] = _cell.fill.name
 
         # Creating cell volume dictionary to allow easy mapping to dataframe
-        self.cell_vols = {}
-        for cell_id in self.universe.cells:
-            self.cell_vols[cell_id] = self.universe.cells[cell_id].volume
+        cell_vols = {}
+        for cell_id in universe.cells:
+            cell_vols[cell_id] = universe.cells[cell_id].volume
         # Loads up the output file from the simulation
-        self.statepoint = openmc.StatePoint(self.statepoint_file)
+        statepoint = openmc.StatePoint(statepoint_file)
+        tbr, tbr_err = cls._load_tbr(statepoint)
 
-    @property
-    def tbr(self):
-        """TBR"""
-        self._load_tbr()
-        return self._tbr, self._tbr_e
+        return cls(
+            universe=universe,
+            src_rate=src_rate,
+            statepoint_file=statepoint_file,
+            statepoint=statepoint,
+            cell_names=cell_names,
+            cell_vols=cell_vols,
+            mat_names=mat_names,
+            tbr=tbr,
+            tbr_err=tbr_err,
+            heating=cls._load_heating(statepoint, mat_names),
+            neutron_wall_load=cls._load_neutron_wall_loading(
+                statepoint, cell_names, cell_vols, src_rate
+            ),
+            photon_heat_flux=cls._load_photon_heat_flux(
+                statepoint, cell_names, cell_vols
+            ),
+        )
 
-    @property
-    def heating(self):
-        """Heating"""
-        self._load_heating()
-        return self._heating_df
-
-    @property
-    def neutron_wall_load(self):
-        """Neutron wall load (eV)"""
-        self._load_neutron_wall_loading()
-        return self._neutron_wall_load
-
-    @property
-    def photon_heat_flux(self):
-        self._load_photon_heat_flux()
-        return self._photon_heat_flux
-
-    def _load_dataframe_from_statepoint(self, tally_name: str):
-        return self.statepoint.get_tally(name=tally_name).get_pandas_dataframe()
+    @staticmethod
+    def _load_dataframe_from_statepoint(statepoint, tally_name: str):
+        return statepoint.get_tally(name=tally_name).get_pandas_dataframe()
 
     @staticmethod
     def _convert_dict_contents(dataset: Dict[str, Dict[int, List[Union[str, float]]]]):
@@ -170,17 +185,18 @@ class OpenMCResult:
             dataset[k] = vals if isinstance(vals[0], str) else np.array(vals)
         return dataset
 
-    def _load_tbr(self):
+    @classmethod
+    def _load_tbr(cls, statepoint):
         """Load the TBR value and uncertainty."""
-        self.tbr_df = self._load_dataframe_from_statepoint("TBR")
-        self._tbr = self.tbr_df["mean"].sum()
-        self._tbr_e = self.tbr_df["std. dev."].sum()
+        tbr_df = cls._load_dataframe_from_statepoint(statepoint, "TBR")
+        return tbr_df["mean"].sum(), tbr_df["std. dev."].sum()
 
-    def _load_heating(self):
+    @classmethod
+    def _load_heating(cls, statepoint, mat_names):
         """Load the heating (sorted by material) dataframe"""
-        heating_df = self._load_dataframe_from_statepoint("MW heating")
+        heating_df = cls._load_dataframe_from_statepoint(statepoint, "MW heating")
         # additional columns
-        heating_df["material_name"] = heating_df["material"].map(self.mat_names)
+        heating_df["material_name"] = heating_df["material"].map(mat_names)
         heating_df["%err."] = heating_df.apply(get_percent_err, axis=1)
         # DataFrame columns rearrangement
         # rearrange dataframe into this desired order
@@ -198,26 +214,29 @@ class OpenMCResult:
         hdf = heating_df.to_dict()
         hdf["mean"] = raw_uc(heating_df["mean"].to_numpy(), "MW", "W")
         hdf["std. dev."] = raw_uc(heating_df["std. dev."].to_numpy(), "MW", "W")
-        self._heating_df = self._convert_dict_contents(hdf)
+        return cls._convert_dict_contents(hdf)
 
-    def _load_neutron_wall_loading(self):
+    @classmethod
+    def _load_neutron_wall_loading(cls, statepoint, cell_names, cell_vols, src_rate):
         """Load the neutron wall load dataframe"""
         dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
-        n_wl_df = self._load_dataframe_from_statepoint("neutron wall load")
+        n_wl_df = cls._load_dataframe_from_statepoint(statepoint, "neutron wall load")
         # additional columns
-        n_wl_df["cell_name"] = n_wl_df["cell"].map(self.cell_names)
-        n_wl_df["vol(cc)"] = n_wl_df["cell"].map(self.cell_vols)
+        n_wl_df["cell_name"] = n_wl_df["cell"].map(cell_names)
+        n_wl_df["vol (m^3)"] = raw_uc(
+            n_wl_df["cell"].map(cell_vols).to_numpy(), "cm^3", "m^3"
+        )
         n_wl_df["dpa/fpy"] = (
             n_wl_df["mean"]
             * dfa_coefs.displacements_per_damage_eV
-            / (n_wl_df["vol(cc)"] * dfa_coefs.atoms_per_cc)
+            / (n_wl_df["vol (m^3)"] * raw_uc(dfa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"))
             / S_TO_YR
-            * self.src_rate
+            * src_rate
         )
         n_wl_df["%err."] = n_wl_df.apply(get_percent_err, axis=1)
         n_wl_df = n_wl_df.drop(
             n_wl_df[~n_wl_df["cell_name"].str.contains("Surface")].index
-        )  # ~ invert operator = doesnt contain
+        )
         # DataFrame columns rearrangement
         n_wl_df = n_wl_df.reindex([12, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11])
         n_wl_df = n_wl_df[
@@ -227,7 +246,7 @@ class OpenMCResult:
                 "particle",
                 "nuclide",
                 "score",
-                "vol(cc)",
+                "vol (m^3)",
                 "mean",  # 'mean' units are eV per source particle
                 "std. dev.",
                 "dpa/fpy",
@@ -235,39 +254,40 @@ class OpenMCResult:
             ]
         ]
 
-        self._neutron_wall_load = self._convert_dict_contents(n_wl_df.to_dict())
+        return cls._convert_dict_contents(n_wl_df.to_dict())
 
-    def _load_photon_heat_flux(self):
+    @classmethod
+    def _load_photon_heat_flux(cls, statepoint, cell_names, cell_vols):
         """Load the photon heaat flux dataframe"""
-        p_hf_df = self._load_dataframe_from_statepoint("photon heat flux")
+        p_hf_df = cls._load_dataframe_from_statepoint(statepoint, "photon heat flux")
         # additional columns
-        p_hf_df["cell_name"] = p_hf_df["cell"].map(self.cell_names)
-        p_hf_df["vol(cc)"] = p_hf_df["cell"].map(self.cell_vols)
-        p_hf_df["MW_m-2"] = raw_uc(
-            (p_hf_df["mean"] / p_hf_df["vol(cc)"]).to_numpy(), "1/cm^2", "1/m^2"
+        p_hf_df["cell_name"] = p_hf_df["cell"].map(cell_names)
+        p_hf_df["vol (m^3)"] = raw_uc(
+            p_hf_df["cell"].map(cell_vols).to_numpy(), "cm^3", "m^3"
+        )
+        p_hf_df["W_m-2"] = raw_uc(
+            (p_hf_df["mean"] / p_hf_df["vol (m^3)"]).to_numpy(), "MW/cm^2", "W/m^2"
         )
         p_hf_df["%err."] = p_hf_df.apply(get_percent_err, axis=1)
         # Scaling first wall results by factor to surface results
         surface_total = p_hf_df.loc[
-            p_hf_df["cell_name"].str.contains("FW Surface"), "MW_m-2"
+            p_hf_df["cell_name"].str.contains("FW Surface"), "W_m-2"
         ].sum()
         cell_total = p_hf_df.loc[
-            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"), "MW_m-2"
-        ].sum()  # ~ invert operator = doesnt contain
+            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"), "W_m-2"
+        ].sum()
         _surface_factor = surface_total / cell_total
-        p_hf_df["MW_m-2"] = np.where(
+        p_hf_df["W_m-2"] = np.where(
             ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
-            p_hf_df["MW_m-2"] * _surface_factor,
-            p_hf_df["MW_m-2"],
+            p_hf_df["W_m-2"] * _surface_factor,
+            p_hf_df["W_m-2"],
         )
         # DataFrame columns rearrangement
         p_hf_df = p_hf_df.drop(
             p_hf_df[p_hf_df["cell_name"].str.contains("FW Surface")].index
         )
         p_hf_df = p_hf_df.drop(p_hf_df[p_hf_df["cell_name"] == "Divertor PFC"].index)
-        p_hf_df = p_hf_df.replace(
-            "FW", "FW Surface", regex=True
-        )  # df.replace('Py','Python with ', regex=True)
+        p_hf_df = p_hf_df.replace("FW", "FW Surface", regex=True)
         p_hf_df = p_hf_df[
             [
                 "cell",
@@ -275,22 +295,20 @@ class OpenMCResult:
                 "particle",
                 "nuclide",
                 "score",
-                "vol(cc)",
+                "vol (m^3)",
                 "mean",  # 'mean' units are MW cm
                 "std. dev.",
-                "MW_m-2",
+                "W_m-2",
                 "%err.",
             ]
         ]
-
-        self._photon_heat_flux = self._convert_dict_contents(p_hf_df.to_dict())
+        return cls._convert_dict_contents(p_hf_df.to_dict())
 
     def __str__(self):
         """String representation"""
-        tbr, err = self.tbr
-        ret_str = f"TBR\n{tbr:.3f}±{err:.3f}"
+        ret_str = f"TBR\n{self.tbr:.3f}±{self.tbr_err:.3f}"
         for title, data in zip(
-            ("Heating (W)", "Neutron Wall Load (eV)", "Photon Heat Flux MW m-2"),
+            ("Heating (W)", "Neutron Wall Load (eV)", "Photon Heat Flux (W m-2)"),
             (
                 self.heating,
                 self.neutron_wall_load,
@@ -317,7 +335,7 @@ class OpenMCResult:
 
 
 def geometry_plotter(
-    cells_and_cell_lists: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
+    cells: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
     tokamak_geometry: TokamakGeometry,
 ) -> None:
     """
@@ -325,7 +343,7 @@ def geometry_plotter(
 
     Parameters
     ----------
-    cells_and_cell_lists:
+    cells:
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
     tokamak_geometry: TokamakGeometry
@@ -338,53 +356,51 @@ def geometry_plotter(
     """
     # Assigning colours for plots
     cell_color_assignment = {
-        cells_and_cell_lists["tf_coil_cell"]: "brown",
-        cells_and_cell_lists["plasma_inner1"]: "dimgrey",
-        cells_and_cell_lists["plasma_inner2"]: "grey",
-        cells_and_cell_lists["plasma_outer1"]: "darkgrey",
-        cells_and_cell_lists["plasma_outer2"]: "dimgrey",
-        cells_and_cell_lists["divertor_inner1"]: "grey",
-        cells_and_cell_lists["divertor_inner2"]: "dimgrey",
-        cells_and_cell_lists["outer_vessel_cell"]: "white",
-        cells_and_cell_lists["inb_vv_cells"][0]: "red",
-        cells_and_cell_lists["outb_vv_cells"][1]: "orange",
-        cells_and_cell_lists["outb_vv_cells"][2]: "yellow",
+        cells.tf_coil: "brown",
+        cells.plasma.inner1: "dimgrey",
+        cells.plasma.inner2: "grey",
+        cells.plasma.outer1: "darkgrey",
+        cells.plasma.outer2: "dimgrey",
+        cells.divertor.inner1: "grey",
+        cells.divertor.inner2: "dimgrey",
+        cells.outer_vessel: "white",
+        cells.inboard.vv[0]: "red",
+        cells.outboard.vv[1]: "orange",
+        cells.outboard.vv[2]: "yellow",
     }
 
     mat_color_assignment = {
-        cells_and_cell_lists["bore_cell"]: "blue",
-        cells_and_cell_lists["tf_coil_cell"]: "brown",
-        cells_and_cell_lists["plasma_inner1"]: "white",
-        cells_and_cell_lists["plasma_inner2"]: "white",
-        cells_and_cell_lists["plasma_outer1"]: "white",
-        cells_and_cell_lists["plasma_outer2"]: "white",
-        cells_and_cell_lists["divertor_inner1"]: "white",
-        cells_and_cell_lists["divertor_inner2"]: "white",
-        cells_and_cell_lists["divertor_fw"]: "red",
-        cells_and_cell_lists["outer_vessel_cell"]: "white",
-        cells_and_cell_lists["outer_container"]: "darkgrey",
+        cells.bore: "blue",
+        cells.tf_coil: "brown",
+        cells.plasma.inner1: "white",
+        cells.plasma.inner2: "white",
+        cells.plasma.outer1: "white",
+        cells.plasma.outer2: "white",
+        cells.divertor.inner1: "white",
+        cells.divertor.inner2: "white",
+        cells.divertor.fw: "red",
+        cells.outer_vessel: "white",
+        cells.outer_container: "darkgrey",
     }
 
-    def color_cells(prefixed_cell_type, color):
-        for i in range(len(cells_and_cell_lists[prefixed_cell_type + "_cells"])):
-            mat_color_assignment[
-                cells_and_cell_lists[prefixed_cell_type + "_cells"][i]
-            ] = color
+    def color_cells(cell, ctype, color):
+        for c in getattr(getattr(cells, cell), ctype):
+            mat_color_assignment[c] = color
 
     # first wall: red
-    color_cells("outb_fw", "red")
-    color_cells("inb_fw", "red")
+    color_cells("outboard", "fw", "red")
+    color_cells("inboard", "fw", "red")
     # breeding zone: yellow
-    color_cells("outb_bz", "yellow")
-    color_cells("inb_bz", "yellow")
+    color_cells("outboard", "bz", "yellow")
+    color_cells("inboard", "bz", "yellow")
     # manifold: green
-    color_cells("outb_mani", "green")
-    color_cells("inb_mani", "green")
+    color_cells("outboard", "mani", "green")
+    color_cells("inboard", "mani", "green")
     # vacuum vessel: grey
-    color_cells("outb_vv", "grey")
-    color_cells("inb_vv", "grey")
+    color_cells("outboard", "vv", "grey")
+    color_cells("inboard", "vv", "grey")
     # divertor: cyan
-    color_cells("divertor", "cyan")
+    color_cells("divertor", "regions", "cyan")
 
     plot_width = 2 * (
         tokamak_geometry.cgs.major_r
@@ -397,7 +413,7 @@ def geometry_plotter(
     )
 
     plot_list = []
-    for _, basis in enumerate(["xz", "xy", "yz"]):
+    for _, basis in enumerate(("xz", "xy", "yz")):
         plot = openmc.Plot()
         plot.basis = basis
         plot.pixels = [400, 400]
