@@ -79,7 +79,7 @@ def make_collapsable(md_lines: List[str], summary: str) -> List[str]:
     """Surround the given lines in html to make them collapsable."""
     lines = [
         "<details>\n",
-        f"{' '*INDENT_SIZE}<summary>{summary}</summary>\n",
+        f"{' ' * INDENT_SIZE}<summary>{summary}</summary>\n",
     ]
     lines.extend(md_lines)
     lines.append("\n</details>")

@@ -87,7 +87,7 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
         bounds=([-2, -2], [3, 3]),
     )
     t2 = time.time()
-    print(f"{algorithm}: {result}, time={t2-t1:.3f} seconds")
+    print(f"{algorithm}: {result}, time={t2 - t1:.3f} seconds")
 
 # %% [markdown]
 # They all get pretty close to the optimum here.
@@ -162,7 +162,7 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
         ],
     )
     t2 = time.time()
-    print(f"{algorithm}: {result}, time={t2-t1:.3f} seconds")
+    print(f"{algorithm}: {result}, time={t2 - t1:.3f} seconds")
 
 # %% [markdown]
 # SLSQP and COBYLA do fine here, because there is only one minimum and it is a problem

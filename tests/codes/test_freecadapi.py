@@ -364,7 +364,7 @@ class TestCADFiletype:
     )
     def test_exporter_function_exists_and_creates_a_file(self, name, tmp_path):
         filetype = cadapi.CADFileType[name]
-        filename = f"{tmp_path/'tst'}.{filetype.value}"
+        filename = f"{tmp_path / 'tst'}.{filetype.value}"
         if name != "FREECAD":  # custom function in this case
             assert filetype.exporter.__name__ == "export"
 

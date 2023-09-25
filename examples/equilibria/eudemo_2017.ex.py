@@ -207,7 +207,7 @@ bd_opt_problem = BreakdownCOP(
 
 coilset = bd_opt_problem.optimise(x0=max_currents).coilset
 
-bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi*2*np.pi:.2f} V.s")
+bluemira_print(f"Breakdown psi: {breakdown.breakdown_psi * 2 * np.pi:.2f} V.s")
 # %% [markdown]
 #
 # Calculate SOF and EOF plasma boundary fluxes

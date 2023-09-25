@@ -89,7 +89,7 @@ def make_solenoid(
             dx=tk_cs - tk_inscas,
             dz=dz_coil,
             ctype="CS",
-            name=f"CS_{i+1}",
+            name=f"CS_{i + 1}",
         )
 
     if z_max < z_min:
@@ -219,7 +219,7 @@ def make_coilset(
             z,
             current=0,
             ctype="PF",
-            name=f"PF_{i+1}",
+            name=f"PF_{i + 1}",
             j_max=PF_jmax,
             b_max=PF_bmax,
         )
@@ -280,7 +280,7 @@ def make_reference_coilset(
             z,
             current=0,
             ctype="PF",
-            name=f"PF_{i+1}",
+            name=f"PF_{i + 1}",
             j_max=100.0e6,
         )
         pf_coils.append(coil)

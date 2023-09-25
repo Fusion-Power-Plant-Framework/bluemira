@@ -130,7 +130,7 @@ class ColorPalette:
                 else:
                     if col != "  ":
                         string += (
-                            f'<rect x="{x*s}" y="{y*s}"'
+                            f'<rect x="{x * s}" y="{y * s}"'
                             f' width="{s}" height="{s}" style="fill:{col};'
                             'stroke-width:2;stroke:rgb(255,255,255)"/>'
                         )
@@ -142,7 +142,7 @@ class ColorPalette:
         hex_str = self._hex_horizontal()
         m = len(hex_str) if any(isinstance(h, list) for h in hex_str) else 1
         colours = html_str(hex_str)
-        return f'<svg  width="{(len(self))* s}" height="{m * s}">{colours}</svg>'
+        return f'<svg  width="{(len(self)) * s}" height="{m * s}">{colours}</svg>'
 
     def _repr_colour_str(self, _hex: Union[List[str], List[List[str]]]) -> str:
         """Create colourful representation in terminal"""
@@ -201,7 +201,7 @@ def background_colour_string(hexstring: str, sqlen=2) -> str:
     return (
         f"\033[48:2::{int(hexstring[:a], 16)}:"
         f"{int(hexstring[a:b], 16)}:"
-        f"{int(hexstring[b:c], 16)}m{' '*sqlen}\033[49m"
+        f"{int(hexstring[b:c], 16)}m{' ' * sqlen}\033[49m"
     )
 
 

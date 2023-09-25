@@ -676,7 +676,7 @@ class BreakdownPlotter(Plotter):
         )
 
         if self.psi_bd is not None:
-            self.ax.set_title("$\\psi_{b}$ = " + f"{2*np.pi*self.psi_bd:.2f} V.s")
+            self.ax.set_title("$\\psi_{b}$ = " + f"{2 * np.pi * self.psi_bd:.2f} V.s")
 
 
 class XZLPlotter(Plotter):

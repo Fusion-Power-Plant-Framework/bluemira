@@ -306,7 +306,7 @@ class LifeCycle:
                 "reactor lifetime\n"
                 f"Actual: {actual_life:.2f}\n"
                 f"Planned: {life:.2f}\n"
-                f"% diff: {100*delt:.4f}\n"
+                f"% diff: {100 * delt:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
             self.__init__(
@@ -322,7 +322,7 @@ class LifeCycle:
                 "specified tolerance\n"
                 f"Actual: {actual_lf:.4f}\n"
                 f"Planned: {self.params.A_global:.4f}\n"
-                f"% diff: {100*delta2:.4f}\n"
+                f"% diff: {100 * delta2:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
             self.__init__(

@@ -45,6 +45,7 @@ from bluemira.utilities.tools import json_writer
 if TYPE_CHECKING:
     from bluemira.geometry.plane import BluemiraPlane
 
+
 DIM = 3
 # =============================================================================
 # Pre-processing utilities

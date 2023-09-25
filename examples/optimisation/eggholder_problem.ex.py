@@ -92,7 +92,7 @@ for algorithm in ["SLSQP", "COBYLA", "ISRES"]:
     )
     results[algorithm] = result
     t2 = time.time()
-    print(f"{algorithm}: {result}, time={t2-t1:.3f} seconds")
+    print(f"{algorithm}: {result}, time={t2 - t1:.3f} seconds")
 
 # %% [markdown]
 # SLSQP and COBYLA are local optimisation algorithms, and converge rapidly on a local
