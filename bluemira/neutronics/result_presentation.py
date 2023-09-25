@@ -139,6 +139,7 @@ class OpenMCResult:
         src_rate: float,
         statepoint_file: str = "statepoint.2.h5",
     ):
+        """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
         cell_names = {}
         mat_names = {}

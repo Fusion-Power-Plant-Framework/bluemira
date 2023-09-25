@@ -126,6 +126,7 @@ class TokamakOperationParametersPPS(TokamakOperationParameters):
 
     @classmethod
     def from_si(cls, op_params: TokamakOperationParameters):
+        """Convert from si units dataclass"""
         conversion = {
             "reactor_power": ("W", "MW"),
             "temperature": ("K", "keV"),
@@ -204,6 +205,7 @@ class TokamakGeometryCGS(TokamakGeometry):
 
     @classmethod
     def from_si(cls, tokamak_geometry: TokamakGeometry):
+        """Convert from si units dataclass"""
         tg = asdict(tokamak_geometry)
         tgcgs = tg.copy()
         for k, v in tgcgs.items():

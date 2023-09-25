@@ -135,14 +135,14 @@ def filter_cells(
 
 
 def _create_tallies_from_filters(
-    cell_filter: openmc.CellFilter,
+    cell_filter: openmc.CellFilter,  # noqa: ARG001
     mat_filter: openmc.MaterialFilter,
     fw_surf_filter: openmc.CellFilter,
     neutron_filter: openmc.ParticleFilter,
     photon_filter: openmc.ParticleFilter,
     MW_mult_filter: openmc.EnergyFunctionFilter,
     energy_mult_filter: openmc.EnergyFunctionFilter,
-    cyl_mesh_filter: openmc.MeshFilter,
+    cyl_mesh_filter: openmc.MeshFilter,  # noqa: ARG001
 ) -> None:
     """
     Produces tallies for OpenMC scoring.
