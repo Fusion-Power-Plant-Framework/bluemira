@@ -28,6 +28,7 @@ from operator import itemgetter
 from typing import (
     TYPE_CHECKING,
     Any,
+    ClassVar,
     Dict,
     Generator,
     Iterable,
@@ -223,6 +224,8 @@ class ParameterFrame:
             try:
                 param_data = data.pop(member)
             except KeyError as e:
+                if cls.__dataclass_fields__[member].type == ClassVar:
+                    continue
                 raise ValueError(f"Data for parameter '{member}' not found.") from e
 
             kwargs[member] = cls._member_data_to_parameter(
@@ -326,6 +329,8 @@ class ParameterFrame:
         """Serialize this ParameterFrame to a dictionary."""
         out = {}
         for param_name in self.__dataclass_fields__:
+            if self.__dataclass_fields__[param_name].type == ClassVar:
+                continue
             param_data = getattr(self, param_name).to_dict()
             # We already have the name of the param, and use it as a
             # key. No need to repeat the name in the data, so pop it.
