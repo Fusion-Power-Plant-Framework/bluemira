@@ -32,7 +32,7 @@ def test_benchmark():
     """
     Verification test.
 
-    Benchmarked against cube using trapezoidal current source with 45 deg offset
+    Benchmarked against cube using trapezoidal current source with 45 deg offset.
     """
     # Babic and Aykel example (single trapezoidal prism)
     source = TrapezoidalPrismCurrentSource(

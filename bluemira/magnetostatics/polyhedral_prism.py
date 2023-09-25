@@ -178,13 +178,13 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
             )
         if not (0 <= abs(alpha) < 0.5 * np.pi):
             raise MagnetostaticsError(
-                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside "
-                "bounds of [0, 90°)."
+                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is "
+                "outside bounds of [0, 90°)."
             )
         if not (0 <= abs(beta) < 0.5 * np.pi):
             raise MagnetostaticsError(
-                f"{self.__class__.__name__} instantiation error: {beta=:.3f} is outside "
-                "bounds of [0, 90°)."
+                f"{self.__class__.__name__} instantiation error: {beta=:.3f} is "
+                "outside bounds of [0, 90°)."
             )
 
     def _check_raise_self_intersection(self, length: float, alpha: float, beta: float):
