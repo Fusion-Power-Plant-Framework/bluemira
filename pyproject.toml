@@ -318,6 +318,7 @@ ignore-names = [
     "I_not_dI",
     "*Li*",
     "from_SI",
+    "*MW*"
 ]
 
 [tool.ruff.per-file-ignores]

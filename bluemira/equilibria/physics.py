@@ -228,7 +228,7 @@ def calc_energy(eq: Equilibrium) -> float:
     return volume_integral(Bp**2 * mask, eq.x, eq.dx, eq.dz) / (2 * MU_0)
 
 
-def calc_Li(eq: Equilibrium) -> float:  # noqa: N802
+def calc_Li(eq: Equilibrium) -> float:
     """
     Calculates the internal inductance of the plasma [H]
 
