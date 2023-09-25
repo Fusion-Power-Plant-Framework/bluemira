@@ -86,13 +86,12 @@ def get_div_fw_vol(outer_cones, inner_cones, rs):
     """Calculates the volume for each section of the divertor first wall
     This is only approximate but accurate as long as the first wall is thin
     """
-    volumes = []
-    for i, outer_cone in enumerate(outer_cones):
-        vol = get_div_fw_section_vol(outer_cone, inner_cones[i], rs[i + 1], rs[i])
-
-        volumes.append(vol)
-
-    return sum(volumes)
+    return sum(
+        [
+            get_div_fw_section_vol(outer_cone, inner_cones[i], rs[i + 1], rs[i])
+            for i, outer_cone in enumerate(outer_cones)
+        ]
+    )
 
 
 def stochastic_volume_calculation(
@@ -105,11 +104,11 @@ def stochastic_volume_calculation(
 
     Parameters
     ----------
-    tokamak_geometry: TokamakGeometry
-    cells_and_cell_lists: dict
-        dictionary where each item is either a single openmc.Cell,
-            or a list of openmc.Cell.
-    particles: int
+    tokamak_geometry:
+        Tokamak geometry object
+    cells:
+        Cells object
+    particles:
         how many randomly generated particle to use
         for the stochastic volume calculation.
     """
