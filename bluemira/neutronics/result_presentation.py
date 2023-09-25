@@ -303,13 +303,16 @@ class OpenMCResult:
                 "%err.",
             ]
         ]
-        return cls._convert_dict_contents(p_hf_df.to_dict())
+        p_hf_dict = p_hf_df.to_dict()
+        p_hf_dict["mean"] = raw_uc(p_hf_df["mean"].to_numpy(), "MW cm", "W m")
+        p_hf_dict["std. dev."] = raw_uc(p_hf_df["std. dev."].to_numpy(), "MW cm", "W m")
+        return cls._convert_dict_contents(p_hf_dict)
 
     def __str__(self):
         """String representation"""
         ret_str = f"TBR\n{self.tbr:.3f}±{self.tbr_err:.3f}"
         for title, data in zip(
-            ("Heating (W)", "Neutron Wall Load (eV)", "Photon Heat Flux (W m-2)"),
+            ("Heating (W)", "Neutron Wall Load (eV)", "Photon Heat Flux (W m)"),
             (
                 self.heating,
                 self.neutron_wall_load,

@@ -336,14 +336,13 @@ class Cells:
 
     def get_cells(self):
         """Get cells from dataclass"""
-        d = self.divertor.get_cells()
         return [
             self.bore,
             self.tf_coil,
             self.outer_vessel,
             self.outer_container,
-            *d[0],
-            *d[1:],
+            *self.divertor.regions,
+            *self.divertor.get_cells()[1:],
             *self.plasma.get_cells(),
             *self.inboard.get_cells(),
             *self.outboard.get_cells(),
