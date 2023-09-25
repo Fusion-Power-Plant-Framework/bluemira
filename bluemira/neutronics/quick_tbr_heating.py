@@ -144,9 +144,11 @@ class TBRHeatingSimulation:
         tokamak_geometry: TokamakGeometry,
     ):
         self.runtime_variables = runtime_variables
-        self.operation_variable = operation_variable
+        self.operation_variable = TokamakOperationParametersCGS.from_si(
+            operation_variable
+        )
         self.breeder_materials = breeder_materials
-        self.tokamak_geometry = tokamak_geometry
+        self.tokamak_geometry = TokamakGeometryCGS.from_si(tokamak_geometry)
 
         self.cells = None
         self.material_lib = None

@@ -22,9 +22,9 @@
 All units used in this file are either [cm] or dimensionless.
 """
 import copy
-from dataclasses import dataclass, field
 import itertools
-from typing import Dict, List, Optional, Tuple
+from dataclasses import dataclass, field
+from typing import List, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -309,7 +309,7 @@ class LayerCells:
     vv: Optional[List[openmc.Cell]] = None
 
     def get_cells(self):
-        return _join_lists((a for a in (self.bz, self.fw, self.mani, self.sf, self.vv)))
+        return _join_lists(a for a in (self.bz, self.fw, self.mani, self.sf, self.vv))
 
 
 @dataclass

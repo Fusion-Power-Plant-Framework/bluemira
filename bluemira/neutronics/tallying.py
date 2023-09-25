@@ -19,15 +19,14 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Functions for creating the openmc tallies."""
-from operator import itemgetter
-from typing import Dict, List, Tuple, Union
+from typing import Tuple
 
 import numpy as np
 import openmc
-from bluemira.neutronics.make_geometry import Cells, _join_lists
 
-from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.base.constants import raw_uc
+from bluemira.neutronics.make_geometry import Cells
+from bluemira.neutronics.make_materials import MaterialsLibrary
 
 
 def filter_cells(
