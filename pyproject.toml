@@ -317,7 +317,6 @@ ignore-names = [
     "*eV",
     "I_not_dI",
     "*Li*",
-    "from_SI",
     "*MW*"
 ]
 
