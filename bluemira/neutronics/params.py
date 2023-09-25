@@ -46,8 +46,8 @@ class OpenMCSimulationRuntimeParameters:
         The way in which OpenMC handles secondary charged particles.
         'thick-target bremsstrahlung' or 'local energy deposition'
         'thick-target bremsstrahlung' accounts for the energy carried away by
-            bremsstrahlung photons and deposited elsewhere, whereas 'local energy
-            deposition' assumes electrons deposit all energies locally.
+        bremsstrahlung photons and deposited elsewhere, whereas 'local energy
+        deposition' assumes electrons deposit all energies locally.
         (the latter is expected to be computationally faster.)
     run_mode:
         see below for details:
@@ -164,7 +164,7 @@ class TokamakGeometry:
     -----
     R = R0 + a cos(θ + δ sin θ)
     https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf
-        page.239 # noqa: W505
+    page.239 # noqa: W505
 
     Other terminologies:
 
@@ -219,10 +219,10 @@ def get_preset_physical_properties(
 ) -> Tuple[BreederTypeParameters, TokamakGeometry]:
     """
     Works as a switch-case for choosing the tokamak geometry
-        and blankets for a given blanket type.
+    and blankets for a given blanket type.
     The allowed list of blanket types are specified in BlanketType.
     Currently, the blanket types with pre-populated data in this function are:
-        {'wcll', 'dcll', 'hcpb'}
+    {'wcll', 'dcll', 'hcpb'}
     """
     if not isinstance(blanket_type, BlanketType):
         blanket_type = BlanketType[blanket_type.lower()]

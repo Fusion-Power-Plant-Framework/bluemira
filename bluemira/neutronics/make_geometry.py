@@ -853,17 +853,20 @@ def load_fw_points(
 ) -> Tuple[npt.NDArray, npt.NDArray, int]:
     """
     Load given first wall points,
-        scale them according to the given major and minor radii,
-        then downsample them so that a simplified geometry can be made.
+    scale them according to the given major and minor radii,
+    then downsample them so that a simplified geometry can be made.
 
     Currently these are full of magic numbers (e.g. manually chosen integer indices)
-        because it was tailored for one specific model.
+    because it was tailored for one specific model.
 
     Parameters
     ----------
     tokamak_geometry:
+        tokamak geometry parameters
     blanket_wire:
+        The blanket wire
     divertor_wire:
+        The divertor wire
     major_radius:
         major radius of the actual device.
         The geometry variables specified by
@@ -881,33 +884,9 @@ def load_fw_points(
         Number of points in new_downsampled_fw
         that belongs to the inboard section.
 
-    Dataflow diagram for this function
-    ----------------------------------
-    full_blanket_2d_outline         divertor_2d_outline
-            ↓                           ↓
-    (select plasma-facing part)         ↓
-            ↓                           ↓
-    inner_blanket_face(ibf)             ↓
-            ↓                           ↓
-    (downsampling)                  (downsampling)
-            ↓                           ↓
-    downsampled_ibf                 divertor_2d_outline
-            ↓                           ↓
-            →           old_points      ←
-                            ↓
-        (expand points outwards using 'shift_cm')
-                            ↓
-                        new_points
-                            ↓
-                    (elongate, stretch)
-                            ↓
-                        new_points
-                        ↓       ↓
-    new_downsampled_fw  ←       →  new_downsampled_div
-
-    Units
+    Notes
     -----
-    All units for the diagram above are in cgs
+    All units are in cgs
     """
     full_blanket_2d_outline = raw_uc(blanket_wire.discretize(100).T, "m", "cm")
     divertor_2d_outline = raw_uc(divertor_wire.discretize(100).T, "m", "cm")

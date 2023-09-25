@@ -57,10 +57,8 @@ def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
     Parameters
     ----------
     tokamak_geometry: TokamakGeometry
-        Only the
-            - tokamak_geometry.cgs.major_r
-            - tokamak_geometry.cgs.shaf_shift
-        variables are used in this function.
+        Only variables are used in this function are
+        tokamak_geometry.cgs.major_r and tokamak_geometry.cgs.shaf_shift
     """
     ring_source = openmc.Source()
     source_radii = openmc.stats.Discrete(
@@ -170,19 +168,19 @@ class TBRHeatingSimulation:
         Parameters
         ----------
         blanket_wire:
-            units: [m]
+            units [m]
         divertor_wire:
-            units: [m]
+            units [m]
         new_major_radius:
             (new) major radius in SI units,
-                separate to the one provided in TokamakGeometry
-            unit: [m]
+            separate to the one provided in TokamakGeometry
+            unit [m]
         new_aspect_ratio:
             scalar denoting the aspect ratio of the device (major/minor radius)
-            unit: [dimensionless]
+            unit [dimensionless]
         new_elong:
             (new) elongation variable, separate to the one provided in TokamakGeometry
-            unit: [dimensionless]
+            unit [dimensionless]
         plot_geometry:
             Should openmc plot the .png files or not.
         """
@@ -243,11 +241,6 @@ class TBRHeatingSimulation:
     def get_result(self) -> present.OpenMCResult:
         """
         Create a summary object, attach it to self, and then return it.
-
-        Parameters
-        ----------
-        print_summary:
-            print the summary to stdout or not.
         """
         if self.universe is None:
             raise RuntimeError(

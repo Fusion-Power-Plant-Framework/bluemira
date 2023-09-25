@@ -1,3 +1,19 @@
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -19,6 +35,11 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Example of how to use the neutronics module"""
+
+# %% [markdown]
+# # Example of how to use the neutronics module
+
+# %%
 from pathlib import Path
 
 import numpy as np
@@ -34,10 +55,12 @@ from bluemira.neutronics.params import (
 )
 from bluemira.neutronics.quick_tbr_heating import TBRHeatingSimulation
 
+# %%
 CROSS_SECTION_XML = str(
     Path("~/Documents/BLUEPRINT/bluemira_openmc_data/cross_sections.xml").expanduser()
 )
 
+# %%
 # set up the variables to be used for the openmc simulation
 # allowed blanket_type so far = {'WCLL', 'DCLL', 'HCPB'}
 breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
@@ -77,6 +100,8 @@ tbr_heat_sim.setup(
     new_elong=1.792,  # [dimensionless]
     plot_geometry=True,
 )
+
+# %%
 tbr_heat_sim.run()
 # get the TBR, component heating, first wall dpa, and photon heat flux
 results = tbr_heat_sim.get_result()

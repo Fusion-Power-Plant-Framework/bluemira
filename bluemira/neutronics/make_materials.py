@@ -61,11 +61,16 @@ class ReactorBaseMaterials:
 
 def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     """Creates openmc material definitions for a dcll blanket.
-    Parameter
-    ---------
+
+    Parameters
+    ----------
+    --_-------
     li_enrich_ao: float
         Enrichment of Li-6 as a percentage
-        (to be parsed as argument to openmc.Material.add_element)
+        to be parsed as argument to openmc.Material.add_element
+
+    Notes
+    -----
     Divertor definition from Neutronic analyses of the preliminary
     design of a DCLL blanket for the EUROfusion DEMO power, 24 March 2016
     Using Eurofer instead of SS316LN
@@ -125,11 +130,15 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
 
 def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     """Creates openmc material definitions for an hcpb blanket.
-    Parameter
-    ---------
-    li_enrich_ao: float
+
+    Parameters
+    ----------
+    li_enrich_ao:
         Enrichment of Li-6 as a percentage
-        (to be parsed as argument to openmc.Material.add_element)
+        to be parsed as argument to openmc.Material.add_element
+
+    Notes
+    -----
     HCPB Design Report, 26/07/2019
     WPBB-DEL-BB-1.2.1-T005-D001
     """
@@ -207,13 +216,17 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
 
 def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     """Creates openmc material definitions for a wcll blanket
-    Parameter
-    ---------
-    li_enrich_ao: float
+
+    Parameters
+    ----------
+    li_enrich_ao:
         Enrichment of Li-6 as a percentage
-        (to be parsed as argument to openmc.Material.add_element)
+        to be parsed as argument to openmc.Material.add_element
+
+    Notes
+    -----
     Ref. D. Nevo and M. Oron-Carl, WCLL Design Report 2018, Eurofusion,
-        WPBB-DEL-BB-3.2.1-T005-D001, June 2019.
+    WPBB-DEL-BB-3.2.1-T005-D001, June 2019.
     """
     _PbLi_mat = md.make_PbLi_mat(li_enrich_ao)
 
@@ -305,7 +318,13 @@ class MaterialsLibrary:
         cls, blanket_type: BlanketType, li_enrich_ao: float
     ) -> MaterialsLibrary:
         """Create Materials Library by specifying just the blanket type
-        li_enrich_ao: PERCENTAGE enrichment of Li6 (float between 0 - 100)
+
+        Parameters
+        ----------
+        blanket_type:
+            the blanket type
+        li_enrich_ao:
+            PERCENTAGE enrichment of Li6 (float between 0 - 100)
         """
         if blanket_type is BlanketType.DCLL:
             base_materials = _make_dcll_mats(li_enrich_ao)

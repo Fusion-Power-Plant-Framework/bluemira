@@ -40,17 +40,19 @@ Fe_density_g_cc = elements.isotope("Fe").density
 class DPACoefficients:
     """
     Get the coefficients required
-        to convert the number of damage into the number of displacements.
+
+    To convert the number of damage into the number of displacements.
     number of atoms in region = avogadro * density * volume / molecular mass
     number of atoms in 1 cc   = avogadro * density          / molecular mass
     dpa_per_second_of_operation = src_rate * displacements / atoms
     dpa_fpy = dpa_per_second_of_operation / S_TO_YEAR
 
-    taken from [1]_.
-    .. [1] Shengli Chena, David Bernard
-       On the calculation of atomic displacements using damage energy
-       Results in Physics 16 (2020) 102835
-       https://doi.org/10.1016/j.rinp.2019.102835
+    Notes
+    -----
+    Shengli Chena, David Bernard
+    On the calculation of atomic displacements using damage energy
+    Results in Physics 16 (2020) 102835
+    https://doi.org/10.1016/j.rinp.2019.102835
     """
 
     def __init__(
