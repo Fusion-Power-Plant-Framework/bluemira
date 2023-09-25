@@ -19,13 +19,17 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Functions related to the calculation of volumes of openmc cells."""
+from __future__ import annotations
+
 from pathlib import Path
-from typing import List, Union
+from typing import TYPE_CHECKING
 
 import openmc
 from numpy import pi
 
-from bluemira.neutronics.params import TokamakGeometry
+if TYPE_CHECKING:
+    from bluemira.neutroncs.make_geometry import Cells
+    from bluemira.neutronics.params import TokamakGeometry
 
 
 def get_vol_of_truncated_cone(cone, top_z, bot_z):
@@ -93,7 +97,7 @@ def get_div_fw_vol(outer_cones, inner_cones, rs):
 
 def stochastic_volume_calculation(
     tokamak_geometry: TokamakGeometry,
-    cells_and_cell_lists: Union[List[openmc.Cell], openmc.Cell],
+    cells: Cells,
     particles: int = int(4e7),
 ) -> None:
     """
@@ -132,9 +136,7 @@ def stochastic_volume_calculation(
     lower_left = (-maxr, -maxr, -maxz)
     upper_right = (maxr, maxr, maxz)
     cell_vol_calc = openmc.VolumeCalculation(
-        cells_and_cell_lists["inb_fw_cells"]
-        + [cells_and_cell_lists["divertor_fw"]]
-        + cells_and_cell_lists["outb_fw_cells"],
+        (*cells.inboard.fw, cells.divertor.fw, *cells.outboard.fw),
         int(particles),
         lower_left,
         upper_right,
