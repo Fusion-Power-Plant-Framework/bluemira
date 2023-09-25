@@ -25,11 +25,9 @@ Utility for sets of coordinates
 from __future__ import annotations
 
 import json
+from itertools import starmap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Union
-
-if TYPE_CHECKING:
-    from bluemira.geometry.plane import BluemiraPlane
 
 import numba as nb
 import numpy as np
@@ -43,6 +41,10 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.constants import CROSS_P_TOL, DOT_P_TOL
 from bluemira.geometry.error import CoordinatesError
 from bluemira.utilities.tools import json_writer
+
+if TYPE_CHECKING:
+    from bluemira.geometry.plane import BluemiraPlane
+
 
 DIM = 3
 # =============================================================================
@@ -550,7 +552,7 @@ def get_centroid_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> List[float]:
             return array[np.argmax(np.abs(array))]
         return array[0]
 
-    return [get_rational(i, c) for i, c in enumerate([cx, cy, cz])]
+    return list(starmap(get_rational, enumerate([cx, cy, cz])))
 
 
 def get_angle_between_points(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> float:
