@@ -20,7 +20,6 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
 TODO:
-[ ]Integration into our logging system (print should go through bluemira_print etc.)
 [ ]Should we rename `quick_tbr_heating.py` to something else?
 ____
 [ ]Tests?

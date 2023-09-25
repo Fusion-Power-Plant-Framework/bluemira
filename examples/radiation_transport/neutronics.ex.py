@@ -48,12 +48,12 @@ from bluemira.base.constants import raw_uc
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import make_polygon
 from bluemira.neutronics.make_materials import BlanketType
+from bluemira.neutronics.neutronics_axisymmetric import TBRHeatingSimulation
 from bluemira.neutronics.params import (
     OpenMCSimulationRuntimeParameters,
     TokamakOperationParameters,
     get_preset_physical_properties,
 )
-from bluemira.neutronics.quick_tbr_heating import TBRHeatingSimulation
 
 # %%
 CROSS_SECTION_XML = str(Path("~/bluemira_openmc_data/cross_sections.xml").expanduser())
