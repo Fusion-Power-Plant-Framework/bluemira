@@ -116,7 +116,12 @@ class TokamakOperationParameters:
 
 
 @dataclass(frozen=True)
-class TokamakOperationParametersCGS(TokamakOperationParameters):
+class TokamakOperationParametersPPS(TokamakOperationParameters):
+    """See TokamakOperationParameters
+
+    Addition of plasma_physics_units converted variables
+    """
+
     plasma_physics_units: TokamakOperationParameters
 
     @classmethod
@@ -190,6 +195,11 @@ class TokamakGeometry:
 
 @dataclass(frozen=True)
 class TokamakGeometryCGS(TokamakGeometry):
+    """See TokamakGeometry
+
+    Addition of cgs converted variables
+    """
+
     cgs: TokamakGeometry
 
     @classmethod

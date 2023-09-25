@@ -279,17 +279,22 @@ class Surfaces:
 
 @dataclass
 class PlasmaCells:
+    """Plasma CSG cells"""
+
     inner1: openmc.Cell
     outer1: openmc.Cell
     inner2: openmc.Cell
     outer2: openmc.Cell
 
     def get_cells(self):
+        """Get cells from dataclass"""
         return self.inner1, self.outer1, self.inner2, self.outer2
 
 
 @dataclass
 class DivertorCells:
+    """Divertor CSG cells"""
+
     regions: List[openmc.Cell]
     fw: openmc.Cell
     fw_sf: openmc.Cell
@@ -297,11 +302,14 @@ class DivertorCells:
     inner2: openmc.Cell
 
     def get_cells(self):
+        """Get cells from dataclass"""
         return self.regions, self.fw, self.fw_sf, self.inner1, self.inner2
 
 
 @dataclass
 class LayerCells:
+    """Reactor layer CSG cells"""
+
     bz: Optional[List[openmc.Cell]] = None
     fw: Optional[List[openmc.Cell]] = None
     mani: Optional[List[openmc.Cell]] = None
@@ -309,11 +317,14 @@ class LayerCells:
     vv: Optional[List[openmc.Cell]] = None
 
     def get_cells(self):
+        """Get cells from dataclass"""
         return _join_lists(a for a in (self.bz, self.fw, self.mani, self.sf, self.vv))
 
 
 @dataclass
 class Cells:
+    """Universe CSG cells"""
+
     bore: openmc.Cell
     tf_coil: openmc.Cell
     outer_vessel: openmc.Cell
@@ -324,6 +335,7 @@ class Cells:
     outboard: LayerCells
 
     def get_cells(self):
+        """Get cells from dataclass"""
         d = self.divertor.get_cells()
         return [
             self.bore,

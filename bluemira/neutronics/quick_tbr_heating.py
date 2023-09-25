@@ -43,7 +43,7 @@ from bluemira.neutronics.params import (
     TokamakGeometry,
     TokamakGeometryCGS,
     TokamakOperationParameters,
-    TokamakOperationParametersCGS,
+    TokamakOperationParametersPPS,
 )
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
@@ -144,7 +144,7 @@ class TBRHeatingSimulation:
         tokamak_geometry: TokamakGeometry,
     ):
         self.runtime_variables = runtime_variables
-        self.operation_variable = TokamakOperationParametersCGS.from_si(
+        self.operation_variable = TokamakOperationParametersPPS.from_si(
             operation_variable
         )
         self.breeder_materials = breeder_materials
