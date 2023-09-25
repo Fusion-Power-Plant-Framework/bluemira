@@ -57,7 +57,7 @@ from bluemira.neutronics.quick_tbr_heating import TBRHeatingSimulation
 
 # %%
 CROSS_SECTION_XML = str(
-    Path("~/Documents/BLUEPRINT/bluemira_openmc_data/cross_sections.xml").expanduser()
+    Path("~/bluemira_openmc_data/cross_sections.xml").expanduser()
 )
 
 # %%
