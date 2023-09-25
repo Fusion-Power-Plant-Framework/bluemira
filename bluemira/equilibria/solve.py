@@ -169,7 +169,7 @@ class DudsonConvergence(ConvergenceCriterion):
         dpsi_rel = dpsi_max / (np.amax(psi) - np.amin(psi))
         if print_status:
             bluemira_print_flush(
-                f"EQUILIBRIA G-S iter {i}: relative delta_psi: {100*dpsi_rel:.2f} %"
+                f"EQUILIBRIA G-S iter {i}: relative delta_psi: {100 * dpsi_rel:.2f} %"
             )
         return self.check_converged(dpsi_rel)
 
@@ -216,7 +216,7 @@ class JrelConvergence(ConvergenceCriterion):
         d_j_rel = d_j_max / (np.amax(j_new) - np.amin(j_new))
         if print_status:
             bluemira_print_flush(
-                f"EQUILIBRIA G-S iter {i}: relative delta_J: {100*d_j_rel:.2f} %"
+                f"EQUILIBRIA G-S iter {i}: relative delta_J: {100 * d_j_rel:.2f} %"
             )
         return self.check_converged(d_j_rel)
 

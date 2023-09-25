@@ -454,7 +454,7 @@ def _reactivity_plasmod(
         return 1e-19 * term_1 * term_2
 
     raise ValueError(
-        f"This function only supports D-D and D-T, not {reaction.name.replace('_','-')}"
+        f"This function only supports D-D and D-T, not {reaction.name.replace('_', '-')}"
     )
 
 
@@ -482,7 +482,7 @@ def _reactivity_johner(
     """
     if reaction != Reactions.D_T:
         raise ValueError(
-            f"This function only supports D-T, not {reaction.name.replace('_','-')}"
+            f"This function only supports D-T, not {reaction.name.replace('_', '-')}"
         )
 
     if np.max(temp_kev) > 100:  # noqa: PLR2004

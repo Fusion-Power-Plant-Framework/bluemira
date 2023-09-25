@@ -915,8 +915,8 @@ class OISBuilder(Builder):
             ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
             ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
 
-            right_component = PhysicalComponent(f"{self.RIGHT_OIS} {i+1}", ois_right)
-            left_component = PhysicalComponent(f"{self.LEFT_OIS} {i+1}", ois_left)
+            right_component = PhysicalComponent(f"{self.RIGHT_OIS} {i + 1}", ois_right)
+            left_component = PhysicalComponent(f"{self.LEFT_OIS} {i + 1}", ois_left)
             components.extend([left_component, right_component])
 
         for component in components:

@@ -256,7 +256,7 @@ problem.optimise()
 # tolerances)... but we don't!
 
 # %%
-print(f"Theoretical optimum: {c_value-c_tolerance}")
+print(f"Theoretical optimum: {c_value - c_tolerance}")
 print(f"Length with SLSQP: {parameterisation_3.create_shape().length}")
 print(f"n_evals: {problem.opt.n_evals}")
 
