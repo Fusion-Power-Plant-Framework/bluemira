@@ -56,9 +56,7 @@ from bluemira.neutronics.params import (
 from bluemira.neutronics.quick_tbr_heating import TBRHeatingSimulation
 
 # %%
-CROSS_SECTION_XML = str(
-    Path("~/bluemira_openmc_data/cross_sections.xml").expanduser()
-)
+CROSS_SECTION_XML = str(Path("~/bluemira_openmc_data/cross_sections.xml").expanduser())
 
 # %%
 # set up the variables to be used for the openmc simulation
