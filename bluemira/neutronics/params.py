@@ -209,8 +209,13 @@ class TokamakGeometryCGS(TokamakGeometry):
         tg = asdict(tokamak_geometry)
         tgcgs = tg.copy()
         for k, v in tgcgs.items():
-            if k not in ("elong", "triang"):
-                tgcgs[k] = raw_uc(v, "m", "cm")
+            if k not in (
+                "elong",
+                "triang",
+            ):  # these are the only two dimensionless quantities
+                tgcgs[k] = raw_uc(
+                    v, "m", "cm"
+                )  # everything else are distances measurements.
         return cls(**tg, cgs=TokamakGeometry(**tgcgs))
 
 
