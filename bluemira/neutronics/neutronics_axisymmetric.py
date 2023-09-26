@@ -192,12 +192,14 @@ class TBRHeatingSimulation:
                 major_r=self.tokamak_geometry.cgs.major_r,
                 minor_r=self.tokamak_geometry.cgs.minor_r,
                 elongation=self.tokamak_geometry.cgs.elong,
-                triangulation=self.tokamak_geometry.cgs.triang,
+                triangularity=self.tokamak_geometry.cgs.triang,
                 # plasma geometry
                 peaking_factor=self.operation_variable.plasma_physics_units.peaking_factor,
                 temperature=self.operation_variable.plasma_physics_units.temperature,
                 radial_shift=self.operation_variable.plasma_physics_units.shaf_shift,
                 vertical_shift=self.operation_variable.plasma_physics_units.vertical_shift,
+                # plasma type
+                mode="DT",
             )
         else:
             source = create_ring_source(self.tokamak_geometry)

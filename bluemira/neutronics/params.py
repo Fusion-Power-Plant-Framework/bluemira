@@ -103,8 +103,8 @@ class TokamakOperationParameters:
     """
 
     reactor_power: float  # [W]
-    temperature: float  # [K]
     peaking_factor: float  # [dimensionless]
+    temperature: float  # [K]
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
 
