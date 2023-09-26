@@ -22,7 +22,8 @@
 (Including both printed/logged texts and images)
 """
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from pathlib import Path
+from typing import Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -30,6 +31,7 @@ import openmc
 from tabulate import tabulate
 
 from bluemira.base.constants import S_TO_YR, raw_uc
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
 from bluemira.neutronics.params import TokamakGeometry
 
@@ -132,12 +134,17 @@ class OpenMCResult:
     cell_vols: Dict
     mat_names: Dict
 
+    volume_file: str
+    stochastic_cell_volumes: Optional[Dict[int, float]] = None
+    volume_state: Optional[openmc.VolumeCalculation] = None
+
     @classmethod
     def from_run(
         cls,
         universe: openmc.Universe,
         src_rate: float,
         statepoint_file: str = "statepoint.2.h5",
+        volume_file: str = "volume_1.h5",
     ):
         """Create results class from run statepoint"""
         # Create cell and material name dictionaries to allow easy mapping to dataframe
@@ -155,6 +162,9 @@ class OpenMCResult:
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
         tbr, tbr_err = cls._load_tbr(statepoint)
+        volume_state, st_cell_volumes = cls._load_volume_calculation(
+            volume_file, cell_names
+        )
 
         return cls(
             universe=universe,
@@ -173,7 +183,29 @@ class OpenMCResult:
             photon_heat_flux=cls._load_photon_heat_flux(
                 statepoint, cell_names, cell_vols
             ),
+            stochastic_cell_volumes=st_cell_volumes,
+            volume_state=volume_state,
+            volume_file=volume_file,
         )
+
+    @staticmethod
+    def _load_volume_calculation(volume_file, cell_names):
+        if Path(volume_file).is_file():
+            vol_results = openmc.VolumeCalculation.from_hdf5("volume_1.h5")
+            vols = vol_results.volumes
+            ids = list(vols.keys())
+            cell_volumes = {
+                "cell": ids,
+                "cell_names": [cell_names[i] for i in ids],
+                "Stochasitic Volumes": list(raw_uc(list(vols.values()), "cm^3", "m^3")),
+            }
+
+        else:
+            bluemira_debug("No volume file found")
+            vol_results = None
+            cell_volumes = None
+
+        return vol_results, cell_volumes
 
     @staticmethod
     def _load_dataframe_from_statepoint(statepoint, tally_name: str):
@@ -320,6 +352,9 @@ class OpenMCResult:
             ),
         ):
             ret_str = f"{ret_str}\n{title}\n{self._tabulate(data)}"
+
+        if self.stochastic_cell_volumes is not None:
+            ret_str += f"\nStochastic Cell Volumes (m^3) \n{self._tabulate(self.stochastic_cell_volumes)}"
         return ret_str
 
     @staticmethod

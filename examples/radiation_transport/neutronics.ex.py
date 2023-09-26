@@ -57,7 +57,7 @@ from bluemira.neutronics.params import (
 
 # %%
 CROSS_SECTION_XML = str(Path("~/bluemira_openmc_data/cross_sections.xml").expanduser())
-
+volume_calculation = True
 # %%
 # set up the variables to be used for the openmc simulation
 # allowed blanket_type so far = {'WCLL', 'DCLL', 'HCPB'}
@@ -100,10 +100,14 @@ tbr_heat_sim.setup(
 )
 
 # %%
-tbr_heat_sim.run()
 # get the TBR, component heating, first wall dpa, and photon heat flux
+tbr_heat_sim.run()
+# %%
+# Takes ~ 45s on a modern laptop
+if volume_calculation:
+    tbr_heat_sim.calculate_volume_stochastically()
+
+# %%
 results = tbr_heat_sim.get_result()
 
 print(results)
-# tbr_heat_sim.calculate_volume_stochastically()
-# # don't do this because it takes a long time.

@@ -143,7 +143,7 @@ def stochastic_volume_calculation(
     settings = openmc.Settings()
     settings.volume_calculations = [cell_vol_calc]
 
-    settings.export_to_xml()
+    settings.export_to_xml("volume_settings.xml")
     # within this bounding box, use naive Monte Carlo to find
     # the volumes of the cells representing the tokamak components.
-    openmc.calculate_volumes()
+    openmc.calculate_volumes(output=False)
