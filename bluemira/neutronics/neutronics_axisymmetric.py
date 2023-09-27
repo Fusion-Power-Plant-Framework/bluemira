@@ -26,7 +26,6 @@ ____
 """
 import openmc
 from numpy import pi
-from openmc.config import config
 from pps_isotropic.source import create_parametric_plasma_source
 
 import bluemira.neutronics.constants as neutronics_const
@@ -94,8 +93,18 @@ def setup_openmc(
     We run the simulation with the assumption that temperature = 293K,
     as the nuclear cross-section values are evaluated at this temperature
     """
-    config["cross_sections"] = variables.cross_section_xml
-    settings = openmc.Settings()
+    try:
+        from openmc.config import config
+
+        config["cross_sections"] = variables.cross_section_xml
+
+    except ModuleNotFoundError:
+        # Not new enought openmc
+        import os
+
+        os.environ["OPENMC_CROSS_SECTIONS"] = str(variables.cross_section_xml)
+        settings = openmc.Settings()
+
     settings.source = plasma_source
     settings.particles = variables.particles
     settings.batches = variables.batches

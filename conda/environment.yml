@@ -1,4 +1,4 @@
-name: bluemira
+name: bluemira-openmc
 channels:
   - conda-forge
   - nodefaults
