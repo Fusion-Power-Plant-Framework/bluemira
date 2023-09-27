@@ -190,7 +190,6 @@ ignore = [
     "FA100", # use future ann everywhere
     "UP006", # type annotations
     "UP007",
-
 ]
 
 [tool.ruff.lint.isort]
@@ -309,6 +308,8 @@ ignore-names = [
     "*_F",
     "*eV",
     "I_not_dI",
+    "*Li*",
+    "*MW*"
 ]
 
 [tool.ruff.lint.per-file-ignores]
