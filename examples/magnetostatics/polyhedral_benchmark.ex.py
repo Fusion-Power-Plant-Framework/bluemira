@@ -78,7 +78,7 @@ source = TrapezoidalPrismCurrentSource(
 )
 source.rotate(45, "z")
 w = 1.0
-len = np.sqrt(0.5 * w**2)
+length = np.sqrt(0.5 * w**2)
 source2 = PolyhedralPrismCurrentSource(
     np.array([0, 0, 0]),
     np.array([0, 4, 0]),
@@ -87,7 +87,7 @@ source2 = PolyhedralPrismCurrentSource(
     np.array([1, 1, 0]),
     4,
     4,
-    len,
+    length,
     np.pi * 0 / 4,
     np.pi * 0 / 4,
     1e6,

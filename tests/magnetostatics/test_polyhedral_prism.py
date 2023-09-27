@@ -134,7 +134,7 @@ class TestPolyhedralPrismCurrentSource:
                 5,
             )
 
-    @pytest.mark.parametrize("angle1,angle2", [[10, -10], [-20, 30]])
+    @pytest.mark.parametrize(("angle1", "angle2"), [(10, -10), (-20, 30)])
     def test_error_on_mixed_sign_angles(self, angle1, angle2):
         with pytest.raises(MagnetostaticsError):
             PolyhedralPrismCurrentSource(
@@ -152,7 +152,7 @@ class TestPolyhedralPrismCurrentSource:
                 5,
             )
 
-    @pytest.mark.parametrize("angle1,angle2", [[1, 1], [2, 3], [0, 2], [-2, 0]])
+    @pytest.mark.parametrize(("angle1", "angle2"), [(1, 1), (2, 3), (0, 2), (-2, 0)])
     def test_no_error_on_double_sign_angles(self, angle1, angle2):
         PolyhedralPrismCurrentSource(
             np.array([0, 0, 0]),

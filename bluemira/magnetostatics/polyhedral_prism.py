@@ -61,8 +61,7 @@ def trap_dist(theta, pos, min_pos, vec):
 
     """
     dy = np.dot((pos - min_pos), vec)
-    dz = dy * np.tan(theta)
-    return dz
+    return dy * np.tan(theta)
 
 
 class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
@@ -157,7 +156,7 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         self.J = current / self.area
         # trapezoidal sources for field calculation
         self.sources = self._segmentation_setup(self.nrows)
-        if not round(self.area, 4) == round(self.seg_area, 4):
+        if round(self.area, 4) != round(self.seg_area, 4):
             bluemira_warn(
                 "Difference between prism area and total segment area at 4dp."
                 f"Prism area = {self.area} and Segment area = {self.seg_area}."
@@ -170,7 +169,7 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         """
         sign_alpha = np.sign(alpha)
         sign_beta = np.sign(beta)
-        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0.0)
+        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0.0)  # noqa: PLR2004
         if not one_zero and sign_alpha != sign_beta:
             raise MagnetostaticsError(
                 f"{self.__class__.__name__} instantiation error: end-cap angles "
@@ -191,12 +190,9 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         """
         Check for bad combinations of source length and end-cap angles.
         """
-        if self.wire is None:
-            points = self.points[0]
-        else:
-            points = self.wire.vertexes.T
-        min, max = self._shape_min_max(points, self.trap_vec)
-        dist = round(np.dot(max - min, self.trap_vec), 10)
+        points = self.points[0] if self.wire is None else self.wire.vertexes.T
+        pmin, pmax = self._shape_min_max(points, self.trap_vec)
+        dist = round(np.dot(pmax - pmin, self.trap_vec), 10)
         a = np.tan(np.abs(alpha)) * dist
         b = np.tan(np.abs(beta)) * dist
         if (a + b) > length:
@@ -218,7 +214,8 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
         face = BluemiraFace(boundary=wire)
         return face.area
 
-    def _shape_min_max(self, points, vector):
+    @staticmethod
+    def _shape_min_max(points, vector):
         """
         Function to calculate min and max points of prism cross section
         along vector.
@@ -258,7 +255,7 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
                 c_points += [np.array(p)]
             c_points += [np.array(points[0, :])]
             c_points = np.vstack([np.array(c_points)])
-        boundl, boundu = self._shape_min_max(c_points, self.trap_vec)
+        boundl, _ = self._shape_min_max(c_points, self.trap_vec)
 
         l_points = []
         u_points = []
@@ -274,15 +271,12 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
             ]
         l_points = np.vstack([np.array(l_points)])
         u_points = np.vstack([np.array(u_points)])
-        points = [c_points] + [l_points] + [u_points]
+        points = [c_points, l_points, u_points]
         # add lines between cuts
         for i in range(self.n):
             points += [np.vstack([l_points[i], u_points[i]])]
-        p_array = []
-        for p in points:
-            p_array.append(self._local_to_global(p))
 
-        return np.array(p_array, dtype=object)
+        return np.array([self._local_to_global(p) for p in points], dtype=object)
 
     def _segmentation_setup(self, nrows):
         """
@@ -319,7 +313,7 @@ class PolyhedralPrismCurrentSource(ArbitraryCrossSectionCurrentSource):
             coords = Coordinates({"x": x, "y": y, "z": z})
             wire = make_polygon(coords, closed=False)
             dist, vectors = distance_to(main_wire, wire)
-            if np.round(dist, 4) > 0.0:
+            if np.round(dist, 4) > 0:
                 print("no intersect between line and wire")
             else:
                 p1 = np.array(vectors[0][0])
