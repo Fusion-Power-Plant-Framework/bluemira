@@ -348,7 +348,7 @@ OBJECTIVE_EQ_MAPPING = {
 CONSTRAINT_EQ_MAPPING = {
     "beta_consistency": 1,  # Beta Consistency
     "global_power_consistency": 2,  # Global Power Balance Consistency
-    "ion_power_consistency": 3, # Global power balance equation for ions
+    "ion_power_consistency": 3,  # Global power balance equation for ions
     "electron_power_consistency": 4,  # Global power balance equation for electrons
     "density_upper_limit": 5,  # Density Upper Limit (Greenwald)
     "eps_beta_pol_upper_limit": 6,  # Equation for epsilon beta-poloidal upper limit
@@ -366,13 +366,15 @@ CONSTRAINT_EQ_MAPPING = {
     "divertor_heat_upper_limit": 18,  # Equation for divertor heat load upper limit
     "MVA_upper_limit": 19,  # Equation for MVA upper limit
     "NBI_tangency_upper_limit": 20,  # Equation for neutral beam tangency radius upper limit
-    "a_lower_limit": 21,  # Equation for minor radius lower limit
-    "": 22,  # 
-    "": 23,  #
+    "aminor_lower_limit": 21,  # Equation for minor radius lower limit
+    "div_coll_conn_ratio_upper_limit": 22,  #  Equation for divertor collision/connection length ratio upper limit
+    "cond_shell_r_aminor_upper_limit": 23,  # Equation for conducting shell radius / rminor upper limit
     "beta_upper_limit": 24,  # Beta Upper Limit
     "peak_TF_upper_limit": 25,  # Max TF field
     "CS_EOF_density_limit": 26,  # Central solenoid EOF current density upper limit
     "CS_BOP_density_limit": 27,  # Central solenoid BOP current density upper limit
+    "Q_lower_limit": 28,  # Equation for fusion gain (big Q) lower limit
+    "inboard_major_radius": 29,  # Equation for inboard major radius
     "Pinj_upper_limit": 30,  # Injection Power Upper Limit
     "TF_case_stress_upper_limit": 31,  # TF coil case stress upper limit
     "TF_jacket_stress_upper_limit": 32,  # TF WP steel jacket/conduit stress upper limit
@@ -380,13 +382,60 @@ CONSTRAINT_EQ_MAPPING = {
     "TF_dump_voltage_upper_limit": 34,  # Dump voltage upper limit
     "TF_current_density_upper_limit": 35,  # J_winding pack
     "TF_temp_margin_lower_limit": 36,  # TF temperature marg
-    "CS_temp_margin_lower_limit": 60,  # OH coil temp margin
-    "confinement_ratio_limit": 62,  # taup/taueff ratio of particle to energy confinement times
-    "dump_time_lower_limit": 65,  # dump time by VV stresses
+    "CD_gamma_upper_limit": 37,  # Equation for current drive gamma upper limit
+    # 38 NOT USED
+    "FW_temp_upper_limit": 39,  # Equation for first wall temperature upper limit
+    "Paux_lower_limit": 40,  # Equation for auxiliary power lower limit
+    "Ip_ramp_lower_limit": 41,  # Equation for plasma current ramp-up time lower limit
+    "cycle_time_lower_limit": 42,  # Equation for cycle time lower limit
+    "centrepost_temp_average": 43,  # Equation for average centrepost temperature
+    "centrepost_temp_upper_limit": 44,  # Equation for centrepost temperature upper limit (TART)
+    "qedge_lower_limit": 45,  # Equation for edge safety factor lower limit (TART)
+    "Ip_Irod_upper_limit": 46,  # Equation for Ip/Irod upper limit (TART)
+    "TF_toroidal_tk_upper_limit": 47,  # Equation for TF coil toroidal thickness upper limit
+    "betapol_upper_limit": 48,  # Equation for poloidal beta upper limit
+    # 49 SCARES ME
+    "rep_rate_upper_limit": 50,  # Equation for repetition rate upper limit
+    "CS_flux_consistency": 51,  # Equation to enforce startup flux = available startup flux
+    "TBR_lower_limit": 52,  # Equation for tritium breeding ratio lower limit
+    "nfluence_TF_upper_limit": 53,  # Equation for fast neutron fluence on TF coil upper limit
+    "Pnucl_TF_upper_limit": 54,  # Equation for peak TF coil nuclear heating upper limit
+    "He_VV_upper_limit": 55,  # Equation for helium concentration in vacuum vessel upper limit
+    "PsepR_upper_limit": 56,  # Equation for power through separatrix / major radius upper limit
+    # 57, 58 NOT USED
+    "NBI_shinethrough_upper_limit": 59,  # Equation for neutral beam shine-through fraction upper limit
+    "CS_temp_margin_lower_limit": 60,  # Equation for Central Solenoid s/c temperature margin lower limit
+    "availability_lower_limit": 61,  # Equation for availability limit
+    "confinement_ratio_lower_limit": 62,  # Lower limit on taup/taueff the ratio of alpha particle to energy confinement times
+    "niterpump_upper_limit": 63,  # Upper limit on niterpump (vacuum_model = simple)
+    "Zeff_upper_limit": 64,  # Upper limit on Zeff
+    "dump_time_lower_limit": 65,  # Limit TF dump time to calculated quench time
+    "PF_energy_rate_upper_limit": 66,  # Limit on rate of change of energy in poloidal field
+    "wall_radiation_upper_limit": 67,  # Simple upper limit on radiation wall load
     "PsepBqAR_upper_limit": 68,  # Pseparatrix Bt / q A R upper limit
-    "CS_stress_upper_limit": 72,
+    "Psep_kallenbach_upper_limit": 69,  # Ensure separatrix power is less than value from Kallenbach divertor
+    "tsep_consistency": 70,  # Separatrix temperature consistency
+    "nsep_consistency": 71,  # Separatrix density consistency
+    "CS_stress_upper_limit": 72,  # Central Solenoid Tresca yield criterion
+    "Psep_LH_aux_consistency": 73,  # ensure separatrix power is greater than the L-H power + auxiliary power
+    "TF_CROCO_temp_upper_limit": 74,  # ensure TF coil quench temperature < tmax_croco
+    "TF_CROCO_Cu_area_constraint": 75,  # ensure that TF coil current / copper area < Maximum value ONLY used for croco HTS coil
+    "eich_sep_density_constraint": 76,  # Eich critical separatrix density model
+    "TF_turn_current_upper_limit": 77,  # Equation for maximum TF current per turn upper limit
+    "reinke_imp_frac_lower_limit": 78,  # Equation for Reinke criterion, divertor impurity fraction lower limit
+    "Bmax_CS_upper_limit": 79,  # Equation for maximum CS field
+    "pdivt_lower_limit": 80,  # Lower limit pdivt
     "density_profile_sanity": 81,  # ne(0) > ne(ped) constraint
+    "stellarator_coil_consistency": 82,  # Constraint equation making sure that stellarator coils dont touch in toroidal direction
+    "stellarator_radial_build_consistency": 83,  # Constraint ensuring radial build consistency for stellarators
+    "beta_lower_limit": 84,  # Constraint for lower limit of beta
+    "CP_lifetime_lower_limit": 85,  # Constraint for CP lifetime
+    "turn_size_upper_limit": 86,  # Constraint for turn dimension
+    "cryopower_upper_limit": 87,  # Constraint for cryogenic power
+    "TF_strain_upper_limit": 88,  # Constraint for TF coil strain
+    "OH_CROCO_Cu_area_constraint": 89,  # ensure that OH coil current / copper area < Maximum value ONLY used for croco HTS coil
     "CS_fatigue": 90,  # CS fatigue constraints
+    "ECRH_ignitability": 91,  # Constraint for indication of ECRH ignitability
 }
 
 ITERATION_VAR_MAPPING = {
