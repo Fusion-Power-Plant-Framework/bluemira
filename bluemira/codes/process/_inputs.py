@@ -375,23 +375,170 @@ CONSTRAINT_EQ_MAPPING = {
 }
 
 ITERATION_VAR_MAPPING = {
-    "": 1,
-    "": 2,
-    "": 3,
-    "": 4,
-    "": 5,
-    "": 6,
-    "": 7,
-    "": 8,
-    "": 9,
-    "": 10,
-    "": 11,
-    "": 12,
-    "": 13,
-    "": 14,
-    "": 15,
-    "": 16,
-    "": 17,
+    "aspect": 1,
+    "bt": 2,
+    "rmajor": 3,
+    "te": 4,
+    "beta": 5,
+    "dene": 6,
+    "rnbeam": 7,
+    "fbeta": 8,
+    "fdene": 9,
+    "hfact": 10,
+    "pheat": 11,
+    "oacdp": 12,
+    "tfcth": 13,
+    "fwalld": 14,
+    "fvs": 15,
+    "ochth": 16,
+    "tdwell": 17,
+    "q": 18,
+    "enbeam": 19,
+    "tcpav": 20,
+    "ftburn": 21,
+    # 22 NOT USED
+    "fcoolcp": 23,
+    # 24 NOT USED
+    "fpnetel": 25,
+    "ffuspow": 26,
+    "fhldiv": 27,
+    "fradpwr": 28,
+    "bore": 29,
+    "fmva": 30,
+    "gapomin": 31,
+    "frminor": 32,
+    "fportsz": 33,
+    "fdivcol": 34,
+    "fpeakb": 35,
+    "fbetatry": 36,
+    "coheof": 37,
+    "fjohc": 38,
+    "fjohc0": 39,
+    "fgamcd": 40,
+    "fcohbop": 41,
+    "gapoh": 42,
+    # 43 NOT USED
+    "fvsbrnni": 44,
+    "fqval": 45,
+    "fpinj": 46,
+    "feffcd": 47,
+    "fstrcase": 48,
+    "fstrcond": 49,
+    "fiooic": 50,
+    "fvdump": 51,
+    "vdalw": 52,
+    "fjprot": 53,
+    "ftmargtf": 54,
+    # 55 NOT USED
+    "tdmptf": 56,
+    "thkcas": 57,
+    "thwcndut": 58,
+    "fcutfsu": 59,
+    "cpttf": 60,
+    "gapds": 61,
+    "fdtmp": 62,
+    "ftpeak": 63,
+    "fauxmn": 64,
+    "tohs": 65,
+    "ftohs": 66,
+    "ftcycl": 67,
+    "fptemp": 68,
+    "rcool": 69,
+    "vcool": 70,
+    "fq": 71,
+    "fipir": 72,
+    "scrapli": 73,
+    "scraplo": 74,
+    "tfootfi": 75,
+    # 76, 77, 78 NOT USED
+    "fbetap": 79,
+    # 80 NOT USED
+    "edrive": 81,
+    "drveff": 82,
+    "tgain": 83,
+    "chrad": 84,
+    "pdrive": 85,
+    "frrmax": 86,
+    # 87, 88 NOT USED
+    "ftbr": 89,
+    "blbuith": 90,
+    "blbuoth": 91,
+    "fflutf": 92,
+    "shldith": 93,
+    "shldoth": 94,
+    "fptfnuc": 95,
+    "fvvhe": 96,
+    "fpsepr": 97,
+    "li6enrich": 98,
+    # 99, 100, 101 NOT USED
+    "fimpvar": 102,
+    "flhthresh": 103,
+    "fcwr": 104,
+    "fnbshinef": 105,
+    "ftmargoh": 106,
+    "favail": 107,
+    "breeder_f": 108,
+    "ralpne": 109,
+    "ftaulimit": 110,
+    "fniterpump": 111,
+    "fzeffmax": 112,
+    "ftaucq": 113,
+    "fw_channel_length": 114,
+    "fpoloidalpower": 115,
+    "fradwall": 116,
+    "fpsepbqar": 117,
+    "fpsep": 118,
+    "tesep": 119,
+    "ttarget": 120,
+    "neratio": 121,
+    "oh_steel_frac": 122,
+    "foh_stress": 123,
+    "qtargettotal": 124,
+    "fimp(3)": 125,  # Beryllium
+    "fimp(4)": 126,  # Carbon
+    "fimp(5)": 127,  # Nitrogen
+    "fimp(6)": 128,  # Oxygen
+    "fimp(7)": 129,  # Neon
+    "fimp(8)": 130,  # Silicon
+    "fimp(9)": 131,  # Argon
+    "fimp(10)": 132,  # Iron
+    "fimp(11)": 133,  # Nickel
+    "fimp(12)": 134,  # Krypton
+    "fimp(13)": 135,  # Xenon
+    "fimp(14)": 136,  # Tungsten
+    "fplhsep": 137,
+    "rebco_thickness": 138,
+    "copper_thick": 139,
+    "dr_tf_wp": 140,  # TODO: WTF
+    "fcqt": 141,
+    "nesep": 142,
+    "f_coppera_m2": 143,
+    "fnesep": 144,
+    "fgwped": 145,
+    "fcpttf": 146,
+    "freinke": 147,
+    "fzactual": 148,
+    "fbmaxcs": 149,
+    # 150, 151 NOT USED
+    "fgwsep": 152,
+    "fpdivlim": 153,
+    "fne0": 154,
+    "pfusife": 155,
+    "rrin": 156,
+    "fvssu": 157,
+    "croco_thick": 158,
+    "ftoroidalgap": 159,
+    "f_avspace": 160,
+    "fbetatry_lower": 161,
+    "r_cp_top": 162,
+    "f_t_turn_tf": 163,
+    "f_crypmw": 164,
+    "fstr_wp": 165,
+    "f_copperaoh_m2": 166,
+    "fncycle": 167,
+    "fecrh_ignition": 168,
+    "te0_ecrh_achievable": 169,
+    "beta_div": 170,
 }
 
 
@@ -402,6 +549,7 @@ class PROCESSTemplateBuilder:
     """
 
     def __init__(self):
+        self.values: Dict[str, float] = {}
         self.bounds: Dict[str, Dict[str, str]] = {}
         self.icc: List[int] = []
         self.ixc: List[int] = []
@@ -430,6 +578,7 @@ class PROCESSTemplateBuilder:
     def add_variable(
         self,
         name: str,
+        value: float,
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
     ):
@@ -441,6 +590,7 @@ class PROCESSTemplateBuilder:
             raise ValueError(f"There is no iteration variable: '{name}'")
 
         self.ixc.append(itvar)
+        self.values[name] = value
 
         if lower_bound or upper_bound:
             var_bounds = {}
@@ -456,4 +606,5 @@ class PROCESSTemplateBuilder:
             icc=self.icc,
             ixc=self.ixc,
             ioptimz=self.ioptimiz,
+            **self.values,
         )
