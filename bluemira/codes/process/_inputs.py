@@ -348,12 +348,27 @@ OBJECTIVE_EQ_MAPPING = {
 CONSTRAINT_EQ_MAPPING = {
     "beta_consistency": 1,  # Beta Consistency
     "global_power_consistency": 2,  # Global Power Balance Consistency
+    "ion_power_consistency": 3, # Global power balance equation for ions
+    "electron_power_consistency": 4,  # Global power balance equation for electrons
     "density_upper_limit": 5,  # Density Upper Limit (Greenwald)
+    "eps_beta_pol_upper_limit": 6,  # Equation for epsilon beta-poloidal upper limit
+    "hot_beam_ion_density": 7,  # Equation for hot beam ion density
     "NWL_upper_limit": 8,  # Neutron wall load upper limit
+    "fusioN_power_upper_limit": 9,  # Equation for fusion power upper limit
+    # 10 NOT USED
     "radial_build_consistency": 11,  # Radial Build Consistency
+    "vs_lower_limit": 12,  # Equation for volt-second capability lower limit
     "burn_time_lower_limit": 13,  # Burn time lower limit
+    "NBI_lambda_centre": 14,  # Equation to fix number of NBI decay lengths to plasma centre
     "LH_threshhold_limit": 15,  # L-H Power Threshold Limit
     "net_electric_lower_limit": 16,  # Net electric power lower limit
+    "Prad_upper_limit": 17,  # Equation for radiation power upper limit
+    "divertor_heat_upper_limit": 18,  # Equation for divertor heat load upper limit
+    "MVA_upper_limit": 19,  # Equation for MVA upper limit
+    "NBI_tangency_upper_limit": 20,  # Equation for neutral beam tangency radius upper limit
+    "a_lower_limit": 21,  # Equation for minor radius lower limit
+    "": 22,  # 
+    "": 23,  #
     "beta_upper_limit": 24,  # Beta Upper Limit
     "peak_TF_upper_limit": 25,  # Max TF field
     "CS_EOF_density_limit": 26,  # Central solenoid EOF current density upper limit
