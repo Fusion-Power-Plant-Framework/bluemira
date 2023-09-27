@@ -370,7 +370,7 @@ ITERATION_VAR_MAPPING = {}
 
 class PROCESSTemplateBuilder:
     """
-    This is a patch to make PROCESS a little easier to work with before
+    An API patch to make PROCESS a little easier to work with before
     they write a Python API
     """
 
