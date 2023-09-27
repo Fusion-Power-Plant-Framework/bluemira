@@ -335,15 +335,29 @@ class ProcessInputs:
 
 
 OBJECTIVE_EQ_MAPPING = {
-    "": 1,
-    "": 2,
-    "": 3,
-    "": 4,
-    "": 5,
-    "": 6,
-    "": 7,
-    "": 8,
+    "rmajor": 1,  # major radius
+    # 2 NOT USED
+    "NWL": 3,  # neutron wall load
+    "P_max": 4,  # P_tf + P_pf
+    "Q": 5,  # fusion gain Q
+    "electricity_cost": 6,  # cost of electricity
+    "captial_cost": 7,  # capital cost (direct cost if ireactor=0, constructed cost otherwise)
+    "aspect": 8,  # aspect ratio
+    "divertor_heat_load": 9,  # divertor heat load
+    "bt": 10,  # toroidal field
+    "pinj": 11,  # total injected power
+    # 12, 13 NOT USED
+    "tpulse": 14,  # pulse length
+    "avail": 15,  # plant availability factor (N.B. requires iavail=1 to be set)
+    "rmajor_tpulse": 16,  # linear combination of major radius (minimised) and pulse length (maximised)
+    # note: FoM should be minimised only!
+    "pnetel": 17,  # net electrical output
+    "NULL": 18,  # Null Figure of Merit
+    "Q_tpulse": 19,  # linear combination of big Q and pulse length (maximised)
+    # note: FoM should be minimised only!
 }
+
+OBJECTIVE_MIN_ONLY = [16, 19]
 
 CONSTRAINT_EQ_MAPPING = {
     "beta_consistency": 1,  # Beta Consistency
@@ -617,17 +631,30 @@ class PROCESSTemplateBuilder:
         self.bounds: Dict[str, Dict[str, str]] = {}
         self.icc: List[int] = []
         self.ixc: List[int] = []
-        self.ioptimiz: int = 1
+        self.minmax: int = 1
 
-    def set_objective(self, name: str):
+    def set_minimisation_objective(self, name: str):
         """
-        Set the objective equation to use when running PROCESS
+        Set the minimisation objective equation to use when running PROCESS
         """
-        ioptimiz = OBJECTIVE_EQ_MAPPING.get(name, None)
-        if not ioptimiz:
+        minmax = OBJECTIVE_EQ_MAPPING.get(name, None)
+        if not minmax:
             raise ValueError(f"There is no objective equation: '{name}'")
 
-        self.ioptimiz = ioptimiz
+        self.minmax = minmax
+
+    def set_maximisation_objective(self, name: str):
+        """
+        Set the maximisation objective equation to use when running PROCESS
+        """
+        minmax = OBJECTIVE_EQ_MAPPING.get(name, None)
+        if not minmax:
+            raise ValueError(f"There is no objective equation: '{name}'")
+        if minmax in OBJECTIVE_MIN_ONLY:
+            raise ValueError(
+                f"Equation {name} can only be used as a minimisation objective."
+            )
+        self.minmax = -minmax
 
     def add_constraint(self, name: str):
         """
@@ -669,6 +696,6 @@ class PROCESSTemplateBuilder:
             bounds=self.bounds,
             icc=self.icc,
             ixc=self.ixc,
-            ioptimz=self.ioptimiz,
+            ioptimz=self.minmax,
             **self.values,
         )
