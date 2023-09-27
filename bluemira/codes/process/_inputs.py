@@ -334,7 +334,16 @@ class ProcessInputs:
         return {name: value for name, value in self}
 
 
-OBJECTIVE_EQ_MAPPING = {}
+OBJECTIVE_EQ_MAPPING = {
+    "": 1,
+    "": 2,
+    "": 3,
+    "": 4,
+    "": 5,
+    "": 6,
+    "": 7,
+    "": 8,
+}
 
 CONSTRAINT_EQ_MAPPING = {
     "beta_consistency": 1,  # Beta Consistency
@@ -365,7 +374,25 @@ CONSTRAINT_EQ_MAPPING = {
     "CS_fatigue": 90,  # CS fatigue constraints
 }
 
-ITERATION_VAR_MAPPING = {}
+ITERATION_VAR_MAPPING = {
+    "": 1,
+    "": 2,
+    "": 3,
+    "": 4,
+    "": 5,
+    "": 6,
+    "": 7,
+    "": 8,
+    "": 9,
+    "": 10,
+    "": 11,
+    "": 12,
+    "": 13,
+    "": 14,
+    "": 15,
+    "": 16,
+    "": 17,
+}
 
 
 class PROCESSTemplateBuilder:
@@ -384,13 +411,21 @@ class PROCESSTemplateBuilder:
         """
         Set the objective equation to use when running PROCESS
         """
-        self.ioptimiz = OBJECTIVE_EQ_MAPPING[name]
+        ioptimiz = OBJECTIVE_EQ_MAPPING.get(name, None)
+        if not ioptimiz:
+            raise ValueError(f"There is no objective equation: '{name}'")
+
+        self.ioptimiz = ioptimiz
 
     def add_constraint(self, name: str):
         """
         Add a constraint to the PROCESS run
         """
-        self.icc.append(CONSTRAINT_EQ_MAPPING[name])
+        constraint = CONSTRAINT_EQ_MAPPING.get(name, None)
+        if not constraint:
+            raise ValueError(f"There is no constraint equation: '{name}'")
+
+        self.icc.append(constraint)
 
     def add_variable(
         self,
@@ -401,7 +436,10 @@ class PROCESSTemplateBuilder:
         """
         Add an iteration variable to the PROCESS run
         """
-        itvar = ITERATION_VAR_MAPPING[name]
+        itvar = ITERATION_VAR_MAPPING.get(name, None)
+        if not itvar:
+            raise ValueError(f"There is no iteration variable: '{name}'")
+
         self.ixc.append(itvar)
 
         if lower_bound or upper_bound:
@@ -411,3 +449,11 @@ class PROCESSTemplateBuilder:
             if upper_bound:
                 var_bounds["u"] = upper_bound
             self.bounds[str(itvar)] = var_bounds
+
+    def make_inputs(self) -> ProcessInputs:
+        return ProcessInputs(
+            bounds=self.bounds,
+            icc=self.icc,
+            ixc=self.ixc,
+            ioptimz=self.ioptimiz,
+        )
