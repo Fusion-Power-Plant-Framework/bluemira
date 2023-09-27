@@ -1,4 +1,4 @@
-name: bluemira
+name: bluemira-openmc
 channels:
   - conda-forge
   - nodefaults
@@ -24,6 +24,7 @@ dependencies:
   - freecad=0.21.2
   - h5py
   - c-blosc2=2.14.3
+  - openmc=0.13
   - graphviz
   - pip
   - pip:

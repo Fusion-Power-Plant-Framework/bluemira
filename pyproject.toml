@@ -311,6 +311,8 @@ ignore-names = [
     "*_F",
     "*eV",
     "I_not_dI",
+    "*Li*",
+    "*MW*"
 ]
 
 [tool.ruff.lint.per-file-ignores]

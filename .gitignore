@@ -180,3 +180,8 @@ generated_data
 !generated_data/naughty_geometry/README.md
 tests/bluemira/test_generated_data
 plasmod_*.dat
+
+# openmc outputs
+*.svg
+*.xml
+*.out
