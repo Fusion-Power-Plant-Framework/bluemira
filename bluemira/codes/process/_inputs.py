@@ -381,7 +381,7 @@ CONSTRAINT_EQ_MAPPING = {
     "MVA_upper_limit": 19,  # Equation for MVA upper limit
     "NBI_tangency_upper_limit": 20,  # Equation for neutral beam tangency radius upper limit
     "aminor_lower_limit": 21,  # Equation for minor radius lower limit
-    "div_coll_conn_ratio_upper_limit": 22,  #  Equation for divertor collision/connection length ratio upper limit
+    "div_coll_conn_ratio_upper_limit": 22,  # Equation for divertor collision/connection length ratio upper limit
     "cond_shell_r_aminor_upper_limit": 23,  # Equation for conducting shell radius / rminor upper limit
     "beta_upper_limit": 24,  # Beta Upper Limit
     "peak_TF_upper_limit": 25,  # Max TF field
@@ -692,6 +692,9 @@ class PROCESSTemplateBuilder:
             self.bounds[str(itvar)] = var_bounds
 
     def make_inputs(self) -> ProcessInputs:
+        """
+        Make the ProcessInputs for the specified template
+        """
         return ProcessInputs(
             bounds=self.bounds,
             icc=self.icc,
