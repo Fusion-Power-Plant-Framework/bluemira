@@ -453,6 +453,74 @@ CONSTRAINT_EQ_MAPPING = {
     "ECRH_ignitability": 91,  # Constraint for indication of ECRH ignitability
 }
 
+# The dreaded f-values
+FV_CONSTRAINT_ITVAR_MAPPING = {
+    5: 9,
+    6: 8,
+    8: 14,
+    9: 26,
+    12: 15,
+    13: 21,
+    15: 103,
+    16: 25,
+    17: 28,
+    18: 27,
+    19: 30,
+    20: 33,
+    21: 32,
+    22: 34,
+    23: 104,
+    24: 36,
+    25: 35,
+    26: 38,
+    27: 39,
+    28: 45,
+    30: 46,
+    31: 48,
+    32: 49,
+    33: 50,
+    34: 51,
+    35: 53,
+    36: 54,
+    37: 40,
+    38: 62,
+    39: 63,
+    40: 64,
+    41: 66,
+    42: 67,
+    44: 68,
+    45: 71,
+    46: 72,
+    48: 79,
+    50: 86,
+    52: 89,
+    53: 92,
+    54: 95,
+    55: 96,
+    56: 97,
+    59: 105,
+    60: 106,
+    61: 107,
+    62: 110,
+    63: 111,
+    64: 112,
+    65: 113,
+    66: 115,
+    67: 116,
+    68: 117,
+    69: 118,
+    73: 137,
+    74: 141,
+    75: 143,
+    76: 144,
+    77: 146,
+    78: 146,
+    83: 160,
+    84: 161,
+    89: 166,
+    91: 168,
+}
+
 ITERATION_VAR_MAPPING = {
     "aspect": 1,
     "bt": 2,
@@ -621,10 +689,13 @@ ITERATION_VAR_MAPPING = {
 }
 
 
+VAR_ITERATION_MAPPING = {v: k for k, v in ITERATION_VAR_MAPPING.items()}
+
+
 class PROCESSTemplateBuilder:
     """
     An API patch to make PROCESS a little easier to work with before
-    they write a Python API
+    the PROCESS team write a Python API.
     """
 
     def __init__(self):
@@ -666,8 +737,36 @@ class PROCESSTemplateBuilder:
             raise ValueError(f"There is no constraint equation: '{name}'")
         if constraint in self.icc:
             bluemira_warn(f"Constraint {name} is already in the constraint list.")
+
+        if constraint in FV_CONSTRAINT_ITVAR_MAPPING.keys():
+            # Sensible (?) defaults. bounds are standard PROCESS for f-values for _most_
+            # f-value constraints.
+            self.add_fvalue_constraint(name, 0.5, 1e-3, 1.0)
         else:
             self.icc.append(constraint)
+
+    def add_fvalue_constraint(
+        self,
+        name: str,
+        value: float,
+        lower_bound: float = 1e-3,
+        upper_bound: float = 1.0,
+    ):
+        """
+        Add an f-value constraint to the PROCESS run
+        """
+        constraint = CONSTRAINT_EQ_MAPPING.get(name, None)
+        if not constraint:
+            raise ValueError(f"There is no constraint equation: '{name}'")
+
+        if constraint not in FV_CONSTRAINT_ITVAR_MAPPING.keys():
+            raise ValueError(f"Constraint '{name}' is not an f-value constraint.")
+
+        itvar = FV_CONSTRAINT_ITVAR_MAPPING[constraint]
+        if itvar not in self.ixc:
+            self.add_variable(
+                VAR_ITERATION_MAPPING[itvar], value, lower_bound, upper_bound
+            )
 
     def add_variable(
         self,
