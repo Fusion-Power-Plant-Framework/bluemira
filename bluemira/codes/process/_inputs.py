@@ -804,14 +804,14 @@ class PROCESSTemplateBuilder:
                 var_bounds["u"] = upper_bound
             self.bounds[str(itvar)] = var_bounds
 
-    def make_inputs(self) -> ProcessInputs:
+    def make_inputs(self) -> Dict[str, _INVariable]:
         """
-        Make the ProcessInputs for the specified template
+        Make the ProcessInputs InVariable for the specified template
         """
         return ProcessInputs(
             bounds=self.bounds,
             icc=self.icc,
             ixc=self.ixc,
-            ioptimz=self.minmax,
+            minmax=self.minmax,
             **self.values,
-        )
+        ).to_invariable()
