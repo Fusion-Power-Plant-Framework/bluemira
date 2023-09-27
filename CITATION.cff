@@ -62,6 +62,10 @@ authors:
     given-names: G. A.
     affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
 
+  - family-names: Hagues
+    given-names: J.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
   - family-names: Humphrey
     given-names: L.
     affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
@@ -88,6 +92,10 @@ authors:
 
   - family-names: Vaccaro
     given-names: D.
+    affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
+
+  - family-names: Wong
+    given-names: O.
     affiliation: United Kingdom Atomic Energy Authority, Culham Science Centre, Abingdon, Oxfordshire OX14 3DB, United Kingdom
 
 message: "If you use this software, please cite it using these references."
