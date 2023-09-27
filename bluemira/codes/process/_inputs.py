@@ -23,7 +23,7 @@ Parameter classes/structures for Process
 """
 
 from dataclasses import dataclass, field, fields
-from typing import Dict, Generator, List, Tuple, Union
+from typing import Dict, Generator, List, Optional, Tuple, Union
 
 from bluemira.codes.process.api import _INVariable
 
@@ -331,3 +331,69 @@ class ProcessInputs:
 
         """
         return dict(self)
+        return {name: value for name, value in self}
+
+
+OBJECTIVE_EQ_MAPPING = {}
+
+CONSTRAINT_EQ_MAPPING = {
+    "beta_consistency": 1,  # Beta Consistency
+    "global_power_consistency": 2,  # Global Power Balance Consistency
+    "density_upper_limit": 5,  # Density Upper Limit (Greenwald)
+    "NWL_upper_limit": 8,  # Neutron wall load upper limit
+    "radial_build_consistency": 11,  # Radial Build Consistency
+    "burn_time_lower_limit": 13,  # Burn time lower limit
+    "LH_threshhold_limit": 15,  # L-H Power Threshold Limit
+    "net_electric_lower_limit": 16,  # Net electric power lower limit
+    "beta_upper_limit": 24,  # Beta Upper Limit
+    "peak_TF_upper_limit": 25,  # Max TF field
+    "CS_EOF_density_limit": 26,  # Central solenoid EOF current density upper limit
+    "CS_BOP_density_limit": 27,  # Central solenoid BOP current density upper limit
+    "Pinj_upper_limit": 30,  # Injection Power Upper Limit
+    "TF_case_stress_upper_limit": 31,  # TF coil case stress upper limit
+    "TF_jacket_stress_upper_limit": 32,  # TF WP steel jacket/conduit stress upper limit
+    "TF_jcrit_ratio_upper_limit": 33,  # TF superconductor operating current / critical current density
+    "TF_dump_voltage_upper_limit": 34,  # Dump voltage upper limit
+    "TF_current_density_upper_limit": 35,  # J_winding pack
+    "TF_temp_margin_lower_limit": 36,  # TF temperature marg
+    "CS_temp_margin_lower_limit": 60,  # OH coil temp margin
+    "confinement_ratio_limit": 62,  # taup/taueff ratio of particle to energy confinement times
+    "dump_time_lower_limit": 65,  # dump time by VV stresses
+    "PsepBqAR_upper_limit": 68,  # Pseparatrix Bt / q A R upper limit
+    "CS_stress_upper_limit": 72,
+    "density_profile_sanity": 81,  # ne(0) > ne(ped) constraint
+    "CS_fatigue": 90,  # CS fatigue constraints
+}
+
+ITERATION_VAR_MAPPING = {}
+
+
+class PROCESSTemplateBuilder:
+    def __init__(self):
+        self.bounds: Dict[str, Dict[str, str]] = {}
+        self.icc: List[int] = []
+        self.ixc: List[int] = []
+        self.ioptimiz: int = 1
+
+    def set_objective(self, name: str):
+        self.ioptimiz = OBJECTIVE_EQ_MAPPING[name]
+
+    def add_constraint(self, name: str):
+        self.icc.append(CONSTRAINT_EQ_MAPPING[name])
+
+    def add_variable(
+        self,
+        name: str,
+        lower_bound: Optional[float] = None,
+        upper_bound: Optional[float] = None,
+    ):
+        itvar = ITERATION_VAR_MAPPING[name]
+        self.ixc.append(itvar)
+
+        if lower_bound or upper_bound:
+            var_bounds = {}
+            if lower_bound:
+                var_bounds["l"] = lower_bound
+            if upper_bound:
+                var_bounds["u"] = upper_bound
+            self.bounds[str(itvar)] = var_bounds
