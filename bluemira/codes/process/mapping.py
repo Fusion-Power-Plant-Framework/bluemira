@@ -25,6 +25,210 @@ PROCESS mappings
 from bluemira.codes.utilities import Model, create_mapping
 
 
+class PlasmaGeometryModel(Model):
+    """
+    Switch for plasma geometry
+
+    PROCESS variable name: "ishape"
+    """
+
+    HENDER_K_D_100 = 0
+    GALAMBOS_K_D_95 = 1
+    ZOHM_ITER = 2
+    ZOHM_ITER_D_95 = 3
+    HENDER_K_D_95 = 4
+    MAST_95 = 5
+    MAST_100 = 6
+    FIESTA_95 = 7
+    FIESTA_100 = 8
+
+
+class PlasmaProfileModel(Model):
+    """
+    Switch for plasma profile model
+
+    PROCESS variable name: "ipedestal"
+    """
+
+    NO_PEDESTAL = 0
+    PEDESTAL_GW = 1
+    PLASMOD_GW = 2
+    PLASMOD = 3
+
+
+class BetaLimitModel(Model):
+    """
+    Switch for the plasma beta limit model
+
+    PROCESS variable name: "iculbl"
+    """
+
+    TOTAL = 0  # Including fast ion contribution
+    THERMAL = 1
+    THERMAL_NBI = 2
+    TOTAL_TF = 3  # Calculated using only the toroidal field
+
+
+class BetaGScalingModel(Model):
+    """
+    Switch for the beta g coefficient dnbeta model
+
+    PROCESS variable name: "gtscale"
+
+    NOTE: Over-ridden if iprofile = 1
+    """
+
+    INPUT = 0  # dnbeta is an input
+    CONVENTIONAL = 1
+    MENARD_ST = 2
+
+
+class AlphaPressureModel(Model):
+    """
+    Switch for the pressure contribution from fast alphas
+
+    PROCESS variable name: "ifalphap"
+    """
+
+    HENDER = 0
+    LUX = 1
+
+
+class DensityLimitModel(Model):
+    """
+    Switch for the density limit model
+
+    PROCESS variable name: "idensl"
+    """
+
+    ASDEX = 1
+    BORRASS_ITER_I = 2
+    BORRASS_ITER_II = 3
+    JET_RADIATION = 4
+    JET_SIMPLE = 5
+    HUGILL_MURAKAMI = 6
+    GREENWALD = 7
+
+
+class PlasmaCurrentScalingLaw(Model):
+    """
+    Switch for plasma current scaling law
+
+    PROCESS variable name: "icurr"
+    """
+
+    PENG = 1
+    PENG_DN = 2
+    ITER_SIMPLE = 3
+    ITER_REVISED = 4  # Recommended for iprofile = 1
+    TODD_I = 5
+    TODD_II = 6
+    CONNOR_HASTIE = 7
+    SAUTER = 8
+    FIESTA = 9
+
+
+class ConfinementTimeScalingLaw(Model):
+    """
+    Switch for the energy confinement time scaling law
+
+    PROCESS variable name: "isc"
+    """
+
+    NEO_ALCATOR_OHMIC = 1
+    MIRNOV_H_MODE = 2
+    MEREZHKIN_MUHKOVATOV_L_MODE = 3
+    SHIMOMURA_H_MODE = 4
+    KAYE_GOLDSTON_L_MODE = 5
+    ITER_89_P_L_MODE = 6
+    ITER_89_O_L_MODE = 7
+    REBUT_LALLIA_L_MODE = 8
+    GOLDSTON_L_MODE = 9
+    T10_L_MODE = 10
+    JAERI_88_L_MODE = 11
+    KAYE_BIG_COMPLEX_L_MODE = 12
+    ITER_H90_P_H_MODE = 13
+    ITER_MIX = 14  # Minimum of 6 and 7
+    RIEDEL_L_MODE = 15
+    CHRISTIANSEN_L_MODE = 16
+    LACKNER_GOTTARDI_L_MODE = 17
+    NEO_KAYE_L_MODE = 18
+    RIEDEL_H_MODE = 19
+    ITER_H90_P_H_MODE_AMENDED = 20
+    LHD_STELLARATOR = 21
+    GRYO_RED_BOHM_STELLARATOR = 22
+    LACKNER_GOTTARDI_STELLARATOR = 23
+    ITER_93H_H_MODE = 24
+    TITAN_RFP = 25
+    ITER_H97_P_NO_ELM_H_MODE = 26
+    ITER_H97_P_ELMY_H_MODE = 27
+    ITER_96P_L_MODE = 28
+    VALOVIC_ELMY_H_MODE = 29
+    KAYE_PPPL98_L_MODE = 30
+    ITERH_PB98P_H_MODE = 31
+    IPB98_Y_H_MODE = 32
+    IPB98_Y1_H_MODE = 33
+    IPB98_Y2_H_MODE = 34
+    IPB98_Y3_H_MODE = 35
+    IPB98_Y4_H_MODE = 36
+    ISS95_STELLARATOR = 37
+    ISS04_STELLARATOR = 38
+    DS03_H_MODE = 39
+    MURARI_H_MODE = 40
+    PETTY_H_MODE = 41
+    LANG_H_MODE = 42
+    HUBBARD_NOM_I_MODE = 43
+    HUBBARD_LOW_I_MODE = 44
+    HUBBARD_HI_I_MODE = 45
+    NSTX_H_MODE = 46
+    NSTX_PETTY_H_MODE = 47
+    NSTX_GB_H_MODE = 48
+    INPUT = 49  # tauee_in
+
+
+class BootstrapCurrentScalingLaw(Model):
+    """
+    Switch for the model to calculate bootstrap fraction
+
+    PROCESS variable name: "ibss"
+    """
+
+    ITER = 1
+    GENERAL = 2
+    NUMERICAL = 3
+    SAUTER = 4
+
+
+class LHThreshholdScalingLaw(Model):
+    """
+    Switch for the model to calculate the L-H power threshhold
+
+    PROCESS variable name: "ilhthresh"
+    """
+
+    ITER_1996_NOM = 1
+    ITER_1996_LOW = 2
+    ITER_1996_HI = 3
+    ITER_1997 = 4
+    ITER_1997_K = 5
+    MARTIN_NOM = 6
+    MARTIN_HI = 7
+    MARTIN_LOW = 8
+    SNIPES_NOM = 9
+    SNIPES_HI = 10
+    SNIPES_LOW = 11
+    SNIPES_CLOSED_DIVERTOR_NOM = 12
+    SNIPES_CLOSED_DIVERTOR_HI = 13
+    SNIPES_CLOSED_DIVERTOR_LOW = 14
+    HUBBARD_LI_NOM = 15
+    HUBBARD_LI_HI = 16
+    HUBBARD_LI_LOW = 17
+    HUBBARD_2017_LI = 18
+    MARTIN_ACORRECT_NOM = 19
+    MARTIN_ACORRECT_HI = 20
+    MARTIN_ACORRECT_LOW = 21
+
+
 class CurrentDriveEfficiencyModel(Model):
     """
     Switch for current drive efficiency model:
