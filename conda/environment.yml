@@ -1,4 +1,4 @@
-name: bluemira
+name: bluemira-openmc
 channels:
   - conda-forge
   - nodefaults
@@ -22,6 +22,7 @@ dependencies:
   - python=3.8
   - freecad=0.21.2
   - fenics=2019.1.0
+  - openmc=0.13
   - graphviz
   - pip
   - pip:
