@@ -25,6 +25,7 @@ Parameter classes/structures for Process
 from dataclasses import dataclass, field, fields
 from typing import Dict, Generator, List, Optional, Tuple, Union
 
+from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process.api import _INVariable
 
 
@@ -663,8 +664,10 @@ class PROCESSTemplateBuilder:
         constraint = CONSTRAINT_EQ_MAPPING.get(name, None)
         if not constraint:
             raise ValueError(f"There is no constraint equation: '{name}'")
-
-        self.icc.append(constraint)
+        if constraint in self.icc:
+            bluemira_warn(f"Constraint {name} is already in the constraint list.")
+        else:
+            self.icc.append(constraint)
 
     def add_variable(
         self,
@@ -680,8 +683,19 @@ class PROCESSTemplateBuilder:
         if not itvar:
             raise ValueError(f"There is no iteration variable: '{name}'")
 
-        self.ixc.append(itvar)
-        self.values[name] = value
+        if itvar in self.ixc:
+            bluemira_warn(
+                "Iterable variable {name} is already in the variable list. Updating value and bounds."
+            )
+            self.values[name] = value
+            if lower_bound:
+                self.bounds[str(itvar)]["l"] = lower_bound
+            if upper_bound:
+                self.bounds[str(itvar)]["u"] = upper_bound
+
+        else:
+            self.ixc.append(itvar)
+            self.values[name] = value
 
         if lower_bound or upper_bound:
             var_bounds = {}
