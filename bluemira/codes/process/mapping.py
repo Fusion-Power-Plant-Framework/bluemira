@@ -229,6 +229,17 @@ class LHThreshholdScalingLaw(Model):
     MARTIN_ACORRECT_LOW = 21
 
 
+class PlasmaWallGapModel(Model):
+    """
+    Switch to select plasma-wall gap model
+
+    PROCESS variable name: "iscrp"
+    """
+
+    TEN_PERCENT = 0
+    INPUT = 1  # scrapli and scraplo are inputs
+
+
 class CurrentDriveEfficiencyModel(Model):
     """
     Switch for current drive efficiency model:
