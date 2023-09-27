@@ -24,65 +24,10 @@ from typing import Dict, TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes import plot_radial_build, systems_code_solver
-from bluemira.codes.process._inputs import ProcessInputs
+from bluemira.codes.process._inputs import ProcessInputs, PROCESSTemplateBuilder
 
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
-
-CONSTRAINT_EQS = [
-    1,  # Beta Consistency
-    # JUSTIFICATION: Consistency equations should always be on
-    2,  # Global Power Balance Consistency
-    # JUSTIFICATION: Consistency equations should always be on
-    5,  # Density Upper Limit
-    # JUSTIFICATION: Used to enforce Greenwald limit
-    8,  # Neutron wall load upper limit
-    # JUSTIFICATION: To keep component lifetime acceptable
-    11,  # Radial Build Consistency
-    # JUSTIFICATION: Consistency equations should always be on
-    13,  # Burn time lower limit
-    # JUSTIFICATION: Required minimum burn time
-    15,  # L-H Power Threshold Limit
-    # JUSTIFICATION: Required to be in H-mode
-    16,  # Net electric power lower limit
-    # JUSTIFICATION: Required to generate net electricity
-    24,  # Beta Upper Limit
-    # JUSTIFICATION: Limit for plasma stability
-    # 25, # Max TF field
-    # JUSTIFICATION: switch off
-    26,  # Central solenoid EOF current density upper limit
-    # JUSTIFICATION: enforce current limits on inductive current drive
-    27,  # Central solenoid BOP current density upper limit
-    # JUSTIFICATION: enforce current limits on inductive current drive
-    30,  # Injection Power Upper Limit
-    # JUSTIFICATION: Limit for plasma stability
-    31,  # TF coil case stress upper limit
-    # JUSTIFICATION: The support structure must hold
-    32,  # TF WP steel jacket/conduit stress upper limit
-    # JUSTIFICATION: The turn support structure must hold
-    33,  # TF superconductor operating current / critical current density
-    # JUSTIFICATION: A quench must be avoided
-    34,  # Dump voltage upper limit
-    # JUSTIFICATION: Quench protection constraint
-    35,  # J_winding pack
-    # JUSTIFICATION: Constraint of TF engineering desgin
-    36,  # TF temperature marg
-    # JUSTIFICATION: Constraint of TF engineering desgin
-    60,  # OH coil temp margin
-    # JUSTIFICATION: Constraint of CS engineering desgin
-    62,  # taup/taueff ratio of particle to energy confinement times
-    # JUSTIFICATION: Used to constrain helium fraction
-    65,  # dump time by VV stresses
-    # JUSTIFICATION: Quench protection constraint
-    68,  # Pseparatrix Bt / q A R upper limit
-    # JUSTIICATION: Divertor protection
-    72,  # OH stress limit
-    # JUSTIFICATION: CS coil structure must hold
-    81,  # ne(0) > ne(ped) constraint
-    # JUSTIFICATION: Prevents unrealistic density profiles
-    90,  # CS fatigue constraints
-    # JUSTIFICATION: Enforce number of cycles over lifetime
-]
 
 ITERATION_VARS = [
     2,  # Toroidal field on axis (T)
@@ -157,9 +102,46 @@ BOUNDS = {
     "154": {"u": "0.95"},  # fne0
 }
 
+template_builder = PROCESSTemplateBuilder()
+template_builder.set_minimisation_objective("rmajor")
+
+for constraint in [
+    "beta_consistency",
+    "global_power_consistency",
+    "radial_build_consistency",
+    "confinement_ratio_lower_limit",
+    "density_upper_limit",
+    "density_profile_sanity",
+    "beta_upper_limit",
+    "NWL_upper_limit",
+    "burn_time_lower_limit",
+    "net_electric_lower_limit" "LH_threshhold_limit",
+    "PsepBqAR_upper_limit",
+    "Pinj_upper_limit",
+    "TF_case_stress_upper_limit" "TF_jacket_stress_upper_limit",
+    "TF_jcrit_ratio_upper_limit",
+    "TF_dump_voltage_upper_limit",
+    "TF_current_density_upper_limit",
+    "TF_temp_margin_lower_limit",
+    "CS_fatigue",
+    "CS_stress_upper_limit",
+    "CS_temp_margin_lower_limit",
+    "CS_EOF_density_limit",
+    "CS_BOP_density_limit",
+]:
+    template_builder.add_constraint(constraint)
+
+template_builder.add_variable("rmajor", lower_bound=5.0, upper_bound=20.0)
+template_builder.add_variable("bt", lower_bound=2.0, upper_bound=20.0)
+template_builder.add_variable("te", 12.0, upper_bound=150.0)
+template_builder.add_variable("q", 3.8, lower_bound=3.8)
+# ETC
+
+template = template_builder.make_inputs()
+
+
 EUDEMO_PROCESS_INPUTS = ProcessInputs(
     bounds=BOUNDS,
-    icc=CONSTRAINT_EQS,
     ixc=ITERATION_VARS,
     flhthresh=1.2,
     bt=5.2652e00,
