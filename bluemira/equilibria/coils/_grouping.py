@@ -167,9 +167,13 @@ class CoilGroup(CoilGroupFieldsMixin):
         kwargs:
             passed to matplotlib's Axes.plot
         """
-        return CoilGroupPlotter(
-            self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
-        )
+        if self.ctype == CoilType.DUM:
+            # Do not plot if it is a dummy coil
+            pass
+        else:
+            return CoilGroupPlotter(
+                self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
+            )
 
     def fix_sizes(self):
         """
@@ -298,7 +302,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                     current=0,
                     dx=0,
                     dz=0,
-                    ctype="PF",
+                    ctype="DUM",
                     j_max=0,
                     b_max=0,
                 )
