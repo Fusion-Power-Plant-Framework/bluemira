@@ -240,6 +240,153 @@ class PlasmaWallGapModel(Model):
     INPUT = 1  # scrapli and scraplo are inputs
 
 
+class BlanketModel(Model):
+    """
+    Switch to select the blanket model
+
+    PROCESS variable name: "blktmodel"
+    """
+
+    CCFE_HCPB = 1
+    KIT_HCPB = 2
+    CCFE_HCPB_TBR = 3
+
+
+class TFCSTopologyModel(Model):
+    """
+    Switch to select the TF-CS topology
+    """
+
+    ITER = 0
+    INSANITY = 1
+
+
+class TFCoilConductorTechnology(Model):
+    """
+    Switch for TF coil conductor model:
+
+    0 - copper
+    1 - superconductor
+    2 - Cryogenic aluminium
+
+    PROCESS variable name: "i_tf_sup"
+    """
+
+    COPPER = 0
+    SC = 1
+    CRYO_AL = 2
+
+
+class TFSuperconductorModel(Model):
+    """
+    Switch for the TF superconductor model
+
+    PROCESS variable name: "i_tf_sc_mat"
+    """
+
+    NB3SN_ITER_STD = 1
+    BI_2212 = 2
+    NBTI = 3
+    NB3SN_ITER_INPUT = 4  # User-defined critical parameters
+    NB3SN_WST = 5
+    REBCO_CROCO = 6
+    NBTI_DGL = 7
+    REBCO_DGL = 8
+    REBCO_ZHAI = 9
+
+
+class TFCasingGeometryModel(Model):
+    """
+    Switch for the TF casing geometry model
+
+    PROCESS variable name: "i_tf_case_geom"
+    """
+
+    CURVED = 0
+    FLAT = 1
+
+
+class TFWindingPackGeometryModel(Model):
+    """
+    Switch for the TF winding pack geometry model
+
+    PROCESS variable name: "i_tf_wp_geom"
+    """
+
+    RECTANGULAR = 0
+    DOUBLE_RECTANGULAR = 1
+    TRAPEZOIDAL = 2
+
+
+class TFWindingPackTurnModel(Model):
+    """
+    Switch for the TF winding pack turn model
+
+    PROCESS variable name: "i_tf_turns_integer"
+    """
+
+    CURRENT_PER_TURN = 0  # set cpttf or t_cable_tf or t_turn_tf
+    INTEGER_TURN = 1  # set n_layer and n_pancake
+
+
+class TFCoilShapeModel(Model):
+    """
+    Switch for the TF coil shape model
+
+    PROCESS variable name: "i_tf_shape"
+    """
+
+    PRINCETON = 1
+    PICTURE_FRAME = 2
+
+
+class ResistiveCentrepostModel(Model):
+    """
+    Swtich for the resistive centrepost model
+
+    PROCESS variable name: "i_r_cp_top"
+    """
+
+    CALCULATED = 0
+    INPUT = 1
+    MID_TOP_RATIO = 2
+
+
+class TFCoilJointsModel(Model):
+    """
+    Switch for the TF coil joints
+
+    PROCESS variable name: "i_cp_joints"
+    """
+
+    NO_JOINTS = 0
+    SLIDING_JOINTS = 1
+
+
+class TFStressModel(Model):
+    """
+    Switch for the TF inboard midplane stress model
+
+    PROCESS variable name: "i_tf_stress_model"
+    """
+
+    GEN_PLANE_STRAIN = 0
+    PLANE_STRESS = 1
+    GEN_PLANE_STRAIN_NEW = 2
+
+
+class TFCoilSupportModel(Model):
+    """
+    Switch for the TF inboard coil support model
+
+    PROCESS variable name: "i_tf_bucking"
+    """
+
+    NO_SUPPORT = 0
+    BUCKED = 1
+    BUCKED_WEDGED = 2
+
+
 class CurrentDriveEfficiencyModel(Model):
     """
     Switch for current drive efficiency model:
@@ -270,22 +417,6 @@ class CurrentDriveEfficiencyModel(Model):
     ECRH_UI_GAM = 10
     ECRH_HARE = 11
     EBW_UI = 12
-
-
-class TFCoilConductorTechnology(Model):
-    """
-    Switch for TF coil conductor model:
-
-    0 - copper
-    1 - superconductor
-    2 - Cryogenic aluminium
-
-    PROCESS variable name: "i_tf_sup"
-    """
-
-    COPPER = 0
-    SC = 1
-    CRYO_AL = 2
 
 
 IN_mappings = {
