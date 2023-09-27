@@ -369,6 +369,11 @@ ITERATION_VAR_MAPPING = {}
 
 
 class PROCESSTemplateBuilder:
+    """
+    This is a patch to make PROCESS a little easier to work with before
+    they write a Python API
+    """
+
     def __init__(self):
         self.bounds: Dict[str, Dict[str, str]] = {}
         self.icc: List[int] = []
@@ -376,9 +381,15 @@ class PROCESSTemplateBuilder:
         self.ioptimiz: int = 1
 
     def set_objective(self, name: str):
+        """
+        Set the objective equation to use when running PROCESS
+        """
         self.ioptimiz = OBJECTIVE_EQ_MAPPING[name]
 
     def add_constraint(self, name: str):
+        """
+        Add a constraint to the PROCESS run
+        """
         self.icc.append(CONSTRAINT_EQ_MAPPING[name])
 
     def add_variable(
@@ -387,6 +398,9 @@ class PROCESSTemplateBuilder:
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
     ):
+        """
+        Add an iteration variable to the PROCESS run
+        """
         itvar = ITERATION_VAR_MAPPING[name]
         self.ixc.append(itvar)
 
