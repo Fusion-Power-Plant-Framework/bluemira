@@ -20,6 +20,7 @@ numba==0.57.1
 numba-scipy==0.3.1
 numexpr==2.8.5
 numpy==1.22.4
+openmc_data==0.2.2
 packaging==23.1
 pandas==2.0.3
 periodictable==1.6.1

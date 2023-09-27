@@ -86,6 +86,7 @@ openmoc = [
 openmc = [
     "OpenMC @git+https://github.com/openmc-dev/openmc.git",
     "parametric-plasma-source @git+https://github.com/open-radiation-sources/parametric-plasma-source.git",
+    "openmc_data",
 ]
 process = [
     "cmake>=3.13.0",
