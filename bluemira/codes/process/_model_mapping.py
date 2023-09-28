@@ -411,6 +411,38 @@ class OperationModel(PROCESSModel):
     PULSED = 1
 
 
+class PulseTimingModel(PROCESSModel):
+    """
+    Switch to control pulse timing model
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "pulse_timings"
+
+    RAMP_RATE = 0  # tramp, tqnch
+    ITVAR_INPUT = 1  # tramp/tqnch tohs
+
+
+class PowerFlowModel(PROCESSModel):
+    """
+    Switch to control power flow model
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ipowerflow"
+
+    SIMPLE = 0
+    STELLARATOR = 1
+
+
 class ThermalStorageModel(PROCESSModel):
     """
     Switch to et the power cycle thermal storage model
@@ -948,3 +980,19 @@ class CostModel(PROCESSModel):
 
     TETRA_1990 = 0
     KOVARI_2015 = 1
+
+
+class OutputCostsSwitch(PROCESSModel):
+    """
+    Switch to control whether or not cost information is output
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "output_costs"
+
+    NO = 0
+    YES = 1

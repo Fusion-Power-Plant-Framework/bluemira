@@ -224,7 +224,7 @@ ITERATION_VAR_MAPPING = {
     "tfcth": 13,
     "fwalld": 14,
     "fvs": 15,
-    "ochth": 16,
+    "ohcth": 16,
     "tdwell": 17,
     "q": 18,
     "enbeam": 19,
