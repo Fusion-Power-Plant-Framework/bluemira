@@ -34,6 +34,9 @@ class classproperty:  # noqa: N801
         self.func = func
 
     def __get__(self, obj, owner):
+        """
+        Apply function to owner
+        """
         return self.func(owner)
 
 
