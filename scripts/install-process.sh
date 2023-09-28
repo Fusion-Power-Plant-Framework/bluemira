@@ -35,33 +35,9 @@ if [ -d build ]; then
   rm -rf build
 fi
 
-# Come out of bluemira conda and make a new environment for our build
-conda deactivate
-conda env remove -n bluemira-process-build || true
-conda create -y -n bluemira-process-build python=3.8 numpy=1.21.5
-conda activate bluemira-process-build
-
-# Install requirements into the build environment
-pip install -r ../bluemira/requirements.txt
-pip install -r requirements.txt --no-cache-dir
-pip install --upgrade --no-cache-dir -e ../bluemira/'[process]'
-
 # Do the PROCESS build
-cmake -S . -B build
+cmake -S . -B build -DRELEASE=TRUE
 cmake --build build
-
-# Deactivate build environment and reactivate bluemira
-conda deactivate && conda activate bluemira
-
-# Install PROCESS dependencies into bluemira environment
-pip install -r requirements.txt --no-cache-dir
-pip install --upgrade --no-cache-dir -e ../bluemira/'[process]'
-
-# Install PROCESS into bluemira environment
-pip install .
-
-# Clean up our build environment
-conda env remove -n bluemira-process-build || true
 
 # The following suggests how to install PROCESS via a manylinux wheel, if you have docker
 # installed.
