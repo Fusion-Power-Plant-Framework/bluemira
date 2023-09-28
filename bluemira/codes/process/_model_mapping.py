@@ -74,6 +74,8 @@ class PlasmaGeometryModel(PROCESSModel):
     MAST_100 = 6
     FIESTA_95 = 7
     FIESTA_100 = 8
+    A_LI3 = 9  # Undocumented
+    CREATE_A_M_S = 10  # Undocumented, but this is what I gave them for EU-DEMO
 
 
 class PlasmaNullConfigurationModel(PROCESSModel):
@@ -160,7 +162,7 @@ class AlphaPressureModel(PROCESSModel):
         return "ifalphap"
 
     HENDER = 0
-    LUX = 1
+    WARD = 1
 
 
 class DensityLimitModel(PROCESSModel):

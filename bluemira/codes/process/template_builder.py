@@ -28,7 +28,6 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 if TYPE_CHECKING:
     from enum import EnumType
-    from bluemira.codes.process._model_mapping import PROCESSModel
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process._equation_variable_mapping import (
@@ -88,11 +87,11 @@ class PROCESSTemplateBuilder:
             )
         self.minmax = -minmax
 
-    def set_model(self, model: PROCESSModel, choice: EnumType):
+    def set_model(self, model_choice: EnumType):
         """
         Set a model switch to the PROCESS run
         """
-        self.models[model.switch_name] = choice.value
+        self.models[model_choice.switch_name] = model_choice.value
 
     def add_constraint(self, name: str):
         """
@@ -174,7 +173,16 @@ class PROCESSTemplateBuilder:
         """
         Add a fixed input value to the PROCESS run
         """
+        if name in self.values.keys():
+            bluemira_warn(f"Over-writing {name} from {self.values[name]} to {value}")
         self.values[name] = value
+
+    def add_input_values(self, mapping: Dict[str, float]):
+        """
+        Add a dictionary of fixed input values to the PROCESS run
+        """
+        for name, value in mapping:
+            self.add_input_value(name, value)
 
     def make_inputs(self) -> Dict[str, _INVariable]:
         """
