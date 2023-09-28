@@ -24,7 +24,7 @@ PROCESS IN.DAT template builder
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:
     from enum import EnumType
@@ -41,6 +41,7 @@ from bluemira.codes.process._equation_variable_mapping import (
     VAR_ITERATION_MAPPING,
 )
 from bluemira.codes.process._inputs import ProcessInputs
+from bluemira.codes.process.api import Impurities
 
 
 class PROCESSTemplateBuilder:
@@ -51,11 +52,12 @@ class PROCESSTemplateBuilder:
 
     def __init__(self):
         self.models: Dict[str, int] = {}
-        self.values: Dict[str, Union[int, float]] = {}
+        self.values: Dict[str, Any] = {}
         self.variables: Dict[str, float] = {}
         self.bounds: Dict[str, Dict[str, str]] = {}
         self.icc: List[int] = []
         self.ixc: List[int] = []
+        self.fimp: List[float] = 14 * [0.0]
 
         self.minmax: int = 0
         self.ioptimiz: bool = 0
@@ -164,7 +166,8 @@ class PROCESSTemplateBuilder:
             bluemira_warn(
                 f"Iterable variable {name} is already in the variable list. Updating value and bounds."
             )
-            self.variables[name] = value
+            self._add_to_dict(self.variables, name, value)
+
             if lower_bound:
                 self.bounds[str(itvar)]["l"] = lower_bound
             if upper_bound:
@@ -172,7 +175,7 @@ class PROCESSTemplateBuilder:
 
         else:
             self.ixc.append(itvar)
-            self.variables[name] = value
+            self._add_to_dict(self.variables, name, value)
 
         if lower_bound or upper_bound:
             var_bounds = {}
@@ -188,14 +191,29 @@ class PROCESSTemplateBuilder:
         """
         if name in self.values:
             bluemira_warn(f"Over-writing {name} from {self.values[name]} to {value}")
-        self.values[name] = value
+        self._add_to_dict(self.values, name, value)
 
-    def add_input_values(self, mapping: Dict[str, float]):
+    def add_input_values(self, mapping: Dict[str, Any]):
         """
         Add a dictionary of fixed input values to the PROCESS run
         """
         for name, value in mapping.items():
             self.add_input_value(name, value)
+
+    def add_impurity(self, impurity: EnumType, value: float):
+        """
+        Add an impurity concentration
+        """
+        idx = impurity.value - 1
+        self.fimp[idx] = value
+
+    def _add_to_dict(self, mapping: Dict[str, Any], name: str, value: Any):
+        if "fimp(" in name:
+            num = int(name.strip("fimp(")[:2])
+            impurity = Impurities(num)
+            self.add_impurity(impurity, value)
+        else:
+            mapping[name] = value
 
     def make_inputs(self) -> Dict[str, _INVariable]:
         """

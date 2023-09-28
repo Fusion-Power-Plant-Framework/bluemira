@@ -65,6 +65,7 @@ from bluemira.codes.process._model_mapping import (
     TFWindingPackGeometryModel,
     TFWindingPackTurnModel,
 )
+from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 
 _PfT = TypeVar("_PfT", bound=ParameterFrame)
@@ -190,6 +191,9 @@ for model_choice in [
 ]:
     template_builder.set_model(model_choice)
 
+template_builder.add_impurity(Impurities.H, 1.0)
+template_builder.add_impurity(Impurities.He, 0.1)
+template_builder.add_impurity(Impurities.W, 5.0e-5)
 
 # Set fixed input values
 template_builder.add_input_values(
