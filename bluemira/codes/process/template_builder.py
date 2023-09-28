@@ -57,7 +57,13 @@ class PROCESSTemplateBuilder:
         self.icc: List[int] = []
         self.ixc: List[int] = []
         self.minmax: int = 0
-        self.ioptimiz: int = 1
+        self.ioptimiz: bool = True
+
+    def toggle_optimisation_mode(self):
+        """
+        Toggle optimisation mode
+        """
+        self.ioptimiz = not self.ioptimiz
 
     def set_minimisation_objective(self, name: str):
         """
@@ -168,16 +174,23 @@ class PROCESSTemplateBuilder:
         """
         Add a fixed input value to the PROCESS run
         """
+        self.values[name] = value
 
     def make_inputs(self) -> Dict[str, _INVariable]:
         """
         Make the ProcessInputs InVariable for the specified template
         """
+        if self.ioptimiz and self.minmax == 0:
+            bluemira_warn(
+                "You are running in optimisation mode, but have not set an objective function."
+            )
+
         return ProcessInputs(
             bounds=self.bounds,
             icc=self.icc,
             ixc=self.ixc,
             minmax=self.minmax,
+            ioptimz=int(self.ioptimiz),
             **self.values,
             **self.models,
             **self.variables,
