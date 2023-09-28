@@ -25,7 +25,7 @@ PROCESS model mappings
 from bluemira.codes.utilities import Model
 
 
-class classproperty:
+class classproperty:  # flake8: N801
     """
     Hacking for properties to work with Enums
     """
