@@ -278,6 +278,11 @@ class ProcessInputs:
     blktmodel: int = 1
     pulse_timings: int = 0
     ipfres: int = 0
+    i_tf_case_geom: int = 1
+    i_tf_sup: int = 1
+    i_tf_shape: int = 1
+    i_tf_wp_geom: int = 0
+    tf_in_cs: int = 0
     life_dpa: float = 70.0  # Not used??
     n_cycle_min: int = 20000
     t_crack_vertical: float = 0.65e-3
