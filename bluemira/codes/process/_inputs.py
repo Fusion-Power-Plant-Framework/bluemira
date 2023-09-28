@@ -165,6 +165,9 @@ class ProcessInputs:
     i_single_null: int = 1
     i_tf_sc_mat: int = 5
     i_tf_turns_integer: int = 1
+    ilhthresh: int = 6
+    snull: int = 1
+    iscrp: int = 1
     iavail: int = 0
     ibss: int = 4
     iculbl: int = 1
@@ -272,6 +275,9 @@ class ProcessInputs:
         default_factory=lambda: [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     )
     iblkt_life: int = 1
+    blktmodel: int = 1
+    pulse_timings: int = 0
+    ipfres: int = 0
     life_dpa: float = 70.0  # Not used??
     n_cycle_min: int = 20000
     t_crack_vertical: float = 0.65e-3
@@ -332,4 +338,4 @@ class ProcessInputs:
 
         """
         return dict(self)
-        return {name: value for name, value in self}
+        return dict(self)

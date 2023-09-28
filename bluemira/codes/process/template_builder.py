@@ -162,7 +162,7 @@ class PROCESSTemplateBuilder:
 
         if itvar in self.ixc:
             bluemira_warn(
-                "Iterable variable {name} is already in the variable list. Updating value and bounds."
+                f"Iterable variable {name} is already in the variable list. Updating value and bounds."
             )
             self.variables[name] = value
             if lower_bound:
@@ -194,7 +194,7 @@ class PROCESSTemplateBuilder:
         """
         Add a dictionary of fixed input values to the PROCESS run
         """
-        for name, value in mapping:
+        for name, value in mapping.items():
             self.add_input_value(name, value)
 
     def make_inputs(self) -> Dict[str, _INVariable]:
