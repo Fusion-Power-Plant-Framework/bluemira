@@ -24,7 +24,6 @@ from typing import Dict, TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes import plot_radial_build, systems_code_solver
-from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._model_mapping import (
     AlphaPressureModel,
     AvailabilityModel,
@@ -292,31 +291,6 @@ template_builder.add_input_values(
 template = template_builder.make_inputs()
 
 
-EUDEMO_PROCESS_INPUTS = ProcessInputs(
-    tdmptf=2.6933e01,
-    pinjalw=50.0,
-    neped=0.678e20,
-    nesep=0.2e20,
-    rhopedn=0.94,
-    rhopedt=0.94,
-    m_s_limit=0.2,
-    hfact=1.1,
-    ishape=10,
-    life_dpa=70.0,
-    pheat=10,
-    gapds=0.02,
-    tbrnmn=7200.0,
-    tburn=7200.0,
-    n_cycle_min=20000,
-    # fimp = [1.0, 0.1, *([0.0] * 10), 0.00044, 5e-05]
-    # ipfloc =[2, 2, 3, 3]
-    # ncls=[1, 1, 2, 2]
-    # cptdin = [*([42200.0] * 4), *([43000.0] * 4)]
-    # rjconpf=[1.1e7, 1.1e7, 6e6, 6e6, 8e6, 8e6, 8e6, 8e6]
-    # zref=[3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-)
-
-
 def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     """
     Update parameters after a radial build is run/read/mocked using PROCESS.
@@ -335,7 +309,7 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     run_mode = build_config.pop("run_mode", "mock")
     plot = build_config.pop("plot", False)
     if run_mode == "run":
-        build_config["template_in_dat"] = EUDEMO_PROCESS_INPUTS.to_invariable()
+        build_config["template_in_dat"] = template
     solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
 
