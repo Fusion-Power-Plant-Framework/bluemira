@@ -77,7 +77,17 @@ class Run(CodesTask):
         """
         self._run_process()
 
+    @staticmethod
+    def flush_callable(line: str) -> bool:
+        """Callable for flushed output"""
+        try:
+            int(line.split("|")[0])
+        except ValueError:
+            return False
+        else:
+            return True
+
     def _run_process(self):
         bluemira_print(f"Running '{PROCESS_NAME}' systems code")
         command = [self.binary, "-i", self.in_dat_path]
-        self._run_subprocess(command)
+        self._run_subprocess(command, flush_callable=self.flush_callable)
