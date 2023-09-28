@@ -541,6 +541,9 @@ class Breakdown(CoilSetMHDState):
             Filename
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
+        user_coils:
+            Coilset provided by the user - for eqdsk with no coilset.
+            Set current, j_max and b_max to zero in user_coils.
         """
         cls._eqdsk, psi, coilset, grid, limiter = super()._get_eqdsk(
             filename, force_symmetry=force_symmetry, user_coils=user_coils
@@ -861,6 +864,9 @@ class Equilibrium(CoilSetMHDState):
             Filename
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
+        user_coils:
+            Coilset provided by the user - for eqdsk with no coilset.
+            Set current, j_max and b_max to zero in user_coils.
         """
         e, psi, coilset, grid, limiter = super()._get_eqdsk(
             filename,
