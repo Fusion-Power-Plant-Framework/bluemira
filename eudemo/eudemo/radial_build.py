@@ -31,9 +31,9 @@ from bluemira.codes.process._model_mapping import (
     BetaLimitModel,
     BlanketModel,
     BootstrapCurrentScalingLaw,
+    CSSuperconductorModel,
     ConfinementTimeScalingLaw,
     CostModel,
-    CSSuperconductorModel,
     CurrentDriveEfficiencyModel,
     DensityLimitModel,
     EPEDScalingModel,
@@ -42,6 +42,7 @@ from bluemira.codes.process._model_mapping import (
     OperationModel,
     PFConductorModel,
     PFSuperconductorModel,
+    PROCESSOptimisationAlgorithm,
     PlasmaCurrentScalingLaw,
     PlasmaGeometryModel,
     PlasmaNullConfigurationModel,
@@ -51,10 +52,11 @@ from bluemira.codes.process._model_mapping import (
     PrimaryPumpingModel,
     SecondaryCycleModel,
     ShieldThermalHeatUse,
+    SolenoidSwitchModel,
+    TFCSTopologyModel,
     TFCasingGeometryModel,
     TFCoilConductorTechnology,
     TFCoilShapeModel,
-    TFCSTopologyModel,
     TFNuclearHeatingModel,
     TFSuperconductorModel,
     TFWindingPackGeometryModel,
@@ -66,6 +68,9 @@ _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
 
 template_builder = PROCESSTemplateBuilder()
+template_builder.set_optimisation_algorithm(PROCESSOptimisationAlgorithm.VMCON)
+template_builder.set_optimisation_numerics(max_iterations=1000, tolerance=1e-8)
+
 template_builder.set_minimisation_objective("rmajor")
 
 for constraint in [
@@ -163,6 +168,7 @@ for model_choice in [
     OperationModel.PULSED,
     PFConductorModel.SUPERCONDUCTING,
     PFSuperconductorModel.NBTI,
+    SolenoidSwitchModel.SOLENOID,
     CSSuperconductorModel.NB3SN_WST,
     TFCasingGeometryModel.FLAT,
     TFCoilConductorTechnology.SC,

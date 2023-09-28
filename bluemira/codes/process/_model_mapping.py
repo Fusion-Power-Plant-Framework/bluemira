@@ -53,6 +53,25 @@ class PROCESSModel(Model):
         raise NotImplementedError(f"{self.__name__} has no 'switch_name' property.")
 
 
+class PROCESSOptimisationAlgorithm(PROCESSModel):
+    """
+    Switch for the optimisation algorithm to use in PROCESS
+
+    # TODO: This switch will be used in future to support
+    alternative optimisation algorithms.
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ioptimz"
+
+    NO_OPTIMISATION = 0
+    VMCON = 1
+
+
 class PlasmaGeometryModel(PROCESSModel):
     """
     Switch for plasma geometry
@@ -651,6 +670,23 @@ class PFSuperconductorModel(PROCESSModel):
     NBTI_DGL = 7
     REBCO_DGL = 8
     REBCO_ZHAI = 9
+
+
+class SolenoidSwitchModel(PROCESSModel):
+    """
+    Switch to control whether or not a central solenoid should be
+    used.
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iohcl"
+
+    NO_SOLENOID = 0
+    SOLENOID = 1
 
 
 class CSSuperconductorModel(PROCESSModel):

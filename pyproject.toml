@@ -323,6 +323,7 @@ ignore-names = [
 ]
 "bluemira/__init__.py" = ["TID252"]
 "bluemira/codes/__init__.py" = ["E402"]
+"bluemira/codes/process/_model_mapping.py" = ["PLR6301"]
 "bluemira/geometry/parameterisations.py" = ["E731"]
 "bluemira/codes/plasmod/api/_outputs.py" = ["N815"]
 "bluemira/codes/plasmod/api/_inputs.py" = ["N815"]

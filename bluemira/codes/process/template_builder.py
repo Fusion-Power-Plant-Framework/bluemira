@@ -29,6 +29,8 @@ from typing import TYPE_CHECKING, Dict, List, Optional, Union
 if TYPE_CHECKING:
     from enum import EnumType
 
+    from bluemira.codes.process.api import _INVariable
+
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process._equation_variable_mapping import (
     CONSTRAINT_EQ_MAPPING,
@@ -39,7 +41,6 @@ from bluemira.codes.process._equation_variable_mapping import (
     VAR_ITERATION_MAPPING,
 )
 from bluemira.codes.process._inputs import ProcessInputs
-from bluemira.codes.process.api import _INVariable
 
 
 class PROCESSTemplateBuilder:
@@ -57,15 +58,15 @@ class PROCESSTemplateBuilder:
         self.ixc: List[int] = []
 
         self.minmax: int = 0
-        self.ioptimiz: bool = True
+        self.ioptimiz: bool = 0
         self.maxcal: int = 1000
         self.epsvmc: float = 1.0e-8
 
-    def toggle_optimisation_mode(self):
+    def set_optimisation_algorithm(self, algorithm_choice: EnumType):
         """
-        Toggle optimisation mode
+        Set the optimisation algorithm to use
         """
-        self.ioptimiz = not self.ioptimiz
+        self.ioptimiz = algorithm_choice.value
 
     def set_optimisation_numerics(
         self, max_iterations: int = 1000, tolerance: float = 1e-8
@@ -115,7 +116,7 @@ class PROCESSTemplateBuilder:
         if constraint in self.icc:
             bluemira_warn(f"Constraint {name} is already in the constraint list.")
 
-        if constraint in FV_CONSTRAINT_ITVAR_MAPPING.keys():
+        if constraint in FV_CONSTRAINT_ITVAR_MAPPING:
             # Sensible (?) defaults. bounds are standard PROCESS for f-values for _most_
             # f-value constraints.
             self.add_fvalue_constraint(name, 0.5, 1e-3, 1.0)
@@ -136,7 +137,7 @@ class PROCESSTemplateBuilder:
         if not constraint:
             raise ValueError(f"There is no constraint equation: '{name}'")
 
-        if constraint not in FV_CONSTRAINT_ITVAR_MAPPING.keys():
+        if constraint not in FV_CONSTRAINT_ITVAR_MAPPING:
             raise ValueError(f"Constraint '{name}' is not an f-value constraint.")
 
         itvar = FV_CONSTRAINT_ITVAR_MAPPING[constraint]
@@ -185,7 +186,7 @@ class PROCESSTemplateBuilder:
         """
         Add a fixed input value to the PROCESS run
         """
-        if name in self.values.keys():
+        if name in self.values:
             bluemira_warn(f"Over-writing {name} from {self.values[name]} to {value}")
         self.values[name] = value
 
@@ -200,7 +201,7 @@ class PROCESSTemplateBuilder:
         """
         Make the ProcessInputs InVariable for the specified template
         """
-        if self.ioptimiz and self.minmax == 0:
+        if self.ioptimiz != 0 and self.minmax == 0:
             bluemira_warn(
                 "You are running in optimisation mode, but have not set an objective function."
             )
