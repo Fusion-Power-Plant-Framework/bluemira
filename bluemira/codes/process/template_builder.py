@@ -22,8 +22,13 @@
 """
 PROCESS IN.DAT template builder
 """
+from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
+
+if TYPE_CHECKING:
+    from enum import EnumType
+    from bluemira.codes.process._model_mapping import PROCESSModel
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process._equation_variable_mapping import (
@@ -45,7 +50,9 @@ class PROCESSTemplateBuilder:
     """
 
     def __init__(self):
-        self.values: Dict[str, float] = {}
+        self.models: Dict[str, int] = {}
+        self.values: Dict[str, Union[int, float]] = {}
+        self.variables: Dict[str, float] = {}
         self.bounds: Dict[str, Dict[str, str]] = {}
         self.icc: List[int] = []
         self.ixc: List[int] = []
@@ -74,6 +81,12 @@ class PROCESSTemplateBuilder:
                 f"Equation {name} can only be used as a minimisation objective."
             )
         self.minmax = -minmax
+
+    def set_model(self, model: PROCESSModel, choice: EnumType):
+        """
+        Set a model switch to the PROCESS run
+        """
+        self.models[model.switch_name] = choice.value
 
     def add_constraint(self, name: str):
         """
@@ -133,7 +146,7 @@ class PROCESSTemplateBuilder:
             bluemira_warn(
                 "Iterable variable {name} is already in the variable list. Updating value and bounds."
             )
-            self.values[name] = value
+            self.variables[name] = value
             if lower_bound:
                 self.bounds[str(itvar)]["l"] = lower_bound
             if upper_bound:
@@ -141,7 +154,7 @@ class PROCESSTemplateBuilder:
 
         else:
             self.ixc.append(itvar)
-            self.values[name] = value
+            self.variables[name] = value
 
         if lower_bound or upper_bound:
             var_bounds = {}
@@ -150,6 +163,11 @@ class PROCESSTemplateBuilder:
             if upper_bound:
                 var_bounds["u"] = upper_bound
             self.bounds[str(itvar)] = var_bounds
+
+    def add_input_value(self, name: str, value: str):
+        """
+        Add a fixed input value to the PROCESS run
+        """
 
     def make_inputs(self) -> Dict[str, _INVariable]:
         """
@@ -161,4 +179,6 @@ class PROCESSTemplateBuilder:
             ixc=self.ixc,
             minmax=self.minmax,
             **self.values,
+            **self.models,
+            **self.variables,
         ).to_invariable()
