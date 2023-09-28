@@ -43,6 +43,17 @@ class PlasmaGeometryModel(Model):
     FIESTA_100 = 8
 
 
+class PlasmaNullConfigurationModel(Model):
+    """
+    Switch for single-null / double-null
+
+    PROCESS variable name: "snull"
+    """
+
+    DOUBLE_NULL = 0
+    SINGLE_NULL = 1
+
+
 class PlasmaProfileModel(Model):
     """
     Switch for plasma profile model
@@ -240,6 +251,29 @@ class PlasmaWallGapModel(Model):
     INPUT = 1  # scrapli and scraplo are inputs
 
 
+class OperationModel(Model):
+    """
+    Switch to set the operation mode
+
+    PROCESS variable name: "lpulse"
+    """
+
+    STEADY_STATE = 0
+    PULSED = 1
+
+
+class ThermalStorageModel(Model):
+    """
+    Switch to et the power cycle thermal storage model
+
+    PROCESS variable name: "istore"
+    """
+
+    INHERENT_STEAM = 1
+    BOILER = 2
+    STEEL = 3  # Obsolete
+
+
 class BlanketModel(Model):
     """
     Switch to select the blanket model
@@ -387,6 +421,98 @@ class TFCoilSupportModel(Model):
     BUCKED_WEDGED = 2
 
 
+class PFConductorModel(Model):
+    """
+    Switch for the PF conductor technology model
+
+    PROCESS variable name: "ipfres"
+    """
+
+    SUPERCONDUCTING = 0
+    RESISTIVE = 1
+
+
+class PFSuperconductorModel(Model):
+    """
+    Switch for the PF superconductor model
+
+    PROCESS variable name: "isumatpf"
+    """
+
+    NB3SN_ITER_STD = 1
+    BI_2212 = 2
+    NBTI = 3
+    NB3SN_ITER_INPUT = 4  # User-defined critical parameters
+    NB3SN_WST = 5
+    REBCO_CROCO = 6
+    NBTI_DGL = 7
+    REBCO_DGL = 8
+    REBCO_ZHAI = 9
+
+
+class CSPrecompressionModel(Model):
+    """
+    Switch to control the existence of pre-compression tie plates in the CS
+
+    PROCESS variable name: "iprecomp"
+    """
+
+    ABSENT = 0
+    PRESENT = 1
+
+
+class DivertorHeatFluxModel(Model):
+    """
+    Switch for the divertor heat flux model
+
+    PROCESS variable name: "i_hldiv"
+    """
+
+    # TODO: What about Kallenbach?
+    INPUT = 0
+    CHAMBER = 1
+    WADE = 2
+
+
+class DivertorThermalHeatUse(Model):
+    """
+    Switch to control if the divertor thermal power is used in the
+    power cycle
+
+    PROCESS variable name: "iprimdiv"
+    """
+
+    LOW_GRADE_HEAT = 0
+    HIGH_GRADE_HEAT = 1
+
+
+class PrimaryPumpingModel(Model):
+    """
+    Switch for the calculation method of the pumping power
+    required for the primary coolant
+
+    PROCESS variable name: "primary_pumping"
+    """
+
+    INPUT = 0
+    FRACTION = 1
+    PRESSURE_DROP = 3
+
+
+class SecondaryCycleModel(Model):
+    """
+    Switch for the calculation of thermal to electric conversion efficiency
+
+    PROCESS variable name: "secondary_cycle"
+    """
+
+    FIXED = 0
+    FIXED_W_DIVERTOR = 1
+    INPUT = 2
+    RANKINE = 3
+    BRAYTON = 4
+
+
 class CurrentDriveEfficiencyModel(Model):
     """
     Switch for current drive efficiency model:
@@ -417,6 +543,51 @@ class CurrentDriveEfficiencyModel(Model):
     ECRH_UI_GAM = 10
     ECRH_HARE = 11
     EBW_UI = 12
+
+
+class PlasmaIgnitionModel(Model):
+    """
+    Switch to control whether or not the plasma is ignited
+
+    PROCESS variable name: "ignite"
+    """
+
+    NOT_IGNITED = 0
+    IGNITED = 1
+
+
+class VacuumPumpingModel(Model):
+    """
+    Switch to control the vacuum pumping technology model
+
+    PROCESS variable name: ntype
+    """
+
+    TURBO_PUMP = 0
+    CRYO_PUMP = 1
+
+
+class AvailabilityModel(Model):
+    """
+    Switch to control the availability model
+
+    PROCESS variable name: "iavail"
+    """
+
+    INPUT = 0
+    TAYLOR_WARD = 1
+    MORRIS = 2
+
+
+class CostModel(Model):
+    """
+    Switch to control the cost model used
+
+    PROCESS variable name: "cost_model"
+    """
+
+    TETRA_1990 = 0
+    KOVARI_2015 = 1
 
 
 IN_mappings = {
