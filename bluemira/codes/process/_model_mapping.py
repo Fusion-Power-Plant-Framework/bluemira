@@ -94,7 +94,7 @@ class PlasmaNullConfigurationModel(PROCESSModel):
     SINGLE_NULL = 1
 
 
-class PlasmaProfileModel(PROCESSModel):
+class PlasmaPedestalModel(PROCESSModel):
     """
     Switch for plasma profile model
     """
@@ -110,6 +110,41 @@ class PlasmaProfileModel(PROCESSModel):
     PEDESTAL_GW = 1
     PLASMOD_GW = 2
     PLASMOD = 3
+
+
+class PlasmaProfileModel(PROCESSModel):
+    """
+    Switch for current profile consistency
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iprofile"
+
+    INPUT = 0  # alphaj, rli
+    CONSISTENT = 1
+
+
+class EPEDScalingModel(PROCESSModel):
+    """
+    Switch for the pedestal scaling model
+
+    TODO: This is largely undocumented and bound to some extent with PLASMOD
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ieped"
+
+    SAARELMA = 1
+    UNKNOWN_1 = 2
+    UNKNOWN_2 = 3
 
 
 class BetaLimitModel(PROCESSModel):
@@ -618,6 +653,29 @@ class PFSuperconductorModel(PROCESSModel):
     REBCO_ZHAI = 9
 
 
+class CSSuperconductorModel(PROCESSModel):
+    """
+    Switch for the CS superconductor model
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "isumatoh"
+
+    NB3SN_ITER_STD = 1
+    BI_2212 = 2
+    NBTI = 3
+    NB3SN_ITER_INPUT = 4  # User-defined critical parameters
+    NB3SN_WST = 5
+    REBCO_CROCO = 6
+    NBTI_DGL = 7
+    REBCO_DGL = 8
+    REBCO_ZHAI = 9
+
+
 class CSPrecompressionModel(PROCESSModel):
     """
     Switch to control the existence of pre-compression tie plates in the CS
@@ -667,6 +725,22 @@ class DivertorThermalHeatUse(PROCESSModel):
 
     LOW_GRADE_HEAT = 0
     HIGH_GRADE_HEAT = 1
+
+
+class ShieldThermalHeatUse(PROCESSModel):
+    """
+    Switch to control if shield (inside VV) is used in the power cycle
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iprimshld"
+
+    NOT_USED = 0
+    LOW_GRADE_HEAT = 1
 
 
 class PrimaryPumpingModel(PROCESSModel):
@@ -773,6 +847,22 @@ class VacuumPumpingModel(PROCESSModel):
 
     TURBO_PUMP = 0
     CRYO_PUMP = 1
+
+
+class FISPACTSwitchModel(PROCESSModel):
+    """
+    Switch to control FISPACT-II neutronics calculations
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ifispact"
+
+    OFF = 0
+    ON = 1  # Presumably...
 
 
 class AvailabilityModel(PROCESSModel):

@@ -55,14 +55,26 @@ class PROCESSTemplateBuilder:
         self.bounds: Dict[str, Dict[str, str]] = {}
         self.icc: List[int] = []
         self.ixc: List[int] = []
+
         self.minmax: int = 0
         self.ioptimiz: bool = True
+        self.maxcal: int = 1000
+        self.epsvmc: float = 1.0e-8
 
     def toggle_optimisation_mode(self):
         """
         Toggle optimisation mode
         """
         self.ioptimiz = not self.ioptimiz
+
+    def set_optimisation_numerics(
+        self, max_iterations: int = 1000, tolerance: float = 1e-8
+    ):
+        """
+        Set optimisation numerics
+        """
+        self.maxcal = max_iterations
+        self.epsvmc = tolerance
 
     def set_minimisation_objective(self, name: str):
         """
@@ -199,6 +211,8 @@ class PROCESSTemplateBuilder:
             ixc=self.ixc,
             minmax=self.minmax,
             ioptimz=int(self.ioptimiz),
+            epsvmc=self.epsvmc,
+            maxcal=self.maxcal,
             **self.values,
             **self.models,
             **self.variables,

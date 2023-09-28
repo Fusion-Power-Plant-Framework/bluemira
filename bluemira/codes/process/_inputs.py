@@ -193,6 +193,7 @@ class ProcessInputs:
     ksic: float = 1.4
     lpulse: int = 1
     lsa: int = 2
+    maxcal: int = 1000
     minmax: int = 1
     n_layer: int = 10
     n_pancake: int = 20
