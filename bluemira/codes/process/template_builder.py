@@ -169,9 +169,9 @@ class PROCESSTemplateBuilder:
             self._add_to_dict(self.variables, name, value)
 
             if lower_bound:
-                self.bounds[str(itvar)]["l"] = lower_bound
+                self.bounds[str(itvar)]["l"] = str(lower_bound)
             if upper_bound:
-                self.bounds[str(itvar)]["u"] = upper_bound
+                self.bounds[str(itvar)]["u"] = str(upper_bound)
 
         else:
             self.ixc.append(itvar)
@@ -180,9 +180,9 @@ class PROCESSTemplateBuilder:
         if lower_bound or upper_bound:
             var_bounds = {}
             if lower_bound:
-                var_bounds["l"] = lower_bound
+                var_bounds["l"] = str(lower_bound)
             if upper_bound:
-                var_bounds["u"] = upper_bound
+                var_bounds["u"] = str(upper_bound)
             self.bounds[str(itvar)] = var_bounds
 
     def add_input_value(self, name: str, value: str):
