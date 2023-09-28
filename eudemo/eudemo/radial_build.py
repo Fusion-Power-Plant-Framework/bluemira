@@ -55,6 +55,7 @@ from bluemira.codes.process._model_mapping import (
     TFCoilConductorTechnology,
     TFCoilShapeModel,
     TFCSTopologyModel,
+    TFNuclearHeatingModel,
     TFSuperconductorModel,
     TFWindingPackGeometryModel,
     TFWindingPackTurnModel,
@@ -116,11 +117,13 @@ template_builder.add_variable("tdmptf", 2.7e1, lower_bound=0.1)
 template_builder.add_variable("vdalw", 10.0, upper_bound=10.0)
 template_builder.add_variable("fimp(13)", 4.4e-4, lower_bound=0.0, upper_bound=0.1)
 
-# Modified bounds (value) w.r.t. defaults [0.001 < 0.5 < 1.0]
+# Modified f-values and bounds w.r.t. defaults [0.001 < 0.5 < 1.0]
 template_builder.add_variable("fdene", 1.2, upper_bound=1.2)
 template_builder.add_variable("fne0", 0.6, upper_bound=0.95)
 template_builder.add_variable("flhthresh", 1.15, lower_bound=1.1, upper_bound=1.2)
 template_builder.add_variable("fcutfsu", 0.88, lower_bound=0.5, upper_bound=0.94)
+
+# Modifying the initial variable vector to improve convergence
 template_builder.add_variable("fpnetel", 1.0)
 template_builder.add_variable("fncycle", 1.0)
 template_builder.add_variable("fstrcase", 1.0)
@@ -135,6 +138,7 @@ template_builder.add_variable("fwalld", 0.13)
 template_builder.add_variable("fstrcond", 0.77)
 template_builder.add_variable("fiooic", 0.72)
 template_builder.add_variable("fjprot", 1.0)
+template_builder.add_variable("fpinj", 1.0)
 
 # Set model switches
 for model_choice in [
@@ -168,6 +172,7 @@ for model_choice in [
     TFWindingPackGeometryModel,
     TFWindingPackTurnModel.INTEGER_TURN,
     FISPACTSwitchModel.OFF,
+    TFNuclearHeatingModel.INPUT,
     CostModel.TETRA_1990,
     AvailabilityModel.INPUT,
 ]:
@@ -177,24 +182,94 @@ for model_choice in [
 # Set fixed input values
 template_builder.add_input_values(
     {
+        # Profile parameterisation inputs
         "alphan": 1.0,
         "alphat": 1.45,
-        "cfactr": 0.75,  # Ha!
+        "rhopedn": 0.94,
+        "rhopedt": 0.94,
+        "tbeta": 2.0,
+        "teped": 5.5,
+        "tesep": 0.1,
+        "fgwped": 0.85,
+        "neped": 0.678e20,
+        "nesep": 0.2e20,
+        "dnbeta": 3.0,
+        "fkzohm": 1.0245,  # not used..?
+        # Important stuff
+        "pnetelin": 500.0,
+        "tbrnmn": 7.2e3,
+        "sig_tf_case_max": 5.8e8,
+        "sig_tf_wp_max": 5.8e8,
+        "alstroh": 6.6e8,
+        "psepbqarmax": 9.2,
+        "aspect": 3.1,
+        "m_s_limit": 0.1,
+        "q0": 1.0,
+        "ssync": 0.6,
+        "plasma_res_factor": 0.66,
         "gamma": 0.3,
         "hfact": 1.1,
+        "lifedpa": 70.0,
+        # Radial build inputs
+        "tftsgap": 0.05,
+        "d_vv_in": 0.3,
+        "shldith": 0.3,
+        "vvblgap": 0.02,
+        "blnkith": 0.755,
+        "scrapli": 0.225,
+        "scraplo": 0.225,
+        "blnkoth": 0.982,
+        "d_vv_out": 0.3,
+        "shldoth": 0.8,
+        "ddwex": 0.15,
+        "gapomin": 0.2,
+        # Vertical build inputs
+        "d_vv_top": 0.3,
+        "vgap2": 0.05,
+        "shldtth": 0.3,
+        "divfix": 0.621,
+        "d_vv_bot": 0.3,
         "pinjalw": 51.0,
         "gamma_ecrh": 0.3,
         "etaech": 0.4,
-        "n_pancake": 20,
-        "n_layer": 10,
-        "scrapli": 0.225,
-        "scraplo": 0.225,
         "etath": 0.375,
         "etahtp": 0.87,
         "etaiso": 0.9,
         "vfshld": 0.6,
         "coreradius": 0.75,
         "coreradiationfraction": 0.6,
+        "tdwell": 0.0,
+        "tramp": 500.0,
+        # CS / PF coil inputs
+        "t_crack_vertical": 0.004,
+        "fcuohsu": 0.7,
+        "ohhghf": 0.9,
+        "rpf2": -1.825,
+        "cptdin": [4.22e4, 4.22e4, 4.22e4, 4.22e4, 4.3e4, 4.3e4, 4.3e4, 4.3e4],
+        "ipfloc": [2, 2, 3, 3],
+        "ncls": [1, 1, 2, 2],
+        "ngrp": 4,
+        "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
+        "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0],
+        # TF coil inputs
+        "n_tf": 16,
+        "casthi": 0.06,
+        "casths": 0.05,
+        "ripmax": 0.06,
+        "dhecoil": 0.01,
+        "tftmp": 4.75,
+        "thicndut": 0.002,
+        "tinsft": 0.008,
+        "tmargmin": 1.5,
+        "vftf": 0.3,
+        "n_pancake": 20,
+        "n_layer": 10,
+        "qnuc": 1.292e4,
+        # Inputs we don't care about but must specify
+        "cfactr": 0.75,  # Ha!
+        "kappa": 1.848,  # Should be overwritten
+        "triang": 0.5,  # Should be overwritten
+        "walalw": 8.0,  # Should never get even close to this
     }
 )
 

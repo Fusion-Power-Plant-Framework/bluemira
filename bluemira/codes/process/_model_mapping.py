@@ -743,6 +743,22 @@ class ShieldThermalHeatUse(PROCESSModel):
     LOW_GRADE_HEAT = 1
 
 
+class TFNuclearHeatingModel(PROCESSModel):
+    """
+    Switch to control nuclear heating in TF model
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "inuclear"
+
+    FRANCES_FOX = 0
+    INPUT = 1  # qnuc
+
+
 class PrimaryPumpingModel(PROCESSModel):
     """
     Switch for the calculation method of the pumping power
