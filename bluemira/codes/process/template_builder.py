@@ -229,7 +229,7 @@ class PROCESSTemplateBuilder:
             icc=self.icc,
             ixc=self.ixc,
             minmax=self.minmax,
-            ioptimz=int(self.ioptimiz),
+            ioptimz=self.ioptimiz,
             epsvmc=self.epsvmc,
             maxcal=self.maxcal,
             **self.values,
