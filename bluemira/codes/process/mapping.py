@@ -25,6 +25,16 @@ PROCESS mappings
 from bluemira.codes.utilities import Model, create_mapping
 
 
+class PROCESSModel(Model):
+    """
+    Baseclass for PROCESS models
+    """
+
+    @property
+    def switch_name(self) -> str:
+        return ""
+
+
 class PlasmaGeometryModel(Model):
     """
     Switch for plasma geometry
