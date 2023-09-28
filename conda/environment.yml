@@ -1,4 +1,4 @@
-name: bluemira
+name: bluemira-process-pre-numpy-upd
 channels:
   - conda-forge
   - nodefaults
@@ -25,7 +25,7 @@ dependencies:
   - libpng=1.6.37 # malloc crash on 1.6.38
   - hdf5=1.12.1
   - netcdf4=1.6.0
-  - numpy=1.22.4
+  - numpy=1.21.5
   - fenics=2019.1.0
   - MeshPy=2020.1
   - meshio=4.4.5
