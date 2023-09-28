@@ -43,11 +43,11 @@ class PROCESSModel(Model):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
-        raise NotImplementedError(f"{cls.__name__} has no 'switch_name' property.")
+        raise NotImplementedError(f"{self.__name__} has no 'switch_name' property.")
 
 
 class PlasmaGeometryModel(PROCESSModel):
@@ -56,7 +56,7 @@ class PlasmaGeometryModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -79,7 +79,7 @@ class PlasmaNullConfigurationModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -95,7 +95,7 @@ class PlasmaProfileModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -113,7 +113,7 @@ class BetaLimitModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -133,7 +133,7 @@ class BetaGScalingModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -150,7 +150,7 @@ class AlphaPressureModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -166,7 +166,7 @@ class DensityLimitModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -187,7 +187,7 @@ class PlasmaCurrentScalingLaw(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -210,7 +210,7 @@ class ConfinementTimeScalingLaw(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -273,7 +273,7 @@ class BootstrapCurrentScalingLaw(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -291,7 +291,7 @@ class LHThreshholdScalingLaw(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -326,7 +326,7 @@ class PlasmaWallGapModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -342,7 +342,7 @@ class OperationModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -358,7 +358,7 @@ class ThermalStorageModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -375,7 +375,7 @@ class BlanketModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -392,7 +392,7 @@ class TFCSTopologyModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -408,7 +408,7 @@ class TFCoilConductorTechnology(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -425,7 +425,7 @@ class TFSuperconductorModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -448,7 +448,7 @@ class TFCasingGeometryModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -464,7 +464,7 @@ class TFWindingPackGeometryModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -481,7 +481,7 @@ class TFWindingPackTurnModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -497,7 +497,7 @@ class TFCoilShapeModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -513,7 +513,7 @@ class ResistiveCentrepostModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -530,7 +530,7 @@ class TFCoilJointsModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -546,7 +546,7 @@ class TFStressModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -563,7 +563,7 @@ class TFCoilSupportModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -580,7 +580,7 @@ class PFConductorModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -596,7 +596,7 @@ class PFSuperconductorModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -619,7 +619,7 @@ class CSPrecompressionModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -635,7 +635,7 @@ class DivertorHeatFluxModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -654,7 +654,7 @@ class DivertorThermalHeatUse(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -671,7 +671,7 @@ class PrimaryPumpingModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -688,7 +688,7 @@ class SecondaryCycleModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -719,7 +719,7 @@ class CurrentDriveEfficiencyModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -744,7 +744,7 @@ class PlasmaIgnitionModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -760,7 +760,7 @@ class VacuumPumpingModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -776,7 +776,7 @@ class AvailabilityModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
@@ -793,7 +793,7 @@ class CostModel(PROCESSModel):
     """
 
     @classproperty
-    def switch_name(cls) -> str:
+    def switch_name(self) -> str:
         """
         PROCESS switch name
         """
