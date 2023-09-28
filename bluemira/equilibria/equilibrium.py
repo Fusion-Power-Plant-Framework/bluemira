@@ -528,7 +528,9 @@ class Breakdown(CoilSetMHDState):
         self.filename = filename
 
     @classmethod
-    def from_eqdsk(cls, filename: str, force_symmetry: bool):
+    def from_eqdsk(
+        cls, filename: str, force_symmetry: bool, user_coils: Optional[CoilSet] = None
+    ):
         """
         Initialises a Breakdown Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux.
@@ -541,7 +543,7 @@ class Breakdown(CoilSetMHDState):
             Whether or not to force symmetrisation in the CoilSet
         """
         cls._eqdsk, psi, coilset, grid, limiter = super()._get_eqdsk(
-            filename, force_symmetry=force_symmetry
+            filename, force_symmetry=force_symmetry, user_coils=user_coils
         )
         return cls(coilset, grid, limiter=limiter, psi=psi, filename=filename)
 
@@ -839,7 +841,12 @@ class Equilibrium(CoilSetMHDState):
         self._kwargs = {"vcontrol": vcontrol}
 
     @classmethod
-    def from_eqdsk(cls, filename: str, force_symmetry: bool = False):
+    def from_eqdsk(
+        cls,
+        filename: str,
+        force_symmetry: bool = False,
+        user_coils: Optional[CoilSet] = None,
+    ):
         """
         Initialises an Equilibrium Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux. Because of the nature
@@ -856,7 +863,9 @@ class Equilibrium(CoilSetMHDState):
             Whether or not to force symmetrisation in the CoilSet
         """
         e, psi, coilset, grid, limiter = super()._get_eqdsk(
-            filename, force_symmetry=force_symmetry
+            filename,
+            force_symmetry=force_symmetry,
+            user_coils=user_coils,
         )
 
         profiles = CustomProfile.from_eqdsk(filename)
