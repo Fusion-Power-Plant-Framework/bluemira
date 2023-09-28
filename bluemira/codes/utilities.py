@@ -29,7 +29,7 @@ import subprocess
 import threading
 from enum import Enum
 from types import ModuleType
-from typing import Any, Dict, List
+from typing import Any, Callable, Dict, List
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
@@ -133,13 +133,18 @@ class LogPipe(threading.Thread):
 
     """
 
-    def __init__(self, loglevel: str):
+    def __init__(
+        self,
+        loglevel: str,
+        flush_callable: Callable[[str], bool] = lambda line: False,  # noqa: ARG005
+    ):
         super().__init__(daemon=True)
 
         self.logfunc = {"print": bluemira_print_clean, "error": bluemira_error_clean}[
             loglevel
         ]
         self.logfunc_flush = _bluemira_clean_flush
+        self.flush_callable = flush_callable
         self.fd_read, self.fd_write = os.pipe()
         self.pipe = os.fdopen(self.fd_read, encoding="utf-8", errors="ignore")
         self.start()
@@ -155,7 +160,7 @@ class LogPipe(threading.Thread):
         Run the thread and pipe it all into the logger.
         """
         for line in iter(self.pipe.readline, ""):
-            if line.startswith("==>"):
+            if self.flush_callable(line):
                 self.logfunc_flush(line.strip("\n"))
             else:
                 self.logfunc(line)
@@ -169,7 +174,12 @@ class LogPipe(threading.Thread):
         os.close(self.fd_write)
 
 
-def run_subprocess(command: List[str], run_directory: str = ".", **kwargs) -> int:
+def run_subprocess(
+    command: List[str],
+    run_directory: str = ".",
+    flush_callable: Callable[[str], bool] = lambda line: False,  # noqa: ARG005
+    **kwargs,
+) -> int:
     """
     Run a subprocess terminal command piping the output into bluemira's
     logs.
@@ -189,8 +199,8 @@ def run_subprocess(command: List[str], run_directory: str = ".", **kwargs) -> in
     return_code: int
         The return code of the subprocess.
     """
-    stdout = LogPipe("print")
-    stderr = LogPipe("error")
+    stdout = LogPipe("print", flush_callable)
+    stderr = LogPipe("error", flush_callable)
 
     kwargs["cwd"] = run_directory
     kwargs.pop("shell", None)  # Protect against user input
