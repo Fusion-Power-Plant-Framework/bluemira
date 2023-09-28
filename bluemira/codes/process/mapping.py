@@ -22,7 +22,7 @@
 """
 PROCESS mappings
 """
-from bluemira.codes.utilities import Model, create_mapping
+from bluemira.codes.utilities import create_mapping
 
 IN_mappings = {
     "P_el_net": ("pnetelin", "MW"),
@@ -107,8 +107,9 @@ IO_mappings = {
     "tk_vv_in": ("d_vv_in", "m"),
     "tk_sol_ib": ("scrapli", "m"),
     "tk_sol_ob": ("scraplo", "m"),
-    "tk_ts": ("thshield_ob", "m"),
-    "tk_ts": ("thshield_vb", "m"),
+    # Thermal shield thickness is a constant for us
+    # "tk_ts": ("thshield_ob", "m"),
+    # "tk_ts": ("thshield_vb", "m"),
     "tk_ts": ("thshield_ib", "m"),
     "g_cs_tf": ("gapoh", "m"),
     "g_ts_tf": ("tftsgap", "m"),
