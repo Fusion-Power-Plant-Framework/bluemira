@@ -25,22 +25,42 @@ PROCESS model mappings
 from bluemira.codes.utilities import Model
 
 
+class classproperty:
+    """
+    Hacking for properties to work with Enums
+    """
+
+    def __init__(self, func):
+        self.func = func
+
+    def __get__(self, obj, owner):
+        return self.func(owner)
+
+
 class PROCESSModel(Model):
     """
     Baseclass for PROCESS models
     """
 
-    @property
-    def switch_name(self) -> str:
-        return ""
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        raise NotImplementedError(f"{cls.__name__} has no 'switch_name' property.")
 
 
-class PlasmaGeometryModel(Model):
+class PlasmaGeometryModel(PROCESSModel):
     """
     Switch for plasma geometry
-
-    PROCESS variable name: "ishape"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ishape"
 
     HENDER_K_D_100 = 0
     GALAMBOS_K_D_95 = 1
@@ -53,23 +73,33 @@ class PlasmaGeometryModel(Model):
     FIESTA_100 = 8
 
 
-class PlasmaNullConfigurationModel(Model):
+class PlasmaNullConfigurationModel(PROCESSModel):
     """
     Switch for single-null / double-null
-
-    PROCESS variable name: "snull"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "snull"
 
     DOUBLE_NULL = 0
     SINGLE_NULL = 1
 
 
-class PlasmaProfileModel(Model):
+class PlasmaProfileModel(PROCESSModel):
     """
     Switch for plasma profile model
-
-    PROCESS variable name: "ipedestal"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ipedestal"
 
     NO_PEDESTAL = 0
     PEDESTAL_GW = 1
@@ -77,12 +107,17 @@ class PlasmaProfileModel(Model):
     PLASMOD = 3
 
 
-class BetaLimitModel(Model):
+class BetaLimitModel(PROCESSModel):
     """
     Switch for the plasma beta limit model
-
-    PROCESS variable name: "iculbl"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iculbl"
 
     TOTAL = 0  # Including fast ion contribution
     THERMAL = 1
@@ -90,37 +125,52 @@ class BetaLimitModel(Model):
     TOTAL_TF = 3  # Calculated using only the toroidal field
 
 
-class BetaGScalingModel(Model):
+class BetaGScalingModel(PROCESSModel):
     """
     Switch for the beta g coefficient dnbeta model
 
-    PROCESS variable name: "gtscale"
-
     NOTE: Over-ridden if iprofile = 1
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "gtscale"
 
     INPUT = 0  # dnbeta is an input
     CONVENTIONAL = 1
     MENARD_ST = 2
 
 
-class AlphaPressureModel(Model):
+class AlphaPressureModel(PROCESSModel):
     """
     Switch for the pressure contribution from fast alphas
-
-    PROCESS variable name: "ifalphap"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ifalphap"
 
     HENDER = 0
     LUX = 1
 
 
-class DensityLimitModel(Model):
+class DensityLimitModel(PROCESSModel):
     """
     Switch for the density limit model
-
-    PROCESS variable name: "idensl"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "idensl"
 
     ASDEX = 1
     BORRASS_ITER_I = 2
@@ -131,12 +181,17 @@ class DensityLimitModel(Model):
     GREENWALD = 7
 
 
-class PlasmaCurrentScalingLaw(Model):
+class PlasmaCurrentScalingLaw(PROCESSModel):
     """
     Switch for plasma current scaling law
-
-    PROCESS variable name: "icurr"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "icurr"
 
     PENG = 1
     PENG_DN = 2
@@ -149,12 +204,17 @@ class PlasmaCurrentScalingLaw(Model):
     FIESTA = 9
 
 
-class ConfinementTimeScalingLaw(Model):
+class ConfinementTimeScalingLaw(PROCESSModel):
     """
     Switch for the energy confinement time scaling law
-
-    PROCESS variable name: "isc"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "isc"
 
     NEO_ALCATOR_OHMIC = 1
     MIRNOV_H_MODE = 2
@@ -207,12 +267,17 @@ class ConfinementTimeScalingLaw(Model):
     INPUT = 49  # tauee_in
 
 
-class BootstrapCurrentScalingLaw(Model):
+class BootstrapCurrentScalingLaw(PROCESSModel):
     """
     Switch for the model to calculate bootstrap fraction
-
-    PROCESS variable name: "ibss"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ibss"
 
     ITER = 1
     GENERAL = 2
@@ -220,12 +285,17 @@ class BootstrapCurrentScalingLaw(Model):
     SAUTER = 4
 
 
-class LHThreshholdScalingLaw(Model):
+class LHThreshholdScalingLaw(PROCESSModel):
     """
     Switch for the model to calculate the L-H power threshhold
-
-    PROCESS variable name: "ilhthresh"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ilhthresh"
 
     ITER_1996_NOM = 1
     ITER_1996_LOW = 2
@@ -250,83 +320,116 @@ class LHThreshholdScalingLaw(Model):
     MARTIN_ACORRECT_LOW = 21
 
 
-class PlasmaWallGapModel(Model):
+class PlasmaWallGapModel(PROCESSModel):
     """
     Switch to select plasma-wall gap model
-
-    PROCESS variable name: "iscrp"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iscrp"
 
     TEN_PERCENT = 0
     INPUT = 1  # scrapli and scraplo are inputs
 
 
-class OperationModel(Model):
+class OperationModel(PROCESSModel):
     """
     Switch to set the operation mode
-
-    PROCESS variable name: "lpulse"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "lpulse"
 
     STEADY_STATE = 0
     PULSED = 1
 
 
-class ThermalStorageModel(Model):
+class ThermalStorageModel(PROCESSModel):
     """
     Switch to et the power cycle thermal storage model
-
-    PROCESS variable name: "istore"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "istore"
 
     INHERENT_STEAM = 1
     BOILER = 2
     STEEL = 3  # Obsolete
 
 
-class BlanketModel(Model):
+class BlanketModel(PROCESSModel):
     """
     Switch to select the blanket model
-
-    PROCESS variable name: "blktmodel"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "blktmodel"
 
     CCFE_HCPB = 1
     KIT_HCPB = 2
     CCFE_HCPB_TBR = 3
 
 
-class TFCSTopologyModel(Model):
+class TFCSTopologyModel(PROCESSModel):
     """
     Switch to select the TF-CS topology
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "tf_in_cs"
 
     ITER = 0
     INSANITY = 1
 
 
-class TFCoilConductorTechnology(Model):
+class TFCoilConductorTechnology(PROCESSModel):
     """
     Switch for TF coil conductor model:
-
-    0 - copper
-    1 - superconductor
-    2 - Cryogenic aluminium
-
-    PROCESS variable name: "i_tf_sup"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_sup"
 
     COPPER = 0
     SC = 1
     CRYO_AL = 2
 
 
-class TFSuperconductorModel(Model):
+class TFSuperconductorModel(PROCESSModel):
     """
     Switch for the TF superconductor model
-
-    PROCESS variable name: "i_tf_sc_mat"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_sc_mat"
 
     NB3SN_ITER_STD = 1
     BI_2212 = 2
@@ -339,115 +442,165 @@ class TFSuperconductorModel(Model):
     REBCO_ZHAI = 9
 
 
-class TFCasingGeometryModel(Model):
+class TFCasingGeometryModel(PROCESSModel):
     """
     Switch for the TF casing geometry model
-
-    PROCESS variable name: "i_tf_case_geom"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_case_geom"
 
     CURVED = 0
     FLAT = 1
 
 
-class TFWindingPackGeometryModel(Model):
+class TFWindingPackGeometryModel(PROCESSModel):
     """
     Switch for the TF winding pack geometry model
-
-    PROCESS variable name: "i_tf_wp_geom"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_wp_geom"
 
     RECTANGULAR = 0
     DOUBLE_RECTANGULAR = 1
     TRAPEZOIDAL = 2
 
 
-class TFWindingPackTurnModel(Model):
+class TFWindingPackTurnModel(PROCESSModel):
     """
     Switch for the TF winding pack turn model
-
-    PROCESS variable name: "i_tf_turns_integer"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_turns_integer"
 
     CURRENT_PER_TURN = 0  # set cpttf or t_cable_tf or t_turn_tf
     INTEGER_TURN = 1  # set n_layer and n_pancake
 
 
-class TFCoilShapeModel(Model):
+class TFCoilShapeModel(PROCESSModel):
     """
     Switch for the TF coil shape model
-
-    PROCESS variable name: "i_tf_shape"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_shape"
 
     PRINCETON = 1
     PICTURE_FRAME = 2
 
 
-class ResistiveCentrepostModel(Model):
+class ResistiveCentrepostModel(PROCESSModel):
     """
     Swtich for the resistive centrepost model
-
-    PROCESS variable name: "i_r_cp_top"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_r_cp_top"
 
     CALCULATED = 0
     INPUT = 1
     MID_TOP_RATIO = 2
 
 
-class TFCoilJointsModel(Model):
+class TFCoilJointsModel(PROCESSModel):
     """
     Switch for the TF coil joints
-
-    PROCESS variable name: "i_cp_joints"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_cp_joints"
 
     NO_JOINTS = 0
     SLIDING_JOINTS = 1
 
 
-class TFStressModel(Model):
+class TFStressModel(PROCESSModel):
     """
     Switch for the TF inboard midplane stress model
-
-    PROCESS variable name: "i_tf_stress_model"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_stress_model"
 
     GEN_PLANE_STRAIN = 0
     PLANE_STRESS = 1
     GEN_PLANE_STRAIN_NEW = 2
 
 
-class TFCoilSupportModel(Model):
+class TFCoilSupportModel(PROCESSModel):
     """
     Switch for the TF inboard coil support model
-
-    PROCESS variable name: "i_tf_bucking"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_bucking"
 
     NO_SUPPORT = 0
     BUCKED = 1
     BUCKED_WEDGED = 2
 
 
-class PFConductorModel(Model):
+class PFConductorModel(PROCESSModel):
     """
     Switch for the PF conductor technology model
-
-    PROCESS variable name: "ipfres"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ipfres"
 
     SUPERCONDUCTING = 0
     RESISTIVE = 1
 
 
-class PFSuperconductorModel(Model):
+class PFSuperconductorModel(PROCESSModel):
     """
     Switch for the PF superconductor model
-
-    PROCESS variable name: "isumatpf"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "isumatpf"
 
     NB3SN_ITER_STD = 1
     BI_2212 = 2
@@ -460,23 +613,33 @@ class PFSuperconductorModel(Model):
     REBCO_ZHAI = 9
 
 
-class CSPrecompressionModel(Model):
+class CSPrecompressionModel(PROCESSModel):
     """
     Switch to control the existence of pre-compression tie plates in the CS
-
-    PROCESS variable name: "iprecomp"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iprecomp"
 
     ABSENT = 0
     PRESENT = 1
 
 
-class DivertorHeatFluxModel(Model):
+class DivertorHeatFluxModel(PROCESSModel):
     """
     Switch for the divertor heat flux model
-
-    PROCESS variable name: "i_hldiv"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_hldiv"
 
     # TODO: What about Kallenbach?
     INPUT = 0
@@ -484,37 +647,52 @@ class DivertorHeatFluxModel(Model):
     WADE = 2
 
 
-class DivertorThermalHeatUse(Model):
+class DivertorThermalHeatUse(PROCESSModel):
     """
     Switch to control if the divertor thermal power is used in the
     power cycle
-
-    PROCESS variable name: "iprimdiv"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iprimdiv"
 
     LOW_GRADE_HEAT = 0
     HIGH_GRADE_HEAT = 1
 
 
-class PrimaryPumpingModel(Model):
+class PrimaryPumpingModel(PROCESSModel):
     """
     Switch for the calculation method of the pumping power
     required for the primary coolant
-
-    PROCESS variable name: "primary_pumping"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "primary_pumping"
 
     INPUT = 0
     FRACTION = 1
     PRESSURE_DROP = 3
 
 
-class SecondaryCycleModel(Model):
+class SecondaryCycleModel(PROCESSModel):
     """
     Switch for the calculation of thermal to electric conversion efficiency
-
-    PROCESS variable name: "secondary_cycle"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "secondary_cycle"
 
     FIXED = 0
     FIXED_W_DIVERTOR = 1
@@ -523,7 +701,7 @@ class SecondaryCycleModel(Model):
     BRAYTON = 4
 
 
-class CurrentDriveEfficiencyModel(Model):
+class CurrentDriveEfficiencyModel(PROCESSModel):
     """
     Switch for current drive efficiency model:
 
@@ -538,9 +716,14 @@ class CurrentDriveEfficiencyModel(Model):
     10 - ECRH user input gamma
     11 - ECRH "HARE" model (E. Poli, Physics of Plasmas 2019)
     12 - EBW user scaling input. Scaling (S. Freethy)
-
-    PROCESS variable name: "iefrf"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iefrf"
 
     FENSTER_LH = 1
     ICYCCD = 2
@@ -555,46 +738,66 @@ class CurrentDriveEfficiencyModel(Model):
     EBW_UI = 12
 
 
-class PlasmaIgnitionModel(Model):
+class PlasmaIgnitionModel(PROCESSModel):
     """
     Switch to control whether or not the plasma is ignited
-
-    PROCESS variable name: "ignite"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ignite"
 
     NOT_IGNITED = 0
     IGNITED = 1
 
 
-class VacuumPumpingModel(Model):
+class VacuumPumpingModel(PROCESSModel):
     """
     Switch to control the vacuum pumping technology model
-
-    PROCESS variable name: ntype
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ntype"
 
     TURBO_PUMP = 0
     CRYO_PUMP = 1
 
 
-class AvailabilityModel(Model):
+class AvailabilityModel(PROCESSModel):
     """
     Switch to control the availability model
-
-    PROCESS variable name: "iavail"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iavail"
 
     INPUT = 0
     TAYLOR_WARD = 1
     MORRIS = 2
 
 
-class CostModel(Model):
+class CostModel(PROCESSModel):
     """
     Switch to control the cost model used
-
-    PROCESS variable name: "cost_model"
     """
+
+    @classproperty
+    def switch_name(cls) -> str:
+        """
+        PROCESS switch name
+        """
+        return "cost_model"
 
     TETRA_1990 = 0
     KOVARI_2015 = 1
