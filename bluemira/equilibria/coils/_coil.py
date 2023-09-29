@@ -62,7 +62,6 @@ class CoilType(Enum, metaclass=CoilTypeEnumMeta):
 
     PF = auto()
     CS = auto()
-    DUM = auto()
     NONE = auto()
 
 
@@ -73,7 +72,6 @@ class CoilNumber:
 
     __PF_counter: int = 1
     __CS_counter: int = 1
-    __DUM_counter: int = 1
     __no_counter: int = 1
 
     @staticmethod
@@ -100,9 +98,6 @@ class CoilNumber:
         elif ctype == CoilType.PF:
             idx = CoilNumber.__PF_counter
             CoilNumber.__PF_counter += 1
-        elif ctype == CoilType.DUM:
-            idx = CoilNumber.__DUM_counter
-            CoilNumber.__DUM_counter += 1
         else:
             raise ValueError(f"Unknown coil type {ctype}")
 
@@ -245,13 +240,9 @@ class Coil(CoilFieldsMixin):
         kwargs:
             passed to matplotlib's Axes.plot
         """
-        if self.ctype == CoilType.DUM:
-            # Do not plot if it is a dummy coil
-            pass
-        else:
-            return CoilGroupPlotter(
-                self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
-            )
+        return CoilGroupPlotter(
+            self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
+        )
 
     @staticmethod
     def n_coils() -> int:

@@ -46,7 +46,6 @@ from bluemira.equilibria.coils._tools import (
 )
 from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import flatten_iterable, yintercept
 
@@ -167,13 +166,9 @@ class CoilGroup(CoilGroupFieldsMixin):
         kwargs:
             passed to matplotlib's Axes.plot
         """
-        if self.ctype == CoilType.DUM:
-            # Do not plot if it is a dummy coil
-            pass
-        else:
-            return CoilGroupPlotter(
-                self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
-            )
+        return CoilGroupPlotter(
+            self, ax=ax, subcoil=subcoil, label=label, force=force, **kwargs
+        )
 
     def fix_sizes(self):
         """
@@ -291,26 +286,6 @@ class CoilGroup(CoilGroupFieldsMixin):
         pfcoils = []
         cscoils = []
         passivecoils = []
-        if eqdsk.ncoil < 1:
-            grid = Grid.from_eqdsk(eqdsk)
-            dum_xc = [np.min(grid.x), np.max(grid.x), np.max(grid.x), np.min(grid.x)]
-            dum_zc = [np.min(grid.z), np.min(grid.z), np.max(grid.z), np.max(grid.z)]
-            for i in range(4):
-                coil = Coil(
-                    dum_xc[i],
-                    dum_zc[i],
-                    current=0,
-                    dx=0,
-                    dz=0,
-                    ctype="DUM",
-                    j_max=0,
-                    b_max=0,
-                )
-                coil.fix_size()  # Oh ja
-                pfcoils.append(coil)
-            coils = pfcoils
-            bluemira_warn("EQDSK coilset empty - dummy coilset in use.")
-            return cls(*coils)
         for i in range(eqdsk.ncoil):
             dx = eqdsk.dxc[i]
             dz = eqdsk.dzc[i]
