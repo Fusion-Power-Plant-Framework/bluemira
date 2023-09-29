@@ -35,7 +35,7 @@ author = "M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D
 release: str = get_version(project)
 version: str = release.split("+")[0]
 
-if version == "0.1":
+if version.startswith("0.1"):
     release = "develop"
     version = "develop"
 
