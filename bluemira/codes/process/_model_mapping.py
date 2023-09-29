@@ -379,6 +379,23 @@ class LHThreshholdScalingLaw(PROCESSModel):
     MARTIN_ACORRECT_LOW = 21
 
 
+class RadiationLossModel(PROCESSModel):
+    """
+    Switch for radiation loss term usage in power balance
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iradloss"
+
+    SCALING_PEDSETAL = 0  # ipedestal 2, 3
+    SCALING_CORE = 1
+    SCALING_ONLY = 2
+
+
 class PlasmaWallGapModel(PROCESSModel):
     """
     Switch to select plasma-wall gap model
@@ -475,6 +492,38 @@ class BlanketModel(PROCESSModel):
     CCFE_HCPB = 1
     KIT_HCPB = 2
     CCFE_HCPB_TBR = 3
+
+
+class InboardBlanketSwitch(PROCESSModel):
+    """
+    Switch to determin whether or not there is an inboard blanket
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iblktith"
+
+    ABSENT = 0
+    PRESENT = 1
+
+
+class InVesselGeometryModel(PROCESSModel):
+    """
+    Switch to control the geometry of the FW, blanket, shield, and VV shape
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "fwbsshape"
+
+    CYL_ELLIPSE = 1
+    TWO_ELLIPSE = 2
 
 
 class TFCSTopologyModel(PROCESSModel):
@@ -704,6 +753,22 @@ class PFSuperconductorModel(PROCESSModel):
     REBCO_ZHAI = 9
 
 
+class PFCurrentControlModel(PROCESSModel):
+    """
+    Switch to control the currents in the PF coils
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_pf_current"
+
+    INPUT = 0  # curpfb, curpff, curpfs
+    SVD = 1
+
+
 class SolenoidSwitchModel(PROCESSModel):
     """
     Switch to control whether or not a central solenoid should be
@@ -758,6 +823,24 @@ class CSPrecompressionModel(PROCESSModel):
 
     ABSENT = 0
     PRESENT = 1
+
+
+class CSStressModel(PROCESSModel):
+    """
+    Switch for the calculation of the CS stress
+
+    # TODO: Listed as an output?!
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_cs_stress"
+
+    HOOP_ONLY = 0
+    HOOP_AXIAL = 1
 
 
 class DivertorHeatFluxModel(PROCESSModel):
@@ -934,6 +1017,23 @@ class VacuumPumpingModel(PROCESSModel):
     CRYO_PUMP = 1
 
 
+class VacuumPumpingDwellModel(PROCESSModel):
+    """
+    Switch to control when vacuum pumping occurs
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "dwell_pump"
+
+    T_DWELL = 0
+    T_RAMP = 1
+    T_DWELL_RAMP = 2
+
+
 class FISPACTSwitchModel(PROCESSModel):
     """
     Switch to control FISPACT-II neutronics calculations
@@ -965,6 +1065,24 @@ class AvailabilityModel(PROCESSModel):
     INPUT = 0
     TAYLOR_WARD = 1
     MORRIS = 2
+
+
+class SafetyAssuranceLevel(PROCESSModel):
+    """
+    Switch to control the level of safety assurance
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "lsa"
+
+    TRULY_SAFE = 1
+    VERY_SAFE = 2  # In-between
+    SOMEWHAT_SAFE = 3  # In-between
+    FISSION = 4  # Not sure what this is implying...
 
 
 class CostModel(PROCESSModel):
