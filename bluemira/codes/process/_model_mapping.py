@@ -226,7 +226,7 @@ class BetaGScalingModel(PROCESSModel):
         """
         return "gtscale"
 
-    INPUT = 0  # dnbeta is an input
+    INPUT = 0, ["dnbeta"]
     CONVENTIONAL = 1
     MENARD_ST = 2
 
@@ -351,7 +351,7 @@ class ConfinementTimeScalingLaw(PROCESSModel):
     NSTX_H_MODE = 46
     NSTX_PETTY_H_MODE = 47
     NSTX_GB_H_MODE = 48
-    INPUT = 49  # tauee_in
+    INPUT = 49, ["tauee_in"]
 
 
 class BootstrapCurrentScalingLaw(PROCESSModel):
@@ -436,8 +436,8 @@ class PlasmaWallGapModel(PROCESSModel):
         """
         return "iscrp"
 
-    TEN_PERCENT = 0
-    INPUT = 1  # scrapli and scraplo are inputs
+    TEN_PERCENT = 0, [], "SOL thickness calculated as 10 percent of minor radius"
+    INPUT = 1, ["scrapli", "scarplo"], "Fixed thickness SOL values"
 
 
 class OperationModel(PROCESSModel):
@@ -656,7 +656,7 @@ class TFWindingPackTurnModel(PROCESSModel):
         return "i_tf_turns_integer"
 
     CURRENT_PER_TURN = 0  # set cpttf or t_cable_tf or t_turn_tf
-    INTEGER_TURN = 1  # set n_layer and n_pancake
+    INTEGER_TURN = 1, ["n_layer", "n_pancake"]
 
 
 class TFCoilShapeModel(PROCESSModel):
@@ -935,7 +935,7 @@ class TFNuclearHeatingModel(PROCESSModel):
         return "inuclear"
 
     FRANCES_FOX = 0
-    INPUT = 1  # qnuc
+    INPUT = 1, ["qnuc"]
 
 
 class PrimaryPumpingModel(PROCESSModel):
