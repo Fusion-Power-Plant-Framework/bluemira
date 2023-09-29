@@ -552,7 +552,7 @@ class EUDEMOFuelCycleModel:
         """
         Plot correction for compressed time inventories
         """
-        idx = np.where(t - np.roll(t, 1) > thresh)[0] - 2
+        idx = np.nonzero(t - np.roll(t, 1) > thresh)[0] - 2
         inventory = inventory.copy()
         for i in idx:
             inventory[i + 1] = inventory[i]

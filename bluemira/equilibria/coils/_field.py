@@ -71,7 +71,7 @@ class CoilGroupFieldsMixin:
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
-        ind = np.where(self._quad_weighting != 0)
+        ind = np.nonzero(self._quad_weighting != 0)
         out = np.zeros((*x.shape, *self._quad_x.shape))
 
         out[(*(slice(None) for _ in x.shape), *ind)] = greens_psi(
@@ -356,7 +356,7 @@ class CoilGroupFieldsMixin:
             _quad_z = self._quad_z
             _quad_weight = self._quad_weighting
 
-        ind = np.where(_quad_weight != 0)
+        ind = np.nonzero(_quad_weight != 0)
         out = np.zeros((*x.shape, *_quad_x.shape))
 
         out[(*(slice(None) for _ in x.shape), *ind)] = greens(
@@ -597,7 +597,7 @@ class CoilGroupFieldsMixin:
         cr = self._current_radius
         if any(cr != 0):
             # true divide errors for zero current coils
-            cr_ind = np.where(cr != 0)
+            cr_ind = np.nonzero(cr != 0)
             fx = np.zeros_like(cr)
             fx[cr_ind] = (
                 MU_0
@@ -627,9 +627,9 @@ class CoilGroupFieldsMixin:
         response = np.zeros((x.size, coil.x.size, 2))
         coils = coil._coils
         for j, coil2 in enumerate(coils):
-            xw = np.where(x == coil2.x)[0]
-            zw = np.where(z == coil2.z)[0]
-            same_pos = np.where(xw == zw)[0]
+            xw = np.nonzero(x == coil2.x)[0]
+            zw = np.nonzero(z == coil2.z)[0]
+            same_pos = np.nonzero(xw == zw)[0]
             if same_pos.size > 0:
                 # self inductance
                 xxw = xw[same_pos]
@@ -639,7 +639,7 @@ class CoilGroupFieldsMixin:
                 mask = np.zeros_like(Bz, dtype=bool)
                 mask[same_pos] = True
                 if any(cr != 0):
-                    cr_ind = np.where(cr != 0)
+                    cr_ind = np.nonzero(cr != 0)
                     Bz[mask][cr_ind] = (
                         MU_0
                         / (4 * np.pi * x[cr_ind])
