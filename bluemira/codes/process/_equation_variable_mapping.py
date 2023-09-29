@@ -224,6 +224,27 @@ class Constraint(ConstraintSelection, Model):
         "P_separatrix Bt / q A R upper limit",
     )
 
+    CS_FATIGUE = (
+        90,
+        [167],
+        [
+            "residual_sig_hoop",
+            "n_cycle_min",
+            "t_crack_radial",
+            "t_crack_vertical",
+            "t_structural_radial",
+            "t_structural_vertical",
+            "sf_vertical_crack",
+            "sf_radial_crack",
+            "sf_fast_fracture",
+            "paris_coefficient",
+            "paris_power_law",
+            "walker_coefficient",
+            "fracture_toughness",
+        ],
+        "CS fatigue constraints",
+    )
+
 
 from bluemira.codes.utilities import Model
 
