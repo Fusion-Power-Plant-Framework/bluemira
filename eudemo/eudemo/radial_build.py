@@ -219,7 +219,7 @@ template_builder.add_input_values(
         "alstroh": 6.6e8,
         "psepbqarmax": 9.2,
         "aspect": 3.1,
-        "m_s_limit": 0.1,
+        # "m_s_limit": 0.1,
         "q0": 1.0,
         "ssync": 0.6,
         "plasma_res_factor": 0.66,
