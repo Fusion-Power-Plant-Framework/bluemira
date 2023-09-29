@@ -216,7 +216,7 @@ class PROCESSTemplateBuilder:
             missing_inputs = [
                 input_name
                 for input_name in model.requires
-                if input_name not in self.values
+                if (input_name not in self.values or input_name not in self.variables)
             ]
 
             if missing_inputs:

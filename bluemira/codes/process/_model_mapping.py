@@ -107,17 +107,22 @@ class PlasmaGeometryModel(PROCESSModel):
         """
         return "ishape"
 
-    HENDER_K_D_100 = 0
-    GALAMBOS_K_D_95 = 1
-    ZOHM_ITER = 2
-    ZOHM_ITER_D_95 = 3
-    HENDER_K_D_95 = 4
-    MAST_95 = 5
-    MAST_100 = 6
-    FIESTA_95 = 7
-    FIESTA_100 = 8
-    A_LI3 = 9  # Undocumented
-    CREATE_A_M_S = 10, ["m_s_limit"], "A fit to CREATE data for conventional A tokamaks"
+    HENDER_K_D_100 = 0, ["kappa", "triang"]
+    GALAMBOS_K_D_95 = 1, ["kappa95", "triang95"]
+    ZOHM_ITER = 2, ["triang"]
+    ZOHM_ITER_D_95 = 3, ["triang95"]
+    HENDER_K_D_95 = 4, ["kappa95, triang95"]
+    MAST_95 = 5, ["kappa95, triang95"]
+    MAST_100 = 6, ["kappa, triang"]
+    FIESTA_95 = 7, ["kappa95, triang95"]
+    FIESTA_100 = 8, ["kappa, triang"]
+    A_LI3 = 9, ["triang"]
+    CREATE_A_M_S = (
+        10,
+        ["aspect", "m_s_limit", "triang"],
+        "A fit to CREATE data for conventional A tokamaks",
+    )
+    MENARD = 11, ["triang", "aspect"]
 
 
 class PlasmaNullConfigurationModel(PROCESSModel):
