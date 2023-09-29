@@ -117,11 +117,7 @@ class PlasmaGeometryModel(PROCESSModel):
     FIESTA_95 = 7
     FIESTA_100 = 8
     A_LI3 = 9  # Undocumented
-    CREATE_A_M_S = (
-        10,
-        ["m_s_limit", "temp"],
-        "A fit to CREATE data for conventional A tokamaks",
-    )
+    CREATE_A_M_S = 10, ["m_s_limit"], "A fit to CREATE data for conventional A tokamaks"
 
 
 class PlasmaNullConfigurationModel(PROCESSModel):
