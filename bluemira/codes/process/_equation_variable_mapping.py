@@ -78,7 +78,6 @@ class Constraint(ConstraintSelection, Model):
         5,
         [1, 2, 3, 4, 6, 9],
         [],
-        [],
         "Density Upper Limit (Greenwald)",
     )
     EPS_BETA_POL_UPPER_LIMIT = (
@@ -218,6 +217,12 @@ class Constraint(ConstraintSelection, Model):
     # 47 NOT USED (or maybe it is, WTF?!)
 
     # 49 NOT USED
+    PSEPB_QAR_UPPER_LIMIT = (
+        68,
+        [117],
+        ["psepbqarmax"],
+        "P_separatrix Bt / q A R upper limit",
+    )
 
 
 from bluemira.codes.utilities import Model
