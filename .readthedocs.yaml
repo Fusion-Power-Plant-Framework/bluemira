@@ -4,6 +4,8 @@ build:
   os: "ubuntu-20.04"
   tools:
     python: "mambaforge-4.10"
-
+  jobs:
+    pre_create_environment:
+      - git fetch origin --force --prune --depth 1 refs/heads/main:refs/remotes/origin/main
 conda:
   environment: conda/environment.yml
