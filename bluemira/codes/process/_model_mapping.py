@@ -842,7 +842,8 @@ class PrimaryPumpingModel(PROCESSModel):
 
     INPUT = 0
     FRACTION = 1
-    PRESSURE_DROP = 3
+    PRESSURE_DROP = 2
+    PRESSURE_DROP_INPUT = 3
 
 
 class SecondaryCycleModel(PROCESSModel):

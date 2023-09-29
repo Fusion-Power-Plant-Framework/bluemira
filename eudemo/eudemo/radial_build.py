@@ -164,7 +164,7 @@ for model_choice in [
     PlasmaGeometryModel.CREATE_A_M_S,
     PlasmaWallGapModel.INPUT,
     PowerFlowModel.SIMPLE,
-    PrimaryPumpingModel.PRESSURE_DROP,
+    PrimaryPumpingModel.PRESSURE_DROP_INPUT,
     ShieldThermalHeatUse.LOW_GRADE_HEAT,
     SecondaryCycleModel.FIXED,
     BlanketModel.CCFE_HCPB,
