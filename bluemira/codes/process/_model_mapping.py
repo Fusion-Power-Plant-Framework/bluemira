@@ -22,6 +22,9 @@
 """
 PROCESS model mappings
 """
+from dataclasses import dataclass, field
+from typing import List
+
 from bluemira.codes.utilities import Model
 
 
@@ -40,7 +43,27 @@ class classproperty:  # noqa: N801
         return self.func(owner)
 
 
-class PROCESSModel(Model):
+@dataclass
+class ModelSelection:
+    """
+    Mixin dataclass for a Model selection in PROCESSModel
+
+    Parameters
+    ----------
+    _value_:
+        Integer value of the model selection
+    requires:
+        List of required inputs for the model selection
+    description:
+        Short description of the model selection
+    """
+
+    _value_: int
+    requires: List[str] = field(default_factory=list)
+    description: str = ""
+
+
+class PROCESSModel(ModelSelection, Model):
     """
     Baseclass for PROCESS models
     """
