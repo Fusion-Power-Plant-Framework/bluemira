@@ -232,6 +232,7 @@ class PROCESSTemplateBuilder:
             ioptimz=self.ioptimiz,
             epsvmc=self.epsvmc,
             maxcal=self.maxcal,
+            fimp=self.fimp,
             **self.values,
             **self.models,
             **self.variables,
