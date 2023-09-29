@@ -52,6 +52,7 @@ class PROCESSTemplateBuilder:
     """
 
     def __init__(self):
+        self._models: Dict[str, PROCESSModel] = {}
         self.models: Dict[str, int] = {}
         self.values: Dict[str, Any] = {}
         self.variables: Dict[str, float] = {}
@@ -101,7 +102,7 @@ class PROCESSTemplateBuilder:
         """
         Set a model switch to the PROCESS run
         """
-        self.models[model_choice.switch_name] = model_choice.value
+        self._models[model_choice.switch_name] = model_choice
 
     def add_constraint(self, constraint: Constraint):
         """
@@ -207,6 +208,20 @@ class PROCESSTemplateBuilder:
         else:
             mapping[name] = value
 
+    def _check_inputs(self):
+        """
+        Check the required inputs for models have been provided.
+        """
+        for switch_name, model in self._models.items():
+            for input_name in model.requires:
+                missing_inputs = []
+                if input_name not in self.values:
+                    missing_inputs.append(input_name)
+                if missing_inputs:
+                    bluemira_warn(
+                        f"Model {switch_name} requires inputs {missing_inputs} which have not been specified. Default values will be used."
+                    )
+
     def make_inputs(self) -> Dict[str, _INVariable]:
         """
         Make the ProcessInputs InVariable for the specified template
@@ -215,6 +230,9 @@ class PROCESSTemplateBuilder:
             bluemira_warn(
                 "You are running in optimisation mode, but have not set an objective function."
             )
+
+        self._check_inputs()
+        self.models = {k: v.value for k, v in self._models.items()}
 
         return ProcessInputs(
             bounds=self.bounds,
