@@ -4,7 +4,6 @@ build:
   os: "ubuntu-20.04"
   tools:
     python: "mambaforge-4.10"
-  jobs:
 
 conda:
   environment: conda/environment.yml
