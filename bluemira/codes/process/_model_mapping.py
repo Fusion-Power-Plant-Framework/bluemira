@@ -91,8 +91,8 @@ class PROCESSOptimisationAlgorithm(PROCESSModel):
         """
         return "ioptimz"
 
-    NO_OPTIMISATION = 0
-    VMCON = 1
+    NO_OPTIMISATION = 0, [], "Do not use optimisation"
+    VMCON = 1, [], "The traditional VMCON optimisation algorithm"
 
 
 class PlasmaGeometryModel(PROCESSModel):
@@ -117,7 +117,7 @@ class PlasmaGeometryModel(PROCESSModel):
     FIESTA_95 = 7
     FIESTA_100 = 8
     A_LI3 = 9  # Undocumented
-    CREATE_A_M_S = 10  # Undocumented, but this is what I gave them for EU-DEMO
+    CREATE_A_M_S = 10, ["m_s_limit"], "A fit to CREATE data for conventional A tokamaks"
 
 
 class PlasmaNullConfigurationModel(PROCESSModel):
