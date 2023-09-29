@@ -92,7 +92,7 @@ def E_DD_fusion() -> float:
         (1.01 ~\\text{MeV})+\\text{p} (3.02~\\text{MeV})~~[50 \\textrm{\\%}]
         ~~~~~~~~~~\\rightarrow~{^{3}_{2}He} (0.82~\\text{MeV})+\\text{n}^{0} (2.45~\\text{MeV})~~[50 \\text{\\%}]\n
         \\Delta E = \\Delta m c^2
-    """  # noqa: W505
+    """  # noqa: W505, E501
     # NOTE: Electron mass must be included with proton mass
     delta_m = np.array(
         [
@@ -160,7 +160,7 @@ def r_T_burn(p_fus: float) -> float:  # noqa: N802
     Returns
     -------
     T burn rate in the plasma [g/s]
-    """  # noqa: W505
+    """  # noqa: W505, E501
     return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
 
 

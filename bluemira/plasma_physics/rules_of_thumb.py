@@ -68,7 +68,7 @@ def estimate_loop_voltage(
     Assumes a circular cross-section on axis
 
     There is no neo-classical resistivity on axis because there are no trapped particles
-    """  # noqa: W505
+    """  # noqa: W505, E501
     ln_lambda = coulomb_logarithm(T_e * EV_TO_J / K_BOLTZMANN, n_e)
     sigma = spitzer_conductivity(Z_eff, T_e, ln_lambda)
 

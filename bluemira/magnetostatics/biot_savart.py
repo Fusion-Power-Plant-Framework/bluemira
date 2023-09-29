@@ -179,7 +179,7 @@ class BiotSavartFilament(CurrentSource):
 
         This is the original Biot-Savart equation, without centre-averaged
         smoothing. Do not use for values near the coil current centreline.
-        """  # noqa: W505
+        """  # noqa: W505, E501
         point = np.array([x, y, z])
         r = point - self.mid_points
         r3 = np.linalg.norm(r, axis=1) ** 3
@@ -211,7 +211,7 @@ class BiotSavartFilament(CurrentSource):
 
         You probably shouldn't use this if you are actually interested in the
         inductance of an arbitrarily shaped Coordinates...
-        """  # noqa: W505
+        """  # noqa: W505, E501
         # TODO: Validate inductance calculate properly and compare stored
         # energy of systems
         inductance = 0

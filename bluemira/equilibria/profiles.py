@@ -529,7 +529,7 @@ class BetaIpProfile(Profile):
     \t:math:`d{\\Omega}`\n
 
     \t:math:`{\\beta}_{p}=\\dfrac{\\langle p({\\beta_{0}})\\rangle}{\\langle B_{p}^{2}\\rangle_{\\psi_{a}}/2\\mu_{0}}`
-    """  # noqa: W505
+    """  # noqa: W505, E501
 
     # NOTE: For high betap >= 2, this can lead to there being no plasma current
     # on the high field side...
@@ -579,7 +579,7 @@ class BetaIpProfile(Profile):
         \t:math:`\\lambda=\\dfrac{I_{p}-\\lambda{\\beta_{0}}\\bigg(\\int\\int\\dfrac{X}{R_{0}}f+\\int\\int\\dfrac{R_{0}}{X}f\\bigg)}{\\int\\int\\dfrac{R_{0}}{X}f}`
 
         Derivation: book 10, p 120
-        """  # noqa: W505
+        """  # noqa: W505, E501
         self.dx = x[1, 0] - x[0, 0]
         self.dz = z[0, 1] - z[0, 0]
         psix, psio, mask = self._jtor(x, z, psi, o_points, x_points)

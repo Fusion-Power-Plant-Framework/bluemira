@@ -592,7 +592,7 @@ class CoilGroupFieldsMixin:
              \\mathbf{F} = \\mathbf{j}\\times \\mathbf{B}
             F_x = IB_z+\\dfrac{\\mu_0I^2}{4\\pi X}\\textrm{ln}\\bigg(\\dfrac{8X}{r_c}-1+\\xi/2\\bigg)
             F_z = -IBx
-        """  # noqa: W505
+        """  # noqa: W505, E501
         multiplier = self.current * 2 * np.pi * self.x
         cr = self._current_radius
         if any(cr != 0):

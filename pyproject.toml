@@ -189,7 +189,6 @@ ignore = [
     "D401",
     "E203",  # black conflicts
     "DTZ005",  # datetime timezone arg
-    "E501",  # Same as W505
     "PTH123",  # use Path.open
     "TRY003",  # put error messages in error class
     "FIX002",  # Line contains todo
@@ -337,7 +336,7 @@ ignore-names = [
     "D101",
 ]
 "examples/*" = ["INP001"]
-"examples/geometry/optimisation_tutorial.ex.py" = ["W505"]
+"examples/geometry/optimisation_tutorial.ex.py" = ["W505", "E501"]
 "examples/optimisation/geometry_optimisation.ex.py" = ["E402"]
 "examples/optimisation/nonlinearly_constrained_problem.ex.py" = [
     "E402",
@@ -396,4 +395,6 @@ ignore-names = [
     "N802",
     "PT023",
 ]
-"tests/codes/plasmod/test_profiles.py" = ["E221"]
+"tests/codes/plasmod/test_profiles.py" = ["E221", "E501"]
+"tests/geometry/test_private_tools.py" = ["E501"]
+"tests/utilities/test_opt_variables.py" = ["E501"]

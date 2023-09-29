@@ -1221,7 +1221,7 @@ class Equilibrium(CoilSetMHDState):
             The radial position of the effective current centre
         zcur:
             The vertical position of the effective current centre
-        """  # noqa: W505
+        """  # noqa: W505, E501
         xcur = np.sqrt(1 / self.profiles.I_p * self._int_dxdz(self.x**2 * self._jtor))
         zcur = 1 / self.profiles.I_p * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur

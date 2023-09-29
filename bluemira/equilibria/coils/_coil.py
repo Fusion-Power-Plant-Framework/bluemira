@@ -211,8 +211,8 @@ class Coil(CoilFieldsMixin):
         """
         return (
             f"{type(self).__name__}({self.name} ctype={self.ctype.name} x={self.x:.2g}"
-            f" z={self.z:.2g} dx={self.dx:.2g} dz={self.dz:.2g} current={self.current:.2g}"
-            f" j_max={self.j_max:.2g} b_max={self.b_max:.2g}"
+            f" z={self.z:.2g} dx={self.dx:.2g} dz={self.dz:.2g}"
+            f" current={self.current:.2g} j_max={self.j_max:.2g} b_max={self.b_max:.2g}"
             f" discretisation={self.discretisation:.2g})"
         )
 

@@ -61,7 +61,7 @@ class TestSinkTools:
         th \\n
         :math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+\\dot{m}\\sum_{t=0}^{T}e^{-\\lambda(T-t)}`\\n
         :math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+\\dot{m}\\dfrac{e^{-{\\lambda}T}\\big(e^{{\\lambda}(T+1)}-1\\big)}{e^{\\lambda}-1}`
-        """  # noqa: W505
+        """  # noqa: W505, E501
         time_y = 0.50  # years
         n = 100000  # intersteps
 
