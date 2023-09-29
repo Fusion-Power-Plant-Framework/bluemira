@@ -504,7 +504,7 @@ def flux_surface_kuiroukidis_quadrants(
     tau_up_left = t_0 * theta_up_left**2 + t_1 * theta_up_left**n_power
 
     tau_up_left = np.clip(tau_up_left, None, np.pi)
-    clip_arg = np.where(tau_up_left == np.pi)[0][0]
+    clip_arg = np.nonzero(tau_up_left == np.pi)[0][0]
     tau_up_left = tau_up_left[: clip_arg + 1]
 
     x_upper_right = r_0 * (

@@ -712,7 +712,7 @@ class TestMirrorShape:
         cog = shape.center_of_mass
         m_cog = m_shape.center_of_mass
         new_cog = cog
-        idx = np.where(list(direction))[0]
+        idx = np.nonzero(list(direction))[0]
         new_cog[idx] = -cog[idx]
         assert np.isclose(m_shape.volume, shape.volume)
         assert np.allclose(m_cog, new_cog)

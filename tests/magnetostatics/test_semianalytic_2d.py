@@ -184,7 +184,7 @@ class TestPoloidalFieldBenchmark:
 
         x_values = np.unique(x)
         for x_value in x_values:
-            idx = np.where(np.isclose(x, x_value))[0]
+            idx = np.nonzero(np.isclose(x, x_value))[0]
             z_x = z[idx]
             b_fe = B[idx]
 
@@ -215,7 +215,7 @@ class TestPoloidalFieldBenchmark:
 
         z_values = np.unique(z)[:5]  # Mirrored about coil zc-axis
         for z_value in z_values:
-            idx = np.where(np.isclose(z, z_value))[0]
+            idx = np.nonzero(np.isclose(z, z_value))[0]
             x_z = x[idx][1:]  # Can't do 0
             b_fe = B[idx][1:]
 

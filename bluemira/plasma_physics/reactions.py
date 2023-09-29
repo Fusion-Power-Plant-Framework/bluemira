@@ -491,10 +491,10 @@ def _reactivity_johner(
         bluemira_warn("The Johner parameterisation is not valid for T < 5.3 keV")
 
     sigma_v = np.zeros_like(temp_kev)
-    idx_1 = np.where((temp_kev >= 5.3) & (temp_kev <= 10.3))[0]  # noqa: PLR2004
-    idx_2 = np.where((temp_kev >= 10.3) & (temp_kev <= 18.5))[0]  # noqa: PLR2004
-    idx_3 = np.where((temp_kev >= 18.5) & (temp_kev <= 39.9))[0]  # noqa: PLR2004
-    idx_4 = np.where((temp_kev >= 39.9) & (temp_kev <= 100.0))[0]  # noqa: PLR2004
+    idx_1 = np.nonzero((temp_kev >= 5.3) & (temp_kev <= 10.3))[0]  # noqa: PLR2004
+    idx_2 = np.nonzero((temp_kev >= 10.3) & (temp_kev <= 18.5))[0]  # noqa: PLR2004
+    idx_3 = np.nonzero((temp_kev >= 18.5) & (temp_kev <= 39.9))[0]  # noqa: PLR2004
+    idx_4 = np.nonzero((temp_kev >= 39.9) & (temp_kev <= 100.0))[0]  # noqa: PLR2004
     t1 = temp_kev[idx_1]
     t2 = temp_kev[idx_2]
     t3 = temp_kev[idx_3]

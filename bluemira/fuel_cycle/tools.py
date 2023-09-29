@@ -221,7 +221,7 @@ def fit_sink_data(
         The threshold of the fitted piecewise linear threshold function
     """
     x, y = np.array(x), np.array(y)
-    arg = np.where(y > 0.98 * max(y))[0][0]
+    arg = np.nonzero(y > 0.98 * max(y))[0][0]
     kink_point = x[arg]
 
     if method == "linear":

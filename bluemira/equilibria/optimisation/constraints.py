@@ -359,7 +359,7 @@ class CoilForceConstraints(UpdateableConstraint):
         """
         fp = np.zeros((equilibrium.coilset.n_coils(), 2))
         current = equilibrium.coilset.current
-        non_zero = np.where(current != 0)[0]
+        non_zero = np.nonzero(current != 0)[0]
         if non_zero.size:
             fp[non_zero] = (
                 equilibrium.coilset.F(equilibrium)[non_zero] / current[non_zero][:, None]

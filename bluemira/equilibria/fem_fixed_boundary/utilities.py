@@ -273,7 +273,7 @@ def get_mesh_boundary(mesh: dolfin.Mesh) -> Tuple[np.ndarray, np.ndarray]:
         temp_v = next(v for v in temp_edge if v not in sorted_v)
         sorted_v.append(temp_v)
         check_edge[index] = 0
-        connected = np.where(edges == temp_v)[0]
+        connected = np.nonzero(edges == temp_v)[0]
         index = next(e for e in connected if check_edge[e] == 1)
         temp_edge = edges[index]
 

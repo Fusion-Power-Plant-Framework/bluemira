@@ -614,7 +614,7 @@ class FieldLine:
 
         xz_plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])
         xi, _, zi = coords_plane_intersect(self.coords, xz_plane).T
-        idx = np.where(xi >= 0)
+        idx = np.nonzero(xi >= 0)
         xi = xi[idx]
         zi = zi[idx]
         ax.plot(xi, zi, linestyle="", marker="o", color="r", ms=5)

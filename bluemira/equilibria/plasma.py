@@ -93,7 +93,7 @@ class PlasmaCoil:
     def _set_j_tor(self, j_tor: Optional[np.ndarray]):
         self._j_tor = j_tor
         if j_tor is not None:
-            self._ii, self._jj = np.where(j_tor > J_TOR_MIN)
+            self._ii, self._jj = np.nonzero(j_tor > J_TOR_MIN)
         else:
             self._ii, self._jj = None, None
 
@@ -267,7 +267,7 @@ class PlasmaCoil:
         """
         Get a simple string representation of the PlasmaCoil.
         """
-        n_filaments = len(np.where(self._j_tor > 0)[0])
+        n_filaments = len(np.nonzero(self._j_tor > 0)[0])
         return f"{self.__class__.__name__}: {n_filaments} filaments"
 
 

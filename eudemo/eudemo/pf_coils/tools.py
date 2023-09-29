@@ -393,7 +393,7 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
     while np.isclose(z_min, z_max):
         # This is unlikely, but if so, shifting x_min a little ensures the boolean cut
         # can be performed and that an open wire will be returned
-        idx_inner = np.where(np.isclose(coordinates.x, x_min))[0]
+        idx_inner = np.nonzero(np.isclose(coordinates.x, x_min))[0]
         z_min = np.min(coordinates.z[idx_inner])
         z_max = np.max(coordinates.z[idx_inner])
         x_min += eps
