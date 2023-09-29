@@ -814,7 +814,7 @@ class PFCurrentControlModel(PROCESSModel):
         """
         return "i_pf_current"
 
-    INPUT = 0["curpfb", "curpff", "curpfs"]
+    INPUT = 0, ["curpfb", "curpff", "curpfs"]
     SVD = 1
 
 
