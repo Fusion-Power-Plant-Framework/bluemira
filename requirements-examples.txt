@@ -11,7 +11,7 @@ decorator==5.1.1
 defusedxml==0.7.1
 entrypoints==0.4
 executing==2.0.0
-fastjsonschema==2.18.0
+fastjsonschema==2.18.1
 importlib-resources==6.1.0
 ipykernel==6.25.2
 ipython==8.12.0
