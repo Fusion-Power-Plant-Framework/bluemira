@@ -32,12 +32,14 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from typing import Dict, List
+import bluemira.codes.process as process
 from bluemira.base import constants
 from bluemira.base.constants import ureg
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.equilibria.grid import Grid
 from bluemira.geometry.coordinates import Coordinates, in_polygon
+from bluemira.geometry.wire import BluemiraWire
 from matplotlib.collections import LineCollection
 
 # CHERAB imports
@@ -810,6 +812,22 @@ def filtering_in_or_out(domain_x: list, domain_z: list, include_points=True):
 
     return include
 
+def get_impurity_data(impurities_list: list = ["H", "He"]):
+    """
+    Function getting the PROCESS impurity data
+    """
+    # This is a function
+    imp_data_getter = process.Solver.get_species_data
+
+    impurity_data = {}
+    for imp in impurities_list:
+        impurity_data[imp] = {
+            "T_ref": imp_data_getter(imp)[0],
+            "L_ref": imp_data_getter(imp)[1],
+        }
+
+    return impurity_data
+
 
 # Adapted functions from Stuart
 def detect_radiation(wall_detectors, n_samples, world):
@@ -1081,30 +1099,43 @@ def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_ti
 
     plt.show()
 
-def calculate_fw_rad_loads(rad_source, fw_shape, plot=True):
+class FirstWallRadiationSolver:
+    """
+    ...
+    """
 
-    rad_3d = AxisymmetricMapper(rad_source)
-    ray_stepsize = 1.0  # 2.0e-4
-    emitter = VolumeTransform(
-        RadiationFunction(rad_3d, step=ray_stepsize * 0.1),
-        translate(0, 0, np.max(fw_shape.z)),
-    )
-    world = World()
-    Cylinder(
-        np.max(fw_shape.x),
-        2.0 * np.max(fw_shape.z),
-        transform=translate(0, 0, np.min(fw_shape.z)),
-        parent=world,
-        material=emitter,
-    )
-    max_wall_len = 10.0e-2
-    X_WIDTH = 0.01
-    wall_detectors = build_wall_detectors(fw_shape.x, fw_shape.z, max_wall_len, X_WIDTH)
-    wall_loads = detect_radiation(wall_detectors, 500, world)
+    def __init__(
+        self,
+        source_func: callable,
+        firstwall_shape: BluemiraWire
+    ):
+        self.rad_source = source_func
+        self.fw_shape = firstwall_shape
 
-    if plot:
-        plot_radiation_loads(
-            rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads", fw_shape
+    def solve(self, plot=True):
+
+        rad_3d = AxisymmetricMapper(self.rad_source)
+        ray_stepsize = 1.0  # 2.0e-4
+        emitter = VolumeTransform(
+            RadiationFunction(rad_3d, step=ray_stepsize * 0.1),
+            translate(0, 0, np.max(self.fw_shape.z)),
         )
+        world = World()
+        Cylinder(
+            np.max(self.fw_shape.x),
+            2.0 * np.max(self.fw_shape.z),
+            transform=translate(0, 0, np.min(self.fw_shape.z)),
+            parent=world,
+            material=emitter,
+        )
+        max_wall_len = 10.0e-2
+        X_WIDTH = 0.01
+        wall_detectors = build_wall_detectors(self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH)
+        wall_loads = detect_radiation(wall_detectors, 500, world)
 
-    return wall_loads
+        if plot:
+            plot_radiation_loads(
+                rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads", self.fw_shape
+            )
+
+        return wall_loads
