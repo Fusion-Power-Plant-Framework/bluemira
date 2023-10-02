@@ -5,7 +5,7 @@ attrs==23.1.0
 backcall==0.2.0
 beautifulsoup4==4.12.2
 bleach==6.0.0
-cffi==1.15.1
+cffi==1.16.0
 debugpy==1.8.0
 decorator==5.1.1
 defusedxml==0.7.1
