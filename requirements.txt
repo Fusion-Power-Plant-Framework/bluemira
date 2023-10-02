@@ -18,7 +18,7 @@ nlopt==2.7.1
 meshio==4.4.5
 numba==0.58.0
 numba-scipy==0.3.1
-numexpr==2.8.6
+numexpr==2.8.7
 numpy==1.22.4
 packaging==23.2
 pandas==2.0.3
