@@ -33,7 +33,11 @@ copyright = "2021-2023, M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh
 author = "M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short, UKAEA & contributors"
 
 release: str = get_version(project)
-version: str = ".".join(release.split(".")[:2])
+version: str = release.split("+")[0]
+
+if version.startswith("0.1"):
+    release = "develop"
+    version = "develop"
 
 # -- General configuration ---------------------------------------------------
 
