@@ -299,7 +299,7 @@ class OpenMCResult:
             p_hf_df["cell"].map(cell_vols).to_numpy(), "cm^3", "m^3"
         )
         p_hf_df["W_m-2"] = raw_uc(
-            (p_hf_df["mean"] / p_hf_df["vol (m^3)"]).to_numpy(), "MW/cm^2", "W/m^2"
+            (p_hf_df["mean"] / p_hf_df["vol (m^3)"]).to_numpy(), "MW/m^2", "W/m^2"
         )
         p_hf_df["%err."] = p_hf_df.apply(get_percent_err, axis=1)
         # Scaling first wall results by factor to surface results
