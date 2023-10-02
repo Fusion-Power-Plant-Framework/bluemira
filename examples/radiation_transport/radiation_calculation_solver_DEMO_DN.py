@@ -29,13 +29,12 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.codes.process as process
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.midplane_temperature_density import MidplaneProfiles
 from bluemira.radiation_transport.radiation_profile import (
-    RadiationSolver, 
+    RadiationSource, 
     linear_interpolator, 
     interpolated_field_values, 
 )
@@ -43,10 +42,8 @@ from bluemira.radiation_transport.radiation_tools import (
     filtering_in_or_out, 
     pfr_filter,
     grid_interpolator,
-    calculate_fw_rad_loads,
+    FirstWallRadiationSolver,
 )
-from bluemira.radiation_transport.flux_surfaces_maker import analyse_first_wall_flux_surfaces
-
 
 # %% [markdown]
 # # Double Null radiation
@@ -121,42 +118,13 @@ config = {
             }
         }
 
-# %% [markdown]
-#
-# Initialising the `FluxSurfaceMaker` and run it.
-
-# %%
-dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp = analyse_first_wall_flux_surfaces(equilibrium=eq, first_wall=fw_shape, dx_mp=0.001)
 
 # %% [markdown]
 #
-# Getting impurity data.
-
-# %%
-def get_impurity_data(impurities_list: list = ["H", "He"]):
-    """
-    Function getting the PROCESS impurity data
-    """
-    # This is a function
-    imp_data_getter = process.Solver.get_species_data
-
-    impurity_data = {}
-    for imp in impurities_list:
-        impurity_data[imp] = {
-            "T_ref": imp_data_getter(imp)[0],
-            "L_ref": imp_data_getter(imp)[1],
-        }
-
-    return impurity_data
-
 # Get the core impurity fractions
 f_impurities_core = config["f_imp_core"]
 f_impurities_sol = config["f_imp_sol"]
-impurities_list_core = [imp for imp in f_impurities_core]
-impurities_list_sol = [imp for imp in f_impurities_sol]
-# Get the impurities data
-impurity_data_core = get_impurity_data(impurities_list=impurities_list_core)
-impurity_data_sol = get_impurity_data(impurities_list=impurities_list_sol)
+
 # Get core midplane profiles
 Profiles = MidplaneProfiles(params=params)
 psi_n = Profiles.psi_n
@@ -168,24 +136,18 @@ te_mp = Profiles.te_mp
 # Initialising the `RadiationSolver` and run it.
 
 # %%
-rad_solver = RadiationSolver(
+source = RadiationSource(
         eq=eq,
+        firstwall_shape=fw_shape,
         params=params,
-        flux_surfaces=flux_surfaces,
         psi_n = psi_n,
         ne_mp = ne_mp,
         te_mp = te_mp,
-        impurity_content_core=f_impurities_core,
-        impurity_data_core=impurity_data_core,
-        impurity_content_sol=f_impurities_sol,
-        impurity_data_sol=impurity_data_sol,
-        x_sep_omp = x_sep_omp,
-        x_sep_imp = x_sep_imp,
-        dx_omp = dx_omp,
-        dx_imp = dx_imp,
+        core_impurities=f_impurities_core,
+        sol_impurities=f_impurities_sol,
     )
-rad_solver.analyse(firstwall_geom=fw_shape)
-rad_solver.rad_map(fw_shape)
+source.analyse(firstwall_geom=fw_shape)
+source.rad_map(fw_shape)
 
 # %% [markdown]
 #
@@ -196,17 +158,17 @@ rad_solver.rad_map(fw_shape)
 def main(only_source=True):
 
     if only_source:
-        rad_solver.plot()
+        source.plot()
         plt.show()
     
     else:
         # Core and SOL source: coordinates and radiation values
-        x_core = rad_solver.core_rad.x_tot
-        z_core = rad_solver.core_rad.z_tot
-        rad_core = rad_solver.core_rad.rad_tot
-        x_sol = rad_solver.sol_rad.x_tot
-        z_sol = rad_solver.sol_rad.z_tot
-        rad_sol = rad_solver.sol_rad.rad_tot
+        x_core = source.core_rad.x_tot
+        z_core = source.core_rad.z_tot
+        rad_core = source.core_rad.rad_tot
+        x_sol = source.sol_rad.x_tot
+        z_sol = source.sol_rad.z_tot
+        rad_sol = source.sol_rad.rad_tot
 
         # Coversion required for CHERAB
         rad_core = rad_core * 1.0e6
@@ -224,16 +186,16 @@ def main(only_source=True):
         # Filter in/out zones
         wall_filter = filtering_in_or_out(fw_shape.x, fw_shape.z)
         pfr_x_down, pfr_z_down = pfr_filter(
-            rad_solver.sol_rad.separatrix, rad_solver.sol_rad.points["x_point"]["z_low"]
+            source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_low"]
         )
         pfr_x_up, pfr_z_up = pfr_filter(
-            rad_solver.sol_rad.separatrix, rad_solver.sol_rad.points["x_point"]["z_up"]
+            source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_up"]
         )
         pfr_down_filter = filtering_in_or_out(pfr_x_down, pfr_z_down, False)
         pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, False)
 
         # Fetch lcfs
-        lcfs = rad_solver.lcfs
+        lcfs = source.lcfs
         core_filter_in = filtering_in_or_out(lcfs.x, lcfs.z)
         core_filter_out = filtering_in_or_out(lcfs.x, lcfs.z, False)
         for i in range(len(x_sol)):
@@ -254,7 +216,8 @@ def main(only_source=True):
 
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
         # Calculate radiation of FW points
-        calculate_fw_rad_loads(rad_source=func, fw_shape=fw_shape)
+        solver = FirstWallRadiationSolver(source_func=func, firstwall_shape=fw_shape)
+        solver.solve()
 
 if __name__ == "__main__":
     main()

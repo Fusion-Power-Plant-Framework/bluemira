@@ -40,8 +40,11 @@ from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.physics import calc_psi_norm
 from bluemira.display.plotter import plot_coordinates
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.wire import BluemiraWire
 
 from scipy.interpolate import interp1d
+
+from bluemira.radiation_transport.flux_surfaces_maker import analyse_first_wall_flux_surfaces
 
 from bluemira.radiation_transport.radiation_tools import (
     gaussian_decay, 
@@ -56,6 +59,7 @@ from bluemira.radiation_transport.radiation_tools import (
     upstream_temperature,
     linear_interpolator,
     interpolated_field_values,
+    get_impurity_data,
     
 )
 
@@ -1766,7 +1770,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         )
 
 
-class RadiationSolver:
+class RadiationSource:
     """
     Simplified solver to easily access the radiation model location inputs.
     """
@@ -1774,28 +1778,28 @@ class RadiationSolver:
     def __init__(
         self,
         eq: Equilibrium,
+        firstwall_shape: BluemiraWire,
         params: ParameterFrame,
-        flux_surfaces,
         psi_n,
         ne_mp,
         te_mp,
-        impurity_content_core,
-        impurity_data_core,
-        impurity_content_sol,
-        impurity_data_sol,
-        x_sep_omp = None,
-        x_sep_imp = None,
-        dx_omp = None,
-        dx_imp = None,
+        core_impurities: Dict[str, float],
+        sol_impurities: Dict[str, float],
         sep_corrector = None
     ):
 
         self.eq = eq
-        self.flux_surfaces = flux_surfaces
         self.params = self._make_params(params)
-        self.imp_content_core = impurity_content_core
+
+        # Get impurity data
+        impurities_list_core = [imp for imp in core_impurities]
+        impurities_list_sol = [imp for imp in sol_impurities]
+        impurity_data_core = get_impurity_data(impurities_list=impurities_list_core)
+        impurity_data_sol = get_impurity_data(impurities_list=impurities_list_sol)
+
+        self.imp_content_core = core_impurities
         self.imp_data_core = impurity_data_core
-        self.imp_content_sol = impurity_content_sol
+        self.imp_content_sol = sol_impurities
         self.imp_data_sol = impurity_data_sol
         self.lcfs = self.eq.get_LCFS()
 
@@ -1803,10 +1807,6 @@ class RadiationSolver:
         self.psi_n = psi_n
         self.ne_mp = ne_mp
         self.te_mp = te_mp
-        self.x_sep_omp = x_sep_omp
-        self.x_sep_imp = x_sep_imp
-        self.dx_omp = dx_omp
-        self.dx_imp = dx_imp
         if sep_corrector is None:
             sep_corrector = SeparationCorrector.DN if eq.is_double_null else SeparationCorrector.SN
         self.sep_corrector = sep_corrector
@@ -1819,6 +1819,19 @@ class RadiationSolver:
         self.x_tot = None
         self.z_tot = None
         self.rad_tot = None
+
+        # Initialising the `FluxSurfaceMaker`
+        (
+            self.dx_omp, 
+            self.dx_imp, 
+            self.flux_surfaces, 
+            self.x_sep_omp, 
+            self.x_sep_imp) = analyse_first_wall_flux_surfaces(
+                equilibrium=eq, 
+                first_wall=firstwall_shape, 
+                dx_mp=0.001
+                )
+
 
     def analyse(self, firstwall_geom: Grid):
         """
