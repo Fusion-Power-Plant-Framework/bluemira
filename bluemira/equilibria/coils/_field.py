@@ -71,7 +71,7 @@ class CoilGroupFieldsMixin:
         """
         x, z = np.ascontiguousarray(x), np.ascontiguousarray(z)
 
-        ind = np.nonzero(self._quad_weighting != 0)
+        ind = np.nonzero(self._quad_weighting)
         out = np.zeros((*x.shape, *self._quad_x.shape))
 
         out[(*(slice(None) for _ in x.shape), *ind)] = greens_psi(
@@ -356,7 +356,7 @@ class CoilGroupFieldsMixin:
             _quad_z = self._quad_z
             _quad_weight = self._quad_weighting
 
-        ind = np.nonzero(_quad_weight != 0)
+        ind = np.nonzero(_quad_weight)
         out = np.zeros((*x.shape, *_quad_x.shape))
 
         out[(*(slice(None) for _ in x.shape), *ind)] = greens(
@@ -597,7 +597,7 @@ class CoilGroupFieldsMixin:
         cr = self._current_radius
         if any(cr != 0):
             # true divide errors for zero current coils
-            cr_ind = np.nonzero(cr != 0)
+            cr_ind = np.nonzero(cr)
             fx = np.zeros_like(cr)
             fx[cr_ind] = (
                 MU_0
@@ -639,7 +639,7 @@ class CoilGroupFieldsMixin:
                 mask = np.zeros_like(Bz, dtype=bool)
                 mask[same_pos] = True
                 if any(cr != 0):
-                    cr_ind = np.nonzero(cr != 0)
+                    cr_ind = np.nonzero(cr)
                     Bz[mask][cr_ind] = (
                         MU_0
                         / (4 * np.pi * x[cr_ind])

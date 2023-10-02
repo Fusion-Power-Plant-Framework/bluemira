@@ -395,7 +395,7 @@ class Timeline:
         self.mci = np.cumsum(lens)
 
         # TODO: fix how rt is calculated for varying pulse lengths
-        fuse_indices = np.nonzero(self.DT_rate != 0)[0]
+        fuse_indices = np.nonzero(self.DT_rate)[0]
         self.ft = np.zeros(len(self.t))
         for i in fuse_indices[1::2]:
             self.ft[i] = self.t[i] - self.t[i - 1]

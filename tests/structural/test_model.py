@@ -152,7 +152,7 @@ class TestFEModel:
         deflections = result.deflections
 
         # Check that there are three displacements
-        non_zero = np.nonzero(deflections != 0)[0]
+        non_zero = np.nonzero(deflections)[0]
         assert len(non_zero) == 3
 
         # Check that the displacements occur in the correct places

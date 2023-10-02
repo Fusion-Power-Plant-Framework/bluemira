@@ -592,7 +592,7 @@ class BetaIpProfile(Profile):
         if mask is None:
             pfunc = speedy_pressure(psi_norm, psio, psix, self.shape)
         else:
-            ii, jj = np.nonzero(mask != 0)
+            ii, jj = np.nonzero(mask)
             jtorshape *= mask
             pfunc = speedy_pressure_mask(
                 iter(ii), iter(jj), psi_norm, psio, psix, self.shape
