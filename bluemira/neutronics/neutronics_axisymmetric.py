@@ -103,7 +103,7 @@ def setup_openmc(
         import os
 
         os.environ["OPENMC_CROSS_SECTIONS"] = str(variables.cross_section_xml)
-        settings = openmc.Settings()
+    settings = openmc.Settings()
 
     settings.source = plasma_source
     settings.particles = variables.particles
