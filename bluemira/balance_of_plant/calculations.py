@@ -128,7 +128,7 @@ def He_pumping(  # noqa: N802
     \t:math:`P_{pump,el} = \\dfrac{P_{pump}}{\\eta_{el}}` [W]\n
     **No longer in use:**
     \t:math:`f_{pump}=\\dfrac{dP}{dTc_P\\rho_{av}}`
-    """  # noqa: W505
+    """  # noqa: W505, E501
     d_temp = t_out - t_in
     t_bb_inlet = t_in
     # Ideal monoatomic gas - small compression ratios

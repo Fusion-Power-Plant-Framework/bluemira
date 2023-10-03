@@ -438,7 +438,7 @@ class CoilSetMHDState(MHDState):
         """
         no_coils = self.coilset.n_coils()
         plasma = self.plasma
-        non_zero_current = np.where(self.coilset.current != 0)[0]
+        non_zero_current = np.nonzero(self.coilset.current)[0]
         response = self.coilset.control_F(self.coilset)
         background = (
             self.coilset.F(plasma)[non_zero_current]
@@ -1221,7 +1221,7 @@ class Equilibrium(CoilSetMHDState):
             The radial position of the effective current centre
         zcur:
             The vertical position of the effective current centre
-        """  # noqa: W505
+        """  # noqa: W505, E501
         xcur = np.sqrt(1 / self.profiles.I_p * self._int_dxdz(self.x**2 * self._jtor))
         zcur = 1 / self.profiles.I_p * self._int_dxdz(self.z * self._jtor)
         return xcur, zcur

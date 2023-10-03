@@ -319,7 +319,7 @@ def _check_constraints(
         # Deal with scalar constraints
         c_value = np.array([c_value]) if np.isscalar(c_value) else c_value
         tols = np.array(constraint["tolerance"])
-        indices = np.where(condition(c_value, tols))[0]
+        indices = np.nonzero(condition(c_value, tols))[0]
         if indices.size > 0:
             return (indices, c_value, tols)
         return None

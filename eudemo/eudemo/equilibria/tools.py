@@ -74,7 +74,7 @@ def estimate_kappa95(A: float, m_s_limit: float) -> float:
     design driving. Exercise caution.
     \t:math:`m_{s} = a\\kappa_{95}^{2}+bA^{2}+c\\kappa A+d\\kappa+eA+f`\n
     \t:math:`\\kappa_{95}(A, m_{s}) = \\dfrac{-d-cA-\\sqrt{(c^{2}-4ab)A^{2}+(2dc-4ae)A+d^{2}-4af+4am_{s})}}{2a}`
-    """  # noqa: W505
+    """  # noqa: W505, E501
     if not 2.6 <= A <= 3.6:  # noqa: PLR2004
         bluemira_warn(f"Kappa 95 estimate only valid for 2.6 <= A <= 3.6, not A = {A}")
     if not 0.0 <= m_s_limit <= 0.8655172413793104:  # noqa: PLR2004

@@ -92,7 +92,7 @@ def E_DD_fusion() -> float:
         (1.01 ~\\text{MeV})+\\text{p} (3.02~\\text{MeV})~~[50 \\textrm{\\%}]
         ~~~~~~~~~~\\rightarrow~{^{3}_{2}He} (0.82~\\text{MeV})+\\text{n}^{0} (2.45~\\text{MeV})~~[50 \\text{\\%}]\n
         \\Delta E = \\Delta m c^2
-    """  # noqa: W505
+    """  # noqa: W505, E501
     # NOTE: Electron mass must be included with proton mass
     delta_m = np.array(
         [
@@ -160,7 +160,7 @@ def r_T_burn(p_fus: float) -> float:  # noqa: N802
     Returns
     -------
     T burn rate in the plasma [g/s]
-    """  # noqa: W505
+    """  # noqa: W505, E501
     return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
 
 
@@ -491,10 +491,10 @@ def _reactivity_johner(
         bluemira_warn("The Johner parameterisation is not valid for T < 5.3 keV")
 
     sigma_v = np.zeros_like(temp_kev)
-    idx_1 = np.where((temp_kev >= 5.3) & (temp_kev <= 10.3))[0]  # noqa: PLR2004
-    idx_2 = np.where((temp_kev >= 10.3) & (temp_kev <= 18.5))[0]  # noqa: PLR2004
-    idx_3 = np.where((temp_kev >= 18.5) & (temp_kev <= 39.9))[0]  # noqa: PLR2004
-    idx_4 = np.where((temp_kev >= 39.9) & (temp_kev <= 100.0))[0]  # noqa: PLR2004
+    idx_1 = np.nonzero((temp_kev >= 5.3) & (temp_kev <= 10.3))[0]  # noqa: PLR2004
+    idx_2 = np.nonzero((temp_kev >= 10.3) & (temp_kev <= 18.5))[0]  # noqa: PLR2004
+    idx_3 = np.nonzero((temp_kev >= 18.5) & (temp_kev <= 39.9))[0]  # noqa: PLR2004
+    idx_4 = np.nonzero((temp_kev >= 39.9) & (temp_kev <= 100.0))[0]  # noqa: PLR2004
     t1 = temp_kev[idx_1]
     t2 = temp_kev[idx_2]
     t3 = temp_kev[idx_3]

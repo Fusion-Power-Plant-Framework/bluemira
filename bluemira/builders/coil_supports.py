@@ -400,7 +400,7 @@ class PFCoilSupportBuilder(Builder):
         for inter in intersections:
             direction = inter - point
             direction /= np.linalg.norm(direction)
-            if not np.dot(correct_direction, direction) < 0:
+            if np.dot(correct_direction, direction) >= 0:
                 dx = inter[0] - point[0]
                 dz = inter[2] - point[2]
 

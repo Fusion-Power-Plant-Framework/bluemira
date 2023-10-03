@@ -53,7 +53,7 @@ Note that the gradient (Jacobian) of the constraint function is of the form:
 If the `df_constraint` function is not provided, the constraint can still be used for
 derivative-free optimisation algorithms, but will need to be updated or approximated for
 use in derivative based algorithms, such as those utilising gradient descent.
-"""  # noqa: W505
+"""  # noqa: W505, E501
 
 from __future__ import annotations
 

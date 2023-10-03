@@ -834,7 +834,7 @@ class TFCoilBuilder(Builder):
         inner_xs_rect = make_polygon([x_in, y_in, np.zeros(4)], closed=True)
 
         # Sweep with a varying rectangular cross-section
-        idx = np.where(np.isclose(centreline_points.x, np.min(centreline_points.x)))[0]
+        idx = np.nonzero(np.isclose(centreline_points.x, np.min(centreline_points.x)))[0]
         z_turn_top = np.max(centreline_points.z[idx])
         z_turn_bot = np.min(centreline_points.z[idx])
 

@@ -660,7 +660,7 @@ class MixedFaceMaker:
         seg_lengths = _segment_lengths(self.x, self.y, self.z)
         median = np.median(seg_lengths)
 
-        long_indices = np.where(seg_lengths > self.median_factor * median)[0]
+        long_indices = np.nonzero(seg_lengths > self.median_factor * median)[0]
 
         # find sharp angle indices
         angles = np.zeros(len(self.x) - 2)
@@ -684,7 +684,7 @@ class MixedFaceMaker:
             angles = np.append(angles, join_angle)
 
         angles = np.rad2deg(angles)
-        sharp_indices = np.where((angles <= self.a_acute) & (angles != 0))[0]
+        sharp_indices = np.nonzero((angles <= self.a_acute) & (angles != 0))[0]
         # Convert angle numbering to segment numbering (both segments of angle)
         sharp_edge_indices = []
         for index in sharp_indices:

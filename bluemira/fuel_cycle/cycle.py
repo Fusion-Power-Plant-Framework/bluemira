@@ -552,7 +552,7 @@ class EUDEMOFuelCycleModel:
         """
         Plot correction for compressed time inventories
         """
-        idx = np.where(t - np.roll(t, 1) > thresh)[0] - 2
+        idx = np.nonzero(t - np.roll(t, 1) > thresh)[0] - 2
         inventory = inventory.copy()
         for i in idx:
             inventory[i + 1] = inventory[i]
@@ -568,7 +568,7 @@ class EUDEMOFuelCycleModel:
         Doubling time of the tritium fuel cycle [y]
 
         \t:math:`t_{d} = t[\\text{max}(\\text{argmin}\\lvert m_{T_{store}}-I_{TFV_{min}}-m_{T_{start}}\\rvert))]`
-        """  # noqa: W505
+        """  # noqa: W505, E501
         t_req = self.m_T[0] + self.params.I_tfv_min
         m_temp = self.m_T[::-1]
         try:

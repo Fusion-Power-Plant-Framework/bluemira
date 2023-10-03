@@ -239,7 +239,7 @@ class FiniteElementModel:
             self.n_fixed_dofs += n_supports  # Count fixed DOFs
 
             if n_supports != 0:
-                support_indices = np.where(node.supports == True)[0]  # noqa: E712
+                support_indices = np.nonzero(node.supports == True)[0]  # noqa: E712
                 dofs = [6 * node.id_number + i for i in support_indices]
                 # Keep tracked of fixed DOFs
                 self.fixed_dof_ids.extend(dofs)

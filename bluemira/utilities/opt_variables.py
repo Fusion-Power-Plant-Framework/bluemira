@@ -346,7 +346,7 @@ class OptVariablesFrame:
         if not hasattr(cls, "__dataclass_fields__"):
             raise TypeError(f"{cls} must be annotated with '@dataclass'")
         for field_name in cls.__dataclass_fields__:  # type: ignore[attr-defined]
-            dcf: Field = cls.__dataclass_fields__[field_name]  # type: ignore[attr-defined]
+            dcf: Field = cls.__dataclass_fields__[field_name]  # type: ignore[attr-defined]  # noqa: E501
             fact_inst = dcf.default_factory() if dcf.default_factory != MISSING else None
             if fact_inst is None:
                 raise TypeError(

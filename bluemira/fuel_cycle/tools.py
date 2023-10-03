@@ -221,7 +221,7 @@ def fit_sink_data(
         The threshold of the fitted piecewise linear threshold function
     """
     x, y = np.array(x), np.array(y)
-    arg = np.where(y > 0.98 * max(y))[0][0]
+    arg = np.nonzero(y > 0.98 * max(y))[0][0]
     kink_point = x[arg]
 
     if method == "linear":
@@ -461,7 +461,7 @@ def _dec_I_mdot(  # noqa: N802
     \t:math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+{\\eta}\\dot{m}\\sum_{t=0}^{{\\Delta}t}e^{-\\lambda(T-t)}`
 
     \t:math:`I_{end} = Ie^{-{\\lambda}{\\Delta}t}+{\\eta}\\dot{m}\\dfrac{e^{-{\\lambda}T}\\big(e^{{\\lambda}({\\Delta}t+1/2)}-1\\big)}{e^{\\lambda}-1}`
-    """  # noqa: W505
+    """  # noqa: W505, E501
     # intuitive hack for 1/2... maths says it should be 1
     dt = t_out - t_in
 
@@ -491,7 +491,7 @@ def _timestep_decay(flux: float, dt: float) -> float:
     Returns
     -------
     The value of the total inventory which decayed over the time-step.
-    """  # noqa: W505
+    """  # noqa: W505, E501
     return flux * (
         1
         - (np.exp(-T_LAMBDA * dt) * (np.exp(T_LAMBDA * (dt + 0)) - 1))

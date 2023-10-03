@@ -124,7 +124,7 @@ class ScalarSubFunc(dolfin.UserExpression):
         else:
             m = self.subdomains[cell.index]
             func = (
-                self.functions[np.where(np.array(self.markers) == m)[0][0]]
+                self.functions[np.nonzero(np.array(self.markers) == m)[0][0]]
                 if m in self.markers
                 else 0
             )
