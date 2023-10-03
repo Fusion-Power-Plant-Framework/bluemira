@@ -236,7 +236,7 @@ class TBRHeatingSimulation:
         # by assuming 100% of reactor power comes from DT fusion
         self.src_rate = self.operation_variable.calculate_total_neutron_rate()
 
-        create_tallies(self.cells, self.material_lib, self.src_rate)
+        create_tallies(self.cells, self.material_lib)
 
         if plot_geometry:
             present.geometry_plotter(self.cells, self.tokamak_geometry)

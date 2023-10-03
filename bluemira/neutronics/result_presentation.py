@@ -30,7 +30,7 @@ import numpy as np
 import openmc
 from tabulate import tabulate
 
-from bluemira.base.constants import S_TO_YR, raw_uc
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
 from bluemira.neutronics.params import TokamakGeometry
@@ -131,7 +131,7 @@ class OpenMCResult:
     statepoint: openmc.StatePoint
     statepoint_file: str
     cell_names: Dict
-    cell_vols: Dict
+    cell_vols: Dict  # [m^3]
     mat_names: Dict
 
     volume_file: str
@@ -158,7 +158,15 @@ class OpenMCResult:
         # Creating cell volume dictionary to allow easy mapping to dataframe
         cell_vols = {}
         for cell_id in universe.cells:
-            cell_vols[cell_id] = universe.cells[cell_id].volume
+            try:
+                cell_vols[cell_id] = raw_uc(
+                    universe.cells[cell_id].volume, "cm^3", "m^3"
+                )
+            except TypeError:
+                cell_vols[cell_id] = universe.cells[
+                    cell_id
+                ].volume  # catch the None's or na.
+            # provided by openmc in cm^3, but we want to save it in m^3
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
         tbr, tbr_err = cls._load_tbr(statepoint)
@@ -176,12 +184,12 @@ class OpenMCResult:
             mat_names=mat_names,
             tbr=tbr,
             tbr_err=tbr_err,
-            heating=cls._load_heating(statepoint, mat_names),
+            heating=cls._load_heating(statepoint, mat_names, src_rate),
             neutron_wall_load=cls._load_neutron_wall_loading(
                 statepoint, cell_names, cell_vols, src_rate
             ),
             photon_heat_flux=cls._load_photon_heat_flux(
-                statepoint, cell_names, cell_vols
+                statepoint, cell_names, cell_vols, src_rate
             ),
             stochastic_cell_volumes=st_cell_volumes,
             volume_state=volume_state,
@@ -225,13 +233,19 @@ class OpenMCResult:
         return tbr_df["mean"].sum(), tbr_df["std. dev."].sum()
 
     @classmethod
-    def _load_heating(cls, statepoint, mat_names):
+    def _load_heating(cls, statepoint, mat_names, src_rate):
         """Load the heating (sorted by material) dataframe"""
-        heating_df = cls._load_dataframe_from_statepoint(statepoint, "MW heating")
-        # additional columns
+        # mean and std. dev. are given in eV per source particle,
+        # so we don't need to show them to the user.
+        heating_df = cls._load_dataframe_from_statepoint(statepoint, "material heating")
         heating_df["material_name"] = heating_df["material"].map(mat_names)
+        heating_df["mean(W)"] = raw_uc(
+            heating_df["mean"].to_numpy() * src_rate, "eV/s", "W"
+        )
+        heating_df["err."] = raw_uc(
+            heating_df["std. dev."].to_numpy() * src_rate, "eV/s", "W"
+        )
         heating_df["%err."] = heating_df.apply(get_percent_err, axis=1)
-        # DataFrame columns rearrangement
         # rearrange dataframe into this desired order
         heating_df = heating_df[
             [
@@ -239,14 +253,12 @@ class OpenMCResult:
                 "material_name",
                 "nuclide",
                 "score",
-                "mean",  # 'mean' units are MW
-                "std. dev.",
+                "mean(W)",
+                "err.",
                 "%err.",
             ]
         ]
         hdf = heating_df.to_dict()
-        hdf["mean"] = raw_uc(heating_df["mean"].to_numpy(), "MW", "W")
-        hdf["std. dev."] = raw_uc(heating_df["std. dev."].to_numpy(), "MW", "W")
         return cls._convert_dict_contents(hdf)
 
     @classmethod
@@ -254,19 +266,23 @@ class OpenMCResult:
         """Load the neutron wall load dataframe"""
         dfa_coefs = DPACoefficients()  # default assumes iron (Fe) is used.
         n_wl_df = cls._load_dataframe_from_statepoint(statepoint, "neutron wall load")
-        # additional columns
         n_wl_df["cell_name"] = n_wl_df["cell"].map(cell_names)
-        n_wl_df["vol (m^3)"] = raw_uc(
-            n_wl_df["cell"].map(cell_vols).to_numpy(), "cm^3", "m^3"
+        n_wl_df["vol (m^3)"] = n_wl_df["cell"].map(cell_vols)
+        total_displacements_per_second = (
+            n_wl_df["mean"] * dfa_coefs.displacements_per_damage_eV * src_rate
+        )  # "mean" has units "eV per source particle"
+        # total number of atomic displacements per second in the cell.
+        num_atoms_in_cell = n_wl_df["vol (m^3)"] * raw_uc(
+            dfa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"
         )
-        n_wl_df["dpa/fpy"] = (
-            n_wl_df["mean"]
-            * dfa_coefs.displacements_per_damage_eV
-            / (n_wl_df["vol (m^3)"] * raw_uc(dfa_coefs.atoms_per_cc, "1/cm^3", "1/m^3"))
-            / S_TO_YR
-            * src_rate
+        n_wl_df["dpa/fpy"] = raw_uc(
+            total_displacements_per_second.to_numpy() / num_atoms_in_cell.to_numpy(),
+            "1/s",
+            "1/year",
         )
+
         n_wl_df["%err."] = n_wl_df.apply(get_percent_err, axis=1)
+        # keep only the surface cells:
         n_wl_df = n_wl_df.drop(
             n_wl_df[~n_wl_df["cell_name"].str.contains("Surface")].index
         )
@@ -280,8 +296,6 @@ class OpenMCResult:
                 "nuclide",
                 "score",
                 "vol (m^3)",
-                "mean",  # 'mean' units are eV per source particle
-                "std. dev.",
                 "dpa/fpy",
                 "%err.",
             ]
@@ -290,37 +304,61 @@ class OpenMCResult:
         return cls._convert_dict_contents(n_wl_df.to_dict())
 
     @classmethod
-    def _load_photon_heat_flux(cls, statepoint, cell_names, cell_vols):
+    def _load_photon_heat_flux(cls, statepoint, cell_names, cell_vols, src_rate):
         """Load the photon heaat flux dataframe"""
-        p_hf_df = cls._load_dataframe_from_statepoint(statepoint, "photon heat flux")
-        # additional columns
+        p_hf_df = cls._load_dataframe_from_statepoint(statepoint, "photon heating")
         p_hf_df["cell_name"] = p_hf_df["cell"].map(cell_names)
-        p_hf_df["vol (m^3)"] = raw_uc(
-            p_hf_df["cell"].map(cell_vols).to_numpy(), "cm^3", "m^3"
-        )
-        p_hf_df["W_m-2"] = raw_uc(
-            (p_hf_df["mean"] / p_hf_df["vol (m^3)"]).to_numpy(), "MW/m^2", "W/m^2"
-        )
+
         p_hf_df["%err."] = p_hf_df.apply(get_percent_err, axis=1)
+        p_hf_df["vol (m^3)"] = p_hf_df["cell"].map(cell_vols)
+        p_hf_df["heating (W)"] = photon_heating = raw_uc(
+            p_hf_df["mean"].to_numpy() * src_rate, "eV/s", "W"
+        )
+        p_hf_df["heating std.dev."] = photon_heating_stddev = raw_uc(
+            p_hf_df["std. dev."].to_numpy() * src_rate, "eV/s", "W"
+        )
+        p_hf_df["vol. heating (W/m3)"] = photon_heating / p_hf_df["vol (m^3)"]
+        p_hf_df["vol. heating std.dev."] = photon_heating_stddev / p_hf_df["vol (m^3)"]
+
         # Scaling first wall results by factor to surface results
         surface_total = p_hf_df.loc[
-            p_hf_df["cell_name"].str.contains("FW Surface"), "W_m-2"
+            p_hf_df["cell_name"].str.contains("FW Surface"), "heating (W)"
         ].sum()
         cell_total = p_hf_df.loc[
-            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"), "W_m-2"
+            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"), "heating (W)"
         ].sum()
         _surface_factor = surface_total / cell_total
-        p_hf_df["W_m-2"] = np.where(
+        # in-place modification
+        p_hf_df["vol. heating (W/m3)"] = np.where(
+            ~p_hf_df["cell_name"].str.contains(
+                "FW Surface|PFC"
+            ),  # modify the matching entries,
+            p_hf_df["heating (W)"] * _surface_factor,
+            p_hf_df["heating (W)"],  # otherwise leave it unchanged.
+        )
+        p_hf_df["vol. heating (W/m3)"] = np.where(
             ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
-            p_hf_df["W_m-2"] * _surface_factor,
-            p_hf_df["W_m-2"],
+            p_hf_df["heating std.dev."] * _surface_factor,
+            p_hf_df["heating std.dev."],
+        )
+        p_hf_df["vol. heating (W/m3)"] = np.where(
+            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
+            p_hf_df["vol. heating (W/m3)"] * _surface_factor,
+            p_hf_df["vol. heating (W/m3)"],
+        )
+        p_hf_df["vol. heating (W/m3)"] = np.where(
+            ~p_hf_df["cell_name"].str.contains("FW Surface|PFC"),
+            p_hf_df["vol. heating std.dev."] * _surface_factor,
+            p_hf_df["vol. heating std.dev."],
         )
         # DataFrame columns rearrangement
         p_hf_df = p_hf_df.drop(
             p_hf_df[p_hf_df["cell_name"].str.contains("FW Surface")].index
         )
         p_hf_df = p_hf_df.drop(p_hf_df[p_hf_df["cell_name"] == "Divertor PFC"].index)
-        p_hf_df = p_hf_df.replace("FW", "FW Surface", regex=True)
+        p_hf_df = p_hf_df.replace(
+            "FW", "FW Surface", regex=True
+        )  # expand the word again
         p_hf_df = p_hf_df[
             [
                 "cell",
@@ -329,15 +367,14 @@ class OpenMCResult:
                 "nuclide",
                 "score",
                 "vol (m^3)",
-                "mean",  # 'mean' units are MW cm
-                "std. dev.",
-                "W_m-2",
+                "heating (W)",
+                "heating std.dev.",
+                "vol. heating (W/m3)",
+                "vol. heating std.dev.",
                 "%err.",
             ]
         ]
         p_hf_dict = p_hf_df.to_dict()
-        p_hf_dict["mean"] = raw_uc(p_hf_df["mean"].to_numpy(), "MW cm", "W m")
-        p_hf_dict["std. dev."] = raw_uc(p_hf_df["std. dev."].to_numpy(), "MW cm", "W m")
         return cls._convert_dict_contents(p_hf_dict)
 
     def __str__(self):
