@@ -27,31 +27,27 @@ with arbitrarily shaped cross-section, following equations as described in:
 """
 import numpy as np
 
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, make_polygon
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.baseclass import (
-    ArbitraryCrossSectionCurrentSource,
     SourceGroup,
 )
-from bluemira.magnetostatics.error import MagnetostaticsError
-from bluemira.magnetostatics.tools import process_xyz_array
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
+
 def polyhedral_discretised_sources(
-        normal,
-        trap_vec,
-        wire,
-        length,
-        alpha,
-        beta,
-        current,
-        rows,
-        ):
+    normal,
+    trap_vec,
+    wire,
+    length,
+    alpha,
+    beta,
+    current,
+    rows,
+):
     """
-    Function to approximate a polyhedral current source using a 
+    Function to approximate a polyhedral current source using a
     set of discretised trapezoidal prism current sources.
     """
     points = wire.vertexes.T
@@ -65,7 +61,7 @@ def polyhedral_discretised_sources(
     theta_l = np.deg2rad(beta)
     theta_u = np.deg2rad(alpha)
     face = BluemiraFace(boundary=wire)
-    J = current / face.area
+    j = current / face.area
     main_length = length
     vals1 = []
     vals2 = []
@@ -75,13 +71,13 @@ def polyhedral_discretised_sources(
     tmin = points[vals1.index(min(vals1)), :]
     tmax = points[vals1.index(max(vals1)), :]
     tdist = np.dot(tmax - tmin, trap_vec)
-    offset = tdist/rows
+    offset = tdist / rows
     pmin = points[vals2.index(min(vals2)), :]
     pmax = points[vals2.index(max(vals2)), :]
     pdist = np.dot(pmax - pmin, perp_vec)
 
     for i in range(rows):
-        vdist = i*offset + offset/2
+        vdist = i * offset + offset / 2
         cen = tmin + vdist * trap_vec
         up = cen + pdist * perp_vec
         low = cen - pdist * perp_vec
@@ -99,9 +95,9 @@ def polyhedral_discretised_sources(
             o = np.multiply(0.5, (p1 + p2))
             width = np.linalg.norm(p2 - p1)
             area = width * offset
-            current = J * area
-            dz_l = np.dot((o - tmin), trap_vec)*np.tan(theta_l)
-            dz_u = np.dot((o - tmin), trap_vec)*np.tan(theta_u)
+            current = j * area
+            dz_l = np.dot((o - tmin), trap_vec) * np.tan(theta_l)
+            dz_u = np.dot((o - tmin), trap_vec) * np.tan(theta_u)
             length = main_length + dz_l + dz_u
             source = TrapezoidalPrismCurrentSource(
                 o,
