@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import dataclass
+from typing import ClassVar
 
 from bluemira.base.parameter_frame import Parameter
 from bluemira.codes import interface
@@ -44,7 +45,7 @@ class Params(MappedParameterFrame):
     param1: Parameter[float]
     param2: Parameter[int]
 
-    _mappings = {  # noqa: RUF012
+    _mappings: ClassVar = {
         "param1": ParameterMapping("ext1", send=True, recv=True, unit="MW"),
         "param2": ParameterMapping("ext2", send=False, recv=False),
     }

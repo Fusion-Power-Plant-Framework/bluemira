@@ -20,6 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 from dataclasses import asdict, dataclass
+from typing import ClassVar
 
 import pytest
 
@@ -84,7 +85,7 @@ class MyPF(MappedParameterFrame):
     E: Parameter[str]
     F: Parameter[bool]
 
-    _mappings = mappings
+    _mappings: ClassVar = mappings
     _defaults = MyDC()
 
     @property
