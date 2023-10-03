@@ -25,6 +25,7 @@ from unittest import mock
 import numpy as np
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.equilibria.run import (
     BreakdownCOPSettings,
     EQSettings,
@@ -96,7 +97,7 @@ class TestPulsedCoilSetDesign:
             self.params, *[None] * 4, equilibrium_settings={"gamma": 1e-5}
         )
         assert isinstance(mypcs._eq_settings, EQSettings)
-        assert mypcs._eq_settings.gamma == 1e-5
+        assert mypcs._eq_settings.gamma == pytest.approx(1e-5, rel=0, abs=EPS)
 
         with pytest.raises(TypeError):
             mypcs = self.MyPulsedCoilset(

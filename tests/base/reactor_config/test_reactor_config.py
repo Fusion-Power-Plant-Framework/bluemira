@@ -24,7 +24,7 @@ from pathlib import Path
 
 import pytest
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.logs import get_log_level, set_log_level
 from bluemira.base.parameter_frame import (
@@ -133,7 +133,7 @@ class TestReactorConfigClass:
 
     def _compa_designer_param_value_checks(self, cpf):
         assert cpf.only_global.value == raw_uc(1, "years", "s")
-        assert cpf.height.value == 1.8
+        assert cpf.height.value == pytest.approx(1.8, rel=0, abs=EPS)
         assert cpf.age.value == raw_uc(30, "years", "s")
         assert cpf.name.value == "Comp A"
         assert cpf.location.value == "here"

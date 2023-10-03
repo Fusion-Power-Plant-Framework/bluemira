@@ -29,6 +29,7 @@ import pytest
 from FreeCAD import Base, newDocument
 
 import bluemira.codes._freecadapi as cadapi
+from bluemira.base.constants import EPS
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.constants import D_TOLERANCE
 from tests._helpers import skipif_import_error
@@ -170,15 +171,23 @@ class TestFreecadapi:
 
     def test_length(self):
         open_wire: Part.Wire = cadapi.make_polygon(self.square_points)
-        assert cadapi.length(open_wire) == open_wire.Length == 3.0
+        assert (
+            cadapi.length(open_wire)
+            == open_wire.Length
+            == pytest.approx(3.0, rel=0, abs=EPS)
+        )
         closed_wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        assert cadapi.length(closed_wire) == closed_wire.Length == 4.0
+        assert (
+            cadapi.length(closed_wire)
+            == closed_wire.Length
+            == pytest.approx(4.0, rel=0, abs=EPS)
+        )
 
     def test_area(self):
         wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
-        assert cadapi.area(wire) == wire.Area == 0.0
+        assert cadapi.area(wire) == wire.Area == pytest.approx(0.0, rel=0, abs=EPS)
         face: Part.Face = Part.Face(wire)
-        assert cadapi.area(face) == face.Area == 1.0
+        assert cadapi.area(face) == face.Area == pytest.approx(1.0, rel=0, abs=EPS)
 
     def test_center_of_mass(self):
         wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
@@ -194,7 +203,11 @@ class TestFreecadapi:
         scaled_wire = cadapi.scale_shape(wire.copy(), factor)
         face: Part.Face = Part.Face(scaled_wire)
         assert cadapi.area(face) == 1.0 * factor**2
-        assert cadapi.length(face) == cadapi.length(scaled_wire) == 4.0 * factor
+        assert (
+            cadapi.length(face)
+            == cadapi.length(scaled_wire)
+            == pytest.approx(4.0 * factor, rel=0, abs=EPS)
+        )
         face_from_wire = Part.Face(wire)
         scaled_face = cadapi.scale_shape(face_from_wire.copy(), factor)
         assert cadapi.length(scaled_face) == cadapi.length(face)

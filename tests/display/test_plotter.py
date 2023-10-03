@@ -30,6 +30,7 @@ import numpy as np
 import pytest
 
 from bluemira.base.components import Component, PhysicalComponent
+from bluemira.base.constants import EPS
 from bluemira.display import plot_3d, plotter
 from bluemira.display.error import DisplayError
 from bluemira.geometry import face, placement, tools
@@ -133,7 +134,9 @@ class TestPlotOptions:
         the_options = plotter.PlotOptions()
         the_options.wire_options = {"color": "blue"}
         assert the_options.wire_options["color"] == "blue"
-        assert the_options.wire_options["linewidth"] == 0.5
+        assert the_options.wire_options["linewidth"] == pytest.approx(
+            0.5, rel=0, abs=EPS
+        )
 
     def test_wrong_view_str_raises_DisplayError(self):
         the_options = plotter.PlotOptions()

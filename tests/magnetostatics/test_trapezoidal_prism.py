@@ -22,7 +22,7 @@
 import numpy as np
 import pytest
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.constants import EPS, raw_uc
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
@@ -52,16 +52,14 @@ def test_paper_example():
     # As per Babic and Aykel paper
     # Assume truncated last digit and not rounded...
     field_7decimals = np.trunc(abs_field * 10**7) / 10**7
-    field_7true = 15.5533805
-    assert field_7decimals == field_7true
+    assert field_7decimals == pytest.approx(15.5533805, rel=0, abs=EPS)
 
     # Test singularity treatments:
     field = source.field(1, 1, 1)
     abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
     # Assume truncated last digit and not rounded...
     field_9decimals = np.trunc(abs_field * 10**9) / 10**9
-    field_9true = 53.581000397
-    assert field_9decimals == field_9true
+    assert field_9decimals == pytest.approx(53.581000397, rel=0, abs=EPS)
 
 
 class TestTrapezoidalPrismCurrentSource:

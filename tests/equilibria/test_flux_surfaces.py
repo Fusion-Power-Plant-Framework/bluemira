@@ -25,6 +25,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
@@ -247,4 +248,4 @@ def test_poloidal_angle():
     theta = poloidal_angle(Bp_strike, Bt_strike, gamma)
     assert theta > gamma
     # By hand, from a different calculation
-    assert round(theta, 1) == 20.6
+    assert round(theta, 1) == pytest.approx(20.6, rel=0, abs=EPS)

@@ -27,6 +27,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.utilities.opt_variables import (
     OptVariable,
     OptVariablesError,
@@ -56,7 +57,7 @@ class TestOptVariable:
 
     def test_normalised_value(self):
         v1 = OptVariable("a", 2, 0, 4)
-        assert v1.normalised_value == 0.5
+        assert v1.normalised_value == pytest.approx(0.5, rel=0, abs=EPS)
 
     def test_adjust(self):
         v1 = OptVariable("a", 2, 0, 4)
