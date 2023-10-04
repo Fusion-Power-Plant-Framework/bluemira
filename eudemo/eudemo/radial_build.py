@@ -90,8 +90,8 @@ for constraint in (
     Constraint.NET_ELEC_LOWER_LIMIT,
     Constraint.LH_THRESHHOLD_LIMIT,
     Constraint.PSEPB_QAR_UPPER_LIMIT,
-    Constraint.PINJ_UPPER_LIMIT,
-    Constraint.DUMP_TIME_LOWER_LIMIT,
+    # Constraint.PINJ_UPPER_LIMIT,
+    # Constraint.DUMP_TIME_LOWER_LIMIT,
     Constraint.TF_CASE_STRESS_UPPER_LIMIT,
     Constraint.TF_JACKET_STRESS_UPPER_LIMIT,
     Constraint.TF_JCRIT_RATIO_UPPER_LIMIT,
@@ -135,12 +135,13 @@ template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0
 template_builder.add_variable("fcohbop", 0.93176)
 template_builder.add_variable("fvsbrnni", 0.39566)
 template_builder.add_variable("fncycle", 1.0)
+template_builder.add_variable("feffcd", 1.0)
 
 # Modified f-values and bounds w.r.t. defaults [0.001 < 0.5 < 1.0]
 template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
 template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
 template_builder.adjust_variable("flhthresh", 1.2, lower_bound=1.1, upper_bound=1.2)
-template_builder.adjust_variable("ftburn", 1.0, lower_bound=0.98, upper_bound=1.0)
+template_builder.adjust_variable("ftburn", 1.0, upper_bound=1.0)
 
 # Modifying the initial variable vector to improve convergence
 template_builder.adjust_variable("fpnetel", 1.0)
@@ -151,6 +152,7 @@ template_builder.adjust_variable("ftmargoh", 1.0)
 template_builder.adjust_variable("ftaulimit", 1.0)
 template_builder.adjust_variable("fjohc", 0.57941)
 template_builder.adjust_variable("fjohc0", 0.53923)
+template_builder.adjust_variable("foh_stress", 0.8)
 template_builder.adjust_variable("fbetatry", 0.48251)
 template_builder.adjust_variable("fwalld", 0.131)
 # template_builder.adjust_variable("ftaucq", 0.93)
@@ -222,6 +224,9 @@ template_builder.add_input_values(
         "neped": 0.678e20,
         "nesep": 0.2e20,
         "dnbeta": 3.0,
+        # Plasma impurity stuff
+        "coreradius": 0.75,
+        "coreradiationfraction": 0.6,
         "taulimit": 5.0,
         # Important stuff
         "pnetelin": 500.0,
@@ -258,15 +263,15 @@ template_builder.add_input_values(
         "shldtth": 0.3,
         "divfix": 0.621,
         "d_vv_bot": 0.3,
+        # HCD inputs
         "pinjalw": 51.0,
         "gamma_ecrh": 0.3,
         "etaech": 0.4,
+        # BOP inputs
         "etath": 0.375,
         "etahtp": 0.87,
         "etaiso": 0.9,
         "vfshld": 0.6,
-        "coreradius": 0.75,
-        "coreradiationfraction": 0.6,
         "tdwell": 0.0,
         "tramp": 500.0,
         # CS / PF coil inputs
@@ -311,6 +316,13 @@ template_builder.add_input_values(
         "cfactr": 0.75,  # Ha!
         "kappa": 1.848,  # Should be overwritten
         "walalw": 8.0,  # Should never get even close to this
+        "tlife": 40.0,
+        # For sanity...
+        "divdum": 1,
+        "hldivlim": 10,
+        "ksic": 1.4,
+        "prn1": 0.4,
+        "zeffdiv": 35,
     }
 )
 
@@ -336,7 +348,7 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     plot = build_config.pop("plot", False)
     if run_mode == "run":
         build_config["template_in_dat"] = template
-    solver = systems_code_solver(params, build_config)
+    solver = systems_code_solver({}, build_config)
     new_params = solver.execute(run_mode)
 
     if plot:

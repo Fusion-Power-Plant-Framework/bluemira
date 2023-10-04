@@ -302,6 +302,7 @@ class ProcessInputs:
     taulimit: float = 5.0
     tfinsgap: float = 0.01
     max_vv_stress: float = 93.0e6
+    feffcd: float = 1.0
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
