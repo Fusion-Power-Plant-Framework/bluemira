@@ -24,6 +24,7 @@ from typing import ClassVar
 
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.base.parameter_frame import Parameter
 
 
@@ -128,7 +129,9 @@ class TestParameter:
 
         s_param["unit"] = "metre"
         param = Parameter(**s_param)
-        assert param.value_as("km") == 1e-3 * s_param["value"]
+        assert param.value_as("km") == pytest.approx(
+            1e-3 * s_param["value"], rel=0, abs=EPS
+        )
 
     def test_value_as_conversion_for_None(self):
         s_param = copy.deepcopy(self.SERIALIZED_PARAM)
