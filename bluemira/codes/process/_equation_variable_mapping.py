@@ -148,7 +148,7 @@ class Constraint(ConstraintSelection, Model):
         "Equation to fix number of NBI decay lengths to plasma centre",
     )
     LH_THRESHHOLD_LIMIT = 15, (103), (), "L-H Power ThresHhold Limit"
-    NET_ELEC_UPPER_LIMIT = 16, (1, 2, 3, 25), (), "Net electric power lower limit"
+    NET_ELEC_LOWER_LIMIT = 16, (1, 2, 3, 25), (), "Net electric power lower limit"
     RAD_POWER_UPPER_LIMIT = 17, (28), (), "Equation for radiation power upper limit"
     DIVERTOR_HEAT_UPPER_LIMIT = (
         18,
