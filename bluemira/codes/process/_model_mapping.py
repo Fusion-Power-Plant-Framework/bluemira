@@ -137,7 +137,7 @@ class PlasmaNullConfigurationModel(PROCESSModel):
         """
         return "snull"
 
-    DOUBLE_NULL = 0, ("ftar")
+    DOUBLE_NULL = 0, ("ftar",)
     SINGLE_NULL = 1
 
 
