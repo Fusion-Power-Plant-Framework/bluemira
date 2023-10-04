@@ -125,10 +125,17 @@ class TestPROCESSTemplateBuilder:
         t.add_constraint(Constraint.NET_ELEC_LOWER_LIMIT)
         assert "fpnetel" in t.variables
 
-    def test_warn_on_overwrite(self, caplog):
+    def test_warn_on_overwrite_value(self, caplog):
         t = PROCESSTemplateBuilder()
         t.add_input_value("dummy", 1.0)
         t.add_input_value("dummy", 2.0)
+        assert len(caplog.messages) == 1
+        assert "Over-writing" in extract_warning(caplog)
+
+    def test_warn_on_overwrite_model(self, caplog):
+        t = PROCESSTemplateBuilder()
+        t.set_model(PlasmaGeometryModel.CREATE_A_M_S)
+        t.set_model(PlasmaGeometryModel.FIESTA_100)
         assert len(caplog.messages) == 1
         assert "Over-writing" in extract_warning(caplog)
 
