@@ -83,7 +83,7 @@ for constraint in (
     Constraint.RADIAL_BUILD_CONSISTENCY,
     Constraint.CONFINEMENT_RATIO_LOWER_LIMIT,
     Constraint.DENSITY_UPPER_LIMIT,
-    Constraint.DENSITY_PROFILE_CONSISTENCY,
+    # Constraint.DENSITY_PROFILE_CONSISTENCY,
     Constraint.BETA_UPPER_LIMIT,
     Constraint.NWL_UPPER_LIMIT,
     Constraint.BURN_TIME_LOWER_LIMIT,
