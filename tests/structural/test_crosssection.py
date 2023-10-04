@@ -40,9 +40,9 @@ class TestIbeam:
     def test_ibeam(self):
         # https://structx.com/Shape_Formulas_013.html
         i_beam = IBeam(1, 1, 0.25, 0.5)
-        assert i_beam.area == pytest.approx(7.5e-11, rel=0, abs=EPS)
-        assert i_beam.i_yy == pytest.approx(78125e-18, rel=0, abs=EPS)
-        assert i_beam.i_zz == pytest.approx(46875e-18, rel=0, abs=EPS)
+        assert i_beam.area == pytest.approx(0.75, rel=0, abs=EPS)
+        assert i_beam.i_yy == pytest.approx(0.078125, rel=0, abs=EPS)
+        assert i_beam.i_zz == pytest.approx(0.046875, rel=0, abs=EPS)
         assert np.isclose(i_beam.j, 114583333333.3333e-12)
 
     def test_plot(self):
