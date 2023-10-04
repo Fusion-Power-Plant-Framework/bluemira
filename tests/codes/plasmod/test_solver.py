@@ -29,6 +29,7 @@ import numpy as np
 import pytest
 from scipy.interpolate import interp1d
 
+from bluemira.base.constants import EPS
 from bluemira.codes import plasmod
 from bluemira.codes.error import CodesError
 from bluemira.codes.plasmod.api import Run, Setup, Teardown
@@ -57,9 +58,9 @@ class TestPlasmodSetup:
 
         setup = Setup(self.default_pf, problem_settings, self.input_file)
 
-        assert setup.inputs.v_loop == -1.5e-3
-        assert setup.inputs.q_heat == 1.5
-        assert setup.inputs.nx == 25
+        assert setup.inputs.v_loop == pytest.approx(-1.5e-3, rel=0, abs=EPS)
+        assert setup.inputs.q_heat == pytest.approx(1.5, rel=0, abs=EPS)
+        assert setup.inputs.nx == pytest.approx(25, rel=0, abs=EPS)
 
     def test_update_inputs_changes_input_values(self):
         new_inputs = {
@@ -72,9 +73,9 @@ class TestPlasmodSetup:
 
         setup.update_inputs(new_inputs)
 
-        assert setup.inputs.v_loop == -1.5e-3
-        assert setup.inputs.q_heat == 1.5
-        assert setup.inputs.nx == 25
+        assert setup.inputs.v_loop == pytest.approx(-1.5e-3, rel=0, abs=EPS)
+        assert setup.inputs.q_heat == pytest.approx(1.5, rel=0, abs=EPS)
+        assert setup.inputs.nx == pytest.approx(25, rel=0, abs=EPS)
 
     def test_update_inputs_shows_warning_if_input_unknown(self):
         new_inputs = {"not_a_param": -1.5e-3}

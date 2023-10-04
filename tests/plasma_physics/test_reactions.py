@@ -25,7 +25,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import get_bluemira_path
 from bluemira.plasma_physics.reactions import E_DD_fusion, E_DT_fusion, reactivity
 
@@ -56,7 +56,7 @@ def _xfail_DD_He3p_erratum_erratum(request):
     H.-S. Bosch and G.M. Hale 1993 Nucl. Fusion 33 1919
     """
     t = request.getfixturevalue("temp_kev")
-    if t == 1.3:
+    if t == pytest.approx(1.3, rel=0, abs=EPS):
         request.node.add_marker(pytest.mark.xfail(reason="Error in erratum data?"))
 
 

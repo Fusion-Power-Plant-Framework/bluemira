@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.plotter import plot_coordinates
 from bluemira.geometry.coordinates import (
@@ -85,7 +86,7 @@ class TestPerimeter:
         # 2 x 2 square
         x = [0, 2, 2, 0, 0]
         y = [0, 0, 2, 2, 0]
-        assert get_perimeter(x, y) == 8.0
+        assert get_perimeter(x, y) == pytest.approx(8.0, rel=0, abs=EPS)
 
 
 class TestGetNormal:

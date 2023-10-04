@@ -24,6 +24,7 @@ from pathlib import Path
 import numpy as np
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
@@ -55,8 +56,8 @@ def test_lcfs_fit_metric():
 
     assert lcfs_fit_metric(poly1, poly1) == 0
     assert lcfs_fit_metric(poly1, poly2) == 1
-    assert lcfs_fit_metric(poly1, poly3) == 0.75
-    assert lcfs_fit_metric(poly1, poly4) == 0.5
+    assert lcfs_fit_metric(poly1, poly3) == pytest.approx(0.75, rel=0, abs=EPS)
+    assert lcfs_fit_metric(poly1, poly4) == pytest.approx(0.5, rel=0, abs=EPS)
 
 
 def test_harmonic_amplitude_marix():

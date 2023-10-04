@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry._private_tools import (
@@ -54,7 +55,7 @@ class TestArea:
         """
         x = np.array([0, 1, 2, 3, 4, 5, 6, 4, 3, 2])
         y = np.array([0, -5, -3, -5, -1, 0, 2, 6, 4, 1])
-        assert get_area(x, y) == 29.5
+        assert get_area(x, y) == pytest.approx(29.5, rel=0, abs=EPS)
         coords = Coordinates({"x": x, "y": y})
         coords.rotate(base=(3, 2, 1), direction=(42, 2, 1), degree=43)
         assert np.isclose(get_area(*coords.xyz), 29.5)

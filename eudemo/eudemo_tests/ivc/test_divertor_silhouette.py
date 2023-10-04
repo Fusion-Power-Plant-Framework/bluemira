@@ -27,7 +27,9 @@ from typing import ClassVar
 from unittest import mock
 
 import numpy as np
+import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
@@ -84,13 +86,14 @@ class TestDivertorSilhouetteDesigner:
             assert signed_distance(target, self.separatrix) == 0
 
     def test_target_length_set_by_parameter(self):
-        self.params["div_Ltarg"]["value"] = 1.5
+        val = 1.5
+        self.params["div_Ltarg"]["value"] = val
         designer = DivertorSilhouetteDesigner(self.params, self.eq, self.wall)
 
         divertor = designer.execute()
 
         for target in [divertor[1], divertor[3]]:
-            assert target.length == 1.5
+            assert target.length == pytest.approx(val, rel=0, abs=EPS)
 
     def test_dome_added_to_divertor(self):
         designer = DivertorSilhouetteDesigner(self.params, self.eq, self.wall)

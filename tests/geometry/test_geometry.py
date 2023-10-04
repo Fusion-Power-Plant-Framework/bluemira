@@ -26,6 +26,7 @@ import pytest
 from scipy.special import ellipe
 
 import bluemira.codes._freecadapi as cadapi
+from bluemira.base.constants import EPS
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
     boolean_cut,
@@ -67,17 +68,17 @@ class TestGeometry:
 
     def test_create_wire(self):
         wire = make_polygon(self.square_points, label="test", closed=False)
-        assert wire.length == 3.0
-        assert wire.area == 0.0
-        assert wire.volume == 0.0
+        assert wire.length == pytest.approx(3.0, rel=0, abs=EPS)
+        assert wire.area == pytest.approx(0.0, rel=0, abs=EPS)
+        assert wire.volume == pytest.approx(0.0, rel=0, abs=EPS)
         assert wire.label == "test"
         assert not wire.is_closed()
 
     def test_close_wire(self):
         wire = make_polygon(self.square_points, label="test", closed=True)
-        assert wire.length == 4.0
-        assert wire.area == 0.0
-        assert wire.volume == 0.0
+        assert wire.length == pytest.approx(4.0, rel=0, abs=EPS)
+        assert wire.area == pytest.approx(0.0, rel=0, abs=EPS)
+        assert wire.volume == pytest.approx(0.0, rel=0, abs=EPS)
         assert wire.label == "test"
         assert wire.is_closed()
 
@@ -89,18 +90,18 @@ class TestGeometry:
         wire2 = make_polygon(half_sq_2, label="wire2", closed=False)
         wire3 = wire1 + wire2
         wire3.label = "wire3"
-        assert wire1.length == 2.0
-        assert wire2.length == 1.0
-        assert wire3.length == 3.0
+        assert wire1.length == pytest.approx(2.0, rel=0, abs=EPS)
+        assert wire2.length == pytest.approx(1.0, rel=0, abs=EPS)
+        assert wire3.length == pytest.approx(3.0, rel=0, abs=EPS)
         wire1 += wire2
-        assert wire1.length == 3.0
+        assert wire1.length == pytest.approx(3.0, rel=0, abs=EPS)
 
     def test_make_circle(self):
         radius = 2.0
         center = [1, 0, 3]
         axis = [0, 1, 0]
         bm_circle = make_circle(radius=radius, center=center, axis=axis)
-        assert bm_circle.length == 2 * math.pi * radius
+        assert bm_circle.length == pytest.approx(2 * math.pi * radius, rel=0, abs=EPS)
 
     def test_make_circle_arc_3P(self):
         p1 = [0, 0, 0]

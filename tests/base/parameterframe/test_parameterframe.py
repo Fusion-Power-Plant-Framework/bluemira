@@ -27,6 +27,7 @@ from unittest import mock
 import pint
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.base.parameter_frame._parameter import ParamDictT
 
@@ -62,7 +63,7 @@ class TestParameterFrame:
         assert caplog.records[0].levelname == "WARNING"
 
     def test_init_from_dict_sets_valid_entries(self):
-        assert self.frame.height.value == 1.805
+        assert self.frame.height.value == pytest.approx(1.805, rel=0, abs=EPS)
         assert self.frame.height.unit == "m"
         assert (
             self.frame.age.value
@@ -162,7 +163,7 @@ class TestParameterFrame:
 
         frame = BasicFrame.from_json(json_str)
 
-        assert frame.height.value == 1.805
+        assert frame.height.value == pytest.approx(1.805, rel=0, abs=EPS)
         assert frame.height.unit == "m"
         assert frame.age.value == pint.Quantity(30, "year").to("s").magnitude
         assert frame.age.unit == "s"
@@ -176,7 +177,7 @@ class TestParameterFrame:
 
         frame = BasicFrame.from_json(json_io)
 
-        assert frame.height.value == 1.805
+        assert frame.height.value == pytest.approx(1.805, rel=0, abs=EPS)
         assert frame.height.unit == "m"
         assert frame.age.value == pint.Quantity(30, "year").to("s").magnitude
         assert frame.age.unit == "s"
@@ -191,7 +192,7 @@ class TestParameterFrame:
         ):
             frame = BasicFrame.from_json("./some/path")
 
-        assert frame.height.value == 1.805
+        assert frame.height.value == pytest.approx(1.805, rel=0, abs=EPS)
         assert frame.height.unit == "m"
         assert frame.age.value == pint.Quantity(30, "year").to("s").magnitude
         assert frame.age.unit == "s"
@@ -220,7 +221,7 @@ class TestParameterFrame:
     def test_update_values_edits_frames_values(self):
         self.frame.update_values({"height": 160.4}, source="a test")
 
-        assert self.frame.height.value == 160.4
+        assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
         assert self.frame.height.source == "a test"
         assert (
             self.frame.age.value
@@ -233,7 +234,7 @@ class TestParameterFrame:
     def test_update_using_values_edits_frames_values(self):
         self.frame.update({"height": 160.4})
 
-        assert self.frame.height.value == 160.4
+        assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
         assert (
             self.frame.age.value
             == pint.Quantity(FRAME_DATA["age"]["value"], FRAME_DATA["age"]["unit"])
@@ -255,7 +256,7 @@ class TestParameterFrame:
             }
         )
 
-        assert self.frame.height.value == 160.4
+        assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
         assert self.frame.height.source == "a test"
         assert self.frame.age.value == pint.Quantity(20, "years").to("s").magnitude
         assert self.frame.age.source != "a test"
@@ -274,7 +275,7 @@ class TestParameterFrame:
         )
         getattr(self.frame, func)(update_frame)
 
-        assert self.frame.height.value == 160.4
+        assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
         assert self.frame.height.source == "a test"
         assert self.frame.age.value == pint.Quantity(20, "years").to("s").magnitude
         assert self.frame.age.source != "a test"
@@ -293,7 +294,7 @@ class TestParameterFrame:
         )
         getattr(self.frame, func)(update_frame)
 
-        assert self.frame.height.value == 160.4
+        assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
         assert self.frame.height.source == "a test"
         assert self.frame.age.value is None
         assert self.frame.age.source != "a test"
@@ -312,7 +313,7 @@ class TestParameterFrame:
             }
         )
 
-        assert self.frame.height.value == 160.4
+        assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
         assert self.frame.height.source == "a test"
         assert self.frame.age.value is None
         assert self.frame.age.source != "a test"
