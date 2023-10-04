@@ -195,13 +195,13 @@ class Constraint(ConstraintSelection, Model):
     )
     CS_EOF_DENSITY_LIMIT = (
         26,
-        (12, 37, 38, 41),
+        (37, 38, 41),
         (),
         "Central solenoid EOF current density upper limit",
     )
     CS_BOP_DENSITY_LIMIT = (
         27,
-        (12, 37, 38, 41),
+        (37, 38, 41),
         (),
         "Central solenoid bop current density upper limit",
     )
@@ -570,7 +570,7 @@ ITERATION_VAR_MAPPING = {
     "fdene": 9,
     "hfact": 10,
     "pheat": 11,
-    "oacdp": 12,
+    # NO LONGER USED "oacdp": 12,
     "tfcth": 13,
     "fwalld": 14,
     "fvs": 15,
