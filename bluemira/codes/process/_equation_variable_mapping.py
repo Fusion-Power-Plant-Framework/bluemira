@@ -24,30 +24,33 @@ Death to PROCESS integers
 
 from bluemira.codes.utilities import Model
 
-OBJECTIVE_EQ_MAPPING = {
-    "rmajor": 1,  # major radius
-    # 2 NOT USED
-    "NWL": 3,  # neutron wall load
-    "P_max": 4,  # P_tf + P_pf
-    "Q": 5,  # fusion gain Q
-    "electricity_cost": 6,  # cost of electricity
-    "captial_cost": 7,  # capital cost (direct cost if ireactor=0, constructed cost otherwise)
-    "aspect": 8,  # aspect ratio
-    "divertor_heat_load": 9,  # divertor heat load
-    "bt": 10,  # toroidal field
-    "pinj": 11,  # total injected power
-    # 12, 13 NOT USED
-    "tpulse": 14,  # pulse length
-    "avail": 15,  # plant availability factor (N.B. requires iavail=1 to be set)
-    "rmajor_tpulse": 16,  # linear combination of major radius (minimised) and pulse length (maximised)
-    # note: FoM should be minimised only!
-    "pnetel": 17,  # net electrical output
-    "NULL": 18,  # Null Figure of Merit
-    "Q_tpulse": 19,  # linear combination of big Q and pulse length (maximised)
-    # note: FoM should be minimised only!
-}
 
-OBJECTIVE_MIN_ONLY = [16, 19]
+class Objective(Model):
+    """
+    Enum for PROCESS optimisation objective
+    """
+
+    MAJOR_RADIUS = 1
+    # 2 NOT USED
+    NEUTRON_WALL_LOAD = 3
+    MAX_COIL_POWER = 4
+    FUSION_GAIN = 5
+    ELECTRICITY_COST = 6
+    CAPITAL_COST = 7
+    ASPECT_RATIO = 8
+    DIVERTOR_HEAT_LOAD = 9
+    TOROIDAL_FIELD = 10
+    INJECTED_POWER = 11
+    # 12, 13 NOT USED
+    PULSE_LENGTH = 14
+    AVAILABILITY = 15
+    MAJOR_RADIUS_PULSE_LENGTH = 16
+    NET_ELECTRICITY = 17
+    NULL = 18
+    FUSION_GAIN_PULSE_LENGTH = 19
+
+
+OBJECTIVE_MIN_ONLY = (16, 19)
 
 
 class Constraint(Model):
