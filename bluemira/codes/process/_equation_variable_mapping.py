@@ -220,37 +220,37 @@ class Constraint(ConstraintSelection, Model):
     PINJ_UPPER_LIMIT = 30, (11, 46, 47), ("pinjalw",), "Injection Power Upper Limit"
     TF_CASE_STRESS_UPPER_LIMIT = (
         31,
-        (24, 48, 56, 57, 58, 59, 60),
+        (48, 56, 57, 58, 59, 60),
         ("sig_tf_case_max",),
         "TF coil case stress upper limit",
     )
     TF_JACKET_STRESS_UPPER_LIMIT = (
         32,
-        (24, 49, 56, 57, 58, 59, 60),
+        (49, 56, 57, 58, 59, 60),
         ("sig_tf_wp_max",),
         "TF WP steel jacket/conduit stress upper limit",
     )
     TF_JCRIT_RATIO_UPPER_LIMIT = (
         33,
-        (24, 50, 56, 57, 58, 59, 60),
+        (50, 56, 57, 58, 59, 60),
         (),
         "TF superconductor operating current / critical current density",
     )
     TF_DUMP_VOLTAGE_UPPER_LIMIT = (
         34,
-        (24, 51, 52, 56, 57, 58, 59, 60),
+        (51, 52, 56, 57, 58, 59, 60),
         ("vdalw",),
         "TF dump voltage upper limit",
     )
     TF_CURRENT_DENSITY_UPPER_LIMIT = (
         35,
-        (24, 53, 56, 57, 58, 59, 60),
+        (53, 56, 57, 58, 59, 60),
         (),
         "TF winding pack current density upper limit",
     )
     TF_T_MARGIN_LOWER_LIMIT = (
         36,
-        (24, 54, 55, 56, 57, 58, 59, 60),
+        (54, 55, 56, 57, 58, 59, 60),
         ("tftmp",),
         "TF temperature margin upper limit",
     )
