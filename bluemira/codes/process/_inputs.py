@@ -106,8 +106,8 @@ class ProcessInputs:
     divdum: int = 1
     divfix: float = 0.621
     dnbeta: float = 3.0
-    dr_tf_case_in: float = 0.52465
-    dr_tf_case_out: float = 0.06
+    thkcas: float = 0.52465
+    casthi: float = 0.06
     emult: float = 1.35
     enbeam: float = 1e3
     epsvmc: float = 1e-08
@@ -138,6 +138,8 @@ class ProcessInputs:
     fkind: float = 1.0
     fkzohm: float = 1.0245
     flhthresh: float = 1.4972
+    fncycle: float = 1.0
+    fne0: float = 0.9
     foh_stress: float = 1.0
     fpeakb: float = 1.0
     fpinj: float = 1.0
@@ -163,6 +165,9 @@ class ProcessInputs:
     i_single_null: int = 1
     i_tf_sc_mat: int = 5
     i_tf_turns_integer: int = 1
+    ilhthresh: int = 6
+    snull: int = 1
+    iscrp: int = 1
     iavail: int = 0
     ibss: int = 4
     iculbl: int = 1
@@ -191,6 +196,7 @@ class ProcessInputs:
     ksic: float = 1.4
     lpulse: int = 1
     lsa: int = 2
+    maxcal: int = 1000
     minmax: int = 1
     n_layer: int = 10
     n_pancake: int = 20
@@ -246,7 +252,9 @@ class ProcessInputs:
     tftmp: float = 4.75
     tftsgap: float = 0.05
     thicndut: float = 0.002
-    thshield: float = 0
+    thshield_ib: float = 0
+    thshield_ob: float = 0
+    thshield_vb: float = 0
     thwcndut: float = 0.008
     tinstf: float = 0.008
     tlife: float = 40.0
@@ -266,6 +274,28 @@ class ProcessInputs:
     zref: List[float] = field(
         default_factory=lambda: [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     )
+    iblkt_life: int = 1
+    blktmodel: int = 1
+    pulse_timings: int = 0
+    ipfres: int = 0
+    i_tf_case_geom: int = 1
+    i_tf_sup: int = 1
+    i_tf_shape: int = 1
+    i_tf_wp_geom: int = 0
+    tf_in_cs: int = 0
+    life_dpa: float = 70.0  # Not used??
+    n_cycle_min: int = 20000
+    t_crack_vertical: float = 0.65e-3
+    sf_vertical_crack: float = 1.0
+    sf_radial_crack: float = 1.0
+    sf_fast_fracture: float = 1.0
+    residual_sig_hoop: float = 1.50e8
+    paris_coefficient: float = 3.86e-11
+    paris_power_law: float = 2.394
+    walker_coefficient: float = 0.5
+    fracture_toughness: float = 150.0
+    m_s_limit: float = 0.2
+    gap_ds: float = 0.02
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """

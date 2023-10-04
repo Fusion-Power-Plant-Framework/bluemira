@@ -210,7 +210,11 @@ def process_RB_fromOUT(f):
         rb = []
         num += 1
         while "***" not in raw[num]:
-            if read_rb_line(raw[num]) is None:
+            if "TF coil radial placement switch" in raw[num]:
+                # PROCESS v3.0.0 added this line to the start of the RB
+                # TF coil radial placement switch ... (tf_in_cs)  ....           0
+                pass
+            elif read_rb_line(raw[num]) is None:
                 pass
             else:
                 rb.append(read_rb_line(raw[num]))
