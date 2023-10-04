@@ -107,7 +107,7 @@ class PROCESSTemplateBuilder:
         """
         Add a constraint to the PROCESS run
         """
-        if constraint.value in self.icc:
+        if constraint in self._constraints:
             bluemira_warn(
                 f"Constraint {constraint.name} is already in the constraint list."
             )
@@ -234,25 +234,28 @@ class PROCESSTemplateBuilder:
         Check the required inputs for models have been provided.
         """
         for model in self._models.values():
-            missing_inputs = [
-                input_name
-                for input_name in model.requires_values
-                if (input_name not in self.values and input_name not in self.variables)
-            ]
-
-            if missing_inputs:
-                model_name = f"{model.__class__.__name__}.{model.name}"
-                inputs = ", ".join([f"'{inp}'" for inp in missing_inputs])
-                bluemira_warn(
-                    f"{model_name} requires inputs {inputs} which have not been specified. Default values will be used."
-                )
+            self._check_missing_inputs(model)
 
     def _check_constraint_inputs(self):
         """
         Check the required inputs for the constraints have been provided
         """
-        for _constraint in self._constraints:
-            pass
+        for constraint in self._constraints:
+            self._check_missing_inputs(constraint)
+
+    def _check_missing_inputs(self, model: Union[PROCESSModel, Constraint]):
+        missing_inputs = [
+            input_name
+            for input_name in model.requires_values
+            if (input_name not in self.values and input_name not in self.variables)
+        ]
+
+        if missing_inputs:
+            model_name = f"{model.__class__.__name__}.{model.name}"
+            inputs = ", ".join([f"'{inp}'" for inp in missing_inputs])
+            bluemira_warn(
+                f"{model_name} requires inputs {inputs} which have not been specified. Default values will be used."
+            )
 
     def make_inputs(self) -> Dict[str, _INVariable]:
         """

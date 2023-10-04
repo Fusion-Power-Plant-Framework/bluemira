@@ -116,7 +116,7 @@ class PlasmaGeometryModel(PROCESSModel):
     MAST_100 = 6, ("kappa, triang")
     FIESTA_95 = 7, ("kappa95, triang95")
     FIESTA_100 = 8, ("kappa, triang")
-    A_LI3 = 9, ("triang")
+    A_LI3 = 9, ("triang",)
     CREATE_A_M_S = (
         10,
         ("aspect", "m_s_limit", "triang"),
@@ -153,7 +153,7 @@ class PlasmaPedestalModel(PROCESSModel):
         """
         return "ipedestal"
 
-    NO_PEDESTAL = 0, ("te")
+    NO_PEDESTAL = 0, ("te",)
     PEDESTAL_GW = 1, (
         "te",
         "neped",
@@ -199,7 +199,7 @@ class EPEDScalingModel(PROCESSModel):
         """
         return "ieped"
 
-    UKNOWN_0 = 0, ("teped")
+    UKNOWN_0 = 0, ("teped",)
     SAARELMA = 1
     UNKNOWN_1 = 2
     UNKNOWN_2 = 3
@@ -237,7 +237,7 @@ class BetaGScalingModel(PROCESSModel):
         """
         return "gtscale"
 
-    INPUT = 0, ("dnbeta")
+    INPUT = 0, ("dnbeta",)
     CONVENTIONAL = 1
     MENARD_ST = 2
 
@@ -377,7 +377,7 @@ class BootstrapCurrentScalingLaw(PROCESSModel):
         """
         return "ibss"
 
-    ITER = 1, ("cboot")
+    ITER = 1, ("cboot",)
     GENERAL = 2
     NUMERICAL = 3
     SAUTER = 4
@@ -513,7 +513,7 @@ class ThermalStorageModel(PROCESSModel):
 
     INHERENT_STEAM = 1
     BOILER = 2
-    STEEL = 3, ("dtstor")  # Obsolete
+    STEEL = 3, ("dtstor",)  # Obsolete
 
 
 class BlanketModel(PROCESSModel):
@@ -593,7 +593,7 @@ class TFCoilConductorTechnology(PROCESSModel):
         """
         return "i_tf_sup"
 
-    COPPER = 0, ("tfootfi")
+    COPPER = 0, ("tfootfi",)
     SC = 1
     CRYO_AL = 2
 
@@ -666,7 +666,7 @@ class TFWindingPackTurnModel(PROCESSModel):
         """
         return "i_tf_turns_integer"
 
-    CURRENT_PER_TURN = 0, ("cpttf")  # or t_cable_tf or t_turn_tf
+    CURRENT_PER_TURN = 0, ("cpttf",)  # or t_cable_tf or t_turn_tf
     INTEGER_TURN = 1, ("n_layer", "n_pancake")
 
 
@@ -792,7 +792,7 @@ class PFSuperconductorModel(PROCESSModel):
         return "isumatpf"
 
     NB3SN_ITER_STD = 1
-    BI_2212 = 2, ("fhts")
+    BI_2212 = 2, ("fhts",)
     NBTI = 3
     NB3SN_ITER_INPUT = 4  # User-defined critical parameters
     NB3SN_WST = 5
@@ -956,7 +956,7 @@ class TFNuclearHeatingModel(PROCESSModel):
         return "inuclear"
 
     FRANCES_FOX = 0
-    INPUT = 1, ("qnuc")
+    INPUT = 1, ("qnuc",)
 
 
 class PrimaryPumpingModel(PROCESSModel):

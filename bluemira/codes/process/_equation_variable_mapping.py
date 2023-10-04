@@ -115,7 +115,12 @@ class Constraint(ConstraintSelection, Model):
         "Equation for epsilon beta-poloidal upper limit",
     )
     HOT_BEAM_ION_DENSITY = 7, (7), (), "Equation for hot beam ion density"
-    NWL_UPPER_LIMIT = 8, (1, 2, 3, 4, 6, 14), ("walalw"), "Neutron wall load upper limit"
+    NWL_UPPER_LIMIT = (
+        8,
+        (1, 2, 3, 4, 6, 14),
+        ("walalw",),
+        "Neutron wall load upper limit",
+    )
     FUSION_POWER_UPPER_LIMIT = (
         9,
         (1, 2, 3, 4, 6, 26),
@@ -219,7 +224,7 @@ class Constraint(ConstraintSelection, Model):
     TF_DUMP_VOLTAGE_UPPER_LIMIT = (
         34,
         (24, 51, 52, 56, 57, 58, 59, 60),
-        ("vdalw"),
+        ("vdalw",),
         "TF dump voltage upper limit",
     )
     TF_CURRENT_DENSITY_UPPER_LIMIT = (
@@ -291,7 +296,7 @@ class Constraint(ConstraintSelection, Model):
     PSEPR_UPPER_LIMIT = (
         56,
         (1, 3, 97, 102),
-        ("pseprmax"),
+        ("pseprmax",),
         "Pseparatrix/Rmajor upper limit",
     )
     # 57, 58 NOT USED
@@ -320,12 +325,17 @@ class Constraint(ConstraintSelection, Model):
         (),
         "The number of ITER-like vacuum pumps niterpump < tfno",
     )
-    ZEFF_UPPER_LIMIT = 64, (112), ("zeffmax"), "Zeff less than or equal to zeffmax"
-    DUMP_TIME_LOWER_LIMIT = 65, (56, 113), ("max_vv_stress"), "Dump time set by VV loads"
+    ZEFF_UPPER_LIMIT = 64, (112), ("zeffmax",), "Zeff less than or equal to zeffmax"
+    DUMP_TIME_LOWER_LIMIT = (
+        65,
+        (56, 113),
+        ("max_vv_stress",),
+        "Dump time set by VV loads",
+    )
     PF_ENERGY_RATE_UPPER_LIMIT = (
         66,
         (65, 113),
-        ("tohs"),
+        ("tohs",),
         "Limit on rate of change of energy in poloidal field",
     )
     WALL_RADIATION_UPPER_LIMIT = (
@@ -337,7 +347,7 @@ class Constraint(ConstraintSelection, Model):
     PSEPB_QAR_UPPER_LIMIT = (
         68,
         (117),
-        ("psepbqarmax"),
+        ("psepbqarmax",),
         "P_separatrix Bt / q A R upper limit",
     )
     PSEP_KALLENBACH_UPPER_LIMIT = (
@@ -365,11 +375,11 @@ class Constraint(ConstraintSelection, Model):
         "Central solenoid shear stress limit (Tresca yield criterion)",
     )
     PSEP_LH_AUX_CONSISTENCY = 73, (137), (), "Psep >= Plh + Paux"
-    TF_CROCO_T_UPPER_LIMIT = 74, (141), ("tmax_croco"), "TFC quench"
+    TF_CROCO_T_UPPER_LIMIT = 74, (141), ("tmax_croco",), "TFC quench"
     TF_CROCO_CU_AREA_CONSTRAINT = (
         75,
         (143),
-        ("coppera_m2_max"),
+        ("coppera_m2_max",),
         "TFC current / copper area < maximum",
     )
     EICH_SEP_DENSITY_CONSTRAINT = 76, (144), (), "Eich critical separatrix density"
@@ -380,13 +390,13 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Reinke criterion impurity fraction lower limit",
     )
-    BMAX_CS_UPPER_LIMIT = 79, (149), ("bmaxcs_lim"), "Peak CS field upper limit"
-    PDIVT_LOWER_LIMIT = 80, (153), ("pdivtlim"), "Divertor power lower limit"
+    BMAX_CS_UPPER_LIMIT = 79, (149), ("bmaxcs_lim",), "Peak CS field upper limit"
+    PDIVT_LOWER_LIMIT = 80, (153), ("pdivtlim",), "Divertor power lower limit"
     DENSITY_PROFILE_CONSISTENCY = 81, (154), (), "Ne(0) > ne(ped) constraint"
     STELLARATOR_COIL_CONSISTENCY = (
         82,
         (171),
-        ("toroidalgap"),
+        ("toroidalgap",),
     )
     STELLARATOR_RADIAL_BUILD_CONSISTENCY = (
         83,
