@@ -30,6 +30,7 @@ from bluemira.base.constants import EPS
 from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process._model_mapping import (
     PROCESSOptimisationAlgorithm,
+    PlasmaGeometryModel,
 )
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
@@ -110,6 +111,13 @@ class TestPROCESSTemplateBuilder:
         assert len(caplog.messages) == 1
         warning = extract_warning(caplog)
         assert "requires inputs 'walalw'" in warning
+
+    def test_warn_on_missing_input_model(self, caplog):
+        t = PROCESSTemplateBuilder()
+        t.set_model(PlasmaGeometryModel.CREATE_A_M_S)
+        _ = t.make_inputs()
+        assert len(caplog.messages) == 1
+        assert "requires inputs" in extract_warning(caplog)
 
     def test_automatic_fvalue_itv(self):
         t = PROCESSTemplateBuilder()
