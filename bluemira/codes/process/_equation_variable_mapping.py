@@ -176,7 +176,7 @@ class Constraint(ConstraintSelection, Model):
     AMINOR_LOWER_LIMIT = 21, (32,), (), "Equation for minor radius lower limit"
     DIV_COLL_CONN_UPPER_LIMIT = (
         22,
-        (34, 43),
+        (34,),
         (),
         "Equation for divertor collision/connection length ratio upper limit",
     )
