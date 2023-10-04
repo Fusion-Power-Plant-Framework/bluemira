@@ -142,6 +142,7 @@ class TestPROCESSTemplateBuilder:
     def test_impurity_shenanigans(self):
         t = PROCESSTemplateBuilder()
         t.add_impurity(Impurities.Xe, 0.5)
+        assert t.fimp[12] == pytest.approx(0.5, rel=0, abs=EPS)
         t.add_variable("fimp(13)", 0.6)
         assert t.fimp[12] == pytest.approx(0.6, rel=0, abs=EPS)
         t.add_impurity(Impurities.Xe, 0.4)
