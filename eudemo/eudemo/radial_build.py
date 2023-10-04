@@ -142,6 +142,7 @@ template_builder.adjust_variable("flhthresh", 1.2, lower_bound=1.1, upper_bound=
 template_builder.adjust_variable("ftburn", 1.0, lower_bound=0.98, upper_bound=1.0)
 
 # Modifying the initial variable vector to improve convergence
+template_builder.adjust_variable("ffuspow", 1.0)
 template_builder.adjust_variable("fpnetel", 1.0)
 template_builder.adjust_variable("fncycle", 1.0)
 template_builder.adjust_variable("fstrcase", 1.0)
@@ -269,7 +270,10 @@ template_builder.add_input_values(
         "tdwell": 0.0,
         "tramp": 500.0,
         # CS / PF coil inputs
+        "t_crack_radial": 0.006,
         "t_crack_vertical": 0.004,
+        "t_structural_radial": 0.07,
+        "t_structural_vertical": 0.022,
         "sf_vertical_crack": 1.0,
         "sf_radial_crack": 1.0,
         "sf_fast_fracture": 1.0,
@@ -301,6 +305,7 @@ template_builder.add_input_values(
         "n_pancake": 20,
         "n_layer": 10,
         "qnuc": 1.292e4,
+        "max_vv_stress": 93.0e6,
         # Inputs we don't care about but must specify
         "cfactr": 0.75,  # Ha!
         "kappa": 1.848,  # Should be overwritten
