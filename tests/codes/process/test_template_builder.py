@@ -79,6 +79,14 @@ class TestPROCESSTemplateBuilder:
         warning = extract_warning(caplog)
         assert "is already in" in warning
 
+    def test_warn_on_repeated_itv(self, caplog):
+        t = PROCESSTemplateBuilder()
+        t.add_variable("bore", 2.0)
+        t.add_variable("bore", 3.0)
+        assert len(caplog.messages) == 1
+        warning = extract_warning(caplog)
+        assert "Iteration variable 'bore' is already" in warning
+
     def test_warn_on_missing_input_constraint(self, caplog):
         t = PROCESSTemplateBuilder()
         t.add_constraint(Constraint.NWL_UPPER_LIMIT)

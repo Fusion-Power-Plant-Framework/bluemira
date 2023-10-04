@@ -157,7 +157,7 @@ class PROCESSTemplateBuilder:
 
         if itvar in self.ixc:
             bluemira_warn(
-                f"Iterable variable {name} is already in the variable list. Updating value and bounds."
+                f"Iteration variable '{name}' is already in the variable list. Updating value and bounds."
             )
             self.adjust_variable(name, value, lower_bound, upper_bound)
 
