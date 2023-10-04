@@ -124,6 +124,18 @@ class TestPROCESSTemplateBuilder:
         assert len(caplog.messages) == 1
         assert "requires iteration" in extract_warning(caplog)
 
+    def test_no_warn_on_missing_itv_constraint_but_as_input(self, caplog):
+        t = PROCESSTemplateBuilder()
+        t.add_constraint(Constraint.NWL_UPPER_LIMIT)
+        t.add_variable("bt", 5.0)
+        t.add_variable("rmajor", 9.0)
+        t.add_variable("te", 12.0)
+        t.add_variable("dene", 8.0e19)
+        t.add_input_value("walalw", 8.0)
+        t.add_input_value("aspect", 3.1)
+        _ = t.make_inputs()
+        assert len(caplog.messages) == 0
+
     def test_warn_on_missing_input_model(self, caplog):
         t = PROCESSTemplateBuilder()
         t.set_model(PlasmaGeometryModel.CREATE_A_M_S)

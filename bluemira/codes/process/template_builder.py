@@ -268,7 +268,10 @@ class PROCESSTemplateBuilder:
         missing_itv = [
             VAR_ITERATION_MAPPING[itv_num]
             for itv_num in constraint.requires_variables
-            if VAR_ITERATION_MAPPING[itv_num] not in self.variables
+            if (
+                VAR_ITERATION_MAPPING[itv_num] not in self.variables
+                and VAR_ITERATION_MAPPING[itv_num] not in self.values
+            )
         ]
         if missing_itv:
             con_name = f"{constraint.__class__.__name__}.{constraint.name}"
