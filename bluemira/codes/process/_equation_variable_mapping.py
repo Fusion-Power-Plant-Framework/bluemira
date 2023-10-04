@@ -221,13 +221,13 @@ class Constraint(ConstraintSelection, Model):
     TF_CASE_STRESS_UPPER_LIMIT = (
         31,
         (24, 48, 56, 57, 58, 59, 60),
-        (),
+        ("sig_tf_case_max",),
         "TF coil case stress upper limit",
     )
     TF_JACKET_STRESS_UPPER_LIMIT = (
         32,
         (24, 49, 56, 57, 58, 59, 60),
-        (),
+        ("sig_tf_wp_max",),
         "TF WP steel jacket/conduit stress upper limit",
     )
     TF_JCRIT_RATIO_UPPER_LIMIT = (
@@ -251,7 +251,7 @@ class Constraint(ConstraintSelection, Model):
     TF_T_MARGIN_LOWER_LIMIT = (
         36,
         (24, 54, 55, 56, 57, 58, 59, 60),
-        (),
+        ("tftmp",),
         "TF temperature margin upper limit",
     )
     CD_GAMMA_UPPER_LIMIT = (
@@ -413,7 +413,12 @@ class Constraint(ConstraintSelection, Model):
         "TFC current / copper area < maximum",
     )
     EICH_SEP_DENSITY_CONSTRAINT = 76, (144), (), "Eich critical separatrix density"
-    TF_TURN_CURRENT_UPPER_LIMIT = 77, (146), (), "TF coil current per turn upper limit"
+    TF_TURN_CURRENT_UPPER_LIMIT = (
+        77,
+        (146),
+        ("cpttf_max",),
+        "TF coil current per turn upper limit",
+    )
     REINKE_IMP_FRAC_LOWER_LIMIT = (
         78,
         (147),
@@ -441,7 +446,12 @@ class Constraint(ConstraintSelection, Model):
         ("nflutfmax",),
         "Constraint for centrepost lifetime",
     )
-    TURN_SIZE_UPPER_LIMIT = 86, (), (), "Constraint for TF coil turn dimension"
+    TURN_SIZE_UPPER_LIMIT = (
+        86,
+        (),
+        ("t_turn_tf_max",),
+        "Constraint for TF coil turn dimension",
+    )
     CRYOPOWER_UPPER_LIMIT = 87, (), (), "Constraint for cryogenic power"
     TF_STRAIN_UPPER_LIMIT = (
         88,

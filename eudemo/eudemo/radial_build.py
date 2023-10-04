@@ -300,6 +300,7 @@ template_builder.add_input_values(
         "tftmp": 4.75,
         "thicndut": 0.002,
         "tinstf": 0.008,
+        "tfinsgap": 0.01,
         "tmargmin": 1.5,
         "vftf": 0.3,
         "n_pancake": 20,
