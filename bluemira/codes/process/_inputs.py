@@ -286,6 +286,9 @@ class ProcessInputs:
     life_dpa: float = 70.0  # Not used??
     n_cycle_min: int = 20000
     t_crack_vertical: float = 0.65e-3
+    t_crack_radial: float = 0.006
+    t_structural_radial: float = 0.07
+    t_structural_vertical: float = 0.022
     sf_vertical_crack: float = 1.0
     sf_radial_crack: float = 1.0
     sf_fast_fracture: float = 1.0
@@ -297,6 +300,8 @@ class ProcessInputs:
     m_s_limit: float = 0.2
     gap_ds: float = 0.02
     taulimit: float = 5.0
+    tfinsgap: float = 0.01
+    max_vv_stress: float = 93.0e6
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
