@@ -65,6 +65,12 @@ class TestPROCESSTemplateBuilder:
         ):
             t.set_maximisation_objective(objective)
 
+    @pytest.mark.parametrize("bad_name", ["spoon", "aaaaaaaaaaaaa"])
+    def test_error_on_bad_itv_name(self, bad_name):
+        t = PROCESSTemplateBuilder()
+        with pytest.raises(ValueError, match="There is no iteration variable:"):
+            t.add_variable(bad_name, 3.14159)
+
     def test_warn_on_repeated_constraint(self, caplog):
         t = PROCESSTemplateBuilder()
         t.add_constraint(Constraint.BETA_CONSISTENCY)
