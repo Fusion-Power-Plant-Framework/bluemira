@@ -307,6 +307,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                     dx=0,
                     dz=0,
                     ctype="DUM",
+                    control=False,
                     j_max=0,
                     b_max=0,
                 )
@@ -314,7 +315,8 @@ class CoilGroup(CoilGroupFieldsMixin):
                 pfcoils.append(coil)
             coils = pfcoils
             bluemira_warn(
-                "EQDSK coilset empty - dummy coilset in use. Please replace with an appropriate coilset."
+                "EQDSK coilset empty - dummy coilset in use."
+                "Please replace with an appropriate coilset."
             )
             return cls(*coils)
         for i in range(eqdsk.ncoil):
