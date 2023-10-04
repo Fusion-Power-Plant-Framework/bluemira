@@ -26,10 +26,12 @@ import os
 
 import pytest
 
+from bluemira.base.constants import EPS
 from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process._model_mapping import (
     PROCESSOptimisationAlgorithm,
 )
+from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 
 
@@ -121,3 +123,11 @@ class TestPROCESSTemplateBuilder:
         t.add_input_value("dummy", 2.0)
         assert len(caplog.messages) == 1
         assert "Over-writing" in extract_warning(caplog)
+
+    def test_impurity_shenanigans(self):
+        t = PROCESSTemplateBuilder()
+        t.add_impurity(Impurities.Xe, 0.5)
+        t.add_variable("fimp(13)", 0.6)
+        assert t.fimp[12] == pytest.approx(0.6, rel=0, abs=EPS)
+        t.add_impurity(Impurities.Xe, 0.4)
+        assert t.fimp[12] == pytest.approx(0.4, rel=0, abs=EPS)
