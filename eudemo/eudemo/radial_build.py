@@ -221,7 +221,7 @@ template_builder.add_input_values(
         "neped": 0.678e20,
         "nesep": 0.2e20,
         "dnbeta": 3.0,
-        "fkzohm": 1.0245,  # not used..?
+        "taulimit": 5.0,
         # Important stuff
         "pnetelin": 500.0,
         "tbrnmn": 7.2e3,
