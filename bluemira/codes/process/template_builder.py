@@ -159,12 +159,7 @@ class PROCESSTemplateBuilder:
             bluemira_warn(
                 f"Iterable variable {name} is already in the variable list. Updating value and bounds."
             )
-            self._add_to_dict(self.variables, name, value)
-
-            if lower_bound:
-                self.bounds[str(itvar)]["l"] = str(lower_bound)
-            if upper_bound:
-                self.bounds[str(itvar)]["u"] = str(upper_bound)
+            self.adjust_variable(name, value, lower_bound, upper_bound)
 
         else:
             self.ixc.append(itvar)
@@ -177,6 +172,32 @@ class PROCESSTemplateBuilder:
             if upper_bound:
                 var_bounds["u"] = str(upper_bound)
             self.bounds[str(itvar)] = var_bounds
+
+    def adjust_variable(
+        self,
+        name: str,
+        value: float,
+        lower_bound: Optional[float] = None,
+        upper_bound: Optional[float] = None,
+    ):
+        """
+        Adjust an iteration variable in the PROCESS run
+        """
+        itvar = ITERATION_VAR_MAPPING.get(name, None)
+        if not itvar:
+            raise ValueError(f"There is no iteration variable: '{name}'")
+        if itvar not in self.ixc:
+            bluemira_warn(
+                f"Iteration variable {name} is not in the variable list. Adding it."
+            )
+            self.add_variable(name, value, lower_bound, upper_bound)
+        else:
+            self._add_to_dict(self.variables, name, value)
+
+            if lower_bound:
+                self.bounds[str(itvar)]["l"] = str(lower_bound)
+            if upper_bound:
+                self.bounds[str(itvar)]["u"] = str(upper_bound)
 
     def add_input_value(self, name: str, value: Union[float, Iterable[float]]):
         """
