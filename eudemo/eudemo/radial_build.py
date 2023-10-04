@@ -142,7 +142,6 @@ template_builder.adjust_variable("flhthresh", 1.2, lower_bound=1.1, upper_bound=
 template_builder.adjust_variable("ftburn", 1.0, lower_bound=0.98, upper_bound=1.0)
 
 # Modifying the initial variable vector to improve convergence
-template_builder.adjust_variable("ffuspow", 1.0)
 template_builder.adjust_variable("fpnetel", 1.0)
 template_builder.adjust_variable("fncycle", 1.0)
 template_builder.adjust_variable("fstrcase", 1.0)
