@@ -250,7 +250,7 @@ class Constraint(ConstraintSelection, Model):
     )
     TF_T_MARGIN_LOWER_LIMIT = (
         36,
-        (54, 55, 56, 57, 58, 59, 60),
+        (54, 56, 57, 58, 59, 60),
         ("tftmp",),
         "TF temperature margin upper limit",
     )
