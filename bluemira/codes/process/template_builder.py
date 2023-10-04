@@ -27,7 +27,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
 
 if TYPE_CHECKING:
-    from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
+    from bluemira.codes.process._equation_variable_mapping import (
+        Constraint,
+        ConstraintSelection,
+        Objective,
+    )
     from bluemira.codes.process._model_mapping import (
         PROCESSModel,
         PROCESSOptimisationAlgorithm,
@@ -243,9 +247,10 @@ class PROCESSTemplateBuilder:
         Check the required inputs for the constraints have been provided
         """
         for constraint in self._constraints:
+            self._check_missing_iteration_variables(constraint)
             self._check_missing_inputs(constraint)
 
-    def _check_missing_inputs(self, model: Union[PROCESSModel, Constraint]):
+    def _check_missing_inputs(self, model: Union[PROCESSModel, ConstraintSelection]):
         missing_inputs = [
             input_name
             for input_name in model.requires_values
@@ -257,6 +262,19 @@ class PROCESSTemplateBuilder:
             inputs = ", ".join([f"'{inp}'" for inp in missing_inputs])
             bluemira_warn(
                 f"{model_name} requires inputs {inputs} which have not been specified. Default values will be used."
+            )
+
+    def _check_missing_iteration_variables(self, constraint: ConstraintSelection):
+        missing_itv = [
+            VAR_ITERATION_MAPPING[itv_num]
+            for itv_num in constraint.requires_variables
+            if VAR_ITERATION_MAPPING[itv_num] not in self.variables
+        ]
+        if missing_itv:
+            con_name = f"{constraint.__class__.__name__}.{constraint.name}"
+            inputs = ", ".join([f"'{inp}'" for inp in missing_itv])
+            bluemira_warn(
+                f"{con_name} requires iteration variable {inputs} which have not been specified. Default values will be used."
             )
 
     def make_inputs(self) -> Dict[str, _INVariable]:

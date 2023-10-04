@@ -107,10 +107,22 @@ class TestPROCESSTemplateBuilder:
     def test_warn_on_missing_input_constraint(self, caplog):
         t = PROCESSTemplateBuilder()
         t.add_constraint(Constraint.NWL_UPPER_LIMIT)
+        t.add_variable("aspect", 3.1)
+        t.add_variable("bt", 5.0)
+        t.add_variable("rmajor", 9.0)
+        t.add_variable("te", 12.0)
+        t.add_variable("dene", 8.0e19)
         _ = t.make_inputs()
         assert len(caplog.messages) == 1
         warning = extract_warning(caplog)
         assert "requires inputs 'walalw'" in warning
+
+    def test_warn_on_missing_itv_constraint(self, caplog):
+        t = PROCESSTemplateBuilder()
+        t.add_constraint(Constraint.RADIAL_BUILD_CONSISTENCY)
+        _ = t.make_inputs()
+        assert len(caplog.messages) == 1
+        assert "requires iteration" in extract_warning(caplog)
 
     def test_warn_on_missing_input_model(self, caplog):
         t = PROCESSTemplateBuilder()
