@@ -147,6 +147,8 @@ def _create_tallies_from_filters(
     tallies_list = []
     for name, scores, filters in (
         ("TBR", "(n,Xt)", []),
+        # this is only the THEORETICAL TBR, does not account for extraction losses.
+        # we can use the (n,Xt) score because the Lithium produces a maximum of 1 Tritium per reaction, so there won't be issue of under-counting.
         ("material heating", "heating", [mat_filter]),  # eV per sp
         ("neutron wall load", "damage-energy", [fw_surf_filter, neutron_filter]),
         ("photon heating", "heating", [fw_surf_filter, photon_filter]),
