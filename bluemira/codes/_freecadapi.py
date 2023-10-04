@@ -560,7 +560,7 @@ def offset_wire(
     -------
     Offset wire
     """
-    if thickness < MIN_PRECISION:
+    if thickness == 0.0:  # noqa: PLR2004
         return deepcopy(wire)
 
     if _wire_is_straight(wire):
@@ -947,11 +947,12 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
     -------
     Wire point value at distance
     """
+    if distance == 0.0:  # noqa: PLR2004
+        return start_point(wire)
     if distance == wire.Length:
         return end_point(wire)
-    if distance < MIN_PRECISION:
-        if distance < 0:
-            bluemira_warn("Distance must be greater than 0; returning start point.")
+    if distance < 0.0:  # noqa: PLR2004
+        bluemira_warn("Distance must be greater than 0; returning start point.")
         return start_point(wire)
     if distance > wire.Length:
         bluemira_warn("Distance greater than the length of wire; returning end point.")
