@@ -188,7 +188,7 @@ class PROCESSTemplateBuilder:
             raise ValueError(f"There is no iteration variable: '{name}'")
         if itvar not in self.ixc:
             bluemira_warn(
-                f"Iteration variable {name} is not in the variable list. Adding it."
+                f"Iteration variable '{name}' is not in the variable list. Adding it."
             )
             self.add_variable(name, value, lower_bound, upper_bound)
         else:
