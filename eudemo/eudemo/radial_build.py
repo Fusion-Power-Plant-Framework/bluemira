@@ -134,6 +134,7 @@ template_builder.add_variable("fimp(13)", 3.573e-04, lower_bound=0.0, upper_boun
 template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
 template_builder.add_variable("fcohbop", 0.93176)
 template_builder.add_variable("fvsbrnni", 0.39566)
+template_builder.add_variable("fncycle", 1.0)
 
 # Modified f-values and bounds w.r.t. defaults [0.001 < 0.5 < 1.0]
 template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
