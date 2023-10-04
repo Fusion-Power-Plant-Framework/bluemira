@@ -150,7 +150,7 @@ template_builder.add_variable("fjprot", 1.0)
 template_builder.add_variable("fpinj", 1.0)
 
 # Set model switches
-for model_choice in [
+for model_choice in (
     BootstrapCurrentScalingLaw.SAUTER,
     ConfinementTimeScalingLaw.IPB98_Y2_H_MODE,
     PlasmaCurrentScalingLaw.ITER_REVISED,
@@ -188,7 +188,7 @@ for model_choice in [
     CostModel.TETRA_1990,
     AvailabilityModel.INPUT,
     OutputCostsSwitch.NO,
-]:
+):
     template_builder.set_model(model_choice)
 
 template_builder.add_impurity(Impurities.H, 1.0)
