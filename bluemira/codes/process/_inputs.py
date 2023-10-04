@@ -296,6 +296,7 @@ class ProcessInputs:
     fracture_toughness: float = 150.0
     m_s_limit: float = 0.2
     gap_ds: float = 0.02
+    taulimit: float = 5.0
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
