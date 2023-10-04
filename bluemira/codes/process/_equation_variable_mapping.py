@@ -22,7 +22,7 @@
 Death to PROCESS integers
 """
 from dataclasses import dataclass, field
-from typing import List
+from typing import Tuple
 
 from bluemira.codes.utilities import Model
 
@@ -73,8 +73,8 @@ class ConstraintSelection:
     """
 
     _value_: int
-    requires_variables: List[int] = field(default_factory=list)
-    requires_values: List[str] = field(default_factory=list)
+    requires_variables: Tuple[int] = field(default_factory=tuple)
+    requires_values: Tuple[str] = field(default_factory=tuple)
     description: str = ""
 
 
@@ -83,161 +83,161 @@ class Constraint(ConstraintSelection, Model):
     Enum for PROCESS constraints
     """
 
-    BETA_CONSISTENCY = 1, [5], [], "Beta consistency"
+    BETA_CONSISTENCY = 1, (5), (), "Beta consistency"
     GLOBAL_POWER_CONSISTENCY = (
         2,
-        [1, 2, 3, 4, 6, 10, 11],
-        [],
+        (1, 2, 3, 4, 6, 10, 11),
+        (),
         "Global Power Balance Consistency",
     )
     ION_POWER_CONSISTENCY = (
         3,
-        [1, 2, 3, 4, 6, 10, 11],
-        [],
+        (1, 2, 3, 4, 6, 10, 11),
+        (),
         "DEPRECATED - Ion Power Balance Consistency",
     )
     ELECTRON_POWER_CONSISTENCY = (
         4,
-        [1, 2, 3, 4, 6, 10, 11],
-        [],
+        (1, 2, 3, 4, 6, 10, 11),
+        (),
         "DEPRECATED - Electron Power Balance Consistency",
     )
     DENSITY_UPPER_LIMIT = (
         5,
-        [1, 2, 3, 4, 6, 9],
-        [],
+        (1, 2, 3, 4, 6, 9),
+        (),
         "Density Upper Limit (Greenwald)",
     )
     EPS_BETA_POL_UPPER_LIMIT = (
         6,
-        [1, 2, 3, 4, 6, 8],
-        [],
+        (1, 2, 3, 4, 6, 8),
+        (),
         "Equation for epsilon beta-poloidal upper limit",
     )
-    HOT_BEAM_ION_DENSITY = 7, [7], [], "Equation for hot beam ion density"
-    NWL_UPPER_LIMIT = 8, [1, 2, 3, 4, 6, 14], ["walalw"], "Neutron wall load upper limit"
+    HOT_BEAM_ION_DENSITY = 7, (7), (), "Equation for hot beam ion density"
+    NWL_UPPER_LIMIT = 8, (1, 2, 3, 4, 6, 14), ("walalw"), "Neutron wall load upper limit"
     FUSION_POWER_UPPER_LIMIT = (
         9,
-        [1, 2, 3, 4, 6, 26],
-        [],
+        (1, 2, 3, 4, 6, 26),
+        (),
         "Equation for fusion power upper limit",
     )
     # 10 NOT USED
     RADIAL_BUILD_CONSISTENCY = (
         11,
-        [1, 3, 13, 16, 29, 42, 61],
-        [],
+        (1, 3, 13, 16, 29, 42, 61),
+        (),
         "Radial Build Consistency",
     )
     VS_LOWER_LIMIT = (
         12,
-        [1, 2, 3, 15],
-        [],
+        (1, 2, 3, 15),
+        (),
         "Equation for volt-second capability lower limit",
     )
     BURN_TIME_LOWER_LIMIT = (
         13,
-        [1, 2, 3, 6, 16, 17, 19, 29, 42, 44, 61],
-        [],
+        (1, 2, 3, 6, 16, 17, 19, 29, 42, 44, 61),
+        (),
         "Burn time lower limit",
     )
     NBI_LAMBDA_CENTRE = (
         14,
-        [],
-        [],
+        (),
+        (),
         "Equation to fix number of NBI decay lengths to plasma centre",
     )
-    LH_THRESHHOLD_LIMIT = 15, [103], [], "L-H Power ThresHhold Limit"
-    NET_ELEC_UPPER_LIMIT = 16, [1, 2, 3, 25], [], "Net electric power lower limit"
-    RAD_POWER_UPPER_LIMIT = 17, [28], [], "Equation for radiation power upper limit"
+    LH_THRESHHOLD_LIMIT = 15, (103), (), "L-H Power ThresHhold Limit"
+    NET_ELEC_UPPER_LIMIT = 16, (1, 2, 3, 25), (), "Net electric power lower limit"
+    RAD_POWER_UPPER_LIMIT = 17, (28), (), "Equation for radiation power upper limit"
     DIVERTOR_HEAT_UPPER_LIMIT = (
         18,
-        [27],
-        [],
+        (27),
+        (),
         "Equation for divertor heat load upper limit",
     )
-    MVA_UPPER_LIMIT = 19, [30], [], "Equation for MVA upper limit"
+    MVA_UPPER_LIMIT = 19, (30), (), "Equation for MVA upper limit"
     NBI_TANGENCY_UPPER_LIMIT = (
         20,
-        [3, 13, 31, 33],
-        [],
+        (3, 13, 31, 33),
+        (),
         "Equation for neutral beam tangency radius upper limit",
     )
-    AMINOR_LOWER_LIMIT = 21, [32], [], "Equation for minor radius lower limit"
+    AMINOR_LOWER_LIMIT = 21, (32), (), "Equation for minor radius lower limit"
     DIV_COLL_CONN_UPPER_LIMIT = (
         22,
-        [34, 43],
-        [],
+        (34, 43),
+        (),
         "Equation for divertor collision/connection length ratio upper limit",
     )
     COND_SHELL_R_RATIO_UPPER_LIMIT = (
         23,
-        [1, 74, 104],
-        [],
+        (1, 74, 104),
+        (),
         "Equation for conducting shell radius / rminor upper limit",
     )
-    BETA_UPPER_LIMIT = 24, [1, 2, 3, 4, 6, 18, 36], [], "Beta Upper Limit"
-    PEAK_TF_UPPER_LIMIT = 25, [3, 13, 29, 35], [], "Peak toroidal field upper limit"
+    BETA_UPPER_LIMIT = 24, (1, 2, 3, 4, 6, 18, 36), (), "Beta Upper Limit"
+    PEAK_TF_UPPER_LIMIT = 25, (3, 13, 29, 35), (), "Peak toroidal field upper limit"
     CS_EOF_DENSITY_LIMIT = (
         26,
-        [12, 37, 38, 41],
-        [],
+        (12, 37, 38, 41),
+        (),
         "Central solenoid EOF current density upper limit",
     )
     CS_BOP_DENSITY_LIMIT = (
         27,
-        [12, 37, 38, 41],
-        [],
+        (12, 37, 38, 41),
+        (),
         "Central solenoid bop current density upper limit",
     )
-    Q_LOWER_LIMIT = 28, [40, 45, 47], [], "Equation for fusion gain (big Q) lower limit"
+    Q_LOWER_LIMIT = 28, (40, 45, 47), (), "Equation for fusion gain (big Q) lower limit"
     IB_RADIAL_BUILD_CONSISTENCY = (
         29,
-        [1, 3, 13, 16, 29, 42, 61],
-        [],
+        (1, 3, 13, 16, 29, 42, 61),
+        (),
         "Equation for minor radius lower limit OR Inboard radial build consistency",
     )
-    PINJ_UPPER_LIMIT = 30, [11, 46, 47], [], "Injection Power Upper Limit"
+    PINJ_UPPER_LIMIT = 30, (11, 46, 47), (), "Injection Power Upper Limit"
     TF_CASE_STRESS_UPPER_LIMIT = (
         31,
-        [24, 48, 56, 57, 58, 59, 60],
-        [],
+        (24, 48, 56, 57, 58, 59, 60),
+        (),
         "TF coil case stress upper limit",
     )
     TF_JACKET_STRESS_UPPER_LIMIT = (
         32,
-        [24, 49, 56, 57, 58, 59, 60],
-        [],
+        (24, 49, 56, 57, 58, 59, 60),
+        (),
         "TF WP steel jacket/conduit stress upper limit",
     )
     TF_JCRIT_RATIO_UPPER_LIMIT = (
         33,
-        [24, 50, 56, 57, 58, 59, 60],
-        [],
+        (24, 50, 56, 57, 58, 59, 60),
+        (),
         "TF superconductor operating current / critical current density",
     )
     TF_DUMP_VOLTAGE_UPPER_LIMIT = (
         34,
-        [24, 51, 52, 56, 57, 58, 59, 60],
-        ["vdalw"],
+        (24, 51, 52, 56, 57, 58, 59, 60),
+        ("vdalw"),
         "TF dump voltage upper limit",
     )
     TF_CURRENT_DENSITY_UPPER_LIMIT = (
         35,
-        [24, 53, 56, 57, 58, 59, 60],
-        [],
+        (24, 53, 56, 57, 58, 59, 60),
+        (),
         "TF winding pack current density upper limit",
     )
     TF_T_MARGIN_LOWER_LIMIT = (
         36,
-        [24, 54, 55, 56, 57, 58, 59, 60],
-        [],
+        (24, 54, 55, 56, 57, 58, 59, 60),
+        (),
         "TF temperature margin upper limit",
     )
     CD_GAMMA_UPPER_LIMIT = (
         37,
-        [40, 47],
-        [],
+        (40, 47),
+        (),
         "Equation for current drive gamma upper limit",
     )
     # 38 NOT USED
@@ -271,8 +271,8 @@ class Constraint(ConstraintSelection, Model):
     WALL_RADIATION_UPPER_LIMIT = 67
     PSEPB_QAR_UPPER_LIMIT = (
         68,
-        [117],
-        ["psepbqarmax"],
+        (117),
+        ("psepbqarmax"),
         "P_separatrix Bt / q A R upper limit",
     )
     PSEP_KALLENBACH_UPPER_LIMIT = 69
@@ -298,8 +298,8 @@ class Constraint(ConstraintSelection, Model):
     OH_CROCO_CU_AREA_CONSTRAINT = 89
     CS_FATIGUE = (
         90,
-        [167],
-        [
+        (167),
+        (
             "residual_sig_hoop",
             "n_cycle_min",
             "t_crack_radial",
@@ -313,10 +313,10 @@ class Constraint(ConstraintSelection, Model):
             "paris_power_law",
             "walker_coefficient",
             "fracture_toughness",
-        ],
+        ),
         "CS fatigue constraints",
     )
-    ECRH_IGNITABILITY = 91, [], []
+    ECRH_IGNITABILITY = 91, (), ()
 
 
 # The dreaded f-values
