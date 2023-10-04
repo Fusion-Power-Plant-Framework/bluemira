@@ -24,13 +24,14 @@ PROCESS IN.DAT template builder
 """
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
 
 if TYPE_CHECKING:
-    from enum import EnumType
-
     from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
-    from bluemira.codes.process._model_mapping import PROCESSOptimisationAlgorithm
+    from bluemira.codes.process._model_mapping import (
+        PROCESSModel,
+        PROCESSOptimisationAlgorithm,
+    )
     from bluemira.codes.process.api import _INVariable
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -96,7 +97,7 @@ class PROCESSTemplateBuilder:
             )
         self.minmax = -minmax
 
-    def set_model(self, model_choice: EnumType):
+    def set_model(self, model_choice: PROCESSModel):
         """
         Set a model switch to the PROCESS run
         """
@@ -176,7 +177,7 @@ class PROCESSTemplateBuilder:
                 var_bounds["u"] = str(upper_bound)
             self.bounds[str(itvar)] = var_bounds
 
-    def add_input_value(self, name: str, value: str):
+    def add_input_value(self, name: str, value: Union[float, Iterable[float]]):
         """
         Add a fixed input value to the PROCESS run
         """
@@ -191,7 +192,7 @@ class PROCESSTemplateBuilder:
         for name, value in mapping.items():
             self.add_input_value(name, value)
 
-    def add_impurity(self, impurity: EnumType, value: float):
+    def add_impurity(self, impurity: Impurities, value: float):
         """
         Add an impurity concentration
         """
