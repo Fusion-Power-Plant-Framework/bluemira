@@ -146,7 +146,7 @@ def find_local_minima(f: np.ndarray) -> np.ndarray.np.ndarray:
     Cannot find "plateau" minima.
     For our use case, neither limitation is relevant.
     """
-    return np.where(
+    return np.nonzero(
         (f < np.roll(f, 1, 0))
         & (f < np.roll(f, -1, 0))
         & (f <= np.roll(f, 0, 1))

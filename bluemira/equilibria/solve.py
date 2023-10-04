@@ -123,7 +123,7 @@ class ConvergenceCriterion(ABC):
             The matplotlib axes onto which to plot
         """
         if ax is None:
-            f, ax = plt.subplots()
+            _f, ax = plt.subplots()
         ax.semilogy(self.progress)
         ax.set_xlabel("Iterations [n]")
         ax.set_ylabel(self.math_string)

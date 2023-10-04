@@ -247,7 +247,7 @@ def fit_sink_data(
         true_integral = np.trapz(y)
         fit_integral = np.trapz(y_fit)
 
-        f, ax = plt.subplots()
+        _f, ax = plt.subplots()
         ax.set_xlabel("Time [years]")
         ax.set_ylabel("Sequestered tritium [kg]")
         ax.set_title(f"Slope: {slope:.2f}, threshold: {threshold:.2f}")
@@ -390,7 +390,7 @@ def find_max_load_factor(time_years: np.ndarray, time_fpy: np.ndarray) -> float:
     -------
     The maximum load factor in the time signal (over a one year period)
     """
-    t, rt = discretise_1d(time_years, time_fpy, int(np.ceil(time_years[-1])))
+    _t, rt = discretise_1d(time_years, time_fpy, int(np.ceil(time_years[-1])))
     try:
         a = max([x - x1 for x1, x in zip(rt[:-1], rt[1:])])
     except ValueError:

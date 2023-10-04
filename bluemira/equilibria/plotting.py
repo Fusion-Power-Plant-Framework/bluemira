@@ -120,7 +120,7 @@ class Plotter:
                 bluemira_warn(f"Unrecognised plot kwarg: {kwarg}")
 
         if ax is None:
-            f, self.ax = plt.subplots()
+            _f, self.ax = plt.subplots()
         else:
             self.ax = ax
         self.ax.set_xlabel("$x$ [m]")
@@ -244,7 +244,7 @@ class CoilGroupPlotter(Plotter):
                 qb = [qb]
 
         if force is not None:
-            d_fx, d_fz = force / M_PER_MN
+            _d_fx, d_fz = force / M_PER_MN
 
         for i, (x, z, dx, x_b, z_b, ct, n, cur, ctrl) in enumerate(zip(*arrays)):
             if ctrl:
@@ -753,7 +753,7 @@ class CorePlotter2(Plotter):
         pfunc = RectBivariateSpline(eq.x[:, 0], eq.z[0, :], p)
         o_points, _ = eq.get_OX_points()
         xmag, zmag = o_points[0].x, o_points[0].z
-        psia, psib = eq.get_OX_psis()
+        _psia, psib = eq.get_OX_psis()
         n = 50
         xx = np.linspace(eq.grid.x_min, eq.grid.x_max, n)
         zz = np.linspace(zmag, zmag, n)
