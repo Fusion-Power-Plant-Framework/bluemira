@@ -22,6 +22,8 @@
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 from bluemira.codes.process import api
 
 PROCESS_OBS_VAR = {
@@ -39,6 +41,7 @@ def test_update_obsolete_vars():
     assert str2 == "shrubbery"
 
 
+@pytest.mark.skipif(not api.ENABLED, reason="PROCESS is not installed on the system.")
 @patch.object(api, "imp_data")
 def test_impurities(imp_data_mock):
     imp_data_mock.__file__ = "./__init__.py"

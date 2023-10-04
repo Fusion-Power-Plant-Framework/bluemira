@@ -46,6 +46,8 @@ class TestRun:
 
         getattr(run, run_func)()
 
-        self.run_subprocess_mock.assert_called_once_with(
-            [process.BINARY, "-i", "input/path_IN.DAT"]
-        )
+        assert self.run_subprocess_mock.call_args[0][0] == [
+            process.BINARY,
+            "-i",
+            "input/path_IN.DAT",
+        ]
