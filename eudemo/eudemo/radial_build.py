@@ -24,6 +24,7 @@ from typing import Dict, TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes import plot_radial_build, systems_code_solver
+from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process._model_mapping import (
     AlphaPressureModel,
     AvailabilityModel,
@@ -74,34 +75,34 @@ template_builder = PROCESSTemplateBuilder()
 template_builder.set_optimisation_algorithm(PROCESSOptimisationAlgorithm.VMCON)
 template_builder.set_optimisation_numerics(max_iterations=1000, tolerance=1e-8)
 
-template_builder.set_minimisation_objective("rmajor")
+template_builder.set_minimisation_objective(Objective.MAJOR_RADIUS)
 
-for constraint in [
-    "beta_consistency",
-    "global_power_consistency",
-    "radial_build_consistency",
-    "confinement_ratio_lower_limit",
-    "density_upper_limit",
-    "density_profile_sanity",
-    "beta_upper_limit",
-    "NWL_upper_limit",
-    "burn_time_lower_limit",
-    "net_electric_lower_limit",
-    "LH_threshhold_limit",
-    "PsepBqAR_upper_limit",
-    "Pinj_upper_limit",
-    "TF_case_stress_upper_limit",
-    "TF_jacket_stress_upper_limit",
-    "TF_jcrit_ratio_upper_limit",
-    "TF_dump_voltage_upper_limit",
-    "TF_current_density_upper_limit",
-    "TF_temp_margin_lower_limit",
-    "CS_fatigue",
-    "CS_stress_upper_limit",
-    "CS_temp_margin_lower_limit",
-    "CS_EOF_density_limit",
-    "CS_BOP_density_limit",
-]:
+for constraint in (
+    Constraint.BETA_CONSISTENCY,
+    Constraint.GLOBAL_POWER_CONSISTENCY,
+    Constraint.RADIAL_BUILD_CONSISTENCY,
+    Constraint.CONFINEMENT_RATIO_LOWER_LIMIT,
+    Constraint.DENSITY_UPPER_LIMIT,
+    Constraint.DENSITY_PROFILE_CONSISTENCY,
+    Constraint.BETA_UPPER_LIMIT,
+    Constraint.NWL_UPPER_LIMIT,
+    Constraint.BURN_TIME_LOWER_LIMIT,
+    Constraint.NET_ELEC_UPPER_LIMIT,
+    Constraint.LH_THRESHHOLD_LIMIT,
+    Constraint.PSEPB_QAR_UPPER_LIMIT,
+    Constraint.PINJ_UPPER_LIMIT,
+    Constraint.TF_CASE_STRESS_UPPER_LIMIT,
+    Constraint.TF_JACKET_STRESS_UPPER_LIMIT,
+    Constraint.TF_JCRIT_RATIO_UPPER_LIMIT,
+    Constraint.TF_DUMP_VOLTAGE_UPPER_LIMIT,
+    Constraint.TF_CURRENT_DENSITY_UPPER_LIMIT,
+    Constraint.TF_T_MARGIN_LOWER_LIMIT,
+    Constraint.CS_FATIGUE,
+    Constraint.CS_STRESS_UPPER_LIMIT,
+    Constraint.CS_T_MARGIN_LOWER_LIMIT,
+    Constraint.CS_EOF_DENSITY_LIMIT,
+    Constraint.CS_BOP_DENSITY_LIMIT,
+):
     template_builder.add_constraint(constraint)
 
 # Variable vector values and bounds
