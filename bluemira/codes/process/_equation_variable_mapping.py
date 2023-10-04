@@ -27,6 +27,34 @@ from typing import List
 from bluemira.codes.utilities import Model
 
 
+class Objective(Model):
+    """
+    Enum for PROCESS optimisation objective
+    """
+
+    MAJOR_RADIUS = 1
+    # 2 NOT USED
+    NEUTRON_WALL_LOAD = 3
+    MAX_COIL_POWER = 4
+    FUSION_GAIN = 5
+    ELECTRICITY_COST = 6
+    CAPITAL_COST = 7
+    ASPECT_RATIO = 8
+    DIVERTOR_HEAT_LOAD = 9
+    TOROIDAL_FIELD = 10
+    INJECTED_POWER = 11
+    # 12, 13 NOT USED
+    PULSE_LENGTH = 14
+    AVAILABILITY = 15
+    MAJOR_RADIUS_PULSE_LENGTH = 16
+    NET_ELECTRICITY = 17
+    NULL = 18
+    FUSION_GAIN_PULSE_LENGTH = 19
+
+
+OBJECTIVE_MIN_ONLY = (16, 19)
+
+
 @dataclass
 class ConstraintSelection:
     """
@@ -96,19 +124,19 @@ class Constraint(ConstraintSelection, Model):
     )
     # 10 NOT USED
     RADIAL_BUILD_CONSISTENCY = (
-        10,
+        11,
         [1, 3, 13, 16, 29, 42, 61],
         [],
         "Radial Build Consistency",
     )
     VS_LOWER_LIMIT = (
-        11,
+        12,
         [1, 2, 3, 15],
         [],
         "Equation for volt-second capability lower limit",
     )
     BURN_TIME_LOWER_LIMIT = (
-        12,
+        13,
         [1, 2, 3, 6, 16, 17, 19, 29, 42, 44, 61],
         [],
         "Burn time lower limit",
@@ -213,113 +241,6 @@ class Constraint(ConstraintSelection, Model):
         "Equation for current drive gamma upper limit",
     )
     # 38 NOT USED
-
-    # 47 NOT USED (or maybe it is, WTF?!)
-
-    # 49 NOT USED
-    PSEPB_QAR_UPPER_LIMIT = (
-        68,
-        [117],
-        ["psepbqarmax"],
-        "P_separatrix Bt / q A R upper limit",
-    )
-
-    CS_FATIGUE = (
-        90,
-        [167],
-        [
-            "residual_sig_hoop",
-            "n_cycle_min",
-            "t_crack_radial",
-            "t_crack_vertical",
-            "t_structural_radial",
-            "t_structural_vertical",
-            "sf_vertical_crack",
-            "sf_radial_crack",
-            "sf_fast_fracture",
-            "paris_coefficient",
-            "paris_power_law",
-            "walker_coefficient",
-            "fracture_toughness",
-        ],
-        "CS fatigue constraints",
-    )
-
-
-from bluemira.codes.utilities import Model
-
-
-class Objective(Model):
-    """
-    Enum for PROCESS optimisation objective
-    """
-
-    MAJOR_RADIUS = 1
-    # 2 NOT USED
-    NEUTRON_WALL_LOAD = 3
-    MAX_COIL_POWER = 4
-    FUSION_GAIN = 5
-    ELECTRICITY_COST = 6
-    CAPITAL_COST = 7
-    ASPECT_RATIO = 8
-    DIVERTOR_HEAT_LOAD = 9
-    TOROIDAL_FIELD = 10
-    INJECTED_POWER = 11
-    # 12, 13 NOT USED
-    PULSE_LENGTH = 14
-    AVAILABILITY = 15
-    MAJOR_RADIUS_PULSE_LENGTH = 16
-    NET_ELECTRICITY = 17
-    NULL = 18
-    FUSION_GAIN_PULSE_LENGTH = 19
-
-
-OBJECTIVE_MIN_ONLY = (16, 19)
-
-
-class Constraint(Model):
-    """
-    Enum for PROCESS constraints
-    """
-
-    BETA_CONSISTENCY = 1
-    GLOBAL_POWER_CONSISTENCY = 2
-    ION_POWER_CONSISTENCY = 3
-    ELECTRON_POWER_CONSISTENCY = 4
-    DENSITY_UPPER_LIMIT = 5
-    EPS_BETA_POL_UPPER_LIMIT = 6
-    HOT_BEAM_ION_DENSITY = 7
-    NWL_UPPER_LIMIT = 8
-    FUSION_POWER_UPPER_LIMIT = 9
-    # 10 NOT USED
-    RADIAL_BUILD_CONSISTENCY = 11
-    VS_LOWER_LIMIT = 12
-    BURN_TIME_LOWER_LIMIT = 13
-    NBI_LAMBDA_CENTRE = 14
-    LH_THRESHHOLD_LIMIT = 15
-    NET_ELEC_UPPER_LIMIT = 16
-    RAD_POWER_UPPER_LIMIT = 17
-    DIVERTOR_HEAT_UPPER_LIMIT = 18
-    MVA_UPPER_LIMIT = 19
-    NBI_TANGENCY_UPPER_LIMIT = 20
-    AMINOR_LOWER_LIMIT = 21
-    DIV_COLL_CONN_UPPER_LIMIT = 22
-    COND_SHELL_R_RATIO_UPPER_LIMIT = 23
-    BETA_UPPER_LIMIT = 24
-    PEAK_TF_UPPER_LIMIT = 25
-    CS_EOF_DENSITY_LIMIT = 26
-    CS_BOP_DENSITY_LIMIT = 27
-    Q_LOWER_LIMIT = 28
-    IB_RADIAL_BUILD_CONSISTENCY = 29
-    PINJ_UPPER_LIMIT = 30
-    TF_CASE_STRESS_UPPER_LIMIT = 31
-    TF_JACKET_STRESS_UPPER_LIMIT = 32
-    TF_JCRIT_RATIO_UPPER_LIMIT = 33
-    TF_DUMP_VOLTAGE_UPPER_LIMIT = 34
-    TF_CURRENT_DENSITY_UPPER_LIMIT = 35
-    TF_T_MARGIN_LOWER_LIMIT = 36
-    CD_GAMMA_UPPER_LIMIT = 37
-    # 38 NOT USED
     FW_TEMP_UPPER_LIMIT = 39
     PAUX_LOWER_LIMIT = 40
     IP_RAMP_LOWER_LIMIT = 41
@@ -330,7 +251,7 @@ class Constraint(Model):
     IP_IROD_UPPER_LIMIT = 46
     TF_TOROIDAL_TK_UPPER_LIMIT = 47  # 47 NOT USED (or maybe it is, WTF?!)
     BETAPOL_UPPER_LIMIT = 48
-    # 49 NOT USED  / SCARES ME
+    # 49 NOT USED
     REP_RATE_UPPER_LIMIT = 50
     CS_FLUX_CONSISTENCY = 51
     TBR_LOWER_LIMIT = 52
@@ -348,7 +269,12 @@ class Constraint(Model):
     DUMP_TIME_LOWER_LIMIT = 65
     PF_ENERGY_RATE_UPPER_LIMIT = 66
     WALL_RADIATION_UPPER_LIMIT = 67
-    PSEPB_QAR_UPPER_LIMIT = 68
+    PSEPB_QAR_UPPER_LIMIT = (
+        68,
+        [117],
+        ["psepbqarmax"],
+        "P_separatrix Bt / q A R upper limit",
+    )
     PSEP_KALLENBACH_UPPER_LIMIT = 69
     TSEP_CONSISTENCY = 70
     NSEP_CONSISTENCY = 71
@@ -370,8 +296,27 @@ class Constraint(Model):
     CRYOPOWER_UPPER_LIMIT = 87
     TF_STRAIN_UPPER_LIMIT = 88
     OH_CROCO_CU_AREA_CONSTRAINT = 89
-    CS_FATIGUE = 90
-    ECRH_IGNITABILITY = 91
+    CS_FATIGUE = (
+        90,
+        [167],
+        [
+            "residual_sig_hoop",
+            "n_cycle_min",
+            "t_crack_radial",
+            "t_crack_vertical",
+            "t_structural_radial",
+            "t_structural_vertical",
+            "sf_vertical_crack",
+            "sf_radial_crack",
+            "sf_fast_fracture",
+            "paris_coefficient",
+            "paris_power_law",
+            "walker_coefficient",
+            "fracture_toughness",
+        ],
+        "CS fatigue constraints",
+    )
+    ECRH_IGNITABILITY = 91, [], []
 
 
 # The dreaded f-values
