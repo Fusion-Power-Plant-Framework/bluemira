@@ -53,10 +53,10 @@ class PROCESSTemplateBuilder:
 
     def __init__(self):
         self._models: Dict[str, PROCESSModel] = {}
+        self._constraints: List[Constraint] = []
         self.values: Dict[str, Any] = {}
         self.variables: Dict[str, float] = {}
         self.bounds: Dict[str, Dict[str, str]] = {}
-        self.icc: List[int] = []
         self.ixc: List[int] = []
         self.fimp: List[float] = 14 * [0.0]
 
@@ -117,7 +117,7 @@ class PROCESSTemplateBuilder:
             # f-value constraints.
             self.add_fvalue_constraint(constraint, 0.5, 1e-3, 1.0)
         else:
-            self.icc.append(constraint.value)
+            self._constraints.append(constraint)
 
     def add_fvalue_constraint(
         self,
@@ -133,7 +133,8 @@ class PROCESSTemplateBuilder:
             raise ValueError(
                 f"Constraint '{constraint.name}' is not an f-value constraint."
             )
-        self.icc.append(constraint.value)
+        self._constraints.append(constraint)
+
         itvar = FV_CONSTRAINT_ITVAR_MAPPING[constraint.value]
         if itvar not in self.ixc:
             self.add_variable(
@@ -235,7 +236,7 @@ class PROCESSTemplateBuilder:
         for model in self._models.values():
             missing_inputs = [
                 input_name
-                for input_name in model.requires
+                for input_name in model.requires_values
                 if (input_name not in self.values and input_name not in self.variables)
             ]
 
@@ -246,6 +247,13 @@ class PROCESSTemplateBuilder:
                     f"{model_name} requires inputs {inputs} which have not been specified. Default values will be used."
                 )
 
+    def _check_constraint_inputs(self):
+        """
+        Check the required inputs for the constraints have been provided
+        """
+        for _constraint in self._constraints:
+            pass
+
     def make_inputs(self) -> Dict[str, _INVariable]:
         """
         Make the ProcessInputs InVariable for the specified template
@@ -255,12 +263,14 @@ class PROCESSTemplateBuilder:
                 "You are running in optimisation mode, but have not set an objective function."
             )
 
+        self._check_constraint_inputs()
+        icc = [con.value for con in self._constraints]
         self._check_model_inputs()
         models = {k: v.value for k, v in self._models.items()}
 
         return ProcessInputs(
             bounds=self.bounds,
-            icc=self.icc,
+            icc=icc,
             ixc=self.ixc,
             minmax=self.minmax,
             ioptimz=self.ioptimiz,

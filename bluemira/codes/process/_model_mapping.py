@@ -23,7 +23,7 @@
 PROCESS model mappings
 """
 from dataclasses import dataclass, field
-from typing import List
+from typing import Tuple
 
 from bluemira.codes.utilities import Model
 
@@ -59,7 +59,7 @@ class ModelSelection:
     """
 
     _value_: int
-    requires: List[str] = field(default_factory=list)
+    requires_values: Tuple[str] = field(default_factory=tuple)
     description: str = ""
 
 
@@ -91,8 +91,8 @@ class PROCESSOptimisationAlgorithm(PROCESSModel):
         """
         return "ioptimz"
 
-    NO_OPTIMISATION = 0, [], "Do not use optimisation"
-    VMCON = 1, [], "The traditional VMCON optimisation algorithm"
+    NO_OPTIMISATION = 0, (), "Do not use optimisation"
+    VMCON = 1, (), "The traditional VMCON optimisation algorithm"
 
 
 class PlasmaGeometryModel(PROCESSModel):
@@ -107,22 +107,22 @@ class PlasmaGeometryModel(PROCESSModel):
         """
         return "ishape"
 
-    HENDER_K_D_100 = 0, ["kappa", "triang"]
-    GALAMBOS_K_D_95 = 1, ["kappa95", "triang95"]
-    ZOHM_ITER = 2, ["triang", "fkzohm"]
-    ZOHM_ITER_D_95 = 3, ["triang95", "fkzohm"]
-    HENDER_K_D_95 = 4, ["kappa95, triang95"]
-    MAST_95 = 5, ["kappa95, triang95"]
-    MAST_100 = 6, ["kappa, triang"]
-    FIESTA_95 = 7, ["kappa95, triang95"]
-    FIESTA_100 = 8, ["kappa, triang"]
-    A_LI3 = 9, ["triang"]
+    HENDER_K_D_100 = 0, ("kappa", "triang")
+    GALAMBOS_K_D_95 = 1, ("kappa95", "triang95")
+    ZOHM_ITER = 2, ("triang", "fkzohm")
+    ZOHM_ITER_D_95 = 3, ("triang95", "fkzohm")
+    HENDER_K_D_95 = 4, ("kappa95, triang95")
+    MAST_95 = 5, ("kappa95, triang95")
+    MAST_100 = 6, ("kappa, triang")
+    FIESTA_95 = 7, ("kappa95, triang95")
+    FIESTA_100 = 8, ("kappa, triang")
+    A_LI3 = 9, ("triang")
     CREATE_A_M_S = (
         10,
-        ["aspect", "m_s_limit", "triang"],
+        ("aspect", "m_s_limit", "triang"),
         "A fit to CREATE data for conventional A tokamaks",
     )
-    MENARD = 11, ["triang", "aspect"]
+    MENARD = 11, ("triang", "aspect")
 
 
 class PlasmaNullConfigurationModel(PROCESSModel):
@@ -137,7 +137,7 @@ class PlasmaNullConfigurationModel(PROCESSModel):
         """
         return "snull"
 
-    DOUBLE_NULL = 0, ["ftar"]
+    DOUBLE_NULL = 0, ("ftar")
     SINGLE_NULL = 1
 
 
@@ -153,8 +153,8 @@ class PlasmaPedestalModel(PROCESSModel):
         """
         return "ipedestal"
 
-    NO_PEDESTAL = 0, ["te"]
-    PEDESTAL_GW = 1, [
+    NO_PEDESTAL = 0, ("te")
+    PEDESTAL_GW = 1, (
         "te",
         "neped",
         "nesep",
@@ -164,9 +164,9 @@ class PlasmaPedestalModel(PROCESSModel):
         "teped",
         "tesep",
         "ralpne",
-    ]
-    PLASMOD_GW = 2, ["te", "neped", "nesep", "tbeta", "teped", "tesep", "ralpne"]
-    PLASMOD = 3, ["te", "rhopedn", "rhopedt", "teped", "tesep"]
+    )
+    PLASMOD_GW = 2, ("te", "neped", "nesep", "tbeta", "teped", "tesep", "ralpne")
+    PLASMOD = 3, ("te", "rhopedn", "rhopedt", "teped", "tesep")
 
 
 class PlasmaProfileModel(PROCESSModel):
@@ -181,8 +181,8 @@ class PlasmaProfileModel(PROCESSModel):
         """
         return "iprofile"
 
-    INPUT = 0, ["alphaj", "rli"]
-    CONSISTENT = 1, ["q", "q0"]
+    INPUT = 0, ("alphaj", "rli")
+    CONSISTENT = 1, ("q", "q0")
 
 
 class EPEDScalingModel(PROCESSModel):
@@ -199,7 +199,7 @@ class EPEDScalingModel(PROCESSModel):
         """
         return "ieped"
 
-    UKNOWN_0 = 0, ["teped"]
+    UKNOWN_0 = 0, ("teped")
     SAARELMA = 1
     UNKNOWN_1 = 2
     UNKNOWN_2 = 3
@@ -237,7 +237,7 @@ class BetaGScalingModel(PROCESSModel):
         """
         return "gtscale"
 
-    INPUT = 0, ["dnbeta"]
+    INPUT = 0, ("dnbeta")
     CONVENTIONAL = 1
     MENARD_ST = 2
 
@@ -362,7 +362,7 @@ class ConfinementTimeScalingLaw(PROCESSModel):
     NSTX_H_MODE = 46
     NSTX_PETTY_H_MODE = 47
     NSTX_GB_H_MODE = 48
-    INPUT = 49, ["tauee_in"]
+    INPUT = 49, ("tauee_in")
 
 
 class BootstrapCurrentScalingLaw(PROCESSModel):
@@ -377,7 +377,7 @@ class BootstrapCurrentScalingLaw(PROCESSModel):
         """
         return "ibss"
 
-    ITER = 1, ["cboot"]
+    ITER = 1, ("cboot")
     GENERAL = 2
     NUMERICAL = 3
     SAUTER = 4
@@ -447,8 +447,8 @@ class PlasmaWallGapModel(PROCESSModel):
         """
         return "iscrp"
 
-    TEN_PERCENT = 0, [], "SOL thickness calculated as 10 percent of minor radius"
-    INPUT = 1, ["scrapli", "scraplo"], "Fixed thickness SOL values"
+    TEN_PERCENT = 0, (), "SOL thickness calculated as 10 percent of minor radius"
+    INPUT = 1, ("scrapli", "scraplo"), "Fixed thickness SOL values"
 
 
 class OperationModel(PROCESSModel):
@@ -513,7 +513,7 @@ class ThermalStorageModel(PROCESSModel):
 
     INHERENT_STEAM = 1
     BOILER = 2
-    STEEL = 3, ["dtstor"]  # Obsolete
+    STEEL = 3, ("dtstor")  # Obsolete
 
 
 class BlanketModel(PROCESSModel):
@@ -593,7 +593,7 @@ class TFCoilConductorTechnology(PROCESSModel):
         """
         return "i_tf_sup"
 
-    COPPER = 0, ["tfootfi"]
+    COPPER = 0, ("tfootfi")
     SC = 1
     CRYO_AL = 2
 
@@ -666,8 +666,8 @@ class TFWindingPackTurnModel(PROCESSModel):
         """
         return "i_tf_turns_integer"
 
-    CURRENT_PER_TURN = 0, ["cpttf"]  # or t_cable_tf or t_turn_tf
-    INTEGER_TURN = 1, ["n_layer", "n_pancake"]
+    CURRENT_PER_TURN = 0, ("cpttf")  # or t_cable_tf or t_turn_tf
+    INTEGER_TURN = 1, ("n_layer", "n_pancake")
 
 
 class TFCoilShapeModel(PROCESSModel):
@@ -717,16 +717,16 @@ class TFCoilJointsModel(PROCESSModel):
 
     SC_CLAMP_RES_SLIDE = (
         -1,
-        [],
+        (),
         "Chooses clamped joints for SC magnets (i_tf_sup=1) and sliding joints for resistive magnets (i_tf_sup=0,2)",
     )
     NO_JOINTS = 0
-    SLIDING_JOINTS = 1, [
+    SLIDING_JOINTS = 1, (
         "tho_tf_joints",
         "n_tf_joints_contact",
         "n_tf_joints",
         "th_joint_contact",
-    ]
+    )
 
 
 class TFStressModel(PROCESSModel):
@@ -792,7 +792,7 @@ class PFSuperconductorModel(PROCESSModel):
         return "isumatpf"
 
     NB3SN_ITER_STD = 1
-    BI_2212 = 2, ["fhts"]
+    BI_2212 = 2, ("fhts")
     NBTI = 3
     NB3SN_ITER_INPUT = 4  # User-defined critical parameters
     NB3SN_WST = 5
@@ -814,7 +814,7 @@ class PFCurrentControlModel(PROCESSModel):
         """
         return "i_pf_current"
 
-    INPUT = 0, ["curpfb", "curpff", "curpfs"]
+    INPUT = 0, ("curpfb", "curpff", "curpfs")
     SVD = 1
 
 
@@ -956,7 +956,7 @@ class TFNuclearHeatingModel(PROCESSModel):
         return "inuclear"
 
     FRANCES_FOX = 0
-    INPUT = 1, ["qnuc"]
+    INPUT = 1, ("qnuc")
 
 
 class PrimaryPumpingModel(PROCESSModel):
@@ -1162,5 +1162,5 @@ class OutputCostsSwitch(PROCESSModel):
         """
         return "output_costs"
 
-    NO = 0, [], "Do not print cost information to output"
-    YES = 1, [], "Print cost information to output"
+    NO = 0, (), "Do not print cost information to output"
+    YES = 1, (), "Print cost information to output"
