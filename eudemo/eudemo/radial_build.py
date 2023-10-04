@@ -122,7 +122,6 @@ template_builder.add_variable("thkcas", 0.52465, lower_bound=0.1)
 template_builder.add_variable("tfcth", 1.2080, lower_bound=0.2)
 template_builder.add_variable("gapoh", 0.05, lower_bound=0.05, upper_bound=0.1)
 template_builder.add_variable("gapds", 0.02, lower_bound=0.02)
-template_builder.add_variable("coheof", 1.6e07)
 template_builder.add_variable("oh_steel_frac", 0.57875)
 template_builder.add_variable("coheof", 2.0726e07)
 template_builder.add_variable("cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
@@ -134,6 +133,7 @@ template_builder.add_variable("fimp(13)", 3.573e-04, lower_bound=0.0, upper_boun
 # so no fancy mechanics for now...
 template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
 template_builder.add_variable("fcohbop", 0.93176)
+template_builder.add_variable("fvsbrnni", 0.39566)
 
 # Modified f-values and bounds w.r.t. defaults [0.001 < 0.5 < 1.0]
 template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
@@ -148,13 +148,10 @@ template_builder.adjust_variable("fstrcase", 1.0)
 template_builder.adjust_variable("ftmargtf", 1.0)
 template_builder.adjust_variable("ftmargoh", 1.0)
 template_builder.adjust_variable("ftaulimit", 1.0)
-template_builder.adjust_variable("fmaxvvstress", 1.0)
-template_builder.adjust_variable("f_oh_stress", 1.0)
 template_builder.adjust_variable("fjohc", 0.57941)
 template_builder.adjust_variable("fjohc0", 0.53923)
 template_builder.adjust_variable("fbetatry", 0.48251)
 template_builder.adjust_variable("fwalld", 0.131)
-template_builder.adjust_variable("fvsbrnni", 0.39566)
 # template_builder.adjust_variable("ftaucq", 0.93)
 template_builder.adjust_variable("fpsepbqar", 1.0)
 template_builder.adjust_variable("fvdump", 1.0)
@@ -305,7 +302,6 @@ template_builder.add_input_values(
         "n_layer": 10,
         "qnuc": 1.292e4,
         # Inputs we don't care about but must specify
-        "cpttf_max": 9.0e4,  # This is an ITV which is upper bounded to this
         "cfactr": 0.75,  # Ha!
         "kappa": 1.848,  # Should be overwritten
         "walalw": 8.0,  # Should never get even close to this
