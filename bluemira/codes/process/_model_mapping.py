@@ -362,7 +362,7 @@ class ConfinementTimeScalingLaw(PROCESSModel):
     NSTX_H_MODE = 46
     NSTX_PETTY_H_MODE = 47
     NSTX_GB_H_MODE = 48
-    INPUT = 49, ("tauee_in")
+    INPUT = 49, ("tauee_in",)
 
 
 class BootstrapCurrentScalingLaw(PROCESSModel):
