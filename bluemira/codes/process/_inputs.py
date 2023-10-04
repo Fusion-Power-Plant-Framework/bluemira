@@ -343,4 +343,3 @@ class ProcessInputs:
 
         """
         return dict(self)
-        return dict(self)

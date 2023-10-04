@@ -29,14 +29,14 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional
 if TYPE_CHECKING:
     from enum import EnumType
 
+    from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
+    from bluemira.codes.process._model_mapping import PROCESSOptimisationAlgorithm
     from bluemira.codes.process.api import _INVariable
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process._equation_variable_mapping import (
-    CONSTRAINT_EQ_MAPPING,
     FV_CONSTRAINT_ITVAR_MAPPING,
     ITERATION_VAR_MAPPING,
-    OBJECTIVE_EQ_MAPPING,
     OBJECTIVE_MIN_ONLY,
     VAR_ITERATION_MAPPING,
 )
@@ -60,11 +60,11 @@ class PROCESSTemplateBuilder:
         self.fimp: List[float] = 14 * [0.0]
 
         self.minmax: int = 0
-        self.ioptimiz: bool = 0
+        self.ioptimiz: int = 0
         self.maxcal: int = 1000
         self.epsvmc: float = 1.0e-8
 
-    def set_optimisation_algorithm(self, algorithm_choice: EnumType):
+    def set_optimisation_algorithm(self, algorithm_choice: PROCESSOptimisationAlgorithm):
         """
         Set the optimisation algorithm to use
         """
@@ -79,26 +79,20 @@ class PROCESSTemplateBuilder:
         self.maxcal = max_iterations
         self.epsvmc = tolerance
 
-    def set_minimisation_objective(self, name: str):
+    def set_minimisation_objective(self, objective: Objective):
         """
         Set the minimisation objective equation to use when running PROCESS
         """
-        minmax = OBJECTIVE_EQ_MAPPING.get(name, None)
-        if not minmax:
-            raise ValueError(f"There is no objective equation: '{name}'")
+        self.minmax = objective.value
 
-        self.minmax = minmax
-
-    def set_maximisation_objective(self, name: str):
+    def set_maximisation_objective(self, objective: Objective):
         """
         Set the maximisation objective equation to use when running PROCESS
         """
-        minmax = OBJECTIVE_EQ_MAPPING.get(name, None)
-        if not minmax:
-            raise ValueError(f"There is no objective equation: '{name}'")
+        minmax = objective.value
         if minmax in OBJECTIVE_MIN_ONLY:
             raise ValueError(
-                f"Equation {name} can only be used as a minimisation objective."
+                f"Equation {objective} can only be used as a minimisation objective."
             )
         self.minmax = -minmax
 
@@ -108,26 +102,25 @@ class PROCESSTemplateBuilder:
         """
         self.models[model_choice.switch_name] = model_choice.value
 
-    def add_constraint(self, name: str):
+    def add_constraint(self, constraint: Constraint):
         """
         Add a constraint to the PROCESS run
         """
-        constraint = CONSTRAINT_EQ_MAPPING.get(name, None)
-        if not constraint:
-            raise ValueError(f"There is no constraint equation: '{name}'")
-        if constraint in self.icc:
-            bluemira_warn(f"Constraint {name} is already in the constraint list.")
+        if constraint.value in self.icc:
+            bluemira_warn(
+                f"Constraint {constraint.name} is already in the constraint list."
+            )
 
-        if constraint in FV_CONSTRAINT_ITVAR_MAPPING:
+        if constraint.value in FV_CONSTRAINT_ITVAR_MAPPING:
             # Sensible (?) defaults. bounds are standard PROCESS for f-values for _most_
             # f-value constraints.
-            self.add_fvalue_constraint(name, 0.5, 1e-3, 1.0)
+            self.add_fvalue_constraint(constraint, 0.5, 1e-3, 1.0)
         else:
-            self.icc.append(constraint)
+            self.icc.append(constraint.value)
 
     def add_fvalue_constraint(
         self,
-        name: str,
+        constraint: Constraint,
         value: float,
         lower_bound: float = 1e-3,
         upper_bound: float = 1.0,
@@ -135,14 +128,12 @@ class PROCESSTemplateBuilder:
         """
         Add an f-value constraint to the PROCESS run
         """
-        constraint = CONSTRAINT_EQ_MAPPING.get(name, None)
-        if not constraint:
-            raise ValueError(f"There is no constraint equation: '{name}'")
-
-        if constraint not in FV_CONSTRAINT_ITVAR_MAPPING:
-            raise ValueError(f"Constraint '{name}' is not an f-value constraint.")
-
-        itvar = FV_CONSTRAINT_ITVAR_MAPPING[constraint]
+        if constraint.value not in FV_CONSTRAINT_ITVAR_MAPPING:
+            raise ValueError(
+                f"Constraint '{constraint.name}' is not an f-value constraint."
+            )
+        self.icc.append(constraint.value)
+        itvar = FV_CONSTRAINT_ITVAR_MAPPING[constraint.value]
         if itvar not in self.ixc:
             self.add_variable(
                 VAR_ITERATION_MAPPING[itvar], value, lower_bound, upper_bound
