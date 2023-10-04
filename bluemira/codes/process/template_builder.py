@@ -53,7 +53,6 @@ class PROCESSTemplateBuilder:
 
     def __init__(self):
         self._models: Dict[str, PROCESSModel] = {}
-        self.models: Dict[str, int] = {}
         self.values: Dict[str, Any] = {}
         self.variables: Dict[str, float] = {}
         self.bounds: Dict[str, Dict[str, str]] = {}
@@ -237,7 +236,7 @@ class PROCESSTemplateBuilder:
             missing_inputs = [
                 input_name
                 for input_name in model.requires
-                if (input_name not in self.values or input_name not in self.variables)
+                if (input_name not in self.values and input_name not in self.variables)
             ]
 
             if missing_inputs:
@@ -257,7 +256,7 @@ class PROCESSTemplateBuilder:
             )
 
         self._check_model_inputs()
-        self.models = {k: v.value for k, v in self._models.items()}
+        models = {k: v.value for k, v in self._models.items()}
 
         return ProcessInputs(
             bounds=self.bounds,
@@ -269,6 +268,6 @@ class PROCESSTemplateBuilder:
             maxcal=self.maxcal,
             fimp=self.fimp,
             **self.values,
-            **self.models,
+            **models,
             **self.variables,
         ).to_invariable()

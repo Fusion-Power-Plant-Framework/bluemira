@@ -126,11 +126,15 @@ template_builder.add_variable("tdmptf", 2.7e1, lower_bound=0.1)
 template_builder.add_variable("vdalw", 10.0, upper_bound=10.0)
 template_builder.add_variable("fimp(13)", 4.4e-4, lower_bound=0.0, upper_bound=0.1)
 
+# Some constraints require multiple f-values, but they are getting ridding of those,
+# so no fancy mechanics for now...
+template_builder.add_variable("fcutfsu", 0.88, lower_bound=0.5, upper_bound=0.94)
+template_builder.add_variable("fcohbop", 0.9)
+
 # Modified f-values and bounds w.r.t. defaults [0.001 < 0.5 < 1.0]
-template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
 template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
+template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
 template_builder.adjust_variable("flhthresh", 1.15, lower_bound=1.1, upper_bound=1.2)
-template_builder.adjust_variable("fcutfsu", 0.88, lower_bound=0.5, upper_bound=0.94)
 
 # Modifying the initial variable vector to improve convergence
 template_builder.adjust_variable("fpnetel", 1.0)
@@ -139,10 +143,9 @@ template_builder.adjust_variable("fstrcase", 1.0)
 template_builder.adjust_variable("ftmargtf", 1.0)
 template_builder.adjust_variable("ftmargoh", 1.0)
 template_builder.adjust_variable("ftaulimit", 1.0)
-template_builder.adjust_variable("ftaucq", 0.93)
+# template_builder.adjust_variable("ftaucq", 0.93)
 template_builder.adjust_variable("fpsepbqar", 1.0)
 template_builder.adjust_variable("fvdump", 1.0)
-template_builder.adjust_variable("fcohbop", 0.9)
 template_builder.adjust_variable("fwalld", 0.13)
 template_builder.adjust_variable("fstrcond", 0.77)
 template_builder.adjust_variable("fiooic", 0.72)
@@ -219,7 +222,8 @@ template_builder.add_input_values(
         "alstroh": 6.6e8,
         "psepbqarmax": 9.2,
         "aspect": 3.1,
-        # "m_s_limit": 0.1,
+        "m_s_limit": 0.1,
+        "triang": 0.5,
         "q0": 1.0,
         "ssync": 0.6,
         "plasma_res_factor": 0.66,
@@ -292,12 +296,12 @@ template_builder.add_input_values(
         # Inputs we don't care about but must specify
         "cfactr": 0.75,  # Ha!
         "kappa": 1.848,  # Should be overwritten
-        "triang": 0.5,  # Should be overwritten
         "walalw": 8.0,  # Should never get even close to this
     }
 )
 
 template = template_builder.make_inputs()
+print(list(template_builder.values.keys()))
 
 
 def radial_build(params: _PfT, build_config: Dict) -> _PfT:

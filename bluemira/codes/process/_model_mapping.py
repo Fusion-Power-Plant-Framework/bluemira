@@ -448,7 +448,7 @@ class PlasmaWallGapModel(PROCESSModel):
         return "iscrp"
 
     TEN_PERCENT = 0, [], "SOL thickness calculated as 10 percent of minor radius"
-    INPUT = 1, ["scrapli", "scarplo"], "Fixed thickness SOL values"
+    INPUT = 1, ["scrapli", "scraplo"], "Fixed thickness SOL values"
 
 
 class OperationModel(PROCESSModel):
