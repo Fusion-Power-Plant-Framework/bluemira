@@ -93,6 +93,7 @@ class TestPROCESSTemplateBuilder:
         assert len(caplog.messages) == 1
         warning = extract_warning(caplog)
         assert "Iteration variable 'bore' is not in" in warning
+        assert "bore" in t.variables
 
     def test_warn_on_missing_input_constraint(self, caplog):
         t = PROCESSTemplateBuilder()
