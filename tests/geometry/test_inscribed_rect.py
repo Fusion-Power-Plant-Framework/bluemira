@@ -67,7 +67,8 @@ class TestInscribedRectangle:
         x = y = 5
         self.r = False
         # Random points in a rectangular grid of the shape
-        points = np.random.random((3, x, y))
+        rng = np.random.default_rng()
+        points = rng.random((3, x, y))
         points[1] = 0
         points[0] *= np.ptp(shape[0])
         points[2] *= np.ptp(shape[2])

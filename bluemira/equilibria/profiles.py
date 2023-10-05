@@ -460,7 +460,7 @@ class Profile:
             return x_points[0][2], o_points[0][2], in_zone(x, z, lcfs)
 
         if not o_points:
-            f, ax = plt.subplots()
+            _f, ax = plt.subplots()
             ax.contour(x, z, psi, cmap="viridis")
             # TODO: Handle this better, with perhaps some alternatives
             # e.g.

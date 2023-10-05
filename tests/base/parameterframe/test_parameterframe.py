@@ -566,7 +566,7 @@ class TestParameterFrameUnits:
     def test_simple_units_to_defaults(self):
         frame = UnitFrame1.from_dict(self.SIMPLE_FRAME_DATA)
         assert frame.length.unit == "m"
-        assert frame.length.value == 4.5847
+        assert frame.length.value == pytest.approx(4.5847, rel=0, abs=EPS)
         assert frame.time.unit == "s"
         assert frame.time.value == 2592000
         assert frame.mass.unit == "kg"
@@ -666,4 +666,4 @@ def test_changes_to_parameters_are_propagated_between_frames():
 
     slim_frame.height.value = 200.5
 
-    assert base_frame.height.value == 200.5
+    assert base_frame.height.value == pytest.approx(200.5, rel=0, abs=EPS)

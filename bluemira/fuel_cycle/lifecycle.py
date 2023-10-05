@@ -341,7 +341,7 @@ class LifeCycle:
         """
         Plot the load factor breakdown and learning curve
         """
-        f, ax = plt.subplots(1, 2)
+        _f, ax = plt.subplots(1, 2)
         self.plot_learning(ax=ax[0])
         self.plot_load_factor(ax=ax[1])
 
@@ -350,7 +350,7 @@ class LifeCycle:
         Plot the different maintenance events in the Lifecycle, and the slope
         of each operational phase
         """
-        f, ax = plt.subplots(1, 1)
+        _f, ax = plt.subplots(1, 1)
         # Plotting crutches
         fs, s, h = 0, 0, 0.95 * self.fpy
         ft, rt = [0], [0]

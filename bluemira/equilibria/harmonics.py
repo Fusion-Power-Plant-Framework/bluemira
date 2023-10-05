@@ -476,7 +476,7 @@ def get_psi_harmonic_amplitudes(
     )
 
     # Fit harmonics to match values at collocation points
-    psi_harmonic_amplitudes, residual, rank, s = np.linalg.lstsq(
+    psi_harmonic_amplitudes, _residual, _rank, _s = np.linalg.lstsq(
         harmonics2collocation, collocation_psivac, rcond=None
     )
 
