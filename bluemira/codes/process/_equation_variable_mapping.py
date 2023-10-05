@@ -166,7 +166,7 @@ class Constraint(ConstraintSelection, Model):
         (),
         "Equation for divertor heat load upper limit",
     )
-    MVA_UPPER_LIMIT = 19, (30), ("mvalim",), "Equation for MVA upper limit"
+    MVA_UPPER_LIMIT = 19, (30,), ("mvalim",), "Equation for MVA upper limit"
     NBI_TANGENCY_UPPER_LIMIT = (
         20,
         (3, 13, 31, 33),
