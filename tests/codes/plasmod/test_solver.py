@@ -436,7 +436,7 @@ class TestPlasmodSolver:
         param_value = self._get_value_from_input_file(
             "qdivt_sup", self.build_config["input_file"]
         )
-        assert param_value == 10.0
+        assert param_value == pytest.approx(10.0, rel=0, abs=EPS)
 
     def test_param_not_modified_in_plasmod_input_if_modify_mapping_send_is_False(self):
         solver = plasmod.Solver(self.default_pf, self.build_config)
