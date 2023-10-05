@@ -236,9 +236,10 @@ class ArbitraryCrossSectionCurrentSource(CurrentSource):
         self.origin = self.origin @ r
         self.points = np.array([p @ r for p in self.points], dtype=object)
         self.dcm = self.dcm @ r
-        self.trap_vec = self.trap_vec @ r
-        self.perp_vec = self.perp_vec @ r
-        self.sources = self.sources.rotate(angle, axis)
+        self.shell = self.shell.rotate(angle, axis)
+        # self.trap_vec = self.trap_vec @ r
+        # self.perp_vec = self.perp_vec @ r
+        # self.sources = self.sources.rotate(angle, axis)
 
     def _local_to_global(self, points):
         """
