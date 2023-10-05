@@ -171,3 +171,19 @@ class TestPROCESSTemplateBuilder:
         assert t.fimp[12] == pytest.approx(0.6, rel=0, abs=EPS)
         t.add_impurity(Impurities.Xe, 0.4)
         assert t.fimp[12] == pytest.approx(0.4, rel=0, abs=EPS)
+
+    def test_input_appears_in_dat(self):
+        t = PROCESSTemplateBuilder()
+        t.add_input_value("tinstf", 1000.0)
+        assert t.values["tinstf"] == pytest.approx(1000.0, rel=0, abs=EPS)
+        data = t.make_inputs()
+        assert data["tinstf"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
+
+    def test_inputs_appear_in_dat(self):
+        t = PROCESSTemplateBuilder()
+        t.add_input_values({"tinstf": 1000.0, "bore": 1000})
+        assert t.values["tinstf"] == pytest.approx(1000.0, rel=0, abs=EPS)
+        assert t.values["bore"] == pytest.approx(1000.0, rel=0, abs=EPS)
+        data = t.make_inputs()
+        assert data["tinstf"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
+        assert data["bore"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
