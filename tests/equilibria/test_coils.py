@@ -80,6 +80,9 @@ class TestCoil:
         plt.show()
         plt.close("all")
 
+    def test_no_plotting_dummy(self):
+        assert self.dum_coil.plot() is None
+
     def test_name(self):
         assert self.coil.ctype == CoilType.PF
         assert self.cs_coil.ctype == CoilType.CS
