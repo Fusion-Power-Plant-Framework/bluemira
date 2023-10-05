@@ -202,7 +202,7 @@ class TestFreecadapi:
         wire: Part.Wire = cadapi.make_polygon(self.closed_square_points)
         scaled_wire = cadapi.scale_shape(wire.copy(), factor)
         face: Part.Face = Part.Face(scaled_wire)
-        assert cadapi.area(face) == 1.0 * factor**2
+        assert cadapi.area(face) == pytest.approx(1.0 * factor**2, rel=0, abs=EPS)
         assert (
             cadapi.length(face)
             == cadapi.length(scaled_wire)
