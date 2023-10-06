@@ -213,6 +213,7 @@ template_builder.add_input_values(
         # Undocumented danger stuff
         "iblanket": 1,
         "lsa": 2,
+        "impvar": 13,
         # Profile parameterisation inputs
         "alphan": 1.0,
         "alphat": 1.45,
