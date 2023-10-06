@@ -71,52 +71,12 @@ class ProcessInputs:
                                                     59, 60, 61, 102, 103, 106, 109, 110,
                                                     113, 117, 122, 123])
     # fmt: on
-    bscfmax: float = 0.99
-    casths: float = 0.05
-    dintrt: float = 0.0
-    divdum: int = 1
-    divfix: float = 0.621
-    casthi: float = 0.06
-    emult: float = 1.269
-    enbeam: float = 1e3
-    epsvmc: float = 1e-08
-    etaech: float = 0.4
-    etanbi: float = 0.3
-    gamma_ecrh: float = 0.3
-    iefrf: int = 10
-    ifueltyp: int = 1
-    inuclear: int = 1
-    ioptimz: int = 1
-    lpulse: int = 1
-
+    # Settings
     maxcal: int = 1000
     minmax: int = 1
-
-    oacdcp: float = 8673900.0
+    epsvmc: float = 1e-08
+    ioptimz: int = 1
     output_costs: int = 0
-    pheat: float = 50.0
-    pinjalw: float = 51.0
-    primary_pumping: int = 2
-    qnuc: float = 12920.0
-    ripmax: float = 1.0
-
-    tramp: float = 15.0
-    tfcth: float = 1.208
-
-    tftsgap: float = 0.05
-
-    tmargmin: float = 1.5
-
-    vfshld: float = 0.25
-    blktmodel: int = 1
-    ipfres: int = 0
-    tf_in_cs: int = 0
-
-    feffcd: float = 1.0
-    # Undocumented danger stuff
-    blk_life_csf: int = 1
-    iblanket: int = 1
-    iblnkith: int = 1
 
     # Top down of PROCESS variables list
 
@@ -126,19 +86,24 @@ class ProcessInputs:
     theat: float = 10.0
     tohs: float = 30.0
     tqnch: float = 15.0
+    tramp: float = 15.0
 
     # FWBS
     denstl: float = 7800.0
     denw: float = 19250.0
+    emult: float = 1.269
     fblss: float = 0.09705
     fdiv: float = 0.115
     fwbsshape: int = 2
     fw_armour_thickness: float = 0.005
+    iblanket: int = 1
+    iblnkith: int = 1
     li6enrich: float = 30.0
     breeder_f: float = 0.5
     breeder_multiplier: float = 0.75
     vfcblkt: float = 0.05295
     vfpblkt: float = 0.1
+    blktmodel: int = 1  # Listed as an output...
     # f_neut_shield: float = # -1.0 the documentation defaults cannot be right...
     breedmat: int = 1
     fblbe: float = 0.6
@@ -181,6 +146,7 @@ class ProcessInputs:
     fvolso: float = 0.64
     fwclfr: float = 0.15
     rpf2dewar: float = 0.5
+    vfshld: float = 0.25
     irefprop: int = 1
     fblli2o: float = 0.08
     fbllipb: float = 0.68
@@ -293,6 +259,15 @@ class ProcessInputs:
     theta1_coil: float = 45.0
     theta1_vv: float = 1.0
     max_vv_stress: float = 143000000.0
+    inuclear: int = 1
+    qnuc: float = 12920.0
+    ripmax: float = 1.0
+    tf_in_cs: int = 0
+    tfcth: float = 1.208
+    tftsgap: float = 0.05
+    casthi: float = 0.06
+    casths: float = 0.05
+    tmargmin: float = 1.5
 
     # PF Power
     iscenr: int = 2
@@ -358,6 +333,7 @@ class ProcessInputs:
     uufw: float = 0.04
     uumag: float = 0.02
     uuves: float = 0.04
+    ifueltyp: int = 1
     ucblvd: float = 280.0
     ucdiv: float = 500000.0
     ucme: float = 300000000.0
@@ -397,6 +373,7 @@ class ProcessInputs:
     f_copperaoh_m2: float = 1.0
 
     # Primary pumping
+    primary_pumping: int = 2
     gamma_he: float = 1.667
     t_in_bb: float = 573.13
     t_out_bb: float = 773.13
@@ -533,6 +510,26 @@ class ProcessInputs:
     # Buildings
 
     # Current drive
+    beamwd: float = 0.58
+    bscfmax: float = 0.99
+    cboot: float = 1.0
+    harnum: float = 1.0
+    enbeam: float = 1e3
+    etaech: float = 0.3
+    etanbi: float = 0.3
+    fpion: float = 0.5
+    feffcd: float = 1.0
+    frbeam: float = 1.05
+    ftritbm: float = 1e-6
+    gamma_ecrh: float = 0.35
+    rho_ecrh: float = 0.1
+    xi_ebw: float = 0.8
+    iefrf: int = 5
+    irfcf: int = 1
+    nbshield: float = 0.5
+    pheat: float = 0.0  # Listed as an output
+    pinjalw: float = 150.0
+    tbeamin: float = 3.0
 
     # Impurity radiation
     coreradius: float = 0.6
@@ -560,6 +557,7 @@ class ProcessInputs:
     delld: float = 1.0
     divclfr: float = 0.3
     divdens: float = 10000.0
+    divfix: float = 0.2
     divleg_profile_inner: float = 0.563
     divleg_profile_outer: float = 2.596
     divplt: float = 0.035
@@ -584,6 +582,7 @@ class ProcessInputs:
     dtstor: float = 300.0
     istore: float = 1
     itcycl: float = 1
+    lpulse: int = 1  # Listed as an output
 
     # IFE
 
@@ -633,6 +632,7 @@ class ProcessInputs:
     ipfloc: List[int] = field(
         default_factory=lambda: [2, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]
     )
+    ipfres: int = 0  # Listed as an output
     isumatoh: int = 1
     isumatpf: int = 1
     i_pf_current: int = 1
