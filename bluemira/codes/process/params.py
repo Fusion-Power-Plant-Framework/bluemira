@@ -372,10 +372,10 @@ class ProcessSolverParams(MappedParameterFrame):
         """
         if template is None:
             template = ProcessInputs()
-            inst = super().from_defaults(template.to_dict())
+            self = super().from_defaults(template.to_dict())
         else:
-            inst = super().from_defaults(
+            self = super().from_defaults(
                 template.to_dict(), source=f"{NAME} user input template"
             )
-        inst._defaults = template
-        return inst
+        self._defaults = template
+        return self
