@@ -667,7 +667,7 @@ ITERATION_VAR_MAPPING = {
     "ftaulimit": 110,
     "fniterpump": 111,
     "fzeffmax": 112,
-    "ftaucq": 113,
+    "fmaxvvstress": 113,  # OR IS IT fmaxvvstress ?! ftaucq
     "fw_channel_length": 114,
     "fpoloidalpower": 115,
     "fradwall": 116,

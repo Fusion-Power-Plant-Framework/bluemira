@@ -52,7 +52,6 @@ from bluemira.codes.process._model_mapping import (
     PlasmaWallGapModel,
     PowerFlowModel,
     PrimaryPumpingModel,
-    PulseTimingModel,
     SecondaryCycleModel,
     ShieldThermalHeatUse,
     SolenoidSwitchModel,
@@ -98,7 +97,7 @@ for constraint in (
     Constraint.TF_DUMP_VOLTAGE_UPPER_LIMIT,
     Constraint.TF_CURRENT_DENSITY_UPPER_LIMIT,
     Constraint.TF_T_MARGIN_LOWER_LIMIT,
-    Constraint.CS_FATIGUE,
+    # Constraint.CS_FATIGUE,
     Constraint.CS_STRESS_UPPER_LIMIT,
     Constraint.CS_T_MARGIN_LOWER_LIMIT,
     Constraint.CS_EOF_DENSITY_LIMIT,
@@ -155,7 +154,7 @@ template_builder.adjust_variable("fjohc0", 0.53923)
 template_builder.adjust_variable("foh_stress", 1.0)
 template_builder.adjust_variable("fbetatry", 0.48251)
 template_builder.adjust_variable("fwalld", 0.131)
-# template_builder.adjust_variable("ftaucq", 0.93)
+template_builder.adjust_variable("fmaxvvstress", 1.0)
 template_builder.adjust_variable("fpsepbqar", 1.0)
 template_builder.adjust_variable("fvdump", 1.0)
 template_builder.adjust_variable("fstrcond", 0.92007)
@@ -185,7 +184,6 @@ for model_choice in (
     BlanketModel.CCFE_HCPB,
     CurrentDriveEfficiencyModel.ECRH_UI_GAM,
     OperationModel.PULSED,
-    PulseTimingModel.RAMP_RATE,
     PFConductorModel.SUPERCONDUCTING,
     PFSuperconductorModel.NBTI,
     SolenoidSwitchModel.SOLENOID,
@@ -212,6 +210,9 @@ template_builder.add_impurity(Impurities.W, 5.0e-5)
 # Set fixed input values
 template_builder.add_input_values(
     {
+        # Undocumented danger stuff
+        "blk_life_csf": 1,
+        "iblanket": 1,
         # Profile parameterisation inputs
         "alphan": 1.0,
         "alphat": 1.45,

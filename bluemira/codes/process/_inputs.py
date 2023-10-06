@@ -73,11 +73,12 @@ class ProcessInputs:
     # fmt: on
     abktflnc: float = 15.0
     adivflnc: float = 20.0
-    alphan: float = 1.0
-    alphat: float = 1.45
+    alphaj: float = 1.0
+    alphan: float = 0.25
+    alphat: float = 0.5
     alstroh: float = 660000000.0
-    aspect: float = 3.1
-    beta: float = 0.031421
+    aspect: float = 2.907
+    beta: float = 0.042
     blnkith: float = 0.755
     blnkoth: float = 0.982
     bmxlim: float = 11.2
@@ -147,7 +148,6 @@ class ProcessInputs:
     fpsepbqar: float = 1.0
     fstrcase: float = 1.0
     fstrcond: float = 0.92007
-    ftaucq: float = 0.91874
     ftaulimit: float = 1.0
     ftburn: float = 1.0
     ftmargoh: float = 1.0
@@ -184,14 +184,16 @@ class ProcessInputs:
     iohcl: int = 1
     ioptimz: int = 1
     ipedestal: int = 1
-    ipfloc: List[int] = field(default_factory=lambda: [2, 2, 3, 3])
+    ipfloc: List[int] = field(
+        default_factory=lambda: [2, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    )
     ipowerflow: int = 0
     iprimshld: int = 1
     iprofile: int = 1
     isc: int = 34
     ishape: int = 0
-    isumatoh: int = 5
-    isumatpf: int = 3
+    isumatoh: int = 1
+    isumatpf: int = 1
     kappa: float = 1.848
     ksic: float = 1.4
     lpulse: int = 1
@@ -201,14 +203,14 @@ class ProcessInputs:
     n_layer: int = 10
     n_pancake: int = 20
     n_tf: int = 16
-    ncls: List[int] = field(default_factory=lambda: [1, 1, 2, 2])
+    ncls: List[int] = field(default_factory=lambda: [1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     neped: float = 6.78e19
     nesep: float = 2e19
-    ngrp: int = 4
+    ngrp: int = 3
     oacdcp: float = 8673900.0
-    oh_steel_frac: float = 0.57875
+    oh_steel_frac: float = 0.5
     ohcth: float = 0.55242
-    ohhghf: float = 0.9
+    ohhghf: float = 0.71
     output_costs: int = 0
     pheat: float = 50.0
     pinjalw: float = 51.0
@@ -225,11 +227,10 @@ class ProcessInputs:
     rhopedn: float = 0.94
     rhopedt: float = 0.94
     ripmax: float = 0.6
-    rjconpf: List[float] = field(
-        default_factory=lambda: [1.1e7, 1.1e7, 6e6, 6e6, 8e6, 8e6, 8e6, 8e6]
-    )
+    rjconpf: List[float] = field(default_factory=lambda: [30000000] * 22)
+    vf: List[float] = field(default_factory=lambda: [0.3] * 22)
     rmajor: float = 8.8901
-    rpf2: float = -1.825
+    rpf2: float = -1.63
     scrapli: float = 0.225
     scraplo: float = 0.225
     secondary_cycle: int = 2
@@ -242,7 +243,7 @@ class ProcessInputs:
     ssync: float = 0.6
     tbeta: float = 2.0
     tbrnmn: float = 7200.0
-    tburn: float = 10000.0
+    tburn: float = 1000.0
     tdmptf: float = 25.829
     tdwell: float = 0.0
     te: float = 12.33
@@ -272,11 +273,10 @@ class ProcessInputs:
     walalw: float = 8.0
     zeffdiv: float = 3.5
     zref: List[float] = field(
-        default_factory=lambda: [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+        default_factory=lambda: [3.6, 1.2, 2.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     )
-    iblkt_life: int = 1
+    rref: List[float] = field(default_factory=lambda: [7] * 10)
     blktmodel: int = 1
-    pulse_timings: int = 0
     ipfres: int = 0
     i_tf_case_geom: int = 1
     i_tf_sup: int = 1
@@ -298,11 +298,25 @@ class ProcessInputs:
     walker_coefficient: float = 0.436
     fracture_toughness: float = 200.0
     m_s_limit: float = 0.2
-    gap_ds: float = 0.02
     taulimit: float = 5.0
     tfinsgap: float = 0.01
-    max_vv_stress: float = 93.0e6
+    max_vv_stress: float = 143000000.0
     feffcd: float = 1.0
+    fmaxvvstress: float = 1.0
+    # Undocumented danger stuff
+    blk_life_csf: int = 1
+    iblanket: int = 1
+    # Inputs with defaults for JIC sanity
+    i_pf_current: int = 1
+    nfxfh: int = 7
+    pfclres: float = 2.5e-8
+    routr: float = 1.5
+    vhohc: float = 0.3
+    bmaxcs_lim: float = 13.0
+    fbmaxcs: float = 1.0
+    ld_ratio_cst: float = 3.0
+    sigpfcf: float = 0.666
+    sigpfcalw: float = 500.0
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
