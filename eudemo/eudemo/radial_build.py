@@ -97,7 +97,7 @@ for constraint in (
     Constraint.TF_DUMP_VOLTAGE_UPPER_LIMIT,
     Constraint.TF_CURRENT_DENSITY_UPPER_LIMIT,
     Constraint.TF_T_MARGIN_LOWER_LIMIT,
-    # Constraint.CS_FATIGUE,
+    Constraint.CS_FATIGUE,
     Constraint.CS_STRESS_UPPER_LIMIT,
     Constraint.CS_T_MARGIN_LOWER_LIMIT,
     Constraint.CS_EOF_DENSITY_LIMIT,
@@ -212,6 +212,7 @@ template_builder.add_input_values(
     {
         # Undocumented danger stuff
         "iblanket": 1,
+        "lsa": 2,
         # Profile parameterisation inputs
         "alphan": 1.0,
         "alphat": 1.45,
