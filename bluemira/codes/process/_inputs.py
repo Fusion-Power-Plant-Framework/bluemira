@@ -414,22 +414,18 @@ class ProcessInputs:
     i_tf_cond_eyoung_trans: int = 1
     i_tf_bucking = -1
     n_tf_graded_layers: int = 1
-    n_tf_wp_layers: int = 5
+
     jbus: float = 1250000.0
     eyoung_ins: float = 100000000.0
     eyoung_steel: float = 205000000000.0
     eyong_cond_axial: float = 660000000.0
     eyoung_res_tf_buck: float = 150000000000.0
-    eyoung_copper: float = 117000000000.0
-    eyoung_al: float = 69000000000.0
+
+    # eyoung_al: float = 69000000000.0 # defaults  cannot be right
     poisson_steel: float = 0.3
     poisson_copper: float = 0.35
     poisson_al: float = 0.35
-    poisson_ins: float = 0.34
-    poisson_cond_axial: float = 0.30000001192092896
-    poisson_cond_trans: float = 0.30000001192092896
-    toroidalgap: float = 1.0
-    n_radial_array: int = 50
+
     str_cs_con_res: float = -0.005
     str_pf_con_res: float = -0.005
     str_tf_con_res: float = -0.005
@@ -437,16 +433,16 @@ class ProcessInputs:
     i_str_wp: int = 1
     quench_model: str = b"exponential"
     tcritsc: float = 16.0
-    rhotfbus: float = -1.0
+    # rhotfbus: float = -1.0 # defaults cannot be right
     frhocp: float = 1.0
     frholeg: float = 1.0
-    i_cp_joints: int = -1
+    # i_cp_joints: int = -1 # defaults cannot be right
     rho_tf_joints: float = 2.5e-10
     n_tf_joints_contact: int = 6
     n_tf_joints: int = 4
     th_joint_contact: float = 0.03
-    eff_tf_cryo: float = -1.0
-    tftort: float = 1.0
+    # eff_tf_cryo: float = -1.0 # defaults cannot be right
+
     tmaxpro: float = 150.0
     tmax_croco: float = 200.0
     tmpcry: float = 4.5
@@ -458,7 +454,7 @@ class ProcessInputs:
     rcool: float = 0.005
     tcoolin: float = 313.15
     tcpav: float = 373.15
-    tlegav: float = -1.0
+
     vcool: float = 20.0
     theta1_coil: float = 45.0
     theta1_vv: float = 1.0
