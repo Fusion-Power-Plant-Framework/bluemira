@@ -25,6 +25,8 @@ import pytest
 
 from bluemira.codes import process
 from bluemira.codes.error import CodesError
+from bluemira.codes.params import ParameterMapping
+from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process.mapping import mappings as process_mappings
 from bluemira.codes.process.params import ProcessSolverParams
@@ -130,11 +132,25 @@ class TestSetupIntegration:
     @mock.patch(f"{MODULE_REF}.InDat")
     def test_obsolete_parameter_names_are_updated(self, writer_cls_mock):
         pf = ProcessSolverParams.from_json(PARAM_FILE)
+        pf.mappings["tk_tf_front_ib"] = ParameterMapping(
+            "dr_tf_case_out", send=True, recv=False, unit="m"
+        )
         setup = Setup(pf, "")
         writer_cls_mock.return_value.data = {"x": 0}
 
         setup.run()
 
         writer = writer_cls_mock.return_value
-        # 'dr_tf_case_out' is new name for 'casthi'
-        assert mock.call("dr_tf_case_out", 0.04) in writer.add_parameter.call_args_list
+        # 'dr_tf_case_out' is old name for 'casthi'
+        assert mock.call("casthi", 0.04) in writer.add_parameter.call_args_list
+
+    @pytest.mark.parametrize(
+        ("template", "result"),
+        [(ProcessInputs(), 1e-6), (ProcessInputs(shldith=5), 5)],
+    )
+    def test_indat_creation_with_template(self, template, result, tmp_path):
+        path = tmp_path / "IN.DAT"
+        setup = Setup({}, path, template_in_dat=template)
+        setup.run()
+
+        assert f"shldith  = {result}" in open(path).read()  # noqa: SIM115
