@@ -22,16 +22,20 @@
 """
 PROCESS's parameter definitions.
 """
+from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import ClassVar, Dict, List, Union
+from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Union
 
-from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 from bluemira.codes.process._inputs import ProcessInputs
-from bluemira.codes.process.api import _INVariable
+from bluemira.codes.process.constants import NAME
 from bluemira.codes.process.mapping import mappings
+
+if TYPE_CHECKING:
+    from bluemira.base.parameter_frame import Parameter
+    from bluemira.codes.process.api import _INVariable
 
 
 @dataclass
@@ -353,8 +357,14 @@ class ProcessSolverParams(MappedParameterFrame):
         return self._defaults.to_invariable()
 
     @classmethod
-    def from_defaults(cls) -> MappedParameterFrame:
+    def from_defaults(
+        cls, template: Optional[ProcessInputs] = None
+    ) -> ProcessSolverParams:
         """
         Initialise from defaults
         """
-        return super().from_defaults(cls._defaults.to_dict())
+        if template is None:
+            return super().from_defaults(cls._defaults.to_dict())
+        return super().from_defaults(
+            template.to_dict(), source=f"{NAME} user input template"
+        )

@@ -36,7 +36,6 @@ from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
-from bluemira.codes.process.params import ProcessSolverParams
 
 BuildConfig = Dict[str, Union[float, str, "BuildConfig"]]
 
@@ -123,23 +122,13 @@ class Solver(CodesSolver):
         self._run: Union[Run, None] = None
         self._teardown: Union[Teardown, None] = None
 
-        self.params = ProcessSolverParams.from_defaults()
-
-        if isinstance(params, ParameterFrame):
-            self.params.update_from_frame(params)
-        else:
-            try:
-                self.params.update_from_dict(params)
-            except TypeError:
-                self.params.update_values(params)
+        self._input_params = params
 
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", Path.cwd().as_posix())
         self.read_directory = _build_config.pop("read_dir", Path.cwd().as_posix())
-        self.template_in_dat = _build_config.pop(
-            "template_in_dat", self.params.template_defaults
-        )
+        self.template_in_dat = _build_config.pop("template_in_dat", None)
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
             "in_dat_path", Path(self.run_directory, "IN.DAT").as_posix()
@@ -150,6 +139,10 @@ class Solver(CodesSolver):
                 f"'{self.name}' solver received unknown build_config arguments: "
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
+
+    @property
+    def params(self):
+        return self._setup.params
 
     def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
@@ -165,7 +158,7 @@ class Solver(CodesSolver):
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
         self._setup = Setup(
-            self.params,
+            self._input_params,
             self.in_dat_path,
             self.template_in_dat,
             self.problem_settings,

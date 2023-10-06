@@ -36,7 +36,6 @@ if TYPE_CHECKING:
         PROCESSModel,
         PROCESSOptimisationAlgorithm,
     )
-    from bluemira.codes.process.api import _INVariable
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process._equation_variable_mapping import (
@@ -289,7 +288,7 @@ class PROCESSTemplateBuilder:
                 f"{con_name} requires iteration variable {inputs} which have not been specified. Default values will be used."
             )
 
-    def make_inputs(self) -> Dict[str, _INVariable]:
+    def make_inputs(self) -> ProcessInputs:
         """
         Make the ProcessInputs InVariable for the specified template
         """
@@ -315,4 +314,4 @@ class PROCESSTemplateBuilder:
             **self.values,
             **models,
             **self.variables,
-        ).to_invariable()
+        )
