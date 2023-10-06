@@ -148,7 +148,10 @@ class TestSetupIntegration:
     @pytest.mark.parametrize(("pf_n", "pf_v"), [(None, None), ("tk_sh_in", 3)])
     @pytest.mark.parametrize(
         ("template", "result"),
-        [(ProcessInputs(), 0.69), (ProcessInputs(shldith=5), 5)],
+        [
+            (ProcessInputs(), (1.42, 0.69, 0)),
+            (ProcessInputs(bore=5, shldith=5, i_tf_wp_geom=2), (5, 5, 2)),
+        ],
     )
     def test_indat_creation_with_template(self, template, result, pf_n, pf_v, tmp_path):
         if pf_n is None:
@@ -157,9 +160,11 @@ class TestSetupIntegration:
             with open(PARAM_FILE) as pf_h:
                 pf = {pf_n: json.load(pf_h)[pf_n]}
             pf[pf_n]["value"] = pf_v
-            result = pf_v
+            result = (result[0], pf_v, result[2])
         path = tmp_path / "IN.DAT"
         setup = Setup(pf, path, template_in_dat=template)
         setup.run()
 
-        assert f"shldith  = {result}" in open(path).read()  # noqa: SIM115
+        assert f"bore     = {result[0]}" in open(path).read()  # noqa: SIM115
+        assert f"shldith  = {result[1]}" in open(path).read()  # noqa: SIM115
+        assert f"i_tf_wp_geom = {result[2]}" in open(path).read()  # noqa: SIM115

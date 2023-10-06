@@ -335,7 +335,14 @@ class ProcessSolverParams(MappedParameterFrame):
     """Effective particle radiation atomic mass [unified_atomic_mass_unit]."""
 
     _mappings: ClassVar = deepcopy(mappings)
-    _defaults = ProcessInputs()
+
+    @property
+    def _defaults(self):
+        return self.__defaults
+
+    @_defaults.setter
+    def _defaults(self, value: ProcessInputs):
+        self.__defaults = value
 
     @property
     def mappings(self) -> Dict[str, ParameterMapping]:
@@ -364,7 +371,11 @@ class ProcessSolverParams(MappedParameterFrame):
         Initialise from defaults
         """
         if template is None:
-            return super().from_defaults(cls._defaults.to_dict())
-        return super().from_defaults(
-            template.to_dict(), source=f"{NAME} user input template"
-        )
+            template = ProcessInputs()
+            inst = super().from_defaults(template.to_dict())
+        else:
+            inst = super().from_defaults(
+                template.to_dict(), source=f"{NAME} user input template"
+            )
+        inst._defaults = template
+        return inst
