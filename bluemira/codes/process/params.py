@@ -28,13 +28,13 @@ from copy import deepcopy
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Union
 
+from bluemira.base.parameter_frame import Parameter  # noqa: TCH001
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process.constants import NAME
 from bluemira.codes.process.mapping import mappings
 
 if TYPE_CHECKING:
-    from bluemira.base.parameter_frame import Parameter
     from bluemira.codes.process.api import _INVariable
 
 
