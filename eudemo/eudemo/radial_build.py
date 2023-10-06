@@ -107,7 +107,7 @@ for constraint in (
 
 # Variable vector values and bounds
 template_builder.add_variable("bt", 5.3292, lower_bound=0.01, upper_bound=20.0)
-template_builder.add_variable("rmajor", 8.8901, lower_buond=0.1, upper_bound=13.0)
+template_builder.add_variable("rmajor", 8.8901, lower_bound=0.1, upper_bound=13.0)
 template_builder.add_variable("te", 12.33, lower_bound=5.0, upper_bound=150.0)
 template_builder.add_variable("beta", 3.1421e-2, lower_bound=0.01, upper_bound=1.0)
 template_builder.add_variable("dene", 7.4321e19, lower_bound=1.0e19, upper_bound=1.0e21)
