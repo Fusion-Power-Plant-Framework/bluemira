@@ -668,7 +668,6 @@ class ProcessInputs:
     dene: float = 9.8e19
     dnbeta: float = 3.5
     epbetmax: float = 1.38
-    eps: float = 0.34399724802
     falpha: float = 0.95
     fdeut: float = 0.5
     ftar: float = 1.0
@@ -676,7 +675,6 @@ class ProcessInputs:
     fgwped: float = 0.85
     fgwsep: float = 0.5
     fkzohm: float = 1.0
-    fplhsep: float = 1.0
     fpdivlim: float = 1.0
     fne0: float = 1.0
     ftrit: float = 0.5
@@ -688,7 +686,6 @@ class ProcessInputs:
     iculbl: int = 1  # listed as an output...
     icurr: int = 4
     idensl: int = 7
-    idivrt: int = 2
     ifalphap: int = 1
     ifispact: int = 0  # listed as an output...
     iinvqd: int = 1

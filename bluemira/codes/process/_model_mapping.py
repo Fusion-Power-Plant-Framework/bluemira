@@ -135,7 +135,7 @@ class PlasmaNullConfigurationModel(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "snull"
+        return "i_single_null"
 
     DOUBLE_NULL = 0, ("ftar",)
     SINGLE_NULL = 1
