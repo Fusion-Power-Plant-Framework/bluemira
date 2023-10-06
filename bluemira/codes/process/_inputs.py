@@ -81,8 +81,6 @@ class ProcessInputs:
     bt: float = 5.3292
     casths: float = 0.05
     coheof: float = 20726000.0
-    coreradiationfraction: float = 0.6
-    coreradius: float = 0.75
     cptdin: List[float] = field(
         default_factory=lambda: [*([42200.0] * 4), *([43000.0] * 4)]
     )
@@ -108,16 +106,11 @@ class ProcessInputs:
     fcuohsu: float = 0.7
     fcutfsu: float = 0.69
     fgwped: float = 0.85
-    fimp: List[float] = field(
-        default_factory=lambda: [1.0, 0.1, *([0.0] * 10), 0.00044, 5e-05]
-    )
-    fimpvar: float = 0.00037786
     fkzohm: float = 1.0245
     fne0: float = 0.9
     gamma: float = 0.3
     gamma_ecrh: float = 0.3
     hfact: float = 1.1
-    hldivlim: float = 10.0
     i_single_null: int = 1
     i_tf_sc_mat: int = 1
     i_tf_turns_integer: int = 1
@@ -134,7 +127,6 @@ class ProcessInputs:
     ifispact: int = 0
     ifueltyp: int = 1
     iinvqd: int = 1
-    impvar: int = 13
     inuclear: int = 1
     ioptimz: int = 1
     ipedestal: int = 1
@@ -149,7 +141,6 @@ class ProcessInputs:
     isumatoh: int = 1
     isumatpf: int = 1
     kappa: float = 1.848
-    ksic: float = 1.4
     lpulse: int = 1
 
     maxcal: int = 1000
@@ -170,7 +161,6 @@ class ProcessInputs:
     pinjalw: float = 51.0
     plasma_res_factor: float = 0.66
     primary_pumping: int = 2
-    prn1: float = 0.4
     pulsetimings: float = 0.0
     q0: float = 1.0
     q: float = 3.5
@@ -212,7 +202,6 @@ class ProcessInputs:
     vdalw: float = 20.0
     vfshld: float = 0.25
     vftf: float = 0.4
-    zeffdiv: float = 3.5
     zref: List[float] = field(
         default_factory=lambda: [3.6, 1.2, 2.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
     )
@@ -608,9 +597,60 @@ class ProcessInputs:
     plsepi: float = 1.0
     plsepo: float = 1.5
 
-    # Buildings variables
+    # Buildings
 
-    # Current drive variables
+    # Current drive
+
+    # Impurity radiation
+    coreradius: float = 0.6
+    coreradiationfraction: float = 1.0
+    fimp: List[float] = field(default_factory=lambda: [1.0, 0.1, *([0.0] * 10), 0, 0])
+    fimpvar: float = 0.001
+    impvar: int = 9
+
+    # Reinke
+    impvardiv: int = 9
+    lhat: float = 4.33
+    fzactual: float = 0.001
+
+    # Divertor
+    anginc: float = 0.262
+    beta_div: float = 1.0
+    betai: float = 1.0
+    betao: float = 1.0
+    bpsout: float = 0.6
+    c1div: float = 0.45
+    c2div: float = -7.0
+    c3div: float = 0.54
+    c4div: float = -3.6
+    c5div: float = 0.7
+    delld: float = 1.0
+    divclfr: float = 0.3
+    divdens: float = 10000.0
+    divleg_profile_inner: float = 0.563
+    divleg_profile_outer: float = 2.596
+    divplt: float = 0.035
+    fdfs: float = 10.0
+    fdiva: float = 1.11
+    fgamp: float = 1.0
+    fififi: float = 0.004
+    flux_exp: float = 2.0
+    frrp: float = 0.4
+    hldivlim: float = 5.0
+    ksic: float = 0.8
+    omegan: float = 1.0
+    prn1: float = 0.285
+    rlenmax: float = 0.5
+    tdiv: float = 2.0
+    xparain: float = 2100.0
+    xpertin: float = 2.0
+    zeffdiv: float = 1.0
+
+    # Pulse
+    bctmp: float = 320.0
+    dtstor: float = 300.0
+    istore: float = 1
+    itcycl: float = 1
 
     fvsbrnni: float = 0.39566
 
