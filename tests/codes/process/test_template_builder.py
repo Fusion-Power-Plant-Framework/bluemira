@@ -208,14 +208,16 @@ class TestPROCESSTemplateBuilder:
         t.add_input_value("tinstf", 1000.0)
         assert t.values["tinstf"] == pytest.approx(1000.0, rel=0, abs=EPS)
         data = t.make_inputs()
-        assert data["tinstf"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
+        assert data.to_invariable()["tinstf"]._value == pytest.approx(
+            1000.0, rel=0, abs=EPS
+        )
 
     def test_inputs_appear_in_dat(self):
         t = PROCESSTemplateBuilder()
         t.add_input_values({"tinstf": 1000.0, "bore": 1000})
         assert t.values["tinstf"] == pytest.approx(1000.0, rel=0, abs=EPS)
         assert t.values["bore"] == pytest.approx(1000.0, rel=0, abs=EPS)
-        data = t.make_inputs()
+        data = t.make_inputs().to_invariable()
         assert data["tinstf"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
         assert data["bore"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
 
