@@ -36,6 +36,7 @@ from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
+from bluemira.codes.process.params import ProcessSolverParams
 
 BuildConfig = Dict[str, Union[float, str, "BuildConfig"]]
 
@@ -141,8 +142,18 @@ class Solver(CodesSolver):
             )
 
     @property
-    def params(self):
-        return self._setup.params
+    def params(self) -> Union[Dict, ParameterFrame, ProcessSolverParams]:
+        """
+        Solver params
+
+        Notes
+        -----
+        The full frame is only available after execute has been run because the
+        template is only initialised in setup
+        """
+        if self._setup is not None:
+            return self._setup.params
+        return self._input_params
 
     def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
