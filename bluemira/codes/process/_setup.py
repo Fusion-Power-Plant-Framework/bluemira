@@ -31,7 +31,7 @@ from bluemira.codes.process._model_mapping import (
     CurrentDriveEfficiencyModel,
     TFCoilConductorTechnology,
 )
-from bluemira.codes.process.api import InDat, _INVariable, update_obsolete_vars
+from bluemira.codes.process.api import InDat, _INVariable
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
 from bluemira.codes.process.params import ProcessSolverParams
 
@@ -104,14 +104,14 @@ class Setup(CodesSetup):
         # Load defaults in bluemira folder
         writer = _make_writer(self.template_in_dat)
 
-        if use_bp_inputs:
-            inputs = self._get_new_inputs(remapper=update_obsolete_vars)
-            for key, value in inputs.items():
-                writer.add_parameter(key, value)
-            for key, value in self.problem_settings.items():
-                writer.add_parameter(key, value)
+        # if use_bp_inputs:
+        #     inputs = self._get_new_inputs(remapper=update_obsolete_vars)
+        #     for key, value in inputs.items():
+        #         writer.add_parameter(key, value)
+        #     for key, value in self.problem_settings.items():
+        #         writer.add_parameter(key, value)
 
-            self._validate_models(writer)
+        #     self._validate_models(writer)
 
         writer.write_in_dat(output_filename=self.in_dat_path)
 

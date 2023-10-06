@@ -107,8 +107,8 @@ for constraint in (
     template_builder.add_constraint(constraint)
 
 # Variable vector values and bounds
-template_builder.add_variable("bt", 5.3292, lower_bound=2.0, upper_bound=20.0)
-template_builder.add_variable("rmajor", 8.8901, lower_bound=5.0, upper_bound=13.0)
+template_builder.add_variable("bt", 5.3292, upper_bound=20.0)
+template_builder.add_variable("rmajor", 8.8901, upper_bound=13.0)
 template_builder.add_variable("te", 12.33, upper_bound=150.0)
 template_builder.add_variable("beta", 3.1421e-2)
 template_builder.add_variable("dene", 7.4321e19)
@@ -127,7 +127,7 @@ template_builder.add_variable("coheof", 2.0726e07)
 template_builder.add_variable("cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
 template_builder.add_variable("tdmptf", 2.5829e01)
 template_builder.add_variable("vdalw", 10.0, upper_bound=10.0)
-template_builder.add_variable("fimp(13)", 3.573e-04, lower_bound=0.0, upper_bound=0.1)
+template_builder.add_variable("fimp(13)", 3.573e-04)
 
 # Some constraints require multiple f-values, but they are getting ridding of those,
 # so no fancy mechanics for now...
@@ -152,7 +152,7 @@ template_builder.adjust_variable("ftmargoh", 1.0)
 template_builder.adjust_variable("ftaulimit", 1.0)
 template_builder.adjust_variable("fjohc", 0.57941)
 template_builder.adjust_variable("fjohc0", 0.53923)
-template_builder.adjust_variable("foh_stress", 0.8)
+template_builder.adjust_variable("foh_stress", 1.0)
 template_builder.adjust_variable("fbetatry", 0.48251)
 template_builder.adjust_variable("fwalld", 0.131)
 # template_builder.adjust_variable("ftaucq", 0.93)
@@ -181,7 +181,7 @@ for model_choice in (
     PowerFlowModel.SIMPLE,
     PrimaryPumpingModel.PRESSURE_DROP_INPUT,
     ShieldThermalHeatUse.LOW_GRADE_HEAT,
-    SecondaryCycleModel.FIXED,
+    SecondaryCycleModel.INPUT,
     BlanketModel.CCFE_HCPB,
     CurrentDriveEfficiencyModel.ECRH_UI_GAM,
     OperationModel.PULSED,
@@ -271,6 +271,7 @@ template_builder.add_input_values(
         "pinjalw": 51.0,
         "gamma_ecrh": 0.3,
         "etaech": 0.4,
+        "bscfmax": 0.99,
         # BOP inputs
         "etath": 0.375,
         "etahtp": 0.87,
@@ -279,18 +280,18 @@ template_builder.add_input_values(
         "tdwell": 0.0,
         "tramp": 500.0,
         # CS / PF coil inputs
-        "t_crack_radial": 0.006,
+        # "t_crack_radial": 0.006,
         "t_crack_vertical": 0.004,
-        "t_structural_radial": 0.07,
-        "t_structural_vertical": 0.022,
-        "sf_vertical_crack": 1.0,
-        "sf_radial_crack": 1.0,
-        "sf_fast_fracture": 1.0,
-        "residual_sig_hoop": 1.5e8,
-        "paris_coefficient": 3.86e-11,
-        "paris_power_law": 2.394,
-        "walker_coefficient": 0.5,
-        "fracture_toughness": 150.0,
+        # "t_structural_radial": 0.07,
+        # "t_structural_vertical": 0.022,
+        # "sf_vertical_crack": 1.0,
+        # "sf_radial_crack": 1.0,
+        # "sf_fast_fracture": 1.0,
+        # "residual_sig_hoop": 1.5e8,
+        # "paris_coefficient": 3.86e-11,
+        # "paris_power_law": 2.394,
+        # "walker_coefficient": 0.5,
+        # "fracture_toughness": 150.0,
         "fcuohsu": 0.7,
         "ohhghf": 0.9,
         "rpf2": -1.825,
@@ -304,18 +305,18 @@ template_builder.add_input_values(
         "n_tf": 16,
         "casthi": 0.06,
         "casths": 0.05,
-        "ripmax": 0.06,
+        "ripmax": 0.6,
         "dhecoil": 0.01,
         "tftmp": 4.75,
-        "thicndut": 0.002,
+        "thicndut": 2.0e-3,
         "tinstf": 0.008,
-        "tfinsgap": 0.01,
+        # "tfinsgap": 0.01,
         "tmargmin": 1.5,
         "vftf": 0.3,
         "n_pancake": 20,
         "n_layer": 10,
         "qnuc": 1.292e4,
-        "max_vv_stress": 93.0e6,
+        # "max_vv_stress": 93.0e6,
         # Inputs we don't care about but must specify
         "cfactr": 0.75,  # Ha!
         "kappa": 1.848,  # Should be overwritten
@@ -327,6 +328,9 @@ template_builder.add_input_values(
         "ksic": 1.4,
         "prn1": 0.4,
         "zeffdiv": 35,
+        "bmxlim": 11.2,
+        "ffuspow": 1.0,
+        "fpeakb": 1.0,
     }
 )
 
