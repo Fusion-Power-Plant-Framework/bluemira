@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import json
 from unittest import mock
 
 import pytest
@@ -144,13 +145,21 @@ class TestSetupIntegration:
         # 'dr_tf_case_out' is old name for 'casthi'
         assert mock.call("casthi", 0.04) in writer.add_parameter.call_args_list
 
+    @pytest.mark.parametrize(("pf_n", "pf_v"), [(None, None), ("tk_sh_in", 3)])
     @pytest.mark.parametrize(
         ("template", "result"),
-        [(ProcessInputs(), 1e-6), (ProcessInputs(shldith=5), 5)],
+        [(ProcessInputs(), 0.69), (ProcessInputs(shldith=5), 5)],
     )
-    def test_indat_creation_with_template(self, template, result, tmp_path):
+    def test_indat_creation_with_template(self, template, result, pf_n, pf_v, tmp_path):
+        if pf_n is None:
+            pf = {}
+        else:
+            with open(PARAM_FILE) as pf_h:
+                pf = {pf_n: json.load(pf_h)[pf_n]}
+            pf[pf_n]["value"] = pf_v
+            result = pf_v
         path = tmp_path / "IN.DAT"
-        setup = Setup({}, path, template_in_dat=template)
+        setup = Setup(pf, path, template_in_dat=template)
         setup.run()
 
         assert f"shldith  = {result}" in open(path).read()  # noqa: SIM115
