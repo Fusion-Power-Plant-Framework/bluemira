@@ -73,22 +73,29 @@ class TestCoil:
         # make a default coil
         cls.coil = Coil(x=4, z=4, current=10e6, ctype="PF", j_max=NBTI_J_MAX)
         cls.cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
+        cls.dum_coil = Coil(x=4, z=4, current=0.0, ctype="DUM", j_max=0.0)
         cls.no_coil = Coil(x=4, z=4, current=10e6, ctype="NONE", j_max=NBTI_J_MAX)
 
     def teardown_method(self):
         plt.show()
         plt.close("all")
 
+    def test_no_plotting_dummy(self):
+        assert self.dum_coil.plot() is None
+
     def test_name(self):
         assert self.coil.ctype == CoilType.PF
         assert self.cs_coil.ctype == CoilType.CS
+        assert self.dum_coil.ctype == CoilType.DUM
         assert self.no_coil.ctype == CoilType.NONE
         coil = Coil(x=4, z=4, current=10e6, ctype="PF", j_max=NBTI_J_MAX)
         cs_coil = Coil(x=4, z=4, current=10e6, ctype="CS", j_max=NBTI_J_MAX)
+        dum_coil = Coil(x=4, z=4, current=0.0, ctype="DUM", j_max=0.0)
         no_coil = Coil(x=4, z=4, current=10e6, ctype="NONE", j_max=NBTI_J_MAX)
 
         assert coil._number == self.coil._number + 1
         assert cs_coil._number == self.cs_coil._number + 1
+        assert dum_coil._number == self.dum_coil._number + 1
         assert no_coil._number == self.no_coil._number + 1
 
     def test_field(self):

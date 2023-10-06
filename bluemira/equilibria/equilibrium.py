@@ -365,7 +365,10 @@ class CoilSetMHDState(MHDState):
 
     @classmethod
     def _get_eqdsk(
-        cls, filename: str, force_symmetry: bool = False
+        cls,
+        filename: str,
+        force_symmetry: bool = False,
+        user_coils: Optional[CoilSet] = None,
     ) -> Tuple[EQDSKInterface, np.ndarray, CoilSet, Grid, Optional[Limiter]]:
         """
         Get eqdsk data from file for read in
@@ -376,6 +379,9 @@ class CoilSetMHDState(MHDState):
             Filename
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
+        user_coils:
+            Coilset provided by the user.
+            Set current, j_max and b_max to zero in user_coils.
 
         Returns
         -------
@@ -391,7 +397,7 @@ class CoilSetMHDState(MHDState):
             Limiter instance if any limiters are in file
         """
         e, psi, grid = super()._get_eqdsk(filename)
-        coilset = CoilSet.from_group_vecs(e)
+        coilset = user_coils if user_coils is not None else CoilSet.from_group_vecs(e)
         if force_symmetry:
             coilset = symmetrise_coilset(coilset)
 
@@ -528,7 +534,9 @@ class Breakdown(CoilSetMHDState):
         self.filename = filename
 
     @classmethod
-    def from_eqdsk(cls, filename: str, force_symmetry: bool):
+    def from_eqdsk(
+        cls, filename: str, force_symmetry: bool, user_coils: Optional[CoilSet] = None
+    ):
         """
         Initialises a Breakdown Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux.
@@ -539,9 +547,12 @@ class Breakdown(CoilSetMHDState):
             Filename
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
+        user_coils:
+            Coilset provided by the user.
+            Set current, j_max and b_max to zero in user_coils.
         """
         cls._eqdsk, psi, coilset, grid, limiter = super()._get_eqdsk(
-            filename, force_symmetry=force_symmetry
+            filename, force_symmetry=force_symmetry, user_coils=user_coils
         )
         return cls(coilset, grid, limiter=limiter, psi=psi, filename=filename)
 
@@ -839,7 +850,12 @@ class Equilibrium(CoilSetMHDState):
         self._kwargs = {"vcontrol": vcontrol}
 
     @classmethod
-    def from_eqdsk(cls, filename: str, force_symmetry: bool = False):
+    def from_eqdsk(
+        cls,
+        filename: str,
+        force_symmetry: bool = False,
+        user_coils: Optional[CoilSet] = None,
+    ):
         """
         Initialises an Equilibrium Object from an eqdsk file. Note that this
         will involve recalculation of the magnetic flux. Because of the nature
@@ -854,9 +870,14 @@ class Equilibrium(CoilSetMHDState):
             Filename
         force_symmetry:
             Whether or not to force symmetrisation in the CoilSet
+        user_coils:
+            Coilset provided by the user.
+            Set current, j_max and b_max to zero in user_coils.
         """
         e, psi, coilset, grid, limiter = super()._get_eqdsk(
-            filename, force_symmetry=force_symmetry
+            filename,
+            force_symmetry=force_symmetry,
+            user_coils=user_coils,
         )
 
         profiles = CustomProfile.from_eqdsk(filename)
