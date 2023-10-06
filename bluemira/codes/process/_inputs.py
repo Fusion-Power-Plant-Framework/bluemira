@@ -77,9 +77,6 @@ class ProcessInputs:
     alstroh: float = 660000000.0
     aspect: float = 2.907
     beta: float = 0.042
-    blnkith: float = 0.755
-    blnkoth: float = 0.982
-    bore: float = 2.3322
     bscfmax: float = 0.99
     bt: float = 5.3292
     casths: float = 0.05
@@ -91,11 +88,6 @@ class ProcessInputs:
     )
     cpttf: float = 70000.0
     cpttf_max: float = 90000.0
-    d_vv_bot: float = 0.6
-    d_vv_in: float = 0.6
-    d_vv_out: float = 1.1
-    d_vv_top: float = 0.6
-    ddwex: float = 0.15
     dene: float = 7.4321e19
     dhecoil: float = 0.005
     dintrt: float = 0.0
@@ -124,9 +116,6 @@ class ProcessInputs:
     fne0: float = 0.9
     gamma: float = 0.3
     gamma_ecrh: float = 0.3
-    gapds: float = 0.02
-    gapoh: float = 0.05
-    gapomin: float = 0.2
     hfact: float = 1.1
     hldivlim: float = 10.0
     i_single_null: int = 1
@@ -147,7 +136,6 @@ class ProcessInputs:
     iinvqd: int = 1
     impvar: int = 13
     inuclear: int = 1
-    iohcl: int = 1
     ioptimz: int = 1
     ipedestal: int = 1
     ipfloc: List[int] = field(
@@ -176,7 +164,6 @@ class ProcessInputs:
     ngrp: int = 3
     oacdcp: float = 8673900.0
     oh_steel_frac: float = 0.5
-    ohcth: float = 0.55242
     ohhghf: float = 0.71
     output_costs: int = 0
     pheat: float = 50.0
@@ -196,13 +183,7 @@ class ProcessInputs:
     vf: List[float] = field(default_factory=lambda: [0.3] * 22)
     rmajor: float = 8.8901
     rpf2: float = -1.63
-    scrapli: float = 0.225
-    scraplo: float = 0.225
     secondary_cycle: int = 2
-    shldith: float = 1e-06
-    shldlth: float = 1e-06
-    shldoth: float = 1e-06
-    shldtth: float = 1e-06
     sig_tf_case_max: float = 600000000.0
     sig_tf_wp_max: float = 600000000.0
     ssync: float = 0.6
@@ -221,9 +202,6 @@ class ProcessInputs:
     tftmp: float = 4.75
     tftsgap: float = 0.05
     thicndut: float = 0.0008
-    thshield_ib: float = 0
-    thshield_ob: float = 0
-    thshield_vb: float = 0
     thwcndut: float = 0.008
     tinstf: float = 0.018
     tmargmin: float = 1.5
@@ -234,8 +212,6 @@ class ProcessInputs:
     vdalw: float = 20.0
     vfshld: float = 0.25
     vftf: float = 0.4
-    vgap2: float = 0.05
-    vvblgap: float = 0.02
     zeffdiv: float = 3.5
     zref: List[float] = field(
         default_factory=lambda: [3.6, 1.2, 2.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
@@ -593,6 +569,48 @@ class ProcessInputs:
     blbpith: float = 0.3
     blbpoth: float = 0.35
     blbuith: float = 0.365
+    blbuoth: float = 0.465
+    blnkith: float = 0.115
+    blnkoth: float = 0.235
+    bore: float = 1.42
+    clhsf: float = 4.268
+    ddwex: float = 0.07
+    d_vv_in: float = 0.07
+    d_vv_out: float = 0.07
+    d_vv_top: float = 0.07
+    d_vv_bot: float = 0.07
+    f_avspace: float = 1.0
+    fcspc: float = 0.6
+    fseppc: float = 350000000.0
+    gapds: float = 0.155
+    gapoh: float = 0.08
+    gapomin: float = 0.234
+    iohcl: int = 1
+    iprecomp: int = 1
+    ohcth: float = 0.811
+    rinboard: float = 0.651
+    f_r_cp: float = 1.4
+    scrapli: float = 0.14
+    scraplo: float = 0.15
+    shldith: float = 0.69
+    shldlth: float = 0.7
+    shldoth: float = 1.05
+    shldtth: float = 0.6
+    sigallpc: float = 300000000.0
+    tfoofti: float = 1.19
+    thshield_ib: float = 0.05
+    thshield_ob: float = 0.05
+    thshield_vb: float = 0.05
+    vgap2: float = 0.163
+    vgaptop: float = 0.6
+    vvblgap: float = 0.05
+    plleni: float = 1.0
+    plsepi: float = 1.0
+    plsepo: float = 1.5
+
+    # Buildings variables
+
+    # Current drive variables
 
     fvsbrnni: float = 0.39566
 
