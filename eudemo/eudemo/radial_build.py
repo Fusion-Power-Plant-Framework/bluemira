@@ -106,27 +106,31 @@ for constraint in (
     template_builder.add_constraint(constraint)
 
 # Variable vector values and bounds
-template_builder.add_variable("bt", 5.3292, upper_bound=20.0)
-template_builder.add_variable("rmajor", 8.8901, upper_bound=13.0)
-template_builder.add_variable("te", 12.33, upper_bound=150.0)
-template_builder.add_variable("beta", 3.1421e-2)
-template_builder.add_variable("dene", 7.4321e19)
-template_builder.add_variable("q", 3.5, lower_bound=3.5)
-template_builder.add_variable("pheat", 50.0)
-template_builder.add_variable("ralpne", 6.8940e-02)
-template_builder.add_variable("bore", 2.3322, lower_bound=0.1)
-template_builder.add_variable("ohcth", 0.55242, lower_bound=0.1)
-template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3)
-template_builder.add_variable("thkcas", 0.52465, lower_bound=0.1)
-template_builder.add_variable("tfcth", 1.2080, lower_bound=0.2)
+template_builder.add_variable("bt", 5.3292, lower_bound=0.01, upper_bound=20.0)
+template_builder.add_variable("rmajor", 8.8901, lower_buond=0.1, upper_bound=13.0)
+template_builder.add_variable("te", 12.33, lower_bound=5.0, upper_bound=150.0)
+template_builder.add_variable("beta", 3.1421e-2, lower_bound=0.01, upper_bound=1.0)
+template_builder.add_variable("dene", 7.4321e19, lower_bound=1.0e19, upper_bound=1.0e21)
+template_builder.add_variable("q", 3.5, lower_bound=3.5, upper_bound=50.0)
+template_builder.add_variable("pheat", 50.0, lower_bound=1.0e-3, upper_bound=1.0e3)
+template_builder.add_variable("ralpne", 6.8940e-02, lower_bound=0.05, upper_bound=0.15)
+template_builder.add_variable("bore", 2.3322, lower_bound=0.1, upper_bound=10.0)
+template_builder.add_variable("ohcth", 0.55242, lower_bound=0.1, upper_bound=10.0)
+template_builder.add_variable("thwcndut", 8.0e-3, lower_bound=8.0e-3, upper_bound=0.1)
+template_builder.add_variable("thkcas", 0.52465, lower_bound=0.05, upper_bound=1.0)
+template_builder.add_variable("tfcth", 1.2080, lower_bound=0.1, upper_bound=5.0)
 template_builder.add_variable("gapoh", 0.05, lower_bound=0.05, upper_bound=0.1)
-template_builder.add_variable("gapds", 0.02, lower_bound=0.02)
-template_builder.add_variable("oh_steel_frac", 0.57875)
-template_builder.add_variable("coheof", 2.0726e07)
+template_builder.add_variable("gapds", 0.02, lower_bound=0.02, upper_bound=10.0)
+template_builder.add_variable(
+    "oh_steel_frac", 0.57875, lower_bound=0.001, upper_bound=0.95
+)
+template_builder.add_variable("coheof", 2.0726e07, lower_bound=1.0e5, upper_bound=1.0e8)
 template_builder.add_variable("cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
-template_builder.add_variable("tdmptf", 2.5829e01)
-template_builder.add_variable("vdalw", 10.0, upper_bound=10.0)
-template_builder.add_variable("fimp(13)", 3.573e-04)
+template_builder.add_variable("tdmptf", 2.5829e01, lower_bound=0.01, upper_bound=100.0)
+template_builder.add_variable("vdalw", 10.0, lower_bound=0.001, upper_bound=10.0)
+template_builder.add_variable(
+    "fimp(13)", 3.573e-04, lower_bound=1.0e-8, upper_bound=0.01
+)
 
 # Some constraints require multiple f-values, but they are getting ridding of those,
 # so no fancy mechanics for now...
@@ -140,7 +144,7 @@ template_builder.add_variable("feffcd", 1.0)
 template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
 template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
 template_builder.adjust_variable("flhthresh", 1.2, lower_bound=1.1, upper_bound=1.2)
-template_builder.adjust_variable("ftburn", 1.0, upper_bound=1.0)
+template_builder.adjust_variable("ftburn", 1.0, lower_bound=0.001, upper_bound=1.0)
 
 # Modifying the initial variable vector to improve convergence
 template_builder.adjust_variable("fpnetel", 1.0)
@@ -153,7 +157,7 @@ template_builder.adjust_variable("fjohc", 0.57941)
 template_builder.adjust_variable("fjohc0", 0.53923)
 template_builder.adjust_variable("foh_stress", 1.0)
 template_builder.adjust_variable("fbetatry", 0.48251)
-template_builder.adjust_variable("fwalld", 0.131)
+template_builder.adjust_variable("fwalld", 0.131, lower_bound=0.001, upper_bound=1.0)
 template_builder.adjust_variable("fmaxvvstress", 1.0)
 template_builder.adjust_variable("fpsepbqar", 1.0)
 template_builder.adjust_variable("fvdump", 1.0)
@@ -334,6 +338,8 @@ template_builder.add_input_values(
         "bmxlim": 11.2,
         "ffuspow": 1.0,
         "fpeakb": 1.0,
+        "divdum": 1,
+        "ibkt_life": 1,
     }
 )
 

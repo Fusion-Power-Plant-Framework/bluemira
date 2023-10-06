@@ -89,6 +89,7 @@ class ProcessInputs:
     tramp: float = 15.0
 
     # FWBS
+    ibkt_life: int = 1
     denstl: float = 7800.0
     denw: float = 19250.0
     emult: float = 1.269
@@ -543,6 +544,7 @@ class ProcessInputs:
     fzactual: float = 0.001
 
     # Divertor
+    divdum: int = 0
     anginc: float = 0.262
     beta_div: float = 1.0
     betai: float = 1.0
