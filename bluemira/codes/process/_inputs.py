@@ -74,16 +74,11 @@ class ProcessInputs:
     alphaj: float = 1.0
     alphan: float = 0.25
     alphat: float = 0.5
-    alstroh: float = 660000000.0
     aspect: float = 2.907
     beta: float = 0.042
     bscfmax: float = 0.99
     bt: float = 5.3292
     casths: float = 0.05
-    coheof: float = 20726000.0
-    cptdin: List[float] = field(
-        default_factory=lambda: [*([42200.0] * 4), *([43000.0] * 4)]
-    )
     cpttf: float = 70000.0
     cpttf_max: float = 90000.0
     dene: float = 7.4321e19
@@ -101,9 +96,6 @@ class ProcessInputs:
     etahtp: float = 0.95
     etaiso: float = 0.85
     etanbi: float = 0.3
-    etath: float = 0.375
-    fcohbop: float = 0.93176
-    fcuohsu: float = 0.7
     fcutfsu: float = 0.69
     fgwped: float = 0.85
     fkzohm: float = 1.0245
@@ -130,16 +122,9 @@ class ProcessInputs:
     inuclear: int = 1
     ioptimz: int = 1
     ipedestal: int = 1
-    ipfloc: List[int] = field(
-        default_factory=lambda: [2, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    )
-    ipowerflow: int = 0
-    iprimshld: int = 1
     iprofile: int = 1
     isc: int = 34
     ishape: int = 0
-    isumatoh: int = 1
-    isumatpf: int = 1
     kappa: float = 1.848
     lpulse: int = 1
 
@@ -149,13 +134,9 @@ class ProcessInputs:
     n_pancake: int = 20
     n_rad_per_layer: int = 100
     n_tf: int = 16
-    ncls: List[int] = field(default_factory=lambda: [1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     neped: float = 6.78e19
     nesep: float = 2e19
-    ngrp: int = 3
     oacdcp: float = 8673900.0
-    oh_steel_frac: float = 0.5
-    ohhghf: float = 0.71
     output_costs: int = 0
     pheat: float = 50.0
     pinjalw: float = 51.0
@@ -169,10 +150,7 @@ class ProcessInputs:
     rhopedn: float = 0.94
     rhopedt: float = 0.94
     ripmax: float = 1.0
-    rjconpf: List[float] = field(default_factory=lambda: [30000000] * 22)
-    vf: List[float] = field(default_factory=lambda: [0.3] * 22)
     rmajor: float = 8.8901
-    rpf2: float = -1.63
     secondary_cycle: int = 2
     sig_tf_case_max: float = 600000000.0
     sig_tf_wp_max: float = 600000000.0
@@ -202,10 +180,6 @@ class ProcessInputs:
     vdalw: float = 20.0
     vfshld: float = 0.25
     vftf: float = 0.4
-    zref: List[float] = field(
-        default_factory=lambda: [3.6, 1.2, 2.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    )
-    rref: List[float] = field(default_factory=lambda: [7] * 10)
     blktmodel: int = 1
     ipfres: int = 0
     i_tf_case_geom: int = 1
@@ -652,19 +626,80 @@ class ProcessInputs:
     istore: float = 1
     itcycl: float = 1
 
-    fvsbrnni: float = 0.39566
+    # IFE
 
-    # Inputs with defaults for JIC sanity
+    # Heat transport
+    baseel: float = 5000000.0
+    crypw_max: float = 50.0
+    f_crypmw: float = 1.0
+    etatf: float = 0.9
+    etath: float = 0.375
+    etath_liq: float = 0.35
+    fpumpblkt: float = 0.005
+    fpumpdiv: float = 0.005
+    fpumpfw: float = 0.005
+    fpumpshld: float = 0.005
+    ipowerflow: int = 1
+    iprimshld: int = 1
+    pinjmax: float = 120.0
+    pwpm2: float = 150.0
+    trithtmw: float = 15.0
+    vachtmw: float = 0.5
+
+    # Water usage
+
+    # Vacuum
+    ntype: int = 1
+    pbase: float = 0.0005
+    prdiv: float = 0.36
+    pumptp: float = 1.2155e22
+    rat: float = 1.3e-8
+    tn: float = 300.0
+    pumpareafraction: float = 0.0203
+    pumpspeedmax: float = 27.3
+    pumpspeedfactor: float = 0.167
+    initialpressure: float = 1.0
+    outgasindex: float = 1.0
+    outgasfactor: float = 0.0235
+
+    # PF coil
+    alfapf: float = 5.0e-10
+    alstroh: float = 400000000.0
+    coheof: float = 18500000.0
+    cptdin: List[float] = field(default_factory=lambda: [40000.0] * 22)
+    etapsu: float = 0.9
+    fcohbop: float = 0.9
+    fcuohsu: float = 0.7
+    fcupfsu: float = 0.69
+    fvssu: float = 1.0
+    ipfloc: List[int] = field(
+        default_factory=lambda: [2, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    )
+    isumatoh: int = 1
+    isumatpf: int = 1
     i_pf_current: int = 1
+    ncls: List[int] = field(default_factory=lambda: [1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0])
     nfxfh: int = 7
+    ngrp: int = 3
+    ohhghf: float = 0.71
+    oh_steel_frac: float = 0.5
     pfclres: float = 2.5e-8
+    rjconpf: List[float] = field(default_factory=lambda: [30000000] * 22)
     routr: float = 1.5
+    rpf2: float = -1.63
+    rref: List[float] = field(default_factory=lambda: [7] * 10)
+    sigpfcalw: float = 500.0
+    sigpfcf: float = 0.666
+    vf: List[float] = field(default_factory=lambda: [0.3] * 22)
     vhohc: float = 0.3
+    zref: List[float] = field(
+        default_factory=lambda: [3.6, 1.2, 2.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+    )
     bmaxcs_lim: float = 13.0
     fbmaxcs: float = 1.0
     ld_ratio_cst: float = 3.0
-    sigpfcf: float = 0.666
-    sigpfcalw: float = 500.0
+
+    fvsbrnni: float = 0.39566
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
