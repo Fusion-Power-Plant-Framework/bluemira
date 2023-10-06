@@ -73,25 +73,16 @@ class ProcessInputs:
     # fmt: on
     bscfmax: float = 0.99
     casths: float = 0.05
-    cpttf: float = 70000.0
-    cpttf_max: float = 90000.0
-    dhecoil: float = 0.005
     dintrt: float = 0.0
     divdum: int = 1
     divfix: float = 0.621
-    thkcas: float = 0.3
     casthi: float = 0.06
     emult: float = 1.269
     enbeam: float = 1e3
     epsvmc: float = 1e-08
     etaech: float = 0.4
-    etahtp: float = 0.95
-    etaiso: float = 0.85
     etanbi: float = 0.3
-    fcutfsu: float = 0.69
     gamma_ecrh: float = 0.3
-    i_tf_sc_mat: int = 1
-    i_tf_turns_integer: int = 1
     iefrf: int = 10
     ifueltyp: int = 1
     inuclear: int = 1
@@ -100,51 +91,27 @@ class ProcessInputs:
 
     maxcal: int = 1000
     minmax: int = 1
-    n_layer: int = 10
-    n_pancake: int = 20
-    n_rad_per_layer: int = 100
-    n_tf: int = 16
+
     oacdcp: float = 8673900.0
     output_costs: int = 0
     pheat: float = 50.0
     pinjalw: float = 51.0
     primary_pumping: int = 2
-    pulsetimings: float = 0.0
     qnuc: float = 12920.0
     ripmax: float = 1.0
-    secondary_cycle: int = 2
-    sig_tf_case_max: float = 600000000.0
-    sig_tf_wp_max: float = 600000000.0
 
-    tburn: float = 1000.0
-    tdmptf: float = 10.0
-    tdwell: float = 1800.0
-    theat: float = 10.0
-    tohs: float = 30.0
-    tqnch: float = 15.0
     tramp: float = 15.0
     tfcth: float = 1.208
-    tftmp: float = 4.75
+
     tftsgap: float = 0.05
-    thicndut: float = 0.0008
-    thwcndut: float = 0.008
-    tinstf: float = 0.018
+
     tmargmin: float = 1.5
-    ucblvd: float = 280.0
-    ucdiv: float = 500000.0
-    ucme: float = 300000000.0
-    vdalw: float = 20.0
+
     vfshld: float = 0.25
-    vftf: float = 0.4
     blktmodel: int = 1
     ipfres: int = 0
-    i_tf_case_geom: int = 1
-    i_tf_sup: int = 1
-    i_tf_shape: int = 1
-    i_tf_wp_geom: int = 0
     tf_in_cs: int = 0
-    tfinsgap: float = 0.01
-    max_vv_stress: float = 143000000.0
+
     feffcd: float = 1.0
     # Undocumented danger stuff
     blk_life_csf: int = 1
@@ -152,9 +119,17 @@ class ProcessInputs:
     iblnkith: int = 1
 
     # Top down of PROCESS variables list
+
+    # Times
+    tburn: float = 1000.0
+    tdwell: float = 1800.0
+    theat: float = 10.0
+    tohs: float = 30.0
+    tqnch: float = 15.0
+
+    # FWBS
     denstl: float = 7800.0
     denw: float = 19250.0
-
     fblss: float = 0.09705
     fdiv: float = 0.115
     fwbsshape: int = 2
@@ -178,8 +153,8 @@ class ProcessInputs:
     nphcdout: int = 2
     wallpf: float = 1.21
     iblanket_thickness: int = 2
+    secondary_cycle: int = 2  # Listed as an output...
     secondary_cycle_liq: int = 4
-
     afwi: float = 0.008
     afwo: float = 0.008
     fw_wall: float = 0.003
@@ -214,21 +189,26 @@ class ProcessInputs:
     declfw: float = 0.075
     declshld: float = 0.075
     blkttype: int = 3
+    etaiso: float = 0.85
+    etahtp: float = 0.95
     n_liq_recirc: int = 10
-
     bz_channel_conduct_liq: float = 833000.0
-
     blpressure_liq: float = 1700000.0
     inlet_temp_liq: float = 570.0
     outlet_temp_liq: float = 720.0
     f_nuc_pow_bz_struct: float = 0.34
     pnuc_fw_ratio_dcll: float = 0.14
 
+    # TF coil
+    sig_tf_case_max: float = 600000000.0
+    sig_tf_wp_max: float = 600000000.0
     bcritsc: float = 24.0
     casthi_fraction: float = 0.05
     casths_fraction: float = 0.06
     f_t_turn_tf: float = 1.0
     t_turn_tf_max: float = 0.05000000074505806
+    cpttf: float = 70000.0
+    cpttf_max: float = 90000.0
     dcase: float = 8000.0
     dcond: List[float] = field(
         default_factory=lambda: [
@@ -244,26 +224,34 @@ class ProcessInputs:
         ]
     )
     dcondins: float = 1800.0
+    dhecoil: float = 0.005
     farc4tf: float = 0.7
     b_crit_upper_nbti: float = 14.86
     t_crit_nbti: float = 9.04
+    fcutfsu: float = 0.69
     fhts: float = 0.5
     i_tf_stress_model: int = 1
+    i_tf_wp_geom: int = -1
+    i_tf_case_geom: int = 1  # Listed as an output
+    i_tf_turns_integer: int = 1  # Listed as an output
+    i_tf_sc_mat: int = 1
+    i_tf_sup: int = 1
+    i_tf_shape: int = 1  # Listed as an output
     i_tf_cond_eyoung_trans: int = 1
+    n_pancake: int = 20
+    n_layer: int = 10
+    n_rad_per_layer: int = 100
     i_tf_bucking = -1
     n_tf_graded_layers: int = 1
-
     jbus: float = 1250000.0
     eyoung_ins: float = 100000000.0
     eyoung_steel: float = 205000000000.0
     eyong_cond_axial: float = 660000000.0
     eyoung_res_tf_buck: float = 150000000000.0
-
     # eyoung_al: float = 69000000000.0 # defaults  cannot be right
     poisson_steel: float = 0.3
     poisson_copper: float = 0.35
     poisson_al: float = 0.35
-
     str_cs_con_res: float = -0.005
     str_pf_con_res: float = -0.005
     str_tf_con_res: float = -0.005
@@ -271,6 +259,8 @@ class ProcessInputs:
     i_str_wp: int = 1
     quench_model: str = b"exponential"
     tcritsc: float = 16.0
+    tdmptf: float = 10.0
+    tfinsgap: float = 0.01
     # rhotfbus: float = -1.0 # defaults cannot be right
     frhocp: float = 1.0
     frholeg: float = 1.0
@@ -280,11 +270,18 @@ class ProcessInputs:
     n_tf_joints: int = 4
     th_joint_contact: float = 0.03
     # eff_tf_cryo: float = -1.0 # defaults cannot be right
-
+    n_tf: int = 16
+    tftmp: float = 4.75
+    thicndut: float = 0.0008
+    thkcas: float = 0.3
+    thwcndut: float = 0.008
+    tinstf: float = 0.018
     tmaxpro: float = 150.0
     tmax_croco: float = 200.0
     tmpcry: float = 4.5
-    v_force_inboard: float = 0.5
+    vdalw: float = 20.0
+    f_vforce_inboard: float = 0.5
+    vftf: float = 0.4
     etapump: float = 0.8
     fcoolcp: float = 0.3
     fcoolleg: float = 0.2
@@ -292,12 +289,15 @@ class ProcessInputs:
     rcool: float = 0.005
     tcoolin: float = 313.15
     tcpav: float = 373.15
-
     vcool: float = 20.0
     theta1_coil: float = 45.0
     theta1_vv: float = 1.0
+    max_vv_stress: float = 143000000.0
+
+    # PF Power
     iscenr: int = 2
     maxpoloidalpower: float = 1000.0
+
     # Cost variables
     abktflnc: float = 5.0
     adivflnc: float = 7.0
@@ -358,11 +358,15 @@ class ProcessInputs:
     uufw: float = 0.04
     uumag: float = 0.02
     uuves: float = 0.04
+    ucblvd: float = 280.0
+    ucdiv: float = 500000.0
+    ucme: float = 300000000.0
     ireactor: int = 1
     lsa: int = 4
     discount_rate: float = 0.0435
     startupratio: float = 1.0
     tlife: float = 30.0
+    # ...
 
     # CS fatigue
     residual_sig_hoop: float = 240000000.0
@@ -533,7 +537,7 @@ class ProcessInputs:
     # Impurity radiation
     coreradius: float = 0.6
     coreradiationfraction: float = 1.0
-    fimp: List[float] = field(default_factory=lambda: [1.0, 0.1, *([0.0] * 10), 0, 0])
+    fimp: List[float] = field(default_factory=lambda: [1.0, 0.1, *([0.0] * 12)])
     fimpvar: float = 0.001
     impvar: int = 9
 
@@ -727,6 +731,8 @@ class ProcessInputs:
     tratio: float = 1.0
     triang: float = 0.36
     triang95: float = 0.24
+
+    # Stellarator
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
