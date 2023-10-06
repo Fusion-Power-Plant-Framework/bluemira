@@ -323,6 +323,8 @@ template_builder.add_input_values(
         "kappa": 1.848,  # Should be overwritten
         "walalw": 8.0,  # Should never get even close to this
         "tlife": 40.0,
+        "abktflnc": 15.0,
+        "adivflnc": 20.0,
         # For sanity...
         "divdum": 1,
         "hldivlim": 10,
