@@ -328,7 +328,7 @@ template_builder.add_input_values(
         "hldivlim": 10,
         "ksic": 1.4,
         "prn1": 0.4,
-        "zeffdiv": 35,
+        "zeffdiv": 3.5,
         "bmxlim": 11.2,
         "ffuspow": 1.0,
         "fpeakb": 1.0,
