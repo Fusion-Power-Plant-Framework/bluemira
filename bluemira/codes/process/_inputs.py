@@ -517,7 +517,6 @@ class ProcessInputs:
     enbeam: float = 1e3
     etaech: float = 0.3
     etanbi: float = 0.3
-    fpion: float = 0.5
     feffcd: float = 1.0
     frbeam: float = 1.05
     ftritbm: float = 1e-6

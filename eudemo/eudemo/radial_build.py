@@ -211,7 +211,6 @@ template_builder.add_impurity(Impurities.W, 5.0e-5)
 template_builder.add_input_values(
     {
         # Undocumented danger stuff
-        "blk_life_csf": 1,
         "iblanket": 1,
         # Profile parameterisation inputs
         "alphan": 1.0,
@@ -326,7 +325,6 @@ template_builder.add_input_values(
         "abktflnc": 15.0,
         "adivflnc": 20.0,
         # For sanity...
-        "divdum": 1,
         "hldivlim": 10,
         "ksic": 1.4,
         "prn1": 0.4,
