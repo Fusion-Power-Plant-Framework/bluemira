@@ -1,0 +1,12 @@
+{
+  "BOP": {
+    "description": "Magnetics (PBS = 49,50,54,58,70)",
+    "config_path": "loads_BOP.json",
+    "systems": ["PHT", "IHT", "PCS"]
+  },
+  "AUX": {
+    "description": "Auxiliaries (PBS = 80,82,83,87)",
+    "config_path": "loads_AUX_complete.json",
+    "systems": ["EPS", "BSU", "OTR"]
+  }
+}

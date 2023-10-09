@@ -47,7 +47,7 @@ class PowerCyclePhaseError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "breakdown": (
                 "The argument given for 'duration_breakdown' is not "
                 "valid. It must be a dictionary with keys that are "
@@ -58,7 +58,6 @@ class PowerCyclePhaseError(PowerCycleError):
                 f"{self._source} class."
             ),
         }
-        return errors
 
 
 class PowerCyclePulseError(PowerCycleError):
@@ -82,7 +81,7 @@ class ScenarioBuilderError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "config": (
                 "An incorrect file has been passed as 'config'. It "
                 "must be a JSON file with a structure that matches "
@@ -93,7 +92,6 @@ class ScenarioBuilderError(PowerCycleError):
             "library": ("Requested element is not present in library."),
             "operator": ("Breakdown for phase could not be built."),
         }
-        return errors
 
 
 # ######################################################################
@@ -107,7 +105,7 @@ class LoadDataError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "increasing": (
                 "The 'time' parameter used to create an instance of "
                 f"the {self._source} class must be an increasing list."
@@ -125,7 +123,6 @@ class LoadDataError(PowerCycleError):
                 f"instances of the {self._source} class.",
             ),
         }
-        return errors
 
 
 class LoadModelError(PowerCycleError):
@@ -140,7 +137,7 @@ class PowerLoadError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "loadmodel": (
                 "The argument given for the attribute 'model' is not "
                 "a valid value. A model must be specified with an "
@@ -151,7 +148,6 @@ class PowerLoadError(PowerCycleError):
                 f"the {self._source} class must have the same length."
             ),
         }
-        return errors
 
 
 class PhaseLoadError(PowerCycleError):
@@ -160,7 +156,7 @@ class PhaseLoadError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "normalise": (
                 "The argument given for 'normalise' is not a valid "
                 f"value for an instance of the {self._source} class. "
@@ -183,7 +179,6 @@ class PhaseLoadError(PowerCycleError):
                 "pulse phase."
             ),
         }
-        return errors
 
 
 class PulseLoadError(PowerCycleError):
@@ -192,14 +187,13 @@ class PulseLoadError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "addition": (
                 f"Instances of the {self._source} class can only be "
                 "added if their 'pulse' attributes represent the same "
                 "pulse."
             ),
         }
-        return errors
 
 
 class ScenarioLoadError(PowerCycleError):
@@ -220,11 +214,10 @@ class EquilibriaImporterError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "duration": ("Unable to import duration from 'equilibria' module."),
             "load": ("Unable to import load from 'equilibria' module."),
         }
-        return errors
 
 
 class PumpingImporterError(PowerCycleError):
@@ -234,10 +227,9 @@ class PumpingImporterError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "duration": ("Unable to import duration from 'pumping' module."),
         }
-        return errors
 
 
 # ######################################################################
@@ -252,11 +244,10 @@ class PowerCycleSystemError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "scenario": ("Scenario is incorrect."),
             "import": ("Bluemira data import failed."),
         }
-        return errors
 
 
 class PowerCycleGroupError(PowerCycleError):
@@ -273,10 +264,9 @@ class PowerCycleManagerError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "load-type": ("The argument passed as 'load_type' is incorrect."),
         }
-        return errors
 
 
 # ######################################################################
@@ -290,14 +280,13 @@ class BOPPhaseError(PowerCycleError):
     """
 
     def _errors(self):
-        errors = {
+        return {
             "dependency": (
                 "The 'dependency' parameter used to create an instance "
                 f"of the {self._source} class must be an instance of "
                 "the 'BOPPhaseDependency' class."
             ),
         }
-        return errors
 
 
 class BOPPulseError(PowerCycleError):

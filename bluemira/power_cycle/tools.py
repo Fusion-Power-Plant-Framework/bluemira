@@ -3,104 +3,12 @@
 """
 Utility functions for the power cycle model.
 """
-import copy
 import json
-import os
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.base.file import get_bluemira_root
 from bluemira.utilities.tools import flatten_iterable
-
-
-def validate_list(argument):
-    """
-    Validate an argument to be a list. If the argument is just a
-    single value, insert it in a list.
-    """
-    if not isinstance(argument, (list, np.ndarray)):
-        argument = [argument]
-    return argument
-
-
-def validate_numerical(argument):
-    """
-    Validate an argument to be a numerical value (i.e. an instance
-    of either the 'int' or the 'float' classes).
-    """
-    if isinstance(argument, (int, float)):
-        return argument
-    else:
-        raise TypeError(
-            "This argument must be either an 'int' or 'float', but "
-            f"it is a {type(argument).__name__} instead.",
-        )
-
-
-def validate_nonnegative(argument):
-    """
-    Validate an argument to be a nonnegative numerical value.
-    """
-    argument = validate_numerical(argument)
-    if argument >= 0:
-        return argument
-    else:
-        raise ValueError(
-            "This argument must be a non-negative numerical value.",
-        )
-
-
-def validate_vector(argument):
-    """
-    Validate an argument to be a numerical list.
-    """
-
-    argument = validate_list(argument)
-    for element in argument:
-        element = validate_numerical(element)
-    return argument
-
-
-def validate_file(file_path):
-    """
-    Validate 'str' to be the path to a file. If the file exists, the
-    function returns its absolute path. If not, 'FileNotFoundError'
-    is issued.
-    """
-    absolute_path = (
-        os.path.join(get_bluemira_root(), file_path)
-        if not os.path.isabs(file_path)
-        else file_path
-    )
-
-    if not os.path.isfile(absolute_path):
-        raise FileNotFoundError(
-            "The file does not exist in the specified path.",
-        )
-
-    return absolute_path
-
-
-def validate_lists_to_have_same_length(*args):
-    """
-    Validate an arbitrary number of arguments to be lists of the same
-    length. Arguments that are not lists are considered lists of one
-    element.
-    If all equal, returns the length of those lists.
-    """
-    all_lengths = []
-    for argument in args:
-        argument = validate_list(argument)
-        argument_length = len(argument)
-        all_lengths.append(argument_length)
-
-    if len(unique_and_sorted_vector(all_lengths)) != 1:
-        raise ValueError(
-            "At least one of the lists passed as argument does not "
-            "have the same length as the others."
-        )
-    return argument_length
 
 
 def copy_dict_without_key(dictionary, key_to_remove):
@@ -123,7 +31,7 @@ def unique_and_sorted_vector(vector):
     Returns a sorted list, in ascending order, created from the set
     created from a vector, as a way to eliminate redundant entries.
     """
-    return sorted(set(validate_vector(vector)))
+    return sorted(set(vector))
 
 
 def remove_characters(string, character_list):

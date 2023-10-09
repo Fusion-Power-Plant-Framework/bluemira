@@ -1,0 +1,165 @@
+{
+  "EPS": {
+    "description": "Electrical Power Supply",
+    "reactive": {
+      "man": {
+        "description": "reactive main power (PPEN)",
+        "phases": ["dwl", "d2f", "f2d"],
+        "normalise": [true, true, true],
+        "consumption": true,
+        "efficiencies": {},
+        "loads": {
+          "eps_peak": {
+            "description": "peak value extrapolated to all relevant phases",
+            "time": [0, 1],
+            "data": [300, 300],
+            "unit": "MW",
+            "model": "STEP"
+          }
+        }
+      },
+      "aux": {
+        "description": "reactive auxiliary power (SSEN)",
+        "phases": ["dwl", "d2f", "ftt", "f2d"],
+        "normalise": [true, true, true, true],
+        "consumption": true,
+        "efficiencies": {},
+        "loads": {
+          "eps_upk": {
+            "description": "EPS upkeep",
+            "time": [0, 1],
+            "data": [10.2, 10.2],
+            "unit": "MW",
+            "model": "RAMP"
+          }
+        }
+      }
+    },
+    "active": {
+      "man": {
+        "description": "active main power (PPEN)",
+        "phases": ["dwl", "d2f", "f2d"],
+        "normalise": [true, true, true],
+        "consumption": true,
+        "efficiencies": {},
+        "loads": {
+          "PPEN_peak": {
+            "description": "peak value extrapolated to all relevant phases",
+            "time": [0, 1],
+            "data": [300, 300],
+            "unit": "MW",
+            "model": "STEP"
+          }
+        }
+      },
+      "aux": {
+        "description": "active auxiliary power (SSEN)",
+        "phases": ["dwl", "d2f", "ftt", "f2d"],
+        "normalise": [true, true, true, true],
+        "consumption": true,
+        "efficiencies": {},
+        "loads": {
+          "eps_upk": {
+            "description": "EPS upkeep",
+            "time": [0, 1],
+            "data": [21, 21],
+            "unit": "MW",
+            "model": "RAMP"
+          }
+        }
+      }
+    }
+  },
+  "BSU": {
+    "description": "Buildings & Site Utilities",
+    "reactive": {
+      "rus": {
+        "description": "reactive utilities power (SSEN)",
+        "phases": ["dwl", "d2f", "ftt", "f2d"],
+        "normalise": [true, true, true, true],
+        "consumption": true,
+        "efficiencies": {},
+        "loads": {
+          "buildings": {
+            "description": "buildings (light/elevators/HVAC; ITER extrapolation)",
+            "time": [0, 1],
+            "data": [26.6, 26.6],
+            "unit": "MW",
+            "model": "RAMP"
+          },
+          "site": {
+            "description": "site utilities",
+            "time": [0, 1],
+            "data": [1.9, 1.9],
+            "unit": "MW",
+            "model": "RAMP"
+          }
+        }
+      }
+    },
+    "active": {
+      "aus": {
+        "description": "active utilities power (SSEN)",
+        "phases": ["dwl", "d2f", "ftt", "f2d"],
+        "normalise": [true, true, true, true],
+        "consumption": true,
+        "efficiencies": {},
+        "loads": {
+          "buildings": {
+            "description": "buildings (light/elevators/HVAC; ITER extrapolation)",
+            "time": [0, 1],
+            "data": [54.8, 54.8],
+            "unit": "MW",
+            "model": "RAMP"
+          },
+          "site": {
+            "description": "site utilities",
+            "time": [0, 1],
+            "data": [3.1, 3.1],
+            "unit": "MW",
+            "model": "RAMP"
+          }
+        }
+      }
+    }
+  },
+  "OTR": {
+    "description": "Other Auxiliary Systems",
+    "reactive": {
+      "rot": {
+        "description": "other reactive power (SSEN)",
+        "phases": ["dwl", "d2f", "ftt", "f2d"],
+        "normalise": [true, true, true, true],
+        "consumption": true,
+        "efficiencies": {},
+        "loads": {
+          "sf6_air": {
+            "description": "ITER extrapolation for: SF6 & compressed air distribution, CCWS, CHWS",
+            "time": [0, 1],
+            "data": [56.4, 56.4],
+            "unit": "MW",
+            "model": "RAMP"
+          }
+        }
+      }
+    },
+    "active": {
+      "aot": {
+        "description": "other active power (SSEN)",
+        "phases": ["dwl", "d2f", "ftt", "f2d"],
+        "normalise": [true, true, true, true],
+        "consumption": true,
+        "efficiencies": {},
+        "loads": {
+          "sf6_air": {
+            "description": "ITER extrapolation for: SF6 & compressed air distribution, CCWS, CHWS",
+            "time": [0, 1],
+            "data": [90.9, 90.9],
+            "unit": "MW",
+            "model": "RAMP"
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "scenario": {
+    "name": "std_scenario",
+    "description": "Standard scenario",
+    "pulses": { "std": 1 }
+  },
+  "pulse_library": {
+    "std": {
+      "description": "Standard pulse",
+      "phases": ["dwl", "d2f", "ftt", "f2d"]
+    }
+  },
+  "phase_library": {
+    "dwl": {
+      "description": "Dwell",
+      "operation": "max",
+      "breakdown": ["csr", "pmp"]
+    },
+    "d2f": {
+      "description": "Transition between dwell and flat-top",
+      "operation": "sum",
+      "breakdown": ["cru", "bri"]
+    },
+    "ftt": {
+      "description": "Flat-top",
+      "operation": "sum",
+      "breakdown": ["plb"]
+    },
+    "f2d": {
+      "description": "Transition between flat-top and dwell",
+      "operation": "sum",
+      "breakdown": ["brt", "crd"]
+    }
+  },
+  "breakdown_library": {
+    "csr": {
+      "description": "Central Solenoid recharge",
+      "duration": "CS-recharge-time"
+    },
+    "pmp": {
+      "description": "Reactor pump-down",
+      "duration": "pumpdown-time"
+    },
+    "cru": {
+      "description": "Current ramp-up",
+      "duration": "ramp-up-time"
+    },
+    "crd": {
+      "description": "Current ramp-down",
+      "duration": "ramp-down-time"
+    },
+    "bri": {
+      "description": "Burn initiation (heat up plasma)",
+      "duration": 19,
+      "unit": "second",
+      "reference": ""
+    },
+    "brt": {
+      "description": "Burn termination (cool down plasma)",
+      "duration": 123,
+      "unit": "second",
+      "reference": ""
+    },
+    "plb": {
+      "description": "Plasma burn",
+      "duration": 2,
+      "unit": "hour",
+      "reference": ""
+    }
+  }
+}
