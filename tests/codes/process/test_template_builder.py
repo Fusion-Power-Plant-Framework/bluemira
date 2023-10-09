@@ -23,6 +23,7 @@
 Test PROCESS template builder
 """
 import os
+from pathlib import Path
 
 import pytest
 from process.io.in_dat import InDat
@@ -226,7 +227,7 @@ def read_indat(filename):
 class TestInDatOneForOne:
     @classmethod
     def setup_class(cls):
-        fp = os.Path(
+        fp = Path(
             try_get_bluemira_private_data_root(),
             "process/DEMO_2023_TEMPLATE_TEST_IN.DAT",
         )
