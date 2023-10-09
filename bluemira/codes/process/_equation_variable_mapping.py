@@ -510,7 +510,7 @@ FV_CONSTRAINT_ITVAR_MAPPING = {
     26: 38,
     27: 39,
     28: 45,
-    30: 46,
+    # 30: 46,  # Keep this as an equality constraint by default
     31: 48,
     32: 49,
     33: 50,

@@ -332,7 +332,6 @@ class TestInDatOneForOne:
         template_builder.adjust_variable("fstrcond", 0.92007)
         template_builder.adjust_variable("fiooic", 0.63437, upper_bound=1.0)
         template_builder.adjust_variable("fjprot", 1.0)
-        template_builder.adjust_variable("fpinj", 1.0)
 
         # Set model switches
         for model_choice in (
@@ -500,6 +499,7 @@ class TestInDatOneForOne:
                 "ucme": 3.0e8,
                 # Suspicous stuff
                 "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+                "fpinj": 1.0,
             }
         )
 
@@ -532,5 +532,4 @@ class TestInDatOneForOne:
 
     def test_inputs(self):
         for k in self.true_data:
-            print(k)
             assert np.allclose(self.true_data[k].get_value, self.template[k].get_value)
