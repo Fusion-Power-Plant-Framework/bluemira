@@ -8,7 +8,6 @@ from bluemira.power_cycle.refactor.loads import PulseSystemLoad
 from bluemira.power_cycle.refactor.time import (
     ScenarioBuilderConfig,
     build_phase_breakdowns,
-    get_scenario_pulses,
     pulse_phase_durations,
 )
 
@@ -30,7 +29,7 @@ class PowerCycleScenario:
 
         self.scenario_config = ScenarioBuilderConfig.from_file(scenario_config)
         self.scenario_config.import_breakdown_data(breakdown_data)
-        self.pulses = get_scenario_pulses(self.scenario_config)
+        self.pulses = self.scenario_config.get_scenario_pulses()
 
         self.pulse_system_loads = {
             k: PulseSystemLoad(self.pulses[k], self.manager_configs) for k in self.pulses

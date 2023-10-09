@@ -105,15 +105,14 @@ class ScenarioBuilderConfig:
     def phase_breakdowns(self):
         return {k: ph_c.breakdown for k, ph_c in self.phase_library.items()}
 
-
-def get_scenario_pulses(
-    scenario_config: ScenarioBuilderConfig,
-) -> Dict[str, List[PhaseConfig]]:
-    return {
-        k: [scenario_config.phase_library[phase] for phase in v.phases]
-        for k, v in scenario_config.pulse_library.items()
-        if k in scenario_config.scenario.pulses
-    }
+    def get_scenario_pulses(
+        self,
+    ) -> Dict[str, List[PhaseConfig]]:
+        return {
+            k: [self.phase_library[phase] for phase in v.phases]
+            for k, v in self.pulse_library.items()
+            if k in self.scenario.pulses
+        }
 
 
 def build_phase_breakdowns(scenario_config: ScenarioBuilderConfig):
