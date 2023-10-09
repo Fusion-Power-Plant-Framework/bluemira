@@ -9,6 +9,7 @@ from bluemira.power_cycle.refactor.load_manager import (
     PowerCycleLoadConfig,
     create_manager_configs,
 )
+from bluemira.power_cycle.refactor.loads import PulseSystemLoad
 from bluemira.power_cycle.refactor.time import (
     ScenarioBuilderConfig,
     build_phase_breakdowns,
@@ -36,10 +37,12 @@ manager_configs = create_manager_configs("manager_config_complete.json")
 
 scenario_config = ScenarioBuilderConfig.from_file("scenario_config.json")
 scenario_config.import_breakdown_data(PowerCycleDurationParameters())
+pulses = get_scenario_pulses(scenario_config)
+
+pulse_system_loads = {k: PulseSystemLoad(pulses[k], manager_configs) for k in pulses}
 
 phase_breakdowns = build_phase_breakdowns(scenario_config)
 
-pulses = get_scenario_pulses(scenario_config)
 durations_arrays = {
     k: pulse_phase_durations(phases, phase_breakdowns) for k, phases in pulses.items()
 }

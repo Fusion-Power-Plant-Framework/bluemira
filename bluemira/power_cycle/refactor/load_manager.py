@@ -257,18 +257,12 @@ class PowerCycleLoadConfig(Config, PlotMixin):
 
         other = copy.deepcopy(other)
 
-        """
-        The addition of 'PowerLoad' instances creates a new 'PowerLoad'
-        instance with joined 'loaddata_set' and 'loadmodel_set'
-        attributes.
-        """
-        return PowerLoad(
-            "Resulting PowerLoad",
-            this.loaddata_set + other.loaddata_set,
-            this.loadmodel_set + other.loadmodel_set,
-        )
-        ...
-        return None
+        # TODO add together loads
+        # problems:
+        #  duplicated load names
+        #  duplicate but different efficiencies
+        # return new load?
+        raise NotImplementedError
 
     def __mul__(self, other: float):
         this = copy.deepcopy(self)
