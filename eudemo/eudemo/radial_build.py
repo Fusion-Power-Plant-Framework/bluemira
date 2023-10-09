@@ -193,6 +193,7 @@ template_builder.add_input_values(
         # Undocumented danger stuff
         "iblanket": 1,
         "lsa": 2,
+        "fpinj": 1.0,
         # Profile parameterisation inputs
         "alphan": 1.0,
         "alphat": 1.45,
@@ -237,14 +238,10 @@ template_builder.add_input_values(
         "shldoth": 0.8,
         "ddwex": 0.15,
         "gapomin": 0.2,
-        "thshield_ib": 0.05,
-        "thshield_ob": 0.05,
-        "thshield_vb": 0.05,
         # Vertical build inputs
         "d_vv_top": 0.3,
         "vgap2": 0.05,
         "shldtth": 0.3,
-        "shldlth": 0.3,
         "divfix": 0.621,
         "d_vv_bot": 0.3,
         # HCD inputs

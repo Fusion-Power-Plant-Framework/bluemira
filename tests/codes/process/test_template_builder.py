@@ -238,7 +238,6 @@ class TestInDatOneForOne:
         cls.true_data = read_indat(fp)
 
         template_builder = PROCESSTemplateBuilder()
-        template_builder.set_run_title("EU-DEMO 2018 baseline")
         template_builder.set_optimisation_algorithm(PROCESSOptimisationAlgorithm.VMCON)
         template_builder.set_optimisation_numerics(max_iterations=1000, tolerance=1e-8)
 
@@ -419,14 +418,10 @@ class TestInDatOneForOne:
                 "shldoth": 0.8,
                 "ddwex": 0.15,
                 "gapomin": 0.2,
-                "thshield_ib": 0.05,
-                "thshield_ob": 0.05,
-                "thshield_vb": 0.05,
                 # Vertical build inputs
                 "d_vv_top": 0.3,
                 "vgap2": 0.05,
                 "shldtth": 0.3,
-                "shldlth": 0.3,
                 "divfix": 0.621,
                 "d_vv_bot": 0.3,
                 # HCD inputs
@@ -530,6 +525,10 @@ class TestInDatOneForOne:
 
         np.testing.assert_allclose(sorted(true_vars), sorted(new_vars))
 
-    def test_inputs(self):
+    def test_inputs_same(self):
         for k in self.true_data:
             assert np.allclose(self.true_data[k].get_value, self.template[k].get_value)
+
+    def test_no_extra_inputs(self):
+        for k in self.template:
+            assert k in self.true_data
