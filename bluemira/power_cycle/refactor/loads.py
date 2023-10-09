@@ -1,4 +1,7 @@
-from typing import Dict, List
+from copy import copy
+from typing import Dict, List, Literal
+
+import numpy.typing as npt
 
 from bluemira.power_cycle.refactor.load_manager import LoadType, PowerCycleManagerConfig
 from bluemira.power_cycle.refactor.time import PhaseConfig
@@ -40,8 +43,9 @@ class PulseSystemLoad:
         # Create new PowerCycleLoadConfig(s) for a given PulseSystemLoad
         ...
 
-    #### PowerCycleLoadConfig
 
+#### PowerCycleLoadConfig
+class Tmp:
     def __radd__(self, other):
         return self.__add__(other)
 
