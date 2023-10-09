@@ -344,5 +344,8 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
 
     if plot:
         plot_radial_build(solver.read_directory)
+    for a in new_params:
+        if a.value is None:
+            a.set_value(getattr(params, a.name).value, source="None from process")
     params.update_from_frame(new_params)
     return params
