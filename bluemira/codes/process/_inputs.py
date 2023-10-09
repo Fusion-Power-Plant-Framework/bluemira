@@ -22,7 +22,7 @@
 Parameter classes/structures for Process
 """
 
-from dataclasses import dataclass, field, fields
+from dataclasses import dataclass, fields
 from typing import Dict, Generator, List, Tuple, Union
 
 from bluemira.codes.process.api import _INVariable
@@ -42,35 +42,11 @@ class ProcessInputs:
     `process.io.python_fortran_dicts.get_dicts()["DICT_DESCRIPTIONS"]`
     """
 
-    bounds: Dict[str, Dict[str, str]] = field(
-        default_factory=lambda: {
-            "2": {"u": "20.0"},
-            "3": {"u": "13"},
-            "4": {"u": "150.0"},
-            "9": {"u": "1.2"},
-            "18": {"l": "3.5"},
-            "29": {"l": "0.1"},
-            "38": {"u": "1.0"},
-            "39": {"u": "1.0"},
-            "42": {"l": "0.05", "u": "0.1"},
-            "50": {"u": "1.0"},
-            "52": {"u": "10.0"},
-            "61": {"l": "0.02"},
-            "103": {"u": "10.0"},
-            "60": {"l": "6.0e4", "u": "9.0e4"},
-            "59": {"l": "0.50", "u": "0.94"},
-        }
-    )
-    # fmt: off
-    icc: List[int] = field(default_factory=lambda: [1, 2, 5, 8, 11, 13, 15, 16, 24, 25,
-                                                    26, 27, 30, 31, 32, 33, 34, 35, 36,
-                                                    60, 62, 65, 68, 72])
-    ixc: List[int] = field(default_factory=lambda: [2, 3, 4, 5, 6, 9, 13, 14, 16, 18,
-                                                    29, 36, 37, 38, 39, 41, 42, 44, 48,
-                                                    49, 50, 51, 52, 53, 54, 56, 57, 58,
-                                                    59, 60, 61, 102, 103, 106, 109, 110,
-                                                    113, 117, 122, 123])
-    # fmt: on
+    # Optimisation problem setup
+    bounds: Dict[str, Dict[str, str]] = None
+    icc: List[int] = None
+    ixc: List[int] = None
+
     # Settings
     maxcal: int = None
     minmax: int = None
