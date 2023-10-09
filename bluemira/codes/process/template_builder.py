@@ -129,8 +129,8 @@ class PROCESSTemplateBuilder:
         self,
         constraint: Constraint,
         value: float,
-        lower_bound: float = 1e-3,
-        upper_bound: float = 1.0,
+        lower_bound: Optional[float] = None,
+        upper_bound: Optional[float] = None,
     ):
         """
         Add an f-value constraint to the PROCESS run
@@ -177,7 +177,8 @@ class PROCESSTemplateBuilder:
                 var_bounds["l"] = str(lower_bound)
             if upper_bound:
                 var_bounds["u"] = str(upper_bound)
-            self.bounds[str(itvar)] = var_bounds
+            if var_bounds:
+                self.bounds[str(itvar)] = var_bounds
 
     def adjust_variable(
         self,
