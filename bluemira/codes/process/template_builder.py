@@ -69,6 +69,12 @@ class PROCESSTemplateBuilder:
         self.maxcal: int = 1000
         self.epsvmc: float = 1.0e-8
 
+    def set_run_title(self, run_title: str):
+        """
+        Set the run title
+        """
+        self.values["runtitle"] = run_title
+
     def set_optimisation_algorithm(self, algorithm_choice: PROCESSOptimisationAlgorithm):
         """
         Set the optimisation algorithm to use
@@ -169,8 +175,7 @@ class PROCESSTemplateBuilder:
 
         else:
             self.ixc.append(itvar)
-            if value:
-                self._add_to_dict(self.variables, name, value)
+            self._add_to_dict(self.variables, name, value)
 
         if lower_bound or upper_bound:
             var_bounds = {}
