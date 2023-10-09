@@ -121,14 +121,14 @@ class PROCESSTemplateBuilder:
         if constraint.value in FV_CONSTRAINT_ITVAR_MAPPING:
             # Sensible (?) defaults. bounds are standard PROCESS for f-values for _most_
             # f-value constraints.
-            self.add_fvalue_constraint(constraint, 0.5, 1e-3, 1.0)
+            self.add_fvalue_constraint(constraint, None, None, None)
         else:
             self._constraints.append(constraint)
 
     def add_fvalue_constraint(
         self,
         constraint: Constraint,
-        value: float,
+        value: Optional[float] = None,
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
     ):
@@ -150,7 +150,7 @@ class PROCESSTemplateBuilder:
     def add_variable(
         self,
         name: str,
-        value: float,
+        value: Optional[float] = None,
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
     ):
@@ -169,7 +169,8 @@ class PROCESSTemplateBuilder:
 
         else:
             self.ixc.append(itvar)
-            self._add_to_dict(self.variables, name, value)
+            if value:
+                self._add_to_dict(self.variables, name, value)
 
         if lower_bound or upper_bound:
             var_bounds = {}
@@ -183,7 +184,7 @@ class PROCESSTemplateBuilder:
     def adjust_variable(
         self,
         name: str,
-        value: float,
+        value: Optional[float] = None,
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
     ):
@@ -200,6 +201,8 @@ class PROCESSTemplateBuilder:
             self.add_variable(name, value, lower_bound, upper_bound)
         else:
             self._add_to_dict(self.variables, name, value)
+            if (lower_bound or upper_bound) and str(itvar) not in self.bounds:
+                self.bounds[str(itvar)] = {}
 
             if lower_bound:
                 self.bounds[str(itvar)]["l"] = str(lower_bound)
