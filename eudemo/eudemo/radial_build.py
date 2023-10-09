@@ -213,7 +213,6 @@ template_builder.add_input_values(
         "psepbqarmax": 9.2,
         "aspect": 3.1,
         "m_s_limit": 0.1,
-        "kappa": 1.848,  # Should be overwritten
         "triang": 0.5,
         "q0": 1.0,
         "ssync": 0.6,
@@ -241,6 +240,7 @@ template_builder.add_input_values(
         "d_vv_top": 0.3,
         "vgap2": 0.05,
         "shldtth": 0.3,
+        "shldlth": 0.3,
         "divfix": 0.621,
         "d_vv_bot": 0.3,
         # HCD inputs
@@ -295,6 +295,7 @@ template_builder.add_input_values(
         # "max_vv_stress": 93.0e6,
         # Inputs we don't care about but must specify
         "cfactr": 0.75,  # Ha!
+        "kappa": 1.848,  # Should be overwritten
         "walalw": 8.0,  # Should never get even close to this
         "tlife": 40.0,
         "abktflnc": 15.0,
@@ -305,7 +306,6 @@ template_builder.add_input_values(
         "prn1": 0.4,
         "zeffdiv": 3.5,
         "bmxlim": 11.2,
-        "fpinj": 1.0,
         "ffuspow": 1.0,
         "fpeakb": 1.0,
         "divdum": 1,

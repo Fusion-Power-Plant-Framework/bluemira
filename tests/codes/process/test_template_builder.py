@@ -112,6 +112,7 @@ class TestPROCESSTemplateBuilder:
         t.add_variable("rmajor", 9.0)
         t.add_variable("te", 12.0)
         t.add_variable("dene", 8.0e19)
+        t.add_variable("fwalld", 0.1)
         _ = t.make_inputs()
         assert len(caplog.messages) == 1
         warning = extract_warning(caplog)
