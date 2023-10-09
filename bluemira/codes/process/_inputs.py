@@ -268,6 +268,7 @@ class ProcessInputs:
     csi: float = None
     # cturbb: float = 38.0 # defaults cannot be right
     decomf: float = None
+    dintrt: float = None
     fcap0: float = None
     fcap0cp: float = None
     fcdfuel: float = None
@@ -308,6 +309,7 @@ class ProcessInputs:
     discount_rate: float = None
     startupratio: float = None
     tlife: float = None
+    bkt_life_csf: int = None
     # ...
 
     # CS fatigue

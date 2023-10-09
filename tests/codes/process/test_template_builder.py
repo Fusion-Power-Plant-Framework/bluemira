@@ -25,6 +25,7 @@ Test PROCESS template builder
 import os
 from pathlib import Path
 
+import numpy as np
 import pytest
 from process.io.in_dat import InDat
 
@@ -49,9 +50,11 @@ from bluemira.codes.process._model_mapping import (
     PROCESSOptimisationAlgorithm,
     PlasmaCurrentScalingLaw,
     PlasmaGeometryModel,
+    PlasmaNullConfigurationModel,
     PlasmaPedestalModel,
     PlasmaProfileModel,
     PowerFlowModel,
+    PrimaryPumpingModel,
     SecondaryCycleModel,
     ShieldThermalHeatUse,
     SolenoidSwitchModel,
@@ -218,7 +221,7 @@ class TestPROCESSTemplateBuilder:
 
 
 def read_indat(filename):
-    naughties = ["runtitle"]
+    naughties = ["runtitle", "pulsetimings"]
     data = InDat(filename=filename).data
     return {k: v for k, v in data.items() if k not in naughties}
 
@@ -329,6 +332,7 @@ class TestInDatOneForOne:
         template_builder.adjust_variable("fstrcond", 0.92007)
         template_builder.adjust_variable("fiooic", 0.63437, upper_bound=1.0)
         template_builder.adjust_variable("fjprot", 1.0)
+        template_builder.adjust_variable("fpinj", 1.0)
 
         # Set model switches
         for model_choice in (
@@ -337,6 +341,7 @@ class TestInDatOneForOne:
             PlasmaCurrentScalingLaw.ITER_REVISED,
             PlasmaProfileModel.CONSISTENT,
             PlasmaPedestalModel.PEDESTAL_GW,
+            PlasmaNullConfigurationModel.SINGLE_NULL,
             EPEDScalingModel.SAARELMA,
             BetaLimitModel.THERMAL,
             DensityLimitModel.GREENWALD,
@@ -353,6 +358,7 @@ class TestInDatOneForOne:
             TFSuperconductorModel.NB3SN_WST,
             TFWindingPackTurnModel.INTEGER_TURN,
             FISPACTSwitchModel.OFF,
+            PrimaryPumpingModel.PRESSURE_DROP_INPUT,
             TFNuclearHeatingModel.INPUT,
             CostModel.TETRA_1990,
             AvailabilityModel.INPUT,
@@ -446,7 +452,6 @@ class TestInDatOneForOne:
                 "ncls": [1, 1, 2, 2],
                 "ngrp": 4,
                 "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
-                "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0],
                 # TF coil inputs
                 "n_tf": 16,
                 "casthi": 0.06,
@@ -480,6 +485,21 @@ class TestInDatOneForOne:
                 "divdum": 1,
                 "ibkt_life": 1,
                 "fkzohm": 1.0245,
+                "iinvqd": 1,
+                "dintrt": 0.0,
+                "fcap0": 1.15,
+                "fcap0cp": 1.06,
+                "fcontng": 0.15,
+                "fcr0": 0.065,
+                "fkind": 1.0,
+                "ifueltyp": 1,
+                "discount_rate": 0.06,
+                "bkt_life_csf": 1,
+                "ucblvd": 280.0,
+                "ucdiv": 5e5,
+                "ucme": 3.0e8,
+                # Suspicous stuff
+                "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
             }
         )
 
@@ -497,3 +517,20 @@ class TestInDatOneForOne:
             for kk in new_bounds[k]:
                 new_bounds[k][kk] = float(new_bounds[k][kk])
         assert compare_dicts(true_bounds, new_bounds)
+
+    def test_indat_constraints(self):
+        true_cons = self.true_data.pop("icc").get_value
+        new_cons = self.template.pop("icc").get_value
+
+        np.testing.assert_allclose(sorted(true_cons), sorted(new_cons))
+
+    def test_indat_variables(self):
+        true_vars = self.true_data.pop("ixc").get_value
+        new_vars = self.template.pop("ixc").get_value
+
+        np.testing.assert_allclose(sorted(true_vars), sorted(new_vars))
+
+    def test_inputs(self):
+        for k in self.true_data:
+            print(k)
+            assert np.allclose(self.true_data[k].get_value, self.template[k].get_value)

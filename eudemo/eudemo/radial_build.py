@@ -43,9 +43,11 @@ from bluemira.codes.process._model_mapping import (
     PROCESSOptimisationAlgorithm,
     PlasmaCurrentScalingLaw,
     PlasmaGeometryModel,
+    PlasmaNullConfigurationModel,
     PlasmaPedestalModel,
     PlasmaProfileModel,
     PowerFlowModel,
+    PrimaryPumpingModel,
     SecondaryCycleModel,
     ShieldThermalHeatUse,
     SolenoidSwitchModel,
@@ -176,6 +178,8 @@ for model_choice in (
     CostModel.TETRA_1990,
     AvailabilityModel.INPUT,
     OutputCostsSwitch.NO,
+    PlasmaNullConfigurationModel.SINGLE_NULL,
+    PrimaryPumpingModel.PRESSURE_DROP_INPUT,
 ):
     template_builder.set_model(model_choice)
 
