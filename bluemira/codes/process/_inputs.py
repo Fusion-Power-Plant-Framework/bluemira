@@ -661,7 +661,7 @@ class ProcessInputs:
     # Physics
     alphaj: float = 1.0
     alphan: float = 0.25
-    alphat: float = 0.5
+    alphat: float = None
     aspect: float = 2.907
     beamfus0: float = 1.0
     beta: float = 0.042
@@ -753,7 +753,7 @@ class ProcessInputs:
         """
         out_dict = {}
         for name, value in self:
-            if name not in ["icc", "ixc", "bounds"]:
+            if name not in ["icc", "ixc", "bounds"] and value is not None:
                 new_val = _INVariable(name, value, "Parameter", "", "")
                 out_dict[name] = new_val
         out_dict["icc"] = _INVariable(

@@ -219,7 +219,7 @@ template_builder.add_input_values(
         "impvar": 13,
         # Profile parameterisation inputs
         "alphan": 1.0,
-        "alphat": 1.45,
+        # "alphat": 1.45,
         "rhopedn": 0.94,
         "rhopedt": 0.94,
         "tbeta": 2.0,
