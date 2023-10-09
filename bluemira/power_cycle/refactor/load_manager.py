@@ -11,6 +11,7 @@ from scipy.interpolate import interp1d
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.power_cycle.errors import PowerLoadError
 from bluemira.power_cycle.refactor.base import Config, LibraryConfigDescriptor
 from bluemira.power_cycle.tools import read_json, validate_axes
 
@@ -108,8 +109,6 @@ class PowerCycleSubLoadConfig(Config, PlotMixin):
     model: Optional[Union[LoadModel, str]] = None
     unit: str = "W"
     description: str = ""
-    _shift: float = 0
-    _norm: float = 0
 
     def __post_init__(self):
         if any(isinstance(i, type(None)) for i in (self.time, self.data, self.model)):
@@ -229,7 +228,59 @@ class PowerCycleLoadConfig(Config, PlotMixin):
         }
 
     def build_timeseries(self):
-        return np.unique(np.concatenate([ld.time for ld in self.loads.values()]))
+        try:
+            return np.unique(np.concatenate([ld.time for ld in self.loads.values()]))
+        except ValueError:
+            if not self.loads:
+                raise PowerLoadError(f"{self.name} has no loads") from None
+            raise
+
+    def load_total(self, timeseries: np.ndarray):
+        return np.sum(
+            [subload.interpolate(timeseries) for subload in self.loads.values()],
+            axis=0,
+        )
+
+    def __radd__(self, other):
+        """
+        The reverse addition operator, to enable the 'sum' method for
+        children classes that define the '__add__' method.
+        """
+        return self.__add__(other)
+
+    def __add__(self, other: Union[PowerCycleLoadConfig, float]):
+        this = copy.deepcopy(self)
+        if isinstance(other, float):
+            for load in this.loads.values():
+                load.data += other
+            return this
+
+        other = copy.deepcopy(other)
+
+        """
+        The addition of 'PowerLoad' instances creates a new 'PowerLoad'
+        instance with joined 'loaddata_set' and 'loadmodel_set'
+        attributes.
+        """
+        return PowerLoad(
+            "Resulting PowerLoad",
+            this.loaddata_set + other.loaddata_set,
+            this.loadmodel_set + other.loadmodel_set,
+        )
+        ...
+        return None
+
+    def __mul__(self, other: float):
+        this = copy.deepcopy(self)
+        for load in this.loads.values():
+            load.data *= other
+        return this
+
+    def __truediv__(self, other: float):
+        this = copy.deepcopy(self)
+        for load in this.loads.values():
+            load.data /= other
+        return this
 
     def plot(
         self,
@@ -295,52 +346,6 @@ class PowerCycleLoadConfig(Config, PlotMixin):
                 )
 
         return ax
-
-    def __radd__(self, other):
-        """
-        The reverse addition operator, to enable the 'sum' method for
-        children classes that define the '__add__' method.
-        """
-        return self.__add__(other)
-
-    def __add__(self, other: Union[PowerCycleLoadConfig, float]):
-        this = copy.deepcopy(self)
-        if isinstance(other, float):
-            for load in this.loads.values():
-                load.data += other
-            return this
-
-        other = copy.deepcopy(other)
-
-        """
-        The addition of 'PowerLoad' instances creates a new 'PowerLoad'
-        instance with joined 'loaddata_set' and 'loadmodel_set'
-        attributes.
-        """
-        return PowerLoad(
-            "Resulting PowerLoad",
-            this.loaddata_set + other.loaddata_set,
-            this.loadmodel_set + other.loadmodel_set,
-        )
-        ...
-
-    def __mul__(self, other: float):
-        this = copy.deepcopy(self)
-        for load in this.loads.values():
-            load.data *= other
-        return this
-
-    def __truediv__(self, other: float):
-        this = copy.deepcopy(self)
-        for load in this.loads.values():
-            load.data /= other
-        return this
-
-    def load_total(self, timeseries: np.ndarray):
-        return np.sum(
-            [subload.interpolate(timeseries) for subload in self.loads.values()],
-            axis=0,
-        )
 
 
 @dataclass

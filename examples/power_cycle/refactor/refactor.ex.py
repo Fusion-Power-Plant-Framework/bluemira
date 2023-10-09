@@ -7,7 +7,6 @@ import numpy as np
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.refactor.load_manager import (
     PowerCycleLoadConfig,
-    PowerCycleSubLoadConfig,
     create_manager_configs,
 )
 from bluemira.power_cycle.refactor.time import (
