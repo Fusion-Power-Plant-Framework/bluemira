@@ -177,19 +177,7 @@ class ProcessInputs:
     cpttf: float = None
     cpttf_max: float = None
     dcase: float = None
-    dcond: List[float] = field(
-        default_factory=lambda: [
-            6080.0,
-            6080.0,
-            6070.0,
-            6080.0,
-            6080.0,
-            8500.0,
-            6070.0,
-            8500.0,
-            8500.0,
-        ]
-    )
+    dcond: List[float] = None
     dcondins: float = None
     dhecoil: float = None
     farc4tf: float = None
@@ -281,7 +269,7 @@ class ProcessInputs:
     cconshpf: float = None
     cconshtf: float = None
     cfactr: float = None
-    cfind: List[float] = field(default_factory=lambda: [0.244, 0.244, 0.244, 0.29])
+    cfind: List[float] = None
     cland: float = None
     costexp: float = None
     costexp_pebbles: float = None
@@ -534,7 +522,7 @@ class ProcessInputs:
     # Impurity radiation
     coreradius: float = None
     coreradiationfraction: float = None
-    fimp: List[float] = field(default_factory=lambda: [1.0, 0.1, *([0.0] * 12)])
+    fimp: List[float] = None
     fimpvar: float = None
     impvar: int = None
 
@@ -624,36 +612,32 @@ class ProcessInputs:
     alfapf: float = None
     alstroh: float = None
     coheof: float = None
-    cptdin: List[float] = field(default_factory=lambda: [40000.0] * 22)
+    cptdin: List[float] = None
     etapsu: float = None
     fcohbop: float = None
     fcuohsu: float = None
     fcupfsu: float = None
     fvssu: float = None
-    ipfloc: List[int] = field(
-        default_factory=lambda: [2, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    )
+    ipfloc: List[int] = None
     ipfres: int = None  # Listed as an output
     isumatoh: int = None
     isumatpf: int = None
     i_pf_current: int = None
-    ncls: List[int] = field(default_factory=lambda: [1, 1, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0])
+    ncls: List[int] = None
     nfxfh: int = None
     ngrp: int = None
     ohhghf: float = None
     oh_steel_frac: float = None
     pfclres: float = None
-    rjconpf: List[float] = field(default_factory=lambda: [30000000] * 22)
+    rjconpf: List[float] = None
     routr: float = None
     rpf2: float = None
-    rref: List[float] = field(default_factory=lambda: [7] * 10)
+    rref: List[float] = None
     sigpfcalw: float = None
     sigpfcf: float = None
-    vf: List[float] = field(default_factory=lambda: [0.3] * 22)
+    vf: List[float] = None
     vhohc: float = None
-    zref: List[float] = field(
-        default_factory=lambda: [3.6, 1.2, 2.5, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    )
+    zref: List[float] = None
     bmaxcs_lim: float = None
     fbmaxcs: float = None
     ld_ratio_cst: float = None
