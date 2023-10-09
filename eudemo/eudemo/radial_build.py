@@ -137,7 +137,7 @@ template_builder.adjust_variable("fstrcase", 1.0)
 template_builder.adjust_variable("ftmargtf", 1.0)
 template_builder.adjust_variable("ftmargoh", 1.0)
 template_builder.adjust_variable("ftaulimit", 1.0)
-template_builder.adjust_variable("fjohc", 0.57941)
+template_builder.adjust_variable("fjohc", 0.57941, upper_bound=1.0)
 template_builder.adjust_variable("fjohc0", 0.53923, upper_bound=1.0)
 template_builder.adjust_variable("foh_stress", 1.0)
 template_builder.adjust_variable("fbetatry", 0.48251)
@@ -146,9 +146,8 @@ template_builder.adjust_variable("fmaxvvstress", 1.0)
 template_builder.adjust_variable("fpsepbqar", 1.0)
 template_builder.adjust_variable("fvdump", 1.0)
 template_builder.adjust_variable("fstrcond", 0.92007)
-template_builder.adjust_variable("fiooic", 0.63437)
+template_builder.adjust_variable("fiooic", 0.63437, upper_bound=1.0)
 template_builder.adjust_variable("fjprot", 1.0)
-template_builder.adjust_variable("fpinj", 1.0)
 
 # Set model switches
 for model_choice in (
@@ -205,7 +204,6 @@ template_builder.add_input_values(
         # Plasma impurity stuff
         "coreradius": 0.75,
         "coreradiationfraction": 0.6,
-        "taulimit": 5.0,
         # Important stuff
         "pnetelin": 500.0,
         "tbrnmn": 7.2e3,
@@ -259,7 +257,7 @@ template_builder.add_input_values(
         "tramp": 500.0,
         # CS / PF coil inputs
         # "t_crack_radial": 0.006,
-        "t_crack_vertical": 0.004,
+        "t_crack_vertical": 0.4e-3,
         # "t_structural_radial": 0.07,
         # "t_structural_vertical": 0.022,
         # "sf_vertical_crack": 1.0,
