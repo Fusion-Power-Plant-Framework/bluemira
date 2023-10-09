@@ -7,7 +7,6 @@ from bluemira.power_cycle.refactor.load_manager import create_manager_configs
 from bluemira.power_cycle.refactor.loads import PulseSystemLoad
 from bluemira.power_cycle.refactor.time import (
     ScenarioBuilderConfig,
-    build_phase_breakdowns,
     pulse_phase_durations,
 )
 
@@ -45,7 +44,7 @@ class PowerCycleScenario:
         ...
 
     def tmp(self):
-        phase_breakdowns = build_phase_breakdowns(self.scenario_config)
+        phase_breakdowns = self.scenario_config.build_phase_breakdowns()
 
         durations_arrays = {
             k: pulse_phase_durations(phases, phase_breakdowns)

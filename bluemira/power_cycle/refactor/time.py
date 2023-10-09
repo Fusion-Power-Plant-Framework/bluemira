@@ -114,26 +114,25 @@ class ScenarioBuilderConfig:
             if k in self.scenario.pulses
         }
 
-
-def build_phase_breakdowns(scenario_config: ScenarioBuilderConfig):
-    """
-    Build pulse from 'PowerCyclePhase' objects stored in the
-    'phase' attributes of each 'PhaseLoad' instance in the
-    'phaseload_set' list.
-    """
-    phase_op = scenario_config.phase_operations()
-    durations = scenario_config.breakdown_durations()
-    phase_breakdowns = {}
-    for phase, breakdowns in scenario_config.phase_breakdowns().items():
-        phase_breakdowns[phase] = getattr(np, phase_op[phase])(
-            [durations[br] for br in breakdowns]
-        )
-        if phase_breakdowns[phase] < 0:
-            raise ValueError(
-                f"{phase} phase duration must be positive: {phase_breakdowns[phase]}s"
+    def build_phase_breakdowns(self):
+        """
+        Build pulse from 'PowerCyclePhase' objects stored in the
+        'phase' attributes of each 'PhaseLoad' instance in the
+        'phaseload_set' list.
+        """
+        phase_op = self.phase_operations()
+        durations = self.breakdown_durations()
+        phase_breakdowns = {}
+        for phase, breakdowns in self.phase_breakdowns().items():
+            phase_breakdowns[phase] = getattr(np, phase_op[phase])(
+                [durations[br] for br in breakdowns]
             )
+            if phase_breakdowns[phase] < 0:
+                raise ValueError(
+                    f"{phase} phase duration must be positive: {phase_breakdowns[phase]}s"
+                )
 
-    return phase_breakdowns
+        return phase_breakdowns
 
 
 def pulse_phase_durations(phases: List[PhaseConfig], phase_breakdowns: Dict[str, float]):
