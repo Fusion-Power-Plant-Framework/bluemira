@@ -339,7 +339,7 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     plot = build_config.pop("plot", False)
     if run_mode == "run":
         build_config["template_in_dat"] = template
-    solver = systems_code_solver({}, build_config)
+    solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
 
     if plot:
