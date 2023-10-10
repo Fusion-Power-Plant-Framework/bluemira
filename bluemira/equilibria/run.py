@@ -449,7 +449,7 @@ class PulsedCoilsetDesign(ABC):
                 "Unable to relax the breakdown optimisation for coil sizes."
             )
 
-        bluemira_print(f"Premagnetisation flux = {2*np.pi * psi_premag:.2f} V.s")
+        bluemira_print(f"Premagnetisation flux = {2 * np.pi * psi_premag:.2f} V.s")
 
         self._psi_premag = 2 * np.pi * psi_premag
         self.take_snapshot(self.BREAKDOWN, breakdown, result.coilset, problem)
@@ -634,7 +634,7 @@ class PulsedCoilsetDesign(ABC):
             else:
                 psi_name, psi_val = r"$\Psi_{b}$", snap.eq.get_OX_points()[1][0].psi
 
-            axi.set_title(f"{k} {psi_name}: {2* np.pi * psi_val:.2f} V.s")
+            axi.set_title(f"{k} {psi_name}: {2 * np.pi * psi_val:.2f} V.s")
         return f
 
 

@@ -573,10 +573,10 @@ old_coilset.plot(ax=ax_1, label=True)
 
 sof.plot(ax=ax_2)
 sof.coilset.plot(ax=ax_2, label=True)
-ax_2.set_title("SOF $\\Psi_{b} = $" + f"{sof.get_OX_psis()[1] * 2*np.pi:.2f} V.s")
+ax_2.set_title("SOF $\\Psi_{b} = $" + f"{sof.get_OX_psis()[1] * 2 * np.pi:.2f} V.s")
 
 
 eof.plot(ax=ax_3)
 eof.coilset.plot(ax=ax_3, label=True)
-ax_3.set_title("EOF $\\Psi_{b} = $" + f"{eof.get_OX_psis()[1] * 2*np.pi:.2f} V.s")
+ax_3.set_title("EOF $\\Psi_{b} = $" + f"{eof.get_OX_psis()[1] * 2 * np.pi:.2f} V.s")
 plt.show()

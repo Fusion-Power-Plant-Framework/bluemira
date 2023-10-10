@@ -90,7 +90,7 @@ class TestSTEquilibrium:
         coils = []
         for i, (x, z, dx, dz) in enumerate(zip(xc, zc, dxc, dzc)):
             coil = SymmetricCircuit(
-                Coil(x=x, z=z, dx=dx, dz=dz, name=f"PF_{i+1}", ctype="PF")
+                Coil(x=x, z=z, dx=dx, dz=dz, name=f"PF_{i + 1}", ctype="PF")
             )
             coils.append(coil)
         coilset = CoilSet(*coils)
