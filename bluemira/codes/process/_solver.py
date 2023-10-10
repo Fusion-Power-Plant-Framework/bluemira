@@ -31,7 +31,7 @@ from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import BaseRunMode, CodesSolver
 from bluemira.codes.process._run import Run
-from bluemira.codes.process._setup import Setup
+from bluemira.codes.process._setup import Setup, create_template_from_path
 from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
@@ -123,8 +123,6 @@ class Solver(CodesSolver):
         self._run: Union[Run, None] = None
         self._teardown: Union[Teardown, None] = None
 
-        self._input_params = params
-
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", Path.cwd().as_posix())
@@ -134,26 +132,19 @@ class Solver(CodesSolver):
         self.in_dat_path = _build_config.pop(
             "in_dat_path", Path(self.run_directory, "IN.DAT").as_posix()
         )
+
+        if isinstance(self.template_in_dat, str):
+            self.template_in_dat = create_template_from_path(self.template_in_dat)
+
+        self.params = ProcessSolverParams.from_defaults(self.template_in_dat)
+        self.params.update(params)
+
         if len(_build_config) > 0:
             quoted_delim = "', '"
             bluemira_warn(
                 f"'{self.name}' solver received unknown build_config arguments: "
                 f"'{quoted_delim.join(_build_config.keys())}'."
             )
-
-    @property
-    def params(self) -> Union[Dict, ParameterFrame, ProcessSolverParams]:
-        """
-        Solver params
-
-        Notes
-        -----
-        The full frame is only available after execute has been run because the
-        template is only initialised in setup
-        """
-        if self._setup is not None:
-            return self._setup.params
-        return self._input_params
 
     def execute(self, run_mode: Union[str, RunMode]) -> ParameterFrame:
         """
@@ -169,9 +160,8 @@ class Solver(CodesSolver):
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
         self._setup = Setup(
-            self._input_params,
+            self.params,
             self.in_dat_path,
-            self.template_in_dat,
             self.problem_settings,
         )
         self._run = Run(self.params, self.in_dat_path, self.binary)

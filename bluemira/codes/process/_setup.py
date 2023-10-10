@@ -34,7 +34,6 @@ from bluemira.codes.process._model_mapping import (
 )
 from bluemira.codes.process.api import ENABLED, InDat, _INVariable, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
-from bluemira.codes.process.params import ProcessSolverParams
 
 
 class Setup(CodesSetup):
@@ -63,21 +62,12 @@ class Setup(CodesSetup):
         self,
         params: Union[Dict, ParameterFrame],
         in_dat_path: str,
-        template_in_dat: Optional[Union[str, ProcessInputs]] = None,
         problem_settings: Optional[Dict[str, Union[float, str]]] = None,
     ):
+        super().__init__(params, PROCESS_NAME)
+
         self.in_dat_path = in_dat_path
-
-        if isinstance(template_in_dat, str):
-            template_in_dat = _create_template_from_path(template_in_dat)
-
-        _params = ProcessSolverParams.from_defaults(template_in_dat)
-
-        self.template_in_dat = _params.template_defaults
         self.problem_settings = problem_settings if problem_settings is not None else {}
-
-        _params.update(params)
-        super().__init__(_params, PROCESS_NAME)
 
     def run(self):
         """
@@ -108,16 +98,14 @@ class Setup(CodesSetup):
             Default, True
         """
         # Load defaults in bluemira folder
-        writer = _make_writer(self.template_in_dat)
+        writer = _make_writer(self.params.template_defaults)
 
         if use_bp_inputs:
             inputs = self._get_new_inputs(remapper=update_obsolete_vars)
             for key, value in inputs.items():
-                if value is not None:
-                    writer.add_parameter(key, value)
+                writer.add_parameter(key, value)
             for key, value in self.problem_settings.items():
-                if value is not None:
-                    writer.add_parameter(key, value)
+                writer.add_parameter(key, value)
 
             self._validate_models(writer)
 
@@ -144,7 +132,7 @@ def _make_writer(template_in_dat: Dict[str, _INVariable]) -> InDat:
     return indat
 
 
-def _create_template_from_path(template_in_dat: str) -> ProcessInputs:
+def create_template_from_path(template_in_dat: str) -> ProcessInputs:
     if not ENABLED:
         raise CodesError(
             f"{PROCESS_NAME} is not installed cannot read template {template_in_dat}"
