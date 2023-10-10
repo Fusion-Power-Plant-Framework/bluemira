@@ -4,85 +4,28 @@
 Utility functions for the power cycle model.
 """
 import json
+from typing import Any, Dict
 
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.utilities.tools import flatten_iterable
 
-
-def copy_dict_without_key(dictionary, key_to_remove):
+def read_json(file_path) -> Dict[str, Any]:
     """
-    Returns a dictionary that is a copy of the parameter 'dictionary',
-    but without the 'key_to_remove' key.
+    Returns the contents of a 'json' file.
     """
-    return {k: dictionary[k] for k in dictionary if k != key_to_remove}
+    with open(file_path) as json_file:
+        return json.load(json_file)
 
 
-def unnest_list(list_of_lists):
+def create_axes(ax=None):
     """
-    Un-nest a list of lists into a simple list, maintaining order.
-    """
-    return [item for sublist in list_of_lists for item in sublist]
+    Create axes object.
 
-
-def unique_and_sorted_vector(vector):
-    """
-    Returns a sorted list, in ascending order, created from the set
-    created from a vector, as a way to eliminate redundant entries.
-    """
-    return sorted(set(vector))
-
-
-def remove_characters(string, character_list):
-    """
-    Remove all 'str' in a list from a main 'string' parameter.
-    """
-    for character in character_list:
-        string = string.replace(character, "")
-    return string
-
-
-def read_json(file_path):
-    """
-    Returns the contents of a 'json' file in 'dict' format.
-    """
-    try:
-        with open(file_path) as json_file:
-            contents_dict = json.load(json_file)
-    except json.decoder.JSONDecodeError:
-        raise TypeError(
-            "The file could not be read as a 'json' file.",
-        )
-    return _array_converter(contents_dict)
-
-
-def _array_converter(contents):
-    for k, v in contents.items():
-        if isinstance(v, dict):
-            contents[k] = _array_converter(v)
-        elif isinstance(v, list):
-            if all(isinstance(val, (int, float)) for val in flatten_iterable(v)):
-                contents[k] = np.array(v)
-            elif all(isinstance(val, bool) for val in flatten_iterable(v)):
-                contents[k] = np.array(v, bool)
-
-    return contents
-
-
-def validate_axes(ax=None):
-    """
-    Validate axes argument for plotting method. If 'None', create
-    new 'axes' instance.
+    If 'None', creates a new 'axes' instance.
     """
     if ax is None:
         _, ax = plt.subplots()
-    elif not isinstance(ax, plt.Axes):
-        raise TypeError(
-            "The argument 'ax' used to create a plot is not an "
-            "instance of the 'Axes' class, but an instance of the "
-            f"'{ax.__class__}' class instead."
-        )
     return ax
 
 

@@ -4,16 +4,14 @@
 Classes for the definition of power loads in the power cycle model.
 """
 import copy
-from abc import ABC, abstractproperty
+from abc import ABC
 from typing import Iterable, List, Union
 
 import numpy as np
 
 from bluemira.base.constants import EPS
-from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.power_cycle.errors import (
     PhaseLoadError,
-    PowerLoadError,
     PulseLoadError,
 )
 from bluemira.power_cycle.tools import validate_axes
@@ -62,7 +60,6 @@ class PowerCycleLoadABC(ABC):
         return np.unique(
             np.concatenate([load_object.intrinsic_time for load_object in load_set])
         )
-
 
     def __radd__(self, other):
         """
@@ -137,58 +134,6 @@ class LoadData(PowerCycleLoadABC):
         """
         self.time += time_shift
         self._shift.append(time_shift)
-
-
-class PowerLoad(PowerCycleLoadABC):
-    """
-    Generic representation of a power load.
-
-    Defines a power load with a set of 'LoadData' instances. Each
-    instance must be accompanied by a 'LoadModel' specification, used to
-    compute additional values between data points. This enables the
-    instance to compute time-dependent curves.
-
-    Instances of the 'PowerLoad' class can be added to each other, and
-    a list of them can be summed. Instances can also be multiplied and
-    divided by scalar numerical values.
-
-    Parameters
-    ----------
-    name: str
-        Description of the 'PowerLoad' instance.
-    loaddata_set: LoadData | list[LoadData]
-        Collection of instances of the 'LoadData' class that define
-        the 'PowerLoad' object.
-    loadmodel_set: LoadModel | list[LoadModel]
-        Mathematical loadmodel used to compute values between
-        'loaddata_set' definition points.
-
-    Properties
-    ----------
-    intrinsic_time: list[int | float]
-        List that contains all values in the 'intrinsic_time' properties
-        of the different 'LoadData' objects contained in the
-        'loaddata_set' attribute, ordered and with no repetitions.
-    """
-
-    _n_points = 100
-
-    def __init__(
-        self,
-        name,
-        loaddata_set: List[LoadData],
-    ):
-        self.name = name
-        self.loaddata_set = loaddata_set
-
-    @property
-    def intrinsic_time(self):
-        """
-        Single time vector that contains all values used to define the
-        different 'LoadData' objects contained in the 'loaddata_set'
-        attribute, ordered and with no repetitions.
-        """
-        return self.build_timeseries(self.loaddata_set)
 
 
 class PhaseLoad(PowerCycleLoadABC):
@@ -524,67 +469,3 @@ class PulseLoad(PowerCycleLoadABC):
             this.pulse,
             this.phaseload_set + other.phaseload_set,
         )
-
-
-class ScenarioLoad(PowerCycleLoadABC):
-    """
-    Generic representation of the total power load during a scenario.
-
-    Defines the phase load with a set of 'PulseLoad' instances. Each
-    instance must be accompanied by a 'repetition' specification, used
-    to indicate how many times that pulse load is repeated in the
-    scenario before a new set of pulse loads starts. This enables the
-    instance to adjust the evolution of pulse loads accordingly, if
-    changes occur to the plant scenario.
-
-    Parameters
-    ----------
-    name: str
-        Description of the 'ScenarioLoad' instance.
-    scenario: 'PowerCycleScenario'
-        Scenario specification, that determines the necessary pulses to
-        be characterized by 'PulseLoad' objects.
-    pulseload_set: PulseLoad | list[PulseLoad]
-        Collection of instances of the 'PulseLoad' class that define
-        the 'ScenarioLoad' object.
-
-    Attributes
-    ----------
-    scenario: PowerCycleScenario
-        Scenario specification, determined by the 'pulse' attributes of
-        the 'PulseLoad' instances used to define the 'ScenarioLoad'.
-
-    Properties
-    ----------
-    intrinsic_time: list[int | float]
-        List that contains all values in the 'intrinsic_time' properties
-        of the different 'PulseLoad' objects contained in the
-        'pulseload_set' attribute, ordered and with no repetitions.
-    timeline_time: list[int | float]
-        List that contains all values in the 'intrinsic_time' properties
-        of the different 'PulseLoad' objects contained in the
-        '_timeline_set' attribute, ordered and with no repetitions.
-    """
-
-    @property
-    def intrinsic_time(self):
-        """
-        Single time vector that contains all values used to define the
-        different 'PulseLoad' objects contained in the 'pulseload_set'
-        attribute (i.e. all times are their original values).
-        """
-        # return self.build_timeseries(self.pulseload_set)
-
-    @intrinsic_time.setter
-    def intrinsic_time(self, value) -> None:
-        pass
-
-    @property
-    def timeline_time(self):
-        """
-        Single time vector that contains all values used to define the
-        different 'PowerLoad' objects contained in the '_timeline_set'
-        attribute (i.e. all times are shifted in respect to the
-        duration of previous pulses).
-        """
-        # return self.build_timeseries(self._timeline_set)

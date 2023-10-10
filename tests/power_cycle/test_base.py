@@ -4,14 +4,8 @@ import pytest
 
 from bluemira.power_cycle.base import (
     PowerCycleABC,
-    PowerCycleImporterABC,
     PowerCycleLoadABC,
     PowerCycleTimeABC,
-)
-from bluemira.power_cycle.tools import (
-    validate_list,
-    validate_nonnegative,
-    validate_vector,
 )
 from tests.power_cycle.kits_for_tests import ToolsTestKit
 
@@ -47,15 +41,6 @@ class TestPowerCycleABC:
         self.another_sample = another_sample
         self.test_arguments = test_arguments
 
-    def test_validate_class(self):
-        for argument in self.test_arguments:
-            if isinstance(argument, self.SampleConcreteClass):
-                validated_argument = self.sample.validate_class(argument)
-                assert validated_argument == argument
-            else:
-                with pytest.raises(TypeError):
-                    validated_argument = self.sample.validate_class(argument)
-
     def test_equality(self):
         sample = self.sample
         another_sample = self.another_sample
@@ -74,7 +59,6 @@ class TestPowerCycleTimeABC:
         abstract class of the test.
         """
 
-        pass
 
     def setup_method(self):
         name = "A sample instance name"
@@ -86,24 +70,6 @@ class TestPowerCycleTimeABC:
 
         self.sample = sample
         self.test_arguments = test_arguments
-
-    def test_constructor(self):
-        test_arguments = self.test_arguments
-        name = "instance being created in constructor test"
-        possible_errors = (TypeError, ValueError)
-        for argument in test_arguments:
-            argument_in_list = validate_list(argument)
-            try:
-                test_instance = self.SampleConcreteClass(name, argument)
-                assert test_instance.duration == sum(argument_in_list)
-
-            except possible_errors:
-                with pytest.raises(possible_errors):
-                    if argument:
-                        for value in argument_in_list:
-                            validate_nonnegative(value)
-                    else:
-                        validate_nonnegative(argument)
 
     def test_duration(self):
         sample = self.sample
@@ -124,7 +90,6 @@ class TestPowerCycleLoadABC:
             """
             Define concrete version of abstract property.
             """
-            pass
 
     def setup_method(self):
         sample = self.SampleConcreteClass("A sample instance name")
@@ -146,10 +111,7 @@ class TestPowerCycleLoadABC:
 
             arg_type = type(argument)
             arg_is_numeric = (arg_type is int) or (arg_type is float)
-            if arg_is_numeric:
-                arg_is_nonnegative = argument > 0
-            else:
-                arg_is_nonnegative = False
+            arg_is_nonnegative = argument > 0 if arg_is_numeric else False
 
             if not argument:
                 default_n_points = sample._n_points
@@ -167,13 +129,7 @@ class TestPowerCycleLoadABC:
         sample = self.sample
         test_arguments = self.test_arguments
 
-        possible_errors = (TypeError, ValueError)
         for argument in test_arguments:
-            try:
-                argument = validate_vector(argument)
-            except possible_errors:
-                return
-
             numeric_list = argument
             refined_list = sample._refine_vector(
                 numeric_list,

@@ -10,7 +10,7 @@ from bluemira.power_cycle.net.manager import (
     PowerCycleSystem,
     PowerCycleSystemConfig,
 )
-from bluemira.power_cycle.tools import adjust_2d_graph_ranges, unnest_list
+from bluemira.power_cycle.tools import adjust_2d_graph_ranges
 from tests.power_cycle.kits_for_tests import NetManagerTestKit, ToolsTestKit
 
 tools_testkit = ToolsTestKit()
@@ -38,7 +38,7 @@ class TestPowerCycleSystem:
 
     def construct_multiple_samples(self):
         all_samples = []
-        for system_label in self.all_system_inputs.keys():
+        for system_label in self.all_system_inputs:
             all_samples.append(
                 PowerCycleSystem(
                     self.scenario,
@@ -121,7 +121,7 @@ class TestPowerCycleGroup:
 
     def construct_multiple_samples(self):
         all_samples = []
-        for group_label in self.all_group_inputs.keys():
+        for group_label in self.all_group_inputs:
             group_inputs = self.all_group_inputs[group_label]
 
             group_name = group_inputs["name"]

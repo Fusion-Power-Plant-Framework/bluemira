@@ -10,7 +10,7 @@ from scipy.interpolate import interp1d
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.errors import PowerLoadError
 from bluemira.power_cycle.refactor.base import Config, LibraryConfigDescriptor
-from bluemira.power_cycle.tools import read_json, validate_axes
+from bluemira.power_cycle.tools import create_axes, read_json
 
 if TYPE_CHECKING:
     from pathlib import Path
@@ -128,7 +128,7 @@ class PowerCycleSubLoadConfig(Config, PlotMixin):
         """
         # Set each default options in kwargs, if not specified
         return self._plot_load(
-            validate_axes(ax),
+            create_axes(ax),
             self.time,
             self.data,
             self.name,

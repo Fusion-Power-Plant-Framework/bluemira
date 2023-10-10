@@ -13,11 +13,17 @@ from bluemira.power_cycle.time import (
 )
 from tests.power_cycle.kits_for_tests import (
     TimeTestKit,
-    assert_value_is_nonnegative,
-    copy_dict_with_wrong_key,
 )
 
 time_testkit = TimeTestKit()
+
+
+@dataclass
+class PowerCycleDurationParameters:
+    CS_recharge_time: float = raw_uc(5, "minute", "second")
+    pumpdown_time: float = raw_uc(10, "minute", "second")
+    ramp_up_time: float = 157
+    ramp_down_time: float = 157
 
 
 class TestPowerCyclePhase:
@@ -53,44 +59,12 @@ class TestPowerCyclePhase:
         try:
             sample = PowerCyclePhase(name, breakdown)
         except (TypeError, ValueError, PowerCyclePhaseError):
-            if all([isinstance(k, str) for k in test_keys]):
+            if all(isinstance(k, str) for k in test_keys):
                 with pytest.raises((TypeError, ValueError)):
                     PowerCyclePhase(name, breakdown)
             else:
                 with pytest.raises(ValueError):
                     PowerCyclePhase(name, breakdown)
-
-
-class TestPowerCyclePulse:
-    def setup_method(self):
-        (_, self.sample_phases) = time_testkit.inputs_for_pulse()
-
-        self.sample = PowerCyclePulse("Pulse example", self.sample_phases)
-
-    def test_build_phase_library(self):
-        """
-        No new functionality to be tested.
-        """
-        assert callable(self.sample.build_phase_library)
-
-
-class TestPowerCycleScenario:
-    def setup_method(self):
-        (_, self.sample_pulses) = time_testkit.inputs_for_scenario()
-
-        self.sample = PowerCycleScenario("Scenario example", self.sample_pulses)
-
-    def test_build_phase_library(self):
-        """
-        No new functionality to be tested.
-        """
-        assert callable(self.sample.build_phase_library)
-
-    def test_build_pulse_library(self):
-        """
-        No new functionality to be tested.
-        """
-        assert callable(self.sample.build_pulse_library)
 
 
 class TestScenarioBuilder:

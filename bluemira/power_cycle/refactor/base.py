@@ -14,13 +14,13 @@ class Descriptor:
 
 
 class LibraryConfigDescriptor(Descriptor):
-    """Scenario config descriptor for use with dataclasses"""
+    """Config descriptor for use with dataclasses"""
 
     def __init__(self, *, library_config: Config):
         self.library_config = library_config
 
     def __get__(self, obj: Any, _) -> Dict[str, Config]:
-        """Get the scenario config"""
+        """Get the config"""
         return getattr(obj, self._name)
 
     def __set__(
@@ -28,7 +28,7 @@ class LibraryConfigDescriptor(Descriptor):
         obj: Any,
         value: Dict[str, Union[Config, Dict]],
     ):
-        """Set the scenario config"""
+        """Setup the config"""
         for k, v in value.items():
             if not isinstance(v, self.library_config):
                 value[k] = self.library_config(name=k, **v)

@@ -6,16 +6,10 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.base.constants as constants
+from bluemira.base import constants
 from bluemira.power_cycle.net.loads import LoadData, LoadModel, PhaseLoad, PowerLoad
 from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse, ScenarioBuilder
-from bluemira.power_cycle.tools import (
-    read_json,
-    unnest_list,
-    validate_axes,
-    validate_file,
-    validate_nonnegative,
-)
+from bluemira.power_cycle.tools import read_json
 
 test_data_folder_path = (
     "tests",
@@ -24,45 +18,15 @@ test_data_folder_path = (
 )
 
 
-def assert_value_is_nonnegative(argument):
-    possible_errors = (TypeError, ValueError)
-    try:
-        validate_nonnegative(argument)
-    except possible_errors:
-        assert False
-    else:
-        assert True
-
-
-def copy_dict_with_wrong_key(right_dict, key_to_substitute):
-    """
-    Make deep copy of dictionary, but substitute one key
-    by the 'wrong_key' string.
-    """
-    wrong_dict = copy.deepcopy(right_dict)
-    wrong_dict["wrong_key"] = wrong_dict.pop(key_to_substitute)
-    return wrong_dict
-
-
-def copy_dict_with_wrong_value(right_dict, key, value_to_substitute):
-    """
-    Make deep copy of dictionary, but substitute the value in 'key'
-    by 'value_to_substitute'.
-    """
-    wrong_dict = copy.deepcopy(right_dict)
-    wrong_dict[key] = value_to_substitute
-    return wrong_dict
-
-
 class ToolsTestKit:
     def __init__(self):
-        test_file_name = tuple(["test_file.txt"])
+        test_file_name = ("test_file.txt",)
         test_file_path = test_data_folder_path + test_file_name
         self.test_file_path = os.path.join(*test_file_path)
 
     @staticmethod
     def build_list_of_example_arguments():
-        example_arguments = [
+        return [
             None,
             True,  # bool
             "some string",  # string
@@ -83,7 +47,6 @@ class ToolsTestKit:
             (1.2, 2.2, 3.2, 4.2),  # float tuple
             (-1.2, -2.2, -3.2, -4.2),  # negative float tuple
         ]
-        return example_arguments
 
     @staticmethod
     def prepare_figure(figure_title, humor=False):
@@ -105,8 +68,8 @@ class ToolsTestKit:
         argument_examples = self.build_list_of_example_arguments()
 
         count = 0
-        format_example = dict()
-        dictionary_example = dict()
+        format_example = {}
+        dictionary_example = {}
         for argument in argument_examples:
             argument_type = type(argument)
 
@@ -116,7 +79,7 @@ class ToolsTestKit:
             format_example[current_key] = argument_type
             dictionary_example[current_key] = argument
 
-        subdictionaries_example = dict()
+        subdictionaries_example = {}
         for c in range(count):
             current_key = "key " + str(c)
             subdictionaries_example[current_key] = dictionary_example
@@ -173,7 +136,7 @@ class ToolsTestKit:
 
 class TimeTestKit:
     def __init__(self):
-        scenario_json_name = tuple(["scenario_config.json"])
+        scenario_json_name = ("scenario_config.json",)
         scenario_json_path = test_data_folder_path + scenario_json_name
         self.scenario_json_path = os.path.join(*scenario_json_path)
 
@@ -270,9 +233,8 @@ class TimeTestKit:
 
     def inputs_for_builder(self):
         scenario_json_path = self.scenario_json_path
-        scenario_json_contents = read_json(scenario_json_path)
+        return read_json(scenario_json_path)
 
-        return scenario_json_contents
 
 
 class NetLoadsTestKit:
@@ -365,8 +327,7 @@ class NetLoadsTestKit:
         start = minimum_time - time_extrapolation
         stop = maximum_time + time_extrapolation
         time_vector = np.arange(start, stop, time_step)
-        time_list = list(time_vector)
-        return time_list
+        return list(time_vector)
 
     def inputs_for_powerload(self):
         """
@@ -493,34 +454,31 @@ class NetLoadsTestKit:
 class NetImportersTestKit:
     @staticmethod
     def equilibria_duration_inputs():
-        possible_inputs = {
+        return {
             "desired_data": [
                 "CS-recharge-time",
                 "ramp-up-time",
                 "ramp-down-time",
             ]
         }
-        return possible_inputs
 
     @staticmethod
     def equilibria_phaseload_inputs():
-        possible_inputs = {
+        return {
             "desired_data": [
                 "CS-coils",
                 "TF-coils",
                 "PF-coils",
             ]
         }
-        return possible_inputs
 
     @staticmethod
     def pumping_duration_inputs():
-        possible_inputs = {
+        return {
             "desired_data": [
                 "pumpdown-time",
             ]
         }
-        return possible_inputs
 
 
 class NetManagerTestKit:
@@ -535,20 +493,19 @@ class NetManagerTestKit:
         scenario = scenario_builder.scenario
         self.scenario = scenario
 
-        manager_json_name = tuple(["manager_config.json"])
+        manager_json_name = ("manager_config.json",)
         manager_json_path = test_data_folder_path + manager_json_name
         self.manager_json_path = os.path.join(*manager_json_path)
 
     def inputs_for_manager(self):
         manager_json_path = self.manager_json_path
-        manager_json_contents = read_json(manager_json_path)
+        return read_json(manager_json_path)
 
-        return manager_json_contents
 
     def inputs_for_groups(self):
         manager_json_contents = self.inputs_for_manager()
 
-        all_group_inputs = dict()
+        all_group_inputs = {}
         all_group_labels = manager_json_contents.keys()
         for group_label in all_group_labels:
             group_config = manager_json_contents[group_label]
@@ -567,7 +524,7 @@ class NetManagerTestKit:
                 continue
             systems_config = read_json(config_path)
 
-            group_inputs = dict()
+            group_inputs = {}
             group_inputs["name"] = group_name
             group_inputs["systems_list"] = group_systems
             group_inputs["systems_config"] = systems_config
@@ -578,7 +535,7 @@ class NetManagerTestKit:
     def inputs_for_systems(self):
         all_group_inputs = self.inputs_for_groups()
 
-        all_system_inputs = dict()
+        all_system_inputs = {}
         all_group_labels = all_group_inputs.keys()
         for group_label in all_group_labels:
             group_config = all_group_inputs[group_label]
@@ -593,15 +550,14 @@ class NetManagerTestKit:
     @staticmethod
     def _copy_dictionary_with_preceding_str_in_all_keys(dictionary, string):
         d = copy.deepcopy(dictionary)
-        new_dictionary = {f"{string}{k}": v for k, v in d.items()}
-        return new_dictionary
+        return {f"{string}{k}": v for k, v in d.items()}
 
     def inputs_for_loads(self):
         all_system_inputs = self.inputs_for_systems()
 
         all_load_types = ["reactive", "active"]
 
-        all_load_inputs = dict()
+        all_load_inputs = {}
         all_system_labels = all_system_inputs.keys()
         for system_label in all_system_labels:
             system_config = all_system_inputs[system_label]

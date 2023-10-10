@@ -7,20 +7,14 @@ import numpy as np
 import pytest
 
 from bluemira.power_cycle.errors import (
-    LoadDataError,
-    PhaseLoadError,
     PowerCycleError,
     PowerLoadError,
-    PulseLoadError,
 )
 from bluemira.power_cycle.net.loads import (
     LoadData,
-    LoadModel,
     PhaseLoad,
-    PowerLoad,
     PulseLoad,
 )
-from bluemira.power_cycle.time import PowerCyclePhase, PowerCyclePulse
 from bluemira.power_cycle.tools import adjust_2d_graph_ranges
 from tests.power_cycle.kits_for_tests import NetLoadsTestKit, TimeTestKit, ToolsTestKit
 
@@ -42,52 +36,6 @@ class TestLoadData:
             LoadData(sample_names[s], sample_times[s], sample_datas[s])
             for s in range(n_samples)
         ]
-
-    @pytest.mark.parametrize("test_attr", ["time", "data"])
-    def test_is_increasing(self, test_attr):
-        all_samples = self.all_samples
-        n_samples = len(all_samples)
-
-        def check_if_increasing(test_list):
-            check = []
-            for i in range(len(test_list) - 1):
-                check.append(test_list[i] <= test_list[i + 1])
-            return all(check)
-
-        for s in range(n_samples):
-            sample = all_samples[s]
-            example_list = getattr(sample, test_attr)
-            list_is_increasing = check_if_increasing(example_list)
-            if list_is_increasing:
-                sample._is_increasing(example_list)
-            else:
-                with pytest.raises(LoadDataError):
-                    sample._is_increasing(example_list)
-
-    def test_sanity(self):
-        all_samples = self.all_samples
-        n_samples = len(all_samples)
-        for s in range(n_samples):
-            sample = all_samples[s]
-            name = sample.name
-            list_of_given_length = sample.time
-            list_shorter = list_of_given_length[:-1]
-            list_longer = list_of_given_length + [10]
-            all_lists = [
-                list_of_given_length,
-                list_shorter,
-                list_longer,
-            ]
-            for time in all_lists:
-                for data in all_lists:
-                    length_time = len(time)
-                    length_data = len(data)
-                    if length_time == length_data:
-                        test_instance = LoadData(name, time, data)
-                        assert isinstance(test_instance, LoadData)
-                    else:
-                        with pytest.raises(LoadDataError):
-                            test_instance = LoadData(name, time, data)
 
     def test_null_constructor(self):
         null_instance = LoadData.null()
@@ -175,7 +123,6 @@ class TestLoadData:
         """
         No new functionality to be tested.
         """
-        pass
 
     def test_plot(self):
         ax = tools_testkit.prepare_figure("LoadData Plotting")
@@ -193,16 +140,6 @@ class TestLoadData:
     def test_addition(self):
         with pytest.raises(PowerCycleError):
             _ = sum(self.all_samples)
-
-
-class TestLoadModel:
-    def test_members(self):
-        all_names = [member.name for member in LoadModel]
-        all_values = [member.value for member in LoadModel]
-
-        for name, value in zip(all_names, all_values):
-            assert isinstance(name, str)
-            assert isinstance(value, str)
 
 
 class TestPowerLoad:
@@ -229,12 +166,11 @@ class TestPowerLoad:
         sample_loaddatas = self.sample_loaddatas
         sample_loadmodels = self.sample_loadmodels
 
-        multisample = PowerLoad(
+        return PowerLoad(
             "PowerLoad with multiple loaddata & loadmodel arguments",
             sample_loaddatas,
             sample_loadmodels,
         )
-        return multisample
 
     def test_constructor_with_multiple_arguments(self):
         multisample = self.construct_multisample()
@@ -435,7 +371,7 @@ class TestPowerLoad:
         assert result.loaddata_set == self.sample_loaddatas
         assert result.loadmodel_set == self.sample_loadmodels
 
-        ax, list_of_plot_objects = result.plot(
+        ax = result.plot(
             ax=ax,
             detailed=True,
             color="b",
@@ -711,7 +647,7 @@ class TestPhaseLoad:
 
             result.name = "2x " + sample.name + " (added to itself)"
             result_color = next(colors)
-            ax, result_plot_objects = result.plot(
+            a = result.plot(
                 ax=ax,
                 detailed=False,
                 color=result_color,
@@ -887,7 +823,7 @@ class TestPulseLoad:
         ax = tools_testkit.prepare_figure(
             f"PulseLoad Plotting 'detailed' flag = {detailed_plot_flag}"
         )
-        list_of_plot_objects = self.construct_multisample().plot(
+        self.construct_multisample().plot(
             ax=ax,
             detailed=detailed_plot_flag,
             color=netloads_testkit.color_order_for_plotting[color_index],
@@ -923,11 +859,9 @@ class TestPulseLoad:
         negative_original.make_consumption_explicit()
         result_minus_original = result + negative_original
 
-        ax, result_plot_objects = result.plot(ax=ax, detailed=False, color="y")
-        ax, original_plot_objects = original.plot(ax=ax, detailed=False, color="k")
-        ax, subtraction_plot_objects = result_minus_original.plot(
-            ax=ax, detailed=False, color="c", linestyle="--"
-        )
+        ax = result.plot(ax=ax, detailed=False, color="y")
+        ax = original.plot(ax=ax, detailed=False, color="k")
+        ax = result_minus_original.plot(ax=ax, detailed=False, color="c", linestyle="--")
 
         adjust_2d_graph_ranges(ax=ax)
         plt.show()
