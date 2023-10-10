@@ -102,6 +102,7 @@ def ellipk_nb(k: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
 ellipk_nb.__doc__ += ellipk.__doc__
 
 
+@nb.jit(nopython=True)
 def circular_coil_inductance_elliptic(radius: float, rc: float) -> float:
     """
     Calculate the inductance of a circular coil by elliptic integrals.
@@ -118,11 +119,8 @@ def circular_coil_inductance_elliptic(radius: float, rc: float) -> float:
     The self-inductance of the circular coil [H]
     """
     k = 4 * radius * (radius - rc) / (2 * radius - rc) ** 2
-    args = (
-        np.array(arg, dtype=np.float64) for arg in (k, GREENS_ZERO, 1.0 - GREENS_ZERO)
-    )
-    k = clip_nb(*args)
-    return MU_0 * (2 * radius - rc) * ((1 - k**2 / 2) * ellipk(k) - ellipe(k))
+    k = clip_nb(k, GREENS_ZERO, 1.0 - GREENS_ZERO)
+    return MU_0 * (2 * radius - rc) * ((1 - k**2 / 2) * ellipk_nb(k) - ellipe_nb(k))
 
 
 def circular_coil_inductance_kirchhoff(radius: float, rc: float) -> float:

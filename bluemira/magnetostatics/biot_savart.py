@@ -218,17 +218,21 @@ class BiotSavartFilament(CurrentSource):
         for _i, (x1, dx1) in enumerate(zip(self.ref_mid_points, self.ref_d_l)):
             # We create a mask to drop the point where x1 == x2
             r = x1 - self.mid_points
-            mask = np.sum(r**2, axis=1) > self.radius
+            mask = np.sum(r**2, axis=1) > 0.5 * self.length_scale
             inductance += np.sum(
                 np.dot(dx1, self.d_l[mask].T) / np.linalg.norm(r[mask], axis=1)
             )
 
         # Self-inductance correction (Y = 0.5 for homogenous current distribution)
-        inductance += (
-            2 * self.length * (np.log(2 * self.length_scale / self.radius) + 0.25)
-        )
+        # Equation 6 of https://arxiv.org/pdf/1204.1486.pdf
+        error_tail = 0
+        a, b = self.radius, 0.5 * self.length_scale
+        if b > 10 * a:
+            # Equation A.4 of https://arxiv.org/pdf/1204.1486.pdf
+            error_tail = a**2 / b**2 - 3 / (8 * b**4) * (a**4 - 2 * a**2)
+        l_hat_0 = self.length * (2 * np.log(2 * b / a) + 0.5) + error_tail
 
-        return MU_0_4PI * inductance
+        return MU_0_4PI * (inductance + l_hat_0)
 
     def rotate(self, angle: float, axis: Union[str, np.ndarray]):
         """

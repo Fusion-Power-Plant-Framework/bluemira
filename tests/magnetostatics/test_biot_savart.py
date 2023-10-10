@@ -25,7 +25,8 @@ import pytest
 
 from bluemira.base.constants import MU_0
 from bluemira.display.auto_config import plot_defaults
-from bluemira.geometry.tools import make_circle
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.geometry.tools import make_circle, make_polygon
 from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.greens import (
     circular_coil_inductance_elliptic,
@@ -156,30 +157,92 @@ def plot_errors(x, z, Bx, Bz, Bp, Bx2, Bz2, Bp2):
     plt.close(f)
 
 
-@pytest.mark.longrun
-def test_inductance():
-    radii = np.linspace(1, 100, 100)
-    rci = np.linspace(0.0001, 1, 100)
-    ind, ind2 = np.zeros((100, 100)), np.zeros((100, 100))
+class TestSelfInductance:
+    def test_circular_inductance(self):
+        n = 25
+        radii = np.linspace(1, 100, n)
+        rci = np.linspace(0.0001, 1, n)
+        ind, ind2 = np.zeros((n, n)), np.zeros((n, n))
+        ind3 = np.zeros((n, n))
 
-    ind3 = np.zeros((100, 100))
-    for i, r in enumerate(radii):
-        circle = make_circle(r, center=(0, 0, 0), axis=(0, 1, 0))
-        filament = circle.discretize(ndiscr=200)
-        for j, rc in enumerate(rci):
-            bsf = BiotSavartFilament(filament, rc)
-            ind[i, j] = circular_coil_inductance_elliptic(r, rc)
-            ind2[i, j] = circular_coil_inductance_kirchhoff(r, rc)
-            ind3[i, j] = bsf.inductance()
+        for i, r in enumerate(radii):
+            circle = make_circle(r, center=(0, 0, 0), axis=(0, 1, 0))
+            filament = circle.discretize(dl=circle.length / 50)
+            for j, rc in enumerate(rci):
+                bsf = BiotSavartFilament(filament, rc)
+                ind[i, j] = circular_coil_inductance_elliptic(r, rc)
+                ind2[i, j] = circular_coil_inductance_kirchhoff(r, rc)
+                ind3[i, j] = bsf.inductance()
 
-    levels = np.linspace(np.amin(ind), np.amax(ind), 20)
-    f, ax = plt.subplots(1, 4)
-    xx, yy = np.meshgrid(radii, rci)
-    ax[0].contourf(xx, yy, ind, levels=levels)
-    ax[1].contourf(xx, yy, ind2, levels=levels)
-    ax[2].contourf(xx, yy, ind3, levels=levels)
-    diff = 100 * (ind - ind3) / ind
-    cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-10, 10, 100))
-    f.colorbar(cm)
-    plt.show()
-    plt.close(f)
+        levels = np.linspace(np.amin(ind), np.amax(ind), 20)
+        f, ax = plt.subplots(1, 4)
+        xx, yy = np.meshgrid(radii, rci)
+        ax[0].contourf(xx, yy, ind, levels=levels)
+        ax[0].set_title("Elliptic")
+        ax[1].contourf(xx, yy, ind2, levels=levels)
+        ax[1].set_title("Kirchoff")
+        ax[2].contourf(xx, yy, ind3, levels=levels)
+        ax[2].set_title("Biot-Savart")
+
+        for a in ax:
+            a.set_xlabel("radius [m]")
+            a.set_ylabel("filament radius [m]")
+
+        diff = 100 * (ind2 - ind3) / ind2
+        cm = ax[3].contourf(xx, yy, diff, levels=np.linspace(-5, 5, 100))
+        ax[3].set_title("K - (BS / K)")
+        cb = f.colorbar(cm)
+        cb.set_label("%")
+        plt.subplots_adjust(wspace=0.5)
+        plt.show()
+        plt.close(f)
+        res = np.sum((ind2 - ind3) ** 2)
+        tot = np.sum((ind2 - np.average(ind2)) ** 2)
+        r2 = 1 - res / tot
+        assert r2 > 0.998
+
+    @pytest.mark.parametrize("discr", [False, True])
+    @pytest.mark.parametrize(
+        ("a", "c", "d", "f_error"),
+        [
+            (1, 10, 10, 0.13),
+            (1, 20, 20, 0.1),
+            (1, 40, 40, 0.8),
+            (1, 80, 80, 0.7),
+            (1, 160, 160, 0.6),
+        ],
+    )
+    def test_rectangular_inductance(
+        self, discr: bool, a: float, c: float, d: float, f_error: float
+    ):
+        """
+        Attempt at replicating results from https://arxiv.org/pdf/1204.1486.pdf
+        for a rectangle. Differences include discretisation and lack of corners,
+        and the lack of knowledge of `d`, assumed here as `d`=`c`.
+        """
+        poly = Coordinates(
+            {
+                "x": [-c / 2, c / 2, c / 2, -c / 2],
+                "y": 0,
+                "z": [-d / 2, -d / 2, d / 2, d / 2],
+            }
+        )
+        poly.close()
+        if discr:
+            poly = make_polygon(poly, closed=True).discretize(dl=12 * a, byedges=True)
+        filament = BiotSavartFilament(poly, radius=a)
+        inductance = filament.inductance()
+        exact = (
+            MU_0
+            / np.pi
+            * (
+                c * np.log(2 * c / a)
+                + d * np.log(2 * d / a)
+                - (c + d) * (2 - 0.5 / 2)
+                + 2 * np.hypot(c, d)
+                - c * np.arcsinh(c / d)
+                - d * np.arcsinh(d / c)
+                + a
+            )
+        )
+        assert abs(1 - inductance / exact) < f_error
