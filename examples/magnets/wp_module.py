@@ -71,6 +71,8 @@ class DummySteel(Material):
 
 
 class Copper(Material):
+    RRR: None
+
     def resistivity(self, T: float, B: float, RRR: float):
         """Calculate the resistivity as function of temperature, magnetic field
         and residual resistance ratio.
@@ -294,9 +296,51 @@ class REBCO(Material):
         Jc = 1e6 * Ic_REBCO / A_tapes
         return Jc
 
-####################################
-class Cable:
 
+####################################
+@dataclass
+class Cable:
+    void_fraction: float
+    d_stab: float
+    n_stab: int
+    mat_stab: Material
+    d_strand: float
+    n_strand: int
+    mat_strand: Material
+    d_he: float
+    mat_he: Material
+    cu_non_cu: float
+
+    @property
+    def area(self):
+        return (
+            np.pi
+            / 4
+            * (
+                self.n_stab * self.d_stab**2
+                + self.n_strand * self.d_strand**2
+                + self.d_he**2
+            )
+        )
+
+    @property
+    def area_cu(self):
+        return (
+            np.pi
+            / 4
+            * (
+                self.n_stab * self.d_stab**2
+                + 1 / (self.cu_non_cu + 1) * self.n_strand * self.d_strand**2
+            )
+        )
+
+    @property
+    def resistance(self):
+        pass
+
+    @property
+    def specific_heat_capacity(self):
+        pass
 
 
 ####################################
