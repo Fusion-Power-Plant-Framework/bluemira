@@ -197,6 +197,19 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
             ax.quiver(*self.origin, *self.dcm[2], length=self.depth, color="r")
 
 
+class PolyhedralCrossSectionCurrentSource(CurrentSource):
+    """
+    Abstract base class for a current source with a polyhedral cross-section.
+    """
+
+    origin: np.array
+    dcm: np.array
+    points: np.array
+    breadth: float
+    depth: float
+    length: float
+
+
 class SourceGroup(ABC):
     """
     Abstract base class for multiple current sources.
