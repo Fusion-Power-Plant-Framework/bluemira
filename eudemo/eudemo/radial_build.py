@@ -158,6 +158,7 @@ for model_choice in (
     PlasmaCurrentScalingLaw.ITER_REVISED,
     PlasmaProfileModel.CONSISTENT,
     PlasmaPedestalModel.PEDESTAL_GW,
+    PlasmaNullConfigurationModel.SINGLE_NULL,
     EPEDScalingModel.SAARELMA,
     BetaLimitModel.THERMAL,
     DensityLimitModel.GREENWALD,
@@ -174,12 +175,11 @@ for model_choice in (
     TFSuperconductorModel.NB3SN_WST,
     TFWindingPackTurnModel.INTEGER_TURN,
     FISPACTSwitchModel.OFF,
+    PrimaryPumpingModel.PRESSURE_DROP_INPUT,
     TFNuclearHeatingModel.INPUT,
     CostModel.TETRA_1990,
     AvailabilityModel.INPUT,
     OutputCostsSwitch.NO,
-    PlasmaNullConfigurationModel.SINGLE_NULL,
-    PrimaryPumpingModel.PRESSURE_DROP_INPUT,
 ):
     template_builder.set_model(model_choice)
 
@@ -193,7 +193,6 @@ template_builder.add_input_values(
         # Undocumented danger stuff
         "iblanket": 1,
         "lsa": 2,
-        "fpinj": 1.0,
         # Profile parameterisation inputs
         "alphan": 1.0,
         "alphat": 1.45,
@@ -257,18 +256,7 @@ template_builder.add_input_values(
         "tdwell": 0.0,
         "tramp": 500.0,
         # CS / PF coil inputs
-        # "t_crack_radial": 0.006,
         "t_crack_vertical": 0.4e-3,
-        # "t_structural_radial": 0.07,
-        # "t_structural_vertical": 0.022,
-        # "sf_vertical_crack": 1.0,
-        # "sf_radial_crack": 1.0,
-        # "sf_fast_fracture": 1.0,
-        # "residual_sig_hoop": 1.5e8,
-        # "paris_coefficient": 3.86e-11,
-        # "paris_power_law": 2.394,
-        # "walker_coefficient": 0.5,
-        # "fracture_toughness": 150.0,
         "fcuohsu": 0.7,
         "ohhghf": 0.9,
         "rpf2": -1.825,
@@ -277,7 +265,6 @@ template_builder.add_input_values(
         "ncls": [1, 1, 2, 2],
         "ngrp": 4,
         "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
-        "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0],
         # TF coil inputs
         "n_tf": 16,
         "casthi": 0.06,
@@ -293,7 +280,6 @@ template_builder.add_input_values(
         "n_pancake": 20,
         "n_layer": 10,
         "qnuc": 1.292e4,
-        # "max_vv_stress": 93.0e6,
         # Inputs we don't care about but must specify
         "cfactr": 0.75,  # Ha!
         "kappa": 1.848,  # Should be overwritten
@@ -312,6 +298,22 @@ template_builder.add_input_values(
         "divdum": 1,
         "ibkt_life": 1,
         "fkzohm": 1.0245,
+        "iinvqd": 1,
+        "dintrt": 0.0,
+        "fcap0": 1.15,
+        "fcap0cp": 1.06,
+        "fcontng": 0.15,
+        "fcr0": 0.065,
+        "fkind": 1.0,
+        "ifueltyp": 1,
+        "discount_rate": 0.06,
+        "bkt_life_csf": 1,
+        "ucblvd": 280.0,
+        "ucdiv": 5e5,
+        "ucme": 3.0e8,
+        # Suspicous stuff
+        "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+        "fpinj": 1.0,
     }
 )
 
