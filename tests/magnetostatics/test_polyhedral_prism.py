@@ -30,10 +30,10 @@ class TestPolyhedralMaths:
     @classmethod
     def setup_class(cls):
         cls.trap = TrapezoidalPrismCurrentSource(
-            [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 0, 0, current=1
+            [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 40, 40, current=1
         )
         cls.poly = PolyhedralPrismCurrentSource(
-            [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 0, 0, current=1
+            [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 40, 40, current=1
         )
 
     def test_geometry(self):

@@ -209,6 +209,19 @@ class PolyhedralCrossSectionCurrentSource(CurrentSource):
     depth: float
     length: float
 
+    def set_current(self, current: float):
+        """
+        Set the current inside the source, adjusting current density.
+
+        Parameters
+        ----------
+        current:
+            The current of the source [A]
+        """
+        super().set_current(current)
+        # TODO: Generalise to polygon area
+        self.rho = current / (4 * self.breadth * self.depth)
+
     def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
         Rotate the CurrentSource about an axis.
