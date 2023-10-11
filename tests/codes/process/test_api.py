@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
 from unittest.mock import patch
 
 import pytest
@@ -49,8 +48,8 @@ def test_impurities(imp_data_mock):
     assert api.Impurities(1) == api.Impurities.H
     assert api.Impurities(1).id() == "fimp(01"
     assert api.Impurities(10).id() == "fimp(10"
-    assert api.Impurities(1).file() == Path("./H_Lzdata.dat")
-    assert api.Impurities(10).file() == Path("./FeLzdata.dat")
+    assert api.Impurities(1).file().parts[-1] == "H_lz_tau.dat"
+    assert api.Impurities(10).file().parts[-1] == "Felz_tau.dat"
 
 
 def test_INVariable_works_with_floats():
