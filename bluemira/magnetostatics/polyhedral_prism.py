@@ -257,12 +257,7 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
         The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
-        # Convert to local coordinates
-        point = self._global_to_local([point])[0]
-        # Evaluate field in local coordinates
-        b_local = MU_0_4PI * self.rho * self._BxByBz(point)
-        # Convert vector back to global coordinates
-        return self.dcm.T @ b_local
+        return field(self.rho * self.dcm[1], self.face_points, self.face_normals, point)
 
     def _calculate_points(self):
         """
@@ -282,6 +277,16 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
         p6 = np.array([d, b + d * np.tan(self.alpha), -c])
         p7 = np.array([d, b + d * np.tan(self.alpha), c])
         p8 = np.array([-d, b - d * np.tan(self.alpha), c])
+
+        self.face_points = [
+            [p1, p2, p3, p4, p1],
+            [p1, p5, p6, p2, p1],
+            [p2, p6, p7, p3, p2],
+            [p3, p7, p8, p4, p3],
+            [p4, p8, p5, p1, p4],
+            [p5, p6, p7, p8, p5],
+        ]
+        self.face_points = [self._local_to_global(p) for p in self.face_points]
 
         points = [
             np.vstack([p1, p2, p3, p4, p1]),
