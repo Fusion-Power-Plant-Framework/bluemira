@@ -25,6 +25,7 @@ Polyhedral prism current source
 
 from typing import Union
 
+import numba as nb
 import numpy as np
 
 from bluemira.base.constants import MU_0, MU_0_4PI
@@ -33,6 +34,7 @@ from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 
 
+@nb.jit(nopython=True)
 def omega_t(r, r1, r2, r3):
     """
     Solid angle seen from the calculation point subtended by the face
@@ -50,9 +52,10 @@ def omega_t(r, r1, r2, r3):
         + r2r * np.dot(r1_r, r3_r)
         + r1r * np.dot(r2_r, r3_r)
     )
-    return 2 * np.arctan2(np.dot(r1_r, np.cross(r2_r, r3_r)) / d)
+    return 2 * np.arctan2(np.dot(r1_r, np.cross(r2_r, r3_r)), d)
 
 
+@nb.jit(nopython=True)
 def line_integral(r, r1, r2):
     """
     w_e(r)
@@ -65,13 +68,15 @@ def line_integral(r, r1, r2):
     return np.log(a / b)
 
 
+@nb.jit(nopython=True)
 def get_face_midpoint(face_points):
     """
     Get an arbitrary point on the face
     """
-    return np.sum(face_points[:3] / 3)
+    return np.sum(face_points[:-1], axis=0) / (len(face_points) - 1)
 
 
+@nb.jit(nopython=True)
 def surface_integral(face_points, face_normal, point):
     """
     W_f(r)
@@ -79,16 +84,28 @@ def surface_integral(face_points, face_normal, point):
     integral = 0.0
     r_f = get_face_midpoint(face_points)
     omega_f = 0.0
-    for i in range(len(face_points)):
-        r_e = face_points[i]
-        u_e = face_points[i + 1] - r_e
+    for i in range(len(face_points) - 1):
+        p0 = face_points[i]
+        p1 = face_points[i + 1]
+        r_e = 0.5 * (p0 + p1)
+        u_e = p1 - p0
         u_e /= np.linalg.norm(u_e)
+        # u_e = -np.cross(face_normal, u_e)
+        # u_e /= np.linalg.norm(u_e)
         integral += np.dot(
             np.cross(face_normal, r_e - point),
-            u_e * line_integral(point, r_e, face_points[i + 1]),
+            u_e * line_integral(point, p0, p1),
         )
-        # Make sure normals line up
-        omega_f += omega_t(point, r_e, face_points[i + 1], face_points[i + 2])
+        # import matplotlib.pyplot as plt
+        # ax = plt.gca()
+        # ax.quiver(*r_e, *assert np.allcloseu_e)
+
+        r1, r2, r3 = p0, p1, r_f
+        normal = np.cross(r2 - r1, r3 - r1)
+        normal /= np.linalg.norm(normal)
+        # if not np.allclose(normal, face_normal):
+        #     print(normal, face_normal)
+        omega_f += omega_t(point, r1, r2, r3)
     return integral - np.dot(r_f - point, face_normal) * omega_f
 
 
@@ -111,8 +128,8 @@ def field(rho_vector, face_points, face_normals, point):
     """
     field = np.zeros(3)
     for i, normal in enumerate(face_normals):
-        field += np.cross(
-            rho_vector, normal * surface_integral(face_points[i], normal, point)
+        field += np.cross(rho_vector, normal) * surface_integral(
+            face_points[i], normal, point
         )
     return MU_0_4PI * field
 
@@ -217,22 +234,6 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
                 "angles imply a self-intersecting trapezoidal prism."
             )
 
-    def _xyzlocal_to_rql(self, x_local, y_local, z_local):
-        """
-        Convert local x, y, z coordinates to working coordinates.
-        """
-        b = self.length
-        c = self.depth
-        d = self.breadth
-
-        l1 = -d - x_local
-        l2 = d - x_local
-        q1 = -c - z_local
-        q2 = c - z_local
-        r1 = (d + x_local) * np.tan(self.alpha) + b - y_local
-        r2 = (d + x_local) * np.tan(self.beta) + b + y_local
-        return l1, l2, q1, q2, r1, r2
-
     @process_xyz_array
     def field(
         self,
@@ -284,9 +285,12 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
             [p2, p6, p7, p3, p2],
             [p3, p7, p8, p4, p3],
             [p4, p8, p5, p1, p4],
-            [p5, p6, p7, p8, p5],
+            [p5, p8, p7, p6, p5],
         ]
         self.face_points = [self._local_to_global(p) for p in self.face_points]
+        normals = [np.cross(p[1] - p[0], p[2] - p[1]) for p in self.face_points]
+        normals = [n / np.linalg.norm(n) for n in normals]
+        self.face_normals = normals
 
         points = [
             np.vstack([p1, p2, p3, p4, p1]),
