@@ -209,6 +209,18 @@ class PolyhedralCrossSectionCurrentSource(CurrentSource):
     depth: float
     length: float
 
+    def _local_to_global(self, points: np.ndarray) -> np.ndarray:
+        """
+        Convert local x', y', z' point coordinates to global x, y, z point coordinates.
+        """
+        return np.array([self.origin + self.dcm.T @ p for p in points])
+
+    def _global_to_local(self, points: np.ndarray) -> np.ndarray:
+        """
+        Convert global x, y, z point coordinates to local x', y', z' point coordinates.
+        """
+        return np.array([(self.dcm @ (p - self.origin)) for p in points])
+
 
 class SourceGroup(ABC):
     """
