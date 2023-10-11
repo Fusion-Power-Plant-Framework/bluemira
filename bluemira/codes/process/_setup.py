@@ -132,7 +132,7 @@ def _make_writer(template_in_dat: Dict[str, _INVariable]) -> InDat:
     return indat
 
 
-def create_template_from_path(template_in_dat: str) -> ProcessInputs:
+def create_template_from_path(template_in_dat: Union[str, Path]) -> ProcessInputs:
     if not ENABLED:
         raise CodesError(
             f"{PROCESS_NAME} is not installed cannot read template {template_in_dat}"
@@ -140,6 +140,6 @@ def create_template_from_path(template_in_dat: str) -> ProcessInputs:
     if Path(template_in_dat).is_file():
         # InDat autoloads IN.DAT without checking for existence
         return ProcessInputs(
-            **{k: v.value for k, v in InDat(filename=template_in_dat).data.items()}
+            **{k: v.get_value for k, v in InDat(filename=template_in_dat).data.items()}
         )
     raise CodesError(f"Template IN.DAT '{template_in_dat}' is not a file.")

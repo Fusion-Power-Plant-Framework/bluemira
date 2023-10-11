@@ -152,7 +152,7 @@ class Impurities(Enum):
             data_path = dp.parent
 
         try:
-            return Path(data_path, f"{self.name:_<2}lz_tau.dat")
+            return Path(data_path, f"{self.name:_<3}lz_tau.dat")
         except NameError:
             raise CodesError("PROCESS impurity data directory not found") from None
 

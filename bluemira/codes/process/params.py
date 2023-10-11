@@ -338,7 +338,11 @@ class ProcessSolverParams(MappedParameterFrame):
 
     @property
     def _defaults(self):
-        return self.__defaults
+        try:
+            return self.__defaults
+        except AttributeError:
+            self.__defaults = ProcessInputs()
+            return self.__defaults
 
     @_defaults.setter
     def _defaults(self, value: ProcessInputs):
@@ -377,5 +381,5 @@ class ProcessSolverParams(MappedParameterFrame):
             self = super().from_defaults(
                 template.to_dict(), source=f"{NAME} user input template"
             )
-        self._defaults = template
+        self.__defaults = template
         return self

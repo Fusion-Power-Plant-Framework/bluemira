@@ -234,6 +234,7 @@ class ProcessInputs:
     casthi: float = None
     casths: float = None
     tmargmin: float = None
+    oacdcp: float = None
 
     # PF Power
     iscenr: int = None
@@ -448,6 +449,7 @@ class ProcessInputs:
     d_vv_bot: float = None
     f_avspace: float = None
     fcspc: float = None
+    fhole: float = None
     fseppc: float = None
     gapds: float = None
     gapoh: float = None
@@ -468,6 +470,7 @@ class ProcessInputs:
     thshield_ib: float = None
     thshield_ob: float = None
     thshield_vb: float = None
+    vgap: float = None
     vgap2: float = None
     vgaptop: float = None
     vvblgap: float = None
@@ -570,6 +573,7 @@ class ProcessInputs:
     pwpm2: float = None
     trithtmw: float = None
     vachtmw: float = None
+    irfcd: int = None
 
     # Water usage
 
@@ -697,6 +701,7 @@ class ProcessInputs:
     triang95: float = None
 
     # Stellarator
+    fblvd: float = None
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
@@ -721,20 +726,24 @@ class ProcessInputs:
                 out_dict[name] = new_val
         out_dict["icc"] = _INVariable(
             "icc",
-            self.icc,
+            [] if self.icc is None else self.icc,
             "Constraint Equation",
             "Constraint Equation",
             "Constraint Equations",
         )
         out_dict["ixc"] = _INVariable(
             "ixc",
-            self.ixc,
+            [] if self.ixc is None else self.ixc,
             "Iteration Variable",
             "Iteration Variable",
             "Iteration Variables",
         )
         out_dict["bounds"] = _INVariable(
-            "bounds", self.bounds, "Bound", "Bound", "Bounds"
+            "bounds",
+            {} if self.bounds is None else self.bounds,
+            "Bound",
+            "Bound",
+            "Bounds",
         )
         return out_dict
 

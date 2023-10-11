@@ -22,14 +22,18 @@
 import copy
 from enum import auto
 from pathlib import Path
-from typing import Dict, List, Mapping, Tuple, Union
+from typing import Dict, List, Mapping, Tuple, Type, Union
 
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.interface import BaseRunMode, CodesSolver
+from bluemira.codes.interface import (
+    BaseRunMode,
+    CodesSolver,
+)
+from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._run import Run
 from bluemira.codes.process._setup import Setup, create_template_from_path
 from bluemira.codes.process._teardown import Teardown
@@ -106,11 +110,11 @@ class Solver(CodesSolver):
         overwriting data with PROCESS outputs would be undesirable.
     """
 
-    name = PROCESS_NAME
-    setup_cls = Setup
-    run_cls = Run
-    teardown_cls = Teardown
-    run_mode_cls = RunMode
+    name: str = PROCESS_NAME
+    setup_cls: Type[Setup] = Setup
+    run_cls: Type[Run] = Run
+    teardown_cls: Type[Teardown] = Teardown
+    run_mode_cls: Type[RunMode] = RunMode
 
     def __init__(
         self,
@@ -127,13 +131,13 @@ class Solver(CodesSolver):
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", Path.cwd().as_posix())
         self.read_directory = _build_config.pop("read_dir", Path.cwd().as_posix())
-        self.template_in_dat = _build_config.pop("template_in_dat", None)
+        self.template_in_dat = _build_config.pop("template_in_dat", ProcessInputs())
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
             "in_dat_path", Path(self.run_directory, "IN.DAT").as_posix()
         )
 
-        if isinstance(self.template_in_dat, str):
+        if isinstance(self.template_in_dat, (str, Path)):
             self.template_in_dat = create_template_from_path(self.template_in_dat)
 
         self.params = ProcessSolverParams.from_defaults(self.template_in_dat)
@@ -159,13 +163,15 @@ class Solver(CodesSolver):
         """
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
-        self._setup = Setup(
+        self._setup = self.setup_cls(
             self.params,
             self.in_dat_path,
             self.problem_settings,
         )
-        self._run = Run(self.params, self.in_dat_path, self.binary)
-        self._teardown = Teardown(self.params, self.run_directory, self.read_directory)
+        self._run = self.run_cls(self.params, self.in_dat_path, self.binary)
+        self._teardown = self.teardown_cls(
+            self.params, self.run_directory, self.read_directory
+        )
 
         if setup := self._get_execution_method(self._setup, run_mode):
             setup()

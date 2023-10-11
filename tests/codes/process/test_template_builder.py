@@ -500,7 +500,7 @@ class TestInDatOneForOne:
             }
         )
 
-        cls.template = template_builder.make_inputs()
+        cls.template = template_builder.make_inputs().to_invariable()
 
     def test_indat_bounds_the_same(self):
         true_bounds = self.true_data.pop("bounds").get_value
@@ -529,7 +529,16 @@ class TestInDatOneForOne:
 
     def test_inputs_same(self):
         for k in self.true_data:
-            assert np.allclose(self.true_data[k].get_value, self.template[k].get_value)
+            if not isinstance(self.true_data[k].get_value, (list, dict)):
+                assert np.allclose(
+                    self.true_data[k].get_value, self.template[k].get_value
+                )
+            elif isinstance(self.true_data[k].get_value, dict):
+                compare_dicts(self.true_data[k].get_value, self.template[k]._value)
+            else:
+                assert not set(self.true_data[k].get_value) - set(
+                    self.template[k].get_value
+                )
 
     def test_no_extra_inputs(self):
         for k in self.template:

@@ -19,19 +19,15 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import json
 from unittest import mock
 
 import pytest
 
 from bluemira.codes import process
-from bluemira.codes.error import CodesError
 from bluemira.codes.params import ParameterMapping
-from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process.mapping import mappings as process_mappings
 from bluemira.codes.process.params import ProcessSolverParams
-from tests._helpers import file_exists
 from tests.codes.process.utilities import PARAM_FILE
 
 MODULE_REF = "bluemira.codes.process._setup"
@@ -73,30 +69,6 @@ class TestSetup:
         writer = writer_cls_mock.return_value
         assert writer.add_parameter.call_count > 0
         assert mock.call("input0", 0.0) in writer.add_parameter.call_args_list
-
-    def test_run_inits_writer_with_template_file_if_file_exists(self):
-        with self._indat_patch as indat_cls_mock:
-            setup = Setup(self.default_pf, "", template_in_dat="template/path/in.dat")
-            indat_cls_mock.return_value.data = {"input": 0.0}
-
-            with file_exists("template/path/in.dat", f"{MODULE_REF}.Path.is_file"):
-                setup.run()
-
-        indat_cls_mock.assert_called_once_with(filename="template/path/in.dat")
-
-    def test_run_inits_writer_without_template_returns_default_filled_data(self):
-        with self._indat_patch as indat_cls_mock:
-            setup = Setup(self.default_pf, "", template_in_dat=None)
-            setup.run()
-
-        assert indat_cls_mock.return_value.data == self.default_pf.template_defaults
-
-    @pytest.mark.parametrize("run_func", ["run", "runinput"])
-    def test_run_raises_CodesError_given_no_data_in_template_file(self, run_func):
-        setup = Setup(self.default_pf, "", template_in_dat="template/path/in.dat")
-
-        with pytest.raises(CodesError):
-            getattr(setup, run_func)()
 
     def test_runinput_does_not_write_bluemira_outputs_to_in_dat(self):
         with self._writer_patch as writer_cls_mock:
@@ -144,27 +116,3 @@ class TestSetupIntegration:
         writer = writer_cls_mock.return_value
         # 'dr_tf_case_out' is old name for 'casthi'
         assert mock.call("casthi", 0.04) in writer.add_parameter.call_args_list
-
-    @pytest.mark.parametrize(("pf_n", "pf_v"), [(None, None), ("tk_sh_in", 3)])
-    @pytest.mark.parametrize(
-        ("template", "result"),
-        [
-            (ProcessInputs(), (1.42, 0.69, 0)),
-            (ProcessInputs(bore=5, shldith=5, i_tf_wp_geom=2), (5, 5, 2)),
-        ],
-    )
-    def test_indat_creation_with_template(self, template, result, pf_n, pf_v, tmp_path):
-        if pf_n is None:
-            pf = {}
-        else:
-            with open(PARAM_FILE) as pf_h:
-                pf = {pf_n: json.load(pf_h)[pf_n]}
-            pf[pf_n]["value"] = pf_v
-            result = (result[0], pf_v, result[2])
-        path = tmp_path / "IN.DAT"
-        setup = Setup(pf, path, template_in_dat=template)
-        setup.run()
-
-        assert f"bore     = {result[0]}" in open(path).read()  # noqa: SIM115
-        assert f"shldith  = {result[1]}" in open(path).read()  # noqa: SIM115
-        assert f"i_tf_wp_geom = {result[2]}" in open(path).read()  # noqa: SIM115
