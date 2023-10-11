@@ -71,9 +71,14 @@ class DummySteel(Material):
 
 
 class Copper(Material):
-    RRR: None
+    def __init__(self, RRR: 100):
+        self._RRR = RRR
 
-    def resistivity(self, T: float, B: float, RRR: float):
+    @property
+    def RRR(self):
+        return self._RRR
+
+    def resistivity(self, T: float, B: float):
         """Calculate the resistivity as function of temperature, magnetic field
         and residual resistance ratio.
 
@@ -96,9 +101,10 @@ class Copper(Material):
             1 + (4.5 * (10**-7) * (T**3.35) * (math.exp(-((50 / T) ** 6.428))))
         )
         rho2 = (
-            (1.69 * (10**-8) / RRR)
+            (1.69 * (10**-8) / self.RRR)
             + rho1
-            + 0.4531 * ((1.69 * (10**-8) * rho1) / (RRR * rho1 + 1.69 * (10**-8)))
+            + 0.4531
+            * ((1.69 * (10**-8) * rho1) / (self.RRR * rho1 + 1.69 * (10**-8)))
         )
 
         A = np.log10(1.553 * (10**-8) * B / rho2)
@@ -300,16 +306,31 @@ class REBCO(Material):
 ####################################
 @dataclass
 class Cable:
-    void_fraction: float
-    d_stab: float
-    n_stab: int
-    mat_stab: Material
-    d_strand: float
-    n_strand: int
-    mat_strand: Material
-    d_he: float
-    mat_he: Material
-    cu_non_cu: float
+    def __init__(
+        self,
+        void_fraction: float,
+        d_stab: float,
+        n_stab: int,
+        mat_stab: Material,
+        d_strand: float,
+        n_strand: int,
+        mat_strand: Material,
+        d_he: float,
+        mat_he: Material,
+        cu_non_cu: float,
+        dx_dy_ratio: float
+    ):
+        self.void_fraction = void_fraction
+        self.d_stab = d_stab
+        self.n_stab = n_stab
+        self.mat_stab = mat_stab
+        self.d_strand = d_strand
+        self.n_strand = n_strand
+        self.mat_strand = mat_strand
+        self.d_he = d_he
+        self.mat_he = mat_he
+        self.cu_non_cu = cu_non_cu
+        self.dx_dy_ratio = float
 
     @property
     def area(self):
@@ -317,8 +338,8 @@ class Cable:
             np.pi
             / 4
             * (
-                self.n_stab * self.d_stab**2
-                + self.n_strand * self.d_strand**2
+                (self.n_stab * self.d_stab**2 + self.n_strand * self.d_strand**2)
+                / self.void_fraction
                 + self.d_he**2
             )
         )
@@ -342,6 +363,12 @@ class Cable:
     def specific_heat_capacity(self):
         pass
 
+    def calculate_dx_dy(self):
+        pass
+
+
+
+
 
 ####################################
 class Conductor:
@@ -349,7 +376,7 @@ class Conductor:
         self,
         mat_ins: Material,
         mat_jacket: Material,
-        mat_cable: Material,
+        mat_cable: Cable,
         dx_ins: float,
         dy_ins: float,
         dx_jacket: float,
@@ -454,12 +481,6 @@ class Conductor:
         K_ins_lat = self.mat_ins.Young_moduli * self.dx_ins / self.dy_conductor
         K_ins_top_bot = self.mat_ins.Young_moduli * self.dx_conductor / self.dx_ins
 
-        # K_cond = (
-        #     2 * K_jacket_lat
-        #     + 2 * K_ins_lat
-        #     + (1 / K_cable + 2 * 1 / K_jacket_top_bot + 2 * 1 / K_ins_top_bot) ** -1
-        # )
-
         K_cond = serie(
             [
                 K_ins_lat,
@@ -498,7 +519,7 @@ class SquareConductor(Conductor):
         self,
         mat_ins: Material,
         mat_jacket: Material,
-        mat_cable: Material,
+        mat_cable: Cable,
         d_ins: float,
         d_jacket: float,
         d_cable: float,
@@ -520,6 +541,7 @@ class SquareConductor(Conductor):
             yc=yc,
             name=name,
         )
+        self.mat_cable.dx_dy_ratio = 1
 
 
 def rearrange_TF_conductors(
@@ -809,7 +831,7 @@ Tau_discharge = max([Tau_discharge1, Tau_discharge2, 4])
 mat_insulator = DummyInsulator()
 mat_jacket = DummySteel()
 mat_case = DummySteel()
-cu = Copper()
+cu = Copper(100)
 nb3sn = Nb3Sn_WST()
 rebco = REBCO()
 
