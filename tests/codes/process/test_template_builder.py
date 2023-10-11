@@ -27,7 +27,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from process.io.in_dat import InDat
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import try_get_bluemira_private_data_root
@@ -62,7 +61,7 @@ from bluemira.codes.process._model_mapping import (
     TFSuperconductorModel,
     TFWindingPackTurnModel,
 )
-from bluemira.codes.process.api import Impurities
+from bluemira.codes.process.api import ENABLED, Impurities
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 from bluemira.utilities.tools import compare_dicts
 
@@ -223,12 +222,15 @@ class TestPROCESSTemplateBuilder:
 
 
 def read_indat(filename):
+    from process.io.in_dat import InDat
+
     naughties = ["runtitle", "pulsetimings"]
     data = InDat(filename=filename).data
     return {k: v for k, v in data.items() if k not in naughties}
 
 
 @pytest.mark.private
+@pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
 class TestInDatOneForOne:
     @classmethod
     def setup_class(cls):
