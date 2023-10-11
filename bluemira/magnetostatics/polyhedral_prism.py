@@ -81,34 +81,23 @@ def surface_integral(face_points, face_normal, point):
     """
     W_f(r)
     """
-    integral = 0.0
     r_f = get_face_midpoint(face_points)
     omega_f = 0.0
+    integral = 0.0
     for i in range(len(face_points) - 1):
         p0 = face_points[i]
         p1 = face_points[i + 1]
-        r_e = 0.5 * (p0 + p1)
         u_e = p1 - p0
         u_e /= np.linalg.norm(u_e)
-        # u_e = -np.cross(face_normal, u_e)
-        # u_e /= np.linalg.norm(u_e)
         integral += np.dot(
-            np.cross(face_normal, r_e - point),
+            np.cross(face_normal, p0 - point),  # r_e is an arbitrary point
             u_e * line_integral(point, p0, p1),
         )
-        # import matplotlib.pyplot as plt
-        # ax = plt.gca()
-        # ax.quiver(*r_e, *assert np.allcloseu_e)
-
-        r1, r2, r3 = p0, p1, r_f
-        normal = np.cross(r2 - r1, r3 - r1)
-        normal /= np.linalg.norm(normal)
-        # if not np.allclose(normal, face_normal):
-        #     print(normal, face_normal)
-        omega_f += omega_t(point, r1, r2, r3)
+        omega_f += omega_t(point, p0, p1, r_f)
     return integral - np.dot(r_f - point, face_normal) * omega_f
 
 
+@nb.jit(nopython=True)
 def vector_potential(rho_vector, face_points, face_normals, point):
     """
     Calculate the vector potential
@@ -122,6 +111,7 @@ def vector_potential(rho_vector, face_points, face_normals, point):
     return MU_0 / (8 * np.pi) * np.dot(rho_vector, integral)
 
 
+@nb.jit(nopython=True)
 def field(rho_vector, face_points, face_normals, point):
     """
     Calculate the magnetic field
@@ -194,7 +184,7 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
         self.alpha = alpha
         self.beta = beta
         # Current density
-        self.rho = current / (4 * breadth * depth)
+        self.set_current(current)
         self.points = self._calculate_points()
 
     def _check_angle_values(self, alpha, beta):
@@ -240,7 +230,7 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
         x: Union[float, np.ndarray],
         y: Union[float, np.ndarray],
         z: Union[float, np.ndarray],
-    ) -> Union[float, np.ndarray]:
+    ) -> np.ndarray:
         """
         Calculate the magnetic field at a point due to the current source.
 
@@ -259,6 +249,34 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
         """
         point = np.array([x, y, z])
         return field(self.rho * self.dcm[1], self.face_points, self.face_normals, point)
+
+    @process_xyz_array
+    def vector_potential(
+        self,
+        x: Union[float, np.ndarray],
+        y: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],
+    ) -> np.ndarray:
+        """
+        Calculate the vector potential at a point due to the current source.
+
+        Parameters
+        ----------
+        x:
+            The x coordinate(s) of the points at which to calculate the field
+        y:
+            The y coordinate(s) of the points at which to calculate the field
+        z:
+            The z coordinate(s) of the points at which to calculate the field
+
+        Returns
+        -------
+        The vector potential {Ax, Ay, Az} in [T]
+        """
+        point = np.array([x, y, z])
+        return vector_potential(
+            self.rho * self.dcm[1], self.face_points, self.face_normals, point
+        )
 
     def _calculate_points(self):
         """
