@@ -229,8 +229,7 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
     def __init__(
         self,
         shape: Union[np.ndarray, Coordinates],
-        breadth: float,
-        depth: float,
+        xs_coordinates: Coordinates,
         current: float,
     ):
         shape = process_to_coordinates(shape)
@@ -258,8 +257,7 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
                 d_l,
                 normal,
                 t_vec,
-                breadth,
-                depth,
+                xs_coordinates,
                 alpha,
                 beta,
                 current,
