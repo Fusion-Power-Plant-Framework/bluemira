@@ -230,6 +230,7 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
         r = rotation_matrix(np.deg2rad(angle), axis).T
         self.face_normals = np.array([n @ r for n in self.face_normals])
         self.face_points = np.array([p @ r for p in self.face_points])
+        self.mid_points = np.array([p @ r for p in self.mid_points])
 
 
 class PrismEndCapMixin:
