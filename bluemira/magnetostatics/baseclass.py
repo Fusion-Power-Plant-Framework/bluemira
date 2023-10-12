@@ -35,6 +35,7 @@ import numpy as np
 
 from bluemira.geometry.bound_box import BoundingBox
 from bluemira.geometry.coordinates import rotation_matrix
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.utilities.plot_tools import Plot3D
 
 __all__ = ["CurrentSource", "RectangularCrossSectionCurrentSource", "SourceGroup"]
@@ -214,19 +215,6 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
     face_points: np.ndarray
     face_normals: np.ndarray
 
-    def set_current(self, current: float):
-        """
-        Set the current inside the source, adjusting current density.
-
-        Parameters
-        ----------
-        current:
-            The current of the source [A]
-        """
-        super().set_current(current)
-        # TODO: Generalise to polygon area
-        self.rho = current / (4 * self.breadth * self.depth)
-
     def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
         Rotate the CurrentSource about an axis.
@@ -242,6 +230,45 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
         r = rotation_matrix(np.deg2rad(angle), axis).T
         self.face_normals = np.array([n @ r for n in self.face_normals])
         self.face_points = np.array([p @ r for p in self.face_points])
+
+
+class PrismEndCapMixin:
+    def _check_angle_values(self, alpha, beta):
+        """
+        Check that end-cap angles are acceptable.
+        """
+        sign_alpha = np.sign(alpha)
+        sign_beta = np.sign(beta)
+        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0.0)  # noqa: PLR2004
+        if not one_zero and sign_alpha != sign_beta:
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: end-cap angles "
+                f"must have the same sign {alpha=:.3f}, {beta=:.3f}."
+            )
+        if not (0 <= abs(alpha) < 0.5 * np.pi):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside"
+                " bounds of [0, 180°)."
+            )
+        if not (0 <= abs(beta) < 0.5 * np.pi):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {beta=:.3f} is outside "
+                "bounds of [0, 180°)."
+            )
+
+    def _check_raise_self_intersection(
+        self, length: float, breadth: float, alpha: float, beta: float
+    ):
+        """
+        Check for bad combinations of source length and end-cap angles.
+        """
+        a = np.tan(alpha) * breadth
+        b = np.tan(beta) * breadth
+        if (a + b) > length:
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: source length and "
+                "angles imply a self-intersecting trapezoidal prism."
+            )
 
 
 class SourceGroup(ABC):
