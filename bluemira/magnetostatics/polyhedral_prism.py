@@ -98,7 +98,7 @@ def line_integral(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
     return np.log(a / b)
 
 
-@nb.jit(nopython=True, cache=True)
+# @nb.jit(nopython=True, cache=True)
 def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
     """
     Get an arbitrary point on the face
@@ -108,12 +108,14 @@ def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
 
 @nb.jit(nopython=True, cache=True)
 def surface_integral(
-    face_points: np.ndarray, face_normal: np.ndarray, point: np.ndarray
+    face_points: np.ndarray,
+    face_normal: np.ndarray,
+    mid_point: np.ndarray,
+    point: np.ndarray,
 ) -> float:
     """
     W_f(r)
     """
-    r_f = get_face_midpoint(face_points)
     omega_f = 0.0
     integral = 0.0
     for i in range(len(face_points) - 1):
@@ -127,8 +129,8 @@ def surface_integral(
         )
         # Calculate omega_f as the sum of subtended angles with a triangle
         # for each edge
-        omega_f += omega_t(point, p0, p1, r_f)
-    return integral - np.dot(r_f - point, face_normal) * omega_f
+        omega_f += omega_t(point, p0, p1, mid_point)
+    return integral - np.dot(mid_point - point, face_normal) * omega_f
 
 
 @nb.jit(nopython=True, cache=True)
@@ -166,11 +168,12 @@ def vector_potential(
     return MU_0 / (8 * np.pi) * np.dot(current_direction, integral)
 
 
-@nb.jit(nopython=True, cache=True)
+# @nb.jit(nopython=True, cache=True)
 def field(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
+    mid_points: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -195,7 +198,7 @@ def field(
     field = np.zeros(3)
     for i, normal in enumerate(face_normals):
         field += np.cross(current_direction, normal) * surface_integral(
-            face_points[i], normal, point
+            face_points[i], normal, mid_points[i], point
         )
     return MU_0_4PI * field
 
@@ -266,11 +269,10 @@ class PolyhedralPrismCurrentSource(
         self.points = self._calculate_points()
 
     def _set_cross_section(self, xs_coordinates: Coordinates):
+        xs_coordinates = deepcopy(xs_coordinates)
         xs_coordinates.close()
         self.area = get_area_2d(*xs_coordinates.xz)
-        self._xs = (
-            xs_coordinates  # Coordinates(self._local_to_global(xs_coordinates.xyz))
-        )
+        self._xs = xs_coordinates
         self._xs.set_ccw([0, 1, 0])
 
     @process_xyz_array
@@ -297,7 +299,9 @@ class PolyhedralPrismCurrentSource(
         The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
-        return self.rho * field(self.dcm[1], self.face_points, self.face_normals, point)
+        return self.rho * field(
+            self.dcm[1], self.face_points, self.face_normals, self.mid_points, point
+        )
 
     @process_xyz_array
     def vector_potential(
@@ -346,6 +350,7 @@ class PolyhedralPrismCurrentSource(
         upper_points = self._local_to_global(upper)
 
         face_points = [lower_points]
+        mid_points = [np.sum(lower_points[:-1], axis=0) / (len(lower_points) - 1)]
 
         for i in range(len(lower) - 1):
             fp = [
@@ -355,11 +360,14 @@ class PolyhedralPrismCurrentSource(
                 lower_points[i + 1],
                 lower_points[i],
             ]
+            mid_points.append(np.sum(fp[:-1], axis=0) / (len(fp) - 1))
             face_points.append(fp)
         # Important to make sure the normal faces outwards!
-        face_points.append(upper_points[::-1])
+        face_points.append(list(upper_points[::-1]))
+        mid_points.append(np.sum(upper_points[:-1], axis=0) / (len(upper_points) - 1))
 
         self.face_points = np.array(face_points)
+        self.mid_points = np.array(mid_points)
         normals = [np.cross(p[1] - p[0], p[2] - p[1]) for p in self.face_points]
         self.face_normals = np.array([n / np.linalg.norm(n) for n in normals])
 
@@ -367,10 +375,7 @@ class PolyhedralPrismCurrentSource(
         points = [np.vstack(lower_points), np.vstack(upper_points)]
         # Lines between corners
         points.extend(
-            [
-                np.vstack([lower_points[i], upper_points[i]])
-                for i in range(len(lower) - 1)
-            ]
+            [np.vstack([lower_points[i], upper_points[i]]) for i in range(len(lower))]
         )
 
         return np.array(points, dtype=object)
