@@ -331,19 +331,17 @@ class PolyhedralPrismCurrentSource(
         """
         Calculate extrema points of the current source for plotting and debugging.
         """
-        b = self._halflength
-
         # Lower shape
         lower = deepcopy(self._xs.xyz)
         # Project points onto end cap plane
-        lower[1] += -b - lower[0] * np.tan(self.beta)
+        lower[1] += -self._halflength - lower[0] * np.tan(self.beta)
         lower = lower.T
         lower_points = self._local_to_global(lower)
 
         # Upper shape
         upper = deepcopy(self._xs.xyz)
         # Project points onto end cap plane
-        upper[1] += b + upper[0] * np.tan(self.alpha)
+        upper[1] += self._halflength + upper[0] * np.tan(self.alpha)
         upper = upper.T
         upper_points = self._local_to_global(upper)
 
