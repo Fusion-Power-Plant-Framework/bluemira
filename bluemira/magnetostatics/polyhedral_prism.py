@@ -126,10 +126,27 @@ def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> fl
 
 
 @nb.jit(nopython=True, cache=True)
-def line_integral(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
+def edge_integral(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
     """
-    w_e(r)
-    """
+    Evaluate the edge integral w_e(r) of the W function at a point
+
+    Parameters
+    ----------
+    r:
+        Point at which the calculation is being performed
+    r1:
+        First point of the edge
+    r2:
+        Second point of the edge
+
+    Returns
+    -------
+    Value of the edge integral w_e(r)
+
+    Notes
+    -----
+    \t:math:`w_{e}(\\mathbf{r}) = \\textrm{ln}\\dfrac{\\lvert \\mathbf{r_2} - \\mathbf{r} \\rvert + \\lvert\\mathbf{r_1} - \\mathbf{r} \\rvert + \\lvert \\mathbf{r_2} - \\mathbf{r_1} \\rvert}{\\lvert \\mathbf{r_2} - \\mathbf{r} \\rvert + \\lvert\\mathbf{r_1} - \\mathbf{r} \\rvert - \\lvert \\mathbf{r_2} - \\mathbf{r_1} \\rvert}`
+    """  # noqa: W505 E501
     r1r = vector_norm_eps(r1 - r)
     r2r = vector_norm_eps(r2 - r)
     r2r1 = vector_norm_eps(r2 - r1)
@@ -164,7 +181,7 @@ def surface_integral(
         u_e /= np.linalg.norm(u_e)
         integral += np.dot(
             np.cross(face_normal, p0 - point),  # r_e is an arbitrary point
-            u_e * line_integral(point, p0, p1),
+            u_e * edge_integral(point, p0, p1),
         )
         # Calculate omega_f as the sum of subtended angles with a triangle
         # for each edge
