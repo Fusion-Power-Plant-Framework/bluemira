@@ -274,6 +274,22 @@ class TestPolyhedralCoordinates:
             10,
             1e6,
         )
+        coords = Coordinates(
+            {
+                "x": [-1, 1, 0],
+                "z": [-0.5, -0.5, 0.25],
+            }
+        )
+        cls.triangle = PolyhedralPrismCurrentSource(
+            [0, 0, 0],
+            [10, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            coords,
+            10,
+            10,
+            1e6,
+        )
 
     @pytest.mark.parametrize("plane", ["x", "y", "z"])
     def test_hexagon(self, plane):
@@ -296,8 +312,35 @@ class TestPolyhedralCoordinates:
         ax = f.add_subplot(1, 1, 1, projection="3d")
         self.hexagon.plot(ax)
         ax.set_title("HexagonPrism")
-        self.hexagon.plot(ax)
         Bx, By, Bz = self.hexagon.field(xx, yy, zz)
+        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
+        args_new = [xx, yy, zz, B_new]
+        cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
+        f.colorbar(cm)
+        plt.show()
+
+    @pytest.mark.parametrize("plane", ["x", "y", "z"])
+    def test_triangle(self, plane):
+        n = 150
+        x1, x2 = np.linspace(-5, 5, n), np.linspace(-5, 5, n)
+        xx1, xx2 = np.meshgrid(x1, x2)
+        xx3 = np.zeros_like(xx1)
+
+        if plane == "x":
+            xx, yy, zz = xx3, xx1, xx2
+            i, j, k = 3, 1, 2
+        elif plane == "y":
+            xx, yy, zz = xx1, xx3, xx2
+            i, j, k = 0, 3, 2
+        elif plane == "z":
+            xx, yy, zz = xx1, xx2, xx3
+            i, j, k = 0, 1, 3
+
+        f = plt.figure()
+        ax = f.add_subplot(1, 1, 1, projection="3d")
+        self.triangle.plot(ax)
+        ax.set_title("TrianglePrism")
+        Bx, By, Bz = self.triangle.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         args_new = [xx, yy, zz, B_new]
         cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
