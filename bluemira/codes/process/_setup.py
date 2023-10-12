@@ -103,9 +103,11 @@ class Setup(CodesSetup):
         if use_bp_inputs:
             inputs = self._get_new_inputs(remapper=update_obsolete_vars)
             for key, value in inputs.items():
-                writer.add_parameter(key, value)
+                if value is not None:
+                    writer.add_parameter(key, value)
             for key, value in self.problem_settings.items():
-                writer.add_parameter(key, value)
+                if value is not None:
+                    writer.add_parameter(key, value)
 
             self._validate_models(writer)
 
