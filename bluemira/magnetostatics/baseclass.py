@@ -113,17 +113,16 @@ class CurrentSource(ABC):
         return deepcopy(self)
 
 
-class RectangularCrossSectionCurrentSource(CurrentSource):
+class CrossSectionCurrentSource(CurrentSource):
     """
-    Abstract base class for a current source with a rectangular cross-section.
+    Abstract class for a current source with a cross-section
     """
 
     origin: np.array
     dcm: np.array
     points: np.array
-    breadth: float
-    depth: float
-    length: float
+    rho: float
+    area: float
 
     def set_current(self, current: float):
         """
@@ -135,7 +134,7 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
             The current of the source [A]
         """
         super().set_current(current)
-        self.rho = current / (4 * self.breadth * self.depth)
+        self.rho = current / self.area
 
     def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
@@ -192,22 +191,28 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
         # Plot local coordinate system
         if show_coord_sys:
             ax.scatter(*self.origin, color="k")
-            ax.quiver(*self.origin, *self.dcm[0], length=self.breadth, color="r")
-            ax.quiver(*self.origin, *self.dcm[1], length=self.length, color="r")
-            ax.quiver(*self.origin, *self.dcm[2], length=self.depth, color="r")
+            ax.quiver(*self.origin, *self.dcm[0], length=1, color="r")
+            ax.quiver(*self.origin, *self.dcm[1], length=1, color="r")
+            ax.quiver(*self.origin, *self.dcm[2], length=1, color="r")
 
 
-class PolyhedralCrossSectionCurrentSource(CurrentSource):
+class RectangularCrossSectionCurrentSource(CrossSectionCurrentSource):
+    """
+    Abstract base class for a current source with a rectangular cross-section.
+    """
+
+    breadth: float
+    depth: float
+    length: float
+
+
+class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
     """
     Abstract base class for a current source with a polyhedral cross-section.
     """
 
-    origin: np.array
-    dcm: np.array
-    points: np.array
-    breadth: float
-    depth: float
-    length: float
+    face_points: np.ndarray
+    face_normals: np.ndarray
 
     def set_current(self, current: float):
         """
@@ -233,53 +238,10 @@ class PolyhedralCrossSectionCurrentSource(CurrentSource):
         axis:
             The axis of rotation
         """
+        super().rotate(angle, axis)
         r = rotation_matrix(np.deg2rad(angle), axis).T
-        self.origin = self.origin @ r
-        self.points = np.array([p @ r for p in self.points], dtype=object)
-        self.dcm = self.dcm @ r
-
-    def _local_to_global(self, points: np.ndarray) -> np.ndarray:
-        """
-        Convert local x', y', z' point coordinates to global x, y, z point coordinates.
-        """
-        return np.array([self.origin + self.dcm.T @ p for p in points])
-
-    def _global_to_local(self, points: np.ndarray) -> np.ndarray:
-        """
-        Convert global x, y, z point coordinates to local x', y', z' point coordinates.
-        """
-        return np.array([(self.dcm @ (p - self.origin)) for p in points])
-
-    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
-        """
-        Plot the CurrentSource.
-
-        Parameters
-        ----------
-        ax: Union[None, Axes]
-            The matplotlib axes to plot on
-        show_coord_sys: bool
-            Whether or not to plot the coordinate systems
-        """
-        if ax is None:
-            ax = Plot3D()
-            # If no ax provided, we assume that we want to plot only this source,
-            # and thus set aspect ratio equality on this term only
-            edge_points = np.concatenate(self.points)
-
-            # Invisible bounding box to set equal aspect ratio plot
-            xbox, ybox, zbox = BoundingBox.from_xyz(*edge_points.T).get_box_arrays()
-            ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
-
-        for points in self.points:
-            ax.plot(*points.T, color="b", linewidth=1)
-
-        # Plot local coordinate system
-        if show_coord_sys:
-            ax.scatter(*self.origin, color="k")
-            ax.quiver(*self.origin, *self.dcm[0], length=self.breadth, color="r")
-            ax.quiver(*self.origin, *self.dcm[1], length=self.length, color="r")
-            ax.quiver(*self.origin, *self.dcm[2], length=self.depth, color="r")
+        self.face_normals = np.array([n @ r for n in self.face_normals])
+        self.face_points = np.array([p @ r for p in self.face_points])
 
 
 class SourceGroup(ABC):

@@ -367,7 +367,8 @@ class TrapezoidalPrismCurrentSource(RectangularCrossSectionCurrentSource):
         self.alpha = alpha
         self.beta = beta
         # Current density
-        self.rho = current / (4 * breadth * depth)
+        self.area = 4 * breadth * depth
+        self.set_current(current)
         self.points = self._calculate_points()
 
     def _check_angle_values(self, alpha, beta):
