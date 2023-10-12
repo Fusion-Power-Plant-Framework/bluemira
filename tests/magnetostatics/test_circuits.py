@@ -326,6 +326,32 @@ class TestArbitraryPlanarPolyhedralCircuit:
         return np.allclose(s1_rect, s2_rect)
 
 
+class TestPolyhedralCircuitPlotting:
+    @classmethod
+    def setup_class(cls):
+        shape = PrincetonD().create_shape()
+        xs = Coordinates({"x": [-1, -1, 1], "z": [-1, 1, 0]})
+        xs.translate(xs.center_of_mass)
+
+        cls.circuit = ArbitraryPlanarPolyhedralXSCircuit(
+            shape.discretize(ndiscr=15), xs, current=1e6
+        )
+
+    def test_field_plot(self):
+        x = np.linspace(2, 8, 100)
+        z = np.linspace(-12, 12, 100)
+        xx, zz = np.meshgrid(x, z)
+        yy = np.zeros_like(xx)
+        self.circuit.plot()
+        ax = plt.gca()
+        Bx, By, Bz = self.circuit.field(xx, yy, zz)
+        B = np.sqrt(Bx**2 + By**2 + Bz**2)
+        cm = ax.contourf(xx, B, zz, zdir="y", offset=0)
+        cb = plt.gcf().colorbar(cm, shrink=0.46)
+        cb.set_label("$B$ [T]")
+        plt.show()
+
+
 class TestCariddiBenchmark:
     """
     This is a code comparison benchmark to some work from F. Villone (CREATE) in
