@@ -334,34 +334,45 @@ class PolyhedralPrismCurrentSource(
         b = self._halflength
 
         # Lower shape
-        pln = deepcopy(self._xs.xyz)
+        lower = deepcopy(self._xs.xyz)
         # Project points onto end cap plane
-        pln[1] += -b - pln[0] * np.tan(self.beta)
-        pln = pln.T
-        plng = self._local_to_global(pln)
+        lower[1] += -b - lower[0] * np.tan(self.beta)
+        lower = lower.T
+        lower_points = self._local_to_global(lower)
 
         # Upper shape
-        pun = deepcopy(self._xs.xyz)
+        upper = deepcopy(self._xs.xyz)
         # Project points onto end cap plane
-        pun[1] += b + pun[0] * np.tan(self.alpha)
-        pun = pun.T
-        pung = self._local_to_global(pun)
+        upper[1] += b + upper[0] * np.tan(self.alpha)
+        upper = upper.T
+        upper_points = self._local_to_global(upper)
 
-        face_points = [plng]
+        face_points = [lower_points]
 
-        for i in range(len(pln) - 1):
-            fp = [plng[i], pung[i], pung[i + 1], plng[i + 1], plng[i]]
+        for i in range(len(lower) - 1):
+            fp = [
+                lower_points[i],
+                upper_points[i],
+                upper_points[i + 1],
+                lower_points[i + 1],
+                lower_points[i],
+            ]
             face_points.append(fp)
-        face_points.append(pung[::-1])
+        # Important to make sure the normal faces outwards!
+        face_points.append(upper_points[::-1])
 
         self.face_points = np.array(face_points)
         normals = [np.cross(p[1] - p[0], p[2] - p[1]) for p in self.face_points]
-        normals = [n / np.linalg.norm(n) for n in normals]
-        self.face_normals = np.array(normals)
+        self.face_normals = np.array([n / np.linalg.norm(n) for n in normals])
 
-        points = [np.vstack(plng), np.vstack(pung)]
-        for i in range(len(pln) - 1):
-            points.append(np.vstack([plng[i], pung[i]]))
-            # Lines between corners
+        # Points for plotting only
+        points = [np.vstack(lower_points), np.vstack(upper_points)]
+        # Lines between corners
+        points.extend(
+            [
+                np.vstack([lower_points[i], upper_points[i]])
+                for i in range(len(lower) - 1)
+            ]
+        )
 
         return np.array(points, dtype=object)
