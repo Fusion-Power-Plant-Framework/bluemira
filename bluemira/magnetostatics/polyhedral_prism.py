@@ -20,7 +20,13 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
 """
-Polyhedral prism current source
+Polyhedral prism current source using the volume integral method
+
+Easiest to follow was M. Fabbri, "Magnetic Flux Density and Vector
+Potential of Uniform Polyhedral Sources", IEEE TRANSACTIONS ON MAGNETICS,
+VOL. 44, NO. 1, JANUARY 2008
+
+but
 """
 
 from typing import Union
@@ -33,11 +39,11 @@ from bluemira.magnetostatics.baseclass import PolyhedralCrossSectionCurrentSourc
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 
-ZERO_GUARD_EPS = 1e-14
+ZERO_DIV_GUARD_EPS = 1e-14
 
 
 @nb.jit(nopython=True)
-def vector_norm_eps(r):
+def vector_norm_eps(r: np.ndarray) -> float:
     """
     Dodge singularities in omega_t and line_integral when field point
     lies on an edge.
@@ -47,11 +53,11 @@ def vector_norm_eps(r):
     around the edge.
     """
     r_norm = np.linalg.norm(r)
-    return np.sqrt(r_norm**2 + ZERO_GUARD_EPS)
+    return np.sqrt(r_norm**2 + ZERO_DIV_GUARD_EPS)
 
 
 @nb.jit(nopython=True)
-def omega_t(r, r1, r2, r3):
+def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> float:
     """
     Solid angle seen from the calculation point subtended by the face
     triangle normal must be pointing outwards from the face
@@ -62,7 +68,6 @@ def omega_t(r, r1, r2, r3):
     r1r = vector_norm_eps(r1_r)
     r2r = vector_norm_eps(r2_r)
     r3r = vector_norm_eps(r3_r)
-    # Dodge singularities (at the price of some error...)
     d = (
         r1r * r2r * r3r
         + r3r * np.dot(r1_r, r2_r)
@@ -77,7 +82,7 @@ def omega_t(r, r1, r2, r3):
 
 
 @nb.jit(nopython=True)
-def line_integral(r, r1, r2):
+def line_integral(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
     """
     w_e(r)
     """
@@ -90,7 +95,7 @@ def line_integral(r, r1, r2):
 
 
 @nb.jit(nopython=True)
-def get_face_midpoint(face_points):
+def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
     """
     Get an arbitrary point on the face
     """
@@ -98,7 +103,9 @@ def get_face_midpoint(face_points):
 
 
 @nb.jit(nopython=True)
-def surface_integral(face_points, face_normal, point):
+def surface_integral(
+    face_points: np.ndarray, face_normal: np.ndarray, point: np.ndarray
+) -> float:
     """
     W_f(r)
     """
@@ -119,7 +126,12 @@ def surface_integral(face_points, face_normal, point):
 
 
 @nb.jit(nopython=True)
-def vector_potential(current_direction, face_points, face_normals, point):
+def vector_potential(
+    current_direction: np.ndarray,
+    face_points: np.ndarray,
+    face_normals: np.ndarray,
+    point: np.ndarray,
+) -> np.ndarray:
     """
     Calculate the vector potential
 
@@ -242,6 +254,7 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
         self.alpha = alpha
         self.beta = beta
         # Current density
+        self.area = 4 * breadth * depth
         self.set_current(current)
         self.points = self._calculate_points()
 

@@ -78,7 +78,7 @@ class TestPolyhedralMaths:
         cm = ax.contourf(xx, B_new, zz, zdir="y", offset=0)
         f.colorbar(cm)
         plt.show()
-        assert np.allclose(B, B_new)
+        np.testing.assert_allclose(B_new, B)
 
     def test_xy_field(self):
         n = 50
@@ -105,7 +105,7 @@ class TestPolyhedralMaths:
         cm = ax.contourf(xx, yy, B_new, zdir="z", offset=0)
         f.colorbar(cm)
         plt.show()
-        assert np.allclose(B, B_new)
+        np.testing.assert_allclose(B_new, B)
 
     def test_yz_field(self):
         n = 50
@@ -131,7 +131,7 @@ class TestPolyhedralMaths:
         cm = ax.contourf(B_new, yy, zz, zdir="x", offset=10)
         f.colorbar(cm)
         plt.show()
-        assert np.allclose(B, B_new)
+        np.testing.assert_allclose(B_new, B)
 
 
 class TestPolyhedralPrismBabicAykel:
@@ -186,7 +186,7 @@ class TestPolyhedralPrismBabicAykel:
             i, j, k = 0, 1, 3
 
         f = plt.figure()
-        ax = f.add_subplot(1, 2, 1, projection="3d")
+        ax = f.add_subplot(1, 3, 1, projection="3d")
         ax.set_title("TrapezoidalPrism")
         self.trap.plot(ax)
         Bx, By, Bz = self.trap.field(xx, yy, zz)
@@ -196,16 +196,23 @@ class TestPolyhedralPrismBabicAykel:
         cm = ax.contourf(args[i], args[j], args[k], zdir=plane, offset=0)
         f.colorbar(cm)
 
-        ax = f.add_subplot(1, 2, 2, projection="3d")
+        ax = f.add_subplot(1, 3, 2, projection="3d")
         ax.set_title("PolyhedralPrism")
         self.poly.plot(ax)
         Bx, By, Bz = self.poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
-        args = [xx, yy, zz, B_new]
-        cm = ax.contourf(args[i], args[j], args[k], zdir=plane, offset=0)
+        args_new = [xx, yy, zz, B_new]
+        cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
+        f.colorbar(cm)
+
+        ax = f.add_subplot(1, 3, 3, projection="3d")
+        ax.set_title("difference [%]")
+        args_diff = [xx, yy, zz, 100 * (B - B_new) / B]
+        self.poly.plot(ax)
+        cm = ax.contourf(args_diff[i], args_diff[j], args_diff[k], zdir=plane, offset=0)
         f.colorbar(cm)
         plt.show()
-        assert np.allclose(B, B_new)
+        np.testing.assert_allclose(B_new, B)
 
     def test_paper_values(self):
         field = self.poly.field(2, 2, 2)
