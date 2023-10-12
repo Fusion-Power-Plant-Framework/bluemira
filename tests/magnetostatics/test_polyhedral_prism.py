@@ -133,7 +133,10 @@ class TestPolyhedralMaths:
         plt.show()
         assert np.allclose(B, B_new)
 
-    def test_paper_example(self):
+
+class TestPolyhedralPrismBabicAykel:
+    @classmethod
+    def setup_class(cls):
         """
         Verification test.
 
@@ -142,7 +145,7 @@ class TestPolyhedralMaths:
         https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
         """
         # Babic and Aykel example (single trapezoidal prism)
-        source = PolyhedralPrismCurrentSource(
+        cls.trap = TrapezoidalPrismCurrentSource(
             np.array([0, 0, 0]),
             np.array([2 * 2.154700538379251, 0, 0]),  # This gives b=1
             np.array([0, 1, 0]),
@@ -153,9 +156,59 @@ class TestPolyhedralMaths:
             30.0,
             4e5,
         )
-        source.plot()
+        cls.poly = PolyhedralPrismCurrentSource(
+            np.array([0, 0, 0]),
+            np.array([2 * 2.154700538379251, 0, 0]),  # This gives b=1
+            np.array([0, 1, 0]),
+            np.array([0, 0, 1]),
+            1,
+            1,
+            60.0,
+            30.0,
+            4e5,
+        )
+
+    @pytest.mark.parametrize("plane", ["x", "y", "z"])
+    def test_plot(self, plane):
+        n = 50
+        x1, x2 = np.linspace(-5, 5, n), np.linspace(-5, 5, n)
+        xx1, xx2 = np.meshgrid(x1, x2)
+        xx3 = np.zeros_like(xx1)
+
+        if plane == "x":
+            xx, yy, zz = xx3, xx1, xx2
+            i, j, k = 3, 1, 2
+        elif plane == "y":
+            xx, yy, zz = xx1, xx3, xx2
+            i, j, k = 0, 3, 2
+        elif plane == "z":
+            xx, yy, zz = xx1, xx2, xx3
+            i, j, k = 0, 1, 3
+
+        f = plt.figure()
+        ax = f.add_subplot(1, 2, 1, projection="3d")
+        ax.set_title("TrapezoidalPrism")
+        self.trap.plot(ax)
+        Bx, By, Bz = self.trap.field(xx, yy, zz)
+        B = np.sqrt(Bx**2 + By**2 + Bz**2)
+        args = [xx, yy, zz, B]
+
+        cm = ax.contourf(args[i], args[j], args[k], zdir=plane, offset=0)
+        f.colorbar(cm)
+
+        ax = f.add_subplot(1, 2, 2, projection="3d")
+        ax.set_title("PolyhedralPrism")
+        self.poly.plot(ax)
+        Bx, By, Bz = self.poly.field(xx, yy, zz)
+        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
+        args = [xx, yy, zz, B_new]
+        cm = ax.contourf(args[i], args[j], args[k], zdir=plane, offset=0)
+        f.colorbar(cm)
         plt.show()
-        field = source.field(2, 2, 2)
+        assert np.allclose(B, B_new)
+
+    def test_paper_values(self):
+        field = self.poly.field(2, 2, 2)
         abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
         # As per Babic and Aykel paper
         # Assume truncated last digit and not rounded...
@@ -163,7 +216,7 @@ class TestPolyhedralMaths:
         assert field_7decimals == pytest.approx(15.5533805, rel=0, abs=EPS)
 
         # Test singularity treatments:
-        field = source.field(1, 1, 1)
+        field = self.poly.field(1, 1, 1)
         abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
         # Assume truncated last digit and not rounded...
         field_9decimals = np.trunc(abs_field * 10**9) / 10**9
