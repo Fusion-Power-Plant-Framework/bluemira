@@ -240,6 +240,68 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
         )
 
 
+class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
+    """
+    An arbitrary, planar current loop of constant polyhedral cross-section
+    and uniform current density.
+
+    Parameters
+    ----------
+    shape:
+        The geometry from which to form an ArbitraryPlanarRectangularXSCircuit
+    xs_coordinates:
+        The cross-section geometry of the conductor
+    current:
+        The current flowing through the source [A]
+
+    Notes
+    -----
+    Works best with planar x-z geometries.
+    """
+
+    def __init__(
+        self,
+        shape: Union[np.ndarray, Coordinates],
+        breadth: float,
+        depth: float,
+        current: float,
+    ):
+        shape = process_to_coordinates(shape)
+        if not shape.is_planar:
+            raise MagnetostaticsError(
+                f"The input shape for {self.__class__.__name__} must be planar."
+            )
+
+        betas, alphas = self._get_betas_alphas(shape)
+
+        normal = shape.normal_vector
+
+        # Set up geometry, calculating all trapezoidal prism sources
+        self.shape = shape.T
+        self.d_l = np.diff(self.shape, axis=0)
+        self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
+        sources = []
+
+        for midpoint, d_l, beta, alpha in zip(self.midpoints, self.d_l, betas, alphas):
+            d_l_norm = d_l / np.linalg.norm(d_l)
+            t_vec = np.cross(d_l_norm, normal)
+
+            source = PolyhedralPrismCurrentSource(
+                midpoint,
+                d_l,
+                normal,
+                t_vec,
+                breadth,
+                depth,
+                alpha,
+                beta,
+                current,
+            )
+            sources.append(source)
+
+        super().__init__(sources)
+
+
 class HelmholtzCage(SourceGroup):
     """
     Axisymmetric arrangement of current sources about the z-axis.
