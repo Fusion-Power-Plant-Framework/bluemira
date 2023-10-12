@@ -70,8 +70,9 @@ def omega_t(r, r1, r2, r3):
         + r1r * np.dot(r2_r, r3_r)
     )
     a = np.dot(r1_r, np.cross(r2_r, r3_r))
-    if abs(a) < ZERO_GUARD_EPS and (-ZERO_GUARD_EPS < d < 0):
-        return 0
+    # Not sure this is an issue...
+    # if abs(a) < ZERO_GUARD_EPS and (-ZERO_GUARD_EPS < d < 0):
+    #     return 0 # and not pi as per IEEE
     return 2 * np.arctan2(a, d)
 
 
@@ -132,7 +133,12 @@ def vector_potential(rho_vector, face_points, face_normals, point):
 
 
 @nb.jit(nopython=True)
-def field(rho_vector, face_points, face_normals, point):
+def field(
+    rho_vector: np.ndarray,
+    face_points: np.ndarray,
+    face_normals: np.ndarray,
+    point: np.ndarray,
+) -> np.ndarray:
     """
     Calculate the magnetic field
     """
@@ -325,10 +331,10 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
             [p4, p8, p5, p1, p4],
             [p5, p8, p7, p6, p5],
         ]
-        self.face_points = [self._local_to_global(p) for p in self.face_points]
+        self.face_points = np.array([self._local_to_global(p) for p in self.face_points])
         normals = [np.cross(p[1] - p[0], p[2] - p[1]) for p in self.face_points]
         normals = [n / np.linalg.norm(n) for n in normals]
-        self.face_normals = normals
+        self.face_normals = np.array(normals)
 
         points = [
             np.vstack([p1, p2, p3, p4, p1]),
