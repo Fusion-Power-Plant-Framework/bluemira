@@ -21,7 +21,9 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
+from bluemira.base.constants import EPS, raw_uc
 from bluemira.magnetostatics.polyhedral_prism import PolyhedralPrismCurrentSource
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 
@@ -130,3 +132,39 @@ class TestPolyhedralMaths:
         f.colorbar(cm)
         plt.show()
         assert np.allclose(B, B_new)
+
+    def test_paper_example(self):
+        """
+        Verification test.
+
+        Babic and Aykel example
+
+        https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
+        """
+        # Babic and Aykel example (single trapezoidal prism)
+        source = PolyhedralPrismCurrentSource(
+            np.array([0, 0, 0]),
+            np.array([2 * 2.154700538379251, 0, 0]),  # This gives b=1
+            np.array([0, 1, 0]),
+            np.array([0, 0, 1]),
+            1,
+            1,
+            60.0,
+            30.0,
+            4e5,
+        )
+        source.plot()
+        plt.show()
+        field = source.field(2, 2, 2)
+        abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
+        # As per Babic and Aykel paper
+        # Assume truncated last digit and not rounded...
+        field_7decimals = np.trunc(abs_field * 10**7) / 10**7
+        assert field_7decimals == pytest.approx(15.5533805, rel=0, abs=EPS)
+
+        # Test singularity treatments:
+        field = source.field(1, 1, 1)
+        abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
+        # Assume truncated last digit and not rounded...
+        field_9decimals = np.trunc(abs_field * 10**9) / 10**9
+        assert field_9decimals == pytest.approx(53.581000397, rel=0, abs=EPS)
