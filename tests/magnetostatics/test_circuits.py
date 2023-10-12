@@ -22,6 +22,7 @@ from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
     ArbitraryPlanarPolyhedralXSCircuit,
+    ArbitraryPlanarPolyhedralXSCircuit,
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
