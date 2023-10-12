@@ -33,6 +33,22 @@ from bluemira.magnetostatics.baseclass import PolyhedralCrossSectionCurrentSourc
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 
+ZERO_GUARD_EPS = 1e-14
+
+
+@nb.jit(nopython=True)
+def vector_norm_eps(r):
+    """
+    Dodge singularities in omega_t and line_integral when field point
+    lies on an edge.
+
+    Introduces an error which is negligible provided the volume is small
+    the error is only introduced in a cylindrical volume of radius EPS**1/2
+    around the edge.
+    """
+    r_norm = np.linalg.norm(r)
+    return np.sqrt(r_norm**2 + ZERO_GUARD_EPS)
+
 
 @nb.jit(nopython=True)
 def omega_t(r, r1, r2, r3):
@@ -43,9 +59,10 @@ def omega_t(r, r1, r2, r3):
     r1_r = r1 - r
     r2_r = r2 - r
     r3_r = r3 - r
-    r1r = np.linalg.norm(r1_r)
-    r2r = np.linalg.norm(r2_r)
-    r3r = np.linalg.norm(r3_r)
+    r1r = vector_norm_eps(r1_r)
+    r2r = vector_norm_eps(r2_r)
+    r3r = vector_norm_eps(r3_r)
+    # Dodge singularities (at the price of some error...)
     d = (
         r1r * r2r * r3r
         + r3r * np.dot(r1_r, r2_r)
@@ -60,9 +77,9 @@ def line_integral(r, r1, r2):
     """
     w_e(r)
     """
-    r1r = np.linalg.norm(r1 - r)
-    r2r = np.linalg.norm(r2 - r)
-    r2r1 = np.linalg.norm(r2 - r1)
+    r1r = vector_norm_eps(r1 - r)
+    r2r = vector_norm_eps(r2 - r)
+    r2r1 = vector_norm_eps(r2 - r1)
     a = r2r + r1r + r2r1
     b = r2r + r1r - r2r1
     return np.log(a / b)
