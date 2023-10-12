@@ -29,12 +29,14 @@ VOL. 44, NO. 1, JANUARY 2008
 but
 """
 
+from copy import deepcopy
 from typing import Union
 
 import numba as nb
 import numpy as np
 
 from bluemira.base.constants import MU_0, MU_0_4PI
+from bluemira.geometry.coordinates import Coordinates, get_area_2d
 from bluemira.magnetostatics.baseclass import (
     PolyhedralCrossSectionCurrentSource,
     PrismEndCapMixin,
@@ -44,7 +46,7 @@ from bluemira.magnetostatics.tools import process_xyz_array
 ZERO_DIV_GUARD_EPS = 1e-14
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def vector_norm_eps(r: np.ndarray) -> float:
     """
     Dodge singularities in omega_t and line_integral when field point
@@ -58,7 +60,7 @@ def vector_norm_eps(r: np.ndarray) -> float:
     return np.sqrt(r_norm**2 + ZERO_DIV_GUARD_EPS)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> float:
     """
     Solid angle seen from the calculation point subtended by the face
@@ -83,7 +85,7 @@ def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> fl
     return 2 * np.arctan2(a, d)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def line_integral(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
     """
     w_e(r)
@@ -96,7 +98,7 @@ def line_integral(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
     return np.log(a / b)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
     """
     Get an arbitrary point on the face
@@ -104,7 +106,7 @@ def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
     return np.sum(face_points[:-1], axis=0) / (len(face_points) - 1)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def surface_integral(
     face_points: np.ndarray, face_normal: np.ndarray, point: np.ndarray
 ) -> float:
@@ -123,11 +125,13 @@ def surface_integral(
             np.cross(face_normal, p0 - point),  # r_e is an arbitrary point
             u_e * line_integral(point, p0, p1),
         )
+        # Calculate omega_f as the sum of subtended angles with a triangle
+        # for each edge
         omega_f += omega_t(point, p0, p1, r_f)
     return integral - np.dot(r_f - point, face_normal) * omega_f
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def vector_potential(
     current_direction: np.ndarray,
     face_points: np.ndarray,
@@ -162,7 +166,7 @@ def vector_potential(
     return MU_0 / (8 * np.pi) * np.dot(current_direction, integral)
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def field(
     current_direction: np.ndarray,
     face_points: np.ndarray,
@@ -237,8 +241,7 @@ class PolyhedralPrismCurrentSource(
         ds: np.ndarray,
         normal: np.ndarray,
         t_vec: np.ndarray,
-        breadth: float,
-        depth: float,
+        xs_coordinates: Coordinates,
         alpha: float,
         beta: float,
         current: float,
@@ -247,20 +250,28 @@ class PolyhedralPrismCurrentSource(
         self.origin = origin
 
         length = np.linalg.norm(ds)
-        self._check_angle_values(alpha, beta)
-        self._check_raise_self_intersection(length, breadth, alpha, beta)
         self._halflength = 0.5 * length
+        self._check_angle_values(alpha, beta)
+        # self._check_raise_self_intersection(length, breadth, alpha, beta)
+
         # Normalised direction cosine matrix
         self.dcm = np.array([t_vec, ds / length, normal])
-        self.length = 0.5 * (length - breadth * np.tan(alpha) - breadth * np.tan(beta))
-        self.breadth = breadth
-        self.depth = depth
+        self._set_cross_section(xs_coordinates)
+
         self.alpha = alpha
         self.beta = beta
+
         # Current density
-        self.area = 4 * breadth * depth
         self.set_current(current)
         self.points = self._calculate_points()
+
+    def _set_cross_section(self, xs_coordinates: Coordinates):
+        xs_coordinates.close()
+        self.area = get_area_2d(*xs_coordinates.xz)
+        self._xs = (
+            xs_coordinates  # Coordinates(self._local_to_global(xs_coordinates.xyz))
+        )
+        self._xs.set_ccw([0, 1, 0])
 
     @process_xyz_array
     def field(
@@ -321,41 +332,36 @@ class PolyhedralPrismCurrentSource(
         Calculate extrema points of the current source for plotting and debugging.
         """
         b = self._halflength
-        c = self.depth
-        d = self.breadth
-        # Lower rectangle
-        p1 = np.array([-d, -b + d * np.tan(self.beta), -c])
-        p2 = np.array([d, -b - d * np.tan(self.beta), -c])
-        p3 = np.array([d, -b - d * np.tan(self.beta), c])
-        p4 = np.array([-d, -b + d * np.tan(self.beta), c])
 
-        # Upper rectangle
-        p5 = np.array([-d, b - d * np.tan(self.alpha), -c])
-        p6 = np.array([d, b + d * np.tan(self.alpha), -c])
-        p7 = np.array([d, b + d * np.tan(self.alpha), c])
-        p8 = np.array([-d, b - d * np.tan(self.alpha), c])
+        # Lower shape
+        pln = deepcopy(self._xs.xyz)
+        # Project points onto end cap plane
+        pln[1] += -b - pln[0] * np.tan(self.beta)
+        pln = pln.T
+        plng = self._local_to_global(pln)
 
-        self.face_points = [
-            [p1, p2, p3, p4, p1],
-            [p1, p5, p6, p2, p1],
-            [p2, p6, p7, p3, p2],
-            [p3, p7, p8, p4, p3],
-            [p4, p8, p5, p1, p4],
-            [p5, p8, p7, p6, p5],
-        ]
-        self.face_points = np.array([self._local_to_global(p) for p in self.face_points])
+        # Upper shape
+        pun = deepcopy(self._xs.xyz)
+        # Project points onto end cap plane
+        pun[1] += b + pun[0] * np.tan(self.alpha)
+        pun = pun.T
+        pung = self._local_to_global(pun)
+
+        face_points = [plng]
+
+        for i in range(len(pln) - 1):
+            fp = [plng[i], pung[i], pung[i + 1], plng[i + 1], plng[i]]
+            face_points.append(fp)
+        face_points.append(pung[::-1])
+
+        self.face_points = np.array(face_points)
         normals = [np.cross(p[1] - p[0], p[2] - p[1]) for p in self.face_points]
         normals = [n / np.linalg.norm(n) for n in normals]
         self.face_normals = np.array(normals)
 
-        points = [
-            np.vstack([p1, p2, p3, p4, p1]),
-            np.vstack([p5, p6, p7, p8, p5]),
-            # Lines between rectangle corners
-            np.vstack([p1, p5]),
-            np.vstack([p2, p6]),
-            np.vstack([p3, p7]),
-            np.vstack([p4, p8]),
-        ]
+        points = [np.vstack(plng), np.vstack(pung)]
+        for i in range(len(pln) - 1):
+            points.append(np.vstack([plng[i], pung[i]]))
+            # Lines between corners
 
-        return np.array([self._local_to_global(p) for p in points], dtype=object)
+        return np.array(points, dtype=object)
