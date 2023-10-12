@@ -24,8 +24,19 @@ import numpy as np
 import pytest
 
 from bluemira.base.constants import EPS, raw_uc
+from bluemira.geometry.tools import Coordinates
 from bluemira.magnetostatics.polyhedral_prism import PolyhedralPrismCurrentSource
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
+
+
+def make_xs_from_bd(b, d):
+    return Coordinates(
+        {
+            "x": [-b, b, b, -b],
+            "y": 0,
+            "z": [-d, -d, d, d],
+        }
+    )
 
 
 class TestPolyhedralMaths:
@@ -35,12 +46,20 @@ class TestPolyhedralMaths:
             [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 40, 40, current=1
         )
         cls.poly = PolyhedralPrismCurrentSource(
-            [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 40, 40, current=1
+            [10, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            make_xs_from_bd(0.5, 0.5),
+            40,
+            40,
+            current=1,
         )
 
     def test_geometry(self):
         self.poly.plot()
         ax = plt.gca()
+        self.trap.plot(ax)
         colors = ["r", "g", "b", "pink", "cyan", "yellow"]
         for i, normal in enumerate(self.poly.face_normals):
             points = self.poly.face_points[i]
@@ -161,8 +180,7 @@ class TestPolyhedralPrismBabicAykel:
             np.array([2 * 2.154700538379251, 0, 0]),  # This gives b=1
             np.array([0, 1, 0]),
             np.array([0, 0, 1]),
-            1,
-            1,
+            make_xs_from_bd(1, 1),
             60.0,
             30.0,
             4e5,
