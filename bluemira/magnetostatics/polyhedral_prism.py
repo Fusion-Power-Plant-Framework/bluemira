@@ -256,7 +256,8 @@ class PolyhedralPrismCurrentSource(
         length = np.linalg.norm(ds)
         self._halflength = 0.5 * length
         self._check_angle_values(alpha, beta)
-        # self._check_raise_self_intersection(length, breadth, alpha, beta)
+        m_breadth = np.max(np.abs(xs_coordinates.x))
+        self._check_raise_self_intersection(length, m_breadth, alpha, beta)
 
         # Normalised direction cosine matrix
         self.dcm = np.array([t_vec, ds / length, normal])
