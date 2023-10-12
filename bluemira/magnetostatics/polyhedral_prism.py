@@ -69,7 +69,10 @@ def omega_t(r, r1, r2, r3):
         + r2r * np.dot(r1_r, r3_r)
         + r1r * np.dot(r2_r, r3_r)
     )
-    return 2 * np.arctan2(np.dot(r1_r, np.cross(r2_r, r3_r)), d)
+    a = np.dot(r1_r, np.cross(r2_r, r3_r))
+    if abs(a) < ZERO_GUARD_EPS and (-ZERO_GUARD_EPS < d < 0):
+        return 0
+    return 2 * np.arctan2(a, d)
 
 
 @nb.jit(nopython=True)
