@@ -119,9 +119,25 @@ def surface_integral(face_points, face_normal, point):
 
 
 @nb.jit(nopython=True)
-def vector_potential(rho_vector, face_points, face_normals, point):
+def vector_potential(current_direction, face_points, face_normals, point):
     """
     Calculate the vector potential
+
+    Parameters
+    ----------
+    current_direction:
+        Normalised current direction vector (3)
+    face_points:
+        Array of points on each face (n_face, n_points, 3)
+    face_normals:
+        Array of normalised normal vectors to the faces (pointing outwards)
+        (n_face, 3)
+    point:
+        Point at which to calculate the vector potential (3)
+
+    Returns
+    -------
+    Vector potential at the point (response to unit current density)
     """
     integral = np.zeros(3)
     for i, normal in enumerate(face_normals):
@@ -129,22 +145,38 @@ def vector_potential(rho_vector, face_points, face_normals, point):
         integral += np.dot(
             r_f - point, normal * surface_integral(face_points[i], normal, point)
         )
-    return MU_0 / (8 * np.pi) * np.dot(rho_vector, integral)
+    return MU_0 / (8 * np.pi) * np.dot(current_direction, integral)
 
 
 @nb.jit(nopython=True)
 def field(
-    rho_vector: np.ndarray,
+    current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
     Calculate the magnetic field
+
+    Parameters
+    ----------
+    current_direction:
+        Normalised current direction vector (3)
+    face_points:
+        Array of points on each face (n_face, n_points, 3)
+    face_normals:
+        Array of normalised normal vectors to the faces (pointing outwards)
+        (n_face, 3)
+    point:
+        Point at which to calculate the magnetic field (3)
+
+    Returns
+    -------
+    Magnetic field vector at the point (response to unit current density)
     """
     field = np.zeros(3)
     for i, normal in enumerate(face_normals):
-        field += np.cross(rho_vector, normal) * surface_integral(
+        field += np.cross(current_direction, normal) * surface_integral(
             face_points[i], normal, point
         )
     return MU_0_4PI * field
@@ -274,7 +306,7 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
         The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
-        return field(self.rho * self.dcm[1], self.face_points, self.face_normals, point)
+        return self.rho * field(self.dcm[1], self.face_points, self.face_normals, point)
 
     @process_xyz_array
     def vector_potential(
@@ -300,8 +332,8 @@ class PolyhedralPrismCurrentSource(PolyhedralCrossSectionCurrentSource):
         The vector potential {Ax, Ay, Az} in [T]
         """
         point = np.array([x, y, z])
-        return vector_potential(
-            self.rho * self.dcm[1], self.face_points, self.face_normals, point
+        return self.rho * vector_potential(
+            self.dcm[1], self.face_points, self.face_normals, point
         )
 
     def _calculate_points(self):
