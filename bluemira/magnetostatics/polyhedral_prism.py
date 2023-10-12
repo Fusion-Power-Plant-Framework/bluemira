@@ -138,6 +138,7 @@ def vector_potential(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
+    mid_points: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -161,9 +162,9 @@ def vector_potential(
     """
     integral = np.zeros(3)
     for i, normal in enumerate(face_normals):
-        r_f = get_face_midpoint(face_points[i])
         integral += np.dot(
-            r_f - point, normal * surface_integral(face_points[i], normal, point)
+            mid_points[i] - point,
+            normal * surface_integral(face_points[i], normal, point),
         )
     return MU_0 / (8 * np.pi) * np.dot(current_direction, integral)
 
@@ -328,7 +329,7 @@ class PolyhedralPrismCurrentSource(
         """
         point = np.array([x, y, z])
         return self.rho * vector_potential(
-            self.dcm[1], self.face_points, self.face_normals, point
+            self.dcm[1], self.face_points, self.face_normals, self.mid_points, point
         )
 
     def _calculate_points(self):
