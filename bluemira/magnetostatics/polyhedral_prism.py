@@ -98,7 +98,6 @@ def line_integral(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
     return np.log(a / b)
 
 
-# @nb.jit(nopython=True, cache=True)
 def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
     """
     Get an arbitrary point on the face
@@ -335,26 +334,25 @@ class PolyhedralPrismCurrentSource(
 
     def _calculate_points(self):
         """
-        Calculate extrema points of the current source for plotting and debugging.
+        Calculate extrema points of the current source for integration and plotting
+        purposes
         """
         # Lower shape
+        n_rect_faces = len(self._xs) - 1
         lower = deepcopy(self._xs.xyz)
-        # Project points onto end cap plane
+        # Project and translate points onto end cap plane
         lower[1] += -self._halflength - lower[0] * np.tan(self.beta)
-        lower = lower.T
-        lower_points = self._local_to_global(lower)
+        lower_points = self._local_to_global(lower.T)
 
         # Upper shape
         upper = deepcopy(self._xs.xyz)
-        # Project points onto end cap plane
+        # Project and translate points onto end cap plane
         upper[1] += self._halflength + upper[0] * np.tan(self.alpha)
-        upper = upper.T
-        upper_points = self._local_to_global(upper)
+        upper_points = self._local_to_global(upper.T)
 
         face_points = [lower_points]
-        mid_points = [np.sum(lower_points[:-1], axis=0) / (len(lower_points) - 1)]
-
-        for i in range(len(lower) - 1):
+        for i in range(n_rect_faces):
+            # Assemble rectangular joining faces
             fp = [
                 lower_points[i],
                 upper_points[i],
@@ -362,11 +360,11 @@ class PolyhedralPrismCurrentSource(
                 lower_points[i + 1],
                 lower_points[i],
             ]
-            mid_points.append(np.sum(fp[:-1], axis=0) / (len(fp) - 1))
             face_points.append(fp)
         # Important to make sure the normal faces outwards!
         face_points.append(list(upper_points[::-1]))
-        mid_points.append(np.sum(upper_points[:-1], axis=0) / (len(upper_points) - 1))
+
+        mid_points = [get_face_midpoint(face) for face in face_points]
 
         self.face_points = np.array(face_points)
         self.mid_points = np.array(mid_points)
@@ -377,7 +375,7 @@ class PolyhedralPrismCurrentSource(
         points = [np.vstack(lower_points), np.vstack(upper_points)]
         # Lines between corners
         points.extend(
-            [np.vstack([lower_points[i], upper_points[i]]) for i in range(len(lower))]
+            [np.vstack([lower_points[i], upper_points[i]]) for i in range(n_rect_faces)]
         )
 
         return np.array(points, dtype=object)
