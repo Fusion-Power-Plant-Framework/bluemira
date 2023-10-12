@@ -55,7 +55,20 @@ def vector_norm_eps(r: np.ndarray) -> float:
     Introduces an error which is negligible provided the volume is small
     the error is only introduced in a cylindrical volume of radius EPS**1/2
     around the edge.
-    """
+
+    Parameters
+    ----------
+    r:
+        Vector coordinates (3)
+
+    Returns
+    -------
+    Vector norm
+
+    Notes
+    -----
+    \t:math:`\\lvert \\mathbf{r}\\rvert = \\sqrt{\\lvert \\mathbf{r}\\rvert^2+\\epsilon^2}`
+    """  # noqa: W505 E501
     r_norm = np.linalg.norm(r)
     return np.sqrt(r_norm**2 + ZERO_DIV_GUARD_EPS)
 
@@ -65,7 +78,34 @@ def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> fl
     """
     Solid angle seen from the calculation point subtended by the face
     triangle normal must be pointing outwards from the face
-    """
+
+    Parameters
+    ----------
+    r:
+        Point at which the field is being calculated
+    r1:
+        First point of the triangle
+    r2:
+        Second point of the triangle
+    r3: float
+        Third point of the triangle
+
+    Returns
+    -------
+    Solid angle [rad]
+
+    Notes
+    -----
+    \t:math:`\\Omega_{T} = 2\\textrm{arctan}\\dfrac{(\\mathbf{r_{1}}-\\mathbf{r})\\cdot(\\mathbf{r_{2}}-\\mathbf{r})\\times(\\mathbf{r_{3}}-\\mathbf{r})}{D}`
+
+    with:
+
+    \t:math:`D=\\lvert \\mathbf{r_1}-\\mathbf{r}\\rvert\\lvert\\mathbf{r_2}-\\mathbf{r} \\rvert\\lvert \\mathbf{r_3} - \\mathbf{r}\\rvert + \\lvert \\mathbf{r_3} - \\mathbf{r}\\rvert (\\mathbf{r_1}-\\mathbf{r}) \\cdot (\\mathbf{r_2} - \\mathbf{r}) + \\lvert\\mathbf{r_2} - \\mathbf{r} \\rvert (\\mathbf{r_1}-\\mathbf{r})\\cdot(\\mathbf{r_3}-\\mathbf{r}) + \\lvert \\mathbf{r_1} - \\mathbf{r}\\rvert (\\mathbf{r_2} - \\mathbf{r}) \\cdot (\\mathbf{r_3} - \\mathbf{r})`
+
+    noting that the normal vector (outwards from the triangle) is:
+
+    \t:math:`\\mathbf{n_T} = \\dfrac{(\\mathbf{r_2} - \\mathbf{r_1}) \\times (\\mathbf{r_3} - \\mathbf{r_1})}{\\lvert (\\mathbf{r_2} - \\mathbf{r_1}) \\times (\\mathbf{r_3} - \\mathbf{r_1}) \\rvert}`
+    """  # noqa: W505 E501
     r1_r = r1 - r
     r2_r = r2 - r
     r3_r = r3 - r
@@ -152,6 +192,8 @@ def vector_potential(
     face_normals:
         Array of normalised normal vectors to the faces (pointing outwards)
         (n_face, 3)
+    mid_points:
+        Array of face midpoints (n_face, 3)
     point:
         Point at which to calculate the vector potential (3)
 
@@ -188,6 +230,8 @@ def field(
     face_normals:
         Array of normalised normal vectors to the faces (pointing outwards)
         (n_face, 3)
+    mid_points:
+        Array of face midpoints (n_face, 3)
     point:
         Point at which to calculate the magnetic field (3)
 
@@ -207,10 +251,12 @@ class PolyhedralPrismCurrentSource(
     PrismEndCapMixin, PolyhedralCrossSectionCurrentSource
 ):
     """
-    3-D trapezoidal prism current source with a polyhedral cross-section and
+    3-D polyhedral prism current source with a polyhedral cross-section and
     uniform current distribution.
 
     The current direction is along the local y coordinate.
+
+    The cross-section is specified in the local x-z plane.
 
     Parameters
     ----------
@@ -222,10 +268,8 @@ class PolyhedralPrismCurrentSource(
         The normalised normal vector of the current source in global coordinates [m]
     t_vec:
         The normalised tangent vector of the current source in global coordinates [m]
-    breadth:
-        The breadth of the current source (half-width) [m]
-    depth:
-        The depth of the current source (half-height) [m]
+    xs_coordinates:
+        Coordinates of the conductor cross-section (specified in the x-z plane)
     alpha:
         The first angle of the trapezoidal prism [°] [0, 180)
     beta:

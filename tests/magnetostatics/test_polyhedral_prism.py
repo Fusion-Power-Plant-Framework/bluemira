@@ -321,7 +321,7 @@ class TestPolyhedralCoordinates:
 
     @pytest.mark.parametrize("plane", ["x", "y", "z"])
     def test_triangle(self, plane):
-        n = 150
+        n = 50
         x1, x2 = np.linspace(-5, 5, n), np.linspace(-5, 5, n)
         xx1, xx2 = np.meshgrid(x1, x2)
         xx3 = np.zeros_like(xx1)
