@@ -158,9 +158,8 @@ class TestSolverIntegration:
         filecmp.cmp(Path(tmp_path, "IN.DAT"), template_path)
         assert Path(tmp_path, "MFILE.DAT").is_file()
 
-    @pytest.mark.xfail(reason="TODO reimplement / get reader from process")
     def test_get_species_data_returns_row_vectors(self):
-        temp, loss_f, z_eff = Solver.get_species_data("H")
+        temp, loss_f, z_eff = Solver.get_species_data("H", confinement_time_ms=1.0)
 
         assert isinstance(temp.size, int) == 1
         assert temp.size > 0

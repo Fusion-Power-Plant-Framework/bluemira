@@ -217,7 +217,9 @@ class Solver(CodesSolver):
         )
 
     @staticmethod
-    def get_species_data(impurity: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_species_data(
+        impurity: str, confinement_time_ms: float
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get species data from PROCESS section of OPEN-ADAS database.
 
@@ -239,8 +241,14 @@ class Solver(CodesSolver):
         z_ref:
             Average effective charge.
         """
-        t_ref, lz_ref, z_av_ref = np.genfromtxt(Impurities[impurity].file()).T
-        return t_ref, lz_ref, z_av_ref
+        lz_ref, z_ref = Impurities[impurity].read_impurity_files(("lz", "z"))
+
+        t_ref = filter(lambda lz: lz.content == "Te[eV]", lz_ref)
+        lz_ref = filter(lambda lz: f"{confinement_time_ms:.1f}" in lz.content, lz_ref)
+        z_av_ref = filter(lambda z: f"{confinement_time_ms:.1f}" in z.content, z_ref)
+        return tuple(
+            np.array(next(ref).data, dtype=float) for ref in (t_ref, lz_ref, z_av_ref)
+        )
 
     def get_species_fraction(self, impurity: str) -> float:
         """
