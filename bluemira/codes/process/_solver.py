@@ -80,9 +80,21 @@ class Solver(CodesSolver):
             The directory in which to run PROCESS. It is also the
             directory in which to look for PROCESS input and output
             files. Default is current working directory.
+        * read_dir:
+            The directory from which data is read when running in read mode.
+        * template_in_dat_path:
+            The path to a template PROCESS IN.DAT file or and instances of
+            :class:`bluemira.codes.process._inputs.ProcessInputs`.
+            By default this is an empty instance of the class. To create a new
+            instance
+            :class:`bluemira.codes.process.template_builder.PROCESSTemplateBuilder`
+            should be used.
         * problem_settings:
             Any PROCESS parameters that do not correspond to a bluemira
             parameter.
+        * in_dat_path:
+            The path to save the IN.DAT file that is run by PROCESS.
+            By default this is '<run_dir>/IN.DAT'.
 
     Notes
     -----

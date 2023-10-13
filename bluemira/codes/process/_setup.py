@@ -46,9 +46,6 @@ class Setup(CodesSetup):
         The bluemira parameters for this task.
     in_dat_path:
         The path to where the IN.DAT file should be written.
-    template_in_dat_path:
-        The path to a template PROCESS IN.DAT file. By default this
-        points to a sample one within the Bluemira repository.
     problem_settings:
         The PROCESS parameters that do not exist in Bluemira.
     """
