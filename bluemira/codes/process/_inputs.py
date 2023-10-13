@@ -42,6 +42,8 @@ class ProcessInputs:
     `process.io.python_fortran_dicts.get_dicts()["DICT_DESCRIPTIONS"]`
     """
 
+    runtitle: str = ""
+
     # Optimisation problem setup
     bounds: Dict[str, Dict[str, str]] = None
     icc: List[int] = None

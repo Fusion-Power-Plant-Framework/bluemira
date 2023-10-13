@@ -139,6 +139,9 @@ def create_template_from_path(template_in_dat: Union[str, Path]) -> ProcessInput
     if Path(template_in_dat).is_file():
         # InDat autoloads IN.DAT without checking for existence
         return ProcessInputs(
-            **{k: v.get_value for k, v in InDat(filename=template_in_dat).data.items()}
+            **{
+                k: v.value if k == "runtitle" else v.get_value
+                for k, v in InDat(filename=template_in_dat).data.items()
+            }
         )
     raise CodesError(f"Template IN.DAT '{template_in_dat}' is not a file.")
