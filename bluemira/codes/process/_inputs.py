@@ -53,8 +53,10 @@ class ProcessInputs:
     epsvmc: float = None
     ioptimz: int = None
     output_costs: int = None
-    runtitle: str = None
-
+    isweep: int = None
+    nsweep: int = None
+    sweep: List[float] = None
+    pulsetimings: int = None
     # Top down of PROCESS variables list
 
     # Times

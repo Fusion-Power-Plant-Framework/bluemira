@@ -1,4 +1,4 @@
-name: bluemira-test
+name: bluemira
 channels:
   - conda-forge
   - nodefaults
