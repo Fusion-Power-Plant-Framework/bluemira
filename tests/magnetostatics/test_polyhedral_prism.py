@@ -40,12 +40,11 @@ def make_xs_from_bd(b, d):
 
 
 class TestPolyhedralMaths:
-    @classmethod
-    def setup_class(cls):
-        cls.trap = TrapezoidalPrismCurrentSource(
+    same_angle = (
+        TrapezoidalPrismCurrentSource(
             [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 40, 40, current=1
-        )
-        cls.poly = PolyhedralPrismCurrentSource(
+        ),
+        PolyhedralPrismCurrentSource(
             [10, 0, 0],
             [1, 0, 0],
             [0, 1, 0],
@@ -54,25 +53,45 @@ class TestPolyhedralMaths:
             40,
             40,
             current=1,
-        )
+        ),
+    )
 
-    def test_geometry(self):
-        self.poly.plot()
+    diff_angle = (
+        TrapezoidalPrismCurrentSource(
+            [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 20, 40, current=1
+        ),
+        PolyhedralPrismCurrentSource(
+            [10, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            make_xs_from_bd(0.5, 0.5),
+            20,
+            40,
+            current=1,
+        ),
+    )
+    test_cases = (same_angle, diff_angle)
+
+    @pytest.mark.parametrize(("trap", "poly"), test_cases)
+    def test_geometry(self, trap, poly):
+        poly.plot()
         ax = plt.gca()
-        self.trap.plot(ax)
+        trap.plot(ax)
         colors = ["r", "g", "b", "pink", "cyan", "yellow"]
-        for i, normal in enumerate(self.poly.face_normals):
-            points = self.poly.face_points[i]
+        for i, normal in enumerate(poly.face_normals):
+            points = poly.face_points[i]
             centre = np.sum(points[:3], axis=0) / 3
             ax.quiver(*centre, *normal, color=colors[i])
 
-        for i, points in enumerate(self.poly.face_points):
+        for i, points in enumerate(poly.face_points):
             for point in points:
                 ax.plot(*point, marker="o", ms=int(50 / (i + 1)), color=colors[i])
 
         plt.show()
 
-    def test_xz_field(self):
+    @pytest.mark.parametrize(("trap", "poly"), test_cases)
+    def test_xz_field(self, trap, poly):
         f = plt.figure()
         ax = f.add_subplot(1, 2, 1, projection="3d")
         ax.set_title("TrapezoidalPrism")
@@ -82,24 +101,25 @@ class TestPolyhedralMaths:
         xx, zz = np.meshgrid(x, z)
         yy = 0.0 * np.ones_like(xx)
 
-        self.trap.plot(ax)
-        Bx, By, Bz = self.trap.field(xx, yy, zz)
+        trap.plot(ax)
+        Bx, By, Bz = trap.field(xx, yy, zz)
         B = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(xx, B, zz, zdir="y", offset=0)
         f.colorbar(cm)
 
         ax = f.add_subplot(1, 2, 2, projection="3d")
         ax.set_title("PolyhedralPrism")
-        self.poly.plot(ax)
+        poly.plot(ax)
 
-        Bx, By, Bz = self.poly.field(xx, yy, zz)
+        Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(xx, B_new, zz, zdir="y", offset=0)
         f.colorbar(cm)
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
-    def test_xy_field(self):
+    @pytest.mark.parametrize(("trap", "poly"), test_cases)
+    def test_xy_field(self, trap, poly):
         n = 50
         x = np.linspace(8, 12, n)
         y = np.linspace(-2, 2, n)
@@ -109,24 +129,25 @@ class TestPolyhedralMaths:
         f = plt.figure()
         ax = f.add_subplot(1, 2, 1, projection="3d")
         ax.set_title("TrapezoidalPrism")
-        self.trap.plot(ax)
+        trap.plot(ax)
 
-        Bx, By, Bz = self.trap.field(xx, yy, zz)
+        Bx, By, Bz = trap.field(xx, yy, zz)
         B = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(xx, yy, B, zdir="z", offset=0)
         f.colorbar(cm)
 
         ax = f.add_subplot(1, 2, 2, projection="3d")
         ax.set_title("PolyhedralPrism")
-        self.poly.plot(ax)
-        Bx, By, Bz = self.poly.field(xx, yy, zz)
+        poly.plot(ax)
+        Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(xx, yy, B_new, zdir="z", offset=0)
         f.colorbar(cm)
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
-    def test_yz_field(self):
+    @pytest.mark.parametrize(("trap", "poly"), test_cases)
+    def test_yz_field(self, trap, poly):
         n = 50
         y = np.linspace(-2, 2, n)
         z = np.linspace(-2, 2, n)
@@ -136,16 +157,16 @@ class TestPolyhedralMaths:
         f = plt.figure()
         ax = f.add_subplot(1, 2, 1, projection="3d")
         ax.set_title("TrapezoidalPrism")
-        self.trap.plot(ax)
-        Bx, By, Bz = self.trap.field(xx, yy, zz)
+        trap.plot(ax)
+        Bx, By, Bz = trap.field(xx, yy, zz)
         B = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(B, yy, zz, zdir="x", offset=10)
         f.colorbar(cm)
 
         ax = f.add_subplot(1, 2, 2, projection="3d")
         ax.set_title("PolyhedralPrism")
-        self.poly.plot(ax)
-        Bx, By, Bz = self.poly.field(xx, yy, zz)
+        poly.plot(ax)
+        Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(B_new, yy, zz, zdir="x", offset=10)
         f.colorbar(cm)
