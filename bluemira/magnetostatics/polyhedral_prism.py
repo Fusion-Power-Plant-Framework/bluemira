@@ -170,8 +170,28 @@ def surface_integral(
     point: np.ndarray,
 ) -> float:
     """
-    W_f(r)
-    """
+    Evaluate the surface integral W_f(r) on a planar face
+
+    Parameters
+    ----------
+    face_points:
+        Array of points on each face (n_face, n_points, 3)
+    face_normals:
+        Array of normalised normal vectors to the faces (pointing outwards)
+        (n_face, 3)
+    mid_points:
+        Array of face midpoints (n_face, 3)
+    point:
+        Point at which to calculate the vector potential (3)
+
+    Returns
+    -------
+    Value of the surface integral W_f(r)
+
+    Notes
+    -----
+    \t:math:`W_f(\\mathbf{r}) = -(\\mathbf{r_f}-\\mathbf{r}) \\cdot \\mathbf{n_f} \\Omega_f(\\mathbf{r}) + \\sum_{l_e \\in \\partial S_f} \\mathbf{n_f} \\times (\\mathbf{r_e} - \\mathbf{r}) \\cdot \\mathbf{u_e}w_e(\\mathbf{r})`
+    """  # noqa: W505 E501
     omega_f = 0.0
     integral = 0.0
     for i in range(len(face_points) - 1):
