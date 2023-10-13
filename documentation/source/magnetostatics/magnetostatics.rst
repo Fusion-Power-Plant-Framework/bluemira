@@ -145,9 +145,9 @@ a volume :math:`V` can be written as:
 .. math::
     :label: B_J_rr3_dV
 
-    \mathbf{B} = \dfrac{\mu_0}{4\pi}\mathbf{J}\times\int_{V} \dfrac{\mathbf{r}-\mathbf{r^{'}}}{\lvert \mathbf{r}-\mathbf{r^{'}}\rvert}dr^{'}
+    \mathbf{B} = \dfrac{\mu_0}{4\pi}\mathbf{J}\times\int_{V} \dfrac{\mathbf{r}-\mathbf{r^{'}}}{\lvert \mathbf{r}-\mathbf{r^{'}}\rvert}d^{3}r^{'}
 
-Following a procedure described in [Fabbri_2008], this volume integral can be solved by
+Following a procedure described in [Fabbri_2008]_, this volume integral can be solved by
 a series of surface integrals, which themselves can be solved as a series of line integrals.
 
 A ``PolyhedralPrismCurrentSource`` object is used to describe a conductor segment of
@@ -156,7 +156,7 @@ uniform current density, with an arbitary (polygonal) cross-section.
 .. literalinclude:: doc_polyhedral.py
     :language: python
 
-.. figure:: pic_hexagonal.py
+.. figure:: pic_hexagonal.png
     :name: fig:hexagonal
 
 Finite element
