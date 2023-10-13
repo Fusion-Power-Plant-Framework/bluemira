@@ -38,7 +38,7 @@ from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.utilities.plot_tools import Plot3D
 
-__all__ = ["CurrentSource", "RectangularCrossSectionCurrentSource", "SourceGroup"]
+__all__ = ["CurrentSource", "CrossSectionCurrentSource", "SourceGroup"]
 
 
 class CurrentSource(ABC):
@@ -119,11 +119,11 @@ class CrossSectionCurrentSource(CurrentSource):
     Abstract class for a current source with a cross-section
     """
 
-    origin: np.array
-    dcm: np.array
-    points: np.array
-    rho: float
-    area: float
+    _origin: np.array
+    _dcm: np.array
+    _points: np.array
+    _rho: float
+    _area: float
 
     def set_current(self, current: float):
         """
@@ -135,7 +135,7 @@ class CrossSectionCurrentSource(CurrentSource):
             The current of the source [A]
         """
         super().set_current(current)
-        self.rho = current / self.area
+        self._rho = current / self._area
 
     def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
@@ -149,21 +149,21 @@ class CrossSectionCurrentSource(CurrentSource):
             The axis of rotation
         """
         r = rotation_matrix(np.deg2rad(angle), axis).T
-        self.origin = self.origin @ r
-        self.points = np.array([p @ r for p in self.points], dtype=object)
-        self.dcm = self.dcm @ r
+        self._origin = self._origin @ r
+        self._points = np.array([p @ r for p in self._points], dtype=object)
+        self._dcm = self._dcm @ r
 
     def _local_to_global(self, points: np.ndarray) -> np.ndarray:
         """
         Convert local x', y', z' point coordinates to global x, y, z point coordinates.
         """
-        return np.array([self.origin + self.dcm.T @ p for p in points])
+        return np.array([self._origin + self._dcm.T @ p for p in points])
 
     def _global_to_local(self, points: np.ndarray) -> np.ndarray:
         """
         Convert global x, y, z point coordinates to local x', y', z' point coordinates.
         """
-        return np.array([(self.dcm @ (p - self.origin)) for p in points])
+        return np.array([(self._dcm @ (p - self._origin)) for p in points])
 
     def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
         """
@@ -180,31 +180,21 @@ class CrossSectionCurrentSource(CurrentSource):
             ax = Plot3D()
             # If no ax provided, we assume that we want to plot only this source,
             # and thus set aspect ratio equality on this term only
-            edge_points = np.concatenate(self.points)
+            edge_points = np.concatenate(self._points)
 
             # Invisible bounding box to set equal aspect ratio plot
             xbox, ybox, zbox = BoundingBox.from_xyz(*edge_points.T).get_box_arrays()
             ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
 
-        for points in self.points:
+        for points in self._points:
             ax.plot(*points.T, color="b", linewidth=1)
 
         # Plot local coordinate system
         if show_coord_sys:
-            ax.scatter(*self.origin, color="k")
-            ax.quiver(*self.origin, *self.dcm[0], length=1, color="r")
-            ax.quiver(*self.origin, *self.dcm[1], length=1, color="r")
-            ax.quiver(*self.origin, *self.dcm[2], length=1, color="r")
-
-
-class RectangularCrossSectionCurrentSource(CrossSectionCurrentSource):
-    """
-    Abstract base class for a current source with a rectangular cross-section.
-    """
-
-    breadth: float
-    depth: float
-    length: float
+            ax.scatter(*self._origin, color="k")
+            ax.quiver(*self._origin, *self._dcm[0], length=1, color="r")
+            ax.quiver(*self._origin, *self._dcm[1], length=1, color="r")
+            ax.quiver(*self._origin, *self._dcm[2], length=1, color="r")
 
 
 class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
@@ -214,6 +204,7 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
 
     face_points: np.ndarray
     face_normals: np.ndarray
+    mid_points: np.ndarray
 
     def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """

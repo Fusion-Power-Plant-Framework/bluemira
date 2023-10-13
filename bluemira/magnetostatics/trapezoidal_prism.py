@@ -34,8 +34,8 @@ import numpy as np
 
 from bluemira.base.constants import MU_0_4PI
 from bluemira.magnetostatics.baseclass import (
+    CrossSectionCurrentSource,
     PrismEndCapMixin,
-    RectangularCrossSectionCurrentSource,
 )
 from bluemira.magnetostatics.tools import process_xyz_array
 
@@ -309,9 +309,7 @@ def Bz_analytical_prism(
     )
 
 
-class TrapezoidalPrismCurrentSource(
-    PrismEndCapMixin, RectangularCrossSectionCurrentSource
-):
+class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource):
     """
     3-D trapezoidal prism current source with a rectangular cross-section and
     uniform current distribution.
@@ -357,38 +355,38 @@ class TrapezoidalPrismCurrentSource(
         current: float,
     ):
         alpha, beta = np.deg2rad(alpha), np.deg2rad(beta)
-        self.origin = origin
+        self._origin = origin
 
         length = np.linalg.norm(ds)
         self._check_angle_values(alpha, beta)
         self._check_raise_self_intersection(length, breadth, alpha, beta)
         self._halflength = 0.5 * length
         # Normalised direction cosine matrix
-        self.dcm = np.array([t_vec, ds / length, normal])
-        self.length = 0.5 * (length - breadth * np.tan(alpha) - breadth * np.tan(beta))
-        self.breadth = breadth
-        self.depth = depth
-        self.alpha = alpha
-        self.beta = beta
+        self._dcm = np.array([t_vec, ds / length, normal])
+        self._length = 0.5 * (length - breadth * np.tan(alpha) - breadth * np.tan(beta))
+        self._breadth = breadth
+        self._depth = depth
+        self._alpha = alpha
+        self._beta = beta
         # Current density
-        self.area = 4 * breadth * depth
+        self._area = 4 * breadth * depth
         self.set_current(current)
-        self.points = self._calculate_points()
+        self._points = self._calculate_points()
 
     def _xyzlocal_to_rql(self, x_local, y_local, z_local):
         """
         Convert local x, y, z coordinates to working coordinates.
         """
-        b = self.length
-        c = self.depth
-        d = self.breadth
+        b = self._length
+        c = self._depth
+        d = self._breadth
 
         l1 = -d - x_local
         l2 = d - x_local
         q1 = -c - z_local
         q2 = c - z_local
-        r1 = (d + x_local) * np.tan(self.alpha) + b - y_local
-        r2 = (d + x_local) * np.tan(self.beta) + b + y_local
+        r1 = (d + x_local) * np.tan(self._alpha) + b - y_local
+        r2 = (d + x_local) * np.tan(self._beta) + b + y_local
         return l1, l2, q1, q2, r1, r2
 
     def _BxByBz(self, point):
@@ -396,8 +394,8 @@ class TrapezoidalPrismCurrentSource(
         Calculate the field at a point in local coordinates.
         """
         l1, l2, q1, q2, r1, r2 = self._xyzlocal_to_rql(*point)
-        bx = Bx_analytical_prism(self.alpha, self.beta, l1, l2, q1, q2, r1, r2)
-        bz = Bz_analytical_prism(self.alpha, self.beta, l1, l2, q1, q2, r1, r2)
+        bx = Bx_analytical_prism(self._alpha, self._beta, l1, l2, q1, q2, r1, r2)
+        bz = Bz_analytical_prism(self._alpha, self._beta, l1, l2, q1, q2, r1, r2)
         return np.array([bx, 0, bz])
 
     @process_xyz_array
@@ -427,28 +425,28 @@ class TrapezoidalPrismCurrentSource(
         # Convert to local coordinates
         point = self._global_to_local([point])[0]
         # Evaluate field in local coordinates
-        b_local = MU_0_4PI * self.rho * self._BxByBz(point)
+        b_local = MU_0_4PI * self._rho * self._BxByBz(point)
         # Convert vector back to global coordinates
-        return self.dcm.T @ b_local
+        return self._dcm.T @ b_local
 
     def _calculate_points(self):
         """
         Calculate extrema points of the current source for plotting and debugging.
         """
         b = self._halflength
-        c = self.depth
-        d = self.breadth
+        c = self._depth
+        d = self._breadth
         # Lower rectangle
-        p1 = np.array([-d, -b + d * np.tan(self.beta), -c])
-        p2 = np.array([d, -b - d * np.tan(self.beta), -c])
-        p3 = np.array([d, -b - d * np.tan(self.beta), c])
-        p4 = np.array([-d, -b + d * np.tan(self.beta), c])
+        p1 = np.array([-d, -b + d * np.tan(self._beta), -c])
+        p2 = np.array([d, -b - d * np.tan(self._beta), -c])
+        p3 = np.array([d, -b - d * np.tan(self._beta), c])
+        p4 = np.array([-d, -b + d * np.tan(self._beta), c])
 
         # Upper rectangle
-        p5 = np.array([-d, b - d * np.tan(self.alpha), -c])
-        p6 = np.array([d, b + d * np.tan(self.alpha), -c])
-        p7 = np.array([d, b + d * np.tan(self.alpha), c])
-        p8 = np.array([-d, b - d * np.tan(self.alpha), c])
+        p5 = np.array([-d, b - d * np.tan(self._alpha), -c])
+        p6 = np.array([d, b + d * np.tan(self._alpha), -c])
+        p7 = np.array([d, b + d * np.tan(self._alpha), c])
+        p8 = np.array([-d, b - d * np.tan(self._alpha), c])
 
         points = [
             np.vstack([p1, p2, p3, p4, p1]),

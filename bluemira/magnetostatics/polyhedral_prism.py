@@ -331,7 +331,7 @@ class PolyhedralPrismCurrentSource(
         current: float,
     ):
         alpha, beta = np.deg2rad(alpha), np.deg2rad(beta)
-        self.origin = origin
+        self._origin = origin
 
         length = np.linalg.norm(ds)
         self._halflength = 0.5 * length
@@ -340,7 +340,7 @@ class PolyhedralPrismCurrentSource(
         self._check_raise_self_intersection(length, m_breadth, alpha, beta)
 
         # Normalised direction cosine matrix
-        self.dcm = np.array([t_vec, ds / length, normal])
+        self._dcm = np.array([t_vec, ds / length, normal])
         self._set_cross_section(xs_coordinates)
 
         self.alpha = alpha
@@ -348,12 +348,12 @@ class PolyhedralPrismCurrentSource(
 
         # Current density
         self.set_current(current)
-        self.points = self._calculate_points()
+        self._points = self._calculate_points()
 
     def _set_cross_section(self, xs_coordinates: Coordinates):
         xs_coordinates = deepcopy(xs_coordinates)
         xs_coordinates.close()
-        self.area = get_area_2d(*xs_coordinates.xz)
+        self._area = get_area_2d(*xs_coordinates.xz)
         self._xs = xs_coordinates
         self._xs.set_ccw([0, 1, 0])
 
@@ -381,8 +381,8 @@ class PolyhedralPrismCurrentSource(
         The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
-        return self.rho * field(
-            self.dcm[1], self.face_points, self.face_normals, self.mid_points, point
+        return self._rho * field(
+            self._dcm[1], self.face_points, self.face_normals, self.mid_points, point
         )
 
     @process_xyz_array
@@ -409,8 +409,8 @@ class PolyhedralPrismCurrentSource(
         The vector potential {Ax, Ay, Az} in [T]
         """
         point = np.array([x, y, z])
-        return self.rho * vector_potential(
-            self.dcm[1], self.face_points, self.face_normals, self.mid_points, point
+        return self._rho * vector_potential(
+            self._dcm[1], self.face_points, self.face_normals, self.mid_points, point
         )
 
     def _calculate_points(self):
