@@ -202,9 +202,9 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
     Abstract base class for a current source with a polyhedral cross-section.
     """
 
-    face_points: np.ndarray
-    face_normals: np.ndarray
-    mid_points: np.ndarray
+    _face_points: np.ndarray
+    _face_normals: np.ndarray
+    _mid_points: np.ndarray
 
     def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
@@ -219,9 +219,9 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
         """
         super().rotate(angle, axis)
         r = rotation_matrix(np.deg2rad(angle), axis).T
-        self.face_normals = np.array([n @ r for n in self.face_normals])
-        self.face_points = np.array([p @ r for p in self.face_points])
-        self.mid_points = np.array([p @ r for p in self.mid_points])
+        self._face_normals = np.array([n @ r for n in self._face_normals])
+        self._face_points = np.array([p @ r for p in self._face_points])
+        self._mid_points = np.array([p @ r for p in self._mid_points])
 
 
 class PrismEndCapMixin:

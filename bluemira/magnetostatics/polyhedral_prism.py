@@ -43,6 +43,8 @@ from bluemira.magnetostatics.baseclass import (
 )
 from bluemira.magnetostatics.tools import process_xyz_array
 
+__all__ = ["PolyhedralPrismCurrentSource"]
+
 ZERO_DIV_GUARD_EPS = 1e-14
 
 
@@ -343,8 +345,8 @@ class PolyhedralPrismCurrentSource(
         self._dcm = np.array([t_vec, ds / length, normal])
         self._set_cross_section(xs_coordinates)
 
-        self.alpha = alpha
-        self.beta = beta
+        self._alpha = alpha
+        self._beta = beta
 
         # Current density
         self.set_current(current)
@@ -382,7 +384,7 @@ class PolyhedralPrismCurrentSource(
         """
         point = np.array([x, y, z])
         return self._rho * field(
-            self._dcm[1], self.face_points, self.face_normals, self.mid_points, point
+            self._dcm[1], self._face_points, self._face_normals, self._mid_points, point
         )
 
     @process_xyz_array
@@ -410,7 +412,7 @@ class PolyhedralPrismCurrentSource(
         """
         point = np.array([x, y, z])
         return self._rho * vector_potential(
-            self._dcm[1], self.face_points, self.face_normals, self.mid_points, point
+            self._dcm[1], self._face_points, self._face_normals, self._mid_points, point
         )
 
     def _calculate_points(self):
@@ -422,13 +424,13 @@ class PolyhedralPrismCurrentSource(
         n_rect_faces = len(self._xs) - 1
         lower = deepcopy(self._xs.xyz)
         # Project and translate points onto end cap plane
-        lower[1] += -self._halflength - lower[0] * np.tan(self.beta)
+        lower[1] += -self._halflength - lower[0] * np.tan(self._beta)
         lower_points = self._local_to_global(lower.T)
 
         # Upper shape
         upper = deepcopy(self._xs.xyz)
         # Project and translate points onto end cap plane
-        upper[1] += self._halflength + upper[0] * np.tan(self.alpha)
+        upper[1] += self._halflength + upper[0] * np.tan(self._alpha)
         upper_points = self._local_to_global(upper.T)
 
         face_points = [lower_points]
@@ -447,10 +449,10 @@ class PolyhedralPrismCurrentSource(
 
         mid_points = [get_face_midpoint(face) for face in face_points]
 
-        self.face_points = np.array(face_points)
-        self.mid_points = np.array(mid_points)
-        normals = [np.cross(p[1] - p[0], p[2] - p[1]) for p in self.face_points]
-        self.face_normals = np.array([n / np.linalg.norm(n) for n in normals])
+        self._face_points = np.array(face_points)
+        self._mid_points = np.array(mid_points)
+        normals = [np.cross(p[1] - p[0], p[2] - p[1]) for p in self._face_points]
+        self._face_normals = np.array([n / np.linalg.norm(n) for n in normals])
 
         # Points for plotting only
         points = [np.vstack(lower_points), np.vstack(upper_points)]
