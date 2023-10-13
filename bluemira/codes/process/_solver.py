@@ -231,6 +231,9 @@ class Solver(CodesSolver):
             The impurity to get the species data for. This string should
             be one of the names in the
             :class:`~bluemira.codes.process.api.Impurities` Enum.
+        confinement_time_ms:
+            the confinement time to read the data for options are:
+            [0.1, 1.0, 10.0, 100.0, 1000.0, np.inf]
 
         Returns
         -------
