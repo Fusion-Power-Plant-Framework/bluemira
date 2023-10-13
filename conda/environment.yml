@@ -30,7 +30,7 @@ dependencies:
   - MeshPy=2020.1
   - meshio=4.4.5
   - mshr=2019.1.0
-  - scipy=1.10
+  - scipy=1.9
   - graphviz
   - pip
   - pip:
