@@ -135,6 +135,30 @@ described in [Feng_1985]_.
 .. figure:: pic_circular.png
     :name: fig:circular
 
+
+Volume integral method
+----------------------
+
+The magnetic field due to a uniform current density distribution :math:`\mathbf{J}` in
+a volume :math:`V` can be written as:
+
+.. math::
+    :label: B_J_rr3_dV
+
+    \mathbf{B} = \dfrac{\mu_0}{4\pi}\mathbf{J}\times\int_{V} \dfrac{\mathbf{r}-\mathbf{r^{'}}}{\lvert \mathbf{r}-\mathbf{r^{'}}\rvert}dr^{'}
+
+Following a procedure described in [Fabbri_2008], this volume integral can be solved by
+a series of surface integrals, which themselves can be solved as a series of line integrals.
+
+A ``PolyhedralPrismCurrentSource`` object is used to describe a conductor segment of
+uniform current density, with an arbitary (polygonal) cross-section.
+
+.. literalinclude:: doc_polyhedral.py
+    :language: python
+
+.. figure:: pic_hexagonal.py
+    :name: fig:hexagonal
+
 Finite element
 --------------
 
@@ -173,5 +197,6 @@ where :math:`v` is the basis element function of the defined functional subspace
 .. [Babic_2005a] S. Babic and C. Aykel, An improvement in the calculation of the magnetic field for an arbitrary geometry coil with rectangular cross section, International Journal of Numerical Modelling, Electronic Networks, Devices and Fields, 2005, vol. 18, pp. 493-504
 .. [Babic_2005b] S. Babic and C. Aykel, An improvement in the calculation of the magnetic field for an arbitrary geometry coil with rectangular cross section - Erratum, International Journal of Numerical Modelling, Electronic Networks, Devices and Fields, 2005
 .. [Feng_1985] Z. X. Feng, The treatment of singularities in calculation of magnetic field using integral method, IEEE Transactions on Magnetics, 1985, vol. 21
+.. [Fabbri_2008] M. Fabbri, Magnetic Flux Density and Vector Potential of Uniform Polyhedral Sources, IEEE Transactions on Magnetics, 2008, vol. 44, no. 1
 .. [Zohm_2015] H. Zohm, Magnetohydrodynamic Stability of Tokamaks, Wiley-VCH, Germany, 2015
 .. [Villone_2013] VILLONE, F. et al. Plasma Phys. Control. Fusion 55 (2013) 095008, https://doi.org/10.1088/0741-3335/55/9/095008
