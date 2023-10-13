@@ -232,20 +232,17 @@ class TestPolyhedralPrismBabicAykel:
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
-    def test_paper_values(self):
-        field = self.poly.field(2, 2, 2)
+    @pytest.mark.parametrize(
+        ("point", "value", "precision"),
+        [((2, 2, 2), 15.5533805, 7), ((1, 1, 1), 53.581000397, 9)],
+    )
+    def test_paper_values(self, point, value, precision):
+        field = self.poly.field(*point)
         abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
         # As per Babic and Aykel paper
         # Assume truncated last digit and not rounded...
-        field_7decimals = np.trunc(abs_field * 10**7) / 10**7
-        assert field_7decimals == pytest.approx(15.5533805, rel=0, abs=EPS)
-
-        # Test singularity treatments:
-        field = self.poly.field(1, 1, 1)
-        abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
-        # Assume truncated last digit and not rounded...
-        field_9decimals = np.trunc(abs_field * 10**9) / 10**9
-        assert field_9decimals == pytest.approx(53.581000397, rel=0, abs=EPS)
+        field_ndecimals = np.trunc(abs_field * 10**precision) / 10**precision
+        assert field_ndecimals == pytest.approx(value, rel=0, abs=EPS)
 
 
 class TestPolyhedralCoordinates:
