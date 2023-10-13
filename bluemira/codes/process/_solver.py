@@ -235,7 +235,7 @@ class Solver(CodesSolver):
         Returns
         -------
         tref:
-            The temperature in keV.
+            The temperature in eV.
         l_ref:
             The loss function value $L_z(n_e, T_e)$ in W.m3.
         z_ref:
