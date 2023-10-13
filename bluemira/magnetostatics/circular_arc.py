@@ -31,7 +31,7 @@ import numpy as np
 
 from bluemira.base.constants import MU_0_4PI
 from bluemira.geometry._private_tools import make_circle_arc
-from bluemira.magnetostatics.baseclass import RectangularCrossSectionCurrentSource
+from bluemira.magnetostatics.baseclass import CrossSectionCurrentSource
 from bluemira.magnetostatics.tools import (
     integrate,
     jit_llc3,
@@ -601,7 +601,7 @@ def Bz_analytical_circular(
     )
 
 
-class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
+class CircularArcCurrentSource(CrossSectionCurrentSource):
     """
     3-D circular arc prism current source with a rectangular cross-section and
     uniform current distribution.
@@ -647,17 +647,17 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         dtheta: float,
         current: float,
     ):
-        self.origin = origin
+        self._origin = origin
         self._breadth = breadth
-        self.depth = depth
-        self.length = 0.5 * (breadth + depth)  # For plotting only
+        self._depth = depth
+        self._length = 0.5 * (breadth + depth)  # For plotting only
         self._radius = radius
         self._update_r1r2()
 
-        self.dtheta = np.deg2rad(dtheta)
-        self.rho = current / (4 * breadth * depth)
-        self.dcm = np.array([ds, normal, t_vec])
-        self.points = self._calculate_points()
+        self._dtheta = np.deg2rad(dtheta)
+        self._rho = current / (4 * breadth * depth)
+        self._dcm = np.array([ds, normal, t_vec])
+        self._points = self._calculate_points()
 
     @property
     def radius(self) -> float:
@@ -720,8 +720,8 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         """
         Convert from local cylindrical coordinates to working coordinates.
         """
-        z1 = zp + self.depth
-        z2 = zp - self.depth
+        z1 = zp + self._depth
+        z2 = zp - self._depth
         return self._r1, self._r2, z1, z2
 
     def _BxByBz(self, rp: float, tp: float, zp: float) -> np.ndarray:
@@ -729,8 +729,8 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         Calculate the field at a point in local coordinates.
         """
         r1, r2, z1, z2 = self._cylindrical_to_working(zp)
-        bx = Bx_analytical_circular(r1, r2, z1, z2, self.dtheta, rp, tp)
-        bz = Bz_analytical_circular(r1, r2, z1, z2, self.dtheta, rp, tp)
+        bx = Bx_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
+        bz = Bz_analytical_circular(r1, r2, z1, z2, self._dtheta, rp, tp)
         return np.array([bx, 0, bz])
 
     @process_xyz_array
@@ -761,9 +761,9 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         point = self._global_to_local([point])[0]
         rp, tp, zp = self._local_to_cylindrical(point)
         # Calculate field in local coordinates
-        b_local = MU_0_4PI * self.rho * self._BxByBz(rp, tp, zp)
+        b_local = MU_0_4PI * self._rho * self._BxByBz(rp, tp, zp)
         # Convert field to global coordinates
-        return self.dcm.T @ b_local
+        return self._dcm.T @ b_local
 
     def _calculate_points(self):
         """
@@ -771,11 +771,11 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         """
         r = self.radius
         a = self.breadth
-        b = self.depth
+        b = self._depth
 
         # Circle arcs
         n = 200
-        theta = self.dtheta
+        theta = self._dtheta
         ones = np.ones(n)
         arc_1x, arc_1y = make_circle_arc(r - a, 0, 0, angle=theta, n_points=n)
         arc_2x, arc_2y = make_circle_arc(r + a, 0, 0, angle=theta, n_points=n)
@@ -786,7 +786,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         arc_3 = np.array([arc_3x, arc_3y, b * ones]).T
         arc_4 = np.array([arc_4x, arc_4y, b * ones]).T
 
-        n_slices = int(2 + self.dtheta // (0.25 * np.pi))
+        n_slices = int(2 + self._dtheta // (0.25 * np.pi))
         slices = np.linspace(0, n - 1, n_slices, endpoint=True, dtype=int)
         points = [arc_1, arc_2, arc_3, arc_4]
 
@@ -813,7 +813,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
         """
         super().plot(ax=ax, show_coord_sys=show_coord_sys)
         ax = plt.gca()
-        theta = self.dtheta
+        theta = self._dtheta
         x, y = make_circle_arc(
             self.radius, 0, 0, angle=theta / 2, start_angle=theta / 4, n_points=200
         )

@@ -229,8 +229,8 @@ class TestArbitraryPlanarXSCircuit:
 
     @staticmethod
     def _check_continuity(source_1, source_2):
-        s1_rect = source_1.points[1][:4]
-        s2_rect = source_2.points[0][:4]
+        s1_rect = source_1._points[1][:4]
+        s2_rect = source_2._points[0][:4]
         return np.allclose(s1_rect, s2_rect)
 
 

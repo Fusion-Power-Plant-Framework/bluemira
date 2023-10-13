@@ -269,11 +269,11 @@ class SourceGroup(ABC):
     """
 
     sources: List[CurrentSource]
-    points: np.array
+    _points: np.array
 
     def __init__(self, sources: List[CurrentSource]):
         self.sources = sources
-        self.points = np.vstack([np.vstack(s.points) for s in self.sources])
+        self._points = np.vstack([np.vstack(s._points) for s in self.sources])
 
     def set_current(self, current: float):
         """
@@ -324,7 +324,7 @@ class SourceGroup(ABC):
         """
         for source in self.sources:
             source.rotate(angle, axis)
-        self.points = self.points @ rotation_matrix(angle, axis)
+        self._points = self._points @ rotation_matrix(angle, axis)
 
     def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
         """
@@ -341,7 +341,7 @@ class SourceGroup(ABC):
             ax = Plot3D()
 
         # Invisible bounding box to set equal aspect ratio plot
-        xbox, ybox, zbox = BoundingBox.from_xyz(*self.points.T).get_box_arrays()
+        xbox, ybox, zbox = BoundingBox.from_xyz(*self._points.T).get_box_arrays()
         ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
 
         for source in self.sources:
