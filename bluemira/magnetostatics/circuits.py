@@ -265,39 +265,11 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
         xs_coordinates: Coordinates,
         current: float,
     ):
-        shape = process_to_coordinates(shape)
-        if not shape.is_planar:
-            raise MagnetostaticsError(
-                f"The input shape for {self.__class__.__name__} must be planar."
+        super().__init__(
+            self._generate_sources(
+                shape, current, PolyhedralPrismCurrentSource, (xs_coordinates,)
             )
-
-        betas, alphas = self._get_betas_alphas(shape)
-
-        normal = shape.normal_vector
-
-        # Set up geometry, calculating all trapezoidal prism sources
-        self.shape = shape.T
-        self.d_l = np.diff(self.shape, axis=0)
-        self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
-        sources = []
-
-        for midpoint, d_l, beta, alpha in zip(self.midpoints, self.d_l, betas, alphas):
-            d_l_norm = d_l / np.linalg.norm(d_l)
-            t_vec = np.cross(d_l_norm, normal)
-
-            source = PolyhedralPrismCurrentSource(
-                midpoint,
-                d_l,
-                normal,
-                t_vec,
-                xs_coordinates,
-                alpha,
-                beta,
-                current,
-            )
-            sources.append(source)
-
-        super().__init__(sources)
+        )
 
 
 class HelmholtzCage(SourceGroup):
