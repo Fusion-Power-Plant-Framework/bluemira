@@ -114,7 +114,7 @@ class PlanarCircuit(SourceGroup):
         )
         alphas = []
 
-        for i, (midpoint, _d_l) in enumerate(zip(midpoints, d_l)):
+        for i, midpoint in enumerate(midpoints):
             if i != len(midpoints) - 1:
                 alpha = self._get_half_angle(
                     midpoint, shape.points[i + 1], midpoints[i + 1]
