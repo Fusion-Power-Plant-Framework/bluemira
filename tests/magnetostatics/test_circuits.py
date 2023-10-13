@@ -338,8 +338,8 @@ class TestPolyhedralCircuitPlotting:
         )
 
     def test_field_plot(self):
-        x = np.linspace(2, 8, 100)
-        z = np.linspace(-12, 12, 100)
+        x = np.linspace(2, 8, 50)
+        z = np.linspace(-12, 12, 50)
         xx, zz = np.meshgrid(x, z)
         yy = np.zeros_like(xx)
         self.circuit.plot()

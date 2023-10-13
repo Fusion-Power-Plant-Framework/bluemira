@@ -49,10 +49,55 @@ class PlanarCircuit(SourceGroup):
     Base class for a planar current loop
     """
 
-    shape: np.array
+    shape: Union[np.ndarray, Coordinates]
     current: float
 
-    def _get_betas_alphas(self, shape):
+    def _generate_sources(self, shape, current, source_class, xs_args):
+        """
+        Generate the sources of a given class along the discretised shape
+        """
+        shape = self._process_planar_shape(shape)
+        betas, alphas = self._get_betas_alphas(shape)
+
+        normal = shape.normal_vector
+
+        # Set up geometry, calculating all trapezoidal prism sources
+        self.shape = shape.T
+        self.d_l = np.diff(self.shape, axis=0)
+        self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
+        sources = []
+
+        for midpoint, d_l, beta, alpha in zip(self.midpoints, self.d_l, betas, alphas):
+            d_l_norm = d_l / np.linalg.norm(d_l)
+            t_vec = np.cross(d_l_norm, normal)
+
+            source = source_class(
+                midpoint,
+                d_l,
+                normal,
+                t_vec,
+                *xs_args,
+                alpha=alpha,
+                beta=beta,
+                current=current,
+            )
+            sources.append(source)
+        return sources
+
+    def _process_planar_shape(
+        self, shape: Union[np.ndarray, Coordinates]
+    ) -> Coordinates:
+        """
+        Checks that the shape is planar
+        """
+        shape = process_to_coordinates(shape)
+        if not shape.is_planar:
+            raise MagnetostaticsError(
+                f"The input shape for {self.__class__.__name__} must be planar."
+            )
+        return shape
+
+    def _get_betas_alphas(self, shape: Union[np.ndarray, Coordinates]):
         """
         Get the first and second half-angles (transformed to the x-z plane)
         """
@@ -171,40 +216,11 @@ class ArbitraryPlanarRectangularXSCircuit(PlanarCircuit):
         depth: float,
         current: float,
     ):
-        shape = process_to_coordinates(shape)
-        if not shape.is_planar:
-            raise MagnetostaticsError(
-                f"The input shape for {self.__class__.__name__} must be planar."
+        super().__init__(
+            self._generate_sources(
+                shape, current, TrapezoidalPrismCurrentSource, (breadth, depth)
             )
-
-        betas, alphas = self._get_betas_alphas(shape)
-
-        normal = shape.normal_vector
-
-        # Set up geometry, calculating all trapezoidal prism sources
-        self.shape = shape.T
-        self.d_l = np.diff(self.shape, axis=0)
-        self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
-        sources = []
-
-        for midpoint, d_l, beta, alpha in zip(self.midpoints, self.d_l, betas, alphas):
-            d_l_norm = d_l / np.linalg.norm(d_l)
-            t_vec = np.cross(d_l_norm, normal)
-
-            source = TrapezoidalPrismCurrentSource(
-                midpoint,
-                d_l,
-                normal,
-                t_vec,
-                breadth,
-                depth,
-                alpha,
-                beta,
-                current,
-            )
-            sources.append(source)
-
-        super().__init__(sources)
+        )
 
 
 class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
@@ -232,39 +248,11 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
         xs_coordinates: Coordinates,
         current: float,
     ):
-        shape = process_to_coordinates(shape)
-        if not shape.is_planar:
-            raise MagnetostaticsError(
-                f"The input shape for {self.__class__.__name__} must be planar."
+        super().__init__(
+            self._generate_sources(
+                shape, current, PolyhedralPrismCurrentSource, (xs_coordinates,)
             )
-
-        betas, alphas = self._get_betas_alphas(shape)
-
-        normal = shape.normal_vector
-
-        # Set up geometry, calculating all trapezoidal prism sources
-        self.shape = shape.T
-        self.d_l = np.diff(self.shape, axis=0)
-        self.midpoints = self.shape[:-1, :] + 0.5 * self.d_l
-        sources = []
-
-        for midpoint, d_l, beta, alpha in zip(self.midpoints, self.d_l, betas, alphas):
-            d_l_norm = d_l / np.linalg.norm(d_l)
-            t_vec = np.cross(d_l_norm, normal)
-
-            source = PolyhedralPrismCurrentSource(
-                midpoint,
-                d_l,
-                normal,
-                t_vec,
-                xs_coordinates,
-                alpha,
-                beta,
-                current,
-            )
-            sources.append(source)
-
-        super().__init__(sources)
+        )
 
 
 class HelmholtzCage(SourceGroup):
