@@ -1915,10 +1915,10 @@ class RadiationSource:
             self.imp_content_core,
             self.imp_data_core,
         )
-        core_rad.build_mp_rad_profile()
-        rad_tot = np.sum(np.array(core_rad.rad, dtype=object), axis=0)
-        f_rad = interp1d(core_rad.rho_core, rad_tot)
-        return f_rad(np.sqrt(psi_n))
+        core_rad.build_mp_radiation_profile()
+        rad_tot = np.sum(np.array(core_rad.rad_mp, dtype=object), axis=0)
+        f_rad = interp1d(core_rad.psi_n, rad_tot)
+        return f_rad(psi_n)
 
     def rad_core_by_points(self, x, z):
         """
@@ -1954,7 +1954,7 @@ class RadiationSource:
         list
             Local radiation source values associated to the given psi_n
         """
-        f_sol = linear_interpolator(self.x_sol, self.z_sol, self.rad_sol)
+        f_sol = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         fs = self.eq.get_flux_surface(psi_n)
         return np.concatenate(
             [interpolated_field_values(x, z, f_sol) for x, z in zip(fs.x, fs.z)]
