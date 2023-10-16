@@ -26,7 +26,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, ClassVar, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 from bluemira.base.parameter_frame import Parameter  # noqa: TCH001
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
@@ -334,7 +334,7 @@ class ProcessSolverParams(MappedParameterFrame):
     Z_eff: Parameter[float]
     """Effective particle radiation atomic mass [unified_atomic_mass_unit]."""
 
-    _mappings: ClassVar = deepcopy(mappings)
+    _mappings = deepcopy(mappings)
 
     @property
     def _defaults(self):
