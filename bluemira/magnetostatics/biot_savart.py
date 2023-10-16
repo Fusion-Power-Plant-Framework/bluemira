@@ -79,12 +79,12 @@ class BiotSavartFilament(CurrentSource):
                 self.length_scale = np.min(lengths)
 
         # Assemble arrays and vector
-        self.d_l = np.vstack(d_ls)
-        self.d_l_hat = np.linalg.norm(self.d_l, axis=1)
-        self.mid_points = np.vstack(mids_points)
-        self.points = np.vstack(points)
+        self._d_l = np.vstack(d_ls)
+        self._d_l_hat = np.linalg.norm(self._d_l, axis=1)
+        self._mid_points = np.vstack(mids_points)
+        self._points = np.vstack(points)
         self._arrays = arrays
-        self.radius = radius
+        self._radius = radius
         self.current = current
 
     @staticmethod
@@ -124,16 +124,16 @@ class BiotSavartFilament(CurrentSource):
         The vector potential at the point due to the arbitrarily shaped Coordinates
         """
         point = np.array([x, y, z])
-        r = point - self.points
+        r = point - self._points
         r_mag = tools.norm(r, axis=1)
         r_mag[r_mag < EPS] = EPS
-        core = r_mag / self.radius
-        core[r_mag > self.radius] = 1
+        core = r_mag / self._radius
+        core[r_mag > self._radius] = 1
 
         # The below einsum operation is equivalent to:
         # self.current * np.sum(core * self.d_l.T / r_mag, axis=0) / (4 * np.pi)
         return np.einsum(
-            "i, ji, ... -> j", core, self.d_l / r_mag[None], ONE_4PI * self.current
+            "i, ji, ... -> j", core, self._d_l / r_mag[None], ONE_4PI * self.current
         )
 
     @process_xyz_array
@@ -167,18 +167,18 @@ class BiotSavartFilament(CurrentSource):
         smoothing. Do not use for values near the coil current centreline.
         """  # noqa: W505, E501
         point = np.array([x, y, z])
-        r = point - self.mid_points
+        r = point - self._mid_points
         r3 = np.linalg.norm(r, axis=1) ** 3
 
-        ds = np.cross(self.d_l, r)
+        ds = np.cross(self._d_l, r)
 
         # Coil core correction
-        d_l_hat = self.d_l_hat[:, None]
+        d_l_hat = self._d_l_hat[:, None]
         ds_mag = np.linalg.norm(ds / d_l_hat, axis=1)
         ds_mag = np.tile(ds_mag, (3, 1)).T
         ds_mag[ds_mag < EPS] = EPS
-        core = ds_mag**2 / self.radius**2
-        core[ds_mag > self.radius] = 1
+        core = ds_mag**2 / self._radius**2
+        core[ds_mag > self._radius] = 1
         return MU_0_4PI * self.current * np.sum(core * ds / r3[:, np.newaxis], axis=0)
 
     def inductance(self) -> float:
@@ -203,16 +203,16 @@ class BiotSavartFilament(CurrentSource):
         inductance = 0
         for _i, (x1, dx1) in enumerate(zip(self.ref_mid_points, self.ref_d_l)):
             # We create a mask to drop the point where x1 == x2
-            r = x1 - self.mid_points
+            r = x1 - self._mid_points
             mask = np.sum(r**2, axis=1) > 0.5 * self.length_scale
             inductance += np.sum(
-                np.dot(dx1, self.d_l[mask].T) / np.linalg.norm(r[mask], axis=1)
+                np.dot(dx1, self._d_l[mask].T) / np.linalg.norm(r[mask], axis=1)
             )
 
         # Self-inductance correction (Y = 0.5 for homogenous current distribution)
         # Equation 6 of https://arxiv.org/pdf/1204.1486.pdf
         error_tail = 0
-        a, b = self.radius, 0.5 * self.length_scale
+        a, b = self._radius, 0.5 * self.length_scale
         if b > 10 * a:
             # Equation A.4 of https://arxiv.org/pdf/1204.1486.pdf
             error_tail = a**2 / b**2 - 3 / (8 * b**4) * (a**4 - 2 * a**2)
@@ -232,9 +232,9 @@ class BiotSavartFilament(CurrentSource):
             The axis of rotation
         """
         r = rotation_matrix(np.deg2rad(angle), axis).T
-        self.points = self.points @ r
-        self.d_l = self.d_l @ r
-        self.mid_points = self.mid_points @ r
+        self._points = self._points @ r
+        self._d_l = self._d_l @ r
+        self._mid_points = self._mid_points @ r
         self.ref_d_l = self.ref_d_l @ r
         self.ref_mid_points = self.ref_mid_points @ r
         self._arrays = [array @ r for array in self._arrays]
@@ -255,7 +255,7 @@ class BiotSavartFilament(CurrentSource):
             # If no ax provided, we assume that we want to plot only this source,
             # and thus set aspect ratio equality on this term only
             # Invisible bounding box to set equal aspect ratio plot
-            xbox, ybox, zbox = BoundingBox.from_xyz(*self.points.T).get_box_arrays()
+            xbox, ybox, zbox = BoundingBox.from_xyz(*self._points.T).get_box_arrays()
             ax.plot(1.1 * xbox, 1.1 * ybox, 1.1 * zbox, "s", alpha=0)
 
         for array in self._arrays:
