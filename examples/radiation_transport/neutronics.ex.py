@@ -56,12 +56,17 @@ from bluemira.neutronics.params import (
 )
 
 # %% [markdown]
-# Since nuclear data (data about the probability of nuclear reactions) is required in order to run the neutronics simulations, we must download the cross-section data (see nuclear_data_downloader) to a local directory, and let OpenMC know where that directory is.
+# Since nuclear data (data about the probability of nuclear reactions) is required in
+# order to run the neutronics simulations, we must download the
+# cross-section data (see nuclear_data_downloader) to a local directory,
+# and let OpenMC know where that directory is.
 
 # %%
 CROSS_SECTION_XML = str(Path("~/bluemira_openmc_data/cross_sections.xml").expanduser())
 # %% [markdown]
-# In this script we can also demonstrate openmc's ability to calculate the volume stochastically (rather than analytically). Specifically, in this script we toggle this parameter on/off using the following variable:
+# In this script we can also demonstrate openmc's ability to calculate the volume
+# stochastically (rather than analytically). Specifically, in this script we
+# toggle this parameter on/off using the following variable:
 
 # %%
 volume_calculation = True
@@ -72,7 +77,8 @@ volume_calculation = True
 # - DCLL (Dual Coolant Lithium Lead breeding blanket)
 # - HCPB (Helium Cooled Pebble Bed breeding blanket),
 #
-# bluemira provides a list of preset parameters in `get_preset_physical_properties` so that you can a simple generic tokamak of that design.
+# bluemira provides a list of preset parameters in `get_preset_physical_properties`
+# so that you can a simple generic tokamak of that design.
 #
 # Using these presets parameters, we can set up a simulation for OpenMC to run.
 
