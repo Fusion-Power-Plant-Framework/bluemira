@@ -91,6 +91,8 @@ class TestPolyhedralMaths:
                 ax.plot(*point, marker="o", ms=int(50 / (i + 1)), color=colors[i])
 
         plt.show()
+        for i in range(len(trap._points)):
+            np.testing.assert_allclose(trap._points[i], poly._points[i])
 
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
     def test_xz_field(
