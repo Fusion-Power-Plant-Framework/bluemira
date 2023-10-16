@@ -57,12 +57,11 @@ def get_percent_err(row):
     dataframe.apply(get_percent_err),
     where dataframe must have one row named "std. dev." and another named "mean".
     """
-    # Returns to an OpenMC results dataframe that is the
-    # percentage stochastic uncertainty in the result
-    try:
-        return row["std. dev."] / row["mean"] * 100.0
-    except ZeroDivisionError:
+    # if percentage error > 1E7:
+    if np.isclose(row["mean"], 0.0, rtol=0.0, atol=row["std. dev."] / 100000):
         return np.nan
+    # else: normal mode of operation: divide std by mean, then multiply by 100.
+    return row["std. dev."] / row["mean"] * 100.0
 
 
 class PoloidalXSPlot:
@@ -158,14 +157,12 @@ class OpenMCResult:
         # Creating cell volume dictionary to allow easy mapping to dataframe
         cell_vols = {}
         for cell_id in universe.cells:
-            try:
+            if isinstance(cell_vols, float):
                 cell_vols[cell_id] = raw_uc(
                     universe.cells[cell_id].volume, "cm^3", "m^3"
                 )
-            except TypeError:
-                cell_vols[cell_id] = universe.cells[
-                    cell_id
-                ].volume  # catch the None's or na.
+            else:
+                cell_vols[cell_id] = universe.cells[cell_id].volume  # catch the None's.
             # provided by openmc in cm^3, but we want to save it in m^3
         # Loads up the output file from the simulation
         statepoint = openmc.StatePoint(statepoint_file)
