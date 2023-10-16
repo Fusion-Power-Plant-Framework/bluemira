@@ -265,13 +265,21 @@ class TestPolyhedralPrismBabicAykel:
         ("point", "value", "precision"),
         [((2, 2, 2), 15.5533805, 7), ((1, 1, 1), 53.581000397, 9)],
     )
-    def test_paper_values(self, point, value, precision):
+    def test_paper_singularity_values(self, point, value, precision):
         field = self.poly.field(*point)
         abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
         # As per Babic and Aykel paper
         # Assume truncated last digit and not rounded...
         field_ndecimals = np.trunc(abs_field * 10**precision) / 10**precision
         assert field_ndecimals == pytest.approx(value, rel=0, abs=EPS)
+
+    def test_paper_inside_conductor(self):
+        field = self.poly.field(0.5, 0.5, 0.5)
+        abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
+        # As per Babic and Aykel paper
+        # Assume truncated last digit and not rounded...
+        field_ndecimals = np.trunc(abs_field * 10**7) / 10**7
+        assert field_ndecimals == pytest.approx(34.9969156, rel=0, abs=EPS)
 
 
 class TestPolyhedralCoordinates:
