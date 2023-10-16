@@ -205,7 +205,7 @@ def surface_integral(
         u_e = p1 - p0
         u_e /= np.linalg.norm(u_e)
         integral += np.dot(
-            np.cross(face_normal, p0 - point),  # r_e is an arbitrary point
+            np.cross(face_normal, p1 - point),  # r_e is an arbitrary point
             u_e * edge_integral(point, p0, p1),
         )
         # Calculate omega_f as the sum of subtended angles with a triangle
