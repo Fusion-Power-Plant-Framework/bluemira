@@ -340,7 +340,8 @@ class Constraint(ConstraintSelection, Model):
         60,
         (106,),
         (),
-        "Central solenoid temperature margin lower limit (SCTF)[sic.. I guess they mean SCCS]",
+        "Central solenoid temperature margin lower limit (SCTF)[sic.."
+        " I guess they mean SCCS]",
     )
     AVAIL_LOWER_LIMIT = 61, (107,), ("avail_min",), "Minimum availability value"
     CONFINEMENT_RATIO_LOWER_LIMIT = (
