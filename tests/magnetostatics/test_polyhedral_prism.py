@@ -201,6 +201,9 @@ class TestPolyhedralMaths:
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
+    def teardown_method(self):
+        plt.close()
+
 
 class TestPolyhedralPrismBabicAykel:
     @classmethod
@@ -288,6 +291,9 @@ class TestPolyhedralPrismBabicAykel:
         field_ndecimals = np.trunc(abs_field * 10**7) / 10**7
         assert field_ndecimals == pytest.approx(34.9969156, rel=0, abs=EPS)
 
+    def teardown_method(self):
+        plt.close()
+
 
 class TestPolyhedralCoordinates:
     @classmethod
@@ -362,6 +368,9 @@ class TestPolyhedralCoordinates:
         f.colorbar(cm)
         plt.show()
 
+    def teardown_method(self):
+        plt.close()
+
 
 class TestCombinedShapes:
     @classmethod
@@ -434,3 +443,6 @@ class TestCombinedShapes:
         f.colorbar(cm)
         plt.show()
         np.testing.assert_allclose(B_new, B)
+
+    def teardown_method(self):
+        plt.close()
