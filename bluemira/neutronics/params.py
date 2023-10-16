@@ -64,7 +64,9 @@ class OpenMCSimulationRuntimeParameters:
     cross_section_xml: Union[str, Path]
     batches: int = 2
     photon_transport: bool = True
-    electron_treatment: Literal["ttb", "led"] = "ttb"
+    electron_treatment: Literal[
+        "ttb", "led"
+    ] = "led"  # Bremsstrahlung only matters for very thin objects
     run_mode: str = openmc.settings.RunMode.FIXED_SOURCE.value
     openmc_write_summary: bool = False
     # number of particles used in the volume calculation.
