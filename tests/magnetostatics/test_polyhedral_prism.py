@@ -74,24 +74,28 @@ class TestPolyhedralMaths:
     test_cases = (same_angle, diff_angle)
 
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
-    def test_geometry(self, trap, poly):
+    def test_geometry(
+        self, trap: TrapezoidalPrismCurrentSource, poly: PolyhedralPrismCurrentSource
+    ):
         poly.plot()
         ax = plt.gca()
         trap.plot(ax)
         colors = ["r", "g", "b", "pink", "cyan", "yellow"]
-        for i, normal in enumerate(poly.face_normals):
-            points = poly.face_points[i]
+        for i, normal in enumerate(poly._face_normals):
+            points = poly._face_points[i]
             centre = np.sum(points[:3], axis=0) / 3
             ax.quiver(*centre, *normal, color=colors[i])
 
-        for i, points in enumerate(poly.face_points):
+        for i, points in enumerate(poly._face_points):
             for point in points:
                 ax.plot(*point, marker="o", ms=int(50 / (i + 1)), color=colors[i])
 
         plt.show()
 
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
-    def test_xz_field(self, trap, poly):
+    def test_xz_field(
+        self, trap: TrapezoidalPrismCurrentSource, poly: PolyhedralPrismCurrentSource
+    ):
         f = plt.figure()
         ax = f.add_subplot(1, 2, 1, projection="3d")
         ax.set_title("TrapezoidalPrism")
@@ -119,7 +123,9 @@ class TestPolyhedralMaths:
         np.testing.assert_allclose(B_new, B)
 
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
-    def test_xy_field(self, trap, poly):
+    def test_xy_field(
+        self, trap: TrapezoidalPrismCurrentSource, poly: PolyhedralPrismCurrentSource
+    ):
         n = 50
         x = np.linspace(8, 12, n)
         y = np.linspace(-2, 2, n)
@@ -147,7 +153,9 @@ class TestPolyhedralMaths:
         np.testing.assert_allclose(B_new, B)
 
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
-    def test_yz_field(self, trap, poly):
+    def test_yz_field(
+        self, trap: TrapezoidalPrismCurrentSource, poly: PolyhedralPrismCurrentSource
+    ):
         n = 50
         y = np.linspace(-2, 2, n)
         z = np.linspace(-2, 2, n)
