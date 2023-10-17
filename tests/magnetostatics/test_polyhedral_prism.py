@@ -10,6 +10,7 @@ import pytest
 
 from bluemira.geometry.tools import Coordinates
 from bluemira.magnetostatics.error import MagnetostaticsError
+from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.polyhedral_prism import (
     Bottura,
     Fabbri,
@@ -200,9 +201,6 @@ class TestPolyhedralMaths:
 
         np.testing.assert_allclose(B_new, B)
 
-    def teardown_method(self):
-        plt.close()
-
 
 class TestPolyhedralCoordinates:
     @classmethod
@@ -277,9 +275,6 @@ class TestPolyhedralCoordinates:
         f.colorbar(cm)
         plt.show()
 
-    def teardown_method(self):
-        plt.close()
-
 
 class TestCombinedShapes:
     @classmethod
@@ -353,5 +348,78 @@ class TestCombinedShapes:
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
-    def teardown_method(self):
-        plt.close()
+
+
+class TestPolyhedralSourceContinuity:
+    @classmethod
+    def setup_class(cls):
+        coords = Coordinates(
+            {
+                "x": [-1, 1, 0],
+                "z": [-0.5, -0.5, 0.25],
+            }
+        )
+        cls.half_triangle1 = PolyhedralPrismCurrentSource(
+            [-2.5, 0, 0],
+            [5, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            coords,
+            0,
+            0,
+            1e6,
+        )
+        coords = Coordinates(
+            {
+                "x": [-1, 1, 0],
+                "z": [-0.5, -0.5, 0.25],
+            }
+        )
+        cls.half_triangle2 = PolyhedralPrismCurrentSource(
+            [2.5, 0, 0],
+            [5, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            coords,
+            0,
+            0,
+            1e6,
+        )
+        coords = Coordinates(
+            {
+                "x": [-1, 1, 0],
+                "z": [-0.5, -0.5, 0.25],
+            }
+        )
+        cls.triangle = PolyhedralPrismCurrentSource(
+            [0, 0, 0],
+            [10, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            coords,
+            0,
+            0,
+            1e6,
+        )
+
+    @pytest.mark.parametrize("plane", ["x", "y", "z"])
+    def test_source_continuity(self, plane):
+        n = 50
+        x1, x2 = np.linspace(-5, 5, n), np.linspace(-5, 5, n)
+        xx1, xx2 = np.meshgrid(x1, x2)
+        xx3 = np.zeros_like(xx1)
+
+        if plane == "x":
+            xx, yy, zz = xx3, xx1, xx2
+            i, j, k = 3, 1, 2
+        elif plane == "y":
+            xx, yy, zz = xx1, xx3, xx2
+            i, j, k = 0, 3, 2
+        elif plane == "z":
+            xx, yy, zz = xx1, xx2, xx3
+            i, j, k = 0, 1, 3
+
+        half_source = SourceGroup([self.half_triangle1, self.half_triangle2])
+        assert np.allclose(
+            half_source.field(xx, yy, zz), self.triangle.field(xx, yy, zz)
+        )

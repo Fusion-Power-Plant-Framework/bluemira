@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 from scipy.interpolate import UnivariateSpline, interp1d
 
+from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._private_tools import offset
 from bluemira.geometry.coordinates import Coordinates, vector_lengthnorm
@@ -292,6 +293,38 @@ class TestPolyhedralCircuitPlotting:
         cb = plt.gcf().colorbar(cm, shrink=0.46)
         cb.set_label("$B$ [T]")
         plt.show()
+
+
+class TestPolyhedralFaceContinuity:
+    @classmethod
+    def setup_class(cls):
+        shape = PrincetonD().create_shape()
+        xs = Coordinates({"x": [-1, -1, 1], "z": [-1, 1, 0]})
+        xs.translate(xs.center_of_mass)
+
+        cls.circuit = ArbitraryPlanarPolyhedralXSCircuit(
+            shape.discretize(ndiscr=15), xs, current=1e6
+        )
+
+    def test_field_faces(self):
+        point = np.array([2, 2, 2])
+        source1 = self.circuit.sources[4]
+        source2 = self.circuit.sources[5]
+        field1 = source1._rho * poly_field(
+            source1._dcm[1],
+            [source1._face_points[-1]],
+            [source1._face_normals[-1]],
+            [source1._mid_points[-1]],
+            point,
+        )
+        field2 = source2._rho * poly_field(
+            source2._dcm[1],
+            [source2._face_points[0]],
+            [source2._face_normals[0]],
+            [source2._mid_points[0]],
+            point,
+        )
+        assert np.sum(field1 - field2) == pytest.approx(0.0, rel=0, abs=EPS)
 
 
 class TestCariddiBenchmark:
