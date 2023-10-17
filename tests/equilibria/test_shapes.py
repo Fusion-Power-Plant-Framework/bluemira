@@ -77,7 +77,6 @@ class TestCunningham:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Cunningham parameterisations")
-        plt.close(cls.f)
 
 
 class TestHirschman:
@@ -129,8 +128,6 @@ class TestHirschman:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Hirschman parameterisations")
-        plt.show()
-        plt.close(cls.f)
 
 
 class TestManickam:
@@ -171,8 +168,6 @@ class TestManickam:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Manickam parameterisations")
-        plt.show()
-        plt.close(cls.f)
 
 
 class TestKuiroukidis:
@@ -247,8 +242,6 @@ class TestKuiroukidis:
     def teardown_class(cls):
         cls.f.suptitle("Kuiroukidis parameterisations")
         plt.subplots_adjust(hspace=0.4)
-        plt.show()
-        plt.close(cls.f)
 
 
 johner_names = [
@@ -307,8 +300,6 @@ class TestJohner:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Johner parameterisations")
-        plt.show()
-        plt.close(cls.f)
 
 
 class TestJohnerCAD:

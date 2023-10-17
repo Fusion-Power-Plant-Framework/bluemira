@@ -60,11 +60,6 @@ class TestRippleConstrainedLengthGOP:
         RippleConstrainedLengthGOPParams,
     )
 
-    @classmethod
-    def teardown_method(cls):
-        plt.show()
-        plt.close("all")
-
     def test_default_setup(self):
         problem = RippleConstrainedLengthGOP(
             self.princeton,

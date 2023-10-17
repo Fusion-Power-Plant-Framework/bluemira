@@ -124,8 +124,6 @@ class TestSemiAnalyticBxBz:
         ax.legend()
         ax.set_xlabel("Point number")
         ax.set_ylabel("$B_{p}$ [T]")
-        plt.show()
-        plt.close(fig)
 
     def test_tough_Bz_integration_does_not_raise_error(self):
         """
@@ -180,7 +178,7 @@ class TestPoloidalFieldBenchmark:
     def test_field_inside_coil_z_z(self):
         x, z, B = self.load_data(Path(self.path, "new_B_along_z-z.json"))
 
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
 
         x_values = np.unique(x)
         for x_value in x_values:
@@ -206,12 +204,11 @@ class TestPoloidalFieldBenchmark:
         ax.set_xlim([40, 80])
         ax.set_xlabel("z")
         ax.set_ylabel("$B_{p}$")
-        plt.close(fig)
 
     def test_field_inside_coil_x_x(self):
         x, z, B = self.load_data(Path(self.path, "new_B_along_x-x.json"))
 
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
 
         z_values = np.unique(z)[:5]  # Mirrored about coil zc-axis
         for z_value in z_values:
@@ -236,4 +233,3 @@ class TestPoloidalFieldBenchmark:
         ax.set_xlim([0, 8])
         ax.set_xlabel("x")
         ax.set_ylabel("$B_{p}$")
-        plt.close(fig)

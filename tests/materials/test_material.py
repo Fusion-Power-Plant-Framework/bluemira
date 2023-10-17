@@ -112,8 +112,6 @@ class TestMaterials:
         self.nb_3_sn.plot(b_min, b_max, t_min, t_max, eps)
         self.nb_3_sn_2.plot(b_min, b_max, t_min, t_max, eps)
         self.nbti.plot(b_min, b_max, t_min, t_max)
-        plt.show()
-        plt.close()
 
 
 class TestLiquids:

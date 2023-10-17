@@ -54,7 +54,7 @@ class TestSinkTools:
 
     @classmethod
     def teardown_class(cls):
-        plt.close("all")
+        ...
 
     def test_timestep(self):
         """
@@ -96,7 +96,6 @@ class TestSinkTools:
         ax.plot([0, time_y], [cross, cross])
 
         ax.plot(dt15, cross, color="r", marker="*", ms=15)
-        plt.show()
 
         # high n required to converge..
         assert np.isclose(iend2, i[-1], rtol=0.01), f"{iend2} != {i[-1]}"

@@ -42,8 +42,8 @@ class TestFuelCycleComponent:
         cls.f, cls.ax = plt.subplots()
 
     @classmethod
-    def teardown_cls(cls):
-        plt.close(cls.f)
+    def teardown_class(cls):
+        ...
 
     def test_bathtub(self):
         t = np.linspace(0, 30, 1900)
@@ -69,7 +69,6 @@ class TestFuelCycleComponent:
 
         self.ax.plot(t, component.inventory, label="sqrt")
         self.ax.legend()
-        plt.show()
 
 
 class TestSqrtFittedSinks:
@@ -158,7 +157,5 @@ class TestSqrtFittedSinks:
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.6, box.height])
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-        plt.show()
-        plt.close(f)
 
         assert np.all(np.array(r_2_values) > 0.9995)

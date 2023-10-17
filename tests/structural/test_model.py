@@ -558,7 +558,6 @@ class TestCompoundDeflection:
 
         result = model.solve(load_case)
         result.plot()
-        plt.show()
 
 
 @pytest.mark.longrun
@@ -581,7 +580,6 @@ class TestGravityLoads:
 
         result = model.solve()
         result.plot()
-        plt.show()
 
         # Check that tip displacements in the x and y directions are equal
         assert np.isclose(result.deflections[6 * n], result.deflections[6 * n + 1])
@@ -610,7 +608,6 @@ class TestFixedFixedStress:
         result = model.solve()
 
         result.plot()
-        plt.show()
 
 
 @pytest.mark.longrun
@@ -696,7 +693,6 @@ class TestMiniEiffelTower:
         model.add_element(20, 21, cs5, SS316)
 
         model.plot()
-        plt.show()
 
         cls.model = model
 
@@ -705,7 +701,6 @@ class TestMiniEiffelTower:
         result = self.model.solve()
         result.plot(stress=True)
         self.model.clear_loads()
-        plt.show()
 
 
 @pytest.mark.longrun
@@ -740,4 +735,3 @@ class TestInterpolation:
         result = model.solve()
 
         result.plot(stress=True)
-        plt.show()

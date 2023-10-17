@@ -134,8 +134,6 @@ class TestInscribedRectangle:
 
                         if not np.allclose(dx / dz, k):
                             self.assertion_error_creator("Aspect", [dx, dz, dx / dz, k])
-        plt.show()
-        plt.close(fig)
 
         if self.r is not False:
             raise AssertionError(self.r)

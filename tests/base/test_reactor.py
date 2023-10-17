@@ -35,6 +35,7 @@ from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
 from bluemira.geometry.tools import make_polygon
 from bluemira.materials.material import Void
 
+
 REACTOR_NAME = "My Reactor"
 
 
@@ -58,8 +59,8 @@ class TestReactor:
         cls.reactor = cls._make_reactor()
 
     @classmethod
-    def teardown_method(cls):
-        plt.close("all")
+    def teardown_class(cls):
+        ...
 
     def test_time_since_init(self):
         a = self.reactor.time_since_init()

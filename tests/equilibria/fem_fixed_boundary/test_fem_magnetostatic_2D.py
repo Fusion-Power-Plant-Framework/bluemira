@@ -87,8 +87,8 @@ class TestFemGradShafranovFixedBoundary:
         )
 
     @classmethod
-    def teardown_method(cls):
-        plt.close()
+    def teardown_class(cls):
+        ...
 
     @pytest.mark.parametrize("plot", [False, True])
     def test_all_optional_init_12(self, plot):
