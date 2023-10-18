@@ -134,7 +134,7 @@ Abbreviations are allowed to be in capitals, e.g.:
 * `show_CAD`
 * `build_TF_coils`
 
-A full list of accepted abbreviations can be found in the `.flake8` file under
+A full list of accepted abbreviations can be found in the `pyproject.toml` file under
 `ignore_names`.
 
 We try to stick to descriptive `lower_case_snake_case` argument and local variable names with the general rule that names less than three characters should not be used.
@@ -157,7 +157,7 @@ This is not a hard rule, and there are some notable exceptions:
     ```python
     from ..base.components import Component
     ```
-    We enforce this with `flake8`.
+    We enforce this with `ruff`.
 * Imports between bluemira modules should access individual methods directly.
 * Wildcard imports should not be used as it pollutes the namespace and makes it hard to work out where a method originates.
 * Some external modules such as `numpy` and `matplotlib.pyplot` have specific import styles widely used elsewhere, please look for examples in ``bluemira`` if unsure:
@@ -236,14 +236,37 @@ def IPB98y2(
 The API documentation is built automatically using `sphinx` which reads docstrings and argument types
 and processes them accordingly.
 
+## Testing
+
+[Pytest](https://docs.pytest.org) is used for all testing of bluemira. We aim for around 80% coverage of our code as a rough metric.
+
+``Bluemira`` tests are grouped into classes for testing multiple pieces of functionality of a single class or function.
+
+### Custom commandline arguments
+There are 3 user available extra command line flags to modify the running style of the tests:
+
+  -  ``--reactor``
+  -  ``--longrun``
+  -  ``--plotting-on``
+
+A further ``--private`` flag is available where data is not public but tests against that data are useful. If you have some private data that you would like to test against please contact a maintainer for more information.
+
+[!WARNING]
+Do not commit private data to the repository there is no simple way to remove that
+data once pushed. You will have to contact github support to fully remove the data
+as noted [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository#fully-removing-the-data-from-github).
+
+### Marking tests
+
+``Bluemira`` has 4 custom pytest marks which can be used to decorate tests (`@pytest.mark.*`):
+
+  -  ``pytest.mark.reactor``
+  -  ``pytest.mark.longrun``
+  -  ``pytest.mark.classplot``
+  -  ``pytest.mark.private``
+
 ## Releases and Packaging
 
-Release versions of ``bluemira`` are generated from git tags, and [versioneer](
-https://github.com/python-versioneer/python-versioneer) is used so that the most recent
-tag is dynamically pulled into the ``bluemira`` itself to set `__version__` correctly.
-[Useage of versioneer for releases](
-https://github.com/python-versioneer/python-versioneer/blob/master/INSTALL.md#post-installation-usage)
-is quite straightforward, and that link also gives details on how ``versioneer`` is
-installed, should it be necessary to do that again. If this fails and you haven't
-touched `bluemira/_version.py`, then it is possible
-that ``versioneer`` needs to be updated (see [their README](https://github.com/python-versioneer/python-versioneer#updating-versioneer)).
+Release versions of ``bluemira`` are generated from git tags, and [setuptools-scm](
+https://github.com/pypa/setuptools_scm) is used so that the most recent
+tag is dynamically pulled into the ``bluemira`` itself to set `__version__` correctly. The ``main`` branch will always contain the newest release.
