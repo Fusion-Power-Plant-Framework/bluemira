@@ -199,10 +199,14 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
 
         # Update parameterisation (coilset).
-        self.coilset.current = self.coilset.current + current_adjustment
+        current = self.coilset.get_control_coils().current + current_adjustment
+        self.coilset.get_control_coils().current = current
+        f_x = np.linalg.norm(a_mat @ current - b_vec) + np.linalg.norm(
+            self.gamma * current
+        )
         return CoilsetOptimiserResult(
             coilset=self.coilset,
-            f_x=self.coilset.current,
+            f_x=f_x,
             n_evals=0,
             history=[],
             constraints_satisfied=True,
