@@ -39,6 +39,24 @@ def make_xs_from_bd(b, d):
     )
 
 
+def plane_setup(plane):
+    n = 50
+    x1, x2 = np.linspace(-5, 5, n), np.linspace(-5, 5, n)
+    xx1, xx2 = np.meshgrid(x1, x2)
+    xx3 = np.zeros_like(xx1)
+
+    if plane == "x":
+        xx, yy, zz = xx3, xx1, xx2
+        i, j, k = 3, 1, 2
+    elif plane == "y":
+        xx, yy, zz = xx1, xx3, xx2
+        i, j, k = 0, 3, 2
+    elif plane == "z":
+        xx, yy, zz = xx1, xx2, xx3
+        i, j, k = 0, 1, 3
+    return xx, yy, zz, i, j, k
+
+
 class TestPolyhedralMaths:
     same_angle = (
         TrapezoidalPrismCurrentSource(
@@ -183,6 +201,9 @@ class TestPolyhedralMaths:
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
+    def teardown_method(self):
+        plt.close()
+
 
 class TestPolyhedralPrismBabicAykel:
     @classmethod
@@ -219,20 +240,7 @@ class TestPolyhedralPrismBabicAykel:
 
     @pytest.mark.parametrize("plane", ["x", "y", "z"])
     def test_plot(self, plane):
-        n = 50
-        x1, x2 = np.linspace(-5, 5, n), np.linspace(-5, 5, n)
-        xx1, xx2 = np.meshgrid(x1, x2)
-        xx3 = np.zeros_like(xx1)
-
-        if plane == "x":
-            xx, yy, zz = xx3, xx1, xx2
-            i, j, k = 3, 1, 2
-        elif plane == "y":
-            xx, yy, zz = xx1, xx3, xx2
-            i, j, k = 0, 3, 2
-        elif plane == "z":
-            xx, yy, zz = xx1, xx2, xx3
-            i, j, k = 0, 1, 3
+        xx, yy, zz, i, j, k = plane_setup(plane)
 
         f = plt.figure()
         ax = f.add_subplot(1, 3, 1, projection="3d")
@@ -283,6 +291,9 @@ class TestPolyhedralPrismBabicAykel:
         field_ndecimals = np.trunc(abs_field * 10**7) / 10**7
         assert field_ndecimals == pytest.approx(34.9969156, rel=0, abs=EPS)
 
+    def teardown_method(self):
+        plt.close()
+
 
 class TestPolyhedralCoordinates:
     @classmethod
@@ -329,20 +340,7 @@ class TestPolyhedralCoordinates:
 
     @pytest.mark.parametrize("plane", ["x", "y", "z"])
     def test_hexagon(self, plane):
-        n = 50
-        x1, x2 = np.linspace(-5, 5, n), np.linspace(-5, 5, n)
-        xx1, xx2 = np.meshgrid(x1, x2)
-        xx3 = np.zeros_like(xx1)
-
-        if plane == "x":
-            xx, yy, zz = xx3, xx1, xx2
-            i, j, k = 3, 1, 2
-        elif plane == "y":
-            xx, yy, zz = xx1, xx3, xx2
-            i, j, k = 0, 3, 2
-        elif plane == "z":
-            xx, yy, zz = xx1, xx2, xx3
-            i, j, k = 0, 1, 3
+        xx, yy, zz, i, j, k = plane_setup(plane)
 
         f = plt.figure()
         ax = f.add_subplot(1, 1, 1, projection="3d")
@@ -357,20 +355,7 @@ class TestPolyhedralCoordinates:
 
     @pytest.mark.parametrize("plane", ["x", "y", "z"])
     def test_triangle(self, plane):
-        n = 50
-        x1, x2 = np.linspace(-5, 5, n), np.linspace(-5, 5, n)
-        xx1, xx2 = np.meshgrid(x1, x2)
-        xx3 = np.zeros_like(xx1)
-
-        if plane == "x":
-            xx, yy, zz = xx3, xx1, xx2
-            i, j, k = 3, 1, 2
-        elif plane == "y":
-            xx, yy, zz = xx1, xx3, xx2
-            i, j, k = 0, 3, 2
-        elif plane == "z":
-            xx, yy, zz = xx1, xx2, xx3
-            i, j, k = 0, 1, 3
+        xx, yy, zz, i, j, k = plane_setup(plane)
 
         f = plt.figure()
         ax = f.add_subplot(1, 1, 1, projection="3d")
@@ -382,3 +367,82 @@ class TestPolyhedralCoordinates:
         cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
         f.colorbar(cm)
         plt.show()
+
+    def teardown_method(self):
+        plt.close()
+
+
+class TestCombinedShapes:
+    @classmethod
+    def setup_class(cls):
+        current = 1e6
+        coords = Coordinates({"x": [-1, -1, 1, 1], "z": [1, -1, -1, 1]})
+        cls.square = PolyhedralPrismCurrentSource(
+            [0, 0, 0],
+            [10, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            coords,
+            10,
+            10,
+            current,
+        )
+        coords = Coordinates({"x": [-1, -1, 1], "z": [1, -1, -1]})
+        cls.triangle1 = PolyhedralPrismCurrentSource(
+            [0, 0, 0],
+            [10, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            coords,
+            10,
+            10,
+            current / 2,
+        )
+        coords = Coordinates({"x": [-1, 1, 1], "z": [1, -1, 1]})
+        cls.triangle2 = PolyhedralPrismCurrentSource(
+            [0, 0, 0],
+            [10, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            coords,
+            10,
+            10,
+            current / 2,
+        )
+
+    @pytest.mark.parametrize("plane", ["x", "y", "z"])
+    def test_plot(self, plane):
+        xx, yy, zz, i, j, k = plane_setup(plane)
+
+        f = plt.figure()
+        ax = f.add_subplot(1, 3, 1, projection="3d")
+        ax.set_title("Sqaure")
+        self.square.plot(ax)
+        Bx, By, Bz = self.square.field(xx, yy, zz)
+        B = np.sqrt(Bx**2 + By**2 + Bz**2)
+        args = [xx, yy, zz, B]
+        cm = ax.contourf(args[i], args[j], args[k], zdir=plane, offset=0)
+        f.colorbar(cm)
+
+        ax = f.add_subplot(1, 3, 2, projection="3d")
+        ax.set_title("CombinedTriangles")
+        self.triangle1.plot(ax)
+        self.triangle2.plot(ax)
+        Bx, By, Bz = self.triangle1.field(xx, yy, zz) + self.triangle2.field(xx, yy, zz)
+        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
+        args_new = [xx, yy, zz, B_new]
+        cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
+        f.colorbar(cm)
+
+        ax = f.add_subplot(1, 3, 3, projection="3d")
+        ax.set_title("difference [%]")
+        args_diff = [xx, yy, zz, 100 * (B - B_new) / B]
+        self.triangle1.plot(ax)
+        self.triangle2.plot(ax)
+        cm = ax.contourf(args_diff[i], args_diff[j], args_diff[k], zdir=plane, offset=0)
+        f.colorbar(cm)
+        plt.show()
+        np.testing.assert_allclose(B_new, B)
+
+    def teardown_method(self):
+        plt.close()
