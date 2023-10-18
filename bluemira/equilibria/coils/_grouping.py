@@ -515,7 +515,9 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def get_coiltype(self, ctype: Union[str, CoilType]):
         """Get coil by coil type"""
-        return CoilGroup(*self._get_coiltype(ctype))
+        if coiltype := self._get_coiltype(ctype):
+            return type(self(*coiltype))
+        return None
 
     def assign_material(self, ctype, j_max, b_max):
         """Assign material J and B to Coilgroup"""
@@ -958,10 +960,6 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
                 coils.append(c)
         return CoilSet(*coils)
 
-    def get_coiltype(self, ctype):  # noqa: PLR6301
-        """Get coils by coils type"""
-        return CoilSet(*super()._get_coiltype(ctype))
-
     @property
     def area(self) -> float:
         """
@@ -998,3 +996,18 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         ind = self._control_ind if control else slice(None)
 
         return np.sum(output[..., ind], axis=-1) if sum_coils else output[..., ind]
+
+    @classmethod
+    def from_group_vecs(cls, eqdsk: EQDSKInterface):
+        """Same as its parent class,
+        initialize an instance of CoilSet from group vectors,
+        but it also auto-populate the control attribute.
+
+        This is done so that the user doesn't have to
+        manually set passive coils as non-controlled.
+        """
+        self = super().from_group_vecs(eqdsk)
+
+        if coil_name := self.get_coiltype(CoilType.NONE):
+            self.control = coil_name.name  # passive coil
+        return self
