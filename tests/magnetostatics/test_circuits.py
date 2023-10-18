@@ -299,7 +299,7 @@ class TestPolyhedralFaceContinuity:
     @classmethod
     def setup_class(cls):
         shape = PrincetonD().create_shape()
-        xs = Coordinates({"x": [-1, -1, 1], "z": [-1, 1, 0]})
+        xs = Coordinates({"x": [-1, -1, 1, -1], "z": [-1, 1, 0, -1]})
         xs.translate(xs.center_of_mass)
 
         cls.circuit = ArbitraryPlanarPolyhedralXSCircuit(
