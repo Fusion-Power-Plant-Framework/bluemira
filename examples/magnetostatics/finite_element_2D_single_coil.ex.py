@@ -67,7 +67,7 @@ for ii in range(len(r_encl)):
     enclosure_points.append(enclosure_point)
 
 poly_enclo1 = make_polygon(enclosure_points[0:2])
-poly_enclo1.mesh_options = {"lcar": 0.1, "physical_group": "poly_enclo1"}
+poly_enclo1.mesh_options = {"lcar": 0.05, "physical_group": "poly_enclo1"}
 poly_enclo2 = make_polygon(enclosure_points[1:])
 poly_enclo2.mesh_options = {"lcar": 1, "physical_group": "poly_enclo2"}
 poly_enclo = BluemiraWire([poly_enclo1, poly_enclo2])
@@ -142,18 +142,19 @@ else:
     cell_tag_fig = plotter.screenshot("cell_tags.png")
 
 
-from bluemira.magnetostatics.fem_utils import calculate_area, create_j_function
+from bluemira.magnetostatics.fem_utils import calculate_area, create_j_function, integrate_f
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
-
+from bluemira.magnetostatics.fem_utils import create_j_function
 coil_tag = 5
 
-em_solver = FemMagnetostatic2d(mesh, ct, ("CG", 2))
-j_wire = I_wire / calculate_area(mesh, ct, coil_tag)
-j_wire = create_j_function(mesh, ct, [(j_wire, coil_tag)])
-em_solver.solve(j_wire)
+em_solver = FemMagnetostatic2d(mesh, ct, ft, ("CG", 2))
+
+j_wire = create_j_function(mesh, ct, [(1, coil_tag, I_wire)])
+em_solver.define_g(j_wire)
+em_solver.solve()
 
 plotter = pyvista.Plotter()
-V = em_solver._V
+V = em_solver.V
 psi = em_solver.psi
 
 B = em_solver.compute_B(("CG", 1))

@@ -77,24 +77,49 @@ class FemMagnetostatic2d:
     ----------
     mesh : dolfinx.mesh.Mesh
         mesh of the FEM model
-    boundaries:
-        boundaries mesh tags
+    cell_tags:
+        mesh cell tags
+    face_tags:
+        mesh face tags
     eltype: Tuple (default ("CG",1))
         tuple with the specification of the element family and the degree of the element
     """
 
     # TODO: check if the problem can be solved with any element type or if "eltype"
     #       should be hardcoded and removed from the signature.
-    def __init__(self, mesh: Mesh, boundaries, eltype: Tuple = ("CG", 1)):
+    def __init__(self, mesh: Mesh, cell_tags, face_tags, eltype: Tuple = ("CG", 1)):
         self.mesh = mesh
-        self.boundaries = boundaries
+        self.cell_tags = cell_tags
+        self.face_tags = face_tags
         self._eltype = eltype
-        self._V = FunctionSpace(self.mesh, self._eltype)
-        self.psi = Function(self._V)
+        self.V = FunctionSpace(self.mesh, self._eltype)
+        self.psi = Function(self.V)
+
+        self.u = TrialFunction(self.V)
+        self.v = TestFunction(self.V)
+
+        x = SpatialCoordinate(self.mesh)
+        self.a = (
+            1 / (2.0 * np.pi * MU_0) * (1 / x[0] * dot(grad(self.u), grad(self.v))) * dx
+        )
+
+        self.g = Function(self.V)
+        self.L = self.g * self.v * dx
+
+    def define_g(self, g: dolfinx.fem.Function):
+        """
+        Define g, the right hand side function of the Poisson problem
+
+        Parameters
+        ----------
+        g:
+            Right hand side function of the Poisson problem
+        """
+        self.g = g
+        self.L = self.g * self.v * dx
 
     def solve(
         self,
-        J: dolfinx.fem.Function,
         dirichlet_bcs: Optional[Tuple[int, dolfinx.fem.Function]] = None,
     ):
         """
@@ -102,8 +127,6 @@ class FemMagnetostatic2d:
 
         Parameters
         ----------
-        J : dolfinx.fem.Function
-            current density function in the mesh region
         dirichlet_bcs : Tuple[int, dolfinx.fem.Function] (default None)
             Dirichlet boundary conditions given as a tuple of (marker,dirichlet_function)
 
@@ -119,24 +142,18 @@ class FemMagnetostatic2d:
             facets = locate_entities_boundary(
                 self.mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
             )
-            dofs = locate_dofs_topological(self._V, tdim - 1, facets)
-            dirichlet_bcs = [dirichletbc(ScalarType(0), dofs, self._V)]
+            dofs = locate_dofs_topological(self.V, tdim - 1, facets)
+            dirichlet_bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
 
-        u = TrialFunction(self._V)
-        v = TestFunction(self._V)
-
-        x = SpatialCoordinate(self.mesh)
-        a = 1 / (2.0 * np.pi * MU_0) * (1 / x[0] * dot(grad(u), grad(v))) * dx
-        L = J * v * dx
-
-        # u_h = Function(self._V)
-        problem = LinearProblem(a, L, u=self.psi, bcs=dirichlet_bcs)
-        # TODO: check petsc_options
-        # problem = LinearProblem(a, L, u=u_h, bcs=[bc],
-        # petsc_options={"ksp_type": "preonly", "pc_type": "lu"})
+        problem = LinearProblem(
+            self.a,
+            self.L,
+            u=self.psi,
+            bcs=dirichlet_bcs,
+            petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
+        )
         self.psi = problem.solve()
 
-        # self.psi = u_h
         return self.psi
 
     def compute_B(self, eltype: Optional[Tuple] = None):
