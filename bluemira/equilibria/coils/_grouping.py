@@ -333,7 +333,6 @@ class CoilGroup(CoilGroupFieldsMixin):
                         dx=dx,
                         dz=dz,
                         ctype="NONE",
-                        control=False,
                     )
                 )
             elif dx != dz:  # Rough and ready
