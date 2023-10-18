@@ -109,12 +109,12 @@ def _plot_show_and_close(request):
 
     cls = request.node.getparent(pytest.Class)
 
-    if not (cls and "classplot" in cls.keywords):
+    if cls and "classplot" in cls.keywords:
+        yield
+    else:
         yield
         plt.show()
         plt.close()
-    else:
-        yield
 
 
 @pytest.fixture(scope="class", autouse=True)

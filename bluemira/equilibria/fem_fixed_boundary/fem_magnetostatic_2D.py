@@ -328,6 +328,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         debug: bool = False,
         gif: bool = False,
         figname: Optional[str] = None,
+        *,
         autoclose_plot: bool = True,
     ) -> FixedBoundaryEquilibrium:
         """
