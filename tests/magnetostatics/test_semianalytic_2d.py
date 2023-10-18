@@ -117,7 +117,7 @@ class TestSemiAnalyticBxBz:
         assert np.all(bx_array == bx_results)
         assert np.all(bz_array == bz_results)
 
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         ax.plot(bp_fe, marker="s", label="FE", ms=20)
         ax.plot(bp_paper, marker="^", label="Paper", ms=20)
         ax.plot(bp, marker="X", label="New", ms=20)

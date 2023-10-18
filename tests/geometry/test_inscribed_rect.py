@@ -75,7 +75,7 @@ class TestInscribedRectangle:
         points[0] += np.min(shape[0])
         points[2] += np.min(shape[2])
 
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
 
         shape_face = BluemiraFace(make_polygon(shape, closed=True))
         plot_2d(

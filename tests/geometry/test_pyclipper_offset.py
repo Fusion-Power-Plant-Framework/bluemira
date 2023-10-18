@@ -57,7 +57,7 @@ class TestClipperOffset:
         coordinates = Coordinates({"x": x, "y": y, "z": rng.random()})
         c = offset_clipper(coordinates, delta, method=method)
 
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         ax.plot(x, y, "k")
         ax.plot(c.x, c.y, "r", marker="o")
         ax.set_aspect("equal")
@@ -84,7 +84,7 @@ class TestClipperOffset:
             # distance = self._calculate_offset(coordinates, offset_coordinates)
             # np.testing.assert_almost_equal(distance, 1.5)
 
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
         ax.plot(coordinates.x, coordinates.z, color="k")
         colors = ["r", "g", "y"]
         for offset_coordinates, c in zip(offsets, colors):

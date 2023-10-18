@@ -100,7 +100,7 @@ class TestSqrtFittedSinks:
         # Now build an example TCycleComponent for the HCPB upper
         # with a constant mass flux equivalent to that modelled
 
-        f, ax = plt.subplots()
+        _, ax = plt.subplots()
 
         r_2_values = []
 
