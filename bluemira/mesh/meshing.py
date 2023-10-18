@@ -579,10 +579,9 @@ class _FreeCADGmsh:
         with open(logfile, "w") as file_handler:
             file_handler.write("\n".join(str(item) for item in gmsh.logger.get()))
 
-        gmsh.logger.stop()
-
         # This should be called when you are done using the Gmsh Python API:
-        gmsh.finalize()
+        # gmsh.logger.stop()
+        # gmsh.finalize()
 
     @staticmethod
     def _generate_mesh(mesh_dim: int = 3):
