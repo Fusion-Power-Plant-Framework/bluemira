@@ -514,10 +514,10 @@ class CoilGroup(CoilGroupFieldsMixin):
         return coils
 
     def get_coiltype(self, ctype: Union[str, CoilType]):
-        """Get coil by coil type"""
-        if coiltype := self._get_coiltype(ctype):
-            return type(self(*coiltype))
-        return None
+        """Get coils matching coil type"""
+        if coiltype := self._get_coiltype(ctype):  # if matched coils list is not empty
+            return CoilGroup(*coiltype)
+        return None  # Don't return anything.
 
     def assign_material(self, ctype, j_max, b_max):
         """Assign material J and B to Coilgroup"""
@@ -997,6 +997,12 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
         return np.sum(output[..., ind], axis=-1) if sum_coils else output[..., ind]
 
+    def get_coiltype(self, ctype):
+        """Get coils by coils type"""
+        if coiltype := self._get_coiltype(ctype):
+            return CoilSet(*coiltype)
+        return None
+
     @classmethod
     def from_group_vecs(cls, eqdsk: EQDSKInterface):
         """Same as its parent class,
@@ -1009,5 +1015,6 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self = super().from_group_vecs(eqdsk)
 
         if coil_name := self.get_coiltype(CoilType.NONE):
-            self.control = coil_name.name  # passive coil
+            # if passive coils are present: give them the correct names.
+            self.control = coil_name.name
         return self
