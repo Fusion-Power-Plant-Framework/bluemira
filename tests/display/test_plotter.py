@@ -25,7 +25,6 @@ Tests for the plotter module.
 
 from dataclasses import asdict
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -197,7 +196,7 @@ class TestPlot3d:
         assert ax_2 is ax_orig
 
     def test_plot_3d_new_axis(self):
-        ax_orig = Plot3D()
+        ax_orig = Plot3D()  # Empty axis
         ax_1 = plot_3d(tools.make_circle(), show=False)
         ax_2 = plot_3d(tools.make_circle(radius=2), show=False)
 

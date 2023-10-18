@@ -40,6 +40,7 @@ from bluemira.equilibria.shapes import (
 )
 
 
+@pytest.mark.classplot
 class TestCunningham:
     @classmethod
     def setup_class(cls):
@@ -79,6 +80,7 @@ class TestCunningham:
         cls.f.suptitle("Cunningham parameterisations")
 
 
+@pytest.mark.classplot
 class TestHirschman:
     @classmethod
     def setup_class(cls):
@@ -130,6 +132,7 @@ class TestHirschman:
         cls.f.suptitle("Hirschman parameterisations")
 
 
+@pytest.mark.classplot
 class TestManickam:
     @classmethod
     def setup_class(cls):
@@ -170,6 +173,7 @@ class TestManickam:
         cls.f.suptitle("Manickam parameterisations")
 
 
+@pytest.mark.classplot
 class TestKuiroukidis:
     fixture = (
         pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, -0.5, [0, 0]),
@@ -283,6 +287,7 @@ johner_params = [
 ]
 
 
+@pytest.mark.classplot
 class TestJohner:
     @classmethod
     def setup_class(cls):

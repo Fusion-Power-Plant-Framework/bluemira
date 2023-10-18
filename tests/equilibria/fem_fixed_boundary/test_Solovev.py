@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import matplotlib.pyplot as plt
 import numpy as np
 import scipy
 
@@ -175,7 +174,6 @@ class TestSolovevZheng:
 
         levels = 50
         cls.solovev.plot_psi(5.0, -6, 8.0, 12.0, 100, 100, levels=levels)
-        plt.show()
 
         n_points = 500
         boundary = find_flux_surface(cls.solovev.psi_norm_2d, 1, n_points=n_points)
@@ -246,7 +244,6 @@ class TestSolovevZheng:
             ax=None,
             tofill=True,
         )
-        plt.show()
 
         error = abs(psi_calc_data - psi_exact)
 
@@ -259,7 +256,6 @@ class TestSolovevZheng:
             ax=None,
             tofill=True,
         )
-        plt.show()
 
         # calculate the error norm
         diff = psi_calc_data - psi_exact

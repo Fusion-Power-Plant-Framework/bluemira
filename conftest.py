@@ -25,7 +25,6 @@ Used by pytest for configuration like adding command line options.
 
 from contextlib import suppress
 from unittest import mock
-from inspect import ismethod
 
 import matplotlib as mpl
 import pytest
@@ -98,45 +97,39 @@ def pytest_configure(config):
     config.option.markexpr = logic_string
 
 
-@pytest.fixture(scope="session", autouse=True)
-def plot_show_and_close(request):
+@pytest.fixture(autouse=True)
+def _plot_show_and_close(request):
+    """Fixture to show and close plots
+
+    Notes
+    -----
+    Does not do anything if testclass marked with 'classplot'
+    """
     import matplotlib.pyplot as plt
 
-    def _internal_tdmc(*_):
-        return
+    cls = request.node.getparent(pytest.Class)
 
-    seen = set()
-    session = request.node
-    for item in session.items:
-        cls = item.getparent(pytest.Class)
-        print(item, cls)
-        if cls not in seen and cls is not None:
-            _internal_tdc = (
-                cls.teardown_class if hasattr(cls, "teardown_class") else _internal_tdmc
-            )
-            _internal_tdm = (
-                cls.teardown_method
-                if hasattr(cls, "teardown_method")
-                else _internal_tdmc
-            )
-            if ismethod(_internal_tdc) and _internal_tdc.__self__ is cls:
+    if not (cls and "classplot" in cls.keywords):
+        yield
+        plt.show()
+        plt.close()
+    else:
+        yield
 
-                @pytest.fixture(scope="class", autouse=True)
-                def tdc(cls):
-                    yield
-                    plt.show()
-                    plt.close()
 
-                cls.plot_class_teardown = tdc
+@pytest.fixture(scope="class", autouse=True)
+def _plot_show_and_close_class(request):
+    """Fixture to show and close plots for marked classes
 
-            else:
+    Notes
+    -----
+    Only shows and closes figures on classes marked with 'classplot'
+    """
+    import matplotlib.pyplot as plt
 
-                @pytest.fixture(autouse=True, scope="function")
-                def tdm(self):
-                    plt.show()
-                    plt.close()
-
-                cls.plot_teardown = tdm
-
-            seen.add(cls)
-    print(seen)
+    if "classplot" in request.keywords:
+        yield
+        plt.show()
+        plt.close()
+    else:
+        yield

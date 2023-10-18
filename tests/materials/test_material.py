@@ -33,7 +33,6 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     from neutronics_material_maker.utils import make_serpent_material
 
-import matplotlib.pyplot as plt
 
 from bluemira.base.constants import EPS, kgm3_to_gcm3, to_kelvin
 from bluemira.utilities.tools import is_num

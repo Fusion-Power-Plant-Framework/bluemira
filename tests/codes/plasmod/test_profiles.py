@@ -21,6 +21,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 from matplotlib.tri import LinearTriInterpolator, Triangulation
 from scipy.interpolate import interp1d
 
@@ -94,7 +95,6 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
             ax.plot(*fs.xz)
 
         ax.set_aspect("equal")
-        plt.show()
         cls.flux_surfaces = flux_surfaces
         cls._calculate_metrics(cls)
 
@@ -196,6 +196,7 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         np.testing.assert_allclose(self.results["g3"], self.g3, rtol=0.02)
 
 
+@pytest.mark.classplot
 class TestPLASMODVerificationCurrentProfiles(PLASMODVerificationRawData):
     """
     A verification test for which we take the raw PLASMOD profiles

@@ -23,7 +23,6 @@ from copy import deepcopy
 
 import numpy as np
 import pytest
-from matplotlib import pyplot as plt
 
 from bluemira.base.constants import ANSI_COLOR
 from bluemira.structural.crosssection import IBeam, RectangularBeam

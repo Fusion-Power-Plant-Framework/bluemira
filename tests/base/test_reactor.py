@@ -24,7 +24,6 @@ from copy import deepcopy
 from pathlib import Path
 from unittest.mock import patch
 
-import matplotlib.pyplot as plt
 import pytest
 
 from bluemira.base.builder import ComponentManager
@@ -34,7 +33,6 @@ from bluemira.base.reactor import Reactor
 from bluemira.builders.plasma import Plasma, PlasmaBuilder, PlasmaBuilderParams
 from bluemira.geometry.tools import make_polygon
 from bluemira.materials.material import Void
-
 
 REACTOR_NAME = "My Reactor"
 
@@ -53,14 +51,11 @@ class MyReactor(Reactor):
     tf_coil: TFCoil
 
 
+@pytest.mark.classplot
 class TestReactor:
     @classmethod
     def setup_class(cls):
         cls.reactor = cls._make_reactor()
-
-    @classmethod
-    def teardown_class(cls):
-        ...
 
     def test_time_since_init(self):
         a = self.reactor.time_since_init()

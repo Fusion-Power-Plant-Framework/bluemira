@@ -47,14 +47,11 @@ def test_distributions(n, integral, parameter):
         assert np.isclose(np.sum(d), integral)
 
 
+@pytest.mark.classplot
 class TestSinkTools:
     def setup_method(self):
         self.I_min, self.I_max = 3.0, 5.0
         self.t_in, self.t_out = 5.0, 6.0
-
-    @classmethod
-    def teardown_class(cls):
-        ...
 
     def test_timestep(self):
         """

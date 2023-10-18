@@ -25,6 +25,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 from scipy.interpolate import interp1d
 
 from bluemira.base.file import get_bluemira_path
@@ -36,14 +37,11 @@ from bluemira.fuel_cycle.tools import (
 )
 
 
+@pytest.mark.classplot
 class TestFuelCycleComponent:
     @classmethod
     def setup_class(cls):
         cls.f, cls.ax = plt.subplots()
-
-    @classmethod
-    def teardown_class(cls):
-        ...
 
     def test_bathtub(self):
         t = np.linspace(0, 30, 1900)

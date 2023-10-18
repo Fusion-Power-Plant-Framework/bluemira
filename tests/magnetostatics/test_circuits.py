@@ -138,8 +138,6 @@ def test_mixedsourcesolver():
     fig, ax = plt.subplots()
     ax.contourf(xx, zz, Bt)
     ax.set_aspect("equal")
-    plt.show()
-    plt.close(fig)
 
 
 class TestArbitraryPlanarXSCircuit:

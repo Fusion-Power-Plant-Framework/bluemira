@@ -26,7 +26,6 @@ A collection of general helper functions for tests.
 import contextlib
 from pathlib import Path
 from unittest import mock
-from inspect import ismethod
 
 import pytest
 
@@ -95,42 +94,3 @@ def skipif_import_error(*module_name: str) -> pytest.MarkDecorator:
         reason = f"dependencies {modules} not found"
 
     return pytest.mark.skipif(any(skip), reason=reason)
-
-
-def plot_helper(cls=None, as_classmethod=False):
-    import matplotlib.pyplot as plt
-
-    def _internal_tdmc(*_):
-        return
-
-    def wrapper(cls):
-        _internal_tdc = (
-            cls.teardown_class if hasattr(cls, "teardown_class") else _internal_tdmc
-        )
-        _internal_tdm = (
-            cls.teardown_method if hasattr(cls, "teardown_method") else _internal_tdmc
-        )
-
-        if (ismethod(_internal_tdc) and _internal_tdc.__self__ is cls) or as_classmethod:
-
-            @classmethod
-            def tdc(cls):
-                _internal_tdc()
-                plt.show()
-                plt.close()
-
-            cls.teardown_class = tdc
-
-        else:
-
-            def tdm(self):
-                _internal_tdm(self)
-                plt.show()
-                plt.close()
-
-            cls.teardown_method = tdm
-        return cls
-
-    if cls is not None:
-        return wrapper(cls)
-    return wrapper

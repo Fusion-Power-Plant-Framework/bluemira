@@ -22,7 +22,6 @@
 
 import numpy as np
 import pytest
-from matplotlib import pyplot as plt
 
 from bluemira.base.constants import EPS
 from bluemira.display import plot_2d

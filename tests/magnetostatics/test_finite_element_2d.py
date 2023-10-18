@@ -22,7 +22,6 @@
 from pathlib import Path
 
 import dolfin
-import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.components import Component, PhysicalComponent
@@ -101,7 +100,6 @@ class TestGetNormal:
         )
 
         dolfin.plot(mesh)
-        plt.show()
 
         em_solver = FemMagnetostatic2d(3)
         em_solver.set_mesh(mesh, boundaries)

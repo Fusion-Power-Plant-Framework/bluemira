@@ -490,6 +490,7 @@ class TestOnPolygon:
             assert on_polygon(*fail, coords.xz.T) is False
 
 
+@pytest.mark.classplot
 class TestInPolygon:
     def test_simple(self):
         coords = Coordinates({"x": [-2, 2, 2, -2, -2, -2], "z": [-2, -2, 2, 2, 1.5, -2]})
@@ -641,6 +642,7 @@ class TestIntersections:
         assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
 
 
+@pytest.mark.classplot
 class TestCoordinatesPlaneIntersect:
     def test_simple(self):
         coords = Coordinates({"x": [0, 1, 2, 2, 0, 0], "z": [-1, -1, -1, 1, 1, -1]})
