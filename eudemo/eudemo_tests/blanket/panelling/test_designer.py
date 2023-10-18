@@ -114,9 +114,6 @@ def cut_polygon_vertically(shape: BluemiraWire) -> Tuple[BluemiraWire, BluemiraW
 
 
 class TestPanellingDesigner:
-    def teardown_method(self):
-        plt.close("all")
-
     @pytest.mark.parametrize("max_angle", [30, 50])
     @pytest.mark.parametrize(
         "shape",
@@ -147,7 +144,6 @@ class TestPanellingDesigner:
         _, ax = plt.subplots()
         plot_2d(shape, show=False, ax=ax)
         ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
-        plt.show()
 
         panel_vecs = np.diff(panel_edges).T
         angles = [
@@ -187,7 +183,6 @@ class TestPanellingDesigner:
         _, ax = plt.subplots()
         plot_2d(shape, show=False, ax=ax)
         ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
-        plt.show()
 
         lengths = np.sqrt(np.sum(np.diff(panel_edges.T, axis=0) ** 2, axis=1))
         abs_tol = 1e-3
@@ -232,7 +227,6 @@ class TestPanellingDesigner:
         _, ax = plt.subplots()
         plot_2d(shape, show=False, ax=ax)
         ax.plot(panel_edges[0], panel_edges[1], "--x", linewidth=0.5, color="r")
-        plt.show()
 
         # test that we at least get a solution that encloses the boundary
         poly_panels = coords_xz_to_polygon(panel_edges).discretize()
