@@ -324,7 +324,7 @@ class TestPolyhedralFaceContinuity:
             [source2._mid_points[0]],
             point,
         )
-        assert np.sum(field1 - field2) == pytest.approx(0.0, rel=0, abs=EPS)
+        assert np.sum(field1 + field2) == pytest.approx(0.0, rel=0, abs=EPS)
 
 
 class TestCariddiBenchmark:

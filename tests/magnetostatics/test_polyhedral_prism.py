@@ -367,7 +367,7 @@ class TestPolyhedralSourceContinuity:
             [0, 1, 0],
             [0, 0, 1],
             coords,
-            0,
+            30,
             0,
             1e6,
         )
@@ -384,7 +384,7 @@ class TestPolyhedralSourceContinuity:
             [0, 0, 1],
             coords,
             0,
-            0,
+            -30,
             1e6,
         )
         coords = Coordinates(
