@@ -988,7 +988,7 @@ class AutoConstraints(MagneticConstraintSet):
             ]
 
         # Interpolate some points on the LCFS
-        x_boundary, _, z_boundary = interpolate_points(x, np.zeros_like[x], z, n_points)
+        x_boundary, _, z_boundary = interpolate_points(x, np.zeros_like(x), z, n_points)
 
         # Apply an appropriate constraint on the LCFS
         if psi_boundary is None:
