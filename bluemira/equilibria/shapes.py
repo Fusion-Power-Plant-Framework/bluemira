@@ -800,10 +800,10 @@ class _InOut(Enum):
 
 
 def _johner_quadrant(
-    delta: float, kappa: float, psi: float, n_pts: int, ul: _UpLow, io: _InOut
+    delta: float, kappa: float, phi: float, n_pts: int, ul: _UpLow, io: _InOut
 ) -> Tuple[float, float]:
     calc_t = calc_t_neg if io is _InOut.INNER else calc_t_pos
-    t = calc_t(delta, kappa, psi)
+    t = calc_t(delta, kappa, phi)
     conditional_point = 0.5
     if t < conditional_point:
         calc_angles = (
@@ -864,10 +864,10 @@ def flux_surface_johner_quadrants(
     kappa_l: float,
     delta_u: float,
     delta_l: float,
-    psi_u_neg: float,
-    psi_u_pos: float,
-    psi_l_neg: float,
-    psi_l_pos: float,
+    phi_u_neg: float,
+    phi_u_pos: float,
+    phi_l_neg: float,
+    phi_l_pos: float,
     n: int = 100,
 ) -> Tuple[List[np.ndarray], List[np.ndarray]]:
     """
@@ -919,26 +919,26 @@ def flux_surface_johner_quadrants(
         negative = True
     else:
         negative = False
-    psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos = (
-        np.deg2rad(i) for i in [psi_u_neg, psi_u_pos, psi_l_neg, psi_l_pos]
+    phi_u_neg, phi_u_pos, phi_l_neg, phi_l_pos = (
+        np.deg2rad(i) for i in [phi_u_neg, phi_u_pos, phi_l_neg, phi_l_pos]
     )
 
     n_pts = int(n / 4)
     # inner upper
     x_ui, z_ui = _johner_quadrant(
-        delta_u, kappa_u, psi_u_neg, n_pts, ul=_UpLow.UPPER, io=_InOut.INNER
+        delta_u, kappa_u, phi_u_neg, n_pts, ul=_UpLow.UPPER, io=_InOut.INNER
     )
     # inner lower
     x_li, z_li = _johner_quadrant(
-        delta_l, kappa_l, psi_l_neg, n_pts, ul=_UpLow.LOWER, io=_InOut.INNER
+        delta_l, kappa_l, phi_l_neg, n_pts, ul=_UpLow.LOWER, io=_InOut.INNER
     )
     # outer upper
     x_uo, z_uo = _johner_quadrant(
-        delta_u, kappa_u, psi_u_pos, n_pts, ul=_UpLow.UPPER, io=_InOut.OUTER
+        delta_u, kappa_u, phi_u_pos, n_pts, ul=_UpLow.UPPER, io=_InOut.OUTER
     )
     # outer lower
     x_lo, z_lo = _johner_quadrant(
-        delta_l, kappa_l, psi_l_pos, n_pts, ul=_UpLow.LOWER, io=_InOut.OUTER
+        delta_l, kappa_l, phi_l_pos, n_pts, ul=_UpLow.LOWER, io=_InOut.OUTER
     )
 
     x_quadrants = [x_ui, x_uo[::-1], x_lo[::-1], x_li]
@@ -960,10 +960,10 @@ def flux_surface_johner(
     kappa_l: float,
     delta_u: float,
     delta_l: float,
-    psi_u_neg: float,
-    psi_u_pos: float,
-    psi_l_neg: float,
-    psi_l_pos: float,
+    phi_u_neg: float,
+    phi_u_pos: float,
+    phi_l_neg: float,
+    phi_l_pos: float,
     n: int = 100,
 ) -> Coordinates:
     """
@@ -990,13 +990,13 @@ def flux_surface_johner(
         Upper triangularity at the plasma edge (psi_n=1)
     delta_l:
         Lower triangularity at the plasma edge (psi_n=1)
-    psi_u_neg:
+    phi_u_neg:
         Upper inner angle [°]
-    psi_u_pos:
+    phi_u_pos:
         Upper outer angle [°]
-    psi_l_neg:
+    phi_l_neg:
         Lower inner angle [°]
-    psi_l_pos:
+    phi_l_pos:
         Lower outer angle [°]
     n:
         Number of point to generate on the flux surface
@@ -1013,10 +1013,10 @@ def flux_surface_johner(
         kappa_l,
         delta_u,
         delta_l,
-        psi_u_neg,
-        psi_u_pos,
-        psi_l_neg,
-        psi_l_pos,
+        phi_u_neg,
+        phi_u_pos,
+        phi_l_neg,
+        phi_l_pos,
         n=n,
     )
 

@@ -256,10 +256,10 @@ johner_names = [
     "kappa_l",
     "delta_u",
     "delta_l",
-    "psi_u_neg",
-    "psi_u_pos",
-    "psi_l_neg",
-    "psi_l_pos",
+    "phi_u_neg",
+    "phi_u_pos",
+    "phi_l_neg",
+    "phi_l_pos",
     "ax",
     "label",
 ]
@@ -329,6 +329,18 @@ class TestJohnerCAD:
         wire_neg = p_neg.create_shape()
 
         assert np.isclose(wire_pos.length, wire_neg.length)
+
+    @pytest.mark.parametrize("kwargs", johner_params)
+    def test_cad(self, kwargs):
+        kwargs.pop("ax")
+        kwargs.pop("label")
+        var_dict = {k: {"value": v} for k, v in kwargs.items()}
+        var_dict["r_0"] = {"value": 9}
+        var_dict["z_0"] = {"value": 0}
+        var_dict["a"] = {"value": 9 / 3}
+        param = JohnerLCFS(var_dict=var_dict)
+        shape = param.create_shape()
+        assert shape.is_closed()
 
 
 class TestKuiroukidisCAD:
