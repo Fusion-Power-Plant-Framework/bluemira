@@ -123,7 +123,6 @@ class TestFields:
     def test_psi(self):
         self.callable_tester(self.eq.psi)
 
-    @pytest.mark.longrun
     def test_out_of_bounds(self):
         plt.close("all")
         eq = self.eq

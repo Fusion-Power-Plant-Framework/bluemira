@@ -126,11 +126,15 @@ class PlasmaCoil:
                 " distribution."
             )
 
-        array = np.zeros_like(x, dtype=float)
-        for i, j in zip(self._ii, self._jj):
-            current = self._j_tor[i, j] * self._grid.dx * self._grid.dz
-            array += current * func(self._grid.x[i, j], self._grid.z[i, j], x, z)
-        return array
+        return np.sum(
+            self._j_tor[self._ii, self._jj]
+            * self._grid.dx
+            * self._grid.dz
+            * func(
+                self._grid.x[self._ii, self._jj], self._grid.z[self._ii, self._jj], x, z
+            ),
+            axis=0,
+        )
 
     @treat_xz_array
     def psi(
