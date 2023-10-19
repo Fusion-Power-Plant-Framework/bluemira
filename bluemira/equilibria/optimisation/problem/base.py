@@ -241,9 +241,8 @@ class CoilsetOptimisationProblem(abc.ABC):
 
         # Get the current limits from coil current densities
         coilset_current_limits = np.infty * np.ones(n_control_currents)
-        coilset_current_limits[coilset._flag_sizefix] = coilset.get_max_current()[
-            coilset._flag_sizefix
-        ]
+        cc = coilset.get_control_coils()
+        coilset_current_limits[cc._flag_sizefix] = cc.get_max_current()[cc._flag_sizefix]
 
         # Limit the control current magnitude by the smaller of the two limits
         control_current_limits = np.minimum(
