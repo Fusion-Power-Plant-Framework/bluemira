@@ -19,6 +19,8 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from copy import deepcopy
+
 import numpy as np
 import pytest
 from matplotlib import pyplot as plt
@@ -295,7 +297,7 @@ class TestJohner:
     def setup_class(cls):
         cls.f, cls.ax = plt.subplots(4, 2)
 
-    @pytest.mark.parametrize("kwargs", johner_params)
+    @pytest.mark.parametrize("kwargs", deepcopy(johner_params))
     def test_johner(self, kwargs):
         ax0, ax1 = kwargs.pop("ax")
         label = kwargs.pop("label")
@@ -330,8 +332,8 @@ class TestJohnerCAD:
 
         assert np.isclose(wire_pos.length, wire_neg.length)
 
-    @pytest.mark.parametrize("kwargs", johner_params)
-    def test_cad(self, kwargs):
+    @pytest.mark.parametrize("kwargs", deepcopy(johner_params))
+    def test_cad_closed(self, kwargs):
         kwargs.pop("ax")
         kwargs.pop("label")
         var_dict = {k: {"value": v} for k, v in kwargs.items()}
@@ -361,6 +363,24 @@ class TestKuiroukidisCAD:
         wire_neg = p_neg.create_shape()
 
         assert np.isclose(wire_pos.length, wire_neg.length)
+
+    @pytest.mark.parametrize(
+        ("r_0", "a", "kappa_u", "kappa_l", "delta_u", "delta_l", "ax"),
+        TestKuiroukidis.fixture,
+    )
+    def test_cad_closed(
+        self, r_0, a, kappa_u, kappa_l, delta_u, delta_l, ax  # noqa: ARG002
+    ):
+        kwargs = dict(
+            zip(
+                ("r_0", "a", "kappa_u", "kappa_l", "delta_u", "delta_l"),
+                (r_0, a, kappa_u, kappa_l, delta_u, delta_l),
+            )
+        )
+        var_dict = {k: {"value": v} for k, v in kwargs.items()}
+        param = KuiroukidisLCFS(var_dict=var_dict)
+        shape = param.create_shape()
+        assert shape.is_closed()
 
 
 class TestManickamCunninghamZakahrovCAD:
