@@ -317,7 +317,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                 "EQDSK coilset empty - dummy coilset in use."
                 "Please replace with an appropriate coilset."
             )
-            return cls(*coils, control_names=False)
+            return cls(*coils)
         for i in range(eqdsk.ncoil):
             dx = eqdsk.dxc[i]
             dz = eqdsk.dzc[i]

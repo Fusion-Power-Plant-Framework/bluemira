@@ -378,7 +378,7 @@ class TestEquilibrium:
         testfile = Path(get_bluemira_path("eqdsk", subfolder="data"), "jetto.eqdsk_out")
         e = EQDSKInterface.from_file(testfile)
         coil = grouping.from_group_vecs(e)
-        assert isinstance(coil, grouping)
+        assert isinstance(coil, grouping), "Check classmethod is making the right class"
         assert coil.current.any() == 0
         assert coil.j_max.any() == 0
         assert coil.b_max.any() == 0
