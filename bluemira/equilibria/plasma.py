@@ -120,7 +120,6 @@ class PlasmaCoil:
         Map a Green's function across the grid at a point, without crashing or
         running out of memory.
         """
-        print()
         if self._j_tor is None:
             raise EquilibriaError(
                 "Cannot calculate value off grid; there is no known toroidal current"
