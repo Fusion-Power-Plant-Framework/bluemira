@@ -140,8 +140,9 @@ class CoilsetOptimisationProblem(abc.ABC):
         Number of substates (blocks) in the state vector.
         """
         substates = 3
-        x, z = coilset.position
-        currents = coilset.current / current_scale
+        cc = coilset.get_control_coils()
+        x, z = cc.position
+        currents = cc.current / current_scale
 
         coilset_state = np.concatenate((x, z, currents))
         return coilset_state, substates
@@ -167,9 +168,10 @@ class CoilsetOptimisationProblem(abc.ABC):
         """
         x, z, currents = np.array_split(coilset_state, 3)
 
-        coilset.x = x
-        coilset.z = z
-        coilset.current = currents * current_scale
+        cc = coilset.get_control_coils()
+        cc.x = x
+        cc.z = z
+        cc.current = currents * current_scale
 
     @staticmethod
     def get_state_bounds(
