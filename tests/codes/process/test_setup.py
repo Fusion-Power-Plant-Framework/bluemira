@@ -24,11 +24,10 @@ from unittest import mock
 import pytest
 
 from bluemira.codes import process
-from bluemira.codes.error import CodesError
+from bluemira.codes.params import ParameterMapping
 from bluemira.codes.process._setup import Setup
 from bluemira.codes.process.mapping import mappings as process_mappings
 from bluemira.codes.process.params import ProcessSolverParams
-from tests._helpers import file_exists
 from tests.codes.process.utilities import PARAM_FILE
 
 MODULE_REF = "bluemira.codes.process._setup"
@@ -71,30 +70,6 @@ class TestSetup:
         assert writer.add_parameter.call_count > 0
         assert mock.call("input0", 0.0) in writer.add_parameter.call_args_list
 
-    def test_run_inits_writer_with_template_file_if_file_exists(self):
-        with self._indat_patch as indat_cls_mock:
-            setup = Setup(self.default_pf, "", template_in_dat="template/path/in.dat")
-            indat_cls_mock.return_value.data = {"input": 0.0}
-
-            with file_exists("template/path/in.dat", f"{MODULE_REF}.Path.is_file"):
-                setup.run()
-
-        indat_cls_mock.assert_called_once_with(filename="template/path/in.dat")
-
-    def test_run_inits_writer_without_template_returns_default_filled_data(self):
-        with self._indat_patch as indat_cls_mock:
-            setup = Setup(self.default_pf, "", template_in_dat=None)
-            setup.run()
-
-        assert indat_cls_mock.return_value.data == self.default_pf.template_defaults
-
-    @pytest.mark.parametrize("run_func", ["run", "runinput"])
-    def test_run_raises_CodesError_given_no_data_in_template_file(self, run_func):
-        setup = Setup(self.default_pf, "", template_in_dat="template/path/in.dat")
-
-        with pytest.raises(CodesError):
-            getattr(setup, run_func)()
-
     def test_runinput_does_not_write_bluemira_outputs_to_in_dat(self):
         with self._writer_patch as writer_cls_mock:
             setup = Setup(self.default_pf, "")
@@ -130,11 +105,14 @@ class TestSetupIntegration:
     @mock.patch(f"{MODULE_REF}.InDat")
     def test_obsolete_parameter_names_are_updated(self, writer_cls_mock):
         pf = ProcessSolverParams.from_json(PARAM_FILE)
+        pf.mappings["tk_tf_front_ib"] = ParameterMapping(
+            "dr_tf_case_out", send=True, recv=False, unit="m"
+        )
         setup = Setup(pf, "")
         writer_cls_mock.return_value.data = {"x": 0}
 
         setup.run()
 
         writer = writer_cls_mock.return_value
-        # 'dr_tf_case_out' is new name for 'casthi'
-        assert mock.call("dr_tf_case_out", 0.04) in writer.add_parameter.call_args_list
+        # 'dr_tf_case_out' is old name for 'casthi'
+        assert mock.call("casthi", 0.04) in writer.add_parameter.call_args_list

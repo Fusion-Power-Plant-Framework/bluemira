@@ -232,7 +232,7 @@ class _MFileWrapper:
         except KeyError:
             # PROCESS updated their parameter names in v2.4.0, splitting
             # 'thshield' into 'thshield_ib', 'thshield_ob', and 'thshield_vb'
-            shield_th = data["thshield_ib"] + data["thshield_ib"]
+            shield_th = data["thshield_ib"]
 
         try:
             rtfin = data["bore"] + data["ohcth"] + data["precomp"] + data["gapoh"]

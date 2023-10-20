@@ -24,7 +24,7 @@
     "long_name": "Peak field inside the TF coil winding pack"
   },
   "C_Ejima": {
-    "value": 0.4,
+    "value": 0.3,
     "unit": "dimensionless",
     "source": "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))",
     "long_name": "Ejima constant"
@@ -84,7 +84,7 @@
     "long_name": "D-T fusion power"
   },
   "P_hcd_ss": {
-    "value": 50,
+    "value": 51,
     "unit": "megawatt",
     "source": "Input",
     "long_name": "Steady-state HCD power"
@@ -517,19 +517,19 @@
     "long_name": "Minimum breeding blanket angle"
   },
   "tk_bb_ib": {
-    "value": 0.8,
+    "value": 0.755,
     "unit": "meter",
     "source": "Input",
     "long_name": "Inboard blanket thickness"
   },
   "tk_bb_ob": {
-    "value": 1.1,
+    "value": 0.982,
     "unit": "meter",
     "source": "Input",
     "long_name": "Outboard blanket thickness"
   },
   "tk_cr_vv": {
-    "value": 0.3,
+    "value": 0.15,
     "unit": "meter",
     "source": "Input",
     "long_name": "Cryostat VV thickness"
@@ -625,28 +625,28 @@
     "long_name": "ITER-like TF gravity support base plate depth"
   },
   "tk_sh_bot": {
-    "value": 1e-6,
+    "value": 0.3,
     "unit": "meter",
     "source": "Input",
     "long_name": "Lower shield thickness",
     "description": "DO NOT USE - PROCESS has VV = VV + shield"
   },
   "tk_sh_in": {
-    "value": 1e-6,
+    "value": 0.3,
     "unit": "meter",
     "source": "Input",
     "long_name": "Inboard shield thickness",
     "description": "DO NOT USE - PROCESS has VV = VV + shield"
   },
   "tk_sh_out": {
-    "value": 1e-6,
+    "value": 0.8,
     "unit": "meter",
     "source": "Input",
     "long_name": "Outboard shield thickness",
     "description": "DO NOT USE - PROCESS has VV = VV + shield"
   },
   "tk_sh_top": {
-    "value": 1e-6,
+    "value": 0.3,
     "unit": "meter",
     "source": "Input",
     "long_name": "Upper shield thickness",
@@ -665,7 +665,7 @@
     "long_name": "Outboard SOL thickness"
   },
   "tk_tf_front_ib": {
-    "value": 0.04,
+    "value": 0.06,
     "unit": "meter",
     "source": "Input",
     "long_name": "TF coil inboard steel front plasma-facing"
@@ -702,7 +702,7 @@
     "long_name": "TF coil outboard thickness"
   },
   "tk_tf_side": {
-    "value": 0.1,
+    "value": 0.05,
     "unit": "meter",
     "source": "Input",
     "long_name": "TF coil inboard case minimum side wall thickness"
@@ -714,25 +714,25 @@
     "long_name": "TS thickness"
   },
   "tk_vv_bot": {
-    "value": 0.6,
+    "value": 0.3,
     "unit": "meter",
     "source": "Input",
     "long_name": "Lower vacuum vessel thickness"
   },
   "tk_vv_in": {
-    "value": 0.6,
+    "value": 0.3,
     "unit": "meter",
     "source": "Input",
     "long_name": "Inboard vacuum vessel thickness"
   },
   "tk_vv_out": {
-    "value": 1.1,
+    "value": 0.3,
     "unit": "meter",
     "source": "Input",
     "long_name": "Outboard vacuum vessel thickness"
   },
   "tk_vv_top": {
-    "value": 0.6,
+    "value": 0.3,
     "unit": "meter",
     "source": "Input",
     "long_name": "Upper vacuum vessel thickness"

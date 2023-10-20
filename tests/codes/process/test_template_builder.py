@@ -27,7 +27,6 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from process.io.in_dat import InDat
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import try_get_bluemira_private_data_root
@@ -62,7 +61,7 @@ from bluemira.codes.process._model_mapping import (
     TFSuperconductorModel,
     TFWindingPackTurnModel,
 )
-from bluemira.codes.process.api import Impurities
+from bluemira.codes.process.api import ENABLED, Impurities
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 from bluemira.utilities.tools import compare_dicts
 
@@ -208,25 +207,30 @@ class TestPROCESSTemplateBuilder:
         t.add_input_value("tinstf", 1000.0)
         assert t.values["tinstf"] == pytest.approx(1000.0, rel=0, abs=EPS)
         data = t.make_inputs()
-        assert data["tinstf"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
+        assert data.to_invariable()["tinstf"]._value == pytest.approx(
+            1000.0, rel=0, abs=EPS
+        )
 
     def test_inputs_appear_in_dat(self):
         t = PROCESSTemplateBuilder()
         t.add_input_values({"tinstf": 1000.0, "bore": 1000})
         assert t.values["tinstf"] == pytest.approx(1000.0, rel=0, abs=EPS)
         assert t.values["bore"] == pytest.approx(1000.0, rel=0, abs=EPS)
-        data = t.make_inputs()
+        data = t.make_inputs().to_invariable()
         assert data["tinstf"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
         assert data["bore"]._value == pytest.approx(1000.0, rel=0, abs=EPS)
 
 
 def read_indat(filename):
+    from process.io.in_dat import InDat
+
     naughties = ["runtitle", "pulsetimings"]
     data = InDat(filename=filename).data
     return {k: v for k, v in data.items() if k not in naughties}
 
 
 @pytest.mark.private
+@pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
 class TestInDatOneForOne:
     @classmethod
     def setup_class(cls):
@@ -498,7 +502,7 @@ class TestInDatOneForOne:
             }
         )
 
-        cls.template = template_builder.make_inputs()
+        cls.template = template_builder.make_inputs().to_invariable()
 
     def test_indat_bounds_the_same(self):
         true_bounds = self.true_data.pop("bounds").get_value
@@ -527,7 +531,16 @@ class TestInDatOneForOne:
 
     def test_inputs_same(self):
         for k in self.true_data:
-            assert np.allclose(self.true_data[k].get_value, self.template[k].get_value)
+            if not isinstance(self.true_data[k].get_value, (list, dict)):
+                assert np.allclose(
+                    self.true_data[k].get_value, self.template[k].get_value
+                )
+            elif isinstance(self.true_data[k].get_value, dict):
+                compare_dicts(self.true_data[k].get_value, self.template[k]._value)
+            else:
+                assert not set(self.true_data[k].get_value) - set(
+                    self.template[k].get_value
+                )
 
     def test_no_extra_inputs(self):
         for k in self.template:

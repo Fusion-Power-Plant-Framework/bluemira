@@ -36,7 +36,6 @@ if TYPE_CHECKING:
         PROCESSModel,
         PROCESSOptimisationAlgorithm,
     )
-    from bluemira.codes.process.api import _INVariable
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process._equation_variable_mapping import (
@@ -169,7 +168,8 @@ class PROCESSTemplateBuilder:
 
         if itvar in self.ixc:
             bluemira_warn(
-                f"Iteration variable '{name}' is already in the variable list. Updating value and bounds."
+                f"Iteration variable '{name}' is already in the variable list."
+                " Updating value and bounds."
             )
             self.adjust_variable(name, value, lower_bound, upper_bound)
 
@@ -270,7 +270,8 @@ class PROCESSTemplateBuilder:
             model_name = f"{model.__class__.__name__}.{model.name}"
             inputs = ", ".join([f"'{inp}'" for inp in missing_inputs])
             bluemira_warn(
-                f"{model_name} requires inputs {inputs} which have not been specified. Default values will be used."
+                f"{model_name} requires inputs {inputs} which have not been specified."
+                " Default values will be used."
             )
 
     def _check_missing_iteration_variables(self, constraint: ConstraintSelection):
@@ -286,16 +287,18 @@ class PROCESSTemplateBuilder:
             con_name = f"{constraint.__class__.__name__}.{constraint.name}"
             inputs = ", ".join([f"'{inp}'" for inp in missing_itv])
             bluemira_warn(
-                f"{con_name} requires iteration variable {inputs} which have not been specified. Default values will be used."
+                f"{con_name} requires iteration variable {inputs} "
+                "which have not been specified. Default values will be used."
             )
 
-    def make_inputs(self) -> Dict[str, _INVariable]:
+    def make_inputs(self) -> ProcessInputs:
         """
         Make the ProcessInputs InVariable for the specified template
         """
         if self.ioptimiz != 0 and self.minmax == 0:
             bluemira_warn(
-                "You are running in optimisation mode, but have not set an objective function."
+                "You are running in optimisation mode,"
+                " but have not set an objective function."
             )
 
         self._check_constraint_inputs()
@@ -315,4 +318,4 @@ class PROCESSTemplateBuilder:
             **self.values,
             **models,
             **self.variables,
-        ).to_invariable()
+        )

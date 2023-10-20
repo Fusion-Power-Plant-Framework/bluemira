@@ -702,7 +702,8 @@ class TFCoilJointsModel(PROCESSModel):
     SC_CLAMP_RES_SLIDE = (
         -1,
         (),
-        "Chooses clamped joints for SC magnets (i_tf_sup=1) and sliding joints for resistive magnets (i_tf_sup=0,2)",
+        "Chooses clamped joints for SC magnets (i_tf_sup=1)"
+        " and sliding joints for resistive magnets (i_tf_sup=0,2)",
     )
     NO_JOINTS = 0
     SLIDING_JOINTS = 1, (

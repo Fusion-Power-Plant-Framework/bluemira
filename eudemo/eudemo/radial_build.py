@@ -317,8 +317,6 @@ template_builder.add_input_values(
     }
 )
 
-template = template_builder.make_inputs()
-
 
 def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     """
@@ -338,11 +336,15 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     run_mode = build_config.pop("run_mode", "mock")
     plot = build_config.pop("plot", False)
     if run_mode == "run":
-        build_config["template_in_dat"] = template
-    solver = systems_code_solver({}, build_config)
+        template_builder.set_run_title(
+            build_config.pop("PROCESS_runtitle", "Bluemira EUDEMO")
+        )
+        build_config["template_in_dat"] = template_builder.make_inputs()
+    solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
 
     if plot:
         plot_radial_build(solver.read_directory)
+
     params.update_from_frame(new_params)
     return params
