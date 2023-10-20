@@ -52,8 +52,6 @@ from bluemira.magnetostatics.baseclass import (
 )
 from bluemira.magnetostatics.tools import process_xyz_array
 
-__all__ = ["PolyhedralPrismCurrentSource"]
-
 ZERO_DIV_GUARD_EPS = 1e-14
 
 
@@ -652,7 +650,7 @@ def _surface_integral_bottura(face_normal, face_points, point):
 
     Notes
     -----
-    \t:math:`W_f(\\mathbf{r}) = \\sum_{j} \\y_{P}^{''}\\bigg[I_{1}(x_{Q2}^{''}-x_{P}^{''}, y_{P}^{''}, z_{P}^{''}) - I_{1}(x_{Q1}^{''}-x_{P}^{''}, y_{P}^{''}, z_{P}^{''})\\bigg]
+    \t:math:`W_f(\\mathbf{r}) = \\sum_{j} y_{P}^{''}\\bigg[I_{1}(x_{Q2}^{''}-x_{P}^{''}, y_{P}^{''}, z_{P}^{''}) - I_{1}(x_{Q1}^{''}-x_{P}^{''}, y_{P}^{''}, z_{P}^{''})\\bigg]`
     """  # noqa: W505 E501
     integral = 0.0
 
@@ -682,13 +680,27 @@ def _surface_integral_bottura(face_normal, face_points, point):
 @nb.jit(nopython=True, cache=True)
 def _line_integral_bottura(x: float, y: float, z: float) -> float:
     """
+    Line integral I_1(x, y, z)
+
+    Parameters
+    ----------
+    x:
+        x coordinate
+    y:
+        y coordinate
+    z:
+        z coordinate
+
+    Returns
+    -------
+    Value of the line integral I_1(x, y, z)
 
     Notes
     -----
-    \t:math:`\\int \\dfrac{1}{r+\\lvert z \\rvert}dx \\equiv I_{i}(x, y, z) = \textrm{ln}(x+r)+\\dfrac{\\lvert z \\rvert}{y}\\bigg(\\textrm{arctan}(\\dfrac{x\\lvert z \\rvert}{yr}) - \\textrm{arctan}(\\dfrac{x}{y})\\bigg)`
+    \t:math:`\\int \\dfrac{1}{r+\\lvert z \\rvert}dx \\equiv I_{1}(x, y, z) = \\textrm{ln}(x+r)+\\dfrac{\\lvert z \\rvert}{y}\\bigg(\\textrm{arctan}\\bigg(\\dfrac{x\\lvert z \\rvert}{yr}\\bigg) - \\textrm{arctan}\\bigg(\\dfrac{x}{y}\\bigg)\\bigg)`
 
     with:
-    \t:math:`r \\equiv \\sqrt(x^2+y^2+z^2)`
+    \t:math:`r \\equiv \\sqrt{x^2+y^2+z^2}`
     """  # noqa: W505 E501
     abs_z = abs(z)
     r = np.sqrt(x**2 + y**2 + z**2)
