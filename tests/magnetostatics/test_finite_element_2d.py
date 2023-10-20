@@ -11,7 +11,7 @@ import numpy as np
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry import tools
-from bluemira.geometry.face import BluemiraFace
+from bluemira.geometry.face import BluemiraFace, BluemiraWire
 from bluemira.magnetostatics.finite_element_2d import (
     Bz_coil_axis,
     FemMagnetostatic2d,
@@ -50,17 +50,22 @@ class TestGetNormal:
         coil = BluemiraFace(poly_coil)
         coil.mesh_options = {"lcar": lcar_coil, "physical_group": "coil"}
 
-        poly_enclo = tools.make_polygon(
+        poly_axis = tools.make_polygon([0, 0, 0], [0, 0, 0], [-r_enclo, 0, r_enclo])
+        poly_axis.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_axis"}
+
+        poly_ext = tools.make_polygon(
             [
                 [0, r_enclo, r_enclo, 0],
                 [0, 0, 0, 0],
-                [-r_enclo, -r_enclo, r_enclo, r_enclo],
+                [r_enclo, r_enclo, -r_enclo, -r_enclo],
             ],
-            closed=True,
-            label="poly_enclo",
+            label="poly_ext",
         )
+        poly_ext.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_ext"}
 
+        poly_enclo = BluemiraWire([poly_axis, poly_ext], "poly_enclo")
         poly_enclo.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_enclo"}
+
         enclosure = BluemiraFace([poly_enclo, poly_coil])
         enclosure.mesh_options = {"lcar": lcar_enclo, "physical_group": "enclo"}
 
