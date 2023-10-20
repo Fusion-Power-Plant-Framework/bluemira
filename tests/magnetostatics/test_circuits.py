@@ -19,11 +19,13 @@ from bluemira.geometry.parameterisations import PictureFrame, PrincetonD, Triple
 from bluemira.geometry.tools import make_circle
 from bluemira.magnetostatics.baseclass import SourceGroup
 from bluemira.magnetostatics.circuits import (
+    ArbitraryPlanarPolyhedralXSCircuit,
     ArbitraryPlanarRectangularXSCircuit,
     HelmholtzCage,
 )
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
+from tests.magnetostatics.tools import make_xs_from_bd
 
 
 def test_analyticalsolvergrouper():
@@ -215,6 +217,122 @@ class TestArbitraryPlanarXSCircuit:
         s1_rect = source_1._points[1][:4]
         s2_rect = source_2._points[0][:4]
         return np.allclose(s1_rect, s2_rect)
+
+
+class TestArbitraryPlanarPolyhedralCircuit:
+    pd_inputs: ClassVar = {"x1": {"value": 4}, "x2": {"value": 16}, "dz": {"value": 0}}
+
+    pf_inputs: ClassVar = {
+        "x1": {"value": 5},
+        "x2": {"value": 10},
+        "z1": {"value": 10},
+        "z2": {"value": -9},
+        "ri": {"value": 0.4},
+        "ro": {"value": 1},
+    }
+    ta_inputs: ClassVar = {
+        "x1": {"value": 4},
+        "dz": {"value": 0},
+        "sl": {"value": 6.5},
+        "f1": {"value": 3},
+        "f2": {"value": 4},
+        "a1": {"value": 20},
+        "a2": {"value": 40},
+    }
+
+    p_inputs = (pd_inputs, ta_inputs, pf_inputs)
+    clockwises = [False] * len(p_inputs) + [True] * len(p_inputs)
+    p_inputs = p_inputs * 2  # noqa: PIE794
+    parameterisations = tuple(
+        [
+            PrincetonD,
+            TripleArc,
+            PictureFrame,
+        ]
+        * 2
+    )
+
+    @pytest.mark.parametrize(
+        ("parameterisation", "inputs", "clockwise"),
+        zip(parameterisations, p_inputs, clockwises),
+    )
+    def test_circuits_are_continuous_and_chained(
+        self, parameterisation, inputs, clockwise
+    ):
+        shape = parameterisation(inputs).create_shape()
+        coords = shape.discretize(ndiscr=50, byedges=True)
+        coords.set_ccw((0, -1, 0))
+        if clockwise:
+            coords.set_ccw((0, 1, 0))
+        circuit = ArbitraryPlanarPolyhedralXSCircuit(
+            coords,
+            make_xs_from_bd(0.25, 0.5),
+            1.0,
+        )
+        open_circuit = ArbitraryPlanarPolyhedralXSCircuit(
+            coords[:, :25].T, make_xs_from_bd(0.25, 0.5), 1.0
+        )
+        n_chain = int(self._calc_daisychain(circuit))
+        n_sources = len(circuit.sources) - 1
+        assert n_chain == n_sources
+        assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
+        assert self._calc_daisychain(open_circuit) == len(open_circuit.sources) - 1
+
+    @pytest.mark.parametrize("clockwise", [False, True])
+    def test_a_circuit_from_a_clockwise_circle_is_continuous(self, clockwise):
+        shape = make_circle(5, (0, 9, 0), axis=(0, 0, 1))
+        coords = shape.discretize(ndiscr=30, byedges=True)
+        if clockwise:
+            coords.set_ccw((0, 0, 1))
+        else:
+            coords.set_ccw((0, 0, -1))
+        circuit = ArbitraryPlanarPolyhedralXSCircuit(
+            coords,
+            make_xs_from_bd(0.25, 0.5),
+            1.0,
+        )
+        assert self._calc_daisychain(circuit) == len(circuit.sources) - 1
+        assert self._check_continuity(circuit.sources[-1], circuit.sources[0])
+
+    def _calc_daisychain(self, circuit):
+        chain = []
+        for i, source_1 in enumerate(circuit.sources[:-1]):
+            source_2 = circuit.sources[i + 1]
+            daisy = self._check_continuity(source_1, source_2)
+            chain.append(daisy)
+        return sum(chain)
+
+    @staticmethod
+    def _check_continuity(source_1, source_2):
+        s1_rect = source_1._points[1][:4]
+        s2_rect = source_2._points[0][:4]
+        return np.allclose(s1_rect, s2_rect)
+
+
+class TestPolyhedralCircuitPlotting:
+    @classmethod
+    def setup_class(cls):
+        shape = PrincetonD().create_shape()
+        xs = Coordinates({"x": [-1, -1, 1], "z": [-1, 1, 0]})
+        xs.translate(xs.center_of_mass)
+
+        cls.circuit = ArbitraryPlanarPolyhedralXSCircuit(
+            shape.discretize(ndiscr=15), xs, current=1e6
+        )
+
+    def test_field_plot(self):
+        x = np.linspace(2, 8, 50)
+        z = np.linspace(-12, 12, 50)
+        xx, zz = np.meshgrid(x, z)
+        yy = np.zeros_like(xx)
+        self.circuit.plot()
+        ax = plt.gca()
+        Bx, By, Bz = self.circuit.field(xx, yy, zz)
+        B = np.sqrt(Bx**2 + By**2 + Bz**2)
+        cm = ax.contourf(xx, B, zz, zdir="y", offset=0)
+        cb = plt.gcf().colorbar(cm, shrink=0.46)
+        cb.set_label("$B$ [T]")
+        plt.show()
 
 
 class TestCariddiBenchmark:
