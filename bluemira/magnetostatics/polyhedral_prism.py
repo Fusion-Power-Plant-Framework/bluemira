@@ -681,9 +681,18 @@ def _surface_integral_bottura(face_normal, face_points, point):
 
 @nb.jit(nopython=True, cache=True)
 def _line_integral_bottura(x: float, y: float, z: float) -> float:
+    """
+
+    Notes
+    -----
+    \t:math:`\\int \\dfrac{1}{r+\\lvert z \\rvert}dx \\equiv I_{i}(x, y, z) = \textrm{ln}(x+r)+\\dfrac{\\lvert z \\rvert}{y}\\bigg(\\textrm{arctan}(\\dfrac{x\\lvert z \\rvert}{yr}) - \\textrm{arctan}(\\dfrac{x}{y})\\bigg)`
+
+    with:
+    \t:math:`r \\equiv \\sqrt(x^2+y^2+z^2)`
+    """  # noqa: W505 E501
     abs_z = abs(z)
     r = np.sqrt(x**2 + y**2 + z**2)
-    if y == 0:
+    if y == 0 or r == 0:
         # This may not be the right solution
         return np.log(x + r)
     a1 = np.arctan2(x * abs_z, (y * r))
