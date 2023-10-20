@@ -33,16 +33,7 @@ from bluemira.magnetostatics.polyhedral_prism import (
     PolyhedralPrismCurrentSource,
 )
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
-
-
-def make_xs_from_bd(b, d):
-    return Coordinates(
-        {
-            "x": [-b, b, b, -b],
-            "y": 0,
-            "z": [-d, -d, d, d],
-        }
-    )
+from tests.magnetostatics.tools import make_xs_from_bd
 
 
 def plane_setup(plane):
