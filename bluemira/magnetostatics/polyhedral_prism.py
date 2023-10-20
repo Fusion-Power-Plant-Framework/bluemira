@@ -515,7 +515,7 @@ class BotturaPolyhedralPrismCurrentSource(PolyhedralPrismCurrentSource):
         point = np.array([x, y, z])
         J = self._rho * self._dcm[1]
 
-        return -MU_0_4PI * np.cross(
+        return MU_0_4PI * np.cross(
             J,
             _field_new(
                 self._face_normals, self._face_points, point, self._origin, test=False
@@ -541,7 +541,7 @@ def _vector_potential(
             zpp_axis = face_normals[i]
             xpp_axis = face_corners[i][j + 1] - face_corners[i][j]
             x_side_len = np.linalg.norm(xpp_axis)
-            ypp_axis = -np.cross(zpp_axis, xpp_axis / x_side_len)
+            ypp_axis = np.cross(zpp_axis, xpp_axis / x_side_len)
             dcm = np.zeros((3, 3))
             dcm[0, :] = xpp_axis
             dcm[1, :] = ypp_axis
@@ -575,11 +575,12 @@ def _vector_potential(
     return A
 
 
-@nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def _line_integral(x: float, y: float, z: float) -> float:
     abs_z = abs(z)
     r = np.sqrt(x**2 + y**2 + z**2)
     if y == 0:
+        # This may not be the right solution
         return np.log(x + r)
     a1 = np.arctan2(x * abs_z, (y * r))
     a2 = np.arctan2(x, y)
@@ -591,7 +592,6 @@ def _field_new(face_normals, face_points, point, source_origin, test=False):
 
     for i, face_normal in enumerate(face_normals):  # Faces of the prism
         s = 0.0
-        zpp = np.dot(face_normal, point)
 
         for j in range(4):  # Lines of the face
             corner_1, corner_2 = face_points[i][j], face_points[i][j + 1]
