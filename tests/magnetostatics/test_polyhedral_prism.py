@@ -25,8 +25,28 @@ import pytest
 
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.geometry.tools import Coordinates
-from bluemira.magnetostatics.polyhedral_prism import PolyhedralPrismCurrentSource
+from bluemira.magnetostatics.polyhedral_prism import (
+    BotturaPolyhedralPrismCurrentSource,
+    PolyhedralPrismCurrentSource,
+)
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
+
+
+class TestMe:
+    def test_bottura_coords(self):
+        source = BotturaPolyhedralPrismCurrentSource(
+            [10, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            make_xs_from_bd(0.5, 0.5),
+            20,
+            40,
+            current=1,
+        )
+        source.plot()
+        source.field(10, 1, 1)
+        plt.show()
 
 
 def make_xs_from_bd(b, d):
@@ -72,6 +92,16 @@ class TestPolyhedralMaths:
             40,
             current=1,
         ),
+        BotturaPolyhedralPrismCurrentSource(
+            [10, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            make_xs_from_bd(0.5, 0.5),
+            40,
+            40,
+            current=1,
+        ),
     )
 
     diff_angle = (
@@ -88,12 +118,25 @@ class TestPolyhedralMaths:
             40,
             current=1,
         ),
+        BotturaPolyhedralPrismCurrentSource(
+            [10, 0, 0],
+            [1, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            make_xs_from_bd(0.5, 0.5),
+            20,
+            40,
+            current=1,
+        ),
     )
     test_cases = (same_angle, diff_angle)
 
-    @pytest.mark.parametrize(("trap", "poly"), test_cases)
+    @pytest.mark.parametrize(("trap", "poly", "poly2"), test_cases)
     def test_geometry(
-        self, trap: TrapezoidalPrismCurrentSource, poly: PolyhedralPrismCurrentSource
+        self,
+        trap: TrapezoidalPrismCurrentSource,
+        poly: PolyhedralPrismCurrentSource,
+        poly2: BotturaPolyhedralPrismCurrentSource,
     ):
         poly.plot()
         ax = plt.gca()
@@ -112,12 +155,15 @@ class TestPolyhedralMaths:
         for i in range(len(trap._points)):
             np.testing.assert_allclose(trap._points[i], poly._points[i])
 
-    @pytest.mark.parametrize(("trap", "poly"), test_cases)
+    @pytest.mark.parametrize(("trap", "poly", "poly2"), test_cases)
     def test_xz_field(
-        self, trap: TrapezoidalPrismCurrentSource, poly: PolyhedralPrismCurrentSource
+        self,
+        trap: TrapezoidalPrismCurrentSource,
+        poly: PolyhedralPrismCurrentSource,
+        poly2: BotturaPolyhedralPrismCurrentSource,
     ):
         f = plt.figure()
-        ax = f.add_subplot(1, 2, 1, projection="3d")
+        ax = f.add_subplot(1, 3, 1, projection="3d")
         ax.set_title("TrapezoidalPrism")
         n = 50
         x = np.linspace(8, 12, n)
@@ -131,20 +177,30 @@ class TestPolyhedralMaths:
         cm = ax.contourf(xx, B, zz, zdir="y", offset=0)
         f.colorbar(cm)
 
-        ax = f.add_subplot(1, 2, 2, projection="3d")
+        ax = f.add_subplot(1, 3, 2, projection="3d")
         ax.set_title("PolyhedralPrism")
         poly.plot(ax)
-
         Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
+        cm = ax.contourf(xx, B_new, zz, zdir="y", offset=0)
+        f.colorbar(cm)
+
+        ax = f.add_subplot(1, 3, 3, projection="3d")
+        ax.set_title("BotturaPolyhedralPrism")
+        poly2.plot(ax)
+        Bx, By, Bz = poly2.field(xx, yy, zz)
+        B_new2 = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(xx, B_new, zz, zdir="y", offset=0)
         f.colorbar(cm)
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
-    @pytest.mark.parametrize(("trap", "poly"), test_cases)
+    @pytest.mark.parametrize(("trap", "poly", "poly2"), test_cases)
     def test_xy_field(
-        self, trap: TrapezoidalPrismCurrentSource, poly: PolyhedralPrismCurrentSource
+        self,
+        trap: TrapezoidalPrismCurrentSource,
+        poly: PolyhedralPrismCurrentSource,
+        poly2: BotturaPolyhedralPrismCurrentSource,
     ):
         n = 50
         x = np.linspace(8, 12, n)
@@ -153,7 +209,7 @@ class TestPolyhedralMaths:
         zz = np.zeros_like(xx)
 
         f = plt.figure()
-        ax = f.add_subplot(1, 2, 1, projection="3d")
+        ax = f.add_subplot(1, 3, 1, projection="3d")
         ax.set_title("TrapezoidalPrism")
         trap.plot(ax)
 
@@ -162,19 +218,30 @@ class TestPolyhedralMaths:
         cm = ax.contourf(xx, yy, B, zdir="z", offset=0)
         f.colorbar(cm)
 
-        ax = f.add_subplot(1, 2, 2, projection="3d")
+        ax = f.add_subplot(1, 3, 2, projection="3d")
         ax.set_title("PolyhedralPrism")
         poly.plot(ax)
         Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(xx, yy, B_new, zdir="z", offset=0)
         f.colorbar(cm)
+
+        ax = f.add_subplot(1, 3, 3, projection="3d")
+        ax.set_title("BotturaPolyhedralPrism")
+        poly2.plot(ax)
+        Bx, By, Bz = poly2.field(xx, yy, zz)
+        B_new2 = np.sqrt(Bx**2 + By**2 + Bz**2)
+        cm = ax.contourf(xx, yy, B_new, zdir="z", offset=0)
+        f.colorbar(cm)
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
-    @pytest.mark.parametrize(("trap", "poly"), test_cases)
+    @pytest.mark.parametrize(("trap", "poly", "poly2"), test_cases)
     def test_yz_field(
-        self, trap: TrapezoidalPrismCurrentSource, poly: PolyhedralPrismCurrentSource
+        self,
+        trap: TrapezoidalPrismCurrentSource,
+        poly: PolyhedralPrismCurrentSource,
+        poly2: BotturaPolyhedralPrismCurrentSource,
     ):
         n = 50
         y = np.linspace(-2, 2, n)
@@ -183,7 +250,7 @@ class TestPolyhedralMaths:
         xx = 10 * np.ones_like(yy)
 
         f = plt.figure()
-        ax = f.add_subplot(1, 2, 1, projection="3d")
+        ax = f.add_subplot(1, 3, 1, projection="3d")
         ax.set_title("TrapezoidalPrism")
         trap.plot(ax)
         Bx, By, Bz = trap.field(xx, yy, zz)
@@ -191,11 +258,19 @@ class TestPolyhedralMaths:
         cm = ax.contourf(B, yy, zz, zdir="x", offset=10)
         f.colorbar(cm)
 
-        ax = f.add_subplot(1, 2, 2, projection="3d")
+        ax = f.add_subplot(1, 3, 2, projection="3d")
         ax.set_title("PolyhedralPrism")
         poly.plot(ax)
         Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
+        cm = ax.contourf(B_new, yy, zz, zdir="x", offset=10)
+        f.colorbar(cm)
+
+        ax = f.add_subplot(1, 3, 3, projection="3d")
+        ax.set_title("BotturaPolyhedralPrism")
+        poly2.plot(ax)
+        Bx, By, Bz = poly2.field(xx, yy, zz)
+        B_new2 = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(B_new, yy, zz, zdir="x", offset=10)
         f.colorbar(cm)
         plt.show()
