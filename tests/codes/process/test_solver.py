@@ -137,11 +137,11 @@ class TestSolverIntegration:
 
         # Expected values come from derivation (I added the numbers up by hand)
         assert solver.params.r_tf_in.value == pytest.approx(1.89236)
-        assert solver.params.r_ts_ib_in.value == pytest.approx(3.52836)
-        assert solver.params.r_vv_ib_in.value == pytest.approx(4.14836)
-        assert solver.params.r_fw_ib_in.value == pytest.approx(4.94136)
-        assert solver.params.r_fw_ob_in.value == pytest.approx(12.72696)
-        assert solver.params.r_vv_ob_in.value == pytest.approx(13.74696)
+        assert solver.params.r_ts_ib_in.value == pytest.approx(3.47836)
+        assert solver.params.r_vv_ib_in.value == pytest.approx(4.09836)
+        assert solver.params.r_fw_ib_in.value == pytest.approx(4.89136)
+        assert solver.params.r_fw_ob_in.value == pytest.approx(12.67696)
+        assert solver.params.r_vv_ob_in.value == pytest.approx(13.69696)
 
     @pytest.mark.longrun
     def test_runinput_mode_does_not_edit_template(self, tmp_path):
