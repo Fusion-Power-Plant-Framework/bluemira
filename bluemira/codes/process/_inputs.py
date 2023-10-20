@@ -735,9 +735,10 @@ class ProcessInputs:
             "Constraint Equation",
             "Constraint Equations",
         )
+        # PROCESS iteration variables need to be sorted to converge well(!)
         out_dict["ixc"] = _INVariable(
             "ixc",
-            [] if self.ixc is None else self.ixc,
+            [] if self.ixc is None else sorted(self.ixc),
             "Iteration Variable",
             "Iteration Variable",
             "Iteration Variables",
