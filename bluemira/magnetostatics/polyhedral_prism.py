@@ -34,7 +34,7 @@ https://thesis.unipd.it/retrieve/d0269be2-2e5d-4068-af58-4374193d38a1/Passarotto
 
 from copy import deepcopy
 from typing import Union
-
+import abc
 import numba as nb
 import numpy as np
 
@@ -49,6 +49,33 @@ from bluemira.magnetostatics.tools import process_xyz_array
 __all__ = ["PolyhedralPrismCurrentSource"]
 
 ZERO_DIV_GUARD_EPS = 1e-14
+
+class PolyhedralKernel(abc.ABC):
+    """
+    Baseclass for the polyhedral prism magnetostatics kernel
+    """
+    @abc.abstractmethod
+    def field(*args) -> np.ndarray:
+        pass
+
+    @abc.abstractmethod
+    def vector_potential(*args) -> np.ndarray:
+        pass
+
+class Fabbri(PolyhedralKernel):
+    def field(*args) -> np.ndarray:
+        return field_fabbri(*args)
+    
+    def vector_potential(*args) -> np.ndarray:
+        return vector_potential_fabbri(*args)
+
+
+class Bottura(PolyhedralKernel):
+    def field(*args) -> np.ndarray:
+        return _field_bottura(*args)
+
+    def vector_potential(*args) -> np.ndarray:
+        return _vector_potential_bottura(*args)
 
 
 @nb.jit(nopython=True, cache=True)
@@ -140,7 +167,7 @@ def omega_t(
 
 
 @nb.jit(nopython=True, cache=True)
-def edge_integral(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
+def edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
     """
     Evaluate the edge integral w_e(r) of the W function at a point
 
@@ -177,7 +204,7 @@ def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
 
 
 @nb.jit(nopython=True, cache=True)
-def surface_integral(
+def surface_integral_fabbri(
     face_points: np.ndarray,
     face_normal: np.ndarray,
     mid_point: np.ndarray,
@@ -215,7 +242,7 @@ def surface_integral(
         u_e /= np.linalg.norm(u_e)
         integral += np.dot(
             np.cross(face_normal, p0 - point),  # r_e is an arbitrary point
-            u_e * edge_integral(point, p0, p1),
+            u_e * edge_integral_fabbri(point, p0, p1),
         )
         # Calculate omega_f as the sum of subtended angles with a triangle
         # for each edge
@@ -224,7 +251,7 @@ def surface_integral(
 
 
 @nb.jit(nopython=True, cache=True)
-def vector_potential(
+def vector_potential_fabbri(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
@@ -256,13 +283,13 @@ def vector_potential(
     for i, normal in enumerate(face_normals):
         integral += np.dot(
             mid_points[i] - point,
-            normal * surface_integral(face_points[i], normal, point),
+            normal * surface_integral_fabbri(face_points[i], normal, point),
         )
     return MU_0 / (8 * np.pi) * np.dot(current_direction, integral)
 
 
 # @nb.jit(nopython=True, cache=True)
-def field(
+def field_fabbri(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
@@ -292,7 +319,7 @@ def field(
     """
     field = np.zeros(3)
     for i, normal in enumerate(face_normals):
-        field += np.cross(current_direction, normal) * surface_integral(
+        field += np.cross(current_direction, normal) * surface_integral_fabbri(
             face_points[i], normal, mid_points[i], point
         )
     return MU_0_4PI * field
@@ -364,6 +391,19 @@ class PolyhedralPrismCurrentSource(
         self.set_current(current)
         self._points = self._calculate_points()
 
+        # Kernel (not intended to be user-facing)
+
+        self.__kernel = Fabbri()
+    
+    @property
+    def _kernel(self):
+        return self.__kernel
+    
+    @_kernel.setter
+    def _kernel(self, value: PolyhedralKernel):
+        self.__kernel = value
+
+
     def _set_cross_section(self, xs_coordinates: Coordinates):
         xs_coordinates = deepcopy(xs_coordinates)
         xs_coordinates.close()
@@ -395,7 +435,7 @@ class PolyhedralPrismCurrentSource(
         The magnetic field vector {Bx, By, Bz} in [T]
         """
         point = np.array([x, y, z])
-        return self._rho * field(
+        return self._rho * self.__kernel.field(
             self._dcm[1], self._face_points, self._face_normals, self._mid_points, point
         )
 
@@ -423,7 +463,7 @@ class PolyhedralPrismCurrentSource(
         The vector potential {Ax, Ay, Az} in [T]
         """
         point = np.array([x, y, z])
-        return self._rho * vector_potential(
+        return self._rho * self.__kernel.vector_potential(
             self._dcm[1], self._face_points, self._face_normals, self._mid_points, point
         )
 
@@ -476,107 +516,63 @@ class PolyhedralPrismCurrentSource(
         return np.array(points, dtype=object)
 
 
-class BotturaPolyhedralPrismCurrentSource(PolyhedralPrismCurrentSource):
-    """
-    Alternative VIM formulation without the Stokes trick
-    """
-
-    @process_xyz_array
-    def vector_potential(
-        self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
-    ) -> np.ndarray:
-        """
-        Calculate the vector potential at a point due to the current source.
-
-        Parameters
-        ----------
-        x:
-            The x coordinate(s) of the points at which to calculate the field
-        y:
-            The y coordinate(s) of the points at which to calculate the field
-        z:
-            The z coordinate(s) of the points at which to calculate the field
-
-        Returns
-        -------
-        The vector potential {Ax, Ay, Az} in [T]
-        https://supermagnet.sourceforge.io/notes/CRYO-02-028.pdf
-        https://supermagnet.sourceforge.io/notes/CRYO-97-003.pdf
-        """
-        point = np.array([x, y, z])
-        A = _vector_potential(self._face_normals, self._face_points, point)
-        return 0.5 * MU_0_4PI * self._rho * A * self._dcm[1]
-
-    @process_xyz_array
-    def field(self, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray:
-        point = np.array([x, y, z])
-        J = self._rho * self._dcm[1]
-
-        return MU_0_4PI * np.cross(
-            J,
-            _field_new(
-                self._face_normals, self._face_points, point, self._origin, test=False
-            ),
-        )
-
-
 # @nb.jit(nopython=True)
-def _vector_potential(
+def _vector_potential_bottura(
+    current_direction: np.ndarray,
+    face_points: np.ndarray,
     face_normals: np.ndarray,
-    face_corners: np.ndarray,
+    mid_points: np.ndarray,
     point: np.ndarray,
-):
+) -> np.ndarray:
     A = 0.0
 
-    for i in range(6):  # Faces of the prism
-        s = 0.0
-        zpp = np.dot(face_normals[i, :], point)
-        azpp = abs(zpp)
-        zpp2 = zpp**2
+    for i, face_normal in enumerate(face_normals):  # Faces of the prism
+        surface_integral = _surface_integral_bottura(face_normal, face_points[i], point)
+        zpp = np.dot(face_normal, mid_points[i] - point)
+        A += zpp * surface_integral
+    return 0.5 * MU_0_4PI * A * current_direction
 
-        for j in range(4):  # Lines of the face
-            zpp_axis = face_normals[i]
-            xpp_axis = face_corners[i][j + 1] - face_corners[i][j]
-            x_side_len = np.linalg.norm(xpp_axis)
-            ypp_axis = np.cross(zpp_axis, xpp_axis / x_side_len)
-            dcm = np.zeros((3, 3))
-            dcm[0, :] = xpp_axis
-            dcm[1, :] = ypp_axis
-            dcm[2, :] = zpp_axis
-            point_local = np.dot(dcm, point)
 
-            ypp = point_local[1]
+def _field_bottura(
+        current_direction: np.ndarray,
+        face_points: np.ndarray,
+        face_normals: np.ndarray,
+        mid_points: np.ndarray,
+        point: np.ndarray,
+    ) -> np.ndarray:
+    B = np.zeros(3)
 
-            # Lack of choice of centroid of reference frame, so pick an easy one
-            xpp1 = point_local[0]
-            xpp2 = point_local[0] + x_side_len
+    for i, face_normal in enumerate(face_normals):  # Faces of the prism
+        surface_integral = _surface_integral_bottura(face_normal, face_points[i], point)
+        B += face_normal * surface_integral
+    return -MU_0_4PI * np.cross(current_direction, B)
 
-            ypp2_zpp2 = ypp**2 + zpp2
-            r1 = np.sqrt(xpp1**2 + ypp2_zpp2)
-            r2 = np.sqrt(xpp2**2 + ypp2_zpp2)
 
-            s += ypp * (
-                azpp
-                / ypp
-                * (
-                    np.arctan(xpp2 * azpp / (ypp * r2))
-                    - np.arctan(xpp1 * azpp / (ypp * r1))
-                    + np.arctan(xpp1 / ypp)
-                    - np.arctan(xpp2 / ypp)
-                )
-                + np.log(xpp2 + r2)
-                - np.log(xpp1 + r1)
-            )
+def _surface_integral_bottura(face_normal, face_points, point):
+    integral = 0.0
 
-        A += zpp * s
-    return A
+    for j in range(len(face_points) - 1):  # Lines of the face
+        corner_1, corner_2 = face_points[j], face_points[j + 1]
+        xpp_axis = corner_2 - corner_1
+        xpp_axis /= np.linalg.norm(xpp_axis)
+        # Ensure y is pointing outwards
+        ypp_axis = -np.cross(face_normal, xpp_axis)
+        dcm = np.zeros((3, 3))
+        dcm[0, :] = xpp_axis
+        dcm[1, :] = ypp_axis
+        dcm[2, :] = face_normal
 
+        # NOTE: zpp should be constant for each surface, and ypp for each line, but i am lazy
+        xppq1, ypp, zpp = np.dot(dcm, corner_1 - point)
+        xppq2 = np.dot(dcm, corner_2 - point)[0]
+
+        integral += ypp * (
+            _line_integral_bottura(xppq2, ypp, zpp) - _line_integral_bottura(xppq1, ypp, zpp)
+        )
+    return integral
 
 @nb.jit(nopython=True, cache=True)
-def _line_integral(x: float, y: float, z: float) -> float:
+def _line_integral_bottura(x: float, y: float, z: float) -> float:
     abs_z = abs(z)
     r = np.sqrt(x**2 + y**2 + z**2)
     if y == 0:
@@ -586,31 +582,3 @@ def _line_integral(x: float, y: float, z: float) -> float:
     a2 = np.arctan2(x, y)
     return np.log(x + r) + (abs_z / y) * (a1 - a2)
 
-
-def _field_new(face_normals, face_points, point, source_origin, test=False):
-    B = np.zeros(3)
-
-    for i, face_normal in enumerate(face_normals):  # Faces of the prism
-        s = 0.0
-
-        for j in range(4):  # Lines of the face
-            corner_1, corner_2 = face_points[i][j], face_points[i][j + 1]
-            xpp_axis = corner_2 - corner_1
-            xpp_axis /= np.linalg.norm(xpp_axis)
-            # Ensure y is pointing outwards
-            ypp_axis = -np.cross(face_normal, xpp_axis)
-            dcm = np.zeros((3, 3))
-            dcm[0, :] = xpp_axis
-            dcm[1, :] = ypp_axis
-            dcm[2, :] = face_normal
-
-            # NOTE: zpp should be constant for each surface, and ypp for each line, but i am lazy
-            xppq1, ypp, zpp = np.dot(dcm, corner_1 - point)
-            xppq2 = np.dot(dcm, corner_2 - point)[0]
-
-            s += ypp * (
-                _line_integral(xppq2, ypp, zpp) - _line_integral(xppq1, ypp, zpp)
-            )
-
-        B += face_normal * s
-    return B
