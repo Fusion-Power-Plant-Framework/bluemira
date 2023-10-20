@@ -13,7 +13,6 @@ import dolfinx.fem
 import numpy as np
 from dolfinx.fem import (
     Expression,
-    Function,
     FunctionSpace,
     VectorFunctionSpace,
     dirichletbc,
@@ -33,6 +32,7 @@ from ufl import (
 )
 
 from bluemira.base.constants import MU_0
+from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
 
 
 def Bz_coil_axis(
@@ -87,13 +87,15 @@ class FemMagnetostatic2d:
 
     # TODO: check if the problem can be solved with any element type or if "eltype"
     #       should be hardcoded and removed from the signature.
-    def __init__(self, mesh: Mesh, cell_tags, face_tags, eltype: Tuple = ("CG", 1)):
+    def __init__(
+        self, mesh: Mesh, cell_tags=None, face_tags=None, eltype: Tuple = ("CG", 1)
+    ):
         self.mesh = mesh
         self.cell_tags = cell_tags
         self.face_tags = face_tags
         self._eltype = eltype
         self.V = FunctionSpace(self.mesh, self._eltype)
-        self.psi = Function(self.V)
+        self.psi = BluemiraFemFunction(self.V)
 
         self.u = TrialFunction(self.V)
         self.v = TestFunction(self.V)
@@ -103,10 +105,10 @@ class FemMagnetostatic2d:
             1 / (2.0 * np.pi * MU_0) * (1 / x[0] * dot(grad(self.u), grad(self.v))) * dx
         )
 
-        self.g = Function(self.V)
+        self.g = BluemiraFemFunction(self.V)
         self.L = self.g * self.v * dx
 
-    def define_g(self, g: dolfinx.fem.Function):
+    def define_g(self, g: BluemiraFemFunction):
         """
         Define g, the right hand side function of the Poisson problem
 
@@ -120,14 +122,14 @@ class FemMagnetostatic2d:
 
     def solve(
         self,
-        dirichlet_bcs: Optional[Tuple[int, dolfinx.fem.Function]] = None,
+        dirichlet_bcs: Optional[Tuple[int, BluemiraFemFunction]] = None,
     ):
         """
         Solve the defined static electromagnetic problem.
 
         Parameters
         ----------
-        dirichlet_bcs : Tuple[int, dolfinx.fem.Function] (default None)
+        dirichlet_bcs : Tuple[int, BluemiraFemFunction] (default None)
             Dirichlet boundary conditions given as a tuple of (marker,dirichlet_function)
 
         Warning
@@ -167,7 +169,7 @@ class FemMagnetostatic2d:
             eltype = base_eltype
 
         W0 = VectorFunctionSpace(self.mesh, base_eltype)
-        B0 = Function(W0)
+        B0 = BluemiraFemFunction(W0)
 
         x = SpatialCoordinate(self.mesh)
 
@@ -187,7 +189,7 @@ class FemMagnetostatic2d:
 
         if eltype is not None:
             W = VectorFunctionSpace(self.mesh, eltype)
-            B = Function(W)
+            B = BluemiraFemFunction(W)
             B.interpolate(B0)
         else:
             B = B0

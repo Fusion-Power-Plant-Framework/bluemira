@@ -38,6 +38,7 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics.fem_utils import plot_scalar_field
+from bluemira.magnetostatics.fem_utils import eval_f
 
 rank = MPI.COMM_WORLD.rank
 
@@ -73,7 +74,6 @@ poly_enclo2.mesh_options = {"lcar": 1, "physical_group": "poly_enclo2"}
 poly_enclo = BluemiraWire([poly_enclo1, poly_enclo2])
 poly_enclo.close("poly_enclo")
 
-
 # coil
 theta_coil = np.linspace(0, 2 * np.pi, nwire)
 r_coil = rc + ri * np.cos(theta_coil[:-1])
@@ -99,7 +99,6 @@ c_universe = Component(name="universe")
 c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
 c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
-
 # %% [markdown]
 #
 # ## Mesh
@@ -123,6 +122,7 @@ gmsh.finalize()
 
 with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
     xdmf.write_mesh(mesh)
+    xdmf.write_meshtags(ft)
     xdmf.write_meshtags(ct)
 
 pyvista.start_xvfb()
@@ -167,25 +167,10 @@ z_max = 10
 z = np.linspace(z_min, z_max, num_points)
 points = np.zeros((3, num_points))
 points[1] = z
-Psi_values = []
-B_values = []
 
-bb_tree = geometry.BoundingBoxTree(mesh, mesh.topology.dim)
-cells = []
-points_on_proc = []
-# Find cells whose bounding-box collide with the points
-cell_candidates = geometry.compute_collisions(bb_tree, points.T)
-# Choose one of the cells that contains the point
-colliding_cells = geometry.compute_colliding_cells(mesh, cell_candidates, points.T)
-for i, point in enumerate(points.T):
-    if len(colliding_cells.links(i)) > 0:
-        points_on_proc.append(point)
-        cells.append(colliding_cells.links(i)[0])
-points_on_proc = np.array(points_on_proc, dtype=np.float64)
-Psi_values = psi.eval(points_on_proc, cells)
-B_values = B.eval(points_on_proc, cells)
-
-x_new = points_on_proc[:, 1]
+# Psi_values, new_points = psi(np.array([points.T[0]]), True)
+B_values, new_points = eval_f(B, points.T, "error")
+x_new = new_points[:, 1]
 
 B_z_teo = 4 * np.pi * 1e-7 * I_wire * rc**2 / (2 * np.sqrt(x_new**2 + rc**2) ** 3)
 

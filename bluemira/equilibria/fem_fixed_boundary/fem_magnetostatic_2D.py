@@ -105,7 +105,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         iter_err_max: float = 1e-5,
         relaxation: float = 0.0,
     ):
-        super().__init__(p_order)
+        super().__init__(mesh, ("CG", p_order))
         self._g_func = None
         self._psi_ax = None
         self._psi_b = None
