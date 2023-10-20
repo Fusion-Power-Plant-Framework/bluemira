@@ -30,11 +30,17 @@ https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4407584
 
 Additional information and detail also present in Passaroto's Master's thesis:
 https://thesis.unipd.it/retrieve/d0269be2-2e5d-4068-af58-4374193d38a1/Passarotto_Mauro_tesi.pdf
+
+An alternative calculation also available, which should give identical results
+from Bottura et al., following essentially C. J. Collie's 1976 RAL work
+
+https://supermagnet.sourceforge.io/notes/CRYO-06-034.pdf
 """
 
+import abc
 from copy import deepcopy
 from typing import Union
-import abc
+
 import numba as nb
 import numpy as np
 
@@ -50,31 +56,66 @@ __all__ = ["PolyhedralPrismCurrentSource"]
 
 ZERO_DIV_GUARD_EPS = 1e-14
 
+
 class PolyhedralKernel(abc.ABC):
     """
     Baseclass for the polyhedral prism magnetostatics kernel
     """
-    @abc.abstractmethod
-    def field(*args) -> np.ndarray:
-        pass
 
-    @abc.abstractmethod
+    @abc.abstractstaticmethod
+    def field(*args) -> np.ndarray:
+        """
+        Magnetic field
+        """
+
+    @abc.abstractstaticmethod
     def vector_potential(*args) -> np.ndarray:
-        pass
+        """
+        Vector potential
+        """
+
 
 class Fabbri(PolyhedralKernel):
+    """
+    Fabbri polyhedral prism formulation
+
+    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=4407584
+    """
+
+    @staticmethod
     def field(*args) -> np.ndarray:
+        """
+        Magnetic field
+        """
         return field_fabbri(*args)
-    
+
+    @staticmethod
     def vector_potential(*args) -> np.ndarray:
+        """
+        Vector potential
+        """
         return vector_potential_fabbri(*args)
 
 
 class Bottura(PolyhedralKernel):
+    """
+    Bottura polyhedral prism formulation
+
+    https://supermagnet.sourceforge.io/notes/CRYO-06-034.pdf
+    """
+
+    @staticmethod
     def field(*args) -> np.ndarray:
+        """
+        Magnetic field
+        """
         return _field_bottura(*args)
 
+    @staticmethod
     def vector_potential(*args) -> np.ndarray:
+        """
+        Vector potential
+        """
         return _vector_potential_bottura(*args)
 
 
@@ -394,15 +435,14 @@ class PolyhedralPrismCurrentSource(
         # Kernel (not intended to be user-facing)
 
         self.__kernel = Fabbri()
-    
+
     @property
     def _kernel(self):
         return self.__kernel
-    
+
     @_kernel.setter
     def _kernel(self, value: PolyhedralKernel):
         self.__kernel = value
-
 
     def _set_cross_section(self, xs_coordinates: Coordinates):
         xs_coordinates = deepcopy(xs_coordinates)
@@ -524,6 +564,27 @@ def _vector_potential_bottura(
     mid_points: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
+    """
+    Calculate the vector potential
+
+    Parameters
+    ----------
+    current_direction:
+        Normalised current direction vector (3)
+    face_points:
+        Array of points on each face (n_face, n_points, 3)
+    face_normals:
+        Array of normalised normal vectors to the faces (pointing outwards)
+        (n_face, 3)
+    mid_points:
+        Array of face midpoints (n_face, 3)
+    point:
+        Point at which to calculate the vector potential (3)
+
+    Returns
+    -------
+    Vector potential at the point (response to unit current density)
+    """
     A = 0.0
 
     for i, face_normal in enumerate(face_normals):  # Faces of the prism
@@ -534,12 +595,33 @@ def _vector_potential_bottura(
 
 
 def _field_bottura(
-        current_direction: np.ndarray,
-        face_points: np.ndarray,
-        face_normals: np.ndarray,
-        mid_points: np.ndarray,
-        point: np.ndarray,
-    ) -> np.ndarray:
+    current_direction: np.ndarray,
+    face_points: np.ndarray,
+    face_normals: np.ndarray,
+    mid_points: np.ndarray,
+    point: np.ndarray,
+) -> np.ndarray:
+    """
+    Calculate the magnetic field
+
+    Parameters
+    ----------
+    current_direction:
+        Normalised current direction vector (3)
+    face_points:
+        Array of points on each face (n_face, n_points, 3)
+    face_normals:
+        Array of normalised normal vectors to the faces (pointing outwards)
+        (n_face, 3)
+    mid_points:
+        Array of face midpoints (n_face, 3)
+    point:
+        Point at which to calculate the magnetic field (3)
+
+    Returns
+    -------
+    Magnetic field vector at the point (response to unit current density)
+    """
     B = np.zeros(3)
 
     for i, face_normal in enumerate(face_normals):  # Faces of the prism
@@ -549,6 +631,29 @@ def _field_bottura(
 
 
 def _surface_integral_bottura(face_normal, face_points, point):
+    """
+    Evaluate the surface integral W_f(r) on a planar face
+
+    Parameters
+    ----------
+    face_points:
+        Array of points on each face (n_face, n_points, 3)
+    face_normals:
+        Array of normalised normal vectors to the faces (pointing outwards)
+        (n_face, 3)
+    mid_points:
+        Array of face midpoints (n_face, 3)
+    point:
+        Point at which to calculate the vector potential (3)
+
+    Returns
+    -------
+    Value of the surface integral W_f(r)
+
+    Notes
+    -----
+    \t:math:`W_f(\\mathbf{r}) = \\sum_{j} \\y_{P}^{''}\\bigg[I_{1}(x_{Q2}^{''}-x_{P}^{''}, y_{P}^{''}, z_{P}^{''}) - I_{1}(x_{Q1}^{''}-x_{P}^{''}, y_{P}^{''}, z_{P}^{''})\\bigg]
+    """  # noqa: W505 E501
     integral = 0.0
 
     for j in range(len(face_points) - 1):  # Lines of the face
@@ -567,9 +672,11 @@ def _surface_integral_bottura(face_normal, face_points, point):
         xppq2 = np.dot(dcm, corner_2 - point)[0]
 
         integral += ypp * (
-            _line_integral_bottura(xppq2, ypp, zpp) - _line_integral_bottura(xppq1, ypp, zpp)
+            _line_integral_bottura(xppq2, ypp, zpp)
+            - _line_integral_bottura(xppq1, ypp, zpp)
         )
     return integral
+
 
 @nb.jit(nopython=True, cache=True)
 def _line_integral_bottura(x: float, y: float, z: float) -> float:
@@ -581,4 +688,3 @@ def _line_integral_bottura(x: float, y: float, z: float) -> float:
     a1 = np.arctan2(x * abs_z, (y * r))
     a2 = np.arctan2(x, y)
     return np.log(x + r) + (abs_z / y) * (a1 - a2)
-
