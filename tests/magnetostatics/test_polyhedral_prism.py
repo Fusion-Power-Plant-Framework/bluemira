@@ -121,7 +121,7 @@ class TestPolyhedralMaths:
         self,
         trap: TrapezoidalPrismCurrentSource,
         poly: PolyhedralPrismCurrentSource,
-        poly2: PolyhedralPrismCurrentSource,
+        *_,
     ):
         poly.plot()
         ax = plt.gca()

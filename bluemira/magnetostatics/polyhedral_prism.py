@@ -598,7 +598,7 @@ def _field_bottura(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
-    mid_points: np.ndarray,
+    mid_points: np.ndarray,  # noqa: ARG001
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -667,7 +667,8 @@ def _surface_integral_bottura(face_normal, face_points, point):
         dcm[1, :] = ypp_axis
         dcm[2, :] = face_normal
 
-        # NOTE: zpp should be constant for each surface, and ypp for each line, but i am lazy
+        # NOTE: zpp should be constant for each surface, and ypp for each line,
+        # but i am lazy
         xppq1, ypp, zpp = np.dot(dcm, corner_1 - point)
         xppq2 = np.dot(dcm, corner_2 - point)[0]
 
