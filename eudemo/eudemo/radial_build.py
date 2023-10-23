@@ -349,8 +349,6 @@ def apply_specific_interface_rules(params: _PfT):
         }
     )
 
-    return params
-
 
 def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     """
