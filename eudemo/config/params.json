@@ -643,28 +643,28 @@
     "long_name": "ITER-like TF gravity support base plate depth"
   },
   "tk_sh_bot": {
-    "value": 0.3,
+    "value": 0.0,
     "unit": "meter",
     "source": "Input",
     "long_name": "Lower shield thickness",
     "description": "DO NOT USE - PROCESS has VV = VV + shield"
   },
   "tk_sh_in": {
-    "value": 0.3,
+    "value": 0.0,
     "unit": "meter",
     "source": "Input",
     "long_name": "Inboard shield thickness",
     "description": "DO NOT USE - PROCESS has VV = VV + shield"
   },
   "tk_sh_out": {
-    "value": 0.8,
+    "value": 0.0,
     "unit": "meter",
     "source": "Input",
     "long_name": "Outboard shield thickness",
     "description": "DO NOT USE - PROCESS has VV = VV + shield"
   },
   "tk_sh_top": {
-    "value": 0.3,
+    "value": 0.0,
     "unit": "meter",
     "source": "Input",
     "long_name": "Upper shield thickness",
@@ -732,25 +732,25 @@
     "long_name": "TS thickness"
   },
   "tk_vv_bot": {
-    "value": 0.3,
+    "value": 0.6,
     "unit": "meter",
     "source": "Input",
     "long_name": "Lower vacuum vessel thickness"
   },
   "tk_vv_in": {
-    "value": 0.3,
+    "value": 0.6,
     "unit": "meter",
     "source": "Input",
     "long_name": "Inboard vacuum vessel thickness"
   },
   "tk_vv_out": {
-    "value": 0.3,
+    "value": 1.1,
     "unit": "meter",
     "source": "Input",
     "long_name": "Outboard vacuum vessel thickness"
   },
   "tk_vv_top": {
-    "value": 0.3,
+    "value": 0.6,
     "unit": "meter",
     "source": "Input",
     "long_name": "Upper vacuum vessel thickness"

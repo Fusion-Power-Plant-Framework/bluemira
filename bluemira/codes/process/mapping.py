@@ -34,12 +34,6 @@ IN_mappings = {
     "P_hcd_ss": ("pinjalw", "MW"),
     "eta_nb": ("etanbi", "dimensionless"),
     "e_mult": ("emult", "dimensionless"),
-    "tk_sh_out": ("shldoth", "m"),
-    "tk_sh_top": ("shldtth", "m"),
-    "tk_sh_bot": ("shldlth", "m"),
-    "tk_vv_out": ("d_vv_out", "m"),
-    "tk_vv_top": ("d_vv_top", "m"),
-    "tk_vv_bot": ("d_vv_bot", "m"),
     "tk_cr_vv": ("ddwex", "m"),
     "tk_tf_front_ib": ("casthi", "m"),
     "tk_tf_side": ("casths", "m"),
@@ -63,6 +57,7 @@ OUT_mappings = {
     "P_el_net_process": ("pnetelmw", "MW"),
     # TODO: Different in/out mapping, is this OK and should we do the same with P_el_net
     "tau_flattop": ("tburn", "s"),
+    "q_95": ("q", "dimensionless"),
     "R_0": ("rmajor", "m"),
     "B_0": ("bt", "T"),
     "kappa_95": ("kappa95", "dimensionless"),
@@ -117,10 +112,8 @@ OUT_mappings = {
 
 IO_mappings = {
     "A": ("aspect", "dimensionless"),
-    "q_95": ("q", "dimensionless"),
     "tk_bb_ib": ("blnkith", "m"),
     "tk_bb_ob": ("blnkoth", "m"),
-    "tk_sh_in": ("shldith", "m"),
     "tk_vv_in": ("d_vv_in", "m"),
     "tk_sol_ib": ("scrapli", "m"),
     "tk_sol_ob": ("scraplo", "m"),
@@ -130,10 +123,6 @@ IO_mappings = {
 }
 
 NONE_mappings = {
-    # Thermal shield thickness is a constant for us
-    # "tk_ts": ("thshield_ob", "m"),
-    # "tk_ts": ("thshield_vb", "m"),
-    "tk_ts": ("thshield_ib", "m"),
     "B_tf_peak": ("bmaxtfrp", "T"),
     "T_e": ("te", "keV"),
     "Z_eff": ("zeff", "amu"),
@@ -144,6 +133,18 @@ NONE_mappings = {
     "h_cp_top": ("h_cp_top", "m"),
     "h_tf_max_in": ("hmax", "m"),
     "r_tf_inboard_out": ("r_tf_inboard_out", "m"),
+    # The following mappings are not 1:1
+    "tk_sh_in": ("shldith", "m"),
+    "tk_sh_out": ("shldoth", "m"),
+    "tk_sh_top": ("shldtth", "m"),
+    "tk_sh_bot": ("shldlth", "m"),
+    "tk_vv_out": ("d_vv_out", "m"),
+    "tk_vv_top": ("d_vv_top", "m"),
+    "tk_vv_bot": ("d_vv_bot", "m"),
+    # Thermal shield thickness is a constant for us
+    "tk_ts": ("thshield_ib", "m"),
+    # "tk_ts": ("thshield_ob", "m"),
+    # "tk_ts": ("thshield_vb", "m"),
 }
 
 mappings = create_mapping(IN_mappings, OUT_mappings, IO_mappings, NONE_mappings)
