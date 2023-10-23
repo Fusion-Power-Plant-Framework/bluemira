@@ -345,10 +345,17 @@ template_builder.add_input_value("n_pancake", 20)
 
 
 # %%[markdown]
-# Finally, let us run PROCESS with our inputs:
+# Finally, let us run PROCESS with our inputs. In this case, we're just running
+# PROCESS as an external code (see e.g. [External code example](../external_code.ex.py))
+# So we are not interesed in passing any parameters into it. In future, once the
+# input template has been refined to something desirable, one can pass in parameters
+# in mapped names to PROCESS, and not need to explicitly know all the PROCESS
+# parameter names.
 
 # %%
-solver = systems_code_solver({}, {"template_in_dat": template_builder.make_inputs()})
+solver = systems_code_solver(
+    params={}, build_config={"template_in_dat": template_builder.make_inputs()}
+)
 
 result = solver.execute("run")
 
