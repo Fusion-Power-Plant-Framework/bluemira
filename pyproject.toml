@@ -192,6 +192,7 @@ ignore = [
     "PTH123",  # use Path.open
     "TRY003",  # put error messages in error class
     "FIX002",  # Line contains todo
+    "PLW1514", # Specify file open encoding
     # should remove
     "TD",  # standardise TODOs
     "ERA",  # remove commented out code
@@ -223,6 +224,7 @@ max-statements = 73
 max-returns = 12
 max-branches = 23
 max-public-methods = 38
+max-bool-expr = 6
 
 [tool.ruff.flake8-bugbear]
 extend-immutable-calls = [

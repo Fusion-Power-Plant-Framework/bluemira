@@ -228,11 +228,11 @@ class DivertorLegCalculator:
         """
         Calculate the position of a straight line divertor leg.
         """
-        if loc not in ["upper", "lower"]:
+        if loc not in {"upper", "lower"}:
             raise ValueError(
                 f"Please specify loc: 'upper' or 'lower' X-point, not: {loc}"
             )
-        if pos not in ["inner", "outer"]:
+        if pos not in {"inner", "outer"}:
             raise ValueError(f"Please specify pos: 'inner' or 'outer' X leg, not: {pos}")
 
         loc_sign = 1 if loc == "upper" else -1

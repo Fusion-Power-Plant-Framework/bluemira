@@ -417,7 +417,7 @@ class CoilGroup(CoilGroupFieldsMixin):
     ):
         """Set attributes on coils"""
         values = np.atleast_1d(values)
-        if dtype not in (None, object):
+        if dtype not in {None, object}:
             values.dtype = np.dtype(dtype)
         no_val = values.size
         no = 0
@@ -959,7 +959,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
                 coils.append(c)
         return CoilSet(*coils)
 
-    def get_coiltype(self, ctype):  # noqa: PLR6301
+    def get_coiltype(self, ctype):
         """Get coils by coils type"""
         return CoilSet(*super()._get_coiltype(ctype))
 
