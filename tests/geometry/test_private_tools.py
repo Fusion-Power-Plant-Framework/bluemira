@@ -42,7 +42,7 @@ from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates, get_area
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import extrude_shape, revolve_shape
+from bluemira.geometry.tools import distance_to, extrude_shape, revolve_shape
 
 TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 
@@ -68,6 +68,41 @@ class TestArea:
 
 
 class TestOffset:
+    open_complex = (
+        [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2],
+        [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1],
+    )
+    closed_complex = (
+        [
+            -4,
+            -3,
+            -2,
+            -1,
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            7,
+            6,
+            5,
+            4,
+            3,
+            2,
+            1,
+            0,
+            -1,
+            -2,
+            -3,
+            -4,
+        ],
+        [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 1, 0],
+    )
+
     @classmethod
     def teardown_class(cls):
         plt.close("all")
@@ -77,54 +112,53 @@ class TestOffset:
         x = [1, 3, 3, 1, 1, 3]
         y = [1, 1, 3, 3, 1, 1]
         o = offset(x, y, 0.25)
-        assert sum(o[0] - np.array([0.75, 3.25, 3.25, 0.75, 0.75])) == 0
-        assert sum(o[1] - np.array([0.75, 0.75, 3.25, 3.25, 0.75])) == 0
 
         _, ax = plt.subplots()
         ax.plot(x, y, "k")
         ax.plot(*o, "r", marker="o")
         ax.set_aspect("equal")
+        plt.show()
+        assert sum(o[0] - np.array([0.75, 3.25, 3.25, 0.75, 0.75])) == 0
+        assert sum(o[1] - np.array([0.75, 0.75, 3.25, 3.25, 0.75])) == 0
 
     def test_triangle(self):
         x = [1, 2, 1.5, 1, 2]
         y = [1, 1, 4, 1, 1]
         t = offset(x, y, -0.25)
+        _, ax = plt.subplots()
+        ax.plot(x, y, "k")
+        ax.plot(*t, "r", marker="o")
+        ax.set_aspect("equal")
+        plt.show()
         assert (
             abs(sum(t[0] - np.array([1.29511511, 1.70488489, 1.5, 1.29511511])) - 0)
             < 1e-3
         )
         assert abs(sum(t[1] - np.array([1.25, 1.25, 2.47930937, 1.25])) - 0) < 1e-3
 
-        _, ax = plt.subplots()
-        ax.plot(x, y, "k")
-        ax.plot(*t, "r", marker="o")
-        ax.set_aspect("equal")
+    @pytest.mark.parametrize("shape", [open_complex, closed_complex])
+    @pytest.mark.parametrize("offset_value", [0.5, 0.766, 1.0, 1.3, -0.3])
+    def test_complex_closed(self, shape, offset_value):
+        x, y = shape
+        z = np.zeros_like(x)
 
-    def test_complex_open(self):
-        # fmt:off
-        x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2]
-        y = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1]
-        # fmt:on
-
-        c = offset(x, y, 1)
+        xo, yo = offset(x, y, offset_value)
+        zo = np.zeros_like(xo)
 
         _, ax = plt.subplots()
         ax.plot(x, y, "k")
-        ax.plot(*c, "r", marker="o")
+        ax.plot(xo, yo, "r", marker="o")
         ax.set_aspect("equal")
+        plt.show()
 
-    def test_complex_closed(self):
-        # fmt:off
-        x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4, -3]
-        y = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 1, 0, 2]
-        # fmt:on
-
-        c = offset(x, y, 1)
-
-        _, ax = plt.subplots()
-        ax.plot(x, y, "k")
-        ax.plot(*c, "r", marker="o")
-        ax.set_aspect("equal")
+        assert np.isclose(
+            np.sign(offset_value)
+            * distance_to(
+                convert_coordinates_to_wire(x, y, z, method="polygon"),
+                convert_coordinates_to_wire(xo, yo, zo, method="polygon"),
+            )[0],
+            offset_value,
+        )
 
 
 class TestMixedFaces:
