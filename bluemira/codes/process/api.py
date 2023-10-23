@@ -165,7 +165,7 @@ class Impurities(Enum):
         """
         Get variable string for impurity fraction
         """
-        return f"fimp({self.value:02}"
+        return f"fimp({self.value:02})"
 
     def read_impurity_files(
         self, filetype: Iterable[Literal["lz", "z2", "z"]]
