@@ -1047,7 +1047,7 @@
     "long_name": "Electron cyclotron resonce heating wallplug efficiency"
   },
   "gamma_ecrh": {
-    "value": 0.3,
+    "value": 0.3e20,
     "unit": "A/W/m^2",
     "source": "Input",
     "long_name": "Electron cyclotron resonce heating current drive efficiency"
