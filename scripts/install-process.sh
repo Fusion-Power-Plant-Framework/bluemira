@@ -7,7 +7,7 @@
 set -e
 
 # Ensure we are working in the (bluemira) conda environment
-source ~/.mambaforge-init.sh && conda activate bluemira
+source ~/.mambaforge-init.sh && conda activate bluemira-test
 
 if [[ $(basename $PWD) == *"bluemira"* ]]; then
   cd ..

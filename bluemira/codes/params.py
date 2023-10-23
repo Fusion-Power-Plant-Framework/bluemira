@@ -47,7 +47,9 @@ class MappedParameterFrame(ParameterFrame):
         """
 
     @classmethod
-    def from_defaults(cls, data: Dict) -> MappedParameterFrame:
+    def from_defaults(
+        cls, data: Dict, source: str = "bluemira codes default"
+    ) -> MappedParameterFrame:
         """
         Create ParameterFrame with default values for external codes.
 
@@ -62,7 +64,7 @@ class MappedParameterFrame(ParameterFrame):
             new_param_dict[bm_map_name] = {
                 "value": data.get(param_map.name, None),
                 "unit": param_map.unit,
-                "source": "bluemira codes default",
+                "source": source,
             }
 
         return cls.from_dict(new_param_dict)

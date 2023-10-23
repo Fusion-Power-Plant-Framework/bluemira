@@ -1,3 +1,19 @@
+# ---
+# jupyter:
+#   jupytext:
+#     cell_metadata_filter: tags,-all
+#     notebook_metadata_filter: -jupytext.text_representation.jupytext_version
+#     text_representation:
+#       extension: .py
+#       format_name: percent
+#       format_version: '1.3'
+#   kernelspec:
+#     display_name: Python 3 (ipykernel)
+#     language: python
+#     name: python3
+# ---
+
+# %% tags=["remove-cell"]
 # bluemira is an integrated inter-disciplinary design tool for future fusion
 # reactors. It incorporates several modules, some of which rely on other
 # codes, to carry out a range of typical conceptual fusion reactor design
@@ -18,12 +34,18 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-"""Functions to optimise an EUDEMO radial build"""
 
-from typing import Dict, TypeVar
+"""
+Run PROCESS using the PROCESSTemplateBuilder
+"""
 
-from bluemira.base.parameter_frame import ParameterFrame
-from bluemira.codes import plot_radial_build, systems_code_solver
+# %% [markdown]
+# # Running PROCESS from "scratch"
+# This example shows how to build a PROCESS template IN.DAT file
+
+
+# %%
+from bluemira.codes import systems_code_solver
 from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
 from bluemira.codes.process._model_mapping import (
     AlphaPressureModel,
@@ -58,45 +80,81 @@ from bluemira.codes.process._model_mapping import (
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 
-_PfT = TypeVar("_PfT", bound=ParameterFrame)
+# %%[markdown]
+# First we are going to build a template using the :py:class:`PROCESSTemplateBuilder`,
+# without interacting with any of PROCESS' integers.
 
+# %%
 
 template_builder = PROCESSTemplateBuilder()
+
+
+# %%[markdown]
+# Now we're going to specify which optimisation algorithm we want to use, and the
+# number of iterations and tolerance.
+
+# %%
+template_builder.set_run_title("Example that won't converge")
 template_builder.set_optimisation_algorithm(PROCESSOptimisationAlgorithm.VMCON)
 template_builder.set_optimisation_numerics(max_iterations=1000, tolerance=1e-8)
 
+
+# %%[markdown]
+# Let's select the optimisation objective as the major radius:
+
+# %%
 template_builder.set_minimisation_objective(Objective.MAJOR_RADIUS)
 
+# %%[markdown]
+# You can inspect what options are available by taking a look at the
+# :py:class:`Objective` Enum. The options are hopefully self-explanatory.
+# The values of the options correspond to the PROCESS integers.
+
+# %%
+print("\n".join(str(o) for o in list(Objective)))
+
+
+# %%[markdown]
+# Now we will add a series of constraint equations to the PROCESS problem
+# we wish to solve. You can read more about these constraints an what
+# they mean in the PROCESS documentation
+
+# %%
 for constraint in (
     Constraint.BETA_CONSISTENCY,
     Constraint.GLOBAL_POWER_CONSISTENCY,
     Constraint.DENSITY_UPPER_LIMIT,
-    Constraint.NWL_UPPER_LIMIT,
     Constraint.RADIAL_BUILD_CONSISTENCY,
     Constraint.BURN_TIME_LOWER_LIMIT,
     Constraint.LH_THRESHHOLD_LIMIT,
     Constraint.NET_ELEC_LOWER_LIMIT,
-    Constraint.BETA_UPPER_LIMIT,
-    Constraint.CS_EOF_DENSITY_LIMIT,
-    Constraint.CS_BOP_DENSITY_LIMIT,
-    Constraint.PINJ_UPPER_LIMIT,
     Constraint.TF_CASE_STRESS_UPPER_LIMIT,
     Constraint.TF_JACKET_STRESS_UPPER_LIMIT,
     Constraint.TF_JCRIT_RATIO_UPPER_LIMIT,
-    Constraint.TF_DUMP_VOLTAGE_UPPER_LIMIT,
     Constraint.TF_CURRENT_DENSITY_UPPER_LIMIT,
     Constraint.TF_T_MARGIN_LOWER_LIMIT,
-    Constraint.CS_T_MARGIN_LOWER_LIMIT,
-    Constraint.CONFINEMENT_RATIO_LOWER_LIMIT,
-    Constraint.DUMP_TIME_LOWER_LIMIT,
     Constraint.PSEPB_QAR_UPPER_LIMIT,
-    Constraint.CS_STRESS_UPPER_LIMIT,
-    Constraint.DENSITY_PROFILE_CONSISTENCY,
-    Constraint.CS_FATIGUE,
 ):
     template_builder.add_constraint(constraint)
 
-# Variable vector values and bounds
+
+# %%[markdown]
+# Many of these constraints require certain iteration variables to have been
+# specified, or certain input values. The novice user can easily not be
+# aware that this is the case, or simply forget to specify these.
+
+# The :py:class:`PROCESSTemplateBuilder` will warn the user if certain
+# values have not been specified. For example, if we try to make a set of
+# inputs for an IN.DAT now, we will get many warning messages:
+
+# %%
+inputs = template_builder.make_inputs()
+
+
+# %%[markdown]
+# So let's go ahead and add the iteration variables we want to the problem:
+
+# %%
 template_builder.add_variable("bt", 5.3292, upper_bound=20.0)
 template_builder.add_variable("rmajor", 8.8901, upper_bound=13.0)
 template_builder.add_variable("te", 12.33, upper_bound=150.0)
@@ -112,87 +170,39 @@ template_builder.add_variable("thkcas", 0.52465)
 template_builder.add_variable("tfcth", 1.2080)
 template_builder.add_variable("gapoh", 0.05, lower_bound=0.05, upper_bound=0.1)
 template_builder.add_variable("gapds", 0.02, lower_bound=0.02)
-template_builder.add_variable("oh_steel_frac", 0.57875)
-template_builder.add_variable("coheof", 2.0726e07)
 template_builder.add_variable("cpttf", 6.5e4, lower_bound=6.0e4, upper_bound=9.0e4)
 template_builder.add_variable("tdmptf", 2.5829e01)
-template_builder.add_variable("vdalw", 10.0, upper_bound=10.0)
-template_builder.add_variable("fimp(13)", 3.573e-04)
-
-# Some constraints require multiple f-values, but they are getting ridding of those,
-# so no fancy mechanics for now...
 template_builder.add_variable("fcutfsu", 0.80884, lower_bound=0.5, upper_bound=0.94)
-template_builder.add_variable("fcohbop", 0.93176)
 template_builder.add_variable("fvsbrnni", 0.39566)
-template_builder.add_variable("fncycle", 1.0)
-# template_builder.add_variable("feffcd", 1.0, lower_bound=0.001, upper_bound=1.0)
 
+# %%[markdown]
+# Many of the PROCESS constraints use so-called 'f-values', which are automatically
+# added to the iteration variables using this API. However, often one wants to modify
+# the defaults of these f-values, which one can do as such:
+
+# %%
 # Modified f-values and bounds w.r.t. defaults
 template_builder.adjust_variable("fne0", 0.6, upper_bound=0.95)
 template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
-template_builder.adjust_variable("flhthresh", 1.2, lower_bound=1.1, upper_bound=1.2)
-template_builder.adjust_variable("ftburn", 1.0, upper_bound=1.0)
 
-# Modifying the initial variable vector to improve convergence
-template_builder.adjust_variable("fpnetel", 1.0)
-template_builder.adjust_variable("fstrcase", 1.0)
-template_builder.adjust_variable("ftmargtf", 1.0)
-template_builder.adjust_variable("ftmargoh", 1.0)
-template_builder.adjust_variable("ftaulimit", 1.0)
-template_builder.adjust_variable("fjohc", 0.57941, upper_bound=1.0)
-template_builder.adjust_variable("fjohc0", 0.53923, upper_bound=1.0)
-template_builder.adjust_variable("foh_stress", 1.0)
-template_builder.adjust_variable("fbetatry", 0.48251)
-template_builder.adjust_variable("fwalld", 0.131)
-template_builder.adjust_variable("fmaxvvstress", 1.0)
-template_builder.adjust_variable("fpsepbqar", 1.0)
-template_builder.adjust_variable("fvdump", 1.0)
-template_builder.adjust_variable("fstrcond", 0.92007)
-template_builder.adjust_variable("fiooic", 0.63437, upper_bound=1.0)
-template_builder.adjust_variable("fjprot", 1.0)
 
-# Set model switches
-for model_choice in (
-    BootstrapCurrentScalingLaw.SAUTER,
-    ConfinementTimeScalingLaw.IPB98_Y2_H_MODE,
-    PlasmaCurrentScalingLaw.ITER_REVISED,
-    PlasmaProfileModel.CONSISTENT,
-    PlasmaPedestalModel.PEDESTAL_GW,
-    PlasmaNullConfigurationModel.SINGLE_NULL,
-    EPEDScalingModel.SAARELMA,
-    BetaLimitModel.THERMAL,
-    DensityLimitModel.GREENWALD,
-    AlphaPressureModel.WARD,
-    PlasmaGeometryModel.CREATE_A_M_S,
-    PowerFlowModel.SIMPLE,
-    ShieldThermalHeatUse.LOW_GRADE_HEAT,
-    SecondaryCycleModel.INPUT,
-    CurrentDriveEfficiencyModel.ECRH_UI_GAM,
-    OperationModel.PULSED,
-    PFSuperconductorModel.NBTI,
-    SolenoidSwitchModel.SOLENOID,
-    CSSuperconductorModel.NB3SN_WST,
-    TFSuperconductorModel.NB3SN_WST,
-    TFWindingPackTurnModel.INTEGER_TURN,
-    FISPACTSwitchModel.OFF,
-    PrimaryPumpingModel.PRESSURE_DROP_INPUT,
-    TFNuclearHeatingModel.INPUT,
-    CostModel.TETRA_1990,
-    AvailabilityModel.INPUT,
-    OutputCostsSwitch.NO,
-):
-    template_builder.set_model(model_choice)
+# %%[markdown]
+# Often one wants to specify certain impurity concentrations, and even use
+# one of these as an iteration variable.
 
+# %%
 template_builder.add_impurity(Impurities.H, 1.0)
 template_builder.add_impurity(Impurities.He, 0.1)
 template_builder.add_impurity(Impurities.W, 5.0e-5)
+template_builder.add_variable(Impurities.Xe.id(), 3.573e-04)
 
-# Set fixed input values
+
+# %%[markdown]
+# We also want to specify some input values that are not variables:
+
+# %%
 template_builder.add_input_values(
     {
-        # Undocumented danger stuff
-        "iblanket": 1,
-        "lsa": 2,
         # Profile parameterisation inputs
         "alphan": 1.0,
         "alphat": 1.45,
@@ -277,74 +287,94 @@ template_builder.add_input_values(
         # "tfinsgap": 0.01,
         "tmargmin": 1.5,
         "vftf": 0.3,
-        "n_pancake": 20,
-        "n_layer": 10,
-        "qnuc": 1.292e4,
-        # Inputs we don't care about but must specify
-        "cfactr": 0.75,  # Ha!
-        "kappa": 1.848,  # Should be overwritten
-        "walalw": 8.0,  # Should never get even close to this
-        "tlife": 40.0,
-        "abktflnc": 15.0,
-        "adivflnc": 20.0,
-        # For sanity...
-        "hldivlim": 10,
-        "ksic": 1.4,
-        "prn1": 0.4,
-        "zeffdiv": 3.5,
-        "bmxlim": 11.2,
-        "ffuspow": 1.0,
-        "fpeakb": 1.0,
-        "divdum": 1,
-        "ibkt_life": 1,
-        "fkzohm": 1.0245,
-        "iinvqd": 1,
-        "dintrt": 0.0,
-        "fcap0": 1.15,
-        "fcap0cp": 1.06,
-        "fcontng": 0.15,
-        "fcr0": 0.065,
-        "fkind": 1.0,
-        "ifueltyp": 1,
-        "discount_rate": 0.06,
-        "bkt_life_csf": 1,
-        "ucblvd": 280.0,
-        "ucdiv": 5e5,
-        "ucme": 3.0e8,
-        # Suspicous stuff
-        "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        "fpinj": 1.0,
     }
 )
 
+# %%[markdown]
+# PROCESS has many different models with integer-value 'switches'. We can specify
+# these choices as follows:
 
-def radial_build(params: _PfT, build_config: Dict) -> _PfT:
-    """
-    Update parameters after a radial build is run/read/mocked using PROCESS.
+# %%
+for model_choice in (
+    BootstrapCurrentScalingLaw.SAUTER,
+    ConfinementTimeScalingLaw.IPB98_Y2_H_MODE,
+    PlasmaCurrentScalingLaw.ITER_REVISED,
+    PlasmaProfileModel.CONSISTENT,
+    PlasmaPedestalModel.PEDESTAL_GW,
+    PlasmaNullConfigurationModel.SINGLE_NULL,
+    EPEDScalingModel.SAARELMA,
+    BetaLimitModel.THERMAL,
+    DensityLimitModel.GREENWALD,
+    AlphaPressureModel.WARD,
+    PlasmaGeometryModel.CREATE_A_M_S,
+    PowerFlowModel.SIMPLE,
+    ShieldThermalHeatUse.LOW_GRADE_HEAT,
+    SecondaryCycleModel.INPUT,
+    CurrentDriveEfficiencyModel.ECRH_UI_GAM,
+    OperationModel.PULSED,
+    PFSuperconductorModel.NBTI,
+    SolenoidSwitchModel.SOLENOID,
+    CSSuperconductorModel.NB3SN_WST,
+    TFSuperconductorModel.NB3SN_WST,
+    TFWindingPackTurnModel.INTEGER_TURN,
+    FISPACTSwitchModel.OFF,
+    PrimaryPumpingModel.PRESSURE_DROP_INPUT,
+    TFNuclearHeatingModel.INPUT,
+    CostModel.TETRA_1990,
+    AvailabilityModel.INPUT,
+    OutputCostsSwitch.NO,
+):
+    template_builder.set_model(model_choice)
 
-    Parameters
-    ----------
-    params:
-        Parameters on which to perform the solve (updated)
-    build_config:
-        Build configuration
+# %%[markdown]
+# Some of these model choices also require certain input values
+# to be specified. If these are not specified by the user, default
+# values are used, which may not be desirable. Let us see what
+# we're still missing:
 
-    Returns
-    -------
-    Updated parameters following the solve.
-    """
-    run_mode = build_config.pop("run_mode", "mock")
-    plot = build_config.pop("plot", False)
-    if run_mode == "run":
-        template_builder.set_run_title(
-            build_config.pop("PROCESS_runtitle", "Bluemira EUDEMO")
-        )
-        build_config["template_in_dat"] = template_builder.make_inputs()
-    solver = systems_code_solver(params, build_config)
-    new_params = solver.execute(run_mode)
+# %%
+inputs = template_builder.make_inputs()
 
-    if plot:
-        plot_radial_build(solver.read_directory)
+# %%[markdown]
+# And now let's add those missing inputs:
 
-    params.update_from_frame(new_params)
-    return params
+# %%
+template_builder.add_input_value("qnuc", 1.3e4)
+template_builder.add_input_value("n_layer", 20)
+template_builder.add_input_value("n_pancake", 20)
+
+
+# %%[markdown]
+# Finally, let us run PROCESS with our inputs. In this case, we're just running
+# PROCESS as an external code (see e.g. [External code example](../external_code.ex.py))
+# So we are not interesed in passing any parameters into it. In future, once the
+# input template has been refined to something desirable, one can pass in parameters
+# in mapped names to PROCESS, and not need to explicitly know all the PROCESS
+# parameter names.
+
+# %%
+solver = systems_code_solver(
+    params={}, build_config={"template_in_dat": template_builder.make_inputs()}
+)
+
+result = solver.execute("run")
+
+# %%
+# Great, so it runs! All we need to do now is make sure we have properly
+# specified our design problem, and perhaps adjust the initial values
+# of the iteration variables to give the optimisation algorithm a better
+# chance of finding a feasible point.
+
+# %%
+template_builder.adjust_variable("fpnetel", 1.0)
+template_builder.adjust_variable("fstrcase", 1.0)
+template_builder.adjust_variable("ftmargtf", 1.0)
+template_builder.adjust_variable("ftmargoh", 1.0)
+template_builder.adjust_variable("ftaulimit", 1.0)
+template_builder.adjust_variable("fbetatry", 0.48251)
+template_builder.adjust_variable("fpsepbqar", 1.0)
+template_builder.adjust_variable("fvdump", 1.0)
+template_builder.adjust_variable("fstrcond", 0.92007)
+template_builder.adjust_variable("fjprot", 1.0)
+
+# %%
