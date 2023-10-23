@@ -542,6 +542,12 @@
     "source": "Input",
     "long_name": "Plasma safety factor"
   },
+  "q_0": {
+    "value": 1.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Plasma safety factor on axis"
+  },
   "r_tf_inboard_out": {
     "value": 0.6265,
     "unit": "meter",
