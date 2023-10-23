@@ -3717,7 +3717,7 @@
   },
   "pnetelmw.": {
     "var_mod": "Plant Power / Heat Transport Balance",
-    "scan01": 500.0
+    "scan01": 600.0
   },
   "pnetelin": {
     "var_mod": "Plant Power / Heat Transport Balance",
@@ -3737,7 +3737,7 @@
   },
   "pnetelmw": {
     "var_mod": "Plant Power / Heat Transport Balance",
-    "scan01": 500.0
+    "scan01": 600.0
   },
   "rejected_main": {
     "var_mod": "Plant Power / Heat Transport Balance",
