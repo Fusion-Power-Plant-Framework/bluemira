@@ -12,7 +12,25 @@ and toroidal current source using fenics FEM solver
 from dataclasses import dataclass
 from typing import Callable, Iterable, Optional, Tuple, Union
 
-import dolfin
+import dolfinx
+
+from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
+from bluemira.magnetostatics.fem_utils import integrate_f
+
+from dolfinx.fem import Expression
+
+from ufl import (
+    SpatialCoordinate,
+    TestFunction,
+    TrialFunction,
+    as_vector,
+    dot,
+    dx,
+    ds,
+    grad,
+    Constant
+)
+
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.figure import Figure
@@ -49,7 +67,7 @@ class FixedBoundaryEquilibrium:
     """
 
     # Solver information
-    mesh: dolfin.Mesh
+    mesh: dolfinx.mesh.Mesh
     psi: Callable[[float, float], float]
 
     # Profile information
@@ -97,7 +115,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         self,
         p_prime: Optional[Callable[[float], float]] = None,
         ff_prime: Optional[Callable[[float], float]] = None,
-        mesh: Optional[Union[dolfin.Mesh, str]] = None,
+        mesh: Optional[Union[dolfinx.mesh.Mesh, str]] = None,
         I_p: Optional[float] = None,
         R_0: Optional[float] = None,
         B_0: Optional[float] = None,
@@ -148,11 +166,20 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         Calculate the gradients of psi at a point
         """
         if self._grad_psi is None:
-            w = dolfin.VectorFunctionSpace(self.mesh, "CG", 1)
-            dpsi_dx = self.psi.dx(0)
-            dpsi_dz = self.psi.dx(1)
-            self._grad_psi = dolfin.project(dolfin.as_vector((dpsi_dx, dpsi_dz)), w)
-            self._grad_psi.set_allow_extrapolation(True)
+            w = dolfinx.fem.VectorFunctionSpace(self.mesh, "CG", 1)
+
+            self._grad_psi = BluemiraFemFunction(w)
+            grad_psi_expr = Expression(
+                as_vector(
+                    (
+                        self.psi.dx(0),
+                        self.psi.dx(1),
+                    )
+                ),
+                w.element.interpolation_points(),
+            )
+            self._grad_psi.interpolate(grad_psi_expr)
+
         return self._grad_psi(point)
 
     @property
@@ -162,7 +189,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
         )
 
-    def set_mesh(self, mesh: Union[dolfin.Mesh, str]):
+    def set_mesh(self, mesh: Union[dolfinx.mesh.Mesh, str]):
         """
         Set the mesh for the solver
 
@@ -197,9 +224,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         -------
         Source current callable to solve the magnetostatic problem
         """
-        area = dolfin.assemble(
-            dolfin.Constant(1) * dolfin.Measure("dx", domain=self.mesh)()
-        )
+        from bluemira.magnetostatics.fem_utils import calculate_area
+
+        area = calculate_area(self.mesh, None, None)
 
         j_target = curr_target / area if curr_target else 1.0
 
@@ -229,7 +256,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         # it has been replaced by this code
         dof_points = self.V.tabulate_dof_coordinates()
-        self.g.vector()[:] = np.array([self._g_func(p) for p in dof_points])
+        self.g.x.array[:] = np.array([self._g_func(p) for p in dof_points])
 
     def set_profiles(
         self,
@@ -279,7 +306,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def _calculate_curr_tot(self) -> float:
         """Calculate the total current into the domain"""
-        return dolfin.assemble(self.g * dolfin.Measure("dx", domain=self.mesh)())
+        return integrate_f(self.g, self.mesh)
 
     def _update_curr(self):
         self.k = 1
@@ -357,7 +384,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         diff = np.zeros(len(points))
         for i in range(1, self.max_iter + 1):
-            prev_psi = self.psi.vector()[:]
+            prev_psi = self.psi.x.array[:]
             prev = np.array([self.psi_norm_2d(p) for p in points])
 
             if plot:
@@ -384,7 +411,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             )
 
             # Update psi in-place (Fenics handles this with the below syntax)
-            self.psi.vector()[:] = (1 - self.relaxation) * self.psi.vector()[
+            self.psi.x.array[:] = (1 - self.relaxation) * self.psi.x.array[
                 :
             ] + self.relaxation * prev_psi
 

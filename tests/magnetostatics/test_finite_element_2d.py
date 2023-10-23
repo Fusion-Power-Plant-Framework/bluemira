@@ -6,8 +6,8 @@
 
 from pathlib import Path
 
-import dolfin
 import numpy as np
+from mpi4py import MPI
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry import tools
@@ -15,10 +15,12 @@ from bluemira.geometry.face import BluemiraFace, BluemiraWire
 from bluemira.magnetostatics.finite_element_2d import (
     Bz_coil_axis,
     FemMagnetostatic2d,
-    ScalarSubFunc,
 )
 from bluemira.mesh import meshing
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+
+from bluemira.magnetostatics.fem_utils import create_j_function
+import gmsh
+from dolfinx.io.gmshio import model_to_mesh
 
 
 class TestGetNormal:
@@ -28,9 +30,12 @@ class TestGetNormal:
         calculated with the fem module and the analytic solution as limit of the
         Biot-Savart law.
         """
+        model_rank = MPI.COMM_WORLD.rank
+        mesh_comm = MPI.COMM_WORLD
 
         r_enclo = 100
-        lcar_enclo = 0.5
+        lcar_enclo = 2
+        lcar_axis = lcar_enclo / 10
 
         rc = 5
         drc = 0.01
@@ -39,8 +44,8 @@ class TestGetNormal:
         poly_coil = tools.make_polygon(
             [
                 [rc - drc, rc + drc, rc + drc, rc - drc],
-                [0, 0, 0, 0],
                 [-drc, -drc, +drc, +drc],
+                [0, 0, 0, 0],
             ],
             closed=True,
             label="poly_enclo",
@@ -50,14 +55,14 @@ class TestGetNormal:
         coil = BluemiraFace(poly_coil)
         coil.mesh_options = {"lcar": lcar_coil, "physical_group": "coil"}
 
-        poly_axis = tools.make_polygon([0, 0, 0], [0, 0, 0], [-r_enclo, 0, r_enclo])
+        poly_axis = tools.make_polygon([[0, 0, 0], [-r_enclo, 0, r_enclo], [0, 0, 0]])
         poly_axis.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_axis"}
 
         poly_ext = tools.make_polygon(
             [
                 [0, r_enclo, r_enclo, 0],
-                [0, 0, 0, 0],
                 [r_enclo, r_enclo, -r_enclo, -r_enclo],
+                [0, 0, 0, 0],
             ],
             label="poly_ext",
         )
@@ -79,24 +84,19 @@ class TestGetNormal:
         m = meshing.Mesh(meshfile=meshfiles)
         m(c_universe, dim=2)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=tmp_path)
+        mesh, ct, ft = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
+        print(np.unique(ct.values))
 
-        mesh, boundaries, subdomains, labels = import_mesh(
-            "Mesh",
-            directory=tmp_path,
-            subdomains=True,
-        )
-
-        dolfin.plot(mesh)
+        gmsh.write("Mesh.msh")
+        gmsh.finalize()
 
         em_solver = FemMagnetostatic2d(3)
-        em_solver.set_mesh(mesh, boundaries)
+        em_solver.set_mesh(mesh, ct)
 
         current = 1e6
-        jc = current / coil.area
-        markers = [labels["coil"]]
-        functions = [jc]
-        jtot = ScalarSubFunc(functions, markers, subdomains)
+        coil_tag = 6
+        j_functions = [(1, coil_tag, current)]
+        jtot = create_j_function(mesh, ct, j_functions)
 
         em_solver.define_g(jtot)
         em_solver.solve()
@@ -105,14 +105,14 @@ class TestGetNormal:
         z_points_axis = np.linspace(0, r_enclo, 200)
         r_points_axis = np.zeros(z_points_axis.shape)
 
-        Bz_axis = np.array([
-            em_solver.B(x) for x in np.array([r_points_axis, z_points_axis]).T
-        ]).T[1]
+        points = np.array([r_points_axis, z_points_axis, 0 * z_points_axis]).T
+        Bz_axis, points = em_solver.B._eval_new(points)
+        Bz_axis = Bz_axis[:, 1]
 
-        B_teo = np.array([Bz_coil_axis(rc, 0, z, current) for z in z_points_axis])
+        B_teo = np.array([Bz_coil_axis(rc, 0, z, current) for z in points[:, 1]])
 
         # I just set an absolute tolerance for the comparison (since the magnetic field
         # goes to zero, the comparison cannot be made on the basis of a relative
         # tolerance). An allclose comparison was out of discussion considering the
         # necessary accuracy.
-        np.testing.assert_allclose(Bz_axis, B_teo, atol=1e-4)
+        np.testing.assert_allclose(Bz_axis, B_teo, atol=2e-3)

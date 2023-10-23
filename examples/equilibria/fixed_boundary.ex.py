@@ -33,7 +33,6 @@ Fixed boundary equilibrium example
 # %%
 from datetime import datetime
 
-import dolfin
 import matplotlib.pyplot as plt
 
 from bluemira.base.components import PhysicalComponent
@@ -78,8 +77,6 @@ plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
 mesh = create_mesh(plasma, ".", "fixed_boundary_example", "fixed_boundary_example.msh")
 
-dolfin.plot(mesh)
-plt.show()
 # %% [markdown]
 # Now we define some profile functions for p' and FF'.
 # We'll use some typical functional forms for this, but you are free to specify
@@ -126,8 +123,6 @@ plasma.shape.mesh_options = {"lcar": 0.15, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.15, "physical_group": "lcfs"}
 
 mesh = create_mesh(plasma, ".", "fixed_boundary_example", "fixed_boundary_example.msh")
-dolfin.plot(mesh)
-plt.show()
 
 solver.set_mesh(mesh)
 solver.solve()
