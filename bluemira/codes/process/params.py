@@ -64,6 +64,9 @@ class ProcessSolverParams(MappedParameterFrame):
     P_el_net: Parameter[float]
     """Net electrical power output [megawatt]."""
 
+    tau_flattop: Parameter[float]
+    """Flat-top duration [second]."""
+
     P_hcd_ss: Parameter[float]
     """Steady-state HCD power [megawatt]."""
 
@@ -119,18 +122,25 @@ class ProcessSolverParams(MappedParameterFrame):
     """Maximum von Mises stress in the CS coil winding pack [pascal]."""
 
     H_star: Parameter[float]
+    """H factor (radiation corrected) [dimensionless]."""
 
     bb_pump_eta_el: Parameter[float]
+    """Breeding blanket pumping electrical efficiency [dimensionless]"""
 
     bb_pump_eta_isen: Parameter[float]
+    """Breeding blanket pumping isentropic efficiency [dimensionless]"""
 
     bb_t_inlet: Parameter[float]
+    """Breeding blanket inlet temperature [K]"""
 
     bb_t_outlet: Parameter[float]
+    """Breeding blanket outlet temperature [K]"""
 
     eta_ecrh: Parameter[float]
+    """Electron cyclotron resonce heating wallplug efficiency [dimensionless]"""
 
     gamma_ecrh: Parameter[float]
+    """Electron cyclotron resonce heating current drive efficiency [TODO: UNITS!]"""
 
     # Out parameters
     B_0: Parameter[float]
