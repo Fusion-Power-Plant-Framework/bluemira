@@ -68,6 +68,41 @@ class TestArea:
 
 
 class TestOffset:
+    open_complex = (
+        [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2],
+        [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1],
+    )
+    closed_complex = (
+        [
+            -4,
+            -3,
+            -2,
+            -1,
+            0,
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            7,
+            8,
+            7,
+            6,
+            5,
+            4,
+            3,
+            2,
+            1,
+            0,
+            -1,
+            -2,
+            -3,
+            -4,
+        ],
+        [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 1, 0],
+    )
+
     @classmethod
     def teardown_class(cls):
         plt.close("all")
@@ -101,14 +136,13 @@ class TestOffset:
         )
         assert abs(sum(t[1] - np.array([1.25, 1.25, 2.47930937, 1.25])) - 0) < 1e-3
 
-    def test_complex_open(self):
-        # fmt:off
-        x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2]
-        y = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1]
+    @pytest.mark.parametrize("shape", [open_complex, closed_complex])
+    @pytest.mark.parametrize("offset_value", [0.5, 0.766, 1.0, 1.3, -0.3])
+    def test_complex_closed(self, shape, offset_value):
+        x, y = shape
         z = np.zeros_like(x)
-        # fmt:on
 
-        xo, yo = offset(x, y, 1)
+        xo, yo = offset(x, y, offset_value)
         zo = np.zeros_like(xo)
 
         _, ax = plt.subplots()
@@ -118,35 +152,12 @@ class TestOffset:
         plt.show()
 
         assert np.isclose(
-            distance_to(
+            np.sign(offset_value)
+            * distance_to(
                 convert_coordinates_to_wire(x, y, z, method="polygon"),
                 convert_coordinates_to_wire(xo, yo, zo, method="polygon"),
             )[0],
-            1.0,
-        )
-
-    def test_complex_closed(self):
-        # fmt:off
-        x = [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4]
-        y = [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 1, 0]
-        z = np.zeros_like(x)
-        # fmt:on
-
-        xo, yo = offset(x, y, 1)
-        zo = np.zeros_like(xo)
-
-        _, ax = plt.subplots()
-        ax.plot(x, y, "k")
-        ax.plot(xo, yo, "r", marker="o")
-        ax.set_aspect("equal")
-        plt.show()
-
-        assert np.isclose(
-            distance_to(
-                convert_coordinates_to_wire(x, y, z),
-                convert_coordinates_to_wire(xo, yo, zo, method="polygon"),
-            )[0],
-            1.0,
+            offset_value,
         )
 
 
