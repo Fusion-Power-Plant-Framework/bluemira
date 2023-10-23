@@ -488,7 +488,7 @@
     "value": 660000000.0,
     "unit": "pascal",
     "source": "Input",
-    "long name": "Maximum von Mises stress in the CS coil winding pack"
+    "long_name": "Maximum von Mises stress in the CS coil winding pack"
   },
   "sigma_tf_case_max": {
     "value": 580000000.0,
