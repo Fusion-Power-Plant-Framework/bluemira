@@ -249,7 +249,12 @@ There are 3 user available extra command line flags to modify the running style 
   -  ``--longrun``
   -  ``--plotting-on``
 
-A further ``--private`` flag is available where data is not public but tests against that data are useful. If you have some private data that you would like to test against please contact a maintainer for more information.
+The ``plotting-on`` flag will enable visualising any plots that are created in the tests. By default these are not displayed.
+There are a lot of figures in the full test suite so it is recommended to only do this for a subset of the tests.
+For information about ``reactor`` and ``longrun`` tests see below.
+
+A further ``--private`` flag is available where data is not public but tests against that data are useful.
+If you have some private data that you would like to test against please contact a maintainer for more information.
 
 [!WARNING]
 Do not commit private data to the repository there is no simple way to remove that
@@ -261,9 +266,19 @@ as noted [here](https://docs.github.com/en/authentication/keeping-your-account-a
 ``Bluemira`` has 4 custom pytest marks which can be used to decorate tests (`@pytest.mark.*`):
 
   -  ``pytest.mark.reactor``
+      Test only run with the ``--reactor`` commandline flag.
+      This is allocated for intergration tests or large systems
   -  ``pytest.mark.longrun``
-  -  ``pytest.mark.classplot``
+      Test only run with the ``--longrun`` commandline flag.
+      If a test cannot be sped up and takes more than 20s consider flagging it.
   -  ``pytest.mark.private``
+      Test only run with the ``--private`` commandline flag.
+      These tests require private data to run
+  -  ``pytest.mark.classplot``
+      These tests allow the production of a figure after all tests in a class have been run.
+      Without this mark figures are shown and closed after every test.
+      Useful for visual comparison of similar paramterisations of a test.
+
 
 ## Releases and Packaging
 
