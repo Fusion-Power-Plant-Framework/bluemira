@@ -25,8 +25,6 @@ PROCESS mappings
 from bluemira.codes.utilities import create_mapping
 
 IN_mappings = {
-    "P_el_net": ("pnetelin", "MW"),
-    "tau_flattop": ("tbrnmn", "s"),
     "n_TF": ("n_tf", "dimensionless"),
     "TF_ripple_limit": ("ripmax", "%"),
     "C_Ejima": ("gamma", "dimensionless"),
@@ -54,9 +52,6 @@ IN_mappings = {
 }
 
 OUT_mappings = {
-    "P_el_net_process": ("pnetelmw", "MW"),
-    # TODO: Different in/out mapping, is this OK and should we do the same with P_el_net
-    "tau_flattop": ("tburn", "s"),
     "R_0": ("rmajor", "m"),
     "B_0": ("bt", "T"),
     "kappa_95": ("kappa95", "dimensionless"),
@@ -111,6 +106,8 @@ OUT_mappings = {
 
 IO_mappings = {
     "A": ("aspect", "dimensionless"),
+    "tau_flattop": (("tbrnmn", "tburn"), "s"),
+    "P_el_net": (("pnetelin", "pnetelmw"), "MW"),
     "tk_bb_ib": ("blnkith", "m"),
     "tk_bb_ob": ("blnkoth", "m"),
     "tk_vv_in": ("d_vv_in", "m"),

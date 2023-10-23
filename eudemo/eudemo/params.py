@@ -72,7 +72,6 @@ class EUDEMOReactorParams(ParameterFrame):
     ob_offset_angle: Parameter[float]
     P_bd_in: Parameter[float]
     P_brehms: Parameter[float]
-    P_el_net_process: Parameter[float]
     P_el_net: Parameter[float]
     P_fus_DD: Parameter[float]
     P_fus_DT: Parameter[float]

@@ -59,12 +59,6 @@
     "source": "Input",
     "long_name": "Net electrical power output"
   },
-  "P_el_net_process": {
-    "value": 0.0,
-    "unit": "megawatt",
-    "source": "Input",
-    "long_name": "Net electrical power output as provided by PROCESS"
-  },
   "P_fus": {
     "value": 2000,
     "unit": "megawatt",
