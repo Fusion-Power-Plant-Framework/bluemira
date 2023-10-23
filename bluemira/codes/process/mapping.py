@@ -115,7 +115,7 @@ OUT_mappings = {
 
 IO_mappings = {
     "A": ("aspect", "dimensionless"),
-    "q_95": ("q95", "dimensionless"),
+    "q_95": ("q", "dimensionless"),
     "tk_bb_ib": ("blnkith", "m"),
     "tk_bb_ob": ("blnkoth", "m"),
     "tk_sh_in": ("shldith", "m"),

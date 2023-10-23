@@ -106,6 +106,9 @@ class ProcessSolverParams(MappedParameterFrame):
     q_0: Parameter[float]
     """Plasma safety factor on axis [dimensionless]"""
 
+    q_95: Parameter[float]
+    """Plasma safety factor at the 95th percentile flux surface [dimensionless]"""
+
     m_s_limit: Parameter[float]
     """Margin to vertical stability [dimensionless]"""
 
