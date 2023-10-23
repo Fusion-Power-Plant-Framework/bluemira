@@ -387,7 +387,7 @@ class FiniteElementModel:
                 node = self.geometry.nodes[load["node_id"]]
                 node.add_load(load)
 
-            elif load["type"] in ["Element Load", "Distributed Load"]:
+            elif load["type"] in {"Element Load", "Distributed Load"}:
                 element = self.geometry.elements[load["element_id"]]
                 element.add_load(load)
             else:

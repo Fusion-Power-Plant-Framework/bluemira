@@ -185,10 +185,10 @@ class ParameterMapping:
             Value of attribute
         """
         if (
-            attr not in ["send", "recv", "name", "out_name", "unit", "_frozen"]
+            attr not in {"send", "recv", "name", "out_name", "unit", "_frozen"}
             or attr in self._frozen
         ):
             raise KeyError(f"{attr} cannot be set for a {type(self).__name__}")
-        if attr in ["send", "recv"] and not isinstance(value, bool):
+        if attr in {"send", "recv"} and not isinstance(value, bool):
             raise ValueError(f"{attr} must be a bool")
         super().__setattr__(attr, value)

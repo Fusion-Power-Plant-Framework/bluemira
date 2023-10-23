@@ -198,7 +198,7 @@ class EQDSKInterface:
         if file_format == "json":
             json_kwargs = {} if json_kwargs is None else json_kwargs
             json_writer(self.to_dict(), file_path, **json_kwargs)
-        elif file_format in ["eqdsk", "geqdsk"]:
+        elif file_format in {"eqdsk", "geqdsk"}:
             bluemira_warn(
                 "You are in the 21st century. Are you sure you want to be making an"
                 " EDQSK in this day and age?"

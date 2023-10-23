@@ -60,7 +60,7 @@ class NumpyJSONEncoder(JSONEncoder):
     A JSON encoder that can handle numpy arrays.
     """
 
-    def default(self, obj):  # noqa: PLR6301
+    def default(self, obj):
         """
         Override the JSONEncoder default object handling behaviour for np.arrays.
         """
@@ -374,7 +374,7 @@ def is_num_array(thing: Any) -> bool:
     """
     :func:is_num but also includes arrays
     """
-    if isinstance(thing, np.ndarray) and thing.dtype in [float, int, complex]:
+    if isinstance(thing, np.ndarray) and thing.dtype in {float, int, complex}:
         return ~np.isnan(thing)
     return is_num(thing)
 
