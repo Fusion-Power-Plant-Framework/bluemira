@@ -50,6 +50,13 @@ IN_mappings = {
     "sigma_tf_case_max": ("sig_tf_case_max", "Pa"),
     "sigma_tf_wp_max": ("sig_tf_wp_max", "Pa"),
     "sigma_cs_wp_max": ("alstroh", "Pa"),
+    "H_star": ("hfact", "dimensionless"),
+    "bb_pump_eta_el": ("etahtp", "dimensionless"),
+    "bb_pump_eta_isen": ("etaiso", "dimensionless"),
+    "bb_t_inlet": ("inlet_temp", "K"),
+    "bb_t_outlet": ("outlet_temp", "K"),
+    "eta_ecrh": ("etaech", "dimensionless"),
+    "gamma_ecrh": ("gamma_ecrh", "1e20 A/W/m^2"),
 }
 
 OUT_mappings = {
@@ -63,7 +70,6 @@ OUT_mappings = {
     "P_fus": ("powfmw", "MW"),
     "P_fus_DT": ("pdt", "MW"),
     "P_fus_DD": ("pdd", "MW"),
-    "H_star": ("hfact", "dimensionless"),
     "P_sep": ("pdivt", "MW"),
     "P_rad_core": ("pinnerzoneradmw", "MW"),
     "P_rad_edge": ("pouterzoneradmw", "MW"),

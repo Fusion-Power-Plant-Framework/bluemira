@@ -1039,5 +1039,17 @@
     "value": 150,
     "unit": "MW",
     "long_name": "Steady-state heating and current drive electrical power"
+  },
+  "eta_ecrh": {
+    "value": 0.4,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Electron cyclotron resonce heating wallplug efficiency"
+  },
+  "gamma_ecrh": {
+    "value": 0.3,
+    "unit": "1e20 A/W/m^2",
+    "source": "Input",
+    "long_name": "Electron cyclotron resonce heating current drive efficiency"
   }
 }

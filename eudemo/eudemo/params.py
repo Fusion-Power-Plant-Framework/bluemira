@@ -154,6 +154,10 @@ class EUDEMOReactorParams(ParameterFrame):
     T_e_ped: Parameter[float]
     q_control: Parameter[float]
 
+    # Heating and current drive
+    eta_ecrh: Parameter[float]
+    gamma_ecrh: Parameter[float]
+
     # Equilibrium
     div_L2D_ib: Parameter[float]
     div_L2D_ob: Parameter[float]
@@ -167,7 +171,7 @@ class EUDEMOReactorParams(ParameterFrame):
     div_Ltarg: Parameter[float]  # noqa: N815
     div_open: Parameter[bool]
 
-    # Plasma face
+    # Remote maintenance
     c_rm: Parameter[float]
 
     # Vacuum vessel
