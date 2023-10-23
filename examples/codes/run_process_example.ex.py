@@ -189,15 +189,12 @@ template_builder.adjust_variable("fdene", 1.2, upper_bound=1.2)
 # %%[markdown]
 # Often one wants to specify certain impurity concentrations, and even use
 # one of these as an iteration variable.
-# Note that the PROCESS term for the impurity concentrations is the `fimp`
-# array, for which sadly one must still know the integer in order to specify
-# it as an iteration variable. 13 is Xenon.
 
 # %%
 template_builder.add_impurity(Impurities.H, 1.0)
 template_builder.add_impurity(Impurities.He, 0.1)
 template_builder.add_impurity(Impurities.W, 5.0e-5)
-template_builder.add_variable("fimp(13)", 3.573e-04)
+template_builder.add_variable(Impurities.Xe.id(), 3.573e-04)
 
 
 # %%[markdown]
