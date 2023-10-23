@@ -7,7 +7,7 @@
 """
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import dolfinx.fem
 import numpy as np
@@ -28,8 +28,11 @@ from ufl import (
     as_vector,
     dot,
     dx,
+    ds,
     grad,
+    Constant
 )
+from petsc4py import PETSc
 
 from bluemira.base.constants import MU_0
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
@@ -71,32 +74,84 @@ def Bz_coil_axis(
 
 class FemMagnetostatic2d:
     """
-    A 2D magnetostic solver for 2D planar and axisymmetric problems.
+    A 2D magnetostatic solver. The solver is thought as support for the fem fixed
+    boundary module and it is limited to axisymmetric magnetostatic problem
+    with toroidal current sources. The Maxwell equations, as function of the poloidal
+    magnetic flux (:math:`\\Psi`), are then reduced to the form ([Zohm]_, page 25):
+
+    .. math::
+        r^2 \\nabla\\cdot\\left(\\frac{\\nabla\\Psi}{r^2}\\right) = 2
+        \\pi r \\mu_0 J_{\\Phi}
+
+    whose weak formulation is defined as ([Villone]_):
+
+    .. math::
+        \\int_{D_p} {\\frac{1}{r}}{\\nabla}{\\Psi}{\\cdot}{\\nabla} v \\,dr\\,dz = 2
+        \\pi \\mu_0 \\int_{D_p} J_{\\Phi} v \\,dr\\,dz
+
+    where :math:`v` is the basis element function of the defined functional subspace
+    :math:`V`.
+
+    .. [Zohm] H. Zohm, Magnetohydrodynamic Stability of Tokamaks, Wiley-VCH, Germany,
+       2015
+    .. [Villone] VILLONE, F. et al. Plasma Phys. Control. Fusion 55 (2013) 095008,
+       https://doi.org/10.1088/0741-3335/55/9/095008
 
     Parameters
     ----------
-    mesh : dolfinx.mesh.Mesh
-        mesh of the FEM model
-    cell_tags:
-        mesh cell tags
-    face_tags:
-        mesh face tags
-    eltype: Tuple (default ("CG",1))
-        tuple with the specification of the element family and the degree of the element
+    p_order:
+        Order of the approximating polynomial basis functions
     """
 
-    # TODO: check if the problem can be solved with any element type or if "eltype"
-    #       should be hardcoded and removed from the signature.
-    def __init__(
-        self, mesh: Mesh, cell_tags=None, face_tags=None, eltype: Tuple = ("CG", 1)
-    ):
-        self.mesh = mesh
-        self.cell_tags = cell_tags
-        self.face_tags = face_tags
-        self._eltype = eltype
-        self.V = FunctionSpace(self.mesh, self._eltype)
-        self.psi = BluemiraFemFunction(self.V)
+    def __init__(self, p_order: int = 2):
+        self.p_order = p_order
+        self.mesh = None
+        self.a = None
+        self.u = None
+        self.v = None
+        self.V = None
+        self.g = None
+        self.L = None
+        self.boundaries = None
+        self.bcs = None
 
+        self.psi = None
+        self.B = None
+
+    def set_mesh(
+        self,
+        mesh: Union[dolfinx.mesh.Mesh, str],
+        boundaries: Optional[Union[dolfinx.mesh.Mesh, str]] = None,
+    ):
+        """
+        Set the mesh for the solver
+
+        Parameters
+        ----------
+        mesh:
+            Filename of the xml file with the mesh definition or a dolfin mesh
+        boundaries:
+            Filename of the xml file with the boundaries definition or a MeshFunction
+            that defines the boundaries
+        """
+        # check whether mesh is a filename or a mesh, then load it or use it
+        self.mesh = dolfinx.mesh.Mesh(mesh) if isinstance(mesh, str) else mesh
+
+        # define boundaries
+        if boundaries is None:
+            tdim = self.mesh.topology.dim
+            self.boundaries = locate_entities_boundary(
+                self.mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
+            )
+        else:
+            self.boundaries = boundaries
+
+        # define the function space and bilinear forms
+        # the Continuos Galerkin function space has been chosen as suitable for the
+        # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
+        self.V = FunctionSpace(self.mesh, ("CG", self.p_order))
+
+        # define trial and test functions
         self.u = TrialFunction(self.V)
         self.v = TestFunction(self.V)
 
@@ -105,10 +160,14 @@ class FemMagnetostatic2d:
             1 / (2.0 * np.pi * MU_0) * (1 / x[0] * dot(grad(self.u), grad(self.v))) * dx
         )
 
-        self.g = BluemiraFemFunction(self.V)
-        self.L = self.g * self.v * dx
+        # initialize solution
+        self.psi = BluemiraFemFunction(self.V)
+        # self.psi.set_allow_extrapolation(True)
 
-    def define_g(self, g: BluemiraFemFunction):
+        # initialize g to zero
+        self.g = BluemiraFemFunction(self.V)
+
+    def define_g(self, g: Union[dolfinx.fem.Expression, BluemiraFemFunction]):
         """
         Define g, the right hand side function of the Poisson problem
 
@@ -118,80 +177,218 @@ class FemMagnetostatic2d:
             Right hand side function of the Poisson problem
         """
         self.g = g
-        self.L = self.g * self.v * dx
 
     def solve(
         self,
-        dirichlet_bcs: Optional[Tuple[int, BluemiraFemFunction]] = None,
-    ):
+        dirichlet_bc_function: Optional[
+            Union[dolfinx.fem.Expression, BluemiraFemFunction]
+        ] = None,
+        dirichlet_marker: Optional[int] = None,
+        neumann_bc_function: Optional[
+            Union[dolfinx.fem.Expression, BluemiraFemFunction]
+        ] = None,
+    ) -> BluemiraFemFunction:
         """
-        Solve the defined static electromagnetic problem.
+        Solve the weak formulation maxwell equation given a right hand side g,
+        Dirichlet and Neumann boundary conditions.
 
         Parameters
         ----------
-        dirichlet_bcs : Tuple[int, BluemiraFemFunction] (default None)
-            Dirichlet boundary conditions given as a tuple of (marker,dirichlet_function)
+        dirichlet_bc_function:
+            Dirichlet boundary condition function
+        dirichlet_marker:
+            Identification number for the dirichlet boundary
+        neumann_bc_function:
+            Neumann boundary condition function
 
-        Warning
+        Returns
         -------
-        User-defined boundary conditions still not implemented
-
-        TODO: check if it is possible just to have the same topological output without
-            increase too much the computational time.
+        Poloidal magnetic flux function as solution of the magnetostatic problem
         """
-        if dirichlet_bcs is None:
+        # if neumann_bc_function is None:
+        #
+        #     neumann_bc_function = dolfinx.fem.Expression(
+        #         Constant(self.mesh, ScalarType(0)),
+        #         self.V.element.interpolation_points(),
+        #     )
+
+        # define the right hand side
+        self.L = self.g * self.v * dx # - neumann_bc_function * self.v * ds
+
+        # define the Dirichlet boundary conditions
+        if dirichlet_bc_function is None:
             tdim = self.mesh.topology.dim
             facets = locate_entities_boundary(
                 self.mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
             )
             dofs = locate_dofs_topological(self.V, tdim - 1, facets)
-            dirichlet_bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
+            self.bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
+        else:
+            # TODO: we should pass directly the BCs, not the functions since
+            # dolfinx wants functions and dofs.
+            self.bcs = dirichlet_bc_function
 
+        # solve the system taking into account the boundary conditions
         problem = LinearProblem(
             self.a,
             self.L,
             u=self.psi,
-            bcs=dirichlet_bcs,
+            bcs=self.bcs,
             petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
         )
         self.psi = problem.solve()
 
         return self.psi
 
-    def compute_B(self, eltype: Optional[Tuple] = None):
+    def calculate_b(self) -> BluemiraFemFunction:
         """
-        Compute the magnetic field interpolating the result in a Function Space
-        with eltype elements.
+        Calculates the magnetic field intensity from psi
+
+        Note: code from Fenics_tutorial (
+        https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
         """
-        base_eltype = ("DG", 0)
-
-        if eltype is None:
-            eltype = base_eltype
-
-        W0 = VectorFunctionSpace(self.mesh, base_eltype)
-        B0 = BluemiraFemFunction(W0)
-
+        # new function space for mapping B as vector
+        W = VectorFunctionSpace(self.mesh, ("DG", 0))
+        self.B = BluemiraFemFunction(W)
         x = SpatialCoordinate(self.mesh)
-
-        r = x[0]
-
         B_expr = Expression(
             as_vector(
                 (
-                    -self.psi.dx(1) / (2 * np.pi * r),
-                    self.psi.dx(0) / (2 * np.pi * r),
+                    -self.psi.dx(1) / (2 * np.pi * x[0]),
+                    self.psi.dx(0) / (2 * np.pi * x[0]),
                 )
             ),
-            W0.element.interpolation_points(),
+            W.element.interpolation_points(),
         )
+        self.B.interpolate(B_expr)
 
-        B0.interpolate(B_expr)
+        return self.B
 
-        if eltype is not None:
-            W = VectorFunctionSpace(self.mesh, eltype)
-            B = BluemiraFemFunction(W)
-            B.interpolate(B0)
-        else:
-            B = B0
 
-        return B
+# ########################################################################################
+# class FemMagnetostatic2d:
+#     """
+#     A 2D magnetostic solver for 2D planar and axisymmetric problems.
+#
+#     Parameters
+#     ----------
+#     mesh : dolfinx.mesh.Mesh
+#         mesh of the FEM model
+#     cell_tags:
+#         mesh cell tags
+#     face_tags:
+#         mesh face tags
+#     eltype: Tuple (default ("CG",1))
+#         tuple with the specification of the element family and the degree of the element
+#     """
+#
+#     # TODO: check if the problem can be solved with any element type or if "eltype"
+#     #       should be hardcoded and removed from the signature.
+#     def __init__(
+#         self, mesh: Mesh, cell_tags=None, face_tags=None, eltype: Tuple = ("CG", 1)
+#     ):
+#         self.mesh = mesh
+#         self.cell_tags = cell_tags
+#         self.face_tags = face_tags
+#         self._eltype = eltype
+#         self.V = FunctionSpace(self.mesh, self._eltype)
+#         self.psi = BluemiraFemFunction(self.V)
+#
+#         self.u = TrialFunction(self.V)
+#         self.v = TestFunction(self.V)
+#
+#         x = SpatialCoordinate(self.mesh)
+#         self.a = (
+#             1 / (2.0 * np.pi * MU_0) * (1 / x[0] * dot(grad(self.u), grad(self.v))) * dx
+#         )
+#
+#         self.g = BluemiraFemFunction(self.V)
+#         self.L = self.g * self.v * dx
+#
+#     def define_g(self, g: BluemiraFemFunction):
+#         """
+#         Define g, the right hand side function of the Poisson problem
+#
+#         Parameters
+#         ----------
+#         g:
+#             Right hand side function of the Poisson problem
+#         """
+#         self.g = g
+#         self.L = self.g * self.v * dx
+#
+#     def solve(
+#         self,
+#         dirichlet_bcs: Optional[Tuple[int, BluemiraFemFunction]] = None,
+#     ):
+#         """
+#         Solve the defined static electromagnetic problem.
+#
+#         Parameters
+#         ----------
+#         dirichlet_bcs : Tuple[int, BluemiraFemFunction] (default None)
+#             Dirichlet boundary conditions given as a tuple of (marker,dirichlet_function)
+#
+#         Warning
+#         -------
+#         User-defined boundary conditions still not implemented
+#
+#         TODO: check if it is possible just to have the same topological output without
+#             increase too much the computational time.
+#         """
+#         if dirichlet_bcs is None:
+#             tdim = self.mesh.topology.dim
+#             facets = locate_entities_boundary(
+#                 self.mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
+#             )
+#             dofs = locate_dofs_topological(self.V, tdim - 1, facets)
+#             dirichlet_bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
+#
+#         problem = LinearProblem(
+#             self.a,
+#             self.L,
+#             u=self.psi,
+#             bcs=dirichlet_bcs,
+#             petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
+#         )
+#         self.psi = problem.solve()
+#
+#         return self.psi
+#
+#     def compute_B(self, eltype: Optional[Tuple] = None):
+#         """
+#         Compute the magnetic field interpolating the result in a Function Space
+#         with eltype elements.
+#         """
+#         base_eltype = ("DG", 0)
+#
+#         if eltype is None:
+#             eltype = base_eltype
+#
+#         W0 = VectorFunctionSpace(self.mesh, base_eltype)
+#         B0 = BluemiraFemFunction(W0)
+#
+#         x = SpatialCoordinate(self.mesh)
+#
+#         r = x[0]
+#
+#         B_expr = Expression(
+#             as_vector(
+#                 (
+#                     -self.psi.dx(1) / (2 * np.pi * r),
+#                     self.psi.dx(0) / (2 * np.pi * r),
+#                 )
+#             ),
+#             W0.element.interpolation_points(),
+#         )
+#
+#         B0.interpolate(B_expr)
+#
+#         if eltype is not None:
+#             W = VectorFunctionSpace(self.mesh, eltype)
+#             B = BluemiraFemFunction(W)
+#             B.interpolate(B0)
+#         else:
+#             B = B0
+#
+#         return B

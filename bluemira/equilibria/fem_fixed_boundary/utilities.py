@@ -9,11 +9,10 @@
 from pathlib import Path
 from typing import Callable, Iterable, List, Optional, Tuple, Union
 
-import dolfin
+import dolfinx
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-from dolfin import BoundaryMesh, Mesh, Vertex
 from matplotlib._tri import TriContourGenerator
 from matplotlib.pyplot import Axes
 from matplotlib.tri import Triangulation
@@ -25,7 +24,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.mesh import meshing
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
+# from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.optimisation import optimise
 from bluemira.utilities.tools import is_num
 
@@ -151,7 +150,7 @@ def get_tricontours(
 def find_flux_surface(
     psi_norm_func: Callable[[np.ndarray], float],
     psi_norm: float,
-    mesh: Optional[dolfin.Mesh] = None,
+    mesh: Optional[dolfinx.mesh.Mesh] = None,
     n_points: int = 100,
 ) -> np.ndarray:
     """
@@ -229,8 +228,8 @@ def find_flux_surface(
 
     return points
 
-
-def get_mesh_boundary(mesh: dolfin.Mesh) -> Tuple[np.ndarray, np.ndarray]:
+### checked - working
+def get_mesh_boundary(mesh: dolfinx.mesh.Mesh) -> Tuple[np.ndarray, np.ndarray]:
     """
     Retrieve the boundary of the mesh, as an ordered set of coordinates.
 
@@ -246,28 +245,48 @@ def get_mesh_boundary(mesh: dolfin.Mesh) -> Tuple[np.ndarray, np.ndarray]:
     zbdry:
         z coordinates of the boundary
     """
-    boundary = BoundaryMesh(mesh, "exterior")
-    edges = boundary.cells()
-    check_edge = np.ones(boundary.num_edges())
 
-    index = 0
-    temp_edge = edges[index]
-    sorted_v = [temp_edge[0]]
+    cell_map = mesh.topology.index_map(mesh.topology.dim)
+    mesh.topology.create_entities(mesh.topology.dim - 1)
+    mesh.topology.create_entities(mesh.topology.dim - 2)
 
-    for _i in range(len(edges) - 1):
-        temp_v = next(v for v in temp_edge if v not in sorted_v)
-        sorted_v.append(temp_v)
-        check_edge[index] = 0
-        connected = np.nonzero(edges == temp_v)[0]
-        index = next(e for e in connected if check_edge[e] == 1)
-        temp_edge = edges[index]
+    mesh.topology.create_connectivity(0, mesh.topology.dim)
+    mesh.topology.create_connectivity(0, mesh.topology.dim-1)
 
-    points_sorted = np.array([Vertex(boundary, v).point().array() for v in sorted_v])
+    facet_map = mesh.topology.index_map(mesh.topology.dim - 1)
+    vertex_map = mesh.topology.index_map(0)
+
+    # select all the facet on the boundary
+    boundary_facets = dolfinx.mesh.exterior_facet_indices(mesh.topology)
+    f_to_v = mesh.topology.connectivity(mesh.topology.dim - 1, 0)
+    v_to_f = mesh.topology.connectivity(0, mesh.topology.dim - 1)
+
+    facet_marker = np.zeros(facet_map.size_local + facet_map.num_ghosts, dtype=np.int32)
+    vertex_marker = np.zeros(vertex_map.size_local + vertex_map.num_ghosts, dtype=np.int32)
+
+    sorted_vertex = []
+    sorted_vertex += f_to_v.links(boundary_facets[0]).tolist()
+
+    facet_marker[boundary_facets[0]] = 1
+    vertex_marker[sorted_vertex] = 1
+
+    for i in range(len(boundary_facets)-1):
+        facets = v_to_f.links(sorted_vertex[-1])
+        for f in facets:
+            if f in boundary_facets and facet_marker[f] == 0:
+                vertexes = f_to_v.links(f).tolist()
+                for v in vertexes:
+                    if vertex_marker[v] == 0:
+                        sorted_vertex += [v]
+                        vertex_marker[v] = 1
+
+    points = mesh.geometry.x
+    points_sorted = np.array([points[v] for v in sorted_vertex])
     return points_sorted[:, 0], points_sorted[:, 1]
 
 
 def get_flux_surfaces_from_mesh(
-    mesh: dolfin.Mesh,
+    mesh: dolfinx.mesh.Mesh,
     psi_norm_func: Callable[[float, float], float],
     x_1d: Optional[np.ndarray] = None,
     nx: Optional[int] = None,
@@ -345,7 +364,7 @@ def get_flux_surfaces_from_mesh(
 
 def calculate_plasma_shape_params(
     psi_norm_func: Callable[[np.ndarray], np.ndarray],
-    mesh: dolfin.Mesh,
+    mesh: dolfinx.mesh.Mesh,
     psi_norm: float,
     plot: bool = False,
 ) -> Tuple[float, float, float]:
@@ -414,7 +433,7 @@ def calculate_plasma_shape_params(
 
 
 def find_magnetic_axis(
-    psi_func: Callable[[np.ndarray], float], mesh: Optional[dolfin.Mesh] = None
+    psi_func: Callable[[np.ndarray], float], mesh: Optional[dolfinx.mesh.Mesh] = None
 ) -> np.ndarray:
     """
     Find the magnetic axis in the poloidal flux map.
@@ -467,7 +486,7 @@ def _interpolate_profile(
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
 
 
-def _cell_near_point(cell: dolfin.Cell, refine_point: Iterable, distance: float) -> bool:
+def _cell_near_point(cell, refine_point: Iterable, distance: float) -> bool:
     """
     Determine whether or not a cell is in the vicinity of a point.
 
@@ -491,11 +510,11 @@ def _cell_near_point(cell: dolfin.Cell, refine_point: Iterable, distance: float)
 
 
 def refine_mesh(
-    mesh: dolfin.Mesh,
+    mesh: dolfinx.mesh.Mesh,
     refine_point: Iterable[float],
     distance: float,
     num_levels: int = 1,
-) -> dolfin.Mesh:
+) -> dolfinx.mesh.Mesh:
     """
     Refine the mesh around a reference point.
 
@@ -530,7 +549,7 @@ def create_mesh(
     directory: str,
     mesh_filename: str,
     mesh_name_msh: str,
-) -> Mesh:
+) -> dolfinx.mesh.Mesh:
     """
     Create mesh
     """
