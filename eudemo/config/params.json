@@ -376,6 +376,12 @@
     "source": "Input",
     "long_name": "95th percentile plasma elongation"
   },
+  "m_s_limit": {
+    "value": 0.1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Margin to vertical stability criterion"
+  },
   "l_i": {
     "value": 0.8,
     "unit": "dimensionless",
@@ -478,17 +484,23 @@
     "source": "Input",
     "long_name": "Outboard vessel inner radius"
   },
+  "sigma_cs_wp_max": {
+    "value": 660000000.0,
+    "unit": "pascal",
+    "source": "Input",
+    "long name": "Maximum von Mises stress in the CS coil winding pack"
+  },
   "sigma_tf_case_max": {
-    "value": 550000000.0,
+    "value": 580000000.0,
     "unit": "pascal",
     "source": "Input",
     "long_name": "Maximum von Mises stress in the TF coil case nose"
   },
   "sigma_tf_wp_max": {
-    "value": 550000000.0,
+    "value": 580000000.0,
     "unit": "pascal",
     "source": "Input",
-    "long_name": "Maximum von Mises stress in the TF coil winding pack nose"
+    "long_name": "Maximum von Mises stress in the TF coil winding pack"
   },
   "tau_e": {
     "value": 3,

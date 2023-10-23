@@ -45,6 +45,11 @@ IN_mappings = {
     "tk_tf_side": ("casths", "m"),
     "PsepB_qAR_max": ("psepbqarmax", "MW.T/m"),
     "q_0": ("q0", "dimensionless"),
+    "m_s_limit": ("m_s_limit", "dimensionless"),
+    "delta": ("triang", "dimensionless"),
+    "sigma_tf_case_max": ("sig_tf_case_max", "Pa"),
+    "sigma_tf_wp_max": ("sig_tf_wp_max", "Pa"),
+    "sigma_cs_wp_max": ("alstroh", "Pa"),
 }
 
 OUT_mappings = {
@@ -54,7 +59,6 @@ OUT_mappings = {
     "kappa_95": ("kappa95", "dimensionless"),
     "kappa": ("kappa", "dimensionless"),
     "delta_95": ("triang95", "dimensionless"),
-    "delta": ("triang", "dimensionless"),
     "I_p": ("plascur/1d6", "MA"),
     "P_fus": ("powfmw", "MW"),
     "P_fus_DT": ("pdt", "MW"),
@@ -128,8 +132,6 @@ NONE_mappings = {
     "l_i": ("rli", "dimensionless"),
     "f_ni": ("faccd", "dimensionless"),
     "tk_tf_outboard": ("tfthko", "m"),
-    "sigma_tf_case_max": ("sig_tf_case_max", "Pa"),
-    "sigma_tf_wp_max": ("sig_tf_wp_max", "Pa"),
     "h_cp_top": ("h_cp_top", "m"),
     "h_tf_max_in": ("hmax", "m"),
     "r_tf_inboard_out": ("r_tf_inboard_out", "m"),
