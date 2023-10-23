@@ -27,12 +27,15 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
 
 if TYPE_CHECKING:
-    from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
+    from bluemira.codes.process._equation_variable_mapping import (
+        Constraint,
+        ConstraintSelection,
+        Objective,
+    )
     from bluemira.codes.process._model_mapping import (
         PROCESSModel,
         PROCESSOptimisationAlgorithm,
     )
-    from bluemira.codes.process.api import _INVariable
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.process._equation_variable_mapping import (
@@ -52,11 +55,11 @@ class PROCESSTemplateBuilder:
     """
 
     def __init__(self):
-        self.models: Dict[str, int] = {}
+        self._models: Dict[str, PROCESSModel] = {}
+        self._constraints: List[Constraint] = []
         self.values: Dict[str, Any] = {}
         self.variables: Dict[str, float] = {}
         self.bounds: Dict[str, Dict[str, str]] = {}
-        self.icc: List[int] = []
         self.ixc: List[int] = []
         self.fimp: List[float] = 14 * [0.0]
 
@@ -64,6 +67,12 @@ class PROCESSTemplateBuilder:
         self.ioptimiz: int = 0
         self.maxcal: int = 1000
         self.epsvmc: float = 1.0e-8
+
+    def set_run_title(self, run_title: str):
+        """
+        Set the run title
+        """
+        self.values["runtitle"] = run_title
 
     def set_optimisation_algorithm(self, algorithm_choice: PROCESSOptimisationAlgorithm):
         """
@@ -101,13 +110,15 @@ class PROCESSTemplateBuilder:
         """
         Set a model switch to the PROCESS run
         """
-        self.models[model_choice.switch_name] = model_choice.value
+        if model_choice.switch_name in self._models:
+            bluemira_warn(f"Over-writing model choice {model_choice}.")
+        self._models[model_choice.switch_name] = model_choice
 
     def add_constraint(self, constraint: Constraint):
         """
         Add a constraint to the PROCESS run
         """
-        if constraint.value in self.icc:
+        if constraint in self._constraints:
             bluemira_warn(
                 f"Constraint {constraint.name} is already in the constraint list."
             )
@@ -115,16 +126,16 @@ class PROCESSTemplateBuilder:
         if constraint.value in FV_CONSTRAINT_ITVAR_MAPPING:
             # Sensible (?) defaults. bounds are standard PROCESS for f-values for _most_
             # f-value constraints.
-            self.add_fvalue_constraint(constraint, 0.5, 1e-3, 1.0)
+            self.add_fvalue_constraint(constraint, None, None, None)
         else:
-            self.icc.append(constraint.value)
+            self._constraints.append(constraint)
 
     def add_fvalue_constraint(
         self,
         constraint: Constraint,
-        value: float,
-        lower_bound: float = 1e-3,
-        upper_bound: float = 1.0,
+        value: Optional[float] = None,
+        lower_bound: Optional[float] = None,
+        upper_bound: Optional[float] = None,
     ):
         """
         Add an f-value constraint to the PROCESS run
@@ -133,7 +144,8 @@ class PROCESSTemplateBuilder:
             raise ValueError(
                 f"Constraint '{constraint.name}' is not an f-value constraint."
             )
-        self.icc.append(constraint.value)
+        self._constraints.append(constraint)
+
         itvar = FV_CONSTRAINT_ITVAR_MAPPING[constraint.value]
         if itvar not in self.ixc:
             self.add_variable(
@@ -143,7 +155,7 @@ class PROCESSTemplateBuilder:
     def add_variable(
         self,
         name: str,
-        value: float,
+        value: Optional[float] = None,
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
     ):
@@ -156,14 +168,10 @@ class PROCESSTemplateBuilder:
 
         if itvar in self.ixc:
             bluemira_warn(
-                f"Iterable variable {name} is already in the variable list. Updating value and bounds."
+                f"Iteration variable '{name}' is already in the variable list."
+                " Updating value and bounds."
             )
-            self._add_to_dict(self.variables, name, value)
-
-            if lower_bound:
-                self.bounds[str(itvar)]["l"] = str(lower_bound)
-            if upper_bound:
-                self.bounds[str(itvar)]["u"] = str(upper_bound)
+            self.adjust_variable(name, value, lower_bound, upper_bound)
 
         else:
             self.ixc.append(itvar)
@@ -175,7 +183,36 @@ class PROCESSTemplateBuilder:
                 var_bounds["l"] = str(lower_bound)
             if upper_bound:
                 var_bounds["u"] = str(upper_bound)
-            self.bounds[str(itvar)] = var_bounds
+            if var_bounds:
+                self.bounds[str(itvar)] = var_bounds
+
+    def adjust_variable(
+        self,
+        name: str,
+        value: Optional[float] = None,
+        lower_bound: Optional[float] = None,
+        upper_bound: Optional[float] = None,
+    ):
+        """
+        Adjust an iteration variable in the PROCESS run
+        """
+        itvar = ITERATION_VAR_MAPPING.get(name, None)
+        if not itvar:
+            raise ValueError(f"There is no iteration variable: '{name}'")
+        if itvar not in self.ixc:
+            bluemira_warn(
+                f"Iteration variable '{name}' is not in the variable list. Adding it."
+            )
+            self.add_variable(name, value, lower_bound, upper_bound)
+        else:
+            self._add_to_dict(self.variables, name, value)
+            if (lower_bound or upper_bound) and str(itvar) not in self.bounds:
+                self.bounds[str(itvar)] = {}
+
+            if lower_bound:
+                self.bounds[str(itvar)]["l"] = str(lower_bound)
+            if upper_bound:
+                self.bounds[str(itvar)]["u"] = str(upper_bound)
 
     def add_input_value(self, name: str, value: Union[float, Iterable[float]]):
         """
@@ -207,18 +244,71 @@ class PROCESSTemplateBuilder:
         else:
             mapping[name] = value
 
-    def make_inputs(self) -> Dict[str, _INVariable]:
+    def _check_model_inputs(self):
+        """
+        Check the required inputs for models have been provided.
+        """
+        for model in self._models.values():
+            self._check_missing_inputs(model)
+
+    def _check_constraint_inputs(self):
+        """
+        Check the required inputs for the constraints have been provided
+        """
+        for constraint in self._constraints:
+            self._check_missing_iteration_variables(constraint)
+            self._check_missing_inputs(constraint)
+
+    def _check_missing_inputs(self, model: Union[PROCESSModel, ConstraintSelection]):
+        missing_inputs = [
+            input_name
+            for input_name in model.requires_values
+            if (input_name not in self.values and input_name not in self.variables)
+        ]
+
+        if missing_inputs:
+            model_name = f"{model.__class__.__name__}.{model.name}"
+            inputs = ", ".join([f"'{inp}'" for inp in missing_inputs])
+            bluemira_warn(
+                f"{model_name} requires inputs {inputs} which have not been specified."
+                " Default values will be used."
+            )
+
+    def _check_missing_iteration_variables(self, constraint: ConstraintSelection):
+        missing_itv = [
+            VAR_ITERATION_MAPPING[itv_num]
+            for itv_num in constraint.requires_variables
+            if (
+                VAR_ITERATION_MAPPING[itv_num] not in self.variables
+                and VAR_ITERATION_MAPPING[itv_num] not in self.values
+            )
+        ]
+        if missing_itv:
+            con_name = f"{constraint.__class__.__name__}.{constraint.name}"
+            inputs = ", ".join([f"'{inp}'" for inp in missing_itv])
+            bluemira_warn(
+                f"{con_name} requires iteration variable {inputs} "
+                "which have not been specified. Default values will be used."
+            )
+
+    def make_inputs(self) -> ProcessInputs:
         """
         Make the ProcessInputs InVariable for the specified template
         """
         if self.ioptimiz != 0 and self.minmax == 0:
             bluemira_warn(
-                "You are running in optimisation mode, but have not set an objective function."
+                "You are running in optimisation mode,"
+                " but have not set an objective function."
             )
+
+        self._check_constraint_inputs()
+        icc = [con.value for con in self._constraints]
+        self._check_model_inputs()
+        models = {k: v.value for k, v in self._models.items()}
 
         return ProcessInputs(
             bounds=self.bounds,
-            icc=self.icc,
+            icc=icc,
             ixc=self.ixc,
             minmax=self.minmax,
             ioptimz=self.ioptimiz,
@@ -226,6 +316,6 @@ class PROCESSTemplateBuilder:
             maxcal=self.maxcal,
             fimp=self.fimp,
             **self.values,
-            **self.models,
+            **models,
             **self.variables,
-        ).to_invariable()
+        )

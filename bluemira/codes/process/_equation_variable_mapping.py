@@ -21,6 +21,8 @@
 """
 Death to PROCESS integers
 """
+from dataclasses import dataclass, field
+from typing import Tuple
 
 from bluemira.codes.utilities import Model
 
@@ -53,101 +55,438 @@ class Objective(Model):
 OBJECTIVE_MIN_ONLY = (16, 19)
 
 
-class Constraint(Model):
+@dataclass
+class ConstraintSelection:
+    """
+    Mixin dataclass for a Constraint selection in PROCESSModel
+
+    Parameters
+    ----------
+    _value_:
+        Integer value of the constraint
+    requires_variables:
+        List of required iteration variables for the constraint
+    requires_values:
+        List of required inputs for the constraint
+    description:
+        Short description of the model constraint
+    """
+
+    _value_: int
+    requires_variables: Tuple[int] = field(default_factory=tuple)
+    requires_values: Tuple[str] = field(default_factory=tuple)
+    description: str = ""
+
+
+class Constraint(ConstraintSelection, Model):
     """
     Enum for PROCESS constraints
     """
 
-    BETA_CONSISTENCY = 1
-    GLOBAL_POWER_CONSISTENCY = 2
-    ION_POWER_CONSISTENCY = 3
-    ELECTRON_POWER_CONSISTENCY = 4
-    DENSITY_UPPER_LIMIT = 5
-    EPS_BETA_POL_UPPER_LIMIT = 6
-    HOT_BEAM_ION_DENSITY = 7
-    NWL_UPPER_LIMIT = 8
-    FUSION_POWER_UPPER_LIMIT = 9
+    BETA_CONSISTENCY = 1, (5,), (), "Beta consistency"
+    GLOBAL_POWER_CONSISTENCY = (
+        2,
+        (1, 2, 3, 4, 6, 10, 11),
+        (),
+        "Global Power Balance Consistency",
+    )
+    ION_POWER_CONSISTENCY = (
+        3,
+        (1, 2, 3, 4, 6, 10, 11),
+        (),
+        "DEPRECATED - Ion Power Balance Consistency",
+    )
+    ELECTRON_POWER_CONSISTENCY = (
+        4,
+        (1, 2, 3, 4, 6, 10, 11),
+        (),
+        "DEPRECATED - Electron Power Balance Consistency",
+    )
+    DENSITY_UPPER_LIMIT = (
+        5,
+        (1, 2, 3, 4, 6, 9),
+        (),
+        "Density Upper Limit (Greenwald)",
+    )
+    EPS_BETA_POL_UPPER_LIMIT = (
+        6,
+        (1, 2, 3, 4, 6, 8),
+        ("epbetmax",),
+        "Equation for epsilon beta-poloidal upper limit",
+    )
+    HOT_BEAM_ION_DENSITY = 7, (7,), (), "Equation for hot beam ion density"
+    NWL_UPPER_LIMIT = (
+        8,
+        (1, 2, 3, 4, 6, 14),
+        ("walalw",),
+        "Neutron wall load upper limit",
+    )
+    FUSION_POWER_UPPER_LIMIT = (
+        9,
+        (1, 2, 3, 4, 6, 26),
+        ("powfmax",),
+        "Equation for fusion power upper limit",
+    )
     # 10 NOT USED
-    RADIAL_BUILD_CONSISTENCY = 11
-    VS_LOWER_LIMIT = 12
-    BURN_TIME_LOWER_LIMIT = 13
-    NBI_LAMBDA_CENTRE = 14
-    LH_THRESHHOLD_LIMIT = 15
-    NET_ELEC_UPPER_LIMIT = 16
-    RAD_POWER_UPPER_LIMIT = 17
-    DIVERTOR_HEAT_UPPER_LIMIT = 18
-    MVA_UPPER_LIMIT = 19
-    NBI_TANGENCY_UPPER_LIMIT = 20
-    AMINOR_LOWER_LIMIT = 21
-    DIV_COLL_CONN_UPPER_LIMIT = 22
-    COND_SHELL_R_RATIO_UPPER_LIMIT = 23
-    BETA_UPPER_LIMIT = 24
-    PEAK_TF_UPPER_LIMIT = 25
-    CS_EOF_DENSITY_LIMIT = 26
-    CS_BOP_DENSITY_LIMIT = 27
-    Q_LOWER_LIMIT = 28
-    IB_RADIAL_BUILD_CONSISTENCY = 29
-    PINJ_UPPER_LIMIT = 30
-    TF_CASE_STRESS_UPPER_LIMIT = 31
-    TF_JACKET_STRESS_UPPER_LIMIT = 32
-    TF_JCRIT_RATIO_UPPER_LIMIT = 33
-    TF_DUMP_VOLTAGE_UPPER_LIMIT = 34
-    TF_CURRENT_DENSITY_UPPER_LIMIT = 35
-    TF_T_MARGIN_LOWER_LIMIT = 36
-    CD_GAMMA_UPPER_LIMIT = 37
+    RADIAL_BUILD_CONSISTENCY = (
+        11,
+        (1, 3, 13, 16, 29, 42, 61),
+        (),
+        "Radial Build Consistency",
+    )
+    VS_LOWER_LIMIT = (
+        12,
+        (1, 2, 3, 15),
+        (),
+        "Equation for volt-second capability lower limit",
+    )
+    BURN_TIME_LOWER_LIMIT = (
+        13,
+        (1, 2, 3, 6, 16, 17, 19, 29, 42, 44, 61),
+        (),
+        "Burn time lower limit",
+    )
+    NBI_LAMBDA_CENTRE = (
+        14,
+        (),
+        (),
+        "Equation to fix number of NBI decay lengths to plasma centre",
+    )
+    LH_THRESHHOLD_LIMIT = 15, (103,), (), "L-H Power ThresHhold Limit"
+    NET_ELEC_LOWER_LIMIT = (
+        16,
+        (1, 2, 3, 25),
+        ("pnetelin",),
+        "Net electric power lower limit",
+    )
+    RAD_POWER_UPPER_LIMIT = 17, (28,), (), "Equation for radiation power upper limit"
+    DIVERTOR_HEAT_UPPER_LIMIT = (
+        18,
+        (27),
+        (),
+        "Equation for divertor heat load upper limit",
+    )
+    MVA_UPPER_LIMIT = 19, (30,), ("mvalim",), "Equation for MVA upper limit"
+    NBI_TANGENCY_UPPER_LIMIT = (
+        20,
+        (3, 13, 31, 33),
+        (),
+        "Equation for neutral beam tangency radius upper limit",
+    )
+    AMINOR_LOWER_LIMIT = 21, (32,), (), "Equation for minor radius lower limit"
+    DIV_COLL_CONN_UPPER_LIMIT = (
+        22,
+        (34,),
+        (),
+        "Equation for divertor collision/connection length ratio upper limit",
+    )
+    COND_SHELL_R_RATIO_UPPER_LIMIT = (
+        23,
+        (1, 74, 104),
+        ("cwrmax",),
+        "Equation for conducting shell radius / rminor upper limit",
+    )
+    BETA_UPPER_LIMIT = 24, (1, 2, 3, 4, 6, 18, 36), (), "Beta Upper Limit"
+    PEAK_TF_UPPER_LIMIT = (
+        25,
+        (3, 13, 29, 35),
+        ("bmxlim",),
+        "Peak toroidal field upper limit",
+    )
+    CS_EOF_DENSITY_LIMIT = (
+        26,
+        (37, 38, 41),
+        (),
+        "Central solenoid EOF current density upper limit",
+    )
+    CS_BOP_DENSITY_LIMIT = (
+        27,
+        (37, 38, 41),
+        (),
+        "Central solenoid bop current density upper limit",
+    )
+    Q_LOWER_LIMIT = (
+        28,
+        (40, 45, 47),
+        ("bigqmin",),
+        "Equation for fusion gain (big Q) lower limit",
+    )
+    IB_RADIAL_BUILD_CONSISTENCY = (
+        29,
+        (1, 3, 13, 16, 29, 42, 61),
+        (),
+        "Equation for minor radius lower limit OR Inboard radial build consistency",
+    )
+    PINJ_UPPER_LIMIT = 30, (11, 46, 47), ("pinjalw",), "Injection Power Upper Limit"
+    TF_CASE_STRESS_UPPER_LIMIT = (
+        31,
+        (48, 56, 57, 58, 59, 60),
+        ("sig_tf_case_max",),
+        "TF coil case stress upper limit",
+    )
+    TF_JACKET_STRESS_UPPER_LIMIT = (
+        32,
+        (49, 56, 57, 58, 59, 60),
+        ("sig_tf_wp_max",),
+        "TF WP steel jacket/conduit stress upper limit",
+    )
+    TF_JCRIT_RATIO_UPPER_LIMIT = (
+        33,
+        (50, 56, 57, 58, 59, 60),
+        (),
+        "TF superconductor operating current / critical current density",
+    )
+    TF_DUMP_VOLTAGE_UPPER_LIMIT = (
+        34,
+        (51, 52, 56, 57, 58, 59, 60),
+        ("vdalw",),
+        "TF dump voltage upper limit",
+    )
+    TF_CURRENT_DENSITY_UPPER_LIMIT = (
+        35,
+        (53, 56, 57, 58, 59, 60),
+        (),
+        "TF winding pack current density upper limit",
+    )
+    TF_T_MARGIN_LOWER_LIMIT = (
+        36,
+        (54, 56, 57, 58, 59, 60),
+        ("tftmp",),
+        "TF temperature margin upper limit",
+    )
+    CD_GAMMA_UPPER_LIMIT = (
+        37,
+        (40, 47),
+        ("gammax",),
+        "Equation for current drive gamma upper limit",
+    )
     # 38 NOT USED
-    FW_TEMP_UPPER_LIMIT = 39
-    PAUX_LOWER_LIMIT = 40
-    IP_RAMP_LOWER_LIMIT = 41
-    CYCLE_TIME_LOWER_LIMIT = 42
-    CENTREPOST_TEMP_AVERAGE = 43
-    CENTREPOST_TEMP_UPPER_LIMIT = 44
-    QEDGE_LOWER_LIMIT = 45
-    IP_IROD_UPPER_LIMIT = 46
-    TF_TOROIDAL_TK_UPPER_LIMIT = 47  # 47 NOT USED (or maybe it is, WTF?!)
-    BETAPOL_UPPER_LIMIT = 48
-    # 49 NOT USED  / SCARES ME
-    REP_RATE_UPPER_LIMIT = 50
-    CS_FLUX_CONSISTENCY = 51
-    TBR_LOWER_LIMIT = 52
-    NFLUENCE_TF_UPPER_LIMIT = 53
-    PNUCL_TF_UPPER_LIMIT = 54
-    HE_VV_UPPER_LIMIT = 55
-    PSEPR_UPPER_LIMIT = 56
+    FW_TEMP_UPPER_LIMIT = 39, (63,), (), "First wall peak temperature upper limit"
+    PAUX_LOWER_LIMIT = (
+        40,
+        (64,),
+        ("auxmin",),
+        "Start-up injection power upper limit (PULSE)",
+    )
+    IP_RAMP_LOWER_LIMIT = (
+        41,
+        (65, 66),
+        ("tohsmn",),
+        "Plasma ramp-up time lower limit (PULSE)",
+    )
+    CYCLE_TIME_LOWER_LIMIT = (
+        42,
+        (17, 65, 67),
+        ("tcycmn",),
+        "Cycle time lower limit (PULSE)",
+    )
+    CENTREPOST_TEMP_AVERAGE = (
+        43,
+        (13, 20, 69, 70),
+        (),
+        "Average centrepost temperature (TART) consistency equation",
+    )
+    CENTREPOST_TEMP_UPPER_LIMIT = (
+        44,
+        (68, 69, 70),
+        ("ptempalw",),
+        "Peak centrepost temperature upper limit (TART)",
+    )
+    QEDGE_LOWER_LIMIT = 45, (1, 2, 3, 70), (), "Edge safety factor lower limit (TART)"
+    IP_IROD_UPPER_LIMIT = 46, (2, 60, 72), (), "Equation for Ip/Irod upper limit (TART)"
+    # 47 NOT USED (or maybe it is, WTF?!)
+    BETAPOL_UPPER_LIMIT = 48, (2, 3, 18, 79), ("betpmax",), "Poloidal beta upper limit"
+    # 49 NOT USED
+    REP_RATE_UPPER_LIMIT = 50, (86,), (), "IFE repetition rate upper limit (IFE)"
+    CS_FLUX_CONSISTENCY = (
+        51,
+        (1, 3, 16, 29),
+        (),
+        "Startup volt-seconds consistency (PULSE)",
+    )
+    TBR_LOWER_LIMIT = 52, (89, 90, 91), ("tbrmin",), "Tritium breeding ratio lower limit"
+    NFLUENCE_TF_UPPER_LIMIT = (
+        53,
+        (92, 93, 94),
+        ("nflutfmax",),
+        "Neutron fluence on TF coil upper limit",
+    )
+    PNUCL_TF_UPPER_LIMIT = (
+        54,
+        (93, 94, 95),
+        ("ptfnucmax",),
+        "Peak TF coil nuclear heating upper limit",
+    )
+    HE_VV_UPPER_LIMIT = (
+        55,
+        (93, 94, 96),
+        ("vvhealw",),
+        "Vacuum vessel helium concentration upper limit iblanket=2",
+    )
+    PSEPR_UPPER_LIMIT = (
+        56,
+        (1, 3, 97, 102),
+        ("pseprmax",),
+        "Pseparatrix/Rmajor upper limit",
+    )
     # 57, 58 NOT USED
-    NBI_SHINETHROUGH_UPPER_LIMIT = 59
-    CS_T_MARGIN_LOWER_LIMIT = 60
-    AVAIL_LOWER_LIMIT = 61
-    CONFINEMENT_RATIO_LOWER_LIMIT = 62
-    NITERPUMP_UPPER_LIMIT = 63
-    ZEFF_UPPER_LIMIT = 64
-    DUMP_TIME_LOWER_LIMIT = 65
-    PF_ENERGY_RATE_UPPER_LIMIT = 66
-    WALL_RADIATION_UPPER_LIMIT = 67
-    PSEPB_QAR_UPPER_LIMIT = 68
-    PSEP_KALLENBACH_UPPER_LIMIT = 69
-    TSEP_CONSISTENCY = 70
-    NSEP_CONSISTENCY = 71
-    CS_STRESS_UPPER_LIMIT = 72
-    PSEP_LH_AUX_CONSISTENCY = 73
-    TF_CROCO_T_UPPER_LIMIT = 74
-    TF_CROCO_CU_AREA_CONSTRAINT = 75
-    EICH_SEP_DENSITY_CONSTRAINT = 76
-    TF_TURN_CURRENT_UPPER_LIMIT = 77
-    REINKE_IMP_FRAC_LOWER_LIMIT = 78
-    BMAX_CS_UPPER_LIMIT = 79
-    PDIVT_LOWER_LIMIT = 80
-    DENSITY_PROFILE_CONSISTENCY = 81
-    STELLARATOR_COIL_CONSISTENCY = 82
-    STELLARATOR_RADIAL_BUILD_CONSISTENCY = 83
-    BETA_LOWER_LIMIT = 84
-    CP_LIFETIME_LOWER_LIMIT = 85
-    TURN_SIZE_UPPER_LIMIT = 86
-    CRYOPOWER_UPPER_LIMIT = 87
-    TF_STRAIN_UPPER_LIMIT = 88
-    OH_CROCO_CU_AREA_CONSTRAINT = 89
-    CS_FATIGUE = 90
-    ECRH_IGNITABILITY = 91
+    NBI_SHINETHROUGH_UPPER_LIMIT = (
+        59,
+        (4, 6, 19, 105),
+        ("nbshinefmax",),
+        "Neutral beam shinethrough fraction upper limit (NBI)",
+    )
+    CS_T_MARGIN_LOWER_LIMIT = (
+        60,
+        (106,),
+        (),
+        "Central solenoid temperature margin lower limit (SCTF)[sic.."
+        " I guess they mean SCCS]",
+    )
+    AVAIL_LOWER_LIMIT = 61, (107,), ("avail_min",), "Minimum availability value"
+    CONFINEMENT_RATIO_LOWER_LIMIT = (
+        62,
+        (110,),
+        ("taulimit",),
+        "taup/taueff the ratio of particle to energy confinement times",
+    )
+    NITERPUMP_UPPER_LIMIT = (
+        63,
+        (111,),
+        (),
+        "The number of ITER-like vacuum pumps niterpump < tfno",
+    )
+    ZEFF_UPPER_LIMIT = 64, (112,), ("zeffmax",), "Zeff less than or equal to zeffmax"
+    DUMP_TIME_LOWER_LIMIT = (
+        65,
+        (56, 113),
+        ("max_vv_stress",),
+        "Dump time set by VV loads",
+    )
+    PF_ENERGY_RATE_UPPER_LIMIT = (
+        66,
+        (65, 113),
+        ("tohs",),
+        "Limit on rate of change of energy in poloidal field",
+    )
+    WALL_RADIATION_UPPER_LIMIT = (
+        67,
+        (4, 6, 102, 116),
+        ("peakfactrad", "peakradwallload"),
+        "Simple radiation wall load limit",
+    )
+    PSEPB_QAR_UPPER_LIMIT = (
+        68,
+        (117,),
+        ("psepbqarmax",),
+        "P_separatrix Bt / q A R upper limit",
+    )
+    PSEP_KALLENBACH_UPPER_LIMIT = (
+        69,
+        (118,),
+        (),
+        "ensure the separatrix power = the value from Kallenbach divertor",
+    )
+    TSEP_CONSISTENCY = (
+        70,
+        (119,),
+        (),
+        "ensure that temp = separatrix in the pedestal profile",
+    )
+    NSEP_CONSISTENCY = (
+        71,
+        (),
+        (),
+        "ensure that neomp = separatrix density (nesep) x neratio",
+    )
+    CS_STRESS_UPPER_LIMIT = (
+        72,
+        (123,),
+        (),
+        "Central solenoid shear stress limit (Tresca yield criterion)",
+    )
+    PSEP_LH_AUX_CONSISTENCY = 73, (137,), (), "Psep >= Plh + Paux"
+    TF_CROCO_T_UPPER_LIMIT = 74, (141,), ("tmax_croco",), "TFC quench"
+    TF_CROCO_CU_AREA_CONSTRAINT = (
+        75,
+        (143,),
+        ("coppera_m2_max",),
+        "TFC current / copper area < maximum",
+    )
+    EICH_SEP_DENSITY_CONSTRAINT = 76, (144,), (), "Eich critical separatrix density"
+    TF_TURN_CURRENT_UPPER_LIMIT = (
+        77,
+        (146,),
+        ("cpttf_max",),
+        "TF coil current per turn upper limit",
+    )
+    REINKE_IMP_FRAC_LOWER_LIMIT = (
+        78,
+        (147,),
+        (),
+        "Reinke criterion impurity fraction lower limit",
+    )
+    BMAX_CS_UPPER_LIMIT = 79, (149,), ("bmaxcs_lim",), "Peak CS field upper limit"
+    PDIVT_LOWER_LIMIT = 80, (153,), ("pdivtlim",), "Divertor power lower limit"
+    DENSITY_PROFILE_CONSISTENCY = 81, (154,), (), "Ne(0) > ne(ped) constraint"
+    STELLARATOR_COIL_CONSISTENCY = (
+        82,
+        (171,),
+        ("toroidalgap",),
+    )
+    STELLARATOR_RADIAL_BUILD_CONSISTENCY = (
+        83,
+        (172,),
+        (),
+        "Radial build consistency for stellarators",
+    )
+    BETA_LOWER_LIMIT = 84, (173,), (), "Lower limit for beta"
+    CP_LIFETIME_LOWER_LIMIT = (
+        85,
+        (),
+        ("nflutfmax",),
+        "Constraint for centrepost lifetime",
+    )
+    TURN_SIZE_UPPER_LIMIT = (
+        86,
+        (),
+        ("t_turn_tf_max",),
+        "Constraint for TF coil turn dimension",
+    )
+    CRYOPOWER_UPPER_LIMIT = 87, (), (), "Constraint for cryogenic power"
+    TF_STRAIN_UPPER_LIMIT = (
+        88,
+        (),
+        ("str_wp_max",),
+        "Constraint for TF coil strain absolute value",
+    )
+    OH_CROCO_CU_AREA_CONSTRAINT = (
+        89,
+        (166,),
+        ("copperaoh_m2_max",),
+        "Constraint for CS coil quench protection",
+    )
+    CS_FATIGUE = (
+        90,
+        (167,),
+        (
+            "residual_sig_hoop",
+            "n_cycle_min",
+            "t_crack_radial",
+            "t_crack_vertical",
+            "t_structural_radial",
+            "t_structural_vertical",
+            "sf_vertical_crack",
+            "sf_radial_crack",
+            "sf_fast_fracture",
+            "paris_coefficient",
+            "paris_power_law",
+            "walker_coefficient",
+            "fracture_toughness",
+        ),
+        "CS fatigue constraints",
+    )
+    ECRH_IGNITABILITY = 91, (168,), (), "Checking if the design point is ECRH ignitable"
 
 
 # The dreaded f-values
@@ -172,7 +511,7 @@ FV_CONSTRAINT_ITVAR_MAPPING = {
     26: 38,
     27: 39,
     28: 45,
-    30: 46,
+    # 30: 46,  # Keep this as an equality constraint by default
     31: 48,
     32: 49,
     33: 50,
@@ -206,15 +545,18 @@ FV_CONSTRAINT_ITVAR_MAPPING = {
     67: 116,
     68: 117,
     69: 118,
+    72: 123,
     73: 137,
     74: 141,
     75: 143,
     76: 144,
     77: 146,
     78: 146,
-    83: 160,
-    84: 161,
+    81: 154,
+    83: 160,  # OR 172?!
+    84: 161,  # OR 173?!
     89: 166,
+    90: 167,
     91: 168,
 }
 
@@ -230,7 +572,7 @@ ITERATION_VAR_MAPPING = {
     "fdene": 9,
     "hfact": 10,
     "pheat": 11,
-    "oacdp": 12,
+    # NO LONGER USED "oacdp": 12,
     "tfcth": 13,
     "fwalld": 14,
     "fvs": 15,
@@ -326,7 +668,7 @@ ITERATION_VAR_MAPPING = {
     "ftaulimit": 110,
     "fniterpump": 111,
     "fzeffmax": 112,
-    "ftaucq": 113,
+    "fmaxvvstress": 113,  # OR IS IT fmaxvvstress ?! ftaucq
     "fw_channel_length": 114,
     "fpoloidalpower": 115,
     "fradwall": 116,

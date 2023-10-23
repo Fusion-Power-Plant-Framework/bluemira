@@ -22,8 +22,8 @@
 Parameter classes/structures for Process
 """
 
-from dataclasses import dataclass, field, fields
-from typing import Dict, Generator, List, Tuple, Union
+from dataclasses import dataclass, fields
+from typing import Dict, Generator, List, Optional, Tuple, Union
 
 from bluemira.codes.process.api import _INVariable
 
@@ -42,260 +42,670 @@ class ProcessInputs:
     `process.io.python_fortran_dicts.get_dicts()["DICT_DESCRIPTIONS"]`
     """
 
-    bounds: Dict[str, Dict[str, str]] = field(
-        default_factory=lambda: {
-            "2": {"u": "20.0"},
-            "3": {"u": "13"},
-            "4": {"u": "150.0"},
-            "9": {"u": "1.2"},
-            "18": {"l": "3.5"},
-            "29": {"l": "0.1"},
-            "38": {"u": "1.0"},
-            "39": {"u": "1.0"},
-            "42": {"l": "0.05", "u": "0.1"},
-            "50": {"u": "1.0"},
-            "52": {"u": "10.0"},
-            "61": {"l": "0.02"},
-            "103": {"u": "10.0"},
-            "60": {"l": "6.0e4", "u": "9.0e4"},
-            "59": {"l": "0.50", "u": "0.94"},
-        }
-    )
-    # fmt: off
-    icc: List[int] = field(default_factory=lambda: [1, 2, 5, 8, 11, 13, 15, 16, 24, 25,
-                                                    26, 27, 30, 31, 32, 33, 34, 35, 36,
-                                                    60, 62, 65, 68, 72])
-    ixc: List[int] = field(default_factory=lambda: [2, 3, 4, 5, 6, 9, 13, 14, 16, 18,
-                                                    29, 36, 37, 38, 39, 41, 42, 44, 48,
-                                                    49, 50, 51, 52, 53, 54, 56, 57, 58,
-                                                    59, 60, 61, 102, 103, 106, 109, 110,
-                                                    113, 117, 122, 123])
-    # fmt: on
-    abktflnc: float = 15.0
-    adivflnc: float = 20.0
-    alphan: float = 1.0
-    alphat: float = 1.45
-    alstroh: float = 660000000.0
-    aspect: float = 3.1
-    beta: float = 0.031421
-    blnkith: float = 0.755
-    blnkoth: float = 0.982
-    bmxlim: float = 11.2
-    bore: float = 2.3322
-    bscfmax: float = 0.99
-    bt: float = 5.3292
-    casths: float = 0.05
-    cfactr: float = 0.75
-    coheof: float = 20726000.0
-    coreradiationfraction: float = 0.6
-    coreradius: float = 0.75
-    cost_model: int = 0
-    cptdin: List[float] = field(
-        default_factory=lambda: [*([42200.0] * 4), *([43000.0] * 4)]
-    )
-    cpttf: float = 65000.0
-    d_vv_bot: float = 0.6
-    d_vv_in: float = 0.6
-    d_vv_out: float = 1.1
-    d_vv_top: float = 0.6
-    ddwex: float = 0.15
-    dene: float = 7.4321e19
-    dhecoil: float = 0.01
-    dintrt: float = 0.0
-    discount_rate: float = 0.06
-    divdum: int = 1
-    divfix: float = 0.621
-    dnbeta: float = 3.0
-    thkcas: float = 0.52465
-    casthi: float = 0.06
-    emult: float = 1.35
-    enbeam: float = 1e3
-    epsvmc: float = 1e-08
-    etaech: float = 0.4
-    etahtp: float = 0.87
-    etaiso: float = 0.9
-    etanbi: float = 0.3
-    etath: float = 0.375
-    fbetatry: float = 0.48251
-    fcap0: float = 1.15
-    fcap0cp: float = 1.06
-    fcohbop: float = 0.93176
-    fcontng: float = 0.15
-    fcr0: float = 0.065
-    fcuohsu: float = 0.7
-    fcutfsu: float = 0.80884
-    fdene: float = 1.2
-    ffuspow: float = 1.0
-    fgwped: float = 0.85
-    fimp: List[float] = field(
-        default_factory=lambda: [1.0, 0.1, *([0.0] * 10), 0.00044, 5e-05]
-    )
-    fimpvar: float = 0.00037786
-    fiooic: float = 0.63437
-    fjohc0: float = 0.53923
-    fjohc: float = 0.57941
-    fjprot: float = 1.0
-    fkind: float = 1.0
-    fkzohm: float = 1.0245
-    flhthresh: float = 1.4972
-    fncycle: float = 1.0
-    fne0: float = 0.9
-    foh_stress: float = 1.0
-    fpeakb: float = 1.0
-    fpinj: float = 1.0
-    fpnetel: float = 1.0
-    fpsepbqar: float = 1.0
-    fstrcase: float = 1.0
-    fstrcond: float = 0.92007
-    ftaucq: float = 0.91874
-    ftaulimit: float = 1.0
-    ftburn: float = 1.0
-    ftmargoh: float = 1.0
-    ftmargtf: float = 1.0
-    fvdump: float = 1.0
-    fvsbrnni: float = 0.39566
-    fwalld: float = 0.131
-    gamma: float = 0.3
-    gamma_ecrh: float = 0.3
-    gapds: float = 0.02
-    gapoh: float = 0.05
-    gapomin: float = 0.2
-    hfact: float = 1.1
-    hldivlim: float = 10.0
-    i_single_null: int = 1
-    i_tf_sc_mat: int = 5
-    i_tf_turns_integer: int = 1
-    ilhthresh: int = 6
-    snull: int = 1
-    iscrp: int = 1
-    iavail: int = 0
-    ibss: int = 4
-    iculbl: int = 1
-    icurr: int = 4
-    idensl: int = 7
-    iefrf: int = 10
-    ieped: int = 1
-    ifalphap: int = 1
-    ifispact: int = 0
-    ifueltyp: int = 1
-    iinvqd: int = 1
-    impvar: int = 13
-    inuclear: int = 1
-    iohcl: int = 1
-    ioptimz: int = 1
-    ipedestal: int = 1
-    ipfloc: List[int] = field(default_factory=lambda: [2, 2, 3, 3])
-    ipowerflow: int = 0
-    iprimshld: int = 1
-    iprofile: int = 1
-    isc: int = 34
-    ishape: int = 0
-    isumatoh: int = 5
-    isumatpf: int = 3
-    kappa: float = 1.848
-    ksic: float = 1.4
-    lpulse: int = 1
-    lsa: int = 2
-    maxcal: int = 1000
-    minmax: int = 1
-    n_layer: int = 10
-    n_pancake: int = 20
-    n_tf: int = 16
-    ncls: List[int] = field(default_factory=lambda: [1, 1, 2, 2])
-    neped: float = 6.78e19
-    nesep: float = 2e19
-    ngrp: int = 4
-    oacdcp: float = 8673900.0
-    oh_steel_frac: float = 0.57875
-    ohcth: float = 0.55242
-    ohhghf: float = 0.9
-    output_costs: int = 0
-    pheat: float = 50.0
-    pinjalw: float = 51.0
-    plasma_res_factor: float = 0.66
-    pnetelin: float = 500.0
-    primary_pumping: int = 3
-    prn1: float = 0.4
-    psepbqarmax: float = 9.2
-    pulsetimings: float = 0.0
-    q0: float = 1.0
-    q: float = 3.5
-    qnuc: float = 12920.0
-    ralpne: float = 0.06894
-    rhopedn: float = 0.94
-    rhopedt: float = 0.94
-    ripmax: float = 0.6
-    rjconpf: List[float] = field(
-        default_factory=lambda: [1.1e7, 1.1e7, 6e6, 6e6, 8e6, 8e6, 8e6, 8e6]
-    )
-    rmajor: float = 8.8901
-    rpf2: float = -1.825
-    scrapli: float = 0.225
-    scraplo: float = 0.225
-    secondary_cycle: int = 2
-    shldith: float = 1e-06
-    shldlth: float = 1e-06
-    shldoth: float = 1e-06
-    shldtth: float = 1e-06
-    sig_tf_case_max: float = 580000000.0
-    sig_tf_wp_max: float = 580000000.0
-    ssync: float = 0.6
-    tbeta: float = 2.0
-    tbrnmn: float = 7200.0
-    tburn: float = 10000.0
-    tdmptf: float = 25.829
-    tdwell: float = 0.0
-    te: float = 12.33
-    teped: float = 5.5
-    tesep: float = 0.1
-    tfcth: float = 1.208
-    tftmp: float = 4.75
-    tftsgap: float = 0.05
-    thicndut: float = 0.002
-    thshield_ib: float = 0
-    thshield_ob: float = 0
-    thshield_vb: float = 0
-    thwcndut: float = 0.008
-    tinstf: float = 0.008
-    tlife: float = 40.0
-    tmargmin: float = 1.5
-    tramp: float = 500.0
-    triang: float = 0.5
-    ucblvd: float = 280.0
-    ucdiv: float = 500000.0
-    ucme: float = 300000000.0
-    vdalw: float = 10.0
-    vfshld: float = 0.6
-    vftf: float = 0.3
-    vgap2: float = 0.05
-    vvblgap: float = 0.02
-    walalw: float = 8.0
-    zeffdiv: float = 3.5
-    zref: List[float] = field(
-        default_factory=lambda: [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
-    )
-    iblkt_life: int = 1
-    blktmodel: int = 1
-    pulse_timings: int = 0
-    ipfres: int = 0
-    i_tf_case_geom: int = 1
-    i_tf_sup: int = 1
-    i_tf_shape: int = 1
-    i_tf_wp_geom: int = 0
-    tf_in_cs: int = 0
-    life_dpa: float = 70.0  # Not used??
-    n_cycle_min: int = 20000
-    t_crack_vertical: float = 0.65e-3
-    sf_vertical_crack: float = 1.0
-    sf_radial_crack: float = 1.0
-    sf_fast_fracture: float = 1.0
-    residual_sig_hoop: float = 1.50e8
-    paris_coefficient: float = 3.86e-11
-    paris_power_law: float = 2.394
-    walker_coefficient: float = 0.5
-    fracture_toughness: float = 150.0
-    m_s_limit: float = 0.2
-    gap_ds: float = 0.02
+    runtitle: Optional[str] = None
+
+    # Optimisation problem setup
+    bounds: Optional[Dict[str, Dict[str, str]]] = None
+    icc: Optional[List[int]] = None
+    ixc: Optional[List[int]] = None
+
+    # Settings
+    maxcal: Optional[int] = None
+    minmax: Optional[int] = None
+    epsvmc: Optional[float] = None
+    ioptimz: Optional[int] = None
+    output_costs: Optional[int] = None
+    isweep: Optional[int] = None
+    nsweep: Optional[int] = None
+    sweep: List[float] = None
+    pulsetimings: Optional[int] = None
+    # Top down of PROCESS variables list
+
+    # Times
+    tburn: Optional[float] = None
+    tdwell: Optional[float] = None
+    theat: Optional[float] = None
+    tohs: Optional[float] = None
+    tqnch: Optional[float] = None
+    tramp: Optional[float] = None
+
+    # FWBS
+    ibkt_life: Optional[int] = None
+    denstl: Optional[float] = None
+    denw: Optional[float] = None
+    emult: Optional[float] = None
+    fblss: Optional[float] = None
+    fdiv: Optional[float] = None
+    fwbsshape: Optional[int] = None
+    fw_armour_thickness: Optional[float] = None
+    iblanket: Optional[int] = None
+    iblnkith: Optional[int] = None
+    li6enrich: Optional[float] = None
+    breeder_f: Optional[float] = None
+    breeder_multiplier: Optional[float] = None
+    vfcblkt: Optional[float] = None
+    vfpblkt: Optional[float] = None
+    blktmodel: Optional[int] = None  # Listed as an output...
+    # f_neut_shield: float = # -1.0 the documentation defaults cannot be right...
+    breedmat: Optional[int] = None
+    fblbe: Optional[float] = None
+    fblbreed: Optional[float] = None
+    fblhebmi: Optional[float] = None
+    fblhebmo: Optional[float] = None
+    fblhebpi: Optional[float] = None
+    fblhebpo: Optional[float] = None
+    hcdportsize: Optional[int] = None
+    npdiv: Optional[int] = None
+    nphcdin: Optional[int] = None
+    nphcdout: Optional[int] = None
+    wallpf: Optional[float] = None
+    iblanket_thickness: Optional[int] = None
+    secondary_cycle: Optional[int] = None  # Listed as an output...
+    secondary_cycle_liq: Optional[int] = None
+    afwi: Optional[float] = None
+    afwo: Optional[float] = None
+    fw_wall: Optional[float] = None
+    afw: Optional[float] = None
+    pitch: Optional[float] = None
+    fwinlet: Optional[float] = None
+    fwoutlet: Optional[float] = None
+    fwpressure: Optional[float] = None
+    roughness: Optional[float] = None
+    fw_channel_length: Optional[float] = None
+    peaking_factor: Optional[float] = None
+    blpressure: Optional[float] = None
+    inlet_temp: Optional[float] = None
+    outlet_temp: Optional[float] = None
+    coolp: Optional[float] = None
+    nblktmodpo: Optional[int] = None
+    nblktmodpi: Optional[int] = None
+    nblktmodto: Optional[int] = None
+    nblktmodti: Optional[int] = None
+    tfwmatmax: Optional[float] = None
+    fw_th_conductivity: Optional[float] = None
+    fvoldw: Optional[float] = None
+    fvolsi: Optional[float] = None
+    fvolso: Optional[float] = None
+    fwclfr: Optional[float] = None
+    rpf2dewar: Optional[float] = None
+    vfshld: Optional[float] = None
+    irefprop: Optional[int] = None
+    fblli2o: Optional[float] = None
+    fbllipb: Optional[float] = None
+    vfblkt: Optional[float] = None
+    declblkt: Optional[float] = None
+    declfw: Optional[float] = None
+    declshld: Optional[float] = None
+    blkttype: Optional[int] = None
+    etaiso: Optional[float] = None
+    etahtp: Optional[float] = None
+    n_liq_recirc: Optional[int] = None
+    bz_channel_conduct_liq: Optional[float] = None
+    blpressure_liq: Optional[float] = None
+    inlet_temp_liq: Optional[float] = None
+    outlet_temp_liq: Optional[float] = None
+    f_nuc_pow_bz_struct: Optional[float] = None
+    pnuc_fw_ratio_dcll: Optional[float] = None
+
+    # TF coil
+    sig_tf_case_max: Optional[float] = None
+    sig_tf_wp_max: Optional[float] = None
+    bcritsc: Optional[float] = None
+    casthi_fraction: Optional[float] = None
+    casths_fraction: Optional[float] = None
+    f_t_turn_tf: Optional[float] = None
+    t_turn_tf_max: Optional[float] = None
+    cpttf: Optional[float] = None
+    cpttf_max: Optional[float] = None
+    dcase: Optional[float] = None
+    dcond: List[float] = None
+    dcondins: Optional[float] = None
+    dhecoil: Optional[float] = None
+    farc4tf: Optional[float] = None
+    b_crit_upper_nbti: Optional[float] = None
+    t_crit_nbti: Optional[float] = None
+    fcutfsu: Optional[float] = None
+    fhts: Optional[float] = None
+    i_tf_stress_model: Optional[int] = None
+    i_tf_wp_geom: Optional[int] = None
+    i_tf_case_geom: Optional[int] = None  # Listed as an output
+    i_tf_turns_integer: Optional[int] = None  # Listed as an output
+    i_tf_sc_mat: Optional[int] = None
+    i_tf_sup: Optional[int] = None
+    i_tf_shape: Optional[int] = None  # Listed as an output
+    i_tf_cond_eyoung_trans: Optional[int] = None
+    n_pancake: Optional[int] = None
+    n_layer: Optional[int] = None
+    n_rad_per_layer: Optional[int] = None
+    i_tf_bucking: Optional[int] = None
+    n_tf_graded_layers: Optional[int] = None
+    jbus: Optional[float] = None
+    eyoung_ins: Optional[float] = None
+    eyoung_steel: Optional[float] = None
+    eyong_cond_axial: Optional[float] = None
+    eyoung_res_tf_buck: Optional[float] = None
+    # eyoung_al: Optional[float] = 69000000000.0 # defaults  cannot be right
+    poisson_steel: Optional[float] = None
+    poisson_copper: Optional[float] = None
+    poisson_al: Optional[float] = None
+    str_cs_con_res: Optional[float] = None
+    str_pf_con_res: Optional[float] = None
+    str_tf_con_res: Optional[float] = None
+    str_wp_max: Optional[float] = None
+    i_str_wp: Optional[int] = None
+    quench_model: str = None
+    tcritsc: Optional[float] = None
+    tdmptf: Optional[float] = None
+    tfinsgap: Optional[float] = None
+    # rhotfbus: Optional[float] = -1.0 # defaults cannot be right
+    frhocp: Optional[float] = None
+    frholeg: Optional[float] = None
+    # i_cp_joints: Optional[int] = -1 # defaults cannot be right
+    rho_tf_joints: Optional[float] = None
+    n_tf_joints_contact: Optional[int] = None
+    n_tf_joints: Optional[int] = None
+    th_joint_contact: Optional[float] = None
+    # eff_tf_cryo: Optional[float] = -1.0 # defaults cannot be right
+    n_tf: Optional[int] = None
+    tftmp: Optional[float] = None
+    thicndut: Optional[float] = None
+    thkcas: Optional[float] = None
+    thwcndut: Optional[float] = None
+    tinstf: Optional[float] = None
+    tmaxpro: Optional[float] = None
+    tmax_croco: Optional[float] = None
+    tmpcry: Optional[float] = None
+    vdalw: Optional[float] = None
+    f_vforce_inboard: Optional[float] = None
+    vftf: Optional[float] = None
+    etapump: Optional[float] = None
+    fcoolcp: Optional[float] = None
+    fcoolleg: Optional[float] = None
+    ptempalw: Optional[float] = None
+    rcool: Optional[float] = None
+    tcoolin: Optional[float] = None
+    tcpav: Optional[float] = None
+    vcool: Optional[float] = None
+    theta1_coil: Optional[float] = None
+    theta1_vv: Optional[float] = None
+    max_vv_stress: Optional[float] = None
+    inuclear: Optional[int] = None
+    qnuc: Optional[float] = None
+    ripmax: Optional[float] = None
+    tf_in_cs: Optional[int] = None
+    tfcth: Optional[float] = None
+    tftsgap: Optional[float] = None
+    casthi: Optional[float] = None
+    casths: Optional[float] = None
+    tmargmin: Optional[float] = None
+    oacdcp: Optional[float] = None
+
+    # PF Power
+    iscenr: Optional[int] = None
+    maxpoloidalpower: Optional[float] = None
+
+    # Cost variables
+    abktflnc: Optional[float] = None
+    adivflnc: Optional[float] = None
+    cconfix: Optional[float] = None
+    cconshpf: Optional[float] = None
+    cconshtf: Optional[float] = None
+    cfactr: Optional[float] = None
+    cfind: List[float] = None
+    cland: Optional[float] = None
+    costexp: Optional[float] = None
+    costexp_pebbles: Optional[float] = None
+    cost_factor_buildings: Optional[float] = None
+    cost_factor_land: Optional[float] = None
+    cost_factor_tf_coils: Optional[float] = None
+    cost_factor_fwbs: Optional[float] = None
+    cost_factor_tf_rh: Optional[float] = None
+    cost_factor_tf_vv: Optional[float] = None
+    cost_factor_tf_bop: Optional[float] = None
+    cost_factor_tf_misc: Optional[float] = None
+    maintenance_fwbs: Optional[float] = None
+    maintenance_gen: Optional[float] = None
+    amortization: Optional[float] = None
+    cost_model: Optional[int] = None
+    cowner: Optional[float] = None
+    cplife_input: Optional[float] = None
+    cpstflnc: Optional[float] = None
+    csi: Optional[float] = None
+    # cturbb: Optional[float] = 38.0 # defaults cannot be right
+    decomf: Optional[float] = None
+    dintrt: Optional[float] = None
+    fcap0: Optional[float] = None
+    fcap0cp: Optional[float] = None
+    fcdfuel: Optional[float] = None
+    fcontng: Optional[float] = None
+    fcr0: Optional[float] = None
+    fkind: Optional[float] = None
+    iavail: Optional[int] = None
+    life_dpa: Optional[float] = None
+    avail_min: Optional[float] = None
+    favail: Optional[float] = None
+    num_rh_systems: Optional[int] = None
+    conf_mag: Optional[float] = None
+    div_prob_fail: Optional[float] = None
+    div_umain_time: Optional[float] = None
+    div_nref: Optional[float] = None
+    div_nu: Optional[float] = None
+    fwbs_nref: Optional[float] = None
+    fwbs_nu: Optional[float] = None
+    fwbs_prob_fail: Optional[float] = None
+    fwbs_umain_time: Optional[float] = None
+    redun_vacp: Optional[float] = None
+    tbktrepl: Optional[float] = None
+    tcomrepl: Optional[float] = None
+    tdivrepl: Optional[float] = None
+    uubop: Optional[float] = None
+    uucd: Optional[float] = None
+    uudiv: Optional[float] = None
+    uufuel: Optional[float] = None
+    uufw: Optional[float] = None
+    uumag: Optional[float] = None
+    uuves: Optional[float] = None
+    ifueltyp: Optional[int] = None
+    ucblvd: Optional[float] = None
+    ucdiv: Optional[float] = None
+    ucme: Optional[float] = None
+    ireactor: Optional[int] = None
+    lsa: Optional[int] = None
+    discount_rate: Optional[float] = None
+    startupratio: Optional[float] = None
+    tlife: Optional[float] = None
+    bkt_life_csf: Optional[int] = None
+    # ...
+
+    # CS fatigue
+    residual_sig_hoop: Optional[float] = None
+    n_cycle_min: Optional[int] = None
+    t_crack_vertical: Optional[float] = None
+    t_crack_radial: Optional[float] = None
+    t_structural_radial: Optional[float] = None
+    t_structural_vertical: Optional[float] = None
+    sf_vertical_crack: Optional[float] = None
+    sf_radial_crack: Optional[float] = None
+    sf_fast_fracture: Optional[float] = None
+    paris_coefficient: Optional[float] = None
+    paris_power_law: Optional[float] = None
+    walker_coefficient: Optional[float] = None
+    fracture_toughness: Optional[float] = None
+
+    # REBCO
+    rebco_thickness: Optional[float] = None
+    copper_thick: Optional[float] = None
+    hastelloy_thickness: Optional[float] = None
+    tape_width: Optional[float] = None
+    tape_thickness: Optional[float] = None
+    croco_thick: Optional[float] = None
+    copper_rrr: Optional[float] = None
+    copper_m2_max: Optional[float] = None
+    f_coppera_m2: Optional[float] = None
+    copperaoh_m2_max: Optional[float] = None
+    f_copperaoh_m2: Optional[float] = None
+
+    # Primary pumping
+    primary_pumping: Optional[int] = None
+    gamma_he: Optional[float] = None
+    t_in_bb: Optional[float] = None
+    t_out_bb: Optional[float] = None
+    p_he: Optional[float] = None
+    dp_he: Optional[float] = None
+
+    # Constraint variables
+    auxmin: Optional[float] = None
+    betpmx: Optional[float] = None
+    bigqmin: Optional[float] = None
+    bmxlim: Optional[float] = None
+    fauxmn: Optional[float] = None
+    fbeta: Optional[float] = None
+    fbetap: Optional[float] = None
+    fbetatry: Optional[float] = None
+    fbetatry_lower: Optional[float] = None
+    fcwr: Optional[float] = None
+    fdene: Optional[float] = None
+    fdivcol: Optional[float] = None
+    fdtmp: Optional[float] = None
+    fecrh_ignition: Optional[float] = None
+    fflutf: Optional[float] = None
+    ffuspow: Optional[float] = None
+    fgamcd: Optional[float] = None
+    fhldiv: Optional[float] = None
+    fiooic: Optional[float] = None
+    fipir: Optional[float] = None
+    fjohc: Optional[float] = None
+    fjohc0: Optional[float] = None
+    fjprot: Optional[float] = None
+    flhthresh: Optional[float] = None
+    fmva: Optional[float] = None
+    fnbshinef: Optional[float] = None
+    fncycle: Optional[float] = None
+    fnesep: Optional[float] = None
+    foh_stress: Optional[float] = None
+    fpeakb: Optional[float] = None
+    fpinj: Optional[float] = None
+    fpnetel: Optional[float] = None
+    fportsz: Optional[float] = None
+    fpsepbqar: Optional[float] = None
+    fpsepr: Optional[float] = None
+    fptemp: Optional[float] = None
+    fq: Optional[float] = None
+    fqval: Optional[float] = None
+    fradwall: Optional[float] = None
+    freinke: Optional[float] = None
+    fstrcase: Optional[float] = None
+    fstrcond: Optional[float] = None
+    fstr_wp: Optional[float] = None
+    fmaxvvstress: Optional[float] = None
+    ftbr: Optional[float] = None
+    ftburn: Optional[float] = None
+    ftcycl: Optional[float] = None
+    ftmargoh: Optional[float] = None
+    ftmargtf: Optional[float] = None
+    ftohs: Optional[float] = None
+    ftpeak: Optional[float] = None
+    fvdump: Optional[float] = None
+    fvs: Optional[float] = None
+    fvvhe: Optional[float] = None
+    fwalld: Optional[float] = None
+    fzeffmax: Optional[float] = None
+    gammax: Optional[float] = None
+    maxradwallload: Optional[float] = None
+    mvalim: Optional[float] = None
+    nbshinefmax: Optional[float] = None
+    nflutfmax: Optional[float] = None
+    pdivtlim: Optional[float] = None
+    peakfactrad: Optional[float] = None
+    pnetelin: Optional[float] = None
+    powfmax: Optional[float] = None
+    psepbqarmax: Optional[float] = None
+    pseprmax: Optional[float] = None
+    ptfnucmax: Optional[float] = None
+    tbrmin: Optional[float] = None
+    tbrnmn: Optional[float] = None
+    vvhealw: Optional[float] = None
+    walalw: Optional[float] = None
+    taulimit: Optional[float] = None
+    ftaulimit: Optional[float] = None
+    fniterpump: Optional[float] = None
+    zeffmax: Optional[float] = None
+    fpoloidalpower: Optional[float] = None
+    fpsep: Optional[float] = None
+    fcqt: Optional[float] = None
+
+    # Build variables
+    aplasmin: Optional[float] = None
+    blbmith: Optional[float] = None
+    blbmoth: Optional[float] = None
+    blbpith: Optional[float] = None
+    blbpoth: Optional[float] = None
+    blbuith: Optional[float] = None
+    blbuoth: Optional[float] = None
+    blnkith: Optional[float] = None
+    blnkoth: Optional[float] = None
+    bore: Optional[float] = None
+    clhsf: Optional[float] = None
+    ddwex: Optional[float] = None
+    d_vv_in: Optional[float] = None
+    d_vv_out: Optional[float] = None
+    d_vv_top: Optional[float] = None
+    d_vv_bot: Optional[float] = None
+    f_avspace: Optional[float] = None
+    fcspc: Optional[float] = None
+    fhole: Optional[float] = None
+    fseppc: Optional[float] = None
+    gapds: Optional[float] = None
+    gapoh: Optional[float] = None
+    gapomin: Optional[float] = None
+    iohcl: Optional[int] = None
+    iprecomp: Optional[int] = None
+    ohcth: Optional[float] = None
+    rinboard: Optional[float] = None
+    f_r_cp: Optional[float] = None
+    scrapli: Optional[float] = None
+    scraplo: Optional[float] = None
+    shldith: Optional[float] = None
+    shldlth: Optional[float] = None
+    shldoth: Optional[float] = None
+    shldtth: Optional[float] = None
+    sigallpc: Optional[float] = None
+    tfoofti: Optional[float] = None
+    thshield_ib: Optional[float] = None
+    thshield_ob: Optional[float] = None
+    thshield_vb: Optional[float] = None
+    vgap: Optional[float] = None
+    vgap2: Optional[float] = None
+    vgaptop: Optional[float] = None
+    vvblgap: Optional[float] = None
+    plleni: Optional[float] = None
+    plsepi: Optional[float] = None
+    plsepo: Optional[float] = None
+
+    # Buildings
+
+    # Current drive
+    beamwd: Optional[float] = None
+    bscfmax: Optional[float] = None
+    cboot: Optional[float] = None
+    harnum: Optional[float] = None
+    enbeam: Optional[float] = None
+    etaech: Optional[float] = None
+    etanbi: Optional[float] = None
+    feffcd: Optional[float] = None
+    frbeam: Optional[float] = None
+    ftritbm: Optional[float] = None
+    gamma_ecrh: Optional[float] = None
+    rho_ecrh: Optional[float] = None
+    xi_ebw: Optional[float] = None
+    iefrf: Optional[int] = None
+    irfcf: Optional[int] = None
+    nbshield: Optional[float] = None
+    pheat: Optional[float] = None  # Listed as an output
+    pinjalw: Optional[float] = None
+    tbeamin: Optional[float] = None
+
+    # Impurity radiation
+    coreradius: Optional[float] = None
+    coreradiationfraction: Optional[float] = None
+    fimp: List[float] = None
+    fimpvar: Optional[float] = None
+    impvar: Optional[int] = None
+
+    # Reinke
+    impvardiv: Optional[int] = None
+    lhat: Optional[float] = None
+    fzactual: Optional[float] = None
+
+    # Divertor
+    divdum: Optional[int] = None
+    anginc: Optional[float] = None
+    beta_div: Optional[float] = None
+    betai: Optional[float] = None
+    betao: Optional[float] = None
+    bpsout: Optional[float] = None
+    c1div: Optional[float] = None
+    c2div: Optional[float] = None
+    c3div: Optional[float] = None
+    c4div: Optional[float] = None
+    c5div: Optional[float] = None
+    delld: Optional[float] = None
+    divclfr: Optional[float] = None
+    divdens: Optional[float] = None
+    divfix: Optional[float] = None
+    divleg_profile_inner: Optional[float] = None
+    divleg_profile_outer: Optional[float] = None
+    divplt: Optional[float] = None
+    fdfs: Optional[float] = None
+    fdiva: Optional[float] = None
+    fgamp: Optional[float] = None
+    fififi: Optional[float] = None
+    flux_exp: Optional[float] = None
+    frrp: Optional[float] = None
+    hldivlim: Optional[float] = None
+    ksic: Optional[float] = None
+    omegan: Optional[float] = None
+    prn1: Optional[float] = None
+    rlenmax: Optional[float] = None
+    tdiv: Optional[float] = None
+    xparain: Optional[float] = None
+    xpertin: Optional[float] = None
+    zeffdiv: Optional[float] = None
+
+    # Pulse
+    bctmp: Optional[float] = None
+    dtstor: Optional[float] = None
+    istore: Optional[int] = None
+    itcycl: Optional[int] = None
+    lpulse: Optional[int] = None  # Listed as an output
+
+    # IFE
+
+    # Heat transport
+    baseel: Optional[float] = None
+    crypw_max: Optional[float] = None
+    f_crypmw: Optional[float] = None
+    etatf: Optional[float] = None
+    etath: Optional[float] = None
+    fpumpblkt: Optional[float] = None
+    fpumpdiv: Optional[float] = None
+    fpumpfw: Optional[float] = None
+    fpumpshld: Optional[float] = None
+    ipowerflow: Optional[int] = None
+    iprimshld: Optional[int] = None
+    pinjmax: Optional[float] = None
+    pwpm2: Optional[float] = None
+    trithtmw: Optional[float] = None
+    vachtmw: Optional[float] = None
+    irfcd: Optional[int] = None
+
+    # Water usage
+
+    # Vacuum
+    ntype: Optional[int] = None
+    pbase: Optional[float] = None
+    prdiv: Optional[float] = None
+    pumptp: Optional[float] = None
+    rat: Optional[float] = None
+    tn: Optional[float] = None
+    pumpareafraction: Optional[float] = None
+    pumpspeedmax: Optional[float] = None
+    pumpspeedfactor: Optional[float] = None
+    initialpressure: Optional[float] = None
+    outgasindex: Optional[float] = None
+    outgasfactor: Optional[float] = None
+
+    # PF coil
+    alfapf: Optional[float] = None
+    alstroh: Optional[float] = None
+    coheof: Optional[float] = None
+    cptdin: List[float] = None
+    etapsu: Optional[float] = None
+    fcohbop: Optional[float] = None
+    fcuohsu: Optional[float] = None
+    fcupfsu: Optional[float] = None
+    fvssu: Optional[float] = None
+    ipfloc: Optional[List[int]] = None
+    ipfres: Optional[int] = None  # Listed as an output
+    isumatoh: Optional[int] = None
+    isumatpf: Optional[int] = None
+    i_pf_current: Optional[int] = None
+    ncls: Optional[List[int]] = None
+    nfxfh: Optional[int] = None
+    ngrp: Optional[int] = None
+    ohhghf: Optional[float] = None
+    oh_steel_frac: Optional[float] = None
+    pfclres: Optional[float] = None
+    rjconpf: List[float] = None
+    routr: Optional[float] = None
+    rpf2: Optional[float] = None
+    rref: List[float] = None
+    sigpfcalw: Optional[float] = None
+    sigpfcf: Optional[float] = None
+    vf: List[float] = None
+    vhohc: Optional[float] = None
+    zref: List[float] = None
+    bmaxcs_lim: Optional[float] = None
+    fbmaxcs: Optional[float] = None
+    ld_ratio_cst: Optional[float] = None
+
+    # Physics
+    alphaj: Optional[float] = None
+    alphan: Optional[float] = None
+    alphat: Optional[float] = None
+    aspect: Optional[float] = None
+    beamfus0: Optional[float] = None
+    beta: Optional[float] = None
+    betbm0: Optional[float] = None
+    bt: Optional[float] = None
+    csawth: Optional[float] = None
+    cvol: Optional[float] = None
+    cwrmax: Optional[float] = None
+    dene: Optional[float] = None
+    dnbeta: Optional[float] = None
+    epbetmax: Optional[float] = None
+    falpha: Optional[float] = None
+    fdeut: Optional[float] = None
+    ftar: Optional[float] = None
+    ffwal: Optional[float] = None
+    fgwped: Optional[float] = None
+    fgwsep: Optional[float] = None
+    fkzohm: Optional[float] = None
+    fpdivlim: Optional[float] = None
+    fne0: Optional[float] = None
+    ftrit: Optional[float] = None
+    fvsbrnni: Optional[float] = None
+    gamma: Optional[float] = None
+    hfact: Optional[float] = None
+    taumax: Optional[float] = None
+    ibss: Optional[int] = None
+    iculbl: Optional[int] = None  # listed as an output...
+    icurr: Optional[int] = None
+    idensl: Optional[int] = None
+    ifalphap: Optional[int] = None
+    ifispact: Optional[int] = None  # listed as an output...
+    iinvqd: Optional[int] = None
+    ipedestal: Optional[int] = None
+    ieped: Optional[int] = None  # listed as an output...
+    eped_sf: Optional[float] = None
+    neped: Optional[float] = None
+    nesep: Optional[float] = None
+    plasma_res_factor: Optional[float] = None
+    rhopedn: Optional[float] = None
+    rhopedt: Optional[float] = None
+    tbeta: Optional[float] = None
+    teped: Optional[float] = None
+    tesep: Optional[float] = None
+    iprofile: Optional[int] = None
+    iradloss: Optional[int] = None
+    isc: Optional[int] = None
+    iscrp: Optional[int] = None
+    ishape: Optional[int] = None  # listed as an output...
+    itart: Optional[int] = None  # listed as an output...
+    itartpf: Optional[int] = None  # listed as an output...
+    iwalld: Optional[int] = None
+    kappa: Optional[float] = None
+    kappa95: Optional[float] = None
+    m_s_limit: Optional[float] = None
+    ilhthresh: Optional[int] = None
+    q: Optional[float] = None
+    q0: Optional[float] = None
+    tauratio: Optional[float] = None
+    rad_fraction_sol: Optional[float] = None
+    ralpne: Optional[float] = None
+    rli: Optional[float] = None
+    rmajor: Optional[float] = None
+    rnbeam: Optional[float] = None
+    i_single_null: Optional[int] = None
+    ssync: Optional[float] = None
+    te: Optional[float] = None
+    ti: Optional[float] = None
+    tratio: Optional[float] = None
+    triang: Optional[float] = None
+    triang95: Optional[float] = None
+
+    # Stellarator
+    fblvd: Optional[float] = None
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
@@ -315,25 +725,30 @@ class ProcessInputs:
         """
         out_dict = {}
         for name, value in self:
-            if name not in ["icc", "ixc", "bounds"]:
+            if name not in ["icc", "ixc", "bounds"] and value is not None:
                 new_val = _INVariable(name, value, "Parameter", "", "")
                 out_dict[name] = new_val
         out_dict["icc"] = _INVariable(
             "icc",
-            self.icc,
+            [] if self.icc is None else self.icc,
             "Constraint Equation",
             "Constraint Equation",
             "Constraint Equations",
         )
+        # PROCESS iteration variables need to be sorted to converge well(!)
         out_dict["ixc"] = _INVariable(
             "ixc",
-            self.ixc,
+            [] if self.ixc is None else sorted(self.ixc),
             "Iteration Variable",
             "Iteration Variable",
             "Iteration Variables",
         )
         out_dict["bounds"] = _INVariable(
-            "bounds", self.bounds, "Bound", "Bound", "Bounds"
+            "bounds",
+            {} if self.bounds is None else self.bounds,
+            "Bound",
+            "Bound",
+            "Bounds",
         )
         return out_dict
 

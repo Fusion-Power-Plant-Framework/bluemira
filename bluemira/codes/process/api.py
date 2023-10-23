@@ -22,11 +22,13 @@
 """
 PROCESS api
 """
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Dict, List, TypeVar, Union
+from typing import Dict, Iterable, List, Literal, Tuple, TypeVar, Union
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
@@ -58,6 +60,7 @@ PROCESS_DICT = {}
 imp_data = None  # placeholder for PROCESS module
 
 try:
+    from process.impurity_radiation import ImpurityDataHeader, read_impurity_file
     from process.io.in_dat import InDat  # noqa: F401, F811
     from process.io.mfile import MFile  # noqa: F401, F811
     from process.io.python_fortran_dicts import get_dicts
@@ -141,18 +144,20 @@ class Impurities(Enum):
     Xe = 13
     W = 14
 
-    def file(self):
+    def files(self) -> Dict[str, Path]:
         """
         Get PROCESS impurity data file path
         """
-        # TODO(je-cook) fixme process data has moved/ been removed
         with resources.path(
             "process.data.lz_non_corona_14_elements", "Ar_lz_tau.dat"
         ) as dp:
             data_path = dp.parent
 
         try:
-            return Path(data_path, f"{self.name:_<2}lz_tau.dat")
+            return {
+                i: Path(data_path, f"{self.name:_<3}{i}_tau.dat")
+                for i in ("lz", "z", "z2")
+            }
         except NameError:
             raise CodesError("PROCESS impurity data directory not found") from None
 
@@ -160,7 +165,16 @@ class Impurities(Enum):
         """
         Get variable string for impurity fraction
         """
-        return f"fimp({self.value:02}"
+        return f"fimp({self.value:02})"
+
+    def read_impurity_files(
+        self, filetype: Iterable[Literal["lz", "z2", "z"]]
+    ) -> Tuple[list[ImpurityDataHeader]]:
+        """Get contents of impurity data files"""
+        files = self.files()
+        return tuple(
+            read_impurity_file(files[file]) for file in set(filetype).intersection(files)
+        )
 
 
 def update_obsolete_vars(process_map_name: str) -> Union[str, List[str], None]:
