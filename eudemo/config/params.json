@@ -1048,7 +1048,7 @@
   },
   "gamma_ecrh": {
     "value": 0.3,
-    "unit": "1e20 A/W/m^2",
+    "unit": "A/W/m^2",
     "source": "Input",
     "long_name": "Electron cyclotron resonce heating current drive efficiency"
   }
