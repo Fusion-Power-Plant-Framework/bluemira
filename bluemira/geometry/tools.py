@@ -87,7 +87,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     JSON Encoder for BluemiraGeo.
     """
 
-    def default(self, obj: Union[BluemiraGeo, np.ndarray, Any]):  # noqa: PLR6301
+    def default(self, obj: Union[BluemiraGeo, np.ndarray, Any]):
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
         """

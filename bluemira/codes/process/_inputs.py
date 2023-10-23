@@ -285,7 +285,7 @@ class ProcessInputs:
         """
         out_dict = {}
         for name, value in self:
-            if name not in ["icc", "ixc", "bounds"]:
+            if name not in {"icc", "ixc", "bounds"}:
                 new_val = _INVariable(name, value, "Parameter", "", "")
                 out_dict[name] = new_val
         out_dict["icc"] = _INVariable(

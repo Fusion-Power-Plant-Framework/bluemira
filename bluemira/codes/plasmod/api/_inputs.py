@@ -242,7 +242,7 @@ class PlasmodInputs:
         for enum_val in enum_cls:
             # Let's us specify using the enum value (usually an int)
             # or specify using the enum's name (e.g., q95_sawtooth)
-            if value in (enum_val.value, enum_val.name):
+            if value in {enum_val.value, enum_val.name}:
                 return enum_val
         raise ValueError(
             f"Cannot convert '{value}' to value enumerated by '{enum_cls.__name__}'."

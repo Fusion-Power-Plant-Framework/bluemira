@@ -1991,7 +1991,7 @@ def _wire_is_straight(wire):
 
 
 def _is_wire_or_face(shape_type):
-    return shape_type in (apiWire, apiFace)
+    return shape_type in {apiWire, apiFace}
 
 
 def _check_shapes_same_type(shapes):
@@ -2463,7 +2463,7 @@ def serialize_shape(shape):
     if type_ == Part.Edge:
         return serialize_shape(_convert_edge_to_curve(shape))
 
-    if type_ in [Part.LineSegment, Part.Line]:
+    if type_ in {Part.LineSegment, Part.Line}:
         return {
             "LineSegment": {
                 "StartPoint": list(shape.StartPoint),

@@ -848,7 +848,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         wire.translate((0, 0, dz))
         return wire
 
-    def _label_function(self, ax, shape: BluemiraWire):  # noqa: PLR6301
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
@@ -1112,7 +1112,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         return BluemiraWire(wires, label=label)
 
-    def _label_function(self, ax, shape: BluemiraWire):  # noqa: PLR6301
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
@@ -1412,7 +1412,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
         return p1, p2
 
-    def _label_function(self, ax, shape: BluemiraWire):  # noqa: PLR6301
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 

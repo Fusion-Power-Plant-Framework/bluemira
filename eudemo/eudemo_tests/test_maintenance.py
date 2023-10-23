@@ -168,7 +168,7 @@ class TestDuctConnection:
             assert np.isclose(np.cross(v1, v2), 0)
 
             # Are they the right distance apart
-            if no in (0, 3):
+            if no in {0, 3}:
                 assert np.isclose(distance_to(e1, e2)[0], port_wall * 2)
             else:
                 assert np.isclose(distance_to(e1, e2)[0], port_wall)
