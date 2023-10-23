@@ -107,10 +107,10 @@ class Snapshot:
     def __post_init__(self):
         """Copy some variables on initialisation"""
         for fld in fields(type(self)):
-            if (val := getattr(self, fld.name)) is not None and fld.name not in (
+            if (val := getattr(self, fld.name)) is not None and fld.name not in {
                 "constraints",
                 "tfcoil",
-            ):
+            }:
                 setattr(self, fld.name, deepcopy(val))
 
 

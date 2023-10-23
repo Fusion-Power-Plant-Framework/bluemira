@@ -31,7 +31,7 @@ class TestProcessInput:
         for k, v in self.df.to_invariable().items():
             assert k == v.name
             assert isinstance(v, _INVariable)
-            if k not in ["icc", "ixc", "bounds"]:
+            if k not in {"icc", "ixc", "bounds"}:
                 assert v.v_type == "Parameter"
             elif k == "icc":
                 assert v.v_type == "Constraint Equation"

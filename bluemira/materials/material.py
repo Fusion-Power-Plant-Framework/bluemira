@@ -600,7 +600,7 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         if density is None:
             raise MaterialsError("No density (value or T-function) specified.")
 
-        if density_unit not in ["kg/m3", "g/cm3", "g/cc"]:
+        if density_unit not in {"kg/m3", "g/cm3", "g/cc"}:
             raise MaterialsError("Density unit must be one of kg/m3, g/cm3, or g/cc")
 
         if isinstance(density.value, (int, float)):
@@ -685,7 +685,7 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         """
         density = _try_calc_property(self, "density_prop", temperature)
 
-        if self.density_unit in ["g/cm3", "g/cc"]:
+        if self.density_unit in {"g/cm3", "g/cc"}:
             density = gcm3_to_kgm3(density)
 
         return density
@@ -1134,7 +1134,7 @@ class Liquid(SerialisedMaterial, nmm.Material):
         if density is None:
             raise MaterialsError("No density (value or T/P-function) specified.")
 
-        if density_unit not in ["kg/m3", "g/cm3", "g/cc"]:
+        if density_unit not in {"kg/m3", "g/cm3", "g/cc"}:
             raise MaterialsError("Density unit must be one of kg/m3, g/cm3, or g/cc")
 
         if isinstance(density.value, (int, float)):
@@ -1181,7 +1181,7 @@ class Liquid(SerialisedMaterial, nmm.Material):
 
         density = _try_calc_property(self, "density_prop", temperature, pressure)
 
-        if self.density_unit in ["g/cm3", "g/cc"]:
+        if self.density_unit in {"g/cm3", "g/cc"}:
             density = gcm3_to_kgm3(density)
 
         return density

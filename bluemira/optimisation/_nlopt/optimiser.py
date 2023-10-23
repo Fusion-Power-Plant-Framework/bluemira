@@ -164,7 +164,7 @@ class NloptOptimiser(Optimiser):
 
         See :meth:`~bluemira.optimisation._optimiser.Optimiser.add_eq_constraint`.
         """
-        if self.algorithm not in [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES]:
+        if self.algorithm not in {Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES}:
             raise OptimisationError(
                 f"Algorithm '{self.algorithm.name}' does not support equality "
                 "constraints."
@@ -190,7 +190,7 @@ class NloptOptimiser(Optimiser):
 
         See :meth:`~bluemira.optimisation._optimiser.Optimiser.add_ineq_constraint`.
         """
-        if self.algorithm not in [Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES]:
+        if self.algorithm not in {Algorithm.SLSQP, Algorithm.COBYLA, Algorithm.ISRES}:
             raise OptimisationError(
                 f"Algorithm '{self.algorithm.name}' does not support inequality "
                 "constraints."
