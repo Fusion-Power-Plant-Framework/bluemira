@@ -85,6 +85,7 @@ class EUDEMOReactorParams(ParameterFrame):
     P_sync: Parameter[float]
     PF_bmax: Parameter[float]
     PF_jmax: Parameter[float]
+    q_0: Parameter[float]
     q_95: Parameter[float]
     R_0: Parameter[float]
     r_cs_corner: Parameter[float]
