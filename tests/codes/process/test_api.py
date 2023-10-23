@@ -46,8 +46,8 @@ def test_impurities(imp_data_mock):
     imp_data_mock.__file__ = "./__init__.py"
     assert api.Impurities["H"] == api.Impurities.H
     assert api.Impurities(1) == api.Impurities.H
-    assert api.Impurities(1).id() == "fimp(01"
-    assert api.Impurities(10).id() == "fimp(10"
+    assert api.Impurities(1).id() == "fimp(01)"
+    assert api.Impurities(10).id() == "fimp(10)"
     assert api.Impurities(1).file().parts[-1] == "H__lz_tau.dat"
     assert api.Impurities(10).file().parts[-1] == "Fe_lz_tau.dat"
 
