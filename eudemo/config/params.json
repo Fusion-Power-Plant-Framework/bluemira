@@ -376,6 +376,12 @@
     "source": "Input",
     "long_name": "95th percentile plasma elongation"
   },
+  "m_s_limit": {
+    "value": 0.1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Margin to vertical stability criterion"
+  },
   "l_i": {
     "value": 0.8,
     "unit": "dimensionless",
@@ -388,11 +394,17 @@
     "source": "Input",
     "long_name": "Number of TF coils"
   },
+  "q_0": {
+    "value": 1.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Plasma safety factor on axis"
+  },
   "q_95": {
     "value": 3.8,
     "unit": "dimensionless",
     "source": "Input",
-    "long_name": "Plasma safety factor"
+    "long_name": "Plasma safety factor at the 95th percentile flux surface"
   },
   "r_cs_corner": {
     "value": 0,
@@ -472,17 +484,23 @@
     "source": "Input",
     "long_name": "Outboard vessel inner radius"
   },
+  "sigma_cs_wp_max": {
+    "value": 660000000.0,
+    "unit": "pascal",
+    "source": "Input",
+    "long name": "Maximum von Mises stress in the CS coil winding pack"
+  },
   "sigma_tf_case_max": {
-    "value": 550000000.0,
+    "value": 580000000.0,
     "unit": "pascal",
     "source": "Input",
     "long_name": "Maximum von Mises stress in the TF coil case nose"
   },
   "sigma_tf_wp_max": {
-    "value": 550000000.0,
+    "value": 580000000.0,
     "unit": "pascal",
     "source": "Input",
-    "long_name": "Maximum von Mises stress in the TF coil winding pack nose"
+    "long_name": "Maximum von Mises stress in the TF coil winding pack"
   },
   "tau_e": {
     "value": 3,
@@ -1021,5 +1039,17 @@
     "value": 150,
     "unit": "MW",
     "long_name": "Steady-state heating and current drive electrical power"
+  },
+  "eta_ecrh": {
+    "value": 0.4,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Electron cyclotron resonce heating wallplug efficiency"
+  },
+  "gamma_ecrh": {
+    "value": 0.3,
+    "unit": "1e20 A/W/m^2",
+    "source": "Input",
+    "long_name": "Electron cyclotron resonce heating current drive efficiency"
   }
 }

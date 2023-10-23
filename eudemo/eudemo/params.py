@@ -64,6 +64,7 @@ class EUDEMOReactorParams(ParameterFrame):
     ib_offset_angle: Parameter[float]
     kappa_95: Parameter[float]
     kappa: Parameter[float]
+    m_s_limit: Parameter[float]
     l_i: Parameter[float]
     n_CS: Parameter[int]
     n_PF: Parameter[int]
@@ -85,6 +86,7 @@ class EUDEMOReactorParams(ParameterFrame):
     P_sync: Parameter[float]
     PF_bmax: Parameter[float]
     PF_jmax: Parameter[float]
+    q_0: Parameter[float]
     q_95: Parameter[float]
     R_0: Parameter[float]
     r_cs_corner: Parameter[float]
@@ -100,6 +102,7 @@ class EUDEMOReactorParams(ParameterFrame):
     r_ts_ib_in: Parameter[float]
     r_vv_ib_in: Parameter[float]
     r_vv_ob_in: Parameter[float]
+    sigma_cs_wp_max: Parameter[float]
     sigma_tf_case_max: Parameter[float]
     sigma_tf_wp_max: Parameter[float]
     T_e: Parameter[float]
@@ -151,6 +154,10 @@ class EUDEMOReactorParams(ParameterFrame):
     T_e_ped: Parameter[float]
     q_control: Parameter[float]
 
+    # Heating and current drive
+    eta_ecrh: Parameter[float]
+    gamma_ecrh: Parameter[float]
+
     # Equilibrium
     div_L2D_ib: Parameter[float]
     div_L2D_ob: Parameter[float]
@@ -164,7 +171,7 @@ class EUDEMOReactorParams(ParameterFrame):
     div_Ltarg: Parameter[float]  # noqa: N815
     div_open: Parameter[bool]
 
-    # Plasma face
+    # Remote maintenance
     c_rm: Parameter[float]
 
     # Vacuum vessel
