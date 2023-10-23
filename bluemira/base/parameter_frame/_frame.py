@@ -405,6 +405,10 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
 def _validate_units(param_data: Dict, value_type: Iterable[Type]):
     try:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
+    except ValueError:
+        quantity = pint.Quantity(f'{param_data["value"]}*{param_data["unit"]}')
+        param_data["value"] = quantity.magnitude
+        param_data["unit"] = quantity.units
     except KeyError as ke:
         raise ValueError("Parameters need a value and a unit") from ke
     except TypeError:
