@@ -61,6 +61,8 @@ IN_mappings = {
 
 OUT_mappings = {
     "P_el_net_process": ("pnetelmw", "MW"),
+    # TODO: Different in/out mapping, is this OK and should we do the same with P_el_net
+    "tau_flattop": ("tburn", "s"),
     "R_0": ("rmajor", "m"),
     "B_0": ("bt", "T"),
     "kappa_95": ("kappa95", "dimensionless"),
@@ -122,17 +124,16 @@ IO_mappings = {
     "tk_vv_in": ("d_vv_in", "m"),
     "tk_sol_ib": ("scrapli", "m"),
     "tk_sol_ob": ("scraplo", "m"),
-    # Thermal shield thickness is a constant for us
-    # "tk_ts": ("thshield_ob", "m"),
-    # "tk_ts": ("thshield_vb", "m"),
-    "tk_ts": ("thshield_ib", "m"),
     "g_cs_tf": ("gapoh", "m"),
     "g_ts_tf": ("tftsgap", "m"),
     "g_vv_bb": ("vvblgap", "m"),
 }
 
 NONE_mappings = {
-    "tau_flattop": ("tburn", "s"),
+    # Thermal shield thickness is a constant for us
+    # "tk_ts": ("thshield_ob", "m"),
+    # "tk_ts": ("thshield_vb", "m"),
+    "tk_ts": ("thshield_ib", "m"),
     "B_tf_peak": ("bmaxtfrp", "T"),
     "T_e": ("te", "keV"),
     "Z_eff": ("zeff", "amu"),
