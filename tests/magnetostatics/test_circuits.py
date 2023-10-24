@@ -485,11 +485,14 @@ class TestPolyhedral2DRing:
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
-    def test_point(self):
-        point = np.array([10, 0, 0])
-        Bx, By, Bz = self.arc_circuit.field(10, 0, 0)
+    @pytest.mark.parametrize(
+        ("point"),
+        [((0, 0, 0)), ((10, 0, 0)), ((0, 10, 0))],
+    )
+    def test_point(self, point):
+        Bx, By, Bz = self.arc_circuit.field(*point)
         B = np.sqrt(Bx**2 + By**2 + Bz**2)
-        Bx, By, Bz = self.poly_circuit.field(10, 0, 0)
+        Bx, By, Bz = self.poly_circuit.field(*point)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         field = np.array([0, 0, 0])
         for s in self.poly_circuit.sources:
@@ -498,7 +501,7 @@ class TestPolyhedral2DRing:
                 [s._face_points[-1]],
                 [s._face_normals[-1]],
                 [s._mid_points[-1]],
-                point,
+                np.array(point),
             )
         B_new2 = np.sqrt(Bx**2 + By**2 + Bz**2)
         test1 = B_new == pytest.approx(B, rel=0, abs=EPS)
