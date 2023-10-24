@@ -57,7 +57,6 @@ OUT_mappings = {
     "P_el_net_process": ("pnetelmw", "MW"),
     # TODO: Different in/out mapping, is this OK and should we do the same with P_el_net
     "tau_flattop": ("tburn", "s"),
-    "q_95": ("q", "dimensionless"),
     "R_0": ("rmajor", "m"),
     "B_0": ("bt", "T"),
     "kappa_95": ("kappa95", "dimensionless"),
@@ -145,6 +144,8 @@ NONE_mappings = {
     "tk_ts": ("thshield_ib", "m"),
     # "tk_ts": ("thshield_ob", "m"),
     # "tk_ts": ("thshield_vb", "m"),
+    # q is not properly put in the MFILE output
+    "q_95": ("q", "dimensionless"),
 }
 
 mappings = create_mapping(IN_mappings, OUT_mappings, IO_mappings, NONE_mappings)
