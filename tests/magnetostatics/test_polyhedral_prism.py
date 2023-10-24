@@ -290,6 +290,7 @@ class TestPolyhedralPrismBabicAykel:
         poly.plot(ax)
         cm = ax.contourf(args_diff[i], args_diff[j], args_diff[k], zdir=plane, offset=0)
         f.colorbar(cm)
+        f.tight_layout()
         plt.show()
         np.testing.assert_allclose(B_new, B)
 
