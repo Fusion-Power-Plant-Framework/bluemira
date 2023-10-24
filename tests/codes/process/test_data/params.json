@@ -560,6 +560,12 @@
     "source": "Input",
     "long_name": "Outboard Radius of the TF coil inboard leg tapered region"
   },
+  "sigma_cs_wp_max": {
+    "value": 660000000.0,
+    "unit": "pascal",
+    "source": "Input",
+    "long_name": "Maximum von Mises stress in the CS coil winding pack"
+  },
   "sigma_tf_case_max": {
     "value": 550000000.0,
     "unit": "pascal",
