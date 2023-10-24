@@ -589,5 +589,37 @@
     "unit": "meter",
     "source": "Input",
     "long_name": "TF coil outboard thickness"
+  },
+  "bb_pump_eta_el": {
+    "value": 0.87,
+    "unit": "",
+    "long_name": "Breeding blanket pumping electrical efficiency"
+  },
+  "bb_pump_eta_isen": {
+    "value": 0.9,
+    "unit": "",
+    "long_name": "Breeding blanket pumping isentropic efficiency"
+  },
+  "bb_t_inlet": {
+    "value": 573.15,
+    "unit": "K",
+    "long_name": "Breeding blanket inlet temperature"
+  },
+  "bb_t_outlet": {
+    "value": 773.15,
+    "unit": "K",
+    "long_name": "Breeding blanket outlet temperature"
+  },
+  "eta_ecrh": {
+    "value": 0.4,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Electron cyclotron resonce heating wallplug efficiency"
+  },
+  "gamma_ecrh": {
+    "value": 0.3e20,
+    "unit": "A/W/m^2",
+    "source": "Input",
+    "long_name": "Electron cyclotron resonce heating current drive efficiency"
   }
 }
