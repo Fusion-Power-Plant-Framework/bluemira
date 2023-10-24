@@ -275,7 +275,8 @@ class TestPolyhedralPrismBabicAykel:
         f.colorbar(cm)
 
         ax = f.add_subplot(1, 3, 2, projection="3d")
-        ax.set_title("PolyhedralPrism")
+        title = f"PolyhedralPrism {poly._kernel.__class__.__name__}"
+        ax.set_title(title)
         poly.plot(ax)
         Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
