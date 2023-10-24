@@ -413,7 +413,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
                 quantity = pint.Quantity(
                     1 if param_data["unit"] in (None, "") else param_data["unit"]
                 )
-                param_data["source"] = f"{param_data.get('source', '')}\nMAD UNIT:"
+                param_data["source"] = f"{param_data.get('source', '')}\nMAD UNIT 🤯 😭:"
             else:
                 raise ValueError("Unit conversion failed") from pe
         else:
