@@ -117,6 +117,28 @@ class Bottura(PolyhedralKernel):
         return _vector_potential_bottura(*args)
 
 
+class Ciric(PolyhedralKernel):
+    """
+    Ciric polyhedral prism formulation
+
+    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=123865&tag=1
+    """
+
+    @staticmethod
+    def field(*args) -> np.ndarray:
+        """
+        Magnetic field
+        """
+        return _field_ciric(*args)
+
+    @staticmethod
+    def vector_potential(*args) -> np.ndarray:
+        """
+        Vector potential
+        """
+        raise NotImplementedError
+
+
 @nb.jit(nopython=True, cache=True)
 def vector_norm_eps(r: np.ndarray) -> float:
     """
@@ -710,3 +732,76 @@ def _line_integral_bottura(x: float, y: float, z: float) -> float:
     a1 = np.arctan2(x * abs_z, (y * r))
     a2 = np.arctan2(x, y)
     return np.log(x + r) + (abs_z / y) * (a1 - a2)
+
+
+def _field_ciric(
+    current_direction: np.ndarray,
+    face_points: np.ndarray,
+    face_normals: np.ndarray,
+    mid_points: np.ndarray,  # noqa: ARG001
+    point: np.ndarray,
+) -> np.ndarray:
+    """
+    Calculate the magnetic field
+
+    Parameters
+    ----------
+    current_direction:
+        Normalised current direction vector (3)
+    face_points:
+        Array of points on each face (n_face, n_points, 3)
+    face_normals:
+        Array of normalised normal vectors to the faces (pointing outwards)
+        (n_face, 3)
+    mid_points:
+        Array of face midpoints (n_face, 3)
+    point:
+        Point at which to calculate the magnetic field (3)
+
+    Returns
+    -------
+    Magnetic field vector at the point (response to unit current density)
+    """
+    [face_points[0], face_points[-1]]
+    rectangles = face_points[1:-1]
+
+    for i, rectangle in enumerate(rectangles):
+        face_normals[i + 1]
+        l_12 = rectangle[0] - rectangle[1]
+        l_34 = rectangle[2] - rectangle[3]
+        zh = rectangle[0] - rectangle[4]
+        zh /= np.linalg.norm(zh)
+        d = np.sqrt(np.linalg.norm(l_12) ** 2 - rectangle[1][2] ** 2)
+        xh = np.cross(l_12, zh) / d  # should be = face_normals[i+1]
+        yh = np.cross(zh, xh)
+        r_1 = point - rectangle[0]
+        r_2 = point - rectangle[1]
+        r_3 = point - rectangle[2]
+        r_4 = point - rectangle[3]
+        r_1n = np.linalg.norm(r_1)
+        r_2n = np.linalg.norm(r_2)
+        r_3n = np.linalg.norm(r_3)
+        r_4n = np.linalg.norm(r_4)
+        l_12n = np.linalg.norm(l_12)
+        l_34n = np.linalg.norm(l_34)
+        np.dot(xh, r_1)
+        np.dot(yh, r_1)
+        z = np.dot(zh, r_1)
+        z_2 = np.dot(zh, l_12)
+        z_3 = np.dot(zh, rectangle[0] - rectangle[2])
+        z_4 = np.dot(zh, rectangle[0] - rectangle[3])
+
+        np.dot(xh, np.cross(r_1, r_2))
+        -np.dot(xh, np.cross(r_3, r_4))
+        q_12 = np.dot(r_1, l_12)
+        q_34 = -np.dot(r_4, l_34)
+
+        lambda_12 = np.log((r_1n * l_12n - q_12) / ((r_2n + l_12n) * l_12n - q_12))
+        lambda_34 = np.log(((r_3n + l_34n) * l_34n - q_34) / (r_4n * l_34n - q_34))
+        (
+            np.log(
+                ((r_1n + z) * (r_3n + z - z_3)) / ((r_2n + z - z_2) * (r_4n + z - z_4))
+            )
+            + lambda_12 * z_2 / l_12n
+            + lambda_34 * (z_3 - z_4) / l_34n
+        )
