@@ -159,6 +159,18 @@ uniform current density, with an arbitary (polygonal) cross-section.
 .. figure:: pic_hexagonal.png
     :name: fig:hexagonal
 
+
+Tapering at the ends of the current source allows for the facilitation of circuits,
+like with the trapezoidal current source. The
+``ArbitraryPlanarPolyhedralXSCircuit`` is a utility provided to enable the construction
+of planar circuits, making use of the ``PolyhedralPrismCurrentSource`` object.
+
+.. literalinclude:: doc_polyhedral_planar.py
+    :language: python
+
+.. figure:: pic_polyhedral_planar.png
+    :name: fig:polyhedral_planar
+
 Finite element
 --------------
 
