@@ -223,6 +223,7 @@ class TestSolverIntegration:
         }
 
         solver = Solver(pf, build_config)
+        solver.params.mappings["tk_sh_in"].send = True
         solver.run_cls = lambda *_, **_kw: None
         solver.teardown_cls = lambda *_, **_kw: None
         solver.execute("run")
