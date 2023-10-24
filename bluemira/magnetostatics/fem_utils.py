@@ -57,6 +57,8 @@ class BluemiraFemFunction(Function):
         Supporting function for __call__
         """
         if len(points.shape) == 1:
+            if len(points) == 2:
+                points = np.array([points[0], points[1], 0])
             points = np.array([points])
         res, new_points = eval_f(self, points)
         if len(res.shape) == 1:
@@ -501,3 +503,39 @@ def compute_B_from_Psi(Psi: BluemiraFemFunction, eltype: tuple, eltype1: tuple =
         B = B0
 
     return B
+
+
+def plot_meshtags(
+    mesh: dolfinx.mesh.Mesh,
+    meshtags: Union[dolfinx.cpp.mesh.MeshTags_float64, dolfinx.cpp.mesh.MeshTags_int32] = None,
+    filename: str = "meshtags.png",
+):
+    """
+    Plot dolfinx mesh with markers using pyvista.
+
+    Parameters
+    ----------
+    mesh: dolfinx.mesh.Mesh
+        Mesh
+    meshtags: Union[dolfinx.cpp.mesh.MeshTags_float64, dolfinx.cpp.mesh.MeshTags_int32]
+        Mesh tags
+    filename: str
+        Full path for plot save
+    """
+
+    # Create VTK mesh
+    cells, types, x = plot.create_vtk_mesh(mesh)
+    grid = pyvista.UnstructuredGrid(cells, types, x)
+
+    # Attach the cells tag data to the pyvita grid
+    if meshtags is not None:
+        grid.cell_data["Marker"] = meshtags.values
+        grid.set_active_scalars("Marker")
+
+    plotter = pyvista.Plotter()
+    plotter.add_mesh(grid, show_edges=True, show_scalar_bar=False)
+    plotter.view_xy()
+    if not pyvista.OFF_SCREEN:
+        plotter.show()
+    else:
+        plotter.screenshot(filename)
