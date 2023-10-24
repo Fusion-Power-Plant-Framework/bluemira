@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+import copy
 import json
 from typing import ClassVar
 
@@ -12,6 +13,7 @@ import numpy as np
 import pytest
 from scipy.interpolate import UnivariateSpline, interp1d
 
+from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry._private_tools import offset
 from bluemira.geometry.coordinates import Coordinates, vector_lengthnorm
@@ -25,6 +27,7 @@ from bluemira.magnetostatics.circuits import (
 )
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_psi
+from bluemira.magnetostatics.polyhedral_prism import field_fabbri as poly_field
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 from tests.magnetostatics.setup_methods import make_xs_from_bd, plane_setup
 
@@ -422,3 +425,82 @@ class TestCariddiBenchmark:
         ax2.plot(self.x_rip[1:19], self.z_rip[1:19], marker=".", color="r")
 
         assert np.max(np.abs(ripple - self.cariddi_ripple)) < 0.04
+
+
+class TestPolyhedral2DRing:
+    @classmethod
+    def setup_class(cls):
+        radius = 7
+        n = 50
+        ring = make_circle(radius, [0, 0, 0], 0, 360, [0, 1, 0])
+        xs = Coordinates({"x": [-1, -1, 1, 1, -1], "z": [-1, 1, 1, -1, -1]})
+        xs.translate(xs.center_of_mass)
+        cls.poly_circuit = ArbitraryPlanarPolyhedralXSCircuit(
+            ring.discretize(ndiscr=n), xs, current=1e6
+        )
+        cls.arc_circuit = CircularArcCurrentSource(
+            [0, 0, 0], [1, 0, 0], [0, 0, 1], [0, 1, 0], 1, 1, 7, 360, current=1e6
+        )
+        cls.trap_circuit = ArbitraryPlanarRectangularXSCircuit(
+            ring.discretize(ndiscr=n), 1, 1, 1e6
+        )
+
+    def test_plot(self):
+        x = np.linspace(-10, 10, 50)
+        z = np.linspace(-10, 10, 50)
+        xx, zz = np.meshgrid(x, z)
+        yy = np.zeros_like(xx)
+        Bx, By, Bz = self.poly_circuit.field(xx, yy, zz)
+        B = np.sqrt(Bx**2 + By**2 + Bz**2)
+        Bx, By, Bz = self.arc_circuit.field(xx, yy, zz)
+        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
+        Bx, By, Bz = self.trap_circuit.field(xx, yy, zz)
+        B_new2 = np.sqrt(Bx**2 + By**2 + Bz**2)
+        self.poly_circuit.plot()
+        f = plt.figure()
+        ax = f.add_subplot(1, 3, 1, projection="3d")
+        ax.set_title("PolyhedralCircuit")
+        # self.poly_circuit.plot(ax)
+        cm = ax.contourf(xx, B, zz, zdir="y", offset=0)
+        # ax.set_title("TrapCircuit")
+        # cm = ax.contourf(xx, B_new2, zz, zdir="y", offset=0)
+        f.colorbar(cm)
+        ax = f.add_subplot(1, 3, 2, projection="3d")
+        ax.set_title("ArcCircuit")
+        cm = ax.contourf(xx, B_new, zz, zdir="y", offset=0)
+        # ax.set_title("TrapCircuit")
+        # self.arc_circuit.plot(ax)
+        # cm = ax.contourf(xx, B_new2, zz, zdir="y", offset=0)
+        f.colorbar(cm)
+        ax = f.add_subplot(1, 3, 3, projection="3d")
+        ax.set_title("difference [%]")
+        # self.poly_circuit.plot(ax)
+        diff = 100 * (B - B_new) / B
+        new_diff = copy.deepcopy(diff)
+        new_diff[abs(diff) < 1e-4] = 0.0
+        cm = ax.contourf(xx, new_diff, zz, zdir="y", offset=0)
+        # cm = ax.contourf(xx, new_diff, zz, zdir="y", offset=0,
+        #                  norm=colors.LogNorm())
+        f.colorbar(cm)
+        plt.show()
+        np.testing.assert_allclose(B_new, B)
+
+    def test_point(self):
+        point = np.array([10, 0, 0])
+        Bx, By, Bz = self.arc_circuit.field(10, 0, 0)
+        B = np.sqrt(Bx**2 + By**2 + Bz**2)
+        Bx, By, Bz = self.poly_circuit.field(10, 0, 0)
+        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
+        field = np.array([0, 0, 0])
+        for s in self.poly_circuit.sources:
+            field = field + s._rho * poly_field(
+                s._dcm[1],
+                [s._face_points[-1]],
+                [s._face_normals[-1]],
+                [s._mid_points[-1]],
+                point,
+            )
+        B_new2 = np.sqrt(Bx**2 + By**2 + Bz**2)
+        test1 = B_new == pytest.approx(B, rel=0, abs=EPS)
+        test2 = B_new2 == pytest.approx(B, rel=0, abs=EPS)
+        assert test1 or test2
