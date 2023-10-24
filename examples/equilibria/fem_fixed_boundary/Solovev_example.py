@@ -15,7 +15,7 @@ from dolfinx.io import gmshio
 import matplotlib.pyplot as plt
 
 from bluemira.equilibria.fem_fixed_boundary.utilities import get_mesh_boundary
-
+from bluemira.codes.bmgmshio import model_to_mesh
 
 class Solovev:
     """
@@ -186,6 +186,7 @@ if __name__ == "__main__":
     gmsh.initialize()
     # points
     point_tags = [gmsh.model.occ.addPoint(v[0], v[1], 0, lcar) for v in LCFS[:-1]]
+    #point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
     line_tags = []
     for i in range(len(point_tags) - 1):
         line_tags.append(gmsh.model.occ.addLine(point_tags[i + 1], point_tags[i]))
@@ -213,13 +214,19 @@ if __name__ == "__main__":
     gmsh.model.mesh.generate(2)
     gmsh.model.mesh.optimize("Netgen")
 
-    mesh, ct, ft = dolfinx.io.gmshio.model_to_mesh(
+    mesh, ct, ft = model_to_mesh(
         gmsh.model, mesh_comm, model_rank, gdim=2
     )
+    # mesh.geometry.x[:, [1, 2]] = mesh.geometry.x[:, 2:1]
 
     gmsh.write("Mesh.geo_unrolled")
     gmsh.write("Mesh.msh")
     gmsh.finalize()
+
+    mesh1, ct1, ft1 = dolfinx.io.gmshio.read_from_msh(
+        "Mesh.msh", mesh_comm, model_rank, gdim=2
+    )
+
 
     # Inizialize the em solever
     gs_solver = FemMagnetostatic2d(2)
@@ -289,8 +296,24 @@ if __name__ == "__main__":
     assert mean_err[0] == mean_err[1]
     assert mean_err[2] == mean_err[3]
     assert mean_err[0] < 2e-1
-    assert mean_err[2] < 1e-2
+    assert mean_err[2] < 1e-5
 
     points_x, points_y = get_mesh_boundary(mesh)
     plt.plot(points_x, points_y)
+    plt.title("Check mesh boundary function")
     plt.show()
+
+    from bluemira.equilibria.fem_fixed_boundary.utilities import find_magnetic_axis
+    o_point = find_magnetic_axis(gs_solver.psi, mesh)
+
+    # gs_solver.psi_ax = max(gs_solver.psi.x.array)
+    # gs_solver.psi_b = 0
+    #
+    # def psi_norm_fun():
+    #     def myfunc(x):
+    #         value = np.sqrt(
+    #             np.abs((gs_solver.psi(x) - gs_solver.psi_ax) / (gs_solver.psi_b - gs_solver.psi_ax))
+    #         )
+    #         return value
+    #
+    #     return myfunc

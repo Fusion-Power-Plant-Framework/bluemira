@@ -37,14 +37,12 @@ Application of the dolfin fem 2D magnetostatic to a single coil problem
 # Import necessary module definitions.
 
 # %%
-
 import gmsh
-import matplotlib.pyplot as plt
 import numpy as np
 import pyvista
 from dolfinx import geometry
 from dolfinx.io import XDMFFile
-from dolfinx.io.gmshio import model_to_mesh
+from bluemira.codes.bmgmshio import model_to_mesh
 from dolfinx.plot import create_vtk_mesh
 from mpi4py import MPI
 
@@ -55,6 +53,11 @@ from bluemira.geometry.wire import BluemiraWire
 
 from bluemira.magnetostatics.finite_element_2d import Bz_coil_axis
 from bluemira.magnetostatics import greens
+
+import matplotlib
+
+matplotlib.use("Qt5Agg")
+import matplotlib.pyplot as plt
 
 rank = MPI.COMM_WORLD.rank
 
@@ -89,6 +92,7 @@ poly_enclo2 = make_polygon(enclosure_points[1:])
 poly_enclo2.mesh_options = {"lcar": 1, "physical_group": "poly_enclo2"}
 poly_enclo = BluemiraWire([poly_enclo1, poly_enclo2])
 poly_enclo.close("poly_enclo")
+poly_enclo.mesh_options = {"lcar": 1, "physical_group": "poly_enclo"}
 
 # coil
 theta_coil = np.linspace(0, 2 * np.pi, nwire)
@@ -132,7 +136,7 @@ meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.
 
 meshing.Mesh(meshfile=meshfiles)(c_universe, dim=2)
 
-mesh, ct, ft = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
+mesh, ct, ft, labels = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
 gmsh.write("Mesh.msh")
 gmsh.finalize()
 
@@ -175,7 +179,7 @@ em_solver.set_mesh(mesh, ct)
 # Define source term (coil current distribution) for the fem problem
 
 # %%
-coil_tag = 5
+coil_tag = labels["coil"][1]
 functions = [(1, coil_tag, I_wire)]
 jtot = create_j_function(mesh, ct, [(1, coil_tag, I_wire)])
 
@@ -270,10 +274,6 @@ plt.xlabel("r (m)")
 plt.ylabel("error (T)")
 plt.show()
 
-import dolfinx
-
-
-def get_mesh_boundary(mesh: dolfinx.mesh.Mesh):
-    boundary_facets = mesh.locate_entities_boundary(
-        domain, fdim, lambda x: np.full(x.shape[1], True, dtype=bool)
-    )
+# from bluemira.magnetostatics.fem_utils import plot_meshtags
+# pyvista.OFF_SCREEN = False
+# plot_meshtags(mesh)

@@ -175,9 +175,14 @@ def find_flux_surface(
     x_axis, z_axis = find_magnetic_axis(lambda x: -psi_norm_func(x), mesh=mesh)
 
     if mesh:
-        search_range = mesh.hmax()
-        mpoints = mesh.coordinates()
-        psi_norm_array = [psi_norm_func(x) for x in mpoints]
+        tdim = mesh.topology.dim
+        num_cells = mesh.topology.index_map(tdim).size_local + mesh.topology.index_map(tdim).num_ghosts
+        h = dolfinx.cpp.mesh.h(mesh, tdim, range(num_cells))
+        search_range = max(h)
+
+        mpoints = mesh.geometry.x
+
+        psi_norm_array = psi_norm_func(mpoints)
         contour = get_tricontours(
             mpoints[:, 0], mpoints[:, 1], psi_norm_array, psi_norm
         )[0]
@@ -393,7 +398,7 @@ def calculate_plasma_shape_params(
         Triangularity of the flux surface at psi_norm
     """
     points = mesh.coordinates()
-    psi_norm_array = [psi_norm_func(x) for x in points]
+    psi_norm_array = [psi_norm_func(points) for x in points]
 
     contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
     x, z = contour.T
@@ -431,7 +436,7 @@ def calculate_plasma_shape_params(
 
     return r_geo, kappa, delta
 
-
+### checked - working
 def find_magnetic_axis(
     psi_func: Callable[[np.ndarray], float], mesh: Optional[dolfinx.mesh.Mesh] = None
 ) -> np.ndarray:
@@ -451,12 +456,17 @@ def find_magnetic_axis(
     Position vector (2) of the magnetic axis [m]
     """
     if mesh:
-        points = mesh.coordinates()
-        psi_array = [psi_func(x) for x in points]
+        points = mesh.geometry.x
+        psi_array = psi_func(points)
         psi_max_arg = np.argmax(psi_array)
 
-        x0 = points[psi_max_arg]
-        search_range = mesh.hmax()
+        x0 = points[psi_max_arg][:2]
+
+        tdim = mesh.topology.dim
+        num_cells = mesh.topology.index_map(tdim).size_local + mesh.topology.index_map(tdim).num_ghosts
+        h = dolfinx.cpp.mesh.h(mesh, tdim, range(num_cells))
+
+        search_range = max(h)
         lower_bounds = x0 - search_range
         upper_bounds = x0 + search_range
     else:
@@ -486,29 +496,7 @@ def _interpolate_profile(
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
 
 
-def _cell_near_point(cell, refine_point: Iterable, distance: float) -> bool:
-    """
-    Determine whether or not a cell is in the vicinity of a point.
-
-    Parameters
-    ----------
-    cell:
-        Cell to check for vicintiy to a point
-    refine_point:
-        Point from which to determine vicinity to a cell
-    distance:
-        Distance away from the midpoint of the cell to determine vicinity
-
-    Returns
-    -------
-    Whether or not the cell is in the vicinity of a point
-    """
-    # Get the center of the cell
-    # Calculate the distance between the cell center and the refinement point
-    # Refine the cell if it is close to the refinement point
-    return np.linalg.norm(cell.midpoint()[:] - np.array(refine_point)) < distance
-
-
+### modified - to be checked
 def refine_mesh(
     mesh: dolfinx.mesh.Mesh,
     refine_point: Iterable[float],
@@ -533,13 +521,14 @@ def refine_mesh(
     -------
     Refined mesh
     """
+    def inside_delta(xs):
+        return np.linalg.norm(xs[:2,:].T - refine_point[:2], axis=1) < distance
+
     for _ in range(num_levels):
-        cell_markers = dolfin.MeshFunction("bool", mesh, mesh.topology().dim())
-        cell_markers.set_all(False)
-        for cell in dolfin.cells(mesh):
-            if _cell_near_point(cell, refine_point, distance):
-                cell_markers[cell.index()] = True
-        mesh = dolfin.refine(mesh, cell_markers)
+        dim = mesh.topology.dim
+        edges = dolfinx.mesh.locate_entities(mesh, dim - 1, inside_delta)
+        mesh.topology.create_entities(1)
+        mesh = dolfinx.mesh.refine(mesh, edges, redistribute=False)
 
     return mesh
 
