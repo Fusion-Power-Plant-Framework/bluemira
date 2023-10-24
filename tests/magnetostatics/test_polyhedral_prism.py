@@ -26,7 +26,8 @@ import numpy as np
 import pytest
 
 from bluemira.base.constants import EPS, raw_uc
-from bluemira.geometry.tools import Coordinates
+from bluemira.geometry.tools import Coordinates, make_circle
+from bluemira.magnetostatics.biot_savart import BiotSavartFilament
 from bluemira.magnetostatics.polyhedral_prism import (
     Bottura,
     Fabbri,
@@ -469,3 +470,61 @@ class TestCombinedShapes:
 
     def teardown_method(self):
         plt.close()
+
+
+class TestCircularXS:
+    @classmethod
+    def setup_class(cls):
+        circle = make_circle(0.1, [0, 0, 0], 0, 360, [1, 0, 0]).discretize(ndiscr=100)
+        coords = Coordinates({"x": circle[1], "z": circle[2]})
+        cls.poly_circle = PolyhedralPrismCurrentSource(
+            [0, 0, 0],
+            [10, 0, 0],
+            [0, 1, 0],
+            [0, 0, 1],
+            coords,
+            0,
+            0,
+            1e6,
+        )
+        n = 200
+        x = np.linspace(-5, 5, n)
+        y = np.zeros(n)
+        z = np.zeros(n)
+        cls.filament = BiotSavartFilament(
+            np.array([x, y, z]).T,
+            radius=0.1,
+            current=1e6,
+        )
+
+    def test_plot(self):
+        y = np.linspace(-2, 2, 100)
+        z = np.linspace(-2, 2, 100)
+        yy, zz = np.meshgrid(y, z)
+        xx = np.zeros_like(yy)
+        r = np.sqrt((yy) ** 2 + (zz) ** 2)
+        pts = (yy) ** 2 + (zz) ** 2 <= 0.099
+        Bx, By, Bz = self.filament.field(xx, yy, zz)
+        B = np.sqrt(Bx**2 + By**2 + Bz**2)
+        B[pts] = 0
+        Bx, By, Bz = self.poly_circle.field(xx, yy, zz)
+        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
+        B_new[pts] = 0
+        f = plt.figure()
+        ax = f.add_subplot(1, 3, 1, projection="3d")
+        ax.set_title("Filament")
+        self.filament.plot(ax)
+        cm = ax.contourf(B, yy, zz, zdir="x", offset=0)
+        f.colorbar(cm)
+        ax = f.add_subplot(1, 3, 2, projection="3d")
+        ax.set_title("PolyCircle")
+        self.poly_circle.plot(ax)
+        cm = ax.contourf(B_new, yy, zz, zdir="x", offset=0)
+        f.colorbar(cm)
+        ax = f.add_subplot(1, 3, 3, projection="3d")
+        ax.set_title("Differences [%]")
+        self.poly_circle.plot(ax)
+        cm = ax.contourf(100 * (B - B_new) / B, yy, zz, zdir="x", offset=0)
+        f.colorbar(cm)
+        plt.show()
+        np.testing.assert_allclose(B_new, B)
