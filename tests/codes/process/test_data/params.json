@@ -530,6 +530,12 @@
     "source": "Input",
     "long_name": "Plasma side TF coil maximum height"
   },
+  "m_s_limit": {
+    "value": 0.1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Margin to vertical stability criterion"
+  },
   "l_i": {
     "value": 0.8,
     "unit": "dimensionless",
