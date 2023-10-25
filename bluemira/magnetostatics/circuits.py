@@ -240,38 +240,6 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
         )
 
 
-class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
-    """
-    An arbitrary, planar current loop of constant polyhedral cross-section
-    and uniform current density.
-
-    Parameters
-    ----------
-    shape:
-        The geometry from which to form an ArbitraryPlanarRectangularXSCircuit
-    xs_coordinates:
-        The cross-section geometry of the conductor
-    current:
-        The current flowing through the source [A]
-
-    Notes
-    -----
-    Works best with planar x-z geometries.
-    """
-
-    def __init__(
-        self,
-        shape: Union[np.ndarray, Coordinates],
-        xs_coordinates: Coordinates,
-        current: float,
-    ):
-        super().__init__(
-            self._generate_sources(
-                shape, current, PolyhedralPrismCurrentSource, (xs_coordinates,)
-            )
-        )
-
-
 class HelmholtzCage(SourceGroup):
     """
     Axisymmetric arrangement of current sources about the z-axis.
