@@ -172,7 +172,7 @@ if _has_gmsh:
 
     def model_to_mesh(
         model: gmsh.model, comm: _MPI.Comm, rank: int, gdim: Union[int, List] = 3
-    ) -> typing.Tuple[Mesh, _cpp.mesh.MeshTags_int32, _cpp.mesh.MeshTags_int32]:
+    ) -> typing.Tuple[Mesh, _cpp.mesh.MeshTags_int32, _cpp.mesh.MeshTags_int32, List]:
         """
         Given a Gmsh model, take all physical entities of the highest
         topological dimension and create the corresponding DOLFINx mesh.
@@ -316,7 +316,7 @@ if _has_gmsh:
 
     def read_from_msh(
         filename: str, comm: _MPI.Comm, rank: int = 0, gdim: Union[int, List] = 3
-    ) -> typing.Tuple[Mesh, _cpp.mesh.MeshTags_int32, _cpp.mesh.MeshTags_int32]:
+    ) -> typing.Tuple[Mesh, _cpp.mesh.MeshTags_int32, _cpp.mesh.MeshTags_int32, List]:
         """Reads a mesh from a msh-file and returns the distributed DOLFINx
         mesh and cell and facet markers associated with physical groups
         in the msh file.

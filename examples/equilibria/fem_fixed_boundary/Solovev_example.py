@@ -15,7 +15,7 @@ from dolfinx.io import gmshio
 import matplotlib.pyplot as plt
 
 from bluemira.equilibria.fem_fixed_boundary.utilities import get_mesh_boundary
-from bluemira.codes.bmgmshio import model_to_mesh
+from bluemira.codes.bmgmshio import model_to_mesh, read_from_msh
 
 class Solovev:
     """
@@ -185,7 +185,7 @@ if __name__ == "__main__":
 
     gmsh.initialize()
     # points
-    point_tags = [gmsh.model.occ.addPoint(v[0], v[1], 0, lcar) for v in LCFS[:-1]]
+    point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
     #point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
     line_tags = []
     for i in range(len(point_tags) - 1):
@@ -199,7 +199,7 @@ if __name__ == "__main__":
     # embed psi_ax point with a finer mesh
     psi_ax = solovev.psi_ax
     rz_ax = solovev._rz_ax
-    psi_ax_tag = gmsh.model.occ.addPoint(rz_ax[0], rz_ax[1], 0, lcar / 50)
+    psi_ax_tag = gmsh.model.occ.addPoint(rz_ax[0], 0, rz_ax[1], lcar / 50)
     gmsh.model.occ.synchronize()
     gmsh.model.mesh.embed(0, [psi_ax_tag], 2, surf)
     gmsh.model.occ.synchronize()
@@ -214,16 +214,15 @@ if __name__ == "__main__":
     gmsh.model.mesh.generate(2)
     gmsh.model.mesh.optimize("Netgen")
 
-    mesh, ct, ft = model_to_mesh(
-        gmsh.model, mesh_comm, model_rank, gdim=2
+    mesh, ct, ft, labels = model_to_mesh(
+        gmsh.model, mesh_comm, model_rank, gdim=[0,2]
     )
-    # mesh.geometry.x[:, [1, 2]] = mesh.geometry.x[:, 2:1]
 
     gmsh.write("Mesh.geo_unrolled")
     gmsh.write("Mesh.msh")
     gmsh.finalize()
 
-    mesh1, ct1, ft1 = dolfinx.io.gmshio.read_from_msh(
+    mesh1, ct1, ft1, labels = read_from_msh(
         "Mesh.msh", mesh_comm, model_rank, gdim=2
     )
 
@@ -299,7 +298,7 @@ if __name__ == "__main__":
     assert mean_err[2] < 1e-5
 
     points_x, points_y = get_mesh_boundary(mesh)
-    plt.plot(points_x, points_y)
+    plt.plot(points_x, points_y, "r-")
     plt.title("Check mesh boundary function")
     plt.show()
 
