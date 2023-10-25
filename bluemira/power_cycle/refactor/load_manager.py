@@ -177,9 +177,14 @@ class PowerCycleLoadConfig(Config):
                 raise PowerLoadError(f"{self.name} has no loads") from None
             raise
 
-    def load_total(self, timeseries: np.ndarray):
+    def load_total(self, timeseries: np.ndarray, unit=None):
         return np.sum(
-            [subload.interpolate(timeseries) for subload in self.loads.values()],
+            [
+                subload.interpolate(timeseries)
+                if unit is None
+                else raw_uc(subload.interpolate(timeseries), subload.unit, unit)
+                for subload in self.loads.values()
+            ],
             axis=0,
         )
 

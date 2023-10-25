@@ -133,7 +133,3 @@ class ScenarioBuilderConfig:
                 )
 
         return phase_breakdowns
-
-
-def pulse_phase_durations(phases: List[PhaseConfig], phase_breakdowns: Dict[str, float]):
-    return np.array([phase_breakdowns[phase.name] for phase in phases])

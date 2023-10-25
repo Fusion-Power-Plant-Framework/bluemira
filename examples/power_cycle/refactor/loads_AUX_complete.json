@@ -5,7 +5,7 @@
       "man": {
         "description": "reactive main power (PPEN)",
         "phases": ["dwl", "d2f", "ftt", "f2d"],
-        "normalise": [true, true, true],
+        "normalise": [true, true, true, true],
         "consumption": true,
         "efficiencies": {},
         "loads": {
