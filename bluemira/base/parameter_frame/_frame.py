@@ -406,8 +406,18 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
     try:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
     except ValueError:
-        quantity = pint.Quantity(f'{param_data["value"]}*{param_data["unit"]}')
-        param_data["value"] = quantity.magnitude
+        try:
+            quantity = pint.Quantity(f'{param_data["value"]}*{param_data["unit"]}')
+        except pint.errors.PintError as pe:
+            if param_data["value"] is None:
+                quantity = pint.Quantity(
+                    1 if param_data["unit"] in (None, "") else param_data["unit"]
+                )
+                param_data["source"] = f"{param_data.get('source', '')}\nMAD UNIT 🤯 😭:"
+            else:
+                raise ValueError("Unit conversion failed") from pe
+        else:
+            param_data["value"] = quantity.magnitude
         param_data["unit"] = quantity.units
     except KeyError as ke:
         raise ValueError("Parameters need a value and a unit") from ke
@@ -437,6 +447,9 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
         param_data["value"] = val
 
     param_data["unit"] = f"{unit:~P}"
+
+    if "MAD UNIT" in param_data.get("source", ""):
+        param_data["source"] += f"{quantity.magnitude}{param_data['unit']}"
 
 
 def _remake_units(dimensionality: Union[Dict, pint.util.UnitsContainer]) -> pint.Unit:

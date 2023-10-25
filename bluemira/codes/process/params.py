@@ -184,9 +184,6 @@ class ProcessSolverParams(MappedParameterFrame):
     P_brehms: Parameter[float]
     """Bremsstrahlung [megawatt]."""
 
-    P_el_net_process: Parameter[float]
-    """Net electrical power output as provided by PROCESS [megawatt]."""
-
     P_fus_DD: Parameter[float]
     """D-D fusion power [megawatt]."""
 

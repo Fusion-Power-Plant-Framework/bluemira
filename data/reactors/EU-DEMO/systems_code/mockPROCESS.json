@@ -5,7 +5,7 @@
   "H_star": 1.1,
   "I_p": 19.117,
   "P_brehms": 60.956,
-  "P_el_net_process": 500.0,
+  "P_el_net": 500.0,
   "P_fus": 1790.6,
   "P_fus_DD": 2.1206,
   "P_fus_DT": 1788.5,
