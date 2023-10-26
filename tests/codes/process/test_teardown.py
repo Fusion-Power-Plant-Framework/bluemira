@@ -59,6 +59,7 @@ class TestTeardown:
 
         # Expected value comes from ./test_data/mfile_data.json
         assert teardown.params.tau_e.value == pytest.approx(4.3196)
+        assert teardown.params.P_el_net.value == pytest.approx(6e8)
 
     @pytest.mark.parametrize("run_func", ["read", "readall"])
     def test_read_func_updates_bluemira_params_from_mfile(self, run_func):
@@ -70,7 +71,7 @@ class TestTeardown:
         # Expected value comes from ./test_data/mfile_data.json
         assert teardown.params.tau_e.value == pytest.approx(4.3196)
         # auto unit conversion
-        assert teardown.params.P_el_net.value == pytest.approx(5e8)
+        assert teardown.params.P_el_net.value == pytest.approx(6e8)
 
     def test_read_unknown_outputs_set_to_nan(self):
         """

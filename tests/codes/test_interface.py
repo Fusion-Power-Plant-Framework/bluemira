@@ -47,7 +47,7 @@ class Params(MappedParameterFrame):
 
     _mappings: ClassVar = {
         "param1": ParameterMapping("ext1", send=True, recv=True, unit="MW"),
-        "param2": ParameterMapping("ext2", send=False, recv=False),
+        "param2": ParameterMapping("ext2", "ext3", send=False, recv=False),
     }
 
     @property
@@ -87,3 +87,7 @@ class TestCodesSolver:
         assert params.param2.value is None
         assert params.param1.unit == "W"
         assert params.param2.unit == ""
+        assert params.mappings["param1"].name == "ext1"
+        assert params.mappings["param1"].out_name == "ext1"
+        assert params.mappings["param2"].name == "ext2"
+        assert params.mappings["param2"].out_name == "ext3"

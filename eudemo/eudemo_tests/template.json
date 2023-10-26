@@ -233,21 +233,8 @@
     "mapping": {
       "PROCESS": {
         "name": "pnetelin",
+        "out_name": "pnetelmw",
         "send": true,
-        "recv": false,
-        "unit": "MW"
-      }
-    }
-  },
-  "P_el_net_process": {
-    "name": "Net electrical power output as provided by PROCESS",
-    "value": null,
-    "unit": "MW",
-    "source": "Input",
-    "mapping": {
-      "PROCESS": {
-        "name": "pnetelmw",
-        "send": false,
         "recv": true,
         "unit": "MW"
       }

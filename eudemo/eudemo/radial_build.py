@@ -226,23 +226,16 @@ template_builder.add_input_values(
         "life_dpa": 70.0,
         # Radial build inputs
         "tftsgap": 0.05,
-        "d_vv_in": 0.3,
-        "shldith": 0.3,
         "vvblgap": 0.02,
         "blnkith": 0.755,
         "scrapli": 0.225,
         "scraplo": 0.225,
         "blnkoth": 0.982,
-        "d_vv_out": 0.3,
-        "shldoth": 0.8,
         "ddwex": 0.15,
         "gapomin": 0.2,
         # Vertical build inputs
-        "d_vv_top": 0.3,
         "vgap2": 0.05,
-        "shldtth": 0.3,
         "divfix": 0.621,
-        "d_vv_bot": 0.3,
         # HCD inputs
         "pinjalw": 51.0,
         "gamma_ecrh": 0.3,
@@ -318,6 +311,45 @@ template_builder.add_input_values(
 )
 
 
+def apply_specific_interface_rules(params: _PfT):
+    """
+    Apply specific rules for the interface between PROCESS and BLUEMIRA
+    that relate to the EU-DEMO design parameterisation
+    """
+    # Apply q_95 as a boundary on the iteration vector rather than a fixed input
+    q_95_min = params.q_95.value
+    template_builder.adjust_variable("q", value=q_95_min, lower_bound=q_95_min)
+
+    # Apply thermal shield thickness to all values in PROCESS
+    tk_ts = params.tk_ts.value
+    template_builder.add_input_values(
+        {
+            "thshield_ib": tk_ts,
+            "thshield_ob": tk_ts,
+            "thshield_vb": tk_ts,
+        }
+    )
+
+    # Apply the summation of "shield" and "VV" thicknesses in PROCESS
+    default_vv_tk = 0.3
+    tk_vv_ib = params.tk_vv_in.value
+    tk_vv_ob = params.tk_vv_out.value
+    tk_sh_ib = tk_vv_ib - default_vv_tk
+    tk_sh_ob = tk_vv_ob - default_vv_tk
+    template_builder.add_input_values(
+        {
+            "shldith": tk_sh_ib,
+            "shldoth": tk_sh_ob,
+            "shldtth": tk_sh_ib,
+            "shldlth": tk_sh_ib,
+            "d_vv_in": default_vv_tk,
+            "d_vv_out": default_vv_tk,
+            "d_vv_top": default_vv_tk,
+            "d_vv_bot": default_vv_tk,
+        }
+    )
+
+
 def radial_build(params: _PfT, build_config: Dict) -> _PfT:
     """
     Update parameters after a radial build is run/read/mocked using PROCESS.
@@ -339,6 +371,7 @@ def radial_build(params: _PfT, build_config: Dict) -> _PfT:
         template_builder.set_run_title(
             build_config.pop("PROCESS_runtitle", "Bluemira EUDEMO")
         )
+        apply_specific_interface_rules(params)
         build_config["template_in_dat"] = template_builder.make_inputs()
     solver = systems_code_solver(params, build_config)
     new_params = solver.execute(run_mode)
