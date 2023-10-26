@@ -934,14 +934,19 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return self._control
 
     @control.setter
-    def control(self, control_names: Optional[Union[List, bool]] = None):
-        """Set which coils are actively controlled"""
+    def control(self, control_names: Optional[Union[List[str], bool]] = None):
+        """Set which coils are actively controlled
+        control names: can be one of the following:
+                    - list of str, each one being the name of each control coil.
+                    - None, for when ALL coils are control coils.
+                    - a boolean, which denotes all controlled vs none controlled.
+        """
         names = self.name
-        if isinstance(control_names, List):
+        if isinstance(control_names, List):  # List[str] case
             self._control_ind = [names.index(c) for c in control_names]
-        elif control_names or control_names is None:
+        elif control_names or control_names is None:  # bool case or None case
             self._control_ind = np.arange(len(names)).tolist()
-        else:
+        else:  # bool case
             self._control_ind = []
         self._control = [names[c] for c in self._control_ind]
 
@@ -1014,11 +1019,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         self = super().from_group_vecs(eqdsk)
 
-        if (none_coil := self.get_coiltype(CoilType.NONE)) or (
-            dum_coil := self.get_coiltype(CoilType.DUM)
-        ):
-            # if passive coils are present: give them the correct names.
-            self.control = [
-                *([] if none_coil is None else none_coil.name),
-                *([] if dum_coil is None else dum_coil.name),
-            ]
+        dummy_coils = self.get_coiltype(CoilType.DUM)
+        passive_coils = self.get_coiltype(CoilType.NONE)
+        all_passive_coils = list(flatten_iterable([dummy_coils, passive_coils]))
+        active_coils = [name for name in self.name if (name not in all_passive_coils)]
+        self.control = active_coils
+        return self
