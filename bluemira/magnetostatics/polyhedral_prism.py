@@ -789,7 +789,7 @@ def _field_ciric(
             new = [r[0], r[1], r[2], r[3]]
         else:#elif i == 3 or i == 4:
             r = r[:-1]
-            new = [r[3], r[0], r[1], r[2]]
+            new = [r[0], r[3], r[2], r[1]]
         # elif i == 2 or i == 1:
         #     new = [r[3], r[0], r[1], r[2]]
         rectangles.append(new)
@@ -797,10 +797,10 @@ def _field_ciric(
     for i, rectangle in enumerate(rectangles[1:-1]):
  
         normal = face_normals[i+1]
-        r_1 = -(point - rectangle[0])
-        r_2 = -(point - rectangle[1] )
-        r_3 = -(point - rectangle[2])
-        r_4 = -(point - rectangle[3])
+        r_1 = (point - rectangle[0])
+        r_2 = (point - rectangle[1] )
+        r_3 = (point - rectangle[2])
+        r_4 = (point - rectangle[3])
         l_12 = r_1 - r_2
         l_34 = r_3 - r_4
         l_12n = np.linalg.norm(l_12)
@@ -809,9 +809,11 @@ def _field_ciric(
         zh = r_1 - r_4
         zh /= np.linalg.norm(zh)
         z_2 = np.dot(zh, l_12)
+        assert np.allclose(zh,  (rectangle[3] - rectangle[0]) / np.linalg.norm(rectangle[3] - rectangle[0]))
         d = np.sqrt(l_12n ** 2 - z_2 ** 2)
         xh = -np.cross(l_12, zh) / d  # should be = face_normals[i]? should not be a minus in front
         print(xh, face_normals[i+1])
+        assert np.allclose(xh, face_normals[i+1])
         xh = face_normals[i+1]
         yh = np.cross(zh, xh)
         r_1n = np.linalg.norm(r_1)
