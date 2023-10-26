@@ -30,6 +30,7 @@ from bluemira.geometry.tools import Coordinates
 from bluemira.magnetostatics.polyhedral_prism import (
     Bottura,
     Fabbri,
+    Ciric,
     PolyhedralPrismCurrentSource,
 )
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
@@ -55,6 +56,7 @@ def plane_setup(plane):
 
 
 class TestPolyhedralMaths:
+    kernels = [Ciric()]
     same_angle = (
         TrapezoidalPrismCurrentSource(
             [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 40, 40, current=1
@@ -88,7 +90,7 @@ class TestPolyhedralMaths:
     )
     test_cases = (same_angle, diff_angle)
 
-    @pytest.mark.parametrize("kernel", ["Fabbri", "Bottura"])
+    @pytest.mark.parametrize("kernel", kernels)
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
     def test_geometry(
         self,
@@ -96,7 +98,7 @@ class TestPolyhedralMaths:
         trap: TrapezoidalPrismCurrentSource,
         poly: PolyhedralPrismCurrentSource,
     ):
-        poly._kernel = Fabbri() if kernel == "Fabbri" else Bottura()
+        poly._kernel = kernel
         poly.plot()
         ax = plt.gca()
         trap.plot(ax)
@@ -114,7 +116,7 @@ class TestPolyhedralMaths:
         for i in range(len(trap._points)):
             np.testing.assert_allclose(trap._points[i], poly._points[i])
 
-    @pytest.mark.parametrize("kernel", ["Fabbri", "Bottura"])
+    @pytest.mark.parametrize("kernel", kernels)
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
     def test_xz_field(
         self,
@@ -122,7 +124,7 @@ class TestPolyhedralMaths:
         trap: TrapezoidalPrismCurrentSource,
         poly: PolyhedralPrismCurrentSource,
     ):
-        poly._kernel = Fabbri() if kernel == "Fabbri" else Bottura()
+        poly._kernel = kernel
         f = plt.figure()
         ax = f.add_subplot(1, 2, 1, projection="3d")
         ax.set_title("TrapezoidalPrism")
@@ -139,7 +141,7 @@ class TestPolyhedralMaths:
         f.colorbar(cm)
 
         ax = f.add_subplot(1, 2, 2, projection="3d")
-        ax.set_title(f"PolyhedralPrism {kernel}")
+        ax.set_title(f"PolyhedralPrism {kernel.__class__.__name__}")
         poly.plot(ax)
         Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
@@ -149,7 +151,7 @@ class TestPolyhedralMaths:
 
         np.testing.assert_allclose(B_new, B)
 
-    @pytest.mark.parametrize("kernel", ["Fabbri", "Bottura"])
+    @pytest.mark.parametrize("kernel", kernels)
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
     def test_xy_field(
         self,
@@ -157,7 +159,7 @@ class TestPolyhedralMaths:
         trap: TrapezoidalPrismCurrentSource,
         poly: PolyhedralPrismCurrentSource,
     ):
-        poly._kernel = Fabbri() if kernel == "Fabbri" else Bottura()
+        poly._kernel = kernel
         n = 50
         x = np.linspace(8, 12, n)
         y = np.linspace(-2, 2, n)
@@ -175,7 +177,7 @@ class TestPolyhedralMaths:
         f.colorbar(cm)
 
         ax = f.add_subplot(1, 2, 2, projection="3d")
-        ax.set_title(f"PolyhedralPrism {kernel}")
+        ax.set_title(f"PolyhedralPrism {kernel.__class__.__name__}")
         poly.plot(ax)
         Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
@@ -185,7 +187,7 @@ class TestPolyhedralMaths:
 
         np.testing.assert_allclose(B_new, B)
 
-    @pytest.mark.parametrize("kernel", ["Fabbri", "Bottura"])
+    @pytest.mark.parametrize("kernel", kernels)
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
     def test_yz_field(
         self,
@@ -193,7 +195,7 @@ class TestPolyhedralMaths:
         trap: TrapezoidalPrismCurrentSource,
         poly: PolyhedralPrismCurrentSource,
     ):
-        poly._kernel = Fabbri() if kernel == "Fabbri" else Bottura()
+        poly._kernel = kernel
         n = 50
         y = np.linspace(-2, 2, n)
         z = np.linspace(-2, 2, n)
@@ -210,7 +212,7 @@ class TestPolyhedralMaths:
         f.colorbar(cm)
 
         ax = f.add_subplot(1, 2, 2, projection="3d")
-        ax.set_title(f"PolyhedralPrism {kernel}")
+        ax.set_title(f"PolyhedralPrism {kernel.__class__.__name__}")
         poly.plot(ax)
         Bx, By, Bz = poly.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
