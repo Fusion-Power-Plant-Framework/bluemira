@@ -425,6 +425,7 @@ class TestCariddiBenchmark:
         assert np.max(np.abs(ripple - self.cariddi_ripple)) < 0.04
 
 
+@pytest.mark.longrun
 class TestPolyhedral2DRing:
     @classmethod
     def setup_class(cls):
