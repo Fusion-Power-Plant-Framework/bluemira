@@ -65,6 +65,13 @@ class CoilType(Enum, metaclass=CoilTypeEnumMeta):
     DUM = auto()
     NONE = auto()
 
+    @classmethod
+    def get_actively_controlled_types(cls):
+        """Get the list of types which are actively controlled
+        (as opposed to passive coils).
+        """
+        return [cls.PF, cls.CS]
+
 
 class CoilNumber:
     """

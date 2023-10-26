@@ -1012,16 +1012,15 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def from_group_vecs(cls, eqdsk: EQDSKInterface):
         """Same as its parent class,
         initialize an instance of CoilSet from group vectors,
-        but it also auto-populate the control attribute.
-
-        This is done so that the user doesn't have to
-        manually set passive coils as non-controlled.
+        but it also automatically decide which coils are control coils
+        according to CoilType.get_actively_controlled_types.
         """
         self = super().from_group_vecs(eqdsk)
 
-        dummy_coils = self.get_coiltype(CoilType.DUM)
-        passive_coils = self.get_coiltype(CoilType.NONE)
-        all_passive_coils = list(flatten_iterable([dummy_coils, passive_coils]))
-        active_coils = [name for name in self.name if (name not in all_passive_coils)]
-        self.control = active_coils
+        controlled_coils = []
+        for active_coiltype in CoilType.get_actively_controlled_types():
+            controlled_coils.extend(
+                [coil.name for coil in self._get_coiltype(active_coiltype)]
+            )
+        self.control = controlled_coils
         return self
