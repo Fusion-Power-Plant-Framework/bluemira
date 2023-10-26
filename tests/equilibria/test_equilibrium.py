@@ -328,7 +328,7 @@ class TestSolveEquilibrium:
             self.B_0,
             shape=shape,
             li_min_iter=0,
-            li_reltol=rel_tol,
+            li_rel_tol=rel_tol,
         )
         eq = Equilibrium(deepcopy(self.coilset), self.grid, profiles)
         opt_problem = UnconstrainedTikhonovCurrentGradientCOP(
@@ -383,7 +383,8 @@ class TestEquilibrium:
         assert coil.j_max.any() == 0
         assert coil.b_max.any() == 0
         assert coil.n_coils(ctype="DUM") == 4
-        assert len(coil.control) == 0
+        if grouping is CoilSet:
+            assert len(coil.control) == 0
 
 
 class TestEqReadWrite:

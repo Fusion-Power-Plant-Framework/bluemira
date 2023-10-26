@@ -935,7 +935,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
     @control.setter
     def control(self, control_names: Optional[Union[List, bool]] = None):
-        """Set control coils"""
+        """Set which coils are actively controlled"""
         names = self.name
         if isinstance(control_names, List):
             self._control_ind = [names.index(c) for c in control_names]
@@ -946,7 +946,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self._control = [names[c] for c in self._control_ind]
 
     def get_control_coils(self):
-        """Get Control coils"""
+        """Get control coils"""
         coils = []
         for c in self._coils:
             names = c.name
@@ -1014,7 +1014,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         self = super().from_group_vecs(eqdsk)
 
-        if coil_name := self.get_coiltype(CoilType.NONE):
+        if (none_coil := self.get_coiltype(CoilType.NONE)) or (
+            dum_coil := self.get_coiltype(CoilType.DUM)
+        ):
             # if passive coils are present: give them the correct names.
-            self.control = coil_name.name
-        return self
+            self.control = [
+                *([] if none_coil is None else none_coil.name),
+                *([] if dum_coil is None else dum_coil.name),
+            ]
