@@ -789,7 +789,7 @@ def _field_ciric(
             new = [r[0], r[1], r[2], r[3]]
         else:#elif i == 3 or i == 4:
             r = r[:-1]
-            new = [r[0], r[3], r[2], r[1]]
+            new = [r[3], r[0], r[1], r[2]]
         # elif i == 2 or i == 1:
         #     new = [r[3], r[0], r[1], r[2]]
         rectangles.append(new)
