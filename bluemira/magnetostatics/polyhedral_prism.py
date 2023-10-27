@@ -812,7 +812,8 @@ def _field_ciric(
         assert np.allclose(zh,  (rectangle[3] - rectangle[0]) / np.linalg.norm(rectangle[3] - rectangle[0]))
         d = np.sqrt(l_12n ** 2 - z_2 ** 2)
         xh = -np.cross(l_12, zh) / d  # should be = face_normals[i]? should not be a minus in front
-        print(xh, face_normals[i+1])
+        xh = -np.cross(l_12, zh)
+        xh /=np.linalg.norm(xh)
         assert np.allclose(xh, face_normals[i+1])
         xh = face_normals[i+1]
         yh = np.cross(zh, xh)
@@ -851,6 +852,12 @@ def _field_ciric(
             + np.arctan2(cn, cd)
             - np.arctan2(dn, dd)
         )
+        if x < 0:
+            if np.sign(gamma) > 0:
+                gamma *= -1
+        if x >= 0:
+            if np.sign(gamma) < -1:
+                gamma *= - 1
 
         r12n = r_1n - r_2n
         r34n = r_3n - r_4n
