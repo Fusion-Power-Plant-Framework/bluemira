@@ -300,7 +300,7 @@ def find_OX_points(
     -------
     o_points:
         The O-points in the psi map
-    x_points: List[Union[Xpoint,LPoint]]
+    x_points:
         The X-points and L-points in the psi map
 
     Notes

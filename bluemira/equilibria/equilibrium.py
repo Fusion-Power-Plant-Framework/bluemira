@@ -42,6 +42,7 @@ from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.find import (
+    Lpoint,
     Opoint,
     Xpoint,
     find_LCFS_separatrix,
@@ -1558,7 +1559,7 @@ class Equilibrium(CoilSetMHDState):
 
     def get_OX_points(
         self, psi: Optional[np.ndarray] = None, *, force_update: bool = False
-    ) -> Tuple[Iterable, Iterable]:
+    ) -> Tuple[List[Opoint], List[Union[Xpoint, Lpoint]]]:
         """
         Returns list of [[O-points], [X-points]]
         """
