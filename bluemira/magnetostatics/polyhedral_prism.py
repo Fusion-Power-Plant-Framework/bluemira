@@ -779,7 +779,9 @@ def _field_ciric(
     odn = np.linalg.norm(origin_line)
     ap = point - mid1
     D = np.linalg.norm(np.cross(ap, origin_line)) / odn
+    D = np.linalg.norm(np.cross(point - o_1, point - o_2)) / np.linalg.norm(o_2-o_1)
     inside = _point_in_volume(point, face_normals, mid_points)
+    
   
     rectangles = []
     for i, r in enumerate(face_points):
@@ -812,10 +814,10 @@ def _field_ciric(
         assert np.allclose(zh,  (rectangle[3] - rectangle[0]) / np.linalg.norm(rectangle[3] - rectangle[0]))
         d = np.sqrt(l_12n ** 2 - z_2 ** 2)
         xh = -np.cross(l_12, zh) / d  # should be = face_normals[i]? should not be a minus in front
-        xh = -np.cross(l_12, zh)
+        xh = np.cross(l_12, zh)
         xh /=np.linalg.norm(xh)
-        assert np.allclose(xh, face_normals[i+1])
-        xh = face_normals[i+1]
+        #assert np.allclose(xh, face_normals[i+1])
+  
         yh = np.cross(zh, xh)
         r_1n = np.linalg.norm(r_1)
         r_2n = np.linalg.norm(r_2)
@@ -847,10 +849,10 @@ def _field_ciric(
         cn, cd = (z - z_3) * (q_34 - l_34n**2) - r_3n**2 * (z_3 - z_4), x * r_3n * d
         dn, dd = (z - z_4) * q_34 - (z_3 - z_4) * r_4n**2, x * r_4n * d
         gamma = (
-            np.arctan2(an, ad)
-            - np.arctan2(bn, bd)
-            + np.arctan2(cn, cd)
-            - np.arctan2(dn, dd)
+            np.arctan(an/ad)
+            - np.arctan(bn/bd)
+            + np.arctan(cn/cd)
+            - np.arctan(dn/dd)
         )
         if x < 0:
             if np.sign(gamma) > 0:
@@ -870,8 +872,8 @@ def _field_ciric(
         n_h = xh
         n_p = np.dot(n_h, m_c)
         n_pp = np.dot(n_h, np.cross(m_c, current_direction))
-        D = np.linalg.norm(np.cross(r_1, zh))
-        D = np.linalg.norm(np.cross(point - rectangle[0], point - rectangle[1])) / np.linalg.norm(rectangle[1]-rectangle[0])
+        #D = np.linalg.norm(np.cross(r_1, zh))
+        D = np.linalg.norm(np.cross(point - rectangle[0], point - rectangle[3])) / np.linalg.norm(rectangle[3]-rectangle[0])
 
         dcm = np.zeros((3, 3))
         dcm[0, :] = xh
@@ -911,7 +913,7 @@ def _field_ciric(
         # B[1] += d * (1/d**2*(-y*lambdda+x*gamma) - r12n*z_2/(d*l_12n**2) - r34n*(z_3-z_4)/(d*l_34n**2) + p_12*lambda_12/l_12n**2+p_34*lambda_34/l_34n**2)
         # B[2] += d * (r12n/l_12n**2 + r34n/l_34n**2+q_12*lambda_12/l_12n**2+q_34*lambda_34/l_34n**2)
 
-    return MU_0_4PI * B
+    return MU_0_4PI * B #+ MU_0_4PI*point*m_c * inside
 
 
 
