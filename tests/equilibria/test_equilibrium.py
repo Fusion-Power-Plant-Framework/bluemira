@@ -124,7 +124,6 @@ class TestFields:
         self.callable_tester(self.eq.psi)
 
     def test_out_of_bounds(self):
-        plt.close("all")
         eq = self.eq
         f, (ax, ax2, ax3, ax4) = plt.subplots(1, 4)
         psi = eq.psi()
@@ -220,7 +219,6 @@ class TestFields:
         )
         ax4.set_aspect("equal")
         ax4.set_title("plasma_Bp")
-        plt.close("all")
 
 
 class TestSolveEquilibrium:
@@ -435,5 +433,3 @@ class TestFixedPlasmaEquilibrium:
     @pytest.mark.parametrize("field", [False, True])
     def test_plotting(self, field):
         self.eq.plot(field=field)
-        plt.show()
-        plt.close()

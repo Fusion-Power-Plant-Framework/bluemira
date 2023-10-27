@@ -21,6 +21,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 from matplotlib.tri import LinearTriInterpolator, Triangulation
 from scipy.interpolate import interp1d
 
@@ -94,7 +95,6 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
             ax.plot(*fs.xz)
 
         ax.set_aspect("equal")
-        plt.show()
         cls.flux_surfaces = flux_surfaces
         cls._calculate_metrics(cls)
 
@@ -159,7 +159,6 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         ax.set_ylabel("[$m^3$]")
         ax.set_xlabel("$\\rho$")
         ax.legend()
-        plt.show()
         np.testing.assert_allclose(self.results["V"][1:], self.volprof[1:], rtol=5e-2)
 
     def test_gradV(self):
@@ -176,7 +175,6 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         ax.plot(self.rho, self.vprime, label="$V^'$ PLASMOD")
         ax.set_xlabel("$\\rho$")
         ax.legend()
-        plt.show()
         np.testing.assert_allclose(grad_vol[1:], self.vprime[1:], rtol=9e-2)
 
     def test_g2(self):
@@ -186,7 +184,6 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         ax.set_xlabel("$g_{2}$")
         ax.set_xlabel("$\\rho$")
         ax.legend()
-        plt.show()
         np.testing.assert_allclose(self.results["g2"][1:], self.g2[1:], rtol=0.26)
 
     def test_g3(self):
@@ -196,10 +193,10 @@ class TestPLASMODVerificationMetricCoefficients(PLASMODVerificationRawData):
         ax.set_xlabel("$g_{3}$")
         ax.set_xlabel("$\\rho$")
         ax.legend()
-        plt.show()
         np.testing.assert_allclose(self.results["g3"], self.g3, rtol=0.02)
 
 
+@pytest.mark.classplot
 class TestPLASMODVerificationCurrentProfiles(PLASMODVerificationRawData):
     """
     A verification test for which we take the raw PLASMOD profiles
@@ -243,7 +240,6 @@ class TestPLASMODVerificationCurrentProfiles(PLASMODVerificationRawData):
             else:
                 a.set_xlabel("x")
         cls.ax[1, 0].set_ylabel("PLASMOD-bluemira")
-        plt.show()
 
     def test_plasma_current(self):
         # 15/03/23: Max relative difference: 4.71793662e-05

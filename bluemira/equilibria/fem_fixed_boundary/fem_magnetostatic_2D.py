@@ -328,6 +328,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         debug: bool = False,
         gif: bool = False,
         figname: Optional[str] = None,
+        *,
+        autoclose_plot: bool = True,
     ) -> FixedBoundaryEquilibrium:
         """
         Solve the G-S problem.
@@ -404,7 +406,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             if eps < self.iter_err_max:
                 break
 
-        if plot:
+        if plot and autoclose_plot:
             plt.close(f)
         if gif:
             make_gif(folder, figname, clean=not debug)

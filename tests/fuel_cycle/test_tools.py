@@ -47,14 +47,11 @@ def test_distributions(n, integral, parameter):
         assert np.isclose(np.sum(d), integral)
 
 
+@pytest.mark.classplot
 class TestSinkTools:
     def setup_method(self):
         self.I_min, self.I_max = 3.0, 5.0
         self.t_in, self.t_out = 5.0, 6.0
-
-    @classmethod
-    def teardown_class(cls):
-        plt.close("all")
 
     def test_timestep(self):
         """
@@ -96,7 +93,6 @@ class TestSinkTools:
         ax.plot([0, time_y], [cross, cross])
 
         ax.plot(dt15, cross, color="r", marker="*", ms=15)
-        plt.show()
 
         # high n required to converge..
         assert np.isclose(iend2, i[-1], rtol=0.01), f"{iend2} != {i[-1]}"

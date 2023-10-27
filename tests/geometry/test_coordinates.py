@@ -490,11 +490,8 @@ class TestOnPolygon:
             assert on_polygon(*fail, coords.xz.T) is False
 
 
+@pytest.mark.classplot
 class TestInPolygon:
-    @classmethod
-    def teardown_class(cls):
-        plt.close("all")
-
     def test_simple(self):
         coords = Coordinates({"x": [-2, 2, 2, -2, -2, -2], "z": [-2, -2, 2, 2, 1.5, -2]})
         in_points = [
@@ -545,7 +542,6 @@ class TestInPolygon:
             check = in_polygon(*point, coords.xz.T)
             c = "b" if check else "r"
             ax.plot(*point, marker="*", color=c)
-        plt.show()
 
         # Test single and arrays
         for p in in_points:
@@ -587,17 +583,12 @@ class TestInPolygon:
         _, ax = plt.subplots()
         plot_coordinates(lcfs, ax=ax, fill=False, edgecolor="k")
         ax.contourf(x, z, mask, levels=[0, 0.5, 1])
-        plt.show()
 
         hits = np.count_nonzero(mask)
         assert hits == 1171, hits
 
 
 class TestIntersections:
-    def teardown_method(self):
-        plt.show()
-        plt.close("all")
-
     @pytest.mark.parametrize(("c1", "c2"), [("x", "z"), ("x", "y"), ("y", "z")])
     def test_get_intersect(self, c1, c2):
         loop1 = Coordinates({c1: [0, 0.5, 1, 2, 3, 4, 0], c2: [1, 1, 1, 1, 2, 5, 5]})
@@ -651,11 +642,8 @@ class TestIntersections:
         assert np.allclose(np.sort(intz), np.sort(tf.z[args])), f"{intz} != {tf.z[args]}"
 
 
+@pytest.mark.classplot
 class TestCoordinatesPlaneIntersect:
-    @classmethod
-    def teardown_class(cls):
-        plt.close("all")
-
     def test_simple(self):
         coords = Coordinates({"x": [0, 1, 2, 2, 0, 0], "z": [-1, -1, -1, 1, 1, -1]})
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
@@ -722,7 +710,6 @@ class TestCoordinatesPlaneIntersect:
         plot_coordinates(coords, ax=ax)
         for i in intersect:
             ax.plot(i[0], i[2], marker="o", color="r")
-        plt.show()
 
         plane = BluemiraPlane.from_3_points([0, 10, 0], [1, 10, 0], [0, 10, 1])  # x-y
         intersect = coords_plane_intersect(coords, plane)

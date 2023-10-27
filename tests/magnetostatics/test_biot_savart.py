@@ -58,8 +58,6 @@ def test_biot_savart_loop():
     filament = circle.discretize(ndiscr=2000)
     bsf = BiotSavartFilament(filament, radius)
     bsf.plot()
-    plt.show()
-    plt.close()
 
     Bx2, _, Bz2 = bsf.field(x_2d, np.zeros_like(x_2d), z_2d)
 
@@ -153,8 +151,6 @@ def plot_errors(x, z, Bx, Bz, Bp, Bx2, Bz2, Bp2):
     ax[2, 1].set_aspect("equal")
     ax[2, 2].set_aspect("equal")
     ax[2, 3].set_aspect(20)
-    plt.show()
-    plt.close(f)
 
 
 class TestSelfInductance:
@@ -194,8 +190,6 @@ class TestSelfInductance:
         cb = f.colorbar(cm)
         cb.set_label("%")
         plt.subplots_adjust(wspace=0.5)
-        plt.show()
-        plt.close(f)
         res = np.sum((ind2 - ind3) ** 2)
         tot = np.sum((ind2 - np.average(ind2)) ** 2)
         r2 = 1 - res / tot

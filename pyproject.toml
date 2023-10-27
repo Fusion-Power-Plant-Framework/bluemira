@@ -142,7 +142,8 @@ ignore_errors = true
 markers = [
     "longrun",
     "reactor",
-    "private"
+    "private",
+    "classplot"
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']

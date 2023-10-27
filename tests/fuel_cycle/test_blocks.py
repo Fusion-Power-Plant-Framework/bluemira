@@ -25,6 +25,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 from scipy.interpolate import interp1d
 
 from bluemira.base.file import get_bluemira_path
@@ -36,14 +37,11 @@ from bluemira.fuel_cycle.tools import (
 )
 
 
+@pytest.mark.classplot
 class TestFuelCycleComponent:
     @classmethod
     def setup_class(cls):
         cls.f, cls.ax = plt.subplots()
-
-    @classmethod
-    def teardown_cls(cls):
-        plt.close(cls.f)
 
     def test_bathtub(self):
         t = np.linspace(0, 30, 1900)
@@ -69,7 +67,6 @@ class TestFuelCycleComponent:
 
         self.ax.plot(t, component.inventory, label="sqrt")
         self.ax.legend()
-        plt.show()
 
 
 class TestSqrtFittedSinks:
@@ -103,7 +100,7 @@ class TestSqrtFittedSinks:
         # Now build an example TCycleComponent for the HCPB upper
         # with a constant mass flux equivalent to that modelled
 
-        f, ax = plt.subplots()
+        _, ax = plt.subplots()
 
         r_2_values = []
 
@@ -158,7 +155,5 @@ class TestSqrtFittedSinks:
         box = ax.get_position()
         ax.set_position([box.x0, box.y0, box.width * 0.6, box.height])
         ax.legend(loc="center left", bbox_to_anchor=(1, 0.5))
-        plt.show()
-        plt.close(f)
 
         assert np.all(np.array(r_2_values) > 0.9995)

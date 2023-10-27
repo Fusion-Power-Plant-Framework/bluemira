@@ -76,10 +76,6 @@ class TestCoil:
         cls.dum_coil = Coil(x=4, z=4, current=0.0, ctype="DUM", j_max=0.0)
         cls.no_coil = Coil(x=4, z=4, current=10e6, ctype="NONE", j_max=NBTI_J_MAX)
 
-    def teardown_method(self):
-        plt.show()
-        plt.close("all")
-
     def test_no_plotting_dummy(self):
         assert self.dum_coil.plot() is None
 
@@ -224,10 +220,6 @@ class TestSemiAnalytic:
         cls.z_boundary.append(
             np.append(cls.cg2.z_boundary, cls.cg2.z_boundary[:, 0][:, None], axis=-1)
         )
-
-    def teardown_method(self):
-        plt.show()
-        plt.close("all")
 
     def _plotter(self, gp, gp_greens, gp_analytic):
         _, ax = plt.subplots(3, 3)

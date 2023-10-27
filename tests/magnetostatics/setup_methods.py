@@ -72,6 +72,3 @@ def _plot_verification_test(
         axis.set_xlabel("$x$ [m]")
         axis.set_ylabel("$z$ [m]")
         axis.set_aspect("equal")
-
-    plt.show()
-    plt.close(f)

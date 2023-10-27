@@ -75,7 +75,7 @@ class TestInscribedRectangle:
         points[0] += np.min(shape[0])
         points[2] += np.min(shape[2])
 
-        fig, ax = plt.subplots()
+        _, ax = plt.subplots()
 
         shape_face = BluemiraFace(make_polygon(shape, closed=True))
         plot_2d(
@@ -134,8 +134,6 @@ class TestInscribedRectangle:
 
                         if not np.allclose(dx / dz, k):
                             self.assertion_error_creator("Aspect", [dx, dz, dx / dz, k])
-        plt.show()
-        plt.close(fig)
 
         if self.r is not False:
             raise AssertionError(self.r)

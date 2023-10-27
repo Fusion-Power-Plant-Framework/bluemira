@@ -40,6 +40,7 @@ from bluemira.equilibria.shapes import (
 )
 
 
+@pytest.mark.classplot
 class TestCunningham:
     @classmethod
     def setup_class(cls):
@@ -77,9 +78,9 @@ class TestCunningham:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Cunningham parameterisations")
-        plt.close(cls.f)
 
 
+@pytest.mark.classplot
 class TestHirschman:
     @classmethod
     def setup_class(cls):
@@ -129,10 +130,9 @@ class TestHirschman:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Hirschman parameterisations")
-        plt.show()
-        plt.close(cls.f)
 
 
+@pytest.mark.classplot
 class TestManickam:
     @classmethod
     def setup_class(cls):
@@ -171,10 +171,9 @@ class TestManickam:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Manickam parameterisations")
-        plt.show()
-        plt.close(cls.f)
 
 
+@pytest.mark.classplot
 class TestKuiroukidis:
     fixture = (
         pytest.param(6.2, 3.1, 1.55, 2.0, -0.5, -0.5, [0, 0]),
@@ -247,8 +246,6 @@ class TestKuiroukidis:
     def teardown_class(cls):
         cls.f.suptitle("Kuiroukidis parameterisations")
         plt.subplots_adjust(hspace=0.4)
-        plt.show()
-        plt.close(cls.f)
 
 
 johner_names = [
@@ -290,6 +287,7 @@ johner_params = [
 ]
 
 
+@pytest.mark.classplot
 class TestJohner:
     @classmethod
     def setup_class(cls):
@@ -307,8 +305,6 @@ class TestJohner:
     @classmethod
     def teardown_class(cls):
         cls.f.suptitle("Johner parameterisations")
-        plt.show()
-        plt.close(cls.f)
 
 
 class TestJohnerCAD:

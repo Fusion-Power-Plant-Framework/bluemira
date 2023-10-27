@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import matplotlib.pyplot as plt
 
 from bluemira.base.parameter_frame import Parameter
 from eudemo.power_cycle import SteadyStatePowerCycleParams, SteadyStatePowerCycleSolver
@@ -58,7 +57,6 @@ class TestEUDEMOPowerCycle:
 
     def test_plotting(self):
         self.sspc_solver.model.plot()
-        plt.show()
 
     def test_values(self):
         assert self.sspc_result["P_el_net"] > 0

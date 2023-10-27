@@ -68,44 +68,16 @@ class TestArea:
 
 
 class TestOffset:
+    # fmt: off
     open_complex = (
         [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2],
         [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1],
     )
     closed_complex = (
-        [
-            -4,
-            -3,
-            -2,
-            -1,
-            0,
-            1,
-            2,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            7,
-            6,
-            5,
-            4,
-            3,
-            2,
-            1,
-            0,
-            -1,
-            -2,
-            -3,
-            -4,
-        ],
+        [-4, -3, -2, -1, 0, 1, 2, 3, 4, 5, 6, 7, 8, 7, 6, 5, 4, 3, 2, 1, 0, -1, -2, -3, -4],
         [0, -2, -4, -3, -4, -2, 0, 1, 2, 3, 4, 5, 6, 6, 6, 6, 4, 3, 2, 1, 2, 2, 1, 1, 0],
     )
-
-    @classmethod
-    def teardown_class(cls):
-        plt.close("all")
+    # fmt: on
 
     def test_rectangle(self):
         # Rectangle - positive offset
@@ -117,7 +89,6 @@ class TestOffset:
         ax.plot(x, y, "k")
         ax.plot(*o, "r", marker="o")
         ax.set_aspect("equal")
-        plt.show()
         assert sum(o[0] - np.array([0.75, 3.25, 3.25, 0.75, 0.75])) == 0
         assert sum(o[1] - np.array([0.75, 0.75, 3.25, 3.25, 0.75])) == 0
 
@@ -129,7 +100,6 @@ class TestOffset:
         ax.plot(x, y, "k")
         ax.plot(*t, "r", marker="o")
         ax.set_aspect("equal")
-        plt.show()
         assert (
             abs(sum(t[0] - np.array([1.29511511, 1.70488489, 1.5, 1.29511511])) - 0)
             < 1e-3
@@ -149,7 +119,6 @@ class TestOffset:
         ax.plot(x, y, "k")
         ax.plot(xo, yo, "r", marker="o")
         ax.set_aspect("equal")
-        plt.show()
 
         assert np.isclose(
             np.sign(offset_value)

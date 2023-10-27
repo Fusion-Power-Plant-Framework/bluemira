@@ -68,10 +68,6 @@ class TestXZLMapper:
         )
         cls.xzl_map = XZLMapper(cls.TF, solenoid.x, -10, 10, 0.1, CS=False)
 
-    def teardown_method(self):
-        plt.show()
-        plt.close("all")
-
     def test_xzl(self):
         pfcoils = self.coilset.get_coiltype("PF")
 
@@ -200,10 +196,6 @@ class TestZLMapper:
             0.1,
             CS=True,
         )
-
-    def teardown_method(self):
-        plt.show()
-        plt.close("all")
 
     @pytest.mark.parametrize(
         "up",

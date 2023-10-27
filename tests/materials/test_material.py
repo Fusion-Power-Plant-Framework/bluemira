@@ -33,7 +33,6 @@ with warnings.catch_warnings():
     warnings.simplefilter("ignore", category=UserWarning)
     from neutronics_material_maker.utils import make_serpent_material
 
-import matplotlib.pyplot as plt
 
 from bluemira.base.constants import EPS, kgm3_to_gcm3, to_kelvin
 from bluemira.utilities.tools import is_num
@@ -112,8 +111,6 @@ class TestMaterials:
         self.nb_3_sn.plot(b_min, b_max, t_min, t_max, eps)
         self.nb_3_sn_2.plot(b_min, b_max, t_min, t_max, eps)
         self.nbti.plot(b_min, b_max, t_min, t_max)
-        plt.show()
-        plt.close()
 
 
 class TestLiquids:

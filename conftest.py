@@ -27,6 +27,7 @@ from contextlib import suppress
 from unittest import mock
 
 import matplotlib as mpl
+import pytest
 
 from bluemira.base.file import try_get_bluemira_private_data_root
 
@@ -94,3 +95,41 @@ def pytest_configure(config):
     logic_string = " and ".join(strings)
 
     config.option.markexpr = logic_string
+
+
+@pytest.fixture(autouse=True)
+def _plot_show_and_close(request):
+    """Fixture to show and close plots
+
+    Notes
+    -----
+    Does not do anything if testclass marked with 'classplot'
+    """
+    import matplotlib.pyplot as plt
+
+    cls = request.node.getparent(pytest.Class)
+
+    if cls and "classplot" in cls.keywords:
+        yield
+    else:
+        yield
+        plt.show()
+        plt.close()
+
+
+@pytest.fixture(scope="class", autouse=True)
+def _plot_show_and_close_class(request):
+    """Fixture to show and close plots for marked classes
+
+    Notes
+    -----
+    Only shows and closes figures on classes marked with 'classplot'
+    """
+    import matplotlib.pyplot as plt
+
+    if "classplot" in request.keywords:
+        yield
+        plt.show()
+        plt.close()
+    else:
+        yield

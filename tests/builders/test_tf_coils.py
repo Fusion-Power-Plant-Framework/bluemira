@@ -19,7 +19,6 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
@@ -59,11 +58,6 @@ class TestRippleConstrainedLengthGOP:
         },
         RippleConstrainedLengthGOPParams,
     )
-
-    @classmethod
-    def teardown_method(cls):
-        plt.show()
-        plt.close("all")
 
     def test_default_setup(self):
         problem = RippleConstrainedLengthGOP(
