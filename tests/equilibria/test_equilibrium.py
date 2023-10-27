@@ -28,7 +28,7 @@ import pytest
 from matplotlib import pyplot as plt
 
 from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
-from bluemira.equilibria.coils import CoilSet
+from bluemira.equilibria.coils import CoilGroup, CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium, FixedPlasmaEquilibrium
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
@@ -371,16 +371,18 @@ class TestEquilibrium:
             assert "qpsi" in res
             assert np.all(res["qpsi"] == 0)  # array is all zeros
 
-    def test_woops_no_coils(self):
+    @pytest.mark.parametrize("grouping", [CoilSet, CoilGroup])
+    def test_woops_no_coils(self, grouping):
         testfile = Path(get_bluemira_path("eqdsk", subfolder="data"), "jetto.eqdsk_out")
         e = EQDSKInterface.from_file(testfile)
-        coilset = CoilSet.from_group_vecs(e)
-        zeros = np.zeros(4)
-        assert coilset.current.any() == 0
-        assert coilset.j_max.any() == 0
-        assert coilset.b_max.any() == 0
-        assert coilset.n_coils(ctype="DUM") == 4
-        assert len(coilset.control) == 0
+        coil = grouping.from_group_vecs(e)
+        assert isinstance(coil, grouping), "Check classmethod is making the right class"
+        assert coil.current.any() == 0
+        assert coil.j_max.any() == 0
+        assert coil.b_max.any() == 0
+        assert coil.n_coils(ctype="DUM") == 4
+        if grouping is CoilSet:
+            assert len(coil.control) == 0
 
 
 class TestEqReadWrite:

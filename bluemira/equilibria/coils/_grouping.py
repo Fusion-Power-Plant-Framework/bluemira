@@ -317,7 +317,7 @@ class CoilGroup(CoilGroupFieldsMixin):
                 "EQDSK coilset empty - dummy coilset in use."
                 "Please replace with an appropriate coilset."
             )
-            return cls(*coils, control_names=False)
+            return cls(*coils)
         for i in range(eqdsk.ncoil):
             dx = eqdsk.dxc[i]
             dz = eqdsk.dzc[i]
@@ -514,8 +514,10 @@ class CoilGroup(CoilGroupFieldsMixin):
         return coils
 
     def get_coiltype(self, ctype: Union[str, CoilType]):
-        """Get coil by coil type"""
-        return CoilGroup(*self._get_coiltype(ctype))
+        """Get coils matching coil type"""
+        if coiltype := self._get_coiltype(ctype):
+            return CoilGroup(*coiltype)
+        return None
 
     def assign_material(self, ctype, j_max, b_max):
         """Assign material J and B to Coilgroup"""
@@ -932,8 +934,16 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return self._control
 
     @control.setter
-    def control(self, control_names: Optional[Union[List, bool]] = None):
-        """Set control coils"""
+    def control(self, control_names: Optional[Union[List[str], bool]] = None):
+        """Set which coils are actively controlled
+
+        Parameters
+        ----------
+        control_names:
+                    - list of str, each one being the name of each control coil.
+                    - None, for when ALL coils are control coils.
+                    - a boolean, which denotes all controlled vs none controlled.
+        """
         names = self.name
         if isinstance(control_names, List):
             self._control_ind = [names.index(c) for c in control_names]
@@ -944,7 +954,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self._control = [names[c] for c in self._control_ind]
 
     def get_control_coils(self):
-        """Get Control coils"""
+        """Get control coils"""
         coils = []
         for c in self._coils:
             names = c.name
@@ -957,10 +967,6 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             elif names in self.control:
                 coils.append(c)
         return CoilSet(*coils)
-
-    def get_coiltype(self, ctype):  # noqa: PLR6301
-        """Get coils by coils type"""
-        return CoilSet(*super()._get_coiltype(ctype))
 
     @property
     def area(self) -> float:
@@ -998,3 +1004,26 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         ind = self._control_ind if control else slice(None)
 
         return np.sum(output[..., ind], axis=-1) if sum_coils else output[..., ind]
+
+    def get_coiltype(self, ctype):
+        """Get coils by coils type"""
+        if coiltype := self._get_coiltype(ctype):
+            return CoilSet(*coiltype)
+        return None
+
+    @classmethod
+    def from_group_vecs(
+        cls, eqdsk: EQDSKInterface, control_coiltypes=(CoilType.PF, CoilType.CS)
+    ):
+        """Create CoilSet from eqdsk group vectors.
+
+        Automatically sets all coils that are not implicitly passive to control coils
+        """
+        self = super().from_group_vecs(eqdsk)
+
+        self.control = [
+            coil.name
+            for ctype in control_coiltypes
+            for coil in self._get_coiltype(ctype)
+        ]
+        return self
