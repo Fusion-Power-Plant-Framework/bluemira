@@ -945,11 +945,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
                     - a boolean, which denotes all controlled vs none controlled.
         """
         names = self.name
-        if isinstance(control_names, List):  # List[str] case
+        if isinstance(control_names, List):
             self._control_ind = [names.index(c) for c in control_names]
-        elif control_names or control_names is None:  # bool case or None case
+        elif control_names or control_names is None:
             self._control_ind = np.arange(len(names)).tolist()
-        else:  # bool case
+        else:
             self._control_ind = []
         self._control = [names[c] for c in self._control_ind]
 
@@ -1012,16 +1012,18 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return None
 
     @classmethod
-    def from_group_vecs(cls, eqdsk: EQDSKInterface):
+    def from_group_vecs(
+        cls, eqdsk: EQDSKInterface, control_coiltypes=(CoilType.PF, CoilType.CS)
+    ):
         """Create CoilSet from eqdsk group vectors.
-        
+
         Automatically sets all coils that are not implicitly passive to control coils
         """
         self = super().from_group_vecs(eqdsk)
 
         self.control = [
             coil.name
-            for active_coiltype in (CoilType.CS, CoilType.PF)
-            for coil in self._get_coiltype(active_coiltype)
+            for ctype in control_coiltypes
+            for coil in self._get_coiltype(ctype)
         ]
         return self
