@@ -140,10 +140,10 @@ ignore_errors = true
 
 [tool.pytest.ini_options]
 markers = [
-    "longrun",
-    "reactor",
-    "private",
-    "classplot"
+    "longrun: Long running tests (>20s)",
+    "reactor: Whole reactor tests",
+    "private: Tests using private data",
+    "classplot: Show and close figures after running all tests in class"
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']

@@ -490,7 +490,6 @@ class TestLFrame:
         assert np.isclose(delta_cz, deflections[6 * 2 + 2], rtol=1e-2)
 
 
-@pytest.mark.longrun
 class TestCompoundDeflection:
     def test_fixedfixed(self):
         length = 4
@@ -559,7 +558,6 @@ class TestCompoundDeflection:
         result.plot()
 
 
-@pytest.mark.longrun
 class TestGravityLoads:
     def test_angled_cantilever(self):
         model = FiniteElementModel()
@@ -609,7 +607,6 @@ class TestFixedFixedStress:
         result.plot()
 
 
-@pytest.mark.longrun
 class TestMiniEiffelTower:
     @classmethod
     def setup_class(cls):
@@ -702,7 +699,6 @@ class TestMiniEiffelTower:
         self.model.clear_loads()
 
 
-@pytest.mark.longrun
 class TestInterpolation:
     def test_model(self):
         xsection = RectangularBeam(0.2, 0.3)

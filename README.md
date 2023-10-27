@@ -140,6 +140,8 @@ using a regular expression. See the
 After a test run an html report of the results can be found in `report.html`. A test
 coverage report can be found in the `htmlcov` directory.
 
+Further information about our testing can be found [here](CONTRIBUTING.md#testing).
+
 ## Building Documentation
 
 The documentation is built with Sphinx. In addition the API documentation is created by
