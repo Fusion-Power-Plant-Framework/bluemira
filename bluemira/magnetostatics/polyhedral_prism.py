@@ -763,66 +763,103 @@ def _field_ciric(
     Magnetic field vector at the point (response to unit current density)
     """
     B = np.zeros(3)
- 
+
     o_1 = face_points[0][0]
     o_2 = face_points[-1][0]
     origin_line = o_1 - o_2
     o_3 = face_points[0][2]
     o_4 = face_points[-1][2]
 
-    mid1 = 0.5 * (o_1+o_2)
-    mid2 = 0.5 * (o_3+o_4)
+    mid1 = 0.5 * (o_1 + o_2)
+    mid2 = 0.5 * (o_3 + o_4)
 
-    m_c =  mid2 - mid1
+    m_c = mid2 - mid1
     m_c /= np.linalg.norm(m_c)
 
     odn = np.linalg.norm(origin_line)
     ap = point - mid1
     D = np.linalg.norm(np.cross(ap, origin_line)) / odn
-    D = np.linalg.norm(np.cross(point - o_1, point - o_2)) / np.linalg.norm(o_2-o_1)
+    D = np.linalg.norm(np.cross(point - o_1, point - o_2)) / np.linalg.norm(o_2 - o_1)
+
+    X = np.dot(np.linalg.norm(point - mid1), np.cross(m_c, current_direction))
+
     inside = _point_in_volume(point, face_normals, mid_points)
-    
-  
+
     rectangles = []
     for i, r in enumerate(face_points):
         if i == 0:
-            new = [r[0], r[1], r[2], r[3]]
+            # First end cap
+            new = [r[3], r[0], r[1], r[2]]
         elif i == 5:
-            new = [r[0], r[1], r[2], r[3]]
-        else:#elif i == 3 or i == 4:
-            r = r[:-1]
-            new = [r[0], r[3], r[2], r[1]]
-        # elif i == 2 or i == 1:
-        #     new = [r[3], r[0], r[1], r[2]]
-        rectangles.append(new)
-  
-    for i, rectangle in enumerate(rectangles[1:-1]):
- 
-        normal = face_normals[i+1]
-        r_1 = (point - rectangle[0])
-        r_2 = (point - rectangle[1] )
-        r_3 = (point - rectangle[2])
-        r_4 = (point - rectangle[3])
+            # Second end cap
+            new = [r[3], r[0], r[1], r[2]]
+        elif i == 1:
+            new = [r[3], r[0], r[1], r[2]]
+        # new = [r[0], r[3], r[2], r[1]]
+        elif i == 2:
+            new = [r[3], r[0], r[1], r[2]]  # [::-1]  # ?
+            # new = [r[0], r[1], r[2], r[3]][::-1]
+        elif i == 3:
+            new = [r[3], r[0], r[1], r[2]]
+            # new = [r[0], r[3], r[2], r[1]][::-1]
+            # new = [r[3], r[0], r[1], r[2]][::-1]
+            # new = [r[0], r[3], r[2], r[1]]
+        elif i == 4:
+            new = [r[0], r[3], r[2], r[1]][::-1]
+            new = [r[3], r[0], r[1], r[2]]
+            # new = [r[3], r[0], r[1], r[2]][::-1]
+        rectangles.append(new)  # ?
+
+    idx = [1, 3]
+    rectangles = np.array(rectangles)
+
+    for i, rectangle in zip(idx, rectangles[idx]):
+        normal = face_normals[i]
+        r_1 = point - rectangle[0]
+        r_2 = point - rectangle[1]
+        r_3 = point - rectangle[2]
+        r_4 = point - rectangle[3]
         l_12 = r_1 - r_2
         l_34 = r_3 - r_4
         l_12n = np.linalg.norm(l_12)
         l_34n = np.linalg.norm(l_34)
-        zh = rectangle[3] - rectangle[0]
+
+        # Conversion to local coordinate system
         zh = r_1 - r_4
         zh /= np.linalg.norm(zh)
         z_2 = np.dot(zh, l_12)
-        assert np.allclose(zh,  (rectangle[3] - rectangle[0]) / np.linalg.norm(rectangle[3] - rectangle[0]))
-        d = np.sqrt(l_12n ** 2 - z_2 ** 2)
-        xh = -np.cross(l_12, zh) / d  # should be = face_normals[i]? should not be a minus in front
-        xh = np.cross(l_12, zh)
-        xh /=np.linalg.norm(xh)
-        #assert np.allclose(xh, face_normals[i+1])
-  
+
+        d = np.sqrt(l_12n**2 - z_2**2)
+        xh = np.cross(l_12, zh) / d
         yh = np.cross(zh, xh)
+        dcm = np.zeros((3, 3))
+        dcm[0, :] = xh
+        dcm[1, :] = yh
+        dcm[2, :] = zh
+
+        # import matplotlib.pyplot as plt
+        # f, ax = plt.subplots(subplot_kw={"projection": "3d"})
+        # for j, r in enumerate(rectangle):
+        #     ax.plot(*r, marker="o")
+        #     ax.text(*r, str(j))
+        # #ax.plot(*mid_points[i], marker="x", color="k")
+        # ax.quiver(*mid_points[i], *0.1*xh, color="g")
+        # ax.quiver(*mid_points[i], *0.1*yh, color="r")
+        # ax.quiver(*mid_points[i], *0.1*zh, color="k")
+        # ax.plot(*point, marker="x", color="b")
+        # ax.quiver(*rectangle[0], *r_1)
+        # plt.show()
+        assert np.allclose(
+            zh,
+            (rectangle[3] - rectangle[0]) / np.linalg.norm(rectangle[3] - rectangle[0]),
+        )
+        assert np.allclose(xh, normal)
+
         r_1n = np.linalg.norm(r_1)
         r_2n = np.linalg.norm(r_2)
         r_3n = np.linalg.norm(r_3)
         r_4n = np.linalg.norm(r_4)
+        x, y, z = np.dot(dcm, r_1)
         x = np.dot(xh, r_1)
         y = np.dot(yh, r_1)
         z = np.dot(zh, r_1)
@@ -849,17 +886,25 @@ def _field_ciric(
         cn, cd = (z - z_3) * (q_34 - l_34n**2) - r_3n**2 * (z_3 - z_4), x * r_3n * d
         dn, dd = (z - z_4) * q_34 - (z_3 - z_4) * r_4n**2, x * r_4n * d
         gamma = (
-            np.arctan(an/ad)
-            - np.arctan(bn/bd)
-            + np.arctan(cn/cd)
-            - np.arctan(dn/dd)
+            np.arctan(an / ad)
+            - np.arctan(bn / bd)
+            + np.arctan(cn / cd)
+            - np.arctan(dn / dd)
         )
+        # gamma = (  # Pretty sure this won't work, need to try alternative e.g. omega_t
+        #     np.arctan2(an, ad)
+        #     - np.arctan2(bn, bd)
+        #     + np.arctan2(cn, cd)
+        #     - np.arctan2(dn, dd)
+        # )
         if x < 0:
             if np.sign(gamma) > 0:
-                gamma *= -1
+                print("solid angle sign adjusted...")
+                # gamma *= -1
         if x >= 0:
             if np.sign(gamma) < -1:
-                gamma *= - 1
+                print("solid angle sign adjusted...")
+                # gamma *= - 1
 
         r12n = r_1n - r_2n
         r34n = r_3n - r_4n
@@ -869,27 +914,29 @@ def _field_ciric(
             - d**2 * (p_12 * lambda_12 / l_12n**3 + p_34 * lambda_34 / l_34n**3)
         )
 
-        n_h = xh
+        n_h = normal
         n_p = np.dot(n_h, m_c)
         n_pp = np.dot(n_h, np.cross(m_c, current_direction))
-        #D = np.linalg.norm(np.cross(r_1, zh))
-        D = np.linalg.norm(np.cross(point - rectangle[0], point - rectangle[3])) / np.linalg.norm(rectangle[3]-rectangle[0])
 
-        dcm = np.zeros((3, 3))
-        dcm[0, :] = xh
-        dcm[1, :] = yh
-        dcm[2, :] = zh
+        # if i == 0 or i == 5:
+        #     n_pp = 0
+        #     assert np.isclose(n_pp, 0.0)
+
+        # Distance from the arbitrary origin (0, 0, 0) to the edge (k-1,k)
+        D = np.linalg.norm(
+            np.cross(mid1 - rectangle[0], mid1 - rectangle[3])
+        ) / np.linalg.norm(rectangle[3] - rectangle[0])
+        dvec = mid1 - rectangle[0]
+        D = np.dot(dvec, np.cross(m_c, current_direction))
 
         B_f = np.zeros(3)
-        B_f[0] += (
-            (n_pp * D - n_p * (n_p * x + n_pp * y)) * lambdda
-            + ((n_p * D - n_p * (-n_pp * x + n_p * y)) * gamma
-            - n_p * n_pp * psic)
+        B_f[0] = (n_pp * D - n_p * (n_p * x + n_pp * y)) * lambdda + (
+            (n_p * D - n_p * (-n_pp * x + n_p * y)) * gamma - n_p * n_pp * psic
         )
-        B_f[1] += (-(n_p * D - n_p * (-n_pp * x + n_p * y)) * lambdda) + (
+        B_f[1] = (-(n_p * D - n_p * (-n_pp * x + n_p * y)) * lambdda) + (
             (n_pp * D - n_p * (n_p * x + n_pp * y)) * gamma + n_p**2 * psic
         )
-        B_f[2] += (
+        B_f[2] = (
             n_p * D * d * (lambda_12 / l_12n + lambda_34 / l_34n)
         ) - n_p**2 * d**2 * (
             r12n / l_12n**2
@@ -897,24 +944,14 @@ def _field_ciric(
             + q_12 * lambda_12 / l_12n**3
             + q_34 * lambda_34 / l_34n**3
         )
+        B += np.dot(dcm, B_f)
+        # B += B_f
 
-        B += B_f
-        # import matplotlib.pyplot as plt
-        # f, ax = plt.subplots(subplot_kw={"projection": "3d"})
-        # for j, r in enumerate(rectangle):
-        #     ax.plot(*r, marker="o")
-        #     ax.text(*r, str(j))
-        # ax.plot(*mid_points[i+1], marker="x", color="k")
-        # ax.quiver(*mid_points[i+1], *0.1*current_direction)
-        # ax.plot(*point, marker="x", color="b")
-        # ax.quiver(*rectangle[0], *r_1)
-        # plt.show()
-        # B[0] += 1/d * (x*lambdda + y * gamma)
-        # B[1] += d * (1/d**2*(-y*lambdda+x*gamma) - r12n*z_2/(d*l_12n**2) - r34n*(z_3-z_4)/(d*l_34n**2) + p_12*lambda_12/l_12n**2+p_34*lambda_34/l_34n**2)
-        # B[2] += d * (r12n/l_12n**2 + r34n/l_34n**2+q_12*lambda_12/l_12n**2+q_34*lambda_34/l_34n**2)
+        # B += np.dot(dcm.T, B_f)
 
-    return MU_0_4PI * B #+ MU_0_4PI*point*m_c * inside
-
+    area = 1
+    # inside=0
+    return MU_0_4PI * (B + inside * X * m_c / area)
 
 
 def _point_in_volume(point, normals, mid_points):
