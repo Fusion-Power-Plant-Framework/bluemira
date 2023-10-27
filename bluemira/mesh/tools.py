@@ -269,7 +269,7 @@ def _export_link_file(mesh, file_prefix, directory):
 
 
 def _get_data(mesh, cell_type):
-    return [array for (typ, array) in mesh.cells if typ == cell_type]
+    return [cell.data for cell in mesh.cells if cell.type == cell_type]
 
 
 def _make_cellblocks(data, cell_type):
