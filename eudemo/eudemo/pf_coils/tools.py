@@ -31,8 +31,10 @@ from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
+    _offset_wire_discretised,
     boolean_cut,
     distance_to,
+    force_wire_to_spline,
     make_polygon,
     offset_wire,
     split_wire,
@@ -205,6 +207,11 @@ def make_coilset(
         s.fix_size()
 
     tf_track = offset_wire(tf_boundary, 1)
+
+    if tf_track.length < tf_boundary.length:
+        tf_track = force_wire_to_spline(
+            _offset_wire_discretised(tf_boundary, 1), n_edges_max=300
+        )
     x_c, z_c = make_PF_coil_positions(
         tf_track,
         n_PF,
@@ -329,12 +336,10 @@ def make_coil_mapper(
         if len(_bin) < 1:
             bluemira_warn("There is a segment of the track which has no coils on it.")
         elif len(_bin) == 1:
-            coil = _bin[0]
-            interpolator_dict[coil.name] = PathInterpolator(segment)
+            interpolator_dict[_bin[0].name] = PathInterpolator(segment)
         else:
-            coils = _bin
             l_values = np.array(
-                [segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in coils]
+                [segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in _bin]
             )
             idx = np.argsort(l_values)
             l_values = l_values[idx]
@@ -344,7 +349,7 @@ def make_coil_mapper(
             sub_segs = _split_segment(segment, split_positions)
 
             # Sorted coils
-            for coil, sub_seg in zip([coils[i] for i in idx], sub_segs):
+            for coil, sub_seg in zip([_bin[i] for i in idx], sub_segs):
                 interpolator_dict[coil.name] = PathInterpolator(sub_seg)
 
     return PositionMapper(interpolator_dict)
@@ -384,6 +389,11 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
     Path along which the PF coil centroids should be positioned
     """
     tf_offset = offset_wire(tf_boundary, offset_value)
+
+    if tf_offset.length < tf_boundary.length and offset_value > 0:
+        tf_offset = force_wire_to_spline(
+            _offset_wire_discretised(tf_boundary, offset_value), n_edges_max=300
+        )
 
     # Find top-left and bottom-left "corners"
     coordinates = tf_offset.discretize(byedges=True, ndiscr=200)

@@ -369,8 +369,13 @@ class CoilGroupPlotter(Plotter):
 
         x = np.append(x_boundary, x_boundary[0])
         z = np.append(z_boundary, z_boundary[0])
+        if all(x_boundary == x_boundary[0]) or all(z_boundary == z_boundary[0]):
+            self.ax.plot(
+                x[0], z[0], zorder=11, color="k", linewidth=linewidth, marker="x"
+            )
+        else:
+            self.ax.plot(x, z, zorder=11, color=color, linewidth=linewidth)
 
-        self.ax.plot(x, z, zorder=11, color=color, linewidth=linewidth)
         if fill:
             if mask:
                 self.ax.fill(x, z, color="w", zorder=10, alpha=1)
