@@ -515,9 +515,9 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def get_coiltype(self, ctype: Union[str, CoilType]):
         """Get coils matching coil type"""
-        if coiltype := self._get_coiltype(ctype):  # if matched coils list is not empty
+        if coiltype := self._get_coiltype(ctype):
             return CoilGroup(*coiltype)
-        return None  # Don't return anything.
+        return None
 
     def assign_material(self, ctype, j_max, b_max):
         """Assign material J and B to Coilgroup"""
@@ -936,7 +936,10 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     @control.setter
     def control(self, control_names: Optional[Union[List[str], bool]] = None):
         """Set which coils are actively controlled
-        control names: can be one of the following:
+
+        Parameters
+        ----------
+        control_names:
                     - list of str, each one being the name of each control coil.
                     - None, for when ALL coils are control coils.
                     - a boolean, which denotes all controlled vs none controlled.
@@ -1010,17 +1013,15 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
     @classmethod
     def from_group_vecs(cls, eqdsk: EQDSKInterface):
-        """Same as its parent class,
-        initialize an instance of CoilSet from group vectors,
-        but it also automatically decide which coils are control coils
-        according to CoilType.get_actively_controlled_types.
+        """Create CoilSet from eqdsk group vectors.
+        
+        Automatically sets all coils that are not implicitly passive to control coils
         """
         self = super().from_group_vecs(eqdsk)
 
-        controlled_coils = []
-        for active_coiltype in CoilType.get_actively_controlled_types():
-            controlled_coils.extend(
-                [coil.name for coil in self._get_coiltype(active_coiltype)]
-            )
-        self.control = controlled_coils
+        self.control = [
+            coil.name
+            for active_coiltype in (CoilType.CS, CoilType.PF)
+            for coil in self._get_coiltype(active_coiltype)
+        ]
         return self
