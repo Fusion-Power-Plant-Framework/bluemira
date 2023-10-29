@@ -347,16 +347,15 @@ def solve_transport_fixed_boundary(
         mesh = create_mesh(
             plasma,
             directory,
-            mesh_filename,
             mesh_name_msh,
-        )
+        )[0]
 
         # store the created mesh as coarse mesh
         coarse_mesh = mesh
 
         gs_solver.set_mesh(mesh)
 
-        points = gs_solver.mesh.coordinates()
+        points = gs_solver.mesh.geometry.x
         psi2d_0 = np.zeros(len(points))
 
         for n_iter_inner in range(max_inner_iter):

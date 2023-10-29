@@ -27,6 +27,15 @@ import pyvista
 
 import bluemira.base.look_and_feel
 
+def convert_to_points_array(x):
+    x = np.array(x)
+    if len(x.shape) == 1:
+        if len(x) == 2:
+            x = np.array([x[0], x[1], 0])
+        x = np.array([x])
+    if x.shape[1] == 2:
+        x = np.array([x[:, 0], x[:, 1], x[:, 0]*0]).T
+    return x
 
 class BluemiraFemFunction(Function):
     """A supporting class that extends the BluemiraFemFunction implementing
@@ -52,14 +61,12 @@ class BluemiraFemFunction(Function):
         res, _ = self._eval_new(points)
         return res
 
-    def _eval_new(self, points: np.array):
+    def _eval_new(self, points: Union[np.array, List]):
         """
         Supporting function for __call__
         """
-        if len(points.shape) == 1:
-            if len(points) == 2:
-                points = np.array([points[0], points[1], 0])
-            points = np.array([points])
+        initial_shape = points.shape
+        points = convert_to_points_array(points)
         res, new_points = eval_f(self, points)
         if len(res.shape) == 1:
             res = res[0]
@@ -70,8 +77,32 @@ class BluemiraFemFunction(Function):
                 if res.shape[0] == 1:
                     res = res[0]
                     new_points = new_points[0]
+            elif res.shape[0] == 1 and len(initial_shape) == 1:
+                res = res[0]
+                new_points = new_points[0]
+
         return res, new_points
 
+
+def closest_point_in_mesh(mesh, points):
+    points = convert_to_points_array(points)
+
+    closest_points = []
+
+    tdim = mesh.topology.dim
+    tree = dolfinx.geometry.BoundingBoxTree(mesh, tdim)
+    num_entities_local = mesh.topology.index_map(tdim).size_local + mesh.topology.index_map(tdim).num_ghosts
+    entities = np.arange(num_entities_local, dtype=np.int32)
+    midpoint_tree = dolfinx.geometry.create_midpoint_tree(mesh, tdim, entities)
+    closest_entities = dolfinx.geometry.compute_closest_entity(tree, midpoint_tree, mesh, points)
+    colliding_entity_bboxes = dolfinx.geometry.compute_collisions(tree, points)
+    mesh_geom = mesh.geometry.x
+    geom_dofs = dolfinx.cpp.mesh.entities_to_geometry(mesh, tdim, [closest_entities], False)
+    mesh_nodes = mesh_geom[geom_dofs][0]
+    for p in points:
+        displacement = dolfinx.geometry.compute_distance_gjk(p, mesh_nodes)
+        closest_points.append(p - displacement)
+    return np.array(closest_points)
 
 def plot_meshtags(
     mesh: dolfinx.mesh.Mesh,
@@ -134,7 +165,7 @@ def calculate_area(
 
 
 def integrate_f(
-    f: BluemiraFemFunction, mesh: dolfinx.mesh.Mesh, boundaries: None, tag: int = None
+    f: BluemiraFemFunction, mesh: dolfinx.mesh.Mesh, boundaries = None, tag: int = None
 ):
     """
     Calculate the integral of a function on the specified sub-domain
@@ -280,6 +311,8 @@ def eval_f(function: Function, points: np.array, check: str="warn"):
     bb_tree = geometry.BoundingBoxTree(mesh, mesh.topology.dim)
     cells = []
     points_on_proc = []
+
+    # points = closest_point_in_mesh(mesh, points)
     # Find cells whose bounding-box collide with the points
     cell_candidates = geometry.compute_collisions(bb_tree, points)
     # Choose one of the cells that contains the point
@@ -288,8 +321,15 @@ def eval_f(function: Function, points: np.array, check: str="warn"):
         if len(colliding_cells.links(i)) > 0:
             points_on_proc.append(point)
             cells.append(colliding_cells.links(i)[0])
+        else:
+            point = closest_point_in_mesh(mesh, np.array([point]))
+            temp_cell_candidates = geometry.compute_collisions(bb_tree, point)
+            temp_colliding_cells = geometry.compute_colliding_cells(mesh, temp_cell_candidates, point)
+            points_on_proc.append(point[0])
+            cells.append(temp_colliding_cells.links(0)[0])
+
     points_on_proc = np.array(points_on_proc, dtype=np.float64)
-    values = np.array(function.eval(points_on_proc, cells))
+    values = np.array(function.eval(points_on_proc, cells)).reshape(points.shape[0], -1)
 
     if check == "warn":
         if points.shape != points_on_proc.shape:

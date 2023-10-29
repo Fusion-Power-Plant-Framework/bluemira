@@ -24,10 +24,10 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.mesh import meshing
-# from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.optimisation import optimise
 from bluemira.utilities.tools import is_num
 
+from bluemira.codes.bmgmshio import model_to_mesh, read_from_msh
 
 def plot_scalar_field(
     x: np.ndarray,
@@ -146,6 +146,11 @@ def get_tricontours(
             results.append(None)
     return results
 
+# modified
+# Note: since it is not possible anymore to extrapolate dolfinx function data outside the
+# mesh domain, this procedure fails when psi_norm is almost 1 (i.e. points are near to the
+# boundary). Not sure how to solve this problem.
+# Moreover, this procedure seems to be very slow now.
 
 def find_flux_surface(
     psi_norm_func: Callable[[np.ndarray], float],
@@ -210,15 +215,16 @@ def find_flux_surface(
         return float(x_axis + d * np.cos(theta_i)), float(z_axis + d * np.sin(theta_i))
 
     def psi_line_match(d, theta):
-        return psi_norm_match(theta_line(d, theta))
+        return psi_norm_match(np.array(theta_line(d, theta)))
 
     theta = np.linspace(0, 2 * np.pi, n_points - 1, endpoint=False, dtype=float)
     points = np.zeros((2, n_points), dtype=float)
     distances = np.zeros(n_points)
 
     for i in range(len(theta)):
+
         result = optimise(
-            f_objective=lambda d, i=i: psi_line_match(d, theta[i]),
+            f_objective=lambda d, j=i: psi_line_match(d, theta[j]),
             x0=d_guess,
             dimensions=1,
             algorithm="SLSQP",
@@ -290,6 +296,7 @@ def get_mesh_boundary(mesh: dolfinx.mesh.Mesh) -> Tuple[np.ndarray, np.ndarray]:
     return points_sorted[:, 0], points_sorted[:, 1]
 
 
+# modified
 def get_flux_surfaces_from_mesh(
     mesh: dolfinx.mesh.Mesh,
     psi_norm_func: Callable[[float, float], float],
@@ -339,10 +346,10 @@ def get_flux_surfaces_from_mesh(
     elif nx is not None:
         bluemira_warn("x_1d and nx specified, discarding nx.")
 
-    mesh_points = mesh.coordinates()
+    mesh_points = mesh.geometry.x
     x = mesh_points[:, 0]
     z = mesh_points[:, 1]
-    psi_norm_data = np.array([psi_norm_func(p) for p in mesh_points])
+    psi_norm_data = psi_norm_func(mesh_points)
 
     index = []
     flux_surfaces = []
@@ -367,6 +374,7 @@ def get_flux_surfaces_from_mesh(
     return x_1d[mask], flux_surfaces
 
 
+### modified - seems to work
 def calculate_plasma_shape_params(
     psi_norm_func: Callable[[np.ndarray], np.ndarray],
     mesh: dolfinx.mesh.Mesh,
@@ -397,8 +405,8 @@ def calculate_plasma_shape_params(
     delta:
         Triangularity of the flux surface at psi_norm
     """
-    points = mesh.coordinates()
-    psi_norm_array = [psi_norm_func(points) for x in points]
+    points = mesh.geometry.x
+    psi_norm_array = psi_norm_func(points)
 
     contour = get_tricontours(points[:, 0], points[:, 1], psi_norm_array, psi_norm)[0]
     x, z = contour.T
@@ -410,7 +418,7 @@ def calculate_plasma_shape_params(
 
     if plot:
         _, ax = plt.subplots()
-        dolfin.plot(mesh)
+        #dolfin.plot(mesh)
         ax.tricontour(points[:, 0], points[:, 1], psi_norm_array)
         ax.plot(x, z, color="r")
         ax.plot(*po, marker="o", color="r")
@@ -533,15 +541,18 @@ def refine_mesh(
     return mesh
 
 
+from mpi4py import MPI
 def create_mesh(
     plasma: PhysicalComponent,
     directory: str,
-    mesh_filename: str,
     mesh_name_msh: str,
+    gdim: Union[int, List] = [0, 2]
 ) -> dolfinx.mesh.Mesh:
     """
     Create mesh
     """
-    meshing.Mesh(meshfile=Path(directory, mesh_name_msh).as_posix())(plasma)
-    msh_to_xdmf(mesh_name_msh, dimensions=(0, 2), directory=directory)
-    return import_mesh(mesh_filename, directory=directory, subdomains=True)[0]
+    meshfile = Path(directory, mesh_name_msh).as_posix()
+    meshing.Mesh(meshfile=meshfile)(plasma)
+    model_rank = 0
+    mesh_comm = MPI.COMM_WORLD
+    return read_from_msh(meshfile, mesh_comm, model_rank, gdim=gdim)

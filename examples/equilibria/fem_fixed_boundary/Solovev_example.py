@@ -17,6 +17,7 @@ import matplotlib.pyplot as plt
 from bluemira.equilibria.fem_fixed_boundary.utilities import get_mesh_boundary
 from bluemira.codes.bmgmshio import model_to_mesh, read_from_msh
 
+
 class Solovev:
     """
     Solov'ev analytical solution to a fixed boundary equilibrium problem with a symmetric
@@ -101,7 +102,7 @@ class Solovev:
         rv, zv = np.meshgrid(r, z)
         points = np.vstack([rv.ravel(), zv.ravel()]).T
         psi = np.array([self.psi(point) for point in points])
-        ax, cntr, cntrf  = plot_scalar_field(
+        ax, cntr, cntrf = plot_scalar_field(
             points[:, 0], points[:, 1], psi, levels=levels, ax=axis, tofill=tofill
         )
         output = {"ax": ax, "cntr": cntr, "cntrf": cntrf}
@@ -186,7 +187,7 @@ if __name__ == "__main__":
     gmsh.initialize()
     # points
     point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
-    #point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
+    # point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
     line_tags = []
     for i in range(len(point_tags) - 1):
         line_tags.append(gmsh.model.occ.addLine(point_tags[i + 1], point_tags[i]))
@@ -214,18 +215,13 @@ if __name__ == "__main__":
     gmsh.model.mesh.generate(2)
     gmsh.model.mesh.optimize("Netgen")
 
-    mesh, ct, ft, labels = model_to_mesh(
-        gmsh.model, mesh_comm, model_rank, gdim=[0,2]
-    )
+    mesh, ct, ft, labels = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=[0, 2])
 
     gmsh.write("Mesh.geo_unrolled")
     gmsh.write("Mesh.msh")
     gmsh.finalize()
 
-    mesh1, ct1, ft1, labels = read_from_msh(
-        "Mesh.msh", mesh_comm, model_rank, gdim=2
-    )
-
+    mesh1, ct1, ft1, labels = read_from_msh("Mesh.msh", mesh_comm, model_rank, gdim=2)
 
     # Inizialize the em solever
     gs_solver = FemMagnetostatic2d(2)
@@ -235,8 +231,7 @@ if __name__ == "__main__":
     g = dolfinx.fem.Function(gs_solver.V)
     # select the dofs coordinates in the xz plane
     dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
-    g.x.array[:] = [solovev.jp(x) for x in dof_points]
-
+    g.x.array[:] = np.array([solovev.jp(x) for x in dof_points])
 
     """
     Solve the linear GSE for the Solovev' plasma using zero boundary conditions on the LCFS
@@ -251,6 +246,7 @@ if __name__ == "__main__":
     Itot = []
     # boundary conditions
     dirichlet_bcs = None
+
     for bc_tag in range(4):
         if bc_tag == 0:
             dirichlet_bcs = None
@@ -266,9 +262,7 @@ if __name__ == "__main__":
             facets = dolfinx.mesh.locate_entities_boundary(
                 mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
             )
-            dofs = dolfinx.fem.locate_dofs_topological(
-                gs_solver.V, tdim - 1, facets
-            )
+            dofs = dolfinx.fem.locate_dofs_topological(gs_solver.V, tdim - 1, facets)
             dirichlet_bcs = [dolfinx.fem.dirichletbc(psi_exact_fun, dofs)]
         elif bc_tag == 3:
             dofs = dolfinx.fem.locate_dofs_topological(
@@ -302,17 +296,49 @@ if __name__ == "__main__":
     plt.title("Check mesh boundary function")
     plt.show()
 
+    dofs_points = gs_solver.psi.function_space.tabulate_dof_coordinates()[:, 0:2]
+    data = gs_solver.psi(dofs_points)
+    plot_scalar_field(dofs_points[:,0], dofs_points[:,1], data)
+    plt.title("Plot psi from recalculated dof_points")
+    plt.show()
+
+    dofs_points = gs_solver.psi.function_space.tabulate_dof_coordinates()[:, 0:2]
+    plot_scalar_field(dofs_points[:,0], dofs_points[:,1], gs_solver.psi.x.array[:])
+    plt.title("Plot psi from dof_points")
+    plt.show()
+
+
     from bluemira.equilibria.fem_fixed_boundary.utilities import find_magnetic_axis
+
     o_point = find_magnetic_axis(gs_solver.psi, mesh)
 
-    # gs_solver.psi_ax = max(gs_solver.psi.x.array)
-    # gs_solver.psi_b = 0
-    #
-    # def psi_norm_fun():
-    #     def myfunc(x):
-    #         value = np.sqrt(
-    #             np.abs((gs_solver.psi(x) - gs_solver.psi_ax) / (gs_solver.psi_b - gs_solver.psi_ax))
-    #         )
-    #         return value
-    #
-    #     return myfunc
+
+
+    gs_solver.psi_ax = max(gs_solver.psi.x.array)
+    gs_solver.psi_b = 0
+
+    def psi_norm_func(x):
+        value = np.sqrt(
+            np.abs(
+                (gs_solver.psi(x) - gs_solver.psi_ax)
+                / (gs_solver.psi_b - gs_solver.psi_ax)
+            )
+        )
+        return value
+
+    from bluemira.equilibria.fem_fixed_boundary.utilities import (
+        find_flux_surface,
+        calculate_plasma_shape_params,
+        get_flux_surfaces_from_mesh,
+    )
+
+    print(calculate_plasma_shape_params(psi_norm_func, mesh, 0.95, True))
+    print(get_flux_surfaces_from_mesh(mesh, psi_norm_func, None, 40))
+
+    from bluemira.magnetostatics.fem_utils import convert_to_points_array, closest_point_in_mesh
+
+    points = np.array([[-1, 0.3, 0], [9, 0.3, 0]])
+    print(closest_point_in_mesh(mesh, points))
+
+    point = [9, 0.3, 0]
+    print(closest_point_in_mesh(mesh, point))
