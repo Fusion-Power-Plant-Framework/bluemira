@@ -75,7 +75,16 @@ plasma = PhysicalComponent("plasma", lcfs_face)
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
-mesh = create_mesh(plasma, ".", "fixed_boundary_example", "fixed_boundary_example.msh")
+from bluemira.mesh import meshing
+from pathlib import Path
+from bluemira.equilibria.fem_fixed_boundary.utilities import read_from_msh
+from mpi4py import MPI
+
+meshing.Mesh(meshfile=Path(".", "fixed_boundary_example.msh").as_posix())(plasma)
+
+model_rank = 0
+mesh_comm = MPI.COMM_WORLD
+mesh, ct, ft, labels = read_from_msh("fixed_boundary_example.msh", mesh_comm, model_rank, gdim=[0,2])
 
 # %% [markdown]
 # Now we define some profile functions for p' and FF'.
@@ -107,26 +116,24 @@ solver = FemGradShafranovFixedBoundary(
 )
 equilibrium = solver.solve(plot=True)
 
-
 # %% [markdown]
 # We can also update the flux functions and/or the mesh with new entities
-# if we we wish to do so:
+# if we wish to do so:
 
 # %%
 solver.set_profiles(
     p_prime=DoublePowerFunc([2.0, 1.0]), ff_prime=DoublePowerFunc([1.5, 2])
 )
 solver.solve(plot=True)
-
 # %%
 plasma.shape.mesh_options = {"lcar": 0.15, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.15, "physical_group": "lcfs"}
 
-mesh = create_mesh(plasma, ".", "fixed_boundary_example", "fixed_boundary_example.msh")
+mesh, ct, ft, labels = create_mesh(plasma, ".", "fixed_boundary_example.msh", gdim = [0,2])
 
 solver.set_mesh(mesh)
 solver.solve()
-
+print("third solve")
 # %% [markdown]
 # Save the result to a file
 

@@ -124,7 +124,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         iter_err_max: float = 1e-5,
         relaxation: float = 0.0,
     ):
-        super().__init__(mesh, ("CG", p_order))
+        super().__init__(p_order)
         self._g_func = None
         self._psi_ax = None
         self._psi_b = None
@@ -166,7 +166,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         Calculate the gradients of psi at a point
         """
         if self._grad_psi is None:
-            w = dolfinx.fem.VectorFunctionSpace(self.mesh, "CG", 1)
+            w = dolfinx.fem.VectorFunctionSpace(self.mesh, ("CG", 1))
 
             self._grad_psi = BluemiraFemFunction(w)
             grad_psi_expr = Expression(
@@ -233,7 +233,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         def g(x):
             if self.psi_ax == 0:
                 return j_target
-            r = x[0]
+            r = x[:,0]
             x_psi = self.psi_norm_2d(x)
 
             a = r * pprime(x_psi)
@@ -256,7 +256,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         # it has been replaced by this code
         dof_points = self.V.tabulate_dof_coordinates()
-        self.g.x.array[:] = np.array([self._g_func(p) for p in dof_points])
+        self.g.x.array[:] = self._g_func(dof_points)
 
     def set_profiles(
         self,
@@ -363,10 +363,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         -------
         FixedBoundaryEquilibrium object corresponding to the solve
         """
+        print("solve")
         self._check_all_inputs_ready_error()
         self.define_g()
 
-        points = self.mesh.coordinates()
+        points = self.mesh.geometry.x
         plot = any((plot, debug, gif))
         folder = try_get_bluemira_path(
             "", subfolder="generated_data", allow_missing=False
@@ -385,7 +386,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         diff = np.zeros(len(points))
         for i in range(1, self.max_iter + 1):
             prev_psi = self.psi.x.array[:]
-            prev = np.array([self.psi_norm_2d(p) for p in points])
+            prev = self.psi_norm_2d(points)
 
             if plot:
                 self._plot_current_iteration(ax, cax, i, points, prev, diff, debug)
@@ -401,7 +402,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             super().solve()
             self._reset_psi_cache()
 
-            new = np.array([self.psi_norm_2d(p) for p in points])
+            new = self.psi_norm_2d(points)
             diff = new - prev
 
             eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(new, ord=2)
@@ -471,7 +472,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         cm = self._plot_array(
             ax[0],
             points,
-            np.array([self._g_func(p) for p in points]),
+            self._g_func(points),
             f"({i_iter}) " + "$J_{tor}$",
             PLOT_DEFAULTS["current"]["cmap"],
         )
