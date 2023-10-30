@@ -55,7 +55,6 @@ repository = "https://github.com/Fusion-Power-Plant-Framework/bluemira"
 
 [project.optional-dependencies]
 dev = [
-    "black",
     "jupytext",
     "mypy",
     "myst-nb",
@@ -102,41 +101,30 @@ exclude = ["tests*"]
 
 [tool.setuptools_scm]
 
-[tool.black]
-line-length = 89
-include = '\.pyi?$'
-extend-exclude = '\.env'
-
 [tool.coverage.report]
 "exclude_also" = [
   "if __name__ == .__main__.:",
   "if TYPE_CHECKING:"
 ]
 
-
 [tool.mypy]
 python_version = "3.8"
 check_untyped_defs = true
 disallow_any_generics = true
+disallow_incomplete_defs = true
 disallow_subclassing_any = true
 disallow_untyped_calls = true
-disallow_untyped_defs = false
-disallow_incomplete_defs = true
 disallow_untyped_decorators = true
+disallow_untyped_defs = false
+extra_checks = true
 ignore_missing_imports = true
 no_implicit_reexport = true
 strict_equality = true
-strict_concatenate = true
-warn_return_any = false
 warn_no_return = false
+warn_redundant_casts = true
+warn_return_any = false
 warn_unused_configs = true
 warn_unused_ignores = true
-warn_redundant_casts = true
-
-[[tool.mypy.overrides]]
-module = "bluemira._version.*"
-follow_imports = "skip"
-ignore_errors = true
 
 [tool.pytest.ini_options]
 markers = [
@@ -148,10 +136,8 @@ addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']
 
 [tool.ruff]
-select = ["ALL"]
-extend-select = ["E241", "CPY001", "PLR0904"]
+target-version = "py38"
 line-length = 89
-preview = true
 
 exclude = [
     ".git",
@@ -162,7 +148,6 @@ exclude = [
     ".pytest_cache",
     "htmlcov",
     "generated_data",
-    "bluemira/_version.py",
     # Deprecated modules
     "bluemira/utilities/optimiser.py",
     "bluemira/utilities/opt_tools.py",
@@ -175,30 +160,37 @@ exclude = [
     "bluemira/codes/_nlopt_api.py",
     "tests/equilibria/test_constraints.py",
 ]
+
+[tool.ruff.format]
+preview = true
+
+[tool.ruff.lint]
+preview = true
+select = ["ALL"]
 ignore = [
     "ANN",  # type annotations
     "EM",  # string in error messages
     "PD",  # Pandas
     "B019",  # using cache memory leaks
-    "COM812", # trailing comma, disagrees with black
+    "COM812", # enforce trailing comma, disagrees with black/ruff format
     "D200",  # docs stuff
     "D203",
     "D205",
     "D301",
     "D400",
     "D401",
-    "E203",  # black conflicts
     "DTZ005",  # datetime timezone arg
+    "E203",  # black/ruff format conflicts
+    "FIX002",  # Line contains todo
+    "ISC001",  # ruff format conflict
+    "PLW1514", # Specify file open encoding
     "PTH123",  # use Path.open
     "TRY003",  # put error messages in error class
-    "FIX002",  # Line contains todo
-    "PLW1514", # Specify file open encoding
     # should remove
     "TD",  # standardise TODOs
     "ERA",  # remove commented out code
     "FBT",  # dont put bools in func definition
     "SLF001",  # private method use
-    "T201",  # dont use print
     # remove when we move to python3.10
     "FA100",  # use future ann everywhere
     "UP006",  # type annotations
@@ -206,18 +198,18 @@ ignore = [
 
 ]
 
-[tool.ruff.isort]
+[tool.ruff.lint.isort]
 case-sensitive = true
 known-first-party = ["bluemira", "eudemo", "eudemo_tests"]
 force-to-top = ["freecad", "FreeCAD"]
 
-[tool.ruff.flake8-tidy-imports]
+[tool.ruff.lint.flake8-tidy-imports]
 ban-relative-imports = "all"
 
-[tool.ruff.mccabe]
+[tool.ruff.lint.mccabe]
 max-complexity = 20
 
-[tool.ruff.pylint]
+[tool.ruff.lint.pylint]
 # These should be made stricter
 max-args = 30
 max-statements = 73
@@ -226,20 +218,20 @@ max-branches = 23
 max-public-methods = 38
 max-bool-expr = 6
 
-[tool.ruff.flake8-bugbear]
+[tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = [
     "bluemira.base.reactor.FilterMaterial",
     "bluemira.utilities.opt_variables.ov",
     "bluemira.utilities.tools.ColourDescriptor",
 ]
 
-[tool.ruff.pydocstyle]
+[tool.ruff.lint.pydocstyle]
 convention = "numpy"
 
-[tool.ruff.pycodestyle]
+[tool.ruff.lint.pycodestyle]
 max-doc-length = 89
 
-[tool.ruff.pep8-naming]
+[tool.ruff.lint.pep8-naming]
 ignore-names = [
     "*PROCESS*",
     "*PLASMOD*",
@@ -320,7 +312,7 @@ ignore-names = [
     "I_not_dI",
 ]
 
-[tool.ruff.per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 "__init__.py" = [
     "F401",
     "F403",
@@ -331,13 +323,13 @@ ignore-names = [
 "bluemira/codes/plasmod/api/_outputs.py" = ["N815"]
 "bluemira/codes/plasmod/api/_inputs.py" = ["N815"]
 "data/*" = ["INP001"]
-"scripts/*" = ["INP001", "CPY001"]
+"scripts/*" = ["INP001", "CPY001", "T201"]
 "setup.py" = ["CPY001"]
 "documentation/source/*" = [
     "D100",
     "D101",
 ]
-"examples/*" = ["INP001"]
+"examples/*" = ["INP001", "T201"]
 "examples/geometry/optimisation_tutorial.ex.py" = ["W505", "E501"]
 "examples/optimisation/geometry_optimisation.ex.py" = ["E402"]
 "examples/optimisation/nonlinearly_constrained_problem.ex.py" = [
@@ -369,6 +361,7 @@ ignore-names = [
     "D409",
     "N802",
     "PT023",
+    "T201",
 ]
 "tests/*" = [
     "INP001",
@@ -396,6 +389,7 @@ ignore-names = [
     "D409",
     "N802",
     "PT023",
+    "T201",
 ]
 "tests/codes/plasmod/test_profiles.py" = ["E221", "E501"]
 "tests/geometry/test_private_tools.py" = ["E501"]

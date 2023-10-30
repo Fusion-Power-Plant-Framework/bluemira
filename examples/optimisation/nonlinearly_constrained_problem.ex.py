@@ -231,7 +231,10 @@ class NonLinearConstraintOP(OptimisationProblem):
         ]
 
     def f_constraint(
-        self, x: np.ndarray, a: float, b: float  # noqa: PLR6301
+        self,  # noqa: PLR6301
+        x: np.ndarray,
+        a: float,
+        b: float,
     ) -> np.ndarray:
         """Inequality constraint function."""
         return (a * x[0] + b) ** 3 - x[1]

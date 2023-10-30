@@ -279,8 +279,7 @@ class TestFreecadapi:
 
         cadapi.save_cad([shape], filename)
         assert Path(filename).exists
-        with open(filename) as fh:
-            stp_content = fh.read()
+        stp_content = Path(filename).read_text()
         assert "myshape" not in stp_content
         assert "Bluemira" in stp_content
         assert (
@@ -296,8 +295,7 @@ class TestFreecadapi:
             stp_file_scheme="AP214IS",
         )
         assert Path(filename).exists()
-        with open(filename) as fh:
-            stp_content = fh.read()
+        stp_content = Path(filename).read_text()
         assert "myshape" in stp_content  # shape label in file
         assert "Bluemira" in stp_content  # bluemira still in file if author changed
         assert "myfile" in stp_content  # author change

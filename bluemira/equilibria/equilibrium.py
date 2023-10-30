@@ -1155,7 +1155,7 @@ class Equilibrium(CoilSetMHDState):
         # Speed optimisations
         o_points, x_points = self.get_OX_points(psi=psi, force_update=True)
         mask = in_plasma(self.x, self.z, psi, o_points=o_points, x_points=x_points)
-        print()  # flusher
+        print()  # flusher  # noqa: T201
 
         def minimise_dli(x):
             """
@@ -1680,7 +1680,7 @@ class Equilibrium(CoilSetMHDState):
             for j in range(self.coilset.n_coils("CS") - 1)
         )
         table = {"I [A]": currents, "B [T]": fields, "F [N]": fz}
-        print(
+        print(  # noqa: T201
             tabulate.tabulate(
                 list(table.values()),
                 headers=c_names,

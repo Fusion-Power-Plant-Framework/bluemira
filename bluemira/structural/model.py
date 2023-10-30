@@ -616,7 +616,6 @@ class FiniteElementModel:
             ur = self.cycle_sym.reorder(ur)
 
         else:
-            print("sparse")
             k = self.geometry.k_matrix_sparse()
 
             kr, pr = self._apply_boundary_conditions_sparse(k, p)
