@@ -31,10 +31,8 @@ from bluemira.equilibria.coils import Coil, CoilSet
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
-    _offset_wire_discretised,
     boolean_cut,
     distance_to,
-    force_wire_to_spline,
     make_polygon,
     offset_wire,
     split_wire,
@@ -206,12 +204,10 @@ def make_coilset(
     for s in solenoid:
         s.fix_size()
 
-    tf_track = offset_wire(tf_boundary, 1)
+    tf_track = offset_wire(
+        tf_boundary, 1, fallback_method="miter", fallback_force_spline=True
+    )
 
-    if tf_track.length < tf_boundary.length:
-        tf_track = force_wire_to_spline(
-            _offset_wire_discretised(tf_boundary, 1), n_edges_max=300
-        )
     x_c, z_c = make_PF_coil_positions(
         tf_track,
         n_PF,
@@ -388,12 +384,9 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
     -------
     Path along which the PF coil centroids should be positioned
     """
-    tf_offset = offset_wire(tf_boundary, offset_value)
-
-    if tf_offset.length < tf_boundary.length and offset_value > 0:
-        tf_offset = force_wire_to_spline(
-            _offset_wire_discretised(tf_boundary, offset_value), n_edges_max=300
-        )
+    tf_offset = offset_wire(
+        tf_boundary, offset_value, fallback_method="miter", fallback_force_spline=True
+    )
 
     # Find top-left and bottom-left "corners"
     coordinates = tf_offset.discretize(byedges=True, ndiscr=200)
