@@ -256,8 +256,8 @@ For information about ``reactor`` and ``longrun`` tests see below.
 A further ``--private`` flag is available where data is not public but tests against that data are useful.
 If you have some private data that you would like to test against please contact a maintainer for more information.
 
-[!WARNING]
-Do not commit private data to the repository there is no simple way to remove that
+> [!WARNING]
+> Do not commit private data to the repository there is no simple way to remove that
 data once pushed. You will have to contact github support to fully remove the data
 as noted [here](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository#fully-removing-the-data-from-github).
 
@@ -277,7 +277,7 @@ as noted [here](https://docs.github.com/en/authentication/keeping-your-account-a
   -  ``pytest.mark.classplot``
       These tests allow the production of a figure after all tests in a class have been run.
       Without this mark figures are shown and closed after every test.
-      Useful for visual comparison of similar paramterisations of a test.
+      Useful for visual comparison of similar parameterisations of a test.
 
 
 ## Releases and Packaging
