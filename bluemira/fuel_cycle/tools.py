@@ -690,9 +690,9 @@ def _fountain_linear_sink(
     decayed += j_inv0 - inventory
 
     if m_out > m_flow:
-        print(m_flow, m_out)
         raise ValueError(
-            "Out flow greater than in flow. Check that your timesteps are small enough."
+            f"Out flow greater than in flow ({m_flow} > {m_out}."
+            " Check that your timesteps are small enough."
         )
     if m_out < 0:
         raise ValueError("Negative out flow in fountain_linear_sink.")

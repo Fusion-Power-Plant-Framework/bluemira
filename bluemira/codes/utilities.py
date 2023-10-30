@@ -212,7 +212,11 @@ def run_subprocess(
     kwargs.pop("shell", None)  # Protect against user input
 
     with subprocess.Popen(
-        command, stdout=stdout, stderr=stderr, shell=False, **kwargs  # noqa: S603
+        command,
+        stdout=stdout,
+        stderr=stderr,
+        shell=False,  # noqa: S603
+        **kwargs,
     ) as s:
         stdout.close()
         stderr.close()

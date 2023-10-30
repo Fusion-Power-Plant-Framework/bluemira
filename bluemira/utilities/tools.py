@@ -523,7 +523,7 @@ def compare_dicts(
     else:
         result += "==========================================================="
         if verbose:
-            print(result)
+            print(result)  # noqa: T201
     return the_same
 
 

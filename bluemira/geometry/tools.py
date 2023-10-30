@@ -353,7 +353,10 @@ def make_bspline(
 
 
 def _make_polygon_fallback(
-    points, label="", closed=False, **kwargs  # noqa: ARG001
+    points,
+    label="",
+    closed=False,
+    **kwargs,  # noqa: ARG001
 ) -> BluemiraWire:
     """
     Overloaded function signature for fallback option from interpolate_bspline
