@@ -79,23 +79,24 @@ Please try and follow these relatively loose guidelines when developing ``bluemi
 We also recommend you use an integrated development environment with appropriate code
 linting to improve the code you contribute.
 
-``Bluemira`` is strictly auto-formatted using the [black
-](https://pypi.org/project/black/) module. This is an opinionated subset of the
+``Bluemira`` is strictly auto-formatted using the [ruff](https://docs.astral.sh/ruff/)
+format module which is very similar to [black](https://pypi.org/project/black/).
+In both cases this is an opinionated subset of the
 [Python PEP8 style guide](https://www.python.org/dev/peps/pep-0008/).
 
-If you don't like how ``black`` formats your code, join the club... the loss of
+If you don't like how ``ruff`` formats your code, join the club... the loss of
 aesthetics is the price to pay for uniformity and consistency!
 The point of using it is that all code should more or less look the same, regardless of who writes it.
 
 Please read up on this if you need more details. For ``bluemira``,
-``black`` has the potential to generate very ugly code, especially if:
+``ruff`` has the potential to generate very ugly code, especially if:
 
 * you are playing code golf
 * you are writing data tables of some form
 * you are coding out long mathematical formulae
 
 For the first case, it is probably best you don't do this...
-If ``black`` breaks your one-line or chain calls into multiple lines, consider breaking these down for readability.
+If ``ruff`` breaks your one-line or chain calls into multiple lines, consider breaking these down for readability.
 
 In some cases, it is nicer to turn off the auto-formatting. You can do this as follows:
 ```python
@@ -107,10 +108,9 @@ default_params = [
 # fmt: on
 ```
 
-On top of ``black``, which only handles formatting,
-code in bluemira is also checked for quality using [ruff](https://beta.ruff.rs/docs/) which
+Bluemira is also checked for quality using the [ruff](https://beta.ruff.rs/docs/) linter which
 implements [flake8](https://flake8.pycqa.org/en/latest/) rules and various extensions to it.
-This is more a question of code style, which black doesn't cover in full.
+This is more a question of code style, which just the formatter doesn't cover in full.
 
 Code that is committed to a branch is automatically checked for quality using pre-commit.
 Violations detected by our code quality checks are printed to the console for information.
@@ -157,7 +157,7 @@ This is not a hard rule, and there are some notable exceptions:
     ```python
     from ..base.components import Component
     ```
-    We enforce this with `flake8`.
+    We enforce this with the `flake8` rules in `ruff`.
 * Imports between bluemira modules should access individual methods directly.
 * Wildcard imports should not be used as it pollutes the namespace and makes it hard to work out where a method originates.
 * Some external modules such as `numpy` and `matplotlib.pyplot` have specific import styles widely used elsewhere, please look for examples in ``bluemira`` if unsure:
@@ -166,7 +166,7 @@ This is not a hard rule, and there are some notable exceptions:
    import matplotlib.pyplot as plt
     ```
     If only a few methods are used from these types of modules directly importing the method is preferred.
-* Formatting of imports is automatically organised by the rules provided by `isort` and `black`. `isort` organises imports into three sections; builtin modules, external modules and internal modules.
+* Formatting of imports is automatically organised by the rules provided by `isort` and `ruff`. `isort` organises imports into three sections; builtin modules, external modules and internal modules.
 
 All of the above means that this is bad:
 
