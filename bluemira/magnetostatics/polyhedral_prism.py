@@ -781,7 +781,7 @@ def _field_ciric(
     D = np.linalg.norm(np.cross(ap, origin_line)) / odn
     D = np.linalg.norm(np.cross(point - o_1, point - o_2)) / np.linalg.norm(o_2 - o_1)
 
-    X = np.dot(np.linalg.norm(point - mid1), np.cross(m_c, current_direction))
+    X = np.dot(point - mid1, np.cross(m_c, current_direction))
 
     inside = _point_in_volume(point, face_normals, mid_points)
 
@@ -789,10 +789,10 @@ def _field_ciric(
     for i, r in enumerate(face_points):
         if i == 0:
             # First end cap
-            new = [r[3], r[0], r[1], r[2]]
+            new = [r[0], r[1], r[2], r[3]]
         elif i == 5:
             # Second end cap
-            new = [r[3], r[0], r[1], r[2]]
+            new = [r[0], r[1], r[2], r[3]]#[::-1]
         elif i == 1:
             new = [r[3], r[0], r[1], r[2]]
         # new = [r[0], r[3], r[2], r[1]]
@@ -805,12 +805,11 @@ def _field_ciric(
             # new = [r[3], r[0], r[1], r[2]][::-1]
             # new = [r[0], r[3], r[2], r[1]]
         elif i == 4:
-            new = [r[0], r[3], r[2], r[1]][::-1]
             new = [r[3], r[0], r[1], r[2]]
             # new = [r[3], r[0], r[1], r[2]][::-1]
         rectangles.append(new)  # ?
 
-    idx = [1, 3]
+    idx = [0, 5, 1, 2, 3, 4]
     rectangles = np.array(rectangles)
 
     for i, rectangle in zip(idx, rectangles[idx]):
@@ -885,6 +884,7 @@ def _field_ciric(
         bn, bd = (z - z_2) * (q_12 - l_12n**2) - z_2 * r_2n**2, x * r_2n * d
         cn, cd = (z - z_3) * (q_34 - l_34n**2) - r_3n**2 * (z_3 - z_4), x * r_3n * d
         dn, dd = (z - z_4) * q_34 - (z_3 - z_4) * r_4n**2, x * r_4n * d
+
         gamma = (
             np.arctan(an / ad)
             - np.arctan(bn / bd)
@@ -897,35 +897,31 @@ def _field_ciric(
         #     + np.arctan2(cn, cd)
         #     - np.arctan2(dn, dd)
         # )
-        if x < 0:
-            if np.sign(gamma) > 0:
-                print("solid angle sign adjusted...")
-                # gamma *= -1
-        if x >= 0:
-            if np.sign(gamma) < -1:
-                print("solid angle sign adjusted...")
-                # gamma *= - 1
+        assert np.sign(x) == np.sign(gamma)
 
         r12n = r_1n - r_2n
         r34n = r_3n - r_4n
+        lambda_12_l_12_3 = lambda_12 / l_12n**3
+        lambda_34_l_34_3 = lambda_34 / l_34n**3
         psic = (
             d * z_2 / l_12n**2 * r12n
             + d * (z_3 - z_4) / l_34n**2 * r34n
-            - d**2 * (p_12 * lambda_12 / l_12n**3 + p_34 * lambda_34 / l_34n**3)
+            - d**2 * (p_12 * lambda_12_l_12_3 + p_34 * lambda_34_l_34_3)
         )
 
         n_h = normal
         n_p = np.dot(n_h, m_c)
+        # TODO: Conflict between these two options
+        n_pp = np.dot(n_h, current_direction)
         n_pp = np.dot(n_h, np.cross(m_c, current_direction))
 
-        # if i == 0 or i == 5:
-        #     n_pp = 0
-        #     assert np.isclose(n_pp, 0.0)
+        # TODO: Need to account for surface charge only for end faces
+        # (decompose polygon into triangles)
+        if i == 0 or i == 5:
+            # This is probably not the right way of separating out surface currents
+            pass # n_pp = 0
 
         # Distance from the arbitrary origin (0, 0, 0) to the edge (k-1,k)
-        D = np.linalg.norm(
-            np.cross(mid1 - rectangle[0], mid1 - rectangle[3])
-        ) / np.linalg.norm(rectangle[3] - rectangle[0])
         dvec = mid1 - rectangle[0]
         D = np.dot(dvec, np.cross(m_c, current_direction))
 
@@ -941,22 +937,29 @@ def _field_ciric(
         ) - n_p**2 * d**2 * (
             r12n / l_12n**2
             + r34n / l_34n**2
-            + q_12 * lambda_12 / l_12n**3
-            + q_34 * lambda_34 / l_34n**3
+            + q_12 * lambda_12_l_12_3
+            + q_34 * lambda_34_l_34_3
         )
-        B += np.dot(dcm, B_f)
-        # B += B_f
 
-        # B += np.dot(dcm.T, B_f)
+        # TODO: not clear if the resulting field is in local or global coordinates...
+        #B += B_f
+        #B += np.dot(dcm, B_f)
+        B += np.dot(dcm.T, B_f)
 
+    # TODO: factor in area properly once it works
     area = 1
-    # inside=0
-    return MU_0_4PI * (B + inside * X * m_c / area)
+    M_c_r = inside * X * m_c / area
+    # TODO: figure out M_c units, because I can't believe MU_0 is not involved.
+    #M_c_r = 0
+    return MU_0_4PI * (B + M_c_r)
 
 
 def _point_in_volume(point, normals, mid_points):
+    """
+    Determine if a field point is inside the source
+    """
     # Who'd have thought it was this easy?
-    inside = 1
     for i, normal in enumerate(normals):
-        inside *= np.dot(normal, point - mid_points[i]) < 0
-    return inside
+        if np.dot(normal, point - mid_points[i]) > 0:
+            return False
+    return True
