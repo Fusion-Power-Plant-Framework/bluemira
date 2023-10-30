@@ -157,7 +157,7 @@ class ParameterFrame:
             except TypeError:
                 self.update_values(new_values)
 
-    def get_values(self, *names: List[str]) -> Tuple[ParameterValueType, ...]:
+    def get_values(self, *names: Tuple[str]) -> Tuple[ParameterValueType, ...]:
         """Get values of a set of Parameters"""
         try:
             return tuple(getattr(self, n).value for n in names)
