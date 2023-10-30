@@ -202,7 +202,7 @@ equilibrium = solve_transport_fixed_boundary(
     plot=False,
     debug=False,
     gif=False,
-    refine=True,
+    refine=False,
     num_levels=2,
     distance=1.0,
 )
