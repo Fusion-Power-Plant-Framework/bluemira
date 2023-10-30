@@ -8,7 +8,7 @@ coverage[toml]==7.3.2
 distlib==0.3.7
 docutils==0.18.1
 filelock==3.13.0
-greenlet==3.0.0
+greenlet==3.0.1
 identify==2.5.31
 idna==3.4
 imagesize==1.4.1
