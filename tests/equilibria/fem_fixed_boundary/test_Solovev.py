@@ -133,7 +133,9 @@ class Solovev:
     def psi_ax(self):
         """Poloidal flux on the magnetic axis"""
         if self._psi_ax is None:
-            self._psi_ax = self.psi(find_magnetic_axis(lambda x: self.psi(x), None))
+            self._psi_ax = self.psi(
+                find_magnetic_axis(lambda x: self.psi(x), None)  # noqa: PLW0108
+            )
         return self._psi_ax
 
     @property

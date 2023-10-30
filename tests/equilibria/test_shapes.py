@@ -234,7 +234,14 @@ class TestKuiroukidis:
         fixture,
     )
     def test_kuiroukidis_ccw(
-        self, R_0, A, kappa_u, kappa_l, delta_u, delta_l, ax  # noqa: ARG002
+        self,
+        R_0,
+        A,
+        kappa_u,
+        kappa_l,
+        delta_u,
+        delta_l,
+        ax,  # noqa: ARG002
     ):
         flux_surface = flux_surface_kuiroukidis(
             R_0, 0, R_0 / A, kappa_u, kappa_l, delta_u, delta_l, 8, 100
