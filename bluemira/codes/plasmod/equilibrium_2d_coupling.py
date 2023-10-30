@@ -406,7 +406,8 @@ def solve_transport_fixed_boundary(
             f_pprime = interp1d(x1d, pprime, fill_value="extrapolate")
             f_ffprime = interp1d(x1d, ffprime, fill_value="extrapolate")
 
-            psi2d = np.array([gs_solver.psi(p) for p in points])
+            # psi2d = np.array([gs_solver.psi(p) for p in points])
+            psi2d = gs_solver.psi(points)
 
             eps_psi2d = np.linalg.norm(psi2d - psi2d_0, ord=2) / np.linalg.norm(
                 psi2d, ord=2

@@ -65,7 +65,7 @@ class BluemiraFemFunction(Function):
         """
         Supporting function for __call__
         """
-        initial_shape = points.shape
+        # initial_shape = points.shape
         points = convert_to_points_array(points)
         res, new_points = eval_f(self, points)
         if len(res.shape) == 1:
@@ -77,7 +77,7 @@ class BluemiraFemFunction(Function):
                 if res.shape[0] == 1:
                     res = res[0]
                     new_points = new_points[0]
-            elif res.shape[0] == 1 and len(initial_shape) == 1:
+            elif res.shape[0] == 1: # and len(initial_shape) == 1:
                 res = res[0]
                 new_points = new_points[0]
 
