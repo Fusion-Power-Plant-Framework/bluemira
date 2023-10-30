@@ -232,9 +232,7 @@ class TestGeometry:
             zone, "discretize", wraps=zone.discretize
         ) as discr_mock, mock.patch.object(
             parameterisation, "create_shape", return_value=pf
-        ), mock.patch.object(
-            pf, "discretize", wraps=pf.discretize
-        ) as shape_discr_mock:
+        ), mock.patch.object(pf, "discretize", wraps=pf.discretize) as shape_discr_mock:
             optimise_geometry(
                 parameterisation,
                 lambda x: x.create_shape().length,

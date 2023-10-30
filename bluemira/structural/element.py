@@ -148,7 +148,11 @@ def local_k_shear(
 
 # @nb.jit(nopython=True, cache=True)
 def local_k(
-    EA: float, EIyy: float, EIzz: float, L: float, GJ: float  # noqa: N803
+    EA: float,  # noqa: N803
+    EIyy: float,  # noqa: N803
+    EIzz: float,  # noqa: N803
+    L: float,  # noqa: N803
+    GJ: float,  # noqa: N803
 ) -> np.ndarray:
     """
     3-D stiffness local member stiffness matrix, including shear deformation

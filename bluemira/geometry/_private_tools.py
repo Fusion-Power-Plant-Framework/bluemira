@@ -633,8 +633,8 @@ class MixedFaceMaker:
                 s_sequences = self._get_spline_sequences(p_sequences)
 
                 if self.debug:
-                    print("p_sequences :", p_sequences)
-                    print("s_sequences :", s_sequences)
+                    print("p_sequences :", p_sequences)  # noqa: T201
+                    print("s_sequences :", s_sequences)  # noqa: T201
 
                 # Make coordinates for all the segments
                 self._make_subcoordinates(p_sequences, s_sequences)

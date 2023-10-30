@@ -42,11 +42,11 @@ LOGGER = logger_setup()
 
 # Calculate the number of lines in this file
 try:
-    with open(
-        Path(get_bluemira_path("base"), "look_and_feel.py"),
-        encoding="utf-8",
-    ) as f:
-        LOCAL_LINES = len(f.read().splitlines())
+    LOCAL_LINES = len(
+        Path(get_bluemira_path("base"), "look_and_feel.py")
+        .read_text(encoding="utf-8")
+        .splitlines()
+    )
 except FileNotFoundError:
     # Approximately
     LOCAL_LINES = 550
@@ -70,7 +70,8 @@ def get_git_version(directory: str) -> str:
     The git version bytestring
     """
     return subprocess.check_output(
-        ["git", "describe", "--tags", "--always"], cwd=directory  # noqa: S603, S607
+        ["git", "describe", "--tags", "--always"],  # noqa: S603, S607
+        cwd=directory,
     ).strip()
 
 
@@ -174,8 +175,9 @@ def count_slocs(
                 if name.endswith(e):
                     path = Path(directory, name)
                     try:
-                        with open(path, encoding="utf-8") as file:
-                            lines[e] += len(file.read().splitlines())
+                        lines[e] += len(
+                            Path(path).read_text(encoding="utf-8").splitlines()
+                        )
 
                     except FileNotFoundError:
                         bluemira_warn(

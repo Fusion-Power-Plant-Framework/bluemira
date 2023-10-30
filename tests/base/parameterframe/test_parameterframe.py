@@ -150,8 +150,7 @@ class TestParameterFrame:
 
     def test_a_default_frame_is_empty(self):
         @dataclass
-        class GenericFrame(ParameterFrame):
-            ...
+        class GenericFrame(ParameterFrame): ...
 
         assert len(GenericFrame().to_dict()) == 0
 

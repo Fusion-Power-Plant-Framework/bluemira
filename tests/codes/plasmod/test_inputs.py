@@ -61,10 +61,8 @@ class TestPlasmodInputs:
 
         assert getattr(params, model) == getattr(enum_cls, enum_name)
 
-    @pytest.mark.parametrize(("model", "enum_cls"), MODEL_MAP.items())
-    def test_CodesError_if_model_not_convertible_to_enum(
-        self, model, enum_cls  # noqa: ARG002
-    ):
+    @pytest.mark.parametrize("model", MODEL_MAP.keys())
+    def test_CodesError_if_model_not_convertible_to_enum(self, model):
         values = {model: "NOT_AN_ENUM_VALUE"}
 
         with pytest.raises(CodesError):

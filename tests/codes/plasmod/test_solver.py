@@ -468,9 +468,7 @@ class TestPlasmodSolver:
 
     @staticmethod
     def read_data_file(file_name):
-        data_dir = Path(Path(__file__).parent, "data")
-        with open(Path(data_dir, file_name)) as f:
-            return f.read()
+        return Path(Path(__file__).parent, "data", file_name).read_text()
 
     @staticmethod
     def _plasmod_run_subprocess_fake(command: List[str], **_):
@@ -499,8 +497,7 @@ class TestPlasmodSolver:
         Find a parameter value from a plasmod input file via a regex.
         This should work with floats and ints.
         """
-        with open(file_path) as f:
-            input_file = f.read()
+        input_file = Path(file_path).read_text()
         param_regex = param + r" +([0-9]+(\.[0-9]+E[\+-][0-9]+)?)"
         re_match = re.search(param_regex, input_file, re.MULTILINE)
         if re_match:
