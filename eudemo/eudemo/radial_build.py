@@ -190,6 +190,19 @@ template_builder.add_impurity(Impurities.W, 5.0e-5)
 # Set fixed input values
 template_builder.add_input_values(
     {
+        # CS fatigue variables
+        "residual_sig_hoop": 150.0e6,
+        # "n_cycle_min": ,
+        # "t_crack_radial": ,
+        # "t_structural_radial": ,
+        "t_structural_vertical": 0.65e-3,
+        "sf_vertical_crack": 1.0,
+        "sf_radial_crack": 1.0,
+        "sf_fast_fracture": 1.0,
+        "paris_coefficient": 3.86e-11,
+        "paris_power_law": 2.394,
+        "walker_coefficient": 0.5,
+        "fracture_toughness": 150.0,
         # Undocumented danger stuff
         "iblanket": 1,
         "lsa": 2,
