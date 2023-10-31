@@ -195,7 +195,7 @@ template_builder.add_input_values(
         # "n_cycle_min": ,
         # "t_crack_radial": ,
         # "t_structural_radial": ,
-        "t_structural_vertical": 0.65e-3,
+        "t_crack_vertical": 0.65e-3,
         "sf_vertical_crack": 1.0,
         "sf_radial_crack": 1.0,
         "sf_fast_fracture": 1.0,
@@ -262,7 +262,6 @@ template_builder.add_input_values(
         "tdwell": 0.0,
         "tramp": 500.0,
         # CS / PF coil inputs
-        "t_crack_vertical": 0.4e-3,
         "fcuohsu": 0.7,
         "ohhghf": 0.9,
         "rpf2": -1.825,
