@@ -19,7 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Union
 
 import numpy as np
 import numpy.typing as npt
@@ -60,8 +60,9 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         coilset: CoilSet,
         eq: Equilibrium,
         max_currents: Optional[npt.ArrayLike] = None,
-        opt_conditions: Optional[Dict[str, float]] = None,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
+        opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
+        opt_parameters: Optional[Dict[str, float]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.coilset = coilset
@@ -69,6 +70,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         self.opt_conditions = opt_conditions
         self.opt_algorithm = opt_algorithm
+        self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
     def optimise(self, x0: Optional[npt.NDArray] = None, fixed_coils: bool = True):
@@ -97,11 +99,13 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         objective = CoilCurrentsObjective()
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
-            f_objective=objective.f_objective,
-            df_objective=objective.df_objective,
-            x0=x0,
             algorithm=self.opt_algorithm,
+            f_objective=objective.f_objective,
+            df_objective=getattr(objective, "df_objective", None),
+            x0=x0,
+            bounds=self.bounds,
             opt_conditions=self.opt_conditions,
+            opt_parameters=self.opt_parameters,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
