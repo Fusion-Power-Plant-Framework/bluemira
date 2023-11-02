@@ -371,7 +371,7 @@ class CoilGroupPlotter(Plotter):
         z = np.append(z_boundary, z_boundary[0])
         if all(x_boundary == x_boundary[0]) or all(z_boundary == z_boundary[0]):
             self.ax.plot(
-                x[0], z[0], zorder=11, color="k", linewidth=linewidth, marker="x"
+                x[0], z[0], zorder=11, color="k", linewidth=linewidth, marker="+"
             )
         else:
             self.ax.plot(x, z, zorder=11, color=color, linewidth=linewidth)
