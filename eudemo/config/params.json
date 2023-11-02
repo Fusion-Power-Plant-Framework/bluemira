@@ -395,7 +395,7 @@
     "long_name": "Plasma safety factor on axis"
   },
   "q_95": {
-    "value": 3.8,
+    "value": 3.5,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Plasma safety factor at the 95th percentile flux surface"

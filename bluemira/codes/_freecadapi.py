@@ -595,6 +595,8 @@ def offset_wire(
         raise FreeCADError(msg) from None
 
     fix_wire(wire)
+    if not wire.isClosed() and not open_wire:
+        raise FreeCADError("offset failed to close wire")
     return wire
 
 

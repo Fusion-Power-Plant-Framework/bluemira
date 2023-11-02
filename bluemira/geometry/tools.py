@@ -598,6 +598,7 @@ def _offset_wire_discretised(
     label="",
     *,
     fallback_method="square",
+    fallback_force_spline=False,
     byedges=True,
     ndiscr=200,
     **fallback_kwargs,
@@ -624,10 +625,16 @@ def _offset_wire_discretised(
 
     coordinates = wire.discretize(byedges=byedges, ndiscr=ndiscr)
 
-    result = offset_clipper(
-        coordinates, thickness, method=fallback_method, **fallback_kwargs
+    wire = make_polygon(
+        offset_clipper(
+            coordinates, thickness, method=fallback_method, **fallback_kwargs
+        ),
+        label=label,
+        closed=True,
     )
-    return make_polygon(result, label=label, closed=True)
+    if fallback_force_spline:
+        return force_wire_to_spline(wire, n_edges_max=ndiscr)
+    return wire
 
 
 @fallback_to(_offset_wire_discretised, cadapi.FreeCADError)

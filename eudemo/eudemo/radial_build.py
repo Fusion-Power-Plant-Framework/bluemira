@@ -98,9 +98,9 @@ for constraint in (
 
 # Variable vector values and bounds
 template_builder.add_variable("bt", 5.3292, upper_bound=20.0)
-template_builder.add_variable("rmajor", 8.8901, upper_bound=13.0)
+template_builder.add_variable("rmajor", 9.2901, upper_bound=13.0)
 template_builder.add_variable("te", 12.33, upper_bound=150.0)
-template_builder.add_variable("beta", 3.1421e-2)
+template_builder.add_variable("beta", 3.4421e-2)
 template_builder.add_variable("dene", 7.4321e19)
 template_builder.add_variable("q", 3.5, lower_bound=3.5)
 template_builder.add_variable("pheat", 50.0)
@@ -190,6 +190,19 @@ template_builder.add_impurity(Impurities.W, 5.0e-5)
 # Set fixed input values
 template_builder.add_input_values(
     {
+        # CS fatigue variables
+        "residual_sig_hoop": 150.0e6,
+        # "n_cycle_min": ,
+        # "t_crack_radial": ,
+        # "t_structural_radial": ,
+        "t_crack_vertical": 0.649e-3,
+        "sf_vertical_crack": 1.0,
+        "sf_radial_crack": 1.0,
+        "sf_fast_fracture": 1.0,
+        "paris_coefficient": 3.86e-11,
+        "paris_power_law": 2.394,
+        "walker_coefficient": 0.5,
+        "fracture_toughness": 150.0,
         # Undocumented danger stuff
         "iblanket": 1,
         "lsa": 2,
@@ -249,7 +262,6 @@ template_builder.add_input_values(
         "tdwell": 0.0,
         "tramp": 500.0,
         # CS / PF coil inputs
-        "t_crack_vertical": 0.4e-3,
         "fcuohsu": 0.7,
         "ohhghf": 0.9,
         "rpf2": -1.825,

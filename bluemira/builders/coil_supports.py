@@ -28,6 +28,7 @@ from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Type, Union
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -38,7 +39,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.compound import BluemiraCompound
-from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
 from bluemira.geometry.coordinates import Coordinates, get_intersect
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -621,7 +622,9 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         return np.array([0, 0]), np.array([1, 1])
 
     @staticmethod
-    def f_L_to_wire(wire: BluemiraWire, x_norm: List[float]):  # noqa: N802
+    def f_L_to_wire(  # noqa: N802
+        wire: BluemiraWire, x_norm: Union[List[float], npt.NDArray]
+    ):
         """
         Convert a pair of normalised L values to a wire
         """
@@ -667,6 +670,9 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         -------
         KOZ constraint array
         """
+        if np.isnan(x_norm).any():
+            bluemira_warn(f"NaN in x_norm {x_norm}")
+            x_norm = np.array([0, D_TOLERANCE])
         straight_line = self.f_L_to_wire(self.wire, x_norm)
         straight_points = straight_line.discretize(ndiscr=self.n_koz_discr).xz.T
         return signed_distance_2D_polygon(straight_points, self.koz_points)
