@@ -632,10 +632,14 @@ class CoilGroupFieldsMixin:
             same_pos = np.nonzero(xw == zw)[0]
             if same_pos.size > 0:
                 # self inductance
-                xxw = np.array(
-                    [_pos for _z in zw if (_pos := np.nonzero(_z == xw)[0]).size > 0]
-                ).ravel()
-                cr = self._current_radius[xxw]
+                # same_pos could be an array that is indexed from zw.
+                # This loops over zw and creates an index in xw where xw == zw
+                # better ways welcome!
+                xxw = []
+                for _z in zw:
+                    if (_pos := np.nonzero(_z == xw)[0]).size > 0:
+                        xxw.extend(_pos)
+                cr = self._current_radius[np.array(xxw)]
                 Bz = np.zeros((x.size, 1))
                 Bx = Bz.copy()  # Should be 0 anyway
                 mask = np.zeros_like(Bz, dtype=bool)
