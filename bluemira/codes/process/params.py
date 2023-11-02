@@ -22,16 +22,20 @@
 """
 PROCESS's parameter definitions.
 """
+from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import ClassVar, Dict, List, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
-from bluemira.base.parameter_frame import Parameter
+from bluemira.base.parameter_frame import Parameter  # noqa: TCH001
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
 from bluemira.codes.process._inputs import ProcessInputs
-from bluemira.codes.process.api import _INVariable
+from bluemira.codes.process.constants import NAME
 from bluemira.codes.process.mapping import mappings
+
+if TYPE_CHECKING:
+    from bluemira.codes.process.api import _INVariable
 
 
 @dataclass
@@ -59,6 +63,9 @@ class ProcessSolverParams(MappedParameterFrame):
 
     P_el_net: Parameter[float]
     """Net electrical power output [megawatt]."""
+
+    tau_flattop: Parameter[float]
+    """Flat-top duration [second]."""
 
     P_hcd_ss: Parameter[float]
     """Steady-state HCD power [megawatt]."""
@@ -96,6 +103,48 @@ class ProcessSolverParams(MappedParameterFrame):
     PsepB_qAR_max: Parameter[float]
     """Maximum PsepB/q95AR vale [MW.T/m]"""
 
+    q_0: Parameter[float]
+    """Plasma safety factor on axis [dimensionless]"""
+
+    q_95: Parameter[float]
+    """Plasma safety factor at the 95th percentile flux surface [dimensionless]"""
+
+    m_s_limit: Parameter[float]
+    """Margin to vertical stability [dimensionless]"""
+
+    delta: Parameter[float]
+    """Triangularity [dimensionless]"""
+
+    sigma_tf_case_max: Parameter[float]
+    """Maximum von Mises stress in the TF coil case nose [pascal]."""
+
+    sigma_tf_wp_max: Parameter[float]
+    """Maximum von Mises stress in the TF coil winding pack [pascal]."""
+
+    sigma_cs_wp_max: Parameter[float]
+    """Maximum von Mises stress in the CS coil winding pack [pascal]."""
+
+    H_star: Parameter[float]
+    """H factor (radiation corrected) [dimensionless]."""
+
+    bb_pump_eta_el: Parameter[float]
+    """Breeding blanket pumping electrical efficiency [dimensionless]"""
+
+    bb_pump_eta_isen: Parameter[float]
+    """Breeding blanket pumping isentropic efficiency [dimensionless]"""
+
+    bb_t_inlet: Parameter[float]
+    """Breeding blanket inlet temperature [K]"""
+
+    bb_t_outlet: Parameter[float]
+    """Breeding blanket outlet temperature [K]"""
+
+    eta_ecrh: Parameter[float]
+    """Electron cyclotron resonce heating wallplug efficiency [dimensionless]"""
+
+    gamma_ecrh: Parameter[float]
+    """Electron cyclotron resonce heating current drive efficiency [TODO: UNITS!]"""
+
     # Out parameters
     B_0: Parameter[float]
     """Toroidal field at R_0 [tesla]."""
@@ -112,7 +161,6 @@ class ProcessSolverParams(MappedParameterFrame):
     delta_95: Parameter[float]
     """95th percentile plasma triangularity [dimensionless]."""
 
-    delta: Parameter[float]
     """Last closed surface plasma triangularity [dimensionless]."""
 
     f_bs: Parameter[float]
@@ -120,9 +168,6 @@ class ProcessSolverParams(MappedParameterFrame):
 
     g_vv_ts: Parameter[float]
     """Gap between VV and TS [meter]."""
-
-    H_star: Parameter[float]
-    """H factor (radiation corrected) [dimensionless]."""
 
     I_p: Parameter[float]
     """Plasma current [megaampere]."""
@@ -138,9 +183,6 @@ class ProcessSolverParams(MappedParameterFrame):
 
     P_brehms: Parameter[float]
     """Bremsstrahlung [megawatt]."""
-
-    P_el_net_process: Parameter[float]
-    """Net electrical power output as provided by PROCESS [megawatt]."""
 
     P_fus_DD: Parameter[float]
     """D-D fusion power [megawatt]."""
@@ -303,23 +345,11 @@ class ProcessSolverParams(MappedParameterFrame):
     l_i: Parameter[float]
     """Normalised internal plasma inductance [dimensionless]."""
 
-    q_95: Parameter[float]
-    """Plasma safety factor [dimensionless]."""
-
     r_tf_inboard_out: Parameter[float]
     """Outboard Radius of the TF coil inboard leg tapered region [meter]."""
 
-    sigma_tf_case_max: Parameter[float]
-    """Maximum von Mises stress in the TF coil case nose [pascal]."""
-
-    sigma_tf_wp_max: Parameter[float]
-    """Maximum von Mises stress in the TF coil winding pack nose [pascal]."""
-
     T_e: Parameter[float]
     """Average plasma electron temperature [kiloelectron_volt]."""
-
-    tau_flattop: Parameter[float]
-    """Flat-top duration [second]."""
 
     tk_tf_outboard: Parameter[float]
     """TF coil outboard thickness [meter]."""
@@ -330,8 +360,19 @@ class ProcessSolverParams(MappedParameterFrame):
     Z_eff: Parameter[float]
     """Effective particle radiation atomic mass [unified_atomic_mass_unit]."""
 
-    _mappings: ClassVar = deepcopy(mappings)
-    _defaults = ProcessInputs()
+    _mappings = deepcopy(mappings)
+
+    @property
+    def _defaults(self):
+        try:
+            return self.__defaults
+        except AttributeError:
+            self.__defaults = ProcessInputs()
+            return self.__defaults
+
+    @_defaults.setter
+    def _defaults(self, value: ProcessInputs):
+        self.__defaults = value
 
     @property
     def mappings(self) -> Dict[str, ParameterMapping]:
@@ -353,8 +394,18 @@ class ProcessSolverParams(MappedParameterFrame):
         return self._defaults.to_invariable()
 
     @classmethod
-    def from_defaults(cls) -> MappedParameterFrame:
+    def from_defaults(
+        cls, template: Optional[ProcessInputs] = None
+    ) -> ProcessSolverParams:
         """
         Initialise from defaults
         """
-        return super().from_defaults(cls._defaults.to_dict())
+        if template is None:
+            template = ProcessInputs()
+            self = super().from_defaults(template.to_dict())
+        else:
+            self = super().from_defaults(
+                template.to_dict(), source=f"{NAME} user input template"
+            )
+        self.__defaults = template
+        return self

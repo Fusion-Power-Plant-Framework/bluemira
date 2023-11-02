@@ -47,7 +47,9 @@ class MappedParameterFrame(ParameterFrame):
         """
 
     @classmethod
-    def from_defaults(cls, data: Dict) -> MappedParameterFrame:
+    def from_defaults(
+        cls, data: Dict, source: str = "bluemira codes default"
+    ) -> MappedParameterFrame:
         """
         Create ParameterFrame with default values for external codes.
 
@@ -62,7 +64,7 @@ class MappedParameterFrame(ParameterFrame):
             new_param_dict[bm_map_name] = {
                 "value": data.get(param_map.name, None),
                 "unit": param_map.unit,
-                "source": "bluemira codes default",
+                "source": source,
             }
 
         return cls.from_dict(new_param_dict)
@@ -130,6 +132,7 @@ class ParameterMapping:
     """
 
     name: str
+    out_name: Optional[str] = None
     send: bool = True
     recv: bool = True
     unit: Optional[str] = None
@@ -140,7 +143,9 @@ class ParameterMapping:
         """
         Freeze the dataclass
         """
-        self._frozen = ("name", "unit", "_frozen")
+        if self.out_name is None:
+            self.out_name = self.name
+        self._frozen = ("name", "out_name", "unit", "_frozen")
 
     def to_dict(self) -> Dict:
         """
@@ -148,6 +153,7 @@ class ParameterMapping:
         """
         return {
             "name": self.name,
+            "out_name": self.out_name,
             "send": self.send,
             "recv": self.recv,
             "unit": self.unit,
@@ -179,10 +185,10 @@ class ParameterMapping:
             Value of attribute
         """
         if (
-            attr not in ["send", "recv", "name", "unit", "_frozen"]
+            attr not in ["send", "recv", "name", "out_name", "unit", "_frozen"]
             or attr in self._frozen
         ):
-            raise KeyError(f"{attr} cannot be set for a {self.__class__.__name__}")
+            raise KeyError(f"{attr} cannot be set for a {type(self).__name__}")
         if attr in ["send", "recv"] and not isinstance(value, bool):
             raise ValueError(f"{attr} must be a bool")
         super().__setattr__(attr, value)

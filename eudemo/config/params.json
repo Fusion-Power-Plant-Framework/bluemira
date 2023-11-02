@@ -24,7 +24,7 @@
     "long_name": "Peak field inside the TF coil winding pack"
   },
   "C_Ejima": {
-    "value": 0.4,
+    "value": 0.3,
     "unit": "dimensionless",
     "source": "Input (Ejima, et al., Volt-second analysis and consumption in Doublet III plasmas, Nuclear Fusion 22, 1313 (1982))",
     "long_name": "Ejima constant"
@@ -59,12 +59,6 @@
     "source": "Input",
     "long_name": "Net electrical power output"
   },
-  "P_el_net_process": {
-    "value": 0.0,
-    "unit": "megawatt",
-    "source": "Input",
-    "long_name": "Net electrical power output as provided by PROCESS"
-  },
   "P_fus": {
     "value": 2000,
     "unit": "megawatt",
@@ -84,7 +78,7 @@
     "long_name": "D-T fusion power"
   },
   "P_hcd_ss": {
-    "value": 50,
+    "value": 51,
     "unit": "megawatt",
     "source": "Input",
     "long_name": "Steady-state HCD power"
@@ -376,6 +370,12 @@
     "source": "Input",
     "long_name": "95th percentile plasma elongation"
   },
+  "m_s_limit": {
+    "value": 0.1,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Margin to vertical stability criterion"
+  },
   "l_i": {
     "value": 0.8,
     "unit": "dimensionless",
@@ -383,16 +383,22 @@
     "long_name": "Normalised internal plasma inductance"
   },
   "n_TF": {
-    "value": 18,
+    "value": 16,
     "unit": "dimensionless",
     "source": "Input",
     "long_name": "Number of TF coils"
+  },
+  "q_0": {
+    "value": 1.0,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Plasma safety factor on axis"
   },
   "q_95": {
     "value": 3.5,
     "unit": "dimensionless",
     "source": "Input",
-    "long_name": "Plasma safety factor"
+    "long_name": "Plasma safety factor at the 95th percentile flux surface"
   },
   "r_cs_corner": {
     "value": 0,
@@ -472,17 +478,23 @@
     "source": "Input",
     "long_name": "Outboard vessel inner radius"
   },
+  "sigma_cs_wp_max": {
+    "value": 660000000.0,
+    "unit": "pascal",
+    "source": "Input",
+    "long_name": "Maximum von Mises stress in the CS coil winding pack"
+  },
   "sigma_tf_case_max": {
-    "value": 550000000.0,
+    "value": 580000000.0,
     "unit": "pascal",
     "source": "Input",
     "long_name": "Maximum von Mises stress in the TF coil case nose"
   },
   "sigma_tf_wp_max": {
-    "value": 550000000.0,
+    "value": 580000000.0,
     "unit": "pascal",
     "source": "Input",
-    "long_name": "Maximum von Mises stress in the TF coil winding pack nose"
+    "long_name": "Maximum von Mises stress in the TF coil winding pack"
   },
   "tau_e": {
     "value": 3,
@@ -517,19 +529,19 @@
     "long_name": "Minimum breeding blanket angle"
   },
   "tk_bb_ib": {
-    "value": 0.8,
+    "value": 0.755,
     "unit": "meter",
     "source": "Input",
     "long_name": "Inboard blanket thickness"
   },
   "tk_bb_ob": {
-    "value": 1.1,
+    "value": 0.982,
     "unit": "meter",
     "source": "Input",
     "long_name": "Outboard blanket thickness"
   },
   "tk_cr_vv": {
-    "value": 0.3,
+    "value": 0.15,
     "unit": "meter",
     "source": "Input",
     "long_name": "Cryostat VV thickness"
@@ -625,28 +637,28 @@
     "long_name": "ITER-like TF gravity support base plate depth"
   },
   "tk_sh_bot": {
-    "value": 1e-6,
+    "value": 0.0,
     "unit": "meter",
     "source": "Input",
     "long_name": "Lower shield thickness",
     "description": "DO NOT USE - PROCESS has VV = VV + shield"
   },
   "tk_sh_in": {
-    "value": 1e-6,
+    "value": 0.0,
     "unit": "meter",
     "source": "Input",
     "long_name": "Inboard shield thickness",
     "description": "DO NOT USE - PROCESS has VV = VV + shield"
   },
   "tk_sh_out": {
-    "value": 1e-6,
+    "value": 0.0,
     "unit": "meter",
     "source": "Input",
     "long_name": "Outboard shield thickness",
     "description": "DO NOT USE - PROCESS has VV = VV + shield"
   },
   "tk_sh_top": {
-    "value": 1e-6,
+    "value": 0.0,
     "unit": "meter",
     "source": "Input",
     "long_name": "Upper shield thickness",
@@ -665,7 +677,7 @@
     "long_name": "Outboard SOL thickness"
   },
   "tk_tf_front_ib": {
-    "value": 0.04,
+    "value": 0.06,
     "unit": "meter",
     "source": "Input",
     "long_name": "TF coil inboard steel front plasma-facing"
@@ -702,7 +714,7 @@
     "long_name": "TF coil outboard thickness"
   },
   "tk_tf_side": {
-    "value": 0.1,
+    "value": 0.05,
     "unit": "meter",
     "source": "Input",
     "long_name": "TF coil inboard case minimum side wall thickness"
@@ -778,7 +790,7 @@
     "long_name": "Maximum peak field to use in CS modules"
   },
   "CS_jmax": {
-    "value": 16,
+    "value": 16.5,
     "unit": "megaampere / meter ** 2",
     "source": "Input",
     "long_name": "Maximum current density to use in CS modules"
@@ -832,7 +844,7 @@
     "long_name": "Shafranov shift of plasma (geometric=>magnetic)"
   },
   "tk_cs_casing": {
-    "value": 0.07,
+    "value": 0.02,
     "unit": "meter",
     "source": "Input",
     "long_name": "Thickness of the CS coil casing"
@@ -1021,5 +1033,17 @@
     "value": 150,
     "unit": "MW",
     "long_name": "Steady-state heating and current drive electrical power"
+  },
+  "eta_ecrh": {
+    "value": 0.4,
+    "unit": "dimensionless",
+    "source": "Input",
+    "long_name": "Electron cyclotron resonce heating wallplug efficiency"
+  },
+  "gamma_ecrh": {
+    "value": 0.3e20,
+    "unit": "A/W/m^2",
+    "source": "Input",
+    "long_name": "Electron cyclotron resonce heating current drive efficiency"
   }
 }

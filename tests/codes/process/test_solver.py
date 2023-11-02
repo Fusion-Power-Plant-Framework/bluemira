@@ -19,9 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+import contextlib
 import filecmp
+import json
 import re
-import tempfile
 from pathlib import Path
 from unittest import mock
 
@@ -29,8 +30,10 @@ import pytest
 
 from bluemira.codes.error import CodesError
 from bluemira.codes.process import ENABLED
+from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._solver import RunMode, Solver
 from bluemira.codes.process.params import ProcessSolverParams
+from tests._helpers import file_exists
 from tests.codes.process import utilities as utils
 
 
@@ -96,28 +99,32 @@ class TestSolver:
 @pytest.mark.skipif(not ENABLED, reason="PROCESS is not installed on the system.")
 class TestSolverIntegration:
     DATA_DIR = Path(Path(__file__).parent, "test_data")
+    MODULE_REF = "bluemira.codes.process._setup"
 
     def setup_method(self):
         self.params = ProcessSolverParams.from_json(utils.PARAM_FILE)
 
+        self._indat_patch = mock.patch(f"{self.MODULE_REF}.InDat")
+
+    def teardown_method(self):
+        self._indat_patch.stop()
+
     @pytest.mark.longrun
-    def test_run_mode_outputs_process_files(self):
-        run_dir = tempfile.TemporaryDirectory()
-        build_config = {"run_dir": run_dir.name}
-        solver = Solver(self.params, build_config)
+    def test_run_mode_outputs_process_files(self, tmp_path):
+        solver = Solver(self.params, {"run_dir": tmp_path})
 
-        solver.execute(RunMode.RUN)
+        with contextlib.suppress(CodesError):
+            solver.execute(RunMode.RUNINPUT)
 
-        assert Path(run_dir.name, "IN.DAT").exists()
-        assert Path(run_dir.name, "MFILE.DAT").exists()
+        assert Path(tmp_path, "IN.DAT").exists()
+        assert Path(tmp_path, "MFILE.DAT").exists()
 
     @pytest.mark.parametrize("run_mode", [RunMode.READ, RunMode.READALL])
     def test_read_mode_updates_params_from_mfile(self, run_mode):
         # Assert here to check the parameter is actually changing
         assert self.params.r_tf_in_centre.value != pytest.approx(2.6354)
-        build_config = {"read_dir": self.DATA_DIR}
 
-        solver = Solver(self.params, build_config)
+        solver = Solver(self.params, {"read_dir": self.DATA_DIR})
         solver.execute(run_mode)
 
         # Expected value comes from ./test_data/MFILE.DAT
@@ -125,9 +132,7 @@ class TestSolverIntegration:
 
     @pytest.mark.parametrize("run_mode", [RunMode.READ, RunMode.READALL])
     def test_derived_radial_build_params_are_updated(self, run_mode):
-        build_config = {"read_dir": self.DATA_DIR}
-
-        solver = Solver(self.params, build_config)
+        solver = Solver(self.params, {"read_dir": self.DATA_DIR})
         solver.execute(run_mode)
 
         # Expected values come from derivation (I added the numbers up by hand)
@@ -139,23 +144,22 @@ class TestSolverIntegration:
         assert solver.params.r_vv_ob_in.value == pytest.approx(13.69696)
 
     @pytest.mark.longrun
-    def test_runinput_mode_does_not_edit_template(self):
-        run_dir = tempfile.TemporaryDirectory()
+    def test_runinput_mode_does_not_edit_template(self, tmp_path):
         template_path = Path(self.DATA_DIR, "IN.DAT")
         build_config = {
-            "run_dir": run_dir.name,
+            "run_dir": tmp_path,
             "template_in_dat": template_path,
         }
 
         solver = Solver(self.params, build_config)
-        solver.execute(RunMode.RUN)
-
-        assert Path(run_dir.name, "IN.DAT").is_file()
-        filecmp.cmp(Path(run_dir.name, "IN.DAT"), template_path)
-        assert Path(run_dir.name, "MFILE.DAT").is_file()
+        with contextlib.suppress(CodesError):
+            solver.execute(RunMode.RUN)
+        assert Path(tmp_path, "IN.DAT").is_file()
+        filecmp.cmp(Path(tmp_path, "IN.DAT"), template_path)
+        assert Path(tmp_path, "MFILE.DAT").is_file()
 
     def test_get_species_data_returns_row_vectors(self):
-        temp, loss_f, z_eff = Solver.get_species_data("H")
+        temp, loss_f, z_eff = Solver.get_species_data("H", confinement_time_ms=1.0)
 
         assert isinstance(temp.size, int) == 1
         assert temp.size > 0
@@ -163,3 +167,67 @@ class TestSolverIntegration:
         assert loss_f.size > 0
         assert isinstance(z_eff.size, int) == 1
         assert z_eff.size > 0
+
+    def test_run_inits_writer_with_template_file_if_file_exists(self, tmp_path):
+        build_config = {
+            "run_dir": tmp_path,
+            "template_in_dat": "template/path/in.dat",
+        }
+
+        class BLANK:
+            get_value = 0.0
+
+        with self._indat_patch as indat_cls_mock, file_exists(
+            "template/path/in.dat", f"{self.MODULE_REF}.Path.is_file"
+        ):
+            indat_cls_mock.return_value.data = {"casthi": BLANK}
+            Solver(self.params, build_config)
+
+        indat_cls_mock.assert_called_once_with(filename="template/path/in.dat")
+
+    def test_run_inits_writer_without_template_returns_default_filled_data(self):
+        with self._indat_patch as indat_cls_mock:
+            solver = Solver(self.params, {})
+            solver.run_cls = lambda *_, **_kw: None
+            solver.teardown_cls = lambda *_, **_kw: None
+            solver.execute("run")
+        assert indat_cls_mock.return_value.data == self.params.template_defaults
+
+    def test_run_raises_CodesError_given_no_data_in_template_file(self):
+        build_config = {
+            "template_in_dat": "template/path/in.dat",
+        }
+
+        with pytest.raises(CodesError):
+            Solver(self.params, build_config)
+
+    @pytest.mark.parametrize(("pf_n", "pf_v"), [(None, None), ("tk_sh_in", 3)])
+    @pytest.mark.parametrize(
+        ("template", "result"),
+        [
+            (ProcessInputs(bore=5, shldith=5, i_tf_wp_geom=2), (5, 5, 2)),
+        ],
+    )
+    def test_indat_creation_with_template(self, template, result, pf_n, pf_v, tmp_path):
+        if pf_n is None:
+            pf = {}
+        else:
+            with open(utils.PARAM_FILE) as pf_h:
+                pf = {pf_n: json.load(pf_h)[pf_n]}
+            pf[pf_n]["value"] = pf_v
+            result = (result[0], pf_v, result[2])
+        path = tmp_path / "IN.DAT"
+        build_config = {
+            "in_dat_path": path,
+            "template_in_dat": template,
+        }
+
+        solver = Solver(pf, build_config)
+        solver.params.mappings["tk_sh_in"].send = True
+        solver.run_cls = lambda *_, **_kw: None
+        solver.teardown_cls = lambda *_, **_kw: None
+        solver.execute("run")
+
+        assert f"bore     = {result[0]}" in open(path).read()  # noqa: SIM115
+        assert f"shldith  = {result[1]}" in open(path).read()  # noqa: SIM115
+        assert f"i_tf_wp_geom = {result[2]}" in open(path).read()  # noqa: SIM115

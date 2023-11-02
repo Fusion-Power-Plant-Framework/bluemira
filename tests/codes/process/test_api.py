@@ -19,8 +19,9 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from pathlib import Path
 from unittest.mock import patch
+
+import pytest
 
 from bluemira.codes.process import api
 
@@ -39,15 +40,16 @@ def test_update_obsolete_vars():
     assert str2 == "shrubbery"
 
 
+@pytest.mark.skipif(not api.ENABLED, reason="PROCESS is not installed on the system.")
 @patch.object(api, "imp_data")
 def test_impurities(imp_data_mock):
     imp_data_mock.__file__ = "./__init__.py"
     assert api.Impurities["H"] == api.Impurities.H
     assert api.Impurities(1) == api.Impurities.H
-    assert api.Impurities(1).id() == "fimp(01"
-    assert api.Impurities(10).id() == "fimp(10"
-    assert api.Impurities(1).file() == Path("./H_Lzdata.dat")
-    assert api.Impurities(10).file() == Path("./FeLzdata.dat")
+    assert api.Impurities(1).id() == "fimp(01)"
+    assert api.Impurities(10).id() == "fimp(10)"
+    assert api.Impurities(1).file().parts[-1] == "H__lz_tau.dat"
+    assert api.Impurities(10).file().parts[-1] == "Fe_lz_tau.dat"
 
 
 def test_INVariable_works_with_floats():

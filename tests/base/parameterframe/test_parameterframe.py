@@ -131,6 +131,15 @@ class TestParameterFrame:
 
         assert frame.x.value == 10
 
+    def test_horrible_scalar_unit(self):
+        @dataclass
+        class GenericFrame(ParameterFrame):
+            x: Parameter
+
+        frame = GenericFrame.from_dict({"x": {"value": 10, "unit": "1e50 m"}})
+
+        assert frame.x.value == pytest.approx(1e51)
+
     @pytest.mark.parametrize("value", ["OK", ["OK"]])
     def test_TypeError_given_field_has_Union_Parameter_type(self, value):
         @dataclass

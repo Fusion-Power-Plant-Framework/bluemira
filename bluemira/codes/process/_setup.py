@@ -24,16 +24,16 @@ Defines the setup task for running PROCESS.
 from pathlib import Path
 from typing import ClassVar, Dict, Optional, Union
 
+from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSetup
 from bluemira.codes.process._inputs import ProcessInputs
-from bluemira.codes.process.api import InDat, _INVariable, update_obsolete_vars
-from bluemira.codes.process.constants import NAME as PROCESS_NAME
-from bluemira.codes.process.mapping import (
+from bluemira.codes.process._model_mapping import (
     CurrentDriveEfficiencyModel,
     TFCoilConductorTechnology,
 )
-from bluemira.codes.process.params import ProcessSolverParams
+from bluemira.codes.process.api import ENABLED, InDat, _INVariable, update_obsolete_vars
+from bluemira.codes.process.constants import NAME as PROCESS_NAME
 
 
 class Setup(CodesSetup):
@@ -46,9 +46,6 @@ class Setup(CodesSetup):
         The bluemira parameters for this task.
     in_dat_path:
         The path to where the IN.DAT file should be written.
-    template_in_dat_path:
-        The path to a template PROCESS IN.DAT file. By default this
-        points to a sample one within the Bluemira repository.
     problem_settings:
         The PROCESS parameters that do not exist in Bluemira.
     """
@@ -60,17 +57,13 @@ class Setup(CodesSetup):
 
     def __init__(
         self,
-        params: ProcessSolverParams,
+        params: Union[Dict, ParameterFrame],
         in_dat_path: str,
-        template_in_dat: Union[str, ProcessInputs] = None,
         problem_settings: Optional[Dict[str, Union[float, str]]] = None,
     ):
         super().__init__(params, PROCESS_NAME)
 
         self.in_dat_path = in_dat_path
-        self.template_in_dat = (
-            self.params.template_defaults if template_in_dat is None else template_in_dat
-        )
         self.problem_settings = problem_settings if problem_settings is not None else {}
 
     def run(self):
@@ -102,14 +95,16 @@ class Setup(CodesSetup):
             Default, True
         """
         # Load defaults in bluemira folder
-        writer = _make_writer(self.template_in_dat)
+        writer = _make_writer(self.params.template_defaults)
 
         if use_bp_inputs:
             inputs = self._get_new_inputs(remapper=update_obsolete_vars)
             for key, value in inputs.items():
-                writer.add_parameter(key, value)
+                if value is not None:
+                    writer.add_parameter(key, value)
             for key, value in self.problem_settings.items():
-                writer.add_parameter(key, value)
+                if value is not None:
+                    writer.add_parameter(key, value)
 
             self._validate_models(writer)
 
@@ -130,12 +125,23 @@ class Setup(CodesSetup):
             writer.add_parameter(name, model.value)
 
 
-def _make_writer(template_in_dat: Union[str, Dict[str, _INVariable]]) -> InDat:
-    if isinstance(template_in_dat, Dict):
-        indat = InDat(filename=None)
-        indat.data = template_in_dat
-        return indat
-    if isinstance(template_in_dat, str) and Path(template_in_dat).is_file():
+def _make_writer(template_in_dat: Dict[str, _INVariable]) -> InDat:
+    indat = InDat(filename=None)
+    indat.data = template_in_dat
+    return indat
+
+
+def create_template_from_path(template_in_dat: Union[str, Path]) -> ProcessInputs:
+    if not ENABLED:
+        raise CodesError(
+            f"{PROCESS_NAME} is not installed cannot read template {template_in_dat}"
+        )
+    if Path(template_in_dat).is_file():
         # InDat autoloads IN.DAT without checking for existence
-        return InDat(filename=template_in_dat)
+        return ProcessInputs(
+            **{
+                k: v.value if k == "runtitle" else v.get_value
+                for k, v in InDat(filename=template_in_dat).data.items()
+            }
+        )
     raise CodesError(f"Template IN.DAT '{template_in_dat}' is not a file.")

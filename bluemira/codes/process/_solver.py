@@ -22,16 +22,20 @@
 import copy
 from enum import auto
 from pathlib import Path
-from typing import Dict, List, Mapping, Tuple, Union
+from typing import Dict, List, Mapping, Tuple, Type, Union
 
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
-from bluemira.codes.interface import BaseRunMode, CodesSolver
+from bluemira.codes.interface import (
+    BaseRunMode,
+    CodesSolver,
+)
+from bluemira.codes.process._inputs import ProcessInputs
 from bluemira.codes.process._run import Run
-from bluemira.codes.process._setup import Setup
+from bluemira.codes.process._setup import Setup, create_template_from_path
 from bluemira.codes.process._teardown import Teardown
 from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.constants import BINARY as PROCESS_BINARY
@@ -76,9 +80,21 @@ class Solver(CodesSolver):
             The directory in which to run PROCESS. It is also the
             directory in which to look for PROCESS input and output
             files. Default is current working directory.
+        * read_dir:
+            The directory from which data is read when running in read mode.
+        * template_in_dat_path:
+            The path to a template PROCESS IN.DAT file or and instances of
+            :class:`bluemira.codes.process._inputs.ProcessInputs`.
+            By default this is an empty instance of the class. To create a new
+            instance
+            :class:`bluemira.codes.process.template_builder.PROCESSTemplateBuilder`
+            should be used.
         * problem_settings:
             Any PROCESS parameters that do not correspond to a bluemira
             parameter.
+        * in_dat_path:
+            The path to save the IN.DAT file that is run by PROCESS.
+            By default this is '<run_dir>/IN.DAT'.
 
     Notes
     -----
@@ -106,11 +122,11 @@ class Solver(CodesSolver):
         overwriting data with PROCESS outputs would be undesirable.
     """
 
-    name = PROCESS_NAME
-    setup_cls = Setup
-    run_cls = Run
-    teardown_cls = Teardown
-    run_mode_cls = RunMode
+    name: str = PROCESS_NAME
+    setup_cls: Type[Setup] = Setup
+    run_cls: Type[Run] = Run
+    teardown_cls: Type[Teardown] = Teardown
+    run_mode_cls: Type[RunMode] = RunMode
 
     def __init__(
         self,
@@ -123,27 +139,22 @@ class Solver(CodesSolver):
         self._run: Union[Run, None] = None
         self._teardown: Union[Teardown, None] = None
 
-        self.params = ProcessSolverParams.from_defaults()
-
-        if isinstance(params, ParameterFrame):
-            self.params.update_from_frame(params)
-        else:
-            try:
-                self.params.update_from_dict(params)
-            except TypeError:
-                self.params.update_values(params)
-
         _build_config = copy.deepcopy(build_config)
         self.binary = _build_config.pop("binary", PROCESS_BINARY)
         self.run_directory = _build_config.pop("run_dir", Path.cwd().as_posix())
         self.read_directory = _build_config.pop("read_dir", Path.cwd().as_posix())
-        self.template_in_dat = _build_config.pop(
-            "template_in_dat", self.params.template_defaults
-        )
+        self.template_in_dat = _build_config.pop("template_in_dat", ProcessInputs())
         self.problem_settings = _build_config.pop("problem_settings", {})
         self.in_dat_path = _build_config.pop(
             "in_dat_path", Path(self.run_directory, "IN.DAT").as_posix()
         )
+
+        if isinstance(self.template_in_dat, (str, Path)):
+            self.template_in_dat = create_template_from_path(self.template_in_dat)
+
+        self.params = ProcessSolverParams.from_defaults(self.template_in_dat)
+        self.params.update(params)
+
         if len(_build_config) > 0:
             quoted_delim = "', '"
             bluemira_warn(
@@ -164,14 +175,15 @@ class Solver(CodesSolver):
         """
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
-        self._setup = Setup(
+        self._setup = self.setup_cls(
             self.params,
             self.in_dat_path,
-            self.template_in_dat,
             self.problem_settings,
         )
-        self._run = Run(self.params, self.in_dat_path, self.binary)
-        self._teardown = Teardown(self.params, self.run_directory, self.read_directory)
+        self._run = self.run_cls(self.params, self.in_dat_path, self.binary)
+        self._teardown = self.teardown_cls(
+            self.params, self.run_directory, self.read_directory
+        )
 
         if setup := self._get_execution_method(self._setup, run_mode):
             setup()
@@ -205,7 +217,9 @@ class Solver(CodesSolver):
         )
 
     @staticmethod
-    def get_species_data(impurity: str) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_species_data(
+        impurity: str, confinement_time_ms: float
+    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get species data from PROCESS section of OPEN-ADAS database.
 
@@ -217,18 +231,27 @@ class Solver(CodesSolver):
             The impurity to get the species data for. This string should
             be one of the names in the
             :class:`~bluemira.codes.process.api.Impurities` Enum.
+        confinement_time_ms:
+            the confinement time to read the data for options are:
+            [0.1, 1.0, 10.0, 100.0, 1000.0, np.inf]
 
         Returns
         -------
         tref:
-            The temperature in keV.
+            The temperature in eV.
         l_ref:
             The loss function value $L_z(n_e, T_e)$ in W.m3.
         z_ref:
             Average effective charge.
         """
-        t_ref, lz_ref, z_av_ref = np.genfromtxt(Impurities[impurity].file()).T
-        return t_ref, lz_ref, z_av_ref
+        lz_ref, z_ref = Impurities[impurity].read_impurity_files(("lz", "z"))
+
+        t_ref = filter(lambda lz: lz.content == "Te[eV]", lz_ref)
+        lz_ref = filter(lambda lz: f"{confinement_time_ms:.1f}" in lz.content, lz_ref)
+        z_av_ref = filter(lambda z: f"{confinement_time_ms:.1f}" in z.content, z_ref)
+        return tuple(
+            np.array(next(ref).data, dtype=float) for ref in (t_ref, lz_ref, z_av_ref)
+        )
 
     def get_species_fraction(self, impurity: str) -> float:
         """

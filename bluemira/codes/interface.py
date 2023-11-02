@@ -236,9 +236,11 @@ class CodesTeardown(CodesTask):
         for bm_name, mapping in self.params.mappings.items():
             if not (mapping.recv or recv_all):
                 continue
-            output_value = self._get_output_or_raise(external_outputs, mapping.name)
+            output_value = self._get_output_or_raise(external_outputs, mapping.out_name)
             if mapping.unit is None:
-                bluemira_warn(f"{mapping.name} from code {self._name} has no known unit")
+                bluemira_warn(
+                    f"{mapping.out_name} from code {self._name} has no known unit"
+                )
                 value = output_value
             elif output_value is None:
                 value = output_value
