@@ -31,7 +31,10 @@ from scipy.integrate import solve_ivp
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError, FluxSurfaceError
-from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find import (
+    find_LCFS_separatrix,
+    find_flux_surface_through_point,
+)
 from bluemira.equilibria.grid import Grid
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -815,6 +818,8 @@ def calculate_connection_length_fs(
     z: float,
     *,
     forward: bool = True,
+    double_null: bool = False,
+    lower: bool = True,
     first_wall=Coordinates | Grid | None,
 ) -> float:
     """
@@ -855,8 +860,35 @@ def calculate_connection_length_fs(
         z1, z2 = eq.grid.z_min, eq.grid.z_max
         first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
 
-    xfs, zfs = find_flux_surface_through_point(eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z))
-    f_s = OpenFluxSurface(Coordinates({"x": xfs, "z": zfs}))
+    if (x is None) or (z is None):
+        # Use Seperatrix Flux Surface
+        lcfs, seperatrix = find_LCFS_separatrix(
+            eq.grid.x,
+            eq.grid.z,
+            eq.psi(eq.grid.x, eq.grid.z),
+            double_null=double_null,
+            psi_n_tol=PSI_NORM_TOL,
+        )
+
+        if double_null:
+            if lower:
+                f_s = OpenFluxSurface(seperatrix[0])
+            else:
+                f_s = OpenFluxSurface(seperatrix[1])
+        else:
+            f_s = OpenFluxSurface(seperatrix)
+
+        if forward:
+            x = np.max(f_s.coords.x[f_s.coords.z == 0])
+        else:
+            x = np.min(f_s.coords.x[f_s.coords.z == 0])
+        z = 0.0
+
+    else:
+        xfs, zfs = find_flux_surface_through_point(
+            eq.x, eq.z, eq.psi(), x, z, eq.psi(x, z)
+        )
+        f_s = OpenFluxSurface(Coordinates({"x": xfs, "z": zfs}))
 
     class Point:
         def __init__(self, x, z):
