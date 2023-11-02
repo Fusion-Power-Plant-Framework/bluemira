@@ -13,6 +13,9 @@ from bluemira.equilibria.optimisation.problem._breakdown import (
     InputBreakdownZoneStrategy,
     OutboardBreakdownZoneStrategy,
 )
+from bluemira.equilibria.optimisation.problem._maximise_connection_length import (
+    MaximiseConnectionLengthCOP,
+)
 from bluemira.equilibria.optimisation.problem._minimal_current import MinimalCurrentCOP
 from bluemira.equilibria.optimisation.problem._nested_position import (
     NestedCoilsetPositionCOP,
@@ -34,6 +37,7 @@ __all__ = [
     "InboardBreakdownZoneStrategy",
     "InputBreakdownZoneStrategy",
     "MinimalCurrentCOP",
+    "MaximiseConnectionLengthCOP",
     "NestedCoilsetPositionCOP",
     "OutboardBreakdownZoneStrategy",
     "PulsedNestedPositionCOP",

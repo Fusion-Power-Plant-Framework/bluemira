@@ -27,13 +27,19 @@ Note that the gradient of the objective function is of the form:
 """  # noqa: W505, E501
 
 import abc
-from typing import Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.flux_surfaces import (
+    calculate_connection_length_fs,
+)
+from bluemira.equilibria.grid import Grid
+from bluemira.geometry.coordinates import Coordinates
 
 
 class ObjectiveFunction(abc.ABC):
@@ -140,6 +146,83 @@ class MaximiseFluxObjective(ObjectiveFunction):
     def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """Gradient of the objective function for an optimisation."""
         return -self.scale * self.c_psi_mat
+
+
+class MaximiseConnectionLength(ObjectiveFunction):
+    """
+    Objective function to maximise connection length
+
+    Parameters
+    ----------
+    FIXME
+    """
+
+    def __init__(
+        self,
+        eq: Equilibrium,
+        scale: float,
+        double_null: bool = False,
+        plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
+        outer: Optional[bool] = True,
+    ) -> None:
+        self.eq = eq
+        self.scale = scale
+        self.double_null = double_null
+        self.plasma_facing_boundary = plasma_facing_boundary
+        self.outer = outer
+
+    def f_objective(self, vector: npt.NDArray) -> float:
+        """Objective function for an optimisation."""
+        self.eq.coilset.get_control_coils().current = vector * self.scale
+
+        if self.outer:
+            # lower outer
+            l2 = calculate_connection_length_fs(
+                self.eq,
+                first_wall=self.plasma_facing_boundary,
+                forward=True,
+                double_null=self.double_null,
+                lower=True,
+            )
+
+            # print(l2)
+
+            if self.double_null:
+                # upper_outer
+                l4 = calculate_connection_length_fs(
+                    self.eq,
+                    first_wall=self.plasma_facing_boundary,
+                    forward=True,
+                    double_null=self.double_null,
+                    lower=False,
+                )
+
+                return 1 / np.sum([l2, l4])
+
+            return 1 / l2
+
+        # lower inner
+        l1 = calculate_connection_length_fs(
+            self.eq,
+            first_wall=self.plasma_facing_boundary,
+            forward=False,
+            double_null=self.double_null,
+            lower=True,
+        )
+
+        if self.double_null:
+            # upper inner
+            l3 = calculate_connection_length_fs(
+                self.eq,
+                first_wall=self.plasma_facing_boundary,
+                forward=False,
+                double_null=self.double_null,
+                lower=False,
+            )
+
+            return 1 / np.sum([l1, l3])
+
+        return 1 / l1
 
 
 # =============================================================================
