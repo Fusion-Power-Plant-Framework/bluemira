@@ -8,7 +8,7 @@
    version="1.1"
    id="svg5"
    sodipodi:docname="bluemira-roadmap.svg"
-   inkscape:version="1.2.2 (b0a8486541, 2022-12-01)"
+   inkscape:version="1.3 (0e150ed6c4, 2023-07-21)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
@@ -35,13 +35,13 @@
      inkscape:object-nodes="true"
      inkscape:zoom="1"
      inkscape:cx="579"
-     inkscape:cy="165"
-     inkscape:window-width="1904"
-     inkscape:window-height="976"
-     inkscape:window-x="1374"
+     inkscape:cy="164.5"
+     inkscape:window-width="1350"
+     inkscape:window-height="664"
+     inkscape:window-x="8"
      inkscape:window-y="59"
      inkscape:window-maximized="0"
-     inkscape:current-layer="g562"
+     inkscape:current-layer="g35"
      height="150mm"
      width="296mm"
      inkscape:showpageshadow="2"
@@ -132,15 +132,14 @@
            xml:space="preserve"><tspan
              x="0"
              y="12.146373"
-             id="tspan1289">Transient Power </tspan><tspan
+             id="tspan1">Transient Power </tspan><tspan
              x="0"
              y="28.133373"
-             id="tspan1291">Balance model
-</tspan></text>
+             id="tspan2">Balance model&#10;</tspan></text>
       </g>
       <g
          id="g231-5"
-         transform="translate(-216.14715,165.7943)">
+         transform="translate(-418.39715,165.7943)">
         <text
            transform="matrix(1,0,0,-1,745.398,235.899)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:145.862;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -148,15 +147,14 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan1293">Vertical Stability </tspan><tspan
+             id="tspan3">Vertical Stability </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan1295">calculations
-</tspan></text>
+             id="tspan4">calculations&#10;</tspan></text>
       </g>
       <g
          id="g231-5-6"
-         transform="translate(-419.15435,144.04201)">
+         transform="translate(-617.48395,180.1576)">
         <text
            transform="matrix(1,0,0,-1,745.398,253.5097)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:173.576;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -164,23 +162,22 @@
            xml:space="preserve"><tspan
              x="0"
              y="31.974001"
-             id="tspan1297">2-D winding pack </tspan><tspan
+             id="tspan5">2-D winding pack </tspan><tspan
              x="0"
              y="47.961002"
-             id="tspan1299">design module
-</tspan></text>
+             id="tspan6">design module&#10;</tspan></text>
       </g>
       <text
-         transform="matrix(1,0,0,-1,327.26217,401.6933)"
+         transform="matrix(1,0,0,-1,326.69641,365.57771)"
          style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:154.221;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
          id="text325-7"
          xml:space="preserve"><tspan
            x="0"
            y="0"
-           id="tspan1301">3-D radiation </tspan><tspan
+           id="tspan7">3-D radiation </tspan><tspan
            x="0"
            y="15.987"
-           id="tspan1303">transport</tspan></text>
+           id="tspan8">transport</tspan></text>
       <g
          id="g73"
          transform="matrix(1.0026884,0,0,1.0079576,0.1820512,138.6613)">
@@ -258,14 +255,6 @@
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path115" />
       <path
-         d="m 705.76044,398.91287 8.986,9.978 8.986,-9.978 -8.986,-10.007 z"
-         style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
-         id="path117" />
-      <path
-         d="m 106.71811,480.44919 2.749,2.863 -0.142,4.195 3.799,-0.142 2.579,3.062 2.552,-3.062 3.798,0.142 -0.142,-4.195 2.778,-2.863 -2.778,-2.863 0.142,-4.195 -3.798,0.141 -2.552,-3.089 -2.579,3.089 -3.799,-0.141 0.142,4.195 z"
-         style="fill:#ffc000;fill-opacity:1;fill-rule:evenodd;stroke:none"
-         id="path119" />
-      <path
          d="m 506.07966,398.42234 8.986,9.977 8.986,-9.977 -8.986,-10.007 z"
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path127" />
@@ -316,7 +305,7 @@
       </g>
       <g
          id="g153"
-         transform="translate(0.24960097,140.48762)">
+         transform="translate(0.24960098,140.48762)">
         <text
            transform="matrix(1,0,0,-1,109.701,372.586)"
            style="font-variant:normal;font-weight:normal;font-size:18px;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -324,7 +313,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan155">Q3</tspan></text>
+             id="tspan155">Q4</tspan></text>
       </g>
       <g
          id="g159"
@@ -336,22 +325,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan161">Q4</tspan></text>
-      </g>
-      <g
-         id="g231"
-         transform="translate(-617.77278,177.94067)">
-        <text
-           transform="matrix(1,0,0,-1,745.398,235.899)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:161.734;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
-           id="text235"
-           xml:space="preserve"><tspan
-             x="0"
-             y="12.146373"
-             id="tspan1305">2-D deterministic </tspan><tspan
-             x="0"
-             y="28.133373"
-             id="tspan1307">radiation transport</tspan></text>
+             id="tspan161">Q1</tspan></text>
       </g>
       <g
          id="g237"
@@ -387,11 +361,10 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan1309">User group
-</tspan><tspan
+             id="tspan9">User group&#10;</tspan><tspan
              x="0"
              y="15.987"
-             id="tspan1311">meetings/workshops</tspan></text>
+             id="tspan10">meetings/workshops</tspan></text>
       </g>
       <g
          id="g267"
@@ -427,7 +400,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan311">Q1</tspan></text>
+             id="tspan311">Q2</tspan></text>
       </g>
       <g
          id="g315"
@@ -439,7 +412,7 @@
              x="0"
              y="0"
              sodipodi:role="line"
-             id="tspan317">Q2</tspan></text>
+             id="tspan317">Q3</tspan></text>
       </g>
       <g
          id="g321"
@@ -466,43 +439,13 @@
          d="m 306.39888,480.44919 2.75,2.863 -0.142,4.196 3.798,-0.142 2.58,3.061 2.551,-3.061 3.798,0.142 -0.141,-4.196 2.778,-2.863 -2.778,-2.863 0.141,-4.195 -3.798,0.142 -2.551,-3.09 -2.58,3.09 -3.798,-0.142 0.142,4.195 z"
          style="fill:#ffc000;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path353" />
-      <g
-         id="g355"
-         transform="translate(-611.31255,138.72655)">
-        <text
-           transform="matrix(1,0,0,-1,939.95369,345.52897)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:155.261;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
-           id="text359"
-           xml:space="preserve"><tspan
-             x="0"
-             y="0"
-             id="tspan1313">Switch to PROCESS </tspan><tspan
-             x="0"
-             y="15.987"
-             id="tspan1315">Python API</tspan></text>
-      </g>
-      <g
-         id="g355-3"
-         transform="translate(-611.31877,140.68121)">
-        <text
-           transform="matrix(1,0,0,-1,740.27291,342.00683)"
-           style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:155.261;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
-           id="text359-6"
-           xml:space="preserve"><tspan
-             x="0"
-             y="0"
-             id="tspan1317">New Optimisation </tspan><tspan
-             x="0"
-             y="15.987"
-             id="tspan1319">API</tspan></text>
-      </g>
       <path
          d="m 306.39888,362.30473 8.986,9.978 8.986,-9.978 -8.986,-10.007 z"
          style="fill:#70ad47;fill-opacity:1;fill-rule:evenodd;stroke:none"
          id="path544" />
       <g
          id="g552"
-         transform="translate(-16.466369,165.7943)">
+         transform="translate(-216.91996,165.7943)">
         <text
            transform="matrix(1,0,0,-1,745.398,235.899)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:145.862;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -510,19 +453,18 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan1321">Coupling to 3D </tspan><tspan
+             id="tspan11">Coupling to 3D </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan1323">FEA
-</tspan></text>
+             id="tspan12">FEA&#10;</tspan></text>
       </g>
       <path
-         d="m 508.07647,325.03055 v 0 c 0,0.397 0.11402,0.822 0.31206,1.162 0.19804,0.369 0.5101,0.652 0.85016,0.85 0.36907,0.199 0.76615,0.312 1.16322,0.312 h 9.29877 v 0 c 0.39707,0 0.82215,-0.113 1.16222,-0.312 0.36907,-0.198 0.65212,-0.51 0.85116,-0.85 0.19804,-0.368 0.31206,-0.765 0.31206,-1.162 v 0 l 0.028,-11.622 v 0 c 0,-0.397 -0.11302,-0.822 -0.31205,-1.162 -0.19804,-0.369 -0.5101,-0.652 -0.85017,-0.851 -0.36907,-0.198 -0.76614,-0.312 -1.16222,-0.312 l -9.32777,-0.028 v 0 c -0.39707,0 -0.82315,0.113 -1.16322,0.312 -0.36807,0.198 -0.65212,0.51 -0.85016,0.85 -0.19804,0.369 -0.31206,0.766 -0.31206,1.163 z"
+         d="m 308.39569,325.03055 v 0 c 0,0.397 0.11402,0.822 0.31206,1.162 0.19804,0.369 0.5101,0.652 0.85016,0.85 0.36907,0.199 0.76615,0.312 1.16322,0.312 h 9.29877 v 0 c 0.39707,0 0.82215,-0.113 1.16222,-0.312 0.36907,-0.198 0.65212,-0.51 0.85116,-0.85 0.19804,-0.368 0.31206,-0.765 0.31206,-1.162 v 0 l 0.028,-11.622 v 0 c 0,-0.397 -0.11302,-0.822 -0.31205,-1.162 -0.19804,-0.369 -0.5101,-0.652 -0.85017,-0.851 -0.36907,-0.198 -0.76614,-0.312 -1.16222,-0.312 l -9.32777,-0.028 v 0 c -0.39707,0 -0.82315,0.113 -1.16322,0.312 -0.36807,0.198 -0.65212,0.51 -0.85016,0.85 -0.19804,0.369 -0.31206,0.766 -0.31206,1.163 z"
          style="fill:#5b9bd5;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1.0001"
          id="path554" />
       <g
          id="g562"
-         transform="translate(-13.008343,132.33376)">
+         transform="translate(-215.25835,132.33376)">
         <text
            transform="matrix(1,0,0,-1,541.502,189.39662)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:179.43;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -530,21 +472,17 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan1325">Moving EUDEMO </tspan><tspan
+             id="tspan13">Moving EUDEMO </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan1327">design into separate </tspan><tspan
+             id="tspan14">design into separate </tspan><tspan
              x="0"
              y="31.974001"
-             id="tspan1329">repo</tspan></text>
+             id="tspan15">repo</tspan></text>
       </g>
-      <path
-         d="m 306.39888,443.84109 2.75,2.863 -0.142,4.196 3.798,-0.142 2.58,3.061 2.551,-3.061 3.798,0.142 -0.141,-4.196 2.778,-2.863 -2.778,-2.863 0.141,-4.195 -3.798,0.142 -2.551,-3.09 -2.58,3.09 -3.798,-0.142 0.142,4.195 z"
-         style="fill:#ffc000;fill-opacity:1;fill-rule:evenodd;stroke:none"
-         id="path728" />
       <g
          id="g736"
-         transform="translate(-611.31255,100.35646)">
+         transform="translate(-611.31255,138.72568)">
         <text
            transform="matrix(1,0,0,-1,939.95369,345.52897)"
            style="font-variant:normal;font-weight:normal;font-size:15.987px;line-height:1;font-family:sans-serif;-inkscape-font-specification:sans-serif;writing-mode:lr-tb;white-space:pre;inline-size:168.194;display:inline;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
@@ -552,10 +490,10 @@
            xml:space="preserve"><tspan
              x="0"
              y="0"
-             id="tspan1331">Version 2, removal </tspan><tspan
+             id="tspan16">Version 2, removal </tspan><tspan
              x="0"
              y="15.987"
-             id="tspan1333">of old APIs</tspan></text>
+             id="tspan17">of old APIs</tspan></text>
       </g>
     </g>
   </g>
