@@ -48,8 +48,10 @@ def test_impurities(imp_data_mock):
     assert api.Impurities(1) == api.Impurities.H
     assert api.Impurities(1).id() == "fimp(01)"
     assert api.Impurities(10).id() == "fimp(10)"
-    assert api.Impurities(1).file().parts[-1] == "H__lz_tau.dat"
-    assert api.Impurities(10).file().parts[-1] == "Fe_lz_tau.dat"
+    assert api.Impurities(1).files()["lz"].parts[-1] == "H__lz_tau.dat"
+    assert api.Impurities(1).files()["z"].parts[-1] == "H__z_tau.dat"
+    assert api.Impurities(1).files()["z2"].parts[-1] == "H__z2_tau.dat"
+    assert api.Impurities(10).files()["lz"].parts[-1] == "Fe_lz_tau.dat"
 
 
 def test_INVariable_works_with_floats():

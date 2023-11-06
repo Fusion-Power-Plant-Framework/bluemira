@@ -63,32 +63,20 @@ To disable this warning and for any other issues, please refer to our :ref:`FAQ 
 Installing PROCESS
 ------------------
 
-``PROCESS`` is a 0D-1D fusion systems code. More information on ``PROCESS`` and how to
-inquire about access can be found `here <https://ccfe.ukaea.uk/resources/process/>`_.
+``PROCESS`` is a 0D-1D fusion systems code. More information on ``PROCESS`` can be found in
+thier documentation `here <https://ukaea.github.io/PROCESS/>`_ and
+`git repository <https://github.com/ukaea/PROCESS>`_.
 ``Bluemira`` is able perform a ``PROCESS`` run as the initial step in the reactor design.
 
-.. note::
-
-    The ``PROCESS`` build requires gfortran-9, gcc and make.
-    gfortran-9 is not the default version on Ubuntu 18.04.
-    In order to install the dependencies and make this more recent gfortran version available,
-    if you are using Ubuntu 18.04, you must first run:
-
-    .. code-block:: bash
-
-        sudo apt-get update
-        sudo apt-get install -y software-properties-common
-        sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test
-        sudo apt-get update && sudo apt-get install -y gfortran-9 gcc make
-        sudo update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-9 30
-
-In order install ``PROCESS`` in your ``bluemira`` environment, run the following:
+Install ``PROCESS`` in your ``bluemira`` environment by running the following:
 
 .. code-block:: bash
 
     bash scripts/install-process.sh
 
-.. note::
+you can optionally specify which version of ``PROCESS`` is installed by specifying the version tag
+or commit hash as an argument.
 
-    You will need to have first obtained permissions to be able to clone the ``PROCESS``
-    source repository and have set up an ssh key within UKAEA's GitLab.
+.. code-block:: bash
+
+    bash scripts/install-process.sh v3.0.1

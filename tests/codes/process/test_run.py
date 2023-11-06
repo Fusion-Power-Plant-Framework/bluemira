@@ -42,9 +42,10 @@ class TestRun:
 
     @pytest.mark.parametrize("run_func", ["run", "runinput"])
     def test_run_func_calls_subprocess_with_in_dat_path(self, run_func):
-        run = Run(self.default_pf, "input/path_IN.DAT")
-
-        getattr(run, run_func)()
+        with mock.patch.object(Run, "_get_epsvmc"):
+            run = Run(self.default_pf, "input/path_IN.DAT")
+            run._epsvmc = 1
+            getattr(run, run_func)()
 
         assert self.run_subprocess_mock.call_args[0][0] == [
             process.BINARY,
