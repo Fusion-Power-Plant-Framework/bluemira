@@ -99,15 +99,18 @@ class Run(CodesTask):
             visible=True,
         )
 
-    def _run_process(self):
-        bluemira_print(f"Running '{PROCESS_NAME}' systems code")
-        command = [self.binary, "-i", self.in_dat_path]
-
+    def _get_epsvmc(self):
         with open(self.in_dat_path) as f:
             for line in f:
                 if line.startswith("epsvmc"):
                     self._epsvmc = float(line.split("=")[1].split("*")[0])
                     break
+
+    def _run_process(self):
+        bluemira_print(f"Running '{PROCESS_NAME}' systems code")
+        command = [self.binary, "-i", self.in_dat_path]
+
+        self._get_epsvmc()
 
         cols = list(Progress.get_default_columns())
         tc = cols[0]
