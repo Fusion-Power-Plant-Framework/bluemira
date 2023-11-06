@@ -92,6 +92,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         gamma=1e-8,
         opt_algorithm: AlgorithmType = Algorithm.SBPLX,
         opt_conditions: Optional[Dict[str, float]] = None,
+        opt_parameters: Optional[Dict[str, float]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.coilset = coilset
@@ -104,6 +105,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.opt_conditions = opt_conditions or self._opt_condition_defaults(
             {"max_eval": 100}
         )
+        self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
     def optimise(self, **_) -> CoilsetOptimiserResult:
@@ -122,7 +124,9 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         opt_result = optimise(
             f_objective=self.objective,
             x0=np.concatenate((initial_mapped_positions, initial_currents)),
+            bounds=self.bounds,
             opt_conditions=self.opt_conditions,
+            opt_parameters=self.opt_parameters,
             algorithm=self.opt_algorithm,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
