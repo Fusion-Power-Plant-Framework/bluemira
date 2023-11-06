@@ -23,10 +23,66 @@
 FreeCAD configuration
 """
 
-import enum  # noqa: I001
+import enum
+import importlib
+import os
+import sys
 
-import freecad  # noqa: F401
-import FreeCAD
+
+def get_freecad_modules(*mod):
+    # freecad_path = Path(
+    # /app/org.freecadweb.FreeCAD/current/active/files/freecad/lib"
+    # ).expanduser()
+    # # sys.path.append(f"{freecad_path/ 'Ext'}")
+    # # sys.path.append(f"{freecad_path/ 'Mod' / 'Part'}")
+    # # sys.path.append(f"{freecad_path/ 'Mod' / 'Draft'}")
+    # # sys.path.append(f"{freecad_path.parent / 'lib' / 'python3.10' / 'site-package'}")
+    # # sys.path.append(f"{freecad_path.parent}")
+    # sys.path.append(f"{freecad_path}")
+    # sys.path.append(f"{freecad_path.parent / 'freecad' / 'lib' / 'libFreeCADApp'}")
+    paths = [
+        "/usr/lib/freecad-python3/lib",
+        "/usr/lib/freecad/",
+        "/usr/lib/freecad/Ext",
+        "/usr/lib/freecad/Mod",
+        "/usr/lib/freecad/Mod/Part",
+        "/usr/lib/freecad/Mod/Draft",
+        "/usr/lib/python3/dist-packages",
+    ]
+
+    for pth in paths:
+        sys.path.append(pth)
+
+    freecad_message_removal()
+    imps = []
+    for m in mod:
+        if isinstance(m, tuple):
+            imp = __import__(m[0], fromlist=[*m[1:]])
+            imps.extend(getattr(imp, _m) for _m in m[1:])
+        else:
+            imps.append(__import__(m))
+
+    for pth in paths:
+        sys.path.pop(sys.path.index(pth))
+    return imps[0] if len(imps) == 1 else tuple(imps)
+
+
+def freecad_message_removal():
+    """
+    Remove annoying message about freecad libdir not being set
+    """
+    if "PATH_TO_FREECAD_LIBDIR" in os.environ:
+        return os.environ["PATH_TO_FREECAD_LIBDIR"]
+    freecad_default_path = None
+    with open(importlib.util.find_spec("freecad").origin) as rr:
+        for line in rr:
+            if '_path_to_freecad_libdir = "' in line:
+                freecad_default_path = line.split('"')[1]
+                break
+    if freecad_default_path is not None:
+        os.environ["PATH_TO_FREECAD_LIBDIR"] = freecad_default_path
+
+    return freecad_default_path
 
 
 class _Unit(enum.IntEnum):
@@ -87,3 +143,8 @@ def _freecad_save_config(
     import_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
     import_prefs.SetInt("ImportMode", 0)
     import_prefs.SetBool("ExportLegacy", False)
+
+
+freecad, FreeCAD = get_freecad_modules("freecad", "FreeCAD")
+
+_freecad_save_config()
