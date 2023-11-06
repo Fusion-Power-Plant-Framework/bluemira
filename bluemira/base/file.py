@@ -48,7 +48,7 @@ def get_bluemira_root() -> str:
         The full path to the bluemira root folder, e.g.:
             '/home/user/code/bluemira'
     """
-    import bluemira
+    import bluemira  # noqa: PLC0415
 
     path = next(iter(bluemira.__path__))
     return os.path.split(path)[0]
@@ -197,7 +197,7 @@ def get_files_by_ext(folder: str, extension: str) -> List[str]:
     """
     files = [file for file in os.listdir(folder) if file.endswith(extension)]
     if len(files) == 0:
-        from bluemira.base.look_and_feel import bluemira_warn
+        from bluemira.base.look_and_feel import bluemira_warn  # noqa: PLC0415
 
         bluemira_warn(f"No files with extension {extension} found in folder {folder}")
     return files

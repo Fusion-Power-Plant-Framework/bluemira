@@ -43,7 +43,7 @@ _FREECAD_REF = "bluemira.codes._freecadapi"
 
 def _skip_polyscope():
     try:
-        import polyscope  # noqa: F401
+        import polyscope  # noqa: F401, PLC0415
     except ImportError:
         return True
     else:

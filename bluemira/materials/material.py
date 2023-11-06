@@ -1304,7 +1304,7 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
     ):
         self.is_enrichable = True
         try:
-            import openmc  # noqa: F401
+            import openmc  # noqa: F401, PLC0415
         except ImportError:
             self.is_enrichable = False
         if enrichment is not None:

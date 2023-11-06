@@ -25,17 +25,16 @@ FE transformation matrices and methods
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Union
-
-if TYPE_CHECKING:
-    from bluemira.structural.geometry import DeformedGeometry, Geometry
-
 from copy import deepcopy
+from typing import TYPE_CHECKING, List, Union
 
 import numpy as np
 from scipy.linalg import block_diag
 
 from bluemira.geometry.coordinates import rotation_matrix
+
+if TYPE_CHECKING:
+    from bluemira.structural.geometry import DeformedGeometry, Geometry
 
 
 def _direction_cosine_matrix(dx: float, dy: float, dz: float) -> np.ndarray:
@@ -211,7 +210,7 @@ def cyclic_pattern(
     The patterned and merged geometry
     """
     # Dodge cyclic import
-    from bluemira.structural.geometry import DeformedGeometry, Geometry
+    from bluemira.structural.geometry import DeformedGeometry, Geometry  # noqa: PLC0415
 
     if include_first:
         patterned = deepcopy(geometry)

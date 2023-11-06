@@ -234,7 +234,7 @@ class Grid:
         """
         Plot the Grid object onto an ax.
         """
-        from bluemira.equilibria.plotting import GridPlotter
+        from bluemira.equilibria.plotting import GridPlotter  # noqa: PLC0415
 
         return GridPlotter(self, ax=ax, **kwargs)
 

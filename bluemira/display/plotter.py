@@ -545,7 +545,7 @@ class ComponentPlotter(BasePlotter):
 
     @staticmethod
     def _check_obj(obj):
-        import bluemira.base.components
+        import bluemira.base.components  # noqa: PLC0415
 
         if not isinstance(obj, bluemira.base.components.Component):
             raise TypeError(f"{obj} must be a BluemiraComponent")
@@ -622,7 +622,7 @@ def _get_plotter_class(part):
     """
     Get the plotting class for a BluemiraGeo object.
     """
-    import bluemira.base.components
+    import bluemira.base.components  # noqa: PLC0415
 
     if isinstance(part, (list, np.ndarray, Coordinates)):
         plot_class = PointsPlotter
@@ -828,7 +828,7 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
     alpha: float
         The transparency to plot the Coordinates fill with
     """
-    from bluemira.utilities.plot_tools import coordinates_to_path
+    from bluemira.utilities.plot_tools import coordinates_to_path  # noqa: PLC0415
 
     ndim = _get_ndim(coords)
 
@@ -878,7 +878,7 @@ def plot_coordinates(coords, ax=None, points=False, **kwargs):
 
 
 def _plot_3d(coords, ax=None, **kwargs):
-    from bluemira.utilities.plot_tools import (
+    from bluemira.utilities.plot_tools import (  # noqa: PLC0415
         BluemiraPathPatch3D,
         Plot3D,
         coordinates_to_path,

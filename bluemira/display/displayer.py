@@ -196,7 +196,7 @@ def _get_displayer_class(part):
     """
     Get the displayer class for an object.
     """
-    import bluemira.base.components
+    import bluemira.base.components  # noqa: PLC0415
 
     if isinstance(part, bluemira.base.components.Component):
         plot_class = ComponentDisplayer
@@ -269,7 +269,7 @@ class ComponentDisplayer(BaseDisplayer):
         comp: Union[Iterable[Component], Component]
             Component, or iterable of Components, to be displayed
         """
-        import bluemira.base.components as bm_comp
+        import bluemira.base.components as bm_comp  # noqa: PLC0415
 
         show_cad(
             *bm_comp.get_properties_from_components(

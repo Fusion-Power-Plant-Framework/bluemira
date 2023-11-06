@@ -174,6 +174,6 @@ class BluemiraPlane:
         """
         Convert the plane into a placement
         """
-        from bluemira.geometry.placement import BluemiraPlacement
+        from bluemira.geometry.placement import BluemiraPlacement  # noqa: PLC0415
 
         return BluemiraPlacement._create(cadapi.placement_from_plane(self._shape))
