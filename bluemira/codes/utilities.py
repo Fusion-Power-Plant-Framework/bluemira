@@ -29,7 +29,7 @@ import subprocess
 import threading
 from enum import Enum
 from types import ModuleType
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict, List, Optional
 
 from bluemira.base.look_and_feel import (
     _bluemira_clean_flush,
@@ -143,13 +143,14 @@ class LogPipe(threading.Thread):
         self,
         loglevel: str,
         flush_callable: Callable[[str], bool] = lambda line: False,  # noqa: ARG005
+        flush_printer: Optional[Callable[[str], None]] = None,
     ):
         super().__init__(daemon=True)
 
         self.logfunc = {"print": bluemira_print_clean, "error": bluemira_error_clean}[
             loglevel
         ]
-        self.logfunc_flush = _bluemira_clean_flush
+        self.logfunc_flush = flush_printer or _bluemira_clean_flush
         self.flush_callable = flush_callable
         self.fd_read, self.fd_write = os.pipe()
         self.pipe = os.fdopen(self.fd_read, encoding="utf-8", errors="ignore")
@@ -184,6 +185,7 @@ def run_subprocess(
     command: List[str],
     run_directory: str = ".",
     flush_callable: Callable[[str], bool] = lambda line: False,  # noqa: ARG005
+    flush_printer: Optional[Callable[[str], None]] = None,
     **kwargs,
 ) -> int:
     """
@@ -205,14 +207,18 @@ def run_subprocess(
     return_code: int
         The return code of the subprocess.
     """
-    stdout = LogPipe("print", flush_callable)
+    stdout = LogPipe("print", flush_callable, flush_printer=flush_printer)
     stderr = LogPipe("error", flush_callable)
 
     kwargs["cwd"] = run_directory
     kwargs.pop("shell", None)  # Protect against user input
 
     with subprocess.Popen(
-        command, stdout=stdout, stderr=stderr, shell=False, **kwargs  # noqa: S603
+        command,
+        stdout=stdout,
+        stderr=stderr,
+        shell=False,  # noqa: S603
+        **kwargs,
     ) as s:
         stdout.close()
         stderr.close()

@@ -22,6 +22,8 @@
 """
 PROCESS run functions
 """
+import numpy as np
+from rich.progress import Progress, TextColumn
 
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.codes.interface import CodesTask
@@ -87,7 +89,41 @@ class Run(CodesTask):
         else:
             return True
 
+    def flush_printer(self, line: str):
+        description, convergence = line.rsplit(":", 1)
+        description = f"{convergence} | {description.split('|')[0]}"
+        self._progress.update(
+            self._task,
+            description=description,
+            completed=np.clip(np.log(1 / float(convergence)), 0, None),
+            visible=True,
+        )
+
     def _run_process(self):
         bluemira_print(f"Running '{PROCESS_NAME}' systems code")
         command = [self.binary, "-i", self.in_dat_path]
-        self._run_subprocess(command, flush_callable=self.flush_callable)
+
+        with open(self.in_dat_path) as f:
+            for line in f:
+                if line.startswith("epsvmc"):
+                    self._epsvmc = float(line.split("=")[1].split("*")[0])
+                    break
+
+        cols = list(Progress.get_default_columns())
+        tc = cols[0]
+        cols[0] = TextColumn("Convergence")
+        cols[-1] = tc
+
+        with Progress(*cols) as self._progress:
+            self._task = self._progress.add_task(
+                "",
+                completed=0,
+                total=np.log(1 / self._epsvmc),
+                visible=False,
+            )
+
+            self._run_subprocess(
+                command,
+                flush_callable=self.flush_callable,
+                flush_printer=self.flush_printer,
+            )
