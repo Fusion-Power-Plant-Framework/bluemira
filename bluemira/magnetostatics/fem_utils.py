@@ -1,31 +1,33 @@
-from typing import Optional
-import dolfinx.fem
-from ufl import as_vector, SpatialCoordinate
-from typing import List, Callable
+import functools
+from dataclasses import dataclass
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+from unittest.mock import patch
+
+import matplotlib.pyplot as plt
 import matplotlib.tri as tr
-
-import dolfinx.fem
-from typing import Union, Tuple
-
-import ufl
 import numpy as np
-from mpi4py import MPI
-from petsc4py import PETSc
+import pyvista
+import ufl
+from dolfinx import cpp, geometry, plot
 from dolfinx.fem import (
+    Constant,
     Expression,
     Function,
-    FunctionSpace,
-    VectorFunctionSpace,
     assemble_scalar,
     form,
+    functionspace,
+    locate_dofs_topological,
 )
-from dolfinx import geometry
-from matplotlib.pyplot import Axes
-import matplotlib.pyplot as plt
-import dolfinx.plot as plot
-import pyvista
+from dolfinx.io import gmshio
+from dolfinx.mesh import Mesh
+from dolfinx.plot import vtk_mesh
+from mpi4py import MPI
+from petsc4py import PETSc
 
-import bluemira.base.look_and_feel
+from bluemira.base.look_and_feel import bluemira_error, bluemira_warn
+
+old_m_to_m = gmshio.model_to_mesh
+
 
 def convert_to_points_array(x):
     x = np.array(x)
@@ -34,8 +36,36 @@ def convert_to_points_array(x):
             x = np.array([x[0], x[1], 0])
         x = np.array([x])
     if x.shape[1] == 2:
-        x = np.array([x[:, 0], x[:, 1], x[:, 0]*0]).T
+        x = np.array([x[:, 0], x[:, 1], x[:, 0] * 0]).T
     return x
+
+
+def model_to_mesh(model, comm, rank: int, gdim: Union[int, Iterable[int]] = 3, **kwargs):
+    if isinstance(gdim, Iterable):
+        dimensions = gdim
+        gdim = len(dimensions)
+    else:
+        dimensions = np.arange(2)[:gdim]
+
+    labels = {
+        model.getPhysicalName(dim, tag): (dim, tag)
+        for dim, tag in model.getPhysicalGroups()
+    }
+
+    extr_geometry = functools.partial(
+        extract_geometry, gmshio.extract_geometry, dimensions
+    )
+    with patch("dolfinx.io.gmshio.extract_geometry", new=extr_geometry):
+        result = old_m_to_m(model, comm, rank, gdim, **kwargs)
+    return result, labels
+
+
+def extract_geometry(func, dimensions, model):
+    x = func(model)
+    if any(dimensions != np.arange(len(dimensions))):
+        return x[:, dimensions]
+    return x
+
 
 class BluemiraFemFunction(Function):
     """A supporting class that extends the BluemiraFemFunction implementing
