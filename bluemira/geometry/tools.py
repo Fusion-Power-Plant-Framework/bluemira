@@ -1208,8 +1208,8 @@ def _signed_distance_2D(point: np.ndarray, polygon: np.ndarray) -> float:
     Credit: Inigo Quilez (https://www.iquilezles.org/)
     """
     sign = -1.0
-    point = np.asarray(point, dtype=float)
-    polygon = np.asarray(polygon, dtype=float)
+    point = np.asarray(point, dtype=np.float64)
+    polygon = np.asarray(polygon, dtype=np.float64)
     n = len(polygon)
 
     d = _nb_dot_2D(point - polygon[0], point - polygon[0])
