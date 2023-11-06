@@ -86,7 +86,7 @@ class ConstraintFunction(abc.ABC):
 
     @constraint_type.setter
     def constraint_type(self, constraint_t: Literal["inequality", "equality"]) -> None:
-        if constraint_t not in ["inequality", "equality"]:
+        if constraint_t not in {"inequality", "equality"}:
             bluemira_warn(
                 f"Unknown nonlinear constraint type '{constraint_t}', "
                 "defaulting to 'inequality'."

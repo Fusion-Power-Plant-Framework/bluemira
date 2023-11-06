@@ -22,6 +22,7 @@
 """
 Grid object and operations for equilibria.
 """
+
 import numba as nb
 import numpy as np
 
@@ -80,7 +81,7 @@ class Grid:
             raise EquilibriaError("Invalid Grid dimensions specified.")
 
         if x_min > x_max:
-            print()  # stdout flusher
+            print()  # stdout flusher  # noqa: T201
             bluemira_warn(
                 f"x_min should be < x_max {x_min:.2f} > {x_max:.2f}. Switching x_min and"
                 " x_max."
@@ -88,7 +89,7 @@ class Grid:
             x_min, x_max = x_max, x_min
 
         if z_min > z_max:
-            print()  # stdout flusher
+            print()  # stdout flusher  # noqa: T201
             bluemira_warn(
                 f"z_min should be < z_max {z_min:.2f} > {z_max:.2f}. Switching z_min and"
                 " z_max."
@@ -99,14 +100,14 @@ class Grid:
             x_min = X_AXIS_MIN
 
         if nx < MIN_N_DISCR:
-            print()  # stdout flusher
+            print()  # stdout flusher  # noqa: T201
             bluemira_warn(
                 f"Insufficient nx discretisation: {nx}, setting to {MIN_N_DISCR}."
             )
             nx = MIN_N_DISCR
 
         if nz < MIN_N_DISCR:
-            print()  # stdout flusher
+            print()  # stdout flusher  # noqa: T201
             bluemira_warn(
                 f"Insufficient nx discretisation: {nz}, setting to {MIN_N_DISCR}."
             )
@@ -233,7 +234,7 @@ class Grid:
         """
         Plot the Grid object onto an ax.
         """
-        from bluemira.equilibria.plotting import GridPlotter
+        from bluemira.equilibria.plotting import GridPlotter  # noqa: PLC0415
 
         return GridPlotter(self, ax=ax, **kwargs)
 

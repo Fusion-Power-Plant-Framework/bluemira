@@ -22,6 +22,7 @@
 """
 Finite element model
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional, Tuple
@@ -387,7 +388,7 @@ class FiniteElementModel:
                 node = self.geometry.nodes[load["node_id"]]
                 node.add_load(load)
 
-            elif load["type"] in ["Element Load", "Distributed Load"]:
+            elif load["type"] in {"Element Load", "Distributed Load"}:
                 element = self.geometry.elements[load["element_id"]]
                 element.add_load(load)
             else:
@@ -616,7 +617,6 @@ class FiniteElementModel:
             ur = self.cycle_sym.reorder(ur)
 
         else:
-            print("sparse")
             k = self.geometry.k_matrix_sparse()
 
             kr, pr = self._apply_boundary_conditions_sparse(k, p)

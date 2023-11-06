@@ -22,6 +22,7 @@
 """
 A collection of tools used in the EU-DEMO design.
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List, Optional, Tuple, Union

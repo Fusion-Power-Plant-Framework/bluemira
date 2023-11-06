@@ -21,6 +21,7 @@
 """
 Parameters classes/structures for plasmod outputs.
 """
+
 from __future__ import annotations
 
 import csv

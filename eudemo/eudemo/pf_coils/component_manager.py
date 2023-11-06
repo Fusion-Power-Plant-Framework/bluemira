@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Component Manager for PF coils."""
+
 from bluemira.base.builder import ComponentManager
 
 

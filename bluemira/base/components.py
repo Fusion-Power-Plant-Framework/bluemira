@@ -285,7 +285,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         found_nodes = anytree.search.findall(
             self.root if full_tree else self, filter_=filter_
         )
-        if found_nodes in (None, ()):
+        if found_nodes in {None, ()}:
             return None
         if first and isinstance(found_nodes, Iterable):
             found_nodes = found_nodes[0]

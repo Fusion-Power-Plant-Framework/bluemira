@@ -22,6 +22,7 @@
 """
 Material mixture utility classes
 """
+
 from __future__ import annotations
 
 import copy

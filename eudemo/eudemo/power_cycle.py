@@ -22,6 +22,7 @@
 """
 Simple steady-state EU-DEMO balance of plant model
 """
+
 import enum
 from dataclasses import dataclass
 

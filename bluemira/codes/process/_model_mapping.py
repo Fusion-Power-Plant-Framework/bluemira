@@ -22,6 +22,7 @@
 """
 PROCESS model mappings
 """
+
 from dataclasses import dataclass, field
 from typing import Tuple
 
@@ -154,16 +155,19 @@ class PlasmaPedestalModel(PROCESSModel):
         return "ipedestal"
 
     NO_PEDESTAL = 0, ("te",)
-    PEDESTAL_GW = 1, (
-        "te",
-        "neped",
-        "nesep",
-        "rhopedn",
-        "rhopedt",
-        "tbeta",
-        "teped",
-        "tesep",
-        "ralpne",
+    PEDESTAL_GW = (
+        1,
+        (
+            "te",
+            "neped",
+            "nesep",
+            "rhopedn",
+            "rhopedt",
+            "tbeta",
+            "teped",
+            "tesep",
+            "ralpne",
+        ),
     )
     PLASMOD_GW = 2, ("te", "neped", "nesep", "tbeta", "teped", "tesep", "ralpne")
     PLASMOD = 3, ("te", "rhopedn", "rhopedt", "teped", "tesep")
@@ -706,11 +710,14 @@ class TFCoilJointsModel(PROCESSModel):
         " and sliding joints for resistive magnets (i_tf_sup=0,2)",
     )
     NO_JOINTS = 0
-    SLIDING_JOINTS = 1, (
-        "tho_tf_joints",
-        "n_tf_joints_contact",
-        "n_tf_joints",
-        "th_joint_contact",
+    SLIDING_JOINTS = (
+        1,
+        (
+            "tho_tf_joints",
+            "n_tf_joints_contact",
+            "n_tf_joints",
+            "th_joint_contact",
+        ),
     )
 
 

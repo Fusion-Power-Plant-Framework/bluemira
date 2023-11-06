@@ -23,6 +23,7 @@ Function to find inscribed rectangle.
 
 In contained file because loop module imports geomtools and geombase modules
 """
+
 from copy import deepcopy
 from typing import List, Tuple
 

@@ -22,6 +22,7 @@
 """
 Coil and coil grouping objects
 """
+
 from __future__ import annotations
 
 from enum import Enum, EnumMeta, auto
@@ -182,7 +183,7 @@ class Coil(CoilFieldsMixin):
         self._dx = None
         self._dz = None
         self._discretisation = np.nan
-        self._flag_sizefix = None not in (dx, dz)
+        self._flag_sizefix = None not in {dx, dz}
 
         if dx is not None and x - dx < 0:
             raise ValueError("Coil extent crosses x=0")
@@ -206,7 +207,7 @@ class Coil(CoilFieldsMixin):
         # check if dx and not dz set
         # check of j max set
         self._validate_size()
-        if not self._flag_sizefix and None in (self.dx, self.dz):
+        if not self._flag_sizefix and None in {self.dx, self.dz}:
             self._dx, self._dz = 0, 0
             self._re_discretise()
 
@@ -407,14 +408,14 @@ class Coil(CoilFieldsMixin):
     def current(self, value: float):
         """Set coil current"""
         self._current = float(value)
-        if None not in (self.dx, self.dz):
+        if None not in {self.dx, self.dz}:
             self.resize()
 
     @j_max.setter
     def j_max(self, value: float):
         """Set coil max current density"""
         self._j_max = float(value)
-        if None not in (self.dx, self.dz):
+        if None not in {self.dx, self.dz}:
             self.resize()
 
     @b_max.setter
@@ -454,7 +455,7 @@ class Coil(CoilFieldsMixin):
     def get_max_current(self):
         """Get max current"""
         return (
-            np.infty
+            np.inf
             if np.isnan(self.j_max)
             else get_max_current(self.dx, self.dz, self.j_max)
         )
@@ -558,7 +559,7 @@ class Coil(CoilFieldsMixin):
         """
         Re discretise and re set attributes if sizing information changes.
         """
-        if None not in (self.dx, self.dz):
+        if None not in {self.dx, self.dz}:
             self._discretise()
             self._set_coil_attributes()
 

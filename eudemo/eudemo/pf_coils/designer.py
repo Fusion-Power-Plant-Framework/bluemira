@@ -178,7 +178,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
         timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         result_dict = {}
         for k, v in opt_problem.snapshots.items():
-            if k in [opt_problem.SOF, opt_problem.EOF]:
+            if k in {opt_problem.SOF, opt_problem.EOF}:
                 result_dict[k] = v.eq.to_dict()
                 result_dict[k]["name"] = f"bluemira {timestamp} {k}"
             self.eq_manager.add_state(k, v)

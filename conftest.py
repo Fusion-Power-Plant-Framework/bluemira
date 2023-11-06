@@ -105,7 +105,7 @@ def _plot_show_and_close(request):
     -----
     Does not do anything if testclass marked with 'classplot'
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     cls = request.node.getparent(pytest.Class)
 
@@ -125,7 +125,7 @@ def _plot_show_and_close_class(request):
     -----
     Only shows and closes figures on classes marked with 'classplot'
     """
-    import matplotlib.pyplot as plt
+    import matplotlib.pyplot as plt  # noqa: PLC0415
 
     if "classplot" in request.keywords:
         yield

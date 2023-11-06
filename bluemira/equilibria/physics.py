@@ -22,6 +22,7 @@
 """
 A collection of simple equilibrium physics calculations
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Iterable, Optional, Union
@@ -446,7 +447,10 @@ def normalise_beta(beta: float, a: float, b_tor: float, I_p: float) -> float:
 
 
 def beta_N_to_beta(  # noqa: N802
-    beta_N: float, a: float, Btor: float, I_p: float  # noqa: N803
+    beta_N: float,  # noqa: N803
+    a: float,
+    Btor: float,
+    I_p: float,
 ) -> float:
     """
     Converts normalised beta to beta

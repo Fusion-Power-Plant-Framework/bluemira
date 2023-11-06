@@ -233,7 +233,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         if max_currents is not None:
             input_current_limits = np.asarray(max_currents)
             input_size = np.size(np.asarray(input_current_limits))
-            if input_size in (1, n_control_currents):
+            if input_size in {1, n_control_currents}:
                 scaled_input_current_limits = input_current_limits / current_scale
             else:
                 raise EquilibriaError(
@@ -242,7 +242,7 @@ class CoilsetOptimisationProblem(abc.ABC):
                 )
 
         # Get the current limits from coil current densities
-        coilset_current_limits = np.infty * np.ones(n_control_currents)
+        coilset_current_limits = np.inf * np.ones(n_control_currents)
         cc = coilset.get_control_coils()
         coilset_current_limits[cc._flag_sizefix] = cc.get_max_current()[cc._flag_sizefix]
 

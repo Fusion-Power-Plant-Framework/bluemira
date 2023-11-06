@@ -22,6 +22,7 @@
 """
 Numerical vertical stability control - still not quite there!
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Union
@@ -60,7 +61,8 @@ class DummyController:
 
     @staticmethod
     def Bx(
-        x: Union[float, np.ndarray], z: Union[float, np.ndarray]  # noqa: ARG004
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],  # noqa: ARG004
     ) -> Union[float, np.ndarray]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
@@ -74,7 +76,8 @@ class DummyController:
 
     @staticmethod
     def Bz(
-        x: Union[float, np.ndarray], z: Union[float, np.ndarray]  # noqa: ARG004
+        x: Union[float, np.ndarray],
+        z: Union[float, np.ndarray],  # noqa: ARG004
     ) -> Union[float, np.ndarray]:
         """
         Dummy method to retain procedures with no effect on the equilibria.

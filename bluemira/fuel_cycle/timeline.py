@@ -22,6 +22,7 @@
 """
 Partially randomised fusion reactor load signal object and tools
 """
+
 from typing import Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt

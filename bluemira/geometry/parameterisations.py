@@ -150,7 +150,10 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         self.variables.fix_variable(name, value)
 
     def shape_ineq_constraints(
-        self, constraint: np.ndarray, x: np.ndarray, grad: np.ndarray  # noqa: ARG002
+        self,
+        constraint: np.ndarray,  # noqa: ARG002
+        x: np.ndarray,  # noqa: ARG002
+        grad: np.ndarray,  # noqa: ARG002
     ):
         """
         Inequality constraint function for the variable vector of the geometry
@@ -333,7 +336,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             },
         )
         ax.annotate(
-            r"$\it{" f"{str_to_latex(key).strip('$')}" "}$",  # noqa: ISC001
+            r"$\it{" f"{str_to_latex(key).strip('$')}" "}$",
             xy=xy3,
             xycoords="data",
             xytext=(0, 5),
@@ -848,7 +851,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         wire.translate((0, 0, dz))
         return wire
 
-    def _label_function(self, ax, shape: BluemiraWire):  # noqa: PLR6301
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
@@ -1112,7 +1115,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         return BluemiraWire(wires, label=label)
 
-    def _label_function(self, ax, shape: BluemiraWire):  # noqa: PLR6301
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 
@@ -1412,7 +1415,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
         return p1, p2
 
-    def _label_function(self, ax, shape: BluemiraWire):  # noqa: PLR6301
+    def _label_function(self, ax, shape: BluemiraWire):
         """
         Adds labels to parameterisation plots
 

@@ -411,7 +411,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
         except pint.errors.PintError as pe:
             if param_data["value"] is None:
                 quantity = pint.Quantity(
-                    1 if param_data["unit"] in (None, "") else param_data["unit"]
+                    1 if param_data["unit"] in {None, ""} else param_data["unit"]
                 )
                 param_data["source"] = f"{param_data.get('source', '')}\nMAD UNIT 🤯 😭:"
             else:
@@ -425,7 +425,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
         if param_data["value"] is None:
             # dummy for None values
             quantity = pint.Quantity(
-                1 if param_data["unit"] in (None, "") else param_data["unit"]
+                1 if param_data["unit"] in {None, ""} else param_data["unit"]
             )
         elif isinstance(param_data["value"], (bool, str)):
             param_data["unit"] = "dimensionless"
@@ -627,7 +627,7 @@ def make_parameter_frame(
         A frame of the type `param_cls`, or `None` if `params` and
         `param_cls` are both `None`.
     """
-    from bluemira.base.reactor_config import ConfigParams
+    from bluemira.base.reactor_config import ConfigParams  # noqa: PLC0415
 
     if param_cls is None:
         if params is None:

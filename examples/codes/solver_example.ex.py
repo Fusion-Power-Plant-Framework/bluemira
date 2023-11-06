@@ -44,7 +44,6 @@ An example to run PROCESS
 # This example shows how to use File interface solvers.
 # Using PROCESS as the external solver
 
-
 # %%
 from bluemira.base.file import get_bluemira_path
 from bluemira.base.logs import set_log_level

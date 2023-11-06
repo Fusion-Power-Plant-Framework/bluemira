@@ -22,6 +22,7 @@
 """
 Test PROCESS template builder
 """
+
 import os
 from pathlib import Path
 
@@ -222,7 +223,7 @@ class TestPROCESSTemplateBuilder:
 
 
 def read_indat(filename):
-    from process.io.in_dat import InDat
+    from process.io.in_dat import InDat  # noqa: PLC0415
 
     naughties = ["runtitle", "pulsetimings"]
     data = InDat(filename=filename).data

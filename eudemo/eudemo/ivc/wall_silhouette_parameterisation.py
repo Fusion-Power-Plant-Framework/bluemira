@@ -21,6 +21,7 @@
 """
 Wall Silhouette Parameterisations
 """
+
 import copy
 from typing import ClassVar, Dict, Optional
 

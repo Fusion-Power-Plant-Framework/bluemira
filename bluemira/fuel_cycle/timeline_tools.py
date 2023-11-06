@@ -22,6 +22,7 @@
 """
 Distribution and timeline utilities
 """
+
 import abc
 from typing import Iterable, Tuple
 

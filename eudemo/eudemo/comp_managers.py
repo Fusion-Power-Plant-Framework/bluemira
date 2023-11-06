@@ -21,6 +21,7 @@
 """
 EUDEMO component manager classes
 """
+
 from __future__ import annotations
 
 import abc

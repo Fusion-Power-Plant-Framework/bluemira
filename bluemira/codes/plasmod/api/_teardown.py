@@ -21,6 +21,7 @@
 """
 Defines the 'Teardown' stage for the plasmod solver.
 """
+
 from pathlib import Path
 from typing import Union
 

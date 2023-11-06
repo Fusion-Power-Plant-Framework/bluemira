@@ -21,6 +21,7 @@
 """
 Update copyright on files
 """
+
 import fileinput
 from argparse import ArgumentParser
 from datetime import date

@@ -25,6 +25,7 @@ Couple PLASMOD to a 2-D asymmetric fixed boundary equilibrium solve
 NOTE: This procedure is known to be sensitive to inputs, exercise
 caution.
 """
+
 from __future__ import annotations
 
 from copy import deepcopy

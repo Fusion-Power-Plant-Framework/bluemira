@@ -22,6 +22,7 @@
 """
 Picard iteration procedures for equilibria (and their infinite variations)
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -509,11 +510,11 @@ class PicardIterator:
             try:
                 next(iterator)
             except StopIteration:  # noqa: PERF203
-                print()
+                print()  # noqa: T201
                 bluemira_print("EQUILIBRIA G-S converged value found.")
                 break
         else:
-            print()
+            print()  # noqa: T201
             bluemira_warn(
                 "EQUILIBRIA G-S unable to find converged value after"
                 f" {self.i} iterations."

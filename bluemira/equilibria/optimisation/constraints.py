@@ -22,6 +22,7 @@
 """
 Equilibrium optimisation constraint classes
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

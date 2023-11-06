@@ -22,6 +22,7 @@
 """
 Spherical harmonics classes and calculations.
 """
+
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
@@ -230,7 +231,7 @@ def collocation_points(
     x_bdry = plasma_boundary.x
     z_bdry = plasma_boundary.z
 
-    if point_type in (PointType.ARC, PointType.ARC_PLUS_EXTREMA):
+    if point_type in {PointType.ARC, PointType.ARC_PLUS_EXTREMA}:
         # Hello spherical coordinates
         theta_bdry = np.arctan2(x_bdry, z_bdry)
 
@@ -245,7 +246,7 @@ def collocation_points(
         collocation_x = collocation_r * np.sin(collocation_theta)
         collocation_z = collocation_r * np.cos(collocation_theta)
 
-    if point_type in (PointType.RANDOM, PointType.RANDOM_PLUS_EXTREMA):
+    if point_type in {PointType.RANDOM, PointType.RANDOM_PLUS_EXTREMA}:
         # Random sample within a circle enclosed by the LCFS
         rng = np.random.default_rng()
         half_sample_x_range = 0.5 * (np.max(x_bdry) - np.min(x_bdry))
@@ -262,7 +263,7 @@ def collocation_points(
         collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
         collocation_theta = np.arctan2(collocation_x, collocation_z)
 
-    if point_type in (PointType.ARC_PLUS_EXTREMA, PointType.RANDOM_PLUS_EXTREMA):
+    if point_type in {PointType.ARC_PLUS_EXTREMA, PointType.RANDOM_PLUS_EXTREMA}:
         # Extrema
         d = 0.1
         extrema_x = np.array(

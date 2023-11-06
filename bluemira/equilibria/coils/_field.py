@@ -22,6 +22,7 @@
 """
 Coil and coil grouping objects
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Callable, Optional, Union

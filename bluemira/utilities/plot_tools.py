@@ -184,7 +184,7 @@ def coordinates_to_path(x: np.ndarray, z: np.ndarray) -> Path_mpl:
 
 
 def set_component_view(comp: Component, placement: Union[str, BluemiraPlacement]):
-    if placement not in ["xy", "xz", "yz"] and not isinstance(
+    if placement not in {"xy", "xz", "yz"} and not isinstance(
         placement, BluemiraPlacement
     ):
         raise bm_display_error.DisplayError(

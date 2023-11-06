@@ -22,6 +22,7 @@
 """
 Tests for the displayer module.
 """
+
 import logging
 from dataclasses import asdict
 from unittest.mock import Mock, patch
@@ -42,7 +43,7 @@ _FREECAD_REF = "bluemira.codes._freecadapi"
 
 def _skip_polyscope():
     try:
-        import polyscope  # noqa: F401
+        import polyscope  # noqa: F401, PLC0415
     except ImportError:
         return True
     else:

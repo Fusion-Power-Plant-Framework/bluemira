@@ -22,6 +22,7 @@
 """
 Builder for the PF coils
 """
+
 from dataclasses import dataclass
 from typing import Dict, List, Union
 

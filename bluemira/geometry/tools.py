@@ -87,7 +87,7 @@ class BluemiraGeoEncoder(json.JSONEncoder):
     JSON Encoder for BluemiraGeo.
     """
 
-    def default(self, obj: Union[BluemiraGeo, np.ndarray, Any]):  # noqa: PLR6301
+    def default(self, obj: Union[BluemiraGeo, np.ndarray, Any]):
         """
         Override the JSONEncoder default object handling behaviour for BluemiraGeo.
         """
@@ -353,7 +353,10 @@ def make_bspline(
 
 
 def _make_polygon_fallback(
-    points, label="", closed=False, **kwargs  # noqa: ARG001
+    points,
+    label="",
+    closed=False,
+    **kwargs,  # noqa: ARG001
 ) -> BluemiraWire:
     """
     Overloaded function signature for fallback option from interpolate_bspline
@@ -612,7 +615,7 @@ def _offset_wire_discretised(
         If the wire is not closed. This function cannot handle the offet of an open
         wire.
     """
-    from bluemira.geometry._pyclipper_offset import offset_clipper
+    from bluemira.geometry._pyclipper_offset import offset_clipper  # noqa: PLC0415
 
     if not wire.is_closed() and not open_wire:
         wire = wire.deepcopy()
@@ -1205,8 +1208,8 @@ def _signed_distance_2D(point: np.ndarray, polygon: np.ndarray) -> float:
     Credit: Inigo Quilez (https://www.iquilezles.org/)
     """
     sign = -1.0
-    point = np.asfarray(point)
-    polygon = np.asfarray(polygon)
+    point = np.asarray(point, dtype=np.float64)
+    polygon = np.asarray(polygon, dtype=np.float64)
     n = len(polygon)
 
     d = _nb_dot_2D(point - polygon[0], point - polygon[0])

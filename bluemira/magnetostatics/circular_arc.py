@@ -24,6 +24,7 @@ rectangular cross-section, following equations as described in:
 
 https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259
 """
+
 from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
@@ -289,9 +290,7 @@ def bf2_0_pi_integrand(psi: float, r_pc: float, z_k: float) -> float:
     The result of the integrand at a single point for 0 to pi integral
     """
     cos_psi = np.cos(psi)
-    return (
-        r_pc * cos_psi * np.log(z_k + np.sqrt(2 * r_pc**2 * (1 - cos_psi) + z_k**2))
-    )
+    return r_pc * cos_psi * np.log(z_k + np.sqrt(2 * r_pc**2 * (1 - cos_psi) + z_k**2))
 
 
 @jit_llc4

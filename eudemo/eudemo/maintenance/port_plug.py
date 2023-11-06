@@ -22,6 +22,7 @@
 """
 Port plugs
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Type, Union
@@ -87,7 +88,7 @@ def make_castellated_plug(
         raise ValueError("Both distance and n_castellations parameters are None")
 
     # Check/Set-up offsets iterable
-    if type(offsets) is float:  # noqa: E721
+    if type(offsets) is float:
         off_iter = [offsets] * len(dist_iter)
     elif len(offsets) == len(dist_iter):
         off_iter = offsets

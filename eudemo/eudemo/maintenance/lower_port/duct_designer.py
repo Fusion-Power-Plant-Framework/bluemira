@@ -22,6 +22,7 @@
 """
 EU-DEMO Lower Port Duct KOZ Designer
 """
+
 from dataclasses import dataclass
 from typing import Dict, List, Tuple, Type, Union
 

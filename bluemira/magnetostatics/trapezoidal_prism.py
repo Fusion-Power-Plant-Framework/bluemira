@@ -27,6 +27,7 @@ https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
 including corrections from:
 https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
+
 from typing import Union
 
 import numba as nb
@@ -158,9 +159,7 @@ def primitive_szn_bound(
     # are singularities
     divisor_1 = cos_theta * np.sqrt(t**2 + r**2 * cos_theta**2)
     divisor_2 = cos_theta * np.sqrt(t**2 + ll**2)
-    divisor_3 = np.sqrt(
-        ll**2 + 2 * ll * r * sin_theta * cos_theta + r**2 * cos_theta**2
-    )
+    divisor_3 = np.sqrt(ll**2 + 2 * ll * r * sin_theta * cos_theta + r**2 * cos_theta**2)
     divisor_4 = r * cos_theta * sqrt_term
     divisor_5 = ll * sqrt_term
 

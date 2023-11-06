@@ -22,6 +22,7 @@
 """
 Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
+
 from __future__ import annotations
 
 import operator
@@ -353,7 +354,7 @@ def find_OX_points(
     o_points, x_points = triage_OX_points(f_psi, points)
 
     if len(o_points) == 0:
-        print()  # stdout flusher
+        print()  # stdout flusher  # noqa: T201
         bluemira_warn(
             "EQUILIBRIA::find_OX: No O-points found during an iteration. Defaulting to"
             " grid centre."
@@ -371,7 +372,7 @@ def find_OX_points(
     if len(x_points) == 0:
         # There is an O-point, but no X-points or L-points, so we will take the grid
         # as a boundary
-        print()  # stdout flusher
+        print()  # stdout flusher  # noqa: T201
         bluemira_warn(
             "EQUILIBRIA::find_OX: No X-points found during an iteration, using grid"
             " boundary to limit the plasma."
@@ -396,9 +397,7 @@ def find_OX_points(
             useless_x.append(xp)
             continue  # Check O-point is within 1 gridpoint on line
 
-        if (max(psi_ox) - psi_ox[-1]) / (
-            max(psi_ox) - psi_ox[0]
-        ) > 0.025:  # noqa: PLR2004
+        if (max(psi_ox) - psi_ox[-1]) / (max(psi_ox) - psi_ox[0]) > 0.025:  # noqa: PLR2004
             useless_x.append(xp)
             continue  # Not monotonic
 

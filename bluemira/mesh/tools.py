@@ -169,12 +169,12 @@ def _check_dimensions(dimensions: Union[int, List[int]]) -> Tuple[int]:
     if isinstance(dimensions, int):
         dimensions = tuple(np.arange(dimensions))
 
-    if len(dimensions) not in [2, 3]:
+    if len(dimensions) not in {2, 3}:
         raise MeshConversionError(
             f"Length of dimensions must be either 2 or 3, not: {len(dimensions)}"
         )
     for dim in dimensions:
-        if dim not in [0, 1, 2]:
+        if dim not in {0, 1, 2}:
             raise MeshConversionError(
                 f"Dimensions tuple must contain integers 0, 1, or 2, not: {dim}"
             )
@@ -269,7 +269,7 @@ def _export_link_file(mesh, file_prefix, directory):
 
 
 def _get_data(mesh, cell_type):
-    return [array for (typ, array) in mesh.cells if typ == cell_type]
+    return [cell.data for cell in mesh.cells if cell.type == cell_type]
 
 
 def _make_cellblocks(data, cell_type):
