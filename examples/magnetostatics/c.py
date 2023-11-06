@@ -1,23 +1,24 @@
 from pathlib import Path
 
+import gmsh
 import numpy as np
 from mpi4py import MPI
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry import tools
 from bluemira.geometry.face import BluemiraFace, BluemiraWire
+from bluemira.magnetostatics.fem_utils import (
+    Association,
+    create_j_function,
+    model_to_mesh,
+)
 from bluemira.magnetostatics.finite_element_2d import (
     Bz_coil_axis,
     FemMagnetostatic2d,
 )
 from bluemira.mesh import meshing
 
-from bluemira.magnetostatics.fem_utils import create_j_function
-import gmsh
-from dolfinx.io.gmshio import model_to_mesh
-
 DATA_DIR = Path(__file__).parent
-
 
 
 """
@@ -50,7 +51,7 @@ poly_coil.mesh_options = {"lcar": lcar_coil, "physical_group": "poly_coil"}
 coil = BluemiraFace(poly_coil)
 coil.mesh_options = {"lcar": lcar_coil, "physical_group": "coil"}
 
-poly_axis = tools.make_polygon([[0, 0, 0],  [-r_enclo, 0, r_enclo], [0, 0, 0]])
+poly_axis = tools.make_polygon([[0, 0, 0], [-r_enclo, 0, r_enclo], [0, 0, 0]])
 poly_axis.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_axis"}
 
 poly_ext = tools.make_polygon(
@@ -73,13 +74,11 @@ c_universe = Component(name="universe")
 c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
 c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
-meshfiles = [
-    Path(DATA_DIR, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
-]
+meshfiles = [Path(DATA_DIR, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 m = meshing.Mesh(meshfile=meshfiles)
 m(c_universe, dim=2)
 
-mesh, ct, ft = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
+(mesh, ct, ft), labels = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
 print(np.unique(ct.values))
 
 gmsh.write("Mesh.msh")
@@ -90,7 +89,7 @@ em_solver.set_mesh(mesh, ct)
 
 current = 1e6
 coil_tag = 6
-j_functions = [(1, coil_tag, current)]
+j_functions = [Association(1, coil_tag, current)]
 jtot = create_j_function(mesh, ct, j_functions)
 
 em_solver.define_g(jtot)
@@ -102,8 +101,8 @@ r_points_axis = np.zeros(z_points_axis.shape)
 
 points = np.array([r_points_axis, z_points_axis, 0 * z_points_axis]).T
 Bz_axis, points = em_solver.B._eval_new(points)
-Bz_axis = Bz_axis[:,1]
-z_points = points[:,1]
+Bz_axis = Bz_axis[:, 1]
+z_points = points[:, 1]
 B_teo = np.array([Bz_coil_axis(rc, 0, z, current) for z in z_points])
 
 # I just set an absolute tolerance for the comparison (since the magnetic field

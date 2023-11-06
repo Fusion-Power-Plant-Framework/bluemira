@@ -10,6 +10,7 @@ R. Delaporte-Mathurin, and C. Weickhmann's https://github.com/floiseau/msh2xdmf
 
 Credit: F. Loiseau, R. Delaporte-Mathurin, and C. Weickhmann
 """
+from __future__ import annotations
 
 import json
 from pathlib import Path
@@ -17,8 +18,10 @@ from typing import List, Optional, Tuple, Union
 
 import meshio
 import numpy as np
-from dolfin import Mesh, MeshValueCollection, XDMFFile
-from dolfin.cpp.mesh import MeshFunctionSizet
+from dolfinx.io import XDMFFile
+from dolfinx.mesh import Mesh  # , MeshValueCollection
+
+# from dolfinx.cpp.mesh import MeshFunctionSizet
 from tabulate import tabulate
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn

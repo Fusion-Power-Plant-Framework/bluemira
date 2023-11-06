@@ -6,27 +6,20 @@
 
 from pathlib import Path
 
+import gmsh
 import numpy as np
 import pytest
 import scipy
 
-from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    find_flux_surface,
     find_magnetic_axis,
     plot_scalar_field,
 )
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import interpolate_bspline
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.mesh import meshing
-from bluemira.mesh.tools import import_mesh, msh_to_xdmf
-
-import dolfin  # isort:skip
+from bluemira.magnetostatics.fem_utils import model_to_mesh, read_from_msh
 
 
 class Solovev:
@@ -114,10 +107,12 @@ class Solovev:
     @property
     def psi_ax(self):
         """Poloidal flux on the magnetic axis"""
+        # if self._psi_ax is None:
+        #     self._psi_ax = self.psi(find_magnetic_axis(lambda x: self.psi(x), None))
         if self._psi_ax is None:
-            self._psi_ax = self.psi(
-                find_magnetic_axis(lambda x: self.psi(x), None)  # noqa: PLW0108
-            )
+            result = scipy.optimize.minimize(lambda x: -self.psi(x), (self.R_0, 0))
+            self._psi_ax = self.psi(result.x)
+            self._rz_ax = result.x
         return self._psi_ax
 
     @property
@@ -137,6 +132,21 @@ class Solovev:
             )
 
         return myfunc
+
+    def psi_gradient(self, point):
+        return scipy.optimize.approx_fprime(point, self.psi)
+
+    @property
+    def pprime(self):
+        return lambda x: -self.A1 / MU_0
+
+    @property
+    def ffprime(self):
+        return lambda x: self.A2
+
+    @property
+    def jp(self):
+        return lambda x: x[0] * self.pprime(x) + self.ffprime(x) / (MU_0 * x[0])
 
 
 class TestSolovevZheng:
@@ -159,54 +169,100 @@ class TestSolovevZheng:
         cls.solovev = Solovev(R_0, a, kappa, delta, A1, A2)
 
         levels = 50
-        cls.solovev.plot_psi(5.0, -6, 8.0, 12.0, 100, 100, levels=levels)
+        plot_info = cls.solovev.plot_psi(5.0, -6, 8.0, 12.0, 100, 100, levels=levels)
 
-        n_points = 500
-        boundary = find_flux_surface(cls.solovev.psi_norm_2d, 1, n_points=n_points)
-        cls.boundary = boundary
-        boundary = np.array([boundary[0, :], np.zeros(n_points), boundary[1, :]])
+        # n_points = 500
+        # boundary = find_flux_surface(cls.solovev.psi_norm_2d, 1, n_points=n_points)
+        # cls.boundary = boundary
+        # boundary = np.array([boundary[0, :], np.zeros(n_points), boundary[1, :]])
 
-        curve1 = interpolate_bspline(boundary[:, : n_points // 2 + 1], "curve1")
-        curve2 = interpolate_bspline(boundary[:, n_points // 2 :], "curve2")
-        lcfs = BluemiraWire([curve1, curve2], "LCFS")
+        # curve1 = interpolate_bspline(boundary[:, : n_points // 2 + 1], "curve1")
+        # curve2 = interpolate_bspline(boundary[:, n_points // 2 :], "curve2")
+        # lcfs = BluemiraWire([curve1, curve2], "LCFS")
 
-        # Tweaked discretisation and mesh size to get error below 1e-5 but still be fast.
-        # Keep as is until we move to Fenics-X where we will need to see how it performs.
-        lcfs.mesh_options = {"lcar": 0.024, "physical_group": "lcfs"}
+        # # Tweaked discretisation and mesh size to get error below 1e-5 but still be fast.
+        # # Keep as is until we move to Fenics-X where we will need to see how it performs.
+        # lcfs.mesh_options = {"lcar": 0.024, "physical_group": "lcfs"}
 
-        plasma_face = BluemiraFace(lcfs, "plasma_face")
-        plasma_face.mesh_options = {"lcar": 0.5, "physical_group": "plasma_face"}
+        # plasma_face = BluemiraFace(lcfs, "plasma_face")
+        # plasma_face.mesh_options = {"lcar": 0.5, "physical_group": "plasma_face"}
 
-        plasma = PhysicalComponent("Plasma", shape=plasma_face)
+        # plasma = PhysicalComponent("Plasma", shape=plasma_face)
 
-        # mesh the plasma
-        meshfiles = [
-            Path(tmp_path, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
-        ]
-        meshing.Mesh(meshfile=meshfiles)(plasma)
+        # # mesh the plasma
+        # meshing.Mesh()(plasma)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=tmp_path)
+        # msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
 
-        cls.mesh, boundaries, _, _ = import_mesh(
-            "Mesh",
-            directory=tmp_path,
-            subdomains=True,
+        # cls.mesh, boundaries, _, _ = import_mesh(
+        #     "Mesh",
+        #     directory=".",
+        #     subdomains=True,
+        # )
+
+        # Find the LCFS.
+        # Note: the points returned by matplotlib can have a small "interpolation" error,
+        # thus psi on the LCFS could not be exaclty 0.
+        LCFS = plot_info[1].collections[0].get_paths()[0].vertices
+
+        # create the mesh
+        model_rank = 0
+        mesh_comm = MPI.COMM_WORLD
+        lcar = 1
+
+        gmsh.initialize()
+        # points
+        point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
+        # point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
+        line_tags = []
+        for i in range(len(point_tags) - 1):
+            line_tags.append(gmsh.model.occ.addLine(point_tags[i + 1], point_tags[i]))
+        line_tags.append(gmsh.model.occ.addLine(point_tags[0], point_tags[-1]))
+        gmsh.model.occ.synchronize()
+        curve_loop = gmsh.model.occ.addCurveLoop(line_tags)
+        surf = gmsh.model.occ.addPlaneSurface([curve_loop])
+        gmsh.model.occ.synchronize()
+
+        # embed psi_ax point with a finer mesh
+        psi_ax = cls.solovev.psi_ax
+        rz_ax = cls.solovev._rz_ax
+        psi_ax_tag = gmsh.model.occ.addPoint(rz_ax[0], 0, rz_ax[1], lcar / 50)
+        gmsh.model.occ.synchronize()
+        gmsh.model.mesh.embed(0, [psi_ax_tag], 2, surf)
+        gmsh.model.occ.synchronize()
+
+        gmsh.model.addPhysicalGroup(1, line_tags, 0)
+        gmsh.model.addPhysicalGroup(2, [surf], 1)
+        gmsh.model.occ.synchronize()
+
+        # Generate mesh
+        gmsh.option.setNumber("Mesh.Algorithm", 2)
+        gmsh.option.setNumber("Mesh.CharacteristicLengthMin", lcar)
+        gmsh.model.mesh.generate(2)
+        gmsh.model.mesh.optimize("Netgen")
+
+        (mesh, ct, ft), labels = model_to_mesh(
+            gmsh.model, mesh_comm, model_rank, gdim=[0, 2]
+        )
+
+        gmsh.write("Mesh.geo_unrolled")
+        gmsh.write("Mesh.msh")
+        gmsh.finalize()
+
+        (mesh1, ct1, ft1), labels = read_from_msh(
+            "Mesh.msh", mesh_comm, model_rank, gdim=2
         )
 
         # initialize the Grad-Shafranov solver
         p = 2
         gs_solver = FemMagnetostatic2d(p_order=p)
-        gs_solver.set_mesh(cls.mesh, boundaries)
+        gs_solver.set_mesh(mesh, ct)
 
-        # Set the right hand side of the Grad-Shafranov equation, as a function of psi
-        g = dolfin.Expression(
-            "1/mu0*(-x[0]*A1 + A2/x[0])",
-            A1=cls.solovev.A1,
-            A2=cls.solovev.A2,
-            mu0=MU_0,
-            degree=p,
-        )
-        gs_solver.define_g(g)
+        # create the plasma density current function
+        g = fem.Function(gs_solver.V)
+        # select the dofs coordinates in the xz plane
+        dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
+        g.x.array[:] = np.array([cls.solovev.jp(x) for x in dof_points])
 
         # solve the Grad-Shafranov equation
         cls.fe_psi_calc = gs_solver.solve()

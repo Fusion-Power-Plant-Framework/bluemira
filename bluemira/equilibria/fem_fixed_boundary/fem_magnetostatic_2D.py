@@ -13,29 +13,15 @@ from dataclasses import dataclass
 from typing import Callable, Iterable, Optional, Union
 
 import dolfinx
-
-from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
-from bluemira.magnetostatics.fem_utils import integrate_f
-
-from dolfinx.fem import Expression
-
-from ufl import (
-    SpatialCoordinate,
-    TestFunction,
-    TrialFunction,
-    as_vector,
-    dot,
-    dx,
-    ds,
-    grad,
-    Constant
-)
-
 import matplotlib.pyplot as plt
 import numpy as np
+from dolfinx.fem import Expression
 from mpl_toolkits.axes_grid1 import make_axes_locatable
+from ufl import (
+    as_vector,
+)
 
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import EPS, MU_0
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.display import plot_defaults
@@ -46,6 +32,7 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
     find_magnetic_axis,
 )
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
+from bluemira.magnetostatics.fem_utils import BluemiraFemFunction, integrate_f
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 from bluemira.utilities.plot_tools import make_gif, save_figure
 
@@ -165,7 +152,9 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         Calculate the gradients of psi at a point
         """
         if self._grad_psi is None:
-            w = dolfinx.fem.VectorFunctionSpace(self.mesh, ("CG", 1))
+            w = dolfinx.fem.functionspace(
+                self.mesh, ("CG", 1, (self.mesh.geometry.dim,))
+            )
 
             self._grad_psi = BluemiraFemFunction(w)
             grad_psi_expr = Expression(
@@ -184,9 +173,13 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
     @property
     def psi_norm_2d(self) -> Callable[[np.ndarray], np.ndarray]:
         """Normalized flux function in 2-D"""
-        return lambda x: np.sqrt(
-            np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
-        )
+
+        def func(x):
+            if (denom := self.psi_b - self.psi_ax) == 0:
+                denom = EPS
+            return np.sqrt(np.abs((self.psi(x) - self.psi_ax) / denom))
+
+        return func
 
     def set_mesh(self, mesh: Union[dolfinx.mesh.Mesh, str]):
         """
@@ -232,7 +225,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         def g(x):
             if self.psi_ax == 0:
                 return j_target
-            r = x[:,0]
+            r = x[:, 0]
             x_psi = self.psi_norm_2d(x)
 
             a = r * pprime(x_psi)

@@ -344,11 +344,11 @@ def solve_transport_fixed_boundary(
             f"from equilibrium iteration {n_iter}",
         )
 
-        mesh = create_mesh(
+        (mesh, ct, ft), labels = create_mesh(
             plasma,
             directory,
             mesh_name_msh,
-        )[0]
+        )
 
         # store the created mesh as coarse mesh
         coarse_mesh = mesh

@@ -7,32 +7,20 @@
 """
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
-from typing import Optional, Tuple, Union
+from typing import Optional, Union
 
 import dolfinx.fem
 import numpy as np
 from dolfinx.fem import (
     Expression,
-    FunctionSpace,
-    VectorFunctionSpace,
     dirichletbc,
+    functionspace,
     locate_dofs_topological,
 )
 from dolfinx.fem.petsc import LinearProblem
-from dolfinx.mesh import Mesh, locate_entities_boundary
+from dolfinx.mesh import locate_entities_boundary
 from petsc4py.PETSc import ScalarType
-from ufl import (
-    SpatialCoordinate,
-    TestFunction,
-    TrialFunction,
-    as_vector,
-    dot,
-    dx,
-    ds,
-    grad,
-    Constant
-)
-from petsc4py import PETSc
+from ufl import SpatialCoordinate, TestFunction, TrialFunction, as_vector, dot, dx, grad
 
 from bluemira.base.constants import MU_0
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
@@ -150,7 +138,7 @@ class FemMagnetostatic2d:
         # define the function space and bilinear forms
         # the Continuos Galerkin function space has been chosen as suitable for the
         # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
-        self.V = FunctionSpace(self.mesh, ("CG", self.p_order))
+        self.V = functionspace(self.mesh, ("CG", self.p_order))
 
         # define trial and test functions
         self.u = TrialFunction(self.V)
@@ -214,7 +202,7 @@ class FemMagnetostatic2d:
         #     )
 
         # define the right hand side
-        self.L = self.g * self.v * dx # - neumann_bc_function * self.v * ds
+        self.L = self.g * self.v * dx  # - neumann_bc_function * self.v * ds
 
         # define the Dirichlet boundary conditions
         if dirichlet_bc_function is None:
@@ -249,7 +237,7 @@ class FemMagnetostatic2d:
         https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
         """
         # new function space for mapping B as vector
-        W = VectorFunctionSpace(self.mesh, ("DG", 0))
+        W = functionspace(self.mesh, ("DG", 0, (self.mesh.geometry.dim,)))
         self.B = BluemiraFemFunction(W)
         x = SpatialCoordinate(self.mesh)
         B_expr = Expression(
