@@ -33,8 +33,6 @@ Fixed boundary equilibrium example
 # %%
 from datetime import datetime
 
-import matplotlib.pyplot as plt
-
 from bluemira.base.components import PhysicalComponent
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
@@ -75,16 +73,20 @@ plasma = PhysicalComponent("plasma", lcfs_face)
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
-from bluemira.mesh import meshing
 from pathlib import Path
-from bluemira.equilibria.fem_fixed_boundary.utilities import read_from_msh
+
 from mpi4py import MPI
+
+from bluemira.equilibria.fem_fixed_boundary.utilities import read_from_msh
+from bluemira.mesh import meshing
 
 meshing.Mesh(meshfile=Path(".", "fixed_boundary_example.msh").as_posix())(plasma)
 
 model_rank = 0
 mesh_comm = MPI.COMM_WORLD
-mesh, ct, ft, labels = read_from_msh("fixed_boundary_example.msh", mesh_comm, model_rank, gdim=[0,2])
+(mesh, ct, ft), labels = read_from_msh(
+    "fixed_boundary_example.msh", mesh_comm, model_rank, gdim=[0, 2]
+)
 
 # %% [markdown]
 # Now we define some profile functions for p' and FF'.
@@ -129,7 +131,9 @@ solver.solve(plot=True)
 plasma.shape.mesh_options = {"lcar": 0.15, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.15, "physical_group": "lcfs"}
 
-mesh, ct, ft, labels = create_mesh(plasma, ".", "fixed_boundary_example.msh", gdim = [0,2])
+(mesh, ct, ft), labels = create_mesh(
+    plasma, ".", "fixed_boundary_example.msh", gdim=[0, 2]
+)
 
 solver.set_mesh(mesh)
 solver.solve()
