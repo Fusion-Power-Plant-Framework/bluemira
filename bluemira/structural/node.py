@@ -22,6 +22,7 @@
 """
 Finite element Node object
 """
+
 from typing import Dict, Tuple
 
 import numpy as np

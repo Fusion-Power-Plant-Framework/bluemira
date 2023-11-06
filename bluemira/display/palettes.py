@@ -167,7 +167,7 @@ class ColorPalette:
         except NameError:
             return self._repr_colour_str(self._hex_horizontal()).strip(" \n")
 
-        from IPython.core.display import HTML, display
+        from IPython.core.display import HTML, display  # noqa: PLC0415
 
         display(HTML(self._repr_html()))
         return ""

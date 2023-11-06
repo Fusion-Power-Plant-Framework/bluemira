@@ -21,6 +21,7 @@
 """
 Test ivc boundary designer.
 """
+
 from typing import ClassVar
 
 import pytest

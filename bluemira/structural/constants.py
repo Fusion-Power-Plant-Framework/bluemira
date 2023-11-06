@@ -22,6 +22,7 @@
 """
 Constants for use in the structural module.
 """
+
 import numpy as np
 from matplotlib.pyplot import get_cmap
 

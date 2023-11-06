@@ -22,6 +22,7 @@
 """
 Tests for EU-DEMO Maintenance
 """
+
 import numpy as np
 import pytest
 

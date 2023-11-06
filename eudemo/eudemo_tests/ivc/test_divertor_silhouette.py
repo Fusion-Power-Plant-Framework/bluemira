@@ -21,6 +21,7 @@
 """
 Test divertor silhouette designer.
 """
+
 import copy
 from pathlib import Path
 from typing import ClassVar

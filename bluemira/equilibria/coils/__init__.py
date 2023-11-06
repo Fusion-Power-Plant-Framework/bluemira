@@ -23,7 +23,6 @@
 Coil and coil grouping objects
 """
 
-
 from bluemira.equilibria.coils._coil import Coil, CoilType
 from bluemira.equilibria.coils._grouping import (
     Circuit,

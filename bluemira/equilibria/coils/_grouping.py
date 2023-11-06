@@ -22,6 +22,7 @@
 """
 Coil and coil grouping objects
 """
+
 from __future__ import annotations
 
 from collections import Counter
@@ -525,7 +526,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         cg.j_max = j_max
         cg.b_max = b_max
 
-    def get_max_current(self, max_current: float = np.infty) -> np.ndarray:
+    def get_max_current(self, max_current: float = np.inf) -> np.ndarray:
         """
         Get max currents
 

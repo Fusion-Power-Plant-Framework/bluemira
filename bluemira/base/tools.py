@@ -22,6 +22,7 @@
 """
 Tool function and classes for the bluemira base module.
 """
+
 import time
 from functools import wraps
 from typing import Callable, Dict, TypeVar

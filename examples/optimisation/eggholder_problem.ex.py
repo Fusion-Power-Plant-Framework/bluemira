@@ -56,7 +56,6 @@ Constrained Rosenbrock Optimisation Problem
 # For the algorithms that require a gradient (e.g. SLSQP), one is automatically
 # estimated for you, but you should not rely on this too heavily!
 
-
 # %%
 import time
 

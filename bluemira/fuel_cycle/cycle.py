@@ -22,6 +22,7 @@
 """
 Full fuel cycle model object
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

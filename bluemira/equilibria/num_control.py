@@ -22,6 +22,7 @@
 """
 Numerical vertical stability control - still not quite there!
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Union

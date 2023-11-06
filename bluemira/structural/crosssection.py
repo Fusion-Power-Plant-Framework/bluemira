@@ -22,6 +22,7 @@
 """
 Objects and tools for calculating cross-sectional properties
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, List

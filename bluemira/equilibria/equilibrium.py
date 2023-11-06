@@ -22,6 +22,7 @@
 """
 Plasma MHD equilibrium and state objects
 """
+
 from copy import deepcopy
 from enum import Enum
 from pathlib import Path

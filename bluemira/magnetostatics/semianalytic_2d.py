@@ -23,6 +23,7 @@
 Semi-analytic methods for Bx, Bz, and psi for circular coils of rectangular
 cross-section.
 """
+
 from typing import Tuple, Union
 
 import numba as nb

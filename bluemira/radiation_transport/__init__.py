@@ -22,6 +22,7 @@
 """
 The bluemira radiation transport module.
 """
+
 from bluemira.radiation_transport.advective_transport import ChargedParticleSolver
 
 __all__ = ["ChargedParticleSolver"]

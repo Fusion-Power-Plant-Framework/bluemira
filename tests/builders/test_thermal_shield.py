@@ -22,6 +22,7 @@
 """
 Tests for thermal shield builders.
 """
+
 import numpy as np
 
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder

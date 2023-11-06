@@ -104,8 +104,8 @@ def setup_radial_build(run: Dict[str, Any], width: float = 1.0):
     plots: Axes
         The Matplotlib Axes object.
     """
-    from bluemira.display.plotter import plot_coordinates
-    from bluemira.geometry.coordinates import Coordinates
+    from bluemira.display.plotter import plot_coordinates  # noqa: PLC0415
+    from bluemira.geometry.coordinates import Coordinates  # noqa: PLC0415
 
     R_0 = run["R_0"]
 

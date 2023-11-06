@@ -27,6 +27,7 @@ https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
 including corrections from:
 https://onlinelibrary.wiley.com/doi/abs/10.1002/jnm.675
 """
+
 from typing import Union
 
 import numba as nb

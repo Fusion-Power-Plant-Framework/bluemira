@@ -22,6 +22,7 @@
 """
 Bluemira display error class
 """
+
 from bluemira.base.error import BluemiraError
 
 

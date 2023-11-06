@@ -28,8 +28,8 @@ def freecad_message_removal():
     """
     Remove annoying message about freecad libdir not being set
     """
-    import importlib
-    import os
+    import importlib  # noqa: PLC0415
+    import os  # noqa: PLC0415
 
     if "PATH_TO_FREECAD_LIBDIR" in os.environ:
         return os.environ["PATH_TO_FREECAD_LIBDIR"]

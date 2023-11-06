@@ -22,6 +22,7 @@
 """
 Tests for palettes module
 """
+
 from copy import copy
 
 import pytest

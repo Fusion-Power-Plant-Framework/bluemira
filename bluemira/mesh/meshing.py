@@ -192,7 +192,9 @@ class Mesh:
         bluemira_print("Starting mesh process...")
 
         if "Component" in [c.__name__ for c in inspect.getmro(type(obj))]:
-            from bluemira.base.tools import create_compound_from_component
+            from bluemira.base.tools import (  # noqa: PLC0415
+                create_compound_from_component,
+            )
 
             obj = create_compound_from_component(obj)
 
@@ -233,7 +235,7 @@ class Mesh:
         """
         Function to mesh the object.
         """
-        from bluemira.geometry.tools import serialize_shape
+        from bluemira.geometry.tools import serialize_shape  # noqa: PLC0415
 
         if not hasattr(obj, "ismeshed") or not obj.ismeshed:
             # object is serialized into a dictionary

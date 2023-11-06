@@ -22,6 +22,7 @@
 """
 Green's functions mappings for psi, Bx, and Bz
 """
+
 from typing import Tuple, Union
 
 import numba as nb

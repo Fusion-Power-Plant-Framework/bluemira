@@ -22,6 +22,7 @@
 """
 Utility for sets of coordinates
 """
+
 from __future__ import annotations
 
 import json
@@ -60,10 +61,10 @@ def xyz_process(func):
 
     def wrapper(x, y, z=None):
         _validate_coordinates(x, y, z)
-        x = np.ascontiguousarray(x, dtype=np.float_)
-        y = np.ascontiguousarray(y, dtype=np.float_)
+        x = np.ascontiguousarray(x, dtype=np.float64)
+        y = np.ascontiguousarray(y, dtype=np.float64)
         if z is not None:
-            z = np.ascontiguousarray(z, dtype=np.float_)
+            z = np.ascontiguousarray(z, dtype=np.float64)
 
         return func(x, y, z)
 
@@ -757,8 +758,8 @@ def check_linesegment(
     True: if C on A--B, else False
     """
     # Do some protection of numba against integers and lists
-    a_c = np.array([point_c[0] - point_a[0], point_c[1] - point_a[1]], dtype=np.float_)
-    a_b = np.array([point_b[0] - point_a[0], point_b[1] - point_a[1]], dtype=np.float_)
+    a_c = np.array([point_c[0] - point_a[0], point_c[1] - point_a[1]], dtype=np.float64)
+    a_b = np.array([point_b[0] - point_a[0], point_b[1] - point_a[1]], dtype=np.float64)
 
     distance = np.sqrt(np.sum(a_b**2))
     # Numba doesn't like doing cross-products of things with size 2

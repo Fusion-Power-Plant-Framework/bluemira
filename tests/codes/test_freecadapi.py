@@ -313,7 +313,7 @@ class TestCADFiletype:
         doc.recompute()
 
     def setup_method(self):
-        import FreeCADGui
+        import FreeCADGui  # noqa: PLC0415
 
         if not hasattr(FreeCADGui, "subgraphFromObject"):
             FreeCADGui.setupWithoutGUI()

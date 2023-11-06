@@ -21,6 +21,7 @@
 """
 Module containing builders for the EUDEMO first wall components
 """
+
 from dataclasses import dataclass
 from typing import Dict
 

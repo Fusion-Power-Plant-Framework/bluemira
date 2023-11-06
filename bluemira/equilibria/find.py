@@ -22,6 +22,7 @@
 """
 Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 """
+
 from __future__ import annotations
 
 import operator

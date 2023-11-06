@@ -22,6 +22,7 @@
 """
 Wrapper for FreeCAD Part.Wire objects
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union

@@ -22,6 +22,7 @@
 """
 Picard iteration procedures for equilibria (and their infinite variations)
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

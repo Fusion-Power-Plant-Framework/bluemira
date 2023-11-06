@@ -627,7 +627,7 @@ def make_parameter_frame(
         A frame of the type `param_cls`, or `None` if `params` and
         `param_cls` are both `None`.
     """
-    from bluemira.base.reactor_config import ConfigParams
+    from bluemira.base.reactor_config import ConfigParams  # noqa: PLC0415
 
     if param_cls is None:
         if params is None:

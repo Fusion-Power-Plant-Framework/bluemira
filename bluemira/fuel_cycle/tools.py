@@ -22,6 +22,7 @@
 """
 Fuel cycle utility objects, including sink algorithms
 """
+
 from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
