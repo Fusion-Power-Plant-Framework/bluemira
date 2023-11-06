@@ -68,11 +68,16 @@ thier documentation `here <https://ukaea.github.io/PROCESS/>`_ and
 `git repository <https://github.com/ukaea/PROCESS>`_.
 ``Bluemira`` is able perform a ``PROCESS`` run as the initial step in the reactor design.
 
-In order install ``PROCESS`` in your ``bluemira`` environment, run the following:
+Install ``PROCESS`` in your ``bluemira`` environment, run the following:
 
 .. code-block:: bash
 
-    bash scripts/install-process.sh
+    bash scripts/install-process.sh 
 
 you can optionally specify which version of ``PROCESS`` is installed by specifying the version tag
 or commit hash as an argument.
+
+.. code-block:: bash
+
+    bash scripts/install-process.sh v3.0.1 
+
