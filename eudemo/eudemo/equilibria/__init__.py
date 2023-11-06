@@ -22,6 +22,7 @@
 """
 Equilibrium objects for EU-DEMO design
 """
+
 from eudemo.equilibria._designer import (
     DummyFixedEquilibriumDesigner,
     EquilibriumDesigner,

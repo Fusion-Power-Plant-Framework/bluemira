@@ -22,6 +22,7 @@
 """
 Radiation shield builder
 """
+
 from dataclasses import dataclass
 from typing import Dict, List, Type, Union
 

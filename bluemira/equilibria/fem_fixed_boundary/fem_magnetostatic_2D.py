@@ -23,6 +23,7 @@
 Bluemira module for the solution of a 2D magnetostatic problem with cylindrical symmetry
 and toroidal current source using fenics FEM solver
 """
+
 from dataclasses import dataclass
 from typing import Callable, Iterable, Optional, Union
 

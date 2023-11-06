@@ -22,6 +22,7 @@
 """
 PROCESS mappings
 """
+
 from bluemira.codes.utilities import create_mapping
 
 IN_mappings = {

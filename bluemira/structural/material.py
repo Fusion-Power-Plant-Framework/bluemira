@@ -22,6 +22,7 @@
 """
 Simple structural material representations
 """
+
 from dataclasses import dataclass, field
 from typing import Optional, Union
 

@@ -23,6 +23,7 @@
 Tests for the display auto_config module.
 
 """
+
 import time
 from functools import partial
 from unittest.mock import patch

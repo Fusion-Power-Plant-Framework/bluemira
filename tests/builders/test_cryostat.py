@@ -22,6 +22,7 @@
 """
 Tests for cryostat builder.
 """
+
 from unittest import mock
 
 import pytest

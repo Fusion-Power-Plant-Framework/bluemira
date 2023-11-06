@@ -22,6 +22,7 @@
 """
 Spherical harmonics classes and calculations.
 """
+
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto

@@ -22,6 +22,7 @@
 """
 EU-DEMO parameterisations classes for TF Coils.
 """
+
 import copy
 from typing import ClassVar, Optional
 

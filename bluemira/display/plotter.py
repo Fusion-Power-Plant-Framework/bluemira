@@ -22,6 +22,7 @@
 """
 api for plotting using matplotlib
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod

@@ -43,7 +43,6 @@ Run PROCESS using the PROCESSTemplateBuilder
 # # Running PROCESS from "scratch"
 # This example shows how to build a PROCESS template IN.DAT file
 
-
 # %%
 from bluemira.codes import systems_code_solver
 from bluemira.codes.process._equation_variable_mapping import Constraint, Objective

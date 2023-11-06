@@ -22,6 +22,7 @@
 """
 A collection of miscellaneous tools.
 """
+
 from __future__ import annotations
 
 import operator

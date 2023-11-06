@@ -22,6 +22,7 @@
 """
 EU-DEMO build classes for TF Coils.
 """
+
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Tuple, Type, Union

@@ -21,6 +21,7 @@
 """
 First Wall Silhouette designer
 """
+
 from dataclasses import dataclass
 from typing import Dict, Type, Union
 

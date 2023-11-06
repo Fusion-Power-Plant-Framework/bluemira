@@ -21,6 +21,7 @@
 """
 Define builder for divertor
 """
+
 import enum
 import operator
 from dataclasses import dataclass

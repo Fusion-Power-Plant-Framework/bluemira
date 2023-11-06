@@ -22,6 +22,7 @@
 """
 Port plugs
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Type, Union

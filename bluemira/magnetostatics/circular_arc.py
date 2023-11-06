@@ -24,6 +24,7 @@ rectangular cross-section, following equations as described in:
 
 https://ieeexplore.ieee.org/stamp/stamp.jsp?arnumber=1064259
 """
+
 from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt

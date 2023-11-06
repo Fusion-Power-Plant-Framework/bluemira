@@ -22,6 +22,7 @@
 """
 Just-in-time compilation and LowLevelCallable speed-up tools.
 """
+
 import warnings
 from typing import Callable, Iterable, List, Union
 

@@ -22,7 +22,6 @@
 Module containing components for the EUDEMO Lower Port
 """
 
-
 from eudemo.maintenance.lower_port.builder import (
     TSLowerPortDuctBuilder,
     TSLowerPortDuctBuilderParams,

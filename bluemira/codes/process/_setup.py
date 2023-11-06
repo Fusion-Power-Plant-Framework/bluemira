@@ -21,6 +21,7 @@
 """
 Defines the setup task for running PROCESS.
 """
+
 from pathlib import Path
 from typing import ClassVar, Dict, Optional, Union
 

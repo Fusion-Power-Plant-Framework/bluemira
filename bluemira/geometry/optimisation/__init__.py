@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Optimisation for geometry"""
+
 from bluemira.geometry.optimisation._optimisation_old import (
     GeometryOptimisationProblem,
     MinimiseLengthGOP,

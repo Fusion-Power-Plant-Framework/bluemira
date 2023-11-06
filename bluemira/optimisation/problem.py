@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Interface for defining an optimisation problem."""
+
 import abc
 from typing import Any, Callable, List, Mapping, Optional, Tuple, Type, TypeVar, Union
 

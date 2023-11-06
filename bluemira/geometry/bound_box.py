@@ -22,6 +22,7 @@
 """
 Bounding box object
 """
+
 from dataclasses import dataclass
 from typing import Tuple
 

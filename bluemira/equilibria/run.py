@@ -22,6 +22,7 @@
 """
 Interface for building and loading equilibria and coilset designs
 """
+
 from __future__ import annotations
 
 import warnings

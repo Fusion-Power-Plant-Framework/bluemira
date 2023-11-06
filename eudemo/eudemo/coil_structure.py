@@ -22,6 +22,7 @@
 """
 Coil structure stuff
 """
+
 from dataclasses import dataclass
 
 from bluemira.base.components import Component

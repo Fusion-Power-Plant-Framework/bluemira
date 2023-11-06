@@ -22,6 +22,7 @@
 """
 tools for display module
 """
+
 import pprint
 from dataclasses import asdict
 

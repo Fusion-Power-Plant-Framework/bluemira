@@ -22,6 +22,7 @@
 """
 FreeCAD configuration
 """
+
 import enum  # noqa: I001
 
 import freecad  # noqa: F401

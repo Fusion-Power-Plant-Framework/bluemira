@@ -22,6 +22,7 @@
 """
 Builder for making a parameterised EU-DEMO vacuum vessel.
 """
+
 from dataclasses import dataclass
 from typing import Dict, List, Type, Union
 

@@ -518,16 +518,14 @@ class TestCoilSet:
         # isnan(j_max) = False False False
         # not flagsizefix = True False False
         np.testing.assert_allclose(coilset.get_max_current(10), [10, 5, 5])
-        np.testing.assert_allclose(coilset.get_max_current(), [np.infty, 5, 5])
+        np.testing.assert_allclose(coilset.get_max_current(), [np.inf, 5, 5])
 
         # isnan(j_max) = True True True
         # not flagsizefix = True False False
         coilset.assign_material("PF", j_max=np.nan, b_max=5)
 
         np.testing.assert_allclose(coilset.get_max_current(10), [10, 10, 10])
-        np.testing.assert_allclose(
-            coilset.get_max_current(), [np.infty, np.infty, np.infty]
-        )
+        np.testing.assert_allclose(coilset.get_max_current(), [np.inf, np.inf, np.inf])
 
 
 class TestCoilSetSymmetry:

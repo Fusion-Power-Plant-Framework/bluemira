@@ -22,6 +22,7 @@
 """
 Coil and coil grouping objects
 """
+
 from __future__ import annotations
 
 from enum import Enum, EnumMeta, auto
@@ -454,7 +455,7 @@ class Coil(CoilFieldsMixin):
     def get_max_current(self):
         """Get max current"""
         return (
-            np.infty
+            np.inf
             if np.isnan(self.j_max)
             else get_max_current(self.dx, self.dz, self.j_max)
         )

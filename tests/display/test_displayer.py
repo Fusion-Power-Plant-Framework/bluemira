@@ -22,6 +22,7 @@
 """
 Tests for the displayer module.
 """
+
 import logging
 from dataclasses import asdict
 from unittest.mock import Mock, patch

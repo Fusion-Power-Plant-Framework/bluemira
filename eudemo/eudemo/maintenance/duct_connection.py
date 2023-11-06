@@ -22,6 +22,7 @@
 """
 Creating ducts for the port
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

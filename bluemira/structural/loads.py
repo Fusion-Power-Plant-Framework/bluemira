@@ -22,6 +22,7 @@
 """
 Load objects
 """
+
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn

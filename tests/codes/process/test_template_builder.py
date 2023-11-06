@@ -22,6 +22,7 @@
 """
 Test PROCESS template builder
 """
+
 import os
 from pathlib import Path
 

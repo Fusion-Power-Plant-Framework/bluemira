@@ -22,6 +22,7 @@
 """
 Grid object and operations for equilibria.
 """
+
 import numba as nb
 import numpy as np
 

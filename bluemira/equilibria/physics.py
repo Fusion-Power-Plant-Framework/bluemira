@@ -22,6 +22,7 @@
 """
 A collection of simple equilibrium physics calculations
 """
+
 from __future__ import annotations
 
 from typing import TYPE_CHECKING, Dict, Iterable, Optional, Union
