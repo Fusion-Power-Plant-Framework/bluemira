@@ -7,6 +7,7 @@
 """
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
+
 from typing import Optional, Union
 
 import dolfinx.fem
@@ -138,7 +139,7 @@ class FemMagnetostatic2d:
         # define the function space and bilinear forms
         # the Continuos Galerkin function space has been chosen as suitable for the
         # solution of the magnetostatic weak formulation in a Soblev Space H1(D)
-        self.V = functionspace(self.mesh, ("CG", self.p_order))
+        self.V = functionspace(self.mesh, ("P", self.p_order))
 
         # define trial and test functions
         self.u = TrialFunction(self.V)

@@ -152,9 +152,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         Calculate the gradients of psi at a point
         """
         if self._grad_psi is None:
-            w = dolfinx.fem.functionspace(
-                self.mesh, ("CG", 1, (self.mesh.geometry.dim,))
-            )
+            w = dolfinx.fem.functionspace(self.mesh, ("P", 1, (self.mesh.geometry.dim,)))
 
             self._grad_psi = BluemiraFemFunction(w)
             grad_psi_expr = Expression(

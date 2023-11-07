@@ -520,7 +520,7 @@ def compute_B_from_Psi(
     psi:
         the magnetic flux function in the mesh domain
     eltype:
-        Element type identified (e.g. ("CG", 1)) for the magnetic flux density function
+        Element type identified (e.g. ("P", 1)) for the magnetic flux density function
 
     Return
     ------
