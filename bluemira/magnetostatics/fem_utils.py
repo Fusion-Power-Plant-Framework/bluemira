@@ -67,6 +67,10 @@ def extract_geometry(func, dimensions, model):
     return x
 
 
+def calc_bb_tree(mesh):
+    return geometry.bb_tree(mesh, mesh.topology.dim)
+
+
 class BluemiraFemFunction(Function):
     """A supporting class that extends the BluemiraFemFunction implementing
     the __call__ function to return the interpolated function value on the specified
@@ -79,6 +83,14 @@ class BluemiraFemFunction(Function):
     is integrated in most recent version of dolfinx, this class can be removed and
     replaced simply by BluemiraFemFunction.
     """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._bb_tree = calc_bb_tree(self.function_space.mesh)
+
+    def interpolate(self, *args, **kwargs):
+        super().interpolate(*args, **kwargs)
+        self._bb_tree = calc_bb_tree(self.function_space.mesh)
 
     def __call__(self, points: np.ndarray):
         """
@@ -96,8 +108,7 @@ class BluemiraFemFunction(Function):
         Supporting function for __call__
         """
         # initial_shape = points.shape
-        points = convert_to_points_array(points)
-        res, new_points = eval_f(self, points)
+        res, new_points = eval_f(self, convert_to_points_array(points))
         if len(res.shape) == 1:
             res = res[0]
             new_points = new_points[0]
@@ -304,7 +315,7 @@ def eval_f(
     """
     # TODO(je-cook) get rid of check strings
     mesh = function.function_space.mesh
-    bb_tree = geometry.bb_tree(mesh, mesh.topology.dim)
+    bb_tree = getattr(function, "_bb_tree", calc_bb_tree(mesh))
     cells = []
     points_on_proc = []
 
