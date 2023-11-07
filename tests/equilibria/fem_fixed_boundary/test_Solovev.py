@@ -187,15 +187,9 @@ class TestSolovevZheng:
         # create the Solovev instance to get the exact psi
         cls.solovev = Solovev(R_0, a, kappa, delta, A1, A2)
 
-        # levels = 50
+        levels = np.linspace(cls.solovev.psi_b, cls.solovev.psi_ax, 20)
         _ax, cntr, _cntrf, _points, _psi = cls.solovev.plot_psi(
-            5.0,
-            -6,
-            8.0,
-            12.0,
-            100,
-            100,
-            levels=np.linspace(cls.solovev.psi_b, cls.solovev.psi_ax, 20),
+            5.0, -6, 8.0, 12.0, 100, 100, levels=levels
         )
 
         # n_points = 500
@@ -318,17 +312,19 @@ class TestSolovevZheng:
         psi_exact_boundary.x.array[dofs] = g.x.array[dofs]
         dirichlet_bcs_list.append([fem.dirichletbc(psi_exact_boundary, dofs)])
 
-        mean_err = []
-        Itot = []
+        cls.mean_err = []
+        cls.itot = []
         for dirichlet_bcs in dirichlet_bcs_list:
             cls.gs_solver.solve(dirichlet_bcs)
 
             dx = ufl.Measure("dx", subdomain_data=ct, domain=cls.mesh)
-            Itot.append(fem.assemble_scalar(fem.form(g * dx)))
+            cls.itot.append(fem.assemble_scalar(fem.form(g * dx)))
 
             err = fem.form((cls.gs_solver.psi - g) ** 2 * dx)
             comm = cls.gs_solver.psi.function_space.mesh.comm
-            mean_err.append(np.sqrt(comm.allreduce(fem.assemble_scalar(err), MPI.SUM)))
+            cls.mean_err.append(
+                np.sqrt(comm.allreduce(fem.assemble_scalar(err), MPI.SUM))
+            )
 
     def test_psi_mesh_array(self):
         """
@@ -341,32 +337,33 @@ class TestSolovevZheng:
         """
         # calculate the GS and analytic solution on the mesh points
         points_x, points_y = get_mesh_boundary(self.mesh)
-        plt.plot(points_x, points_y, "r-")
-        plt.title("Check mesh boundary function")
+        _f, ax = plt.subplots()
+        ax.plot(points_x, points_y, "r-")
+        ax.set_title("Check mesh boundary function")
 
         dofs_points = self.gs_solver.psi.function_space.tabulate_dof_coordinates()[
             :, 0:2
         ]
         psi_calc_data = self.gs_solver.psi(dofs_points)
-        plot_scalar_field(
+        (ax, _cntr, _cntrf) = plot_scalar_field(
             dofs_points[:, 0], dofs_points[:, 1], self.gs_solver.psi(dofs_points)
         )
-        plt.title("Plot psi from recalculated dof_points")
+        ax.set_title("Plot psi from recalculated dof_points")
 
         dofs_points = self.gs_solver.psi.function_space.tabulate_dof_coordinates()[
             :, 0:2
         ]
-        plot_scalar_field(
+        (ax, _cntr, _cntrf) = plot_scalar_field(
             dofs_points[:, 0], dofs_points[:, 1], self.gs_solver.psi.x.array[:]
         )
-        plt.title("Plot psi from dof_points")
+        ax.set_title("Plot psi from dof_points")
 
         psi_exact = [self.solovev.psi(point) for point in zip(points_x, points_y)]
 
         error = abs(psi_calc_data - psi_exact)
 
         levels = np.linspace(0.0, max(error) * 1.1, 50)
-        plot_scalar_field(
+        (ax, _cntr, _cntrf) = plot_scalar_field(
             points_x,
             points_y,
             error,
@@ -374,11 +371,13 @@ class TestSolovevZheng:
             ax=None,
             tofill=True,
         )
+        ax.set_title("Error")
 
         # calculate the error norm
-        diff = psi_calc_data - psi_exact
-        eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(psi_exact, ord=2)
-        assert eps < 1e-5
+        assert (
+            np.linalg.norm(psi_calc_data - psi_exact, ord=2)
+            / np.linalg.norm(psi_exact, ord=2)
+        ) < 1e-5
 
     def test_psi_axis(self):
         x_axis_s, z_axis_s = find_magnetic_axis(self.solovev.psi, None)
@@ -387,6 +386,8 @@ class TestSolovevZheng:
         np.testing.assert_allclose(z_axis_fe, z_axis_s, atol=1e-6)
 
     def test_closest_point_in_mesh(self):
+        old_psi_ax = self.gs_solver.psi_ax
+        old_psi_b = self.gs_solver.psi_b
         self.gs_solver.psi_ax = max(self.gs_solver.psi.x.array)
         self.gs_solver.psi_b = 0
 
@@ -401,11 +402,18 @@ class TestSolovevZheng:
         print(calculate_plasma_shape_params(psi_norm_func, self.mesh, 0.95, True))
         print(get_flux_surfaces_from_mesh(self.mesh, psi_norm_func, None, 40))
 
-        points = np.array([[-1, 0.3, 0], [9, 0.3, 0]])
-        print(closest_point_in_mesh(self.mesh, points))
+        print(closest_point_in_mesh(self.mesh, np.array([[-1, 0.3, 0], [9, 0.3, 0]])))
+        print(closest_point_in_mesh(self.mesh, [9, 0.3, 0]))
+        self.gs_solver.psi_ax = old_psi_ax
+        self.gs_solver.psi_b = old_psi_b
 
-        point = [9, 0.3, 0]
-        print(closest_point_in_mesh(self.mesh, point))
+    def mean_test(self):
+        np.testing.assert_allclose(self.itot, self.itot[0])
+        assert self.mean_err[0] == self.mean_err[1]
+        assert self.mean_err[2] == self.mean_err[3]
+        assert self.mean_err[0] < 2e-1
+        # TODO(je-cook) convergence is not very tight old:1e-5
+        assert self.mean_err[2] < 6e-3
 
     # TODO reenable
     # def test_psi_boundary(self):
