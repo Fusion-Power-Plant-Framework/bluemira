@@ -24,7 +24,7 @@ from dolfinx.plot import vtk_mesh
 from mpi4py import MPI
 from petsc4py import PETSc
 
-from bluemira.base.look_and_feel import bluemira_error, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug
 
 old_m_to_m = gmshio.model_to_mesh
 
@@ -225,6 +225,8 @@ def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.png
     if pyvista.OFF_SCREEN is False the plot is shown on the screen, otherwise
     the file with the plot is saved.
     """
+    if pyvista.OFF_SCREEN:
+        pyvista.start_xvfb()
     plotter = pyvista.Plotter()
     V = field.function_space
     degree = V.ufl_element().degree()
@@ -239,7 +241,7 @@ def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.png
         _field_fig = plotter.screenshot(filename)
 
 
-def error_L2(
+def error_L2(  # noqa: N802
     uh: BluemiraFemFunction,
     u_ex: Union[BluemiraFemFunction, Expression],
     degree_raise: int = 0,
@@ -292,9 +294,7 @@ def error_L2(
     return np.sqrt(error_global)
 
 
-def eval_f(
-    function: Function, points: np.ndarray, check: str = "warn"
-) -> Tuple[np.ndarray, ...]:
+def eval_f(function: Function, points: np.ndarray) -> Tuple[np.ndarray, ...]:
     """
     Evaluate the value of a dolfinx function in the specified points
 
@@ -329,26 +329,26 @@ def eval_f(
             points_on_proc.append(point)
             cells.append(colliding_cells.links(i)[0])
         else:
-            point = closest_point_in_mesh(mesh, np.array([point]))
-            temp_cell_candidates = geometry.compute_collisions_points(bb_tree, point)
-            temp_colliding_cells = geometry.compute_colliding_cells(
-                mesh, temp_cell_candidates, point
+            closest_point = closest_point_in_mesh(mesh, np.array([point]))
+            temp_cell_candidates = geometry.compute_collisions_points(
+                bb_tree, closest_point
             )
-            points_on_proc.append(point[0])
+            temp_colliding_cells = geometry.compute_colliding_cells(
+                mesh, temp_cell_candidates, closest_point
+            )
+            points_on_proc.append(closest_point[0])
             cells.append(temp_colliding_cells.links(0)[0])
 
     points_on_proc = np.array(points_on_proc, dtype=np.float64)
     values = np.array(function.eval(points_on_proc, cells)).reshape(points.shape[0], -1)
 
-    if check != "off":
-        print_func = bluemira_warn if check == "warn" else bluemira_error
-        if points.shape != points_on_proc.shape:
-            print_func(
-                "Some points cannot be interpolated (no colliding cells have been found "
-                f"for {points.shape[0] - points_on_proc.shape[0]} points)."
-                f"Original points: {points.shape} - "
-                f"Interpolated points: {points_on_proc.shape}"
-            )
+    if points.shape != points_on_proc.shape:
+        bluemira_debug(
+            "Some points cannot be interpolated (no colliding cells have been found "
+            f"for {points.shape[0] - points_on_proc.shape[0]} points)."
+            f"Original points: {points.shape} - "
+            f"Interpolated points: {points_on_proc.shape}"
+        )
 
     return values, points_on_proc
 

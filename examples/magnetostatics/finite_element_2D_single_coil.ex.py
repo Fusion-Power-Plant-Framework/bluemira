@@ -153,6 +153,9 @@ with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
 # pyvista.start_xvfb()
 
 pyvista.OFF_SCREEN = False
+if pyvista.OFF_SCREEN:
+    pyvista.start_xvfb()
+
 plotter = pyvista.Plotter()
 grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
 num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local

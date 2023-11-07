@@ -9,10 +9,16 @@ from mpi4py import MPI
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
+    calculate_plasma_shape_params,
+    get_flux_surfaces_from_mesh,
     get_mesh_boundary,
     plot_scalar_field,
 )
-from bluemira.magnetostatics.fem_utils import model_to_mesh, read_from_msh
+from bluemira.magnetostatics.fem_utils import (
+    closest_point_in_mesh,
+    model_to_mesh,
+    read_from_msh,
+)
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 
 
@@ -43,31 +49,32 @@ class Solovev:
         ro = self.R_0 + self.a
         rt = self.R_0 - self.delta * self.a
         zt = self.kappa * self.a
+        ri_2, ri_4 = ri**2, ri**4
+        ro_2, ro_4 = ro**2, ro**4
+        rt_lg, rt_2 = np.log(rt), rt**2
+        zt_2 = zt**2
 
         m = np.array(
             [
-                [1.0, ri**2, ri**4, ri**2 * np.log(ri)],
-                [1.0, ro**2, ro**4, ro**2 * np.log(ro)],
-                [
-                    1.0,
-                    rt**2,
-                    rt**2 * (rt**2 - 4 * zt**2),
-                    rt**2 * np.log(rt) - zt**2,
-                ],
-                [0.0, 2.0, 4 * (rt**2 - 2 * zt**2), 2 * np.log(rt) + 1.0],
+                [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
+                [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
+                [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
+                [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
             ]
         )
 
-        b = np.array(
-            [
-                [-(ri**4) / 8.0, 0],
-                [-(ro**4) / 8.0, 0.0],
-                [-(rt**4) / 8.0, +(zt**2) / 2.0],
-                [-(rt**2) / 2.0, 0.0],
-            ]
+        b = np.sum(
+            np.array(
+                [
+                    [-ri_4 * 0.125, 0],
+                    [-ro_4 * 0.125, 0],
+                    [-(rt**4) * 0.125, zt_2 * 0.5],
+                    [-rt_2 * 0.5, 0],
+                ]
+            )
+            * np.array([self.A1, self.A2]),
+            axis=1,
         )
-        b = b * np.array([self.A1, self.A2])
-        b = np.sum(b, axis=1)
 
         self.coeff = scipy.linalg.solve(m, b)
 
@@ -77,14 +84,16 @@ class Solovev:
         """
 
         def psi_func(x):
+            x_0_2 = x[0] ** 2
+            x_1_2 = x[1] ** 2
             return np.array(
                 [
                     1.0,
-                    x[0] ** 2,
-                    x[0] ** 2 * (x[0] ** 2 - 4 * x[1] ** 2),
-                    x[0] ** 2 * np.log(x[0]) - x[1] ** 2,
+                    x_0_2,
+                    x_0_2 * (x_0_2 - 4 * x_1_2),
+                    x_0_2 * np.log(x[0]) - x_1_2,
                     (x[0] ** 4) / 8.0,
-                    -(x[1] ** 2) / 2.0,
+                    -(x_1_2) / 2.0,
                 ]
             )
 
@@ -185,10 +194,10 @@ if __name__ == "__main__":
     gmsh.initialize()
     # points
     point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
-    # point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
-    line_tags = []
-    for i in range(len(point_tags) - 1):
-        line_tags.append(gmsh.model.occ.addLine(point_tags[i + 1], point_tags[i]))
+    line_tags = [
+        gmsh.model.occ.addLine(point_tags[i + 1], point_tags[i])
+        for i in range(len(point_tags) - 1)
+    ]
     line_tags.append(gmsh.model.occ.addLine(point_tags[0], point_tags[-1]))
     gmsh.model.occ.synchronize()
     curve_loop = gmsh.model.occ.addCurveLoop(line_tags)
@@ -320,17 +329,8 @@ if __name__ == "__main__":
             )
         )
 
-    from bluemira.equilibria.fem_fixed_boundary.utilities import (
-        calculate_plasma_shape_params,
-        get_flux_surfaces_from_mesh,
-    )
-
     print(calculate_plasma_shape_params(psi_norm_func, mesh, 0.95, True))
     print(get_flux_surfaces_from_mesh(mesh, psi_norm_func, None, 40))
-
-    from bluemira.magnetostatics.fem_utils import (
-        closest_point_in_mesh,
-    )
 
     points = np.array([[-1, 0.3, 0], [9, 0.3, 0]])
     print(closest_point_in_mesh(mesh, points))
