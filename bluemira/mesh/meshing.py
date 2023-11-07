@@ -15,7 +15,6 @@ import inspect
 import pprint
 from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Tuple, Union
 
-# import mesher lib (gmsh)
 import gmsh
 
 from bluemira.base.look_and_feel import bluemira_print
@@ -23,7 +22,6 @@ from bluemira.mesh.error import MeshOptionsError
 
 if TYPE_CHECKING:
     from bluemira.base.components import Component
-# import bluemira modules
 
 
 # Mesh options for the moment are limited to definition of mesh size for each point (
