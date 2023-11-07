@@ -108,19 +108,11 @@ class BluemiraFemFunction(Function):
         Supporting function for __call__
         """
         # initial_shape = points.shape
-        res, new_points = eval_f(self, convert_to_points_array(points))
-        if len(res.shape) == 1:
-            res = res[0]
-            new_points = new_points[0]
-        elif res.shape[1] == 1:
-            res = res.reshape(-1)
-            if res.shape[0] == 1:
-                res = res[0]
-                new_points = new_points[0]
-        elif res.shape[0] == 1:  # and len(initial_shape) == 1:
-            res = res[0]
-            new_points = new_points[0]
-
+        res, new_points = [
+            np.squeeze(a) for a in eval_f(self, convert_to_points_array(points))
+        ]
+        if res.size == 1:
+            return res[()], new_points[()]
         return res, new_points
 
 
