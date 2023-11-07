@@ -353,7 +353,6 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         -------
         FixedBoundaryEquilibrium object corresponding to the solve
         """
-        print("solve")
         self._check_all_inputs_ready_error()
         self.define_g()
 
