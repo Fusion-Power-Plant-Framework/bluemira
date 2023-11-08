@@ -36,6 +36,7 @@ dependencies = [
     "pyclipper",
     "pypet",
     "pyquaternion",
+    "pyvista",
     "rich",
     "scikit-learn",
     "seaborn",
