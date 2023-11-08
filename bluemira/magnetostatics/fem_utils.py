@@ -86,11 +86,17 @@ class BluemiraFemFunction(Function):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self._dim = self.function_space.mesh.topology.dim
         self._bb_tree = calc_bb_tree(self.function_space.mesh)
 
     def interpolate(self, *args, **kwargs):
         super().interpolate(*args, **kwargs)
-        self._bb_tree = calc_bb_tree(self.function_space.mesh)
+        self._calc_bb_tree()
+
+    def _calc_bb_tree(self):
+        if self._dim != self.function_space.mesh.topology.dim:
+            self._bb_tree = calc_bb_tree(self.function_space.mesh)
+            self._dim = self.function_space.mesh.topology.dim
 
     def __call__(self, points: np.ndarray):
         """
@@ -108,9 +114,9 @@ class BluemiraFemFunction(Function):
         Supporting function for __call__
         """
         # initial_shape = points.shape
-        res, new_points = [
+        res, new_points = (
             np.squeeze(a) for a in eval_f(self, convert_to_points_array(points))
-        ]
+        )
         if res.size == 1:
             return res[()], new_points[()]
         return res, new_points
@@ -118,8 +124,6 @@ class BluemiraFemFunction(Function):
 
 def closest_point_in_mesh(mesh, points):
     points = convert_to_points_array(points)
-
-    closest_points = []
 
     tdim = mesh.topology.dim
     tree = geometry.bb_tree(mesh, tdim)
@@ -131,15 +135,10 @@ def closest_point_in_mesh(mesh, points):
     midpoint_tree = geometry.create_midpoint_tree(mesh, tdim, entities)
     closest_entities = geometry.compute_closest_entity(tree, midpoint_tree, mesh, points)
     _colliding_entity_bboxes = geometry.compute_collisions_points(tree, points)
-    mesh_geom = mesh.geometry.x
     geom_dofs = cpp.mesh.entities_to_geometry(
         mesh._cpp_object, tdim, np.atleast_2d(closest_entities), False
     )
-    mesh_nodes = mesh_geom[geom_dofs][0]
-    for p in points:
-        displacement = geometry.compute_distance_gjk(p, mesh_nodes)
-        closest_points.append(p - displacement)
-    return np.array(closest_points)
+    return points - geometry.compute_distance_gjk(points, mesh.geometry.x[geom_dofs][0])
 
 
 def calculate_area(mesh: Mesh, boundaries: object, tag: Optional[int] = None) -> float:
@@ -307,7 +306,8 @@ def eval_f(function: Function, points: np.ndarray) -> Tuple[np.ndarray, ...]:
     """
     # TODO(je-cook) get rid of check strings
     mesh = function.function_space.mesh
-    bb_tree = getattr(function, "_bb_tree", calc_bb_tree(mesh))
+
+    bb_tree = function._bb_tree if hasattr(function, "_bb_tree") else calc_bb_tree(mesh)
     cells = []
     points_on_proc = []
 
