@@ -283,7 +283,8 @@ if __name__ == "__main__":
 
         # solve the Grad-Shafranov equation
         gs_solver.define_g(g)
-        gs_solver.solve(dirichlet_bcs)
+        gs_solver.setup_problem(dirichlet_bcs)
+        gs_solver.solve()
 
         dx = ufl.Measure("dx", subdomain_data=ct, domain=mesh)
         Itot.append(fem.assemble_scalar(fem.form(g * dx)))
