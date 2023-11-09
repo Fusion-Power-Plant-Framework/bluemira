@@ -123,7 +123,6 @@ class FemMagnetostatic2d:
             Filename of the xml file with the boundaries definition or a MeshFunction
             that defines the boundaries
         """
-        print("set_mesh function: recreating the fem matrix")
         # check whether mesh is a filename or a mesh, then load it or use it
         self.mesh = dolfinx.mesh.Mesh(mesh) if isinstance(mesh, str) else mesh
 
@@ -168,7 +167,7 @@ class FemMagnetostatic2d:
         """
         self.g = g
 
-    def solve(
+    def setup_problem(
         self,
         dirichlet_bc_function: Optional[
             Union[dolfinx.fem.Expression, BluemiraFemFunction]
@@ -177,7 +176,7 @@ class FemMagnetostatic2d:
         neumann_bc_function: Optional[
             Union[dolfinx.fem.Expression, BluemiraFemFunction]
         ] = None,
-    ) -> BluemiraFemFunction:
+    ):
         """
         Solve the weak formulation maxwell equation given a right hand side g,
         Dirichlet and Neumann boundary conditions.
@@ -202,10 +201,10 @@ class FemMagnetostatic2d:
         #         self.V.element.interpolation_points(),
         #     )
 
-        # define the right hand side
-        self.L = self.g * self.v * dx  # - neumann_bc_function * self.v * ds
+        # # define the right hand side
+        # self.L = self.g * self.v * dx # - neumann_bc_function * self.v * ds
 
-        # define the Dirichlet boundary conditions
+        # # define the Dirichlet boundary conditions
         if dirichlet_bc_function is None:
             tdim = self.mesh.topology.dim
             facets = locate_entities_boundary(
@@ -219,14 +218,18 @@ class FemMagnetostatic2d:
             self.bcs = dirichlet_bc_function
 
         # solve the system taking into account the boundary conditions
-        problem = LinearProblem(
+        self.L = self.g * self.v * dx  # - neumann_bc_function * self.v * ds
+
+        self.problem = LinearProblem(
             self.a,
             self.L,
             u=self.psi,
             bcs=self.bcs,
             # petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
         )
-        self.psi = problem.solve()
+
+    def solve(self) -> BluemiraFemFunction:
+        self.psi = self.problem.solve()
 
         return self.psi
 
