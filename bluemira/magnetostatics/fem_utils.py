@@ -86,17 +86,11 @@ class BluemiraFemFunction(Function):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self._dim = self.function_space.mesh.topology.dim
         self._bb_tree = calc_bb_tree(self.function_space.mesh)
 
     def interpolate(self, *args, **kwargs):
         super().interpolate(*args, **kwargs)
-        self._calc_bb_tree()
-
-    def _calc_bb_tree(self):
-        if self._dim != self.function_space.mesh.topology.dim:
-            self._bb_tree = calc_bb_tree(self.function_space.mesh)
-            self._dim = self.function_space.mesh.topology.dim
+        calc_bb_tree(self.function_space.mesh)
 
     def __call__(self, points: np.ndarray):
         """
