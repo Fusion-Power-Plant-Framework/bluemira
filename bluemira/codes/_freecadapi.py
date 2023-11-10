@@ -81,13 +81,13 @@ if TYPE_CHECKING:
 ) = get_freecad_modules(
     "FreeCAD",
     "BOPTools",
-    "BOPTools.GeneralFuseResult",
-    "BOPTools.JoinAPI",
-    "BOPTools.JoinFeatures",
-    "BOPTools.ShapeMerge",
-    "BOPTools.SplitAPI",
-    "BOPTools.SplitFeatures",
-    "BOPTools.Utils",
+    ("BOPTools", "GeneralFuseResult"),
+    ("BOPTools", "JoinAPI"),
+    ("BOPTools", "JoinFeatures"),
+    ("BOPTools", "ShapeMerge"),
+    ("BOPTools", "SplitAPI"),
+    ("BOPTools", "SplitFeatures"),
+    ("BOPTools", "Utils"),
     "DraftGeomUtils",
     "FreeCADGui",
     ("FreeCAD", "Base"),
@@ -1306,6 +1306,13 @@ class CADFileType(enum.Enum):
     @DynamicClassAttribute
     def exporter(self) -> ExporterProtocol:
         """Get exporter module for each filetype"""
+        if self.module is None:
+            # Assume CADFileType.FREECAD
+            def FreeCADwriter(objs, filename, **kwargs):  # noqa: ARG001
+                doc = objs[0].Document
+                doc.saveAs(filename)
+
+            return FreeCADwriter
         try:
             export_func = __import__(self.module).export
         except AttributeError:
@@ -1315,13 +1322,6 @@ class CADFileType(enum.Enum):
             raise FreeCADError(
                 f"Unable to save to {self.value} please try through the main FreeCAD GUI"
             ) from None
-        except TypeError:
-            # Assume CADFileType.FREECAD
-            def FreeCADwriter(objs, filename, **kwargs):  # noqa: ARG001
-                doc = objs[0].Document
-                doc.saveAs(filename)
-
-            return FreeCADwriter
         else:
             if self in self.manual_mesh_formats():
                 return meshed_exporter(self, export_func)

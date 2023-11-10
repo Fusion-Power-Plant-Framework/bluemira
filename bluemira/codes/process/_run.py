@@ -122,7 +122,7 @@ class Run(CodesTask):
             self._task = self._progress.add_task(
                 "",
                 completed=0,
-                total=np.log(1 / self._epsvmc),
+                total=np.log(1 / getattr(self, "_epsvmc", 1)),
                 visible=False,
             )
 
