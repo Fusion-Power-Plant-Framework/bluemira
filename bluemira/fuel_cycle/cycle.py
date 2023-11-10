@@ -644,7 +644,7 @@ class EUDEMOFuelCycleModel:
         """
         Check that no tritium is lost (graphically).
         """
-        f, ax = plt.subplots()
+        _, ax = plt.subplots()
         m_ideal = self.tbreed(self.params.TBR, self.m_T_req)
         inter = interp1d(self.DEMO_t, self.I_blanket)
         bb_inventory = inter(self.t)
