@@ -21,7 +21,16 @@ from dolfinx.fem import (
 from dolfinx.fem.petsc import LinearProblem
 from dolfinx.mesh import locate_entities_boundary
 from petsc4py.PETSc import ScalarType
-from ufl import SpatialCoordinate, TestFunction, TrialFunction, as_vector, dot, dx, grad
+from ufl import (
+    SpatialCoordinate,
+    TestFunction,
+    TrialFunction,
+    as_vector,
+    dot,
+    ds,
+    dx,
+    grad,
+)
 
 from bluemira.base.constants import MU_0
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
@@ -100,9 +109,8 @@ class FemMagnetostatic2d:
         self.v = None
         self.V = None
         self.g = None
-        self.L = None
         self.boundaries = None
-        self.bcs = None
+        self.problem = None
 
         self.psi = None
         self.B = None
@@ -111,6 +119,13 @@ class FemMagnetostatic2d:
         self,
         mesh: Union[dolfinx.mesh.Mesh, str],
         boundaries: Optional[Union[dolfinx.mesh.Mesh, str]] = None,
+        dirichlet_bc_function: Optional[
+            Union[dolfinx.fem.Expression, BluemiraFemFunction]
+        ] = None,
+        dirichlet_marker: Optional[int] = None,
+        neumann_bc_function: Optional[
+            Union[dolfinx.fem.Expression, BluemiraFemFunction]
+        ] = None,
     ):
         """
         Set the mesh for the solver
@@ -122,6 +137,13 @@ class FemMagnetostatic2d:
         boundaries:
             Filename of the xml file with the boundaries definition or a MeshFunction
             that defines the boundaries
+        dirichlet_bc_function:
+            Dirichlet boundary condition function
+        dirichlet_marker:
+            Identification number for the dirichlet boundary
+        neumann_bc_function:
+            Neumann boundary condition function
+
         """
         # check whether mesh is a filename or a mesh, then load it or use it
         self.mesh = dolfinx.mesh.Mesh(mesh) if isinstance(mesh, str) else mesh
@@ -181,26 +203,10 @@ class FemMagnetostatic2d:
         Solve the weak formulation maxwell equation given a right hand side g,
         Dirichlet and Neumann boundary conditions.
 
-        Parameters
-        ----------
-        dirichlet_bc_function:
-            Dirichlet boundary condition function
-        dirichlet_marker:
-            Identification number for the dirichlet boundary
-        neumann_bc_function:
-            Neumann boundary condition function
-
         Returns
         -------
         Poloidal magnetic flux function as solution of the magnetostatic problem
         """
-        # if neumann_bc_function is None:
-        #
-        #     neumann_bc_function = dolfinx.fem.Expression(
-        #         Constant(self.mesh, ScalarType(0)),
-        #         self.V.element.interpolation_points(),
-        #     )
-
         # # define the right hand side
         # self.L = self.g * self.v * dx # - neumann_bc_function * self.v * ds
 
@@ -217,8 +223,18 @@ class FemMagnetostatic2d:
             # dolfinx wants functions and dofs.
             self.bcs = dirichlet_bc_function
 
+        if neumann_bc_function is None:
+            neumann_bc = 0
+            # neumann_bc_function = dolfinx.fem.Expression(
+            #     Constant(self.mesh, ScalarType(0)),
+            #     self.V.element.interpolation_points(),
+            # )
+        else:
+            raise NotImplementedError
+            neumann_bc_function * self.v * ds
+
         # solve the system taking into account the boundary conditions
-        self.L = self.g * self.v * dx  # - neumann_bc_function * self.v * ds
+        self.L = self.g * self.v * dx - neumann_bc  # - neumann_bc_function * self.v * ds
 
         self.problem = LinearProblem(
             self.a,
@@ -229,6 +245,9 @@ class FemMagnetostatic2d:
         )
 
     def solve(self) -> BluemiraFemFunction:
+        if self.problem is None:
+            self.setup_problem()
+
         self.psi = self.problem.solve()
 
         return self.psi
@@ -245,12 +264,10 @@ class FemMagnetostatic2d:
         self.B = BluemiraFemFunction(W)
         x = SpatialCoordinate(self.mesh)
         B_expr = Expression(
-            as_vector(
-                (
-                    -self.psi.dx(1) / (2 * np.pi * x[0]),
-                    self.psi.dx(0) / (2 * np.pi * x[0]),
-                )
-            ),
+            as_vector((
+                -self.psi.dx(1) / (2 * np.pi * x[0]),
+                self.psi.dx(0) / (2 * np.pi * x[0]),
+            )),
             W.element.interpolation_points(),
         )
         self.B.interpolate(B_expr)
