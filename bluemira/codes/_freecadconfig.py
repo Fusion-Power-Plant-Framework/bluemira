@@ -47,6 +47,9 @@ def get_freecad_modules(*mod):
         "/usr/lib/freecad/Mod",
         "/usr/lib/freecad/Mod/Part",
         "/usr/lib/freecad/Mod/Draft",
+        "/usr/lib/freecad/Mod/Arch",
+        "/usr/lib/freecad/Mod/OpenSCAD",
+        "/usr/lib/freecad/Mod/Import",
         "/usr/lib/python3/dist-packages",
     ]
 
