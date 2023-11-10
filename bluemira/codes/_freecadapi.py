@@ -1227,7 +1227,7 @@ class CADFileType(enum.Enum):
     BINMESH = ("bms", "Mesh")
     BREP = ("brep", "Part")
     BREP_2 = ("brp", "Part")
-    CSG = ("csg", "exportCSG")
+    CSG = ("csg", "OpenSCAD.exportCSG")
     DAE = ("dae", "importDAE")
     # DAT = ("dat", "Fem")
     FREECAD = ("FCStd", None)
@@ -1241,7 +1241,7 @@ class CADFileType(enum.Enum):
     IGES_2 = ("igs", "ImportGui")
     # INP = ("inp", "Fem")
     INVENTOR_V2_1 = ("iv", "Mesh")
-    JSON = ("json", "importJSON")
+    JSON = ("json", "Arch.importJSON")
     # JSON_MESH = ("$json", "feminout.importYamlJsonMesh")
     # MED = ("med", "Fem")
     # MESHJSON = ("meshjson", "feminout.importYamlJsonMesh")
@@ -1250,7 +1250,7 @@ class CADFileType(enum.Enum):
     OBJ = ("obj", "Mesh")
     OBJ_WAVE = ("$obj", "importOBJ")
     OFF = ("off", "Mesh")
-    OPENSCAD = ("scad", "exportCSG")
+    OPENSCAD = ("scad", "OpenSCAD.exportCSG")
     # PCD = ("pcd", "Points")
     # PDF = ("pdf", "FreeCADGui")
     # PLY = ("ply", "Points")
@@ -1314,11 +1314,11 @@ class CADFileType(enum.Enum):
 
             return FreeCADwriter
         try:
-            export_func = __import__(self.module).export
+            export_func = get_freecad_modules(self.module).export
         except AttributeError:
             modlist = self.module.split(".")
             if len(modlist) > 1:
-                return getattr(__import__(modlist[0]), modlist[1]).export
+                return getattr(get_freecad_modules(modlist[0]), modlist[1]).export
             raise FreeCADError(
                 f"Unable to save to {self.value} please try through the main FreeCAD GUI"
             ) from None
