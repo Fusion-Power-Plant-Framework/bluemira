@@ -27,46 +27,65 @@ import enum
 import importlib
 import os
 import sys
+from pathlib import Path
+
+
+class _FreeCADPathContext:
+    """Context manager for FreeCAD Imports
+
+    If FreeCAD is installed using apt we need to add some elements to sys path
+    for imports to function correctly
+    """
+
+    apt_install = False
+
+    def __init__(self):
+        # TODO(je-cook) is it possible to use the flatpak
+        # /app/org.freecadweb.FreeCAD/current/active/files/freecad/lib"
+        base_path = Path("/usr/lib/freecad/")
+        subfolders = (
+            "",
+            "Ext",
+            "Mod",
+            "Mod/Part",
+            "Mod/Draft",
+            "Mod/Arch",
+            "Mod/OpenSCAD",
+            "Mod/Import",
+        )
+        self.paths = [
+            "/usr/lib/freecad-python3/lib",
+            *(Path(base_path, sub).as_posix() for sub in subfolders),
+            "/usr/lib/python3/dist-packages",
+        ]
+
+    def __enter__(self):
+        try:
+            freecad_message_removal()
+            import freecad  # noqa: F401, PLC0415
+        except (AttributeError, ImportError):
+            type(self).apt_install = True
+        if self.apt_install:
+            for pth in self.paths:
+                sys.path.append(pth)
+            freecad_message_removal()
+
+    def __exit__(self, _exc_type, _exc_value, _exc_traceback):
+        if self.apt_install:
+            for pth in self.paths:
+                sys.path.pop(sys.path.index(pth))
 
 
 def get_freecad_modules(*mod):
-    # freecad_path = Path(
-    # /app/org.freecadweb.FreeCAD/current/active/files/freecad/lib"
-    # ).expanduser()
-    # # sys.path.append(f"{freecad_path/ 'Ext'}")
-    # # sys.path.append(f"{freecad_path/ 'Mod' / 'Part'}")
-    # # sys.path.append(f"{freecad_path/ 'Mod' / 'Draft'}")
-    # # sys.path.append(f"{freecad_path.parent / 'lib' / 'python3.10' / 'site-package'}")
-    # # sys.path.append(f"{freecad_path.parent}")
-    # sys.path.append(f"{freecad_path}")
-    # sys.path.append(f"{freecad_path.parent / 'freecad' / 'lib' / 'libFreeCADApp'}")
-    paths = [
-        "/usr/lib/freecad-python3/lib",
-        "/usr/lib/freecad/",
-        "/usr/lib/freecad/Ext",
-        "/usr/lib/freecad/Mod",
-        "/usr/lib/freecad/Mod/Part",
-        "/usr/lib/freecad/Mod/Draft",
-        "/usr/lib/freecad/Mod/Arch",
-        "/usr/lib/freecad/Mod/OpenSCAD",
-        "/usr/lib/freecad/Mod/Import",
-        "/usr/lib/python3/dist-packages",
-    ]
-
-    for pth in paths:
-        sys.path.append(pth)
-
-    freecad_message_removal()
     imps = []
-    for m in mod:
-        if isinstance(m, tuple):
-            imp = __import__(m[0], fromlist=[*m[1:]])
-            imps.extend(getattr(imp, _m) for _m in m[1:])
-        else:
-            imps.append(__import__(m))
+    with _FreeCADPathContext():
+        for m in mod:
+            if isinstance(m, tuple):
+                imp = __import__(m[0], fromlist=[*m[1:]])
+                imps.extend(getattr(imp, _m) for _m in m[1:])
+            else:
+                imps.append(__import__(m))
 
-    for pth in paths:
-        sys.path.pop(sys.path.index(pth))
     return imps[0] if len(imps) == 1 else tuple(imps)
 
 
