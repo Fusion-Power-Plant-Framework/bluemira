@@ -33,7 +33,7 @@ parso==0.8.3
 pexpect==4.8.0
 pickleshare==0.7.5
 prometheus-client==0.18.0
-prompt-toolkit==3.0.39
+prompt-toolkit==3.0.40
 psutil==5.9.6
 ptyprocess==0.7.0
 pure-eval==0.2.2
