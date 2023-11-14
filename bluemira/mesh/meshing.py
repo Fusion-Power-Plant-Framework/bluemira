@@ -339,7 +339,7 @@ class Mesh:
         """
         Apply the boolean fragment operation.
         """
-        all_ent, oo, oov = _FreeCADGmsh._fragment(
+        all_ent, _oo, oov = _FreeCADGmsh._fragment(
             dim, all_ent, [] if tools is None else tools, remove_object, remove_tool
         )
         Mesh.__iterate_gmsh_dict(buffer, _FreeCADGmsh._map_mesh_dict, all_ent, oov)
