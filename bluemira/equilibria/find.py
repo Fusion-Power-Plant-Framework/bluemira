@@ -488,7 +488,7 @@ def find_flux_surfs(
     # NOTE: This may all fall over for multiple psi_norm islands with overlaps
     # on the grid edges...
     o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
-    xo, zo, psio = o_points[0]
+    _xo, _zo, psio = o_points[0]
     __, __, psix = x_points[0]
     psinormed = psio - psinorm * (psio - psix)
     return get_contours(x, z, psi, psinormed)
