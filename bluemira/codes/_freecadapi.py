@@ -911,7 +911,7 @@ def dist_to_shape(
         between shape1 and shape2. The distance between those points is the minimum
         distance given by dist.
     """
-    dist, solution, info = shape1.distToShape(shape2)
+    dist, solution, _info = shape1.distToShape(shape2)
     vectors = []
     for v1, v2 in solution:
         vectors.append((vector_to_numpy(v1), vector_to_numpy(v2)))

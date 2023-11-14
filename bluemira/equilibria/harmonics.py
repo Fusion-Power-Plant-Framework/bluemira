@@ -317,7 +317,7 @@ def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> float:
     area2 = get_area_2d(coords2.x, coords2.z)
 
     # Find intersections of the LCFSs
-    xcross, zcross = get_intersect(coords1.xz, coords2.xz)
+    xcross, _zcross = get_intersect(coords1.xz, coords2.xz)
 
     # Check there are an even number of intersections
     if np.mod(len(xcross), 2) != 0:
@@ -587,7 +587,7 @@ def spherical_harmonic_approximation(
         )
 
         # Calculate necessary coil currents
-        currents, residual, rank, s = np.linalg.lstsq(
+        currents, _residual, _rank, _s = np.linalg.lstsq(
             currents2harmonics, psi_harmonic_amplitudes[:degree], rcond=None
         )
 
