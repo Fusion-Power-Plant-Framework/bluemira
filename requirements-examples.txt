@@ -43,7 +43,7 @@ pyzmq==25.1.1
 Send2Trash==1.8.2
 soupsieve==2.5
 stack-data==0.6.3
-terminado==0.17.1
+terminado==0.18.0
 tinycss2==1.2.1
 tornado==6.3.3
 traitlets==5.13.0
