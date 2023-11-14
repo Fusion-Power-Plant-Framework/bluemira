@@ -108,7 +108,7 @@ def setup_radial_build(run: Dict[str, Any], width: float = 1.0):
         "Thermal shield": "#77ac30",
     }
 
-    f, ax = plt.subplots(figsize=[14, 10])
+    _, ax = plt.subplots(figsize=[14, 10])
 
     lpatches = []
     gkeys = [
