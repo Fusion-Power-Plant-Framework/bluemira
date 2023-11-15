@@ -150,8 +150,8 @@ def get_tricontours(
 
 # modified
 # Note: since it is not possible anymore to extrapolate dolfinx function data outside the
-# mesh domain, this procedure fails when psi_norm is almost 1 (i.e. points are near to the
-# boundary). Not sure how to solve this problem.
+# mesh domain, this procedure fails when psi_norm is almost 1 (i.e. points are near to
+# the boundary). Not sure how to solve this problem.
 # Moreover, this procedure seems to be very slow now.
 # TODO(je-cook) follow https://github.com/FEniCS/dolfinx/issues/2847
 
@@ -246,7 +246,7 @@ def find_flux_surface(
     return points
 
 
-### checked - working
+# ## checked - working
 def get_mesh_boundary(mesh: dolfinx.mesh.Mesh) -> Tuple[np.ndarray, np.ndarray]:
     """
     Retrieve the boundary of the mesh, as an ordered set of coordinates.
@@ -365,22 +365,21 @@ def get_flux_surfaces_from_mesh(
             fs = Coordinates({"x": path[0], "z": path[1]})
             fs.close()
             flux_surfaces.append(ClosedFluxSurface(fs))
+        elif (path := get_tricontours(x, z, psi_norm_data, xi)[0]) is not None and len(
+            path.T[0]
+        ) > ny_fs_min:
+            # Only capture flux surfaces with sufficient points
+            fs = Coordinates({"x": path.T[0], "z": path.T[1]})
+            fs.close()
+            flux_surfaces.append(ClosedFluxSurface(fs))
         else:
-            path = get_tricontours(x, z, psi_norm_data, xi)[0]
-            if path is not None and len(path.T[0]) > ny_fs_min:
-                # Only capture flux surfaces with sufficient points
-                fs = Coordinates({"x": path.T[0], "z": path.T[1]})
-                fs.close()
-                flux_surfaces.append(ClosedFluxSurface(fs))
-            else:
-                index.append(i)
+            index.append(i)
 
     mask = np.ones_like(x_1d, dtype=bool)
     mask[index] = False
     return x_1d[mask], flux_surfaces
 
 
-### modified - seems to work
 def calculate_plasma_shape_params(
     psi_norm_func: Callable[[np.ndarray], np.ndarray],
     mesh: dolfinx.mesh.Mesh,
@@ -456,7 +455,6 @@ def calculate_plasma_shape_params(
     return r_geo, kappa, delta
 
 
-### checked - working
 def find_magnetic_axis(
     psi_func: Callable[[np.ndarray], float], mesh: Optional[dolfinx.mesh.Mesh] = None
 ) -> np.ndarray:
@@ -521,7 +519,6 @@ def _interpolate_profile(
     return interp1d(x, profile_data, kind="linear", fill_value="extrapolate")
 
 
-### modified - to be checked
 def refine_mesh(
     mesh: dolfinx.mesh.Mesh,
     refine_point: Iterable[float],
