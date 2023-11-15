@@ -1,3 +1,28 @@
+# bluemira is an integrated inter-disciplinary design tool for future fusion
+# reactors. It incorporates several modules, some of which rely on other
+# codes, to carry out a range of typical conceptual fusion reactor design
+# activities.
+#
+# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
+#                         J. Morris, D. Short
+#
+# bluemira is free software; you can redistribute it and/or
+# modify it under the terms of the GNU Lesser General Public
+# License as published by the Free Software Foundation; either
+# version 2.1 of the License, or (at your option) any later version.
+#
+# bluemira is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+# Lesser General Public License for more details.
+#
+# You should have received a copy of the GNU Lesser General Public
+# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+
+"""
+Finite element method utilities
+"""
+
 import functools
 from contextlib import contextmanager
 from dataclasses import dataclass
@@ -32,6 +57,7 @@ old_m_to_m = gmshio.model_to_mesh
 
 
 def convert_to_points_array(x):
+    """Convert points to array"""
     x = np.array(x)
     if len(x.shape) == 1:
         if len(x) == 2:
@@ -49,6 +75,12 @@ def model_to_mesh(
     gdim: Union[int, Iterable[int]] = 3,
     **kwargs,
 ):
+    """Convert gmsh model to dolfinx mesh
+
+    Notes
+    -----
+    Patches dolfinx.io.gmshio.model_to_mesh to allow non sequential dimensions
+    """
     if isinstance(gdim, Iterable):
         dimensions = gdim
         gdim = len(dimensions)
@@ -71,14 +103,24 @@ def model_to_mesh(
     return result, labels
 
 
-def extract_geometry(func, dimensions, model):
+def extract_geometry(
+    func: Callable[[Type[gmsh.model]], np.ndarray],
+    dimensions: Iterable[int],
+    model: Type[gmsh.model],
+):
+    """Extract model geometry
+
+    Designed to call dolfinx.io.gmshio.extract_geometry but patch for non
+    sequential dimensions
+    """
     x = func(model)
     if any(dimensions != np.arange(len(dimensions))):
         return x[:, dimensions]
     return x
 
 
-def calc_bb_tree(mesh):
+def calc_bb_tree(mesh: Mesh) -> geometry.BoundingBoxTree:
+    """Calculate the BoundingBoxTree of a dolfinx mesh"""
     return geometry.bb_tree(mesh, mesh.topology.dim)
 
 
@@ -100,6 +142,7 @@ class BluemiraFemFunction(Function):
         self._bb_tree = calc_bb_tree(self.function_space.mesh)
 
     def interpolate(self, *args, **kwargs):
+        """Interpolate function and cache bb_tree"""
         super().interpolate(*args, **kwargs)
         calc_bb_tree(self.function_space.mesh)
 
@@ -127,7 +170,11 @@ class BluemiraFemFunction(Function):
         return res, new_points
 
 
-def closest_point_in_mesh(mesh, points):
+def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
+    """Calculate closest point in mesh
+
+    TODO hopefully remove in dolfinx >0.7.1
+    """
     points = convert_to_points_array(points)
 
     tdim = mesh.topology.dim
@@ -163,9 +210,7 @@ def calculate_area(mesh: Mesh, boundaries: object, tag: Optional[int] = None) ->
     -------
     area of the subdomain
     """
-    f = Constant(mesh, PETSc.ScalarType(1))
-
-    return integrate_f(f, mesh, boundaries, tag)
+    return integrate_f(Constant(mesh, PETSc.ScalarType(1)), mesh, boundaries, tag)
 
 
 def integrate_f(
@@ -207,6 +252,7 @@ def integrate_f(
 # for a better future implementation.
 @contextmanager
 def pyvista_plot_show_save(filename: str = "field.svg"):
+    """Show or save figure from pyvista"""
     if pyvista.OFF_SCREEN:
         pyvista.start_xvfb()
     plotter = pyvista.Plotter()
@@ -237,7 +283,7 @@ def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.svg
     the file with the plot is saved.
     """
     with pyvista_plot_show_save(filename) as plotter:
-        V = field.function_space
+        V = field.function_space  # noqa: N806
         degree = V.ufl_element().degree()
         field_grid = pyvista.UnstructuredGrid(*vtk_mesh(V.mesh if degree == 0 else V))
         field_grid.point_data["Field"] = field.x.array
@@ -273,14 +319,14 @@ def error_L2(  # noqa: N802
     degree = uh.function_space.ufl_element().degree()
     family = uh.function_space.ufl_element().family()
     mesh = uh.function_space.mesh
-    W = functionspace(mesh, (family, degree + degree_raise))
+    W = functionspace(mesh, (family, degree + degree_raise))  # noqa: N806
     # Interpolate approximate solution
-    u_W = BluemiraFemFunction(W)
+    u_W = BluemiraFemFunction(W)  # noqa: N806
     u_W.interpolate(uh)
 
     # Interpolate exact solution, special handling if exact solution
     # is a ufl expression or a python lambda function
-    u_ex_W = BluemiraFemFunction(W)
+    u_ex_W = BluemiraFemFunction(W)  # noqa: N806
     if not isinstance(u_ex, ufl.core.expr.Expr):
         u_expr = Expression(u_ex, W.element.interpolation_points())
         u_ex_W.interpolate(u_expr)
@@ -288,7 +334,7 @@ def error_L2(  # noqa: N802
         u_ex_W.interpolate(u_ex)
 
     # Compute the error in the higher order function space
-    e_W = BluemiraFemFunction(W)
+    e_W = BluemiraFemFunction(W)  # noqa: N806
     e_W.x.array[:] = u_W.x.array - u_ex_W.x.array
 
     # Integrate the error

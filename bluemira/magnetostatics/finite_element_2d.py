@@ -210,11 +210,11 @@ class FemMagnetostatic2d:
                 self.mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
             )
             dofs = locate_dofs_topological(self.V, tdim - 1, facets)
-            self.bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
+            bcs = [dirichletbc(ScalarType(0), dofs, self.V)]
         else:
             # TODO: we should pass directly the BCs, not the functions since
             # dolfinx wants functions and dofs.
-            self.bcs = dirichlet_bc_function
+            bcs = dirichlet_bc_function
 
         if neumann_bc_function is None:
             neumann_bc = 0
@@ -233,7 +233,7 @@ class FemMagnetostatic2d:
             self.a,
             self.L,
             u=self.psi,
-            bcs=self.bcs,
+            bcs=bcs,
             # petsc_options={"ksp_type": "preonly", "pc_type": "lu"},
         )
 
@@ -253,7 +253,7 @@ class FemMagnetostatic2d:
         https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
         """
         # new function space for mapping B as vector
-        W = functionspace(self.mesh, ("DG", 0, (self.mesh.geometry.dim,)))
+        W = functionspace(self.mesh, ("DG", 0, (self.mesh.geometry.dim,)))  # noqa: N806
         B = BluemiraFemFunction(W)
         x_0 = SpatialCoordinate(self.mesh)[0]
         B_expr = Expression(
