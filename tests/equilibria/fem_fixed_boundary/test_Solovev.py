@@ -157,11 +157,11 @@ class Solovev:
 
     @property
     def pprime(self):
-        return lambda x: -self.A1 / MU_0
+        return lambda _x: -self.A1 / MU_0
 
     @property
     def ffprime(self):
-        return lambda x: self.A2
+        return lambda _x: self.A2
 
     @property
     def jp(self):
@@ -201,8 +201,8 @@ class TestSolovevZheng:
         # curve2 = interpolate_bspline(boundary[:, n_points // 2 :], "curve2")
         # lcfs = BluemiraWire([curve1, curve2], "LCFS")
 
-        # # Tweaked discretisation and mesh size to get error below 1e-5 but still be fast.
-        # # Keep as is until we move to Fenics-X where we will need to see how it performs.
+        # Tweaked discretisation and mesh size to get error below 1e-5 but still be fast.
+        # Keep as is until we move to Fenics-X where we will need to see how it performs.
         # lcfs.mesh_options = {"lcar": 0.024, "physical_group": "lcfs"}
 
         # plasma_face = BluemiraFace(lcfs, "plasma_face")
@@ -412,6 +412,6 @@ class TestSolovevZheng:
     # TODO reenable
     # def test_psi_boundary(self):
     #     psi_fe_boundary = [self.fe_psi_calc(point) for point in self.boundary.T]
-    #     # Higher than I might expect, but probably because some of the points lie outside
-    #     # the mesh, and cannot be properly interpolated.
+    #     # Higher than I might expect, but probably because some of the points
+    #     # lie outside the mesh, and cannot be properly interpolated.
     #     assert np.max(np.abs(psi_fe_boundary)) < 2e-3

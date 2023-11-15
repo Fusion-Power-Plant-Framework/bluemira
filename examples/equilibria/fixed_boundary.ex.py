@@ -32,16 +32,18 @@ Fixed boundary equilibrium example
 
 # %%
 from datetime import datetime
+from pathlib import Path
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
 )
 from bluemira.equilibria.fem_fixed_boundary.file import save_fixed_boundary_to_file
-from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh
+from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh, read_from_msh
 from bluemira.equilibria.profiles import DoublePowerFunc, LaoPolynomialFunc
 from bluemira.equilibria.shapes import KuiroukidisLCFS
 from bluemira.geometry.face import BluemiraFace
+from bluemira.mesh import meshing
 
 # %% [markdown]
 # Define some important values
@@ -72,11 +74,6 @@ lcfs_face = BluemiraFace(lcfs_shape)
 plasma = PhysicalComponent("plasma", lcfs_face)
 plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
 plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
-
-from pathlib import Path
-
-from bluemira.equilibria.fem_fixed_boundary.utilities import read_from_msh
-from bluemira.mesh import meshing
 
 meshing.Mesh(meshfile=Path(".", "fixed_boundary_example.msh").as_posix())(plasma)
 
