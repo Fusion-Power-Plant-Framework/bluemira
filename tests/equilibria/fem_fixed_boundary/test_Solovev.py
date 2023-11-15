@@ -227,8 +227,6 @@ class TestSolovevZheng:
         LCFS = cntr.get_paths()[0].vertices
 
         # create the mesh
-        model_rank = 0
-        mesh_comm = MPI.COMM_WORLD
         lcar = 1
 
         gmsh.initialize()
@@ -262,17 +260,13 @@ class TestSolovevZheng:
         gmsh.model.mesh.generate(2)
         gmsh.model.mesh.optimize("Netgen")
 
-        (cls.mesh, ct, ft), labels = model_to_mesh(
-            gmsh.model, mesh_comm, model_rank, gdim=[0, 2]
-        )
+        (cls.mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=[0, 2])
 
         gmsh.write("Mesh.geo_unrolled")
         gmsh.write("Mesh.msh")
         gmsh.finalize()
 
-        (mesh1, ct1, ft1), labels = read_from_msh(
-            "Mesh.msh", mesh_comm, model_rank, gdim=2
-        )
+        (mesh1, ct1, ft1), labels = read_from_msh("Mesh.msh", gdim=2)
 
         # initialize the Grad-Shafranov solver
         p = 2

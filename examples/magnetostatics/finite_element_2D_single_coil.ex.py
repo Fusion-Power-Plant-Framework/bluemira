@@ -62,24 +62,14 @@ from bluemira.magnetostatics.fem_utils import (
 from bluemira.magnetostatics.finite_element_2d import Bz_coil_axis, FemMagnetostatic2d
 from bluemira.mesh import meshing
 
-<<<<<<< HEAD
-import matplotlib
 
-matplotlib.use("Qt5Agg")
-import matplotlib.pyplot as plt
-
-=======
 # %%
->>>>>>> 99f124d2 (🎨 Various updates and cleanup for dolfinx 0.7.1)
-rank = MPI.COMM_WORLD.rank
 
 ri = 0.01  # Inner radius of copper wire
 rc = 3  # Outer radius of copper wire
 R = 100  # Radius of domain
 I_wire = 10e6  # wire's current
 gdim = 2  # Geometric dimension of the mesh
-model_rank = 0
-mesh_comm = MPI.COMM_WORLD
 
 # Define geometry for wire cylinder
 nwire = 20  # number of wire divisions
@@ -141,7 +131,7 @@ meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.
 
 meshing.Mesh(meshfile=meshfiles)(c_universe, dim=2)
 
-(mesh, ct, ft), labels = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
+(mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=2)
 gmsh.write("Mesh.msh")
 gmsh.finalize()
 
@@ -170,17 +160,6 @@ else:
     cell_tag_fig = plotter.screenshot("cell_tags.png")
 
 
-<<<<<<< HEAD
-from bluemira.magnetostatics.fem_utils import (
-    calculate_area,
-    create_j_function,
-    integrate_f,
-)
-from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
-from bluemira.magnetostatics.fem_utils import create_j_function
-
-=======
->>>>>>> 99f124d2 (🎨 Various updates and cleanup for dolfinx 0.7.1)
 # %%
 em_solver = FemMagnetostatic2d(2)
 em_solver.set_mesh(mesh, ct)

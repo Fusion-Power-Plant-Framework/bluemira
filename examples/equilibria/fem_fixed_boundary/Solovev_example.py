@@ -187,8 +187,6 @@ if __name__ == "__main__":
     LCFS = plot_info["cntr"].collections[0].get_paths()[0].vertices
 
     # create the mesh
-    model_rank = 0
-    mesh_comm = MPI.COMM_WORLD
     lcar = 1
 
     gmsh.initialize()
@@ -222,9 +220,7 @@ if __name__ == "__main__":
     gmsh.model.mesh.generate(2)
     gmsh.model.mesh.optimize("Netgen")
 
-    (mesh, ct, ft), labels = model_to_mesh(
-        gmsh.model, mesh_comm, model_rank, gdim=[0, 2]
-    )
+    (mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=[0, 2])
 
     gmsh.write("Mesh.geo_unrolled")
     gmsh.write("Mesh.msh")

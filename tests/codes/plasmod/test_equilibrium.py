@@ -9,7 +9,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import pytest
-from dolfin import Mesh
+from dolfinx.mesh import Mesh
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS

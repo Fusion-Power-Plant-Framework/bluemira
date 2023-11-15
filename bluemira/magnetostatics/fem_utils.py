@@ -3,6 +3,7 @@ from dataclasses import dataclass
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 from unittest.mock import patch
 
+import gmsh
 import matplotlib.pyplot as plt
 import matplotlib.tri as tr
 import numpy as np
@@ -40,12 +41,21 @@ def convert_to_points_array(x):
     return x
 
 
-def model_to_mesh(model, comm, rank: int, gdim: Union[int, Iterable[int]] = 3, **kwargs):
+def model_to_mesh(
+    model: Optional[gmsh.model] = None,
+    comm=MPI.COMM_WORLD,
+    rank: int = 0,
+    gdim: Union[int, Iterable[int]] = 3,
+    **kwargs,
+):
     if isinstance(gdim, Iterable):
         dimensions = gdim
         gdim = len(dimensions)
     else:
         dimensions = np.arange(2)[:gdim]
+
+    if model is None:
+        model = gmsh.model
 
     labels = {
         model.getPhysicalName(dim, tag): (dim, tag)
@@ -409,7 +419,7 @@ def plot_scalar_field(
 
 def read_from_msh(
     filename: str,
-    comm,
+    comm=MPI.COMM_WORLD,
     rank: int = 0,
     gdim: Union[int, tuple] = 3,
     partitioner=None,
