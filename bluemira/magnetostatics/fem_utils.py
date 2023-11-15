@@ -1,7 +1,7 @@
 import functools
 from contextlib import contextmanager
 from dataclasses import dataclass
-from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Optional, Tuple, Type, Union
 from unittest.mock import patch
 
 import gmsh
@@ -43,7 +43,7 @@ def convert_to_points_array(x):
 
 
 def model_to_mesh(
-    model: Optional[gmsh.model] = None,
+    model: Optional[Type[gmsh.model]] = None,
     comm=MPI.COMM_WORLD,
     rank: int = 0,
     gdim: Union[int, Iterable[int]] = 3,
@@ -543,17 +543,16 @@ def compute_B_from_Psi(
     Magnetic flux density function in the mesh domain
     """
     mesh = psi.function_space.mesh
-    eltype = (*eltype, (mesh.geometry.dim,))
-    W0 = functionspace(mesh, eltype)  # noqa: N806
+    W0 = functionspace(mesh, (*eltype, (mesh.geometry.dim,)))  # noqa: N806
     B0 = BluemiraFemFunction(W0)
 
-    # x = ufl.SpatialCoordinate(mesh)
+    x_0 = ufl.SpatialCoordinate(mesh)[0]
 
     B_expr = Expression(
         ufl.as_vector(
             (
-                -psi.dx(1) / (2 * np.pi * r),
-                psi.dx(0) / (2 * np.pi * r),
+                -psi.dx(1) / (2 * np.pi * x_0),
+                psi.dx(0) / (2 * np.pi * x_0),
             )
         ),
         W0.element.interpolation_points(),
@@ -562,7 +561,7 @@ def compute_B_from_Psi(
     B0.interpolate(B_expr)
 
     if eltype1 is not None:
-        W = functionspace(mesh, eltype)  # noqa: N806
+        W = functionspace(mesh, (*eltype1, (mesh.geometry.dim,)))  # noqa: N806
         B = BluemiraFemFunction(W)
         B.interpolate(B0)
     else:
