@@ -21,6 +21,7 @@
 """Make the entire tokamak from scratch using user-provided variables.
 All units used in this file are either [cm] or dimensionless.
 """
+
 import copy
 import itertools
 from dataclasses import dataclass, field
@@ -57,7 +58,8 @@ def check_geometry(tokamak_geometry: TokamakGeometry) -> None:
 
     if inboard_build > tokamak_geometry.cgs.major_r:
         raise ValueError(
-            "The inboard build does not fit within the major radius. Increase the major radius."
+            "The inboard build does not fit within the major radius."
+            " Increase the major radius."
         )
 
 
@@ -420,7 +422,7 @@ def create_layer(
             )
 
         # Calculating volume for first wall - not perfect but very close as wall is thin
-        if short_name in ("fw", "sf"):
+        if short_name in {"fw", "sf"}:
             if inboard:
                 inner_cone = b_surf.cones[i - 1]
                 outer_cone = surf.cones[-1]

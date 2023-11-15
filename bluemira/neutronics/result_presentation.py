@@ -21,6 +21,7 @@
 """Functions to present the results prettily
 (Including both printed/logged texts and images)
 """
+
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, List, Optional, Union
@@ -388,7 +389,10 @@ class OpenMCResult:
             ret_str = f"{ret_str}\n{title}\n{self._tabulate(data)}"
 
         if self.stochastic_cell_volumes is not None:
-            ret_str += f"\nStochastic Cell Volumes (m^3) \n{self._tabulate(self.stochastic_cell_volumes)}"
+            ret_str += (
+                "\nStochastic Cell Volumes (m^3) \n"
+                f"{self._tabulate(self.stochastic_cell_volumes)}"
+            )
         return ret_str
 
     @staticmethod
