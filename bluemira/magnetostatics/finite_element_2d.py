@@ -36,12 +36,7 @@ from bluemira.base.constants import MU_0
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
 
 
-def Bz_coil_axis(
-    r: float,
-    z: Optional[float] = 0,
-    pz: Optional[float] = 0,
-    current: Optional[float] = 1,
-) -> float:
+def Bz_coil_axis(r: float, z: float = 0, pz: float = 0, current: float = 1) -> float:
     """
     Calculate the theoretical vertical magnetic field of a filament coil
     (of radius r and centred in (0, z)) on a point on the coil axis at
@@ -104,16 +99,12 @@ class FemMagnetostatic2d:
     def __init__(self, p_order: int = 2):
         self.p_order = p_order
         self.mesh = None
-        self.a = None
-        self.u = None
-        self.v = None
         self.V = None
         self.g = None
         self.boundaries = None
         self.problem = None
 
         self.psi = None
-        self.B = None
 
     def set_mesh(
         self,
@@ -163,12 +154,14 @@ class FemMagnetostatic2d:
         self.V = functionspace(self.mesh, ("P", self.p_order))
 
         # define trial and test functions
-        self.u = TrialFunction(self.V)
+        u = TrialFunction(self.V)
         self.v = TestFunction(self.V)
 
-        x = SpatialCoordinate(self.mesh)
         self.a = (
-            1 / (2.0 * np.pi * MU_0) * (1 / x[0] * dot(grad(self.u), grad(self.v))) * dx
+            1
+            / (2.0 * np.pi * MU_0)
+            * (1 / SpatialCoordinate(self.mesh)[0] * dot(grad(u), grad(self.v)))
+            * dx
         )
 
         # initialize solution
@@ -261,15 +254,15 @@ class FemMagnetostatic2d:
         """
         # new function space for mapping B as vector
         W = functionspace(self.mesh, ("DG", 0, (self.mesh.geometry.dim,)))
-        self.B = BluemiraFemFunction(W)
-        x = SpatialCoordinate(self.mesh)
+        B = BluemiraFemFunction(W)
+        x_0 = SpatialCoordinate(self.mesh)[0]
         B_expr = Expression(
             as_vector((
-                -self.psi.dx(1) / (2 * np.pi * x[0]),
-                self.psi.dx(0) / (2 * np.pi * x[0]),
+                -self.psi.dx(1) / (2 * np.pi * x_0),
+                self.psi.dx(0) / (2 * np.pi * x_0),
             )),
             W.element.interpolation_points(),
         )
-        self.B.interpolate(B_expr)
+        B.interpolate(B_expr)
 
-        return self.B
+        return B
