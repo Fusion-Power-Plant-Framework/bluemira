@@ -54,24 +54,20 @@ class Solovev:
         rt_lg, rt_2 = np.log(rt), rt**2
         zt_2 = zt**2
 
-        m = np.array(
-            [
-                [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
-                [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
-                [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
-                [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
-            ]
-        )
+        m = np.array([
+            [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
+            [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
+            [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
+            [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
+        ])
 
         b = np.sum(
-            np.array(
-                [
-                    [-ri_4 * 0.125, 0],
-                    [-ro_4 * 0.125, 0],
-                    [-(rt**4) * 0.125, zt_2 * 0.5],
-                    [-rt_2 * 0.5, 0],
-                ]
-            )
+            np.array([
+                [-ri_4 * 0.125, 0],
+                [-ro_4 * 0.125, 0],
+                [-(rt**4) * 0.125, zt_2 * 0.5],
+                [-rt_2 * 0.5, 0],
+            ])
             * np.array([self.A1, self.A2]),
             axis=1,
         )
@@ -86,16 +82,14 @@ class Solovev:
         def psi_func(x):
             x_0_2 = x[0] ** 2
             x_1_2 = x[1] ** 2
-            return np.array(
-                [
-                    1.0,
-                    x_0_2,
-                    x_0_2 * (x_0_2 - 4 * x_1_2),
-                    x_0_2 * np.log(x[0]) - x_1_2,
-                    (x[0] ** 4) / 8.0,
-                    -(x_1_2) / 2.0,
-                ]
-            )
+            return np.array([
+                1.0,
+                x_0_2,
+                x_0_2 * (x_0_2 - 4 * x_1_2),
+                x_0_2 * np.log(x[0]) - x_1_2,
+                (x[0] ** 4) / 8.0,
+                -(x_1_2) / 2.0,
+            ])
 
         m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
         return 2 * np.pi * np.sum(psi_func(point) * m)
@@ -226,7 +220,7 @@ if __name__ == "__main__":
     gmsh.write("Mesh.msh")
     gmsh.finalize()
 
-    (mesh1, ct1, ft1), labels = read_from_msh("Mesh.msh", mesh_comm, model_rank, gdim=2)
+    (mesh1, ct1, ft1), labels = read_from_msh("Mesh.msh", gdim=2)
 
     # Inizialize the em solever
     gs_solver = FemMagnetostatic2d(2)
