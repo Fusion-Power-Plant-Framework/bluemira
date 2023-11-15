@@ -26,23 +26,11 @@ from bluemira.base.look_and_feel import bluemira_print_flush
 from bluemira.display import plot_defaults
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    _interpolate_profile,
-    find_magnetic_axis,
-)
+from bluemira.equilibria.fem_fixed_boundary.utilities import find_magnetic_axis
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction, integrate_f
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 from bluemira.utilities.plot_tools import make_gif, save_figure
-
-
-def _parse_to_callable(profile_data: Union[None, np.ndarray]):
-    if isinstance(profile_data, np.ndarray):
-        x = np.linspace(0, 1, len(profile_data))
-        return _interpolate_profile(x, profile_data)
-    if profile_data is None:
-        return None
-    return None
 
 
 @dataclass
