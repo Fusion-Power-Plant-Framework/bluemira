@@ -1,4 +1,5 @@
 import functools
+from contextlib import contextmanager
 from dataclasses import dataclass
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 from unittest.mock import patch
@@ -204,7 +205,22 @@ def integrate_f(
 # Plotting method for scalar field.
 # Not really clear how to manage pyvista plots. Left here just as reference
 # for a better future implementation.
-def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.png"):
+@contextmanager
+def pyvista_plot_show_save(filename: str = "field.svg"):
+    if pyvista.OFF_SCREEN:
+        pyvista.start_xvfb()
+    plotter = pyvista.Plotter()
+
+    try:
+        yield plotter
+    finally:
+        if pyvista.OFF_SCREEN:
+            plotter.screenshot(filename)
+        else:
+            plotter.show()
+
+
+def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.svg"):
     """
     Plot a scalar field given by the dolfinx function "field" in pyvista or in a file.
 
@@ -220,20 +236,14 @@ def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.png
     if pyvista.OFF_SCREEN is False the plot is shown on the screen, otherwise
     the file with the plot is saved.
     """
-    if pyvista.OFF_SCREEN:
-        pyvista.start_xvfb()
-    plotter = pyvista.Plotter()
-    V = field.function_space
-    degree = V.ufl_element().degree()
-    field_grid = pyvista.UnstructuredGrid(*vtk_mesh(V.mesh if degree == 0 else V))
-    field_grid.point_data["Field"] = field.x.array
-    field_grid.set_active_scalars("Field")
-    warp = field_grid.warp_by_scalar("Field", factor=1)
-    _actor = plotter.add_mesh(warp, show_edges=True)
-    if not pyvista.OFF_SCREEN:
-        plotter.show()
-    else:
-        _field_fig = plotter.screenshot(filename)
+    with pyvista_plot_show_save(filename) as plotter:
+        V = field.function_space
+        degree = V.ufl_element().degree()
+        field_grid = pyvista.UnstructuredGrid(*vtk_mesh(V.mesh if degree == 0 else V))
+        field_grid.point_data["Field"] = field.x.array
+        field_grid.set_active_scalars("Field")
+        warp = field_grid.warp_by_scalar("Field", factor=1)
+        _actor = plotter.add_mesh(warp, show_edges=True)
 
 
 def error_L2(  # noqa: N802
@@ -308,7 +318,6 @@ def eval_f(function: Function, points: np.ndarray) -> Tuple[np.ndarray, ...]:
     the values of the function in the specified points
 
     """
-    # TODO(je-cook) get rid of check strings
     mesh = function.function_space.mesh
 
     bb_tree = function._bb_tree if hasattr(function, "_bb_tree") else calc_bb_tree(mesh)
@@ -565,7 +574,7 @@ def compute_B_from_Psi(
 def plot_meshtags(
     mesh: Mesh,
     meshtags: Optional[Union[cpp.mesh.MeshTags_float64, cpp.mesh.MeshTags_int32]] = None,
-    filename: str = "meshtags.png",
+    filename: str = "meshtags.svg",
 ):
     """
     Plot dolfinx mesh with markers using pyvista.
@@ -580,6 +589,7 @@ def plot_meshtags(
         Full path for plot save
     """
     # Create VTK mesh
+
     cells, types, x = plot.vtk_mesh(mesh)
     grid = pyvista.UnstructuredGrid(cells, types, x)
 
@@ -588,10 +598,6 @@ def plot_meshtags(
         grid.cell_data["Marker"] = meshtags.values
         grid.set_active_scalars("Marker")
 
-    plotter = pyvista.Plotter()
-    plotter.add_mesh(grid, show_edges=True, show_scalar_bar=False)
-    plotter.view_xy()
-    if not pyvista.OFF_SCREEN:
-        plotter.show()
-    else:
-        plotter.screenshot(filename)
+    with pyvista_plot_show_save(filename) as plotter:
+        plotter.add_mesh(grid, show_edges=True, show_scalar_bar=False)
+        plotter.view_xy()

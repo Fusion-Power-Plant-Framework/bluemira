@@ -58,6 +58,7 @@ from bluemira.magnetostatics.fem_utils import (
     Association,
     create_j_function,
     model_to_mesh,
+    pyvista_plot_show_save,
 )
 from bluemira.magnetostatics.finite_element_2d import Bz_coil_axis, FemMagnetostatic2d
 from bluemira.mesh import meshing
@@ -140,24 +141,13 @@ with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
     xdmf.write_meshtags(ft, mesh.geometry)
     xdmf.write_meshtags(ct, mesh.geometry)
 
-# pyvista.start_xvfb()
-
-pyvista.OFF_SCREEN = False
-if pyvista.OFF_SCREEN:
-    pyvista.start_xvfb()
-
-plotter = pyvista.Plotter()
-grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
-num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
-grid.cell_data["Marker"] = ct.values[ct.indices < num_local_cells]
-grid.set_active_scalars("Marker")
-actor = plotter.add_mesh(grid, show_edges=True)
-plotter.view_xy()
-
-if not pyvista.OFF_SCREEN:
-    plotter.show()
-else:
-    cell_tag_fig = plotter.screenshot("cell_tags.png")
+with pyvista_plot_show_save("cell_tags.png") as plotter:
+    grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
+    num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
+    grid.cell_data["Marker"] = ct.values[ct.indices < num_local_cells]
+    grid.set_active_scalars("Marker")
+    actor = plotter.add_mesh(grid, show_edges=True)
+    plotter.view_xy()
 
 
 # %%
@@ -259,5 +249,4 @@ ax.set_ylabel("error (T)")
 plt.show()
 
 # from bluemira.magnetostatics.fem_utils import plot_meshtags
-# pyvista.OFF_SCREEN = False
 # plot_meshtags(mesh)
