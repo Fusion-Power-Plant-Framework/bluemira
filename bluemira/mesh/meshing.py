@@ -238,7 +238,7 @@ class Mesh:
             buffer = self.__mesh_obj(obj, dim=dim)
             # Check for possible intersection (only allowed at the boundary to adjust
             # the gmsh_dictionary
-            Mesh.__iterate_gmsh_dict(buffer, Mesh._check_intersections)
+            self.__iterate_gmsh_dict(buffer, self._check_intersections)
 
             # Create the physical groups
             self._apply_physical_group(buffer)
@@ -349,8 +349,8 @@ class Mesh:
         points_lcar = dict(points_lcar)
         return list(points_lcar.items())
 
-    @staticmethod
     def __apply_fragment(
+        self,
         buffer: dict,
         dim: Iterable[int] = (2, 1, 0),
         all_ent=None,
@@ -364,7 +364,7 @@ class Mesh:
         all_ent, _oo, oov = _FreeCADGmsh._fragment(
             dim, all_ent, [] if tools is None else tools, remove_object, remove_tool
         )
-        Mesh.__iterate_gmsh_dict(buffer, _FreeCADGmsh._map_mesh_dict, all_ent, oov)
+        self.__iterate_gmsh_dict(buffer, _FreeCADGmsh._map_mesh_dict, all_ent, oov)
 
     @staticmethod
     def _check_intersections(gmsh_dict: dict):
@@ -377,27 +377,24 @@ class Mesh:
                 tag[1] for tag in _FreeCADGmsh._get_boundary(gmsh_curve_tag)
             })
 
-    @staticmethod
-    def __iterate_gmsh_dict(buffer: dict, function: Callable, *args):
+    def __iterate_gmsh_dict(self, buffer: dict, function: Callable, *args):
         """
         Supporting function to iterate over a gmsh dict.
         """
         if "BluemiraWire" in buffer:
-            boundary = buffer["BluemiraWire"]["boundary"]
             if "gmsh" in buffer["BluemiraWire"]:
                 function(buffer["BluemiraWire"]["gmsh"], *args)
-            for item in boundary:
+            for item in buffer["BluemiraWire"]["boundary"]:
                 for k in item:
                     if k == "BluemiraWire":
-                        Mesh.__iterate_gmsh_dict(item, function, *args)
+                        self.__iterate_gmsh_dict(item, function, *args)
 
         for buffer_type in ("BluemiraFace", "BluemiraShell", "BluemiraCompound"):
             if buffer_type in buffer:
-                boundary = buffer[buffer_type]["boundary"]
                 if "gmsh" in buffer[buffer_type]:
                     function(buffer[buffer_type]["gmsh"], *args)
-                for item in boundary:
-                    Mesh.__iterate_gmsh_dict(item, function, *args)
+                for item in buffer[buffer_type]["boundary"]:
+                    self.__iterate_gmsh_dict(item, function, *args)
 
     @staticmethod
     def __buffer_loop(buffer: dict, type_check: str, raise_error=False):
@@ -524,13 +521,12 @@ class Mesh:
             if obj_name not in buffer:
                 raise ValueError(f"No {obj_name} to mesh.")
 
-            boundary = buffer[obj_name]["boundary"]
             if "gmsh" in buffer[obj_name]:
                 for d in MeshTagsNC:
                     if d in buffer[obj_name]["gmsh"]:
                         gmsh_dict[d] += buffer[obj_name]["gmsh"][d]
 
-            for item in boundary:
+            for item in buffer[obj_name]["boundary"]:
                 if obj_name == "BluemiraWire":
                     for k in item:
                         if k == obj_name:
