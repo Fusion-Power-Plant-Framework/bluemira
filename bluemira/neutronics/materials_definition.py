@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Create specific materials that will be imported by other modules."""
+
 from openmc import Material
 
 # Elements

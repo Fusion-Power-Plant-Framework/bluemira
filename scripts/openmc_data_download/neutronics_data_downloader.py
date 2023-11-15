@@ -1,4 +1,5 @@
 """Neutronics data downloader main script"""
+
 import argparse
 import fnmatch
 import functools
@@ -55,7 +56,7 @@ def extractor(
                     if not file.is_file() or file.stat().st_size != m.file_size:
                         zip_handler.extract(m, path=extraction_dir)
 
-        elif suffix in (".tar.gz", ".tgz", ".tar.bz2", ".tar.xz", ".xz"):
+        elif suffix in {".tar.gz", ".tgz", ".tar.bz2", ".tar.xz", ".xz"}:
             with tarfile.open(f, "r") as tgz:
                 bluemira_print("Getting file list")
                 file_list = {m.get_info()["name"]: m for m in tgz.getmembers()}
@@ -79,8 +80,8 @@ def _filter_members(
     file: str, filename: str, members: Dict[str, Union[tarfile.TarInfo, zipfile.ZipInfo]]
 ) -> Union[List[tarfile.TarInfo], List[zipfile.ZipInfo]]:
     """Filter archive contents to only extract wanted files"""
-    import openmc_data.convert.convert_tendl as tendl
-    from openmc_data import all_release_details as ard
+    import openmc_data.convert.convert_tendl as tendl  # noqa: PLC0415
+    from openmc_data import all_release_details as ard  # noqa: PLC0415
 
     with open(Path(Path(file).parent, "nuclear_data_isotopes.json")) as fh:
         isotope_data = json.load(fh)
@@ -216,8 +217,8 @@ def main(args: Optional[List[str]] = None):
     download = functools.partial(downloader, max_workers=p.download_threads)
 
     # Imported after parsing arguments because argparse is called on import here...
-    import openmc_data.convert.convert_endf as endf
-    import openmc_data.convert.convert_tendl as tendl
+    import openmc_data.convert.convert_endf as endf  # noqa: PLC0415
+    import openmc_data.convert.convert_tendl as tendl  # noqa: PLC0415
 
     libs = (tendl, endf)
     lib_names = tuple(lib.__name__.split("_")[-1] for lib in libs)

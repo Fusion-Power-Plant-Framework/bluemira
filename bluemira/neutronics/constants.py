@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """constants used for the neutronics module"""
+
 from periodictable import elements
 
 from bluemira.base.constants import N_AVOGADRO, raw_uc

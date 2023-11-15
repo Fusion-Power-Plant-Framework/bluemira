@@ -19,6 +19,7 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """dataclasses containing parameters used to set up the openmc model."""
+
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal, Tuple, Union
@@ -211,10 +212,10 @@ class TokamakGeometryCGS(TokamakGeometry):
         tg = asdict(tokamak_geometry)
         tgcgs = tg.copy()
         for k, v in tgcgs.items():
-            if k not in (
+            if k not in {
                 "elong",
                 "triang",
-            ):  # these are the only two dimensionless quantities
+            }:  # these are the only two dimensionless quantities
                 tgcgs[k] = raw_uc(
                     v, "m", "cm"
                 )  # everything else are distances measurements.

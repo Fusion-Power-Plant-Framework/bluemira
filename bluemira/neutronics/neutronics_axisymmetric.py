@@ -24,6 +24,7 @@ TODO:
 ____
 [ ]Tests?
 """
+
 import openmc
 from numpy import pi
 from pps_isotropic.source import create_parametric_plasma_source
@@ -94,13 +95,13 @@ def setup_openmc(
     as the nuclear cross-section values are evaluated at this temperature
     """
     try:
-        from openmc.config import config
+        from openmc.config import config  # noqa: PLC0415
 
         config["cross_sections"] = variables.cross_section_xml
 
     except ModuleNotFoundError:
         # Not new enought openmc
-        import os
+        import os  # noqa: PLC0415
 
         os.environ["OPENMC_CROSS_SECTIONS"] = str(variables.cross_section_xml)
     settings = openmc.Settings()

@@ -1,4 +1,5 @@
 """Asynchronous multithreaded file downloader"""
+
 import asyncio
 import concurrent.futures
 import functools
@@ -80,8 +81,7 @@ async def _download(
     with open(output, "wb") as o:  # noqa: ASYNC101
         for i in range(len(chunks)):
             chunk_path = Path(f"{output}.part{i}")
-            with open(chunk_path, "rb") as s:  # noqa: ASYNC101
-                o.write(s.read())
+            o.write(Path(chunk_path).read_bytes())
 
     # Write all before deleting
     for i in range(len(chunks)):
