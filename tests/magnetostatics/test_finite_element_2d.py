@@ -8,7 +8,6 @@ from pathlib import Path
 
 import gmsh
 import numpy as np
-from mpi4py import MPI
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry import tools
@@ -34,9 +33,6 @@ class TestGetNormal:
         calculated with the fem module and the analytic solution as limit of the
         Biot-Savart law.
         """
-        model_rank = MPI.COMM_WORLD.rank
-        mesh_comm = MPI.COMM_WORLD
-
         r_enclo = 100
         lcar_enclo = 2
         lcar_axis = lcar_enclo / 10
@@ -88,9 +84,7 @@ class TestGetNormal:
         m = meshing.Mesh(meshfile=meshfiles)
         m(c_universe, dim=2)
 
-        (mesh, ct, ft), _labels = model_to_mesh(
-            gmsh.model, mesh_comm, model_rank, gdim=2
-        )
+        (mesh, ct, ft), _labels = model_to_mesh(gmsh.model, gdim=2)
         print(np.unique(ct.values))
 
         gmsh.write("Mesh.msh")

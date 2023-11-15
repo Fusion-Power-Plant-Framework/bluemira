@@ -561,17 +561,12 @@ def create_mesh(
     directory: str,
     mesh_name_msh: str,
     gdim: Union[int, Tuple] = (0, 2),
+    comm=MPI.COMM_WORLD,
+    rank: int = 0,
 ) -> dolfinx.mesh.Mesh:
     """
     Create mesh
     """
     meshfile = Path(directory, mesh_name_msh).as_posix()
     meshing.Mesh(meshfile=meshfile)(plasma)
-    model_rank = 0
-    mesh_comm = MPI.COMM_WORLD
-    return read_from_msh(
-        meshfile,
-        mesh_comm,
-        model_rank,
-        gdim=gdim,
-    )
+    return read_from_msh(meshfile, comm, rank, gdim=gdim)

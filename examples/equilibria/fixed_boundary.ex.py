@@ -75,18 +75,12 @@ plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
 
 from pathlib import Path
 
-from mpi4py import MPI
-
 from bluemira.equilibria.fem_fixed_boundary.utilities import read_from_msh
 from bluemira.mesh import meshing
 
 meshing.Mesh(meshfile=Path(".", "fixed_boundary_example.msh").as_posix())(plasma)
 
-model_rank = 0
-mesh_comm = MPI.COMM_WORLD
-(mesh, ct, ft), labels = read_from_msh(
-    "fixed_boundary_example.msh", mesh_comm, model_rank, gdim=[0, 2]
-)
+(mesh, ct, ft), labels = read_from_msh("fixed_boundary_example.msh", gdim=[0, 2])
 
 # %% [markdown]
 # Now we define some profile functions for p' and FF'.
