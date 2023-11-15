@@ -18,9 +18,7 @@ import numpy as np
 from dolfinx.fem import Expression
 from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
-from ufl import (
-    as_vector,
-)
+from ufl import as_vector
 
 from bluemira.base.constants import EPS, MU_0
 from bluemira.base.file import try_get_bluemira_path
@@ -213,7 +211,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         -------
         Source current callable to solve the magnetostatic problem
         """
-        from bluemira.magnetostatics.fem_utils import calculate_area
+        from bluemira.magnetostatics.fem_utils import calculate_area  # noqa: PLC0415
 
         area = calculate_area(self.mesh, None, None)
 
