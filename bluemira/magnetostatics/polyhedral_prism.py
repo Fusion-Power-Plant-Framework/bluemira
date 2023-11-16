@@ -117,6 +117,28 @@ class Bottura(PolyhedralKernel):
         return _vector_potential_bottura(*args)
 
 
+class Ciric(PolyhedralKernel):
+    """
+    Ciric polyhedral prism formulation
+
+    https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=123865&tag=1
+    """
+
+    @staticmethod
+    def field(*args) -> np.ndarray:
+        """
+        Magnetic field
+        """
+        return _field_ciric(*args)
+
+    @staticmethod
+    def vector_potential(*args) -> np.ndarray:
+        """
+        Vector potential
+        """
+        raise NotImplementedError
+
+
 @nb.jit(nopython=True, cache=True)
 def vector_norm_eps(r: np.ndarray) -> float:
     """
@@ -710,3 +732,267 @@ def _line_integral_bottura(x: float, y: float, z: float) -> float:
     a1 = np.arctan2(x * abs_z, (y * r))
     a2 = np.arctan2(x, y)
     return np.log(x + r) + (abs_z / y) * (a1 - a2)
+
+
+def _field_ciric(  # noqa: PLR0915
+    current_direction: np.ndarray,
+    face_points: np.ndarray,
+    face_normals: np.ndarray,
+    mid_points: np.ndarray,
+    point: np.ndarray,
+) -> np.ndarray:
+    """
+    Calculate the magnetic field
+
+    Parameters
+    ----------
+    current_direction:
+        Normalised current direction vector (3)
+    face_points:
+        Array of points on each face (n_face, n_points, 3)
+    face_normals:
+        Array of normalised normal vectors to the faces (pointing outwards)
+        (n_face, 3)
+    mid_points:
+        Array of face midpoints (n_face, 3)
+    point:
+        Point at which to calculate the magnetic field (3)
+
+    Returns
+    -------
+    Magnetic field vector at the point (response to unit current density)
+    """
+    B = np.zeros(3)
+
+    # Coordinate reordering
+    rectangles = []
+    for i, r in enumerate(face_points):
+        if i == 0:
+            # First end cap
+            new = [r[0], r[1], r[2], r[3]]
+        elif i == 5:  # noqa: PLR2004
+            # Second end cap
+            new = [r[0], r[1], r[2], r[3]]  # [::-1]
+
+        # Fairly sure the side faces are correct
+        elif i == 1:  # noqa: SIM114
+            new = [r[3], r[0], r[1], r[2]]
+            # new = [r[2], r[3], r[0], r[1]]
+        elif i == 2:  # noqa: PLR2004
+            new = [r[3], r[0], r[1], r[2]]
+            # new = [r[2], r[3], r[0], r[1]]
+            # new = [r[2], r[1], r[0], r[3]]
+            # [::-1]  # ?
+            # new = [r[0], r[1], r[2], r[3]][::-1]
+        elif i == 3:  # noqa: PLR2004
+            # This can give a negative z_2 value
+            new = [r[3], r[0], r[1], r[2]]
+            # new = [r[2], r[3], r[0], r[1]]
+            # This is a good alternative because it sets the trapezoid "right"..ish
+            # new = [r[1], r[2], r[3], r[0]]
+        elif i == 4:  # noqa: PLR2004
+            new = [r[3], r[0], r[1], r[2]]
+            # new = [r[2], r[3], r[0], r[1]]
+            # new = [r[3], r[0], r[1], r[2]][::-1]
+        rectangles.append(new)
+
+    # "Arbitrary" origin
+    o_1 = rectangles[0][0]
+    o_2 = rectangles[-1][0]
+    o_1 - o_2
+    o_3 = rectangles[0][2]
+    o_4 = rectangles[-1][2]
+
+    # Arbitrary origin = mid1
+    mid1 = 0.5 * (o_1 + o_2)
+    mid2 = 0.5 * (o_3 + o_4)
+
+    m_c = mid2 - mid1
+    m_c /= np.linalg.norm(m_c)
+
+    # odn = np.linalg.norm(origin_line)
+    # ap = point - mid1
+    # D = np.linalg.norm(np.cross(ap, origin_line)) / odn
+    # D = np.linalg.norm(np.cross(point - o_1, point - o_2)) / np.linalg.norm(o_2 - o_1)
+
+    # Assume that the distance X is to the field point
+    X = np.dot(point - mid1, np.cross(m_c, current_direction))  # noqa: N806
+
+    inside = _point_in_volume(point, face_normals, mid_points)
+    #
+    # All faces
+    idx = [0, 1, 2, 3, 4, 5]
+    # Side faces only
+    idx = [1, 2, 3, 4]
+    # Side trapezoids
+    # idx = [1, 3]
+    # Top bottom rectangles
+    # idx = [2, 4]
+
+    rectangles = np.array(rectangles)
+
+    for i, rectangle in zip(idx, rectangles[idx]):
+        normal = face_normals[i]
+        r_1 = point - rectangle[0]
+        r_2 = point - rectangle[1]
+        r_3 = point - rectangle[2]
+        r_4 = point - rectangle[3]
+        l_12 = r_1 - r_2
+        l_34 = r_3 - r_4
+        l_12n = np.linalg.norm(l_12)
+        l_34n = np.linalg.norm(l_34)
+
+        # Conversion to local coordinate system
+        zh = r_1 - r_4
+        zh /= np.linalg.norm(zh)
+        z_2 = np.dot(zh, l_12)
+
+        d = np.sqrt(l_12n**2 - z_2**2)
+        xh = np.cross(l_12, zh) / d
+        yh = np.cross(zh, xh)
+        dcm = np.zeros((3, 3))
+        dcm[0, :] = xh
+        dcm[1, :] = yh
+        dcm[2, :] = zh
+
+        j_sc = np.cross(normal, m_c)
+
+        if False:
+            import matplotlib.pyplot as plt
+
+            _, ax = plt.subplots(subplot_kw={"projection": "3d"})
+            for j, r in enumerate(rectangle):
+                ax.plot(*r, marker="o")
+                ax.text(*r, str(j))
+            # ax.plot(*mid_points[i], marker="x", color="k")
+            ax.quiver(*mid_points[i], *0.1 * xh, color="g")
+            ax.quiver(*mid_points[i], *0.1 * yh, color="r")
+            ax.quiver(*mid_points[i], *0.1 * zh, color="k")
+            ax.plot(*point, marker="x", color="b")
+            ax.quiver(*rectangle[0], *r_1)
+            ax.quiver(*mid_points[i], *j_sc, color="c")
+            ax.quiver(*mid_points[i], *0.1 * m_c, color="b")
+            plt.show()
+
+        # Check coordinate systems are as expected
+        assert np.allclose(  # noqa: S101
+            zh,
+            (rectangle[3] - rectangle[0]) / np.linalg.norm(rectangle[3] - rectangle[0]),
+        )
+        assert np.allclose(xh, normal)  # noqa: S101
+
+        r_1n = np.linalg.norm(r_1)
+        r_2n = np.linalg.norm(r_2)
+        r_3n = np.linalg.norm(r_3)
+        r_4n = np.linalg.norm(r_4)
+        x = np.dot(xh, r_1)
+        y = np.dot(yh, r_1)
+        z = np.dot(zh, r_1)
+        z_3 = np.dot(zh, r_1 - r_3)
+        z_4 = np.dot(zh, r_1 - r_4)
+
+        p_12 = np.dot(xh, np.cross(r_1, r_2))
+        p_34 = np.dot(-xh, np.cross(r_3, r_4))
+        q_12 = np.dot(r_1, l_12)
+        q_34 = np.dot(-r_4, l_34)
+
+        lambda_12 = np.log((r_1n * l_12n - q_12) / ((r_2n + l_12n) * l_12n - q_12))
+        lambda_34 = np.log(((r_3n + l_34n) * l_34n - q_34) / (r_4n * l_34n - q_34))
+        lambdda = (
+            np.log(
+                ((r_1n + z) * (r_3n + z - z_3)) / ((r_2n + z - z_2) * (r_4n + z - z_4))
+            )
+            + lambda_12 * z_2 / l_12n
+            + lambda_34 * (z_3 - z_4) / l_34n
+        )
+        an, ad = z * q_12 - z_2 * r_1n**2, x * r_1n * d
+        bn, bd = (z - z_2) * (q_12 - l_12n**2) - z_2 * r_2n**2, x * r_2n * d
+        cn, cd = (z - z_3) * (q_34 - l_34n**2) - r_3n**2 * (z_3 - z_4), x * r_3n * d
+        dn, dd = (z - z_4) * q_34 - (z_3 - z_4) * r_4n**2, x * r_4n * d
+
+        gamma = (
+            np.arctan(an / ad)
+            - np.arctan(bn / bd)
+            + np.arctan(cn / cd)
+            - np.arctan(dn / dd)
+        )
+        # gamma = (  # This won't work, need to try alternative e.g. omega_t
+        #    np.arctan2(an, ad)
+        #    - np.arctan2(bn, bd)
+        #    + np.arctan2(cn, cd)
+        #    - np.arctan2(dn, dd)
+        # )
+        # gamma = (  # This might work
+        #     np.arctan2(ad, an)
+        #     - np.arctan2(bd, bn)
+        #     + np.arctan2(cd, cn)
+        #     - np.arctan2(dd, dn)
+        # )
+        if np.sign(x) != np.sign(gamma):
+            gamma *= -1
+            # Check with omega_t  <- need to use anyway for a polygon
+        assert np.sign(x) == np.sign(gamma)  # noqa: S101
+
+        r12n = r_1n - r_2n
+        r34n = r_3n - r_4n
+        lambda_12_l_12_3 = lambda_12 / l_12n**3
+        lambda_34_l_34_3 = lambda_34 / l_34n**3
+        psic = (
+            d * z_2 / l_12n**2 * r12n
+            + d * (z_3 - z_4) / l_34n**2 * r34n
+            - d**2 * (p_12 * lambda_12_l_12_3 + p_34 * lambda_34_l_34_3)
+        )
+        n_h = normal
+        # Cosines of the angles made by n_h and m_c and m_c x J
+        n_p = np.dot(n_h, m_c)
+        # TODO: Discrepancy between these two options
+        n_pp = np.dot(n_h, current_direction)
+        n_pp = np.dot(n_h, np.cross(m_c, current_direction))
+        # TODO: Need to account for surface charge only for end faces
+        # (decompose polygon into triangles)
+        # if i == 0 or i == 5:
+        # This is probably not the right way of separating out surface currents
+        #    pass  # n_pp = 0
+
+        # Distance from the arbitrary origin (0, 0, 0) to the edge (k-1,k)
+        dvec = mid1 - rectangle[0]
+        D = np.dot(dvec, np.cross(m_c, current_direction))  # noqa: N806
+        B_f = np.zeros(3)
+        B_f[0] = (n_pp * D - n_p * (n_p * x + n_pp * y)) * lambdda + (
+            (n_p * D - n_p * (-n_pp * x + n_p * y)) * gamma - n_p * n_pp * psic
+        )
+        B_f[1] = (-(n_p * D - n_p * (-n_pp * x + n_p * y)) * lambdda) + (
+            (n_pp * D - n_p * (n_p * x + n_pp * y)) * gamma + n_p**2 * psic
+        )
+        B_f[2] = (
+            n_p * D * d * (lambda_12 / l_12n + lambda_34 / l_34n)
+        ) - n_p**2 * d**2 * (
+            r12n / l_12n**2
+            + r34n / l_34n**2
+            + q_12 * lambda_12_l_12_3
+            + q_34 * lambda_34_l_34_3
+        )
+
+        # TODO: not clear if the resulting field is in local or global coordinates...
+        # B += B_f
+        # B += np.dot(dcm, B_f)
+        B += np.dot(dcm.T, B_f)
+        # breakpoint()
+
+    # TODO: factor in area properly once it works
+    area = 1
+    M_c_r = inside * X * m_c / area  # noqa: N806
+    # TODO: figure out M_c units, because I can't believe MU_0 is not involved.
+    # M_c_r = 0
+    return MU_0_4PI * (B + M_c_r)
+
+
+def _point_in_volume(point, normals, mid_points):
+    """
+    Determine if a field point is inside the source
+    """
+    # Who'd have thought it was this easy?
+    for i, normal in enumerate(normals):
+        if np.dot(normal, point - mid_points[i]) > 0:
+            return False
+    return True
