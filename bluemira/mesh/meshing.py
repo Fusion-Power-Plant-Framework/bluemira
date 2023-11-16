@@ -338,7 +338,7 @@ class Mesh:
             if k in SUPPORTED_GEOS:
                 if "lcar" in v and v["lcar"] is not None:
                     points_tags = self.get_gmsh_dict(buffer, GmshFileType.GMSH)[
-                        MeshTags(GEOS[k].value)
+                        MeshTags(0)
                     ]
                     if len(points_tags) > 0:
                         points_lcar += [(p[1], v["lcar"]) for p in points_tags]
