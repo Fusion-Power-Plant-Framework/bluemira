@@ -857,7 +857,7 @@ def _field_ciric(  # noqa: PLR0915
 
         j_sc = np.cross(normal, m_c)
 
-        if True:
+        if False:
             import matplotlib.pyplot as plt
 
             _, ax = plt.subplots(subplot_kw={"projection": "3d"})
