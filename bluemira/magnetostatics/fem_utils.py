@@ -33,7 +33,6 @@ import gmsh
 import matplotlib.pyplot as plt
 import matplotlib.tri as tr
 import numpy as np
-import pyvista
 import ufl
 from dolfinx import cpp, geometry, plot
 from dolfinx.fem import (
@@ -119,9 +118,9 @@ def extract_geometry(
     return x
 
 
-def calc_bb_tree(mesh: Mesh) -> geometry.BoundingBoxTree:
+def calc_bb_tree(mesh: Mesh, padding: float = 0.0) -> geometry.BoundingBoxTree:
     """Calculate the BoundingBoxTree of a dolfinx mesh"""
-    return geometry.bb_tree(mesh, mesh.topology.dim)
+    return geometry.bb_tree(mesh, mesh.topology.dim, padding=padding)
 
 
 class BluemiraFemFunction(Function):
@@ -253,6 +252,8 @@ def integrate_f(
 @contextmanager
 def pyvista_plot_show_save(filename: str = "field.svg"):
     """Show or save figure from pyvista"""
+    import pyvista
+
     if pyvista.OFF_SCREEN:
         pyvista.start_xvfb()
     plotter = pyvista.Plotter()
@@ -282,6 +283,8 @@ def plot_fem_scalar_field(field: BluemiraFemFunction, filename: str = "field.svg
     if pyvista.OFF_SCREEN is False the plot is shown on the screen, otherwise
     the file with the plot is saved.
     """
+    import pyvista
+
     with pyvista_plot_show_save(filename) as plotter:
         V = field.function_space  # noqa: N806
         degree = V.ufl_element().degree()
@@ -634,6 +637,7 @@ def plot_meshtags(
         Full path for plot save
     """
     # Create VTK mesh
+    import pyvista
 
     cells, types, x = plot.vtk_mesh(mesh)
     grid = pyvista.UnstructuredGrid(cells, types, x)

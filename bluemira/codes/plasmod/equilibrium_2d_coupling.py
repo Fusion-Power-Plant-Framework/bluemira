@@ -17,14 +17,6 @@ from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
 from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Union
 
-if TYPE_CHECKING:
-    from bluemira.codes.interface import BaseRunMode, CodesSolver
-    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-        FemGradShafranovFixedBoundary,
-    )
-    from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
-    from bluemira.geometry.parameterisations import GeometryParameterisation
-
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import cumulative_trapezoid
@@ -38,6 +30,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.plasmod import plot_default_profiles
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
+
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
     create_mesh,
@@ -49,6 +42,14 @@ from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.optimisation._tools import approx_derivative
 from bluemira.utilities.plot_tools import make_gif, save_figure
+
+if TYPE_CHECKING:
+    from bluemira.codes.interface import BaseRunMode, CodesSolver
+    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+        FemGradShafranovFixedBoundary,
+    )
+    from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
+    from bluemira.geometry.parameterisations import GeometryParameterisation
 
 __all__ = ["solve_transport_fixed_boundary"]
 
