@@ -40,6 +40,7 @@ from dolfinx.fem import (
     Expression,
     Function,
     assemble_scalar,
+    create_nonmatching_meshes_interpolation_data,
     form,
     functionspace,
     locate_dofs_topological,
@@ -140,9 +141,19 @@ class BluemiraFemFunction(Function):
         super().__init__(*args, **kwargs)
         self._bb_tree = calc_bb_tree(self.function_space.mesh)
 
-    def interpolate(self, *args, **kwargs):
+    def interpolate(self, u, *args, **kwargs):
         """Interpolate function and cache bb_tree"""
-        super().interpolate(*args, **kwargs)
+        nmm = (
+            create_nonmatching_meshes_interpolation_data(
+                self.function_space.mesh._cpp_object,
+                self.function_space.element,
+                u.function_space.mesh._cpp_object,
+                padding=1e-8,
+            )
+            if hasattr(u, "function_space")
+            else ((), (), (), ())
+        )
+        super().interpolate(u, *args, nmm_interpolation_data=nmm, **kwargs)
         calc_bb_tree(self.function_space.mesh)
 
     def __call__(self, points: np.ndarray):
