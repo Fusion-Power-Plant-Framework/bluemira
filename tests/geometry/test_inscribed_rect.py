@@ -49,9 +49,7 @@ class TestInscribedRectangle:
         c_s.translate(i)
         complex_shape = boolean_cut(complex_shape, c_s)[0]
 
-    complex_shape = complex_shape.boundary[0].discretize(  # noqa: PIE794
-        byedges=True, ndiscr=100
-    )
+    complex_shape = complex_shape.boundary[0].discretize(byedges=True, ndiscr=100)
 
     shapes = (square, diamond, circle, complex_shape)
     convex = (True, True, True, False)
