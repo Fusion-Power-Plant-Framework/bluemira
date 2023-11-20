@@ -26,7 +26,7 @@ Interfaces for builder classes.
 from __future__ import annotations
 
 import abc
-from typing import TYPE_CHECKING, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Union
 
 from bluemira.base.components import Component
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
@@ -34,9 +34,10 @@ from bluemira.base.tools import _timing
 from bluemira.utilities.plot_tools import set_component_view
 
 if TYPE_CHECKING:
+    from bluemira.base.parameter_frame._parameter import ParamDictT
     from bluemira.base.reactor_config import ConfigParams
 
-BuildConfig = Dict[str, Union[int, float, str, "BuildConfig"]]
+BuildConfig = dict[str, Union[int, float, str, "BuildConfig"]]
 """
 Type alias for representing nested build configuration information.
 """
@@ -70,8 +71,8 @@ class Builder(abc.ABC):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
-        build_config: Optional[Dict] = None,
+        params: dict[str, ParamDictT] | ParameterFrame | ConfigParams | None,
+        build_config: None | BuildConfig = None,
         *,
         verbose=True,
     ):
@@ -86,7 +87,7 @@ class Builder(abc.ABC):
         )
 
     @abc.abstractproperty
-    def param_cls(self) -> Union[Type[ParameterFrame], None]:
+    def param_cls(self) -> type[ParameterFrame] | None:
         """The class to hold this Builders's parameters."""
 
     @abc.abstractmethod
@@ -94,7 +95,7 @@ class Builder(abc.ABC):
         """Build the component."""
 
     def component_tree(
-        self, xz: List[Component], xy: List[Component], xyz: List[Component]
+        self, xz: list[Component], xy: list[Component], xyz: list[Component]
     ) -> Component:
         """
         Adds views of components to an overall component tree.

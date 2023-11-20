@@ -25,10 +25,10 @@ Module containing the base Component class.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, Iterable, Sequence
 
 import anytree
-from anytree import NodeMixin, RenderTree
+from anytree import Node, NodeMixin, RenderTree
 
 from bluemira.base.error import ComponentError
 from bluemira.display.displayer import DisplayableCAD
@@ -62,8 +62,8 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def __init__(
         self,
         name: str,
-        parent: Optional[Component] = None,
-        children: Optional[List[Component]] = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__()
         self.name = name
@@ -92,7 +92,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
     def filter_components(
         self,
         names: Iterable[str],
-        component_filter: Optional[Callable[[Component], bool]] = None,
+        component_filter: Callable[[Component], bool] | None = None,
     ):
         """
         Removes all components from the tree, starting at this component,
@@ -120,7 +120,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
             if descendent_comps is None:
                 continue
             if not isinstance(descendent_comps, Iterable):
-                descendent_comps = [descendent_comps]
+                descendent_comps = (descendent_comps,)
 
             # Filter out all siblings that are not in names
             for c in descendent_comps:
@@ -140,7 +140,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def copy(
         self,
-        parent: Optional[Component] = None,
+        parent: Component | None = None,
     ) -> Component:
         """
         Copies this component and its children (recursively)
@@ -200,7 +200,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component(
         self, name: str, *, first: bool = True, full_tree: bool = False
-    ) -> Union[Component, Tuple[Component], None]:
+    ) -> Component | tuple[Component] | None:
         """
         Find the components with the specified name.
 
@@ -232,11 +232,11 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def get_component_properties(
         self,
-        properties: Union[Iterable[str], str],
+        properties: Sequence[str] | str,
         *,
         first: bool = True,
         full_tree: bool = False,
-    ) -> Union[Tuple[List[Any]], List[Any], Any]:
+    ) -> tuple[list[Any]] | list[Any] | Any:
         """
         Get properties from a component
 
@@ -264,7 +264,7 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         if isinstance(properties, str):
             properties = [properties]
 
-        def filter_(node, properties):
+        def filter_(node: Node, properties: Iterable[str]) -> bool:
             return all(hasattr(node, prop) for prop in properties)
 
         found_nodes = self._get_thing(
@@ -285,14 +285,14 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
         return tuple(map(list, zip(*node_properties)))
 
     def _get_thing(
-        self, filter_: Union[Callable, None], *, first: bool, full_tree: bool
-    ) -> Union[Component, Tuple[Component], None]:
+        self, filter_: Callable[[Node], bool] | None, *, first: bool, full_tree: bool
+    ) -> Component | tuple[Component] | None:
         found_nodes = anytree.search.findall(
             self.root if full_tree else self, filter_=filter_
         )
         if found_nodes in {None, ()}:
             return None
-        if first and isinstance(found_nodes, Iterable):
+        if first and isinstance(found_nodes, Sequence):
             found_nodes = found_nodes[0]
         return found_nodes
 
@@ -318,10 +318,10 @@ class Component(NodeMixin, Plottable, DisplayableCAD):
 
     def add_children(
         self,
-        children: Optional[Union[Component, List[Component]]],
+        children: Component | list[Component] | None,
         *,
         merge_trees: bool = False,
-    ) -> Optional[Component]:
+    ) -> Component | None:
         """
         Add multiple children to this node
 
@@ -394,8 +394,8 @@ class PhysicalComponent(Component):
         name: str,
         shape: BluemiraGeo,
         material: Any = None,
-        parent: Optional[Component] = None,
-        children: Optional[List[Component]] = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__(name, parent, children)
         self.shape = shape
@@ -403,7 +403,7 @@ class PhysicalComponent(Component):
 
     def copy(
         self,
-        parent: Optional[Component] = None,
+        parent: Component | None = None,
     ) -> Component:
         """
         Copies this component and its children (recursively)
@@ -461,15 +461,15 @@ class MagneticComponent(PhysicalComponent):
         shape: BluemiraGeo,
         material: Any = None,
         conductor: Any = None,
-        parent: Optional[Component] = None,
-        children: Optional[List[Component]] = None,
+        parent: Component | None = None,
+        children: list[Component] | None = None,
     ):
         super().__init__(name, shape, material, parent, children)
         self.conductor = conductor
 
     def copy(
         self,
-        parent: Optional[Component] = None,
+        parent: Component | None = None,
     ) -> Component:
         """
         Copies this component and its children (recursively)
@@ -508,8 +508,8 @@ class MagneticComponent(PhysicalComponent):
 
 
 def get_properties_from_components(
-    comps: Union[Component, Iterable[Component]], properties: Union[str, Iterable[str]]
-) -> Union[Tuple[List[Any]], List[Any], Any]:
+    comps: Component | Iterable[Component], properties: str | Sequence[str]
+) -> tuple[list[Any]] | list[Any] | Any:
     """
     Get properties from Components
 
@@ -529,7 +529,7 @@ def get_properties_from_components(
     if isinstance(properties, str):
         properties = [properties]
 
-    property_lists = tuple([] for _ in properties)
+    property_lists: tuple[list[Any], ...] = tuple([] for _ in properties)
 
     if not isinstance(comps, Iterable):
         comps = [comps]
@@ -542,9 +542,9 @@ def get_properties_from_components(
             property_lists[i].extend(prop)
 
     if len(property_lists[0]) == 1:
-        property_lists = [p[0] for p in property_lists]
+        return [p[0] for p in property_lists]
 
     if len(property_lists) == 1:
-        property_lists = property_lists[0]
+        return property_lists[0]
 
     return property_lists
