@@ -28,7 +28,7 @@ def _make_star():
     return {"x": x, "z": z}
 
 
-def _coilset_setup(self, materials=False):
+def _coilset_setup(self, *, materials=False):
     # EU DEMO 2015
     x = [5.4, 14.0, 17.0, 17.01, 14.4, 7.0, 2.9, 2.9, 2.9, 2.9, 2.9]
     z = [

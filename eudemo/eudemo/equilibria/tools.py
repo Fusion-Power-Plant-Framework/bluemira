@@ -253,6 +253,7 @@ class EUDEMOSingleNullConstraints(DivertorLegCalculator, MagneticConstraintSet):
         div_l_ob: float,
         psibval: float,
         psibtol: float = 1e-3,
+        *,
         lower: float = True,
         n: int = 100,
     ):

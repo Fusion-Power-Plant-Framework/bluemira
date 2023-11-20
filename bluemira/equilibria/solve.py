@@ -67,6 +67,7 @@ class ConvergenceCriterion(ABC):
         old_val: npt.NDArray[np.float64],
         new_val: npt.NDArray[np.float64],
         i: int,
+        *,
         print_status: bool = True,
     ) -> bool:
         """
@@ -139,6 +140,7 @@ class DudsonConvergence(ConvergenceCriterion):
         psi_old: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         i: int,
+        *,
         print_status: bool = True,
     ) -> bool:
         """
@@ -190,6 +192,7 @@ class JrelConvergence(ConvergenceCriterion):
         j_old: npt.NDArray[np.float64],
         j_new: npt.NDArray[np.float64],
         i: int,
+        *,
         print_status: bool = True,
     ) -> bool:
         """
@@ -240,6 +243,7 @@ class LacknerConvergence(ConvergenceCriterion):
         psi_old: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         i: int,
+        *,
         print_status: bool = True,
     ) -> bool:
         """
@@ -285,6 +289,7 @@ class JeonConvergence(ConvergenceCriterion):
         psi_old: npt.NDArray[np.float64],
         psi: npt.NDArray[np.float64],
         i: int,
+        *,
         print_status: bool = True,
     ) -> bool:
         """
@@ -334,6 +339,7 @@ class CunninghamConvergence(ConvergenceCriterion):
         j_old: npt.NDArray[np.float64],
         j_new: npt.NDArray[np.float64],
         i: int,
+        *,
         print_status: bool = True,
     ) -> bool:
         """
@@ -385,6 +391,7 @@ class JsourceConvergence(ConvergenceCriterion):
         j_old: npt.NDArray[np.float64],
         j_new: npt.NDArray[np.float64],
         i: int,
+        *,
         print_status: bool = True,
     ) -> bool:
         """
@@ -451,6 +458,7 @@ class PicardIterator:
         eq: Equilibrium,
         optimisation_problem: CoilsetOptimisationProblem,
         convergence: ConvergenceCriterion | None = None,
+        *,
         fixed_coils: bool = False,
         relaxation: float = 0,
         maxiter: int = 30,
@@ -581,7 +589,7 @@ class PicardIterator:
             self._teardown()
         return self.result
 
-    def check_converged(self, print_status: bool = True) -> bool:
+    def check_converged(self, *, print_status: bool = True) -> bool:
         """
         Check if the iterator has converged.
 

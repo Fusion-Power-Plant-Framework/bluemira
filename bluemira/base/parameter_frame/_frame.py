@@ -194,6 +194,7 @@ class ParameterFrame:
     def from_dict(
         cls: type[ParameterFrame],
         data: dict[str, ParamDictT],
+        *,
         allow_unknown=False,
     ) -> ParameterFrame:
         """Initialize an instance from a dictionary."""

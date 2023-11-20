@@ -617,7 +617,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         )
         return coilset
 
-    def optimise(self, verbose: bool = False) -> CoilSet:
+    def optimise(self, *, verbose: bool = False) -> CoilSet:
         """
         Optimise the coil positions for the start and end of the current flat-top.
         """

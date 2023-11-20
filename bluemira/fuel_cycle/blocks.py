@@ -103,6 +103,7 @@ class FuelCycleComponent:
         retention_model: str = "bathtub",
         min_inventory: float | None = None,
         bci: int | None = None,
+        *,
         summing: bool = False,
         _testing: bool = False,
     ):

@@ -109,7 +109,7 @@ class PowerLawScaling:
 
 
 def lambda_q(
-    B_t: float, q_cyl: float, p_sol: float, R_0: float, error: bool = False
+    B_t: float, q_cyl: float, p_sol: float, R_0: float, *, error: bool = False
 ) -> float | tuple[float, float, float]:
     """
     Scrape-off layer power width scaling (Eich et al., 2011) [4]
@@ -155,7 +155,7 @@ def lambda_q(
 
 
 def P_LH(  # noqa: N802
-    n_e: float, B_t: float, A: float, R_0: float, error: bool = False
+    n_e: float, B_t: float, A: float, R_0: float, *, error: bool = False
 ) -> float | tuple[float, float, float]:
     """
     Power requirement for accessing H-mode, Martin scaling [3]

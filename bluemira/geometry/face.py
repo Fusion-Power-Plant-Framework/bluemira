@@ -91,7 +91,7 @@ class BluemiraFace(BluemiraGeo):
             f"Only {self._boundary_classes} objects can be used for {self.__class__}"
         )
 
-    def _create_face(self, check_reverse: bool = True):
+    def _create_face(self, *, check_reverse: bool = True):
         """Create the primitive face"""
         external: BluemiraWire = self.boundary[0]
         face = cadapi.apiFace(external._create_wire(check_reverse=False))
@@ -134,7 +134,7 @@ class BluemiraFace(BluemiraGeo):
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
 
     def discretize(
-        self, ndiscr: int = 100, byedges: bool = False, dl: float | None = None
+        self, ndiscr: int = 100, dl: float | None = None, *, byedges: bool = False
     ) -> np.ndarray:
         """
         Make an array of the geometry.
@@ -143,10 +143,10 @@ class BluemiraFace(BluemiraGeo):
         ----------
         ndiscr:
             Number of points in the array
-        byedges:
-            Whether or not to discretise by edges
         dl:
             Optional length discretisation (overrides ndiscr)
+        byedges:
+            Whether or not to discretise by edges
 
         Returns
         -------

@@ -89,7 +89,7 @@ def run_example(file_path: str) -> bool:
 
 
 def run_examples(
-    example_files: list[str], plotting_on: bool = False
+    example_files: list[str], *, plotting_on: bool = False
 ) -> list[tuple[str, bool]]:
     """
     Run the given example files.
@@ -126,7 +126,7 @@ if __name__ == "__main__":
         print(f"found no python files in '{args.examples_dir}'.")
         sys.exit(1)
 
-    results = run_examples(example_py_files, args.plotting_on)
+    results = run_examples(example_py_files, plotting_on=args.plotting_on)
     print("\nExamples run:")
     print("-------------")
     for example, result in results:

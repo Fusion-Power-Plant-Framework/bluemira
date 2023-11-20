@@ -81,7 +81,7 @@ class BluemiraWire(BluemiraGeo):
         """apiWire: shape of the object as a single wire"""
         return self._create_wire()
 
-    def _create_wire(self, check_reverse: bool = True):
+    def _create_wire(self, *, check_reverse: bool = True):
         wire = cadapi.apiWire(self._get_wires())
         if check_reverse:
             return self._check_reverse(wire)
@@ -125,10 +125,7 @@ class BluemiraWire(BluemiraGeo):
             raise NotClosedWireError("The open boundary has not been closed.")
 
     def discretize(
-        self,
-        ndiscr: int = 100,
-        byedges: bool = False,
-        dl: float | None = None,
+        self, ndiscr: int = 100, *, byedges: bool = False, dl: float | None = None
     ) -> Coordinates:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl

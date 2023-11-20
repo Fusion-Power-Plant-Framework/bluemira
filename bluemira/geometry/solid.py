@@ -40,7 +40,7 @@ class BluemiraSolid(BluemiraGeo):
         boundary_classes = [BluemiraShell]
         super().__init__(boundary, label, boundary_classes)
 
-    def _create_solid(self, check_reverse: bool = True):
+    def _create_solid(self, *, check_reverse: bool = True):
         """Creation of the solid"""
         new_shell = self.boundary[0]._create_shell(check_reverse=False)
         solid = cadapi.apiSolid(new_shell)

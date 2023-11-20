@@ -221,7 +221,7 @@ class BreakdownCOP(CoilsetOptimisationProblem):
         max_currents = np.atleast_1d(max_currents)
         self.bounds = (-max_currents / self.scale, max_currents / self.scale)
 
-    def optimise(self, x0=None, fixed_coils=True):  # noqa: ARG002
+    def optimise(self, x0=None, *, fixed_coils=True):  # noqa: ARG002
         """
         Solve the optimisation problem.
         """

@@ -240,6 +240,7 @@ class CurrentMidplanceConstraint(ConstraintFunction):
         eq: Equilibrium,
         radius: float,
         scale: float,
+        *,
         inboard: bool,
     ):
         self.eq = eq

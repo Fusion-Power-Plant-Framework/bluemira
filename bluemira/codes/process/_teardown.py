@@ -137,7 +137,7 @@ class Teardown(CodesTeardown):
             outputs.append(value)
         return outputs
 
-    def _load_mfile(self, path: str, recv_all: bool):
+    def _load_mfile(self, path: str, *, recv_all: bool):
         """
         Load the MFile at the given path, and update this object's
         params with the MFile's values.
@@ -148,7 +148,7 @@ class Teardown(CodesTeardown):
         ``recv == True``.
         """
         mfile = self._read_mfile(path)
-        self._update_params_with_outputs(mfile.data, recv_all)
+        self._update_params_with_outputs(mfile.data, recv_all=recv_all)
 
     def _read_mfile(self, path: str):
         """

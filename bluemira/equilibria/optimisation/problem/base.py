@@ -259,7 +259,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         self.bounds = (lower_bounds, upper_bounds)
 
     def update_magnetic_constraints(
-        self, I_not_dI: bool = True, fixed_coils: bool = True
+        self, *, I_not_dI: bool = True, fixed_coils: bool = True
     ):
         """
         Update the magnetic optimisation constraints with the state of the Equilibrium

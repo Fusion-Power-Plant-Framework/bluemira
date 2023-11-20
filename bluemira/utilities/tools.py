@@ -60,8 +60,8 @@ class NumpyJSONEncoder(JSONEncoder):
 def json_writer(
     data: dict[str, Any],
     file: PathLike | str | None = None,
-    return_output: bool = False,
     *,
+    return_output: bool = False,
     cls: JSONEncoder = NumpyJSONEncoder,
     **kwargs,
 ) -> str | None:
@@ -424,6 +424,7 @@ def set_random_seed(seed_number: int):
 def compare_dicts(
     d1: dict[str, Any],
     d2: dict[str, Any],
+    *,
     almost_equal: bool = False,
     verbose: bool = True,
     rtol: float = 1e-5,
