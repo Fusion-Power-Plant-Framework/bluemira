@@ -160,20 +160,20 @@ class ChargedParticleSolver:
             sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - o_point.x))
             x_sep1_mp = sep1_intersections.T[0][sep1_arg]
             x_sep2_mp = sep2_intersections.T[0][sep2_arg]
-            if outboard:
-                x_sep_mp = x_sep1_mp if x_sep1_mp > x_sep2_mp else x_sep2_mp
-            else:
-                x_sep_mp = x_sep1_mp if x_sep1_mp < x_sep2_mp else x_sep2_mp
+            x_sep_mp = (
+                max(x_sep2_mp, x_sep1_mp) if outboard else min(x_sep2_mp, x_sep1_mp)
+            )
         else:
             sep_intersections = coords_plane_intersect(separatrix, yz_plane)
             sep_arg = np.argmin(np.abs(sep_intersections.T[0] - o_point.x))
             x_sep_mp = sep_intersections.T[0][sep_arg]
 
         out_intersections = coords_plane_intersect(self.first_wall, yz_plane)
-        if outboard:
-            x_out_mp = np.max(out_intersections.T[0])
-        else:
-            x_out_mp = np.min(out_intersections.T[0])
+        x_out_mp = (
+            np.max(out_intersections.T[0])
+            if outboard
+            else np.min(out_intersections.T[0])
+        )
 
         return x_sep_mp, x_out_mp
 
