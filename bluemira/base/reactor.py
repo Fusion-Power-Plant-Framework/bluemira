@@ -506,9 +506,9 @@ class Reactor(BaseManager):
         if not hasattr(self, "__annotations__"):
             raise ComponentError(
                 "This reactor is ill-defined. "
-                "Have you sub-classed Reactor and "
-                "correctly defined the component managers for it? "
-                "Please look at the examples for how to do this."
+                "Make sure you have sub-classed Reactor and "
+                "correctly defined component managers for it. "
+                "Please see the examples for a template Reactor."
             )
 
         component = Component(self.name)
