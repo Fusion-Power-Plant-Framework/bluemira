@@ -557,7 +557,7 @@ def clip(
     if isinstance(val, np.ndarray):
         np.core.umath.clip(val, val_min, val_max, out=val)
     else:
-        val = val_min if val < val_min else val_max if val > val_max else val
+        val = val_min if val < val_min else min(val, val_max)
     return val
 
 

@@ -1182,7 +1182,7 @@ def _nb_clip(val, a_min, a_max):
     """
     Numba 1-D clip
     """
-    return a_min if val < a_min else a_max if val > a_max else val
+    return a_min if val < a_min else min(val, a_max)
 
 
 @nb.jit(nopython=True, cache=True)
