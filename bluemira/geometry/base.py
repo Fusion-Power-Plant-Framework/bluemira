@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import copy
 import enum
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import numpy as np
@@ -98,9 +98,9 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     def __init__(
         self,
-        boundary: Union[BluemiraGeo, list[BluemiraGeo]],
+        boundary: BluemiraGeo | list[BluemiraGeo],
         label: str = "",
-        boundary_classes: Optional[BluemiraGeo] = None,
+        boundary_classes: BluemiraGeo | None = None,
     ):
         super().__init__()
         self._boundary_classes = boundary_classes
@@ -401,7 +401,7 @@ class BluemiraGeo(ABC, GeoMeshable):
             f"volume: {self.volume})"
         )
 
-    def copy(self, label: Optional[str] = None):
+    def copy(self, label: str | None = None):
         """
         Make a copy of the BluemiraGeo.
         """
@@ -412,7 +412,7 @@ class BluemiraGeo(ABC, GeoMeshable):
             geo_copy.label = self.label
         return geo_copy
 
-    def deepcopy(self, label: Optional[str] = None):
+    def deepcopy(self, label: str | None = None):
         """
         Make a deepcopy of the BluemiraGeo.
         """

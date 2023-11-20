@@ -26,7 +26,7 @@ FE transformation matrices and methods
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.linalg import block_diag
@@ -189,7 +189,7 @@ def cyclic_pattern(
     n: int,
     *,
     include_first: bool = True,
-) -> list[Union[Geometry, DeformedGeometry]]:
+) -> list[Geometry | DeformedGeometry]:
     """
     Build a cyclic pattern of a Geometry.
 

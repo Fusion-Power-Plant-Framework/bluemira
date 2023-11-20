@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
-from typing import Literal, Optional, Union
+from typing import Literal
 
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
@@ -133,10 +133,10 @@ class ParameterMapping:
     """
 
     name: str
-    out_name: Optional[str] = None
+    out_name: str | None = None
     send: bool = True
     recv: bool = True
-    unit: Optional[str] = None
+    unit: str | None = None
 
     _frozen = ()
 
@@ -174,7 +174,7 @@ class ParameterMapping:
         """
         return repr(self.to_dict())
 
-    def __setattr__(self, attr: str, value: Union[bool, str]):
+    def __setattr__(self, attr: str, value: bool | str):
         """
         Protect against additional attributes
 

@@ -25,7 +25,7 @@ Finite element geometry
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -238,7 +238,7 @@ class Geometry:
         node_id1: int,
         node_id2: int,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ) -> int:
         """
         Adds an Element to the Geometry object
@@ -327,7 +327,7 @@ class Geometry:
         self,
         coordinates: Coordinates,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ):
         """
         Adds a Coordinates object to the Geometry
@@ -544,9 +544,7 @@ class DeformedGeometry(Geometry):
             node.displacements[1] = 0
             node.displacements[2] = 0
 
-    def plot(
-        self, ax: Optional[Axes] = None, stress: Optional[np.ndarray] = None, **kwargs
-    ):
+    def plot(self, ax: Axes | None = None, stress: np.ndarray | None = None, **kwargs):
         """
         Plot the DeformedGeometry.
 

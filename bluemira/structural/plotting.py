@@ -25,7 +25,7 @@ Structural module plotting tools
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -191,7 +191,7 @@ class BasePlotter:
     Base utility plotting class for structural models
     """
 
-    def __init__(self, geometry: Geometry, ax: Optional[Axes] = None, **kwargs):
+    def __init__(self, geometry: Geometry, ax: Axes | None = None, **kwargs):
         self.geometry = geometry
         if ax is None:
             self.ax = Plot3D()
@@ -452,7 +452,7 @@ class GeometryPlotter(BasePlotter):
     Utility class for the plotting of structural geometry models
     """
 
-    def __init__(self, geometry: Geometry, ax: Optional[Axes] = None, **kwargs):
+    def __init__(self, geometry: Geometry, ax: Axes | None = None, **kwargs):
         super().__init__(geometry, ax, **kwargs)
         self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
         self.options["show_stress"] = False
@@ -473,7 +473,7 @@ class DeformedGeometryPlotter(BasePlotter):
     overlaying with GeometryPlotters
     """
 
-    def __init__(self, geometry: DeformedGeometry, ax: Optional[Axes] = None, **kwargs):
+    def __init__(self, geometry: DeformedGeometry, ax: Axes | None = None, **kwargs):
         super().__init__(geometry, ax, **kwargs)
         self.options = deepcopy(DEFAULT_STRUCT_PLOT_OPTIONS)
         self.options["node_options"]["color"] = "b"
@@ -498,8 +498,8 @@ class StressDeformedGeometryPlotter(BasePlotter):
     def __init__(
         self,
         geometry: DeformedGeometry,
-        ax: Optional[Axes] = None,
-        stress: Optional[np.ndarray] = None,
+        ax: Axes | None = None,
+        stress: np.ndarray | None = None,
         *,
         deflection: bool = False,
         **kwargs,

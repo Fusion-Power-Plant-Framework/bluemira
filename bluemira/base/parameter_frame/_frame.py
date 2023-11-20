@@ -31,9 +31,7 @@ from typing import (
     ClassVar,
     Generator,
     Iterable,
-    Optional,
     TypeVar,
-    Union,
     get_args,
     get_type_hints,
 )
@@ -142,7 +140,7 @@ class ParameterFrame:
 
     def update(
         self,
-        new_values: Union[dict[str, ParameterValueType], ParamDictT, ParameterFrame],
+        new_values: dict[str, ParameterValueType] | ParamDictT | ParameterFrame,
     ):
         """Update the given frame"""
         if isinstance(new_values, ParameterFrame):
@@ -249,7 +247,7 @@ class ParameterFrame:
         return cls(**kwargs)
 
     @classmethod
-    def from_json(cls: type[_PfT], json_in: Union[str, json.SupportsRead]) -> _PfT:
+    def from_json(cls: type[_PfT], json_in: str | json.SupportsRead) -> _PfT:
         """Initialise an instance from a JSON file, string, or reader."""
         if hasattr(json_in, "read"):
             # load from file stream
@@ -337,7 +335,7 @@ class ParameterFrame:
 
     def tabulate(
         self,
-        keys: Optional[list] = None,
+        keys: list | None = None,
         tablefmt: str = "fancy_grid",
         floatfmt: str = ".5g",
     ) -> str:
@@ -449,7 +447,7 @@ def _validate_units(param_data: dict, value_type: Iterable[type]):
         param_data["source"] += f"{quantity.magnitude}{param_data['unit']}"
 
 
-def _remake_units(dimensionality: Union[dict, pint.util.UnitsContainer]) -> pint.Unit:
+def _remake_units(dimensionality: dict | pint.util.UnitsContainer) -> pint.Unit:
     """Reconstruct unit from its dimensionality"""
     dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
     dim_pow = list(dimensionality.values())
@@ -581,7 +579,7 @@ class EmptyFrame(ParameterFrame):
 
 
 def make_parameter_frame(
-    params: Union[dict[str, ParamDictT], ParameterFrame, ConfigParams, str, None],
+    params: dict[str, ParamDictT] | ParameterFrame | ConfigParams | str | None,
     param_cls: type[ParameterFrame] | None,
 ) -> ParameterFrame | None:
     """

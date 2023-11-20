@@ -25,7 +25,7 @@ Wrapper for FreeCAD Placement objects
 
 from __future__ import annotations
 
-from typing import Iterable, Optional
+from typing import Iterable
 
 import numpy as np
 
@@ -185,7 +185,7 @@ class BluemiraPlacement:
             f"angle: {self.angle})"
         )
 
-    def copy(self, label: Optional[str] = None):
+    def copy(self, label: str | None = None):
         """Make a copy of the BluemiraPlacement"""
         placement_copy = BluemiraPlacement(self.base, self.axis, self.angle)
         if label is not None:
@@ -194,7 +194,7 @@ class BluemiraPlacement:
             placement_copy.label = self.label
         return placement_copy
 
-    def deepcopy(self, label: Optional[str] = None):  # noqa: ARG002
+    def deepcopy(self, label: str | None = None):  # noqa: ARG002
         """Make a deepcopy of the BluemiraPlacement"""
         return self.copy()
 
@@ -215,7 +215,7 @@ class BluemiraPlacement:
         return cadapi.vector_to_numpy(self._shape.multVec(cadapi.Base.Vector(vec)))
 
     def extract_plane(
-        self, v1: Iterable[float], v2: Iterable[float], base: Optional[float] = None
+        self, v1: Iterable[float], v2: Iterable[float], base: float | None = None
     ) -> BluemiraPlane:
         """
         Return a plane identified by two vector given in the self placement

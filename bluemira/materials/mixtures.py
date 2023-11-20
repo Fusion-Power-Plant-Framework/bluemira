@@ -26,7 +26,7 @@ Material mixture utility classes
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from bluemira.materials.cache import MaterialCache
@@ -61,10 +61,10 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         self,
         name: str,
         materials: dict[str, float],
-        temperature_in_K: Optional[float] = None,  # noqa: N803
-        enrichment: Optional[float] = None,
-        zaid_suffix: Optional[str] = None,
-        material_id: Optional[str] = None,
+        temperature_in_K: float | None = None,  # noqa: N803
+        enrichment: float | None = None,
+        zaid_suffix: str | None = None,
+        material_id: str | None = None,
     ):
         if temperature_in_K is None:
             temperature_in_K = self.default_temperature  # noqa: N806

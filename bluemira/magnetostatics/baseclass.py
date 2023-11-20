@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -62,9 +62,9 @@ class CurrentSource(ABC):
     @abstractmethod
     def field(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate the magnetic field at a set of coordinates.
@@ -84,7 +84,7 @@ class CurrentSource(ABC):
         """
 
     @abstractmethod
-    def plot(self, ax: Optional[Axes], **kwargs):
+    def plot(self, ax: Axes | None, **kwargs):
         """
         Plot the CurrentSource.
 
@@ -95,7 +95,7 @@ class CurrentSource(ABC):
         """
 
     @abstractmethod
-    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
+    def rotate(self, angle: float, axis: np.ndarray | str):
         """
         Rotate the CurrentSource about an axis.
 
@@ -138,7 +138,7 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
         super().set_current(current)
         self.rho = current / (4 * self.breadth * self.depth)
 
-    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
+    def rotate(self, angle: float, axis: np.ndarray | str):
         """
         Rotate the CurrentSource about an axis.
 
@@ -166,7 +166,7 @@ class RectangularCrossSectionCurrentSource(CurrentSource):
         """
         return np.array([(self.dcm @ (p - self.origin)) for p in points])
 
-    def plot(self, ax: Optional[Axes] = None, *, show_coord_sys: bool = False):
+    def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False):
         """
         Plot the CurrentSource.
 
@@ -224,9 +224,9 @@ class SourceGroup(ABC):
 
     def field(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate the magnetic field at a point.
@@ -246,7 +246,7 @@ class SourceGroup(ABC):
         """
         return np.sum([source.field(x, y, z) for source in self.sources], axis=0)
 
-    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
+    def rotate(self, angle: float, axis: np.ndarray | str):
         """
         Rotate the CurrentSource about an axis.
 
@@ -261,7 +261,11 @@ class SourceGroup(ABC):
             source.rotate(angle, axis)
         self.points = self.points @ rotation_matrix(angle, axis)
 
+<<<<<<< HEAD
     def plot(self, ax: Optional[Axes] = None, *, show_coord_sys: bool = False):
+=======
+    def plot(self, ax: Axes | None = None, show_coord_sys: bool = False):
+>>>>>>> cad43301 (🚨 Ruff typing autofixes)
         """
         Plot the MultiCurrentSource.
 

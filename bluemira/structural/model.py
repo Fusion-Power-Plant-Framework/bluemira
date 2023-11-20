@@ -25,7 +25,7 @@ Finite element model
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.geometry.coordinates import Coordinates
@@ -159,7 +159,7 @@ class FiniteElementModel:
         node_id1: int,
         node_id2: int,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ) -> int:
         """
         Adds an Element to the FiniteElementModel
@@ -185,7 +185,7 @@ class FiniteElementModel:
         self,
         coords: Coordinates,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ):
         """
         Adds a Coordinates object to the FiniteElementModel
@@ -252,8 +252,8 @@ class FiniteElementModel:
         self,
         left_node_ids: list[int],
         right_node_ids: list[int],
-        p1: Optional[np.ndarray] = None,
-        p2: Optional[np.ndarray] = None,
+        p1: np.ndarray | None = None,
+        p2: np.ndarray | None = None,
     ):
         """
         Applies a cyclic symmetry condition to the FiniteElementModel
@@ -567,7 +567,7 @@ class FiniteElementModel:
         return self.geometry.plot(ax=ax, **kwargs)
 
     def solve(
-        self, load_case: Optional[LoadCase] = None, *, sparse: bool = False
+        self, load_case: LoadCase | None = None, *, sparse: bool = False
     ) -> Result:
         """
         Solves the system of linear equations for deflection and applies the

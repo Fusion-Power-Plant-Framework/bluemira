@@ -25,7 +25,7 @@ Finite element class
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.structural.crosssection import CrossSection
@@ -235,7 +235,7 @@ class Element:
         node_2: Node,
         id_number: int,
         cross_section: CrossSection,
-        material: Optional[StructuralMaterial] = None,
+        material: StructuralMaterial | None = None,
     ):
         # Utility properties
         self.node_1 = node_1

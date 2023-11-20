@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import copy
 from dataclasses import dataclass
-from typing import Generic, Optional, TypeVar, TypedDict, Union
+from typing import Generic, TypeVar, TypedDict
 
 import numpy as np
 import pint
@@ -97,7 +97,7 @@ class Parameter(Generic[ParameterValueType]):
         source: str = "",
         description: str = "",
         long_name: str = "",
-        _value_types: Optional[tuple[type, ...]] = None,
+        _value_types: tuple[type, ...] | None = None,
     ):
         value = self._type_check(name, value, _value_types)
         self._name = name
@@ -112,7 +112,7 @@ class Parameter(Generic[ParameterValueType]):
 
     @staticmethod
     def _type_check(
-        name: str, value: ParameterValueType, value_types: Optional[tuple[type, ...]]
+        name: str, value: ParameterValueType, value_types: tuple[type, ...] | None
     ) -> ParameterValueType:
         if value_types and value is not None:
             if float in value_types and isinstance(value, int):
@@ -190,7 +190,7 @@ class Parameter(Generic[ParameterValueType]):
     def value(self, new_value: ParameterValueType):
         self.set_value(new_value, source="")
 
-    def value_as(self, unit: Union[str, pint.Unit]) -> Union[ParameterValueType, None]:
+    def value_as(self, unit: str | pint.Unit) -> ParameterValueType | None:
         """
         Return the current value in a given unit
 

@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Iterable
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
@@ -57,9 +57,7 @@ class BluemiraWire(BluemiraGeo):
         Label to assign to the wire
     """
 
-    def __init__(
-        self, boundary: list[Union[cadapi.apiWire, BluemiraWire]], label: str = ""
-    ):
+    def __init__(self, boundary: list[cadapi.apiWire | BluemiraWire], label: str = ""):
         boundary_classes = [self.__class__, cadapi.apiWire]
         super().__init__(boundary, label, boundary_classes)
         self._check_orientations()
@@ -140,7 +138,7 @@ class BluemiraWire(BluemiraGeo):
             raise NotClosedWireError("The open boundary has not been closed.")
 
     def discretize(
-        self, ndiscr: int = 100, *, byedges: bool = False, dl: Optional[float] = None
+        self, ndiscr: int = 100, *, byedges: bool = False, dl: float | None = None
     ) -> Coordinates:
         """
         Discretize the wire in ndiscr equidistant points or with a reference dl
@@ -169,7 +167,7 @@ class BluemiraWire(BluemiraGeo):
         return Coordinates(points.T)
 
     def value_at(
-        self, alpha: Optional[float] = None, distance: Optional[float] = None
+        self, alpha: float | None = None, distance: float | None = None
     ) -> np.ndarray:
         """
         Get a point along the wire at a given parameterised length or length.

@@ -25,7 +25,7 @@ A collection of simple equilibrium physics calculations
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Iterable
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -40,8 +40,8 @@ from bluemira.equilibria.grid import revolved_volume, volume_integral
 
 
 def calc_psi_norm(
-    psi: Union[float, np.ndarray], opsi: float, xpsi: float
-) -> Union[float, np.ndarray]:
+    psi: float | np.ndarray, opsi: float, xpsi: float
+) -> float | np.ndarray:
     """
     Calculate normalised magnetic flux.
 
@@ -62,8 +62,8 @@ def calc_psi_norm(
 
 
 def calc_psi(
-    psi_norm: Union[float, np.ndarray], opsi: float, xpsi: float
-) -> Union[float, np.ndarray]:
+    psi_norm: float | np.ndarray, opsi: float, xpsi: float
+) -> float | np.ndarray:
     """
     Calculate the absolute psi values from normalised psi values
 
@@ -278,9 +278,9 @@ def calc_li3minargs(
     I_p: float,
     dx: float,
     dz: float,
-    mask: Optional[np.ndarray] = None,
-    o_points: Optional[Iterable[Opoint]] = None,
-    x_points: Optional[Iterable[Xpoint]] = None,
+    mask: np.ndarray | None = None,
+    o_points: Iterable[Opoint] | None = None,
+    x_points: Iterable[Xpoint] | None = None,
 ) -> float:
     """
     Calculate the normalised plasma internal inductance with arguments only.

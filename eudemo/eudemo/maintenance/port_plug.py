@@ -25,7 +25,7 @@ Port plugs
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Iterable
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
@@ -49,9 +49,9 @@ def make_castellated_plug(
     face: BluemiraFace,
     vec: tuple[float, float, float],
     length: float,
-    offsets: Union[float, Iterable],
-    distances: Optional[Iterable] = None,
-    n_castellations: Optional[int] = None,
+    offsets: float | Iterable,
+    distances: Iterable | None = None,
+    n_castellations: int | None = None,
 ) -> BluemiraSolid:
     """
     Make a castellated port plug.
@@ -220,8 +220,8 @@ class CryostatPortPlugBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[dict, ParameterFrame, CryostatPortPlugBuilderParams],
-        build_config: Optional[dict],
+        params: dict | ParameterFrame | CryostatPortPlugBuilderParams,
+        build_config: dict | None,
         outer_profiles: Iterable[BluemiraWire],
         cryostat_xz_boundary: BluemiraFace,
     ):
@@ -292,8 +292,8 @@ class RadiationPortPlugBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[dict, ParameterFrame, RadiationPortPlugBuilderParams],
-        build_config: Optional[dict],
+        params: dict | ParameterFrame | RadiationPortPlugBuilderParams,
+        build_config: dict | None,
         outer_profiles: Iterable[BluemiraWire],
         radiation_xz_boundary: BluemiraFace,
     ):

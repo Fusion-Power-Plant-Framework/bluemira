@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 from itertools import starmap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Any, Iterable
 
 import numba as nb
 import numpy as np
@@ -91,7 +91,7 @@ def _validate_coordinates(x, y, z=None):
 
 
 def vector_lengthnorm(
-    x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None
+    x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None
 ) -> np.ndarray:
     """
     Get a normalised 1-D parameterisation of a set of x-y(-z) coordinates.
@@ -235,7 +235,7 @@ def get_normal_vector(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> np.ndarray
 
 
 @xyz_process
-def get_perimeter(x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None) -> float:
+def get_perimeter(x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None) -> float:
     """
     Calculate the perimeter of a set of coordinates.
 
@@ -303,7 +303,7 @@ def get_perimeter_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> float:
 
 
 @xyz_process
-def get_area(x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None) -> float:
+def get_area(x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None) -> float:
     """
     Calculate the area inside a closed polygon with x, y coordinate vectors.
     `Link Shoelace method <https://en.wikipedia.org/wiki/Shoelace_formula>`_
@@ -441,7 +441,7 @@ def check_ccw_3d(
 
 @xyz_process
 def get_centroid(
-    x: np.ndarray, y: np.ndarray, z: Optional[np.ndarray] = None
+    x: np.ndarray, y: np.ndarray, z: np.ndarray | None = None
 ) -> np.ndarray:
     """
     Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
@@ -607,7 +607,7 @@ def get_angle_between_vectors(
 # =============================================================================
 
 
-def rotation_matrix(theta: float, axis: Union[str, np.ndarray] = "z") -> np.ndarray:
+def rotation_matrix(theta: float, axis: str | np.ndarray = "z") -> np.ndarray:
     """
     Old-fashioned rotation matrix: :math:`\\mathbf{R_{u}}(\\theta)`
     \t:math:`\\mathbf{x^{'}}=\\mathbf{R_{u}}(\\theta)\\mathbf{x}`
@@ -1052,7 +1052,7 @@ class Coordinates:
     # Instantiation
     # =============================================================================
 
-    def __init__(self, xyz_array: Union[np.ndarray, dict, Iterable[Iterable]]):
+    def __init__(self, xyz_array: np.ndarray | dict | Iterable[Iterable]):
         self._array = _parse_to_xyz_array(xyz_array)
         self._is_planar = None
         self._normal_vector = None
@@ -1123,7 +1123,7 @@ class Coordinates:
         self._set_plane_props()
         return self._normal_vector
 
-    def check_ccw(self, axis: Optional[np.ndarray] = None) -> bool:
+    def check_ccw(self, axis: np.ndarray | None = None) -> bool:
         """
         Whether or not the Coordinates are ordered in the counter-clockwise direction
         about a specified axis. If None is specified, the Coordinates normal vector will
@@ -1142,7 +1142,7 @@ class Coordinates:
 
         return check_ccw_3d(self.x, self.y, self.z, axis)
 
-    def set_ccw(self, axis: Optional[np.ndarray] = None):
+    def set_ccw(self, axis: np.ndarray | None = None):
         """
         Set the Coordinates to be counter-clockwise about a specified axis. If None is
         specified, the Coordinates normal vector will be used.
@@ -1553,7 +1553,7 @@ def vector_intersect_3d(
 
 def coords_plane_intersect(
     coords: Coordinates, plane: BluemiraPlane
-) -> Union[np.ndarray, None]:
+) -> np.ndarray | None:
     """
     Calculate the intersection of Coordinates with a plane.
 
@@ -1677,7 +1677,7 @@ def _intersect_count(
 
 def join_intersect(
     coords1: Coordinates, coords2: Coordinates, *, get_arg: bool = False
-) -> Optional[List[int]]:
+) -> list[int] | None:
     """
     Add the intersection points between coords1 and coords2 to coords1.
 

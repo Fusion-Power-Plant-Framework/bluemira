@@ -29,7 +29,7 @@ from dataclasses import dataclass
 from enum import Enum
 from importlib import resources
 from pathlib import Path
-from typing import Dict, Iterable, List, Literal, TypeVar, Union
+from typing import Dict, Iterable, List, Literal, TypeVar
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.codes.error import CodesError
@@ -98,18 +98,18 @@ class _INVariable:
     """
 
     name: str
-    _value: Union[float, list, dict]
+    _value: float | list | dict
     v_type: TypeVar("InVarValueType")
     parameter_group: str
     comment: str
 
     @property
-    def get_value(self) -> Union[float, list, dict]:
+    def get_value(self) -> float | list | dict:
         """Return value in correct format"""
         return self._value
 
     @property
-    def value(self) -> Union[str, list, dict]:
+    def value(self) -> str | list | dict:
         """
         Return the string of a value if not a Dict or a List
         """
@@ -178,7 +178,7 @@ class Impurities(Enum):
         )
 
 
-def update_obsolete_vars(process_map_name: str) -> Union[str, list[str], None]:
+def update_obsolete_vars(process_map_name: str) -> str | list[str] | None:
     """
     Check if the bluemira variable is up to date using the OBS_VAR dict.
     If the PROCESS variable name has been updated in the installed version

@@ -26,7 +26,7 @@ Coil and coil grouping objects
 from __future__ import annotations
 
 from enum import Enum, EnumMeta, auto
-from typing import TYPE_CHECKING, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Iterable
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -170,10 +170,10 @@ class Coil(CoilFieldsMixin):
         self,
         x: float,
         z: float,
-        dx: Optional[float] = None,
-        dz: Optional[float] = None,
-        name: Optional[str] = None,
-        ctype: Union[str, CoilType] = CoilType.NONE,
+        dx: float | None = None,
+        dz: float | None = None,
+        name: str | None = None,
+        ctype: str | CoilType = CoilType.NONE,
         current: float = 0,
         j_max: float = np.nan,
         b_max: float = np.nan,
@@ -224,11 +224,11 @@ class Coil(CoilFieldsMixin):
 
     def plot(
         self,
-        ax: Optional[Axes] = None,
+        ax: Axes | None = None,
         *,
         subcoil: bool = True,
         label: bool = False,
-        force: Optional[Iterable] = None,
+        force: Iterable | None = None,
         **kwargs,
     ):
         """
@@ -377,7 +377,7 @@ class Coil(CoilFieldsMixin):
         self.z = values[1]
 
     @ctype.setter
-    def ctype(self, value: Union[str, np.ndarray, CoilType]):
+    def ctype(self, value: str | np.ndarray | CoilType):
         """Set coil type"""
         self._ctype = (
             value
@@ -546,7 +546,7 @@ class Coil(CoilFieldsMixin):
             " longer change the coil size."
         )
 
-    def resize(self, current: Optional[float] = None):
+    def resize(self, current: float | None = None):
         """Resize coil given a current"""
         if not self._flag_sizefix:
             # Adjust the size of the coil
@@ -564,7 +564,7 @@ class Coil(CoilFieldsMixin):
             self._discretise()
             self._set_coil_attributes()
 
-    def _make_size(self, current: Optional[float] = None):
+    def _make_size(self, current: float | None = None):
         """
         Size the coil based on a current and a current density.
         """

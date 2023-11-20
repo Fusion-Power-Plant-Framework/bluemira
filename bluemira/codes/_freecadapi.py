@@ -38,9 +38,7 @@ from typing import (
     TYPE_CHECKING,
     Callable,
     Iterable,
-    Optional,
     Protocol,
-    Union,
 )
 
 import FreeCAD
@@ -240,7 +238,7 @@ def make_compound(shapes: list[apiShape]) -> apiCompound:
     return Part.makeCompound(shapes)
 
 
-def make_polygon(points: Union[list, np.ndarray]) -> apiWire:
+def make_polygon(points: list | np.ndarray) -> apiWire:
     """
     Make a polygon from a set of points.
 
@@ -259,7 +257,7 @@ def make_polygon(points: Union[list, np.ndarray]) -> apiWire:
     return Part.makePolygon(pntslist)
 
 
-def make_bezier(points: Union[list, np.ndarray]) -> apiWire:
+def make_bezier(points: list | np.ndarray) -> apiWire:
     """
     Make a bezier curve from a set of points.
 
@@ -327,11 +325,11 @@ def make_bspline(
 
 
 def interpolate_bspline(
-    points: Union[list, np.ndarray],
+    points: list | np.ndarray,
     *,
     closed: bool = False,
-    start_tangent: Optional[Iterable] = None,
-    end_tangent: Optional[Iterable] = None,
+    start_tangent: Iterable | None = None,
+    end_tangent: Iterable | None = None,
 ) -> apiWire:
     """
     Make a B-Spline curve by interpolating a set of points.
@@ -814,7 +812,7 @@ def close_wire(wire: apiWire) -> apiWire:
     return wire
 
 
-def discretize(w: apiWire, ndiscr: int = 10, dl: Optional[float] = None) -> np.ndarray:
+def discretize(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndarray:
     """
     Discretize a wire.
 
@@ -858,7 +856,7 @@ def discretize(w: apiWire, ndiscr: int = 10, dl: Optional[float] = None) -> np.n
 
 
 def discretize_by_edges(
-    w: apiWire, ndiscr: int = 10, dl: Optional[float] = None
+    w: apiWire, ndiscr: int = 10, dl: float | None = None
 ) -> np.ndarray:
     """
     Discretize a wire taking into account the edges of which it consists of.
@@ -1011,7 +1009,7 @@ def wire_parameter_at(
 
 def split_wire(
     wire: apiWire, vertex: Iterable[float], tolerance: float
-) -> tuple[Union[None, apiWire], Union[None, apiWire]]:
+) -> tuple[None | apiWire, None | apiWire]:
     """
     Split a wire at a given vertex.
 
@@ -1155,7 +1153,7 @@ def _slice_solid(obj, normal_plane, shift):
 # FreeCAD Configuration
 # ======================================================================================
 def _setup_document(
-    parts: Iterable[apiShape], labels: Optional[Iterable[str]] = None
+    parts: Iterable[apiShape], labels: Iterable[str] | None = None
 ) -> Iterable[Part.Feature]:
     """
     Setup FreeCAD document.
@@ -1398,8 +1396,8 @@ def _scale_obj(objs, scale: float = 1000):
 def save_cad(
     shapes: Iterable[apiShape],
     filename: str,
-    cad_format: Union[str, CADFileType] = "stp",
-    labels: Optional[Iterable[str]] = None,
+    cad_format: str | CADFileType = "stp",
+    labels: Iterable[str] | None = None,
     unit_scale: str = "metre",
     **kwargs,
 ):
@@ -1657,7 +1655,7 @@ def sweep_shape(
     *,
     solid: bool = True,
     frenet: bool = True,
-) -> Union[apiShell, apiSolid]:
+) -> apiShell | apiSolid:
     """
     Sweep a a set of profiles along a path.
 
@@ -2280,7 +2278,7 @@ def _colourise(node: coin.SoNode, options: dict):
 
 def collect_verts_faces(
     solid: apiShape, tesselation: float = 0.1
-) -> tuple[Optional[np.ndarray], ...]:
+) -> tuple[np.ndarray | None, ...]:
     """
     Collects verticies and faces of parts and tessellates them
     for the CAD viewer
@@ -2361,14 +2359,14 @@ class DefaultDisplayOptions:
         return self.colour
 
     @color.setter
-    def color(self, value: Union[str, tuple[float, float, float], ColorPalette]):
+    def color(self, value: str | tuple[float, float, float] | ColorPalette):
         """See colour"""
         self.colour = value
 
 
 def show_cad(
-    parts: Union[apiShape, list[apiShape]],
-    options: Union[dict, list[Optional[dict]]],
+    parts: apiShape | list[apiShape],
+    options: dict | list[dict | None],
     labels: list[str],
     **kwargs,  # noqa: ARG001
 ):

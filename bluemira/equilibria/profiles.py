@@ -25,7 +25,7 @@ Plasma profile objects, shape functions, and associated tools
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     from bluemira.equilibria.find import Opoint, Optional, Xpoint
@@ -322,7 +322,7 @@ class LaoPolynomialFunc(ShapeFunction):
     _fact = 1
     _order = 3
 
-    def __init__(self, coeffs: Union[float, np.ndarray]):
+    def __init__(self, coeffs: float | np.ndarray):
         if not hasattr(coeffs, "__len__"):
             self.n = 0
         self.n = len(coeffs) - 1
@@ -341,7 +341,7 @@ class LuxonExpFunc(ShapeFunction):
     _fact = 1
     _order = 1
 
-    def __init__(self, coeffs: Union[float, np.ndarray]):
+    def __init__(self, coeffs: float | np.ndarray):
         if not hasattr(coeffs, "__len__"):
             self.n = 1
             self.coeffs = [coeffs]
@@ -383,7 +383,7 @@ class Profile:
         o_vals = np.reshape(out, -1)
         return p_vals, o_vals
 
-    def pressure(self, psinorm: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def pressure(self, psinorm: float | np.ndarray) -> float | np.ndarray:
         """
         Return p as a function of normalised psi by integrating pprime
         """
@@ -395,7 +395,7 @@ class Profile:
             o_vals[i] = self._scalar_denorm(self.pprime, p_vals[i])
         return np.reshape(o_vals, psinorm.shape)
 
-    def fRBpol(self, psinorm: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def fRBpol(self, psinorm: float | np.ndarray) -> float | np.ndarray:
         """
         Return f as a function of normalised psi
 
@@ -632,13 +632,13 @@ class BetaIpProfile(Profile):
         self.beta0 = beta0
         return jtor
 
-    def pprime(self, pn: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def pprime(self, pn: float | np.ndarray) -> float | np.ndarray:
         """
         dp/dpsi as a function of normalised psi
         """
         return self.lambd * self.beta0 / self.R_0 * self.shape(pn)
 
-    def ffprime(self, pn: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def ffprime(self, pn: float | np.ndarray) -> float | np.ndarray:
         """
         f*df/dpsi as a function of normalised psi
         """
@@ -712,12 +712,12 @@ class CustomProfile(Profile):
 
     def __init__(
         self,
-        pprime_func: Union[np.ndarray, Callable[[float]], float],
-        ffprime_func: Union[np.ndarray, Callable[[float]], float],
+        pprime_func: np.ndarray | Callable[[float]] | float,
+        ffprime_func: np.ndarray | Callable[[float]] | float,
         R_0: float,
         B_0: float,
-        p_func: Optional[Union[np.ndarray, Callable[[float]], float]] = None,
-        f_func: Optional[Union[np.ndarray, Callable[[float]], float]] = None,
+        p_func: Optional[np.ndarray | Callable[[float]] | float] = None,
+        f_func: Optional[np.ndarray | Callable[[float]] | float] = None,
         I_p: Optional[float] = None,
     ):
         self._pprime_in = self.parse_to_callable(pprime_func)
@@ -747,13 +747,13 @@ class CustomProfile(Profile):
             return None
         raise TypeError("Could not make input object a callable function.")
 
-    def pprime(self, pn: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def pprime(self, pn: float | np.ndarray) -> float | np.ndarray:
         """
         dp/dpsi as a function of normalised psi
         """
         return abs(self.scale) * self._pprime_in(pn)
 
-    def ffprime(self, pn: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def ffprime(self, pn: float | np.ndarray) -> float | np.ndarray:
         """
         f*df/dpsi as a function of normalised psi
         """
@@ -790,7 +790,7 @@ class CustomProfile(Profile):
                 jtor *= self.scale
         return jtor
 
-    def pressure(self, psinorm: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def pressure(self, psinorm: float | np.ndarray) -> float | np.ndarray:
         """
         Return pressure [Pa] at given value(s) of normalised psi
         """
@@ -798,7 +798,7 @@ class CustomProfile(Profile):
             return abs(self.scale) * self.p_func(psinorm)
         return super().pressure(psinorm)
 
-    def fRBpol(self, psinorm: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def fRBpol(self, psinorm: float | np.ndarray) -> float | np.ndarray:
         """
         Return f=R*Bt at given value(s) of normalised psi
         """

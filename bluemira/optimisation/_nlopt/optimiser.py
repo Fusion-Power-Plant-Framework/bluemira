@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Any, Mapping
 
 import nlopt
 import numpy as np
@@ -111,9 +111,9 @@ class NloptOptimiser(Optimiser):
         algorithm: AlgorithmType,
         n_variables: int,
         f_objective: ObjectiveCallable,
-        df_objective: Optional[OptimiserCallable] = None,
-        opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-        opt_parameters: Optional[Mapping[str, Any]] = None,
+        df_objective: OptimiserCallable | None = None,
+        opt_conditions: Mapping[str, int | float] | None = None,
+        opt_parameters: Mapping[str, Any] | None = None,
         *,
         keep_history: bool = False,
     ):
@@ -140,7 +140,7 @@ class NloptOptimiser(Optimiser):
         return self._opt_conditions.to_dict()
 
     @property
-    def opt_parameters(self) -> Mapping[str, Union[int, float]]:
+    def opt_parameters(self) -> Mapping[str, int | float]:
         """Return the optimiser algorithms's parameters."""
         return self._opt_parameters
 
@@ -158,7 +158,7 @@ class NloptOptimiser(Optimiser):
         self,
         f_constraint: OptimiserCallable,
         tolerance: np.ndarray,
-        df_constraint: Optional[OptimiserCallable] = None,
+        df_constraint: OptimiserCallable | None = None,
     ) -> None:
         """
         Add an equality constraint.
@@ -184,7 +184,7 @@ class NloptOptimiser(Optimiser):
         self,
         f_constraint: OptimiserCallable,
         tolerance: np.ndarray,
-        df_constraint: Optional[OptimiserCallable] = None,
+        df_constraint: OptimiserCallable | None = None,
     ) -> None:
         """
         Add an inequality constraint.
@@ -206,7 +206,7 @@ class NloptOptimiser(Optimiser):
         self._opt.add_inequality_mconstraint(constraint.call, constraint.tolerance)
         self._ineq_constraints.append(constraint)
 
-    def optimise(self, x0: Optional[np.ndarray] = None) -> OptimiserResult:
+    def optimise(self, x0: np.ndarray | None = None) -> OptimiserResult:
         """
         Run the optimisation.
 
@@ -305,7 +305,7 @@ class NloptOptimiser(Optimiser):
     def _set_objective_function(
         self,
         func: ObjectiveCallable,
-        df: Union[None, OptimiserCallable],
+        df: None | OptimiserCallable,
         n_variables: int,
     ) -> None:
         """Wrap and set the objective function."""
@@ -318,7 +318,7 @@ class NloptOptimiser(Optimiser):
             self._opt.set_min_objective(self._objective.call)
 
     def _set_termination_conditions(
-        self, opt_conditions: Mapping[str, Union[int, float]]
+        self, opt_conditions: Mapping[str, int | float]
     ) -> None:
         """Validate and set the termination conditions."""
         self._opt_conditions = NLOptConditions(**opt_conditions)

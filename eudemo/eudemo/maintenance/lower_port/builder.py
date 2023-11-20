@@ -26,7 +26,7 @@ EUDEMO Lower Port Builder
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Union
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
@@ -63,7 +63,7 @@ class TSLowerPortDuctBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[ParameterFrame, dict],
+        params: ParameterFrame | dict,
         build_config: dict,
         duct_angled_nowall_extrude_boundary: BluemiraWire,
         duct_straight_nowall_extrude_boundary: BluemiraWire,
@@ -125,7 +125,7 @@ class VVLowerPortDuctBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[ParameterFrame, dict],
+        params: ParameterFrame | dict,
         build_config: dict,
         duct_angled_nowall_extrude_boundary: BluemiraWire,
         duct_straight_nowall_extrude_boundary: BluemiraWire,

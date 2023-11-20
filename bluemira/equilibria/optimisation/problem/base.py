@@ -59,7 +59,7 @@ class CoilsetOptimiserResult:
     The first element of each tuple is the parameterisation (x), the
     second is the evaluation of the objective function at x (f(x)).
     """
-    constraints_satisfied: Union[bool, None] = None
+    constraints_satisfied: bool | None = None
     """
     Whether all constraints have been satisfied to within the required tolerance.
 
@@ -91,7 +91,7 @@ class CoilsetOptimisationProblem(abc.ABC):
 
     def _opt_condition_defaults(
         self, default_cond=Dict[str, Union[float, int]]
-    ) -> dict[str, Union[float, int]]:
+    ) -> dict[str, float | int]:
         algorithm = (
             Algorithm[self.opt_algorithm]
             if not isinstance(self.opt_algorithm, Algorithm)

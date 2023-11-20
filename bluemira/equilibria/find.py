@@ -26,7 +26,7 @@ Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 from __future__ import annotations
 
 import operator
-from typing import TYPE_CHECKING, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Iterable
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -167,7 +167,7 @@ def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> np.ndarray:
 
 def find_local_Bp_minima_cg(
     f_psi: RectBivariateSpline, x0: float, z0: float, radius: float
-) -> Union[None, list[float]]:
+) -> None | list[float]:
     """
     Find local Bp minima on a grid (precisely) using a local Newton/Powell
     conjugate gradient search.
@@ -276,10 +276,10 @@ def find_OX_points(
     x: np.ndarray,
     z: np.ndarray,
     psi: np.ndarray,
-    limiter: Optional[Limiter] = None,
+    limiter: Limiter | None = None,
     *,
     field_cut_off: float = 1.0,
-) -> tuple[list[Opoint], list[Union[Xpoint, Lpoint]]]:
+) -> tuple[list[Opoint], list[Xpoint | Lpoint]]:
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -473,8 +473,8 @@ def find_flux_surfs(
     z: np.ndarray,
     psi: np.ndarray,
     psinorm: float,
-    o_points: Optional[list[Opoint]] = None,
-    x_points: Optional[list[Xpoint]] = None,
+    o_points: list[Opoint] | None = None,
+    x_points: list[Xpoint] | None = None,
 ) -> list[np.ndarray]:
     """
     Finds all flux surfaces with a given normalised psi. If a flux loop goes off
@@ -514,8 +514,8 @@ def find_flux_surf(
     z: np.ndarray,
     psi: np.ndarray,
     psinorm: float,
-    o_points: Optional[list[Opoint]] = None,
-    x_points: Optional[list[Xpoint]] = None,
+    o_points: list[Opoint] | None = None,
+    x_points: list[Xpoint] | None = None,
 ) -> np.ndarray:
     """
     Picks a flux surface with a normalised psinorm relative to the separatrix.
@@ -661,12 +661,12 @@ def find_LCFS_separatrix(
     x: np.ndarray,
     z: np.ndarray,
     psi: np.ndarray,
-    o_points: Optional[List[Opoint]] = None,
-    x_points: Optional[List[Xpoint]] = None,
+    o_points: list[Opoint] | None = None,
+    x_points: list[Xpoint] | None = None,
     *,
     double_null: bool = False,
     psi_n_tol: float = 1e-6,
-) -> tuple[Coordinates, Union[Coordinates, list[Coordinates]]]:
+) -> tuple[Coordinates, Coordinates | list[Coordinates]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
 
@@ -945,8 +945,8 @@ def in_plasma(
     x: np.ndarray,
     z: np.ndarray,
     psi: np.ndarray,
-    o_points: Optional[list[Opoint]] = None,
-    x_points: Optional[list[Xpoint]] = None,
+    o_points: list[Opoint] | None = None,
+    x_points: list[Xpoint] | None = None,
 ) -> np.ndarray:
     """
     Get a psi-shaped mask of psi where 1 is inside the plasma, 0 outside.

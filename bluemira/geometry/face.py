@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import bluemira.codes._freecadapi as cadapi
 
@@ -75,7 +75,7 @@ class BluemiraFace(BluemiraGeo):
         """Make a copy of the BluemiraFace"""
         return BluemiraFace(self.boundary, self.label)
 
-    def deepcopy(self, label: Optional[str] = None):
+    def deepcopy(self, label: str | None = None):
         """Make a copy of the BluemiraFace"""
         boundary = []
         for o in self.boundary:
@@ -149,7 +149,7 @@ class BluemiraFace(BluemiraGeo):
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
 
     def discretize(
-        self, ndiscr: int = 100, *, byedges: bool = False, dl: Optional[float] = None
+        self, ndiscr: int = 100, *, byedges: bool = False, dl: float | None = None
     ) -> np.ndarray:
         """
         Make an array of the geometry.

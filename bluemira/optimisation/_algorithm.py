@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import asdict, dataclass, field
-from typing import Optional, Union
+from typing import Union
 
 
 class _AlgorithmMeta(enum.EnumMeta):
@@ -65,13 +65,13 @@ AlgorithmType = Union[str, Algorithm]
 class AlgorithmConditions:
     """Algorithm conditions container"""
 
-    ftol_abs: Optional[float] = None
-    ftol_rel: Optional[float] = None
-    xtol_abs: Optional[float] = None
-    xtol_rel: Optional[float] = None
+    ftol_abs: float | None = None
+    ftol_rel: float | None = None
+    xtol_abs: float | None = None
+    xtol_rel: float | None = None
     max_eval: int = 2000
-    max_time: Optional[float] = None
-    stop_val: Optional[float] = None
+    max_time: float | None = None
+    stop_val: float | None = None
 
     def to_dict(self) -> dict[str, float]:
         """Convert to dictionary without Nones"""

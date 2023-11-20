@@ -28,7 +28,7 @@ from __future__ import annotations
 import copy
 import inspect
 import pprint
-from typing import TYPE_CHECKING, Callable, Dict, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterable
 
 # import mesher lib (gmsh)
 import gmsh
@@ -128,7 +128,7 @@ class Meshable:
         return self._mesh_options
 
     @mesh_options.setter
-    def mesh_options(self, value: Union[MeshOptions, dict]):
+    def mesh_options(self, value: MeshOptions | dict):
         if isinstance(value, MeshOptions):
             self._mesh_options = value
         elif isinstance(value, Dict):
@@ -148,7 +148,7 @@ class Mesh:
         self,
         modelname: str = "Mesh",
         terminal: int = 0,
-        meshfile: Optional[Union[str, list[str]]] = None,
+        meshfile: str | list[str] | None = None,
         logfile: str = "gmsh.log",
     ):
         self.modelname = modelname
@@ -159,7 +159,7 @@ class Mesh:
         self.logfile = logfile
 
     @staticmethod
-    def _check_meshfile(meshfile: Union[str, list]) -> list[str]:
+    def _check_meshfile(meshfile: str | list) -> list[str]:
         """
         Check the mesh file input.
         """
@@ -182,10 +182,10 @@ class Mesh:
         return self._meshfile
 
     @meshfile.setter
-    def meshfile(self, meshfile: Union[str, list[str]]):
+    def meshfile(self, meshfile: str | list[str]):
         self._meshfile = self._check_meshfile(meshfile)
 
-    def __call__(self, obj: Union[Component, Meshable], dim: int = 2):
+    def __call__(self, obj: Component | Meshable, dim: int = 2):
         """
         Generate the mesh and save it to file.
         """
@@ -332,7 +332,7 @@ class Mesh:
         buffer: dict,
         dim: Iterable[int] = (2, 1, 0),
         all_ent=None,
-        tools: Optional[list] = None,
+        tools: list | None = None,
         *,
         remove_object: bool = True,
         remove_tool: bool = True,
@@ -685,9 +685,14 @@ class _FreeCADGmsh:
     @staticmethod
     def _fragment(
         dim: Iterable[int] = (2, 1, 0),
+<<<<<<< HEAD
         all_ent: Optional[list[int]] = None,
         tools: Optional[list] = None,
         *,
+=======
+        all_ent: list[int] | None = None,
+        tools: list | None = None,
+>>>>>>> cad43301 (🚨 Ruff typing autofixes)
         remove_object: bool = True,
         remove_tool: bool = True,
     ):
@@ -711,7 +716,7 @@ class _FreeCADGmsh:
         return all_ent, oo, oov
 
     @staticmethod
-    def _map_mesh_dict(mesh_dict: dict, all_ent, oov: Optional[list] = None):
+    def _map_mesh_dict(mesh_dict: dict, all_ent, oov: list | None = None):
         if oov is None:
             oov = []
         dim_dict = {
@@ -748,7 +753,7 @@ class _FreeCADGmsh:
         gmsh.model.occ.synchronize()
 
     @staticmethod
-    def add_physical_group(dim, tags, name: Optional[str] = None):
+    def add_physical_group(dim, tags, name: str | None = None):
         tag = gmsh.model.addPhysicalGroup(dim, tags)
         if name is not None:
             gmsh.model.setPhysicalName(dim, tag, name)

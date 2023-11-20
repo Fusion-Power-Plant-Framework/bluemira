@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,7 +71,7 @@ class LifeCycle:
 
     def __init__(
         self,
-        config: Union[LifeCycleParams, dict[str, float]],
+        config: LifeCycleParams | dict[str, float],
         learning_strategy: LearningStrategy,
         availability_strategy: OperationalAvailabilityStrategy,
         inputs: dict,
@@ -402,7 +402,7 @@ class LifeCycle:
         ax.set_xlim([0, self.fpy / self.params.A_global])
         ax.set_ylim(bottom=0)
 
-    def plot_load_factor(self, typ: str = "pie", ax: Optional[plt.Axes] = None):
+    def plot_load_factor(self, typ: str = "pie", ax: plt.Axes | None = None):
         """
         Plots a pie or bar chart of the breakdown of the reactor lifetime
 

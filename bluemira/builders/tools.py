@@ -25,7 +25,7 @@ A collection of tools used in the EU-DEMO design.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Tuple
 
 from bluemira.display.palettes import ColorPalette
 
@@ -75,8 +75,8 @@ __all__ = [
 
 def apply_component_display_options(
     phys_component: PhysicalComponent,
-    color: Union[Iterable, ColorPalette],
-    transparency: Optional[float] = None,
+    color: Iterable | ColorPalette,
+    transparency: float | None = None,
 ):
     """
     Apply color and transparency to a PhysicalComponent for both plotting and CAD.
@@ -114,7 +114,7 @@ def get_n_sectors(no_obj: int, degree: float = 360) -> tuple[float, int]:
 
 
 def circular_pattern_component(
-    component: Union[bm_comp.Component, list[bm_comp.Component]],
+    component: bm_comp.Component | list[bm_comp.Component],
     n_children: int,
     parent_prefix: str = "Sector",
     *,
@@ -363,7 +363,7 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 def build_sectioned_xy(
     face: BluemiraFace,
     plot_colour: tuple[float],
-    material: Optional[SerialisedMaterial] = None,
+    material: SerialisedMaterial | None = None,
 ) -> list[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
@@ -407,7 +407,7 @@ def build_sectioned_xyz(
     degree: float = 360,
     *,
     enable_sectioning: bool = True,
-    material: Optional[SerialisedMaterial] = None,
+    material: SerialisedMaterial | None = None,
 ) -> list[PhysicalComponent]:
     """
     Build the x-y-z components of sectioned component

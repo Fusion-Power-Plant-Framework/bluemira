@@ -25,7 +25,7 @@ PROCESS IN.DAT template builder
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Any, Iterable
 
 if TYPE_CHECKING:
     from bluemira.codes.process._equation_variable_mapping import (
@@ -134,9 +134,9 @@ class PROCESSTemplateBuilder:
     def add_fvalue_constraint(
         self,
         constraint: Constraint,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ):
         """
         Add an f-value constraint to the PROCESS run
@@ -156,9 +156,9 @@ class PROCESSTemplateBuilder:
     def add_variable(
         self,
         name: str,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ):
         """
         Add an iteration variable to the PROCESS run
@@ -190,9 +190,9 @@ class PROCESSTemplateBuilder:
     def adjust_variable(
         self,
         name: str,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ):
         """
         Adjust an iteration variable in the PROCESS run
@@ -215,7 +215,7 @@ class PROCESSTemplateBuilder:
             if upper_bound:
                 self.bounds[str(itvar)]["u"] = str(upper_bound)
 
-    def add_input_value(self, name: str, value: Union[float, Iterable[float]]):
+    def add_input_value(self, name: str, value: float | Iterable[float]):
         """
         Add a fixed input value to the PROCESS run
         """
@@ -260,7 +260,7 @@ class PROCESSTemplateBuilder:
             self._check_missing_iteration_variables(constraint)
             self._check_missing_inputs(constraint)
 
-    def _check_missing_inputs(self, model: Union[PROCESSModel, ConstraintSelection]):
+    def _check_missing_inputs(self, model: PROCESSModel | ConstraintSelection):
         missing_inputs = [
             input_name
             for input_name in model.requires_values

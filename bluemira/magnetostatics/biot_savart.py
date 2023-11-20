@@ -25,7 +25,7 @@ Biot-Savart filament object
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -64,7 +64,7 @@ class BiotSavartFilament(CurrentSource):
 
     def __init__(
         self,
-        arrays: Union[Coordinates, np.ndarray, list[Coordinates], list[np.ndarray]],
+        arrays: Coordinates | np.ndarray | list[Coordinates] | list[np.ndarray],
         radius: float,
         current: float = 1.0,
     ):
@@ -117,9 +117,9 @@ class BiotSavartFilament(CurrentSource):
     @process_xyz_array
     def potential(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate the vector potential of an arbitrarily shaped Coordinates.
@@ -154,9 +154,9 @@ class BiotSavartFilament(CurrentSource):
     @process_xyz_array
     def field(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> np.ndarray:
         """
         Calculate the field due to the arbitrarily shaped Coordinates.
@@ -235,7 +235,7 @@ class BiotSavartFilament(CurrentSource):
 
         return MU_0_4PI * (inductance + l_hat_0)
 
-    def rotate(self, angle: float, axis: Union[str, np.ndarray]):
+    def rotate(self, angle: float, axis: str | np.ndarray):
         """
         Rotate the CurrentSource about an axis.
 
@@ -254,7 +254,7 @@ class BiotSavartFilament(CurrentSource):
         self.ref_mid_points = self.ref_mid_points @ r
         self._arrays = [array @ r for array in self._arrays]
 
-    def plot(self, ax: Optional[Axes] = None, *, show_coord_sys: bool = False):
+    def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False):
         """
         Plot the CurrentSource.
 

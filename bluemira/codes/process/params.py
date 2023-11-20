@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING
 
 from bluemira.base.parameter_frame import Parameter  # noqa: TCH001
 from bluemira.codes.params import MappedParameterFrame, ParameterMapping
@@ -381,7 +381,7 @@ class ProcessSolverParams(MappedParameterFrame):
         return self._mappings
 
     @property
-    def defaults(self) -> dict[str, Union[float, list, dict]]:
+    def defaults(self) -> dict[str, float | list | dict]:
         """
         Default values for Process
         """
@@ -395,9 +395,7 @@ class ProcessSolverParams(MappedParameterFrame):
         return self._defaults.to_invariable()
 
     @classmethod
-    def from_defaults(
-        cls, template: Optional[ProcessInputs] = None
-    ) -> ProcessSolverParams:
+    def from_defaults(cls, template: ProcessInputs | None = None) -> ProcessSolverParams:
         """
         Initialise from defaults
         """

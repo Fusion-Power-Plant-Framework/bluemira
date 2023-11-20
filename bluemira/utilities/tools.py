@@ -36,7 +36,7 @@ from importlib import util as imp_u
 from itertools import permutations
 from json import JSONEncoder, dumps
 from os import listdir
-from typing import TYPE_CHECKING, Any, Callable, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable
 
 import nlopt
 import numpy as np
@@ -72,7 +72,7 @@ class NumpyJSONEncoder(JSONEncoder):
 
 def json_writer(
     data: dict[str, Any],
-    file: Optional[Union[Path, str]] = None,
+    file: Path | str | None = None,
     *,
     return_output: bool = False,
     cls: JSONEncoder = NumpyJSONEncoder,
@@ -221,7 +221,7 @@ class EinsumWrapper:
             raise ValueError("matrices dimensions >2d Unsupported") from None
 
     def dot(
-        self, ix: np.ndarray, iy: np.ndarray, out: Optional[np.ndarray] = None
+        self, ix: np.ndarray, iy: np.ndarray, out: np.ndarray | None = None
     ) -> np.ndarray:
         """
         A dot product emulation using np.einsum.
@@ -268,7 +268,7 @@ class EinsumWrapper:
         return np.einsum(out_str, ix, iy, out=out)
 
     def cross(
-        self, ix: np.ndarray, iy: np.ndarray, out: Optional[np.ndarray] = None
+        self, ix: np.ndarray, iy: np.ndarray, out: np.ndarray | None = None
     ) -> np.ndarray:
         """
         A row-wise cross product of a 2D matrices of vectors.
@@ -331,7 +331,7 @@ class ColourDescriptor:
 
         return colors.to_hex(getattr(obj, self._name, self._default))
 
-    def __set__(self, obj: Any, value: Union[str, tuple[float, ...], ColorPalette]):
+    def __set__(self, obj: Any, value: str | tuple[float, ...] | ColorPalette):
         """
         Set the colour
 
@@ -537,10 +537,10 @@ def compare_dicts(
 
 
 def clip(
-    val: Union[float, np.ndarray],
-    val_min: Union[float, np.ndarray],
-    val_max: Union[float, np.ndarray],
-) -> Union[float, np.ndarray]:
+    val: float | np.ndarray,
+    val_min: float | np.ndarray,
+    val_max: float | np.ndarray,
+) -> float | np.ndarray:
     """
     Clips (limits) val between val_min and val_max.
     This function wraps the numpy core umath minimum and maximum functions
@@ -843,7 +843,7 @@ def list_array(list_: Any) -> np.ndarray:
     raise TypeError("Could not convert input type to list_array to a np.array.")
 
 
-def array_or_num(array: Any) -> Union[np.ndarray, float]:
+def array_or_num(array: Any) -> np.ndarray | float:
     """
     Always returns a numpy array or a float
 
@@ -869,7 +869,7 @@ def array_or_num(array: Any) -> Union[np.ndarray, float]:
 
 
 def deprecation_wrapper(
-    message: Union[Optional[Callable[[Any], Any]], Optional[str]]
+    message: Callable[[Any], Any] | None | str
 ) -> Callable[[Any], Any]:
     """Deprecate any callable.
 

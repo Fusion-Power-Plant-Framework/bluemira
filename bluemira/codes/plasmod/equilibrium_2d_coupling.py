@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import TYPE_CHECKING, Callable, Union
+from typing import TYPE_CHECKING, Callable
 
 if TYPE_CHECKING:
     from bluemira.codes.interface import BaseRunMode, CodesSolver
@@ -161,7 +161,7 @@ def create_plasma_xz_cross_section(
 def _run_transport_solver(
     transport_solver: CodesSolver,
     transport_params: ParameterFrame,
-    transport_run_mode: Union[str, BaseRunMode],
+    transport_run_mode: str | BaseRunMode,
 ) -> tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
     """Run transport solver"""
     transport_solver.params.update_from_frame(transport_params)
@@ -227,7 +227,7 @@ def solve_transport_fixed_boundary(
     max_inner_iter: int = 20,
     inner_iter_err_max: float = 1e-4,
     relaxation: float = 0.2,
-    transport_run_mode: Union[str, BaseRunMode] = "run",
+    transport_run_mode: str | BaseRunMode = "run",
     mesh_filename: str = "FixedBoundaryEquilibriumMesh",
     *,
     plot: bool = False,

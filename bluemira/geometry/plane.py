@@ -26,7 +26,7 @@ Wrapper for FreeCAD Plane objects
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Iterable, Optional
+from typing import TYPE_CHECKING, Iterable
 
 import numpy as np
 
@@ -140,7 +140,7 @@ class BluemiraPlane:
             f" axis: {self.axis})"
         )
 
-    def copy(self, label: Optional[str] = None):
+    def copy(self, label: str | None = None):
         """
         Make a copy of the BluemiraGeo.
         """
@@ -151,7 +151,7 @@ class BluemiraPlane:
             plane_copy.label = self.label
         return plane_copy
 
-    def deepcopy(self, label: Optional[str] = None):
+    def deepcopy(self, label: str | None = None):
         """Make a deepcopy of the BluemiraPlane"""
         plane_copy = BluemiraPlane(self.base, self.axis)
         if label is not None:

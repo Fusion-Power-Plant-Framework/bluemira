@@ -32,8 +32,6 @@ from typing import (
     Any,
     Callable,
     ClassVar,
-    Optional,
-    Union,
 )
 
 import matplotlib.pyplot as plt
@@ -82,7 +80,7 @@ class ViewDescriptor:
 
         return getattr(obj, self._name, self._default)
 
-    def __set__(self, obj: Any, value: Union[str, tuple, _placement.BluemiraPlacement]):
+    def __set__(self, obj: Any, value: str | tuple | _placement.BluemiraPlacement):
         """Set the view"""
         if isinstance(value, str):
             if value.startswith("xy"):
@@ -125,25 +123,21 @@ class DictOptionsDescriptor:
 
     """
 
-    def __init__(self, default_factory: Optional[Callable[[], dict[str, Any]]] = None):
+    def __init__(self, default_factory: Callable[[], dict[str, Any]] | None = None):
         self.default = {} if default_factory is None else default_factory()
 
     def __set_name__(self, _, name: str):
         """Set the attribute name from a dataclass"""
         self._name = "_" + name
 
-    def __get__(
-        self, obj: Any, _
-    ) -> Union[Callable[[], dict[str, Any]], dict[str, Any]]:
+    def __get__(self, obj: Any, _) -> Callable[[], dict[str, Any]] | dict[str, Any]:
         """Get the options dictionary"""
         if obj is None:
             return lambda: self.default
 
         return getattr(obj, self._name, self.default)
 
-    def __set__(
-        self, obj: Any, value: Union[Callable[[], dict[str, Any]], dict[str, Any]]
-    ):
+    def __set__(self, obj: Any, value: Callable[[], dict[str, Any]] | dict[str, Any]):
         """Set the options dictionary"""
         if callable(value):
             value = value()
@@ -241,7 +235,7 @@ class BasePlotter(ABC):
 
     _CLASS_PLOT_OPTIONS: ClassVar = {}
 
-    def __init__(self, options: Optional[PlotOptions] = None, **kwargs):
+    def __init__(self, options: PlotOptions | None = None, **kwargs):
         # discretization points representing the shape in global coordinate system
         self._data = []
         # modified discretization points for plotting (e.g. after view transformation)
@@ -637,8 +631,8 @@ def _get_plotter_class(part):
 
 
 def plot_2d(
-    parts: Union[BluemiraGeo, list[BluemiraGeo]],
-    options: Optional[Union[PlotOptions, list[PlotOptions]]] = None,
+    parts: BluemiraGeo | list[BluemiraGeo],
+    options: PlotOptions | list[PlotOptions] | None = None,
     ax=None,
     *,
     show: bool = True,
@@ -673,8 +667,8 @@ def plot_2d(
 
 
 def plot_3d(
-    parts: Union[BluemiraGeo, list[BluemiraGeo]],
-    options: Optional[Union[PlotOptions, list[PlotOptions]]] = None,
+    parts: BluemiraGeo | list[BluemiraGeo],
+    options: PlotOptions | list[PlotOptions] | None = None,
     ax=None,
     *,
     show: bool = True,

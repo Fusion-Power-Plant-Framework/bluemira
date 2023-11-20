@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 from dataclasses import MISSING, Field, field
 from pathlib import Path
-from typing import Dict, Generator, Optional, TextIO, TypedDict, Union
+from typing import Dict, Generator, TextIO, TypedDict
 
 import numpy as np
 from tabulate import tabulate
@@ -101,7 +101,7 @@ class OptVariable:
         upper_bound: float,
         *,
         fixed: bool = False,
-        description: Optional[str] = None,
+        description: str | None = None,
     ):
         self.name = name
 
@@ -145,7 +145,7 @@ class OptVariable:
         """
         return self.lower_bound + norm * (self.upper_bound - self.lower_bound)
 
-    def fix(self, value: Optional[float] = None):
+    def fix(self, value: float | None = None):
         """
         Fix the variable at a specified value. Ignores bounds.
 
@@ -160,9 +160,9 @@ class OptVariable:
 
     def adjust(
         self,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         *,
         strict_bounds: bool = True,
     ):
@@ -323,7 +323,7 @@ def ov(
     upper_bound: float,
     *,
     fixed: bool = False,
-    description: Optional[str] = None,
+    description: str | None = None,
 ):
     """Field factory for OptVariable"""
     return field(
@@ -393,9 +393,9 @@ class OptVariablesFrame:
     def adjust_variable(
         self,
         name: str,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
         *,
         fixed: bool = False,
         strict_bounds: bool = True,
@@ -433,7 +433,7 @@ class OptVariablesFrame:
 
     def adjust_variables(
         self,
-        var_dict: Optional[VarDictT] = None,
+        var_dict: VarDictT | None = None,
         *,
         strict_bounds=True,
     ):
@@ -465,7 +465,7 @@ class OptVariablesFrame:
                     )
                 self.adjust_variable(k, **kwargs, strict_bounds=strict_bounds)
 
-    def fix_variable(self, name: str, value: Optional[float] = None):
+    def fix_variable(self, name: str, value: float | None = None):
         """
         Fix a variable in the frame, removing it from optimisation but preserving a
         constant value.
@@ -588,7 +588,7 @@ class OptVariablesFrame:
         json_writer(self.as_serializable(), file, **kwargs)
 
     @classmethod
-    def from_json(cls, file: Union[Path, str, TextIO]):
+    def from_json(cls, file: Path | str | TextIO):
         """
         Create an OptVariablesFrame instance from a json file.
 

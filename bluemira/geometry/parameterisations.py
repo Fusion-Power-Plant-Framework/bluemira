@@ -37,10 +37,8 @@ from typing import (
     Any,
     Generic,
     Iterable,
-    Optional,
     TextIO,
     TypeVar,
-    Union,
 )
 
 import matplotlib.pyplot as plt
@@ -111,9 +109,9 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
     def adjust_variable(
         self,
         name: str,
-        value: Optional[float] = None,
-        lower_bound: Optional[float] = None,
-        upper_bound: Optional[float] = None,
+        value: float | None = None,
+        lower_bound: float | None = None,
+        upper_bound: float | None = None,
     ):
         """
         Adjust a variable in the GeometryParameterisation.
@@ -131,7 +129,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         """
         self.variables.adjust_variable(name, value, lower_bound, upper_bound)
 
-    def fix_variable(self, name: str, value: Optional[float] = None):
+    def fix_variable(self, name: str, value: float | None = None):
         """
         Fix a variable in the GeometryParameterisation, removing it from optimisation
         but preserving a constant value.
@@ -246,7 +244,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         self.variables.to_json(file)
 
     @classmethod
-    def from_json(cls, file: Union[Path, str, TextIO]) -> GeometryParameterisation:
+    def from_json(cls, file: Path | str | TextIO) -> GeometryParameterisation:
         """
         Create the GeometryParameterisation from a json file.
 
@@ -422,7 +420,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = PrincetonDOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -629,7 +627,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = TripleArcOptVaribles()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -850,7 +848,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
     __slots__ = ()
     n_ineq_constraints: int = 1
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = SextupleArcOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1161,7 +1159,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = PolySplineOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -1693,9 +1691,9 @@ class PictureFrameOptVariables(OptVariablesFrame):
 
     def configure(
         self,
-        upper: Union[str, PFrameSection],
-        lower: Union[str, PFrameSection],
-        inner: Optional[Union[str, PFrameSection]],
+        upper: str | PFrameSection,
+        lower: str | PFrameSection,
+        inner: str | PFrameSection | None,
     ):
         """Fix variables based on the upper, lower and inner limbs."""
         if upper is PFrameSection.CURVED and lower is PFrameSection.CURVED:
@@ -1776,11 +1774,11 @@ class PictureFrame(
 
     def __init__(
         self,
-        var_dict: Optional[VarDictT] = None,
+        var_dict: VarDictT | None = None,
         *,
-        upper: Union[str, PFrameSection] = PFrameSection.FLAT,
-        lower: Union[str, PFrameSection] = PFrameSection.FLAT,
-        inner: Optional[Union[str, PFrameSection]] = None,
+        upper: str | PFrameSection = PFrameSection.FLAT,
+        lower: str | PFrameSection = PFrameSection.FLAT,
+        inner: str | PFrameSection | None = None,
     ):
         self.upper = upper if isinstance(upper, PFrameSection) else PFrameSection[upper]
         self.lower = lower if isinstance(lower, PFrameSection) else PFrameSection[lower]

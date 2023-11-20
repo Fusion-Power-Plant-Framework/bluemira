@@ -26,7 +26,7 @@ Full fuel cycle model object
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Any, Optional, Union
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from bluemira.fuel_cycle.timeline import Timeline
@@ -75,8 +75,8 @@ class EUDEMOFuelCycleModel:
 
     def __init__(
         self,
-        params: Optional[Union[EDFCMParams, dict[str, float]]] = None,
-        build_config: Optional[dict[str, Any]] = None,
+        params: EDFCMParams | dict[str, float] | None = None,
+        build_config: dict[str, Any] | None = None,
     ):
         # Handle parameters
         if isinstance(params, EDFCMParams):
@@ -212,7 +212,7 @@ class EUDEMOFuelCycleModel:
         self,
         eta_iv: float,
         max_inventory: float,
-        flows: Optional[list[np.ndarray]] = None,
+        flows: list[np.ndarray] | None = None,
     ) -> np.ndarray:
         """
         In-vessel environment

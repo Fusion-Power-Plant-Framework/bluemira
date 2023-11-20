@@ -28,7 +28,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
-from typing import TYPE_CHECKING, Any, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Any, Iterable
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -97,11 +97,11 @@ class Snapshot:
 
     eq: MHDState
     coilset: CoilSet
-    constraints: Optional[CoilsetOptimisationProblem] = None
-    profiles: Optional[Profile] = None
-    optimisation_result: Optional[CoilsetOptimiserResult] = None
-    limiter: Optional[Limiter] = None
-    tfcoil: Optional[Coordinates] = None
+    constraints: CoilsetOptimisationProblem | None = None
+    profiles: Profile | None = None
+    optimisation_result: CoilsetOptimiserResult | None = None
+    limiter: Limiter | None = None
+    tfcoil: Coordinates | None = None
 
     def __post_init__(self):
         """Copy some variables on initialisation"""
@@ -120,7 +120,7 @@ class BreakdownCOPSettings:
     problem: type[BreakdownCOP] = BreakdownCOP
     strategy: type[BreakdownZoneStrategy] = CircularZoneStrategy
     algorithm: AlgorithmType = Algorithm.COBYLA
-    opt_conditions: dict[str, Union[float, int]] = field(
+    opt_conditions: dict[str, float | int] = field(
         default_factory=lambda: {"max_eval": 5000, "ftol_rel": 1e-10}
     )
     B_stray_con_tol: float = 1e-8
@@ -136,7 +136,7 @@ class EQSettings:
         default_factory=lambda: DudsonConvergence(1e-2)
     )
     algorithm: AlgorithmType = Algorithm.SLSQP
-    opt_conditions: dict[str, Union[float, int]] = field(
+    opt_conditions: dict[str, float | int] = field(
         default_factory=lambda: {"max_eval": 1000, "ftol_rel": 1e-6}
     )
     opt_parameters: dict[str, Any] = field(
@@ -154,7 +154,7 @@ class PositionSettings:
 
     problem: type[PulsedNestedPositionCOP] = PulsedNestedPositionCOP
     algorithm: AlgorithmType = Algorithm.COBYLA
-    opt_conditions: dict[str, Union[float, int]] = field(
+    opt_conditions: dict[str, float | int] = field(
         default_factory=lambda: {"max_eval": 100, "ftol_rel": 1e-4}
     )
 
@@ -217,11 +217,11 @@ class PulsedCoilsetDesign(ABC):
         grid: Grid,
         equilibrium_constraints: list[MagneticConstraint],
         profiles: Profile,
-        breakdown_settings: Optional[Union[dict, BreakdownCOPSettings]] = None,
-        equilibrium_settings: Optional[Union[dict, EQSettings]] = None,
-        current_opt_constraints: Optional[list[UpdateableConstraint]] = None,
-        coil_constraints: Optional[list[UpdateableConstraint]] = None,
-        limiter: Optional[Limiter] = None,
+        breakdown_settings: dict | BreakdownCOPSettings | None = None,
+        equilibrium_settings: dict | EQSettings | None = None,
+        current_opt_constraints: list[UpdateableConstraint] | None = None,
+        coil_constraints: list[UpdateableConstraint] | None = None,
+        limiter: Limiter | None = None,
     ):
         self.snapshots = {}
         self.params = PulsedCoilsetDesignFrame.from_frame(params)
@@ -247,7 +247,7 @@ class PulsedCoilsetDesign(ABC):
         return self._bd_settings
 
     @bd_settings.setter
-    def bd_settings(self, value: Optional[Union[dict, BreakdownCOPSettings]] = None):
+    def bd_settings(self, value: dict | BreakdownCOPSettings | None = None):
         """Breakdown COP settings."""
         if value is None:
             self._bd_settings = BreakdownCOPSettings()
@@ -262,7 +262,7 @@ class PulsedCoilsetDesign(ABC):
         return self._eq_settings
 
     @eq_settings.setter
-    def eq_settings(self, value: Optional[Union[EQSettings, dict]] = None):
+    def eq_settings(self, value: EQSettings | dict | None = None):
         """Equilibrium COP settings."""
         if value is None:
             self._eq_settings = EQSettings()
@@ -277,7 +277,7 @@ class PulsedCoilsetDesign(ABC):
         eq: MHDState,
         coilset: CoilSet,
         problem: CoilsetOptimisationProblem,
-        profiles: Optional[Profile] = None,
+        profiles: Profile | None = None,
     ):
         """Take a snapshot of the pulse."""
         if name in self.snapshots:
@@ -386,7 +386,7 @@ class PulsedCoilsetDesign(ABC):
 
         self.take_snapshot(self.EQ_REF, eq, coilset, opt_problem, self.profiles)
 
-    def calculate_sof_eof_fluxes(self, psi_premag: Optional[float] = None):
+    def calculate_sof_eof_fluxes(self, psi_premag: float | None = None):
         """Calculate the SOF and EOF plasma boundary fluxes."""
         if psi_premag is None:
             if self.BREAKDOWN not in self.snapshots:
@@ -445,7 +445,7 @@ class PulsedCoilsetDesign(ABC):
         self,
         eq: Equilibrium,
         max_currents: np.ndarray,
-        current_constraints: Optional[list[UpdateableConstraint]],
+        current_constraints: list[UpdateableConstraint] | None,
         eq_constraints: list[MagneticConstraint],
     ) -> CoilsetOptimisationProblem:
         if self.eq_settings.problem == MinimalCurrentCOP:
@@ -580,12 +580,12 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         grid: Grid,
         equilibrium_constraints: list[MagneticConstraint],
         profiles: Profile,
-        breakdown_settings: Optional[Union[dict, BreakdownCOPSettings]] = None,
-        equilibrium_settings: Optional[Union[dict, EQSettings]] = None,
-        current_opt_constraints: Optional[list[UpdateableConstraint]] = None,
-        coil_constraints: Optional[list[UpdateableConstraint]] = None,
-        limiter: Optional[Limiter] = None,
-        position_settings: Optional[Union[dict, PositionSettings]] = None,
+        breakdown_settings: dict | BreakdownCOPSettings | None = None,
+        equilibrium_settings: dict | EQSettings | None = None,
+        current_opt_constraints: list[UpdateableConstraint] | None = None,
+        coil_constraints: list[UpdateableConstraint] | None = None,
+        limiter: Limiter | None = None,
+        position_settings: dict | PositionSettings | None = None,
     ):
         super().__init__(
             params,
@@ -609,7 +609,7 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         return self._pos_settings
 
     @pos_settings.setter
-    def pos_settings(self, value: Optional[Union[PositionSettings, dict]] = None):
+    def pos_settings(self, value: PositionSettings | dict | None = None):
         """Position COP settings."""
         if value is None:
             self._pos_settings = PositionSettings()
