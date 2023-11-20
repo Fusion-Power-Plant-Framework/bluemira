@@ -22,12 +22,18 @@
 Interface for designer classes.
 """
 
+from __future__ import annotations
+
 import abc
-from typing import Callable, Dict, Generic, Optional, Type, TypeVar, Union
+from typing import TYPE_CHECKING, Any, Callable, Generic, TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame, make_parameter_frame
-from bluemira.base.reactor_config import ConfigParams
 from bluemira.base.tools import _timing
+
+if TYPE_CHECKING:
+    from bluemira.base.builder import BuildConfig
+    from bluemira.base.parameter_frame._parameter import ParamDictT
+    from bluemira.base.reactor_config import ConfigParams
 
 _DesignerReturnT = TypeVar("_DesignerReturnT")
 
@@ -56,10 +62,10 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
-        build_config: Optional[Dict] = None,
+        params: dict[str, ParamDictT] | ParameterFrame | ConfigParams | None,
+        build_config: BuildConfig | None = None,
         *,
-        verbose=True,
+        verbose: bool = True,
     ):
         self.params = make_parameter_frame(params, self.param_cls)
         self.build_config = build_config if build_config is not None else {}
@@ -81,6 +87,7 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
     @abc.abstractmethod
     def run(self) -> _DesignerReturnT:
         """Run the design problem."""
+        ...
 
     def mock(self) -> _DesignerReturnT:
         """
@@ -101,15 +108,16 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
         raise NotImplementedError
 
     @abc.abstractproperty
-    def param_cls(self) -> Type[ParameterFrame]:
+    def param_cls(self) -> type[ParameterFrame]:
         """The ParameterFrame class defining this designer's parameters."""
+        ...
 
     @property
     def run_mode(self) -> str:
         """Get the run mode of this designer."""
         return self.build_config.get(self.KEY_RUN_MODE, "run")
 
-    def _get_run_func(self, mode: str) -> Callable:
+    def _get_run_func(self, mode: str) -> Callable[[Any], Any]:
         """Retrieve the function corresponding to the given run mode."""
         try:
             return getattr(self, mode)
@@ -120,9 +128,9 @@ class Designer(abc.ABC, Generic[_DesignerReturnT]):
 
 
 def run_designer(
-    designer_cls: Type[Designer[_DesignerReturnT]],
-    params: Union[ParameterFrame, Dict],
-    build_config: Dict,
+    designer_cls: type[Designer[_DesignerReturnT]],
+    params: ParameterFrame | dict[str, ParamDictT],
+    build_config: BuildConfig,
     **kwargs,
 ) -> _DesignerReturnT:
     """Make and run a designer, returning the result."""
