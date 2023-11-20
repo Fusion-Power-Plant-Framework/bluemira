@@ -135,7 +135,7 @@ class OptimisationProblem(abc.ABC, OptimisationProblemBase):
             check_constraints_warn=check_constraints_warn,
         )
 
-    def check_constraints(self, x: np.ndarray, warn: bool = True) -> bool:
+    def check_constraints(self, x: np.ndarray, *, warn: bool = True) -> bool:
         """
         Check if the given parameterisation violates this optimiser's constraints.
 

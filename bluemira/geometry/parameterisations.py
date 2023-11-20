@@ -371,7 +371,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
                 offset_ar_z += 1.5
         return offset_ar_x, offset_ar_z
 
-    def plot(self, ax=None, labels=False, **kwargs):
+    def plot(self, ax=None, *, labels=False, **kwargs):
         """
         Plot the geometry parameterisation
 
@@ -1351,6 +1351,7 @@ class PictureFrameTools:
         z_mid: float,
         ri: float,
         axis: Iterable[float] = (0, -1, 0),
+        *,
         flip: bool = False,
     ) -> BluemiraWire:
         """
@@ -1504,6 +1505,7 @@ class PictureFrameTools:
         r_i: float,
         r_o: float,
         axis: Iterable[float] = (0, 1, 0),
+        *,
         flip: bool = False,
     ) -> BluemiraWire:
         """
@@ -1668,7 +1670,7 @@ class PictureFrameTools:
             [bot_straight, bot_curve, taper, top_curve, top_straight], label="inner_limb"
         )
 
-    def _connect_to_outer_limb(self, top, bottom, top_curve=False, bot_curve=False):
+    def _connect_to_outer_limb(self, top, bottom, *, top_curve=False, bot_curve=False):
         return self._outer_limb(
             top.discretize(100, byedges=True)[:, -1] if top_curve else top,
             bottom.discretize(100, byedges=True)[:, 0] if bot_curve else bottom,
@@ -1939,7 +1941,7 @@ class PictureFrame(
         return None
 
     def _make_upper_lower_leg(
-        self, make_upper_section: bool, flip: bool
+        self, *, make_upper_section: bool, flip: bool
     ) -> PFrameSection:
         v = self.variables
         section_func: PFrameSection = self.upper if make_upper_section else self.lower
@@ -1977,8 +1979,8 @@ class PictureFrame(
                 if self.lower is PFrameSection.CURVED
                 else [v.x2.value, 0, v.z2 + v.ro]
             ),
-            self.upper is PFrameSection.CURVED,
-            self.lower is PFrameSection.CURVED,
+            top_curve=self.upper is PFrameSection.CURVED,
+            bot_curve=self.lower is PFrameSection.CURVED,
         )
 
     def _label_function(self, ax, shape):

@@ -76,6 +76,7 @@ def logger_setup(
 
 def set_log_level(
     verbose: int | str = 1,
+    *,
     increase: bool = False,
     logger_names: Iterable[str] = ("bluemira",),
 ):
@@ -100,7 +101,7 @@ def set_log_level(
         _modify_handler(new_level, logger)
 
 
-def get_log_level(logger_name: str = "bluemira", as_str: bool = True) -> str | int:
+def get_log_level(logger_name: str = "bluemira", *, as_str: bool = True) -> str | int:
     """
     Return the current logging level.
 

@@ -265,6 +265,7 @@ def make_bspline(
     poles: np.ndarray,
     mults: np.ndarray,
     knots: np.ndarray,
+    *,
     periodic: bool,
     degree: int,
     weights: np.ndarray,
@@ -308,6 +309,7 @@ def make_bspline(
 
 def interpolate_bspline(
     points: list | np.ndarray,
+    *,
     closed: bool = False,
     start_tangent: Iterable | None = None,
     end_tangent: Iterable | None = None,
@@ -516,7 +518,7 @@ class JoinType(enum.IntEnum):
 
 
 def offset_wire(
-    wire: apiWire, thickness: float, join: str = "intersect", open_wire: bool = True
+    wire: apiWire, thickness: float, join: str = "intersect", *, open_wire: bool = True
 ) -> apiWire:
     """
     Make an offset from a wire.
@@ -561,7 +563,10 @@ def offset_wire(
     shape = apiShape(wire)
     try:
         wire = arrange_edges(
-            wire, shape.makeOffset2D(thickness, f_join.value, False, open_wire)
+            wire,
+            shape.makeOffset2D(
+                thickness, f_join.value, fill=False, intersection=open_wire
+            ),
         )
     except Base.FreeCADError as error:
         msg = "\n".join([
@@ -1625,7 +1630,11 @@ def _split_wire(wire):
 
 
 def sweep_shape(
-    profiles: Iterable[apiWire], path: apiWire, solid: bool = True, frenet: bool = True
+    profiles: Iterable[apiWire],
+    path: apiWire,
+    *,
+    solid: bool = True,
+    frenet: bool = True,
 ) -> apiShell | apiSolid:
     """
     Sweep a a set of profiles along a path.
@@ -1668,7 +1677,7 @@ def sweep_shape(
             " produce unexpected results."
         )
 
-    result = path.makePipeShell(profiles, True, frenet)
+    result = path.makePipeShell(profiles, isSolid=True, isFrenet=frenet)
 
     solid_result = apiSolid(result)
     if solid:
@@ -1676,7 +1685,7 @@ def sweep_shape(
     return solid_result.Shells[0]
 
 
-def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWire:
+def fillet_wire_2D(wire: apiWire, radius: float, *, chamfer: bool = False) -> apiWire:
     """
     Fillet or chamfer a two-dimensional wire, returning a new wire
 
@@ -1709,7 +1718,9 @@ def fillet_wire_2D(wire: apiWire, radius: float, chamfer: bool = False) -> apiWi
 # ======================================================================================
 # Boolean operations
 # ======================================================================================
-def boolean_fuse(shapes: Iterable[apiShape], remove_splitter: bool = True) -> apiShape:
+def boolean_fuse(
+    shapes: Iterable[apiShape], *, remove_splitter: bool = True
+) -> apiShape:
     """
     Fuse two or more shapes together. Internal splitter are removed.
 
@@ -1790,7 +1801,7 @@ def boolean_fuse(shapes: Iterable[apiShape], remove_splitter: bool = True) -> ap
 
 
 def boolean_cut(
-    shape: apiShape, tools: list[apiShape], split: bool = True
+    shape: apiShape, tools: list[apiShape], *, split: bool = True
 ) -> list[apiShape]:
     """
     Difference of shape and a given (list of) topo shape cut(tools)
@@ -1882,7 +1893,7 @@ def point_inside_shape(point: Iterable[float], shape: apiShape) -> bool:
     Whether or not the point is inside the shape
     """
     vector = apiVector(*point)
-    return shape.isInside(vector, EPS_FREECAD, True)
+    return shape.isInside(vector, EPS_FREECAD, checkFace=True)
 
 
 # ======================================================================================
@@ -2516,10 +2527,10 @@ def deserialize_shape(buffer):
                 v["Poles"],
                 v["Mults"],
                 v["Knots"],
-                v["isPeriodic"],
-                v["Degree"],
-                v["Weights"],
-                v["checkRational"],
+                periodic=v["isPeriodic"],
+                degree=v["Degree"],
+                weights=v["Weights"],
+                check_rational=v["checkRational"],
             )
         if type_ == "ArcOfCircle":
             return make_circle(

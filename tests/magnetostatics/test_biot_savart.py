@@ -192,7 +192,12 @@ class TestSelfInductance:
         ],
     )
     def test_rectangular_inductance(
-        self, discr: bool, a: float, c: float, d: float, f_error: float
+        self,
+        discr: bool,  # noqa: FBT001
+        a: float,
+        c: float,
+        d: float,
+        f_error: float,
     ):
         """
         Attempt at replicating results from https://arxiv.org/pdf/1204.1486.pdf

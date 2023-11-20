@@ -468,7 +468,7 @@ def make_mixed_face(
 
 
 def make_wire(
-    x: np.ndarray, y: np.ndarray, z: np.ndarray, label: str = "", spline: bool = False
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, label: str = "", *, spline: bool = False
 ) -> BluemiraWire:
     """
     Makes a wire from a set of coordinates.
@@ -496,7 +496,7 @@ def make_wire(
 
 
 def make_face(
-    x: np.ndarray, y: np.ndarray, z: np.ndarray, label: str = "", spline: bool = False
+    x: np.ndarray, y: np.ndarray, z: np.ndarray, label: str = "", *, spline: bool = False
 ) -> BluemiraFace:
     """
     Makes a face from a set of coordinates.

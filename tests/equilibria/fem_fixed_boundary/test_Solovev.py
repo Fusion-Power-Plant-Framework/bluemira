@@ -98,7 +98,7 @@ class Solovev:
 
         return np.squeeze(2 * np.pi * np.sum(psi_func * self._m, axis=0))
 
-    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
+    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, *, tofill=True):
         """
         Plot psi
         """

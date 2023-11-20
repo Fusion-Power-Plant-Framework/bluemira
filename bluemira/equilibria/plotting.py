@@ -119,7 +119,7 @@ class GridPlotter(Plotter):
     Utility class for plotting Grid objects
     """
 
-    def __init__(self, grid: Grid, ax=None, edge: bool = False, **kwargs):
+    def __init__(self, grid: Grid, ax=None, *, edge: bool = False, **kwargs):
         super().__init__(ax)
         self.grid = grid
         self.plot_grid(**kwargs)
@@ -196,7 +196,9 @@ class CoilGroupPlotter(Plotter):
         Whether to plot force vectors, and if so the array of force vectors
     """
 
-    def __init__(self, coil, ax=None, subcoil=True, label=False, force=None, **kwargs):
+    def __init__(
+        self, coil, ax=None, *, subcoil=True, label=False, force=None, **kwargs
+    ):
         super().__init__(ax)
         self._cg = coil
         self.colors = kwargs.pop("facecolor", None)
@@ -218,7 +220,7 @@ class CoilGroupPlotter(Plotter):
             self.ax.set_ylim(bottom=ymin - 1)
             self.ax.set_ylim(top=ymax + 1)
 
-    def plot_coil(self, subcoil, label=False, force=None, **kwargs):
+    def plot_coil(self, subcoil, *, label=False, force=None, **kwargs):
         """
         Plot a coil onto the Axes.
         """
@@ -346,7 +348,7 @@ class CoilGroupPlotter(Plotter):
             zorder=100,
         )
 
-    def _plot_coil(self, x_boundary, z_boundary, ctype, fill=True, **kwargs):
+    def _plot_coil(self, x_boundary, z_boundary, ctype, *, fill=True, **kwargs):
         """
         Single coil plot utility
         """
@@ -468,7 +470,7 @@ class FixedPlasmaEquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
     """
 
     def __init__(
-        self, equilibrium: FixedPlasmaEquilibrium, ax=None, field: bool = False
+        self, equilibrium: FixedPlasmaEquilibrium, ax=None, *, field: bool = False
     ):
         super().__init__(ax)
         self.eq = equilibrium
@@ -504,6 +506,7 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         self,
         equilibrium: Equilibrium,
         ax=None,
+        *,
         plasma=False,
         show_ox=True,
         field=False,
@@ -623,7 +626,7 @@ class BreakdownPlotter(Plotter):
     Utility class for Breakdown plotting
     """
 
-    def __init__(self, breakdown, ax=None, Bp=False, B_breakdown=0.003):
+    def __init__(self, breakdown, ax=None, *, Bp=False, B_breakdown=0.003):
         super().__init__(ax)
         self.bd = breakdown
 

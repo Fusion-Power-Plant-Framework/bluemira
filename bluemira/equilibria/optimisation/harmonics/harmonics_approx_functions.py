@@ -260,7 +260,7 @@ def collocation_points(
 
     if point_type in {PointType.RANDOM, PointType.RANDOM_PLUS_EXTREMA}:
         # Random sample within a circle enclosed by the LCFS
-        rng = np.random.default_rng(seed=seed)
+        rng = np.random.default_rng(RNGSeeds.equilibria_harmonics.value)
         half_sample_x_range = 0.5 * (np.max(x_bdry) - np.min(x_bdry))
         sample_r = half_sample_x_range * rng.random(n_points)
         sample_theta = (rng.random(n_points) * 2 * np.pi) - np.pi
@@ -492,9 +492,10 @@ def spherical_harmonic_approximation(
     point_type: PointType = PointType.ARC_PLUS_EXTREMA,
     grid_num: str | None = None,
     acceptable_fit_metric: float = 0.01,
-    plot: bool = False,
     nlevels: int = 50,
     seed: int | None = None,
+    *,
+    plot: bool = False,
 ) -> tuple[list, np.ndarray, int, float, np.ndarray, float, np.ndarray]:
     """
     Calculate the spherical harmonic (SH) amplitudes/coefficients
@@ -537,13 +538,12 @@ def spherical_harmonic_approximation(
         A fit metric of 1 means that they do not overlap at all.
         fit_metric_value = total area within one but not both LCFSs /
         (input LCFS area + approximation LCFS area)
-    plot:
-        Whether or not to plot the results
     nlevels:
         Plot setting, higher n = greater number of contour lines
     seed:
         Seed value to use with random point distribution
-
+    plot:
+        Whether or not to plot the results
 
     Returns
     -------
@@ -685,6 +685,7 @@ def plot_psi_comparision(
     vac_psi_app: np.ndarray,
     axes: list[plt.Axes] | None = None,
     nlevels: int = 50,
+    *,
     show: bool = True,
 ) -> tuple[plt.Axes, ...]:
     """

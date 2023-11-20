@@ -307,7 +307,7 @@ class BasePlotter(ABC):
         self.ax.set_ylabel(offset + Y_LABEL)
         self.ax.set_zlabel(offset + Z_LABEL)
 
-    def plot_2d(self, obj, ax=None, show: bool = True):
+    def plot_2d(self, obj, ax=None, *, show: bool = True):
         """2D plotting method"""
         self._check_obj(obj)
 
@@ -341,7 +341,7 @@ class BasePlotter(ABC):
         self._data_to_plot, so _populate_data should be called before.
         """
 
-    def plot_3d(self, obj, ax=None, show: bool = True):
+    def plot_3d(self, obj, ax=None, *, show: bool = True):
         """3D plotting method"""
         self._check_obj(obj)
 
@@ -617,6 +617,7 @@ def plot_2d(
     parts: BluemiraGeo | list[BluemiraGeo],
     options: PlotOptions | list[PlotOptions] | None = None,
     ax=None,
+    *,
     show: bool = True,
     **kwargs,
 ):
@@ -652,6 +653,7 @@ def plot_3d(
     parts: BluemiraGeo | list[BluemiraGeo],
     options: PlotOptions | list[PlotOptions] | None = None,
     ax=None,
+    *,
     show: bool = True,
     **kwargs,
 ):
@@ -719,7 +721,7 @@ class Plottable:
         """
         return _get_plotter_class(self)(self._plot_options)
 
-    def plot_2d(self, ax=None, show: bool = True) -> None:
+    def plot_2d(self, ax=None, *, show: bool = True) -> None:
         """
         Default method to call display the object by calling into the Displayer's display
         method.
@@ -731,7 +733,7 @@ class Plottable:
         """
         return self._plotter.plot_2d(self, ax=ax, show=show)
 
-    def plot_3d(self, ax=None, show: bool = True) -> None:
+    def plot_3d(self, ax=None, *, show: bool = True) -> None:
         """
         Function to 3D plot a component.
 
@@ -782,7 +784,7 @@ def _get_plan_dims(array):
     return sorted(dims)
 
 
-def plot_coordinates(coords, ax=None, points=False, **kwargs):
+def plot_coordinates(coords, ax=None, *, points=False, **kwargs):
     """
     Plot Coordinates.
 
