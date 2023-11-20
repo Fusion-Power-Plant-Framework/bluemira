@@ -27,7 +27,7 @@ from __future__ import annotations
 
 import copy
 import enum
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
     import numpy as np
@@ -98,7 +98,7 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     def __init__(
         self,
-        boundary: Union[BluemiraGeo, List[BluemiraGeo]],
+        boundary: Union[BluemiraGeo, list[BluemiraGeo]],
         label: str = "",
         boundary_classes: Optional[BluemiraGeo] = None,
     ):
@@ -266,7 +266,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return cadapi.is_same(self.shape, obj.shape)
 
-    def search(self, label: str) -> List[BluemiraGeo]:
+    def search(self, label: str) -> list[BluemiraGeo]:
         """
         Search for a shape with the specified label
 
@@ -305,7 +305,7 @@ class BluemiraGeo(ABC, GeoMeshable):
                 cadapi.scale_shape(o, factor)
         cadapi.scale_shape(self.shape, factor)
 
-    def _tessellate(self, tolerance: float = 1.0) -> Tuple[np.ndarray, np.ndarray]:
+    def _tessellate(self, tolerance: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
         """
         Tessellate the geometry object.
 
@@ -328,7 +328,7 @@ class BluemiraGeo(ABC, GeoMeshable):
         """
         return cadapi.tessellate(self.shape, tolerance)
 
-    def translate(self, vector: Tuple[float, float, float]) -> None:
+    def translate(self, vector: tuple[float, float, float]) -> None:
         """
         Translate this shape with the vector. This function modifies the self
         object.
@@ -348,8 +348,8 @@ class BluemiraGeo(ABC, GeoMeshable):
 
     def rotate(
         self,
-        base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-        direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+        base: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
         degree: float = 180,
     ):
         """

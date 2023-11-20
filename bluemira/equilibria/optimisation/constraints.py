@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import TYPE_CHECKING, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
@@ -180,7 +180,7 @@ class FieldConstraints(UpdateableConstraint):
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
 
-    def control_response(self, coilset: CoilSet) -> Tuple[np.ndarray, np.ndarray]:
+    def control_response(self, coilset: CoilSet) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate control response of a CoilSet to the constraint.
         """
@@ -189,7 +189,7 @@ class FieldConstraints(UpdateableConstraint):
             coilset.Bz_response(self.x, self.z, control=True),
         )
 
-    def evaluate(self, equilibrium: Equilibrium) -> Tuple[np.ndarray, np.ndarray]:
+    def evaluate(self, equilibrium: Equilibrium) -> tuple[np.ndarray, np.ndarray]:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
@@ -399,7 +399,7 @@ class MagneticConstraint(UpdateableConstraint):
         target_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance: Union[float, np.ndarray] = 1e-6,
-        f_constraint: Type[ConstraintFunction] = L2NormConstraint,
+        f_constraint: type[ConstraintFunction] = L2NormConstraint,
         constraint_type: str = "inequality",
     ):
         self.target_value = target_value * np.ones(len(self))
@@ -485,7 +485,7 @@ class SphericalHarmonicsConstraint(MagneticConstraint):
         target_value: float = 0.0,
         weights: Union[float, npt.NDArray] = 1.0,
         tolerance: Union[float, npt.NDArray] = 1e-6,
-        f_constraint: Type[ConstraintFunction] = AxBConstraint,
+        f_constraint: type[ConstraintFunction] = AxBConstraint,
         constraint_type: str = "inequality",
     ):
         super().__init__(
@@ -540,7 +540,7 @@ class AbsoluteMagneticConstraint(MagneticConstraint):
         target_value: float,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance: Union[float, np.ndarray] = 1e-6,
-        f_constraint: Type[ConstraintFunction] = AxBConstraint,
+        f_constraint: type[ConstraintFunction] = AxBConstraint,
         constraint_type: str = "equality",
     ):
         self.x = x
@@ -569,7 +569,7 @@ class RelativeMagneticConstraint(MagneticConstraint):
         constraint_value: float = 0.0,
         weights: Union[float, np.ndarray] = 1.0,
         tolerance: Union[float, np.ndarray] = 1e-6,
-        f_constraint: Type[ConstraintFunction] = L2NormConstraint,
+        f_constraint: type[ConstraintFunction] = L2NormConstraint,
         constraint_type: str = "inequality",
     ):
         self.x = x
@@ -829,7 +829,7 @@ class MagneticConstraintSet(ABC):
 
     __slots__ = ["constraints", "eq", "coilset", "A", "w", "target", "background"]
 
-    def __init__(self, constraints: List[MagneticConstraint]):
+    def __init__(self, constraints: list[MagneticConstraint]):
         self.constraints = constraints
         self.eq = None
         self.A = None
@@ -871,7 +871,7 @@ class MagneticConstraintSet(ABC):
         """
         return sum([len(c) for c in self.constraints])
 
-    def get_weighted_arrays(self) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+    def get_weighted_arrays(self) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
         """
         Get [A] and [b] scaled by weight matrix.
         Weight matrix assumed to be diagonal.

@@ -28,7 +28,7 @@ from __future__ import annotations
 import copy
 import inspect
 import pprint
-from typing import TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Callable, Dict, Iterable, Optional, Union
 
 # import mesher lib (gmsh)
 import gmsh
@@ -128,7 +128,7 @@ class Meshable:
         return self._mesh_options
 
     @mesh_options.setter
-    def mesh_options(self, value: Union[MeshOptions, Dict]):
+    def mesh_options(self, value: Union[MeshOptions, dict]):
         if isinstance(value, MeshOptions):
             self._mesh_options = value
         elif isinstance(value, Dict):
@@ -148,7 +148,7 @@ class Mesh:
         self,
         modelname: str = "Mesh",
         terminal: int = 0,
-        meshfile: Optional[Union[str, List[str]]] = None,
+        meshfile: Optional[Union[str, list[str]]] = None,
         logfile: str = "gmsh.log",
     ):
         self.modelname = modelname
@@ -159,7 +159,7 @@ class Mesh:
         self.logfile = logfile
 
     @staticmethod
-    def _check_meshfile(meshfile: Union[str, list]) -> List[str]:
+    def _check_meshfile(meshfile: Union[str, list]) -> list[str]:
         """
         Check the mesh file input.
         """
@@ -175,14 +175,14 @@ class Mesh:
         return meshfile
 
     @property
-    def meshfile(self) -> List[str]:
+    def meshfile(self) -> list[str]:
         """
         The path(s) to the file(s) containing the meshes.
         """
         return self._meshfile
 
     @meshfile.setter
-    def meshfile(self, meshfile: Union[str, List[str]]):
+    def meshfile(self, meshfile: Union[str, list[str]]):
         self._meshfile = self._check_meshfile(meshfile)
 
     def __call__(self, obj: Union[Component, Meshable], dim: int = 2):
@@ -685,7 +685,7 @@ class _FreeCADGmsh:
     @staticmethod
     def _fragment(
         dim: Iterable[int] = (2, 1, 0),
-        all_ent: Optional[List[int]] = None,
+        all_ent: Optional[list[int]] = None,
         tools: Optional[list] = None,
         *,
         remove_object: bool = True,
@@ -762,7 +762,7 @@ class _FreeCADGmsh:
         return gmsh.model.getBoundary(dimtags, combined, recursive)
 
 
-def _add_points(*point: Iterable) -> List:
+def _add_points(*point: Iterable) -> list:
     """
     Add gmsh model points
     """

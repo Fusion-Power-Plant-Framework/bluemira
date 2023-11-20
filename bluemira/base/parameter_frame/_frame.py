@@ -29,13 +29,9 @@ from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
-    Dict,
     Generator,
     Iterable,
-    List,
     Optional,
-    Tuple,
-    Type,
     TypeVar,
     Union,
     get_args,
@@ -129,7 +125,7 @@ class ParameterFrame:
                 field._value = val_unit["value"]
 
     @classmethod
-    def _get_types(cls) -> Dict[str, GenericAlias]:
+    def _get_types(cls) -> dict[str, GenericAlias]:
         """Gets types for the frame even with annotations imported"""
         frame_type_hints = get_type_hints(cls)
         return {f.name: frame_type_hints[f.name] for f in fields(cls)}
@@ -146,7 +142,7 @@ class ParameterFrame:
 
     def update(
         self,
-        new_values: Union[Dict[str, ParameterValueType], ParamDictT, ParameterFrame],
+        new_values: Union[dict[str, ParameterValueType], ParamDictT, ParameterFrame],
     ):
         """Update the given frame"""
         if isinstance(new_values, ParameterFrame):
@@ -157,7 +153,7 @@ class ParameterFrame:
             except TypeError:
                 self.update_values(new_values)
 
-    def get_values(self, *names: str) -> Tuple[ParameterValueType, ...]:
+    def get_values(self, *names: str) -> tuple[ParameterValueType, ...]:
         """Get values of a set of Parameters"""
         try:
             return tuple(getattr(self, n).value for n in names)
@@ -167,7 +163,7 @@ class ParameterFrame:
                 " ParameterFrame"
             ) from ae
 
-    def update_values(self, new_values: Dict[str, ParameterValueType], source: str = ""):
+    def update_values(self, new_values: dict[str, ParameterValueType], source: str = ""):
         """Update the given parameter values."""
         for key, value in new_values.items():
             param: Parameter = getattr(self, key)
@@ -213,14 +209,14 @@ class ParameterFrame:
 
     @classmethod
     def from_dict(
-        cls: Type[_PfT],
-        data: Dict[str, ParamDictT],
+        cls: type[_PfT],
+        data: dict[str, ParamDictT],
         *,
         allow_unknown=False,
     ) -> _PfT:
         """Initialize an instance from a dictionary."""
         data = copy.deepcopy(data)
-        kwargs: Dict[str, Parameter] = {}
+        kwargs: dict[str, Parameter] = {}
         for member in cls.__dataclass_fields__:
             try:
                 param_data = data.pop(member)
@@ -239,7 +235,7 @@ class ParameterFrame:
         return cls(**kwargs)
 
     @classmethod
-    def from_frame(cls: Type[_PfT], frame: ParameterFrame) -> _PfT:
+    def from_frame(cls: type[_PfT], frame: ParameterFrame) -> _PfT:
         """Initialise an instance from another ParameterFrame."""
         kwargs = {}
         for field in cls.__dataclass_fields__:
@@ -253,7 +249,7 @@ class ParameterFrame:
         return cls(**kwargs)
 
     @classmethod
-    def from_json(cls: Type[_PfT], json_in: Union[str, json.SupportsRead]) -> _PfT:
+    def from_json(cls: type[_PfT], json_in: Union[str, json.SupportsRead]) -> _PfT:
         """Initialise an instance from a JSON file, string, or reader."""
         if hasattr(json_in, "read"):
             # load from file stream
@@ -268,7 +264,7 @@ class ParameterFrame:
         return cls.from_dict(json.loads(json_in))
 
     @classmethod
-    def from_config_params(cls: Type[_PfT], config_params: ConfigParams) -> _PfT:
+    def from_config_params(cls: type[_PfT], config_params: ConfigParams) -> _PfT:
         """
         Initialise an instance from a
         :class:`~bluemira.base.reactor_config.ConfigParams` object.
@@ -313,7 +309,7 @@ class ParameterFrame:
     def _member_data_to_parameter(
         cls,
         member: str,
-        member_param_data: Dict,
+        member_param_data: dict,
     ) -> Parameter:
         value_type = _validate_parameter_field(member, cls._get_types()[member])
         try:
@@ -326,7 +322,7 @@ class ParameterFrame:
             _value_types=value_type,
         )
 
-    def to_dict(self) -> Dict[str, Dict[str, Any]]:
+    def to_dict(self) -> dict[str, dict[str, Any]]:
         """Serialize this ParameterFrame to a dictionary."""
         out = {}
         for param_name in self.__dataclass_fields__:
@@ -341,7 +337,7 @@ class ParameterFrame:
 
     def tabulate(
         self,
-        keys: Optional[List] = None,
+        keys: Optional[list] = None,
         tablefmt: str = "fancy_grid",
         floatfmt: str = ".5g",
     ) -> str:
@@ -395,7 +391,7 @@ class ParameterFrame:
         return self.tabulate()
 
 
-def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
+def _validate_parameter_field(field, member_type: type) -> tuple[type, ...]:
     if (member_type is not Parameter) and (
         not hasattr(member_type, "__origin__") or member_type.__origin__ is not Parameter
     ):
@@ -403,7 +399,7 @@ def _validate_parameter_field(field, member_type: Type) -> Tuple[Type, ...]:
     return get_args(member_type)
 
 
-def _validate_units(param_data: Dict, value_type: Iterable[Type]):
+def _validate_units(param_data: dict, value_type: Iterable[type]):
     try:
         quantity = pint.Quantity(param_data["value"], param_data["unit"])
     except ValueError:
@@ -453,7 +449,7 @@ def _validate_units(param_data: Dict, value_type: Iterable[Type]):
         param_data["source"] += f"{quantity.magnitude}{param_data['unit']}"
 
 
-def _remake_units(dimensionality: Union[Dict, pint.util.UnitsContainer]) -> pint.Unit:
+def _remake_units(dimensionality: Union[dict, pint.util.UnitsContainer]) -> pint.Unit:
     """Reconstruct unit from its dimensionality"""
     dim_list = list(map(base_unit_defaults.get, dimensionality.keys()))
     dim_pow = list(dimensionality.values())
@@ -585,9 +581,9 @@ class EmptyFrame(ParameterFrame):
 
 
 def make_parameter_frame(
-    params: Union[Dict[str, ParamDictT], ParameterFrame, ConfigParams, str, None],
-    param_cls: Type[_PfT],
-) -> Union[_PfT, None]:
+    params: Union[dict[str, ParamDictT], ParameterFrame, ConfigParams, str, None],
+    param_cls: type[ParameterFrame] | None,
+) -> ParameterFrame | None:
     """
     Factory function to generate a `ParameterFrame` of a specific type.
 

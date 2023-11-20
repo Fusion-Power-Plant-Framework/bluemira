@@ -25,7 +25,7 @@ PROCESS IN.DAT template builder
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.codes.process._equation_variable_mapping import (
@@ -56,13 +56,13 @@ class PROCESSTemplateBuilder:
     """
 
     def __init__(self):
-        self._models: Dict[str, PROCESSModel] = {}
-        self._constraints: List[Constraint] = []
-        self.values: Dict[str, Any] = {}
-        self.variables: Dict[str, float] = {}
-        self.bounds: Dict[str, Dict[str, str]] = {}
-        self.ixc: List[int] = []
-        self.fimp: List[float] = 14 * [0.0]
+        self._models: dict[str, PROCESSModel] = {}
+        self._constraints: list[Constraint] = []
+        self.values: dict[str, Any] = {}
+        self.variables: dict[str, float] = {}
+        self.bounds: dict[str, dict[str, str]] = {}
+        self.ixc: list[int] = []
+        self.fimp: list[float] = 14 * [0.0]
 
         self.minmax: int = 0
         self.ioptimiz: int = 0
@@ -223,7 +223,7 @@ class PROCESSTemplateBuilder:
             bluemira_warn(f"Over-writing {name} from {self.values[name]} to {value}")
         self._add_to_dict(self.values, name, value)
 
-    def add_input_values(self, mapping: Dict[str, Any]):
+    def add_input_values(self, mapping: dict[str, Any]):
         """
         Add a dictionary of fixed input values to the PROCESS run
         """
@@ -237,7 +237,7 @@ class PROCESSTemplateBuilder:
         idx = impurity.value - 1
         self.fimp[idx] = value
 
-    def _add_to_dict(self, mapping: Dict[str, Any], name: str, value: Any):
+    def _add_to_dict(self, mapping: dict[str, Any], name: str, value: Any):
         if "fimp(" in name:
             num = int(name.strip("fimp(")[:2])
             impurity = Impurities(num)

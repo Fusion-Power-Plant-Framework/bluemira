@@ -28,7 +28,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from enum import Enum
 from functools import lru_cache
-from typing import TYPE_CHECKING, ClassVar, List, Optional, Union
+from typing import TYPE_CHECKING, ClassVar, Optional, Union
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.display.error import DisplayError
@@ -121,10 +121,10 @@ def _validate_display_inputs(parts, options, labels):
 
 def show_cad(
     parts: Optional[
-        Union[BluemiraGeo, List[BluemiraGeo]]
+        Union[BluemiraGeo, list[BluemiraGeo]]
     ] = None,  # avoiding circular deps
-    options: Optional[Union[DisplayCADOptions, List[DisplayCADOptions]]] = None,
-    labels: Optional[Union[str, List[str]]] = None,
+    options: Optional[Union[DisplayCADOptions, list[DisplayCADOptions]]] = None,
+    labels: Optional[Union[str, list[str]]] = None,
     backend: Union[str, ViewerBackend] = ViewerBackend.FREECAD,
     **kwargs,
 ):

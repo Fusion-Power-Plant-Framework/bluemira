@@ -25,7 +25,7 @@ Fuel cycle analysis class for Monte Carlo statistics
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, Union
+from typing import TYPE_CHECKING, ClassVar, Iterable, Union
 
 if TYPE_CHECKING:
     from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
@@ -69,7 +69,7 @@ class FuelCycleAnalysis:
         self.t_d = []
         self.m_dot_release = []
 
-    def run_model(self, timelines: Iterable[Dict[str, Union[np.ndarray, int]]]):
+    def run_model(self, timelines: Iterable[dict[str, Union[np.ndarray, int]]]):
         """
         Run the tritium fuel cycle model for each timeline.
 

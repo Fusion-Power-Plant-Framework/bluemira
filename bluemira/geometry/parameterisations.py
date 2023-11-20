@@ -35,13 +35,10 @@ from functools import partial
 from pathlib import Path
 from typing import (
     Any,
-    Dict,
     Generic,
     Iterable,
-    List,
     Optional,
     TextIO,
-    Tuple,
     TypeVar,
     Union,
 )
@@ -195,7 +192,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
                 count += 1
         return idx_actual - count
 
-    def process_x_norm_fixed(self, x_norm: np.ndarray) -> List[float]:
+    def process_x_norm_fixed(self, x_norm: np.ndarray) -> list[float]:
         """
         Utility for processing a set of free, normalised variables, and folding the fixed
         un-normalised variables back into a single list of all actual values.
@@ -223,7 +220,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         return x_actual
 
     @abc.abstractmethod
-    def create_shape(self, label: str = "", **kwargs: Dict[str, Any]) -> BluemiraWire:
+    def create_shape(self, label: str = "", **kwargs: dict[str, Any]) -> BluemiraWire:
         """
         Make a CAD representation of the geometry.
 
@@ -266,7 +263,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         return cls(var_dict)
 
     @staticmethod
-    def _annotator(ax, key: str, xy1: Tuple, xy2: Tuple, xy3: Tuple):
+    def _annotator(ax, key: str, xy1: tuple, xy2: tuple, xy3: tuple):
         """
         Create annotation arrow with label
 
@@ -485,7 +482,7 @@ class PrincetonD(GeometryParameterisation[PrincetonDOptVariables]):
     @staticmethod
     def _princeton_d(
         x1: float, x2: float, dz: float, npoints: int = 2000
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Princeton D shape calculation (e.g. Gralnick and Tenney, 1976, or
         File, Mills, and Sheffield, 1971)

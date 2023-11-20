@@ -25,7 +25,7 @@ Objects and tools for calculating cross-sectional properties
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from bluemira.structural.material import StructuralMaterial
@@ -487,7 +487,7 @@ class AnalyticalCompositeCrossSection(CrossSection):
 
     __slots__ = ("ea", "nu", "gj", "rho")
 
-    def __init__(self, geometry: BluemiraFace, materials: List[StructuralMaterial]):
+    def __init__(self, geometry: BluemiraFace, materials: list[StructuralMaterial]):
         super().__init__()
         self.geometry = deepcopy(geometry)
 

@@ -30,7 +30,7 @@ from __future__ import annotations
 
 import enum
 from dataclasses import asdict, dataclass, field
-from typing import Dict, Optional, Union
+from typing import Optional, Union
 
 
 class _AlgorithmMeta(enum.EnumMeta):
@@ -73,7 +73,7 @@ class AlgorithmConditions:
     max_time: Optional[float] = None
     stop_val: Optional[float] = None
 
-    def to_dict(self) -> Dict[str, float]:
+    def to_dict(self) -> dict[str, float]:
         """Convert to dictionary without Nones"""
         return {k: v for k, v in asdict(self).items() if v is not None}
 

@@ -26,7 +26,7 @@ Wrapper for FreeCAD Plane objects
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Iterable, Optional, Tuple
+from typing import TYPE_CHECKING, Iterable, Optional
 
 import numpy as np
 
@@ -56,8 +56,8 @@ class BluemiraPlane:
 
     def __init__(
         self,
-        base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-        axis: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+        base: tuple[float, float, float] = (0.0, 0.0, 0.0),
+        axis: tuple[float, float, float] = (0.0, 0.0, 1.0),
         label: str = "",
     ):
         if np.allclose(np.array(axis), np.array([0, 0, 0])):

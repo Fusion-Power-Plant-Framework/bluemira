@@ -26,7 +26,7 @@ Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 from __future__ import annotations
 
 import operator
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -167,7 +167,7 @@ def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> np.ndarray:
 
 def find_local_Bp_minima_cg(
     f_psi: RectBivariateSpline, x0: float, z0: float, radius: float
-) -> Union[None, List[float]]:
+) -> Union[None, list[float]]:
     """
     Find local Bp minima on a grid (precisely) using a local Newton/Powell
     conjugate gradient search.
@@ -211,7 +211,7 @@ def find_local_Bp_minima_cg(
 
 def drop_space_duplicates(
     points: Iterable, tol: float = X_TOLERANCE
-) -> List[np.ndarray]:
+) -> list[np.ndarray]:
     """
     Drop duplicates from a list of points if closer together than tol
     """
@@ -228,8 +228,8 @@ def drop_space_duplicates(
 
 
 def triage_OX_points(
-    f_psi: RectBivariateSpline, points: List[List[float]]
-) -> Tuple[List[Opoint], List[Xpoint]]:
+    f_psi: RectBivariateSpline, points: list[list[float]]
+) -> tuple[list[Opoint], list[Xpoint]]:
     """
     Triage the local Bp minima into O- and X-points: sort the field minima by second
     derivative.
@@ -279,7 +279,7 @@ def find_OX_points(
     limiter: Optional[Limiter] = None,
     *,
     field_cut_off: float = 1.0,
-) -> Tuple[List[Opoint], List[Union[Xpoint, Lpoint]]]:
+) -> tuple[list[Opoint], list[Union[Xpoint, Lpoint]]]:
     """
     Finds O-points and X-points by minimising the poloidal field.
 
@@ -443,7 +443,7 @@ def _parse_OXp(x, z, psi, o_points, x_points):  # noqa: N802
 
 def get_contours(
     x: np.ndarray, z: np.ndarray, array: np.ndarray, value: float
-) -> List[np.ndarray]:
+) -> list[np.ndarray]:
     """
     Get the contours of a value in continuous array.
 
@@ -473,9 +473,9 @@ def find_flux_surfs(
     z: np.ndarray,
     psi: np.ndarray,
     psinorm: float,
-    o_points: Optional[List[Opoint]] = None,
-    x_points: Optional[List[Xpoint]] = None,
-) -> List[np.ndarray]:
+    o_points: Optional[list[Opoint]] = None,
+    x_points: Optional[list[Xpoint]] = None,
+) -> list[np.ndarray]:
     """
     Finds all flux surfaces with a given normalised psi. If a flux loop goes off
     the grid, separate sets of coordinates will be produced.
@@ -514,8 +514,8 @@ def find_flux_surf(
     z: np.ndarray,
     psi: np.ndarray,
     psinorm: float,
-    o_points: Optional[List[Opoint]] = None,
-    x_points: Optional[List[Xpoint]] = None,
+    o_points: Optional[list[Opoint]] = None,
+    x_points: Optional[list[Xpoint]] = None,
 ) -> np.ndarray:
     """
     Picks a flux surface with a normalised psinorm relative to the separatrix.
@@ -666,7 +666,7 @@ def find_LCFS_separatrix(
     *,
     double_null: bool = False,
     psi_n_tol: float = 1e-6,
-) -> Tuple[Coordinates, Union[Coordinates, List[Coordinates]]]:
+) -> tuple[Coordinates, Union[Coordinates, list[Coordinates]]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
 
@@ -817,7 +817,7 @@ def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_poi
 
 def get_legs(
     equilibrium: Equilibrium, n_layers: int = 1, dx_off: float = 0.0
-) -> Dict[str, List[Coordinates]]:
+) -> dict[str, list[Coordinates]]:
     """
     Get the legs of a separatrix.
 
@@ -900,7 +900,7 @@ def get_legs(
     return leg_dict
 
 
-def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Grid a smooth contour and get the outline of the cells it encompasses.
 
@@ -945,8 +945,8 @@ def in_plasma(
     x: np.ndarray,
     z: np.ndarray,
     psi: np.ndarray,
-    o_points: Optional[List[Opoint]] = None,
-    x_points: Optional[List[Xpoint]] = None,
+    o_points: Optional[list[Opoint]] = None,
+    x_points: Optional[list[Xpoint]] = None,
 ) -> np.ndarray:
     """
     Get a psi-shaped mask of psi where 1 is inside the plasma, 0 outside.

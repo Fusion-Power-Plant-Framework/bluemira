@@ -25,7 +25,7 @@ A collection of tools used in the EU-DEMO design.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 from bluemira.display.palettes import ColorPalette
 
@@ -90,7 +90,7 @@ def apply_component_display_options(
         phys_component.display_cad_options.transparency = transparency
 
 
-def get_n_sectors(no_obj: int, degree: float = 360) -> Tuple[float, int]:
+def get_n_sectors(no_obj: int, degree: float = 360) -> tuple[float, int]:
     """
     Get sector count and angle size for a given number of degrees of the reactor.
 
@@ -114,12 +114,12 @@ def get_n_sectors(no_obj: int, degree: float = 360) -> Tuple[float, int]:
 
 
 def circular_pattern_component(
-    component: Union[bm_comp.Component, List[bm_comp.Component]],
+    component: Union[bm_comp.Component, list[bm_comp.Component]],
     n_children: int,
     parent_prefix: str = "Sector",
     *,
-    origin: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-    direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    origin: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 360.0,
 ):
     """
@@ -190,7 +190,7 @@ def circular_pattern_component(
 
 def pattern_revolved_silhouette(
     face: BluemiraFace, n_seg_p_sector: int, n_sectors: int, gap: float
-) -> List[BluemiraSolid]:
+) -> list[BluemiraSolid]:
     """
     Pattern a silhouette with revolutions about the z-axis, inter-spaced with parallel
     gaps between solids.
@@ -232,7 +232,7 @@ def pattern_revolved_silhouette(
 
 def pattern_lofted_silhouette(
     face: BluemiraFace, n_seg_p_sector: int, n_sectors: int, gap: float
-) -> List[BluemiraSolid]:
+) -> list[BluemiraSolid]:
     """
     Pattern a silhouette with lofts about the z-axis, inter-spaced with parallel
     gaps between solids.
@@ -324,7 +324,7 @@ def _order_shapes_anticlockwise(shapes):
     return list(np.array(shapes)[indices])
 
 
-def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> List[float]:
+def find_xy_plane_radii(wire: BluemiraWire, plane: BluemiraPlane) -> list[float]:
     """
     Get the radial coordinates of a wire's intersection points with a plane.
 
@@ -362,9 +362,9 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
 
 def build_sectioned_xy(
     face: BluemiraFace,
-    plot_colour: Tuple[float],
+    plot_colour: tuple[float],
     material: Optional[SerialisedMaterial] = None,
-) -> List[PhysicalComponent]:
+) -> list[PhysicalComponent]:
     """
     Build the x-y components of sectioned component
 
@@ -403,12 +403,12 @@ def build_sectioned_xyz(
     face: BluemiraFace,
     name: str,
     n_TF: int,
-    plot_colour: Tuple[float],
+    plot_colour: tuple[float],
     degree: float = 360,
     *,
     enable_sectioning: bool = True,
     material: Optional[SerialisedMaterial] = None,
-) -> List[PhysicalComponent]:
+) -> list[PhysicalComponent]:
     """
     Build the x-y-z components of sectioned component
 

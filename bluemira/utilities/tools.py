@@ -36,7 +36,7 @@ from importlib import util as imp_u
 from itertools import permutations
 from json import JSONEncoder, dumps
 from os import listdir
-from typing import TYPE_CHECKING, Any, Callable, Dict, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Optional, Union
 
 import nlopt
 import numpy as np
@@ -71,7 +71,7 @@ class NumpyJSONEncoder(JSONEncoder):
 
 
 def json_writer(
-    data: Dict[str, Any],
+    data: dict[str, Any],
     file: Optional[Union[Path, str]] = None,
     *,
     return_output: bool = False,
@@ -331,7 +331,7 @@ class ColourDescriptor:
 
         return colors.to_hex(getattr(obj, self._name, self._default))
 
-    def __set__(self, obj: Any, value: Union[str, Tuple[float, ...], ColorPalette]):
+    def __set__(self, obj: Any, value: Union[str, tuple[float, ...], ColorPalette]):
         """
         Set the colour
 
@@ -565,7 +565,7 @@ def clip(
     if isinstance(val, np.ndarray):
         np.core.umath.clip(val, val_min, val_max, out=val)
     else:
-        val = val_min if val < val_min else val_max if val > val_max else val
+        val = val_min if val < val_min else min(val, val_max)
     return val
 
 
@@ -618,7 +618,7 @@ def slope(arr: np.ndarray) -> float:
     return np.inf if b == 0 else (arr[1, 1] - arr[0, 1]) / b
 
 
-def yintercept(arr: np.ndarray) -> Tuple[float]:
+def yintercept(arr: np.ndarray) -> tuple[float]:
     """Calculate the y intercept and gradient of an array"""
     s = slope(arr)
     return arr[0, 1] - s * arr[0, 0], s
@@ -631,7 +631,7 @@ def yintercept(arr: np.ndarray) -> Tuple[float]:
 
 def cartesian_to_polar(
     x: np.ndarray, z: np.ndarray, x_ref: float = 0.0, z_ref: float = 0.0
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Convert from 2-D Cartesian coordinates to polar coordinates about a reference point.
 
@@ -661,7 +661,7 @@ def cartesian_to_polar(
 
 def polar_to_cartesian(
     r: np.ndarray, phi: np.ndarray, x_ref: float = 0.0, z_ref: float = 0.0
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Convert from 2-D polar to Cartesian coordinates about a reference point.
 
@@ -776,7 +776,7 @@ def _loadfromspec(name: str) -> ModuleType:
     return module
 
 
-def get_class_from_module(name: str, default_module: str = "") -> Type:
+def get_class_from_module(name: str, default_module: str = "") -> type:
     """
     Load a class from a module dynamically.
 

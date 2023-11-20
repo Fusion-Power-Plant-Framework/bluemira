@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Wire objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Union
 
 import bluemira.codes._freecadapi as cadapi
 from bluemira.base.constants import EPS
@@ -58,7 +58,7 @@ class BluemiraWire(BluemiraGeo):
     """
 
     def __init__(
-        self, boundary: List[Union[cadapi.apiWire, BluemiraWire]], label: str = ""
+        self, boundary: list[Union[cadapi.apiWire, BluemiraWire]], label: str = ""
     ):
         boundary_classes = [self.__class__, cadapi.apiWire]
         super().__init__(boundary, label, boundary_classes)
@@ -102,7 +102,7 @@ class BluemiraWire(BluemiraGeo):
             return self._check_reverse(wire)
         return wire
 
-    def _get_wires(self) -> List[cadapi.apiWire]:
+    def _get_wires(self) -> list[cadapi.apiWire]:
         """list(apiWire): list of wires of which the shape consists of."""
         wires = []
         for o in self.boundary:
@@ -261,7 +261,7 @@ class BluemiraWire(BluemiraGeo):
         return Coordinates(vertexes)
 
     @property
-    def edges(self) -> Tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire]:
         """
         The ordered edges of the wire.
         """
@@ -270,7 +270,7 @@ class BluemiraWire(BluemiraGeo):
         )
 
     @property
-    def wires(self) -> Tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire]:
         """
         The wires of the wire. By definition a tuple of itself.
         """

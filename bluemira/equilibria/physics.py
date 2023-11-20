@@ -25,7 +25,7 @@ A collection of simple equilibrium physics calculations
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterable, Optional, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -378,7 +378,7 @@ def calc_beta_p_approx(eq: Equilibrium) -> float:
     return 2 * MU_0 * p_avg / Bp**2
 
 
-def calc_summary(eq: Equilibrium) -> Dict[str, float]:
+def calc_summary(eq: Equilibrium) -> dict[str, float]:
     """
     Calculates interesting values in one go
     """

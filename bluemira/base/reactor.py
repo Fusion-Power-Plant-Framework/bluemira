@@ -30,10 +30,7 @@ from typing import (
     Any,
     Callable,
     Iterable,
-    List,
     Optional,
-    Tuple,
-    Type,
     Union,
 )
 
@@ -138,7 +135,7 @@ class BaseManager(abc.ABC):
         """
         return self.component().tree()
 
-    def _validate_cad_dims(self, *dims: str) -> Tuple[str, ...]:  # noqa: PLR6301
+    def _validate_cad_dims(self, *dims: str) -> tuple[str, ...]:  # noqa: PLR6301
         """
         Validate showable CAD dimensions
         """
@@ -154,7 +151,7 @@ class BaseManager(abc.ABC):
         return dims_to_show
 
     @staticmethod
-    def _validate_plot_dims(*dims) -> Tuple[str, ...]:
+    def _validate_plot_dims(*dims) -> tuple[str, ...]:
         """
         Validate showable plot dimensions
         """
@@ -172,7 +169,7 @@ class BaseManager(abc.ABC):
     @staticmethod
     def _filter_tree(
         comp: Component,
-        dims_to_show: Tuple[str, ...],
+        dims_to_show: tuple[str, ...],
         component_filter: Optional[Callable[[Component], bool]],
     ) -> Component:
         """
@@ -190,7 +187,7 @@ class BaseManager(abc.ABC):
     def _plot_dims(
         self,
         comp: Component,
-        dims_to_show: Tuple[str, ...],
+        dims_to_show: tuple[str, ...],
         component_filter: Optional[Callable[[Component], bool]],
     ):
         for i, dim in enumerate(dims_to_show):
@@ -218,10 +215,10 @@ class FilterMaterial:
     def __init__(
         self,
         keep_material: Union[
-            Type[SerialisedMaterial], Tuple[Type[SerialisedMaterial]], None
+            type[SerialisedMaterial], tuple[type[SerialisedMaterial]], None
         ] = None,
         reject_material: Union[
-            Type[SerialisedMaterial], Tuple[Type[SerialisedMaterial]], None
+            type[SerialisedMaterial], tuple[type[SerialisedMaterial]], None
         ] = Void,
     ):
         super().__setattr__("keep_material", keep_material)
@@ -245,7 +242,7 @@ class FilterMaterial:
         raise AttributeError(f"{type(self).__name__} is immutable")
 
     def _apply_filters(
-        self, material: Union[SerialisedMaterial, Tuple[SerialisedMaterial]]
+        self, material: Union[SerialisedMaterial, tuple[SerialisedMaterial]]
     ) -> bool:
         bool_store = True
 
@@ -437,7 +434,7 @@ class Reactor(BaseManager):
 
     def component(
         self,
-        with_components: Optional[List[ComponentManager]] = None,
+        with_components: Optional[list[ComponentManager]] = None,
     ) -> Component:
         """Return the component tree."""
         return self._build_component_tree(with_components)
@@ -450,11 +447,11 @@ class Reactor(BaseManager):
 
     def _build_component_tree(
         self,
-        with_components: Optional[List[ComponentManager]] = None,
+        with_components: Optional[list[ComponentManager]] = None,
     ) -> Component:
         """Build the component tree from this class's annotations."""
         component = Component(self.name)
-        comp_type: Type
+        comp_type: type
         for comp_name, comp_type in self.__annotations__.items():
             if not issubclass(comp_type, ComponentManager):
                 continue
@@ -476,7 +473,7 @@ class Reactor(BaseManager):
     def _construct_xyz_cad(
         self,
         reactor_component: Component,
-        with_components: Optional[List[ComponentManager]] = None,
+        with_components: Optional[list[ComponentManager]] = None,
         n_sectors: int = 1,
     ):
         xyzs = reactor_component.get_component(
@@ -503,8 +500,8 @@ class Reactor(BaseManager):
 
     def _filter_and_reconstruct(
         self,
-        dims_to_show: Tuple[str, ...],
-        with_components: Optional[List[ComponentManager]],
+        dims_to_show: tuple[str, ...],
+        with_components: Optional[list[ComponentManager]],
         n_sectors: Optional[int],
         component_filter: Optional[Callable[[Component], bool]],
     ) -> Component:
@@ -528,7 +525,7 @@ class Reactor(BaseManager):
     def save_cad(
         self,
         *dims: str,
-        with_components: Optional[List[ComponentManager]] = None,
+        with_components: Optional[list[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
         component_filter: Optional[Callable[[Component], bool]] = FilterMaterial(),
         filename: Optional[str] = None,
@@ -580,7 +577,7 @@ class Reactor(BaseManager):
     def show_cad(
         self,
         *dims: str,
-        with_components: Optional[List[ComponentManager]] = None,
+        with_components: Optional[list[ComponentManager]] = None,
         n_sectors: Optional[int] = None,
         component_filter: Optional[Callable[[Component], bool]] = FilterMaterial(),
         **kwargs,
@@ -618,7 +615,7 @@ class Reactor(BaseManager):
     def plot(
         self,
         *dims: str,
-        with_components: Optional[List[ComponentManager]] = None,
+        with_components: Optional[list[ComponentManager]] = None,
         component_filter: Optional[Callable[[Component], bool]] = FilterMaterial(),
     ):
         """

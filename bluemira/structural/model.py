@@ -25,7 +25,7 @@ Finite element model
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from bluemira.geometry.coordinates import Coordinates
@@ -250,8 +250,8 @@ class FiniteElementModel:
 
     def apply_cyclic_symmetry(
         self,
-        left_node_ids: List[int],
-        right_node_ids: List[int],
+        left_node_ids: list[int],
+        right_node_ids: list[int],
         p1: Optional[np.ndarray] = None,
         p2: Optional[np.ndarray] = None,
     ):
@@ -496,7 +496,7 @@ class FiniteElementModel:
 
     def _apply_boundary_conditions(
         self, k: np.ndarray, p: np.ndarray, method: str = "Przemieniecki"
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Applies the boundary conditions to the matrices to make the problem
         solvable. This is creation of the "reduced" stiffness matrix and

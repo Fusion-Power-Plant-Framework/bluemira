@@ -28,7 +28,7 @@ from __future__ import annotations
 from collections import Counter
 from copy import deepcopy
 from operator import attrgetter
-from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Iterable, List, Optional, Union
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -182,13 +182,13 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         self.__run_func("fix_size")
 
-    def resize(self, currents: Union[float, List, np.ndarray]):
+    def resize(self, currents: Union[float, list, np.ndarray]):
         """
         Resize coils based on their current if their size is not fixed
         """
         self.__run_func("resize", currents)
 
-    def _resize(self, currents: Union[float, List, np.ndarray]):
+    def _resize(self, currents: Union[float, list, np.ndarray]):
         """
         Resize coils based on their current
 
@@ -228,7 +228,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         """Add coils to the coil group"""
         self._coils = (*self._coils, *coils)
 
-    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> Union[None, List]:
+    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> Union[None, list]:
         """
         Remove coil from CoilGroup
 
@@ -367,7 +367,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def to_group_vecs(
         self,
-    ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
         """
         Output CoilGroup properties as numpy arrays
 
@@ -386,7 +386,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         """
         return self.x, self.z, self.dx, self.dz, self.current
 
-    def __list_getter(self, attr: str) -> List:
+    def __list_getter(self, attr: str) -> list:
         """Get attributes from coils tuple"""
         return np.frompyfunc(attrgetter(attr), 1, 1)(self._coils)
 
@@ -414,7 +414,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         self,
         attr: str,
         values: Union[CoilType, float, Iterable[Union[CoilType, float]]],
-        dtype: Union[Type, None] = None,
+        dtype: Union[type, None] = None,
     ):
         """Set attributes on coils"""
         values = np.atleast_1d(values)
@@ -464,7 +464,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     def _pad_discretisation(
         self,
-        _to_pad: List[np.ndarray],
+        _to_pad: list[np.ndarray],
     ):
         """
         Convert quadrature list of array to rectangular arrays.
@@ -550,7 +550,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         )
 
     @property
-    def name(self) -> List:
+    def name(self) -> list:
         """Get coil names"""
         return self.__getter("name").tolist()
 
@@ -570,7 +570,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return np.array([self.x, self.z])
 
     @property
-    def ctype(self) -> List:
+    def ctype(self) -> list:
         """Get coil types"""
         return self.__getter("ctype").tolist()
 
@@ -801,7 +801,7 @@ class SymmetricCircuit(Circuit):
         self,
         *coils: Union[Coil, CoilGroup[Coil]],
     ):
-        symmetry_line: Union[Tuple, np.ndarray] = ((0, 0), (1, 0))
+        symmetry_line: Union[tuple, np.ndarray] = ((0, 0), (1, 0))
 
         if len(coils) == 1:
             coils = (coils[0], deepcopy(coils[0]))
@@ -918,12 +918,12 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
     def __init__(
         self,
         *coils: Union[Coil, CoilGroup[Coil]],
-        control_names: Optional[Union[List, bool]] = None,
+        control_names: Optional[Union[list, bool]] = None,
     ):
         super().__init__(*coils)
         self.control = control_names
 
-    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> Union[None, List]:
+    def remove_coil(self, *coil_name: str, _top_level: bool = True) -> Union[None, list]:
         """
         Remove coil from CoilSet
         """
@@ -931,12 +931,12 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self.control = list(set(self.control) & set(self.name))
 
     @property
-    def control(self) -> List:
+    def control(self) -> list:
         """Get control coil names"""
         return self._control
 
     @control.setter
-    def control(self, control_names: Optional[Union[List[str], bool]] = None):
+    def control(self, control_names: Optional[Union[list[str], bool]] = None):
         """Set which coils are actively controlled
 
         Parameters

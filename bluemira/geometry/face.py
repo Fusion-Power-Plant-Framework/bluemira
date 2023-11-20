@@ -25,7 +25,7 @@ Wrapper for FreeCAD Part.Face objects
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 import bluemira.codes._freecadapi as cadapi
 
@@ -55,7 +55,7 @@ class BluemiraFace(BluemiraGeo):
         Label to assign to the BluemiraFace
     """
 
-    def __init__(self, boundary: List[BluemiraWire], label: str = ""):
+    def __init__(self, boundary: list[BluemiraWire], label: str = ""):
         boundary_classes = [BluemiraWire]
         super().__init__(boundary, label, boundary_classes)
 
@@ -191,21 +191,21 @@ class BluemiraFace(BluemiraGeo):
         return Coordinates(cadapi.vertexes(self.shape))
 
     @property
-    def edges(self) -> Tuple[BluemiraWire]:
+    def edges(self) -> tuple[BluemiraWire]:
         """
         The edges of the face.
         """
         return tuple([BluemiraWire(cadapi.apiWire(o)) for o in cadapi.edges(self.shape)])
 
     @property
-    def wires(self) -> Tuple[BluemiraWire]:
+    def wires(self) -> tuple[BluemiraWire]:
         """
         The wires of the face.
         """
         return tuple([BluemiraWire(o) for o in cadapi.wires(self.shape)])
 
     @property
-    def faces(self) -> Tuple[BluemiraFace]:
+    def faces(self) -> tuple[BluemiraFace]:
         """
         The faces of the face. By definition a tuple of itself.
         """

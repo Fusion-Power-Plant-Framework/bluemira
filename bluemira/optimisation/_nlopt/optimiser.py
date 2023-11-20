@@ -20,7 +20,7 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Mapping, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Mapping, Optional, Union
 
 import nlopt
 import numpy as np
@@ -126,8 +126,8 @@ class NloptOptimiser(Optimiser):
         self._set_objective_function(f_objective, df_objective, n_variables)
         self._set_termination_conditions(opt_conditions)
         self._set_algorithm_parameters(opt_parameters)
-        self._eq_constraints: List[Constraint] = []
-        self._ineq_constraints: List[Constraint] = []
+        self._eq_constraints: list[Constraint] = []
+        self._ineq_constraints: list[Constraint] = []
 
     @property
     def algorithm(self) -> Algorithm:
@@ -135,7 +135,7 @@ class NloptOptimiser(Optimiser):
         return self._algorithm
 
     @property
-    def opt_conditions(self) -> Dict[str, float]:
+    def opt_conditions(self) -> dict[str, float]:
         """Return the optimiser's stopping conditions."""
         return self._opt_conditions.to_dict()
 
@@ -277,13 +277,13 @@ class NloptOptimiser(Optimiser):
         for constraint in self._eq_constraints + self._ineq_constraints:
             constraint.set_approx_derivative_upper_bound(bounds)
 
-    def _get_previous_iter_result(self) -> Tuple[np.ndarray, float]:
+    def _get_previous_iter_result(self) -> tuple[np.ndarray, float]:
         """Get the parameterisation and result from the previous iteration."""
         x_star = self._objective.prev_iter
         f_x = self._objective.f(x_star) if x_star.size else np.inf
         return x_star, f_x
 
-    def _handle_round_off_error(self) -> Tuple[np.ndarray, float]:
+    def _handle_round_off_error(self) -> tuple[np.ndarray, float]:
         """
         Handle a round-off error occurring in an optimisation.
 

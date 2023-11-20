@@ -25,7 +25,7 @@ Plasma profile objects, shape functions, and associated tools
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Callable, List, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Union
 
 if TYPE_CHECKING:
     from bluemira.equilibria.find import Opoint, Optional, Xpoint
@@ -421,10 +421,10 @@ class Profile:
         x: np.ndarray,
         z: np.ndarray,
         psi: np.ndarray,
-        o_points: List[Opoint],
-        x_points: List[Xpoint],
+        o_points: list[Opoint],
+        x_points: list[Xpoint],
         lcfs: Optional[np.ndarray] = None,
-    ) -> Tuple[float, float, np.ndarray]:
+    ) -> tuple[float, float, np.ndarray]:
         """
         Do-not-repeat-yourself utility
 
@@ -561,8 +561,8 @@ class BetaIpProfile(Profile):
         x: np.ndarray,
         z: np.ndarray,
         psi: np.ndarray,
-        o_points: List[Opoint],
-        x_points: List[Xpoint],
+        o_points: list[Opoint],
+        x_points: list[Xpoint],
     ) -> np.ndarray:
         """
         Calculate toroidal plasma current array.
@@ -764,8 +764,8 @@ class CustomProfile(Profile):
         x: np.ndarray,
         z: np.ndarray,
         psi: np.ndarray,
-        o_points: List[Opoint],
-        x_points: List[Xpoint],
+        o_points: list[Opoint],
+        x_points: list[Xpoint],
         lcfs: Optional[np.ndarray] = None,
     ) -> np.ndarray:
         """

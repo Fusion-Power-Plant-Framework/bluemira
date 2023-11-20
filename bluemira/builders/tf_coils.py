@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.optimisation.typing import GeomConstraintT
@@ -452,8 +452,8 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         self,
         parameterisation: GeometryParameterisation,
         algorithm: str,
-        opt_conditions: Dict[str, float],
-        opt_parameters: Dict[str, float],
+        opt_conditions: dict[str, float],
+        opt_parameters: dict[str, float],
         params: ParameterFrame,
         wp_cross_section: BluemiraWire,
         separatrix: BluemiraWire,

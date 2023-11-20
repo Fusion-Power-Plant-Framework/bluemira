@@ -22,7 +22,7 @@ from __future__ import annotations
 
 import functools
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Union
 
 import numpy as np
 import polyscope as ps
@@ -54,15 +54,15 @@ class DefaultDisplayOptions:
         return self.colour
 
     @color.setter
-    def color(self, value: Union[str, Tuple[float, float, float], ColorPalette]):
+    def color(self, value: Union[str, tuple[float, float, float], ColorPalette]):
         """See colour"""
         self.colour = value
 
 
 def show_cad(
-    parts: Union[cadapi.apiShape, List[cadapi.apiShape]],
-    part_options: List[Dict],
-    labels: List[str],
+    parts: Union[cadapi.apiShape, list[cadapi.apiShape]],
+    part_options: list[dict],
+    labels: list[str],
     **kwargs,
 ):
     """
@@ -165,10 +165,10 @@ def _init_polyscope():
 
 
 def add_features(
-    labels: List[str],
-    parts: Union[cadapi.apiShape, List[cadapi.apiShape]],
-    options: Union[Dict, List[Dict]],
-) -> Tuple[List[ps.SurfaceMesh], List[ps.CurveNetwork]]:
+    labels: list[str],
+    parts: Union[cadapi.apiShape, list[cadapi.apiShape]],
+    options: Union[dict, list[dict]],
+) -> tuple[list[ps.SurfaceMesh], list[ps.CurveNetwork]]:
     """
     Grab meshes of all parts to be displayed by Polyscope
 

@@ -25,7 +25,7 @@ Finite element geometry
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -393,7 +393,7 @@ class Geometry:
             k[j : j + 6, j : j + 6] += k_elem[6:, 6:]
         return k
 
-    def bounds(self) -> Tuple[float, float, float, float, float, float]:
+    def bounds(self) -> tuple[float, float, float, float, float, float]:
         """
         Calculates the bounds of the geometry
         """

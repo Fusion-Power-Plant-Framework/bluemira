@@ -24,7 +24,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import dataclass
-from typing import Dict, Literal, Optional, Union
+from typing import Literal, Optional, Union
 
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
@@ -42,14 +42,14 @@ class MappedParameterFrame(ParameterFrame):
     """
 
     @abc.abstractproperty
-    def defaults(self) -> Dict:
+    def defaults(self) -> dict:
         """
         Default values for the ParameterFrame
         """
 
     @classmethod
     def from_defaults(
-        cls, data: Dict, source: str = "bluemira codes default"
+        cls, data: dict, source: str = "bluemira codes default"
     ) -> MappedParameterFrame:
         """
         Create ParameterFrame with default values for external codes.
@@ -71,7 +71,7 @@ class MappedParameterFrame(ParameterFrame):
         return cls.from_dict(new_param_dict)
 
     @abc.abstractproperty
-    def mappings(self) -> Dict[str, ParameterMapping]:
+    def mappings(self) -> dict[str, ParameterMapping]:
         """
         The mappings associated with these frame's parameters.
 
@@ -81,7 +81,7 @@ class MappedParameterFrame(ParameterFrame):
         """
 
     def update_mappings(
-        self, new_send_recv: Dict[str, Dict[Literal["send", "recv"], bool]]
+        self, new_send_recv: dict[str, dict[Literal["send", "recv"], bool]]
     ):
         """
         Update the mappings in this frame with new send/recv values.
@@ -148,7 +148,7 @@ class ParameterMapping:
             self.out_name = self.name
         self._frozen = ("name", "out_name", "unit", "_frozen")
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """
         Convert this object to a dictionary with attributes as values.
         """
@@ -161,7 +161,7 @@ class ParameterMapping:
         }
 
     @classmethod
-    def from_dict(cls, the_dict: Dict) -> ParameterMapping:
+    def from_dict(cls, the_dict: dict) -> ParameterMapping:
         """
         Create a ParameterMapping using a dictionary with attributes as values.
         """

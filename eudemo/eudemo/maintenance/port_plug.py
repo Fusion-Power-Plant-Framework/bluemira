@@ -25,7 +25,7 @@ Port plugs
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.solid import BluemiraSolid
@@ -47,7 +47,7 @@ from bluemira.materials import Void
 
 def make_castellated_plug(
     face: BluemiraFace,
-    vec: Tuple[float, float, float],
+    vec: tuple[float, float, float],
     length: float,
     offsets: Union[float, Iterable],
     distances: Optional[Iterable] = None,
@@ -120,7 +120,7 @@ def make_onion_layer_plug_void(
     tk_castellation: float,
     n_castellations: int,
     n_TF: int,
-) -> Tuple[List[BluemiraSolid], List[BluemiraSolid]]:
+) -> tuple[list[BluemiraSolid], list[BluemiraSolid]]:
     """
     Make geometries for castellated port plugs and voids for all ports.
 
@@ -216,12 +216,12 @@ class CryostatPortPlugBuilder(Builder):
     Cryostat port plug builder.
     """
 
-    param_cls: Type[CryostatPortPlugBuilderParams] = CryostatPortPlugBuilderParams
+    param_cls: type[CryostatPortPlugBuilderParams] = CryostatPortPlugBuilderParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, CryostatPortPlugBuilderParams],
-        build_config: Optional[Dict],
+        params: Union[dict, ParameterFrame, CryostatPortPlugBuilderParams],
+        build_config: Optional[dict],
         outer_profiles: Iterable[BluemiraWire],
         cryostat_xz_boundary: BluemiraFace,
     ):
@@ -237,7 +237,7 @@ class CryostatPortPlugBuilder(Builder):
             xyz=self.build_xyz(),
         )
 
-    def build_xyz(self) -> List[PhysicalComponent]:
+    def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the 3D representation of the Cryostat port plugs
         """
@@ -288,12 +288,12 @@ class RadiationPortPlugBuilder(Builder):
     Radiation shield port plug builder.
     """
 
-    param_cls: Type[RadiationPortPlugBuilderParams] = RadiationPortPlugBuilderParams
+    param_cls: type[RadiationPortPlugBuilderParams] = RadiationPortPlugBuilderParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, RadiationPortPlugBuilderParams],
-        build_config: Optional[Dict],
+        params: Union[dict, ParameterFrame, RadiationPortPlugBuilderParams],
+        build_config: Optional[dict],
         outer_profiles: Iterable[BluemiraWire],
         radiation_xz_boundary: BluemiraFace,
     ):
@@ -309,7 +309,7 @@ class RadiationPortPlugBuilder(Builder):
             xyz=self.build_xyz(),
         )
 
-    def build_xyz(self) -> List[PhysicalComponent]:
+    def build_xyz(self) -> list[PhysicalComponent]:
         """
         Build the 3D representation of the radiation shield port plugs
         """

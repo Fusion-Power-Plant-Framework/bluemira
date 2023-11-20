@@ -27,7 +27,7 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from copy import deepcopy
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -203,10 +203,10 @@ class SourceGroup(ABC):
     Abstract base class for multiple current sources.
     """
 
-    sources: List[CurrentSource]
+    sources: list[CurrentSource]
     points: np.array
 
-    def __init__(self, sources: List[CurrentSource]):
+    def __init__(self, sources: list[CurrentSource]):
         self.sources = sources
         self.points = np.vstack([np.vstack(s.points) for s in self.sources])
 

@@ -28,7 +28,7 @@ from __future__ import annotations
 from copy import deepcopy
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
@@ -323,7 +323,7 @@ class ClosedFluxSurface(FluxSurface):
         """
         return 2 * np.pi * self.area * self.coords.center_of_mass[0]
 
-    def shafranov_shift(self, eq: Equilibrium) -> Tuple[float, float]:
+    def shafranov_shift(self, eq: Equilibrium) -> tuple[float, float]:
         """
         Calculate the Shafranov shift of the ClosedFluxSurface.
 
@@ -382,7 +382,7 @@ class OpenFluxSurface(FluxSurface):
 
     def split(
         self, o_point: PsiPoint, plane: Optional[BluemiraPlane] = None
-    ) -> Tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
+    ) -> tuple[PartialOpenFluxSurface, PartialOpenFluxSurface]:
         """
         Split an OpenFluxSurface into two separate PartialOpenFluxSurfaces about a
         horizontal plane.

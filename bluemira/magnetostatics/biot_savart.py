@@ -25,7 +25,7 @@ Biot-Savart filament object
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import numpy as np
 
@@ -64,7 +64,7 @@ class BiotSavartFilament(CurrentSource):
 
     def __init__(
         self,
-        arrays: Union[Coordinates, np.ndarray, List[Coordinates], List[np.ndarray]],
+        arrays: Union[Coordinates, np.ndarray, list[Coordinates], list[np.ndarray]],
         radius: float,
         current: float = 1.0,
     ):

@@ -26,7 +26,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Optional, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -71,7 +71,7 @@ class LifeCycle:
 
     def __init__(
         self,
-        config: Union[LifeCycleParams, Dict[str, float]],
+        config: Union[LifeCycleParams, dict[str, float]],
         learning_strategy: LearningStrategy,
         availability_strategy: OperationalAvailabilityStrategy,
         inputs: dict,
@@ -224,7 +224,7 @@ class LifeCycle:
             self.params.A_global, op_durations
         )
 
-    def calc_n_pulses(self, phases: List[List[float]]):
+    def calc_n_pulses(self, phases: list[list[float]]):
         """
         Calculate the number of pulses per phase.
         """
@@ -234,7 +234,7 @@ class LifeCycle:
             if phases[i][1].startswith("Phase P")
         ]
 
-    def get_op_phases(self) -> List[float]:
+    def get_op_phases(self) -> list[float]:
         """
         Get the operational phases for the LifeCycle.
         """

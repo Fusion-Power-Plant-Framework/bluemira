@@ -26,7 +26,7 @@ Creating ducts for the port
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING, Dict, List, Union
+from typing import TYPE_CHECKING, Union
 
 if TYPE_CHECKING:
     from bluemira.base.reactor_config import ConfigParams
@@ -72,7 +72,7 @@ class TSUpperPortDuctBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        params: Union[dict, ParameterFrame, ConfigParams, None],
         port_koz: BluemiraFace,
         cryostat_ts_xz: BluemiraWire,
     ):
@@ -151,7 +151,7 @@ class TSEquatorialPortDuctBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        params: Union[dict, ParameterFrame, ConfigParams, None],
         cryostat_xz: BluemiraWire,
     ):
         super().__init__(params, None)
@@ -220,7 +220,7 @@ class VVUpperPortDuctBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        params: Union[dict, ParameterFrame, ConfigParams, None],
         port_koz: BluemiraFace,
         cryostat_ts_xz: BluemiraWire,
     ):
@@ -312,7 +312,7 @@ class VVEquatorialPortDuctBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, ConfigParams, None],
+        params: Union[dict, ParameterFrame, ConfigParams, None],
         cryostat_xz: BluemiraWire,
     ):
         super().__init__(params, None)
@@ -500,7 +500,7 @@ def pipe_pipe_join(
     target_void: BluemiraSolid,
     tool_shape: BluemiraSolid,
     tool_void: BluemiraSolid,
-) -> List[BluemiraSolid]:
+) -> list[BluemiraSolid]:
     """
     Join two hollow, intersecting pipes.
 

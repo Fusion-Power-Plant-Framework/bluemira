@@ -25,7 +25,7 @@ Finite element class
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:
     from bluemira.structural.crosssection import CrossSection
@@ -427,7 +427,7 @@ class Element:
 
         return self._lambda_matrix
 
-    def add_load(self, load: Dict[str, float]):
+    def add_load(self, load: dict[str, float]):
         """
         Applies a load to the Element object.
 

@@ -37,12 +37,9 @@ from types import DynamicClassAttribute
 from typing import (
     TYPE_CHECKING,
     Callable,
-    Dict,
     Iterable,
-    List,
     Optional,
     Protocol,
-    Tuple,
     Union,
 )
 
@@ -177,37 +174,37 @@ def check_data_type(data_type):
 
 
 @check_data_type(Base.Vector)
-def vector_to_list(vectors: List[apiVector]) -> List[List[float]]:
+def vector_to_list(vectors: list[apiVector]) -> list[list[float]]:
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a list"""
     return [list(v) for v in vectors]
 
 
 @check_data_type(Part.Point)
-def point_to_list(points: List[Part.Point]) -> List[List[float]]:
+def point_to_list(points: list[Part.Point]) -> list[list[float]]:
     """Converts a FreeCAD Part.Point or list(Part.Point) into a list"""
     return [[p.X, p.Y, p.Z] for p in points]
 
 
 @check_data_type(Part.Vertex)
-def vertex_to_list(vertexes: List[apiVertex]) -> List[List[float]]:
+def vertex_to_list(vertexes: list[apiVertex]) -> list[list[float]]:
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a list"""
     return [[v.X, v.Y, v.Z] for v in vertexes]
 
 
 @check_data_type(Base.Vector)
-def vector_to_numpy(vectors: List[apiVector]) -> np.ndarray:
+def vector_to_numpy(vectors: list[apiVector]) -> np.ndarray:
     """Converts a FreeCAD Base.Vector or list(Base.Vector) into a numpy array"""
     return np.array([np.array(v) for v in vectors])
 
 
 @check_data_type(Part.Point)
-def point_to_numpy(points: List[Part.Point]) -> np.ndarray:
+def point_to_numpy(points: list[Part.Point]) -> np.ndarray:
     """Converts a FreeCAD Part.Point or list(Part.Point) into a numpy array"""
     return np.array([np.array([p.X, p.Y, p.Z]) for p in points])
 
 
 @check_data_type(Part.Vertex)
-def vertex_to_numpy(vertexes: List[apiVertex]) -> np.ndarray:
+def vertex_to_numpy(vertexes: list[apiVertex]) -> np.ndarray:
     """Converts a FreeCAD Part.Vertex or list(Part.Vertex) into a numpy array"""
     return np.array([np.array([v.X, v.Y, v.Z]) for v in vertexes])
 
@@ -222,12 +219,12 @@ def make_solid(shell: apiShell) -> apiSolid:
     return Part.makeSolid(shell)
 
 
-def make_shell(faces: List[apiFace]) -> apiShell:
+def make_shell(faces: list[apiFace]) -> apiShell:
     """Make a shell from faces."""
     return Part.makeShell(faces)
 
 
-def make_compound(shapes: List[apiShape]) -> apiCompound:
+def make_compound(shapes: list[apiShape]) -> apiCompound:
     """
     Make an FreeCAD compound object out of many shapes
 
@@ -683,13 +680,13 @@ def is_same(obj1: apiShape, obj2: apiShape) -> bool:
     return obj1.isSame(obj2)
 
 
-def bounding_box(obj: apiShape) -> Tuple[float, float, float, float, float, float]:
+def bounding_box(obj: apiShape) -> tuple[float, float, float, float, float, float]:
     """Object's bounding box"""
     box = _get_api_attr(obj, "BoundBox")
     return box.XMin, box.YMin, box.ZMin, box.XMax, box.YMax, box.ZMax
 
 
-def tessellate(obj: apiShape, tolerance: float) -> Tuple[np.ndarray, np.ndarray]:
+def tessellate(obj: apiShape, tolerance: float) -> tuple[np.ndarray, np.ndarray]:
     """
     Tessellate a geometry object.
 
@@ -911,7 +908,7 @@ def discretize_by_edges(
 
 def dist_to_shape(
     shape1: apiShape, shape2: apiShape
-) -> Tuple[float, List[Tuple[np.ndarray, np.ndarray]]]:
+) -> tuple[float, list[tuple[np.ndarray, np.ndarray]]]:
     """
     Find the minimum distance between two shapes
 
@@ -1014,7 +1011,7 @@ def wire_parameter_at(
 
 def split_wire(
     wire: apiWire, vertex: Iterable[float], tolerance: float
-) -> Tuple[Union[None, apiWire], Union[None, apiWire]]:
+) -> tuple[Union[None, apiWire], Union[None, apiWire]]:
     """
     Split a wire at a given vertex.
 
@@ -1273,12 +1270,12 @@ class CADFileType(enum.Enum):
         self.module = module
 
     @classmethod
-    def unitless_formats(cls) -> Tuple[CADFileType, ...]:
+    def unitless_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that don't need to be converted because they are unitless"""
         return (cls.OBJ_WAVE, *[form for form in cls if form.module == "Mesh"])
 
     @classmethod
-    def manual_mesh_formats(cls) -> Tuple[CADFileType, ...]:
+    def manual_mesh_formats(cls) -> tuple[CADFileType, ...]:
         """CAD formats that need to have meshed objects."""
         return (
             cls.GLTRANSMISSION,
@@ -1315,7 +1312,7 @@ class CADFileType(enum.Enum):
 class ExporterProtocol(Protocol):
     """Typing for CAD exporter"""
 
-    def __call__(self, objs: List[Part.Feature], filename: str, **kwargs):
+    def __call__(self, objs: list[Part.Feature], filename: str, **kwargs):
         """Export CAD protocol"""
 
 
@@ -1341,7 +1338,7 @@ def meshed_exporter(
 
 
 def save_as_STP(
-    shapes: List[apiShape], filename: str = "test", unit_scale: str = "metre"
+    shapes: list[apiShape], filename: str = "test", unit_scale: str = "metre"
 ):
     """
     Saves a series of Shape objects as a STEP assembly
@@ -1503,7 +1500,7 @@ def scale_shape(shape: apiShape, factor: float) -> apiShape:
     return shape.scale(factor)
 
 
-def translate_shape(shape: apiShape, vector: Tuple[float, float, float]) -> apiShape:
+def translate_shape(shape: apiShape, vector: tuple[float, float, float]) -> apiShape:
     """
     Apply scaling with factor to the shape
 
@@ -1523,8 +1520,8 @@ def translate_shape(shape: apiShape, vector: Tuple[float, float, float]) -> apiS
 
 def rotate_shape(
     shape: apiShape,
-    base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-    direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    base: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 180,
 ) -> apiShape:
     """
@@ -1550,8 +1547,8 @@ def rotate_shape(
 
 def mirror_shape(
     shape: apiShape,
-    base: Tuple[float, float, float],
-    direction: Tuple[float, float, float],
+    base: tuple[float, float, float],
+    direction: tuple[float, float, float],
 ) -> apiShape:
     """
     Mirror a shape about a plane.
@@ -1587,8 +1584,8 @@ def mirror_shape(
 
 def revolve_shape(
     shape: apiShape,
-    base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-    direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    base: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    direction: tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 180.0,
 ) -> apiShape:
     """
@@ -1614,7 +1611,7 @@ def revolve_shape(
     return shape.revolve(base, direction, degree)
 
 
-def extrude_shape(shape: apiShape, vec: Tuple[float, float, float]) -> apiShape:
+def extrude_shape(shape: apiShape, vec: tuple[float, float, float]) -> apiShape:
     """
     Apply the extrusion along vec to this shape
 
@@ -1826,8 +1823,8 @@ def boolean_fuse(
 
 
 def boolean_cut(
-    shape: apiShape, tools: List[apiShape], *, split: bool = True
-) -> List[apiShape]:
+    shape: apiShape, tools: list[apiShape], *, split: bool = True
+) -> list[apiShape]:
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
@@ -1875,8 +1872,8 @@ def boolean_cut(
 
 
 def boolean_fragments(
-    shapes: List[apiSolid], tolerance: float = 0.0
-) -> Tuple[apiCompound, List[apiSolid]]:
+    shapes: list[apiSolid], tolerance: float = 0.0
+) -> tuple[apiCompound, list[apiSolid]]:
     """
     Split a list of shapes into their Boolean fragments.
 
@@ -2157,8 +2154,8 @@ def change_placement(geo: apiShape, placement: apiPlacement):
 # Plane creation and manipulations
 # ======================================================================================
 def make_plane(
-    base: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-    axis: Tuple[float, float, float] = (0.0, 0.0, 1.0),
+    base: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    axis: tuple[float, float, float] = (0.0, 0.0, 1.0),
 ) -> apiPlane:
     """
     Creates a FreeCAD plane with a given location and normal
@@ -2181,9 +2178,9 @@ def make_plane(
 
 
 def make_plane_from_3_points(
-    point1: Tuple[float, float, float] = (0.0, 0.0, 0.0),
-    point2: Tuple[float, float, float] = (1.0, 0.0, 0.0),
-    point3: Tuple[float, float, float] = (0.0, 1.0, 0.0),
+    point1: tuple[float, float, float] = (0.0, 0.0, 0.0),
+    point2: tuple[float, float, float] = (1.0, 0.0, 0.0),
+    point3: tuple[float, float, float] = (0.0, 1.0, 0.0),
 ) -> apiPlane:
     """
     Creates a FreeCAD plane defined by three non-linear points
@@ -2270,7 +2267,7 @@ def placement_from_plane(plane: apiPlane) -> apiPlacement:
 # ======================================================================================
 
 
-def _colourise(node: coin.SoNode, options: Dict):
+def _colourise(node: coin.SoNode, options: dict):
     if isinstance(node, coin.SoMaterial):
         rgb = colors.to_rgb(options["colour"])
         transparency = options["transparency"]
@@ -2283,7 +2280,7 @@ def _colourise(node: coin.SoNode, options: Dict):
 
 def collect_verts_faces(
     solid: apiShape, tesselation: float = 0.1
-) -> Tuple[Optional[np.ndarray], ...]:
+) -> tuple[Optional[np.ndarray], ...]:
     """
     Collects verticies and faces of parts and tessellates them
     for the CAD viewer
@@ -2322,7 +2319,7 @@ def collect_verts_faces(
     return None, None
 
 
-def collect_wires(solid: apiShape, **kwds) -> Tuple[np.ndarray, np.ndarray]:
+def collect_wires(solid: apiShape, **kwds) -> tuple[np.ndarray, np.ndarray]:
     """
     Collects verticies and edges of parts and discretizes them
     for the CAD viewer
@@ -2364,15 +2361,15 @@ class DefaultDisplayOptions:
         return self.colour
 
     @color.setter
-    def color(self, value: Union[str, Tuple[float, float, float], ColorPalette]):
+    def color(self, value: Union[str, tuple[float, float, float], ColorPalette]):
         """See colour"""
         self.colour = value
 
 
 def show_cad(
-    parts: Union[apiShape, List[apiShape]],
-    options: Union[Dict, List[Optional[Dict]]],
-    labels: List[str],
+    parts: Union[apiShape, list[apiShape]],
+    options: Union[dict, list[Optional[dict]]],
+    labels: list[str],
     **kwargs,  # noqa: ARG001
 ):
     """

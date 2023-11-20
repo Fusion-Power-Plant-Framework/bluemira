@@ -564,13 +564,13 @@ class OptVariablesFrame:
         # as you need the correct index for the variable
         return [i for i, v in enumerate(self) if v.fixed]
 
-    def as_dict(self) -> Dict[str, OptVarDictT]:
+    def as_dict(self) -> dict[str, OptVarDictT]:
         """
         Dictionary Representation of the frame
         """
         return {opv.name: opv.as_dict() for opv in self}
 
-    def as_serializable(self) -> Dict[str, OptVarSerializedT]:
+    def as_serializable(self) -> dict[str, OptVarSerializedT]:
         """
         Dictionary Representation of the frame
         """

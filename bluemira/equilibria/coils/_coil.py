@@ -26,7 +26,7 @@ Coil and coil grouping objects
 from __future__ import annotations
 
 from enum import Enum, EnumMeta, auto
-from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, Optional, Union
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -578,7 +578,7 @@ class Coil(CoilFieldsMixin):
     @staticmethod
     def _make_boundary(
         x_c: float, z_c: float, dx: float, dz: float
-    ) -> Tuple[np.ndarray, np.ndarray]:
+    ) -> tuple[np.ndarray, np.ndarray]:
         """
         Makes the coil boundary vectors
 

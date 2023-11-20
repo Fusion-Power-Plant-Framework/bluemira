@@ -28,7 +28,7 @@ from __future__ import annotations
 import json
 from itertools import starmap
 from pathlib import Path
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Iterable, Optional, Union
 
 import numba as nb
 import numpy as np
@@ -117,7 +117,7 @@ def vector_lengthnorm(
 
 def interpolate_points(
     x: np.ndarray, y: np.ndarray, z: np.ndarray, n_points: int
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Interpolate points.
 
@@ -153,7 +153,7 @@ def interpolate_midpoints(
     x: np.ndarray,
     y: np.ndarray,
     z: np.ndarray,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Interpolate the points adding the midpoint of each segment to the points.
 
@@ -465,7 +465,7 @@ def get_centroid(
 
 
 @nb.jit(cache=True, nopython=True)
-def get_centroid_2d(x: np.ndarray, z: np.ndarray) -> List[float]:
+def get_centroid_2d(x: np.ndarray, z: np.ndarray) -> list[float]:
     """
     Calculate the centroid of a non-self-intersecting 2-D counter-clockwise polygon.
 
@@ -499,7 +499,7 @@ def get_centroid_2d(x: np.ndarray, z: np.ndarray) -> List[float]:
     return [cx, cz]
 
 
-def get_centroid_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> List[float]:
+def get_centroid_3d(x: np.ndarray, y: np.ndarray, z: np.ndarray) -> list[float]:
     """
     Calculate the centroid of a non-self-intersecting counterclockwise polygon
     in 3-D.
@@ -716,7 +716,7 @@ def project_point_axis(point: np.ndarray, axis: np.ndarray) -> np.ndarray:
     return axis * np.dot(point, axis) / np.dot(axis, axis)
 
 
-def principal_components(xyz_array: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def principal_components(xyz_array: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Principal component analysis.
     """
@@ -1052,7 +1052,7 @@ class Coordinates:
     # Instantiation
     # =============================================================================
 
-    def __init__(self, xyz_array: Union[np.ndarray, Dict, Iterable[Iterable]]):
+    def __init__(self, xyz_array: Union[np.ndarray, dict, Iterable[Iterable]]):
         self._array = _parse_to_xyz_array(xyz_array)
         self._is_planar = None
         self._normal_vector = None
@@ -1238,7 +1238,7 @@ class Coordinates:
         return self._array
 
     @property
-    def points(self) -> List[np.ndarray]:
+    def points(self) -> list[np.ndarray]:
         """
         A list of the individual points of the Coordinates.
         """
@@ -1248,7 +1248,7 @@ class Coordinates:
     # Conversions
     # =========================================================================
 
-    def as_dict(self) -> Dict[str, np.ndarray]:
+    def as_dict(self) -> dict[str, np.ndarray]:
         """
         Cast the Coordinates as a dictionary.
 
@@ -1259,7 +1259,7 @@ class Coordinates:
         """
         return {"x": self.x, "y": self.y, "z": self.z}
 
-    def to_json(self, filename: str, **kwargs: Dict[str, Any]) -> str:
+    def to_json(self, filename: str, **kwargs: dict[str, Any]) -> str:
         """
         Save the Coordinates as a JSON file.
         """
@@ -1290,7 +1290,7 @@ class Coordinates:
         return get_perimeter_3d(*self._array)
 
     @property
-    def center_of_mass(self) -> Tuple[float, float, float]:
+    def center_of_mass(self) -> tuple[float, float, float]:
         """
         Geometrical centroid of the Coordinates.
         """
@@ -1316,7 +1316,7 @@ class Coordinates:
         return self._array.T
 
     @property
-    def shape(self) -> Tuple[int, int]:
+    def shape(self) -> tuple[int, int]:
         """
         Shape of the Coordinates
         """
@@ -1381,8 +1381,8 @@ class Coordinates:
 
     def rotate(
         self,
-        base: Tuple[float, float, float] = (0, 0, 0),
-        direction: Tuple[float, float, float] = (0, 0, 1),
+        base: tuple[float, float, float] = (0, 0, 0),
+        direction: tuple[float, float, float] = (0, 0, 1),
         degree: float = 0.0,
     ):
         """
@@ -1417,7 +1417,7 @@ class Coordinates:
 
         self._update_plane_props()
 
-    def translate(self, vector: Tuple[float, float, float] = (0, 0, 0)):
+    def translate(self, vector: tuple[float, float, float] = (0, 0, 0)):
         """
         Translate this shape with the vector. This function modifies the self
         object.
@@ -1592,7 +1592,7 @@ def _coords_plane_intersect(
     return out
 
 
-def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
+def get_intersect(xy1: np.ndarray, xy2: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
     """
     Calculates the intersection points between two sets of 2-D coordinates. Will return
     a unique list of x, z intersections (no duplicates in x-z space).

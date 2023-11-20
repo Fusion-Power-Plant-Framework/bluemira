@@ -30,7 +30,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import asdict, dataclass, fields
-from typing import TYPE_CHECKING, Callable, Dict, List, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Union
 
 if TYPE_CHECKING:
     from bluemira.codes.interface import BaseRunMode, CodesSolver
@@ -93,7 +93,7 @@ class PlasmaFixedBoundaryParams:
         )
 
     @classmethod
-    def fields(cls) -> List:
+    def fields(cls) -> list:
         """List of fields in the dataclass"""
         if cls._fields is None:
             cls._fields = [k.name for k in fields(cls)]
@@ -124,7 +124,7 @@ def create_plasma_xz_cross_section(
     params: PlasmaFixedBoundaryParams,
     kappa_95: float,
     delta_95: float,
-    lcfs_options: Dict[str, Dict],
+    lcfs_options: dict[str, dict],
     source: str,
 ) -> PhysicalComponent:
     """
@@ -162,7 +162,7 @@ def _run_transport_solver(
     transport_solver: CodesSolver,
     transport_params: ParameterFrame,
     transport_run_mode: Union[str, BaseRunMode],
-) -> Tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[ParameterFrame, np.ndarray, np.ndarray, np.ndarray]:
     """Run transport solver"""
     transport_solver.params.update_from_frame(transport_params)
     transp_out_params = transport_solver.execute(transport_run_mode)
@@ -494,11 +494,11 @@ def solve_transport_fixed_boundary(
 
 
 def calc_metric_coefficients(
-    flux_surfaces: List[ClosedFluxSurface],
+    flux_surfaces: list[ClosedFluxSurface],
     grad_psi_2D_func: Callable[[np.ndarray], np.ndarray],
     psi_norm_1D: np.ndarray,
     psi_ax: float,
-) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Calculate metric coefficients of a set of flux surfaces.
 
@@ -597,7 +597,7 @@ def calc_curr_dens_profiles(
     R_0: float,
     psi_ax: float,
     psi_b: float,
-) -> Tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+) -> tuple[float, np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
     Calculate pprime and ffprime from metric coefficients, emulating behaviour
     in PLASMOD.

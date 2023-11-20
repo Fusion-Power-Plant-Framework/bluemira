@@ -26,7 +26,7 @@ Material mixture utility classes
 from __future__ import annotations
 
 import copy
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:
     from bluemira.materials.cache import MaterialCache
@@ -50,7 +50,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
     Inherits and does some dropping of 0 fractions (avoid touching nmm)
     """
 
-    materials: Dict[str, float]
+    materials: dict[str, float]
     temperature_in_K: float  # noqa: N815
     enrichment: float
 
@@ -60,7 +60,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
     def __init__(
         self,
         name: str,
-        materials: Dict[str, float],
+        materials: dict[str, float],
         temperature_in_K: Optional[float] = None,  # noqa: N803
         enrichment: Optional[float] = None,
         zaid_suffix: Optional[str] = None,
@@ -205,7 +205,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
 
     @classmethod
     def from_dict(
-        cls, name: str, material_dict: Dict[str, Any], material_cache: MaterialCache
+        cls, name: str, material_dict: dict[str, Any], material_cache: MaterialCache
     ) -> SerialisedMaterial:
         """
         Generate an instance of the mixture from a dictionary of materials.
