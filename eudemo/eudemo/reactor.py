@@ -35,8 +35,10 @@ The EUDEMO reactor design routine.
 11. Produce power cycle report
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, Optional, Union
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -44,7 +46,6 @@ import numpy as np
 from bluemira.base.components import Component
 from bluemira.base.designer import run_designer
 from bluemira.base.logs import set_log_level
-from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.base.reactor import Reactor
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.builders.cryostat import CryostatBuilder, CryostatDesigner
@@ -52,10 +53,7 @@ from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
-from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, interpolate_bspline, offset_wire
 from eudemo.blanket import Blanket, BlanketBuilder, BlanketDesigner
@@ -100,6 +98,12 @@ from eudemo.radial_build import radial_build
 from eudemo.tf_coils import TFCoil, TFCoilBuilder, TFCoilDesigner
 from eudemo.vacuum_vessel import VacuumVessel, VacuumVesselBuilder
 
+if TYPE_CHECKING:
+    from bluemira.base.parameter_frame import ParameterFrame
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.profiles import Profile
+    from bluemira.geometry.coordinates import Coordinates
+
 CONFIG_DIR = Path(__file__).parent.parent / "config"
 BUILD_CONFIG_FILE_PATH = Path(CONFIG_DIR, "build_config.json").as_posix()
 
@@ -124,11 +128,11 @@ class EUDEMO(Reactor):
 
 
 def build_reference_equilibrium(
-    params: Union[Dict, ParameterFrame],
-    build_config: Dict,
+    params: dict | ParameterFrame,
+    build_config: dict,
     equilibrium_manager: EquilibriumManager,
-    lcfs_coords: Optional[Coordinates],
-    profiles: Optional[Profile],
+    lcfs_coords: Coordinates | None,
+    profiles: Profile | None,
 ) -> Equilibrium:
     """
     Build the reference equilibrium for the tokamak and store in
@@ -158,7 +162,7 @@ def build_reference_equilibrium(
     return reference_eq
 
 
-def build_plasma(params, build_config: Dict, eq: Equilibrium) -> Plasma:
+def build_plasma(params, build_config: dict, eq: Equilibrium) -> Plasma:
     """Build EUDEMO plasma from an equilibrium."""
     lcfs_loop = eq.get_LCFS()
     lcfs_wire = interpolate_bspline({"x": lcfs_loop.x, "z": lcfs_loop.z}, closed=True)
@@ -212,7 +216,7 @@ def build_divertor(params, build_config, div_silhouette) -> Divertor:
 
 def build_blanket(
     params,
-    build_config: Dict,
+    build_config: dict,
     blanket_boundary,
     blanket_face,
     r_inner_cut: float,

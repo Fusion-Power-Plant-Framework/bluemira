@@ -22,20 +22,24 @@
 First Wall Silhouette designer
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, Type, Union
+from typing import TYPE_CHECKING
 
 from bluemira.base.designer import Designer
 from bluemira.base.error import DesignError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points, get_legs
 from bluemira.geometry.optimisation import KeepOutZone, optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation, PolySpline
 from bluemira.geometry.tools import convex_hull_wires_2d, make_polygon, offset_wire
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import get_class_from_module
+
+if TYPE_CHECKING:
+    from bluemira.equilibria import Equilibrium
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
@@ -72,13 +76,13 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
-        build_config: Dict,
+        params: ParameterFrame | dict,
+        build_config: dict,
         equilibrium: Equilibrium,
     ) -> None:
         super().__init__(params, build_config)
 
-        self.parameterisation_cls: Type[
+        self.parameterisation_cls: type[
             GeometryParameterisation
         ] = get_class_from_module(
             self.build_config["param_class"],
@@ -169,7 +173,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
     def _get_parameterisation(self) -> GeometryParameterisation:
         return self.parameterisation_cls(self._derive_shape_params())
 
-    def _derive_shape_params(self) -> Dict:
+    def _derive_shape_params(self) -> dict:
         shape_params = {}
         for key, val in self.variables_map.items():
             if isinstance(val, str):

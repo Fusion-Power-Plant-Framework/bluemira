@@ -18,12 +18,16 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
-from typing import List, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from bluemira.optimisation import OptimisationProblem
-from bluemira.optimisation.typing import ConstraintT
+
+if TYPE_CHECKING:
+    from bluemira.optimisation.typing import ConstraintT
 
 
 class SimpleOptProblem(OptimisationProblem):
@@ -56,7 +60,7 @@ class SimpleOptProblem(OptimisationProblem):
         self.df_call_count += 1
         return np.array([0.0, 0.5 / np.sqrt(x[1])])
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    def ineq_constraints(self) -> list[ConstraintT]:
         return [
             {
                 "f_constraint": self.constraint_1,
@@ -70,7 +74,7 @@ class SimpleOptProblem(OptimisationProblem):
             },
         ]
 
-    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+    def bounds(self) -> tuple[np.ndarray, np.ndarray]:
         return np.array([-np.inf, 0]), np.array([np.inf, np.inf])
 
     def constraint_1(self, x: np.ndarray) -> np.ndarray:
@@ -91,7 +95,7 @@ class OptProblemNoGrad(OptimisationProblem):
         """Objective to minimise (x - 1)^2 + x + 3."""
         return np.sqrt(x[1])
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    def ineq_constraints(self) -> list[ConstraintT]:
         return [
             {
                 "f_constraint": self.constraint_1,
@@ -103,7 +107,7 @@ class OptProblemNoGrad(OptimisationProblem):
             },
         ]
 
-    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+    def bounds(self) -> tuple[np.ndarray, np.ndarray]:
         return np.array([-np.inf, 0]), np.array([np.inf, np.inf])
 
     def constraint_1(self, x: np.ndarray) -> np.ndarray:
@@ -127,7 +131,7 @@ class OptProblemEqConstraint(OptimisationProblem):
     def objective(self, x: np.ndarray) -> float:
         return -np.prod(x)
 
-    def eq_constraints(self) -> List[ConstraintT]:
+    def eq_constraints(self) -> list[ConstraintT]:
         return [
             {
                 "f_constraint": self.eq_constraint_1,

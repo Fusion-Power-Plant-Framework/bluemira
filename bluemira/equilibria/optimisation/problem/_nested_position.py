@@ -36,24 +36,28 @@ the method used to map the coilset object to the state vector
 
 """
 
-from typing import Dict, List, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_print_flush
-from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimisation.constraints import (
-    MagneticConstraintSet,
-    UpdateableConstraint,
-)
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
-from bluemira.utilities.positioning import PositionMapper
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.optimisation.constraints import (
+        MagneticConstraintSet,
+        UpdateableConstraint,
+    )
+    from bluemira.utilities.positioning import PositionMapper
 
 
 class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
@@ -100,8 +104,8 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         targets: MagneticConstraintSet,
         position_mapper: PositionMapper,
         opt_algorithm: AlgorithmType = Algorithm.SBPLX,
-        opt_conditions: Optional[Dict[str, float]] = None,
-        constraints: Optional[List[UpdateableConstraint]] = None,
+        opt_conditions: dict[str, float] | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
     ):
         self.eq = eq
         self.targets = targets
@@ -197,9 +201,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self,
         coilset: CoilSet,
         position_mapper: PositionMapper,
-        sub_opt_problems: List[CoilsetOptimisationProblem],
+        sub_opt_problems: list[CoilsetOptimisationProblem],
         opt_algorithm: AlgorithmType = Algorithm.COBYLA,
-        opt_conditions: Optional[Dict[str, float]] = None,
+        opt_conditions: dict[str, float] | None = None,
         constraints=None,
         initial_currents=None,
         *,
@@ -292,7 +296,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         return self.position_mapper.to_L(x, z)
 
     def optimise(
-        self, x0: Optional[npt.NDArray] = None, *, verbose: bool = False
+        self, x0: npt.NDArray | None = None, *, verbose: bool = False
     ) -> CoilsetOptimiserResult:
         """
         Run the PulsedNestedPositionCOP

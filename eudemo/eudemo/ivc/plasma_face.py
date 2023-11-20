@@ -22,8 +22,10 @@
 Plasma Face Designer
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, Tuple, Union
+from typing import Tuple
 
 import numpy as np
 
@@ -63,10 +65,10 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
+        params: ParameterFrame | dict,
         ivc_boundary: BluemiraWire,
         wall_boundary: BluemiraWire,
-        divertor_silhouette: Tuple[BluemiraWire, ...],
+        divertor_silhouette: tuple[BluemiraWire, ...],
     ):
         super().__init__(params)
         if self.params.div_type.value == "DN":
@@ -75,7 +77,7 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         self.wall_boundary = wall_boundary
         self.divertor_silhouette = divertor_silhouette
 
-    def run(self) -> Tuple[BluemiraFace, BluemiraFace]:
+    def run(self) -> tuple[BluemiraFace, BluemiraFace]:
         """
         Run method for PlasmaFaceDesigner
         """
@@ -130,7 +132,7 @@ def _make_clearance_face(
 
 def _cut_vessel_shape(
     in_vessel_face: BluemiraFace, rm_clearance_face: BluemiraFace
-) -> Tuple[BluemiraFace, BluemiraFace]:
+) -> tuple[BluemiraFace, BluemiraFace]:
     """
     Cut a remote maintenance clearance into the given vessel shape.
     """

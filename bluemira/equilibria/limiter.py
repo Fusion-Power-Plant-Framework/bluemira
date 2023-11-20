@@ -23,13 +23,17 @@
 Limiter object class
 """
 
+from __future__ import annotations
+
 from itertools import cycle
-from typing import Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
-from matplotlib.pyplot import Axes
 
 from bluemira.equilibria.plotting import LimiterPlotter
+
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
 
 __all__ = ["Limiter"]
 
@@ -48,7 +52,7 @@ class Limiter:
 
     __slots__ = ["x", "z", "xz", "_i"]
 
-    def __init__(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
+    def __init__(self, x: float | np.ndarray, z: float | np.ndarray):
         self.x = x
         self.z = z
         self.xz = cycle(np.array([x, z]).T)
@@ -78,7 +82,7 @@ class Limiter:
         self._i += 1
         return next(self.xz[self._i - 1])
 
-    def plot(self, ax: Optional[Axes] = None):
+    def plot(self, ax: Axes | None = None):
         """
         Plots the Limiter object
         """

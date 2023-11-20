@@ -23,11 +23,15 @@
 EU-DEMO parameterisations classes for TF Coils.
 """
 
+from __future__ import annotations
+
 import copy
-from typing import ClassVar, Optional
+from typing import TYPE_CHECKING, ClassVar
 
 from bluemira.geometry.parameterisations import PolySpline
-from bluemira.utilities.opt_variables import VarDictT
+
+if TYPE_CHECKING:
+    from bluemira.utilities.opt_variables import VarDictT
 
 
 class TFCoilPolySpline(PolySpline):
@@ -50,7 +54,7 @@ class TFCoilPolySpline(PolySpline):
         "flat": {"value": 0.0},
     }
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         if var_dict is None:
             var_dict = {}
         defaults = copy.deepcopy(self._defaults)

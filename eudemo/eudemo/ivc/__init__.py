@@ -22,20 +22,24 @@
 Module containing builders for the EUDEMO first wall components
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict
+from typing import TYPE_CHECKING, Dict
 
 from bluemira.base.designer import run_designer
-from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.equilibria import find_OX_points
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.wire import BluemiraWire
 from eudemo.ivc.divertor_silhouette import DivertorSilhouetteDesigner
 from eudemo.ivc.ivc_boundary import IVCBoundaryDesigner
 from eudemo.ivc.plasma_face import PlasmaFaceDesigner
 from eudemo.ivc.tools import cut_wall_below_x_point
 from eudemo.ivc.wall_silhouette import WallSilhouetteDesigner
+
+if TYPE_CHECKING:
+    from bluemira.base.parameter_frame import ParameterFrame
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.geometry.face import BluemiraFace
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
@@ -49,7 +53,7 @@ class IVCShapes:
 
 
 def design_ivc(
-    params: ParameterFrame, build_config: Dict, equilibrium: Equilibrium
+    params: ParameterFrame, build_config: dict, equilibrium: Equilibrium
 ) -> IVCShapes:
     """
     Run the IVC component designers in sequence.

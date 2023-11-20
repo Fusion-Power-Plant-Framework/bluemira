@@ -22,8 +22,9 @@
 EUDEMO builder for blanket
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, List, Type, Union
 
 from bluemira.base.builder import Builder, Component
 from bluemira.base.components import PhysicalComponent
@@ -69,13 +70,13 @@ class BlanketBuilder(Builder):
     BB = "BB"
     IBS = "IBS"
     OBS = "OBS"
-    param_cls: Type[BlanketBuilderParams] = BlanketBuilderParams
+    param_cls: type[BlanketBuilderParams] = BlanketBuilderParams
     params: BlanketBuilderParams
 
     def __init__(
         self,
-        params: Union[BlanketBuilderParams, Dict],
-        build_config: Dict,
+        params: BlanketBuilderParams | dict,
+        build_config: dict,
         ib_silhouette: BluemiraFace,
         ob_silhouette: BluemiraFace,
     ):
@@ -104,7 +105,7 @@ class BlanketBuilder(Builder):
         apply_component_display_options(obs, color=BLUE_PALETTE[self.BB][1])
         return Component(self.BB, children=[ibs, obs])
 
-    def build_xy(self, segments: List[PhysicalComponent]):
+    def build_xy(self, segments: list[PhysicalComponent]):
         """
         Build the x-y components of the blanket.
         """
@@ -122,7 +123,7 @@ class BlanketBuilder(Builder):
             Component(self.BB, children=slices), self.params.n_TF.value
         )
 
-    def build_xyz(self, segments: List[PhysicalComponent], degree: float = 360.0):
+    def build_xyz(self, segments: list[PhysicalComponent], degree: float = 360.0):
         """
         Build the x-y-z components of the blanket.
         """

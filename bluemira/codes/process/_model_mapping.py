@@ -23,8 +23,9 @@
 PROCESS model mappings
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Tuple
 
 from bluemira.codes.utilities import Model
 
@@ -60,7 +61,7 @@ class ModelSelection:
     """
 
     _value_: int
-    requires_values: Tuple[str] = field(default_factory=tuple)
+    requires_values: tuple[str] = field(default_factory=tuple)
     description: str = ""
 
 

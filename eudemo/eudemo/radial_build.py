@@ -20,7 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Functions to optimise an EUDEMO radial build"""
 
-from typing import Dict, TypeVar
+from __future__ import annotations
+
+from typing import TypeVar
 
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes import plot_radial_build, systems_code_solver
@@ -362,7 +364,7 @@ def apply_specific_interface_rules(params: _PfT):
     )
 
 
-def radial_build(params: _PfT, build_config: Dict) -> _PfT:
+def radial_build(params: _PfT, build_config: dict) -> _PfT:
     """
     Update parameters after a radial build is run/read/mocked using PROCESS.
 

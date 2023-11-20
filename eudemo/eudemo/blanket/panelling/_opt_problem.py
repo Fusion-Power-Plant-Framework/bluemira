@@ -20,13 +20,17 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Definition of panelling optimisation problem for EUDEMO."""
 
-from typing import List, Tuple
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from bluemira.optimisation import OptimisationProblem
-from bluemira.optimisation.typing import ConstraintT
-from eudemo.blanket.panelling._paneller import Paneller
+
+if TYPE_CHECKING:
+    from bluemira.optimisation.typing import ConstraintT
+    from eudemo.blanket.panelling._paneller import Paneller
 
 
 class PanellingOptProblem(OptimisationProblem):
@@ -56,11 +60,11 @@ class PanellingOptProblem(OptimisationProblem):
         """Objective function to minimise the total panel length."""
         return self.paneller.length(x)
 
-    def bounds(self) -> Tuple[np.ndarray, np.ndarray]:
+    def bounds(self) -> tuple[np.ndarray, np.ndarray]:
         """The normalized bounds of the parameterisation."""
         return np.zeros_like(self.paneller.x0), np.ones_like(self.paneller.x0)
 
-    def ineq_constraints(self) -> List[ConstraintT]:
+    def ineq_constraints(self) -> list[ConstraintT]:
         """
         The inequality constraints for the optimiser.
 

@@ -20,12 +20,15 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Typing for the geometry optimisation module"""
 
-from typing import Optional, Protocol, TypedDict
+from __future__ import annotations
 
-import numpy as np
-from typing_extensions import NotRequired
+from typing import TYPE_CHECKING, Protocol, TypedDict
 
-from bluemira.geometry.parameterisations import GeometryParameterisation
+if TYPE_CHECKING:
+    import numpy as np
+    from typing_extensions import NotRequired
+
+    from bluemira.geometry.parameterisations import GeometryParameterisation
 
 
 class GeomOptimiserObjective(Protocol):
@@ -57,4 +60,4 @@ class GeomConstraintT(TypedDict):
 
     f_constraint: GeomOptimiserCallable
     tolerance: np.ndarray
-    df_constraint: NotRequired[Optional[GeomOptimiserCallable]]
+    df_constraint: NotRequired[GeomOptimiserCallable | None]

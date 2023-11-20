@@ -23,8 +23,9 @@
 Discretised offset operations used in case of failure in primitive offsetting.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
-from typing import List, Tuple
 
 import numpy as np
 from pyclipper import (
@@ -85,7 +86,7 @@ def pyclippath_to_coordinates(path: np.ndarray) -> Coordinates:
     return Coordinates({"x": p2[0], "y": 0, "z": p2[1]})
 
 
-def pyclippolytree_to_coordinates(polytree: List[np.ndarray]) -> List[Coordinates]:
+def pyclippolytree_to_coordinates(polytree: list[np.ndarray]) -> list[Coordinates]:
     """
     Converts a ClipperLib PolyTree into a list of Coordinates
 
@@ -117,7 +118,7 @@ class PyclipperMixin:
         """
         bluemira_warn(f"{self.name} operation on 2-D polygons returning None.\n")
 
-    def handle_solution(self, solution: Tuple[np.ndarray]) -> List[Coordinates]:
+    def handle_solution(self, solution: tuple[np.ndarray]) -> list[Coordinates]:
         """
         Handles the output of the Pyclipper.Execute(*) algorithms, turning them
         into Coordaintes objects. NOTE: These are closed by default.

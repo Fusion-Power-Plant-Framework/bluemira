@@ -18,35 +18,37 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+
 import copy
 from dataclasses import asdict, dataclass, field
 from typing import (
+    TYPE_CHECKING,
     Any,
     Generic,
     Iterable,
-    List,
     Mapping,
-    Optional,
-    Tuple,
     TypeVar,
     TypedDict,
-    Union,
 )
 
 import numpy as np
-from typing_extensions import NotRequired
 
 from bluemira.geometry.optimisation import _tools
 from bluemira.geometry.optimisation._tools import KeepOutZone
-from bluemira.geometry.optimisation.typing import (
-    GeomConstraintT,
-    GeomOptimiserCallable,
-    GeomOptimiserObjective,
-)
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation._algorithm import Algorithm, AlgorithmType
 from bluemira.optimisation._optimise import optimise
+
+if TYPE_CHECKING:
+    from typing_extensions import NotRequired
+
+    from bluemira.geometry.optimisation.typing import (
+        GeomConstraintT,
+        GeomOptimiserCallable,
+        GeomOptimiserObjective,
+    )
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
 
@@ -69,9 +71,9 @@ class GeomOptimiserResult(Generic[_GeomT]):
     """The evaluation of the optimised parameterisation."""
     n_evals: int
     """The number of evaluations of the objective function in the optimisation."""
-    history: List[Tuple[np.ndarray, float]] = field(repr=False)
+    history: list[tuple[np.ndarray, float]] = field(repr=False)
     """The history of the parametrisation at each iteration."""
-    constraints_satisfied: Union[bool, None] = None
+    constraints_satisfied: bool | None = None
     """
     Whether all constraints have been satisfied to within the required tolerance.
 
@@ -86,7 +88,7 @@ class KeepOutZoneDict(TypedDict):
     """Closed wire defining the keep-out zone."""
     byedges: NotRequired[bool]
     """Whether to discretize the keep-out zone by edges or not."""
-    dl: NotRequired[Optional[float]]
+    dl: NotRequired[float | None]
     """
     The discretization length for the keep-out zone.
 
@@ -103,12 +105,12 @@ class KeepOutZoneDict(TypedDict):
 def optimise_geometry(
     geom: _GeomT,
     f_objective: GeomOptimiserObjective,
-    df_objective: Optional[GeomOptimiserCallable] = None,
+    df_objective: GeomOptimiserCallable | None = None,
     *,
-    keep_out_zones: Iterable[Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]] = (),
+    keep_out_zones: Iterable[BluemiraWire | KeepOutZoneDict | KeepOutZone] = (),
     algorithm: AlgorithmType = Algorithm.SLSQP,
-    opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
-    opt_parameters: Optional[Mapping[str, Any]] = None,
+    opt_conditions: Mapping[str, int | float] | None = None,
+    opt_parameters: Mapping[str, Any] | None = None,
     eq_constraints: Iterable[GeomConstraintT] = (),
     ineq_constraints: Iterable[GeomConstraintT] = (),
     keep_history: bool = False,
@@ -264,7 +266,7 @@ def optimise_geometry(
     return GeomOptimiserResult(**result_dict, geom=geom)
 
 
-def _to_koz(koz: Union[BluemiraWire, KeepOutZoneDict, KeepOutZone]) -> KeepOutZone:
+def _to_koz(koz: BluemiraWire | KeepOutZoneDict | KeepOutZone) -> KeepOutZone:
     """Convert ``koz`` to a ``KeepOutZone``."""
     if isinstance(koz, BluemiraWire):
         return KeepOutZone(koz)

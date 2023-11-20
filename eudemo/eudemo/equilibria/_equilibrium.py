@@ -18,15 +18,19 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, Union
+from typing import TYPE_CHECKING
 
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.profiles import BetaIpProfile, Profile
-from bluemira.geometry.wire import BluemiraWire
 from eudemo.equilibria.tools import make_grid
 from eudemo.pf_coils.tools import make_coilset, make_reference_coilset
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 KAPPA_95_TO_100 = 1.12
 
@@ -56,7 +60,7 @@ class EquilibriumParams(ParameterFrame):
 
 
 def make_equilibrium(
-    _params: Union[EquilibriumParams, Dict],
+    _params: EquilibriumParams | dict,
     tf_coil_boundary: BluemiraWire,
     grid_settings: dict,
 ):
@@ -118,7 +122,7 @@ class ReferenceEquilibriumParams(ParameterFrame):
 
 
 def make_reference_equilibrium(
-    _params: Union[ReferenceEquilibriumParams, Dict],
+    _params: ReferenceEquilibriumParams | dict,
     tf_track: BluemiraWire,
     lcfs_shape: BluemiraWire,
     profiles: Profile,

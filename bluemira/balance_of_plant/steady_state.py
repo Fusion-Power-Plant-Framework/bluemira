@@ -23,9 +23,10 @@
 Crude 0-D steady-state balance of plant model. Mostly for visualisation purposes.
 """
 
+from __future__ import annotations
+
 import abc
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Tuple, Union
 
 import numpy as np
 
@@ -47,7 +48,7 @@ class CoolantPumping(abc.ABC):
     """
 
     @abc.abstractmethod
-    def pump(self, power: float) -> Tuple[float, float]:
+    def pump(self, power: float) -> tuple[float, float]:
         """
         Calculate the pump work and electrical pumping power required for a given power.
         """
@@ -89,7 +90,7 @@ class HePumping(CoolantPumping):
         self.eta_isen = eta_isentropic
         self.eta_el = eta_electric
 
-    def pump(self, power: float) -> Tuple[float, float]:
+    def pump(self, power: float) -> tuple[float, float]:
         """
         Calculate the pump work and electrical pumping power required for a given power.
 
@@ -136,7 +137,7 @@ class H2OPumping(CoolantPumping):
         self.eta_isen = eta_isentropic
         self.eta_el = eta_electric
 
-    def pump(self, power: float) -> Tuple[float, float]:
+    def pump(self, power: float) -> tuple[float, float]:
         """
         Calculate the pump work and electrical pumping power required for a given power.
 
@@ -246,7 +247,7 @@ class FractionSplitStrategy(abc.ABC):
         Split flows somehow.
         """
 
-    def check_fractions(self, fractions: List[float]) -> bool:
+    def check_fractions(self, fractions: list[float]) -> bool:
         """
         Check that fractions sum to 1.0
 
@@ -309,7 +310,7 @@ class NeutronPowerStrategy(FractionSplitStrategy):
 
     def split(
         self, neutron_power: float
-    ) -> Tuple[float, float, float, float, float, float]:
+    ) -> tuple[float, float, float, float, float, float]:
         """
         Split neutron power into several flows
 
@@ -377,7 +378,7 @@ class RadChargedPowerStrategy(FractionSplitStrategy):
 
     def split(
         self, p_radiation: float, p_separatrix: float
-    ) -> Tuple[float, float, float]:
+    ) -> tuple[float, float, float]:
         """
         Split the radiation and charged particle power
 
@@ -425,7 +426,7 @@ class ParasiticLoadStrategy(abc.ABC):
     """
 
     @abc.abstractmethod
-    def calculate(*args, **kwargs) -> Tuple[float, float, float, float]:
+    def calculate(*args, **kwargs) -> tuple[float, float, float, float]:
         """
         Calculate the parasitic loads somehow
 
@@ -499,7 +500,7 @@ class BalanceOfPlantModel:
 
     def __init__(
         self,
-        params: Union[Dict[str, float], BoPModelParams],
+        params: dict[str, float] | BoPModelParams,
         rad_sep_strat: FractionSplitStrategy,
         neutron_strat: FractionSplitStrategy,
         blanket_pump_strat: CoolantPumping,
@@ -637,7 +638,7 @@ class BalanceOfPlantModel:
                 " lost somewhere."
             )
 
-    def plot(self, title: Optional[str] = None, **kwargs):
+    def plot(self, title: str | None = None, **kwargs):
         """
         Plot the BalanceOfPlant object.
 

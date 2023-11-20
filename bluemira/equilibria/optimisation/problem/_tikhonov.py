@@ -18,24 +18,27 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 
-from typing import Dict, List, Optional, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimisation.constraints import (
-    MagneticConstraintSet,
-    UpdateableConstraint,
-)
 from bluemira.equilibria.optimisation.objectives import RegularisedLsqObjective, tikhonov
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.optimisation.constraints import (
+        MagneticConstraintSet,
+        UpdateableConstraint,
+    )
 
 
 class TikhonovCurrentCOP(CoilsetOptimisationProblem):
@@ -82,10 +85,10 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
         targets: MagneticConstraintSet,
         gamma: float,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
-        opt_conditions: Optional[Dict[str, Union[float, int]]] = None,
-        opt_parameters: Optional[Dict[str, float]] = None,
-        max_currents: Optional[npt.ArrayLike] = None,
-        constraints: Optional[List[UpdateableConstraint]] = None,
+        opt_conditions: dict[str, float | int] | None = None,
+        opt_parameters: dict[str, float] | None = None,
+        max_currents: npt.ArrayLike | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
     ):
         self.coilset = coilset
         self.eq = eq

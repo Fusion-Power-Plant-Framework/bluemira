@@ -23,9 +23,10 @@
 Useful parameterisations for plasma flux surface shapes.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -195,7 +196,7 @@ class ZakharovLCFS(GeometryParameterisation[ZakharovLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = ZakharovLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -311,7 +312,7 @@ class CunninghamLCFS(GeometryParameterisation[CunninghamLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = CunninghamLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -428,7 +429,7 @@ class ManickamLCFS(GeometryParameterisation[ManickamLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = ManickamLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -470,7 +471,7 @@ def flux_surface_kuiroukidis_quadrants(
     delta_l: float,
     n_power: int = 8,
     n_points: int = 100,
-) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """
     Kuiroukidis flux surface individual quadrants
 
@@ -709,7 +710,7 @@ class KuiroukidisLCFS(GeometryParameterisation[KuiroukidisLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = KuiroukidisLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)
@@ -801,7 +802,7 @@ class _InOut(Enum):
 
 def _johner_quadrant(
     delta: float, kappa: float, psi: float, n_pts: int, ul: _UpLow, io: _InOut
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     calc_t = calc_t_neg if io is _InOut.INNER else calc_t_pos
     t = calc_t(delta, kappa, psi)
     conditional_point = 0.5
@@ -869,7 +870,7 @@ def flux_surface_johner_quadrants(
     psi_l_neg: float,
     psi_l_pos: float,
     n: int = 100,
-) -> Tuple[List[np.ndarray], List[np.ndarray]]:
+) -> tuple[list[np.ndarray], list[np.ndarray]]:
     """
     Initial plasma shape parametrerisation from HELIOS author
     J. Johner (CEA). Sets initial separatrix shape for the plasma core
@@ -1103,7 +1104,7 @@ class JohnerLCFS(GeometryParameterisation[JohnerLCFSOptVariables]):
 
     __slots__ = ()
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         variables = JohnerLCFSOptVariables()
         variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(variables)

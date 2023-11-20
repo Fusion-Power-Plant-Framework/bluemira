@@ -18,9 +18,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -38,11 +39,13 @@ from bluemira.geometry._private_tools import (
     make_wire,
     offset,
 )
-from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.coordinates import Coordinates, get_area
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import distance_to, extrude_shape, revolve_shape
+
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
 
 TEST_PATH = get_bluemira_path("geometry/test_data", subfolder="tests")
 
@@ -137,7 +140,7 @@ class TestMixedFaces:
     working correctly.
     """
 
-    def assert_properties(self, true_props: Dict[str, Any], part: BluemiraGeo):
+    def assert_properties(self, true_props: dict[str, Any], part: BluemiraGeo):
         """
         Helper function to pull out the properties to be compared, and to make the
         comparison in an output-friendly way.

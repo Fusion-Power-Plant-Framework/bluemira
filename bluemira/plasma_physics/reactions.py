@@ -23,9 +23,10 @@
 Fusion reactions
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import Union
 
 import numpy as np
 import numpy.typing as npt
@@ -205,10 +206,10 @@ class ReactivityMethod(Enum):
 
 
 def reactivity(
-    temp_k: Union[float, np.ndarray],
-    reaction: Union[str, Reactions] = Reactions.D_T,
-    method: Union[str, ReactivityMethod] = ReactivityMethod.BOSCH_HALE,
-) -> Union[float, np.ndarray]:
+    temp_k: float | np.ndarray,
+    reaction: str | Reactions = Reactions.D_T,
+    method: str | ReactivityMethod = ReactivityMethod.BOSCH_HALE,
+) -> float | np.ndarray:
     """
     Calculate the thermal reactivity of a fusion reaction in Maxwellian plasmas,
     \\t:math:`<\\sigma v>`
@@ -360,8 +361,8 @@ class BoschHale_DHe3_4Hep:
 
 
 def _reactivity_bosch_hale(
-    temp_kev: Union[float, np.ndarray], reaction: Reactions
-) -> Union[float, np.ndarray]:
+    temp_kev: float | np.ndarray, reaction: Reactions
+) -> float | np.ndarray:
     """
     Bosch-Hale reactivity parameterisation for Maxwellian plasmas
 
@@ -422,8 +423,8 @@ def _reactivity_bosch_hale(
 
 
 def _reactivity_plasmod(
-    temp_kev: Union[float, np.ndarray], reaction: Reactions
-) -> Union[float, np.ndarray]:
+    temp_kev: float | np.ndarray, reaction: Reactions
+) -> float | np.ndarray:
     """
     Reactivity equations used in PLASMOD (original source unknown)
 
@@ -459,8 +460,8 @@ def _reactivity_plasmod(
 
 
 def _reactivity_johner(
-    temp_kev: Union[float, np.ndarray], reaction: Reactions
-) -> Union[float, np.ndarray]:
+    temp_kev: float | np.ndarray, reaction: Reactions
+) -> float | np.ndarray:
     """
     Johner's monomial fit for analytical calculations
 

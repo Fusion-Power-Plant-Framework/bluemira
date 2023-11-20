@@ -23,8 +23,9 @@
 Three-dimensional current source terms.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
-from typing import List, Union
 
 import numpy as np
 
@@ -71,7 +72,7 @@ class ArbitraryPlanarRectangularXSCircuit(SourceGroup):
 
     def __init__(
         self,
-        shape: Union[np.ndarray, Coordinates],
+        shape: np.ndarray | Coordinates,
         breadth: float,
         depth: float,
         current: float,
@@ -221,7 +222,7 @@ class HelmholtzCage(SourceGroup):
 
         super().__init__(sources)
 
-    def _pattern(self, circuit: CurrentSource) -> List[CurrentSource]:
+    def _pattern(self, circuit: CurrentSource) -> list[CurrentSource]:
         """
         Pattern the CurrentSource axisymmetrically.
         """
@@ -235,9 +236,9 @@ class HelmholtzCage(SourceGroup):
     @process_xyz_array
     def ripple(
         self,
-        x: Union[float, np.ndarray],
-        y: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],
+        x: float | np.ndarray,
+        y: float | np.ndarray,
+        z: float | np.ndarray,
     ) -> float:
         """
         Get the toroidal field ripple at a point.

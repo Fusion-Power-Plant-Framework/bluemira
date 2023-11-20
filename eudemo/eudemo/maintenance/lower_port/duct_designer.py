@@ -23,14 +23,15 @@
 EU-DEMO Lower Port Duct KOZ Designer
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, List, Tuple, Type, Union
+from typing import TYPE_CHECKING
 
 import numpy as np
 
 from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.geometry.base import BluemiraGeo
 from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
@@ -41,7 +42,10 @@ from bluemira.geometry.tools import (
     make_polygon,
     offset_wire,
 )
-from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from bluemira.geometry.base import BluemiraGeo
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
@@ -76,12 +80,12 @@ class LowerPortKOZDesigner(Designer):
     """
 
     params: LowerPortKOZDesignerParams
-    param_cls: Type[ParameterFrame] = LowerPortKOZDesignerParams
+    param_cls: type[ParameterFrame] = LowerPortKOZDesignerParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Dict,
+        params: dict | ParameterFrame,
+        build_config: dict,
         divertor_xz: BluemiraFace,
         tf_coil_xz_boundary: BluemiraWire,
     ):
@@ -105,7 +109,7 @@ class LowerPortKOZDesigner(Designer):
         self.port_height = self.params.lp_height.value
         self.port_width = self.params.lp_width.value
 
-    def run(self) -> Tuple[BluemiraFace, BluemiraFace, BluemiraWire, BluemiraWire]:
+    def run(self) -> tuple[BluemiraFace, BluemiraFace, BluemiraWire, BluemiraWire]:
         """Run method of Designer"""
         # ib -> inboard
         # ob -> outboard
@@ -146,7 +150,7 @@ class LowerPortKOZDesigner(Designer):
     def _half_beta(self) -> float:
         return np.pi / self.params.n_TF.value
 
-    def _get_div_pts_at_angle(self) -> Tuple[Tuple, Tuple]:
+    def _get_div_pts_at_angle(self) -> tuple[tuple, tuple]:
         div_z_top = self.divertor_face.bounding_box.z_max
         div_z_bot = self.divertor_face.bounding_box.z_min
 
@@ -171,7 +175,7 @@ class LowerPortKOZDesigner(Designer):
 
         return (z_highest_pt[0], z_highest_pt[2]), (div_x_ob, div_z_top)
 
-    def _pad_points(self, ib_point: Tuple, ob_point: Tuple):
+    def _pad_points(self, ib_point: tuple, ob_point: tuple):
         points_grad = (ib_point[1] - ob_point[1]) / (ib_point[0] - ob_point[0])  # z/x
         points_len, _ = distance_to(
             [ib_point[0], 0, ib_point[1]], [ob_point[0], 0, ob_point[1]]
@@ -187,8 +191,8 @@ class LowerPortKOZDesigner(Designer):
 
     def _straight_duct_inner_yz_boundary(
         self,
-        straight_top_inner_pt: Tuple,
-        straight_bot_inner_pt: Tuple,
+        straight_top_inner_pt: tuple,
+        straight_bot_inner_pt: tuple,
     ) -> BluemiraWire:
         """
         Make the inner yz boundary of the straight duct.
@@ -214,7 +218,7 @@ class LowerPortKOZDesigner(Designer):
         )
 
     def _angled_duct_inner_xy_boundary(
-        self, ib_div_pt_padded: Tuple, ob_div_pt_padded: Tuple
+        self, ib_div_pt_padded: tuple, ob_div_pt_padded: tuple
     ):
         def _calc_y_point(x_point):
             x_meet = self.tf_coil_thickness / np.sin(self._half_beta)
@@ -265,7 +269,7 @@ class LowerPortKOZDesigner(Designer):
         duct_inner_xy.translate(-1 * direction)
         return duct_inner_xy
 
-    def _duct_xz_shapes(self, ib_div_pt_padded: Tuple, ob_div_pt_padded: Tuple):
+    def _duct_xz_shapes(self, ib_div_pt_padded: tuple, ob_div_pt_padded: tuple):
         angled_duct_boundary = self._angled_duct_xz_boundary(
             ib_div_pt_padded, ob_div_pt_padded
         )
@@ -299,7 +303,7 @@ class LowerPortKOZDesigner(Designer):
             straight_bot_inner_pt,
         )
 
-    def _angled_duct_xz_boundary(self, ib_pt: Tuple, ob_pt: Tuple):
+    def _angled_duct_xz_boundary(self, ib_pt: tuple, ob_pt: tuple):
         """
         Returns a rectangular face at the duct angle,
         starting at the inboard and outboard points
@@ -406,10 +410,10 @@ class LowerPortKOZDesigner(Designer):
 
     @staticmethod
     def _xz_points_dist_away_from(
-        starting_xz_point: Union[Tuple, List],
+        starting_xz_point: tuple | list,
         gradient: float,
         distance: float,
-    ) -> Tuple:
+    ) -> tuple:
         """
         Returns two points, the first being in the negative x quadrant,
         the second in the positive x quadrant, at a distance away from
@@ -426,8 +430,8 @@ class LowerPortKOZDesigner(Designer):
 
     @staticmethod
     def _make_xz_wire_from_points(
-        a_xz_point: Tuple,
-        b_xz_point: Tuple,
+        a_xz_point: tuple,
+        b_xz_point: tuple,
     ) -> BluemiraWire:
         return make_polygon(
             [[a_xz_point[0], b_xz_point[0]], [0] * 2, [a_xz_point[1], b_xz_point[1]]]
@@ -437,7 +441,7 @@ class LowerPortKOZDesigner(Designer):
     def _intersection_points(
         shape_a: BluemiraGeo,
         shape_b: BluemiraGeo,
-    ) -> List[Tuple]:
+    ) -> list[tuple]:
         dist, vects = distance_to(shape_a, shape_b)
         if dist > D_TOLERANCE:  # not intersecting
             return []
@@ -451,7 +455,7 @@ class LowerPortKOZDesigner(Designer):
     def _closest_points(
         shape_a: BluemiraGeo,
         shape_b: BluemiraGeo,
-    ) -> List[Tuple]:
+    ) -> list[tuple]:
         dist, vects = distance_to(shape_a, shape_b)
         if dist < D_TOLERANCE:  # intersecting, return intersection points
             return LowerPortKOZDesigner._intersection_points(shape_a, shape_b)

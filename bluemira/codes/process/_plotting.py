@@ -18,8 +18,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -33,7 +35,7 @@ from bluemira.utilities.tools import is_num
 
 def boxr(
     ri: float, ro: float, w: float, off: float = 0
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Generate coordinates for an arbitrary height radial width. Used in plotting.
     """
@@ -90,7 +92,7 @@ def read_n_line(line: str):
     return out
 
 
-def setup_radial_build(run: Dict[str, Any], width: float = 1.0):
+def setup_radial_build(run: dict[str, Any], width: float = 1.0):
     """
     Plots radial and vertical build of a PROCESS run.
 

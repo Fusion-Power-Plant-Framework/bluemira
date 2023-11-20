@@ -23,6 +23,8 @@
 Aesthetic and ambiance functions.
 """
 
+from __future__ import annotations
+
 import logging
 import os
 import platform
@@ -31,7 +33,7 @@ import subprocess
 from getpass import getuser
 from pathlib import Path
 from textwrap import dedent, wrap
-from typing import Callable, Dict, List, Optional
+from typing import Callable
 
 from bluemira import __version__
 from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
@@ -98,7 +100,7 @@ def get_git_branch(directory: str) -> str:
     )
 
 
-def get_git_files(directory: str, branch: str) -> List[str]:
+def get_git_files(directory: str, branch: str) -> list[str]:
     """
     Get the names of the files in the directory of the specified branch name.
 
@@ -137,9 +139,9 @@ def get_platform() -> str:
 def count_slocs(
     directory: str,
     branch: str,
-    exts: Optional[List[str]] = None,
-    ignore: Optional[List[str]] = None,
-) -> Dict:
+    exts: list[str] | None = None,
+    ignore: list[str] | None = None,
+) -> dict:
     """
     Counts lines of code within a given directory for a given git branch
 
@@ -436,7 +438,7 @@ def print_banner():
     bluemira_print("\n".join(v))
 
 
-def version_banner() -> List[str]:
+def version_banner() -> list[str]:
     """
     Get the string for the version banner.
 
@@ -467,7 +469,7 @@ def version_banner() -> List[str]:
     return output
 
 
-def user_banner() -> List[str]:
+def user_banner() -> list[str]:
     """
     Get user and platform info and create text to print to banner.
 

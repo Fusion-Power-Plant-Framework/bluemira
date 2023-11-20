@@ -23,8 +23,10 @@
 EU-DEMO Equatorial Port
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, Type, Union
+from typing import TYPE_CHECKING
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -35,8 +37,10 @@ from bluemira.builders.tools import apply_component_display_options
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.solid import BluemiraWire
 from bluemira.geometry.tools import extrude_shape, make_polygon, offset_wire, slice_shape
+
+if TYPE_CHECKING:
+    from bluemira.geometry.solid import BluemiraWire
 
 
 class EquatorialPort(ComponentManager):
@@ -83,12 +87,12 @@ class EquatorialPortKOZDesigner(Designer):
     offset out from the equatorial port x-z profile
     """
 
-    param_cls: Type[EquatorialPortKOZDesignerParams] = EquatorialPortKOZDesignerParams
+    param_cls: type[EquatorialPortKOZDesignerParams] = EquatorialPortKOZDesignerParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, EquatorialPortKOZDesignerParams],
-        build_config: Union[Dict, None],
+        params: dict | ParameterFrame | EquatorialPortKOZDesignerParams,
+        build_config: dict | None,
         x_ob: float,
     ):
         """
@@ -146,12 +150,12 @@ class EquatorialPortDuctBuilder(Builder):
     """
 
     NAME = "Equatorial Port Duct"
-    param_cls: Type[EquatorialPortDuctBuilderParams] = EquatorialPortDuctBuilderParams
+    param_cls: type[EquatorialPortDuctBuilderParams] = EquatorialPortDuctBuilderParams
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame, EquatorialPortDuctBuilderParams],
-        build_config: Union[Dict, None],
+        params: dict | ParameterFrame | EquatorialPortDuctBuilderParams,
+        build_config: dict | None,
         outer_profile: BluemiraWire,
         length: float,
         equatorial_port_wall_thickness: float,

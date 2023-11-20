@@ -18,13 +18,17 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+
 import enum
-from typing import Callable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Union
 
 import numpy as np
 
 from bluemira.optimisation._tools import approx_derivative
-from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
+
+if TYPE_CHECKING:
+    from bluemira.optimisation.typing import ObjectiveCallable, OptimiserCallable
 
 _FloatOrArrayT = Union[np.ndarray, float]
 
@@ -47,10 +51,10 @@ class _NloptFunction:
     def __init__(
         self,
         f: Callable[[np.ndarray], _FloatOrArrayT],
-        bounds: Tuple[_FloatOrArrayT, _FloatOrArrayT],
+        bounds: tuple[_FloatOrArrayT, _FloatOrArrayT],
     ):
         self.f = f
-        self.f0: Union[float, np.ndarray] = 0
+        self.f0: float | np.ndarray = 0
         self.bounds = bounds
 
     def _approx_derivative(self, x: np.ndarray) -> np.ndarray:
@@ -82,13 +86,13 @@ class ObjectiveFunction(_NloptFunction):
     def __init__(
         self,
         f: ObjectiveCallable,
-        df: Optional[OptimiserCallable],
+        df: OptimiserCallable | None,
         n_variables: int,
-        bounds: Tuple[_FloatOrArrayT, _FloatOrArrayT] = (-np.inf, np.inf),
+        bounds: tuple[_FloatOrArrayT, _FloatOrArrayT] = (-np.inf, np.inf),
     ):
         super().__init__(f, bounds)
         self.df = df if df is not None else self._approx_derivative
-        self.history: List[Tuple[np.ndarray, float]] = []
+        self.history: list[tuple[np.ndarray, float]] = []
         self.prev_iter = np.zeros(n_variables, dtype=float)
 
     def call(self, x: np.ndarray, grad: np.ndarray) -> float:
@@ -131,8 +135,8 @@ class Constraint(_NloptFunction):
         constraint_type: ConstraintType,
         f: OptimiserCallable,
         tolerance: np.ndarray,
-        df: Optional[OptimiserCallable] = None,
-        bounds: Tuple[_FloatOrArrayT, _FloatOrArrayT] = (-np.inf, np.inf),
+        df: OptimiserCallable | None = None,
+        bounds: tuple[_FloatOrArrayT, _FloatOrArrayT] = (-np.inf, np.inf),
     ):
         super().__init__(f, bounds)
         self.constraint_type = constraint_type

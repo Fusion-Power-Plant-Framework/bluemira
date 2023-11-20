@@ -23,8 +23,10 @@
 Builder for the PF coils
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from typing import TYPE_CHECKING
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -32,11 +34,13 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
-from bluemira.equilibria.coils import Coil
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
-from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import Coil
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
@@ -67,8 +71,8 @@ class PFCoilBuilder(Builder):
 
     def __init__(
         self,
-        params: Union[PFCoilBuilderParams, Dict],
-        build_config: Dict,
+        params: PFCoilBuilderParams | dict,
+        build_config: dict,
         xz_cross_section: BluemiraWire,
     ):
         super().__init__(params, build_config, verbose=False)
@@ -84,7 +88,7 @@ class PFCoilBuilder(Builder):
             xyz=self.build_xyz(self.xz_cross_section, degree=0),
         )
 
-    def build_xy(self, shape: BluemiraWire) -> List[PhysicalComponent]:
+    def build_xy(self, shape: BluemiraWire) -> list[PhysicalComponent]:
         """
         Build the xy cross-section of the PF coil.
         """
@@ -123,7 +127,7 @@ class PFCoilBuilder(Builder):
 
         return [wp, ins, casing]
 
-    def build_xz(self, shape: BluemiraWire) -> List[PhysicalComponent]:
+    def build_xz(self, shape: BluemiraWire) -> list[PhysicalComponent]:
         """
         Build the xz cross-section of the PF coil.
         """
@@ -144,7 +148,7 @@ class PFCoilBuilder(Builder):
         self,
         shape: BluemiraWire,
         degree: float = 360.0,
-    ) -> List[PhysicalComponent]:
+    ) -> list[PhysicalComponent]:
         """
         Build the xyz representation of the PF coil.
 
@@ -192,7 +196,7 @@ class PFCoilPictureFrame(Designer):
 
     param_cls = PFCoilPictureFrameParams
 
-    def __init__(self, params: Union[PFCoilPictureFrameParams, Dict], coil: Coil):
+    def __init__(self, params: PFCoilPictureFrameParams | dict, coil: Coil):
         super().__init__(params, verbose=False)
         self.coil = coil
 

@@ -23,8 +23,10 @@
 Simple structural material representations
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Optional, Union
+from typing import Union
 
 from bluemira.materials.material import MassFractionMaterial
 from bluemira.materials.mixtures import HomogenisedMixture
@@ -57,7 +59,7 @@ class StructuralMaterial:
     alpha: float
     sigma_y: float
     G: float = field(init=False, repr=True)
-    description: Optional[str] = field(default="", repr=True)
+    description: str | None = field(default="", repr=True)
 
     def __post_init__(self):
         """

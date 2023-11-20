@@ -23,8 +23,9 @@
 Colour palettes
 """
 
+from __future__ import annotations
+
 from itertools import cycle, zip_longest
-from typing import List, Tuple, Union
 
 import numpy as np
 import seaborn as sns
@@ -62,7 +63,7 @@ class ColorPalette:
         """
         return next(self._cycle)
 
-    def __setitem__(self, idx_or_key: Union[int, str], value):
+    def __setitem__(self, idx_or_key: int | str, value):
         """
         Set an item in the ColorPalette by index or key
 
@@ -83,7 +84,7 @@ class ColorPalette:
             idx = list(self._dict).index(idx_or_key)
             self._palette[idx] = type(self)({idx_or_key: value})
 
-    def __getitem__(self, idx_or_key: Union[int, str]):
+    def __getitem__(self, idx_or_key: int | str):
         """
         Get an item in the ColorPalette by index or key
 
@@ -108,7 +109,7 @@ class ColorPalette:
             )
         return None
 
-    def _hex_horizontal(self) -> Union[List[str], List[List[str]]]:
+    def _hex_horizontal(self) -> list[str] | list[list[str]]:
         _hex = self.as_hex()
         if isinstance(_hex, str):
             _hex = [_hex]
@@ -120,7 +121,7 @@ class ColorPalette:
         return _hex
 
     def _repr_html(self) -> str:
-        def html_str(_hex: Union[List[str], List[List[str]]], y: int = 0) -> str:
+        def html_str(_hex: list[str] | list[list[str]], y: int = 0) -> str:
             string = ""
             x = 0
             for col in _hex:
@@ -144,7 +145,7 @@ class ColorPalette:
         colours = html_str(hex_str)
         return f'<svg  width="{(len(self)) * s}" height="{m * s}">{colours}</svg>'
 
-    def _repr_colour_str(self, _hex: Union[List[str], List[List[str]]]) -> str:
+    def _repr_colour_str(self, _hex: list[str] | list[list[str]]) -> str:
         """Create colourful representation in terminal"""
         string = ""
         for col in _hex:
@@ -176,7 +177,7 @@ class ColorPalette:
         """Get the length of the ColorPalette"""
         return len(self._palette)
 
-    def as_hex(self) -> Union[List[str], List[List[str]], str]:
+    def as_hex(self) -> list[str] | list[list[str]] | str:
         """
         Get the hex representation of the palette
         """
@@ -206,10 +207,10 @@ def background_colour_string(hexstring: str, sqlen=2) -> str:
 
 
 def make_rgb_alpha(
-    rgb: Tuple[float, ...],
+    rgb: tuple[float, ...],
     alpha: float,
-    background_rgb: Tuple[float, ...] = (1.0, 1.0, 1.0),
-) -> Tuple[float, ...]:
+    background_rgb: tuple[float, ...] = (1.0, 1.0, 1.0),
+) -> tuple[float, ...]:
     """
     Adds a transparency to a RGB color tuple
 

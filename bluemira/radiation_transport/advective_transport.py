@@ -23,13 +23,14 @@
 A simplified 2-D solver for calculating charged particle heat loads.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
 from dataclasses import dataclass, fields
-from typing import Dict
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
-from matplotlib.axes import Axes
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
@@ -39,6 +40,9 @@ from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.radiation_transport.error import AdvectionTransportError
+
+if TYPE_CHECKING:
+    from matplotlib.axes import Axes
 
 __all__ = ["ChargedParticleSolver"]
 
@@ -60,7 +64,7 @@ class ChargedParticleSolver:
         (default: 0.001).
     """
 
-    def __init__(self, config: Dict[str, float], equilibrium, dx_mp: float = 0.001):
+    def __init__(self, config: dict[str, float], equilibrium, dx_mp: float = 0.001):
         self.eq = equilibrium
         self.params = self._make_params(config)
         self._check_params()

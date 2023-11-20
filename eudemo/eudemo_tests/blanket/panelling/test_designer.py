@@ -18,8 +18,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+
 from functools import lru_cache
-from typing import Tuple
+from typing import TYPE_CHECKING
 from unittest import mock
 
 import matplotlib.pyplot as plt
@@ -37,9 +39,11 @@ from bluemira.geometry.tools import (
     slice_shape,
     split_wire,
 )
-from bluemira.geometry.wire import BluemiraWire
 from eudemo.blanket.panelling import PanellingDesigner
 from eudemo.ivc.wall_silhouette_parameterisation import WallPolySpline
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 
 def cut_wire_below_z(wire: BluemiraWire, proportion: float) -> BluemiraWire:
@@ -105,7 +109,7 @@ def coords_xz_to_polygon(coords: np.ndarray) -> BluemiraWire:
     return make_polygon(coords_3d)
 
 
-def cut_polygon_vertically(shape: BluemiraWire) -> Tuple[BluemiraWire, BluemiraWire]:
+def cut_polygon_vertically(shape: BluemiraWire) -> tuple[BluemiraWire, BluemiraWire]:
     """Cut a polygon either side of a vertical line through it's centre."""
     centre_x = shape.center_of_mass[0]
     cutting_plane = BluemiraPlane((centre_x, 0, 0), (1, 0, 0))

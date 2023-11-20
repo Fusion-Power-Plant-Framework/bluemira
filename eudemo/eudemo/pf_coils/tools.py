@@ -20,7 +20,9 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Functions related to EUDEMO PF coils."""
 
-from typing import List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -37,8 +39,10 @@ from bluemira.geometry.tools import (
     offset_wire,
     split_wire,
 )
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.positioning import PathInterpolator, PositionMapper
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 
 def make_solenoid(
@@ -50,7 +54,7 @@ def make_solenoid(
     tk_cs_ins: float,
     tk_cs_cas: float,
     n_CS: int,
-) -> List[Coil]:
+) -> list[Coil]:
     """
     Make a set of solenoid coils in an EU-DEMO fashion. If n_CS is odd, the central
     module is twice the size of the others. If n_CS is even, all the modules are the
@@ -291,7 +295,7 @@ def make_reference_coilset(
 
 
 def make_coil_mapper(
-    track: BluemiraWire, exclusion_zones: List[BluemiraFace], coils: List[Coil]
+    track: BluemiraWire, exclusion_zones: list[BluemiraFace], coils: list[Coil]
 ) -> PositionMapper:
     """
     Make a PositionMapper for the given coils.

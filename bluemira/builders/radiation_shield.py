@@ -23,8 +23,9 @@
 Radiation shield builder
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, List, Type, Union
 
 import numpy as np
 
@@ -59,12 +60,12 @@ class RadiationShieldBuilder(Builder):
 
     RS = "RS"
     BODY = "Body"
-    param_cls: Type[RadiationShieldBuilderParams] = RadiationShieldBuilderParams
+    param_cls: type[RadiationShieldBuilderParams] = RadiationShieldBuilderParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
-        build_config: Dict,
+        params: ParameterFrame | dict,
+        build_config: dict,
         cryo_vv: BluemiraFace,
     ):
         super().__init__(params, build_config)
@@ -128,7 +129,7 @@ class RadiationShieldBuilder(Builder):
 
     def build_xyz(
         self, rs_face: BluemiraFace, degree: float = 360.0
-    ) -> List[PhysicalComponent]:
+    ) -> list[PhysicalComponent]:
         """
         Build the x-y-z components of the radiation shield.
         """

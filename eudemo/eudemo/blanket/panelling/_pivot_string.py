@@ -18,8 +18,9 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+
 from itertools import count
-from typing import Tuple
 
 import numpy as np
 
@@ -29,7 +30,7 @@ def make_pivoted_string(
     max_angle: float = 10,
     dx_min: float = 0,
     dx_max: float = np.inf,
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Generate a set of pivot points along the given boundary.
 

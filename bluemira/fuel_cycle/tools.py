@@ -23,7 +23,7 @@
 Fuel cycle utility objects, including sink algorithms
 """
 
-from typing import Optional, Tuple
+from __future__ import annotations
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -43,7 +43,7 @@ from bluemira.plasma_physics.reactions import r_T_burn
 
 def find_noisy_locals(
     x: np.ndarray, x_bins: int = 50, mode: str = "min"
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Find local minima or maxima in a noisy signal.
 
@@ -86,7 +86,7 @@ def find_noisy_locals(
 
 def discretise_1d(
     x: np.ndarray, y: np.ndarray, n: int, method: str = "linear"
-) -> Tuple[np.ndarray, np.ndarray]:
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Discretise x and y for a given number of points.
 
@@ -198,7 +198,7 @@ def piecewise_sqrt_threshold(
 
 def fit_sink_data(
     x: np.ndarray, y: np.ndarray, method: str = "sqrt", *, plot: bool = True
-) -> Tuple[float, float]:
+) -> tuple[float, float]:
     """
     Function used to determine simplified tritium sink model parameters, from
     data values.
@@ -414,8 +414,8 @@ def legal_limit(
     f_detrit_split: float,
     f_terscwps: float,
     TBR: float,
-    mb: Optional[float] = None,
-    p_fus: Optional[float] = None,
+    mb: float | None = None,
+    p_fus: float | None = None,
 ):
     """
     Calculates the release rate of T from the model TFV cycle in g/yr.
@@ -549,7 +549,7 @@ def _fountain_linear_sink(
     min_inventory: float,
     sum_in: float,
     decayed: float,
-) -> Tuple[float, float, float, float]:
+) -> tuple[float, float, float, float]:
     """
     A simple linear fountain tritium retention sink model between a minimum
     and a maximum. Used over a time-step.
@@ -712,7 +712,7 @@ def _linear_thresh_sink(
     max_inventory: float,
     sum_in: float,
     decayed: float,
-) -> Tuple[float, float, float, float]:
+) -> tuple[float, float, float, float]:
     """
     A simple linear tritium retention sink model. Used over a time-step.
 
@@ -793,7 +793,7 @@ def _sqrt_thresh_sink(
     decayed: float,
     *,
     _testing: bool,
-) -> Tuple[float, float, float, float]:
+) -> tuple[float, float, float, float]:
     """
     A simple sqrt tritium retention sink model. Used over a time-step.
 
@@ -906,7 +906,7 @@ def _sqrt_thresh_sink(
 @nb.jit(nopython=True, cache=True)  # Factor ~70 reduction in runtime
 def linear_bathtub(
     flow: np.ndarray, t: np.ndarray, eta: float, bci: int, max_inventory: float
-) -> Tuple[np.ndarray, np.ndarray, float, float]:
+) -> tuple[np.ndarray, np.ndarray, float, float]:
     """
     Bathtub sink model.
 
@@ -958,7 +958,7 @@ def sqrt_bathtub(
     max_inventory: float,
     *,
     _testing: bool = False,
-) -> Tuple[np.ndarray, np.ndarray, float, float]:
+) -> tuple[np.ndarray, np.ndarray, float, float]:
     """
     Bathtub sink model with a sqrt inventory retention law.
 
@@ -1019,7 +1019,7 @@ def fountain_bathtub(
     fs: float,
     max_inventory: float,
     min_inventory: float,
-) -> Tuple[np.ndarray, np.ndarray, float, float]:
+) -> tuple[np.ndarray, np.ndarray, float, float]:
     """
     A fountain and bathtub sink simultaneously.
 

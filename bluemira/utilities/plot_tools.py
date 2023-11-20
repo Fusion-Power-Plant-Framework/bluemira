@@ -23,10 +23,12 @@
 A collection of plotting tools.
 """
 
+from __future__ import annotations
+
 import os
 import re
 from pathlib import Path
-from typing import Optional, Union
+from typing import TYPE_CHECKING
 
 import imageio
 import matplotlib.pyplot as plt
@@ -37,11 +39,13 @@ from mpl_toolkits.mplot3d import Axes3D
 from mpl_toolkits.mplot3d.art3d import PathPatch3D
 
 import bluemira.display.error as bm_display_error
-from bluemira.base.components import Component
 from bluemira.base.constants import GREEK_ALPHABET, GREEK_ALPHABET_CAPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
+
+if TYPE_CHECKING:
+    from bluemira.base.components import Component
 
 __all__ = [
     "str_to_latex",
@@ -164,7 +168,7 @@ def coordinates_to_path(x: np.ndarray, z: np.ndarray) -> Path_mpl:
     return Path_mpl(vertices, codes)
 
 
-def set_component_view(comp: Component, placement: Union[str, BluemiraPlacement]):
+def set_component_view(comp: Component, placement: str | BluemiraPlacement):
     if placement not in {"xy", "xz", "yz"} and not isinstance(
         placement, BluemiraPlacement
     ):
@@ -215,7 +219,7 @@ class BluemiraPathPatch3D(PathPatch3D):
         self,
         path: Path_mpl,
         normal: np.ndarray,
-        translation: Optional[np.ndarray] = None,
+        translation: np.ndarray | None = None,
         color: str = "b",
         **kwargs,
     ):

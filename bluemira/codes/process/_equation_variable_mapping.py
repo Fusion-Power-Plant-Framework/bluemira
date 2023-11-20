@@ -22,8 +22,9 @@
 Death to PROCESS integers
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass, field
-from typing import Tuple
 
 from bluemira.codes.utilities import Model
 
@@ -74,8 +75,8 @@ class ConstraintSelection:
     """
 
     _value_: int
-    requires_variables: Tuple[int] = field(default_factory=tuple)
-    requires_values: Tuple[str] = field(default_factory=tuple)
+    requires_variables: tuple[int] = field(default_factory=tuple)
+    requires_values: tuple[str] = field(default_factory=tuple)
     description: str = ""
 
 

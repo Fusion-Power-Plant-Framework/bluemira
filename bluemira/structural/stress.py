@@ -23,7 +23,7 @@
 FE stress interpolations
 """
 
-from typing import List
+from __future__ import annotations
 
 import numpy as np
 
@@ -66,7 +66,7 @@ def hermite_shear(n: int) -> np.ndarray:
     return matrix
 
 
-def hermite_polynomials(n: int) -> List[np.ndarray]:
+def hermite_polynomials(n: int) -> list[np.ndarray]:
     """
     Calculate all the base Hermite polynomials
 

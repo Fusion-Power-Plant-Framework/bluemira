@@ -18,10 +18,10 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Dict
 
 import pytest
 
@@ -72,6 +72,6 @@ class TestEquilibriumDesigner:
             EquilibriumDesigner(self.param_dict, {"run_mode": "read"})
 
     @staticmethod
-    def _read_json(file_path: str) -> Dict:
+    def _read_json(file_path: str) -> dict:
         with open(file_path) as f:
             return json.load(f)

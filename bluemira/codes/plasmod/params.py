@@ -22,16 +22,21 @@
 Parameter definitions for Plasmod.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
 from dataclasses import asdict, dataclass
-from enum import Enum
-from typing import Dict, Union
+from typing import TYPE_CHECKING
 
-from bluemira.base.parameter_frame import Parameter
 from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.plasmod.api._inputs import PlasmodInputs
 from bluemira.codes.plasmod.mapping import mappings
-from bluemira.codes.utilities import ParameterMapping
+
+if TYPE_CHECKING:
+    from enum import Enum
+
+    from bluemira.base.parameter_frame import Parameter
+    from bluemira.codes.utilities import ParameterMapping
 
 
 @dataclass
@@ -130,12 +135,12 @@ class PlasmodSolverParams(MappedParameterFrame):
     _defaults = PlasmodInputs()
 
     @property
-    def mappings(self) -> Dict[str, ParameterMapping]:
+    def mappings(self) -> dict[str, ParameterMapping]:
         """Define mappings between these parameters and Plasmod's."""
         return self._mappings
 
     @property
-    def defaults(self) -> Dict[str, Union[float, Enum]]:
+    def defaults(self) -> dict[str, float | Enum]:
         """Defaults for Plasmod"""
         return self._defaults.to_dict()
 

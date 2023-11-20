@@ -41,8 +41,10 @@ combine them.
 """
 
 # %%
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -64,8 +66,10 @@ from bluemira.geometry.tools import (
     revolve_shape,
     sweep_shape,
 )
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.tools import get_class_from_module
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 # %% [markdown]
 #
@@ -207,7 +211,7 @@ class PlasmaBuilder(Builder):
 
     param_cls = None
 
-    def __init__(self, wire: BluemiraWire, build_config: Dict):
+    def __init__(self, wire: BluemiraWire, build_config: dict):
         super().__init__(None, build_config)
         self.wire = wire
 

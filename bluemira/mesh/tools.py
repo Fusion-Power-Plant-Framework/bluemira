@@ -26,9 +26,10 @@ R. Delaporte-Mathurin, and C. Weickhmann's https://github.com/floiseau/msh2xdmf
 Credit: F. Loiseau, R. Delaporte-Mathurin, and C. Weickhmann
 """
 
+from __future__ import annotations
+
 import json
 from pathlib import Path
-from typing import List, Optional, Tuple, Union
 
 import meshio
 import numpy as np
@@ -59,7 +60,7 @@ LINKFILE_SUFFIX = "linkfile.json"
 
 def msh_to_xdmf(
     mesh_name: str,
-    dimensions: Union[Tuple[int], int] = (0, 2),
+    dimensions: tuple[int] | int = (0, 2),
     directory: str = ".",
 ):
     """
@@ -104,7 +105,7 @@ def msh_to_xdmf(
 
 def import_mesh(
     file_prefix: str = "mesh", *, subdomains: bool = False, directory: str = "."
-) -> Tuple[Mesh, MeshFunctionSizet, Optional[MeshFunctionSizet], dict]:
+) -> tuple[Mesh, MeshFunctionSizet, MeshFunctionSizet | None, dict]:
     """
     Import a dolfin mesh.
 
@@ -165,7 +166,7 @@ def import_mesh(
     return mesh, boundaries_mf, subdomains_mf, link_dict
 
 
-def _check_dimensions(dimensions: Union[int, List[int]]) -> Tuple[int]:
+def _check_dimensions(dimensions: int | list[int]) -> tuple[int]:
     if isinstance(dimensions, int):
         dimensions = tuple(np.arange(dimensions))
 

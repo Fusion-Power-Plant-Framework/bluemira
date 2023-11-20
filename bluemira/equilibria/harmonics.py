@@ -23,10 +23,12 @@
 Spherical harmonics classes and calculations.
 """
 
+from __future__ import annotations
+
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Optional, Tuple
+from typing import TYPE_CHECKING
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -37,8 +39,6 @@ from bluemira.base.constants import MU_0
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -48,6 +48,10 @@ from bluemira.geometry.coordinates import (
 )
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import boolean_cut, make_polygon
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.grid import Grid
 
 
 def coil_harmonic_amplitude_matrix(
@@ -374,7 +378,7 @@ def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> float:
 
 def coils_outside_sphere_vacuum_psi(
     eq: Equilibrium,
-) -> Tuple[np.ndarray, np.ndarray, CoilSet]:
+) -> tuple[np.ndarray, np.ndarray, CoilSet]:
     """
     Calculate the poloidal flux (psi) contribution from the vacuum/coils
     located outside of the sphere containing the plasma, i.e., LCFS of
@@ -486,14 +490,14 @@ def get_psi_harmonic_amplitudes(
 
 def spherical_harmonic_approximation(
     eq: Equilibrium,
-    n_points: Optional[int] = None,
-    point_type: Optional[str] = None,
-    acceptable_fit_metric: Optional[float] = None,
-    r_t: Optional[float] = None,
+    n_points: int | None = None,
+    point_type: str | None = None,
+    acceptable_fit_metric: float | None = None,
+    r_t: float | None = None,
     *,
     plot: bool = False,
     nlevels: int = 50,
-) -> Tuple[CoilSet, float, np.ndarray, int, float, np.ndarray]:
+) -> tuple[CoilSet, float, np.ndarray, int, float, np.ndarray]:
     """
     Calculate the spherical harmonic (SH) amplitudes/coefficients
     needed as a reference value for the 'spherical_harmonics_constraint'

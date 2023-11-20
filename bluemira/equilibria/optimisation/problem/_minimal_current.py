@@ -18,21 +18,24 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 from bluemira.equilibria.optimisation.objectives import CoilCurrentsObjective
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.optimisation.constraints import UpdateableConstraint
 
 
 class MinimalCurrentCOP(CoilsetOptimisationProblem):
@@ -59,10 +62,10 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self,
         coilset: CoilSet,
         eq: Equilibrium,
-        max_currents: Optional[npt.ArrayLike] = None,
-        opt_conditions: Optional[Dict[str, float]] = None,
+        max_currents: npt.ArrayLike | None = None,
+        opt_conditions: dict[str, float] | None = None,
         opt_algorithm: AlgorithmType = Algorithm.SLSQP,
-        constraints: Optional[List[UpdateableConstraint]] = None,
+        constraints: list[UpdateableConstraint] | None = None,
     ):
         self.coilset = coilset
         self.eq = eq
@@ -71,7 +74,7 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         self.opt_algorithm = opt_algorithm
         self._constraints = [] if constraints is None else constraints
 
-    def optimise(self, x0: Optional[npt.NDArray] = None, *, fixed_coils: bool = True):
+    def optimise(self, x0: npt.NDArray | None = None, *, fixed_coils: bool = True):
         """
         Run the optimisation problem
 

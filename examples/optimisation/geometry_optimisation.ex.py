@@ -56,7 +56,9 @@
 # utilising bluemira's `optimise_geometry` function.
 
 # %%
-from typing import List
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 
@@ -65,7 +67,9 @@ from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation, PrincetonD
 from bluemira.geometry.tools import distance_to, make_circle
-from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 min_distance = 0.5
 plasma = make_circle(radius=2, center=(8, 0, 0.25), axis=(0, 1, 0))
@@ -158,7 +162,9 @@ plot_2d(boundary, ax=ax, show=True)
 # %%
 
 from bluemira.geometry.optimisation import GeomOptimisationProblem
-from bluemira.geometry.optimisation.typing import GeomConstraintT
+
+if TYPE_CHECKING:
+    from bluemira.geometry.optimisation.typing import GeomConstraintT
 
 
 class ContractLengthGOP(GeomOptimisationProblem):
@@ -172,7 +178,7 @@ class ContractLengthGOP(GeomOptimisationProblem):
         """Objective function to minimise."""
         return geom.create_shape().length
 
-    def ineq_constraints(self) -> List[GeomConstraintT]:
+    def ineq_constraints(self) -> list[GeomConstraintT]:
         """List of inequality constraints to satisfy."""
         return [
             {

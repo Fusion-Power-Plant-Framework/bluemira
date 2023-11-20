@@ -24,15 +24,14 @@
 File saving for fixed boundary equilibrium
 """
 
-from typing import Dict, Optional
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import numpy as np
 from scipy.integrate import quad, quadrature
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
-    FixedBoundaryEquilibrium,
-)
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     _interpolate_profile,
     find_magnetic_axis,
@@ -40,6 +39,11 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
 )
 from bluemira.equilibria.file import EQDSKInterface
 from bluemira.equilibria.grid import Grid
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+        FixedBoundaryEquilibrium,
+    )
 
 
 def _pressure_profile(pprime, psi_norm, psi_mag):
@@ -68,7 +72,7 @@ def save_fixed_boundary_to_file(
     nx: int,
     nz: int,
     file_format: str = "json",
-    json_kwargs: Optional[Dict] = None,
+    json_kwargs: dict | None = None,
 ):
     """
     Save a fixed boundary equilibrium to a file.

@@ -23,10 +23,11 @@
 File I/O functions and some path operations
 """
 
+from __future__ import annotations
+
 import os
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Dict, List, Optional, Union
 
 BM_ROOT = "!BM_ROOT!"
 SUB_DIRS = ["equilibria", "neutronics", "systems_code", "CAD", "plots", "geometry"]
@@ -54,7 +55,7 @@ def get_bluemira_root() -> str:
     return os.path.split(path)[0]
 
 
-def try_get_bluemira_private_data_root() -> Union[str, None]:
+def try_get_bluemira_private_data_root() -> str | None:
     """
     Get the bluemira-private-data root install folder.
 
@@ -103,7 +104,7 @@ def get_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
 
 def try_get_bluemira_path(
     path: str = "", subfolder: str = "bluemira", *, allow_missing: bool = True
-) -> Optional[str]:
+) -> str | None:
     """
     Try to get the bluemira path of a module subfolder.
 
@@ -155,7 +156,7 @@ def make_bluemira_path(path: str = "", subfolder: str = "bluemira") -> str:
         return _get_relpath(bpath, path)
 
 
-def force_file_extension(file_path: str, valid_extensions: Union[str, List[str]]) -> str:
+def force_file_extension(file_path: str, valid_extensions: str | list[str]) -> str:
     """
     If the file path does not have one of the valid extensions, append the first
     valid one
@@ -180,7 +181,7 @@ def force_file_extension(file_path: str, valid_extensions: Union[str, List[str]]
     return file_path
 
 
-def get_files_by_ext(folder: str, extension: str) -> List[str]:
+def get_files_by_ext(folder: str, extension: str) -> list[str]:
     """
     Get filenames of files in folder with the specified extension.
 
@@ -203,7 +204,7 @@ def get_files_by_ext(folder: str, extension: str) -> List[str]:
     return files
 
 
-def file_name_maker(filename: Union[str, Path], *, lowercase: bool = False) -> str:
+def file_name_maker(filename: str | Path, *, lowercase: bool = False) -> str:
     """
     Ensure the file name is acceptable.
 
@@ -245,8 +246,8 @@ class FileManager:
     _reference_data_root: str
     _generated_data_root: str
 
-    reference_data_dirs: Dict[str, str]
-    generated_data_dirs: Dict[str, str]
+    reference_data_dirs: dict[str, str]
+    generated_data_dirs: dict[str, str]
 
     def __init__(
         self,
@@ -300,7 +301,7 @@ class FileManager:
         """
         _get_relpath(self._reference_data_root, subfolder="")
 
-    def make_reactor_folder(self, subfolder: str) -> Dict[str, str]:
+    def make_reactor_folder(self, subfolder: str) -> dict[str, str]:
         """
         Initialise a data storage folder tree.
 
@@ -361,7 +362,7 @@ class FileManager:
         self.create_generated_data_paths()
 
     def get_path(
-        self, sub_dir_name: str, path: Union[Path, str], *, make_dir: bool = False
+        self, sub_dir_name: str, path: Path | str, *, make_dir: bool = False
     ) -> str:
         """
         Get a path within the generated data sub-sdirectories.

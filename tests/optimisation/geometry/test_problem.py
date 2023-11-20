@@ -18,17 +18,20 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple
+from typing import TYPE_CHECKING
 
 import pytest
 
 from bluemira.geometry.optimisation import GeomOptimisationProblem
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, ov
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
@@ -41,7 +44,7 @@ class CircleOptVariables(OptVariablesFrame):
 
 
 class Circle(GeometryParameterisation):
-    def __init__(self, radius: float, centre: Tuple[float, float]):
+    def __init__(self, radius: float, centre: tuple[float, float]):
         opt_vars = CircleOptVariables()
         opt_vars.adjust_variables(
             {

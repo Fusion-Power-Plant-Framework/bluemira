@@ -21,8 +21,10 @@
 
 """Module to support the fem_fixed_boundary implementation"""
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Callable, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Callable, Iterable
 
 import dolfin
 import matplotlib.pyplot as plt
@@ -30,11 +32,9 @@ import numpy as np
 import numpy.typing as npt
 from dolfin import BoundaryMesh, Mesh, Vertex
 from matplotlib._tri import TriContourGenerator
-from matplotlib.pyplot import Axes
 from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
 
-from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.flux_surfaces import ClosedFluxSurface
@@ -44,18 +44,23 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 from bluemira.optimisation import optimise
 from bluemira.utilities.tools import is_num
 
+if TYPE_CHECKING:
+    from matplotlib.pyplot import Axes
+
+    from bluemira.base.components import PhysicalComponent
+
 
 def plot_scalar_field(
     x: np.ndarray,
     y: np.ndarray,
     data: np.ndarray,
     levels: int = 20,
-    ax: Optional[Axes] = None,
+    ax: Axes | None = None,
     *,
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
-) -> Tuple[Axes, Union[Axes, None], Union[Axes, None]]:
+) -> tuple[Axes, Axes | None, Axes | None]:
     """
     Plot a scalar field
 
@@ -110,7 +115,7 @@ def plot_profile(
     prof: np.ndarray,
     var_name: str,
     var_unit: str,
-    ax: Optional[Axes] = None,
+    ax: Axes | None = None,
     *,
     show: bool = True,
 ):
@@ -128,8 +133,8 @@ def plot_profile(
 
 
 def get_tricontours(
-    x: np.ndarray, z: np.ndarray, array: np.ndarray, value: Union[float, Iterable]
-) -> List[Union[np.ndarray, None]]:
+    x: np.ndarray, z: np.ndarray, array: np.ndarray, value: float | Iterable
+) -> list[np.ndarray | None]:
     """
     Get the contours of a value in a triangular set of points.
 
@@ -168,7 +173,7 @@ def get_tricontours(
 def find_flux_surface(
     psi_norm_func: Callable[[np.ndarray], float],
     psi_norm: float,
-    mesh: Optional[dolfin.Mesh] = None,
+    mesh: dolfin.Mesh | None = None,
     n_points: int = 100,
 ) -> np.ndarray:
     """
@@ -247,7 +252,7 @@ def find_flux_surface(
     return points
 
 
-def get_mesh_boundary(mesh: dolfin.Mesh) -> Tuple[np.ndarray, np.ndarray]:
+def get_mesh_boundary(mesh: dolfin.Mesh) -> tuple[np.ndarray, np.ndarray]:
     """
     Retrieve the boundary of the mesh, as an ordered set of coordinates.
 
@@ -286,10 +291,10 @@ def get_mesh_boundary(mesh: dolfin.Mesh) -> Tuple[np.ndarray, np.ndarray]:
 def get_flux_surfaces_from_mesh(
     mesh: dolfin.Mesh,
     psi_norm_func: Callable[[float, float], float],
-    x_1d: Optional[np.ndarray] = None,
-    nx: Optional[int] = None,
+    x_1d: np.ndarray | None = None,
+    nx: int | None = None,
     ny_fs_min: int = 40,
-) -> Tuple[np.ndarray, List[ClosedFluxSurface]]:
+) -> tuple[np.ndarray, list[ClosedFluxSurface]]:
     """
     Get a list of flux surfaces from a mesh and normalised psi callable.
 
@@ -366,7 +371,7 @@ def calculate_plasma_shape_params(
     psi_norm: float,
     *,
     plot: bool = False,
-) -> Tuple[float, float, float]:
+) -> tuple[float, float, float]:
     """
     Calculate the plasma parameters (r_geo, kappa, delta) for a given magnetic
     isoflux from the mesh.
@@ -432,7 +437,7 @@ def calculate_plasma_shape_params(
 
 
 def find_magnetic_axis(
-    psi_func: Callable[[np.ndarray], float], mesh: Optional[dolfin.Mesh] = None
+    psi_func: Callable[[np.ndarray], float], mesh: dolfin.Mesh | None = None
 ) -> np.ndarray:
     """
     Find the magnetic axis in the poloidal flux map.

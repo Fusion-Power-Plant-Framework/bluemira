@@ -20,10 +20,13 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Types for the optimisation module."""
 
-from typing import Optional, Protocol, TypedDict
+from __future__ import annotations
 
-import numpy as np
-from typing_extensions import NotRequired
+from typing import TYPE_CHECKING, Protocol, TypedDict
+
+if TYPE_CHECKING:
+    import numpy as np
+    from typing_extensions import NotRequired
 
 
 class ObjectiveCallable(Protocol):
@@ -65,4 +68,4 @@ class ConstraintT(TypedDict):
 
     f_constraint: OptimiserCallable
     tolerance: np.ndarray
-    df_constraint: NotRequired[Optional[OptimiserCallable]]
+    df_constraint: NotRequired[OptimiserCallable | None]

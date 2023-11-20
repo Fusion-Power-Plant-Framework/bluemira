@@ -18,26 +18,30 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from bluemira.geometry.optimisation.typing import (
-    GeomClsOptimiserCallable,
-    GeomConstraintT,
-    GeomOptimiserCallable,
-    GeomOptimiserObjective,
-)
-from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import signed_distance_2D_polygon
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.optimisation.error import GeometryOptimisationError
-from bluemira.optimisation.typing import (
-    ConstraintT,
-    ObjectiveCallable,
-    OptimiserCallable,
-)
+
+if TYPE_CHECKING:
+    from bluemira.geometry.optimisation.typing import (
+        GeomClsOptimiserCallable,
+        GeomConstraintT,
+        GeomOptimiserCallable,
+        GeomOptimiserObjective,
+    )
+    from bluemira.geometry.parameterisations import GeometryParameterisation
+    from bluemira.geometry.wire import BluemiraWire
+    from bluemira.optimisation.typing import (
+        ConstraintT,
+        ObjectiveCallable,
+        OptimiserCallable,
+    )
 
 
 @dataclass
@@ -48,7 +52,7 @@ class KeepOutZone:
     """Closed wire defining the keep-out zone."""
     byedges: bool = True
     """Whether to discretize the keep-out zone by edges or not."""
-    dl: Optional[float] = None
+    dl: float | None = None
     """
     The discretization length for the keep-out zone.
 
@@ -161,7 +165,7 @@ def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
     return {"f_constraint": _f_constraint, "tolerance": np.full(shape_n_discr, koz.tol)}
 
 
-def get_shape_ineq_constraint(geom: GeometryParameterisation) -> List[ConstraintT]:
+def get_shape_ineq_constraint(geom: GeometryParameterisation) -> list[ConstraintT]:
     """
     Retrieve the inequality constraints registered for the given parameterisation.
 

@@ -22,8 +22,10 @@
 Plasma builder.
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, Type, Union
+from typing import TYPE_CHECKING
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -33,7 +35,9 @@ from bluemira.builders.tools import apply_component_display_options, get_n_secto
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_circle, revolve_shape
-from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 
 class Plasma(ComponentManager):
@@ -67,12 +71,12 @@ class PlasmaBuilder(Builder):
 
     LCFS = "LCFS"
 
-    param_cls: Type[PlasmaBuilderParams] = PlasmaBuilderParams
+    param_cls: type[PlasmaBuilderParams] = PlasmaBuilderParams
 
     def __init__(
         self,
-        params: Union[ParameterFrame, Dict],
-        build_config: Dict,
+        params: ParameterFrame | dict,
+        build_config: dict,
         xz_lcfs: BluemiraWire,
     ):
         super().__init__(params, build_config)

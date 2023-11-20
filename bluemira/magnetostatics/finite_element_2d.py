@@ -23,7 +23,9 @@
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
 
-from typing import Any, Callable, Iterable, List, Optional, Tuple, Union
+from __future__ import annotations
+
+from typing import Any, Callable, Iterable
 
 import dolfin
 import numpy as np
@@ -33,9 +35,9 @@ from bluemira.base.constants import MU_0
 
 def Bz_coil_axis(
     r: float,
-    z: Optional[float] = 0,
-    pz: Optional[float] = 0,
-    current: Optional[float] = 1,
+    z: float | None = 0,
+    pz: float | None = 0,
+    current: float | None = 1,
 ) -> float:
     """
     Calculate the theoretical vertical magnetic field of a filament coil
@@ -92,11 +94,11 @@ class ScalarSubFunc(dolfin.UserExpression):
 
     def __init__(
         self,
-        func_list: Union[
-            Iterable[Union[float, Callable[[Any], float]]], float, Callable[[Any], float]
-        ],
-        mark_list: Optional[Iterable[int]] = None,
-        subdomains: Optional[dolfin.cpp.mesh.MeshFunctionSizet] = None,
+        func_list: Iterable[float | Callable[[Any], float]]
+        | float
+        | Callable[[Any], float],
+        mark_list: Iterable[int] | None = None,
+        subdomains: dolfin.cpp.mesh.MeshFunctionSizet | None = None,
         **kwargs,
     ):
         super().__init__(**kwargs)
@@ -106,8 +108,8 @@ class ScalarSubFunc(dolfin.UserExpression):
 
     @staticmethod
     def check_functions(
-        functions: Union[Iterable[Union[float, Callable]], float, Callable],
-    ) -> Iterable[Union[float, Callable]]:
+        functions: Iterable[float | Callable] | float | Callable,
+    ) -> Iterable[float | Callable]:
         """Check if the argument is a function or a list of functions"""
         if not isinstance(functions, Iterable):
             functions = [functions]
@@ -117,7 +119,7 @@ class ScalarSubFunc(dolfin.UserExpression):
             "Accepted functions are instance of (int, float, Callable)or a list of them."
         )
 
-    def eval_cell(self, values: List, x: float, cell):
+    def eval_cell(self, values: list, x: float, cell):
         """Evaluate the value on each cell"""
         if self.markers is None or self.subdomains is None:
             func = self.functions[0]
@@ -136,7 +138,7 @@ class ScalarSubFunc(dolfin.UserExpression):
             raise TypeError(f"{func} is not callable or is not a constant")
 
     @staticmethod
-    def value_shape() -> Tuple:
+    def value_shape() -> tuple:
         """
         Value_shape function (necessary for a UserExpression)
         https://fenicsproject.discourse.group/t/problems-interpolating-a-userexpression-and-plotting-it/1303
@@ -192,8 +194,8 @@ class FemMagnetostatic2d:
 
     def set_mesh(
         self,
-        mesh: Union[dolfin.Mesh, str],
-        boundaries: Optional[Union[dolfin.Mesh, str]] = None,
+        mesh: dolfin.Mesh | str,
+        boundaries: dolfin.Mesh | str | None = None,
     ):
         """
         Set the mesh for the solver
@@ -250,7 +252,7 @@ class FemMagnetostatic2d:
         # initialize g to zero
         self.g = dolfin.Function(self.V)
 
-    def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):
+    def define_g(self, g: dolfin.Expression | dolfin.Function):
         """
         Define g, the right hand side function of the Poisson problem
 
@@ -263,11 +265,9 @@ class FemMagnetostatic2d:
 
     def solve(
         self,
-        dirichlet_bc_function: Optional[
-            Union[dolfin.Expression, dolfin.Function]
-        ] = None,
-        dirichlet_marker: Optional[int] = None,
-        neumann_bc_function: Optional[Union[dolfin.Expression, dolfin.Function]] = None,
+        dirichlet_bc_function: dolfin.Expression | dolfin.Function | None = None,
+        dirichlet_marker: int | None = None,
+        neumann_bc_function: dolfin.Expression | dolfin.Function | None = None,
     ) -> dolfin.Function:
         """
         Solve the weak formulation maxwell equation given a right hand side g,

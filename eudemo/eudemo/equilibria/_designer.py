@@ -23,10 +23,12 @@ Designer for an `Equilibrium` solving an unconstrained Tikhnov current
 gradient coil-set optimisation problem.
 """
 
+from __future__ import annotations
+
 import shutil
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Dict, Optional, Tuple, Type, Union
+from typing import Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -127,8 +129,8 @@ class EquilibriumDesigner(Designer[Equilibrium]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Optional[Dict] = None,
+        params: dict | ParameterFrame,
+        build_config: dict | None = None,
     ):
         super().__init__(params, build_config)
         self.file_path = self.build_config.get("file_path", None)
@@ -316,8 +318,8 @@ class FixedEquilibriumDesigner(Designer[Tuple[Coordinates, CustomProfile]]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Optional[Dict] = None,
+        params: dict | ParameterFrame,
+        build_config: dict | None = None,
     ):
         super().__init__(params, build_config)
         self.file_path = self.build_config.get("file_path", None)
@@ -327,7 +329,7 @@ class FixedEquilibriumDesigner(Designer[Tuple[Coordinates, CustomProfile]]):
                 "'file_path' missing from build config."
             )
 
-    def run(self) -> Tuple[Coordinates, CustomProfile]:
+    def run(self) -> tuple[Coordinates, CustomProfile]:
         """
         Run the FixedEquilibriumDesigner.
         """
@@ -379,7 +381,7 @@ class FixedEquilibriumDesigner(Designer[Tuple[Coordinates, CustomProfile]]):
         )
         return lcfs_coords, profiles
 
-    def read(self) -> Tuple[Coordinates, CustomProfile]:
+    def read(self) -> tuple[Coordinates, CustomProfile]:
         """
         Read in a fixed boundary equilibrium
         """
@@ -397,7 +399,7 @@ class FixedEquilibriumDesigner(Designer[Tuple[Coordinates, CustomProfile]]):
         return lcfs_coords, profiles
 
     def _get_geometry_parameterisation(self):
-        param_cls: Type[GeometryParameterisation] = get_class_from_module(
+        param_cls: type[GeometryParameterisation] = get_class_from_module(
             self.build_config["param_class"], default_module="bluemira.equilibria.shapes"
         )
         shape_config = self.build_config.get("shape_config", {})
@@ -482,7 +484,7 @@ class DummyFixedEquilibriumDesigner(Designer[Tuple[Coordinates, Profile]]):
             )
             self.build_config["run_mode"] = "run"
 
-    def run(self) -> Tuple[Coordinates, Profile]:
+    def run(self) -> tuple[Coordinates, Profile]:
         """
         Run the DummyFixedEquilibriumDesigner.
         """
@@ -573,10 +575,10 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
-        build_config: Optional[Dict] = None,
-        lcfs_coords: Optional[Coordinates] = None,
-        profiles: Optional[Profile] = None,
+        params: dict | ParameterFrame,
+        build_config: dict | None = None,
+        lcfs_coords: Coordinates | None = None,
+        profiles: Profile | None = None,
     ):
         super().__init__(params, build_config)
         self.file_path = self.build_config.get("file_path", None)

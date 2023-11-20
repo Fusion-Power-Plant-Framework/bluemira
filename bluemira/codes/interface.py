@@ -20,15 +20,19 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Base classes for solvers using external codes."""
 
+from __future__ import annotations
+
 import abc
 import enum
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
-from bluemira.codes.params import MappedParameterFrame
 from bluemira.codes.utilities import run_subprocess
+
+if TYPE_CHECKING:
+    from bluemira.codes.params import MappedParameterFrame
 
 
 class BaseRunMode(enum.Enum):
@@ -75,7 +79,7 @@ class CodesTask(abc.ABC):
     def run(self):
         """Run the task."""
 
-    def _run_subprocess(self, command: List[str], **kwargs):
+    def _run_subprocess(self, command: list[str], **kwargs):
         """
         Run a subprocess command and raise a CodesError if it returns a
         non-zero exit code.
@@ -108,8 +112,8 @@ class CodesSetup(CodesTask):
     """
 
     def _get_new_inputs(
-        self, remapper: Optional[Union[Callable, Dict[str, str]]] = None
-    ) -> Dict[str, float]:
+        self, remapper: Callable | dict[str, str] | None = None
+    ) -> dict[str, float]:
         """
         Retrieve inputs values to the external code from this task's
         ParameterFrame.
@@ -156,7 +160,7 @@ class CodesSetup(CodesTask):
         return _inputs
 
     @staticmethod
-    def _convert_units(param, target_unit: Union[str, None]):
+    def _convert_units(param, target_unit: str | None):
         value = (
             param.value
             if target_unit is None or param.value is None
@@ -183,7 +187,7 @@ class CodesTeardown(CodesTask):
     """
 
     def _update_params_with_outputs(
-        self, outputs: Dict[str, float], *, recv_all: bool = False
+        self, outputs: dict[str, float], recv_all: bool = False
     ):
         """
         Update this task's parameters with the external code's outputs.
@@ -212,8 +216,8 @@ class CodesTeardown(CodesTask):
         self.params.update_values(mapped_outputs, source=self._name)
 
     def _map_external_outputs_to_bluemira_params(
-        self, external_outputs: Dict[str, Any], *, recv_all: bool
-    ) -> Dict[str, Dict[str, Any]]:
+        self, external_outputs: dict[str, Any], *, recv_all: bool
+    ) -> dict[str, dict[str, Any]]:
         """
         Loop through external outputs, find the corresponding bluemira
         parameter name, and map it to the output's value and unit.
@@ -254,7 +258,7 @@ class CodesTeardown(CodesTask):
         return mapped_outputs
 
     def _get_output_or_raise(
-        self, external_outputs: Dict[str, Any], parameter_name: str
+        self, external_outputs: dict[str, Any], parameter_name: str
     ):
         output_value = external_outputs.get(parameter_name, None)
         if output_value is None:
@@ -288,7 +292,7 @@ class CodesSolver(abc.ABC):
         """
 
     @abc.abstractproperty
-    def setup_cls(self) -> Type[CodesTask]:
+    def setup_cls(self) -> type[CodesTask]:
         """
         Class defining the run modes for the setup stage of the solver.
 
@@ -298,7 +302,7 @@ class CodesSolver(abc.ABC):
         """
 
     @abc.abstractproperty
-    def run_cls(self) -> Type[CodesTask]:
+    def run_cls(self) -> type[CodesTask]:
         """
         Class defining the run modes for the computational stage of the
         solver.
@@ -309,7 +313,7 @@ class CodesSolver(abc.ABC):
         """
 
     @abc.abstractproperty
-    def teardown_cls(self) -> Type[CodesTask]:
+    def teardown_cls(self) -> type[CodesTask]:
         """
         Class defining the run modes for the teardown stage of the
         solver.
@@ -321,14 +325,14 @@ class CodesSolver(abc.ABC):
         """
 
     @abc.abstractproperty
-    def run_mode_cls(self) -> Type[BaseRunMode]:
+    def run_mode_cls(self) -> type[BaseRunMode]:
         """
         Class enumerating the run modes for this solver.
 
         Common run modes are RUN, MOCK, READ, etc,.
         """
 
-    def execute(self, run_mode: Union[str, BaseRunMode]) -> Any:
+    def execute(self, run_mode: str | BaseRunMode) -> Any:
         """Execute the setup, run, and teardown tasks, in order."""
         if isinstance(run_mode, str):
             run_mode = self.run_mode_cls.from_string(run_mode)
@@ -341,7 +345,7 @@ class CodesSolver(abc.ABC):
             result = teardown(result)
         return result
 
-    def modify_mappings(self, send_recv: Dict[str, Dict[str, bool]]):
+    def modify_mappings(self, send_recv: dict[str, dict[str, bool]]):
         """
         Modify the send/receive truth values of a parameter.
 
@@ -376,9 +380,7 @@ class CodesSolver(abc.ABC):
                     setattr(p_map, sr_key, sr_val)
 
     @staticmethod
-    def _get_execution_method(
-        task: CodesTask, run_mode: BaseRunMode
-    ) -> Optional[Callable]:
+    def _get_execution_method(task: CodesTask, run_mode: BaseRunMode) -> Callable | None:
         """
         Return the method on the task corresponding to this solver's run
         mode (e.g., :code:`task.run`).

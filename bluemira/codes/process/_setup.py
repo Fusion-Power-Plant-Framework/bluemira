@@ -22,10 +22,11 @@
 Defines the setup task for running PROCESS.
 """
 
-from pathlib import Path
-from typing import ClassVar, Dict, Optional, Union
+from __future__ import annotations
 
-from bluemira.base.parameter_frame import ParameterFrame
+from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar
+
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSetup
 from bluemira.codes.process._inputs import ProcessInputs
@@ -35,6 +36,9 @@ from bluemira.codes.process._model_mapping import (
 )
 from bluemira.codes.process.api import ENABLED, InDat, _INVariable, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
+
+if TYPE_CHECKING:
+    from bluemira.base.parameter_frame import ParameterFrame
 
 
 class Setup(CodesSetup):
@@ -58,9 +62,9 @@ class Setup(CodesSetup):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
+        params: dict | ParameterFrame,
         in_dat_path: str,
-        problem_settings: Optional[Dict[str, Union[float, str]]] = None,
+        problem_settings: dict[str, float | str] | None = None,
     ):
         super().__init__(params, PROCESS_NAME)
 
@@ -126,13 +130,13 @@ class Setup(CodesSetup):
             writer.add_parameter(name, model.value)
 
 
-def _make_writer(template_in_dat: Dict[str, _INVariable]) -> InDat:
+def _make_writer(template_in_dat: dict[str, _INVariable]) -> InDat:
     indat = InDat(filename=None)
     indat.data = template_in_dat
     return indat
 
 
-def create_template_from_path(template_in_dat: Union[str, Path]) -> ProcessInputs:
+def create_template_from_path(template_in_dat: str | Path) -> ProcessInputs:
     if not ENABLED:
         raise CodesError(
             f"{PROCESS_NAME} is not installed cannot read template {template_in_dat}"

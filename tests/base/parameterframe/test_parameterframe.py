@@ -18,10 +18,12 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
+
 import io
 from copy import deepcopy
 from dataclasses import dataclass
-from typing import ClassVar, Union
+from typing import ClassVar
 from unittest import mock
 
 import pint
@@ -144,7 +146,7 @@ class TestParameterFrame:
     def test_TypeError_given_field_has_Union_Parameter_type(self, value):
         @dataclass
         class GenericFrame(ParameterFrame):
-            x: Parameter[Union[str, list]]
+            x: Parameter[str | list]
 
         with pytest.raises(TypeError):
             GenericFrame.from_dict({"x": {"value": value, "unit": "m"}})

@@ -20,8 +20,10 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Designer for EUDEMO blankets."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, Optional, Tuple, TypeVar, Union
+from typing import Tuple, TypeVar
 
 import numpy as np
 
@@ -101,12 +103,12 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
 
     def __init__(
         self,
-        params: Union[Dict, ParameterFrame],
+        params: dict | ParameterFrame,
         blanket_boundary: BluemiraWire,
         blanket_silhouette: BluemiraFace,
         r_inner_cut: float,
         cut_angle: float,
-        build_config: Optional[Dict] = None,
+        build_config: dict | None = None,
     ):
         super().__init__(params, build_config)
         self.boundary = blanket_boundary
@@ -118,7 +120,7 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
             )
         self.cut_angle = cut_angle
 
-    def run(self) -> Tuple[BluemiraFace, BluemiraFace]:
+    def run(self) -> tuple[BluemiraFace, BluemiraFace]:
         """Run the blanket design problem."""
         segments = self.segment_blanket()
         # Inboard
@@ -173,7 +175,7 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
     _GeomT = TypeVar("_GeomT", BluemiraFace, BluemiraWire)
 
     @staticmethod
-    def _cut_geom(geom: _GeomT, cut_tool: BluemiraFace) -> Tuple[_GeomT, _GeomT]:
+    def _cut_geom(geom: _GeomT, cut_tool: BluemiraFace) -> tuple[_GeomT, _GeomT]:
         """Cut the given geometry into two using the given cutting tool."""
         parts = boolean_cut(geom, cut_tool)
         if len(parts) < 2:  # noqa: PLR2004

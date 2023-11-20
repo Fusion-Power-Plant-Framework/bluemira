@@ -23,7 +23,7 @@
 A collection of tools used in the EU-DEMO design.
 """
 
-from typing import List
+from __future__ import annotations
 
 import numpy as np
 
@@ -47,8 +47,8 @@ def get_inner_cut_point(breeding_blanket_xz, r_inner_cut):
 
 
 def make_2d_view_components(
-    view: str, azimuthal_angle: float, components: List[PhysicalComponent]
-) -> List[PhysicalComponent]:
+    view: str, azimuthal_angle: float, components: list[PhysicalComponent]
+) -> list[PhysicalComponent]:
     """
     Make a 2-D slice of a list of 3-D components
 

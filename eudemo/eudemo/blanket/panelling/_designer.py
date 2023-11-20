@@ -20,18 +20,22 @@
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """Designer for wall panelling."""
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Any, ClassVar, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import numpy as np
 
 from bluemira.base.designer import Designer
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.error import ExternalOptError
 from eudemo.blanket.panelling._opt_problem import PanellingOptProblem
 from eudemo.blanket.panelling._paneller import Paneller
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
@@ -102,9 +106,9 @@ class PanellingDesigner(Designer[np.ndarray]):
 
     def __init__(
         self,
-        params: Union[Dict, PanellingDesignerParams, ParameterFrame],
+        params: dict | PanellingDesignerParams | ParameterFrame,
         wall_boundary: BluemiraWire,
-        build_config: Optional[Dict] = None,
+        build_config: dict | None = None,
     ):
         super().__init__(params, build_config)
         self.wall_boundary = wall_boundary
@@ -168,7 +172,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         boundary: np.ndarray,
         opt_problem: PanellingOptProblem,
         max_retries: int,
-    ) -> Tuple[Union[np.ndarray, None], PanellingOptProblem, int]:
+    ) -> tuple[np.ndarray | None, PanellingOptProblem, int]:
         """
         Run the minimise panel length optimisation problem.
 
@@ -217,7 +221,7 @@ class PanellingDesigner(Designer[np.ndarray]):
         return x_opt, opt_problem, iter_num
 
     def _set_up_opt_problem(
-        self, boundary: np.ndarray, fix_num_panels: Optional[int] = None
+        self, boundary: np.ndarray, fix_num_panels: int | None = None
     ) -> PanellingOptProblem:
         """Set up an instance of the minimise panel length optimisation problem."""
         paneller = Paneller(

@@ -41,16 +41,20 @@
 # # Geometry Optimisation with a New Parameterisation
 
 # %%
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Optional
+from typing import TYPE_CHECKING
 
 from bluemira.display import plot_2d
 from bluemira.display.plotter import PlotOptions
 from bluemira.geometry.optimisation import optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation
 from bluemira.geometry.tools import make_circle, make_polygon
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
@@ -65,7 +69,7 @@ class CircleOptVariables(OptVariablesFrame):
 class Circle(GeometryParameterisation):
     """Geometry parameterisation for a circle in the xz-plane."""
 
-    def __init__(self, var_dict: Optional[VarDictT] = None):
+    def __init__(self, var_dict: VarDictT | None = None):
         opt_variables = CircleOptVariables()
         opt_variables.adjust_variables(var_dict, strict_bounds=False)
         super().__init__(opt_variables)

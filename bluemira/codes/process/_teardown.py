@@ -22,8 +22,10 @@
 PROCESS teardown functions
 """
 
+from __future__ import annotations
+
 from pathlib import Path
-from typing import Dict, Iterable, List, Union
+from typing import TYPE_CHECKING, Iterable
 
 import numpy as np
 
@@ -32,8 +34,10 @@ from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesTeardown
 from bluemira.codes.process.api import MFile, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
-from bluemira.codes.process.params import ProcessSolverParams
 from bluemira.codes.utilities import read_mock_json_or_raise
+
+if TYPE_CHECKING:
+    from bluemira.codes.process.params import ProcessSolverParams
 
 
 class Teardown(CodesTeardown):
@@ -112,7 +116,7 @@ class Teardown(CodesTeardown):
         outputs = read_mock_json_or_raise(mock_file_path, self._name)
         self.params.update_values(outputs, source=self._name)
 
-    def get_raw_outputs(self, params: Union[Iterable, str]) -> List[float]:
+    def get_raw_outputs(self, params: Iterable | str) -> list[float]:
         """
         Get raw variables from an MFILE.
 
@@ -194,7 +198,7 @@ class _MFileWrapper:
         _raise_on_infeasible_solution(self)
         self.data = {}
 
-    def read(self) -> Dict:
+    def read(self) -> dict:
         """
         Read the data from the PROCESS MFile.
 
@@ -217,7 +221,7 @@ class _MFileWrapper:
 
         self.data.update(self._derive_radial_build_params(self.data))
 
-    def _derive_radial_build_params(self, data: Dict) -> Dict[str, float]:
+    def _derive_radial_build_params(self, data: dict) -> dict[str, float]:
         """
         Derive radial build parameters that PROCESS does not directly calculate.
 

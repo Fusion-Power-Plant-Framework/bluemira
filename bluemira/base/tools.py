@@ -23,9 +23,11 @@
 Tool function and classes for the bluemira base module.
 """
 
+from __future__ import annotations
+
 import time
 from functools import wraps
-from typing import Callable, Dict, TypeVar
+from typing import Callable, TypeVar
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
@@ -88,7 +90,7 @@ def create_compound_from_component(comp: Component) -> BluemiraCompound:
 # # =============================================================================
 # # Serialize and Deserialize
 # # =============================================================================
-def serialize_component(comp: Component) -> Dict:
+def serialize_component(comp: Component) -> dict:
     """
     Serialize a Component object.
     """

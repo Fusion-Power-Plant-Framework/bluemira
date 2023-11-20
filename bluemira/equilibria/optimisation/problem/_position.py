@@ -18,25 +18,28 @@
 #
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+from __future__ import annotations
 
-from typing import Dict, List, Optional
+from typing import TYPE_CHECKING
 
 import numpy as np
 import numpy.typing as npt
 
-from bluemira.equilibria.coils import CoilSet
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.optimisation.constraints import (
-    MagneticConstraintSet,
-    UpdateableConstraint,
-)
 from bluemira.equilibria.optimisation.objectives import regularised_lsq_fom
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
 )
 from bluemira.optimisation import Algorithm, AlgorithmType, optimise
-from bluemira.utilities.positioning import PositionMapper
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import CoilSet
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.optimisation.constraints import (
+        MagneticConstraintSet,
+        UpdateableConstraint,
+    )
+    from bluemira.utilities.positioning import PositionMapper
 
 
 class CoilsetPositionCOP(CoilsetOptimisationProblem):
@@ -88,11 +91,11 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         eq: Equilibrium,
         targets: MagneticConstraintSet,
         position_mapper: PositionMapper,
-        max_currents: Optional[npt.ArrayLike] = None,
+        max_currents: npt.ArrayLike | None = None,
         gamma=1e-8,
         opt_algorithm: AlgorithmType = Algorithm.SBPLX,
-        opt_conditions: Optional[Dict[str, float]] = None,
-        constraints: Optional[List[UpdateableConstraint]] = None,
+        opt_conditions: dict[str, float] | None = None,
+        constraints: list[UpdateableConstraint] | None = None,
     ):
         self.coilset = coilset
         self.eq = eq
@@ -159,7 +162,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
         return regularised_lsq_fom(currents * self.scale, a_mat, b_vec, self.gamma)[0]
 
-    def get_mapped_state_bounds(self, max_currents: Optional[npt.ArrayLike] = None):
+    def get_mapped_state_bounds(self, max_currents: npt.ArrayLike | None = None):
         """
         Get mapped bounds on the coilset state vector from the coil regions and
         maximum coil currents.
