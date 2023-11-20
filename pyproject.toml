@@ -74,10 +74,10 @@ examples = ["notebook", "jupytext"]
 pinned = [
     "nlopt==2.7.1",
     "numba==0.58.1",
-    "numba-scipy==0.3.1",
-    "numpy==1.23.2",
+    "numba-scipy @ git+https://github.com/numba/numba-scipy@1e2f244",
+    "numpy==1.23.5",
     "matplotlib==3.7.3",
-    "scipy==1.7.3",
+    "scipy==1.10.1",
 ]
 openmoc = ["OpenMOC @git+https://github.com/mit-crpg/OpenMOC.git@7940c0b"]
 openmc = [
@@ -179,6 +179,8 @@ ignore = [
     "PLW1514", # Specify file open encoding
     "PTH123",  # use Path.open
     "TRY003",  # put error messages in error class
+    "FURB152",  # 3.14 != pi
+    "PIE790",  # TMP for false positive ...
     # should remove
     "TD",     # standardise TODOs
     "ERA",    # remove commented out code
