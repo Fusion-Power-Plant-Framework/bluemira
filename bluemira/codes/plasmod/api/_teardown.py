@@ -94,8 +94,8 @@ class Teardown(CodesTeardown):
         Get data for read or run modes
         """
         try:
-            with open(output_file) as scalar_file, open(profiles_file) as profiles_file:
-                self.outputs = PlasmodOutputs.from_files(scalar_file, profiles_file)
+            with open(output_file) as scalar_hdl, open(profiles_file) as profiles_hdl:
+                self.outputs = PlasmodOutputs.from_files(scalar_hdl, profiles_hdl)
         except OSError as os_error:
             raise CodesError(
                 f"Could not read plasmod output file: {os_error}."
