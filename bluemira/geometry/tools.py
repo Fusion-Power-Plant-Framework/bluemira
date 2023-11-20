@@ -216,14 +216,17 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     return cadapi.apiVertex(*point)
 
 
-def closed_wire_wrapper(drop_closure_point: bool):
+def closed_wire_wrapper(*, drop_closure_point: bool):
     """
     Decorator for checking / enforcing closures on wire creation functions.
     """
 
     def decorator(func: Callable):
         def wrapper(
-            points: Union[list, np.ndarray, Dict], label: str = "", closed: bool = False
+            points: Union[list, np.ndarray, Dict],
+            label: str = "",
+            *,
+            closed: bool = False,
         ):
             points = Coordinates(points)
             if points.closed:
@@ -250,6 +253,7 @@ def closed_wire_wrapper(drop_closure_point: bool):
 def make_polygon(
     points: Union[list, np.ndarray],
     label: str = "",  # noqa: ARG001
+    *,
     closed: bool = False,  # noqa: ARG001
 ) -> BluemiraWire:
     """
@@ -282,6 +286,7 @@ def make_polygon(
 def make_bezier(
     points: Union[list, np.ndarray],
     label: str = "",  # noqa: ARG001
+    *,
     closed: bool = False,  # noqa: ARG001
 ) -> BluemiraWire:
     """Make a bspline from a set of points.
@@ -313,6 +318,7 @@ def make_bspline(
     poles: Union[list, np.ndarray],
     mults: Union[list, np.ndarray],
     knots: Union[list, np.ndarray],
+    *,
     periodic: bool,
     degree: int,
     weights: Union[list, np.ndarray],
@@ -345,7 +351,13 @@ def make_bspline(
     """
     return BluemiraWire(
         cadapi.make_bspline(
-            poles, mults, knots, periodic, degree, weights, check_rational
+            poles,
+            mults,
+            knots,
+            periodic=periodic,
+            degree=degree,
+            weights=weights,
+            check_rational=check_rational,
         ),
         label=label,
     )
@@ -354,13 +366,14 @@ def make_bspline(
 def _make_polygon_fallback(
     points,
     label="",
+    *,
     closed=False,
     **kwargs,  # noqa: ARG001
 ) -> BluemiraWire:
     """
     Overloaded function signature for fallback option from interpolate_bspline
     """
-    return make_polygon(points, label, closed)
+    return make_polygon(points, label, closed=closed)
 
 
 @fallback_to(_make_polygon_fallback, cadapi.FreeCADError)
@@ -368,6 +381,7 @@ def _make_polygon_fallback(
 def interpolate_bspline(
     points: Union[list, np.ndarray],
     label: str = "",
+    *,
     closed: bool = False,
     start_tangent: Optional[Iterable] = None,
     end_tangent: Optional[Iterable] = None,
@@ -396,7 +410,9 @@ def interpolate_bspline(
     """
     points = Coordinates(points)
     return BluemiraWire(
-        cadapi.interpolate_bspline(points.T, closed, start_tangent, end_tangent),
+        cadapi.interpolate_bspline(
+            points.T, closed=closed, start_tangent=start_tangent, end_tangent=end_tangent
+        ),
         label=label,
     )
 
@@ -596,9 +612,9 @@ def _offset_wire_discretised(
     thickness,
     /,
     join: str = "intersect",  # noqa: ARG001
+    *,
     open_wire: bool = True,
     label="",
-    *,
     fallback_method="square",
     fallback_force_spline=False,
     byedges=True,
@@ -646,9 +662,9 @@ def offset_wire(
     thickness: float,
     /,
     join: str = "intersect",
+    *,
     open_wire: bool = True,
     label: str = "",
-    *,
     fallback_method="square",  # noqa: ARG001
     byedges=True,  # noqa: ARG001
     ndiscr=400,  # noqa: ARG001
@@ -691,7 +707,7 @@ def offset_wire(
     Offset wire
     """
     return BluemiraWire(
-        cadapi.offset_wire(wire.shape, thickness, join, open_wire), label=label
+        cadapi.offset_wire(wire.shape, thickness, join, open_wire=open_wire), label=label
     )
 
 
@@ -824,6 +840,7 @@ def extrude_shape(
 def sweep_shape(
     profiles: Union[BluemiraWire, Iterable[BluemiraWire]],
     path: BluemiraWire,
+    *,
     solid: bool = True,
     frenet: bool = True,
     label: str = "",
@@ -852,12 +869,12 @@ def sweep_shape(
 
     profile_shapes = [p.shape for p in profiles]
 
-    result = cadapi.sweep_shape(profile_shapes, path.shape, solid, frenet)
+    result = cadapi.sweep_shape(profile_shapes, path.shape, solid=solid, frenet=frenet)
 
     return convert(result, label=label)
 
 
-def fillet_chamfer_decorator(chamfer: bool):
+def fillet_chamfer_decorator(*, chamfer: bool):
     """
     Decorator for fillet and chamfer operations, checking for validity of wire
     and radius.
@@ -885,7 +902,7 @@ def fillet_chamfer_decorator(chamfer: bool):
     return decorator
 
 
-@fillet_chamfer_decorator(False)
+@fillet_chamfer_decorator(chamfer=False)
 def fillet_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
     """
     Fillet all edges of a wire
@@ -904,7 +921,7 @@ def fillet_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
     return BluemiraWire(cadapi.fillet_wire_2D(wire.shape, radius))
 
 
-@fillet_chamfer_decorator(True)
+@fillet_chamfer_decorator(chamfer=True)
 def chamfer_wire_2D(wire: BluemiraWire, radius: float):
     """
     Chamfer all edges of a wire

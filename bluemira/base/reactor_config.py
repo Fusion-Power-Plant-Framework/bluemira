@@ -109,6 +109,7 @@ class ReactorConfig:
         self,
         config_path: Union[str, Path, dict],
         global_params_type: Type[_PfT],
+        *,
         warn_on_duplicate_keys: bool = False,
         warn_on_empty_local_params: bool = False,
         warn_on_empty_config: bool = False,
@@ -135,7 +136,7 @@ class ReactorConfig:
         return self._pprint_dict(self.config_data)
 
     @staticmethod
-    def _warn_or_debug_log(msg: str, warn: bool) -> None:
+    def _warn_or_debug_log(msg: str, *, warn: bool = False) -> None:
         if warn:
             bluemira_warn(msg)
         else:
@@ -179,7 +180,8 @@ class ReactorConfig:
         local_params = self._extract(args, is_config=False)
         if not local_params:
             self._warn_or_debug_log(
-                f"Empty local params for args: {args}", self.warn_on_empty_local_params
+                f"Empty local params for args: {args}",
+                warn=self.warn_on_empty_local_params,
             )
 
         return ConfigParams(
@@ -219,7 +221,7 @@ class ReactorConfig:
         _return = self._extract(args, is_config=True)
         if not _return:
             self._warn_or_debug_log(
-                f"Empty config for args: {args}", self.warn_on_empty_config
+                f"Empty config for args: {args}", warn=self.warn_on_empty_config
             )
 
         return _return
@@ -253,7 +255,7 @@ class ReactorConfig:
         self._warn_or_debug_log(
             "duplicate config key: "
             f"'{shared_key}' in {arg} wil be overwritten with {existing_value}",
-            self.warn_on_duplicate_keys,
+            warn=self.warn_on_duplicate_keys,
         )
 
     @staticmethod
@@ -310,7 +312,7 @@ class ReactorConfig:
         f_data = self._read_json_file(f_path)
         return f_data, f_path.parent
 
-    def _extract(self, arg_keys: Tuple[str], is_config: bool) -> dict:
+    def _extract(self, arg_keys: Tuple[str], *, is_config: bool = True) -> dict:
         extracted = {}
 
         # this routine is designed not to copy any dict's while parsing

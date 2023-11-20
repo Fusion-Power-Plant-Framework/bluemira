@@ -39,6 +39,7 @@ def _timing(
     func: Callable[..., _T],
     timing_prefix: str,
     info_str: str = "",
+    *,
     debug_info_str: bool = False,
 ) -> Callable[..., _T]:
     """

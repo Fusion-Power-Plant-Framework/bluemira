@@ -490,6 +490,7 @@ def spherical_harmonic_approximation(
     point_type: Optional[str] = None,
     acceptable_fit_metric: Optional[float] = None,
     r_t: Optional[float] = None,
+    *,
     plot: bool = False,
     nlevels: int = 50,
 ) -> Tuple[CoilSet, float, np.ndarray, int, float, np.ndarray]:

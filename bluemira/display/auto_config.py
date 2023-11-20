@@ -128,7 +128,7 @@ def get_figure_scale_factor(figsize):
     return sf
 
 
-def plot_defaults(force=False):
+def plot_defaults(*, force=False):
     """
     Set a series of plotting defaults based on machine and user.
 

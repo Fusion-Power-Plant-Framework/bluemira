@@ -225,6 +225,7 @@ class Coil(CoilFieldsMixin):
     def plot(
         self,
         ax: Optional[Axes] = None,
+        *,
         subcoil: bool = True,
         label: bool = False,
         force: Optional[Iterable] = None,

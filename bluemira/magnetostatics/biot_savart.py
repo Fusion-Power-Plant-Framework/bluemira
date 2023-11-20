@@ -254,7 +254,7 @@ class BiotSavartFilament(CurrentSource):
         self.ref_mid_points = self.ref_mid_points @ r
         self._arrays = [array @ r for array in self._arrays]
 
-    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
+    def plot(self, ax: Optional[Axes] = None, *, show_coord_sys: bool = False):
         """
         Plot the CurrentSource.
 

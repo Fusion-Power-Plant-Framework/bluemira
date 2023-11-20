@@ -73,8 +73,8 @@ class NumpyJSONEncoder(JSONEncoder):
 def json_writer(
     data: Dict[str, Any],
     file: Optional[Union[Path, str]] = None,
-    return_output: bool = False,
     *,
+    return_output: bool = False,
     cls: JSONEncoder = NumpyJSONEncoder,
     **kwargs,
 ):
@@ -417,6 +417,7 @@ def set_random_seed(seed_number: int):
 def compare_dicts(
     d1: Dict[str, Any],
     d2: Dict[str, Any],
+    *,
     almost_equal: bool = False,
     verbose: bool = True,
     rtol: float = 1e-5,

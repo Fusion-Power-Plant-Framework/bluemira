@@ -144,7 +144,7 @@ def _plot_force(ax: Axes, node: Node, vector: np.ndarray, color: str = "r"):
 
 
 def _plot_moment(
-    ax: Axes, node: Node, vector: np.ndarray, color: str = "r", support: bool = False
+    ax: Axes, node: Node, vector: np.ndarray, color: str = "r", *, support: bool = False
 ):
     """
     Plots a double "moment" arrow in 3-D to indicate a moment load. Offset the
@@ -500,6 +500,7 @@ class StressDeformedGeometryPlotter(BasePlotter):
         geometry: DeformedGeometry,
         ax: Optional[Axes] = None,
         stress: Optional[np.ndarray] = None,
+        *,
         deflection: bool = False,
         **kwargs,
     ):
@@ -513,14 +514,14 @@ class StressDeformedGeometryPlotter(BasePlotter):
         self.options["show_all_nodes"] = False
         self.options["show_as_grey"] = False
 
-        self.color_normer = self.make_color_normer(stress, deflection)
+        self.color_normer = self.make_color_normer(stress, deflection=deflection)
 
         self.plot_nodes()
         self.plot_elements()
         self._set_aspect_equal()
 
     @staticmethod
-    def make_color_normer(stress: np.ndarray, deflection: bool = False):
+    def make_color_normer(stress: np.ndarray, *, deflection: bool = False):
         """
         Make a ColorNorm object for the plot based on the stress values.
         """

@@ -405,6 +405,7 @@ def build_sectioned_xyz(
     n_TF: int,
     plot_colour: Tuple[float],
     degree: float = 360,
+    *,
     enable_sectioning: bool = True,
     material: Optional[SerialisedMaterial] = None,
 ) -> List[PhysicalComponent]:

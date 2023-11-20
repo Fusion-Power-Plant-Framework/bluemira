@@ -134,6 +134,7 @@ class Result:
         self,
         deformation_scale: float = 10.0,
         ax: Optional[Axes] = None,
+        *,
         stress: bool = False,
         deflection: bool = False,
         pattern: bool = False,

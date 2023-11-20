@@ -79,7 +79,7 @@ class UpdateableConstraint(ABC):
     """
 
     @abstractmethod
-    def prepare(self, equilibrium: Equilibrium, I_not_dI=False, fixed_coils=False):
+    def prepare(self, equilibrium: Equilibrium, *, I_not_dI=False, fixed_coils=False):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -158,7 +158,11 @@ class FieldConstraints(UpdateableConstraint):
         self.f_constraint_type = constraint_type
 
     def prepare(
-        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+        self,
+        equilibrium: Equilibrium,
+        *,
+        I_not_dI: bool = False,
+        fixed_coils: bool = False,
     ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
@@ -258,7 +262,11 @@ class CoilFieldConstraints(FieldConstraints):
         return coilset.x - coilset.dx, coilset.z
 
     def prepare(
-        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+        self,
+        equilibrium: Equilibrium,
+        *,
+        I_not_dI: bool = False,
+        fixed_coils: bool = False,
     ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
@@ -332,7 +340,11 @@ class CoilForceConstraints(UpdateableConstraint):
         self.tolerance = tolerance
 
     def prepare(
-        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+        self,
+        equilibrium: Equilibrium,
+        *,
+        I_not_dI: bool = False,
+        fixed_coils: bool = False,
     ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
@@ -403,7 +415,11 @@ class MagneticConstraint(UpdateableConstraint):
         self.constraint_type = constraint_type
 
     def prepare(
-        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+        self,
+        equilibrium: Equilibrium,
+        *,
+        I_not_dI: bool = False,
+        fixed_coils: bool = False,
     ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
@@ -821,7 +837,11 @@ class MagneticConstraintSet(ABC):
         self.background = None
 
     def __call__(
-        self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
+        self,
+        equilibrium: Equilibrium,
+        *,
+        I_not_dI: bool = False,
+        fixed_coils: bool = False,
     ):
         """
         Update the MagneticConstraintSet

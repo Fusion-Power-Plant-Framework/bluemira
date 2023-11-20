@@ -204,6 +204,7 @@ class FiniteElementModel:
     def add_support(
         self,
         node_id: int,
+        *,
         dx: bool = False,
         dy: bool = False,
         dz: bool = False,
@@ -566,7 +567,7 @@ class FiniteElementModel:
         return self.geometry.plot(ax=ax, **kwargs)
 
     def solve(
-        self, load_case: Optional[LoadCase] = None, sparse: bool = False
+        self, load_case: Optional[LoadCase] = None, *, sparse: bool = False
     ) -> Result:
         """
         Solves the system of linear equations for deflection and applies the

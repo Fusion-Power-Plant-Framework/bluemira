@@ -663,6 +663,7 @@ def find_LCFS_separatrix(
     psi: np.ndarray,
     o_points: Optional[List[Opoint]] = None,
     x_points: Optional[List[Xpoint]] = None,
+    *,
     double_null: bool = False,
     psi_n_tol: float = 1e-6,
 ) -> Tuple[Coordinates, Union[Coordinates, List[Coordinates]]]:

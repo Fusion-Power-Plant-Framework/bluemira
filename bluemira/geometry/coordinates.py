@@ -568,7 +568,7 @@ def get_angle_between_points(p0: np.ndarray, p1: np.ndarray, p2: np.ndarray) -> 
 
 
 def get_angle_between_vectors(
-    v1: np.ndarray, v2: np.ndarray, signed: bool = False
+    v1: np.ndarray, v2: np.ndarray, *, signed: bool = False
 ) -> float:
     """
     Angle between vectors. Will return the signed angle if specified.
@@ -775,7 +775,10 @@ def check_linesegment(
 
 @nb.jit(cache=True, nopython=True)
 def in_polygon(
-    x: float, z: float, poly: np.ndarray, include_edges: bool = False
+    x: float,
+    z: float,
+    poly: np.ndarray,
+    include_edges: bool = False,  # noqa: FBT001, FBT002
 ) -> bool:
     """
     Determine if a point (x, z) is inside a 2-D polygon.
@@ -822,7 +825,9 @@ def in_polygon(
 
 @nb.jit(cache=True, nopython=True)
 def polygon_in_polygon(
-    poly1: np.ndarray, poly2: np.ndarray, include_edges: bool = False
+    poly1: np.ndarray,
+    poly2: np.ndarray,
+    include_edges: bool = False,  # noqa: FBT001, FBT002
 ) -> np.ndarray:
     """
     Determine what points of a 2-D polygon are inside another 2-D polygon.
@@ -1671,7 +1676,7 @@ def _intersect_count(
 
 
 def join_intersect(
-    coords1: Coordinates, coords2: Coordinates, get_arg: bool = False
+    coords1: Coordinates, coords2: Coordinates, *, get_arg: bool = False
 ) -> Optional[List[int]]:
     """
     Add the intersection points between coords1 and coords2 to coords1.

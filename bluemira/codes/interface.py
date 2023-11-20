@@ -183,7 +183,7 @@ class CodesTeardown(CodesTask):
     """
 
     def _update_params_with_outputs(
-        self, outputs: Dict[str, float], recv_all: bool = False
+        self, outputs: Dict[str, float], *, recv_all: bool = False
     ):
         """
         Update this task's parameters with the external code's outputs.
@@ -206,11 +206,13 @@ class CodesTeardown(CodesTask):
             parameter, or the output maps to a bluemira parameter that
             does not exist in this object's ParameterFrame.
         """
-        mapped_outputs = self._map_external_outputs_to_bluemira_params(outputs, recv_all)
+        mapped_outputs = self._map_external_outputs_to_bluemira_params(
+            outputs, recv_all=recv_all
+        )
         self.params.update_values(mapped_outputs, source=self._name)
 
     def _map_external_outputs_to_bluemira_params(
-        self, external_outputs: Dict[str, Any], recv_all: bool
+        self, external_outputs: Dict[str, Any], *, recv_all: bool
     ) -> Dict[str, Dict[str, Any]]:
         """
         Loop through external outputs, find the corresponding bluemira

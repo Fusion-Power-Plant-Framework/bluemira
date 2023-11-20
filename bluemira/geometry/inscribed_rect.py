@@ -121,8 +121,8 @@ def inscribed_rect_in_poly(
         coordinates,
         [x_point, z_point],
         aspectratio,
-        convex,
-        [xx_plane, zz_plane, xz_plane, zx_plane],
+        convex=convex,
+        planes=[xx_plane, zz_plane, xz_plane, zx_plane],
     )
 
     dx, dz = getdxdz()
@@ -170,6 +170,7 @@ class _GetDxDz:
         coords: Coordinates,
         point: Tuple[float, float],
         aspectratio: float,
+        *,
         convex: bool,
         planes: List[BluemiraPlane],
     ):

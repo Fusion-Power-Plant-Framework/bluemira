@@ -114,6 +114,7 @@ class NloptOptimiser(Optimiser):
         df_objective: Optional[OptimiserCallable] = None,
         opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
         opt_parameters: Optional[Mapping[str, Any]] = None,
+        *,
         keep_history: bool = False,
     ):
         opt_conditions = {} if opt_conditions is None else opt_conditions

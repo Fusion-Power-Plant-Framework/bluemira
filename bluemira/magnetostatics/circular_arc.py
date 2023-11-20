@@ -799,7 +799,7 @@ class CircularArcCurrentSource(RectangularCrossSectionCurrentSource):
 
         return np.array([self._local_to_global(p) for p in points], dtype=object)
 
-    def plot(self, ax: Optional[plt.Axes] = None, show_coord_sys: bool = False):
+    def plot(self, ax: Optional[plt.Axes] = None, *, show_coord_sys: bool = False):
         """
         Plot the CircularArcCurrentSource.
 

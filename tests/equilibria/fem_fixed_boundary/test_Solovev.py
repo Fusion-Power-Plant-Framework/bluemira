@@ -115,7 +115,7 @@ class Solovev:
         m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
         return 2 * np.pi * np.sum(psi_func(point) * m)
 
-    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
+    def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, *, tofill=True):
         """
         Plot psi
         """

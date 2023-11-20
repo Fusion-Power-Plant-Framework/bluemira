@@ -99,6 +99,7 @@ class OptVariable:
         value: float,
         lower_bound: float,
         upper_bound: float,
+        *,
         fixed: bool = False,
         description: Optional[str] = None,
     ):
@@ -162,6 +163,7 @@ class OptVariable:
         value: Optional[float] = None,
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
+        *,
         strict_bounds: bool = True,
     ):
         """
@@ -319,13 +321,14 @@ def ov(
     value: float,
     lower_bound: float,
     upper_bound: float,
+    *,
     fixed: bool = False,
     description: Optional[str] = None,
 ):
     """Field factory for OptVariable"""
     return field(
         default_factory=lambda: OptVariable(
-            name, value, lower_bound, upper_bound, fixed, description
+            name, value, lower_bound, upper_bound, fixed=fixed, description=description
         )
     )
 
@@ -393,6 +396,7 @@ class OptVariablesFrame:
         value: Optional[float] = None,
         lower_bound: Optional[float] = None,
         upper_bound: Optional[float] = None,
+        *,
         fixed: bool = False,
         strict_bounds: bool = True,
     ):
@@ -425,11 +429,12 @@ class OptVariablesFrame:
             )
             opt_var.fix(value)
         else:
-            opt_var.adjust(value, lower_bound, upper_bound, strict_bounds)
+            opt_var.adjust(value, lower_bound, upper_bound, strict_bounds=strict_bounds)
 
     def adjust_variables(
         self,
         var_dict: Optional[VarDictT] = None,
+        *,
         strict_bounds=True,
     ):
         """
@@ -446,19 +451,19 @@ class OptVariablesFrame:
         """
         if var_dict is not None:
             for k, v in var_dict.items():
-                args = [
-                    v.get("value", None),
-                    v.get("lower_bound", None),
-                    v.get("upper_bound", None),
-                    v.get("fixed", None),
-                ]
-                if all(i is None for i in args):
+                kwargs = {
+                    "value": v.get("value", None),
+                    "lower_bound": v.get("lower_bound", None),
+                    "upper_bound": v.get("upper_bound", None),
+                    "fixed": v.get("fixed", None),
+                }
+                if all(i is None for i in kwargs.values()):
                     raise OptVariablesError(
                         "When adjusting variables in an OptVariableFrame instance, the"
                         " dictionary must be of the form: {'var_name': {'value': v,"
                         " 'lower_bound': lb, 'upper_bound': ub}, ...}"
                     )
-                self.adjust_variable(k, *args, strict_bounds=strict_bounds)
+                self.adjust_variable(k, **kwargs, strict_bounds=strict_bounds)
 
     def fix_variable(self, name: str, value: Optional[float] = None):
         """
