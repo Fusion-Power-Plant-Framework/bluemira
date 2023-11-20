@@ -573,7 +573,7 @@ class Reactor(BaseManager):
         )
         if not comp_copy.children:
             raise ComponentError(
-                "The react has no components defined for the given "
+                "The reactor has no components defined for the given "
                 "dimension(s) and/or filter."
             )
         # if "xyz" is requested, construct the 3d cad
