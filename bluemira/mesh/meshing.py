@@ -685,14 +685,9 @@ class _FreeCADGmsh:
     @staticmethod
     def _fragment(
         dim: Iterable[int] = (2, 1, 0),
-<<<<<<< HEAD
-        all_ent: Optional[list[int]] = None,
-        tools: Optional[list] = None,
-        *,
-=======
         all_ent: list[int] | None = None,
         tools: list | None = None,
->>>>>>> cad43301 (🚨 Ruff typing autofixes)
+        *,
         remove_object: bool = True,
         remove_tool: bool = True,
     ):

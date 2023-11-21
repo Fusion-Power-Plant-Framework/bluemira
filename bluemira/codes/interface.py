@@ -187,7 +187,7 @@ class CodesTeardown(CodesTask):
     """
 
     def _update_params_with_outputs(
-        self, outputs: dict[str, float], recv_all: bool = False
+        self, outputs: dict[str, float], *, recv_all: bool = False
     ):
         """
         Update this task's parameters with the external code's outputs.

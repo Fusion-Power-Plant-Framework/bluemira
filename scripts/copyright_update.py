@@ -22,11 +22,12 @@
 Update copyright on files
 """
 
+from __future__ import annotations
+
 import fileinput
 from argparse import ArgumentParser
 from datetime import date
 from sys import exit
-from typing import List
 
 
 def arguments():
@@ -46,7 +47,7 @@ def arguments():
     return args.files
 
 
-def edit_files(files: List[str], copyright_line: str):
+def edit_files(files: list[str], copyright_line: str):
     """
     Edit files in place
     """

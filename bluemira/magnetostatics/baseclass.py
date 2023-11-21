@@ -261,11 +261,7 @@ class SourceGroup(ABC):
             source.rotate(angle, axis)
         self.points = self.points @ rotation_matrix(angle, axis)
 
-<<<<<<< HEAD
-    def plot(self, ax: Optional[Axes] = None, *, show_coord_sys: bool = False):
-=======
-    def plot(self, ax: Axes | None = None, show_coord_sys: bool = False):
->>>>>>> cad43301 (🚨 Ruff typing autofixes)
+    def plot(self, ax: Axes | None = None, *, show_coord_sys: bool = False):
         """
         Plot the MultiCurrentSource.
 

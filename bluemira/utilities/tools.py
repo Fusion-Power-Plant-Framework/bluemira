@@ -415,8 +415,8 @@ def set_random_seed(seed_number: int):
 
 
 def compare_dicts(
-    d1: Dict[str, Any],
-    d2: Dict[str, Any],
+    d1: dict[str, Any],
+    d2: dict[str, Any],
     *,
     almost_equal: bool = False,
     verbose: bool = True,
