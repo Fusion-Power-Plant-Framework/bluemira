@@ -166,7 +166,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             dpsi_dx = self.psi.dx(0)
             dpsi_dz = self.psi.dx(1)
             self._grad_psi = dolfin.project(dolfin.as_vector((dpsi_dx, dpsi_dz)), w)
-            self._grad_psi.set_allow_extrapolation(True)
+            self._grad_psi.set_allow_extrapolation(True)  # noqa: FBT003
         return self._grad_psi(point)
 
     @property
@@ -325,11 +325,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def solve(
         self,
+        *,
         plot: bool = False,
         debug: bool = False,
         gif: bool = False,
         figname: Optional[str] = None,
-        *,
         autoclose_plot: bool = True,
     ) -> FixedBoundaryEquilibrium:
         """
@@ -367,7 +367,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         if plot:
             plot_defaults()
-            f, ax, cax = self._setup_plot(debug)
+            f, ax, cax = self._setup_plot(debug=debug)
 
         diff = np.zeros(len(points))
         for i in range(1, self.max_iter + 1):
@@ -375,7 +375,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             prev = np.array([self.psi_norm_2d(p) for p in points])
 
             if plot:
-                self._plot_current_iteration(ax, cax, i, points, prev, diff, debug)
+                self._plot_current_iteration(ax, cax, i, points, prev, diff, debug=debug)
                 if debug or gif:
                     save_figure(
                         f,
@@ -427,7 +427,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
 
     @staticmethod
-    def _setup_plot(debug: bool):
+    def _setup_plot(*, debug: bool = False):
         n_col = 3 if debug else 2
         fig, ax = plt.subplots(1, n_col, figsize=(18, 10))
         plt.subplots_adjust(wspace=0.5)
@@ -447,7 +447,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         points: Iterable,
         prev: np.ndarray,
         diff: np.ndarray,
-        debug: bool,
+        *,
+        debug: bool = False,
     ):
         for axis in ax:
             axis.clear()

@@ -333,6 +333,7 @@ class Mesh:
         dim: Iterable[int] = (2, 1, 0),
         all_ent=None,
         tools: Optional[list] = None,
+        *,
         remove_object: bool = True,
         remove_tool: bool = True,
     ):
@@ -340,7 +341,11 @@ class Mesh:
         Apply the boolean fragment operation.
         """
         all_ent, oo, oov = _FreeCADGmsh._fragment(
-            dim, all_ent, [] if tools is None else tools, remove_object, remove_tool
+            dim,
+            all_ent,
+            [] if tools is None else tools,
+            remove_object=remove_object,
+            remove_tool=remove_tool,
         )
         Mesh.__iterate_gmsh_dict(buffer, _FreeCADGmsh._map_mesh_dict, all_ent, oov)
 
@@ -430,7 +435,9 @@ class Mesh:
 
                     # fragment points_tag and curves
                     all_ent = dict_gmsh["points_tag"] + dict_gmsh["curve_tag"]
-                    self.__apply_fragment(buffer, all_ent, [], False, False)
+                    self.__apply_fragment(
+                        buffer, all_ent, [], remove_object=False, remove_tool=False
+                    )
             else:
                 raise NotImplementedError(f"Serialization non implemented for {type_}")
 
@@ -680,6 +687,7 @@ class _FreeCADGmsh:
         dim: Iterable[int] = (2, 1, 0),
         all_ent: Optional[List[int]] = None,
         tools: Optional[list] = None,
+        *,
         remove_object: bool = True,
         remove_tool: bool = True,
     ):
@@ -750,7 +758,7 @@ class _FreeCADGmsh:
         gmsh.model.mesh.setSize(dim_tags, size)
 
     @staticmethod
-    def _get_boundary(dimtags, combined=False, recursive=False):
+    def _get_boundary(dimtags, *, combined=False, recursive=False):
         return gmsh.model.getBoundary(dimtags, combined, recursive)
 
 

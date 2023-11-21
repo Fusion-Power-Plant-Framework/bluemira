@@ -103,7 +103,7 @@ def msh_to_xdmf(
 
 
 def import_mesh(
-    file_prefix: str = "mesh", subdomains: bool = False, directory: str = "."
+    file_prefix: str = "mesh", *, subdomains: bool = False, directory: str = "."
 ) -> Tuple[Mesh, MeshFunctionSizet, Optional[MeshFunctionSizet], dict]:
     """
     Import a dolfin mesh.

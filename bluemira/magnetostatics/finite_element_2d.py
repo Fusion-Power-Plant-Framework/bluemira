@@ -245,7 +245,7 @@ class FemMagnetostatic2d:
 
         # initialize solution
         self.psi = dolfin.Function(self.V)
-        self.psi.set_allow_extrapolation(True)
+        self.psi.set_allow_extrapolation(True)  # noqa: FBT003
 
         # initialize g to zero
         self.g = dolfin.Function(self.V)

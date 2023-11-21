@@ -51,6 +51,7 @@ def plot_scalar_field(
     data: np.ndarray,
     levels: int = 20,
     ax: Optional[Axes] = None,
+    *,
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
@@ -110,6 +111,7 @@ def plot_profile(
     var_name: str,
     var_unit: str,
     ax: Optional[Axes] = None,
+    *,
     show: bool = True,
 ):
     """
@@ -362,6 +364,7 @@ def calculate_plasma_shape_params(
     psi_norm_func: Callable[[np.ndarray], np.ndarray],
     mesh: dolfin.Mesh,
     psi_norm: float,
+    *,
     plot: bool = False,
 ) -> Tuple[float, float, float]:
     """
@@ -531,7 +534,7 @@ def refine_mesh(
     """
     for _ in range(num_levels):
         cell_markers = dolfin.MeshFunction("bool", mesh, mesh.topology().dim())
-        cell_markers.set_all(False)
+        cell_markers.set_all(False)  # noqa: FBT003
         for cell in dolfin.cells(mesh):
             if _cell_near_point(cell, refine_point, distance):
                 cell_markers[cell.index()] = True
