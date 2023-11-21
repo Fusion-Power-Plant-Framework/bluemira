@@ -159,7 +159,7 @@ class ParameterMapping:
         """
         return repr(self.to_dict())
 
-    def __setattr__(self, attr: str, value: bool | str):
+    def __setattr__(self, attr: str, value: bool | str):  # noqa: FBT001
         """
         Protect against additional attributes
 

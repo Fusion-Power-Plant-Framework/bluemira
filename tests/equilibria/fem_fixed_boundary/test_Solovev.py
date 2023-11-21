@@ -254,7 +254,7 @@ class TestSolovevZheng:
         # boundary conditions
         tdim = mesh.topology.dim
         facets = dmesh.locate_entities_boundary(
-            mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
+            mesh, tdim - 1, lambda x: np.ones(x.shape[1], dtype=bool)
         )
         dirichlet_bcs = fem.dirichletbc(
             psi_exact_fun, fem.locate_dofs_topological(gs_solver.V, tdim - 1, facets)

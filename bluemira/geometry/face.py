@@ -134,7 +134,7 @@ class BluemiraFace(BluemiraGeo):
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
 
     def discretize(
-        self, ndiscr: int = 100, dl: float | None = None, *, byedges: bool = False
+        self, ndiscr: int = 100, *, byedges: bool = False, dl: float | None = None
     ) -> np.ndarray:
         """
         Make an array of the geometry.

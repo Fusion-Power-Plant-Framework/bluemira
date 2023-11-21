@@ -357,6 +357,7 @@ class Mesh:
         dim: Iterable[int] = (2, 1, 0),
         all_ent=None,
         tools: list | None = None,
+        *,
         remove_object: bool = True,
         remove_tool: bool = True,
     ):
@@ -364,7 +365,11 @@ class Mesh:
         Apply the boolean fragment operation.
         """
         all_ent, _oo, oov = _FreeCADGmsh._fragment(
-            dim, all_ent, [] if tools is None else tools, remove_object, remove_tool
+            dim,
+            all_ent,
+            [] if tools is None else tools,
+            remove_object=remove_object,
+            remove_tool=remove_tool,
         )
         self.__iterate_gmsh_dict(buffer, _FreeCADGmsh._map_mesh_dict, all_ent, oov)
 
@@ -399,7 +404,7 @@ class Mesh:
                     self.__iterate_gmsh_dict(item, function, *args)
 
     @staticmethod
-    def __buffer_loop(buffer: dict, type_check: str, raise_error=False):
+    def __buffer_loop(buffer: dict, type_check: str, *, raise_error=False):
         for type_, value in buffer.items():
             if type_ != type_check:
                 if raise_error:
@@ -441,8 +446,8 @@ class Mesh:
                 buffer,
                 dict_gmsh[MeshTags.POINTS] + dict_gmsh[MeshTags.CURVE],
                 [],
-                False,
-                False,
+                remove_object=False,
+                remove_tool=False,
             )
 
     def __convert_face_to_gmsh(self, buffer: dict, dim: int):
@@ -668,6 +673,7 @@ class _FreeCADGmsh:
         dim: int | Iterable[int] = (2, 1, 0),
         all_ent: list[int] | None = None,
         tools: list | None = None,
+        *,
         remove_object: bool = True,
         remove_tool: bool = True,
     ) -> tuple[list[int], list[tuple], list[list[tuple]]]:
@@ -730,7 +736,7 @@ class _FreeCADGmsh:
         gmsh.model.mesh.setSize(dim_tags, size)
 
     @staticmethod
-    def _get_boundary(dimtags, combined=False, recursive=False):
+    def _get_boundary(dimtags, *, combined=False, recursive=False):
         return gmsh.model.getBoundary(dimtags, combined, recursive)
 
 
