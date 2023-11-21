@@ -105,7 +105,7 @@ class FemMagnetostatic2d:
         if boundaries is None:
             tdim = self.mesh.topology.dim
             self.boundaries = locate_entities_boundary(
-                self.mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
+                self.mesh, tdim - 1, lambda x: np.ones(x.shape[1], dtype=bool)
             )
         else:
             self.boundaries = boundaries
@@ -162,7 +162,7 @@ class FemMagnetostatic2d:
         if dirichlet_bc_function is None:
             tdim = self.mesh.topology.dim
             facets = locate_entities_boundary(
-                self.mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
+                self.mesh, tdim - 1, lambda x: np.ones(x.shape[1], dtype=bool)
             )
             dofs = locate_dofs_topological(self.V, tdim - 1, facets)
             bcs = [dirichletbc(ScalarType(0), dofs, self.V)]

@@ -1677,7 +1677,7 @@ def sweep_shape(
             " produce unexpected results."
         )
 
-    result = path.makePipeShell(profiles, isSolid=True, isFrenet=frenet)
+    result = path.makePipeShell(profiles, True, frenet)  # noqa: FBT003
 
     solid_result = apiSolid(result)
     if solid:
@@ -1893,7 +1893,7 @@ def point_inside_shape(point: Iterable[float], shape: apiShape) -> bool:
     Whether or not the point is inside the shape
     """
     vector = apiVector(*point)
-    return shape.isInside(vector, EPS_FREECAD, checkFace=True)
+    return shape.isInside(vector, EPS_FREECAD, True)  # noqa: FBT003
 
 
 # ======================================================================================

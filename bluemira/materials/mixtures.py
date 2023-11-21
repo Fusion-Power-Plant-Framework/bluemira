@@ -215,7 +215,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         for mat in material_dict[name]["materials"]:
             if isinstance(mat, str):
                 del mat_dict["materials"][mat]
-                material_inst = material_cache.get_material(mat, False)
+                material_inst = material_cache.get_material(mat, clone=False)
                 material_value = material_dict[name]["materials"][mat]
                 mat_dict["materials"][material_inst] = material_value
 

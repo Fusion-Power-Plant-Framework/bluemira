@@ -44,6 +44,7 @@ def plot_scalar_field(
     data: np.ndarray,
     levels: int = 20,
     ax: Axes | None = None,
+    *,
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
@@ -103,6 +104,7 @@ def plot_profile(
     var_name: str,
     var_unit: str,
     ax: Axes | None = None,
+    *,
     show: bool = True,
 ):
     """
@@ -390,6 +392,7 @@ def calculate_plasma_shape_params(
     psi_norm_func: Callable[[np.ndarray], np.ndarray],
     mesh: dolfinx.mesh.Mesh,
     psi_norm: float,
+    *,
     plot: bool = False,
 ) -> tuple[float, float, float]:
     """

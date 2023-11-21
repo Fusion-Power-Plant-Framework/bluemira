@@ -336,11 +336,11 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     def solve(
         self,
+        *,
         plot: bool = False,
         debug: bool = False,
         gif: bool = False,
         figname: str | None = None,
-        *,
         autoclose_plot: bool = True,
     ) -> FixedBoundaryEquilibrium:
         """
@@ -378,7 +378,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         if plot:
             plot_defaults()
-            f, ax, cax = self._setup_plot(debug)
+            f, ax, cax = self._setup_plot(debug=debug)
 
         diff = np.zeros(len(points))
         for i in range(1, self.max_iter + 1):
@@ -386,7 +386,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             prev = self.psi_norm_2d(points)
 
             if plot:
-                self._plot_current_iteration(ax, cax, i, points, prev, diff, debug)
+                self._plot_current_iteration(ax, cax, i, points, prev, diff, debug=debug)
                 if debug or gif:
                     save_figure(
                         f,
@@ -438,7 +438,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
 
     @staticmethod
-    def _setup_plot(debug: bool) -> tuple[Figure, np.ndarray, list]:
+    def _setup_plot(*, debug: bool) -> tuple[Figure, np.ndarray, list]:
         n_col = 3 if debug else 2
         fig, ax = plt.subplots(1, n_col, figsize=(18, 10))
         plt.subplots_adjust(wspace=0.5)
@@ -458,7 +458,8 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         points: Iterable,
         prev: np.ndarray,
         diff: np.ndarray,
-        debug: bool,
+        *,
+        debug: bool = False,
     ):
         for axis in ax:
             axis.clear()

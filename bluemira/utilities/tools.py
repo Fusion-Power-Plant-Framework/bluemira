@@ -465,7 +465,14 @@ def compare_dicts(
     # Define functions to use for comparison in either the array, dict, or
     # numeric cases.
     def dict_eq(value_1, value_2):
-        return compare_dicts(value_1, value_2, almost_equal, verbose, rtol, atol)
+        return compare_dicts(
+            value_1,
+            value_2,
+            almost_equal=almost_equal,
+            verbose=verbose,
+            rtol=rtol,
+            atol=atol,
+        )
 
     def array_almost_eq(val1, val2):
         return np.allclose(val1, val2, rtol, atol)
