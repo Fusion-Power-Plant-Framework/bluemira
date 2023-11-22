@@ -458,7 +458,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         opt_parameters: Dict[str, float],
         params: ParameterFrame,
         wp_cross_section: BluemiraWire,
-        separatrix: BluemiraWire,
+        ripple_wire: Optional[BluemiraWire] = None,
         keep_out_zone: Optional[BluemiraWire] = None,
         rip_con_tol: float = 1e-3,
         koz_con_tol: float = 1e-3,
@@ -467,15 +467,26 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         n_rip_points: int = 100,
         n_koz_points: int = 100,
         ripple_selector: Optional[RipplePointSelector] = None,
+        separatrix: Optional[BluemiraWire] = None,
     ):
         self.parameterisation = parameterisation
         self.params = make_parameter_frame(params, RippleConstrainedLengthGOPParams)
-        self.separatrix = separatrix
         self.wp_cross_section = wp_cross_section
         self.algorithm = algorithm
         self.opt_parameters = opt_parameters
         self.opt_conditions = opt_conditions
-
+        if separatrix is not None:
+            if ripple_wire is None:
+                ripple_wire = separatrix
+            warnings.warn(
+                "Argument 'separatrix' is deprecated, "
+                "argument 'ripple_wire' is used instead.",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
+        elif ripple_wire is None:
+            raise ValueError("No value for ripple_wire found!")
+        self.ripple_wire = ripple_wire
         if keep_out_zone:
             self._keep_out_zone = [
                 KeepOutZone(
@@ -500,7 +511,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             )
             ripple_selector = EquispacedSelector(n_rip_points)
 
-        ripple_selector.set_wire(self.separatrix)
+        ripple_selector.set_wire(self.ripple_wire)
         self.ripple_values = None
 
         self.solver = ParameterisedRippleSolver(
@@ -571,7 +582,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             ax = plt.gca()
 
         plot_2d(
-            self.separatrix,
+            self.ripple_wire,
             ax=ax,
             show=False,
             wire_options={"color": "red", "linewidth": "0.5"},
