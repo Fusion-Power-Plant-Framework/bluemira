@@ -479,14 +479,14 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             if ripple_wire is None:
                 ripple_wire = separatrix
             warnings.warn(
-                    "Argument 'separatrix' is deprecated, "
-                    "argument 'ripple_wire' is used instead.",
-                    category=DeprecationWarning,
-                    stacklevel=2,
-                )
+                "Argument 'separatrix' is deprecated, "
+                "argument 'ripple_wire' is used instead.",
+                category=DeprecationWarning,
+                stacklevel=2,
+            )
         elif ripple_wire is None:
             raise ValueError("No value for ripple_wire found!")
-        self.ripple_wire = ripple_wire      
+        self.ripple_wire = ripple_wire
         if keep_out_zone:
             self._keep_out_zone = [
                 KeepOutZone(
