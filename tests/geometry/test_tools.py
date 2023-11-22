@@ -659,15 +659,15 @@ class TestSavingCAD:
         self.obj = make_circle(5, axis=(1, 1, 1))
 
     @pytest.mark.xfail(reason="Unknown, passes locally")
-    def test_save_as_STP(self, tmpdir):
-        self._save_and_check(self.obj, save_as_STP, tmpdir)
+    def test_save_as_STP(self, tmp_path):
+        self._save_and_check(self.obj, save_as_STP, tmp_path)
 
-    def test_save_cad(self, tmpdir):
-        self._save_and_check(self.obj, save_cad, tmpdir)
+    def test_save_cad(self, tmp_path):
+        self._save_and_check(self.obj, save_cad, tmp_path)
 
-    def _save_and_check(self, obj, save_func, tmpdir):
+    def _save_and_check(self, obj, save_func, tmp_path):
         # Can't mock out as written by freecad not python
-        self.generated_file = tmpdir.join(self.generated_file)
+        self.generated_file = tmp_path / self.generated_file
         save_func(obj, filename=str(self.generated_file).split(".")[0])
 
         with open(self.test_file) as tf:

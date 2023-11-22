@@ -48,7 +48,7 @@ from tabulate import tabulate
 
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.constants import EPS, MU_0
-from bluemira.base.file import get_bluemira_path, try_get_bluemira_path
+from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.plasmod import plot_default_profiles
@@ -236,6 +236,7 @@ def solve_transport_fixed_boundary(
     num_levels: int = 2,
     distance: float = 1.0,
     ny_fs_min: int = 40,
+    directory: str = "",
 ):
     """
     Solve the plasma fixed boundary problem using delta95 and kappa95 as target
@@ -291,7 +292,6 @@ def solve_transport_fixed_boundary(
     kappa_95 = kappa95_t
     delta_95 = delta95_t
 
-    directory = get_bluemira_path("", subfolder="generated_data")
     mesh_name_msh = mesh_filename + ".msh"
 
     paramet_params = PlasmaFixedBoundaryParams(
