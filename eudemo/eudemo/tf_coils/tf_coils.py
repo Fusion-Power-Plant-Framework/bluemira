@@ -346,7 +346,7 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
             self.opt_parameters,
             self.params,
             wp_cross_section=wp_cross_section,
-            separatrix=self.separatrix,
+            ripple_wire=self.separatrix,
             keep_out_zone=(
                 None
                 if self.keep_out_zone is None
