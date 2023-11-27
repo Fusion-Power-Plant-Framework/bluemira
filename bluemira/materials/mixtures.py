@@ -10,74 +10,67 @@ Material mixture utility classes
 
 from __future__ import annotations
 
-import copy
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, List, Optional, Union
 
 if TYPE_CHECKING:
-    from bluemira.materials.cache import MaterialCache
+    from bluemira.materials.material import MassFractionMaterial
 
-import warnings
 
 import numpy as np
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=UserWarning)
-    import neutronics_material_maker as nmm
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.materials.constants import T_DEFAULT
 from bluemira.materials.error import MaterialsError
-from bluemira.materials.material import SerialisedMaterial
 
 
-class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
+class HomogenisedMixture:
     """
     Inherits and does some dropping of 0 fractions (avoid touching nmm)
     """
 
-    materials: dict[str, float]
-    temperature_in_K: float  # noqa: N815
-    enrichment: float
-
-    default_temperature = T_DEFAULT
-    _material_classes = ()
-
     def __init__(
         self,
         name: str,
-        materials: dict[str, float],
-        temperature_in_K: float | None = None,  # noqa: N803
-        enrichment: float | None = None,
-        zaid_suffix: str | None = None,
-        material_id: str | None = None,
+        materials: List[Union[MassFractionMaterial, HomogenisedMixture]],
+        fracs: List[float],
+        material_id: Optional[int] = None,
+        percent_type="vo",
+        packing_fraction: Optional[float] = 1.0,
     ):
-        if temperature_in_K is None:
-            temperature_in_K = self.default_temperature  # noqa: N806
-
-        mats = []
-        for mat in materials:
-            mat.temperature = temperature_in_K
-            if "enrichment" in mat.__class__.__annotations__:
-                mat.enrichment = enrichment
-            mats += [mat]
-
-        super().__init__(
-            material_tag=name,
-            materials=mats,
-            fracs=list(materials.values()),
-            percent_type="vo",
-            temperature_in_K=temperature_in_K,
-            zaid_suffix=zaid_suffix,
-            material_id=material_id,
-        )
-
         self.name = name
+        self.material_id = material_id
+        self.materials = materials
+        self.fracs = fracs
+        self.percent_type = percent_type
+        self.packing_fraction = packing_fraction
 
     def __str__(self) -> str:
         """
         Get the name of the mixture.
         """
         return self.name
+
+    def to_openmc_material(self, temperature: float = T_DEFAULT):
+        """
+        Convert the mixture to an openmc material.
+        """
+        # Convert the constituent materials to openmc materials
+        openmc_materials = [
+            mat.to_openmc_material(temperature) for mat in self.materials
+        ]
+
+        from neutronics_material_maker import Material  # noqa: PLC0415
+
+        # Create the mixture
+        return Material.from_mixture(
+            name=self.name,
+            material_id=self.material_id,
+            materials=openmc_materials,
+            fracs=self.fracs,
+            percent_type=self.percent_type,
+            packing_fraction=self.packing_fraction,
+            temperature=temperature,
+        ).openmc_material
 
     def _calc_homogenised_property(self, prop: str, temperature: float) -> float:
         """
@@ -188,35 +181,35 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         """
         return self._calc_homogenised_property("Sy", temperature)
 
-    @classmethod
-    def from_dict(
-        cls, name: str, material_dict: dict[str, Any], material_cache: MaterialCache
-    ) -> SerialisedMaterial:
-        """
-        Generate an instance of the mixture from a dictionary of materials.
+    # @classmethod
+    # def from_dict(
+    #     cls, name: str, material_dict: Dict[str, Any], material_cache: MaterialCache
+    # ) -> SerialisedMaterial:
+    #     """
+    #     Generate an instance of the mixture from a dictionary of materials.
 
-        Parameters
-        ----------
-        name:
-            The name of the mixture
-        materials_dict:
-            The dictionary defining this and any additional mixtures
-        material_cache:
-            The cache to load the constituent materials from
+    #     Parameters
+    #     ----------
+    #     name:
+    #         The name of the mixture
+    #     materials_dict:
+    #         The dictionary defining this and any additional mixtures
+    #     material_cache:
+    #         The cache to load the constituent materials from
 
-        Returns
-        -------
-        The mixture
-        """
-        mat_dict = copy.deepcopy(material_dict[name])
-        if "materials" not in material_dict[name]:
-            raise MaterialsError("Mixture must define constituent materials.")
+    #     Returns
+    #     -------
+    #     The mixture
+    #     """
+    #     mat_dict = copy.deepcopy(material_dict[name])
+    #     if "materials" not in material_dict[name]:
+    #         raise MaterialsError("Mixture must define constituent materials.")
 
-        for mat in material_dict[name]["materials"]:
-            if isinstance(mat, str):
-                del mat_dict["materials"][mat]
-                material_inst = material_cache.get_material(mat, clone=False)
-                material_value = material_dict[name]["materials"][mat]
-                mat_dict["materials"][material_inst] = material_value
+    #     for mat in material_dict[name]["materials"]:
+    #         if isinstance(mat, str):
+    #             del mat_dict["materials"][mat]
+    #             material_inst = material_cache.get_material(mat, False)
+    #             material_value = material_dict[name]["materials"][mat]
+    #             mat_dict["materials"][material_inst] = material_value
 
-        return super().from_dict(name, {name: mat_dict})
+    #     return super().from_dict(name, {name: mat_dict})
