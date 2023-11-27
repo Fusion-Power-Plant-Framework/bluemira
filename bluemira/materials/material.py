@@ -467,7 +467,7 @@ class Void(SerialisedMaterial, nmm.Material):
         return 0.0
 
 
-class MassFractionMaterial(SerialisedMaterial, nmm.Material):
+class MassFractionMaterial:
     """
     Mass fraction material
 
@@ -537,12 +537,13 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
 
     # Properties to interface with neutronics material maker
     name: str
+    material_id: Optional[int]
+
     elements: Dict[str, float]
-    density: MaterialProperty
+    nuclides: Dict[str, float]
+
+    density_prop: MaterialProperty
     density_unit: str
-    temperature_in_K: float  # noqa: N815
-    zaid_suffix: str
-    material_id: str
 
     # Engineering properties
     poissons_ratio: MaterialProperty
@@ -562,12 +563,16 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
     def __init__(
         self,
         name: str,
-        elements: Dict[str, float],
-        density: Optional[MaterialProperty] = None,
+        material_id: Optional[int] = None,
+        percent_type: str = "wo",
         density_unit: str = "kg/m3",
+        density: Optional[Union[MaterialProperty, str, float]] = None,
+        elements: Optional[Dict[str, float]] = None,
+        nuclides: Optional[Dict[str, float]] = None,
         temperature_in_K: float = T_DEFAULT,  # noqa: N803
-        zaid_suffix: Optional[str] = None,
-        material_id: Optional[float] = None,
+        enrichment: Optional[Union[MaterialProperty, str, float]] = None,
+        enrichment_target: Optional[str] = None,
+        enrichment_type: Optional[str] = None,
         poissons_ratio: Optional[MaterialProperty] = None,
         thermal_conductivity: Optional[MaterialProperty] = None,
         youngs_modulus: Optional[MaterialProperty] = None,
@@ -588,29 +593,32 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         if density_unit not in {"kg/m3", "g/cm3", "g/cc"}:
             raise MaterialsError("Density unit must be one of kg/m3, g/cm3, or g/cc")
 
-        if isinstance(density.value, (int, float)):
-            density_val = density.value
-            density_equation = None
-        else:
-            density_val = None
-            density_equation = density.value
-
-        super().__init__(
-            material_tag=name,
-            elements=elements,
-            density=density_val,
-            density_equation=density_equation,
-            density_unit=density_unit,
-            percent_type="wo",
-            temperature_in_K=temperature_in_K,
-            temperature_in_C=to_celsius(temperature_in_K),
-            zaid_suffix=zaid_suffix,
-            material_id=material_id,
-        )
+        if not (elements or nuclides):
+            raise MaterialsError("No elements or nuclides specified.")
 
         self.name = name
 
-        self.density_prop = density
+        # nmm properties
+        self.material_id = material_id
+        self.percent_type = percent_type
+        self.density_unit = density_unit
+        self.elements = elements
+        self.nuclides = nuclides
+        self.enrichment_prop = (
+            MaterialProperty(enrichment)
+            if isinstance(enrichment, (str, float))
+            else enrichment
+        )
+        self.enrichment_target = enrichment_target
+        self.enrichment_type = enrichment_type
+
+        # material props
+        self.density_prop = (
+            density
+            if isinstance(density, MaterialProperty)
+            else MaterialProperty(density)
+        )
+        self.density = _try_calc_property(self, "density_prop", temperature_in_K)
         self.poissons_ratio = poissons_ratio
         self.thermal_conductivity = thermal_conductivity
         self.youngs_modulus = youngs_modulus
@@ -625,14 +633,46 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         self.minimum_ultimate_tensile_stress = minimum_ultimate_tensile_stress
         self.average_ultimate_tensile_stress = average_ultimate_tensile_stress
 
-        if self.density is None:
-            self.density = _try_calc_property(self, "density_prop", temperature_in_K)
-
     def __str__(self) -> str:
         """
         Get a string representation of the MfMaterial.
         """
         return self.name
+
+    def to_openmc_material(self, temperature: float = T_DEFAULT):
+        """
+        Convert the material to an OpenMC material.
+
+        Parameters
+        ----------
+        temperature:
+            The temperature [K].
+
+        Returns
+        -------
+        The OpenMC material.
+        """
+        from neutronics_material_maker import Material  # noqa: PLC0415
+
+        enrichment = (
+            _try_calc_property(self, "enrichment_prop", temperature)
+            if self.enrichment_prop
+            else None
+        )
+
+        return Material(
+            name=self.name,
+            material_id=self.material_id,
+            density=self.density if temperature is None else self.rho(temperature),
+            density_unit=self.density_unit,
+            percent_type=self.percent_type,
+            isotopes=self.nuclides,
+            elements=self.elements,
+            enrichment=enrichment,
+            enrichment_target=self.enrichment_target,
+            enrichment_type=self.enrichment_type,
+            # temperature=temperature, not sure if this is needed
+        ).openmc_material
 
     def mu(self, temperature: float) -> float:
         """

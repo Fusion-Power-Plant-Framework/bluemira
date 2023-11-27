@@ -23,6 +23,7 @@
 from __future__ import annotations
 
 import dataclasses
+from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Union
@@ -31,15 +32,22 @@ import openmc
 from openmc import Material
 
 import bluemira.neutronics.materials_definition as md
+from bluemira.materials.mixtures import HomogenisedMixture
 
 if TYPE_CHECKING:
     from pathlib import Path
 
+    from bluemira.materials.material import MassFractionMaterial
 
-def duplicate_mat_as(mat_to_clone, new_id, new_name) -> Material:
+
+def duplicate_mat_as(
+    mat_to_clone: Union[MassFractionMaterial, HomogenisedMixture],
+    new_id: int,
+    new_name: str,
+) -> Union[MassFractionMaterial, HomogenisedMixture]:
     """Clones and renames an OpenMC material"""
-    new_mat = mat_to_clone.clone()
-    new_mat.id = new_id
+    new_mat = deepcopy(mat_to_clone)
+    new_mat.material_id = new_id
     new_mat.name = new_name
 
     return new_mat
@@ -52,12 +60,12 @@ class ReactorBaseMaterials:
     e.g. inobard material = outboard material etc.
     """
 
-    inb_vv_mat: Material
-    inb_fw_mat: Material
-    inb_bz_mat: Material
-    inb_mani_mat: Material
-    divertor_mat: Material
-    div_fw_mat: Material
+    inb_vv_mat: HomogenisedMixture
+    inb_fw_mat: HomogenisedMixture
+    inb_bz_mat: HomogenisedMixture
+    inb_mani_mat: HomogenisedMixture
+    divertor_mat: HomogenisedMixture
+    div_fw_mat: HomogenisedMixture
 
 
 def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
@@ -76,17 +84,18 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     design of a DCLL blanket for the EUROfusion DEMO power, 24 March 2016
     Using Eurofer instead of SS316LN
     """
-    inb_vv_mat = Material.mix_materials(
+    inb_vv_mat = HomogenisedMixture(
         name="inb_vacuum_vessel",
+        material_id=104,
         materials=[md.eurofer_mat, md.water_mat],
         fracs=[0.8, 0.2],
         percent_type="vo",
     )
-    inb_vv_mat.id = 104
 
     # Making first wall
-    inb_fw_mat = Material.mix_materials(
+    inb_fw_mat = HomogenisedMixture(
         name="inb_first_wall",
+        material_id=101,
         materials=[
             md.tungsten_mat,
             md.eurofer_mat,
@@ -96,25 +105,24 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         fracs=[2.0 / 27.0, 1.5 / 27.0, 12.0 / 27.0, 11.5 / 27.0],
         percent_type="vo",
     )
-    inb_fw_mat.id = 101
 
     # Making blanket
     _PbLi_mat = md.make_PbLi_mat(li_enrich_ao)
-    inb_bz_mat = Material.mix_materials(
+    inb_bz_mat = HomogenisedMixture(
         name="inb_breeder_zone",
+        material_id=102,
         materials=[md.lined_euro_mat, _PbLi_mat],
         fracs=[0.0605 + 0.9395 * 0.05, 0.9395 * 0.95],
         percent_type="vo",
     )
-    inb_bz_mat.id = 102
 
-    inb_mani_mat = Material.mix_materials(
+    inb_mani_mat = HomogenisedMixture(
         name="inb_manifold",
+        material_id=103,
         materials=[md.eurofer_mat, inb_bz_mat],
         fracs=[0.573, 0.426],  # 1% void
         percent_type="vo",
     )
-    inb_mani_mat.id = 103
 
     # Making divertor
     divertor_mat = duplicate_mat_as(inb_vv_mat, 301, "divertor")
@@ -143,22 +151,22 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     HCPB Design Report, 26/07/2019
     WPBB-DEL-BB-1.2.1-T005-D001
     """
-    inb_vv_mat = Material.mix_materials(
+    inb_vv_mat = HomogenisedMixture(
         name="inb_vacuum_vessel",  # optional name of homogeneous material
+        material_id=104,
         materials=[md.eurofer_mat, md.water_mat],
         fracs=[0.6, 0.4],
         percent_type="vo",
     )
-    inb_vv_mat.id = 104
 
     # Making first wall
-    inb_fw_mat = Material.mix_materials(
+    inb_fw_mat = HomogenisedMixture(
         name="inb_first_wall",  # optional name of homogeneous material
+        material_id=101,
         materials=[md.tungsten_mat, md.eurofer_mat, md.he_cool_mat],
         fracs=[2.0 / 27.0, 25.0 * 0.573 / 27.0, 25.0 * 0.427 / 27.0],
         percent_type="vo",
     )
-    inb_fw_mat.id = 101
 
     # Making blanket
     structural_fraction_vo = 0.128
@@ -166,8 +174,9 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     breeder_fraction_vo = 0.103  # 0.163
     helium_fraction_vo = 0.276  # 0.062
 
-    inb_bz_mat = Material.mix_materials(
+    inb_bz_mat = HomogenisedMixture(
         name="inb_breeder_zone",
+        material_id=102,
         materials=[
             md.eurofer_mat,
             md.Be12Ti_mat,
@@ -182,10 +191,10 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         ],
         percent_type="vo",
     )
-    inb_bz_mat.id = 102
 
-    inb_mani_mat = Material.mix_materials(
+    inb_mani_mat = HomogenisedMixture(
         name="inb_manifold",
+        material_id=103,
         materials=[
             md.eurofer_mat,
             md.make_KALOS_ACB_mat(li_enrich_ao),
@@ -194,17 +203,16 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         fracs=[0.4724, 0.0241, 0.5035],
         percent_type="vo",
     )
-    inb_mani_mat.id = 103
 
     # Making divertor
     divertor_mat = duplicate_mat_as(inb_vv_mat, 301, "divertor")
-    div_fw_mat = Material.mix_materials(
+    div_fw_mat = HomogenisedMixture(
         name="div_first_wall",
+        material_id=302,
         materials=[md.tungsten_mat, md.water_mat, md.eurofer_mat],
         fracs=[16.0 / 25.0, 4.5 / 25.0, 4.5 / 25.0],
         percent_type="vo",
     )
-    div_fw_mat.id = 302
     return ReactorBaseMaterials(
         inb_vv_mat=inb_vv_mat,
         inb_fw_mat=inb_fw_mat,
@@ -234,26 +242,27 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     # Divertor definition from Neutronic analyses of the preliminary
     #  design of a DCLL blanket for the EUROfusion DEMO power, 24 March 2016
     # Using Eurofer instead of SS316LN
-    inb_vv_mat = Material.mix_materials(
+    inb_vv_mat = HomogenisedMixture(
         name="inb_vacuum_vessel",
+        material_id=104,
         materials=[md.eurofer_mat, md.water_mat],
         fracs=[0.6, 0.4],
         percent_type="vo",
     )
-    inb_vv_mat.id = 104
 
     # Making first wall
-    inb_fw_mat = Material.mix_materials(
+    inb_fw_mat = HomogenisedMixture(
         name="inb_first_wall",
+        material_id=101,
         materials=[md.tungsten_mat, md.water_mat, md.eurofer_mat],
         fracs=[0.0766, 0.1321, 0.7913],
         percent_type="vo",
     )
-    inb_fw_mat.id = 101
 
     # Making blanket
-    inb_bz_mat = Material.mix_materials(
+    inb_bz_mat = HomogenisedMixture(
         name="inb_breeder_zone",
+        material_id=102,
         materials=[
             md.tungsten_mat,
             _PbLi_mat,
@@ -263,15 +272,14 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         fracs=[0.0004, 0.8238, 0.0176, 0.1582],
         percent_type="vo",
     )
-    inb_bz_mat.id = 102
 
-    inb_mani_mat = Material.mix_materials(
+    inb_mani_mat = HomogenisedMixture(
         name="inb_manifold",
+        material_id=103,
         materials=[_PbLi_mat, md.water_mat, md.eurofer_mat],
         fracs=[0.2129, 0.2514, 0.5357],
         percent_type="vo",
     )
-    inb_mani_mat.id = 103
 
     # Making divertor
     divertor_mat = duplicate_mat_as(md.eurofer_mat, 301, "divertor")
@@ -334,30 +342,40 @@ class MaterialsLibrary:
         elif blanket_type is BlanketType.WCLL:
             base_materials = _make_wcll_mats(li_enrich_ao)
         return cls(
-            inb_vv_mat=base_materials.inb_vv_mat,
-            inb_fw_mat=base_materials.inb_fw_mat,
-            inb_bz_mat=base_materials.inb_bz_mat,
-            inb_mani_mat=base_materials.inb_mani_mat,
-            divertor_mat=base_materials.divertor_mat,
-            div_fw_mat=base_materials.div_fw_mat,
+            inb_vv_mat=base_materials.inb_vv_mat.to_openmc_material(),
+            inb_fw_mat=base_materials.inb_fw_mat.to_openmc_material(),
+            inb_bz_mat=base_materials.inb_bz_mat.to_openmc_material(),
+            inb_mani_mat=base_materials.inb_mani_mat.to_openmc_material(),
+            divertor_mat=base_materials.divertor_mat.to_openmc_material(),
+            div_fw_mat=base_materials.div_fw_mat.to_openmc_material(),
             outb_fw_mat=duplicate_mat_as(
                 base_materials.inb_fw_mat, 201, "outb_first_wall"
-            ),
+            ).to_openmc_material(),
             outb_bz_mat=duplicate_mat_as(
                 base_materials.inb_bz_mat, 202, "outb_breeder_zone"
-            ),
+            ).to_openmc_material(),
             outb_mani_mat=duplicate_mat_as(
                 base_materials.inb_mani_mat, 203, "outb_manifold"
-            ),
+            ).to_openmc_material(),
             outb_vv_mat=duplicate_mat_as(
                 base_materials.inb_vv_mat, 204, "outb_vacuum_vessel"
-            ),
-            tf_coil_mat=duplicate_mat_as(md.eurofer_mat, 401, "tf_coil"),
-            container_mat=duplicate_mat_as(base_materials.inb_vv_mat, 501, "container"),
+            ).to_openmc_material(),
+            tf_coil_mat=duplicate_mat_as(
+                md.eurofer_mat, 401, "tf_coil"
+            ).to_openmc_material(),
+            container_mat=duplicate_mat_as(
+                base_materials.inb_vv_mat, 501, "container"
+            ).to_openmc_material(),
             # surfaces
-            inb_sf_mat=duplicate_mat_as(md.eurofer_mat, 601, "inb_sf"),
-            outb_sf_mat=duplicate_mat_as(md.eurofer_mat, 602, "outb_sf"),
-            div_sf_mat=duplicate_mat_as(md.eurofer_mat, 603, "div_sf"),
+            inb_sf_mat=duplicate_mat_as(
+                md.eurofer_mat, 601, "inb_sf"
+            ).to_openmc_material(),
+            outb_sf_mat=duplicate_mat_as(
+                md.eurofer_mat, 602, "outb_sf"
+            ).to_openmc_material(),
+            div_sf_mat=duplicate_mat_as(
+                md.eurofer_mat, 603, "div_sf"
+            ).to_openmc_material(),
         )
 
     def export(self, path: Union[str, Path] = "materials.xml"):
