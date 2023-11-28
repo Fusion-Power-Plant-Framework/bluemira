@@ -73,32 +73,102 @@ fw_shape = Coordinates.from_json(fw_name)
 
 # %%
 params = {
-    "rho_ped_n": 0.94,
-    "n_e_0": 21.93e19,
-    "n_e_ped": 8.117e19,
-    "n_e_sep": 1.623e19,
-    "alpha_n": 1.15,
-    "rho_ped_t": 0.976,
-    "T_e_0": 21.442,
-    "T_e_ped": 5.059,
-    "T_e_sep": 0.16,
-    "alpha_t": 1.905,
-    "t_beta": 2.0,
-    "P_sep": 150,
-    "k_0": 2000.0,
-    "gamma_sheath": 7.0,
-    "eps_cool": 25.0,
-    "f_ion_t": 0.01,
-    "det_t": 0.0015,
-    "lfs_p_fraction": 0.9,
-    "div_p_sharing": 0.5,
-    "theta_outer_target": 5.0,
-    "theta_inner_target": 5.0,
-    "f_p_sol_near": 0.65,
-    "fw_lambda_q_near_omp": 0.003,
-    "fw_lambda_q_far_omp": 0.1,
-    "fw_lambda_q_near_imp": 0.003,
-    "fw_lambda_q_far_imp": 0.1,
+    "rho_ped_n": {
+        "value": 0.94,
+        "unit": "dimensionless"
+    },
+    "n_e_0": {
+        "value": 21.93e19,
+        "unit": "1/m^3"
+    },
+    "n_e_ped": {
+        "value": 8.117e19,
+        "unit": "1/m^3"
+    },
+    "n_e_sep": {
+        "value": 1.623e19,
+        "unit": "1/m^3"
+    },
+    "alpha_n": {
+        "value":1.15,
+        "unit": "dimensionless"
+    },
+    "rho_ped_t": {
+        "value": 0.976,
+        "unit": "dimensionless"
+    },
+    "T_e_0": {
+        "value": 21.442,
+        "unit": "keV"
+    },
+    "T_e_ped": {
+        "value": 5.059,
+        "unit": "keV"
+    },
+    "T_e_sep": {
+        "value": 0.16,
+        "unit": "keV"
+    },
+    "alpha_t": {
+        "value": 1.905,
+        "unit": "dimensionless"
+    },
+    "t_beta": {
+        "value": 2.0,
+        "unit": "dimensionless"
+    },
+    "P_sep": {
+        "value": 150,
+        "unit": "MW"
+    },
+    "k_0": {
+        "value": 2000.0,
+        "unit": "dimensionless"
+    },
+    "gamma_sheath": {
+        "value": 7.0,
+        "unit": "dimensionless"
+    },
+    "eps_cool": {
+        "value": 25.0,
+        "unit": "eV"
+    },
+    "f_ion_t": {
+        "value": 0.01,
+        "unit": "keV"
+    },
+    "det_t": {
+        "value": 0.0015,
+        "unit": "keV"
+    },
+    "lfs_p_fraction": {
+        "value": 0.9,
+        "unit": "dimensionless"
+    },
+    "theta_outer_target": {
+        "value": 5.0,
+        "unit": "deg"
+    },
+    "theta_inner_target": {
+        "value": 5.0,
+        "unit": "deg"
+    },
+    "fw_lambda_q_near_omp": {
+        "value": 0.003,
+        "unit": "m"
+    },
+    "fw_lambda_q_far_omp": {
+        "value": 0.1,
+        "unit": "m"
+    },
+    "fw_lambda_q_near_imp": {
+        "value": 0.003,
+        "unit": "m"
+    },
+    "fw_lambda_q_far_imp": {
+        "value": 0.1,
+        "unit": "m"
+    },
 }
 
 # %%
