@@ -143,6 +143,19 @@ class TestReactor:
         self.reactor.save_cad("xyz", directory=tmp_path)
         assert Path(tmp_path, f"{REACTOR_NAME}.stp").is_file()
 
+    def test_show_cad_empty_reactor(self):
+        reactor = Reactor(REACTOR_NAME, n_sectors=1)
+        with pytest.raises(ComponentError):
+            reactor.show_cad()
+
+    def test_show_cad_illdefinded_reactor(self):
+        class BadReactor(Reactor):
+            A: int
+
+        reactor = BadReactor(REACTOR_NAME, n_sectors=1)
+        with pytest.raises(ComponentError):
+            reactor.show_cad()
+
     @staticmethod
     def _make_reactor() -> MyReactor:
         reactor = MyReactor(REACTOR_NAME, n_sectors=1)
