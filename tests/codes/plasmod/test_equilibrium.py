@@ -188,7 +188,7 @@ class TestSolveTransportFixedBoundary:
             (1, "did not"),
         ],
     )
-    def test_full_run_through(self, max_iter, message, caplog):
+    def test_full_run_through(self, max_iter, message, caplog, tmp_path):
         johner_parameterisation = JohnerLCFS(
             {
                 "r_0": {"value": 8.9830e00},
@@ -212,5 +212,6 @@ class TestSolveTransportFixedBoundary:
             refine=True,
             num_levels=1,
             distance=0.1,
+            directory=tmp_path,
         )
         assert message in caplog.messages[-1]

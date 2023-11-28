@@ -23,7 +23,6 @@ import numpy as np
 import pytest
 
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemGradShafranovFixedBoundary,
@@ -32,10 +31,6 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import create_mesh
 from bluemira.equilibria.profiles import DoublePowerFunc, LaoPolynomialFunc
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
-
-DATA_DIR = get_bluemira_path(
-    "equilibria/fem_fixed_boundary/test_generated_data", subfolder="tests"
-)
 
 
 def parameterisation_fixture_not_fully_init(
@@ -54,14 +49,15 @@ def parameterisation_fixture_not_fully_init(
 
 @pytest.mark.classplot
 class TestFemGradShafranovFixedBoundary:
-    def setup_method(self):
+    @pytest.fixture(autouse=True)
+    def setup_method(self, tmp_path):  # noqa: PT004
         lcfs_shape = make_polygon({"x": [7, 10, 7], "z": [-4, 0, 4]}, closed=True)
         lcfs_face = BluemiraFace(lcfs_shape)
         plasma = PhysicalComponent("plasma", lcfs_face)
         plasma.shape.mesh_options = {"lcar": 0.3, "physical_group": "plasma_face"}
         plasma.shape.boundary[0].mesh_options = {"lcar": 0.3, "physical_group": "lcfs"}
         self.mesh = create_mesh(
-            plasma, DATA_DIR, "fixed_boundary_example", "fixed_boundary_example.msh"
+            plasma, tmp_path, "fixed_boundary_example", "fixed_boundary_example.msh"
         )
 
         self.p_prime = LaoPolynomialFunc([2, 3, 1])

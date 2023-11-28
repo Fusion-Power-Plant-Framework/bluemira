@@ -23,13 +23,15 @@
 Used by pytest for configuration like adding command line options.
 """
 
+import os
 from contextlib import suppress
+from pathlib import Path
 from unittest import mock
 
 import matplotlib as mpl
 import pytest
 
-from bluemira.base.file import try_get_bluemira_private_data_root
+from bluemira.base.file import get_bluemira_path, try_get_bluemira_private_data_root
 
 
 def pytest_addoption(parser):
@@ -95,6 +97,11 @@ def pytest_configure(config):
     logic_string = " and ".join(strings)
 
     config.option.markexpr = logic_string
+    config.option.basetemp = (
+        basetemp
+        if (basetemp := os.environ.get("PYTEST_TMPDIR", config.option.basetemp))
+        else Path(get_bluemira_path("", subfolder="generated_data"), "test_data")
+    )
 
 
 @pytest.fixture(autouse=True)

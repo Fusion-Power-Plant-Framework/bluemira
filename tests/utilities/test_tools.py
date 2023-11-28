@@ -323,9 +323,9 @@ class TestGetModule:
         with pytest.raises(ImportError):
             get_module(Path(get_bluemira_path(), "../README.md").as_posix())
 
-    def test_get_weird_ext_python_file(self, tmpdir):
-        path1 = tmpdir.join("file")
-        path2 = tmpdir.join("file.hello")
+    def test_get_weird_ext_python_file(self, tmp_path):
+        path1 = tmp_path / "file"
+        path2 = tmp_path / "file.hello"
         function = """def f():
     return True"""
         for path in [path1, path2]:

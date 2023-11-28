@@ -35,11 +35,9 @@ from bluemira.magnetostatics.finite_element_2d import (
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
-DATA_DIR = Path(Path(__file__).parent, "test_generated_data")
-
 
 class TestGetNormal:
-    def test_simple_thin_coil(self):
+    def test_simple_thin_coil(self, tmp_path):
         """
         Compare the magnetic field on the axis of a coil with a very small cross-section
         calculated with the fem module and the analytic solution as limit of the
@@ -86,16 +84,16 @@ class TestGetNormal:
         c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
         meshfiles = [
-            Path(DATA_DIR, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
+            Path(tmp_path, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
         ]
         m = meshing.Mesh(meshfile=meshfiles)
         m(c_universe, dim=2)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=DATA_DIR)
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=tmp_path)
 
         mesh, boundaries, subdomains, labels = import_mesh(
             "Mesh",
-            directory=DATA_DIR,
+            directory=tmp_path,
             subdomains=True,
         )
 

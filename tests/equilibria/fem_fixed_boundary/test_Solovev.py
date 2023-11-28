@@ -19,7 +19,10 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
+from pathlib import Path
+
 import numpy as np
+import pytest
 import scipy
 
 from bluemira.base.components import PhysicalComponent
@@ -158,8 +161,10 @@ class Solovev:
 
 
 class TestSolovevZheng:
-    @classmethod
-    def setup_class(cls):
+    @pytest.fixture(scope="class", autouse=True)
+    def setup_class(self, tmp_path_factory):  # noqa: PT004
+        cls = type(self)
+        tmp_path = tmp_path_factory.mktemp("Solvev")
         # set problem parameters
         R_0 = 9.07
         A = 3.1
@@ -196,13 +201,16 @@ class TestSolovevZheng:
         plasma = PhysicalComponent("Plasma", shape=plasma_face)
 
         # mesh the plasma
-        meshing.Mesh()(plasma)
+        meshfiles = [
+            Path(tmp_path, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
+        ]
+        meshing.Mesh(meshfile=meshfiles)(plasma)
 
-        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
+        msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=tmp_path)
 
         cls.mesh, boundaries, _, _ = import_mesh(
             "Mesh",
-            directory=".",
+            directory=tmp_path,
             subdomains=True,
         )
 
