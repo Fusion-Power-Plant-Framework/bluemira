@@ -822,8 +822,8 @@ def get_impurity_data(impurities_list: list = ["H", "He"]):
     impurity_data = {}
     for imp in impurities_list:
         impurity_data[imp] = {
-            "T_ref": imp_data_getter(imp)[0],
-            "L_ref": imp_data_getter(imp)[1],
+            "T_ref": imp_data_getter(imp, confinement_time_ms=0.1)[0],
+            "L_ref": imp_data_getter(imp, confinement_time_ms=0.1)[1],
         }
 
     return impurity_data
