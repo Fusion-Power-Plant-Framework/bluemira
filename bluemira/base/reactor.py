@@ -200,7 +200,7 @@ class BaseManager(abc.ABC):
 
         Notes
         -----
-        A copy of the component tree must be made
+        A copy of the component tree is made
         as filtering would mutate the ComponentMangers' underlying component trees
         """
         comp_copy = comp.copy()
@@ -503,6 +503,14 @@ class Reactor(BaseManager):
         with_components: Optional[List[ComponentManager]] = None,
     ) -> Component:
         """Build the component tree from this class's annotations."""
+        if not hasattr(self, "__annotations__"):
+            raise ComponentError(
+                "This reactor is ill-defined. "
+                "Make sure you have sub-classed Reactor and "
+                "correctly defined component managers for it. "
+                "Please see the examples for a template Reactor."
+            )
+
         component = Component(self.name)
         comp_type: Type
         for comp_name, comp_type in self.__annotations__.items():
@@ -563,6 +571,11 @@ class Reactor(BaseManager):
         comp_copy = self._filter_tree(
             self.component(with_components), dims_to_show, component_filter
         )
+        if not comp_copy.children:
+            raise ComponentError(
+                "The reactor has no components defined for the given "
+                "dimension(s) and/or filter."
+            )
         # if "xyz" is requested, construct the 3d cad
         # from each xyz component in the tree,
         # as it's assumed that the cad is only built for 1 sector
