@@ -28,10 +28,13 @@ if TYPE_CHECKING:
 
 @dataclass
 class MixtureFraction:
+    """Material mixture fraction"""
+
     material: Union[MassFractionMaterial, HomogenisedMixture]
     fraction: float
 
     def __post_init__(self):
+        """Set name"""
         self.name = self.material.name
 
 
@@ -92,7 +95,7 @@ class HomogenisedMixture:
                 else:
                     values.append(v)
                     fractions.append(mat.fraction)
-            except AttributeError:
+            except AttributeError:  # noqa: PERF203
                 warn.append([mat.name, prop])
 
         f = np.array(fractions) / sum(fractions)  # Normalised
