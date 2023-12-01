@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Union
 
 import asteval
 import matplotlib.pyplot as plt
@@ -35,6 +35,14 @@ asteval_user_symbols = {
     "to_celsius": to_celsius,
     "to_kelvin": to_kelvin,
 }
+
+
+class Material(Protocol):
+    """Material Typing"""
+
+    name: str
+    density_unit: str
+    percent_type: str
 
 
 def matproperty(t_min: float, t_max: float):
