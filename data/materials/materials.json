@@ -463,14 +463,14 @@
   "H2O": {
     "material_class": "Liquid",
     "symbol": "H2O",
-    "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Water')"
+    "density": "PropsSI('D', 'T', temperature, 'P', pressure, 'Water')"
   },
   "He": {
     "material_class": "Liquid",
     "symbol": "He",
-    "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Helium')",
-    "temperature_in_K": 4.5,
-    "pressure_in_Pa": 6e5
+    "density": "PropsSI('D', 'T', temperature, 'P', pressure, 'Helium')",
+    "temperature": 4.5,
+    "pressure": 6e5
   },
   "Li4SiO4": {
     "material_class": "UnitCellCompound",
@@ -478,13 +478,13 @@
     "volume_of_unit_cell_cm3": 1.1543e-21,
     "atoms_per_unit_cell": 14,
     "specific_heat": {
-      "value": "interp(temperature_in_C, [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1392.4, 1450, 1513.4, 1580, 1648.5, 1718.2, 1788.8, 1859.9, 1931.4, 2003.3, 2075.3, 2147.5, 2219.8, 2292.3, 2364.8, 2437.4, 2510.1, 2582.8, 2655.5, 2728.3, 2801.1])",
+      "value": "interp(to_celsius(temperature), [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1392.4, 1450, 1513.4, 1580, 1648.5, 1718.2, 1788.8, 1859.9, 1931.4, 2003.3, 2075.3, 2147.5, 2219.8, 2292.3, 2364.8, 2437.4, 2510.1, 2582.8, 2655.5, 2728.3, 2801.1])",
       "temp_min_celsius": 0,
       "temp_max_celsius": 1000,
       "reference": "Fokkens, J. H., \"Thermomechanical finite element analysis of the HCPB in-pile test element\" NRG Report 21477/02.50560/P. Technical Report, TW0-TTBB-004-D1, 2003"
     },
     "coefficient_thermal_expansion": {
-      "value": "0.768 + 4.96e-4 * temperature_in_C + 0.045 * eps_vol",
+      "value": "0.768 + 4.96e-4 * to_celsius(temperature) + 0.045 * eps_vol",
       "temp_min_celsius": 25,
       "temp_max_celsius": 800,
       "reference": "https://www.sciencedirect.com/science/article/pii/S0920379602001655"
@@ -520,7 +520,7 @@
     "volume_of_unit_cell_cm3": 0.01622e-21,
     "atoms_per_unit_cell": 8,
     "specific_heat": {
-      "value": "interp(temperature_in_C, [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1741.8, 1900.97, 2045.53, 2176.44, 2294.66, 2401.14, 2496.83, 2582.71, 2659.71, 2728.79, 2790.93, 2847.05, 2898.14, 2945.13, 2988.99, 3030.68, 3071.14, 3111.34, 3152.22, 3194.76, 3239.9])",
+      "value": "interp(to_celsius(temperature), [0, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850, 900, 950, 1000], [1741.8, 1900.97, 2045.53, 2176.44, 2294.66, 2401.14, 2496.83, 2582.71, 2659.71, 2728.79, 2790.93, 2847.05, 2898.14, 2945.13, 2988.99, 3030.68, 3071.14, 3111.34, 3152.22, 3194.76, 3239.9])",
       "temp_min_celsius": 0,
       "temp_max_celsius": 1000,
       "reference": "Fokkens, J. H., \"Thermomechanical finite element analysis of the HCPB in-pile test element\" NRG Report 21477/02.50560/P. Technical Report, TW0-TTBB-004-D1, 2003"

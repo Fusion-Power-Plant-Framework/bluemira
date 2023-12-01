@@ -293,7 +293,7 @@ keyed by the names of the materials.
                 "SS316-LN": 0.6,
                 "H2O": 0.4
             },
-            "temperature_in_K": 293.15
+            "temperature": 293.15
         }
     }
     material_cache.load_from_dict("Steel Water 60/40", mat_dict)

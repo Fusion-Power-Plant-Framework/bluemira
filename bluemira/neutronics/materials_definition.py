@@ -21,7 +21,7 @@
 """Create specific materials that will be imported by other modules."""
 
 from bluemira.materials.material import MassFractionMaterial
-from bluemira.materials.mixtures import HomogenisedMixture
+from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
 
 # Elements
 he_cool_mat = MassFractionMaterial(
@@ -131,8 +131,10 @@ def make_Li2TiO3_mat(li_enrich_ao) -> MassFractionMaterial:
 # mixture of existing materials
 lined_euro_mat = HomogenisedMixture(
     name="Eurofer with Al2O3 lining",
-    materials=[eurofer_mat, al2o3_mat],
-    fracs=[2.0 / 2.4, 0.4 / 2.4],
+    materials=[
+        MixtureFraction(eurofer_mat, 2.0 / 2.4),
+        MixtureFraction(al2o3_mat, 0.4 / 2.4),
+    ],
     percent_type="vo",
 )
 
@@ -142,11 +144,14 @@ def make_KALOS_ACB_mat(li_enrich_ao) -> HomogenisedMixture:
     """Ref: Current status and future perspectives of EU ceramic breeder development"""
     KALOS_ACB_mat = HomogenisedMixture(
         name="kalos_acb",  # optional name of homogeneous material
-        materials=[make_Li4SiO4_mat(li_enrich_ao), make_Li2TiO3_mat(li_enrich_ao)],
-        fracs=[
-            9 * 0.65 / (9 * 0.65 + 6 * 0.35),
-            6 * 0.35 / (9 * 0.65 + 6 * 0.35),
-        ],  # molar combination adjusted to atom fractions
+        materials=[  # molar combination adjusted to atom fractions
+            MixtureFraction(
+                make_Li4SiO4_mat(li_enrich_ao), 9 * 0.65 / (9 * 0.65 + 6 * 0.35)
+            ),
+            MixtureFraction(
+                make_Li2TiO3_mat(li_enrich_ao), 6 * 0.35 / (9 * 0.65 + 6 * 0.35)
+            ),
+        ],
         percent_type="ao",
         packing_fraction=0.642,
     )  # combination fraction type is by atom fraction

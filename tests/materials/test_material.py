@@ -66,8 +66,8 @@ class TestMaterials:
     def test_density_load(self):
         self.beryllium.temperature = 300
         assert hasattr(self.beryllium, "density")
-        assert is_num(self.beryllium.density)
-        assert type(self.beryllium.density) is float
+        assert is_num(self.beryllium.density())
+        assert type(self.beryllium.density()) is float
 
     def test_material_card(self):
         pytest.importorskip("openmc")
@@ -104,7 +104,7 @@ class TestLiquids:
     def test_temp_pressure(self):
         assert self.water.temperature == pytest.approx(293.15, rel=0, abs=EPS)
         assert self.water.pressure == pytest.approx(101325, rel=0, abs=EPS)
-        assert self.water.density == pytest.approx(998.207815375)
+        assert self.water.density() == pytest.approx(998.207815375)
 
     def test_material_card(self):
         pytest.importorskip("openmc")
