@@ -12,19 +12,22 @@ from __future__ import annotations
 
 import abc
 from dataclasses import asdict, dataclass, field
-from typing import Any, Dict, List, Optional, Union, get_type_hints
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import asteval
 import matplotlib.pyplot as plt
 import numpy as np
 from CoolProp.CoolProp import PropsSI
-from numpy.typing import ArrayLike
 
 from bluemira.base.constants import to_celsius, to_kelvin
 from bluemira.materials.constants import P_DEFAULT, T_DEFAULT
 from bluemira.materials.error import MaterialsError
 from bluemira.materials.tools import import_nmm
 from bluemira.utilities.tools import array_or_num, is_num
+
+if TYPE_CHECKING:
+    import openmc
+    from numpy.typing import ArrayLike
 
 # Set any custom symbols for use in asteval
 asteval_user_symbols = {
@@ -98,7 +101,8 @@ def to_openmc_material(
     decimal_places: Optional[int] = 8,
     volume_in_cm3: Optional[float] = None,
     additional_end_lines: Optional[Dict[str, List[str]]] = None,
-):
+) -> openmc.Material:
+    """Convert Bluemira material to OpenMC material"""
     return (
         import_nmm()
         .Material(
@@ -247,6 +251,11 @@ class MaterialProperty:
 
 
 class MaterialPropertyDescriptor:
+    """Material Property descriptor
+
+    Converts various value inputs to a MaterialProperty
+    """
+
     def __init__(self, _default=None):
         self._default = self._mutate_value(_default)
 
@@ -254,7 +263,7 @@ class MaterialPropertyDescriptor:
         """Set the attribute name from a dataclass"""
         self._name = "_" + name
 
-    def __get__(self, obj: Any, _) -> float:
+    def __get__(self, obj: Any, _) -> MaterialProperty:
         """Get the hex colour"""
         if obj is None:
             return self._default
@@ -265,7 +274,9 @@ class MaterialPropertyDescriptor:
 
     def _mutate_value(
         self,
-        value: Union[Dict[str, Union[float, str, None]], float, str, None],
+        value: Union[
+            Union[Dict[str, Union[float, str, None]], float, str, None], MaterialProperty
+        ],
         obj=None,
     ) -> MaterialProperty:
         if isinstance(value, dict):
@@ -294,10 +305,16 @@ class MaterialPropertyDescriptor:
         elif isinstance(value, (float, int, str, type(None))):
             value = MaterialProperty(value=value, obj=obj)
         elif not isinstance(value, MaterialProperty):
-            raise ValueError("Can't convert value to MaterialProperty")
+            raise TypeError("Can't convert value to MaterialProperty")
         return value
 
-    def __set__(self, obj: Any, value: Union[dict, MaterialProperty]):
+    def __set__(
+        self,
+        obj: Any,
+        value: Union[
+            Union[Dict[str, Union[float, str, None]], float, str, None], MaterialProperty
+        ],
+    ):
         """
         Set the colour
 
@@ -306,58 +323,6 @@ class MaterialPropertyDescriptor:
         The value can be anything accepted by matplotlib.colors.to_hex
         """
         setattr(obj, self._name, self._mutate_value(value, obj))
-
-
-class TemperatureDescriptor:
-    def __init__(self, _default=T_DEFAULT):
-        self._default = _default
-
-    def __set_name__(self, _, name: str):
-        """Set the attribute name from a dataclass"""
-        self._name = "_" + name
-
-    def __get__(self, obj: Any, _) -> float:
-        """Get the hex colour"""
-        if obj is None:
-            return self._default
-
-        return getattr(obj, self._name, self._default)
-
-    def __set__(self, obj: Any, value: float):
-        """
-        Set the colour
-
-        Notes
-        -----
-        The value can be anything accepted by matplotlib.colors.to_hex
-        """
-        setattr(obj, self._name, value)
-
-
-class PressureDescriptor:
-    def __init__(self, _default=P_DEFAULT):
-        self._default = _default
-
-    def __set_name__(self, _, name: str):
-        """Set the attribute name from a dataclass"""
-        self._name = "_" + name
-
-    def __get__(self, obj: Any, _) -> float:
-        """Get the hex colour"""
-        if obj is None:
-            return self._default
-
-        return getattr(obj, self._name, self._default)
-
-    def __set__(self, obj: Any, value: float):
-        """
-        Set the colour
-
-        Notes
-        -----
-        The value can be anything accepted by matplotlib.colors.to_hex
-        """
-        setattr(obj, self._name, value)
 
 
 @dataclass
@@ -405,18 +370,9 @@ class Void:
         """
         return 0.0
 
-    def to_openmc_material(self, temperature: None = None):
+    def to_openmc_material(self, temperature: None = None) -> openmc.Material:  # noqa: ARG002
         """
         Convert the material to an OpenMC material.
-
-        Parameters
-        ----------
-        temperature:
-            The temperature [K].
-
-        Returns
-        -------
-        The OpenMC material.
         """
         return to_openmc_material(
             name=self.name,
@@ -504,7 +460,7 @@ class MassFractionMaterial:
     nuclides: Optional[Dict[str, float]] = None
     density: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
     density_unit: str = "kg/m3"
-    temperature: TemperatureDescriptor = TemperatureDescriptor(T_DEFAULT)
+    temperature: float = T_DEFAULT
     zaid_suffix: Optional[str] = None
     material_id: Optional[int] = None
     percent_type: str = "wo"
@@ -538,6 +494,10 @@ class MassFractionMaterial:
     def __post_init__(
         self,
     ):
+        """Value checking for required args marked as optional
+
+        dataclass limitation py3.8
+        """
         if not (self.elements or self.nuclides):
             raise MaterialsError("No elements or nuclides specified.")
 
@@ -547,7 +507,7 @@ class MassFractionMaterial:
         """
         return self.name
 
-    def to_openmc_material(self, temperature: float = T_DEFAULT):
+    def to_openmc_material(self, temperature: float = T_DEFAULT) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -556,9 +516,6 @@ class MassFractionMaterial:
         temperature:
             The temperature [K].
 
-        Returns
-        -------
-        The OpenMC material.
         """
         return to_openmc_material(
             name=self.name,
@@ -716,6 +673,23 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
     beta: Optional[float] = None
     gamma: Optional[float] = None
 
+    def __post_init__(self):
+        """Value checking for required args marked as optional
+
+        dataclass limitation py3.8
+        """
+        if None in {
+            self.c_0,
+            self.bc_20,
+            self.tc_0,
+            self.alpha,
+            self.beta,
+            self.gamma,
+        }:
+            raise ValueError(
+                "Not all required values set TODO(je-cook) kwargs in dataclasses"
+            )
+
     def Bc2(self, temperature: float) -> float:
         """
         Critical field \n
@@ -741,7 +715,7 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         c = (1 - ii) ** self.beta if 1 - ii > 0 else 0
         return a * b * c
 
-    def to_openmc_material(self, temperature: float = T_DEFAULT):
+    def to_openmc_material(self, temperature: float = T_DEFAULT) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -750,9 +724,6 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         temperature:
             The temperature [K].
 
-        Returns
-        -------
-        The OpenMC material.
         """
         return to_openmc_material(
             name=self.name,
@@ -802,6 +773,10 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
     q: Optional[float] = None
 
     def __post_init__(self):
+        """Value checking for required args marked as optional
+
+        dataclass limitation py3.8
+        """
         if None in {
             self.c_a1,
             self.c_a2,
@@ -900,7 +875,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
             - self.c_a2 * eps
         )
 
-    def to_openmc_material(self, temperature: float = T_DEFAULT):
+    def to_openmc_material(self, temperature: float = T_DEFAULT) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -909,9 +884,6 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         temperature:
             The temperature [K].
 
-        Returns
-        -------
-        The OpenMC material.
         """
         return to_openmc_material(
             name=self.name,
@@ -953,8 +925,8 @@ class Liquid:
     symbol: str
     density: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
     density_unit: str = "kg/m3"
-    temperature: TemperatureDescriptor = TemperatureDescriptor(T_DEFAULT)
-    pressure: PressureDescriptor = PressureDescriptor(P_DEFAULT)
+    temperature: float = T_DEFAULT
+    pressure: float = P_DEFAULT
     zaid_suffix: Optional[str] = None
     material_id: Optional[int] = None
     percent_type: str = "ao"
@@ -990,7 +962,7 @@ class Liquid:
         """
         return 0
 
-    def to_openmc_material(self, temperature: float = T_DEFAULT):
+    def to_openmc_material(self, temperature: float = T_DEFAULT) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -999,9 +971,6 @@ class Liquid:
         temperature:
             The temperature [K].
 
-        Returns
-        -------
-        The OpenMC material.
         """
         return to_openmc_material(
             name=self.symbol,
@@ -1079,7 +1048,10 @@ class UnitCellCompound:
             self, "coefficient_thermal_expansion", temperature, eps_vol
         )
 
-    def to_openmc_material(self):
+    def to_openmc_material(self, temperature: None = None) -> openmc.Material:  # noqa: ARG002
+        """
+        Convert the material to an OpenMC material.
+        """
         return to_openmc_material(
             name=self.name,
             chemical_equation=self.symbol,
@@ -1152,7 +1124,7 @@ class Plasma:
     isotopes: Dict[str, float]
     density: MaterialPropertyDescriptor = MaterialPropertyDescriptor(1e-6)
     density_unit: str = "g/cm3"
-    temperature: TemperatureDescriptor = TemperatureDescriptor(T_DEFAULT)
+    temperature: float = T_DEFAULT
     zaid_suffix: Optional[str] = None
     material_id: Optional[int] = None
     percent_type: str = "ao"
@@ -1177,10 +1149,13 @@ class Plasma:
         """
         return 0
 
-    def to_openmc_material(self):
+    def to_openmc_material(self, temperature: None = None) -> openmc.Material:  # noqa: ARG002
+        """
+        Convert the material to an OpenMC material.
+        """
         return to_openmc_material(
             name=self.name,
-            density=self.density.value,
+            density=self.density(self.temperature),
             density_unit=self.density_unit,
             isotopes=self.isotopes,
             percent_type=self.percent_type,
