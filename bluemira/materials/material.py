@@ -10,17 +10,20 @@ The home of base material objects. Use classes in here to make new materials.
 
 from __future__ import annotations
 
-import json
-from typing import Any, Dict, Optional, Union, get_type_hints
+import abc
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Optional, Union, get_type_hints
 
 import asteval
 import matplotlib.pyplot as plt
 import numpy as np
 from CoolProp.CoolProp import PropsSI
+from numpy.typing import ArrayLike
 
 from bluemira.base.constants import to_celsius, to_kelvin
 from bluemira.materials.constants import P_DEFAULT, T_DEFAULT
 from bluemira.materials.error import MaterialsError
+from bluemira.materials.tools import import_nmm
 from bluemira.utilities.tools import array_or_num, is_num
 
 # Set any custom symbols for use in asteval
@@ -72,6 +75,61 @@ def _try_calc_property(mat, prop_name, *args, **kwargs):
     )
 
 
+def to_openmc_material(
+    name: Optional[str] = None,
+    packing_fraction: Optional[float] = 1.0,
+    enrichment: Optional[float] = None,
+    enrichment_target: Optional[str] = None,
+    temperature: Optional[float] = None,
+    temperature_to_neutronics_code: bool = True,
+    pressure: Optional[float] = None,
+    elements: Optional[Dict[str, float]] = None,
+    chemical_equation: Optional[str] = None,
+    isotopes: Optional[Dict[str, float]] = None,
+    percent_type: Optional[str] = None,
+    density: Optional[float] = None,
+    density_unit: Optional[str] = None,
+    atoms_per_unit_cell: Optional[int] = None,
+    volume_of_unit_cell_cm3: Optional[float] = None,
+    enrichment_type: Optional[str] = None,
+    comment: Optional[str] = None,
+    zaid_suffix: Optional[str] = None,
+    material_id: Optional[int] = None,
+    decimal_places: Optional[int] = 8,
+    volume_in_cm3: Optional[float] = None,
+    additional_end_lines: Optional[Dict[str, List[str]]] = None,
+):
+    return (
+        import_nmm()
+        .Material(
+            name=name,
+            packing_fraction=packing_fraction,
+            enrichment=enrichment,
+            enrichment_target=enrichment_target,
+            temperature=temperature,
+            temperature_to_neutronics_code=temperature_to_neutronics_code,
+            pressure=pressure,
+            elements=elements,
+            chemical_equation=chemical_equation,
+            isotopes=isotopes,
+            percent_type=percent_type,
+            density=density,
+            density_unit=density_unit,
+            atoms_per_unit_cell=atoms_per_unit_cell,
+            volume_of_unit_cell_cm3=volume_of_unit_cell_cm3,
+            enrichment_type=enrichment_type,
+            comment=comment,
+            zaid_suffix=zaid_suffix,
+            material_id=material_id,
+            decimal_places=decimal_places,
+            volume_in_cm3=volume_in_cm3,
+            additional_end_lines=additional_end_lines,
+        )
+        .openmc_material
+    )
+
+
+@dataclass
 class MaterialProperty:
     """
     Defines a property of a material within a valid temperature range.
@@ -82,60 +140,28 @@ class MaterialProperty:
         If supplied as a string then this will define a temperature-, pressure-, and/or
         eps_vol-dependent calculation to be evaluated when the property is retrieved,
         otherwise it will define a constant value.
-    temp_max_kelvin:
+    temp_max:
         The maximum temperature [K] at which the property is valid. If not provided
         and no temp_max_celsius then all temperatures above 0K are valid.
-    temp_min_kelvin:
+    temp_min:
         The maximum temperature [K] at which the property is valid. If not
         provided and no temp_min_celsius then properties will be valid down to 0K.
-    temp_max_celsius:
-        The maximum temperature [°C] at which the property is valid. If not provided
-        and no temp_max_kelvin then all temperatures above 0K are valid.
-    temp_min_celsius:
-        The optional maximum temperature [°C] at which the property is valid. If not
-        provided and no temp_min_kelvin then properties will be valid down to 0K.
     reference:
         The optional reference e.g. paper/database/website for the property.
     """
 
-    def __init__(
-        self,
-        value: float | str,
-        temp_max_kelvin: float | None = None,
-        temp_min_kelvin: float | None = None,
-        temp_max_celsius: float | None = None,
-        temp_min_celsius: float | None = None,
-        reference: str | None = None,
-    ):
-        if (temp_max_kelvin is not None or temp_min_kelvin is not None) and (
-            temp_max_celsius is not None or temp_min_celsius is not None
-        ):
-            raise MaterialsError(
-                "Material property temperature ranges must be set by either K or C, not"
-                " both."
-            )
-
-        self.value = value
-        self.reference = reference
-
-        self.temp_max = None
-        if temp_max_kelvin is not None:
-            self.temp_max = temp_max_kelvin
-        elif temp_max_celsius is not None:
-            self.temp_max = to_kelvin(temp_max_celsius)
-
-        self.temp_min = None
-        if temp_min_kelvin is not None:
-            self.temp_min = temp_min_kelvin
-        elif temp_min_celsius is not None:
-            self.temp_min = to_kelvin(temp_min_celsius)
+    value: Union[float, str]
+    temp_max: Optional[float] = None
+    temp_min: Optional[float] = None
+    reference: str = ""
+    obj: Any = field(default=None, repr=False)
 
     def __call__(
         self,
-        temperature: float,
-        pressure: float | None = None,
-        eps_vol: float | None = None,
-    ) -> float:
+        temperature: Optional[float] = None,
+        pressure: Optional[float] = None,
+        eps_vol: float = 0.0,
+    ) -> Union[float, ArrayLike]:
         """
         Evaluates the property at a given temperature, pressure, and/or eps_vol.
 
@@ -152,55 +178,32 @@ class MaterialProperty:
         -------
         The property evaluated at the given temperature, pressure, and/or eps_vol.
         """
+        if temperature is None:
+            temperature = self.obj.temperature
+        if pressure is None and hasattr(self.obj, "pressure"):
+            pressure = self.obj.pressure
+
+        temperature = self._validate_temperature(temperature)
+
         if isinstance(self.value, str):
             aeval = asteval.Interpreter(usersyms=asteval_user_symbols)
-            temperature = list_array(temperature)
-            self._validate_temperature(temperature)
             aeval.symtable["temperature"] = temperature
-            aeval.symtable["temperature_in_K"] = temperature
-            aeval.symtable["temperature_in_C"] = to_celsius(temperature)
 
             if pressure is not None:
                 aeval.symtable["pressure"] = pressure
-                aeval.symtable["pressure_in_Pa"] = pressure
 
-            if eps_vol is not None:
-                aeval.symtable["eps_vol"] = eps_vol
-            else:
-                aeval.symtable["eps_vol"] = 0.0
+            aeval.symtable["eps_vol"] = eps_vol
 
-            prop_val = aeval.eval(self.value)
-            prop_val = array_or_num(prop_val)
+            prop_val = array_or_num(aeval.eval(self.value))
 
             if len(aeval.error) > 0:
                 raise aeval.error[0].exc(aeval.error[0].msg)
 
             return prop_val
 
-        self._validate_temperature(temperature)
         return self.value
 
-    @classmethod
-    def deserialise(cls, prop_rep: dict[str, Any] | float | str) -> MaterialProperty:
-        """
-        Deserialise the provided property representation.
-
-        Parameters
-        ----------
-        prop_rep:
-            The representation of the property. Can be just the value that the property
-            defines, or can be a dictionary containing the value and any of the optional
-            properties.
-
-        Returns
-        -------
-        The `MaterialProperty` corresponding to the provided representation.
-        """
-        if isinstance(prop_rep, dict):
-            return cls(**prop_rep)
-        return cls(value=prop_rep)
-
-    def serialise(self):
+    def to_dict(self):
         """
         Serialise the material property to a value or dictionary.
 
@@ -211,18 +214,11 @@ class MaterialProperty:
             mapping attributes to their values, if more attributes than the value are
             defined, otherwise just returns the value.
         """
-        if self.temp_max is None and self.temp_min is None and self.reference is None:
-            return self.value
-        prop_dict = {"value": self.value}
-        if self.temp_max is not None:
-            prop_dict["temp_max_kelvin"] = self.temp_max
-        if self.temp_min is not None:
-            prop_dict["temp_min_kelvin"] = self.temp_min
-        if self.reference is not None:
-            prop_dict["reference"] = self.reference
-        return prop_dict
+        return asdict(self)
 
-    def _validate_temperature(self, temperature: float | list[float] | np.ndarray):
+    def _validate_temperature(
+        self, temperature: Union[float, ArrayLike]
+    ) -> Union[float, ArrayLike]:
         """
         Check that the property is valid for the requested temperature range.
 
@@ -236,7 +232,7 @@ class MaterialProperty:
         ValueError
             If any of the requested temperatures are outside of the valid range
         """
-        temperatures = list_array(temperature)
+        temperatures = np.atleast_1d(temperature)
         if self.temp_min is not None and (temperatures < self.temp_min).any():
             raise ValueError(
                 "Material property not valid outside of temperature range: "
@@ -247,115 +243,125 @@ class MaterialProperty:
                 "Material property not valid outside of temperature range: "
                 f"{temperature} > T_max = {self.temp_max}"
             )
+        return temperatures
 
 
-class SerialisedMaterial:
-    """
-    A mix-in class to make a material serialisable.
+class MaterialPropertyDescriptor:
+    def __init__(self, _default=None):
+        self._default = self._mutate_value(_default)
 
-    The class must provide attributes to be serialised as annotations.
-    """
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
 
-    def to_dict(self) -> dict[str, Any]:
+    def __get__(self, obj: Any, _) -> float:
+        """Get the hex colour"""
+        if obj is None:
+            return self._default
+        if self._default.obj is None:
+            self._default.obj = obj
+
+        return getattr(obj, self._name, self._default)
+
+    def _mutate_value(
+        self,
+        value: Union[Dict[str, Union[float, str, None]], float, str, None],
+        obj=None,
+    ) -> MaterialProperty:
+        if isinstance(value, dict):
+            if "temp_min" not in value:
+                # muck with keys
+                # TODO(je-cook) should deprecate ?
+                if "temp_min_kelvin" in value:
+                    value["temp_max"] = value["temp_max_kelvin"]
+                    value["temp_min"] = value["temp_min_kelvin"]
+                    for k in (
+                        "temp_min_kelvin",
+                        "temp_max_kelvin",
+                        "temp_min_celsius",
+                        "temp_max_celsius",
+                    ):
+                        del value[k]
+
+                if "temp_min_celsius" in value:
+                    value["temp_max"] = to_kelvin(value["temp_max_celsius"])
+                    value["temp_min"] = to_kelvin(value["temp_min_celsius"])
+                    for k in ("temp_min_celsius", "temp_max_celsius"):
+                        del value[k]
+            # empty dictionary
+            value = MaterialProperty(**value, obj=obj) if value else self._default
+
+        elif isinstance(value, (float, int, str, type(None))):
+            value = MaterialProperty(value=value, obj=obj)
+        elif not isinstance(value, MaterialProperty):
+            raise ValueError("Can't convert value to MaterialProperty")
+        return value
+
+    def __set__(self, obj: Any, value: Union[dict, MaterialProperty]):
         """
-        Get a dictionary representation of the material.
+        Set the colour
 
-        Returns
-        -------
-        The dictionary representation of the material.
+        Notes
+        -----
+        The value can be anything accepted by matplotlib.colors.to_hex
         """
-        attr_dict = {}
-        for attr in [attr for attr in self.__annotations__ if attr != "name"]:
-            attr_val = getattr(self, attr, None)
-            if attr_val is not None:
-                if isinstance(attr_val, MaterialProperty):
-                    attr_dict[attr] = attr_val.serialise()
-                else:
-                    attr_dict[attr] = attr_val
-        return {self.name: attr_dict}
+        setattr(obj, self._name, self._mutate_value(value, obj))
 
-    @classmethod
-    def from_dict(cls, name: str, materials_dict: dict[str, Any]) -> SerialisedMaterial:
+
+class TemperatureDescriptor:
+    def __init__(self, _default=T_DEFAULT):
+        self._default = _default
+
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
+
+    def __get__(self, obj: Any, _) -> float:
+        """Get the hex colour"""
+        if obj is None:
+            return self._default
+
+        return getattr(obj, self._name, self._default)
+
+    def __set__(self, obj: Any, value: float):
         """
-        Generate an instance of the material from a dictionary of materials.
+        Set the colour
 
-        Returns
-        -------
-            The material.
+        Notes
+        -----
+        The value can be anything accepted by matplotlib.colors.to_hex
         """
-        mat_dict = materials_dict[name]
-        type_hints = get_type_hints(cls)
-        for attr_name, attr_type in type_hints.items():
-            if (
-                attr_name in mat_dict
-                and not hasattr(attr_type, "__origin__")
-                and issubclass(attr_type, MaterialProperty)
-            ):
-                mat_dict[attr_name] = attr_type.deserialise(mat_dict[attr_name])
-        return cls(name, **mat_dict)
+        setattr(obj, self._name, value)
 
-    def to_json(self, **kwargs) -> str:
+
+class PressureDescriptor:
+    def __init__(self, _default=P_DEFAULT):
+        self._default = _default
+
+    def __set_name__(self, _, name: str):
+        """Set the attribute name from a dataclass"""
+        self._name = "_" + name
+
+    def __get__(self, obj: Any, _) -> float:
+        """Get the hex colour"""
+        if obj is None:
+            return self._default
+
+        return getattr(obj, self._name, self._default)
+
+    def __set__(self, obj: Any, value: float):
         """
-        Get a JSON representation of the material.
+        Set the colour
 
-        Parameters
-        ----------
-        kwargs:
-            passed to json writer
-
-        Returns
-        -------
-        The JSON representation of the material.
+        Notes
+        -----
+        The value can be anything accepted by matplotlib.colors.to_hex
         """
-        mat_dict = self.to_dict()
-        mat_dict[self.name]["material_class"] = self.__class__.__name__
-        return json_writer(mat_dict, return_output=True, **kwargs)
-
-    @classmethod
-    def from_json(cls, data: str) -> str:
-        """
-        Generate an instance of the material from JSON.
-
-        Returns
-        -------
-        The JSON representation of the material.
-        """
-        mat_dict = json.loads(data)
-        mat_name = next(iter(mat_dict.keys()))
-        return cls.from_dict(mat_name, mat_dict)
-
-    def __hash__(self) -> int:
-        """
-        Hash the material by it's name.
-
-        Returns
-        -------
-        The hashed material name
-        """
-        return hash(self.name)
-
-    def __eq__(self, other) -> bool:
-        """
-        Two materials are equal if their attributes have the same values.
-
-        Returns
-        -------
-        True if the two materials have the same attribute values, else false.
-        """
-        return self.to_dict() == other.to_dict()
-
-    def __ne__(self, other) -> bool:
-        """
-        Two materials are not equal if their attributes have different values.
-
-        Returns
-        -------
-        True if the two materials have different attribute values, else false.
-        """
-        return self != other
+        setattr(obj, self._name, value)
 
 
-class Void(SerialisedMaterial, nmm.Material):
+@dataclass
+class Void:
     """
     Void material class.
 
@@ -373,86 +379,57 @@ class Void(SerialisedMaterial, nmm.Material):
     """
 
     name: str
-    temperature_in_K: float  # noqa: N815
-    zaid_suffix: str
-    material_id: str
-
-    def __init__(
-        self,
-        name: str,
-        temperature_in_K: float = T_DEFAULT,  # noqa: N803
-        zaid_suffix: str | None = None,
-        material_id: str | None = None,
-    ):
-        super().__init__(
-            material_tag=name,
-            density=1,
-            density_unit="atom/cm3",
-            elements={"H": 1},
-            percent_type="ao",
-            temperature_in_K=temperature_in_K,
-            temperature_in_C=to_celsius(temperature_in_K),
-            zaid_suffix=zaid_suffix,
-            material_id=material_id,
-        )
-
-        self.name = name
-
-    def __str__(self) -> str:
-        """
-        Get a string representation of the Void.
-        """
-        return self.name
+    density: MaterialPropertyDescriptor = MaterialPropertyDescriptor(1)
+    density_unit: str = "atom/cm3"
+    percent_type: str = "ao"
+    elements: Dict[str, float] = field(default_factory=lambda: {"H": 1})
 
     @staticmethod
     def E(temperature: float | None = None) -> float:  # noqa: N802, ARG004
         """
-        Young's modulus.
-
-        Parameters
-        ----------
-        temperature:
-            The optional temperature [K].
-
-        Returns
-        -------
-        The Young's modulus of the material at the given temperature.
+        Young's modulus of the material at the given temperature.
         """
         return 0.0
 
     @staticmethod
     def mu(temperature: float | None = None) -> float:  # noqa: ARG004
         """
-        Poisson's ratio.
-
-        Parameters
-        ----------
-        temperature:
-            The optional temperature [K].
-
-        Returns
-        -------
-        Poisson's ratio for the material at the given temperature.
+        Poisson's ratio at a given temperature.
         """
         return 0.0
 
     @staticmethod
     def rho(temperature: float | None = None) -> float:  # noqa: ARG004
         """
-        Density.
+        The density at a given temperature.
+        """
+        return 0.0
+
+    def to_openmc_material(self, temperature: None = None):
+        """
+        Convert the material to an OpenMC material.
 
         Parameters
         ----------
         temperature:
-            The optional temperature [K].
+            The temperature [K].
 
         Returns
         -------
-        The density of the material at the given temperature.
+        The OpenMC material.
         """
-        return 0.0
+        return to_openmc_material(
+            name=self.name,
+            material_id=None,
+            density=self.density,
+            density_unit=self.density_unit,
+            percent_type=self.percent_type,
+            isotopes=None,
+            elements=self.elements,
+        )
 
 
+@dataclass
 class MassFractionMaterial:
     """
     Mass fraction material
@@ -523,101 +500,46 @@ class MassFractionMaterial:
 
     # Properties to interface with neutronics material maker
     name: str
-    material_id: Optional[int]
-
-    elements: Dict[str, float]
-    nuclides: Dict[str, float]
-
-    density_prop: MaterialProperty
-    density_unit: str
+    elements: Optional[Dict[str, float]] = None
+    nuclides: Optional[Dict[str, float]] = None
+    density: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    density_unit: str = "kg/m3"
+    temperature: TemperatureDescriptor = TemperatureDescriptor(T_DEFAULT)
+    zaid_suffix: Optional[str] = None
+    material_id: Optional[int] = None
+    percent_type: str = "wo"
+    enrichment: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    enrichment_target: Optional[str] = None
+    enrichment_type: Optional[str] = None
 
     # Engineering properties
-    poissons_ratio: MaterialProperty
-    thermal_conductivity: MaterialProperty
-    youngs_modulus: MaterialProperty
-    specific_heat: MaterialProperty
-    coefficient_thermal_expansion: MaterialProperty
-    electrical_resistivity: MaterialProperty
-    magnetic_saturation: MaterialProperty
-    viscous_remanent_magnetisation: MaterialProperty
-    coercive_field: MaterialProperty
-    minimum_yield_stress: MaterialProperty
-    average_yield_stress: MaterialProperty
-    minimum_ultimate_tensile_stress: MaterialProperty
-    average_ultimate_tensile_stress: MaterialProperty
+    poissons_ratio: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    thermal_conductivity: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    youngs_modulus: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    specific_heat: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    coefficient_thermal_expansion: MaterialPropertyDescriptor = (
+        MaterialPropertyDescriptor()
+    )
+    electrical_resistivity: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    magnetic_saturation: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    viscous_remanent_magnetisation: MaterialPropertyDescriptor = (
+        MaterialPropertyDescriptor()
+    )
+    coercive_field: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    minimum_yield_stress: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    average_yield_stress: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    minimum_ultimate_tensile_stress: MaterialPropertyDescriptor = (
+        MaterialPropertyDescriptor()
+    )
+    average_ultimate_tensile_stress: MaterialPropertyDescriptor = (
+        MaterialPropertyDescriptor()
+    )
 
-    def __init__(
+    def __post_init__(
         self,
-        name: str,
-        material_id: Optional[int] = None,
-        percent_type: str = "wo",
-        density_unit: str = "kg/m3",
-        density: Optional[Union[MaterialProperty, str, float]] = None,
-        elements: Optional[Dict[str, float]] = None,
-        nuclides: Optional[Dict[str, float]] = None,
-        temperature_in_K: float = T_DEFAULT,  # noqa: N803
-        enrichment: Optional[Union[MaterialProperty, str, float]] = None,
-        enrichment_target: Optional[str] = None,
-        enrichment_type: Optional[str] = None,
-        poissons_ratio: Optional[MaterialProperty] = None,
-        thermal_conductivity: Optional[MaterialProperty] = None,
-        youngs_modulus: Optional[MaterialProperty] = None,
-        specific_heat: Optional[MaterialProperty] = None,
-        coefficient_thermal_expansion: Optional[MaterialProperty] = None,
-        electrical_resistivity: Optional[MaterialProperty] = None,
-        magnetic_saturation: Optional[MaterialProperty] = None,
-        viscous_remanent_magnetisation: Optional[MaterialProperty] = None,
-        coercive_field: Optional[MaterialProperty] = None,
-        minimum_yield_stress: Optional[MaterialProperty] = None,
-        average_yield_stress: Optional[MaterialProperty] = None,
-        minimum_ultimate_tensile_stress: Optional[MaterialProperty] = None,
-        average_ultimate_tensile_stress: Optional[MaterialProperty] = None,
     ):
-        if density is None:
-            raise MaterialsError("No density (value or T-function) specified.")
-
-        if density_unit not in {"kg/m3", "g/cm3", "g/cc"}:
-            raise MaterialsError("Density unit must be one of kg/m3, g/cm3, or g/cc")
-
-        if not (elements or nuclides):
+        if not (self.elements or self.nuclides):
             raise MaterialsError("No elements or nuclides specified.")
-
-        self.name = name
-
-        # nmm properties
-        self.material_id = material_id
-        self.percent_type = percent_type
-        self.density_unit = density_unit
-        self.elements = elements
-        self.nuclides = nuclides
-        self.enrichment_prop = (
-            MaterialProperty(enrichment)
-            if isinstance(enrichment, (str, float))
-            else enrichment
-        )
-        self.enrichment_target = enrichment_target
-        self.enrichment_type = enrichment_type
-
-        # material props
-        self.density_prop = (
-            density
-            if isinstance(density, MaterialProperty)
-            else MaterialProperty(density)
-        )
-        self.density = _try_calc_property(self, "density_prop", temperature_in_K)
-        self.poissons_ratio = poissons_ratio
-        self.thermal_conductivity = thermal_conductivity
-        self.youngs_modulus = youngs_modulus
-        self.specific_heat = specific_heat
-        self.coefficient_thermal_expansion = coefficient_thermal_expansion
-        self.electrical_resistivity = electrical_resistivity
-        self.magnetic_saturation = magnetic_saturation
-        self.viscous_remanent_magnetisation = viscous_remanent_magnetisation
-        self.coercive_field = coercive_field
-        self.minimum_yield_stress = minimum_yield_stress
-        self.average_yield_stress = average_yield_stress
-        self.minimum_ultimate_tensile_stress = minimum_ultimate_tensile_stress
-        self.average_ultimate_tensile_stress = average_ultimate_tensile_stress
 
     def __str__(self) -> str:
         """
@@ -638,27 +560,21 @@ class MassFractionMaterial:
         -------
         The OpenMC material.
         """
-        from neutronics_material_maker import Material  # noqa: PLC0415
-
-        enrichment = (
-            _try_calc_property(self, "enrichment_prop", temperature)
-            if self.enrichment_prop
-            else None
-        )
-
-        return Material(
+        return to_openmc_material(
             name=self.name,
             material_id=self.material_id,
-            density=self.density if temperature is None else self.rho(temperature),
+            density=self.rho(self.temperature if temperature is None else temperature),
             density_unit=self.density_unit,
             percent_type=self.percent_type,
             isotopes=self.nuclides,
             elements=self.elements,
-            enrichment=enrichment,
+            enrichment=_try_calc_property(self, "enrichment", temperature)
+            if self.enrichment
+            else None,
             enrichment_target=self.enrichment_target,
             enrichment_type=self.enrichment_type,
-            # temperature=temperature, not sure if this is needed
-        ).openmc_material
+            temperature=self.temperature if temperature is None else temperature,
+        )
 
     def mu(self, temperature: float) -> float:
         """
@@ -694,12 +610,7 @@ class MassFractionMaterial:
         """
         Mass density in kg/m**3
         """
-        density = _try_calc_property(self, "density_prop", temperature)
-
-        if self.density_unit in {"g/cm3", "g/cc"}:
-            density = gcm3_to_kgm3(density)
-
-        return density
+        return _try_calc_property(self, "density", temperature)
 
     def erho(self, temperature: float) -> float:
         """
@@ -749,36 +660,8 @@ class MassFractionMaterial:
         """
         return _try_calc_property(self, "average_ultimate_tensile_stress", temperature)
 
-    @property
-    def temperature(self) -> float:
-        """
-        Temperature: this is a pythonic property, but not an actual material
-        property!
 
-        Returns
-        -------
-        The temperature in Kelvin
-        """
-        return self.temperature_in_K
-
-    @temperature.setter
-    def temperature(self, value: float):
-        """
-        Sets the temperature of the material
-
-        Parameters
-        ----------
-        value:
-            The temperature in Kelvin
-        """
-        with contextlib.suppress(NotImplementedError):
-            self.density = self.rho(value)
-
-        self.temperature_in_K = value
-        self.temperature_in_C = to_celsius(value)
-
-
-class Superconductor:
+class Superconductor(abc.ABC):
     """
     Presently gratuitous use of multiple inheritance to convey plot function
     and avoid repetition. In future perhaps also a useful thing.
@@ -815,90 +698,23 @@ class Superconductor:
         ax.plot_surface(fields, temperatures, jc, cmap=plt.cm.viridis)
         ax.view_init(30, 45)
 
-    @staticmethod
+    @abc.abstractmethod
     def Jc():  # noqa: N802, D102
-        _raise_error()
-
-    @staticmethod
-    def _handle_ij(number):
-        """
-        Takes the real part of the imaginary number that results from the
-        exponentiation of a negative number with a fraction.
-        """
-        return number.real
+        ...
 
 
+@dataclass
 class NbTiSuperconductor(MassFractionMaterial, Superconductor):
     """
     Niobium-Titanium superconductor class.
     """
 
-    __annotations__ = MassFractionMaterial.__annotations__.copy()
-    c_0: float
-    bc_20: float
-    tc_0: float
-    alpha: float
-    beta: float
-    gamma: float
-
-    def __init__(
-        self,
-        name,
-        elements,
-        c_0=None,
-        bc_20=None,
-        tc_0=None,
-        alpha=None,
-        beta=None,
-        gamma=None,
-        density=None,
-        density_unit="kg/m3",
-        temperature_in_K=T_DEFAULT,  # noqa: N803
-        zaid_suffix=None,
-        material_id=None,
-        poissons_ratio=None,
-        thermal_conductivity=None,
-        youngs_modulus=None,
-        specific_heat=None,
-        coefficient_thermal_expansion=None,
-        electrical_resistivity=None,
-        magnetic_saturation=None,
-        viscous_remanent_magnetisation=None,
-        coercive_field=None,
-        minimum_yield_stress=None,
-        average_yield_stress=None,
-        minimum_ultimate_tensile_stress=None,
-        average_ultimate_tensile_stress=None,
-    ):
-        super().__init__(
-            name=name,
-            elements=elements,
-            density=density,
-            density_unit=density_unit,
-            temperature_in_K=temperature_in_K,
-            zaid_suffix=zaid_suffix,
-            material_id=material_id,
-            poissons_ratio=poissons_ratio,
-            thermal_conductivity=thermal_conductivity,
-            youngs_modulus=youngs_modulus,
-            specific_heat=specific_heat,
-            coefficient_thermal_expansion=coefficient_thermal_expansion,
-            electrical_resistivity=electrical_resistivity,
-            magnetic_saturation=magnetic_saturation,
-            viscous_remanent_magnetisation=viscous_remanent_magnetisation,
-            coercive_field=coercive_field,
-            minimum_yield_stress=minimum_yield_stress,
-            average_yield_stress=average_yield_stress,
-            minimum_ultimate_tensile_stress=minimum_ultimate_tensile_stress,
-            average_ultimate_tensile_stress=average_ultimate_tensile_stress,
-        )
-
-        self.c_0 = c_0
-        self.bc_20 = bc_20
-        self.tc_0 = tc_0
-        self.alpha = alpha
-        self.beta = beta
-        self.gamma = gamma
+    c_0: Optional[float] = None
+    bc_20: Optional[float] = None
+    tc_0: Optional[float] = None
+    alpha: Optional[float] = None
+    beta: Optional[float] = None
+    gamma: Optional[float] = None
 
     def Bc2(self, temperature: float) -> float:
         """
@@ -925,7 +741,38 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         c = (1 - ii) ** self.beta if 1 - ii > 0 else 0
         return a * b * c
 
+    def to_openmc_material(self, temperature: float = T_DEFAULT):
+        """
+        Convert the material to an OpenMC material.
 
+        Parameters
+        ----------
+        temperature:
+            The temperature [K].
+
+        Returns
+        -------
+        The OpenMC material.
+        """
+        return to_openmc_material(
+            name=self.name,
+            temperature=temperature,
+            zaid_suffix=self.zaid_suffix,
+            material_id=self.material_id,
+            density=self.rho(self.temperature if temperature is None else temperature),
+            density_unit=self.density_unit,
+            percent_type=self.percent_type,
+            isotopes=self.nuclides,
+            elements=self.elements,
+            enrichment=_try_calc_property(self, "enrichment", temperature)
+            if self.enrichment
+            else None,
+            enrichment_target=self.enrichment_target,
+            enrichment_type=self.enrichment_type,
+        )
+
+
+@dataclass
 class NbSnSuperconductor(MassFractionMaterial, Superconductor):
     """
     Niobium-Tin Superconductor class.
@@ -944,82 +791,31 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         The id number or mat number used in the MCNP and OpenMC material cards.
     """
 
-    __annotations__ = MassFractionMaterial.__annotations__.copy()
-    c_a1: float
-    c_a2: float
-    eps_0a: float
-    eps_m: float
-    b_c20m: float
-    t_c0max: float
-    c: float
-    p: float
-    q: float
+    c_a1: Optional[float] = None
+    c_a2: Optional[float] = None
+    eps_0a: Optional[float] = None
+    eps_m: Optional[float] = None
+    b_c20m: Optional[float] = None
+    t_c0max: Optional[float] = None
+    c: Optional[float] = None
+    p: Optional[float] = None
+    q: Optional[float] = None
 
-    def __init__(
-        self,
-        name,
-        elements,
-        c_a1=None,
-        c_a2=None,
-        eps_0a=None,
-        eps_m=None,
-        b_c20m=None,
-        t_c0max=None,
-        c=None,
-        p=None,
-        q=None,
-        density=None,
-        density_unit="kg/m3",
-        temperature_in_K=T_DEFAULT,  # noqa: N803
-        zaid_suffix=None,
-        material_id=None,
-        poissons_ratio=None,
-        thermal_conductivity=None,
-        youngs_modulus=None,
-        specific_heat=None,
-        coefficient_thermal_expansion=None,
-        electrical_resistivity=None,
-        magnetic_saturation=None,
-        viscous_remanent_magnetisation=None,
-        coercive_field=None,
-        minimum_yield_stress=None,
-        average_yield_stress=None,
-        minimum_ultimate_tensile_stress=None,
-        average_ultimate_tensile_stress=None,
-    ):
-        super().__init__(
-            name=name,
-            elements=elements,
-            density=density,
-            density_unit=density_unit,
-            temperature_in_K=temperature_in_K,
-            zaid_suffix=zaid_suffix,
-            material_id=material_id,
-            poissons_ratio=poissons_ratio,
-            thermal_conductivity=thermal_conductivity,
-            youngs_modulus=youngs_modulus,
-            specific_heat=specific_heat,
-            coefficient_thermal_expansion=coefficient_thermal_expansion,
-            electrical_resistivity=electrical_resistivity,
-            magnetic_saturation=magnetic_saturation,
-            viscous_remanent_magnetisation=viscous_remanent_magnetisation,
-            coercive_field=coercive_field,
-            minimum_yield_stress=minimum_yield_stress,
-            average_yield_stress=average_yield_stress,
-            minimum_ultimate_tensile_stress=minimum_ultimate_tensile_stress,
-            average_ultimate_tensile_stress=average_ultimate_tensile_stress,
-        )
-
-        self.c_a1 = c_a1
-        self.c_a2 = c_a2
-        self.eps_0a = eps_0a
-        self.eps_m = eps_m
-        self.b_c20m = b_c20m
-        self.t_c0max = t_c0max
-        self.c = c
-        self.p = p
-        self.q = q
-
+    def __post_init__(self):
+        if None in {
+            self.c_a1,
+            self.c_a2,
+            self.eps_0a,
+            self.eps_m,
+            self.b_c20m,
+            self.t_c0max,
+            self.c,
+            self.p,
+            self.q,
+        }:
+            raise ValueError(
+                "Not all required values set TODO(je-cook) kwargs in dataclasses"
+            )
         self.eps_sh = self.c_a2 * self.eps_0a / np.sqrt(self.c_a1**2 - self.c_a2**2)
 
     def Tc_star(self, B: float, eps: float) -> float:  # noqa: N802
@@ -1031,7 +827,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
         """
         if B == 0:
             return self.t_c0max * self.s(eps) ** (1 / 3)
-        b = self._handle_ij((1 - self.Bc2_star(0, eps)) ** (1 / 1.52j))
+        b = (1 - self.Bc2_star(0, eps)) ** (1 / 1.52j).real
         return self.t_c0max * self.s(eps) ** (1 / 3) * b
 
     def Bc2_star(self, temperature: float, eps: float) -> float:
@@ -1072,7 +868,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
     def _t152(self, temperature: float, eps: float) -> float:
         # 1.52 = 30000/19736
         t = self.reduced_t(temperature, eps) ** 1.52j
-        return self._handle_ij(t)
+        return t.real
 
     def reduced_t(self, temperature: float, eps: float) -> float:
         """
@@ -1104,8 +900,39 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
             - self.c_a2 * eps
         )
 
+    def to_openmc_material(self, temperature: float = T_DEFAULT):
+        """
+        Convert the material to an OpenMC material.
 
-class Liquid(SerialisedMaterial, nmm.Material):
+        Parameters
+        ----------
+        temperature:
+            The temperature [K].
+
+        Returns
+        -------
+        The OpenMC material.
+        """
+        return to_openmc_material(
+            name=self.name,
+            temperature=self.temperature if temperature is None else temperature,
+            zaid_suffix=self.zaid_suffix,
+            material_id=self.material_id,
+            density=self.rho(self.temperature if temperature is None else temperature),
+            density_unit=self.density_unit,
+            percent_type=self.percent_type,
+            isotopes=self.nuclides,
+            elements=self.elements,
+            enrichment=_try_calc_property(self, "enrichment", temperature)
+            if self.enrichment
+            else None,
+            enrichment_target=self.enrichment_target,
+            enrichment_type=self.enrichment_type,
+        )
+
+
+@dataclass
+class Liquid:
     """
     Liquid material base class.
 
@@ -1124,58 +951,13 @@ class Liquid(SerialisedMaterial, nmm.Material):
 
     name: str
     symbol: str
-    density: MaterialProperty
-    density_unit: str
-    temperature_in_K: float  # noqa: N815
-    pressure_in_Pa: float  # noqa: N815
-    zaid_suffix: str
-    material_id: str
-
-    def __init__(
-        self,
-        name: str,
-        symbol: str,
-        density: MaterialProperty | None = None,
-        density_unit: str = "kg/m3",
-        temperature_in_K: float = T_DEFAULT,  # noqa: N803
-        pressure_in_Pa: float = P_DEFAULT,  # noqa: N803
-        zaid_suffix: str | None = None,
-        material_id: str | None = None,
-    ):
-        if density is None:
-            raise MaterialsError("No density (value or T/P-function) specified.")
-
-        if density_unit not in {"kg/m3", "g/cm3", "g/cc"}:
-            raise MaterialsError("Density unit must be one of kg/m3, g/cm3, or g/cc")
-
-        if isinstance(density.value, int | float):
-            density_val = density.value
-            density_equation = None
-        else:
-            density_val = None
-            density_equation = density.value
-
-        super().__init__(
-            material_tag=symbol,
-            chemical_equation=symbol,
-            density=density_val,
-            density_equation=density_equation,
-            density_unit=density_unit,
-            percent_type="ao",
-            temperature_in_K=temperature_in_K,
-            temperature_in_C=to_celsius(temperature_in_K),
-            pressure_in_Pa=pressure_in_Pa,
-            zaid_suffix=zaid_suffix,
-            material_id=material_id,
-        )
-
-        self.name = name
-        self.density_prop = density
-
-        if self.density is None:
-            self.density = _try_calc_property(
-                self, "density_prop", temperature_in_K, pressure_in_Pa
-            )
+    density: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    density_unit: str = "kg/m3"
+    temperature: TemperatureDescriptor = TemperatureDescriptor(T_DEFAULT)
+    pressure: PressureDescriptor = PressureDescriptor(P_DEFAULT)
+    zaid_suffix: Optional[str] = None
+    material_id: Optional[int] = None
+    percent_type: str = "ao"
 
     def __str__(self) -> str:
         """
@@ -1185,17 +967,14 @@ class Liquid(SerialisedMaterial, nmm.Material):
 
     def rho(self, temperature: float, pressure: float | None = None) -> float:
         """
-        Mass density in kg/m**3
+        Mass density
         """
-        if pressure is None:
-            pressure = self.pressure_in_Pa
-
-        density = _try_calc_property(self, "density_prop", temperature, pressure)
-
-        if self.density_unit in {"g/cm3", "g/cc"}:
-            density = gcm3_to_kgm3(density)
-
-        return density
+        return _try_calc_property(
+            self,
+            "density",
+            temperature,
+            self.pressure if pressure is None else pressure,
+        )
 
     @staticmethod
     def E(temperature: float | None = None) -> float:  # noqa: N802, ARG004
@@ -1211,61 +990,34 @@ class Liquid(SerialisedMaterial, nmm.Material):
         """
         return 0
 
-    @property
-    def pressure(self) -> float:
+    def to_openmc_material(self, temperature: float = T_DEFAULT):
         """
-        The pressure of the material in Pascals
-
-        Returns
-        -------
-        The pressure [Pa]
-        """
-        return self.pressure_in_Pa
-
-    @pressure.setter
-    def pressure(self, value: float):
-        """
-        Sets the pressure of the material
+        Convert the material to an OpenMC material.
 
         Parameters
         ----------
-        value:
-            The value of the pressure in Pascals
-        """
-        with contextlib.suppress(NotImplementedError):
-            self.density = self.rho(self.temperature_in_K, value)
-
-        self.pressure_in_Pa = value
-
-    @property
-    def temperature(self) -> float:
-        """
-        Temperature: this is a pythonic property, but not an actual material
-        property!
+        temperature:
+            The temperature [K].
 
         Returns
         -------
-        The temperature in Kelvin
+        The OpenMC material.
         """
-        return self.temperature_in_K
-
-    @temperature.setter
-    def temperature(self, value: float):
-        """
-        Sets the temperature of the material
-
-        Parameters
-        ----------
-        value:
-            The temperature in Kelvin
-        """
-        with contextlib.suppress(NotImplementedError):
-            self.density = self.rho(value, self.pressure)
-
-        self.temperature_in_K = value
+        return to_openmc_material(
+            name=self.symbol,
+            chemical_equation=self.symbol,
+            density=self.rho(self.temperature if temperature is None else temperature),
+            density_unit=self.density_unit,
+            percent_type=self.percent_type,
+            temperature=self.temperature if temperature is None else temperature,
+            pressure=self.pressure,
+            zaid_suffix=self.zaid_suffix,
+            material_id=self.material_id,
+        )
 
 
-class UnitCellCompound(SerialisedMaterial, nmm.Material):
+@dataclass
+class UnitCellCompound:
     """
     Unit cell compound
 
@@ -1288,63 +1040,22 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
     name: str
     symbol: str
     volume_of_unit_cell_cm3: float
-    atoms_per_unit_cell: float
-    packing_fraction: float
-    enrichment: float
-    temperature_in_K: float  # noqa: N815
-    zaid_suffix: str
-    material_id: str
+    atoms_per_unit_cell: int
+    packing_fraction: float = 1.0
+    enrichment: Optional[float] = None
+    temperature: float = T_DEFAULT
+    zaid_suffix: Optional[str] = None
+    material_id: Optional[int] = None
+    percent_type: str = "ao"
+    density_unit: str = "g/cm3"
+    enrichment_target: str = "Li6"
+    enrichment_type: str = "ao"
 
     # Engineering properties
-    specific_heat: MaterialProperty
-    coefficient_thermal_expansion: MaterialProperty
-
-    def __init__(
-        self,
-        name: str,
-        symbol: str,
-        volume_of_unit_cell_cm3: float,
-        atoms_per_unit_cell: float,
-        packing_fraction: float = 1.0,
-        enrichment: float | None = None,
-        temperature_in_K: float = T_DEFAULT,  # noqa: N803
-        zaid_suffix: str | None = None,
-        material_id: str | None = None,
-        specific_heat: MaterialProperty | None = None,
-        coefficient_thermal_expansion: MaterialProperty | None = None,
-    ):
-        self.is_enrichable = True
-        try:
-            import openmc  # noqa: F401, PLC0415
-        except ImportError:
-            self.is_enrichable = False
-        if enrichment is not None:
-            bluemira_warn(
-                f"Enrichment set for {self.name} but OpenMC is not available, so "
-                "enrichment properties will not be ignored."
-            )
-
-        super().__init__(
-            material_tag=name,
-            chemical_equation=symbol,
-            volume_of_unit_cell_cm3=volume_of_unit_cell_cm3,
-            atoms_per_unit_cell=atoms_per_unit_cell,
-            percent_type="ao",
-            temperature_in_K=temperature_in_K,
-            temperature_in_C=to_celsius(temperature_in_K),
-            packing_fraction=packing_fraction,
-            enrichment=enrichment if self.is_enrichable else None,
-            enrichment_target="Li6" if self.is_enrichable else None,
-            enrichment_type="ao" if self.is_enrichable else None,
-            density_unit="g/cm3",
-            zaid_suffix=zaid_suffix,
-            material_id=material_id,
-        )
-
-        self.name = name
-
-        self.specific_heat = specific_heat
-        self.coefficient_thermal_expansion = coefficient_thermal_expansion
+    specific_heat: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
+    coefficient_thermal_expansion: MaterialPropertyDescriptor = (
+        MaterialPropertyDescriptor()
+    )
 
     def __str__(self):
         """
@@ -1366,6 +1077,23 @@ class UnitCellCompound(SerialisedMaterial, nmm.Material):
         """
         return _try_calc_property(
             self, "coefficient_thermal_expansion", temperature, eps_vol
+        )
+
+    def to_openmc_material(self):
+        return to_openmc_material(
+            name=self.name,
+            chemical_equation=self.symbol,
+            volume_of_unit_cell_cm3=self.volume_of_unit_cell_cm3,
+            atoms_per_unit_cell=self.atoms_per_unit_cell,
+            percent_type=self.percent_type,
+            temperature=self.temperature,
+            packing_fraction=self.packing_fraction,
+            enrichment=self.enrichment,
+            enrichment_target=self.enrichment_target,
+            enrichment_type=self.enrichment_type,
+            density_unit=self.density_unit,
+            zaid_suffix=self.zaid_suffix,
+            material_id=self.material_id,
         )
 
 
@@ -1414,52 +1142,20 @@ class BePebbleBed(UnitCellCompound):
         )
 
 
-class Plasma(SerialisedMaterial, nmm.Material):
+@dataclass
+class Plasma:
     """
     A generic plasma material.
     """
 
     name: str
-    isotopes: dict[str, float]
-    density: MaterialProperty
-    density_unit: str
-    temperature_in_K: float  # noqa: N815
-    zaid_suffix: str
-    material_id: str
-
-    def __init__(
-        self,
-        name: str,
-        isotopes: dict[str, float],
-        density: MaterialProperty | None = None,
-        density_unit: str = "g/cm3",
-        temperature_in_K: float | None = None,  # noqa: N803
-        zaid_suffix: str | None = None,
-        material_id: str | None = None,
-    ):
-        temperature_in_C = None  # noqa: N806
-        if temperature_in_K is not None:
-            temperature_in_C = to_celsius(temperature_in_K)  # noqa: N806
-
-        if density is None:
-            density = MaterialProperty(1e-6)
-        density_val = None
-        if isinstance(density.value, int | float):
-            density_val = density.value
-
-        super().__init__(
-            material_tag=name,
-            density=density_val,
-            density_unit=density_unit,
-            isotopes=isotopes,
-            percent_type="ao",
-            temperature_in_K=temperature_in_K,
-            temperature_in_C=temperature_in_C,
-            material_id=material_id,
-            zaid_suffix=zaid_suffix,
-        )
-
-        self.name = name
+    isotopes: Dict[str, float]
+    density: MaterialPropertyDescriptor = MaterialPropertyDescriptor(1e-6)
+    density_unit: str = "g/cm3"
+    temperature: TemperatureDescriptor = TemperatureDescriptor(T_DEFAULT)
+    zaid_suffix: Optional[str] = None
+    material_id: Optional[int] = None
+    percent_type: str = "ao"
 
     def __str__(self) -> str:
         """
@@ -1480,3 +1176,15 @@ class Plasma(SerialisedMaterial, nmm.Material):
         Poisson's ratio.
         """
         return 0
+
+    def to_openmc_material(self):
+        return to_openmc_material(
+            name=self.name,
+            density=self.density.value,
+            density_unit=self.density_unit,
+            isotopes=self.isotopes,
+            percent_type=self.percent_type,
+            temperature=self.temperature,
+            material_id=self.material_id,
+            zaid_suffix=self.zaid_suffix,
+        )

@@ -83,7 +83,7 @@ mixture_dict = {
         # State which materials are to be used and in what volume fractions
         "materials": {"Strawberry": 0.7, "Cream": 0.3},
         # Set the temperature of the mixture
-        "temperature_in_K": 290,
+        "temperature": 290,
     },
 }
 

@@ -35,26 +35,19 @@ class MixtureFraction:
         self.name = self.material.name
 
 
+@dataclass
 class HomogenisedMixture:
     """
     Inherits and does some dropping of 0 fractions (avoid touching nmm)
     """
 
-    def __init__(
-        self,
-        name: str,
-        materials: List[Union[MassFractionMaterial, HomogenisedMixture]],
-        fracs: List[float],
-        material_id: Optional[int] = None,
-        percent_type="vo",
-        packing_fraction: Optional[float] = 1.0,
-    ):
-        self.name = name
-        self.material_id = material_id
-        self.materials = materials
-        self.fracs = fracs
-        self.percent_type = percent_type
-        self.packing_fraction = packing_fraction
+    name: str
+    materials: List[MixtureFraction]
+    material_id: Optional[int] = None
+    percent_type: str = "vo"
+    packing_fraction: float = 1.0
+    enrichment: Optional[float] = None
+    temperature: Optional[float] = None
 
     def __str__(self) -> str:
         """
@@ -66,23 +59,22 @@ class HomogenisedMixture:
         """
         Convert the mixture to an openmc material.
         """
-        # Convert the constituent materials to openmc materials
-        openmc_materials = [
-            mat.to_openmc_material(temperature) for mat in self.materials
-        ]
-
-        from neutronics_material_maker import Material  # noqa: PLC0415
-
-        # Create the mixture
-        return Material.from_mixture(
-            name=self.name,
-            material_id=self.material_id,
-            materials=openmc_materials,
-            fracs=self.fracs,
-            percent_type=self.percent_type,
-            packing_fraction=self.packing_fraction,
-            temperature=temperature,
-        ).openmc_material
+        return (
+            import_nmm()
+            .Material.from_mixture(
+                name=self.name,
+                material_id=self.material_id,
+                materials=[
+                    mat.material.to_openmc_material(temperature)
+                    for mat in self.materials
+                ],
+                fracs=[mat.fraction for mat in self.materials],
+                percent_type=self.percent_type,
+                packing_fraction=self.packing_fraction,
+                temperature=temperature,
+            )
+            .openmc_material
+        )
 
     def _calc_homogenised_property(self, prop: str, temperature: float) -> float:
         """
@@ -92,28 +84,27 @@ class HomogenisedMixture:
         values, fractions = [], []
         # Calculate property mixtures, ignoring liquids and voids
         # for certain properties
-        for mat, vf in zip(self.materials, self.fracs, strict=False):
+        for mat in self.materials:
             try:
-                v = getattr(mat, prop)(temperature)
-                values.append(v)
-                fractions.append(vf)
-            except (  # noqa: PERF203
-                NotImplementedError,
-                AttributeError,
-                MaterialsError,
-            ):
-                warn.append([mat, prop])
+                v = getattr(mat.material, prop)(temperature)
+                if v is None:
+                    warn.append([mat.name, prop])
+                else:
+                    values.append(v)
+                    fractions.append(mat.fraction)
+            except AttributeError:
+                warn.append([mat.name, prop])
 
         f = np.array(fractions) / sum(fractions)  # Normalised
         value = np.dot(values, f)
 
         if warn:
             txt = (
-                f"Materials::{self.__class__.__name__}: The following "
+                f"Materials::{type(self).__name__}: The following "
                 "mat.prop calls failed:\n"
             )
             for w in warn:
-                txt += f"{w[0]}: {w[1]}" + "\n"
+                txt += f"{w[0]}: {w[1]}\n"
             bluemira_warn(txt)
 
         return value
@@ -193,35 +184,35 @@ class HomogenisedMixture:
         """
         return self._calc_homogenised_property("Sy", temperature)
 
-    # @classmethod
-    # def from_dict(
-    #     cls, name: str, material_dict: Dict[str, Any], material_cache: MaterialCache
-    # ) -> SerialisedMaterial:
-    #     """
-    #     Generate an instance of the mixture from a dictionary of materials.
+    @classmethod
+    def from_dict(
+        cls, name: str, material_dict: Dict[str, Any], material_cache: MaterialCache
+    ) -> HomogenisedMixture:
+        """
+        Generate an instance of the mixture from a dictionary of materials.
 
-    #     Parameters
-    #     ----------
-    #     name:
-    #         The name of the mixture
-    #     materials_dict:
-    #         The dictionary defining this and any additional mixtures
-    #     material_cache:
-    #         The cache to load the constituent materials from
+        Parameters
+        ----------
+        name:
+            The name of the mixture
+        materials_dict:
+            The dictionary defining this and any additional mixtures
+        material_cache:
+            The cache to load the constituent materials from
 
-    #     Returns
-    #     -------
-    #     The mixture
-    #     """
-    #     mat_dict = copy.deepcopy(material_dict[name])
-    #     if "materials" not in material_dict[name]:
-    #         raise MaterialsError("Mixture must define constituent materials.")
+        Returns
+        -------
+        The mixture
+        """
+        mat_dict = copy.deepcopy(material_dict[name])
+        if "materials" not in material_dict[name]:
+            raise MaterialsError("Mixture must define constituent materials.")
 
-    #     for mat in material_dict[name]["materials"]:
-    #         if isinstance(mat, str):
-    #             del mat_dict["materials"][mat]
-    #             material_inst = material_cache.get_material(mat, False)
-    #             material_value = material_dict[name]["materials"][mat]
-    #             mat_dict["materials"][material_inst] = material_value
-
-    #     return super().from_dict(name, {name: mat_dict})
+        materials = []
+        for mat in material_dict[name]["materials"]:
+            if isinstance(mat, str):
+                material_inst = material_cache.get_material(mat, False)
+                material_value = material_dict[name]["materials"][mat]
+                materials.append(MixtureFraction(material_inst, material_value))
+        mat_dict["materials"] = materials
+        return cls(name, **mat_dict)
