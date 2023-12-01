@@ -513,7 +513,7 @@ class MassFractionMaterial:
         """
         return self.name
 
-    def to_openmc_material(self, temperature: float = T_DEFAULT) -> openmc.Material:
+    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -523,10 +523,11 @@ class MassFractionMaterial:
             The temperature [K].
 
         """
+        temperature = self.temperature if temperature is None else temperature
         return to_openmc_material(
             name=self.name,
             material_id=self.material_id,
-            density=self.rho(self.temperature if temperature is None else temperature),
+            density=self.rho(temperature),
             density_unit=self.density_unit,
             percent_type=self.percent_type,
             isotopes=self.nuclides,
@@ -536,7 +537,7 @@ class MassFractionMaterial:
             else None,
             enrichment_target=self.enrichment_target,
             enrichment_type=self.enrichment_type,
-            temperature=self.temperature if temperature is None else temperature,
+            temperature=temperature,
         )
 
     def mu(self, temperature: float) -> float:
@@ -721,7 +722,7 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
         c = (1 - ii) ** self.beta if 1 - ii > 0 else 0
         return a * b * c
 
-    def to_openmc_material(self, temperature: float = T_DEFAULT) -> openmc.Material:
+    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -731,12 +732,14 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
             The temperature [K].
 
         """
+        temperature = self.temperature if temperature is None else temperature
+
         return to_openmc_material(
             name=self.name,
             temperature=temperature,
             zaid_suffix=self.zaid_suffix,
             material_id=self.material_id,
-            density=self.rho(self.temperature if temperature is None else temperature),
+            density=self.rho(temperature),
             density_unit=self.density_unit,
             percent_type=self.percent_type,
             isotopes=self.nuclides,
@@ -881,7 +884,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
             - self.c_a2 * eps
         )
 
-    def to_openmc_material(self, temperature: float = T_DEFAULT) -> openmc.Material:
+    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -891,12 +894,13 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
             The temperature [K].
 
         """
+        temperature = self.temperature if temperature is None else temperature
         return to_openmc_material(
             name=self.name,
-            temperature=self.temperature if temperature is None else temperature,
+            temperature=temperature,
             zaid_suffix=self.zaid_suffix,
             material_id=self.material_id,
-            density=self.rho(self.temperature if temperature is None else temperature),
+            density=self.rho(temperature),
             density_unit=self.density_unit,
             percent_type=self.percent_type,
             isotopes=self.nuclides,
@@ -968,7 +972,7 @@ class Liquid:
         """
         return 0
 
-    def to_openmc_material(self, temperature: float = T_DEFAULT) -> openmc.Material:
+    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
 
@@ -978,13 +982,15 @@ class Liquid:
             The temperature [K].
 
         """
+        temperature = self.temperature if temperature is None else temperature
+
         return to_openmc_material(
             name=self.symbol,
             chemical_equation=self.symbol,
-            density=self.rho(self.temperature if temperature is None else temperature),
+            density=self.rho(temperature),
             density_unit=self.density_unit,
             percent_type=self.percent_type,
-            temperature=self.temperature if temperature is None else temperature,
+            temperature=temperature,
             pressure=self.pressure,
             zaid_suffix=self.zaid_suffix,
             material_id=self.material_id,
