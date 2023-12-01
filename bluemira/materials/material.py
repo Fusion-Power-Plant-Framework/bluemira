@@ -8,26 +8,21 @@
 The home of base material objects. Use classes in here to make new materials.
 """
 
-import json
-import warnings
-from typing import Any, Dict, List, Optional, Union, get_type_hints
+import abc
+from dataclasses import asdict, dataclass, field
+from typing import Any, Dict, List, Optional, Union
 
 import asteval
 import matplotlib.pyplot as plt
 import numpy as np
 from CoolProp.CoolProp import PropsSI
+from numpy.typing import ArrayLike
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=UserWarning)
-    import neutronics_material_maker as nmm
-
-import contextlib
-
-from bluemira.base.constants import gcm3_to_kgm3, to_celsius, to_kelvin
-from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.base.constants import to_celsius, to_kelvin
 from bluemira.materials.constants import P_DEFAULT, T_DEFAULT
 from bluemira.materials.error import MaterialsError
-from bluemira.utilities.tools import array_or_num, is_num, json_writer, list_array
+from bluemira.materials.tools import import_nmm
+from bluemira.utilities.tools import array_or_num, is_num
 
 # Set any custom symbols for use in asteval
 asteval_user_symbols = {
@@ -46,7 +41,7 @@ def matproperty(t_min: float, t_max: float):
 
     def decorator(f):
         def wrapper(*args, **kwargs):
-            temperatures = list_array(args[1])
+            temperatures = np.atleast_1d(args[1])
 
             if not (temperatures <= t_max).all():
                 raise ValueError(
@@ -58,18 +53,11 @@ def matproperty(t_min: float, t_max: float):
                     "Material property not valid outside of tempe"
                     f"rature range: {temperatures} < T_min = {t_min}"
                 )
-            temperatures = array_or_num(temperatures)
             return f(args[0], temperatures, **kwargs)
 
         return wrapper
 
     return decorator
-
-
-def _raise_error():
-    raise NotImplementedError(
-        "This Material has not yet been given this property. Please add it."
-    )
 
 
 def _try_calc_property(mat, prop_name, *args, **kwargs):
