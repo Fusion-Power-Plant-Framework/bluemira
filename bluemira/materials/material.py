@@ -8,20 +8,16 @@
 The home of base material objects. Use classes in here to make new materials.
 """
 
-import abc
-from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional, Union
 
 import asteval
 import matplotlib.pyplot as plt
 import numpy as np
 from CoolProp.CoolProp import PropsSI
-from numpy.typing import ArrayLike
 
 from bluemira.base.constants import to_celsius, to_kelvin
 from bluemira.materials.constants import P_DEFAULT, T_DEFAULT
 from bluemira.materials.error import MaterialsError
-from bluemira.materials.tools import import_nmm
 from bluemira.utilities.tools import array_or_num, is_num
 
 # Set any custom symbols for use in asteval

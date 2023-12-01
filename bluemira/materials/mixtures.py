@@ -10,17 +10,29 @@ Material mixture utility classes
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional, Union
-
-if TYPE_CHECKING:
-    from bluemira.materials.material import MassFractionMaterial
-
+import copy
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.materials.constants import T_DEFAULT
 from bluemira.materials.error import MaterialsError
+from bluemira.materials.tools import import_nmm
+
+if TYPE_CHECKING:
+    from bluemira.materials.cache import MaterialCache
+    from bluemira.materials.material import MassFractionMaterial
+
+
+@dataclass
+class MixtureFraction:
+    material: Union[MassFractionMaterial, HomogenisedMixture]
+    fraction: float
+
+    def __post_init__(self):
+        self.name = self.material.name
 
 
 class HomogenisedMixture:
