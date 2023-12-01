@@ -88,8 +88,10 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_vv_mat = HomogenisedMixture(
         name="inb_vacuum_vessel",
         material_id=104,
-        materials=[md.eurofer_mat, md.water_mat],
-        fracs=[0.8, 0.2],
+        materials=[
+            MixtureFraction(md.eurofer_mat, 0.8),
+            MixtureFraction(md.water_mat, 0.2),
+        ],
         percent_type="vo",
     )
 
@@ -98,12 +100,11 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         name="inb_first_wall",
         material_id=101,
         materials=[
-            md.tungsten_mat,
-            md.eurofer_mat,
-            md.he_cool_mat,
-            md.lined_euro_mat,
+            MixtureFraction(md.tungsten_mat, 2.0 / 27.0),
+            MixtureFraction(md.eurofer_mat, 1.5 / 27.0),
+            MixtureFraction(md.he_cool_mat, 12.0 / 27.0),
+            MixtureFraction(md.lined_euro_mat, 11.5 / 27.0),
         ],
-        fracs=[2.0 / 27.0, 1.5 / 27.0, 12.0 / 27.0, 11.5 / 27.0],
         percent_type="vo",
     )
 
@@ -112,16 +113,20 @@ def _make_dcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_bz_mat = HomogenisedMixture(
         name="inb_breeder_zone",
         material_id=102,
-        materials=[md.lined_euro_mat, _PbLi_mat],
-        fracs=[0.0605 + 0.9395 * 0.05, 0.9395 * 0.95],
+        materials=[
+            MixtureFraction(md.lined_euro_mat, 0.0605 + 0.9395 * 0.05),
+            MixtureFraction(_PbLi_mat, 0.9395 * 0.95),
+        ],
         percent_type="vo",
     )
 
     inb_mani_mat = HomogenisedMixture(
         name="inb_manifold",
         material_id=103,
-        materials=[md.eurofer_mat, inb_bz_mat],
-        fracs=[0.573, 0.426],  # 1% void
+        materials=[
+            MixtureFraction(md.eurofer_mat, 0.573),
+            MixtureFraction(inb_bz_mat, 0.426),
+        ],  # 1% void
         percent_type="vo",
     )
 
@@ -155,8 +160,10 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_vv_mat = HomogenisedMixture(
         name="inb_vacuum_vessel",  # optional name of homogeneous material
         material_id=104,
-        materials=[md.eurofer_mat, md.water_mat],
-        fracs=[0.6, 0.4],
+        materials=[
+            MixtureFraction(md.eurofer_mat, 0.6),
+            MixtureFraction(md.water_mat, 0.4),
+        ],
         percent_type="vo",
     )
 
@@ -164,8 +171,11 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_fw_mat = HomogenisedMixture(
         name="inb_first_wall",  # optional name of homogeneous material
         material_id=101,
-        materials=[md.tungsten_mat, md.eurofer_mat, md.he_cool_mat],
-        fracs=[2.0 / 27.0, 25.0 * 0.573 / 27.0, 25.0 * 0.427 / 27.0],
+        materials=[
+            MixtureFraction(md.tungsten_mat, 2.0 / 27.0),
+            MixtureFraction(md.eurofer_mat, 25.0 * 0.573 / 27.0),
+            MixtureFraction(md.he_cool_mat, 25.0 * 0.427 / 27.0),
+        ],
         percent_type="vo",
     )
 
@@ -179,16 +189,10 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         name="inb_breeder_zone",
         material_id=102,
         materials=[
-            md.eurofer_mat,
-            md.Be12Ti_mat,
-            md.make_KALOS_ACB_mat(li_enrich_ao),
-            md.he_cool_mat,
-        ],
-        fracs=[
-            structural_fraction_vo,
-            multiplier_fraction_vo,
-            breeder_fraction_vo,
-            helium_fraction_vo,
+            MixtureFraction(md.eurofer_mat, structural_fraction_vo),
+            MixtureFraction(md.Be12Ti_mat, multiplier_fraction_vo),
+            MixtureFraction(md.make_KALOS_ACB_mat(li_enrich_ao), breeder_fraction_vo),
+            MixtureFraction(md.he_cool_mat, helium_fraction_vo),
         ],
         percent_type="vo",
     )
@@ -197,11 +201,10 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         name="inb_manifold",
         material_id=103,
         materials=[
-            md.eurofer_mat,
-            md.make_KALOS_ACB_mat(li_enrich_ao),
-            md.he_cool_mat,
+            MixtureFraction(md.eurofer_mat, 0.4724),
+            MixtureFraction(md.make_KALOS_ACB_mat(li_enrich_ao), 0.0241),
+            MixtureFraction(md.he_cool_mat, 0.5035),
         ],
-        fracs=[0.4724, 0.0241, 0.5035],
         percent_type="vo",
     )
 
@@ -210,8 +213,11 @@ def _make_hcpb_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     div_fw_mat = HomogenisedMixture(
         name="div_first_wall",
         material_id=302,
-        materials=[md.tungsten_mat, md.water_mat, md.eurofer_mat],
-        fracs=[16.0 / 25.0, 4.5 / 25.0, 4.5 / 25.0],
+        materials=[
+            MixtureFraction(md.tungsten_mat, 16.0 / 25.0),
+            MixtureFraction(md.water_mat, 4.5 / 25.0),
+            MixtureFraction(md.eurofer_mat, 4.5 / 25.0),
+        ],
         percent_type="vo",
     )
     return ReactorBaseMaterials(
@@ -246,8 +252,10 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_vv_mat = HomogenisedMixture(
         name="inb_vacuum_vessel",
         material_id=104,
-        materials=[md.eurofer_mat, md.water_mat],
-        fracs=[0.6, 0.4],
+        materials=[
+            MixtureFraction(md.eurofer_mat, 0.6),
+            MixtureFraction(md.water_mat, 0.4),
+        ],
         percent_type="vo",
     )
 
@@ -255,8 +263,11 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
     inb_fw_mat = HomogenisedMixture(
         name="inb_first_wall",
         material_id=101,
-        materials=[md.tungsten_mat, md.water_mat, md.eurofer_mat],
-        fracs=[0.0766, 0.1321, 0.7913],
+        materials=[
+            MixtureFraction(md.tungsten_mat, 0.0766),
+            MixtureFraction(md.water_mat, 0.1321),
+            MixtureFraction(md.eurofer_mat, 0.7913),
+        ],
         percent_type="vo",
     )
 
@@ -265,20 +276,22 @@ def _make_wcll_mats(li_enrich_ao: float) -> ReactorBaseMaterials:
         name="inb_breeder_zone",
         material_id=102,
         materials=[
-            md.tungsten_mat,
-            _PbLi_mat,
-            md.water_mat,
-            md.eurofer_mat,
+            MixtureFraction(md.tungsten_mat, 0.0004),
+            MixtureFraction(_PbLi_mat, 0.8238),
+            MixtureFraction(md.water_mat, 0.0176),
+            MixtureFraction(md.eurofer_mat, 0.1582),
         ],
-        fracs=[0.0004, 0.8238, 0.0176, 0.1582],
         percent_type="vo",
     )
 
     inb_mani_mat = HomogenisedMixture(
         name="inb_manifold",
         material_id=103,
-        materials=[_PbLi_mat, md.water_mat, md.eurofer_mat],
-        fracs=[0.2129, 0.2514, 0.5357],
+        materials=[
+            MixtureFraction(_PbLi_mat, 0.2129),
+            MixtureFraction(md.water_mat, 0.2514),
+            MixtureFraction(md.eurofer_mat, 0.5357),
+        ],
         percent_type="vo",
     )
 
