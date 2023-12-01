@@ -29,13 +29,14 @@ from enum import Enum, auto
 from typing import TYPE_CHECKING, Union
 
 import openmc
-from openmc import Material
 
 import bluemira.neutronics.materials_definition as md
-from bluemira.materials.mixtures import HomogenisedMixture
+from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
 
 if TYPE_CHECKING:
     from pathlib import Path
+
+    from openmc import Material
 
     from bluemira.materials.material import MassFractionMaterial
 

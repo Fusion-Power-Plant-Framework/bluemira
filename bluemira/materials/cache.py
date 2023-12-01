@@ -8,6 +8,8 @@
 Classes and methods to load, store, and retrieve materials.
 """
 
+from __future__ import annotations
+
 import copy
 import json
 from typing import Any, ClassVar, Dict
@@ -20,7 +22,6 @@ from bluemira.materials.material import (
     NbSnSuperconductor,
     NbTiSuperconductor,
     Plasma,
-    SerialisedMaterial,
     UnitCellCompound,
     Void,
 )
@@ -85,8 +86,9 @@ class MaterialCache:
         mat_dict:
             The dictionary containing the material or mixture attributes to be loaded.
         """
-        material_class = mats_dict[mat_name]["material_class"]
-        if material_class not in self.available_classes:
+        if (
+            material_class := mats_dict[mat_name]["material_class"]
+        ) not in self.available_classes:
             raise MaterialsError(
                 f"Request to load unknown material class {material_class}"
             )
@@ -109,10 +111,10 @@ class MaterialCache:
         mat_dict:
             The dictionary containing the mixture attributes to be loaded.
         """
-        class_name = mats_dict[mat_name].pop("material_class")
-        mat_class = self.available_classes[class_name]
-        mat = mat_class.from_dict(mat_name, mats_dict, self)
-        self._update_cache(mat_name, mat, overwrite=overwrite)
+        mat_class = self.available_classes[mats_dict[mat_name].pop("material_class")]
+        self._update_cache(
+            mat_name, mat_class.from_dict(mat_name, mats_dict, self), overwrite=overwrite
+        )
 
     def material_from_dict(
         self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
@@ -127,12 +129,12 @@ class MaterialCache:
         mat_dict:
             The dictionary containing the material attributes to be loaded.
         """
-        class_name = mats_dict[mat_name].pop("material_class")
-        mat_class = self.available_classes[class_name]
-        mat = mat_class.from_dict(mat_name, mats_dict)
-        self._update_cache(mat_name, mat, overwrite=overwrite)
+        mat_class = self.available_classes[mats_dict[mat_name].pop("material_class")]
+        self._update_cache(
+            mat_name, mat_class(mat_name, **mats_dict[mat_name]), overwrite=overwrite
+        )
 
-    def get_material(self, name: str, clone: bool = True) -> SerialisedMaterial:
+    def get_material(self, name: str, clone: bool = True):
         """
         Get the named material from the material dictionary
 
@@ -152,9 +154,7 @@ class MaterialCache:
             return copy.deepcopy(self._material_dict[name])
         return self._material_dict[name]
 
-    def _update_cache(
-        self, mat_name: str, mat: SerialisedMaterial, overwrite: bool = True
-    ):
+    def _update_cache(self, mat_name: str, mat, overwrite: bool = True):
         if not overwrite and mat_name in self._material_dict:
             raise MaterialsError(
                 f"Attempt to load material {mat_name}, which already "

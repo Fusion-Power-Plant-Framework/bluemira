@@ -19,11 +19,12 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 """
-TODO:
-[ ]Should we rename `quick_tbr_heating.py` to something else?
-____
 [ ]Tests?
 """
+
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
 
 import openmc
 from numpy import pi
@@ -34,7 +35,6 @@ import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.result_presentation as present
 from bluemira.base.constants import raw_uc
 from bluemira.base.tools import _timing
-from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.neutronics.params import (
     BreederTypeParameters,
@@ -46,6 +46,9 @@ from bluemira.neutronics.params import (
 )
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 
 def create_ring_source(tokamak_geometry: TokamakGeometry) -> openmc.Source:
