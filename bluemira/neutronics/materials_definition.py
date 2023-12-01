@@ -78,7 +78,7 @@ Be12Ti_mat = MassFractionMaterial(
     name="Be12Ti",
     elements={"Be": 12, "Ti": 1},
     percent_type="ao",
-    density=1.85,
+    density=2.25,
     density_unit="g/cm3",
 )
 
