@@ -230,14 +230,14 @@ def target_temperature(
         t_tar = roots[sol_i]
 
     # target temperature in keV
-    t_tar = constants.raw_uc(t_tar, "eV", "keV")
+    #t_tar = constants.raw_uc(t_tar, "eV", "keV")
 
     #test
-    boltz = 1.380649e-23/(8.61e-5) #[J/K]
+    #boltz = 1.380649e-23/(8.61e-5) #[J/K]
 
-    c_st = (2 * boltz * 5/m_i_kg)**(1/2)
+    #c_st = (2 * boltz * 5/m_i_kg)**(1/2)
 
-    q_t = 7*boltz*5*7.5e20*c_st
+    #q_t = 7*boltz*5*7.5e20*c_st
 
     return t_tar
 
@@ -334,8 +334,8 @@ def random_point_temperature(
     if round(abs(z_p)) == 0:
         s_p = 0
     # Return local temperature
-    return  constants.raw_uc(((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7), "eV", "keV")
-
+    #return  constants.raw_uc(((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7), "eV", "keV")
+    return  ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
 
 def electron_density_and_temperature_sol_decay(
     t_sep: float,
@@ -614,6 +614,10 @@ def radiative_loss_function_values(te, t_ref, l_ref):
     interp_func(te): np.array [W m^3]
         local values of the radiative power loss function
     """
+    #print(te)
+    #print(max(t_ref))
+    #te = constants.raw_uc(te, "keV", "eV")
+    #print(te)
     te_i = np.where(te < min(t_ref))
     te[te_i] = min(t_ref) + (np.finfo(float).eps)
     interp_func = interp1d(t_ref, l_ref)
@@ -668,7 +672,6 @@ def calculate_line_radiation_loss(ne, p_loss_f, species_frac):
     (species_frac[0] * (ne**2) * p_loss_f) * 1e-6: np.array
         Line radiation losses [MW m^-3]
     """
-
     return (species_frac * (ne**2) * p_loss_f)/(4*np.pi) * 1e-6
 
 
