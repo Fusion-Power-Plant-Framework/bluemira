@@ -398,6 +398,7 @@ class CoreRadiation(Radiation):
 
         # For each impurity species and for each flux tube,
         # poloidal distribution of the radiative power loss function.
+        #print(self.te_pol)
         self.loss_f = [
             [radiative_loss_function_values(t, t_ref, l_ref) for t in self.te_pol]
             for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
@@ -708,7 +709,7 @@ class ScrapeOffLayerRadiation(Radiation):
             dx = self.dx_imp
 
         if te_sep is None:
-            te_sep = self.params.T_e_sep.value
+            te_sep = constants.raw_uc(self.params.T_e_sep.value_as('keV'), "keV", "eV")
         ne_sep = self.params.n_e_sep.value
 
         te_sol, ne_sol = electron_density_and_temperature_sol_decay(
@@ -823,7 +824,7 @@ class ScrapeOffLayerRadiation(Radiation):
             target density [1/m^3]
         """
         if detachment:
-            te_t = [self.params.det_t.value] * len(te_div)
+            te_t = [constants.raw_uc(self.params.det_t.value_as('keV'), "keV", "eV")] * len(te_div)
             f_m = 0.1
         else:
             te_t = te_div
@@ -957,16 +958,16 @@ class ScrapeOffLayerRadiation(Radiation):
 
         # Coverting needed parameter units
         t_u_ev = constants.raw_uc(t_u_kev, "keV", "eV")
-        p_sol = constants.raw_uc(self.params.P_sep.value, "MW", "W")
-        f_ion_t = constants.raw_uc(self.params.f_ion_t.value, "keV", "eV")
+        p_sol = self.params.P_sep.value
+        f_ion_t = constants.raw_uc(self.params.f_ion_t.value_as('keV'), "keV", "eV")
 
         if self.eq.is_double_null:
             p_sol *= self.params.lfs_p_fraction.value if lfs else (1-self.params.lfs_p_fraction.value)
 
         t_mp_prof, n_mp_prof = self.mp_electron_density_temperature_profiles(
-            t_u_kev, lfs
+            t_u_ev, lfs
         )
-
+        #print(t_mp_prof, "t_mp_prof")
         # entrance of radiation region
         t_rad_in = random_point_temperature(
             in_x,
@@ -985,16 +986,16 @@ class ScrapeOffLayerRadiation(Radiation):
 
         # exit of radiation region
         if x_point_rad and pfr_ext is not None:
-            t_rad_out = self.params.f_ion_t.value
+            t_rad_out = constants.raw_uc(self.params.f_ion_t.value_as('keV'), "keV", "eV")
         elif detachment:
-            t_rad_out = self.params.f_ion_t.value
+            t_rad_out = constants.raw_uc(self.params.f_ion_t.value_as('keV'), "keV", "eV")
         else:
             t_rad_out = target_temperature(
                 p_sol,
                 t_u_ev,
                 self.params.n_e_sep.value,
                 self.params.gamma_sheath.value,
-                self.params.eps_cool.value,
+                self.params.eps_cool.value_as('eV'),
                 f_ion_t,
                 b_pol_tar,
                 b_pol_u,
@@ -1006,7 +1007,7 @@ class ScrapeOffLayerRadiation(Radiation):
             )
 
         # condition for occurred detachment
-        if t_rad_out <= self.params.f_ion_t.value:
+        if t_rad_out <= constants.raw_uc(self.params.f_ion_t.value_as('keV'), "keV", "eV"):
             x_point_rad = True
             detachment = True
 
@@ -1015,7 +1016,7 @@ class ScrapeOffLayerRadiation(Radiation):
             in_x,
             in_z,
             t_rad_in,
-            t_u_kev,
+            t_u_ev,
             lfs,
         )
 
@@ -1023,15 +1024,17 @@ class ScrapeOffLayerRadiation(Radiation):
             out_x,
             out_z,
             t_rad_out,
-            t_u_kev,
+            t_u_ev,
             lfs,
         )
-
+        #print(t_in_prof, "t_in")
+        #print(t_out_prof, "t_out")
         t_tar_prof, n_tar_prof = self.tar_electron_densitiy_temperature_profiles(
             n_out_prof,
             t_out_prof,
             detachment=detachment,
         )
+        #print(detachment)
         
         # temperature poloidal distribution
         t_pol = [
@@ -1264,7 +1267,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.b_tor_inn_tar = self.eq.Bt(self.x_strike_hfs)
         self.b_tot_inn_tar = np.hypot(self.b_pol_inn_tar, self.b_tor_inn_tar)
 
-        p_sol = constants.raw_uc(self.params.P_sep.value, "MW", "W")
+        p_sol = self.params.P_sep.value
         p_sol_lfs = p_sol*self.params.lfs_p_fraction.value
         p_sol_hfs = p_sol*(1-self.params.lfs_p_fraction.value)
 
@@ -1398,6 +1401,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         }
 
         for side, t_pol in loss.items():
+            #print(t_pol)
             loss[side] = [
                 [radiative_loss_function_values(t, t_ref, l_ref) for t in t_pol]
                 for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
@@ -1421,6 +1425,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 ]
                 for f, fi in zip(ft["loss"], self.impurities_content)
             ]
+
         return self.rad
 
     def build_sol_radiation_map(self, rad_lfs_low, rad_lfs_up, rad_hfs_low, rad_hfs_up):
@@ -1559,7 +1564,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.b_tor_inn_tar = self.eq.Bt(self.x_strike_hfs)
         self.b_tot_inn_tar = np.hypot(self.b_pol_inn_tar, self.b_tor_inn_tar)
 
-        p_sol = constants.raw_uc(self.params.P_sep.value, "MW", "W")
+        p_sol = self.params.P_sep.value
 
         # upstream temperature and power density
         self.t_omp = upstream_temperature(
@@ -2047,8 +2052,8 @@ class RadiationSource:
         else:
             fig = ax.figure
 
-        p_min = min(self.rad_tot)
-        p_max = max(self.rad_tot)
+        p_min = min(self.sol_rad.rad_tot)
+        p_max = max(self.sol_rad.rad_tot)
 
         separatrix = self.eq.get_separatrix()
         if isinstance(separatrix, Coordinates):
@@ -2057,9 +2062,9 @@ class RadiationSource:
         for sep in separatrix:
             plot_coordinates(sep, ax=ax, linewidth=0.2)
         cm = ax.scatter(
-            self.x_tot,
-            self.z_tot,
-            c=self.rad_tot,
+            self.sol_rad.x_tot,
+            self.sol_rad.z_tot,
+            c=self.sol_rad.rad_tot,
             s=10,
             cmap="plasma",
             vmin=p_min,
