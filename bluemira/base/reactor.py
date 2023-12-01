@@ -32,7 +32,7 @@ from bluemira.builders.tools import circular_pattern_component
 from bluemira.display.displayer import ComponentDisplayer
 from bluemira.display.plotter import ComponentPlotter
 from bluemira.geometry.tools import save_cad
-from bluemira.materials.material import SerialisedMaterial, Void
+from bluemira.materials.material import Material, Void
 
 if TYPE_CHECKING:
     import anytree
@@ -222,12 +222,8 @@ class FilterMaterial:
 
     def __init__(
         self,
-        keep_material: Union[
-            Type[SerialisedMaterial], Tuple[Type[SerialisedMaterial]], None
-        ] = None,
-        reject_material: Union[
-            Type[SerialisedMaterial], Tuple[Type[SerialisedMaterial]], None
-        ] = Void,
+        keep_material: Union[Type[Material], Tuple[Type[Material]], None] = None,
+        reject_material: Union[Type[Material], Tuple[Type[Material]], None] = Void,
     ):
         super().__setattr__("keep_material", keep_material)
         super().__setattr__("reject_material", reject_material)
@@ -249,9 +245,7 @@ class FilterMaterial:
         """
         raise AttributeError(f"{type(self).__name__} is immutable")
 
-    def _apply_filters(
-        self, material: Union[SerialisedMaterial, Tuple[SerialisedMaterial]]
-    ) -> bool:
+    def _apply_filters(self, material: Union[Material, Tuple[Material]]) -> bool:
         bool_store = True
 
         if self.keep_material is not None:
