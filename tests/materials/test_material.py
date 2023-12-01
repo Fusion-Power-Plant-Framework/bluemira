@@ -3,23 +3,11 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""
-Created on Tue Sep 17 11:18:37 2019
-
-@author: matti
-"""
-
-import warnings
 
 import numpy as np
 import pytest
 
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore", category=UserWarning)
-    from neutronics_material_maker.utils import make_serpent_material
-
-
-from bluemira.base.constants import EPS, kgm3_to_gcm3, to_kelvin
+from bluemira.base.constants import EPS, to_kelvin
 from bluemira.utilities.tools import is_num
 from tests.materials.materials_helpers import MATERIAL_CACHE
 
@@ -71,23 +59,19 @@ class TestMaterials:
 
     def test_material_card(self):
         pytest.importorskip("openmc")
-        s = make_serpent_material(self.beryllium)
-        s = s.splitlines()[0]
-        # Check serpent header updated with correct density
-        assert float(s.split(" ")[2]) == pytest.approx(
-            kgm3_to_gcm3(self.beryllium.density)
-        )
+        openmc_mat = self.beryllium.to_openmc_material()
+        assert openmc_mat.density == pytest.approx(self.beryllium.density())
 
     def test_t_tmp(self):
         """
         Tests Doppler broadening material card for serpent II
         """
         pytest.importorskip("openmc")
-        s = make_serpent_material(self.SS_316)
-        assert " tmp 293.15 " in s.splitlines()[0]
+        openmc_mat = self.SS_316.to_openmc_material()
+        assert openmc_mat.temperature == pytest.approx(293.15)
         self.SS_316.temperature = 400
-        s = make_serpent_material(self.SS_316)
-        assert " tmp 400 " in s.splitlines()[0]
+        openmc_mat = self.SS_316.to_openmc_material()
+        assert openmc_mat.temperature == pytest.approx(400)
 
     def test_superconductor_plot(self):
         b_min, b_max = 3, 16
@@ -109,6 +93,5 @@ class TestLiquids:
     def test_material_card(self):
         pytest.importorskip("openmc")
         self.water.temperature, self.water.pressure = 500, 200000
-        s = make_serpent_material(self.water)
-        s = s.splitlines()[0]
-        assert float(s.split(" ")[2]) == pytest.approx(kgm3_to_gcm3(self.water.density))
+        openmc_mat = self.water.to_openmc_material()
+        assert openmc_mat.density == pytest.approx(self.water.density())
