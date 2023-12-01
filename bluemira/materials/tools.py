@@ -22,6 +22,7 @@
 
 import json
 import warnings
+from contextlib import contextmanager
 
 
 def import_nmm():
@@ -34,3 +35,16 @@ def import_nmm():
         json.JSONEncoder.default = nmm.material._default.default
 
     return nmm
+
+
+@contextmanager
+def patch_nmm_openmc():
+    """Avoid creating openmc material until necessary"""
+    nmm = import_nmm()
+    if value := nmm.material.OPENMC_AVAILABLE:
+        nmm.material.OPENMC_AVAILABLE = False
+    try:
+        yield
+    finally:
+        if value:
+            nmm.material.OPENMC_AVAILABLE = True

@@ -19,7 +19,7 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.materials.constants import T_DEFAULT
 from bluemira.materials.error import MaterialsError
-from bluemira.materials.tools import import_nmm
+from bluemira.materials.tools import import_nmm, patch_nmm_openmc
 
 if TYPE_CHECKING:
     from bluemira.materials.cache import MaterialCache
@@ -62,9 +62,9 @@ class HomogenisedMixture:
         """
         Convert the mixture to an openmc material.
         """
-        return (
-            import_nmm()
-            .Material.from_mixture(
+        nmm = import_nmm()
+        with patch_nmm_openmc():
+            return nmm.Material.from_mixture(
                 name=self.name,
                 material_id=self.material_id,
                 materials=[
@@ -75,9 +75,7 @@ class HomogenisedMixture:
                 percent_type=self.percent_type,
                 packing_fraction=self.packing_fraction,
                 temperature=temperature,
-            )
-            .openmc_material
-        )
+            ).openmc_material
 
     def _calc_homogenised_property(self, prop: str, temperature: float):
         """
