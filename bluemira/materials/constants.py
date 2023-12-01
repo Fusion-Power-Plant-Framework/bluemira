@@ -9,5 +9,9 @@ Constants for use in the materials package.
 """
 
 # Standard temperature and pressure
-T_DEFAULT = 293.15  # Default temperature for all liquids [K]
-P_DEFAULT = 101325  # Default pressure for all liquids [Pa]
+
+T_DEFAULT = 293.15
+"""Default temperature for all materials [K]"""
+
+P_DEFAULT = 101325
+"""Default pressure for all liquids [Pa]"""
