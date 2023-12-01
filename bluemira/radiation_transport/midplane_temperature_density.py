@@ -104,7 +104,7 @@ class MidplaneProfiles:
         i_interior = np.where((rho_core >= 0) & (rho_core <= self.rho_ped))[0]
 
         n_grad_ped0 = self.params.n_e_0.value - self.params.n_e_ped.value
-        t_grad_ped0 = self.params.T_e_0.value - self.params.T_e_ped.value
+        t_grad_ped0 = self.params.T_e_0.value_as('keV') - self.params.T_e_ped.value_as('keV')
 
         rho_ratio_n = (
             1 - ((rho_core[i_interior] ** 2) / (self.rho_ped**2))
@@ -119,17 +119,17 @@ class MidplaneProfiles:
         ) ** self.params.alpha_t.value
 
         ne_i = self.params.n_e_ped.value + (n_grad_ped0 * rho_ratio_n)
-        te_i = self.params.T_e_ped.value + (t_grad_ped0 * rho_ratio_t)
+        te_i = self.params.T_e_ped.value_as('keV') + (t_grad_ped0 * rho_ratio_t)
 
         i_exterior = np.where((rho_core > self.rho_ped) & (rho_core <= 1))[0]
 
         n_grad_sepped = self.params.n_e_ped.value - self.params.n_e_sep.value
-        t_grad_sepped = self.params.T_e_ped.value - self.params.T_e_sep.value
+        t_grad_sepped = self.params.T_e_ped.value_as('keV') - self.params.T_e_sep.value_as('keV')
 
         rho_ratio = (1 - rho_core[i_exterior]) / (1 - self.rho_ped)
 
         ne_e = self.params.n_e_sep.value + (n_grad_sepped * rho_ratio)
-        te_e = self.params.T_e_sep.value + (t_grad_sepped * rho_ratio)
+        te_e = self.params.T_e_sep.value_as('keV') + (t_grad_sepped * rho_ratio)
 
         ne_core = np.append(ne_i, ne_e)
         te_core = np.append(te_i, te_e)
