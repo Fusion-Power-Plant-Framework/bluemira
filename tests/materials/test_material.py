@@ -85,7 +85,7 @@ class TestMaterials:
         pytest.importorskip("openmc")
         s = make_serpent_material(self.SS_316)
         assert " tmp 293.15 " in s.splitlines()[0]
-        self.SS_316.temperature_in_K = 400
+        self.SS_316.temperature = 400
         s = make_serpent_material(self.SS_316)
         assert " tmp 400 " in s.splitlines()[0]
 
