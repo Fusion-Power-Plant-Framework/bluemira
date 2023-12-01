@@ -52,7 +52,7 @@ input dictionary.
         "H2O": {
             "material_class": "Liquid",
             "symbol": "H2O",
-            "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Water')"
+            "density": "PropsSI('D', 'T', temperature, 'P', pressure, 'Water')"
         }
     }
     material_cache.load_from_dict("H2O", mat_dict)
@@ -104,7 +104,7 @@ the case of liquids), and will be described more when we discuss
         "H2O": {
             "material_class": "Liquid",
             "symbol": "H2O",
-            "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Water')"
+            "density": "PropsSI('D', 'T', temperature, 'P', pressure, 'Water')"
         }
     }
 
@@ -169,9 +169,9 @@ cache as below:
     material_cache = MaterialCache()
     material_cache.load_from_dict("Bronze", mat_dict)
     bronze = material_cache.get_material("Bronze")
-    temperature_in_K = 300
-    print(f"Density of bronze at {temperature_in_K} K: {bronze.rho(temperature_in_K)}")
-    print(f"Poisson's ratio of bronze at {temperature_in_K} K: {bronze.mu(temperature_in_K)}")
+    temperature = 300  # Kelvin
+    print(f"Density of bronze at {temperature} K: {bronze.rho(temperature)}")
+    print(f"Poisson's ratio of bronze at {temperature} K: {bronze.mu(temperature)}")
 
 As you may note in the above, the material properties have been defined using a verbose
 description of the property by then access using a shorthand form, which corresponds to
@@ -182,10 +182,10 @@ also possible to set the temperature of the material directly:
 
 .. code-block:: python
 
-    temperature_in_K = 500
-    bronze.temperature = temperature_in_K
-    print(f"Density of bronze at {temperature_in_K} K: {bronze.density}")
-    print(f"Poisson's ratio of bronze at {temperature_in_K} K: {bronze.poissons_ratio(temperature_in_K)}")
+    temperature= 500  # Kelvin
+    bronze.temperature = temperature
+    print(f"Density of bronze at {temperature} K: {bronze.density()}")
+    print(f"Poisson's ratio of bronze at {temperature} K: {bronze.poissons_ratio(temperature)}")
 
 This is not so useful for a material property that is temperature independent, so let's
 define a material with some properties that vary with temperature in different ways (the
@@ -205,19 +205,19 @@ element composition here has been reduced down for simplicity).
             },
             "poissons_ratio": 0.33,
             "coefficient_thermal_expansion": {
-                "value": "polynomial.Polynomial([15.13, 7.93e-3, -3.33e-6])(temperature_in_C)",
+                "value": "polynomial.Polynomial([15.13, 7.93e-3, -3.33e-6])(to_celsius(temperature))",
                 "temp_min_celsius": 20,
                 "temp_max_celsius": 1000,
                 "reference": "ITER_D_222RLN v3.3 Equation 40"
             },
             "youngs_modulus": {
-                "value": "0.001 * (201660 - 84.8 * temperature_in_C)",
+                "value": "0.001 * (201660 - 84.8 * to_celsius(temperature))",
                 "temp_min_celsius": 20,
                 "temp_max_celsius": 700,
                 "reference": "ITER_D_222RLN v3.3 Equation 41"
             },
             "density": {
-                "value": "interp(temperature_in_C, [20, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800], [7930, 7919, 7899, 7879, 7858, 7837, 7815, 7793, 7770, 7747, 7724, 7701, 7677, 7654, 7630, 7606, 7582])",
+                "value": "interp(to_celsius(temperature), [20, 50, 100, 150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800], [7930, 7919, 7899, 7879, 7858, 7837, 7815, 7793, 7770, 7747, 7724, 7701, 7677, 7654, 7630, 7606, 7582])",
                 "temp_min_celsius": 20,
                 "temp_max_celsius": 800,
                 "reference": "ITER_D_222RLN v3.3 Table A.S03.2.4-1"
@@ -231,8 +231,8 @@ There are a few things to pick out here:
   property definitions. These are derived from `asteval <https://newville.github.io/asteval/>`_,
   with the extended numpy support enabled. This lets us perform interpolations and
   define polynomial functions.
-- The temperature can be defined in this dynamic functions via ``temperature_in_K`` or
-  ``temperature_in_C`` to allow the functional forms to used directly in K or to be
+- The temperature can be defined in this dynamic functions via ``temperature`` or
+  or ``to_celsius(temperature)`` to allow the functional forms to used directly in K or to be
   converted from :sup:`o`\ C.
 - We have defined temperature ranges (in celsius or kelvin) over which the functional
   forms are valid.
@@ -243,15 +243,15 @@ There are a few things to pick out here:
     material_cache.load_from_dict("SS316-LN", mat_dict)
     steel = material_cache.get_material("SS316-LN")
 
-    temperature_in_K = 500
-    print(f"Density of steel at {temperature_in_K} K: {steel.rho(temperature_in_K)}")
-    print(f"CTE of steel at {temperature_in_K} K: {steel.CTE(temperature_in_K)}")
-    print(f"Young's modulus of steel at {temperature_in_K} K: {steel.E(temperature_in_K)}")
+    temperature = 500  # Kelvin
+    print(f"Density of steel at {temperature} K: {steel.rho(temperature)}")
+    print(f"CTE of steel at {temperature} K: {steel.CTE(temperature)}")
+    print(f"Young's modulus of steel at {temperature} K: {steel.E(temperature)}")
 
-    temperature_in_K = 600
-    print(f"Density of steel at {temperature_in_K} K: {steel.rho(temperature_in_K)}")
-    print(f"CTE of steel at {temperature_in_K} K: {steel.CTE(temperature_in_K)}")
-    print(f"Young's modulus of steel at {temperature_in_K} K: {steel.E(temperature_in_K)}")
+    temperature = 600  # Kelvin
+    print(f"Density of steel at {temperature} K: {steel.rho(temperature)}")
+    print(f"CTE of steel at {temperature} K: {steel.CTE(temperature)}")
+    print(f"Young's modulus of steel at {temperature} K: {steel.E(temperature)}")
 
 Liquids can be pressurised, so have a density property that is also dependent on pressure
 (in Pa).
@@ -262,7 +262,7 @@ Liquids can be pressurised, so have a density property that is also dependent on
         "H2O": {
             "material_class": "Liquid",
             "symbol": "H2O",
-            "density": "PropsSI('D', 'T', temperature_in_K, 'P', pressure_in_Pa, 'Water')"
+            "density": "PropsSI('D', 'T', temperature, 'P', pressure, 'Water')"
         }
     }
 
