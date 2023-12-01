@@ -22,7 +22,7 @@ from CoolProp.CoolProp import PropsSI
 from bluemira.base.constants import to_celsius, to_kelvin
 from bluemira.materials.constants import P_DEFAULT, T_DEFAULT
 from bluemira.materials.error import MaterialsError
-from bluemira.materials.tools import import_nmm
+from bluemira.materials.tools import import_nmm, patch_nmm_openmc
 from bluemira.utilities.tools import array_or_num, is_num
 
 if TYPE_CHECKING:
@@ -111,9 +111,9 @@ def to_openmc_material(
     additional_end_lines: Optional[Dict[str, List[str]]] = None,
 ) -> openmc.Material:
     """Convert Bluemira material to OpenMC material"""
-    return (
-        import_nmm()
-        .Material(
+    nmm = import_nmm()
+    with patch_nmm_openmc():
+        return nmm.Material(
             name=name,
             packing_fraction=packing_fraction,
             enrichment=enrichment,
@@ -136,9 +136,7 @@ def to_openmc_material(
             decimal_places=decimal_places,
             volume_in_cm3=volume_in_cm3,
             additional_end_lines=additional_end_lines,
-        )
-        .openmc_material
-    )
+        ).openmc_material
 
 
 @dataclass
