@@ -424,9 +424,7 @@ class MassFractionMaterial:
             percent_type=self.percent_type,
             isotopes=self.nuclides,
             elements=self.elements,
-            enrichment=_try_calc_property(self, "enrichment", temperature)
-            if self.enrichment
-            else None,
+            enrichment=self.enrichment(temperature),
             enrichment_target=self.enrichment_target,
             enrichment_type=self.enrichment_type,
             temperature=temperature,
@@ -636,9 +634,7 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
             percent_type=self.percent_type,
             isotopes=self.nuclides,
             elements=self.elements,
-            enrichment=_try_calc_property(self, "enrichment", temperature)
-            if self.enrichment
-            else None,
+            enrichment=self.enrichment(temperature),
             enrichment_target=self.enrichment_target,
             enrichment_type=self.enrichment_type,
         )
@@ -784,9 +780,7 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
             percent_type=self.percent_type,
             isotopes=self.nuclides,
             elements=self.elements,
-            enrichment=_try_calc_property(self, "enrichment", temperature)
-            if self.enrichment
-            else None,
+            enrichment=self.enrichment(temperature),
             enrichment_target=self.enrichment_target,
             enrichment_type=self.enrichment_type,
         )
@@ -876,12 +870,12 @@ class UnitCellCompound:
     volume_of_unit_cell_cm3: float
     atoms_per_unit_cell: int
     packing_fraction: float = 1.0
-    enrichment: Optional[float] = None
     temperature: float = T_DEFAULT
     zaid_suffix: Optional[str] = None
     material_id: Optional[int] = None
     percent_type: str = "ao"
     density_unit: str = "g/cm3"
+    enrichment: MaterialPropertyDescriptor = MaterialPropertyDescriptor()
     enrichment_target: str = "Li6"
     enrichment_type: str = "ao"
 
@@ -913,7 +907,7 @@ class UnitCellCompound:
             self, "coefficient_thermal_expansion", temperature, eps_vol
         )
 
-    def to_openmc_material(self, temperature: None = None) -> openmc.Material:  # noqa: ARG002
+    def to_openmc_material(self, temperature: None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
         """
@@ -925,7 +919,7 @@ class UnitCellCompound:
             percent_type=self.percent_type,
             temperature=self.temperature,
             packing_fraction=self.packing_fraction,
-            enrichment=self.enrichment,
+            enrichment=self.enrichment(temperature),
             enrichment_target=self.enrichment_target,
             enrichment_type=self.enrichment_type,
             density_unit=self.density_unit,
