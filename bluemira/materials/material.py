@@ -246,25 +246,16 @@ class MaterialPropertyDescriptor:
 class Void:
     """
     Void material class.
-
-    Parameters
-    ----------
-    name:
-        The material's name.
-    temperature_in_K:
-        The temperature [K].
-    zaid_suffix:
-        The nuclear library to apply to the zaid, for example ".31c", this is used in
-        MCNP and Serpent material cards.
-    material_id:
-        The id number or mat number used in the MCNP and OpenMC material cards.
     """
 
     name: str
     density: MaterialPropertyDescriptor = MaterialPropertyDescriptor(1)
     density_unit: str = "atom/cm3"
+    temperature: float = T_DEFAULT
     percent_type: str = "ao"
     elements: Dict[str, float] = field(default_factory=lambda: {"H": 1})
+    zaid_suffix: Optional[str] = None
+    material_id: Optional[int] = None
 
     @staticmethod
     def E(temperature: Optional[float] = None) -> float:  # noqa: N802, ARG004
@@ -287,18 +278,20 @@ class Void:
         """
         return 0.0
 
-    def to_openmc_material(self, temperature: None = None) -> openmc.Material:
+    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
         """
+        temperature = self.temperature if temperature is None else temperature
         return to_openmc_material(
             name=self.name,
-            material_id=None,
+            material_id=self.material_id,
             density=self.density(temperature),
             density_unit=self.density_unit,
             percent_type=self.percent_type,
             isotopes=None,
             elements=self.elements,
+            zaid_suffix=self.zaid_suffix,
         )
 
 
@@ -319,7 +312,7 @@ class MassFractionMaterial:
     density_unit:
         The unit that the density is supplied in, may be any one of kg/m3, g/cm3, g/cc,
         by default kg/m3.
-    temperature_in_K:
+    temperature:
         The temperature [K].
     zaid_suffix:
         The nuclear library to apply to the zaid, for example ".31c", this is used in
@@ -667,19 +660,6 @@ class NbTiSuperconductor(MassFractionMaterial, Superconductor):
 class NbSnSuperconductor(MassFractionMaterial, Superconductor):
     """
     Niobium-Tin Superconductor class.
-
-    Parameters
-    ----------
-    temperature_in_K: float
-        The temperature [K].
-    density: float
-        The optional density [kg/m3]. If supplied then this will override the calculated
-        density for the material.
-    zaid_suffix: str
-        The nuclear library to apply to the zaid, for example ".31c", this is used in
-        MCNP and Serpent material cards.
-    material_id: int
-        The id number or mat number used in the MCNP and OpenMC material cards.
     """
 
     c_a1: Optional[float] = None
@@ -828,18 +808,6 @@ class NbSnSuperconductor(MassFractionMaterial, Superconductor):
 class Liquid:
     """
     Liquid material base class.
-
-    Parameters
-    ----------
-    temperature_in_K: float
-        The temperature [K].
-    pressure_in_Pa: float
-        The pressure [Pa].
-    zaid_suffix: str
-        The nuclear library to apply to the zaid, for example ".31c", this is used in
-        MCNP and Serpent material cards.
-    material_id: int
-        The id number or mat number used in the MCNP and OpenMC material cards.
     """
 
     name: str
@@ -912,20 +880,6 @@ class Liquid:
 class UnitCellCompound:
     """
     Unit cell compound
-
-    Parameters
-    ----------
-    temperature_in_K:
-        The temperature [K].
-    packing_fraction:
-        Compound packing fraction (filled with Void). 0  <= float <= 1
-    enrichment:
-        Li6 absolute enrichment fraction. 0 <= float <= 1
-    zaid_suffix:
-        The nuclear library to apply to the zaid, for example ".31c", this is used in
-        MCNP and Serpent material cards.
-    material_id:
-        The id number or mat number used in the MCNP and OpenMC material cards.
     """
 
     # Properties to interface with neutronics material maker
