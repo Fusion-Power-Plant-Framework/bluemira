@@ -199,7 +199,7 @@ class MaterialPropertyDescriptor:
         if isinstance(value, dict):
             # Convert temp_*_celsius to temp_*
             if change := {"temp_min_celsius", "temp_max_celsius"}.intersection(value):
-                if {"temp_min", "temp_max"}.difference(value) != {}:
+                if {"temp_min", "temp_max"}.difference(value):
                     for key in change:
                         value[key.rsplit("_", 1)[0]] = to_kelvin(value[key])
                 for key in change:
@@ -553,7 +553,7 @@ class Superconductor(abc.ABC):
         ax.view_init(30, 45)
 
     @abc.abstractmethod
-    def Jc():  # noqa: N802, D102
+    def Jc(self):  # noqa: N802, D102
         ...
 
 
