@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import abc
 from dataclasses import asdict, dataclass, field
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Protocol, Union
+from typing import TYPE_CHECKING, Any, Dict, Optional, Protocol, Union
 
 import asteval
 import matplotlib.pyplot as plt
@@ -22,7 +22,7 @@ from CoolProp.CoolProp import PropsSI
 from bluemira.base.constants import to_celsius, to_kelvin
 from bluemira.materials.constants import P_DEFAULT, T_DEFAULT
 from bluemira.materials.error import MaterialsError
-from bluemira.materials.tools import import_nmm, patch_nmm_openmc
+from bluemira.materials.tools import _try_calc_property, matproperty, to_openmc_material
 from bluemira.utilities.tools import array_or_num, is_num
 
 if TYPE_CHECKING:
@@ -44,99 +44,9 @@ class Material(Protocol):
     density_unit: str
     percent_type: str
 
-
-def matproperty(t_min: float, t_max: float):
-    """
-    Material property decorator object.
-
-    Checks that input T vector is within bounds. Handles floats and arrays.
-    """
-
-    def decorator(f):
-        def wrapper(*args, **kwargs):
-            temperatures = np.atleast_1d(args[1])
-
-            if not (temperatures <= t_max).all():
-                raise ValueError(
-                    "Material property not valid outside of tempe"
-                    f"rature range: {temperatures} > T_max = {t_max}"
-                )
-            if not (temperatures >= t_min).all():
-                raise ValueError(
-                    "Material property not valid outside of tempe"
-                    f"rature range: {temperatures} < T_min = {t_min}"
-                )
-            return f(args[0], temperatures, **kwargs)
-
-        return wrapper
-
-    return decorator
-
-
-def _try_calc_property(mat, prop_name, *args, **kwargs):
-    if not hasattr(mat, prop_name):
-        raise MaterialsError(
-            f"Property {prop_name} does not exist for material {mat.name}"
-        )
-
-    if getattr(mat, prop_name) is not None:
-        return getattr(mat, prop_name)(*args, **kwargs)
-    raise MaterialsError(
-        f"Property {prop_name} has not been defined for material {mat.name}"
-    )
-
-
-def to_openmc_material(
-    name: Optional[str] = None,
-    packing_fraction: Optional[float] = 1.0,
-    enrichment: Optional[float] = None,
-    enrichment_target: Optional[str] = None,
-    temperature: Optional[float] = None,
-    temperature_to_neutronics_code: bool = True,
-    pressure: Optional[float] = None,
-    elements: Optional[Dict[str, float]] = None,
-    chemical_equation: Optional[str] = None,
-    isotopes: Optional[Dict[str, float]] = None,
-    percent_type: Optional[str] = None,
-    density: Optional[float] = None,
-    density_unit: Optional[str] = None,
-    atoms_per_unit_cell: Optional[int] = None,
-    volume_of_unit_cell_cm3: Optional[float] = None,
-    enrichment_type: Optional[str] = None,
-    comment: Optional[str] = None,
-    zaid_suffix: Optional[str] = None,
-    material_id: Optional[int] = None,
-    decimal_places: Optional[int] = 8,
-    volume_in_cm3: Optional[float] = None,
-    additional_end_lines: Optional[Dict[str, List[str]]] = None,
-) -> openmc.Material:
-    """Convert Bluemira material to OpenMC material"""
-    nmm = import_nmm()
-    with patch_nmm_openmc():
-        return nmm.Material(
-            name=name,
-            packing_fraction=packing_fraction,
-            enrichment=enrichment,
-            enrichment_target=enrichment_target,
-            temperature=temperature,
-            temperature_to_neutronics_code=temperature_to_neutronics_code,
-            pressure=pressure,
-            elements=elements,
-            chemical_equation=chemical_equation,
-            isotopes=isotopes,
-            percent_type=percent_type,
-            density=density,
-            density_unit=density_unit,
-            atoms_per_unit_cell=atoms_per_unit_cell,
-            volume_of_unit_cell_cm3=volume_of_unit_cell_cm3,
-            enrichment_type=enrichment_type,
-            comment=comment,
-            zaid_suffix=zaid_suffix,
-            material_id=material_id,
-            decimal_places=decimal_places,
-            volume_in_cm3=volume_in_cm3,
-            additional_end_lines=additional_end_lines,
-        ).openmc_material
+    def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
+        """Convert bluemira material to openmc material"""
+        ...
 
 
 @dataclass
@@ -188,21 +98,21 @@ class MaterialProperty:
         -------
         The property evaluated at the given temperature, pressure, and/or eps_vol.
         """
-        if temperature is None:
-            temperature = self.obj.temperature
-        if pressure is None and hasattr(self.obj, "pressure"):
-            pressure = self.obj.pressure
-
-        temperature = self._validate_temperature(temperature)
-
         if isinstance(self.value, str):
             aeval = asteval.Interpreter(usersyms=asteval_user_symbols)
-            aeval.symtable["temperature"] = temperature
-
-            if pressure is not None:
-                aeval.symtable["pressure"] = pressure
-
             aeval.symtable["eps_vol"] = eps_vol
+
+            if "temperature" in self.value:
+                if temperature is None:
+                    temperature = self.obj.temperature
+                temperature = self._validate_temperature(temperature)
+                aeval.symtable["temperature"] = temperature
+
+            if "pressure" in self.value:
+                if pressure is None and hasattr(self.obj, "pressure"):
+                    pressure = self.obj.pressure
+                pressure = self._validate_pressure(pressure)
+                aeval.symtable["pressure"] = pressure
 
             prop_val = array_or_num(aeval.eval(self.value))
 
@@ -215,16 +125,15 @@ class MaterialProperty:
 
     def to_dict(self):
         """
-        Serialise the material property to a value or dictionary.
-
-        Returns
-        -------
-        serialised_prop: Union[Dict[str, Any], float, str]
-            The serialised representation of the property. Represented by a dictionary
-            mapping attributes to their values, if more attributes than the value are
-            defined, otherwise just returns the value.
+        Serialise the material property to a dictionary.
         """
         return asdict(self)
+
+    @staticmethod
+    def _validate_pressure(pressure: Union[float, ArrayLike]):
+        if pressure is None:
+            raise ValueError("Pressure is not set")
+        return pressure
 
     def _validate_temperature(
         self, temperature: Union[float, ArrayLike]
@@ -242,6 +151,8 @@ class MaterialProperty:
         ValueError
             If any of the requested temperatures are outside of the valid range
         """
+        if temperature is None:
+            raise ValueError("Temperature is not set")
         temperatures = np.atleast_1d(temperature)
         if self.temp_min is not None and (temperatures < self.temp_min).any():
             raise ValueError(
@@ -376,14 +287,14 @@ class Void:
         """
         return 0.0
 
-    def to_openmc_material(self, temperature: None = None) -> openmc.Material:  # noqa: ARG002
+    def to_openmc_material(self, temperature: None = None) -> openmc.Material:
         """
         Convert the material to an OpenMC material.
         """
         return to_openmc_material(
             name=self.name,
             material_id=None,
-            density=self.density,
+            density=self.density(temperature),
             density_unit=self.density_unit,
             percent_type=self.percent_type,
             isotopes=None,

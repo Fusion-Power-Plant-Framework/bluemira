@@ -17,9 +17,8 @@ from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.materials.constants import T_DEFAULT
 from bluemira.materials.error import MaterialsError
-from bluemira.materials.tools import import_nmm, patch_nmm_openmc
+from bluemira.materials.tools import to_openmc_material_mixture
 
 if TYPE_CHECKING:
     from bluemira.materials.cache import MaterialCache
@@ -58,24 +57,20 @@ class HomogenisedMixture:
         """
         return self.name
 
-    def to_openmc_material(self, temperature: float = T_DEFAULT):
+    def to_openmc_material(self, temperature: Optional[float] = None):
         """
         Convert the mixture to an openmc material.
         """
-        nmm = import_nmm()
-        with patch_nmm_openmc():
-            return nmm.Material.from_mixture(
-                name=self.name,
-                material_id=self.material_id,
-                materials=[
-                    mat.material.to_openmc_material(temperature)
-                    for mat in self.materials
-                ],
-                fracs=[mat.fraction for mat in self.materials],
-                percent_type=self.percent_type,
-                packing_fraction=self.packing_fraction,
-                temperature=temperature,
-            ).openmc_material
+        temperature = self.temperature if temperature is None else temperature
+        return to_openmc_material_mixture(
+            [mat.material.to_openmc_material(temperature) for mat in self.materials],
+            [mat.fraction for mat in self.materials],
+            self.name,
+            self.material_id,
+            temperature,
+            percent_type=self.percent_type,
+            packing_fraction=self.packing_fraction,
+        )
 
     def _calc_homogenised_property(self, prop: str, temperature: float) -> float:
         """
