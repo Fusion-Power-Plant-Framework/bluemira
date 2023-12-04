@@ -197,11 +197,13 @@ class MaterialPropertyDescriptor:
         obj=None,
     ) -> MaterialProperty:
         if isinstance(value, dict):
-            if "temp_min" not in value and "temp_min_celsius" in value:
-                value["temp_max"] = to_kelvin(value["temp_max_celsius"])
-                value["temp_min"] = to_kelvin(value["temp_min_celsius"])
-                for k in ("temp_min_celsius", "temp_max_celsius"):
-                    del value[k]
+            # Convert temp_*_celsius to temp_*
+            if change := {"temp_min_celsius", "temp_max_celsius"}.intersection(value):
+                if {"temp_min", "temp_max"}.difference(value) != {}:
+                    for key in change:
+                        value[key.rsplit("_", 1)[0]] = to_kelvin(value[key])
+                for key in change:
+                    del value[key]
             # empty dictionary
             value = MaterialProperty(**value, obj=obj) if value else self._default
 
