@@ -72,10 +72,13 @@ class HomogenisedMixture:
             packing_fraction=self.packing_fraction,
         )
 
-    def _calc_homogenised_property(self, prop: str, temperature: float) -> float:
+    def _calc_homogenised_property(
+        self, prop: str, temperature: Optional[float] = None
+    ) -> float:
         """
         Calculate an mass-fraction-averaged property for the homogenised mixture.
         """
+        temperature = self.temperature if temperature is None else temperature
         warn = []
         values, fractions = [], []
         # Calculate property mixtures, ignoring liquids and voids
@@ -105,7 +108,7 @@ class HomogenisedMixture:
 
         return value
 
-    def E(self, temperature: float) -> float:  # noqa: N802
+    def E(self, temperature: Optional[float] = None) -> float:  # noqa: N802
         """
         Young's modulus.
 
@@ -120,7 +123,7 @@ class HomogenisedMixture:
         """
         return self._calc_homogenised_property("E", temperature)
 
-    def mu(self, temperature: float) -> float:
+    def mu(self, temperature: Optional[float] = None) -> float:
         """
         Poisson's ratio.
 
@@ -135,7 +138,7 @@ class HomogenisedMixture:
         """
         return self._calc_homogenised_property("mu", temperature)
 
-    def CTE(self, temperature: float) -> float:  # noqa: N802
+    def CTE(self, temperature: Optional[float] = None) -> float:  # noqa: N802
         """
         Mean coefficient of thermal expansion in 10**-6/T
 
@@ -150,7 +153,7 @@ class HomogenisedMixture:
         """
         return self._calc_homogenised_property("CTE", temperature)
 
-    def rho(self, temperature: float) -> float:
+    def rho(self, temperature: Optional[float] = None) -> float:
         """
         Density.
 
@@ -165,7 +168,7 @@ class HomogenisedMixture:
         """
         return self._calc_homogenised_property("rho", temperature)
 
-    def Sy(self, temperature: float) -> float:  # noqa: N802
+    def Sy(self, temperature: Optional[float] = None) -> float:  # noqa: N802
         """
         Minimum yield stress in MPa
 
