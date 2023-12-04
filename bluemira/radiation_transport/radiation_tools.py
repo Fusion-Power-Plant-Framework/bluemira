@@ -182,13 +182,12 @@ def target_temperature(
     Returns
     -------
     t_tar: float
-        target temperature. Unit [keV]
+        target temperature. Unit [eV]
     """
     # flux expansion at the target location
     f_exp = (r_u * b_pol_u) / (r_tar * b_pol_tar)
 
     # lambda target
-    # lambda_q_tar = lambda_q_near * f_exp * (1 / np.sin(np.deg2rad(alpha_pol_deg)))
     lambda_q_tar = lambda_q_near * f_exp * (1 / np.sin(np.deg2rad(alpha_pol_deg)))
     # wet area as poloidal section
     a_wet = 4 * np.pi * r_tar * lambda_q_tar
@@ -228,16 +227,6 @@ def target_temperature(
 
         # Target temperature
         t_tar = roots[sol_i]
-
-    # target temperature in keV
-    #t_tar = constants.raw_uc(t_tar, "eV", "keV")
-
-    #test
-    #boltz = 1.380649e-23/(8.61e-5) #[J/K]
-
-    #c_st = (2 * boltz * 5/m_i_kg)**(1/2)
-
-    #q_t = 7*boltz*5*7.5e20*c_st
 
     return t_tar
 
@@ -289,7 +278,7 @@ def random_point_temperature(
     Returns
     -------
     t_p: float
-        point temperature. Unit [keV]
+        point temperature. Unit [eV]
     """
     # Flux expansion at the point
     b_pol_sep_mp = eq.Bp(r_sep_mp, z_mp)
@@ -334,7 +323,6 @@ def random_point_temperature(
     if round(abs(z_p)) == 0:
         s_p = 0
     # Return local temperature
-    #return  constants.raw_uc(((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7), "eV", "keV")
     return  ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
 
 def electron_density_and_temperature_sol_decay(
@@ -380,7 +368,7 @@ def electron_density_and_temperature_sol_decay(
     Returns
     -------
     te_sol: np.array
-        radial decayed temperatures through the SoL. Unit [keV]
+        radial decayed temperatures through the SoL. Unit [eV]
     ne_sol: np.array
         radial decayed densities through the SoL. unit [1/m^3]
     """
@@ -603,9 +591,9 @@ def radiative_loss_function_values(te, t_ref, l_ref):
     Parameters
     ----------
     te: np.array
-        electron temperature [keV]
+        electron temperature [eV]
     t_ref: np.array
-        temperature reference [keV]
+        temperature reference [eV]
     l_ref: np.array
         radiative power loss reference [Wm^3]
 
@@ -614,10 +602,6 @@ def radiative_loss_function_values(te, t_ref, l_ref):
     interp_func(te): np.array [W m^3]
         local values of the radiative power loss function
     """
-    #print(te)
-    #print(max(t_ref))
-    #te = constants.raw_uc(te, "keV", "eV")
-    #print(te)
     te_i = np.where(te < min(t_ref))
     te[te_i] = min(t_ref) + (np.finfo(float).eps)
     interp_func = interp1d(t_ref, l_ref)
