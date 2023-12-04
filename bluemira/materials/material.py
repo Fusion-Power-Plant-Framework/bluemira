@@ -197,25 +197,11 @@ class MaterialPropertyDescriptor:
         obj=None,
     ) -> MaterialProperty:
         if isinstance(value, dict):
-            if "temp_min" not in value:
-                # muck with keys
-                # TODO(je-cook) should deprecate ?
-                if "temp_min_kelvin" in value:
-                    value["temp_max"] = value["temp_max_kelvin"]
-                    value["temp_min"] = value["temp_min_kelvin"]
-                    for k in (
-                        "temp_min_kelvin",
-                        "temp_max_kelvin",
-                        "temp_min_celsius",
-                        "temp_max_celsius",
-                    ):
-                        del value[k]
-
-                if "temp_min_celsius" in value:
-                    value["temp_max"] = to_kelvin(value["temp_max_celsius"])
-                    value["temp_min"] = to_kelvin(value["temp_min_celsius"])
-                    for k in ("temp_min_celsius", "temp_max_celsius"):
-                        del value[k]
+            if "temp_min" not in value and "temp_min_celsius" in value:
+                value["temp_max"] = to_kelvin(value["temp_max_celsius"])
+                value["temp_min"] = to_kelvin(value["temp_min_celsius"])
+                for k in ("temp_min_celsius", "temp_max_celsius"):
+                    del value[k]
             # empty dictionary
             value = MaterialProperty(**value, obj=obj) if value else self._default
 
