@@ -398,7 +398,6 @@ class CoreRadiation(Radiation):
 
         # For each impurity species and for each flux tube,
         # poloidal distribution of the radiative power loss function.
-        #print(self.te_pol)
         self.loss_f = [
             [radiative_loss_function_values(t, t_ref, l_ref) for t in self.te_pol]
             for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
@@ -743,9 +742,9 @@ class ScrapeOffLayerRadiation(Radiation):
         z_p: float
             z coordinate of the point at the separatrix [m]
         t_p: float
-            point temperature [keV]
+            point temperature [eV]
         t_u: float
-            upstream temperature [keV]
+            upstream temperature [eV]
         lfs: boolean
             low (toroidal) field side (outer wall side). Default value True.
             If False it stands for high field side (hfs).
@@ -753,7 +752,7 @@ class ScrapeOffLayerRadiation(Radiation):
         Returns
         -------
         te_prof: np.array
-            radial decayed temperatures through the SoL. Unit [keV]
+            radial decayed temperatures through the SoL. Unit [eV]
         ne_prof: np.array
             radial decayed densities through the SoL. Unit [1/m^3]
         """
@@ -812,14 +811,14 @@ class ScrapeOffLayerRadiation(Radiation):
             assumed to be corresponding to the divertor plane [1/m^3]
         te_div: np.array
             temperature of the flux tubes at the entrance of the recycling region,
-            assumed to be corresponding to the divertor plane [keV]
+            assumed to be corresponding to the divertor plane [eV]
         f_m: float
             fractional loss factor
 
         Returns
         -------
         te_t: np.array
-            target temperature [keV]
+            target temperature [eV]
         ne_t: np.array
             target density [1/m^3]
         """
@@ -894,7 +893,7 @@ class ScrapeOffLayerRadiation(Radiation):
         -------
         t_pol: array
             temperature poloidal profile along each
-            flux tube within the specified set [keV]
+            flux tube within the specified set [eV]
         n_pol: array
             density poloidal profile along each
             flux tube within the specified set [1/m^3]
@@ -967,7 +966,6 @@ class ScrapeOffLayerRadiation(Radiation):
         t_mp_prof, n_mp_prof = self.mp_electron_density_temperature_profiles(
             t_u_ev, lfs
         )
-        #print(t_mp_prof, "t_mp_prof")
         # entrance of radiation region
         t_rad_in = random_point_temperature(
             in_x,
@@ -1027,14 +1025,11 @@ class ScrapeOffLayerRadiation(Radiation):
             t_u_ev,
             lfs,
         )
-        #print(t_in_prof, "t_in")
-        #print(t_out_prof, "t_out")
         t_tar_prof, n_tar_prof = self.tar_electron_densitiy_temperature_profiles(
             n_out_prof,
             t_out_prof,
             detachment=detachment,
         )
-        #print(detachment)
         
         # temperature poloidal distribution
         t_pol = [
@@ -2052,8 +2047,8 @@ class RadiationSource:
         else:
             fig = ax.figure
 
-        p_min = min(self.sol_rad.rad_tot)
-        p_max = max(self.sol_rad.rad_tot)
+        p_min = min(self.rad_tot)
+        p_max = max(self.rad_tot)
 
         separatrix = self.eq.get_separatrix()
         if isinstance(separatrix, Coordinates):
@@ -2062,9 +2057,9 @@ class RadiationSource:
         for sep in separatrix:
             plot_coordinates(sep, ax=ax, linewidth=0.2)
         cm = ax.scatter(
-            self.sol_rad.x_tot,
-            self.sol_rad.z_tot,
-            c=self.sol_rad.rad_tot,
+            self.x_tot,
+            self.z_tot,
+            c=self.rad_tot,
             s=10,
             cmap="plasma",
             vmin=p_min,

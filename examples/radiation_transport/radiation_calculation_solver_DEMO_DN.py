@@ -225,7 +225,7 @@ source.rad_map(fw_shape)
 # or to calculate radiation loads on the first wall [MW/m^2].
 
 # %%
-def main(only_source=True):
+def main(only_source=False):
 
     if only_source:
         source.plot()
