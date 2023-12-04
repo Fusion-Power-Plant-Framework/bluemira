@@ -4,11 +4,10 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from tests.materials.materials_helpers import MATERIAL_CACHE
+import pytest
 
-# =============================================================================
-# Material mixture utility classes
-# =============================================================================
+from bluemira.base.constants import raw_uc
+from tests.materials.materials_helpers import MATERIAL_CACHE
 
 
 class TestMatDict:
@@ -20,3 +19,9 @@ class TestMatDict:
         assert isinstance(tf.rho(294), float)
         assert isinstance(tf.mu(294), float)
         assert isinstance(tf.Sy(294), float)
+
+    def test_openmc(self):
+        pytest.importorskip("openmc")
+        tf = MATERIAL_CACHE.get_material("Toroidal_Field_Coil_2015")
+        openmc_mat = tf.to_openmc_material()
+        assert openmc_mat.density == pytest.approx(raw_uc(tf.rho(), "kg/m^3", "g/cm^3"))
