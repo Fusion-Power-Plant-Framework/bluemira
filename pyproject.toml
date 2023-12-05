@@ -1,19 +1,19 @@
 [project]
 name = "bluemira"
-authors = [{name="The bluemira team"}]
+authors = [{ name = "The bluemira team" }]
 description = """An integrated inter-disciplinary design tool for future fusion
  reactors, incorporating several modules, some of which rely on
  other codes, to carry out a range of typical conceptual fusion
  reactor design activities."""
 readme = "README.md"
 requires-python = ">=3.8"
-dynamic=['version']
-classifiers=[
-        "Development Status :: 5 - Production/Stable",
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: GNU Lesser General Public License v2.1 or later (LGPLv2.1+)",
-        "Operating System :: POSIX :: Linux",
-    ]
+dynamic = ['version']
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Lesser General Public License v2.1 or later (LGPLv2.1+)",
+    "Operating System :: POSIX :: Linux",
+]
 dependencies = [
     "anytree",
     "asteval",
@@ -26,7 +26,7 @@ dependencies = [
     "imageio",
     "matplotlib>=3.5",
     "meshio",
-    "neutronics-material-maker==0.1.11",  # Crash on upgrade
+    "neutronics-material-maker==0.1.11", # Crash on upgrade
     "nlopt",
     "numba",
     "numba-scipy",
@@ -79,9 +79,7 @@ pinned = [
     "matplotlib==3.7.3",
     "scipy==1.7.3",
 ]
-openmoc = [
-    "OpenMOC @git+https://github.com/mit-crpg/OpenMOC.git@7940c0b",
-]
+openmoc = ["OpenMOC @git+https://github.com/mit-crpg/OpenMOC.git@7940c0b"]
 openmc = [
     "OpenMC @git+https://github.com/openmc-dev/openmc.git",
     "parametric-plasma-source @git+https://github.com/open-radiation-sources/parametric-plasma-source.git",
@@ -99,10 +97,7 @@ exclude = ["tests*"]
 [tool.setuptools_scm]
 
 [tool.coverage.report]
-"exclude_also" = [
-  "if __name__ == .__main__.:",
-  "if TYPE_CHECKING:"
-]
+"exclude_also" = ["if __name__ == .__main__.:", "if TYPE_CHECKING:"]
 
 [tool.mypy]
 python_version = "3.8"
@@ -128,7 +123,7 @@ markers = [
     "longrun: Long running tests (>20s)",
     "reactor: Whole reactor tests",
     "private: Tests using private data",
-    "classplot: Show and close figures after running all tests in class"
+    "classplot: Show and close figures after running all tests in class",
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']
@@ -166,32 +161,32 @@ preview = true
 preview = true
 select = ["ALL"]
 ignore = [
-    "ANN",  # type annotations
-    "EM",  # string in error messages
-    "PD",  # Pandas
-    "B019",  # using cache memory leaks
-    "COM812", # enforce trailing comma, disagrees with black/ruff format
-    "D200",  # docs stuff
+    "ANN",     # type annotations
+    "EM",      # string in error messages
+    "PD",      # Pandas
+    "B019",    # using cache memory leaks
+    "COM812",  # enforce trailing comma, disagrees with black/ruff format
+    "D200",    # docs stuff
     "D203",
     "D205",
     "D301",
     "D400",
     "D401",
     "DTZ005",  # datetime timezone arg
-    "E203",  # black/ruff format conflicts
+    "E203",    # black/ruff format conflicts
     "FIX002",  # Line contains todo
     "ISC001",  # ruff format conflict
     "PLW1514", # Specify file open encoding
     "PTH123",  # use Path.open
     "TRY003",  # put error messages in error class
     # should remove
-    "TD",  # standardise TODOs
-    "ERA",  # remove commented out code
-    "FBT",  # dont put bools in func definition
-    "SLF001",  # private method use
+    "TD",     # standardise TODOs
+    "ERA",    # remove commented out code
+    "FBT",    # dont put bools in func definition
+    "SLF001", # private method use
     # remove when we move to python3.10
-    "FA100",  # use future ann everywhere
-    "UP006",  # type annotations
+    "FA100", # use future ann everywhere
+    "UP006", # type annotations
     "UP007",
 
 ]
@@ -222,6 +217,9 @@ extend-immutable-calls = [
     "bluemira.utilities.opt_variables.ov",
     "bluemira.utilities.tools.ColourDescriptor",
 ]
+
+[tool.ruff.lint.flake8-copyright]
+notice-rgx = "(?i)# SPDX-FileCopyrightText:\\s\\d{4}(-(\\d{4}|present))*"
 
 [tool.ruff.lint.pydocstyle]
 convention = "numpy"
@@ -311,10 +309,7 @@ ignore-names = [
 ]
 
 [tool.ruff.lint.per-file-ignores]
-"__init__.py" = [
-    "F401",
-    "F403",
-]
+"__init__.py" = ["F401", "F403"]
 "bluemira/__init__.py" = ["TID252"]
 "bluemira/codes/__init__.py" = ["E402"]
 "bluemira/codes/process/_model_mapping.py" = ["PLR6301"]
@@ -324,17 +319,11 @@ ignore-names = [
 "data/*" = ["INP001"]
 "scripts/*" = ["INP001", "CPY001", "T201"]
 "setup.py" = ["CPY001"]
-"documentation/source/*" = [
-    "D100",
-    "D101",
-]
+"documentation/source/*" = ["D100", "D101"]
 "examples/*" = ["INP001", "T201"]
 "examples/geometry/optimisation_tutorial.ex.py" = ["W505", "E501"]
 "examples/optimisation/geometry_optimisation.ex.py" = ["E402"]
-"examples/optimisation/nonlinearly_constrained_problem.ex.py" = [
-    "E402",
-    "W505",
-]
+"examples/optimisation/nonlinearly_constrained_problem.ex.py" = ["E402", "W505"]
 "eudemo/eudemo/reactor.py" = ["ARG001"]
 "eudemo/eudemo_tests/*" = [
     "INP001",
