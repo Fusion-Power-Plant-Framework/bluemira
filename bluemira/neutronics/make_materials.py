@@ -28,7 +28,7 @@ from dataclasses import dataclass
 from enum import Enum, auto
 from typing import TYPE_CHECKING, Union
 
-import openmc
+from openmc import Materials
 
 import bluemira.neutronics.materials_definition as md
 from bluemira.materials.mixtures import HomogenisedMixture, MixtureFraction
@@ -394,5 +394,5 @@ class MaterialsLibrary:
 
     def export(self, path: Union[str, Path] = "materials.xml"):
         """Exports material defintions to xml"""
-        material_list = openmc.Materials(dataclasses.asdict(self).values())
+        material_list = Materials(dataclasses.asdict(self).values())
         return material_list.export_to_xml(path)
