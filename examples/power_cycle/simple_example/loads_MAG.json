@@ -39,8 +39,14 @@
           },
           "loads": {
             "description": ["upper_set", "lower_set"],
-            "time": [[0, 500], [0, 500]],
-            "data": [[0, 10], [0, 10]],
+            "time": [
+              [0, 500],
+              [0, 500]
+            ],
+            "data": [
+              [0, 10],
+              [0, 10]
+            ],
             "model": ["RAMP", "RAMP"]
           }
         }

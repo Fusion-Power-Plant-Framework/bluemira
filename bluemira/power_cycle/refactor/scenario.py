@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import ClassVar, Dict, List, Optional, Protocol, Union
+from typing import ClassVar, Dict, Iterable, Optional, Protocol, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -7,11 +7,11 @@ import numpy as np
 from bluemira.power_cycle.refactor.load_manager import (
     LoadType,
     PowerCycleLoadConfig,
-    create_manager_configs,
 )
+
+# create_manager_configs,
 from bluemira.power_cycle.refactor.loads import PulseSystemLoad
 from bluemira.power_cycle.refactor.time import ScenarioBuilderConfig
-from bluemira.utilities.tools import flatten_iterable
 
 
 class IsDataclass(Protocol):
@@ -59,12 +59,16 @@ class PowerCycleScenario:
         # TODO include repeat pulses, also currently all pulses are plotted on a separate axis
         x = int(np.ceil(np.sqrt(len(self.pulses))))
         _, axes = plt.subplots(x, x)
-        if not isinstance(axes, list):
-            axes = [axes]
-        for phases, ax in zip(self.pulses.values(), flatten_iterable(axes)):
+        if not isinstance(axes, Iterable):
+            axes = np.array([axes])
+        lab_col = None
+
+        for phases, ax in zip(self.pulses.values(), axes.flat):
             start_time = 0
             for phase in phases:
-                phase.plot_data(ax=ax, phase_start=start_time, unit=unit)
+                _, lab_col = phase.plot_data(
+                    ax=ax, phase_start=start_time, unit=unit, lab_col=lab_col
+                )
                 start_time += phase.duration
         plt.show()
 
@@ -122,43 +126,63 @@ class PowerCyclePhase:
 
     def _setup_phase(self, pulse_system_load):
         return {
-            loadtype: [
-                load
-                for sysloads in pulse_system_load.psl[loadtype].values()
-                for loads in sysloads.values()
+            loadtype: {
+                f"{sysname}:{loadsname}:{load.name}": load
+                for sysname, sysloads in pulse_system_load.psl[loadtype].items()
+                for loadsname, loads in sysloads.items()
                 for load in loads
                 if self.config.name in load.phases
-            ]
+            }
             for loadtype in LoadType
         }
 
-    def plot_data(self, ax=None, phase_start=0, unit="MW"):
-        """Plot the phase as a stackplot"""
-        # TODO improve colouring and add legend
+    def plot_data(self, ax=None, phase_start=0, unit="MW", lab_col=None):
+        """Plot the phase as a stacked plot"""
         if ax is None:
             _, ax = plt.subplots()
 
         active = self._get_data_arrays(self.loads[LoadType.ACTIVE], unit=unit)
-        active_offset = np.sum(active, axis=0)
-        ax.stackplot(
-            self._phase_duration + phase_start,
-            active,
-        )
-        ax.stackplot(
-            self._phase_duration + phase_start,
-            [
-                reactive_load + active_offset
-                for reactive_load in self._get_data_arrays(
-                    self.loads[LoadType.REACTIVE], unit=unit
-                )
-            ],
-        )
-        return ax
+        reactive = self._get_data_arrays(self.loads[LoadType.REACTIVE], unit=unit)
 
-    def _get_data_arrays(self, load_configs: List[PowerCycleLoadConfig], unit="MW"):
-        return [
-            self._collect_data(load_config, unit=unit) for load_config in load_configs
-        ]
+        ax.plot(
+            self._phase_duration + phase_start,
+            np.sum(list(active.values()), axis=0),
+            label="active" if lab_col is None else "_active",
+            color="k",
+        )
+
+        labels, colours, lab_col = self._define_labels_colours(
+            ax,
+            [a.rsplit(":", 1)[0] for tive in (active, reactive) for a in tive],
+            lab_col,
+        )
+
+        stack = np.cumsum(
+            np.row_stack(list(active.values()) + list(reactive.values())),
+            axis=0,
+        )
+
+        x = self._phase_duration + phase_start
+        coll = ax.fill_between(
+            x,
+            0,
+            stack[0, :],
+            facecolor=next(colours),
+            label=next(labels, None),
+            alpha=0.7,
+        )
+        coll.sticky_edges.y[:] = [0]
+        for i in range(len(stack) - 1):
+            _fillbetween_plot(ax, x, stack, i, next(colours), next(labels, None))
+
+        ax.legend()
+        return ax, lab_col
+
+    def _get_data_arrays(self, load_configs: Dict[str, PowerCycleLoadConfig], unit="MW"):
+        return {
+            name: self._collect_data(load_config, unit=unit)
+            for name, load_config in load_configs.items()
+        }
 
     def _collect_data(self, load_config: PowerCycleLoadConfig, unit="MW"):
         normalised = load_config.normalise[load_config.phases.index(self.config.name)]
@@ -169,3 +193,35 @@ class PowerCyclePhase:
     def __repr__(self) -> str:
         """Representation of the class"""
         return f"<{type(self).__name__} {self.config.name}: {self.config.description}>"
+
+    def _define_labels_colours(self, ax, labels, lab_col=None):
+        u_labels, u_ind, u_rlabels = np.unique(
+            labels, return_index=True, return_inverse=True
+        )
+        if lab_col is None:
+            col = [ax._get_lines.get_next_color() for _ in u_labels]
+
+            labs = iter(
+                [lab if ind in u_ind else f"_{lab}" for ind, lab in enumerate(labels)]
+            )
+            lab_col = dict(zip(u_labels, col))
+        else:
+            if u_labs := set(u_labels) - lab_col.keys():
+                for new_l in u_labs:
+                    lab_col[new_l] = ax._get_lines.get_next_color()
+
+            col = [lab_col[name] for name in u_labels]
+            labs = iter(
+                [
+                    lab if lab in u_labs and ind in u_ind else f"_{lab}"
+                    for ind, lab in enumerate(labels)
+                ]
+            )
+
+        cols = iter([col[i] for i in u_rlabels])
+
+        return labs, cols, lab_col
+
+
+def _fillbetween_plot(ax, x, y, i, fc, lab):
+    return ax.fill_between(x, y[i, :], y[i + 1, :], facecolor=fc, label=lab, alpha=0.7)

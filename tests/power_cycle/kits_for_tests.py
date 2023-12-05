@@ -236,7 +236,6 @@ class TimeTestKit:
         return read_json(scenario_json_path)
 
 
-
 class NetLoadsTestKit:
     time_testkit = TimeTestKit()
 
@@ -500,7 +499,6 @@ class NetManagerTestKit:
     def inputs_for_manager(self):
         manager_json_path = self.manager_json_path
         return read_json(manager_json_path)
-
 
     def inputs_for_groups(self):
         manager_json_contents = self.inputs_for_manager()

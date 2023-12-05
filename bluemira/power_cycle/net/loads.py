@@ -3,6 +3,7 @@
 """
 Classes for the definition of power loads in the power cycle model.
 """
+
 import copy
 from abc import ABC
 from typing import Iterable, List, Union

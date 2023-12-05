@@ -1,122 +1,96 @@
 {
-    "scenario": {
-        "name": "standard scenario",
-        "pulses": [
-            "std"
-        ],
-        "repetition": [
-            1
-        ]
+  "scenario": {
+    "name": "standard scenario",
+    "pulses": ["std"],
+    "repetition": [1]
+  },
+  "pulse_library": {
+    "std": {
+      "name": "standard pulse",
+      "phases": ["dwl", "d2f", "ftt", "f2d"]
     },
-    "pulse_library": {
-        "std": {
-            "name": "standard pulse",
-            "phases": [
-                "dwl",
-                "d2f",
-                "ftt",
-                "f2d"
-            ]
-        },
-        "wrd": {
-            "name": "weird pulse (for testing purposes only)",
-            "phases": [
-                "dwl",
-                "dwl",
-                "ftt",
-                "d2f",
-                "f2d"
-            ]
-        }
-    },
-    "phase_library": {
-        "dwl": {
-            "name": "dwell",
-            "logical": "|",
-            "breakdown": [
-                "csr",
-                "pmp"
-            ]
-        },
-        "d2f": {
-            "name": "transition between dwell and flat-top",
-            "logical": "&",
-            "breakdown": [
-                "cru",
-                "bri"
-            ]
-        },
-        "ftt": {
-            "name": "flat-top",
-            "logical": "&",
-            "breakdown": [
-                "plb"
-            ]
-        },
-        "f2d": {
-            "name": "transition between flat-top and dwell",
-            "logical": "&",
-            "breakdown": [
-                "brt",
-                "crd"
-            ]
-        }
-    },
-    "breakdown_library": {
-        "csr": {
-            "name": "Central Solenoid recharge",
-            "module": "equilibria",
-            "variables_map": {
-                "desired_data": "CS-recharge-time"
-            }
-        },
-        "pmp": {
-            "name": "reactor pump-down",
-            "module": "pumping",
-            "variables_map": {
-                "desired_data": "pumpdown-time"
-            }
-        },
-        "cru": {
-            "name": "current ramp-up",
-            "module": "equilibria",
-            "variables_map": {
-                "desired_data": "ramp-up-time"
-            }
-        },
-        "crd": {
-            "name": "current ramp-down",
-            "module": "equilibria",
-            "variables_map": {
-                "desired_data": "ramp-down-time"
-            }
-        },
-        "bri": {
-            "name": "burn initiation (heat up plasma)",
-            "module": null,
-            "variables_map": {
-                "duration": 19,
-                "unit": "second",
-                "reference": "?"
-            }
-        },
-        "brt": {
-            "name": "burn termination (cool down plasma)",
-            "module": null,
-            "variables_map": {
-                "duration": 123,
-                "unit": "second",
-                "reference": "?"
-            }
-        },
-        "plb": {
-            "name": "plasma burn",
-            "module": null,
-            "variables_map": {
-                "duration": 2,
-                "unit": "hour",
-                "reference": "?"
-            }
-        }
+    "wrd": {
+      "name": "weird pulse (for testing purposes only)",
+      "phases": ["dwl", "dwl", "ftt", "d2f", "f2d"]
     }
+  },
+  "phase_library": {
+    "dwl": {
+      "name": "dwell",
+      "logical": "|",
+      "breakdown": ["csr", "pmp"]
+    },
+    "d2f": {
+      "name": "transition between dwell and flat-top",
+      "logical": "&",
+      "breakdown": ["cru", "bri"]
+    },
+    "ftt": {
+      "name": "flat-top",
+      "logical": "&",
+      "breakdown": ["plb"]
+    },
+    "f2d": {
+      "name": "transition between flat-top and dwell",
+      "logical": "&",
+      "breakdown": ["brt", "crd"]
+    }
+  },
+  "breakdown_library": {
+    "csr": {
+      "name": "Central Solenoid recharge",
+      "module": "equilibria",
+      "variables_map": {
+        "desired_data": "CS-recharge-time"
+      }
+    },
+    "pmp": {
+      "name": "reactor pump-down",
+      "module": "pumping",
+      "variables_map": {
+        "desired_data": "pumpdown-time"
+      }
+    },
+    "cru": {
+      "name": "current ramp-up",
+      "module": "equilibria",
+      "variables_map": {
+        "desired_data": "ramp-up-time"
+      }
+    },
+    "crd": {
+      "name": "current ramp-down",
+      "module": "equilibria",
+      "variables_map": {
+        "desired_data": "ramp-down-time"
+      }
+    },
+    "bri": {
+      "name": "burn initiation (heat up plasma)",
+      "module": null,
+      "variables_map": {
+        "duration": 19,
+        "unit": "second",
+        "reference": "?"
+      }
+    },
+    "brt": {
+      "name": "burn termination (cool down plasma)",
+      "module": null,
+      "variables_map": {
+        "duration": 123,
+        "unit": "second",
+        "reference": "?"
+      }
+    },
+    "plb": {
+      "name": "plasma burn",
+      "module": null,
+      "variables_map": {
+        "duration": 2,
+        "unit": "hour",
+        "reference": "?"
+      }
+    }
+  }
 }

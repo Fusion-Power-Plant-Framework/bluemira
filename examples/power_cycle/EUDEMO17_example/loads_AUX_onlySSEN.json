@@ -57,8 +57,14 @@
               "buildings (light/elevators/HVAC; ITER extrapolation)",
               "site utilities"
             ],
-            "time": [[0, 1], [0, 1]],
-            "data": [[26.6, 26.6], [1.9, 1.9]],
+            "time": [
+              [0, 1],
+              [0, 1]
+            ],
+            "data": [
+              [26.6, 26.6],
+              [1.9, 1.9]
+            ],
             "model": ["RAMP", "RAMP"]
           }
         }
@@ -79,8 +85,14 @@
               "buildings (light/elevators/HVAC; ITER extrapolation)",
               "site utilities"
             ],
-            "time": [[0, 1], [0, 1]],
-            "data": [[54.8, 54.8], [3.1, 3.1]],
+            "time": [
+              [0, 1],
+              [0, 1]
+            ],
+            "data": [
+              [54.8, 54.8],
+              [3.1, 3.1]
+            ],
             "model": ["RAMP", "RAMP"]
           }
         }

@@ -3,6 +3,7 @@
 """
 Exception classes for the power cycle model.
 """
+
 from bluemira.base.error import BluemiraError
 
 

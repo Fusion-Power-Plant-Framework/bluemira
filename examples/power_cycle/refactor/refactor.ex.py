@@ -1,10 +1,14 @@
-from __future__ import annotations
+# from __future__ import annotations
 
 from dataclasses import dataclass
 
 from bluemira.base.constants import raw_uc
-from bluemira.power_cycle.refactor.load_manager import PowerCycleLoadConfig
-from bluemira.power_cycle.refactor.scenario import PowerCycleScenario
+
+# from bluemira.power_cycle.refactor.load_manager import (
+#     PowerCycleLibraryConfig,
+#     PowerCycleLoadConfig,
+# )
+from bluemira.power_cycle.refactor.load_manager import PowerCycleLibraryConfig
 
 
 @dataclass
@@ -15,15 +19,12 @@ class PowerCycleDurationParameters:
     ramp_down_time: float = 157
 
 
-@dataclass
-class PowerCyclePhaseLoads:
-    CS: PowerCycleLoadConfig = PowerCycleLoadConfig("", [], [], True, {}, {})
-    TF: PowerCycleLoadConfig = PowerCycleLoadConfig("", [], [], True, {}, {})
-    PF: PowerCycleLoadConfig = PowerCycleLoadConfig("", [], [], True, {}, {})
+# @dataclass
+# class PowerCyclePhaseLoads:
+#     CS: PowerCycleLoadConfig = PowerCycleLoadConfig("", [], [], True, {}, {})
+#     TF: PowerCycleLoadConfig = PowerCycleLoadConfig("", [], [], True, {}, {})
+#     PF: PowerCycleLoadConfig = PowerCycleLoadConfig("", [], [], True, {}, {})
 
 
-scenario = PowerCycleScenario(
-    "scenario_config.json",
-    "manager_config_complete.json",
-    PowerCycleDurationParameters(),
-)
+config = PowerCycleLibraryConfig.from_json("scenario_config.json")
+config.import_breakdown_data(PowerCycleDurationParameters())

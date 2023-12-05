@@ -59,7 +59,6 @@ class TestPowerCycleTimeABC:
         abstract class of the test.
         """
 
-
     def setup_method(self):
         name = "A sample instance name"
         durations_list = [0, 1, 5, 10]

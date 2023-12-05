@@ -1,9 +1,11 @@
 from copy import copy
-from typing import Dict, List, Literal
+from typing import List, Literal
 
 import numpy.typing as npt
 
-from bluemira.power_cycle.refactor.load_manager import LoadType, PowerCycleManagerConfig
+from bluemira.power_cycle.refactor.load_manager import LoadType
+
+# PowerCycleManagerConfig
 from bluemira.power_cycle.refactor.time import PhaseConfig
 
 
@@ -11,7 +13,7 @@ class PulseSystemLoad:
     def __init__(
         self,
         pulse: List[PhaseConfig],
-        manager_configs: Dict[str, PowerCycleManagerConfig],
+        # manager_configs: Dict[str, PowerCycleManagerConfig],
     ):
         self.pulse = pulse
         self._manager_configs = manager_configs
@@ -36,12 +38,7 @@ class PulseSystemLoad:
             }
             for loadtype in LoadType
         }
-
-        # active = dict[loads]
-        # reactive = dict[loads]
-
-        # Create new PowerCycleLoadConfig(s) for a given PulseSystemLoad
-        ...
+        return self.psl
 
 
 #### PowerCycleLoadConfig

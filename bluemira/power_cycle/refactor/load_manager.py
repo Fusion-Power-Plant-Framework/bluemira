@@ -2,14 +2,25 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
 
 import numpy as np
 from scipy.interpolate import interp1d
 
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.errors import PowerLoadError
-from bluemira.power_cycle.refactor.base import Config, LibraryConfigDescriptor
+from bluemira.power_cycle.refactor.base import (
+    Config,
+    Descriptor,
+    LibraryConfigDescriptor,
+)
+from bluemira.power_cycle.refactor.time import (
+    PhaseConfig,
+    PowerCycleBreakdownConfig,
+    PulseConfig,
+    ScenarioConfig,
+    ScenarioConfigDescriptor,
+)
 from bluemira.power_cycle.tools import create_axes, read_json
 
 if TYPE_CHECKING:
@@ -56,7 +67,7 @@ class PowerCycleSubLoadConfig(Config, PlotMixin):
     description: str = ""
 
     def __post_init__(self):
-        if any(isinstance(i, type(None)) for i in (self.time, self.data, self.model)):
+        if any(i is None for i in (self.time, self.data, self.model)):
             self = self.null()
         for var_name in ("time", "data"):
             var = getattr(self, var_name)
@@ -143,9 +154,7 @@ class PowerCycleLoadConfig(Config):
     normalise: list[bool]
     consumption: bool
     efficiencies: dict  # todo  another dataclass
-    loads: LibraryConfigDescriptor = LibraryConfigDescriptor(
-        library_config=PowerCycleSubLoadConfig
-    )
+    subloads: List[str]
     description: str = ""
 
     def __post_init__(self):
@@ -189,32 +198,156 @@ class PowerCycleLoadConfig(Config):
         )
 
 
+class LoadConfigDescriptor(Descriptor):
+    """Config descriptor for use with dataclasses"""
+
+    def __init__(
+        self,
+        *,
+        library: Config,
+    ):
+        self.library = library
+
+    def __get__(self, obj: Any, _) -> Dict[str, Config]:
+        """Get the config"""
+        return getattr(obj, self._name)
+
+    def __set__(
+        self,
+        obj: Any,
+        value: Dict[str, Union[Config, Dict]],
+    ):
+        """Setup the config"""
+        for k, v in value.items():
+            if not isinstance(v, self.library):
+                value[k] = self.library(name=k, **v)
+
+        setattr(obj, self._name, value)
+
+
 @dataclass
-class PowerCycleSystemLoadConfig:
+class SubLoadLibrary:
+    load_type: LoadType
+    loads: LoadConfigDescriptor = LoadConfigDescriptor(library=PowerCycleSubLoadConfig)
+
+
+@dataclass
+class LoadLibrary:
+    load_type: LoadType
+    loads: LoadConfigDescriptor = LoadConfigDescriptor(library=PowerCycleLoadConfig)
+
+
+@dataclass
+class PowerCycleSubSystem:
     name: str
-    reactive: LibraryConfigDescriptor = LibraryConfigDescriptor(
-        library_config=PowerCycleLoadConfig
-    )
-    active: LibraryConfigDescriptor = LibraryConfigDescriptor(
-        library_config=PowerCycleLoadConfig
-    )
+    reactive_loads: List[str]
+    active_loads: List[str]
     description: str = ""
 
 
 @dataclass
-class PowerCycleManagerConfig(Config):
-    config_path: str
-    systems: dict[str, PowerCycleSystemLoadConfig]
+class PowerCycleSystem(Config):
+    subsystems: List[str]
     description: str = ""
 
 
-def create_manager_configs(manager_config_path: Union[Path, str]):
-    manager_configs = {}
-    for key, val in read_json(manager_config_path).items():
-        json_contents = read_json(val["config_path"])
-        val["systems"] = {
-            system: PowerCycleSystemLoadConfig(name=system, **json_contents[system])
-            for system in val["systems"]
+@dataclass
+class PowerCycleLibraryConfig:
+    load: Dict[LoadType, LoadLibrary]
+    subload: Dict[LoadType, SubLoadLibrary]
+    scenario: ScenarioConfigDescriptor = ScenarioConfigDescriptor()
+    pulse: LibraryConfigDescriptor = LibraryConfigDescriptor(library_config=PulseConfig)
+    phase: LibraryConfigDescriptor = LibraryConfigDescriptor(library_config=PhaseConfig)
+    breakdown: LibraryConfigDescriptor = LibraryConfigDescriptor(
+        library_config=PowerCycleBreakdownConfig
+    )
+    system: LibraryConfigDescriptor = LibraryConfigDescriptor(
+        library_config=PowerCycleSystem
+    )
+    subsystem: LibraryConfigDescriptor = LibraryConfigDescriptor(
+        library_config=PowerCycleSubSystem
+    )
+
+    def __post_init__(self):
+        bl_keys = self.breakdown.keys()
+        ss_keys = self.subsystem.keys()
+        for ph_c in self.phase.values():
+            if unknown := ph_c.breakdown - bl_keys:
+                raise ValueError(f"Unknown breakdown configurations {unknown}")
+        for sys_c in self.system.values():
+            if unknown := sys_c.subsystems - ss_keys:
+                raise ValueError(f"Unknown subsystem configurations {unknown}")
+        for s_sys_c in self.subsystem.values():
+            for entry in LoadType:
+                if (
+                    unknown := getattr(s_sys_c, f"{entry.name.lower()}_loads")
+                    - self.load[entry].loads.keys()
+                ):
+                    raise ValueError(
+                        f"Unknown load configurations in subsystem {unknown}"
+                    )
+        for load, subload in zip(self.load.values(), self.subload.values()):
+            for sl in load.loads.values():
+                if unknown := sl.subloads - subload.loads.keys():
+                    raise ValueError(f"Unknown subload configurations in load {unknown}")
+
+    def import_breakdown_data(self, breakdown_duration_params):
+        for br in self.breakdown.values():
+            if isinstance(br.duration, str):
+                br.duration = getattr(
+                    breakdown_duration_params, br.duration.replace("-", "_")
+                )
+
+    @classmethod
+    def from_json(cls, manager_config_path: Union[Path, str]):
+        json_content = read_json(manager_config_path)
+
+        libraries = {
+            "load": {},
+            "subload": {},
         }
-        manager_configs[key] = PowerCycleManagerConfig(name=key, **val)
-    return manager_configs
+        for load_type in LoadType:
+            libraries["subload"][load_type] = SubLoadLibrary(
+                load_type, json_content[f"{load_type.name.lower()}_subload_library"]
+            )
+
+            libraries["load"][load_type] = LoadLibrary(
+                load_type, json_content[f"{load_type.name.lower()}_load_library"]
+            )
+
+        return cls(
+            scenario=ScenarioConfig(**json_content["scenario"]),
+            pulse={
+                k: PulseConfig(name=k, **v)
+                for k, v in json_content["pulse_library"].items()
+            },
+            phase={
+                k: PhaseConfig(name=k, **v)
+                for k, v in json_content["phase_library"].items()
+            },
+            breakdown={
+                k: PowerCycleBreakdownConfig(name=k, **v)
+                for k, v in json_content["breakdown_library"].items()
+            },
+            system={
+                k: PowerCycleSystem(name=k, **v)
+                for k, v in json_content["system_library"].items()
+            },
+            subsystem={
+                k: PowerCycleSubSystem(name=k, **v)
+                for k, v in json_content["sub_system_library"].items()
+            },
+            **libraries,
+        )
+
+    def make_phase(self, phase: str):
+        phase_config = self.phase[phase]
+        return phase
+
+    def make_pulse(self, pulse: str):
+        return {phase: self.make_phase(phase) for phase in self.pulse[pulse].phases}
+
+    def make_scenario(self):
+        pulses = {pulse: self.make_pulse(pulse) for pulse in self.scenario.pulses.keys()}
+        # TODO deal with repeat pulses
+        return pulses
