@@ -43,6 +43,7 @@ class Material(Protocol):
     name: str
     density_unit: str
     percent_type: str
+    temperature: float
 
     def to_openmc_material(self, temperature: Optional[float] = None) -> openmc.Material:
         """Convert bluemira material to openmc material"""
@@ -181,7 +182,7 @@ class MaterialPropertyDescriptor:
         self._name = "_" + name
 
     def __get__(self, obj: Any, _) -> MaterialProperty:
-        """Get the hex colour"""
+        """Get the MaterialProperty of the dataclass entry"""
         if obj is None:
             return self._default
         if self._default.obj is None:
@@ -221,11 +222,7 @@ class MaterialPropertyDescriptor:
         ],
     ):
         """
-        Set the colour
-
-        Notes
-        -----
-        The value can be anything accepted by matplotlib.colors.to_hex
+        Set the MaterialProperty of the dataclass entry
         """
         setattr(obj, self._name, self._mutate_value(value, obj))
 
