@@ -135,9 +135,9 @@ def test_coils_outside_sphere_vacuum_psi():
     assert len(test_coilset.get_control_coils().x) == 16
 
     non_cc_diff = np.array([eq.coilset.psi(eq.grid.x, eq.grid.z) == test_v_psi])
-    test_total = np.array(
-        [test_coilset.psi(eq.grid.x, eq.grid.z) - (test_v_psi + test_p_psi)]
-    )
+    test_total = np.array([
+        test_coilset.psi(eq.grid.x, eq.grid.z) - (test_v_psi + test_p_psi)
+    ])
 
     assert not non_cc_diff.all()
     assert test_total.all()
@@ -153,27 +153,25 @@ def test_get_psi_harmonic_amplitudes():
     test_v_psi, _, _ = coils_outside_sphere_vacuum_psi(eq)
     test_sh_amps = get_psi_harmonic_amplitudes(test_v_psi, eq.grid, test_colocation, 1.2)
 
-    sh_amps = np.array(
-        [
-            6.27021137e-03,
-            1.13305430e-01,
-            -7.10644651e-04,
-            -1.21121072e-02,
-            2.26606652e-04,
-            8.62564002e-03,
-            -1.09407173e-03,
-            1.40751192e-02,
-            -9.94184734e-04,
-            1.18311187e-02,
-            -7.55837162e-04,
-            7.67252084e-03,
-            -3.87118182e-04,
-            2.66066774e-03,
-            -1.87114805e-04,
-            1.09257867e-03,
-            -5.05761500e-05,
-        ]
-    )
+    sh_amps = np.array([
+        6.27021137e-03,
+        1.13305430e-01,
+        -7.10644651e-04,
+        -1.21121072e-02,
+        2.26606652e-04,
+        8.62564002e-03,
+        -1.09407173e-03,
+        1.40751192e-02,
+        -9.94184734e-04,
+        1.18311187e-02,
+        -7.55837162e-04,
+        7.67252084e-03,
+        -3.87118182e-04,
+        2.66066774e-03,
+        -1.87114805e-04,
+        1.09257867e-03,
+        -5.05761500e-05,
+    ])
 
     assert test_sh_amps == pytest.approx(sh_amps)
 
@@ -196,28 +194,26 @@ def test_spherical_harmonic_approximation():
         acceptable_fit_metric=0.3,
     )
 
-    sh_coilset_current = np.array(
-        [
-            7629.10582467,
-            80572.92343772,
-            72402.30872331,
-            64228.69554408,
-            21485.75482944,
-            -16683.29269502,
-            -67147.66998197,
-            -169607.44792089,
-            13184.10256721,
-            12076.3164052,
-            80572.92343772,
-            72402.30872331,
-            64228.69554408,
-            21485.75482944,
-            -13554.03543257,
-            -67147.66998197,
-            -169607.44792089,
-            13184.10256721,
-        ]
-    )
+    sh_coilset_current = np.array([
+        7629.10582467,
+        80572.92343772,
+        72402.30872331,
+        64228.69554408,
+        21485.75482944,
+        -16683.29269502,
+        -67147.66998197,
+        -169607.44792089,
+        13184.10256721,
+        12076.3164052,
+        80572.92343772,
+        72402.30872331,
+        64228.69554408,
+        21485.75482944,
+        -13554.03543257,
+        -67147.66998197,
+        -169607.44792089,
+        13184.10256721,
+    ])
     harmonic_amps = np.array([0.00627021, 0.12891703])
 
     assert test_sh_coilset.current == pytest.approx(sh_coilset_current)

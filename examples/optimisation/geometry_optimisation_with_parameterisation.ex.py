@@ -72,9 +72,11 @@ class Circle(GeometryParameterisation):
 zone = make_polygon({"x": [-2, -2, 3, 3], "z": [0, 1, 1, 0]}, closed=True)
 
 # Now lets create our circle within the shape
-circle = Circle(
-    {"radius": {"value": 10}, "centre_x": {"value": -2}, "centre_z": {"value": 1.5}}
-)
+circle = Circle({
+    "radius": {"value": 10},
+    "centre_x": {"value": -2},
+    "centre_z": {"value": 1.5},
+})
 
 plot_2d([circle.create_shape(), zone])
 

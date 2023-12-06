@@ -614,29 +614,23 @@ def rotation_matrix(theta: float, axis: Union[str, np.ndarray] = "z") -> np.ndar
         # I'm leaving all this in here, because it is easier to understand
         # what is going on, and that these are just "normal" rotation matrices
         if axis == "z":
-            r_matrix = np.array(
-                [
-                    [np.cos(theta), -np.sin(theta), 0],
-                    [np.sin(theta), np.cos(theta), 0],
-                    [0, 0, 1],
-                ]
-            )
+            r_matrix = np.array([
+                [np.cos(theta), -np.sin(theta), 0],
+                [np.sin(theta), np.cos(theta), 0],
+                [0, 0, 1],
+            ])
         elif axis == "y":
-            r_matrix = np.array(
-                [
-                    [np.cos(theta), 0, np.sin(theta)],
-                    [0, 1, 0],
-                    [-np.sin(theta), 0, np.cos(theta)],
-                ]
-            )
+            r_matrix = np.array([
+                [np.cos(theta), 0, np.sin(theta)],
+                [0, 1, 0],
+                [-np.sin(theta), 0, np.cos(theta)],
+            ])
         elif axis == "x":
-            r_matrix = np.array(
-                [
-                    [1, 0, 0],
-                    [0, np.cos(theta), -np.sin(theta)],
-                    [0, np.sin(theta), np.cos(theta)],
-                ]
-            )
+            r_matrix = np.array([
+                [1, 0, 0],
+                [0, np.cos(theta), -np.sin(theta)],
+                [0, np.sin(theta), np.cos(theta)],
+            ])
         else:
             raise CoordinatesError(
                 f"Incorrect rotation axis: {axis}\nplease select from: ['x', 'y', 'z']"
@@ -1344,9 +1338,11 @@ class Coordinates:
             if index == -1:
                 self._array = np.hstack((self._array, point))
             else:
-                self._array = np.hstack(
-                    (self._array[:, :index], point, self._array[:, index:])
-                )
+                self._array = np.hstack((
+                    self._array[:, :index],
+                    point,
+                    self._array[:, index:],
+                ))
 
     def close(self):
         """

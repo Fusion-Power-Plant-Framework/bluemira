@@ -56,9 +56,11 @@ def _direction_cosine_matrix(dx: float, dy: float, dz: float) -> np.ndarray:
     # TODO: Why does the less intuitive, simpler algebra form work better??
     # https://ocw.mit.edu/courses/civil-and-environmental-engineering/1-571-structural-analysis-and-control-spring-2004/readings/connor_ch5.pdf
     if np.isclose(a, 0) and np.isclose(b, 0):
-        dcm = np.array(
-            [[0.0, 0.0, -np.sign(c)], [0.0, 1.0, 0.0], [np.sign(c), 0.0, 0.0]]
-        )
+        dcm = np.array([
+            [0.0, 0.0, -np.sign(c)],
+            [0.0, 1.0, 0.0],
+            [np.sign(c), 0.0, 0.0],
+        ])
     else:
         dcm = np.array([[a, -b / d, -a * c / d], [b, a / d, -b * c / d], [c, 0, d]]).T
 
@@ -98,9 +100,11 @@ def _direction_cosine_matrix_debugging(dx, dy, dz, debug=False):
         # (rotation about z-axis)
         cos_theta = 0
         sin_theta = np.sign(x_local[1])
-        dcm = np.array(
-            [[cos_theta, -sin_theta, 0], [sin_theta, cos_theta, 0], [0, 0, 1]]
-        )
+        dcm = np.array([
+            [cos_theta, -sin_theta, 0],
+            [sin_theta, cos_theta, 0],
+            [0, 0, 1],
+        ])
         if debug:
             local = np.array([[0, sin_theta, 0], [-sin_theta, 0, 0], [0, 0, 1]])
             return dcm, local
@@ -110,9 +114,11 @@ def _direction_cosine_matrix_debugging(dx, dy, dz, debug=False):
         # rotation about the y-axis
         cos_theta = 0
         sin_theta = -1
-        dcm = np.array(
-            [[cos_theta, 0, sin_theta], [0, 1, 0], [-sin_theta, 0, cos_theta]]
-        )
+        dcm = np.array([
+            [cos_theta, 0, sin_theta],
+            [0, 1, 0],
+            [-sin_theta, 0, cos_theta],
+        ])
         if debug:
             local = np.array([[0, 0, 1], [0, 1, 0], [-1, 0, 0]])
             return dcm, local

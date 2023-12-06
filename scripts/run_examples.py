@@ -69,13 +69,11 @@ def parse_args(sys_args: List[str]) -> Args:
 
 def find_python_files(examples_dir: str, exclude_patterns: List[str]) -> List[str]:
     """Glob for Python files in the given directory."""
-    return sorted(
-        [
-            path
-            for path in Path(examples_dir).rglob("*.py")
-            if not any(re.search(p, str(path)) for p in exclude_patterns)
-        ]
-    )
+    return sorted([
+        path
+        for path in Path(examples_dir).rglob("*.py")
+        if not any(re.search(p, str(path)) for p in exclude_patterns)
+    ])
 
 
 def run_example(file_path: str) -> bool:

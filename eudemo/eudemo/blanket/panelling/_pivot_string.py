@@ -53,9 +53,10 @@ def make_pivoted_string(
     # Protect against dividing by zero
     tangent_vec_norm[tangent_vec_norm == 0] = 1e-32
     average_step_length = np.median(tangent_vec_norm)
-    tangent_vec /= tangent_vec_norm.reshape(-1, 1) * np.ones(
-        (1, np.shape(tangent_vec)[1])
-    )
+    tangent_vec /= tangent_vec_norm.reshape(-1, 1) * np.ones((
+        1,
+        np.shape(tangent_vec)[1],
+    ))
 
     new_points = np.zeros_like(boundary_points)
     index = np.zeros(boundary_points.shape[0], dtype=int)

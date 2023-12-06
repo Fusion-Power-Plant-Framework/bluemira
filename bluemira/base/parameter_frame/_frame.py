@@ -352,12 +352,10 @@ class ParameterFrame:
         columns = list(ParamDictT.__annotations__.keys()) if keys is None else keys
         rec_col = copy.deepcopy(columns)
         rec_col.pop(columns.index("name"))
-        records = sorted(
-            [
-                [key, *[param.get(col, "N/A") for col in rec_col]]
-                for key, param in self.to_dict().items()
-            ]
-        )
+        records = sorted([
+            [key, *[param.get(col, "N/A") for col in rec_col]]
+            for key, param in self.to_dict().items()
+        ])
         # tabulate's floatfmt only works if the whole column is a float
         for r in records:
             if isinstance(r[1], float):

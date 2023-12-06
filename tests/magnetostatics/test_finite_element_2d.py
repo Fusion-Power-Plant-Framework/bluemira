@@ -100,9 +100,9 @@ class TestGetNormal:
         z_points_axis = np.linspace(0, r_enclo, 200)
         r_points_axis = np.zeros(z_points_axis.shape)
 
-        Bz_axis = np.array(
-            [em_solver.B(x) for x in np.array([r_points_axis, z_points_axis]).T]
-        ).T[1]
+        Bz_axis = np.array([
+            em_solver.B(x) for x in np.array([r_points_axis, z_points_axis]).T
+        ]).T[1]
 
         B_teo = np.array([Bz_coil_axis(rc, 0, z, current) for z in z_points_axis])
 

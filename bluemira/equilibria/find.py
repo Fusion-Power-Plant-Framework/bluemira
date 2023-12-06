@@ -751,9 +751,10 @@ def find_LCFS_separatrix(
 
 
 def _extract_leg(flux_line, x_cut, z_cut, delta_x, o_point_z):
-    radial_line = Coordinates(
-        {"x": [x_cut - delta_x, x_cut + delta_x], "z": [z_cut, z_cut]}
-    )
+    radial_line = Coordinates({
+        "x": [x_cut - delta_x, x_cut + delta_x],
+        "z": [z_cut, z_cut],
+    })
     arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
     arg_inters.sort()
     # Lower null vs upper null

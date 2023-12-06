@@ -57,12 +57,14 @@ class MyParameterFrame(ParameterFrame):
 
 
 # the unit "" is equivalent to "dimensionless"
-mypf = MyParameterFrame.from_dict(
-    {"A": {"value": 5, "unit": ""}, "R_0": {"value": 8, "unit": "m"}}
-)
-mypf2 = MyParameterFrame.from_dict(
-    {"A": {"value": 5, "unit": ""}, "R_0": {"value": 8, "unit": "m"}}
-)
+mypf = MyParameterFrame.from_dict({
+    "A": {"value": 5, "unit": ""},
+    "R_0": {"value": 8, "unit": "m"},
+})
+mypf2 = MyParameterFrame.from_dict({
+    "A": {"value": 5, "unit": ""},
+    "R_0": {"value": 8, "unit": "m"},
+})
 
 print(mypf)
 print(mypf2)
@@ -73,9 +75,10 @@ assert mypf == mypf2  # noqa: S101
 # Trying to set a unit with the wrong dimension
 
 # %%
-mydiffval = MyParameterFrame.from_dict(
-    {"A": {"value": 6, "unit": "m"}, "R_0": {"value": 8, "unit": "m"}}
-)
+mydiffval = MyParameterFrame.from_dict({
+    "A": {"value": 6, "unit": "m"},
+    "R_0": {"value": 8, "unit": "m"},
+})
 
 try:
     mypf.update_from_frame(mydiffval)

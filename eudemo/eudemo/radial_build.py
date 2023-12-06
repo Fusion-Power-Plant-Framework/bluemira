@@ -173,139 +173,137 @@ template_builder.add_impurity(Impurities.He, 0.1)
 template_builder.add_impurity(Impurities.W, 5.0e-5)
 
 # Set fixed input values
-template_builder.add_input_values(
-    {
-        # CS fatigue variables
-        "residual_sig_hoop": 150.0e6,
-        # "n_cycle_min": ,
-        # "t_crack_radial": ,
-        # "t_structural_radial": ,
-        "t_crack_vertical": 0.65e-3,
-        "sf_vertical_crack": 1.0,
-        "sf_radial_crack": 1.0,
-        "sf_fast_fracture": 1.0,
-        "paris_coefficient": 3.86e-11,
-        "paris_power_law": 2.394,
-        "walker_coefficient": 0.5,
-        "fracture_toughness": 150.0,
-        # Undocumented danger stuff
-        "iblanket": 1,
-        "lsa": 2,
-        # Profile parameterisation inputs
-        "alphan": 1.0,
-        "alphat": 1.45,
-        "rhopedn": 0.94,
-        "rhopedt": 0.94,
-        "tbeta": 2.0,
-        "teped": 5.5,
-        "tesep": 0.1,
-        "fgwped": 0.85,
-        "neped": 0.678e20,
-        "nesep": 0.2e20,
-        "dnbeta": 3.0,
-        # Plasma impurity stuff
-        "coreradius": 0.75,
-        "coreradiationfraction": 0.6,
-        # Important stuff
-        "pnetelin": 500.0,
-        "tbrnmn": 7.2e3,
-        "sig_tf_case_max": 5.8e8,
-        "sig_tf_wp_max": 5.8e8,
-        "alstroh": 6.6e8,
-        "psepbqarmax": 9.2,
-        "aspect": 3.1,
-        "m_s_limit": 0.1,
-        "triang": 0.5,
-        "q0": 1.0,
-        "ssync": 0.6,
-        "plasma_res_factor": 0.66,
-        "gamma": 0.3,
-        "hfact": 1.1,
-        "life_dpa": 70.0,
-        # Radial build inputs
-        "tftsgap": 0.05,
-        "vvblgap": 0.02,
-        "blnkith": 0.755,
-        "scrapli": 0.225,
-        "scraplo": 0.225,
-        "blnkoth": 0.982,
-        "ddwex": 0.15,
-        "gapomin": 0.2,
-        # Vertical build inputs
-        "vgap2": 0.05,
-        "divfix": 0.621,
-        # HCD inputs
-        "pinjalw": 51.0,
-        "gamma_ecrh": 0.3,
-        "etaech": 0.4,
-        "bscfmax": 0.99,
-        # BOP inputs
-        "etath": 0.375,
-        "etahtp": 0.87,
-        "etaiso": 0.9,
-        "vfshld": 0.6,
-        "tdwell": 0.0,
-        "tramp": 500.0,
-        # CS / PF coil inputs
-        "fcuohsu": 0.7,
-        "ohhghf": 0.9,
-        "rpf2": -1.825,
-        "cptdin": [4.22e4, 4.22e4, 4.22e4, 4.22e4, 4.3e4, 4.3e4, 4.3e4, 4.3e4],
-        "ipfloc": [2, 2, 3, 3],
-        "ncls": [1, 1, 2, 2],
-        "ngrp": 4,
-        "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
-        # TF coil inputs
-        "n_tf": 16,
-        "casthi": 0.06,
-        "casths": 0.05,
-        "ripmax": 0.6,
-        "dhecoil": 0.01,
-        "tftmp": 4.75,
-        "thicndut": 2.0e-3,
-        "tinstf": 0.008,
-        # "tfinsgap": 0.01,
-        "tmargmin": 1.5,
-        "vftf": 0.3,
-        "n_pancake": 20,
-        "n_layer": 10,
-        "qnuc": 1.292e4,
-        # Inputs we don't care about but must specify
-        "cfactr": 0.75,  # Ha!
-        "kappa": 1.848,  # Should be overwritten
-        "walalw": 8.0,  # Should never get even close to this
-        "tlife": 40.0,
-        "abktflnc": 15.0,
-        "adivflnc": 20.0,
-        # For sanity...
-        "hldivlim": 10,
-        "ksic": 1.4,
-        "prn1": 0.4,
-        "zeffdiv": 3.5,
-        "bmxlim": 11.2,
-        "ffuspow": 1.0,
-        "fpeakb": 1.0,
-        "divdum": 1,
-        "ibkt_life": 1,
-        "fkzohm": 1.0245,
-        "iinvqd": 1,
-        "dintrt": 0.0,
-        "fcap0": 1.15,
-        "fcap0cp": 1.06,
-        "fcontng": 0.15,
-        "fcr0": 0.065,
-        "fkind": 1.0,
-        "ifueltyp": 1,
-        "discount_rate": 0.06,
-        "bkt_life_csf": 1,
-        "ucblvd": 280.0,
-        "ucdiv": 5e5,
-        "ucme": 3.0e8,
-        # Suspicous stuff
-        "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-        "fpinj": 1.0,
-    }
-)
+template_builder.add_input_values({
+    # CS fatigue variables
+    "residual_sig_hoop": 150.0e6,
+    # "n_cycle_min": ,
+    # "t_crack_radial": ,
+    # "t_structural_radial": ,
+    "t_crack_vertical": 0.65e-3,
+    "sf_vertical_crack": 1.0,
+    "sf_radial_crack": 1.0,
+    "sf_fast_fracture": 1.0,
+    "paris_coefficient": 3.86e-11,
+    "paris_power_law": 2.394,
+    "walker_coefficient": 0.5,
+    "fracture_toughness": 150.0,
+    # Undocumented danger stuff
+    "iblanket": 1,
+    "lsa": 2,
+    # Profile parameterisation inputs
+    "alphan": 1.0,
+    "alphat": 1.45,
+    "rhopedn": 0.94,
+    "rhopedt": 0.94,
+    "tbeta": 2.0,
+    "teped": 5.5,
+    "tesep": 0.1,
+    "fgwped": 0.85,
+    "neped": 0.678e20,
+    "nesep": 0.2e20,
+    "dnbeta": 3.0,
+    # Plasma impurity stuff
+    "coreradius": 0.75,
+    "coreradiationfraction": 0.6,
+    # Important stuff
+    "pnetelin": 500.0,
+    "tbrnmn": 7.2e3,
+    "sig_tf_case_max": 5.8e8,
+    "sig_tf_wp_max": 5.8e8,
+    "alstroh": 6.6e8,
+    "psepbqarmax": 9.2,
+    "aspect": 3.1,
+    "m_s_limit": 0.1,
+    "triang": 0.5,
+    "q0": 1.0,
+    "ssync": 0.6,
+    "plasma_res_factor": 0.66,
+    "gamma": 0.3,
+    "hfact": 1.1,
+    "life_dpa": 70.0,
+    # Radial build inputs
+    "tftsgap": 0.05,
+    "vvblgap": 0.02,
+    "blnkith": 0.755,
+    "scrapli": 0.225,
+    "scraplo": 0.225,
+    "blnkoth": 0.982,
+    "ddwex": 0.15,
+    "gapomin": 0.2,
+    # Vertical build inputs
+    "vgap2": 0.05,
+    "divfix": 0.621,
+    # HCD inputs
+    "pinjalw": 51.0,
+    "gamma_ecrh": 0.3,
+    "etaech": 0.4,
+    "bscfmax": 0.99,
+    # BOP inputs
+    "etath": 0.375,
+    "etahtp": 0.87,
+    "etaiso": 0.9,
+    "vfshld": 0.6,
+    "tdwell": 0.0,
+    "tramp": 500.0,
+    # CS / PF coil inputs
+    "fcuohsu": 0.7,
+    "ohhghf": 0.9,
+    "rpf2": -1.825,
+    "cptdin": [4.22e4, 4.22e4, 4.22e4, 4.22e4, 4.3e4, 4.3e4, 4.3e4, 4.3e4],
+    "ipfloc": [2, 2, 3, 3],
+    "ncls": [1, 1, 2, 2],
+    "ngrp": 4,
+    "rjconpf": [1.1e7, 1.1e7, 6.0e6, 6.0e6, 8.0e6, 8.0e6, 8.0e6, 8.0e6],
+    # TF coil inputs
+    "n_tf": 16,
+    "casthi": 0.06,
+    "casths": 0.05,
+    "ripmax": 0.6,
+    "dhecoil": 0.01,
+    "tftmp": 4.75,
+    "thicndut": 2.0e-3,
+    "tinstf": 0.008,
+    # "tfinsgap": 0.01,
+    "tmargmin": 1.5,
+    "vftf": 0.3,
+    "n_pancake": 20,
+    "n_layer": 10,
+    "qnuc": 1.292e4,
+    # Inputs we don't care about but must specify
+    "cfactr": 0.75,  # Ha!
+    "kappa": 1.848,  # Should be overwritten
+    "walalw": 8.0,  # Should never get even close to this
+    "tlife": 40.0,
+    "abktflnc": 15.0,
+    "adivflnc": 20.0,
+    # For sanity...
+    "hldivlim": 10,
+    "ksic": 1.4,
+    "prn1": 0.4,
+    "zeffdiv": 3.5,
+    "bmxlim": 11.2,
+    "ffuspow": 1.0,
+    "fpeakb": 1.0,
+    "divdum": 1,
+    "ibkt_life": 1,
+    "fkzohm": 1.0245,
+    "iinvqd": 1,
+    "dintrt": 0.0,
+    "fcap0": 1.15,
+    "fcap0cp": 1.06,
+    "fcontng": 0.15,
+    "fcr0": 0.065,
+    "fkind": 1.0,
+    "ifueltyp": 1,
+    "discount_rate": 0.06,
+    "bkt_life_csf": 1,
+    "ucblvd": 280.0,
+    "ucdiv": 5e5,
+    "ucme": 3.0e8,
+    # Suspicous stuff
+    "zref": [3.6, 1.2, 1.0, 2.8, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
+    "fpinj": 1.0,
+})
 
 
 def apply_specific_interface_rules(params: _PfT):
@@ -319,13 +317,11 @@ def apply_specific_interface_rules(params: _PfT):
 
     # Apply thermal shield thickness to all values in PROCESS
     tk_ts = params.tk_ts.value
-    template_builder.add_input_values(
-        {
-            "thshield_ib": tk_ts,
-            "thshield_ob": tk_ts,
-            "thshield_vb": tk_ts,
-        }
-    )
+    template_builder.add_input_values({
+        "thshield_ib": tk_ts,
+        "thshield_ob": tk_ts,
+        "thshield_vb": tk_ts,
+    })
 
     # Apply the summation of "shield" and "VV" thicknesses in PROCESS
     default_vv_tk = 0.3
@@ -333,18 +329,16 @@ def apply_specific_interface_rules(params: _PfT):
     tk_vv_ob = params.tk_vv_out.value
     tk_sh_ib = tk_vv_ib - default_vv_tk
     tk_sh_ob = tk_vv_ob - default_vv_tk
-    template_builder.add_input_values(
-        {
-            "shldith": tk_sh_ib,
-            "shldoth": tk_sh_ob,
-            "shldtth": tk_sh_ib,
-            "shldlth": tk_sh_ib,
-            "d_vv_in": default_vv_tk,
-            "d_vv_out": default_vv_tk,
-            "d_vv_top": default_vv_tk,
-            "d_vv_bot": default_vv_tk,
-        }
-    )
+    template_builder.add_input_values({
+        "shldith": tk_sh_ib,
+        "shldoth": tk_sh_ob,
+        "shldtth": tk_sh_ib,
+        "shldlth": tk_sh_ib,
+        "d_vv_in": default_vv_tk,
+        "d_vv_out": default_vv_tk,
+        "d_vv_top": default_vv_tk,
+        "d_vv_bot": default_vv_tk,
+    })
 
 
 def radial_build(params: _PfT, build_config: Dict) -> _PfT:

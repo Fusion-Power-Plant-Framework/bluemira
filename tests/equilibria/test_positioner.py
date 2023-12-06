@@ -27,9 +27,10 @@ def _setup_zl_class(cls, _up):
     clip = np.where(tf.x >= 3.5)
     tf = Coordinates({"x": tf.x[clip], "z": tf.z[clip]})
     up = Coordinates(_up)
-    lp = Coordinates(
-        {"x": [10, 10, 15, 22, 22, 15, 10], "z": [-6, -10, -13, -13, -8, -8, -6]}
-    )
+    lp = Coordinates({
+        "x": [10, 10, 15, 22, 22, 15, 10],
+        "z": [-6, -10, -13, -13, -8, -8, -6],
+    })
     eq = Coordinates({"x": [14, 22, 22, 14, 14], "z": [-1.4, -1.4, 1.4, 1.4, -1.4]})
 
     cls.ax.plot(up.x, up.z, linestyle="-", color="r")

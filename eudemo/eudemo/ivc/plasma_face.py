@@ -66,9 +66,10 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         """
         # For double null this and self.divertor_silhouette need a structure
         # to accommodate two divertors
-        plasma_facing_wire = BluemiraWire(
-            [self.wall_boundary, *self.divertor_silhouette]
-        )
+        plasma_facing_wire = BluemiraWire([
+            self.wall_boundary,
+            *self.divertor_silhouette,
+        ])
 
         in_vessel_face = BluemiraFace([self.ivc_boundary, plasma_facing_wire])
 

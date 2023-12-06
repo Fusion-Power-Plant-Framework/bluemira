@@ -57,26 +57,24 @@ from bluemira.geometry.tools import (
 from bluemira.geometry.wire import BluemiraWire
 from tests._helpers import combine_text_mock_write_calls
 
-generic_wire = make_polygon(
-    [
-        [0.0, -1.0, 0.0],
-        [1.0, -2.0, 0.0],
-        [2.0, -3.0, 0.0],
-        [3.0, -4.0, 0.0],
-        [4.0, -5.0, 0.0],
-        [5.0, -6.0, 0.0],
-        [6.0, -7.0, 0.0],
-        [7.0, -8.0, 0.0],
-        [8.0, -4.0, 0.0],
-        [9.0, -2.0, 0.0],
-        [10.0, 3.0, 0.0],
-        [8.0, 2.0, 0.0],
-        [6.0, 4.0, 0.0],
-        [4.0, 2.0, 0.0],
-        [2.0, 0.0, 0.0],
-        [0.0, -1.0, 0.0],
-    ]
-)
+generic_wire = make_polygon([
+    [0.0, -1.0, 0.0],
+    [1.0, -2.0, 0.0],
+    [2.0, -3.0, 0.0],
+    [3.0, -4.0, 0.0],
+    [4.0, -5.0, 0.0],
+    [5.0, -6.0, 0.0],
+    [6.0, -7.0, 0.0],
+    [7.0, -8.0, 0.0],
+    [8.0, -4.0, 0.0],
+    [9.0, -2.0, 0.0],
+    [10.0, 3.0, 0.0],
+    [8.0, 2.0, 0.0],
+    [6.0, 4.0, 0.0],
+    [4.0, 2.0, 0.0],
+    [2.0, 0.0, 0.0],
+    [0.0, -1.0, 0.0],
+])
 
 
 class TestMakePolygon:
@@ -142,30 +140,47 @@ class TestSignedDistanceFunctions:
 
     def test_sdf(self):
         # Overlapping
-        target = make_polygon(
-            [[0, 0, 0], [4, 0, 0], [4, 2.5, 0], [0, 2.5, 0], [0, 0, 0]]
-        )
+        target = make_polygon([
+            [0, 0, 0],
+            [4, 0, 0],
+            [4, 2.5, 0],
+            [0, 2.5, 0],
+            [0, 0, 0],
+        ])
         sd = signed_distance(self.subject_wire, target)
         assert sd > 0
         # Touching
-        target = make_polygon(
-            [[0, 0, 0], [-4, 0, 0], [-4, -2.5, 0], [0, -2.5, 0], [0, 0, 0]]
-        )
+        target = make_polygon([
+            [0, 0, 0],
+            [-4, 0, 0],
+            [-4, -2.5, 0],
+            [0, -2.5, 0],
+            [0, 0, 0],
+        ])
         sd = signed_distance(self.subject_wire, target)
         assert sd == 0
         # Not overlapping
-        target = make_polygon(
-            [[-1, 3.5, 0], [-1, -5, 0], [6, -5, 0], [6, 3.5, 0], [-1, 3.5, 0]]
-        )
+        target = make_polygon([
+            [-1, 3.5, 0],
+            [-1, -5, 0],
+            [6, -5, 0],
+            [6, 3.5, 0],
+            [-1, 3.5, 0],
+        ])
         sd = signed_distance(self.subject_wire, target)
         assert sd < 0
 
 
 class TestWirePlaneIntersect:
     def test_simple(self):
-        loop = make_polygon(
-            [[0, 0, -1], [1, 0, -1], [2, 0, -1], [2, 0, 1], [0, 0, 1], [0, 0, -1]]
-        )
+        loop = make_polygon([
+            [0, 0, -1],
+            [1, 0, -1],
+            [2, 0, -1],
+            [2, 0, 1],
+            [0, 0, 1],
+            [0, 0, -1],
+        ])
 
         xy_plane = BluemiraPlane(base=(0, 0, 0), axis=(0, 0, 1))
         intersect = slice_shape(loop, xy_plane)
@@ -175,26 +190,24 @@ class TestWirePlaneIntersect:
         assert np.allclose(intersect, e)
 
     def test_complex(self):
-        wire = make_polygon(
-            [
-                [0.0, 0.0, -1.0],
-                [1.0, 0.0, -2.0],
-                [2.0, 0.0, -3.0],
-                [3.0, 0.0, -4.0],
-                [4.0, 0.0, -5.0],
-                [5.0, 0.0, -6.0],
-                [6.0, 0.0, -7.0],
-                [7.0, 0.0, -8.0],
-                [8.0, 0.0, -4.0],
-                [9.0, 0.0, -2.0],
-                [10.0, 0.0, 3.0],
-                [8.0, 0.0, 2.0],
-                [6.0, 0.0, 4.0],
-                [4.0, 0.0, 2.0],
-                [2.0, 0.0, 0.0],
-                [0.0, 0.0, -1.0],
-            ]
-        )
+        wire = make_polygon([
+            [0.0, 0.0, -1.0],
+            [1.0, 0.0, -2.0],
+            [2.0, 0.0, -3.0],
+            [3.0, 0.0, -4.0],
+            [4.0, 0.0, -5.0],
+            [5.0, 0.0, -6.0],
+            [6.0, 0.0, -7.0],
+            [7.0, 0.0, -8.0],
+            [8.0, 0.0, -4.0],
+            [9.0, 0.0, -2.0],
+            [10.0, 0.0, 3.0],
+            [8.0, 0.0, 2.0],
+            [6.0, 0.0, 4.0],
+            [4.0, 0.0, 2.0],
+            [2.0, 0.0, 0.0],
+            [0.0, 0.0, -1.0],
+        ])
         xy_plane = BluemiraPlane(base=(0, 0, 0), axis=(0, 0, 1))
         intersect = slice_shape(wire, xy_plane)
         assert intersect.shape[0] == 2
@@ -245,15 +258,13 @@ class TestWirePlaneIntersect:
 
     def test_flat_intersect(self):
         # test that a shared segment with plane only gives two intersects
-        wire = make_polygon(
-            [
-                [0.0, 0.0, -1.0],
-                [2.0, 0.0, -1.0],
-                [2.0, 0.0, 1.0],
-                [0.0, 0.0, 1.0],
-                [0.0, 0.0, -1.0],
-            ]
-        )
+        wire = make_polygon([
+            [0.0, 0.0, -1.0],
+            [2.0, 0.0, -1.0],
+            [2.0, 0.0, 1.0],
+            [0.0, 0.0, 1.0],
+            [0.0, 0.0, -1.0],
+        ])
 
         plane = BluemiraPlane.from_3_points([0, 0, 1], [0, 1, 1], [1, 0, 1])
         inter = slice_shape(wire, plane)
@@ -264,26 +275,24 @@ class TestWirePlaneIntersect:
 
     def test_weird_wire(self):
         # test a wire that moves in 3 dimensions
-        wire = make_polygon(
-            [
-                [0.0, -1.0, 0.0],
-                [1.0, -2.0, 1.0],
-                [2.0, -3.0, 2.0],
-                [3.0, -4.0, 1.0],
-                [4.0, -5.0, 0.0],
-                [5.0, -6.0, -1.0],
-                [6.0, -7.0, -2.0],
-                [7.0, -8.0, -1.0],
-                [8.0, -4.0, 0.0],
-                [9.0, -2.0, 1.0],
-                [10.0, 3.0, 2.0],
-                [8.0, 2.0, 1.0],
-                [6.0, 4.0, 0.0],
-                [4.0, 2.0, -1.0],
-                [2.0, 0.0, -2.0],
-                [0.0, -1.0, 0.0],
-            ]
-        )
+        wire = make_polygon([
+            [0.0, -1.0, 0.0],
+            [1.0, -2.0, 1.0],
+            [2.0, -3.0, 2.0],
+            [3.0, -4.0, 1.0],
+            [4.0, -5.0, 0.0],
+            [5.0, -6.0, -1.0],
+            [6.0, -7.0, -2.0],
+            [7.0, -8.0, -1.0],
+            [8.0, -4.0, 0.0],
+            [9.0, -2.0, 1.0],
+            [10.0, 3.0, 2.0],
+            [8.0, 2.0, 1.0],
+            [6.0, 4.0, 0.0],
+            [4.0, 2.0, -1.0],
+            [2.0, 0.0, -2.0],
+            [0.0, -1.0, 0.0],
+        ])
 
         plane = BluemiraPlane.from_3_points([1, -2, -1], [6, 4, 0], [9, -2, 1])
 
@@ -753,13 +762,11 @@ class TestFilletChamfer2D:
 
     @pytest.mark.parametrize("func", [fillet_wire_2D, chamfer_wire_2D])
     def test_GeometryError_on_non_planar_wire(self, func):
-        three_d_wire = make_polygon(
-            {
-                "x": [0, 1, 2, 3, 4, 5],
-                "y": [0, -1, -2, 0, 1, 2],
-                "z": [0, 1, 2, 1, 0, -1],
-            }
-        )
+        three_d_wire = make_polygon({
+            "x": [0, 1, 2, 3, 4, 5],
+            "y": [0, -1, -2, 0, 1, 2],
+            "z": [0, 1, 2, 1, 0, -1],
+        })
         with pytest.raises(GeometryError):
             func(three_d_wire, 0.2)
 
