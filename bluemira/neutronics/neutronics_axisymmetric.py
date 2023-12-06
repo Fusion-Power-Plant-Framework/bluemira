@@ -15,6 +15,8 @@ import openmc
 from numpy import pi
 from pps_isotropic.source import create_parametric_plasma_source
 
+import bluemira.neutronics.constants as neutronics_const
+import bluemira.neutronics.make_csg as mcsg
 import bluemira.neutronics.make_geometry as mg
 import bluemira.neutronics.result_presentation as present
 from bluemira.base.constants import raw_uc
@@ -31,7 +33,6 @@ from bluemira.neutronics.params import (
     TokamakOperationParameters,
     TokamakOperationParametersBase,
 )
-from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
@@ -223,7 +224,7 @@ class TBRHeatingSimulation:
             new_elong,
             True,
         )
-        self.cells, self.universe = mg.make_geometry(
+        self.cells, self.universe = mcsg.make_geometry(
             self.tokamak_geometry,
             blanket_points,
             div_points,
@@ -237,12 +238,10 @@ class TBRHeatingSimulation:
             self.operation_variable.plasma_physics_units.reactor_power  # [MW]
         )
 
-        create_tallies(self.cells, self.material_lib)
+        # create_tallies(self.cells, self.material_lib)
 
-        if plot_geometry:
-            present.geometry_plotter(
-                self.cells, self.plasma_geometry, self.tokamak_geometry
-            )
+        # if plot_geometry:
+        #     present.geometry_plotter(self.cells, self.tokamak_geometry)
 
     @staticmethod
     def run(*args, output=False, **kwargs) -> None:
