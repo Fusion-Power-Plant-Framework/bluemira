@@ -87,7 +87,7 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
 
 operation_variable = TokamakOperationParameters(
     reactor_power=1998e6,  # [W]
-    temperature=round(raw_uc(15.4, "keV", "K"), 5),
+    temperature=raw_uc(15.4, "keV", "K"),
     peaking_factor=1.508,  # [dimensionless]
     shaf_shift=0.0,  # [m]
     vertical_shift=0.0,  # [m]
