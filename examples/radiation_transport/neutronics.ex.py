@@ -47,14 +47,16 @@ from bluemira.neutronics.params import (
 # and let OpenMC know where that directory is.
 
 # %%
-CROSS_SECTION_XML = str(Path("~/bluemira_openmc_data/cross_sections.xml").expanduser())
+CROSS_SECTION_XML = str(
+    Path("~/code/bluemira/bluemira_openmc_data/cross_sections.xml").expanduser()
+)
 # %% [markdown]
 # In this script we can also demonstrate openmc's ability to calculate the volume
 # stochastically (rather than analytically). Specifically, in this script we
 # toggle this parameter on/off using the following variable:
 
 # %%
-volume_calculation = True
+volume_calculation = False
 
 # %% [markdown]
 # For each of the three Tokamak designs:
