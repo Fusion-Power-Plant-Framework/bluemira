@@ -7,12 +7,23 @@
 
 from periodictable import elements
 
-from bluemira.base.constants import N_AVOGADRO, raw_uc
+from bluemira.base.constants import (
+    ELECTRON_MOLAR_MASS,
+    HE_MOLAR_MASS,
+    NEUTRON_MOLAR_MASS,
+    N_AVOGADRO,
+    raw_uc,
+)
+from bluemira.plasma_physics.reactions import E_DT_fusion
 
 # Amount of energy released in a single dt fusion reaction, in MeV.
-energy_per_dt = raw_uc(17.58, "MeV", "J")
-# Amount of energy carried away by the neutron
-dt_neutron_energy = energy_per_dt * (4 / 5)  # [J]
+energy_per_dt = raw_uc(E_DT_fusion(), "eV", "J")
+# Amount of energy carried away by the neutron, which is about 4/5 of that.
+ALHPA_MASS = HE_MOLAR_MASS - ELECTRON_MOLAR_MASS
+# (ignoring the binding energy of the electron, but that's too minute for us to care anyways.) # noqa: W505, E501
+dt_neutron_energy = energy_per_dt * (
+    ALHPA_MASS / (ALHPA_MASS + NEUTRON_MOLAR_MASS)
+)  # [J]
 
 # Energy required to displace an Fe atom in Fe. See docstring of DPACoefficients
 dpa_Fe_threshold_eV = 40  # Source cites 40 eV.
