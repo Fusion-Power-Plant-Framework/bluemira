@@ -77,13 +77,16 @@ def extractor(
 
 
 def _filter_members(
-    file: str, filename: str, members: Dict[str, Union[tarfile.TarInfo, zipfile.ZipInfo]]
+    file: str,
+    isotope_file: str,
+    filename: str,
+    members: Dict[str, Union[tarfile.TarInfo, zipfile.ZipInfo]],
 ) -> Union[List[tarfile.TarInfo], List[zipfile.ZipInfo]]:
     """Filter archive contents to only extract wanted files"""
     import openmc_data.convert.convert_tendl as tendl  # noqa: PLC0415
     from openmc_data import all_release_details as ard  # noqa: PLC0415
 
-    with open(Path(Path(file).parent, "nuclear_data_isotopes.json")) as fh:
+    with open(Path(Path(file).parent, isotope_file)) as fh:
         isotope_data = json.load(fh)
     if filename in ard["tendl"][tendl.args.release]["neutron"]["compressed_files"]:
         return _filter(
@@ -114,6 +117,8 @@ def _filter(
     """Filter archive members"""
     filtered_members = []
     mem_keys = members.keys()
+    if datakeys == "*":
+        return list(members.values())
     for m in datakeys:
         if file := fnmatch.filter(mem_keys, filt(m)):
             filtered_members.append(members[file[0]])
@@ -185,7 +190,8 @@ def parse_args(args: Optional[List[str]] = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser("Bluemira Neutronics data downloader")
 
     parser.add_argument("-l", "--location", default=Path.cwd() / "bluemira_openmc_data")
-    parser.add_argument("--download_threads", type=int, default=5)
+    parser.add_argument("--download-threads", type=int, default=5)
+    parser.add_argument("--isotope-file", type=str, default="nuclear_data_isotopes.json")
     p, unknown = parser.parse_known_args(args)
     p.location = Path(p.location)
     sys.argv = [sys.argv[0], *unknown]
@@ -208,9 +214,8 @@ class ChgDir:
         chdir(self.origin)
 
 
-def main(args: Optional[List[str]] = None):
+def main(p):
     """Main function"""
-    p = parse_args(args)
     root_folder = p.location
     root_folder.mkdir(parents=True, exist_ok=True)
 
@@ -234,5 +239,8 @@ def main(args: Optional[List[str]] = None):
 
 
 if __name__ == "__main__":
-    filter_members = functools.partial(_filter_members, str(Path(__file__).resolve()))
-    main()
+    p = parse_args(None)
+    filter_members = functools.partial(
+        _filter_members, str(Path(__file__).resolve()), p.isotope_file
+    )
+    main(p)
