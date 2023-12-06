@@ -81,6 +81,8 @@ class TokamakOperationParameters:
         total reactor (thermal) power when operating at 100%
     peaking_factor:
         (max. heat flux on fw)/(avg. heat flux on fw)
+    temperature:
+        plasma temperature (assumed to be uniform throughout the plasma)
     shaf_shift:
         shafranov shift
         how far (towards the outboard direction) is the centre of the plasma shifted
