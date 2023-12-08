@@ -31,6 +31,7 @@ from bluemira.neutronics.params import (
 )
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
+from bluemira.plasma_physics.reactions import n_DT_reactions
 
 if TYPE_CHECKING:
     from bluemira.geometry.wire import BluemiraWire
@@ -223,7 +224,9 @@ class TBRHeatingSimulation:
 
         # deduce source strength (self.src_rate) from the power of the reactor,
         # by assuming 100% of reactor power comes from DT fusion
-        self.src_rate = self.operation_variable.calculate_total_neutron_rate()
+        self.src_rate = n_DT_reactions(
+            self.operation_variable.plasma_physics_units.reactor_power
+        )
 
         create_tallies(self.cells, self.material_lib)
 

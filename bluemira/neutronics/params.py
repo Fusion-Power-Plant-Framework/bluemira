@@ -12,7 +12,6 @@ from typing import Literal, Tuple, Union
 import openmc
 
 from bluemira.base.constants import raw_uc
-from bluemira.neutronics.constants import energy_per_dt
 from bluemira.neutronics.make_materials import BlanketType
 
 
@@ -97,12 +96,6 @@ class TokamakOperationParameters:
     temperature: float  # [K]
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
-
-    def calculate_total_neutron_rate(self) -> float:  # [1/s]
-        """Convert the reactor power to neutron rate
-        (number of neutrons produced per second) assuming 100% efficiency.
-        """
-        return self.reactor_power / energy_per_dt
 
 
 @dataclass(frozen=True)
