@@ -163,7 +163,9 @@ class TRegion:
 
 BBDIV = TRegion(7, np.array([0, 0, 1]))
 IBDIV = TRegion(12, np.array([-1, 0, 0]))
-OBDIV = TRegion(16, np.array([1, 0, 0]))
+degrees = -30
+radians = np.rad2deg(degrees)
+OBDIV = TRegion(16, np.array([-np.cos(radians), 0, -np.sin(radians)]))
 
 
 import matplotlib.pyplot as plt
