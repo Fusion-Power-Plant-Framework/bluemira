@@ -157,7 +157,7 @@ class TBRHeatingSimulation:
 
     def setup(
         self,
-        blanket_wire: BluemiraWire,
+        fw_deconstruction,
         divertor_wire: BluemiraWire,
         new_major_radius: float,
         new_aspect_ratio: float,
@@ -215,20 +215,21 @@ class TBRHeatingSimulation:
 
         setup_openmc(source, self.runtime_params)
 
-        blanket_points, div_points, num_inboard_points = mg.load_fw_points(
-            self.plasma_geometry,
-            blanket_wire,
-            divertor_wire,
-            raw_uc(new_major_radius, "m", "cm"),
-            new_aspect_ratio,
-            new_elong,
-            True,
-        )
+        # blanket_points, div_points, num_inboard_points = mg.load_fw_points(
+        #     self.tokamak_geometry,
+        #     fw_deconstruction,
+        #     divertor_wire,
+        #     raw_uc(new_major_radius, "m", "cm"),
+        #     new_aspect_ratio,
+        #     new_elong,
+        #     True,
+        # )
+
         self.cells, self.universe = mcsg.make_geometry(
             self.tokamak_geometry,
-            blanket_points,
-            div_points,
-            num_inboard_points,
+            fw_deconstruction,
+            divertor_wire,
+            # num_inboard_points,
             self.material_lib,
         )
 

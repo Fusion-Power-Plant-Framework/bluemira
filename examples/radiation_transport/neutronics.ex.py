@@ -26,6 +26,7 @@
 
 # %%
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 
@@ -107,8 +108,89 @@ tbr_heat_sim = TBRHeatingSimulation(
 )
 blanket_wire = make_polygon(Coordinates(np.load("blanket_face.npy")))
 divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
+
+fw_coordinates = Coordinates(
+    {
+        "x": [
+            9.94,
+            10.89,
+            11.90,
+            12.19,
+            12.03,
+            11.34,
+            9.69,
+            7.53,
+            6.38,
+            5.95,
+            5.93,
+            6.21,
+            6.84,
+            7.26,
+            7.90,
+            8.79,
+            9.94,
+        ],
+        "z": [
+            -5.27,
+            -3.57,
+            -1.62,
+            0,
+            1.57,
+            3.05,
+            4.57,
+            5.26,
+            3.95,
+            1.32,
+            -1.91,
+            -3.51,
+            -5.01,
+            -5.86,
+            -5.78,
+            -6.46,
+            -5.27,
+        ],
+    }
+)
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class TRegion:
+    index: int
+    direction: np.ndarray
+
+
+BBDIV = TRegion(7, np.array([0, 0, 1]))
+IBDIV = TRegion(12, np.array([-1, 0, 0]))
+OBDIV = TRegion(16, np.array([1, 0, 0]))
+
+
+import matplotlib.pyplot as plt
+
+f, ax = plt.subplots()
+ax.plot(*fw_coordinates.xz)
+ax.set_aspect("equal")
+for r in [BBDIV, IBDIV, OBDIV]:
+    ax.quiver(
+        fw_coordinates.x[r.index],
+        fw_coordinates.z[r.index],
+        r.direction[0],
+        r.direction[2],
+    )
+plt.show()
+
+
+@dataclass(frozen=True)
+class FWDeconstruction:
+    coordinates: Coordinates
+    tregions: Tuple[TRegion]
+
+
+fw_deconstruction = FWDeconstruction(fw_coordinates, (IBDIV, BBDIV, OBDIV))
+
 tbr_heat_sim.setup(
-    blanket_wire,
+    fw_deconstruction,
     divertor_wire,
     new_major_radius=9.00,  # [m]
     new_aspect_ratio=3.10344,  # [dimensionless]
