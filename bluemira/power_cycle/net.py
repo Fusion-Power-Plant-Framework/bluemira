@@ -185,15 +185,15 @@ class PowerCycleBreakdown(Config):
         """Enforce unit conversion"""
         if isinstance(self.duration, (float, int)):
             self.duration = raw_uc(self.duration, self.unit, "second")
-            self.unit = "second"
+            self.unit = "s"
 
 
 @dataclass
 class PowerCycleSubLoad(Config):
     """Power cycle sub load config"""
 
-    time: np.ndarray
-    data: np.ndarray
+    time: npt.ArrayLike
+    data: npt.ArrayLike
     model: Union[LoadModel, str]
     unit: str = "W"
     description: str = ""
@@ -242,7 +242,7 @@ class PowerCycleSubLoad(Config):
             kind=self.model.value,
             bounds_error=False,  # turn-off error for out-of-bound
             fill_value=(0, 0),  # below-/above-bounds extrapolations
-        )(time if end_time is None else time * end_time)
+        )(time if end_time is None else np.array(time) * end_time)
 
 
 @dataclass
@@ -273,7 +273,7 @@ class Loads:
         self.subload = subload
 
     @staticmethod
-    def _normalise_time(
+    def _normalise_timeseries(
         time: np.ndarray, end_time: Optional[float] = None
     ) -> Tuple[np.ndarray, Optional[float]]:
         if min(time) < 0:
@@ -281,9 +281,7 @@ class Loads:
 
         if max(time) > 1:
             mx_time = max(time)
-            return time / np.ptp(time), mx_time if end_time is None else (
-                mx_time + end_time
-            )
+            return time / mx_time, mx_time if end_time is None else end_time
         return time, end_time
 
     def get_load_data_with_efficiencies(
@@ -349,14 +347,18 @@ class Loads:
             for sl in load_conf.subloads
         }
 
-    def build_timeseries(self) -> np.ndarray:
+    def build_timeseries(self, end_time: Optional[float] = None) -> np.ndarray:
         """Build a combined time series based on subloads"""
-        # to do deal with unnormalised
-        return np.unique(
-            np.concatenate(
-                [ld.time for lt in self.subload.values() for ld in lt.values()]
-            )
-        )
+        times = []
+        for lt in self.subload.values():
+            for ld in lt.values():
+                if ld.normalised:
+                    times.append(ld.time)
+                else:
+                    times.append(
+                        ld.time / (max(ld.time) if end_time is None else end_time)
+                    )
+        return np.unique(np.concatenate(times))
 
     def get_interpolated_loads(
         self,
@@ -380,7 +382,7 @@ class Loads:
             for unnormalised subloads this assures the subload is
             applied at the right point in time
         """
-        timeseries, end_time = self._normalise_time(timeseries, end_time)
+        timeseries, end_time = self._normalise_timeseries(timeseries, end_time)
         load_type = LoadType.from_str(load_type)
         subload = self.subload[load_type]
         return {

@@ -1,16 +1,10 @@
-from typing import Literal
-
-
 from abc import ABC
-from typing import Iterable
-import numpy as np
-
-from bluemira.base.constants import EPS
-from typing import ClassVar, Dict, Iterable, Protocol
+from typing import ClassVar, Dict, Iterable, Literal, Protocol
 
 import matplotlib.pyplot as plt
 import numpy as np
 
+from bluemira.base.constants import EPS
 from bluemira.power_cycle.refactor.load_manager import (
     LoadType,
 )

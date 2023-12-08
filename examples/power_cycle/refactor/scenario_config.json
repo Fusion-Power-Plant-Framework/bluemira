@@ -317,11 +317,11 @@
     },
     "eps_upk": {
       "description": "EPS upkeep",
-      "time": [0, 1],
+      "time": [0, 120],
       "data": [10.2, 10.2],
       "unit": "MW",
       "model": "RAMP",
-      "normalised": true
+      "normalised": false
     },
     "buildings": {
       "description": "buildings (light/elevators/HVAC; ITER extrapolation)",
