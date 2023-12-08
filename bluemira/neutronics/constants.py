@@ -19,10 +19,10 @@ from bluemira.plasma_physics.reactions import E_DT_fusion
 # Amount of energy released in a single dt fusion reaction, in MeV.
 energy_per_dt = raw_uc(E_DT_fusion(), "eV", "J")
 # Amount of energy carried away by the neutron, which is about 4/5 of that.
-ALHPA_MASS = HE_MOLAR_MASS - ELECTRON_MOLAR_MASS
+ALHPA_MOLAR_MASS = HE_MOLAR_MASS - ELECTRON_MOLAR_MASS
 # (ignoring the binding energy of the electron, but that's too minute for us to care anyways.) # noqa: W505, E501
 dt_neutron_energy = energy_per_dt * (
-    ALHPA_MASS / (ALHPA_MASS + NEUTRON_MOLAR_MASS)
+    ALHPA_MOLAR_MASS / (ALHPA_MOLAR_MASS + NEUTRON_MOLAR_MASS)
 )  # [J]
 
 # Energy required to displace an Fe atom in Fe. See docstring of DPACoefficients
