@@ -430,7 +430,7 @@ def geometry_plotter(
     # Assigning colours for plots
     cell_color_assignment = {
         cells.tf_coil: "brown",
-        cells.plasma.inner1: "dimgrey",
+        cells.plasma: "dimgrey",
         cells.plasma.inner2: "grey",
         cells.plasma.outer1: "darkgrey",
         cells.plasma.outer2: "dimgrey",
@@ -445,7 +445,7 @@ def geometry_plotter(
     mat_color_assignment = {
         cells.bore: "blue",
         cells.tf_coil: "brown",
-        cells.plasma.inner1: "white",
+        cells.plasma: "pink",
         cells.plasma.inner2: "white",
         cells.plasma.outer1: "white",
         cells.plasma.outer2: "white",
