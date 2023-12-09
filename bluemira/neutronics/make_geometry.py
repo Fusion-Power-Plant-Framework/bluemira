@@ -17,31 +17,46 @@ import numpy.typing as npt
 import openmc
 from numpy import pi
 
-import bluemira.neutronics.make_materials as mm
 import bluemira.neutronics.result_presentation as present
 import bluemira.neutronics.volume_functions as vf
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.params import TokamakGeometry
+from bluemira.neutronics.make_materials import MaterialsLibrary
+from bluemira.neutronics.params import (
+    PlasmaGeometry,
+    TokamakGeometry,
+)
 
 
-def check_geometry(tokamak_geometry: TokamakGeometry) -> None:
-    """Some basic geometry checks"""
-    if tokamak_geometry.cgs.elong < 1.0:  # noqa: PLR2004
+def check_geometry(plasma_geometry, tokamak_geometry) -> None:
+    """Some basic geometry checks.
+
+    Parameters
+    ----------
+    plasma_geometry:
+        dataclass with attribute minor_r, major_r, elong
+
+    tokamak_geometry:
+        dataclass with various thickness attributes. (See TokamakGeometry for details.)
+
+    It doesn't matter whether these two parameters are provided in metric or cgs,
+    As long as the units match the check can proceed.
+    """
+    if plasma_geometry.elong < 1.0:  # noqa: PLR2004
         raise ValueError("Elongation must be at least 1.0")
 
     inboard_build = (
-        tokamak_geometry.cgs.minor_r
-        + tokamak_geometry.cgs.inb_fw_thick
-        + tokamak_geometry.cgs.inb_bz_thick
-        + tokamak_geometry.cgs.inb_mnfld_thick
-        + tokamak_geometry.cgs.inb_vv_thick
-        + tokamak_geometry.cgs.tf_thick
-        + tokamak_geometry.cgs.inb_gap
+        plasma_geometry.minor_r
+        + tokamak_geometry.inb_fw_thick
+        + tokamak_geometry.inb_bz_thick
+        + tokamak_geometry.inb_mnfld_thick
+        + tokamak_geometry.inb_vv_thick
+        + tokamak_geometry.tf_thick
+        + tokamak_geometry.inb_gap
     )
 
-    if inboard_build > tokamak_geometry.cgs.major_r:
+    if inboard_build > plasma_geometry.major_r:
         raise ValueError(
             "The inboard build does not fit within the major radius."
             " Increase the major radius."
@@ -144,17 +159,19 @@ def elongate(points, adjust_elong):
     return points
 
 
-def stretch_r(points, tokamak_geometry: TokamakGeometry, stretch_r_val) -> np.ndarray:
+def stretch_r(points, plasma_geometry: PlasmaGeometry, stretch_r_val) -> np.ndarray:
     """Moves the points in the r dimension away from the major radius by extra_r_cm
 
     Parameters
     ----------
     points: np.array of 2D or 3D points
+    plasma_geometry: PlasmaGeometry
+        The values that we want is actually in plasma_geometry.cgs.
     stretch_r_val: in cm
     """
     points[:, 0] = (
-        points[:, 0] - tokamak_geometry.cgs.major_r
-    ) * stretch_r_val + tokamak_geometry.cgs.major_r
+        points[:, 0] - plasma_geometry.cgs.major_r
+    ) * stretch_r_val + plasma_geometry.cgs.major_r
 
     return points
 
@@ -342,7 +359,7 @@ def create_layer(
     layer_points: np.ndarray,
     num_points: int,
     layer_name: str,
-    material_lib: mm.MaterialsLibrary,
+    material_lib: MaterialsLibrary,
     surfaces: Surfaces,
     inboard: bool = True,
 ):
@@ -431,7 +448,7 @@ def create_divertor(
     div_points: np.ndarray,
     outer_points: np.ndarray,
     inner_points: np.ndarray,
-    material_lib: mm.MaterialsLibrary,
+    material_lib: MaterialsLibrary,
     surfaces,
     div_clearance=49.0,  # [cm]
     div_fw_thick=2.5,  # [cm]
@@ -589,7 +606,7 @@ def make_geometry(
     fw_points: np.ndarray,
     div_points: np.ndarray,
     num_inboard_points: int,
-    material_lib: mm.MaterialsLibrary,
+    material_lib: MaterialsLibrary,
     *,
     fw_surf_score_depth: float = 0.0001,
     div_clearance: float = 49.0,  # [cm]
@@ -829,7 +846,7 @@ def make_geometry(
 
 
 def load_fw_points(
-    tokamak_geometry: TokamakGeometry,
+    plasma_geometry: PlasmaGeometry,
     blanket_wire: BluemiraWire,
     divertor_wire: BluemiraWire,
     new_major_radius: float,
@@ -847,28 +864,42 @@ def load_fw_points(
 
     Parameters
     ----------
-    tokamak_geometry:
-        tokamak geometry parameters
-    blanket_wire:
+    plasma_geometry: PlasmaGeometry
+        a dataclass containing plasma geometry parameters:
+        major_r, minor_r, elong, triang.
+
+    blanket_wire: BluemiraWire
         The blanket wire
-    divertor_wire:
+
+    divertor_wire: BluemiraWire
         The divertor wire
-    major_radius:
+
+    new_major_radius: [cm]
         major radius of the actual device.
-        The geometry variables specified by
-        tokamak_geometry will then be modified by major_radius
-    aspect_ratio:
+
+    new_aspect_ratio: [dimensionless]
         aspect ratio of the reactor
+
+    new_elong: [dimensionless]
+        elongation parameter of the actual device.
+
+    save_plot: bool
+        if True, the following plots would be saved to current directory:
+        - blanket_face.svg
+        - all_points_before_after.svg
+        - selected_pts_inner_blanket_face.svg
+        - selected_pts_divertor_face.svg
 
     Returns
     -------
     new_downsampled_fw:
         points belonging to the first wall
+
     new_downsampled_div:
         points belonging to the divertor
+
     num_inboard_points:
-        Number of points in new_downsampled_fw
-        that belongs to the inboard section.
+        Number of points in new_downsampled_fw that belongs to the inboard section.
 
     Notes
     -----
@@ -909,17 +940,17 @@ def load_fw_points(
 
     # rescale data to fit new geometry.
     # Expand point outwards according to new major radius
-    shift_cm = tokamak_geometry.cgs.major_r - ex_pts_maj_r
+    shift_cm = plasma_geometry.cgs.major_r - ex_pts_maj_r
     new_points = shift_points(old_points, shift_cm)
 
     # Adjusting points for elongation and minor radius
     # This elongation also include an allowance for the minor radius
     elong_w_minor_r = (
-        tokamak_geometry.cgs.minor_r / ex_pts_min_r * tokamak_geometry.cgs.elong
+        plasma_geometry.cgs.minor_r / ex_pts_min_r * plasma_geometry.cgs.elong
     )
-    stretch_r_val = tokamak_geometry.cgs.minor_r / ex_pts_min_r
+    stretch_r_val = plasma_geometry.cgs.minor_r / ex_pts_min_r
     new_points = elongate(new_points, elong_w_minor_r / ex_pts_elong)
-    new_points = stretch_r(new_points, tokamak_geometry, stretch_r_val)
+    new_points = stretch_r(new_points, plasma_geometry, stretch_r_val)
 
     # split 'new_points' into new_downsampled_* variables
     new_downsampled_fw = new_points[:-num_points_belongong_to_divertor]
@@ -932,13 +963,13 @@ def load_fw_points(
     # plotting.
     if save_plots:
         # create parametric variables for plotting smoother lines
-        u = tokamak_geometry.cgs.major_r  # x-position of the center
+        u = plasma_geometry.cgs.major_r  # x-position of the center
         v = 0.0  # y-position of the center
-        a = tokamak_geometry.cgs.minor_r  # radius on the x-axis
+        a = plasma_geometry.cgs.minor_r  # radius on the x-axis
         b = (
-            tokamak_geometry.cgs.elong * tokamak_geometry.cgs.minor_r
+            plasma_geometry.cgs.elong * plasma_geometry.cgs.minor_r
         )  # radius on the y-axis
-        tri = tokamak_geometry.cgs.triang  # triangularity
+        tri = plasma_geometry.cgs.triang  # triangularity
         t = np.linspace(0, 2 * pi, 100)
 
         with present.PoloidalXSPlot("blanket_face.svg", "Blanket Face") as ax:
