@@ -19,7 +19,7 @@ from tabulate import tabulate
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
-from bluemira.neutronics.params import TokamakGeometry
+from bluemira.neutronics.params import PlasmaGeometry, TokamakGeometry
 
 
 def get_percent_err(row):
@@ -31,12 +31,12 @@ def get_percent_err(row):
     ----------
     row: pd.Series object
         It should have the "mean" and "std. dev."
-        row['mean']: scalar
-        row['std. dev.']: scalar
+        row['mean']: float
+        row['std. dev.']: float
 
     Returns
     -------
-    fractional_error: scalar
+    fractional_error: float
 
     Usage
     -----
@@ -55,6 +55,11 @@ class PoloidalXSPlot:
     Using the 'with' statement (i.e. in the syntax of context manager in python)
     also improves readability, as the save_name is written at the top of the indented
     block, so it's obvious what's the indented block plotting.
+
+    Usage
+    -----
+    ```with PoloidalXSPlot(file_name, plot_title_text) as ax:
+        ax.plot(...)```
     """
 
     def __init__(self, save_name, title=None):
@@ -398,6 +403,7 @@ class OpenMCResult:
 
 def geometry_plotter(
     cells: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
+    plasma_geometry: PlasmaGeometry,
     tokamak_geometry: TokamakGeometry,
 ) -> None:
     """
@@ -408,7 +414,12 @@ def geometry_plotter(
     cells:
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
-    tokamak_geometry: TokamakGeometry
+
+    plasma_geometry:
+        dataclass containing the plasma geometry, including major_r, minor_r, elong.
+
+    tokamak_geometry:
+        dataclass containing the tokamak geometry. See TokamakGeometry for details.
 
     Returns
     -------
@@ -465,8 +476,8 @@ def geometry_plotter(
     color_cells("divertor", "regions", "cyan")
 
     plot_width = 2 * (
-        tokamak_geometry.cgs.major_r
-        + tokamak_geometry.cgs.minor_r * tokamak_geometry.cgs.elong
+        plasma_geometry.cgs.major_r
+        + plasma_geometry.cgs.minor_r * plasma_geometry.cgs.elong
         + tokamak_geometry.cgs.outb_fw_thick
         + tokamak_geometry.cgs.outb_bz_thick
         + tokamak_geometry.cgs.outb_mnfld_thick
@@ -489,4 +500,4 @@ def geometry_plotter(
         plot_list.append(plot)
 
     openmc.Plots(plot_list).export_to_xml()
-    openmc.plot_geometry(output=False)
+    openmc.plot_geometry(output=False)  # ignore OpenMC stdout printed during plotting.
