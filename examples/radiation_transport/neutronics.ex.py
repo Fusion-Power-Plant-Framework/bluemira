@@ -36,7 +36,7 @@ from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import TBRHeatingSimulation
 from bluemira.neutronics.params import (
     OpenMCSimulationRuntimeParameters,
-    TokamakOperationParameters,
+    TokamakOperationParametersBase,
     get_preset_physical_properties,
 )
 
@@ -70,7 +70,9 @@ volume_calculation = True
 # %%
 # set up the variables to be used for the openmc simulation
 # allowed blanket_type so far = {'WCLL', 'DCLL', 'HCPB'}
-breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
+breeder_materials, plasma_geometry, tokamak_geometry = get_preset_physical_properties(
+    BlanketType.HCPB
+)
 
 runtime_variables = OpenMCSimulationRuntimeParameters(
     cross_section_xml=CROSS_SECTION_XML,
@@ -85,7 +87,7 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     volume_calc_particles=int(4e8),
 )
 
-operation_variable = TokamakOperationParameters(
+operation_variable = TokamakOperationParametersBase(
     reactor_power=1998e6,  # [W]
     temperature=raw_uc(15.4, "keV", "K"),
     peaking_factor=1.508,  # [dimensionless]
@@ -95,7 +97,11 @@ operation_variable = TokamakOperationParameters(
 
 # set up a DEMO-like reactor, and run OpenMC simualtion
 tbr_heat_sim = TBRHeatingSimulation(
-    runtime_variables, operation_variable, breeder_materials, tokamak_geometry
+    runtime_variables,
+    operation_variable,
+    breeder_materials,
+    plasma_geometry,
+    tokamak_geometry,
 )
 blanket_wire = make_polygon(Coordinates(np.load("blanket_face.npy")))
 divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
