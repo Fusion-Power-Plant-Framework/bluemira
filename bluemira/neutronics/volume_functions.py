@@ -15,7 +15,7 @@ from numpy import pi
 
 if TYPE_CHECKING:
     from bluemira.neutroncs.make_geometry import Cells
-    from bluemira.neutronics.params import TokamakGeometry
+    from bluemira.neutronics.params import PlasmaGeometry, TokamakGeometry
 
 
 def get_vol_of_truncated_cone(cone, top_z, bot_z):
@@ -81,6 +81,7 @@ def get_div_fw_vol(outer_cones, inner_cones, rs):
 
 
 def stochastic_volume_calculation(
+    plasma_geometry: PlasmaGeometry,
     tokamak_geometry: TokamakGeometry,
     cells: Cells,
     particles: int = int(4e7),
@@ -90,13 +91,17 @@ def stochastic_volume_calculation(
 
     Parameters
     ----------
+    plasma_geometry:
+        dataclass containing the major_r, minor_r, and elong of the plasma.
+
     tokamak_geometry:
-        Tokamak geometry object
+        dataclass containing thicknesses of various components
+
     cells:
         Cells object
+
     particles:
-        how many randomly generated particle to use
-        for the stochastic volume calculation.
+        how many particles to use for the stochastic volume calculation.
     """
     # quietly delete the unused .hf files: bad practice, fix later?
     Path("summary.h5").unlink(missing_ok=True)
@@ -104,14 +109,14 @@ def stochastic_volume_calculation(
 
     # maximum radii and heigth reached by all of the tokamak's breeder zone component
     maxr = (
-        tokamak_geometry.cgs.major_r
-        + tokamak_geometry.cgs.minor_r
+        plasma_geometry.cgs.major_r
+        + plasma_geometry.cgs.minor_r
         + tokamak_geometry.cgs.outb_fw_thick
         + tokamak_geometry.cgs.outb_bz_thick
     )
     maxz = (
         # height of plasma = 2 * elong * minor
-        tokamak_geometry.cgs.elong * tokamak_geometry.cgs.minor_r
+        plasma_geometry.cgs.elong * plasma_geometry.cgs.minor_r
         + tokamak_geometry.cgs.outb_fw_thick
         + tokamak_geometry.cgs.outb_bz_thick
         + tokamak_geometry.cgs.outb_mnfld_thick
