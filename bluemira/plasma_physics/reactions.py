@@ -12,6 +12,8 @@ from dataclasses import dataclass, field
 from enum import Enum, auto
 from typing import Union
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
@@ -224,8 +226,68 @@ def reactivity(
     return mapping[method](raw_uc(temp_k, "K", "keV"), reaction)
 
 
+class BoschHaleBase:
+    def get_reactivity(self, temp_kev: Union[float, np.ndarray]):
+        """
+        Parameters
+        ----------
+        temp_kev:
+            temperature of plasma that the user would like to find
+            out the value of reactivity for. [keV]
+
+        Returns
+        -------
+        reactivity:
+            reactivity/reactivities at the desired temperature at the desired
+            temperature/array of temperatures [m^3/s]
+        """
+        if np.min(temp_kev) < self.t_min:
+            bluemira_warn(
+                f"The parameterisation {self.__class__.__name__} is only valid "
+                f"between {self.t_min} and {self.t_max} keV, not {np.min(temp_kev)} keV."
+            )
+        if np.max(temp_kev) > self.t_max:
+            bluemira_warn(
+                f"The parameterisation {self.__class__.__name__} is only valid "
+                f"between {self.t_min} and {self.t_max} keV, not {np.max(temp_kev)} keV."
+            )
+        numerator = self.c[1] + temp_kev * (self.c[3] + temp_kev * self.c[5])
+        de = 1 + temp_kev * (self.c[2] + temp_kev * (self.c[4] + temp_kev * self.c[6]))
+        frac = temp_kev * numerator / de
+        theta = temp_kev / (1 - frac)
+        chi = (self.bg**2 / (4 * theta)) ** (1 / 3)
+        return (
+            1e-6
+            * self.c[0]
+            * theta
+            * np.sqrt(chi / (self.mrc2 * temp_kev**3))
+            * np.exp(-3 * chi)
+        )
+
+    def plot(self, ax: mpl.axes.Axes = None, loglog: bool = False):
+        """
+        Parameters
+        ----------
+        ax:
+            the axis that the user would like to plot the reactivity curve on.
+        loglog:
+            if the plot should be made in log-log scale or linear-linear scale.
+        """
+        temp_kev = np.geomspace(self.t_min, self.t_max, 400)
+        curve = self.get_reactivity(temp_kev)
+        if not ax:
+            ax = plt.subplot()
+        ax.plot(temp_kev, curve, label=self.__class__.__name__)
+        if loglog:
+            ax.set_xscale("log")
+            ax.set_yscale("log")
+        ax.set_xlabel("temperature (keV)")
+        ax.set_ylabel("reactivity [m^3/s]")
+        return ax
+
+
 @dataclass
-class BoschHale_DT_4Hen:
+class BoschHale_DT_4Hen(BoschHaleBase):
     """
     Bosch-Hale parameterisation data for the reaction:
 
@@ -255,7 +317,7 @@ class BoschHale_DT_4Hen:
 
 
 @dataclass
-class BoschHale_DD_3Hen:
+class BoschHale_DD_3Hen(BoschHaleBase):
     """
     Bosch-Hale parameterisation data for the reaction:
 
@@ -285,7 +347,7 @@ class BoschHale_DD_3Hen:
 
 
 @dataclass
-class BoschHale_DD_Tp:
+class BoschHale_DD_Tp(BoschHaleBase):
     """
     Bosch-Hale parameterisation data for the reaction:
 
@@ -315,7 +377,7 @@ class BoschHale_DD_Tp:
 
 
 @dataclass
-class BoschHale_DHe3_4Hep:
+class BoschHale_DHe3_4Hep(BoschHaleBase):
     """
     Bosch-Hale parameterisation data for the reaction:
 
@@ -372,38 +434,13 @@ def _reactivity_bosch_hale(
             + _reactivity_bosch_hale(temp_kev, Reactions.D_D2)
         )
     mapping = {
-        Reactions.D_T: BoschHale_DT_4Hen(),
-        Reactions.D_D1: BoschHale_DD_3Hen(),
-        Reactions.D_D2: BoschHale_DD_Tp(),
-        Reactions.D_He3: BoschHale_DHe3_4Hep(),
+        Reactions.D_T: BoschHale_DT_4Hen,
+        Reactions.D_D1: BoschHale_DD_3Hen,
+        Reactions.D_D2: BoschHale_DD_Tp,
+        Reactions.D_He3: BoschHale_DHe3_4Hep,
     }
-    data = mapping[reaction]
-
-    if np.min(temp_kev) < data.t_min:
-        bluemira_warn(
-            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid "
-            f"between {data.t_min} and {data.t_max} keV, not {np.min(temp_kev)} keV."
-        )
-    if np.max(temp_kev) > data.t_max:
-        bluemira_warn(
-            f"The Bosch-Hale parameterisation for reaction {reaction} is only valid "
-            f"between {data.t_min} and {data.t_max} keV, not {np.max(temp_kev)} keV."
-        )
-
-    frac = (
-        temp_kev
-        * (data.c[1] + temp_kev * (data.c[3] + temp_kev * data.c[5]))
-        / (1 + temp_kev * (data.c[2] + temp_kev * (data.c[4] + temp_kev * data.c[6])))
-    )
-    theta = temp_kev / (1 - frac)
-    chi = (data.bg**2 / (4 * theta)) ** (1 / 3)
-    return (
-        1e-6
-        * data.c[0]
-        * theta
-        * np.sqrt(chi / (data.mrc2 * temp_kev**3))
-        * np.exp(-3 * chi)
-    )
+    data = mapping[reaction]()
+    return data.get_reactivity(temp_kev)
 
 
 def _reactivity_plasmod(
@@ -465,6 +502,10 @@ def _reactivity_johner(
     Johner, Jean (2011). HELIOS: a zero-dimensional tool for next step and reactor
     studies. Fusion Science and Technology, 59(2), 308-313. Appendix E.II
     """
+    if np.isscalar(temp_kev):
+        return _reactivity_johner(np.array([temp_kev]), reaction)[0]
+    temp_kev = np.array(temp_kev)
+
     if reaction != Reactions.D_T:
         raise ValueError(
             f"This function only supports D-T, not {reaction.name.replace('_', '-')}"
@@ -476,9 +517,9 @@ def _reactivity_johner(
         bluemira_warn("The Johner parameterisation is not valid for T < 5.3 keV")
 
     sigma_v = np.zeros_like(temp_kev)
-    idx_1 = np.nonzero((temp_kev >= 5.3) & (temp_kev <= 10.3))[0]  # noqa: PLR2004
-    idx_2 = np.nonzero((temp_kev >= 10.3) & (temp_kev <= 18.5))[0]  # noqa: PLR2004
-    idx_3 = np.nonzero((temp_kev >= 18.5) & (temp_kev <= 39.9))[0]  # noqa: PLR2004
+    idx_1 = np.nonzero((temp_kev >= 5.3) & (temp_kev < 10.3))[0]  # noqa: PLR2004
+    idx_2 = np.nonzero((temp_kev >= 10.3) & (temp_kev < 18.5))[0]  # noqa: PLR2004
+    idx_3 = np.nonzero((temp_kev >= 18.5) & (temp_kev < 39.9))[0]  # noqa: PLR2004
     idx_4 = np.nonzero((temp_kev >= 39.9) & (temp_kev <= 100.0))[0]  # noqa: PLR2004
     t1 = temp_kev[idx_1]
     t2 = temp_kev[idx_2]
@@ -488,6 +529,4 @@ def _reactivity_johner(
     sigma_v[idx_2] = 1.18e-24 * t2**2
     sigma_v[idx_3] = 2.18e-23 * t3
     sigma_v[idx_4] = 8.69e-22
-    if isinstance(temp_kev, (float, int)):
-        return float(sigma_v)
     return sigma_v
