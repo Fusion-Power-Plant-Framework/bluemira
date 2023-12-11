@@ -241,8 +241,8 @@ class TBRHeatingSimulation:
 
         # create_tallies(self.cells, self.material_lib)
 
-        # if plot_geometry:
-        #     present.geometry_plotter(self.cells, self.tokamak_geometry)
+        if plot_geometry:
+            present.geometry_plotter(self.cells, self.tokamak_geometry)
 
     @staticmethod
     def run(*args, output=False, **kwargs) -> None:
