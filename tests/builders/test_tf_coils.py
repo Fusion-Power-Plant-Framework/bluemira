@@ -22,13 +22,11 @@ from bluemira.geometry.tools import make_polygon
 
 
 class TestRippleConstrainedLengthGOP:
-    princeton = PrincetonD(
-        {
-            "x1": {"value": 4, "fixed": True},
-            "dz": {"value": 0, "fixed": True},
-            "x2": {"value": 15, "lower_bound": 13, "upper_bound": 20},
-        }
-    )
+    princeton = PrincetonD({
+        "x1": {"value": 4, "fixed": True},
+        "dz": {"value": 0, "fixed": True},
+        "x2": {"value": 15, "lower_bound": 13, "upper_bound": 20},
+    })
     lcfs = make_polygon({"x": [6, 12, 6], "z": [-4, 0, 4]}, closed=True)
     wp_xs = make_polygon(
         {"x": [3.5, 4.5, 4.5, 3.5], "y": [-0.5, -0.5, 0.5, 0.5], "z": 0}, closed=True

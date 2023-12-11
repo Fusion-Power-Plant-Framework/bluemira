@@ -23,9 +23,12 @@ class TestPlasmaFaceDesigner:
 
     @classmethod
     def setup_class(cls):
-        cls.wall_boundary = make_polygon(
-            [[1, 0, -10], [1, 0, 10], [11, 0, 10], [11, 0, -10]]
-        )
+        cls.wall_boundary = make_polygon([
+            [1, 0, -10],
+            [1, 0, 10],
+            [11, 0, 10],
+            [11, 0, -10],
+        ])
         cls.divertor_silhouette = (
             make_polygon([[1, 0, -10], [6, 0, -15]]),
             make_polygon([[11, 0, -10], [6, 0, -15]]),

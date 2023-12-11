@@ -52,13 +52,11 @@ class GeoMeshable(meshing.Meshable):
         output = []
         output.append(self.mesh_options)
         if hasattr(self, "boundary"):
-            output.extend(
-                [
-                    obj.print_mesh_options(True)
-                    for obj in self.boundary
-                    if isinstance(obj, GeoMeshable)
-                ]
-            )
+            output.extend([
+                obj.print_mesh_options(True)
+                for obj in self.boundary
+                if isinstance(obj, GeoMeshable)
+            ])
         return output
 
 

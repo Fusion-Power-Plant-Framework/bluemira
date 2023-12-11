@@ -90,9 +90,9 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.bounds = self.get_mapped_state_bounds(max_currents)
         self.gamma = gamma
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions or self._opt_condition_defaults(
-            {"max_eval": 100}
-        )
+        self.opt_conditions = opt_conditions or self._opt_condition_defaults({
+            "max_eval": 100
+        })
         self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 

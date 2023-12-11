@@ -199,13 +199,11 @@ class TestSelfInductance:
         for a rectangle. Differences include discretisation and lack of corners,
         and the lack of knowledge of `d`, assumed here as `d`=`c`.
         """
-        poly = Coordinates(
-            {
-                "x": [-c / 2, c / 2, c / 2, -c / 2],
-                "y": 0,
-                "z": [-d / 2, -d / 2, d / 2, d / 2],
-            }
-        )
+        poly = Coordinates({
+            "x": [-c / 2, c / 2, c / 2, -c / 2],
+            "y": 0,
+            "z": [-d / 2, -d / 2, d / 2, d / 2],
+        })
         poly.close()
         if discr:
             poly = make_polygon(poly, closed=True).discretize(dl=12 * a, byedges=True)

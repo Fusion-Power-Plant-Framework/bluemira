@@ -71,14 +71,12 @@ class TestGeometryParameterisation:
 
             def create_shape(self, **kwargs):  # noqa: ARG002
                 return BluemiraWire(
-                    make_polygon(
-                        [
-                            [self.variables.a, 0, 0],
-                            [self.variables.b, 0, 0],
-                            [self.variables.c, 0, 1],
-                            [self.variables.a, 0, 1],
-                        ]
-                    )
+                    make_polygon([
+                        [self.variables.a, 0, 0],
+                        [self.variables.b, 0, 0],
+                        [self.variables.c, 0, 1],
+                        [self.variables.a, 0, 1],
+                    ])
                 )
 
         t = TestPara()
@@ -104,25 +102,24 @@ class TestPrincetonD:
             PrincetonD._princeton_d(10, 3, 0)
 
     def test_instantiation_fixed(self):
-        p = PrincetonD(
-            {"x1": {"value": 5, "fixed": True}, "x2": {"value": 14, "fixed": False}}
-        )
+        p = PrincetonD({
+            "x1": {"value": 5, "fixed": True},
+            "x2": {"value": 14, "fixed": False},
+        })
         assert p.variables["x1"].fixed
         assert not p.variables["x2"].fixed
 
 
 class TestPictureFrame:
     def test_length(self):
-        p = PictureFrame(
-            {
-                "x1": {"value": 4},
-                "x2": {"value": 16},
-                "z1": {"value": 8},
-                "z2": {"value": -8},
-                "ri": {"value": 1, "upper_bound": 1},
-                "ro": {"value": 1},
-            }
-        )
+        p = PictureFrame({
+            "x1": {"value": 4},
+            "x2": {"value": 16},
+            "z1": {"value": 8},
+            "z2": {"value": -8},
+            "ri": {"value": 1, "upper_bound": 1},
+            "ro": {"value": 1},
+        })
         wire = p.create_shape()
         length = 2 * (np.pi + 10 + 14)
         assert np.isclose(wire.length, length)
@@ -151,16 +148,14 @@ class TestPictureFrame:
         assert np.isclose(wire.length, length)
 
     def test_ordering(self):
-        p = PictureFrame(
-            {
-                "x1": {"value": 4},
-                "x2": {"value": 16},
-                "z1": {"value": 8},
-                "z2": {"value": -8},
-                "ri": {"value": 1, "upper_bound": 1},
-                "ro": {"value": 1},
-            }
-        )
+        p = PictureFrame({
+            "x1": {"value": 4},
+            "x2": {"value": 16},
+            "z1": {"value": 8},
+            "z2": {"value": -8},
+            "ri": {"value": 1, "upper_bound": 1},
+            "ro": {"value": 1},
+        })
         wire = p.create_shape()
         assert _wire_edges_tangent(wire.shape)
 
@@ -326,22 +321,20 @@ class TestSextupleArc:
         assert len(wire._boundary) == 7
 
     def test_circle(self):
-        p = SextupleArc(
-            {
-                "x1": {"value": 4},
-                "z1": {"value": 0},
-                "r1": {"value": 4},
-                "r2": {"value": 4},
-                "r3": {"value": 4},
-                "r4": {"value": 4},
-                "r5": {"value": 4},
-                "a1": {"value": 60, "upper_bound": 60},
-                "a2": {"value": 60, "upper_bound": 60},
-                "a3": {"value": 60, "upper_bound": 60},
-                "a4": {"value": 60, "upper_bound": 60},
-                "a5": {"value": 60, "upper_bound": 60},
-            }
-        )
+        p = SextupleArc({
+            "x1": {"value": 4},
+            "z1": {"value": 0},
+            "r1": {"value": 4},
+            "r2": {"value": 4},
+            "r3": {"value": 4},
+            "r4": {"value": 4},
+            "r5": {"value": 4},
+            "a1": {"value": 60, "upper_bound": 60},
+            "a2": {"value": 60, "upper_bound": 60},
+            "a3": {"value": 60, "upper_bound": 60},
+            "a4": {"value": 60, "upper_bound": 60},
+            "a5": {"value": 60, "upper_bound": 60},
+        })
         wire = p.create_shape()
 
         assert np.isclose(wire.length, 2 * np.pi * 4)

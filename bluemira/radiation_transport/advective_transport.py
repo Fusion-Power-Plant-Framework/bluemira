@@ -410,20 +410,24 @@ class ChargedParticleSolver:
         ) / q_imp_int
 
         return (
-            np.concatenate(
-                [x_lfs_down_inter, x_lfs_up_inter, x_hfs_down_inter, x_hfs_up_inter]
-            ),
-            np.concatenate(
-                [z_lfs_down_inter, z_lfs_up_inter, z_hfs_down_inter, z_hfs_up_inter]
-            ),
-            np.concatenate(
-                [
-                    f_correct_lfs_down * heat_flux_lfs_down,
-                    f_correct_lfs_up * heat_flux_lfs_up,
-                    f_correct_hfs_down * heat_flux_hfs_down,
-                    f_correct_hfs_up * heat_flux_hfs_up,
-                ]
-            ),
+            np.concatenate([
+                x_lfs_down_inter,
+                x_lfs_up_inter,
+                x_hfs_down_inter,
+                x_hfs_up_inter,
+            ]),
+            np.concatenate([
+                z_lfs_down_inter,
+                z_lfs_up_inter,
+                z_hfs_down_inter,
+                z_hfs_up_inter,
+            ]),
+            np.concatenate([
+                f_correct_lfs_down * heat_flux_lfs_down,
+                f_correct_lfs_up * heat_flux_lfs_up,
+                f_correct_hfs_down * heat_flux_hfs_down,
+                f_correct_hfs_up * heat_flux_hfs_up,
+            ]),
         )
 
     def _q_par(self, x, dx, B, Bp, outboard=True):

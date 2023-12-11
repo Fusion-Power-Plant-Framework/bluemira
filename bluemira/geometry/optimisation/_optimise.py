@@ -218,9 +218,9 @@ def optimise_geometry(
     else:
         df_obj = None
     ineq_constraints_list = list(ineq_constraints)
-    ineq_constraints_list.extend(
-        [_tools.make_keep_out_zone_constraint(_to_koz(zone)) for zone in keep_out_zones]
-    )
+    ineq_constraints_list.extend([
+        _tools.make_keep_out_zone_constraint(_to_koz(zone)) for zone in keep_out_zones
+    ])
 
     ineq_constraints = _tools.get_shape_ineq_constraint(geom) + [
         _tools.to_constraint(c, geom) for c in ineq_constraints_list

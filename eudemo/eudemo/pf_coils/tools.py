@@ -136,13 +136,11 @@ def _get_intersections_from_angles(boundary, ref_x, ref_z, angles):
     n_angles = len(angles)
     x_c, z_c = np.zeros(n_angles), np.zeros(n_angles)
     for i, angle in enumerate(angles):
-        line = make_polygon(
-            [
-                [ref_x, ref_x + VERY_BIG * np.cos(angle)],
-                [0, 0],
-                [ref_z, ref_z + VERY_BIG * np.sin(angle)],
-            ]
-        )
+        line = make_polygon([
+            [ref_x, ref_x + VERY_BIG * np.cos(angle)],
+            [0, 0],
+            [ref_z, ref_z + VERY_BIG * np.sin(angle)],
+        ])
         _, intersection = distance_to(boundary, line)
         x_c[i], _, z_c[i] = intersection[0][0]
     return x_c, z_c
@@ -319,9 +317,9 @@ def make_coil_mapper(
         elif len(_bin) == 1:
             interpolator_dict[_bin[0].name] = PathInterpolator(segment)
         else:
-            l_values = np.array(
-                [segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in _bin]
-            )
+            l_values = np.array([
+                segment.parameter_at([c.x, 0, c.z], tolerance=VERY_BIG) for c in _bin
+            ])
             idx = np.argsort(l_values)
             l_values = l_values[idx]
             split_values = l_values[:-1] + 0.5 * np.diff(l_values)

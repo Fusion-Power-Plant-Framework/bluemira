@@ -320,13 +320,11 @@ def _check_constraints(
         if diff := _check_constraint(x_star, constraint, condition):
             indices, c_value, tols = diff
             warnings.append(
-                "\n".join(
-                    [
-                        f"{constraint_type} constraint {i} [{j}]: "
-                        f"{pformat(c_value[j])} {comp_str} {pformat(tols[j])}"
-                        for j in indices
-                    ]
-                )
+                "\n".join([
+                    f"{constraint_type} constraint {i} [{j}]: "
+                    f"{pformat(c_value[j])} {comp_str} {pformat(tols[j])}"
+                    for j in indices
+                ])
             )
     return warnings
 

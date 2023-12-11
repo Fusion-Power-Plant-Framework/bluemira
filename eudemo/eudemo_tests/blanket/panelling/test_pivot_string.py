@@ -38,9 +38,11 @@ class TestMakePivotedString:
 
         Using bluemira 437a1c10, and BLUEPRINT e3fb8d1c.
         """
-        boundary = PrincetonD(
-            {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
-        ).create_shape()
+        boundary = PrincetonD({
+            "x1": {"value": 4},
+            "x2": {"value": 14},
+            "dz": {"value": 0},
+        }).create_shape()
         boundary_points = boundary.discretize().T
 
         new_points, _ = make_pivoted_string(
@@ -52,9 +54,11 @@ class TestMakePivotedString:
 
     @pytest.mark.parametrize("dx_max", [0, 0.5, 0.9999])
     def test_ValueError_given_dx_min_gt_dx_max(self, dx_max):
-        boundary = PrincetonD(
-            {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
-        ).create_shape()
+        boundary = PrincetonD({
+            "x1": {"value": 4},
+            "x2": {"value": 14},
+            "dz": {"value": 0},
+        }).create_shape()
         boundary_points = boundary.discretize().T
 
         with pytest.raises(ValueError):  # noqa: PT011

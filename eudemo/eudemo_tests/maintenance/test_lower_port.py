@@ -27,34 +27,26 @@ class TestLowerPort:
 
     @classmethod
     def setup_class(cls):
-        cls.divertor_xz_silhouette = BluemiraWire(
-            [
-                make_polygon(
-                    [
-                        [4, 6],
-                        [0, 0],
-                        [0, 0],
-                    ]
-                ),
-                make_circle(
-                    1, center=(5, 0, 0), start_angle=-180, end_angle=0, axis=(0, -1, 0)
-                ),
-            ]
-        )
-        cls.tf_coils_outer_boundary = BluemiraWire(
-            [
-                make_polygon(
-                    [
-                        [3, 3],
-                        [0, 0],
-                        [8, -8],
-                    ]
-                ),
-                make_circle(
-                    8, center=(3, 0, 0), start_angle=-90, end_angle=90, axis=(0, -1, 0)
-                ),
-            ]
-        )
+        cls.divertor_xz_silhouette = BluemiraWire([
+            make_polygon([
+                [4, 6],
+                [0, 0],
+                [0, 0],
+            ]),
+            make_circle(
+                1, center=(5, 0, 0), start_angle=-180, end_angle=0, axis=(0, -1, 0)
+            ),
+        ])
+        cls.tf_coils_outer_boundary = BluemiraWire([
+            make_polygon([
+                [3, 3],
+                [0, 0],
+                [8, -8],
+            ]),
+            make_circle(
+                8, center=(3, 0, 0), start_angle=-90, end_angle=90, axis=(0, -1, 0)
+            ),
+        ])
 
     def setup_method(self):
         self.duct_des_params = make_parameter_frame(

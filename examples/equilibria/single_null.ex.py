@@ -155,9 +155,19 @@ grid = Grid(3.0, 13.0, -10.0, 10.0, 65, 65)
 
 profiles = CustomProfile(
     np.array([86856, 86506, 84731, 80784, 74159, 64576, 52030, 36918, 20314, 4807, 0.0]),
-    -np.array(
-        [0.125, 0.124, 0.122, 0.116, 0.106, 0.093, 0.074, 0.053, 0.029, 0.007, 0.0]
-    ),
+    -np.array([
+        0.125,
+        0.124,
+        0.122,
+        0.116,
+        0.106,
+        0.093,
+        0.074,
+        0.053,
+        0.029,
+        0.007,
+        0.0,
+    ]),
     R_0=R_0,
     B_0=B_0,
     I_p=I_p,
@@ -177,21 +187,19 @@ eq = Equilibrium(coilset, grid, profiles, psi=None)
 # * A `FieldNullConstraint` forces the poloidal field at a point to be zero.
 
 # %%
-lcfs_parameterisation = JohnerLCFS(
-    {
-        "r_0": {"value": R_0},
-        "z_0": {"value": 0.0},
-        "a": {"value": R_0 / A},
-        "kappa_u": {"value": 1.6},
-        "kappa_l": {"value": 1.9},
-        "delta_u": {"value": 0.4},
-        "delta_l": {"value": 0.4},
-        "phi_u_neg": {"value": 0.0},
-        "phi_u_pos": {"value": 0.0},
-        "phi_l_neg": {"value": 45.0},
-        "phi_l_pos": {"value": 30.0},
-    }
-)
+lcfs_parameterisation = JohnerLCFS({
+    "r_0": {"value": R_0},
+    "z_0": {"value": 0.0},
+    "a": {"value": R_0 / A},
+    "kappa_u": {"value": 1.6},
+    "kappa_l": {"value": 1.9},
+    "delta_u": {"value": 0.4},
+    "delta_l": {"value": 0.4},
+    "phi_u_neg": {"value": 0.0},
+    "phi_u_pos": {"value": 0.0},
+    "phi_l_neg": {"value": 45.0},
+    "phi_l_pos": {"value": 30.0},
+})
 
 lcfs = lcfs_parameterisation.create_shape().discretize(byedges=True, ndiscr=50)
 

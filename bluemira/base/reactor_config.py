@@ -304,7 +304,7 @@ class ReactorConfig:
 
         for next_idx, current_arg_key in enumerate(arg_keys, start=1):
             current_layer = current_layer.get(current_arg_key, {})
-            next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None
+            next_arg_key = arg_keys[next_idx] if next_idx < len(arg_keys) else None  # noqa: PLR1736
 
             to_extract = current_layer
             if not is_config:

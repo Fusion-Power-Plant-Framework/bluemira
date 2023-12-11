@@ -61,18 +61,16 @@ class TestGeometry:
         koz_radius = 4.5
         koz_center = (10, 0, 0)
         keep_out_zone = make_circle(radius=koz_radius, center=koz_center, axis=(0, 1, 0))
-        parameterisation = PictureFrame(
-            {
-                # Make sure bounds are set within the keep-out zone so
-                # we know it's doing some work
-                "x1": {"value": 4.5, "upper_bound": 6, "lower_bound": 3},
-                "x2": {"value": 16, "upper_bound": 17.5, "lower_bound": 14.0},
-                "z1": {"value": 8, "upper_bound": 15, "lower_bound": 2.5},
-                "z2": {"value": -6, "upper_bound": -2.5, "lower_bound": -15},
-                "ri": {"value": 0, "fixed": True},
-                "ro": {"value": 0, "fixed": True},
-            }
-        )
+        parameterisation = PictureFrame({
+            # Make sure bounds are set within the keep-out zone so
+            # we know it's doing some work
+            "x1": {"value": 4.5, "upper_bound": 6, "lower_bound": 3},
+            "x2": {"value": 16, "upper_bound": 17.5, "lower_bound": 14.0},
+            "z1": {"value": 8, "upper_bound": 15, "lower_bound": 2.5},
+            "z2": {"value": -6, "upper_bound": -2.5, "lower_bound": -15},
+            "ri": {"value": 0, "fixed": True},
+            "ro": {"value": 0, "fixed": True},
+        })
 
         opt_result = optimise_geometry(
             parameterisation,
@@ -91,13 +89,11 @@ class TestGeometry:
         assert bounds.z_max - bounds.z_min == pytest.approx(2 * koz_radius, rel=0.01)
 
     def test_princeton_d(self):
-        parameterisation = PrincetonD(
-            {
-                "x1": {"value": 5.5, "upper_bound": 10, "lower_bound": 5},
-                "x2": {"value": 16, "upper_bound": 19.5, "lower_bound": 12.5},
-                "dz": {"value": 1, "upper_bound": 1.5, "lower_bound": -1.5},
-            }
-        )
+        parameterisation = PrincetonD({
+            "x1": {"value": 5.5, "upper_bound": 10, "lower_bound": 5},
+            "x2": {"value": 16, "upper_bound": 19.5, "lower_bound": 12.5},
+            "dz": {"value": 1, "upper_bound": 1.5, "lower_bound": -1.5},
+        })
         # TODO(hsaunders1904): think about whether we want to keep the
         # original parameterisation constant, or whether we change it
         # in-place. Add a test for the behaviour
@@ -259,16 +255,14 @@ class TestGeometry:
             )
             return np.array([abs(x2 - x1) - abs(z2 - z1)])
 
-        pf = PictureFrame(
-            {
-                "x1": {"value": 2, "upper_bound": 4, "lower_bound": 0},
-                "x2": {"value": 7.5, "upper_bound": 10, "lower_bound": 5},
-                "z1": {"value": 5, "upper_bound": 10, "lower_bound": 4},
-                "z2": {"value": -5, "upper_bound": -4, "lower_bound": -10},
-                "ri": {"value": 0, "fixed": True},
-                "ro": {"value": 0, "fixed": True},
-            }
-        )
+        pf = PictureFrame({
+            "x1": {"value": 2, "upper_bound": 4, "lower_bound": 0},
+            "x2": {"value": 7.5, "upper_bound": 10, "lower_bound": 5},
+            "z1": {"value": 5, "upper_bound": 10, "lower_bound": 4},
+            "z2": {"value": -5, "upper_bound": -4, "lower_bound": -10},
+            "ri": {"value": 0, "fixed": True},
+            "ro": {"value": 0, "fixed": True},
+        })
         eq_constraint = {
             "f_constraint": square_constraint,
             "df_constraint": None,

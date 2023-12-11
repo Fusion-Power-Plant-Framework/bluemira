@@ -42,15 +42,11 @@ def build_pf_coils_component(params, build_config, coilset):
             params.r_pf_corner.value if coil_type == "PF" else params.r_cs_corner.value
         )
         if not (coil.dx == 0 or coil.dz == 0):
-            wires.append(
-                (
-                    PFCoilPictureFrame(
-                        {"r_corner": {"value": r_corner, "unit": "m"}}, coil
-                    ),
-                    coil_type,
-                    name,
-                )
-            )
+            wires.append((
+                PFCoilPictureFrame({"r_corner": {"value": r_corner, "unit": "m"}}, coil),
+                coil_type,
+                name,
+            ))
         else:
             bluemira_warn(f"Coil {name} has no size")
 

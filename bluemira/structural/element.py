@@ -59,22 +59,20 @@ def _k_array(
     -------
     The local member stiffness matrix
     """
-    return np.array(
-        [
-            [k11, 0, 0, 0, 0, 0, -k11, 0, 0, 0, 0, 0],
-            [0, k22, 0, 0, 0, k26, 0, -k22, 0, 0, 0, k26],
-            [0, 0, k33, 0, k35, 0, 0, 0, -k33, 0, k35, 0],
-            [0, 0, 0, k44, 0, 0, 0, 0, 0, -k44, 0, 0],
-            [0, 0, k35, 0, k55, 0, 0, 0, -k35, 0, k511, 0],
-            [0, k26, 0, 0, 0, k66, 0, -k26, 0, 0, 0, k612],
-            [-k11, 0, 0, 0, 0, 0, k11, 0, 0, 0, 0, 0],
-            [0, -k22, 0, 0, 0, -k26, 0, k22, 0, 0, 0, -k26],
-            [0, 0, -k33, 0, -k35, 0, 0, 0, k33, 0, -k35, 0],
-            [0, 0, 0, -k44, 0, 0, 0, 0, 0, k44, 0, 0],
-            [0, 0, k35, 0, k511, 0, 0, 0, -k35, 0, k55, 0],
-            [0, k26, 0, 0, 0, k612, 0, -k26, 0, 0, 0, k66],
-        ]
-    )
+    return np.array([
+        [k11, 0, 0, 0, 0, 0, -k11, 0, 0, 0, 0, 0],
+        [0, k22, 0, 0, 0, k26, 0, -k22, 0, 0, 0, k26],
+        [0, 0, k33, 0, k35, 0, 0, 0, -k33, 0, k35, 0],
+        [0, 0, 0, k44, 0, 0, 0, 0, 0, -k44, 0, 0],
+        [0, 0, k35, 0, k55, 0, 0, 0, -k35, 0, k511, 0],
+        [0, k26, 0, 0, 0, k66, 0, -k26, 0, 0, 0, k612],
+        [-k11, 0, 0, 0, 0, 0, k11, 0, 0, 0, 0, 0],
+        [0, -k22, 0, 0, 0, -k26, 0, k22, 0, 0, 0, -k26],
+        [0, 0, -k33, 0, -k35, 0, 0, 0, k33, 0, -k35, 0],
+        [0, 0, 0, -k44, 0, 0, 0, 0, 0, k44, 0, 0],
+        [0, 0, k35, 0, k511, 0, 0, 0, -k35, 0, k55, 0],
+        [0, k26, 0, 0, 0, k612, 0, -k26, 0, 0, 0, k66],
+    ])
 
 
 # @nb.jit(nopython=True, cache=True)
@@ -330,13 +328,11 @@ class Element:
         vector: np.array(3)
             The [dx, dy, dz] vector of the Element
         """
-        return np.array(
-            [
-                self.node_2.x - self.node_1.x,
-                self.node_2.y - self.node_1.y,
-                self.node_2.z - self.node_1.z,
-            ]
-        )
+        return np.array([
+            self.node_2.x - self.node_1.x,
+            self.node_2.y - self.node_1.y,
+            self.node_2.z - self.node_1.z,
+        ])
 
     @property
     def displacements(self) -> np.ndarray:
@@ -589,11 +585,9 @@ class Element:
         displacements = self.lambda_matrix[0:3, 0:3].T @ u
 
         # Global interpolated positions
-        c = np.array(
-            [
-                np.linspace(self.node_1.x, self.node_2.x, N_INTERP),
-                np.linspace(self.node_1.y, self.node_2.y, N_INTERP),
-                np.linspace(self.node_1.z, self.node_2.z, N_INTERP),
-            ]
-        )
+        c = np.array([
+            np.linspace(self.node_1.x, self.node_2.x, N_INTERP),
+            np.linspace(self.node_1.y, self.node_2.y, N_INTERP),
+            np.linspace(self.node_1.z, self.node_2.z, N_INTERP),
+        ])
         self.shapes = c + scale * displacements

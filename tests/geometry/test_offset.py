@@ -72,13 +72,11 @@ class TestOffset:
     @pytest.mark.xfail
     def test_bad_princeton(self):
         # TODO: This is a more fundamental issue that I have yet to get to the bottom of
-        p = PrincetonD(
-            {
-                "x1": {"value": 4},
-                "x2": {"value": 14},
-                "dz": {"value": 0},
-            }
-        )
+        p = PrincetonD({
+            "x1": {"value": 4},
+            "x2": {"value": 14},
+            "dz": {"value": 0},
+        })
         wire = p.create_shape()
         offset = offset_wire(wire, -0.5, join="intersect")
         assert offset.is_valid()

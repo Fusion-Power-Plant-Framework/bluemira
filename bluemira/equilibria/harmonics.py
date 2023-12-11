@@ -251,22 +251,18 @@ def collocation_points(
     if point_type in {PointType.ARC_PLUS_EXTREMA, PointType.RANDOM_PLUS_EXTREMA}:
         # Extrema
         d = 0.1
-        extrema_x = np.array(
-            [
-                np.amin(x_bdry) + d,
-                np.amax(x_bdry) - d,
-                x_bdry[np.argmax(z_bdry)],
-                x_bdry[np.argmin(z_bdry)],
-            ]
-        )
-        extrema_z = np.array(
-            [
-                0,
-                0,
-                np.amax(z_bdry) - d,
-                np.amin(z_bdry) + d,
-            ]
-        )
+        extrema_x = np.array([
+            np.amin(x_bdry) + d,
+            np.amax(x_bdry) - d,
+            x_bdry[np.argmax(z_bdry)],
+            x_bdry[np.argmin(z_bdry)],
+        ])
+        extrema_z = np.array([
+            0,
+            0,
+            np.amax(z_bdry) - d,
+            np.amin(z_bdry) + d,
+        ])
 
         # Equispaced arc + extrema
         collocation_x = np.concatenate([collocation_x, extrema_x])

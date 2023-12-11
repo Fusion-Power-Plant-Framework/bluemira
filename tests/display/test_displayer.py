@@ -94,14 +94,12 @@ class TestComponentDisplayer:
         ],
     )
     def test_display(self, colour, viewer):
-        square_points = np.array(
-            [
-                (0.0, 0.0, 0.0),
-                (1.0, 0.0, 0.0),
-                (1.0, 1.0, 0.0),
-                (0.0, 1.0, 0.0),
-            ]
-        )
+        square_points = np.array([
+            (0.0, 0.0, 0.0),
+            (1.0, 0.0, 0.0),
+            (1.0, 1.0, 0.0),
+            (0.0, 1.0, 0.0),
+        ])
 
         wire1 = make_polygon(square_points, closed=True)
         wire2 = make_polygon(square_points + 1.0, closed=True)

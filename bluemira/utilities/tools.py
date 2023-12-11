@@ -846,7 +846,7 @@ def array_or_num(array: Any) -> Union[np.ndarray, float]:
 
 
 def deprecation_wrapper(
-    message: Union[Optional[Callable[[Any], Any]], Optional[str]]
+    message: Union[Optional[Callable[[Any], Any]], Optional[str]],
 ) -> Callable[[Any], Any]:
     """Deprecate any callable.
 

@@ -79,14 +79,12 @@ def E_DD_fusion() -> float:
         \\Delta E = \\Delta m c^2
     """  # noqa: W505, E501
     # NOTE: Electron mass must be included with proton mass
-    delta_m = np.array(
-        [
-            D_MOLAR_MASS
-            + D_MOLAR_MASS
-            - (T_MOLAR_MASS + PROTON_MOLAR_MASS + ELECTRON_MOLAR_MASS),
-            (D_MOLAR_MASS + D_MOLAR_MASS) - (HE3_MOLAR_MASS + NEUTRON_MOLAR_MASS),
-        ]
-    )
+    delta_m = np.array([
+        D_MOLAR_MASS
+        + D_MOLAR_MASS
+        - (T_MOLAR_MASS + PROTON_MOLAR_MASS + ELECTRON_MOLAR_MASS),
+        (D_MOLAR_MASS + D_MOLAR_MASS) - (HE3_MOLAR_MASS + NEUTRON_MOLAR_MASS),
+    ])
     delta_m = np.average(delta_m)
     return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
@@ -240,17 +238,15 @@ class BoschHale_DT_4Hen:
     bg: float = 34.3827  # [keV**0.5]
     mrc2: float = 1.124656e6  # [keV]
     c: npt.NDArray = field(
-        default_factory=lambda: np.array(
-            [
-                1.17302e-9,
-                1.51361e-2,
-                7.51886e-2,
-                4.60643e-3,
-                1.35000e-2,
-                -1.06750e-4,
-                1.36600e-5,
-            ]
-        )
+        default_factory=lambda: np.array([
+            1.17302e-9,
+            1.51361e-2,
+            7.51886e-2,
+            4.60643e-3,
+            1.35000e-2,
+            -1.06750e-4,
+            1.36600e-5,
+        ])
     )
 
 
@@ -270,17 +266,15 @@ class BoschHale_DD_3Hen:
     bg: float = 31.3970  # [keV**0.5]
     mrc2: float = 0.937814e6  # [keV]
     c: npt.NDArray = field(
-        default_factory=lambda: np.array(
-            [
-                5.43360e-12,
-                5.85778e-3,
-                7.68222e-3,
-                0.0,
-                -2.96400e-6,
-                0.0,
-                0.0,
-            ]
-        )
+        default_factory=lambda: np.array([
+            5.43360e-12,
+            5.85778e-3,
+            7.68222e-3,
+            0.0,
+            -2.96400e-6,
+            0.0,
+            0.0,
+        ])
     )
 
 
@@ -300,17 +294,15 @@ class BoschHale_DD_Tp:
     bg: float = 31.3970  # [keV**0.5]
     mrc2: float = 0.937814e6  # [keV]
     c: npt.NDArray = field(
-        default_factory=lambda: np.array(
-            [
-                5.65718e-12,
-                3.41267e-3,
-                1.99167e-3,
-                0.0,
-                1.05060e-5,
-                0.0,
-                0.0,
-            ]
-        )
+        default_factory=lambda: np.array([
+            5.65718e-12,
+            3.41267e-3,
+            1.99167e-3,
+            0.0,
+            1.05060e-5,
+            0.0,
+            0.0,
+        ])
     )
 
 
@@ -330,17 +322,15 @@ class BoschHale_DHe3_4Hep:
     bg: float = 68.7508  # [keV**0.5]
     mrc2: float = 1.124572e6  # [keV]
     c: npt.NDArray = field(
-        default_factory=lambda: np.array(
-            [
-                5.51036e-10,
-                6.41918e-3,
-                -2.02896e-3,
-                -1.91080e-5,
-                1.35776e-4,
-                0.0,
-                0.0,
-            ]
-        )
+        default_factory=lambda: np.array([
+            5.51036e-10,
+            6.41918e-3,
+            -2.02896e-3,
+            -1.91080e-5,
+            1.35776e-4,
+            0.0,
+            0.0,
+        ])
     )
 
 

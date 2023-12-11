@@ -67,15 +67,13 @@ class DummyCircle:
 
 def test_plasma_xz_cross_section():
     pp = Params(1, 1, 1, 1)
-    transport_params = DummyTransportSolverParams.from_dict(
-        {
-            "V_p": {"value": -2500, "unit": "m^3"},
-            "kappa_95": {"value": 1, "unit": ""},
-            "delta_95": {"value": 1, "unit": ""},
-            "delta": {"value": 0.5, "unit": ""},
-            "kappa": {"value": 0.5, "unit": ""},
-        }
-    )
+    transport_params = DummyTransportSolverParams.from_dict({
+        "V_p": {"value": -2500, "unit": "m^3"},
+        "kappa_95": {"value": 1, "unit": ""},
+        "delta_95": {"value": 1, "unit": ""},
+        "delta": {"value": 0.5, "unit": ""},
+        "kappa": {"value": 0.5, "unit": ""},
+    })
     lcfs_options = {"face": {"lcar": 1}, "lcfs": {"lcar": 2}}
     plasma = create_plasma_xz_cross_section(
         DummyCircle(), transport_params, pp, 1.652, 0.333, lcfs_options, "source"
@@ -116,22 +114,20 @@ class TranspOutParams(ParameterFrame):
 
 class DummyTransportSolver:
     name = "DUMMY"
-    params = TransportSolverParams.from_dict(
-        {
-            "I_p": {"value": 15e6, "unit": "A"},
-            "B_0": {"value": 5, "unit": "T"},
-            "R_0": {"value": 9, "unit": "m"},
-            "A": {"value": 3.1, "unit": "m"},
-            "V_p": {"value": 2000, "unit": "m^3"},
-            "v_burn": {"value": 0.02, "unit": "V"},
-            "kappa_95": {"value": 1.5, "unit": ""},
-            "delta_95": {"value": 0.4, "unit": ""},
-            "delta": {"value": 0.33, "unit": ""},
-            "kappa": {"value": 1.6, "unit": ""},
-            "q_95": {"value": 3.25, "unit": ""},
-            "f_ni": {"value": 0.1, "unit": ""},
-        }
-    )
+    params = TransportSolverParams.from_dict({
+        "I_p": {"value": 15e6, "unit": "A"},
+        "B_0": {"value": 5, "unit": "T"},
+        "R_0": {"value": 9, "unit": "m"},
+        "A": {"value": 3.1, "unit": "m"},
+        "V_p": {"value": 2000, "unit": "m^3"},
+        "v_burn": {"value": 0.02, "unit": "V"},
+        "kappa_95": {"value": 1.5, "unit": ""},
+        "delta_95": {"value": 0.4, "unit": ""},
+        "delta": {"value": 0.33, "unit": ""},
+        "kappa": {"value": 1.6, "unit": ""},
+        "q_95": {"value": 3.25, "unit": ""},
+        "f_ni": {"value": 0.1, "unit": ""},
+    })
 
     def __init__(self):
         self.i = 0
@@ -174,16 +170,14 @@ class TestSolveTransportFixedBoundary:
         ],
     )
     def test_full_run_through(self, max_iter, message, caplog, tmp_path):
-        johner_parameterisation = JohnerLCFS(
-            {
-                "r_0": {"value": 8.9830e00},
-                "a": {"value": 8.983 / 3.1},
-                "kappa_u": {"value": 1.6},
-                "kappa_l": {"value": 1.75},
-                "delta_u": {"value": 0.33},
-                "delta_l": {"value": 0.45},
-            }
-        )
+        johner_parameterisation = JohnerLCFS({
+            "r_0": {"value": 8.9830e00},
+            "a": {"value": 8.983 / 3.1},
+            "kappa_u": {"value": 1.6},
+            "kappa_l": {"value": 1.75},
+            "delta_u": {"value": 0.33},
+            "delta_l": {"value": 0.45},
+        })
         solve_transport_fixed_boundary(
             johner_parameterisation,
             self.transport_solver,
