@@ -37,7 +37,7 @@ from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import TBRHeatingSimulation
 from bluemira.neutronics.params import (
     OpenMCSimulationRuntimeParameters,
-    TokamakOperationParametersBase,
+    PlasmaSourceParameters,
     get_preset_physical_properties,
 )
 
@@ -90,7 +90,11 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     volume_calc_particles=int(4e8),
 )
 
-operation_variable = TokamakOperationParametersBase(
+source_parameters = PlasmaSourceParameters(
+    major_radius=9.0,
+    aspect_ratio=3.1,
+    elongation=1.65,
+    triangularity=0.333,
     reactor_power=1998e6,  # [W]
     temperature=raw_uc(15.4, "keV", "K"),
     peaking_factor=1.508,  # [dimensionless]
@@ -100,57 +104,51 @@ operation_variable = TokamakOperationParametersBase(
 
 # set up a DEMO-like reactor, and run OpenMC simualtion
 tbr_heat_sim = TBRHeatingSimulation(
-    runtime_variables,
-    operation_variable,
-    breeder_materials,
-    plasma_geometry,
-    tokamak_geometry,
+    runtime_variables, source_parameters, breeder_materials, tokamak_geometry
 )
 blanket_wire = make_polygon(Coordinates(np.load("blanket_face.npy")))
 divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
 
-fw_coordinates = Coordinates(
-    {
-        "x": [
-            9.94,
-            10.89,
-            11.90,
-            12.19,
-            12.03,
-            11.34,
-            9.69,
-            7.53,
-            6.38,
-            5.95,
-            5.93,
-            6.21,
-            6.84,
-            7.26,
-            7.90,
-            8.79,
-            9.94,
-        ],
-        "z": [
-            -5.27,
-            -3.57,
-            -1.62,
-            0,
-            1.57,
-            3.05,
-            4.57,
-            5.26,
-            3.95,
-            1.32,
-            -1.91,
-            -3.51,
-            -5.01,
-            -5.86,
-            -5.78,
-            -6.46,
-            -5.27,
-        ],
-    }
-)
+fw_coordinates = Coordinates({
+    "x": [
+        9.94,
+        10.89,
+        11.90,
+        12.19,
+        12.03,
+        11.34,
+        9.69,
+        7.53,
+        6.38,
+        5.95,
+        5.93,
+        6.21,
+        6.84,
+        7.26,
+        7.90,
+        8.79,
+        9.94,
+    ],
+    "z": [
+        -5.27,
+        -3.57,
+        -1.62,
+        0,
+        1.57,
+        3.05,
+        4.57,
+        5.26,
+        3.95,
+        1.32,
+        -1.91,
+        -3.51,
+        -5.01,
+        -5.86,
+        -5.78,
+        -6.46,
+        -5.27,
+    ],
+})
 
 from dataclasses import dataclass
 
@@ -194,9 +192,6 @@ fw_deconstruction = FWDeconstruction(fw_coordinates, (IBDIV, BBDIV, OBDIV))
 tbr_heat_sim.setup(
     fw_deconstruction,
     divertor_wire,
-    new_major_radius=9.00,  # [m]
-    new_aspect_ratio=3.10344,  # [dimensionless]
-    new_elong=1.792,  # [dimensionless]
     plot_geometry=True,
 )
 

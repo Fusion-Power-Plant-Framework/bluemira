@@ -462,15 +462,8 @@ def geometry_plotter(
     # divertor: cyan
     # color_cells("divertor", "regions", "cyan")
 
-    plot_width = 2 * (
-        plasma_geometry.cgs.major_r
-        + plasma_geometry.cgs.minor_r * plasma_geometry.cgs.elong
-        + tokamak_geometry.cgs.outb_fw_thick
-        + tokamak_geometry.cgs.outb_bz_thick
-        + tokamak_geometry.cgs.outb_mnfld_thick
-        + tokamak_geometry.cgs.outb_vv_thick
-        + 200.0  # margin
-    )
+    # TODO: Find better way...
+    plot_width = 4000
 
     plot_list = []
     for _, basis in enumerate(("xz", "xy", "yz")):

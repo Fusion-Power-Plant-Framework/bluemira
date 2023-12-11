@@ -69,8 +69,8 @@ class BreederTypeParameters:
 
 
 @dataclass(frozen=True)
-class TokamakOperationParametersBase:
-    """Parameters describing how the tokamak is operated,
+class PlasmaSourceParameters:
+    """Parameters describing how the plasma source,
     i.e. where the plasma is positioned (and therefore where the power is concentrated),
     and what temperature the plasma is at.
 
@@ -92,6 +92,10 @@ class TokamakOperationParametersBase:
         shifted compared to the geometric center of the poloidal cross-section.
     """
 
+    major_radius: float  # [m]
+    aspect_ratio: float  # [dimensionless]
+    elongation: float  # [dimensionless]
+    triangularity: float  # [dimensionless]
     reactor_power: float  # [W]
     peaking_factor: float  # [dimensionless]
     temperature: float  # [K]
@@ -100,18 +104,19 @@ class TokamakOperationParametersBase:
 
 
 @dataclass(frozen=True)
-class TokamakOperationParameters(TokamakOperationParametersBase):
-    """See TokamakOperationParametersBase
+class PlasmaSourceParametersPPS(PlasmaSourceParameters):
+    """See PlasmaSourceParameters
 
     Addition of plasma_physics_units converted variables
     """
 
-    plasma_physics_units: TokamakOperationParametersBase
+    plasma_physics_units: PlasmaSourceParameters
 
     @classmethod
-    def from_si(cls, op_params: TokamakOperationParametersBase):
+    def from_si(cls, op_params: PlasmaSourceParameters):
         """Convert from si units dataclass"""
         conversion = {
+            "major_radius": ("m", "cm"),
             "reactor_power": ("W", "MW"),
             "temperature": ("K", "keV"),
             "shaf_shift": ("m", "cm"),
@@ -121,40 +126,35 @@ class TokamakOperationParameters(TokamakOperationParametersBase):
         op_pps = op.copy()
         for k, v in op_pps.items():
             if k in conversion:
-                op_pps[k] = raw_uc(v, *conversion[k])
-        return cls(**op, plasma_physics_units=TokamakOperationParametersBase(**op_pps))
+                op_ppu[k] = raw_uc(v, *conversion[k])
+        return cls(**op, plasma_physics_units=PlasmaSourceParameters(**op_ppu))
 
 
 @dataclass(frozen=True)
-class PlasmaGeometryBase:
-    """List of parameters describing the
+class TokamakGeometry:
+    """The measurements for all of the generic SOLID components of the tokamak.
+    Other terminologies:
 
-    Parameters
-    ----------
-    major_r:
-        major radius [m]
-        how far is the origin in the poloidal view from the center of the torus.
-    minor_r:
-        minor radius [m] (R0 in equation referenced below)
-        radius of the poloidal cross-section
-    elong:
-        elongation [dimensionless] (a in equation referenced below)
-        how eccentric the poloidal ellipse is
-    triang:
-        triangularity [dimensionless] (δ in equation referenced below)
-        second order eccentricity (best visualized by plotting R(θ) wrt.θ in eq. below)
-
-    Notes
-    -----
-    R = R0 + a cos(θ + δ sin θ)
-    https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf
-    page.239 # noqa: W505
+        thick: thickness
+        inb: inboard
+        outb: outboard
+        fw: first wall
+        bz: breeding zone
+        mnfld: manifold
+        vv: vacuum vessel
+        tf: toroidal field
     """
 
-    major_r: float
-    minor_r: float
-    elong: float
-    triang: float
+    inb_fw_thick: float  # [m]
+    inb_bz_thick: float  # [m]
+    inb_mnfld_thick: float  # [m]
+    inb_vv_thick: float  # [m]
+    tf_thick: float  # [m]
+    outb_fw_thick: float  # [m]
+    outb_bz_thick: float  # [m]
+    outb_mnfld_thick: float  # [m]
+    outb_vv_thick: float  # [m]
+    inb_gap: float  # [m]
 
 
 @dataclass(frozen=True)
@@ -224,7 +224,7 @@ class TokamakGeometry(TokamakGeometryBase):
         tgcgs = tg.copy()
         for k, v in tgcgs.items():
             tgcgs[k] = raw_uc(v, "m", "cm")
-        return cls(**tg, cgs=TokamakGeometryBase(**tgcgs))
+        return cls(**tg, cgs=TokamakGeometry(**tgcgs))
 
 
 def get_preset_physical_properties(
@@ -278,7 +278,7 @@ def get_preset_physical_properties(
         "outb_vv_thick": 0.6,  # [m]
     }
     if blanket_type is BlanketType.WCLL:
-        tokamak_geometry = TokamakGeometryBase(
+        tokamak_geometry = TokamakGeometry(
             **shared_building_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.378,  # [m]
@@ -288,7 +288,7 @@ def get_preset_physical_properties(
             outb_mnfld_thick=0.429,  # [m]
         )
     elif blanket_type is BlanketType.DCLL:
-        tokamak_geometry = TokamakGeometryBase(
+        tokamak_geometry = TokamakGeometry(
             **shared_building_geometry,
             inb_fw_thick=0.022,  # [m]
             inb_bz_thick=0.300,  # [m]
@@ -299,7 +299,7 @@ def get_preset_physical_properties(
         )
     elif blanket_type is BlanketType.HCPB:
         # HCPB Design Report, 26/07/2019
-        tokamak_geometry = TokamakGeometryBase(
+        tokamak_geometry = TokamakGeometry(
             **shared_building_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.460,  # [m]
