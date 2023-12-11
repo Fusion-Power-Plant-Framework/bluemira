@@ -337,7 +337,7 @@ class TestCADFiletype:
             "STEP_2",
             "STEP_ZIP",  # Case sensitive extension
             "STL",
-            "THREED_MANUFACTURING",
+            # "THREED_MANUFACTURING",  #segfault
             pytest.param("IFC_BIM", marks=[skipif_import_error("ifcopenshell")]),
             pytest.param(
                 "IFC_BIM_JSON",  # github.com/buildingSMART/ifcJSON

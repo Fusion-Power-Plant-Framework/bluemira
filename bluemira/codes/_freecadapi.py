@@ -14,7 +14,6 @@ import enum
 import math
 import os
 import sys
-from copy import deepcopy
 from dataclasses import dataclass
 from functools import wraps
 from pathlib import Path
@@ -546,7 +545,7 @@ def offset_wire(
     Offset wire
     """
     if thickness == 0.0:  # noqa: PLR2004
-        return deepcopy(wire)
+        return wire.copy()
 
     if _wire_is_straight(wire):
         raise InvalidCADInputsError("Cannot offset a straight line.")
@@ -1228,7 +1227,7 @@ class CADFileType(enum.Enum):
     # SVG = ("svg", "DrawingGui")
     # SVG_FLAT = ("$svg", "importSVG")
     # TETGEN_FEM = ("poly", "feminout.convert2TetGen")
-    THREED_MANUFACTURING = ("3mf", "Mesh")
+    # THREED_MANUFACTURING = ("3mf", "Mesh")  # segfault?
     # UNV = ("unv", "Fem")
     # VRML = ("vrml", "FreeCADGui")
     # VRML_2 = ("wrl", "FreeCADGui")

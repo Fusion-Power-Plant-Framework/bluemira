@@ -12,7 +12,6 @@ import datetime
 import functools
 import inspect
 import json
-from copy import deepcopy
 from pathlib import Path
 from typing import (
     Any,
@@ -770,7 +769,7 @@ def revolve_shape(
             flag_shell = False
 
         shape_1 = cadapi.revolve_shape(shape, base, direction, degree=180)
-        shape_2 = deepcopy(shape_1)
+        shape_2 = shape_1.copy()
         shape_2 = cadapi.rotate_shape(shape_2, base, direction, degree=-180)
         result = cadapi.boolean_fuse([shape_1, shape_2], remove_splitter=False)
 
