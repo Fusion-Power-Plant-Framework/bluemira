@@ -217,12 +217,10 @@ class TestSolveEquilibrium:
     grid = Grid(5, 15, -8, 8, 50, 50)
     lcfs = flux_surface_kuiroukidis(R_0, 0, R_0 / A, 1.5, 1.7, 0.33, 0.33)
     x_arg = np.argmin(lcfs.z)
-    targets = MagneticConstraintSet(
-        [
-            IsofluxConstraint(lcfs.x, lcfs.z, lcfs.x[0], lcfs.z[0]),
-            FieldNullConstraint(lcfs.x[x_arg], lcfs.z[x_arg]),
-        ]
-    )
+    targets = MagneticConstraintSet([
+        IsofluxConstraint(lcfs.x, lcfs.z, lcfs.x[0], lcfs.z[0]),
+        FieldNullConstraint(lcfs.x[x_arg], lcfs.z[x_arg]),
+    ])
     shape_funcs = (DoublePowerFunc([2, 1]), LaoPolynomialFunc([3, 1, 0.5]))
 
     @classmethod
@@ -231,36 +229,32 @@ class TestSolveEquilibrium:
 
     def test_custom_profile(self):
         profiles = CustomProfile(
-            np.array(
-                [
-                    86856,
-                    86506,
-                    84731,
-                    80784,
-                    74159,
-                    64576,
-                    52030,
-                    36918,
-                    20314,
-                    4807,
-                    0.0,
-                ]
-            ),
-            -np.array(
-                [
-                    0.125,
-                    0.124,
-                    0.122,
-                    0.116,
-                    0.106,
-                    0.093,
-                    0.074,
-                    0.053,
-                    0.029,
-                    0.007,
-                    0.0,
-                ]
-            ),
+            np.array([
+                86856,
+                86506,
+                84731,
+                80784,
+                74159,
+                64576,
+                52030,
+                36918,
+                20314,
+                4807,
+                0.0,
+            ]),
+            -np.array([
+                0.125,
+                0.124,
+                0.122,
+                0.116,
+                0.106,
+                0.093,
+                0.074,
+                0.053,
+                0.029,
+                0.007,
+                0.0,
+            ]),
             R_0=self.R_0,
             B_0=self.B_0,
             I_p=self.I_p,

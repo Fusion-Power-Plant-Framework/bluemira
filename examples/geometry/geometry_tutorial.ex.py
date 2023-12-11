@@ -340,24 +340,20 @@ show_cad(solid)
 # * You can cut geometries from one another with `boolean_cut`
 
 # %%
-points = np.array(
-    [
-        [0, 2, 2, 0],
-        [0, 0, 0, 0],
-        [0, 0, 3, 3],
-    ]
-)
+points = np.array([
+    [0, 2, 2, 0],
+    [0, 0, 0, 0],
+    [0, 0, 3, 3],
+])
 
 box_1 = BluemiraFace(make_polygon(points, closed=True))
 box_1 = extrude_shape(box_1, (0, 2, 0))
 
-points = np.array(
-    [
-        [1, 3, 3, 1],
-        [0, 0, 0, 0],
-        [0, 0, 2, 2],
-    ]
-)
+points = np.array([
+    [1, 3, 3, 1],
+    [0, 0, 0, 0],
+    [0, 0, 2, 2],
+])
 
 box_2 = BluemiraFace(make_polygon(points, closed=True))
 box_2 = extrude_shape(box_2, (0, 1, 0))

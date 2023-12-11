@@ -70,9 +70,10 @@ class Paneller:
         # Add the start and end panel joints at distances 0 & 1
         dists = np.hstack((0, dists, 1))
         points = np.vstack((self.boundary.x(dists), self.boundary.z(dists)))
-        tangents = np.vstack(
-            (self.boundary.x_tangent(dists), self.boundary.z_tangent(dists))
-        )
+        tangents = np.vstack((
+            self.boundary.x_tangent(dists),
+            self.boundary.z_tangent(dists),
+        ))
         # This could potentially be vectorized, if we need a speed up.
         joints = np.zeros((2, len(dists) + 1))
         joints[:, 0] = points[:, 0]

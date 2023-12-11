@@ -225,13 +225,11 @@ class RectangularBeam(CrossSection):
         self.y = np.array([-w, w, w, -w, -w])
         self.z = np.array([-h, -h, h, h, -h])
         polygon = BluemiraFace(
-            make_polygon(
-                {
-                    "x": 0,
-                    "y": self.y,
-                    "z": self.z,
-                }
-            )
+            make_polygon({
+                "x": 0,
+                "y": self.y,
+                "z": self.z,
+            })
         )
         self.geometry = polygon
 
@@ -358,23 +356,21 @@ class IBeam(CrossSection):
         """
         b, d, f, w = 0.5 * base, 0.5 * depth, flange, 0.5 * web
         self.y = np.array([-b, b, b, w, w, b, b, -b, -b, -w, -w, -b, -b])
-        self.z = np.array(
-            [
-                -d,
-                -d,
-                -d + f,
-                -d + f,
-                d - f,
-                d - f,
-                d,
-                d,
-                d - f,
-                d - f,
-                -d + f,
-                -d + f,
-                -d,
-            ]
-        )
+        self.z = np.array([
+            -d,
+            -d,
+            -d + f,
+            -d + f,
+            d - f,
+            d - f,
+            d,
+            d,
+            d - f,
+            d - f,
+            -d + f,
+            -d + f,
+            -d,
+        ])
         self.geometry = BluemiraFace(make_polygon({"x": 0, "y": self.y, "z": self.z}))
 
 

@@ -56,12 +56,10 @@ min_distance = 0.5
 plasma = make_circle(radius=2, center=(8, 0, 0.25), axis=(0, 1, 0))
 # As with any optimisation, it's important to pick a reasonable initial
 # parameterisation.
-wall_boundary = PrincetonD(
-    {
-        "x1": {"value": 4, "upper_bound": 6},
-        "x2": {"value": 12, "lower_bound": 10},
-    }
-)
+wall_boundary = PrincetonD({
+    "x1": {"value": 4, "upper_bound": 6},
+    "x2": {"value": 12, "lower_bound": 10},
+})
 print("Initial parameterisation:")
 print(wall_boundary.variables)
 print("Length of wall    :", wall_boundary.create_shape().length)
@@ -177,9 +175,10 @@ class ContractLengthGOP(GeomOptimisationProblem):
         return min_distance - distance_to(shape, boundary)[0]
 
 
-wall_boundary = PrincetonD(
-    {"x1": {"value": 4, "upper_bound": 6}, "x2": {"value": 12, "lower_bound": 10}}
-)
+wall_boundary = PrincetonD({
+    "x1": {"value": 4, "upper_bound": 6},
+    "x2": {"value": 12, "lower_bound": 10},
+})
 opt_problem = ContractLengthGOP(plasma, min_distance)
 result = opt_problem.optimise(
     wall_boundary, algorithm="SLSQP", opt_conditions={"ftol_abs": 1e-6}

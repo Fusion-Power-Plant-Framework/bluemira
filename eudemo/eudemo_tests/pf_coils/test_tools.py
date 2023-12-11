@@ -22,9 +22,11 @@ from eudemo.pf_coils.tools import (
 
 class TestMakeCoilMapper:
     tracks = (
-        PrincetonD(
-            {"x1": {"value": 4}, "x2": {"value": 14}, "dz": {"value": 0}}
-        ).create_shape(label="PrincetonD"),
+        PrincetonD({
+            "x1": {"value": 4},
+            "x2": {"value": 14},
+            "dz": {"value": 0},
+        }).create_shape(label="PrincetonD"),
         PictureFrame(
             {
                 "x1": {"value": 4, "upper_bound": 5, "lower_bound": 0.3},
@@ -60,9 +62,9 @@ class TestMakeCoilMapper:
         segments = boolean_cut(track, self.exclusions)
         actual_length = sum([seg.length for seg in segments])
         mapper = make_coil_mapper(track, self.exclusions, self.coils)
-        interp_length = sum(
-            [tool.geometry.length for tool in mapper.interpolators.values()]
-        )
+        interp_length = sum([
+            tool.geometry.length for tool in mapper.interpolators.values()
+        ])
         assert np.isclose(actual_length, interp_length, rtol=1e-2)
 
     @pytest.mark.parametrize("track", tracks)

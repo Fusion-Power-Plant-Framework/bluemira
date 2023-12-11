@@ -268,21 +268,19 @@ class PFCoilsDesigner(Designer[CoilSet]):
         kappa_ul_tweak = 0.085
         kappa_u = (1 - kappa_ul_tweak) * kappa
         kappa_l = (1 + kappa_ul_tweak) * kappa
-        lcfs_parameterisation = JohnerLCFS(
-            {
-                "r_0": {"value": self.params.R_0.value},
-                "z_0": {"value": 0.0},
-                "a": {"value": self.params.R_0.value / self.params.A.value},
-                "kappa_u": {"value": kappa_u},
-                "kappa_l": {"value": kappa_l},
-                "delta_u": {"value": self.params.delta.value},
-                "delta_l": {"value": self.params.delta.value},
-                "phi_u_neg": {"value": 0.0},
-                "phi_u_pos": {"value": 0.0},
-                "phi_l_neg": {"value": 45.0},
-                "phi_l_pos": {"value": 30.0},
-            }
-        )
+        lcfs_parameterisation = JohnerLCFS({
+            "r_0": {"value": self.params.R_0.value},
+            "z_0": {"value": 0.0},
+            "a": {"value": self.params.R_0.value / self.params.A.value},
+            "kappa_u": {"value": kappa_u},
+            "kappa_l": {"value": kappa_l},
+            "delta_u": {"value": self.params.delta.value},
+            "delta_l": {"value": self.params.delta.value},
+            "phi_u_neg": {"value": 0.0},
+            "phi_u_pos": {"value": 0.0},
+            "phi_l_neg": {"value": 45.0},
+            "phi_l_pos": {"value": 30.0},
+        })
         lcfs = lcfs_parameterisation.create_shape().discretize(byedges=True, ndiscr=50)
         x_lcfs, z_lcfs = lcfs.x, lcfs.z
         arg_inner = np.argmin(x_lcfs)

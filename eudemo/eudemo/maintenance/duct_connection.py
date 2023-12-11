@@ -533,12 +533,10 @@ def pipe_pipe_join(
             new_shape_pieces.append(tool_frag)
         else:
             # Find the union piece(s)
-            new_shape_pieces.extend(
-                [
-                    tool_frag
-                    for targ_frag in target_fragments
-                    if tool_frag.is_same(targ_frag)
-                ]
-            )
+            new_shape_pieces.extend([
+                tool_frag
+                for targ_frag in target_fragments
+                if tool_frag.is_same(targ_frag)
+            ])
 
     return new_shape_pieces

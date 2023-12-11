@@ -56,28 +56,24 @@ class Solovev:
         rt = self.R_0 - self.delta * self.a
         zt = self.kappa * self.a
 
-        m = np.array(
+        m = np.array([
+            [1.0, ri**2, ri**4, ri**2 * np.log(ri)],
+            [1.0, ro**2, ro**4, ro**2 * np.log(ro)],
             [
-                [1.0, ri**2, ri**4, ri**2 * np.log(ri)],
-                [1.0, ro**2, ro**4, ro**2 * np.log(ro)],
-                [
-                    1.0,
-                    rt**2,
-                    rt**2 * (rt**2 - 4 * zt**2),
-                    rt**2 * np.log(rt) - zt**2,
-                ],
-                [0.0, 2.0, 4 * (rt**2 - 2 * zt**2), 2 * np.log(rt) + 1.0],
-            ]
-        )
+                1.0,
+                rt**2,
+                rt**2 * (rt**2 - 4 * zt**2),
+                rt**2 * np.log(rt) - zt**2,
+            ],
+            [0.0, 2.0, 4 * (rt**2 - 2 * zt**2), 2 * np.log(rt) + 1.0],
+        ])
 
-        b = np.array(
-            [
-                [-(ri**4) / 8.0, 0],
-                [-(ro**4) / 8.0, 0.0],
-                [-(rt**4) / 8.0, +(zt**2) / 2.0],
-                [-(rt**2) / 2.0, 0.0],
-            ]
-        )
+        b = np.array([
+            [-(ri**4) / 8.0, 0],
+            [-(ro**4) / 8.0, 0.0],
+            [-(rt**4) / 8.0, +(zt**2) / 2.0],
+            [-(rt**2) / 2.0, 0.0],
+        ])
         b = b * np.array([self.A1, self.A2])
         b = np.sum(b, axis=1)
 
@@ -89,16 +85,14 @@ class Solovev:
         """
 
         def psi_func(x):
-            return np.array(
-                [
-                    1.0,
-                    x[0] ** 2,
-                    x[0] ** 2 * (x[0] ** 2 - 4 * x[1] ** 2),
-                    x[0] ** 2 * np.log(x[0]) - x[1] ** 2,
-                    (x[0] ** 4) / 8.0,
-                    -(x[1] ** 2) / 2.0,
-                ]
-            )
+            return np.array([
+                1.0,
+                x[0] ** 2,
+                x[0] ** 2 * (x[0] ** 2 - 4 * x[1] ** 2),
+                x[0] ** 2 * np.log(x[0]) - x[1] ** 2,
+                (x[0] ** 4) / 8.0,
+                -(x[1] ** 2) / 2.0,
+            ])
 
         m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
         return 2 * np.pi * np.sum(psi_func(point) * m)

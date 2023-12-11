@@ -279,15 +279,13 @@ def solve_transport_fixed_boundary(
 
     mesh_name_msh = mesh_filename + ".msh"
 
-    paramet_params = PlasmaFixedBoundaryParams(
-        **{
-            k: v
-            for k, v in zip(
-                parameterisation.variables.names, parameterisation.variables.values
-            )
-            if k in PlasmaFixedBoundaryParams.fields()
-        }
-    )
+    paramet_params = PlasmaFixedBoundaryParams(**{
+        k: v
+        for k, v in zip(
+            parameterisation.variables.names, parameterisation.variables.values
+        )
+        if k in PlasmaFixedBoundaryParams.fields()
+    })
 
     transport_params = TransportSolverParams.from_frame(
         deepcopy(transport_solver.params)

@@ -47,15 +47,13 @@ from bluemira.balance_of_plant.steady_state import (
 # want to use.
 
 # %%
-default_params = BoPModelParams.from_dict(
-    {
-        "P_fus_DT": {"value": 1995e6, "unit": "W", "source": "example"},
-        "P_fus_DD": {"value": 5e6, "unit": "W", "source": "example"},
-        "P_rad": {"value": 400e6, "unit": "W", "source": "example"},
-        "P_hcd_ss": {"value": 50e6, "unit": "W", "source": "example"},
-        "P_hcd_ss_el": {"value": 150e6, "unit": "W", "source": "example"},
-    }
-)
+default_params = BoPModelParams.from_dict({
+    "P_fus_DT": {"value": 1995e6, "unit": "W", "source": "example"},
+    "P_fus_DD": {"value": 5e6, "unit": "W", "source": "example"},
+    "P_rad": {"value": 400e6, "unit": "W", "source": "example"},
+    "P_hcd_ss": {"value": 50e6, "unit": "W", "source": "example"},
+    "P_hcd_ss_el": {"value": 150e6, "unit": "W", "source": "example"},
+})
 
 # %% [markdown]
 #

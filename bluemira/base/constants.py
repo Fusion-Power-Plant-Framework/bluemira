@@ -509,7 +509,7 @@ def _temp_check(unit: Unit, val: Union[complex, Quantity]):
 
 
 def kgm3_to_gcm3(
-    density: Union[float, np.ndarray, List[float]]
+    density: Union[float, np.ndarray, List[float]],
 ) -> Union[float, np.ndarray]:
     """
     Convert a density in kg/m3 to g/cm3
@@ -527,7 +527,7 @@ def kgm3_to_gcm3(
 
 
 def gcm3_to_kgm3(
-    density: Union[float, np.ndarray, List[float]]
+    density: Union[float, np.ndarray, List[float]],
 ) -> Union[float, np.ndarray]:
     """
     Convert a density in g/cm3 to kg/m3

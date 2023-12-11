@@ -594,12 +594,10 @@ class CoilGroupFieldsMixin:
         else:
             fx = 0
 
-        return np.array(
-            [
-                multiplier * (eqcoil.Bz(self.x, self.z) + fx),
-                -multiplier * eqcoil.Bx(self.x, self.z),
-            ]
-        ).T
+        return np.array([
+            multiplier * (eqcoil.Bz(self.x, self.z) + fx),
+            -multiplier * eqcoil.Bx(self.x, self.z),
+        ]).T
 
     def control_F(self, coil: CoilGroup) -> np.ndarray:
         """

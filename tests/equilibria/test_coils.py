@@ -346,15 +346,15 @@ class TestSymmetricCircuit:
         ]
 
         for point in points:
-            coil_psi = sum(
-                [getattr(coil, f"psi{fieldtype}")(*point) for coil in self.coils]
-            )
-            coil_Bx = sum(
-                [getattr(coil, f"Bx{fieldtype}")(*point) for coil in self.coils]
-            )
-            coil_Bz = sum(
-                [getattr(coil, f"Bz{fieldtype}")(*point) for coil in self.coils]
-            )
+            coil_psi = sum([
+                getattr(coil, f"psi{fieldtype}")(*point) for coil in self.coils
+            ])
+            coil_Bx = sum([
+                getattr(coil, f"Bx{fieldtype}")(*point) for coil in self.coils
+            ])
+            coil_Bz = sum([
+                getattr(coil, f"Bz{fieldtype}")(*point) for coil in self.coils
+            ])
 
             circuit_psi = getattr(self.circuit, f"psi{fieldtype}")(*point)
             circuit_Bx = getattr(self.circuit, f"Bx{fieldtype}")(*point)

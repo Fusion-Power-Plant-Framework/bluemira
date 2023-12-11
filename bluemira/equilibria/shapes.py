@@ -626,9 +626,10 @@ def flux_surface_kuiroukidis(
         n_points,
     )
 
-    return Coordinates(
-        {"x": np.concatenate(x_quadrants), "z": np.concatenate(z_quadrants)}
-    )
+    return Coordinates({
+        "x": np.concatenate(x_quadrants),
+        "z": np.concatenate(z_quadrants),
+    })
 
 
 @dataclass
@@ -1005,9 +1006,10 @@ def flux_surface_johner(
         n=n,
     )
 
-    return Coordinates(
-        {"x": np.concatenate(x_quadrants), "z": np.concatenate(z_quadrants)}
-    )
+    return Coordinates({
+        "x": np.concatenate(x_quadrants),
+        "z": np.concatenate(z_quadrants),
+    })
 
 
 @dataclass

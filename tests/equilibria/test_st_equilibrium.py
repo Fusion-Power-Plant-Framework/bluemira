@@ -65,9 +65,13 @@ class TestSTEquilibrium:
         A = 1.667
         i_p = self.jeq_dict.cplasma
 
-        xc = np.array(
-            [1.5, 1.5, 8.259059936102478, 8.259059936102478, 10.635505223274231]
-        )
+        xc = np.array([
+            1.5,
+            1.5,
+            8.259059936102478,
+            8.259059936102478,
+            10.635505223274231,
+        ])
         zc = np.array([8.78, 11.3, 11.8, 6.8, 1.7])
         dxc = np.array([0.175, 0.25, 0.25, 0.25, 0.35])
         dzc = np.array([0.5, 0.4, 0.4, 0.4, 0.5])
@@ -101,27 +105,46 @@ class TestSTEquilibrium:
         z_core = np.array([inboard_iso[1], upper_iso[1], outboard_iso[1], lower_iso[1]])
 
         # Points chosen to replicate divertor legs in AH's FIESTA demo
-        x_hfs = np.array(
-            [
-                1.42031,
-                1.057303,
-                0.814844,
-                0.669531,
-                0.621094,
-                0.621094,
-                0.645312,
-                0.596875,
-            ]
-        )
-        z_hfs = np.array(
-            [4.79844, 5.0875, 5.37656, 5.72344, 6.0125, 6.6484, 6.82188, 7.34219]
-        )
-        x_lfs = np.array(
-            [1.85625, 2.24375, 2.53438, 2.89766, 3.43047, 4.27813, 5.80391, 6.7]
-        )
-        z_lfs = np.array(
-            [4.79844, 5.37656, 5.83906, 6.24375, 6.59063, 6.76406, 6.70625, 6.70625]
-        )
+        x_hfs = np.array([
+            1.42031,
+            1.057303,
+            0.814844,
+            0.669531,
+            0.621094,
+            0.621094,
+            0.645312,
+            0.596875,
+        ])
+        z_hfs = np.array([
+            4.79844,
+            5.0875,
+            5.37656,
+            5.72344,
+            6.0125,
+            6.6484,
+            6.82188,
+            7.34219,
+        ])
+        x_lfs = np.array([
+            1.85625,
+            2.24375,
+            2.53438,
+            2.89766,
+            3.43047,
+            4.27813,
+            5.80391,
+            6.7,
+        ])
+        z_lfs = np.array([
+            4.79844,
+            5.37656,
+            5.83906,
+            6.24375,
+            6.59063,
+            6.76406,
+            6.70625,
+            6.70625,
+        ])
 
         x_div = np.concatenate([x_lfs, x_lfs, x_hfs, x_hfs])
         z_div = np.concatenate([z_lfs, -z_lfs, z_hfs, -z_hfs])
@@ -134,17 +157,15 @@ class TestSTEquilibrium:
         xx = np.concatenate([x_core, x_div])
         zz = np.concatenate([z_core, z_div])
 
-        constraint_set = MagneticConstraintSet(
-            [
-                IsofluxConstraint(
-                    xx,
-                    zz,
-                    ref_x=inboard_iso[0],
-                    ref_z=inboard_iso[1],
-                    constraint_value=0.0,
-                )
-            ]
-        )
+        constraint_set = MagneticConstraintSet([
+            IsofluxConstraint(
+                xx,
+                zz,
+                ref_x=inboard_iso[0],
+                ref_z=inboard_iso[1],
+                constraint_value=0.0,
+            )
+        ])
 
         initial_psi = self._make_initial_psi(
             coilset,

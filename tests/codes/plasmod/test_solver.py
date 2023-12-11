@@ -342,14 +342,12 @@ class TestPlasmodSolver:
 
         pf = solver.execute(plasmod.RunMode.RUN)
 
-        self.run_subprocess_mock.assert_called_once_with(
-            [
-                plasmod.BINARY,
-                self.build_config["input_file"],
-                self.build_config["output_file"],
-                self.build_config["profiles_file"],
-            ]
-        )
+        self.run_subprocess_mock.assert_called_once_with([
+            plasmod.BINARY,
+            self.build_config["input_file"],
+            self.build_config["output_file"],
+            self.build_config["profiles_file"],
+        ])
         self.run_subprocess_mock.reset_mock()
         assert pf.beta_N.value == pytest.approx(3.0007884293)
 

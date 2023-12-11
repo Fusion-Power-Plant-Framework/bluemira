@@ -269,9 +269,9 @@ class GompertzLearningStrategy(LearningStrategy):
             t, self.max_op_a - self.min_op_a, x, self.learn_rate
         )
 
-        return np.array(
-            [np.mean(a_ops[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])]
-        )
+        return np.array([
+            np.mean(a_ops[arg_dates[i] : d]) for i, d in enumerate(arg_dates[1:])
+        ])
 
     def generate_phase_availabilities(
         self, lifetime_op_availability: float, op_durations: Iterable[float]
