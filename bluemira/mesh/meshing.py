@@ -708,9 +708,9 @@ class _FreeCADGmsh:
                     dim = dim_dict[type_]
                     if (dim, v) in all_ent:
                         if len(oov) > 0:
-                            new_gmsh_dict[type_].extend(
-                                [o[1] for o in oov[all_ent.index((dim, v))]]
-                            )
+                            new_gmsh_dict[type_].extend([
+                                o[1] for o in oov[all_ent.index((dim, v))]
+                            ])
                     else:
                         new_gmsh_dict[type_].append(v)
 

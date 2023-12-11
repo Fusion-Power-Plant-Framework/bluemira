@@ -252,13 +252,11 @@ def pattern_lofted_silhouette(
         com_1 = r_face.center_of_mass
         com_2 = faces[i + 1].center_of_mass
 
-        wire = make_polygon(
-            {
-                "x": [com_1[0], com_2[0]],
-                "y": [com_1[1], com_2[1]],
-                "z": [com_1[2], com_2[2]],
-            }
-        )
+        wire = make_polygon({
+            "x": [com_1[0], com_2[0]],
+            "y": [com_1[1], com_2[1]],
+            "z": [com_1[2], com_2[2]],
+        })
         volume = sweep_shape([r_face.boundary[0], faces[i + 1].boundary[0]], wire)
         shapes.append(volume)
 
@@ -277,12 +275,18 @@ def _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap):
     """
     bb = face.bounding_box
     delta = 1.0
-    x = np.array(
-        [bb.x_min - delta, bb.x_max + delta, bb.x_max + delta, bb.x_min - delta]
-    )
-    z = np.array(
-        [bb.z_min - delta, bb.z_min - delta, bb.z_max + delta, bb.z_max + delta]
-    )
+    x = np.array([
+        bb.x_min - delta,
+        bb.x_max + delta,
+        bb.x_max + delta,
+        bb.x_min - delta,
+    ])
+    z = np.array([
+        bb.z_min - delta,
+        bb.z_min - delta,
+        bb.z_max + delta,
+        bb.z_max + delta,
+    ])
     poly = make_polygon({"x": x, "y": 0, "z": z}, closed=True)
     bb_face = BluemiraFace(poly)
     bb_face.translate((0, -0.5 * gap, 0))

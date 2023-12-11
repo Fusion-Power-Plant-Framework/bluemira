@@ -242,58 +242,52 @@ def make_alpha_palette(color, n_colors: int, background_rgb="white") -> ColorPal
         make_rgb_alpha(color_rgb, alpha, background_rgb)
         for alpha in np.linspace(0, 1, n_colors + 1)[1:-1][::-1]
     ]
-    return ColorPalette(
-        {f"{color_name}_{i}": col_val for i, col_val in enumerate(color_values)}
-    )
+    return ColorPalette({
+        f"{color_name}_{i}": col_val for i, col_val in enumerate(color_values)
+    })
 
 
 # This is specifically NOT the MATLAB color palette.
-BLUEMIRA_PALETTE = ColorPalette(
-    {
-        "blue": "#0072c2",
-        "orange": "#d85319",
-        "yellow": "#f0b120",
-        "purple": "#7d2f8e",
-        "green": "#75ac30",
-        "cyan": "#4cbdf0",
-        "red": "#a21430",
-        "pink": "#f77ec7",
-        "grey": "#a8a495",
-    }
-)
+BLUEMIRA_PALETTE = ColorPalette({
+    "blue": "#0072c2",
+    "orange": "#d85319",
+    "yellow": "#f0b120",
+    "purple": "#7d2f8e",
+    "green": "#75ac30",
+    "cyan": "#4cbdf0",
+    "red": "#a21430",
+    "pink": "#f77ec7",
+    "grey": "#a8a495",
+})
 
 
-LONDON_PALETTE = ColorPalette(
-    {
-        "black": "#000000",
-        "blue": "#003688",
-        "red": "#E32017",
-        "green": "#00782A",
-        "purple": "#9B0056",
-        "light_blue": "#0098D4",
-        "orange": "#EE7C0E",
-        "yellow": "#FFD300",
-        "pink": "#F3A9BB",
-        "grey": "#A0A5A9",
-        "brown": "#B36305",
-        "turquoise": "#95CDBA",
-    }
-)
+LONDON_PALETTE = ColorPalette({
+    "black": "#000000",
+    "blue": "#003688",
+    "red": "#E32017",
+    "green": "#00782A",
+    "purple": "#9B0056",
+    "light_blue": "#0098D4",
+    "orange": "#EE7C0E",
+    "yellow": "#FFD300",
+    "pink": "#F3A9BB",
+    "grey": "#A0A5A9",
+    "brown": "#B36305",
+    "turquoise": "#95CDBA",
+})
 
 
-BLUE_PALETTE = ColorPalette(
-    {
-        "BB": "#4a98c9",  # Breeding blanket
-        "DIV": "#d0e1f2",  # Divertor
-        "VV": "#b7d4ea",  # Vacuum vessel
-        "TS": "#e3eef9",  # Thermal shield
-        "TF": "#084a91",  # Toroidal field system
-        "PF": "#1764ab",  # Poloidal field system
-        "CR": "#2e7ebc",  # Cryostat vacuum vessel
-        "RS": "#94c4df",  # Radiation shield
-        "PL": "#cc8acc",  # Plasma
-    }
-)
+BLUE_PALETTE = ColorPalette({
+    "BB": "#4a98c9",  # Breeding blanket
+    "DIV": "#d0e1f2",  # Divertor
+    "VV": "#b7d4ea",  # Vacuum vessel
+    "TS": "#e3eef9",  # Thermal shield
+    "TF": "#084a91",  # Toroidal field system
+    "PF": "#1764ab",  # Poloidal field system
+    "CR": "#2e7ebc",  # Cryostat vacuum vessel
+    "RS": "#94c4df",  # Radiation shield
+    "PL": "#cc8acc",  # Plasma
+})
 
 
 BLUE_PALETTE["VV"] = make_alpha_palette(BLUE_PALETTE["VV"], 2)

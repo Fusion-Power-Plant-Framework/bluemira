@@ -376,12 +376,10 @@ def interpolate_bspline(
         bsc.interpolate(pntslist, PeriodicFlag=closed, **kwargs)
         wire = apiWire(bsc.toShape())
     except Part.OCCError as error:
-        msg = "\n".join(
-            [
-                "FreeCAD was unable to make a spline:",
-                f"{error.args[0]}",
-            ]
-        )
+        msg = "\n".join([
+            "FreeCAD was unable to make a spline:",
+            f"{error.args[0]}",
+        ])
         raise FreeCADError(msg) from error
     return wire
 
@@ -570,12 +568,10 @@ def offset_wire(
             wire, shape.makeOffset2D(thickness, f_join.value, False, open_wire)
         )
     except Base.FreeCADError as error:
-        msg = "\n".join(
-            [
-                "FreeCAD was unable to make an offset of wire:",
-                f"{error.args[0]['sErrMsg']}",
-            ]
-        )
+        msg = "\n".join([
+            "FreeCAD was unable to make an offset of wire:",
+            f"{error.args[0]['sErrMsg']}",
+        ])
         raise FreeCADError(msg) from None
 
     fix_wire(wire)
@@ -1436,12 +1432,10 @@ def save_cad(
 
     filename = force_file_extension(filename, f".{cad_format.value.strip('$')}")
 
-    _freecad_save_config(
-        **{
-            k: kwargs.pop(k)
-            for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
-        }
-    )
+    _freecad_save_config(**{
+        k: kwargs.pop(k)
+        for k in kwargs.keys() & {"unit", "no_dp", "author", "stp_file_scheme"}
+    })
 
     objs = list(_setup_document(shapes, labels))
 

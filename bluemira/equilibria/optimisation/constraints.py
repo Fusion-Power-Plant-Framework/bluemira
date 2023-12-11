@@ -588,12 +588,10 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return np.vstack(
-            [
-                coilset.Bx_response(self.x, self.z, control=True),
-                coilset.Bz_response(self.x, self.z, control=True),
-            ]
-        )
+        return np.vstack([
+            coilset.Bx_response(self.x, self.z, control=True),
+            coilset.Bz_response(self.x, self.z, control=True),
+        ])
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """

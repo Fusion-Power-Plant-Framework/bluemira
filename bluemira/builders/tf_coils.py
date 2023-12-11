@@ -278,14 +278,12 @@ class ExtremaSelector(RipplePointSelector):
         """
         super().set_wire(wire)
         coords = wire.discretize(byedges=True, ndiscr=2000)
-        self.points = Coordinates(
-            [
-                coords.points[np.argmin(coords.x)],
-                coords.points[np.argmax(coords.x)],
-                coords.points[np.argmin(coords.z)],
-                coords.points[np.argmax(coords.z)],
-            ]
-        )
+        self.points = Coordinates([
+            coords.points[np.argmin(coords.x)],
+            coords.points[np.argmax(coords.x)],
+            coords.points[np.argmin(coords.z)],
+            coords.points[np.argmax(coords.z)],
+        ])
 
 
 class FixedSelector(RipplePointSelector):

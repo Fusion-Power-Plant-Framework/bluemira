@@ -63,12 +63,10 @@ class TestTFCoilDesigner:
 
     def test_parameterisation_read(self):
         config = copy.deepcopy(self.CONFIG)
-        config.update(
-            {
-                "run_mode": "read",
-                "file_path": Path(DATA, "tf_coils_TripleArc_18.json").as_posix(),
-            }
-        )
+        config.update({
+            "run_mode": "read",
+            "file_path": Path(DATA, "tf_coils_TripleArc_18.json").as_posix(),
+        })
 
         designer = TFCoilDesigner(
             self.PARAMS,
@@ -113,16 +111,14 @@ class TestTFCoilDesigner:
     def test_run_check_parameters(self):
         config = copy.deepcopy(self.CONFIG)
         config["run_mode"] = "run"
-        config.update(
-            {
-                "problem_settings": {"n_koz_points": 101},
-                "optimisation_settings": {
-                    "algorithm_name": "COBYLA",
-                    "parameters": {"initial_step": 1e-4},
-                    "conditions": {"max_eval": 25},
-                },
-            }
-        )
+        config.update({
+            "problem_settings": {"n_koz_points": 101},
+            "optimisation_settings": {
+                "algorithm_name": "COBYLA",
+                "parameters": {"initial_step": 1e-4},
+                "conditions": {"max_eval": 25},
+            },
+        })
         designer = TFCoilDesigner(
             self.PARAMS,
             build_config=config,

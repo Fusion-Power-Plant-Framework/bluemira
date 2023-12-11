@@ -246,13 +246,11 @@ class TestCoordinates:
 
     def test_rotate_90(self):
         c = Coordinates(
-            np.array(
-                [
-                    [2, 3, 3, 2, 2],
-                    [0, 0, 0, 0, 0],
-                    [1, 1, 2, 2, 1],
-                ]
-            )
+            np.array([
+                [2, 3, 3, 2, 2],
+                [0, 0, 0, 0, 0],
+                [1, 1, 2, 2, 1],
+            ])
         )
         v1 = c.normal_vector
         assert np.allclose(v1, [0, 1, 0])
@@ -280,13 +278,11 @@ class TestCoordinates:
 
     def test_is_planar(self):
         c = Coordinates(
-            np.array(
-                [
-                    [2, 3, 3, 2, 2],
-                    [0, 0, 0, 0, 0],
-                    [1, 1, 2, 2, 1],
-                ]
-            )
+            np.array([
+                [2, 3, 3, 2, 2],
+                [0, 0, 0, 0, 0],
+                [1, 1, 2, 2, 1],
+            ])
         )
         v = self.rng.random(3)
         base = self.rng.random(3)
@@ -586,9 +582,10 @@ class TestIntersections:
         np.testing.assert_allclose(intersect, correct)
 
     def test_join_intersect(self):
-        loop1 = Coordinates(
-            {"x": [0, 0.5, 1, 2, 3, 5, 4.5, 4, 0], "z": [1, 1, 1, 1, 2, 4, 4.5, 5, 5]}
-        )
+        loop1 = Coordinates({
+            "x": [0, 0.5, 1, 2, 3, 5, 4.5, 4, 0],
+            "z": [1, 1, 1, 1, 2, 4, 4.5, 5, 5],
+        })
         loop2 = Coordinates({"x": [1.5, 1.5, 2.5, 2.5], "z": [4, -4, -4, 5]})
         join_intersect(loop1, loop2)
 
@@ -637,12 +634,10 @@ class TestCoordinatesPlaneIntersect:
         assert np.allclose(intersect, e)
 
     def test_complex(self):
-        coords = Coordinates(
-            {
-                "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-                "z": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
-            }
-        )
+        coords = Coordinates({
+            "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
+            "z": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+        })
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 1, 0])  # x-y
         intersect = coords_plane_intersect(coords, plane)
         assert len(intersect) == 2
@@ -681,12 +676,10 @@ class TestCoordinatesPlaneIntersect:
         assert intersect is None
 
     def test_other_dims(self):
-        coords = Coordinates(
-            {
-                "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-                "y": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
-            }
-        )
+        coords = Coordinates({
+            "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
+            "y": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+        })
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 0, 0], [0, 0, 1])  # x-y
         intersect = coords_plane_intersect(coords, plane)
         assert len(intersect) == 2
@@ -701,12 +694,10 @@ class TestCoordinatesPlaneIntersect:
         assert intersect is None
 
     def test_xyzplane(self):
-        coords = Coordinates(
-            {
-                "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
-                "y": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
-            }
-        )
+        coords = Coordinates({
+            "x": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 8, 6, 4, 2, 0],
+            "y": [-1, -2, -3, -4, -5, -6, -7, -8, -4, -2, 3, 2, 4, 2, 0, -1],
+        })
         coords.translate((-2, 0, 0))
         plane = BluemiraPlane.from_3_points([0, 0, 0], [1, 1, 1], [2, 0, 0])  # x-y-z
         intersect = coords_plane_intersect(coords, plane)
@@ -754,15 +745,13 @@ def test_vector_lengthnorm_gives_expected_lengths_2d():
 
     lengths = vector_lengthnorm(points[0], points[1])
 
-    expected = np.array(
-        [
-            0,
-            np.sqrt(5),
-            np.sqrt(5) + np.sqrt(5),
-            np.sqrt(5) + np.sqrt(5) + np.sqrt(8),
-            np.sqrt(5) + np.sqrt(5) + np.sqrt(8) + np.sqrt(5),
-        ]
-    )
+    expected = np.array([
+        0,
+        np.sqrt(5),
+        np.sqrt(5) + np.sqrt(5),
+        np.sqrt(5) + np.sqrt(5) + np.sqrt(8),
+        np.sqrt(5) + np.sqrt(5) + np.sqrt(8) + np.sqrt(5),
+    ])
     expected /= expected[-1]
     np.testing.assert_allclose(lengths, expected)
 
@@ -774,15 +763,13 @@ def test_vector_lengthnorm_gives_expected_lengths_3d():
 
     lengths = vector_lengthnorm(points[0], points[1], points[2])
 
-    expected = np.array(
-        [
-            0,
-            np.sqrt(6),
-            np.sqrt(6) + np.sqrt(9),
-            np.sqrt(6) + np.sqrt(9) + np.sqrt(24),
-            np.sqrt(6) + np.sqrt(9) + np.sqrt(24) + np.sqrt(6),
-        ]
-    )
+    expected = np.array([
+        0,
+        np.sqrt(6),
+        np.sqrt(6) + np.sqrt(9),
+        np.sqrt(6) + np.sqrt(9) + np.sqrt(24),
+        np.sqrt(6) + np.sqrt(9) + np.sqrt(24) + np.sqrt(6),
+    ])
     expected /= expected[-1]
     np.testing.assert_allclose(lengths, expected)
     np.testing.assert_allclose(lengths, expected)

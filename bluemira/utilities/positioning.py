@@ -366,12 +366,9 @@ class PositionMapper:
         """
         l_values = self._vector_to_list(l_values)
         self._check_length(l_values)
-        return np.array(
-            [
-                tool.to_xz(l_values[i])
-                for i, tool in enumerate(self.interpolators.values())
-            ]
-        ).T
+        return np.array([
+            tool.to_xz(l_values[i]) for i, tool in enumerate(self.interpolators.values())
+        ]).T
 
     def to_xz_dict(self, l_values: np.ndarray) -> Dict[str, np.ndarray]:
         """

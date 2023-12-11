@@ -103,9 +103,9 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.coilset = sub_opt.coilset
         self.sub_opt = sub_opt
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions or self._opt_condition_defaults(
-            {"max_eval": 100}
-        )
+        self.opt_conditions = opt_conditions or self._opt_condition_defaults({
+            "max_eval": 100
+        })
         self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
@@ -203,9 +203,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.position_mapper = position_mapper
         self.sub_opt_problems = sub_opt_problems
         self.opt_algorithm = opt_algorithm
-        self.opt_conditions = opt_conditions or self._opt_condition_defaults(
-            {"max_eval": 100}
-        )
+        self.opt_conditions = opt_conditions or self._opt_condition_defaults({
+            "max_eval": 100
+        })
         self.opt_parameters = opt_parameters
         self._constraints = constraints
 

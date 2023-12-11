@@ -230,9 +230,11 @@ def build_lower_port_xyz(
             (angled_bb.x_min - (strait_bb.x_min + 2.0)) / np.cos(duct_angle)
         )
 
-    ext_vector = angled_duct_extrude_extent * np.array(
-        [np.cos(duct_angle), 0, np.sin(duct_angle)]
-    )
+    ext_vector = angled_duct_extrude_extent * np.array([
+        np.cos(duct_angle),
+        0,
+        np.sin(duct_angle),
+    ])
     angled_duct = extrude_shape(angled_duct_face, ext_vector)
     angled_void = extrude_shape(angled_void_face, ext_vector)
 

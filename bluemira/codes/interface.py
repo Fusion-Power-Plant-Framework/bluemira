@@ -239,7 +239,7 @@ class CodesTeardown(CodesTask):
     def _get_output_or_raise(
         self, external_outputs: Dict[str, Any], parameter_name: str
     ):
-        output_value = external_outputs.get(parameter_name, None)
+        output_value = external_outputs.get(parameter_name)
         if output_value is None:
             bluemira_warn(
                 f"No value for output parameter '{parameter_name}' from code "

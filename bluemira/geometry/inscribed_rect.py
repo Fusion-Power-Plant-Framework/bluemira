@@ -213,12 +213,10 @@ class _GetDxDz:
         self.vec_arr_x[:, 1] = self.point[1]
         self.vec_arr_z[:, 0] = self.point[0]
 
-        dist = np.array(
-            [
-                pdist(self.vec_arr_x, "euclidean")[: self.n_p],
-                pdist(self.vec_arr_z, "euclidean")[: self.n_p],
-            ]
-        )
+        dist = np.array([
+            pdist(self.vec_arr_x, "euclidean")[: self.n_p],
+            pdist(self.vec_arr_z, "euclidean")[: self.n_p],
+        ])
 
         # Find minimum distance
         # this is loopy indexing TODO cleanup
@@ -254,9 +252,7 @@ def _rect(x: float, z: float, dx: float, dz: float) -> Coordinates:
     -------
     Rectangular closed set of coordinates
     """
-    return Coordinates(
-        {
-            "x": x + np.array([-dx, dx, dx, -dx, -dx]),
-            "z": z + np.array([-dz, -dz, dz, dz, -dz]),
-        }
-    )
+    return Coordinates({
+        "x": x + np.array([-dx, dx, dx, -dx, -dx]),
+        "z": z + np.array([-dz, -dz, dz, dz, -dz]),
+    })

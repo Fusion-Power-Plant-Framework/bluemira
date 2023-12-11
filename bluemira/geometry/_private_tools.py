@@ -860,28 +860,20 @@ class MixedFaceMaker:
             for seg in sequence:
                 if seg[0] > seg[1]:
                     # There is a bridge
-                    coords = np.hstack(
-                        (
-                            np.array(
-                                [self.x[seg[0] :], self.y[seg[0] :], self.z[seg[0] :]]
-                            ),
-                            np.array(
-                                [
-                                    self.x[0 : seg[1] + 1],
-                                    self.y[0 : seg[1] + 1],
-                                    self.z[0 : seg[1] + 1],
-                                ]
-                            ),
-                        )
-                    )
+                    coords = np.hstack((
+                        np.array([self.x[seg[0] :], self.y[seg[0] :], self.z[seg[0] :]]),
+                        np.array([
+                            self.x[0 : seg[1] + 1],
+                            self.y[0 : seg[1] + 1],
+                            self.z[0 : seg[1] + 1],
+                        ]),
+                    ))
                 else:
-                    coords = np.array(
-                        [
-                            self.x[seg[0] : seg[1] + 1],
-                            self.y[seg[0] : seg[1] + 1],
-                            self.z[seg[0] : seg[1] + 1],
-                        ]
-                    )
+                    coords = np.array([
+                        self.x[seg[0] : seg[1] + 1],
+                        self.y[seg[0] : seg[1] + 1],
+                        self.z[seg[0] : seg[1] + 1],
+                    ])
                 clean_coords = self._clean_coordinates(coords)
                 if all(shape >= 2 for shape in clean_coords.shape):  # noqa: PLR2004
                     s_coords.append(clean_coords)
