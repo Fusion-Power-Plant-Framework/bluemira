@@ -44,7 +44,7 @@ from typing import Union
 import numba as nb
 import numpy as np
 
-from bluemira.base.constants import MU_0, MU_0_4PI
+from bluemira.base.constants import MU_0_4PI
 from bluemira.geometry.coordinates import Coordinates, get_area_2d
 from bluemira.magnetostatics.baseclass import (
     PolyhedralCrossSectionCurrentSource,
@@ -146,9 +146,7 @@ def vector_norm_eps(r: np.ndarray) -> float:
 
 
 @nb.jit(nopython=True, cache=True)
-def omega_t(
-    r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray, normal
-) -> float:
+def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> float:
     """
     Solid angle seen from the calculation point subtended by the face
     triangle normal must be pointing outwards from the face
@@ -183,12 +181,6 @@ def omega_t(
     r1_r = r1 - r
     r2_r = r2 - r
     r3_r = r3 - r
-
-    # TODO: Remove this sanity check
-    t_normal = np.cross(r2 - r1, r3 - r1)
-    t_normal /= np.linalg.norm(t_normal)
-    if not np.allclose(t_normal, normal, rtol=1e-8, atol=1e-8, equal_nan=False):
-        print(t_normal, normal)
 
     r1r = vector_norm_eps(r1_r)
     r2r = vector_norm_eps(r2_r)
@@ -286,7 +278,7 @@ def surface_integral_fabbri(
         )
         # Calculate omega_f as the sum of subtended angles with a triangle
         # for each edge
-        omega_f += omega_t(point, p0, p1, mid_point, face_normal)
+        omega_f += omega_t(point, p0, p1, mid_point)
     return integral - np.dot(mid_point - point, face_normal) * omega_f
 
 
@@ -326,7 +318,7 @@ def vector_potential_fabbri(
             normal
             * surface_integral_fabbri(face_points[i], normal, mid_points[i], point),
         )
-    return MU_0 / (8 * np.pi) * np.dot(current_direction, integral)
+    return 0.5 * MU_0_4PI * np.dot(current_direction, integral)
 
 
 # @nb.jit(nopython=True, cache=True)
