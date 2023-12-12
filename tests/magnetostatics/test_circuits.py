@@ -26,8 +26,7 @@ from bluemira.magnetostatics.circuits import (
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
 from bluemira.magnetostatics.semianalytic_2d import semianalytic_psi
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
-from tests.magnetostatics.setup_methods import plane_setup
-from tests.magnetostatics.tools import make_xs_from_bd
+from tests.magnetostatics.setup_methods import make_xs_from_bd, plane_setup
 
 
 def test_analyticalsolvergrouper():
