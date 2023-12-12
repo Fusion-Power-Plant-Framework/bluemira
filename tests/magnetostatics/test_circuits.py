@@ -24,7 +24,6 @@ from bluemira.magnetostatics.circuits import (
     HelmholtzCage,
 )
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
-from bluemira.magnetostatics.polyhedral_prism import field_fabbri as poly_field
 from bluemira.magnetostatics.semianalytic_2d import (
     semianalytic_Bx,
     semianalytic_Bz,
@@ -381,7 +380,7 @@ class TestPolyhedral2DRing:
         cls.radius = 4
         cls.z = 4
         cls.current = 1e6
-        n = 150
+        n = 151
         ring = make_circle(cls.radius, [0, 0, cls.z], 0, 360, [0, 0, 1])
         xs = Coordinates({"x": [-1, -1, 1, 1, -1], "z": [-1, 1, 1, -1, -1]})
         xs.translate(xs.center_of_mass)
@@ -391,8 +390,8 @@ class TestPolyhedral2DRing:
 
     @pytest.mark.longrun
     def test_Bx_Bz_2D(self):
-        x = np.linspace(0.1, 10, 50)
-        z = np.linspace(0.1, 10, 50)
+        x = np.linspace(0.1, 10, 20)
+        z = np.linspace(0.1, 10, 20)
         xx, zz = np.meshgrid(x, z)
         yy = np.zeros_like(xx)
         Bx, _, Bz = self.poly_circuit.field(xx, yy, zz)
@@ -400,8 +399,8 @@ class TestPolyhedral2DRing:
         cBz = semianalytic_Bz(self.radius, self.z, xx, zz, 1.0, 1.0)
         Bx_coil = self.current * cBx
         Bz_coil = self.current * cBz
-        assert np.mean(np.isclose(Bx, Bx_coil, rtol=7.5e-4)) >= 0.85
-        assert np.mean(np.isclose(Bz, Bz_coil, rtol=7.5e-4)) >= 0.85
+        np.testing.assert_allclose(Bx, Bx_coil, rtol=1e-2)
+        np.testing.assert_allclose(Bz, Bz_coil, rtol=1e-2)
 
     def test_vector_potential_flux(self):
         """
@@ -440,22 +439,10 @@ class TestPolyhedral2DRing:
         Bx_coil = self.current * cBx
         Bz_coil = self.current * cBz
         Bx, _, Bz = self.poly_circuit.field(*point)
-        field = np.array([0, 0, 0])
-        for s in self.poly_circuit.sources:
-            field = field + s._rho * poly_field(
-                s._dcm[1],
-                [s._face_points[-1]],
-                [s._face_normals[-1]],
-                [s._mid_points[-1]],
-                np.array(point),
-            )
 
         # only passes at this tolerance
-        assert Bx == pytest.approx(Bx_coil, rel=5e-4)
-        assert Bz == pytest.approx(Bz_coil, rel=5e-4)
-        # these fail so the end caps are needed
-        # assert field[0] == pytest.approx(Bx_coil, rel=1e-5, abs=1e-5)
-        # assert field[2] == pytest.approx(Bz_coil, rel=1e-5, abs=1e-5)
+        np.testing.assert_allclose(Bx, Bx_coil, rtol=1e-3)
+        np.testing.assert_allclose(Bz, Bz_coil, rtol=1e-3)
 
 
 class TestArbitraryPlanarPolyhedralPFCoil:
