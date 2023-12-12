@@ -1,13 +1,13 @@
 set -e
 
-NJOBS=$(nproc --ignore=2)
 FORCE="false"
+PYSIDE_VERSION="libpyside2.abi3.so.5.15"
+QT_VERSION="Qt-5.15.5"
 
-while getopts j:f option
+while getopts f option
 do
   case "${option}"
   in
-    j) NJOBS=${OPTARG};;
     f) FORCE="true"
   esac
 done
@@ -29,7 +29,7 @@ fi
 PYTHON_VERSION=`python -c 'import sys; version=sys.version_info[:2]; print("{0}.{1}".format(*version))'`
 PYTHON_BIN=$(which python)
 PYTHON_BIN_DIR=$(dirname $PYTHON_BIN)
-PYTHON_PACKAGES_DIR=$(readlink --canonicalize $PYTHON_BIN_DIR/../lib/python$PYTHON_VERSION/site-packages)
+PYTHON_PACKAGES_DIR=$(python -c 'import site; print(site.getsitepackages()[0])')
 PYTHON_FREECAD_DIR=$PYTHON_PACKAGES_DIR/freecad
 
 mkdir -p $PYTHON_FREECAD_DIR
@@ -82,8 +82,8 @@ cmake -G Ninja \
       -DFREECAD_USE_PYBIND11:BOOL=ON \
       -DPYTHON_EXECUTABLE=$PYTHON_BIN \
       -DPYSIDE_INCLUDE_DIR=$PYTHON_PACKAGES_DIR/PySide2/include \
-      -DPYSIDE_LIBRARY=$PYTHON_PACKAGES_DIR/PySide2/libpyside2.abi3.so.5.15 \
-      -DCMAKE_PREFIX_PATH=/usr/local/Qt-5.15.5/lib/cmake \
+      -DPYSIDE_LIBRARY=$PYTHON_PACKAGES_DIR/PySide2/$PYSIDE_VERSION \
+      -DCMAKE_PREFIX_PATH=/usr/local/$QT_VERSION/lib/cmake \
       -DPYSIDE2UICBINARY=$PYTHON_PACKAGES_DIR/PySide2/uic \
       -DPYSIDE2RCCBINARY=$PYTHON_PACKAGES_DIR/PySide2/rcc \
       -DCMAKE_INSTALL_PREFIX=$PYTHON_FREECAD_DIR \

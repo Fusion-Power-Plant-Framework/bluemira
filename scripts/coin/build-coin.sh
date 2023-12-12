@@ -1,13 +1,11 @@
 set -e
 
-NJOBS=$(nproc --ignore=2)
 FORCE="false"
 
-while getopts j:f option
+while getopts f option
 do
   case "${option}"
   in
-    j) NJOBS=${OPTARG};;
     f) FORCE="true";;
   esac
 done
@@ -19,7 +17,7 @@ fi
 if [ ! -d coin ]; then
   git clone --recurse-submodules https://github.com/coin3d/coin.git
   cd coin
-  git checkout Coin-4.0.0
+  git checkout v4.0.2
   cd ..
 fi
 
@@ -33,6 +31,6 @@ if [ -d coin_build ]; then
   fi
 fi
 
-cmake -Hcoin -Bcoin_build -G "Unix Makefiles" -DCMAKE_INSTALL_PREFIX=/usr/local \
+cmake -Hcoin -Bcoin_build -G Ninja -DCMAKE_INSTALL_PREFIX=/usr/local \
       -DCMAKE_BUILD_TYPE=Release -DCOIN_BUILD_DOCUMENTATION=OFF
-cmake --build coin_build --target all --config Release -- -j$NJOBS
+cmake --build coin_build --target all --config Release

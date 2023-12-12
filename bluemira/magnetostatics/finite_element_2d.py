@@ -193,12 +193,15 @@ class FemMagnetostatic2d:
         ] = None,
     ):
         """
-        Solve the weak formulation maxwell equation given a right hand side g,
-        Dirichlet and Neumann boundary conditions.
+        Define Dirichlet boundary conditions and setup problem
 
-        Returns
-        -------
-        Poloidal magnetic flux function as solution of the magnetostatic problem
+        Parameters
+        ----------
+        dirichlet_bc_function:
+            Dirichlet boundary condition function
+        dirichlet_marker:
+            Identification number for the dirichlet boundary
+
         """
         # # define the right hand side
         # self.L = self.g * self.v * dx # - neumann_bc_function * self.v * ds

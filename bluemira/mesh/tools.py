@@ -76,6 +76,7 @@ def msh_to_xdmf(
         * BOUNDARY_SUFFIX
         * LINKFILE_SUFFIX
     """
+    raise NotImplementedError("TODO fixme")
     dimensions = _check_dimensions(dimensions)
 
     file_path = Path(directory, mesh_name)
