@@ -50,6 +50,7 @@ from bluemira.magnetostatics.baseclass import (
     PolyhedralCrossSectionCurrentSource,
     PrismEndCapMixin,
 )
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 
 ZERO_DIV_GUARD_EPS = 1e-14
@@ -441,6 +442,21 @@ class PolyhedralPrismCurrentSource(
     @_kernel.setter
     def _kernel(self, value: PolyhedralKernel):
         self.__kernel = value
+
+    def _check_angle_values(self, alpha, beta):
+        """
+        Check that end-cap angles are acceptable.
+        """
+        if not np.isclose(alpha, beta):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {alpha:.3f} "
+                f"!= {beta:.3f}"
+            )
+        if not (0 <= abs(alpha) < 0.5 * np.pi):
+            raise MagnetostaticsError(
+                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} is outside"
+                " bounds of [0, 180°)."
+            )
 
     def _set_cross_section(self, xs_coordinates: Coordinates):
         xs_coordinates = deepcopy(xs_coordinates)
