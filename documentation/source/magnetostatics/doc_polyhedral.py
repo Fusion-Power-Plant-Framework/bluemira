@@ -17,7 +17,7 @@ source = PolyhedralPrismCurrentSource(
     t_vec=[1, 0, 0],
     xs_coordinates=Coordinates(np.c_[x, y, z]),  # Points specified in x-z
     alpha=45.0,  # angle at the tip of the current source
-    beta=22.5,  # angle at the tail of the current source
+    beta=45,  # angle at the tail of the current source (must be the same!)
     current=1e6,
 )
 
