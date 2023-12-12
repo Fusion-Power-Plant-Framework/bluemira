@@ -1,8 +1,14 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+"""Power cycle example"""
+
 from __future__ import annotations
 
 from dataclasses import dataclass
 
-from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.net import (
     PowerCycleLibraryConfig,
     PowerCycleLoadConfig,
@@ -13,8 +19,10 @@ from bluemira.power_cycle.net import (
 
 @dataclass
 class PowerCycleDurationParameters:
-    CS_recharge_time: float = raw_uc(5, "minute", "second")
-    pumpdown_time: float = raw_uc(10, "minute", "second")
+    """Dummy power cycle duration parameters [s]"""
+
+    CS_recharge_time: float = 300
+    pumpdown_time: float = 600
     ramp_up_time: float = 157
     ramp_down_time: float = 157
 
