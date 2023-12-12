@@ -65,13 +65,13 @@ class TestPowerCycleSubLoad:
         )
 
     def test_validation_raises_ValueError(self):
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="time and data"):
             PowerCycleSubLoad("name", np.array([0, 0.1, 1]), np.zeros(2), "ramp")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="time and data"):
             PowerCycleSubLoad("name", [0, 0.1, 1], np.zeros(2), "ramp")
 
-        with pytest.raises(ValueError):
+        with pytest.raises(ValueError, match="time must increase"):
             PowerCycleSubLoad("name", [0, 1, 0.1], np.zeros(3), "ramp")
 
         pcsl = PowerCycleSubLoad("name", [0, 0.1, 1], np.zeros(3), "ramp", "MW")

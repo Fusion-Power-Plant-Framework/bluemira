@@ -310,10 +310,9 @@ class Loads:
         data = self.get_explicit_data_consumption(timeseries, load_type, unit, end_time)
         for load_conf in self.load_config[load_type].values():
             for eff in load_conf.efficiencies.values():
-                if load_conf.consumption:
-                    eff = 1 / eff
+                c_eff = 1 / eff if load_conf.consumption else eff
                 for sl in load_conf.subloads:
-                    data[sl] *= eff
+                    data[sl] *= c_eff
 
         return data
 
