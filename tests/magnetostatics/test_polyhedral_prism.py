@@ -19,14 +19,13 @@
 # You should have received a copy of the GNU Lesser General Public
 # License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
 
-from copy import deepcopy
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from bluemira.base.constants import EPS, raw_uc
 from bluemira.geometry.tools import Coordinates
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.polyhedral_prism import (
     Bottura,
     Fabbri,
@@ -54,8 +53,23 @@ def plane_setup(plane):
     return xx, yy, zz, i, j, k
 
 
+class TestPolyhedralInstantiation:
+    def test_diff_angle_error(self):
+        with pytest.raises(MagnetostaticsError):
+            PolyhedralPrismCurrentSource(
+                [10, 0, 0],
+                [1, 0, 0],
+                [0, 1, 0],
+                [0, 0, 1],
+                make_xs_from_bd(0.5, 0.5),
+                40,
+                39.5,
+                current=1,
+            )
+
+
 class TestPolyhedralMaths:
-    same_angle = (
+    same_angle_1 = (
         TrapezoidalPrismCurrentSource(
             [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 40, 40, current=1
         ),
@@ -71,9 +85,9 @@ class TestPolyhedralMaths:
         ),
     )
 
-    diff_angle = (
+    same_angle_2 = (
         TrapezoidalPrismCurrentSource(
-            [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 20, 40, current=1
+            [10, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1], 0.5, 0.5, 0, 0, current=1
         ),
         PolyhedralPrismCurrentSource(
             [10, 0, 0],
@@ -81,12 +95,12 @@ class TestPolyhedralMaths:
             [0, 1, 0],
             [0, 0, 1],
             make_xs_from_bd(0.5, 0.5),
-            20,
-            40,
+            0,
+            0,
             current=1,
         ),
     )
-    test_cases = (same_angle, diff_angle)
+    test_cases = (same_angle_1, same_angle_2)
 
     @pytest.mark.parametrize("kernel", ["Fabbri", "Bottura"])
     @pytest.mark.parametrize(("trap", "poly"), test_cases)
@@ -219,100 +233,6 @@ class TestPolyhedralMaths:
         plt.show()
 
         np.testing.assert_allclose(B_new, B)
-
-    def teardown_method(self):
-        plt.close()
-
-
-class TestPolyhedralPrismBabicAykel:
-    """
-    Verification test.
-
-    Babic and Aykel example
-
-    https://onlinelibrary.wiley.com/doi/epdf/10.1002/jnm.594
-    """
-
-    # Babic and Aykel example (single trapezoidal prism)
-    trap = TrapezoidalPrismCurrentSource(
-        np.array([0, 0, 0]),
-        np.array([2 * 2.154700538379251, 0, 0]),  # This gives b=1
-        np.array([0, 1, 0]),
-        np.array([0, 0, 1]),
-        1,
-        1,
-        60.0,
-        30.0,
-        4e5,
-    )
-    poly = PolyhedralPrismCurrentSource(
-        np.array([0, 0, 0]),
-        np.array([2 * 2.154700538379251, 0, 0]),  # This gives b=1
-        np.array([0, 1, 0]),
-        np.array([0, 0, 1]),
-        make_xs_from_bd(1, 1),
-        60.0,
-        30.0,
-        4e5,
-    )
-    poly2 = deepcopy(poly)
-    poly2._kernel = Bottura()
-
-    @pytest.mark.parametrize("poly", [poly, poly2])
-    @pytest.mark.parametrize("plane", ["x", "y", "z"])
-    def test_plot(self, poly, plane):
-        xx, yy, zz, i, j, k = plane_setup(plane)
-
-        f = plt.figure()
-        ax = f.add_subplot(1, 3, 1, projection="3d")
-        ax.set_title("TrapezoidalPrism")
-        self.trap.plot(ax)
-        Bx, By, Bz = self.trap.field(xx, yy, zz)
-        B = np.sqrt(Bx**2 + By**2 + Bz**2)
-        args = [xx, yy, zz, B]
-
-        cm = ax.contourf(args[i], args[j], args[k], zdir=plane, offset=0)
-        f.colorbar(cm)
-
-        ax = f.add_subplot(1, 3, 2, projection="3d")
-        ax.set_title("PolyhedralPrism")
-        poly.plot(ax)
-        Bx, By, Bz = poly.field(xx, yy, zz)
-        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
-        args_new = [xx, yy, zz, B_new]
-        cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
-        f.colorbar(cm)
-
-        ax = f.add_subplot(1, 3, 3, projection="3d")
-        ax.set_title("difference [%]")
-        args_diff = [xx, yy, zz, 100 * (B - B_new) / B]
-        poly.plot(ax)
-        cm = ax.contourf(args_diff[i], args_diff[j], args_diff[k], zdir=plane, offset=0)
-        f.colorbar(cm)
-        plt.show()
-        np.testing.assert_allclose(B_new, B)
-
-    @pytest.mark.parametrize("poly", [poly, poly2])
-    @pytest.mark.parametrize(
-        ("point", "value", "precision"),
-        [((2, 2, 2), 15.5533805, 7), ((1, 1, 1), 53.581000397, 9)],
-    )
-    def test_paper_singularity_values(self, poly, point, value, precision):
-        field = poly.field(*point)
-        abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
-        # As per Babic and Aykel paper
-        # Assume truncated last digit and not rounded...
-        field_ndecimals = np.trunc(abs_field * 10**precision) / 10**precision
-        assert field_ndecimals == pytest.approx(value, rel=0, abs=EPS)
-
-    @pytest.mark.parametrize("poly", [poly, poly2])
-    def test_paper_inside_conductor(self, poly):
-        field = poly.field(0.5, 0.5, 0.5)
-        abs_field = raw_uc(np.sqrt(sum(field**2)), "T", "mT")  # Field in mT
-        # As per Babic and Aykel paper
-        # Assume truncated last digit and not rounded...
-        field_ndecimals = np.trunc(abs_field * 10**7) / 10**7
-        assert field_ndecimals == pytest.approx(34.9969156, rel=0, abs=EPS)
 
     def teardown_method(self):
         plt.close()
