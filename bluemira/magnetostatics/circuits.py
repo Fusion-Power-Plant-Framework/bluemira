@@ -239,6 +239,23 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
             )
         )
 
+    def _get_betas_alphas(self, shape: Union[np.ndarray, Coordinates]):
+        """
+        Get the first and second half-angles (transformed to the x-z plane)
+        """
+        betas, alphas = super()._get_betas_alphas(shape)
+        if not shape.closed:
+            # We have an open shape, and we need equal angles, so overwrite flat ends
+            betas[0] = alphas[0]
+            alphas[-1] = betas[-2]
+
+        if not np.allclose(alphas, betas[:-1], atol=1e-6):
+            raise MagnetostaticsError(
+                "Cannot use equal angle sources for this shape discretisation"
+            )
+
+        return betas, alphas
+
 
 class HelmholtzCage(SourceGroup):
     """
