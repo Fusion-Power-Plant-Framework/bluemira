@@ -83,8 +83,10 @@ class TokamakOperationParametersBase:
     temperature:
         plasma temperature (assumed to be uniform throughout the plasma)
     shaf_shift:
-        shafranov shift
-        average of the minor radii at the inboard and outboard
+        Shafranov shift
+        shift of the centre of flux surfaces, i.e.
+        mean(min radius, max radius) of the LCFS,
+        towards the outboard radial direction.
     vertical_shift:
         how far (upwards) in the z direction is the centre of the plasma
         shifted compared to the geometric center of the poloidal cross-section.
