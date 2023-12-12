@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from pathlib import Path
 
 import gmsh
 import matplotlib.pyplot as plt
@@ -224,7 +223,7 @@ class TestSolovevZheng:
         # Find the LCFS.
         # Note: the points returned by matplotlib can have a small "interpolation" error,
         # thus psi on the LCFS could not be exaclty 0.
-        LCFS = cntr.get_paths()[0].vertices
+        LCFS = cntr.collections[0].get_paths()[0].vertices
 
         # create the mesh
         lcar = 1
@@ -309,7 +308,9 @@ class TestSolovevZheng:
         cls.mean_err = []
         cls.itot = []
         for dirichlet_bcs in dirichlet_bcs_list:
-            cls.gs_solver.solve(dirichlet_bcs)
+            cls.gs_solver.set_mesh(cls.mesh, ct, dirichlet_bcs)
+
+            cls.gs_solver.solve()
 
             dx = ufl.Measure("dx", subdomain_data=ct, domain=cls.mesh)
             cls.itot.append(fem.assemble_scalar(fem.form(g * dx)))

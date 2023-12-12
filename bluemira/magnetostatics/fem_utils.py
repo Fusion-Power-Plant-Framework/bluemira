@@ -609,12 +609,10 @@ def compute_B_from_Psi(
     x_0 = ufl.SpatialCoordinate(mesh)[0]
 
     B_expr = Expression(
-        ufl.as_vector(
-            (
-                -psi.dx(1) / (2 * np.pi * x_0),
-                psi.dx(0) / (2 * np.pi * x_0),
-            )
-        ),
+        ufl.as_vector((
+            -psi.dx(1) / (2 * np.pi * x_0),
+            psi.dx(0) / (2 * np.pi * x_0),
+        )),
         W0.element.interpolation_points(),
     )
 
