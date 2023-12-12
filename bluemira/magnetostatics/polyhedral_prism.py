@@ -390,7 +390,7 @@ class PolyhedralPrismCurrentSource(
 
     Notes
     -----
-    Negative angles are allowed, but both angles must be either 0 or negative.
+    Negative angles are allowed, but both angles must be equal
     """
 
     def __init__(
