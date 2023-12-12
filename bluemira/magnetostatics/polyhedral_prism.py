@@ -290,7 +290,7 @@ def surface_integral_fabbri(
     return integral - np.dot(mid_point - point, face_normal) * omega_f
 
 
-@nb.jit(nopython=True, cache=True)
+# @nb.jit(nopython=True, cache=True)
 def vector_potential_fabbri(
     current_direction: np.ndarray,
     face_points: np.ndarray,
@@ -323,7 +323,8 @@ def vector_potential_fabbri(
     for i, normal in enumerate(face_normals):
         integral += np.dot(
             mid_points[i] - point,
-            normal * surface_integral_fabbri(face_points[i], normal, point),
+            normal
+            * surface_integral_fabbri(face_points[i], normal, mid_points[i], point),
         )
     return MU_0 / (8 * np.pi) * np.dot(current_direction, integral)
 
