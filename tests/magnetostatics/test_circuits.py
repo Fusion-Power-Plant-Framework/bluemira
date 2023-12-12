@@ -24,8 +24,12 @@ from bluemira.magnetostatics.circuits import (
     HelmholtzCage,
 )
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
-from bluemira.magnetostatics.semianalytic_2d import semianalytic_psi, semianalytic_Bx, semianalytic_Bz
 from bluemira.magnetostatics.polyhedral_prism import field_fabbri as poly_field
+from bluemira.magnetostatics.semianalytic_2d import (
+    semianalytic_Bx,
+    semianalytic_Bz,
+    semianalytic_psi,
+)
 from bluemira.magnetostatics.trapezoidal_prism import TrapezoidalPrismCurrentSource
 from tests.magnetostatics.setup_methods import make_xs_from_bd, plane_setup
 
@@ -265,60 +269,6 @@ class TestArbitraryPlanarPolyhedralCircuit:
         return np.allclose(s1_rect, s2_rect)
 
 
-class TestArbitraryPlanarPolyhedralPFCoil:
-    coordinates = make_circle(10).discretize(31)
-    xs = Coordinates({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]})
-    poly = ArbitraryPlanarPolyhedralXSCircuit(coordinates, xs, current=1)
-    trap = ArbitraryPlanarRectangularXSCircuit(coordinates, 1, 1, current=1)
-
-    @pytest.mark.parametrize("plane", ["x", "y", "z"])
-    def test_fields(self, plane):
-        xx, yy, zz, i, j, k = plane_setup(plane, 5, 15, -5, 5, n=20)
-
-        f = plt.figure()
-        ax = f.add_subplot(1, 2, 1, projection="3d")
-        self.trap.plot(ax)
-        ax.set_title("ArbitraryRectangular")
-        Bx, By, Bz = self.trap.field(xx, yy, zz)
-        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
-        args_new = [xx, yy, zz, B_new]
-        cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
-
-        ax = f.add_subplot(1, 2, 2, projection="3d")
-        self.poly.plot(ax)
-        ax.set_title("ArbitraryPolyhedral")
-        Bx, By, Bz = self.poly.field(xx, yy, zz)
-        B_new2 = np.sqrt(Bx**2 + By**2 + Bz**2)
-        args_new = [xx, yy, zz, B_new2]
-        cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
-        f.colorbar(cm)
-        plt.show()
-        np.testing.assert_allclose(B_new, B_new2)
-
-    def test_vector_potential_flux(self):
-        """
-        Tests non-user-facing functionality
-        """
-        xx, yy, zz, _, _, _ = plane_setup("y", 5, 15, -5, 5, n=20)
-        ax, ay, az = np.zeros((3, 20, 20))
-        for s in self.poly.sources:
-            aix, aiy, aiz = s.vector_potential(xx, yy, zz)
-            ax += aix
-            ay += aiy
-            az += aiz
-
-        psi_true = semianalytic_psi(10, 0, xx, zz, 1, 1)
-        psi_calc = xx * ay
-
-        _, aix = plt.subplots(1, 2)
-        aix[0].contourf(xx, zz, psi_calc)
-        aix[0].set_aspect("equal")
-        aix[1].contourf(xx, zz, psi_true)
-        aix[1].set_aspect("equal")
-        plt.show()
-        np.testing.assert_allclose(psi_calc, psi_true, rtol=0.015)
-
-
 class TestPolyhedralCircuitPlotting:
     @classmethod
     def setup_class(cls):
@@ -425,7 +375,6 @@ class TestCariddiBenchmark:
         assert np.max(np.abs(ripple - self.cariddi_ripple)) < 0.04
 
 
-@pytest.mark.longrun
 class TestPolyhedral2DRing:
     @classmethod
     def setup_class(cls):
@@ -440,7 +389,8 @@ class TestPolyhedral2DRing:
             ring.discretize(ndiscr=n), xs, current=cls.current
         )
 
-    def test_2D(self):
+    @pytest.mark.longrun
+    def test_Bx_Bz_2D(self):
         x = np.linspace(0.1, 10, 50)
         z = np.linspace(0.1, 10, 50)
         xx, zz = np.meshgrid(x, z)
@@ -453,6 +403,33 @@ class TestPolyhedral2DRing:
         assert np.mean(np.isclose(Bx, Bx_coil, rtol=7.5e-4)) >= 0.85
         assert np.mean(np.isclose(Bz, Bz_coil, rtol=7.5e-4)) >= 0.85
 
+    def test_vector_potential_flux(self):
+        """
+        Tests non-user-facing functionality for vector potential
+        """
+        coordinates = make_circle(10).discretize(31)
+        xs = Coordinates({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]})
+        poly = ArbitraryPlanarPolyhedralXSCircuit(coordinates, xs, current=1)
+        xx, yy, zz, _, _, _ = plane_setup("y", 5, 15, -5, 5, n=20)
+        ax, ay, az = np.zeros((3, 20, 20))
+        for s in poly.sources:
+            aix, aiy, aiz = s.vector_potential(xx, yy, zz)
+            ax += aix
+            ay += aiy
+            az += aiz
+
+        psi_true = semianalytic_psi(10, 0, xx, zz, 1, 1)
+        psi_calc = xx * ay
+
+        _, aix = plt.subplots(1, 2)
+        aix[0].contourf(xx, zz, psi_calc)
+        aix[0].set_aspect("equal")
+        aix[1].contourf(xx, zz, psi_true)
+        aix[1].set_aspect("equal")
+        plt.show()
+        np.testing.assert_allclose(psi_calc, psi_true, rtol=0.015)
+
+    @pytest.mark.longrun
     @pytest.mark.parametrize(
         ("point"),
         [(2, 0, 6), (6, 0, 6), (2, 0, 2), (6, 0, 2)],
@@ -479,3 +456,34 @@ class TestPolyhedral2DRing:
         # these fail so the end caps are needed
         # assert field[0] == pytest.approx(Bx_coil, rel=1e-5, abs=1e-5)
         # assert field[2] == pytest.approx(Bz_coil, rel=1e-5, abs=1e-5)
+
+
+class TestArbitraryPlanarPolyhedralPFCoil:
+    coordinates = make_circle(10).discretize(31)
+    xs = Coordinates({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]})
+    poly = ArbitraryPlanarPolyhedralXSCircuit(coordinates, xs, current=1)
+    trap = ArbitraryPlanarRectangularXSCircuit(coordinates, 1, 1, current=1)
+
+    @pytest.mark.parametrize("plane", ["x", "y", "z"])
+    def test_fields(self, plane):
+        xx, yy, zz, i, j, k = plane_setup(plane, 5, 15, -5, 5, n=20)
+
+        f = plt.figure()
+        ax = f.add_subplot(1, 2, 1, projection="3d")
+        self.trap.plot(ax)
+        ax.set_title("ArbitraryRectangular")
+        Bx, By, Bz = self.trap.field(xx, yy, zz)
+        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
+        args_new = [xx, yy, zz, B_new]
+        cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
+
+        ax = f.add_subplot(1, 2, 2, projection="3d")
+        self.poly.plot(ax)
+        ax.set_title("ArbitraryPolyhedral")
+        Bx, By, Bz = self.poly.field(xx, yy, zz)
+        B_new2 = np.sqrt(Bx**2 + By**2 + Bz**2)
+        args_new = [xx, yy, zz, B_new2]
+        cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
+        f.colorbar(cm)
+        plt.show()
+        np.testing.assert_allclose(B_new, B_new2)
