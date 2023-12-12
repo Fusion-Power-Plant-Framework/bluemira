@@ -449,8 +449,8 @@ class PolyhedralPrismCurrentSource(
         """
         if not np.isclose(alpha, beta):
             raise MagnetostaticsError(
-                f"{self.__class__.__name__} instantiation error: {alpha:.3f} "
-                f"!= {beta:.3f}"
+                f"{self.__class__.__name__} instantiation error: {alpha=:.3f} "
+                f"!= {beta=:.3f}"
             )
         if not (0 <= abs(alpha) < 0.5 * np.pi):
             raise MagnetostaticsError(
