@@ -217,7 +217,7 @@ class PrismEndCapMixin:
         """
         sign_alpha = np.sign(alpha)
         sign_beta = np.sign(beta)
-        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0.0)  # noqa: PLR2004
+        one_zero = np.any(np.array([sign_alpha, sign_beta]) == 0)
         if not one_zero and sign_alpha != sign_beta:
             raise MagnetostaticsError(
                 f"{self.__class__.__name__} instantiation error: end-cap angles "
