@@ -70,14 +70,14 @@ class Fabbri(PolyhedralKernel):
         """
         Magnetic field
         """
-        return field_fabbri(*args)
+        return _field_fabbri(*args)
 
     @staticmethod
     def vector_potential(*args) -> np.ndarray:
         """
         Vector potential
         """
-        return vector_potential_fabbri(*args)
+        return _vector_potential_fabbri(*args)
 
 
 class Bottura(PolyhedralKernel):
@@ -103,7 +103,7 @@ class Bottura(PolyhedralKernel):
 
 
 @nb.jit(nopython=True, cache=True)
-def vector_norm_eps(r: np.ndarray) -> float:
+def _vector_norm_eps(r: np.ndarray) -> float:
     """
     Dodge singularities in omega_t and line_integral when field point
     lies on an edge.
@@ -130,7 +130,7 @@ def vector_norm_eps(r: np.ndarray) -> float:
 
 
 @nb.jit(nopython=True, cache=True)
-def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> float:
+def _omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> float:
     """
     Solid angle seen from the calculation point subtended by the face
     triangle normal must be pointing outwards from the face
@@ -166,9 +166,9 @@ def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> fl
     r2_r = r2 - r
     r3_r = r3 - r
 
-    r1r = vector_norm_eps(r1_r)
-    r2r = vector_norm_eps(r2_r)
-    r3r = vector_norm_eps(r3_r)
+    r1r = _vector_norm_eps(r1_r)
+    r2r = _vector_norm_eps(r2_r)
+    r3r = _vector_norm_eps(r3_r)
     d = (
         r1r * r2r * r3r
         + r3r * np.dot(r1_r, r2_r)
@@ -183,7 +183,7 @@ def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> fl
 
 
 @nb.jit(nopython=True, cache=True)
-def edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
+def _edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
     """
     Evaluate the edge integral w_e(r) of the W function at a point
 
@@ -204,15 +204,15 @@ def edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float
     -----
     \t:math:`w_{e}(\\mathbf{r}) = \\textrm{ln}\\dfrac{\\lvert \\mathbf{r_2} - \\mathbf{r} \\rvert + \\lvert\\mathbf{r_1} - \\mathbf{r} \\rvert + \\lvert \\mathbf{r_2} - \\mathbf{r_1} \\rvert}{\\lvert \\mathbf{r_2} - \\mathbf{r} \\rvert + \\lvert\\mathbf{r_1} - \\mathbf{r} \\rvert - \\lvert \\mathbf{r_2} - \\mathbf{r_1} \\rvert}`
     """  # noqa: W505 E501
-    r1r = vector_norm_eps(r1 - r)
-    r2r = vector_norm_eps(r2 - r)
-    r2r1 = vector_norm_eps(r2 - r1)
+    r1r = _vector_norm_eps(r1 - r)
+    r2r = _vector_norm_eps(r2 - r)
+    r2r1 = _vector_norm_eps(r2 - r1)
     a = r2r + r1r + r2r1
     b = r2r + r1r - r2r1
     return np.log(a / b)
 
 
-def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
+def _get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
     """
     Get an arbitrary point on the face
     """
@@ -220,7 +220,7 @@ def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
 
 
 @nb.jit(nopython=True, cache=True)
-def surface_integral_fabbri(
+def _surface_integral_fabbri(
     face_points: np.ndarray,
     face_normal: np.ndarray,
     mid_point: np.ndarray,
@@ -258,16 +258,16 @@ def surface_integral_fabbri(
         u_e /= np.linalg.norm(u_e)
         integral += np.dot(
             np.cross(face_normal, p0 - point),  # r_e is an arbitrary point
-            u_e * edge_integral_fabbri(point, p0, p1),
+            u_e * _edge_integral_fabbri(point, p0, p1),
         )
         # Calculate omega_f as the sum of subtended angles with a triangle
         # for each edge
-        omega_f += omega_t(point, p0, p1, mid_point)
+        omega_f += _omega_t(point, p0, p1, mid_point)
     return integral - np.dot(mid_point - point, face_normal) * omega_f
 
 
 # @nb.jit(nopython=True, cache=True)
-def vector_potential_fabbri(
+def _vector_potential_fabbri(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
@@ -300,13 +300,13 @@ def vector_potential_fabbri(
         integral += np.dot(
             mid_points[i] - point,
             normal
-            * surface_integral_fabbri(face_points[i], normal, mid_points[i], point),
+            * _surface_integral_fabbri(face_points[i], normal, mid_points[i], point),
         )
     return 0.5 * MU_0_4PI * np.dot(current_direction, integral)
 
 
 # @nb.jit(nopython=True, cache=True)
-def field_fabbri(
+def _field_fabbri(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
@@ -336,7 +336,7 @@ def field_fabbri(
     """
     field = np.zeros(3)
     for i, normal in enumerate(face_normals):
-        field += np.cross(current_direction, normal) * surface_integral_fabbri(
+        field += np.cross(current_direction, normal) * _surface_integral_fabbri(
             face_points[i], normal, mid_points[i], point
         )
     return MU_0_4PI * field
@@ -530,7 +530,7 @@ class PolyhedralPrismCurrentSource(
         # Important to make sure the normal faces outwards!
         face_points.append(list(upper_points[::-1]))
 
-        mid_points = [get_face_midpoint(face) for face in face_points]
+        mid_points = [_get_face_midpoint(face) for face in face_points]
 
         self._face_points = np.array(face_points)
         self._mid_points = np.array(mid_points)
