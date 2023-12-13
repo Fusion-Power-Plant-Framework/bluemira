@@ -612,12 +612,13 @@ def _generate_source_geometry(
     return face_points, mid_points, face_normals, n_sides
 
 
-# @nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
 def _vector_potential_bottura(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
     mid_points: np.ndarray,
+    n_sides: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -634,6 +635,8 @@ def _vector_potential_bottura(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
     point:
         Point at which to calculate the vector potential (3)
 
@@ -644,17 +647,21 @@ def _vector_potential_bottura(
     A = 0.0
 
     for i, face_normal in enumerate(face_normals):  # Faces of the prism
-        surface_integral = _surface_integral_bottura(face_normal, face_points[i], point)
+        surface_integral = _surface_integral_bottura(
+            face_normal, face_points[i], n_sides[i], point
+        )
         zpp = np.dot(face_normal, mid_points[i] - point)
         A += zpp * surface_integral
     return 0.5 * MU_0_4PI * A * current_direction
 
 
+@nb.jit(nopython=True, cache=True)
 def _field_bottura(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
     mid_points: np.ndarray,  # noqa: ARG001
+    n_sides: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -671,6 +678,8 @@ def _field_bottura(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
     point:
         Point at which to calculate the magnetic field (3)
 
@@ -681,12 +690,17 @@ def _field_bottura(
     B = np.zeros(3)
 
     for i, face_normal in enumerate(face_normals):  # Faces of the prism
-        surface_integral = _surface_integral_bottura(face_normal, face_points[i], point)
+        surface_integral = _surface_integral_bottura(
+            face_normal, face_points[i], n_sides[i], point
+        )
         B += face_normal * surface_integral
     return -MU_0_4PI * np.cross(current_direction, B)
 
 
-def _surface_integral_bottura(face_normal, face_points, point):
+@nb.jit(nopython=True, cache=True)
+def _surface_integral_bottura(
+    face_normal: np.ndarray, face_points: np.ndarray, n_sides: int, point: np.ndarray
+) -> float:
     """
     Evaluate the surface integral W_f(r) on a planar face
 
@@ -712,7 +726,7 @@ def _surface_integral_bottura(face_normal, face_points, point):
     """  # noqa: W505 E501
     integral = 0.0
 
-    for j in range(len(face_points) - 1):  # Lines of the face
+    for j in range(n_sides):  # Lines of the face
         corner_1, corner_2 = face_points[j], face_points[j + 1]
         xpp_axis = corner_2 - corner_1
         xpp_axis /= np.linalg.norm(xpp_axis)
