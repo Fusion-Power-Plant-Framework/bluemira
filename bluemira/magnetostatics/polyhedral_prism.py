@@ -37,6 +37,8 @@ from bluemira.magnetostatics.baseclass import (
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 
+__all__ = ["PolyhedralPrismCurrentSource"]
+
 ZERO_DIV_GUARD_EPS = 1e-14
 
 
