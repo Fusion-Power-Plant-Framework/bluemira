@@ -25,6 +25,7 @@ from bluemira.magnetostatics.circuits import (
     HelmholtzCage,
 )
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
+from bluemira.magnetostatics.polyhedral_prism import field_fabbri
 from bluemira.magnetostatics.semianalytic_2d import (
     semianalytic_Bx,
     semianalytic_Bz,
@@ -310,14 +311,14 @@ class TestPolyhedralFaceContinuity:
         point = np.array([2, 2, 2])
         source1 = self.circuit.sources[4]
         source2 = self.circuit.sources[5]
-        field1 = source1._rho * poly_field(
+        field1 = source1._rho * field_fabbri(
             source1._dcm[1],
             [source1._face_points[-1]],
             [source1._face_normals[-1]],
             [source1._mid_points[-1]],
             point,
         )
-        field2 = source2._rho * poly_field(
+        field2 = source2._rho * field_fabbri(
             source2._dcm[1],
             [source2._face_points[0]],
             [source2._face_normals[0]],

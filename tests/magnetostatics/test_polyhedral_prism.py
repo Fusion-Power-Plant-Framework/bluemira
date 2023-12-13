@@ -9,8 +9,8 @@ import numpy as np
 import pytest
 
 from bluemira.geometry.tools import Coordinates
-from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.baseclass import SourceGroup
+from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.polyhedral_prism import (
     Bottura,
     Fabbri,
@@ -349,7 +349,6 @@ class TestCombinedShapes:
         f.colorbar(cm)
         plt.show()
         np.testing.assert_allclose(B_new, B)
-
 
 
 class TestPolyhedralSourceContinuity:
