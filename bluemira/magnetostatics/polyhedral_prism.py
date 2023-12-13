@@ -216,6 +216,7 @@ def _edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> floa
     return np.log(a / b)
 
 
+@nb.jit(nopython=True, cache=True)
 def _get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
     """
     Get an arbitrary point on the face
@@ -224,15 +225,10 @@ def _get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
 
 
 @nb.jit(nopython=True, cache=True)
-def _get_face_midpoint_temp(face_points: np.ndarray) -> np.ndarray:
-    """
-    Get an arbitrary point on the face
-    """
-    return np.sum(face_points[:-1], axis=0) / (len(face_points) - 1)
-
-
-@nb.jit(nopython=True, cache=True)
 def _get_face_normal(face_points: np.ndarray) -> np.ndarray:
+    """
+    Get the normal of a face
+    """
     normal = np.cross(face_points[1] - face_points[0], face_points[2] - face_points[1])
     return normal / np.linalg.norm(normal)
 
@@ -589,7 +585,7 @@ def _generate_source_geometry(
     face_normals = np.zeros((n_faces, 3), dtype=np.float64)
 
     face_points[0, :n_end_caps, :] = lower_points
-    mid_points[0, :] = _get_face_midpoint_temp(lower_points)
+    mid_points[0, :] = _get_face_midpoint(lower_points)
     face_normals[0, :] = _get_face_normal(lower_points)
 
     face_p = np.zeros((5, 3), dtype=np.float64)
@@ -602,11 +598,11 @@ def _generate_source_geometry(
         face_p[3, :] = lower_points[i + 1, :]
         face_p[4, :] = lpi
         face_points[i + 1, :5, :] = face_p
-        mid_points[i + 1, :] = _get_face_midpoint_temp(face_p)
+        mid_points[i + 1, :] = _get_face_midpoint(face_p)
         face_normals[i + 1, :] = _get_face_normal(face_p)
 
     face_points[-1, :n_end_caps, :] = upper_points[::-1]
-    mid_points[-1, :] = _get_face_midpoint_temp(face_points[-1, :, :])
+    mid_points[-1, :] = _get_face_midpoint(face_points[-1, :, :])
     face_normals[-1, :] = _get_face_normal(face_points[-1, :, :])
 
     n_sides = 4 * np.ones(n_faces, dtype=np.int32)
