@@ -166,8 +166,9 @@ like with the trapezoidal current source. The
 of planar circuits, making use of the ``PolyhedralPrismCurrentSource`` object.
 
 .. Note::
-    Sadly, the ``PolyhedralPrismCurrentSource`` can only equal angle end-caps. This is due
-    to a limitation that will hopefully be resolved in future.
+    Sadly, the ``PolyhedralPrismCurrentSource`` can only handle equal angle end-caps.
+    This is due to a limitation of the formulation that will hopefully be resolved in
+    future.
 
 
 .. literalinclude:: doc_polyhedral_planar.py
