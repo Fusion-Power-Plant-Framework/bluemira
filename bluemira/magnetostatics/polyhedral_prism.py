@@ -243,6 +243,7 @@ def _surface_integral_fabbri(
     face_normal: np.ndarray,
     mid_point: np.ndarray,
     point: np.ndarray,
+    n_sides: int,
 ) -> float:
     """
     Evaluate the surface integral W_f(r) on a planar face
@@ -258,6 +259,8 @@ def _surface_integral_fabbri(
         Array of face midpoints (n_face, 3)
     point:
         Point at which to calculate the vector potential (3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
 
     Returns
     -------
@@ -269,7 +272,7 @@ def _surface_integral_fabbri(
     """  # noqa: W505 E501
     omega_f = 0.0
     integral = 0.0
-    for i in range(len(face_points) - 1):
+    for i in range(n_sides):
         p0 = face_points[i]
         p1 = face_points[i + 1]
         u_e = p1 - p0
@@ -284,12 +287,13 @@ def _surface_integral_fabbri(
     return integral - np.dot(mid_point - point, face_normal) * omega_f
 
 
-# @nb.jit(nopython=True, cache=True)
+@nb.jit(nopython=True, cache=True)
 def _vector_potential_fabbri(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
     mid_points: np.ndarray,
+    n_sides: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -306,6 +310,8 @@ def _vector_potential_fabbri(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
     point:
         Point at which to calculate the vector potential (3)
 
@@ -318,17 +324,20 @@ def _vector_potential_fabbri(
         integral += np.dot(
             mid_points[i] - point,
             normal
-            * _surface_integral_fabbri(face_points[i], normal, mid_points[i], point),
+            * _surface_integral_fabbri(
+                face_points[i], normal, mid_points[i], n_sides[i], point
+            ),
         )
     return 0.5 * MU_0_4PI * np.dot(current_direction, integral)
 
 
-# @nb.jit(nopython=True, cache=True)
+@nb.jit(nopython=True, cache=True)
 def _field_fabbri(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
     mid_points: np.ndarray,
+    n_sides: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -345,6 +354,8 @@ def _field_fabbri(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
     point:
         Point at which to calculate the magnetic field (3)
 
@@ -355,7 +366,7 @@ def _field_fabbri(
     field = np.zeros(3)
     for i, normal in enumerate(face_normals):
         field += np.cross(current_direction, normal) * _surface_integral_fabbri(
-            face_points[i], normal, mid_points[i], point
+            face_points[i], normal, mid_points[i], n_sides[i], point
         )
     return MU_0_4PI * field
 
@@ -485,7 +496,12 @@ class PolyhedralPrismCurrentSource(
         """
         point = np.array([x, y, z])
         return self._rho * self.__kernel.field(
-            self._dcm[1], self._face_points, self._face_normals, self._mid_points, point
+            self._dcm[1],
+            self._face_points,
+            self._face_normals,
+            self._mid_points,
+            self._n_sides,
+            point,
         )
 
     @process_xyz_array
@@ -513,7 +529,12 @@ class PolyhedralPrismCurrentSource(
         """
         point = np.array([x, y, z])
         return self._rho * self.__kernel.vector_potential(
-            self._dcm[1], self._face_points, self._face_normals, self._mid_points, point
+            self._dcm[1],
+            self._face_points,
+            self._face_normals,
+            self._mid_points,
+            self._n_sides,
+            point,
         )
 
     def _calculate_points(self):
@@ -533,34 +554,12 @@ class PolyhedralPrismCurrentSource(
         # Project and translate points onto end cap plane
         upper[1] += self._halflength + upper[0] * np.tan(self._alpha)
         upper_points = self._local_to_global(upper.T)
-
-        face_points = [lower_points]
-        for i in range(n_rect_faces):
-            # Assemble rectangular joining faces
-            fp = [
-                lower_points[i],
-                upper_points[i],
-                upper_points[i + 1],
-                lower_points[i + 1],
-                lower_points[i],
-            ]
-            face_points.append(fp)
-        # Important to make sure the normal faces outwards!
-        face_points.append(list(upper_points[::-1]))
-
-        mid_points = [_get_face_midpoint(face) for face in face_points]
-        fp, mp, n = _generate_source_geometry(lower_points, upper_points)
-
-        # TODO: remove once done
-        compare = np.array(face_points)
-        for i in range(len(compare)):
-            for j in range(len(compare[i])):
-                assert np.allclose(compare[i][j], fp[i, j, :])  # noqa: S101
-
-        self._face_points = np.array(face_points)
-        self._mid_points = np.array(mid_points)
-        normals = [np.cross(p[1] - p[0], p[2] - p[1]) for p in self._face_points]
-        self._face_normals = np.array([n / np.linalg.norm(n) for n in normals])
+        (
+            self._face_points,
+            self._mid_points,
+            self._face_normals,
+            self._n_sides,
+        ) = _generate_source_geometry(lower_points, upper_points)
 
         # Points for plotting only
         points = [np.vstack(lower_points), np.vstack(upper_points)]
@@ -576,21 +575,24 @@ class PolyhedralPrismCurrentSource(
 def _generate_source_geometry(
     lower_points: np.ndarray, upper_points: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Generate the source geometry - faster
+    """
     # Need to have an array of constant size
     n_end_caps = len(lower_points)
     n_rect_faces = n_end_caps - 1
     n_faces = n_rect_faces + 2
     n_face_max = max(5, n_end_caps)
 
-    face_points = np.zeros((n_faces, n_face_max, 3), dtype=float)
-    mid_points = np.zeros((n_faces, 3), dtype=float)
-    face_normals = np.zeros((n_faces, 3), dtype=float)
+    face_points = np.zeros((n_faces, n_face_max, 3), dtype=np.float64)
+    mid_points = np.zeros((n_faces, 3), dtype=np.float64)
+    face_normals = np.zeros((n_faces, 3), dtype=np.float64)
 
     face_points[0, :n_end_caps, :] = lower_points
     mid_points[0, :] = _get_face_midpoint_temp(lower_points)
     face_normals[0, :] = _get_face_normal(lower_points)
 
-    face_p = np.zeros((5, 3), dtype=float)
+    face_p = np.zeros((5, 3), dtype=np.float64)
     for i in range(n_rect_faces):
         # Assemble rectangular joining faces
         lpi = lower_points[i, :]
@@ -607,7 +609,11 @@ def _generate_source_geometry(
     mid_points[-1, :] = _get_face_midpoint_temp(face_points[-1, :, :])
     face_normals[-1, :] = _get_face_normal(face_points[-1, :, :])
 
-    return face_points, mid_points, face_normals
+    n_sides = 4 * np.ones(n_faces, dtype=np.int32)
+    n_sides[0] = n_end_caps - 1
+    n_sides[-1] = n_sides[0]
+
+    return face_points, mid_points, face_normals, n_sides
 
 
 # @nb.jit(nopython=True)
