@@ -23,7 +23,7 @@ https://supermagnet.sourceforge.io/notes/CRYO-06-034.pdf
 
 import abc
 from copy import deepcopy
-from typing import Union
+from typing import Tuple, Union
 
 import numba as nb
 import numpy as np
@@ -221,6 +221,20 @@ def _get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
     Get an arbitrary point on the face
     """
     return np.sum(face_points[:-1], axis=0) / (len(face_points) - 1)
+
+
+@nb.jit(nopython=True, cache=True)
+def _get_face_midpoint_temp(face_points: np.ndarray) -> np.ndarray:
+    """
+    Get an arbitrary point on the face
+    """
+    return np.sum(face_points[:-1], axis=0) / (len(face_points) - 1)
+
+
+@nb.jit(nopython=True, cache=True)
+def _get_face_normal(face_points: np.ndarray) -> np.ndarray:
+    normal = np.cross(face_points[1] - face_points[0], face_points[2] - face_points[1])
+    return normal / np.linalg.norm(normal)
 
 
 @nb.jit(nopython=True, cache=True)
@@ -535,6 +549,13 @@ class PolyhedralPrismCurrentSource(
         face_points.append(list(upper_points[::-1]))
 
         mid_points = [_get_face_midpoint(face) for face in face_points]
+        fp, mp, n = _generate_source_geometry(lower_points, upper_points)
+
+        # TODO: remove once done
+        compare = np.array(face_points)
+        for i in range(len(compare)):
+            for j in range(len(compare[i])):
+                assert np.allclose(compare[i][j], fp[i, j, :])  # noqa: S101
 
         self._face_points = np.array(face_points)
         self._mid_points = np.array(mid_points)
@@ -549,6 +570,44 @@ class PolyhedralPrismCurrentSource(
         )
 
         return np.array(points, dtype=object)
+
+
+@nb.jit(nopython=True, cache=True)
+def _generate_source_geometry(
+    lower_points: np.ndarray, upper_points: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    # Need to have an array of constant size
+    n_end_caps = len(lower_points)
+    n_rect_faces = n_end_caps - 1
+    n_faces = n_rect_faces + 2
+    n_face_max = max(5, n_end_caps)
+
+    face_points = np.zeros((n_faces, n_face_max, 3), dtype=float)
+    mid_points = np.zeros((n_faces, 3), dtype=float)
+    face_normals = np.zeros((n_faces, 3), dtype=float)
+
+    face_points[0, :n_end_caps, :] = lower_points
+    mid_points[0, :] = _get_face_midpoint_temp(lower_points)
+    face_normals[0, :] = _get_face_normal(lower_points)
+
+    face_p = np.zeros((5, 3), dtype=float)
+    for i in range(n_rect_faces):
+        # Assemble rectangular joining faces
+        lpi = lower_points[i, :]
+        face_p[0, :] = lpi
+        face_p[1, :] = upper_points[i, :]
+        face_p[2, :] = upper_points[i + 1, :]
+        face_p[3, :] = lower_points[i + 1, :]
+        face_p[4, :] = lpi
+        face_points[i + 1, :5, :] = face_p
+        mid_points[i + 1, :] = _get_face_midpoint_temp(face_p)
+        face_normals[i + 1, :] = _get_face_normal(face_p)
+
+    face_points[-1, :n_end_caps, :] = upper_points[::-1]
+    mid_points[-1, :] = _get_face_midpoint_temp(face_points[-1, :, :])
+    face_normals[-1, :] = _get_face_normal(face_points[-1, :, :])
+
+    return face_points, mid_points, face_normals
 
 
 # @nb.jit(nopython=True)
