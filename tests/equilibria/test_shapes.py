@@ -4,6 +4,8 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from copy import deepcopy
+
 import numpy as np
 import pytest
 from matplotlib import pyplot as plt
@@ -245,10 +247,10 @@ johner_names = [
     "kappa_l",
     "delta_u",
     "delta_l",
-    "psi_u_neg",
-    "psi_u_pos",
-    "psi_l_neg",
-    "psi_l_pos",
+    "phi_u_neg",
+    "phi_u_pos",
+    "phi_l_neg",
+    "phi_l_pos",
     "ax",
     "label",
 ]
@@ -285,7 +287,7 @@ class TestJohner:
     def setup_class(cls):
         cls.f, cls.ax = plt.subplots(4, 2)
 
-    @pytest.mark.parametrize("kwargs", johner_params)
+    @pytest.mark.parametrize("kwargs", deepcopy(johner_params))
     def test_johner(self, kwargs):
         ax0, ax1 = kwargs.pop("ax")
         label = kwargs.pop("label")
@@ -318,6 +320,18 @@ class TestJohnerCAD:
 
         assert np.isclose(wire_pos.length, wire_neg.length)
 
+    @pytest.mark.parametrize("kwargs", deepcopy(johner_params))
+    def test_cad_closed(self, kwargs):
+        kwargs.pop("ax")
+        kwargs.pop("label")
+        var_dict = {k: {"value": v} for k, v in kwargs.items()}
+        var_dict["r_0"] = {"value": 9}
+        var_dict["z_0"] = {"value": 0}
+        var_dict["a"] = {"value": 9 / 3}
+        param = JohnerLCFS(var_dict=var_dict)
+        shape = param.create_shape()
+        assert shape.is_closed()
+
 
 class TestKuiroukidisCAD:
     def test_segments(self):
@@ -337,6 +351,24 @@ class TestKuiroukidisCAD:
         wire_neg = p_neg.create_shape()
 
         assert np.isclose(wire_pos.length, wire_neg.length)
+
+    @pytest.mark.parametrize(
+        ("r_0", "a", "kappa_u", "kappa_l", "delta_u", "delta_l", "ax"),
+        TestKuiroukidis.fixture,
+    )
+    def test_cad_closed(
+        self, r_0, a, kappa_u, kappa_l, delta_u, delta_l, ax  # noqa: ARG002
+    ):
+        kwargs = dict(
+            zip(
+                ("r_0", "a", "kappa_u", "kappa_l", "delta_u", "delta_l"),
+                (r_0, a, kappa_u, kappa_l, delta_u, delta_l),
+            )
+        )
+        var_dict = {k: {"value": v} for k, v in kwargs.items()}
+        param = KuiroukidisLCFS(var_dict=var_dict)
+        shape = param.create_shape()
+        assert shape.is_closed()
 
 
 class TestManickamCunninghamZakahrovCAD:

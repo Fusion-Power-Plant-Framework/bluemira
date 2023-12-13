@@ -175,14 +175,10 @@ class PlasmaDesigner(Designer[GeometryParameterisation]):
                 "kappa_l": {"value": params.kappa_l.value},
                 "delta_u": {"value": params.delta_u.value},
                 "delta_l": {"value": params.delta_l.value},
-                "phi_u_pos": {"value": params.phi_pos_u.value, "lower_bound": 0.0},
-                "phi_u_neg": {"value": params.phi_neg_u.value, "lower_bound": 0.0},
-                "phi_l_pos": {"value": params.phi_pos_l.value, "lower_bound": 0.0},
-                "phi_l_neg": {
-                    "value": params.phi_neg_l.value,
-                    "lower_bound": 0.0,
-                    "upper_bound": 90,
-                },
+                "phi_u_pos": {"value": params.phi_pos_u.value},
+                "phi_u_neg": {"value": params.phi_neg_u.value},
+                "phi_l_pos": {"value": params.phi_pos_l.value, "lower_bound": 0},
+                "phi_l_neg": {"value": params.phi_neg_l.value, "upper_bound": 45},
             }
         )
 
