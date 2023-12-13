@@ -572,7 +572,18 @@ def _generate_source_geometry(
     lower_points: np.ndarray, upper_points: np.ndarray
 ) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
     """
-    Generate the source geometry - faster
+    Generate the polyhedral prism source geometry - faster
+
+    Returns
+    -------
+    face_points:
+        The ordered points of the faces
+    mid_points:
+        The mid-points for each face
+    face_normals:
+        The normal vectors for each face (normalised)
+    n_sides:
+        The array of the number of sides to consider for each face
     """
     # Need to have an array of constant size
     n_end_caps = len(lower_points)
