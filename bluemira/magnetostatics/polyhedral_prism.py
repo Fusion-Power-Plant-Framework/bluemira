@@ -242,8 +242,8 @@ def _surface_integral_fabbri(
     face_points: np.ndarray,
     face_normal: np.ndarray,
     mid_point: np.ndarray,
-    point: np.ndarray,
     n_sides: int,
+    point: np.ndarray,
 ) -> float:
     """
     Evaluate the surface integral W_f(r) on a planar face
@@ -257,10 +257,10 @@ def _surface_integral_fabbri(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
-    point:
-        Point at which to calculate the vector potential (3)
     n_sides:
         Number of points in the face points (avoid reflected lists)
+    point:
+        Point at which to calculate the vector potential (3)
 
     Returns
     -------
