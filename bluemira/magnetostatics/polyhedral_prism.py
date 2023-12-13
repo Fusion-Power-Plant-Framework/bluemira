@@ -38,6 +38,8 @@ from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
 
 __all__ = ["PolyhedralPrismCurrentSource"]
+# NOTE: Polyhedral kernels are not intended to be user-facing, but
+# it's useful for testing.
 
 ZERO_DIV_GUARD_EPS = 1e-14
 
