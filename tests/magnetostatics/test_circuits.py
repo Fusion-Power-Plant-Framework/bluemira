@@ -410,12 +410,10 @@ class TestPolyhedral2DRing:
         xs = Coordinates({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]})
         poly = ArbitraryPlanarPolyhedralXSCircuit(coordinates, xs, current=1)
         xx, yy, zz, _, _, _ = plane_setup("y", 5, 15, -5, 5, n=20)
-        ax, ay, az = np.zeros((3, 20, 20))
+        ay = np.zeros((20, 20))
         for s in poly.sources:
-            aix, aiy, aiz = s.vector_potential(xx, yy, zz)
-            ax += aix
+            _, aiy, _ = s.vector_potential(xx, yy, zz)
             ay += aiy
-            az += aiz
 
         psi_true = semianalytic_psi(10, 0, xx, zz, 1, 1)
         psi_calc = xx * ay
@@ -462,7 +460,7 @@ class TestArbitraryPlanarPolyhedralPFCoil:
         Bx, By, Bz = self.trap.field(xx, yy, zz)
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         args_new = [xx, yy, zz, B_new]
-        cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
+        ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
 
         ax = f.add_subplot(1, 2, 2, projection="3d")
         self.poly.plot(ax)
