@@ -51,6 +51,10 @@ class MinimalCurrentCOP(CoilsetOptimisationProblem):
         Optimiser conditions
     opt_algorithm:
         optimiser algorithm
+    opt_parameters:
+        Optimiser specific parameters,
+        see https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#algorithm-specific-parameters
+        Otherwise, the parameters can be founded by digging through the source code.
     constraints:
         List of optimisation constraints to apply to the optimisation problem
     """

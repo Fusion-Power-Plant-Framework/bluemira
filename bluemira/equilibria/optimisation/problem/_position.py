@@ -70,9 +70,12 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         for defaults see
         :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
         along with `max_eval=100`
-
+    opt_parameters:
+        Optimiser specific parameters,
+        see https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#algorithm-specific-parameters
+        Otherwise, the parameters can be founded by digging through the source code.
     constraints:
-        contraints on the problem
+        List of optimisation constraints to apply to the optimisation problem
 
     Notes
     -----
