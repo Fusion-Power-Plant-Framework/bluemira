@@ -339,6 +339,7 @@ class CoilGroupPlotter(Plotter):
                 "linewidth": 1,
                 "edgecolor": "k",
             },
+            zorder=100,
         )
 
     def _plot_coil(self, x_boundary, z_boundary, ctype, fill=True, **kwargs):
