@@ -68,7 +68,12 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         for defaults see
         :class:`~bluemira.optimisation._algorithm.AlgorithDefaultTolerances`
         along with `max_eval=100`
-
+    opt_parameters:
+        Optimiser specific parameters,
+        see https://nlopt.readthedocs.io/en/latest/NLopt_Reference/#algorithm-specific-parameters
+        Otherwise, the parameters can be founded by digging through the source code.
+    constraints:
+        List of optimisation constraints to apply to the optimisation problem
 
     Notes
     -----
@@ -86,6 +91,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         position_mapper: PositionMapper,
         opt_algorithm: AlgorithmType = Algorithm.SBPLX,
         opt_conditions: Optional[Dict[str, float]] = None,
+        opt_parameters: Optional[Dict[str, float]] = None,
         constraints: Optional[List[UpdateableConstraint]] = None,
     ):
         self.eq = eq
@@ -100,6 +106,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.opt_conditions = opt_conditions or self._opt_condition_defaults(
             {"max_eval": 100}
         )
+        self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
         self.initial_state, self.substates = self.read_coilset_state(
@@ -129,7 +136,9 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
             f_objective=self.objective,
             x0=initial_mapped_positions,
             algorithm=self.opt_algorithm,
+            bounds=self.bounds,
             opt_conditions=self.opt_conditions,
+            opt_parameters=self.opt_parameters,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
@@ -185,6 +194,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         sub_opt_problems: List[CoilsetOptimisationProblem],
         opt_algorithm: AlgorithmType = Algorithm.COBYLA,
         opt_conditions: Optional[Dict[str, float]] = None,
+        opt_parameters: Optional[Dict[str, float]] = None,
         constraints=None,
         initial_currents=None,
         debug: bool = False,
@@ -196,6 +206,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self.opt_conditions = opt_conditions or self._opt_condition_defaults(
             {"max_eval": 100}
         )
+        self.opt_parameters = opt_parameters
         self._constraints = constraints
 
         if initial_currents:
@@ -303,6 +314,7 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             df_objective=None,  # use a numerical approximation if needed
             algorithm=self.opt_algorithm,
             opt_conditions=self.opt_conditions,
+            opt_parameters=self.opt_parameters,
             bounds=self.bounds,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
