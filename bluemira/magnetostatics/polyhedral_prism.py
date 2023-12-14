@@ -360,7 +360,8 @@ def _field_fabbri(
     Magnetic field vector at the point (response to unit current density)
     """
     field = np.zeros(3)
-    for i, normal in enumerate(face_normals):
+    for i in range(len(face_normals)):
+        normal = face_normals[i]
         field += np.cross(current_direction, normal) * _surface_integral_fabbri(
             face_points[i], normal, mid_points[i], n_sides[i], point
         )
