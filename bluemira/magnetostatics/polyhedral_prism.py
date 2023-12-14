@@ -23,7 +23,7 @@ https://supermagnet.sourceforge.io/notes/CRYO-06-034.pdf
 
 import abc
 from copy import deepcopy
-from typing import Union
+from typing import Tuple, Union
 
 import numba as nb
 import numpy as np
@@ -36,6 +36,10 @@ from bluemira.magnetostatics.baseclass import (
 )
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.magnetostatics.tools import process_xyz_array
+
+__all__ = ["PolyhedralPrismCurrentSource"]
+# NOTE: Polyhedral kernels are not intended to be user-facing, but
+# it's useful for testing.
 
 ZERO_DIV_GUARD_EPS = 1e-14
 
@@ -70,14 +74,14 @@ class Fabbri(PolyhedralKernel):
         """
         Magnetic field
         """
-        return field_fabbri(*args)
+        return _field_fabbri(*args)
 
     @staticmethod
     def vector_potential(*args) -> np.ndarray:
         """
         Vector potential
         """
-        return vector_potential_fabbri(*args)
+        return _vector_potential_fabbri(*args)
 
 
 class Bottura(PolyhedralKernel):
@@ -103,7 +107,7 @@ class Bottura(PolyhedralKernel):
 
 
 @nb.jit(nopython=True, cache=True)
-def vector_norm_eps(r: np.ndarray) -> float:
+def _vector_norm_eps(r: np.ndarray) -> float:
     """
     Dodge singularities in omega_t and line_integral when field point
     lies on an edge.
@@ -130,7 +134,7 @@ def vector_norm_eps(r: np.ndarray) -> float:
 
 
 @nb.jit(nopython=True, cache=True)
-def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> float:
+def _omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> float:
     """
     Solid angle seen from the calculation point subtended by the face
     triangle normal must be pointing outwards from the face
@@ -166,9 +170,9 @@ def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> fl
     r2_r = r2 - r
     r3_r = r3 - r
 
-    r1r = vector_norm_eps(r1_r)
-    r2r = vector_norm_eps(r2_r)
-    r3r = vector_norm_eps(r3_r)
+    r1r = _vector_norm_eps(r1_r)
+    r2r = _vector_norm_eps(r2_r)
+    r3r = _vector_norm_eps(r3_r)
     d = (
         r1r * r2r * r3r
         + r3r * np.dot(r1_r, r2_r)
@@ -183,7 +187,7 @@ def omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> fl
 
 
 @nb.jit(nopython=True, cache=True)
-def edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
+def _edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float:
     """
     Evaluate the edge integral w_e(r) of the W function at a point
 
@@ -204,15 +208,16 @@ def edge_integral_fabbri(r: np.ndarray, r1: np.ndarray, r2: np.ndarray) -> float
     -----
     \t:math:`w_{e}(\\mathbf{r}) = \\textrm{ln}\\dfrac{\\lvert \\mathbf{r_2} - \\mathbf{r} \\rvert + \\lvert\\mathbf{r_1} - \\mathbf{r} \\rvert + \\lvert \\mathbf{r_2} - \\mathbf{r_1} \\rvert}{\\lvert \\mathbf{r_2} - \\mathbf{r} \\rvert + \\lvert\\mathbf{r_1} - \\mathbf{r} \\rvert - \\lvert \\mathbf{r_2} - \\mathbf{r_1} \\rvert}`
     """  # noqa: W505 E501
-    r1r = vector_norm_eps(r1 - r)
-    r2r = vector_norm_eps(r2 - r)
-    r2r1 = vector_norm_eps(r2 - r1)
+    r1r = _vector_norm_eps(r1 - r)
+    r2r = _vector_norm_eps(r2 - r)
+    r2r1 = _vector_norm_eps(r2 - r1)
     a = r2r + r1r + r2r1
     b = r2r + r1r - r2r1
     return np.log(a / b)
 
 
-def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
+@nb.jit(nopython=True, cache=True)
+def _get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
     """
     Get an arbitrary point on the face
     """
@@ -220,10 +225,20 @@ def get_face_midpoint(face_points: np.ndarray) -> np.ndarray:
 
 
 @nb.jit(nopython=True, cache=True)
-def surface_integral_fabbri(
+def _get_face_normal(face_points: np.ndarray) -> np.ndarray:
+    """
+    Get the normal of a face
+    """
+    normal = np.cross(face_points[1] - face_points[0], face_points[2] - face_points[1])
+    return normal / np.linalg.norm(normal)
+
+
+@nb.jit(nopython=True, cache=True)
+def _surface_integral_fabbri(
     face_points: np.ndarray,
     face_normal: np.ndarray,
     mid_point: np.ndarray,
+    n_sides: int,
     point: np.ndarray,
 ) -> float:
     """
@@ -238,6 +253,8 @@ def surface_integral_fabbri(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
     point:
         Point at which to calculate the vector potential (3)
 
@@ -251,27 +268,28 @@ def surface_integral_fabbri(
     """  # noqa: W505 E501
     omega_f = 0.0
     integral = 0.0
-    for i in range(len(face_points) - 1):
+    for i in range(n_sides):
         p0 = face_points[i]
         p1 = face_points[i + 1]
         u_e = p1 - p0
         u_e /= np.linalg.norm(u_e)
         integral += np.dot(
             np.cross(face_normal, p0 - point),  # r_e is an arbitrary point
-            u_e * edge_integral_fabbri(point, p0, p1),
+            u_e * _edge_integral_fabbri(point, p0, p1),
         )
         # Calculate omega_f as the sum of subtended angles with a triangle
         # for each edge
-        omega_f += omega_t(point, p0, p1, mid_point)
+        omega_f += _omega_t(point, p0, p1, mid_point)
     return integral - np.dot(mid_point - point, face_normal) * omega_f
 
 
-# @nb.jit(nopython=True, cache=True)
-def vector_potential_fabbri(
+@nb.jit(nopython=True, cache=True)
+def _vector_potential_fabbri(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
     mid_points: np.ndarray,
+    n_sides: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -288,6 +306,8 @@ def vector_potential_fabbri(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
     point:
         Point at which to calculate the vector potential (3)
 
@@ -300,17 +320,20 @@ def vector_potential_fabbri(
         integral += np.dot(
             mid_points[i] - point,
             normal
-            * surface_integral_fabbri(face_points[i], normal, mid_points[i], point),
+            * _surface_integral_fabbri(
+                face_points[i], normal, mid_points[i], n_sides[i], point
+            ),
         )
     return 0.5 * MU_0_4PI * np.dot(current_direction, integral)
 
 
-# @nb.jit(nopython=True, cache=True)
-def field_fabbri(
+@nb.jit(nopython=True, cache=True)
+def _field_fabbri(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
     mid_points: np.ndarray,
+    n_sides: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -327,6 +350,8 @@ def field_fabbri(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
     point:
         Point at which to calculate the magnetic field (3)
 
@@ -335,9 +360,10 @@ def field_fabbri(
     Magnetic field vector at the point (response to unit current density)
     """
     field = np.zeros(3)
-    for i, normal in enumerate(face_normals):
-        field += np.cross(current_direction, normal) * surface_integral_fabbri(
-            face_points[i], normal, mid_points[i], point
+    for i in range(len(face_normals)):
+        normal = face_normals[i]
+        field += np.cross(current_direction, normal) * _surface_integral_fabbri(
+            face_points[i], normal, mid_points[i], n_sides[i], point
         )
     return MU_0_4PI * field
 
@@ -467,7 +493,12 @@ class PolyhedralPrismCurrentSource(
         """
         point = np.array([x, y, z])
         return self._rho * self.__kernel.field(
-            self._dcm[1], self._face_points, self._face_normals, self._mid_points, point
+            self._dcm[1],
+            self._face_points,
+            self._face_normals,
+            self._mid_points,
+            self._n_sides,
+            point,
         )
 
     @process_xyz_array
@@ -495,7 +526,12 @@ class PolyhedralPrismCurrentSource(
         """
         point = np.array([x, y, z])
         return self._rho * self.__kernel.vector_potential(
-            self._dcm[1], self._face_points, self._face_normals, self._mid_points, point
+            self._dcm[1],
+            self._face_points,
+            self._face_normals,
+            self._mid_points,
+            self._n_sides,
+            point,
         )
 
     def _calculate_points(self):
@@ -515,27 +551,12 @@ class PolyhedralPrismCurrentSource(
         # Project and translate points onto end cap plane
         upper[1] += self._halflength + upper[0] * np.tan(self._alpha)
         upper_points = self._local_to_global(upper.T)
-
-        face_points = [lower_points]
-        for i in range(n_rect_faces):
-            # Assemble rectangular joining faces
-            fp = [
-                lower_points[i],
-                upper_points[i],
-                upper_points[i + 1],
-                lower_points[i + 1],
-                lower_points[i],
-            ]
-            face_points.append(fp)
-        # Important to make sure the normal faces outwards!
-        face_points.append(list(upper_points[::-1]))
-
-        mid_points = [get_face_midpoint(face) for face in face_points]
-
-        self._face_points = np.array(face_points)
-        self._mid_points = np.array(mid_points)
-        normals = [np.cross(p[1] - p[0], p[2] - p[1]) for p in self._face_points]
-        self._face_normals = np.array([n / np.linalg.norm(n) for n in normals])
+        (
+            self._face_points,
+            self._mid_points,
+            self._face_normals,
+            self._n_sides,
+        ) = _generate_source_geometry(lower_points, upper_points)
 
         # Points for plotting only
         points = [np.vstack(lower_points), np.vstack(upper_points)]
@@ -547,12 +568,69 @@ class PolyhedralPrismCurrentSource(
         return np.array(points, dtype=object)
 
 
-# @nb.jit(nopython=True)
+@nb.jit(nopython=True, cache=True)
+def _generate_source_geometry(
+    lower_points: np.ndarray, upper_points: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
+    """
+    Generate the polyhedral prism source geometry - faster
+
+    Returns
+    -------
+    face_points:
+        The ordered points of the faces
+    mid_points:
+        The mid-points for each face
+    face_normals:
+        The normal vectors for each face (normalised)
+    n_sides:
+        The array of the number of sides to consider for each face
+    """
+    # Need to have an array of constant size
+    n_end_caps = len(lower_points)
+    n_rect_faces = n_end_caps - 1
+    n_faces = n_rect_faces + 2
+    n_face_max = max(5, n_end_caps)
+
+    face_points = np.zeros((n_faces, n_face_max, 3), dtype=np.float64)
+    mid_points = np.zeros((n_faces, 3), dtype=np.float64)
+    face_normals = np.zeros((n_faces, 3), dtype=np.float64)
+
+    face_points[0, :n_end_caps, :] = lower_points
+    mid_points[0, :] = _get_face_midpoint(lower_points)
+    face_normals[0, :] = _get_face_normal(lower_points)
+
+    face_p = np.zeros((5, 3), dtype=np.float64)
+    for i in range(n_rect_faces):
+        # Assemble rectangular joining faces
+        lpi = lower_points[i, :]
+        face_p[0, :] = lpi
+        face_p[1, :] = upper_points[i, :]
+        face_p[2, :] = upper_points[i + 1, :]
+        face_p[3, :] = lower_points[i + 1, :]
+        face_p[4, :] = lpi
+        face_points[i + 1, :5, :] = face_p
+        mid_points[i + 1, :] = _get_face_midpoint(face_p)
+        face_normals[i + 1, :] = _get_face_normal(face_p)
+
+    face_points[-1, :n_end_caps, :] = upper_points[::-1]
+    mid_points[-1, :] = _get_face_midpoint(face_points[-1, :, :])
+    face_normals[-1, :] = _get_face_normal(face_points[-1, :, :])
+
+    n_sides = 4 * np.ones(n_faces, dtype=np.int32)
+    n_sides[0] = n_end_caps - 1
+    n_sides[-1] = n_sides[0]
+
+    return face_points, mid_points, face_normals, n_sides
+
+
+@nb.jit(nopython=True, cache=True)
 def _vector_potential_bottura(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
     mid_points: np.ndarray,
+    n_sides: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -569,6 +647,8 @@ def _vector_potential_bottura(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
     point:
         Point at which to calculate the vector potential (3)
 
@@ -579,17 +659,21 @@ def _vector_potential_bottura(
     A = 0.0
 
     for i, face_normal in enumerate(face_normals):  # Faces of the prism
-        surface_integral = _surface_integral_bottura(face_normal, face_points[i], point)
+        surface_integral = _surface_integral_bottura(
+            face_normal, face_points[i], n_sides[i], point
+        )
         zpp = np.dot(face_normal, mid_points[i] - point)
         A += zpp * surface_integral
     return 0.5 * MU_0_4PI * A * current_direction
 
 
+@nb.jit(nopython=True, cache=True)
 def _field_bottura(
     current_direction: np.ndarray,
     face_points: np.ndarray,
     face_normals: np.ndarray,
     mid_points: np.ndarray,  # noqa: ARG001
+    n_sides: np.ndarray,
     point: np.ndarray,
 ) -> np.ndarray:
     """
@@ -606,6 +690,8 @@ def _field_bottura(
         (n_face, 3)
     mid_points:
         Array of face midpoints (n_face, 3)
+    n_sides:
+        Number of points in the face points (avoid reflected lists)
     point:
         Point at which to calculate the magnetic field (3)
 
@@ -616,12 +702,17 @@ def _field_bottura(
     B = np.zeros(3)
 
     for i, face_normal in enumerate(face_normals):  # Faces of the prism
-        surface_integral = _surface_integral_bottura(face_normal, face_points[i], point)
+        surface_integral = _surface_integral_bottura(
+            face_normal, face_points[i], n_sides[i], point
+        )
         B += face_normal * surface_integral
     return -MU_0_4PI * np.cross(current_direction, B)
 
 
-def _surface_integral_bottura(face_normal, face_points, point):
+@nb.jit(nopython=True, cache=True)
+def _surface_integral_bottura(
+    face_normal: np.ndarray, face_points: np.ndarray, n_sides: int, point: np.ndarray
+) -> float:
     """
     Evaluate the surface integral W_f(r) on a planar face
 
@@ -647,7 +738,7 @@ def _surface_integral_bottura(face_normal, face_points, point):
     """  # noqa: W505 E501
     integral = 0.0
 
-    for j in range(len(face_points) - 1):  # Lines of the face
+    for j in range(n_sides):  # Lines of the face
         corner_1, corner_2 = face_points[j], face_points[j + 1]
         xpp_axis = corner_2 - corner_1
         xpp_axis /= np.linalg.norm(xpp_axis)
