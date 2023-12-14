@@ -177,11 +177,7 @@ class TestParameter:
         assert p1 != p2
 
     def test_params_with_different_names_are_not_equal(self):
-        p1 = Parameter(  # noqa: PIE804
-            **{"name": "p1", "value": 10, "unit": "dimensionless"}
-        )
-        p2 = Parameter(  # noqa: PIE804
-            **{"name": "p2", "value": 10, "unit": "dimensionless"}
-        )
+        p1 = Parameter(name="p1", value=10, unit="dimensionless")
+        p2 = Parameter(name="p2", value=10, unit="dimensionless")
 
         assert p1 != p2
