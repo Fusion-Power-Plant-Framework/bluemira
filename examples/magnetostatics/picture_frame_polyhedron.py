@@ -88,14 +88,6 @@ f, (ax1, ax2) = plt.subplots(1, 2, subplot_kw={"projection": "3d"})
 source = SourceGroup(sources)
 source.plot(ax1)
 
-for s in source.sources:
-    if isinstance(s, ArbitraryPlanarPolyhedralXSCircuit):
-        for si in s.sources:
-            ax1.quiver(*si._origin, *si._dcm[1], color="r")
-    else:
-        ax1.quiver(*s._origin, *s._dcm[1], color="r")
-
-
 x, z = np.linspace(0, 12), np.linspace(-10, 10)
 xx, zz = np.meshgrid(x, z)
 yy = np.zeros_like(xx)
