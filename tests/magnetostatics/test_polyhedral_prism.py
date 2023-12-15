@@ -201,6 +201,9 @@ class TestPolyhedralMaths:
 
         np.testing.assert_allclose(B_new, B)
 
+    def teardown_method(self):
+        plt.close()
+
 
 class TestPolyhedralCoordinates:
     @classmethod
@@ -248,7 +251,6 @@ class TestPolyhedralCoordinates:
     @pytest.mark.parametrize("plane", ["x", "y", "z"])
     def test_hexagon(self, plane):
         xx, yy, zz, i, j, k = plane_setup(plane)
-        xx, yy, zz, i, j, k = plane_setup(plane)
 
         f = plt.figure()
         ax = f.add_subplot(1, 1, 1, projection="3d")
@@ -264,7 +266,6 @@ class TestPolyhedralCoordinates:
     @pytest.mark.parametrize("plane", ["x", "y", "z"])
     def test_triangle(self, plane):
         xx, yy, zz, i, j, k = plane_setup(plane)
-        xx, yy, zz, i, j, k = plane_setup(plane)
 
         f = plt.figure()
         ax = f.add_subplot(1, 1, 1, projection="3d")
@@ -276,6 +277,9 @@ class TestPolyhedralCoordinates:
         cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
         f.colorbar(cm)
         plt.show()
+
+    def teardown_method(self):
+        plt.close()
 
 
 class TestCombinedShapes:
@@ -367,7 +371,7 @@ class TestPolyhedralSourceContinuity:
             [0, 0, 1],
             coords,
             30,
-            0,
+            30,
             1e6,
         )
         coords = Coordinates(
@@ -382,7 +386,7 @@ class TestPolyhedralSourceContinuity:
             [0, 1, 0],
             [0, 0, 1],
             coords,
-            0,
+            -30,
             -30,
             1e6,
         )

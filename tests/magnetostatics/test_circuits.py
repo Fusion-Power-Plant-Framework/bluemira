@@ -25,7 +25,7 @@ from bluemira.magnetostatics.circuits import (
     HelmholtzCage,
 )
 from bluemira.magnetostatics.circular_arc import CircularArcCurrentSource
-from bluemira.magnetostatics.polyhedral_prism import field_fabbri
+from bluemira.magnetostatics.polyhedral_prism import _field_fabbri
 from bluemira.magnetostatics.semianalytic_2d import (
     semianalytic_Bx,
     semianalytic_Bz,
@@ -299,7 +299,7 @@ class TestPolyhedralCircuitPlotting:
 class TestPolyhedralFaceContinuity:
     @classmethod
     def setup_class(cls):
-        shape = PrincetonD().create_shape()
+        shape = make_circle(radius=10, axis=(0, 1, 0))
         xs = Coordinates({"x": [-1, -1, 1, -1], "z": [-1, 1, 0, -1]})
         xs.translate(xs.center_of_mass)
 
@@ -311,21 +311,23 @@ class TestPolyhedralFaceContinuity:
         point = np.array([2, 2, 2])
         source1 = self.circuit.sources[4]
         source2 = self.circuit.sources[5]
-        field1 = source1._rho * field_fabbri(
+        field1 = source1._rho * _field_fabbri(
             source1._dcm[1],
-            [source1._face_points[-1]],
-            [source1._face_normals[-1]],
-            [source1._mid_points[-1]],
+            np.array([source1._face_points[-1]]),
+            np.array([source1._face_normals[-1]]),
+            np.array([source1._mid_points[-1]]),
+            np.array([3]),
             point,
         )
-        field2 = source2._rho * field_fabbri(
+        field2 = source2._rho * _field_fabbri(
             source2._dcm[1],
-            [source2._face_points[0]],
-            [source2._face_normals[0]],
-            [source2._mid_points[0]],
+            np.array([source2._face_points[0]]),
+            np.array([source2._face_normals[0]]),
+            np.array([source2._mid_points[0]]),
+            np.array([3]),
             point,
         )
-        assert np.sum(field1 + field2) == pytest.approx(0.0, rel=0, abs=EPS)
+        assert np.allclose(field1, -field2, rtol=0, atol=EPS)
 
 
 class TestCariddiBenchmark:
