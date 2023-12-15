@@ -253,6 +253,9 @@ class ArbitraryPlanarPolyhedralXSCircuit(PlanarCircuit):
             raise MagnetostaticsError(
                 "Cannot use equal angle sources for this shape discretisation"
             )
+        if not shape.closed:
+            # TODO: Clean up this hack
+            alphas, betas = -alphas, -betas
 
         return betas, alphas
 
