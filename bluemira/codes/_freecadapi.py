@@ -14,7 +14,7 @@ import enum
 import math
 import os
 import sys
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from functools import wraps
 from pathlib import Path
 from types import DynamicClassAttribute
@@ -2362,8 +2362,8 @@ class DefaultDisplayOptions:
 
 def show_cad(
     parts: Union[apiShape, List[apiShape]],
-    options: Union[Dict, List[Optional[Dict]]],
-    labels: List[str],
+    options: Optional[Union[Dict, List[Optional[Dict]]]] = None,
+    labels: Optional[List[str]] = None,
     **kwargs,  # noqa: ARG001
 ):
     """
@@ -2378,11 +2378,14 @@ def show_cad(
     labels:
         labels to use for each part object
     """
+    if isinstance(parts, apiShape):
+        parts = [parts]
+
     if options is None:
-        options = [None]
+        options = [None] * len(parts)
 
     if None in options:
-        options = [DefaultDisplayOptions() if o is None else o for o in options]
+        options = [asdict(DefaultDisplayOptions()) if o is None else o for o in options]
 
     if len(options) != len(parts):
         raise FreeCADError(
