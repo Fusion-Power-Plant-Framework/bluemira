@@ -386,6 +386,27 @@ class BluemiraGeo(ABC, GeoMeshable):
             f"volume: {self.volume})"
         )
 
+    def __deepcopy__(self, memo):
+        """Deepcopy for BluemiraGeo.
+
+        FreeCAD shapes cannot be deepcopied on versions >=0.21
+        """
+        cls = self.__class__
+        result = cls.__new__(cls)
+        memo[id(self)] = result
+        for k, v in self.__dict__.items():
+            if k not in {"_shape", "_boundary"}:
+                setattr(
+                    result,
+                    k,
+                    copy.deepcopy(v, memo),
+                )
+
+        result._shape = self._shape.copy()
+        result._boundary = [n.copy() for n in self._boundary]
+
+        return result
+
     def copy(self, label: Optional[str] = None):
         """
         Make a copy of the BluemiraGeo.

@@ -244,6 +244,7 @@ class TestOISBuilder:
         join_2 = make_polygon([p3, p1])
 
         ois_profile = BluemiraWire([result, join_1, r_copy, join_2])
+        assert ois_profile.is_closed()
         params = OISBuilderParams(
             Parameter("n_TF", n_TF),
             Parameter("tf_wp_depth", 1.4),
