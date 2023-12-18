@@ -1672,8 +1672,8 @@ class PictureFrameTools:
 
     def _connect_to_outer_limb(self, top, bottom, *, top_curve=False, bot_curve=False):
         return self._outer_limb(
-            top.discretize(100, byedges=True)[:, -1] if top_curve else top,
-            bottom.discretize(100, byedges=True)[:, 0] if bot_curve else bottom,
+            top.discretise(100, byedges=True)[:, -1] if top_curve else top,
+            bottom.discretise(100, byedges=True)[:, 0] if bot_curve else bottom,
         )
 
     def _connect_straight_to_inner_limb(self, top, bottom):

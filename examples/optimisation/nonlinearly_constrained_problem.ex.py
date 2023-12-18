@@ -26,7 +26,7 @@ Non-Linearly Constrained Optimisation Problem
 
 # %% [markdown]
 # # Non-Linearly Constrained Optimisation Problem
-# Let's solve the non-linearly constrained minimization problem:
+# Let's solve the non-linearly constrained minimisation problem:
 #
 # $$ \min_{x \in \mathbb{R}^2} \sqrt{x_2} \tag{1}$$
 #

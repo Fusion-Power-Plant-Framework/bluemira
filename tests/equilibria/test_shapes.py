@@ -372,7 +372,7 @@ class TestManickamCunninghamZakahrovCAD:
         pos.adjust_variable("delta", delta, lower_bound=lb, upper_bound=ub)
         wire = pos.create_shape(n_points=25)
 
-        fs = ClosedFluxSurface(wire.discretize(ndiscr=1000, byedges=True))
+        fs = ClosedFluxSurface(wire.discretise(ndiscr=1000, byedges=True))
         np.testing.assert_almost_equal(delta, fs.delta)
 
     @pytest.mark.xfail
@@ -385,7 +385,7 @@ class TestManickamCunninghamZakahrovCAD:
         pos.adjust_variable("delta", delta, lower_bound=lb, upper_bound=ub)
         wire = pos.create_shape(n_points=25)
 
-        fs = ClosedFluxSurface(wire.discretize(ndiscr=1000, byedges=True))
+        fs = ClosedFluxSurface(wire.discretise(ndiscr=1000, byedges=True))
         np.testing.assert_almost_equal(delta, fs.delta)
 
     @pytest.mark.parametrize(
@@ -398,7 +398,7 @@ class TestManickamCunninghamZakahrovCAD:
         pos.adjust_variable("kappa", kappa, lower_bound=lb, upper_bound=ub)
         wire = pos.create_shape(n_points=25)
 
-        fs = ClosedFluxSurface(wire.discretize(ndiscr=1000, byedges=True))
+        fs = ClosedFluxSurface(wire.discretise(ndiscr=1000, byedges=True))
         np.testing.assert_almost_equal(kappa, fs.kappa)
 
 

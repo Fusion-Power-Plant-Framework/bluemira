@@ -34,7 +34,7 @@ class TestInscribedRectangle:
         c_s.translate(i)
         complex_shape = boolean_cut(complex_shape, c_s)[0]
 
-    complex_shape = complex_shape.boundary[0].discretize(byedges=True, ndiscr=100)
+    complex_shape = complex_shape.boundary[0].discretise(byedges=True, ndiscr=100)
 
     shapes = (square, diamond, circle, complex_shape)
     convex = (True, True, True, False)
@@ -90,7 +90,7 @@ class TestInscribedRectangle:
                                 shape_face,
                             )
                             tf = [
-                                Coordinates(seg.discretize(byedges=True, ndiscr=50))
+                                Coordinates(seg.discretise(byedges=True, ndiscr=50))
                                 for seg in tf
                             ]
                         except ValueError:

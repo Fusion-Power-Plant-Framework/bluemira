@@ -68,7 +68,7 @@ class NloptOptimiser(Optimiser):
     df_objective:
         The derivative of the objective function. This must take the
         form: :math:`f(x) \rightarrow y` where :math:`x` is a numpy
-        array containing the optimization parameters, and :math:`y` is a
+        array containing the optimisation parameters, and :math:`y` is a
         numpy array where each element :math:`i` is the partial
         derivative :math:`\frac{\partial f(x)}{\partial x_{i}}`.
         If not given, and a gradient based algorithm is used, a

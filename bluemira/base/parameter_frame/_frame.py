@@ -197,7 +197,7 @@ class ParameterFrame:
         *,
         allow_unknown=False,
     ) -> ParameterFrame:
-        """Initialize an instance from a dictionary."""
+        """Initialise an instance from a dictionary."""
         data = copy.deepcopy(data)
         kwargs: dict[str, Parameter] = {}
         for member in cls.__dataclass_fields__:
@@ -310,7 +310,7 @@ class ParameterFrame:
         )
 
     def to_dict(self) -> dict[str, dict[str, Any]]:
-        """Serialize this ParameterFrame to a dictionary."""
+        """Serialise this ParameterFrame to a dictionary."""
         out = {}
         for param_name in self.__dataclass_fields__:
             if self.__dataclass_fields__[param_name].type == ClassVar:
@@ -563,7 +563,7 @@ class EmptyFrame(ParameterFrame):
     """
     Class to represent an empty `ParameterFrame` (one with no Parameters).
 
-    Can be used when initializing a
+    Can be used when initialising a
     :class:`~bluemira.base.reactor_config.ConfigParams` object with no global params.
     """
 

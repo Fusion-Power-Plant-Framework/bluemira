@@ -125,7 +125,7 @@ class PlasmodOutputs:
     @classmethod
     def from_files(cls, scalar_stream: TextIO, profile_stream: TextIO) -> PlasmodOutputs:
         """
-        Initialize outputs from a scalar and a profiles file.
+        Initialise outputs from a scalar and a profiles file.
         """
         scalars = read_plasmod_output(scalar_stream)
         profiles = read_plasmod_output(profile_stream)

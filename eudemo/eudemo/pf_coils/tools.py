@@ -242,7 +242,7 @@ def make_reference_coilset(
         n_CS=n_CS,
     )
 
-    lcfs_coords = lcfs_shape.discretize(byedges=True)
+    lcfs_coords = lcfs_shape.discretise(byedges=True)
     arg_z_max = np.argmax(lcfs_coords.z)
     arg_z_min = np.argmin(lcfs_coords.z)
 
@@ -370,7 +370,7 @@ def make_pf_coil_path(tf_boundary: BluemiraWire, offset_value: float) -> Bluemir
     )
 
     # Find top-left and bottom-left "corners"
-    coordinates = tf_offset.discretize(byedges=True, ndiscr=200)
+    coordinates = tf_offset.discretise(byedges=True, ndiscr=200)
     x_min = np.min(coordinates.x)
     z_min, z_max = 0.0, 0.0
     eps = 0.0

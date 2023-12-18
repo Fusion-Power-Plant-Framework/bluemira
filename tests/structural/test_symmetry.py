@@ -27,7 +27,7 @@ class TestCyclicSymmetry:
         model.add_support(0, dx=True, dy=True, dz=True, rx=True, ry=True, rz=True)
 
         circle = make_circle(radius=9, center=(0, 0, 3), start_angle=0, end_angle=30)
-        coordinates = circle.discretize(ndiscr=15)
+        coordinates = circle.discretise(ndiscr=15)
 
         sym_nodes = []
         n1 = model.add_node(*coordinates.points[0])

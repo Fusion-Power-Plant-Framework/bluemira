@@ -135,7 +135,7 @@ class Solovev:
 
     @property
     def psi_norm_2d(self):
-        """Normalized flux function in 2-D"""
+        """Normalised flux function in 2-D"""
 
         def myfunc(x):
             return np.sqrt(
