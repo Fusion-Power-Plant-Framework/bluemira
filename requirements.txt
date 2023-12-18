@@ -18,7 +18,7 @@ nlopt==2.7.1
 meshio==5.3.4
 numba==0.58.1
 numba-scipy @ git+https://github.com/numba/numba-scipy@1e2f244
-numexpr==2.8.6
+numexpr==2.8.8
 numpy==1.23.5
 packaging==23.2
 pandas==2.0.3
