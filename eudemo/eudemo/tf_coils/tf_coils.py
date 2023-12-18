@@ -189,11 +189,11 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
     ):
         super().__init__(params, build_config)
 
-        self.parameterisation_cls: Type[
-            GeometryParameterisation
-        ] = get_class_from_module(
-            self.build_config["param_class"],
-            default_module="bluemira.geometry.parameterisations",
+        self.parameterisation_cls: Type[GeometryParameterisation] = (
+            get_class_from_module(
+                self.build_config["param_class"],
+                default_module="bluemira.geometry.parameterisations",
+            )
         )
 
         self.variables_map = self.build_config.get("variables_map", {})
