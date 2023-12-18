@@ -566,7 +566,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
         self.wire = wire
         self.n_koz_discr = n_koz_discr
         self.koz_points = (
-            keep_out_zone.boundary[0].discretize(byedges=True, ndiscr=n_koz_discr).xz.T
+            keep_out_zone.boundary[0].discretise(byedges=True, ndiscr=n_koz_discr).xz.T
         )
 
     def objective(self, x: np.ndarray) -> float:
@@ -645,7 +645,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
             bluemira_warn(f"NaN in x_norm {x_norm}")
             x_norm = np.array([0, D_TOLERANCE])
         straight_line = self.f_L_to_wire(self.wire, x_norm)
-        straight_points = straight_line.discretize(ndiscr=self.n_koz_discr).xz.T
+        straight_points = straight_line.discretise(ndiscr=self.n_koz_discr).xz.T
         return signed_distance_2D_polygon(straight_points, self.koz_points)
 
     @staticmethod

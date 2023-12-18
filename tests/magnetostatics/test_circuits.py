@@ -39,9 +39,9 @@ def test_analyticalsolvergrouper():
     dx_coil, dz_coil = 0.5, 0.75
 
     # Build a corresponding arbitrary current loop
-    circle = make_circle(center=[0, 0, zc], radius=xc).discretize(ndiscr=10)
+    circle = make_circle(center=[0, 0, zc], radius=xc).discretise(ndiscr=10)
     a = ArbitraryPlanarRectangularXSCircuit(circle, dx_coil, dz_coil, current)
-    circle2 = make_circle(center=[0, 0, -zc], radius=xc).discretize(ndiscr=10)
+    circle2 = make_circle(center=[0, 0, -zc], radius=xc).discretise(ndiscr=10)
     a2 = ArbitraryPlanarRectangularXSCircuit(circle2, dx_coil, dz_coil, current)
     solver = SourceGroup([a, a2])
 
@@ -61,7 +61,7 @@ def test_analyticalsolvergrouper():
 
 
 def test_sourcegroup_set_current():
-    circle = make_circle(radius=10).discretize(ndiscr=50)
+    circle = make_circle(radius=10).discretise(ndiscr=50)
     dx_coil, dz_coil = 0.5, 0.75
     a = ArbitraryPlanarRectangularXSCircuit(circle, dx_coil, dz_coil, current=1)
     x, y, z = 4, 4, 4
@@ -173,7 +173,7 @@ class TestArbitraryPlanarXSCircuit:
         self, parameterisation, inputs, clockwise
     ):
         shape = parameterisation(inputs).create_shape()
-        coords = shape.discretize(ndiscr=50, byedges=True)
+        coords = shape.discretise(ndiscr=50, byedges=True)
         coords.set_ccw((0, -1, 0))
         if clockwise:
             coords.set_ccw((0, 1, 0))
@@ -195,7 +195,7 @@ class TestArbitraryPlanarXSCircuit:
     @pytest.mark.parametrize("clockwise", [False, True])
     def test_a_circuit_from_a_clockwise_circle_is_continuous(self, clockwise):
         shape = make_circle(5, (0, 9, 0), axis=(0, 0, 1))
-        coords = shape.discretize(ndiscr=30, byedges=True)
+        coords = shape.discretise(ndiscr=30, byedges=True)
         if clockwise:
             coords.set_ccw((0, 0, 1))
         else:
@@ -226,8 +226,8 @@ class TestArbitraryPlanarXSCircuit:
 
 class TestArbitraryPlanarPolyhedralCircuit:
     discretisations = (
-        make_circle(10).discretize(15),
-        make_circle(5).discretize(5),
+        make_circle(10).discretise(15),
+        make_circle(5).discretise(5),
     )
 
     @pytest.mark.parametrize("coordinates", discretisations)
@@ -276,7 +276,7 @@ class TestPolyhedralCircuitPlotting:
         xs.translate(xs.center_of_mass)
 
         cls.circuit = ArbitraryPlanarPolyhedralXSCircuit(
-            shape.discretize(ndiscr=15), xs, current=1e6
+            shape.discretise(ndiscr=15), xs, current=1e6
         )
 
     def test_field_plot(self):
@@ -384,7 +384,7 @@ class TestPolyhedral2DRing:
         xs = Coordinates({"x": [-1, -1, 1, 1, -1], "z": [-1, 1, 1, -1, -1]})
         xs.translate(xs.center_of_mass)
         cls.poly_circuit = ArbitraryPlanarPolyhedralXSCircuit(
-            ring.discretize(ndiscr=n), xs, current=cls.current
+            ring.discretise(ndiscr=n), xs, current=cls.current
         )
 
     @pytest.mark.longrun
@@ -405,7 +405,7 @@ class TestPolyhedral2DRing:
         """
         Tests non-user-facing functionality for vector potential
         """
-        coordinates = make_circle(10).discretize(31)
+        coordinates = make_circle(10).discretise(31)
         xs = Coordinates({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]})
         poly = ArbitraryPlanarPolyhedralXSCircuit(coordinates, xs, current=1)
         xx, yy, zz, _, _, _ = plane_setup("y", 5, 15, -5, 5, n=20)
@@ -442,7 +442,7 @@ class TestPolyhedral2DRing:
 
 
 class TestArbitraryPlanarPolyhedralPFCoil:
-    coordinates = make_circle(10).discretize(31)
+    coordinates = make_circle(10).discretise(31)
     xs = Coordinates({"x": [-1, 1, 1, -1], "z": [-1, -1, 1, 1]})
     poly = ArbitraryPlanarPolyhedralXSCircuit(coordinates, xs, current=1)
     trap = ArbitraryPlanarRectangularXSCircuit(coordinates, 1, 1, current=1)

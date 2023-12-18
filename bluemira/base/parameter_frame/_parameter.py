@@ -150,7 +150,7 @@ class Parameter(Generic[ParameterValueType]):
         self._add_history_record()
 
     def to_dict(self) -> dict[str, Any]:
-        """Serialize the parameter to a dictionary."""
+        """Serialise the parameter to a dictionary."""
         out = {
             "name": self.name,
             "value": self.value,

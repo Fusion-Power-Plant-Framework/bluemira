@@ -74,7 +74,7 @@ class PlasmodSolverParams(MappedParameterFrame):
     beta_p: Parameter[float]
     """Poloidal beta [dimensionless]."""
     beta_N: Parameter[float]  # noqa: N815
-    """Normalized beta [dimensionless]."""
+    """Normalised beta [dimensionless]."""
     f_bs: Parameter[float]
     """Plasma bootstrap current fraction [dimensionless]."""
     l_i: Parameter[float]

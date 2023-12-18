@@ -32,7 +32,7 @@ from bluemira.geometry.tools import (
     boolean_fragments,
     chamfer_wire_2D,
     convex_hull_wires_2d,
-    deserialize_shape,
+    deserialise_shape,
     extrude_shape,
     fallback_to,
     fillet_wire_2D,
@@ -617,14 +617,14 @@ class TestLogFailedGeometryOperationSerialisation:
         written_data = combine_text_mock_write_calls(open_mock)
         data = json.loads(written_data)
 
-        # Check the serialization of the input shape
+        # Check the serialisation of the input shape
         assert "var" in data
         assert data["var"] == 1
         assert "var2" in data
         assert data["var2"] == [1, 2, 3]
         assert "random_kwarg" in data
         assert np.isclose(data["random_kwarg"], np.pi)
-        saved_wire = deserialize_shape(data["wire"])
+        saved_wire = deserialise_shape(data["wire"])
         np.testing.assert_almost_equal(saved_wire.length, length, decimal=8)
 
     @mock.patch("builtins.open", new_callable=mock.mock_open)
@@ -645,7 +645,7 @@ class TestMakeCircle:
         p3 = [0, 0, 3.2]
 
         arc = make_circle_arc_3P(p1, p2, p3)
-        points = arc.discretize(2).points
+        points = arc.discretise(2).points
         np.testing.assert_allclose(np.array(p1), np.array(points[0]), atol=EPS)
         np.testing.assert_allclose(np.array(p3), np.array(points[1]), atol=EPS)
 
@@ -858,7 +858,7 @@ class TestForceWireToSpline:
             data = json.load(file)
 
         cls.wires = [
-            deserialize_shape(wire) for wire in data["BluemiraFace"]["boundary"]
+            deserialise_shape(wire) for wire in data["BluemiraFace"]["boundary"]
         ]
 
     @mock.patch("bluemira.geometry.tools.bluemira_warn")

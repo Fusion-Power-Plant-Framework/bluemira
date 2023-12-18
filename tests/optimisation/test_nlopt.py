@@ -388,11 +388,11 @@ class TestNloptOptimiser:
         opt.set_lower_bounds(bounds[0])
         opt.set_upper_bounds(bounds[1])
 
-        with mock.patch(f"{NLOPT_OPT_REF}.optimize") as optimize_mock:
+        with mock.patch(f"{NLOPT_OPT_REF}.optimize") as optimise_mock:
             opt.optimise()
 
-        assert optimize_mock.call_count == 1
-        call_args = optimize_mock.call_args[0]
+        assert optimise_mock.call_count == 1
+        call_args = optimise_mock.call_args[0]
         assert len(call_args) == 1
         np.testing.assert_allclose(call_args[0], x0)
 

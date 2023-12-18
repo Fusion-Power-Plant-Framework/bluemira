@@ -118,7 +118,7 @@ class Profiles(Model):
     """
     Profile Selector:
 
-    x       [-] normalized toroidal flux coordinate (Phi/Phi_b)
+    x       [-] normalised toroidal flux coordinate (Phi/Phi_b)
     ne      [10¹⁹/m3] electron density profile
     Te      [keV] Electron temperature profile
     Ti      [keV] Ion temperature profile
@@ -193,7 +193,7 @@ PLASMOD_INPUTS = {
     # ###### "BM_INP": ("dtmax", "dimensionless"),
     # [-] exponent of jipperdo2
     # ###### "BM_INP": ("dtmaxmin", "dimensionless"),
-    # [m²/s] stabilizing diff for TGLF in
+    # [m²/s] stabilising diff for TGLF in
     # ###### "BM_INP": ("dtmaxmax", "m^2/s"),
     # [-] tolerance above which TGLF should be always called
     # ###### "BM_INP": ("dtminmax", "dimensionless"),
@@ -305,9 +305,9 @@ PLASMOD_INPUTS = {
     # ###########################
     # Pedestal properties
     # ############################
-    # [-] normalized coordinate of pedestal density
+    # [-] normalised coordinate of pedestal density
     # ###### "BM_INP": ("rho_n", "dimensionless"),
-    # [-] normalized coordinate of pedestal temperature
+    # [-] normalised coordinate of pedestal temperature
     # ###### "BM_INP": ("rho_T", "dimensionless"),
     # [keV] electrons/ions temperature at separatrix
     # ###### "BM_INP": ("tesep", "keV"),
@@ -322,55 +322,55 @@ PLASMOD_INPUTS = {
     # ###### "BM_INP": ("f_gws", "dimensionless"),
     # [-] fraction of NBI power to ions
     # ###### "BM_INP": ("fpion", "dimensionless"),
-    # [m*MA/MW] Normalized CD efficiency   # tentative g_cd_nb but normalise wrt to what?
+    # [m*MA/MW] Normalised CD efficiency   # tentative g_cd_nb but normalise wrt to what?
     # ###### "BM_INP": ("nbcdeff", "m.MA/MW"),
-    # [m*MA/MW] Normalized EC efficiency   # tentative g_cd_nb but normalise wrt to what?
+    # [m*MA/MW] Normalised EC efficiency   # tentative g_cd_nb but normalise wrt to what?
     # ###### "BM_INP": ("eccdeff", "m.MA/MW")
-    # [-]  normalized mean location of fixed NBI heating
+    # [-]  normalised mean location of fixed NBI heating
     # ###### "BM_INP": ("x_control_nbi", "dimensionless"),
-    # [-]  normalized mean location of fixed EC heating
+    # [-]  normalised mean location of fixed EC heating
     # ###### "BM_INP": ("x_control_ech", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x for fixed NBI heating
+    # normalised coordinate x for fixed NBI heating
     # ###### "BM_INP": ("dx_control_nbi", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x for fixed EC heating
+    # normalised coordinate x for fixed EC heating
     # ###### "BM_INP": ("dx_control_ech", "dimensionless"),
-    # [-]  normalized mean location of NBI power for
+    # [-]  normalised mean location of NBI power for
     # controlling loop voltage or f_ni
     # ###### "BM_INP": ("x_cd_nbi", "dimensionless"),
-    # [-]  normalized mean location of NBI power for
+    # [-]  normalised mean location of NBI power for
     # controlling loop voltage or f_ni
     # ###### "BM_INP": ("x_cd_ech", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x for NBI heating (CD) to control Vloop or f_ni
+    # normalised coordinate x for NBI heating (CD) to control Vloop or f_ni
     # ###### "BM_INP": ("dx_cd_nbi", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x for EC heating to control Vloop or f_ni
+    # normalised coordinate x for EC heating to control Vloop or f_ni
     # ###### "BM_INP": ("dx_cd_ech", "dimensionless"),
-    # [-]  normalized mean location of NBI heating for
+    # [-]  normalised mean location of NBI heating for
     # controlling fusion power (Pfus = Pfus_req)
     # ###### "BM_INP": ("x_fus_nbi", "dimensionless"),
-    # [-]  normalized mean location of EC heating for
+    # [-]  normalised mean location of EC heating for
     # controlling fusion power (Pfus = Pfus_req)
     # ###### "BM_INP": ("x_fus_ech", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x, for NBI heating to control fusion power
+    # normalised coordinate x, for NBI heating to control fusion power
     # ###### "BM_INP": ("dx_fus_nbi", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x, for EC heating to control fusion power
+    # normalised coordinate x, for EC heating to control fusion power
     # ###### "BM_INP": ("dx_fus_ech", "dimensionless"),
-    # [-]  normalized mean location of aux. NBI heating for
+    # [-]  normalised mean location of aux. NBI heating for
     # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
     # ###### "BM_INP": ("x_heat_nbi", "dimensionless"),
-    # [-]  normalized mean location of aux. EC heating for
+    # [-]  normalised mean location of aux. EC heating for
     # controlling H-mode operation (P_sep/P_LH > P_sep_P_LH_min)
     # ###### "BM_INP": ("x_heat_ech", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x, for NBI heating to control H-mode
+    # normalised coordinate x, for NBI heating to control H-mode
     # ###### "BM_INP": ("dx_heat_nbi", "dimensionless"),
     # [-] variance of heat deposition, assimung Gaussian distribution on
-    # normalized coordinate x, for EC heating to control H-mode
+    # normalised coordinate x, for EC heating to control H-mode
     # ###### "BM_INP": ("dx_heat_ech", "dimensionless"),
     # [keV] NBI energy
     "e_nbi": ("nbi_energy", "keV"),
@@ -426,7 +426,7 @@ PLASMOD_OUTPUTS = {
     # ##### "BM_OUT": ("betator", "dimensionless"),
     # [-] poloidal beta
     "beta_p": ("betapol", "dimensionless"),
-    # [-] normalized beta
+    # [-] normalised beta
     "beta_N": ("betan", "dimensionless"),
     # [-] Greenwald density at pedestal top
     # ##### "BM_OUT": (f_gwpedtop", "dimensionless),

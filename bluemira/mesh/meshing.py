@@ -256,7 +256,7 @@ class Mesh:
                 _FreeCADGmsh._save_mesh(file)
 
             # close gmsh
-            _FreeCADGmsh._finalize_mesh(self.logfile)
+            _FreeCADGmsh._finalise_mesh(self.logfile)
         else:
             raise TypeError("Only Meshable objects can be meshed")
 
@@ -268,7 +268,7 @@ class Mesh:
         """
         Function to mesh the object.
         """
-        from bluemira.geometry.tools import serialize_shape  # noqa: PLC0415
+        from bluemira.geometry.tools import serialise_shape  # noqa: PLC0415
 
         if not hasattr(obj, "ismeshed") or not obj.ismeshed:
             if type(obj).__name__ not in SUPPORTED_GEOS:
@@ -277,7 +277,7 @@ class Mesh:
                 )
 
             # object is serialised into a dictionary
-            buffer = serialize_shape(obj)
+            buffer = serialise_shape(obj)
 
             # Each object is recreated into gmsh. Here there is a trick: in order to
             # allow the correct mesh in case of intersection, the procedure
@@ -584,7 +584,7 @@ class _FreeCADGmsh:
         gmsh.write(meshfile)
 
     @staticmethod
-    def _finalize_mesh(logfile: str = "gmsh.log"):
+    def _finalise_mesh(logfile: str = "gmsh.log"):
         with open(logfile, "w") as file_handler:
             file_handler.write("\n".join(str(item) for item in gmsh.logger.get()))
 
@@ -595,14 +595,14 @@ class _FreeCADGmsh:
     @staticmethod
     def _generate_mesh(mesh_dim: int = 3):
         # Before it can be meshed, the internal CAD representation must
-        # be synchronized with the Gmsh model, which will create the
+        # be synchronised with the Gmsh model, which will create the
         # relevant Gmsh data structures. This is achieved by the
         # gmsh.model.occ.synchronize() API call for the built-in
-        # geometry kernel. Synchronizations can be called at any time,
+        # geometry kernel. Synchronisations can be called at any time,
         # but they involve a non trivial amount of processing;
-        # so while you could synchronize the internal CAD data after
-        # every CAD command, it is usually better to minimize
-        # the number of synchronization points.
+        # so while you could synchronise the internal CAD data after
+        # every CAD command, it is usually better to minimise
+        # the number of synchronisation points.
         gmsh.model.occ.synchronize()
 
         # We can then generate a mesh...

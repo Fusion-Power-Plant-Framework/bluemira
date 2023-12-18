@@ -112,7 +112,7 @@ class TestVariedOffsetFunction:
         offset_wire = varied_offset(**kwargs)
 
         offset_size = self._get_offset_sizes(offset_wire, kwargs["wire"], np.pi)
-        # Trade-off here between finer discretization when we
+        # Trade-off here between finer discretisation when we
         # interpolate and a tighter tolerance. A bit of lee-way here for
         # the sake of fewer points to interpolate
         assert offset_size == pytest.approx(kwargs["outboard_offset"], rel=1e-3)
@@ -180,7 +180,7 @@ class TestVariedOffsetFunction:
 
     @staticmethod
     def _interpolation_func_closed_wire(wire: BluemiraWire) -> Callable:
-        coords = wire.discretize(200).xz
+        coords = wire.discretise(200).xz
         centroid = wire.center_of_mass[[0, 2]]
         angles = np.radians(
             find_clockwise_angle_2d(np.array([-1, 0]), coords - centroid.reshape((2, 1)))

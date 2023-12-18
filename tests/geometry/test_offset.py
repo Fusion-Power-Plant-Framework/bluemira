@@ -21,7 +21,7 @@ from bluemira.geometry.parameterisations import (
     TripleArc,
 )
 from bluemira.geometry.tools import (
-    deserialize_shape,
+    deserialise_shape,
     distance_to,
     make_polygon,
     offset_wire,
@@ -87,13 +87,13 @@ class TestOffset:
             new_wire = offset_wire(wire, 1.0, join=join)
             assert new_wire.length > wire.length
             # Check that discretisation doesn't break
-            new_wire.discretize(ndiscr=1000, byedges=True)
+            new_wire.discretise(ndiscr=1000, byedges=True)
 
         for wire in self.all_wires:
             new_wire = offset_wire(wire, -0.15, join=join)
             assert new_wire.length < wire.length
             # Check that discretisation doesn't break
-            new_wire.discretize(ndiscr=1000, byedges=True)
+            new_wire.discretise(ndiscr=1000, byedges=True)
 
     def test_1_offset(self):
         o_rect = offset_wire(self.rect_wire, 0.25, join="intersect")
@@ -129,7 +129,7 @@ class TestFallBackOffset:
         with open(Path(fp, "offset_wire2022-04-08_10-19-27.json")) as file:
             data = json.load(file)
 
-        cls.wire = deserialize_shape(data)
+        cls.wire = deserialise_shape(data)
 
     @pytest.mark.parametrize("join", ["arc", "intersect"])
     @pytest.mark.parametrize("delta", [(0.75), (-0.75)])

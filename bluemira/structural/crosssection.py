@@ -261,7 +261,7 @@ class CircularBeam(CrossSection):
         self.qzz = 0  # Centred about (0, 0)
         circle = make_circle(radius, center=(0, 0, 0), axis=(1, 0, 0))
         self.geometry = BluemiraFace(circle)
-        self.y, self.z = circle.discretize(ndiscr=n_discr).yz
+        self.y, self.z = circle.discretise(ndiscr=n_discr).yz
 
 
 class CircularHollowBeam(CrossSection):
@@ -296,7 +296,7 @@ class CircularHollowBeam(CrossSection):
         outer = make_circle(r_outer, center=(0, 0, 0), axis=(1, 0, 0))
         self.geometry = BluemiraFace([outer, inner])
         self.y, self.z = np.concatenate(
-            [outer.discretize(ndiscr=n_discr).yz, inner.discretize(ndiscr=n_discr).yz],
+            [outer.discretise(ndiscr=n_discr).yz, inner.discretise(ndiscr=n_discr).yz],
             axis=1,
         )
 
@@ -408,7 +408,7 @@ class AnalyticalCrossSection(CrossSection):
         self.geometry = deepcopy(geometry)
         self.area = area = self.geometry.area
         self.y, self.z = (
-            self.geometry.boundary[0].discretize(ndiscr=n_discr, byedges=True).yz
+            self.geometry.boundary[0].discretise(ndiscr=n_discr, byedges=True).yz
         )
 
         q_zz_o, q_yy_o, i_zz_o, i_yy_o, i_zy_o = _calculate_properties(self.y, self.z)
@@ -416,7 +416,7 @@ class AnalyticalCrossSection(CrossSection):
         if len(self.geometry.boundary) > 1:
             # Cut out any holes in the face
             for wire in self.geometry.boundary[1:]:
-                y, z = wire.discretize(ndiscr=n_discr, byedges=True).yz
+                y, z = wire.discretise(ndiscr=n_discr, byedges=True).yz
                 q_zz_i, q_yy_i, i_zz_i, i_yy_i, i_zy_i = _calculate_properties(y, z)
 
                 q_zz_o -= q_zz_i

@@ -133,7 +133,7 @@ class BluemiraFace(BluemiraGeo):
 
         raise TypeError(f"Only Part.Face objects can be used to create a {cls} instance")
 
-    def discretize(
+    def discretise(
         self, ndiscr: int = 100, *, byedges: bool = False, dl: float | None = None
     ) -> np.ndarray:
         """
@@ -151,14 +151,14 @@ class BluemiraFace(BluemiraGeo):
         Returns
         -------
         (M, (3, N)) array of point coordinates where M is the number of boundaries
-        and N the number of discretization points.
+        and N the number of discretisation points.
         """
         points = []
         for w in self.shape.Wires:
             if byedges:
-                points.append(cadapi.discretize_by_edges(w, ndiscr=ndiscr, dl=dl))
+                points.append(cadapi.discretise_by_edges(w, ndiscr=ndiscr, dl=dl))
             else:
-                points.append(cadapi.discretize(w, ndiscr=ndiscr, dl=dl))
+                points.append(cadapi.discretise(w, ndiscr=ndiscr, dl=dl))
         return points
 
     def normal_at(self, alpha_1: float = 0.0, alpha_2: float = 0.0) -> np.ndarray:

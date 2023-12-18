@@ -31,10 +31,10 @@ class KeepOutZone:
     wire: BluemiraWire
     """Closed wire defining the keep-out zone."""
     byedges: bool = True
-    """Whether to discretize the keep-out zone by edges or not."""
+    """Whether to discretise the keep-out zone by edges or not."""
     dl: float | None = None
     """
-    The discretization length for the keep-out zone.
+    The discretisation length for the keep-out zone.
 
     This overrides ``n_discr`` if given.
     """
@@ -115,10 +115,10 @@ def calculate_signed_distance(
     Signed distance from the parameterised shape to the keep-out/in zone.
     """
     shape = parameterisation.create_shape()
-    # Note that we do not discretize by edges here, as the number of
+    # Note that we do not discretise by edges here, as the number of
     # points must remain constant so the size of constraint vectors
     # remain constant.
-    s = shape.discretize(n_shape_discr, byedges=False).xz
+    s = shape.discretise(n_shape_discr, byedges=False).xz
     return signed_distance_2D_polygon(s.T, zone_points.T).T
 
 
@@ -128,11 +128,11 @@ def make_keep_out_zone_constraint(koz: KeepOutZone) -> GeomConstraintT:
         raise GeometryOptimisationError(
             f"Keep-out zone with label '{koz.wire.label}' is not closed."
         )
-    koz_points = koz.wire.discretize(koz.n_discr, byedges=koz.byedges, dl=koz.dl).xz
-    # Note that we do not allow discretization using 'dl' or 'byedges'
+    koz_points = koz.wire.discretise(koz.n_discr, byedges=koz.byedges, dl=koz.dl).xz
+    # Note that we do not allow discretisation using 'dl' or 'byedges'
     # for the shape being optimised. The size of the constraint cannot
     # change within an optimisation loop (NLOpt will error) and these
-    # options do not guarantee a constant number of discretized points.
+    # options do not guarantee a constant number of discretised points.
     shape_n_discr = koz.shape_n_discr
 
     def _f_constraint(geom: GeometryParameterisation) -> np.ndarray:

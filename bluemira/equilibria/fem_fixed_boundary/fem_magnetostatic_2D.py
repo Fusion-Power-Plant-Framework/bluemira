@@ -161,7 +161,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
     @property
     def psi_norm_2d(self) -> Callable[[np.ndarray], np.ndarray]:
-        """Normalized flux function in 2-D"""
+        """Normalised flux function in 2-D"""
 
         def func(x):
             if (denom := self.psi_b - self.psi_ax) == 0:
@@ -198,7 +198,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ffprime:
             ffprime as function of psi_norm (1-D function)
         curr_target:
-            Target current (also used to initialize the solution in case self.psi is
+            Target current (also used to initialise the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined) [A]
 
         Returns
@@ -274,7 +274,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         ffprime:
             ffprime as function of psi_norm (1-D function)
         I_p:
-            Target current (also used to initialize the solution in case self.psi is
+            Target current (also used to initialise the solution in case self.psi is
             still 0 and pprime and ffprime are, then, not defined).
             If None, plasma current is calculated and not constrained
         B_0:

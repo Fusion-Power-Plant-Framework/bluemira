@@ -794,18 +794,18 @@ def close_wire(wire: apiWire) -> apiWire:
     return wire
 
 
-def discretize(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndarray:
+def discretise(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndarray:
     """
-    Discretize a wire.
+    Discretise a wire.
 
     Parameters
     ----------
     w:
-        wire to be discretized.
+        wire to be discretised.
     ndiscr:
-        number of points for the whole wire discretization.
+        number of points for the whole wire discretisation.
     dl:
-        target discretization length (default None). If dl is defined,
+        target discretisation length (default None). If dl is defined,
         ndiscr is not considered.
 
     Returns
@@ -828,7 +828,7 @@ def discretize(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndar
         # NOTE: must discretise to at least two points.
         ndiscr = max(math.ceil(w.Length / dl + 1), 2)
 
-    # discretization points array
+    # discretisation points array
     output = w.discretize(ndiscr)
     output = vector_to_numpy(output)
 
@@ -837,20 +837,20 @@ def discretize(w: apiWire, ndiscr: int = 10, dl: float | None = None) -> np.ndar
     return output
 
 
-def discretize_by_edges(
+def discretise_by_edges(
     w: apiWire, ndiscr: int = 10, dl: float | None = None
 ) -> np.ndarray:
     """
-    Discretize a wire taking into account the edges of which it consists of.
+    Discretise a wire taking into account the edges of which it consists of.
 
     Parameters
     ----------
     w:
-        Wire to be discretized.
+        Wire to be discretised.
     ndiscr:
-        Number of points for the whole wire discretization.
+        Number of points for the whole wire discretisation.
     dl:
-        Target discretization length (default None). If dl is defined,
+        Target discretisation length (default None). If dl is defined,
         ndiscr is not considered.
 
     Returns
@@ -859,10 +859,10 @@ def discretize_by_edges(
 
     Notes
     -----
-    Final number of points can be slightly different due to edge discretization
+    Final number of points can be slightly different due to edge discretisation
     routine.
     """
-    # discretization points array
+    # discretisation points array
     output = []
 
     if dl is None:
@@ -873,9 +873,9 @@ def discretize_by_edges(
 
     # edges are discretised taking into account their orientation
     # Note: OrderedEdges already return a list of edges that considers the edge in the
-    # correct sequence and orientation. No need for tricks after the discretization.
+    # correct sequence and orientation. No need for tricks after the discretisation.
     for e in w.OrderedEdges:
-        pointse = list(discretize(apiWire(e), dl=dl))
+        pointse = list(discretise(apiWire(e), dl=dl))
         output += pointse[:-1]
 
     if w.isClosed():
@@ -2301,7 +2301,7 @@ def collect_verts_faces(
 
 def collect_wires(solid: apiShape, **kwds) -> tuple[np.ndarray, np.ndarray]:
     """
-    Collects verticies and edges of parts and discretizes them
+    Collects verticies and edges of parts and discretises them
     for the CAD viewer
 
     Parameters
@@ -2401,11 +2401,11 @@ def show_cad(
 
 
 # # =============================================================================
-# # Serialize and Deserialize
+# # Serialise and Deserialise
 # # =============================================================================
 def extract_attribute(func):
     """
-    Decorator for serialize_shape. Convert the function output attributes string
+    Decorator for serialise_shape. Convert the function output attributes string
     list to the corresponding object attributes.
     The first argument of func is the reference object.
     If an output is callable, the output result is returned.
@@ -2426,17 +2426,17 @@ def extract_attribute(func):
     return wrapper
 
 
-def serialize_shape(shape):
+def serialise_shape(shape):
     """
-    Serialize a FreeCAD topological data object.
+    Serialise a FreeCAD topological data object.
     """
     type_ = type(shape)
 
     if type_ == Part.Wire:
-        return {"Wire": [serialize_shape(edge) for edge in shape.OrderedEdges]}
+        return {"Wire": [serialise_shape(edge) for edge in shape.OrderedEdges]}
 
     if type_ == Part.Edge:
-        return serialize_shape(_convert_edge_to_curve(shape))
+        return serialise_shape(_convert_edge_to_curve(shape))
 
     if type_ in {Part.LineSegment, Part.Line}:
         return {
@@ -2499,25 +2499,25 @@ def serialize_shape(shape):
             }
         }
 
-    raise NotImplementedError(f"Serialization non implemented for {type_}")
+    raise NotImplementedError(f"Serialisation non implemented for {type_}")
 
 
-def deserialize_shape(buffer):
+def deserialise_shape(buffer):
     """
-    Deserialize a FreeCAD topological data object obtained from serialize_shape.
+    Deserialise a FreeCAD topological data object obtained from serialise_shape.
 
     Parameters
     ----------
     buffer:
-        Object serialization as stored by serialize_shape
+        Object serialisation as stored by serialise_shape
 
     Returns
     -------
-        The deserialized FreeCAD object
+        The deserialised FreeCAD object
     """
     for type_, v in buffer.items():
         if type_ == "Wire":
-            return Part.Wire([deserialize_shape(edge) for edge in v])
+            return Part.Wire([deserialise_shape(edge) for edge in v])
         if type_ == "LineSegment":
             return make_polygon([v["StartPoint"], v["EndPoint"]])
         if type_ == "BezierCurve":
@@ -2546,7 +2546,7 @@ def deserialize_shape(buffer):
                 v["StartAngle"],
                 v["EndAngle"],
             )
-        raise NotImplementedError(f"Deserialization non implemented for {type_}")
+        raise NotImplementedError(f"Deserialisation non implemented for {type_}")
     return None
 
 
@@ -2603,7 +2603,7 @@ def _convert_edge_to_curve(edge: apiEdge) -> Part.Curve:
         output.segment(first, last)
     elif isinstance(curve, Part.BSplineCurve):
         output = curve
-        # p = curve.discretize(100)
+        # p = curve.discretise(100)
         # if edge.Orientation == "Reversed":
         #     p.reverse()
         # output = Part.BSplineCurve()

@@ -122,7 +122,7 @@ class ParameterisedRippleSolver:
                 current_wires.append(c_w)
 
         current_arrays = [
-            w.discretize(byedges=True, dl=wire.length / 200) for w in current_wires
+            w.discretise(byedges=True, dl=wire.length / 200) for w in current_wires
         ]
 
         for c in current_arrays:
@@ -258,7 +258,7 @@ class EquispacedSelector(RipplePointSelector):
                 )
             )
             wire = boolean_cut(wire, cut_face)[0]
-        self.points = wire.discretize(byedges=True, ndiscr=self.n_rip_points)
+        self.points = wire.discretise(byedges=True, ndiscr=self.n_rip_points)
 
 
 class ExtremaSelector(RipplePointSelector):
@@ -276,7 +276,7 @@ class ExtremaSelector(RipplePointSelector):
             Wire along which the points will be selected
         """
         super().set_wire(wire)
-        coords = wire.discretize(byedges=True, ndiscr=2000)
+        coords = wire.discretise(byedges=True, ndiscr=2000)
         self.points = Coordinates([
             coords.points[np.argmin(coords.x)],
             coords.points[np.argmax(coords.x)],
@@ -319,7 +319,7 @@ class MaximiseSelector(RipplePointSelector):
             Wire along which the points will be selected
         """
         super().set_wire(wire)
-        points = wire.discretize(byedges=True, ndiscr=200)
+        points = wire.discretise(byedges=True, ndiscr=200)
         arg_x_max = np.argmax(points.x)
         x_max_point = points[:, arg_x_max]
         self._alpha_0 = wire.parameter_at(x_max_point, tolerance=EPS_FREECAD)

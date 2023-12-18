@@ -126,11 +126,11 @@ class FemMagnetostatic2d:
             * dx
         )
 
-        # initialize solution
+        # initialise solution
         self.psi = BluemiraFemFunction(self.V)
         # self.psi.set_allow_extrapolation(True)
 
-        # initialize g to zero
+        # initialise g to zero
         self.g = BluemiraFemFunction(self.V)
 
     def define_g(
