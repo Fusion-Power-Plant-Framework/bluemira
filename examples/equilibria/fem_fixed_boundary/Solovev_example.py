@@ -10,6 +10,7 @@ from mpi4py import MPI
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
+    find_magnetic_axis,
     get_flux_surfaces_from_mesh,
     get_mesh_boundary,
     plot_scalar_field,
@@ -81,7 +82,7 @@ class Solovev:
 
         def psi_func(x):
             x_0_2 = x[0] ** 2
-            x_1_2 = x[1] ** 2
+            x_1_2 = x[2] ** 2
             return np.array([
                 1.0,
                 x_0_2,
@@ -101,10 +102,10 @@ class Solovev:
         r = np.linspace(ri, ri + dr, nr)
         z = np.linspace(zi, zi + dz, nz)
         rv, zv = np.meshgrid(r, z)
-        points = np.vstack([rv.ravel(), zv.ravel()]).T
+        points = np.vstack([rv.ravel(), np.zeros(rv.size), zv.ravel()]).T
         psi = np.array([self.psi(point) for point in points])
         ax, cntr, cntrf = plot_scalar_field(
-            points[:, 0], points[:, 1], psi, levels=levels, ax=axis, tofill=tofill
+            points[:, 0], points[:, 2], psi, levels=levels, ax=axis, tofill=tofill
         )
         output = {"ax": ax, "cntr": cntr, "cntrf": cntrf}
         output["points"] = points
@@ -118,7 +119,7 @@ class Solovev:
     def psi_ax(self):
         """Poloidal flux on the magnetic axis"""
         if self._psi_ax is None:
-            result = scipy.optimize.minimize(lambda x: -self.psi(x), (self.R_0, 0))
+            result = scipy.optimize.minimize(lambda x: -self.psi(x), (self.R_0, 0, 0))
             self._psi_ax = self.psi(result.x)
             self._rz_ax = result.x
         return self._psi_ax
@@ -156,6 +157,47 @@ class Solovev:
         return lambda x: x[0] * self.pprime(x) + self.ffprime(x) / (MU_0 * x[0])
 
 
+def create_mesh(solovev, LCFS, lcar):
+    gmsh.initialize()
+    # points
+    point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
+    line_tags = [
+        gmsh.model.occ.addLine(point_tags[i + 1], point_tags[i])
+        for i in range(len(point_tags) - 1)
+    ]
+    line_tags.append(gmsh.model.occ.addLine(point_tags[0], point_tags[-1]))
+    gmsh.model.occ.synchronize()
+    curve_loop = gmsh.model.occ.addCurveLoop(line_tags)
+    surf = gmsh.model.occ.addPlaneSurface([curve_loop])
+    gmsh.model.occ.synchronize()
+
+    # embed psi_ax point with a finer mesh
+    psi_ax = solovev.psi_ax
+    rz_ax = solovev._rz_ax
+    psi_ax_tag = gmsh.model.occ.addPoint(rz_ax[0], 0, rz_ax[2], lcar / 50)
+    gmsh.model.occ.synchronize()
+    gmsh.model.mesh.embed(0, [psi_ax_tag], 2, surf)
+    gmsh.model.occ.synchronize()
+
+    gmsh.model.addPhysicalGroup(1, line_tags, 0)
+    gmsh.model.addPhysicalGroup(2, [surf], 1)
+    gmsh.model.occ.synchronize()
+
+    # Generate mesh
+    gmsh.option.setNumber("Mesh.Algorithm", 2)
+    gmsh.option.setNumber("Mesh.CharacteristicLengthMin", lcar)
+    gmsh.model.mesh.generate(2)
+    gmsh.model.mesh.optimize("Netgen")
+
+    (mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=[0, 2])
+
+    gmsh.write("Mesh.geo_unrolled")
+    gmsh.write("Mesh.msh")
+    gmsh.finalize()
+
+    return (mesh, ct, ft), labels, psi_ax
+
+
 if __name__ == "__main__":
     # set problem parameters
     R_0 = 9.07
@@ -179,46 +221,10 @@ if __name__ == "__main__":
     # Note: the points returned by matplotlib can have a small "interpolation" error,
     # thus psi on the LCFS could not be exaclty 0.
     LCFS = plot_info["cntr"].collections[0].get_paths()[0].vertices
-
-    # create the mesh
     lcar = 1
 
-    gmsh.initialize()
-    # points
-    point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
-    line_tags = [
-        gmsh.model.occ.addLine(point_tags[i + 1], point_tags[i])
-        for i in range(len(point_tags) - 1)
-    ]
-    line_tags.append(gmsh.model.occ.addLine(point_tags[0], point_tags[-1]))
-    gmsh.model.occ.synchronize()
-    curve_loop = gmsh.model.occ.addCurveLoop(line_tags)
-    surf = gmsh.model.occ.addPlaneSurface([curve_loop])
-    gmsh.model.occ.synchronize()
-
-    # embed psi_ax point with a finer mesh
-    psi_ax = solovev.psi_ax
-    rz_ax = solovev._rz_ax
-    psi_ax_tag = gmsh.model.occ.addPoint(rz_ax[0], 0, rz_ax[1], lcar / 50)
-    gmsh.model.occ.synchronize()
-    gmsh.model.mesh.embed(0, [psi_ax_tag], 2, surf)
-    gmsh.model.occ.synchronize()
-
-    gmsh.model.addPhysicalGroup(1, line_tags, 0)
-    gmsh.model.addPhysicalGroup(2, [surf], 1)
-    gmsh.model.occ.synchronize()
-
-    # Generate mesh
-    gmsh.option.setNumber("Mesh.Algorithm", 2)
-    gmsh.option.setNumber("Mesh.CharacteristicLengthMin", lcar)
-    gmsh.model.mesh.generate(2)
-    gmsh.model.mesh.optimize("Netgen")
-
-    (mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=[0, 2])
-
-    gmsh.write("Mesh.geo_unrolled")
-    gmsh.write("Mesh.msh")
-    gmsh.finalize()
+    # create the mesh
+    (mesh, ct, ft), labels, psi_ax = create_mesh(solovev, LCFS, lcar)
 
     (mesh1, ct1, ft1), labels = read_from_msh("Mesh.msh", gdim=2)
 
@@ -229,83 +235,76 @@ if __name__ == "__main__":
     # create the plasma density current function
     g = fem.Function(gs_solver.V)
     # select the dofs coordinates in the xz plane
-    dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
+    dof_points = gs_solver.V.tabulate_dof_coordinates()
     g.x.array[:] = np.array([solovev.jp(x) for x in dof_points])
 
-    """
-    Solve the linear GSE for the Solovev' plasma using zero boundary conditions on the LCFS
-    """
     # interpolate the exact solution on the solver function space
     psi_exact_fun = fem.Function(gs_solver.V)
-    # extract the dof coordinates (only on the xz plane)
-    dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
-    psi_exact_fun.x.array[:] = [solovev.psi(x) for x in dof_points]
+    psi_exact_fun.x.array[:] = np.array([solovev.psi(x) for x in dof_points])
+
+    # boundary conditions
+    dofs = fem.locate_dofs_topological(gs_solver.V, mesh.topology.dim - 1, ft.find(0))
+    psi_exact_boundary = fem.Function(gs_solver.V)
+    psi_exact_boundary.x.array[dofs] = 0
+    dirichlet_bcs_1 = fem.dirichletbc(psi_exact_boundary, dofs)
+
+    tdim = mesh.topology.dim
+    facets = dmesh.locate_entities_boundary(
+        mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
+    )
+    dirichlet_bcs_2 = fem.dirichletbc(
+        psi_exact_fun, fem.locate_dofs_topological(gs_solver.V, tdim - 1, facets)
+    )
+
+    dofs = fem.locate_dofs_topological(gs_solver.V, mesh.topology.dim - 1, ft.find(0))
+    psi_exact_boundary = fem.Function(gs_solver.V)
+    psi_exact_boundary.x.array[dofs] = psi_exact_fun.x.array[dofs]
+    dirichlet_bcs_3 = fem.dirichletbc(psi_exact_boundary, dofs)
 
     mean_err = []
     Itot = []
-    # boundary conditions
-    dirichlet_bcs = None
 
-    for bc_tag in range(4):
-        if bc_tag == 0:
-            dirichlet_bcs = None
-        elif bc_tag == 1:
-            dofs = fem.locate_dofs_topological(
-                gs_solver.V, mesh.topology.dim - 1, ft.find(0)
+    # TODO(je-cook) convergence is not very tight old:1e-5, new:6e-3
+    for dirich_bc, is_close in zip(
+        ((None, dirichlet_bcs_1), (dirichlet_bcs_2, dirichlet_bcs_3)), (2e-1, 6e-3)
+    ):
+        for d in dirich_bc:
+            # solve the Grad-Shafranov equation
+            gs_solver.define_g(g)
+            gs_solver.setup_problem(d)
+            gs_solver.solve()
+
+            dx = ufl.Measure("dx", subdomain_data=ct, domain=mesh)
+            Itot.append(fem.assemble_scalar(fem.form(g * dx)))
+
+            err = fem.form((gs_solver.psi - psi_exact_fun) ** 2 * dx)
+            err_val = np.sqrt(
+                gs_solver.psi.function_space.mesh.comm.allreduce(
+                    fem.assemble_scalar(err), MPI.SUM
+                )
             )
-            psi_exact_boundary = fem.Function(gs_solver.V)
-            psi_exact_boundary.x.array[dofs] = psi_exact_fun.x.array[dofs] * 0
-            dirichlet_bcs = [fem.dirichletbc(psi_exact_boundary, dofs)]
-        elif bc_tag == 2:
-            tdim = mesh.topology.dim
-            facets = dmesh.locate_entities_boundary(
-                mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
-            )
-            dofs = fem.locate_dofs_topological(gs_solver.V, tdim - 1, facets)
-            dirichlet_bcs = [fem.dirichletbc(psi_exact_fun, dofs)]
-        elif bc_tag == 3:
-            dofs = fem.locate_dofs_topological(
-                gs_solver.V, mesh.topology.dim - 1, ft.find(0)
-            )
-            psi_exact_boundary = fem.Function(gs_solver.V)
-            psi_exact_boundary.x.array[dofs] = psi_exact_fun.x.array[dofs]
-            dirichlet_bcs = [fem.dirichletbc(psi_exact_boundary, dofs)]
-
-        # solve the Grad-Shafranov equation
-        gs_solver.define_g(g)
-        gs_solver.setup_problem(dirichlet_bcs)
-        gs_solver.solve()
-
-        dx = ufl.Measure("dx", subdomain_data=ct, domain=mesh)
-        Itot.append(fem.assemble_scalar(fem.form(g * dx)))
-
-        err = fem.form((gs_solver.psi - psi_exact_fun) ** 2 * dx)
-        comm = gs_solver.psi.function_space.mesh.comm
-        mean_err.append(np.sqrt(comm.allreduce(fem.assemble_scalar(err), MPI.SUM)))
+            assert err_val < is_close
+            mean_err.append(err_val)
 
     np.testing.assert_allclose(Itot, Itot[0])
-    assert mean_err[0] == mean_err[1]
-    assert mean_err[2] == mean_err[3]
-    assert mean_err[0] < 2e-1
-    assert mean_err[2] < 6e-3  # TODO(je-cook) convergence is not very tight old:1e-5
+    assert np.isclose(mean_err[0], mean_err[1])
+    assert np.isclose(mean_err[2], mean_err[3])
 
     points_x, points_y = get_mesh_boundary(mesh)
     plt.plot(points_x, points_y, "r-")
     plt.title("Check mesh boundary function")
     plt.show()
 
-    dofs_points = gs_solver.psi.function_space.tabulate_dof_coordinates()[:, 0:2]
+    dofs_points = gs_solver.psi.function_space.tabulate_dof_coordinates()
     data = gs_solver.psi(dofs_points)
-    plot_scalar_field(dofs_points[:, 0], dofs_points[:, 1], data)
+    plot_scalar_field(dofs_points[:, 0], dofs_points[:, 2], data)
     plt.title("Plot psi from recalculated dof_points")
     plt.show()
 
-    dofs_points = gs_solver.psi.function_space.tabulate_dof_coordinates()[:, 0:2]
-    plot_scalar_field(dofs_points[:, 0], dofs_points[:, 1], gs_solver.psi.x.array[:])
+    dofs_points = gs_solver.psi.function_space.tabulate_dof_coordinates()
+    plot_scalar_field(dofs_points[:, 0], dofs_points[:, 2], gs_solver.psi.x.array[:])
     plt.title("Plot psi from dof_points")
     plt.show()
-
-    from bluemira.equilibria.fem_fixed_boundary.utilities import find_magnetic_axis
 
     o_point = find_magnetic_axis(gs_solver.psi, mesh)
 
