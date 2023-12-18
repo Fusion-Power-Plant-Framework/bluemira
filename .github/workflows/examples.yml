@@ -20,7 +20,7 @@ jobs:
           activate-environment: bluemira
           environment-file: conda/environment.yml
           miniforge-version: "latest"
-          use-only-tar-bz2: true
+          use-only-tar-bz2: false
           miniforge-variant: Mambaforge
           use-mamba: true
 
