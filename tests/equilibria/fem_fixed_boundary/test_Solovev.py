@@ -180,50 +180,20 @@ class TestSolovevZheng:
         a = R_0 / A
 
         # Solovev parameters for pprime and ffprime
-        A1 = -6.84256806e-02  # noqa: N806
-        A2 = -6.52918977e-02  # noqa: N806
+        A1 = -6.84256806e-02
+        A2 = -6.52918977e-02
 
         # create the Solovev instance to get the exact psi
-        cls.solovev = Solovev(R_0, a, kappa, delta, A1, A2)
+        solovev = Solovev(R_0, a, kappa, delta, A1, A2)
 
-        levels = np.linspace(cls.solovev.psi_b, cls.solovev.psi_ax, 20)
-        _ax, cntr, _cntrf, _points, _psi = cls.solovev.plot_psi(
-            5.0, -6, 8.0, 12.0, 100, 100, levels=levels
-        )
-
-        # n_points = 500
-        # boundary = find_flux_surface(cls.solovev.psi_norm_2d, 1, n_points=n_points)
-        # cls.boundary = boundary
-        # boundary = np.array([boundary[0, :], np.zeros(n_points), boundary[1, :]])
-
-        # curve1 = interpolate_bspline(boundary[:, : n_points // 2 + 1], "curve1")
-        # curve2 = interpolate_bspline(boundary[:, n_points // 2 :], "curve2")
-        # lcfs = BluemiraWire([curve1, curve2], "LCFS")
-
-        # Tweaked discretisation and mesh size to get error below 1e-5 but still be fast.
-        # Keep as is until we move to Fenics-X where we will need to see how it performs.
-        # lcfs.mesh_options = {"lcar": 0.024, "physical_group": "lcfs"}
-
-        # plasma_face = BluemiraFace(lcfs, "plasma_face")
-        # plasma_face.mesh_options = {"lcar": 0.5, "physical_group": "plasma_face"}
-
-        # plasma = PhysicalComponent("Plasma", shape=plasma_face)
-
-        # # mesh the plasma
-        # meshing.Mesh()(plasma)
-
-        # msh_to_xdmf("Mesh.msh", dimensions=(0, 2), directory=".")
-
-        # cls.mesh, boundaries, _, _ = import_mesh(
-        #     "Mesh",
-        #     directory=".",
-        #     subdomains=True,
-        # )
+        levels = np.linspace(solovev.psi_b, solovev.psi_ax, 20)
+        plot_info = solovev.plot_psi(5.0, -6, 8.0, 12.0, 100, 100, levels=levels)
+        plt.show()
 
         # Find the LCFS.
         # Note: the points returned by matplotlib can have a small "interpolation" error,
         # thus psi on the LCFS could not be exaclty 0.
-        LCFS = cntr.collections[0].get_paths()[0].vertices
+        LCFS = plot_info["cntr"].collections[0].get_paths()[0].vertices
 
         # create the mesh
         lcar = 1
@@ -242,8 +212,8 @@ class TestSolovevZheng:
         gmsh.model.occ.synchronize()
 
         # embed psi_ax point with a finer mesh
-        psi_ax = cls.solovev.psi_ax
-        rz_ax = cls.solovev._rz_ax
+        psi_ax = solovev.psi_ax
+        rz_ax = solovev._rz_ax
         psi_ax_tag = gmsh.model.occ.addPoint(rz_ax[0], 0, rz_ax[1], lcar / 50)
         gmsh.model.occ.synchronize()
         gmsh.model.mesh.embed(0, [psi_ax_tag], 2, surf)
@@ -259,7 +229,7 @@ class TestSolovevZheng:
         gmsh.model.mesh.generate(2)
         gmsh.model.mesh.optimize("Netgen")
 
-        (cls.mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=[0, 2])
+        (mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=[0, 2])
 
         gmsh.write("Mesh.geo_unrolled")
         gmsh.write("Mesh.msh")
@@ -267,22 +237,29 @@ class TestSolovevZheng:
 
         (mesh1, ct1, ft1), labels = read_from_msh("Mesh.msh", gdim=2)
 
-        # initialize the Grad-Shafranov solver
-        p = 2
-        cls.gs_solver = FemMagnetostatic2d(p_order=p)
-        cls.gs_solver.set_mesh(cls.mesh, ct)
+        # Inizialize the em solever
+        gs_solver = FemMagnetostatic2d(2)
+        gs_solver.set_mesh(mesh, ct)
 
         # create the plasma density current function
-        g = fem.Function(cls.gs_solver.V)
+        g = fem.Function(gs_solver.V)
         # select the dofs coordinates in the xz plane
-        dof_points = cls.gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
-        g.x.array[:] = np.array([cls.solovev.jp(x) for x in dof_points])
+        dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
+        g.x.array[:] = np.array([solovev.jp(x) for x in dof_points])
 
-        # solve the Grad-Shafranov equation
-        cls.gs_solver.define_g(g)
+        """
+        Solve the linear GSE for the Solovev' plasma using zero boundary conditions on the LCFS
+        """
+        # interpolate the exact solution on the solver function space
+        psi_exact_fun = fem.Function(gs_solver.V)
+        # extract the dof coordinates (only on the xz plane)
+        dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
+        psi_exact_fun.x.array[:] = [solovev.psi(x) for x in dof_points]
 
+        mean_err = []
+        Itot = []
         # boundary conditions
-        dirichlet_bcs_list = [None]
+        dirichlet_bcs = None
 
         dofs = fem.locate_dofs_topological(
             cls.gs_solver.V, cls.mesh.topology.dim - 1, ft.find(0)
@@ -336,20 +313,16 @@ class TestSolovevZheng:
         ax.plot(points_x, points_y, "r-")
         ax.set_title("Check mesh boundary function")
 
-        dofs_points = self.gs_solver.psi.function_space.tabulate_dof_coordinates()[
-            :, 0:2
-        ]
+        dofs_points = self.gs_solver.psi.function_space.tabulate_dof_coordinates()
         psi_calc_data = self.gs_solver.psi(dofs_points)
         (ax, _cntr, _cntrf) = plot_scalar_field(
-            dofs_points[:, 0], dofs_points[:, 1], self.gs_solver.psi(dofs_points)
+            dofs_points[:, 0], dofs_points[:, 2], self.gs_solver.psi(dofs_points)
         )
         ax.set_title("Plot psi from recalculated dof_points")
 
-        dofs_points = self.gs_solver.psi.function_space.tabulate_dof_coordinates()[
-            :, 0:2
-        ]
+        dofs_points = self.gs_solver.psi.function_space.tabulate_dof_coordinates()
         (ax, _cntr, _cntrf) = plot_scalar_field(
-            dofs_points[:, 0], dofs_points[:, 1], self.gs_solver.psi.x.array[:]
+            dofs_points[:, 0], dofs_points[:, 2], self.gs_solver.psi.x.array[:]
         )
         ax.set_title("Plot psi from dof_points")
 

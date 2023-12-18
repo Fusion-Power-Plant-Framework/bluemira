@@ -8,7 +8,7 @@
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
 
-from typing import Optional, Union
+from typing import Iterable, Optional, Union
 
 import dolfinx.fem
 import numpy as np
@@ -217,7 +217,11 @@ class FemMagnetostatic2d:
         else:
             # TODO: we should pass directly the BCs, not the functions since
             # dolfinx wants functions and dofs.
-            bcs = dirichlet_bc_function
+            bcs = (
+                dirichlet_bc_function
+                if isinstance(dirichlet_bc_function, Iterable)
+                else [dirichlet_bc_function]
+            )
 
         if neumann_bc_function is None:
             neumann_bc = 0

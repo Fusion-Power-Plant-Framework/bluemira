@@ -401,8 +401,9 @@ def eval_f(function: Function, points: np.ndarray) -> Tuple[np.ndarray, ...]:
             temp_colliding_cells = geometry.compute_colliding_cells(
                 mesh, temp_cell_candidates, closest_point
             )
-            points_on_proc.append(closest_point[0])
-            cells.append(temp_colliding_cells.links(0)[0])
+            if (tcc := temp_colliding_cells.links(0)).size > 0:
+                points_on_proc.append(closest_point[0])
+                cells.append(tcc[0])
 
     points_on_proc = np.array(points_on_proc, dtype=np.float64)
     values = np.array(function.eval(points_on_proc, cells)).reshape(points.shape[0], -1)
