@@ -19,7 +19,7 @@ import numpy as np
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 
-from bluemira.base.constants import N_AVOGADRO, S_TO_YR, T_LAMBDA, T_MOLAR_MASS, YR_TO_S
+from bluemira.base.constants import N_AVOGADRO, T_LAMBDA, T_MOLAR_MASS, raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
 from bluemira.plasma_physics.reactions import r_T_burn
@@ -289,7 +289,7 @@ def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndar
     -------
     The delayed flow vector
     """
-    t_delay = tt_delay * S_TO_YR
+    t_delay = raw_uc(tt_delay, "s", "yr")
     shift = np.argmin(np.abs(t - t_delay))
     flow = np.zeros(shift)
     deldec = np.exp(-T_LAMBDA * t_delay)
@@ -329,7 +329,7 @@ def fountain(flow: np.ndarray, t: np.ndarray, min_inventory: float) -> np.ndarra
 
     for i, _ti in zip(range(1, len(flow)), flow[1:], strict=False):
         dt = t[i] - t[i - 1]
-        dts = dt * YR_TO_S
+        dts = raw_uc(dt, "yr", "s")
         m_in = flow[i] * dts
         inventory[i] = inventory[i - 1] * np.exp(-T_LAMBDA * dt)
         overflow = inventory[i] + m_in
@@ -368,7 +368,7 @@ def _speed_recycle(
     """
     m_tritium = np.zeros(len(t))
     m_tritium[0] = m_start_up
-    ts = t * YR_TO_S
+    ts = raw_uc(t, "yr", "s")
     for i in range(1, len(t)):
         dt = t[i] - t[i - 1]
         dts = ts[i] - ts[i - 1]
@@ -594,8 +594,8 @@ def _fountain_linear_sink(
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = m_flow * YR_TO_S  # converts kg/s to kg/yr
-    dts = dt * YR_TO_S
+    m_in = raw_uc(m_flow, "yr", "s")  # kg/yr # TODO: possible error? Wrong way round
+    dts = raw_uc(dt, "yr", "s")
     mass_in = m_flow * dts
     sum_in += mass_in
 
@@ -751,8 +751,8 @@ def _linear_thresh_sink(
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = m_flow * YR_TO_S  # converts kg/s to kg/yr
-    dts = dt * YR_TO_S
+    m_in = raw_uc(m_flow, "yr", "s")  # kg/yr # TODO: possible error? Wrong way round
+    dts = raw_uc(dt, "yr", "s")
     mass_in = m_flow * dts
     sum_in += mass_in
     j_inv0 = inventory
@@ -846,7 +846,7 @@ def _sqrt_thresh_sink(
         # Nothing can happen if time is zero
         return m_flow, inventory, sum_in, decayed
 
-    dts = dt * YR_TO_S
+    dts = raw_uc(dt, "yr", "s")
     mass_in = m_flow * dts
     sum_in += mass_in
 
