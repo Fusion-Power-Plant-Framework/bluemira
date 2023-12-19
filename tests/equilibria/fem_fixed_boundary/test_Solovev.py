@@ -284,9 +284,9 @@ class TestSolovevZheng:
 
         cls.mean_err = []
         cls.itot = []
+        cls.gs_solver.set_mesh(cls.mesh, ct)
         for dirichlet_bcs in dirichlet_bcs_list:
-            cls.gs_solver.set_mesh(cls.mesh, ct, dirichlet_bcs)
-
+            cls.gs_solver.define_g(dirichlet_bc_function=dirichlet_bcs)
             cls.gs_solver.solve()
 
             dx = ufl.Measure("dx", subdomain_data=ct, domain=cls.mesh)

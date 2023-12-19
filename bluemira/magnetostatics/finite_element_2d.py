@@ -102,7 +102,6 @@ class FemMagnetostatic2d:
         self.V = None
         self.g = None
         self.boundaries = None
-        self.problem = None
 
         self.psi = None
 
@@ -171,19 +170,9 @@ class FemMagnetostatic2d:
         # initialize g to zero
         self.g = BluemiraFemFunction(self.V)
 
-    def define_g(self, g: Union[dolfinx.fem.Expression, BluemiraFemFunction]):
-        """
-        Define g, the right hand side function of the Poisson problem
-
-        Parameters
-        ----------
-        g:
-            Right hand side function of the Poisson problem
-        """
-        self.g = g
-
-    def setup_problem(
+    def define_g(
         self,
+        g: Optional[Union[dolfinx.fem.Expression, BluemiraFemFunction]] = None,
         dirichlet_bc_function: Optional[
             Union[dolfinx.fem.Expression, BluemiraFemFunction]
         ] = None,
@@ -197,12 +186,17 @@ class FemMagnetostatic2d:
 
         Parameters
         ----------
+        g:
+            Right hand side function of the Poisson problem
         dirichlet_bc_function:
             Dirichlet boundary condition function
         dirichlet_marker:
             Identification number for the dirichlet boundary
 
         """
+        if g is not None:
+            self.g = g
+
         # # define the right hand side
         # self.L = self.g * self.v * dx # - neumann_bc_function * self.v * ds
 
@@ -245,9 +239,6 @@ class FemMagnetostatic2d:
         )
 
     def solve(self) -> BluemiraFemFunction:
-        if self.problem is None:
-            self.setup_problem()
-
         self.psi = self.problem.solve()
 
         return self.psi
@@ -264,10 +255,12 @@ class FemMagnetostatic2d:
         B = BluemiraFemFunction(W)
         x_0 = SpatialCoordinate(self.mesh)[0]
         B_expr = Expression(
-            as_vector((
-                -self.psi.dx(1) / (2 * np.pi * x_0),
-                self.psi.dx(0) / (2 * np.pi * x_0),
-            )),
+            as_vector(
+                (
+                    -self.psi.dx(1) / (2 * np.pi * x_0),
+                    self.psi.dx(0) / (2 * np.pi * x_0),
+                )
+            ),
             W.element.interpolation_points(),
         )
         B.interpolate(B_expr)
