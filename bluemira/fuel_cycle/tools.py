@@ -289,7 +289,7 @@ def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndar
     -------
     The delayed flow vector [kg/s] [or any other unit same as m_t_flow]
     """
-    t_delay = tt_delay * S_TO_YR
+    t_delay = raw_uc(tt_delay, "s", "yr")
     shift = np.argmin(np.abs(t - t_delay))
     flow = np.zeros(shift)
     deldec = np.exp(-T_LAMBDA * t_delay)
@@ -329,7 +329,7 @@ def fountain(flow: np.ndarray, t: np.ndarray, min_inventory: float) -> np.ndarra
 
     for i, _ti in zip(range(1, len(flow)), flow[1:], strict=False):
         dt = t[i] - t[i - 1]
-        dts = dt * YR_TO_S
+        dts = raw_uc(dt, "yr", "s")
         m_in = flow[i] * dts
         inventory[i] = inventory[i - 1] * np.exp(-T_LAMBDA * dt)
         overflow = inventory[i] + m_in
@@ -368,7 +368,7 @@ def _speed_recycle(
     """
     m_tritium = np.zeros(len(t))
     m_tritium[0] = m_start_up
-    ts = t * YR_TO_S
+    ts = raw_uc(t, "yr", "s")
     for i in range(1, len(t)):
         dt = t[i] - t[i - 1]
         dts = ts[i] - ts[i - 1]
