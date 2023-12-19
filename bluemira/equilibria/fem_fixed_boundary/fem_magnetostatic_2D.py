@@ -228,6 +228,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
         # # This instruction seems to slow the calculation
         # super().define_g(ScalarSubFunc(self._g_func))
+        super().define_g()
 
         # it has been replaced by this code
         dof_points = self.V.tabulate_dof_coordinates()
