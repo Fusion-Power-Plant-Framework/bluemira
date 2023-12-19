@@ -78,11 +78,11 @@ class TestGetNormal:
         c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
         c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
-        meshfiles = [
-            Path(tmp_path, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
-        ]
-        m = meshing.Mesh(meshfile=meshfiles)
-        m(c_universe, dim=2)
+        meshing.Mesh(
+            meshfile=[
+                Path(tmp_path, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
+            ]
+        )(c_universe, dim=2)
 
         (mesh, ct, ft), _labels = model_to_mesh(gmsh.model, gdim=2)
         print(np.unique(ct.values))
@@ -100,13 +100,13 @@ class TestGetNormal:
 
         em_solver.define_g(jtot)
         em_solver.solve()
-        em_solver.calculate_b()
+        B = em_solver.calculate_b()
 
         z_points_axis = np.linspace(0, r_enclo, 200)
         r_points_axis = np.zeros(z_points_axis.shape)
 
         points = np.array([r_points_axis, z_points_axis, 0 * z_points_axis]).T
-        Bz_axis, points = em_solver.B._eval_new(points)
+        Bz_axis, points = B._eval_new(points)
         Bz_axis = Bz_axis[:, 1]
 
         B_teo = np.array([Bz_coil_axis(rc, 0, z, current) for z in points[:, 1]])
