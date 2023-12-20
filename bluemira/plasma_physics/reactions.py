@@ -45,7 +45,7 @@ def E_DT_fusion() -> float:
 
     Returns
     -------
-    The energy released from the D-T fusion reaction [eV]
+    The energy released from a single D-T fusion reaction [J]
 
     Notes
     -----
@@ -55,7 +55,7 @@ def E_DT_fusion() -> float:
         \\Delta E = \\Delta m c^2
     """
     delta_m = (D_MOLAR_MASS + T_MOLAR_MASS) - (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
-    return raw_uc(delta_m, "amu", "eV")
+    return raw_uc(delta_m, "amu", "J")
 
 
 def E_DD_fusion() -> float:
@@ -64,7 +64,7 @@ def E_DD_fusion() -> float:
 
     Returns
     -------
-    The energy released from the D-D fusion reaction [eV]
+    The energy released from a single D-D fusion reaction [J]
 
     Notes
     -----
@@ -84,7 +84,7 @@ def E_DD_fusion() -> float:
         ]
     )
     delta_m = np.average(delta_m)
-    return raw_uc(delta_m, "amu", "eV")
+    return raw_uc(delta_m, "amu", "J")
 
 
 def n_DT_reactions(p_fus: float) -> float:
