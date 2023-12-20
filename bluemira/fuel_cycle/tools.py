@@ -403,6 +403,10 @@ def legal_limit(
     p_fus: Optional[float] = None,
 ) -> float:
     r"""
+    Parameters
+    ----------
+    mb: tritium inventory gross burn rate [g/s]
+
     Calculates the release rate of T from the model TFV cycle in g/yr.
 
     .. math::
@@ -463,7 +467,7 @@ def legal_limit(
         mb = None
 
     if mb is None:
-        mb = r_T_burn(p_fus)  # [kg/s]
+        mb = raw_uc(r_T_burn(p_fus), "kg/s", "g/s")
 
     m_plasma = (
         (mb * ((1 / fb - 1) + (1 - eta_fuel_pump) * (1 - eta_f) / (eta_f * fb)) + m_gas)
