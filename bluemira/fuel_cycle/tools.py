@@ -482,7 +482,7 @@ def legal_limit(
         mb = None
 
     if mb is None:
-        mb = raw_uc(r_T_burn(p_fus), "kg/s", "g/s")
+        mb = r_T_burn(p_fus)  # [kg/s]
 
     m_plasma = (
         (mb * ((1 / fb - 1) + (1 - eta_fuel_pump) * (1 - eta_f) / (eta_f * fb)) + m_gas)
