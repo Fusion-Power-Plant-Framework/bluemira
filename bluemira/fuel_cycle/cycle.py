@@ -607,11 +607,11 @@ class EUDEMOFuelCycleModel:
 
         Returns
         -------
-        Tritium release rate [g/yr]
+        Tritium release rate [kg/yr]
         """
         max_load_factor = find_max_load_factor(self.DEMO_t, self.DEMO_rt)
-        mb = 1000 * max(self.brate)
-        m_gas = 1000 * max(self.grate)
+        mb = 1000 * raw_uc(max(self.brate), "g/s", "kg/s")
+        m_gas = 1000 * raw_uc(max(self.grate), "g/s", "kg/s")
         return legal_limit(
             max_load_factor,
             self.params.f_b,
