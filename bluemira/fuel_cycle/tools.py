@@ -260,15 +260,15 @@ def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndar
     Parameters
     ----------
     t:
-        The time vector
+        The time vector [s]
     m_t_flow:
-        The mass flow vector
+        The mass flow vector [kg/s] [or any other unit same as return value]
     tt_delay:
-        The delay duration [yr]
+        The delay duration (scalar) [yr]
 
     Returns
     -------
-    The delayed flow vector
+    The delayed flow vector [kg/s] [or any other unit same as m_t_flow]
     """
     t_delay = tt_delay * S_TO_YR
     shift = np.argmin(np.abs(t - t_delay))
@@ -403,11 +403,7 @@ def legal_limit(
     p_fus: Optional[float] = None,
 ):
     """
-    Parameters
-    ----------
-    mb: tritium inventory gross burn rate [g/s]
-
-    Calculates the release rate of T from the model TFV cycle in g/yr.
+    Calculates the release rate of T from the model TFV cycle in kg/yr.
 
     :math:`A_{max}\\Bigg[\\Big[\\dot{m_{b}}\\Big((\\frac{1}{f_{b}}-1)+\
     (1-{\\eta}_{f_{pump}})(1-{\\eta}_{f})\\frac{1}{f_{b}{\\eta}_{f}}\\Big)+\
@@ -416,6 +412,22 @@ def legal_limit(
     Where:\n
     :math:`\\dot{m_{b}} = \\frac{P_{fus}[MW]M_{T}[g/mol]}
     {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
+
+    Parameters
+    ----------
+    m_gas:
+        mass of gas flow [kg/s]
+    mb:
+        tritium inventory gross burn rate [kg/s]
+    p_fus:
+        fusion power [W]
+
+    All other parameters are dimensionless
+
+    Returns
+    -------
+    legal_limit:
+        release rate of T [kg/yr]
     """
     if p_fus is None and mb is None:
         raise FuelCycleError("You must specify either fusion power or burn rate.")
@@ -427,7 +439,7 @@ def legal_limit(
         mb = None
 
     if mb is None:
-        mb = raw_uc(r_T_burn(p_fus), "kg/s", "g/s")
+        mb = r_T_burn(p_fus)  # [kg/s]
 
     m_plasma = (
         (mb * ((1 / fb - 1) + (1 - eta_fuel_pump) * (1 - eta_f) / (eta_f * fb)) + m_gas)
@@ -437,7 +449,7 @@ def legal_limit(
     )
     m_bb = mb * TBR * (1 - f_terscwps)
     ll = max_load_factor * (m_plasma + m_bb)
-    return ll * 365 * 24 * 3600  # g/yr
+    return raw_uc(ll, "kg/s", "kg/yr")
 
 
 @nb.jit(nopython=True, cache=True)
