@@ -22,7 +22,7 @@ class TestReactionEnergies:
         return f"E=mc^2 value {delta * 1e-6:.2f} MeV {relate} than Kikuchi reference."
 
     def test_DT(self):
-        e_dt_kikuchi = (3.5 + 14.1) * 1e6
+        e_dt_kikuchi = raw_uc(3.5 + 14.1, "MeV", "J")
         e, v = E_DT_fusion(), e_dt_kikuchi
         assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
 
