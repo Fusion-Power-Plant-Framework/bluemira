@@ -109,7 +109,7 @@ def n_DD_reactions(p_fus: float) -> float:
     Calculates the number of D-D fusion reactions per s for a given D-D fusion
     power
 
-    :math:`n_{reactions} = \\frac{P_{fus}[MW]}{E_{DD} [MeV] eV[J]} [1/s]`
+    :math:`n_{reactions} = \\frac{P_{fus}[W]}{E_{DD} [MeV] eV[J]} [1/s]`
 
     Parameters
     ----------
