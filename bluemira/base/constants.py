@@ -363,12 +363,6 @@ ABS_ZERO = {ureg.kelvin: ABS_ZERO_K, ureg.celsius: ABS_ZERO_C}
 # Conversions
 # =============================================================================
 
-# Electron-volts to Joules
-EV_TO_J = ureg.Quantity(1, ureg.eV).to(ureg.joule).magnitude
-
-# Atomic mass units to kilograms
-AMU_TO_KG = ureg.Quantity(1, ureg.amu).to(ureg.kg).magnitude
-
 # Years to seconds
 YR_TO_S = ureg.Quantity(1, ureg.year).to(ureg.second).magnitude
 

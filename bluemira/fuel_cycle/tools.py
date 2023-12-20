@@ -575,7 +575,7 @@ def _fountain_linear_sink(
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = raw_uc(m_flow, "yr", "s")  # kg/yr # TODO: possible error? Wrong way round
+    m_in = raw_uc(m_flow, "kg/s", "kg/yr")  # kg/yr
     dts = raw_uc(dt, "yr", "s")
     mass_in = m_flow * dts
     sum_in += mass_in
@@ -735,7 +735,7 @@ def _linear_thresh_sink(
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = raw_uc(m_flow, "yr", "s")  # kg/yr # TODO: possible error? Wrong way round
+    m_in = raw_uc(m_flow, "kg/s", "kg/yr")  # kg/yr
     dts = raw_uc(dt, "yr", "s")
     mass_in = m_flow * dts
     sum_in += mass_in
