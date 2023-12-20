@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.base.constants import N_AVOGADRO, T_LAMBDA, T_MOLAR_MASS, raw_uc
+from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, raw_uc
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 from bluemira.fuel_cycle.tools import (
@@ -168,9 +168,9 @@ class EUDEMOFuelCycleModel:
         self.grate = m_gas * self.DT_rate / max(self.DT_rate)
         self.bci = timeline["blanket_change_index"]
         # Burn rate of T [kgs of T per second]
-        self.brate = (T_MOLAR_MASS / N_AVOGADRO / 1000) * self.DT_rate
+        self.brate = raw_uc(T_MOLAR_MASS, "amu", "kg") * self.DT_rate
         # T production rate from D-D reaction channel [kgs of T per second]
-        self.prate = (T_MOLAR_MASS / N_AVOGADRO / 1000) * self.DD_rate / 2  # Only 50%!
+        self.prate = raw_uc(T_MOLAR_MASS, "amu", "kg") * self.DD_rate / 2  # Only 50%!
 
     def seed_t(self):
         """

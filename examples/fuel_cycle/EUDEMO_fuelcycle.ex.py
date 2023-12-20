@@ -47,8 +47,8 @@ plot_defaults()
 # First let's set up a configuration with some values (a la EU-DEMO 2015)
 
 # %%
-p_fus_DT = 2037
-p_fus_DD = 3
+p_fus_DT = 2037e6
+p_fus_DD = 3e6
 
 baseline_not_critical = True
 HCPB_not_WCLL = True
