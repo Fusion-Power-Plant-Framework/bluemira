@@ -16,7 +16,7 @@ import numpy as np
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 
-from bluemira.base.constants import N_AVOGADRO, S_TO_YR, T_LAMBDA, T_MOLAR_MASS, YR_TO_S
+from bluemira.base.constants import S_TO_YR, T_LAMBDA, T_MOLAR_MASS, YR_TO_S, raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
 from bluemira.plasma_physics.reactions import r_T_burn
@@ -115,7 +115,7 @@ def convert_flux_to_flow(flux: float, area: float) -> float:
     -------
     The flow-rate [kg/s]
     """
-    return flux * area * T_MOLAR_MASS / N_AVOGADRO / 1000
+    return flux * area * raw_uc(T_MOLAR_MASS, "amu", "kg")
 
 
 # =============================================================================
@@ -403,6 +403,10 @@ def legal_limit(
     p_fus: Optional[float] = None,
 ):
     """
+    Parameters
+    ----------
+    mb: tritium inventory gross burn rate [g/s]
+
     Calculates the release rate of T from the model TFV cycle in g/yr.
 
     :math:`A_{max}\\Bigg[\\Big[\\dot{m_{b}}\\Big((\\frac{1}{f_{b}}-1)+\
@@ -423,7 +427,7 @@ def legal_limit(
         mb = None
 
     if mb is None:
-        mb = r_T_burn(p_fus)
+        mb = raw_uc(r_T_burn(p_fus), "kg/s", "g/s")
 
     m_plasma = (
         (mb * ((1 / fb - 1) + (1 - eta_fuel_pump) * (1 - eta_f) / (eta_f * fb)) + m_gas)
