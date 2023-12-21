@@ -402,16 +402,24 @@ def legal_limit(
     mb: Optional[float] = None,
     p_fus: Optional[float] = None,
 ):
-    """
+    r"""
     Calculates the release rate of T from the model TFV cycle in g/yr.
 
-    :math:`A_{max}\\Bigg[\\Big[\\dot{m_{b}}\\Big((\\frac{1}{f_{b}}-1)+\
-    (1-{\\eta}_{f_{pump}})(1-{\\eta}_{f})\\frac{1}{f_{b}{\\eta}_{f}}\\Big)+\
-        \\dot{m_{gas}}\\Big](1-f_{DIR})(1-f_{tfv})(1-f_{detrit})+\\dot{m_{b}}\
-        \\Lambda f_{TERSCWPS}\\Bigg]\\times365\\times24\\times3600`\n \n
-    Where:\n
-    :math:`\\dot{m_{b}} = \\frac{P_{fus}[MW]M_{T}[g/mol]}
-    {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
+    .. math::
+
+        A_{max}\Bigg[&\Big[\dot{m_{b}}\Big((\frac{1}{f_{b}}-1)+
+        (1-{\eta}_{f_{pump}})(1-{\eta}_{f})\frac{1}{f_{b}{\eta}_{f}}\Big)+
+        \dot{m_{gas}}\Big]\times
+
+        &\Big[(1-f_{DIR})(1-f_{tfv})(1-f_{detrit})\Big]
+        +\dot{m_{b}} \Lambda f_{TERSCWPS}\Bigg]
+
+        &\times365\times24\times3600
+
+    Where:
+
+    :math:`\dot{m_{b}} = \frac{P_{fus}[MW]M_{T}[g/mol]}
+        {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
     """
     if p_fus is None and mb is None:
         raise FuelCycleError("You must specify either fusion power or burn rate.")

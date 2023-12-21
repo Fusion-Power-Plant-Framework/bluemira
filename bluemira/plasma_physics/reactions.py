@@ -53,17 +53,21 @@ def E_DT_fusion() -> float:
 
     Notes
     -----
+    The energy gained is equal to the mass lost:
+        :math:`\\Delta E = \\Delta m c^2`
+
+    where the change of mass is the difference between the products' and reactants'
+    mass in the equation below.
     .. math::
         {^{2}_{1}H}+{^{3}_{1}H}~\\rightarrow~{^{4}_{2}He}~
         (3.5~\\text{MeV})+\\text{n}^{0} (14.1 ~\\text{MeV})\n
-        \\Delta E = \\Delta m c^2
     """
     delta_m = (D_MOLAR_MASS + T_MOLAR_MASS) - (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
     return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
 
 
 def E_DD_fusion() -> float:
-    """
+    r"""
     Calculates the total energy released from the D-D fusion reaction
 
     Returns
@@ -72,11 +76,18 @@ def E_DD_fusion() -> float:
 
     Notes
     -----
+    THe D-D reaction consists of 2 types of reactions, with a temperature dependent
+    branching ratio; this ratio hovers around 50:50 for fusion relevant energies.
+
     .. math::
-        {^{2}_{1}H}+{^{2}_{1}H}~\\rightarrow~{^{3}_{1}H}
-        (1.01 ~\\text{MeV})+\\text{p} (3.02~\\text{MeV})~~[50 \\textrm{\\%}]
-        ~~~~~~~~~~\\rightarrow~{^{3}_{2}He} (0.82~\\text{MeV})+\\text{n}^{0} (2.45~\\text{MeV})~~[50 \\text{\\%}]\n
-        \\Delta E = \\Delta m c^2
+
+        {^{2}_{1}H}+{^{2}_{1}H}~&\rightarrow~{^{3}_{1}H}
+        (1.01 ~\text{MeV})+\text{p} (3.02~\text{MeV})~~[50 \text{%}]
+
+        &\rightarrow~{^{3}_{2}He} (0.82~\text{MeV})+\text{n}^{0} (2.45~\text{MeV})~~[50 \text{%}]\n
+
+    The energy gained is equal to the mass lost from the reaction above.
+        :math:`\Delta E = \Delta m c^2`
     """  # noqa: W505, E501
     # NOTE: Electron mass must be included with proton mass
     delta_m = np.array(
