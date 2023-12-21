@@ -11,6 +11,7 @@ from typing import Dict, List, Mapping, Tuple, Type, Union
 
 import numpy as np
 
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import ParameterFrame
 from bluemira.codes.error import CodesError
@@ -223,7 +224,7 @@ class Solver(CodesSolver):
         Returns
         -------
         tref:
-            The temperature in eV.
+            The temperature in keV.
         l_ref:
             The loss function value $L_z(n_e, T_e)$ in W.m3.
         z_ref:
@@ -234,8 +235,10 @@ class Solver(CodesSolver):
         t_ref = filter(lambda lz: lz.content == "Te[eV]", lz_ref)
         lz_ref = filter(lambda lz: f"{confinement_time_ms:.1f}" in lz.content, lz_ref)
         z_av_ref = filter(lambda z: f"{confinement_time_ms:.1f}" in z.content, z_ref)
-        return tuple(
-            np.array(next(ref).data, dtype=float) for ref in (t_ref, lz_ref, z_av_ref)
+        return (
+            raw_uc(np.array(next(t_ref).data, dtype=float), "eV", "keV"),
+            np.array(next(lz_ref).data, dtype=float),
+            np.array(next(z_av_ref).data, dtype=float),
         )
 
     def get_species_fraction(self, impurity: str) -> float:
