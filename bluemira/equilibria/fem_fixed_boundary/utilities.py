@@ -302,7 +302,7 @@ def get_mesh_boundary(mesh: dolfinx.mesh.Mesh) -> Tuple[np.ndarray, np.ndarray]:
                         vertex_marker[v] = 1
 
     points = mesh.geometry.x
-    points_sorted = np.array([points[v] for v in sorted_vertex])
+    points_sorted = points[sorted_vertex]
     return points_sorted[:, 0], points_sorted[:, 1]
 
 

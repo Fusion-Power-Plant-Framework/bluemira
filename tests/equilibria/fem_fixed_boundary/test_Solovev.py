@@ -259,7 +259,7 @@ class TestSolovevZheng:
         g = fem.Function(gs_solver.V)
         # select the dofs coordinates in the xz plane
         dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
-        g.x.array[:] = np.array([solovev.jp(x) for x in dof_points])
+        g.x.array[:] = solovev.jp(dof_points.T)
 
         # interpolate the exact solution on the solver function space
         psi_exact_fun = fem.Function(gs_solver.V)
