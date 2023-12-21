@@ -219,7 +219,9 @@ def find_flux_surface(
         return abs(psi_norm_func(x) - psi_norm)
 
     def theta_line(d, theta_i):
-        return float(x_axis + d * np.cos(theta_i)), float(z_axis + d * np.sin(theta_i))
+        return (x_axis + d * np.cos(theta_i)).item(), (
+            z_axis + d * np.sin(theta_i)
+        ).item()
 
     def psi_line_match(d, theta):
         return psi_norm_match(np.array(theta_line(d, theta)))
@@ -238,7 +240,7 @@ def find_flux_surface(
             bounds=(lower_bound(d_guess), upper_bound(d_guess)),
         )
         points[:, i] = theta_line(result.x, theta[i])
-        distances[i] = result.x
+        distances[i] = result.x.item()
         d_guess = result.x
 
     points[:, -1] = points[:, 0]
