@@ -1,3 +1,13 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+"""
+Solovev example
+"""
+
 import gmsh
 import matplotlib.pyplot as plt
 import numpy as np
@@ -118,7 +128,7 @@ class Solovev:
         output["values"] = psi
         return output
 
-    def psi_gradient(self, point):
+    def psi_gradient(self, point):  # noqa: D102
         return scipy.optimize.approx_fprime(point, self.psi)
 
     @property
@@ -151,19 +161,19 @@ class Solovev:
         return myfunc
 
     @property
-    def pprime(self):
-        return lambda x: -self.A1 / MU_0
+    def pprime(self):  # noqa: D102
+        return lambda x: -self.A1 / MU_0  # noqa: ARG005
 
     @property
-    def ffprime(self):
-        return lambda x: self.A2
+    def ffprime(self):  # noqa: D102
+        return lambda x: self.A2  # noqa: ARG005
 
     @property
-    def jp(self):
+    def jp(self):  # noqa: D102
         return lambda x: x[0] * self.pprime(x) + self.ffprime(x) / (MU_0 * x[0])
 
 
-def create_mesh(solovev, LCFS, lcar):
+def create_mesh(solovev, LCFS, lcar):  # noqa: D103
     gmsh.initialize()
     # points
     point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
@@ -288,12 +298,12 @@ if __name__ == "__main__":
                     fem.assemble_scalar(err), MPI.SUM
                 )
             )
-            assert err_val < is_close
+            assert err_val < is_close  # noqa: S101
             mean_err.append(err_val)
 
     np.testing.assert_allclose(Itot, Itot[0])
-    assert np.isclose(mean_err[0], mean_err[1])
-    assert np.isclose(mean_err[2], mean_err[3])
+    assert np.isclose(mean_err[0], mean_err[1])  # noqa: S101
+    assert np.isclose(mean_err[2], mean_err[3])  # noqa: S101
 
     points_x, points_y = get_mesh_boundary(mesh)
     plt.plot(points_x, points_y, "r-")
@@ -316,7 +326,7 @@ if __name__ == "__main__":
     gs_solver.psi_ax = max(gs_solver.psi.x.array)
     gs_solver.psi_b = 0
 
-    def psi_norm_func(x):
+    def psi_norm_func(x):  # noqa: D103
         return np.sqrt(
             np.abs(
                 (gs_solver.psi(x) - gs_solver.psi_ax)
