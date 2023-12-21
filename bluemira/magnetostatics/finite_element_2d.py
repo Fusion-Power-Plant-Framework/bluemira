@@ -109,13 +109,6 @@ class FemMagnetostatic2d:
         self,
         mesh: Union[dolfinx.mesh.Mesh, str],
         boundaries: Optional[Union[dolfinx.mesh.Mesh, str]] = None,
-        dirichlet_bc_function: Optional[
-            Union[dolfinx.fem.Expression, BluemiraFemFunction]
-        ] = None,
-        dirichlet_marker: Optional[int] = None,
-        neumann_bc_function: Optional[
-            Union[dolfinx.fem.Expression, BluemiraFemFunction]
-        ] = None,
     ):
         """
         Set the mesh for the solver
@@ -176,7 +169,7 @@ class FemMagnetostatic2d:
         dirichlet_bc_function: Optional[
             Union[dolfinx.fem.Expression, BluemiraFemFunction]
         ] = None,
-        dirichlet_marker: Optional[int] = None,
+        dirichlet_marker: Optional[int] = None,  # noqa: ARG002
         neumann_bc_function: Optional[
             Union[dolfinx.fem.Expression, BluemiraFemFunction]
         ] = None,
@@ -239,6 +232,7 @@ class FemMagnetostatic2d:
         )
 
     def solve(self) -> BluemiraFemFunction:
+        """Solve Fem problem"""
         self.psi = self.problem.solve()
 
         return self.psi
