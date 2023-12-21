@@ -1,3 +1,15 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+"""
+Compare the magnetic field on the axis of a coil with a very small cross-section
+calculated with the fem module and the analytic solution as limit of the
+Biot-Savart law.
+"""
+
 from pathlib import Path
 
 import gmsh
@@ -21,11 +33,6 @@ from bluemira.mesh import meshing
 DATA_DIR = Path(__file__).parent
 
 
-"""
-Compare the magnetic field on the axis of a coil with a very small cross-section
-calculated with the fem module and the analytic solution as limit of the
-Biot-Savart law.
-"""
 model_rank = MPI.COMM_WORLD.rank
 mesh_comm = MPI.COMM_WORLD
 

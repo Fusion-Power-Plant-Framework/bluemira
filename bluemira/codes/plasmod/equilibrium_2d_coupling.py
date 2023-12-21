@@ -30,7 +30,6 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.codes.plasmod import plot_default_profiles
 from bluemira.equilibria.constants import DPI_GIF, PLT_PAUSE
-
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     calculate_plasma_shape_params,
     create_mesh,

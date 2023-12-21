@@ -63,7 +63,6 @@ from bluemira.magnetostatics.fem_utils import (
 from bluemira.magnetostatics.finite_element_2d import Bz_coil_axis, FemMagnetostatic2d
 from bluemira.mesh import meshing
 
-
 # %%
 
 ri = 0.01  # Inner radius of copper wire
