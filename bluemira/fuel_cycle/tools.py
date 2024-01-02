@@ -418,8 +418,7 @@ def legal_limit(
 
     Where:
 
-    :math:`\dot{m_{b}} = \frac{P_{fus}[MW]M_{T}[g/mol]}
-    {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
+    :math:`\dot{m_{b}} = \frac{P_{fus}}{E_{DT}}`
     """
     if p_fus is None and mb is None:
         raise FuelCycleError("You must specify either fusion power or burn rate.")
