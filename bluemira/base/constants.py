@@ -62,7 +62,11 @@ class BMUnitRegistry(UnitRegistry):
         Add new contexts to registry
         """
         if not self._contexts_added:
-            self.contexts = [self._energy_temperature_context(), self._flow_context()]
+            self.contexts = [
+                self._energy_temperature_context(),
+                self._mass_energy_context(),
+                self._flow_context(),
+            ]
 
             for c in self.contexts:
                 self.add_context(c)
@@ -103,6 +107,31 @@ class BMUnitRegistry(UnitRegistry):
             e_to_t,
             t_units,
             ev_units,
+            lambda _, x: x * conversion,
+            lambda _, x: x / conversion,
+        )
+
+    def _mass_energy_context(self):
+        """
+        Converter between mass and energy
+
+        energy = mass * speed-of-light^2
+
+        Returns
+        -------
+        pint context
+        """
+        m_to_e = Context("Mass_to_Energy")
+
+        m_units = "[mass]"
+        e_units = "[energy]"
+
+        conversion = self.Quantity("c^2")
+
+        return self._transform(
+            m_to_e,
+            m_units,
+            e_units,
             lambda _, x: x * conversion,
             lambda _, x: x / conversion,
         )
@@ -248,15 +277,14 @@ ANGLE_UNITS = [
 # Physical constants
 # =============================================================================
 
-# Speed of light
-C_LIGHT = ureg.Quantity("c").to_base_units().magnitude  # [m/s]
-
 # Vacuum permeability
 MU_0 = ureg.Quantity("mu_0").to_base_units().magnitude  # [T.m/A] or [V.s/(A.m)]
 
 # Vacuum permittivity
 EPS_0 = ureg.Quantity("eps_0").to_base_units().magnitude  # [A^2.s^4/kg/m^3]
 
+# absolute charge of an electron
+ELEMENTARY_CHARGE = ureg.Quantity("e").to_base_units().magnitude  # [e]
 
 # Commonly used..
 MU_0_2PI = 2e-7  # [T.m/A] or [V.s/(A.m)]
@@ -336,15 +364,6 @@ ABS_ZERO = {ureg.kelvin: ABS_ZERO_K, ureg.celsius: ABS_ZERO_C}
 # =============================================================================
 # Conversions
 # =============================================================================
-
-# Electron-volts to Joules
-EV_TO_J = ureg.Quantity(1, ureg.eV).to(ureg.joule).magnitude
-
-# Joules to Electron-volts
-J_TO_EV = ureg.Quantity(1, ureg.joule).to(ureg.eV).magnitude
-
-# Atomic mass units to kilograms
-AMU_TO_KG = ureg.Quantity(1, ureg.amu).to(ureg.kg).magnitude
 
 # Years to seconds
 YR_TO_S = ureg.Quantity(1, ureg.year).to(ureg.second).magnitude

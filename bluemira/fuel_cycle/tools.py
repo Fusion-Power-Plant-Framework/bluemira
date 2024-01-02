@@ -16,7 +16,7 @@ import numpy as np
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 
-from bluemira.base.constants import N_AVOGADRO, S_TO_YR, T_LAMBDA, T_MOLAR_MASS, YR_TO_S
+from bluemira.base.constants import S_TO_YR, T_LAMBDA, T_MOLAR_MASS, YR_TO_S, raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
 from bluemira.plasma_physics.reactions import r_T_burn
@@ -115,7 +115,7 @@ def convert_flux_to_flow(flux: float, area: float) -> float:
     -------
     The flow-rate [kg/s]
     """
-    return flux * area * T_MOLAR_MASS / N_AVOGADRO / 1000
+    return flux * area * raw_uc(T_MOLAR_MASS, "amu", "kg")
 
 
 # =============================================================================
@@ -260,15 +260,15 @@ def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndar
     Parameters
     ----------
     t:
-        The time vector
+        The time vector [s]
     m_t_flow:
-        The mass flow vector
-    t_delay:
-        The delay duration [s]
+        The mass flow vector [kg/s] [or any other unit same as return value]
+    tt_delay:
+        The delay duration (scalar) [yr]
 
     Returns
     -------
-    The delayed flow vector
+    The delayed flow vector [kg/s] [or any other unit same as m_t_flow]
     """
     t_delay = tt_delay * S_TO_YR
     shift = np.argmin(np.abs(t - t_delay))
@@ -419,6 +419,22 @@ def legal_limit(
     Where:
 
     :math:`\dot{m_{b}} = \frac{P_{fus}}{E_{DT}}`
+
+    Parameters
+    ----------
+    m_gas:
+        mass of gas flow [kg/s]
+    mb:
+        tritium inventory gross burn rate [kg/s]
+    p_fus:
+        fusion power [W]
+
+    All other parameters are dimensionless
+
+    Returns
+    -------
+    legal_limit:
+        release rate of T [kg/yr]
     """
     if p_fus is None and mb is None:
         raise FuelCycleError("You must specify either fusion power or burn rate.")
@@ -430,7 +446,7 @@ def legal_limit(
         mb = None
 
     if mb is None:
-        mb = r_T_burn(p_fus)
+        mb = r_T_burn(p_fus)  # [kg/s]
 
     m_plasma = (
         (mb * ((1 / fb - 1) + (1 - eta_fuel_pump) * (1 - eta_f) / (eta_f * fb)) + m_gas)
@@ -440,7 +456,7 @@ def legal_limit(
     )
     m_bb = mb * TBR * (1 - f_terscwps)
     ll = max_load_factor * (m_plasma + m_bb)
-    return ll * 365 * 24 * 3600  # g/yr
+    return raw_uc(ll, "kg/s", "kg/yr")
 
 
 @nb.jit(nopython=True, cache=True)
@@ -582,7 +598,7 @@ def _fountain_linear_sink(
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = m_flow * YR_TO_S  # kg/yr
+    m_in = m_flow * YR_TO_S  # converts kg/s to kg/yr
     dts = dt * YR_TO_S
     mass_in = m_flow * dts
     sum_in += mass_in
@@ -738,13 +754,12 @@ def _linear_thresh_sink(
     decayed:
         Accountancy parameter to calculate the total value of decayed T in a sink
     """
-    years = 365 * 24 * 3600
     dt = t_out - t_in
     if dt == 0:
         return m_flow, inventory, sum_in, decayed
 
-    m_in = m_flow * years  # kg/yr
-    dts = dt * years
+    m_in = m_flow * YR_TO_S  # converts kg/s to kg/yr
+    dts = dt * YR_TO_S
     mass_in = m_flow * dts
     sum_in += mass_in
     j_inv0 = inventory
@@ -832,13 +847,12 @@ def _sqrt_thresh_sink(
     not accounted for in this function. We have to add decay in the sink and
     ensure this is handled when calculation the absorbtion and out-flow.
     """
-    years = 365 * 24 * 3600
     dt = t_out - t_in
     if dt == 0:
         # Nothing can happen if time is zero
         return m_flow, inventory, sum_in, decayed
 
-    dts = dt * years
+    dts = dt * YR_TO_S
     mass_in = m_flow * dts
     sum_in += mass_in
 

@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.base.constants import S_TO_YR, YR_TO_S
+from bluemira.base.constants import raw_uc
 from bluemira.fuel_cycle.timeline_tools import (
     LogNormalAvailabilityStrategy,
     OperationalAvailabilityStrategy,
@@ -354,7 +354,7 @@ class Timeline:
                 )
                 j += 1
             elif "Phase M" in name:
-                p = MaintenancePhase(name, duration * YR_TO_S, t_start=t_start)
+                p = MaintenancePhase(name, raw_uc(duration, "yr", "s"), t_start=t_start)
             phases.append(p)
         self.phases = phases
         self.build_arrays(phases)
@@ -385,9 +385,8 @@ class Timeline:
         self.ft = np.zeros(len(self.t))
         for i in fuse_indices[1::2]:
             self.ft[i] = self.t[i] - self.t[i - 1]
-        self.ft = np.cumsum(self.ft)
-        self.ft *= S_TO_YR
-        self.t *= S_TO_YR
+        self.ft = raw_uc(np.cumsum(self.ft), "s", "yr")
+        self.t = raw_uc(self.t, "s", "yr")
         self.plant_life = self.t[-1]  # total plant lifetime [calendar]
 
     def to_dict(self) -> Dict[str, Union[np.ndarray, int]]:

@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.interpolate import interp1d
 
-from bluemira.base.constants import N_AVOGADRO, T_LAMBDA, T_MOLAR_MASS, YR_TO_S, raw_uc
+from bluemira.base.constants import T_LAMBDA, T_MOLAR_MASS, raw_uc
 from bluemira.base.look_and_feel import bluemira_print
 from bluemira.fuel_cycle.blocks import FuelCycleComponent, FuelCycleFlow
 from bluemira.fuel_cycle.tools import (
@@ -168,9 +168,9 @@ class EUDEMOFuelCycleModel:
         self.grate = m_gas * self.DT_rate / max(self.DT_rate)
         self.bci = timeline["blanket_change_index"]
         # Burn rate of T [kgs of T per second]
-        self.brate = (T_MOLAR_MASS / N_AVOGADRO / 1000) * self.DT_rate
+        self.brate = raw_uc(T_MOLAR_MASS, "amu", "kg") * self.DT_rate
         # T production rate from D-D reaction channel [kgs of T per second]
-        self.prate = (T_MOLAR_MASS / N_AVOGADRO / 1000) * self.DD_rate / 2  # Only 50%!
+        self.prate = raw_uc(T_MOLAR_MASS, "amu", "kg") * self.DD_rate / 2  # Only 50%!
 
     def seed_t(self):
         """
@@ -186,10 +186,11 @@ class EUDEMOFuelCycleModel:
         m_T = m_T_0 * np.ones(len(self.DEMO_t))
         for i in range(1, len(self.DEMO_t)):
             dt = self.DEMO_t[i] - self.DEMO_t[i - 1]
-            t_bred = TBR * self.brate[i] * (YR_TO_S * dt)
-            t_bred += self.prate[i] * (YR_TO_S * dt)
-            t_burnt = self.brate[i] * (YR_TO_S * dt)
-            t_DD = self.prate[i] * (YR_TO_S * dt)
+            dts = raw_uc(dt, "yr", "s")
+            t_bred = TBR * self.brate[i] * dts
+            t_bred += self.prate[i] * dts
+            t_burnt = self.brate[i] * dts
+            t_DD = self.prate[i] * dts
             m_T[i] = (m_T[i - 1]) * np.exp(-T_LAMBDA * dt) - t_burnt + t_bred + t_DD
         return m_T
 
@@ -350,7 +351,7 @@ class EUDEMOFuelCycleModel:
 
         m_T_out = self.plasma(self.params.eta_iv, self.params.I_miv, flows=flows)
         # Resolution - Not used everywhere for speed
-        n_ts = int(round((YR_TO_S * self.DEMO_t[-1]) / self.timestep))
+        n_ts = int(round(raw_uc(self.DEMO_t[-1], "yr", "s") / self.timestep))
         self.t, m_pellet_in = discretise_1d(self.DEMO_t, self.m_T_in, n_ts)
 
         # Flow out of the vacuum vessel
@@ -606,11 +607,11 @@ class EUDEMOFuelCycleModel:
 
         Returns
         -------
-        Tritium release rate [g/yr]
+        Tritium release rate [kg/yr]
         """
         max_load_factor = find_max_load_factor(self.DEMO_t, self.DEMO_rt)
-        mb = 1000 * max(self.brate)
-        m_gas = 1000 * max(self.grate)
+        mb = 1000 * raw_uc(max(self.brate), "g/s", "kg/s")
+        m_gas = 1000 * raw_uc(max(self.grate), "g/s", "kg/s")
         return legal_limit(
             max_load_factor,
             self.params.f_b,

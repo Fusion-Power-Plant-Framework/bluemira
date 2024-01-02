@@ -16,16 +16,11 @@ import numpy as np
 import numpy.typing as npt
 
 from bluemira.base.constants import (
-    AMU_TO_KG,
-    C_LIGHT,
     D_MOLAR_MASS,
     ELECTRON_MOLAR_MASS,
-    EV_TO_J,
     HE3_MOLAR_MASS,
     HE_MOLAR_MASS,
-    J_TO_EV,
     NEUTRON_MOLAR_MASS,
-    N_AVOGADRO,
     PROTON_MOLAR_MASS,
     T_MOLAR_MASS,
     raw_uc,
@@ -49,7 +44,7 @@ def E_DT_fusion() -> float:
 
     Returns
     -------
-    The energy released from the D-T fusion reaction [eV]
+    The energy released from a single D-T fusion reaction [J]
 
     Notes
     -----
@@ -65,7 +60,7 @@ def E_DT_fusion() -> float:
         (3.5~\\text{MeV})+\\text{n}^{0} (14.1 ~\\text{MeV})\n
     """
     delta_m = (D_MOLAR_MASS + T_MOLAR_MASS) - (HE_MOLAR_MASS + NEUTRON_MOLAR_MASS)
-    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
+    return raw_uc(delta_m, "amu", "J")
 
 
 def E_DD_fusion() -> float:
@@ -74,7 +69,7 @@ def E_DD_fusion() -> float:
 
     Returns
     -------
-    The energy released from the D-D fusion reaction [eV]
+    The energy released from a single D-D fusion reaction [J]
 
     Notes
     -----
@@ -101,7 +96,7 @@ def E_DD_fusion() -> float:
         ]
     )
     delta_m = np.average(delta_m)
-    return delta_m * C_LIGHT**2 * AMU_TO_KG * J_TO_EV
+    return raw_uc(delta_m, "amu", "J")
 
 
 def n_DT_reactions(p_fus: float) -> float:
@@ -114,14 +109,13 @@ def n_DT_reactions(p_fus: float) -> float:
     Parameters
     ----------
     p_fus:
-        D-T fusion power [MW]
+        D-T fusion power [W]
 
     Returns
     -------
     Number of D-T reactions per second [1/s]
     """
-    e_dt = E_DT_fusion()
-    return raw_uc(p_fus, "MW", "W") / (e_dt * EV_TO_J)
+    return p_fus / E_DT_fusion()
 
 
 def n_DD_reactions(p_fus: float) -> float:
@@ -140,8 +134,7 @@ def n_DD_reactions(p_fus: float) -> float:
     -------
     Number of D-D reactions per second [1/s]
     """
-    e_dd = E_DD_fusion()
-    return p_fus / (e_dd * EV_TO_J)
+    return p_fus / E_DD_fusion()
 
 
 def r_T_burn(p_fus: float) -> float:  # noqa: N802
@@ -153,13 +146,13 @@ def r_T_burn(p_fus: float) -> float:  # noqa: N802
     Parameters
     ----------
     p_fus:
-        D-T fusion power [MW]
+        D-T fusion power [W]
 
     Returns
     -------
-    T burn rate in the plasma [g/s]
-    """
-    return n_DT_reactions(p_fus) * T_MOLAR_MASS / N_AVOGADRO
+    T burn rate in the plasma [kg/s]
+    """  # noqa: W505, E501
+    return n_DT_reactions(p_fus) * raw_uc(T_MOLAR_MASS, "amu", "kg")
 
 
 def r_D_burn_DT(p_fus: float) -> float:
@@ -169,7 +162,7 @@ def r_D_burn_DT(p_fus: float) -> float:
     Parameters
     ----------
     p_fus:
-        D-T fusion power [MW]
+        D-T fusion power [W]
 
     Returns
     -------
@@ -178,11 +171,10 @@ def r_D_burn_DT(p_fus: float) -> float:
     Notes
     -----
     .. math::
-
+        
         \\dot{m_{b}} = \\frac{P_{fus}}{E_{DT}}
-
     """
-    return n_DT_reactions(p_fus) * D_MOLAR_MASS / N_AVOGADRO
+    return n_DT_reactions(p_fus) * raw_uc(D_MOLAR_MASS, "amu", "kg")
 
 
 class Reactions(Enum):

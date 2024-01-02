@@ -17,7 +17,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.lines import Line2D
 
-from bluemira.base.constants import S_TO_YR, YR_TO_S, raw_uc
+from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.fuel_cycle.timeline import Timeline
 from bluemira.utilities.tools import abs_rel_difference, is_num, json_writer
@@ -125,8 +125,8 @@ class LifeCycle:
 
         self.n_blk_replace = 1  # HLR
         self.n_div_replace = ndivch_in1blk + ndivch_in2blk
-        m_short = self.maintenance_s * S_TO_YR
-        m_long = self.maintenance_l * S_TO_YR
+        m_short = raw_uc(self.maintenance_s, "s", "yr")
+        m_long = raw_uc(self.maintenance_l, "s", "yr")
         phases = []
         for i in range(ndivch_in1blk):
             p_str = "Phase P1." + str(i + 1)
@@ -156,10 +156,12 @@ class LifeCycle:
                 fpy += phases[i][0]
         self.fpy = fpy
         # Irreplaceable components life checks
-        self.t_on_total = self.fpy * YR_TO_S  # [s] total fusion time
+        self.t_on_total = raw_uc(self.fpy, "yr", "s")  # [s] total fusion time
         tf_ins_life_dose = tf_ins_nflux * self.t_on_total / self.params.tf_fluence
         if tf_ins_life_dose > 1:
-            self.tf_lifeend = round(self.params.tf_fluence / tf_ins_nflux / YR_TO_S, 2)
+            self.tf_lifeend = round(
+                raw_uc(self.params.tf_fluence / tf_ins_nflux, "s", "yr"), 2
+            )
             tflifeperc = round(100 * self.tf_lifeend / self.fpy, 1)
             bluemira_warn(
                 f"TF coil insulation fried after {self.tf_lifeend:.2f} full-power years"
@@ -174,7 +176,7 @@ class LifeCycle:
                 f" years, or {vvlifeperc:.2f} % of neutron budget."
             )
             # TODO: treat output parameter
-        self.n_cycles = self.fpy * YR_TO_S / self.t_flattop
+        self.n_cycles = raw_uc(self.fpy, "yr", "s") / self.t_flattop
 
     def set_availabilities(self, load_factor: float):
         """
@@ -214,7 +216,7 @@ class LifeCycle:
         Calculate the number of pulses per phase.
         """
         self.n_pulse_p = [
-            int(YR_TO_S * phases[i][0] // self.t_flattop)
+            int(raw_uc(phases[i][0], "yr", "s") // self.t_flattop)
             for i in range(len(phases))
             if phases[i][1].startswith("Phase P")
         ]
@@ -276,12 +278,14 @@ class LifeCycle:
         results that violate the tolerances.
         """
         life = self.fpy / self.params.A_global
-        actual_life = S_TO_YR * (
+        actual_life = raw_uc(
             self.t_on_total
             + self.total_ramptime
             + self.t_interdown
             + self.total_planned_maintenance
-            + self.t_unplanned_m
+            + self.t_unplanned_m,
+            "s",
+            "yr",
         )
         actual_lf = self.fpy / actual_life
         delt = abs_rel_difference(actual_life, life)
@@ -318,7 +322,9 @@ class LifeCycle:
                 self.inputs,
             )  # Phoenix
 
-        if self.params.A_global > self.fpy / (self.fpy + S_TO_YR * self.min_downtime):
+        if self.params.A_global > self.fpy / (
+            self.fpy + raw_uc(self.min_downtime, "s", "yr")
+        ):
             bluemira_warn("FuelCycle::Lifecyle: Input availability is unachievable.")
         # Re-assign A
         self.params.A_global = actual_lf
