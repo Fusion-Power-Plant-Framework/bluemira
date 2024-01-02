@@ -58,7 +58,9 @@ def E_DT_fusion() -> float:
 
     where the change of mass is the difference between the products' and reactants'
     mass in the equation below.
+
     .. math::
+
         {^{2}_{1}H}+{^{3}_{1}H}~\\rightarrow~{^{4}_{2}He}~
         (3.5~\\text{MeV})+\\text{n}^{0} (14.1 ~\\text{MeV})\n
     """
@@ -84,7 +86,7 @@ def E_DD_fusion() -> float:
         {^{2}_{1}H}+{^{2}_{1}H}~&\rightarrow~{^{3}_{1}H}
         (1.01 ~\text{MeV})+\text{p} (3.02~\text{MeV})~~[50 \text{%}]
 
-        &\rightarrow~{^{3}_{2}He} (0.82~\text{MeV})+\text{n}^{0} (2.45~\text{MeV})~~[50 \text{%}]\n
+        &\rightarrow~{^{3}_{2}He} (0.82~\text{MeV})+\text{n}^{0} (2.45~\text{MeV})~~[50 \text{%}]
 
     The energy gained is equal to the mass lost from the reaction above.
         :math:`\Delta E = \Delta m c^2`
@@ -176,6 +178,7 @@ def r_D_burn_DT(p_fus: float) -> float:
     Notes
     -----
     .. math::
+
         \\dot{m_{b}} = \\frac{P_{fus}[MW]M_{D}[g/mol]}
         {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]
     """
