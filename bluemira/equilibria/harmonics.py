@@ -84,7 +84,7 @@ def coil_harmonic_amplitude_matrix(
     # [number of degrees, number of coils]
     currents2harmonics = np.zeros([max_degree, np.size(r_f)])
     # First 'harmonic' is constant (this line avoids Nan issues)
-    currents2harmonics[0, :] = 1  #
+    currents2harmonics[0, :] = 1
 
     # SH coefficients from function of the current distribution
     # outside of the sphere containing the LCFS
