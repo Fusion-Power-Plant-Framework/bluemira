@@ -17,10 +17,10 @@ from bluemira.power_cycle.net import (
     Loads,
     Phase,
     PhaseConfig,
-    PowerCycleBreakdown,
     PowerCycleLibraryConfig,
     PowerCycleLoadConfig,
     PowerCycleSubLoad,
+    PowerCycleSubPhase,
     ScenarioConfig,
     ScenarioConfigDescriptor,
     interpolate_extra,
@@ -39,8 +39,8 @@ def test_interpolate_extra_returns_the_correct_length():
     assert min(arr) == 0
 
 
-def test_PowerCycleBreakdown_duration():
-    pcb = PowerCycleBreakdown("name", 5, unit="hours")
+def test_PowerCycleSubPhase_duration():
+    pcb = PowerCycleSubPhase("name", 5, unit="hours")
     assert pcb.duration == 18000
     assert pcb.unit == "s"
 
@@ -124,7 +124,7 @@ class TestLoads:
         cls._config = PowerCycleLibraryConfig.from_json(
             Path(__file__).parent / "test_data" / "scenario_config.json"
         )
-        cls._config.import_breakdown_data(PowerCycleDurationParameters())
+        cls._config.import_subphase_data(PowerCycleDurationParameters())
         cls._loads = cls._config.make_phase("dwl").loads
 
     def setup_method(self):
@@ -183,7 +183,7 @@ class TestPhase:
     def test_duration_validation_and_extraction(self):
         phase = Phase(
             PhaseConfig("dwl", "max", ["a", "b"]),
-            {"a": PowerCycleBreakdown("a", 5), "b": PowerCycleBreakdown("b", 10)},
+            {"a": PowerCycleSubPhase("a", 5), "b": PowerCycleSubPhase("b", 10)},
             Loads(  # Dummy load
                 {LoadType.ACTIVE: {}, LoadType.REACTIVE: {}},
                 {LoadType.ACTIVE: {}, LoadType.REACTIVE: {}},
@@ -199,7 +199,7 @@ class TestPowerCycleLibraryConfig:
         cls._config = PowerCycleLibraryConfig.from_json(
             Path(__file__).parent / "test_data" / "scenario_config.json"
         )
-        cls._config.import_breakdown_data(PowerCycleDurationParameters())
+        cls._config.import_subphase_data(PowerCycleDurationParameters())
 
     def setup_method(self):
         self.config = deepcopy(self._config)
@@ -210,9 +210,18 @@ class TestPowerCycleLibraryConfig:
         assert scenario["std"]["repeat"] == 1
         assert len(scenario["std"]["data"].keys()) == 4
         assert all(isinstance(val, Phase) for val in scenario["std"]["data"].values())
+        assert scenario["std"]["data"]["dwl"].subphases.keys() == {"csr", "pmp"}
 
-    def test_import_breakdown_data(self):
-        assert self.config.breakdown["csr"].duration == 300
+        sph = scenario["std"]["data"]["dwl"].subphases
+        assert scenario["std"]["data"]["dwl"].loads.load_config[
+            LoadType.REACTIVE
+        ].keys() == set(sph["csr"].reactive_loads + sph["pmp"].reactive_loads)
+        assert scenario["std"]["data"]["dwl"].loads.load_config[
+            LoadType.ACTIVE
+        ].keys() == set(sph["csr"].active_loads + sph["pmp"].active_loads)
+
+    def test_import_subphase_data(self):
+        assert self.config.subphase["csr"].duration == 300
 
     def test_add_subload(self):
         self.config.add_subload(
@@ -226,11 +235,11 @@ class TestPowerCycleLibraryConfig:
 
     def test_add_load(self):
         name = "CS"
-        breakdowns = ["cru", "bri"]
+        subphases = ["cru", "bri"]
         self.config.add_load_config(
             "active",
-            breakdowns,
+            subphases,
             PowerCycleLoadConfig(name, True, {}, ["cs_power"], "something made up"),
         )
-        assert all(name in self.config.breakdown[k].active_loads for k in breakdowns)
+        assert all(name in self.config.subphase[k].active_loads for k in subphases)
         assert self.config.load[LoadType.ACTIVE].loads["CS"].subloads == ["cs_power"]

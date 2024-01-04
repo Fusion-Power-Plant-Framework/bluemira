@@ -14,25 +14,25 @@
     "dwl": {
       "description": "Dwell",
       "operation": "max",
-      "breakdown": ["csr", "pmp"]
+      "subphases": ["csr", "pmp"]
     },
     "d2f": {
       "description": "Transition between dwell and flat-top",
       "operation": "sum",
-      "breakdown": ["cru", "bri"]
+      "subphases": ["cru", "bri"]
     },
     "ftt": {
       "description": "Flat-top",
       "operation": "sum",
-      "breakdown": ["plb"]
+      "subphases": ["plb"]
     },
     "f2d": {
       "description": "Transition between flat-top and dwell",
       "operation": "sum",
-      "breakdown": ["brt", "crd"]
+      "subphases": ["brt", "crd"]
     }
   },
-  "breakdown_library": {
+  "subphase_library": {
     "csr": {
       "description": "Central Solenoid recharge",
       "duration": "CS-recharge-time",

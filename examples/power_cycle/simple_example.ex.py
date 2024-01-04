@@ -25,6 +25,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 
 from bluemira.power_cycle.net import (
     PowerCycleLibraryConfig,
@@ -49,8 +50,10 @@ class PowerCycleDurationParameters:
     ramp_down_time: float = 157
 
 
-config = PowerCycleLibraryConfig.from_json("scenario_config.json")
-config.import_breakdown_data(PowerCycleDurationParameters())
+config = PowerCycleLibraryConfig.from_json(
+    Path(__file__).parent / "scenario_config.json"
+)
+config.import_subphase_data(PowerCycleDurationParameters())
 
 config.add_load_config(
     "active",

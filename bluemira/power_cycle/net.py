@@ -43,6 +43,11 @@ class LoadType(Enum):
             return cls[load_type.upper()]
         return load_type
 
+    @property
+    def as_str(self) -> str:
+        """Load type as a string"""
+        return f"{self.name.lower()}_loads"
+
 
 class LoadModel(Enum):
     """
@@ -76,7 +81,7 @@ class PhaseConfig(Config):
     """Power cycle phase config"""
 
     operation: str
-    breakdown: list[str]
+    subphases: list[str]
     description: str = ""
 
 
@@ -172,8 +177,8 @@ def interpolate_extra(vector: npt.NDArray, n_points: int):
 
 
 @dataclass
-class PowerCycleBreakdown(Config):
-    """Breakdown Config"""
+class PowerCycleSubPhase(Config):
+    """SubPhase Config"""
 
     duration: Union[float, str]
     reactive_loads: list[str] = field(default_factory=list)
@@ -268,10 +273,10 @@ class Loads:
     def __init__(
         self,
         load_config: Dict[LoadType, Dict[str, PowerCycleLoadConfig]],
-        subload: Dict[LoadType, Dict[str, PowerCycleSubLoad]],
+        subloads: Dict[LoadType, Dict[str, PowerCycleSubLoad]],
     ):
         self.load_config = load_config
-        self.subload = subload
+        self.subloads = subloads
 
     @staticmethod
     def _normalise_timeseries(
@@ -350,7 +355,7 @@ class Loads:
     def build_timeseries(self, end_time: Optional[float] = None) -> np.ndarray:
         """Build a combined time series based on subloads"""
         times = []
-        for lt in self.subload.values():
+        for lt in self.subloads.values():
             for ld in lt.values():
                 if ld.normalised:
                     times.append(ld.time)
@@ -384,7 +389,7 @@ class Loads:
         """
         timeseries, end_time = self._normalise_timeseries(timeseries, end_time)
         load_type = LoadType.from_str(load_type)
-        subload = self.subload[load_type]
+        subload = self.subloads[load_type]
         return {
             sl: subload[sl].interpolate(timeseries, end_time)
             if unit is None
@@ -433,7 +438,7 @@ class Phase:
     """Phase container"""
 
     config: PhaseConfig
-    breakdown: Dict[str, PowerCycleBreakdown]
+    subphases: Dict[str, PowerCycleSubPhase]
     loads: Loads
 
     def __post_init__(self):
@@ -447,7 +452,7 @@ class Phase:
     def duration(self):
         """Duration of phase"""
         return getattr(np, self.config.operation)(
-            [br.duration for br in self.breakdown.values()]
+            [s_ph.duration for s_ph in self.subphases.values()]
         )
 
 
@@ -460,8 +465,8 @@ class PowerCycleLibraryConfig:
     scenario: ScenarioConfigDescriptor = ScenarioConfigDescriptor()
     pulse: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PulseConfig)
     phase: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PhaseConfig)
-    breakdown: LibraryConfigDescriptor = LibraryConfigDescriptor(
-        config=PowerCycleBreakdown
+    subphase: LibraryConfigDescriptor = LibraryConfigDescriptor(
+        config=PowerCycleSubPhase
     )
     system: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PowerCycleSystem)
     subsystem: LibraryConfigDescriptor = LibraryConfigDescriptor(
@@ -471,7 +476,7 @@ class PowerCycleLibraryConfig:
     def check_config(self):
         """Check powercycle configuration"""
         ph_keys = self.phase.keys()
-        bl_keys = self.breakdown.keys()
+        bl_keys = self.subphase.keys()
         ss_keys = self.subsystem.keys()
         r_loads = self.load[LoadType.REACTIVE].loads.keys()
         a_loads = self.load[LoadType.ACTIVE].loads.keys()
@@ -482,15 +487,15 @@ class PowerCycleLibraryConfig:
         for pulse in self.pulse.values():
             if unknown_phase := pulse.phases - ph_keys:
                 raise ValueError(f"Unknown phases {unknown_phase}")
-        # phases have known breakdowns
+        # phases have known subphases
         for ph_c in self.phase.values():
-            if unknown_br := ph_c.breakdown - bl_keys:
-                raise ValueError(f"Unknown breakdown configurations {unknown_br}")
-        # breakdowns have known loads
-        for breakdown in self.breakdown.values():
-            if unknown_r_load := breakdown.reactive_loads - r_loads:
+            if unknown_s_ph := ph_c.subphases - bl_keys:
+                raise ValueError(f"Unknown subphase configurations {unknown_s_ph}")
+        # subphases have known loads
+        for subphase in self.subphase.values():
+            if unknown_r_load := subphase.reactive_loads - r_loads:
                 raise ValueError(f"Unknown reactive loads {unknown_r_load}")
-            if unknown_a_load := breakdown.active_loads - a_loads:
+            if unknown_a_load := subphase.active_loads - a_loads:
                 raise ValueError(f"Unknown reactive loads {unknown_a_load}")
 
         # systems have known subsystems
@@ -501,7 +506,7 @@ class PowerCycleLibraryConfig:
         for s_sys_c in self.subsystem.values():
             for entry in LoadType:
                 if (
-                    unknown := getattr(s_sys_c, f"{entry.name.lower()}_loads")
+                    unknown := getattr(s_sys_c, entry.as_str)
                     - self.load[entry].loads.keys()
                 ):
                     raise ValueError(
@@ -513,28 +518,27 @@ class PowerCycleLibraryConfig:
                 if unknown := sl.subloads - subload.loads.keys():
                     raise ValueError(f"Unknown subload configurations in load {unknown}")
 
-    def import_breakdown_data(self, breakdown_duration_params):
-        """Import breakdown data"""
-        for br in self.breakdown.values():
-            if isinstance(br.duration, str):
-                br.duration = getattr(
-                    breakdown_duration_params, br.duration.replace("-", "_")
+    def import_subphase_data(self, subphase_duration_params):
+        """Import subphase data"""
+        for s_ph in self.subphase.values():
+            if isinstance(s_ph.duration, str):
+                s_ph.duration = getattr(
+                    subphase_duration_params, s_ph.duration.replace("-", "_")
                 )
 
     def add_load_config(
         self,
         load_type: Union[str, LoadType],
-        breakdowns: Union[str, Iterable[str]],
+        subphases: Union[str, Iterable[str]],
         load_config: PowerCycleLoadConfig,
     ):
         """Add load config"""
         load_type = LoadType.from_str(load_type)
-        loads_str = f"{load_type.name.lower()}_loads"
         self.load[load_type].loads[load_config.name] = load_config
-        if isinstance(breakdowns, str):
-            breakdowns = [breakdowns]
-        for breakdown in breakdowns:
-            getattr(self.breakdown[breakdown], loads_str).append(load_config.name)
+        if isinstance(subphases, str):
+            subphases = [subphases]
+        for subphase in subphases:
+            getattr(self.subphase[subphase], load_type.as_str).append(load_config.name)
 
     def add_subload(
         self,
@@ -572,9 +576,9 @@ class PowerCycleLibraryConfig:
                 k: PhaseConfig(name=k, **v)
                 for k, v in json_content["phase_library"].items()
             },
-            breakdown={
-                k: PowerCycleBreakdown(name=k, **v)
-                for k, v in json_content["breakdown_library"].items()
+            subphase={
+                k: PowerCycleSubPhase(name=k, **v)
+                for k, v in json_content["subphase_library"].items()
             },
             system={
                 k: PowerCycleSystem(name=k, **v)
@@ -593,22 +597,21 @@ class PowerCycleLibraryConfig:
             self.check_config()
 
         phase_config = self.phase[phase]
-        phase_breakdown = {k: self.breakdown[k] for k in phase_config.breakdown}
+        subphases = {k: self.subphase[k] for k in phase_config.subphases}
         phase_loads = {}
         phase_subloads = {}
         for loadtype in LoadType:
-            loads_str = f"{loadtype.name.lower()}_loads"
             phase_loads[loadtype] = {}
             phase_subloads[loadtype] = {}
             subloads = self.subload[loadtype].loads
-            for breakdown in self.breakdown.values():
-                for ld in getattr(breakdown, loads_str):
+            for subphase in subphases.values():
+                for ld in getattr(subphase, loadtype.as_str):
                     load = self.load[loadtype].loads[ld]
                     phase_loads[loadtype][ld] = load
                     for sl in load.subloads:
                         phase_subloads[loadtype][sl] = subloads[sl]
 
-        return Phase(phase_config, phase_breakdown, Loads(phase_loads, phase_subloads))
+        return Phase(phase_config, subphases, Loads(phase_loads, phase_subloads))
 
     def make_pulse(self, pulse: str, *, check=True) -> Dict[str, Phase]:
         """Create a pulse dictionary"""
