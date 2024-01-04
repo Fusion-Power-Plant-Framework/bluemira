@@ -34,7 +34,7 @@ pytest-metadata==3.0.0
 pytest-json-report==1.5.0
 PyYAML==6.0.1
 requests==2.31.0
-ruff==0.1.7
+ruff==0.1.11
 snowballstemmer==2.2.0
 Sphinx==7.1.2
 sphinx-autoapi==3.0.0
