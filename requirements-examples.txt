@@ -10,7 +10,7 @@ debugpy==1.8.0
 decorator==5.1.1
 defusedxml==0.7.1
 executing==2.0.1
-fastjsonschema==2.19.0
+fastjsonschema==2.19.1
 importlib-resources==6.1.1
 ipykernel==6.28.0
 ipython==8.12.0
