@@ -54,11 +54,13 @@ config.import_breakdown_data(PowerCycleDurationParameters())
 
 config.add_load_config(
     "active",
-    PowerCycleLoadConfig("CS", ["d2f"], True, {}, ["cs_power"], "something made up"),
+    ["cru", "bri"],
+    PowerCycleLoadConfig("CS", True, {}, ["cs_power"], "something made up"),
 )
 
 config.add_subload(
-    "active", PowerCycleSubLoad("cs_power", [0, 1], [10, 20], "RAMP", "MW", "dunno")
+    "active",
+    PowerCycleSubLoad("cs_power", [0, 1], [10, 20], "RAMP", "MW", "dunno"),
 )
 
 phase = config.make_phase("dwl")

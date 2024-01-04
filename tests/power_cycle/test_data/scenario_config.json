@@ -35,36 +35,95 @@
   "breakdown_library": {
     "csr": {
       "description": "Central Solenoid recharge",
-      "duration": "CS-recharge-time"
+      "duration": "CS-recharge-time",
+      "reactive_loads": [
+        "rcc",
+        "rvo",
+        "rbc",
+        "rbp",
+        "man",
+        "aux",
+        "rus",
+        "rot"
+      ],
+      "active_loads": ["acc", "rvo", "abc", "abp", "man", "aux", "aus", "aot"]
     },
     "pmp": {
       "description": "Reactor pump-down",
-      "duration": "pumpdown-time"
+      "duration": "pumpdown-time",
+      "reactive_loads": [
+        "rcc",
+        "rvo",
+        "rbc",
+        "rbp",
+        "man",
+        "aux",
+        "rus",
+        "rot"
+      ],
+      "active_loads": ["acc", "rvo", "abc", "abp", "man", "aux", "aus", "aot"]
     },
     "cru": {
       "description": "Current ramp-up",
-      "duration": "ramp-up-time"
+      "duration": "ramp-up-time",
+      "reactive_loads": [
+        "rcc",
+        "rvo",
+        "rbc",
+        "rbp",
+        "man",
+        "aux",
+        "rus",
+        "rot"
+      ],
+      "active_loads": ["acc", "rvo", "abc", "abp", "man", "aux", "aus", "aot"]
     },
     "crd": {
       "description": "Current ramp-down",
-      "duration": "ramp-down-time"
+      "duration": "ramp-down-time",
+      "reactive_loads": ["rcc", "rvo", "rbp", "man", "aux", "rus", "rot"],
+      "active_loads": ["acc", "rvo", "abc", "abp", "man", "aux", "aus", "aot"]
     },
     "bri": {
       "description": "Burn initiation (heat up plasma)",
       "duration": 19,
       "unit": "second",
+      "reactive_loads": [
+        "rcc",
+        "rvo",
+        "rbc",
+        "rbp",
+        "man",
+        "aux",
+        "rus",
+        "rot"
+      ],
+      "active_loads": ["acc", "rvo", "abc", "abp", "man", "aux", "aus", "aot"],
       "reference": ""
     },
     "brt": {
       "description": "Burn termination (cool down plasma)",
       "duration": 123,
       "unit": "second",
+      "reactive_loads": ["rcc", "rvo", "rbp", "man", "aux", "rus", "rot"],
+      "active_loads": ["acc", "rvo", "abc", "abp", "man", "aux", "aus", "aot"],
       "reference": ""
     },
     "plb": {
       "description": "Plasma burn",
       "duration": 2,
       "unit": "hour",
+      "reactive_loads": [
+        "rcc",
+        "rvb",
+        "rbc",
+        "rbp",
+        "man",
+        "aux",
+        "rus",
+        "rot"
+      ],
+      "active_loads": ["acc", "avb", "abc", "abp", "aux", "aus", "aot"],
       "reference": ""
     }
   },
@@ -113,42 +172,36 @@
   "reactive_load_library": {
     "rcc": {
       "description": "reactive constant PHTS consumption (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["vv", "hcpb_vvps", "div_lim"]
     },
     "rvb": {
       "description": "reactive variable PHTS consumption during burn (SSEN)",
-      "phases": ["ftt"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["hcpb_bb_peak"]
     },
     "rvo": {
       "description": "reactive variable PHTS consumption outside burn (SSEN)",
-      "phases": ["dwl", "d2f", "f2d"],
       "consumption": true,
       "efficiencies": { "coolant-flow-to-20%": 5 },
       "subloads": ["hcpb_bb_peak"]
     },
     "rpc": {
       "description": "NO ESTIMATES for reactive pumping consumption (SSEN)",
-      "phases": [],
       "consumption": true,
       "efficiencies": {},
       "subloads": []
     },
     "rbc": {
       "description": "reactive 'balance-of-plant' consumption (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["hcpb_hirn"]
     },
     "rbp": {
       "description": "reactive 'balance-of-plant' production (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": false,
       "efficiencies": {
         "indirect-storage": 0.85,
@@ -158,28 +211,24 @@
     },
     "man": {
       "description": "reactive main power (PPEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["eps_peak"]
     },
     "aux": {
       "description": "reactive auxiliary power (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["eps_upk"]
     },
     "rus": {
       "description": "reactive utilities power (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["buildings", "site"]
     },
     "rot": {
       "description": "other reactive power (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["sf6_air"]
@@ -188,42 +237,36 @@
   "active_load_library": {
     "acc": {
       "description": "active constant PHTS consumption (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["vv", "hcpb_vvps", "div_lim"]
     },
     "avb": {
       "description": "active variable PHTS consumption during burn (SSEN)",
-      "phases": ["ftt"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["hcpb_bb_peak"]
     },
     "rvo": {
       "description": "active variable PHTS consumption outside burn (SSEN)",
-      "phases": ["dwl", "d2f", "f2d"],
       "consumption": true,
       "efficiencies": { "coolant-flow-to-20%": 5 },
       "subloads": ["hcpb_bb_peak"]
     },
     "apc": {
       "description": "NO ESTIMATES for active pumping consumption (SSEN)",
-      "phases": [],
       "consumption": true,
       "efficiencies": {},
       "subloads": []
     },
     "abc": {
       "description": "reactive 'balance-of-plant' consumption (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["hcpb_hirn"]
     },
     "abp": {
       "description": "reactive 'balance-of-plant' production (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": false,
       "efficiencies": {
         "indirect-storage": 0.85
@@ -232,28 +275,24 @@
     },
     "man": {
       "description": "active main power (PPEN)",
-      "phases": ["dwl", "d2f", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["PPEN_peak"]
     },
     "aux": {
       "description": "active auxiliary power (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["eps_upk"]
     },
     "aus": {
       "description": "active utilities power (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["buildings", "site"]
     },
     "aot": {
       "description": "other active power (SSEN)",
-      "phases": ["dwl", "d2f", "ftt", "f2d"],
       "consumption": true,
       "efficiencies": {},
       "subloads": ["sf6_air"]

@@ -83,7 +83,6 @@ class TestDescriptors:
     def test_LibraryConfigDescriptor_returns_correct_type(self):
         pclc_dict = {
             "test": {
-                "phases": ["dwl"],
                 "consumption": True,
                 "efficiencies": {"test": 0.5},
                 "subloads": ["test_load"],
@@ -96,7 +95,6 @@ class TestDescriptors:
 
         assert all(isinstance(val, PowerCycleLoadConfig) for val in l_lib.loads.values())
         assert l_lib.loads.keys() == {"test"}
-        assert l_lib.loads["test"].phases == ["dwl"]
         assert l_lib.loads["test"].consumption
         assert l_lib.loads["test"].subloads == ["test_load"]
         assert l_lib.loads["test"].efficiencies["test"] == pytest.approx(0.5)
@@ -227,11 +225,12 @@ class TestPowerCycleLibraryConfig:
         assert self.config.subload[LoadType.ACTIVE].loads["cs_power"].unit == "W"
 
     def test_add_load(self):
+        name = "CS"
+        breakdowns = ["cru", "bri"]
         self.config.add_load_config(
             "active",
-            PowerCycleLoadConfig(
-                "CS", ["d2f"], True, {}, ["cs_power"], "something made up"
-            ),
+            breakdowns,
+            PowerCycleLoadConfig(name, True, {}, ["cs_power"], "something made up"),
         )
-        assert self.config.load[LoadType.ACTIVE].loads["CS"].phases == ["d2f"]
+        assert all(name in self.config.breakdown[k].active_loads for k in breakdowns)
         assert self.config.load[LoadType.ACTIVE].loads["CS"].subloads == ["cs_power"]

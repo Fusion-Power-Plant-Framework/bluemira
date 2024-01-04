@@ -7,9 +7,9 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 import numpy as np
 from scipy.interpolate import interp1d
@@ -84,7 +84,6 @@ class PhaseConfig(Config):
 class PowerCycleLoadConfig(Config):
     """Power cycle load config"""
 
-    phases: list[str]
     consumption: bool
     efficiencies: dict  # todo  another dataclass?
     subloads: List[str]
@@ -177,6 +176,8 @@ class PowerCycleBreakdown(Config):
     """Breakdown Config"""
 
     duration: Union[float, str]
+    reactive_loads: list[str] = field(default_factory=list)
+    active_loads: list[str] = field(default_factory=list)
     unit: str = "s"
     description: str = ""
     reference: str = ""
@@ -469,14 +470,34 @@ class PowerCycleLibraryConfig:
 
     def check_config(self):
         """Check powercycle configuration"""
+        ph_keys = self.phase.keys()
         bl_keys = self.breakdown.keys()
         ss_keys = self.subsystem.keys()
+        r_loads = self.load[LoadType.REACTIVE].loads.keys()
+        a_loads = self.load[LoadType.ACTIVE].loads.keys()
+        # scenario has known pulses
+        if unknown_pulse := self.scenario.pulses.keys() - self.pulse.keys():
+            raise ValueError(f"Unknown pulses {unknown_pulse}")
+        # pulses have known phases
+        for pulse in self.pulse.values():
+            if unknown_phase := pulse.phases - ph_keys:
+                raise ValueError(f"Unknown phases {unknown_phase}")
+        # phases have known breakdowns
         for ph_c in self.phase.values():
-            if unknown := ph_c.breakdown - bl_keys:
-                raise ValueError(f"Unknown breakdown configurations {unknown}")
+            if unknown_br := ph_c.breakdown - bl_keys:
+                raise ValueError(f"Unknown breakdown configurations {unknown_br}")
+        # breakdowns have known loads
+        for breakdown in self.breakdown.values():
+            if unknown_r_load := breakdown.reactive_loads - r_loads:
+                raise ValueError(f"Unknown reactive loads {unknown_r_load}")
+            if unknown_a_load := breakdown.active_loads - a_loads:
+                raise ValueError(f"Unknown reactive loads {unknown_a_load}")
+
+        # systems have known subsystems
         for sys_c in self.system.values():
             if unknown := sys_c.subsystems - ss_keys:
                 raise ValueError(f"Unknown subsystem configurations {unknown}")
+        # subsystems have known loads
         for s_sys_c in self.subsystem.values():
             for entry in LoadType:
                 if (
@@ -486,6 +507,7 @@ class PowerCycleLibraryConfig:
                     raise ValueError(
                         f"Unknown load configurations in subsystem {unknown}"
                     )
+        # loads have known subloads
         for load, subload in zip(self.load.values(), self.subload.values()):
             for sl in load.loads.values():
                 if unknown := sl.subloads - subload.loads.keys():
@@ -500,12 +522,25 @@ class PowerCycleLibraryConfig:
                 )
 
     def add_load_config(
-        self, load_type: Union[str, LoadType], load_config: PowerCycleLoadConfig
+        self,
+        load_type: Union[str, LoadType],
+        breakdowns: Union[str, Iterable[str]],
+        load_config: PowerCycleLoadConfig,
     ):
         """Add load config"""
-        self.load[LoadType.from_str(load_type)].loads[load_config.name] = load_config
+        load_type = LoadType.from_str(load_type)
+        loads_str = f"{load_type.name.lower()}_loads"
+        self.load[load_type].loads[load_config.name] = load_config
+        if isinstance(breakdowns, str):
+            breakdowns = [breakdowns]
+        for breakdown in breakdowns:
+            getattr(self.breakdown[breakdown], loads_str).append(load_config.name)
 
-    def add_subload(self, load_type: Union[str, LoadType], subload: PowerCycleSubLoad):
+    def add_subload(
+        self,
+        load_type: Union[str, LoadType],
+        subload: PowerCycleSubLoad,
+    ):
         """Add subload"""
         self.subload[LoadType.from_str(load_type)].loads[subload.name] = subload
 
@@ -562,12 +597,14 @@ class PowerCycleLibraryConfig:
         phase_loads = {}
         phase_subloads = {}
         for loadtype in LoadType:
+            loads_str = f"{loadtype.name.lower()}_loads"
             phase_loads[loadtype] = {}
             phase_subloads[loadtype] = {}
             subloads = self.subload[loadtype].loads
-            for k, load in self.load[loadtype].loads.items():
-                if phase in load.phases:
-                    phase_loads[loadtype][k] = load
+            for breakdown in self.breakdown.values():
+                for ld in getattr(breakdown, loads_str):
+                    load = self.load[loadtype].loads[ld]
+                    phase_loads[loadtype][ld] = load
                     for sl in load.subloads:
                         phase_subloads[loadtype][sl] = subloads[sl]
 
