@@ -18,14 +18,6 @@ repos:
         args: [ --fix ]
       - id: ruff-format
 
--   repo: local
-    hooks:
-    - id: update_copyright
-      name: update_copyright
-      entry: python scripts/copyright_update.py
-      language: system
-      types: [python]
-
 -   repo: https://github.com/pre-commit/mirrors-prettier
     rev: v2.5.1
     hooks:

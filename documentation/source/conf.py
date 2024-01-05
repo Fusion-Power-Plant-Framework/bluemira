@@ -29,7 +29,7 @@ def setup(app):
 # -- Project information -----------------------------------------------------
 
 project = "bluemira"
-copyright = "2021-2023, M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short"
+copyright = "2021-present, M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short"
 author = "M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh, J. Morris, D. Short, UKAEA & contributors"
 
 release: str = get_version(project)
