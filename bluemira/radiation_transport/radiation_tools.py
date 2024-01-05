@@ -24,36 +24,37 @@
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
-from dataclasses import dataclass
+
+from typing import TYPE_CHECKING, Callable, Iterable, Optional, Tuple, Union
 
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-from typing import Dict, List
-import bluemira.codes.process as process
-from bluemira.base import constants
-from bluemira.base.constants import ureg
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
-from bluemira.equilibria.grid import Grid
-from bluemira.geometry.coordinates import Coordinates, in_polygon
-from bluemira.geometry.wire import BluemiraWire
-from matplotlib.collections import LineCollection
-
 # CHERAB imports
 from cherab.core.math import AxisymmetricMapper, sample3d
 from cherab.tools.emitters import RadiationFunction
+from matplotlib.collections import LineCollection
 from raysect.core import Point3D, Vector3D, rotate_basis, translate
 from raysect.optical import World
+from raysect.optical.material import VolumeTransform
 from raysect.optical.observer import PowerPipeline0D
 from raysect.optical.observer.nonimaging.pixel import Pixel
-from raysect.optical.material import VolumeTransform
 from raysect.primitive import Cylinder
 
 # Scipy import
 from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
+
+from bluemira.base import constants
+from bluemira.base.constants import ureg
+from bluemira.codes import process
+from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
+from bluemira.geometry.coordinates import Coordinates, in_polygon
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.grid import Grid
+    from bluemira.geometry.wire import BluemiraWire
 
 E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
 
@@ -68,8 +69,8 @@ def upstream_temperature(
     z_mp: float,
     k_0: float,
     firstwall_geom: Grid,
-    connection_length=None,
-):
+    connection_length: Optional[float] = None,
+) -> float:
     """
     Calculate the upstream temperature, as suggested from "Pitcher, 1997".
     Knowing the power entering the SOL, and assuming large temperature gradient
@@ -77,28 +78,30 @@ def upstream_temperature(
 
     Parameters
     ----------
-    b_pol: float
+    b_pol:
         Poloidal magnetic field at the midplane [T]
-    b_tot: float
+    b_tot:
         Total magnetic field at the midplane [T]
-    lambda_q_near: float
+    lambda_q_near:
         Power decay length in the near SOL [m]
-    p_sol: float
+    p_sol:
         Total power entering the SOL [W]
-    eq: Equilibrium
+    eq:
         Equilibrium in which to calculate the upstream temperature
-    r_sep_mp: float
+    r_sep_mp:
         Upstream location radial coordinate [m]
-    z_mp: float
+    z_mp:
         Upstream location z coordinate [m]
-    k_0: float
+    k_0:
         Material's conductivity
-    firstwall_geom: grid
+    firstwall_geom:
         First wall geometry
+    connection_length:
+        connection length from the midplane to the target
 
     Returns
     -------
-    t_upstream_kev: float
+    t_upstream_kev:
         upstream temperature. Unit [keV]
     """
     # SoL cross-section at the midplane
@@ -108,21 +111,19 @@ def upstream_temperature(
     q_u = p_sol / a_par
 
     # connection length from the midplane to the target
-    if connection_length is None:
-        l_tot = calculate_connection_length_flt(
+    l_tot = (
+        calculate_connection_length_flt(
             eq,
             r_sep_mp,
             z_mp,
             first_wall=firstwall_geom,
         )
-    else:
-        l_tot = connection_length
+        if connection_length is None
+        else connection_length
+    )
 
     # upstream temperature [keV]
-    t_upstream_ev = (3.5 * (q_u / k_0) * l_tot) ** (2 / 7)
-    t_upstream_kev = constants.raw_uc(t_upstream_ev, "eV", "keV")
-
-    return t_upstream_kev
+    return constants.raw_uc((3.5 * (q_u / k_0) * l_tot) ** (2 / 7), "eV", "keV")
 
 
 def target_temperature(
@@ -139,7 +140,7 @@ def target_temperature(
     r_tar: float,
     lambda_q_near: float,
     b_tot_tar: float,
-):
+) -> float:
     """
     Calculate the target as suggested from the 2PM.
     It includes hydrogen recycle loss energy.
@@ -148,40 +149,37 @@ def target_temperature(
 
     Parameters
     ----------
-    p_sol: float
+    p_sol:
         Total power entering the SOL [W]
-    t_u: float
+    t_u:
         Upstream temperature. Unit [eV]
-    n_u: float
+    n_u:
         Electron density at the upstream [1/m^3]
-    gamma: float
+    gamma:
         Sheath heat transmission coefficient
-    eps_cool: float
+    eps_cool:
         Electron energy loss [eV]
-    f_ion_t: float
+    f_ion_t:
         Hydrogen first ionization [eV]
-    b_pol_tar: float
+    b_pol_tar:
         Poloidal magnetic field at the target [T]
-    b_pol_u: float
+    b_pol_u:
         Poloidal magnetic field at the midplane [T]
-    alpha: float
+    alpha:
         Incident angle between separatrix and target plate as
         poloidal projection [deg]
-    r_u: float
+    r_u:
         Upstream location radial coordinate [m]
-    r_tar: float
+    r_tar:
         stike point radial coordinate [m]
-    lambda_q_near: float
+    lambda_q_near:
         Power decay length in the near SOL at the midplane [m]
-    b_tot_tar: float
+    b_tot_tar:
         Total magnetic field at the target [T]
-    lfs: boolean
-        low field side. Default value True.
-        If False it stands for high field side (hfs).
 
     Returns
     -------
-    t_tar: float
+    t_tar:
         target temperature. Unit [eV]
     """
     # flux expansion at the target location
@@ -243,41 +241,44 @@ def random_point_temperature(
     k_0: float,
     sep_corrector: float,
     firstwall_geom: Grid,
+    connection_length: Optional[float] = None,
+    *,
     lfs=True,
-    connection_length=None,
-):
+) -> float:
     """
     Calculate the temperature at a random point above the x-point.
 
     Parameters
     ----------
-    x_p: float
+    x_p:
         x coordinate of the point [m]
-    z_p: float
+    z_p:
         z coordinate of the point [m]
-    t_u: float
+    t_u:
         upstream temperature [eV]
-    p_sol: float
+    p_sol:
         Total power entering the SOL [W]
-    lambda_q_near: float
+    lambda_q_near:
         Power decay length in the near SOL at the midplane [m]
-    eq: Equilibrium
+    eq:
         Equilibrium in which to calculate the point temperature
-    r_sep_omp: float
+    r_sep_omp:
         Upstream location radial coordinate [m]
-    z_mp: float
+    z_mp:
         Upstream location z coordinate [m]
-    k_0: float
+    k_0:
         Material's conductivity
-    firstwall_geom: grid
+    firstwall_geom:
         first wall geometry
-    lfs: boolean
+    connection_length:
+        connection length from the midplane to the target
+    lfs:
         low (toroidal) field side (outer wall side). Default value True.
         If False it stands for high field side (hfs).
 
     Returns
     -------
-    t_p: float
+    t_p:
         point temperature. Unit [eV]
     """
     # Flux expansion at the point
@@ -297,7 +298,7 @@ def random_point_temperature(
     q_par = p_sol / a_par
 
     # Distinction between lfs and hfs
-    d =sep_corrector if lfs else -sep_corrector
+    d = sep_corrector if lfs else -sep_corrector
 
     # Distance between the chosen point and the the target
     l_p = calculate_connection_length_flt(
@@ -308,22 +309,24 @@ def random_point_temperature(
         first_wall=firstwall_geom,
     )
     # connection length from the midplane to the target
-    if connection_length is None:
-        l_tot = calculate_connection_length_flt(
+    l_tot = (
+        calculate_connection_length_flt(
             eq,
             r_sep_mp,
             z_mp,
             forward=lfs,
             first_wall=firstwall_geom,
         )
-    else:
-        l_tot = connection_length
+        if connection_length is None
+        else connection_length
+    )
     # connection length from mp to p point
     s_p = l_tot - l_p
     if round(abs(z_p)) == 0:
         s_p = 0
     # Return local temperature
-    return  ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
+    return ((t_u**3.5) - 3.5 * (q_par / k_0) * s_p) ** (2 / 7)
+
 
 def electron_density_and_temperature_sol_decay(
     t_sep: float,
@@ -331,45 +334,40 @@ def electron_density_and_temperature_sol_decay(
     lambda_q_near: float,
     lambda_q_far: float,
     dx_mp: float,
-    f_exp=1,
+    f_exp: float = 1,
     near_sol_gradient: float = 0.99,
-):
+) -> Tuple[np.ndarray, ...]:
     """
     Generic radial esponential decay to be applied from a generic starting point
     at the separatrix (not only at the mid-plane).
     The vertical location is dictated by the choice of the flux expansion f_exp.
     By default f_exp = 1, meaning mid-plane.
-    The boolean "omp" set by default as "True", gives the option of choosing
-    either outer mid-plane (True) or inner mid-plane (False)
     From the power decay length it calculates the temperature decay length and the
     density decay length.
 
     Parameters
     ----------
-    t_sep: float
+    t_sep:
         initial temperature value at the separatrix [keV]
-    n_sep: float
+    n_sep:
         initial density value at the separatrix [1/m^3]
-    lambda_q_near: float
+    lambda_q_near:
         Power decay length in the near SOL [m]
-    lambda_q_far: float
+    lambda_q_far:
         Power decay length in the far SOL [m]
-    dx_mp: [list]
+    dx_mp:
         Gaps between flux tubes at the mp [m]
-    f_exp: float
+    f_exp:
         flux expansion. Default value=1 referred to the mid-plane
-    near_sol_gradient: float
+    near_sol_gradient:
         temperature and density drop within the near scrape-off layer
         from the separatrix value
-    lfs: boolean
-        low (toroidal) field side (outer wall side). Default value True.
-        If False it stands for high field side (hfs).
 
     Returns
     -------
-    te_sol: np.array
+    te_sol:
         radial decayed temperatures through the SoL. Unit [eV]
-    ne_sol: np.array
+    ne_sol:
         radial decayed densities through the SoL. unit [1/m^3]
     """
     # temperature and density decay factors
@@ -402,23 +400,25 @@ def electron_density_and_temperature_sol_decay(
     return te_sol, ne_sol
 
 
-def gaussian_decay(max_value: float, min_value: float, no_points: float, decay=True):
+def gaussian_decay(
+    max_value: float, min_value: float, no_points: float, *, decay: bool = True
+) -> np.ndarray:
     """
     Generic gaussian decay to be applied between two extreme values and for a
     given number of points.
 
     Parameters
     ----------
-    max_value: float
+    max_value:
         maximum value of the parameters
-    min_value: float
+    min_value:
         minimum value of the parameters
-    no_points: float
+    no_points:
         number of points through which make the parameter decay
 
     Returns
     -------
-    dec_param: np.array
+    dec_param:
         decayed parameter
     """
     no_points = max(no_points, 1)
@@ -446,46 +446,43 @@ def gaussian_decay(max_value: float, min_value: float, no_points: float, decay=T
     return dec_param
 
 
-def exponential_decay(max_value: float, min_value: float, no_points: float, decay=False):
+def exponential_decay(
+    max_value: float, min_value: float, no_points: float, *, decay: bool = False
+) -> np.ndarray:
     """
     Generic exponential decay to be applied between two extreme values and for a
     given number of points.
 
     Parameters
     ----------
-    max_value: float
+    max_value:
         maximum value of the parameters
-    min_value: float
+    min_value:
         minimum value of the parameters
-    no_points: float
+    no_points:
         number of points through which make the parameter decay
-    decay: boolean
+    decay:
         to define either a decay or increment
 
     Returns
     -------
-    dec_param: np.array
+    dec_param:
         decayed parameter
     """
     no_points = max(no_points, 1)
     if no_points <= 1:
         return np.linspace(max_value, min_value, no_points)
+    x = np.linspace(1, no_points, no_points)
+    a = np.array([x[0], min_value])
+    b = np.array([x[-1], max_value])
+    if decay:
+        arg = x / b[0]
+        base = a[0] / b[0]
     else:
-        x = np.linspace(1, no_points, no_points)
-        a = np.array([x[0], min_value])
-        b = np.array([x[-1], max_value])
-        if decay:
-            arg = x / b[0]
-            base = a[0] / b[0]
-        else:
-            arg = x / a[0]
-            base = b[0] / a[0]
+        arg = x / a[0]
+        base = b[0] / a[0]
 
-        my_log = np.log(arg) / np.log(base)
-
-        f = a[1] + (b[1] - a[1]) * my_log
-
-    return f
+    return a[1] + (b[1] - a[1]) * (np.log(arg) / np.log(base))
 
 
 def ion_front_distance(
@@ -493,41 +490,41 @@ def ion_front_distance(
     z_strike: float,
     eq: Equilibrium,
     x_pt_z: float,
-    t_tar: float = None,
-    avg_ion_rate: float = None,
-    avg_momentum_rate: float = None,
-    n_r: float = None,
-    rec_ext: float = None,
-):
+    t_tar: Optional[float] = None,
+    avg_ion_rate: Optional[float] = None,
+    avg_momentum_rate: Optional[float] = None,
+    n_r: Optional[float] = None,
+    rec_ext: Optional[float] = None,
+) -> float:
     """
     Manual definition of ion penetration depth.
     TODO: Find sv_i and sv_m
 
     Parameters
     ----------
-    x_strike: float [m]
-        x coordinate of the strike point
-    z_strike: float [m]
-        z coordinate of the strike point
-    eq: Equilibrium
+    x_strike:
+        x coordinate of the strike point [m]
+    z_strike:
+        z coordinate of the strike point [m]
+    eq:
         Equilibrium in which to calculate the x-point temperature
-    x_pt_z: float
+    x_pt_z:
         x-point location z coordinate [m]
-    t_tar: float [keV]
-        target temperature
-    avg_ion_rate: float
+    t_tar:
+        target temperature [keV]
+    avg_ion_rate:
         average ionization rate
-    avg_momentum_rate: float
+    avg_momentum_rate:
         average momentum loss rate
-    n_r: float
+    n_r:
         density at the recycling region entrance [1/m^3]
-    rec_ext: float [m]
+    rec_ext:
         recycling region extention (along the field line)
-        from the target
+        from the target [m]
 
     Returns
     -------
-    z_front: float [m]
+    z_front:
         z coordinate of the ionization front
     """
     # Speed of light to convert kg to eV/c^2
@@ -552,77 +549,77 @@ def ion_front_distance(
         z_ext = rec_ext * np.sin(pitch_angle)
 
     # z coordinate (from the midplane)
-    z_front = abs(z_strike - x_pt_z) - abs(z_ext)
-
-    return z_front
+    return abs(z_strike - x_pt_z) - abs(z_ext)
 
 
-def calculate_z_species(t_ref, z_ref, species_frac, te):
+def calculate_z_species(
+    t_ref: np.ndarray, z_ref: np.ndarray, species_frac: float, te: np.ndarray
+) -> np.ndarray:
     """
     Calculation of species ion charge, in condition of quasi-neutrality.
 
     Parameters
     ----------
-    t_ref: np.array
+    t_ref:
         temperature reference [keV]
-    z_ref: np.array
+    z_ref:
         effective charge reference [m]
-    species_frac: float
+    species_frac:
         fraction of relevant impurity
-    te: array
+    te:
         electron temperature [keV]
 
     Returns
     -------
-    species_frac*z_val**2: np.array
         species ion charge
     """
     z_interp = interp1d(t_ref, z_ref)
-    z_val = z_interp(te)
 
-    return species_frac * z_val**2
+    return species_frac * z_interp(te) ** 2
 
 
-def radiative_loss_function_values(te, t_ref, l_ref):
+def radiative_loss_function_values(
+    te: np.ndarray, t_ref: np.ndarray, l_ref: np.ndarray
+) -> np.ndarray:
     """
     By interpolation, from reference values, it returns the
     radiative power loss values for a given set of electron temperature.
 
     Parameters
     ----------
-    te: np.array
+    te:
         electron temperature [eV]
-    t_ref: np.array
+    t_ref:
         temperature reference [eV]
-    l_ref: np.array
+    l_ref:
         radiative power loss reference [Wm^3]
 
     Returns
     -------
-    interp_func(te): np.array [W m^3]
-        local values of the radiative power loss function
+        interpolated local values of the radiative power loss function [W m^3]
     """
     te_i = np.where(te < min(t_ref))
     te[te_i] = min(t_ref) + (np.finfo(float).eps)
-    interp_func = interp1d(t_ref, l_ref)
 
-    return interp_func(te)
+    return interp1d(t_ref, l_ref)(te)
 
 
-def radiative_loss_function_plot(t_ref, lz_val, species):
+def radiative_loss_function_plot(
+    t_ref: np.ndarray, lz_val: Iterable[np.ndarray], species: Iterable[str]
+):
     """
     Radiative loss function plot for a set of given impurities.
 
     Parameters
     ----------
-    t_ref: np.array
+    t_ref:
         temperature reference [keV]
-    l_z: [np.array]
+    l_z:
         radiative power loss reference [Wm^3]
-    species: [string]
+    species:
         name species
     """
-    fig, ax = plt.subplots()
+    _fig, ax = plt.subplots()
     plt.title("Radiative loss functions vs Electron Temperature")
     plt.xlabel(r"$T_e~[keV]$")
     plt.ylabel(r"$L_z~[W.m^{3}]$")
@@ -636,7 +633,9 @@ def radiative_loss_function_plot(t_ref, lz_val, species):
     return ax
 
 
-def calculate_line_radiation_loss(ne, p_loss_f, species_frac):
+def calculate_line_radiation_loss(
+    ne: np.ndarray, p_loss_f: np.ndarray, species_frac: float
+) -> np.ndarray:
     """
     Calculation of Line radiation losses.
     For a given impurity this is the total power lost, per unit volume,
@@ -644,65 +643,73 @@ def calculate_line_radiation_loss(ne, p_loss_f, species_frac):
 
     Parameters
     ----------
-    ne: np.array
+    ne:
         electron density [1/m^3]
-    p_loss_f: np.array
+    p_loss_f:
         local values of the radiative power loss function
-    species_frac: float
+    species_frac:
         fraction of relevant impurity
 
     Returns
     -------
-    (species_frac[0] * (ne**2) * p_loss_f) * 1e-6: np.array
         Line radiation losses [MW m^-3]
     """
-    return (species_frac * (ne**2) * p_loss_f)/(4*np.pi) * 1e-6
+    return (species_frac * (ne**2) * p_loss_f) / (4 * np.pi) * 1e-6
 
 
-def linear_interpolator(x, z, field):
+def linear_interpolator(
+    x: np.ndarray, z: np.ndarray, field: np.ndarray
+) -> Callable[[np.ndarray, np.ndarray], np.ndarray]:
     """
     Interpolating function calculated over 1D coordinate
     arrays and 1D field value array.
 
     Parameters
     ----------
-    x: np.array
+    x:
         x coordinates of given points [m]
-    z: np.array
+    z:
         z coordinates of given points [m]
-    field: np.array
+    field:
         set of punctual field values associated to the given points
 
     Returns
     -------
-    interpolated_function: LinearNDInterpolator object
+    interpolated_function:
+        LinearNDInterpolator object
     """
     return LinearNDInterpolator(list(zip(x, z)), field, fill_value=0)
 
 
-def interpolated_field_values(x, z, linear_interpolator):
+def interpolated_field_values(
+    x: np.ndarray,
+    z: np.ndarray,
+    linear_interpolator: Callable[[np.ndarray, np.ndarray], np.ndarray],
+) -> np.ndarray:
     """
     Interpolated field values for a given set of points.
 
     Parameters
     ----------
-    x: float, np.array
+    x:
         x coordinates of point in which interpolate [m]
-    z: float, np.array
+    z:
         z coordinates of point in which interpolate [m]
-    linear_interpolator: Interpolating function
+    linear_interpolator:
         LinearNDInterpolator object
 
     Returns
     -------
-    field_grid: matrix len(x) x len(z)
-        2D grid of interpolated field values
+    field_grid:
+         matrix len(x) x len(z), 2D grid of interpolated field values
     """
     xx, zz = np.meshgrid(x, z)
     return linear_interpolator(xx, zz)
 
 
-def grid_interpolator(x, z, field_grid):
+def grid_interpolator(
+    x: np.ndarray, z: np.ndarray, field_grid: np.ndarray
+) -> Callable[[np.ndarray], np.ndarray]:
     """
     Interpolated field function obtainded for a given grid.
     Needed: length(xx) = m, length(zz) = n, field_grid.shape = n x m.
@@ -713,13 +720,13 @@ def grid_interpolator(x, z, field_grid):
         x coordinates. length(xx)=m [m]
     z: np.array
         z coordinates. length(xx)=n [m]
-    field_grid: matrix n x m
-        corresponding field values arranged according to
+    field_grid:
+        matrix n x m corresponding field values arranged according to
         the grid of given points
 
     Returns
     -------
-    interpolated_function: scipy.interpolate.interp2d object
+    interpolated_function:
         interpolated field function, to be used to
         calculate the field values for a new set of points
         or to be provided to a tracing code such as CHEARAB
@@ -727,40 +734,39 @@ def grid_interpolator(x, z, field_grid):
     return interp2d(x, z, field_grid)
 
 
-def pfr_filter(separatrix: Grid, x_point_z: float):
+def pfr_filter(
+    separatrix: Union[Iterable[Coordinates], Coordinates], x_point_z: float
+) -> Tuple[np.ndarray, ...]:
     """
     To filter out from the radiation interpolation domain the private flux regions
 
     Parameters
     ----------
-    separatrix: [Grid]
+    separatrix:
         Object containing x and z coordinates of each separatrix half
-    x_point_z: float
+    x_point_z:
         z coordinates of the x-point [m]
 
     Returns
     -------
-    domains_x: np.array
+    domains_x:
         x coordinates of pfr domain
-    domains_z: np.array
+    domains_z:
         z coordinates of pfr domain
     """
     # Identifying whether lower or upper x-point
-    if x_point_z < 0:
-        fact = 1
-    else:
-        fact = -1
-    
+    fact = 1 if x_point_z < 0 else -1
+
     if isinstance(separatrix, Coordinates):
-            separatrix = [separatrix]
+        separatrix = [separatrix]
     # Selecting points between null and targets (avoiding the x-point singularity)
     z_ind = [
         np.where((halves.z * fact) < (x_point_z * fact - 0.01)) for halves in separatrix
     ]
     domains_x = [halves.x[list_ind] for list_ind, halves in zip(z_ind, separatrix)]
     domains_z = [halves.z[list_ind] for list_ind, halves in zip(z_ind, separatrix)]
-    
-    if len(domains_x) !=1:
+
+    if len(domains_x) != 1:
         # Closing the domain
         domains_x[1] = np.append(domains_x[1], domains_x[0][0])
         domains_z[1] = np.append(domains_z[1], domains_z[0][0])
@@ -791,15 +797,14 @@ def filtering_in_or_out(domain_x: list, domain_z: list, include_points=True):
     region[:, 0] = domain_x
     region[:, 1] = domain_z
 
-    def include(point):
-        if include_points:
-            return in_polygon(point[0], point[1], region, include_edges=True)
-        else:
-            return not in_polygon(point[0], point[1], region, include_edges=True)
+    if include_points:
+        return lambda point: in_polygon(point[0], point[1], region, include_edges=True)
+    return lambda point: not in_polygon(point[0], point[1], region, include_edges=True)
 
-    return include
 
-def get_impurity_data(impurities_list: list = ["H", "He"]):
+def get_impurity_data(
+    impurities_list: Iterable[str] = ("H", "He"), confinement_time_ms: float = 0.1
+):
     """
     Function getting the PROCESS impurity data
     """
@@ -809,8 +814,8 @@ def get_impurity_data(impurities_list: list = ["H", "He"]):
     impurity_data = {}
     for imp in impurities_list:
         impurity_data[imp] = {
-            "T_ref": imp_data_getter(imp, confinement_time_ms=0.1)[0],
-            "L_ref": imp_data_getter(imp, confinement_time_ms=0.1)[1],
+            "T_ref": imp_data_getter(imp, confinement_time_ms)[0],
+            "L_ref": imp_data_getter(imp, confinement_time_ms)[1],
         }
 
     return impurity_data
@@ -835,9 +840,6 @@ def detect_radiation(wall_detectors, n_samples, world):
 
     # Loop over each tile detector
     for i, detector in enumerate(wall_detectors):
-
-        print("detector {} / {}".format(i, len(wall_detectors) - 1))
-
         # extract the dimensions and orientation of the tile
         x_width = detector[1]
         y_width = detector[2]
@@ -849,7 +851,6 @@ def detect_radiation(wall_detectors, n_samples, world):
         # Use the power pipeline to record total power arriving at the surface
         power_data = PowerPipeline0D()
 
-
         pixel_transform = translate(
             centre_point.x, centre_point.y, centre_point.z
         ) * rotate_basis(normal_vector, y_vector)
@@ -858,7 +859,7 @@ def detect_radiation(wall_detectors, n_samples, world):
             [power_data],
             x_width=x_width,
             y_width=y_width,
-            name="pixel-{}".format(i),
+            name=f"pixel-{i}",
             spectral_bins=1,
             transform=pixel_transform,
             parent=world,
@@ -896,7 +897,7 @@ def detect_radiation(wall_detectors, n_samples, world):
             y_width * 2 * np.pi * detector_radius
         )
 
-    output = {
+    return {
         "power_density": power_density,
         "power_density_stdev": power_density_stdev,
         "detected_power": detected_power,
@@ -907,8 +908,6 @@ def detect_radiation(wall_detectors, n_samples, world):
         "total_power": cherab_total_power,
     }
 
-    return output
-
 
 def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
     """
@@ -916,8 +915,6 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
     """
     # number of detectors
     num = np.shape(wall_r)[0] - 2
-
-    print("\n\n...building detectors...")
 
     # further initializations
     wall_detectors = []
@@ -927,7 +924,7 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
     if debug:
         plt.figure()
 
-    for index in range(0, num + 1):
+    for index in range(num + 1):
         p1x = wall_r[index]
         p1y = wall_z[index]
         p1 = Point3D(p1x, 0, p1y)
@@ -937,7 +934,6 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
         p2 = Point3D(p2x, 0, p2y)
 
         if p1 != p2:  # Ignore duplicate points
-
             # evaluate y_vector
             y_vector_full = p1.vector_to(p2)
             y_vector = y_vector_full.normalise()
@@ -965,21 +961,21 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
                     )
 
                     # to populate it step by step
-                    wall_detectors = wall_detectors + [
+                    wall_detectors = [
+                        *wall_detectors,
                         (
-                            (ctr),
+                            ctr,
                             x_width,
                             y_width,
                             detector_center,
                             normal_vector,
                             y_vector,
-                        )
+                        ),
                     ]
 
                     ctr = ctr + 1
 
             else:
-
                 # evaluate normal_vector
                 normal_vector = Vector3D(p1y - p2y, 0.0, p2x - p1x).normalise()
                 # normal_vector = (detector_center.vector_to(plasma_axis_3D)).normalise()
@@ -989,8 +985,9 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
                 detector_center = Point3D(0.5 * (p1x + p2x), 0, 0.5 * (p1y + p2y))
 
                 # to populate it step by step
-                wall_detectors = wall_detectors + [
-                    ((ctr), x_width, y_width, detector_center, normal_vector, y_vector)
+                wall_detectors = [
+                    *wall_detectors,
+                    (ctr, x_width, y_width, detector_center, normal_vector, y_vector),
                 ]
 
                 if debug:
@@ -1008,22 +1005,23 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
     return wall_detectors
 
 
-def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_title, fw_shape):
+def plot_radiation_loads(
+    radiation_function, wall_detectors, wall_loads, plot_title, fw_shape
+):
     """
     To plot the radiation on the wall as MW/m^2
     """
-
     min_r = min(fw_shape.x)
     max_r = max(fw_shape.x)
     min_z = min(fw_shape.z)
     max_z = max(fw_shape.z)
 
-    t_r, _, t_z, t_samples = sample3d(
+    _t_r, _, _t_z, t_samples = sample3d(
         radiation_function, (min_r, max_r, 500), (0, 0, 1), (min_z, max_z, 1000)
     )
 
     # Plot the wall and radiation distribution
-    fig, ax = plt.subplots(figsize=(12, 6))
+    _fig, _ax = plt.subplots(figsize=(12, 6))
 
     gs = plt.GridSpec(2, 2, top=0.93, wspace=0.23)
 
@@ -1032,7 +1030,7 @@ def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_ti
         np.squeeze(t_samples).transpose() * 1.0e-6,
         extent=[min_r, max_r, min_z, max_z],
         clim=(0.0, np.amax(t_samples) * 1.0e-6),
-        origin='lower'  # Set the origin to 'lower' to flip the image
+        origin="lower",  # Set the origin to 'lower' to flip the image
     )
 
     segs = []
@@ -1086,21 +1084,17 @@ def plot_radiation_loads(radiation_function, wall_detectors, wall_loads, plot_ti
 
     plt.show()
 
+
 class FirstWallRadiationSolver:
     """
     ...
     """
 
-    def __init__(
-        self,
-        source_func: callable,
-        firstwall_shape: BluemiraWire
-    ):
+    def __init__(self, source_func: Callable, firstwall_shape: BluemiraWire):
         self.rad_source = source_func
         self.fw_shape = firstwall_shape
 
     def solve(self, plot=True):
-
         rad_3d = AxisymmetricMapper(self.rad_source)
         ray_stepsize = 1.0  # 2.0e-4
         emitter = VolumeTransform(
@@ -1117,12 +1111,18 @@ class FirstWallRadiationSolver:
         )
         max_wall_len = 10.0e-2
         X_WIDTH = 0.01
-        wall_detectors = build_wall_detectors(self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH)
+        wall_detectors = build_wall_detectors(
+            self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH
+        )
         wall_loads = detect_radiation(wall_detectors, 500, world)
 
         if plot:
             plot_radiation_loads(
-                rad_3d, wall_detectors, wall_loads, "SOL & divertor radiation loads", self.fw_shape
+                rad_3d,
+                wall_detectors,
+                wall_loads,
+                "SOL & divertor radiation loads",
+                self.fw_shape,
             )
 
         return wall_loads

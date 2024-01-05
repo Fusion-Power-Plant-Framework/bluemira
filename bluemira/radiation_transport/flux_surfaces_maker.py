@@ -24,20 +24,20 @@ A simplified 2-D solver for calculating charged particle heat loads.
 """
 
 from copy import deepcopy
-from typing import Dict
 
 import numpy as np
 
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
-from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.geometry.wire import BluemiraWire
 
 __all__ = ["analyse_first_wall_flux_surfaces"]
+
 
 def analyse_first_wall_flux_surfaces(
     equilibrium: Equilibrium, first_wall: BluemiraWire, dx_mp: float
@@ -54,22 +54,26 @@ def analyse_first_wall_flux_surfaces(
         The midplane spatial resolution between flux surfaces [m]
         (default: 0.001).
     """
-    o_points, _ = equilibrium.get_OX_points()
-    o_point = o_points[0]
+    o_point = equilibrium.get_OX_points()[0][0]  # 1st o_point
     z = o_point.z
     yz_plane = BluemiraPlane.from_3_points([0, 0, z], [1, 0, z], [1, 1, z])
 
     first_wall = _process_first_wall(first_wall)
 
     if equilibrium.is_double_null:
-        dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp = _analyse_DN(first_wall, dx_mp, equilibrium, o_point, yz_plane)
+        dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp = _analyse_DN(
+            first_wall, dx_mp, equilibrium, o_point, yz_plane
+        )
     else:
-        dx_omp, flux_surfaces, x_sep_omp = _analyse_SN(first_wall, dx_mp, equilibrium, o_point, yz_plane)
+        dx_omp, flux_surfaces, x_sep_omp = _analyse_SN(
+            first_wall, dx_mp, equilibrium, o_point, yz_plane
+        )
         dx_imp = None
         x_sep_imp = None
     return dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp
 
-def _process_first_wall(first_wall):
+
+def _process_first_wall(first_wall: Coordinates) -> Coordinates:
     """
     Force working first wall geometry to be closed and counter-clockwise.
     """
@@ -84,6 +88,7 @@ def _process_first_wall(first_wall):
         first_wall.close()
     return first_wall
 
+
 def _analyse_SN(first_wall, dx_mp, equilibrium, o_point, yz_plane):
     """
     Calculation for the case of single nulls.
@@ -93,53 +98,47 @@ def _analyse_SN(first_wall, dx_mp, equilibrium, o_point, yz_plane):
     )
 
     flux_surfaces_ob = _make_flux_surfaces_ibob(
-        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, True
+        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, outboard=True
     )
 
-    # Find the intersections of the flux surfaces with the first wall
-    flux_surfaces = _clip_flux_surfaces(first_wall, flux_surfaces_ob)
+    return (
+        get_array_x_mp(flux_surfaces_ob[0]) - x_sep_omp,  # Calculate values at OMP
+        _clip_flux_surfaces(  # Find flux surface intersections with the first wall
+            first_wall, flux_surfaces_ob
+        ),
+        x_sep_omp,
+    )
 
-    x_omp = get_array_x_mp(flux_surfaces_ob[0])
-
-    # Calculate values at OMP
-    dx_omp = x_omp - x_sep_omp
-
-    return dx_omp, flux_surfaces, x_sep_omp
 
 def _analyse_DN(first_wall, dx_mp, equilibrium, o_point, yz_plane):
     """
     Calculation for the case of double nulls.
     """
+    separatrix = equilibrium.get_separatrix()
     x_sep_omp, x_out_omp = _get_sep_out_intersection(
-        equilibrium.get_separatrix(), first_wall, yz_plane, o_point, outboard=True
+        separatrix, first_wall, yz_plane, o_point, outboard=True
     )
     x_sep_imp, x_out_imp = _get_sep_out_intersection(
-        equilibrium.get_separatrix(), first_wall, yz_plane, o_point, outboard=False
+        separatrix, first_wall, yz_plane, o_point, outboard=False
     )
 
     flux_surfaces_ob = _make_flux_surfaces_ibob(
-        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, True
+        dx_mp, equilibrium, o_point, yz_plane, x_sep_omp, x_out_omp, outboard=True
     )
     flux_surfaces_ib = _make_flux_surfaces_ibob(
-        dx_mp, equilibrium, o_point, yz_plane, x_sep_imp, x_out_imp, False
+        dx_mp, equilibrium, o_point, yz_plane, x_sep_imp, x_out_imp, outboard=False
+    )
+    return (
+        get_array_x_mp(flux_surfaces_ob[0]) - x_sep_omp,  # Calculate values at OMP
+        abs(get_array_x_mp(flux_surfaces_ib[0]) - x_sep_imp),  # Calculate values at IMP
+        _clip_flux_surfaces(  # Find flux surface intersections with the first wall
+            first_wall,
+            [*flux_surfaces_ob, *flux_surfaces_ib],
+        ),
+        x_sep_omp,
+        x_sep_imp,
     )
 
-    # Find the intersections of the flux surfaces with the first wall
-    flux_surfaces = _clip_flux_surfaces(
-        first_wall,
-        [*flux_surfaces_ob, *flux_surfaces_ib],
-    )
-
-    x_omp = get_array_x_mp(flux_surfaces_ob[0])
-
-    x_imp = get_array_x_mp(flux_surfaces_ib[0])
-
-    # Calculate values at OMP
-    dx_omp = x_omp - x_sep_omp
-
-    # Calculate values at IMP
-    dx_imp = abs(x_imp - x_sep_imp)
-    return dx_omp, dx_imp, flux_surfaces, x_sep_omp, x_sep_imp
 
 def _clip_flux_surfaces(first_wall, flux_surfaces):
     """
@@ -147,13 +146,14 @@ def _clip_flux_surfaces(first_wall, flux_surfaces):
     are found.
     """
     for group in flux_surfaces:
-        for i, flux_surface in enumerate(group):
+        for flux_surface in group:
             flux_surface.clip(first_wall)
             if flux_surface.alpha is not None:
                 # No intersection detected between flux surface and first wall
                 # Drop the flux surface from the group
                 break
     return flux_surfaces
+
 
 def get_array_x_mp(flux_surfaces):
     """
@@ -189,7 +189,10 @@ def get_array_alpha(flux_surfaces):
     """
     return np.array([fs.alpha for fs in flux_surfaces])
 
-def _get_sep_out_intersection(separatrix, first_wall, yz_plane, o_point, outboard=True):
+
+def _get_sep_out_intersection(
+    separatrix, first_wall, yz_plane, o_point, *, outboard=True
+):
     """
     Find the middle and maximum outboard mid-plane psi norm values
     """
@@ -200,22 +203,18 @@ def _get_sep_out_intersection(separatrix, first_wall, yz_plane, o_point, outboar
         sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - o_point.x))
         x_sep1_mp = sep1_intersections.T[0][sep1_arg]
         x_sep2_mp = sep2_intersections.T[0][sep2_arg]
-        if outboard:
-            x_sep_mp = x_sep1_mp if x_sep1_mp > x_sep2_mp else x_sep2_mp
-        else:
-            x_sep_mp = x_sep1_mp if x_sep1_mp < x_sep2_mp else x_sep2_mp
+        x_sep_mp = max(x_sep2_mp, x_sep1_mp) if outboard else min(x_sep2_mp, x_sep1_mp)
     else:
         sep_intersections = coords_plane_intersect(separatrix, yz_plane)
         sep_arg = np.argmin(np.abs(sep_intersections.T[0] - o_point.x))
         x_sep_mp = sep_intersections.T[0][sep_arg]
 
     out_intersections = coords_plane_intersect(first_wall, yz_plane)
-    if outboard:
-        x_out_mp = np.max(out_intersections.T[0])
-    else:
-        x_out_mp = np.min(out_intersections.T[0])
-
+    x_out_mp = (
+        np.max(out_intersections.T[0]) if outboard else np.min(out_intersections.T[0])
+    )
     return x_sep_mp, x_out_mp
+
 
 def _make_flux_surfaces(x, z, equilibrium, o_point, yz_plane):
     """
@@ -229,16 +228,20 @@ def _make_flux_surfaces(x, z, equilibrium, o_point, yz_plane):
     )
 
 
-def _make_flux_surfaces_ibob(dx_mp, equilibrium, o_point, yz_plane, x_sep_mp, x_out_mp, outboard: bool):
+def _make_flux_surfaces_ibob(
+    dx_mp, equilibrium, o_point, yz_plane, x_sep_mp, x_out_mp, *, outboard: bool
+):
     """
     Make the flux surfaces on the outboard.
     """
-    sign = 1 if outboard else -1 
+    sign = 1 if outboard else -1
 
     flux_surfaces_lfs = []
     flux_surfaces_hfs = []
 
-    for x in np.arange(x_sep_mp + (sign*dx_mp), x_out_mp - (sign*EPS), (sign*dx_mp)):
+    for x in np.arange(
+        x_sep_mp + (sign * dx_mp), x_out_mp - (sign * EPS), (sign * dx_mp)
+    ):
         lfs, hfs = _make_flux_surfaces(x, o_point.z, equilibrium, o_point, yz_plane)
         flux_surfaces_lfs.append(lfs)
         flux_surfaces_hfs.append(hfs)

@@ -34,15 +34,15 @@ from bluemira.equilibria import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.radiation_transport.midplane_temperature_density import MidplaneProfiles
 from bluemira.radiation_transport.radiation_profile import (
-    RadiationSource, 
-    linear_interpolator, 
-    interpolated_field_values, 
+    RadiationSource,
+    interpolated_field_values,
+    linear_interpolator,
 )
 from bluemira.radiation_transport.radiation_tools import (
-    filtering_in_or_out, 
-    pfr_filter,
-    grid_interpolator,
     FirstWallRadiationSolver,
+    filtering_in_or_out,
+    grid_interpolator,
+    pfr_filter,
 )
 
 # %% [markdown]
@@ -73,120 +73,37 @@ fw_shape = Coordinates.from_json(fw_name)
 
 # %%
 params = {
-    "rho_ped_n": {
-        "value": 0.94,
-        "unit": "dimensionless"
-    },
-    "n_e_0": {
-        "value": 21.93e19,
-        "unit": "1/m^3"
-    },
-    "n_e_ped": {
-        "value": 8.117e19,
-        "unit": "1/m^3"
-    },
-    "n_e_sep": {
-        "value": 1.623e19,
-        "unit": "1/m^3"
-    },
-    "alpha_n": {
-        "value":1.15,
-        "unit": "dimensionless"
-    },
-    "rho_ped_t": {
-        "value": 0.976,
-        "unit": "dimensionless"
-    },
-    "T_e_0": {
-        "value": 21.442,
-        "unit": "keV"
-    },
-    "T_e_ped": {
-        "value": 5.059,
-        "unit": "keV"
-    },
-    "T_e_sep": {
-        "value": 0.16,
-        "unit": "keV"
-    },
-    "alpha_t": {
-        "value": 1.905,
-        "unit": "dimensionless"
-    },
-    "t_beta": {
-        "value": 2.0,
-        "unit": "dimensionless"
-    },
-    "P_sep": {
-        "value": 150,
-        "unit": "MW"
-    },
-    "k_0": {
-        "value": 2000.0,
-        "unit": "dimensionless"
-    },
-    "gamma_sheath": {
-        "value": 7.0,
-        "unit": "dimensionless"
-    },
-    "eps_cool": {
-        "value": 25.0,
-        "unit": "eV"
-    },
-    "f_ion_t": {
-        "value": 0.01,
-        "unit": "keV"
-    },
-    "det_t": {
-        "value": 0.0015,
-        "unit": "keV"
-    },
-    "lfs_p_fraction": {
-        "value": 0.9,
-        "unit": "dimensionless"
-    },
-    "theta_outer_target": {
-        "value": 5.0,
-        "unit": "deg"
-    },
-    "theta_inner_target": {
-        "value": 5.0,
-        "unit": "deg"
-    },
-    "fw_lambda_q_near_omp": {
-        "value": 0.002,
-        "unit": "m"
-    },
-    "fw_lambda_q_far_omp": {
-        "value": 0.1,
-        "unit": "m"
-    },
-    "fw_lambda_q_near_imp": {
-        "value": 0.002,
-        "unit": "m"
-    },
-    "fw_lambda_q_far_imp": {
-        "value": 0.1,
-        "unit": "m"
-    },
+    "rho_ped_n": {"value": 0.94, "unit": "dimensionless"},
+    "n_e_0": {"value": 21.93e19, "unit": "1/m^3"},
+    "n_e_ped": {"value": 8.117e19, "unit": "1/m^3"},
+    "n_e_sep": {"value": 1.623e19, "unit": "1/m^3"},
+    "alpha_n": {"value": 1.15, "unit": "dimensionless"},
+    "rho_ped_t": {"value": 0.976, "unit": "dimensionless"},
+    "T_e_0": {"value": 21.442, "unit": "keV"},
+    "T_e_ped": {"value": 5.059, "unit": "keV"},
+    "T_e_sep": {"value": 0.16, "unit": "keV"},
+    "alpha_t": {"value": 1.905, "unit": "dimensionless"},
+    "t_beta": {"value": 2.0, "unit": "dimensionless"},
+    "P_sep": {"value": 150, "unit": "MW"},
+    "k_0": {"value": 2000.0, "unit": "dimensionless"},
+    "gamma_sheath": {"value": 7.0, "unit": "dimensionless"},
+    "eps_cool": {"value": 25.0, "unit": "eV"},
+    "f_ion_t": {"value": 0.01, "unit": "keV"},
+    "det_t": {"value": 0.0015, "unit": "keV"},
+    "lfs_p_fraction": {"value": 0.9, "unit": "dimensionless"},
+    "theta_outer_target": {"value": 5.0, "unit": "deg"},
+    "theta_inner_target": {"value": 5.0, "unit": "deg"},
+    "fw_lambda_q_near_omp": {"value": 0.002, "unit": "m"},
+    "fw_lambda_q_far_omp": {"value": 0.1, "unit": "m"},
+    "fw_lambda_q_near_imp": {"value": 0.002, "unit": "m"},
+    "fw_lambda_q_far_imp": {"value": 0.1, "unit": "m"},
 }
 
 # %%
 config = {
-            "f_imp_core" : {
-                "H": 1e-1,
-                "He": 1e-2,
-                "Xe": 1e-4,
-                "W": 1e-5
-            },
-            "f_imp_sol" : {
-                "H": 0,
-                "He": 0,
-                "Ar": 0.003,
-                "Xe": 0,
-                "W": 0
-            }
-        }
+    "f_imp_core": {"H": 1e-1, "He": 1e-2, "Xe": 1e-4, "W": 1e-5},
+    "f_imp_sol": {"H": 0, "He": 0, "Ar": 0.003, "Xe": 0, "W": 0},
+}
 
 
 # %% [markdown]
@@ -207,15 +124,15 @@ te_mp = Profiles.te_mp
 
 # %%
 source = RadiationSource(
-        eq=eq,
-        firstwall_shape=fw_shape,
-        params=params,
-        psi_n = psi_n,
-        ne_mp = ne_mp,
-        te_mp = te_mp,
-        core_impurities=f_impurities_core,
-        sol_impurities=f_impurities_sol,
-    )
+    eq=eq,
+    firstwall_shape=fw_shape,
+    params=params,
+    psi_n=psi_n,
+    ne_mp=ne_mp,
+    te_mp=te_mp,
+    core_impurities=f_impurities_core,
+    sol_impurities=f_impurities_sol,
+)
 source.analyse(firstwall_geom=fw_shape)
 source.rad_map(fw_shape)
 
@@ -224,13 +141,13 @@ source.rad_map(fw_shape)
 # Defining whether to run the radiation source only [MW/m^3]
 # or to calculate radiation loads on the first wall [MW/m^2].
 
+
 # %%
 def main(only_source=False):
-
     if only_source:
         source.plot()
         plt.show()
-    
+
     else:
         # Core and SOL source: coordinates and radiation values
         x_core = source.core_rad.x_tot
@@ -288,6 +205,7 @@ def main(only_source=False):
         # Calculate radiation of FW points
         solver = FirstWallRadiationSolver(source_func=func, firstwall_shape=fw_shape)
         solver.solve()
+
 
 if __name__ == "__main__":
     main()

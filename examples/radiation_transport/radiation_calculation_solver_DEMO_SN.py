@@ -29,24 +29,25 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 
-import bluemira.codes.process as process
 from bluemira.base.file import get_bluemira_path
+from bluemira.codes import process
 from bluemira.equilibria import Equilibrium
 from bluemira.geometry.coordinates import Coordinates
+from bluemira.radiation_transport.flux_surfaces_maker import (
+    analyse_first_wall_flux_surfaces,
+)
 from bluemira.radiation_transport.midplane_temperature_density import MidplaneProfiles
 from bluemira.radiation_transport.radiation_profile import (
-    RadiationSolver, 
-    linear_interpolator, 
+    RadiationSolver,
     interpolated_field_values,
+    linear_interpolator,
 )
 from bluemira.radiation_transport.radiation_tools import (
-    filtering_in_or_out, 
-    pfr_filter,
-    grid_interpolator,
     calculate_fw_rad_loads,
+    filtering_in_or_out,
+    grid_interpolator,
+    pfr_filter,
 )
-from bluemira.radiation_transport.flux_surfaces_maker import analyse_first_wall_flux_surfaces
-
 
 # %% [markdown]
 # # Double Null radiation
@@ -106,27 +107,18 @@ params = {
 
 # %%
 config = {
-            "f_imp_core" : {
-                "H": 0.7,
-                "He": 0.05,
-                "Xe": 0.25e-3,
-                "W": 0.1e-3
-            },
-            "f_imp_sol" : {
-                "H": 0,
-                "He": 0,
-                "Ar": 0.1e-2,
-                "Xe": 0,
-                "W": 0
-            }
-        }
+    "f_imp_core": {"H": 0.7, "He": 0.05, "Xe": 0.25e-3, "W": 0.1e-3},
+    "f_imp_sol": {"H": 0, "He": 0, "Ar": 0.1e-2, "Xe": 0, "W": 0},
+}
 
 # %% [markdown]
 #
 # Initialising the `FluxSurfaceMaker` and run it.
 
 # %%
-dx_omp, _, flux_surfaces, x_sep_omp, _ = analyse_first_wall_flux_surfaces(equilibrium=eq, first_wall=fw_shape, dx_mp=0.001)
+dx_omp, _, flux_surfaces, x_sep_omp, _ = analyse_first_wall_flux_surfaces(
+    equilibrium=eq, first_wall=fw_shape, dx_mp=0.001
+)
 
 
 # %% [markdown]
@@ -134,6 +126,7 @@ dx_omp, _, flux_surfaces, x_sep_omp, _ = analyse_first_wall_flux_surfaces(equili
 # Getting impurity data.
 
 # %%
+
 
 def get_impurity_data(impurities_list: list = ["H", "He"]):
     """
@@ -150,6 +143,7 @@ def get_impurity_data(impurities_list: list = ["H", "He"]):
         }
 
     return impurity_data
+
 
 # Get the core impurity fractions
 f_impurities_core = config["f_imp_core"]
@@ -171,19 +165,19 @@ te_mp = Profiles.te_mp
 
 # %%
 rad_solver = RadiationSolver(
-        eq=eq,
-        params=params,
-        flux_surfaces=flux_surfaces,
-        psi_n = psi_n,
-        ne_mp = ne_mp,
-        te_mp = te_mp,
-        impurity_content_core=f_impurities_core,
-        impurity_data_core=impurity_data_core,
-        impurity_content_sol=f_impurities_sol,
-        impurity_data_sol=impurity_data_sol,
-        x_sep_omp = x_sep_omp,
-        dx_omp = dx_omp,
-    )
+    eq=eq,
+    params=params,
+    flux_surfaces=flux_surfaces,
+    psi_n=psi_n,
+    ne_mp=ne_mp,
+    te_mp=te_mp,
+    impurity_content_core=f_impurities_core,
+    impurity_data_core=impurity_data_core,
+    impurity_content_sol=f_impurities_sol,
+    impurity_data_sol=impurity_data_sol,
+    x_sep_omp=x_sep_omp,
+    dx_omp=dx_omp,
+)
 rad_solver.analyse(firstwall_geom=fw_shape)
 rad_solver.rad_map(fw_shape)
 
@@ -192,13 +186,13 @@ rad_solver.rad_map(fw_shape)
 # Defining whether to run the radiation source only [MW/m^3]
 # or to calculate radiation loads on the first wall [MW/m^2].
 
+
 # %%
 def main(only_source=True):
-
     if only_source:
         rad_solver.plot()
         plt.show()
-    
+
     else:
         # Core and SOL source: coordinates and radiation values
         x_core = rad_solver.core_rad.x_tot
@@ -252,6 +246,7 @@ def main(only_source=True):
         func = grid_interpolator(x_sol, z_sol, rad_sol_grid)
         # Calculate radiation of FW points
         calculate_fw_rad_loads(rad_source=func, fw_shape=fw_shape)
+
 
 if __name__ == "__main__":
     main()
