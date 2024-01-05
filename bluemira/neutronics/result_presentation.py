@@ -429,30 +429,17 @@ def geometry_plotter(
     """
     # Assigning colours for plots
     cell_color_assignment = {
-        cells.tf_coil: "brown",
-        cells.plasma.inner1: "dimgrey",
-        cells.plasma.inner2: "grey",
-        cells.plasma.outer1: "darkgrey",
-        cells.plasma.outer2: "dimgrey",
-        cells.divertor.inner1: "grey",
-        cells.divertor.inner2: "dimgrey",
-        cells.outer_vessel: "white",
-        cells.inboard.vv[0]: "red",
-        cells.outboard.vv[1]: "orange",
-        cells.outboard.vv[2]: "yellow",
+        cells.tf_coil: "blue",
+        cells.plasma: "dimgrey",
+        cells.divertor: "red",
+        cells.inboard.vacuum_vessel[0]: "darkgrey",
     }
 
     mat_color_assignment = {
         cells.bore: "blue",
         cells.tf_coil: "brown",
-        cells.plasma.inner1: "white",
-        cells.plasma.inner2: "white",
-        cells.plasma.outer1: "white",
-        cells.plasma.outer2: "white",
-        cells.divertor.inner1: "white",
-        cells.divertor.inner2: "white",
-        cells.divertor.fw: "red",
-        cells.outer_vessel: "white",
+        cells.plasma: "pink",
+        cells.divertor: "red",
         cells.outer_container: "darkgrey",
     }
 
@@ -461,29 +448,22 @@ def geometry_plotter(
             mat_color_assignment[c] = color
 
     # first wall: red
-    color_cells("outboard", "fw", "red")
-    color_cells("inboard", "fw", "red")
+    # color_cells("outboard", "fw", "red")
+    color_cells("inboard", "first_wall", "red")
     # breeding zone: yellow
-    color_cells("outboard", "bz", "yellow")
-    color_cells("inboard", "bz", "yellow")
+    # color_cells("outboard", "bz", "yellow")
+    color_cells("inboard", "breeding_zone", "yellow")
     # manifold: green
-    color_cells("outboard", "mani", "green")
-    color_cells("inboard", "mani", "green")
+    # color_cells("outboard", "mani", "green")
+    color_cells("inboard", "manifold", "green")
     # vacuum vessel: grey
-    color_cells("outboard", "vv", "grey")
-    color_cells("inboard", "vv", "grey")
+    # color_cells("outboard", "vv", "grey")
+    color_cells("inboard", "vacuum_vessel", "grey")
     # divertor: cyan
-    color_cells("divertor", "regions", "cyan")
+    # color_cells("divertor", "regions", "cyan")
 
-    plot_width = 2 * (
-        plasma_geometry.cgs.major_r
-        + plasma_geometry.cgs.minor_r * plasma_geometry.cgs.elong
-        + tokamak_geometry.cgs.outb_fw_thick
-        + tokamak_geometry.cgs.outb_bz_thick
-        + tokamak_geometry.cgs.outb_mnfld_thick
-        + tokamak_geometry.cgs.outb_vv_thick
-        + 200.0  # margin
-    )
+    # TODO: Find better way...
+    plot_width = 4000
 
     plot_list = []
     for _, basis in enumerate(("xz", "xy", "yz")):

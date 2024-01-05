@@ -57,12 +57,10 @@ def filter_cells(
 
     cell_filter = openmc.CellFilter((
         cells.tf_coil,
-        *cells.plasma.get_cells(),
-        cells.divertor.fw,
-        cells.divertor.fw_sf,
+        cells.plasma,
         *cells.inboard.get_cells(),
-        *cells.outboard.get_cells(),
-        *cells.divertor.regions,
+        # *cells.outboard.get_cells(),
+        cells.divertor,
     ))
 
     mat_filter = openmc.MaterialFilter([getattr(material_lib, mat) for mat in mats])

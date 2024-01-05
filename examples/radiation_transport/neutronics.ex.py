@@ -26,6 +26,7 @@
 
 # %%
 from pathlib import Path
+from typing import Tuple
 
 import numpy as np
 
@@ -36,7 +37,7 @@ from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import TBRHeatingSimulation
 from bluemira.neutronics.params import (
     OpenMCSimulationRuntimeParameters,
-    TokamakOperationParametersBase,
+    PlasmaSourceParameters,
     get_preset_physical_properties,
 )
 
@@ -47,14 +48,16 @@ from bluemira.neutronics.params import (
 # and let OpenMC know where that directory is.
 
 # %%
-CROSS_SECTION_XML = str(Path("~/bluemira_openmc_data/cross_sections.xml").expanduser())
+CROSS_SECTION_XML = str(
+    Path("~/code/bluemira/bluemira_openmc_data/cross_sections.xml").expanduser()
+)
 # %% [markdown]
 # In this script we can also demonstrate openmc's ability to calculate the volume
 # stochastically (rather than analytically). Specifically, in this script we
 # toggle this parameter on/off using the following variable:
 
 # %%
-volume_calculation = True
+volume_calculation = False
 
 # %% [markdown]
 # For each of the three Tokamak designs:
@@ -80,14 +83,18 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
-    run_mode="fixed source",
+    run_mode="plot",
     openmc_write_summary=False,
     parametric_source=True,
     # only used if stochastic_volume_calculation is turned on.
     volume_calc_particles=int(4e8),
 )
 
-operation_variable = TokamakOperationParametersBase(
+source_parameters = PlasmaSourceParameters(
+    major_radius=9.0,
+    aspect_ratio=3.1,
+    elongation=1.65,
+    triangularity=0.333,
     reactor_power=1998e6,  # [W]
     temperature=raw_uc(15.4, "keV", "K"),
     peaking_factor=1.508,  # [dimensionless]
@@ -97,20 +104,94 @@ operation_variable = TokamakOperationParametersBase(
 
 # set up a DEMO-like reactor, and run OpenMC simualtion
 tbr_heat_sim = TBRHeatingSimulation(
-    runtime_variables,
-    operation_variable,
-    breeder_materials,
-    plasma_geometry,
-    tokamak_geometry,
+    runtime_variables, source_parameters, breeder_materials, tokamak_geometry
 )
 blanket_wire = make_polygon(Coordinates(np.load("blanket_face.npy")))
 divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
+
+fw_coordinates = Coordinates({
+    "x": [
+        9.94,
+        10.89,
+        11.90,
+        12.19,
+        12.03,
+        11.34,
+        9.69,
+        7.53,
+        6.38,
+        5.95,
+        5.93,
+        6.21,
+        6.84,
+        7.26,
+        7.90,
+        8.79,
+        9.94,
+    ],
+    "z": [
+        -5.27,
+        -3.57,
+        -1.62,
+        0,
+        1.57,
+        3.05,
+        4.57,
+        5.26,
+        3.95,
+        1.32,
+        -1.91,
+        -3.51,
+        -5.01,
+        -5.86,
+        -5.78,
+        -6.46,
+        -5.27,
+    ],
+})
+
+from dataclasses import dataclass
+
+
+@dataclass(frozen=True)
+class TRegion:
+    index: int
+    direction: np.ndarray
+
+
+BBDIV = TRegion(7, np.array([0, 0, 1]))
+IBDIV = TRegion(12, np.array([-1, 0, 0]))
+degrees = -30
+radians = np.rad2deg(degrees)
+OBDIV = TRegion(16, np.array([-np.cos(radians), 0, -np.sin(radians)]))
+
+
+import matplotlib.pyplot as plt
+
+f, ax = plt.subplots()
+ax.plot(*fw_coordinates.xz)
+ax.set_aspect("equal")
+for r in [BBDIV, IBDIV, OBDIV]:
+    ax.quiver(
+        fw_coordinates.x[r.index],
+        fw_coordinates.z[r.index],
+        r.direction[0],
+        r.direction[2],
+    )
+plt.show()
+
+
+@dataclass(frozen=True)
+class FWDeconstruction:
+    coordinates: Coordinates
+    tregions: Tuple[TRegion]
+
+
+fw_deconstruction = FWDeconstruction(fw_coordinates, (IBDIV, BBDIV, OBDIV))
+
 tbr_heat_sim.setup(
-    blanket_wire,
+    fw_deconstruction,
     divertor_wire,
-    new_major_radius=9.00,  # [m]
-    new_aspect_ratio=3.10344,  # [dimensionless]
-    new_elong=1.792,  # [dimensionless]
     plot_geometry=True,
 )
 
