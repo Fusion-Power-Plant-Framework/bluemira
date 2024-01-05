@@ -32,6 +32,7 @@ An example that shows how the Spherical Harmonic Approximation works
 # coilset current and position optimisation for spherical tokamaks.
 # For an example of how spherical_harmonic_approximation is used
 # please see, spherical_harmonic_approximation_basic_function_check.
+# please see, spherical_harmonic_approximation_basic_function_check.
 #
 # ## Premise:
 #
@@ -113,6 +114,8 @@ f, ax = plt.subplots()
 eq.plot(ax=ax)
 eq.coilset.plot(ax=ax)
 ax.set_xlim(np.min(eq.grid.x), np.max(eq.grid.z))
+eq.coilset.plot(ax=ax)
+ax.set_xlim(np.min(eq.grid.x), np.max(eq.grid.z))
 max_circ = patch.Circle((0, 0), max_bdry_r, ec="orange", fill=True, fc="orange")
 ax.add_patch(max_circ)
 plt.show()
@@ -129,7 +132,17 @@ total_psi = eq.psi()
 
 # Psi contribution from plasma
 plasma_psi = eq.plasma.psi(eq.grid.x, eq.grid.z)
+# Psi contribution from plasma
+plasma_psi = eq.plasma.psi(eq.grid.x, eq.grid.z)
 
+# Calculate psi contribution from the vacuum, i.e.,
+# from coils located outside of the sphere containing LCFS
+vacuum_psi = np.zeros(np.shape(eq.grid.x))
+for n in sh_coil_names:
+    vacuum_psi = np.sum([vacuum_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0)
+
+# Calculate psi contribution from coils not used in the SH approx
+non_sh_coil_cont = eq.coilset.psi(eq.grid.x, eq.grid.z) - vacuum_psi
 # Calculate psi contribution from the vacuum, i.e.,
 # from coils located outside of the sphere containing LCFS
 vacuum_psi = np.zeros(np.shape(eq.grid.x))
