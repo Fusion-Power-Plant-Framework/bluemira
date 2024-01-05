@@ -37,20 +37,18 @@ class TestBoundingBox:
 
 
 class TestHardBoundingBox:
-    ps = PolySpline(
-        {
-            "bottom": {"value": 0.509036},
-            "flat": {"value": 1},
-            "height": {"value": 10.1269},
-            "lower": {"value": 0.2},
-            "tilt": {"value": 19.6953},
-            "top": {"value": 0.46719},
-            "upper": {"value": 0.326209},
-            "x1": {"value": 5},
-            "x2": {"value": 11.8222},
-            "z2": {"value": -0.170942},
-        }
-    )
+    ps = PolySpline({
+        "bottom": {"value": 0.509036},
+        "flat": {"value": 1},
+        "height": {"value": 10.1269},
+        "lower": {"value": 0.2},
+        "tilt": {"value": 19.6953},
+        "top": {"value": 0.46719},
+        "upper": {"value": 0.326209},
+        "x1": {"value": 5},
+        "x2": {"value": 11.8222},
+        "z2": {"value": -0.170942},
+    })
 
     cut_box = BluemiraFace(
         make_polygon({"x": [0, 15, 15, 0], "z": [-7, -7, -5, -5], "y": 0}, closed=True)

@@ -166,9 +166,12 @@ class LoadCase(list):
             The type and axis of the load from ['Fx', 'Fy', 'Fz', 'Mx', 'My', 'Mz']
         """
         _check_load_type(load_type)
-        self.append(
-            {"type": "Node Load", "sub_type": load_type, "node_id": node_id, "Q": load}
-        )
+        self.append({
+            "type": "Node Load",
+            "sub_type": load_type,
+            "node_id": node_id,
+            "Q": load,
+        })
 
     def add_element_load(self, element_id: int, load: float, x: float, load_type: str):
         """
@@ -189,15 +192,13 @@ class LoadCase(list):
         x_clip = np.clip(x, 0, 1)
         if x_clip != x:
             bluemira_warn("x should be between 0 and 1.")
-        self.append(
-            {
-                "type": "Element Load",
-                "sub_type": load_type,
-                "element_id": element_id,
-                "Q": load,
-                "x": x,
-            }
-        )
+        self.append({
+            "type": "Element Load",
+            "sub_type": load_type,
+            "element_id": element_id,
+            "Q": load,
+            "x": x,
+        })
 
     def add_distributed_load(self, element_id: int, w: float, load_type: str):
         """
@@ -213,11 +214,9 @@ class LoadCase(list):
             The type and axis of the load (from ['Fx', 'Fy', 'Fz'])
         """
         _check_load_type(load_type)
-        self.append(
-            {
-                "type": "Distributed Load",
-                "sub_type": load_type,
-                "element_id": element_id,
-                "w": w,
-            }
-        )
+        self.append({
+            "type": "Distributed Load",
+            "sub_type": load_type,
+            "element_id": element_id,
+            "w": w,
+        })

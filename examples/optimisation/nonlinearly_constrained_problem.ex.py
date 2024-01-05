@@ -215,8 +215,8 @@ class NonLinearConstraintOP(OptimisationProblem):
             },
         ]
 
-    def f_constraint(
-        self,  # noqa: PLR6301
+    def f_constraint(  # noqa: PLR6301
+        self,
         x: np.ndarray,
         a: float,
         b: float,

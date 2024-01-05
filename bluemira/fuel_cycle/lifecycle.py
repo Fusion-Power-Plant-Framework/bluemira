@@ -135,12 +135,10 @@ class LifeCycle:
             count = i
         if ndivch_in1blk == 0:
             count = 0
-        phases.extend(
-            (
-                [blk1l % divl, "Phase P1." + str(count + 2)],
-                [m_long, "Phase M1." + str(count + 2)],
-            )
-        )
+        phases.extend((
+            [blk1l % divl, "Phase P1." + str(count + 2)],
+            [m_long, "Phase M1." + str(count + 2)],
+        ))
         for i in range(ndivch_in2blk):
             p_str = "Phase P2." + str(i + 1)
             m_str = "Phase M2." + str(i + 1)

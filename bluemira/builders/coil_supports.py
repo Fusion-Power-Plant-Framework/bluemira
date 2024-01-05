@@ -891,18 +891,20 @@ class OISBuilder(Builder):
             )
 
             # First we make the full OIS
-            path = make_polygon(
-                [ois_profile_1.center_of_mass, ois_profile_2.center_of_mass]
-            )
+            path = make_polygon([
+                ois_profile_1.center_of_mass,
+                ois_profile_2.center_of_mass,
+            ])
             ois_right = sweep_shape([ois_profile_1, ois_profile_2], path)
 
             # Then we "chop" it in half, but without the boolean_cut operation
             # This is because I cba to write a project_shape function...
             ois_profile_mid = slice_shape(ois_right, half_plane)[0]
 
-            path = make_polygon(
-                [ois_profile_1.center_of_mass, ois_profile_mid.center_of_mass]
-            )
+            path = make_polygon([
+                ois_profile_1.center_of_mass,
+                ois_profile_mid.center_of_mass,
+            ])
             ois_right = sweep_shape([ois_profile_1, ois_profile_mid], path)
             ois_left = mirror_shape(ois_right, base=(0, 0, 0), direction=(0, 1, 0))
 

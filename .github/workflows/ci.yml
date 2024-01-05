@@ -94,14 +94,8 @@ jobs:
 
     - name: Check Code Quality
       shell: bash -l {0}
-      env:
-         COPYRIGHT: ${{ github.event_name == 'pull_request' && 'PR' || '' }}
       run: |
-        SKIP=update_copyright pre-commit run --all-files
-        if [ $COPYRIGHT ]; then
-           git fetch origin $GITHUB_REF $GITHUB_BASE_REF
-           pre-commit run update_copyright --from-ref origin/$GITHUB_BASE_REF --to-ref FETCH_HEAD
-        fi
+        pre-commit run --all-files
 
     - name: Build Documentation bluemira
       shell: bash -l {0}

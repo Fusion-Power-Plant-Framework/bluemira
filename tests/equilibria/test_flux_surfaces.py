@@ -153,9 +153,11 @@ class TestFieldLine:
         with pytest.raises(EquilibriaError):
             FieldLineTracer(
                 self.eq,
-                Coordinates(
-                    {"x": [6, 3, 3, 4, 5], "y": [0, 2, 0, 4, 0], "z": [1, 2, 3, 4, 5]}
-                ),
+                Coordinates({
+                    "x": [6, 3, 3, 4, 5],
+                    "y": [0, 2, 0, 4, 0],
+                    "z": [1, 2, 3, 4, 5],
+                }),
             )
 
     def test_connection_length(self):
@@ -169,13 +171,11 @@ class TestFieldLine:
         """
         xmin, xmax = self.eq.grid.x_min, self.eq.grid.x_max
         zmin, zmax = self.eq.grid.z_min, self.eq.grid.z_max
-        coords = Coordinates(
-            {
-                "x": [xmin, xmax, xmax, xmin, xmin],
-                "y": 0,
-                "z": [zmin, zmin, zmax, zmax, zmin],
-            }
-        )
+        coords = Coordinates({
+            "x": [xmin, xmax, xmax, xmin, xmin],
+            "y": 0,
+            "z": [zmin, zmin, zmax, zmax, zmin],
+        })
         flt = FieldLineTracer(self.eq, coords)
         field_line = flt.trace_field_line(13, 0, n_points=1000)
         assert np.isclose(
@@ -187,13 +187,11 @@ class TestFieldLine:
         self._check_endpoint(field_line, coords)
 
     def test_connection_length_coordinates(self):
-        coords = Coordinates(
-            {
-                "x": [self.eq.grid.x_min, 9, 12, 13, 13, 12.5, 4, self.eq.grid.x_min],
-                "y": 0,
-                "z": [self.eq.grid.z_min, -7, -7, -6, 6, 5, 7, self.eq.grid.z_min],
-            }
-        )
+        coords = Coordinates({
+            "x": [self.eq.grid.x_min, 9, 12, 13, 13, 12.5, 4, self.eq.grid.x_min],
+            "y": 0,
+            "z": [self.eq.grid.z_min, -7, -7, -6, 6, 5, 7, self.eq.grid.z_min],
+        })
         flt = FieldLineTracer(self.eq, coords)
         field_line = flt.trace_field_line(12.5, 0, n_points=1000, forward=False)
         self._check_endpoint(field_line, coords)

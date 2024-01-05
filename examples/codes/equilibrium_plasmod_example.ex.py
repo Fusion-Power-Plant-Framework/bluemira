@@ -82,16 +82,14 @@ q_95 = 3.25  # 95th percentile flux surface safety factor
 # Setup the Plasma shape parameterisation variables. A Johner parameterisation is used.
 
 # %%
-johner_parameterisation = JohnerLCFS(
-    {
-        "r_0": {"value": R_0},
-        "a": {"value": a_minor},
-        "kappa_u": {"value": 1.6},
-        "kappa_l": {"value": 1.75},
-        "delta_u": {"value": 0.33},
-        "delta_l": {"value": 0.45},
-    }
-)
+johner_parameterisation = JohnerLCFS({
+    "r_0": {"value": R_0},
+    "a": {"value": a_minor},
+    "kappa_u": {"value": 1.6},
+    "kappa_l": {"value": 1.75},
+    "delta_u": {"value": 0.33},
+    "delta_l": {"value": 0.45},
+})
 
 # %% [markdown]
 # Initialise the transport solver (in this case PLASMOD is used)

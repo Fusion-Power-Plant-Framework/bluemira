@@ -41,7 +41,7 @@ class PLASMODVerificationRawData:
     # Convert to x = sqrt()
     rho = np.sqrt(psi / psi[-1])
     # Flip sign of psi so that peak is at centre
-    psi = -(psi - np.max(psi))  # noqa: PIE794
+    psi = -(psi - np.max(psi))
     psi_ax = psi[0]
     psi_b = psi[-1]
 

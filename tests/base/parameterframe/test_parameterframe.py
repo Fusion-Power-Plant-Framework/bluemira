@@ -200,9 +200,10 @@ class TestParameterFrame:
             age: Parameter[int]
             weight: Parameter[float]
 
-        frame2 = OtherFrame.from_dict(
-            {**FRAME_DATA, "weight": {"value": 58.2, "unit": "kg"}}
-        )
+        frame2 = OtherFrame.from_dict({
+            **FRAME_DATA,
+            "weight": {"value": 58.2, "unit": "kg"},
+        })
 
         assert self.frame != frame2
 
@@ -237,17 +238,15 @@ class TestParameterFrame:
 
     @pytest.mark.parametrize("func", ["update_from_dict", "update"])
     def test_update_from_dict(self, func):
-        getattr(self.frame, func)(
-            {
-                "height": {
-                    "name": "height",
-                    "value": 160.4,
-                    "unit": "m",
-                    "source": "a test",
-                },
-                "age": {"value": 20, "unit": "years"},
-            }
-        )
+        getattr(self.frame, func)({
+            "height": {
+                "name": "height",
+                "value": 160.4,
+                "unit": "m",
+                "source": "a test",
+            },
+            "age": {"value": 20, "unit": "years"},
+        })
 
         assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
         assert self.frame.height.source == "a test"
@@ -256,16 +255,14 @@ class TestParameterFrame:
 
     @pytest.mark.parametrize("func", ["update_from_frame", "update"])
     def test_update_from_frame(self, func):
-        update_frame = BasicFrame.from_dict(
-            {
-                "height": {
-                    "value": 160.4,
-                    "unit": "m",
-                    "source": "a test",
-                },
-                "age": {"value": 20, "unit": "years"},
-            }
-        )
+        update_frame = BasicFrame.from_dict({
+            "height": {
+                "value": 160.4,
+                "unit": "m",
+                "source": "a test",
+            },
+            "age": {"value": 20, "unit": "years"},
+        })
         getattr(self.frame, func)(update_frame)
 
         assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
@@ -275,16 +272,14 @@ class TestParameterFrame:
 
     @pytest.mark.parametrize("func", ["update_from_frame", "update"])
     def test_update_from_frame_with_None(self, func):
-        update_frame = BasicFrame.from_dict(
-            {
-                "height": {
-                    "value": 160.4,
-                    "unit": "m",
-                    "source": "a test",
-                },
-                "age": {"value": None, "unit": "years"},
-            }
-        )
+        update_frame = BasicFrame.from_dict({
+            "height": {
+                "value": 160.4,
+                "unit": "m",
+                "source": "a test",
+            },
+            "age": {"value": None, "unit": "years"},
+        })
         getattr(self.frame, func)(update_frame)
 
         assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
@@ -294,17 +289,15 @@ class TestParameterFrame:
 
     @pytest.mark.parametrize("func", ["update_from_dict", "update"])
     def test_update_from_dict_with_None(self, func):
-        getattr(self.frame, func)(
-            {
-                "height": {
-                    "name": "height",
-                    "value": 160.4,
-                    "unit": "m",
-                    "source": "a test",
-                },
-                "age": {"value": None, "unit": "years"},
-            }
-        )
+        getattr(self.frame, func)({
+            "height": {
+                "name": "height",
+                "value": 160.4,
+                "unit": "m",
+                "source": "a test",
+            },
+            "age": {"value": None, "unit": "years"},
+        })
 
         assert self.frame.height.value == pytest.approx(160.4, rel=0, abs=EPS)
         assert self.frame.height.source == "a test"

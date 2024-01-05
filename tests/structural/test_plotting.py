@@ -31,9 +31,10 @@ class TestPlotting:
         l_loop = Coordinates([[2.5, 1.5, 1.5], [0, 0, 0], [0, 0, 2]])
         u_loop = Coordinates([[0, 0, 1, 1], [0, 0, 0, 0], [2, 0, 0, 2]])
         u_loop.translate((3, 0, 0))
-        e_loop = Coordinates(
-            {"x": [1, 0, 0, 1, 0, 0, 1], "z": [2, 2, 1.005, 1.005, 1, 0, 0]}
-        )
+        e_loop = Coordinates({
+            "x": [1, 0, 0, 1, 0, 0, 1],
+            "z": [2, 2, 1.005, 1.005, 1, 0, 0],
+        })
         e_loop.translate((4.5, 0, 0))
 
         p_loop = Coordinates({"x": [0, 0, 0, 1, 1, 0.01], "z": [0, 1, 2, 2, 1, 1]})
@@ -41,9 +42,10 @@ class TestPlotting:
         r_loop = Coordinates({"x": [0, 0, 0, 1, 1, 0.01, 1], "z": [0, 1, 2, 2, 1, 1, 0]})
         r_loop.translate((7.5, 0, 0))
 
-        i_loop = Coordinates(
-            {"x": [0, 0.49, 0.49, 0, 1, 0.51, 0.51, 1], "z": [0, 0, 2, 2, 2, 2, 0, 0]}
-        )
+        i_loop = Coordinates({
+            "x": [0, 0.49, 0.49, 0, 1, 0.51, 0.51, 1],
+            "z": [0, 0, 2, 2, 2, 2, 0, 0],
+        })
         i_loop.translate((9, 0, 0))
         n_loop = Coordinates({"x": [0, 0, 1, 1], "z": [0, 2, 0, 2]})
         n_loop.translate((10.5, 0, 0))

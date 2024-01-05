@@ -1166,7 +1166,7 @@ def _nb_clip(val, a_min, a_max):
     """
     Numba 1-D clip
     """
-    return a_min if val < a_min else a_max if val > a_max else val
+    return a_min if val < a_min else min(val, a_max)
 
 
 @nb.jit(nopython=True, cache=True)
@@ -1207,13 +1207,11 @@ def _signed_distance_2D(point: np.ndarray, polygon: np.ndarray) -> float:
         if d_new < d:
             d = d_new
 
-        cond = np.array(
-            [
-                point[1] >= polygon[i][1],
-                point[1] < polygon[j][1],
-                e[0] * w[1] > e[1] * w[0],
-            ]
-        )
+        cond = np.array([
+            point[1] >= polygon[i][1],
+            point[1] < polygon[j][1],
+            e[0] * w[1] > e[1] * w[0],
+        ])
         if np.all(cond) or np.all(~cond):
             sign = -sign
 
