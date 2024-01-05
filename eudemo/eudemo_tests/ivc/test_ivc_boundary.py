@@ -18,9 +18,10 @@ from eudemo.ivc import IVCBoundaryDesigner
 
 
 class TestIVCBoundaryDesigner:
-    picture_frame: ClassVar = PictureFrame(
-        {"ro": {"value": 6}, "ri": {"value": 3}}
-    ).create_shape()
+    picture_frame: ClassVar = PictureFrame({
+        "ro": {"value": 6},
+        "ri": {"value": 3},
+    }).create_shape()
     params: ClassVar = {
         "tk_bb_ib": {"value": 0.8, "unit": "m"},
         "tk_bb_ob": {"value": 1.1, "unit": "m"},

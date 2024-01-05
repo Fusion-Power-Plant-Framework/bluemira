@@ -189,13 +189,11 @@ class PFCoilPictureFrame(Designer):
         x_out = self.coil.x + self.coil.dx
         z_up = self.coil.z + self.coil.dz
         z_down = self.coil.z - self.coil.dz
-        return PictureFrame(
-            {
-                "x1": {"value": x_in, "fixed": True},
-                "x2": {"value": x_out, "fixed": True},
-                "z1": {"value": z_up, "fixed": True},
-                "z2": {"value": z_down, "fixed": True},
-                "ri": {"value": self.params.r_corner.value, "fixed": True},
-                "ro": {"value": self.params.r_corner.value, "fixed": True},
-            }
-        ).create_shape()
+        return PictureFrame({
+            "x1": {"value": x_in, "fixed": True},
+            "x2": {"value": x_out, "fixed": True},
+            "z1": {"value": z_up, "fixed": True},
+            "z2": {"value": z_down, "fixed": True},
+            "ri": {"value": self.params.r_corner.value, "fixed": True},
+            "ro": {"value": self.params.r_corner.value, "fixed": True},
+        }).create_shape()

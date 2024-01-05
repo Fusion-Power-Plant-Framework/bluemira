@@ -21,15 +21,13 @@ def cut_wall_below_x_point(shape: BluemiraWire, x_point_z: float) -> BluemiraWir
     # coordinate, then perform a boolean cut to remove that portion
     # of the wall's shape.
     bounding_box = shape.bounding_box
-    cut_box_points = np.array(
-        [
-            [bounding_box.x_min, 0, bounding_box.z_min],
-            [bounding_box.x_min, 0, x_point_z],
-            [bounding_box.x_max, 0, x_point_z],
-            [bounding_box.x_max, 0, bounding_box.z_min],
-            [bounding_box.x_min, 0, bounding_box.z_min],
-        ]
-    )
+    cut_box_points = np.array([
+        [bounding_box.x_min, 0, bounding_box.z_min],
+        [bounding_box.x_min, 0, x_point_z],
+        [bounding_box.x_max, 0, x_point_z],
+        [bounding_box.x_max, 0, bounding_box.z_min],
+        [bounding_box.x_min, 0, bounding_box.z_min],
+    ])
     cut_zone = make_polygon(cut_box_points, label="_shape_cut_exclusion", closed=True)
     # For a single-null, we expect three 'pieces' from the cut: the
     # upper wall shape and the two separatrix legs

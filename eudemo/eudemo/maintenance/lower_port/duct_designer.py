@@ -269,9 +269,10 @@ class LowerPortKOZDesigner(Designer):
 
         straight_duct_xz = BluemiraFace(straight_duct_boundary)
 
-        duct_inner_xz: BluemiraFace = boolean_fuse(
-            [angled_duct_top_xz, straight_duct_xz]
-        )
+        duct_inner_xz: BluemiraFace = boolean_fuse([
+            angled_duct_top_xz,
+            straight_duct_xz,
+        ])
         duct_inner_boundary = duct_inner_xz.boundary[0]
 
         duct_outer_boundary = offset_wire(duct_inner_boundary, self.wall_tk)
@@ -414,9 +415,11 @@ class LowerPortKOZDesigner(Designer):
         a_xz_point: Tuple,
         b_xz_point: Tuple,
     ) -> BluemiraWire:
-        return make_polygon(
-            [[a_xz_point[0], b_xz_point[0]], [0] * 2, [a_xz_point[1], b_xz_point[1]]]
-        )
+        return make_polygon([
+            [a_xz_point[0], b_xz_point[0]],
+            [0] * 2,
+            [a_xz_point[1], b_xz_point[1]],
+        ])
 
     @staticmethod
     def _intersection_points(

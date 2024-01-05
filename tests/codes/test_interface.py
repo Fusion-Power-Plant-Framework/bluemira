@@ -46,20 +46,16 @@ class Params(MappedParameterFrame):
 
 class TestCodesSolver:
     def test_modify_mappings_updates_send_recv_values_of_params(self):
-        params = Params.from_dict(
-            {
-                "param1": {"value": 0.1, "unit": "m"},
-                "param2": {"value": 5, "unit": "dimensionless"},
-            }
-        )
+        params = Params.from_dict({
+            "param1": {"value": 0.1, "unit": "m"},
+            "param2": {"value": 5, "unit": "dimensionless"},
+        })
         solver = NoOpSolver(params)
 
-        solver.modify_mappings(
-            {
-                "param1": {"recv": True, "send": False},
-                "param2": {"recv": False, "send": True},
-            }
-        )
+        solver.modify_mappings({
+            "param1": {"recv": True, "send": False},
+            "param2": {"recv": False, "send": True},
+        })
 
         assert solver.params.mappings["param1"].send is False
         assert solver.params.mappings["param1"].recv is True

@@ -850,7 +850,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             parameterisation wire
 
         """
-        offset_x, offset_z = super()._label_function(ax, shape)
+        _offset_x, _offset_z = super()._label_function(ax, shape)
 
 
 @dataclass
@@ -1114,7 +1114,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
             parameterisation wire
 
         """
-        offset_x, offset_z = super()._label_function(ax, shape)
+        _offset_x, _offset_z = super()._label_function(ax, shape)
 
 
 @dataclass
@@ -1416,7 +1416,7 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             parameterisation wire
 
         """
-        offset_x, offset_z = super()._label_function(ax, shape)
+        _offset_x, _offset_z = super()._label_function(ax, shape)
 
 
 class PictureFrameTools:
@@ -1906,13 +1906,11 @@ class PictureFrame(
 
     """
 
-    __slots__ = tuple(
-        [
-            f"{leg}{var}"
-            for leg in ["inner", "upper", "lower", "outer"]
-            for var in ["", "_vars"]
-        ]
-    )
+    __slots__ = tuple([
+        f"{leg}{var}"
+        for leg in ["inner", "upper", "lower", "outer"]
+        for var in ["", "_vars"]
+    ])
 
     def __init__(
         self,

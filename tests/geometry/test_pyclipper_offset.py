@@ -89,9 +89,11 @@ class TestClipperOffset:
 
     @pytest.mark.parametrize("method", options)
     def test_non_planar_polygon_raises_error(self, method):
-        coordinates = Coordinates(
-            {"x": [0, 1, 2, 0], "y": [0, 1, -1, 0], "z": [1, 0, 1, 0]}
-        )
+        coordinates = Coordinates({
+            "x": [0, 1, 2, 0],
+            "y": [0, 1, -1, 0],
+            "z": [1, 0, 1, 0],
+        })
         with pytest.raises(GeometryError):
             offset_clipper(coordinates, 1, method=method)
 

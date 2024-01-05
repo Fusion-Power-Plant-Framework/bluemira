@@ -31,15 +31,13 @@ def cut_wire_below_z(wire: BluemiraWire, proportion: float) -> BluemiraWire:
     """Cut a wire below z that is 'proportion' of the height of the wire."""
     bbox = wire.bounding_box
     z_cut_coord = proportion * (bbox.z_max - bbox.z_min) + bbox.z_min
-    cutting_box = np.array(
-        [
-            [bbox.x_min - 1, 0, bbox.z_min - 1],
-            [bbox.x_min - 1, 0, z_cut_coord],
-            [bbox.x_max + 1, 0, z_cut_coord],
-            [bbox.x_max + 1, 0, bbox.z_min - 1],
-            [bbox.x_min - 1, 0, bbox.z_min - 1],
-        ]
-    )
+    cutting_box = np.array([
+        [bbox.x_min - 1, 0, bbox.z_min - 1],
+        [bbox.x_min - 1, 0, z_cut_coord],
+        [bbox.x_max + 1, 0, z_cut_coord],
+        [bbox.x_max + 1, 0, bbox.z_min - 1],
+        [bbox.x_min - 1, 0, bbox.z_min - 1],
+    ])
     pieces = boolean_cut(wire, [make_polygon(cutting_box, closed=True)])
     return pieces[np.argmax([p.center_of_mass[2] for p in pieces])]
 

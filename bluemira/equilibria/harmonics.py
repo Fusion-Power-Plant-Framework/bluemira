@@ -84,7 +84,7 @@ def coil_harmonic_amplitude_matrix(
     # [number of degrees, number of coils]
     currents2harmonics = np.zeros([max_degree, np.size(r_f)])
     # First 'harmonic' is constant (this line avoids Nan issues)
-    currents2harmonics[0, :] = 1  #
+    currents2harmonics[0, :] = 1
 
     # SH coefficients from function of the current distribution
     # outside of the sphere containing the LCFS
@@ -251,22 +251,18 @@ def collocation_points(
     if point_type in {PointType.ARC_PLUS_EXTREMA, PointType.RANDOM_PLUS_EXTREMA}:
         # Extrema
         d = 0.1
-        extrema_x = np.array(
-            [
-                np.amin(x_bdry) + d,
-                np.amax(x_bdry) - d,
-                x_bdry[np.argmax(z_bdry)],
-                x_bdry[np.argmin(z_bdry)],
-            ]
-        )
-        extrema_z = np.array(
-            [
-                0,
-                0,
-                np.amax(z_bdry) - d,
-                np.amin(z_bdry) + d,
-            ]
-        )
+        extrema_x = np.array([
+            np.amin(x_bdry) + d,
+            np.amax(x_bdry) - d,
+            x_bdry[np.argmax(z_bdry)],
+            x_bdry[np.argmin(z_bdry)],
+        ])
+        extrema_z = np.array([
+            0,
+            0,
+            np.amax(z_bdry) - d,
+            np.amin(z_bdry) + d,
+        ])
 
         # Equispaced arc + extrema
         collocation_x = np.concatenate([collocation_x, extrema_x])
@@ -317,7 +313,7 @@ def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> float:
     area2 = get_area_2d(coords2.x, coords2.z)
 
     # Find intersections of the LCFSs
-    xcross, zcross = get_intersect(coords1.xz, coords2.xz)
+    xcross, _zcross = get_intersect(coords1.xz, coords2.xz)
 
     # Check there are an even number of intersections
     if np.mod(len(xcross), 2) != 0:
@@ -587,7 +583,7 @@ def spherical_harmonic_approximation(
         )
 
         # Calculate necessary coil currents
-        currents, residual, rank, s = np.linalg.lstsq(
+        currents, _residual, _rank, _s = np.linalg.lstsq(
             currents2harmonics, psi_harmonic_amplitudes[:degree], rcond=None
         )
 

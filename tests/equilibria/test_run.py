@@ -37,19 +37,17 @@ class TestSnapshot:
 
 class TestPulsedCoilSetDesign:
     def setup_method(self):
-        self.params = PulsedCoilsetDesignFrame.from_dict(
-            {
-                "A": {"value": 1, "unit": ""},
-                "B_premag_stray_max": {"value": 2, "unit": ""},
-                "C_Ejima": {"value": 3, "unit": ""},
-                "I_p": {"value": 4, "unit": ""},
-                "l_i": {"value": 5, "unit": ""},
-                "R_0": {"value": 6, "unit": ""},
-                "tau_flattop": {"value": 7, "unit": ""},
-                "tk_sol_ib": {"value": 8, "unit": ""},
-                "v_burn": {"value": 9, "unit": ""},
-            }
-        )
+        self.params = PulsedCoilsetDesignFrame.from_dict({
+            "A": {"value": 1, "unit": ""},
+            "B_premag_stray_max": {"value": 2, "unit": ""},
+            "C_Ejima": {"value": 3, "unit": ""},
+            "I_p": {"value": 4, "unit": ""},
+            "l_i": {"value": 5, "unit": ""},
+            "R_0": {"value": 6, "unit": ""},
+            "tau_flattop": {"value": 7, "unit": ""},
+            "tk_sol_ib": {"value": 8, "unit": ""},
+            "v_burn": {"value": 9, "unit": ""},
+        })
 
     class MyPulsedCoilset(PulsedCoilsetDesign):  # noqa: D106
         def optimise(self):

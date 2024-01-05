@@ -189,11 +189,11 @@ class TFCoilDesigner(Designer[GeometryParameterisation]):
     ):
         super().__init__(params, build_config)
 
-        self.parameterisation_cls: Type[
-            GeometryParameterisation
-        ] = get_class_from_module(
-            self.build_config["param_class"],
-            default_module="bluemira.geometry.parameterisations",
+        self.parameterisation_cls: Type[GeometryParameterisation] = (
+            get_class_from_module(
+                self.build_config["param_class"],
+                default_module="bluemira.geometry.parameterisations",
+            )
         )
 
         self.variables_map = self.build_config.get("variables_map", {})
@@ -616,12 +616,14 @@ class TFCoilBuilder(Builder):
         """
         Casing x-y
         """
-        cas_inner_face = BluemiraFace(
-            [ib_cas_wire, deepcopy(ins_inner_face.boundary[0])]
-        )
-        cas_outer_face = BluemiraFace(
-            [ob_cas_wire, deepcopy(ins_outer_face.boundary[0])]
-        )
+        cas_inner_face = BluemiraFace([
+            ib_cas_wire,
+            deepcopy(ins_inner_face.boundary[0]),
+        ])
+        cas_outer_face = BluemiraFace([
+            ob_cas_wire,
+            deepcopy(ins_outer_face.boundary[0]),
+        ])
 
         ib_cas_comp = PhysicalComponent(self.INB, cas_inner_face)
         ob_cas_comp = PhysicalComponent(self.OUTB, cas_outer_face)
@@ -722,9 +724,11 @@ class TFCoilBuilder(Builder):
         face = BluemiraFace([ins_outer, self.wp_cross_section])
 
         outer_face = deepcopy(face)
-        outer_face.translate(
-            (self.centreline.bounding_box.x_max - outer_face.center_of_mass[0], 0, 0)
-        )
+        outer_face.translate((
+            self.centreline.bounding_box.x_max - outer_face.center_of_mass[0],
+            0,
+            0,
+        ))
         return face, outer_face
 
     def _make_cas_xsec(self) -> Tuple[float, BluemiraWire, BluemiraWire]:
@@ -881,9 +885,11 @@ class TFCoilBuilder(Builder):
         x1, z1 = start_point.x[0], start_point.z[0]
         x2, z2 = end_point.x[0], end_point.z[0]
 
-        joiner_wire = make_polygon(
-            {"x": [x2, x_inboard, x_inboard, x1], "y": 0, "z": [z2, z2, z1, z1]}
-        )
+        joiner_wire = make_polygon({
+            "x": [x2, x_inboard, x_inboard, x1],
+            "y": 0,
+            "z": [z2, z2, z1, z1],
+        })
 
         # Make the final casing xz face
         outer_wire = BluemiraWire([outboard_outer_wire, joiner_wire])

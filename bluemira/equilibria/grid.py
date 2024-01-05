@@ -116,14 +116,12 @@ class Grid:
             [x_min, x_max, x_max, x_min, x_min],  # Grid corners
             [z_min, z_min, z_max, z_max, z_min],
         ]
-        self.edges = np.concatenate(
-            [
-                [(x, 0) for x in range(nx)],  # Grid edges
-                [(x, nz - 1) for x in range(nx)],
-                [(0, z) for z in range(nz)],
-                [(nx - 1, z) for z in range(nz)],
-            ]
-        )
+        self.edges = np.concatenate([
+            [(x, 0) for x in range(nx)],  # Grid edges
+            [(x, nz - 1) for x in range(nx)],
+            [(0, z) for z in range(nz)],
+            [(nx - 1, z) for z in range(nz)],
+        ])
 
     @classmethod
     def from_eqdict(cls, e):
@@ -206,14 +204,12 @@ class Grid:
         """
         if z is None:
             x, z = x
-        return np.abs(
-            [
-                x - self.x_min,
-                x - self.x_max,
-                z - self.z_min,
-                z - self.z_max,
-            ]
-        )
+        return np.abs([
+            x - self.x_min,
+            x - self.x_max,
+            z - self.z_min,
+            z - self.z_max,
+        ])
 
     def plot(self, ax=None, **kwargs):
         """

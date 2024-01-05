@@ -58,14 +58,12 @@ B_0 = 5  # [T]
 # Let's define a boundary shape for the fixed boundary equilibrium
 
 # %%
-parameterisation = KuiroukidisLCFS(
-    {
-        "kappa_u": {"value": 1.7},
-        "kappa_l": {"value": 1.8},
-        "delta_u": {"value": 0.33},
-        "delta_l": {"value": 0.4},
-    }
-)
+parameterisation = KuiroukidisLCFS({
+    "kappa_u": {"value": 1.7},
+    "kappa_l": {"value": 1.8},
+    "delta_u": {"value": 0.33},
+    "delta_l": {"value": 0.4},
+})
 
 lcfs_shape = parameterisation.create_shape("LCFS", n_points=100)
 lcfs_face = BluemiraFace(lcfs_shape)

@@ -488,7 +488,7 @@ def find_flux_surfs(
     # NOTE: This may all fall over for multiple psi_norm islands with overlaps
     # on the grid edges...
     o_points, x_points = _parse_OXp(x, z, psi, o_points, x_points)
-    xo, zo, psio = o_points[0]
+    _xo, _zo, psio = o_points[0]
     __, __, psix = x_points[0]
     psinormed = psio - psinorm * (psio - psix)
     return get_contours(x, z, psi, psinormed)
@@ -751,9 +751,10 @@ def find_LCFS_separatrix(
 
 
 def _extract_leg(flux_line, x_cut, z_cut, delta_x, o_point_z):
-    radial_line = Coordinates(
-        {"x": [x_cut - delta_x, x_cut + delta_x], "z": [z_cut, z_cut]}
-    )
+    radial_line = Coordinates({
+        "x": [x_cut - delta_x, x_cut + delta_x],
+        "z": [z_cut, z_cut],
+    })
     arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
     arg_inters.sort()
     # Lower null vs upper null

@@ -20,14 +20,12 @@ from bluemira.display.error import DisplayError
 from bluemira.geometry import face, placement, tools
 from bluemira.utilities.plot_tools import Plot3D
 
-SQUARE_POINTS = np.array(
-    [
-        (0.0, 0.0, 0.0),
-        (1.0, 0.0, 0.0),
-        (1.0, 0.0, 1.0),
-        (0.0, 0.0, 1.0),
-    ]
-)
+SQUARE_POINTS = np.array([
+    (0.0, 0.0, 0.0),
+    (1.0, 0.0, 0.0),
+    (1.0, 0.0, 1.0),
+    (0.0, 0.0, 1.0),
+])
 
 
 class TestPlotOptions:

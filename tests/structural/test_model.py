@@ -20,9 +20,12 @@ from bluemira.structural.model import FiniteElementModel, check_matrix_condition
 def test_illconditioned():
     # http://www.ti3.tu-harburg.de/paper/rump/NiRuOi11.pdf
     k1 = np.array([[1, -6, 7, -9], [1, -5, 0, 0], [0, 1, -5, 0], [0, 0, 1, -5]])
-    k2 = np.array(
-        [[17, -864, 716, -799], [1, -50, 0, 0], [0, 1, -50, 0], [0, 0, 1, -50]]
-    )
+    k2 = np.array([
+        [17, -864, 716, -799],
+        [1, -50, 0, 0],
+        [0, 1, -50, 0],
+        [0, 0, 1, -50],
+    ])
     orange = ANSI_COLOR["orange"]
     for k, digits in [
         [k1, 3],
@@ -120,14 +123,12 @@ class TestFEModel:
 
         k1 = treat_matrix(k[0])
 
-        k1a = (e_mat * i_xs / length**3) * np.array(
-            [
-                [12, 6 * length, -12, 6 * length],
-                [6 * length, 4 * length**2, -6 * length, 2 * length**2],
-                [-12, -6 * length, 12, -6 * length],
-                [6 * length, 2 * length**2, -6 * length, 4 * length**2],
-            ]
-        )
+        k1a = (e_mat * i_xs / length**3) * np.array([
+            [12, 6 * length, -12, 6 * length],
+            [6 * length, 4 * length**2, -6 * length, 2 * length**2],
+            [-12, -6 * length, 12, -6 * length],
+            [6 * length, 2 * length**2, -6 * length, 4 * length**2],
+        ])
         assert np.allclose(k1, k1a)
         k2 = treat_matrix(k[1])
         assert np.allclose(k2, k1a)
@@ -150,13 +151,11 @@ class TestFEModel:
             e_mat
             * i_xs
             / length**3
-            * np.array(
-                [
-                    [24, 0, 6 * length],
-                    [0, 8 * length**2, 2 * length**2],
-                    [6 * length, 2 * length**2, 4 * length**2],
-                ]
-            )
+            * np.array([
+                [24, 0, 6 * length],
+                [0, 8 * length**2, 2 * length**2],
+                [6 * length, 2 * length**2, 4 * length**2],
+            ])
         )
         p_a = np.array([p3, m4, m6])
         # Check that the displacements are of the right magnitude
@@ -637,24 +636,20 @@ class TestMiniEiffelTower:
             model.add_support(i, *6 * [True])
 
         make_platform(70.69, 57.64, cs2, internodes=True)
-        cs1_array = np.array(
-            [
-                [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3],
-                [4, 5, 11, 5, 6, 7, 7, 8, 9, 9, 10, 11],
-            ]
-        ).T
+        cs1_array = np.array([
+            [0, 0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3],
+            [4, 5, 11, 5, 6, 7, 7, 8, 9, 9, 10, 11],
+        ]).T
 
         for x1, x2 in cs1_array:
             model.add_element(x1, x2, cs1, SS316)
 
         make_platform(40.96, 115.73, cs3)
 
-        cs2_array = np.array(
-            [
-                [4, 5, 11, 5, 6, 7, 7, 8, 9, 9, 10, 11],
-                [12, 12, 12, 13, 13, 13, 14, 14, 14, 15, 15, 15],
-            ]
-        ).T
+        cs2_array = np.array([
+            [4, 5, 11, 5, 6, 7, 7, 8, 9, 9, 10, 11],
+            [12, 12, 12, 13, 13, 13, 14, 14, 14, 15, 15, 15],
+        ]).T
         for x1, x2 in cs2_array:
             model.add_element(x1, x2, cs2, SS316)
 

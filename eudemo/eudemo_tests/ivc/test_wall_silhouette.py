@@ -60,12 +60,10 @@ class TestWallSilhouetteDesigner:
 
     def test_parameterisation_read(self):
         config = copy.deepcopy(CONFIG)
-        config.update(
-            {
-                "run_mode": "read",
-                "file_path": Path(DATA, "wall_polyspline.json").as_posix(),
-            }
-        )
+        config.update({
+            "run_mode": "read",
+            "file_path": Path(DATA, "wall_polyspline.json").as_posix(),
+        })
 
         designer = WallSilhouetteDesigner(
             PARAMS, build_config=config, equilibrium=self.eq
@@ -90,16 +88,14 @@ class TestWallSilhouetteDesigner:
     def test_run_check_parameters(self):
         config = copy.deepcopy(CONFIG)
         config["run_mode"] = "run"
-        config.update(
-            {
-                "problem_settings": {"n_koz_points": 101},
-                "optimisation_settings": {
-                    "algorithm_name": "COBYLA",
-                    "parameters": {"initial_step": 1e-4},
-                    "conditions": {"max_eval": 101},
-                },
-            }
-        )
+        config.update({
+            "problem_settings": {"n_koz_points": 101},
+            "optimisation_settings": {
+                "algorithm_name": "COBYLA",
+                "parameters": {"initial_step": 1e-4},
+                "conditions": {"max_eval": 101},
+            },
+        })
         designer = WallSilhouetteDesigner(
             PARAMS, build_config=config, equilibrium=self.eq
         )
@@ -127,13 +123,11 @@ class TestWallSilhouetteDesigner:
 
     def test_height_derived_from_params_given_PolySpline_mock_mode(self):
         params = copy.deepcopy(PARAMS)
-        params.update(
-            {
-                "R_0": {"value": 10, "unit": "m"},
-                "kappa_95": {"value": 2, "unit": "m"},
-                "A": {"value": 2, "unit": "m"},
-            }
-        )
+        params.update({
+            "R_0": {"value": 10, "unit": "m"},
+            "kappa_95": {"value": 2, "unit": "m"},
+            "A": {"value": 2, "unit": "m"},
+        })
         config = copy.deepcopy(CONFIG)
         config.update({"param_class": f"{WALL_MODULE_REF}::WallPolySpline"})
 
@@ -157,9 +151,10 @@ class TestWallSilhouetteDesigner:
         }
         config = copy.deepcopy(CONFIG)
 
-        config.update(
-            {"param_class": f"{WALL_MODULE_REF}::WallPrincetonD", "variables_map": vm}
-        )
+        config.update({
+            "param_class": f"{WALL_MODULE_REF}::WallPrincetonD",
+            "variables_map": vm,
+        })
 
         designer = WallSilhouetteDesigner(
             PARAMS, build_config=config, equilibrium=self.eq

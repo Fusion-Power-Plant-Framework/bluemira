@@ -99,13 +99,11 @@ class TestDuctConnection:
 
     def _wires(self, arc: BluemiraWire):
         return [
-            make_polygon(
-                {
-                    "x": [0, point[0][0]],
-                    "y": [0, point[1][0]],
-                    "z": point[2],
-                }
-            )
+            make_polygon({
+                "x": [0, point[0][0]],
+                "y": [0, point[1][0]],
+                "z": point[2],
+            })
             for point in (arc.start_point(), arc.end_point())
         ]
 

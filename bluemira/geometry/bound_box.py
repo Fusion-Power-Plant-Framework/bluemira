@@ -87,9 +87,11 @@ class BoundingBox:
         z_b:
             z coordinates of the BoundingBox in space
         """
-        size = max(
-            [self.x_max - self.x_min, self.y_max - self.y_min, self.z_max - self.z_min]
-        )
+        size = max([
+            self.x_max - self.x_min,
+            self.y_max - self.y_min,
+            self.z_max - self.z_min,
+        ])
 
         x_b = 0.5 * size * np.array([-1, -1, -1, -1, 1, 1, 1, 1]) + 0.5 * (
             self.x_max + self.x_min

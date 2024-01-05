@@ -69,9 +69,11 @@ class TestBluemiraFace:
             assert face.area > 0.0
 
     def test_face_vertices(self):
-        points = Coordinates(
-            {"x": [0, 1, 2, 1, 0, -1, 0], "y": [-2, -1, 0, 1, 2, 1, -2], "z": 0}
-        )
+        points = Coordinates({
+            "x": [0, 1, 2, 1, 0, -1, 0],
+            "y": [-2, -1, 0, 1, 2, 1, -2],
+            "z": 0,
+        })
         wire = make_polygon(points, closed=True)
         face = BluemiraFace(wire)
         vertices = face.vertexes
