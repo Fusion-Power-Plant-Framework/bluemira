@@ -187,6 +187,21 @@ def test_get_psi_harmonic_amplitudes():
             [test_v_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0
         )
 
+
+    sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
+    test_v_psi = np.zeros(np.shape(eq.grid.x))
+    for n in sh_coil_names:
+        test_v_psi = np.sum(
+            [test_v_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0
+        )
+
+    sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
+    test_v_psi = np.zeros(np.shape(eq.grid.x))
+    for n in sh_coil_names:
+        test_v_psi = np.sum(
+            [test_v_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0
+        )
+
     test_sh_amps = get_psi_harmonic_amplitudes(test_v_psi, eq.grid, test_colocation, 1.2)
 
     sh_amps = np.array([
@@ -231,6 +246,9 @@ def test_spherical_harmonic_approximation():
         n_points=20,
         point_type=PointType.ARC_PLUS_EXTREMA,
         acceptable_fit_metric=0.05,
+        n_points=20,
+        point_type="arc_plus_extrema",
+        acceptable_fit_metric=0.05,
     )
 
     sh_coilset_current = np.array([
@@ -270,6 +288,7 @@ def test_spherical_harmonic_approximation():
         -2.60376386e05,
         -7.47634692e04,
         -3.23836517e06,
+
     ])
 
     harmonic_amps = np.array([
