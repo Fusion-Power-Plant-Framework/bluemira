@@ -165,15 +165,13 @@ def interpolate_extra(vector: npt.NDArray, n_points: int):
     if n_points == 0:
         return vector
 
-    return np.concatenate(
-        [
-            *(
-                np.linspace(vector[s], vector[s + 1], n_points + 1, endpoint=False)
-                for s in range(len(vector) - 1)
-            ),
-            np.atleast_1d(vector[-1]),
-        ]
-    )
+    return np.concatenate([
+        *(
+            np.linspace(vector[s], vector[s + 1], n_points + 1, endpoint=False)
+            for s in range(len(vector) - 1)
+        ),
+        np.atleast_1d(vector[-1]),
+    ])
 
 
 @dataclass
@@ -451,9 +449,9 @@ class Phase:
     @property
     def duration(self):
         """Duration of phase"""
-        return getattr(np, self.config.operation)(
-            [s_ph.duration for s_ph in self.subphases.values()]
-        )
+        return getattr(np, self.config.operation)([
+            s_ph.duration for s_ph in self.subphases.values()
+        ])
 
 
 @dataclass
