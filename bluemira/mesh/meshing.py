@@ -373,9 +373,9 @@ class Mesh:
         """
         if len(gmsh_dict[MeshTags.CURVE]) > 0:
             gmsh_curve_tag = [(1, tag) for tag in gmsh_dict[MeshTags.CURVE]]
-            gmsh_dict[MeshTags.POINTS] = list(
-                {tag[1] for tag in _FreeCADGmsh._get_boundary(gmsh_curve_tag)}
-            )
+            gmsh_dict[MeshTags.POINTS] = list({
+                tag[1] for tag in _FreeCADGmsh._get_boundary(gmsh_curve_tag)
+            })
 
     def __iterate_gmsh_dict(self, buffer: dict, function: Callable, *args):
         """

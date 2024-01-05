@@ -142,12 +142,10 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
 
             self._grad_psi = BluemiraFemFunction(w)
             grad_psi_expr = Expression(
-                as_vector(
-                    (
-                        self.psi.dx(0),
-                        self.psi.dx(1),
-                    )
-                ),
+                as_vector((
+                    self.psi.dx(0),
+                    self.psi.dx(1),
+                )),
                 w.element.interpolation_points(),
             )
             self._grad_psi.interpolate(grad_psi_expr)

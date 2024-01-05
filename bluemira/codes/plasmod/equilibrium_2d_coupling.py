@@ -344,7 +344,7 @@ def solve_transport_fixed_boundary(
             f"from equilibrium iteration {n_iter}",
         )
 
-        (mesh, ct, ft), labels = create_mesh(
+        (mesh, _ct, _ft), _labels = create_mesh(
             plasma,
             directory,
             mesh_name_msh,
