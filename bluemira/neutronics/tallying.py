@@ -55,30 +55,26 @@ def filter_cells(
         "div_sf_mat",
     )
 
-    cell_filter = openmc.CellFilter(
-        (
-            cells.tf_coil,
-            *cells.plasma.get_cells(),
-            cells.divertor.fw,
-            cells.divertor.fw_sf,
-            *cells.inboard.get_cells(),
-            *cells.outboard.get_cells(),
-            *cells.divertor.regions,
-        )
-    )
+    cell_filter = openmc.CellFilter((
+        cells.tf_coil,
+        *cells.plasma.get_cells(),
+        cells.divertor.fw,
+        cells.divertor.fw_sf,
+        *cells.inboard.get_cells(),
+        *cells.outboard.get_cells(),
+        *cells.divertor.regions,
+    ))
 
     mat_filter = openmc.MaterialFilter([getattr(material_lib, mat) for mat in mats])
 
-    fw_surf_filter = openmc.CellFilter(
-        (
-            *cells.inboard.sf,
-            *cells.outboard.sf,
-            cells.divertor.fw_sf,
-            *cells.inboard.fw,
-            *cells.outboard.fw,
-            cells.divertor.fw,
-        )
-    )
+    fw_surf_filter = openmc.CellFilter((
+        *cells.inboard.sf,
+        *cells.outboard.sf,
+        cells.divertor.fw_sf,
+        *cells.inboard.fw,
+        *cells.outboard.fw,
+        cells.divertor.fw,
+    ))
 
     neutron_filter = openmc.ParticleFilter(["neutron"])
     photon_filter = openmc.ParticleFilter(["photon"])
