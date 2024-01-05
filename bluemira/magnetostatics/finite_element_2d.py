@@ -249,12 +249,10 @@ class FemMagnetostatic2d:
         B = BluemiraFemFunction(W)
         x_0 = SpatialCoordinate(self.mesh)[0]
         B_expr = Expression(
-            as_vector(
-                (
-                    -self.psi.dx(1) / (2 * np.pi * x_0),
-                    self.psi.dx(0) / (2 * np.pi * x_0),
-                )
-            ),
+            as_vector((
+                -self.psi.dx(1) / (2 * np.pi * x_0),
+                self.psi.dx(0) / (2 * np.pi * x_0),
+            )),
             W.element.interpolation_points(),
         )
         B.interpolate(B_expr)

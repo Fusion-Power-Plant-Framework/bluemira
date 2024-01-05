@@ -65,26 +65,22 @@ class Solovev:
         rt_lg, rt_2 = np.log(rt), rt**2
         zt_2 = zt**2
 
-        m = np.array([
-            [1.0, ri**2, ri**4, ri**2 * np.log(ri)],
-            [1.0, ro**2, ro**4, ro**2 * np.log(ro)],
+        m = np.array(
             [
                 [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
                 [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
                 [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
                 [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
-            ]
+            ],
         )
 
         b = np.sum(
-            np.array(
-                [
-                    [-ri_4 * 0.125, 0],
-                    [-ro_4 * 0.125, 0],
-                    [-(rt**4) * 0.125, zt_2 * 0.5],
-                    [-rt_2 * 0.5, 0],
-                ]
-            )
+            np.array([
+                [-ri_4 * 0.125, 0],
+                [-ro_4 * 0.125, 0],
+                [-(rt**4) * 0.125, zt_2 * 0.5],
+                [-rt_2 * 0.5, 0],
+            ])
             * np.array([self.A1, self.A2]),
             axis=1,
         )
@@ -98,16 +94,14 @@ class Solovev:
         """
 
         psi_func = np.atleast_2d(
-            np.array(
-                [
-                    np.ones_like(point[0]),
-                    point[0] ** 2,
-                    point[0] ** 2 * (point[0] ** 2 - 4 * point[1] ** 2),
-                    point[0] ** 2 * np.log(point[0]) - point[1] ** 2,
-                    (point[0] ** 4) / 8.0,
-                    -(point[1] ** 2) / 2.0,
-                ]
-            ).T
+            np.array([
+                np.ones_like(point[0]),
+                point[0] ** 2,
+                point[0] ** 2 * (point[0] ** 2 - 4 * point[1] ** 2),
+                point[0] ** 2 * np.log(point[0]) - point[1] ** 2,
+                (point[0] ** 4) / 8.0,
+                -(point[1] ** 2) / 2.0,
+            ]).T
         ).T
 
         return np.squeeze(2 * np.pi * np.sum(psi_func * self._m, axis=0))
