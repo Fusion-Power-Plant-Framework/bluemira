@@ -13,7 +13,7 @@ from shutil import rmtree
 from types import ModuleType
 from typing import Callable, Dict, Iterable, List, Optional, Tuple, Union
 from unittest.mock import patch
-from xml.etree import ElementTree
+from xml.etree import cElementTree  # noqa: S405
 
 from multithreaded_download import downloader
 from rich.progress import track
@@ -146,7 +146,7 @@ def combine_xml(
 
     bluemira_print("Combining cross section xml files")
     xml_handle = [
-        ElementTree.parse(Path(name, "cross_sections.xml"))  # noqa: S314
+        cElementTree.parse(Path(name, "cross_sections.xml"))  # noqa: S313
         for name in lib_names
     ]
     for name, xml in zip(lib_names, xml_handle):

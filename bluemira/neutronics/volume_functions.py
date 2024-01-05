@@ -72,12 +72,10 @@ def get_div_fw_vol(outer_cones, inner_cones, rs):
     """Calculates the volume for each section of the divertor first wall
     This is only approximate but accurate as long as the first wall is thin
     """
-    return sum(
-        [
-            get_div_fw_section_vol(outer_cone, inner_cones[i], rs[i + 1], rs[i])
-            for i, outer_cone in enumerate(outer_cones)
-        ]
-    )
+    return sum([
+        get_div_fw_section_vol(outer_cone, inner_cones[i], rs[i + 1], rs[i])
+        for i, outer_cone in enumerate(outer_cones)
+    ])
 
 
 def stochastic_volume_calculation(
