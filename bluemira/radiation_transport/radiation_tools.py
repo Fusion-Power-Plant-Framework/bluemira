@@ -30,23 +30,12 @@ from typing import TYPE_CHECKING, Callable, Iterable, Optional, Tuple, Union
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
-
-# CHERAB imports
-from cherab.core.math import AxisymmetricMapper, sample3d
-from cherab.tools.emitters import RadiationFunction
 from matplotlib.collections import LineCollection
-from raysect.core import Point3D, Vector3D, rotate_basis, translate
-from raysect.optical import World
-from raysect.optical.material import VolumeTransform
-from raysect.optical.observer import PowerPipeline0D
-from raysect.optical.observer.nonimaging.pixel import Pixel
-from raysect.primitive import Cylinder
-
-# Scipy import
 from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
 from bluemira.base import constants
 from bluemira.base.constants import ureg
+from bluemira.base.error import BluemiraError
 from bluemira.codes import process
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
 from bluemira.geometry.coordinates import Coordinates, in_polygon
@@ -57,6 +46,18 @@ if TYPE_CHECKING:
     from bluemira.geometry.wire import BluemiraWire
 
 E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
+
+try:
+    from cherab.core.math import AxisymmetricMapper, sample3d
+    from cherab.tools.emitters import RadiationFunction
+    from raysect.core import Point3D, Vector3D, rotate_basis, translate
+    from raysect.optical import World
+    from raysect.optical.material import VolumeTransform
+    from raysect.optical.observer import PowerPipeline0D
+    from raysect.optical.observer.nonimaging.pixel import Pixel
+    from raysect.primitive import Cylinder
+except ImportError:
+    BluemiraError("Cherab not installed")
 
 
 def upstream_temperature(
