@@ -47,6 +47,6 @@ terminado==0.18.0
 tinycss2==1.2.1
 tornado==6.4
 traitlets==5.14.1
-wcwidth==0.2.12
+wcwidth==0.2.13
 webencodings==0.5.1
 zipp==3.17.0
