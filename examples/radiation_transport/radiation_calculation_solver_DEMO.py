@@ -28,6 +28,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
+from bluemira.base.constants import raw_uc
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria import Equilibrium
@@ -52,7 +53,7 @@ from bluemira.radiation_transport.radiation_tools import (
 
 # %%
 
-SINGLE_NULL = True
+SINGLE_NULL = False
 
 if SINGLE_NULL:
     eq_name = "EU-DEMO_EOF.json"
@@ -158,7 +159,7 @@ source.rad_map(fw_shape)
 
 
 # %%
-def main(only_source=True):
+def main(only_source=False):
     if only_source:
         source.plot()
         plt.show()
@@ -167,18 +168,17 @@ def main(only_source=True):
         # Core and SOL source: coordinates and radiation values
         x_core = source.core_rad.x_tot
         z_core = source.core_rad.z_tot
-        rad_core = source.core_rad.rad_tot
         x_sol = source.sol_rad.x_tot
         z_sol = source.sol_rad.z_tot
-        rad_sol = source.sol_rad.rad_tot
 
         # Coversion required for CHERAB
-        rad_core = rad_core * 1.0e6
-        rad_sol = rad_sol * 1.0e6
-
         # Core and SOL interpolating function
-        f_core = linear_interpolator(x_core, z_core, rad_core)
-        f_sol = linear_interpolator(x_sol, z_sol, rad_sol)
+        f_core = linear_interpolator(
+            x_core, z_core, raw_uc(source.core_rad.rad_tot, "MW", "W")
+        )
+        f_sol = linear_interpolator(
+            x_sol, z_sol, raw_uc(source.sol_rad.rad_tot, "MW", "W")
+        )
 
         # SOL radiation grid
         x_sol = np.linspace(min(fw_shape.x), max(fw_shape.x), 1000)
@@ -191,18 +191,20 @@ def main(only_source=True):
             source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_low"]
         )
 
-        pfr_down_filter = filtering_in_or_out(pfr_x_down, pfr_z_down, False)
+        pfr_down_filter = filtering_in_or_out(
+            pfr_x_down, pfr_z_down, include_points=False
+        )
 
         if not SINGLE_NULL:
             pfr_x_up, pfr_z_up = pfr_filter(
                 source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_up"]
             )
-            pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, False)
+            pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, include_points=False)
 
         # Fetch lcfs
         lcfs = source.lcfs
         core_filter_in = filtering_in_or_out(lcfs.x, lcfs.z)
-        core_filter_out = filtering_in_or_out(lcfs.x, lcfs.z, False)
+        core_filter_out = filtering_in_or_out(lcfs.x, lcfs.z, include_points=False)
         for i in range(len(x_sol)):
             for j in range(len(z_sol)):
                 point = x_sol[i], z_sol[j]

@@ -32,9 +32,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
 from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
+from rich.progress import track
 
-from bluemira.base import constants
-from bluemira.base.constants import ureg
+from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, raw_uc, ureg
 from bluemira.base.error import BluemiraError
 from bluemira.codes import process
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
@@ -124,7 +124,7 @@ def upstream_temperature(
     )
 
     # upstream temperature [keV]
-    return constants.raw_uc((3.5 * (q_u / k_0) * l_tot) ** (2 / 7), "eV", "keV")
+    return raw_uc((3.5 * (q_u / k_0) * l_tot) ** (2 / 7), "eV", "keV")
 
 
 def target_temperature(
@@ -198,27 +198,23 @@ def target_temperature(
     q_u = p_sol / a_par
 
     # ion mass in kg (it should be DT = 2.5*amu)
-    m_i_amu = constants.D_MOLAR_MASS
-    m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
+    m_i_kg = raw_uc(D_MOLAR_MASS, "amu", "kg")
 
     # converting upstream temperature
     # upstream electron density - no fifference hfs/lfs?
     # Numerator and denominator of the upstream forcing function
-    num_f = m_i_kg * 4 * (q_u**2)
-    den_f = 2 * E_CHARGE * (gamma**2) * (E_CHARGE**2) * (n_u**2) * (t_u**2)
     # forcing function
-    f_ev = num_f / den_f
+    f_ev = (m_i_kg * 4 * (q_u**2)) / (
+        2 * E_CHARGE * (gamma**2) * (E_CHARGE**2) * (n_u**2) * (t_u**2)
+    )
 
     # Critical target temperature
     t_crit = eps_cool / gamma
 
     # Finding roots of the target temperature quadratic equation
-    coeff_2 = 2 * (eps_cool / gamma) - f_ev
-    coeff_3 = (eps_cool**2) / (gamma**2)
-    coeff = [1, coeff_2, coeff_3]
-    roots = np.roots(coeff)
+    roots = np.roots([1, 2 * (eps_cool / gamma) - f_ev, (eps_cool**2) / (gamma**2)])
 
-    if roots.dtype == complex:
+    if roots.dtype == complex:  # noqa: E721
         t_tar = f_ion_t
     else:
         # Excluding unstable solution
@@ -529,12 +525,8 @@ def ion_front_distance(
         z coordinate of the ionization front
     """
     # Speed of light to convert kg to eV/c^2
-    light_speed = constants.C_LIGHT
-
     # deuterium ion mass
-    m_i_amu = constants.D_MOLAR_MASS
-    m_i_kg = constants.raw_uc(m_i_amu, "amu", "kg")
-    m_i = m_i_kg / (light_speed**2)
+    m_i = raw_uc(D_MOLAR_MASS, "amu", "kg") / (C_LIGHT**2)
 
     # Magnetic field at the strike point
     b_pol = eq.Bp(x_strike, z_strike)
@@ -655,7 +647,7 @@ def calculate_line_radiation_loss(
     -------
         Line radiation losses [MW m^-3]
     """
-    return (species_frac * (ne**2) * p_loss_f) / (4 * np.pi) * 1e-6
+    return raw_uc((species_frac * (ne**2) * p_loss_f) / (4 * np.pi), "W", "MW")
 
 
 def linear_interpolator(
@@ -775,23 +767,25 @@ def pfr_filter(
     return np.concatenate(domains_x), np.concatenate(domains_z)
 
 
-def filtering_in_or_out(domain_x: list, domain_z: list, include_points=True):
+def filtering_in_or_out(
+    domain_x: list[float], domain_z: list[float], *, include_points: bool = True
+) -> Callable[[Iterable[float]], bool]:
     """
     To exclude from the calculation a specific region which is
     either contained or not contained within a given domain
 
     Parameters
     ----------
-    domain_x: [float]
+    domain_x:
         list of x coordinates defining the domain
-    domain_z: [float]
+    domain_z:
         list of x coordinates defining the domain
-    include_points: boolean
+    include_points:
         wheter the points inside or outside the domain must be excluded
 
     Returns
     -------
-    include: shapely method
+    include:
         method which includes or excludes from the domain a given point
     """
     region = np.zeros((len(domain_x), 2))
@@ -823,7 +817,7 @@ def get_impurity_data(
 
 
 # Adapted functions from Stuart
-def detect_radiation(wall_detectors, n_samples, world):
+def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False):
     """
     To sample the wall and detect radiation
     """
@@ -839,22 +833,20 @@ def detect_radiation(wall_detectors, n_samples, world):
     running_distance = 0
     cherab_total_power = 0
 
+    quiet = not verbose
+
     # Loop over each tile detector
-    for i, detector in enumerate(wall_detectors):
+    for i, (_, x_width, y_width, centre_point, normal_vector, y_vector) in track(
+        enumerate(wall_detectors),
+        total=len(wall_detectors),
+        description="Radaition detectors...",
+    ):
         # extract the dimensions and orientation of the tile
-        x_width = detector[1]
-        y_width = detector[2]
-        centre_point = detector[3]
-        normal_vector = detector[4]
-        y_vector = detector[5]
         pixel_area = x_width * y_width
 
         # Use the power pipeline to record total power arriving at the surface
         power_data = PowerPipeline0D()
 
-        pixel_transform = translate(
-            centre_point.x, centre_point.y, centre_point.z
-        ) * rotate_basis(normal_vector, y_vector)
         # Use pixel_samples argument to increase amount of sampling and reduce noise
         pixel = Pixel(
             [power_data],
@@ -862,9 +854,11 @@ def detect_radiation(wall_detectors, n_samples, world):
             y_width=y_width,
             name=f"pixel-{i}",
             spectral_bins=1,
-            transform=pixel_transform,
+            transform=translate(centre_point.x, centre_point.y, centre_point.z)
+            * rotate_basis(normal_vector, y_vector),
             parent=world,
             pixel_samples=n_samples,
+            quiet=quiet,
         )
         # make detector sensitivity 1nm so that radiation function
         # is effectively W/m^3/str
@@ -923,7 +917,7 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
     ctr = 0
 
     if debug:
-        plt.figure()
+        _fig, ax = plt.subplots()
 
     for index in range(num + 1):
         p1x = wall_r[index]
@@ -951,7 +945,7 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
                 splitwall_x = np.linspace(p1x, p2x, num=n_split + 1)
                 splitwall_y = np.linspace(p1y, p2y, num=n_split + 1)
 
-                y_width = y_width / n_split
+                y_width /= n_split
 
                 for k in np.arange(n_split):
                     # evaluate the central point of the detector
@@ -974,8 +968,6 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
                         ),
                     ]
 
-                    ctr = ctr + 1
-
             else:
                 # evaluate normal_vector
                 normal_vector = Vector3D(p1y - p2y, 0.0, p2x - p1x).normalise()
@@ -992,13 +984,12 @@ def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
                 ]
 
                 if debug:
-                    plt.plot([p1x, p2x], [p1y, p2y], "k")
-                    plt.plot([p1x, p2x], [p1y, p2y], ".k")
-                    pc = detector_center
-                    pcn = pc + normal_vector * 0.05
-                    plt.plot([pc.x, pcn.x], [pc.z, pcn.z], "r")
+                    ax.plot([p1x, p2x], [p1y, p2y], "k")
+                    ax.plot([p1x, p2x], [p1y, p2y], ".k")
+                    pcn = detector_center + normal_vector * 0.05
+                    ax.plot([detector_center.x, pcn.x], [detector_center.z, pcn.z], "r")
 
-                ctr = ctr + 1
+            ctr += 1
 
     if debug:
         plt.show()
@@ -1022,7 +1013,7 @@ def plot_radiation_loads(
     )
 
     # Plot the wall and radiation distribution
-    _fig, _ax = plt.subplots(figsize=(12, 6))
+    fig, _ax = plt.subplots(figsize=(12, 6))
 
     gs = plt.GridSpec(2, 2, top=0.93, wspace=0.23)
 
@@ -1036,11 +1027,7 @@ def plot_radiation_loads(
 
     segs = []
 
-    for i in np.arange(len(wall_detectors)):
-        wall_cen = wall_detectors[i][3]
-        y_vector = wall_detectors[i][5]
-        y_width = wall_detectors[i][2]
-
+    for _, _, y_width, wall_cen, _, y_vector in wall_detectors:
         end1 = wall_cen - 0.5 * y_width * y_vector
         end2 = wall_cen + 0.5 * y_width * y_vector
 
@@ -1053,36 +1040,40 @@ def plot_radiation_loads(
 
     ax1.add_collection(line_segments)
 
-    norm = mpl.colors.Normalize(vmin=0.0, vmax=np.max(wall_powerload) * 1.0e-6)
-    cmap = mpl.cm.ScalarMappable(norm=norm, cmap=mpl.cm.hot)
+    cmap = mpl.cm.ScalarMappable(
+        norm=mpl.colors.Normalize(
+            vmin=0.0, vmax=raw_uc(np.max(wall_powerload), "W", "MW")
+        ),
+        cmap=mpl.cm.hot,
+    )
     cmap.set_array([])
 
-    heat_cbar = plt.colorbar(cmap)
+    heat_cbar = fig.colorbar(cmap, ax=ax1)
     heat_cbar.set_label(r"Wall Load ($MW.m^{-2}$)")
 
     ax2 = plt.subplot(gs[0, 1])
-
     ax2.plot(
-        np.array(wall_loads["distance"]), np.array(wall_loads["power_density"]) * 1.0e-6
+        np.array(wall_loads["distance"]),
+        raw_uc(np.array(wall_loads["power_density"]), "W", "MW"),
     )
+    ax2.set_ylim([
+        0.0,
+        raw_uc(1.1 * np.max(np.array(wall_loads["power_density"])), "W", "MW"),
+    ])
     ax2.grid(True)
-    ax2.set_ylim([0.0, 1.1 * np.max(np.array(wall_loads["power_density"]) * 1.0e-6)])
-
-    plt.ylabel(r"Radiation Load ($MW.m^{-2}$)")
+    ax2.set_ylabel(r"Radiation Load ($MW.m^{-2}$)")
 
     ax3 = plt.subplot(gs[1, 1])
-
-    plt.plot(
+    ax3.plot(
         np.array(wall_loads["distance"]),
         np.cumsum(np.array(wall_loads["detected_power"]) * 1.0e-6),
     )
 
-    plt.ylabel(r"Total Power $[MW]$")
-    plt.xlabel(r"Poloidal Distance $[m]$")
+    ax3.set_ylabel(r"Total Power $[MW]$")
+    ax3.set_xlabel(r"Poloidal Distance $[m]$")
     ax3.grid(True)
 
     plt.suptitle(plot_title)
-
     plt.show()
 
 
