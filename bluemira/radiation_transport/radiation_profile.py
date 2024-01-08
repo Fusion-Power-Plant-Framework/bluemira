@@ -29,7 +29,7 @@ import functools
 import operator
 from dataclasses import dataclass
 from enum import Enum
-from typing import TYPE_CHECKING, Dict, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -292,11 +292,11 @@ class Radiation:
     def flux_tube_pol_n(
         flux_tube: Coordinates,
         ne_mp: float,
-        n_rad_in=None,
-        n_rad_out=None,
-        rad_i=None,
-        rec_i=None,
-        n_tar=None,
+        n_rad_in: Optional[float] = None,
+        n_rad_out: Optional[float] = None,
+        rad_i: Optional[np.ndarray] = None,
+        rec_i: Optional[np.ndarray] = None,
+        n_tar: Optional[float] = None,
         *,
         core: bool = False,
         main_chamber_rad: bool = False,
@@ -306,21 +306,21 @@ class Radiation:
 
         Parameters
         ----------
-        flux_tube: loop
+        flux_tube:
             flux tube geometry
         ne_mp:
             electron density at the midplane [1/m^3]
-        n_rad_in: float
+        n_rad_in:
             density value at the entrance of the radiation region [1/m^3]
-        n_rad_out: float
+        n_rad_out:
             density value at the exit of the radiation region [1/m^3]
-        rad_i: np.array
+        rad_i:
             indexes of points, belonging to the flux tube, which fall
             into the radiation region
-        rec_i: np.array
+        rec_i:
             indexes of points, belonging to the flux tube, which fall
             into the recycling region
-        n_tar: float
+        n_tar:
             electron density at the target [1/m^3]
         core:
             if True, n is constant along the flux tube. If false,it varies
@@ -954,14 +954,14 @@ class ScrapeOffLayerRadiation(Radiation):
 
     def build_sector_distributions(
         self,
-        flux_tubes,
-        x_strike,
-        z_strike,
-        main_ext,
-        firstwall_geom,
-        sep_corrector,
-        pfr_ext=None,
-        rec_ext=None,
+        flux_tubes: np.ndarray,
+        x_strike: float,
+        z_strike: float,
+        main_ext: float,
+        firstwall_geom: Coordinates,
+        sep_corrector: float,
+        pfr_ext: Optional[float] = None,
+        rec_ext: Optional[float] = None,
         *,
         x_point_rad: bool = False,
         detachment: bool = False,
@@ -985,12 +985,12 @@ class ScrapeOffLayerRadiation(Radiation):
         main_ext: float
             extention of the radiation region from the x-point
             towards the main plasma [m]
-        firstwall_geom: grid
+        firstwall_geom:
             first wall geometry
-        pfr_ext: float
+        pfr_ext:
             extention of the radiation region from the x-point
             towards private flux region [m]
-        rec_ext: float
+        rec_ext:
             extention of the recycling region,
             along the separatrix, from the target [m]
         x_point_rad:
@@ -1760,9 +1760,9 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
     def build_sol_radiation_distribution(
         self,
-        t_and_n_pol_lfs,
-        t_and_n_pol_hfs,
-    ):
+        t_and_n_pol_lfs: np.ndarray,
+        t_and_n_pol_hfs: np.ndarray,
+    ) -> Dict[str, List[List[np.ndarray]]]:
         """
         Radiation profiles builder.
         For each scrape-off layer sector, it gives the
@@ -1770,31 +1770,25 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         Parameters
         ----------
-        t_and_n_pol_lfs_low: array
+        t_and_n_pol_lfs:
             temperature and density poloidal profile along each
-            flux tube within the lfs lower divertor set
-        t_and_n_pol_lfs_up: array
+            flux tube within the lfs divertor set
+        t_and_n_pol_hfs:
             temperature and density poloidal profile along each
-            flux tube within the lfs upper divertor set
-        t_and_n_pol_hfs_low: array
-            temperature and density poloidal profile along each
-            flux tube within the hfs lower divertor set
-        t_and_n_pol_hfs_up: array
-            temperature and density poloidal profile along each
-            flux tube within the hfs upper divertor set
+            flux tube within the hfs divertor set
 
         Returns
         -------
-        rad["lfs_low"]: array
+        rad["lfs_low"]:
             radiation poloidal profile along each
             flux tube within the lfs lower divertor set
-        rad["lfs_up"]: array
+        rad["lfs_up"]:
             radiation poloidal profile along each
             flux tube within the lfs upper divertor set
-        rad["hfs_low"]: array
+        rad["hfs_low"]:
             radiation poloidal profile along each
             flux tube within the hfs lower divertor set
-        rad["hfs_up"]: array
+        rad["hfs_up"]:
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
         """
@@ -1830,26 +1824,18 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             ]
         return self.rad
 
-    def build_sol_radiation_map(self, rad_lfs, rad_hfs):
+    def build_sol_radiation_map(self, rad_lfs: np.ndarray, rad_hfs: np.ndarray):
         """
         Scrape off layer radiation map builder.
 
         Parameters
         ----------
-        rad["lfs_low"]: array
+        rad_lfs:
             radiation poloidal profile along each
-            flux tube within the lfs lower divertor set
-        rad["lfs_up"]: array
-            radiation poloidal profile along each
-            flux tube within the lfs upper divertor set
-        rad["hfs_low"]: array
-            radiation poloidal profile along each
-            flux tube within the hfs lower divertor set
-        rad["hfs_up"]: array
+            flux tube within the lfs divertor set
+        rad_hfs:
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
-        firstwall_geom: grid
-            first wall geometry
         """
         # total line radiation loss along the open flux tubes
         self.total_rad_lfs = np.sum(np.array(rad_lfs, dtype=object), axis=0).tolist()
@@ -1865,14 +1851,14 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.z_tot = np.concatenate([flux_tube.coords.z for flux_tube in flux_tubes])
         self.rad_tot = np.concatenate(power)
 
-    def plot_poloidal_radiation_distribution(self, firstwall_geom: Grid):
+    def plot_poloidal_radiation_distribution(self, firstwall_geom: Coordinates):
         """
         Plot poloiadal radiation distribution
         within the scrape-off layer
 
         Parameters
         ----------
-        firstwall: Grid
+        firstwall:
             first wall geometry
         """
         self.radiation_distribution_plot(
@@ -1948,14 +1934,14 @@ class RadiationSource:
             equilibrium=eq, first_wall=firstwall_shape, dx_mp=0.001
         )
 
-    def analyse(self, firstwall_geom: Grid):
+    def analyse(self, firstwall_geom: Coordinates):
         """
         Using core radiation model and sol radiation model
         to calculate the radiation source at all points
 
         Parameters
         ----------
-        first_wall: Loop
+        first_wall:
             The closed first wall geometry
 
         Returns
