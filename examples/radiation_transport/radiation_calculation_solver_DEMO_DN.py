@@ -24,7 +24,7 @@ Example core and scraper-off layer radiation source calculation
 """
 
 # %%
-import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -51,10 +51,23 @@ from bluemira.radiation_transport.radiation_tools import (
 # First we load an equilibrium.
 
 # %%
+
+SINGLE_NULL = True
+
+if SINGLE_NULL:
+    eq_name = "EU-DEMO_EOF.json"
+    fw_name = "first_wall.json"
+    lfs_p_fraction = 1
+    tungsten_fraction = 1e-4
+else:
+    eq_name = "DN-DEMO_eqref.json"
+    fw_name = "DN_fw_shape.json"
+    lfs_p_fraction = 0.9
+    tungsten_fraction = 1e-5
+
+
 read_path = get_bluemira_path("equilibria", subfolder="data")
-eq_name = "DN-DEMO_eqref.json"
-eq_name = os.path.join(read_path, eq_name)
-eq = Equilibrium.from_eqdsk(eq_name)
+eq = Equilibrium.from_eqdsk(Path(read_path, eq_name))
 
 
 # %% [markdown]
@@ -63,9 +76,7 @@ eq = Equilibrium.from_eqdsk(eq_name)
 
 # %%
 read_path = get_bluemira_path("radiation_transport/test_data", subfolder="tests")
-fw_name = "DN_fw_shape.json"
-fw_name = os.path.join(read_path, fw_name)
-fw_shape = Coordinates.from_json(fw_name)
+fw_shape = Coordinates.from_json(Path(read_path, fw_name))
 
 # %% [markdown]
 #
@@ -90,7 +101,7 @@ params = {
     "eps_cool": {"value": 25.0, "unit": "eV"},
     "f_ion_t": {"value": 0.01, "unit": "keV"},
     "det_t": {"value": 0.0015, "unit": "keV"},
-    "lfs_p_fraction": {"value": 0.9, "unit": "dimensionless"},
+    "lfs_p_fraction": {"value": lfs_p_fraction, "unit": "dimensionless"},
     "theta_outer_target": {"value": 5.0, "unit": "deg"},
     "theta_inner_target": {"value": 5.0, "unit": "deg"},
     "fw_lambda_q_near_omp": {"value": 0.002, "unit": "m"},
@@ -99,20 +110,22 @@ params = {
     "fw_lambda_q_far_imp": {"value": 0.1, "unit": "m"},
 }
 
+# if SINGLE_NULL:
+#     params["f_p_sol_near"] = {"value": 0.65, "unit": "dimensionless"}
+
 # %%
 config = {
-    "f_imp_core": {"H": 1e-1, "He": 1e-2, "Xe": 1e-4, "W": 1e-5},
+    "f_imp_core": {"H": 1e-1, "He": 1e-2, "Xe": 1e-4, "W": tungsten_fraction},
     "f_imp_sol": {"H": 0, "He": 0, "Ar": 0.003, "Xe": 0, "W": 0},
 }
 
 
 # %% [markdown]
 #
-# Get the core impurity fractions
-f_impurities_core = config["f_imp_core"]
-f_impurities_sol = config["f_imp_sol"]
 
 # Get core midplane profiles
+# %%
+
 Profiles = MidplaneProfiles(params=params)
 psi_n = Profiles.psi_n
 ne_mp = Profiles.ne_mp
@@ -130,8 +143,8 @@ source = RadiationSource(
     psi_n=psi_n,
     ne_mp=ne_mp,
     te_mp=te_mp,
-    core_impurities=f_impurities_core,
-    sol_impurities=f_impurities_sol,
+    core_impurities=config["f_imp_core"],
+    sol_impurities=config["f_imp_sol"],
 )
 source.analyse(firstwall_geom=fw_shape)
 source.rad_map(fw_shape)
@@ -143,7 +156,7 @@ source.rad_map(fw_shape)
 
 
 # %%
-def main(only_source=False):
+def main(only_source=True):
     if only_source:
         source.plot()
         plt.show()
@@ -175,11 +188,14 @@ def main(only_source=False):
         pfr_x_down, pfr_z_down = pfr_filter(
             source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_low"]
         )
-        pfr_x_up, pfr_z_up = pfr_filter(
-            source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_up"]
-        )
+
         pfr_down_filter = filtering_in_or_out(pfr_x_down, pfr_z_down, False)
-        pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, False)
+
+        if not SINGLE_NULL:
+            pfr_x_up, pfr_z_up = pfr_filter(
+                source.sol_rad.separatrix, source.sol_rad.points["x_point"]["z_up"]
+            )
+            pfr_up_filter = filtering_in_or_out(pfr_x_up, pfr_z_up, False)
 
         # Fetch lcfs
         lcfs = source.lcfs
@@ -197,7 +213,9 @@ def main(only_source=False):
                         rad_sol_grid[j, i]
                         * (wall_filter(point) * 1.0)
                         * (pfr_down_filter(point) * 1.0)
-                        * (pfr_up_filter(point) * 1.0)
+                        * 1
+                        if SINGLE_NULL
+                        else (pfr_up_filter(point) * 1.0)
                         * (core_filter_out(point) * 1.0)
                     )
 
