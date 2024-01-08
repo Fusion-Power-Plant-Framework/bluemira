@@ -3,7 +3,8 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""Make the entire tokamak from scratch using user-provided variables.
+"""
+Make the entire tokamak from scratch using user-provided variables.
 All units used in this file are either [cm] or dimensionless.
 """
 
@@ -32,6 +33,9 @@ from bluemira.neutronics.params import (
 def check_geometry(plasma_geometry, tokamak_geometry) -> None:
     """Some basic geometry checks.
 
+    It doesn't matter whether these two parameters are provided in metric or cgs,
+    As long as the units match the check can proceed.
+
     Parameters
     ----------
     plasma_geometry:
@@ -39,9 +43,6 @@ def check_geometry(plasma_geometry, tokamak_geometry) -> None:
 
     tokamak_geometry:
         dataclass with various thickness attributes. (See TokamakGeometry for details.)
-
-    It doesn't matter whether these two parameters are provided in metric or cgs,
-    As long as the units match the check can proceed.
     """
     if plasma_geometry.elong < 1.0:  # noqa: PLR2004
         raise ValueError("Elongation must be at least 1.0")

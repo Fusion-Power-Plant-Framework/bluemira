@@ -110,7 +110,9 @@ class TokamakOperationParameters(TokamakOperationParametersBase):
 
     @classmethod
     def from_si(cls, op_params: TokamakOperationParametersBase):
-        """Convert from si units dataclass"""
+        """Convert from si units dataclass
+        :class:`bluemira.neutronics.params.TokamakOperationParametersBase`
+        """
         conversion = {
             "reactor_power": ("W", "MW"),
             "temperature": ("K", "keV"),
@@ -168,7 +170,9 @@ class PlasmaGeometry(PlasmaGeometryBase):
 
     @classmethod
     def from_si(cls, plasma_geometry: PlasmaGeometryBase):
-        """Convert from si units dataclass"""
+        """Convert from si units dataclass
+        :class:`bluemira.neutronics.params.PlasmaGeometryBase`
+        """
         pg = asdict(plasma_geometry)
         pgcgs = pg.copy()
         for k, v in pgcgs.items():
@@ -219,7 +223,9 @@ class TokamakGeometry(TokamakGeometryBase):
 
     @classmethod
     def from_si(cls, tokamak_geometry: TokamakGeometryBase):
-        """Convert from si units dataclass"""
+        """Convert from si units dataclass
+        :class:`bluemira.neutronics.params.TokamakGeometryBase`
+        """
         tg = asdict(tokamak_geometry)
         tgcgs = tg.copy()
         for k, v in tgcgs.items():
