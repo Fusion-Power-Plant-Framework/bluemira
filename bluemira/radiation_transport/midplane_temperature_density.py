@@ -35,30 +35,54 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parame
 
 @dataclass
 class MidplaneProfilesParams(ParameterFrame):
-    n_e_sep: Parameter[float]
-    T_e_sep: Parameter[float]
-    n_e_0: Parameter[float]
-    T_e_0: Parameter[float]
-    rho_ped_n: Parameter[float]
-    rho_ped_t: Parameter[float]
-    n_e_ped: Parameter[float]
-    T_e_ped: Parameter[float]
     alpha_n: Parameter[float]
+    """Density profile factor"""
     alpha_t: Parameter[float]
-    t_beta: Parameter[float]
-    P_sep: Parameter[float]
-    fw_lambda_q_near_omp: Parameter[float]
-    fw_lambda_q_far_omp: Parameter[float]
-    fw_lambda_q_near_imp: Parameter[float]
-    fw_lambda_q_far_imp: Parameter[float]
-    k_0: Parameter[float]
-    gamma_sheath: Parameter[float]
-    eps_cool: Parameter[float]
-    f_ion_t: Parameter[float]
+    """Temperature profile index"""
     det_t: Parameter[float]
+    """Detachment target temperature"""
+    eps_cool: Parameter[float]
+    """electron energy loss"""
+    f_ion_t: Parameter[float]
+    """Hydrogen first ionization"""
+    fw_lambda_q_far_imp: Parameter[float]
+    """Lambda_q far SOL imp"""
+    fw_lambda_q_far_omp: Parameter[float]
+    """Lambda_q far SOL omp"""
+    fw_lambda_q_near_imp: Parameter[float]
+    """Lambda_q near SOL imp"""
+    fw_lambda_q_near_omp: Parameter[float]
+    """Lambda_q near SOL omp"""
+    gamma_sheath: Parameter[float]
+    """sheath heat transmission coefficient"""
+    k_0: Parameter[float]
+    """material's conductivity"""
     lfs_p_fraction: Parameter[float]
-    theta_outer_target: Parameter[float]
+    """lfs fraction of SoL power"""
+    n_e_0: Parameter[float]
+    """Electron density on axis"""
+    n_e_ped: Parameter[float]
+    """Electron density pedestal height"""
+    n_e_sep: Parameter[float]
+    """Electron density at separatrix"""
+    P_sep: Parameter[float]
+    """Radiation power"""
+    rho_ped_n: Parameter[float]
+    """Density pedestal r/a location"""
+    rho_ped_t: Parameter[float]
+    """Temperature pedestal r/a location"""
+    t_beta: Parameter[float]
+    """Temperature profile index beta"""
+    T_e_0: Parameter[float]
+    """Electron temperature on axis"""
+    T_e_ped: Parameter[float]
+    """Electron temperature pedestal height"""
+    T_e_sep: Parameter[float]
+    """Electron temperature at separatrix"""
     theta_inner_target: Parameter[float]
+    """Inner divertor poloidal angle with the separatrix flux line"""
+    theta_outer_target: Parameter[float]
+    """Outer divertor poloidal angle with the separatrix flux line"""
 
 
 class MidplaneProfiles:
