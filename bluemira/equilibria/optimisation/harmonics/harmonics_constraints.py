@@ -109,12 +109,11 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         if I_not_dI:
             equilibrium = _get_dummy_equilibrium(equilibrium)
 
-        # TODO
-        if fixed_coils:
-            pass
+        if not fixed_coils:
+            raise ValueError("SphericalHarmonicConstraint requires fixed coils")
 
         self._args["a_mat"] = self.control_response(equilibrium.coilset)
-        self._args["b_vec"] = self.evaluate()
+        self._args["b_vec"] = self.target_harmonics - self.evaluate(equilibrium)
 
     def control_response(self, coilset: CoilSet):
         """
@@ -130,11 +129,11 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             self.sh_coil_names,
         )
 
-    def evaluate(self) -> npt.NDArray:
+    def evaluate(self, _eq: Equilibrium) -> npt.NDArray:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
-        return self.target_harmonics
+        return np.zeros(len(self.target_harmonics))
 
     def f_constraint(self) -> SphericalHarmonicConstraintFunction:
         """Constraint function."""
