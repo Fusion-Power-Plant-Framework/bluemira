@@ -189,7 +189,10 @@ class Collocation:
 
 
 def collocation_points(
-    n_points: int, plasma_boundary: np.ndarray, point_type: str
+    n_points: int,
+    plasma_boundary: np.ndarray,
+    point_type: str,
+    seed: int = 42,
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
@@ -241,7 +244,7 @@ def collocation_points(
 
     if point_type in {PointType.RANDOM, PointType.RANDOM_PLUS_EXTREMA}:
         # Random sample within a circle enclosed by the LCFS
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(seed=seed)
         half_sample_x_range = 0.5 * (np.max(x_bdry) - np.min(x_bdry))
         sample_r = half_sample_x_range * rng.random(n_points)
         sample_theta = (rng.random(n_points) * 2 * np.pi) - np.pi
@@ -449,6 +452,7 @@ def spherical_harmonic_approximation(
     eq: Equilibrium,
     n_points: Optional[int] = None,
     point_type: Optional[str] = None,
+    seed: Optional[str] = None,
     acceptable_fit_metric: Optional[float] = None,
     plot: bool = False,
     nlevels: int = 50,
@@ -550,6 +554,7 @@ def spherical_harmonic_approximation(
         n_points,
         original_LCFS,
         point_type,
+        seed,
     )
 
     # SH amplitudes needed to produce an approximation of vacuum psi contribution

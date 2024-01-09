@@ -208,6 +208,7 @@ collocation = collocation_points(
     n,
     original_LCFS,
     "random_plus_extrema",
+    seed=15,
 )
 
 # Plot

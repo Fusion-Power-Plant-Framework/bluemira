@@ -95,6 +95,7 @@ plt.show()
     n_points=20,
     point_type="random_plus_extrema",
     acceptable_fit_metric=0.05,
+    seed=15,
     plot=True,
 )
 
