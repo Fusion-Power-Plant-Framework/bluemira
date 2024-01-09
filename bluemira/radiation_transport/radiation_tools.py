@@ -1,23 +1,8 @@
-# bluemira is an integrated inter-disciplinary design tool for future fusion
-# reactors. It incorporates several modules, some of which rely on other
-# codes, to carry out a range of typical conceptual fusion reactor design
-# activities.
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
-# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
-#                         J. Morris, D. Short
-#
-# bluemira is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
-#
-# bluemira is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
 1-D radiation model inspired by the PROCESS function "plot_radprofile" in plot_proc.py.
@@ -31,8 +16,8 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.collections import LineCollection
-from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 from rich.progress import track
+from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
 from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, raw_uc, ureg
 from bluemira.base.error import BluemiraError
@@ -1087,6 +1072,7 @@ class FirstWallRadiationSolver:
         self.fw_shape = firstwall_shape
 
     def solve(self, plot=True):
+        """Solve first wall radiation problem"""
         rad_3d = AxisymmetricMapper(self.rad_source)
         ray_stepsize = 1.0  # 2.0e-4
         emitter = VolumeTransform(

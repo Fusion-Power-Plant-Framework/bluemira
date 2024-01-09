@@ -1,23 +1,8 @@
-# bluemira is an integrated inter-disciplinary design tool for future fusion
-# reactors. It incorporates several modules, some of which rely on other
-# codes, to carry out a range of typical conceptual fusion reactor design
-# activities.
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
-# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
-#                         J. Morris, D. Short
-#
-# bluemira is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
-#
-# bluemira is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
 1-D radiation model inspired by the PROCESS function "plot_radprofile" in plot_proc.py.
@@ -67,12 +52,16 @@ if TYPE_CHECKING:
 
 
 class SeparationCorrector(Enum):
+    """Separation correction for double and single null plasma"""
+
     DN = 5e-3
     SN = 5e-2
 
 
 @dataclass
 class RadiationParameterFrame(ParameterFrame):
+    """Radiation parameter frame"""
+
     n_e_sep: Parameter[float]
     """Electron density at separatrix"""
     T_e_sep: Parameter[float]
@@ -81,6 +70,8 @@ class RadiationParameterFrame(ParameterFrame):
 
 @dataclass
 class CoreRadiationParameterFrame(RadiationParameterFrame):
+    """Core radiation parameter frame"""
+
     n_e_0: Parameter[float]
     """Electron density at separatrix"""
     T_e_0: Parameter[float]
@@ -103,6 +94,8 @@ class CoreRadiationParameterFrame(RadiationParameterFrame):
 
 @dataclass
 class SolRadiationParameterFrame(RadiationParameterFrame):
+    """Scrape off layer radiation parameter frame"""
+
     P_sep: Parameter[float]
     """Radiation power"""
     det_t: Parameter[float]
@@ -133,6 +126,8 @@ class SolRadiationParameterFrame(RadiationParameterFrame):
 
 @dataclass
 class RadiationSourceParams(ParameterFrame):
+    """Radiaition source parameter frame"""
+
     alpha_n: Parameter[float]
     """Density profile factor"""
     alpha_t: Parameter[float]
