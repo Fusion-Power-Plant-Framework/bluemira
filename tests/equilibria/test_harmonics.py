@@ -13,9 +13,9 @@ from bluemira.base.constants import EPS
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.harmonics import (
+from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     coil_harmonic_amplitude_matrix,
-    coils_outside_sphere_vacuum_psi,
+    coils_outside_lcfs_sphere,
     collocation_points,
     get_psi_harmonic_amplitudes,
     harmonic_amplitude_marix,
@@ -86,14 +86,18 @@ def test_coil_harmonic_amplitude_matrix():
         ),
     )
 
+    sh_coil_names = ["PF_2", "PF_3"]
+
     coilset = CoilSet(coil, circuit)
 
     d = 2
     r_t = 1
 
-    test_out_matrx = coil_harmonic_amplitude_matrix(coilset, d, r_t)
+    test_out_matrx = coil_harmonic_amplitude_matrix(coilset, d, r_t, sh_coil_names)
 
-    assert test_out_matrx.shape[1] == len(coilset.x)
+    print(np.shape(test_out_matrx))
+
+    assert test_out_matrx.shape[1] == len(sh_coil_names)
     assert test_out_matrx.shape[0] == d
 
 
@@ -130,17 +134,21 @@ def test_coils_outside_sphere_vacuum_psi():
     path = get_bluemira_path("equilibria/test_data", subfolder="tests")
     eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
 
-    test_v_psi, test_p_psi, test_coilset = coils_outside_sphere_vacuum_psi(eq)
+    sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
+    assert len(sh_coil_names) == 16
 
-    assert len(test_coilset.get_control_coils().x) == 16
+    test_p_psi = eq.plasma.psi()
+    test_v_psi = np.zeros(np.shape(eq.grid.x))
+    for n in sh_coil_names:
+        test_v_psi = np.sum(
+            [test_v_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0
+        )
+    non_cc_psi = eq.coilset.psi(eq.grid.x, eq.grid.z) - test_v_psi
 
-    non_cc_diff = np.array([eq.coilset.psi(eq.grid.x, eq.grid.z) == test_v_psi])
-    test_total = np.array([
-        test_coilset.psi(eq.grid.x, eq.grid.z) - (test_v_psi + test_p_psi)
-    ])
+    test_total = (test_v_psi + test_p_psi + non_cc_psi) - eq.psi()
+    grid_zeros = test_total * 0.0
 
-    assert not non_cc_diff.all()
-    assert test_total.all()
+    assert test_total == pytest.approx(grid_zeros, abs=0.005)
 
 
 def test_get_psi_harmonic_amplitudes():
@@ -150,7 +158,14 @@ def test_get_psi_harmonic_amplitudes():
     test_colocation = collocation_points(
         n_points=18, plasma_boundary=eq.get_LCFS(), point_type="arc"
     )
-    test_v_psi, _, _ = coils_outside_sphere_vacuum_psi(eq)
+
+    sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
+    test_v_psi = np.zeros(np.shape(eq.grid.x))
+    for n in sh_coil_names:
+        test_v_psi = np.sum(
+            [test_v_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0
+        )
+
     test_sh_amps = get_psi_harmonic_amplitudes(test_v_psi, eq.grid, test_colocation, 1.2)
 
     sh_amps = np.array([
@@ -181,43 +196,58 @@ def test_spherical_harmonic_approximation():
     eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
 
     (
-        test_sh_coilset,
-        test_r_t,
+        _,
         test_harmonic_amps,
         test_degree,
         test_fit_metric,
         _,
+        test_r_t,
+        test_sh_coilset_current,
     ) = spherical_harmonic_approximation(
         eq,
-        n_points=18,
-        point_type="arc",
-        acceptable_fit_metric=0.3,
+        n_points=20,
+        point_type="arc_plus_extrema",
+        acceptable_fit_metric=0.05,
     )
 
     sh_coilset_current = np.array([
-        7629.10582467,
-        80572.92343772,
-        72402.30872331,
-        64228.69554408,
-        21485.75482944,
-        -16683.29269502,
-        -67147.66998197,
-        -169607.44792089,
-        13184.10256721,
-        12076.3164052,
-        80572.92343772,
-        72402.30872331,
-        64228.69554408,
-        21485.75482944,
-        -13554.03543257,
-        -67147.66998197,
-        -169607.44792089,
-        13184.10256721,
+        7.62910582e03,
+        1.43520553e05,
+        -1.39959367e05,
+        1.38307695e05,
+        -3.03734221e05,
+        -7.65433152e04,
+        -6.29515063e05,
+        -1.95322559e05,
+        2.07073399e06,
+        1.20763164e04,
+        -7.36786063e06,
+        8.49088150e06,
+        3.62769044e06,
+        -2.38451828e06,
+        2.04882463e06,
+        -2.60376386e05,
+        -7.47634692e04,
+        -3.23836517e06,
     ])
-    harmonic_amps = np.array([0.00627021, 0.12891703])
 
-    assert test_sh_coilset.current == pytest.approx(sh_coilset_current)
-    assert test_r_t == pytest.approx(1.3653400)
+    harmonic_amps = np.array([
+        0.1165182,
+        -0.00254487,
+        -0.03455892,
+        -0.00585685,
+        -0.00397113,
+        -0.01681114,
+        0.01649549,
+        -0.02803212,
+        0.03035956,
+        -0.03828872,
+        0.04051739,
+        -0.04283815,
+    ])
+
+    assert test_sh_coilset_current == pytest.approx(sh_coilset_current)
+    assert test_r_t == pytest.approx(1.3661669578370919)
     assert test_harmonic_amps == pytest.approx(harmonic_amps)
-    assert test_degree == 2
-    assert test_fit_metric == pytest.approx(0.03, abs=0.005)
+    assert test_degree == 13
+    assert test_fit_metric == pytest.approx(0.031, abs=0.0006)

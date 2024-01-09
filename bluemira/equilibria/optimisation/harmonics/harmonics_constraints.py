@@ -10,6 +10,8 @@ Harmonics constraint functions.
 
 from typing import Union
 
+import matplotlib.patches as patch
+import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 
@@ -139,3 +141,12 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         f_constraint = SphericalHarmonicConstraintFunction(**self._args)
         f_constraint.constraint_type = self.constraint_type
         return f_constraint
+
+    def plot(self, ax=None):
+        """
+        Plot the constraint onto an Axes.
+        """
+        if ax is None:
+            _, ax = plt.subplots()
+
+        ax.add_patch(patch.Circle((0, 0), self.r_t, ec="orange", fill=True, fc="orange"))
