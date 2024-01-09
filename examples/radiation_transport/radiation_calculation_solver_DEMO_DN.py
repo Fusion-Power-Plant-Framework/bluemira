@@ -154,7 +154,7 @@ params = {
         "unit": "deg"
     },
     "fw_lambda_q_near_omp": {
-        "value": 0.003,
+        "value": 0.002,
         "unit": "m"
     },
     "fw_lambda_q_far_omp": {
@@ -162,7 +162,7 @@ params = {
         "unit": "m"
     },
     "fw_lambda_q_near_imp": {
-        "value": 0.003,
+        "value": 0.002,
         "unit": "m"
     },
     "fw_lambda_q_far_imp": {
@@ -174,15 +174,15 @@ params = {
 # %%
 config = {
             "f_imp_core" : {
-                "H": 0.7,
-                "He": 0.05,
-                "Xe": 0.25e-2,
-                "W": 0.1e-2
+                "H": 1e-1,
+                "He": 1e-2,
+                "Xe": 1e-4,
+                "W": 1e-5
             },
             "f_imp_sol" : {
                 "H": 0,
                 "He": 0,
-                "Ar": 0.01,
+                "Ar": 0.003,
                 "Xe": 0,
                 "W": 0
             }
