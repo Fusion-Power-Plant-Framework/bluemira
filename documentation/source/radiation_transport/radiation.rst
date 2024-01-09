@@ -43,9 +43,9 @@ normalised poloidal flux, and approximated as :math:`\rho = \sqrt{\psi_{N}}`.
 The density and temperature peaking parameters :math:`\alpha_{n}` and :math:`\alpha_{T}` and
 the second exponent :math:`\beta_{T}` can be chosen by the user.
 
-The radiation per unit volume is calculated using radiative power loss functions calculated 
-from quantum mechanics codes and tabulated in the *Atomic Data and Analysis Structure* 
-(ADAS) database. For each impurity, the total power lost per unit volume by all 
+The radiation per unit volume is calculated using radiative power loss functions calculated
+from quantum mechanics codes and tabulated in the *Atomic Data and Analysis Structure*
+(ADAS) database. For each impurity, the total power lost per unit volume by all
 line-radiation processes (including bremsstrahlung) is given by [Johner_2011]_:
 
 .. math::

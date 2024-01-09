@@ -1,105 +1,182 @@
-# bluemira is an integrated inter-disciplinary design tool for future fusion
-# reactors. It incorporates several modules, some of which rely on other
-# codes, to carry out a range of typical conceptual fusion reactor design
-# activities.
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
-# Copyright (C) 2021-2023 M. Coleman, J. Cook, F. Franza, I.A. Maione, S. McIntosh,
-#                         J. Morris, D. Short
-#
-# bluemira is free software; you can redistribute it and/or
-# modify it under the terms of the GNU Lesser General Public
-# License as published by the Free Software Foundation; either
-# version 2.1 of the License, or (at your option) any later version.
-#
-# bluemira is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-# Lesser General Public License for more details.
-#
-# You should have received a copy of the GNU Lesser General Public
-# License along with bluemira; if not, see <https://www.gnu.org/licenses/>.
+# SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
 1-D radiation model inspired by the PROCESS function "plot_radprofile" in plot_proc.py.
 """
 
 from __future__ import annotations
-from typing import TYPE_CHECKING
 
-from dataclasses import dataclass, fields
+import functools
+import operator
+from dataclasses import dataclass
+from enum import Enum
+from typing import TYPE_CHECKING, Dict, List, Optional, Tuple, Union
+
 import matplotlib.pyplot as plt
 import numpy as np
-
-from typing import Dict, Union
-from bluemira.base import constants
-from bluemira.base.constants import ureg
-from bluemira.base.error import BuilderError
-from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
-from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.grid import Grid
-from bluemira.equilibria.physics import calc_psi_norm
-from bluemira.display.plotter import plot_coordinates
-from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.wire import BluemiraWire
-
 from scipy.interpolate import interp1d
 
-from bluemira.radiation_transport.flux_surfaces_maker import analyse_first_wall_flux_surfaces
-
+from bluemira.base import constants
+from bluemira.base.error import BuilderError
+from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
+from bluemira.display.plotter import plot_coordinates
+from bluemira.equilibria.physics import calc_psi_norm
+from bluemira.geometry.coordinates import Coordinates
+from bluemira.radiation_transport.flux_surfaces_maker import (
+    analyse_first_wall_flux_surfaces,
+)
 from bluemira.radiation_transport.radiation_tools import (
-    gaussian_decay, 
-    exponential_decay,
-    radiative_loss_function_values,
     calculate_line_radiation_loss,
-    radiative_loss_function_plot,
     electron_density_and_temperature_sol_decay,
+    exponential_decay,
+    gaussian_decay,
+    get_impurity_data,
+    interpolated_field_values,
     ion_front_distance,
+    linear_interpolator,
+    radiative_loss_function_plot,
+    radiative_loss_function_values,
     random_point_temperature,
     target_temperature,
     upstream_temperature,
-    linear_interpolator,
-    interpolated_field_values,
-    get_impurity_data,
-    
 )
 
-@dataclass
-class SeparationCorrector:
-    DN: float = 5e-3
-    SN: float = 5e-2
+if TYPE_CHECKING:
+    from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.grid import Grid
+    from bluemira.geometry.wire import BluemiraWire
+
+
+class SeparationCorrector(Enum):
+    """Separation correction for double and single null plasma"""
+
+    DN = 5e-3
+    SN = 5e-2
+
 
 @dataclass
 class RadiationParameterFrame(ParameterFrame):
-    n_e_sep: Parameter[float] = Parameter(name="n_e_sep", long_name="Electron density at separatrix", value=3e19, unit='1/m^3', source="default")
-    T_e_sep: Parameter[float] = Parameter(name="T_e_sep", long_name="Electron temperature at separatrix", value=2e-01, unit="keV", source="default")
+    """Radiation parameter frame"""
+
+    n_e_sep: Parameter[float]
+    """Electron density at separatrix"""
+    T_e_sep: Parameter[float]
+    """Electron temperature at separatrix"""
+
 
 @dataclass
 class CoreRadiationParameterFrame(RadiationParameterFrame):
-    n_e_0: Parameter[float] =  Parameter(name="n_e_0", long_name="Electron density on axis", value=1.81e+20, unit="1/m^3", source="default")
-    T_e_0: Parameter[float] =  Parameter(name="T_e_0", long_name="Electron temperature on axis", value=2.196e+01, unit="keV", source="default")
-    rho_ped_n: Parameter[float] =  Parameter(name="rho_ped_n", long_name="Density pedestal r/a location", value=9.4e-01, unit="dimensionless", source="default")
-    rho_ped_t: Parameter[float] =  Parameter(name="rho_ped_t", long_name="Temperature pedestal r/a location", value=9.76e-01 , unit="dimensionless", source="default")
-    n_e_ped: Parameter[float] =  Parameter(name="n_e_ped", long_name="Electron density pedestal height", value=1.086e+20, unit="1/m^3", source="default")
-    T_e_ped: Parameter[float] =  Parameter(name="T_e_ped", long_name="Electron temperature pedestal height", value=3.74, unit="keV", source="default")
-    alpha_n: Parameter[float] =  Parameter(name="alpha_n", long_name="Density profile factor", value=1.15, unit="dimensionless", source="default")
-    alpha_t: Parameter[float] =  Parameter(name="alpha_t", long_name="Temperature profile index", value=1.905, unit="dimensionless", source="default")
-    t_beta: Parameter[float] =  Parameter(name="t_beta", long_name="Temperature profile index beta", value=2, unit="dimensionless", source="default")
+    """Core radiation parameter frame"""
+
+    n_e_0: Parameter[float]
+    """Electron density at separatrix"""
+    T_e_0: Parameter[float]
+    """Electron temperature at separatrix"""
+    rho_ped_n: Parameter[float]
+    """Density pedestal r/a location"""
+    rho_ped_t: Parameter[float]
+    """Temperature pedestal r/a location"""
+    n_e_ped: Parameter[float]
+    """Electron density pedestal height"""
+    T_e_ped: Parameter[float]
+    """Electron temperature pedestal height"""
+    alpha_n: Parameter[float]
+    """Density profile factor"""
+    alpha_t: Parameter[float]
+    """Temperature profile index"""
+    t_beta: Parameter[float]
+    """Temperature profile index beta"""
+
 
 @dataclass
 class SolRadiationParameterFrame(RadiationParameterFrame):
-    P_sep: Parameter[float] =  Parameter(name='P_sep', long_name='Radiation power', value=150, unit='MW', source="default")
-    fw_lambda_q_near_omp: Parameter[float] =  Parameter(name='fw_lambda_q_near_omp', long_name='Lambda_q near SOL omp', value=0.002, unit='m', source="default")
-    fw_lambda_q_far_omp: Parameter[float] =  Parameter(name='fw_lambda_q_far_omp', long_name='Lambda_q far SOL omp', value=0.10, unit='m', source="default")
-    fw_lambda_q_near_imp: Parameter[float] =  Parameter(name='fw_lambda_q_near_imp', long_name='Lambda_q near SOL imp', value=0.002, unit='m', source="default")
-    fw_lambda_q_far_imp: Parameter[float] =  Parameter(name='fw_lambda_q_far_imp', long_name='Lambda_q far SOL imp', value=0.10, unit='m', source="default")
-    k_0: Parameter[float] =  Parameter(name="k_0", long_name="material's conductivity", value=2000, unit="dimensionless", source="default")
-    gamma_sheath: Parameter[float] =  Parameter(name="gamma_sheath", long_name="sheath heat transmission coefficient", value=7, unit="dimensionless", source="default")
-    eps_cool: Parameter[float] =  Parameter(name="eps_cool", long_name="electron energy loss", value=25, unit="eV", source="default")
-    f_ion_t: Parameter[float] =  Parameter(name="f_ion_t", long_name="Hydrogen first ionization", value=0.01, unit="keV", source="default")
-    det_t: Parameter[float] =  Parameter(name="det_t", long_name="Detachment target temperature", value=0.0015, unit="keV", source="default")
-    lfs_p_fraction: Parameter[float] =  Parameter(name="lfs_p_fraction", long_name="lfs fraction of SoL power", value=0.9, unit="dimensionless", source="default")
-    theta_outer_target: Parameter[float] =  Parameter(name="theta_outer_target", long_name="Outer divertor poloidal angle with the separatrix flux line", value=5, unit="deg", source="default")
-    theta_inner_target: Parameter[float] =  Parameter(name="theta_inner_target", long_name="Inner divertor poloidal angle with the separatrix flux line", value=5, unit="deg", source="default")
+    """Scrape off layer radiation parameter frame"""
+
+    P_sep: Parameter[float]
+    """Radiation power"""
+    det_t: Parameter[float]
+    """Detachment target temperature"""
+    eps_cool: Parameter[float]
+    """electron energy loss"""
+    f_ion_t: Parameter[float]
+    """Hydrogen first ionization"""
+    fw_lambda_q_far_imp: Parameter[float]
+    """Lambda_q far SOL imp"""
+    fw_lambda_q_far_omp: Parameter[float]
+    """Lambda_q far SOL omp"""
+    fw_lambda_q_near_imp: Parameter[float]
+    """Lambda_q near SOL imp"""
+    fw_lambda_q_near_omp: Parameter[float]
+    """Lambda_q near SOL omp"""
+    gamma_sheath: Parameter[float]
+    """sheath heat transmission coefficient"""
+    k_0: Parameter[float]
+    """material's conductivity"""
+    lfs_p_fraction: Parameter[float]
+    """lfs fraction of SoL power"""
+    theta_inner_target: Parameter[float]
+    """Inner divertor poloidal angle with the separatrix flux line"""
+    theta_outer_target: Parameter[float]
+    """Outer divertor poloidal angle with the separatrix flux line"""
+
+
+@dataclass
+class RadiationSourceParams(ParameterFrame):
+    """Radiaition source parameter frame"""
+
+    alpha_n: Parameter[float]
+    """Density profile factor"""
+    alpha_t: Parameter[float]
+    """Temperature profile index"""
+    det_t: Parameter[float]
+    """Detachment target temperature"""
+    eps_cool: Parameter[float]
+    """electron energy loss"""
+    f_ion_t: Parameter[float]
+    """Hydrogen first ionization"""
+    fw_lambda_q_far_imp: Parameter[float]
+    """Lambda_q far SOL imp"""
+    fw_lambda_q_far_omp: Parameter[float]
+    """Lambda_q far SOL omp"""
+    fw_lambda_q_near_imp: Parameter[float]
+    """Lambda_q near SOL imp"""
+    fw_lambda_q_near_omp: Parameter[float]
+    """Lambda_q near SOL omp"""
+    gamma_sheath: Parameter[float]
+    """sheath heat transmission coefficient"""
+    k_0: Parameter[float]
+    """material's conductivity"""
+    lfs_p_fraction: Parameter[float]
+    """lfs fraction of SoL power"""
+    n_e_0: Parameter[float]
+    """Electron density on axis"""
+    n_e_ped: Parameter[float]
+    """Electron density pedestal height"""
+    n_e_sep: Parameter[float]
+    """Electron density at separatrix"""
+    P_sep: Parameter[float]
+    """Radiation power"""
+    rho_ped_n: Parameter[float]
+    """Density pedestal r/a location"""
+    rho_ped_t: Parameter[float]
+    """Temperature pedestal r/a location"""
+    t_beta: Parameter[float]
+    """Temperature profile index beta"""
+    T_e_0: Parameter[float]
+    """Electron temperature on axis"""
+    T_e_ped: Parameter[float]
+    """Electron temperature pedestal height"""
+    T_e_sep: Parameter[float]
+    """Electron temperature at separatrix"""
+    theta_inner_target: Parameter[float]
+    """Inner divertor poloidal angle with the separatrix flux line"""
+    theta_outer_target: Parameter[float]
+    """Outer divertor poloidal angle with the separatrix flux line"""
+
 
 class Radiation:
     """
@@ -107,15 +184,11 @@ class Radiation:
     to calculate radiation source within the flux tubes.
     """
 
-    def __init__(
-        self,
-        eq: Equilibrium,
-        params: Union[Dict, ParameterFrame]
-    ):
+    def __init__(self, eq: Equilibrium, params: Union[Dict, ParameterFrame]):
         self.params = params
         self.eq = eq
 
-    def collect_flux_tubes(self, psi_n):
+    def collect_flux_tubes(self, psi_n: np.ndarray) -> list[Coordinates]:
         """
         Collect flux tubes according to the normalised psi.
         For now only used for the core as for the SoL the
@@ -124,59 +197,63 @@ class Radiation:
 
         Parameters
         ----------
-        psi_n: np.array
+        psi_n:
             normalised psi
 
         Returns
         -------
-        flux tubes: list
+        flux tubes:
             list of flux tubes
         """
         return [self.eq.get_flux_surface(psi) for psi in psi_n]
 
+    @staticmethod
     def flux_tube_pol_t(
-        self,
-        flux_tube,
-        te_mp,
-        core=False,
-        t_rad_in=None,
-        t_rad_out=None,
-        rad_i=None,
-        rec_i=None,
-        t_tar=None,
-        x_point_rad=False,
-        main_chamber_rad=False,
-    ):
+        flux_tube: Coordinates,
+        te_mp: float,
+        t_rad_in: float = 0,
+        t_rad_out: float = 0,
+        rad_i: Optional[np.ndarray] = None,
+        rec_i: Optional[np.ndarray] = None,
+        t_tar: float = 0,
+        *,
+        core: bool = False,
+        x_point_rad: bool = False,
+        main_chamber_rad: bool = False,
+    ) -> np.ndarray:
         """
         Along a single flux tube, it assigns different temperature values.
 
         Parameters
         ----------
-        flux_tube: loop
+        flux_tube:
             flux tube geometry
-        te_mp: float
+        te_mp:
             electron temperature at the midplane [keV]
-        core: boolean
-            if True, t is constant along the flux tube. If false,it varies
-        t_rad_in: float
+        t_rad_in:
             temperature value at the entrance of the radiation region [keV]
-        t_rad_out: float
+        t_rad_out:
             temperature value at the exit of the radiation region [keV]
-        rad_i: np.array
+        rad_i:
             indexes of points, belonging to the flux tube, which fall
             into the radiation region
-        rec_i: np.array
+        rec_i:
             indexes of points, belonging to the flux tube, which fall
             into the recycling region
-        t_tar: float
+        t_tar:
             electron temperature at the target [keV]
-        main_chamber_rad: boolean
+        core:
+            if True, t is constant along the flux tube. If false,it varies
+        x_point_rad:
+            if True, it assumes there is no radiation at all
+            in the recycling region.
+        main_chamber_rad:
             if True, the temperature from the midplane to
             the radiation region entrance is not constant
 
         Returns
         -------
-        te: np.array
+        te:
             poloidal distribution of electron temperature
         """
         te = np.array([te_mp] * len(flux_tube))
@@ -197,6 +274,8 @@ class Radiation:
             te[rec_i] = t_tar
 
         if main_chamber_rad:
+            if rad_i is None or rec_i is None:
+                raise ValueError("'rad_i' and 'rec_i' must be specified")
             mask = np.ones_like(te, dtype=bool)
             main_rad = np.concatenate((rad_i, rec_i))
             mask[main_rad] = False
@@ -204,48 +283,49 @@ class Radiation:
 
         return te
 
+    @staticmethod
     def flux_tube_pol_n(
-        self,
-        flux_tube,
-        ne_mp,
-        core=False,
-        n_rad_in=None,
-        n_rad_out=None,
-        rad_i=None,
-        rec_i=None,
-        n_tar=None,
-        main_chamber_rad=False,
-    ):
+        flux_tube: Coordinates,
+        ne_mp: float,
+        n_rad_in: Optional[float] = None,
+        n_rad_out: Optional[float] = None,
+        rad_i: Optional[np.ndarray] = None,
+        rec_i: Optional[np.ndarray] = None,
+        n_tar: Optional[float] = None,
+        *,
+        core: bool = False,
+        main_chamber_rad: bool = False,
+    ) -> np.ndarray:
         """
         Along a single flux tube, it assigns different density values.
 
         Parameters
         ----------
-        flux_tube: loop
+        flux_tube:
             flux tube geometry
-        ne_mp: float
+        ne_mp:
             electron density at the midplane [1/m^3]
-        core: boolean
-            if True, n is constant along the flux tube. If false,it varies
-        n_rad_in: float
+        n_rad_in:
             density value at the entrance of the radiation region [1/m^3]
-        n_rad_out: float
+        n_rad_out:
             density value at the exit of the radiation region [1/m^3]
-        rad_i: np.array
+        rad_i:
             indexes of points, belonging to the flux tube, which fall
             into the radiation region
-        rec_i: np.array
+        rec_i:
             indexes of points, belonging to the flux tube, which fall
             into the recycling region
-        n_tar: float
+        n_tar:
             electron density at the target [1/m^3]
-        main_chamber_rad: boolean
+        core:
+            if True, n is constant along the flux tube. If false,it varies
+        main_chamber_rad:
             if True, the temperature from the midplane to
             the radiation region entrance is not constant
 
         Returns
         -------
-        ne: np.array
+        ne:
             poloidal distribution of electron density
         """
         # initializing ne with same values all along the flux tube
@@ -274,37 +354,46 @@ class Radiation:
 
         return ne
 
-    def mp_profile_plot(self, rho, rad_power, imp_name, ax=None):
+    @staticmethod
+    def mp_profile_plot(
+        rho: np.ndarray, rad_power: np.ndarray, imp_name: Union[str, list[str]], ax=None
+    ):
         """
-        1D plot of the radation power distribution along the midplane.
-        if rad_power.ndim > 1 the plot shows as many line as the number
-        of impurities, plus the total radiated power
+        1D plot of the radiation power distribution along the midplane.
 
         Parameters
         ----------
-        rho: np.array
+        rho:
             dimensionless radius. Values between 0 and 1 for the plasma core.
             Values > 1 for the scrape-off layer
-        rad_power: np.array
+        rad_power:
             radiated power at each mid-plane location corresponding to rho [Mw/m^3]
-        imp_name: [strings]
-            impurity neames
+        imp_name:
+            impurity names
+
+        Notes
+        -----
+        if rad_power.ndim > 1 the plot shows as many line as the number
+        of impurities, plus the total radiated power
         """
         if ax is None:
-            fig, ax = plt.subplots()
+            _, ax = plt.subplots()
             plt.xlabel(r"$\rho$")
             plt.ylabel(r"$[MW.m^{-3}]$")
 
         if len(rad_power) == 1:
-            ax.plot(rho, rad_power)
+            ax.plot(
+                rho, rad_power, imp_name if isinstance(imp_name, str) else imp_name[0]
+            )
         else:
-            [
+            for rad_part, name in zip(rad_power, imp_name):
                 ax.plot(rho, rad_part, label=name)
-                for rad_part, name in zip(rad_power, imp_name)
-            ]
-            rad_tot = np.sum(np.array(rad_power, dtype=object), axis=0).tolist()
             plt.title("Core radiated power density")
-            ax.plot(rho, rad_tot, label="total radiation")
+            ax.plot(
+                rho,
+                np.sum(np.array(rad_power, dtype=object), axis=0).tolist(),
+                label="total radiation",
+            )
             ax.legend(loc="best", borderaxespad=0, fontsize=12)
 
         return ax
@@ -370,14 +459,14 @@ class CoreRadiation(Radiation):
         """
         self.mp_profile_plot(self.psi_n, self.rad_mp, self.impurity_symbols)
 
-    def build_core_distribution(self):
+    def build_core_distribution(self) -> list[list[np.ndarray]]:
         """
         Build poloidal distribution (distribution along the field lines) of
         line radiation loss in the plasma core.
 
         Returns
         -------
-        rad: [np.array]
+        rad:
             Line core radiation.
             For specie and each closed flux line in the core
         """
@@ -426,15 +515,17 @@ class CoreRadiation(Radiation):
         self.z_tot = np.concatenate([flux_tube.z for flux_tube in self.flux_tubes])
         self.rad_tot = np.concatenate(self.total_rad)
 
-    def radiation_distribution_plot(self, flux_tubes, power_density, ax=None):
+    def radiation_distribution_plot(
+        self, flux_tubes: np.ndarray, power_density: np.ndarray, ax=None
+    ):
         """
-        2D plot of the core radation power distribution.
+        2D plot of the core radiation power distribution.
 
         Parameters
         ----------
-        flux_tubes: np.array
+        flux_tubes:
             array of the closed flux tubes within the separatrix.
-        power_density: np.array([np.array])
+        power_density:
             arrays containing the power radiation density of the
             points lying on each flux tube [MW/m^3]
         """
@@ -497,11 +588,11 @@ class ScrapeOffLayerRadiation(Radiation):
         self,
         eq: Equilibrium,
         params: ParameterFrame,
-        x_sep_omp = None,
-        x_sep_imp = None,
-        dx_omp = None,
-        dx_imp = None,
-        sep_corrector = None
+        x_sep_omp=None,
+        x_sep_imp=None,
+        dx_omp=None,
+        dx_imp=None,
+        sep_corrector=None,
     ):
         super().__init__(eq, params)
 
@@ -546,8 +637,14 @@ class ScrapeOffLayerRadiation(Radiation):
         else:
             ob_ind = np.where(self.separatrix.x > self.points["x_point"]["x"])
             ib_ind = np.where(self.separatrix.x < self.points["x_point"]["x"])
-            self.sep_ob = Coordinates({"x": self.separatrix.x[ob_ind], "z": self.separatrix.z[ob_ind]})
-            self.sep_ib = Coordinates({"x": self.separatrix.x[ib_ind], "z": self.separatrix.z[ib_ind]})
+            self.sep_ob = Coordinates({
+                "x": self.separatrix.x[ob_ind],
+                "z": self.separatrix.z[ob_ind],
+            })
+            self.sep_ib = Coordinates({
+                "x": self.separatrix.x[ib_ind],
+                "z": self.separatrix.z[ib_ind],
+            })
         # To move away from the mathematical separatrix which would
         # give infinite connection length
         self.r_sep_omp = self.x_sep_omp + sep_corrector
@@ -562,7 +659,13 @@ class ScrapeOffLayerRadiation(Radiation):
             b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
             self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, b_tor_sep_imp)
 
-    def x_point_radiation_z_ext(self, main_ext=None, pfr_ext=0.3, low_div=True):
+    def x_point_radiation_z_ext(
+        self,
+        main_ext: Optional[float] = None,
+        pfr_ext: float = 0.3,
+        *,
+        low_div: bool = True,
+    ) -> Tuple[float, ...]:
         """
         Simple definition of a radiation region around the x-point.
         The region is supposed to extend from an arbitrary z coordinate on the
@@ -570,21 +673,21 @@ class ScrapeOffLayerRadiation(Radiation):
 
         Parameters
         ----------
-        main_ext: float [m]
-            region extension on the main plasma side
-        pfr_ext: float [m]
-            region extension on the private flux region side
+        main_ext:
+            region extension on the main plasma side [m]
+        pfr_ext:
+            region extension on the private flux region side [m]
         low_div: boolean
             default=True for the lower divertor. If False, upper divertor
 
         Returns
         -------
-        z_main: float [m]
+        z_main:
             vertical (z coordinate) extension of the radiation region
-            toward the main plasma
-        z_pfr: float [m]
+            toward the main plasma [m]
+        z_pfr:
             vertical (z coordinate) extension of the radiation region
-            toward the pfr
+            toward the pfr [m]
         """
         if main_ext is None:
             main_ext = abs(self.points["x_point"]["z_low"])
@@ -598,7 +701,9 @@ class ScrapeOffLayerRadiation(Radiation):
 
         return z_main, z_pfr
 
-    def radiation_region_ends(self, z_main, z_pfr, lfs=True):
+    def radiation_region_ends(
+        self, z_main: float, z_pfr: float, *, lfs: bool = True
+    ) -> Tuple[float, ...]:
         """
         Entering and exiting points (x, z) of the radiation region
         detected on the separatrix.
@@ -606,27 +711,28 @@ class ScrapeOffLayerRadiation(Radiation):
 
         Parameters
         ----------
-        z_main: float [m]
+        z_main:
             vertical (z coordinate) extension of the radiation region
-            toward the main plasma
-        z_pfr: float [m]
+            toward the main plasma [m]
+        z_pfr:
             vertical (z coordinate) extension of the radiation region
-            toward the pfr
-        lfs: boolean
+            toward the pfr [m]
+        lfs:
             default=True for the low field side (right half).
             If False, high field side (left half).
 
         Returns
         -------
-        entrance_x, entrance_z: float, float
+        entrance_x, entrance_z:
             x, z coordinates of the radiation region starting point
-        exit_x, exit_z: float, float
+        exit_x, exit_z:
             x, z coordinates of the radiation region ending point
         """
-        if self.eq.is_double_null:
-            sep_loop = self.sep_lfs if lfs else self.sep_hfs
-        else:
-            sep_loop = self.sep_ob if lfs else self.sep_ib
+        sep_loop = (
+            (self.sep_lfs if lfs else self.sep_hfs)
+            if self.eq.is_double_null
+            else (self.sep_ob if lfs else self.sep_ib)
+        )
         if z_main > z_pfr:
             reg_i = np.where((sep_loop.z < z_main) & (sep_loop.z >= z_pfr))[0]
             i_in = np.where(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
@@ -641,31 +747,34 @@ class ScrapeOffLayerRadiation(Radiation):
 
         return entrance_x[0], entrance_z[0], exit_x[0], exit_z[0]
 
-    def radiation_region_points(self, flux_tube, z_main, z_pfr, lower=True):
+    @staticmethod
+    def radiation_region_points(
+        flux_tube: Coordinates, z_main: float, z_pfr: float, *, lower: bool = True
+    ) -> Tuple[np.ndarray, ...]:
         """
         For a given flux tube, indexes of points which fall respectively
         into the radiation and recycling region
 
         Parameters
         ----------
-        flux_tube: loop
+        flux_tube:
             flux tube geometry
-        z_main: float [m]
+        z_main:
             vertical (z coordinate) extension of the radiation region toward
             the main plasma.
-            Taken on the separatrix
-        z_pfr: float [m]
+            Taken on the separatrix [m]
+        z_pfr:
             vertical (z coordinate) extension of the radiation region
             toward the pfr.
-            Taken on the separatrix
-        lower: boolean
+            Taken on the separatrix [m]
+        lower:
             default=True for the lower divertor. If False, upper divertor
 
         Returns
         -------
-        rad_i: np.array
+        rad_i:
             indexes of the points within the radiation region
-        rec_i: np.array
+        rec_i:
             indexes pf the points within the recycling region
         """
         if lower:
@@ -677,7 +786,9 @@ class ScrapeOffLayerRadiation(Radiation):
 
         return rad_i, rec_i
 
-    def mp_electron_density_temperature_profiles(self, te_sep=None, omp=True):
+    def mp_electron_density_temperature_profiles(
+        self, te_sep: Optional[float] = None, *, omp: bool = True
+    ) -> Tuple[np.ndarray, ...]:
         """
         Calculation of electron density and electron temperature profiles
         across the SoL at midplane.
@@ -686,16 +797,16 @@ class ScrapeOffLayerRadiation(Radiation):
 
         Parameters
         ----------
-        te_sep: float
+        te_sep:
             electron temperature at the separatrix [keV]
-        omp: boolean
+        omp:
             outer mid-plane. Default value True. If False it stands for inner mid-plane
 
         Returns
         -------
-        te_sol: np.array
+        te_sol:
             radial decayed temperatures through the SoL at the mid-plane. Unit [keV]
-        ne_sol: np.array
+        ne_sol:
             radial decayed densities through the SoL at the mid-plane. Unit [1/m^3]
         """
         if omp or not self.eq.is_double_null:
@@ -708,7 +819,7 @@ class ScrapeOffLayerRadiation(Radiation):
             dx = self.dx_imp
 
         if te_sep is None:
-            te_sep = constants.raw_uc(self.params.T_e_sep.value_as('keV'), "keV", "eV")
+            te_sep = self.params.T_e_sep.value_as("eV")
         ne_sep = self.params.n_e_sep.value
 
         te_sol, ne_sol = electron_density_and_temperature_sol_decay(
@@ -727,8 +838,9 @@ class ScrapeOffLayerRadiation(Radiation):
         z_p: float,
         t_p: float,
         t_u: float,
-        lfs=True,
-    ):
+        *,
+        lfs: bool = True,
+    ) -> Tuple[np.ndarray, ...]:
         """
         Calculation of electron density and electron temperature profiles
         across the SoL, starting from any point on the separatrix.
@@ -737,23 +849,23 @@ class ScrapeOffLayerRadiation(Radiation):
 
         Parameters
         ----------
-        x_p: float
+        x_p:
             x coordinate of the point at the separatrix [m]
-        z_p: float
+        z_p:
             z coordinate of the point at the separatrix [m]
-        t_p: float
+        t_p:
             point temperature [eV]
-        t_u: float
+        t_u:
             upstream temperature [eV]
-        lfs: boolean
+        lfs:
             low (toroidal) field side (outer wall side). Default value True.
             If False it stands for high field side (hfs).
 
         Returns
         -------
-        te_prof: np.array
+        te_prof:
             radial decayed temperatures through the SoL. Unit [eV]
-        ne_prof: np.array
+        ne_prof:
             radial decayed densities through the SoL. Unit [1/m^3]
         """
         # Distinction between lfs and hfs
@@ -795,35 +907,39 @@ class ScrapeOffLayerRadiation(Radiation):
         return te_prof, ne_prof
 
     def tar_electron_densitiy_temperature_profiles(
-        self, ne_div, te_div, f_m=1, detachment=False
-    ):
+        self,
+        ne_div: np.ndarray,
+        te_div: np.ndarray,
+        f_m: float = 1,
+        *,
+        detachment: bool = False,
+    ) -> Tuple[np.ndarray, ...]:
         """
         Calculation of electron density and electron temperature profiles
         across the SoL at the target.
         From the pressure balance, considering friction losses.
-        f_m is the fractional loss of pressure due to friction.
-        It can vary between 0 and 1.
 
         Parameters
         ----------
-        ne_div: np.array
+        ne_div:
             density of the flux tubes at the entrance of the recycling region,
             assumed to be corresponding to the divertor plane [1/m^3]
-        te_div: np.array
+        te_div:
             temperature of the flux tubes at the entrance of the recycling region,
             assumed to be corresponding to the divertor plane [eV]
-        f_m: float
-            fractional loss factor
+        f_m:
+            fractional loss of pressure due to friction.
+            It can vary between 0 and 1.
 
         Returns
         -------
-        te_t: np.array
+        te_t:
             target temperature [eV]
-        ne_t: np.array
+        ne_t:
             target density [1/m^3]
         """
         if detachment:
-            te_t = [constants.raw_uc(self.params.det_t.value_as('keV'), "keV", "eV")] * len(te_div)
+            te_t = np.full(len(te_div), self.params.det_t.value_as("eV"))
             f_m = 0.1
         else:
             te_t = te_div
@@ -833,20 +949,21 @@ class ScrapeOffLayerRadiation(Radiation):
 
     def build_sector_distributions(
         self,
-        flux_tubes,
-        x_strike,
-        z_strike,
-        main_ext,
-        firstwall_geom,
-        sep_corrector,
-        pfr_ext=None,
-        rec_ext=None,
-        x_point_rad=False,
-        detachment=False,
-        lfs=True,
-        low_div=True,
-        main_chamber_rad=False,
-    ):
+        flux_tubes: np.ndarray,
+        x_strike: float,
+        z_strike: float,
+        main_ext: float,
+        firstwall_geom: Coordinates,
+        sep_corrector: float,
+        pfr_ext: Optional[float] = None,
+        rec_ext: Optional[float] = None,
+        *,
+        x_point_rad: bool = False,
+        detachment: bool = False,
+        lfs: bool = True,
+        low_div: bool = True,
+        main_chamber_rad: bool = False,
+    ) -> Tuple[np.ndarray, ...]:
         """
         Temperature and density profiles builder.
         Within the scrape-off layer sector, it gives temperature
@@ -863,45 +980,47 @@ class ScrapeOffLayerRadiation(Radiation):
         main_ext: float
             extention of the radiation region from the x-point
             towards the main plasma [m]
-        firstwall_geom: grid
+        firstwall_geom:
             first wall geometry
-        pfr_ext: float
+        pfr_ext:
             extention of the radiation region from the x-point
             towards private flux region [m]
-        rec_ext: float
+        rec_ext:
             extention of the recycling region,
             along the separatrix, from the target [m]
-        x_point_rad: boolean
+        x_point_rad:
             if True, it assumes there is no radiation at all
             in the recycling region, and pfr_ext MUST be provided.
-        detachment: boolean
+        detachment:
             if True, it makes the temperature decay through the
             recycling region from the H ionization temperature to
             the assign temperature for detachment at the target.
             Else temperature is constant through the recycling region.
-        lfs: boolean
+        lfs:
             low field side. Default value True.
             If False it stands for high field side (hfs)
-        low_div: boolean
+        low_div:
             default=True for the lower divertor.
             If False, upper divertor
-        main_chamber_rad: boolean
+        main_chamber_rad:
             if True, the temperature from the midplane to
             the radiation region entrance is not constant
 
         Returns
         -------
-        t_pol: array
+        t_pol:
             temperature poloidal profile along each
             flux tube within the specified set [eV]
-        n_pol: array
+        n_pol:
             density poloidal profile along each
             flux tube within the specified set [1/m^3]
         """
+        f_ion_t_eV = self.params.f_ion_t.value_as("eV")
+
         # Validity condition for not x-point radiative
         if not x_point_rad and rec_ext is None:
             raise BuilderError("Required recycling region extention: rec_ext")
-        elif not x_point_rad and rec_ext is not None and lfs:
+        if not x_point_rad and rec_ext is not None and lfs:
             ion_front_z = ion_front_distance(
                 x_strike,
                 z_strike,
@@ -926,12 +1045,12 @@ class ScrapeOffLayerRadiation(Radiation):
             raise BuilderError("Required extention towards pfr: pfr_ext")
 
         # setting radiation and recycling regions
-        z_main, z_pfr = self.x_point_radiation_z_ext(main_ext, pfr_ext, low_div)
+        z_main, z_pfr = self.x_point_radiation_z_ext(main_ext, pfr_ext, low_div=low_div)
 
-        in_x, in_z, out_x, out_z = self.radiation_region_ends(z_main, z_pfr, lfs)
+        in_x, in_z, out_x, out_z = self.radiation_region_ends(z_main, z_pfr, lfs=lfs)
 
         reg_i = [
-            self.radiation_region_points(f.coords, z_main, z_pfr, low_div)
+            self.radiation_region_points(f.coords, z_main, z_pfr, lower=low_div)
             for f in flux_tubes
         ]
 
@@ -958,13 +1077,16 @@ class ScrapeOffLayerRadiation(Radiation):
         # Coverting needed parameter units
         t_u_ev = constants.raw_uc(t_u_kev, "keV", "eV")
         p_sol = self.params.P_sep.value
-        f_ion_t = constants.raw_uc(self.params.f_ion_t.value_as('keV'), "keV", "eV")
 
         if self.eq.is_double_null:
-            p_sol *= self.params.lfs_p_fraction.value if lfs else (1-self.params.lfs_p_fraction.value)
+            p_sol *= (
+                self.params.lfs_p_fraction.value
+                if lfs
+                else (1 - self.params.lfs_p_fraction.value)
+            )
 
         t_mp_prof, n_mp_prof = self.mp_electron_density_temperature_profiles(
-            t_u_ev, lfs
+            t_u_ev, omp=lfs
         )
         # entrance of radiation region
         t_rad_in = random_point_temperature(
@@ -983,18 +1105,16 @@ class ScrapeOffLayerRadiation(Radiation):
         )
 
         # exit of radiation region
-        if x_point_rad and pfr_ext is not None:
-            t_rad_out = constants.raw_uc(self.params.f_ion_t.value_as('keV'), "keV", "eV")
-        elif detachment:
-            t_rad_out = constants.raw_uc(self.params.f_ion_t.value_as('keV'), "keV", "eV")
-        else:
-            t_rad_out = target_temperature(
+        t_rad_out = (
+            f_ion_t_eV
+            if (x_point_rad and pfr_ext is not None) or detachment  # noqa: PLR1706
+            else target_temperature(
                 p_sol,
                 t_u_ev,
                 self.params.n_e_sep.value,
                 self.params.gamma_sheath.value,
-                self.params.eps_cool.value_as('eV'),
-                f_ion_t,
+                self.params.eps_cool.value_as("eV"),
+                f_ion_t_eV,
                 b_pol_tar,
                 b_pol_u,
                 alpha,
@@ -1003,11 +1123,11 @@ class ScrapeOffLayerRadiation(Radiation):
                 fw_lambda_q_near,
                 b_tot_tar,
             )
+        )
 
         # condition for occurred detachment
-        if t_rad_out <= constants.raw_uc(self.params.f_ion_t.value_as('keV'), "keV", "eV"):
-            x_point_rad = True
-            detachment = True
+        if t_rad_out <= self.params.f_ion_t.value_as("eV"):
+            x_point_rad = detachment = True
 
         # profiles through the SoL
         t_in_prof, n_in_prof = self.any_point_density_temperature_profiles(
@@ -1015,7 +1135,7 @@ class ScrapeOffLayerRadiation(Radiation):
             in_z,
             t_rad_in,
             t_u_ev,
-            lfs,
+            lfs=lfs,
         )
 
         t_out_prof, n_out_prof = self.any_point_density_temperature_profiles(
@@ -1023,14 +1143,14 @@ class ScrapeOffLayerRadiation(Radiation):
             out_z,
             t_rad_out,
             t_u_ev,
-            lfs,
+            lfs=lfs,
         )
         t_tar_prof, n_tar_prof = self.tar_electron_densitiy_temperature_profiles(
             n_out_prof,
             t_out_prof,
             detachment=detachment,
         )
-        
+
         # temperature poloidal distribution
         t_pol = [
             self.flux_tube_pol_t(
@@ -1044,7 +1164,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 x_point_rad=x_point_rad,
                 main_chamber_rad=main_chamber_rad,
             )
-            for f, t, t_in, t_out, reg, t_t, in zip(
+            for f, t, t_in, t_out, reg, t_t in zip(
                 flux_tubes,
                 t_mp_prof,
                 t_in_prof,
@@ -1065,7 +1185,7 @@ class ScrapeOffLayerRadiation(Radiation):
                 n_tar=n_t,
                 main_chamber_rad=main_chamber_rad,
             )
-            for f, n, n_in, n_out, reg, n_t, in zip(
+            for f, n, n_in, n_out, reg, n_t in zip(
                 flux_tubes,
                 n_mp_prof,
                 n_in_prof,
@@ -1101,12 +1221,12 @@ class ScrapeOffLayerRadiation(Radiation):
         else:
             fig = ax.figure
 
-        tubes = sum(flux_tubes, [])
-        power = sum(power_density, [])
+        tubes = functools.reduce(operator.iadd, flux_tubes, [])
+        power = functools.reduce(operator.iadd, power_density, [])
 
         p_min = min([min(p) for p in power])
         p_max = max([max(p) for p in power])
-        
+
         plot_coordinates(firstwall, ax=ax, linewidth=0.5, fill=False)
         separatrix = self.eq.get_separatrix()
         if isinstance(separatrix, Coordinates):
@@ -1131,8 +1251,13 @@ class ScrapeOffLayerRadiation(Radiation):
 
         return ax
 
+    @staticmethod
     def poloidal_distribution_plot(
-        self, flux_tubes, property, temperature=True, ax=None
+        flux_tubes: np.ndarray,
+        flux_property: np.ndarray,
+        *,
+        temperature: bool = True,
+        ax=None,
     ):
         """
         2D plot of a generic property (density, temperature or radiation)
@@ -1140,16 +1265,15 @@ class ScrapeOffLayerRadiation(Radiation):
 
         Parameters
         ----------
-        flux_tubes: np.array
+        flux_tubes
             array of the open flux tubes within the SoL.
-        property: np.array([np.array])
+        flux_property
             arrays containing the property values associated
             to the points of each flux tube.
         """
         if ax is None:
             _, ax = plt.subplots()
-        else:
-            _ = ax.figure
+
         plt.xlabel("Mid-Plane to Target")
         if temperature is True:
             plt.title("Temperature along flux surfaces")
@@ -1158,14 +1282,15 @@ class ScrapeOffLayerRadiation(Radiation):
             plt.title("Density along flux surfaces")
             plt.ylabel(r"$n_e~[m^{-3}]$")
 
-        for flux_tube, val in zip(flux_tubes, property):
-            ax.plot(np.linspace(0, len(flux_tube.coords.x), len(flux_tube.coords.x)), val)
+        for flux_tube, val in zip(flux_tubes, flux_property):
+            ax.plot(
+                np.linspace(0, len(flux_tube.coords.x), len(flux_tube.coords.x)), val
+            )
 
         return ax
 
-    def plot_t_vs_n(
-        self, flux_tube, t_distribution, n_distribution, rad_distribution=None, ax1=None
-    ):
+    @staticmethod
+    def plot_t_vs_n(flux_tube, t_distribution, n_distribution, ax1=None):
         """
         2D plot of temperature and density of a single flux tube within the SoL
 
@@ -1216,11 +1341,11 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         impurity_content,
         impurity_data,
         firstwall_geom,
-        x_sep_omp = None,
-        x_sep_imp = None,
-        dx_omp = None,
-        dx_imp = None,
-        sep_corrector = None
+        x_sep_omp=None,
+        x_sep_imp=None,
+        dx_omp=None,
+        dx_imp=None,
+        sep_corrector=None,
     ):
         super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp, sep_corrector)
 
@@ -1263,8 +1388,8 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         self.b_tot_inn_tar = np.hypot(self.b_pol_inn_tar, self.b_tor_inn_tar)
 
         p_sol = self.params.P_sep.value
-        p_sol_lfs = p_sol*self.params.lfs_p_fraction.value
-        p_sol_hfs = p_sol*(1-self.params.lfs_p_fraction.value)
+        p_sol_lfs = p_sol * self.params.lfs_p_fraction.value
+        p_sol_hfs = p_sol * (1 - self.params.lfs_p_fraction.value)
 
         # upstream temperature and power density
         self.t_omp = upstream_temperature(
@@ -1396,7 +1521,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         }
 
         for side, t_pol in loss.items():
-            #print(t_pol)
+            # print(t_pol)
             loss[side] = [
                 [radiative_loss_function_values(t, t_ref, l_ref) for t in t_pol]
                 for t_ref, l_ref in zip(self.imp_data_t_ref, self.imp_data_l_ref)
@@ -1464,7 +1589,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             self.total_rad_lfs_up,
             self.total_rad_hfs_up,
         ]
-        power = sum(rads, [])
+        power = functools.reduce(operator.iadd, rads, [])
 
         flux_tubes = [
             self.flux_tubes_lfs_low,
@@ -1472,8 +1597,8 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             self.flux_tubes_lfs_up,
             self.flux_tubes_hfs_up,
         ]
-        flux_tubes = sum(flux_tubes, [])
-    
+        flux_tubes = functools.reduce(operator.iadd, flux_tubes, [])
+
         self.x_tot = np.concatenate([flux_tube.coords.x for flux_tube in flux_tubes])
         self.z_tot = np.concatenate([flux_tube.coords.z for flux_tube in flux_tubes])
         self.rad_tot = np.concatenate(power)
@@ -1504,6 +1629,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             firstwall_geom,
         )
 
+
 class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
     """
     Specific class to build the SOL radiation source for a double null configuration.
@@ -1522,9 +1648,11 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         firstwall_geom,
         x_sep_omp,
         dx_omp,
-        sep_corrector
+        sep_corrector,
     ):
-        super().__init__(eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp, sep_corrector=sep_corrector)
+        super().__init__(
+            eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp, sep_corrector=sep_corrector
+        )
 
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
@@ -1627,9 +1755,9 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
     def build_sol_radiation_distribution(
         self,
-        t_and_n_pol_lfs,
-        t_and_n_pol_hfs,
-    ):
+        t_and_n_pol_lfs: np.ndarray,
+        t_and_n_pol_hfs: np.ndarray,
+    ) -> Dict[str, List[List[np.ndarray]]]:
         """
         Radiation profiles builder.
         For each scrape-off layer sector, it gives the
@@ -1637,31 +1765,25 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
 
         Parameters
         ----------
-        t_and_n_pol_lfs_low: array
+        t_and_n_pol_lfs:
             temperature and density poloidal profile along each
-            flux tube within the lfs lower divertor set
-        t_and_n_pol_lfs_up: array
+            flux tube within the lfs divertor set
+        t_and_n_pol_hfs:
             temperature and density poloidal profile along each
-            flux tube within the lfs upper divertor set
-        t_and_n_pol_hfs_low: array
-            temperature and density poloidal profile along each
-            flux tube within the hfs lower divertor set
-        t_and_n_pol_hfs_up: array
-            temperature and density poloidal profile along each
-            flux tube within the hfs upper divertor set
+            flux tube within the hfs divertor set
 
         Returns
         -------
-        rad["lfs_low"]: array
+        rad["lfs_low"]:
             radiation poloidal profile along each
             flux tube within the lfs lower divertor set
-        rad["lfs_up"]: array
+        rad["lfs_up"]:
             radiation poloidal profile along each
             flux tube within the lfs upper divertor set
-        rad["hfs_low"]: array
+        rad["hfs_low"]:
             radiation poloidal profile along each
             flux tube within the hfs lower divertor set
-        rad["hfs_up"]: array
+        rad["hfs_up"]:
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
         """
@@ -1697,70 +1819,46 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             ]
         return self.rad
 
-    def build_sol_radiation_map(self, rad_lfs, rad_hfs):
+    def build_sol_radiation_map(self, rad_lfs: np.ndarray, rad_hfs: np.ndarray):
         """
         Scrape off layer radiation map builder.
 
         Parameters
         ----------
-        rad["lfs_low"]: array
+        rad_lfs:
             radiation poloidal profile along each
-            flux tube within the lfs lower divertor set
-        rad["lfs_up"]: array
-            radiation poloidal profile along each
-            flux tube within the lfs upper divertor set
-        rad["hfs_low"]: array
-            radiation poloidal profile along each
-            flux tube within the hfs lower divertor set
-        rad["hfs_up"]: array
+            flux tube within the lfs divertor set
+        rad_hfs:
             radiation poloidal profile along each
             flux tube within the hfs upper divertor set
-        firstwall_geom: grid
-            first wall geometry
         """
         # total line radiation loss along the open flux tubes
-        self.total_rad_lfs = np.sum(
-            np.array(rad_lfs, dtype=object), axis=0
-        ).tolist()
-        self.total_rad_hfs = np.sum(
-            np.array(rad_hfs, dtype=object), axis=0
-        ).tolist()
+        self.total_rad_lfs = np.sum(np.array(rad_lfs, dtype=object), axis=0).tolist()
+        self.total_rad_hfs = np.sum(np.array(rad_hfs, dtype=object), axis=0).tolist()
 
-        rads = [
-            self.total_rad_lfs,
-            self.total_rad_hfs,
-        ]
-        power = sum(rads, [])
+        rads = [self.total_rad_lfs, self.total_rad_hfs]
+        power = functools.reduce(operator.iadd, rads, [])
 
-        flux_tubes = [
-            self.flux_tubes_lfs,
-            self.flux_tubes_hfs,
-        ]
-        flux_tubes = sum(flux_tubes, [])
+        flux_tubes = [self.flux_tubes_lfs, self.flux_tubes_hfs]
+        flux_tubes = functools.reduce(operator.iadd, flux_tubes, [])
 
         self.x_tot = np.concatenate([flux_tube.coords.x for flux_tube in flux_tubes])
         self.z_tot = np.concatenate([flux_tube.coords.z for flux_tube in flux_tubes])
         self.rad_tot = np.concatenate(power)
 
-    def plot_poloidal_radiation_distribution(self, firstwall_geom: Grid):
+    def plot_poloidal_radiation_distribution(self, firstwall_geom: Coordinates):
         """
         Plot poloiadal radiation distribution
         within the scrape-off layer
 
         Parameters
         ----------
-        firstwall: Grid
+        firstwall:
             first wall geometry
         """
         self.radiation_distribution_plot(
-            [
-                self.flux_tubes_lfs,
-                self.flux_tubes_hfs,
-            ],
-            [
-                self.total_rad_lfs,
-                self.total_rad_hfs,
-            ],
+            [self.flux_tubes_lfs, self.flux_tubes_hfs],
+            [self.total_rad_lfs, self.total_rad_hfs],
             firstwall_geom,
         )
 
@@ -1769,6 +1867,8 @@ class RadiationSource:
     """
     Simplified solver to easily access the radiation model location inputs.
     """
+
+    param_cls = RadiationSourceParams
 
     def __init__(
         self,
@@ -1780,19 +1880,14 @@ class RadiationSource:
         te_mp,
         core_impurities: Dict[str, float],
         sol_impurities: Dict[str, float],
-        sep_corrector = None
+        sep_corrector: Optional[float] = None,
     ):
-
         self.eq = eq
-        param_cls = RadiationSourceParams
-        try:
-            self.params = make_parameter_frame(params, param_cls)
-        except TypeError:
-            self.params = RadiationSourceParams()
+        self.params = make_parameter_frame(params, self.param_cls)
 
         # Get impurity data
-        impurities_list_core = [imp for imp in core_impurities]
-        impurities_list_sol = [imp for imp in sol_impurities]
+        impurities_list_core = list(core_impurities)
+        impurities_list_sol = list(sol_impurities)
         impurity_data_core = get_impurity_data(impurities_list=impurities_list_core)
         impurity_data_sol = get_impurity_data(impurities_list=impurities_list_sol)
 
@@ -1807,7 +1902,11 @@ class RadiationSource:
         self.ne_mp = ne_mp
         self.te_mp = te_mp
         if sep_corrector is None:
-            sep_corrector = SeparationCorrector.DN if eq.is_double_null else SeparationCorrector.SN
+            sep_corrector = (
+                SeparationCorrector.DN.value
+                if eq.is_double_null
+                else SeparationCorrector.SN.value
+            )
         self.sep_corrector = sep_corrector
 
         # To be calculated calling analyse
@@ -1821,25 +1920,23 @@ class RadiationSource:
 
         # Initialising the `FluxSurfaceMaker`
         (
-            self.dx_omp, 
-            self.dx_imp, 
-            self.flux_surfaces, 
-            self.x_sep_omp, 
-            self.x_sep_imp) = analyse_first_wall_flux_surfaces(
-                equilibrium=eq, 
-                first_wall=firstwall_shape, 
-                dx_mp=0.001
-                )
+            self.dx_omp,
+            self.dx_imp,
+            self.flux_surfaces,
+            self.x_sep_omp,
+            self.x_sep_imp,
+        ) = analyse_first_wall_flux_surfaces(
+            equilibrium=eq, first_wall=firstwall_shape, dx_mp=0.001
+        )
 
-
-    def analyse(self, firstwall_geom: Grid):
+    def analyse(self, firstwall_geom: Coordinates):
         """
         Using core radiation model and sol radiation model
         to calculate the radiation source at all points
 
         Parameters
         ----------
-        first_wall: Loop
+        first_wall:
             The closed first wall geometry
 
         Returns
@@ -1874,7 +1971,7 @@ class RadiationSource:
                 self.x_sep_imp,
                 self.dx_omp,
                 self.dx_imp,
-                self.sep_corrector
+                self.sep_corrector,
             )
         else:
             self.sol_rad = SNScrapeOffLayerRadiation(
@@ -1886,7 +1983,7 @@ class RadiationSource:
                 firstwall_geom,
                 self.x_sep_omp,
                 self.dx_omp,
-                self.sep_corrector
+                self.sep_corrector,
             )
 
         return self.core_rad, self.sol_rad
@@ -1955,9 +2052,9 @@ class RadiationSource:
         """
         f_sol = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
         fs = self.eq.get_flux_surface(psi_n)
-        return np.concatenate(
-            [interpolated_field_values(x, z, f_sol) for x, z in zip(fs.x, fs.z)]
-        )
+        return np.concatenate([
+            interpolated_field_values(x, z, f_sol) for x, z in zip(fs.x, fs.z)
+        ])
 
     def rad_sol_by_points(self, x_lst, z_lst):
         """
@@ -1976,9 +2073,9 @@ class RadiationSource:
             Local radiation source value(s) associated to the point(s)
         """
         f_sol = linear_interpolator(self.x_tot, self.z_tot, self.rad_tot)
-        return np.concatenate(
-            [interpolated_field_values(x, z, f_sol) for x, z in zip(x_lst, z_lst)]
-        )
+        return np.concatenate([
+            interpolated_field_values(x, z, f_sol) for x, z in zip(x_lst, z_lst)
+        ])
 
     def rad_by_psi_n(self, psi_n):
         """
@@ -1996,8 +2093,7 @@ class RadiationSource:
         """
         if psi_n < 1:
             return self.rad_core_by_psi_n(psi_n)
-        else:
-            return self.rad_sol_by_psi_n(psi_n)
+        return self.rad_sol_by_psi_n(psi_n)
 
     def rad_by_points(self, x, z):
         """
@@ -2026,7 +2122,9 @@ class RadiationSource:
         """
         self.core_rad.build_core_radiation_map()
 
-        t_and_n_sol_profiles = self.sol_rad.build_sol_distribution(self.sep_corrector, firstwall_geom)
+        t_and_n_sol_profiles = self.sol_rad.build_sol_distribution(
+            self.sep_corrector, firstwall_geom
+        )
         rad_sector_profiles = self.sol_rad.build_sol_radiation_distribution(
             *t_and_n_sol_profiles.values()
         )
@@ -2047,9 +2145,6 @@ class RadiationSource:
         else:
             fig = ax.figure
 
-        p_min = min(self.rad_tot)
-        p_max = max(self.rad_tot)
-
         separatrix = self.eq.get_separatrix()
         if isinstance(separatrix, Coordinates):
             separatrix = [separatrix]
@@ -2062,39 +2157,11 @@ class RadiationSource:
             c=self.rad_tot,
             s=10,
             cmap="plasma",
-            vmin=p_min,
-            vmax=p_max,
+            vmin=min(self.rad_tot),
+            vmax=max(self.rad_tot),
             zorder=40,
         )
 
         fig.colorbar(cm, label=r"$[MW.m^{-3}]$")
 
         return ax
-@dataclass
-class RadiationSourceParams(ParameterFrame):
-    n_e_sep: Parameter[float] = Parameter(name="n_e_sep", long_name="Electron density at separatrix", value=3e19, unit='1/m^3', source="default")
-    T_e_sep: Parameter[float] = Parameter(name="T_e_sep", long_name="Electron temperature at separatrix", value=2e-01, unit="keV", source="default")
-    n_e_0: Parameter[float] =  Parameter(name="n_e_0", long_name="Electron density on axis", value=1.81e+20, unit="1/m^3", source="default")
-    T_e_0: Parameter[float] =  Parameter(name="T_e_0", long_name="Electron temperature on axis", value=2.196e+01, unit="keV", source="default")
-    rho_ped_n: Parameter[float] =  Parameter(name="rho_ped_n", long_name="Density pedestal r/a location", value=9.4e-01, unit="dimensionless", source="default")
-    rho_ped_t: Parameter[float] =  Parameter(name="rho_ped_t", long_name="Temperature pedestal r/a location", value=9.76e-01 , unit="dimensionless", source="default")
-    n_e_ped: Parameter[float] =  Parameter(name="n_e_ped", long_name="Electron density pedestal height", value=1.086e+20, unit="1/m^3", source="default")
-    T_e_ped: Parameter[float] =  Parameter(name="T_e_ped", long_name="Electron temperature pedestal height", value=3.74, unit="keV", source="default")
-    alpha_n: Parameter[float] =  Parameter(name="alpha_n", long_name="Density profile factor", value=1.15, unit="dimensionless", source="default")
-    alpha_t: Parameter[float] =  Parameter(name="alpha_t", long_name="Temperature profile index", value=1.905, unit="dimensionless", source="default")
-    t_beta: Parameter[float] =  Parameter(name="t_beta", long_name="Temperature profile index beta", value=2, unit="dimensionless", source="default")
-    P_sep: Parameter[float] =  Parameter(name='P_sep', long_name='Radiation power', value=150, unit='MW', source="default")
-    fw_lambda_q_near_omp: Parameter[float] =  Parameter(name='fw_lambda_q_near_omp', long_name='Lambda_q near SOL omp', value=0.002, unit='m', source="default")
-    fw_lambda_q_far_omp: Parameter[float] =  Parameter(name='fw_lambda_q_far_omp', long_name='Lambda_q far SOL omp', value=0.10, unit='m', source="default")
-    fw_lambda_q_near_imp: Parameter[float] =  Parameter(name='fw_lambda_q_near_imp', long_name='Lambda_q near SOL imp', value=0.002, unit='m', source="default")
-    fw_lambda_q_far_imp: Parameter[float] =  Parameter(name='fw_lambda_q_far_imp', long_name='Lambda_q far SOL imp', value=0.10, unit='m', source="default")
-    k_0: Parameter[float] =  Parameter(name="k_0", long_name="material's conductivity", value=2000, unit="dimensionless", source="default")
-    gamma_sheath: Parameter[float] =  Parameter(name="gamma_sheath", long_name="sheath heat transmission coefficient", value=7, unit="dimensionless", source="default")
-    eps_cool: Parameter[float] =  Parameter(name="eps_cool", long_name="electron energy loss", value=25, unit="eV", source="default")
-    f_ion_t: Parameter[float] =  Parameter(name="f_ion_t", long_name="Hydrogen first ionization", value=0.01, unit="keV", source="default")
-    det_t: Parameter[float] =  Parameter(name="det_t", long_name="Detachment target temperature", value=0.0015, unit="keV", source="default")
-    lfs_p_fraction: Parameter[float] =  Parameter(name="lfs_p_fraction", long_name="lfs fraction of SoL power", value=0.9, unit="dimensionless", source="default")
-    theta_outer_target: Parameter[float] =  Parameter(name="theta_outer_target", long_name="Outer divertor poloidal angle with the separatrix flux line", value=5, unit="deg", source="default")
-    theta_inner_target: Parameter[float] =  Parameter(name="theta_inner_target", long_name="Inner divertor poloidal angle with the separatrix flux line", value=5, unit="deg", source="default")
-
-    
