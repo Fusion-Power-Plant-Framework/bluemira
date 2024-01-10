@@ -401,28 +401,52 @@ def legal_limit(
     TBR: float,
     mb: Optional[float] = None,
     p_fus: Optional[float] = None,
-):
-    """
-    Calculates the release rate of T from the model TFV cycle in kg/yr.
+) -> float:
+    r"""
+    Calculates the release rate of T from the model TFV cycle in g/yr.
 
-    :math:`A_{max}\\Bigg[\\Big[\\dot{m_{b}}\\Big((\\frac{1}{f_{b}}-1)+\
-    (1-{\\eta}_{f_{pump}})(1-{\\eta}_{f})\\frac{1}{f_{b}{\\eta}_{f}}\\Big)+\
-        \\dot{m_{gas}}\\Big](1-f_{DIR})(1-f_{tfv})(1-f_{detrit})+\\dot{m_{b}}\
-        \\Lambda f_{TERSCWPS}\\Bigg]\\times365\\times24\\times3600`\n \n
-    Where:\n
-    :math:`\\dot{m_{b}} = \\frac{P_{fus}[MW]M_{T}[g/mol]}
-    {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
+    .. math::
+
+        \text{Legal limit} = A_{max} \Bigg[&\Big[\dot{m_{b}}\Big((\frac{1}{f_b}-1)+
+        (1-\eta_{f_{pump}})(1-\eta_f)\frac{1}{f_b \eta_f}\Big)+
+        \dot{m_{gas}}\Big]
+
+        &\times\Big[(1-f_{DIR})(1-f_{tfv})(1-f_{detrit})\Big]
+        +\dot{m_{b}} \Lambda (1-f_{TERSCWPS})\Bigg]
+
+        \times&365\times24\times3600
+
+    Where either :math:`\dot{m_{b}}` or :math:`P_{fus}` has to be provided,
+    as they are related by the equation:
+
+    :math:`\dot{m_{b}} = \frac{P_{fus}}{E_{DT}}`
 
     Parameters
     ----------
+    mb:
+        :math:`\dot{m_{b}}` tritium inventory gross burn rate [kg/s]
+    p_fus:
+        :math:`P_{fus}` fusion power [W]
+    max_load_factor:
+        :math:`A_{max}` [dimensionless]
     m_gas:
         mass of gas flow [kg/s]
-    mb:
-        tritium inventory gross burn rate [kg/s]
-    p_fus:
-        fusion power [W]
-
-    All other parameters are dimensionless
+    eta_fuel_pump:
+        :math:`\eta_{f_{pump}}` [dimensionless]
+    eta_f:
+        :math:`\eta_f` [dimensionless]
+    fb:
+        :math:`f_b` [dimensionless]
+    f_dir:
+        :math:`f_{DIR}` [dimensionless]
+    f_detrit_split:
+        :math:`f_{detrit}` [dimensionless]
+    f_terscwps:
+        :math:`f_{TERSCWPS}` [dimensionless]
+    f_exh_split:
+        :math:`f_{tfv}` [dimensionless]
+    TBR:
+        :math:`\Lambda` [dimensionless]
 
     Returns
     -------
