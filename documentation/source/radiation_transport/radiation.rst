@@ -79,7 +79,7 @@ heat and momentum sink and sources appears. In the recycling region the temperat
 constant, due to strong parallel convection. This assumes that volumetric energy losses are
 relatively small. Assumption which may drop in reality, especially at low divertor temperatures.
 
-.. figure:: pitcher_schematic.png
+.. figure:: pitcher_schematic.PNG
    :scale: 50 %
    :name: fig:pitcher_schematic
    :align: center
@@ -92,7 +92,7 @@ The model in ``bluemira`` follows Pitcher's model and adds a fourth key location
 the start of the radiation region, to enhance the flexibility. Density and temperature parallel
 profiles are interpolated through these key location points for every SOL flux surface.
 
-.. figure:: T_drop_det.png
+.. figure:: T_drop_det.PNG
    :scale: 40 %
    :name: fig:T_drop_det
    :align: center
@@ -209,7 +209,7 @@ for every SOL flux surface, the poloidal profiles are defined by interpolation.
 In the :math:`recycle` region, if :math:`T_{recycling} > 10eV`,
 the electron temperature remains constant, and the electron density drop is weaker.
 
-.. figure:: no_detachment.png
+.. figure:: no_detachment.PNG
    :scale: 50 %
    :name: fig:no_detachment
    :align: center
@@ -220,7 +220,7 @@ the electron temperature remains constant, and the electron density drop is weak
 In contrast, if :math:`T_{recycling} < 10eV`, the electron temperature drops,
 and the electron density drop is larger.
 
-.. figure:: exp_detachment.png
+.. figure:: exp_detachment.PNG
    :scale: 50 %
    :name: fig:exp_detachment
    :align: center
