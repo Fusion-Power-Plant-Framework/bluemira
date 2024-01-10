@@ -101,7 +101,7 @@ def n_DT_reactions(p_fus: float) -> float:
     Calculates the number of D-T fusion reactions per s for a given D-T fusion
     power
 
-    :math:`n_{reactions} = \\frac{P_{fus}[W]}{17.58 [MeV]eV[J]} [1/s]`
+    :math:`n_{reactions} = \\frac{P_{fus}}{E_{DT}}`
 
     Parameters
     ----------
@@ -148,7 +148,7 @@ def r_T_burn(p_fus: float) -> float:  # noqa: N802
     Returns
     -------
     T burn rate in the plasma [kg/s]
-    """  # noqa: W505, E501
+    """
     return n_DT_reactions(p_fus) * raw_uc(T_MOLAR_MASS, "amu", "kg")
 
 
@@ -168,8 +168,8 @@ def r_D_burn_DT(p_fus: float) -> float:
     Notes
     -----
     .. math::
-        \\dot{m_{b}} = \\frac{P_{fus}[MW]M_{D}[g/mol]}
-        {17.58 [MeV]eV[J]N_{A}[1/mol]} [kg/s]
+
+        \\dot{m_{b}} = \\frac{P_{fus}}{E_{DT}}
     """
     return n_DT_reactions(p_fus) * raw_uc(D_MOLAR_MASS, "amu", "kg")
 
