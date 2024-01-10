@@ -16,7 +16,7 @@ import numpy as np
 from scipy.interpolate import griddata
 from scipy.optimize import curve_fit
 
-from bluemira.base.constants import N_AVOGADRO, S_TO_YR, T_LAMBDA, T_MOLAR_MASS, YR_TO_S
+from bluemira.base.constants import S_TO_YR, T_LAMBDA, T_MOLAR_MASS, YR_TO_S, raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
 from bluemira.plasma_physics.reactions import r_T_burn
@@ -115,7 +115,7 @@ def convert_flux_to_flow(flux: float, area: float) -> float:
     -------
     The flow-rate [kg/s]
     """
-    return flux * area * T_MOLAR_MASS / N_AVOGADRO / 1000
+    return flux * area * raw_uc(T_MOLAR_MASS, "amu", "kg")
 
 
 # =============================================================================
@@ -260,15 +260,15 @@ def delay_decay(t: np.ndarray, m_t_flow: np.ndarray, tt_delay: float) -> np.ndar
     Parameters
     ----------
     t:
-        The time vector
+        The time vector [s]
     m_t_flow:
-        The mass flow vector
+        The mass flow vector [kg/s] [or any other unit same as return value]
     tt_delay:
-        The delay duration [yr]
+        The delay duration (scalar) [yr]
 
     Returns
     -------
-    The delayed flow vector
+    The delayed flow vector [kg/s] [or any other unit same as m_t_flow]
     """
     t_delay = tt_delay * S_TO_YR
     shift = np.argmin(np.abs(t - t_delay))
@@ -401,17 +401,57 @@ def legal_limit(
     TBR: float,
     mb: Optional[float] = None,
     p_fus: Optional[float] = None,
-):
-    """
+) -> float:
+    r"""
     Calculates the release rate of T from the model TFV cycle in g/yr.
 
-    :math:`A_{max}\\Bigg[\\Big[\\dot{m_{b}}\\Big((\\frac{1}{f_{b}}-1)+\
-    (1-{\\eta}_{f_{pump}})(1-{\\eta}_{f})\\frac{1}{f_{b}{\\eta}_{f}}\\Big)+\
-        \\dot{m_{gas}}\\Big](1-f_{DIR})(1-f_{tfv})(1-f_{detrit})+\\dot{m_{b}}\
-        \\Lambda f_{TERSCWPS}\\Bigg]\\times365\\times24\\times3600`\n \n
-    Where:\n
-    :math:`\\dot{m_{b}} = \\frac{P_{fus}[MW]M_{T}[g/mol]}
-    {17.58 [MeV]eV[J]N_{A}[1/mol]} [g/s]`
+    .. math::
+
+        \text{Legal limit} = A_{max} \Bigg[&\Big[\dot{m_{b}}\Big((\frac{1}{f_b}-1)+
+        (1-\eta_{f_{pump}})(1-\eta_f)\frac{1}{f_b \eta_f}\Big)+
+        \dot{m_{gas}}\Big]
+
+        &\times\Big[(1-f_{DIR})(1-f_{tfv})(1-f_{detrit})\Big]
+        +\dot{m_{b}} \Lambda (1-f_{TERSCWPS})\Bigg]
+
+        \times&365\times24\times3600
+
+    Where either :math:`\dot{m_{b}}` or :math:`P_{fus}` has to be provided,
+    as they are related by the equation:
+
+    :math:`\dot{m_{b}} = \frac{P_{fus}}{E_{DT}}`
+
+    Parameters
+    ----------
+    mb:
+        :math:`\dot{m_{b}}` tritium inventory gross burn rate [kg/s]
+    p_fus:
+        :math:`P_{fus}` fusion power [W]
+    max_load_factor:
+        :math:`A_{max}` [dimensionless]
+    m_gas:
+        mass of gas flow [kg/s]
+    eta_fuel_pump:
+        :math:`\eta_{f_{pump}}` [dimensionless]
+    eta_f:
+        :math:`\eta_f` [dimensionless]
+    fb:
+        :math:`f_b` [dimensionless]
+    f_dir:
+        :math:`f_{DIR}` [dimensionless]
+    f_detrit_split:
+        :math:`f_{detrit}` [dimensionless]
+    f_terscwps:
+        :math:`f_{TERSCWPS}` [dimensionless]
+    f_exh_split:
+        :math:`f_{tfv}` [dimensionless]
+    TBR:
+        :math:`\Lambda` [dimensionless]
+
+    Returns
+    -------
+    legal_limit:
+        release rate of T [kg/yr]
     """
     if p_fus is None and mb is None:
         raise FuelCycleError("You must specify either fusion power or burn rate.")
@@ -423,7 +463,7 @@ def legal_limit(
         mb = None
 
     if mb is None:
-        mb = r_T_burn(p_fus)
+        mb = r_T_burn(p_fus)  # [kg/s]
 
     m_plasma = (
         (mb * ((1 / fb - 1) + (1 - eta_fuel_pump) * (1 - eta_f) / (eta_f * fb)) + m_gas)
@@ -433,7 +473,7 @@ def legal_limit(
     )
     m_bb = mb * TBR * (1 - f_terscwps)
     ll = max_load_factor * (m_plasma + m_bb)
-    return ll * 365 * 24 * 3600  # g/yr
+    return raw_uc(ll, "kg/s", "kg/yr")
 
 
 @nb.jit(nopython=True, cache=True)

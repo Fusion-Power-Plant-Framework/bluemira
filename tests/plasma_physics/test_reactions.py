@@ -22,13 +22,13 @@ class TestReactionEnergies:
         return f"E=mc^2 value {delta * 1e-6:.2f} MeV {relate} than Kikuchi reference."
 
     def test_DT(self):
-        e_dt_kikuchi = (3.5 + 14.1) * 1e6
-        e, v = E_DT_fusion(), e_dt_kikuchi
+        e_dt_kikuchi = 3.5 + 14.1
+        e, v = raw_uc(E_DT_fusion(), "J", "MeV"), e_dt_kikuchi
         assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
 
     def test_DD(self):
-        e_dd_kikuchi = np.array([1.01 + 3.02, 0.82 + 2.45]) * 1e6
-        e, v = E_DD_fusion(), np.average(e_dd_kikuchi)
+        e_dd_kikuchi = np.array([1.01 + 3.02, 0.82 + 2.45])
+        e, v = raw_uc(E_DD_fusion(), "J", "MeV"), np.average(e_dd_kikuchi)
         assert np.isclose(e, v, rtol=1e-3), self._msg(e, v)
 
 
