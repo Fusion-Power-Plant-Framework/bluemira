@@ -204,8 +204,6 @@ def reactivity(
     Calculate the thermal reactivity of a fusion reaction in Maxwellian plasmas,
     \\t:math:`<\\sigma v>`
 
-    temp
-
     Parameters
     ----------
     temp_k:
