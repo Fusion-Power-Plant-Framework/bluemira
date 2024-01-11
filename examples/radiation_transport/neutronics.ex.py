@@ -34,7 +34,6 @@ import numpy as np
 
 from bluemira.base.constants import raw_uc
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.tools import make_polygon
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import TBRHeatingSimulation
 from bluemira.neutronics.params import (
@@ -108,8 +107,6 @@ source_parameters = PlasmaSourceParameters(
 tbr_heat_sim = TBRHeatingSimulation(
     runtime_variables, source_parameters, breeder_materials, tokamak_geometry
 )
-blanket_wire = make_polygon(Coordinates(np.load("blanket_face.npy")))
-divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
 
 fw_coordinates = Coordinates({
     "x": [
@@ -193,7 +190,6 @@ fw_deconstruction = FWDeconstruction(fw_coordinates, (IBDIV, BBDIV, OBDIV))
 
 tbr_heat_sim.setup(
     fw_deconstruction,
-    divertor_wire,
     plot_geometry=True,
 )
 
