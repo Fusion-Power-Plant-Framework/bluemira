@@ -50,6 +50,8 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
     sh_coil_names:
         Names of the coils to use with SH approximation
         (Returned by spherical_harmonic_approximation)
+    tolerance:
+        Tolerance with which the constraint(s) will be met
 
     """
 

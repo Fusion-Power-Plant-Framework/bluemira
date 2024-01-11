@@ -20,7 +20,7 @@ from scipy.special import lpmv
 
 from bluemira.base.constants import MU_0
 from bluemira.base.error import BluemiraError
-from bluemira.base.look_and_feel import bluemira_print
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
@@ -215,6 +215,8 @@ def collocation_points(
     point_type:
         Method for creating a set of points: 'arc', 'arc_plus_extrema',
         'random', or 'random_plus_extrema'
+    seed:
+        Seed value to use with a random point distribution
 
     Returns
     -------
@@ -364,7 +366,7 @@ def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> float:
     )
 
 
-def coils_outside_lcfs_sphere(eq: Equilibrium) -> Tuple[np.ndarray, float]:
+def coils_outside_lcfs_sphere(eq: Equilibrium) -> Tuple[list, float]:
     """
     Find the coils located outside of the sphere containing the core plasma,
     i.e., LCFS of the equilibrium state.
@@ -378,6 +380,8 @@ def coils_outside_lcfs_sphere(eq: Equilibrium) -> Tuple[np.ndarray, float]:
     -------
     c_names or not_too_close_coils:
         coil names selected appropriately for use of SH approximation
+    bdry_r:
+        maximum radial value for lcfs of starting equilibria
 
     """
     c_names = np.array(eq.coilset.name)
@@ -388,11 +392,10 @@ def coils_outside_lcfs_sphere(eq: Equilibrium) -> Tuple[np.ndarray, float]:
     # Are the control coils outside the sphere containing
     # the last closed flux surface?
     if bdry_r > np.min(coil_r):
-        too_close_coils = c_names[coil_r <= bdry_r]
         not_too_close_coils = c_names[coil_r > bdry_r].tolist()
-        bluemira_print(
-            "One or more of your coils is too close to the LCFS to be used in the SH"
-            f" approximation. Coil names: {too_close_coils}."
+        bluemira_debug(
+            "Names of coils that can be used in the SH"
+            f" approximation: {not_too_close_coils}."
         )
         return not_too_close_coils, bdry_r
     return c_names, bdry_r
@@ -452,7 +455,7 @@ def spherical_harmonic_approximation(
     acceptable_fit_metric: Optional[float] = None,
     plot: bool = False,
     nlevels: int = 50,
-) -> Tuple[list, np.ndarray, int, float, np.ndarray, float]:
+) -> Tuple[list, np.ndarray, int, float, np.ndarray, float, np.ndarray]:
     """
     Calculate the spherical harmonic (SH) amplitudes/coefficients
     needed as a reference value for the 'spherical_harmonics_constraint'
@@ -483,6 +486,8 @@ def spherical_harmonic_approximation(
         in the x- and z-directions (4 points total),
         - 'random',
         - 'random_plus_extrema'.
+    seed:
+        Seed value to use with random point distribution
     acceptable_fit_metric:
         Value between 0 and 1 chosen by user (default=0.01).
         If the LCFS found using the SH approximation method perfectly matches the
@@ -503,13 +508,15 @@ def spherical_harmonic_approximation(
     coil_current_harmonic_amplitudes:
         SH coefficients/amplitudes for required number of degrees
     degree:
-        number of degrees required for a SH approx with the desired fit metric
+        Number of degrees required for a SH approx with the desired fit metric
     fit_metric_value:
-        fit metric achieved
+        Fit metric achieved
     approx_total_psi:
-        the total psi obtained using the SH approximation
+        Total psi obtained using the SH approximation
     bdry_r:
         Approximation boundary - sphere containing LCFS for chosen equilibrium.
+    sh_eq.coilset.current:
+        Coil currents found using the spherical harmonic approximation
 
     """
     # Default values if not input

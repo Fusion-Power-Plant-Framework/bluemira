@@ -22,16 +22,14 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
 
     Parameters
     ----------
-    ref_harmonics:
-        Initial harmonic amplitudes obtained from desired core plasma
+    a_mat:
+        Response matrix
+    b_vec:
+        Target value vector
+    value:
+        Target constraint value
     scale:
         Current scale with which to calculate the constraints
-    eq:
-        Equilibrium used to for coilset.
-    r_t: float
-        Typical length scale of the problem (e.g. radius at outer midplane)
-    sh_coil_names:
-        Names of the coils to use with SH approximation
     """
 
     def __init__(
