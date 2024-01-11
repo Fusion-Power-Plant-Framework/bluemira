@@ -134,8 +134,9 @@ def test_coils_outside_sphere_vacuum_psi():
     path = get_bluemira_path("equilibria/test_data", subfolder="tests")
     eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
 
-    sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
+    sh_coil_names, bdry_r = coils_outside_lcfs_sphere(eq)
     assert len(sh_coil_names) == 16
+    assert bdry_r == pytest.approx(1.366, abs=0.005)
 
     test_p_psi = eq.plasma.psi()
     test_v_psi = np.zeros(np.shape(eq.grid.x))
