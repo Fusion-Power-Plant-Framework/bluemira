@@ -25,9 +25,11 @@
 # # Example of how to use the neutronics module
 
 # %%
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
+import matplotlib.pyplot as plt
 import numpy as np
 
 from bluemira.base.constants import raw_uc
@@ -49,7 +51,9 @@ from bluemira.neutronics.params import (
 
 # %%
 CROSS_SECTION_XML = str(
-    Path("~/code/bluemira/bluemira_openmc_data/cross_sections.xml").expanduser()
+    Path(
+        "~/Others/cross_section_data/cross_section_data/cross_sections.xml"
+    ).expanduser()
 )
 # %% [markdown]
 # In this script we can also demonstrate openmc's ability to calculate the volume
@@ -73,9 +77,7 @@ volume_calculation = False
 # %%
 # set up the variables to be used for the openmc simulation
 # allowed blanket_type so far = {'WCLL', 'DCLL', 'HCPB'}
-breeder_materials, plasma_geometry, tokamak_geometry = get_preset_physical_properties(
-    BlanketType.HCPB
-)
+breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
 
 runtime_variables = OpenMCSimulationRuntimeParameters(
     cross_section_xml=CROSS_SECTION_XML,
@@ -150,11 +152,11 @@ fw_coordinates = Coordinates({
     ],
 })
 
-from dataclasses import dataclass
 
-
-@dataclass(frozen=True)
+@dataclass
 class TRegion:
+    """Tokamak Region"""
+
     index: int
     direction: np.ndarray
 
@@ -165,8 +167,6 @@ degrees = -30
 radians = np.rad2deg(degrees)
 OBDIV = TRegion(16, np.array([-np.cos(radians), 0, -np.sin(radians)]))
 
-
-import matplotlib.pyplot as plt
 
 f, ax = plt.subplots()
 ax.plot(*fw_coordinates.xz)
@@ -181,8 +181,10 @@ for r in [BBDIV, IBDIV, OBDIV]:
 plt.show()
 
 
-@dataclass(frozen=True)
+@dataclass
 class FWDeconstruction:
+    """A dataclass to hold the coordinates and TRegion's"""
+
     coordinates: Coordinates
     tregions: Tuple[TRegion]
 

@@ -19,7 +19,6 @@ from tabulate import tabulate
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
-from bluemira.neutronics.params import PlasmaGeometry, TokamakGeometry
 
 
 def get_percent_err(row):
@@ -403,8 +402,6 @@ class OpenMCResult:
 
 def geometry_plotter(
     cells: Dict[str, Union[List[openmc.Cell], openmc.Cell]],
-    plasma_geometry: PlasmaGeometry,
-    tokamak_geometry: TokamakGeometry,
 ) -> None:
     """
     Uses the OpenMC plotter to produce an image of the modelled geometry
@@ -414,12 +411,6 @@ def geometry_plotter(
     cells:
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
-
-    plasma_geometry:
-        dataclass containing the plasma geometry, including major_r, minor_r, elong.
-
-    tokamak_geometry:
-        dataclass containing the tokamak geometry. See TokamakGeometry for details.
 
     Returns
     -------

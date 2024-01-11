@@ -126,55 +126,8 @@ class PlasmaSourceParametersPPS(PlasmaSourceParameters):
         op_pps = op.copy()
         for k, v in op_pps.items():
             if k in conversion:
-                op_ppu[k] = raw_uc(v, *conversion[k])
-        return cls(**op, plasma_physics_units=PlasmaSourceParameters(**op_ppu))
-
-
-@dataclass(frozen=True)
-class TokamakGeometry:
-    """The measurements for all of the generic SOLID components of the tokamak.
-    Other terminologies:
-
-        thick: thickness
-        inb: inboard
-        outb: outboard
-        fw: first wall
-        bz: breeding zone
-        mnfld: manifold
-        vv: vacuum vessel
-        tf: toroidal field
-    """
-
-    inb_fw_thick: float  # [m]
-    inb_bz_thick: float  # [m]
-    inb_mnfld_thick: float  # [m]
-    inb_vv_thick: float  # [m]
-    tf_thick: float  # [m]
-    outb_fw_thick: float  # [m]
-    outb_bz_thick: float  # [m]
-    outb_mnfld_thick: float  # [m]
-    outb_vv_thick: float  # [m]
-    inb_gap: float  # [m]
-
-
-@dataclass(frozen=True)
-class PlasmaGeometry(PlasmaGeometryBase):
-    """See PlasmaGeometryBase
-
-    Addition of cgs converted variables
-    """
-
-    cgs: PlasmaGeometryBase
-
-    @classmethod
-    def from_si(cls, plasma_geometry: PlasmaGeometryBase):
-        """Convert from si units dataclass"""
-        pg = asdict(plasma_geometry)
-        pgcgs = pg.copy()
-        for k, v in pgcgs.items():
-            if k.endswith("_r"):  # minor and major radii
-                pgcgs[k] = raw_uc(v, "m", "cm")
-        return cls(**pg, cgs=PlasmaGeometryBase(**pgcgs))
+                op_pps[k] = raw_uc(v, *conversion[k])
+        return cls(**op, plasma_physics_units=PlasmaSourceParameters(**op_pps))
 
 
 @dataclass(frozen=True)
@@ -218,18 +171,18 @@ class TokamakGeometry(TokamakGeometryBase):
     cgs: TokamakGeometryBase
 
     @classmethod
-    def from_si(cls, tokamak_geometry: TokamakGeometryBase):
+    def from_si(cls, tokamak_geometry_base: TokamakGeometryBase):
         """Convert from si units dataclass"""
-        tg = asdict(tokamak_geometry)
+        tg = asdict(tokamak_geometry_base)
         tgcgs = tg.copy()
         for k, v in tgcgs.items():
             tgcgs[k] = raw_uc(v, "m", "cm")
-        return cls(**tg, cgs=TokamakGeometry(**tgcgs))
+        return cls(**tg, cgs=TokamakGeometryBase(**tgcgs))
 
 
 def get_preset_physical_properties(
     blanket_type: Union[str, BlanketType],
-) -> Tuple[BreederTypeParameters, PlasmaGeometryBase, TokamakGeometryBase]:
+) -> Tuple[BreederTypeParameters, TokamakGeometryBase]:
     """
     Works as a switch-case for choosing the tokamak geometry
     and blankets for a given blanket type.
@@ -264,13 +217,6 @@ def get_preset_physical_properties(
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
 
-    plasma_geometry = PlasmaGeometryBase(
-        major_r=8.938,  # [m]
-        minor_r=2.883,  # [m]
-        elong=1.65,  # [dimensionless]
-        triang=0.333,  # [m]
-    )
-
     shared_building_geometry = {  # that are identical in all three types of reactors.
         "inb_gap": 0.2,  # [m]
         "inb_vv_thick": 0.6,  # [m]
@@ -278,7 +224,7 @@ def get_preset_physical_properties(
         "outb_vv_thick": 0.6,  # [m]
     }
     if blanket_type is BlanketType.WCLL:
-        tokamak_geometry = TokamakGeometry(
+        tokamak_geometry = TokamakGeometryBase(
             **shared_building_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.378,  # [m]
@@ -288,7 +234,7 @@ def get_preset_physical_properties(
             outb_mnfld_thick=0.429,  # [m]
         )
     elif blanket_type is BlanketType.DCLL:
-        tokamak_geometry = TokamakGeometry(
+        tokamak_geometry = TokamakGeometryBase(
             **shared_building_geometry,
             inb_fw_thick=0.022,  # [m]
             inb_bz_thick=0.300,  # [m]
@@ -299,7 +245,7 @@ def get_preset_physical_properties(
         )
     elif blanket_type is BlanketType.HCPB:
         # HCPB Design Report, 26/07/2019
-        tokamak_geometry = TokamakGeometry(
+        tokamak_geometry = TokamakGeometryBase(
             **shared_building_geometry,
             inb_fw_thick=0.027,  # [m]
             inb_bz_thick=0.460,  # [m]
@@ -309,4 +255,4 @@ def get_preset_physical_properties(
             outb_mnfld_thick=0.560,  # [m]
         )
 
-    return breeder_materials, plasma_geometry, tokamak_geometry
+    return breeder_materials, tokamak_geometry

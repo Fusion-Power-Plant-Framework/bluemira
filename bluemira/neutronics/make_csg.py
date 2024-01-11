@@ -103,16 +103,12 @@ class Cells:
 def make_geometry(
     tokamak_geometry: TokamakGeometry,
     fw_deconstruction: BluemiraWire,
-    div_wire: BluemiraWire,
     material_lib: mm.MaterialsLibrary,
     *,
     fw_surf_score_depth: float = 0.0001,
-    div_clearance: float = 49.0,  # [cm]
     clearance_r: float = 50.0,  # [cm]
     container_steel_thick: float = 200.0,  # [cm]
     clear_div_to_shell=5.0,  # [cm]
-    div_fw_thick=2.5,  # [cm] # Divertor first wall thickness
-    div_sf_thick=0.01,  # [cm]
 ) -> Tuple[Cells, openmc.Universe]:
     """
     Creates an OpenMC CSG geometry for a reactor
