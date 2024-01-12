@@ -21,10 +21,7 @@ from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
 from bluemira.geometry.tools import (
-    interpolate_bspline,
-    make_bezier,
     make_circle,
-    make_ellipse,
     make_polygon,
 )
 from bluemira.geometry.wire import BluemiraWire
@@ -170,11 +167,13 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         # Create some vertical targets for now. Eventually the target
         # angle will be derived from the grazing-angle parameter
         target_length = self.params.div_Ltarg.value
-        target_coords = np.array([
-            [point[0], point[0]],
-            [point[1], point[1]],
-            [point[2] - target_length / 2, point[2] + target_length / 2],
-        ])
+        target_coords = np.array(
+            [
+                [point[0], point[0]],
+                [point[1], point[1]],
+                [point[2] - target_length / 2, point[2] + target_length / 2],
+            ]
+        )
         return make_polygon(target_coords, label=label)
 
     def make_dome(
@@ -208,10 +207,12 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         # the input start and end points
         start_coord = np.array([[start[0]], [start[1]]])  # [[x], [z]]
         end_coord = np.array([[end[0]], [end[1]]])
-        idx = np.array([
-            np.argmin(np.hypot(*(flux_surface - start_coord))),
-            np.argmin(np.hypot(*(flux_surface - end_coord))),
-        ])
+        idx = np.array(
+            [
+                np.argmin(np.hypot(*(flux_surface - start_coord))),
+                np.argmin(np.hypot(*(flux_surface - end_coord))),
+            ]
+        )
 
         # Make sure the start and end are in the right order
         if idx[0] > idx[1]:
@@ -315,7 +316,8 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         radius_t = np.linalg.norm(targ - arc_center_point)
         radius_b = np.linalg.norm(blnk - arc_center_point)
 
-        assert np.isclose(radius_b, radius_t), "radi must be equal"
+        if not np.isclose(radius_b, radius_t):
+            raise ValueError("radi must be equal")
 
         return make_circle(
             radius=radius_t,
@@ -323,6 +325,7 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
             axis=(0, -1, 0),
             start_angle=start_angle,
             end_angle=end_angle,
+            label=label,
         )
 
     def make_inner_baffle(

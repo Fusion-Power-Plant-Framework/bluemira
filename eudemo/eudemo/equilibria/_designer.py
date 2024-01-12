@@ -639,6 +639,14 @@ class ReferenceFreeBoundaryEquilibriumDesigner(Designer[Equilibrium]):
             self.opt_problem.targets.plot(ax=ax)
             plt.show()
 
+        if self.build_config.get("save", False):
+            if self.file_path is None:
+                raise ValueError(
+                    "Cannot execute save equilibrium: "
+                    "'file_path' missing from build config."
+                )
+            eq.to_eqdsk(self.file_path, directory=str(Path().cwd()))
+
         self._update_params_from_eq(eq)
 
         return eq
