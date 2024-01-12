@@ -67,6 +67,7 @@
     "run_mode": "run",
     "diagnostic_plotting": { "plot": ["eq", "convergence"] },
     "summary_plot": true,
+    "plot": true,
     "save": true,
     "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
     "file_path": "$path_expand:./equilibrium_eqdsk.json",
@@ -135,9 +136,8 @@
     "dagmc_export_dir": "$path_expand:./dagmc_export"
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
-    "file_path": "config/TFCoilDesign.json",
     "plot": true,
     "material": {
       "Winding Pack": "Toroidal_Field_Coil_2015",
@@ -166,7 +166,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./PFCoilDesign.json",
     "material": {
       "Ground Insulation": "Poloidal_Field_Coil",
