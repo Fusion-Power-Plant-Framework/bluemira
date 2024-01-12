@@ -60,7 +60,7 @@
     }
   },
   "Free boundary equilibrium": {
-    "run_mode": "run",
+    "run_mode": "read",
     "plot": true,
     "save": true,
     "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
@@ -106,7 +106,7 @@
     "Divertor silhouette": {}
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "config/TFCoilDesign.json",
     "plot": true,
     "param_class": "TripleArc",
@@ -134,7 +134,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "config/PFCoilDesign.json",
     "verbose": false,
     "plot": true,
