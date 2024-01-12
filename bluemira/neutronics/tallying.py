@@ -66,10 +66,10 @@ def filter_cells(
     mat_filter = openmc.MaterialFilter([getattr(material_lib, mat) for mat in mats])
 
     fw_surf_filter = openmc.CellFilter((
-        *cells.inboard.sf,
+        *cells.inboard.scoring,
         *cells.outboard.sf,
         cells.divertor.fw_sf,
-        *cells.inboard.fw,
+        *cells.inboard.first_wall,
         *cells.outboard.fw,
         cells.divertor.fw,
     ))
