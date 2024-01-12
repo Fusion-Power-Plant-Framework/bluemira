@@ -9,8 +9,6 @@
 
 from __future__ import annotations
 
-import contextlib
-
 import openmc
 from numpy import pi
 from pps_isotropic.source import create_parametric_plasma_source
@@ -169,8 +167,7 @@ class TBRHeatingSimulation:
             source = create_parametric_plasma_source(
                 # tokamak geometry
                 major_r=self.source_parameters.plasma_physics_units.major_radius,
-                minor_r=self.source_parameters.plasma_physics_units.major_radius
-                / self.source_parameters.plasma_physics_units.aspect_ratio,
+                minor_r=self.source_parameters.plasma_physics_units.minor_radius,
                 elongation=self.source_parameters.plasma_physics_units.elongation,
                 triangularity=self.source_parameters.plasma_physics_units.triangularity,
                 # plasma geometry
@@ -183,7 +180,7 @@ class TBRHeatingSimulation:
             )
         else:
             source = create_ring_source(
-                self.source_parameters.plasma_physics_units.major_r,
+                self.source_parameters.plasma_physics_units.major_radius,
                 self.source_parameters.plasma_physics_units.shaf_shift,
             )
 
@@ -214,9 +211,7 @@ class TBRHeatingSimulation:
             # it will change the definition of n_DT_reactions from [MW] to [W].
         )
 
-        # TODO: This won't work because of shenanigans:
-        with contextlib.suppress(AttributeError):
-            create_tallies(self.cells, self.material_lib)
+        create_tallies(self.cells, self.material_lib)
 
         if plot_geometry:
             present.geometry_plotter(self.cells)

@@ -90,7 +90,7 @@ def stochastic_volume_calculation(
     Parameters
     ----------
     source_parameters:
-        dataclass containing the major_r, minor_r, and elongation of the plasma.
+        dataclass containing the major_radius, minor_radius, and elong. of the plasma.
 
     tokamak_geometry:
         dataclass containing thicknesses of various components
@@ -107,15 +107,15 @@ def stochastic_volume_calculation(
 
     # maximum radii and heigth reached by all of the tokamak's breeder zone component
     maxr = (
-        source_parameters.plasma_physics_units.major_r
-        + source_parameters.plasma_physics_units.minor_r
+        source_parameters.plasma_physics_units.major_radius
+        + source_parameters.plasma_physics_units.minor_radius
         + tokamak_geometry.cgs.outb_fw_thick
         + tokamak_geometry.cgs.outb_bz_thick
     )
     maxz = (
         # height of plasma = 2 * elong * minor
         source_parameters.plasma_physics_units.elongation
-        * source_parameters.plasma_physics_units.minor_r
+        * source_parameters.plasma_physics_units.minor_radius
         + tokamak_geometry.cgs.outb_fw_thick
         + tokamak_geometry.cgs.outb_bz_thick
         + tokamak_geometry.cgs.outb_mnfld_thick

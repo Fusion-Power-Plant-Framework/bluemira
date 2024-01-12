@@ -102,6 +102,13 @@ class PlasmaSourceParameters:
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
 
+    @property
+    def minor_radius(self):
+        """Calculate minor radius from
+        aspect_ratio = major_radius/minor_radius
+        """
+        return self.major_radius / self.aspect_ratio
+
 
 @dataclass(frozen=True)
 class PlasmaSourceParametersPPS(PlasmaSourceParameters):
