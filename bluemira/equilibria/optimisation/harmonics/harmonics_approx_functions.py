@@ -619,9 +619,7 @@ def spherical_harmonic_approximation(
     if plot:
         _p1, _p2, _p3, _p4 = plot_psi_comparision(
             grid=grid,
-            tot_psi_org=eq.psi(grid.x, grid.z),
-            tot_psi_app=approx_total_psi,
-            vac_psi_org=eq.coilset.psi(grid.x, grid.z),
+            eq=eq,
             vac_psi_app=coilset_approx_psi,
             nlevels=nlevels,
         )
@@ -639,27 +637,21 @@ def spherical_harmonic_approximation(
 
 def plot_psi_comparision(
     grid: Grid,
-    tot_psi_org: np.ndarray,
-    tot_psi_app: np.ndarray,
-    vac_psi_org: np.ndarray,
+    eq: Equilibrium,
     vac_psi_app: np.ndarray,
     axes: Optional[List[plt.Axes]] = None,
     nlevels: int = 50,
     show: bool = True,
 ) -> Tuple[plt.Axes, plt.Axes, plt.Axes, plt.Axes]:
     """
-    Create plot comparing an original psi to psi obtained from approximation.
+    Create plot comparing an original psi to psi obtained from harmonic approximation.
 
     Parameters
     ----------
     grid:
         Need x and z values to plot psi.
-    tot_psi_org:
-        Original Total Psi
-    tot_psi_app:
-        Approximation Total Psi
-    vac_psi_org:
-        Original Vacuum Psi (contribution from entire coilset)
+    eq:
+        Starting Equilibrium
     vac_psi_app:
         Approximation Vacuum Psi (contribution from entire coilset)
     axes:
@@ -675,6 +667,10 @@ def plot_psi_comparision(
         The Matplotlib Axes objects for each subplot.
 
     """
+    tot_psi_org = eq.psi(grid.x, grid.z)
+    vac_psi_org = eq.coilset.psi(grid.x, grid.z)
+    tot_psi_app = eq.plasma.psi(grid.x, grid.z) + vac_psi_app
+
     cmap = PLOT_DEFAULTS["psi"]["cmap"]
     clevels = np.linspace(np.amin(tot_psi_org), np.amax(tot_psi_org), nlevels)
     n_ax = 4
