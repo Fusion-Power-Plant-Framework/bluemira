@@ -163,9 +163,8 @@
     }
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
-    "file_path": "config/TFCoilDesign.json",
     "plot": true,
     "material": {
       "Winding Pack": "Toroidal_Field_Coil_2015",
