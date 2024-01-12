@@ -19,7 +19,7 @@ from matplotlib.collections import LineCollection
 from rich.progress import track
 from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
-from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, raw_uc, ureg
+from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc, ureg
 from bluemira.base.error import BluemiraError
 from bluemira.codes import process
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
@@ -29,8 +29,6 @@ if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.grid import Grid
     from bluemira.geometry.wire import BluemiraWire
-
-E_CHARGE = ureg.Quantity("e").to_base_units().magnitude
 
 try:
     from cherab.core.math import AxisymmetricMapper, sample3d
@@ -211,7 +209,7 @@ def target_temperature(
     return t_tar
 
 
-def random_point_temperature(
+def specific_point_temperature(
     x_p: float,
     z_p: float,
     t_u: float,
@@ -228,7 +226,7 @@ def random_point_temperature(
     lfs=True,
 ) -> float:
     """
-    Calculate the temperature at a random point above the x-point.
+    Calculate the temperature at a specific point above the x-point.
 
     Parameters
     ----------
@@ -824,7 +822,7 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
     for i, (_, x_width, y_width, centre_point, normal_vector, y_vector) in track(
         enumerate(wall_detectors),
         total=len(wall_detectors),
-        description="Radaition detectors...",
+        description="Radiation detectors...",
     ):
         # extract the dimensions and orientation of the tile
         pixel_area = x_width * y_width

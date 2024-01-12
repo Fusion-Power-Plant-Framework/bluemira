@@ -236,7 +236,6 @@ calculate the 2-D distribution of the total radiated power density :math:`[MW/m^
 
 .. [Post_1995] Post et al., Physics of Plasmas 2, 2328-2336 (1995).
 .. [Kovari_2014] Kovari et al., Fusion Engineering and Design 89.12 (2014): 3054-3069.
-.. [Johner_2011] Johner., Fusion Science and Technology 59.2 (2011): 308-349
 .. [Stangeby_2000] Stangeby, The plasma boundary of magnetic fusion devices. Vol.224.
    Philadelphia, Pennsylvania: Institute of Physics Pub., 2000
 .. [Pitcher_1997] Pitcher et al., Plasma Physics and Controlled Fusion 39.6 (1997): 779.
