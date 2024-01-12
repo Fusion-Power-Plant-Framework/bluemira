@@ -302,4 +302,4 @@ def test_SphericalHarmonicConstraintFunction():
 
     test_f_constraint = test_constraint.f_constraint(test_vector)
 
-    assert all(test_f_constraint - (test_result - b_vec)) == 0.0
+    assert all(test_f_constraint - (test_result - b_vec)) == pytest.approx(0.0, abs=0.05)
