@@ -22,6 +22,8 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parame
 class MidplaneProfilesParams(ParameterFrame):
     """Midplane profiles parameters"""
 
+    sep_corrector: Parameter[float]
+    """Separation correction for double and single null plasma"""
     alpha_n: Parameter[float]
     """Density profile factor"""
     alpha_t: Parameter[float]

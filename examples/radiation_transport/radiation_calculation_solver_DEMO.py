@@ -43,11 +43,13 @@ SINGLE_NULL = False
 if SINGLE_NULL:
     eq_name = "EU-DEMO_EOF.json"
     fw_name = "first_wall.json"
+    sep_corrector = 5e-2
     lfs_p_fraction = 1
     tungsten_fraction = 1e-4
 else:
     eq_name = "DN-DEMO_eqref.json"
     fw_name = "DN_fw_shape.json"
+    sep_corrector = 5e-3
     lfs_p_fraction = 0.9
     tungsten_fraction = 1e-5
 
@@ -72,6 +74,7 @@ fw_shape = Coordinates.from_json(
 
 # %%
 params = {
+    "sep_corrector": {"value": sep_corrector, "unit": "dimensionless"},
     "alpha_n": {"value": 1.15, "unit": "dimensionless"},
     "alpha_t": {"value": 1.905, "unit": "dimensionless"},
     "det_t": {"value": 0.0015, "unit": "keV"},
@@ -144,7 +147,7 @@ source.rad_map(fw_shape)
 
 
 # %%
-def main(only_source=False):  # noqa: D103
+def main(only_source=True):  # noqa: D103
     if only_source:
         source.plot()
         plt.show()

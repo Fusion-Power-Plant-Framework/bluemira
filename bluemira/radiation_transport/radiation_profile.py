@@ -40,7 +40,7 @@ from bluemira.radiation_transport.radiation_tools import (
     linear_interpolator,
     radiative_loss_function_plot,
     radiative_loss_function_values,
-    random_point_temperature,
+    specific_point_temperature,
     target_temperature,
     upstream_temperature,
 )
@@ -49,13 +49,6 @@ if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.grid import Grid
     from bluemira.geometry.wire import BluemiraWire
-
-
-class SeparationCorrector(Enum):
-    """Separation correction for double and single null plasma"""
-
-    DN = 5e-3
-    SN = 5e-2
 
 
 @dataclass
@@ -96,6 +89,8 @@ class CoreRadiationParameterFrame(RadiationParameterFrame):
 class SolRadiationParameterFrame(RadiationParameterFrame):
     """Scrape off layer radiation parameter frame"""
 
+    sep_corrector: Parameter[float]
+    """Separation correction for double and single null plasma"""
     P_sep: Parameter[float]
     """Radiation power"""
     det_t: Parameter[float]
@@ -128,6 +123,8 @@ class SolRadiationParameterFrame(RadiationParameterFrame):
 class RadiationSourceParams(ParameterFrame):
     """Radiaition source parameter frame"""
 
+    sep_corrector: Parameter[float]
+    """Separation correction for double and single null plasma"""
     alpha_n: Parameter[float]
     """Density profile factor"""
     alpha_t: Parameter[float]
@@ -592,7 +589,6 @@ class ScrapeOffLayerRadiation(Radiation):
         x_sep_imp=None,
         dx_omp=None,
         dx_imp=None,
-        sep_corrector=None,
     ):
         super().__init__(eq, params)
 
@@ -605,7 +601,7 @@ class ScrapeOffLayerRadiation(Radiation):
         self.collect_x_and_o_point_coordinates()
 
         # Separatrix parameters
-        self.collect_separatrix_parameters(sep_corrector)
+        self.collect_separatrix_parameters()
 
     def collect_x_and_o_point_coordinates(self):
         """
@@ -624,7 +620,7 @@ class ScrapeOffLayerRadiation(Radiation):
             self.points["x_point"]["z_low"] = x_point[1][1]
             self.points["x_point"]["z_up"] = x_point[0][1]
 
-    def collect_separatrix_parameters(self, sep_corrector):
+    def collect_separatrix_parameters(self):
         """
         Radiation source relevant parameters at the separatrix
         """
@@ -647,14 +643,14 @@ class ScrapeOffLayerRadiation(Radiation):
             })
         # To move away from the mathematical separatrix which would
         # give infinite connection length
-        self.r_sep_omp = self.x_sep_omp + sep_corrector
+        self.r_sep_omp = self.x_sep_omp + self.params.sep_corrector.value
         # magnetic field components at the midplane
         self.b_pol_sep_omp = self.eq.Bp(self.x_sep_omp, self.z_mp)
         b_tor_sep_omp = self.eq.Bt(self.x_sep_omp)
         self.b_tot_sep_omp = np.hypot(self.b_pol_sep_omp, b_tor_sep_omp)
 
         if self.eq.is_double_null:
-            self.r_sep_imp = self.x_sep_imp - sep_corrector
+            self.r_sep_imp = self.x_sep_imp - self.params.sep_corrector.value
             self.b_pol_sep_imp = self.eq.Bp(self.x_sep_imp, self.z_mp)
             b_tor_sep_imp = self.eq.Bt(self.x_sep_imp)
             self.b_tot_sep_imp = np.hypot(self.b_pol_sep_imp, b_tor_sep_imp)
@@ -735,17 +731,17 @@ class ScrapeOffLayerRadiation(Radiation):
         )
         if z_main > z_pfr:
             reg_i = np.where((sep_loop.z < z_main) & (sep_loop.z >= z_pfr))[0]
-            i_in = np.where(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
-            i_out = np.where(sep_loop.z == np.min(sep_loop.z[reg_i]))[0]
+            i_in = np.argmax(sep_loop.z[reg_i])
+            i_out = np.argmin(sep_loop.z[reg_i])
         else:
             reg_i = np.where((sep_loop.z > z_main) & (sep_loop.z <= z_pfr))[0]
-            i_in = np.where(sep_loop.z == np.min(sep_loop.z[reg_i]))[0]
-            i_out = np.where(sep_loop.z == np.max(sep_loop.z[reg_i]))[0]
+            i_in = np.argmin(sep_loop.z[reg_i])
+            i_out = np.argmax(sep_loop.z[reg_i])
 
         entrance_x, entrance_z = sep_loop.x[i_in], sep_loop.z[i_in]
         exit_x, exit_z = sep_loop.x[i_out], sep_loop.z[i_out]
 
-        return entrance_x[0], entrance_z[0], exit_x[0], exit_z[0]
+        return entrance_x, entrance_z, exit_x, exit_z
 
     @staticmethod
     def radiation_region_points(
@@ -954,7 +950,6 @@ class ScrapeOffLayerRadiation(Radiation):
         z_strike: float,
         main_ext: float,
         firstwall_geom: Coordinates,
-        sep_corrector: float,
         pfr_ext: Optional[float] = None,
         rec_ext: Optional[float] = None,
         *,
@@ -1089,7 +1084,7 @@ class ScrapeOffLayerRadiation(Radiation):
             t_u_ev, omp=lfs
         )
         # entrance of radiation region
-        t_rad_in = random_point_temperature(
+        t_rad_in = specific_point_temperature(
             in_x,
             in_z,
             t_u_ev,
@@ -1099,7 +1094,7 @@ class ScrapeOffLayerRadiation(Radiation):
             r_sep_mp,
             self.points["o_point"]["z"],
             self.params.k_0.value,
-            sep_corrector,
+            self.params.sep_corrector.value,
             firstwall_geom,
             lfs,
         )
@@ -1345,9 +1340,8 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         x_sep_imp=None,
         dx_omp=None,
         dx_imp=None,
-        sep_corrector=None,
     ):
-        super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp, sep_corrector)
+        super().__init__(eq, params, x_sep_omp, x_sep_imp, dx_omp, dx_imp)
 
         self.impurities_content = [
             frac for key, frac in impurity_content.items() if key != "H"
@@ -1416,7 +1410,7 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             firstwall_geom=firstwall_geom,
         )
 
-    def build_sol_distribution(self, sep_corrector, firstwall_geom: Grid):
+    def build_sol_distribution(self, firstwall_geom: Grid):
         """
         Temperature and density profiles builder.
         For each scrape-off layer sector, it gives temperature
@@ -1449,7 +1443,6 @@ class DNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 "z_strike": getattr(self, f"z_strike_{side}"),
                 "main_ext": None,
                 "firstwall_geom": firstwall_geom,
-                "sep_corrector": sep_corrector,
                 "pfr_ext": None,
                 "rec_ext": 2,
                 "x_point_rad": False,
@@ -1648,10 +1641,9 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
         firstwall_geom,
         x_sep_omp,
         dx_omp,
-        sep_corrector,
     ):
         super().__init__(
-            eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp, sep_corrector=sep_corrector
+            eq, params, x_sep_omp=x_sep_omp, dx_omp=dx_omp
         )
 
         self.impurities_content = [
@@ -1702,7 +1694,7 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
             firstwall_geom=firstwall_geom,
         )
 
-    def build_sol_distribution(self, sep_corrector, firstwall_geom: Grid):
+    def build_sol_distribution(self, firstwall_geom: Grid):
         """
         Temperature and density profiles builder.
         For each scrape-off layer sector, it gives temperature
@@ -1735,7 +1727,6 @@ class SNScrapeOffLayerRadiation(ScrapeOffLayerRadiation):
                 "z_strike": getattr(self, f"z_strike_{side}"),
                 "main_ext": 1,
                 "firstwall_geom": firstwall_geom,
-                "sep_corrector": sep_corrector,
                 "pfr_ext": None,
                 "rec_ext": 2,
                 "x_point_rad": False,
@@ -1880,7 +1871,6 @@ class RadiationSource:
         te_mp,
         core_impurities: Dict[str, float],
         sol_impurities: Dict[str, float],
-        sep_corrector: Optional[float] = None,
     ):
         self.eq = eq
         self.params = make_parameter_frame(params, self.param_cls)
@@ -1901,13 +1891,6 @@ class RadiationSource:
         self.psi_n = psi_n
         self.ne_mp = ne_mp
         self.te_mp = te_mp
-        if sep_corrector is None:
-            sep_corrector = (
-                SeparationCorrector.DN.value
-                if eq.is_double_null
-                else SeparationCorrector.SN.value
-            )
-        self.sep_corrector = sep_corrector
 
         # To be calculated calling analyse
         self.core_rad = None
@@ -1971,7 +1954,6 @@ class RadiationSource:
                 self.x_sep_imp,
                 self.dx_omp,
                 self.dx_imp,
-                self.sep_corrector,
             )
         else:
             self.sol_rad = SNScrapeOffLayerRadiation(
@@ -1983,7 +1965,6 @@ class RadiationSource:
                 firstwall_geom,
                 self.x_sep_omp,
                 self.dx_omp,
-                self.sep_corrector,
             )
 
         return self.core_rad, self.sol_rad
@@ -2123,7 +2104,7 @@ class RadiationSource:
         self.core_rad.build_core_radiation_map()
 
         t_and_n_sol_profiles = self.sol_rad.build_sol_distribution(
-            self.sep_corrector, firstwall_geom
+            firstwall_geom
         )
         rad_sector_profiles = self.sol_rad.build_sol_radiation_distribution(
             *t_and_n_sol_profiles.values()
