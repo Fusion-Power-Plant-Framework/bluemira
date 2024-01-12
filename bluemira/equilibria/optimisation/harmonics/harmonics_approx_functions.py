@@ -11,7 +11,7 @@ Spherical harmonics classes and calculations.
 from copy import deepcopy
 from dataclasses import dataclass
 from enum import Enum, auto
-from typing import Optional, Tuple
+from typing import List, Optional, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -617,13 +617,13 @@ def spherical_harmonic_approximation(
 
     # plot comparing original psi to the SH approximation
     if plot:
-        plot_psi_comparision(
-            grid,
-            eq.psi(grid.x, grid.z),
-            approx_total_psi,
-            eq.coilset.psi(grid.x, grid.z),
-            coilset_approx_psi,
-            nlevels,
+        _p1, _p2, _p3, _p4 = plot_psi_comparision(
+            grid=grid,
+            tot_psi_org=eq.psi(grid.x, grid.z),
+            tot_psi_app=approx_total_psi,
+            vac_psi_org=eq.coilset.psi(grid.x, grid.z),
+            vac_psi_app=coilset_approx_psi,
+            nlevels=nlevels,
         )
 
     return (
@@ -643,8 +643,10 @@ def plot_psi_comparision(
     tot_psi_app: np.ndarray,
     vac_psi_org: np.ndarray,
     vac_psi_app: np.ndarray,
+    axes: Optional[List[plt.Axes]] = None,
     nlevels: int = 50,
-):
+    show: bool = True,
+) -> Tuple[plt.Axes, plt.Axes, plt.Axes, plt.Axes]:
     """
     Create plot comparing an original psi to psi obtained from approximation.
 
@@ -660,22 +662,47 @@ def plot_psi_comparision(
         Original Vacuum Psi (contribution from entire coilset)
     vac_psi_app:
         Approximation Vacuum Psi (contribution from entire coilset)
+    axes:
+        List of Matplotlib Axes objects set by user
+    nlevels:
+        Plot setting, higher n = greater number of contour lines
+    show:
+        Whether or not to display the plot
+
+    Returns
+    -------
+    plot1, plot2, plot3, plot4:
+        The Matplotlib Axes objects for each subplot.
 
     """
     cmap = PLOT_DEFAULTS["psi"]["cmap"]
     clevels = np.linspace(np.amin(tot_psi_org), np.amax(tot_psi_org), nlevels)
+    n_ax = 4
 
-    plot1 = plt.subplot2grid((5, 4), (0, 0), rowspan=2, colspan=1)
+    if axes is not None:
+        if len(axes) != n_ax:
+            raise BluemiraError(
+                f"There are 4 subplots, you have provided settings for {len(axes)}."
+            )
+        plot1, plot2, plot3, plot4 = axes[0], axes[1], axes[2], axes[3]
+    else:
+        plot1, plot2, plot3, plot4 = (
+            plt.subplot2grid((5, 4), (0, 0), rowspan=2, colspan=1),
+            plt.subplot2grid((5, 4), (0, 2), rowspan=2, colspan=1),
+            plt.subplot2grid((5, 4), (3, 0), rowspan=2, colspan=1),
+            plt.subplot2grid((5, 4), (3, 2), rowspan=2, colspan=1),
+        )
+
     plot1.set_title("Original, Total Psi")
     plot1.contour(grid.x, grid.z, tot_psi_org, levels=clevels, cmap=cmap, zorder=8)
-    plot2 = plt.subplot2grid((5, 4), (0, 2), rowspan=2, colspan=1)
     plot2.set_title("SH Approximation, Total Psi")
     plot2.contour(grid.x, grid.z, tot_psi_app, levels=clevels, cmap=cmap, zorder=8)
-    plot3 = plt.subplot2grid((5, 4), (3, 0), rowspan=2, colspan=1)
     plot3.set_title("Original, Vacuum Psi")
     plot3.contour(grid.x, grid.z, vac_psi_org, levels=clevels, cmap=cmap, zorder=8)
-    plot4 = plt.subplot2grid((5, 4), (3, 2), rowspan=2, colspan=1)
     plot4.set_title("SH Approximation, Vacuum Psi")
     plot4.contour(grid.x, grid.z, vac_psi_app, levels=clevels, cmap=cmap, zorder=8)
 
-    plt.show()
+    if show:
+        plt.show()
+
+    return plot1, plot2, plot3, plot4

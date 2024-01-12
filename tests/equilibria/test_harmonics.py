@@ -4,6 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
+from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
@@ -21,6 +22,9 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
     harmonic_amplitude_marix,
     lcfs_fit_metric,
     spherical_harmonic_approximation,
+)
+from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
+    SphericalHarmonicConstraintFunction,
 )
 from bluemira.geometry.coordinates import Coordinates, in_polygon
 
@@ -94,8 +98,6 @@ def test_coil_harmonic_amplitude_matrix():
     r_t = 1
 
     test_out_matrx = coil_harmonic_amplitude_matrix(coilset, d, r_t, sh_coil_names)
-
-    print(np.shape(test_out_matrx))
 
     assert test_out_matrx.shape[1] == len(sh_coil_names)
     assert test_out_matrx.shape[0] == d
@@ -252,3 +254,52 @@ def test_spherical_harmonic_approximation():
     assert test_harmonic_amps == pytest.approx(harmonic_amps)
     assert test_degree == 13
     assert test_fit_metric == pytest.approx(0.031, abs=0.0006)
+
+
+def test_SphericalHarmonicConstraintFunction():
+    coil = Coil(x=4, z=10, current=2e6, dx=1, dz=0.5, j_max=5.0, b_max=50, name="PF_1")
+
+    circuit = SymmetricCircuit(
+        Coil(
+            x=1.5,
+            z=6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=10.0,
+            b_max=100,
+            ctype="PF",
+            name="PF_2",
+        ),
+        Coil(
+            x=1.5,
+            z=-6,
+            current=1e6,
+            dx=0.25,
+            dz=0.5,
+            j_max=10.0,
+            b_max=100,
+            ctype="PF",
+            name="PF_3",
+        ),
+    )
+
+    circuit2 = deepcopy(circuit)
+    circuit2["PF_2"].name = "PF_4"
+    circuit2["PF_3"].name = "PF_5"
+    coilset = CoilSet(coil, circuit, circuit2)
+
+    sh_coil_names = ["PF_2", "PF_3", "PF_4", "PF_5"]
+
+    d = 3
+    r_t = 1
+    a_mat = coil_harmonic_amplitude_matrix(coilset, d, r_t, sh_coil_names)
+    b_vec = np.array([1e-2, 1e-18])
+    test_vector = np.array([1, 1, 1, 1])
+    test_result = a_mat[1:,] @ test_vector
+
+    test_constraint = SphericalHarmonicConstraintFunction(a_mat, b_vec, 0.0, 1)
+
+    test_f_constraint = test_constraint.f_constraint(test_vector)
+
+    assert all(test_f_constraint - (test_result - b_vec)) == 0.0
