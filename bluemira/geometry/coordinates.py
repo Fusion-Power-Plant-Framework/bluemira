@@ -1305,7 +1305,7 @@ class Coordinates:
         """
         self._array = self._array[:, ::-1]
 
-    def open(self):  # noqa: A003
+    def open(self):
         """
         Open the Coordinates (if they are closed)
         """
@@ -1449,7 +1449,7 @@ class Coordinates:
         """
         Representation of the Coordinates.
         """
-        r = self._array.__repr__()
+        r = repr(self._array)
         return f"{self.__class__.__name__}{r[5:]}"
 
     def __getitem__(self, *args, **kwargs):
@@ -1462,7 +1462,7 @@ class Coordinates:
         """
         Array-like unpacking.
         """
-        return self._array.__iter__()
+        return iter(self._array)
 
 
 # =============================================================================

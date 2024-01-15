@@ -10,7 +10,7 @@ Utility functions for interacting with external codes
 
 import json
 import os
-import subprocess
+import subprocess  # noqa: S404
 import threading
 from enum import Enum
 from types import ModuleType

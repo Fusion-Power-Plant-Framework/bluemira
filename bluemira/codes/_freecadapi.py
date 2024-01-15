@@ -365,7 +365,7 @@ def interpolate_bspline(
         kwargs["InitialTangent"] = Base.Vector(start_tangent)
         kwargs["FinalTangent"] = Base.Vector(end_tangent)
 
-    if start_tangent and not end_tangent or end_tangent and not start_tangent:
+    if (start_tangent and not end_tangent) or (end_tangent and not start_tangent):
         bluemira_warn(
             "You must set both start and end tangencies or neither when creating a "
             "bspline. Start and end tangencies ignored."
