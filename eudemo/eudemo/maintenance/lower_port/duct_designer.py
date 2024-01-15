@@ -68,10 +68,12 @@ class LowerPortKOZDesigner(Designer):
         params: Union[Dict, ParameterFrame],
         build_config: Dict,
         divertor_xz: BluemiraFace,
+        div_wall_join_pt: Tuple[float, float],
         tf_coil_xz_boundary: BluemiraWire,
     ):
         super().__init__(params, build_config)
         self.divertor_face = divertor_xz
+        self.div_wall_join_pt = div_wall_join_pt
         self.tf_coil_xz_boundary = tf_coil_xz_boundary
 
         # TODO: Cross-check with upper port handling and add casing
@@ -154,7 +156,7 @@ class LowerPortKOZDesigner(Designer):
         # just take the point with the highest z, if there's more than one
         z_highest_pt = max(closest_pts, key=lambda p: p[2])
 
-        return (z_highest_pt[0], z_highest_pt[2]), (div_x_ob, div_z_top)
+        return (z_highest_pt[0], z_highest_pt[2]), self.div_wall_join_pt
 
     def _pad_points(self, ib_point: Tuple, ob_point: Tuple):
         points_grad = (ib_point[1] - ob_point[1]) / (ib_point[0] - ob_point[0])  # z/x

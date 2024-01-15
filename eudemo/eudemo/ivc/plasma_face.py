@@ -25,9 +25,12 @@ class PlasmaFaceDesignerParams(ParameterFrame):
 
     div_type: Parameter[str]
     c_rm: Parameter[float]
+    lower_port_angle: Parameter[float]
 
 
-class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
+class PlasmaFaceDesigner(
+    Designer[Tuple[BluemiraFace, BluemiraFace, Tuple[float, float]]]
+):
     """
     Designs the Plasma facing keep out zones
 
@@ -60,7 +63,7 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         self.wall_boundary = wall_boundary
         self.divertor_silhouette = divertor_silhouette
 
-    def run(self) -> Tuple[BluemiraFace, BluemiraFace]:
+    def run(self) -> Tuple[BluemiraFace, BluemiraFace, Tuple[float, float]]:
         """
         Run method for PlasmaFaceDesigner
         """
@@ -81,9 +84,13 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         # wire should be at the same z. But take the minimum z value of
         # the start and end points.
         # Note we do not use bounding_box here due to a bug: 34228d3
-        min_z = min(self.wall_boundary.start_point().z, self.wall_boundary.end_point().z)
+        min_z = min(
+            self.wall_boundary.start_point().z, self.wall_boundary.end_point().z
+        )[0]
         # This is the x the outer baffle connects to the wall
-        max_x = max(self.wall_boundary.start_point().x, self.wall_boundary.end_point().x)
+        max_x = max(
+            self.wall_boundary.start_point().x, self.wall_boundary.end_point().x
+        )[0]
 
         rm_clearance_face = _make_clearance_face(
             vessel_bbox.x_min,
@@ -92,12 +99,19 @@ class PlasmaFaceDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
             self.params.c_rm.value,
         )
         rm_outer_clearance_face = _angled_wall_cutter(
-            max_x, min_z, self.params.c_rm.value, -0
+            max_x,
+            min_z,
+            self.params.c_rm.value,
+            self.params.lower_port_angle.value,
         )
 
-        return _cut_vessel_shape(
+        blanket_face, divertor_face = _cut_vessel_shape(
             in_vessel_face, [rm_clearance_face, rm_outer_clearance_face]
         )
+
+        div_wall_join_pt = (max_x, min_z)
+
+        return blanket_face, divertor_face, div_wall_join_pt
 
 
 def _angled_wall_cutter(

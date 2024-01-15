@@ -8,7 +8,7 @@ Module containing builders for the EUDEMO first wall components
 """
 
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Tuple
 
 from bluemira.base.designer import run_designer
 from bluemira.base.parameter_frame import ParameterFrame
@@ -31,6 +31,7 @@ class IVCShapes:
     divertor_face: BluemiraFace
     outer_boundary: BluemiraWire
     inner_boundary: BluemiraWire
+    div_wall_join_pt: Tuple[float, float]
 
 
 def design_ivc(
@@ -63,7 +64,7 @@ def design_ivc(
         wall=cut_wall_boundary,
     ).execute()
     ivc_boundary = IVCBoundaryDesigner(params, wall_shape=wall_boundary).execute()
-    plasma_face, divertor_face = PlasmaFaceDesigner(
+    plasma_face, divertor_face, div_wall_join_pt = PlasmaFaceDesigner(
         params,
         ivc_boundary=ivc_boundary,
         wall_boundary=cut_wall_boundary,
@@ -81,4 +82,5 @@ def design_ivc(
         divertor_face=divertor_face,
         outer_boundary=ivc_boundary,
         inner_boundary=wall_boundary,
+        div_wall_join_pt=div_wall_join_pt,
     )
