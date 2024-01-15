@@ -19,7 +19,7 @@ from matplotlib.collections import LineCollection
 from rich.progress import track
 from scipy.interpolate import LinearNDInterpolator, interp1d, interp2d
 
-from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc, ureg
+from bluemira.base.constants import C_LIGHT, D_MOLAR_MASS, E_CHARGE, raw_uc
 from bluemira.base.error import BluemiraError
 from bluemira.codes import process
 from bluemira.equilibria.flux_surfaces import calculate_connection_length_flt
@@ -887,9 +887,9 @@ def detect_radiation(wall_detectors, n_samples, world, *, verbose: bool = False)
     }
 
 
-def build_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
+def make_wall_detectors(wall_r, wall_z, max_wall_len, x_width, debug=False):
     """
-    To build the detectors on the wall
+    To make the detectors on the wall
     """
     # number of detectors
     num = np.shape(wall_r)[0] - 2
@@ -1087,7 +1087,7 @@ class FirstWallRadiationSolver:
         )
         max_wall_len = 10.0e-2
         X_WIDTH = 0.01
-        wall_detectors = build_wall_detectors(
+        wall_detectors = make_wall_detectors(
             self.fw_shape.x, self.fw_shape.z, max_wall_len, X_WIDTH
         )
         wall_loads = detect_radiation(wall_detectors, 500, world)
