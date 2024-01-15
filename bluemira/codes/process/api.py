@@ -47,8 +47,8 @@ imp_data = None  # placeholder for PROCESS module
 
 try:
     from process.impurity_radiation import ImpurityDataHeader, read_impurity_file
-    from process.io.in_dat import InDat  # noqa: F401, F811
-    from process.io.mfile import MFile  # noqa: F401, F811
+    from process.io.in_dat import InDat  # noqa: F401
+    from process.io.mfile import MFile  # noqa: F401
     from process.io.python_fortran_dicts import get_dicts
 
     ENABLED = True
@@ -147,7 +147,7 @@ class Impurities(Enum):
         except NameError:
             raise CodesError("PROCESS impurity data directory not found") from None
 
-    def id(self):  # noqa: A003
+    def id(self):
         """
         Get variable string for impurity fraction
         """

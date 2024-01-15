@@ -5,7 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import os
-import subprocess
+import subprocess  # noqa: S404
 from unittest import mock
 
 import pytest
