@@ -14,7 +14,7 @@ idna==3.6
 imagesize==1.4.1
 importlib-metadata==7.0.1
 iniconfig==2.0.0
-Jinja2==3.1.2
+Jinja2==3.1.3
 jupyter-cache==0.6.1
 jupytext==1.16.1
 MarkupSafe==2.1.3
