@@ -104,7 +104,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         Pretty print
         """
         coils_repr = "\n    "
-        coils_repr += "".join(f"{c.__repr__()}\n    " for c in self._coils)
+        coils_repr += "".join(f"{c!r}\n    " for c in self._coils)
         coils_repr = coils_repr.replace("\n", "\n    ")
         return f"{type(self).__name__}({coils_repr[:-5]})"
 

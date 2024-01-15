@@ -12,7 +12,7 @@ import logging
 import os
 import platform
 import shutil
-import subprocess
+import subprocess  # noqa: S404
 from getpass import getuser
 from pathlib import Path
 from textwrap import dedent, wrap
