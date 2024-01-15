@@ -147,7 +147,8 @@ def _make_clearance_face(
     """
     x_coords = np.zeros(4)
     x_coords[:2] = x_min
-    x_coords[2:] = (x_max + x_min) / 2  # make it small than half the vessel
+    # will be smaller than the full length of the vessel
+    x_coords[2:] = (x_max + x_min) / 2
 
     y_coords = np.zeros(4)
 
