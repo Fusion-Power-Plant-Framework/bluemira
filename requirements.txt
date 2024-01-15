@@ -5,7 +5,7 @@ click==8.1.7
 contourpy==1.1.1
 CoolProp==6.6.0
 cycler==0.12.1
-fonttools==4.47.0
+fonttools==4.47.2
 fortranformat==2.0.0
 gmsh==4.12.1
 imageio==2.33.1
