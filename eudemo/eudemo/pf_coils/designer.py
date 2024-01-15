@@ -282,6 +282,7 @@ class PFCoilsDesigner(Designer[CoilSet]):
             "phi_l_pos": {"value": 30.0},
         })
         lcfs = lcfs_parameterisation.create_shape().discretize(byedges=True, ndiscr=50)
+        lcfs = self.ref_eq.eq.get_LCFS()
         x_lcfs, z_lcfs = lcfs.x, lcfs.z
         arg_inner = np.argmin(x_lcfs)
         arg_xp = np.argmin(z_lcfs)

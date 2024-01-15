@@ -106,7 +106,7 @@
     "Divertor silhouette": {}
   },
   "TF coils": {
-    "run_mode": "run",
+    "run_mode": "read",
     "file_path": "config/TFCoilDesign.json",
     "plot": true,
     "param_class": "TripleArc",
@@ -172,7 +172,7 @@
       "optimisation_settings": {
         "algorithm_name": "COBYLA",
         "conditions": {
-          "max_eval": 50,
+          "max_eval": 200,
           "ftol_rel": 1e-10
         }
       }
