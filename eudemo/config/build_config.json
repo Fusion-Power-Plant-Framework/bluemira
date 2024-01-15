@@ -1,13 +1,13 @@
 {
   "params": "$path:params.json",
   "Radial build": {
-    "run_mode": "read",
+    "run_mode": "run",
     "read_dir": "config/",
     "run_dir": "config/",
     "plot": true
   },
   "Fixed boundary equilibrium": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "config/fixed_boundary_eqdsk.json",
     "param_class": "JohnerLCFS",
     "shape_config": {
@@ -106,7 +106,7 @@
     "Divertor silhouette": {}
   },
   "TF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "config/TFCoilDesign.json",
     "plot": true,
     "param_class": "TripleArc",
@@ -130,7 +130,7 @@
     }
   },
   "PF coils": {
-    "run_mode": "read",
+    "run_mode": "run",
     "file_path": "config/PFCoilDesign.json",
     "verbose": false,
     "plot": true,
