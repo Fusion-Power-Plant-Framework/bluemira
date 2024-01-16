@@ -61,55 +61,12 @@ class LoadModel(Enum):
 
 
 @dataclass
-class ScenarioConfig(Config):
-    """Power cycle scenario config"""
+class Efficiency:
+    """Efficiency data container"""
 
-    pulses: dict[str, int]
-    description: str = ""
-
-
-@dataclass
-class PulseConfig(Config):
-    """Power cycle pulse config"""
-
-    phases: list[str]
-    description: str = ""
-
-
-@dataclass
-class PhaseConfig(Config):
-    """Power cycle phase config"""
-
-    operation: str
-    subphases: list[str]
-    description: str = ""
-
-
-@dataclass
-class PowerCycleLoadConfig(Config):
-    """Power cycle load config"""
-
-    consumption: bool
-    efficiencies: dict  # todo  another dataclass?
-    subloads: List[str]
-    description: str = ""
-
-
-@dataclass
-class PowerCycleSubSystem(Config):
-    """Power cycle sub system config"""
-
-    reactive_loads: List[str]
-    active_loads: List[str]
-    description: str = ""
-
-
-@dataclass
-class PowerCycleSystem(Config):
-    """Power cycle system config"""
-
-    subsystems: List[str]
-    description: str = ""
+    value: float
+    desc: str = ""
+    reactive: Optional[bool] = None
 
 
 class Descriptor:
@@ -158,6 +115,173 @@ class LibraryConfigDescriptor(Descriptor):
         setattr(obj, self._name, value)
 
 
+class PhaseEfficiencyDescriptor(Descriptor):
+    """Efficiency descriptor for use with dataclasses"""
+
+    def __get__(self, obj: Any, _) -> List[Efficiency]:
+        """Get the config"""
+        if obj is None:
+            return dict
+        return getattr(obj, self._name)
+
+    def __set__(
+        self,
+        obj: Any,
+        value: List[Union[Dict[str, Union[str, float, bool]], Efficiency]],
+    ):
+        """Setup the config"""
+        if callable(value):
+            value = value()
+        for k, val in value.items():
+            for no, v in enumerate(val):
+                if not isinstance(v, Efficiency):
+                    value[k][no] = Efficiency(**v)
+
+        setattr(obj, self._name, value)
+
+
+class LoadEfficiencyDescriptor(Descriptor):
+    """Efficiency descriptor for use with dataclasses"""
+
+    def __get__(self, obj: Any, _) -> List[Efficiency]:
+        """Get the config"""
+        if obj is None:
+            return list
+        return getattr(obj, self._name)
+
+    def __set__(
+        self,
+        obj: Any,
+        value: List[Union[Dict[str, Union[str, float, bool]], Efficiency]],
+    ):
+        """Setup the config"""
+        if callable(value):
+            value = value()
+        for no, v in enumerate(value):
+            if not isinstance(v, Efficiency):
+                value[no] = Efficiency(**v)
+
+        setattr(obj, self._name, value)
+
+
+@dataclass
+class ScenarioConfig(Config):
+    """Power cycle scenario config"""
+
+    pulses: dict[str, int]
+    description: str = ""
+
+
+@dataclass
+class PulseConfig(Config):
+    """Power cycle pulse config"""
+
+    phases: list[str]
+    description: str = ""
+
+
+@dataclass
+class PhaseConfig(Config):
+    """Power cycle phase config"""
+
+    operation: str
+    subphases: list[str]
+    description: str = ""
+
+
+@dataclass
+class PowerCycleSubPhase(Config):
+    """SubPhase Config"""
+
+    duration: Union[float, str]
+    loads: list[str] = field(default_factory=list)
+    efficiencies: PhaseEfficiencyDescriptor = PhaseEfficiencyDescriptor()
+    unit: str = "s"
+    description: str = ""
+    reference: str = ""
+
+    def __post_init__(self):
+        """Enforce unit conversion"""
+        if isinstance(self.duration, (float, int)):
+            self.duration = raw_uc(self.duration, self.unit, "second")
+            self.unit = "s"
+
+
+@dataclass
+class PowerCycleSystem(Config):
+    """Power cycle system config"""
+
+    subsystems: List[str]
+    description: str = ""
+
+
+@dataclass
+class PowerCycleSubSystem(Config):
+    """Power cycle sub system config"""
+
+    loads: List[str]
+    description: str = ""
+
+
+@dataclass
+class PowerCycleLoad(Config):
+    """Power cycle load config"""
+
+    time: npt.ArrayLike = field(default_factory=lambda: np.arange(2))
+    reactive_data: npt.ArrayLike = field(default_factory=lambda: np.zeros(2))
+    active_data: npt.ArrayLike = field(default_factory=lambda: np.zeros(2))
+    efficiencies: LoadEfficiencyDescriptor = LoadEfficiencyDescriptor()
+    model: Union[LoadModel, str] = LoadModel.RAMP
+    unit: str = "W"
+    description: str = ""
+    normalised: bool = True
+    consumption: bool = True
+
+    def __post_init__(self):
+        """Validate load"""
+        for var_name in ("time", "reactive_data", "active_data"):
+            var = getattr(self, var_name)
+            if not isinstance(var, np.ndarray):
+                setattr(self, var_name, np.array(var))
+        if isinstance(self.model, str):
+            self.model = LoadModel[self.model.upper()]
+        for data in (self.reactive_data, self.active_data):
+            if data.size != self.time.size:
+                raise ValueError(
+                    f"time and data must be the same length for {self.name}:" f"{data}"
+                )
+        if any(np.diff(self.time) < 0):
+            raise ValueError("time must increase")
+
+        self.reactive_data = raw_uc(self.reactive_data, self.unit, "W")
+        self.active_data = raw_uc(self.active_data, self.unit, "W")
+        self.unit = "W"
+
+    def interpolate(
+        self,
+        time: npt.ArrayLike,
+        end_time: Optional[float] = None,
+        load_type: Union[str, LoadType] = LoadType.ACTIVE,
+    ) -> np.ndarray:
+        """
+        Interpolate load for a given time vector
+
+        Notes
+        -----
+        The interpolation type is set by subload.model.
+        Any out-of-bound values are set to zero.
+        """
+        if isinstance(load_type, str):
+            load_type = LoadType[load_type.upper()]
+        return interp1d(
+            self.time,
+            getattr(self, f"{load_type.name}_data"),
+            kind=self.model.value,
+            bounds_error=False,  # turn-off error for out-of-bound
+            fill_value=(0, 0),  # below-/above-bounds extrapolations
+        )(time if end_time is None else np.array(time) * end_time)
+
+
 def interpolate_extra(vector: npt.NDArray, n_points: int):
     """
     Add points between each point in a vector.
@@ -172,97 +296,6 @@ def interpolate_extra(vector: npt.NDArray, n_points: int):
         ),
         np.atleast_1d(vector[-1]),
     ])
-
-
-@dataclass
-class PowerCycleSubPhase(Config):
-    """SubPhase Config"""
-
-    duration: Union[float, str]
-    reactive_loads: list[str] = field(default_factory=list)
-    active_loads: list[str] = field(default_factory=list)
-    unit: str = "s"
-    description: str = ""
-    reference: str = ""
-
-    def __post_init__(self):
-        """Enforce unit conversion"""
-        if isinstance(self.duration, (float, int)):
-            self.duration = raw_uc(self.duration, self.unit, "second")
-            self.unit = "s"
-
-
-@dataclass
-class PowerCycleSubLoad(Config):
-    """Power cycle sub load config"""
-
-    time: npt.ArrayLike
-    data: npt.ArrayLike
-    model: Union[LoadModel, str]
-    unit: str = "W"
-    description: str = ""
-    normalised: bool = True
-
-    def __post_init__(self):
-        """Validate subload"""
-        for var_name in ("time", "data"):
-            var = getattr(self, var_name)
-            if not isinstance(var, np.ndarray):
-                setattr(self, var_name, np.array(var))
-        if isinstance(self.model, str):
-            self.model = LoadModel[self.model.upper()]
-        if self.data.size != self.time.size:
-            raise ValueError(f"time and data must be the same length for {self.name}")
-        if any(np.diff(self.time) < 0):
-            raise ValueError("time must increase")
-
-        self.data = raw_uc(self.data, self.unit, "W")
-        self.unit = "W"
-
-    @classmethod
-    def null(cls):
-        """Create empty subload"""
-        return cls(
-            "Null SubLoad",
-            time=np.arange(2),
-            data=np.zeros(2),
-            model=LoadModel.RAMP,
-        )
-
-    def interpolate(
-        self, time: npt.ArrayLike, end_time: Optional[float] = None
-    ) -> np.ndarray:
-        """
-        Interpolate subload for a given time vector
-
-        Notes
-        -----
-        The interpolation type is set by subload.model.
-        Any out-of-bound values are set to zero.
-        """
-        return interp1d(
-            self.time,
-            self.data,
-            kind=self.model.value,
-            bounds_error=False,  # turn-off error for out-of-bound
-            fill_value=(0, 0),  # below-/above-bounds extrapolations
-        )(time if end_time is None else np.array(time) * end_time)
-
-
-@dataclass
-class SubLoadLibrary:
-    """Subload collector"""
-
-    load_type: LoadType
-    loads: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PowerCycleSubLoad)
-
-
-@dataclass
-class LoadLibrary:
-    """Load collector"""
-
-    load_type: LoadType
-    loads: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PowerCycleLoadConfig)
 
 
 class Loads:
@@ -458,8 +491,7 @@ class Phase:
 class PowerCycleLibraryConfig:
     """Power Cycle Configuration"""
 
-    load: Dict[LoadType, LoadLibrary]
-    subload: Dict[LoadType, SubLoadLibrary]
+    loads: dict[PowerCycleLoad]
     scenario: ScenarioConfigDescriptor = ScenarioConfigDescriptor()
     pulse: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PulseConfig)
     phase: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PhaseConfig)
@@ -474,10 +506,9 @@ class PowerCycleLibraryConfig:
     def check_config(self):
         """Check powercycle configuration"""
         ph_keys = self.phase.keys()
-        bl_keys = self.subphase.keys()
+        sph_keys = self.subphase.keys()
         ss_keys = self.subsystem.keys()
-        r_loads = self.load[LoadType.REACTIVE].loads.keys()
-        a_loads = self.load[LoadType.ACTIVE].loads.keys()
+        loads = self.loads.keys()
         # scenario has known pulses
         if unknown_pulse := self.scenario.pulses.keys() - self.pulse.keys():
             raise ValueError(f"Unknown pulses {unknown_pulse}")
@@ -487,14 +518,12 @@ class PowerCycleLibraryConfig:
                 raise ValueError(f"Unknown phases {unknown_phase}")
         # phases have known subphases
         for ph_c in self.phase.values():
-            if unknown_s_ph := ph_c.subphases - bl_keys:
+            if unknown_s_ph := ph_c.subphases - sph_keys:
                 raise ValueError(f"Unknown subphase configurations {unknown_s_ph}")
         # subphases have known loads
         for subphase in self.subphase.values():
-            if unknown_r_load := subphase.reactive_loads - r_loads:
-                raise ValueError(f"Unknown reactive loads {unknown_r_load}")
-            if unknown_a_load := subphase.active_loads - a_loads:
-                raise ValueError(f"Unknown reactive loads {unknown_a_load}")
+            if unknown_load := subphase.loads - loads:
+                raise ValueError(f"Unknown loads {unknown_load}")
 
         # systems have known subsystems
         for sys_c in self.system.values():
@@ -502,19 +531,8 @@ class PowerCycleLibraryConfig:
                 raise ValueError(f"Unknown subsystem configurations {unknown}")
         # subsystems have known loads
         for s_sys_c in self.subsystem.values():
-            for entry in LoadType:
-                if (
-                    unknown := getattr(s_sys_c, entry.as_str)
-                    - self.load[entry].loads.keys()
-                ):
-                    raise ValueError(
-                        f"Unknown load configurations in subsystem {unknown}"
-                    )
-        # loads have known subloads
-        for load, subload in zip(self.load.values(), self.subload.values()):
-            for sl in load.loads.values():
-                if unknown := sl.subloads - subload.loads.keys():
-                    raise ValueError(f"Unknown subload configurations in load {unknown}")
+            if unknown_load := s_sys_c.loads - loads:
+                raise ValueError(f"Unknown loads {unknown_load}")
 
     def import_subphase_data(self, subphase_duration_params):
         """Import subphase data"""
@@ -538,32 +556,10 @@ class PowerCycleLibraryConfig:
         for subphase in subphases:
             getattr(self.subphase[subphase], load_type.as_str).append(load_config.name)
 
-    def add_subload(
-        self,
-        load_type: Union[str, LoadType],
-        subload: PowerCycleSubLoad,
-    ):
-        """Add subload"""
-        self.subload[LoadType.from_str(load_type)].loads[subload.name] = subload
-
     @classmethod
     def from_json(cls, manager_config_path: Union[Path, str]):
         """Create configuration from json"""
         json_content = read_json(manager_config_path)
-
-        libraries = {
-            "load": {},
-            "subload": {},
-        }
-        for load_type in LoadType:
-            libraries["subload"][load_type] = SubLoadLibrary(
-                load_type, json_content[f"{load_type.name.lower()}_subload_library"]
-            )
-
-            libraries["load"][load_type] = LoadLibrary(
-                load_type, json_content[f"{load_type.name.lower()}_load_library"]
-            )
-
         return cls(
             scenario=ScenarioConfig(**json_content["scenario"]),
             pulse={
@@ -586,7 +582,10 @@ class PowerCycleLibraryConfig:
                 k: PowerCycleSubSystem(name=k, **v)
                 for k, v in json_content["sub_system_library"].items()
             },
-            **libraries,
+            loads={
+                k: PowerCycleLoad(name=k, **v)
+                for k, v in json_content["load_library"].items()
+            },
         )
 
     def make_phase(self, phase: str, *, check=True) -> Phase:
