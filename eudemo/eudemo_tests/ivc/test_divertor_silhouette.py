@@ -120,9 +120,9 @@ class TestDivertorSilhouetteDesigner:
         inner_baffle, inner_target, _, outer_target, outer_baffle = designer.execute()
 
         assert inner_baffle is not None
-        assert min(designer.x_limits) == pytest.approx(inner_baffle.end_point()[0][0])
+        assert inner_baffle.end_point()[0][0] == pytest.approx(min(designer.x_limits))
         assert outer_baffle is not None
-        assert max(designer.x_limits) == pytest.approx(outer_baffle.start_point()[0][0])
+        assert outer_baffle.start_point()[0][0] == pytest.approx(max(designer.x_limits))
 
         for target, baffle in [
             [inner_target, inner_baffle],
