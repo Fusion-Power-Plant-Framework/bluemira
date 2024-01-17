@@ -253,7 +253,7 @@ class PowerCycleLoadConfig(Config):
         for data in (self.reactive_data, self.active_data):
             if data.size != self.time.size:
                 raise ValueError(
-                    f"time and data must be the same length for {self.name}:" f"{data}"
+                    f"time and data must be the same length for {self.name}: {data}"
                 )
         if any(np.diff(self.time) < 0):
             raise ValueError("time must increase")
