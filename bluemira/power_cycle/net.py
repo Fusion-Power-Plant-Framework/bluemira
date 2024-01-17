@@ -228,8 +228,8 @@ class PowerCycleLoadConfig(Config):
     """Power cycle load config"""
 
     time: npt.ArrayLike = field(default_factory=lambda: np.arange(2))
-    reactive_data: npt.ArrayLike = field(default_factory=lambda: np.zeros(2))
-    active_data: npt.ArrayLike = field(default_factory=lambda: np.zeros(2))
+    reactive_data: Optional[npt.ArrayLike] = None
+    active_data: Optional[npt.ArrayLike] = None
     efficiencies: LoadEfficiencyDescriptor = LoadEfficiencyDescriptor()
     model: Union[LoadModel, str] = LoadModel.RAMP
     unit: str = "W"
@@ -239,10 +239,15 @@ class PowerCycleLoadConfig(Config):
 
     def __post_init__(self):
         """Validate load"""
+        if self.reactive_data is None:
+            self.reactive_data = np.zeros_like(self.time)
+        if self.active_data is None:
+            self.active_data = np.zeros_like(self.time)
+
         for var_name in ("time", "reactive_data", "active_data"):
             var = getattr(self, var_name)
             if not isinstance(var, np.ndarray):
-                setattr(self, var_name, np.array(var))
+                setattr(self, var_name, np.asarray(var))
         if isinstance(self.model, str):
             self.model = LoadModel[self.model.upper()]
         for data in (self.reactive_data, self.active_data):
@@ -303,7 +308,7 @@ class Loads:
 
     def __init__(
         self,
-        loads: Dict[LoadType, Dict[str, PowerCycleLoadConfig]],
+        loads: Dict[str, PowerCycleLoadConfig],
     ):
         self.loads = loads
 
@@ -492,7 +497,7 @@ class Phase:
 class PowerCycleLibraryConfig:
     """Power Cycle Configuration"""
 
-    loads: dict[PowerCycleLoadConfig]
+    loads: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PowerCycleLoadConfig)
     scenario: ScenarioConfigDescriptor = ScenarioConfigDescriptor()
     pulse: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PulseConfig)
     phase: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PhaseConfig)
