@@ -650,6 +650,7 @@ def find_LCFS_separatrix(
     x_points: Optional[List[Xpoint]] = None,
     double_null: bool = False,
     psi_n_tol: float = 1e-6,
+    delta_start: float = 0.01,
 ) -> Tuple[Coordinates, Union[Coordinates, List[Coordinates]]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
@@ -670,6 +671,10 @@ def find_LCFS_separatrix(
         Whether or not to search for a double null separatrix.
     psi_n_tol:
         The normalised psi tolerance to use
+    delta_start:
+        Search range value. Will search for the transition from a
+        "closed" to "open" flux surface for normalised flux values
+        between 1 - delta_start and 1 + delta_start.
 
     Returns
     -------
@@ -693,8 +698,8 @@ def find_LCFS_separatrix(
         f_s = find_flux_surf(x, z, psi, psi_norm, o_points=o_points, x_points=x_points)
         return Coordinates({"x": f_s[0], "z": f_s[1]})
 
-    low = 0.99  # Guaranteed (?) to be a closed flux surface
-    high = 1.01  # Guaranteed (?) to be an open flux surface
+    low = 1 - delta_start  # Guaranteed (?) to be a closed flux surface
+    high = 1 + delta_start  # Guaranteed (?) to be an open flux surface
 
     # Speed optimisations (avoid recomputing psi and O, X points)
     if o_points is None or x_points is None:
@@ -840,26 +845,112 @@ def get_legs(
 
     if isinstance(separatrix, list):
         # Double null (sort in/out bottom/top)
-        separatrix.sort(key=lambda half_sep: np.min(half_sep.x))
         x_points.sort(key=lambda x_point: x_point.z)
-        legs = []
-        for half_sep, direction in zip(separatrix, [-1, 1]):
-            for x_p in x_points:
-                sep_leg = _extract_leg(half_sep, x_p.x, x_p.z, delta, o_point.z)
-                quadrant_legs = [sep_leg]
+        # Checks to determine configuration
+
+        min_x0, max_x0, min_x1, max_x1 = (
+            min(separatrix[0].x),
+            max(separatrix[0].x),
+            min(separatrix[1].x),
+            max(separatrix[1].x),
+        )
+        min_z0, max_z0, min_z1, max_z1 = (
+            min(separatrix[0].z),
+            max(separatrix[0].z),
+            min(separatrix[1].z),
+            max(separatrix[1].z),
+        )
+
+        legs_out_in = (
+            (min_x0 > max_x1)
+            or (max_x0 < min_x1)
+            or np.isclose(max_x0, min_x1, atol=1e-2)
+            or np.isclose(min_x0, max_x1, atol=1e-2)
+        )
+        legs_top_bot = (
+            (min_z0 >= max_z1)
+            or (max_z0 <= min_z1)
+            or np.isclose(min_z0, max_z1, atol=1e-2)
+            or np.isclose(max_z0, min_z1, atol=1e-2)
+        )
+
+        if legs_out_in:
+            legs = []
+            # Double null (sort in/out bottom/top)
+            separatrix.sort(key=lambda half_sep: np.min(half_sep.x))
+            for half_sep, direction in zip(separatrix, [-1, 1]):
+                for x_p in x_points:
+                    sep_leg = _extract_leg(half_sep, x_p.x, x_p.z, delta, o_point.z)
+                    quadrant_legs = [sep_leg]
+                    if dx_offsets is not None:
+                        quadrant_legs.extend(
+                            _extract_offsets(
+                                equilibrium,
+                                dx_offsets,
+                                sep_leg,
+                                direction,
+                                delta,
+                                o_point.z,
+                            )
+                        )
+                    legs.append(quadrant_legs)
+
+            leg_dict_out_in = {
+                "lower_inner": legs[0],
+                "lower_outer": legs[2],
+                "upper_inner": legs[1],
+                "upper_outer": legs[3],
+            }
+            leg_dict = leg_dict_out_in
+
+        # This if statement goes second in case div legs are
+        # off centre but we still have a top/bottom split
+        if legs_top_bot:
+            leg_dict_top_bot = {}
+            # Double null (sort in/out bottom/top)
+            separatrix.sort(key=lambda half_sep: np.min(half_sep.z))
+            # TODO imin + n and delta values - check with join_intersect
+            for (
+                half_sep,
+                x_p,
+            ) in zip(separatrix, x_points):
+                if np.abs(x_p.z) < np.min(np.abs(half_sep.z)):
+                    imin = np.argmin(np.abs(half_sep.z))
+                    sep_legs = _extract_leg(
+                        half_sep,
+                        half_sep.x[imin],
+                        half_sep.z[imin + 5],
+                        100 * delta,
+                        o_point.z,
+                    )
+                else:
+                    sep_legs = _extract_leg(
+                        half_sep, x_p.x, x_p.z, 100 * delta, o_point.z
+                    )
+
+                sep_legs.sort(key=lambda leg: leg.x[0])
+                inner_leg, outer_leg = sep_legs
+                inner_legs, outer_legs = [inner_leg], [outer_leg]
+
                 if dx_offsets is not None:
-                    quadrant_legs.extend(
+                    inner_legs.extend(
                         _extract_offsets(
-                            equilibrium, dx_offsets, sep_leg, direction, delta, o_point.z
+                            equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
                         )
                     )
-                legs.append(quadrant_legs)
-        leg_dict = {
-            "lower_inner": legs[0],
-            "lower_outer": legs[2],
-            "upper_inner": legs[1],
-            "upper_outer": legs[3],
-        }
+                    outer_legs.extend(
+                        _extract_offsets(
+                            equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z
+                        )
+                    )
+
+                location = "lower" if x_p.z < o_point.z else "upper"
+                leg_dict_top_bot.update({
+                    f"{location}_inner": inner_legs,
+                    f"{location}_outer": outer_legs,
+                })
+                leg_dict = leg_dict_top_bot
+
     else:
         # Single null
         x_point = x_points[0]
