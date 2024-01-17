@@ -834,7 +834,7 @@
     "long_name": "Vacuum vessel double-walled shell thickness"
   },
   "v_burn": {
-    "value": 0.02949,
+    "value": 2.879e-2,
     "unit": "volt",
     "source": "Input",
     "long_name": "Loop voltage during burn"
@@ -850,7 +850,7 @@
     "source": "Input"
   },
   "CS_bmax": {
-    "value": 1,
+    "value": 14,
     "unit": "tesla",
     "source": "Input",
     "long_name": "Maximum peak field to use in CS modules"
