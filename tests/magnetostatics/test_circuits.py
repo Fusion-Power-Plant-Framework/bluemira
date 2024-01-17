@@ -291,7 +291,6 @@ class TestPolyhedralCircuitPlotting:
         cm = ax.contourf(xx, B, zz, zdir="y", offset=0)
         cb = plt.gcf().colorbar(cm, shrink=0.46)
         cb.set_label("$B$ [T]")
-        plt.show()
 
 
 class TestCariddiBenchmark:
@@ -423,7 +422,6 @@ class TestPolyhedral2DRing:
         aix[0].set_aspect("equal")
         aix[1].contourf(xx, zz, psi_true)
         aix[1].set_aspect("equal")
-        plt.show()
         np.testing.assert_allclose(psi_calc, psi_true, rtol=0.015)
 
     @pytest.mark.longrun
@@ -470,5 +468,4 @@ class TestArbitraryPlanarPolyhedralPFCoil:
         args_new = [xx, yy, zz, B_new2]
         cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
         f.colorbar(cm)
-        plt.show()
         np.testing.assert_allclose(B_new, B_new2)

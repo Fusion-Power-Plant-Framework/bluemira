@@ -90,7 +90,6 @@ class TestPolyhedralMaths:
             for point in points:
                 ax.plot(*point, marker="o", ms=int(50 / (i + 1)), color=colors[i])
 
-        plt.show()
         for i in range(len(trap._points)):
             np.testing.assert_allclose(trap._points[i], poly._points[i])
 
@@ -125,7 +124,6 @@ class TestPolyhedralMaths:
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(xx, B_new, zz, zdir="y", offset=0)
         f.colorbar(cm)
-        plt.show()
 
         np.testing.assert_allclose(B_new, B)
 
@@ -161,7 +159,6 @@ class TestPolyhedralMaths:
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(xx, yy, B_new, zdir="z", offset=0)
         f.colorbar(cm)
-        plt.show()
 
         np.testing.assert_allclose(B_new, B)
 
@@ -196,12 +193,9 @@ class TestPolyhedralMaths:
         B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
         cm = ax.contourf(B_new, yy, zz, zdir="x", offset=10)
         f.colorbar(cm)
-        plt.show()
 
         np.testing.assert_allclose(B_new, B)
 
-    def teardown_method(self):
-        plt.close()
 
 
 class TestPolyhedralCoordinates:
@@ -260,7 +254,6 @@ class TestPolyhedralCoordinates:
         args_new = [xx, yy, zz, B_new]
         cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
         f.colorbar(cm)
-        plt.show()
 
     @pytest.mark.parametrize("plane", ["x", "y", "z"])
     def test_triangle(self, plane):
@@ -275,10 +268,6 @@ class TestPolyhedralCoordinates:
         args_new = [xx, yy, zz, B_new]
         cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
         f.colorbar(cm)
-        plt.show()
-
-    def teardown_method(self):
-        plt.close()
 
 
 class TestCombinedShapes:
@@ -350,8 +339,5 @@ class TestCombinedShapes:
         self.triangle2.plot(ax)
         cm = ax.contourf(args_diff[i], args_diff[j], args_diff[k], zdir=plane, offset=0)
         f.colorbar(cm)
-        plt.show()
         np.testing.assert_allclose(B_new, B)
 
-    def teardown_method(self):
-        plt.close()
