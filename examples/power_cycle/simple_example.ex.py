@@ -27,16 +27,26 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
+from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
+    Efficiency,
     PowerCycleLibraryConfig,
     PowerCycleLoadConfig,
-    PowerCycleSubLoad,
     interpolate_extra,
 )
 
 # %% [markdown]
 # # Power Cycle example
+#
+# Firstly we read in the build config and extract the config for the PowerCycle
+# %%
 
+reactor_config = ReactorConfig(Path(__file__).parent / "scenario_config.json", None)
+config = PowerCycleLibraryConfig.from_dict(reactor_config.config_for("Power Cycle"))
+
+# %% [markdown]
+#  We then import and subphase durations.
+#  In principle these could come from other parts of the reactor design.
 # %%
 
 
@@ -44,31 +54,41 @@ from bluemira.power_cycle.net import (
 class PowerCycleDurationParameters:
     """Dummy power cycle duration parameters [s]"""
 
-    CS_recharge_time: float = 300
+    cs_recharge_time: float = 300
     pumpdown_time: float = 600
     ramp_up_time: float = 157
     ramp_down_time: float = 157
 
 
-config = PowerCycleLibraryConfig.from_json(
-    Path(__file__).parent / "scenario_config.json"
-)
-config.import_subphase_data(PowerCycleDurationParameters())
+config.import_subphase_duration(PowerCycleDurationParameters())
+
+# %% [markdown]
+# We can then dynamically add a new load to a specific subphase of the config.
+# %%
 
 config.add_load_config(
-    "active",
+    PowerCycleLoadConfig(
+        "cs_power",
+        active_data=[1, 2],
+        reactive_data=[10, 20],
+        efficiencies=[Efficiency(0.1)],
+        description="something made up",
+    ),
     ["cru", "bri"],
-    PowerCycleLoadConfig("CS", True, {}, ["cs_power"], "something made up"),
+    [Efficiency(0.2, reactive=True)],
 )
 
-config.add_subload(
-    "active",
-    PowerCycleSubLoad("cs_power", [0, 1], [10, 20], "RAMP", "MW", "dunno"),
-)
+# %% [markdown]
+# Once the config is created we can now pull out the data for a specific phase.
+#
+# Below we have interpolated the timeseries and pulled out the active and reactive loads
+# %%
 
 phase = config.make_phase("dwl")
 
-normalised_time = interpolate_extra(phase.loads.build_timeseries(), 5 - 2)
+normalised_time = interpolate_extra(phase.loads.build_timeseries(), 3)
+timeseries = normalised_time * phase.duration
+
 active_loads = phase.loads.get_load_data_with_efficiencies(
     normalised_time, "active", "MW"
 )
@@ -78,5 +98,3 @@ reactive_loads = phase.loads.get_load_data_with_efficiencies(
     normalised_time, "reactive", "MW"
 )
 reactive_load_total = phase.loads.load_total(normalised_time, "reactive", "MW")
-
-timeseries = normalised_time * phase.duration

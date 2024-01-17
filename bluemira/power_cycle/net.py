@@ -46,7 +46,7 @@ class LoadType(Enum):
     @property
     def as_str(self) -> str:
         """Load type as a string"""
-        return f"{self.name.lower()}_loads"
+        return f"{self.name.lower()}_data"
 
 
 class LoadModel(Enum):
@@ -65,7 +65,7 @@ class Efficiency:
     """Efficiency data container"""
 
     value: float
-    desc: str = ""
+    description: str = ""
     reactive: Optional[bool] = None
 
 
@@ -224,7 +224,7 @@ class PowerCycleSubSystem(Config):
 
 
 @dataclass
-class PowerCycleLoad(Config):
+class PowerCycleLoadConfig(Config):
     """Power cycle load config"""
 
     time: npt.ArrayLike = field(default_factory=lambda: np.arange(2))
@@ -275,7 +275,7 @@ class PowerCycleLoad(Config):
             load_type = LoadType[load_type.upper()]
         return interp1d(
             self.time,
-            getattr(self, f"{load_type.name}_data"),
+            getattr(self, f"{load_type.name.lower()}_data"),
             kind=self.model.value,
             bounds_error=False,  # turn-off error for out-of-bound
             fill_value=(0, 0),  # below-/above-bounds extrapolations
@@ -303,11 +303,9 @@ class Loads:
 
     def __init__(
         self,
-        load_config: Dict[LoadType, Dict[str, PowerCycleLoadConfig]],
-        subloads: Dict[LoadType, Dict[str, PowerCycleSubLoad]],
+        loads: Dict[LoadType, Dict[str, PowerCycleLoadConfig]],
     ):
-        self.load_config = load_config
-        self.subloads = subloads
+        self.loads = loads
 
     @staticmethod
     def _normalise_timeseries(
@@ -344,12 +342,17 @@ class Loads:
             applied at the right point in time
         """
         load_type = LoadType.from_str(load_type)
+        load_type_bool = load_type == LoadType.REACTIVE
         data = self.get_explicit_data_consumption(timeseries, load_type, unit, end_time)
-        for load_conf in self.load_config[load_type].values():
-            for eff in load_conf.efficiencies.values():
-                c_eff = 1 / eff if load_conf.consumption else eff
-                for sl in load_conf.subloads:
-                    data[sl] *= c_eff
+        for load_conf in self.loads.values():
+            for eff in load_conf.efficiencies:
+                if eff.reactive in {None, load_type_bool}:
+                    c_eff = (
+                        1 / eff.value
+                        if load_conf.consumption and eff.value > 0
+                        else eff.value
+                    )
+                    data[load_conf.name] *= c_eff
 
         return data
 
@@ -376,24 +379,22 @@ class Loads:
             applied at the right point in time
         """
         load_type = LoadType.from_str(load_type)
-        subload = self.get_interpolated_loads(timeseries, load_type, unit, end_time)
+        load = self.get_interpolated_loads(timeseries, load_type, unit, end_time)
         return {
-            sl: -subload[sl] if load_conf.consumption else subload[sl]
-            for load_conf in self.load_config[load_type].values()
-            for sl in load_conf.subloads
+            ld.name: -load[ld.name] if ld.consumption else load[ld.name]
+            for ld in self.loads.values()
         }
 
     def build_timeseries(self, end_time: Optional[float] = None) -> np.ndarray:
         """Build a combined time series based on subloads"""
         times = []
-        for lt in self.subloads.values():
-            for ld in lt.values():
-                if ld.normalised:
-                    times.append(ld.time)
-                else:
-                    times.append(
-                        ld.time / (max(ld.time) if end_time is None else end_time)
-                    )
+        for load in self.loads.values():
+            if load.normalised:
+                times.append(load.time)
+            else:
+                times.append(
+                    load.time / (max(load.time) if end_time is None else end_time)
+                )
         return np.unique(np.concatenate(times))
 
     def get_interpolated_loads(
@@ -420,17 +421,15 @@ class Loads:
         """
         timeseries, end_time = self._normalise_timeseries(timeseries, end_time)
         load_type = LoadType.from_str(load_type)
-        subload = self.subloads[load_type]
         return {
-            sl: subload[sl].interpolate(timeseries, end_time)
+            load.name: load.interpolate(timeseries, end_time, load_type)
             if unit is None
             else raw_uc(
-                subload[sl].interpolate(timeseries, end_time),
-                subload[sl].unit,
+                load.interpolate(timeseries, end_time, load_type),
+                load.unit,
                 unit,
             )
-            for load in self.load_config[load_type].values()
-            for sl in load.subloads
+            for load in self.loads.values()
         }
 
     def load_total(
@@ -482,16 +481,18 @@ class Phase:
     @property
     def duration(self):
         """Duration of phase"""
-        return getattr(np, self.config.operation)([
-            s_ph.duration for s_ph in self.subphases.values()
-        ])
+        data = [s_ph.duration for s_ph in self.subphases.values()]
+        try:
+            return getattr(np, self.config.operation)(data)
+        except np.core._exceptions.UFuncTypeError as e:
+            raise TypeError(f"duration variables have not been imported {data}") from e
 
 
 @dataclass
 class PowerCycleLibraryConfig:
     """Power Cycle Configuration"""
 
-    loads: dict[PowerCycleLoad]
+    loads: dict[PowerCycleLoadConfig]
     scenario: ScenarioConfigDescriptor = ScenarioConfigDescriptor()
     pulse: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PulseConfig)
     phase: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PhaseConfig)
@@ -534,57 +535,60 @@ class PowerCycleLibraryConfig:
             if unknown_load := s_sys_c.loads - loads:
                 raise ValueError(f"Unknown loads {unknown_load}")
 
-    def import_subphase_data(self, subphase_duration_params):
+    def import_subphase_duration(self, subphase_duration_params):
         """Import subphase data"""
         for s_ph in self.subphase.values():
             if isinstance(s_ph.duration, str):
                 s_ph.duration = getattr(
-                    subphase_duration_params, s_ph.duration.replace("-", "_")
+                    subphase_duration_params, s_ph.duration.replace("$", "")
                 )
 
     def add_load_config(
         self,
-        load_type: Union[str, LoadType],
+        load: PowerCycleLoadConfig,
         subphases: Union[str, Iterable[str]],
-        load_config: PowerCycleLoadConfig,
+        subphase_efficiency: Optional[List[Efficiency]] = None,
     ):
         """Add load config"""
-        load_type = LoadType.from_str(load_type)
-        self.load[load_type].loads[load_config.name] = load_config
+        self.loads[load.name] = load
         if isinstance(subphases, str):
             subphases = [subphases]
         for subphase in subphases:
-            getattr(self.subphase[subphase], load_type.as_str).append(load_config.name)
+            self.subphase[subphase].loads.append(load.name)
+            if subphase_efficiency is not None:
+                self.subphase[subphase].efficiencies[load.name] = subphase_efficiency
 
     @classmethod
     def from_json(cls, manager_config_path: Union[Path, str]):
-        """Create configuration from json"""
-        json_content = read_json(manager_config_path)
+        """Create configuration from pure json"""
+        return cls.from_dict(read_json(manager_config_path))
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]):
+        """Create configuration from dictionary"""
         return cls(
-            scenario=ScenarioConfig(**json_content["scenario"]),
+            scenario=ScenarioConfig(**data["scenario"]),
             pulse={
-                k: PulseConfig(name=k, **v)
-                for k, v in json_content["pulse_library"].items()
+                k: PulseConfig(name=k, **v) for k, v in data["pulse_library"].items()
             },
             phase={
-                k: PhaseConfig(name=k, **v)
-                for k, v in json_content["phase_library"].items()
+                k: PhaseConfig(name=k, **v) for k, v in data["phase_library"].items()
             },
             subphase={
                 k: PowerCycleSubPhase(name=k, **v)
-                for k, v in json_content["subphase_library"].items()
+                for k, v in data["subphase_library"].items()
             },
             system={
                 k: PowerCycleSystem(name=k, **v)
-                for k, v in json_content["system_library"].items()
+                for k, v in data["system_library"].items()
             },
             subsystem={
                 k: PowerCycleSubSystem(name=k, **v)
-                for k, v in json_content["sub_system_library"].items()
+                for k, v in data["sub_system_library"].items()
             },
             loads={
-                k: PowerCycleLoad(name=k, **v)
-                for k, v in json_content["load_library"].items()
+                k: PowerCycleLoadConfig(name=k, **v)
+                for k, v in data["load_library"].items()
             },
         )
 
@@ -595,20 +599,15 @@ class PowerCycleLibraryConfig:
 
         phase_config = self.phase[phase]
         subphases = {k: self.subphase[k] for k in phase_config.subphases}
-        phase_loads = {}
-        phase_subloads = {}
-        for loadtype in LoadType:
-            phase_loads[loadtype] = {}
-            phase_subloads[loadtype] = {}
-            subloads = self.subload[loadtype].loads
-            for subphase in subphases.values():
-                for ld in getattr(subphase, loadtype.as_str):
-                    load = self.load[loadtype].loads[ld]
-                    phase_loads[loadtype][ld] = load
-                    for sl in load.subloads:
-                        phase_subloads[loadtype][sl] = subloads[sl]
-
-        return Phase(phase_config, subphases, Loads(phase_loads, phase_subloads))
+        return Phase(
+            phase_config,
+            subphases,
+            Loads({
+                ld: self.loads[ld]
+                for subphase in subphases.values()
+                for ld in subphase.loads
+            }),
+        )
 
     def make_pulse(self, pulse: str, *, check=True) -> Dict[str, Phase]:
         """Create a pulse dictionary"""
