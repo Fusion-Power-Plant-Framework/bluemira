@@ -101,7 +101,8 @@ def stochastic_volume_calculation(
     particles:
         how many particles to use for the stochastic volume calculation.
     """
-    # quietly delete the unused .hf files: bad practice, fix later?
+    # quietly delete the unused .hf files: bad practice.
+    # TODO: Fix later? by logging in bluemira.log?
     Path("summary.h5").unlink(missing_ok=True)
     Path("statepoint.1.h5").unlink(missing_ok=True)
 
