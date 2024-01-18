@@ -84,7 +84,7 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     batches=2,
     photon_transport=True,
     electron_treatment="ttb",
-    run_mode="plot",
+    run_mode="fixed source",
     openmc_write_summary=False,
     parametric_source=True,
     # only used if stochastic_volume_calculation is turned on.

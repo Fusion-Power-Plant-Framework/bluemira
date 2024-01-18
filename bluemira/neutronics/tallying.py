@@ -67,11 +67,11 @@ def filter_cells(
 
     fw_surf_filter = openmc.CellFilter((
         *cells.inboard.scoring,
-        *cells.outboard.sf,
-        cells.divertor.fw_sf,
+        # *cells.outboard.sf,
+        # cells.divertor.fw_sf,
         *cells.inboard.first_wall,
-        *cells.outboard.fw,
-        cells.divertor.fw,
+        # *cells.outboard.fw,
+        # cells.divertor.fw,
     ))
 
     neutron_filter = openmc.ParticleFilter(["neutron"])
