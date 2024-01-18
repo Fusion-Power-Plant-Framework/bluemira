@@ -197,7 +197,6 @@ class TestPolyhedralMaths:
         np.testing.assert_allclose(B_new, B)
 
 
-
 class TestPolyhedralCoordinates:
     @classmethod
     def setup_class(cls):
@@ -340,4 +339,3 @@ class TestCombinedShapes:
         cm = ax.contourf(args_diff[i], args_diff[j], args_diff[k], zdir=plane, offset=0)
         f.colorbar(cm)
         np.testing.assert_allclose(B_new, B)
-
