@@ -475,11 +475,9 @@ class Phase:
     @property
     def duration(self):
         """Duration of phase"""
-        data = [s_ph.duration for s_ph in self.subphases.values()]
-        try:
-            return getattr(np, self.config.operation)(data)
-        except np.core._exceptions.UFuncTypeError as e:
-            raise TypeError(f"duration variables have not been imported {data}") from e
+        return getattr(np, self.config.operation)([
+            s_ph.duration for s_ph in self.subphases.values()
+        ])
 
 
 class PulseDictType(TypedDict):
@@ -489,17 +487,29 @@ class PulseDictType(TypedDict):
     data: Dict[str, Phase]
 
 
-@dataclass
 class PowerCycleLibraryConfig:
     """Power Cycle Configuration"""
 
-    scenario: ScenarioConfig
-    pulse: Dict[str, PulseConfig]
-    phase: Dict[str, PhaseConfig]
-    subphase: Dict[str, SubPhaseConfig]
-    system: Dict[str, PowerCycleSystem]
-    subsystem: Dict[str, PowerCycleSubSystem]
-    loads: Dict[str, PowerCycleLoadConfig]
+    def __init__(
+        self,
+        scenario: ScenarioConfig,
+        pulse: Dict[str, PulseConfig],
+        phase: Dict[str, PhaseConfig],
+        subphase: Dict[str, SubPhaseConfig],
+        system: Dict[str, PowerCycleSystem],
+        subsystem: Dict[str, PowerCycleSubSystem],
+        loads: Dict[str, PowerCycleLoadConfig],
+        durations: Optional[Dict[str, float]] = None,
+    ):
+        self.scenario = scenario
+        self.pulse = pulse
+        self.phase = phase
+        self.subphase = subphase
+        self.system = system
+        self.subsystem = subsystem
+        self.loads = loads
+        if durations is not None:
+            self._import_subphase_duration(durations)
 
     def check_config(self):
         """Check powercycle configuration"""
@@ -532,7 +542,7 @@ class PowerCycleLibraryConfig:
             if unknown_load := s_sys_c.loads - loads:
                 raise ValueError(f"Unknown loads {unknown_load}")
 
-    def import_subphase_duration(self, subphase_duration_params: Dict[str, float]):
+    def _import_subphase_duration(self, subphase_duration_params: Dict[str, float]):
         """Import subphase data"""
         for s_ph in self.subphase.values():
             if isinstance(s_ph.duration, str):
@@ -568,7 +578,9 @@ class PowerCycleLibraryConfig:
         return cls.from_dict(read_json(manager_config_path))
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]):
+    def from_dict(
+        cls, data: Dict[str, Any], durations: Optional[Dict[str, float]] = None
+    ):
         """Create configuration from dictionary"""
         return cls(
             scenario=ScenarioConfig(**data["scenario"]),
@@ -594,6 +606,7 @@ class PowerCycleLibraryConfig:
                 k: PowerCycleLoadConfig(name=k, **v)
                 for k, v in data["load_library"].items()
             },
+            durations=durations,
         )
 
     def get_phase(self, phase: str, *, check=True) -> Phase:

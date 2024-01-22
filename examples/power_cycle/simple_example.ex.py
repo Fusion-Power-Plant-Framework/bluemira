@@ -37,23 +37,21 @@ from bluemira.power_cycle.net import (
 # %% [markdown]
 # # Power Cycle example
 #
-# Firstly we read in the build config and extract the config for the PowerCycle
+# Firstly we read in the build config and extract the config for the PowerCycle.
+# We import any subphase durations needed for the config.
+# In principle these could come from other parts of the reactor design.
 # %%
 
 reactor_config = ReactorConfig(Path(__file__).parent / "scenario_config.json", None)
-config = PowerCycleLibraryConfig.from_dict(reactor_config.config_for("Power Cycle"))
-
-# %% [markdown]
-#  We then import and subphase durations.
-#  In principle these could come from other parts of the reactor design.
-# %%
-
-config.import_subphase_duration({
-    "cs_recharge_time": 300,
-    "pumpdown_time": 600,
-    "ramp_up_time": 157,
-    "ramp_down_time": 157,
-})
+config = PowerCycleLibraryConfig.from_dict(
+    reactor_config.config_for("Power Cycle"),
+    {
+        "cs_recharge_time": 300,
+        "pumpdown_time": 600,
+        "ramp_up_time": 157,
+        "ramp_down_time": 157,
+    },
+)
 
 # %% [markdown]
 # We can then dynamically add a new load to a specific subphase of the config.

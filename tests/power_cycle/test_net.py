@@ -84,15 +84,14 @@ class TestLoads:
             Path(__file__).parent / "test_data" / "scenario_config.json", None
         )
         cls._config = PowerCycleLibraryConfig.from_dict(
-            reactor_config.config_for("Power Cycle")
+            reactor_config.config_for("Power Cycle"),
+            {
+                "cs_recharge_time": 300,
+                "pumpdown_time": 600,
+                "ramp_up_time": 157,
+                "ramp_down_time": 157,
+            },
         )
-
-        cls._config.import_subphase_duration({
-            "cs_recharge_time": 300,
-            "pumpdown_time": 600,
-            "ramp_up_time": 157,
-            "ramp_down_time": 157,
-        })
         cls._loads = cls._config.get_phase("dwl").loads
 
     def setup_method(self):
@@ -169,14 +168,14 @@ class TestPowerCycleLibraryConfig:
             Path(__file__).parent / "test_data" / "scenario_config.json", None
         )
         cls._config = PowerCycleLibraryConfig.from_dict(
-            reactor_config.config_for("Power Cycle")
+            reactor_config.config_for("Power Cycle"),
+            {
+                "cs_recharge_time": 300,
+                "pumpdown_time": 600,
+                "ramp_up_time": 157,
+                "ramp_down_time": 157,
+            },
         )
-        cls._config.import_subphase_duration({
-            "cs_recharge_time": 300,
-            "pumpdown_time": 600,
-            "ramp_up_time": 157,
-            "ramp_down_time": 157,
-        })
 
     def setup_method(self):
         self.config = deepcopy(self._config)
