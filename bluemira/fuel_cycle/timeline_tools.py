@@ -18,12 +18,12 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
 
 __all__ = [
+    "ExponentialAvailabilityStrategy",
     "GompertzLearningStrategy",
-    "UserSpecifiedLearningStrategy",
-    "UniformLearningStrategy",
     "LogNormalAvailabilityStrategy",
     "TruncNormAvailabilityStrategy",
-    "ExponentialAvailabilityStrategy",
+    "UniformLearningStrategy",
+    "UserSpecifiedLearningStrategy",
 ]
 
 

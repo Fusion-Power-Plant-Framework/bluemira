@@ -32,10 +32,10 @@ from bluemira.equilibria.plotting import ProfilePlotter
 __all__ = [
     "BetaIpProfile",
     "CustomProfile",
-    "SinglePowerFunc",
     "DoublePowerFunc",
     "LaoPolynomialFunc",
     "LuxonExpFunc",
+    "SinglePowerFunc",
 ]
 
 # =============================================================================

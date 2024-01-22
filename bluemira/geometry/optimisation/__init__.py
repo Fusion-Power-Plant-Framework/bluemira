@@ -15,10 +15,10 @@ from bluemira.geometry.optimisation.problem import GeomOptimisationProblem
 
 __all__ = [
     "GeomOptimisationProblem",
-    "KeepOutZone",
-    "optimise_geometry",
     # OLD API
     "GeometryOptimisationProblem",
-    "minimise_length",
+    "KeepOutZone",
     "MinimiseLengthGOP",
+    "minimise_length",
+    "optimise_geometry",
 ]

@@ -32,11 +32,11 @@ if TYPE_CHECKING:
     from bluemira.equilibria.optimisation.problem.base import CoilsetOptimiserResult
 
 __all__ = [
-    "DudsonConvergence",
     "CunninghamConvergence",
-    "JsourceConvergence",
+    "DudsonConvergence",
     "JeonConvergence",
     "JrelConvergence",
+    "JsourceConvergence",
     "PicardIterator",
 ]
 

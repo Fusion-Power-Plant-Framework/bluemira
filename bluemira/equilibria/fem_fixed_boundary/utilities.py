@@ -14,7 +14,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
 from dolfin import BoundaryMesh, Mesh, Vertex
-from matplotlib._tri import TriContourGenerator
+from matplotlib._tri import TriContourGenerator  # noqa: PLC2701
 from matplotlib.pyplot import Axes
 from matplotlib.tri import Triangulation
 from scipy.interpolate import interp1d
