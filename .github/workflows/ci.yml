@@ -40,7 +40,7 @@ jobs:
           mv ~/work/bluemira/bluemira/bluemira-private-data ~/work/bluemira/bluemira-private-data
 
     - name: Cache pip
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       env:
         # Increase this value to reset cache if requirements.txt has not changed
         PIP_CACHE_NUMBER: 1
@@ -52,7 +52,7 @@ jobs:
 
 
     - name: Cache conda
-      uses: actions/cache@v3
+      uses: actions/cache@v4
       env:
         # Increase this value to reset cache if conda/environment.yml has not changed
         CONDA_CACHE_NUMBER: 1
