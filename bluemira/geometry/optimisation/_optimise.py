@@ -35,7 +35,7 @@ from bluemira.optimisation._optimise import optimise
 
 _GeomT = TypeVar("_GeomT", bound=GeometryParameterisation)
 
-__all__ = ["GeomOptimiserResult", "optimise_geometry", "KeepOutZone"]
+__all__ = ["GeomOptimiserResult", "KeepOutZone", "optimise_geometry"]
 
 
 @dataclass

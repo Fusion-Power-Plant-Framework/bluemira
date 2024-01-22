@@ -23,14 +23,14 @@ from bluemira.equilibria.coils._tools import (
 )
 
 __all__ = [
-    "Coil",
-    "CoilType",
     "Circuit",
+    "Coil",
     "CoilGroup",
     "CoilSet",
+    "CoilType",
     "SymmetricCircuit",
-    "symmetrise_coilset",
     "check_coilset_symmetric",
     "get_max_current",
     "make_mutual_inductance_matrix",
+    "symmetrise_coilset",
 ]

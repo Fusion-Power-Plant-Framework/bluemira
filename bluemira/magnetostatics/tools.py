@@ -24,11 +24,11 @@ from bluemira.magnetostatics.error import (
 )
 
 __all__ = [
+    "integrate",
     "jit_llc3",
     "jit_llc4",
     "jit_llc5",
     "jit_llc7",
-    "integrate",
     "n_integrate",
     "process_coords_array",
     "process_xyz_array",

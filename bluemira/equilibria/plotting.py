@@ -35,15 +35,15 @@ from bluemira.equilibria.physics import calc_psi
 from bluemira.utilities.plot_tools import str_to_latex
 
 __all__ = [
-    "GridPlotter",
+    "BreakdownPlotter",
+    "CoilGroupPlotter",
     "ConstraintPlotter",
+    "EquilibriumPlotter",
+    "GridPlotter",
     "LimiterPlotter",
     "PlasmaCoilPlotter",
-    "CoilGroupPlotter",
-    "EquilibriumPlotter",
-    "BreakdownPlotter",
-    "XZLPlotter",
     "RegionPlotter",
+    "XZLPlotter",
 ]
 
 PLOT_DEFAULTS = {

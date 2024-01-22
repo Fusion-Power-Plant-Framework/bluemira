@@ -25,7 +25,7 @@ from bluemira.utilities.opt_problems import (
 )
 from bluemira.utilities.optimiser import Optimiser, approx_derivative
 
-__all__ = ["GeometryOptimisationProblem", "minimise_length", "MinimiseLengthGOP"]
+__all__ = ["GeometryOptimisationProblem", "MinimiseLengthGOP", "minimise_length"]
 
 warnings.warn(
     f"The module '{__name__}' is deprecated and will be removed in v2.0.0.\n"

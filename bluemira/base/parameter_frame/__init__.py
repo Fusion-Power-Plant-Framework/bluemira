@@ -13,8 +13,8 @@ from bluemira.base.parameter_frame._frame import (
 from bluemira.base.parameter_frame._parameter import Parameter
 
 __all__ = [
+    "EmptyFrame",
     "Parameter",
     "ParameterFrame",
-    "EmptyFrame",
     "make_parameter_frame",
 ]

@@ -53,9 +53,9 @@ from bluemira.utilities.plot_tools import str_to_latex
 
 __all__ = [
     "GeometryParameterisation",
+    "PFrameSection",
     "PictureFrame",
     "PictureFrameTools",
-    "PFrameSection",
     "PolySpline",
     "PrincetonD",
     "SextupleArc",
