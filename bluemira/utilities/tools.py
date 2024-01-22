@@ -12,6 +12,7 @@ from __future__ import annotations
 
 import operator
 import string
+import sys
 import warnings
 from collections.abc import Iterable
 from functools import wraps
@@ -741,7 +742,13 @@ def _loadfromspec(name: str) -> ModuleType:
     try:
         spec = imp_u.spec_from_file_location(name, mod_file)
         module = imp_u.module_from_spec(spec)
+        old_mod = sys.modules.get(module.__name__, None)
+        sys.modules[module.__name__] = module
         spec.loader.exec_module(module)
+        if old_mod is not None:
+            sys.modules[module.__name__] = old_mod
+        else:
+            del sys.modules[module.__name__]
     except ModuleNotFoundError:
         raise
     except (AttributeError, ImportError, SyntaxError) as err:

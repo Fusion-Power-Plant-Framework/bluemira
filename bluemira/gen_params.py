@@ -179,10 +179,8 @@ def main():
     mods = find_modules(args.module)
     if len(mods) > 0:
         for mod in mods:
-            path = Path(args.module, mod.replace(".", "/"))
-            if not path.is_dir():
-                module = get_module(f"{path}.py")
-                param_classes.update(get_param_classes(module))
+            module = get_module(mod)
+            param_classes.update(get_param_classes(module))
     else:
         module = get_module(args.module)
         param_classes.update(get_param_classes(module))
