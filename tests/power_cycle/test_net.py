@@ -4,7 +4,6 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 from copy import deepcopy
-from dataclasses import dataclass
 from pathlib import Path
 
 import numpy as np
@@ -12,16 +11,13 @@ import pytest
 
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
-    LibraryConfigDescriptor,
     LoadType,
     Loads,
     Phase,
     PhaseConfig,
     PowerCycleLibraryConfig,
     PowerCycleLoadConfig,
-    PowerCycleSubPhase,
-    ScenarioConfig,
-    ScenarioConfigDescriptor,
+    SubPhaseConfig,
     interpolate_extra,
 )
 
@@ -38,8 +34,8 @@ def test_interpolate_extra_returns_the_correct_length():
     assert min(arr) == 0
 
 
-def test_PowerCycleSubPhase_duration():
-    pcb = PowerCycleSubPhase("name", 5, unit="hours")
+def test_SubPhaseConfig_duration():
+    pcb = SubPhaseConfig("name", 5, unit="hours")
     assert pcb.duration == 18000
     assert pcb.unit == "s"
 
@@ -81,42 +77,6 @@ class TestPowerCycleSubLoad:
         assert pcsl.unit == "W"
 
 
-class TestDescriptors:
-    def test_LibraryConfigDescriptor_returns_correct_type(self):
-        test_dict = {
-            "test": {"operation": "max", "subphases": ["dwl"], "description": "hello"}
-        }
-
-        @dataclass
-        class Test:
-            sc: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PhaseConfig)
-
-        t_sc = Test(test_dict)
-        assert all(isinstance(val, PhaseConfig) for val in t_sc.sc.values())
-        assert t_sc.sc.keys() == {"test"}
-        assert t_sc.sc["test"].operation == "max"
-        assert t_sc.sc["test"].subphases == ["dwl"]
-        assert t_sc.sc["test"].description == "hello"
-
-    def test_ScenarioConfigDescriptor_returns_correct_type(self):
-        @dataclass
-        class Test:
-            sc: ScenarioConfigDescriptor = ScenarioConfigDescriptor()
-
-        t_sc = Test({"name": "sc_1", "pulses": {"std_pulse": 1}, "description": "test"})
-        assert isinstance(t_sc.sc, ScenarioConfig)
-        assert t_sc.sc.pulses["std_pulse"] == 1
-        assert t_sc.sc.description == "test"
-
-
-@dataclass
-class PowerCycleDurationParameters:
-    cs_recharge_time: float = 300
-    pumpdown_time: float = 600
-    ramp_up_time: float = 157
-    ramp_down_time: float = 157
-
-
 class TestLoads:
     @classmethod
     def setup_class(cls):
@@ -126,8 +86,14 @@ class TestLoads:
         cls._config = PowerCycleLibraryConfig.from_dict(
             reactor_config.config_for("Power Cycle")
         )
-        cls._config.import_subphase_duration(PowerCycleDurationParameters())
-        cls._loads = cls._config.make_phase("dwl").loads
+
+        cls._config.import_subphase_duration({
+            "cs_recharge_time": 300,
+            "pumpdown_time": 600,
+            "ramp_up_time": 157,
+            "ramp_down_time": 157,
+        })
+        cls._loads = cls._config.get_phase("dwl").loads
 
     def setup_method(self):
         self.loads = deepcopy(self._loads)
@@ -185,7 +151,7 @@ class TestPhase:
     def test_duration_validation_and_extraction(self):
         phase = Phase(
             PhaseConfig("dwl", "max", ["a", "b"]),
-            {"a": PowerCycleSubPhase("a", 5), "b": PowerCycleSubPhase("b", 10)},
+            {"a": SubPhaseConfig("a", 5), "b": SubPhaseConfig("b", 10)},
             Loads({
                 "name": PowerCycleLoadConfig(
                     "name", np.array([0, 0.5, 1]), np.arange(3), model="ramp"
@@ -205,13 +171,18 @@ class TestPowerCycleLibraryConfig:
         cls._config = PowerCycleLibraryConfig.from_dict(
             reactor_config.config_for("Power Cycle")
         )
-        cls._config.import_subphase_duration(PowerCycleDurationParameters())
+        cls._config.import_subphase_duration({
+            "cs_recharge_time": 300,
+            "pumpdown_time": 600,
+            "ramp_up_time": 157,
+            "ramp_down_time": 157,
+        })
 
     def setup_method(self):
         self.config = deepcopy(self._config)
 
-    def test_make_scenario(self):
-        scenario = self.config.make_scenario()
+    def test_get_scenario(self):
+        scenario = self.config.get_scenario()
 
         assert scenario["std"]["repeat"] == 1
         assert len(scenario["std"]["data"].keys()) == 4

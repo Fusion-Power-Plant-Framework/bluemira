@@ -18,7 +18,6 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Type,
     TypedDict,
     Union,
 )
@@ -101,44 +100,6 @@ class Descriptor:
         self._name = f"_{name}"
 
 
-class ScenarioConfigDescriptor(Descriptor):
-    """Scenario config descriptor for use with dataclasses"""
-
-    def __get__(self, obj: Any, _) -> ScenarioConfig:
-        """Get the scenario config"""
-        return getattr(obj, self._name)
-
-    def __set__(self, obj: Any, value: Union[dict, ScenarioConfig]):
-        """Set the scenario config"""
-        if not isinstance(value, ScenarioConfig):
-            value = ScenarioConfig(**value)
-
-        setattr(obj, self._name, value)
-
-
-class LibraryConfigDescriptor(Descriptor):
-    """Config descriptor for use with dataclasses"""
-
-    def __init__(self, *, config: Type[Config]):
-        self.config = config
-
-    def __get__(self, obj: Any, _) -> Dict[str, Config]:
-        """Get the config"""
-        return getattr(obj, self._name)
-
-    def __set__(
-        self,
-        obj: Any,
-        value: Dict[str, Union[Config, Dict]],
-    ):
-        """Setup the config"""
-        for k, v in value.items():
-            if not isinstance(v, self.config):
-                value[k] = self.config(name=k, **v)
-
-        setattr(obj, self._name, value)
-
-
 class PhaseEfficiencyDescriptor(Descriptor):
     """Efficiency descriptor for use with dataclasses"""
 
@@ -218,7 +179,7 @@ class PhaseConfig(Config):
 
 
 @dataclass
-class PowerCycleSubPhase(Config):
+class SubPhaseConfig(Config):
     """SubPhase Config"""
 
     duration: Union[float, str]
@@ -501,7 +462,7 @@ class Phase:
     """Phase container"""
 
     config: PhaseConfig
-    subphases: Dict[str, PowerCycleSubPhase]
+    subphases: Dict[str, SubPhaseConfig]
     loads: Loads
 
     def __post_init__(self):
@@ -521,21 +482,24 @@ class Phase:
             raise TypeError(f"duration variables have not been imported {data}") from e
 
 
+class PulseDictType(TypedDict):
+    """Pulse dictionary typing"""
+
+    repeat: int
+    data: Dict[str, Phase]
+
+
 @dataclass
 class PowerCycleLibraryConfig:
     """Power Cycle Configuration"""
 
-    scenario: ScenarioConfigDescriptor = ScenarioConfigDescriptor()
-    pulse: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PulseConfig)
-    phase: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PhaseConfig)
-    subphase: LibraryConfigDescriptor = LibraryConfigDescriptor(
-        config=PowerCycleSubPhase
-    )
-    system: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PowerCycleSystem)
-    subsystem: LibraryConfigDescriptor = LibraryConfigDescriptor(
-        config=PowerCycleSubSystem
-    )
-    loads: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PowerCycleLoadConfig)
+    scenario: ScenarioConfig
+    pulse: Dict[str, PulseConfig]
+    phase: Dict[str, PhaseConfig]
+    subphase: Dict[str, SubPhaseConfig]
+    system: Dict[str, PowerCycleSystem]
+    subsystem: Dict[str, PowerCycleSubSystem]
+    loads: Dict[str, PowerCycleLoadConfig]
 
     def check_config(self):
         """Check powercycle configuration"""
@@ -568,28 +532,35 @@ class PowerCycleLibraryConfig:
             if unknown_load := s_sys_c.loads - loads:
                 raise ValueError(f"Unknown loads {unknown_load}")
 
-    def import_subphase_duration(self, subphase_duration_params):
+    def import_subphase_duration(self, subphase_duration_params: Dict[str, float]):
         """Import subphase data"""
         for s_ph in self.subphase.values():
             if isinstance(s_ph.duration, str):
-                s_ph.duration = getattr(
-                    subphase_duration_params, s_ph.duration.replace("$", "")
-                )
+                s_ph.duration = subphase_duration_params[s_ph.duration.replace("$", "")]
 
     def add_load_config(
         self,
         load: PowerCycleLoadConfig,
-        subphases: Union[str, Iterable[str]],
+        subphases: Optional[Union[str, Iterable[str]]] = None,
         subphase_efficiency: Optional[List[Efficiency]] = None,
     ):
         """Add load config"""
         self.loads[load.name] = load
+        self.link_load_to_subphase(load.name, subphases or [], subphase_efficiency)
+
+    def link_load_to_subphase(
+        self,
+        load_name: str,
+        subphases: Union[str, Iterable[str]],
+        subphase_efficiency: Optional[List[Efficiency]] = None,
+    ):
+        """Link a load to a specific subphase"""
         if isinstance(subphases, str):
             subphases = [subphases]
         for subphase in subphases:
-            self.subphase[subphase].loads.append(load.name)
+            self.subphase[subphase].loads.append(load_name)
             if subphase_efficiency is not None:
-                self.subphase[subphase].efficiencies[load.name] = subphase_efficiency
+                self.subphase[subphase].efficiencies[load_name] = subphase_efficiency
 
     @classmethod
     def from_json(cls, manager_config_path: Union[Path, str]):
@@ -608,7 +579,7 @@ class PowerCycleLibraryConfig:
                 k: PhaseConfig(name=k, **v) for k, v in data["phase_library"].items()
             },
             subphase={
-                k: PowerCycleSubPhase(name=k, **v)
+                k: SubPhaseConfig(name=k, **v)
                 for k, v in data["subphase_library"].items()
             },
             system={
@@ -625,7 +596,7 @@ class PowerCycleLibraryConfig:
             },
         )
 
-    def make_phase(self, phase: str, *, check=True) -> Phase:
+    def get_phase(self, phase: str, *, check=True) -> Phase:
         """Create a single phase object"""
         if check:
             self.check_config()
@@ -642,19 +613,19 @@ class PowerCycleLibraryConfig:
             }),
         )
 
-    def make_pulse(self, pulse: str, *, check=True) -> Dict[str, Phase]:
+    def get_pulse(self, pulse: str, *, check=True) -> Dict[str, Phase]:
         """Create a pulse dictionary"""
         if check:
             self.check_config()
         return {
-            phase: self.make_phase(phase, check=False)
+            phase: self.get_phase(phase, check=False)
             for phase in self.pulse[pulse].phases
         }
 
-    def make_scenario(self) -> Dict[str, Dict[str, Union[float, Dict[str, Phase]]]]:
+    def get_scenario(self) -> Dict[str, PulseDictType]:
         """Create a scenario dictionary"""
         self.check_config()
         return {
-            pulse: {"repeat": reps, "data": self.make_pulse(pulse, check=False)}
+            pulse: {"repeat": reps, "data": self.get_pulse(pulse, check=False)}
             for pulse, reps in self.scenario.pulses.items()
         }

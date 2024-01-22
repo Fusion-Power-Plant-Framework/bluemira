@@ -24,7 +24,6 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
 from pathlib import Path
 
 from bluemira.base.reactor_config import ReactorConfig
@@ -49,18 +48,12 @@ config = PowerCycleLibraryConfig.from_dict(reactor_config.config_for("Power Cycl
 #  In principle these could come from other parts of the reactor design.
 # %%
 
-
-@dataclass
-class PowerCycleDurationParameters:
-    """Dummy power cycle duration parameters [s]"""
-
-    cs_recharge_time: float = 300
-    pumpdown_time: float = 600
-    ramp_up_time: float = 157
-    ramp_down_time: float = 157
-
-
-config.import_subphase_duration(PowerCycleDurationParameters())
+config.import_subphase_duration({
+    "cs_recharge_time": 300,
+    "pumpdown_time": 600,
+    "ramp_up_time": 157,
+    "ramp_down_time": 157,
+})
 
 # %% [markdown]
 # We can then dynamically add a new load to a specific subphase of the config.
@@ -84,7 +77,7 @@ config.add_load_config(
 # Below we have interpolated the timeseries and pulled out the active and reactive loads
 # %%
 
-phase = config.make_phase("dwl")
+phase = config.get_phase("dwl")
 
 normalised_time = interpolate_extra(phase.loads.build_timeseries(), 3)
 timeseries = normalised_time * phase.duration
