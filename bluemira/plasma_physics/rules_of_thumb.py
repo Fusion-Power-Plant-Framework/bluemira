@@ -10,7 +10,7 @@ A collection of simple 0-D rules of thumb for tokamak plasmas.
 
 import numpy as np
 
-from bluemira.base.constants import EV_TO_J, K_BOLTZMANN, MU_0
+from bluemira.base.constants import MU_0, raw_uc
 from bluemira.plasma_physics.collisions import coulomb_logarithm, spitzer_conductivity
 
 
@@ -29,7 +29,7 @@ def estimate_loop_voltage(
     Z_eff:
         Effective charge [a.m.u.]
     T_e:
-        Electron temperature on axis [eV]
+        Electron temperature on axis [keV]
     n_e:
         Electron density [1/m^3]
     q_0:
@@ -54,7 +54,7 @@ def estimate_loop_voltage(
 
     There is no neo-classical resistivity on axis because there are no trapped particles
     """  # noqa: W505, E501
-    ln_lambda = coulomb_logarithm(T_e * EV_TO_J / K_BOLTZMANN, n_e)
+    ln_lambda = coulomb_logarithm(raw_uc(T_e, "keV", "K"), n_e)
     sigma = spitzer_conductivity(Z_eff, T_e, ln_lambda)
 
     # Current density on axis
