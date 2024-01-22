@@ -29,8 +29,8 @@ from pathlib import Path
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
     Efficiency,
-    PowerCycleLibraryConfig,
-    PowerCycleLoadConfig,
+    LibraryConfig,
+    LoadConfig,
     interpolate_extra,
 )
 
@@ -43,7 +43,7 @@ from bluemira.power_cycle.net import (
 # %%
 
 reactor_config = ReactorConfig(Path(__file__).parent / "scenario_config.json", None)
-config = PowerCycleLibraryConfig.from_dict(
+config = LibraryConfig.from_dict(
     reactor_config.config_for("Power Cycle"),
     {
         "cs_recharge_time": 300,
@@ -58,7 +58,7 @@ config = PowerCycleLibraryConfig.from_dict(
 # %%
 
 config.add_load_config(
-    PowerCycleLoadConfig(
+    LoadConfig(
         "cs_power",
         active_data=[1, 2],
         reactive_data=[10, 20],

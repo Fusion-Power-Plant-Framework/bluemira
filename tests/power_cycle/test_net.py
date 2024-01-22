@@ -11,12 +11,12 @@ import pytest
 
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
+    LibraryConfig,
+    LoadConfig,
     LoadType,
     Loads,
     Phase,
     PhaseConfig,
-    PowerCycleLibraryConfig,
-    PowerCycleLoadConfig,
     SubPhaseConfig,
     interpolate_extra,
 )
@@ -40,17 +40,15 @@ def test_SubPhaseConfig_duration():
     assert pcb.unit == "s"
 
 
-class TestPowerCycleSubLoad:
+class TestSubLoad:
     def test_interpolate(self):
-        pcsl = PowerCycleLoadConfig(
-            "name", np.array([0, 0.5, 1]), np.arange(3), model="ramp"
-        )
+        pcsl = LoadConfig("name", np.array([0, 0.5, 1]), np.arange(3), model="ramp")
         assert np.allclose(
             pcsl.interpolate([0, 0.1, 0.2, 0.3, 1], load_type="reactive"),
             np.array([0, 0.2, 0.4, 0.6, 2]),
         )
 
-        pcsl = PowerCycleLoadConfig(
+        pcsl = LoadConfig(
             "name", np.array([0, 0.5, 2]), active_data=np.arange(3), model="ramp"
         )
         assert np.allclose(
@@ -60,19 +58,15 @@ class TestPowerCycleSubLoad:
 
     def test_validation_raises_ValueError(self):
         with pytest.raises(ValueError, match="time and data"):
-            PowerCycleLoadConfig(
-                "name", np.array([0, 0.1, 1]), np.zeros(2), model="ramp"
-            )
+            LoadConfig("name", np.array([0, 0.1, 1]), np.zeros(2), model="ramp")
 
         with pytest.raises(ValueError, match="time and data"):
-            PowerCycleLoadConfig("name", [0, 0.1, 1], np.zeros(2), model="ramp")
+            LoadConfig("name", [0, 0.1, 1], np.zeros(2), model="ramp")
 
         with pytest.raises(ValueError, match="time must increase"):
-            PowerCycleLoadConfig("name", [0, 1, 0.1], np.zeros(3), model="ramp")
+            LoadConfig("name", [0, 1, 0.1], np.zeros(3), model="ramp")
 
-        pcsl = PowerCycleLoadConfig(
-            "name", [0, 0.1, 1], np.zeros(3), model="ramp", unit="MW"
-        )
+        pcsl = LoadConfig("name", [0, 0.1, 1], np.zeros(3), model="ramp", unit="MW")
         assert np.allclose(pcsl.time, np.array([0, 0.1, 1]))
         assert pcsl.unit == "W"
 
@@ -83,7 +77,7 @@ class TestLoads:
         reactor_config = ReactorConfig(
             Path(__file__).parent / "test_data" / "scenario_config.json", None
         )
-        cls._config = PowerCycleLibraryConfig.from_dict(
+        cls._config = LibraryConfig.from_dict(
             reactor_config.config_for("Power Cycle"),
             {
                 "cs_recharge_time": 300,
@@ -152,7 +146,7 @@ class TestPhase:
             PhaseConfig("dwl", "max", ["a", "b"]),
             {"a": SubPhaseConfig("a", 5), "b": SubPhaseConfig("b", 10)},
             Loads({
-                "name": PowerCycleLoadConfig(
+                "name": LoadConfig(
                     "name", np.array([0, 0.5, 1]), np.arange(3), model="ramp"
                 )
             }),
@@ -161,13 +155,13 @@ class TestPhase:
         assert phase.duration == 10
 
 
-class TestPowerCycleLibraryConfig:
+class TestLibraryConfig:
     @classmethod
     def setup_class(cls):
         reactor_config = ReactorConfig(
             Path(__file__).parent / "test_data" / "scenario_config.json", None
         )
-        cls._config = PowerCycleLibraryConfig.from_dict(
+        cls._config = LibraryConfig.from_dict(
             reactor_config.config_for("Power Cycle"),
             {
                 "cs_recharge_time": 300,
@@ -198,7 +192,7 @@ class TestPowerCycleLibraryConfig:
 
     def test_add_load_config(self):
         self.config.add_load_config(
-            PowerCycleLoadConfig(
+            LoadConfig(
                 "cs_power",
                 [0, 1],
                 [10, 20],

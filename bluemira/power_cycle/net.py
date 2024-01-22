@@ -197,7 +197,7 @@ class SubPhaseConfig(Config):
 
 
 @dataclass
-class PowerCycleSystem(Config):
+class SystemConfig(Config):
     """Power cycle system config"""
 
     subsystems: List[str]
@@ -205,7 +205,7 @@ class PowerCycleSystem(Config):
 
 
 @dataclass
-class PowerCycleSubSystem(Config):
+class SubSystemConfig(Config):
     """Power cycle sub system config"""
 
     loads: List[str]
@@ -213,7 +213,7 @@ class PowerCycleSubSystem(Config):
 
 
 @dataclass
-class PowerCycleLoadConfig(Config):
+class LoadConfig(Config):
     """Power cycle load config"""
 
     time: npt.ArrayLike = field(default_factory=lambda: np.arange(2))
@@ -297,7 +297,7 @@ class Loads:
 
     def __init__(
         self,
-        loads: Dict[str, PowerCycleLoadConfig],
+        loads: Dict[str, LoadConfig],
     ):
         self.loads = loads
 
@@ -487,7 +487,7 @@ class PulseDictType(TypedDict):
     data: Dict[str, Phase]
 
 
-class PowerCycleLibraryConfig:
+class LibraryConfig:
     """Power Cycle Configuration"""
 
     def __init__(
@@ -496,9 +496,9 @@ class PowerCycleLibraryConfig:
         pulse: Dict[str, PulseConfig],
         phase: Dict[str, PhaseConfig],
         subphase: Dict[str, SubPhaseConfig],
-        system: Dict[str, PowerCycleSystem],
-        subsystem: Dict[str, PowerCycleSubSystem],
-        loads: Dict[str, PowerCycleLoadConfig],
+        system: Dict[str, SystemConfig],
+        subsystem: Dict[str, SubSystemConfig],
+        loads: Dict[str, LoadConfig],
         durations: Optional[Dict[str, float]] = None,
     ):
         self.scenario = scenario
@@ -550,7 +550,7 @@ class PowerCycleLibraryConfig:
 
     def add_load_config(
         self,
-        load: PowerCycleLoadConfig,
+        load: LoadConfig,
         subphases: Optional[Union[str, Iterable[str]]] = None,
         subphase_efficiency: Optional[List[Efficiency]] = None,
     ):
@@ -595,17 +595,13 @@ class PowerCycleLibraryConfig:
                 for k, v in data["subphase_library"].items()
             },
             system={
-                k: PowerCycleSystem(name=k, **v)
-                for k, v in data["system_library"].items()
+                k: SystemConfig(name=k, **v) for k, v in data["system_library"].items()
             },
             subsystem={
-                k: PowerCycleSubSystem(name=k, **v)
+                k: SubSystemConfig(name=k, **v)
                 for k, v in data["sub_system_library"].items()
             },
-            loads={
-                k: PowerCycleLoadConfig(name=k, **v)
-                for k, v in data["load_library"].items()
-            },
+            loads={k: LoadConfig(name=k, **v) for k, v in data["load_library"].items()},
             durations=durations,
         )
 
