@@ -9,10 +9,23 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Type, Union
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Callable,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Tuple,
+    Type,
+    TypedDict,
+    Union,
+)
 
 import numpy as np
 from scipy.interpolate import interp1d
+from typing_extensions import NotRequired
 
 from bluemira.base.constants import raw_uc
 from bluemira.power_cycle.tools import read_json
@@ -69,8 +82,19 @@ class Efficiency:
     reactive: Optional[bool] = None
 
 
+class EfficiencyDictType(TypedDict):
+    """Typing for efficiency object"""
+
+    value: float
+    description: NotRequired[str]
+    reactive: NotRequired[bool]
+
+
 class Descriptor:
-    """Data class property descriptor"""
+    """Data class property descriptor
+
+    See https://docs.python.org/3/library/dataclasses.html#descriptor-typed-fields
+    """
 
     def __set_name__(self, _, name: str):
         """Set the attribute name from a dataclass"""
@@ -118,7 +142,9 @@ class LibraryConfigDescriptor(Descriptor):
 class PhaseEfficiencyDescriptor(Descriptor):
     """Efficiency descriptor for use with dataclasses"""
 
-    def __get__(self, obj: Any, _) -> List[Efficiency]:
+    def __get__(
+        self, obj: Any, _
+    ) -> Union[Callable[[], Dict], Dict[str, List[Efficiency]]]:
         """Get the config"""
         if obj is None:
             return dict
@@ -127,7 +153,9 @@ class PhaseEfficiencyDescriptor(Descriptor):
     def __set__(
         self,
         obj: Any,
-        value: List[Union[Dict[str, Union[str, float, bool]], Efficiency]],
+        value: Union[
+            Callable[[], Dict], Dict[str, List[Union[Efficiency, EfficiencyDictType]]]
+        ],
     ):
         """Setup the config"""
         if callable(value):
@@ -143,7 +171,7 @@ class PhaseEfficiencyDescriptor(Descriptor):
 class LoadEfficiencyDescriptor(Descriptor):
     """Efficiency descriptor for use with dataclasses"""
 
-    def __get__(self, obj: Any, _) -> List[Efficiency]:
+    def __get__(self, obj: Any, _) -> Union[Callable[[], list], List[Efficiency]]:
         """Get the config"""
         if obj is None:
             return list
@@ -152,7 +180,7 @@ class LoadEfficiencyDescriptor(Descriptor):
     def __set__(
         self,
         obj: Any,
-        value: List[Union[Dict[str, Union[str, float, bool]], Efficiency]],
+        value: Union[Callable[[], list], List[Union[EfficiencyDictType, Efficiency]]],
     ):
         """Setup the config"""
         if callable(value):
@@ -273,7 +301,7 @@ class PowerCycleLoadConfig(Config):
 
         Notes
         -----
-        The interpolation type is set by subload.model.
+        The interpolation type is set by load.model.
         Any out-of-bound values are set to zero.
         """
         if isinstance(load_type, str):
@@ -343,7 +371,7 @@ class Loads:
         unit:
             return unit, defaults to [W]
         end_time:
-            for unnormalised subloads this assures the subload is
+            for unnormalised loads this assures the load is
             applied at the right point in time
         """
         load_type = LoadType.from_str(load_type)
@@ -380,7 +408,7 @@ class Loads:
         unit:
             return unit, defaults to [W]
         end_time:
-            for unnormalised subloads this assures the subload is
+            for unnormalised loads this assures the load is
             applied at the right point in time
         """
         load_type = LoadType.from_str(load_type)
@@ -391,7 +419,7 @@ class Loads:
         }
 
     def build_timeseries(self, end_time: Optional[float] = None) -> np.ndarray:
-        """Build a combined time series based on subloads"""
+        """Build a combined time series based on loads"""
         times = []
         for load in self.loads.values():
             if load.normalised:
@@ -421,7 +449,7 @@ class Loads:
         unit:
             return unit, defaults to [W]
         end_time:
-            for unnormalised subloads this assures the subload is
+            for unnormalised loads this assures the load is
             applied at the right point in time
         """
         timeseries, end_time = self._normalise_timeseries(timeseries, end_time)
@@ -455,7 +483,7 @@ class Loads:
         unit:
             return unit, defaults to [W]
         end_time:
-            for unnormalised subloads this assures the subload is
+            for unnormalised loads this assures the load is
             applied at the right point in time
         """
         return np.sum(
@@ -497,7 +525,6 @@ class Phase:
 class PowerCycleLibraryConfig:
     """Power Cycle Configuration"""
 
-    loads: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PowerCycleLoadConfig)
     scenario: ScenarioConfigDescriptor = ScenarioConfigDescriptor()
     pulse: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PulseConfig)
     phase: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PhaseConfig)
@@ -508,6 +535,7 @@ class PowerCycleLibraryConfig:
     subsystem: LibraryConfigDescriptor = LibraryConfigDescriptor(
         config=PowerCycleSubSystem
     )
+    loads: LibraryConfigDescriptor = LibraryConfigDescriptor(config=PowerCycleLoadConfig)
 
     def check_config(self):
         """Check powercycle configuration"""
