@@ -46,15 +46,15 @@ from bluemira.geometry.tools import (
 
 __all__ = [
     "apply_component_display_options",
-    "get_n_sectors",
-    "circular_pattern_component",
-    "pattern_revolved_silhouette",
-    "pattern_lofted_silhouette",
-    "varied_offset",
-    "find_xy_plane_radii",
-    "make_circular_xy_ring",
     "build_sectioned_xy",
     "build_sectioned_xyz",
+    "circular_pattern_component",
+    "find_xy_plane_radii",
+    "get_n_sectors",
+    "make_circular_xy_ring",
+    "pattern_lofted_silhouette",
+    "pattern_revolved_silhouette",
+    "varied_offset",
 ]
 
 

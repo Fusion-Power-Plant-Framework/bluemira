@@ -30,12 +30,12 @@ from bluemira.geometry.coordinates import check_ccw, rotation_matrix_v1v2
 from bluemira.geometry.placement import BluemiraPlacement
 
 __all__ = [
-    "str_to_latex",
+    "BluemiraPathPatch3D",
+    "Plot3D",
+    "coordinates_to_path",
     "make_gif",
     "save_figure",
-    "coordinates_to_path",
-    "Plot3D",
-    "BluemiraPathPatch3D",
+    "str_to_latex",
 ]
 
 

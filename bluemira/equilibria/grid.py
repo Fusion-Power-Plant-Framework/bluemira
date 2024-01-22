@@ -16,7 +16,7 @@ from bluemira.equilibria.constants import MIN_N_DISCR, X_AXIS_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.coordinates import get_area_2d, get_centroid_2d
 
-__all__ = ["Grid", "integrate_dx_dz", "volume_integral", "revolved_volume"]
+__all__ = ["Grid", "integrate_dx_dz", "revolved_volume", "volume_integral"]
 
 
 class Grid:
