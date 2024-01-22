@@ -573,9 +573,13 @@ class LibraryConfig:
                 self.subphase[subphase].efficiencies[load_name] = subphase_efficiency
 
     @classmethod
-    def from_json(cls, manager_config_path: Union[Path, str]):
+    def from_json(
+        cls,
+        manager_config_path: Union[Path, str],
+        durations: Optional[Dict[str, float]] = None,
+    ):
         """Create configuration from pure json"""
-        return cls.from_dict(read_json(manager_config_path))
+        return cls.from_dict(read_json(manager_config_path), durations)
 
     @classmethod
     def from_dict(
