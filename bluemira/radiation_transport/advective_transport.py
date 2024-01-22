@@ -20,7 +20,10 @@ from bluemira.base.constants import EPS
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_coordinates
-from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find import (
+    find_LCFS_separatrix,
+    find_flux_surface_through_point,
+)
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
@@ -46,7 +49,13 @@ class ChargedParticleSolver:
         (default: 0.001).
     """
 
-    def __init__(self, config: Dict[str, float], equilibrium, dx_mp: float = 0.001):
+    def __init__(
+        self,
+        config: Dict[str, float],
+        equilibrium,
+        dx_mp: float = 0.001,
+        psi_n_tol: float = 1e-6,
+    ):
         self.eq = equilibrium
         self.params = self._make_params(config)
         self._check_params()
@@ -63,6 +72,7 @@ class ChargedParticleSolver:
         self.result = None
 
         # Pre-processing
+        self.psi_n_tol = psi_n_tol
         o_points, _ = self.eq.get_OX_points()
         self._o_point = o_points[0]
         z = self._o_point.z
@@ -152,15 +162,21 @@ class ChargedParticleSolver:
         """
         yz_plane = self._yz_plane
         o_point = self._o_point
-        separatrix = self.eq.get_separatrix()
+        psi = self.eq.psi()
+        lcfs, separatrix = find_LCFS_separatrix(
+            self.eq.x,
+            self.eq.z,
+            psi,
+            self.eq._o_points,
+            self.eq._x_points,
+            double_null=self.eq.is_double_null,
+            psi_n_tol=self.psi_n_tol,
+        )
 
         if not isinstance(separatrix, Coordinates):
-            legs_top_bot_split = (
-                (min(separatrix[0].z) >= max(separatrix[1].z))
-                or (max(separatrix[0].z) <= min(separatrix[1].z))
-                or np.isclose(min(separatrix[0].z), max(separatrix[1].z), atol=1e-2)
-                or np.isclose(max(separatrix[0].z), min(separatrix[1].z), atol=1e-2)
-            )
+            z_lcfs = min(abs(min(lcfs.z)), abs(max(lcfs.z)))
+            z_sep = min(abs(min(separatrix[0].z)), abs(max(separatrix[0].z)))
+            legs_top_bot_split = np.isclose(z_sep, z_lcfs, rtol=1e-3)
             sep1_intersections = coords_plane_intersect(separatrix[0], yz_plane)
             sep2_intersections = coords_plane_intersect(separatrix[1], yz_plane)
             if not legs_top_bot_split:
@@ -172,11 +188,10 @@ class ChargedParticleSolver:
                     max(x_sep2_mp, x_sep1_mp) if outboard else min(x_sep2_mp, x_sep1_mp)
                 )
             elif isinstance(sep1_intersections, Coordinates):
+                # separatrix list is sorted by loop length when found,
+                # so separatrix[0] will have the intersection
                 sep_arg = np.argmin(np.abs(sep1_intersections.T[0] - o_point.x))
                 x_sep_mp = sep1_intersections.T[0][sep_arg]
-            elif isinstance(sep2_intersections, Coordinates):
-                sep_arg = np.argmin(np.abs(sep2_intersections.T[0] - o_point.x))
-                x_sep_mp = sep2_intersections.T[0][sep_arg]
             else:
                 raise BluemiraError("Your seperatrix does not cross the midplane.")
         else:

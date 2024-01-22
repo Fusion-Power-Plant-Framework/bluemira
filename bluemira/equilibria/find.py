@@ -806,7 +806,10 @@ def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_poi
 
 
 def get_legs(
-    equilibrium: Equilibrium, n_layers: int = 1, dx_off: float = 0.0
+    equilibrium: Equilibrium,
+    n_layers: int = 1,
+    dx_off: float = 0.0,
+    psi_n_tol: float = 1e-6,
 ) -> Dict[str, List[Coordinates]]:
     """
     Get the legs of a separatrix.
@@ -837,46 +840,75 @@ def get_legs(
     interpolation and local minimum finding tolerances.
     """
     o_points, x_points = equilibrium.get_OX_points()
+    psi = equilibrium.psi()
+    lcfs, separatrix = find_LCFS_separatrix(
+        equilibrium.x,
+        equilibrium.z,
+        psi,
+        o_points,
+        x_points,
+        double_null=equilibrium.is_double_null,
+        psi_n_tol=psi_n_tol,
+    )
     o_point = o_points[0]
     x_points = x_points[:2]
-    separatrix = equilibrium.get_separatrix()
     delta = equilibrium.grid.dx
     dx_offsets = None if n_layers == 1 else np.linspace(0, dx_off, n_layers)[1:]
 
     if isinstance(separatrix, list):
-        # Double null (sort in/out bottom/top)
+        # Double null (N.B., always sort resulting leg dict by in/out
+        # and then bottom/top)
         x_points.sort(key=lambda x_point: x_point.z)
-        # Checks to determine configuration
+        # Check to determine configuration (separatrix list is sorted by
+        # loop length when it is found, so use [0])
+        z_lcfs = min(abs(min(lcfs.z)), abs(max(lcfs.z)))
+        z_sep = min(abs(min(separatrix[0].z)), abs(max(separatrix[0].z)))
+        legs_top_bot = np.isclose(z_sep, z_lcfs, rtol=1e-3)
+        if legs_top_bot:
+            leg_dict_top_bot = {}
+            separatrix.sort(key=lambda half_sep: np.min(half_sep.z))
+            # TODO imin + n and delta values - check with join_intersect
+            for (
+                half_sep,
+                x_p,
+            ) in zip(separatrix, x_points):
+                if np.abs(x_p.z) < np.min(np.abs(half_sep.z)):
+                    imin = np.argmin(np.abs(half_sep.z))
+                    sep_legs = _extract_leg(
+                        half_sep,
+                        half_sep.x[imin],
+                        half_sep.z[imin],
+                        delta,
+                        o_point.z,
+                    )
+                else:
+                    sep_legs = _extract_leg(half_sep, x_p.x, x_p.z, delta, o_point.z)
 
-        min_x0, max_x0, min_x1, max_x1 = (
-            min(separatrix[0].x),
-            max(separatrix[0].x),
-            min(separatrix[1].x),
-            max(separatrix[1].x),
-        )
-        min_z0, max_z0, min_z1, max_z1 = (
-            min(separatrix[0].z),
-            max(separatrix[0].z),
-            min(separatrix[1].z),
-            max(separatrix[1].z),
-        )
+                sep_legs.sort(key=lambda leg: leg.x[0])
+                inner_leg, outer_leg = sep_legs
+                inner_legs, outer_legs = [inner_leg], [outer_leg]
 
-        legs_out_in = (
-            (min_x0 > max_x1)
-            or (max_x0 < min_x1)
-            or np.isclose(max_x0, min_x1, atol=1e-2)
-            or np.isclose(min_x0, max_x1, atol=1e-2)
-        )
-        legs_top_bot = (
-            (min_z0 >= max_z1)
-            or (max_z0 <= min_z1)
-            or np.isclose(min_z0, max_z1, atol=1e-2)
-            or np.isclose(max_z0, min_z1, atol=1e-2)
-        )
+                if dx_offsets is not None:
+                    inner_legs.extend(
+                        _extract_offsets(
+                            equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
+                        )
+                    )
+                    outer_legs.extend(
+                        _extract_offsets(
+                            equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z
+                        )
+                    )
 
-        if legs_out_in:
+                location = "lower" if x_p.z < o_point.z else "upper"
+                leg_dict_top_bot.update({
+                    f"{location}_inner": inner_legs,
+                    f"{location}_outer": outer_legs,
+                })
+                leg_dict = leg_dict_top_bot
+
+        if not legs_top_bot:
             legs = []
-            # Double null (sort in/out bottom/top)
             separatrix.sort(key=lambda half_sep: np.min(half_sep.x))
             for half_sep, direction in zip(separatrix, [-1, 1]):
                 for x_p in x_points:
@@ -902,54 +934,6 @@ def get_legs(
                 "upper_outer": legs[3],
             }
             leg_dict = leg_dict_out_in
-
-        # This if statement goes second in case div legs are
-        # off centre but we still have a top/bottom split
-        if legs_top_bot:
-            leg_dict_top_bot = {}
-            # Double null (sort in/out bottom/top)
-            separatrix.sort(key=lambda half_sep: np.min(half_sep.z))
-            # TODO imin + n and delta values - check with join_intersect
-            for (
-                half_sep,
-                x_p,
-            ) in zip(separatrix, x_points):
-                if np.abs(x_p.z) < np.min(np.abs(half_sep.z)):
-                    imin = np.argmin(np.abs(half_sep.z))
-                    sep_legs = _extract_leg(
-                        half_sep,
-                        half_sep.x[imin],
-                        half_sep.z[imin + 5],
-                        100 * delta,
-                        o_point.z,
-                    )
-                else:
-                    sep_legs = _extract_leg(
-                        half_sep, x_p.x, x_p.z, 100 * delta, o_point.z
-                    )
-
-                sep_legs.sort(key=lambda leg: leg.x[0])
-                inner_leg, outer_leg = sep_legs
-                inner_legs, outer_legs = [inner_leg], [outer_leg]
-
-                if dx_offsets is not None:
-                    inner_legs.extend(
-                        _extract_offsets(
-                            equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
-                        )
-                    )
-                    outer_legs.extend(
-                        _extract_offsets(
-                            equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z
-                        )
-                    )
-
-                location = "lower" if x_p.z < o_point.z else "upper"
-                leg_dict_top_bot.update({
-                    f"{location}_inner": inner_legs,
-                    f"{location}_outer": outer_legs,
-                })
-                leg_dict = leg_dict_top_bot
 
     else:
         # Single null
