@@ -219,8 +219,6 @@ extend-immutable-calls = [
     "bluemira.base.reactor.FilterMaterial",
     "bluemira.utilities.opt_variables.ov",
     "bluemira.utilities.tools.ColourDescriptor",
-    "bluemira.power_cycle.net.ScenarioConfigDescriptor",
-    "bluemira.power_cycle.net.LibraryConfigDescriptor"
 ]
 
 [tool.ruff.lint.flake8-copyright]
