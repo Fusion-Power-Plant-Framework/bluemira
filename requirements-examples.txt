@@ -26,7 +26,7 @@ mistune==3.0.2
 nbclient==0.7.4
 nbconvert==7.14.1
 nbformat==5.9.2
-nest-asyncio==1.5.8
+nest-asyncio==1.6.0
 notebook==7.0.6
 pandocfilters==1.5.0
 parso==0.8.3
