@@ -3,7 +3,7 @@ argon2-cffi-bindings==21.2.0
 asttokens==2.4.1
 attrs==23.2.0
 backcall==0.2.0
-beautifulsoup4==4.12.2
+beautifulsoup4==4.12.3
 bleach==6.1.0
 cffi==1.16.0
 debugpy==1.8.0
