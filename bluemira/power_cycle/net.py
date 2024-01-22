@@ -508,8 +508,7 @@ class LibraryConfig:
         self.system = system
         self.subsystem = subsystem
         self.loads = loads
-        if durations is not None:
-            self._import_subphase_duration(durations)
+        self._import_subphase_duration(durations)
 
     def check_config(self):
         """Check powercycle configuration"""
@@ -542,11 +541,16 @@ class LibraryConfig:
             if unknown_load := s_sys_c.loads - loads:
                 raise ValueError(f"Unknown loads {unknown_load}")
 
-    def _import_subphase_duration(self, subphase_duration_params: Dict[str, float]):
+    def _import_subphase_duration(
+        self, subphase_duration_params: Optional[Dict[str, float]] = None
+    ):
         """Import subphase data"""
         for s_ph in self.subphase.values():
             if isinstance(s_ph.duration, str):
-                s_ph.duration = subphase_duration_params[s_ph.duration.replace("$", "")]
+                key = s_ph.duration.replace("$", "")
+                if subphase_duration_params is None:
+                    raise KeyError(key)
+                s_ph.duration = subphase_duration_params[key]
 
     def add_load_config(
         self,
