@@ -26,7 +26,7 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import is_num
 
-__all__ = ["CoilType", "Coil"]
+__all__ = ["Coil", "CoilType"]
 
 
 class CoilTypeEnumMeta(EnumMeta):

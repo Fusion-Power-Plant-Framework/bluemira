@@ -8,7 +8,9 @@
 from typing import Any, Callable, Iterable, Optional, Tuple, Union
 
 import numpy as np
-from scipy.optimize._numdiff import approx_derivative as _approx_derivative
+from scipy.optimize._numdiff import (
+    approx_derivative as _approx_derivative,  # noqa: PLC2701
+)
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.optimisation.error import OptimisationError

@@ -22,17 +22,17 @@ from bluemira.codes.plasmod.mapping import (
 )
 
 __all__ = [
-    "EquilibriumModel",
-    "ImpurityModel",
-    "PedestalModel",
-    "PLHModel",
-    "plot_default_profiles",
-    "Profiles",
-    "SOLModel",
-    "SafetyProfileModel",
-    "TransportModel",
     "BINARY",
     "NAME",
+    "EquilibriumModel",
+    "ImpurityModel",
+    "PLHModel",
+    "PedestalModel",
+    "Profiles",
     "RunMode",
+    "SOLModel",
+    "SafetyProfileModel",
     "Solver",
+    "TransportModel",
+    "plot_default_profiles",
 ]

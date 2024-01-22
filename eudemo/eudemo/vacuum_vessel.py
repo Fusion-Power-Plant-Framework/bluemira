@@ -23,7 +23,7 @@ from bluemira.builders.tools import (
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import (
-    _offset_wire_discretised,
+    _offset_wire_discretised,  # noqa: PLC2701
     boolean_fuse,
     force_wire_to_spline,
 )

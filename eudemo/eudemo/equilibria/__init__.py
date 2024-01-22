@@ -16,8 +16,8 @@ from eudemo.equilibria._designer import (
 )
 
 __all__ = [
+    "DummyFixedEquilibriumDesigner",
     "EquilibriumDesigner",
     "FixedEquilibriumDesigner",
-    "DummyFixedEquilibriumDesigner",
     "ReferenceFreeBoundaryEquilibriumDesigner",
 ]
