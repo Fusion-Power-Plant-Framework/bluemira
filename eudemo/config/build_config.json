@@ -8,7 +8,7 @@
     "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
-    "plot": false
+    "plot": true
   },
   "Fixed boundary equilibrium": {
     "run_mode": "read",
@@ -138,8 +138,13 @@
     "show_data": false
   },
   "TF coils": {
+<<<<<<< HEAD
     "run_mode": "read",
     "file_path": "$path_expand:./TFCoilDesign.json",
+=======
+    "run_mode": "run",
+    "file_path": "config/TFCoilDesign.json",
+>>>>>>> 5878bc49 (pause)
     "plot": true,
     "material": {
       "Winding Pack": "Toroidal_Field_Coil_2015",
