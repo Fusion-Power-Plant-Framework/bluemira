@@ -6,9 +6,9 @@
   },
   "Radial build": {
     "run_mode": "read",
-    "read_dir": "$path_expand:./process",
-    "run_dir": "$path_expand:./process",
-    "plot": false
+    "read_dir": "$path_expand:./",
+    "run_dir": "$path_expand:./",
+    "plot": true
   },
   "Fixed boundary equilibrium": {
     "run_mode": "read",
@@ -163,9 +163,9 @@
     }
   },
   "TF coils": {
-    "run_mode": "read",
-    "file_path": "$path_expand:./TFCoilDesign.json",
-    "plot": false,
+    "run_mode": "run",
+    "file_path": "config/TFCoilDesign.json",
+    "plot": true,
     "material": {
       "Winding Pack": "Toroidal_Field_Coil_2015",
       "Casing": "Toroidal_Field_Coil_2015",
