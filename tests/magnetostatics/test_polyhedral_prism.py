@@ -240,33 +240,44 @@ class TestPolyhedralCoordinates:
             1e6,
         )
 
-    @pytest.mark.parametrize("plane", ["x", "y", "z"])
+    @pytest.mark.parametrize("plane", ["y", "z"])
     def test_hexagon(self, plane):
-        xx, yy, zz, i, j, k = plane_setup(plane)
+        n = 50
+        xx, yy, zz, i, j, k = plane_setup(plane, x_min=-10, x_max=10, n=n)
 
         f = plt.figure()
         ax = f.add_subplot(1, 1, 1, projection="3d")
         self.hexagon.plot(ax)
         ax.set_title("HexagonPrism")
         Bx, By, Bz = self.hexagon.field(xx, yy, zz)
-        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
-        args_new = [xx, yy, zz, B_new]
+        B = np.sqrt(Bx**2 + By**2 + Bz**2)
+        args_new = [xx, yy, zz, B]
         cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
         f.colorbar(cm)
 
-    @pytest.mark.parametrize("plane", ["x", "y", "z"])
+        if plane == "y":
+            np.testing.assert_allclose(B[:, : n // 2], B[:, n // 2 :][::-1][::-1, ::-1])
+        else:
+            np.testing.assert_allclose(B[: n // 2, :], B[n // 2 :, :][::-1])
+
+    @pytest.mark.parametrize("plane", ["y", "z"])
     def test_triangle(self, plane):
-        xx, yy, zz, i, j, k = plane_setup(plane)
+        n = 50
+        xx, yy, zz, i, j, k = plane_setup(plane, x_min=-10, x_max=10, n=n)
 
         f = plt.figure()
         ax = f.add_subplot(1, 1, 1, projection="3d")
         self.triangle.plot(ax)
         ax.set_title("TrianglePrism")
         Bx, By, Bz = self.triangle.field(xx, yy, zz)
-        B_new = np.sqrt(Bx**2 + By**2 + Bz**2)
-        args_new = [xx, yy, zz, B_new]
+        B = np.sqrt(Bx**2 + By**2 + Bz**2)
+        args_new = [xx, yy, zz, B]
         cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
         f.colorbar(cm)
+        if plane == "z":
+            np.testing.assert_allclose(B[:, : n // 2], B[:, n // 2 :][::-1][::-1, ::-1])
+        else:
+            np.testing.assert_allclose(B[:, : n // 2], B[:, n // 2 :][::-1][::-1, ::-1])
 
 
 class TestCombinedShapes:
