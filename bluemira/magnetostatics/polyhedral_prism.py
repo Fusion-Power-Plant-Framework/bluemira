@@ -316,12 +316,12 @@ def _vector_potential_fabbri(
     Vector potential at the point (response to unit current density)
     """
     integral = np.zeros(3)
-    for i, normal in enumerate(face_normals):
+    for i in range(len(face_normals)):
         integral += np.dot(
             mid_points[i] - point,
-            normal
+            face_normals[i]
             * _surface_integral_fabbri(
-                face_points[i], normal, mid_points[i], n_sides[i], point
+                face_points[i], face_normals[i], mid_points[i], n_sides[i], point
             ),
         )
     return 0.5 * MU_0_4PI * np.dot(current_direction, integral)
