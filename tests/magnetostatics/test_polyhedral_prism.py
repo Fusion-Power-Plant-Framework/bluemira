@@ -270,10 +270,7 @@ class TestPolyhedralCoordinates:
         args_new = [xx, yy, zz, B]
         cm = ax.contourf(args_new[i], args_new[j], args_new[k], zdir=plane, offset=0)
         f.colorbar(cm)
-        if plane == "z":
-            np.testing.assert_allclose(B[:, : n // 2], B[:, n // 2 :][::-1][::-1, ::-1])
-        else:
-            np.testing.assert_allclose(B[:, : n // 2], B[:, n // 2 :][::-1][::-1, ::-1])
+        np.testing.assert_allclose(B[:, : n // 2], B[:, n // 2 :][::-1][::-1, ::-1])
 
 
 class TestCombinedShapes:
