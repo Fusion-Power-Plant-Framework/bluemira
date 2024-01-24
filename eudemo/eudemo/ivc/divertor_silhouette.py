@@ -20,7 +20,10 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
-from bluemira.geometry.tools import make_polygon
+from bluemira.geometry.tools import (
+    make_circle,
+    make_polygon,
+)
 from bluemira.geometry.wire import BluemiraWire
 
 
@@ -226,8 +229,10 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
     @staticmethod
     def _make_baffle(
         label: str,
-        start: Sequence[float],
-        end: Sequence[float],
+        blanket_join_point: Sequence[float],
+        target_join_point: Sequence[float],
+        target_xz_start: Tuple[float],
+        target_xz_end: Tuple[float],
     ) -> BluemiraWire:
         """
         Make a baffle.
@@ -245,8 +250,78 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
             The position (in x-z) to stop drawing the baffle, e.g., the
             position to the upper part of the first wall.
         """
-        return make_polygon(
-            np.array([[start[0], end[0]], [0, 0], [start[1], end[1]]]), label=label
+
+        def grad_xz(x1, x2, z1, z2):
+            if np.isclose(z1, z2):
+                return 0
+            if np.isclose(x1, x2):
+                return np.inf
+            return (z1 - z2) / (x1 - x2)
+
+        def solve(l1: Tuple[float], l2: Tuple[float]):
+            A = np.array([[l1[0], l1[1]], [l2[0], l2[1]]])
+            b = np.array([l1[2], l2[2]])
+            return np.linalg.solve(A, b)
+
+        bx = blanket_join_point[0]
+        bz = blanket_join_point[1]
+        tx = target_join_point[0]
+        tz = target_join_point[1]
+
+        # grad of the target
+        mt = grad_xz(
+            target_xz_start[0],
+            target_xz_end[0],
+            target_xz_start[1],
+            target_xz_end[1],
+        )
+
+        # Solve the two linear equations in the form Ax + Bz = C
+
+        # This comes from solving for where a circle centered at O
+        # will intersect both the target and blanket join points
+        l1 = (
+            2 * bx - 2 * tx,  # A
+            2 * bz - 2 * tz,  # B
+            (bx**2) + bz**2 - (tx**2 + tz**2),  # C
+        )
+        # This comes from solving for where the circle center
+        # lines on the line perpendicular to the target
+        l2 = (
+            0 if mt == np.inf else 1,  # A
+            1 if mt == np.inf else mt,  # B
+            tz if mt == np.inf else tx + mt * tz,  # C
+        )
+        arc_center_point = solve(l1, l2)
+
+        ox = arc_center_point[0]
+        oz = arc_center_point[1]
+
+        deg_t = np.rad2deg(np.arctan2(tz - oz, tx - ox))
+        deg_b = np.rad2deg(np.arctan2(bz - oz, bx - ox))
+
+        start_angle = deg_t
+        end_angle = deg_b
+        if deg_t > deg_b:
+            start_angle = deg_b
+            end_angle = deg_t
+
+        targ = np.array([tx, tz])
+        blnk = np.array([bx, bz])
+
+        radius_t = np.linalg.norm(targ - arc_center_point)
+        radius_b = np.linalg.norm(blnk - arc_center_point)
+
+        if not np.isclose(radius_b, radius_t):
+            raise ValueError("radi must be equal")
+
+        return make_circle(
+            radius=radius_t,
+            center=(ox, 0, oz),
+            axis=(0, -1, 0),
+            start_angle=start_angle,
+            end_angle=end_angle,
+            label=label,
         )
 
     def make_inner_baffle(
@@ -263,8 +338,10 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         inner_target_start = self._get_wire_end_with_largest(target, "x")
         return self._make_baffle(
             label=self.INNER_BAFFLE,
-            start=np.array([x_lim, z_lim]),
-            end=inner_target_start,
+            blanket_join_point=np.array([x_lim, z_lim]),
+            target_join_point=inner_target_start,
+            target_xz_start=(target.start_point().x[0], target.start_point().z[0]),
+            target_xz_end=(target.end_point().x[0], target.end_point().z[0]),
         )
 
     def make_outer_baffle(
@@ -281,8 +358,10 @@ class DivertorSilhouetteDesigner(Designer[Tuple[BluemiraWire, ...]]):
         outer_target_end = self._get_wire_end_with_largest(target, "x")
         return self._make_baffle(
             label=self.OUTER_BAFFLE,
-            start=outer_target_end,
-            end=np.array([x_lim, z_lim]),
+            blanket_join_point=np.array([x_lim, z_lim]),
+            target_join_point=outer_target_end,
+            target_xz_start=(target.start_point().x[0], target.start_point().z[0]),
+            target_xz_end=(target.end_point().x[0], target.end_point().z[0]),
         )
 
     def _get_sols_for_leg(

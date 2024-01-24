@@ -37,6 +37,7 @@ from bluemira.builders.divertor import DivertorBuilder
 from bluemira.builders.plasma import Plasma, PlasmaBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
+from bluemira.display.displayer import show_cad
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.profiles import Profile
 from bluemira.equilibria.run import Snapshot
@@ -509,6 +510,7 @@ if __name__ == "__main__":
         reactor_config.params_for("Lower Port"),
         reactor_config.config_for("Lower Port"),
         ivc_shapes.divertor_face,
+        ivc_shapes.div_wall_join_pt,
         reactor.tf_coils.xz_outer_boundary(),
     ).execute()
 
@@ -617,8 +619,6 @@ if __name__ == "__main__":
         rs_plugs,
         n_TF=reactor_config.global_params.n_TF.value,
     )
-
-    from bluemira.display import show_cad
 
     debug = [upper_port_koz_xz, eq_port_koz_xz, lower_port_koz_xz]
     debug.extend(reactor.pf_coils.xz_boundary())

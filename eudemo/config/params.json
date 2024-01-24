@@ -189,7 +189,7 @@
     "value": -15,
     "unit": "degree",
     "source": "Input",
-    "long_name": "Lower port angle (downwards from 0 degrees)"
+    "long_name": "Lower port angle (downwards from 0 degrees to -90)"
   },
   "x_gs_kink_diff": {
     "value": 2,
