@@ -200,19 +200,17 @@ class TestPolyhedralMaths:
 class TestPolyhedralCoordinates:
     @classmethod
     def setup_class(cls):
-        coords = Coordinates(
-            {
-                "x": [1, 0.5, -0.5, -1, -0.5, 0.5],
-                "z": [
-                    0,
-                    0.5 * np.sqrt(3),
-                    0.5 * np.sqrt(3),
-                    0,
-                    -0.5 * np.sqrt(3),
-                    -0.5 * np.sqrt(3),
-                ],
-            }
-        )
+        coords = Coordinates({
+            "x": [1, 0.5, -0.5, -1, -0.5, 0.5],
+            "z": [
+                0,
+                0.5 * np.sqrt(3),
+                0.5 * np.sqrt(3),
+                0,
+                -0.5 * np.sqrt(3),
+                -0.5 * np.sqrt(3),
+            ],
+        })
         cls.hexagon = PolyhedralPrismCurrentSource(
             [0, 0, 0],
             [10, 0, 0],
@@ -223,12 +221,10 @@ class TestPolyhedralCoordinates:
             10,
             1e6,
         )
-        coords = Coordinates(
-            {
-                "x": [-1, 1, 0],
-                "z": [-0.5, -0.5, 0.25],
-            }
-        )
+        coords = Coordinates({
+            "x": [-1, 1, 0],
+            "z": [-0.5, -0.5, 0.25],
+        })
         cls.triangle = PolyhedralPrismCurrentSource(
             [0, 0, 0],
             [10, 0, 0],

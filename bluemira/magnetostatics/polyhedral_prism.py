@@ -324,6 +324,7 @@ def _vector_potential_fabbri(
                 face_points[i], face_normals[i], mid_points[i], n_sides[i], point
             ),
         )
+
     return 0.5 * MU_0_4PI * np.dot(current_direction, integral)
 
 
@@ -561,9 +562,9 @@ class PolyhedralPrismCurrentSource(
         # Points for plotting only
         points = [np.vstack(lower_points), np.vstack(upper_points)]
         # Lines between corners
-        points.extend(
-            [np.vstack([lower_points[i], upper_points[i]]) for i in range(n_rect_faces)]
-        )
+        points.extend([
+            np.vstack([lower_points[i], upper_points[i]]) for i in range(n_rect_faces)
+        ])
 
         return np.array(points, dtype=object)
 
