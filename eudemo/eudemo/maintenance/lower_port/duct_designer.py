@@ -117,7 +117,7 @@ class LowerPortKOZDesigner(Designer):
         duct_straight_inner_extrude_boundary = self._straight_duct_inner_yz_boundary(
             straight_top_inner_pt,
             straight_bot_inner_pt,
-            duct_angled_inner_extrude_boundary.bounding_box.y_max,
+            # duct_angled_inner_extrude_boundary.bounding_box.y_max,
         )
 
         return (
@@ -178,7 +178,7 @@ class LowerPortKOZDesigner(Designer):
         self,
         straight_top_inner_pt: Tuple,
         straight_bot_inner_pt: Tuple,
-        angled_duct_ymax: float,
+        # angled_duct_ymax: float,
     ) -> BluemiraWire:
         """
         Make the inner yz boundary of the straight duct.
@@ -192,8 +192,8 @@ class LowerPortKOZDesigner(Designer):
         # options:
         #  max(0.5*port_width, angled port width)
         # restrict port size of angled duct to port_width
-        y_size = max(angled_duct_ymax, self.port_width / 2)
-        # y_size = self.port_width / 2
+        # y_size = max(angled_duct_ymax, self.port_width / 2)
+        y_size = self.port_width / 2
 
         return make_polygon(
             [
@@ -225,12 +225,12 @@ class LowerPortKOZDesigner(Designer):
             return x_len * np.tan(self._half_beta)
 
         # TODO alternative limit
-        # y_max = self.port_width / 2
-        # ib_inner_y = min(y_max, _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk)
-        # ob_inner_y = min(y_max, _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk)
+        y_max = self.port_width / 2
+        ib_inner_y = min(y_max, _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk)
+        ob_inner_y = min(y_max, _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk)
 
-        ib_inner_y = _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk
-        ob_inner_y = _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk
+        # ib_inner_y = _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk
+        # ob_inner_y = _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk
 
         # check if the space between the y-points is large enough for the
         # divertor to fit through:
