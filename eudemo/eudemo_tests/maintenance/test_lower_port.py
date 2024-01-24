@@ -80,6 +80,7 @@ class TestLowerPort:
             self.duct_des_params,
             {},
             self.divertor_xz_silhouette,
+            (5.5, 0),
             self.tf_coils_outer_boundary,
         ).execute()
 
