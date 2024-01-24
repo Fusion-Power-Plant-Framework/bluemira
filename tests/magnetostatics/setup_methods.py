@@ -7,6 +7,33 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
+from bluemira.geometry.coordinates import Coordinates
+
+
+def make_xs_from_bd(b, d):
+    return Coordinates({
+        "x": [-b, b, b, -b],
+        "y": 0,
+        "z": [-d, -d, d, d],
+    })
+
+
+def plane_setup(plane, x_min=-5, x_max=5, z_min=-5, z_max=5, n=50):
+    x1, x2 = np.linspace(x_min, x_max, n), np.linspace(z_min, z_max, n)
+    xx1, xx2 = np.meshgrid(x1, x2)
+    xx3 = np.zeros_like(xx1)
+
+    if plane == "x":
+        xx, yy, zz = xx3, xx1, xx2
+        i, j, k = 3, 1, 2
+    elif plane == "y":
+        xx, yy, zz = xx1, xx3, xx2
+        i, j, k = 0, 3, 2
+    elif plane == "z":
+        xx, yy, zz = xx1, xx2, xx3
+        i, j, k = 0, 1, 3
+    return xx, yy, zz, i, j, k
+
 
 def _plot_verification_test(
     xc, zc, dx, dz, xx, zz, Bx_coil, Bz_coil, Bp_coil, Bx, Bz, Bp
