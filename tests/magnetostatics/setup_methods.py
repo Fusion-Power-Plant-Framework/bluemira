@@ -11,13 +11,11 @@ from bluemira.geometry.coordinates import Coordinates
 
 
 def make_xs_from_bd(b, d):
-    return Coordinates(
-        {
-            "x": [-b, b, b, -b],
-            "y": 0,
-            "z": [-d, -d, d, d],
-        }
-    )
+    return Coordinates({
+        "x": [-b, b, b, -b],
+        "y": 0,
+        "z": [-d, -d, d, d],
+    })
 
 
 def plane_setup(plane, x_min=-5, x_max=5, z_min=-5, z_max=5, n=50):
