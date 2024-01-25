@@ -12,8 +12,16 @@ import numpy as np
 import pytest
 
 from bluemira.base.parameter_frame import make_parameter_frame
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
-from bluemira.geometry.tools import make_circle, make_polygon
+from bluemira.geometry.parameterisations import PrincetonD
+from bluemira.geometry.tools import (
+    boolean_fuse,
+    make_circle,
+    make_polygon,
+    offset_wire,
+    sweep_shape,
+)
 from bluemira.geometry.wire import BluemiraWire
 from eudemo.maintenance.lower_port.builder import TSLowerPortDuctBuilder
 from eudemo.maintenance.lower_port.duct_designer import (
@@ -29,15 +37,23 @@ class TestLowerPort:
     def setup_class(cls):
         cls.divertor_xz_silhouette = BluemiraWire([
             make_polygon([
-                [4, 6],
+                [2, 4],
                 [0, 0],
                 [0, 0],
             ]),
             make_circle(
-                1, center=(5, 0, 0), start_angle=-180, end_angle=0, axis=(0, -1, 0)
+                1, center=(3, 0, 0), start_angle=-180, end_angle=0, axis=(0, -1, 0)
             ),
         ])
-        cls.tf_coils_outer_boundary = BluemiraWire([
+        cls.tf_coils_centre_boundary = PrincetonD({
+            "x1": {"value": 1},
+            "x2": {"value": 8, "lower_bound": 8},
+            "dz": {"value": 5, "upper_bound": 5},
+        }).create_shape()
+
+        cls.tf_coils_outer_boundary = offset_wire(cls.tf_coils_centre_boundary, 0.5)
+
+        BluemiraWire([
             make_polygon([
                 [3, 3],
                 [0, 0],
@@ -82,7 +98,7 @@ class TestLowerPort:
             self.duct_des_params,
             {},
             self.divertor_xz_silhouette,
-            (5.5, 0),
+            (3.5, 0),  # connection point between divertor and blanket
             self.tf_coils_outer_boundary,
         ).execute()
 
@@ -91,7 +107,7 @@ class TestLowerPort:
             {},
             lp_duct_angled_nowall_extrude_boundary,
             lp_duct_straight_nowall_extrude_boundary,
-            15,
+            15,  # [m] bigger than the radius of the machine
         )
         lp_duct = builder.build()
 
@@ -126,6 +142,29 @@ class TestLowerPort:
 
         np.testing.assert_allclose(angled_face.normal_at(), pl.normal_at(), atol=1e-8)
 
+        # Does duct touch tf coils
+        tf = self._make_tf()
+        tf2 = tf.deepcopy()
+        tf2.rotate(degree=360 / self.duct_des_params.n_TF.value)
+
+        with pytest.raises(
+            GeometryError,
+            match=(
+                ".*[<Solid.*[\n]*.*Solid.*[\n]*.*Solid.*[\n]*.*>] "
+                "gives more than one solid."
+            ),
+        ):
+            boolean_fuse([tf, tf2, duct_xyz_cad])
+        # import ipdb
+
+        # ipdb.set_trace()
+        # lp_duct_xz_koz
+        from bluemira.display import show_cad
+
+        # show_cad([lp_duct_xz_koz, duct_xyz_cad])
+
+        show_cad([tf, tf2, duct_xyz_cad, self.divertor_xz_silhouette, lp_duct_xz_koz])
+
     @pytest.mark.parametrize("duct_angle", [0, -30, -45, -60, -90])
     @pytest.mark.parametrize("tf_wp_depth", np.linspace(0, 1, 5))
     def test_straight_duct_boundingbox_is_larger_than_angled_duct(
@@ -143,7 +182,7 @@ class TestLowerPort:
             self.duct_des_params,
             {},
             self.divertor_xz_silhouette,
-            (5.5, 0),
+            (3.5, 0),  # connection point between divertor and blanket
             self.tf_coils_outer_boundary,
         ).execute()
 
@@ -151,3 +190,23 @@ class TestLowerPort:
         straight_bb = lp_duct_straight_nowall_extrude_boundary.bounding_box
         assert angle_bb.y_max <= straight_bb.y_max
         assert angle_bb.y_min >= straight_bb.y_min
+
+    def _get_tf_y_max(self):
+        return (
+            (0.5 * self.duct_des_params.tf_wp_depth.value)
+            + self.duct_des_params.g_ts_tf.value
+            + self.duct_des_params.tk_ts.value
+            + self.duct_des_params.g_vv_ts.value
+        )
+
+    def _make_tf(self):
+        tf_ymax = self._get_tf_y_max()
+        xy_cross = make_polygon(
+            {"x": [1.5, 0.5, 0.5, 1.5], "y": [tf_ymax, tf_ymax, -tf_ymax, -tf_ymax]},
+            closed=True,
+        )
+
+        return sweep_shape(
+            xy_cross,
+            self.tf_coils_centre_boundary,
+        )

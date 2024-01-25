@@ -348,16 +348,25 @@ class LowerPortKOZDesigner(Designer):
             )
 
         # find the top and bottom itc points
-        itc_top_pt = max(itc_pts, key=lambda p: p[2])
-        itc_bot_pt = min(itc_pts, key=lambda p: p[2])
+        itc_top_ob_pt = max(itc_pts, key=lambda p: p[2])
+        itc_bot_ib_pt = min(itc_pts, key=lambda p: p[2])
+
         # remap to 2D point
-        itc_top_pt = (itc_top_pt[0], itc_top_pt[2])
-        itc_bot_pt = (itc_bot_pt[0], itc_bot_pt[2])
+        itc_top_ob_pt = (itc_top_ob_pt[0], itc_top_ob_pt[2])
+        itc_bot_ib_pt = (itc_bot_ib_pt[0], itc_bot_ib_pt[2])
+
+        if (
+            self.params.lower_port_angle.value < -45  # noqa: PLR2004
+            and itc_top_ob_pt[0] < itc_bot_ib_pt[0]
+        ):
+            # This is a weird edge case where the 'top' x point is more
+            # inboard than the 'bottom' x point
+            itc_top_ob_pt, itc_bot_ib_pt = itc_bot_ib_pt, itc_top_ob_pt
 
         # choose corner point
-        topleft_corner_pt = itc_bot_pt
+        topleft_corner_pt = itc_bot_ib_pt
         if self.params.lower_port_angle.value > -45:  # noqa: PLR2004
-            topleft_corner_pt = itc_top_pt
+            topleft_corner_pt = itc_top_ob_pt
 
         topright_corner_pt = (
             x_duct_extent,
@@ -376,7 +385,7 @@ class LowerPortKOZDesigner(Designer):
 
         # check if the left edge goes below the angled duct when
         # the corner point is the top itc point (i.e. angle > -45)
-        if topleft_corner_pt == itc_top_pt:
+        if topleft_corner_pt == itc_top_ob_pt:
             left_e = self._make_xz_wire_from_points(topleft_corner_pt, botleft_corner_pt)
             l_e_itc_pts = self._intersection_points(left_e, angled_duct_boundary)
             if len(l_e_itc_pts) == 1:
