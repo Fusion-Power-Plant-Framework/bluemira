@@ -95,7 +95,7 @@
       },
       "run_mode": "read",
       "file_path": "$path_expand:./FirstWallDesign.json",
-      "problem_settings": { "n_koz_points": 100 },
+      "problem_settings": { "n_koz_points": 70 },
       "optimisation_settings": {
         "algorithm_name": "SLSQP",
         "conditions": { "max_eval": 200, "ftol_rel": 1e-6 }
