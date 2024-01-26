@@ -188,9 +188,6 @@ class LowerPortKOZDesigner(Designer):
         """
         x_point = straight_top_inner_pt[0]
 
-        # TODO this breaks things
-        # options:
-        #  max(0.5*port_width, angled port width)
         # restrict port size of angled duct to port_width
         # y_size = max(angled_duct_ymax, self.port_width / 2)
         y_size = self.port_width / 2

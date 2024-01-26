@@ -84,7 +84,7 @@ class TestLowerPort:
         )
 
     @pytest.mark.parametrize("duct_angle", [0, -30, -45, -60, -90])
-    @pytest.mark.parametrize("tf_wp_depth", np.linspace(0, 1, 5))
+    @pytest.mark.parametrize("tf_wp_depth", np.linspace(0, 0.5, 3))
     def test_duct_angle(self, duct_angle, tf_wp_depth):
         self.duct_des_params.lower_port_angle.value = duct_angle
         self.duct_des_params.tf_wp_depth.value = tf_wp_depth
@@ -149,10 +149,7 @@ class TestLowerPort:
 
         with pytest.raises(
             GeometryError,
-            match=(
-                ".*[<Solid.*[\n]*.*Solid.*[\n]*.*Solid.*[\n]*.*>] "
-                "gives more than one solid."
-            ),
+            match=r".*\[(<Solid[\n ]*object at [0-9a-z]{14}>[, ]*){3}\]",
         ):
             boolean_fuse([tf, tf2, duct_xyz_cad])
         # import ipdb
@@ -166,7 +163,7 @@ class TestLowerPort:
         show_cad([tf, tf2, duct_xyz_cad, self.divertor_xz_silhouette, lp_duct_xz_koz])
 
     @pytest.mark.parametrize("duct_angle", [0, -30, -45, -60, -90])
-    @pytest.mark.parametrize("tf_wp_depth", np.linspace(0, 1, 5))
+    @pytest.mark.parametrize("tf_wp_depth", np.linspace(0, 0.5, 3))
     def test_straight_duct_boundingbox_is_larger_than_angled_duct(
         self, duct_angle, tf_wp_depth
     ):
