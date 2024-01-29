@@ -110,7 +110,6 @@ jobs:
         PYTEST_LONGRUN: ${{ github.event.pull_request.head.ref == 'develop_dependencies' && '--longrun' || '' }}
         PYTEST_PRIVATE: ${{ !github.event.pull_request.head.repo.fork && '--private' || '' }}
       run: |
-        export PYTHONPATH="$(pwd)/eudemo"
         pytest --cov=bluemira \
                --cov-report html:htmlcov_bluemira \
                --cov-report xml \

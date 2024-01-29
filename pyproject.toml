@@ -127,6 +127,7 @@ markers = [
 ]
 addopts = "--html=report.html --self-contained-html --strict-markers -r fEX"
 filterwarnings = ['ignore:Matplotlib is currently using agg:UserWarning']
+pythonpath = ['.', 'eudemo']
 
 [tool.ruff]
 target-version = "py38"
