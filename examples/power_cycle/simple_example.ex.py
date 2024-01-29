@@ -82,6 +82,10 @@ timeseries = normalised_time * phase.duration
 active_loads = phase.get_load_data_with_efficiencies(normalised_time, "active", "MW")
 active_load_total = phase.load_total(normalised_time, "active", "MW")
 
+# %% [markdown]
+# Note for reactive loads the unit is 'var' (volt-ampere reactive). Although numerically
+# identical to a watt it is the wrong unit for reactive loads.
+# %%
 
 reactive_loads = phase.get_load_data_with_efficiencies(
     normalised_time, "reactive", "Mvar"
