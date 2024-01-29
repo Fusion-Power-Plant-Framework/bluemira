@@ -281,7 +281,7 @@ class LoadConfig(Config):
             kind=self.model.value,
             bounds_error=False,  # turn-off error for out-of-bound
             fill_value=(0, 0),  # below-/above-bounds extrapolations
-        )(time if self.normalised else np.array(time) * end_time)
+        )(time if self.normalised or end_time is None else np.array(time) * end_time)
 
 
 def interpolate_extra(vector: npt.NDArray, n_points: int):
