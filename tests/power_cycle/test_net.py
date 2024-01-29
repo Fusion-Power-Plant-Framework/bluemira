@@ -11,6 +11,7 @@ import pytest
 
 from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
+    Efficiency,
     LibraryConfig,
     LoadConfig,
     LoadSet,
@@ -164,18 +165,64 @@ class TestLoadSet:
 
 
 class TestPhase:
-    def test_duration_validation_and_extraction(self):
-        phase = Phase(
+    def setup_method(self):
+        self.phase = Phase(
             PhaseConfig("dwl", "max", ["a", "b"]),
-            {"a": SubPhaseConfig("a", 5), "b": SubPhaseConfig("b", 10)},
+            {  # the loads list is not checked again...should we?
+                "a": SubPhaseConfig("a", 5, ["name"]),
+                "b": SubPhaseConfig("b", 10, ["name2"], {"name2": [Efficiency(0.1)]}),
+            },
             LoadSet({
                 "name": LoadConfig(
                     "name", np.array([0, 0.5, 1]), np.arange(3), model="ramp"
-                )
+                ),
+                "name2": LoadConfig(
+                    "name2",
+                    np.array([0, 0.2, 1]),
+                    np.arange(3),
+                    model="ramp",
+                    consumption=False,
+                ),
             }),
         )
 
-        assert phase.duration == 10
+    def test_duration_validation_and_extraction(self):
+        assert self.phase.duration == 10
+
+    @pytest.mark.parametrize("load_type", ["active", "reactive", None])
+    @pytest.mark.parametrize("consumption", [True, False, None])
+    def test_build_timeseries(self, load_type, consumption):
+        assert np.allclose(
+            self.phase.build_timeseries(load_type=load_type, consumption=consumption),
+            [0, 2, 5, 10]
+            if consumption is None
+            else [0, 5, 10]
+            if consumption
+            else [0, 2, 10],
+        )
+
+    @pytest.mark.parametrize("consumption", [True, False, None])
+    @pytest.mark.parametrize("load_type", ["active", "reactive"])
+    def test_load_total(self, load_type, consumption):
+        assert np.allclose(
+            self.phase.load_total([0, 2, 5, 10], load_type, consumption=consumption),
+            [0.0, -0.3, -0.8625, -1.8]
+            if consumption is None
+            else [0.0, -0.4, -1.0, -2.0]
+            if consumption
+            else [0.0, 0.1, 0.1375, 0.2],
+        )
+
+    @pytest.mark.parametrize("consumption", [True, False, None])
+    @pytest.mark.parametrize("load_type", ["active", "reactive"])
+    def test_get_load_data_with_efficiencies(self, load_type, consumption):
+        res = self.phase.get_load_data_with_efficiencies(
+            [0, 2, 5, 10], load_type, consumption=consumption
+        )
+        if (name := res.get("name", None)) is not None:
+            assert np.allclose(name, np.array([-0.0, -0.4, -1.0, -2.0]))
+        if (name2 := res.get("name2", None)) is not None:
+            assert np.allclose(name2, np.array([0.0, 0.1, 0.1375, 0.2]))
 
 
 class TestLibraryConfig:

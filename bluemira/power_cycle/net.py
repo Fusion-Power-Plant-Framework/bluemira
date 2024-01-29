@@ -365,9 +365,10 @@ def interpolate_extra(vector: npt.NDArray, n_points: int):
 
 
 def _normalise_timeseries(
-    time: np.ndarray,
+    time: npt.ArrayLike,
     end_time: Optional[float] = None,
 ) -> Tuple[np.ndarray, Optional[float]]:
+    time = np.asarray(time)
     if min(time) < 0:
         raise NotImplementedError("Negative time not supported")
 
