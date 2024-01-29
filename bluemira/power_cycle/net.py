@@ -307,7 +307,7 @@ class LoadSet:
         self,
         loads: Dict[str, LoadConfig],
     ):
-        self.loads = loads
+        self._loads = loads
 
     @staticmethod
     def _normalise_timeseries(
@@ -357,7 +357,7 @@ class LoadSet:
             timeseries, load_type, unit, end_time, consumption=consumption
         )
         for ld_name in data:
-            load_conf = self.loads[ld_name]
+            load_conf = self._loads[ld_name]
             for eff in load_conf.efficiencies:
                 if eff.reactive in load_type_bool:
                     c_eff = (
@@ -400,14 +400,14 @@ class LoadSet:
             timeseries, load_type, unit, end_time, consumption=consumption
         )
         return {
-            ld_n: -ld if self.loads[ld_n].consumption else ld
+            ld_n: -ld if self._loads[ld_n].consumption else ld
             for ld_n, ld in loads.items()
         }
 
     def build_timeseries(self, end_time: Optional[float] = None) -> np.ndarray:
         """Build a combined time series based on loads"""
         times = []
-        for load in self.loads.values():
+        for load in self._loads.values():
             if load.normalised:
                 times.append(load.time)
             else:
@@ -454,7 +454,7 @@ class LoadSet:
                 load.unit,
                 unit,
             )
-            for load in self.loads.values()
+            for load in self._loads.values()
             if load.consumption in _cnsmptn
         }
 
