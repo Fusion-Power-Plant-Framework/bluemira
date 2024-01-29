@@ -364,6 +364,19 @@ def interpolate_extra(vector: npt.NDArray, n_points: int):
     ])
 
 
+def _normalise_timeseries(
+    time: np.ndarray,
+    end_time: Optional[float] = None,
+) -> Tuple[np.ndarray, Optional[float]]:
+    if min(time) < 0:
+        raise NotImplementedError("Negative time not supported")
+
+    if max(time) > 1:
+        mx_time = max(time)
+        return time / mx_time, mx_time if end_time is None else end_time
+    return time, end_time
+
+
 class LoadSet:
     """LoadSet of a phase"""
 
@@ -372,19 +385,6 @@ class LoadSet:
         loads: Dict[str, LoadConfig],
     ):
         self._loads = loads
-
-    @staticmethod
-    def _normalise_timeseries(
-        time: np.ndarray,
-        end_time: Optional[float] = None,
-    ) -> Tuple[np.ndarray, Optional[float]]:
-        if min(time) < 0:
-            raise NotImplementedError("Negative time not supported")
-
-        if max(time) > 1:
-            mx_time = max(time)
-            return time / mx_time, mx_time if end_time is None else end_time
-        return time, end_time
 
     @staticmethod
     def _consumption_flag(consumption: Optional[bool] = None) -> Set[bool]:
@@ -524,7 +524,7 @@ class LoadSet:
         consumption:
             return only consumption loads
         """
-        timeseries, end_time = self._normalise_timeseries(timeseries, end_time)
+        timeseries, end_time = _normalise_timeseries(timeseries, end_time)
         load_type = LoadType.from_str(load_type)
         _cnsmptn = self._consumption_flag(consumption)
 
@@ -631,8 +631,11 @@ class Phase:
         consumption: Optional[bool] = None,
     ) -> np.ndarray:
         """Build a combined time series based on loads"""
-        return self.loads.build_timeseries(
-            load_type=load_type, end_time=self.duration, consumption=consumption
+        return (
+            self.loads.build_timeseries(
+                load_type=load_type, end_time=self.duration, consumption=consumption
+            )
+            * self.duration
         )
 
     def load_total(
@@ -656,6 +659,7 @@ class Phase:
         consumption:
             return only consumption loads
         """
+        timeseries, _ = _normalise_timeseries(timeseries, self.duration)
         return np.sum(
             list(
                 self.get_load_data_with_efficiencies(
@@ -687,6 +691,7 @@ class Phase:
         consumption:
             return only consumption loads
         """
+        timeseries, _ = _normalise_timeseries(timeseries, self.duration)
         return self._process_phase_efficiencies(
             self.loads.get_load_data_with_efficiencies(
                 timeseries,

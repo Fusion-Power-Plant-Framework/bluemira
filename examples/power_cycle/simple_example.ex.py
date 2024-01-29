@@ -76,18 +76,15 @@ config.add_load_config(
 
 phase = config.get_phase("dwl")
 
-normalised_time = interpolate_extra(phase.loads.build_timeseries(), 3)
-timeseries = normalised_time * phase.duration
+timeseries = interpolate_extra(phase.build_timeseries(), 1)
 
-active_loads = phase.get_load_data_with_efficiencies(normalised_time, "active", "MW")
-active_load_total = phase.load_total(normalised_time, "active", "MW")
+active_loads = phase.get_load_data_with_efficiencies(timeseries, "active", "MW")
+active_load_total = phase.load_total(timeseries, "active", "MW")
 
 # %% [markdown]
 # Note for reactive loads the unit is 'var' (volt-ampere reactive). Although numerically
 # identical to a watt it is the wrong unit for reactive loads.
 # %%
 
-reactive_loads = phase.get_load_data_with_efficiencies(
-    normalised_time, "reactive", "Mvar"
-)
-reactive_load_total = phase.load_total(normalised_time, "reactive", "Mvar")
+reactive_loads = phase.get_load_data_with_efficiencies(timeseries, "reactive", "Mvar")
+reactive_load_total = phase.load_total(timeseries, "reactive", "Mvar")
