@@ -60,13 +60,12 @@ config = LibraryConfig.from_dict(
 config.add_load_config(
     LoadConfig(
         "cs_power",
-        active_data=[1, 2],
-        reactive_data=[10, 20],
+        data={"active": [1, 2], "reactive": [10, 20]},
         efficiencies=[Efficiency(0.1)],
         description="something made up",
     ),
     ["cru", "bri"],
-    [Efficiency(0.2, reactive=True)],
+    [Efficiency({"reactive": 0.2})],
 )
 
 # %% [markdown]
@@ -80,12 +79,11 @@ phase = config.get_phase("dwl")
 normalised_time = interpolate_extra(phase.loads.build_timeseries(), 3)
 timeseries = normalised_time * phase.duration
 
-active_loads = phase.loads.get_load_data_with_efficiencies(
-    normalised_time, "active", "MW"
-)
-active_load_total = phase.loads.load_total(normalised_time, "active", "MW")
+active_loads = phase.get_load_data_with_efficiencies(normalised_time, "active", "MW")
+active_load_total = phase.load_total(normalised_time, "active", "MW")
 
-reactive_loads = phase.loads.get_load_data_with_efficiencies(
-    normalised_time, "reactive", "var"
+
+reactive_loads = phase.get_load_data_with_efficiencies(
+    normalised_time, "reactive", "Mvar"
 )
-reactive_load_total = phase.loads.load_total(normalised_time, "reactive", "var")
+reactive_load_total = phase.load_total(normalised_time, "reactive", "Mvar")

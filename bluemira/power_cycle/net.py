@@ -19,6 +19,7 @@ from typing import (
     Optional,
     Set,
     Tuple,
+    Type,
     TypedDict,
     Union,
 )
@@ -63,10 +64,15 @@ class LoadType(Enum):
         return f"{self.name.lower()}_data"
 
     @classmethod
-    def bool_check(cls, load_type: Union[str, LoadType, None]) -> Set[Union[None, bool]]:
-        """Boolean check for all loadtypes or specific loadtype"""
-        load_type = cls.from_str(load_type)
-        return {None, load_type == LoadType.REACTIVE}
+    def check(
+        cls, load_type: Union[str, LoadType, None]
+    ) -> Union[Type[LoadType], Set[LoadType]]:
+        """Check for all loadtypes or specific loadtype"""
+        return (
+            cls
+            if load_type is None
+            else {cls[load_type.upper()] if isinstance(load_type, str) else load_type}
+        )
 
 
 class LoadModel(Enum):
@@ -84,17 +90,19 @@ class LoadModel(Enum):
 class Efficiency:
     """Efficiency data container"""
 
-    value: float
+    value: Union[Dict[str, float], Dict[LoadType, float]]
     description: str = ""
-    reactive: Optional[bool] = None
+
+    def __post_init__(self):
+        """Enforce value structure"""
+        self.value = efficiency_type(self.value)
 
 
 class EfficiencyDictType(TypedDict):
     """Typing for efficiency object"""
 
-    value: float
+    value: Dict[Union[LoadType, str], float]
     description: NotRequired[str]
-    reactive: NotRequired[bool]
 
 
 class Descriptor:
@@ -106,6 +114,70 @@ class Descriptor:
     def __set_name__(self, _, name: str):
         """Set the attribute name from a dataclass"""
         self._name = f"_{name}"
+
+
+class ActiveReactiveDescriptor(Descriptor):
+    """Descriptor for setting up active and reactive data dictionaries"""
+
+    def __get__(
+        self, obj: Any, _
+    ) -> Union[Callable[[], Dict[LoadType, np.ndarray]], Dict[LoadType, np.ndarray]]:
+        """Get the config"""
+        if obj is None:
+            return lambda: {
+                LoadType.ACTIVE: np.arange(2),
+                LoadType.REACTIVE: np.arange(2),
+            }
+        return getattr(obj, self._name)
+
+    def __set__(
+        self,
+        obj: Any,
+        value: Union[
+            Callable[[], Dict[LoadType, np.ndarray]],
+            Dict[Union[LoadType, str], Union[np.ndarray, list]],
+            np.ndarray,
+        ],
+    ):
+        """Setup the config"""
+        if callable(value):
+            value = value()
+
+        if isinstance(value, (np.ndarray, list)):
+            value = {
+                LoadType.ACTIVE: np.asarray(value),
+                LoadType.REACTIVE: np.asarray(value).copy(),
+            }
+        else:
+            ld_t = {LoadType.ACTIVE, LoadType.REACTIVE}
+            value = {
+                k if isinstance(k, LoadType) else LoadType[k.upper()]: np.asarray(v)
+                for k, v in value.items()
+            }
+            if missing_keys := ld_t - value.keys():
+                value[missing_keys.pop()] = np.zeros_like(
+                    value[(value.keys() - missing_keys).pop()]
+                )
+        setattr(obj, self._name, value)
+
+
+def efficiency_type(
+    value: Union[float, Dict[str, float], Dict[LoadType, float]],
+) -> Dict[LoadType, float]:
+    """Convert efficiency value to the correct structure"""
+    if isinstance(value, (float, int)):
+        value = {LoadType.ACTIVE: value, LoadType.REACTIVE: value}
+    else:
+        ld_t = {LoadType.ACTIVE, LoadType.REACTIVE}
+        value = {
+            k if isinstance(k, LoadType) else LoadType[k.upper()]: v
+            for k, v in value.items()
+        }
+        if missing_keys := ld_t - value.keys():
+            value[missing_keys.pop()] = np.ones_like(
+                value[(value.keys() - missing_keys).pop()]
+            )
+    return value
 
 
 class PhaseEfficiencyDescriptor(Descriptor):
@@ -132,6 +204,7 @@ class PhaseEfficiencyDescriptor(Descriptor):
         for k, val in value.items():
             for no, v in enumerate(val):
                 if not isinstance(v, Efficiency):
+                    v["value"] = efficiency_type(v["value"])
                     value[k][no] = Efficiency(**v)
 
         setattr(obj, self._name, value)
@@ -156,6 +229,7 @@ class LoadEfficiencyDescriptor(Descriptor):
             value = value()
         for no, v in enumerate(value):
             if not isinstance(v, Efficiency):
+                v["value"] = efficiency_type(v["value"])
                 value[no] = Efficiency(**v)
 
         setattr(obj, self._name, value)
@@ -224,9 +298,8 @@ class SubSystemConfig(Config):
 class LoadConfig(Config):
     """Power cycle load config"""
 
-    time: npt.ArrayLike = field(default_factory=lambda: np.arange(2))
-    reactive_data: Optional[npt.ArrayLike] = None
-    active_data: Optional[npt.ArrayLike] = None
+    time: ActiveReactiveDescriptor = ActiveReactiveDescriptor()
+    data: ActiveReactiveDescriptor = ActiveReactiveDescriptor()
     efficiencies: LoadEfficiencyDescriptor = LoadEfficiencyDescriptor()
     model: Union[LoadModel, str] = LoadModel.RAMP
     unit: str = "W"
@@ -236,27 +309,18 @@ class LoadConfig(Config):
 
     def __post_init__(self):
         """Validate load"""
-        if self.reactive_data is None:
-            self.reactive_data = np.zeros_like(self.time)
-        if self.active_data is None:
-            self.active_data = np.zeros_like(self.time)
-
-        for var_name in ("time", "reactive_data", "active_data"):
-            var = getattr(self, var_name)
-            if not isinstance(var, np.ndarray):
-                setattr(self, var_name, np.asarray(var))
         if isinstance(self.model, str):
             self.model = LoadModel[self.model.upper()]
-        for data in (self.reactive_data, self.active_data):
-            if data.size != self.time.size:
+        for lt in LoadType:
+            if self.data[lt].size != self.time[lt].size:
                 raise ValueError(
-                    f"time and data must be the same length for {self.name}: {data}"
+                    f"time and data must be the same length for {self.name}: "
+                    f"{self.data[lt]}"
                 )
-        if any(np.diff(self.time) < 0):
-            raise ValueError("time must increase")
+            if any(np.diff(self.time[lt]) < 0):
+                raise ValueError("time must increase")
 
-        self.reactive_data = raw_uc(self.reactive_data, self.unit, "W")
-        self.active_data = raw_uc(self.active_data, self.unit, "W")
+            self.data[lt] = raw_uc(self.data[lt], self.unit, "W")
         self.unit = "W"
 
     def interpolate(
@@ -276,8 +340,8 @@ class LoadConfig(Config):
         if isinstance(load_type, str):
             load_type = LoadType[load_type.upper()]
         return interp1d(
-            self.time,
-            getattr(self, f"{load_type.name.lower()}_data"),
+            self.time[load_type],
+            self.data[load_type],
             kind=self.model.value,
             bounds_error=False,  # turn-off error for out-of-bound
             fill_value=(0, 0),  # below-/above-bounds extrapolations
@@ -352,20 +416,21 @@ class LoadSet:
         consumption:
             return only consumption loads
         """
-        load_type_bool = LoadType.bool_check(load_type)
         data = self.get_explicit_data_consumption(
             timeseries, load_type, unit, end_time, consumption=consumption
         )
+        load_check = LoadType.check(load_type)
         for ld_name in data:
             load_conf = self._loads[ld_name]
             for eff in load_conf.efficiencies:
-                if eff.reactive in load_type_bool:
-                    c_eff = (
-                        1 / eff.value
-                        if load_conf.consumption and eff.value > 0
-                        else eff.value
-                    )
-                    data[ld_name] *= c_eff
+                for eff_type, eff_val in eff.value.items():
+                    if eff_type in load_check:
+                        c_eff = (
+                            1 / eff_val
+                            if load_conf.consumption and eff.value > 0
+                            else eff_val
+                        )
+                        data[ld_name] *= c_eff
 
         return data
 
@@ -395,7 +460,6 @@ class LoadSet:
         consumption:
             return only consumption loads
         """
-        load_type = LoadType.from_str(load_type)
         loads = self.get_interpolated_loads(
             timeseries, load_type, unit, end_time, consumption=consumption
         )
@@ -404,17 +468,35 @@ class LoadSet:
             for ld_n, ld in loads.items()
         }
 
-    def build_timeseries(self, end_time: Optional[float] = None) -> np.ndarray:
+    def build_timeseries(
+        self,
+        load_type: Optional[Union[str, LoadType]] = None,
+        end_time: Optional[float] = None,
+        *,
+        consumption: Optional[bool] = None,
+    ) -> np.ndarray:
         """Build a combined time series based on loads"""
         times = []
         for load in self._loads.values():
-            if load.normalised:
-                times.append(load.time)
-            else:
-                times.append(
-                    load.time / (max(load.time) if end_time is None else end_time)
-                )
+            for time in self._gettime(
+                load, load_type, self._consumption_flag(consumption)
+            ):
+                if load.normalised:
+                    times.append(time)
+                else:
+                    times.append(time / (max(time) if end_time is None else end_time))
         return np.unique(np.concatenate(times))
+
+    @staticmethod
+    def _gettime(
+        load, load_type: Optional[Union[str, LoadType]], consumption_check: Set[bool]
+    ):
+        load_type = LoadType.from_str(load_type)
+        if load.consumption in consumption_check:
+            if load_type is None:
+                yield from load.time.values()
+            else:
+                yield load.time[load_type]
 
     def get_interpolated_loads(
         self,
@@ -518,13 +600,14 @@ class Phase:
     def _process_phase_efficiencies(
         self, loads: Dict[str, np.ndarray], load_type: Union[str, LoadType]
     ):
-        load_type_bool = LoadType.bool_check(load_type)
+        load_check = LoadType.check(load_type)
         for subphase in self.subphases.values():
             self._find_duplicate_loads(subphase, loads)
             for eff_name, effs in subphase.efficiencies.items():
                 for eff in effs:
-                    if eff.reactive in load_type_bool and eff_name in loads:
-                        loads[eff_name] *= eff.value
+                    for eff_type, eff_val in eff.value.items():
+                        if eff_type in load_check and eff_name in loads:
+                            loads[eff_name] *= eff_val
         return loads
 
     @staticmethod

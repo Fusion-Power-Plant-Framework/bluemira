@@ -42,14 +42,29 @@ def test_SubPhaseConfig_duration():
 
 class TestSubLoad:
     def test_interpolate(self):
-        pcsl = LoadConfig("name", np.array([0, 0.5, 1]), np.arange(3), model="ramp")
+        pcsl = LoadConfig(
+            "name", np.array([0, 0.5, 1]), {"reactive": np.arange(3)}, model="ramp"
+        )
         assert np.allclose(
             pcsl.interpolate([0, 0.1, 0.2, 0.3, 1], load_type="reactive"),
             np.array([0, 0.2, 0.4, 0.6, 2]),
         )
+        pcsl2 = LoadConfig("name", np.array([0, 0.5, 1]), np.arange(3), model="ramp")
+        assert np.allclose(
+            pcsl2.interpolate([0, 0.1, 0.2, 0.3, 1], load_type="reactive"),
+            np.array([0, 0.2, 0.4, 0.6, 2]),
+        )
+        assert np.allclose(
+            pcsl2.interpolate([0, 0.1, 0.2, 0.3, 1], load_type="active"),
+            np.array([0, 0.2, 0.4, 0.6, 2]),
+        )
 
         pcsl = LoadConfig(
-            "name", np.array([0, 0.5, 2]), active_data=np.arange(3), model="ramp"
+            "name",
+            np.array([0, 0.5, 2]),
+            data={"active": np.arange(3)},
+            model="ramp",
+            normalised=False,
         )
         assert np.allclose(
             pcsl.interpolate([0, 0.1, 0.2, 0.3, 1], 10),
@@ -67,7 +82,8 @@ class TestSubLoad:
             LoadConfig("name", [0, 1, 0.1], np.zeros(3), model="ramp")
 
         pcsl = LoadConfig("name", [0, 0.1, 1], np.zeros(3), model="ramp", unit="MW")
-        assert np.allclose(pcsl.time, np.array([0, 0.1, 1]))
+        assert np.allclose(pcsl.time[LoadType.ACTIVE], np.array([0, 0.1, 1]))
+        assert np.allclose(pcsl.time[LoadType.REACTIVE], np.array([0, 0.1, 1]))
         assert pcsl.unit == "W"
 
 
@@ -91,9 +107,16 @@ class TestLoadSet:
     def setup_method(self):
         self.loads = deepcopy(self._loads)
 
-    def test_build_timeseries(self):
-        assert np.allclose(self.loads.build_timeseries(), [0, 1])
-        assert np.allclose(self.loads.build_timeseries(200), [0, 0.6, 1])
+    @pytest.mark.parametrize("load_type", ["active", "reactive", None])
+    @pytest.mark.parametrize("end_time", [200, None])
+    @pytest.mark.parametrize("consumption", [True, False, None])
+    def test_build_timeseries(self, load_type, end_time, consumption):
+        assert np.allclose(
+            self.loads.build_timeseries(
+                load_type=load_type, end_time=end_time, consumption=consumption
+            ),
+            [0, 0.6, 1] if consumption in {True, None} and end_time == 200 else [0, 1],
+        )
 
     @pytest.mark.parametrize(
         ("time", "et", "res1", "res2"),
@@ -101,7 +124,7 @@ class TestLoadSet:
             (
                 np.array([0, 0.005, 0.6, 1]),
                 200,
-                np.array([-4.7, -4.7, -0.0, -0.0]),
+                np.full(4, -4.7),
                 np.array([-10.2, -10.2, -10.2, -0.0]),
             ),
             (
@@ -113,7 +136,7 @@ class TestLoadSet:
             (
                 np.array([0, 1, 120, 200]),
                 None,
-                np.array([-4.7, -4.7, -0.0, -0.0]),
+                np.full(4, -4.7),
                 np.array([-10.2, -10.2, -10.2, -0.0]),
             ),
         ],
@@ -129,8 +152,8 @@ class TestLoadSet:
     @pytest.mark.parametrize(
         ("time", "et", "res"),
         [
-            (np.array([0, 0.6, 1]), 200, np.array([165.4, -10.2, 0.0])),
-            (np.array([0, 120, 200]), None, np.array([165.4, -10.2, 0.0])),
+            (np.array([0, 0.6, 1]), 200, np.array([165.4, 165.4, 175.6])),
+            (np.array([0, 120, 200]), None, np.array([165.4, 165.4, 175.6])),
             (np.array([0, 0.6, 1]), None, np.full(3, 165.4)),
         ],
     )
@@ -183,7 +206,7 @@ class TestLibraryConfig:
         assert scenario["std"]["data"]["dwl"].subphases.keys() == {"csr", "pmp"}
 
         sph = scenario["std"]["data"]["dwl"].subphases
-        assert scenario["std"]["data"]["dwl"].loads.loads.keys() == set(
+        assert scenario["std"]["data"]["dwl"].loads._loads.keys() == set(
             sph["csr"].loads + sph["pmp"].loads
         )
 
@@ -202,5 +225,7 @@ class TestLibraryConfig:
             ),
             ["cru", "bri"],
         )
-        assert np.allclose(self.config.loads["cs_power"].reactive_data, [10e6, 20e6])
+        assert np.allclose(
+            self.config.loads["cs_power"].data[LoadType.REACTIVE], [10e6, 20e6]
+        )
         assert self.config.loads["cs_power"].unit == "W"

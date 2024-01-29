@@ -53,21 +53,14 @@
         "efficiencies": {
           "hcpb_bb_peak": [
             {
-              "value": 5,
-              "description": "coolant flow to 20%",
-              "reactive": true
-            },
-            {
-              "value": 5,
-              "description": "coolant flow to 20%",
-              "reactive": false
+              "value": { "reactive": 5, "active": 5 },
+              "description": "coolant flow to 20%"
             }
           ],
           "turb": [
             {
-              "value": 1.25,
-              "description": "inverse of minimum power factor @ 0.8",
-              "reactive": true
+              "value": { "reactive": 1.25 },
+              "description": "inverse of minimum power factor @ 0.8"
             }
           ]
         }
@@ -97,9 +90,8 @@
           ],
           "turb": [
             {
-              "value": 1.25,
-              "description": "inverse of minimum power factor @ 0.8",
-              "reactive": true
+              "value": { "reactive": 1.25 },
+              "description": "inverse of minimum power factor @ 0.8"
             }
           ]
         }
@@ -129,9 +121,8 @@
           ],
           "turb": [
             {
-              "value": 1.25,
-              "description": "inverse of minimum power factor @ 0.8",
-              "reactive": true
+              "value": { "reactive": 1.25 },
+              "description": "inverse of minimum power factor @ 0.8"
             }
           ]
         }
@@ -161,13 +152,12 @@
           ],
           "turb": [
             {
-              "value": 1.25,
-              "description": "inverse of minimum power factor @ 0.8",
-              "reactive": true
+              "value": { "reactive": 1.25 },
+              "description": "inverse of minimum power factor @ 0.8"
             }
           ],
           "hcpb_hirn": [
-            { "value": 0, "description": "no reactive load", "reactive": true }
+            { "value": { "reactive": 0 }, "description": "no reactive load" }
           ]
         }
       },
@@ -198,9 +188,8 @@
           ],
           "turb": [
             {
-              "value": 1.25,
-              "description": "inverse of minimum power factor @ 0.8",
-              "reactive": true
+              "value": { "reactive": 1.25 },
+              "description": "inverse of minimum power factor @ 0.8"
             }
           ]
         },
@@ -232,13 +221,12 @@
           ],
           "turb": [
             {
-              "value": 1.25,
-              "description": "inverse of minimum power factor @ 0.8",
-              "reactive": true
+              "value": { "reactive": 1.25 },
+              "description": "inverse of minimum power factor @ 0.8"
             }
           ],
           "hcpb_hirn": [
-            { "value": 0, "description": "no reactive load", "reactive": true }
+            { "value": { "reactive": 0 }, "description": "no reactive load" }
           ]
         },
         "reference": ""
@@ -263,9 +251,8 @@
         "efficiencies": {
           "turb": [
             {
-              "value": 1.25,
-              "description": "inverse of minimum power factor @ 0.8",
-              "reactive": true
+              "value": { "reactive": 1.25 },
+              "description": "inverse of minimum power factor @ 0.8"
             }
           ]
         },
@@ -311,8 +298,7 @@
     "load_library": {
       "vv": {
         "time": [0, 1],
-        "reactive_data": [4.7, 4.7],
-        "active_data": [9.7, 9.7],
+        "data": { "reactive": [4.7, 4.7], "active": [9.7, 9.7] },
         "unit": "MW",
         "model": "RAMP",
         "normalised": true,
@@ -321,9 +307,8 @@
         "description": "Vacuum Vessel (VV)"
       },
       "hcpb_vvps": {
-        "time": [0, 1],
-        "reactive_data": [0, 0],
-        "active_data": [2.3, 2.3],
+        "time": { "active": [0, 1] },
+        "data": { "active": [2.3, 2.3] },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
@@ -332,8 +317,7 @@
       },
       "div_lim": {
         "time": [0, 1],
-        "reactive_data": [12.1, 12.1],
-        "active_data": [19.5, 19.5],
+        "data": { "reactive": [12.1, 12.1], "active": [19.5, 19.5] },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
@@ -343,8 +327,7 @@
       "hcpb_bb_peak": {
         "description": "(HCPB) Breeding Blanket (BB) - peak value",
         "time": [0, 1],
-        "reactive_data": [54.4, 54.4],
-        "active_data": [165.6, 165.6],
+        "data": { "reactive": [54.4, 54.4], "active": [165.6, 165.6] },
         "unit": "MW",
         "model": "RAMP",
         "normalised": true
@@ -352,8 +335,7 @@
       "hcpb_hirn": {
         "description": "(HCPB) Hirn Cycle components",
         "time": [0, 1],
-        "reactive_data": [5.8, 5.8],
-        "active_data": [12, 12],
+        "data": { "reactive": [5.8, 5.8], "active": [12, 12] },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
@@ -362,8 +344,7 @@
       "turb": {
         "description": "nominal turbine power for direct concept",
         "time": [0, 1],
-        "reactive_data": [750, 750],
-        "active_data": [750, 750],
+        "data": [750, 750],
         "unit": "MW",
         "model": "RAMP",
         "efficiencies": [{ "value": 0.85, "description": "indirect storage" }],
@@ -373,16 +354,14 @@
       "eps_peak": {
         "description": "peak value extrapolated to all relevant phases",
         "time": [0, 1],
-        "active_data": [300, 300],
-        "reactive_data": [300, 300],
+        "data": [300, 300],
         "unit": "MW",
         "model": "STEP"
       },
       "eps_upk": {
         "description": "EPS upkeep",
         "time": [0, 120],
-        "reactive_data": [10.2, 10.2],
-        "active_data": [21, 21],
+        "data": { "reactive": [10.2, 10.2], "active": [21, 21] },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
@@ -391,8 +370,7 @@
       "buildings": {
         "description": "buildings (light/elevators/HVAC; ITER extrapolation)",
         "time": [0, 1],
-        "reactive_data": [26.6, 26.6],
-        "active_data": [54.8, 54.8],
+        "data": { "reactive": [26.6, 26.6], "active": [54.8, 54.8] },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
@@ -401,8 +379,7 @@
       "site": {
         "description": "site utilities",
         "time": [0, 1],
-        "reactive_data": [1.9, 1.9],
-        "active_data": [3.1, 3.1],
+        "data": { "reactive": [1.9, 1.9], "active": [3.1, 3.1] },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
@@ -411,8 +388,7 @@
       "sf6_air": {
         "description": "ITER extrapolation for: SF6 & compressed air distribution, CCWS, CHWS",
         "time": [0, 1],
-        "reactive_data": [56.4, 56.4],
-        "active_data": [90.9, 90.9],
+        "data": { "reactive": [56.4, 56.4], "active": [90.9, 90.9] },
         "unit": "MW",
         "model": "RAMP",
         "consumption": true,
