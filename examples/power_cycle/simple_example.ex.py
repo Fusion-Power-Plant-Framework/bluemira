@@ -45,7 +45,7 @@ from bluemira.power_cycle.net import (
 reactor_config = ReactorConfig(Path(__file__).parent / "scenario_config.json", None)
 config = LibraryConfig.from_dict(
     reactor_config.config_for("Power Cycle"),
-    {
+    durations={
         "cs_recharge_time": 300,
         "pumpdown_time": 600,
         "ramp_up_time": 157,

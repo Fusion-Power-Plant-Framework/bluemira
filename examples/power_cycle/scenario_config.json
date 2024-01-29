@@ -178,6 +178,7 @@
         "loads": [
           "vv",
           "hcpb_vvps",
+          "hcpb_vvps",
           "div_lim",
           "hcpb_bb_peak",
           "hcpb_hirn",
