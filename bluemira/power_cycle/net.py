@@ -356,7 +356,8 @@ class LoadSet:
         data = self.get_explicit_data_consumption(
             timeseries, load_type, unit, end_time, consumption=consumption
         )
-        for load_conf in self.loads.values():
+        for ld_name in data:
+            load_conf = self.loads[ld_name]
             for eff in load_conf.efficiencies:
                 if eff.reactive in load_type_bool:
                     c_eff = (
@@ -364,7 +365,7 @@ class LoadSet:
                         if load_conf.consumption and eff.value > 0
                         else eff.value
                     )
-                    data[load_conf.name] *= c_eff
+                    data[ld_name] *= c_eff
 
         return data
 
@@ -399,8 +400,8 @@ class LoadSet:
             timeseries, load_type, unit, end_time, consumption=consumption
         )
         return {
-            ld.name: -loads[ld.name] if ld.consumption else loads[ld.name]
-            for ld in self.loads.values()
+            ld_n: -ld if self.loads[ld_n].consumption else ld
+            for ld_n, ld in loads.items()
         }
 
     def build_timeseries(self, end_time: Optional[float] = None) -> np.ndarray:
@@ -522,7 +523,7 @@ class Phase:
             self._find_duplicate_loads(subphase, loads)
             for eff_name, effs in subphase.efficiencies.items():
                 for eff in effs:
-                    if eff.reactive in load_type_bool:
+                    if eff.reactive in load_type_bool and eff_name in loads:
                         loads[eff_name] *= eff.value
         return loads
 
