@@ -17,6 +17,7 @@ from typing import (
     Iterable,
     List,
     Optional,
+    Set,
     Tuple,
     TypedDict,
     Union,
@@ -27,6 +28,7 @@ from scipy.interpolate import interp1d
 from typing_extensions import NotRequired
 
 from bluemira.base.constants import raw_uc
+from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.power_cycle.tools import read_json
 
 if TYPE_CHECKING:
@@ -49,7 +51,7 @@ class LoadType(Enum):
     REACTIVE = auto()
 
     @classmethod
-    def from_str(cls, load_type: Union[str, LoadType]) -> LoadType:
+    def from_str(cls, load_type: Union[str, LoadType, None]) -> Union[LoadType, None]:
         """Create loadtype from str"""
         if isinstance(load_type, str):
             return cls[load_type.upper()]
@@ -59,6 +61,12 @@ class LoadType(Enum):
     def as_str(self) -> str:
         """Load type as a string"""
         return f"{self.name.lower()}_data"
+
+    @classmethod
+    def bool_check(cls, load_type: Union[str, LoadType, None]) -> Set[Union[None, bool]]:
+        """Boolean check for all loadtypes or specific loadtype"""
+        load_type = cls.from_str(load_type)
+        return {None, load_type == LoadType.REACTIVE}
 
 
 class LoadModel(Enum):
@@ -292,8 +300,8 @@ def interpolate_extra(vector: npt.NDArray, n_points: int):
     ])
 
 
-class Loads:
-    """Loads of a phase"""
+class LoadSet:
+    """LoadSet of a phase"""
 
     def __init__(
         self,
@@ -303,7 +311,8 @@ class Loads:
 
     @staticmethod
     def _normalise_timeseries(
-        time: np.ndarray, end_time: Optional[float] = None
+        time: np.ndarray,
+        end_time: Optional[float] = None,
     ) -> Tuple[np.ndarray, Optional[float]]:
         if min(time) < 0:
             raise NotImplementedError("Negative time not supported")
@@ -313,12 +322,18 @@ class Loads:
             return time / mx_time, mx_time if end_time is None else end_time
         return time, end_time
 
+    @staticmethod
+    def _consumption_flag(consumption: Optional[bool] = None) -> Set[bool]:
+        return {True, False} if consumption is None else {consumption}
+
     def get_load_data_with_efficiencies(
         self,
         timeseries: np.ndarray,
         load_type: Union[str, LoadType],
         unit: Optional[str] = None,
         end_time: Optional[float] = None,
+        *,
+        consumption: Optional[bool] = None,
     ) -> Dict[str, np.ndarray]:
         """
         Get load data taking into account efficiencies and consumption
@@ -330,17 +345,20 @@ class Loads:
         load_type:
             Type of load
         unit:
-            return unit, defaults to [W]
+            return unit, defaults to [W] or [var]
         end_time:
             for unnormalised loads this assures the load is
             applied at the right point in time
+        consumption:
+            return only consumption loads
         """
-        load_type = LoadType.from_str(load_type)
-        load_type_bool = load_type == LoadType.REACTIVE
-        data = self.get_explicit_data_consumption(timeseries, load_type, unit, end_time)
+        load_type_bool = LoadType.bool_check(load_type)
+        data = self.get_explicit_data_consumption(
+            timeseries, load_type, unit, end_time, consumption=consumption
+        )
         for load_conf in self.loads.values():
             for eff in load_conf.efficiencies:
-                if eff.reactive in {None, load_type_bool}:
+                if eff.reactive in load_type_bool:
                     c_eff = (
                         1 / eff.value
                         if load_conf.consumption and eff.value > 0
@@ -356,9 +374,11 @@ class Loads:
         load_type: Union[str, LoadType],
         unit: Optional[str] = None,
         end_time: Optional[float] = None,
+        *,
+        consumption: Optional[bool] = None,
     ) -> Dict[str, np.ndarray]:
         """
-        Get data with consumption resulting in a negative load
+        Get data with consumption resulting in an oppositely signed load
 
         Parameters
         ----------
@@ -367,13 +387,17 @@ class Loads:
         load_type:
             Type of load
         unit:
-            return unit, defaults to [W]
+            return unit, defaults to [W] or [var]
         end_time:
             for unnormalised loads this assures the load is
             applied at the right point in time
+        consumption:
+            return only consumption loads
         """
         load_type = LoadType.from_str(load_type)
-        load = self.get_interpolated_loads(timeseries, load_type, unit, end_time)
+        load = self.get_interpolated_loads(
+            timeseries, load_type, unit, end_time, consumption=consumption
+        )
         return {
             ld.name: -load[ld.name] if ld.consumption else load[ld.name]
             for ld in self.loads.values()
@@ -397,6 +421,8 @@ class Loads:
         load_type: Union[str, LoadType],
         unit: Optional[str] = None,
         end_time: Optional[float] = None,
+        *,
+        consumption: Optional[bool] = None,
     ) -> Dict[str, np.ndarray]:
         """
         Get loads for a given time series
@@ -408,13 +434,17 @@ class Loads:
         load_type:
             Type of load
         unit:
-            return unit, defaults to [W]
+            return unit, defaults to [W] or [var]
         end_time:
             for unnormalised loads this assures the load is
             applied at the right point in time
+        consumption:
+            return only consumption loads
         """
         timeseries, end_time = self._normalise_timeseries(timeseries, end_time)
         load_type = LoadType.from_str(load_type)
+        _cnsmptn = self._consumption_flag(consumption)
+
         return {
             load.name: load.interpolate(timeseries, end_time, load_type)
             if unit is None
@@ -424,6 +454,7 @@ class Loads:
                 unit,
             )
             for load in self.loads.values()
+            if load.consumption in _cnsmptn
         }
 
     def load_total(
@@ -432,6 +463,8 @@ class Loads:
         load_type: Union[str, LoadType],
         unit: Optional[str] = None,
         end_time: Optional[float] = None,
+        *,
+        consumption: Optional[bool] = None,
     ) -> np.ndarray:
         """Total load for each timeseries point for a given load_type
 
@@ -442,15 +475,17 @@ class Loads:
         load_type:
             Type of load
         unit:
-            return unit, defaults to [W]
+            return unit, defaults to [W] or [var]
         end_time:
             for unnormalised loads this assures the load is
             applied at the right point in time
+        consumption:
+            return only consumption loads
         """
         return np.sum(
             list(
                 self.get_load_data_with_efficiencies(
-                    timeseries, load_type, unit, end_time
+                    timeseries, load_type, unit, end_time, consumption=consumption
                 ).values()
             ),
             axis=0,
@@ -463,7 +498,7 @@ class Phase:
 
     config: PhaseConfig
     subphases: Dict[str, SubPhaseConfig]
-    loads: Loads
+    loads: LoadSet
 
     def __post_init__(self):
         """Validate duration"""
@@ -478,6 +513,106 @@ class Phase:
         return getattr(np, self.config.operation)([
             s_ph.duration for s_ph in self.subphases.values()
         ])
+
+    def _process_phase_efficiencies(
+        self, loads: Dict[str, np.ndarray], load_type: Union[str, LoadType]
+    ):
+        load_type_bool = LoadType.bool_check(load_type)
+        for subphase in self.subphases.values():
+            self._find_duplicate_loads(subphase, loads)
+            for eff_name, effs in subphase.efficiencies.items():
+                for eff in effs:
+                    if eff.reactive in load_type_bool:
+                        loads[eff_name] *= eff.value
+        return loads
+
+    @staticmethod
+    def _find_duplicate_loads(subphase: SubPhaseConfig, loads: Dict[str, np.ndarray]):
+        """Add duplication efficiency.
+
+        If a load is duplicated in subphase.loads,
+        the resultant data array is multiplied by the number of repeats
+        """
+        u, c = np.unique(subphase.loads, return_counts=True)
+        counts = c[c > 1]
+        for cnt, dup in enumerate(u[c > 1]):
+            eff = counts[cnt]
+            bluemira_debug(f"Duplicate load {dup}, duplication efficiency of {eff}")
+            loads[dup] *= eff
+
+    def build_timeseries(
+        self,
+        load_type: Optional[Union[str, LoadType]] = None,
+        *,
+        consumption: Optional[bool] = None,
+    ) -> np.ndarray:
+        """Build a combined time series based on loads"""
+        return self.loads.build_timeseries(
+            load_type=load_type, end_time=self.duration, consumption=consumption
+        )
+
+    def load_total(
+        self,
+        timeseries: np.ndarray,
+        load_type: Union[str, LoadType],
+        unit: Optional[str] = None,
+        *,
+        consumption: Optional[bool] = None,
+    ) -> np.ndarray:
+        """Total load for each timeseries point for a given load_type
+
+        Parameters
+        ----------
+        timeseries:
+            time array
+        load_type:
+            Type of load
+        unit:
+            return unit, defaults to [W] or [var]
+        consumption:
+            return only consumption loads
+        """
+        return np.sum(
+            list(
+                self.get_load_data_with_efficiencies(
+                    timeseries, load_type, unit, consumption=consumption
+                ).values()
+            ),
+            axis=0,
+        )
+
+    def get_load_data_with_efficiencies(
+        self,
+        timeseries: np.ndarray,
+        load_type: Union[str, LoadType],
+        unit: Optional[str] = None,
+        *,
+        consumption: Optional[bool] = None,
+    ) -> Dict[str, np.ndarray]:
+        """
+        Get load data taking into account efficiencies and consumption
+
+        Parameters
+        ----------
+        timeseries:
+            time array
+        load_type:
+            Type of load
+        unit:
+            return unit, defaults to [W] or [var]
+        consumption:
+            return only consumption loads
+        """
+        return self._process_phase_efficiencies(
+            self.loads.get_load_data_with_efficiencies(
+                timeseries,
+                load_type,
+                unit,
+                end_time=self.duration,
+                consumption=consumption,
+            ),
+            load_type,
+        )
 
 
 class PulseDictType(TypedDict):
@@ -620,10 +755,11 @@ class LibraryConfig:
 
         phase_config = self.phase[phase]
         subphases = {k: self.subphase[k] for k in phase_config.subphases}
+
         return Phase(
             phase_config,
             subphases,
-            Loads({
+            LoadSet({
                 ld: self.loads[ld]
                 for subphase in subphases.values()
                 for ld in subphase.loads

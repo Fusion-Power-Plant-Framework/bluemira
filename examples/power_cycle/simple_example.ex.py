@@ -86,6 +86,6 @@ active_loads = phase.loads.get_load_data_with_efficiencies(
 active_load_total = phase.loads.load_total(normalised_time, "active", "MW")
 
 reactive_loads = phase.loads.get_load_data_with_efficiencies(
-    normalised_time, "reactive", "MW"
+    normalised_time, "reactive", "var"
 )
-reactive_load_total = phase.loads.load_total(normalised_time, "reactive", "MW")
+reactive_load_total = phase.loads.load_total(normalised_time, "reactive", "var")

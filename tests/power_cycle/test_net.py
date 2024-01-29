@@ -13,8 +13,8 @@ from bluemira.base.reactor_config import ReactorConfig
 from bluemira.power_cycle.net import (
     LibraryConfig,
     LoadConfig,
+    LoadSet,
     LoadType,
-    Loads,
     Phase,
     PhaseConfig,
     SubPhaseConfig,
@@ -71,7 +71,7 @@ class TestSubLoad:
         assert pcsl.unit == "W"
 
 
-class TestLoads:
+class TestLoadSet:
     @classmethod
     def setup_class(cls):
         reactor_config = ReactorConfig(
@@ -145,7 +145,7 @@ class TestPhase:
         phase = Phase(
             PhaseConfig("dwl", "max", ["a", "b"]),
             {"a": SubPhaseConfig("a", 5), "b": SubPhaseConfig("b", 10)},
-            Loads({
+            LoadSet({
                 "name": LoadConfig(
                     "name", np.array([0, 0.5, 1]), np.arange(3), model="ramp"
                 )
