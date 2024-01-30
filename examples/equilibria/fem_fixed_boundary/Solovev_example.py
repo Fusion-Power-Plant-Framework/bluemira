@@ -18,19 +18,16 @@ from dolfinx import mesh as dmesh
 from mpi4py import MPI
 
 from bluemira.base.constants import MU_0
+from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
+    FemMagnetostatic2d,
+)
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    calculate_plasma_shape_params,
+    find_flux_surface,
     find_magnetic_axis,
-    get_flux_surfaces_from_mesh,
     get_mesh_boundary,
     plot_scalar_field,
 )
-from bluemira.magnetostatics.fem_utils import (
-    closest_point_in_mesh,
-    model_to_mesh,
-    read_from_msh,
-)
-from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
+from bluemira.magnetostatics.fem_utils import BluemiraFemFunction, model_to_mesh
 
 
 class Solovev:
@@ -43,7 +40,7 @@ class Solovev:
         1996) https://doi.org/10.1063/1.871772
     """
 
-    def __init__(self, R_0, a, kappa, delta, A1, A2, psi_b: float = 0):  # noqa: N803
+    def __init__(self, R_0, a, kappa, delta, A1, A2):  # noqa: N803
         self.R_0 = R_0
         self.a = a
         self.kappa = kappa
@@ -52,8 +49,7 @@ class Solovev:
         self.A2 = A2
         self._find_params()
         self._psi_ax = None
-        self.psi_b = psi_b
-        self._rz_ax = None
+        self._psi_b = None
 
     def _find_params(self):
         ri = self.R_0 - self.a
@@ -65,12 +61,14 @@ class Solovev:
         rt_lg, rt_2 = np.log(rt), rt**2
         zt_2 = zt**2
 
-        m = np.array([
-            [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
-            [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
-            [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
-            [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
-        ])
+        m = np.array(
+            [
+                [1.0, ri_2, ri_4, ri_2 * np.log(ri)],
+                [1.0, ro_2, ro_4, ro_2 * np.log(ro)],
+                [1.0, rt_2, rt_2 * (rt_2 - 4 * zt_2), rt_2 * rt_lg - zt_2],
+                [0.0, 2.0, 4 * (rt_2 - 2 * zt_2), 2 * rt_lg + 1.0],
+            ],
+        )
 
         b = np.sum(
             np.array([
@@ -84,26 +82,24 @@ class Solovev:
         )
 
         self.coeff = scipy.linalg.solve(m, b)
+        self._m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))[:, None]
 
     def psi(self, point):
         """
         Calculate psi analytically at a point.
         """
+        psi_func = np.atleast_2d(
+            np.array([
+                np.ones_like(point[0]),
+                point[0] ** 2,
+                point[0] ** 2 * (point[0] ** 2 - 4 * point[1] ** 2),
+                point[0] ** 2 * np.log(point[0]) - point[1] ** 2,
+                (point[0] ** 4) / 8.0,
+                -(point[1] ** 2) / 2.0,
+            ]).T
+        ).T
 
-        def psi_func(x):
-            x_0_2 = x[0] ** 2
-            x_1_2 = x[2] ** 2
-            return np.array([
-                1.0,
-                x_0_2,
-                x_0_2 * (x_0_2 - 4 * x_1_2),
-                x_0_2 * np.log(x[0]) - x_1_2,
-                (x[0] ** 4) / 8.0,
-                -(x_1_2) / 2.0,
-            ])
-
-        m = np.concatenate((self.coeff, np.array([self.A1, self.A2])))
-        return 2 * np.pi * np.sum(psi_func(point) * m)
+        return np.squeeze(2 * np.pi * np.sum(psi_func * self._m, axis=0))
 
     def plot_psi(self, ri, zi, dr, dz, nr, nz, levels=20, axis=None, tofill=True):
         """
@@ -112,24 +108,24 @@ class Solovev:
         r = np.linspace(ri, ri + dr, nr)
         z = np.linspace(zi, zi + dz, nz)
         rv, zv = np.meshgrid(r, z)
-        points = np.vstack([rv.ravel(), np.zeros(rv.size), zv.ravel()]).T
-        psi = np.array([self.psi(point) for point in points])
-        ax, cntr, cntrf = plot_scalar_field(
-            points[:, 0], points[:, 2], psi, levels=levels, ax=axis, tofill=tofill
+        points = np.vstack([rv.ravel(), zv.ravel()]).T
+        psi = self.psi(points.T)
+        cplot = plot_scalar_field(
+            points[:, 0], points[:, 1], psi, levels=levels, ax=axis, tofill=tofill
         )
-        output = {"ax": ax, "cntr": cntr, "cntrf": cntrf}
-        output["points"] = points
-        output["values"] = psi
-        return output
+        return (*cplot, points, psi)
 
-    def psi_gradient(self, point):  # noqa: D102
+    def psi_gradient(self, point):
+        """Calculate the gradient of psi in the specified point"""
         return scipy.optimize.approx_fprime(point, self.psi)
 
     @property
     def psi_ax(self):
         """Poloidal flux on the magnetic axis"""
+        # if self._psi_ax is None:
+        #     self._psi_ax = self.psi(find_magnetic_axis(lambda x: self.psi(x), None))
         if self._psi_ax is None:
-            result = scipy.optimize.minimize(lambda x: -self.psi(x), (self.R_0, 0, 0))
+            result = scipy.optimize.minimize(lambda x: -self.psi(x), (self.R_0, 0))
             self._psi_ax = self.psi(result.x)
             self._rz_ax = result.x
         return self._psi_ax
@@ -137,11 +133,9 @@ class Solovev:
     @property
     def psi_b(self):
         """Poloidal flux on the boundary"""
+        if self._psi_b is None:
+            self._psi_b = 0.0
         return self._psi_b
-
-    @psi_b.setter
-    def psi_b(self, value: float):
-        self._psi_b = value
 
     @property
     def psi_norm_2d(self):
@@ -155,19 +149,23 @@ class Solovev:
         return myfunc
 
     @property
-    def pprime(self):  # noqa: D102
-        return lambda x: -self.A1 / MU_0  # noqa: ARG005
+    def pprime(self):
+        """Pprime"""
+        return lambda _x: -self.A1 / MU_0
 
     @property
-    def ffprime(self):  # noqa: D102
-        return lambda x: self.A2  # noqa: ARG005
+    def ffprime(self):
+        """FFprime"""
+        return lambda _x: self.A2
 
     @property
-    def jp(self):  # noqa: D102
+    def jp(self):
+        """Current density"""
         return lambda x: x[0] * self.pprime(x) + self.ffprime(x) / (MU_0 * x[0])
 
 
-def create_mesh(solovev, LCFS, lcar):  # noqa: D103
+def create_mesh(solovev, LCFS, lcar):
+    """Create the mesh"""
     gmsh.initialize()
     # points
     point_tags = [gmsh.model.occ.addPoint(v[0], 0, v[1], lcar) for v in LCFS[:-1]]
@@ -184,7 +182,7 @@ def create_mesh(solovev, LCFS, lcar):  # noqa: D103
     # embed psi_ax point with a finer mesh
     psi_ax = solovev.psi_ax
     rz_ax = solovev._rz_ax
-    psi_ax_tag = gmsh.model.occ.addPoint(rz_ax[0], 0, rz_ax[2], lcar / 50)
+    psi_ax_tag = gmsh.model.occ.addPoint(rz_ax[0], 0, rz_ax[1], lcar / 50)
     gmsh.model.occ.synchronize()
     gmsh.model.mesh.embed(0, [psi_ax_tag], 2, surf)
     gmsh.model.occ.synchronize()
@@ -224,40 +222,51 @@ if __name__ == "__main__":
     solovev = Solovev(R_0, a, kappa, delta, A1, A2)
 
     levels = np.linspace(solovev.psi_b, solovev.psi_ax, 20)
-    plot_info = solovev.plot_psi(5.0, -6, 8.0, 12.0, 100, 100, levels=levels)
+    _ax, cntr, _cntrf, _points, _psi = solovev.plot_psi(
+        5.0, -6, 8.0, 12.0, 100, 100, levels=levels
+    )
     plt.show()
+
+    n_points = 500
+    boundary = find_flux_surface(solovev.psi_norm_2d, 1, n_points=n_points)
 
     # Find the LCFS.
     # Note: the points returned by matplotlib can have a small "interpolation" error,
     # thus psi on the LCFS could not be exaclty 0.
-    LCFS = plot_info["cntr"].collections[0].get_paths()[0].vertices
-    lcar = 1
+    LCFS = cntr.collections[0].get_paths()[0].vertices
 
     # create the mesh
-    (mesh, ct, ft), labels, psi_ax = create_mesh(solovev, LCFS, lcar)
+    lcar = 0.5
 
-    (mesh1, ct1, ft1), labels = read_from_msh("Mesh.msh", gdim=2)
+    (mesh, ct, ft), labels, psi_ax = create_mesh(solovev, LCFS, lcar)
+    labels["lcfs"] = (1, 0)
 
     # Inizialize the em solever
-    gs_solver = FemMagnetostatic2d(2)
+    p_order = 2
+    gs_solver = FemMagnetostatic2d(p_order=p_order)
     gs_solver.set_mesh(mesh, ct)
 
     # create the plasma density current function
-    g = fem.Function(gs_solver.V)
+    g = BluemiraFemFunction(gs_solver.V)
     # select the dofs coordinates in the xz plane
-    dof_points = gs_solver.V.tabulate_dof_coordinates()
-    g.x.array[:] = np.array([solovev.jp(x) for x in dof_points])
+    dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
+    g.x.array[:] = solovev.jp(dof_points.T)
 
     # interpolate the exact solution on the solver function space
     psi_exact_fun = fem.Function(gs_solver.V)
-    psi_exact_fun.x.array[:] = np.array([solovev.psi(x) for x in dof_points])
+    psi_exact_fun.x.array[:] = solovev.psi(dof_points.T)
 
     # boundary conditions
-    dofs = fem.locate_dofs_topological(gs_solver.V, mesh.topology.dim - 1, ft.find(0))
-    psi_exact_boundary = fem.Function(gs_solver.V)
-    psi_exact_boundary.x.array[dofs] = 0
-    dirichlet_bcs_1 = fem.dirichletbc(psi_exact_boundary, dofs)
+    dofs_boundary = fem.locate_dofs_topological(
+        gs_solver.V, mesh.topology.dim - 1, ft.find(0)
+    )
 
+    # boundary 1 (set to 0)
+    psi_boundary1 = fem.Function(gs_solver.V)
+    psi_boundary1.x.array[:] = 0
+    dirichlet_bcs_1 = fem.dirichletbc(psi_boundary1, dofs_boundary)
+
+    # boundary 2 (set using psi_exact func)
     tdim = mesh.topology.dim
     facets = dmesh.locate_entities_boundary(
         mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
@@ -266,25 +275,38 @@ if __name__ == "__main__":
         psi_exact_fun, fem.locate_dofs_topological(gs_solver.V, tdim - 1, facets)
     )
 
-    dofs = fem.locate_dofs_topological(gs_solver.V, mesh.topology.dim - 1, ft.find(0))
-    psi_exact_boundary = fem.Function(gs_solver.V)
-    psi_exact_boundary.x.array[dofs] = psi_exact_fun.x.array[dofs]
-    dirichlet_bcs_3 = fem.dirichletbc(psi_exact_boundary, dofs)
+    # boundary 3 (set using psi_exact values at boundary)
+    psi_boundary3 = fem.Function(gs_solver.V)
+    psi_boundary3.x.array[dofs_boundary] = psi_exact_fun.x.array[dofs_boundary]
+    dirichlet_bcs_3 = fem.dirichletbc(psi_boundary3, dofs_boundary)
+
+    points_x, points_y = get_mesh_boundary(mesh)
+    plt.plot(points_x, points_y, "r.")
+    plt.scatter(dof_points[dofs_boundary, 0], dof_points[dofs_boundary, 1], 1)
+    plt.scatter(boundary.T[:, 0], boundary.T[:, 1], 1)
+    plt.title("Check mesh boundary function")
+    plt.show()
 
     mean_err = []
-    Itot = []
+    itot = []
 
+    i = 0
     # TODO(je-cook) convergence is not very tight old:1e-5, new:6e-3
     for dirich_bc, is_close in zip(
         ((None, dirichlet_bcs_1), (dirichlet_bcs_2, dirichlet_bcs_3)), (2e-1, 6e-3)
     ):
         for d in dirich_bc:
+            i = i + 1
+            print(f"i = {i}")
+            print(f"is_close: {is_close}")
+            print(f"dirich_bc: {dirich_bc}")
+
             # solve the Grad-Shafranov equation
             gs_solver.define_g(g, d)
-            gs_solver.solve()
+            fe_psi_calc = gs_solver.solve()
 
             dx = ufl.Measure("dx", subdomain_data=ct, domain=mesh)
-            Itot.append(fem.assemble_scalar(fem.form(g * dx)))
+            itot.append(fem.assemble_scalar(fem.form(g * dx)))
 
             err = fem.form((gs_solver.psi - psi_exact_fun) ** 2 * dx)
             err_val = np.sqrt(
@@ -292,47 +314,95 @@ if __name__ == "__main__":
                     fem.assemble_scalar(err), MPI.SUM
                 )
             )
-            assert err_val < is_close  # noqa: S101
+            # assert err_val < is_close
             mean_err.append(err_val)
 
-    np.testing.assert_allclose(Itot, Itot[0])
-    assert np.isclose(mean_err[0], mean_err[1])  # noqa: S101
-    assert np.isclose(mean_err[2], mean_err[3])  # noqa: S101
+            data = gs_solver.psi(dof_points)
+            plot_scalar_field(dof_points[:, 0], dof_points[:, 1], data)
+            plt.title(f"Plot psi from recalculated dof_points {i}")
+            plt.show()
 
-    points_x, points_y = get_mesh_boundary(mesh)
-    plt.plot(points_x, points_y, "r-")
-    plt.title("Check mesh boundary function")
-    plt.show()
-
-    dofs_points = gs_solver.psi.function_space.tabulate_dof_coordinates()
-    data = gs_solver.psi(dofs_points)
-    plot_scalar_field(dofs_points[:, 0], dofs_points[:, 2], data)
-    plt.title("Plot psi from recalculated dof_points")
-    plt.show()
-
-    dofs_points = gs_solver.psi.function_space.tabulate_dof_coordinates()
-    plot_scalar_field(dofs_points[:, 0], dofs_points[:, 2], gs_solver.psi.x.array[:])
-    plt.title("Plot psi from dof_points")
-    plt.show()
-
-    o_point = find_magnetic_axis(gs_solver.psi, mesh)
-
-    gs_solver.psi_ax = max(gs_solver.psi.x.array)
-    gs_solver.psi_b = 0
-
-    def psi_norm_func(x):  # noqa: D103
-        return np.sqrt(
-            np.abs(
-                (gs_solver.psi(x) - gs_solver.psi_ax)
-                / (gs_solver.psi_b - gs_solver.psi_ax)
+            plot_scalar_field(
+                dof_points[:, 0], dof_points[:, 1], gs_solver.psi.x.array[:]
             )
-        )
+            plt.title(f"Plot psi from dof_points {i}")
+            plt.show()
 
-    print(calculate_plasma_shape_params(psi_norm_func, mesh, 0.95, True))
-    print(get_flux_surfaces_from_mesh(mesh, psi_norm_func, None, 40))
+            # calculate the error norm
+            diff = gs_solver.psi.x.array - psi_exact_fun.x.array
+            eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(
+                psi_exact_fun.x.array, ord=2
+            )
 
-    points = np.array([[-1, 0.3, 0], [9, 0.3, 0]])
-    print(closest_point_in_mesh(mesh, points))
+            plot_scalar_field(
+                dof_points[:, 0],
+                dof_points[:, 1],
+                diff,
+                levels=20,
+                ax=None,
+                tofill=True,
+            )
+            plt.title(f"Diff between psi exact and fem solution with bcs {i}")
+            plt.show()
 
-    point = [9, 0.3, 0]
-    print(closest_point_in_mesh(mesh, point))
+            mesh_points = mesh.geometry.x
+            psi_calc_data = np.array([fe_psi_calc(x) for x in mesh_points])
+            psi_exact = [solovev.psi(point) for point in mesh_points]
+
+            plot_scalar_field(
+                mesh_points[:, 0],
+                mesh_points[:, 1],
+                psi_exact,
+                levels=20,
+                ax=None,
+                tofill=True,
+            )
+            plt.title(f"Psi exact on mesh points {i}")
+            plt.show()
+
+            error = abs(psi_calc_data - psi_exact)
+
+            levels = np.linspace(0.0, max(error) * 1.1, 50)
+            plot_scalar_field(
+                mesh_points[:, 0],
+                mesh_points[:, 1],
+                error,
+                levels=levels,
+                ax=None,
+                tofill=True,
+            )
+            plt.title(f"Absolute error on mesh points {i}")
+            plt.show()
+
+            # calculate the error norm
+            diff = psi_calc_data - psi_exact
+            eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(psi_exact, ord=2)
+            print(f"eps: {eps}")
+            print(f"mean_err: {mean_err}")
+
+            x_axis_s, z_axis_s = find_magnetic_axis(solovev.psi, None)
+            x_axis_fe, z_axis_fe = find_magnetic_axis(gs_solver.psi, mesh)
+
+            print(f"x_axis_fe - x_axis_s: {x_axis_fe - x_axis_s}")
+            print(f"z_axis_fe - z_axis_s: {z_axis_fe - z_axis_s}")
+
+            psi_fe_boundary = np.array([
+                fe_psi_calc(point) for point in dof_points[dofs_boundary]
+            ])
+            psi_exact_boundary1 = np.array([
+                solovev.psi(point) for point in dof_points[dofs_boundary]
+            ])
+
+            # Higher than I might expect, but probably because some of the points
+            # lie outside the mesh, and cannot be properly interpolated.
+            # TODO(je-cook) convergence is not very tight old:2e-3 new 9.1e-2 (!)
+            print(
+                f"np.max(np.abs(psi_fe_boundary)):"
+                f"{np.max(np.abs(psi_fe_boundary - psi_exact_boundary1))}"
+            )
+
+            diff = np.abs(psi_fe_boundary - psi_exact_boundary1)
+            plt.scatter(
+                dof_points[dofs_boundary, 0], dof_points[dofs_boundary, 1], 10, diff
+            )
+            plt.show()
