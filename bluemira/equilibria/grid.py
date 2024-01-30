@@ -8,6 +8,10 @@
 Grid object and operations for equilibria.
 """
 
+from __future__ import annotations
+
+from typing import TYPE_CHECKING
+
 import numba as nb
 import numpy as np
 
@@ -15,6 +19,9 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.constants import MIN_N_DISCR, X_AXIS_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.geometry.coordinates import get_area_2d, get_centroid_2d
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.file import EQDSKInterface
 
 __all__ = ["Grid", "integrate_dx_dz", "revolved_volume", "volume_integral"]
 
@@ -143,7 +150,7 @@ class Grid:
         )
 
     @classmethod
-    def from_eqdsk(cls, e):
+    def from_eqdsk(cls, e: EQDSKInterface):
         """
         Initialise a Grid object from an EQDSKInterface.
 

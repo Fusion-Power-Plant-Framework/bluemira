@@ -130,7 +130,7 @@ class EQDSKInterface:
             self.psinorm = _derive_psinorm(self.fpol)
 
     @classmethod
-    def from_file(cls, file_path: str) -> EQDSKInterface:
+    def from_file(cls, file_path: Path | str) -> EQDSKInterface:
         """
         Create an EQDSKInterface object from a file.
 

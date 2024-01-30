@@ -421,7 +421,7 @@ class ColourDescriptor:
         setattr(obj, self._name, value)
 
 
-def iterable_to_list(obj: Union[Any, Iterable[Any]]):
+def iterable_to_list(obj: Any | Iterable[Any]):
     """Convert object(s) to an explicit list of objects"""
     if isinstance(obj, list):
         return obj
