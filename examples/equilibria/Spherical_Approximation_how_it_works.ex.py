@@ -103,7 +103,7 @@ r_t = bdry_r
 # Plasma boundary x and z locations from data file
 x_bdry = original_LCFS.x
 z_bdry = original_LCFS.z
-max_bdry_r = np.max(np.sqrt(x_bdry**2 + z_bdry**2))
+max_bdry_r = np.max(np.linalg.norm([x_bdry, z_bdry],axis=0))
 
 # Plot
 f, ax = plt.subplots()

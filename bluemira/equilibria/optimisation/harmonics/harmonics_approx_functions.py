@@ -86,7 +86,7 @@ def coil_harmonic_amplitude_matrix(
         z_f.append(input_coils[n].z)
 
     # Spherical coords
-    r_f = np.sqrt(np.asarray(x_f) ** 2 + np.asarray(z_f) ** 2)
+    r_f = np.linalg.norm([x_f, z_f], axis=0)
     theta_f = np.arctan2(x_f, z_f)
 
     # [number of degrees, number of coils]
@@ -642,7 +642,7 @@ def plot_psi_comparision(
     axes: Optional[List[plt.Axes]] = None,
     nlevels: int = 50,
     show: bool = True,
-) -> Tuple[plt.Axes, plt.Axes, plt.Axes, plt.Axes]:
+) -> Tuple[plt.Axes, ...]:
     """
     Create plot comparing an original psi to psi obtained from harmonic approximation.
 
