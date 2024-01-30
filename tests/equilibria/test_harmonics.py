@@ -297,12 +297,17 @@ def test_SphericalHarmonicConstraintFunction():
     b_vec = np.array([1e-2, 1e-18])
     test_vector = np.array([1, 1, 1, 1])
     test_result = a_mat[1:,] @ test_vector
+    print(test_result)
 
     test_constraint = SphericalHarmonicConstraintFunction(a_mat, b_vec, 0.0, 1)
 
     test_f_constraint = test_constraint.f_constraint(test_vector)
 
-    assert all(test_f_constraint - (test_result - b_vec)) == pytest.approx(0.0, abs=0.05)
+    for fc, res in zip(
+        test_f_constraint,
+        (test_result - b_vec),
+    ):
+        assert fc == res
 
 
 def test_SphericalHarmonicConstraint():
@@ -368,5 +373,5 @@ def test_SphericalHarmonicConstraint():
         assert test_name == ref_name
 
     test_eval = test_constraint_class.evaluate(eq)
-    assert test_eval.all() == 0
+    assert all(test_eval == 0)
     assert len(test_eval) == 12
