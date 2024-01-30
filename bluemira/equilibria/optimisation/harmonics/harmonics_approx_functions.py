@@ -398,7 +398,7 @@ def coils_outside_lcfs_sphere(eq: Equilibrium) -> Tuple[list, float]:
             f" approximation: {not_too_close_coils}."
         )
         return not_too_close_coils, bdry_r
-    return c_names, bdry_r
+    return c_names.tolist(), bdry_r
 
 
 def get_psi_harmonic_amplitudes(
