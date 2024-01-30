@@ -58,11 +58,6 @@ class LoadType(Enum):
             return cls[load_type.upper()]
         return load_type
 
-    @property
-    def as_str(self) -> str:
-        """Load type as a string"""
-        return f"{self.name.lower()}_data"
-
     @classmethod
     def check(
         cls, load_type: Union[str, LoadType, None]
@@ -621,9 +616,10 @@ class Phase:
         u, c = np.unique(subphase.loads, return_counts=True)
         counts = c[c > 1]
         for cnt, dup in enumerate(u[c > 1]):
-            eff = counts[cnt]
-            bluemira_debug(f"Duplicate load {dup}, duplication efficiency of {eff}")
-            loads[dup] *= eff
+            if dup in loads:
+                eff = counts[cnt]
+                bluemira_debug(f"Duplicate load {dup}, duplication efficiency of {eff}")
+                loads[dup] *= eff
 
     def build_timeseries(
         self,

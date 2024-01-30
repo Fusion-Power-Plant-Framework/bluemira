@@ -169,7 +169,7 @@ class TestPhase:
         self.phase = Phase(
             PhaseConfig("dwl", "max", ["a", "b"]),
             {  # the loads list is not checked again...should we?
-                "a": SubPhaseConfig("a", 5, ["name"]),
+                "a": SubPhaseConfig("a", 5, ["name", "name"]),
                 "b": SubPhaseConfig("b", 10, ["name2"], {"name2": [Efficiency(0.1)]}),
             },
             LoadSet({
@@ -206,9 +206,9 @@ class TestPhase:
     def test_load_total(self, load_type, consumption):
         assert np.allclose(
             self.phase.load_total([0, 2, 5, 10], load_type, consumption=consumption),
-            [0.0, -0.3, -0.8625, -1.8]
+            [0.0, -0.7, -1.8625, -3.8]
             if consumption is None
-            else [0.0, -0.4, -1.0, -2.0]
+            else [0.0, -0.8, -2.0, -4.0]
             if consumption
             else [0.0, 0.1, 0.1375, 0.2],
         )
@@ -216,13 +216,14 @@ class TestPhase:
     @pytest.mark.parametrize("consumption", [True, False, None])
     @pytest.mark.parametrize("load_type", ["active", "reactive"])
     def test_get_load_data_with_efficiencies(self, load_type, consumption):
-        res = self.phase.get_load_data_with_efficiencies(
-            [0, 2, 5, 10], load_type, consumption=consumption
-        )
-        if (name := res.get("name", None)) is not None:
-            assert np.allclose(name, np.array([-0.0, -0.4, -1.0, -2.0]))
-        if (name2 := res.get("name2", None)) is not None:
-            assert np.allclose(name2, np.array([0.0, 0.1, 0.1375, 0.2]))
+        for _ in range(2):  # run the duplicates twice doesnt keep doubling load
+            res = self.phase.get_load_data_with_efficiencies(
+                [0, 2, 5, 10], load_type, consumption=consumption
+            )
+            if (name := res.get("name", None)) is not None:
+                assert np.allclose(name, np.array([-0.0, -0.8, -2.0, -4.0]))
+            if (name2 := res.get("name2", None)) is not None:
+                assert np.allclose(name2, np.array([0.0, 0.1, 0.1375, 0.2]))
 
 
 class TestLibraryConfig:
