@@ -386,7 +386,7 @@ def coils_outside_lcfs_sphere(eq: Equilibrium) -> Tuple[list, float]:
     """
     c_names = np.array(eq.coilset.name)
     bdry_r = np.max(np.linalg.norm([eq.get_LCFS().x, eq.get_LCFS().z]))
-    coil_r = np.sqrt(np.array(eq.coilset.x) ** 2 + np.array(eq.coilset.z) ** 2)
+    coil_r = np.linalg.norm([eq.coilset.x, eq.coilset.z])
     # Approximation boundary - sphere must contain
     # plasma/LCFS for chosen equilibrium.
     # Are the control coils outside the sphere containing
