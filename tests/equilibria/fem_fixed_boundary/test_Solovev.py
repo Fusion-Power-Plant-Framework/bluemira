@@ -20,10 +20,8 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    calculate_plasma_shape_params,
     find_flux_surface,
     find_magnetic_axis,
-    get_flux_surfaces_from_mesh,
     get_mesh_boundary,
     plot_scalar_field,
 )
@@ -375,12 +373,12 @@ class TestSolovevZheng:
         psi_ax = max(self.gs_solver.psi.x.array)
         psi_b = 0
 
-        def psi_norm_func(x):
-            return np.sqrt(np.abs((self.gs_solver.psi(x) - psi_ax) / (psi_b - psi_ax)))
+        # def psi_norm_func(x):
+        #     return np.sqrt(np.abs((self.gs_solver.psi(x) - psi_ax) / (psi_b - psi_ax)))
 
         # TODO (je-cook) what am I meant to see?
-        print(calculate_plasma_shape_params(psi_norm_func, self.mesh, 0.95, True))
-        print(get_flux_surfaces_from_mesh(self.mesh, psi_norm_func, None, 40))
+        # print(calculate_plasma_shape_params(psi_norm_func, self.mesh, 0.95, True))
+        # print(get_flux_surfaces_from_mesh(self.mesh, psi_norm_func, None, 40))
 
         close_test_1 = np.array([[-1, 0.3, 0], [9, 0.3, 0]])
         np.testing.assert_allclose(
@@ -393,6 +391,7 @@ class TestSolovevZheng:
         )
 
     def mean_test(self):
+        print(self.mean_err)
         np.testing.assert_allclose(self.itot, self.itot[0])
         assert self.mean_err[0] == self.mean_err[1]
         assert self.mean_err[2] == self.mean_err[3]

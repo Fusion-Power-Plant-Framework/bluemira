@@ -128,12 +128,14 @@ class BluemiraFemFunction(Function):
 
     def interpolate(self, u, *args, **kwargs):
         """Interpolate function and cache bb_tree"""
+        # TODO (ivan): create_nonmatching_meshes_interpolation_data doesn't take
+        #  padding as input in dolfinx 0.7.1
         nmm = (
             create_nonmatching_meshes_interpolation_data(
                 self.function_space.mesh._cpp_object,
                 self.function_space.element,
                 u.function_space.mesh._cpp_object,
-                padding=1e-8,
+                # padding=1e-8,
             )
             if hasattr(u, "function_space")
             else ((), (), (), ())
@@ -185,7 +187,12 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
     geom_dofs = cpp.mesh.entities_to_geometry(
         mesh._cpp_object, tdim, np.atleast_2d(closest_entities), False
     )
-    return points - geometry.compute_distance_gjk(points, mesh.geometry.x[geom_dofs][0])
+    # TODO (ivan): compute_distance_gjk must to be applied point to point
+    new_points = np.array([
+        p - geometry.compute_distance_gjk(p, mesh.geometry.x[geom_dofs[i][0]])
+        for i, p in enumerate(points)
+    ])
+    return new_points  # noqa: RET504
 
 
 def calculate_area(mesh: Mesh, boundaries: object, tag: Optional[int] = None) -> float:

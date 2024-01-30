@@ -13,7 +13,9 @@ Biot-Savart law.
 from pathlib import Path
 
 import gmsh
+import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.axes import Axes
 from mpi4py import MPI
 
 from bluemira.base.components import Component, PhysicalComponent
@@ -32,11 +34,10 @@ from bluemira.mesh import meshing
 
 DATA_DIR = Path(__file__).parent
 
-
 model_rank = MPI.COMM_WORLD.rank
 mesh_comm = MPI.COMM_WORLD
 
-r_enclo = 100
+r_enclo = 30
 lcar_enclo = 2
 lcar_axis = lcar_enclo / 10
 
@@ -74,11 +75,31 @@ poly_ext.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_ext"}
 poly_enclo = BluemiraWire([poly_axis, poly_ext], "poly_enclo")
 poly_enclo.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_enclo"}
 
+r_enclo1 = 150
+lcar_enclo1 = 10
+
+poly_ext1 = tools.make_polygon(
+    [
+        [0, r_enclo, r_enclo, 0, 0, r_enclo1, r_enclo1, 0],
+        [r_enclo, r_enclo, -r_enclo, -r_enclo, -r_enclo1, -r_enclo1, r_enclo1, r_enclo1],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+    ],
+    label="poly_ext1",
+    closed=True,
+)
+poly_ext1.mesh_options = {"lcar": lcar_enclo1, "physical_group": "poly_ext1"}
+poly_enclo1 = BluemiraWire([poly_ext1], "poly_enclo1")
+poly_enclo1.mesh_options = {"lcar": lcar_enclo1, "physical_group": "poly_enclo1"}
+
 enclosure = BluemiraFace([poly_enclo, poly_coil])
 enclosure.mesh_options = {"lcar": lcar_enclo, "physical_group": "enclo"}
 
+enclosure1 = BluemiraFace([poly_enclo1])
+enclosure1.mesh_options = {"lcar": lcar_enclo1, "physical_group": "enclo1"}
+
 c_universe = Component(name="universe")
 c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
+c_enclo1 = PhysicalComponent(name="enclosure1", shape=enclosure1, parent=c_universe)
 c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
 meshfiles = [Path(DATA_DIR, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
@@ -86,34 +107,55 @@ m = meshing.Mesh(meshfile=meshfiles)
 m(c_universe, dim=2)
 
 (mesh, ct, ft), labels = model_to_mesh(gmsh.model, mesh_comm, model_rank, gdim=2)
-print(np.unique(ct.values))
 
 gmsh.write("Mesh.msh")
 gmsh.finalize()
 
-em_solver = FemMagnetostatic2d(3)
+em_solver = FemMagnetostatic2d(2)
 em_solver.set_mesh(mesh, ct)
 
 current = 1e6
-coil_tag = 6
+coil_tag = labels["coil"][1]
 j_functions = [Association(1, coil_tag, current)]
 jtot = create_j_function(mesh, ct, j_functions)
 
 em_solver.define_g(jtot)
 em_solver.solve()
-em_solver.calculate_b()
+B = em_solver.calculate_b(("CG", 2))
 
-z_points_axis = np.linspace(0, r_enclo, 200)
-r_points_axis = np.zeros(z_points_axis.shape)
-
+# Comparison of the theoretical and calculated magnetic field (B).
+# Note: The comparison is conducted along the z-axis, where an
+# analytical expression is available. However, due to challenges
+# in calculating the gradient of dPsi/dx along the axis for CG
+# element, the points are translated by a value of deltax.
+deltax = 0.25
+z_points_axis = np.linspace(0, r_enclo / 2, 200)
+r_points_axis = np.zeros(z_points_axis.shape) + deltax
 points = np.array([r_points_axis, z_points_axis, 0 * z_points_axis]).T
-Bz_axis, points = em_solver.B._eval_new(points)
+
+Bz_axis = B(points)
 Bz_axis = Bz_axis[:, 1]
 z_points = points[:, 1]
 B_teo = np.array([Bz_coil_axis(rc, 0, z, current) for z in z_points])
+
+ax: Axes
+_, ax = plt.subplots()
+ax.plot(z_points, Bz_axis, label="B_calc")
+ax.plot(z_points, B_teo, label="B_teo")
+ax.set_xlabel("r (m)")
+ax.set_ylabel("B (T)")
+ax.legend()
+plt.show()
+
+_, ax = plt.subplots()
+ax.plot(z_points, Bz_axis - B_teo, label="B_calc - B_teo")
+ax.set_xlabel("r (m)")
+ax.set_ylabel("error (T)")
+ax.legend()
+plt.show()
 
 # I just set an absolute tolerance for the comparison (since the magnetic field
 # goes to zero, the comparison cannot be made on the basis of a relative
 # tolerance). An allclose comparison was out of discussion considering the
 # necessary accuracy.
-np.testing.assert_allclose(Bz_axis, B_teo, atol=2e-3)
+np.testing.assert_allclose(Bz_axis, B_teo, atol=4e-4)

@@ -8,7 +8,7 @@
 Solver for a 2D magnetostatic problem with cylindrical symmetry
 """
 
-from typing import Iterable, Optional, Union
+from typing import Iterable, Optional, Tuple, Union
 
 import dolfinx.fem
 import numpy as np
@@ -25,6 +25,7 @@ from ufl import (
     SpatialCoordinate,
     TestFunction,
     TrialFunction,
+    VectorElement,
     as_vector,
     dot,
     ds,
@@ -102,7 +103,6 @@ class FemMagnetostatic2d:
         self.V = None
         self.g = None
         self.boundaries = None
-
         self.psi = None
 
     def set_mesh(
@@ -237,24 +237,70 @@ class FemMagnetostatic2d:
 
         return self.psi
 
-    def calculate_b(self) -> BluemiraFemFunction:
+    # def calculate_b(self) -> BluemiraFemFunction:
+    #     """
+    #     Calculates the magnetic field intensity from psi
+    #
+    #     Note: code from Fenics_tutorial (
+    #     https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
+    #     """
+    #     # new function space for mapping B as vector
+    #     W = functionspace(self.mesh, ("CG", 1, (self.mesh.geometry.dim,)))
+    #     B = BluemiraFemFunction(W)
+    #     x_0 = SpatialCoordinate(self.mesh)[0]
+    #     B_expr = Expression(
+    #         as_vector((
+    #             -self.psi.dx(1) / (2 * np.pi * x_0),
+    #             self.psi.dx(0) / (2 * np.pi * x_0),
+    #         )),
+    #         W.element.interpolation_points(),
+    #     )
+    #     B.interpolate(B_expr)
+    #
+    #     return B
+
+    def calculate_b(
+        self,
+        base_eltype: Tuple = ("DG", 0),
+        eltype: Optional[Tuple] = None,
+    ) -> BluemiraFemFunction:
         """
         Calculates the magnetic field intensity from psi
+
+        Parameters
+        ----------
+        base_eltype:
+            dolfinx element type used to calculate B
+        eltype:
+            dolfinx element type
 
         Note: code from Fenics_tutorial (
         https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
         """
-        # new function space for mapping B as vector
-        W = functionspace(self.mesh, ("DG", 0, (self.mesh.geometry.dim,)))  # noqa: N806
-        B = BluemiraFemFunction(W)
-        x_0 = SpatialCoordinate(self.mesh)[0]
+        V_W0 = VectorElement(base_eltype[0], self.mesh.ufl_cell(), base_eltype[1], 2)  # noqa: N806
+        W0 = functionspace(self.mesh, V_W0)  # noqa: N806
+        B0 = BluemiraFemFunction(W0)
+
+        x = SpatialCoordinate(self.mesh)
+
+        r = x[0]
+
         B_expr = Expression(
             as_vector((
-                -self.psi.dx(1) / (2 * np.pi * x_0),
-                self.psi.dx(0) / (2 * np.pi * x_0),
+                -self.psi.dx(1) / (2 * np.pi * r),
+                self.psi.dx(0) / (2 * np.pi * r),
             )),
-            W.element.interpolation_points(),
+            W0.element.interpolation_points(),
         )
-        B.interpolate(B_expr)
+
+        B0.interpolate(B_expr)
+
+        if eltype is not None:
+            V_W = VectorElement(eltype[0], self.mesh.ufl_cell(), eltype[1], 2)  # noqa: N806
+            W = functionspace(self.mesh, V_W)  # noqa: N806
+            B = BluemiraFemFunction(W)
+            B.interpolate(B0)
+        else:
+            B = B0
 
         return B

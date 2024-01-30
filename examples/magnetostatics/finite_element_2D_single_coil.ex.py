@@ -66,8 +66,8 @@ from bluemira.mesh import meshing
 # %%
 
 ri = 0.01  # Inner radius of copper wire
-rc = 3  # Outer radius of copper wire
-R = 100  # Radius of domain
+rc = 5  # Outer radius of copper wire
+R = 150  # Radius of domain
 I_wire = 10e6  # wire's current
 gdim = 2  # Geometric dimension of the mesh
 
@@ -89,14 +89,13 @@ enclosure_points = [
     *[[r_encl[ii], z_encl[ii], 0] for ii in range(r_encl.size)],
 ]
 
-
 poly_enclo1 = make_polygon(enclosure_points[0:2])
 poly_enclo1.mesh_options = {"lcar": 0.05, "physical_group": "poly_enclo1"}
 poly_enclo2 = make_polygon(enclosure_points[1:])
-poly_enclo2.mesh_options = {"lcar": 1, "physical_group": "poly_enclo2"}
+poly_enclo2.mesh_options = {"lcar": 3, "physical_group": "poly_enclo2"}
 poly_enclo = BluemiraWire([poly_enclo1, poly_enclo2])
 poly_enclo.close("poly_enclo")
-poly_enclo.mesh_options = {"lcar": 1, "physical_group": "poly_enclo"}
+poly_enclo.mesh_options = {"lcar": 3, "physical_group": "poly_enclo"}
 
 # coil
 theta_coil = np.linspace(0, 2 * np.pi, nwire)
@@ -147,7 +146,6 @@ with pyvista_plot_show_save("cell_tags.png") as plotter:
     grid.set_active_scalars("Marker")
     actor = plotter.add_mesh(grid, show_edges=True)
     plotter.view_xy()
-
 
 # %%
 em_solver = FemMagnetostatic2d(2)
@@ -246,6 +244,3 @@ ax.legend()
 ax.set_xlabel("r (m)")
 ax.set_ylabel("error (T)")
 plt.show()
-
-# from bluemira.magnetostatics.fem_utils import plot_meshtags
-# plot_meshtags(mesh)
