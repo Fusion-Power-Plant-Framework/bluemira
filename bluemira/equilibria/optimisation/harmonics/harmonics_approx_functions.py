@@ -642,7 +642,7 @@ def plot_psi_comparision(
     axes: Optional[List[plt.Axes]] = None,
     nlevels: int = 50,
     show: bool = True,
-) -> Tuple[plt.Axes, plt.Axes, plt.Axes, plt.Axes]:
+) -> Tuple[plt.Axes, ...]:
     """
     Create plot comparing an original psi to psi obtained from harmonic approximation.
 
