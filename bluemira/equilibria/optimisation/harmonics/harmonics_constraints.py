@@ -41,10 +41,6 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
     ref_harmonics:
         Initial harmonic amplitudes obtained from desired core plasma
         (Returned by spherical_harmonic_approximation)
-    scale:
-        Current scale with which to calculate the constraints
-    eq:
-        Equilibrium used to for coilset.
     r_t: float
         (Returned by spherical_harmonic_approximation)
     sh_coil_names:

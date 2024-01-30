@@ -26,6 +26,9 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions impor
 from bluemira.equilibria.optimisation.harmonics.harmonics_constraint_functions import (
     SphericalHarmonicConstraintFunction,
 )
+from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
+    SphericalHarmonicConstraint,
+)
 from bluemira.geometry.coordinates import Coordinates, in_polygon
 
 TEST_PATH = get_bluemira_path("equilibria/test_data", subfolder="tests")
@@ -303,3 +306,71 @@ def test_SphericalHarmonicConstraintFunction():
     test_f_constraint = test_constraint.f_constraint(test_vector)
 
     assert all(test_f_constraint - (test_result - b_vec)) == pytest.approx(0.0, abs=0.05)
+
+
+def test_SphericalHarmonicConstraint():
+    path = get_bluemira_path("equilibria/test_data", subfolder="tests")
+    eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
+
+    sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
+    ref_harmonics = np.array([
+        0.1165182,
+        -0.00254487,
+        -0.03455892,
+        -0.00585685,
+        -0.00397113,
+        -0.01681114,
+        0.01649549,
+        -0.02803212,
+        0.03035956,
+        -0.03828872,
+        0.04051739,
+        -0.04283815,
+    ])
+    r_t = 1.37
+
+    test_constraint_class = SphericalHarmonicConstraint(
+        ref_harmonics=ref_harmonics,
+        r_t=r_t,
+        sh_coil_names=sh_coil_names,
+    )
+
+    assert test_constraint_class.constraint_type == "equality"
+    assert test_constraint_class.max_degree == len(ref_harmonics) + 1
+
+    for test_tol, ref_tol in zip(
+        test_constraint_class.tolerance,
+        np.array([
+            1e-4,
+            1e-6,
+            1e-5,
+            1e-6,
+            1e-6,
+            1e-5,
+            1e-5,
+            1e-5,
+            1e-5,
+            1e-5,
+            1e-5,
+            1e-5,
+        ]),
+    ):
+        assert test_tol == ref_tol
+
+    tolerance = 0.0
+    test_constraint_class = SphericalHarmonicConstraint(
+        ref_harmonics=ref_harmonics,
+        r_t=r_t,
+        sh_coil_names=sh_coil_names,
+        tolerance=tolerance,
+    )
+
+    assert len(test_constraint_class.tolerance) == len(ref_harmonics)
+    for test_name, ref_name in zip(
+        test_constraint_class.control_coil_names, sh_coil_names
+    ):
+        assert test_name == ref_name
+
+    test_eval = test_constraint_class.evaluate(eq)
+    assert test_eval.all() == 0.0
+    assert len(test_eval) == 12
