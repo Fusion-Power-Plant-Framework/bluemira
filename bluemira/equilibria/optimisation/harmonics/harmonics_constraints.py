@@ -70,8 +70,6 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             tolerance = tolerance * np.ones(len(ref_harmonics))
         elif len(tolerance) != len(ref_harmonics):
             raise ValueError(f"Tolerance vector not of length {len(ref_harmonics)}")
-        else:
-            pass
 
         self.constraint_type = constraint_type
         self.tolerance = tolerance
