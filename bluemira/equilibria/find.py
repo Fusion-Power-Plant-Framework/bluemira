@@ -651,6 +651,7 @@ def find_LCFS_separatrix(
     double_null: bool = False,
     psi_n_tol: float = 1e-6,
     delta_start: float = 0.01,
+    rtol: float = 1e-2,
 ) -> Tuple[Coordinates, Union[Coordinates, List[Coordinates]]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
@@ -739,7 +740,7 @@ def find_LCFS_separatrix(
             middle = low + delta / 2
             flux_surface = get_flux_loop(middle)
             z_new = min(abs(min(flux_surface.z)), abs(max(flux_surface.z)))
-            if np.isclose(z_new, z_ref, rtol=1e-3):
+            if np.isclose(z_new, z_ref, rtol=rtol):
                 # Flux surface only open at one end
                 low = middle
             else:
@@ -755,7 +756,13 @@ def find_LCFS_separatrix(
     return lcfs, separatrix
 
 
-def _extract_leg(flux_line, x_cut, z_cut, delta_x, o_point_z):
+def _extract_leg(
+    flux_line: Coordinates,
+    x_cut: float,
+    z_cut: float,
+    delta_x: float,
+    o_point_z: float,
+):
     radial_line = Coordinates({
         "x": [x_cut - delta_x, x_cut + delta_x],
         "z": [z_cut, z_cut],
@@ -787,6 +794,31 @@ def _extract_leg(flux_line, x_cut, z_cut, delta_x, o_point_z):
     return flux_legs
 
 
+def _extract_leg_from_pair(
+    flux_line: Coordinates,
+    i_cut: float,
+):
+    leg1, leg2 = Coordinates(flux_line[:, i_cut:]), Coordinates(flux_line[:, :i_cut])
+    check_len1, check_len2 = (
+        (len(leg1.x) > len(flux_line.x) * 0.1),
+        (len(leg2.x) > len(flux_line.x) * 0.1),
+    )
+
+    flux_legs = []
+    if leg1.x.any() and check_len1:
+        flux_legs.append(leg1)
+    if leg2.x.any() and check_len2:
+        # Make the leg flow away from the plasma core
+        leg2.reverse()
+        flux_legs.append(leg2)
+
+    if len(flux_legs) == 1:
+        flux_legs = flux_legs[0]
+    if not flux_legs:
+        flux_legs = None
+    return flux_legs
+
+
 def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_point_z):
     offset_legs = []
     for dx in dx_offsets:
@@ -810,6 +842,7 @@ def get_legs(
     n_layers: int = 1,
     dx_off: float = 0.0,
     psi_n_tol: float = 1e-6,
+    rtol: float = 1e-2,
 ) -> Dict[str, List[Coordinates]]:
     """
     Get the legs of a separatrix.
@@ -852,7 +885,7 @@ def get_legs(
     )
     o_point = o_points[0]
     x_points = x_points[:2]
-    delta = equilibrium.grid.dx
+    delta = np.max(equilibrium.grid.x) - np.min(equilibrium.grid.x)
     dx_offsets = None if n_layers == 1 else np.linspace(0, dx_off, n_layers)[1:]
 
     if isinstance(separatrix, list):
@@ -863,48 +896,61 @@ def get_legs(
         # loop length when it is found, so use [0])
         z_lcfs = min(abs(min(lcfs.z)), abs(max(lcfs.z)))
         z_sep = min(abs(min(separatrix[0].z)), abs(max(separatrix[0].z)))
-        legs_top_bot = np.isclose(z_sep, z_lcfs, rtol=1e-3)
+        legs_top_bot = np.isclose(z_sep, z_lcfs, rtol=(1 + rtol) * rtol)
+        # Range over which we will look at just legs
+        x_range_lcfs = [min(lcfs.x), max(lcfs.x)]
         if legs_top_bot:
             leg_dict_top_bot = {}
             separatrix.sort(key=lambda half_sep: np.min(half_sep.z))
-            # TODO imin + n and delta values - check with join_intersect
             for (
                 half_sep,
                 x_p,
             ) in zip(separatrix, x_points):
-                if np.abs(x_p.z) < np.min(np.abs(half_sep.z)):
-                    imin = np.argmin(np.abs(half_sep.z))
-                    sep_legs = _extract_leg(
-                        half_sep,
-                        half_sep.x[imin],
-                        half_sep.z[imin],
-                        delta,
-                        o_point.z,
-                    )
+                if np.abs(o_point.z) < np.min(np.abs(half_sep.z)):
+                    z_range = half_sep.z[
+                        (half_sep.x > x_range_lcfs[0]) & (half_sep.x < x_range_lcfs[1])
+                    ]
+                    if z_range.any():
+                        imin = np.argmin(np.abs(z_range))
+                        sep_legs = _extract_leg_from_pair(
+                            half_sep,
+                            imin,
+                        )
+                    else:
+                        sep_legs = None
                 else:
                     sep_legs = _extract_leg(half_sep, x_p.x, x_p.z, delta, o_point.z)
 
-                sep_legs.sort(key=lambda leg: leg.x[0])
-                inner_leg, outer_leg = sep_legs
-                inner_legs, outer_legs = [inner_leg], [outer_leg]
-
-                if dx_offsets is not None:
-                    inner_legs.extend(
-                        _extract_offsets(
-                            equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
-                        )
-                    )
-                    outer_legs.extend(
-                        _extract_offsets(
-                            equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z
-                        )
-                    )
-
                 location = "lower" if x_p.z < o_point.z else "upper"
-                leg_dict_top_bot.update({
-                    f"{location}_inner": inner_legs,
-                    f"{location}_outer": outer_legs,
-                })
+
+                if isinstance(sep_legs, list) and sep_legs:
+                    sep_legs.sort(key=lambda leg: leg.x[0])
+                    inner_leg, outer_leg = sep_legs
+                    inner_legs, outer_legs = [inner_leg], [outer_leg]
+
+                    if dx_offsets is not None:
+                        inner_legs.extend(
+                            _extract_offsets(
+                                equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
+                            )
+                        )
+                        outer_legs.extend(
+                            _extract_offsets(
+                                equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z
+                            )
+                        )
+
+                    leg_dict_top_bot.update({
+                        f"{location}_inner": inner_legs,
+                        f"{location}_outer": outer_legs,
+                    })
+
+                else:
+                    leg_dict_top_bot.update({
+                        f"{location}_inner": [None],
+                        f"{location}_outer": [None],
+                    })
+
                 leg_dict = leg_dict_top_bot
 
         if not legs_top_bot:
