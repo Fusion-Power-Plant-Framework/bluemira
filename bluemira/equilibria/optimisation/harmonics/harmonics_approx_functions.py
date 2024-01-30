@@ -192,7 +192,7 @@ def collocation_points(
     n_points: int,
     plasma_boundary: np.ndarray,
     point_type: str,
-    seed: int = 42,
+    seed: Optional[int] = 42,
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
