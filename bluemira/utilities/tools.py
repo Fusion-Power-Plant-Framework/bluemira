@@ -421,6 +421,15 @@ class ColourDescriptor:
         setattr(obj, self._name, value)
 
 
+def iterable_to_list(obj: Union[Any, Iterable[Any]]):
+    """Convert object(s) to an explicit list of objects"""
+    if isinstance(obj, list):
+        return obj
+    if isinstance(obj, Iterable):
+        return [*obj]
+    return [obj]
+
+
 def is_num(thing: Any) -> bool:
     """
     Determine whether or not the input is a number.
