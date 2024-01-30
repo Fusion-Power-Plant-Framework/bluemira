@@ -136,8 +136,7 @@ def test_collocation_points():
 
 
 def test_coils_outside_sphere_vacuum_psi():
-    path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-    eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
+    eq = Equilibrium.from_eqdsk(Path(TEST_PATH, "SH_test_file.json").as_posix())
 
     sh_coil_names, bdry_r = coils_outside_lcfs_sphere(eq)
     assert len(sh_coil_names) == 16
@@ -158,8 +157,7 @@ def test_coils_outside_sphere_vacuum_psi():
 
 
 def test_get_psi_harmonic_amplitudes():
-    path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-    eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
+    eq = Equilibrium.from_eqdsk(Path(TEST_PATH, "SH_test_file.json").as_posix())
 
     test_colocation = collocation_points(
         n_points=18, plasma_boundary=eq.get_LCFS(), point_type="arc"
@@ -198,8 +196,7 @@ def test_get_psi_harmonic_amplitudes():
 
 
 def test_spherical_harmonic_approximation():
-    path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-    eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
+    eq = Equilibrium.from_eqdsk(Path(TEST_PATH, "SH_test_file.json").as_posix())
 
     (
         _,
@@ -309,8 +306,7 @@ def test_SphericalHarmonicConstraintFunction():
 
 
 def test_SphericalHarmonicConstraint():
-    path = get_bluemira_path("equilibria/test_data", subfolder="tests")
-    eq = Equilibrium.from_eqdsk(Path(path, "SH_test_file.json"))
+    eq = Equilibrium.from_eqdsk(Path(TEST_PATH, "SH_test_file.json").as_posix())
 
     sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
     ref_harmonics = np.array([
@@ -372,5 +368,5 @@ def test_SphericalHarmonicConstraint():
         assert test_name == ref_name
 
     test_eval = test_constraint_class.evaluate(eq)
-    assert test_eval.all() == 0.0
+    assert test_eval.all() == 0
     assert len(test_eval) == 12
