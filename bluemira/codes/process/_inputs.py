@@ -514,8 +514,6 @@ class ProcessInputs:
     divclfr: Optional[float] = None
     divdens: Optional[float] = None
     divfix: Optional[float] = None
-    divleg_profile_inner: Optional[float] = None
-    divleg_profile_outer: Optional[float] = None
     divplt: Optional[float] = None
     fdfs: Optional[float] = None
     fdiva: Optional[float] = None
