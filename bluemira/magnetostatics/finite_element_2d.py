@@ -237,46 +237,35 @@ class FemMagnetostatic2d:
 
         return self.psi
 
-    # def calculate_b(self) -> BluemiraFemFunction:
-    #     """
-    #     Calculates the magnetic field intensity from psi
-    #
-    #     Note: code from Fenics_tutorial (
-    #     https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
-    #     """
-    #     # new function space for mapping B as vector
-    #     W = functionspace(self.mesh, ("CG", 1, (self.mesh.geometry.dim,)))
-    #     B = BluemiraFemFunction(W)
-    #     x_0 = SpatialCoordinate(self.mesh)[0]
-    #     B_expr = Expression(
-    #         as_vector((
-    #             -self.psi.dx(1) / (2 * np.pi * x_0),
-    #             self.psi.dx(0) / (2 * np.pi * x_0),
-    #         )),
-    #         W.element.interpolation_points(),
-    #     )
-    #     B.interpolate(B_expr)
-    #
-    #     return B
-
     def calculate_b(
         self,
-        base_eltype: Tuple = ("DG", 0),
-        eltype: Optional[Tuple] = None,
+        interpolation_eltype: Optional[Tuple] = None,
     ) -> BluemiraFemFunction:
         """
         Calculates the magnetic field intensity from psi
 
         Parameters
         ----------
-        base_eltype:
-            dolfinx element type used to calculate B
-        eltype:
-            dolfinx element type
+        interpolation_eltype:
+            dolfinx element type for interpolation
 
         Note: code from Fenics_tutorial (
         https://link.springer.com/book/10.1007/978-3-319-52462-7), pag. 104
+
+        Warning: it is important to
         """
+        degree = self.V.ufl_element().degree()
+
+        if degree == 1:
+            base_eltype = ("DG", 0)
+        elif degree > 1:
+            base_eltype = ("CG", degree - 1)
+        else:
+            raise ValueError(
+                f"Cannot calculate B for ({self.V.ufl_element().family()}"
+                f", {self.V.ufl_element().degree()})."
+            )
+
         V_W0 = VectorElement(base_eltype[0], self.mesh.ufl_cell(), base_eltype[1], 2)  # noqa: N806
         W0 = functionspace(self.mesh, V_W0)  # noqa: N806
         B0 = BluemiraFemFunction(W0)
@@ -295,8 +284,10 @@ class FemMagnetostatic2d:
 
         B0.interpolate(B_expr)
 
-        if eltype is not None:
-            V_W = VectorElement(eltype[0], self.mesh.ufl_cell(), eltype[1], 2)  # noqa: N806
+        if interpolation_eltype is not None:
+            family = interpolation_eltype[0]
+            degree = interpolation_eltype[1]
+            V_W = VectorElement(family, self.mesh.ufl_cell(), degree, 2)  # noqa: N806
             W = functionspace(self.mesh, V_W)  # noqa: N806
             B = BluemiraFemFunction(W)
             B.interpolate(B0)
