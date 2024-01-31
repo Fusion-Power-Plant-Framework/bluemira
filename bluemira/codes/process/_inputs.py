@@ -493,9 +493,7 @@ class ProcessInputs:
     # Impurity radiation
     coreradius: Optional[float] = None
     coreradiationfraction: Optional[float] = None
-    fimp: List[float] = None
-    fimpvar: Optional[float] = None
-    impvar: Optional[int] = None
+    fimp: Optional[List[float]] = None
 
     # Reinke
     impvardiv: Optional[int] = None

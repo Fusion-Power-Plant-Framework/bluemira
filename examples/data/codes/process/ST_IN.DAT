@@ -79,7 +79,6 @@ boundl(61) = 0.12
 ixc = 63  * ftpeak (f-value for equation 39)
 ixc = 65 * tohs
 boundu(65) = 1000
-ixc = 102 * fimpvar
 ixc = 103 * flhthresh
 ixc = 109 * ralpne
 ixc = 110 * ftaulimit
@@ -189,8 +188,6 @@ fimp(11) = 0.0
 fimp(12) = 0.0
 fimp(13) = 0.00044
 fimp(14) = 5e-05
-fimpvar  = 4.1100e-04 * Impurity fraction to be used as fimp(impvar)
-impvar   = 13 * Fimp element value to be varied if iteration
 *---------------------Numerics---------------------*
 ioptimz  = 1 * Code operation switch;
 minmax   = 1 * Switch for figure-of-merit (see lablmm for descriptions)

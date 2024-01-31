@@ -70,7 +70,6 @@ boundl(61) = 0.12
 ixc = 13 * tfcth
 boundl(13) = 0.5
 ixc = 103 * flhthresh
-ixc = 102 * fimpvar
 ixc = 60 * cpttf
 boundl(60) = 6.0d4
 boundu(60) = 9.0d4
@@ -305,8 +304,6 @@ fimp(11) = 0.0
 fimp(12) = 0.0
 fimp(13) = 0.00044
 fimp(14) = 5e-05
-fimpvar  = 4.1100e-04 * impvar ; impurity to be iterated (deprecated)
-impvar   = 13 *
 
 *-------------------Init Module--------------------*
 
