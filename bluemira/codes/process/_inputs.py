@@ -146,7 +146,6 @@ class ProcessInputs:
     dcond: Optional[List[float]] = None
     dcondins: Optional[float] = None
     dhecoil: Optional[float] = None
-    farc4tf: Optional[float] = None
     b_crit_upper_nbti: Optional[float] = None
     t_crit_nbti: Optional[float] = None
     fcutfsu: Optional[float] = None
