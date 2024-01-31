@@ -42,7 +42,7 @@ class ProcessInputs:
     output_costs: Optional[int] = None
     isweep: Optional[int] = None
     nsweep: Optional[int] = None
-    sweep: List[float] = None
+    sweep: Optional[List[float]] = None
     pulsetimings: Optional[int] = None
     # Top down of PROCESS variables list
 
@@ -143,7 +143,7 @@ class ProcessInputs:
     cpttf: Optional[float] = None
     cpttf_max: Optional[float] = None
     dcase: Optional[float] = None
-    dcond: List[float] = None
+    dcond: Optional[List[float]] = None
     dcondins: Optional[float] = None
     dhecoil: Optional[float] = None
     farc4tf: Optional[float] = None
@@ -236,7 +236,7 @@ class ProcessInputs:
     cconshpf: Optional[float] = None
     cconshtf: Optional[float] = None
     cfactr: Optional[float] = None
-    cfind: List[float] = None
+    cfind: Optional[List[float]] = None
     cland: Optional[float] = None
     costexp: Optional[float] = None
     costexp_pebbles: Optional[float] = None
@@ -584,7 +584,7 @@ class ProcessInputs:
     alfapf: Optional[float] = None
     alstroh: Optional[float] = None
     coheof: Optional[float] = None
-    cptdin: List[float] = None
+    cptdin: Optional[List[float]] = None
     etapsu: Optional[float] = None
     fcohbop: Optional[float] = None
     fcuohsu: Optional[float] = None
@@ -601,15 +601,15 @@ class ProcessInputs:
     ohhghf: Optional[float] = None
     oh_steel_frac: Optional[float] = None
     pfclres: Optional[float] = None
-    rjconpf: List[float] = None
+    rjconpf: Optional[List[float]] = None
     routr: Optional[float] = None
     rpf2: Optional[float] = None
-    rref: List[float] = None
+    rref: Optional[List[float]] = None
     sigpfcalw: Optional[float] = None
     sigpfcf: Optional[float] = None
-    vf: List[float] = None
+    vf: Optional[List[float]] = None
     vhohc: Optional[float] = None
-    zref: List[float] = None
+    zref: Optional[List[float]] = None
     bmaxcs_lim: Optional[float] = None
     fbmaxcs: Optional[float] = None
     ld_ratio_cst: Optional[float] = None
