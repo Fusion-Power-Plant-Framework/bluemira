@@ -43,7 +43,9 @@ import numpy as np
 from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.harmonics import spherical_harmonic_approximation
+from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
+    spherical_harmonic_approximation,
+)
 
 plot_defaults()
 
@@ -81,17 +83,19 @@ plt.show()
 # %%
 # Information needed for SH Approximation
 (
-    sh_coilset,
-    r_t,
+    sh_coil_names,
     coil_current_harmonic_amplitudes,
     degree,
     fit_metric_value,
     approx_total_psi,
+    r_t,
+    sh_coilset_current,
 ) = spherical_harmonic_approximation(
     eq,
-    n_points=50,
+    n_points=20,
     point_type="random_plus_extrema",
-    acceptable_fit_metric=0.03,
+    acceptable_fit_metric=0.05,
+    seed=15,
     plot=True,
 )
 
@@ -109,7 +113,7 @@ plt.show()
 # - "max_degree", number of degrees required for a SH approx with the desired fit metric
 
 # %%
-print(sh_coilset)
+print(sh_coil_names)
 
 # %%
 print(r_t)
