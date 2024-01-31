@@ -40,26 +40,26 @@ class Grid:
         Number of z grid points
     """
 
-    __slots__ = [
-        "x_min",
-        "x_max",
-        "x_size",
-        "x_mid",
-        "x_1d",
-        "x",
-        "z_min",
-        "z_max",
-        "z_size",
-        "z_mid",
-        "z_1d",
-        "z",
+    __slots__ = (
+        "bounds",
         "dx",
         "dz",
+        "edges",
         "nx",
         "nz",
-        "bounds",
-        "edges",
-    ]
+        "x",
+        "x_1d",
+        "x_max",
+        "x_mid",
+        "x_min",
+        "x_size",
+        "z",
+        "z_1d",
+        "z_max",
+        "z_mid",
+        "z_min",
+        "z_size",
+    )
 
     def __init__(self, x_min, x_max, z_min, z_max, nx, nz):
         if x_min == x_max or z_min == z_max:

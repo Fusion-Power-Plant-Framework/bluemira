@@ -75,7 +75,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
     variables with initial values, and override the create_shape method.
     """
 
-    __slots__ = ("name", "_variables")
+    __slots__ = ("_variables", "name")
 
     def __init__(self, variables: OptVariablesFrameT):
         """

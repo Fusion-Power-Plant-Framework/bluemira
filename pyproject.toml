@@ -214,6 +214,7 @@ max-branches = 23
 max-public-methods = 38
 max-bool-expr = 6
 max-locals = 48
+max-nested-blocks = 7
 
 [tool.ruff.lint.flake8-bugbear]
 extend-immutable-calls = [

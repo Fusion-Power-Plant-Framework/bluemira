@@ -56,7 +56,7 @@ class PsiPoint:
     Abstract object for psi-points with list indexing and point behaviour.
     """
 
-    __slots__ = ("x", "z", "psi")
+    __slots__ = ("psi", "x", "z")
 
     def __init__(self, x: float, z: float, psi: float):
         self.x, self.z = x, z

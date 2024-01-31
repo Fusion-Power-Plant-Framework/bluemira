@@ -84,7 +84,7 @@ class Material(dict):
     A simple material property dictionary (keep small for speed and memory)
     """
 
-    __slots__ = []
+    __slots__ = ()
 
     def __init__(self, e_modulus, nu, rho, alpha, sigma_y):
         self["E"] = e_modulus

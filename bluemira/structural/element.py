@@ -192,24 +192,24 @@ class Element:
     HERMITE_POLYS = hermite_polynomials(N_INTERP)
 
     __slots__ = (
-        "node_1",
-        "node_2",
+        "_cross_section",
+        "_k_matrix",
+        "_k_matrix_glob",
+        "_lambda_matrix",
+        "_length",
+        "_material",
+        "_properties",
+        "_s_functs",
+        "_weight",
         "id_number",
         "loads",
-        "stresses",
+        "material",
         "max_stress",
+        "node_1",
+        "node_2",
         "safety_factor",
         "shapes",
-        "material",
-        "_properties",
-        "_material",
-        "_cross_section",
-        "_length",
-        "_weight",
-        "_k_matrix",
-        "_lambda_matrix",
-        "_k_matrix_glob",
-        "_s_functs",
+        "stresses",
     )
 
     def __init__(
