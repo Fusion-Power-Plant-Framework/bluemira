@@ -646,7 +646,6 @@ class ProcessInputs:
     icurr: Optional[int] = None
     idensl: Optional[int] = None
     ifalphap: Optional[int] = None
-    ifispact: Optional[int] = None  # listed as an output...
     iinvqd: Optional[int] = None
     ipedestal: Optional[int] = None
     ieped: Optional[int] = None  # listed as an output...

@@ -1060,22 +1060,6 @@ class VacuumPumpingDwellModel(PROCESSModel):
     T_DWELL_RAMP = 2
 
 
-class FISPACTSwitchModel(PROCESSModel):
-    """
-    Switch to control FISPACT-II neutronics calculations
-    """
-
-    @classproperty
-    def switch_name(self) -> str:
-        """
-        PROCESS switch name
-        """
-        return "ifispact"
-
-    OFF = 0
-    ON = 1  # Presumably...
-
-
 class AvailabilityModel(PROCESSModel):
     """
     Switch to control the availability model

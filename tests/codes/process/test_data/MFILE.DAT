@@ -1453,7 +1453,6 @@ iculbl   = 1 * switch for beta limit scaling (<code>constraint equation 24</code
 icurr    = 4 * switch for plasma current scaling to use
 idensl   = 7 * switch for density limit to enforce (<code>constraint equation 5</code>)
 ifalphap = 1 * switch for fast alpha pressure calculation
-ifispact = 0 * switch for neutronics calculations;
 iinvqd   = 1 * switch for inverse quadrature in L-mode scaling laws 5 and 9;
 ipedestal = 1 * switch for pedestal profiles;
 ieped    = 1 * switch for scaling pedestal-top temperature with plasma parameters (issue #730);

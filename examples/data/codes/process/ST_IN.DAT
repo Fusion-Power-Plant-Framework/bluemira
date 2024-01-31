@@ -236,7 +236,6 @@ icurr    = 4 * Switch for plasma current scaling to use;
 idia     = 2 *switch for diamagnetic current scaling (2: SCENE scaling)
 idensl   = 7 * Switch for density limit to enforce (constraint equation 5);
 ifalphap = 1 * Switch for fast alpha pressure calculation;
-ifispact = 0 * Switch for neutronics calculations;
 iinvqd   = 1 * Switch for inverse quadrature in l-mode scaling laws 5 and 9;
 ipedestal = 1 * Switch for pedestal profiles;
 neped    = 0.678e20 * Electron density of pedestal (/m3) (ipedestal=1)
