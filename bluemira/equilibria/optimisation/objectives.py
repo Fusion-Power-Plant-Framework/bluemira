@@ -34,8 +34,12 @@ import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria import Equilibrium
+from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
+from bluemira.equilibria.find import get_legs
 from bluemira.equilibria.flux_surfaces import (
+    OpenFluxSurface,
+    PartialOpenFluxSurface,
     calculate_connection_length_fs,
 )
 from bluemira.equilibria.grid import Grid
@@ -154,7 +158,7 @@ class MaximiseConnectionLength(ObjectiveFunction):
 
     Parameters
     ----------
-    FIXME
+            TODO
     """
 
     def __init__(
@@ -182,7 +186,7 @@ class MaximiseConnectionLength(ObjectiveFunction):
                 first_wall=self.plasma_facing_boundary,
                 forward=True,
                 double_null=self.double_null,
-                lower=True,
+                outer=True,
             )
 
             # print(l2)
@@ -192,22 +196,22 @@ class MaximiseConnectionLength(ObjectiveFunction):
                 l4 = calculate_connection_length_fs(
                     self.eq,
                     first_wall=self.plasma_facing_boundary,
-                    forward=True,
+                    forward=False,
                     double_null=self.double_null,
-                    lower=False,
+                    outer=True,
                 )
 
-                return 1 / np.sum([l2, l4])
+                return -1 * np.sum([l2, l4])
 
-            return 1 / l2
+            return -1 * l2
 
         # lower inner
         l1 = calculate_connection_length_fs(
             self.eq,
             first_wall=self.plasma_facing_boundary,
-            forward=False,
+            forward=True,
             double_null=self.double_null,
-            lower=True,
+            outer=False,
         )
 
         if self.double_null:
@@ -217,12 +221,80 @@ class MaximiseConnectionLength(ObjectiveFunction):
                 first_wall=self.plasma_facing_boundary,
                 forward=False,
                 double_null=self.double_null,
-                lower=False,
+                outer=False,
             )
 
-            return 1 / np.sum([l1, l3])
+            return -1 * np.sum([l1, l3])
 
-        return 1 / l1
+        return -1 * l1
+
+
+class MaximiseDivertorLegLength(ObjectiveFunction):
+    """
+    Objective function to maximise divertor leg length
+
+    Parameters
+    ----------
+    eq:
+        Equilibrium object
+    scale:
+        Scaling factor for the vector
+    double_null:
+        Whether or not it is a double null.
+    psi_n_tol:
+        Psi tolerance, default is Bluemira equilibria constant,
+        may need to be adjusted depending on grid.
+    plasma_facing_boundary:
+        Cut-off for divertor legs. Default is grid boundary.
+    """
+
+    def __init__(
+        self,
+        eq: Equilibrium,
+        scale: float,
+        double_null: bool,
+        outer: Optional[bool] = True,
+        psi_n_tol: float = PSI_NORM_TOL,
+        plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
+    ) -> None:
+        self.eq = eq
+        self.scale = scale
+        self.double_null = double_null
+        self.outer = outer
+        self.psi_n_tol = psi_n_tol
+        self.plasma_facing_boundary = plasma_facing_boundary
+
+    def f_objective(self, vector: npt.NDArray) -> float:
+        """Objective function for an optimisation."""
+        self.eq.coilset.get_control_coils().current = vector * self.scale
+
+        legs = get_legs(self.eq)
+
+        if self.outer:
+            leg = legs["lower_outer"][0]
+            if self.double_null:
+                leg_upper = legs["upper_outer"][0]
+        else:
+            leg = legs["lower_inner"][0]
+            if self.double_null:
+                leg_upper = legs["upper_inner"][0]
+
+        if isinstance(leg, Coordinates):
+            leg = PartialOpenFluxSurface(leg)
+            if self.plasma_facing_boundary is not None:
+                leg.clip(self.plasma_facing_boundary)
+            length = OpenFluxSurface(leg.coords).connection_length(self.eq)
+        else:
+            length = 0.0
+
+        if self.double_null and isinstance(leg_upper, Coordinates):
+            leg_upper = PartialOpenFluxSurface(leg_upper)
+            if self.plasma_facing_boundary is not None:
+                leg_upper.clip(self.plasma_facing_boundary)
+            length_upper = OpenFluxSurface(leg_upper.coords).connection_length(self.eq)
+            length += length_upper
+
+        return -length
 
 
 # =============================================================================

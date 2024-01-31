@@ -12,7 +12,7 @@ from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.opt_constraints import UpdateableConstraint
-from bluemira.equilibria.optimisation.objectives import MaximiseConnectionLength
+from bluemira.equilibria.optimisation.objectives import MaximiseDivertorLegLength
 from bluemira.equilibria.optimisation.problem.base import (
     CoilsetOptimisationProblem,
     CoilsetOptimiserResult,
@@ -21,7 +21,7 @@ from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation import optimise
 
 
-class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
+class MaximiseDivertorLegLengthCOP(CoilsetOptimisationProblem):
     """
     Bounded, constrained, minimal current optimisation problem.
 
@@ -35,6 +35,7 @@ class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
         Current bounds vector [A]
     constraints:
         List of optimisation constraints to apply to the optimisation problem
+
     """
 
     def __init__(
@@ -58,7 +59,7 @@ class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
         self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         self.opt_conditions = opt_conditions
         self.opt_algorithm = opt_algorithm
-        self.opt_parameters = (opt_parameters,)
+        self.opt_parameters = opt_parameters
         self._args = {
             "eq": self.eq,
             "scale": self.scale,
@@ -91,7 +92,7 @@ class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
             _, _, initial_currents = np.array_split(initial_state, n_states)
             x0 = np.clip(initial_currents, *self.bounds)
 
-        objective = MaximiseConnectionLength(**self._args)
+        objective = MaximiseDivertorLegLength(**self._args)
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
             f_objective=objective.f_objective,
@@ -100,7 +101,7 @@ class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
             bounds=self.bounds,
             algorithm=self.opt_algorithm,
             opt_conditions=self.opt_conditions,
-            # opt_parameters=self.opt_parameters,
+            opt_parameters=self.opt_parameters,
             eq_constraints=eq_constraints,
             ineq_constraints=ineq_constraints,
         )
