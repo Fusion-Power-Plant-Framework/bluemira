@@ -67,8 +67,9 @@ from bluemira.mesh import meshing
 
 ri = 0.01  # Inner radius of copper wire
 rc = 5  # Outer radius of copper wire
-R = 150  # Radius of domain
-I_wire = 10e6  # wire's current
+R = 25  # Radius of domain
+R_ext = 250
+I_wire = 1e6  # wire's current
 gdim = 2  # Geometric dimension of the mesh
 
 # Define geometry for wire cylinder
@@ -76,7 +77,7 @@ nwire = 20  # number of wire divisions
 lwire = 0.1  # mesh characteristic length for each segment
 
 nenclo = 20  # number of external enclosure divisions
-lenclo = 1  # mesh characteristic length for each segment
+lenclo = 0.5  # mesh characteristic length for each segment
 
 # enclosure
 theta_encl = np.linspace(np.pi / 2, -np.pi / 2, nenclo)
@@ -84,18 +85,44 @@ r_encl = R * np.cos(theta_encl)
 z_encl = R * np.sin(theta_encl)
 
 # adding (0,0) to improve mesh quality
-enclosure_points = [
+enclosure_points = np.array([
     [0, 0, 0],
     *[[r_encl[ii], z_encl[ii], 0] for ii in range(r_encl.size)],
-]
+])
+
+nenclo_ext = 40
+lenclo_ext = 20
+# external enclosure
+theta_encl_ext = np.linspace(np.pi / 2, -np.pi / 2, nenclo_ext)
+r_encl_ext = R_ext * np.cos(theta_encl_ext)
+z_encl_ext = R_ext * np.sin(theta_encl_ext)
+
+enclosure_points_ext1 = np.array([
+    *[[r_encl_ext[ii], z_encl_ext[ii], 0] for ii in range(r_encl_ext.size)]
+])
+enclosure_points_ext2 = enclosure_points[1:][::-1]
+poly_enclo_ext = make_polygon(
+    np.concatenate((enclosure_points_ext1, enclosure_points_ext2)), closed=True
+)
+poly_enclo_ext.mesh_options = {"lcar": lenclo_ext, "physical_group": "poly_enclo_ext"}
+
+enclosure_ext = BluemiraFace([poly_enclo_ext])
+enclosure_ext.mesh_options.physical_group = "enclo_ext"
+
+lcar_axis = 0.05
 
 poly_enclo1 = make_polygon(enclosure_points[0:2])
-poly_enclo1.mesh_options = {"lcar": 0.05, "physical_group": "poly_enclo1"}
+poly_enclo1.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_enclo1"}
+
 poly_enclo2 = make_polygon(enclosure_points[1:])
-poly_enclo2.mesh_options = {"lcar": 3, "physical_group": "poly_enclo2"}
-poly_enclo = BluemiraWire([poly_enclo1, poly_enclo2])
+poly_enclo2.mesh_options = {"lcar": lenclo, "physical_group": "poly_enclo2"}
+
+poly_enclo3 = make_polygon(np.array([enclosure_points[-1], enclosure_points[0]]))
+poly_enclo3.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_enclo3"}
+
+poly_enclo = BluemiraWire([poly_enclo1, poly_enclo2, poly_enclo3])
 poly_enclo.close("poly_enclo")
-poly_enclo.mesh_options = {"lcar": 3, "physical_group": "poly_enclo"}
+poly_enclo.mesh_options = {"lcar": lenclo, "physical_group": "poly_enclo"}
 
 # coil
 theta_coil = np.linspace(0, 2 * np.pi, nwire)
@@ -115,6 +142,9 @@ enclosure = BluemiraFace([poly_enclo, poly_coil])
 enclosure.mesh_options.physical_group = "enclo"
 
 c_universe = Component(name="universe")
+c_enclo_ext = PhysicalComponent(
+    name="enclosure_Ext", shape=enclosure_ext, parent=c_universe
+)
 c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
 c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
@@ -167,7 +197,7 @@ jtot = create_j_function(mesh, ct, [Association(1, coil_tag, I_wire)])
 # %%
 em_solver.define_g(jtot)
 em_solver.solve()
-em_solver.calculate_b()
+# em_solver.calculate_b()
 
 # %% [markdown]
 #
@@ -176,11 +206,13 @@ em_solver.calculate_b()
 # 1) Along the z axis (analytical solution)
 
 # %%
+r_offset = 0.1
+
 z_points_axis = np.linspace(0, R, 200)
-r_points_axis = np.zeros(z_points_axis.shape)
+r_points_axis = np.zeros(z_points_axis.shape) + r_offset
 b_points = np.array([r_points_axis, z_points_axis, 0 * z_points_axis]).T
 
-Bz_axis, b_points = em_solver.B._eval_new(b_points)
+Bz_axis = em_solver.calculate_b()(b_points)
 Bz_axis = Bz_axis[:, 1]
 bz_points = b_points[:, 1]
 B_z_teo = np.array([Bz_coil_axis(rc, 0, z, I_wire) for z in bz_points])
@@ -201,18 +233,21 @@ ax.set_ylabel("error (T)")
 ax.legend()
 plt.show()
 
+
 # %% [markdown]
 #
 # 1) Along a radial path at z_offset (solution from green function)
 
 # %%
-z_offset = 40 * ri
+z_offset = 100 * ri
 
 points_x = np.linspace(0, R, 200)
 points_z = np.zeros(z_points_axis.shape) + z_offset
 
 new_points = np.array([points_x, points_z, 0 * points_z]).T
-B_fem, new_points = em_solver.B._eval_new(new_points)
+new_points = new_points[1:]
+
+B_fem = em_solver.calculate_b()(new_points)
 Bx_fem = B_fem.T[0]
 Bz_fem = B_fem.T[1]
 
@@ -238,8 +273,8 @@ ax.legend()
 plt.show()
 
 _, ax = plt.subplots()
-ax.plot(new_points[:, 0], Bx_fem - g_bx, label="B_calc - GreenBx")
-ax.plot(new_points[:, 0], Bz_fem - g_bz, label="B_calc - GreenBz")
+ax.plot(new_points[:, 0], Bx_fem - g_bx, label="Bx_calc - GreenBx")
+ax.plot(new_points[:, 0], Bz_fem - g_bz, label="Bz_calc - GreenBz")
 ax.legend()
 ax.set_xlabel("r (m)")
 ax.set_ylabel("error (T)")

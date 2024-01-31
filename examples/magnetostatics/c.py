@@ -21,6 +21,7 @@ from mpi4py import MPI
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry import tools
 from bluemira.geometry.face import BluemiraFace, BluemiraWire
+from bluemira.magnetostatics import greens
 from bluemira.magnetostatics.fem_utils import (
     Association,
     create_j_function,
@@ -39,7 +40,7 @@ mesh_comm = MPI.COMM_WORLD
 
 r_enclo = 30
 lcar_enclo = 2
-lcar_axis = lcar_enclo / 10
+lcar_axis = lcar_enclo / 20
 
 rc = 5
 drc = 0.01
@@ -121,7 +122,7 @@ jtot = create_j_function(mesh, ct, j_functions)
 
 em_solver.define_g(jtot)
 em_solver.solve()
-B = em_solver.calculate_b(("CG", 2))
+B = em_solver.calculate_b()
 
 # Comparison of the theoretical and calculated magnetic field (B).
 # Note: The comparison is conducted along the z-axis, where an
@@ -158,4 +159,49 @@ plt.show()
 # goes to zero, the comparison cannot be made on the basis of a relative
 # tolerance). An allclose comparison was out of discussion considering the
 # necessary accuracy.
-np.testing.assert_allclose(Bz_axis, B_teo, atol=4e-4)
+np.testing.assert_allclose(Bz_axis, B_teo, atol=2.5e-4)
+
+
+z_offset = 100 * drc
+
+points_x = np.linspace(0, r_enclo, 200)
+points_z = np.zeros(z_points_axis.shape) + z_offset
+
+new_points = np.array([points_x, points_z, 0 * points_z]).T
+new_points = new_points[1:]
+
+B_fem = em_solver.calculate_b()(new_points)
+Bx_fem = B_fem.T[0]
+Bz_fem = B_fem.T[1]
+
+g_psi, g_bx, g_bz = greens.greens_all(rc, 0, new_points[:, 0], new_points[:, 1])
+g_psi *= current
+g_bx *= current
+g_bz *= current
+
+_, ax = plt.subplots()
+ax.plot(new_points[:, 0], Bx_fem, label="Bx_fem")
+ax.plot(new_points[:, 0], g_bx, label="Green Bx")
+ax.set_xlabel("r (m)")
+ax.set_ylabel("Bx (T)")
+ax.legend()
+plt.show()
+
+_, ax = plt.subplots()
+ax.plot(new_points[:, 0], Bz_fem, label="Bz_fem")
+ax.plot(new_points[:, 0], g_bz, label="Green Bz")
+ax.set_xlabel("r (m)")
+ax.set_ylabel("Bz (T)")
+ax.legend()
+plt.show()
+
+_, ax = plt.subplots()
+ax.plot(new_points[:, 0], Bx_fem - g_bx, label="Bx_calc - GreenBx")
+ax.plot(new_points[:, 0], Bz_fem - g_bz, label="Bz_calc - GreenBz")
+ax.legend()
+ax.set_xlabel("r (m)")
+ax.set_ylabel("error (T)")
+plt.show()
+
+np.testing.assert_allclose(Bx_fem, g_bx, atol=3e-4)
+np.testing.assert_allclose(Bz_fem, g_bz, atol=6e-4)
