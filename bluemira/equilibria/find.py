@@ -886,6 +886,7 @@ def get_legs(
     o_point = o_points[0]
     x_points = x_points[:2]
     delta = np.max(equilibrium.grid.x) - np.min(equilibrium.grid.x)
+    delta_offsets = equilibrium.grid.dx
     dx_offsets = None if n_layers == 1 else np.linspace(0, dx_off, n_layers)[1:]
 
     if isinstance(separatrix, list):
@@ -931,12 +932,22 @@ def get_legs(
                     if dx_offsets is not None:
                         inner_legs.extend(
                             _extract_offsets(
-                                equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
+                                equilibrium,
+                                dx_offsets,
+                                inner_leg,
+                                -1,
+                                delta_offsets,
+                                o_point.z,
                             )
                         )
                         outer_legs.extend(
                             _extract_offsets(
-                                equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z
+                                equilibrium,
+                                dx_offsets,
+                                outer_leg,
+                                1,
+                                delta_offsets,
+                                o_point.z,
                             )
                         )
 
@@ -991,11 +1002,13 @@ def get_legs(
         if dx_offsets is not None:
             inner_legs.extend(
                 _extract_offsets(
-                    equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
+                    equilibrium, dx_offsets, inner_leg, -1, delta_offsets, o_point.z
                 )
             )
             outer_legs.extend(
-                _extract_offsets(equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z)
+                _extract_offsets(
+                    equilibrium, dx_offsets, outer_leg, 1, delta_offsets, o_point.z
+                )
             )
         location = "lower" if x_point.z < o_point.z else "upper"
         leg_dict = {
