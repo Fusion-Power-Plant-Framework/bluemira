@@ -13,7 +13,7 @@ from typing import Dict, List, Optional, Union
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.base.constants import S_TO_YR, YR_TO_S
+from bluemira.base.constants import S_TO_YR, YR_TO_S, RNGSeeds
 from bluemira.fuel_cycle.timeline_tools import (
     LogNormalAvailabilityStrategy,
     OperationalAvailabilityStrategy,
@@ -175,7 +175,7 @@ class OperationPhase(Phase):
 
         dist += self.t_min_down
         self._dist = dist  # Store for plotting/debugging
-        rng = np.random.default_rng()
+        rng = np.random.default_rng(RNGSeeds.timeline_outages.value)
         return rng.permutation(dist)
 
     def plot_dist(self):
