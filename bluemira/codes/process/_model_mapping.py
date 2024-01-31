@@ -154,8 +154,6 @@ class PlasmaPedestalModel(PROCESSModel):
             "ralpne",
         ),
     )
-    PLASMOD_GW = 2, ("te", "neped", "nesep", "tbeta", "teped", "tesep", "ralpne")
-    PLASMOD = 3, ("te", "rhopedn", "rhopedt", "teped", "tesep")
 
 
 class PlasmaProfileModel(PROCESSModel):
@@ -419,7 +417,7 @@ class RadiationLossModel(PROCESSModel):
         """
         return "iradloss"
 
-    SCALING_PEDSETAL = 0  # ipedestal 2, 3
+    SCALING_PEDSETAL = 0
     SCALING_CORE = 1
     SCALING_ONLY = 2
 
