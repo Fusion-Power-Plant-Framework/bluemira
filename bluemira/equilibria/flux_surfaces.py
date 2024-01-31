@@ -490,7 +490,9 @@ class PartialOpenFluxSurface(OpenFluxSurface):
 
         # Relying on the fact that first wall is ccw, get the intersection angle
         self.alpha = get_angle_between_points(
-            self.coords.points[-2], self.coords.points[-1], first_wall.points[fw_arg]
+            self.coords.points[1],
+            self.coords.points[0],
+            first_wall.points[fw_arg],
         )
 
     def flux_expansion(self, eq: Equilibrium) -> float:
@@ -819,7 +821,7 @@ def calculate_connection_length_fs(
     *,
     forward: bool = True,
     double_null: bool = False,
-    lower: bool = True,
+    outer: bool = True,
     first_wall=Coordinates | Grid | None,
 ) -> float:
     """
@@ -856,13 +858,13 @@ def calculate_connection_length_fs(
     passing through Coils, but really they should be intercepted beforehand!
     """
     if first_wall is None:
-        x1, x2 = eq.grid.x_min, eq.grid.x_max
-        z1, z2 = eq.grid.z_min, eq.grid.z_max
+        x1, x2 = eq.grid.x_min + 0.01, eq.grid.x_max - 0.01
+        z1, z2 = eq.grid.z_min + 0.01, eq.grid.z_max - 0.01
         first_wall = Coordinates({"x": [x1, x2, x2, x1, x1], "z": [z1, z1, z2, z2, z1]})
 
     if (x is None) or (z is None):
         # Use Seperatrix Flux Surface
-        lcfs, seperatrix = find_LCFS_separatrix(
+        _lcfs, seperatrix = find_LCFS_separatrix(
             eq.grid.x,
             eq.grid.z,
             eq.psi(eq.grid.x, eq.grid.z),
@@ -871,17 +873,18 @@ def calculate_connection_length_fs(
         )
 
         if double_null:
-            if lower:
-                f_s = OpenFluxSurface(seperatrix[0])
+            if outer:
+                f_s = OpenFluxSurface(seperatrix[0])  # lfs
             else:
-                f_s = OpenFluxSurface(seperatrix[1])
+                f_s = OpenFluxSurface(seperatrix[1])  # hfs
         else:
             f_s = OpenFluxSurface(seperatrix)
 
-        if forward:
-            x = np.max(f_s.coords.x[f_s.coords.z == 0])
+        z_abs = np.abs(f_s.coords.z)
+        if outer:
+            x = np.max(f_s.coords.x[z_abs == np.min(z_abs)])
         else:
-            x = np.min(f_s.coords.x[f_s.coords.z == 0])
+            x = np.min(f_s.coords.x[z_abs == np.min(z_abs)])
         z = 0.0
 
     else:
