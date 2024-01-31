@@ -14,6 +14,7 @@ from typing import Iterable, Tuple
 import numpy as np
 from scipy.optimize import brentq
 
+from bluemira.base.constants import RNGSeeds
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
 
@@ -70,7 +71,7 @@ def generate_lognorm_distribution(n: int, integral: float, sigma: float) -> np.n
     -------
     The distribution of size n and of the correct integral value
     """
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(RNGSeeds.timeline_tools_lognorm.value)
 
     def f_integral(x):
         return np.sum(rng.lognormal(x, sigma, n)) - integral
@@ -100,7 +101,7 @@ def generate_truncnorm_distribution(n: int, integral: float, sigma: float) -> np
     -------
     The distribution of size n and of the correct integral value
     """
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(RNGSeeds.timeline_tools_truncnorm.value)
     distribution = rng.normal(0, sigma, n)
     # Truncate distribution by 0-folding
     distribution = np.abs(distribution)
@@ -129,7 +130,7 @@ def generate_exponential_distribution(
     -------
     The distribution of size n and of the correct integral value
     """
-    rng = np.random.default_rng()
+    rng = np.random.default_rng(RNGSeeds.timeline_tools_expo.value)
     distribution = rng.exponential(lambdda, n)
     # Correct distribution integral
     distribution /= np.sum(distribution)
