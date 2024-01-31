@@ -85,7 +85,7 @@ class LoadModel(Enum):
 class Efficiency:
     """Efficiency data container"""
 
-    value: Union[Dict[str, float], Dict[LoadType, float]]
+    value: Union[float, Dict[str, float], Dict[LoadType, float]]
     description: str = ""
 
     def __post_init__(self):
@@ -421,12 +421,7 @@ class LoadSet:
             for eff in load_conf.efficiencies:
                 for eff_type, eff_val in eff.value.items():
                     if eff_type in load_check:
-                        c_eff = (
-                            1 / eff_val
-                            if load_conf.consumption and eff.value > 0
-                            else eff_val
-                        )
-                        data[ld_name] *= c_eff
+                        data[ld_name] *= eff_val
 
         return data
 

@@ -58,14 +58,14 @@ config = LibraryConfig.from_dict(
 # %%
 
 config.add_load_config(
-    LoadConfig(
+    load=LoadConfig(
         "cs_power",
         data={"active": [1, 2], "reactive": [10, 20]},
         efficiencies=[Efficiency(0.1)],
         description="something made up",
     ),
-    ["cru", "bri"],
-    [Efficiency({"reactive": 0.2})],
+    subphases=["cru", "bri"],
+    subphase_efficiency=[Efficiency({"reactive": 0.2})],
 )
 
 # %% [markdown]
