@@ -520,7 +520,7 @@ class PicardIterator:
 
     def __next__(self):
         """
-        Perform an interation of the solver.
+        Perform an iteration of the solver.
         """
         if not hasattr(self, "_psi"):
             self._setup()

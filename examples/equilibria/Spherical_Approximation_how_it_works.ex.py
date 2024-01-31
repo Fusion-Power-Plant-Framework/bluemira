@@ -31,7 +31,7 @@ An example that shows how the Spherical Harmonic Approximation works
 # approximation function (spherical_harmonic_approximation) which can be used in
 # coilset current and position optimisation for spherical tokamaks.
 # For an example of how spherical_harmonic_approximation is used
-# please see,
+# please see, spherical_harmonic_approximation_basic_function_check.
 #
 # ## Premise:
 #
@@ -50,8 +50,6 @@ An example that shows how the Spherical Harmonic Approximation works
 # ### Imports
 
 # %%
-
-from copy import deepcopy
 from pathlib import Path
 
 import matplotlib.patches as patch
@@ -62,8 +60,9 @@ from scipy.special import lpmv
 
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
-from bluemira.equilibria.harmonics import (
+from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
     coil_harmonic_amplitude_matrix,
+    coils_outside_lcfs_sphere,
     collocation_points,
     harmonic_amplitude_marix,
     lcfs_fit_metric,
@@ -77,8 +76,8 @@ from bluemira.equilibria.harmonics import (
 # Note: We cannot use coils that are within the sphere containing the LCFS
 # for our approximation. The maximum radial distance of the LCFS is used
 # as a limit (orange shaded area in plot below).
-# If you have coils in this region then please specify the control coils
-# using a list of the coil names that are outside of the radial limit
+# If you have coils in this region then we need to specify a list of the
+# coil names that are outside of the radial limit
 # (this is done automatically in the spherical_harmonic_approximation class).
 
 # %%
@@ -87,74 +86,33 @@ file_path = Path(
     get_bluemira_path("equilibria", subfolder="examples"), "SH_test_file.json"
 )
 
-# Equilibrium
-eq = Equilibrium.from_eqdsk(file_path.as_posix())
+eq = Equilibrium.from_eqdsk(file_path)
 
-# Profiles
-profiles = eq.profiles
+# Get the necessary boundary locations and length scale
+# for use in spherical harmonic approximations.
 
-# Coilset
-coilset = eq.coilset
+# Starting LCFS
+original_LCFS = eq.get_LCFS()
 
-# Save copy for comparing
-starting_eq = deepcopy(eq)
-starting_coilset = deepcopy(coilset)
+# Names of coils located outside of the sphere containing the LCFS
+sh_coil_names, bdry_r = coils_outside_lcfs_sphere(eq)
 
-# Grid
-grid = eq.grid
+# Typical length scale
+r_t = bdry_r
 
 # Plasma boundary x and z locations from data file
-original_LCFS = eq.get_LCFS()
 x_bdry = original_LCFS.x
 z_bdry = original_LCFS.z
-
-# Are the coils you have chosen outside the sphere containing
-# the last closed flux surface?
-max_bdry_r = np.max(np.sqrt(x_bdry**2 + z_bdry**2))
-min_coil_r = np.min(
-    np.sqrt(coilset.get_control_coils().x ** 2 + coilset.get_control_coils().x ** 2)
-)
-if max_bdry_r > min_coil_r:
-    print(
-        "One or more of your coils is too close to the plasma to be used in the SH"
-        " approximation: see plot."
-    )
+max_bdry_r = np.max(np.linalg.norm([x_bdry, z_bdry], axis=0))
 
 # Plot
 f, ax = plt.subplots()
 eq.plot(ax=ax)
-coilset.plot(ax=ax)
-ax.set_xlim(np.min(grid.x), np.max(grid.z))
+eq.coilset.plot(ax=ax)
+ax.set_xlim(np.min(eq.grid.x), np.max(eq.grid.z))
 max_circ = patch.Circle((0, 0), max_bdry_r, ec="orange", fill=True, fc="orange")
 ax.add_patch(max_circ)
 plt.show()
-
-# Look at coilset info
-print(eq.coilset)
-
-# %%
-# Set control coils if necessary
-list_of_cc_names = [
-    "PF_2",
-    "PF_3",
-    "PF_4",
-    "PF_5",
-    "PF_6",
-    "PF_7",
-    "PF_8",
-    "PF_9",
-    "PF_11",
-    "PF_12",
-    "PF_13",
-    "PF_14",
-    "PF_15",
-    "PF_16",
-    "PF_17",
-    "PF_18",
-]
-
-coilset.control = list_of_cc_names
-print(coilset.control)
 
 # %% [markdown]
 # ### Find Vacuum Psi
@@ -166,47 +124,49 @@ print(coilset.control)
 # Poloidal magnetic flux
 total_psi = eq.psi()
 
-# Psi contribution from the plasma
-plasma_psi = eq.plasma.psi(grid.x, grid.z)
+# Psi contribution from plasma
+plasma_psi = eq.plasma.psi(eq.grid.x, eq.grid.z)
 
-# Psi contribution from the coils
-vacuum_psi = total_psi - plasma_psi
-test = vacuum_psi
+# Calculate psi contribution from the vacuum, i.e.,
+# from coils located outside of the sphere containing LCFS
+vacuum_psi = np.zeros(np.shape(eq.grid.x))
+for n in sh_coil_names:
+    vacuum_psi = np.sum([vacuum_psi, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0)
 
-# If not using all coils in approx (have set control coils)
-if len(coilset.get_control_coils().name) != len(coilset.name):
-    # Calculate psi contribution from non-control coils
-    # This shouldn't matter if none of the coil currents have been set
-    non_ccoil_cont = coilset.psi(grid.x, grid.z) - coilset.get_control_coils().psi(
-        grid.x, grid.z
-    )
-    # Remove contribution from non-control coils
-    vacuum_psi -= non_ccoil_cont
+# Calculate psi contribution from coils not used in the SH approx
+non_sh_coil_cont = eq.coilset.psi(eq.grid.x, eq.grid.z) - vacuum_psi
 
 # Plot
-x_plot = grid.x
-z_plot = grid.z
+x_plot = eq.grid.x
+z_plot = eq.grid.z
 nlevels = 50
-levels = np.linspace(np.amin(total_psi), np.amax(total_psi), nlevels)
 cmap = "viridis"
+
+levels1 = np.linspace(np.amin(total_psi), np.amax(total_psi), nlevels)
+levels2 = np.linspace(np.amin(plasma_psi), np.amax(plasma_psi), nlevels)
+levels3 = np.linspace(np.amin(vacuum_psi), np.amax(vacuum_psi), nlevels)
+
 plot1 = plt.subplot2grid((3, 3), (0, 0), rowspan=2, colspan=1)
 plot2 = plt.subplot2grid((3, 3), (0, 1), rowspan=2, colspan=1)
 plot3 = plt.subplot2grid((3, 3), (0, 2), rowspan=2, colspan=1)
+
 plot1.set_title("Total")
 plot2.set_title("Plasma")
 plot3.set_title("Vacuum")
-plot1.contour(x_plot, z_plot, total_psi, levels=levels, cmap=cmap, zorder=8)
-plot2.contour(x_plot, z_plot, plasma_psi, levels=levels, cmap=cmap, zorder=8)
-plot3.contour(x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=8)
+
+plot1.contour(x_plot, z_plot, total_psi, levels=levels1, cmap=cmap, zorder=8)
+plot2.contour(x_plot, z_plot, plasma_psi, levels=levels2, cmap=cmap, zorder=8)
+plot3.contour(x_plot, z_plot, vacuum_psi, levels=levels3, cmap=cmap, zorder=8)
 plot3.contour(
     x_plot,
     z_plot,
-    non_ccoil_cont,
-    levels=levels,
+    non_sh_coil_cont,
+    levels=levels3,
     cmap=cmap,
     zorder=8,
     linestyles="dashed",
 )
+
 plt.show()
 
 # %% [markdown]
@@ -241,19 +201,20 @@ plt.show()
 
 # %%
 # Number of desired collocation points excluding extrema (always 4 or +4 automatically)
-n = 50
+n = 20
 
 # Create the set of collocation points for the harmonics
 collocation = collocation_points(
     n,
     original_LCFS,
     "random_plus_extrema",
+    seed=15,
 )
 
 # Plot
 
-x_plot = grid.x
-z_plot = grid.z
+x_plot = eq.grid.x
+z_plot = eq.grid.z
 nlevels = 50
 levels = np.linspace(np.amin(total_psi), np.amax(total_psi), nlevels)
 cmap = "viridis"
@@ -300,8 +261,6 @@ collocation_psivac = psi_func.ev(collocation.x, collocation.z)
 # is set to be equal to number of collocation points - 1.
 
 # %%
-# Typical length scale
-r_t = np.amax(x_bdry)
 # max_degree is set in the bluemira SH code but we need it here
 max_degree = len(collocation.x) - 1
 
@@ -309,7 +268,7 @@ max_degree = len(collocation.x) - 1
 harmonics2collocation = harmonic_amplitude_marix(collocation.r, collocation.theta, r_t)
 
 # Fit harmonics to match values at collocation points
-psi_harmonic_amplitudes, residual, rank, s = np.linalg.lstsq(
+psi_harmonic_amplitudes, _, _, _ = np.linalg.lstsq(
     harmonics2collocation, collocation_psivac, rcond=None
 )
 
@@ -318,7 +277,7 @@ psi_harmonic_amplitudes, residual, rank, s = np.linalg.lstsq(
 #
 # Choose the maximum number of degrees to calculate up to
 # in order to achieve a appropriate SH approximation.
-# Below we set plot_max_degree = 4 as a test.
+# Below we set plot_max_degree = 7 as a test.
 # You can change the number to see what will happen to
 # the plotted results.
 #
@@ -327,9 +286,13 @@ psi_harmonic_amplitudes, residual, rank, s = np.linalg.lstsq(
 
 # %%
 # Select the maximum degree to use in the approximation
-plot_max_degree = 4
+plot_max_degree = 7
+
 if plot_max_degree > max_degree:
     print("You are trying to plot more degrees then you calculated.")
+
+# Plot: overplot or difference - set to true or false to change plot
+plot_diff = False
 
 # Spherical Coords
 r = np.sqrt(eq.x**2 + eq.z**2)
@@ -338,7 +301,7 @@ theta = np.arctan2(eq.x, eq.z)
 # First harmonic is constant
 approx_psi_vac_data = psi_harmonic_amplitudes[0] * np.ones(np.shape(total_psi))
 
-for degree in np.arange(1, plot_max_degree):
+for degree in np.arange(1, plot_max_degree + 1):
     approx_psi_vac_data = approx_psi_vac_data + (
         psi_harmonic_amplitudes[degree]
         * eq.x
@@ -348,8 +311,8 @@ for degree in np.arange(1, plot_max_degree):
     )
 
 # Plot
-x_plot = grid.x
-z_plot = grid.z
+x_plot = eq.grid.x
+z_plot = eq.grid.z
 nlevels = 50
 levels = np.linspace(np.amin(total_psi), np.amax(total_psi), nlevels)
 cmap = "viridis"
@@ -358,14 +321,30 @@ plot2 = plt.subplot2grid((3, 3), (0, 1), rowspan=2, colspan=1)
 plot3 = plt.subplot2grid((3, 3), (0, 2), rowspan=2, colspan=1)
 plot1.set_title("Vacuum Psi")
 plot3.set_title("SH Psi")
-plot1.contour(
-    x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=8, linestyles="dashed"
-)
+plot1.contour(x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=8)
 plot1.plot(x_bdry, z_bdry, color="red")
-plot2.contour(x_plot, z_plot, approx_psi_vac_data, levels=levels, cmap=cmap, zorder=8)
-plot2.contour(
-    x_plot, z_plot, vacuum_psi, levels=levels, cmap=cmap, zorder=8, linestyles="dashed"
-)
+if plot_diff:
+    plot2.contour(
+        x_plot,
+        z_plot,
+        vacuum_psi - approx_psi_vac_data,
+        levels=levels,
+        cmap=cmap,
+        zorder=8,
+    )
+else:
+    plot2.contour(
+        x_plot, z_plot, approx_psi_vac_data, levels=levels, cmap=cmap, zorder=8
+    )
+    plot2.contour(
+        x_plot,
+        z_plot,
+        vacuum_psi,
+        levels=levels,
+        cmap=cmap,
+        zorder=8,
+        linestyles="dashed",
+    )
 plot2.plot(x_bdry, z_bdry, color="red")
 plot3.contour(x_plot, z_plot, approx_psi_vac_data, levels=levels, cmap=cmap, zorder=8)
 plot3.plot(x_bdry, z_bdry, color="red")
@@ -414,40 +393,50 @@ plt.show()
 
 # %%
 # Set min to save some time
-min_degree = 4
+min_degree = 2
 # Choose acceptable value for fit metric
 # 0 = good, 1 = bad
-acceptable = 0.03
+acceptable = 0.05
 
-for degree in np.arange(min_degree, max_degree + 1):
+for degree in np.arange(min_degree, max_degree):  # + 1):
     # Construct matrix from harmonic amplitudes for coils
     currents2harmonics = coil_harmonic_amplitude_matrix(
-        coilset,
+        eq.coilset,
         degree,
         r_t,
+        sh_coil_names,
     )
 
     # Calculate necessary coil currents
-    currents, residual, rank, s = np.linalg.lstsq(
-        currents2harmonics[:, :], (psi_harmonic_amplitudes[:degree]), rcond=None
+    currents, _, _, _ = np.linalg.lstsq(
+        currents2harmonics[1:, :], (psi_harmonic_amplitudes[1:degree]), rcond=None
     )
 
     # Calculate the coefficients (amplitudes) of spherical harmonics
     # for use in optimising equilibria.
-    coil_current_harmonic_amplitudes = currents2harmonics[:, :] @ currents
+    coil_current_harmonic_amplitudes = currents2harmonics[1:, :] @ currents
 
     # Set currents in coilset
-    coilset.get_control_coils().current = currents
+    for n, i in zip(sh_coil_names, currents):
+        eq.coilset[n].current = i
 
     # Calculate the approximate Psi contribution from the coils
     # (including the non control coils)
-    coilset_approx_psi = coilset.psi(grid.x, grid.z)
+    coilset_approx_psi = eq.coilset.psi(eq.grid.x, eq.grid.z)
+
+    # We only wish to plot the contribution from the coils used in the approximation
+    coilset_approx_psi_plot = np.zeros(np.shape(eq.grid.x))
+    for n in sh_coil_names:
+        coilset_approx_psi_plot = np.sum(
+            [coilset_approx_psi_plot, eq.coilset[n].psi(eq.grid.x, eq.grid.z)], axis=0
+        )
+
+    # Total
+    approx_total_psi = coilset_approx_psi + plasma_psi
+    eq.get_OX_points(approx_total_psi, force_update=True)
 
     # Get LCFS for approximation
-    coilset_total_psi = coilset_approx_psi + plasma_psi
-    coilset_eq = eq
-    coilset_eq.coilset = coilset
-    approx_LCFS = coilset_eq.get_LCFS(psi=coilset_total_psi)
+    approx_LCFS = eq.get_LCFS(psi=approx_total_psi)
 
     # Compare staring equilibrium to new approximate equilibrium
     fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
@@ -464,8 +453,8 @@ for degree in np.arange(min_degree, max_degree + 1):
 
 # Plot
 
-x_plot = grid.x
-z_plot = grid.z
+x_plot = eq.grid.x
+z_plot = eq.grid.z
 
 nlevels = 50
 levels = np.linspace(np.amin(total_psi), np.amax(total_psi), nlevels)
@@ -485,24 +474,14 @@ plot1.plot(x_bdry, z_bdry, color="red")
 plot2.contour(x_plot, z_plot, approx_psi_vac_data, levels=levels, cmap=cmap, zorder=8)
 plot2.plot(x_bdry, z_bdry, color="red")
 
-plot3.contour(x_plot, z_plot, coilset_approx_psi, levels=levels, cmap=cmap, zorder=8)
+plot3.contour(
+    x_plot, z_plot, coilset_approx_psi_plot, levels=levels, cmap=cmap, zorder=8
+)
 plot3.plot(x_bdry, z_bdry, color="red")
 
 plot1.set_xlim(np.min(x_plot), np.max(x_plot))
 plot2.set_xlim(np.min(x_plot), np.max(x_plot))
 plot3.set_xlim(np.min(x_plot), np.max(x_plot))
-
-# Maximum spherical radius for which the spherical harmonic approximation is valid
-# N.B., max_valid_r >= r_lcfs
-r_f = np.sqrt(coilset.get_control_coils().x ** 2 + coilset.get_control_coils().z ** 2)
-max_valid_r = np.amin(r_f)
-
-max_circ = patch.Circle((0, 0), max_valid_r, ec="orange", fill=True, fc="orange")
-plot1.add_patch(max_circ)
-max_circ = patch.Circle((0, 0), max_valid_r, ec="orange", fill=True, fc="orange")
-plot2.add_patch(max_circ)
-max_circ = patch.Circle((0, 0), max_valid_r, ec="orange", fill=True, fc="orange")
-plot3.add_patch(max_circ)
 
 plt.show()
 
@@ -521,13 +500,13 @@ plt.show()
 # can be used as constraints.
 
 # %%
-x_lcfs = coilset_eq.get_LCFS().x
-z_lcfs = coilset_eq.get_LCFS().z
+x_lcfs = approx_LCFS.x
+z_lcfs = approx_LCFS.z
 
 # Plot
 
-x_plot = grid.x
-z_plot = grid.z
+x_plot = eq.grid.x
+z_plot = eq.grid.z
 
 nlevels = 50
 levels = np.linspace(np.amin(total_psi), np.amax(total_psi), nlevels)
@@ -545,17 +524,14 @@ plot1.contour(
 plot1.plot(x_bdry, z_bdry, color="red")
 
 plot2.contour(
-    x_plot, z_plot, vacuum_psi - coilset_approx_psi, levels=levels, cmap=cmap, zorder=8
+    x_plot,
+    z_plot,
+    vacuum_psi - coilset_approx_psi_plot,
+    levels=levels,
+    cmap=cmap,
+    zorder=8,
 )
 plot2.plot(x_bdry, z_bdry, color="red")
 plot2.plot(x_lcfs, z_lcfs, color="blue", linestyle="dashed")
-
-plot1.set_xlim(np.min(x_plot), np.max(x_plot))
-plot2.set_xlim(np.min(x_plot), np.max(x_plot))
-
-max_circ = patch.Circle((0, 0), max_valid_r, ec="orange", fill=True, fc="orange")
-plot1.add_patch(max_circ)
-max_circ = patch.Circle((0, 0), max_valid_r, ec="orange", fill=True, fc="orange")
-plot2.add_patch(max_circ)
 
 plt.show()
