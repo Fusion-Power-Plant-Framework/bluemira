@@ -18,7 +18,7 @@ import numpy as np
 from scipy.interpolate import RectBivariateSpline
 from scipy.special import lpmv
 
-from bluemira.base.constants import MU_0
+from bluemira.base.constants import MU_0, RNGSeeds
 from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.equilibria.coils import CoilSet
@@ -192,7 +192,7 @@ def collocation_points(
     n_points: int,
     plasma_boundary: np.ndarray,
     point_type: str,
-    seed: Optional[int] = 42,
+    seed: Optional[int] = RNGSeeds.equilibria_harmonics.value,
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
