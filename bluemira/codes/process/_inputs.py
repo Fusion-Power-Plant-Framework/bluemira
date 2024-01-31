@@ -517,7 +517,6 @@ class ProcessInputs:
     divplt: Optional[float] = None
     fdfs: Optional[float] = None
     fdiva: Optional[float] = None
-    fgamp: Optional[float] = None
     fififi: Optional[float] = None
     flux_exp: Optional[float] = None
     frrp: Optional[float] = None
