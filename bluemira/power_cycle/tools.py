@@ -7,9 +7,10 @@
 """Utility functions for the power cycle model."""
 
 import json
-import pprint
+import sys
 from copy import deepcopy
 from dataclasses import asdict, is_dataclass
+from pprint import PrettyPrinter
 from typing import Any, Dict, List
 
 import matplotlib.pyplot as plt
@@ -31,30 +32,6 @@ def create_axes(ax=None):
     if ax is None:
         _, ax = plt.subplots()
     return ax
-
-
-def recursive_value_types_in_dict(dictionary):
-    """Recursively display value types in a dictionary."""
-    types_dict = dictionary.copy()
-    for key, value in types_dict.items():
-        if isinstance(types_dict[key], dict):
-            types_dict[key] = recursive_value_types_in_dict(types_dict[key])
-        else:
-            length = len(value) if hasattr(value, "__len__") else "N/A"
-            types_dict[key] = f"type = {type(value)}, length = {length}"
-    return types_dict
-
-
-def pp(obj, summary=False):
-    """Prety Printer compatible with dataclasses and able to summarise."""
-    kwargs = {"indent": 4}
-    target = deepcopy(obj)
-    if is_dataclass(target):
-        kwargs["sort_dicts"] = False
-        target = asdict(target)
-    if summary and isinstance(target, dict):
-        target = recursive_value_types_in_dict(target)
-    return pprint.pp(target, **kwargs)
 
 
 def symmetrical_subplot_distribution(n_plots, direction="row"):
@@ -140,3 +117,47 @@ def unique_domain(x, y, epslon=1e-10):
         new_x.append(x_this)
         new_y.append(y_this)
     return new_x, new_y
+
+
+def recursive_value_types_in_dict(dictionary):
+    """Recursively display value types in a dictionary."""
+    types_dict = dictionary.copy()
+    for key, value in types_dict.items():
+        if isinstance(types_dict[key], dict):
+            types_dict[key] = recursive_value_types_in_dict(types_dict[key])
+        else:
+            length = len(value) if hasattr(value, "__len__") else "N/A"
+            types_dict[key] = f"type = {type(value)}, length = {length}"
+    return types_dict
+
+
+def pp(obj, summary=False):
+    """Prety Printer compatible with dataclasses and able to summarise."""
+    kwargs = {"indent": 4, "compact": True}
+    target = deepcopy(obj)
+    if is_dataclass(target):
+        kwargs["sort_dicts"] = False
+        target = asdict(target)
+    if summary and isinstance(target, dict):
+        target = recursive_value_types_in_dict(target)
+    pp = LongStringPP(**kwargs)
+    return pp.pprint(target)
+
+
+class LongStringPP(PrettyPrinter):
+    """
+    Prety Printer that does not break strings.
+
+    Based on: https://stackoverflow.com/questions/31485402/can-i-make-pprint-in-python3-not-split-strings-like-in-python2
+    """
+
+    def _format(self, obj, *args):
+        if isinstance(obj, str):
+            width = self._width
+            self._width = sys.maxsize
+            try:
+                super()._format(obj, *args)
+            finally:
+                self._width = width
+        else:
+            super()._format(obj, *args)
