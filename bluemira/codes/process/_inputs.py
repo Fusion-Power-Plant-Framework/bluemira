@@ -481,7 +481,6 @@ class ProcessInputs:
     frbeam: Optional[float] = None
     ftritbm: Optional[float] = None
     gamma_ecrh: Optional[float] = None
-    rho_ecrh: Optional[float] = None
     xi_ebw: Optional[float] = None
     iefrf: Optional[int] = None
     irfcf: Optional[int] = None
