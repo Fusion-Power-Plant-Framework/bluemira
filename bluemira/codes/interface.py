@@ -7,7 +7,7 @@
 
 import abc
 import enum
-from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
+from typing import Any, Callable, Dict, List, Optional, Type, Union
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
@@ -267,11 +267,14 @@ class CodesTeardown(CodesTask):
             return None
 
         # updated, but split into multiple parameters
-        if isinstance(updated_parameter_name, Iterable):
-            raise CodesError(
-                f"{parameter_name} has become obsolete and been split "
-                f"into {updated_parameter_name}. This must be handled manually."
-            ) from None
+        if isinstance(updated_parameter_name, list):
+            if len(updated_parameter_name) == 1:
+                updated_parameter_name = updated_parameter_name[0]
+            else:
+                raise CodesError(
+                    f"{parameter_name} has become obsolete and been split "
+                    f"into {updated_parameter_name}. This must be handled manually."
+                ) from None
 
         output_value = external_outputs.get(updated_parameter_name)
         if output_value is None:

@@ -7,10 +7,11 @@
 Defines the setup task for running PROCESS.
 """
 
-from pathlib import Path
-from typing import ClassVar, Dict, Optional, Union
+from __future__ import annotations
 
-from bluemira.base.parameter_frame import ParameterFrame
+from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar, Dict, Optional, Union
+
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSetup
 from bluemira.codes.process._inputs import ProcessInputs
@@ -20,7 +21,10 @@ from bluemira.codes.process._model_mapping import (
 )
 from bluemira.codes.process.api import ENABLED, InDat, _INVariable, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
-from bluemira.codes.process.params import ProcessSolverParams
+
+if TYPE_CHECKING:
+    from bluemira.base.parameter_frame import ParameterFrame
+    from bluemira.codes.process.params import ProcessSolverParams
 
 
 class Setup(CodesSetup):
