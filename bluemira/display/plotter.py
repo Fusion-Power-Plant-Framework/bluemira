@@ -41,6 +41,7 @@ from bluemira.geometry.coordinates import (
     get_centroid_3d,
     rotation_matrix_v1v2,
 )
+from bluemira.utilities.tools import flatten_iterable
 
 if TYPE_CHECKING:
     from bluemira.geometry.base import BluemiraGeo
@@ -552,9 +553,15 @@ class ComponentPlotter(BasePlotter):
 
         def _populate_plotters(comp):
             if comp.is_leaf and getattr(comp, "shape", None) is not None:
-                options = (
-                    self.options if comp.plot_options is None else comp.plot_options
-                )
+                if comp.plot_options.face_options["color"] in flatten_iterable(
+                    BLUE_PALETTE.as_hex()
+                ):
+                    if self.options.face_options["color"] == "blue":
+                        options = comp.plot_options
+                    else:
+                        options = self.options
+                else:
+                    options = comp.plot_options
                 plotter = _get_plotter_class(comp.shape)(options)
                 plotter._populate_data(comp.shape)
                 self._cplotters.append(plotter)

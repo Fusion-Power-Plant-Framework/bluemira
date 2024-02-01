@@ -413,6 +413,8 @@ c1 = PhysicalComponent("Comp1", face, parent=group)
 c2 = PhysicalComponent("Comp2", wface, parent=group)
 c3 = PhysicalComponent("Comp3", w1face, parent=group)
 display.plot_2d(group, **my_group_options)
+my_group_options["face_options"] = {}
+display.plot_2d(group, **my_group_options)
 
 # %% [markdown]
 # Note that, since wire_options = {}, wire color is automatically changed by matplotlib
