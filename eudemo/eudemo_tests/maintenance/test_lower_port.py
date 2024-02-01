@@ -188,6 +188,19 @@ class TestLowerPort:
         assert angle_bb.y_max <= straight_bb.y_max
         assert angle_bb.y_min >= straight_bb.y_min
 
+    def test_too_thick_tf_raises_GeometryError(self):
+        self.duct_des_params.lower_port_angle.value = -60
+        self.duct_des_params.tf_wp_depth.value = 0.75
+
+        with pytest.raises(GeometryError, match="duct wall thickness is too large"):
+            LowerPortKOZDesigner(
+                self.duct_des_params,
+                {},
+                self.divertor_xz_silhouette,
+                (3.5, 0),  # connection point between divertor and blanket
+                self.tf_coils_outer_boundary,
+            ).execute()
+
     def _get_tf_y_max(self):
         return (
             (0.5 * self.duct_des_params.tf_wp_depth.value)
