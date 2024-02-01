@@ -37,35 +37,6 @@ from bluemira.base.constants import MU_0
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction
 
 
-def Bz_coil_axis(r: float, z: float = 0, pz: float = 0, current: float = 1) -> float:
-    """
-    Calculate the theoretical vertical magnetic field of a filament coil
-    (of radius r and centred in (0, z)) on a point on the coil axis at
-    a distance pz from the axis origin.
-
-    Parameters
-    ----------
-    r:
-        Coil radius [m]
-    z:
-        Vertical position of the coil centroid [m]
-    pz:
-        Vertical position of the point on the axis on which the magnetic field
-        shall be calculated [m]
-    current:
-        Current of the coil [A]
-
-    Returns
-    -------
-    Vertical magnetic field on the axis [T]
-
-    Notes
-    -----
-    \t:math:`\\dfrac{1}{2}\\dfrac{\\mu_{0}Ir^2}{(r^{2}+(pz-z)^{2})^{3/2}}`
-    """
-    return 0.5 * MU_0 * current * r**2 / (r**2 + (pz - z) ** 2) ** 1.5
-
-
 class FemMagnetostatic2d:
     """
     A 2D magnetostatic solver. The solver is thought as support for the fem fixed

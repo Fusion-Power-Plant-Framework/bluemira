@@ -172,6 +172,7 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
 
     TODO hopefully remove in dolfinx >0.7.1
     """
+    shape = points.shape
     points = convert_to_points_array(points)
 
     tdim = mesh.topology.dim
@@ -192,7 +193,9 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
         p - geometry.compute_distance_gjk(p, mesh.geometry.x[geom_dofs[i][0]])
         for i, p in enumerate(points)
     ])
-    return new_points  # noqa: RET504
+    if len(shape) == 1:
+        new_points = new_points[0]
+    return new_points
 
 
 def calculate_area(mesh: Mesh, boundaries: object, tag: Optional[int] = None) -> float:
@@ -517,9 +520,7 @@ class Association:
 
 
 def create_j_function(
-    mesh: Mesh,
-    cell_tags,
-    values: List[Association],
+    mesh: Mesh, cell_tags, values: List[Association], eltype: Tuple = ("DG", 0)
 ) -> BluemiraFemFunction:
     """
     Create the dolfinx current density function for the whole domain given a set of
@@ -536,18 +537,20 @@ def create_j_function(
         If target current is not None, the applied current density is rescaled
         in order to obtain the total target current in the subdomain identified
         by the boundaries tag.
+    eltype:
+        a tuple of type (element family, element degree)
 
     Returns
     -------
-    a dolfinx function ("DG", 0) with the values of the density current to be applied at
-    each cell
+    a dolfinx function on the function space (mesh, eltype) with the values of
+    the density current to be applied at each cell
 
     Notes
     -----
-    If multiple functions are defined on the same subdomain,
-    the contributions of each function are summed up.
+    If multiple functions are defined on the same subdomain, the contributions
+    of each function are summed up.
     """
-    function_space = functionspace(mesh, ("DG", 0))
+    function_space = functionspace(mesh, eltype)
 
     unique_tags = np.unique(cell_tags.values)
     J = BluemiraFemFunction(function_space)  # noqa: N806

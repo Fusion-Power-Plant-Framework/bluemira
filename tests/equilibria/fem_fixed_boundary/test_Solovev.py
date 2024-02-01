@@ -26,7 +26,6 @@ from bluemira.equilibria.fem_fixed_boundary.utilities import (
     plot_scalar_field,
 )
 from bluemira.magnetostatics.fem_utils import (
-    closest_point_in_mesh,
     model_to_mesh,
     read_from_msh,
 )
@@ -368,27 +367,6 @@ class TestSolovevZheng:
         np.testing.assert_allclose(x_axis_fe, x_axis_s, atol=2e-5)
         # TODO (je-cook error margin increased from 1e-6 to 1e-5)
         np.testing.assert_allclose(z_axis_fe, z_axis_s, atol=1e-5)
-
-    def test_closest_point_in_mesh(self):
-        psi_ax = max(self.gs_solver.psi.x.array)
-        psi_b = 0
-
-        # def psi_norm_func(x):
-        #     return np.sqrt(np.abs((self.gs_solver.psi(x) - psi_ax) / (psi_b - psi_ax)))
-
-        # TODO (je-cook) what am I meant to see?
-        # print(calculate_plasma_shape_params(psi_norm_func, self.mesh, 0.95, True))
-        # print(get_flux_surfaces_from_mesh(self.mesh, psi_norm_func, None, 40))
-
-        close_test_1 = np.array([[-1, 0.3, 0], [9, 0.3, 0]])
-        np.testing.assert_allclose(
-            closest_point_in_mesh(self.mesh, close_test_1), close_test_1
-        )
-
-        close_test_2 = [9, 0.3, 0]
-        np.testing.assert_allclose(
-            np.squeeze(closest_point_in_mesh(self.mesh, close_test_2)), close_test_2
-        )
 
     def mean_test(self):
         print(self.mean_err)

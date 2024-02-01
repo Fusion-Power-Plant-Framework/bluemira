@@ -5,7 +5,8 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Solovev example
+Example of solving a magnetostatic problem (Solovev equilibrium) imposing
+different boundary conditions.
 """
 
 import gmsh
@@ -24,7 +25,6 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
     find_flux_surface,
     find_magnetic_axis,
-    get_mesh_boundary,
     plot_scalar_field,
 )
 from bluemira.magnetostatics.fem_utils import BluemiraFemFunction, model_to_mesh
@@ -203,6 +203,9 @@ def create_mesh(solovev, LCFS, lcar):
     gmsh.write("Mesh.msh")
     gmsh.finalize()
 
+    labels["plasma"] = labels.pop("")
+    labels["lcfs"] = (1, 0)
+
     return (mesh, ct, ft), labels, psi_ax
 
 
@@ -228,25 +231,24 @@ if __name__ == "__main__":
     plt.show()
 
     n_points = 500
-    boundary = find_flux_surface(solovev.psi_norm_2d, 1, n_points=n_points)
+    LCFS = find_flux_surface(solovev.psi_norm_2d, 1, n_points=n_points).T
 
     # Find the LCFS.
     # Note: the points returned by matplotlib can have a small "interpolation" error,
     # thus psi on the LCFS could not be exaclty 0.
-    LCFS = cntr.collections[0].get_paths()[0].vertices
+    # LCFS = cntr.collections[0].get_paths()[0].vertices
 
     # create the mesh
     lcar = 0.5
-
     (mesh, ct, ft), labels, psi_ax = create_mesh(solovev, LCFS, lcar)
-    labels["lcfs"] = (1, 0)
 
     # Inizialize the em solever
     p_order = 2
     gs_solver = FemMagnetostatic2d(p_order=p_order)
     gs_solver.set_mesh(mesh, ct)
 
-    # create the plasma density current function
+    # create the plasma density current function using the values of the exact solution
+    # calculated on the respective dofs.
     g = BluemiraFemFunction(gs_solver.V)
     # select the dofs coordinates in the xz plane
     dof_points = gs_solver.V.tabulate_dof_coordinates()[:, 0:2]
@@ -256,17 +258,21 @@ if __name__ == "__main__":
     psi_exact_fun = fem.Function(gs_solver.V)
     psi_exact_fun.x.array[:] = solovev.psi(dof_points.T)
 
-    # boundary conditions
+    # Definition of the boundary conditions functions:
+    #
+    # locate the dofs on the boundary
     dofs_boundary = fem.locate_dofs_topological(
         gs_solver.V, mesh.topology.dim - 1, ft.find(0)
     )
 
-    # boundary 1 (set to 0)
+    # 1) create a dirichlet boundary function set to 0
+    # Note: due to the approximation in the calculation, this is not a correct
+    # boundary condition for the considered problem
     psi_boundary1 = fem.Function(gs_solver.V)
     psi_boundary1.x.array[:] = 0
     dirichlet_bcs_1 = fem.dirichletbc(psi_boundary1, dofs_boundary)
 
-    # boundary 2 (set using psi_exact func)
+    # 2) create a dirichlet boundary function using the exact solution (as a function)
     tdim = mesh.topology.dim
     facets = dmesh.locate_entities_boundary(
         mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
@@ -275,31 +281,22 @@ if __name__ == "__main__":
         psi_exact_fun, fem.locate_dofs_topological(gs_solver.V, tdim - 1, facets)
     )
 
-    # boundary 3 (set using psi_exact values at boundary)
+    # 3) create a boundary function using the exact solution, with calculated
+    # values assigned to the dofs
     psi_boundary3 = fem.Function(gs_solver.V)
     psi_boundary3.x.array[dofs_boundary] = psi_exact_fun.x.array[dofs_boundary]
     dirichlet_bcs_3 = fem.dirichletbc(psi_boundary3, dofs_boundary)
-
-    points_x, points_y = get_mesh_boundary(mesh)
-    plt.plot(points_x, points_y, "r.")
-    plt.scatter(dof_points[dofs_boundary, 0], dof_points[dofs_boundary, 1], 1)
-    plt.scatter(boundary.T[:, 0], boundary.T[:, 1], 1)
-    plt.title("Check mesh boundary function")
-    plt.show()
 
     mean_err = []
     itot = []
 
     i = 0
-    # TODO(je-cook) convergence is not very tight old:1e-5, new:6e-3
-    for dirich_bc, is_close in zip(
-        ((None, dirichlet_bcs_1), (dirichlet_bcs_2, dirichlet_bcs_3)), (2e-1, 6e-3)
-    ):
+    # for what written before, error with boundary conditions set to 0 is higher
+    # than that with exact solution.
+    for dirich_bc in (None, dirichlet_bcs_1), (dirichlet_bcs_2, dirichlet_bcs_3):
         for d in dirich_bc:
             i = i + 1
-            print(f"i = {i}")
-            print(f"is_close: {is_close}")
-            print(f"dirich_bc: {dirich_bc}")
+            print(f"boundary conditions n.{i}")
 
             # solve the Grad-Shafranov equation
             gs_solver.define_g(g, d)
@@ -393,16 +390,23 @@ if __name__ == "__main__":
                 solovev.psi(point) for point in dof_points[dofs_boundary]
             ])
 
-            # Higher than I might expect, but probably because some of the points
-            # lie outside the mesh, and cannot be properly interpolated.
-            # TODO(je-cook) convergence is not very tight old:2e-3 new 9.1e-2 (!)
             print(
                 f"np.max(np.abs(psi_fe_boundary)):"
                 f"{np.max(np.abs(psi_fe_boundary - psi_exact_boundary1))}"
             )
 
             diff = np.abs(psi_fe_boundary - psi_exact_boundary1)
-            plt.scatter(
-                dof_points[dofs_boundary, 0], dof_points[dofs_boundary, 1], 10, diff
+
+            fig, ax = plt.subplots()
+            ax.scatter(
+                dof_points[dofs_boundary, 0],
+                dof_points[dofs_boundary, 1],
+                10,
+                diff,
+                cmap="viridis",
             )
+            pcm = ax.get_children()[0]
+            plt.colorbar(pcm, ax=ax)
+            ax.set_aspect("equal")
+            plt.title("Error on boundary conditions (imposed - exact)")
             plt.show()

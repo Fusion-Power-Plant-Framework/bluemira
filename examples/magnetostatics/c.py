@@ -22,15 +22,13 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.geometry import tools
 from bluemira.geometry.face import BluemiraFace, BluemiraWire
 from bluemira.magnetostatics import greens
+from bluemira.magnetostatics.biot_savart import Bz_coil_axis
 from bluemira.magnetostatics.fem_utils import (
     Association,
     create_j_function,
     model_to_mesh,
 )
-from bluemira.magnetostatics.finite_element_2d import (
-    Bz_coil_axis,
-    FemMagnetostatic2d,
-)
+from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 from bluemira.mesh import meshing
 
 DATA_DIR = Path(__file__).parent

@@ -9,10 +9,10 @@ from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_path
 from bluemira.geometry.face import BluemiraFace
 from bluemira.magnetostatics.finite_element_2d import (
-    Bz_coil_axis,
     FemMagnetostatic2d,
     ScalarSubFunc,
 )
+from bluemira.magnetostatics.biot_savart import Bz_coil_axis
 from bluemira.mesh import meshing
 from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
