@@ -71,7 +71,7 @@ class Teardown(CodesTeardown):
         """
         Teardown the PROCESS solver.
 
-        This loads the MFile in the run directory and maps its outputs
+        This loads the MFile in the read directory and maps its outputs
         to bluemira parameters.
         """
         self._load_mfile(Path(self.read_directory, "MFILE.DAT"), recv_all=False)
@@ -80,7 +80,7 @@ class Teardown(CodesTeardown):
         """
         Teardown the PROCESS solver.
 
-        This loads the MFile in the run directory and maps its outputs
+        This loads the MFile in the read directory and maps its outputs
         to bluemira parameters.
         """
         self._load_mfile(Path(self.read_directory, "MFILE.DAT"), recv_all=True)

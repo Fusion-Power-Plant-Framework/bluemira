@@ -20,6 +20,7 @@ from bluemira.codes.process._model_mapping import (
 )
 from bluemira.codes.process.api import ENABLED, InDat, _INVariable, update_obsolete_vars
 from bluemira.codes.process.constants import NAME as PROCESS_NAME
+from bluemira.codes.process.params import ProcessSolverParams
 
 
 class Setup(CodesSetup):
@@ -40,6 +41,8 @@ class Setup(CodesSetup):
         "iefrf": CurrentDriveEfficiencyModel,
         "i_tf_sup": TFCoilConductorTechnology,
     }
+
+    params: ProcessSolverParams
 
     def __init__(
         self,

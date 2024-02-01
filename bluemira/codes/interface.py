@@ -7,12 +7,13 @@
 
 import abc
 import enum
-from typing import Any, Callable, Dict, List, Optional, Type, Union
+from typing import Any, Callable, Dict, Iterable, List, Optional, Type, Union
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.params import MappedParameterFrame
+from bluemira.codes.process.api import update_obsolete_vars
 from bluemira.codes.utilities import run_subprocess
 
 
@@ -221,7 +222,8 @@ class CodesTeardown(CodesTask):
         for bm_name, mapping in self.params.mappings.items():
             if not (mapping.recv or recv_all):
                 continue
-            output_value = self._get_output_or_raise(external_outputs, mapping.out_name)
+            # out name is set name if it's not provided
+            output_value = self._get_output_or_raise(external_outputs, mapping.out_name)  # type: ignore type
             if mapping.unit is None:
                 bluemira_warn(
                     f"{mapping.out_name} from code {self._name} has no known unit"
@@ -239,12 +241,51 @@ class CodesTeardown(CodesTask):
     def _get_output_or_raise(
         self, external_outputs: Dict[str, Any], parameter_name: str
     ):
-        output_value = external_outputs.get(parameter_name, None)
-        if output_value is None:
+        output_value = external_outputs.get(parameter_name)
+
+        if output_value is not None:
+            return output_value
+
+        # The parameter may have become obsolete,
+        # try to update the name and check again
+        updated_parameter_name = update_obsolete_vars(parameter_name)
+
+        # no update, not obsolete, just no value found
+        if updated_parameter_name == parameter_name:
             bluemira_warn(
                 f"No value for output parameter '{parameter_name}' from code "
                 f"'{self._name}', setting value to None."
             )
+            return None
+
+        # updated, but remove
+        if updated_parameter_name is None:
+            bluemira_warn(
+                f"{parameter_name} has become obsolete and been removed, "
+                "setting the value to None."
+            )
+            return None
+
+        # updated, but split into multiple parameters
+        if isinstance(updated_parameter_name, Iterable):
+            raise CodesError(
+                f"{parameter_name} has become obsolete and been split "
+                f"into {updated_parameter_name}. This must be handled manually."
+            ) from None
+
+        output_value = external_outputs.get(updated_parameter_name)
+        if output_value is None:
+            bluemira_warn(
+                f"{parameter_name} has become obsolete and set to "
+                f"{updated_parameter_name}, however no value was found, "
+                "setting the value to None."
+            )
+            return None
+
+        bluemira_warn(
+            f"{parameter_name} has become obsolete and set to "
+            f"{updated_parameter_name}."
+        )
         return output_value
 
 
