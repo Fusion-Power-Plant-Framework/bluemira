@@ -54,13 +54,14 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.magnetostatics import greens
+from bluemira.magnetostatics.biot_savart import Bz_coil_axis
 from bluemira.magnetostatics.fem_utils import (
     Association,
     create_j_function,
     model_to_mesh,
     pyvista_plot_show_save,
 )
-from bluemira.magnetostatics.finite_element_2d import Bz_coil_axis, FemMagnetostatic2d
+from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 from bluemira.mesh import meshing
 
 # %%
