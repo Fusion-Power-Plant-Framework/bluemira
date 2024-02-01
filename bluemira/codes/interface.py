@@ -13,7 +13,6 @@ from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes.error import CodesError
 from bluemira.codes.params import MappedParameterFrame
-from bluemira.codes.process.api import update_obsolete_vars
 from bluemira.codes.utilities import run_subprocess
 
 
@@ -242,53 +241,11 @@ class CodesTeardown(CodesTask):
         self, external_outputs: Dict[str, Any], parameter_name: str
     ):
         output_value = external_outputs.get(parameter_name)
-
-        if output_value is not None:
-            return output_value
-
-        # The parameter may have become obsolete,
-        # try to update the name and check again
-        updated_parameter_name = update_obsolete_vars(parameter_name)
-
-        # no update, not obsolete, just no value found
-        if updated_parameter_name == parameter_name:
+        if output_value is None:
             bluemira_warn(
                 f"No value for output parameter '{parameter_name}' from code "
                 f"'{self._name}', setting value to None."
             )
-            return None
-
-        # updated, but remove
-        if updated_parameter_name is None:
-            bluemira_warn(
-                f"{parameter_name} has become obsolete and been removed, "
-                "setting the value to None."
-            )
-            return None
-
-        # updated, but split into multiple parameters
-        if isinstance(updated_parameter_name, list):
-            if len(updated_parameter_name) == 1:
-                updated_parameter_name = updated_parameter_name[0]
-            else:
-                raise CodesError(
-                    f"{parameter_name} has become obsolete and been split "
-                    f"into {updated_parameter_name}. This must be handled manually."
-                ) from None
-
-        output_value = external_outputs.get(updated_parameter_name)
-        if output_value is None:
-            bluemira_warn(
-                f"{parameter_name} has become obsolete and set to "
-                f"{updated_parameter_name}, however no value was found, "
-                "setting the value to None."
-            )
-            return None
-
-        bluemira_warn(
-            f"{parameter_name} has become obsolete and set to "
-            f"{updated_parameter_name}."
-        )
         return output_value
 
 
