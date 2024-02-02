@@ -237,7 +237,7 @@ plt.show()
 
 # %% [markdown]
 #
-# 1) Along a radial path at z_offset (solution from green function)
+# 2) Along a radial path at z_offset (solution from green function)
 
 # %%
 z_offset = 100 * ri
@@ -281,4 +281,4 @@ ax.set_xlabel("r (m)")
 ax.set_ylabel("error (T)")
 plt.show()
 
-print(time.time() - start)
+print(f"computational time: {time.time() - start}")
