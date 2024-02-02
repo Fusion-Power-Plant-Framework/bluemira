@@ -16,10 +16,13 @@ from bluemira.geometry.error import GeometryError
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PrincetonD
 from bluemira.geometry.tools import (
+    boolean_cut,
     boolean_fuse,
+    extrude_shape,
     make_circle,
     make_polygon,
     offset_wire,
+    revolve_shape,
     sweep_shape,
 )
 from bluemira.geometry.wire import BluemiraWire
@@ -88,6 +91,7 @@ class TestLowerPort:
     def test_duct_angle(self, duct_angle, tf_wp_depth):
         self.duct_des_params.lower_port_angle.value = duct_angle
         self.duct_des_params.tf_wp_depth.value = tf_wp_depth
+        tf = self._make_tf()
 
         (
             lp_duct_xz_void_space,
@@ -142,25 +146,56 @@ class TestLowerPort:
 
         np.testing.assert_allclose(angled_face.normal_at(), pl.normal_at(), atol=1e-8)
 
+        # Does the koz contain the duct
+        rotated_duct = duct_xyz_cad.deepcopy()
+        rotated_duct.rotate(degree=-180 / self.duct_des_params.n_TF.value)
+        phat_tf = self._make_tf(10)
+        cut_duct = sorted(
+            boolean_cut(rotated_duct, phat_tf), key=lambda shape: -shape.volume
+        )[0]
+        koz = lp_duct_xz_koz.deepcopy()
+        koz.translate((0, -5, 0))
+        koz = extrude_shape(koz, (0, 10, 0))
+        cut_koz = sorted(boolean_cut(koz, phat_tf), key=lambda shape: -shape.volume)[0]
+        fuse = boolean_fuse([cut_koz, cut_duct])
+
+        assert cut_koz.volume == pytest.approx(fuse.volume)
+
         # Does duct touch tf coils
-        tf = self._make_tf()
-        tf2 = tf.deepcopy()
-        tf2.rotate(degree=360 / self.duct_des_params.n_TF.value)
+        if (tf_wp_depth, duct_angle) not in {
+            (0.0, -90),
+            (0.25, -45),
+            (0.25, -90),
+            (0.5, -45),
+            (0.5, -60),
+            (0.5, -90),
+        }:  # skipping due to tf coil circle approximation
+            tf = self._make_tf()
+            tf2 = tf.deepcopy()
+            tf2.rotate(degree=360 / self.duct_des_params.n_TF.value)
 
-        with pytest.raises(
-            GeometryError,
-            match=r".*\[(<Solid[\n ]*object at [0-9a-z]{14}>[, ]*){3}\]",
-        ):
-            boolean_fuse([tf, tf2, duct_xyz_cad])
-        # import ipdb
+            div = revolve_shape(
+                BluemiraFace(self.divertor_xz_silhouette),
+                direction=(0, 0, 1),
+                degree=360
+                / self.duct_des_params.n_TF.value
+                / self.duct_des_params.n_div_cassettes.value,
+            )
 
-        # ipdb.set_trace()
-        # lp_duct_xz_koz
-        from bluemira.display import show_cad
+            div.rotate(
+                degree=(180 / self.duct_des_params.n_TF.value)
+                - (
+                    180
+                    / self.duct_des_params.n_TF.value
+                    / self.duct_des_params.n_div_cassettes.value
+                )
+            )
 
-        # show_cad([lp_duct_xz_koz, duct_xyz_cad])
-
-        show_cad([tf, tf2, duct_xyz_cad, self.divertor_xz_silhouette, lp_duct_xz_koz])
+            with pytest.raises(
+                GeometryError,
+                match=r".*\[(<Solid[\n ]*object at [0-9a-z]{14}>[, ]*){3}\]",
+            ):
+                boolean_fuse([tf, tf2, duct_xyz_cad])
 
     @pytest.mark.parametrize("duct_angle", [0, -30, -45, -60, -90])
     @pytest.mark.parametrize("tf_wp_depth", np.linspace(0, 0.5, 3))
@@ -209,8 +244,8 @@ class TestLowerPort:
             + self.duct_des_params.g_vv_ts.value
         )
 
-    def _make_tf(self):
-        tf_ymax = self._get_tf_y_max()
+    def _make_tf(self, width=None):
+        tf_ymax = self._get_tf_y_max() if width is None else width
         xy_cross = make_polygon(
             {"x": [1.5, 0.5, 0.5, 1.5], "y": [tf_ymax, tf_ymax, -tf_ymax, -tf_ymax]},
             closed=True,

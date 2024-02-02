@@ -135,7 +135,7 @@ class LowerPortKOZDesigner(Designer):
     def _half_beta(self) -> float:
         return np.pi / self.params.n_TF.value
 
-    def _get_div_pts_at_angle(self) -> Tuple[Tuple, Tuple]:
+    def _get_div_pts_at_angle(self) -> Tuple[Tuple[float, ...], ...]:
         div_z_top = self.divertor_face.bounding_box.z_max
         div_z_bot = self.divertor_face.bounding_box.z_min
 
@@ -210,6 +210,8 @@ class LowerPortKOZDesigner(Designer):
         self, ib_div_pt_padded: Tuple, ob_div_pt_padded: Tuple
     ):
         def _calc_y_point(x_point):
+            # TODO(je-cook) This functions assumes the TF coil is circular
+            # this is not a great approximation, in future could look at otho projection.
             x_meet = self.tf_coil_thickness / np.sin(self._half_beta)
             x_len = x_point - x_meet
 
@@ -222,10 +224,9 @@ class LowerPortKOZDesigner(Designer):
             return x_len * np.tan(self._half_beta)
 
         # TODO alternative limit
-        y_max = self.port_width / 2
-        ib_inner_y = min(y_max, _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk)
-        ob_inner_y = min(y_max, _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk)
-
+        flat_y_max = self.port_width / 2
+        ib_inner_y = min(flat_y_max, _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk)
+        ob_inner_y = min(flat_y_max, _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk)
         # ib_inner_y = _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk
         # ob_inner_y = _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk
 
