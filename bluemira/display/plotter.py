@@ -559,6 +559,7 @@ class ComponentPlotter(BasePlotter):
                     if self.options.face_options["color"] == "blue":
                         options = comp.plot_options
                     else:
+                        # not possible with ComponentPlotter only plot_2d
                         options = self.options
                 else:
                     options = comp.plot_options

@@ -15,7 +15,7 @@ import pytest
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.constants import EPS
-from bluemira.display import plot_3d, plotter
+from bluemira.display import plot_2d, plot_3d, plotter
 from bluemira.display.error import DisplayError
 from bluemira.geometry import face, placement, tools
 from bluemira.utilities.plot_tools import Plot3D
@@ -236,15 +236,30 @@ class TestComponentPlotter:
     def setup_method(self):
         wire1 = tools.make_polygon(SQUARE_POINTS, closed=True)
         wire2 = tools.make_polygon(SQUARE_POINTS + 2.0, closed=True)
+        wire3 = tools.make_polygon(SQUARE_POINTS + 4.0, closed=True)
+        wire4 = tools.make_polygon(SQUARE_POINTS + 6.0, closed=True)
         face1 = face.BluemiraFace(wire1)
         face2 = face.BluemiraFace(wire2)
-
+        face3 = face.BluemiraFace(wire3)
+        face4 = face.BluemiraFace(wire4)
+        # default group
         self.group = Component("Parent")
         self.child1 = PhysicalComponent("Child1", shape=face1, parent=self.group)
         self.child2 = PhysicalComponent("Child2", shape=face2, parent=self.group)
+        # make child2 have non-default colour on creation
+        self.child2.plot_options.face_options["color"] = "green"
+        # custom group
+        self.group2 = Component("Components")
+        self.group2_options = self.group2.plot_options.as_dict()
+        self.group2_options["wire_options"] = {}
+        self.group2_options["face_options"] = {"color": "red"}
+        self.child3 = PhysicalComponent("Child3", shape=face3, parent=self.group2)
+        self.child4 = PhysicalComponent("Child4", shape=face4, parent=self.group2)
+        self.child4.plot_options.face_options["color"] = "green"
 
     def test_plotting_2d(self):
         plotter.ComponentPlotter().plot_2d(self.group)
+        plot_2d(self.group2, **self.group2_options)
 
     def test_plotting_2d_no_wires(self):
         plotter.ComponentPlotter(show_wires=True).plot_2d(self.group)
