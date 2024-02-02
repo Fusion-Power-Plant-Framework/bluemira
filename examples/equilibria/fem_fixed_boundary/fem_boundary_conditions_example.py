@@ -23,7 +23,6 @@ from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    find_flux_surface,
     find_magnetic_axis,
     plot_scalar_field,
 )
@@ -230,16 +229,16 @@ if __name__ == "__main__":
     )
     plt.show()
 
-    n_points = 500
-    LCFS = find_flux_surface(solovev.psi_norm_2d, 1, n_points=n_points).T
+    # n_points = 500
+    # LCFS = find_flux_surface(solovev.psi_norm_2d, 1, n_points=n_points).T
 
     # Find the LCFS.
     # Note: the points returned by matplotlib can have a small "interpolation" error,
     # thus psi on the LCFS could not be exaclty 0.
-    # LCFS = cntr.collections[0].get_paths()[0].vertices
+    LCFS = cntr.collections[0].get_paths()[0].vertices
 
     # create the mesh
-    lcar = 0.5
+    lcar = 1
     (mesh, ct, ft), labels, psi_ax = create_mesh(solovev, LCFS, lcar)
 
     # Inizialize the em solever

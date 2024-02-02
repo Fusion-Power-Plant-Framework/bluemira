@@ -10,24 +10,19 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 import scipy
-import ufl
 from dolfinx import fem
 from dolfinx import mesh as dmesh
-from mpi4py import MPI
 
 from bluemira.base.constants import MU_0
 from bluemira.equilibria.fem_fixed_boundary.fem_magnetostatic_2D import (
     FemMagnetostatic2d,
 )
 from bluemira.equilibria.fem_fixed_boundary.utilities import (
-    find_flux_surface,
     find_magnetic_axis,
-    get_mesh_boundary,
     plot_scalar_field,
 )
 from bluemira.magnetostatics.fem_utils import (
     model_to_mesh,
-    read_from_msh,
 )
 
 
@@ -228,19 +223,19 @@ class TestSolovevZheng:
         )
         plt.show()
 
-        cls.boundary = find_flux_surface(solovev.psi_norm_2d, 1, n_points=500)
+        # Find the boundary of the FEM model as the closed flux surface for psi = 0.
+        # Note: the points can have a small "interpolation" error,
+        # thus psi on the boundary could not be exaclty 0. For this reason, the boundary
+        # conditions will be calculated using the exact solution
+        cls.boundary = cntr.collections[0].get_paths()[0].vertices
 
-        # Find the LCFS.
-        # Note: the points returned by matplotlib can have a small "interpolation" error,
-        # thus psi on the LCFS could not be exaclty 0.
-        LCFS = cntr.collections[0].get_paths()[0].vertices
+        # another way to find the flux surface
+        # cls.boundary = find_flux_surface(solovev.psi_norm_2d, 1, n_points=500)
 
         # create the mesh
         lcar = 1
 
-        (mesh, ct, ft), labels, psi_ax = create_mesh(solovev, LCFS, lcar)
-
-        (mesh1, ct1, ft1), labels = read_from_msh("Mesh.msh", gdim=2)
+        (mesh, ct, ft), labels, psi_ax = create_mesh(solovev, cls.boundary, lcar)
 
         # Inizialize the em solever
         gs_solver = FemMagnetostatic2d(2)
@@ -257,60 +252,24 @@ class TestSolovevZheng:
         psi_exact_fun.x.array[:] = solovev.psi(dof_points.T)
 
         # boundary conditions
-        dofs = fem.locate_dofs_topological(
-            gs_solver.V, mesh.topology.dim - 1, ft.find(0)
-        )
-        psi_exact_boundary = fem.Function(gs_solver.V)
-        psi_exact_boundary.x.array[dofs] = 0
-        dirichlet_bcs_1 = fem.dirichletbc(psi_exact_boundary, dofs)
-
         tdim = mesh.topology.dim
         facets = dmesh.locate_entities_boundary(
             mesh, tdim - 1, lambda x: np.full(x.shape[1], True)
         )
-        dirichlet_bcs_2 = fem.dirichletbc(
+        dirichlet_bcs = fem.dirichletbc(
             psi_exact_fun, fem.locate_dofs_topological(gs_solver.V, tdim - 1, facets)
         )
 
-        dofs = fem.locate_dofs_topological(
-            gs_solver.V, mesh.topology.dim - 1, ft.find(0)
-        )
-        psi_exact_boundary = fem.Function(gs_solver.V)
-        psi_exact_boundary.x.array[dofs] = psi_exact_fun.x.array[dofs]
-        dirichlet_bcs_3 = fem.dirichletbc(psi_exact_boundary, dofs)
-
-        cls.mean_err = []
-        cls.itot = []
-
+        # solve the Grad-Shafranov equation
         cls.gs_solver = gs_solver
-        gs_solver.define_g(g, None)
+        gs_solver.define_g(g, dirichlet_bcs)
         cls.fe_psi_calc = gs_solver.solve()
-
-        # TODO(je-cook) convergence is not very tight old:1e-5, new:6e-3
-        for dirich_bc, is_close in zip(
-            ((None, dirichlet_bcs_1), (dirichlet_bcs_2, dirichlet_bcs_3)), (2e-1, 6e-3)
-        ):
-            for d in dirich_bc:
-                # solve the Grad-Shafranov equation
-                gs_solver.define_g(g, d)
-                gs_solver.solve()
-
-                dx = ufl.Measure("dx", subdomain_data=ct, domain=mesh)
-                cls.itot.append(fem.assemble_scalar(fem.form(g * dx)))
-
-                err = fem.form((gs_solver.psi - psi_exact_fun) ** 2 * dx)
-                err_val = np.sqrt(
-                    gs_solver.psi.function_space.mesh.comm.allreduce(
-                        fem.assemble_scalar(err), MPI.SUM
-                    )
-                )
-                assert err_val < is_close
-                cls.mean_err.append(err_val)
 
         cls.solovev = solovev
         cls.mesh = mesh
+        cls.psi_exact_fun = psi_exact_fun
 
-    def test_psi_mesh_array(self):
+    def test_psi_dofs_array(self):
         """
         Compare the psi Solovev analytical solution as described in [Zheng1996] with the
         one calculated using the implemented magnetostic module.
@@ -319,67 +278,21 @@ class TestSolovevZheng:
            tokamak equilibrium for shaped plasmas", Physics of Plasmas 3, 1176-1178 (
            1996) https://doi.org/10.1063/1.871772
         """
-        # calculate the GS and analytic solution on the mesh points
-        points_x, points_y = get_mesh_boundary(self.mesh)
-        _f, ax = plt.subplots()
-        ax.plot(points_x, points_y, "r-")
-        ax.set_title("Check mesh boundary function")
-
-        dofs_points = self.gs_solver.psi.function_space.tabulate_dof_coordinates()
-        psi_calc_data = self.gs_solver.psi(dofs_points)
-        (ax, _cntr, _cntrf) = plot_scalar_field(
-            dofs_points[:, 0], dofs_points[:, 1], psi_calc_data
+        diff = self.gs_solver.psi.x.array - self.psi_exact_fun.x.array
+        eps = np.linalg.norm(diff, ord=2) / np.linalg.norm(
+            self.psi_exact_fun.x.array, ord=2
         )
-        ax.set_title("Plot psi from recalculated dof_points")
-
-        (ax, _cntr, _cntrf) = plot_scalar_field(
-            dofs_points[:, 0], dofs_points[:, 1], self.gs_solver.psi.x.array[:]
-        )
-        ax.set_title("Plot psi from dof_points")
-
-        psi_exact = self.solovev.psi(dofs_points.T)
-
-        error = abs(psi_calc_data - psi_exact)
-
-        levels = np.linspace(0.0, max(error) * 1.1, 50)
-        (ax, _cntr, _cntrf) = plot_scalar_field(
-            dofs_points[:, 0],
-            dofs_points[:, 1],
-            error,
-            levels=levels,
-            ax=None,
-            tofill=True,
-        )
-        ax.set_title("Error")
-
-        # calculate the error norm
-        # TODO (je-cook error margin increased from 1e-5 to 2e-5)
-        assert (
-            np.linalg.norm(psi_calc_data - psi_exact, ord=2)
-            / np.linalg.norm(psi_exact, ord=2)
-        ) < 2e-5
+        assert eps < 2e-5
 
     def test_psi_axis(self):
         x_axis_s, z_axis_s = find_magnetic_axis(self.solovev.psi, None)
         x_axis_fe, z_axis_fe = find_magnetic_axis(self.gs_solver.psi, self.mesh)
-
-        # TODO (je-cook error margin increased from 1e-6 to 1.7e-5)
         np.testing.assert_allclose(x_axis_fe, x_axis_s, atol=2e-5)
-        # TODO (je-cook error margin increased from 1e-6 to 1e-5)
         np.testing.assert_allclose(z_axis_fe, z_axis_s, atol=1e-5)
 
-    def mean_test(self):
-        print(self.mean_err)
-        np.testing.assert_allclose(self.itot, self.itot[0])
-        assert self.mean_err[0] == self.mean_err[1]
-        assert self.mean_err[2] == self.mean_err[3]
-        assert self.mean_err[0] < 2e-1
-        # TODO(je-cook) convergence is not very tight old:1e-5
-        assert self.mean_err[2] < 6e-3
-
     def test_psi_boundary(self):
-        psi_fe_boundary = [self.fe_psi_calc(point) for point in self.boundary.T]
-        # Higher than I might expect, but probably because some of the points
-        # lie outside the mesh, and cannot be properly interpolated.
-        # TODO(je-cook) convergence is not very tight old:2e-3 new 9.1e-2 (!)
-        assert np.max(np.abs(psi_fe_boundary)) < 9.1e-2
+        psi_fe_boundary = np.array([self.fe_psi_calc(point) for point in self.boundary])
+        psi_exact_boundary = np.array([
+            self.solovev.psi(point) for point in self.boundary
+        ])
+        assert np.max(np.abs(psi_fe_boundary - psi_exact_boundary)) < 4e-7

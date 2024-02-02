@@ -37,14 +37,13 @@ Application of the dolfin fem 2D magnetostatic to a single coil problem
 # Import necessary module definitions.
 
 # %%
+import time
 from pathlib import Path
 
 import gmsh
 import matplotlib.pyplot as plt
 import numpy as np
-import pyvista
 from dolfinx.io import XDMFFile
-from dolfinx.plot import vtk_mesh
 from matplotlib.axes import Axes
 from mpi4py import MPI
 
@@ -59,10 +58,11 @@ from bluemira.magnetostatics.fem_utils import (
     Association,
     create_j_function,
     model_to_mesh,
-    pyvista_plot_show_save,
 )
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 from bluemira.mesh import meshing
+
+start = time.time()
 
 # %%
 
@@ -79,6 +79,8 @@ lwire = 0.1  # mesh characteristic length for each segment
 
 nenclo = 20  # number of external enclosure divisions
 lenclo = 0.5  # mesh characteristic length for each segment
+
+lcar_axis = 0.1  # axis characteristic length
 
 # enclosure
 theta_encl = np.linspace(np.pi / 2, -np.pi / 2, nenclo)
@@ -110,8 +112,6 @@ poly_enclo_ext.mesh_options = {"lcar": lenclo_ext, "physical_group": "poly_enclo
 enclosure_ext = BluemiraFace([poly_enclo_ext])
 enclosure_ext.mesh_options.physical_group = "enclo_ext"
 
-lcar_axis = 0.05
-
 poly_enclo1 = make_polygon(enclosure_points[0:2])
 poly_enclo1.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_enclo1"}
 
@@ -134,7 +134,7 @@ coil_points = [[r_coil[ii], z_coil[ii], 0] for ii in range(r_coil.size)]
 
 poly_coil = make_polygon(coil_points, closed=True)
 lcar_coil = np.ones([poly_coil.vertexes.shape[1], 1]) * lwire
-poly_coil.mesh_options = {"lcar": 0.01, "physical_group": "poly_coil"}
+poly_coil.mesh_options = {"lcar": lwire, "physical_group": "poly_coil"}
 
 coil = BluemiraFace([poly_coil])
 coil.mesh_options.physical_group = "coil"
@@ -170,13 +170,13 @@ with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
     xdmf.write_meshtags(ft, mesh.geometry)
     xdmf.write_meshtags(ct, mesh.geometry)
 
-with pyvista_plot_show_save("cell_tags.png") as plotter:
-    grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
-    num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
-    grid.cell_data["Marker"] = ct.values[ct.indices < num_local_cells]
-    grid.set_active_scalars("Marker")
-    actor = plotter.add_mesh(grid, show_edges=True)
-    plotter.view_xy()
+# with pyvista_plot_show_save("cell_tags.png") as plotter:
+#     grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
+#     num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
+#     grid.cell_data["Marker"] = ct.values[ct.indices < num_local_cells]
+#     grid.set_active_scalars("Marker")
+#     actor = plotter.add_mesh(grid, show_edges=True)
+#     plotter.view_xy()
 
 # %%
 em_solver = FemMagnetostatic2d(2)
@@ -207,7 +207,7 @@ em_solver.solve()
 # 1) Along the z axis (analytical solution)
 
 # %%
-r_offset = 0.1
+r_offset = 2 * lcar_axis
 
 z_points_axis = np.linspace(0, R, 200)
 r_points_axis = np.zeros(z_points_axis.shape) + r_offset
@@ -242,7 +242,7 @@ plt.show()
 # %%
 z_offset = 100 * ri
 
-points_x = np.linspace(0, R, 200)
+points_x = np.linspace(r_offset, R, 200)
 points_z = np.zeros(z_points_axis.shape) + z_offset
 
 new_points = np.array([points_x, points_z, 0 * points_z]).T
@@ -280,3 +280,5 @@ ax.legend()
 ax.set_xlabel("r (m)")
 ax.set_ylabel("error (T)")
 plt.show()
+
+print(time.time() - start)

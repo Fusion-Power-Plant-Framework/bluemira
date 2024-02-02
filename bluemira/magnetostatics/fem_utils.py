@@ -184,15 +184,30 @@ def closest_point_in_mesh(mesh: Mesh, points: np.ndarray) -> np.ndarray:
     entities = np.arange(num_entities_local, dtype=np.int32)
     midpoint_tree = geometry.create_midpoint_tree(mesh, tdim, entities)
     closest_entities = geometry.compute_closest_entity(tree, midpoint_tree, mesh, points)
-    _colliding_entity_bboxes = geometry.compute_collisions_points(tree, points)
+    # _colliding_entity_bboxes = geometry.compute_collisions_points(tree, points)
     geom_dofs = cpp.mesh.entities_to_geometry(
         mesh._cpp_object, tdim, np.atleast_2d(closest_entities), False
     )
     # TODO (ivan): compute_distance_gjk must to be applied point to point
+
+    dist = []
+    min_arg_dist = []
+    for i, p in enumerate(points):
+        temp = np.array([
+            np.linalg.norm(geometry.compute_distance_gjk(p, mesh.geometry.x[dof]))
+            for dof in geom_dofs[i]
+        ])
+        dist.append(temp)
+        min_arg_dist.append(np.argmin(temp))
+
     new_points = np.array([
-        p - geometry.compute_distance_gjk(p, mesh.geometry.x[geom_dofs[i][0]])
+        p
+        - geometry.compute_distance_gjk(
+            p, mesh.geometry.x[geom_dofs[i][min_arg_dist[i]]]
+        )
         for i, p in enumerate(points)
     ])
+
     if len(shape) == 1:
         new_points = new_points[0]
     return new_points
