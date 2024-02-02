@@ -8,7 +8,7 @@ PROCESS teardown functions
 """
 
 from pathlib import Path
-from typing import Dict, Iterable, List, Union
+from typing import Any, Dict, Iterable, List, Union
 
 import numpy as np
 
@@ -71,7 +71,7 @@ class Teardown(CodesTeardown):
         """
         Teardown the PROCESS solver.
 
-        This loads the MFile in the run directory and maps its outputs
+        This loads the MFile in the read directory and maps its outputs
         to bluemira parameters.
         """
         self._load_mfile(Path(self.read_directory, "MFILE.DAT"), recv_all=False)
@@ -80,7 +80,7 @@ class Teardown(CodesTeardown):
         """
         Teardown the PROCESS solver.
 
-        This loads the MFile in the run directory and maps its outputs
+        This loads the MFile in the read directory and maps its outputs
         to bluemira parameters.
         """
         self._load_mfile(Path(self.read_directory, "MFILE.DAT"), recv_all=True)
@@ -157,6 +157,59 @@ class Teardown(CodesTeardown):
         self._mfile_wrapper = _MFileWrapper(path, self._name)
         self._mfile_wrapper.read()
         return self._mfile_wrapper
+
+    def _get_output_or_raise(
+        self, external_outputs: Dict[str, Any], parameter_name: str
+    ):
+        output_value = external_outputs.get(parameter_name)
+
+        if output_value is not None:
+            return output_value
+
+        # The parameter may have become obsolete,
+        # try to update the name and check again
+        updated_parameter_name = update_obsolete_vars(parameter_name)
+
+        # no update, not obsolete, just no value found
+        if updated_parameter_name == parameter_name:
+            bluemira_warn(
+                f"No value for output parameter '{parameter_name}' from code "
+                f"'{self._name}', setting value to None."
+            )
+            return None
+
+        # updated, but remove
+        if updated_parameter_name is None:
+            bluemira_warn(
+                f"{parameter_name} has become obsolete and been removed, "
+                "setting the value to None."
+            )
+            return None
+
+        # updated, but split into multiple parameters
+        if isinstance(updated_parameter_name, list):
+            if len(updated_parameter_name) == 1:
+                updated_parameter_name = updated_parameter_name[0]
+            else:
+                raise CodesError(
+                    f"{parameter_name} has become obsolete and been split "
+                    f"into {updated_parameter_name}. This must be handled manually."
+                ) from None
+
+        output_value = external_outputs.get(updated_parameter_name)
+        if output_value is None:
+            bluemira_warn(
+                f"{parameter_name} has become obsolete and set to "
+                f"{updated_parameter_name}, however no value was found, "
+                "setting the value to None."
+            )
+            return None
+
+        bluemira_warn(
+            f"{parameter_name} has become obsolete and set to "
+            f"{updated_parameter_name}."
+        )
+        return output_value
 
 
 class _MFileWrapper:
