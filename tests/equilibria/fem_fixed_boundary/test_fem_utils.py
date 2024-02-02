@@ -54,7 +54,7 @@ def create_test_mesh(dl: float = 2, lcar: float = 0.1):
 
 class TestFemUtils:
     def setup_method(self):
-        self.l = 1
+        self.l = 3
         self.lcar = 0.1
         (self.mesh, self.ct, self.ft), self.labels = create_test_mesh(self.l, self.lcar)
 
@@ -65,7 +65,7 @@ class TestFemUtils:
             closest_point_in_mesh(self.mesh, single_point), closest_point
         )
 
-        points = np.array([[0, 0, 0], [-1, 0, 0], [-1, self.l, 0]])
+        points = np.array([[0, 0, 0], [-1, -1, 0], [-1, self.l, 0]])
         closest_points = np.array([[0, 0, 0], [0, 0, 0], [0, self.l, 0]])
         np.testing.assert_allclose(
             closest_point_in_mesh(self.mesh, points), closest_points
@@ -84,4 +84,4 @@ class TestFemUtils:
         func = BluemiraFemFunction(V)
         func.x.array[:] = np.array([expr(x) for x in dofs_points])
         area = integrate_f(func, self.mesh, self.ct, 1)
-        assert np.allclose(area, 0.5 * self.l**2)
+        assert np.allclose(area, 0.5 * self.l**2 * self.l)
