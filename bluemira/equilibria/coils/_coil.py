@@ -133,22 +133,22 @@ class Coil(CoilFieldsMixin):
     """
 
     __slots__ = (
-        "_x",
-        "_z",
-        "_dx",
-        "_dz",
-        "_discretisation",
-        "_current",
-        "_j_max",
         "_b_max",
         "_ctype",
-        "name",
-        "n_turns",
-        "_number",
-        "_flag_sizefix",
+        "_current",
         "_current_radius",
+        "_discretisation",
+        "_dx",
+        "_dz",
+        "_flag_sizefix",
+        "_j_max",
+        "_number",
+        "_x",
         "_x_boundary",
+        "_z",
         "_z_boundary",
+        "n_turns",
+        "name",
     )
 
     def __init__(

@@ -30,7 +30,7 @@ class FreeBoundary:
         The grid upon which to apply the free Dirichlet boundary condition
     """
 
-    __slots__ = ["dx", "dz", "edges", "f_greens"]
+    __slots__ = ("dx", "dz", "edges", "f_greens")
 
     def __init__(self, grid: Grid):
         x, z = grid.x, grid.z

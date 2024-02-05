@@ -78,21 +78,21 @@ class CrossSection:
 
     __slots__ = (
         "area",
-        "i_yy",
-        "i_zz",
-        "i_zy",
-        "ei_yy",
-        "ei_zz",
-        "ei_zy",
-        "j",
         "area_sy",
         "area_sz",
-        "ry",
-        "rz",
+        "centroid_geom",
+        "ei_yy",
+        "ei_zy",
+        "ei_zz",
+        "geometry",
+        "i_yy",
+        "i_zy",
+        "i_zz",
+        "j",
         "qyy",
         "qzz",
-        "centroid_geom",
-        "geometry",
+        "ry",
+        "rz",
         "y",
         "z",
     )
@@ -466,7 +466,7 @@ class AnalyticalCompositeCrossSection(CrossSection):
         The ordered list of Materials to use for the geometry
     """
 
-    __slots__ = ("ea", "nu", "gj", "rho")
+    __slots__ = ("ea", "gj", "nu", "rho")
 
     def __init__(self, geometry: BluemiraFace, materials: List[StructuralMaterial]):
         super().__init__()

@@ -34,16 +34,16 @@ class Node:
     """
 
     __slots__ = (
+        "connections",
+        "displacements",
+        "id_number",
+        "loads",
+        "reactions",
+        "supports",
+        "symmetry",
         "x",
         "y",
         "z",
-        "id_number",
-        "displacements",
-        "supports",
-        "symmetry",
-        "loads",
-        "reactions",
-        "connections",
     )
 
     def __init__(self, x: float, y: float, z: float, id_number: int):
