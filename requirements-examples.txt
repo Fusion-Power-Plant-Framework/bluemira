@@ -20,7 +20,7 @@ jupyter-client==8.6.0
 jupyter-core==5.7.1
 jupyterlab-pygments==0.3.0
 jupytext==1.16.1
-MarkupSafe==2.1.4
+MarkupSafe==2.1.5
 matplotlib-inline==0.1.6
 mistune==3.0.2
 nbclient==0.7.4
