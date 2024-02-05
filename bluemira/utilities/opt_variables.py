@@ -17,6 +17,7 @@ from typing import Dict, Generator, Optional, TextIO, TypedDict, Union
 
 import numpy as np
 from tabulate import tabulate
+from typing_extensions import NotRequired
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import OptVariablesError
@@ -27,9 +28,9 @@ class OptVarVarDictValueT(TypedDict, total=False):
     """Typed dictionary for a the values of an OptVariable from a var_dict."""
 
     value: float
-    lower_bound: float
-    upper_bound: float
-    fixed: bool
+    lower_bound: NotRequired[float]
+    upper_bound: NotRequired[float]
+    fixed: NotRequired[bool]
 
 
 VarDictT = Dict[str, OptVarVarDictValueT]
