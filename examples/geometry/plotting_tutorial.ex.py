@@ -403,6 +403,9 @@ plt.show(block=True)
 #
 # Creates a `Component` and plots it in the xz plane using matplotlib defaults.
 # Here we override some defaults and make our custom set of plot options.
+# The custom setting of red loses out in priority to c3 comp being set specifically
+# to green. In latter 2 plots shows that returns to component default settings when
+# custom options are default or removed.
 
 # %%
 group = Component("Components")
@@ -412,6 +415,11 @@ my_group_options["face_options"] = {"color": "red"}
 c1 = PhysicalComponent("Comp1", face, parent=group)
 c2 = PhysicalComponent("Comp2", wface, parent=group)
 c3 = PhysicalComponent("Comp3", w1face, parent=group)
+c3.plot_options.face_options["color"] = "green"
+display.plot_2d(group, **my_group_options)
+my_group_options["face_options"] = {"color": "blue"}
+display.plot_2d(group, **my_group_options)
+my_group_options["face_options"] = {}
 display.plot_2d(group, **my_group_options)
 
 # %% [markdown]
