@@ -79,7 +79,7 @@ class TestFemUtils:
         def expr(x):
             return x[0]
 
-        V = FunctionSpace(self.mesh, ("CG", 1))  # noqa: N806
+        V = FunctionSpace(self.mesh, ("Lagrange", 1))  # noqa: N806
         dofs_points = V.tabulate_dof_coordinates()
         func = BluemiraFemFunction(V)
         func.x.array[:] = np.array([expr(x) for x in dofs_points])

@@ -227,7 +227,7 @@ class TestSolovevZheng:
         # Note: the points can have a small "interpolation" error,
         # thus psi on the boundary could not be exaclty 0. For this reason, the boundary
         # conditions will be calculated using the exact solution
-        cls.boundary = cntr.collections[0].get_paths()[0].vertices
+        cls.boundary = cntr.get_paths()[0].vertices
 
         # another way to find the flux surface
         # cls.boundary = find_flux_surface(solovev.psi_norm_2d, 1, n_points=500)

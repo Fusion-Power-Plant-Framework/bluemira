@@ -235,7 +235,7 @@ if __name__ == "__main__":
     # Find the LCFS.
     # Note: the points returned by matplotlib can have a small "interpolation" error,
     # thus psi on the LCFS could not be exaclty 0.
-    LCFS = cntr.collections[0].get_paths()[0].vertices
+    LCFS = cntr.get_paths()[0].vertices
 
     # create the mesh
     lcar = 1
