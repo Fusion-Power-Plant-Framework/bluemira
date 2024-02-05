@@ -9,7 +9,7 @@ import json
 import pprint
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, Iterable, Tuple, Type, TypeVar, Union
+from typing import Any, Dict, Iterable, Optional, Tuple, Type, TypeVar, Union
 
 from bluemira.base.error import ReactorConfigError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
@@ -93,7 +93,7 @@ class ReactorConfig:
     def __init__(
         self,
         config_path: Union[str, Path, dict],
-        global_params_type: Type[_PfT],
+        global_params_type: Optional[Type[_PfT]] = None,
         warn_on_duplicate_keys: bool = False,
         warn_on_empty_local_params: bool = False,
         warn_on_empty_config: bool = False,
@@ -108,7 +108,9 @@ class ReactorConfig:
 
         self.config_data = config_data
         self.global_params = make_parameter_frame(
-            self.config_data.get(_PARAMETERS_KEY, {}),
+            self.config_data.get(
+                _PARAMETERS_KEY, None if global_params_type is None else {}
+            ),
             global_params_type,
         )
 
