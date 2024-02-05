@@ -113,6 +113,8 @@ class BMUnitRegistry(UnitRegistry):
         self.define("@alias ppm = atomic_parts_per_million = appm")
         # Other currencies need to be set up in a new context
         self.define("USD = [currency]")
+        # EU directive volt-ampere reactive is lower case
+        self.define("var = VA")
 
     def _energy_temperature_context(self):
         """
