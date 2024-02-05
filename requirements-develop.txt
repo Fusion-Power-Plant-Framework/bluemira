@@ -23,7 +23,7 @@ myst-nb==1.0.0rc0
 myst-parser==2.0.0
 nbclient==0.7.4
 nodeenv==1.8.0
-platformdirs==4.1.0
+platformdirs==4.2.0
 pluggy==1.4.0
 pre-commit==3.5.0
 Pygments==2.17.2
