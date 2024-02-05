@@ -115,7 +115,8 @@ class LowerPortKOZDesigner(Designer):
         )
 
         duct_straight_inner_extrude_boundary = self._straight_duct_inner_yz_boundary(
-            straight_top_inner_pt, straight_bot_inner_pt
+            straight_top_inner_pt,
+            straight_bot_inner_pt,
         )
 
         return (
@@ -133,7 +134,7 @@ class LowerPortKOZDesigner(Designer):
     def _half_beta(self) -> float:
         return np.pi / self.params.n_TF.value
 
-    def _get_div_pts_at_angle(self) -> Tuple[Tuple, Tuple]:
+    def _get_div_pts_at_angle(self) -> Tuple[Tuple[float, ...], ...]:
         div_z_top = self.divertor_face.bounding_box.z_max
         div_z_bot = self.divertor_face.bounding_box.z_min
 
@@ -184,6 +185,8 @@ class LowerPortKOZDesigner(Designer):
         inboard points and uses the port width to make the boundary.
         """
         x_point = straight_top_inner_pt[0]
+
+        # restrict port size of angled duct to port_width
         y_size = self.port_width / 2
 
         return make_polygon(
@@ -204,6 +207,8 @@ class LowerPortKOZDesigner(Designer):
         self, ib_div_pt_padded: Tuple, ob_div_pt_padded: Tuple
     ):
         def _calc_y_point(x_point):
+            # TODO(je-cook) This functions assumes the TF coil is circular
+            # this is not a great approximation, in future could look at otho projection.
             x_meet = self.tf_coil_thickness / np.sin(self._half_beta)
             x_len = x_point - x_meet
 
@@ -215,8 +220,10 @@ class LowerPortKOZDesigner(Designer):
 
             return x_len * np.tan(self._half_beta)
 
-        ib_inner_y = _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk
-        ob_inner_y = _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk
+        # TODO alternative limit
+        flat_y_max = self.port_width / 2
+        ib_inner_y = min(flat_y_max, _calc_y_point(ib_div_pt_padded[0]) - self.wall_tk)
+        ob_inner_y = min(flat_y_max, _calc_y_point(ob_div_pt_padded[0]) - self.wall_tk)
 
         # check if the space between the y-points is large enough for the
         # divertor to fit through:
@@ -334,16 +341,25 @@ class LowerPortKOZDesigner(Designer):
             )
 
         # find the top and bottom itc points
-        itc_top_pt = max(itc_pts, key=lambda p: p[2])
-        itc_bot_pt = min(itc_pts, key=lambda p: p[2])
+        itc_top_ob_pt = max(itc_pts, key=lambda p: p[2])
+        itc_bot_ib_pt = min(itc_pts, key=lambda p: p[2])
+
         # remap to 2D point
-        itc_top_pt = (itc_top_pt[0], itc_top_pt[2])
-        itc_bot_pt = (itc_bot_pt[0], itc_bot_pt[2])
+        itc_top_ob_pt = (itc_top_ob_pt[0], itc_top_ob_pt[2])
+        itc_bot_ib_pt = (itc_bot_ib_pt[0], itc_bot_ib_pt[2])
+
+        if (
+            self.params.lower_port_angle.value < -45  # noqa: PLR2004
+            and itc_top_ob_pt[0] < itc_bot_ib_pt[0]
+        ):
+            # This is a weird edge case where the 'top' x point is more
+            # inboard than the 'bottom' x point
+            itc_top_ob_pt, itc_bot_ib_pt = itc_bot_ib_pt, itc_top_ob_pt
 
         # choose corner point
-        topleft_corner_pt = itc_bot_pt
+        topleft_corner_pt = itc_bot_ib_pt
         if self.params.lower_port_angle.value > -45:  # noqa: PLR2004
-            topleft_corner_pt = itc_top_pt
+            topleft_corner_pt = itc_top_ob_pt
 
         topright_corner_pt = (
             x_duct_extent,
@@ -362,7 +378,7 @@ class LowerPortKOZDesigner(Designer):
 
         # check if the left edge goes below the angled duct when
         # the corner point is the top itc point (i.e. angle > -45)
-        if topleft_corner_pt == itc_top_pt:
+        if topleft_corner_pt == itc_top_ob_pt:
             left_e = self._make_xz_wire_from_points(topleft_corner_pt, botleft_corner_pt)
             l_e_itc_pts = self._intersection_points(left_e, angled_duct_boundary)
             if len(l_e_itc_pts) == 1:
