@@ -31,18 +31,18 @@ class Result:
     Container class for storing results
     """
 
-    __slots__ = [
-        "geometry",
-        "load_case",
-        "deflections",
-        "reactions",
-        "deflections_xyz",
+    __slots__ = (
         "_cycle_sym",
-        "_stresses",
+        "_max_deflections",
         "_max_stresses",
         "_safety_factors",
-        "_max_deflections",
-    ]
+        "_stresses",
+        "deflections",
+        "deflections_xyz",
+        "geometry",
+        "load_case",
+        "reactions",
+    )
 
     def __init__(
         self,
