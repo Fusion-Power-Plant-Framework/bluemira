@@ -230,7 +230,7 @@ class FemMagnetostatic2d:
         if degree == 1:
             base_eltype = ("DG", 0)
         elif degree > 1:
-            base_eltype = ("CG", degree - 1)
+            base_eltype = ("Lagrange", degree - 1)
         else:
             raise ValueError(
                 f"Cannot calculate B for ({self.V.ufl_element().family()}"
