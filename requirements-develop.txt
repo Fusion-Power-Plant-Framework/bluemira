@@ -30,7 +30,7 @@ Pygments==2.17.2
 pytest==8.0.0
 pytest-cov==4.1.0
 pytest-html==4.1.1
-pytest-metadata==3.0.0
+pytest-metadata==3.1.0
 pytest-json-report==1.5.0
 PyYAML==6.0.1
 requests==2.31.0
