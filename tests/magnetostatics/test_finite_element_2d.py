@@ -26,7 +26,7 @@ DATA_DIR = Path(Path(__file__).parent, "test_generated_data")
 
 
 class TestGetNormal:
-    def test_simple_thin_coil(self, tmp_path):
+    def test_simple_thin_coil(self, tmp_path):  # noqa: PLR0915, PLR0914
         """
         Compare the magnetic field on the axis of a coil with a very small
         cross-section calculated with the fem module and the analytic
@@ -43,10 +43,13 @@ class TestGetNormal:
         nwire = 20  # number of wire divisions
         lwire = 0.1  # mesh characteristic length for each segment
 
-        nenclo = 20  # number of external enclosure divisions
+        nenclo = 20  # number of enclosure divisions
         lenclo = 0.5  # mesh characteristic length for each segment
 
         lcar_axis = 0.1  # axis characteristic length
+
+        nenclo_ext = 40  # number of external enclosure divisions
+        lenclo_ext = 20  # mesh characteristic length for each segment
 
         # enclosure
         theta_encl = np.linspace(np.pi / 2, -np.pi / 2, nenclo)
@@ -59,8 +62,6 @@ class TestGetNormal:
             *[[r_encl[ii], z_encl[ii], 0] for ii in range(r_encl.size)],
         ])
 
-        nenclo_ext = 40
-        lenclo_ext = 20
         # external enclosure
         theta_encl_ext = np.linspace(np.pi / 2, -np.pi / 2, nenclo_ext)
         r_encl_ext = r_enclo_ext * np.cos(theta_encl_ext)
@@ -102,7 +103,7 @@ class TestGetNormal:
         coil_points = [[r_coil[ii], z_coil[ii], 0] for ii in range(r_coil.size)]
 
         poly_coil = make_polygon(coil_points, closed=True)
-        lcar_coil = np.ones([poly_coil.vertexes.shape[1], 1]) * lwire
+        _lcar_coil = np.ones([poly_coil.vertexes.shape[1], 1]) * lwire
         poly_coil.mesh_options = {"lcar": lwire, "physical_group": "poly_coil"}
 
         coil = BluemiraFace([poly_coil])
@@ -112,20 +113,22 @@ class TestGetNormal:
         enclosure.mesh_options.physical_group = "enclo"
 
         c_universe = Component(name="universe")
-        c_enclo_ext = PhysicalComponent(
+        _c_enclo_ext = PhysicalComponent(
             name="enclosure_Ext", shape=enclosure_ext, parent=c_universe
         )
-        c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
-        c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
+        _c_enclo = PhysicalComponent(
+            name="enclosure", shape=enclosure, parent=c_universe
+        )
+        _c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
         # Create the mesh (by default, mesh is stored in the file Mesh.msh")
-        meshfiles = [
-            Path(tmp_path, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
-        ]
+        meshing.Mesh(
+            meshfile=[
+                Path(tmp_path, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]
+            ]
+        )(c_universe, dim=2)
 
-        meshing.Mesh(meshfile=meshfiles)(c_universe, dim=2)
-
-        (mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=2)
+        (mesh, ct, _ft), labels = model_to_mesh(gmsh.model, gdim=2)
         gmsh.write("Mesh.msh")
         gmsh.finalize()
 
@@ -147,10 +150,8 @@ class TestGetNormal:
         r_points_axis = np.zeros(z_points_axis.shape) + r_offset
         b_points = np.array([r_points_axis, z_points_axis, 0 * z_points_axis]).T
 
-        Bz_axis = em_solver.calculate_b()(b_points)
-        Bz_axis = Bz_axis[:, 1]
-        bz_points = b_points[:, 1]
-        B_z_teo = np.array([Bz_coil_axis(rc, 0, z, i_wire) for z in bz_points])
+        Bz_axis = em_solver.calculate_b()(b_points)[:, 1]
+        B_z_teo = np.array([Bz_coil_axis(rc, 0, z, i_wire) for z in b_points[:, 1]])
 
         np.testing.assert_allclose(Bz_axis, B_z_teo, atol=2e-4)
 
@@ -160,15 +161,12 @@ class TestGetNormal:
         points_x = np.linspace(r_offset, r_enclo_int, 200)
         points_z = np.zeros(z_points_axis.shape) + z_offset
 
-        new_points = np.array([points_x, points_z, 0 * points_z]).T
-        new_points = new_points[1:]
+        new_points = np.array([points_x, points_z, 0 * points_z]).T[1:]
 
-        B_fem = em_solver.calculate_b()(new_points)
-        Bx_fem = B_fem.T[0]
-        Bz_fem = B_fem.T[1]
+        Bx_fem, Bz_fem = em_solver.calculate_b()(new_points).T[[0, 1]]
 
-        g_psi, g_bx, g_bz = greens.greens_all(rc, 0, new_points[:, 0], new_points[:, 1])
-        g_psi *= i_wire
+        _g_psi, g_bx, g_bz = greens.greens_all(rc, 0, new_points[:, 0], new_points[:, 1])
+        _g_psi *= i_wire
         g_bx *= i_wire
         g_bz *= i_wire
 
