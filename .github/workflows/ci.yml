@@ -127,6 +127,6 @@ jobs:
         path: .report.json
 
     - name: "Upload coverage to Codecov"
-      uses: codecov/codecov-action@v3
+      uses: codecov/codecov-action@v4
       with:
         fail_ci_if_error: ${{ github.ref_name == 'develop' || github.ref_name == 'main' }}
