@@ -28,7 +28,6 @@ from ufl import (
     VectorElement,
     as_vector,
     dot,
-    ds,
     dx,
     grad,
 )
@@ -188,8 +187,8 @@ class FemMagnetostatic2d:
             #     self.V.element.interpolation_points(),
             # )
         else:
+            # neumann_bc_function * self.v * ds
             raise NotImplementedError
-            neumann_bc_function * self.v * ds
 
         # solve the system taking into account the boundary conditions
         self.L = self.g * self.v * dx - neumann_bc  # - neumann_bc_function * self.v * ds
