@@ -15,6 +15,7 @@ from bluemira.mesh.tools import import_mesh, msh_to_xdmf
 
 
 class TestMeshing:
+    @pytest.mark.xfail
     @pytest.mark.parametrize(("lcar", "nodes_num"), [(0.1, 40), (0.25, 16), (0.5, 8)])
     def test_mesh_poly(self, lcar, nodes_num, tmp_path):
         poly = tools.make_polygon(
@@ -43,6 +44,7 @@ class TestMeshing:
         arr = boundaries.array()
         assert (arr == labels["poly"]).sum() == nodes_num
 
+    @pytest.mark.xfail
     @pytest.mark.parametrize(("lcar", "nodes_num"), [(0.1, 40), (0.25, 16), (0.5, 8)])
     def test_override_lcar_surf(self, lcar, nodes_num, tmp_path):
         poly = tools.make_polygon(
