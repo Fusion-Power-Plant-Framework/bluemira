@@ -1684,7 +1684,7 @@ class PictureFrameTools:
         z2:
             Vertical position of bottom of limb [m]
         r_min:
-            Minimum radius of curvature
+            Minimum radius of curvature [m]
         axis:
             [x,y,z] vector normal to plane of parameterisation
 
