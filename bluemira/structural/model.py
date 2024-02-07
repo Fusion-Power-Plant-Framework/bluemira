@@ -54,19 +54,19 @@ def check_matrix_condition(matrix: np.ndarray, digits: int):
 
     err_txt = ""
     if condition_number > 1 / EPS:
-        err_txt = """
-            "Structural::FiniteElementModel:\n Singular stiffness matrix will "
-            "cause LinAlgErrors.\n"
+        err_txt = (
+            "Structural::FiniteElementModel:\n"
+            "Singular stiffness matrix will cause LinAlgErrors.\n"
             f"matrix condition number: {condition_number}"
-            """
+        )
 
     if digit_loss > digits:
         digit_loss = int(np.ceil(digit_loss))
 
-        err_txt = """
+        err_txt = (
             "Structural::FiniteElementModel:\n Ill-conditioned matrix"
             f"\n|\tAccuracy loss below the {digit_loss}-th digit."
-        """
+        )
 
     if err_txt:
         err_txt += "\nProbably worth checking model boundary conditions."
