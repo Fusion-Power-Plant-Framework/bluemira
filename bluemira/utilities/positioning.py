@@ -176,7 +176,7 @@ class RegionInterpolator(XZGeometryInterpolator):
         xz_coordinates = self._get_xz_coordinates()
         hull = ConvexHull(xz_coordinates.T)
         # Yes, the "area" of a 2-D scipy ConvexHull is its perimeter...
-        if not np.allclose(hull.area, geometry.length, atol=EPS):
+        if not np.allclose(hull.area, geometry.length, rtol=EPS, atol=0):
             raise PositionerError(
                 "RegionInterpolator can only handle convex geometries. Perimeter"
                 " difference between convex hull and geometry:"
