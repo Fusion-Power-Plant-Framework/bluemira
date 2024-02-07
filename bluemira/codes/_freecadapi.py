@@ -49,7 +49,7 @@ from PySide2.QtWidgets import QApplication
 from matplotlib import colors
 from pivy import coin, quarter
 
-from bluemira.base.constants import EPS, raw_uc
+from bluemira.base.constants import EPS, EPS_FREECAD, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadconfig import _freecad_save_config
@@ -349,7 +349,7 @@ def interpolate_bspline(
     if len(pntslist) < 2:  # noqa: PLR2004
         _err = "interpolate_bspline: not enough points"
         raise InvalidCADInputsError(_err + "\n")
-    if np.allclose(pntslist[0], pntslist[-1], rtol=0, atol=EPS):
+    if np.allclose(pntslist[0], pntslist[-1], rtol=EPS, atol=0):
         if len(pntslist) > 2:  # noqa: PLR2004
             if not closed:
                 bluemira_warn("interpolate_bspline: equal endpoints forced Closed")
@@ -959,7 +959,7 @@ def wire_value_at(wire: apiWire, distance: float) -> np.ndarray:
 
 
 def wire_parameter_at(
-    wire: apiWire, vertex: Iterable[float], tolerance: float = EPS * 10
+    wire: apiWire, vertex: Iterable[float], tolerance: float = EPS_FREECAD
 ) -> float:
     """
     Get the parameter value at a vertex along a wire.
@@ -1903,7 +1903,7 @@ def point_inside_shape(point: Iterable[float], shape: apiShape) -> bool:
     Whether or not the point is inside the shape
     """
     vector = apiVector(*point)
-    return shape.isInside(vector, EPS, True)
+    return shape.isInside(vector, EPS_FREECAD, True)
 
 
 # ======================================================================================
@@ -2026,7 +2026,9 @@ def _make_shapes_coaxis(shapes):
 # ======================================================================================
 
 
-def fix_wire(wire: apiWire, precision: float = EPS, min_length: float = MINIMUM_LENGTH):
+def fix_wire(
+    wire: apiWire, precision: float = EPS_FREECAD, min_length: float = MINIMUM_LENGTH
+):
     """
     Fix a wire by removing any small edges and joining the remaining edges.
 

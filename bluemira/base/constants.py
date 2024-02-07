@@ -551,6 +551,10 @@ def gcm3_to_kgm3(
 
 # Numpy's default float precision limit
 EPS = np.finfo(float).eps
+# FreeCAD's default tolerance is 1E-7, so correspondingly, we need a larger epsilon.
+# The following value happens to equal 1.1920929E-7, which satisifies the requirement.
+# We think that FreeCAD stores number as float 32 but we're not sure.
+EPS_FREECAD = np.finfo(np.float32).eps
 
 # Levi Civita Tensors
 E_IJK = np.zeros((3, 3, 3))

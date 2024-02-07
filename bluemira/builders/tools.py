@@ -27,7 +27,6 @@ from anytree import PreOrderIter
 import bluemira.base.components as bm_comp
 import bluemira.geometry as bm_geo
 from bluemira.base.components import PhysicalComponent
-from bluemira.base.constants import EPS
 from bluemira.base.error import BuilderError, ComponentError
 from bluemira.builders._varied_offset import varied_offset
 from bluemira.geometry.face import BluemiraFace
@@ -338,11 +337,17 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
     """
     centre = (0, 0, 0)
     axis = (0, 0, 1)
-    if np.isclose(r_inner, r_outer, rtol=0, atol=2 * EPS):
-        raise BuilderError(f"Cannot make an annulus where r_inner = r_outer = {r_inner}")
-
+    if r_inner <= 0 or r_outer <= 0:
+        raise ValueError(f"Cannot have a negative radius {r_inner=}, {r_outer=}.")
     if r_inner > r_outer:
         r_inner, r_outer = r_outer, r_inner
+
+    # Make sure that the annulus is thick enough even when they're in float32
+    # (FreeCAD stores numbers as float32 if I understand correctly)
+    if np.float32(r_outer) <= np.nextafter(np.float32(r_inner), np.inf):
+        raise BuilderError(
+            "Cannot make an annulus so thin that" f"{r_outer - r_inner = }mm"
+        )
 
     inner = make_circle(r_inner, center=centre, axis=axis)
     outer = make_circle(r_outer, center=centre, axis=axis)

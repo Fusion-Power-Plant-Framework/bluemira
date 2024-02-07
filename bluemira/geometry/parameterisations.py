@@ -37,6 +37,7 @@ import numpy as np
 import numpy.typing as npt
 from scipy.special import iv as bessel
 
+from bluemira.base.constants import EPS
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
