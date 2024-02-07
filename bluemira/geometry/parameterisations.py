@@ -1704,7 +1704,7 @@ class PictureFrameTools:
         eps = np.finfo(np.pi).resolution
         dx = x_mid - x_in
         expression_to_find_root_for = lambda x: np.sin(x) + (np.cos(x) - 1) * (z_in / dx)
-        theta = opt.bisect(expression_to_find_root_for, 0 + eps, 2 * np.pi - eps)
+        theta = optimize.bisect(expression_to_find_root_for, eps, 2 * np.pi - eps)
         r_taper = z_in / np.sin(theta) - r_min
         if r_taper < r_min:
             raise ValueError(
