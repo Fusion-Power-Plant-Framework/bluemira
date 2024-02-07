@@ -35,7 +35,7 @@ from typing import (
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-from scipy import optimize as opt
+from scipy import optimize
 from scipy.special import iv as bessel
 
 from bluemira.display.plotter import plot_2d
