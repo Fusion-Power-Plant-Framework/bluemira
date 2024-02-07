@@ -1701,7 +1701,8 @@ class PictureFrameTools:
             raise ValueError(
                 "the straight-curve transition point z_in" "must lie between z1 and z2."
             )
-        eps = np.finfo(np.pi).resolution
+        # epsilon must be larger than np.finfo().eps because of quirks of floats >2.0.
+        eps = np.finfo(2 * np.pi).resolution
         dx = x_mid - x_in
         expression_to_find_root_for = lambda x: np.sin(x) + (np.cos(x) - 1) * (z_in / dx)
         theta = optimize.bisect(expression_to_find_root_for, eps, 2 * np.pi - eps)
