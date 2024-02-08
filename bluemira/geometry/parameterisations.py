@@ -1693,13 +1693,9 @@ class PictureFrameTools:
         CAD Wire of the geometry
         """
         # Pre-calculations necessary
-        if z_in > z1:
+        if not (z2 < -z_in < 0 < z_in < z1):
             raise ValueError(
-                "the straight-curve transition point z_in" "must lie between z1 and z2."
-            )
-        if z_in > abs(z2):
-            raise ValueError(
-                "the straight-curve transition point z_in" "must lie between z1 and z2."
+                "the straight-curve transition point z_in must lie between z1 and z2."
             )
         # epsilon must be larger than np.finfo().eps because of quirks of floats >2.0.
         eps = np.finfo(2 * np.pi).resolution
