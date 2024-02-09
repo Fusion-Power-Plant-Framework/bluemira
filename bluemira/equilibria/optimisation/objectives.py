@@ -36,7 +36,7 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.find import get_legs
+from bluemira.equilibria.find_outer_field import LegFlux
 from bluemira.equilibria.flux_surfaces import (
     OpenFluxSurface,
     PartialOpenFluxSurface,
@@ -268,7 +268,7 @@ class MaximiseDivertorLegLength(ObjectiveFunction):
         """Objective function for an optimisation."""
         self.eq.coilset.get_control_coils().current = vector * self.scale
 
-        legs = get_legs(self.eq)
+        legs = LegFlux(self.eq).get_legs()
 
         if self.outer:
             leg = legs["lower_outer"][0]
