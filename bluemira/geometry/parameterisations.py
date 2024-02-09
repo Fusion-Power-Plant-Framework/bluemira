@@ -37,7 +37,6 @@ import numpy as np
 import numpy.typing as npt
 from scipy.special import iv as bessel
 
-from bluemira.base.constants import EPS
 from bluemira.display.plotter import plot_2d
 from bluemira.geometry.error import GeometryParameterisationError
 from bluemira.geometry.tools import (
@@ -1700,6 +1699,7 @@ class PictureFrameTools:
             )
         theta = 2 * np.arctan2(x_mid - x_in, z_taper)
         r_taper = z_taper / np.sin(theta) - r_min
+
         if r_taper < r_min or theta >= (np.pi / 2):
             raise GeometryParameterisationError(
                 f"Cannot achieve radius of curvature <= {r_min=}"
