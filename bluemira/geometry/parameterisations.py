@@ -35,7 +35,6 @@ from typing import (
 import matplotlib.pyplot as plt
 import numpy as np
 import numpy.typing as npt
-from scipy import optimize
 from scipy.special import iv as bessel
 
 from bluemira.display.plotter import plot_2d
@@ -1660,9 +1659,9 @@ class PictureFrameTools:
     def _make_tapered_inner_leg(
         x_in: float,
         x_mid: float,
-        z_in: float,
-        z1: float,
-        z2: float,
+        z_bot: float,
+        z_taper: float,
+        z_top: float,
         r_min: float,
         axis: Iterable[float] = (0, 1, 0),
     ) -> BluemiraWire:
@@ -1677,12 +1676,12 @@ class PictureFrameTools:
             Radial position of innermost point of limb [m]
         x_mid:
             Radial position of outer edge of limb [m]
-        z_in:
-            Vertical position of start of tapering [m]
-        z1:
-            Vertical position of top of limb [m]
-        z2:
+        z_bot:
             Vertical position of bottom of limb [m]
+        z_taper:
+            Vertical position of start of tapering [m]
+        z_top:
+            Vertical position of top of limb [m]
         r_min:
             Minimum radius of curvature [m]
         axis:
@@ -1693,32 +1692,30 @@ class PictureFrameTools:
         CAD Wire of the geometry
         """
         # Pre-calculations necessary
-        if not (z2 < -z_in < 0 < z_in < z1):
-            raise ValueError(
-                "the straight-curve transition point z_in must lie between z1 and z2."
+        if not (z_bot < -z_taper < 0 < z_taper < z_top):
+            raise GeometryParameterisationError(
+                "the straight-curve transition point z_taper must lie between"
+                "z_top and z_bot."
             )
-        # epsilon must be larger than np.finfo().eps because of quirks of floats >2.0.
-        eps = np.finfo(2 * np.pi).resolution
-        dx = x_mid - x_in
-        expression_to_find_root_for = lambda x: np.sin(x) + (np.cos(x) - 1) * (z_in / dx)
-        theta = optimize.bisect(expression_to_find_root_for, eps, 2 * np.pi - eps)
-        r_taper = z_in / np.sin(theta) - r_min
-        if r_taper < r_min:
-            raise ValueError(
+        theta = 2 * np.arctan2(x_mid - x_in, z_taper)
+        r_taper = z_taper / np.sin(theta) - r_min
+        if r_taper < r_min or theta >= (np.pi / 2):
+            raise GeometryParameterisationError(
                 f"Cannot achieve radius of curvature <= {r_min=}"
                 "as the taper (x_mid - x_in) is too deep for this given value of r_min."
             )
+
         theta_deg = np.rad2deg(theta)
 
         # bottom straight line
-        p1 = [x_mid, 0, z2]
-        p2 = [x_mid, 0, -z_in]
+        p1 = [x_mid, 0, z_bot]
+        p2 = [x_mid, 0, -z_taper]
         bot_straight = make_polygon([p1, p2], label="inner_limb_mid_down")
 
         # curve into taper
         bot_curve = make_circle(
             radius=r_min,
-            center=(x_mid - r_min, 0, -z_in),
+            center=(x_mid - r_min, 0, -z_taper),
             start_angle=0,
             end_angle=theta_deg,
             axis=(0, -1, 0),
@@ -1737,7 +1734,7 @@ class PictureFrameTools:
         # curve out of taper
         top_curve = make_circle(
             radius=r_min,
-            center=(x_mid - r_min, 0, z_in),
+            center=(x_mid - r_min, 0, z_taper),
             start_angle=360.0 - theta_deg,
             end_angle=0.0,
             axis=(0, -1, 0),
@@ -1745,8 +1742,8 @@ class PictureFrameTools:
         )
 
         # top straight line.
-        p6 = [x_mid, 0, z_in]
-        p7 = [x_mid, 0, z1]
+        p6 = [x_mid, 0, z_taper]
+        p7 = [x_mid, 0, z_top]
         top_straight = make_polygon([p6, p7], label="inner_limb_mid_up")
 
         return BluemiraWire(
@@ -2011,9 +2008,9 @@ class PictureFrame(
             return self.inner(
                 v.x1.value,
                 v.x4.value,
+                v.z2 + v.ri,
                 v.z3.value,
                 v.z1 - v.ri,
-                v.z2 + v.ri,
                 v.ri.value,
             )
         if self.inner is None:
