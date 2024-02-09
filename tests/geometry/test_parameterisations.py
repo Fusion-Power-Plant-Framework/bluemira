@@ -244,7 +244,6 @@ class TestComplexPictureFrame:
         assert len(wire._boundary) == 4
 
     @pytest.mark.parametrize(
-<<<<<<< HEAD
         ("x_in", "x_mid", "z_bot", "z_taper", "z_top", "r_min"),
         [
             # z_in is not z2<-z_in<0<z_in<z1
@@ -268,24 +267,6 @@ class TestComplexPictureFrame:
         _make_taper = PictureFrameTools._make_tapered_inner_leg
         with pytest.raises(GeometryParameterisationError):
             _make_taper(x_in, x_mid, z_bot, z_taper, z_top, r_min)
-=======
-        ("x_in", "x_mid", "z_in", "z1", "z2", "r_min"),
-        [
-            # ridiculously large radius minimum radius,
-            # so taper cannot be as deep as required.
-            (0.3, 2.0, 0.1, -3.0, 3.0, 100),
-            # z_in is not z2<-z_in<0<z_in<z1
-            (0.5, 2.0, 4.0, 3.0, 4.0, 0.5),
-            (0.5, 2.0, 4.0, 3.0, -4.0, 0.5),
-            (0.5, 2.0, 3.0, -3.0, -2.0, 0.5),
-            (0.5, 2.0, 3.0, -3.0, -4.0, 0.5),
-        ],
-    )
-    def test_inner_taper_must_be_sensible(self, x_in, x_mid, z_in, z1, z2, r_min):
-        """Check that the tapered inner leg of the PictureFrame must not error"""
-        with pytest.raises(ValueError, match="z_in must lie between z1 and z2."):
-            PictureFrameTools._make_tapered_inner_leg(x_in, x_mid, z_in, z1, z2, r_min)
->>>>>>> 2733c191 (Increased test coverage)
 
     @pytest.mark.parametrize(
         "vals",
