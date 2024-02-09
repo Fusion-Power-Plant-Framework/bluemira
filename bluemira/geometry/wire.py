@@ -13,10 +13,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.base.constants import EPS_FREECAD
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.base import BluemiraGeo, _Orientation
+from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import (
     GeometryError,

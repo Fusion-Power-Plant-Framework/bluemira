@@ -20,7 +20,6 @@ import abc
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from bluemira.base.constants import EPS
 from bluemira.geometry.constants import VERY_BIG
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import slice_shape
@@ -43,12 +42,12 @@ class XZGeometryInterpolator(abc.ABC):
     def __init__(self, geometry: BluemiraWire):
         self.geometry = geometry
 
-    def _get_xz_coordinates(self):
+    def _get_xz_coordinates(self, num_pts):
         """
         Get discretised x-z coordinates of the geometry.
         """
         coordinates = self.geometry.discretize(
-            byedges=True, dl=self.geometry.length / 1000
+            byedges=True, dl=self.geometry.length / num_pts
         )
         coordinates.set_ccw([0, 1, 0])
         return coordinates.xz
@@ -173,14 +172,17 @@ class RegionInterpolator(XZGeometryInterpolator):
         if not self.geometry.is_closed:
             raise PositionerError("RegionInterpolator can only handle closed wires.")
 
-        xz_coordinates = self._get_xz_coordinates()
+        xz_coordinates = self._get_xz_coordinates(10000)
         hull = ConvexHull(xz_coordinates.T)
         # Yes, the "area" of a 2-D scipy ConvexHull is its perimeter...
-        if not np.allclose(hull.area, geometry.length, rtol=EPS, atol=0):
+        if not np.allclose(hull.area, geometry.length, rtol=1e-4, atol=0):
             raise PositionerError(
-                "RegionInterpolator can only handle convex geometries. Perimeter"
-                " difference between convex hull and geometry:"
-                f" {hull.area - geometry.length}"
+                "RegionInterpolator can only handle simple convex geometries. "
+                "Perimeter difference between convex hull and geometry:"
+                f"{hull.area} - {geometry.length} ="
+                f"{hull.area - geometry.length}\n"
+                "This suggests that the shape is"
+                "too complex to be discretized accurately."
             )
 
     def to_xz(

@@ -49,12 +49,12 @@ from PySide2.QtWidgets import QApplication
 from matplotlib import colors
 from pivy import coin, quarter
 
-from bluemira.base.constants import EPS, EPS_FREECAD, raw_uc
+from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.codes._freecadconfig import _freecad_save_config
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
-from bluemira.geometry.constants import MINIMUM_LENGTH
+from bluemira.geometry.constants import EPS_FREECAD, MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:
