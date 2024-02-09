@@ -95,7 +95,7 @@ class CoilGroup(CoilGroupFieldsMixin):
 
     __slots__ = ("_coils", "_pad_size")
 
-    def __init__(self, *coils: Coil | CoilGroup[Coil]):
+    def __init__(self, *coils: Coil | CoilGroup):
         if any(not isinstance(c, Coil | CoilGroup) for c in coils):
             raise TypeError("Not all arguments are a Coil or CoilGroup.")
         self._coils = coils
@@ -211,7 +211,7 @@ class CoilGroup(CoilGroupFieldsMixin):
             for ff, *_args in zip(funclist, *args, strict=False):
                 ff(*_args, **kwargs)
 
-    def add_coil(self, *coils: Coil | CoilGroup[Coil]):
+    def add_coil(self, *coils: Coil | CoilGroup):
         """Add coils to the coil group"""
         self._coils = (*self._coils, *coils)
 
@@ -543,6 +543,16 @@ class CoilGroup(CoilGroupFieldsMixin):
         return self.__getter("name").tolist()
 
     @property
+    def primary_coil(self) -> Coil:
+        """Get primary coil, which is arbitrarily taken to
+        be the first (recursively) coil in the group.
+        """
+        c = self._coils[0]
+        if isinstance(c, CoilGroup):
+            return c.primary_coil
+        return c
+
+    @property
     def x(self) -> np.ndarray:
         """Get coil x positions"""
         return self.__getter("x")
@@ -735,7 +745,7 @@ class Circuit(CoilGroup):
 
     __slots__ = ()
 
-    def __init__(self, *coils: Coil | CoilGroup[Coil], current: float | None = None):
+    def __init__(self, *coils: Coil | CoilGroup, current: float | None = None):
         super().__init__(*coils)
         self.current = self._get_current() if current is None else current
 
@@ -745,7 +755,12 @@ class Circuit(CoilGroup):
             current = current[0]
         return current
 
-    def add_coil(self, *coils: Coil | CoilGroup[Coil]):
+    @property
+    def primary_group(self) -> Coil | CoilGroup:
+        """Get primary coil"""
+        return self._coils[0]
+
+    def add_coil(self, *coils: Coil | CoilGroup):
         """
         Add coil to circuit forcing the same current
         """
@@ -785,7 +800,7 @@ class SymmetricCircuit(Circuit):
 
     def __init__(
         self,
-        *coils: Coil | CoilGroup[Coil],
+        *coils: Coil | CoilGroup,
     ):
         symmetry_line: tuple | np.ndarray = ((0, 0), (1, 0))
 
@@ -800,10 +815,15 @@ class SymmetricCircuit(Circuit):
 
         self.modify_symmetry(symmetry_line)
         diff = self._symmetrise()
-        self._coils[1].x = self._coils[1].x - diff[0]
-        self._coils[1].z = self._coils[1].z - diff[1]
+        self.symmetric_group.x -= diff[0]
+        self.symmetric_group.z -= diff[1]
 
-    def modify_symmetry(self, symmetry_line: np.ndarray):
+    @property
+    def symmetric_group(self) -> Union[Coil, CoilGroup]:
+        """Get symmetric coil"""
+        return self._coils[1]
+
+    def modify_symmetry(self, symmetry_line: Union[np.ndarray, Tuple]):
         """
         Create a unit vector for the symmetry of the circuit
 
@@ -843,9 +863,17 @@ class SymmetricCircuit(Circuit):
         """
         cp = self._get_group_centre()
         cp[1] -= self._shift
+
         mirror = np.dot(self.sym_mat, cp.T)
         mirror[1] += self._shift
-        return np.array([np.mean(self._coils[1].x), np.mean(self._coils[1].z)]) - mirror
+
+        return (
+            np.array([
+                self._get_symmetric_group_x_centre(),
+                self._get_symmetric_group_z_centre(),
+            ])
+            - mirror
+        )
 
     @Circuit.x.setter
     def x(self, new_x: float):
@@ -854,8 +882,8 @@ class SymmetricCircuit(Circuit):
         """
         if isinstance(new_x, np.ndarray):
             new_x = np.mean(new_x[0])
-        self._coils[0].x = self._coils[0].x + new_x - self._get_group_x_centre()
-        self._coils[1].x = self._coils[1].x - self._symmetrise()[0]
+        self.primary_group.x += new_x - self._get_primary_group_x_centre()
+        self.symmetric_group.x -= self._symmetrise()[0]
 
     @Circuit.z.setter
     def z(self, new_z: float):
@@ -864,20 +892,31 @@ class SymmetricCircuit(Circuit):
         """
         if isinstance(new_z, np.ndarray):
             new_z = np.mean(new_z[0])
-        self._coils[0].z = self._coils[0].z + new_z - self._get_group_z_centre()
-        self._coils[1].z = self._coils[1].z + self._symmetrise()[1]
+        self.primary_group.z += new_z - self._get_primary_group_z_centre()
+        self.symmetric_group.z -= self._symmetrise()[1]
 
-    def _get_group_x_centre(self) -> np.ndarray:
+    def _get_primary_group_x_centre(self) -> np.ndarray:
         """Get the x centre of the first coil group"""
-        return np.mean(self._coils[0].x)
+        return np.mean(self.primary_group.x)
 
-    def _get_group_z_centre(self) -> np.ndarray:
+    def _get_primary_group_z_centre(self) -> np.ndarray:
         """Get the z centre of the first coil group"""
-        return np.mean(self._coils[0].z)
+        return np.mean(self.primary_group.z)
+
+    def _get_symmetric_group_x_centre(self) -> np.ndarray:
+        """Get the x centre of the first coil group"""
+        return np.mean(self.symmetric_group.x)
+
+    def _get_symmetric_group_z_centre(self) -> np.ndarray:
+        """Get the z centre of the first coil group"""
+        return np.mean(self.symmetric_group.z)
 
     def _get_group_centre(self) -> np.ndarray:
         """Get the centre of the first coil group"""
-        return np.array([self._get_group_x_centre(), self._get_group_z_centre()])
+        return np.array([
+            self._get_primary_group_x_centre(),
+            self._get_primary_group_z_centre(),
+        ])
 
 
 class CoilSet(CoilSetFieldsMixin, CoilGroup):
@@ -903,7 +942,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
     def __init__(
         self,
-        *coils: Coil | CoilGroup[Coil],
+        *coils: Coil | CoilGroup,
         control_names: list | bool | None = None,
     ):
         super().__init__(*coils)
@@ -945,14 +984,11 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """Get control coils"""
         coils = []
         for c in self._coils:
-            names = c.name
-            if isinstance(names, list):
-                # is subset of list
-                if isinstance(c, Circuit) and any(n in self.control for n in names):
-                    coils.append(c)
-                else:
-                    coils.extend(c.get_control_coils()._coils)
-            elif names in self.control:
+            if isinstance(c, CoilSet):
+                coils.extend(c.get_control_coils()._coils)
+            elif (isinstance(c, Coil) and c.name in self.control) or (
+                isinstance(c, CoilGroup) and any(n in self.control for n in c.name)
+            ):
                 coils.append(c)
         return CoilSet(*coils)
 
@@ -989,9 +1025,9 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         -------
         Summed response output
         """
-        ind = self._control_ind if control else slice(None)
+        inds = self._control_ind if control else slice(None)
 
-        return np.sum(output[..., ind], axis=-1) if sum_coils else output[..., ind]
+        return np.sum(output[..., inds], axis=-1) if sum_coils else output[..., inds]
 
     def get_coiltype(self, ctype):
         """Get coils by coils type"""
@@ -1015,3 +1051,37 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             for coil in self._get_coiltype(ctype)
         ]
         return self
+
+    @property
+    def _optimisation_inds(self) -> List[int]:
+        """
+        Get the indices of the control coils
+        """
+        optimisable_coil_names = [
+            c.primary_coil.name if isinstance(c, Circuit) else c.name
+            for c in self._coils
+        ]
+        return [self.name.index(cn) for cn in flatten_iterable(optimisable_coil_names)]
+
+    @property
+    def _optimisation_currents(self) -> np.ndarray:
+        """
+        Get the currents for the optimisable coils
+        """
+        return self.current[self._optimisation_inds]
+
+    @_optimisation_currents.setter
+    def _optimisation_currents(self, values: List[float]):
+        """
+        Set the currents for the optimisable coils
+        """
+        if len(values) != len(self._coils):
+            raise ValueError(
+                "The number of current elements is less than the number of coils"
+            )
+
+        # expand the values to the correct length
+        values_full = []
+        for i, c in enumerate(self._coils):
+            values_full.extend([values[i]] * c.n_coils())
+        self.current = values_full
