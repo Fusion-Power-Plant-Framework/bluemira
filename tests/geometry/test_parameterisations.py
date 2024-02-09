@@ -19,6 +19,7 @@ from bluemira.geometry.parameterisations import (
     GeometryParameterisation,
     PFrameSection,
     PictureFrame,
+    PictureFrameTools,
     PolySpline,
     PrincetonD,
     SextupleArc,
@@ -210,34 +211,14 @@ class TestComplexPictureFrame:
     @pytest.mark.parametrize(
         ("upper", "lower", "inner"),
         [
-            pytest.param("FLAT", "FLAT", "TAPERED_INNER", marks=pytest.mark.xfail),
-            pytest.param("CURVED", "CURVED", "TAPERED_INNER", marks=pytest.mark.xfail),
-            pytest.param("CURVED", "FLAT", "TAPERED_INNER", marks=pytest.mark.xfail),
-            pytest.param("FLAT", "CURVED", "TAPERED_INNER", marks=pytest.mark.xfail),
-            pytest.param(
-                PFrameSection.FLAT,
-                PFrameSection.FLAT,
-                PFrameSection.TAPERED_INNER,
-                marks=pytest.mark.xfail,
-            ),
-            pytest.param(
-                PFrameSection.CURVED,
-                PFrameSection.CURVED,
-                PFrameSection.TAPERED_INNER,
-                marks=pytest.mark.xfail,
-            ),
-            pytest.param(
-                PFrameSection.CURVED,
-                PFrameSection.FLAT,
-                PFrameSection.TAPERED_INNER,
-                marks=pytest.mark.xfail,
-            ),
-            pytest.param(
-                PFrameSection.FLAT,
-                PFrameSection.CURVED,
-                PFrameSection.TAPERED_INNER,
-                marks=pytest.mark.xfail,
-            ),
+            ("FLAT", "FLAT", "TAPERED_INNER"),
+            ("CURVED", "CURVED", "TAPERED_INNER"),
+            ("CURVED", "FLAT", "TAPERED_INNER"),
+            ("FLAT", "CURVED", "TAPERED_INNER"),
+            (PFrameSection.FLAT, PFrameSection.FLAT, PFrameSection.TAPERED_INNER),
+            (PFrameSection.CURVED, PFrameSection.CURVED, PFrameSection.TAPERED_INNER),
+            (PFrameSection.CURVED, PFrameSection.FLAT, PFrameSection.TAPERED_INNER),
+            (PFrameSection.FLAT, PFrameSection.CURVED, PFrameSection.TAPERED_INNER),
             ("FLAT", "FLAT", None),
             ("CURVED", "CURVED", None),
             ("CURVED", "FLAT", None),
@@ -261,6 +242,31 @@ class TestComplexPictureFrame:
         p.adjust_variable("ro", value=0, lower_bound=0, upper_bound=5)
         wire = p.create_shape()
         assert len(wire._boundary) == 4
+
+    @pytest.mark.parametrize(
+        ("x_in", "x_mid", "z_bot", "z_taper", "z_top", "r_min"),
+        [
+            # z_in is not z2<-z_in<0<z_in<z1
+            (0.5, 2.0, 4.0, 4.0, 3.0, 0.5),
+            (0.5, 2.0, -4.0, 4.0, 3.0, 0.5),
+            (0.5, 2.0, -2.0, 3.0, -3.0, 0.5),
+            (0.5, 2.0, -4.0, 3.0, -3.0, 0.5),
+            # ridiculously large radius minimum radius,
+            # so taper cannot be as deep as required.
+            (0.3, 2.0, -3.0, 0.1, 3.0, 100),
+            # Taper required is so deep that it makes it turns into an Omega shape
+            # rather than the simple dome shape.
+            (0.3, 2.0, -3.0, 0.1, 3.0, 0.5),
+        ],
+    )
+    def test_inner_taper_xz(self, x_in, x_mid, z_bot, z_taper, z_top, r_min):
+        """
+        Check that the tapered inner leg of the PictureFrame
+        throws an error when it's non-sensical.
+        """
+        _make_taper = PictureFrameTools._make_tapered_inner_leg
+        with pytest.raises(GeometryParameterisationError):
+            _make_taper(x_in, x_mid, z_bot, z_taper, z_top, r_min)
 
     @pytest.mark.parametrize(
         "vals",

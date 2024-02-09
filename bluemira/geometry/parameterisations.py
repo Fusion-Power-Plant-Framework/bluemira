@@ -1445,7 +1445,7 @@ class PictureFrameTools:
         ----------
         x_out:
             Radial position of outer edge of limb [m]
-        x_curve start:
+        x_curve_start:
             Radial position of straight-curve transition of limb [m]
         x_mid:
             Radial position of inner edge of  upper/lower limb [m]
@@ -1581,7 +1581,7 @@ class PictureFrameTools:
 
     @staticmethod
     def _make_flat_leg(
-        x_in: float,
+        x_mid: float,
         x_out: float,
         z: float,
         r_i: float,
@@ -1594,7 +1594,7 @@ class PictureFrameTools:
 
         Parameters
         ----------
-        x_in:
+        x_mid:
             Radial position of inner edge of limb [m]
         x_out:
             Radial position of outer edge of limb [m]
@@ -1617,7 +1617,7 @@ class PictureFrameTools:
         label = "bottom" if flip else "top"
 
         # Set corner radius centres
-        c_i = [x_in + r_i, 0.0, z + r_i if flip else z - r_i]
+        c_i = [x_mid + r_i, 0.0, z + r_i if flip else z - r_i]
         c_o = [x_out - r_o, 0.0, z + r_o if flip else z - r_o]
 
         # Inner Corner
@@ -1633,7 +1633,7 @@ class PictureFrameTools:
                 )
             )
         # Straight Section
-        p1 = [x_in + r_i, 0.0, z]
+        p1 = [x_mid + r_i, 0.0, z]
         p2 = [x_out - r_o, 0.0, z]
         wires.append(make_polygon([p2, p1] if flip else [p1, p2], label=f"{label}_limb"))
 
@@ -1659,9 +1659,10 @@ class PictureFrameTools:
     def _make_tapered_inner_leg(
         x_in: float,
         x_mid: float,
-        z_in: float,
-        z1: float,
-        z2: float,
+        z_bot: float,
+        z_taper: float,
+        z_top: float,
+        r_min: float,
         axis: Iterable[float] = (0, 1, 0),
     ) -> BluemiraWire:
         """
@@ -1675,12 +1676,14 @@ class PictureFrameTools:
             Radial position of innermost point of limb [m]
         x_mid:
             Radial position of outer edge of limb [m]
-        z_in:
-            Vertical position of start of tapering [m]
-        z1:
-            Vertical position of top of limb [m]
-        z2:
+        z_bot:
             Vertical position of bottom of limb [m]
+        z_taper:
+            Vertical position of start of tapering [m]
+        z_top:
+            Vertical position of top of limb [m]
+        r_min:
+            Minimum radius of curvature [m]
         axis:
             [x,y,z] vector normal to plane of parameterisation
 
@@ -1688,34 +1691,64 @@ class PictureFrameTools:
         -------
         CAD Wire of the geometry
         """
-        # Bottom straight section
-        p1 = [x_mid, 0, -z_in]
-        p2 = [x_mid, 0, z2]
-        bot_straight = make_polygon([p2, p1], label="inner_limb_mid_down")
+        # Pre-calculations necessary
+        if not (z_bot < -z_taper < 0 < z_taper < z_top):
+            raise GeometryParameterisationError(
+                "the straight-curve transition point z_taper must lie between"
+                "z_top and z_bot."
+            )
+        theta = 2 * np.arctan2(x_mid - x_in, z_taper)
+        r_taper = z_taper / np.sin(theta) - r_min
+        if r_taper < r_min or theta >= (np.pi / 2):
+            raise GeometryParameterisationError(
+                f"Cannot achieve radius of curvature <= {r_min=}"
+                "as the taper (x_mid - x_in) is too deep for this given value of r_min."
+            )
 
-        # Curved taper radius
-        x_t = x_mid - x_in
-        alpha = np.arctan(z_in / (x_t))
-        theta_t = np.pi - 2 * alpha
-        r_taper = z_in / np.sin(theta_t)
+        theta_deg = np.rad2deg(theta)
 
-        # Curved taper angle
-        angle = np.rad2deg(np.arcsin(z_in / r_taper))
-        ct_angle = make_circle(
-            radius=r_taper,
-            center=(x_in + r_taper, 0, 0),
-            start_angle=180 - angle,
-            end_angle=180 + angle,
-            axis=axis,
-            label="inner_limb",
+        # bottom straight line
+        p1 = [x_mid, 0, z_bot]
+        p2 = [x_mid, 0, -z_taper]
+        bot_straight = make_polygon([p1, p2], label="inner_limb_mid_down")
+
+        # curve into taper
+        bot_curve = make_circle(
+            radius=r_min,
+            center=(x_mid - r_min, 0, -z_taper),
+            start_angle=0,
+            end_angle=theta_deg,
+            axis=(0, -1, 0),
+            label="inner_limb_lower_curve",
         )
 
-        # Top straight section
-        p3 = [x_mid, 0, z_in]
-        p4 = [x_mid, 0, z1]
-        top_straight = make_polygon([p3, p4], label="inner_limb_mid_up")
+        taper = make_circle(
+            radius=r_taper,
+            center=(x_in + r_taper, 0, 0),
+            start_angle=180.0 - theta_deg,
+            end_angle=180.0 + theta_deg,
+            axis=axis,
+            label="inner_limb_taper_curve",
+        )
 
-        return BluemiraWire([bot_straight, ct_angle, top_straight], label="inner_limb")
+        # curve out of taper
+        top_curve = make_circle(
+            radius=r_min,
+            center=(x_mid - r_min, 0, z_taper),
+            start_angle=360.0 - theta_deg,
+            end_angle=0.0,
+            axis=(0, -1, 0),
+            label="inner_limb_upper_curve",
+        )
+
+        # top straight line.
+        p6 = [x_mid, 0, z_taper]
+        p7 = [x_mid, 0, z_top]
+        top_straight = make_polygon([p6, p7], label="inner_limb_mid_up")
+
+        return BluemiraWire(
+            [bot_straight, bot_curve, taper, top_curve, top_straight], label="inner_limb"
+        )
 
     def _connect_to_outer_limb(self, top, bottom, top_curve=False, bot_curve=False):
         return self._outer_limb(
@@ -1975,9 +2008,10 @@ class PictureFrame(
             return self.inner(
                 v.x1.value,
                 v.x4.value,
+                v.z2 + v.ri,
                 v.z3.value,
                 v.z1 - v.ri,
-                v.z2 + v.ri,
+                v.ri.value,
             )
         if self.inner is None:
             return self._connect_straight_to_inner_limb(
