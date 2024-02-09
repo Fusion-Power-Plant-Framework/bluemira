@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
@@ -127,9 +128,9 @@ class TestGetLegs:
     def setup_class(cls):
         cls.sn_eq = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"))
         cls.dn_eq = Equilibrium.from_eqdsk(Path(DATA, "DN-DEMO_eqref.json"))
-        cls.falsified_dn_eq = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"))
+        cls.falsified_dn_eq = deepcopy(cls.sn_eq)
 
-    def test_LegFlux(self):
+    def test_legflux(self):
         test_sn = LegFlux(self.sn_eq)
         test_dn = LegFlux(self.dn_eq)
         assert test_sn.n_null == "SN"

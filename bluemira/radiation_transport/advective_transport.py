@@ -182,8 +182,8 @@ class ChargedParticleSolver:
             # so separatrix[0] will have the intersection
             sep_intersections = coords_plane_intersect(sep.separatrix, yz_plane)
             if isinstance(sep_intersections, Coordinates):
-                sep_arg = np.argmin(np.abs(sep1_intersections.T[0] - sep.o_point.x))
-                x_sep_mp = sep1_intersections.T[0][sep_arg]
+                sep_arg = np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x))
+                x_sep_mp = sep_intersections.T[0][sep_arg]
             else:
                 raise BluemiraError("Your seperatrix does not cross the midplane.")
 
