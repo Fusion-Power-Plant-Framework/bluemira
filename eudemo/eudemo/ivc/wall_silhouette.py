@@ -15,7 +15,8 @@ from bluemira.base.error import DesignError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.find import find_OX_points, get_legs
+from bluemira.equilibria.find import find_OX_points
+from bluemira.equilibria.find_outer_field import LegFlux
 from bluemira.geometry.optimisation import KeepOutZone, optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation, PolySpline
 from bluemira.geometry.tools import convex_hull_wires_2d, make_polygon, offset_wire
@@ -229,7 +230,7 @@ class WallSilhouetteDesigner(Designer[GeometryParameterisation]):
         Make a "keep-out zone" from an equilibrium's divertor legs
         """
         # TODO move to plasma component manager
-        legs = get_legs(self.equilibrium, n_layers=1, dx_off=0.0)
+        legs = LegFlux(self.equilibrium).get_legs(n_layers=1, dx_off=0.0)
 
         ib_leg = make_polygon(legs["lower_inner"][0].xyz)
         ob_leg = make_polygon(legs["lower_outer"][0].xyz)

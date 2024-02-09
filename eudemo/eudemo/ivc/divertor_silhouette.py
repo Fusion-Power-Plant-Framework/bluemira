@@ -19,7 +19,8 @@ from bluemira.base.designer import Designer
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria import Equilibrium
-from bluemira.equilibria.find import find_flux_surface_through_point, get_legs
+from bluemira.equilibria.find import find_flux_surface_through_point
+from bluemira.equilibria.find_outer_field import LegFlux
 from bluemira.geometry.tools import (
     make_circle,
     make_polygon,
@@ -79,7 +80,7 @@ def get_separatrix_legs(
     """
     # A flag specifying which end of the plasma (i.e., upper or lower)
     # we want the legs from will need to be added
-    legs = get_legs(equilibrium)
+    legs = LegFlux(equilibrium).get_legs()
     return {
         LegPosition.INNER: [make_polygon(loop.xyz) for loop in legs["lower_inner"]],
         LegPosition.OUTER: [make_polygon(loop.xyz) for loop in legs["lower_outer"]],

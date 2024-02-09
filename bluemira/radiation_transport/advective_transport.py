@@ -21,9 +21,9 @@ from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.find import (
-    find_LCFS_separatrix,
     find_flux_surface_through_point,
 )
+from bluemira.equilibria.find_outer_field import LegFlux
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
@@ -161,43 +161,31 @@ class ChargedParticleSolver:
         Find the middle and maximum outboard mid-plane psi norm values
         """
         yz_plane = self._yz_plane
-        o_point = self._o_point
-        psi = self.eq.psi()
-        lcfs, separatrix = find_LCFS_separatrix(
-            self.eq.x,
-            self.eq.z,
-            psi,
-            self.eq._o_points,
-            self.eq._x_points,
-            double_null=self.eq.is_double_null,
-            psi_n_tol=self.psi_n_tol,
-        )
+        sep = LegFlux(self.eq)
 
-        if not isinstance(separatrix, Coordinates):
-            z_lcfs = min(abs(min(lcfs.z)), abs(max(lcfs.z)))
-            z_sep = min(abs(min(separatrix[0].z)), abs(max(separatrix[0].z)))
-            legs_top_bot_split = np.isclose(z_sep, z_lcfs, rtol=1e-3)
-            sep1_intersections = coords_plane_intersect(separatrix[0], yz_plane)
-            sep2_intersections = coords_plane_intersect(separatrix[1], yz_plane)
-            if not legs_top_bot_split:
-                sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - o_point.x))
-                sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - o_point.x))
-                x_sep1_mp = sep1_intersections.T[0][sep1_arg]
-                x_sep2_mp = sep2_intersections.T[0][sep2_arg]
-                x_sep_mp = (
-                    max(x_sep2_mp, x_sep1_mp) if outboard else min(x_sep2_mp, x_sep1_mp)
-                )
-            elif isinstance(sep1_intersections, Coordinates):
-                # separatrix list is sorted by loop length when found,
-                # so separatrix[0] will have the intersection
-                sep_arg = np.argmin(np.abs(sep1_intersections.T[0] - o_point.x))
+        if sep.n_null == "SN":
+            sep_intersections = coords_plane_intersect(sep.separatrix, yz_plane)
+            sep_arg = np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x))
+            x_sep_mp = sep_intersections.T[0][sep_arg]
+        elif sep.sort_split == "X":
+            sep1_intersections = coords_plane_intersect(sep.separatrix[0], yz_plane)
+            sep2_intersections = coords_plane_intersect(sep.separatrix[1], yz_plane)
+            sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - sep.o_point.x))
+            sep2_arg = np.argmin(np.abs(sep2_intersections.T[0] - sep.o_point.x))
+            x_sep1_mp = sep1_intersections.T[0][sep1_arg]
+            x_sep2_mp = sep2_intersections.T[0][sep2_arg]
+            x_sep_mp = (
+                max(x_sep2_mp, x_sep1_mp) if outboard else min(x_sep2_mp, x_sep1_mp)
+            )
+        else:
+            # separatrix list is sorted by loop length when found,
+            # so separatrix[0] will have the intersection
+            sep_intersections = coords_plane_intersect(sep.separatrix, yz_plane)
+            if isinstance(sep_intersections, Coordinates):
+                sep_arg = np.argmin(np.abs(sep1_intersections.T[0] - sep.o_point.x))
                 x_sep_mp = sep1_intersections.T[0][sep_arg]
             else:
                 raise BluemiraError("Your seperatrix does not cross the midplane.")
-        else:
-            sep_intersections = coords_plane_intersect(separatrix, yz_plane)
-            sep_arg = np.argmin(np.abs(sep_intersections.T[0] - o_point.x))
-            x_sep_mp = sep_intersections.T[0][sep_arg]
 
         out_intersections = coords_plane_intersect(self.first_wall, yz_plane)
         x_out_mp = (

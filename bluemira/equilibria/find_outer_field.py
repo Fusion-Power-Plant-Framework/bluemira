@@ -95,10 +95,11 @@ class LegFlux:
                 z_sep, self.z_min_lcfs, rtol=(1 + self.rtol) * self.rtol
             )
             if legs_upper_lower:
-                # Sort LOWER then UPPER at a later stage
+                # Sort LOWER then UPPER when use get_legs
+                # self.separatrix remains sorted by loop length
                 return "DN", "Z"
-            # Sort IN then OUT
-            self.separatrix.sort(key=lambda half_sep: np.min(half_sep.x))
+            # Sort IN then OUT when use get_legs
+            # self.separatrix remains sorted by loop length
             return "DN", "X"
         # --- Single Null ---
         self.x_points = self.x_points[0]
@@ -307,6 +308,7 @@ def get_leg_list(leg_pair, delta, o_p, x_p=None, imin=None):
         return None
     if isinstance(legs, Coordinates):
         return [legs]
+    # Sort IN then OUT
     legs.sort(key=lambda leg: leg.x[0])
     return legs
 
