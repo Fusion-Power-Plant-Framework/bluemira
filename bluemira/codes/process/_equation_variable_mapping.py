@@ -311,7 +311,7 @@ class Constraint(ConstraintSelection, Model):
     )
     PSEPR_UPPER_LIMIT = (
         56,
-        (1, 3, 97, 102),
+        (1, 3, 97),
         ("pseprmax",),
         "Pseparatrix/Rmajor upper limit",
     )
@@ -357,7 +357,7 @@ class Constraint(ConstraintSelection, Model):
     )
     WALL_RADIATION_UPPER_LIMIT = (
         67,
-        (4, 6, 102, 116),
+        (4, 6, 116),
         ("peakfactrad", "peakradwallload"),
         "Simple radiation wall load limit",
     )
@@ -642,8 +642,7 @@ ITERATION_VAR_MAPPING = {
     "fvvhe": 96,
     "fpsepr": 97,
     "li6enrich": 98,
-    # 99, 100, 101 NOT USED
-    "fimpvar": 102,
+    # 99, 100, 101, 102 NOT USED
     "flhthresh": 103,
     "fcwr": 104,
     "fnbshinef": 105,
