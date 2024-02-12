@@ -28,13 +28,13 @@ from bluemira.base.constants import (
 from bluemira.base.look_and_feel import bluemira_warn
 
 __all__ = [
-    "E_DT_fusion",
     "E_DD_fusion",
-    "n_DT_reactions",
+    "E_DT_fusion",
     "n_DD_reactions",
-    "reactivity",
-    "r_T_burn",
+    "n_DT_reactions",
     "r_D_burn_DT",
+    "r_T_burn",
+    "reactivity",
 ]
 
 

@@ -31,12 +31,12 @@ class CoilGroupFieldsMixin:
     """
 
     __slots__ = (
+        "_einsum_str",
         "_quad_dx",
         "_quad_dz",
+        "_quad_weighting",
         "_quad_x",
         "_quad_z",
-        "_quad_weighting",
-        "_einsum_str",
     )
 
     def psi(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):

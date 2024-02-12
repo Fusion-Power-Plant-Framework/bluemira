@@ -53,9 +53,9 @@ from bluemira.utilities.plot_tools import str_to_latex
 
 __all__ = [
     "GeometryParameterisation",
+    "PFrameSection",
     "PictureFrame",
     "PictureFrameTools",
-    "PFrameSection",
     "PolySpline",
     "PrincetonD",
     "SextupleArc",
@@ -75,7 +75,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
     variables with initial values, and override the create_shape method.
     """
 
-    __slots__ = ("name", "_variables")
+    __slots__ = ("_variables", "name")
 
     def __init__(self, variables: OptVariablesFrameT):
         """

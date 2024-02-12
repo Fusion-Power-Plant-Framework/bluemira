@@ -30,8 +30,9 @@ Run PROCESS using the PROCESSTemplateBuilder
 
 # %%
 from bluemira.codes import systems_code_solver
-from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
-from bluemira.codes.process._model_mapping import (
+from bluemira.codes.process.api import Impurities
+from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
+from bluemira.codes.process.model_mapping import (
     AlphaPressureModel,
     AvailabilityModel,
     BetaLimitModel,
@@ -61,7 +62,6 @@ from bluemira.codes.process._model_mapping import (
     TFSuperconductorModel,
     TFWindingPackTurnModel,
 )
-from bluemira.codes.process.api import Impurities
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 
 # %%[markdown]

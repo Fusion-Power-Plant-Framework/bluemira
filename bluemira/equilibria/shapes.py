@@ -21,17 +21,17 @@ from bluemira.geometry.wire import BluemiraWire
 from bluemira.utilities.opt_variables import OptVariable, OptVariablesFrame, VarDictT, ov
 
 __all__ = [
-    "flux_surface_cunningham",
-    "flux_surface_johner",
-    "flux_surface_hirshman",
-    "flux_surface_manickam",
-    "flux_surface_kuiroukidis",
-    "flux_surface_zakharov",
+    "CunninghamLCFS",
     "JohnerLCFS",
     "KuiroukidisLCFS",
     "ManickamLCFS",
-    "CunninghamLCFS",
     "ZakharovLCFS",
+    "flux_surface_cunningham",
+    "flux_surface_hirshman",
+    "flux_surface_johner",
+    "flux_surface_kuiroukidis",
+    "flux_surface_manickam",
+    "flux_surface_zakharov",
 ]
 
 

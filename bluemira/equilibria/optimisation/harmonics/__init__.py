@@ -23,14 +23,14 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 )
 
 __all__ = [
-    "coil_harmonic_amplitude_matrix",
-    "harmonic_amplitude_marix",
-    "collocation_points",
-    "lcfs_fit_metric",
-    "coils_outside_lcfs_sphere",
-    "get_psi_harmonic_amplitudes",
-    "spherical_harmonic_approximation",
-    "plot_psi_comparision",
-    "SphericalHarmonicConstraintFunction",
     "SphericalHarmonicConstraint",
+    "SphericalHarmonicConstraintFunction",
+    "coil_harmonic_amplitude_matrix",
+    "coils_outside_lcfs_sphere",
+    "collocation_points",
+    "get_psi_harmonic_amplitudes",
+    "harmonic_amplitude_marix",
+    "lcfs_fit_metric",
+    "plot_psi_comparision",
+    "spherical_harmonic_approximation",
 ]

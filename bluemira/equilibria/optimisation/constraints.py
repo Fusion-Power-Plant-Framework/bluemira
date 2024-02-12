@@ -725,7 +725,7 @@ class MagneticConstraintSet(ABC):
         - Populate constraints with super().__init__(List[MagneticConstraint])
     """
 
-    __slots__ = ["constraints", "eq", "coilset", "A", "w", "target", "background"]
+    __slots__ = ("A", "background", "coilset", "constraints", "eq", "target", "w")
 
     def __init__(self, constraints: List[MagneticConstraint]):
         self.constraints = constraints

@@ -16,8 +16,9 @@ import pytest
 
 from bluemira.base.constants import EPS
 from bluemira.base.file import try_get_bluemira_private_data_root
-from bluemira.codes.process._equation_variable_mapping import Constraint, Objective
-from bluemira.codes.process._model_mapping import (
+from bluemira.codes.process.api import ENABLED, Impurities
+from bluemira.codes.process.equation_variable_mapping import Constraint, Objective
+from bluemira.codes.process.model_mapping import (
     AlphaPressureModel,
     AvailabilityModel,
     BetaLimitModel,
@@ -46,7 +47,6 @@ from bluemira.codes.process._model_mapping import (
     TFSuperconductorModel,
     TFWindingPackTurnModel,
 )
-from bluemira.codes.process.api import ENABLED, Impurities
 from bluemira.codes.process.template_builder import PROCESSTemplateBuilder
 from bluemira.utilities.tools import compare_dicts
 

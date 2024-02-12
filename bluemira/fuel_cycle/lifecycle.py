@@ -293,7 +293,8 @@ class LifeCycle:
                 f"% diff: {100 * delt:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(
+
+            self.__init__(  # noqa: PLC2801
                 self.params,
                 self.learning_strategy,
                 self.availability_strategy,
@@ -309,7 +310,7 @@ class LifeCycle:
                 f"% diff: {100 * delta2:.4f}\n"
                 "the problem is probably related to unplanned maintenance."
             )
-            self.__init__(
+            self.__init__(  # noqa: PLC2801
                 self.params,
                 self.learning_strategy,
                 self.availability_strategy,

@@ -12,13 +12,9 @@ from __future__ import annotations
 import abc
 from typing import TYPE_CHECKING, Iterable, List, Tuple
 
-if TYPE_CHECKING:
-    from bluemira.geometry.solid import BluemiraSolid
-    from bluemira.geometry.wire import BluemiraWire
-
 from bluemira.base.builder import ComponentManager
 from bluemira.base.components import Component, PhysicalComponent
-from bluemira.base.tools import _timing
+from bluemira.base.tools import _timing  # noqa: PLC2701
 from bluemira.builders.cryostat import CryostatBuilder
 from bluemira.builders.radiation_shield import RadiationShieldBuilder
 from bluemira.builders.thermal_shield import CryostatTSBuilder, VVTSBuilder
@@ -28,6 +24,10 @@ from bluemira.geometry.tools import boolean_cut, boolean_fuse
 from bluemira.materials import Void
 from eudemo.maintenance.duct_connection import pipe_pipe_join
 from eudemo.tools import make_2d_view_components
+
+if TYPE_CHECKING:
+    from bluemira.geometry.solid import BluemiraSolid
+    from bluemira.geometry.wire import BluemiraWire
 
 
 class VacuumVesselThermalShield(ComponentManager):
