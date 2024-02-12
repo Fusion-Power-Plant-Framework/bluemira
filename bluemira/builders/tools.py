@@ -29,6 +29,7 @@ import bluemira.geometry as bm_geo
 from bluemira.base.components import PhysicalComponent
 from bluemira.base.error import BuilderError, ComponentError
 from bluemira.builders._varied_offset import varied_offset
+from bluemira.geometry.constants import D_TOLERANCE
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import (
@@ -338,15 +339,15 @@ def make_circular_xy_ring(r_inner: float, r_outer: float) -> BluemiraFace:
     centre = (0, 0, 0)
     axis = (0, 0, 1)
     if r_inner <= 0 or r_outer <= 0:
-        raise ValueError(f"Cannot have a negative radius {r_inner=}, {r_outer=}.")
+        raise BuilderError(f"Radii must be nonnegative {r_inner=}, {r_outer=}.")
     if r_inner > r_outer:
         r_inner, r_outer = r_outer, r_inner
 
     # Make sure that the annulus is thick enough even when they're in float32
     # (FreeCAD stores numbers as float32 if I understand correctly)
-    if np.float32(r_outer) <= np.nextafter(np.float32(r_inner), np.inf):
+    if np.isclose(r_inner, r_outer, rtol=0, atol=D_TOLERANCE):
         raise BuilderError(
-            "Cannot make an annulus so thin that" f"{r_outer - r_inner = }mm"
+            f"Cannot make an annulus so thin that {r_outer - r_inner = }mm"
         )
 
     inner = make_circle(r_inner, center=centre, axis=axis)
