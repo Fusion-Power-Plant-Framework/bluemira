@@ -32,6 +32,18 @@ You should see a bunch of files, which correspond to what's in your bluemira dir
 
 You can stop the Jupyter server by double-pressing `ctrl+c` in your terminal.
 
+## Running Notebooks in Jupyter Notebook v7.x (nb7)
+
+Previous versions of Jupyter Notebook (a.k.a nb classic) will open python scripts and markdown documents as notebooks by default. From v7 onwards, to open and run a text notebook (.py or .md extension) as a notebook in Jupyter:
+ - right-click on the file,
+ - select "Notebook" in the drop down menu.
+
+Alternatively, you can change the default viewer to "Jupytext Notebook" if you would like particular file types to open as a notebook by default via a double click. This can be set via the command line, e.g., for .py and .md files, using:
+
+```bash
+jupytext-config set-default-viewer python markdown
+```
+
 ## Maintaining the examples
 
 To add a new example, or to edit an existing one, make your changes in an `.ex.py` file.
