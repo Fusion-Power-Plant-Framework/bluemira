@@ -75,7 +75,6 @@ class TestRegionInterpolator:
 
     def test_circle(self):
         circle = make_circle(center=(0, 0, 0), axis=(0, 1, 0), radius=10)
-        print(circle)
         interpolator = RegionInterpolator(circle)
 
         xc, zc = interpolator.to_xz((0.5, 0.5))
