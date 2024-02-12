@@ -24,7 +24,7 @@ from bluemira.geometry.coordinates import rotation_matrix
 from bluemira.magnetostatics.error import MagnetostaticsError
 from bluemira.utilities.plot_tools import Plot3D
 
-__all__ = ["CurrentSource", "CrossSectionCurrentSource", "SourceGroup"]
+__all__ = ["CrossSectionCurrentSource", "CurrentSource", "SourceGroup"]
 
 
 class CurrentSource(ABC):

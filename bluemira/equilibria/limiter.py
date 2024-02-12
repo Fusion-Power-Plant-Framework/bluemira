@@ -31,7 +31,7 @@ class Limiter:
         The z coordinates of the limiter points
     """
 
-    __slots__ = ["x", "z", "xz", "_i"]
+    __slots__ = ("_i", "x", "xz", "z")
 
     def __init__(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
         self.x = x

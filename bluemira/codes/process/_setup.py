@@ -15,12 +15,12 @@ from typing import TYPE_CHECKING, ClassVar, Dict, Optional, Union
 from bluemira.codes.error import CodesError
 from bluemira.codes.interface import CodesSetup
 from bluemira.codes.process._inputs import ProcessInputs
-from bluemira.codes.process._model_mapping import (
+from bluemira.codes.process.api import ENABLED, InDat, _INVariable, update_obsolete_vars
+from bluemira.codes.process.constants import NAME as PROCESS_NAME
+from bluemira.codes.process.model_mapping import (
     CurrentDriveEfficiencyModel,
     TFCoilConductorTechnology,
 )
-from bluemira.codes.process.api import ENABLED, InDat, _INVariable, update_obsolete_vars
-from bluemira.codes.process.constants import NAME as PROCESS_NAME
 
 if TYPE_CHECKING:
     from bluemira.base.parameter_frame import ParameterFrame

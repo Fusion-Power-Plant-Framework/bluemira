@@ -77,7 +77,7 @@ class OptVariable:
         Description of the variable
     """
 
-    __slots__ = ("name", "_value", "lower_bound", "upper_bound", "fixed", "description")
+    __slots__ = ("_value", "description", "fixed", "lower_bound", "name", "upper_bound")
 
     def __init__(
         self,

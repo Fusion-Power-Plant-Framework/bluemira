@@ -33,16 +33,16 @@ from bluemira.geometry.coordinates import (
 )
 
 __all__ = [
-    "Xpoint",
-    "Opoint",
     "Lpoint",
-    "get_contours",
-    "find_OX_points",
+    "Opoint",
+    "Xpoint",
     "find_LCFS_separatrix",
+    "find_OX_points",
     "find_flux_surf",
-    "in_zone",
-    "in_plasma",
+    "get_contours",
     "grid_2d_contour",
+    "in_plasma",
+    "in_zone",
 ]
 
 
@@ -56,7 +56,7 @@ class PsiPoint:
     Abstract object for psi-points with list indexing and point behaviour.
     """
 
-    __slots__ = ("x", "z", "psi")
+    __slots__ = ("psi", "x", "z")
 
     def __init__(self, x: float, z: float, psi: float):
         self.x, self.z = x, z

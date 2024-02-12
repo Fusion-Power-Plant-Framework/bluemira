@@ -24,7 +24,7 @@ from tabulate import tabulate
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.mesh.error import MeshConversionError
 
-__all__ = ("msh_to_xdmf", "import_mesh")
+__all__ = ("import_mesh", "msh_to_xdmf")
 
 
 CELL_TYPE_DIM = {

@@ -12,26 +12,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Union
 
-if TYPE_CHECKING:
-    from bluemira.codes.process._equation_variable_mapping import (
-        Constraint,
-        ConstraintSelection,
-        Objective,
-    )
-    from bluemira.codes.process._model_mapping import (
-        PROCESSModel,
-        PROCESSOptimisationAlgorithm,
-    )
-
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes.process._equation_variable_mapping import (
+from bluemira.codes.process._inputs import ProcessInputs
+from bluemira.codes.process.api import Impurities
+from bluemira.codes.process.equation_variable_mapping import (
     FV_CONSTRAINT_ITVAR_MAPPING,
     ITERATION_VAR_MAPPING,
     OBJECTIVE_MIN_ONLY,
     VAR_ITERATION_MAPPING,
 )
-from bluemira.codes.process._inputs import ProcessInputs
-from bluemira.codes.process.api import Impurities
+
+if TYPE_CHECKING:
+    from bluemira.codes.process.equation_variable_mapping import (
+        Constraint,
+        ConstraintSelection,
+        Objective,
+    )
+    from bluemira.codes.process.model_mapping import (
+        PROCESSModel,
+        PROCESSOptimisationAlgorithm,
+    )
 
 
 class PROCESSTemplateBuilder:

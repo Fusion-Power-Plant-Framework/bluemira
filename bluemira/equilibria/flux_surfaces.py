@@ -439,7 +439,7 @@ class PartialOpenFluxSurface(OpenFluxSurface):
     been split at the midplane and only has one intersection with the wall.
     """
 
-    __slots__ = ["alpha"]
+    __slots__ = ("alpha",)
 
     def __init__(self, coords: Coordinates):
         super().__init__(coords)

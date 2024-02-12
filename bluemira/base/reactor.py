@@ -218,7 +218,7 @@ class FilterMaterial:
 
     """
 
-    slots = ("keep_material", "reject_material")
+    __slots__ = ("keep_material", "reject_material")
 
     def __init__(
         self,
