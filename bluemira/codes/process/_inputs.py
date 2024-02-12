@@ -158,6 +158,8 @@ class ProcessInputs:
     i_tf_sup: Optional[int] = None
     i_tf_shape: Optional[int] = None  # Listed as an output
     i_tf_cond_eyoung_trans: Optional[int] = None
+    i_r_cp_top: Optional[int] = None
+    i_tf_tresca: Optional[int] = None
     n_pancake: Optional[int] = None
     n_layer: Optional[int] = None
     n_rad_per_layer: Optional[int] = None
@@ -299,6 +301,7 @@ class ProcessInputs:
     startupratio: Optional[float] = None
     tlife: Optional[float] = None
     bkt_life_csf: Optional[int] = None
+    i_bldgs_size: Optional[int] = None
     # ...
 
     # CS fatigue
@@ -342,6 +345,7 @@ class ProcessInputs:
     betpmx: Optional[float] = None
     bigqmin: Optional[float] = None
     bmxlim: Optional[float] = None
+    dr_tf_wp: Optional[float] = None
     fauxmn: Optional[float] = None
     fbeta: Optional[float] = None
     fbetap: Optional[float] = None
@@ -376,6 +380,7 @@ class ProcessInputs:
     fptemp: Optional[float] = None
     fq: Optional[float] = None
     fqval: Optional[float] = None
+    fradpwr: Optional[float] = None
     fradwall: Optional[float] = None
     freinke: Optional[float] = None
     fstrcase: Optional[float] = None
@@ -640,10 +645,12 @@ class ProcessInputs:
     iculbl: Optional[int] = None  # listed as an output...
     icurr: Optional[int] = None
     idensl: Optional[int] = None
+    idia: Optional[int] = None
     ifalphap: Optional[int] = None
     iinvqd: Optional[int] = None
     ipedestal: Optional[int] = None
     ieped: Optional[int] = None  # listed as an output...
+    ips: Optional[int] = None
     eped_sf: Optional[float] = None
     neped: Optional[float] = None
     nesep: Optional[float] = None
