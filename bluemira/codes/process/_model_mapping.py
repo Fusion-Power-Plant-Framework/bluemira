@@ -154,8 +154,6 @@ class PlasmaPedestalModel(PROCESSModel):
             "ralpne",
         ),
     )
-    PLASMOD_GW = 2, ("te", "neped", "nesep", "tbeta", "teped", "tesep", "ralpne")
-    PLASMOD = 3, ("te", "rhopedn", "rhopedt", "teped", "tesep")
 
 
 class PlasmaProfileModel(PROCESSModel):
@@ -372,6 +370,39 @@ class BootstrapCurrentScalingLaw(PROCESSModel):
     SAUTER = 4
 
 
+class DiamagneticCurrentScalingLaw(PROCESSModel):
+    """
+    Switch for the model of diamagnetic current calculation
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "idia"
+
+    OFF = 0
+    ST_FIT = 1
+    SCENE_FIT = 2, ("q", "q0")
+
+
+class PfirschSchluterCurrentScalingLaw(PROCESSModel):
+    """
+    Switch for the model of Pfirsch-Schlüter current calculation
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ips"
+
+    OFF = 0
+    SCENE_FIT = 1
+
+
 class LHThreshholdScalingLaw(PROCESSModel):
     """
     Switch for the model to calculate the L-H power threshhold
@@ -419,7 +450,7 @@ class RadiationLossModel(PROCESSModel):
         """
         return "iradloss"
 
-    SCALING_PEDSETAL = 0  # ipedestal 2, 3
+    SCALING_PEDSETAL = 0
     SCALING_CORE = 1
     SCALING_ONLY = 2
 
@@ -438,6 +469,38 @@ class PlasmaWallGapModel(PROCESSModel):
 
     TEN_PERCENT = 0, (), "SOL thickness calculated as 10 percent of minor radius"
     INPUT = 1, ("scrapli", "scraplo"), "Fixed thickness SOL values"
+
+
+class SphericalTokamakModel(PROCESSModel):
+    """
+    Switch to enable spherical tokamak approximations
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "itart"
+
+    OFF = 0
+    ON = 1
+
+
+class SphericalTokamakPFModel(PROCESSModel):
+    """
+    Switch to enable spherical tokamak PF approximations
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "itartpf"
+
+    PENG_STRICKLER = 0, (), "Peng and Strickler (1986)"
+    CONVENTIONAL = 1
 
 
 class OperationModel(PROCESSModel):
@@ -721,6 +784,22 @@ class TFStressModel(PROCESSModel):
     GEN_PLANE_STRAIN = 0
     PLANE_STRESS = 1
     GEN_PLANE_STRAIN_NEW = 2
+
+
+class TFTrescaStressModel(PROCESSModel):
+    """
+    Switch for the TF coil conduit Tresca stress criterion
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_tf_tresca"
+
+    OFF = 0
+    ON = 1, (), "Tresca with CEA adjustment factors (radial+2%, vertical+60%)"
 
 
 class TFCoilSupportModel(PROCESSModel):
@@ -1060,22 +1139,6 @@ class VacuumPumpingDwellModel(PROCESSModel):
     T_DWELL_RAMP = 2
 
 
-class FISPACTSwitchModel(PROCESSModel):
-    """
-    Switch to control FISPACT-II neutronics calculations
-    """
-
-    @classproperty
-    def switch_name(self) -> str:
-        """
-        PROCESS switch name
-        """
-        return "ifispact"
-
-    OFF = 0
-    ON = 1  # Presumably...
-
-
 class AvailabilityModel(PROCESSModel):
     """
     Switch to control the availability model
@@ -1125,6 +1188,42 @@ class CostModel(PROCESSModel):
 
     TETRA_1990 = 0
     KOVARI_2015 = 1
+    CUSTOM = 2
+
+
+class CapCostFracTetraModel(PROCESSModel):
+    """
+    Switch for Tetra cost model.
+
+    Decides whether blanket, divertor and first wall are capital or fuel costs
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ifueltyp"
+
+    ALL_CAPCOST = 0
+    ALL_FUELCOST = 1, ("fcdfuel",)
+    INIT_CAPCOST = 2, ("fcdfuel",)
+
+
+class BuildingSizeModel(PROCESSModel):
+    """
+    Switch for Building size estimation model
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_bldgs_size"
+
+    DEFAULT = 0
+    NEW = 1
 
 
 class OutputCostsSwitch(PROCESSModel):

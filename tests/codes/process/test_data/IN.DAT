@@ -70,7 +70,6 @@ boundl(61) = 0.12
 ixc = 13 * tfcth
 boundl(13) = 0.5
 ixc = 103 * flhthresh
-ixc = 102 * fimpvar
 ixc = 60 * cpttf
 boundl(60) = 6.0d4
 boundu(60) = 9.0d4
@@ -305,8 +304,6 @@ fimp(11) = 0.0
 fimp(12) = 0.0
 fimp(13) = 0.00044
 fimp(14) = 5e-05
-fimpvar  = 4.1100e-04 * impvar ; impurity to be iterated (deprecated)
-impvar   = 13 *
 
 *-------------------Init Module--------------------*
 
@@ -411,7 +408,6 @@ iculbl   = 1 * switch for beta limit scaling (`constraint equation 24`)
 icurr    = 4 * switch for plasma current scaling to use
 idensl   = 7 * switch for density limit to enforce (`constraint equation 5`)
 ifalphap = 1 * switch for fast alpha pressure calculation
-ifispact = 0 * switch for neutronics calculations;
 iinvqd   = 1 * switch for inverse quadrature in L-mode scaling laws 5 and 9;
 ipedestal = 1 * switch for pedestal profiles;
 neped    = 0.678e20 * electron density of pedestal [m-3] (`ipedestal=1;2; calculated if 3`)

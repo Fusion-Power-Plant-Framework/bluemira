@@ -25,7 +25,7 @@ if [ "$1" ]
   then
     git checkout "$1"
 else
-    git checkout 7e5e043  # much faster for EUDEMO than v3.0.1
+    git checkout v3.0.2
 fi
 
 
