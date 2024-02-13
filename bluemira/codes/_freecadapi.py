@@ -31,34 +31,54 @@ from typing import (
 )
 from warnings import warn
 
-import FreeCAD
-import BOPTools
-import BOPTools.GeneralFuseResult
-import BOPTools.JoinAPI
-import BOPTools.JoinFeatures
-import BOPTools.ShapeMerge
-import BOPTools.SplitAPI
-import BOPTools.SplitFeatures
-import BOPTools.Utils
-import DraftGeomUtils
-import FreeCADGui
-import Part
 import numpy as np
-from FreeCAD import Base
-from PySide2.QtWidgets import QApplication
 from matplotlib import colors
-from pivy import coin, quarter
 
 from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.file import force_file_extension
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.codes._freecadconfig import _freecad_save_config
+from bluemira.codes._freecadconfig import _freecad_save_config, get_freecad_modules
 from bluemira.codes.error import FreeCADError, InvalidCADInputsError
 from bluemira.geometry.constants import MINIMUM_LENGTH
 from bluemira.utilities.tools import ColourDescriptor
 
 if TYPE_CHECKING:
     from bluemira.display.palettes import ColorPalette
+
+(
+    FreeCAD,
+    BOPTools,
+    BOPTools.GeneralFuseResult,
+    BOPTools.JoinAPI,
+    BOPTools.JoinFeatures,
+    BOPTools.ShapeMerge,
+    BOPTools.SplitAPI,
+    BOPTools.SplitFeatures,
+    BOPTools.Utils,
+    DraftGeomUtils,
+    FreeCADGui,
+    Base,
+    Part,
+    QApplication,
+    coin,
+    quarter,
+) = get_freecad_modules(
+    "FreeCAD",
+    "BOPTools",
+    ("BOPTools", "GeneralFuseResult"),
+    ("BOPTools", "JoinAPI"),
+    ("BOPTools", "JoinFeatures"),
+    ("BOPTools", "ShapeMerge"),
+    ("BOPTools", "SplitAPI"),
+    ("BOPTools", "SplitFeatures"),
+    ("BOPTools", "Utils"),
+    "DraftGeomUtils",
+    "FreeCADGui",
+    ("FreeCAD", "Base"),
+    "Part",
+    ("PySide2.QtWidgets", "QApplication"),
+    ("pivy", "coin", "quarter"),
+)
 
 apiVertex = Part.Vertex  # noqa: N816
 apiVector = Base.Vector  # noqa: N816
@@ -1266,22 +1286,22 @@ class CADFileType(enum.Enum):
     @DynamicClassAttribute
     def exporter(self) -> ExporterProtocol:
         """Get exporter module for each filetype"""
-        try:
-            export_func = __import__(self.module).export
-        except AttributeError:
-            modlist = self.module.split(".")
-            if len(modlist) > 1:
-                return getattr(__import__(modlist[0]), modlist[1]).export
-            raise FreeCADError(
-                f"Unable to save to {self.value} please try through the main FreeCAD GUI"
-            ) from None
-        except TypeError:
+        if self.module is None:
             # Assume CADFileType.FREECAD
             def FreeCADwriter(objs, filename, **kwargs):  # noqa: ARG001
                 doc = objs[0].Document
                 doc.saveAs(filename)
 
             return FreeCADwriter
+        try:
+            export_func = get_freecad_modules(self.module).export
+        except AttributeError:
+            modlist = self.module.split(".")
+            if len(modlist) > 1:
+                return getattr(get_freecad_modules(modlist[0]), modlist[1]).export
+            raise FreeCADError(
+                f"Unable to save to {self.value} please try through the main FreeCAD GUI"
+            ) from None
         else:
             if self in self.manual_mesh_formats():
                 return meshed_exporter(self, export_func)

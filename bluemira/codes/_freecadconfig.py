@@ -8,10 +8,88 @@
 FreeCAD configuration
 """
 
-import enum  # noqa: I001
+import enum
+import importlib
+import os
+import sys
+from pathlib import Path
 
-import freecad  # noqa: F401
-import FreeCAD
+
+class _FreeCADPathContext:
+    """Context manager for FreeCAD Imports
+
+    If FreeCAD is installed using apt we need to add some elements to sys path
+    for imports to function correctly
+    """
+
+    apt_install = False
+
+    def __init__(self):
+        # TODO(je-cook) is it possible to use the flatpak
+        # /app/org.freecadweb.FreeCAD/current/active/files/freecad/lib"
+        base_path = Path("/usr/lib/freecad/")
+        subfolders = (
+            "",
+            "Ext",
+            "Mod",
+            "Mod/Part",
+            "Mod/Draft",
+            "Mod/Arch",
+            "Mod/OpenSCAD",
+            "Mod/Import",
+        )
+        self.paths = [
+            "/usr/lib/freecad-python3/lib",
+            *(Path(base_path, sub).as_posix() for sub in subfolders),
+            "/usr/lib/python3/dist-packages",
+        ]
+
+    def __enter__(self):
+        try:
+            freecad_message_removal()
+            import freecad  # noqa: F401, PLC0415
+        except (AttributeError, ImportError):
+            type(self).apt_install = True
+        if self.apt_install:
+            for pth in self.paths:
+                sys.path.append(pth)
+            freecad_message_removal()
+
+    def __exit__(self, _exc_type, _exc_value, _exc_traceback):
+        if self.apt_install:
+            for pth in self.paths:
+                sys.path.pop(sys.path.index(pth))
+
+
+def get_freecad_modules(*mod):
+    imps = []
+    with _FreeCADPathContext():
+        for m in mod:
+            if isinstance(m, tuple):
+                imp = __import__(m[0], fromlist=[*m[1:]])
+                imps.extend(getattr(imp, _m) for _m in m[1:])
+            else:
+                imps.append(__import__(m))
+
+    return imps[0] if len(imps) == 1 else tuple(imps)
+
+
+def freecad_message_removal():
+    """
+    Remove annoying message about freecad libdir not being set
+    """
+    if "PATH_TO_FREECAD_LIBDIR" in os.environ:
+        return os.environ["PATH_TO_FREECAD_LIBDIR"]
+    freecad_default_path = None
+    with open(importlib.util.find_spec("freecad").origin) as rr:
+        for line in rr:
+            if '_path_to_freecad_libdir = "' in line:
+                freecad_default_path = line.split('"')[1]
+                break
+    if freecad_default_path is not None:
+        os.environ["PATH_TO_FREECAD_LIBDIR"] = freecad_default_path
+
+    return freecad_default_path
 
 
 class _Unit(enum.IntEnum):
@@ -72,3 +150,8 @@ def _freecad_save_config(
     import_prefs = FreeCAD.ParamGet("User parameter:BaseApp/Preferences/Mod/Import")
     import_prefs.SetInt("ImportMode", 0)
     import_prefs.SetBool("ExportLegacy", False)
+
+
+freecad, FreeCAD = get_freecad_modules("freecad", "FreeCAD")
+
+_freecad_save_config()

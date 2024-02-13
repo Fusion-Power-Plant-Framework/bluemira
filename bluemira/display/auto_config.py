@@ -15,10 +15,12 @@ from multiprocessing import Pool, TimeoutError
 
 import numpy as np
 import seaborn as sns
-from PySide2 import QtWidgets
 
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
+from bluemira.codes._freecadconfig import get_freecad_modules
 from bluemira.display.palettes import BLUEMIRA_PALETTE
+
+QtWidgets = get_freecad_modules(("PySide2", "QtWidgets"))
 
 
 @functools.lru_cache(1)
