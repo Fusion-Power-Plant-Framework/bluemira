@@ -503,6 +503,10 @@ class CoilGroup(CoilGroupFieldsMixin):
                 coils.append(c)
         return coils
 
+    def all_coils(self) -> list[Coil]:
+        """Get all coils as a flattened list"""
+        return [self[n] for n in self.name]
+
     def get_coiltype(self, ctype: str | CoilType) -> CoilGroup | None:
         """Get coils matching coil type"""
         if coiltype := self._get_coiltype(ctype):
@@ -534,6 +538,7 @@ class CoilGroup(CoilGroupFieldsMixin):
         return np.where(
             np.isnan(self.j_max) | ~self._flag_sizefix,  # or not
             max_current,
+            # todo: these are np arrays, not floats
             get_max_current(self.dx, self.dz, self.j_max),
         )
 
@@ -671,6 +676,7 @@ class CoilGroup(CoilGroupFieldsMixin):
     @property
     def _quad_boundary(self):
         """Get coil quadrature boundaries"""
+        # todo: why the [] and *?
         return [*self.__list_getter("_quad_boundary")]
 
     @x.setter
@@ -956,7 +962,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self.control = list(set(self.control) & set(self.name))
 
     @property
-    def control(self) -> list:
+    def control(self) -> list[str]:
         """Get control coil names"""
         return self._control
 
@@ -1053,9 +1059,19 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return self
 
     @property
-    def _optimisation_inds(self) -> List[int]:
+    def n_current_optimisable_coils(self) -> int:
         """
-        Get the indices of the control coils
+        Get the number of coils that can be optimised.
+        """
+        return len(self._optimisation_current_inds)
+
+    @property
+    def _optimisation_current_inds(self) -> List[int]:
+        """
+        Get the indices of the coils that can be optimised.
+
+        These indices are used to extract the optimisable currents from the CoilSet
+        and are based on the index of the coils in the name array.
         """
         optimisable_coil_names = [
             c.primary_coil.name if isinstance(c, Circuit) else c.name
@@ -1068,20 +1084,72 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the currents for the optimisable coils
         """
-        return self.current[self._optimisation_inds]
+        return self.current[self._optimisation_current_inds]
 
     @_optimisation_currents.setter
-    def _optimisation_currents(self, values: List[float]):
+    def _optimisation_currents(self, values: np.ndarray):
         """
         Set the currents for the optimisable coils
         """
-        if len(values) != len(self._coils):
+        n_all_coils = self.n_coils()
+
+        n_vals = values.shape[0]
+        n_opt_coils = self.n_current_optimisable_coils
+
+        if n_vals == 1:
+            c = values[0]
+            self.current = np.ones(n_all_coils) * c
+            return
+
+        if n_vals != n_opt_coils:
             raise ValueError(
-                "The number of current elements is less than the number of coils"
+                f"The number of current elements {n_vals} "
+                "does not match the number of "
+                f"optimisable currents: {n_opt_coils}"
             )
 
         # expand the values to the correct length
         values_full = []
         for i, c in enumerate(self._coils):
             values_full.extend([values[i]] * c.n_coils())
-        self.current = values_full
+        self.current = np.asarray(values_full)
+
+    @property
+    def _optimisation_currents_ref_mat(self) -> np.ndarray:
+        """
+        Get the reflection matrix for the optimisable coils
+        """
+        cc = self.get_control_coils()
+
+        n_all_coils = cc.n_coils()
+        n_opt_coils = cc.n_current_optimisable_coils
+        n_distinct_coils_and_groupings = len(self._coils)
+
+        # this should be true as, at the top level, the number
+        # of coil or group objects should be the same as the no
+        # of optimisable coils
+        assert n_opt_coils == n_distinct_coils_and_groupings  # noqa: S101
+
+        # you are putting 1's in the col. corresponding
+        # to all coils in the same Circuit
+        R = np.zeros((n_all_coils, n_opt_coils))
+        i_row_coil = 0
+        for i_col_coil_group, c in enumerate(self._coils):
+            if isinstance(c, Circuit):
+                n_coils_in_group = c.n_coils()
+                for n in range(n_coils_in_group):
+                    R[i_row_coil + n, i_col_coil_group] = 1
+                i_row_coil += n
+            else:
+                R[i_row_coil, i_col_coil_group] = 1
+            i_row_coil += 1
+        return R
+
+    @property
+    def _optimisation_positions(self) -> np.ndarray:
+        """
+        Get the currents for the optimisable coils
+        """
+        opt_x = self.x[self._optimisation_current_inds]
+        opt_z = self.z[self._optimisation_current_inds]
+        return np.array([opt_x, opt_z])
