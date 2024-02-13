@@ -126,8 +126,8 @@ class CoilsetOptimisationProblem(abc.ABC):
         """
         substates = 3
         cc = coilset.get_control_coils()
-        x, z = cc.position
-        currents = cc.current / current_scale
+        x, z = cc._optimisation_positions
+        currents = cc._optimisation_currents / current_scale
 
         coilset_state = np.concatenate((x, z, currents))
         return coilset_state, substates
@@ -212,29 +212,39 @@ class CoilsetOptimisationProblem(abc.ABC):
             Tuple of arrays containing lower and upper bounds for currents
             permitted in each control coil.
         """
-        n_control_currents = len(coilset.current[coilset._control_ind])
-        scaled_input_current_limits = np.inf * np.ones(n_control_currents)
+        cc = coilset.get_control_coils()
+
+        n_cc_opt_currents = cc.n_current_optimisable_coils
+        scaled_input_current_limits = np.inf * np.ones(n_cc_opt_currents)
 
         if max_currents is not None:
             input_current_limits = np.asarray(max_currents)
-            input_size = np.size(np.asarray(input_current_limits))
-            if input_size in {1, n_control_currents}:
+            input_size = np.size(input_current_limits)
+            if input_size in {1, n_cc_opt_currents}:
                 scaled_input_current_limits = input_current_limits / current_scale
             else:
                 raise EquilibriaError(
-                    "Length of max_currents array provided to optimiser is not"
-                    "equal to the number of control currents present."
+                    f"Length of max_currents {input_size} array provided to "
+                    "the optimiser is not equal to the number of "
+                    f"optimisable control currents present {n_cc_opt_currents}."
                 )
 
         # Get the current limits from coil current densities
-        coilset_current_limits = np.inf * np.ones(n_control_currents)
-        cc = coilset.get_control_coils()
-        coilset_current_limits[cc._flag_sizefix] = cc.get_max_current()[cc._flag_sizefix]
+
+        # if a coil has no jmax, then the current is limited by the max current provided
+        # or default to inf
+        # if a coil has jmax and is fixed (sized), then the current is limited by
+        # jmax * area
+        # if a coil is not fixed (sized) and it has jmax, then the current is limited
+        # by the max current provided or defaults to inf
+
+        opt_coils_max_currents = cc.get_max_current()[cc._optimisation_current_inds]
 
         # Limit the control current magnitude by the smaller of the two limits
         control_current_limits = np.minimum(
-            scaled_input_current_limits, coilset_current_limits
+            scaled_input_current_limits, opt_coils_max_currents
         )
+        # todo: shouldn't the first argument be 0'S?
         return (-control_current_limits, control_current_limits)
 
     def set_current_bounds(self, max_currents: npt.NDArray[np.float64]):

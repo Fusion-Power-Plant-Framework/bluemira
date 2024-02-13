@@ -290,6 +290,7 @@ class CoilForceConstraint(ConstraintFunction):
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
         scale: float,
+        ref_mat: np.ndarray,
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
@@ -299,10 +300,11 @@ class CoilForceConstraint(ConstraintFunction):
         self.CS_Fz_sum_max = CS_Fz_sum_max
         self.CS_Fz_sep_max = CS_Fz_sep_max
         self.scale = scale
+        self.ref_mat = ref_mat
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
-        n_coils = len(vector)
+        n_coils = self.n_CS + self.n_PF
         currents = self.scale * vector
         constraint = np.zeros(n_coils)
 
@@ -336,7 +338,7 @@ class CoilForceConstraint(ConstraintFunction):
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
-        n_coils = vector.size
+        n_coils = self.n_CS + self.n_PF
         grad = np.zeros((n_coils, n_coils))
         dF = np.zeros((n_coils, n_coils, 2))  # noqa: N806
         currents = self.scale * vector
