@@ -192,7 +192,7 @@ class CoilsetOptimisationProblem(OptimisationProblem):
         return np.array([lower_bounds, upper_bounds])
 
     @staticmethod
-    def get_current_bounds(coilset: CoilSet, max_currents, current_scale):
+    def get_current_bounds(coilset, max_currents, current_scale):
         """
         Gets the scaled current vector bounds. Must be called prior to optimise.
 

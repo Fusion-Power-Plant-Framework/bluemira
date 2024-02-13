@@ -228,16 +228,6 @@ class CoilFieldConstraints(FieldConstraints):
                 "Maximum field vector length not equal to the number of coils."
             )
 
-
-        self._args = {
-            "ax_mat": None,
-            "az_mat": None,
-            "bxp_vec": None,
-            "bzp_vec": None,
-            "B_max": B_max,
-            "scale": 1.0,
-        }
-
         if is_num(tolerance):
             tolerance = tolerance * np.ones(n_coils)
         if len(tolerance) != n_coils:
@@ -265,8 +255,8 @@ class CoilFieldConstraints(FieldConstraints):
             # Update the target points for the constraints (the coils may be moving)
             self.x, self.z = self._get_constraint_points(equilibrium.coilset)
             ax_mat, az_mat = self.control_response(equilibrium.coilset)
-            self._args["ax_mat"] = ax_mat @ equilibrium.coilset._optimisation_currents_ref_mat
-            self._args["az_mat"] = az_mat @ equilibrium.coilset._optimisation_currents_ref_mat
+            self._args["ax_mat"] = ax_mat
+            self._args["az_mat"] = az_mat
 
         bxp_vec, bzp_vec = self.evaluate(equilibrium)
         self._args["bxp_vec"] = bxp_vec

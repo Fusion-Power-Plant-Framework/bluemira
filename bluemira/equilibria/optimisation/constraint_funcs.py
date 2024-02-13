@@ -290,7 +290,6 @@ class CoilForceConstraint(ConstraintFunction):
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
         scale: float,
-        ref_mat: np.ndarray,
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
@@ -300,7 +299,6 @@ class CoilForceConstraint(ConstraintFunction):
         self.CS_Fz_sum_max = CS_Fz_sum_max
         self.CS_Fz_sep_max = CS_Fz_sep_max
         self.scale = scale
-        self.ref_mat = ref_mat
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
