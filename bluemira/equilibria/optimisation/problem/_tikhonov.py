@@ -179,6 +179,8 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
         self.targets(self.eq, I_not_dI=False)
         _, a_mat, b_vec = self.targets.get_weighted_arrays()
 
+        # may have to apply the ref mat here
+
         # Optimise currents using analytic expression for optimum.
         current_adjustment = tikhonov(a_mat, b_vec, self.gamma)
 
