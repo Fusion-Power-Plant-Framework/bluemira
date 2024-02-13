@@ -165,10 +165,10 @@ class FieldConstraints(UpdateableConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        bx = coilset.Bx_response(self.x, self.z, control=True)
-        bz = coilset.Bz_response(self.x, self.z, control=True)
-        R = coilset._optimisation_currents_ref_mat
-        return bx @ R, bz @ R
+        return (
+            coilset.Bx_response(self.x, self.z, control=True),
+            coilset.Bz_response(self.x, self.z, control=True),
+        )
 
     def evaluate(self, equilibrium: Equilibrium) -> tuple[np.ndarray, np.ndarray]:
         """
@@ -318,7 +318,6 @@ class CoilForceConstraints(UpdateableConstraint):
             "CS_Fz_sep_max": CS_Fz_sep_max,
             "n_PF": n_PF,
             "n_CS": n_CS,
-            "ref_mat": coilset._optimisation_currents_ref_mat,
         }
         self.tolerance = tolerance
 
@@ -537,10 +536,10 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        bx = coilset.Bx_response(self.x, self.z, control=True)
-        bz = coilset.Bz_response(self.x, self.z, control=True)
-        R = coilset._optimisation_currents_ref_mat
-        return np.vstack([bx @ R, bz @ R])
+        return np.vstack([
+            coilset.Bx_response(self.x, self.z, control=True),
+            coilset.Bz_response(self.x, self.z, control=True),
+        ])
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
@@ -595,9 +594,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        psi = coilset.psi_response(self.x, self.z, control=True)
-        R = coilset._optimisation_currents_ref_mat
-        return psi @ R
+        return coilset.psi_response(self.x, self.z, control=True)
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
@@ -644,11 +641,9 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        psi = coilset.psi_response(self.x, self.z, control=True)
-        psi_ref = coilset.psi_response(self.ref_x, self.ref_z, control=True)
-        dpsi = psi - psi_ref
-        R = coilset._optimisation_currents_ref_mat
-        return dpsi @ R
+        return coilset.psi_response(self.x, self.z, control=True) - coilset.psi_response(
+            self.ref_x, self.ref_z, control=True
+        )
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
@@ -708,9 +703,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        psi = coilset.psi_response(self.x, self.z, control=True)
-        R = coilset._optimisation_currents_ref_mat
-        return psi @ R
+        return coilset.psi_response(self.x, self.z, control=True)
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
@@ -820,10 +813,7 @@ class MagneticConstraintSet(ABC):
         """
         Build the control response matrix used in optimisation.
         """
-        self.A = np.zeros((
-            len(self),
-            self.coilset.get_control_coils().n_current_optimisable_coils,
-        ))
+        self.A = np.zeros((len(self), len(self.coilset.control)))
 
         i = 0
         for constraint in self.constraints:
