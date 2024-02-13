@@ -244,5 +244,5 @@ class BreakdownCOP(CoilsetOptimisationProblem):
             ineq_constraints=ineq_constraints,
         )
         currents = opt_result.x
-        self.coilset.get_control_coils().current = currents * self.scale
+        self.coilset.get_control_coils()._optimisation_currents = currents * self.scale
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)

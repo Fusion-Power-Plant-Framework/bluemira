@@ -84,6 +84,7 @@ class RegularisedLsqObjective(ObjectiveFunction):
 
     def f_objective(self, x: npt.NDArray[np.float64]) -> float:
         """Objective function for an optimisation."""
+        # here!
         x = x * self.scale
         fom, _ = regularised_lsq_fom(x, self.a_mat, self.b_vec, self.gamma)
         if fom <= 0:
