@@ -20,6 +20,7 @@ from typing import (
     Tuple,
     Type,
     Union,
+    get_type_hints,
 )
 from warnings import warn
 
@@ -498,7 +499,7 @@ class Reactor(BaseManager):
 
         component = Component(self.name)
         comp_type: Type
-        for comp_name, comp_type in self.__annotations__.items():
+        for comp_name, comp_type in get_type_hints(type(self)).items():
             if not issubclass(comp_type, ComponentManager):
                 continue
             try:
