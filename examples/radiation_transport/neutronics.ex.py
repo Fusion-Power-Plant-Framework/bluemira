@@ -36,7 +36,7 @@ from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import TBRHeatingSimulation
 from bluemira.neutronics.params import (
     OpenMCSimulationRuntimeParameters,
-    TokamakOperationParametersBase,
+    PlasmaSourceParameters,
     get_preset_physical_properties,
 )
 
@@ -47,7 +47,11 @@ from bluemira.neutronics.params import (
 # and let OpenMC know where that directory is.
 
 # %%
-CROSS_SECTION_XML = str(Path("~/bluemira_openmc_data/cross_sections.xml").expanduser())
+CROSS_SECTION_XML = str(
+    Path(
+        "~/Others/cross_section_data/cross_section_data/cross_sections.xml"
+    ).expanduser()
+)
 # %% [markdown]
 # In this script we can also demonstrate openmc's ability to calculate the volume
 # stochastically (rather than analytically). Specifically, in this script we
@@ -70,9 +74,7 @@ volume_calculation = True
 # %%
 # set up the variables to be used for the openmc simulation
 # allowed blanket_type so far = {'WCLL', 'DCLL', 'HCPB'}
-breeder_materials, plasma_geometry, tokamak_geometry = get_preset_physical_properties(
-    BlanketType.HCPB
-)
+breeder_materials, tokamak_geometry = get_preset_physical_properties(BlanketType.HCPB)
 
 runtime_variables = OpenMCSimulationRuntimeParameters(
     cross_section_xml=CROSS_SECTION_XML,
@@ -87,10 +89,14 @@ runtime_variables = OpenMCSimulationRuntimeParameters(
     volume_calc_particles=int(4e8),
 )
 
-operation_variable = TokamakOperationParametersBase(
+source_parameters = PlasmaSourceParameters(
+    major_radius=8.938,  # [m]
+    aspect_ratio=8.938 / 2.883,  # [m]
+    elongation=1.65,  # [dimensionless]
+    triangularity=0.333,  # [m]
     reactor_power=1998e6,  # [W]
-    temperature=raw_uc(15.4, "keV", "K"),
     peaking_factor=1.508,  # [dimensionless]
+    temperature=raw_uc(15.4, "keV", "K"),
     shaf_shift=0.0,  # [m]
     vertical_shift=0.0,  # [m]
 )
@@ -98,9 +104,8 @@ operation_variable = TokamakOperationParametersBase(
 # set up a DEMO-like reactor, and run OpenMC simualtion
 tbr_heat_sim = TBRHeatingSimulation(
     runtime_variables,
-    operation_variable,
+    source_parameters,
     breeder_materials,
-    plasma_geometry,
     tokamak_geometry,
 )
 blanket_wire = make_polygon(Coordinates(np.load("blanket_face.npy")))
