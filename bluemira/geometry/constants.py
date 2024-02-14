@@ -11,7 +11,7 @@ Constants for the geometry module
 import numpy as np
 
 # Absolute tolerance for equality in distances
-D_TOLERANCE = 1e-5  # [m] # is the unit correct??
+D_TOLERANCE = 1e-5  # [m]
 
 # FreeCAD's default tolerance is 1E-7, so correspondingly, we need a larger epsilon.
 # The following value happens to equal 1.1920929E-7, which satisifies the requirement.
