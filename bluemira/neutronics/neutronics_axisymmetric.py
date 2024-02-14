@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """
-[ ]Tests?
+Make an axis-symmetric tokamak.
 """
 
 from __future__ import annotations
@@ -24,12 +24,10 @@ from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.neutronics.params import (
     BreederTypeParameters,
     OpenMCSimulationRuntimeParameters,
-    PlasmaGeometry,
-    PlasmaGeometryBase,
+    PlasmaSourceParameters,
+    PlasmaSourceParametersPPS,
     TokamakGeometry,
     TokamakGeometryBase,
-    TokamakOperationParameters,
-    TokamakOperationParametersBase,
 )
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.neutronics.volume_functions import stochastic_volume_calculation
@@ -39,7 +37,7 @@ if TYPE_CHECKING:
     from bluemira.geometry.wire import BluemiraWire
 
 
-def create_ring_source(major_r: float, shaf_shift: float) -> openmc.Source:
+def create_ring_source(major_r_cm: float, shaf_shift_cm: float) -> openmc.Source:
     """
     Creating simple line ring source lying on the Z=0 plane,
         at r = major radius + shafranov shift,
@@ -48,13 +46,11 @@ def create_ring_source(major_r: float, shaf_shift: float) -> openmc.Source:
 
     Parameters
     ----------
-    major_r: major radius [m]
-    shaf_shift: shafranov shift [m]
+    major_r_cm: major radius [cm]
+    shaf_shift_cm: shafranov shift [cm]
     """
     ring_source = openmc.Source()
-    source_radii_cm = openmc.stats.Discrete(
-        [raw_uc(major_r + shaf_shift, "m", "cm")], [1]
-    )
+    source_radii_cm = openmc.stats.Discrete([major_r_cm + shaf_shift_cm], [1])
     source_z_values = openmc.stats.Discrete([0], [1])
     source_angles = openmc.stats.Uniform(a=0.0, b=2 * pi)
     ring_source.space = openmc.stats.CylindricalIndependent(
@@ -138,16 +134,14 @@ class TBRHeatingSimulation:
 
     def __init__(
         self,
-        runtime_params: OpenMCSimulationRuntimeParameters,
-        operation_variable: TokamakOperationParametersBase,
+        runtime_variables: OpenMCSimulationRuntimeParameters,
+        source_parameters: PlasmaSourceParameters,
         breeder_materials: BreederTypeParameters,
-        plasma_geometry: PlasmaGeometryBase,
         tokamak_geometry: TokamakGeometryBase,
     ):
-        self.runtime_params = runtime_params
-        self.operation_variable = TokamakOperationParameters.from_si(operation_variable)
+        self.runtime_variables = runtime_variables
+        self.source_parameters = PlasmaSourceParametersPPS.from_si(source_parameters)
         self.breeder_materials = breeder_materials
-        self.plasma_geometry = PlasmaGeometry.from_si(plasma_geometry)
         self.tokamak_geometry = TokamakGeometry.from_si(tokamak_geometry)
 
         self.cells = None
@@ -177,45 +171,46 @@ class TBRHeatingSimulation:
 
         new_major_radius: [m]
             (new) major radius in SI units,
-            separate to the one provided in self.plasma_geometry
+            separate to the one provided in self.source_parameters
 
         new_aspect_ratio: [dimensionless]
             scalar denoting the aspect ratio of the device (major/minor radius)
 
         new_elong: [dimensionless]
             (new) elongation variable,
-            separate to the one provided in self.plasma_geometry
+            separate to the one provided in self.source_parameters
 
         plot_geometry: bool
             Should openmc plot the .png files or not.
         """
         material_lib = create_and_export_materials(self.breeder_materials)
         self.material_lib = material_lib
-        mg.check_geometry(self.plasma_geometry, self.tokamak_geometry)
-        if self.runtime_params.parametric_source:
+        mg.check_geometry(self.source_parameters, self.tokamak_geometry)
+        if self.runtime_variables.parametric_source:
             source = create_parametric_plasma_source(
+                # tokamak geometry
+                major_r=self.source_parameters.plasma_physics_units.major_radius,
+                minor_r=self.source_parameters.plasma_physics_units.minor_radius,
+                elongation=self.source_parameters.plasma_physics_units.elongation,
+                triangularity=self.source_parameters.plasma_physics_units.triangularity,
                 # plasma geometry
-                major_r=self.plasma_geometry.cgs.major_r,
-                minor_r=self.plasma_geometry.cgs.minor_r,
-                elongation=self.plasma_geometry.cgs.elong,
-                triangularity=self.plasma_geometry.cgs.triang,
-                # plasma operating variable
-                peaking_factor=self.operation_variable.plasma_physics_units.peaking_factor,
-                temperature=self.operation_variable.plasma_physics_units.temperature,
-                radial_shift=self.operation_variable.plasma_physics_units.shaf_shift,
-                vertical_shift=self.operation_variable.plasma_physics_units.vertical_shift,
+                peaking_factor=self.source_parameters.plasma_physics_units.peaking_factor,
+                temperature=self.source_parameters.plasma_physics_units.temperature,
+                radial_shift=self.source_parameters.plasma_physics_units.shaf_shift,
+                vertical_shift=self.source_parameters.plasma_physics_units.vertical_shift,
                 # plasma type
                 mode="DT",
             )
         else:
             source = create_ring_source(
-                self.plasma_geometry.major_r, self.operation_variable.shaf_shift
+                self.source_parameters.plasma_physics_units.major_radius,
+                self.source_parameters.plasma_physics_units.shaf_shift,
             )
 
-        setup_openmc(source, self.runtime_params)
+        setup_openmc(source, self.runtime_variables)
 
         blanket_points, div_points, num_inboard_points = mg.load_fw_points(
-            self.plasma_geometry,
+            self.source_parameters,
             blanket_wire,
             divertor_wire,
             raw_uc(new_major_radius, "m", "cm"),
@@ -234,14 +229,17 @@ class TBRHeatingSimulation:
         # deduce source strength (self.src_rate) from the power of the reactor,
         # by assuming 100% of reactor power comes from DT fusion
         self.src_rate = n_DT_reactions(
-            self.operation_variable.plasma_physics_units.reactor_power  # [MW]
+            self.source_parameters.plasma_physics_units.reactor_power  # [MW]
+            # TODO: when issue #2858 is fixed,
+            # it will change the definition of n_DT_reactions from [MW] to [W].
+            # in which which case, we use self.source_parameters.reactor_power.
         )
 
         create_tallies(self.cells, self.material_lib)
 
         if plot_geometry:
             present.geometry_plotter(
-                self.cells, self.plasma_geometry, self.tokamak_geometry
+                self.cells, self.source_parameters, self.tokamak_geometry
             )
 
     @staticmethod
@@ -266,8 +264,8 @@ class TBRHeatingSimulation:
         Using openmc's built-in stochastic volume calculation function to get the volume.
         """
         stochastic_volume_calculation(
-            self.plasma_geometry,
+            self.source_parameters,
             self.tokamak_geometry,
             self.cells,
-            self.runtime_params.volume_calc_particles,
+            self.runtime_variables.volume_calc_particles,
         )

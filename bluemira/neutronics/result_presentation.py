@@ -18,7 +18,7 @@ from tabulate import tabulate
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.neutronics.constants import DPACoefficients
-from bluemira.neutronics.params import PlasmaGeometry, TokamakGeometry
+from bluemira.neutronics.params import PlasmaSourceParametersPPS, TokamakGeometry
 
 
 def get_percent_err(row):
@@ -403,7 +403,7 @@ class OpenMCResult:
 
 def geometry_plotter(
     cells: dict[str, list[openmc.Cell] | openmc.Cell],
-    plasma_geometry: PlasmaGeometry,
+    plasma_source_params: PlasmaSourceParametersPPS,
     tokamak_geometry: TokamakGeometry,
 ) -> None:
     """
@@ -415,11 +415,9 @@ def geometry_plotter(
         dictionary where each item is either a single openmc.Cell,
             or a list of openmc.Cell.
 
-    plasma_geometry:
-        dataclass containing the plasma geometry, including major_r, minor_r, elong.
-
     tokamak_geometry:
-        dataclass containing the tokamak geometry. See TokamakGeometry for details.
+        dataclass containing the tokamak geometry.
+        See :class:`~bluemira.neutronics.params.TokamakGeometry` for details.
 
     Returns
     -------
@@ -476,8 +474,9 @@ def geometry_plotter(
     color_cells("divertor", "regions", "cyan")
 
     plot_width = 2 * (
-        plasma_geometry.cgs.major_r
-        + plasma_geometry.cgs.minor_r * plasma_geometry.cgs.elong
+        plasma_source_params.plasma_physics_units.major_radius
+        + plasma_source_params.plasma_physics_units.minor_radius
+        * plasma_source_params.plasma_physics_units.elongation
         + tokamak_geometry.cgs.outb_fw_thick
         + tokamak_geometry.cgs.outb_bz_thick
         + tokamak_geometry.cgs.outb_mnfld_thick

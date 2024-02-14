@@ -69,8 +69,9 @@ class BreederTypeParameters:
 
 
 @dataclass(frozen=True)
-class TokamakOperationParametersBase:
-    """Parameters describing how the tokamak is operated,
+class PlasmaSourceParameters:
+    """
+    Parameters describing the plasma source,
     i.e. where the plasma is positioned (and therefore where the power is concentrated),
     and what temperature the plasma is at.
 
@@ -92,28 +93,41 @@ class TokamakOperationParametersBase:
         shifted compared to the geometric center of the poloidal cross-section.
     """
 
+    major_radius: float  # [m]
+    aspect_ratio: float  # [dimensionless]
+    elongation: float  # [dimensionless]
+    triangularity: float  # [dimensionless]
     reactor_power: float  # [W]
     peaking_factor: float  # [dimensionless]
     temperature: float  # [K]
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
 
+    @property
+    def minor_radius(self):
+        """Calculate minor radius from
+        aspect_ratio = major_radius/minor_radius
+        """
+        return self.major_radius / self.aspect_ratio
+
 
 @dataclass(frozen=True)
-class TokamakOperationParameters(TokamakOperationParametersBase):
-    """See TokamakOperationParametersBase
+class PlasmaSourceParametersPPS(PlasmaSourceParameters):
+    """See PlasmaSourceParameters
 
     Addition of plasma_physics_units converted variables
     """
 
-    plasma_physics_units: TokamakOperationParametersBase
+    plasma_physics_units: PlasmaSourceParameters
 
     @classmethod
-    def from_si(cls, op_params: TokamakOperationParametersBase):
-        """Convert from si units dataclass
-        :class:`bluemira.neutronics.params.TokamakOperationParametersBase`
+    def from_si(cls, op_params: PlasmaSourceParameters):
+        """
+        Convert from si units dataclass
+        :class:`~bluemira.neutronics.params.PlasmaSourceParameters`
         """
         conversion = {
+            "major_radius": ("m", "cm"),
             "reactor_power": ("W", "MW"),
             "temperature": ("K", "keV"),
             "shaf_shift": ("m", "cm"),
@@ -124,61 +138,7 @@ class TokamakOperationParameters(TokamakOperationParametersBase):
         for k, v in op_pps.items():
             if k in conversion:
                 op_pps[k] = raw_uc(v, *conversion[k])
-        return cls(**op, plasma_physics_units=TokamakOperationParametersBase(**op_pps))
-
-
-@dataclass(frozen=True)
-class PlasmaGeometryBase:
-    """List of parameters describing the
-
-    Parameters
-    ----------
-    major_r:
-        major radius [m]
-        how far is the origin in the poloidal view from the center of the torus.
-    minor_r:
-        minor radius [m] (R0 in equation referenced below)
-        radius of the poloidal cross-section
-    elong:
-        elongation [dimensionless] (a in equation referenced below)
-        how eccentric the poloidal ellipse is
-    triang:
-        triangularity [dimensionless] (δ in equation referenced below)
-        second order eccentricity (best visualized by plotting R(θ) wrt.θ in eq. below)
-
-    Notes
-    -----
-    R = R0 + a cos(θ + δ sin θ)
-    https://hibp.ecse.rpi.edu/~connor/education/plasma/PlasmaEngineering/Miyamoto.pdf
-    page.239 # noqa: W505
-    """
-
-    major_r: float
-    minor_r: float
-    elong: float
-    triang: float
-
-
-@dataclass(frozen=True)
-class PlasmaGeometry(PlasmaGeometryBase):
-    """See PlasmaGeometryBase
-
-    Addition of cgs converted variables
-    """
-
-    cgs: PlasmaGeometryBase
-
-    @classmethod
-    def from_si(cls, plasma_geometry: PlasmaGeometryBase):
-        """Convert from si units dataclass
-        :class:`bluemira.neutronics.params.PlasmaGeometryBase`
-        """
-        pg = asdict(plasma_geometry)
-        pgcgs = pg.copy()
-        for k, v in pgcgs.items():
-            if k.endswith("_r"):  # minor and major radii
-                pgcgs[k] = raw_uc(v, "m", "cm")
-        return cls(**pg, cgs=PlasmaGeometryBase(**pgcgs))
+        return cls(**op, plasma_physics_units=PlasmaSourceParameters(**op_pps))
 
 
 @dataclass(frozen=True)
@@ -222,11 +182,12 @@ class TokamakGeometry(TokamakGeometryBase):
     cgs: TokamakGeometryBase
 
     @classmethod
-    def from_si(cls, tokamak_geometry: TokamakGeometryBase):
-        """Convert from si units dataclass
-        :class:`bluemira.neutronics.params.TokamakGeometryBase`
+    def from_si(cls, tokamak_geometry_base: TokamakGeometryBase):
         """
-        tg = asdict(tokamak_geometry)
+        Convert from si units dataclass
+        :class:`~bluemira.neutronics.params.TokamakGeometryBase`
+        """
+        tg = asdict(tokamak_geometry_base)
         tgcgs = tg.copy()
         for k, v in tgcgs.items():
             tgcgs[k] = raw_uc(v, "m", "cm")
@@ -235,7 +196,7 @@ class TokamakGeometry(TokamakGeometryBase):
 
 def get_preset_physical_properties(
     blanket_type: str | BlanketType,
-) -> tuple[BreederTypeParameters, PlasmaGeometryBase, TokamakGeometryBase]:
+) -> tuple[BreederTypeParameters, TokamakGeometryBase]:
     """
     Works as a switch-case for choosing the tokamak geometry
     and blankets for a given blanket type.
@@ -269,13 +230,6 @@ def get_preset_physical_properties(
     # 0.060,       # Back Wall and Gas Collectors   Back wall = 3.0
     # 0.350,      # breeder zone
     # 0.022        # fw and armour
-
-    plasma_geometry = PlasmaGeometryBase(
-        major_r=8.938,  # [m]
-        minor_r=2.883,  # [m]
-        elong=1.65,  # [dimensionless]
-        triang=0.333,  # [m]
-    )
 
     shared_building_geometry = {  # that are identical in all three types of reactors.
         "inb_gap": 0.2,  # [m]
@@ -315,4 +269,4 @@ def get_preset_physical_properties(
             outb_mnfld_thick=0.560,  # [m]
         )
 
-    return breeder_materials, plasma_geometry, tokamak_geometry
+    return breeder_materials, tokamak_geometry

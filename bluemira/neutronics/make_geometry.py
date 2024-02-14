@@ -21,15 +21,21 @@ import bluemira.neutronics.result_presentation as present
 import bluemira.neutronics.volume_functions as vf
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
+from bluemira.geometry.error import GeometryError
 from bluemira.geometry.wire import BluemiraWire
 from bluemira.neutronics.make_materials import MaterialsLibrary
 from bluemira.neutronics.params import (
-    PlasmaGeometry,
+    PlasmaSourceParameters,
+    PlasmaSourceParametersPPS,
     TokamakGeometry,
+    TokamakGeometryBase,
 )
 
 
-def check_geometry(plasma_geometry, tokamak_geometry) -> None:
+def check_geometry(
+    plasma_source_params: Union[PlasmaSourceParameters, PlasmaSourceParametersPPS],
+    tokamak_geometry: Union[TokamakGeometryBase, TokamakGeometry],
+) -> None:
     """Some basic geometry checks.
 
     It doesn't matter whether these two parameters are provided in metric or cgs,
@@ -37,17 +43,17 @@ def check_geometry(plasma_geometry, tokamak_geometry) -> None:
 
     Parameters
     ----------
-    plasma_geometry:
-        dataclass with attribute minor_r, major_r, elong
+    plasma_source_params:
+        dataclass with attribute minor_radius, major_radius, elongation
 
     tokamak_geometry:
         dataclass with various thickness attributes. (See TokamakGeometry for details.)
     """
-    if plasma_geometry.elong < 1.0:
-        raise ValueError("Elongation must be at least 1.0")
+    if plasma_source_params.elongation < 1.0:  # noqa: PLR2004
+        raise GeometryError("Elongation must be at least 1.0")
 
     inboard_build = (
-        plasma_geometry.minor_r
+        plasma_source_params.minor_radius
         + tokamak_geometry.inb_fw_thick
         + tokamak_geometry.inb_bz_thick
         + tokamak_geometry.inb_mnfld_thick
@@ -56,8 +62,8 @@ def check_geometry(plasma_geometry, tokamak_geometry) -> None:
         + tokamak_geometry.inb_gap
     )
 
-    if inboard_build > plasma_geometry.major_r:
-        raise ValueError(
+    if inboard_build > plasma_source_params.major_radius:
+        raise GeometryError(
             "The inboard build does not fit within the major radius."
             " Increase the major radius."
         )
@@ -159,19 +165,23 @@ def elongate(points, adjust_elong):
     return points
 
 
-def stretch_r(points, plasma_geometry: PlasmaGeometry, stretch_r_val) -> np.ndarray:
+def stretch_r(
+    points, plasma_source_params: PlasmaSourceParametersPPS, stretch_r_val
+) -> np.ndarray:
     """Moves the points in the r dimension away from the major radius by extra_r_cm
 
     Parameters
     ----------
-    points: np.array of 2D or 3D points
-    plasma_geometry: PlasmaGeometry
-        The values that we want is actually in plasma_geometry.cgs.
-    stretch_r_val: in cm
+    points: np.array of 2D or 3D points (coordinates provided in [cm])
+    plasma_source_params: PlasmaSourceParametersPPS
+        The values that we want is actually in plasma_source_params.plasma_physics_units.
+        See :class:`~bluemira.neutronics.params.PlasmaParametersPPS`
+    stretch_r_val: float
+        Scalar value stating how much to stretch the radius by [cm]
     """
     points[:, 0] = (
-        points[:, 0] - plasma_geometry.cgs.major_r
-    ) * stretch_r_val + plasma_geometry.cgs.major_r
+        points[:, 0] - plasma_source_params.plasma_physics_units.major_radius
+    ) * stretch_r_val + plasma_source_params.plasma_physics_units.major_radius
 
     return points
 
@@ -623,6 +633,7 @@ def make_geometry(
     ----------
     tokamak_geometry:
         data all either floats in cm, or dimensionless.
+        See :class:`~bluemira.neutronics.params.TokamakGeometry` for details.
     fw_points:
         coordinates of sample points representing the blanket, where
         blanket = first wall MINUS divertor
@@ -847,7 +858,7 @@ def make_geometry(
 
 
 def load_fw_points(
-    plasma_geometry: PlasmaGeometry,
+    plasma_source_params: PlasmaSourceParametersPPS,
     blanket_wire: BluemiraWire,
     divertor_wire: BluemiraWire,
     new_major_radius: float,
@@ -865,9 +876,10 @@ def load_fw_points(
 
     Parameters
     ----------
-    plasma_geometry: PlasmaGeometry
+    plasma_source_params: PlasmaSourceParametersPPS
         a dataclass containing plasma geometry parameters:
-        major_r, minor_r, elong, triang.
+        major_radius, minor_radius, elongation, triangularity
+        See :class:`~bluemira.neutronics.params.PlasmaParametersPPS` for details.
 
     blanket_wire: BluemiraWire
         The blanket wire
@@ -941,17 +953,19 @@ def load_fw_points(
 
     # rescale data to fit new geometry.
     # Expand point outwards according to new major radius
-    shift_cm = plasma_geometry.cgs.major_r - ex_pts_maj_r
+    shift_cm = plasma_source_params.plasma_physics_units.major_radius - ex_pts_maj_r
     new_points = shift_points(old_points, shift_cm)
 
     # Adjusting points for elongation and minor radius
     # This elongation also include an allowance for the minor radius
     elong_w_minor_r = (
-        plasma_geometry.cgs.minor_r / ex_pts_min_r * plasma_geometry.cgs.elong
+        plasma_source_params.plasma_physics_units.minor_radius
+        / ex_pts_min_r
+        * plasma_source_params.plasma_physics_units.elongation
     )
-    stretch_r_val = plasma_geometry.cgs.minor_r / ex_pts_min_r
+    stretch_r_val = plasma_source_params.plasma_physics_units.minor_radius / ex_pts_min_r
     new_points = elongate(new_points, elong_w_minor_r / ex_pts_elong)
-    new_points = stretch_r(new_points, plasma_geometry, stretch_r_val)
+    new_points = stretch_r(new_points, plasma_source_params, stretch_r_val)
 
     # split 'new_points' into new_downsampled_* variables
     new_downsampled_fw = new_points[:-num_points_belongong_to_divertor]
@@ -964,13 +978,16 @@ def load_fw_points(
     # plotting.
     if save_plots:
         # create parametric variables for plotting smoother lines
-        u = plasma_geometry.cgs.major_r  # x-position of the center
+        u = plasma_source_params.plasma_physics_units.major_radius  # x of the center
         v = 0.0  # y-position of the center
-        a = plasma_geometry.cgs.minor_r  # radius on the x-axis
+        a = (
+            plasma_source_params.plasma_physics_units.minor_radius
+        )  # radius on the x-axis
         b = (
-            plasma_geometry.cgs.elong * plasma_geometry.cgs.minor_r
+            plasma_source_params.plasma_physics_units.elongation
+            * plasma_source_params.plasma_physics_units.minor_radius
         )  # radius on the y-axis
-        tri = plasma_geometry.cgs.triang  # triangularity
+        tri = plasma_source_params.plasma_physics_units.triangularity
         t = np.linspace(0, 2 * pi, 100)
 
         with present.PoloidalXSPlot("blanket_face.svg", "Blanket Face") as ax:
