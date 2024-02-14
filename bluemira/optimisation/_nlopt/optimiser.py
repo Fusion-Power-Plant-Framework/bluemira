@@ -100,6 +100,7 @@ class NloptOptimiser(Optimiser):
         opt_conditions: Optional[Mapping[str, Union[int, float]]] = None,
         opt_parameters: Optional[Mapping[str, Any]] = None,
         keep_history: bool = False,
+        reflection_matrix: Optional[np.ndarray] = None,
     ):
         opt_conditions = {} if opt_conditions is None else opt_conditions
         opt_parameters = {} if opt_parameters is None else opt_parameters
@@ -112,6 +113,7 @@ class NloptOptimiser(Optimiser):
         self._set_algorithm_parameters(opt_parameters)
         self._eq_constraints: List[Constraint] = []
         self._ineq_constraints: List[Constraint] = []
+        self._reflection_matrix = reflection_matrix
 
     @property
     def algorithm(self) -> Algorithm:
@@ -160,6 +162,7 @@ class NloptOptimiser(Optimiser):
             tolerance,
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
+            reflection_matrix=self._reflection_matrix,
         )
         self._opt.add_equality_mconstraint(constraint.call, constraint.tolerance)
         self._eq_constraints.append(constraint)
@@ -186,6 +189,7 @@ class NloptOptimiser(Optimiser):
             tolerance,
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
+            reflection_matrix=self._reflection_matrix,
         )
         self._opt.add_inequality_mconstraint(constraint.call, constraint.tolerance)
         self._ineq_constraints.append(constraint)
