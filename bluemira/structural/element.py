@@ -10,6 +10,7 @@ Finite element class
 
 from __future__ import annotations
 
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Dict, Optional
 
 if TYPE_CHECKING:
@@ -28,10 +29,24 @@ from bluemira.structural.node import get_midpoint
 from bluemira.structural.stress import hermite_polynomials
 from bluemira.structural.transformation import lambda_matrix
 
+
 # TODO: Clean up some class stuff with cached_property decorators.
 # Test some existing stuff (functools?), and your own custom class.
 # Check speed and so on.
 # Only bother doing this if you don't rewrite in C++
+class LoadType(Enum):
+    """Enumification of text based choices"""
+
+    ELEMENT_LOAD = auto()
+    DISTRIBUTED_LOAD = auto()
+    NODE_LOAD = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError as err:
+            raise StructuralError("Unknown Load type") from err
 
 
 # @nb.jit(nopython=True, cache=True)
@@ -469,12 +484,13 @@ class Element:
         """
         enf = np.zeros(12)
         for load in self.loads:
-            if load["type"] == "Element Load":
+            load_type = LoadType[load["type"].replace(" ", "_").upper()]
+            if load_type is LoadType.ELEMENT_LOAD:
                 enf += point_load(load["Q"], load["x"], self.length, load["sub_type"])
-            elif load["type"] == "Distributed Load":
+            elif load_type is LoadType.DISTRIBUTED_LOAD:
                 enf += distributed_load(load["w"], self.length, load["sub_type"])
-            else:
-                raise StructuralError(f'Unknown load type: "{load["type"]}"')
+            # else:
+            # raise StructuralError(f'Unknown load type: "{load["type"]}"')
 
         return enf
 

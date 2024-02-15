@@ -8,6 +8,8 @@
 Load objects
 """
 
+from enum import Enum, auto
+
 import numpy as np
 
 from bluemira.base.look_and_feel import bluemira_warn
@@ -15,16 +17,33 @@ from bluemira.structural.constants import LOAD_MAPPING, LOAD_TYPES
 from bluemira.structural.error import StructuralError
 
 
+class SubLoadType(Enum):
+    """Enumification of text based choices"""
+
+    FORCE = auto()
+    MOMENT = auto()
+    ALL = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError as err:
+            raise StructuralError("Unknown SubLoad type") from err
+
+
 def _check_load_type(load_type, sub_type="all"):
     if load_type not in LOAD_TYPES:
         raise StructuralError(f"Unrecognised load type: {load_type}.")
 
-    if sub_type == "force" and load_type not in LOAD_TYPES[:3]:
+    inp_sub_type = SubLoadType[sub_type.upper()]
+
+    if inp_sub_type is SubLoadType.FORCE and load_type not in LOAD_TYPES[:3]:
         raise StructuralError(
             f"Cannot set a force load with a moment load type: {load_type}"
         )
 
-    if sub_type == "moment" and load_type not in LOAD_TYPES[3:]:
+    if inp_sub_type is SubLoadType.MOMENT and load_type not in LOAD_TYPES[3:]:
         raise StructuralError(
             f"Cannot set a moment load with a force load type: {load_type}"
         )
