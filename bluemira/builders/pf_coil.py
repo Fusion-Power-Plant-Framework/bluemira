@@ -9,6 +9,7 @@ Builder for the PF coils
 """
 
 from dataclasses import dataclass
+from enum import Enum, auto
 from typing import Dict, List, Union
 
 from bluemira.base.builder import Builder
@@ -22,6 +23,20 @@ from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
+
+
+class CType(Enum):
+    """Enumification of text based choices"""
+
+    PF = auto()
+    CS = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError as err:
+            raise ValueError("Please choose a ctype from: PF or CS") from err
 
 
 @dataclass
@@ -79,7 +94,7 @@ class PFCoilBuilder(Builder):
         c2 = make_circle(r_in)
 
         wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace([c1, c2]))
-        idx = 0 if self.params.ctype.value == "CS" else 1
+        idx = 0 if CType[self.params.ctype.value.upper()] is CType.CS else 1
         apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
 
         r_in -= self.params.tk_insulation.value
@@ -113,7 +128,7 @@ class PFCoilBuilder(Builder):
         Build the xz cross-section of the PF coil.
         """
         wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace(shape))
-        idx = 0 if self.params.ctype.value == "CS" else 1
+        idx = 0 if CType[self.params.ctype.value.upper()] is CType.CS else 1
         apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
 
         ins_shape = offset_wire(shape, self.params.tk_insulation.value)
