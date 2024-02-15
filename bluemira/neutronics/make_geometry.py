@@ -50,7 +50,7 @@ def check_geometry(
         dataclass with various thickness attributes. (See TokamakGeometry for details.)
     """
     if plasma_source_params.elongation < 1.0:  # noqa: PLR2004
-        raise GeometryError("Elongation must be at least 1.0")
+        raise GeometryError("Elongation must be at most 1.0")
 
     inboard_build = (
         plasma_source_params.minor_radius
