@@ -84,6 +84,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             "b_vec": None,
             "value": 0.0,
             "scale": 1,
+            "current_sym_matrix": None,
         }
 
     @property
@@ -116,6 +117,10 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         if self.invert:
             self._args["a_mat"] *= -1
             self._args["b_vec"] *= -1
+
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
 
     def control_response(self, coilset: CoilSet) -> np.ndarray:
         """

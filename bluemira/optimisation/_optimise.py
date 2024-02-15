@@ -45,7 +45,6 @@ def optimise(
     keep_history: bool = False,
     check_constraints: bool = True,
     check_constraints_warn: bool = True,
-    reflection_matrix: Optional[np.ndarray] = None,
 ) -> OptimiserResult:
     r"""
     Find the parameters that minimise the given objective function.
@@ -245,7 +244,6 @@ def _make_optimiser(
     ineq_constraints: Iterable[ConstraintT] = (),
     *,
     keep_history: bool = False,
-    reflection_matrix: Optional[np.ndarray] = None,
 ) -> Optimiser:
     """Make a new optimiser object."""
     opt = NloptOptimiser(
@@ -256,7 +254,6 @@ def _make_optimiser(
         opt_conditions=opt_conditions,
         opt_parameters=opt_parameters,
         keep_history=keep_history,
-        reflection_matrix=reflection_matrix,
     )
     for constraint in eq_constraints:
         opt.add_eq_constraint(**constraint)

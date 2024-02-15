@@ -1115,7 +1115,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         self.current = np.asarray(values_full)
 
     @property
-    def _optimisation_currents_ref_mat(self) -> np.ndarray:
+    def _optimisation_currents_sym_mat(self) -> np.ndarray:
         """
         Get the reflection matrix for the optimisable coils
         """
@@ -1123,7 +1123,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
 
         n_all_coils = cc.n_coils()
         n_opt_coils = cc.n_current_optimisable_coils
-        n_distinct_coils_and_groupings = len(self._coils)
+        n_distinct_coils_and_groupings = len(cc._coils)
 
         # this should be true as, at the top level, the number
         # of coil or group objects should be the same as the no
@@ -1134,7 +1134,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         # to all coils in the same Circuit
         R = np.zeros((n_all_coils, n_opt_coils))
         i_row_coil = 0
-        for i_col_coil_group, c in enumerate(self._coils):
+        for i_col_coil_group, c in enumerate(cc._coils):
             if isinstance(c, Circuit):
                 n_coils_in_group = c.n_coils()
                 for n in range(n_coils_in_group):

@@ -102,19 +102,22 @@ class AxBConstraint(ConstraintFunction):
         b_vec: npt.NDArray[np.float64],
         value: float,
         scale: float,
+        current_sym_matrix: np.ndarray,
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
+        self.current_sym_matrix = current_sym_matrix
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
-        return self.a_mat @ (self.scale * vector) - self.b_vec - self.value
+        currents = self.current_sym_matrix @ (self.scale * vector)
+        return self.a_mat @ currents - self.b_vec - self.value
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """Constraint derivative"""
-        return self.scale * self.a_mat
+        return (self.scale * self.a_mat) @ self.current_sym_matrix
 
 
 class L2NormConstraint(ConstraintFunction):
@@ -141,23 +144,25 @@ class L2NormConstraint(ConstraintFunction):
         b_vec: npt.NDArray[np.float64],
         value: float,
         scale: float,
+        current_sym_matrix: np.ndarray,
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
+        self.current_sym_matrix = current_sym_matrix
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
-        vector = self.scale * vector
-        residual = self.a_mat @ vector - self.b_vec
+        currents = self.current_sym_matrix @ (self.scale * vector)
+        residual = self.a_mat @ currents - self.b_vec
         return residual.T @ residual - self.value
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
-        vector = self.scale * vector
-        df = 2 * (self.a_mat.T @ self.a_mat @ vector - self.a_mat.T @ self.b_vec)
-        return df * self.scale
+        currents = self.current_sym_matrix @ (self.scale * vector)
+        df = 2 * (self.a_mat.T @ self.a_mat @ currents - self.a_mat.T @ self.b_vec)
+        return (self.scale * df) @ self.current_sym_matrix
 
 
 class FieldConstraintFunction(ConstraintFunction):
@@ -188,6 +193,7 @@ class FieldConstraintFunction(ConstraintFunction):
         bzp_vec: npt.NDArray[np.float64],
         B_max: npt.NDArray[np.float64],
         scale: float,
+        current_sym_matrix: np.ndarray,
     ):
         self.ax_mat = ax_mat
         self.az_mat = az_mat
@@ -195,10 +201,12 @@ class FieldConstraintFunction(ConstraintFunction):
         self.bzp_vec = bzp_vec
         self.B_max = B_max
         self.scale = scale
+        self.current_sym_matrix = current_sym_matrix
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
-        currents = self.scale * vector
+        currents = self.current_sym_matrix @ (self.scale * vector)
+
         Bx_a = self.ax_mat @ currents
         Bz_a = self.az_mat @ currents
 
@@ -207,14 +215,17 @@ class FieldConstraintFunction(ConstraintFunction):
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
-        currents = self.scale * vector
+        currents = self.current_sym_matrix @ (self.scale * vector)
+
         Bx_a = self.ax_mat @ currents
         Bz_a = self.az_mat @ currents
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
-        return (
-            Bx_a * (Bx_a @ currents + self.bxp_vec)
-            + Bz_a * (Bz_a @ currents + self.bzp_vec)
-        ) / (B * self.scale**2)
+
+        Bx = Bx_a * (Bx_a @ currents + self.bxp_vec)
+        Bz = Bz_a * (Bz_a @ currents + self.bzp_vec)
+        dB = (Bx + Bz) / (B * self.scale**2)
+
+        return dB @ self.current_sym_matrix
 
 
 class CurrentMidplanceConstraint(ConstraintFunction):
@@ -250,7 +261,7 @@ class CurrentMidplanceConstraint(ConstraintFunction):
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
-        self.eq.coilset.get_control_coils().current = vector * self.scale
+        self.eq.coilset.get_control_coils()._optimisation_currents = self.scale * vector
         lcfs = self.eq.get_LCFS()
         if self.inboard:
             return self.radius - min(lcfs.x)
@@ -291,6 +302,7 @@ class CoilForceConstraint(ConstraintFunction):
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
         scale: float,
+        current_sym_matrix: np.ndarray,
     ):
         self.a_mat = a_mat
         self.b_vec = b_vec
@@ -300,11 +312,13 @@ class CoilForceConstraint(ConstraintFunction):
         self.CS_Fz_sum_max = CS_Fz_sum_max
         self.CS_Fz_sep_max = CS_Fz_sep_max
         self.scale = scale
+        self.current_sym_matrix = current_sym_matrix
 
     def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
+        currents = self.current_sym_matrix @ (self.scale * vector)
+
         n_coils = self.n_CS + self.n_PF
-        currents = self.scale * vector
         constraint = np.zeros(n_coils)
 
         # get coil force and jacobian
@@ -337,10 +351,11 @@ class CoilForceConstraint(ConstraintFunction):
 
     def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
+        currents = self.current_sym_matrix @ (self.scale * vector)
+
         n_coils = self.n_CS + self.n_PF
         grad = np.zeros((n_coils, n_coils))
         dF = np.zeros((n_coils, n_coils, 2))  # noqa: N806
-        currents = self.scale * vector
 
         im = currents.reshape(-1, 1) @ np.ones((1, n_coils))  # current matrix
         for i in range(2):
@@ -364,4 +379,5 @@ class CoilForceConstraint(ConstraintFunction):
                 f_up = np.sum(dF[self.n_PF : self.n_PF + i + 1, :, 1], axis=0)
                 f_down = np.sum(dF[self.n_PF + i + 1 :, :, 1], axis=0)
                 grad[self.n_PF + 1 + i] = f_up - f_down
-        return grad
+
+        return grad @ self.current_sym_matrix
