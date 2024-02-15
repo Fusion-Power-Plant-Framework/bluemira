@@ -11,6 +11,7 @@ Plot utilities for equilibria
 from __future__ import annotations
 
 import warnings
+from enum import Enum, auto
 from itertools import cycle
 from typing import TYPE_CHECKING
 
@@ -28,7 +29,6 @@ from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.builders.pf_coil import CType
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
@@ -94,6 +94,20 @@ PLOT_DEFAULTS = {
         "alpha": 0.5,
     },
 }
+
+
+class CType(Enum):
+    """Enumification of text based choices"""
+
+    PF = auto()
+    CS = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError as err:
+            raise ValueError("Please choose a ctype from: PF or CS") from err
 
 
 class Plotter:
