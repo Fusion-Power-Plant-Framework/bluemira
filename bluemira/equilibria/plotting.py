@@ -106,18 +106,33 @@ class Plotter:
     Utility plotter abstract object
     """
 
-    def __init__(self, ax=None, **kwargs):
+    def __init__(self, ax=None, subplots=False, **kwargs):
         for kwarg in kwargs:
             if kwarg not in PLOT_DEFAULTS:
                 bluemira_warn(f"Unrecognised plot kwarg: {kwarg}")
 
-        if ax is None:
-            _f, self.ax = plt.subplots()
+        if not subplots:
+            if ax is None:
+                _f, self.ax = plt.subplots()
+            else:
+                self.ax = ax
+            self.ax.set_xlabel("$x$ [m]")
+            self.ax.set_ylabel("$z$ [m]")
+            self.ax.set_aspect("equal")
+
         else:
-            self.ax = ax
-        self.ax.set_xlabel("$x$ [m]")
-        self.ax.set_ylabel("$z$ [m]")
-        self.ax.set_aspect("equal")
+            if ax is None:
+                _f, self.ax = plt.subplots(nrows=1, ncols=2)
+            else:
+                self.ax = ax
+            self.ax[0].set_xlabel("$x$ [m]")
+            self.ax[0].set_ylabel("$z$ [m]")
+            self.ax[0].set_title("Coilset")
+            self.ax[0].set_aspect("equal")
+            self.ax[1].set_xlabel("$x$ [m]")
+            self.ax[1].set_ylabel("$z$ [m]")
+            self.ax[1].set_title("Plasma")
+            self.ax[1].set_aspect("equal")
 
 
 class GridPlotter(Plotter):
@@ -659,6 +674,221 @@ class EquilibriumPlotter(EquilibriumPlotterMixin, Plotter):
         Plot the plasma coil.
         """
         PlasmaCoilPlotter(self.ax, self.eq.plasma_coil())
+
+
+class EquilibriumComparisonPlotter(EquilibriumPlotterMixin, Plotter):
+    """
+    Utility class for Equilibrium plotting and comparing to a reference equilibrium
+    """
+
+    def __init__(
+        self,
+        equilibrium: Equilibrium,
+        reference_eq: Equilibrium,
+        ax=None,
+        split_psi_cont=False,
+        plot_diff=False,
+    ):
+        if split_psi_cont:
+            super().__init__(ax, subplots=True)
+        else:
+            super().__init__(ax)
+
+        self.eq = equilibrium
+        self.reference_eq = reference_eq
+
+        self.reference_lcfs = self.reference_eq.get_LCFS()
+
+        self.plot_diff = plot_diff
+        self.split_psi_cont = split_psi_cont
+
+        if np.shape(self.eq.grid.x) != np.shape(self.reference_eq.grid.x):
+            bluemira_warn("Reference psi must have same grid size as input equilibria.")
+
+        if np.min(self.eq.grid.x) != np.min(self.reference_eq.grid.x):
+            bluemira_warn(
+                "The minimum value of x is not the same for the reference equilibrium"
+                " and the input equilibrium."
+            )
+
+        if np.min(self.eq.grid.z) != np.min(self.reference_eq.grid.z):
+            bluemira_warn(
+                "The minimum value of z is not the same for the reference equilibrium"
+                " and the input equilibrium."
+            )
+
+        if np.max(self.eq.grid.x) != np.max(self.reference_eq.grid.x):
+            bluemira_warn(
+                "The maximum value of x is not the same for the reference equilibrium"
+                " and the input equilibrium."
+            )
+
+        if np.max(self.eq.grid.z) != np.max(self.reference_eq.grid.z):
+            bluemira_warn(
+                "The maximum value of z is not the same for the reference equilibrium"
+                " and the input equilibrium."
+            )
+
+        if plot_diff:
+            # percentage difference
+            self.coilset_psi = (
+                (
+                    self.reference_eq.coilset.psi(
+                        self.reference_eq.x, self.reference_eq.z
+                    )
+                    - self.eq.coilset.psi(self.eq.x, self.eq.z)
+                )
+                / np.max(
+                    self.reference_eq.coilset.psi(
+                        self.reference_eq.x, self.reference_eq.z
+                    )
+                )
+            ) * 100
+            self.plasma_psi = (
+                (self.reference_eq.plasma.psi() - self.eq.plasma.psi())
+                / np.max(self.reference_eq.plasma.psi())
+            ) * 100
+            self.total_psi = (
+                (self.reference_eq.psi() - self.eq.psi())
+                / np.max(self.reference_eq.psi())
+            ) * 100
+        else:
+            self.coilset_psi = self.eq.coilset.psi(self.eq.x, self.eq.z)
+            self.plasma_psi = self.eq.plasma.psi()
+            self.total_psi = self.eq.psi()
+
+        if split_psi_cont:
+            self.plot_psi_coilset()
+            self.plot_psi_plasma()
+
+        else:
+            self.plot_psi()
+
+    def plot_reference_LCFS(self):
+        """
+        Plot the last closed flux surface for the reference equilibria if split_psi_cont
+        is True
+        """
+        x, z = self.reference_lcfs.xz
+        if self.split_psi_cont is True:
+            for i in range(2):
+                self.ax[i].plot(
+                    x,
+                    z,
+                    color=PLOT_DEFAULTS["separatrix"]["color"],
+                    linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
+                    zorder=9,
+                )
+        else:
+            self.ax.plot(
+                x,
+                z,
+                color=PLOT_DEFAULTS["separatrix"]["color"],
+                linewidth=PLOT_DEFAULTS["separatrix"]["linewidth"],
+                zorder=9,
+            )
+
+    def plot_psi_coilset(self, **kwargs):
+        """
+        Plot flux surfaces - coilset contribution
+        """
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
+
+        levels = np.linspace(
+            np.amin(self.coilset_psi), np.amax(self.coilset_psi), nlevels
+        )
+        if self.plot_diff:
+            im = self.ax[0].contourf(
+                self.eq.x,
+                self.eq.z,
+                self.coilset_psi,
+                levels=levels,
+                cmap=cmap,
+                zorder=8,
+            )
+            plt.colorbar(mappable=im)
+            plt.suptitle(
+                "Percentage difference in psi between reference equilibrium"
+                " and current equilibrium, \n split by contribution from"
+                " coilset and plasma"
+            )
+            plt.tight_layout()
+
+        else:
+            self.ax[0].contour(
+                self.eq.x,
+                self.eq.z,
+                self.coilset_psi,
+                levels=levels,
+                cmap=cmap,
+                zorder=8,
+            )
+            plt.suptitle(
+                "Psi split by contribution from coilset and plasma for current"
+                " equilibrium"
+            )
+        # Plot lcfs
+        self.plot_reference_LCFS()
+
+    def plot_psi_plasma(self, **kwargs):
+        """
+        Plot flux surfaces - plamsa contribution
+        """
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
+
+        levels = np.linspace(np.amin(self.plasma_psi), np.amax(self.plasma_psi), nlevels)
+        if self.plot_diff:
+            im = self.ax[1].contourf(
+                self.eq.x,
+                self.eq.z,
+                self.plasma_psi,
+                levels=levels,
+                cmap=cmap,
+                zorder=8,
+            )
+            plt.colorbar(mappable=im)
+            plt.tight_layout()
+
+        else:
+            self.ax[1].contour(
+                self.eq.x,
+                self.eq.z,
+                self.plasma_psi,
+                levels=levels,
+                cmap=cmap,
+                zorder=8,
+            )
+        # Plot lcfs
+        self.plot_reference_LCFS()
+
+    def plot_psi(self, **kwargs):
+        """
+        Plot flux surfaces
+        """
+        nlevels = kwargs.pop("nlevels", PLOT_DEFAULTS["psi"]["nlevels"])
+        cmap = kwargs.pop("cmap", PLOT_DEFAULTS["psi"]["cmap"])
+
+        levels = np.linspace(np.amin(self.total_psi), np.amax(self.total_psi), nlevels)
+        if self.plot_diff:
+            im = self.ax.contourf(
+                self.eq.x, self.eq.z, self.total_psi, levels=levels, cmap=cmap, zorder=8
+            )
+            plt.colorbar(mappable=im)
+            plt.title(
+                "Percentage difference in total psi between reference equilibrium and"
+                " current equilibrium"
+            )
+            plt.tight_layout()
+
+        else:
+            self.ax.contour(
+                self.eq.x, self.eq.z, self.total_psi, levels=levels, cmap=cmap, zorder=8
+            )
+            plt.title("Total psi for current equilibrium")
+        # Plot lcfs
+        self.plot_reference_LCFS()
 
 
 class BreakdownPlotter(Plotter):
