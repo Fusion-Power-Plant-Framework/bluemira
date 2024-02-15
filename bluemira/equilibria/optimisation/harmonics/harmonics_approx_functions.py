@@ -579,8 +579,10 @@ def spherical_harmonic_approximation(
 
     # Limit on number of degrees is the number of optimisable coils
     # (because we will be using SH coefficients as equality constraints)
-    optimisable_coil_names = eq.coilset._current_optimisable_coil_names
-    degree_limit = len(set(sh_coil_names) & set(optimisable_coil_names))
+    optimisable_coil_names = [
+        eq.coilset.name[i] for i in eq.coilset._optimisation_current_inds
+    ]
+    degree_limit_ocoils = len(set(sh_coil_names) & set(optimisable_coil_names))
 
     # Typical length scale
     r_t = bdry_r
@@ -609,12 +611,14 @@ def spherical_harmonic_approximation(
 
     # Can't have more degrees then sampled psi
     degree_limit_collocation = len(collocation.x) - 1
-    # Max degree is smallest of the limits
-    max_degree = np.min([degree_limit, degree_limit_collocation])
 
     sh_eq = deepcopy(eq)
     # Set min to save some time
     min_degree = 2
+    # Max degree is smallest of the limits
+    max_degree = np.min([degree_limit_ocoils, degree_limit_collocation])
+
+    sh_eq = deepcopy(eq)
     for degree in np.arange(min_degree, max_degree):
         # Construct matrix from harmonic amplitudes for coils
         currents2harmonics = coil_harmonic_amplitude_matrix(
@@ -659,7 +663,7 @@ def spherical_harmonic_approximation(
         )
         if fit_metric_value <= acceptable_fit_metric:
             break
-        if degree == degree_limit:
+        if degree == degree_limit_ocoils:
             bluemira_print("Uh oh, you cannot use more degrees than optimisable coils.")
             break
         if degree == degree_limit_collocation:
