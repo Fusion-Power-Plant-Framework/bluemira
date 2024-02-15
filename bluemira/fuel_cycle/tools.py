@@ -8,6 +8,7 @@
 Fuel cycle utility objects, including sink algorithms
 """
 
+from enum import Enum, auto
 from typing import Optional, Tuple
 
 import matplotlib.pyplot as plt
@@ -21,9 +22,22 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.fuel_cycle.error import FuelCycleError
 from bluemira.plasma_physics.reactions import r_T_burn
 
+
 # =============================================================================
 # Miscellaneous utility functions.
 # =============================================================================
+class NoiseModeType(Enum):
+    """Enumification of text based choices"""
+
+    MIN = auto()
+    MAX = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError as err:
+            raise ValueError("Unknown Noise Mode type") from err
 
 
 def find_noisy_locals(
@@ -48,14 +62,16 @@ def find_noisy_locals(
     local_m:
         The local minima or maxima
     """
-    if mode == "max":
+    inp_mode = NoiseModeType[mode.upper()]
+
+    if inp_mode is NoiseModeType.MAX:
         peak = np.max
         arg_peak = np.argmax
-    elif mode == "min":
+    elif inp_mode is NoiseModeType.MIN:
         peak = np.min
         arg_peak = np.argmin
-    else:
-        raise FuelCycleError(f"Unrecognised mode: {mode}.")
+    # else:
+    # raise FuelCycleError(f"Unrecognised mode: {mode}.")
 
     n = len(x)
     bin_size = round(n / x_bins)
