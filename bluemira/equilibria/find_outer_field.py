@@ -8,15 +8,19 @@ Class and Methods for separatrix legs.
 """
 
 import operator
-from typing import Optional
+from typing import Dict, Optional, Union
 
 import numpy as np
 
-from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.equilibrium import Equilibrium, Grid
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.find import (
     find_LCFS_separatrix,
     find_flux_surface_through_point,
+)
+from bluemira.equilibria.flux_surfaces import (
+    OpenFluxSurface,
+    PartialOpenFluxSurface,
 )
 from bluemira.geometry.coordinates import (
     Coordinates,
@@ -43,7 +47,8 @@ class LegFlux:
         self,
         eq: Equilibrium,
         psi_n_tol: float = 1e-6,
-        rtol: float = 1e-2,
+        delta_start: float = 0.01,
+        rtol: float = 1e-1,
     ):
         self.eq = eq
         o_points, x_points = eq.get_OX_points()
@@ -55,12 +60,13 @@ class LegFlux:
             x_points,
             double_null=eq.is_double_null,
             psi_n_tol=psi_n_tol,
+            delta_start=delta_start,
         )
         self.o_point = o_points[0]
         self.x_points = x_points[:2]
         self.rtol = rtol
         self.x_range_lcfs = [min(lcfs.x), max(lcfs.x)]
-        self.z_min_lcfs = min(abs(min(lcfs.z)), abs(max(lcfs.z)))
+        self.abs_z_lcfs = [abs(min(lcfs.z)), abs(max(lcfs.z))]
         self.delta = np.max(eq.grid.x) - np.min(eq.grid.x)
         self.delta_offsets = eq.grid.dx
         self.dx_offsets = None
@@ -92,8 +98,8 @@ class LegFlux:
             # loop length when it is found (longest first), so use [0])
             z_sep = min(abs(min(self.separatrix[0].z)), abs(max(self.separatrix[0].z)))
             legs_upper_lower = np.isclose(
-                z_sep, self.z_min_lcfs, rtol=(1 + self.rtol) * self.rtol
-            )
+                z_sep, self.abs_z_lcfs[0], rtol=self.rtol
+            ) or np.isclose(z_sep, self.abs_z_lcfs[1], rtol=self.rtol)
             if legs_upper_lower:
                 # Sort LOWER then UPPER when use get_legs
                 # self.separatrix remains sorted by loop length
@@ -210,6 +216,27 @@ class LegFlux:
         return leg_dict
 
 
+def get_legs_length(
+    eq: Equilibrium,
+    leg_dict: Dict,
+    plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
+):
+    """Calculates the length of all the divertor legs in a dictionary."""
+    length_dict = {}
+    for n, leg_list in leg_dict.items():
+        if not isinstance(leg_list[0], Coordinates):
+            lengths = [0.0]
+        else:
+            lengths = []
+            for leg in leg_list:
+                leg_fs = PartialOpenFluxSurface(leg)
+                if plasma_facing_boundary is not None:
+                    leg_fs.clip(plasma_facing_boundary)
+                lengths.append(OpenFluxSurface(leg_fs.coords).connection_length(eq))
+        length_dict.update({n: lengths})
+    return length_dict
+
+
 def get_single_null_legs(separatrix, delta, x_points, o_point):
     """Get the legs from a single null separatrix and return as a dictionary."""
     sorted_legs = get_leg_list(
@@ -270,8 +297,12 @@ def get_legs_double_null_zsplit(separatrix, delta, x_points, o_point, x_range_lc
     z_range = separatrix[1].z[
         (separatrix[1].x > x_range_lcfs[0]) & (separatrix[1].x < x_range_lcfs[1])
     ]
+    i_range = np.arange(len(separatrix[1].z))[
+        (separatrix[1].x > x_range_lcfs[0]) & (separatrix[1].x < x_range_lcfs[1])
+    ]
     if z_range.any():
-        imin = np.argmin(np.abs(z_range))
+        i = np.argmin(np.abs(z_range))
+        imin = i_range[i]
         no_plasma_legs = get_leg_list(
             separatrix[1],
             delta,
@@ -340,8 +371,12 @@ def add_pair_to_dict(sorted_legs, x_p, o_p):
             f"{location}_inner": [None],
             f"{location}_outer": [None],
         }
+    if len(sorted_legs) <= 1:
+        return {
+            f"{location}_inner": [None],
+            f"{location}_outer": [None],
+        }
     # Legs always sorted IN then OUT
-
     return {
         f"{location}_inner": [sorted_legs[0]],
         f"{location}_outer": [sorted_legs[1]],
