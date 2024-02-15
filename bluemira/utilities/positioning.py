@@ -20,7 +20,7 @@ import abc
 import numpy as np
 from scipy.spatial import ConvexHull
 
-from bluemira.geometry.constants import VERY_BIG
+from bluemira.geometry.constants import D_TOLERANCE, VERY_BIG
 from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import slice_shape
 from bluemira.utilities.error import PositionerError
@@ -175,7 +175,7 @@ class RegionInterpolator(XZGeometryInterpolator):
         xz_coordinates = self._get_xz_coordinates(10000)
         hull = ConvexHull(xz_coordinates.T)
         # Yes, the "area" of a 2-D scipy ConvexHull is its perimeter...
-        if not np.allclose(hull.area, geometry.length, rtol=1e-4, atol=0):
+        if not np.allclose(hull.area, geometry.length, rtol=1e-5, atol=D_TOLERANCE):
             raise PositionerError(
                 "RegionInterpolator can only handle simple convex geometries. "
                 "Perimeter difference between convex hull and geometry:"
