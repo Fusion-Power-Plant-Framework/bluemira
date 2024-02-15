@@ -134,6 +134,7 @@ class FieldConstraints(UpdateableConstraint):
             "bzp_vec": None,
             "B_max": B_max,
             "scale": 1.0,
+            "current_sym_matrix": None,
         }
         self.tolerance = tolerance
         self.f_constraint_type = constraint_type
@@ -161,7 +162,11 @@ class FieldConstraints(UpdateableConstraint):
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
 
-    def control_response(self, coilset: CoilSet) -> tuple[np.ndarray, np.ndarray]:
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
+
+    def control_response(self, coilset: CoilSet) -> Tuple[np.ndarray, np.ndarray]:
         """
         Calculate control response of a CoilSet to the constraint.
         """
@@ -268,6 +273,10 @@ class CoilFieldConstraints(FieldConstraints):
         self._args["bxp_vec"] = bxp_vec
         self._args["bzp_vec"] = bzp_vec
 
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
+
 
 class CoilForceConstraints(UpdateableConstraint):
     """
@@ -318,6 +327,7 @@ class CoilForceConstraints(UpdateableConstraint):
             "CS_Fz_sep_max": CS_Fz_sep_max,
             "n_PF": n_PF,
             "n_CS": n_CS,
+            "current_sym_matrix": coilset._optimisation_currents_sym_mat,
         }
         self.tolerance = tolerance
 
@@ -339,6 +349,10 @@ class CoilForceConstraints(UpdateableConstraint):
             self._args["a_mat"] = self.control_response(equilibrium.coilset)
 
         self._args["b_vec"] = self.evaluate(equilibrium)
+
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
 
     @staticmethod
     def control_response(coilset: CoilSet) -> np.ndarray:
@@ -415,6 +429,10 @@ class MagneticConstraint(UpdateableConstraint):
 
         self.update_target(equilibrium)
         self._args["b_vec"] = self.target_value - self.evaluate(equilibrium)
+
+        self._args["current_sym_matrix"] = (
+            equilibrium.coilset._optimisation_currents_sym_mat
+        )
 
     def update_target(self, equilibrium: Equilibrium):
         """
@@ -703,7 +721,9 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        return coilset.psi_response(self.x, self.z, control=True)
+        psi = coilset.psi_response(self.x, self.z, control=True)
+        R = coilset._optimisation_currents_sym_mat
+        return psi @ R
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """

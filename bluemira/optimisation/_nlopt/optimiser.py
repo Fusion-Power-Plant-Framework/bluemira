@@ -165,7 +165,6 @@ class NloptOptimiser(Optimiser):
             tolerance,
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
-            reflection_matrix=self._reflection_matrix,
         )
         self._opt.add_equality_mconstraint(constraint.call, constraint.tolerance)
         self._eq_constraints.append(constraint)
@@ -192,7 +191,6 @@ class NloptOptimiser(Optimiser):
             tolerance,
             df_constraint,
             bounds=(self.lower_bounds, self.upper_bounds),
-            reflection_matrix=self._reflection_matrix,
         )
         self._opt.add_inequality_mconstraint(constraint.call, constraint.tolerance)
         self._ineq_constraints.append(constraint)

@@ -124,7 +124,6 @@ class Constraint(_NloptFunction):
         self.constraint_type = constraint_type
         self.tolerance = tolerance
         self.df = df if df is not None else self._approx_derivative
-        self.reflection_matrix = reflection_matrix
 
     def call(self, result: np.ndarray, x: np.ndarray, grad: np.ndarray) -> None:
         """
@@ -134,10 +133,6 @@ class Constraint(_NloptFunction):
         """
         # Cache f(x) so we do not need to recalculate it if we're using
         # an approximate gradient
-        # TODO: here
-        if self.reflection_matrix is not None:
-            # x = self.reflection_matrix @ x
-            pass +
         result[:] = self.f(x)
         self.f0 = result
         if grad.size > 0:
