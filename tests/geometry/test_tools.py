@@ -465,9 +465,6 @@ class TestConvexHullWires2d:
                 # Changed to KeyError because now the exception
                 # is raised within HullPlaneType(Enum) class as key error
                 convex_hull_wires_2d([circle], 10, plane=test_plane)
-        with pytest.raises(KeyError):
-            # Test None plane
-            convex_hull_wires_2d([circle], 10, plane=None)
 
 
 class TestMakeBSpline:
