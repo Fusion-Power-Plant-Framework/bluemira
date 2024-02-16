@@ -35,10 +35,8 @@ from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.constants import PSI_NORM_TOL
 from bluemira.equilibria.error import EquilibriaError
-from bluemira.equilibria.find_outer_field import LegFlux
+from bluemira.equilibria.find_outer_field import LegFlux, get_legs_length
 from bluemira.equilibria.flux_surfaces import (
-    OpenFluxSurface,
-    PartialOpenFluxSurface,
     calculate_connection_length_fs,
 )
 from bluemira.equilibria.grid import Grid
@@ -157,6 +155,7 @@ class MaximiseFluxObjective(ObjectiveFunction):
 class MaximiseConnectionLength(ObjectiveFunction):
     """
     Objective function to maximise connection length
+    Must be used with symmetric circuits.
 
     Parameters
     ----------
@@ -168,67 +167,34 @@ class MaximiseConnectionLength(ObjectiveFunction):
         eq: Equilibrium,
         scale: float,
         double_null: bool = False,
+        lower: bool = True,
+        outer: bool = True,
+        psi_n_tol=1e-6,
+        delta_start=0.01,
         plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
-        outer: Optional[bool] = True,
     ) -> None:
         self.eq = eq
         self.scale = scale
         self.double_null = double_null
-        self.plasma_facing_boundary = plasma_facing_boundary
+        self.lower = lower
         self.outer = outer
+        self.psi_n_tol = psi_n_tol
+        self.delta_start = delta_start
+        self.plasma_facing_boundary = plasma_facing_boundary
 
     def f_objective(self, vector: npt.NDArray) -> float:
         """Objective function for an optimisation."""
         self.eq.coilset.get_control_coils().current = vector * self.scale
-
-        if self.outer:
-            # lower outer
-            l2 = calculate_connection_length_fs(
-                self.eq,
-                first_wall=self.plasma_facing_boundary,
-                forward=True,
-                double_null=self.double_null,
-                outer=True,
-            )
-
-            # print(l2)
-
-            if self.double_null:
-                # upper_outer
-                l4 = calculate_connection_length_fs(
-                    self.eq,
-                    first_wall=self.plasma_facing_boundary,
-                    forward=False,
-                    double_null=self.double_null,
-                    outer=True,
-                )
-
-                return -1 * np.sum([l2, l4])
-
-            return -1 * l2
-
-        # lower inner
-        l1 = calculate_connection_length_fs(
+        length = calculate_connection_length_fs(
             self.eq,
             first_wall=self.plasma_facing_boundary,
-            forward=True,
+            forward=self.lower,
             double_null=self.double_null,
-            outer=False,
+            outer=self.outer,
+            psi_n_tol=self.psi_n_tol,
+            delta_start=self.delta_start,
         )
-
-        if self.double_null:
-            # upper inner
-            l3 = calculate_connection_length_fs(
-                self.eq,
-                first_wall=self.plasma_facing_boundary,
-                forward=False,
-                double_null=self.double_null,
-                outer=False,
-            )
-
-            return -1 * np.sum([l1, l3])
-
-        return -1 * l1
+        return -1 * length
 
 
 class MaximiseDivertorLegLength(ObjectiveFunction):
@@ -257,6 +223,7 @@ class MaximiseDivertorLegLength(ObjectiveFunction):
         double_null: bool,
         outer: Optional[bool] = True,
         psi_n_tol: float = PSI_NORM_TOL,
+        delta_start: float = 0.01,
         plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
     ) -> None:
         self.eq = eq
@@ -264,36 +231,23 @@ class MaximiseDivertorLegLength(ObjectiveFunction):
         self.double_null = double_null
         self.outer = outer
         self.psi_n_tol = psi_n_tol
+        self.delta_start = delta_start
         self.plasma_facing_boundary = plasma_facing_boundary
 
     def f_objective(self, vector: npt.NDArray) -> float:
         """Objective function for an optimisation."""
         self.eq.coilset.get_control_coils().current = vector * self.scale
 
-        legs = LegFlux(self.eq).get_legs()
+        legs = LegFlux(self.eq).get_legs(
+            psi_n_tol=self.psi_n_tol, delta_start=self.delta_start
+        )
+        lengths = get_legs_length(self.eq, legs, self.plasma_facing_boundary)
 
-        if self.outer:
-            leg = legs["lower_outer"][0]
-            if self.double_null:
-                leg_upper = legs["upper_outer"][0]
-        else:
-            leg = legs["lower_inner"][0]
-            if self.double_null:
-                leg_upper = legs["upper_inner"][0]
-
-        if isinstance(leg, Coordinates):
-            leg = PartialOpenFluxSurface(leg)
-            if self.plasma_facing_boundary is not None:
-                leg.clip(self.plasma_facing_boundary)
-            length = OpenFluxSurface(leg.coords).connection_length(self.eq)
-        else:
-            length = 0.0
-
-        if self.double_null and isinstance(leg_upper, Coordinates):
-            leg_upper = PartialOpenFluxSurface(leg_upper)
-            if self.plasma_facing_boundary is not None:
-                leg_upper.clip(self.plasma_facing_boundary)
-            length_upper = OpenFluxSurface(leg_upper.coords).connection_length(self.eq)
+        length = lengths["lower_outer"][0] if self.outer else lengths["lower_inner"][0]
+        if self.double_null:
+            length_upper = (
+                lengths["upper_outer"][0] if self.outer else lengths["upper_inner"][0]
+            )
             length += length_upper
 
         return -length

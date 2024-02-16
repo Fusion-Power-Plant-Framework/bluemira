@@ -41,8 +41,11 @@ class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
         self,
         coilset: CoilSet,
         eq: Equilibrium,
-        double_null: bool,
-        outer: bool,
+        double_null: bool = False,
+        lower: bool = True,
+        outer: bool = True,
+        psi_n_tol: float = 1e-6,
+        delta_start: float = 0.01,
         plasma_facing_boundary: Optional[Union[Grid, Coordinates]] = None,
         max_currents: Optional[npt.ArrayLike] = None,
         opt_algorithm: str = "SLSQP",
@@ -53,7 +56,10 @@ class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
         self.coilset = coilset
         self.eq = eq
         self.double_null = double_null
+        self.lower = lower
         self.outer = outer
+        self.psi_n_tol = psi_n_tol
+        self.delta_start = delta_start
         self.plasma_facing_boundary = plasma_facing_boundary
         self.bounds = self.get_current_bounds(self.coilset, max_currents, self.scale)
         self.opt_conditions = opt_conditions
@@ -63,7 +69,10 @@ class MaximiseConnectionLengthCOP(CoilsetOptimisationProblem):
             "eq": self.eq,
             "scale": self.scale,
             "double_null": self.double_null,
+            "lower": self.lower,
             "outer": self.outer,
+            "psi_n_tol": self.psi_n_tol,
+            "delta_start": delta_start,
             "plasma_facing_boundary": self.plasma_facing_boundary,
         }
         self._constraints = [] if constraints is None else constraints
