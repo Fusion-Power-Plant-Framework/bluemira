@@ -728,7 +728,7 @@ class TestRotationMatrix:
 
         axes = ["fail", "somthing", "1"]
         for axis in axes:
-            with pytest.raises(CoordinatesError):
+            with pytest.raises(KeyError):
                 rotation_matrix(30, axis)
 
     def test_ccw(self):
