@@ -457,7 +457,7 @@ class TestConvexHullWires2d:
         assert bounding_box.z_min == bounding_box.z_max == 0
 
     @pytest.mark.parametrize("bad_plane", ["ab", "", ["x", "y"]])
-    def test_KeyError_if_invalid_plane(self, bad_plane):
+    def test_keyerror_if_invalid_plane(self, bad_plane):
         circle = make_circle(radius=1)
 
         for test_plane in bad_plane:
