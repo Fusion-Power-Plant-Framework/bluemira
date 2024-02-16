@@ -199,7 +199,7 @@ class ChargedParticleSolver:
         self.flux_surfaces_ob_hfs = []
 
         x = self.x_sep_omp + self.dx_mp
-        while x < x_out_omp - EPS:
+        while x < x_out_omp:
             lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
             self.flux_surfaces_ob_lfs.append(lfs)
             self.flux_surfaces_ob_hfs.append(hfs)
@@ -214,7 +214,7 @@ class ChargedParticleSolver:
         self.flux_surfaces_ib_lfs = []
         self.flux_surfaces_ib_hfs = []
         x = self.x_sep_imp - self.dx_mp
-        while x > x_out_imp + EPS:
+        while x > x_out_imp:
             lfs, hfs = self._make_flux_surfaces(x, self._o_point.z)
             self.flux_surfaces_ib_lfs.append(lfs)
             self.flux_surfaces_ib_hfs.append(hfs)

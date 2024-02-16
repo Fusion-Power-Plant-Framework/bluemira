@@ -24,10 +24,10 @@ import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_debug_flush
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
 from bluemira.display import plot_2d
+from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.optimisation import GeomOptimisationProblem, KeepOutZone
@@ -323,7 +323,7 @@ class MaximiseSelector(RipplePointSelector):
         points = wire.discretize(byedges=True, ndiscr=200)
         arg_x_max = np.argmax(points.x)
         x_max_point = points[:, arg_x_max]
-        self._alpha_0 = wire.parameter_at(x_max_point, tolerance=10 * EPS)
+        self._alpha_0 = wire.parameter_at(x_max_point, tolerance=EPS_FREECAD)
 
     def make_ripple_constraint(
         self, parameterisation, solver, TF_ripple_limit, rip_con_tol

@@ -40,8 +40,8 @@ class NLOptConditions:
         ]:
             if condition and condition < EPS:
                 bluemira_warn(
-                    "optimisation: Setting stopping condition to less than machine "
-                    "precision. This condition may never be met."
+                    "optimisation: Setting stopping condition is too small given this "
+                    "machine's precision. This condition may never be met."
                 )
         if self._no_stopping_condition_set():
             raise OptimisationConditionsError(

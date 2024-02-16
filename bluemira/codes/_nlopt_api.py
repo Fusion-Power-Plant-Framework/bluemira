@@ -14,14 +14,13 @@ from typing import Any, Callable, Dict, Optional
 import nlopt
 import numpy as np
 
+from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.error import (
     ExternalOptError,
     OptUtilitiesError,
     OptVariablesError,
 )
-
-EPS = np.finfo(np.float64).eps
 
 NLOPT_ALG_MAPPING = {
     "SLSQP": nlopt.LD_SLSQP,
@@ -86,8 +85,8 @@ def process_NLOPT_conditions(  # noqa: N802
         elif v > 0:
             if k in ["ftol_abs", "ftol_res", "xtol_abs", "xtol_res"] and v < EPS:
                 bluemira_warn(
-                    "You are setting an optimisation termination condition to below"
-                    " machine precision. Don't.."
+                    "You are setting an optimisation termination condition to a value"
+                    " too small given your machine's precision. Don't.."
                 )
 
             conditions[k] = v

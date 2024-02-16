@@ -13,10 +13,10 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
 
 import bluemira.codes._freecadapi as cadapi
-from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import LOGGER, bluemira_warn
 from bluemira.codes.error import FreeCADError
 from bluemira.geometry.base import BluemiraGeo, _Orientation
+from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import (
     GeometryError,
@@ -191,7 +191,7 @@ class BluemiraWire(BluemiraGeo):
         return cadapi.wire_value_at(self.shape, distance)
 
     def parameter_at(
-        self, vertex: Iterable[float], tolerance: float = EPS * 10
+        self, vertex: Iterable[float], tolerance: float = EPS_FREECAD
     ) -> float:
         """
         Get the parameter value at a vertex along a wire.

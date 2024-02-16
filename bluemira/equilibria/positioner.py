@@ -923,6 +923,6 @@ class RegionInterpolator:
 
         """
         if not np.allclose(
-            ConvexHull(coords.xz.T).volume, get_area_2d(coords.x, coords.z), atol=EPS
+            ConvexHull(coords.xz.T).volume, get_area_2d(coords.x, coords.z), rtol=EPS
         ):
             raise GeometryError("Region must be a Convex Hull")

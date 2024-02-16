@@ -1699,6 +1699,7 @@ class PictureFrameTools:
             )
         theta = 2 * np.arctan2(x_mid - x_in, z_taper)
         r_taper = z_taper / np.sin(theta) - r_min
+
         if r_taper < r_min or theta >= (np.pi / 2):
             raise GeometryParameterisationError(
                 f"Cannot achieve radius of curvature <= {r_min=}"

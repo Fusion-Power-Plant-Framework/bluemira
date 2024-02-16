@@ -28,7 +28,7 @@ from typing import Tuple, Union
 import numba as nb
 import numpy as np
 
-from bluemira.base.constants import MU_0_4PI
+from bluemira.base.constants import EPS, MU_0_4PI
 from bluemira.geometry.coordinates import Coordinates, get_area_2d
 from bluemira.magnetostatics.baseclass import (
     PolyhedralCrossSectionCurrentSource,
@@ -40,8 +40,6 @@ from bluemira.magnetostatics.tools import process_xyz_array
 __all__ = ["PolyhedralPrismCurrentSource"]
 # NOTE: Polyhedral kernels are not intended to be user-facing, but
 # it's useful for testing.
-
-ZERO_DIV_GUARD_EPS = 1e-14
 
 
 class PolyhedralKernel(abc.ABC):
@@ -130,7 +128,7 @@ def _vector_norm_eps(r: np.ndarray) -> float:
     \t:math:`\\lvert \\mathbf{r}\\rvert = \\sqrt{\\lvert \\mathbf{r}\\rvert^2+\\epsilon^2}`
     """  # noqa: W505 E501
     r_norm = np.linalg.norm(r)
-    return np.sqrt(r_norm**2 + ZERO_DIV_GUARD_EPS)
+    return np.sqrt(r_norm**2 + EPS)  # guard against division by 0
 
 
 @nb.jit(nopython=True, cache=True)
@@ -181,7 +179,7 @@ def _omega_t(r: np.ndarray, r1: np.ndarray, r2: np.ndarray, r3: np.ndarray) -> f
     )
     a = np.dot(r1_r, np.cross(r2_r, r3_r))
     # Not sure this is an issue...
-    # if abs(a) < ZERO_GUARD_EPS and (-ZERO_GUARD_EPS < d < 0):
+    # if abs(a) < EPS and (-EPS < d < 0): # guard against division by 0
     #     return 0 # and not pi as per IEEE
     return 2 * np.arctan2(a, d)
 

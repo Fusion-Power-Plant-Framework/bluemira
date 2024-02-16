@@ -294,9 +294,16 @@ class TestMakeCircularRing:
         face = make_circular_xy_ring(r_in, r_out)
         np.testing.assert_almost_equal(face.area, np.pi * (r_in**2 - r_out**2))
 
-    def test_raises_error_on_equal_radii(self):
+    @pytest.mark.parametrize(
+        ("r_in", "r_out"),
+        [
+            (1, 1),  # ring too thin
+            (-0.01, 1),  # negative radius
+        ],
+    )
+    def test_raises_error_on_equal_radii(self, r_in, r_out):
         with pytest.raises(BuilderError):
-            make_circular_xy_ring(1, 1)
+            make_circular_xy_ring(r_in, r_out)
 
 
 class TestBuildSectioned:
