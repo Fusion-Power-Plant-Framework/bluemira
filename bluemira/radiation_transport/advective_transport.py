@@ -23,7 +23,7 @@ from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.find import (
     find_flux_surface_through_point,
 )
-from bluemira.equilibria.find_outer_field import LegFlux
+from bluemira.equilibria.find_legs import LegFlux
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane

@@ -16,7 +16,7 @@ from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_OX_points
-from bluemira.equilibria.find_outer_field import LegFlux
+from bluemira.equilibria.find_legs import LegFlux
 from bluemira.geometry.optimisation import KeepOutZone, optimise_geometry
 from bluemira.geometry.parameterisations import GeometryParameterisation, PolySpline
 from bluemira.geometry.tools import convex_hull_wires_2d, make_polygon, offset_wire

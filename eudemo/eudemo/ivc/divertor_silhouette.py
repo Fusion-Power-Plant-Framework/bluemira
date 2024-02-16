@@ -20,7 +20,7 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.divertor import DivertorBuilder
 from bluemira.equilibria import Equilibrium
 from bluemira.equilibria.find import find_flux_surface_through_point
-from bluemira.equilibria.find_outer_field import LegFlux
+from bluemira.equilibria.find_legs import LegFlux
 from bluemira.geometry.tools import (
     make_circle,
     make_polygon,

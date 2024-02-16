@@ -19,7 +19,7 @@ from bluemira.equilibria.find import (
     find_local_minima,
     inv_2x2_matrix,
 )
-from bluemira.equilibria.find_outer_field import LegFlux
+from bluemira.equilibria.find_legs import LegFlux
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
