@@ -611,7 +611,7 @@ def create_plasma_chamber(surfaces: Surfaces):
     return cells
 
 
-def make_geometry(
+def make_neutronics_geometry(
     tokamak_geometry: TokamakGeometry,
     fw_points: np.ndarray,
     div_points: np.ndarray,
@@ -973,8 +973,9 @@ def load_fw_points(
         (new_points[-(num_points_belongong_to_divertor + 1) :], new_points[:1]), axis=0
     )
 
-    # It seems wrong to have the plotting happening within the make_geometry stage?
-    # Just something to consider when refactoring.
+    # It seems wrong to have the plotting happening within the geometry creation stage?
+    # TODO: Just something to consider when refactoring.
+
     # plotting.
     if save_plots:
         # create parametric variables for plotting smoother lines

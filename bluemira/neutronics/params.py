@@ -12,6 +12,8 @@ from typing import Literal
 import openmc
 
 from bluemira.base.constants import raw_uc
+from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.geometry.error import GeometryError
 from bluemira.neutronics.make_materials import BlanketType
 
 
@@ -102,6 +104,26 @@ class PlasmaSourceParameters:
     temperature: float  # [K]
     shaf_shift: float  # [m]
     vertical_shift: float  # [m]
+
+    def __post_init__(self):
+        """Check dimensionless variables are sensible."""
+        if self.peaking_factor < 1.0:  # noqa: PLR2004
+            raise ValueError(
+                "Peaking factor (peak heat load/avg. heat load) "
+                "must be larger than 1, by definition."
+            )
+        if self.aspect_ratio < 1.0:  # noqa: PLR2004
+            raise GeometryError(
+                "By construction, tokamak aspect ratio " "can't be smaller than 1."
+            )
+        if self.elongation < 1.0:  # noqa: PLR2004
+            raise GeometryError("Elongation can't be smaller than 1")
+        if abs(self.triangularity) > 1.0:  # noqa: PLR2004
+            # triangularity <0 is known as reversed/ negative triangularity.
+            bluemira_warn(
+                "Triangularity with magnitude >1 implies that the difference"
+                "between the major radius and R_upper is larger than the minor radius."
+            )
 
     @property
     def minor_radius(self):
