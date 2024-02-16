@@ -78,7 +78,7 @@ class TestClipperOffset:
 
     def test_wrong_method(self):
         coordinates = Coordinates({"x": [0, 1, 2, 0], "y": [0, 1, -1, 0]})
-        with pytest.raises(GeometryError):
+        with pytest.raises(KeyError):
             offset_clipper(coordinates, 1, method="fail")
 
     @pytest.mark.parametrize("method", options)
