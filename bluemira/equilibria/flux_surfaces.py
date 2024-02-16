@@ -818,6 +818,8 @@ def calculate_connection_length_fs(
     forward: bool = True,
     double_null: bool = False,
     outer: bool = True,
+    psi_n_tol: float = 1e-6,
+    delta_start: float = 0.01,
 ) -> float:
     """
     Calculate the parallel connection length from a starting point to a flux-intercepting
@@ -864,7 +866,8 @@ def calculate_connection_length_fs(
             eq.grid.z,
             eq.psi(eq.grid.x, eq.grid.z),
             double_null=double_null,
-            psi_n_tol=PSI_NORM_TOL,
+            psi_n_tol=psi_n_tol,
+            delta_start=delta_start,
         )
 
         if double_null:
