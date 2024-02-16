@@ -218,7 +218,7 @@ class TBRHeatingSimulation:
             new_elong,
             True,
         )
-        self.cells, self.universe = mg.make_geometry(
+        self.cells, self.universe = mg.make_neutronics_geometry(
             self.tokamak_geometry,
             blanket_points,
             div_points,
