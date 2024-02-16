@@ -11,6 +11,7 @@ import numpy as np
 
 import bluemira.neutronics.make_geometry as mg
 from bluemira.base.constants import raw_uc
+from bluemira.display import plot_2d, show_cad  # noqa: F401
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.tools import make_polygon
 from bluemira.neutronics.make_materials import BlanketType
@@ -55,7 +56,7 @@ _source_parameters = PlasmaSourceParameters(
     major_radius=8.938,  # [m]
     aspect_ratio=8.938 / 2.883,  # [m]
     elongation=1.65,  # [dimensionless]
-    triangularity=0.333,  # [m]
+    triangularity=0.333,  # [dimensionless]
     reactor_power=1998e6,  # [W]
     peaking_factor=1.508,  # [dimensionless]
     temperature=raw_uc(15.4, "keV", "K"),
@@ -112,7 +113,8 @@ blanket_points, div_points, num_inboard_points = mg.load_fw_points(
     new_elong,
     True,
 )  # TODO: improve here
-tbr_heat_sim.cells, tbr_heat_sim.universe = mg.make_geometry(
+
+tbr_heat_sim.cells, tbr_heat_sim.universe = mg.make_neutronics_geometry(
     tokamak_geometry,
     blanket_points,
     div_points,
