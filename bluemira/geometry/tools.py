@@ -723,6 +723,9 @@ def convex_hull_wires_2d(
     if not wires:
         raise ValueError("Must have at least one wire to draw a hull around.")
 
+    if plane is None:
+        raise KeyError("Invalid plane. Must be one of 'xz', 'xy', 'yz'.")
+
     hull_plane = HullPlaneType[plane.upper()]
     if hull_plane is HullPlaneType.XZ:
         plane_idxs = (0, 2)
