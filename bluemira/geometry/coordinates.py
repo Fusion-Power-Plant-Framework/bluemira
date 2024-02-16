@@ -1251,7 +1251,7 @@ class Coordinates:
         Whether or not this is a closed set of Coordinates.
         """
         if len(self) > 2 and np.allclose(  # noqa: PLR2004
-            self[:, 0], self[:, -1], rtol=0, atol=EPS
+            self[:, 0], self[:, -1], rtol=EPS, atol=0
         ):
             return True
         return False
@@ -1428,7 +1428,7 @@ class Coordinates:
         counted as identical.
         """
         if isinstance(other, self.__class__):
-            return np.all(np.allclose(self._array, other._array, rtol=0, atol=EPS))
+            return np.all(np.allclose(self._array, other._array, rtol=EPS, atol=0))
         return False
 
     def __hash__(self):

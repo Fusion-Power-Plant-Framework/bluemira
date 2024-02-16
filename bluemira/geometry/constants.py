@@ -8,8 +8,15 @@
 Constants for the geometry module
 """
 
+import numpy as np
+
 # Absolute tolerance for equality in distances
 D_TOLERANCE = 1e-5  # [m]
+
+# FreeCAD's default tolerance is 1E-7, so correspondingly, we need a larger epsilon.
+# The following value happens to equal 1.1920929E-7, which satisifies the requirement.
+# We think that FreeCAD stores number as float 32 but we're not sure.
+EPS_FREECAD = np.finfo(np.float32).eps
 
 # Minimum length of a wire or sub-wire (edge)
 MINIMUM_LENGTH = 1e-5  # [m]
