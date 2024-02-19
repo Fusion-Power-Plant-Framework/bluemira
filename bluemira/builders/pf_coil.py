@@ -35,8 +35,10 @@ class CType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
-            raise ValueError("Please choose a ctype from: PF or CS") from err
+        except KeyError:
+            raise ValueError(
+                f"{value} is not a valid CType. Choose from: PF or CS"
+            ) from None
 
 
 @dataclass
