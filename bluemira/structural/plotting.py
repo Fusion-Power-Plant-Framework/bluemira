@@ -220,7 +220,7 @@ class BasePlotter:
             loads = []
             for element in self.geometry.elements:
                 for load in element.loads:
-                    load_type = LoadType[load["type"].replace(" ", "_").upper()]
+                    load_type = LoadType(load["type"].replace(" ", "_").upper())
                     if load_type is LoadType.ELEMENT_LOAD:
                         loads.append(load["Q"])
                     elif load_type is LoadType.DISTRIBUTED_LOAD:
@@ -368,7 +368,7 @@ class BasePlotter:
 
         for element in self.geometry.elements:
             for load in element.loads:
-                load_type = LoadType[load["type"].replace(" ", "_").upper()]
+                load_type = LoadType(load["type"].replace(" ", "_").upper())
                 if load_type is LoadType.ELEMENT_LOAD:
                     self._plot_element_load(element, load)
                 elif load_type is LoadType.DISTRIBUTED_LOAD:

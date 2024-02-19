@@ -40,7 +40,7 @@ DIM = 3
 # Pre-processing utilities
 # =============================================================================
 class RotationAxisType(Enum):
-    """Enumification of text based choices"""
+    """Enumification of text based choices for the rotation axis"""
 
     X = auto()
     Y = auto()
@@ -50,10 +50,10 @@ class RotationAxisType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
+        except KeyError:
             raise CoordinatesError(
-                "Incorrect rotation axis: \nplease select from: ['x', 'y', 'z']"
-            ) from err
+                f"Incorrect rotation axis:{value}. Choose from: x, y, z"
+            ) from None
 
 
 def xyz_process(func):
@@ -629,7 +629,7 @@ def rotation_matrix(theta: float, axis: Union[str, np.ndarray] = "z") -> np.ndar
     The (active) rotation matrix about the axis for an angle theta
     """
     if isinstance(axis, str):
-        axis_str = RotationAxisType[axis.upper()]
+        axis_str = RotationAxisType(axis.upper())
         # I'm leaving all this in here, because it is easier to understand
         # what is going on, and that these are just "normal" rotation matrices
         if axis_str is RotationAxisType.Z:

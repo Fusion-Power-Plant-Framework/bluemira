@@ -96,8 +96,8 @@ PLOT_DEFAULTS = {
 }
 
 
-class CType(Enum):
-    """Enumification of text based choices"""
+class CoilType(Enum):
+    """Enumification of text based choice of coil type"""
 
     PF = auto()
     CS = auto()
@@ -106,8 +106,10 @@ class CType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
-            raise ValueError("Please choose a ctype from: PF or CS") from err
+        except KeyError:
+            raise ValueError(
+                f"{value} is not a valid CoilType. Choose from: PF or CS"
+            ) from None
 
 
 class Plotter:
@@ -250,10 +252,10 @@ class CoilGroupPlotter(Plotter):
         for i, (x, z, dx, x_b, z_b, ct, n, cur, ctrl) in enumerate(zip(*arrays)):
             if ctrl:
                 if self.colors is not None:
-                    ctype = CType[ct.name.upper()]
-                    if ctype is CType.PF:
+                    ctype = CoilType(ct.name.upper())
+                    if ctype is CoilType.PF:
                         kwargs["facecolor"] = self.colors[0]
-                    elif ctype is CType.CS:
+                    elif ctype is CoilType.CS:
                         kwargs["facecolor"] = self.colors[1]
 
                 self._plot_coil(
@@ -323,8 +325,8 @@ class CoilGroupPlotter(Plotter):
         Single coil annotation utility function
         """
         off = max(0.2, dx + 0.02)
-        ctype_name = CType[ctype.name.upper()]
-        if ctype_name is CType.CS:
+        ctype_name = CoilType(ctype.name.upper())
+        if ctype_name is CoilType.CS:
             drs = -1.5 * off
             ha = "right"
         else:
@@ -335,7 +337,7 @@ class CoilGroupPlotter(Plotter):
             text = "\n".join([text, f"{raw_uc(force[1], 'N', 'MN'):.2f} MN"])
         x = float(x) + drs
         z = float(z)
-        if centre is not None and ctype_name is CType.PF:
+        if centre is not None and ctype_name is CoilType.PF:
             v = np.array([x - centre[0], z - centre[1]])
             v /= np.sqrt(sum(v**2))
             d = 1 + np.sqrt(2) * dx

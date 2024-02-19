@@ -39,7 +39,7 @@ __all__ = ["offset_clipper"]
 
 
 class OffsetClipperMethodType(Enum):
-    """Enumification of text based choices"""
+    """Enumification of text based choices for the type of offset to perform"""
 
     SQUARE = auto()
     ROUND = auto()
@@ -49,10 +49,10 @@ class OffsetClipperMethodType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
+        except KeyError:
             raise GeometryError(
                 "Please choose an offset method from:\n round \n square \n miter"
-            ) from err
+            ) from None
 
 
 def coordinates_to_pyclippath(coordinates: Coordinates) -> np.ndarray:
@@ -287,7 +287,7 @@ def offset_clipper(
     t_coordinates = transform_coordinates_to_xz(
         coordinates, -np.array(com), (0.0, 1.0, 0.0)
     )
-    inp_method = OffsetClipperMethodType[method.upper()]
+    inp_method = OffsetClipperMethodType(method.upper())
     if inp_method is OffsetClipperMethodType.SQUARE:
         tool = SquareOffset(t_coordinates)
     elif inp_method is OffsetClipperMethodType.ROUND:
@@ -295,10 +295,6 @@ def offset_clipper(
         tool = RoundOffset(t_coordinates)
     elif inp_method is OffsetClipperMethodType.MITER:
         tool = MiterOffset(t_coordinates, miter_limit=miter_limit)
-    # else:
-    #    raise GeometryError(
-    #        "Please choose an offset method from:\n round \n square \n miter"
-    #    )
 
     result = tool.perform(delta)
     if result is None:

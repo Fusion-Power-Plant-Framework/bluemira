@@ -35,7 +35,7 @@ from bluemira.structural.symmetry import CyclicSymmetry
 
 
 class BoundaryConditionMethodType(Enum):
-    """Enumification of text based choices"""
+    """Enumification of text based choices for Boundary Condition Methods"""
 
     PRZEMIENIECKI = auto()
     DELETION = auto()
@@ -44,8 +44,10 @@ class BoundaryConditionMethodType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
-            raise StructuralError("Unrecognised method") from err
+        except KeyError:
+            raise StructuralError(
+                f"Unrecognised method: {value}. Choose From: PRZEMIENIECKI or DELETION "
+            ) from None
 
 
 def check_matrix_condition(matrix: np.ndarray, digits: int):
@@ -526,7 +528,7 @@ class FiniteElementModel:
         # This is the method recommended by Przemieniecki in the book
         # Need to check which is faster with sparse matrices on real problems
         # This method is also easier to unittest!! Indices stay the same :)
-        boundary_cond_method = BoundaryConditionMethodType[method.upper()]
+        boundary_cond_method = BoundaryConditionMethodType(method.upper())
         if boundary_cond_method is BoundaryConditionMethodType.PRZEMIENIECKI:
             for i in self.fixed_dof_ids:
                 # empty row or col of 0's with back-fill of diagonal term to 1

@@ -457,13 +457,11 @@ class TestConvexHullWires2d:
         assert bounding_box.z_min == bounding_box.z_max == 0
 
     @pytest.mark.parametrize("bad_plane", ["ab", "", ["x", "y"]])
-    def test_keyerror_if_invalid_plane(self, bad_plane):
+    def test_ValueError_if_invalid_plane(self, bad_plane):
         circle = make_circle(radius=1)
 
         for test_plane in bad_plane:
-            with pytest.raises(KeyError):
-                # Changed to KeyError because now the exception
-                # is raised within HullPlaneType(Enum) class as key error
+            with pytest.raises(ValueError):  # noqa: PT011
                 convex_hull_wires_2d([circle], 10, plane=test_plane)
 
 

@@ -18,7 +18,7 @@ from bluemira.structural.error import StructuralError
 
 
 class SubLoadType(Enum):
-    """Enumification of text based choices"""
+    """Enumification of text based choices for sub load type"""
 
     FORCE = auto()
     MOMENT = auto()
@@ -28,15 +28,17 @@ class SubLoadType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
-            raise StructuralError("Unknown SubLoad type") from err
+        except KeyError:
+            raise StructuralError(
+                f"Unknown SubLoad type {value}. Choose from: force, moment or all"
+            ) from None
 
 
 def _check_load_type(load_type, sub_type="all"):
     if load_type not in LOAD_TYPES:
         raise StructuralError(f"Unrecognised load type: {load_type}.")
 
-    inp_sub_type = SubLoadType[sub_type.upper()]
+    inp_sub_type = SubLoadType(sub_type.upper())
 
     if inp_sub_type is SubLoadType.FORCE and load_type not in LOAD_TYPES[:3]:
         raise StructuralError(

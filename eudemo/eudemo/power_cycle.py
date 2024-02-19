@@ -33,7 +33,7 @@ __all__ = ["SteadyStatePowerCycleSolver"]
 
 
 class BlanketType(Enum):
-    """Enumification of text based choices"""
+    """Enumification of text based choices for Blanket Type"""
 
     HCPB = auto()
     WCLL = auto()
@@ -42,8 +42,10 @@ class BlanketType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
-            raise ValueError("Unrecognised blanket type") from err
+        except KeyError:
+            raise ValueError(
+                f"Unrecognised blanket type: {value}. Choose from: HCPB or WCLL"
+            ) from None
 
 
 @dataclass
@@ -133,7 +135,7 @@ class SteadyStatePowerCycleSetup(Task):
             f_sol_ch_fw=params.f_sol_ch_fw.value,
             f_fw_aux=params.f_fw_aux.value,
         )
-        blanket_type = BlanketType[params.blanket_type.value.upper()]
+        blanket_type = BlanketType(params.blanket_type.value.upper())
         if blanket_type is BlanketType.HCPB:
             blanket_pump_strat = HePumping(
                 params.bb_p_inlet.value,

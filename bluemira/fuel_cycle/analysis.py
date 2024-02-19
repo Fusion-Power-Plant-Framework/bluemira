@@ -26,7 +26,7 @@ __all__ = ["FuelCycleAnalysis"]
 
 
 class QueryType(Enum):
-    """Enumification of text based choices"""
+    """Enumification of text based choices for the type of statistical value to return"""
 
     MIN = auto()
     MAX = auto()
@@ -38,8 +38,10 @@ class QueryType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
-            raise ValueError("Unknown query type") from err
+        except KeyError:
+            raise ValueError(
+                f"Invalid query: {value}. Choose from: min, max, mean, median, 95th"
+            ) from None
 
 
 class FuelCycleAnalysis:
@@ -135,7 +137,7 @@ class FuelCycleAnalysis:
         return self._query("t_d", s=query)
 
     def _query(self, p: str, s: str) -> float:
-        inp_s = QueryType.P95TH if s == "95th" else QueryType[s.upper()]
+        inp_s = QueryType.P95TH if s == "95th" else QueryType(s.upper())
 
         if inp_s is QueryType.MIN:
             return min(self.__dict__[p])
@@ -147,7 +149,9 @@ class FuelCycleAnalysis:
             return np.median(self.__dict__[p])
         if inp_s is QueryType.P95TH:
             return np.percentile(self.__dict__[p], 95)
-        raise ValueError(f"Unknown query: '{s}'")
+        raise ValueError(
+            f"Unknown query: '{s}'. Choose from: min, max, mean, median, 95th"
+        )
 
     def plot(self, figsize=(12, 6), bins=20, **kwargs):
         """

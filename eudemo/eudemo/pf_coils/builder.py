@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
-from bluemira.builders.pf_coil import CType, PFCoilBuilder, PFCoilPictureFrame
+from bluemira.builders.pf_coil import CoilType, PFCoilBuilder, PFCoilPictureFrame
 
 
 @dataclass
@@ -38,10 +38,10 @@ def build_pf_coils_component(params, build_config, coilset):
     for name in coilset.name:
         coil = coilset[name]
         coil_type = coil.ctype
-        coil_type_enum = CType[coil.ctype.name.upper()]
+        coil_type_enum = CoilType(coil.ctype.name.upper())
         r_corner = (
             params.r_pf_corner.value
-            if coil_type_enum is CType.PF
+            if coil_type_enum is CoilType.PF
             else params.r_cs_corner.value
         )
         if not (coil.dx == 0 or coil.dz == 0):
@@ -56,15 +56,15 @@ def build_pf_coils_component(params, build_config, coilset):
     pf_builders = []
     cs_builders = []
     for designer, coil_type, coil_name in wires:
-        coil_type_enum = CType[coil.ctype.name.upper()]
+        coil_type_enum = CoilType(coil.ctype.name.upper())
         tk_ins = (
             params.tk_pf_insulation.value
-            if coil_type_enum is CType.PF
+            if coil_type_enum is CoilType.PF
             else params.tk_cs_insulation.value
         )
         tk_case = (
             params.tk_pf_casing.value
-            if coil_type_enum is CType.PF
+            if coil_type_enum is CoilType.PF
             else params.tk_cs_casing.value
         )
         bc = {
@@ -81,7 +81,7 @@ def build_pf_coils_component(params, build_config, coilset):
             bc,
             designer.execute(),
         )
-        if coil_type_enum is CType.PF:
+        if coil_type_enum is CoilType.PF:
             pf_builders.append(builder)
         else:
             cs_builders.append(builder)

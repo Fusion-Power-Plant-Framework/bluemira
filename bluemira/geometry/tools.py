@@ -68,7 +68,7 @@ def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
 
 
 class HullPlaneType(Enum):
-    """Enumification of text based choices"""
+    """Enumification of text based choices for the plane to perform the hull in"""
 
     XZ = auto()
     XY = auto()
@@ -78,8 +78,10 @@ class HullPlaneType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
-            raise ValueError("Invalid plane. Must be one of 'xz', 'xy', 'yz'.") from err
+        except KeyError:
+            raise ValueError(
+                f"Invalid plane: {value}. Must be one of 'xz', 'xy', 'yz'."
+            ) from None
 
 
 class BluemiraGeoEncoder(json.JSONEncoder):
@@ -726,7 +728,7 @@ def convex_hull_wires_2d(
     if plane is None:
         raise KeyError("Invalid plane. Must be one of 'xz', 'xy', 'yz'.")
 
-    hull_plane = HullPlaneType[plane.upper()]
+    hull_plane = HullPlaneType(plane.upper())
     if hull_plane is HullPlaneType.XZ:
         plane_idxs = (0, 2)
     elif hull_plane is HullPlaneType.XY:

@@ -60,7 +60,10 @@ from bluemira.utilities.tools import abs_rel_difference
 
 
 class VControlType(Enum):
-    """Enumification of text based choices"""
+    """
+    Enumification of text based numerical stabilisation strategy
+    choices for vertical position controller
+    """
 
     VIRTUAL = auto()
     FEEDBACK = auto()
@@ -69,11 +72,11 @@ class VControlType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
+        except KeyError:
             raise ValueError(
                 "Please select a numerical stabilisation strategy"
                 ' from: 1) "virtual" \n 2) "feedback" 3) None.'
-            ) from err
+            ) from None
 
 
 class MHDState:
@@ -1068,7 +1071,7 @@ class Equilibrium(CoilSetMHDState):
         if vcontrol is None:
             self.controller = DummyController(self.plasma.psi())
         else:
-            vcontrol_str = VControlType[vcontrol.upper()]
+            vcontrol_str = VControlType(vcontrol.upper())
             if vcontrol_str is VControlType.VIRTUAL:
                 self.controller = VirtualController(self, gz=2.2)
             elif vcontrol_str is VControlType.FEEDBACK:

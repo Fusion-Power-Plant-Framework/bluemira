@@ -27,7 +27,7 @@ from bluemira.plasma_physics.reactions import r_T_burn
 # Miscellaneous utility functions.
 # =============================================================================
 class NoiseModeType(Enum):
-    """Enumification of text based choices"""
+    """Enumification of text based choices for noise search mode"""
 
     MIN = auto()
     MAX = auto()
@@ -36,8 +36,10 @@ class NoiseModeType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
-            raise ValueError("Unknown Noise Mode type") from err
+        except KeyError:
+            raise FuelCycleError(
+                f"{value} is invalid Noise Mode type. Choose from: Min or Max"
+            ) from None
 
 
 def find_noisy_locals(
@@ -62,7 +64,7 @@ def find_noisy_locals(
     local_m:
         The local minima or maxima
     """
-    inp_mode = NoiseModeType[mode.upper()]
+    inp_mode = NoiseModeType(mode.upper())
 
     if inp_mode is NoiseModeType.MAX:
         peak = np.max
@@ -70,8 +72,6 @@ def find_noisy_locals(
     elif inp_mode is NoiseModeType.MIN:
         peak = np.min
         arg_peak = np.argmin
-    # else:
-    # raise FuelCycleError(f"Unrecognised mode: {mode}.")
 
     n = len(x)
     bin_size = round(n / x_bins)

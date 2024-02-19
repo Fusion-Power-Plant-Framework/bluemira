@@ -25,8 +25,8 @@ from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
 
 
-class CType(Enum):
-    """Enumification of text based choices"""
+class CoilType(Enum):
+    """Enumification of text based choice of coil type"""
 
     PF = auto()
     CS = auto()
@@ -37,7 +37,7 @@ class CType(Enum):
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                f"{value} is not a valid CType. Choose from: PF or CS"
+                f"{value} is not a valid CoilType. Choose from: PF or CS"
             ) from None
 
 
@@ -96,7 +96,8 @@ class PFCoilBuilder(Builder):
         c2 = make_circle(r_in)
 
         wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace([c1, c2]))
-        idx = 0 if CType[self.params.ctype.value.upper()] is CType.CS else 1
+
+        idx = CoilType(self.params.ctype.value.upper()).value - 1
         apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
 
         r_in -= self.params.tk_insulation.value
@@ -130,7 +131,7 @@ class PFCoilBuilder(Builder):
         Build the xz cross-section of the PF coil.
         """
         wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace(shape))
-        idx = 0 if CType[self.params.ctype.value.upper()] is CType.CS else 1
+        idx = CoilType(self.params.ctype.value.upper()).value - 1
         apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
 
         ins_shape = offset_wire(shape, self.params.tk_insulation.value)

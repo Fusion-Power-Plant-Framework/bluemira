@@ -33,7 +33,7 @@ __all__ = ["LifeCycle"]
 
 
 class PlotType(Enum):
-    """Enumification of text based choices"""
+    """Enumification of text based choices for the type of plot"""
 
     PIE = auto()
     BAR = auto()
@@ -42,8 +42,10 @@ class PlotType(Enum):
     def _missing_(cls, value):
         try:
             return cls[value.upper()]
-        except KeyError as err:
-            raise ValueError("Unknown plot type") from err
+        except KeyError:
+            raise ValueError(
+                f"{value} is not a valid plot type. Choose from: pie or bar"
+            ) from None
 
 
 class LifeCycle:
@@ -427,7 +429,7 @@ class LifeCycle:
             self.total_planned_maintenance,
             self.t_unplanned_m,
         ]
-        plt_typ = PlotType[typ.upper()]
+        plt_typ = PlotType(typ.upper())
         if plt_typ is PlotType.PIE:
             plt.pie(
                 sizes,
