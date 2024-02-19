@@ -5,8 +5,8 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 """Test script to make the CSG branch work."""
 
-from pathlib import Path
 import json
+from pathlib import Path
 
 import numpy as np
 
@@ -14,9 +14,9 @@ import bluemira.neutronics.make_geometry as mg
 from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, show_cad  # noqa: F401
 from bluemira.geometry.coordinates import Coordinates
-from bluemira.geometry.tools import make_polygon, deserialize_shape
-from bluemira.neutronics.make_materials import BlanketType
+from bluemira.geometry.tools import deserialize_shape, make_polygon
 from bluemira.neutronics.make_csg import ThicknessFractions
+from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import (
     PlasmaSourceParametersPPS,
     TBRHeatingSimulation,
@@ -115,15 +115,24 @@ blanket_points, div_points, num_inboard_points = mg.load_fw_points(
     new_elong,
     True,
 )  # TODO: improve here
-with open(Path("~/Others/bluemira/bluemira/neutronics/data/blanket_face_25_0.3").expanduser()) as j:
+with open(
+    Path("~/Others/bluemira/bluemira/neutronics/data/blanket_face_25_0.3").expanduser()
+) as j:
     blanket_face = deserialize_shape(json.load(j))
-with open(Path("~/Others/bluemira/bluemira/neutronics/data/divertor_face_25_0.3").expanduser()) as j:
+with open(
+    Path("~/Others/bluemira/bluemira/neutronics/data/divertor_face_25_0.3").expanduser()
+) as j:
     divertor_face = deserialize_shape(json.load(j))
-with open(Path("~/Others/bluemira/bluemira/neutronics/data/inner_boundary_25_0.3").expanduser()) as j:
+with open(
+    Path("~/Others/bluemira/bluemira/neutronics/data/inner_boundary_25_0.3").expanduser()
+) as j:
     inner_boundary = deserialize_shape(json.load(j))
-with open(Path("~/Others/bluemira/bluemira/neutronics/data/outer_boundary_25_0.3").expanduser()) as j:
+with open(
+    Path("~/Others/bluemira/bluemira/neutronics/data/outer_boundary_25_0.3").expanduser()
+) as j:
     outer_boundary = deserialize_shape(json.load(j))
 import sys
+
 sys.exit()
 thickness_fractions = ThicknessFractions.from_TokamakGeometry(tokamak_geometry)
 
