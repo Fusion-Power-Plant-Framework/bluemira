@@ -186,7 +186,7 @@ class ProcessInputs:
     # rhotfbus: Optional[float] = -1.0 # defaults cannot be right
     frhocp: Optional[float] = None
     frholeg: Optional[float] = None
-    # i_cp_joints: Optional[int] = -1 # defaults cannot be right
+    i_cp_joints: Optional[int] = -1  # defaults cannot be right
     rho_tf_joints: Optional[float] = None
     n_tf_joints_contact: Optional[int] = None
     n_tf_joints: Optional[int] = None
@@ -687,9 +687,19 @@ class ProcessInputs:
     tratio: Optional[float] = None
     triang: Optional[float] = None
     triang95: Optional[float] = None
-
+    i_hldiv: Optional[int] = None
+    tfootfi: Optional[float] = None
+    t_turn_tf: Optional[int] = None
     # Stellarator
     fblvd: Optional[float] = None
+    # Other missing variables
+    fwcoolant: Optional[str] = None
+    icooldual: Optional[int] = None
+    ipump: Optional[int] = None
+    i_bb_liq: Optional[int] = None
+    ims: Optional[int] = None
+    ifci: Optional[int] = (None,)
+    scan_dim: Optional[int] = None
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """

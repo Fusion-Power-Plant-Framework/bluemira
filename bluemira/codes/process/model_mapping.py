@@ -1240,3 +1240,149 @@ class OutputCostsSwitch(PROCESSModel):
 
     NO = 0, (), "Do not print cost information to output"
     YES = 1, (), "Print cost information to output"
+
+
+class VacuumPumpSwitch(PROCESSModel):
+    """
+    Switch for whether the FW and BB are on the same pump system
+    i.e. do they have the same primary coolant or not
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ipump"
+
+    SAME = 0, (), "FW and BB have the same primary coolant"
+    DIFFERENT = (
+        1,
+        (),
+        "FW and BB have the different primary coolant and are on different pump systems",
+    )
+
+
+class FWCoolantSwitch(PROCESSModel):
+    """
+    Switch for first wall coolant (can be different from blanket coolant)
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "fwcoolant"
+
+    HELIUM = "helium"
+    WATER = "water"
+
+
+class BlanketModelSwitch(PROCESSModel):
+    """
+    Switch for blanket model
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "iblanket"
+
+    CCFE_HCPB = 1, (), "CCFE HCPB model"
+    KIT_HCPB = 2, (), "KIT HCPB model"
+    CCFE_HCPB_3H = 3, (), "CCFE HCPB model with Tritium Breeding Ratio calculation"
+    KIT_HCLL = 4, (), "KIT HCLL model"
+    DCLL = 5, (), "no nutronics model included (in development)"
+
+
+class ModuleSegmentSwitch(PROCESSModel):
+    """
+    Switch for Multi Module Segment (MMS) or Single Modle Segment (SMS)
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ims"
+
+    MMS = 0, (), "Multi Module Segment (MMS)"
+    SMS = 1, (), "Single Modle Segment (SMS)"
+
+
+class LiquidMetalBreederMaterialSwitch(PROCESSModel):
+    """
+    Switch for Liquid Metal Breeder Material
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_bb_liq"
+
+    PBLI = 0, (), "PbLi"
+    LI = 1, (), "Li"
+
+
+class BBCoolantSwitch(PROCESSModel):
+    """
+    Switch to specify whether breeding blanket is single-cooled or dual-coolant
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "icooldual"
+
+    SINGLE_FOR_SB = (
+        0,
+        (),
+        "Single coolant, Solid Breeder",
+    )
+    SINGLE_FOR_LB = (
+        1,
+        (),
+        "Single coolant, Liquid metal breeder",
+    )
+    DUAL = (
+        2,
+        (),
+        "Dual coolant",
+    )
+
+
+class FlowChannelInsertSwitch(PROCESSModel):
+    """
+    Switch for Flow Channel Insert (FCI) type if liquid metal breeder blanket.
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ifci"
+
+    THIN = (
+        0,
+        (),
+        "Thin conducting walls",
+    )
+    INS_PERFECT = (
+        1,
+        (),
+        "Insulating Material, perfect electrical insulator",
+    )
+    INS_INPUT = (
+        2,
+        (),
+        "Insulating Material, electrical conductivity is input",
+    )
