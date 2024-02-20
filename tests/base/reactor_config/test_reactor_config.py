@@ -257,3 +257,15 @@ class TestReactorConfigClass:
 
         assert reactor_config.params_for("nest_a").local_params["a_param"] == "nest_a"
         assert reactor_config.params_for("nest_b").local_params["a_param"] == "nest_b"
+
+    def test_path_expansion(self):
+        reactor_config = ReactorConfig(test_config_path, TestGlobalParams)
+
+        assert (
+            reactor_config.config_for("comp A")["test_expand_dir"]
+            == test_config_path.parent.as_posix()
+        )
+        assert (
+            reactor_config.config_for("comp A")["test_expand_file"]
+            == (Path(test_config_path.parent) / "nest_a/nest_a.config.json").as_posix()
+        )
