@@ -2,13 +2,13 @@
   "params": "$path:params.json",
   "Radial build": {
     "run_mode": "run",
-    "read_dir": "config/",
-    "run_dir": "config/",
+    "read_dir": "$path_expand:./",
+    "run_dir": "$path_expand:./",
     "plot": true
   },
   "Fixed boundary equilibrium": {
     "run_mode": "read",
-    "file_path": "config/fixed_boundary_eqdsk.json",
+    "file_path": "$path_expand:./fixed_boundary_eqdsk.json",
     "param_class": "JohnerLCFS",
     "shape_config": {
       "f_delta_l": 1.25,
@@ -63,8 +63,8 @@
     "run_mode": "run",
     "plot": true,
     "save": true,
-    "fixed_eq_file_path": "config/fixed_boundary_eqdsk.json",
-    "file_path": "config/equilibrium_eqdsk.json",
+    "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
+    "file_path": "$path_expand:./equilibrium_eqdsk.json",
     "settings": {
       "iter_err_max": 1e-3,
       "max_iter": 50,
@@ -91,7 +91,7 @@
         }
       },
       "run_mode": "run",
-      "file_path": "config/FirstWallDesign.json",
+      "file_path": "$path_expand:./FirstWallDesign.json",
       "problem_settings": {
         "n_koz_points": 100
       },
@@ -107,7 +107,7 @@
   },
   "TF coils": {
     "run_mode": "run",
-    "file_path": "config/TFCoilDesign.json",
+    "file_path": "$path_expand:./TFCoilDesign.json",
     "plot": true,
     "param_class": "TripleArc",
     "variables_map": {},
@@ -131,7 +131,7 @@
   },
   "PF coils": {
     "run_mode": "run",
-    "file_path": "config/PFCoilDesign.json",
+    "file_path": "$path_expand:./PFCoilDesign.json",
     "verbose": false,
     "plot": true,
     "grid_settings": {

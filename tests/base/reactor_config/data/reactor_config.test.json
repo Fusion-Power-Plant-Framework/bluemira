@@ -5,6 +5,8 @@
       "height": { "value": 18, "unit": "cm" },
       "name": { "value": "Comp A", "unit": "" }
     },
+    "test_expand_dir": "$path_expand:./",
+    "test_expand_file": "$path_expand:./nest_a/nest_a.config.json",
     "config_a": {
       "a_value": "overridden_value"
     },
