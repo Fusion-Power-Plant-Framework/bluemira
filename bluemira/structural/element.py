@@ -44,7 +44,7 @@ class LoadType(Enum):
     @classmethod
     def _missing_(cls, value):
         try:
-            return cls[value.upper()]
+            return cls[value.replace(" ", "_").upper()]
         except KeyError:
             raise StructuralError(
                 f"Invalid load: {value}. Choose from:"
@@ -487,7 +487,7 @@ class Element:
         """
         enf = np.zeros(12)
         for load in self.loads:
-            load_type = LoadType[load["type"].replace(" ", "_").upper()]
+            load_type = LoadType(load["type"])
             if load_type is LoadType.ELEMENT_LOAD:
                 enf += point_load(load["Q"], load["x"], self.length, load["sub_type"])
             elif load_type is LoadType.DISTRIBUTED_LOAD:
