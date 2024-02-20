@@ -44,6 +44,7 @@ class ProcessInputs:
     nsweep: Optional[int] = None
     sweep: Optional[List[float]] = None
     pulsetimings: Optional[int] = None
+    scan_dim: Optional[int] = None
     # Top down of PROCESS variables list
 
     # Times
@@ -225,6 +226,7 @@ class ProcessInputs:
     casths: Optional[float] = None
     tmargmin: Optional[float] = None
     oacdcp: Optional[float] = None
+    t_turn_tf: Optional[int] = None
 
     # PF Power
     iscenr: Optional[int] = None
@@ -470,6 +472,7 @@ class ProcessInputs:
     plleni: Optional[float] = None
     plsepi: Optional[float] = None
     plsepo: Optional[float] = None
+    tfootfi: Optional[float] = None
 
     # Buildings
 
@@ -534,6 +537,7 @@ class ProcessInputs:
     xparain: Optional[float] = None
     xpertin: Optional[float] = None
     zeffdiv: Optional[float] = None
+    i_hldiv: Optional[int] = None
 
     # Pulse
     bctmp: Optional[float] = None
@@ -687,19 +691,17 @@ class ProcessInputs:
     tratio: Optional[float] = None
     triang: Optional[float] = None
     triang95: Optional[float] = None
-    i_hldiv: Optional[int] = None
-    tfootfi: Optional[float] = None
-    t_turn_tf: Optional[int] = None
     # Stellarator
     fblvd: Optional[float] = None
-    # Other missing variables
+
+    # first wall, blanket and
+    # shield components variables
     fwcoolant: Optional[str] = None
     icooldual: Optional[int] = None
     ipump: Optional[int] = None
     i_bb_liq: Optional[int] = None
     ims: Optional[int] = None
-    ifci: Optional[int] = (None,)
-    scan_dim: Optional[int] = None
+    ifci: Optional[int] = None
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """
