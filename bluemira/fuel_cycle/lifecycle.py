@@ -429,7 +429,7 @@ class LifeCycle:
             self.total_planned_maintenance,
             self.t_unplanned_m,
         ]
-        plt_typ = PlotType(typ.upper())
+        plt_typ = PlotType(typ)
         if plt_typ is PlotType.PIE:
             plt.pie(
                 sizes,

@@ -387,7 +387,7 @@ class FiniteElementModel:
             The list of loads to apply to the model
         """
         for load in load_case:
-            load_type = LoadType[load["type"].replace(" ", "_").upper()]
+            load_type = LoadType[load["type"].replace(" ", "_")]
             if load_type is LoadType.NODE_LOAD:
                 node = self.geometry.nodes[load["node_id"]]
                 node.add_load(load)
@@ -528,7 +528,7 @@ class FiniteElementModel:
         # This is the method recommended by Przemieniecki in the book
         # Need to check which is faster with sparse matrices on real problems
         # This method is also easier to unittest!! Indices stay the same :)
-        boundary_cond_method = BoundaryConditionMethodType(method.upper())
+        boundary_cond_method = BoundaryConditionMethodType(method)
         if boundary_cond_method is BoundaryConditionMethodType.PRZEMIENIECKI:
             for i in self.fixed_dof_ids:
                 # empty row or col of 0's with back-fill of diagonal term to 1

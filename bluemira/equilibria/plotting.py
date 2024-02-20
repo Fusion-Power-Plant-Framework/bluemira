@@ -252,7 +252,7 @@ class CoilGroupPlotter(Plotter):
         for i, (x, z, dx, x_b, z_b, ct, n, cur, ctrl) in enumerate(zip(*arrays)):
             if ctrl:
                 if self.colors is not None:
-                    ctype = CoilType(ct.name.upper())
+                    ctype = CoilType(ct.name)
                     if ctype is CoilType.PF:
                         kwargs["facecolor"] = self.colors[0]
                     elif ctype is CoilType.CS:
@@ -325,7 +325,7 @@ class CoilGroupPlotter(Plotter):
         Single coil annotation utility function
         """
         off = max(0.2, dx + 0.02)
-        ctype_name = CoilType(ctype.name.upper())
+        ctype_name = CoilType(ctype.name)
         if ctype_name is CoilType.CS:
             drs = -1.5 * off
             ha = "right"

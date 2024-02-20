@@ -38,7 +38,7 @@ def _check_load_type(load_type, sub_type="all"):
     if load_type not in LOAD_TYPES:
         raise StructuralError(f"Unrecognised load type: {load_type}.")
 
-    inp_sub_type = SubLoadType(sub_type.upper())
+    inp_sub_type = SubLoadType(sub_type)
 
     if inp_sub_type is SubLoadType.FORCE and load_type not in LOAD_TYPES[:3]:
         raise StructuralError(

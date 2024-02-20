@@ -38,7 +38,7 @@ def build_pf_coils_component(params, build_config, coilset):
     for name in coilset.name:
         coil = coilset[name]
         coil_type = coil.ctype
-        coil_type_enum = CoilType(coil.ctype.name.upper())
+        coil_type_enum = CoilType(coil.ctype.name)
         r_corner = (
             params.r_pf_corner.value
             if coil_type_enum is CoilType.PF
@@ -56,7 +56,7 @@ def build_pf_coils_component(params, build_config, coilset):
     pf_builders = []
     cs_builders = []
     for designer, coil_type, coil_name in wires:
-        coil_type_enum = CoilType(coil.ctype.name.upper())
+        coil_type_enum = CoilType(coil.ctype.name)
         tk_ins = (
             params.tk_pf_insulation.value
             if coil_type_enum is CoilType.PF

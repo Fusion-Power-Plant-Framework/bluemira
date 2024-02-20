@@ -629,7 +629,7 @@ def rotation_matrix(theta: float, axis: Union[str, np.ndarray] = "z") -> np.ndar
     The (active) rotation matrix about the axis for an angle theta
     """
     if isinstance(axis, str):
-        axis_str = RotationAxisType(axis.upper())
+        axis_str = RotationAxisType(axis)
         # I'm leaving all this in here, because it is easier to understand
         # what is going on, and that these are just "normal" rotation matrices
         if axis_str is RotationAxisType.Z:

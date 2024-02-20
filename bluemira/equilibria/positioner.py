@@ -123,8 +123,8 @@ class CoilPositioner:
         self.n_PF = n_PF
         self.n_CS = n_CS
         self.csgap = csgap
-        self.rtype = ReactorType(rtype.upper())
-        self.cslayout = CoilsetLayoutType(cslayout.upper())
+        self.rtype = ReactorType(rtype)
+        self.cslayout = CoilsetLayoutType(cslayout)
 
     def equispace_PF(self, track: Coordinates, n_PF: int) -> List[Coil]:
         """

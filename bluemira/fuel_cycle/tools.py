@@ -64,7 +64,7 @@ def find_noisy_locals(
     local_m:
         The local minima or maxima
     """
-    inp_mode = NoiseModeType(mode.upper())
+    inp_mode = NoiseModeType(mode)
 
     if inp_mode is NoiseModeType.MAX:
         peak = np.max

@@ -135,7 +135,7 @@ class SteadyStatePowerCycleSetup(Task):
             f_sol_ch_fw=params.f_sol_ch_fw.value,
             f_fw_aux=params.f_fw_aux.value,
         )
-        blanket_type = BlanketType(params.blanket_type.value.upper())
+        blanket_type = BlanketType(params.blanket_type.value)
         if blanket_type is BlanketType.HCPB:
             blanket_pump_strat = HePumping(
                 params.bb_p_inlet.value,

@@ -97,7 +97,7 @@ class PFCoilBuilder(Builder):
 
         wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace([c1, c2]))
 
-        idx = CoilType(self.params.ctype.value.upper()).value - 1
+        idx = CoilType(self.params.ctype.value).value - 1
         apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
 
         r_in -= self.params.tk_insulation.value
@@ -131,7 +131,7 @@ class PFCoilBuilder(Builder):
         Build the xz cross-section of the PF coil.
         """
         wp = PhysicalComponent(self.WINDING_PACK, BluemiraFace(shape))
-        idx = CoilType(self.params.ctype.value.upper()).value - 1
+        idx = CoilType(self.params.ctype.value).value - 1
         apply_component_display_options(wp, color=BLUE_PALETTE["PF"][idx])
 
         ins_shape = offset_wire(shape, self.params.tk_insulation.value)

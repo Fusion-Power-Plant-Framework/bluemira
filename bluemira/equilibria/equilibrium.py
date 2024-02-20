@@ -59,7 +59,7 @@ from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
 
 
-class VControlType(Enum):
+class VerticalPositionControlType(Enum):
     """
     Enumification of text based numerical stabilisation strategy
     choices for vertical position controller
@@ -1059,7 +1059,7 @@ class Equilibrium(CoilSetMHDState):
         psi -= self.coilset.psi(self.x, self.z)
         self._update_plasma(psi, j_tor)
 
-    def set_vcontrol(self, vcontrol: Optional[str] = None):
+    def set_vcontrol(self, vcontrol_str: Optional[str] = None):
         """
         Sets the vertical position controller
 
@@ -1068,13 +1068,13 @@ class Equilibrium(CoilSetMHDState):
         vcontrol:
             Vertical control strategy
         """
-        if vcontrol is None:
+        if vcontrol_str is None:
             self.controller = DummyController(self.plasma.psi())
         else:
-            vcontrol_str = VControlType(vcontrol.upper())
-            if vcontrol_str is VControlType.VIRTUAL:
+            vcontrol_type = VerticalPositionControlType(vcontrol_str)
+            if vcontrol_type is VerticalPositionControlType.VIRTUAL:
                 self.controller = VirtualController(self, gz=2.2)
-            elif vcontrol_str is VControlType.FEEDBACK:
+            elif vcontrol_type is VerticalPositionControlType.FEEDBACK:
                 raise NotImplementedError
             else:
                 raise ValueError(

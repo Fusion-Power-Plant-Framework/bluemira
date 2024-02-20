@@ -287,7 +287,7 @@ def offset_clipper(
     t_coordinates = transform_coordinates_to_xz(
         coordinates, -np.array(com), (0.0, 1.0, 0.0)
     )
-    inp_method = OffsetClipperMethodType(method.upper())
+    inp_method = OffsetClipperMethodType(method)
     if inp_method is OffsetClipperMethodType.SQUARE:
         tool = SquareOffset(t_coordinates)
     elif inp_method is OffsetClipperMethodType.ROUND:

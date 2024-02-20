@@ -728,7 +728,7 @@ def convex_hull_wires_2d(
     if plane is None:
         raise KeyError("Invalid plane. Must be one of 'xz', 'xy', 'yz'.")
 
-    hull_plane = HullPlaneType(plane.upper())
+    hull_plane = HullPlaneType(plane)
     if hull_plane is HullPlaneType.XZ:
         plane_idxs = (0, 2)
     elif hull_plane is HullPlaneType.XY:

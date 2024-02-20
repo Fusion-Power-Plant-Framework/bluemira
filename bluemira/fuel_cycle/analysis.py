@@ -137,7 +137,7 @@ class FuelCycleAnalysis:
         return self._query("t_d", s=query)
 
     def _query(self, p: str, s: str) -> float:
-        inp_s = QueryType.P95TH if s == "95th" else QueryType(s.upper())
+        inp_s = QueryType.P95TH if s == "95th" else QueryType(s)
 
         if inp_s is QueryType.MIN:
             return min(self.__dict__[p])
