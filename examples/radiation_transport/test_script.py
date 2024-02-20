@@ -111,7 +111,7 @@ with open("data/inner_boundary") as j:
     inner_boundary = deserialize_shape(json.load(j))
 with open("data/outer_boundary") as j:
     outer_boundary = deserialize_shape(json.load(j))
-# from data.load_divertor import divertor_bmwire
+from data.load_divertor import divertor_bmwire
 fw_panel_list = [
     np.load("data/fw_panels_10_0.1.npy"),
     np.load("data/fw_panels_25_0.1.npy"),
@@ -119,7 +119,7 @@ fw_panel_list = [
     np.load("data/fw_panels_50_0.3.npy"),
     np.load("data/fw_panels_50_0.5.npy"),
 ]
-# import sys; sys.exit()
+import sys; sys.exit()
 thickness_fractions = ThicknessFractions.from_TokamakGeometry(tokamak_geometry)
 
 tbr_heat_sim.cells, tbr_heat_sim.universe = mg.make_neutronics_geometry(
