@@ -102,19 +102,24 @@ blanket_points, div_points, num_inboard_points = mg.load_fw_points(
     source_parameters,
     make_polygon(Coordinates(np.load("blanket_face.npy"))),
     make_polygon(Coordinates(np.load("divertor_face.npy"))),
-    new_major_radius = raw_uc(9.0, "m", "cm"),
-    new_aspect_ratio = 3.10344,  # [dimensionless]
-    new_elong = 1.792,  # [dimensionless]
-    True,
+    new_major_radius=raw_uc(9.0, "m", "cm"),
+    new_aspect_ratio=3.10344,  # [dimensionless]
+    new_elong=1.792,  # [dimensionless]
+    save_plots=True,
 )  # TODO: improve here
 with open("data/inner_boundary") as j:
     inner_boundary = deserialize_shape(json.load(j))
 with open("data/outer_boundary") as j:
     outer_boundary = deserialize_shape(json.load(j))
-from data.load_divertor import divertor_bmwire
-fw_panels_50_03 = np.load("data/fw_panels_50_0.3.npy")
-fw_panels_50_03 = np.load("data/fw_panels_50_0.3.npy")
-import sys; sys.exit()
+# from data.load_divertor import divertor_bmwire
+fw_panel_list = [
+    np.load("data/fw_panels_10_0.1.npy"),
+    np.load("data/fw_panels_25_0.1.npy"),
+    np.load("data/fw_panels_25_0.3.npy"),
+    np.load("data/fw_panels_50_0.3.npy"),
+    np.load("data/fw_panels_50_0.5.npy"),
+]
+# import sys; sys.exit()
 thickness_fractions = ThicknessFractions.from_TokamakGeometry(tokamak_geometry)
 
 tbr_heat_sim.cells, tbr_heat_sim.universe = mg.make_neutronics_geometry(
