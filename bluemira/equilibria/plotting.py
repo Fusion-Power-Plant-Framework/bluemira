@@ -11,7 +11,6 @@ Plot utilities for equilibria
 from __future__ import annotations
 
 import warnings
-from enum import Enum, auto
 from itertools import cycle
 from typing import TYPE_CHECKING
 
@@ -29,6 +28,7 @@ from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.builders import pf_coil
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
@@ -94,22 +94,6 @@ PLOT_DEFAULTS = {
         "alpha": 0.5,
     },
 }
-
-
-class CoilType(Enum):
-    """Enumification of text based choice of coil type"""
-
-    PF = auto()
-    CS = auto()
-
-    @classmethod
-    def _missing_(cls, value):
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise ValueError(
-                f"{value} is not a valid CoilType. Choose from: PF or CS"
-            ) from None
 
 
 class Plotter:
@@ -252,10 +236,10 @@ class CoilGroupPlotter(Plotter):
         for i, (x, z, dx, x_b, z_b, ct, n, cur, ctrl) in enumerate(zip(*arrays)):
             if ctrl:
                 if self.colors is not None:
-                    ctype = CoilType(ct.name)
-                    if ctype is CoilType.PF:
+                    ctype = pf_coil.CoilType(ct.name)
+                    if ctype is pf_coil.CoilType.PF:
                         kwargs["facecolor"] = self.colors[0]
-                    elif ctype is CoilType.CS:
+                    elif ctype is pf_coil.CoilType.CS:
                         kwargs["facecolor"] = self.colors[1]
 
                 self._plot_coil(
@@ -325,8 +309,8 @@ class CoilGroupPlotter(Plotter):
         Single coil annotation utility function
         """
         off = max(0.2, dx + 0.02)
-        ctype_name = CoilType(ctype.name)
-        if ctype_name is CoilType.CS:
+        ctype_name = pf_coil.CoilType(ctype.name)
+        if ctype_name is pf_coil.CoilType.CS:
             drs = -1.5 * off
             ha = "right"
         else:
@@ -337,7 +321,7 @@ class CoilGroupPlotter(Plotter):
             text = "\n".join([text, f"{raw_uc(force[1], 'N', 'MN'):.2f} MN"])
         x = float(x) + drs
         z = float(z)
-        if centre is not None and ctype_name is CoilType.PF:
+        if centre is not None and ctype_name is pf_coil.CoilType.PF:
             v = np.array([x - centre[0], z - centre[1]])
             v /= np.sqrt(sum(v**2))
             d = 1 + np.sqrt(2) * dx
