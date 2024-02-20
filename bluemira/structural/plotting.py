@@ -33,6 +33,7 @@ from bluemira.structural.constants import (
     LOAD_STR_VECTORS,
     STRESS_COLOR,
 )
+from bluemira.structural.element import LoadType
 from bluemira.utilities.plot_tools import Plot3D
 
 DEFAULT_STRUCT_PLOT_OPTIONS = {
@@ -219,9 +220,10 @@ class BasePlotter:
             loads = []
             for element in self.geometry.elements:
                 for load in element.loads:
-                    if load["type"] == "Element Load":
+                    load_type = LoadType(load["type"].replace(" ", "_"))
+                    if load_type is LoadType.ELEMENT_LOAD:
                         loads.append(load["Q"])
-                    elif load["type"] == "Distributed Load":
+                    elif load_type is LoadType.DISTRIBUTED_LOAD:
                         loads.append(load["w"] / element.length)
 
             for node in self.geometry.nodes:
@@ -366,9 +368,10 @@ class BasePlotter:
 
         for element in self.geometry.elements:
             for load in element.loads:
-                if load["type"] == "Element Load":
+                load_type = LoadType(load["type"].replace(" ", "_"))
+                if load_type is LoadType.ELEMENT_LOAD:
                     self._plot_element_load(element, load)
-                elif load["type"] == "Distributed Load":
+                elif load_type is LoadType.DISTRIBUTED_LOAD:
                     self._plot_distributed_load(element, load)
 
     def _plot_node_load(self, node, load):

@@ -9,7 +9,7 @@ Plasma MHD equilibrium and state objects
 """
 
 from copy import deepcopy
-from enum import Enum
+from enum import Enum, auto
 from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
@@ -57,6 +57,25 @@ from bluemira.equilibria.profiles import BetaLiIpProfile, CustomProfile, Profile
 from bluemira.geometry.coordinates import Coordinates
 from bluemira.optimisation._tools import process_scipy_result
 from bluemira.utilities.tools import abs_rel_difference
+
+
+class VerticalPositionControlType(Enum):
+    """
+    Enumeration of stabilisation strategies for vertical position control.
+    """
+
+    VIRTUAL = auto()
+    FEEDBACK = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(
+                "Please select a numerical stabilisation strategy"
+                ' from: 1) "virtual" \n 2) "feedback" 3) None.'
+            ) from None
 
 
 class MHDState:
@@ -1039,7 +1058,7 @@ class Equilibrium(CoilSetMHDState):
         psi -= self.coilset.psi(self.x, self.z)
         self._update_plasma(psi, j_tor)
 
-    def set_vcontrol(self, vcontrol: Optional[str] = None):
+    def set_vcontrol(self, vcontrol_str: Optional[str] = None):
         """
         Sets the vertical position controller
 
@@ -1048,17 +1067,19 @@ class Equilibrium(CoilSetMHDState):
         vcontrol:
             Vertical control strategy
         """
-        if vcontrol == "virtual":
-            self.controller = VirtualController(self, gz=2.2)
-        elif vcontrol == "feedback":
-            raise NotImplementedError
-        elif vcontrol is None:
+        if vcontrol_str is None:
             self.controller = DummyController(self.plasma.psi())
         else:
-            raise ValueError(
-                "Please select a numerical stabilisation strategy"
-                ' from: 1) "virtual" \n 2) "feedback" 3) None.'
-            )
+            vcontrol_type = VerticalPositionControlType(vcontrol_str)
+            if vcontrol_type is VerticalPositionControlType.VIRTUAL:
+                self.controller = VirtualController(self, gz=2.2)
+            elif vcontrol_type is VerticalPositionControlType.FEEDBACK:
+                raise NotImplementedError
+            else:
+                raise ValueError(
+                    "Please select a numerical stabilisation strategy"
+                    ' from: 1) "virtual" \n 2) "feedback" 3) None.'
+                )
 
     def solve(self, jtor: Optional[np.ndarray] = None, psi: Optional[np.ndarray] = None):
         """
