@@ -76,14 +76,6 @@ tbr_heat_sim = TBRHeatingSimulation(
 tokamak_geometry = TokamakGeometry.from_si(_tokamak_geometry)
 source_parameters = PlasmaSourceParametersPPS.from_si(_source_parameters)
 
-blanket_wire = make_polygon(Coordinates(np.load("blanket_face.npy")))
-divertor_wire = make_polygon(Coordinates(np.load("divertor_face.npy")))
-# define machine new geometry
-new_major_radius = 9.00  # [m]
-new_aspect_ratio = 3.10344  # [dimensionless]
-new_elong = 1.792  # [dimensionless]
-plot_geometry = True
-
 tbr_heat_sim.material_lib = create_and_export_materials(tbr_heat_sim.breeder_materials)
 if tbr_heat_sim.runtime_variables.parametric_source:
     source = create_parametric_plasma_source(
@@ -108,32 +100,21 @@ else:
 setup_openmc(source, tbr_heat_sim.runtime_variables)
 blanket_points, div_points, num_inboard_points = mg.load_fw_points(
     source_parameters,
-    blanket_wire,
-    divertor_wire,
-    raw_uc(new_major_radius, "m", "cm"),
-    new_aspect_ratio,
-    new_elong,
+    make_polygon(Coordinates(np.load("blanket_face.npy"))),
+    make_polygon(Coordinates(np.load("divertor_face.npy"))),
+    new_major_radius = raw_uc(9.0, "m", "cm"),
+    new_aspect_ratio = 3.10344,  # [dimensionless]
+    new_elong = 1.792,  # [dimensionless]
     True,
 )  # TODO: improve here
-with open(
-    Path("~/Others/bluemira/bluemira/neutronics/data/blanket_face_25_0.3").expanduser()
-) as j:
-    blanket_face = deserialize_shape(json.load(j))
-with open(
-    Path("~/Others/bluemira/bluemira/neutronics/data/divertor_face_25_0.3").expanduser()
-) as j:
-    divertor_face = deserialize_shape(json.load(j))
-with open(
-    Path("~/Others/bluemira/bluemira/neutronics/data/inner_boundary_25_0.3").expanduser()
-) as j:
+with open("data/inner_boundary") as j:
     inner_boundary = deserialize_shape(json.load(j))
-with open(
-    Path("~/Others/bluemira/bluemira/neutronics/data/outer_boundary_25_0.3").expanduser()
-) as j:
+with open("data/outer_boundary") as j:
     outer_boundary = deserialize_shape(json.load(j))
-import sys
-
-sys.exit()
+from data.load_divertor import divertor_bmwire
+fw_panels_50_03 = np.load("data/fw_panels_50_0.3.npy")
+fw_panels_50_03 = np.load("data/fw_panels_50_0.3.npy")
+import sys; sys.exit()
 thickness_fractions = ThicknessFractions.from_TokamakGeometry(tokamak_geometry)
 
 tbr_heat_sim.cells, tbr_heat_sim.universe = mg.make_neutronics_geometry(
