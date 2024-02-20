@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
+from enum import Enum, auto
 from typing import TYPE_CHECKING, Dict, List, Optional, Union
 
 import matplotlib.pyplot as plt
@@ -29,6 +30,22 @@ if TYPE_CHECKING:
     )
 
 __all__ = ["LifeCycle"]
+
+
+class PlotType(Enum):
+    """Enumeration of plot types."""
+
+    PIE = auto()
+    BAR = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(
+                f"{value} is not a valid plot type. Choose from: pie or bar"
+            ) from None
 
 
 class LifeCycle:
@@ -412,7 +429,8 @@ class LifeCycle:
             self.total_planned_maintenance,
             self.t_unplanned_m,
         ]
-        if typ == "pie":
+        plt_typ = PlotType(typ)
+        if plt_typ is PlotType.PIE:
             plt.pie(
                 sizes,
                 labels=labels,
@@ -422,7 +440,7 @@ class LifeCycle:
                 counterclock=False,
             )
             plt.axis("equal")
-        elif typ == "bar":
+        elif plt_typ is PlotType.BAR:
             bottom = 0
             for i, s in enumerate(sizes):
                 ax.bar(1, s / sum(sizes) * 100, bottom=bottom, label=labels[i])

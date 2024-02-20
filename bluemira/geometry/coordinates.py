@@ -11,6 +11,7 @@ Utility for sets of coordinates
 from __future__ import annotations
 
 import json
+from enum import Enum, auto
 from itertools import starmap
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Union
@@ -33,9 +34,26 @@ if TYPE_CHECKING:
 
 
 DIM = 3
+
+
 # =============================================================================
 # Pre-processing utilities
 # =============================================================================
+class RotationAxisType(Enum):
+    """Enumeration of rotation axes."""
+
+    X = auto()
+    Y = auto()
+    Z = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise CoordinatesError(
+                f"Incorrect rotation axis:{value}. Choose from: x, y, z"
+            ) from None
 
 
 def xyz_process(func):
@@ -611,21 +629,22 @@ def rotation_matrix(theta: float, axis: Union[str, np.ndarray] = "z") -> np.ndar
     The (active) rotation matrix about the axis for an angle theta
     """
     if isinstance(axis, str):
+        axis_str = RotationAxisType(axis)
         # I'm leaving all this in here, because it is easier to understand
         # what is going on, and that these are just "normal" rotation matrices
-        if axis == "z":
+        if axis_str is RotationAxisType.Z:
             r_matrix = np.array([
                 [np.cos(theta), -np.sin(theta), 0],
                 [np.sin(theta), np.cos(theta), 0],
                 [0, 0, 1],
             ])
-        elif axis == "y":
+        elif axis_str is RotationAxisType.Y:
             r_matrix = np.array([
                 [np.cos(theta), 0, np.sin(theta)],
                 [0, 1, 0],
                 [-np.sin(theta), 0, np.cos(theta)],
             ])
-        elif axis == "x":
+        elif axis_str is RotationAxisType.X:
             r_matrix = np.array([
                 [1, 0, 0],
                 [0, np.cos(theta), -np.sin(theta)],

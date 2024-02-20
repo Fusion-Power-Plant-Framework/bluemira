@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING, ClassVar, Dict, Iterable, Union
 
 if TYPE_CHECKING:
     from bluemira.fuel_cycle.cycle import EUDEMOFuelCycleModel
+from enum import Enum, auto
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -22,6 +23,25 @@ from rich.progress import track
 from bluemira.base.look_and_feel import bluemira_warn
 
 __all__ = ["FuelCycleAnalysis"]
+
+
+class QueryType(Enum):
+    """Enumeration of statistical function types."""
+
+    MIN = auto()
+    MAX = auto()
+    MEAN = auto()
+    MEDIAN = auto()
+    P95TH = auto()  # identifier should start with a letter
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(
+                f"Invalid query: {value}. Choose from: min, max, mean, median, 95th"
+            ) from None
 
 
 class FuelCycleAnalysis:
@@ -117,17 +137,21 @@ class FuelCycleAnalysis:
         return self._query("t_d", s=query)
 
     def _query(self, p: str, s: str) -> float:
-        if s == "min":
+        inp_s = QueryType.P95TH if s == "95th" else QueryType(s)
+
+        if inp_s is QueryType.MIN:
             return min(self.__dict__[p])
-        if s == "max":
+        if inp_s is QueryType.MAX:
             return max(self.__dict__[p])
-        if s == "mean":
+        if inp_s is QueryType.MEAN:
             return np.mean(self.__dict__[p])
-        if s == "median":
+        if inp_s is QueryType.MEDIAN:
             return np.median(self.__dict__[p])
-        if s == "95th":
+        if inp_s is QueryType.P95TH:
             return np.percentile(self.__dict__[p], 95)
-        raise ValueError(f"Unknown query: '{s}'")
+        raise ValueError(
+            f"Unknown query: '{s}'. Choose from: min, max, mean, median, 95th"
+        )
 
     def plot(self, figsize=(12, 6), bins=20, **kwargs):
         """

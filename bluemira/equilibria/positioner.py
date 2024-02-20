@@ -11,7 +11,7 @@ Coil positioning routines (automatic and adjustable)
 import re
 from copy import deepcopy
 from typing import Dict, List, Tuple, Union
-
+from enum import Enum,auto
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline, interp1d
 from scipy.optimize import minimize_scalar
@@ -40,6 +40,31 @@ from bluemira.geometry.plane import BluemiraPlane
 from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, offset_wire
 from bluemira.utilities import tools
 
+class ReactorType(Enum):
+    """Enumeration of reactor types."""
+
+    NORMAL = auto()
+    ST = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(f"{value} is a wrong ReactorType.  Choose from: ST or Normal") from None
+
+class CoilsetLayoutType(Enum):
+    """Enumeration of CoilSet layouts."""
+
+    ITER = auto()
+    DEMO = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(f"{value} is not a valid coilset Layout. Choose from: 'ITER' and 'DEMO'") from None
 
 class CoilPositioner:
     """
@@ -99,8 +124,8 @@ class CoilPositioner:
         self.n_PF = n_PF
         self.n_CS = n_CS
         self.csgap = csgap
-        self.rtype = rtype
-        self.cslayout = cslayout
+        self.rtype = ReactorType(rtype)
+        self.cslayout = CoilsetLayoutType(cslayout)
 
     def equispace_PF(self, track: Coordinates, n_PF: int) -> List[Coil]:
         """
@@ -109,10 +134,11 @@ class CoilPositioner:
         based on plasma shape considerations (mirror about X-points)
         """
         a = np.rad2deg(np.arctan(abs(self.delta) / self.kappa))
-        if self.rtype == "Normal":
+
+        if self.rtype is ReactorType.NORMAL:
             angle_upper = 90 + a * 1.6
             angle_lower = -90 - a * 1.6
-        elif self.rtype == "ST":
+        elif self.rtype is ReactorType.ST:
             angle_upper = 90 + a * 1.2
             angle_lower = -90 - a * 1.0
 
@@ -224,17 +250,13 @@ class CoilPositioner:
         z_max = max(self.track.z)
         z_min = -z_max
         if self.n_CS != 0:
-            if self.cslayout == "ITER":
+            if self.cslayout  is CoilsetLayoutType.ITER:
                 coils.append(
                     self.equispace_CS(self.x_cs, self.tk_cs, z_min, z_max, self.n_CS)
                 )
-            elif self.cslayout == "DEMO":
+            elif self.cslayout is CoilsetLayoutType.DEMO:
                 coils.extend(
                     self.demospace_CS(self.x_cs, self.tk_cs, z_min, z_max, self.n_CS)
-                )
-            else:
-                raise ValueError(
-                    f"Valid options are 'ITER' and 'DEMO', not '{self.cslayout}'"
                 )
         cset = CoilSet(*coils)
         cset.discretisation = d_coil
