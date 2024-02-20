@@ -387,7 +387,7 @@ class FiniteElementModel:
             The list of loads to apply to the model
         """
         for load in load_case:
-            load_type = LoadType[load["type"].replace(" ", "_")]
+            load_type = LoadType[load["type"].replace(" ", "_").upper()]
             if load_type is LoadType.NODE_LOAD:
                 node = self.geometry.nodes[load["node_id"]]
                 node.add_load(load)
