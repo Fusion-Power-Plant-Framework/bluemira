@@ -26,7 +26,7 @@ __all__ = ["FuelCycleAnalysis"]
 
 
 class QueryType(Enum):
-    """Enumification of text based choices for the type of statistical value to return"""
+    """Enumeration of statistical function types."""
 
     MIN = auto()
     MAX = auto()

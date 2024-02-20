@@ -18,7 +18,7 @@ from bluemira.structural.error import StructuralError
 
 
 class SubLoadType(Enum):
-    """Enumification of text based choices for sub load type"""
+    """Enumeration of sub load types."""
 
     FORCE = auto()
     MOMENT = auto()

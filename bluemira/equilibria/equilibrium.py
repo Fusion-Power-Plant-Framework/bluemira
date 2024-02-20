@@ -61,8 +61,7 @@ from bluemira.utilities.tools import abs_rel_difference
 
 class VerticalPositionControlType(Enum):
     """
-    Enumification of text based numerical stabilisation strategy
-    choices for vertical position controller
+    Enumeration of stabilisation strategies for vertical position control.
     """
 
     VIRTUAL = auto()

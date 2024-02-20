@@ -68,7 +68,9 @@ def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
 
 
 class HullPlaneType(Enum):
-    """Enumification of text based choices for the plane to perform the hull in"""
+    """
+    Enumeration of planes to perform a hull operation in.
+    """
 
     XZ = auto()
     XY = auto()

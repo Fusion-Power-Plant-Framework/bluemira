@@ -33,7 +33,7 @@ __all__ = ["SteadyStatePowerCycleSolver"]
 
 
 class BlanketType(Enum):
-    """Enumification of text based choices for Blanket Type"""
+    """Enumeration of blanket types."""
 
     HCPB = auto()
     WCLL = auto()

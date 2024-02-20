@@ -35,7 +35,7 @@ from bluemira.structural.symmetry import CyclicSymmetry
 
 
 class BoundaryConditionMethodType(Enum):
-    """Enumification of text based choices for Boundary Condition Methods"""
+    """Enumeration of Boundary Condition Methods."""
 
     PRZEMIENIECKI = auto()
     DELETION = auto()

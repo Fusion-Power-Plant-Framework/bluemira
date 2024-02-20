@@ -33,7 +33,7 @@ __all__ = ["LifeCycle"]
 
 
 class PlotType(Enum):
-    """Enumification of text based choices for the type of plot"""
+    """Enumeration of plot types."""
 
     PIE = auto()
     BAR = auto()

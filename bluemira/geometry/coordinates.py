@@ -40,7 +40,7 @@ DIM = 3
 # Pre-processing utilities
 # =============================================================================
 class RotationAxisType(Enum):
-    """Enumification of text based choices for the rotation axis"""
+    """Enumeration of rotation axes."""
 
     X = auto()
     Y = auto()

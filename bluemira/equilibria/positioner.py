@@ -41,7 +41,7 @@ from bluemira.geometry.tools import boolean_cut, boolean_fuse, make_polygon, off
 from bluemira.utilities import tools
 
 class ReactorType(Enum):
-    """Enumification of text based choices of the type of reactor"""
+    """Enumeration of reactor types."""
 
     NORMAL = auto()
     ST = auto()
@@ -52,8 +52,9 @@ class ReactorType(Enum):
             return cls[value.upper()]
         except KeyError:
             raise ValueError(f"{value} is a wrong ReactorType.  Choose from: ST or Normal") from None
+
 class CoilsetLayoutType(Enum):
-    """Enumification of text based choices for the layout of the CS modules"""
+    """Enumeration of CoilSet layouts."""
 
     ITER = auto()
     DEMO = auto()

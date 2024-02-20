@@ -26,7 +26,7 @@ from bluemira.geometry.wire import BluemiraWire
 
 
 class CoilType(Enum):
-    """Enumification of text based choice of coil type"""
+    """Enumeration of the coil types."""
 
     PF = auto()
     CS = auto()

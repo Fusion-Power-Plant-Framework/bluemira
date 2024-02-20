@@ -39,7 +39,7 @@ __all__ = ["offset_clipper"]
 
 
 class OffsetClipperMethodType(Enum):
-    """Enumification of text based choices for the type of offset to perform"""
+    """Enumeration of types of offset methods."""
 
     SQUARE = auto()
     ROUND = auto()

@@ -35,7 +35,7 @@ from bluemira.structural.transformation import lambda_matrix
 # Check speed and so on.
 # Only bother doing this if you don't rewrite in C++
 class LoadType(Enum):
-    """Enumification of text based choices for the load type"""
+    """Enumeration of types of loads."""
 
     ELEMENT_LOAD = auto()
     DISTRIBUTED_LOAD = auto()

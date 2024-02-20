@@ -27,7 +27,7 @@ from bluemira.plasma_physics.reactions import r_T_burn
 # Miscellaneous utility functions.
 # =============================================================================
 class NoiseModeType(Enum):
-    """Enumification of text based choices for noise search mode"""
+    """Enumeration of noise search modes."""
 
     MIN = auto()
     MAX = auto()
