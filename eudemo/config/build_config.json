@@ -63,8 +63,8 @@
     "run_mode": "run",
     "plot": true,
     "save": true,
-    "fixed_eq_file_path": "$path_expand./:fixed_boundary_eqdsk.json",
-    "file_path": "$path_expand./:equilibrium_eqdsk.json",
+    "fixed_eq_file_path": "$path_expand:./fixed_boundary_eqdsk.json",
+    "file_path": "$path_expand:./equilibrium_eqdsk.json",
     "settings": {
       "iter_err_max": 1e-3,
       "max_iter": 50,
