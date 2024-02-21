@@ -10,7 +10,7 @@ Coil and coil grouping objects
 
 from __future__ import annotations
 
-from enum import Enum, EnumMeta, auto
+# from enum import Enum, EnumMeta, auto
 from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
 
 if TYPE_CHECKING:
@@ -21,15 +21,16 @@ import numpy as np
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.coils._tools import get_max_current
+from bluemira.equilibria.coils.coil_type import CoilType
 from bluemira.equilibria.constants import COIL_DISCR, NBTI_B_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import is_num
 
-__all__ = ["Coil", "CoilType"]
+__all__ = ["Coil"]
 
 
-class CoilTypeEnumMeta(EnumMeta):
+'''class CoilTypeEnumMeta(EnumMeta):
     """
     Allow override of KeyError error string
     """
@@ -49,7 +50,7 @@ class CoilType(Enum, metaclass=CoilTypeEnumMeta):
     PF = auto()
     CS = auto()
     DUM = auto()
-    NONE = auto()
+    NONE = auto()'''
 
 
 class CoilNumber:

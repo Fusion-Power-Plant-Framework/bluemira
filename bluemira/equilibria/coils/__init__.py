@@ -8,7 +8,7 @@
 Coil and coil grouping objects
 """
 
-from bluemira.equilibria.coils._coil import Coil, CoilType
+from bluemira.equilibria.coils._coil import Coil
 from bluemira.equilibria.coils._grouping import (
     Circuit,
     CoilGroup,
@@ -21,6 +21,7 @@ from bluemira.equilibria.coils._tools import (
     get_max_current,
     make_mutual_inductance_matrix,
 )
+from bluemira.equilibria.coils.coil_type import CoilType
 
 __all__ = [
     "Circuit",
