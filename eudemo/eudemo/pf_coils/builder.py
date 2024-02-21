@@ -10,7 +10,8 @@ from dataclasses import dataclass
 from bluemira.base.components import Component
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame, make_parameter_frame
-from bluemira.builders.pf_coil import CoilType, PFCoilBuilder, PFCoilPictureFrame
+from bluemira.builders.pf_coil import PFCoilBuilder, PFCoilPictureFrame
+from bluemira.equilibria.coils import CoilType
 
 
 @dataclass

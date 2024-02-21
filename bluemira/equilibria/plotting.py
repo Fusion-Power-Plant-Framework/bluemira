@@ -29,7 +29,7 @@ from scipy.interpolate import RectBivariateSpline
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.display.plotter import plot_coordinates
-from bluemira.equilibria.coils._coil import CoilType
+from bluemira.equilibria.coils import CoilType
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
 from bluemira.equilibria.physics import calc_psi
