@@ -9,7 +9,6 @@ Builder for the PF coils
 """
 
 from dataclasses import dataclass
-from enum import Enum, auto
 from typing import Dict, List, Union
 
 from bluemira.base.builder import Builder
@@ -19,26 +18,11 @@ from bluemira.base.parameter_frame import Parameter, ParameterFrame
 from bluemira.builders.tools import apply_component_display_options, get_n_sectors
 from bluemira.display.palettes import BLUE_PALETTE
 from bluemira.equilibria.coils import Coil
+from bluemira.equilibria.coils._coil import CoilType
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
 from bluemira.geometry.wire import BluemiraWire
-
-
-class CoilType(Enum):
-    """Enumeration of the coil types."""
-
-    PF = auto()
-    CS = auto()
-
-    @classmethod
-    def _missing_(cls, value):
-        try:
-            return cls[value.upper()]
-        except KeyError:
-            raise ValueError(
-                f"{value} is not a valid CoilType. Choose from: PF or CS"
-            ) from None
 
 
 @dataclass
