@@ -1063,28 +1063,66 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the number of coils that can be optimised.
         """
-        return len(self._optimisation_current_inds)
+        return len(self._current_optimisable_coil_names)
 
     @property
-    def _optimisation_current_inds(self) -> List[int]:
+    def _current_optimisable_coil_names(self) -> List[str]:
+        """
+        Get the names of the coils that can be optimised.
+        """
+        optimisable_coil_names = [
+            c.primary_coil.name if isinstance(c, Circuit) else c.name
+            for c in self._coils
+        ]
+        return list(*flatten_iterable(optimisable_coil_names))
+
+    @property
+    def _current_optimisable_coil_inds(self) -> List[int]:
         """
         Get the indices of the coils that can be optimised.
 
         These indices are used to extract the optimisable currents from the CoilSet
         and are based on the index of the coils in the name array.
         """
-        optimisable_coil_names = [
-            c.primary_coil.name if isinstance(c, Circuit) else c.name
-            for c in self._coils
-        ]
-        return [self.name.index(cn) for cn in flatten_iterable(optimisable_coil_names)]
+        return [self.name.index(cn) for cn in self._current_optimisable_coil_names]
+
+    @property
+    def _optimisation_currents_sym_mat(self) -> np.ndarray:
+        """
+        Get the symmetry matrix for the current optimisable coils
+        """
+        cc = self.get_control_coils()
+
+        n_all_coils = cc.n_coils()
+        n_opt_coils = cc.n_current_optimisable_coils
+        n_distinct_coils_and_groupings = len(cc._coils)
+
+        # this should be true as, at the top level, the number
+        # of coil or group objects should be the same as the no
+        # of optimisable coils
+        assert n_opt_coils == n_distinct_coils_and_groupings  # noqa: S101
+
+        # you are putting 1's in the col. corresponding
+        # to all coils in the same Circuit
+        sym_mat = np.zeros((n_all_coils, n_opt_coils))
+        i_row_coil = 0
+        for i_col_coil_group, c in enumerate(cc._coils):
+            if isinstance(c, Circuit):
+                n_coils_in_group = c.n_coils()
+                for n in range(n_coils_in_group):
+                    sym_mat[i_row_coil + n, i_col_coil_group] = 1
+                i_row_coil += n
+            else:
+                sym_mat[i_row_coil, i_col_coil_group] = 1
+            i_row_coil += 1
+        return sym_mat
 
     @property
     def _optimisation_currents(self) -> np.ndarray:
         """
         Get the currents for the optimisable coils
         """
-        return self.current[self._optimisation_current_inds]
+        return self.current[self._current_optimisable_coil_inds]
 
     @_optimisation_currents.setter
     def _optimisation_currents(self, values: np.ndarray):
@@ -1109,20 +1147,50 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             )
 
         # expand the values to the correct length
-        values_full = []
-        for i, c in enumerate(self._coils):
-            values_full.extend([values[i]] * c.n_coils())
-        self.current = np.asarray(values_full)
+        # values_full = []
+        # for i, c in enumerate(self._coils):
+        #     values_full.extend([values[i]] * c.n_coils())
+        # self.current = np.asarray(values_full)
+        self.current = self._optimisation_currents_sym_mat @ values
 
     @property
-    def _optimisation_currents_sym_mat(self) -> np.ndarray:
+    def n_position_optimisable_coils(self) -> int:
         """
-        Get the reflection matrix for the optimisable coils
+        Get the number of coils that can be position optimised.
+        """
+        return len(self._position_optimisable_coil_names)
+
+    @property
+    def _position_optimisable_coil_names(self) -> List[str]:
+        """
+        Get the names of the coils that can be position optimised.
+        """
+        optimisable_coil_names = [
+            c.primary_coil.name if isinstance(c, Circuit) else c.name
+            for c in self._coils
+        ]
+        return list(*flatten_iterable(optimisable_coil_names))
+
+    @property
+    def _position_optimisable_coil_inds(self) -> List[int]:
+        """
+        Get the indices (wrt. the self.name array) of the coils
+        that can be position optimised.
+
+        These indices are used to extract the optimisable positions from the CoilSet
+        and are based on the index of the coils in the name array.
+        """
+        return [self.name.index(cn) for cn in self._position_optimisable_coil_names]
+
+    @property
+    def _optimisation_positions_sym_mat(self) -> np.ndarray:
+        """
+        Get the symmetry matrix for the position optimisable coils
         """
         cc = self.get_control_coils()
 
         n_all_coils = cc.n_coils()
-        n_opt_coils = cc.n_current_optimisable_coils
+        n_opt_coils = cc.n_position_optimisable_coils
         n_distinct_coils_and_groupings = len(cc._coils)
 
         # this should be true as, at the top level, the number
@@ -1131,25 +1199,61 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         assert n_opt_coils == n_distinct_coils_and_groupings  # noqa: S101
 
         # you are putting 1's in the col. corresponding
-        # to all coils in the same Circuit
-        R = np.zeros((n_all_coils, n_opt_coils))
+        # to all coils in the same SymmetricCircuit
+        sym_mat = np.zeros((n_all_coils, n_opt_coils))
         i_row_coil = 0
         for i_col_coil_group, c in enumerate(cc._coils):
-            if isinstance(c, Circuit):
+            if isinstance(c, SymmetricCircuit):
                 n_coils_in_group = c.n_coils()
                 for n in range(n_coils_in_group):
-                    R[i_row_coil + n, i_col_coil_group] = 1
+                    sym_mat[i_row_coil + n, i_col_coil_group] = 1
                 i_row_coil += n
             else:
-                R[i_row_coil, i_col_coil_group] = 1
+                sym_mat[i_row_coil, i_col_coil_group] = 1
             i_row_coil += 1
-        return R
+        return sym_mat
 
     @property
     def _optimisation_positions(self) -> np.ndarray:
         """
-        Get the currents for the optimisable coils
+        Get the positions of position optimisable coils.
         """
-        opt_x = self.x[self._optimisation_current_inds]
-        opt_z = self.z[self._optimisation_current_inds]
+        opt_x = self.x[self._position_optimisable_coil_inds]
+        opt_z = self.z[self._position_optimisable_coil_inds]
         return np.array([opt_x, opt_z])
+
+    @_optimisation_positions.setter
+    def _optimisation_positions(self, values: np.ndarray):
+        """
+        Set the positions of the position optimisable coils
+        """
+        n_all_coils = self.n_coils()
+
+        opt_x = values[0]
+        opt_z = values[1]
+
+        n_vals_x = opt_x.shape[0]
+        n_vals_z = opt_z.shape[0]
+        n_opt_coils = self.n_position_optimisable_coils
+
+        if n_vals_x != n_vals_z:
+            raise ValueError("The number of x and z position elements do not match")
+
+        if n_vals_x == 1:
+            self.position = np.ndarray([
+                np.ones(n_all_coils) * opt_x[0],
+                np.ones(n_all_coils) * opt_z[0],
+            ])
+            return
+
+        if n_vals_x != n_opt_coils:
+            raise ValueError(
+                f"The number of position elements {n_vals_x} "
+                "does not match the number of "
+                f"optimisable positions: {n_opt_coils}"
+            )
+
+        self.position = np.ndarray([
+            self._optimisation_positions_sym_mat @ opt_x,
+            self._optimisation_positions_sym_mat @ opt_z,
+        ])

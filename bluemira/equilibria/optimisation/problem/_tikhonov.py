@@ -114,7 +114,7 @@ class TikhonovCurrentCOP(CoilsetOptimisationProblem):
             a_mat=a_mat,
             b_vec=b_vec,
             gamma=self.gamma,
-            reflection_matrix=self.eq.coilset._optimisation_currents_sym_mat,
+            current_sym_mat=self.eq.coilset._optimisation_currents_sym_mat,
         )
         eq_constraints, ineq_constraints = self._make_numerical_constraints()
         opt_result = optimise(
@@ -185,7 +185,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
             a_mat,
             b_vec,
             self.gamma,
-            reflection_matrix=self.eq.coilset._optimisation_currents_sym_mat,
+            current_sym_mat=self.eq.coilset._optimisation_currents_sym_mat,
         )
 
         # Update parameterisation (coilset).

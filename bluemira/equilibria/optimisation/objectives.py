@@ -76,10 +76,10 @@ class RegularisedLsqObjective(ObjectiveFunction):
         a_mat: npt.NDArray[np.float64],
         b_vec: npt.NDArray[np.float64],
         gamma: float,
-        reflection_matrix: Optional[npt.NDArray] = None,
+        current_sym_mat: Optional[npt.NDArray] = None,
     ) -> None:
         self.scale = scale
-        self.a_mat = a_mat if reflection_matrix is None else a_mat @ reflection_matrix
+        self.a_mat = a_mat if current_sym_mat is None else a_mat @ current_sym_mat
         self.b_vec = b_vec
         self.gamma = gamma
 
@@ -151,7 +151,7 @@ def tikhonov(
     a_mat: np.ndarray,
     b_vec: np.ndarray,
     gamma: float,
-    reflection_matrix: Optional[np.ndarray] = None,
+    current_sym_mat: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
     Tikhonov regularisation of Ax-b problem.
@@ -173,8 +173,8 @@ def tikhonov(
     x:
         The result vector
     """
-    if reflection_matrix is not None:
-        a_mat = a_mat @ reflection_matrix
+    if current_sym_mat is not None:
+        a_mat = a_mat @ current_sym_mat
     try:
         return np.dot(
             np.linalg.inv(np.dot(a_mat.T, a_mat) + gamma**2 * np.eye(a_mat.shape[1])),
