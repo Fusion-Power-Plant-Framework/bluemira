@@ -19,7 +19,7 @@ from scipy.special import lpmv
 
 from bluemira.base.constants import MU_0, RNGSeeds
 from bluemira.base.error import BluemiraError
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.error import EquilibriaError
@@ -428,7 +428,7 @@ def coils_outside_lcfs_sphere(eq: Equilibrium) -> tuple[list, float]:
     coil_r = np.linalg.norm([eq.coilset.x, eq.coilset.z], axis=0)
     # Approximation boundary - sphere must contain
     # plasma/LCFS for chosen equilibrium.
-    # Are the control coils outside the sphere containing
+    # Are the coils outside the sphere containing
     # the last closed flux surface?
     if bdry_r > np.min(coil_r):
         not_too_close_coils = c_names[coil_r > bdry_r].tolist()
@@ -490,7 +490,7 @@ def spherical_harmonic_approximation(
     eq: Equilibrium,
     n_points: int = 8,
     point_type: PointType = PointType.ARC_PLUS_EXTREMA,
-    grid_num: tuple[int, int] | None = None,
+    grid_num: str | None = None,
     acceptable_fit_metric: float = 0.01,
     nlevels: int = 50,
     seed: int | None = None,
@@ -568,9 +568,6 @@ def spherical_harmonic_approximation(
     # Starting LCFS
     original_LCFS = eq.get_LCFS()
 
-    if eq.grid is None or eq.plasma is None:
-        raise BluemiraError("eq not setup for SH approximation.")
-
     # Grid keep the same as input equilibrium
     grid = eq.grid
 
@@ -579,6 +576,11 @@ def spherical_harmonic_approximation(
 
     # Names of coils located outside of the sphere containing the LCFS
     sh_coil_names, bdry_r = coils_outside_lcfs_sphere(eq)
+
+    # Limit on number of degrees is the number of optimisable coils
+    # (because we will be using SH coefficients as equality constraints)
+    optimisable_coil_names = eq.coilset._current_optimisable_coil_names
+    degree_limit = len(set(sh_coil_names) & set(optimisable_coil_names))
 
     # Typical length scale
     r_t = bdry_r
@@ -605,13 +607,15 @@ def spherical_harmonic_approximation(
         vacuum_psi, grid, collocation, r_t
     )
 
-    # Set min to save some time
-    min_degree = 2
     # Can't have more degrees then sampled psi
-    max_degree = len(collocation.x) - 1
+    degree_limit_collocation = len(collocation.x) - 1
+    # Max degree is smallest of the limits
+    max_degree = np.min([degree_limit, degree_limit_collocation])
 
     sh_eq = deepcopy(eq)
-    for degree in range(min_degree, max_degree + 1):
+    # Set min to save some time
+    min_degree = 2
+    for degree in np.arange(min_degree, max_degree):
         # Construct matrix from harmonic amplitudes for coils
         currents2harmonics = coil_harmonic_amplitude_matrix(
             eq.coilset, degree, r_t, sh_coil_names
@@ -655,9 +659,12 @@ def spherical_harmonic_approximation(
         )
         if fit_metric_value <= acceptable_fit_metric:
             break
-        if degree == max_degree:
-            bluemira_warn(
-                "You may need to use more degrees for a fit metric of"
+        if degree == degree_limit:
+            bluemira_print("Uh oh, you cannot use more degrees than optimisable coils.")
+            break
+        if degree == degree_limit_collocation:
+            bluemira_print(
+                "Uh oh, you may need to use more degrees for a fit metric of"
                 f" {acceptable_fit_metric}! Use a greater number of collocation points"
                 " please."
             )

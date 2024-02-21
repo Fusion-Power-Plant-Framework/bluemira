@@ -11,6 +11,7 @@ Harmonics constraint classes
 import numpy as np
 import numpy.typing as npt
 
+from bluemira.base.look_and_feel import bluemira_print
 from bluemira.equilibria.optimisation.constraints import ConstraintFunction
 
 
@@ -37,19 +38,35 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
         b_vec: np.ndarray,
         value: float,
         scale: float,
+        current_sym_matrix: np.ndarray,
+        debug=False,
     ) -> None:
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
+        self.current_sym_matrix = current_sym_matrix
+        self.debug = debug
 
     def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""
-        currents = self.scale * vector
+        currents = self.current_sym_matrix @ (self.scale * vector)
 
         result = self.a_mat[1:,] @ currents
-        return result - self.b_vec - self.value
+        residual = result - self.b_vec - self.value
 
-    def df_constraint(self, _vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        if self.debug:
+            bluemira_print(
+                f"""
+            refs: {self.b_vec}
+            currents: {currents}
+            currents_sum: {np.sum(currents)}
+            result {result}
+            residual: {residual}
+            """
+            )
+        return residual
+
+    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
         """Constraint derivative"""
-        return self.scale * self.a_mat[1:,]
+        return (self.scale * self.a_mat[1:,]) @ self.current_sym_matrix

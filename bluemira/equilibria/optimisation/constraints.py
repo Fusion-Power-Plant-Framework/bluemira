@@ -327,7 +327,7 @@ class CoilForceConstraints(UpdateableConstraint):
             "CS_Fz_sep_max": CS_Fz_sep_max,
             "n_PF": n_PF,
             "n_CS": n_CS,
-            "current_sym_matrix": coilset._optimisation_currents_sym_mat,
+            "current_sym_matrix": None,
         }
         self.tolerance = tolerance
 
@@ -721,9 +721,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         Calculate control response of a CoilSet to the constraint.
         """
-        psi = coilset.psi_response(self.x, self.z, control=True)
-        R = coilset._optimisation_currents_sym_mat
-        return psi @ R
+        return coilset.psi_response(self.x, self.z, control=True)
 
     def evaluate(self, eq: Equilibrium) -> np.ndarray:
         """
@@ -762,7 +760,7 @@ class MagneticConstraintSet(ABC):
         - Populate constraints with super().__init__(List[MagneticConstraint])
     """
 
-    __slots__ = ("A", "background", "coilset", "constraints", "eq", "target", "w")
+    __slots__ = ["A", "background", "coilset", "constraints", "eq", "target", "w"]
 
     def __init__(self, constraints: list[MagneticConstraint]):
         self.constraints = constraints

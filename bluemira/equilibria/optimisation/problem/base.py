@@ -238,7 +238,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         # if a coil is not fixed (sized) and it has jmax, then the current is limited
         # by the max current provided or defaults to inf
 
-        opt_coils_max_currents = cc.get_max_current()[cc._optimisation_current_inds]
+        opt_coils_max_currents = cc.get_max_current()[cc._current_optimisable_coil_inds]
 
         # Limit the control current magnitude by the smaller of the two limits
         control_current_limits = np.minimum(
