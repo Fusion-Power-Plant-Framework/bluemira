@@ -10,6 +10,7 @@ Finite element model
 
 from __future__ import annotations
 
+from enum import Enum, auto
 from typing import TYPE_CHECKING, List, Optional, Tuple
 
 if TYPE_CHECKING:
@@ -25,11 +26,28 @@ from scipy.sparse.linalg import spsolve
 from bluemira.base.constants import EPS
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.structural.constants import R_LARGE_DISP
+from bluemira.structural.element import LoadType
 from bluemira.structural.error import StructuralError
 from bluemira.structural.geometry import Geometry
 from bluemira.structural.loads import LoadCase
 from bluemira.structural.result import Result
 from bluemira.structural.symmetry import CyclicSymmetry
+
+
+class BoundaryConditionMethodType(Enum):
+    """Enumeration of Boundary Condition Methods."""
+
+    PRZEMIENIECKI = auto()
+    DELETION = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise StructuralError(
+                f"Unrecognised method: {value}. Choose From: PRZEMIENIECKI or DELETION "
+            ) from None
 
 
 def check_matrix_condition(matrix: np.ndarray, digits: int):
@@ -369,11 +387,15 @@ class FiniteElementModel:
             The list of loads to apply to the model
         """
         for load in load_case:
-            if load["type"] == "Node Load":
+            load_type = LoadType(load["type"])
+            if load_type is LoadType.NODE_LOAD:
                 node = self.geometry.nodes[load["node_id"]]
                 node.add_load(load)
 
-            elif load["type"] in {"Element Load", "Distributed Load"}:
+            elif (
+                load_type is LoadType.ELEMENT_LOAD
+                or load_type is LoadType.DISTRIBUTED_LOAD
+            ):
                 element = self.geometry.elements[load["element_id"]]
                 element.add_load(load)
             else:
@@ -506,7 +528,8 @@ class FiniteElementModel:
         # This is the method recommended by Przemieniecki in the book
         # Need to check which is faster with sparse matrices on real problems
         # This method is also easier to unittest!! Indices stay the same :)
-        if method == "Przemieniecki":
+        boundary_cond_method = BoundaryConditionMethodType(method)
+        if boundary_cond_method is BoundaryConditionMethodType.PRZEMIENIECKI:
             for i in self.fixed_dof_ids:
                 # empty row or col of 0's with back-fill of diagonal term to 1
                 entry = np.zeros(6 * self.geometry.n_nodes)
@@ -515,7 +538,7 @@ class FiniteElementModel:
                 k[:, i] = entry
                 p[i] = 0
 
-        elif method == "deletion":
+        elif boundary_cond_method is BoundaryConditionMethodType.DELETION:
             # Removes the rows and columns of the fixed degrees of freedom
             # This reduces the size of the problem being solved, but this
             # may not be the fastest way!
@@ -524,8 +547,8 @@ class FiniteElementModel:
                 k = np.delete(k, i, axis=0)
                 k = np.delete(k, i, axis=1)
                 p = np.delete(p, i)
-        else:
-            raise StructuralError(f"Unrecognised method: {method}.")
+        # else:
+        # raise StructuralError(f"Unrecognised method: {method}.")
         return k, p
 
     def _apply_boundary_conditions_sparse(self, k, p):

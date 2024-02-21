@@ -9,6 +9,7 @@ Discretised offset operations used in case of failure in primitive offsetting.
 """
 
 from copy import deepcopy
+from enum import Enum, auto
 from typing import List, Tuple
 
 import numpy as np
@@ -35,6 +36,23 @@ __all__ = ["offset_clipper"]
 # =============================================================================
 # Pyclipper utilities
 # =============================================================================
+
+
+class OffsetClipperMethodType(Enum):
+    """Enumeration of types of offset methods."""
+
+    SQUARE = auto()
+    ROUND = auto()
+    MITER = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise GeometryError(
+                "Please choose an offset method from:\n round \n square \n miter"
+            ) from None
 
 
 def coordinates_to_pyclippath(coordinates: Coordinates) -> np.ndarray:
@@ -269,18 +287,14 @@ def offset_clipper(
     t_coordinates = transform_coordinates_to_xz(
         coordinates, -np.array(com), (0.0, 1.0, 0.0)
     )
-
-    if method == "square":
+    inp_method = OffsetClipperMethodType(method)
+    if inp_method is OffsetClipperMethodType.SQUARE:
         tool = SquareOffset(t_coordinates)
-    elif method == "round":
+    elif inp_method is OffsetClipperMethodType.ROUND:
         bluemira_warn("I don't know why, but this is very slow...")
         tool = RoundOffset(t_coordinates)
-    elif method == "miter":
+    elif inp_method is OffsetClipperMethodType.MITER:
         tool = MiterOffset(t_coordinates, miter_limit=miter_limit)
-    else:
-        raise GeometryError(
-            "Please choose an offset method from:\n round \n square \n miter"
-        )
 
     result = tool.perform(delta)
     if result is None:

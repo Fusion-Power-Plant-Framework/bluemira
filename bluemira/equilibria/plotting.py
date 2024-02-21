@@ -28,6 +28,7 @@ from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
+from bluemira.builders import pf_coil
 from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.constants import J_TOR_MIN, M_PER_MN
 from bluemira.equilibria.find import Xpoint, get_contours, grid_2d_contour
@@ -235,9 +236,10 @@ class CoilGroupPlotter(Plotter):
         for i, (x, z, dx, x_b, z_b, ct, n, cur, ctrl) in enumerate(zip(*arrays)):
             if ctrl:
                 if self.colors is not None:
-                    if ct.name == "PF":
+                    ctype = pf_coil.CoilType(ct.name)
+                    if ctype is pf_coil.CoilType.PF:
                         kwargs["facecolor"] = self.colors[0]
-                    elif ct.name == "CS":
+                    elif ctype is pf_coil.CoilType.CS:
                         kwargs["facecolor"] = self.colors[1]
 
                 self._plot_coil(
@@ -307,7 +309,8 @@ class CoilGroupPlotter(Plotter):
         Single coil annotation utility function
         """
         off = max(0.2, dx + 0.02)
-        if ctype.name == "CS":
+        ctype_name = pf_coil.CoilType(ctype.name)
+        if ctype_name is pf_coil.CoilType.CS:
             drs = -1.5 * off
             ha = "right"
         else:
@@ -318,7 +321,7 @@ class CoilGroupPlotter(Plotter):
             text = "\n".join([text, f"{raw_uc(force[1], 'N', 'MN'):.2f} MN"])
         x = float(x) + drs
         z = float(z)
-        if centre is not None and ctype.name == "PF":
+        if centre is not None and ctype_name is pf_coil.CoilType.PF:
             v = np.array([x - centre[0], z - centre[1]])
             v /= np.sqrt(sum(v**2))
             d = 1 + np.sqrt(2) * dx

@@ -28,6 +28,7 @@ _PfT = TypeVar("_PfT", bound=ParameterFrame)
 
 _PARAMETERS_KEY = "params"
 _FILEPATH_PREFIX = "$path:"
+_FILEPATH_EXPANSION_PREFIX = "$path_expand:"
 
 
 class ReactorConfig:
@@ -259,6 +260,9 @@ class ReactorConfig:
             d[k], rel_path_from = self._extract_and_expand_file_data_if_needed(
                 d[k], rel_path
             )
+            if isinstance(d[k], str):
+                d[k] = self._expand_filepath_if_needed(d[k], rel_path_from)
+
             if isinstance(d[k], dict):
                 self._expand_paths_in_dict(d[k], rel_path_from)
 
@@ -334,3 +338,28 @@ class ReactorConfig:
                 extracted[k] = v
 
         return extracted
+
+    @staticmethod
+    def _expand_filepath_if_needed(value: str, config_dir: Path) -> str:
+        """
+        Checks if the value has a path expansion directive and expands it to the absolute
+        path with respect to the config directory.
+
+        Returns
+        -------
+        Absolute path as str
+        """
+        if not value.startswith(_FILEPATH_EXPANSION_PREFIX):
+            return value
+
+        # remove _FILEPATH_PREFIX
+        path_str = value[len(_FILEPATH_EXPANSION_PREFIX) :]
+
+        # if the path does not start with a /, it is considered a relative path,
+        # relative to the file the path is in (i.e. rel_path)
+        path_value = (
+            config_dir / path_str if not path_str.startswith("/") else Path(path_str)
+        )
+        path_value = path_value.resolve()
+
+        return path_value.as_posix()

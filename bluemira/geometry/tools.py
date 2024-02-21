@@ -12,6 +12,7 @@ import datetime
 import functools
 import inspect
 import json
+from enum import Enum, auto
 from pathlib import Path
 from typing import (
     Any,
@@ -64,6 +65,25 @@ def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
     else:
         raise TypeError(f"Cannot convert {type(apiobj)} object into a BluemiraGeo.")
     return output
+
+
+class HullPlaneType(Enum):
+    """
+    Enumeration of planes to perform a hull operation in.
+    """
+
+    XZ = auto()
+    XY = auto()
+    YZ = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(
+                f"Invalid plane: {value}. Must be one of 'xz', 'xy', 'yz'."
+            ) from None
 
 
 class BluemiraGeoEncoder(json.JSONEncoder):
@@ -706,11 +726,16 @@ def convex_hull_wires_2d(
     """
     if not wires:
         raise ValueError("Must have at least one wire to draw a hull around.")
-    if plane == "xz":
+
+    if plane is None:
+        raise KeyError("Invalid plane. Must be one of 'xz', 'xy', 'yz'.")
+
+    hull_plane = HullPlaneType(plane)
+    if hull_plane is HullPlaneType.XZ:
         plane_idxs = (0, 2)
-    elif plane == "xy":
+    elif hull_plane is HullPlaneType.XY:
         plane_idxs = (0, 1)
-    elif plane == "yz":
+    elif hull_plane is HullPlaneType.YZ:
         plane_idxs = (1, 2)
     else:
         raise ValueError(f"Invalid plane: '{plane}'. Must be one of 'xz', 'xy', 'yz'.")

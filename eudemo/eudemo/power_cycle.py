@@ -10,6 +10,7 @@ Simple steady-state EU-DEMO balance of plant model
 
 import enum
 from dataclasses import dataclass
+from enum import Enum, auto
 
 import numpy as np
 
@@ -29,6 +30,22 @@ from bluemira.codes.interface import BaseRunMode, CodesSolver
 from bluemira.codes.interface import CodesTask as Task
 
 __all__ = ["SteadyStatePowerCycleSolver"]
+
+
+class BlanketType(Enum):
+    """Enumeration of blanket types."""
+
+    HCPB = auto()
+    WCLL = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(
+                f"Unrecognised blanket type: {value}. Choose from: HCPB or WCLL"
+            ) from None
 
 
 @dataclass
@@ -118,8 +135,8 @@ class SteadyStatePowerCycleSetup(Task):
             f_sol_ch_fw=params.f_sol_ch_fw.value,
             f_fw_aux=params.f_fw_aux.value,
         )
-
-        if params.blanket_type.value == "HCPB":
+        blanket_type = BlanketType(params.blanket_type.value)
+        if blanket_type is BlanketType.HCPB:
             blanket_pump_strat = HePumping(
                 params.bb_p_inlet.value,
                 params.bb_p_outlet.value,
@@ -131,15 +148,15 @@ class SteadyStatePowerCycleSetup(Task):
             bop_cycle = SuperheatedRankine(
                 bb_t_out=params.bb_t_outlet.value, delta_t_turbine=20
             )
-        elif params.blanket_type.value == "WCLL":
+        elif blanket_type is BlanketType.WCLL:
             blanket_pump_strat = H2OPumping(
                 0.005,
                 eta_isentropic=params.bb_pump_eta_isen.value,
                 eta_electric=params.bb_pump_eta_el.value,
             )
             bop_cycle = PredeterminedEfficiency(0.33)
-        else:
-            raise ValueError(f"Unrecognised blanket type {params.blanket_type.value}")
+        # else:
+        # raise ValueError(f"Unrecognised blanket type {params.blanket_type.value}")
 
         divertor_pump_strat = H2OPumping(
             f_pump=0.05,
