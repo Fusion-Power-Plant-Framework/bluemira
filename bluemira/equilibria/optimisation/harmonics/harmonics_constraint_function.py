@@ -56,15 +56,13 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
         residual = result - self.b_vec - self.value
 
         if self.debug:
-            bluemira_print(
-                f"""
+            bluemira_print(f"""
             refs: {self.b_vec}
             currents: {currents}
             currents_sum: {np.sum(currents)}
             result {result}
             residual: {residual}
-            """
-            )
+            """)
         return residual
 
     def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002

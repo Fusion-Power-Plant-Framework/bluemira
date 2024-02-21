@@ -8,8 +8,11 @@
 Builder for the PF coils
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
-from typing import Dict, List, Union
+from enum import Enum, auto
+from typing import TYPE_CHECKING, Dict, List, Union
 
 from bluemira.base.builder import Builder
 from bluemira.base.components import Component, PhysicalComponent
@@ -21,7 +24,10 @@ from bluemira.equilibria.coils import Coil, CoilType
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.parameterisations import PictureFrame
 from bluemira.geometry.tools import make_circle, offset_wire, revolve_shape
-from bluemira.geometry.wire import BluemiraWire
+
+if TYPE_CHECKING:
+    from bluemira.equilibria.coils import Coil
+    from bluemira.geometry.wire import BluemiraWire
 
 
 @dataclass
