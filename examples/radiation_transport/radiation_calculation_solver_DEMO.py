@@ -150,7 +150,7 @@ source.rad_map(fw_shape)
 
 
 # %%
-def main(only_source=True):  # noqa: D103
+def main(only_source=False):  # noqa: D103
     if only_source:
         source.plot()
         plt.show()
@@ -208,9 +208,7 @@ def main(only_source=True):  # noqa: D103
                         rad_sol_grid[j, i]
                         * (wall_filter(point) * 1.0)
                         * (pfr_down_filter(point) * 1.0)
-                        * 1
-                        if SINGLE_NULL
-                        else (pfr_up_filter(point) * 1.0)
+                        * (pfr_up_filter(point) * 1.0)
                         * (core_filter_out(point) * 1.0)
                     )
 
