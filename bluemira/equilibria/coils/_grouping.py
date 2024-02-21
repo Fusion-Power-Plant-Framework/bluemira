@@ -1074,7 +1074,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             c.primary_coil.name if isinstance(c, Circuit) else c.name
             for c in self._coils
         ]
-        return list(*flatten_iterable(optimisable_coil_names))
+        return [*flatten_iterable(optimisable_coil_names)]
 
     @property
     def _current_optimisable_coil_inds(self) -> List[int]:
@@ -1169,7 +1169,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
             c.primary_coil.name if isinstance(c, Circuit) else c.name
             for c in self._coils
         ]
-        return list(*flatten_iterable(optimisable_coil_names))
+        return [*flatten_iterable(optimisable_coil_names)]
 
     @property
     def _position_optimisable_coil_inds(self) -> List[int]:
