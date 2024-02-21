@@ -32,18 +32,29 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
         Current scale with which to calculate the constraints
     """
 
-    def __init__(self, a_mat: np.ndarray, b_vec: np.ndarray, value: float, scale: float):
+    def __init__(
+        self,
+        a_mat: np.ndarray,
+        b_vec: np.ndarray,
+        value: float,
+        scale: float,
+        current_sym_matrix: np.ndarray,
+        debug=False,
+    ) -> None:
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
-        self.debug = False
+        self.current_sym_matrix = current_sym_matrix
+        self.debug = debug
 
-    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+    def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
         """Constraint function"""
-        currents = self.scale * vector
+        currents = self.current_sym_matrix @ (self.scale * vector)
+
         result = self.a_mat[1:,] @ currents
         residual = result - self.b_vec - self.value
+
         if self.debug:
             bluemira_print(
                 f"""
@@ -56,6 +67,6 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
             )
         return residual
 
-    def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
+    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
         """Constraint derivative"""
-        return self.scale * self.a_mat[1:,]
+        return (self.scale * self.a_mat[1:,]) @ self.current_sym_matrix
