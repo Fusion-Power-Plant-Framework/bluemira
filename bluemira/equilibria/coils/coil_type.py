@@ -23,6 +23,8 @@ class CoilType(Enum):
 
     @classmethod
     def _missing_(cls, value):
+        if not isinstance(value, str):
+            raise TypeError("Input must be a string.")
         try:
             return cls[value.upper()]
         except KeyError:
