@@ -8,25 +8,10 @@
 Coil Types
 """
 
-from enum import Enum, EnumMeta, auto
+from enum import Enum, auto
 
 
-class CoilTypeEnumMeta(EnumMeta):
-    """
-    Allow override of KeyError error string
-    """
-
-    def __getitem__(self, name):
-        """
-        Coil Type __getitem__
-        """
-        try:
-            return super().__getitem__(name)
-        except KeyError:
-            raise KeyError(f"Unknown CoilType {name}") from None
-
-
-class CoilType(Enum, metaclass=CoilTypeEnumMeta):
+class CoilType(Enum):
     """
     CoilType Enum
     """
@@ -35,3 +20,12 @@ class CoilType(Enum, metaclass=CoilTypeEnumMeta):
     CS = auto()
     DUM = auto()
     NONE = auto()
+
+    @classmethod
+    def _missing_(cls, value):
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(
+                f"{value} is not a valid CoilType. Choose from: PF, CS, DUM, NONE"
+            ) from None
