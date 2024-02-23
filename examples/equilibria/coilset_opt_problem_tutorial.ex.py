@@ -21,10 +21,17 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 """
-Finds a ST equilibrium in a double null configuration, using a constrained
-optimisation method with bound constraints on the maximum coil currents
-and on the position of the inboard midplane.
+Coilset Optimisation Problem Tutorial
 """
+
+# %% [markdown]
+# # coilset optimisation problem tutorial
+#
+#
+# This tutorial finds a ST equilibrium in a double null configuration,
+# using a constrained optimisation method with bound constraints on
+# the maximum coil currents and on the position of the inboard midplane.
+#
 
 # %%[markdown]
 
