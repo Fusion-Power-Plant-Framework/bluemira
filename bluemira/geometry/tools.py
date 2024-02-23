@@ -20,6 +20,7 @@ from typing import Any
 
 import numba as nb
 import numpy as np
+from numpy import typing as npt
 from scipy.spatial import ConvexHull
 
 from bluemira.base.constants import EPS
@@ -1056,6 +1057,38 @@ def slice_shape(
     if len(_slice) > 0:
         return _slice
     return None
+
+
+def get_wire_plane_intersect(
+    convex_bm_wire: BluemiraWire, plane: BluemiraPlane, cut_direction: npt.NDArray[float]
+):
+    """
+    Cut a wire using a plane.
+
+    Parameters
+    ----------
+    convex_bm_wire:
+        The wire that we're interested in cutting.
+    plane:
+        Plane that is cutting the wire.
+    cut_direction:
+        np.ndarray with shape==(3,)
+
+    Returns
+    -------
+    intersection point:
+        np.ndarray with shape==(3,)
+    """
+    intersection_points = slice_shape(convex_bm_wire, plane)
+    if len(intersection_points) > 1:
+        if len(intersection_points) > 2:  # noqa: PLR2004
+            bluemira_warn(
+                "convex_bm_wire expected to be a convex hull, but isn't.\n"
+                "Proceeding by choosing the final intersection point..."
+            )
+        final_intersection = np.argmax(np.dot(intersection_points, cut_direction))
+        return intersection_points[final_intersection]
+    return intersection_points[0]
 
 
 def circular_pattern(

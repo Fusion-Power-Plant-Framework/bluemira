@@ -940,6 +940,43 @@ def vector_intersect(
     return point
 
 
+def get_bisection_line(
+    p1: npt.NDArray[float],
+    p2: npt.NDArray[float],
+    p3: npt.NDArray[float],
+    p4: npt.NDArray[float],
+):
+    """
+    Find the bisection line between two lines.
+
+    Parameters
+    ----------
+    p1:
+        The first point on the first vector (shape: (2,)).
+    p2:
+        The second point on the first vector (shape: (2,)).
+    p3:
+        The first point on the second vector (shape: (2,)).
+    p4:
+        The second point on the second vector (shape: (2,)).
+
+    Returns
+    -------
+    origin:
+        A point on that bisection line. (shape: (2,))
+    direction:
+        A normal vector that the bisection line points in (shape: (2,))
+    """
+    origin = vector_intersect(p1, p2, p3, p4)
+    da = p2 - p1
+    db = p4 - p3
+    normed_da = da / np.linalg.norm(da)
+    normed_db = db / np.linalg.norm(db)
+    dc = normed_da + normed_db
+    direction = dc / np.linalg.norm(dc)
+    return origin, direction
+
+
 # =============================================================================
 # Coordinate class and parsers
 # =============================================================================
