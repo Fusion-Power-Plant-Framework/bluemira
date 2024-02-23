@@ -24,9 +24,7 @@ Equilibria Examples
     examples/equilibria/fixed_boundary
     examples/equilibria/Spherical_Approximation_how_it_works
     examples/equilibria/spherical_harmonic_approximation_basic_function_check
-
-Geometry Examples
-^^^^^^^^^^^^^^^^^
+    examples/equilibria/coilset_opt_problem_tutorial
 
 .. toctree::
     :maxdepth: 1
