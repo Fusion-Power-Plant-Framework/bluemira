@@ -208,6 +208,13 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     -------
     Vertex at the point
     """
+    if isinstance(point, Coordinates):
+        if np.shape(Coordinates) != (3, 1):
+            raise GeometryError(
+                "Can only cast the 3D coordinates of a single point"
+                "into a cadapi vertex!"
+            )
+        point = point.points[0]
     if len(point) != 3:  # noqa: PLR2004
         raise GeometryError("Points must be of dimension 3.")
 
@@ -1329,7 +1336,9 @@ def signed_distance_2D_polygon(
     return d
 
 
-def signed_distance(wire_1: BluemiraWire, wire_2: BluemiraWire) -> float:
+def signed_distance(
+    wire_1: BluemiraWire, wire_2: Union[BluemiraWire, Coordinates]
+) -> float:
     """
     Single-valued signed "distance" function between two wires. Will return negative
     values if wire_1 does not touch or intersect wire_2, 0 if there is one intersection,
@@ -1351,6 +1360,9 @@ def signed_distance(wire_1: BluemiraWire, wire_2: BluemiraWire) -> float:
     This is not a pure implementation of a distance function, as for overlapping wires a
     metric of the quantity of overlap is returned (a positive value). This nevertheless
     enables the use of such a function as a constraint in gradient-based optimisers.
+
+    This function has been extended to allow the target wire to be a point
+        (:class:`~bluemira.geometry.coordinates.Coordinates`) as well
     """
     d, vectors = distance_to(wire_1, wire_2)
     # Intersections are exactly 0.0
