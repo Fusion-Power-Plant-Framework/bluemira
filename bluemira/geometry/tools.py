@@ -209,7 +209,7 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     Vertex at the point
     """
     if isinstance(point, Coordinates):
-        if np.shape(Coordinates) != (3, 1):
+        if np.shape(point) != (3, 1):
             raise GeometryError(
                 "Can only cast the 3D coordinates of a single point"
                 "into a cadapi vertex!"
@@ -1349,7 +1349,7 @@ def signed_distance(
     wire_1:
         Subject wire
     wire_2:
-        Target wire
+        Target wire/ coordinates
 
     Returns
     -------
@@ -1387,6 +1387,22 @@ def signed_distance(
         return length
     # There are no intersections, return minimum distance
     return -d
+
+
+def raise_error_if_overlap(
+    wire_1: BluemiraWire,
+    wire_2: Union[BluemiraWire, Coordinates],
+    name_1: str = "wire_1",
+    name_2: str = "wire_2",
+):
+    """
+    Raise an error if two wires overlap.
+    """
+    check_overlaps = signed_distance(wire_1, wire_2)
+    if check_overlaps == 0:
+        raise GeometryError(f"{name_1} and {name_2} intersects with each other!")
+    if check_overlaps > 0:
+        raise GeometryError(f"{name_1} and {name_2} partially/fully overlaps!")
 
 
 # ======================================================================================
