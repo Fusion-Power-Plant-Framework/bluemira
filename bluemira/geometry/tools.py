@@ -1399,8 +1399,10 @@ def raise_error_if_overlap(
     Raise an error if two wires overlap.
     """
     check_overlaps = signed_distance(wire_1, wire_2)
-    if check_overlaps == 0:
-        raise GeometryError(f"{name_1} and {name_2} intersects with each other!")
+    if -D_TOLERANCE <= check_overlaps <= 0:
+        # Sometimes intersecting lines can still appears to separate (negative),
+        # but only by just a little. So a small negative number is included in the check.
+        raise GeometryError(f"{name_1} and {name_2} likely intersects with each other!")
     if check_overlaps > 0:
         raise GeometryError(f"{name_1} and {name_2} partially/fully overlaps!")
 
