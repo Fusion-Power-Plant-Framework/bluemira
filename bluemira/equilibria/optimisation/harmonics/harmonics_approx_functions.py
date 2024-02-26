@@ -30,6 +30,7 @@ from bluemira.geometry.coordinates import (
     Coordinates,
     get_area_2d,
     get_intersect,
+    in_polygon,
     polygon_in_polygon,
 )
 from bluemira.geometry.face import BluemiraFace
@@ -177,6 +178,7 @@ class PointType(Enum):
     ARC_PLUS_EXTREMA = auto()
     RANDOM = auto()
     RANDOM_PLUS_EXTREMA = auto()
+    GRID_POINTS = auto()
 
 
 @dataclass
@@ -194,6 +196,7 @@ def collocation_points(
     plasma_boundary: Coordinates,
     point_type: PointType,
     seed: Optional[int] = None,
+    grid_num: Optional[Tuple[int, int]] = (10, 10),
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
@@ -204,7 +207,8 @@ def collocation_points(
     - equispaced points on an arc of fixed radius,
     - equispaced points on an arc plus extrema,
     - random points within a circle enclosed by the LCFS,
-    - random points plus extrema.
+    - random points plus extrema,
+    - a grid of points containing the LCFS.
 
     Parameters
     ----------
@@ -215,10 +219,14 @@ def collocation_points(
         XZ coordinates of the plasma boundary
     point_type:
         Method for creating a set of points: 'arc', 'arc_plus_extrema',
-        'random', or 'random_plus_extrema'
+        'random', or 'random_plus_extrema', 'grid_points'
     seed:
         Seed value to use with a random point distribution, defaults
-        to `RNGSeeds.equilibria_harmonics.value`.
+        to `RNGSeeds.equilibria_harmonics.value`. For use with 'random'
+        or 'random_plus_extrema' point type.
+    grid_num:
+        Tuple with the number of desired grid points in the x and z direction. 
+        For use with 'grid_points' point type. 
 
     Returns
     -------
@@ -286,6 +294,37 @@ def collocation_points(
         collocation_z = np.concatenate([collocation_z, extrema_z])
 
         # Hello again spherical coordinates
+        collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
+        collocation_theta = np.arctan2(collocation_x, collocation_z)
+
+    if point_type is PointType.GRID_POINTS:
+        # Create uniform, rectangular grid using max and min LCFS values
+        grid_num_x, grid_num_z = grid_num
+        rect_grid = Grid(
+            x_min=np.amin(x_bdry),
+            x_max=np.amax(x_bdry),
+            z_min=np.amin(z_bdry),
+            z_max=np.amax(z_bdry),
+            nx=grid_num_x,
+            nz=grid_num_z,
+        )
+
+        # Only use grid points that are within LCFS
+        collocation_x = np.array([])
+        collocation_z = np.array([])
+        for i in np.arange(grid_num_x):
+            for j in np.arange(grid_num_x):
+                in_poly = in_polygon(
+                    x=rect_grid.x[i, j],
+                    z=rect_grid.z[i, j],
+                    poly=plasma_boundary.xz.T,
+                    include_edges=True,
+                )
+                if in_poly:
+                    collocation_x = np.append(collocation_x, rect_grid.x[i, j])
+                    collocation_z = np.append(collocation_z, rect_grid.z[i, j])
+
+        # Spherical coordinates
         collocation_r = np.sqrt(collocation_x**2 + collocation_z**2)
         collocation_theta = np.arctan2(collocation_x, collocation_z)
 
