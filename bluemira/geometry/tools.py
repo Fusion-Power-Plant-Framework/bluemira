@@ -67,7 +67,7 @@ def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
     return output
 
 
-class HullPlaneType(Enum):
+class HullPlane(Enum):
     """
     Enumeration of planes to perform a hull operation in.
     """
@@ -730,12 +730,12 @@ def convex_hull_wires_2d(
     if plane is None:
         raise KeyError("Invalid plane. Must be one of 'xz', 'xy', 'yz'.")
 
-    hull_plane = HullPlaneType(plane)
-    if hull_plane is HullPlaneType.XZ:
+    hull_plane = HullPlane(plane)
+    if hull_plane is HullPlane.XZ:
         plane_idxs = (0, 2)
-    elif hull_plane is HullPlaneType.XY:
+    elif hull_plane is HullPlane.XY:
         plane_idxs = (0, 1)
-    elif hull_plane is HullPlaneType.YZ:
+    elif hull_plane is HullPlane.YZ:
         plane_idxs = (1, 2)
     else:
         raise ValueError(f"Invalid plane: '{plane}'. Must be one of 'xz', 'xy', 'yz'.")
