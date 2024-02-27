@@ -200,7 +200,7 @@ def _nested_check(process_name):
         process_name = OBS_VARS[process_name]
         if process_name == "None":
             return None
-        if isinstance(process_name, list):
+        if isinstance(process_name, Iterable):
             names = []
             for p in process_name:
                 names += [_nested_check(p)]

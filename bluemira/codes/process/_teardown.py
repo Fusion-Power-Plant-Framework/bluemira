@@ -247,7 +247,7 @@ class _MFileWrapper:
                     " no alternative. Setting value to NaN"
                 )
                 self.data[process_param_name] = np.nan
-            elif isinstance(param_name, list):
+            elif isinstance(param_name, Iterable):
                 for name in param_name:
                     self.data[name] = value["scan01"]
             else:

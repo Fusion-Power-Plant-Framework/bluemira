@@ -438,7 +438,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         region_mapper: RegionMapper,
         current_scale: float,
         gamma: float,
-    ):
+    ) -> float:
         """
         Calculates figure of merit from objective function,
         consisting of a least-squares objective with Tikhonov
@@ -619,7 +619,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         current_scale: float,
         initial_currents,
         sub_opt: CoilsetOptimisationProblem,
-    ):
+    ) -> np.ndarray:
         """
         Calculates figure of merit, returned from the current
         optimiser at each trial coil position.
@@ -697,7 +697,7 @@ class UnconstrainedTikhonovCurrentGradientCOP(CoilsetOptimisationProblem):
 
         super().__init__(coilset)
 
-    def optimise(self, *args, **kwargs):
+    def optimise(self, *args, **kwargs) -> CoilSet:
         """
         Optimise the prescribed problem.
 

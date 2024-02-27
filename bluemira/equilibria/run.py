@@ -780,7 +780,9 @@ class OptimisedPulsedCoilsetDesign(PulsedCoilsetDesign):
         return self._pos_settings
 
     @pos_settings.setter
-    def pos_settings(self, value: Optional[Union[PositionSettings, Dict]] = None):
+    def pos_settings(
+        self, value: Optional[Union[PositionSettings, Dict]] = None
+    ) -> None:
         """Position COP settings."""
         if value is None:
             self._pos_settings = PositionSettings()

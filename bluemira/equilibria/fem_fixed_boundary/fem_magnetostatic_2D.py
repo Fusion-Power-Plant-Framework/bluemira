@@ -161,7 +161,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
             np.abs((self.psi(x) - self.psi_ax) / (self.psi_b - self.psi_ax))
         )
 
-    def set_mesh(self, mesh: Union[dolfin.Mesh, str]):
+    def set_mesh(self, mesh: Union[dolfin.Mesh, str]) -> None:
         """
         Set the mesh for the solver
 
@@ -237,7 +237,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         I_p: Optional[float] = None,
         B_0: Optional[float] = None,
         R_0: Optional[float] = None,
-    ):
+    ) -> None:
         """
         Set the profies for the FEM G-S solver.
 
