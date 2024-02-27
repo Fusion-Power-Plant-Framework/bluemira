@@ -147,11 +147,8 @@ class FuelCycleAnalysis:
             return np.mean(self.__dict__[p])
         if inp_s is QueryType.MEDIAN:
             return np.median(self.__dict__[p])
-        if inp_s is QueryType.P95TH:
-            return np.percentile(self.__dict__[p], 95)
-        raise ValueError(
-            f"Unknown query: '{s}'. Choose from: min, max, mean, median, 95th"
-        )
+        # QueryType.P95TH
+        return np.percentile(self.__dict__[p], 95)
 
     def plot(self, figsize=(12, 6), bins=20, **kwargs):
         """
