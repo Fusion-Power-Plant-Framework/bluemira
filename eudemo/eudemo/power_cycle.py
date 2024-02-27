@@ -155,8 +155,6 @@ class SteadyStatePowerCycleSetup(Task):
                 eta_electric=params.bb_pump_eta_el.value,
             )
             bop_cycle = PredeterminedEfficiency(0.33)
-        # else:
-        # raise ValueError(f"Unrecognised blanket type {params.blanket_type.value}")
 
         divertor_pump_strat = H2OPumping(
             f_pump=0.05,
