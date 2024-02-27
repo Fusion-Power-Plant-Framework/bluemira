@@ -547,8 +547,7 @@ class FiniteElementModel:
                 k = np.delete(k, i, axis=0)
                 k = np.delete(k, i, axis=1)
                 p = np.delete(p, i)
-        # else:
-        # raise StructuralError(f"Unrecognised method: {method}.")
+
         return k, p
 
     def _apply_boundary_conditions_sparse(self, k, p):
