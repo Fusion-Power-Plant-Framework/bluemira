@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type, Uni
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
 from bluemira.base.parameter_frame import Parameter, ParameterFrame
@@ -504,7 +505,7 @@ class PulsedCoilsetDesign(ABC):
         psi_eof = psi_sof - self.params.tau_flattop.value * self.params.v_burn.value
         return psi_sof, psi_eof
 
-    def _get_max_currents(self, coilset: CoilSet) -> np.ndarray:
+    def _get_max_currents(self, coilset: CoilSet) -> npt.NDArray:
         return coilset.get_max_current(
             self.eq_settings.peak_PF_current_factor * self.params.I_p.value
         )
@@ -545,7 +546,7 @@ class PulsedCoilsetDesign(ABC):
     def _make_opt_problem(
         self,
         eq: Equilibrium,
-        max_currents: np.ndarray,
+        max_currents: npt.NDArray,
         current_constraints: Optional[List[UpdateableConstraint]],
         eq_constraints: List[MagneticConstraint],
     ) -> CoilsetOptimisationProblem:

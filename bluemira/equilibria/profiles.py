@@ -18,6 +18,7 @@ if TYPE_CHECKING:
 import matplotlib.pyplot as plt
 import numba as nb
 import numpy as np
+import numpy.typing as npt
 from scipy.integrate import quad
 from scipy.interpolate import interp1d
 from scipy.optimize import curve_fit
@@ -44,8 +45,8 @@ __all__ = [
 
 
 def fitfunc(
-    func: Callable[[float], float], data: np.ndarray, order: Optional[int] = None
-) -> np.ndarray:
+    func: Callable[[float], float], data: npt.NDArray, order: Optional[int] = None
+) -> npt.NDArray:
     """
     Uses scipy's curve_fit to fit 1-D data to a custom function
 
@@ -107,8 +108,8 @@ def pshape(
 
 @nb.jit(forceobj=True, looplift=True)  # Cannot cache due to "lifted loops"
 def speedy_pressure(
-    psi_norm: np.ndarray, psio: float, psix: float, shape: Callable[[float], float]
-) -> np.ndarray:
+    psi_norm: npt.NDArray, psio: float, psix: float, shape: Callable[[float], float]
+) -> npt.NDArray:
     """
     Calculate the pressure map on the psi_norm array without any masking because
     the plasma is not clearly bounded.
@@ -139,13 +140,13 @@ def speedy_pressure(
 
 @nb.jit(cache=False, forceobj=True)  # Cannot cache due to "lifted loops"
 def speedy_pressure_mask(
-    ii: np.ndarray,
-    jj: np.ndarray,
-    psi_norm: np.ndarray,
+    ii: npt.NDArray,
+    jj: npt.NDArray,
+    psi_norm: npt.NDArray,
     psio: float,
     psix: float,
     shape: Callable[[float], float],
-) -> np.ndarray:
+) -> npt.NDArray:
     """
     Calculate the pressure map on the psi_norm array without any masking because
     the plasma is not clearly bounded.
@@ -208,7 +209,7 @@ class ShapeFunction:
     """
 
     @classmethod
-    def from_datafit(cls, data: np.ndarray, order: Optional[int] = None):
+    def from_datafit(cls, data: npt.NDArray, order: Optional[int] = None):
         """
         Defines function from a dataset, fit using scipy curve_fit
         """
@@ -229,7 +230,7 @@ class ShapeFunction:
         """
         return self._fact * self._func(x)
 
-    def adjust_parameters(self, coeffs: np.ndarray):
+    def adjust_parameters(self, coeffs: npt.NDArray):
         """
         Adjust the coefficients of the ShapeFunction
         """
@@ -307,7 +308,7 @@ class LaoPolynomialFunc(ShapeFunction):
     _fact = 1
     _order = 3
 
-    def __init__(self, coeffs: Union[float, np.ndarray]):
+    def __init__(self, coeffs: Union[float, npt.NDArray]):
         if not hasattr(coeffs, "__len__"):
             self.n = 0
         self.n = len(coeffs) - 1
@@ -326,7 +327,7 @@ class LuxonExpFunc(ShapeFunction):
     _fact = 1
     _order = 1
 
-    def __init__(self, coeffs: Union[float, np.ndarray]):
+    def __init__(self, coeffs: Union[float, npt.NDArray]):
         if not hasattr(coeffs, "__len__"):
             self.n = 1
             self.coeffs = [coeffs]
@@ -368,11 +369,11 @@ class Profile:
         o_vals = np.reshape(out, -1)
         return p_vals, o_vals
 
-    def pressure(self, psinorm: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def pressure(self, psinorm: Union[float, npt.NDArray]) -> Union[float, npt.NDArray]:
         """
         Return p as a function of normalised psi by integrating pprime
         """
-        if not isinstance(psinorm, np.ndarray):
+        if not isinstance(psinorm, npt.NDArray):
             return self._scalar_denorm(self.pprime, psinorm)
 
         p_vals, o_vals = self._reshape(psinorm)
@@ -380,7 +381,7 @@ class Profile:
             o_vals[i] = self._scalar_denorm(self.pprime, p_vals[i])
         return np.reshape(o_vals, psinorm.shape)
 
-    def fRBpol(self, psinorm: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def fRBpol(self, psinorm: Union[float, npt.NDArray]) -> Union[float, npt.NDArray]:
         """
         Return f as a function of normalised psi
 
@@ -390,7 +391,7 @@ class Profile:
             \t:math:`FF^{'}|_{\\substack{\\psi_{N}=1}} = (R_{0}B_{T,0})^{2}`
         """
         fvacuum = self.fvac()
-        if not isinstance(psinorm, np.ndarray):
+        if not isinstance(psinorm, npt.NDArray):
             val = self._scalar_denorm(self.ffprime, psinorm)
             return np.sqrt(2 * val + fvacuum**2)
 
@@ -403,13 +404,13 @@ class Profile:
 
     @staticmethod
     def _jtor(
-        x: np.ndarray,
-        z: np.ndarray,
-        psi: np.ndarray,
+        x: npt.NDArray,
+        z: npt.NDArray,
+        psi: npt.NDArray,
         o_points: List[Opoint],
         x_points: List[Xpoint],
-        lcfs: Optional[np.ndarray] = None,
-    ) -> Tuple[float, float, np.ndarray]:
+        lcfs: Optional[npt.NDArray] = None,
+    ) -> Tuple[float, float, npt.NDArray]:
         """
         Do-not-repeat-yourself utility
 
@@ -472,7 +473,7 @@ class Profile:
         except AttributeError:
             raise NotImplementedError("Please specify ._fvac as vacuum R*B.") from None
 
-    def int2d(self, func2d: np.ndarray) -> float:
+    def int2d(self, func2d: npt.NDArray) -> float:
         """
         Returns the integral of a 2-D function map (numpy 2-D array) over the
         domain space (X, Z)
@@ -543,12 +544,12 @@ class BetaIpProfile(Profile):
 
     def jtor(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
-        psi: np.ndarray,
+        x: npt.NDArray,
+        z: npt.NDArray,
+        psi: npt.NDArray,
         o_points: List[Opoint],
         x_points: List[Xpoint],
-    ) -> np.ndarray:
+    ) -> npt.NDArray:
         """
         Calculate toroidal plasma current array.
 
@@ -617,13 +618,13 @@ class BetaIpProfile(Profile):
         self.beta0 = beta0
         return jtor
 
-    def pprime(self, pn: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def pprime(self, pn: Union[float, npt.NDArray]) -> Union[float, npt.NDArray]:
         """
         dp/dpsi as a function of normalised psi
         """
         return self.lambd * self.beta0 / self.R_0 * self.shape(pn)
 
-    def ffprime(self, pn: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def ffprime(self, pn: Union[float, npt.NDArray]) -> Union[float, npt.NDArray]:
         """
         f*df/dpsi as a function of normalised psi
         """
@@ -697,12 +698,12 @@ class CustomProfile(Profile):
 
     def __init__(
         self,
-        pprime_func: Union[np.ndarray, Callable[[float]], float],
-        ffprime_func: Union[np.ndarray, Callable[[float]], float],
+        pprime_func: Union[npt.NDArray, Callable[[float]], float],
+        ffprime_func: Union[npt.NDArray, Callable[[float]], float],
         R_0: float,
         B_0: float,
-        p_func: Optional[Union[np.ndarray, Callable[[float]], float]] = None,
-        f_func: Optional[Union[np.ndarray, Callable[[float]], float]] = None,
+        p_func: Optional[Union[npt.NDArray, Callable[[float]], float]] = None,
+        f_func: Optional[Union[npt.NDArray, Callable[[float]], float]] = None,
         I_p: Optional[float] = None,
     ):
         self._pprime_in = self.parse_to_callable(pprime_func)
@@ -726,19 +727,19 @@ class CustomProfile(Profile):
         """
         if callable(unknown):
             return unknown
-        if isinstance(unknown, np.ndarray):
+        if isinstance(unknown, npt.NDArray):
             return interp1d(np.linspace(0, 1, len(unknown)), unknown)
         if unknown is None:
             return None
         raise TypeError("Could not make input object a callable function.")
 
-    def pprime(self, pn: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def pprime(self, pn: Union[float, npt.NDArray]) -> Union[float, npt.NDArray]:
         """
         dp/dpsi as a function of normalised psi
         """
         return abs(self.scale) * self._pprime_in(pn)
 
-    def ffprime(self, pn: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def ffprime(self, pn: Union[float, npt.NDArray]) -> Union[float, npt.NDArray]:
         """
         f*df/dpsi as a function of normalised psi
         """
@@ -746,13 +747,13 @@ class CustomProfile(Profile):
 
     def jtor(
         self,
-        x: np.ndarray,
-        z: np.ndarray,
-        psi: np.ndarray,
+        x: npt.NDArray,
+        z: npt.NDArray,
+        psi: npt.NDArray,
         o_points: List[Opoint],
         x_points: List[Xpoint],
-        lcfs: Optional[np.ndarray] = None,
-    ) -> np.ndarray:
+        lcfs: Optional[npt.NDArray] = None,
+    ) -> npt.NDArray:
         """
         Calculate toroidal plasma current
 
@@ -775,7 +776,7 @@ class CustomProfile(Profile):
                 jtor *= self.scale
         return jtor
 
-    def pressure(self, psinorm: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def pressure(self, psinorm: Union[float, npt.NDArray]) -> Union[float, npt.NDArray]:
         """
         Return pressure [Pa] at given value(s) of normalised psi
         """
@@ -783,7 +784,7 @@ class CustomProfile(Profile):
             return abs(self.scale) * self.p_func(psinorm)
         return super().pressure(psinorm)
 
-    def fRBpol(self, psinorm: Union[float, np.ndarray]) -> Union[float, np.ndarray]:
+    def fRBpol(self, psinorm: Union[float, npt.NDArray]) -> Union[float, npt.NDArray]:
         """
         Return f=R*Bt at given value(s) of normalised psi
         """

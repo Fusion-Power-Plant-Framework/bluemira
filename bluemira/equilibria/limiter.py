@@ -12,6 +12,7 @@ from itertools import cycle
 from typing import Optional, Union
 
 import numpy as np
+import numpy.typing as npt
 from matplotlib.pyplot import Axes
 
 from bluemira.equilibria.plotting import LimiterPlotter
@@ -33,7 +34,7 @@ class Limiter:
 
     __slots__ = ("_i", "x", "xz", "z")
 
-    def __init__(self, x: Union[float, np.ndarray], z: Union[float, np.ndarray]):
+    def __init__(self, x: Union[float, npt.NDArray], z: Union[float, npt.NDArray]):
         self.x = x
         self.z = z
         self.xz = cycle(np.array([x, z]).T)

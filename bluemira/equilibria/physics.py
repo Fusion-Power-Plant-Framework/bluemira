@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from bluemira.equilibria.find import Opoint, Xpoint
 
 import numpy as np
+import numpy.typing as npt
 from scipy.interpolate import RectBivariateSpline
 
 from bluemira.base.constants import MU_0
@@ -25,8 +26,8 @@ from bluemira.equilibria.grid import revolved_volume, volume_integral
 
 
 def calc_psi_norm(
-    psi: Union[float, np.ndarray], opsi: float, xpsi: float
-) -> Union[float, np.ndarray]:
+    psi: Union[float, npt.NDArray], opsi: float, xpsi: float
+) -> Union[float, npt.NDArray]:
     """
     Calculate normalised magnetic flux.
 
@@ -47,8 +48,8 @@ def calc_psi_norm(
 
 
 def calc_psi(
-    psi_norm: Union[float, np.ndarray], opsi: float, xpsi: float
-) -> Union[float, np.ndarray]:
+    psi_norm: Union[float, npt.NDArray], opsi: float, xpsi: float
+) -> Union[float, npt.NDArray]:
     """
     Calculate the absolute psi values from normalised psi values
 
@@ -255,15 +256,15 @@ def calc_li3(eq: Equilibrium) -> float:
 
 
 def calc_li3minargs(
-    x: np.ndarray,
-    z: np.ndarray,
-    psi: np.ndarray,
-    Bp: np.ndarray,
+    x: npt.NDArray,
+    z: npt.NDArray,
+    psi: npt.NDArray,
+    Bp: npt.NDArray,
     R_0: float,
     I_p: float,
     dx: float,
     dz: float,
-    mask: Optional[np.ndarray] = None,
+    mask: Optional[npt.NDArray] = None,
     o_points: Optional[Iterable[Opoint]] = None,
     x_points: Optional[Iterable[Xpoint]] = None,
 ) -> float:
@@ -387,7 +388,7 @@ def calc_summary(eq: Equilibrium) -> Dict[str, float]:
     }
 
 
-def beta(pressure: np.ndarray, field: float) -> float:
+def beta(pressure: npt.NDArray, field: float) -> float:
     """
     The ratio of plasma pressure to magnetic pressure
 

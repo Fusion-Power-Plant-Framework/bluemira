@@ -16,6 +16,7 @@ if TYPE_CHECKING:
     from bluemira.equilibria.equilibrium import Equilibrium
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.equilibria.coils import Coil, CoilGroup
 
@@ -30,7 +31,7 @@ class DummyController:
     psi() returns np.zeros(eq.psi.shape)
     """
 
-    def __init__(self, psi: np.ndarray):
+    def __init__(self, psi: npt.NDArray):
         self._shape = psi.shape
 
     def stabilise(self, *args):
@@ -38,7 +39,7 @@ class DummyController:
         Dummy method to retain procedures with no effect on the equilibria.
         """
 
-    def psi(self) -> np.ndarray:
+    def psi(self) -> npt.NDArray:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
@@ -46,9 +47,9 @@ class DummyController:
 
     @staticmethod
     def Bx(
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],  # noqa: ARG004
-    ) -> Union[float, np.ndarray]:
+        x: Union[float, npt.NDArray],
+        z: Union[float, npt.NDArray],  # noqa: ARG004
+    ) -> Union[float, npt.NDArray]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
@@ -61,9 +62,9 @@ class DummyController:
 
     @staticmethod
     def Bz(
-        x: Union[float, np.ndarray],
-        z: Union[float, np.ndarray],  # noqa: ARG004
-    ) -> Union[float, np.ndarray]:
+        x: Union[float, npt.NDArray],
+        z: Union[float, npt.NDArray],  # noqa: ARG004
+    ) -> Union[float, npt.NDArray]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
@@ -96,7 +97,7 @@ class VirtualController(CoilGroup):
             Coil(self.Xc, -self.Zc, current=1, name="V2", ctype="NONE"),
         )
 
-    def feedback_current(self) -> np.ndarray:
+    def feedback_current(self) -> npt.NDArray:
         """
         Calculate feedback currents to compensate for a radial field at the
         centre of the plasma. (Vertical stability)
@@ -122,7 +123,7 @@ class VirtualController(CoilGroup):
         currents = self.feedback_current()
         self.adjust_currents(currents)
 
-    def psi(self) -> np.ndarray:
+    def psi(self) -> npt.NDArray:
         """
         Get the psi array of the VirtualController
         """

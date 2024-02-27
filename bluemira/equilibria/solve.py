@@ -15,6 +15,7 @@ from typing import TYPE_CHECKING, Iterator, Optional
 
 import matplotlib.pyplot as plt
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.file import try_get_bluemira_path
 from bluemira.base.look_and_feel import (
@@ -60,7 +61,11 @@ class ConvergenceCriterion(ABC):
 
     @abstractmethod
     def __call__(
-        self, old_val: np.ndarray, new_val: np.ndarray, i: int, print_status: bool = True
+        self,
+        old_val: npt.NDArray,
+        new_val: npt.NDArray,
+        i: int,
+        print_status: bool = True,
     ) -> bool:
         """
         Carry out convergence check.
@@ -130,7 +135,7 @@ class DudsonConvergence(ConvergenceCriterion):
         self.math_string = "$\\dfrac{max|\\Delta\\psi|}{max(\\psi)-min(\\psi)}$"
 
     def __call__(
-        self, psi_old: np.ndarray, psi: np.ndarray, i: int, print_status: bool = True
+        self, psi_old: npt.NDArray, psi: npt.NDArray, i: int, print_status: bool = True
     ) -> bool:
         """
         Carry out convergence check.
@@ -177,7 +182,7 @@ class JrelConvergence(ConvergenceCriterion):
         self.math_string = "$\\dfrac{max|\\Delta J|}{max(J)-min(J)}$"
 
     def __call__(
-        self, j_old: np.ndarray, j_new: np.ndarray, i: int, print_status: bool = True
+        self, j_old: npt.NDArray, j_new: npt.NDArray, i: int, print_status: bool = True
     ) -> bool:
         """
         Carry out convergence check.
@@ -223,7 +228,7 @@ class LacknerConvergence(ConvergenceCriterion):
         self.math_string = "$max\\dfrac{|\\Delta\\psi|}{\\psi}$"
 
     def __call__(
-        self, psi_old: np.ndarray, psi: np.ndarray, i: int, print_status: bool = True
+        self, psi_old: npt.NDArray, psi: npt.NDArray, i: int, print_status: bool = True
     ) -> bool:
         """
         Carry out convergence check.
@@ -264,7 +269,7 @@ class JeonConvergence(ConvergenceCriterion):
         self.math_string = "$||\\Delta\\psi||$"
 
     def __call__(
-        self, psi_old: np.ndarray, psi: np.ndarray, i: int, print_status: bool = True
+        self, psi_old: npt.NDArray, psi: npt.NDArray, i: int, print_status: bool = True
     ) -> bool:
         """
         Carry out convergence check.
@@ -309,7 +314,7 @@ class CunninghamConvergence(ConvergenceCriterion):
         self.math_string = "$\\dfrac{\\sum{\\Delta J_{n}^{2}}}{\\sum{J_{n+1}^{2}}}$"
 
     def __call__(
-        self, j_old: np.ndarray, j_new: np.ndarray, i: int, print_status: bool = True
+        self, j_old: npt.NDArray, j_new: npt.NDArray, i: int, print_status: bool = True
     ) -> bool:
         """
         Carry out convergence check.
@@ -356,7 +361,7 @@ class JsourceConvergence(ConvergenceCriterion):
         self.math_string = "$||\\Delta J||$"
 
     def __call__(
-        self, j_old: np.ndarray, j_new: np.ndarray, i: int, print_status: bool = True
+        self, j_old: npt.NDArray, j_new: npt.NDArray, i: int, print_status: bool = True
     ) -> bool:
         """
         Carry out convergence check.
@@ -473,14 +478,14 @@ class PicardIterator:
         self.coilset = coilset
 
     @property
-    def psi(self) -> np.ndarray:
+    def psi(self) -> npt.NDArray:
         """
         Get the magnetic flux array.
         """
         return self._psi
 
     @property
-    def j_tor(self) -> np.ndarray:
+    def j_tor(self) -> npt.NDArray:
         """
         Get the toroidal current density array.
         """

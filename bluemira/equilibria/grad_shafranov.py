@@ -9,6 +9,7 @@ Grad-Shafranov operator classes
 """
 
 import numpy as np
+import numpy.typing as npt
 from scipy.sparse import csr_matrix, lil_matrix
 from scipy.sparse.linalg import factorized
 
@@ -132,7 +133,7 @@ class DirectSolver:
     def __init__(self, A: csr_matrix):
         self.solve = factorized(A.tocsc())
 
-    def __call__(self, b: np.ndarray) -> np.ndarray:
+    def __call__(self, b: npt.NDArray) -> npt.NDArray:
         """
         Solve the matrix problem by LU decomposition.
 
@@ -178,7 +179,7 @@ class GSSolver(DirectSolver):
 
         super().__init__(gsoperator(self.grid.nx, self.grid.nz))
 
-    def __call__(self, b: np.ndarray) -> np.ndarray:
+    def __call__(self, b: npt.NDArray) -> npt.NDArray:
         """
         Solves the linear system Ax=b using LU decomposition,
         If the G-S operator is in symmetric form, problem symmetry

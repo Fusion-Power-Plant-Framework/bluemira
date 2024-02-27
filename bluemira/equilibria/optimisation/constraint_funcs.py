@@ -97,7 +97,7 @@ class AxBConstraint(ConstraintFunction):
     """
 
     def __init__(
-        self, a_mat: np.ndarray, b_vec: np.ndarray, value: float, scale: float
+        self, a_mat: npt.NDArray, b_vec: npt.NDArray, value: float, scale: float
     ) -> None:
         self.a_mat = a_mat
         self.b_vec = b_vec
@@ -176,11 +176,11 @@ class FieldConstraintFunction(ConstraintFunction):
 
     def __init__(
         self,
-        ax_mat: np.ndarray,
-        az_mat: np.ndarray,
-        bxp_vec: np.ndarray,
-        bzp_vec: np.ndarray,
-        B_max: np.ndarray,
+        ax_mat: npt.NDArray,
+        az_mat: npt.NDArray,
+        bxp_vec: npt.NDArray,
+        bzp_vec: npt.NDArray,
+        B_max: npt.NDArray,
         scale: float,
     ):
         self.ax_mat = ax_mat
@@ -276,8 +276,8 @@ class CoilForceConstraint(ConstraintFunction):
 
     def __init__(
         self,
-        a_mat: np.ndarray,
-        b_vec: np.ndarray,
+        a_mat: npt.NDArray,
+        b_vec: npt.NDArray,
         n_PF: int,
         n_CS: int,
         PF_Fz_max: float,
