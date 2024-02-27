@@ -561,12 +561,15 @@ class BlanketModel(PROCESSModel):
     def switch_name(self) -> str:
         """
         PROCESS switch name
+        N.B. Previously it returned blktmodel
         """
-        return "blktmodel"
+        return "iblanket"
 
-    CCFE_HCPB = 1
-    KIT_HCPB = 2
-    CCFE_HCPB_TBR = 3
+    CCFE_HCPB = 1, (), "CCFE HCPB model"
+    KIT_HCPB = 2, (), "KIT HCPB model"
+    CCFE_HCPB_TBR = 3, (), "CCFE HCPB model with Tritium Breeding Ratio calculation"
+    KIT_HCLL = 4, (), "KIT HCLL model"
+    DCLL = 5, (), "no nutronics model included (in development)"
 
 
 class InboardBlanketSwitch(PROCESSModel):
@@ -1277,25 +1280,6 @@ class FWCoolantSwitch(PROCESSModel):
 
     HELIUM = "helium"
     WATER = "water"
-
-
-class BlanketModelSwitch(PROCESSModel):
-    """
-    Switch for blanket model
-    """
-
-    @classproperty
-    def switch_name(self) -> str:
-        """
-        PROCESS switch name
-        """
-        return "iblanket"
-
-    CCFE_HCPB = 1, (), "CCFE HCPB model"
-    KIT_HCPB = 2, (), "KIT HCPB model"
-    CCFE_HCPB_3H = 3, (), "CCFE HCPB model with Tritium Breeding Ratio calculation"
-    KIT_HCLL = 4, (), "KIT HCLL model"
-    DCLL = 5, (), "no nutronics model included (in development)"
 
 
 class ModuleSegmentSwitch(PROCESSModel):
