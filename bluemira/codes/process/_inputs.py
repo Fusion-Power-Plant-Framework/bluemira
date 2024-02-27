@@ -189,7 +189,7 @@ class ProcessInputs:
     # rhotfbus: Optional[float] = -1.0 # defaults cannot be right
     frhocp: Optional[float] = None
     frholeg: Optional[float] = None
-    i_cp_joints: Optional[int] = -1  # defaults cannot be right
+    i_cp_joints: Optional[int] = None
     rho_tf_joints: Optional[float] = None
     n_tf_joints_contact: Optional[int] = None
     n_tf_joints: Optional[int] = None
