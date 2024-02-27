@@ -650,10 +650,7 @@ def rotation_matrix(theta: float, axis: Union[str, np.ndarray] = "z") -> np.ndar
                 [0, np.cos(theta), -np.sin(theta)],
                 [0, np.sin(theta), np.cos(theta)],
             ])
-        else:
-            raise CoordinatesError(
-                f"Incorrect rotation axis: {axis}\nplease select from: ['x', 'y', 'z']"
-            )
+
     else:
         # Cute, but hard to understand!
         axis = np.array(axis) / np.linalg.norm(axis)  # Unit vector
