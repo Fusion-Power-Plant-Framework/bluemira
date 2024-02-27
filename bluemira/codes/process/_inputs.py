@@ -134,6 +134,8 @@ class ProcessInputs:
     outlet_temp_liq: Optional[float] = None
     f_nuc_pow_bz_struct: Optional[float] = None
     pnuc_fw_ratio_dcll: Optional[float] = None
+    bldepto: Optional[float] = None
+    bldepti: Optional[float] = None
 
     # TF coil
     sig_tf_case_max: Optional[float] = None
@@ -567,7 +569,7 @@ class ProcessInputs:
     trithtmw: Optional[float] = None
     vachtmw: Optional[float] = None
     irfcd: Optional[int] = None
-
+    htpmw_blkt_liq: Optional[float] = None
     # Water usage
 
     # Vacuum

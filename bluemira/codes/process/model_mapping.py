@@ -564,11 +564,15 @@ class BlanketModel(PROCESSModel):
         """
         return "iblanket"
 
-    CCFE_HCPB = 1, (), "CCFE HCPB model"
-    KIT_HCPB = 2, (), "KIT HCPB model"
-    CCFE_HCPB_TBR = 3, (), "CCFE HCPB model with Tritium Breeding Ratio calculation"
-    KIT_HCLL = 4, (), "KIT HCLL model"
-    DCLL = 5, (), "no nutronics model included (in development)"
+    CCFE_HCPB = 1, ("bldepti", "bldepto", "tbrmin"), "CCFE HCPB model"
+    KIT_HCPB = 2, ("bldepti", "bldepto"), "KIT HCPB model"
+    CCFE_HCPB_TBR = (
+        3,
+        ("bldepti", "bldepto", "iblanket_thickness", "li6enrich", "breeder_f"),
+        "CCFE HCPB model with Tritium Breeding Ratio calculation",
+    )
+    KIT_HCLL = 4, ("bldepti", "bldepto"), "KIT HCLL model"
+    DCLL = 5, ("bldepti", "bldepto"), "no nutronics model included"
 
 
 class StelleratorBlanketModel(PROCESSModel):
@@ -583,8 +587,8 @@ class StelleratorBlanketModel(PROCESSModel):
         """
         return "blktmodel"
 
-    SIMPLE = 0
-    KIT_HCPB = 1
+    SIMPLE = 0, ("coolwh")
+    KIT_HCPB = 1, ("coolwh")
 
 
 class InboardBlanketSwitch(PROCESSModel):
@@ -1348,12 +1352,12 @@ class BBCoolantSwitch(PROCESSModel):
     )
     SINGLE_FOR_LB = (
         1,
-        (),
+        ("n_liq_recirc", "htpmw_blkt_liq"),
         "Single coolant, Liquid metal breeder",
     )
     DUAL = (
         2,
-        (),
+        ("htpmw_blkt_liq"),
         "Dual coolant",
     )
 
@@ -1372,16 +1376,16 @@ class FlowChannelInsertSwitch(PROCESSModel):
 
     THIN = (
         0,
-        (),
+        ("bz_channel_conduct_liq"),
         "Thin conducting walls",
     )
     INS_PERFECT = (
         1,
-        (),
+        ("den_ceramic"),
         "Insulating Material, perfect electrical insulator",
     )
     INS_INPUT = (
         2,
-        (),
+        ("bz_channel_conduct_liq", "den_ceramic"),
         "Insulating Material, electrical conductivity is input",
     )
