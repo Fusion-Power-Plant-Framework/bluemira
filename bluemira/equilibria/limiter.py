@@ -34,7 +34,11 @@ class Limiter:
 
     __slots__ = ("_i", "x", "xz", "z")
 
-    def __init__(self, x: Union[float, npt.NDArray], z: Union[float, npt.NDArray]):
+    def __init__(
+        self,
+        x: Union[float, npt.NDArray[np.float64]],
+        z: Union[float, npt.NDArray[np.float64]],
+    ):
         self.x = x
         self.z = z
         self.xz = cycle(np.array([x, z]).T)

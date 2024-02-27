@@ -108,7 +108,9 @@ class Lpoint(PsiPoint):
     __slots__ = ()
 
 
-def find_local_minima(f: npt.NDArray) -> Tuple[npt.NDArray, npt.NDArray]:
+def find_local_minima(
+    f: npt.NDArray[np.float64],
+) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
     """
     Finds all local minima in a 2-D function map
 
@@ -141,7 +143,7 @@ def find_local_minima(f: npt.NDArray) -> Tuple[npt.NDArray, npt.NDArray]:
 
 
 @nb.jit(nopython=True, cache=True)
-def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> npt.NDArray:
+def inv_2x2_matrix(a: float, b: float, c: float, d: float) -> npt.NDArray[np.float64]:
     """
     Inverse of a 2 x 2 [[a, b], [c, d]] matrix.
     """
@@ -194,7 +196,7 @@ def find_local_Bp_minima_cg(
 
 def drop_space_duplicates(
     points: Iterable, tol: float = X_TOLERANCE
-) -> List[npt.NDArray]:
+) -> List[npt.NDArray[np.float64]]:
     """
     Drop duplicates from a list of points if closer together than tol
     """
@@ -256,9 +258,9 @@ def triage_OX_points(
 
 
 def find_OX_points(
-    x: npt.NDArray,
-    z: npt.NDArray,
-    psi: npt.NDArray,
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    psi: npt.NDArray[np.float64],
     limiter: Optional[Limiter] = None,
     *,
     field_cut_off: float = 1.0,
@@ -425,8 +427,11 @@ def _parse_OXp(x, z, psi, o_points, x_points):  # noqa: N802
 
 
 def get_contours(
-    x: npt.NDArray, z: npt.NDArray, array: npt.NDArray, value: float
-) -> List[npt.NDArray]:
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    array: npt.NDArray[np.float64],
+    value: float,
+) -> List[npt.NDArray[np.float64]]:
     """
     Get the contours of a value in continuous array.
 
@@ -452,13 +457,13 @@ def get_contours(
 
 
 def find_flux_surfs(
-    x: npt.NDArray,
-    z: npt.NDArray,
-    psi: npt.NDArray,
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    psi: npt.NDArray[np.float64],
     psinorm: float,
     o_points: Optional[List[Opoint]] = None,
     x_points: Optional[List[Xpoint]] = None,
-) -> List[npt.NDArray]:
+) -> List[npt.NDArray[np.float64]]:
     """
     Finds all flux surfaces with a given normalised psi. If a flux loop goes off
     the grid, separate sets of coordinates will be produced.
@@ -493,13 +498,13 @@ def find_flux_surfs(
 
 
 def find_flux_surf(
-    x: npt.NDArray,
-    z: npt.NDArray,
-    psi: npt.NDArray,
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    psi: npt.NDArray[np.float64],
     psinorm: float,
     o_points: Optional[List[Opoint]] = None,
     x_points: Optional[List[Xpoint]] = None,
-) -> npt.NDArray:
+) -> npt.NDArray[np.float64]:
     """
     Picks a flux surface with a normalised psinorm relative to the separatrix.
     Uses least squares to retain only the most appropriate flux surface. This
@@ -551,8 +556,11 @@ def find_flux_surf(
 
 
 def find_field_surf(
-    x: npt.NDArray, z: npt.NDArray, Bp: npt.NDArray, field: float
-) -> npt.NDArray:
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    Bp: npt.NDArray[np.float64],
+    field: float,
+) -> npt.NDArray[np.float64]:
     """
     Picks a field surface most likely to be the desired breakdown region
 
@@ -600,13 +608,13 @@ def find_field_surf(
 
 
 def find_flux_surface_through_point(
-    x: npt.NDArray,
-    z: npt.NDArray,
-    psi: npt.NDArray,
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    psi: npt.NDArray[np.float64],
     point_x: float,
     point_z: float,
     point_psi: float,
-) -> npt.NDArray:
+) -> npt.NDArray[np.float64]:
     """
     Get a flux surface passing through a point.
 
@@ -641,9 +649,9 @@ def find_flux_surface_through_point(
 
 
 def find_LCFS_separatrix(
-    x: npt.NDArray,
-    z: npt.NDArray,
-    psi: npt.NDArray,
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    psi: npt.NDArray[np.float64],
     o_points: Optional[List[Opoint]] = None,
     x_points: Optional[List[Xpoint]] = None,
     double_null: bool = False,
@@ -796,12 +804,12 @@ def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> Tuple[np.ndarray, np.ndarra
 
 
 def in_plasma(
-    x: npt.NDArray,
-    z: npt.NDArray,
-    psi: npt.NDArray,
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    psi: npt.NDArray[np.float64],
     o_points: Optional[List[Opoint]] = None,
     x_points: Optional[List[Xpoint]] = None,
-) -> npt.NDArray:
+) -> npt.NDArray[np.float64]:
     """
     Get a psi-shaped mask of psi where 1 is inside the plasma, 0 outside.
 
@@ -828,7 +836,9 @@ def in_plasma(
     return _in_plasma(x, z, mask, lcfs.xz.T)
 
 
-def in_zone(x: npt.NDArray, z: npt.NDArray, zone: npt.NDArray):
+def in_zone(
+    x: npt.NDArray[np.float64], z: npt.NDArray[np.float64], zone: npt.NDArray[np.float64]
+):
     """
     Get a masking matrix for a specified zone.
 
@@ -851,8 +861,11 @@ def in_zone(x: npt.NDArray, z: npt.NDArray, zone: npt.NDArray):
 
 @nb.jit(nopython=True, cache=True)
 def _in_plasma(
-    x: npt.NDArray, z: npt.NDArray, mask: npt.NDArray, sep: npt.NDArray
-) -> npt.NDArray:
+    x: npt.NDArray[np.float64],
+    z: npt.NDArray[np.float64],
+    mask: npt.NDArray[np.float64],
+    sep: npt.NDArray[np.float64],
+) -> npt.NDArray[np.float64]:
     """
     Get a masking matrix for a specified zone. JIT compilation utility.
 

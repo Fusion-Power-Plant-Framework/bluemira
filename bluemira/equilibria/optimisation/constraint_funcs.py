@@ -14,10 +14,10 @@ Constraint functions must be of the form:
 
     class Constraint(ConstraintFunction):
 
-        def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+        def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return constraint_calc(vector)
 
-        def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+        def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return gradient_calc(vector)
 
 
@@ -58,7 +58,7 @@ class ConstraintFunction(abc.ABC):
     """Override to define a numerical constraint for a coilset optimisation."""
 
     @abc.abstractmethod
-    def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """The constraint function."""
 
     @property
@@ -97,18 +97,22 @@ class AxBConstraint(ConstraintFunction):
     """
 
     def __init__(
-        self, a_mat: npt.NDArray, b_vec: npt.NDArray, value: float, scale: float
+        self,
+        a_mat: npt.NDArray[np.float64],
+        b_vec: npt.NDArray[np.float64],
+        value: float,
+        scale: float,
     ) -> None:
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
         self.scale = scale
 
-    def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
         return self.a_mat @ (self.scale * vector) - self.b_vec - self.value
 
-    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
+    def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """Constraint derivative"""
         return self.scale * self.a_mat
 
@@ -131,8 +135,8 @@ class L2NormConstraint(ConstraintFunction):
 
     def __init__(
         self,
-        a_mat: npt.NDArray,
-        b_vec: npt.NDArray,
+        a_mat: npt.NDArray[np.float64],
+        b_vec: npt.NDArray[np.float64],
         value: float,
         scale: float,
     ) -> None:
@@ -141,13 +145,13 @@ class L2NormConstraint(ConstraintFunction):
         self.value = value
         self.scale = scale
 
-    def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
         vector = self.scale * vector
         residual = self.a_mat @ vector - self.b_vec
         return residual.T @ residual - self.value
 
-    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
         vector = self.scale * vector
         df = 2 * (self.a_mat.T @ self.a_mat @ vector - self.a_mat.T @ self.b_vec)
@@ -176,11 +180,11 @@ class FieldConstraintFunction(ConstraintFunction):
 
     def __init__(
         self,
-        ax_mat: npt.NDArray,
-        az_mat: npt.NDArray,
-        bxp_vec: npt.NDArray,
-        bzp_vec: npt.NDArray,
-        B_max: npt.NDArray,
+        ax_mat: npt.NDArray[np.float64],
+        az_mat: npt.NDArray[np.float64],
+        bxp_vec: npt.NDArray[np.float64],
+        bzp_vec: npt.NDArray[np.float64],
+        B_max: npt.NDArray[np.float64],
         scale: float,
     ):
         self.ax_mat = ax_mat
@@ -190,7 +194,7 @@ class FieldConstraintFunction(ConstraintFunction):
         self.B_max = B_max
         self.scale = scale
 
-    def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
         currents = self.scale * vector
         Bx_a = self.ax_mat @ currents
@@ -199,7 +203,7 @@ class FieldConstraintFunction(ConstraintFunction):
         B = np.hypot(Bx_a + self.bxp_vec, Bz_a + self.bzp_vec)
         return B - self.B_max
 
-    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
         currents = self.scale * vector
         Bx_a = self.ax_mat @ currents
@@ -241,7 +245,7 @@ class CurrentMidplanceConstraint(ConstraintFunction):
         self.scale = scale
         self.inboard = inboard
 
-    def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
         self.eq.coilset.get_control_coils().current = vector * self.scale
         lcfs = self.eq.get_LCFS()
@@ -276,8 +280,8 @@ class CoilForceConstraint(ConstraintFunction):
 
     def __init__(
         self,
-        a_mat: npt.NDArray,
-        b_vec: npt.NDArray,
+        a_mat: npt.NDArray[np.float64],
+        b_vec: npt.NDArray[np.float64],
         n_PF: int,
         n_CS: int,
         PF_Fz_max: float,
@@ -294,7 +298,7 @@ class CoilForceConstraint(ConstraintFunction):
         self.CS_Fz_sep_max = CS_Fz_sep_max
         self.scale = scale
 
-    def f_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint function"""
         n_coils = len(vector)
         currents = self.scale * vector
@@ -328,7 +332,7 @@ class CoilForceConstraint(ConstraintFunction):
                 constraint[self.n_PF + 1 + i] = f_sep - CS_Fz_sep_max
         return constraint
 
-    def df_constraint(self, vector: npt.NDArray) -> npt.NDArray:
+    def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Constraint derivative"""
         n_coils = vector.size
         grad = np.zeros((n_coils, n_coils))

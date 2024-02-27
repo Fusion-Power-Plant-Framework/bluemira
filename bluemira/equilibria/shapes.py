@@ -36,7 +36,7 @@ __all__ = [
 ]
 
 
-def _generate_theta(n: int) -> npt.NDArray:
+def _generate_theta(n: int) -> npt.NDArray[np.float64]:
     """
     Generate a poloidal angle vector that encompasses all extrema
     """
@@ -456,7 +456,7 @@ def flux_surface_kuiroukidis_quadrants(
     delta_l: float,
     n_power: int = 8,
     n_points: int = 100,
-) -> Tuple[List[npt.NDArray], List[npt.NDArray]]:
+) -> Tuple[List[npt.NDArray[np.float64]], List[npt.NDArray[np.float64]]]:
     """
     Kuiroukidis flux surface individual quadrants
 
@@ -857,7 +857,7 @@ def flux_surface_johner_quadrants(
     psi_l_neg: float,
     psi_l_pos: float,
     n: int = 100,
-) -> Tuple[List[npt.NDArray], List[npt.NDArray]]:
+) -> Tuple[List[npt.NDArray[np.float64]], List[npt.NDArray[np.float64]]]:
     """
     Initial plasma shape parametrerisation from HELIOS author
     J. Johner (CEA). Sets initial separatrix shape for the plasma core

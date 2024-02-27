@@ -73,20 +73,23 @@ class PlasmaCoil:
     """
 
     def __init__(
-        self, plasma_psi: npt.NDArray, j_tor: Optional[npt.NDArray], grid: Grid
+        self,
+        plasma_psi: npt.NDArray[np.float64],
+        j_tor: Optional[npt.NDArray[np.float64]],
+        grid: Grid,
     ):
         self._grid = grid
         self._set_j_tor(j_tor)
         self._set_funcs(plasma_psi)
 
-    def _set_j_tor(self, j_tor: Optional[npt.NDArray]):
+    def _set_j_tor(self, j_tor: Optional[npt.NDArray[np.float64]]):
         self._j_tor = j_tor
         if j_tor is not None:
             self._ii, self._jj = np.nonzero(j_tor > J_TOR_MIN)
         else:
             self._ii, self._jj = None, None
 
-    def _set_funcs(self, plasma_psi: npt.NDArray):
+    def _set_funcs(self, plasma_psi: npt.NDArray[np.float64]):
         self._plasma_psi = plasma_psi
         self._psi_func = RectBivariateSpline(
             self._grid.x[:, 0], self._grid.z[0, :], plasma_psi
@@ -128,9 +131,9 @@ class PlasmaCoil:
     @treat_xz_array
     def psi(
         self,
-        x: Optional[Union[float, npt.NDArray]] = None,
-        z: Optional[Union[float, npt.NDArray]] = None,
-    ) -> Union[float, npt.NDArray]:
+        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Poloidal magnetic flux at x, z
 
@@ -159,9 +162,9 @@ class PlasmaCoil:
     @treat_xz_array
     def Bx(
         self,
-        x: Optional[Union[float, npt.NDArray]] = None,
-        z: Optional[Union[float, npt.NDArray]] = None,
-    ) -> Union[float, npt.NDArray]:
+        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Radial magnetic field at x, z
 
@@ -190,9 +193,9 @@ class PlasmaCoil:
     @treat_xz_array
     def Bz(
         self,
-        x: Optional[Union[float, npt.NDArray]] = None,
-        z: Optional[Union[float, npt.NDArray]] = None,
-    ) -> Union[float, npt.NDArray]:
+        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Vertical magnetic field at x, z
 
@@ -220,9 +223,9 @@ class PlasmaCoil:
 
     def Bp(
         self,
-        x: Optional[Union[float, npt.NDArray]] = None,
-        z: Optional[Union[float, npt.NDArray]] = None,
-    ) -> Union[float, npt.NDArray]:
+        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Poloidal magnetic field at x, z
 
@@ -280,9 +283,9 @@ class NoPlasmaCoil:
 
     def psi(
         self,
-        x: Optional[Union[float, npt.NDArray]] = None,
-        z: Optional[Union[float, npt.NDArray]] = None,
-    ) -> Union[float, npt.NDArray]:
+        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Poloidal magnetic flux at x, z
 
@@ -305,9 +308,9 @@ class NoPlasmaCoil:
 
     def Bx(
         self,
-        x: Optional[Union[float, npt.NDArray]] = None,
-        z: Optional[Union[float, npt.NDArray]] = None,
-    ) -> Union[float, npt.NDArray]:
+        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Radial magnetic field at x, z
 
@@ -330,9 +333,9 @@ class NoPlasmaCoil:
 
     def Bz(
         self,
-        x: Optional[Union[float, npt.NDArray]] = None,
-        z: Optional[Union[float, npt.NDArray]] = None,
-    ) -> Union[float, npt.NDArray]:
+        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Vertical magnetic field at x, z
 
@@ -355,9 +358,9 @@ class NoPlasmaCoil:
 
     def Bp(
         self,
-        x: Optional[Union[float, npt.NDArray]] = None,
-        z: Optional[Union[float, npt.NDArray]] = None,
-    ) -> Union[float, npt.NDArray]:
+        x: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+        z: Optional[Union[float, npt.NDArray[np.float64]]] = None,
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Poloidal magnetic field at x, z
 

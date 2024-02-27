@@ -133,7 +133,7 @@ class DirectSolver:
     def __init__(self, A: csr_matrix):
         self.solve = factorized(A.tocsc())
 
-    def __call__(self, b: npt.NDArray) -> npt.NDArray:
+    def __call__(self, b: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Solve the matrix problem by LU decomposition.
 
@@ -179,7 +179,7 @@ class GSSolver(DirectSolver):
 
         super().__init__(gsoperator(self.grid.nx, self.grid.nz))
 
-    def __call__(self, b: npt.NDArray) -> npt.NDArray:
+    def __call__(self, b: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """
         Solves the linear system Ax=b using LU decomposition,
         If the G-S operator is in symmetric form, problem symmetry

@@ -31,7 +31,7 @@ class DummyController:
     psi() returns np.zeros(eq.psi.shape)
     """
 
-    def __init__(self, psi: npt.NDArray):
+    def __init__(self, psi: npt.NDArray[np.float64]):
         self._shape = psi.shape
 
     def stabilise(self, *args):
@@ -39,7 +39,7 @@ class DummyController:
         Dummy method to retain procedures with no effect on the equilibria.
         """
 
-    def psi(self) -> npt.NDArray:
+    def psi(self) -> npt.NDArray[np.float64]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
@@ -47,9 +47,9 @@ class DummyController:
 
     @staticmethod
     def Bx(
-        x: Union[float, npt.NDArray],
-        z: Union[float, npt.NDArray],  # noqa: ARG004
-    ) -> Union[float, npt.NDArray]:
+        x: Union[float, npt.NDArray[np.float64]],
+        z: Union[float, npt.NDArray[np.float64]],  # noqa: ARG004
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
@@ -62,9 +62,9 @@ class DummyController:
 
     @staticmethod
     def Bz(
-        x: Union[float, npt.NDArray],
-        z: Union[float, npt.NDArray],  # noqa: ARG004
-    ) -> Union[float, npt.NDArray]:
+        x: Union[float, npt.NDArray[np.float64]],
+        z: Union[float, npt.NDArray[np.float64]],  # noqa: ARG004
+    ) -> Union[float, npt.NDArray[np.float64]]:
         """
         Dummy method to retain procedures with no effect on the equilibria.
         """
@@ -97,7 +97,7 @@ class VirtualController(CoilGroup):
             Coil(self.Xc, -self.Zc, current=1, name="V2", ctype="NONE"),
         )
 
-    def feedback_current(self) -> npt.NDArray:
+    def feedback_current(self) -> npt.NDArray[np.float64]:
         """
         Calculate feedback currents to compensate for a radial field at the
         centre of the plasma. (Vertical stability)
@@ -123,7 +123,7 @@ class VirtualController(CoilGroup):
         currents = self.feedback_current()
         self.adjust_currents(currents)
 
-    def psi(self) -> npt.NDArray:
+    def psi(self) -> npt.NDArray[np.float64]:
         """
         Get the psi array of the VirtualController
         """

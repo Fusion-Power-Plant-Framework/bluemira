@@ -104,7 +104,7 @@ class CoilsetOptimisationProblem(abc.ABC):
     @staticmethod
     def read_coilset_state(
         coilset: CoilSet, current_scale: float
-    ) -> Tuple[npt.NDArray, int]:
+    ) -> Tuple[npt.NDArray[np.float64], int]:
         """
         Reads the input coilset and generates the state vector as an array to represent
         it.
@@ -134,7 +134,7 @@ class CoilsetOptimisationProblem(abc.ABC):
 
     @staticmethod
     def set_coilset_state(
-        coilset: CoilSet, coilset_state: npt.NDArray, current_scale: float
+        coilset: CoilSet, coilset_state: npt.NDArray[np.float64], current_scale: float
     ):
         """
         Set the optimiser coilset from a provided state vector.
@@ -160,10 +160,10 @@ class CoilsetOptimisationProblem(abc.ABC):
 
     @staticmethod
     def get_state_bounds(
-        x_bounds: Tuple[npt.NDArray, npt.NDArray],
-        z_bounds: Tuple[npt.NDArray, npt.NDArray],
-        current_bounds: Tuple[npt.NDArray, npt.NDArray],
-    ) -> Tuple[npt.NDArray, npt.NDArray]:
+        x_bounds: Tuple[npt.NDArray[np.float64], npt.NDArray],
+        z_bounds: Tuple[npt.NDArray[np.float64], npt.NDArray],
+        current_bounds: Tuple[npt.NDArray[np.float64], npt.NDArray],
+    ) -> Tuple[npt.NDArray[np.float64], npt.NDArray]:
         """
         Get bounds on the state vector from provided bounds on the substates.
 
@@ -237,7 +237,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         )
         return (-control_current_limits, control_current_limits)
 
-    def set_current_bounds(self, max_currents: npt.NDArray) -> None:
+    def set_current_bounds(self, max_currents: npt.NDArray[np.float64]) -> None:
         """
         Set the current bounds on this instance.
 
