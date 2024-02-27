@@ -531,7 +531,7 @@ def _find_t15(
         )
         / T_LAMBDA
     )
-    if t > 0.0:  # don't use max for numbagoodness  # noqa: PLR2004
+    if t > 0.0:  # don't use max for numbagoodness
         dt = t_out - t_in
         if t < dt:
             return t

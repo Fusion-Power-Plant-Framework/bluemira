@@ -117,7 +117,7 @@ class PlanarCircuit(SourceGroup):
     @staticmethod
     def _transform_to_xz(shape):
         normal_vector = shape.normal_vector
-        if abs(normal_vector[1]) == 1.0:  # noqa: PLR2004
+        if abs(normal_vector[1]) == 1.0:
             return shape
         shape.translate(-np.array(shape.center_of_mass))
 
