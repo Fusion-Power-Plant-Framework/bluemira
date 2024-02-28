@@ -78,6 +78,8 @@ class HullPlane(Enum):
 
     @classmethod
     def _missing_(cls, value: str):
+        if not isinstance(value, str):
+            raise TypeError(f"Invalid hull plane: {value}. Expected str.")
         try:
             return cls[value.upper()]
         except KeyError:
@@ -726,9 +728,6 @@ def convex_hull_wires_2d(
     """
     if not wires:
         raise ValueError("Must have at least one wire to draw a hull around.")
-
-    if plane is None:
-        raise KeyError("Invalid plane. Must be one of 'xz', 'xy', 'yz'.")
 
     hull_plane = HullPlane(plane)
     if hull_plane is HullPlane.XZ:
