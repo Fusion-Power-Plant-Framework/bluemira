@@ -47,12 +47,12 @@ class RotationAxis(Enum):
     Z = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise CoordinatesError(
-                f"Incorrect rotation axis:{value}. Choose from: x, y, z"
+                f"Invalid rotation axis: {value}. Choose from: {*cls._member_names_, }"
             ) from None
 
 
