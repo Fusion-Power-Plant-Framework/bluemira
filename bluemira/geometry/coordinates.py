@@ -610,7 +610,9 @@ def get_angle_between_vectors(
 # =============================================================================
 
 
-def rotation_matrix(theta: float, axis: Union[str, np.ndarray] = "z") -> np.ndarray:
+def rotation_matrix(
+    theta: float, axis: Union[str, RotationAxis, np.ndarray] = RotationAxis.Z
+) -> np.ndarray:
     """
     Old-fashioned rotation matrix: :math:`\\mathbf{R_{u}}(\\theta)`
     \t:math:`\\mathbf{x^{'}}=\\mathbf{R_{u}}(\\theta)\\mathbf{x}`
@@ -628,23 +630,23 @@ def rotation_matrix(theta: float, axis: Union[str, np.ndarray] = "z") -> np.ndar
     -------
     The (active) rotation matrix about the axis for an angle theta
     """
-    if isinstance(axis, str):
-        axis_str = RotationAxis(axis)
+    if isinstance(axis, (str, RotationAxis)):
+        axis = RotationAxis(axis)
         # I'm leaving all this in here, because it is easier to understand
         # what is going on, and that these are just "normal" rotation matrices
-        if axis_str is RotationAxis.Z:
+        if axis is RotationAxis.Z:
             r_matrix = np.array([
                 [np.cos(theta), -np.sin(theta), 0],
                 [np.sin(theta), np.cos(theta), 0],
                 [0, 0, 1],
             ])
-        elif axis_str is RotationAxis.Y:
+        elif axis is RotationAxis.Y:
             r_matrix = np.array([
                 [np.cos(theta), 0, np.sin(theta)],
                 [0, 1, 0],
                 [-np.sin(theta), 0, np.cos(theta)],
             ])
-        elif axis_str is RotationAxis.X:
+        elif axis is RotationAxis.X:
             r_matrix = np.array([
                 [1, 0, 0],
                 [0, np.cos(theta), -np.sin(theta)],
