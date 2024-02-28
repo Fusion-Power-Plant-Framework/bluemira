@@ -22,7 +22,6 @@ from bluemira.equilibria.coils._tools import (
     get_max_current,
     make_mutual_inductance_matrix,
 )
-from bluemira.equilibria.coils.coil_type import CoilType
 
 __all__ = [
     "Circuit",
