@@ -17,10 +17,10 @@ if TYPE_CHECKING:
 
 import numpy as np
 
+from bluemira.base.constants import CoilType
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.coils._tools import get_max_current
-from bluemira.equilibria.coils.coil_type import CoilType
 from bluemira.equilibria.constants import COIL_DISCR, NBTI_B_MAX, NBTI_J_MAX
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import CoilGroupPlotter
