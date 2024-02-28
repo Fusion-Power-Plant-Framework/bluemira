@@ -77,12 +77,12 @@ class HullPlane(Enum):
     YZ = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                f"Invalid plane: {value}. Must be one of 'xz', 'xy', 'yz'."
+                f"Invalid hull plane: {value}. Choose from: {*cls._member_names_, }"
             ) from None
 
 
@@ -735,10 +735,8 @@ def convex_hull_wires_2d(
         plane_idxs = (0, 2)
     elif hull_plane is HullPlane.XY:
         plane_idxs = (0, 1)
-    elif hull_plane is HullPlane.YZ:
+    else:  # YZ
         plane_idxs = (1, 2)
-    else:
-        raise ValueError(f"Invalid plane: '{plane}'. Must be one of 'xz', 'xy', 'yz'.")
 
     shape_discretizations = []
     for wire in wires:
