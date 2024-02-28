@@ -457,14 +457,14 @@ class TestConvexHullWires2d:
         assert bounding_box.z_min == bounding_box.z_max == 0
 
     @pytest.mark.parametrize("bad_plane", ["ab", ""])
-    def test_ValueError_if_invalid_plane(self, bad_plane):
+    def test_value_error_if_invalid_plane(self, bad_plane):
         circle = make_circle(radius=1)
 
         with pytest.raises(ValueError):  # noqa: PT011
             convex_hull_wires_2d([circle], 10, plane=bad_plane)
 
     @pytest.mark.parametrize("bad_planetype", [None, ["x", "y"]])
-    def test_TypeError_if_invalid_plane(self, bad_planetype):
+    def test_type_error_if_invalid_plane(self, bad_planetype):
         circle = make_circle(radius=1)
 
         with pytest.raises(TypeError):
