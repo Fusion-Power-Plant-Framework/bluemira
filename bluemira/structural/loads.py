@@ -25,12 +25,13 @@ class SubLoadType(Enum):
     ALL = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise StructuralError(
-                f"Unknown SubLoad type {value}. Choose from: force, moment or all"
+                f"{cls.__name__} has no load type {value}"
+                f"please select from {*cls._member_names_, }"
             ) from None
 
 
