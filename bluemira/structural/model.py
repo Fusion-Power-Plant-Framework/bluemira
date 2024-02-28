@@ -41,12 +41,13 @@ class BoundaryConditionMethod(Enum):
     DELETION = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise StructuralError(
-                f"Unrecognised method: {value}. Choose From: PRZEMIENIECKI or DELETION "
+                f"{cls.__name__} has no method {value}"
+                f"please select from {*cls._member_names_, }"
             ) from None
 
 
