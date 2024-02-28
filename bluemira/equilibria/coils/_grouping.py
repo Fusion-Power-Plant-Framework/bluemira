@@ -31,7 +31,6 @@ from bluemira.equilibria.coils._tools import (
     check_coilset_symmetric,
     get_max_current,
 )
-from bluemira.equilibria.coils.coil_type import CoilType
 from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
