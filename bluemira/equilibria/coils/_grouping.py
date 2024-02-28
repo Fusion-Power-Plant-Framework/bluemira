@@ -22,6 +22,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 
+from bluemira.base.constants import CoilType
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.equilibria.coils._coil import Coil
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin, CoilSetFieldsMixin
@@ -30,7 +31,6 @@ from bluemira.equilibria.coils._tools import (
     check_coilset_symmetric,
     get_max_current,
 )
-from bluemira.equilibria.coils.coil_type import CoilType
 from bluemira.equilibria.constants import I_MIN
 from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
