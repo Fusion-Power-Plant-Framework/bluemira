@@ -326,7 +326,7 @@ def transform_coordinates_to_xz(
     Rotate coordinates to the x-z plane.
     """
     coordinates.translate(base)
-    if abs(coordinates.normal_vector[1]) == 1.0:  # noqa: PLR2004
+    if abs(coordinates.normal_vector[1]) == 1.0:
         return coordinates
 
     r = rotation_matrix_v1v2(coordinates.normal_vector, np.array(direction))

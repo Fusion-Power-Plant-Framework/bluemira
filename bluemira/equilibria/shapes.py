@@ -528,15 +528,15 @@ def flux_surface_kuiroukidis_quadrants(
     # The lower X-point does not match up with the input kappa_l and delta_l...
     corr_ratio = x_x_true / x_x_actual
     corr_power = 2
-    if corr_ratio == 1.0:  # noqa: PLR2004
+    if corr_ratio == 1.0:
         # For good measure, but the maths is wrong...
         correction = np.ones(n_quart)
-    elif corr_ratio < 1.0:  # noqa: PLR2004
+    elif corr_ratio < 1.0:
         correction = (
             1
             - np.linspace(0, (1 - corr_ratio) ** (1 / corr_power), n_quart) ** corr_power
         )
-    elif corr_ratio > 1.0:  # noqa: PLR2004
+    elif corr_ratio > 1.0:
         correction = (
             1
             + np.linspace(0, (corr_ratio - 1) ** (1 / corr_power), n_quart) ** corr_power

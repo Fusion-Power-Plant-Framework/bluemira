@@ -197,7 +197,7 @@ def pattern_revolved_silhouette(
     """
     sector_degree = 360 / n_sectors
 
-    if gap <= 0.0:  # noqa: PLR2004
+    if gap <= 0.0:
         # No gaps; just touching solids
         segment_degree = sector_degree / n_seg_p_sector
         shape = revolve_shape(
@@ -260,7 +260,7 @@ def pattern_lofted_silhouette(
         volume = sweep_shape([r_face.boundary[0], faces[i + 1].boundary[0]], wire)
         shapes.append(volume)
 
-    if gap > 0.0:  # noqa: PLR2004
+    if gap > 0.0:
         full_volume = boolean_fuse(shapes) if len(shapes) > 1 else shapes[0]
 
         gaps = _generate_gap_volumes(face, n_seg_p_sector, n_sectors, gap)

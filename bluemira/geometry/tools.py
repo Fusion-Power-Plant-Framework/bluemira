@@ -1308,7 +1308,7 @@ def signed_distance(wire_1: BluemiraWire, wire_2: BluemiraWire) -> float:
     """
     d, vectors = distance_to(wire_1, wire_2)
     # Intersections are exactly 0.0
-    if d == 0.0:  # noqa: PLR2004
+    if d == 0.0:
         if len(vectors) <= 1:
             # There is only one intersection: the wires are touching but not overlapping
             return 0.0

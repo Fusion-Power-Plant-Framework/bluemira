@@ -81,7 +81,7 @@ class PowerLawScaling:
         max_value:
             Maximum value of the power law according to the specified errors
         """
-        if self.constant_err == 0.0 and self.errors is None:  # noqa: PLR2004
+        if self.constant_err == 0.0 and self.errors is None:
             raise ValueError(
                 "No errors provided on PowerLawScaling, cannot calculate range."
             )

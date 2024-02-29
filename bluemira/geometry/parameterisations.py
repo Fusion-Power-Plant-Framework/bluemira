@@ -863,7 +863,7 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             make_circle_arc_3P(p6, p65, p7, label="lower_inner_arc"),
         ]
 
-        if sl != 0.0:  # noqa: PLR2004
+        if sl != 0.0:
             straight_segment = wire_closure(
                 BluemiraWire(wires), label="straight_segment"
             )
@@ -1693,7 +1693,7 @@ class PictureFrameTools:
         c_o = [x_out - r_o, 0.0, z + r_o if flip else z - r_o]
 
         # Inner Corner
-        if r_i != 0.0:  # noqa: PLR2004
+        if r_i != 0.0:
             wires.append(
                 make_circle(
                     r_i,
@@ -1710,7 +1710,7 @@ class PictureFrameTools:
         wires.append(make_polygon([p2, p1] if flip else [p1, p2], label=f"{label}_limb"))
 
         # Outer corner
-        if r_o != 0.0:  # noqa: PLR2004
+        if r_o != 0.0:
             wires.append(
                 make_circle(
                     r_o,

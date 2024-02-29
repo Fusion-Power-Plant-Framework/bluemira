@@ -232,7 +232,7 @@ class UserSpecifiedLearningStrategy(LearningStrategy):
         fraction = (total_fpy / lifetime_op_availability) / (
             op_durations / self.operational_availabilities
         )
-        if fraction != 1.0:  # noqa: PLR2004
+        if fraction != 1.0:
             bluemira_warn(
                 "User-specified operational availabilities do not match the specified"
                 f" lifetime operational : {fraction:.2f} != 1.0. Normalising to adjust"
