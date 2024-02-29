@@ -568,7 +568,7 @@ class BlanketModel(PROCESSModel):
     KIT_HCPB = 2, ("blnkith", "blnkoth"), "KIT HCPB model"
     CCFE_HCPB_TBR = (
         3,
-        ("blnkith", "blnkoth",, "iblanket_thickness", "li6enrich", "breeder_f"),
+        ("blnkith", "blnkoth", "iblanket_thickness", "li6enrich", "breeder_f"),
         "CCFE HCPB model with Tritium Breeding Ratio calculation",
     )
     KIT_HCLL = 4, ("blnkith", "blnkoth"), "KIT HCLL model"
@@ -1356,7 +1356,6 @@ class BBCoolantSwitch(PROCESSModel):
         "Single coolant, Liquid metal breeder",
     )
     DUAL = 2, (), "Dual coolant"
-
 
 
 class FlowChannelInsertSwitch(PROCESSModel):
