@@ -92,7 +92,7 @@ def assert_bluemira_path_exists(path: str):
     try:
         get_bluemira_path(path, "")
     except ValueError as error:
-        pytest.fail("{path} does not exist and has not been created: %s" % error)
+        pytest.fail(f"{path} does not exist and has not been created: {error}")
 
 
 def remove_dir_and_subs(path: str):

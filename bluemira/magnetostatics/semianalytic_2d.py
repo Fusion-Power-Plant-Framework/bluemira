@@ -38,7 +38,7 @@ def _partial_x_integrand(phi: float, rr: float, zz: float) -> float:
     if abs(zz) < EPS:
         if abs(rr - 1.0) < EPS:
             return -1.042258937608 / np.pi
-        if rr < 1.0:  # noqa: PLR2004
+        if rr < 1.0:
             return cos_phi * (
                 r0 + cos_phi * np.log((r0 + 1 + rr) / (r0 + 1 - rr))
             ) - 0.25 * (1 + np.log(4))
