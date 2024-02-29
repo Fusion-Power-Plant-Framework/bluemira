@@ -61,20 +61,20 @@ from bluemira.utilities.tools import abs_rel_difference
 
 class VerticalPositionControlType(Enum):
     """
-    Enumeration of stabilisation strategies for vertical position control.
+    Stabilisation strategies for vertical position control
     """
 
     VIRTUAL = auto()
     FEEDBACK = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                "Please select a numerical stabilisation strategy"
-                ' from: 1) "virtual" \n 2) "feedback" 3) None.'
+                f"{cls.__name__} has no strategy {value}"
+                f"please select from {*cls._member_names_, }"
             ) from None
 
 
@@ -1073,13 +1073,8 @@ class Equilibrium(CoilSetMHDState):
             vcontrol_type = VerticalPositionControlType(vcontrol_str)
             if vcontrol_type is VerticalPositionControlType.VIRTUAL:
                 self.controller = VirtualController(self, gz=2.2)
-            elif vcontrol_type is VerticalPositionControlType.FEEDBACK:
-                raise NotImplementedError
             else:
-                raise ValueError(
-                    "Please select a numerical stabilisation strategy"
-                    ' from: 1) "virtual" \n 2) "feedback" 3) None.'
-                )
+                raise NotImplementedError
 
     def solve(self, jtor: Optional[np.ndarray] = None, psi: Optional[np.ndarray] = None):
         """

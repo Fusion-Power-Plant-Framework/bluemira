@@ -67,7 +67,7 @@ def convert(apiobj: cadapi.apiShape, label: str = "") -> BluemiraGeo:
     return output
 
 
-class HullPlaneType(Enum):
+class HullPlane(Enum):
     """
     Enumeration of planes to perform a hull operation in.
     """
@@ -77,12 +77,14 @@ class HullPlaneType(Enum):
     YZ = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
+        if not isinstance(value, str):
+            raise TypeError(f"Invalid hull plane: {value}. Expected str.")
         try:
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                f"Invalid plane: {value}. Must be one of 'xz', 'xy', 'yz'."
+                f"Invalid hull plane: {value}. Choose from: {*cls._member_names_, }"
             ) from None
 
 
@@ -727,18 +729,15 @@ def convex_hull_wires_2d(
     if not wires:
         raise ValueError("Must have at least one wire to draw a hull around.")
 
-    if plane is None:
-        raise KeyError("Invalid plane. Must be one of 'xz', 'xy', 'yz'.")
-
-    hull_plane = HullPlaneType(plane)
-    if hull_plane is HullPlaneType.XZ:
+    hull_plane = HullPlane(plane)
+    if hull_plane is HullPlane.XZ:
         plane_idxs = (0, 2)
-    elif hull_plane is HullPlaneType.XY:
+    elif hull_plane is HullPlane.XY:
         plane_idxs = (0, 1)
-    elif hull_plane is HullPlaneType.YZ:
+    elif hull_plane is HullPlane.YZ:
         plane_idxs = (1, 2)
     else:
-        raise ValueError(f"Invalid plane: '{plane}'. Must be one of 'xz', 'xy', 'yz'.")
+        raise NotImplementedError
 
     shape_discretizations = []
     for wire in wires:

@@ -34,19 +34,20 @@ from bluemira.structural.result import Result
 from bluemira.structural.symmetry import CyclicSymmetry
 
 
-class BoundaryConditionMethodType(Enum):
+class BoundaryConditionMethod(Enum):
     """Enumeration of Boundary Condition Methods."""
 
     PRZEMIENIECKI = auto()
     DELETION = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise StructuralError(
-                f"Unrecognised method: {value}. Choose From: PRZEMIENIECKI or DELETION "
+                f"{cls.__name__} has no method {value}"
+                f"please select from {*cls._member_names_, }"
             ) from None
 
 
@@ -528,8 +529,8 @@ class FiniteElementModel:
         # This is the method recommended by Przemieniecki in the book
         # Need to check which is faster with sparse matrices on real problems
         # This method is also easier to unittest!! Indices stay the same :)
-        boundary_cond_method = BoundaryConditionMethodType(method)
-        if boundary_cond_method is BoundaryConditionMethodType.PRZEMIENIECKI:
+        boundary_cond_method = BoundaryConditionMethod(method)
+        if boundary_cond_method is BoundaryConditionMethod.PRZEMIENIECKI:
             for i in self.fixed_dof_ids:
                 # empty row or col of 0's with back-fill of diagonal term to 1
                 entry = np.zeros(6 * self.geometry.n_nodes)
@@ -538,7 +539,7 @@ class FiniteElementModel:
                 k[:, i] = entry
                 p[i] = 0
 
-        elif boundary_cond_method is BoundaryConditionMethodType.DELETION:
+        elif boundary_cond_method is BoundaryConditionMethod.DELETION:
             # Removes the rows and columns of the fixed degrees of freedom
             # This reduces the size of the problem being solved, but this
             # may not be the fastest way!
@@ -547,8 +548,7 @@ class FiniteElementModel:
                 k = np.delete(k, i, axis=0)
                 k = np.delete(k, i, axis=1)
                 p = np.delete(p, i)
-        # else:
-        # raise StructuralError(f"Unrecognised method: {method}.")
+
         return k, p
 
     def _apply_boundary_conditions_sparse(self, k, p):

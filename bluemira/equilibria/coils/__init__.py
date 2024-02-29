@@ -8,7 +8,8 @@
 Coil and coil grouping objects
 """
 
-from bluemira.equilibria.coils._coil import Coil, CoilType
+from bluemira.base.constants import CoilType
+from bluemira.equilibria.coils._coil import Coil
 from bluemira.equilibria.coils._grouping import (
     Circuit,
     CoilGroup,

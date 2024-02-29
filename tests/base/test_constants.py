@@ -10,12 +10,30 @@ from bluemira.base.constants import (
     E_I,
     E_IJ,
     E_IJK,
+    CoilType,
     gas_flow_uc,
     raw_uc,
     to_celsius,
     to_kelvin,
 )
 from bluemira.utilities.tools import levi_civita_tensor
+
+
+def test_coil_type_enum():
+    valid_strings = ["PF", "CS", "DUM", "NONE", "pf", "cs", "dum", "none"]
+
+    for coil_type in valid_strings:
+        assert getattr(CoilType, coil_type.upper()) == CoilType(coil_type.upper())
+
+    invalid_strings = ["INVALID", "42"]
+    for invalid_type in invalid_strings:
+        with pytest.raises(ValueError):  # noqa: PT011
+            CoilType(invalid_type)
+
+    invalid_types = [42, None]
+    for invalid_type in invalid_types:
+        with pytest.raises(TypeError, match="Input must be a string."):
+            CoilType(invalid_type)
 
 
 def test_lct_constants():
