@@ -587,8 +587,8 @@ class StelleratorBlanketModel(PROCESSModel):
         """
         return "blktmodel"
 
-    SIMPLE = 0, ("coolwh")
-    KIT_HCPB = 1, ("coolwh")
+    SIMPLE = 0, ("coolwh",)
+    KIT_HCPB = 1, ("coolwh",)
 
 
 class InboardBlanketSwitch(PROCESSModel):
