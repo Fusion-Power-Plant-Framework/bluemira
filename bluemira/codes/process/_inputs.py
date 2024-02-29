@@ -566,7 +566,6 @@ class ProcessInputs:
     trithtmw: Optional[float] = None
     vachtmw: Optional[float] = None
     irfcd: Optional[int] = None
-    htpmw_blkt_liq: Optional[float] = None
     # Water usage
 
     # Vacuum
