@@ -22,8 +22,9 @@ if TYPE_CHECKING:
 
 import numpy as np
 
+from bluemira.base.constants import CoilType
 from bluemira.base.look_and_feel import bluemira_warn
-from bluemira.equilibria.coils._coil import Coil, CoilType
+from bluemira.equilibria.coils._coil import Coil
 from bluemira.equilibria.coils._field import CoilGroupFieldsMixin, CoilSetFieldsMixin
 from bluemira.equilibria.coils._tools import (
     _get_symmetric_coils,

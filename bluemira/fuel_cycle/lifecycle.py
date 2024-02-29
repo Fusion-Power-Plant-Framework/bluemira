@@ -39,12 +39,13 @@ class PlotType(Enum):
     BAR = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                f"{value} is not a valid plot type. Choose from: pie or bar"
+                f"{cls.__name__} has no type {value}."
+                f"please select from {*cls._member_names_, }"
             ) from None
 
 

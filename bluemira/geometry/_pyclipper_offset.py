@@ -46,12 +46,13 @@ class OffsetClipperMethodType(Enum):
     MITER = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise GeometryError(
-                "Please choose an offset method from:\n round \n square \n miter"
+                f"{cls.__name__} has no method {value}."
+                f"please select from {*cls._member_names_, }"
             ) from None
 
 

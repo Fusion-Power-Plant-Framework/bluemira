@@ -39,12 +39,13 @@ class BlanketType(Enum):
     WCLL = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                f"Unrecognised blanket type: {value}. Choose from: HCPB or WCLL"
+                f"{cls.__name__} has no type {value}"
+                f"please select from {*cls._member_names_, }"
             ) from None
 
 
@@ -155,8 +156,6 @@ class SteadyStatePowerCycleSetup(Task):
                 eta_electric=params.bb_pump_eta_el.value,
             )
             bop_cycle = PredeterminedEfficiency(0.33)
-        # else:
-        # raise ValueError(f"Unrecognised blanket type {params.blanket_type.value}")
 
         divertor_pump_strat = H2OPumping(
             f_pump=0.05,

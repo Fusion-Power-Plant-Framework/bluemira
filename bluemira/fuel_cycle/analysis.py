@@ -35,12 +35,14 @@ class QueryType(Enum):
     P95TH = auto()  # identifier should start with a letter
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
+            if value.upper() == "95TH":
+                return cls.P95TH
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                f"Invalid query: {value}. Choose from: min, max, mean, median, 95th"
+                f"Invalid query: {value}. Choose from: {*cls._member_names_, }"
             ) from None
 
 
@@ -137,7 +139,7 @@ class FuelCycleAnalysis:
         return self._query("t_d", s=query)
 
     def _query(self, p: str, s: str) -> float:
-        inp_s = QueryType.P95TH if s == "95th" else QueryType(s)
+        inp_s = QueryType(s)
 
         if inp_s is QueryType.MIN:
             return min(self.__dict__[p])
@@ -149,9 +151,7 @@ class FuelCycleAnalysis:
             return np.median(self.__dict__[p])
         if inp_s is QueryType.P95TH:
             return np.percentile(self.__dict__[p], 95)
-        raise ValueError(
-            f"Unknown query: '{s}'. Choose from: min, max, mean, median, 95th"
-        )
+        raise NotImplementedError
 
     def plot(self, figsize=(12, 6), bins=20, **kwargs):
         """

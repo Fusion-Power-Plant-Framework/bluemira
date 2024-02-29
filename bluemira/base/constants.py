@@ -8,7 +8,7 @@
 A collection of generic physical constants, conversions, and miscellaneous constants.
 """
 
-from enum import Enum
+from enum import Enum, auto
 from typing import Callable, List, Optional, Union
 
 import numpy as np
@@ -16,6 +16,29 @@ from periodictable import elements
 from pint import Context, Quantity, Unit, UnitRegistry, set_application_registry
 from pint.errors import PintError
 from pint.util import UnitsContainer
+
+
+class CoilType(Enum):
+    """
+    CoilType Enum
+    """
+
+    PF = auto()
+    CS = auto()
+    DUM = auto()
+    NONE = auto()
+
+    @classmethod
+    def _missing_(cls, value: str):
+        if not isinstance(value, str):
+            raise TypeError("Input must be a string.")
+        try:
+            return cls[value.upper()]
+        except KeyError:
+            raise ValueError(
+                f"{cls.__name__} has no type {value}."
+                f" Select from {*cls._member_names_, }"
+            ) from None
 
 
 class BMUnitRegistry(UnitRegistry):

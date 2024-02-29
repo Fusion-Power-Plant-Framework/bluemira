@@ -43,15 +43,18 @@ from bluemira.utilities import tools
 class ReactorType(Enum):
     """Enumeration of reactor types."""
 
-    NORMAL = auto()
-    ST = auto()
+    CONVENTIONAL_TOKAMAK = auto()
+    SPHERICAL_TOKAMAK = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
-            raise ValueError(f"{value} is a wrong ReactorType.  Choose from: ST or Normal") from None
+            raise ValueError(
+                f"{cls.__name__} has no type {value}"
+                f"please select from {*cls._member_names_, }"
+            ) from None
 
 class CoilsetLayoutType(Enum):
     """Enumeration of CoilSet layouts."""
@@ -60,11 +63,14 @@ class CoilsetLayoutType(Enum):
     DEMO = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
-            raise ValueError(f"{value} is not a valid coilset Layout. Choose from: 'ITER' and 'DEMO'") from None
+            raise ValueError(
+                f"{cls.__name__} has no layout {value}"
+                f"please select from {*cls._member_names_, }"
+            ) from None
 
 class CoilPositioner:
     """
@@ -93,7 +99,7 @@ class CoilPositioner:
     csgap:
         The gap between CS modules [m]
     rtype:
-        The type of reactor ['ST', 'Normal']. Used for default coil positioning
+        The type of reactor ['SPHERICAL_TOKAMAK', 'CONVENTIONAL_TOKAMAK']. Used for default coil positioning
     cslayout:
         The layout of the CS modules ['ITER', 'DEMO']
     """
@@ -110,7 +116,7 @@ class CoilPositioner:
         n_PF: int,
         n_CS: int,
         csgap: float = 0.1,
-        rtype: str = "Normal",
+        rtype: str = "CONVENTIONAL_TOKAMAK",
         cslayout: str = "DEMO",
     ):
         self.ref = [R_0, 0]
@@ -135,10 +141,10 @@ class CoilPositioner:
         """
         a = np.rad2deg(np.arctan(abs(self.delta) / self.kappa))
 
-        if self.rtype is ReactorType.NORMAL:
+        if self.rtype is ReactorType.CONVENTIONAL_TOKAMAK:
             angle_upper = 90 + a * 1.6
             angle_lower = -90 - a * 1.6
-        elif self.rtype is ReactorType.ST:
+        elif self.rtype is ReactorType.SPHERICAL_TOKAMAK:
             angle_upper = 90 + a * 1.2
             angle_lower = -90 - a * 1.0
 

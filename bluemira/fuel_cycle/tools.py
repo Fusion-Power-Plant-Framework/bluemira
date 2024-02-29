@@ -33,12 +33,13 @@ class NoiseModeType(Enum):
     MAX = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.upper()]
         except KeyError:
             raise FuelCycleError(
-                f"{value} is invalid Noise Mode type. Choose from: Min or Max"
+                f"{cls.__name__} has no mode {value}"
+                f"please select from {*cls._member_names_, }"
             ) from None
 
 

@@ -10,7 +10,6 @@ Coil and coil grouping objects
 
 from __future__ import annotations
 
-from enum import Enum, EnumMeta, auto
 from typing import TYPE_CHECKING, Iterable, Optional, Tuple, Union
 
 if TYPE_CHECKING:
@@ -18,6 +17,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 
+from bluemira.base.constants import CoilType
 from bluemira.base.look_and_feel import bluemira_debug
 from bluemira.equilibria.coils._field import CoilFieldsMixin
 from bluemira.equilibria.coils._tools import get_max_current
@@ -26,30 +26,7 @@ from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.plotting import CoilGroupPlotter
 from bluemira.utilities.tools import is_num
 
-__all__ = ["Coil", "CoilType"]
-
-
-class CoilTypeEnumMeta(EnumMeta):
-    """
-    Allow override of KeyError error string
-    """
-
-    def __getitem__(self, name):
-        try:
-            return super().__getitem__(name)
-        except KeyError:
-            raise KeyError(f"Unknown CoilType {name}") from None
-
-
-class CoilType(Enum, metaclass=CoilTypeEnumMeta):
-    """
-    CoilType Enum
-    """
-
-    PF = auto()
-    CS = auto()
-    DUM = auto()
-    NONE = auto()
+__all__ = ["Coil"]
 
 
 class CoilNumber:

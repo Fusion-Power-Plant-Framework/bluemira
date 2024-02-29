@@ -42,13 +42,13 @@ class LoadType(Enum):
     NODE_LOAD = auto()
 
     @classmethod
-    def _missing_(cls, value):
+    def _missing_(cls, value: str):
         try:
             return cls[value.replace(" ", "_").upper()]
         except KeyError:
             raise StructuralError(
-                f"Invalid load: {value}. Choose from:"
-                f"element_load, distributed_load, node_load"
+                f"{cls.__name__} has no load type {value}"
+                f"please select from {*cls._member_names_, }"
             ) from None
 
 
