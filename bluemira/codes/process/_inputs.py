@@ -128,7 +128,6 @@ class ProcessInputs:
     etahtp: Optional[float] = None
     n_liq_recirc: Optional[int] = None
     bz_channel_conduct_liq: Optional[float] = None
-    den_ceramic: Optional[float] = None
     blpressure_liq: Optional[float] = None
     inlet_temp_liq: Optional[float] = None
     outlet_temp_liq: Optional[float] = None
