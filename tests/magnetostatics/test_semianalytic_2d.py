@@ -184,7 +184,7 @@ class TestPoloidalFieldBenchmark:
         ax.legend()
         ax.set_xlim([40, 80])
         ax.set_xlabel("z")
-        ax.set_ylabel("$B_{p}$")
+        ax.set_ylabel("$B_{p}$")  # noqa: RUF027
 
     def test_field_inside_coil_x_x(self):
         x, z, B = self.load_data(Path(self.path, "new_B_along_x-x.json"))
@@ -213,4 +213,4 @@ class TestPoloidalFieldBenchmark:
         ax.legend()
         ax.set_xlim([0, 8])
         ax.set_xlabel("x")
-        ax.set_ylabel("$B_{p}$")
+        ax.set_ylabel("$B_{p}$")  # noqa: RUF027

@@ -302,7 +302,7 @@ class RegionInterpolator(XZGeometryInterpolator):
             x_min, x_max = sorted([intersect[0][0], intersect[1][0]])
             l_0 = np.clip((x - x_min) / (x_max - x_min), 0.0, 1.0)
         elif len(intersect) == 1:
-            l_0 = float(l_1 == 1.0)  # noqa: PLR2004
+            l_0 = float(l_1 == 1.0)
         else:
             raise PositionerError("Unexpected number of intersections in L conversion.")
         return l_0, l_1
