@@ -734,7 +734,7 @@ def convex_hull_wires_2d(
         plane_idxs = (0, 2)
     elif hull_plane is HullPlane.XY:
         plane_idxs = (0, 1)
-    else:  # YZ
+    elif hull_plane is HullPlaneType.YZ:
         plane_idxs = (1, 2)
     else:
         raise NotImplementedError
