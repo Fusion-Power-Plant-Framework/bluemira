@@ -1378,11 +1378,11 @@ class FlowChannelInsertSwitch(PROCESSModel):
     )
     INS_PERFECT = (
         1,
-        ("den_ceramic"),
+        (),
         "Insulating Material, perfect electrical insulator",
     )
     INS_INPUT = (
         2,
-        ("bz_channel_conduct_liq", "den_ceramic"),
+        ("bz_channel_conduct_liq",),
         "Insulating Material, electrical conductivity is input",
     )
