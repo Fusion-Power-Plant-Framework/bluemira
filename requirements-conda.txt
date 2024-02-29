@@ -11,6 +11,6 @@ pytools==2023.1.1
 PyYAML==6.0.1
 shiboken2==5.15.8
 sympy==1.12
-typing_extensions==4.9.0
+typing_extensions==4.10.0
 vtk==9.2.6
 zipp==3.17.0
