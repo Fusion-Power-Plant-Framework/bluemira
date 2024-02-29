@@ -652,7 +652,8 @@ def rotation_matrix(
                 [0, np.cos(theta), -np.sin(theta)],
                 [0, np.sin(theta), np.cos(theta)],
             ])
-
+        else:
+            raise NotImplementedError
     else:
         # Cute, but hard to understand!
         axis = np.array(axis) / np.linalg.norm(axis)  # Unit vector

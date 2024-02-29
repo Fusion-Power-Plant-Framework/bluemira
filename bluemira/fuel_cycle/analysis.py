@@ -149,8 +149,9 @@ class FuelCycleAnalysis:
             return np.mean(self.__dict__[p])
         if inp_s is QueryType.MEDIAN:
             return np.median(self.__dict__[p])
-        # QueryType.P95TH
-        return np.percentile(self.__dict__[p], 95)
+        if inp_s is QueryType.P95TH:
+            return np.percentile(self.__dict__[p], 95)
+        raise NotImplementedError
 
     def plot(self, figsize=(12, 6), bins=20, **kwargs):
         """

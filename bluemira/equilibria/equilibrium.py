@@ -1073,7 +1073,7 @@ class Equilibrium(CoilSetMHDState):
             vcontrol_type = VerticalPositionControlType(vcontrol_str)
             if vcontrol_type is VerticalPositionControlType.VIRTUAL:
                 self.controller = VirtualController(self, gz=2.2)
-            if vcontrol_type is VerticalPositionControlType.FEEDBACK:
+            else:
                 raise NotImplementedError
 
     def solve(self, jtor: Optional[np.ndarray] = None, psi: Optional[np.ndarray] = None):
