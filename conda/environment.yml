@@ -20,7 +20,7 @@ variables:
 
 dependencies:
   - python=3.10
-  - fenics-dolfinx=0.7.1
+  - fenics-dolfinx=0.7.3
   - freecad=0.21.2
   - h5py
   - graphviz
