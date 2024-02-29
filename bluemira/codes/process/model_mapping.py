@@ -1373,7 +1373,7 @@ class FlowChannelInsertSwitch(PROCESSModel):
 
     THIN = (
         0,
-        ("bz_channel_conduct_liq"),
+        ("bz_channel_conduct_liq",),
         "Thin conducting walls",
     )
     INS_PERFECT = (
