@@ -44,6 +44,7 @@ class ProcessInputs:
     nsweep: Optional[int] = None
     sweep: Optional[List[float]] = None
     pulsetimings: Optional[int] = None
+    scan_dim: Optional[int] = None
     # Top down of PROCESS variables list
 
     # Times
@@ -102,6 +103,7 @@ class ProcessInputs:
     inlet_temp: Optional[float] = None
     outlet_temp: Optional[float] = None
     coolp: Optional[float] = None
+    coolwh: Optional[int] = None
     nblktmodpo: Optional[int] = None
     nblktmodpi: Optional[int] = None
     nblktmodto: Optional[int] = None
@@ -186,7 +188,7 @@ class ProcessInputs:
     # rhotfbus: Optional[float] = -1.0 # defaults cannot be right
     frhocp: Optional[float] = None
     frholeg: Optional[float] = None
-    # i_cp_joints: Optional[int] = -1 # defaults cannot be right
+    i_cp_joints: Optional[int] = None
     rho_tf_joints: Optional[float] = None
     n_tf_joints_contact: Optional[int] = None
     n_tf_joints: Optional[int] = None
@@ -225,6 +227,7 @@ class ProcessInputs:
     casths: Optional[float] = None
     tmargmin: Optional[float] = None
     oacdcp: Optional[float] = None
+    t_turn_tf: Optional[int] = None
 
     # PF Power
     iscenr: Optional[int] = None
@@ -470,6 +473,7 @@ class ProcessInputs:
     plleni: Optional[float] = None
     plsepi: Optional[float] = None
     plsepo: Optional[float] = None
+    tfootfi: Optional[float] = None
 
     # Buildings
 
@@ -534,6 +538,7 @@ class ProcessInputs:
     xparain: Optional[float] = None
     xpertin: Optional[float] = None
     zeffdiv: Optional[float] = None
+    i_hldiv: Optional[int] = None
 
     # Pulse
     bctmp: Optional[float] = None
@@ -561,7 +566,6 @@ class ProcessInputs:
     trithtmw: Optional[float] = None
     vachtmw: Optional[float] = None
     irfcd: Optional[int] = None
-
     # Water usage
 
     # Vacuum
@@ -687,9 +691,17 @@ class ProcessInputs:
     tratio: Optional[float] = None
     triang: Optional[float] = None
     triang95: Optional[float] = None
-
     # Stellarator
     fblvd: Optional[float] = None
+
+    # first wall, blanket and
+    # shield components variables
+    fwcoolant: Optional[str] = None
+    icooldual: Optional[int] = None
+    ipump: Optional[int] = None
+    i_bb_liq: Optional[int] = None
+    ims: Optional[int] = None
+    ifci: Optional[int] = None
 
     def __iter__(self) -> Generator[Tuple[str, Union[float, List, Dict]], None, None]:
         """

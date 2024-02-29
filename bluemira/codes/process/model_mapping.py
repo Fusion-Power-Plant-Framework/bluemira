@@ -562,11 +562,33 @@ class BlanketModel(PROCESSModel):
         """
         PROCESS switch name
         """
+        return "iblanket"
+
+    CCFE_HCPB = 1, ("blnkith", "blnkoth", "tbrmin"), "CCFE HCPB model"
+    KIT_HCPB = 2, ("blnkith", "blnkoth"), "KIT HCPB model"
+    CCFE_HCPB_TBR = (
+        3,
+        ("blnkith", "blnkoth", "iblanket_thickness", "li6enrich", "breeder_f"),
+        "CCFE HCPB model with Tritium Breeding Ratio calculation",
+    )
+    KIT_HCLL = 4, ("blnkith", "blnkoth"), "KIT HCLL model"
+    DCLL = 5, ("blbuith", "blbuoth"), "no neutronics model included"
+
+
+class StelleratorBlanketModel(PROCESSModel):
+    """
+    Switch to select the blanket model for Stellerator
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
         return "blktmodel"
 
-    CCFE_HCPB = 1
-    KIT_HCPB = 2
-    CCFE_HCPB_TBR = 3
+    SIMPLE = 0, ("coolwh",)
+    KIT_HCPB = 1, ("coolwh",)
 
 
 class InboardBlanketSwitch(PROCESSModel):
@@ -579,7 +601,7 @@ class InboardBlanketSwitch(PROCESSModel):
         """
         PROCESS switch name
         """
-        return "iblktith"
+        return "iblnkith"
 
     ABSENT = 0
     PRESENT = 1
@@ -1240,3 +1262,126 @@ class OutputCostsSwitch(PROCESSModel):
 
     NO = 0, (), "Do not print cost information to output"
     YES = 1, (), "Print cost information to output"
+
+
+class VacuumPumpSwitch(PROCESSModel):
+    """
+    Switch for whether the FW and BB are on the same pump system
+    i.e. do they have the same primary coolant or not
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ipump"
+
+    SAME = 0, (), "FW and BB have the same primary coolant"
+    DIFFERENT = (
+        1,
+        (),
+        "FW and BB have the different primary coolant and are on different pump systems",
+    )
+
+
+class FWCoolantSwitch(PROCESSModel):
+    """
+    Switch for first wall coolant (can be different from blanket coolant)
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "fwcoolant"
+
+    HELIUM = "helium"
+    WATER = "water"
+
+
+class ModuleSegmentSwitch(PROCESSModel):
+    """
+    Switch for Multi Module Segment (MMS) or Single Modle Segment (SMS)
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ims"
+
+    MMS = 0, (), "Multi Module Segment (MMS)"
+    SMS = 1, (), "Single Modle Segment (SMS)"
+
+
+class LiquidMetalBreederMaterialSwitch(PROCESSModel):
+    """
+    Switch for Liquid Metal Breeder Material
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "i_bb_liq"
+
+    PBLI = 0, (), "PbLi"
+    LI = 1, (), "Li"
+
+
+class BBCoolantSwitch(PROCESSModel):
+    """
+    Switch to specify whether breeding blanket is single-cooled or dual-coolant
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "icooldual"
+
+    SINGLE_FOR_SB = (
+        0,
+        (),
+        "Single coolant, Solid Breeder",
+    )
+    SINGLE_FOR_LB = (
+        1,
+        ("n_liq_recirc",),
+        "Single coolant, Liquid metal breeder",
+    )
+    DUAL = 2, (), "Dual coolant"
+
+
+class FlowChannelInsertSwitch(PROCESSModel):
+    """
+    Switch for Flow Channel Insert (FCI) type if liquid metal breeder blanket.
+    """
+
+    @classproperty
+    def switch_name(self) -> str:
+        """
+        PROCESS switch name
+        """
+        return "ifci"
+
+    THIN = (
+        0,
+        ("bz_channel_conduct_liq",),
+        "Thin conducting walls",
+    )
+    INS_PERFECT = (
+        1,
+        (),
+        "Insulating Material, perfect electrical insulator",
+    )
+    INS_INPUT = (
+        2,
+        ("bz_channel_conduct_liq",),
+        "Insulating Material, electrical conductivity is input",
+    )
