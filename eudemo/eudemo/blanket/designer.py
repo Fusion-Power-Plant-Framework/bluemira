@@ -151,7 +151,7 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
         p2 = [p0[0] - self.params.c_rm.value, 0, p1[2]]
         p3 = [p2[0], 0, p0[2] - np.sqrt(2) * self.params.c_rm.value]
         cut_zone = BluemiraFace(make_polygon([p0, p1, p2, p3], closed=True))
-        if self.cut_angle != 0.0:  # noqa: PLR2004
+        if self.cut_angle != 0.0:
             cut_zone.rotate(base=p0, direction=(0, -1, 0), degree=self.cut_angle)
         return cut_zone
 

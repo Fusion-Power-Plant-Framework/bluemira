@@ -787,7 +787,7 @@ def _get_plan_dims(array):
         temp = []
         for i, k in enumerate(axes):  # both all equal to something
             c = array[i]
-            if c[0] != 0.0:  # noqa: PLR2004
+            if c[0] != 0.0:
                 temp.append(k)
         if len(temp) == 1:
             dims.append(temp[0])

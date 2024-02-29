@@ -678,7 +678,7 @@ def rotation_matrix_v1v2(v1: np.ndarray, v2: np.ndarray) -> np.ndarray:
     sin_angle = np.linalg.norm(d)
 
     if sin_angle == 0:
-        matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)  # noqa: PLR2004
+        matrix = np.identity(3) if cos_angle > 0.0 else -np.identity(3)
     else:
         d /= sin_angle
 
@@ -1395,7 +1395,7 @@ class Coordinates:
         degree:
             rotation angle [degrees]
         """
-        if degree == 0.0:  # noqa: PLR2004
+        if degree == 0.0:
             return
 
         base = np.array(base, dtype=float)

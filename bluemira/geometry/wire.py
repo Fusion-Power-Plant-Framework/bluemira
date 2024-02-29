@@ -176,12 +176,12 @@ class BluemiraWire(BluemiraGeo):
             raise GeometryError("Must specify either alpha or distance, not both.")
 
         if distance is None:
-            if alpha < 0.0:  # noqa: PLR2004
+            if alpha < 0.0:
                 bluemira_warn(
                     f"alpha must be between 0 and 1, not: {alpha}, setting to 0.0"
                 )
                 alpha = 0
-            elif alpha > 1.0:  # noqa: PLR2004
+            elif alpha > 1.0:
                 bluemira_warn(
                     f"alpha must be between 0 and 1, not: {alpha}, setting to 1.0"
                 )

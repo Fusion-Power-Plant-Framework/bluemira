@@ -792,7 +792,7 @@ class CustomProfile(Profile):
         if self.I_p is not None:
             # This is a simple way to prescribe the plasma current
             I_p = self.int2d(jtor)
-            if I_p != 0.0:  # noqa: PLR2004
+            if I_p != 0.0:
                 self.scale = self.I_p / I_p
                 jtor *= self.scale
         return jtor
