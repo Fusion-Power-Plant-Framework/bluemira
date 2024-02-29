@@ -564,15 +564,15 @@ class BlanketModel(PROCESSModel):
         """
         return "iblanket"
 
-    CCFE_HCPB = 1, ("bldepti", "bldepto", "tbrmin"), "CCFE HCPB model"
-    KIT_HCPB = 2, ("bldepti", "bldepto"), "KIT HCPB model"
+    CCFE_HCPB = 1, ("blnkith", "blnkoth", "tbrmin"), "CCFE HCPB model"
+    KIT_HCPB = 2, ("blnkith", "blnkoth"), "KIT HCPB model"
     CCFE_HCPB_TBR = (
         3,
-        ("bldepti", "bldepto", "iblanket_thickness", "li6enrich", "breeder_f"),
+        ("blnkith", "blnkoth",, "iblanket_thickness", "li6enrich", "breeder_f"),
         "CCFE HCPB model with Tritium Breeding Ratio calculation",
     )
-    KIT_HCLL = 4, ("bldepti", "bldepto"), "KIT HCLL model"
-    DCLL = 5, ("bldepti", "bldepto"), "no nutronics model included"
+    KIT_HCLL = 4, ("blnkith", "blnkoth"), "KIT HCLL model"
+    DCLL = 5, ("blbuith", "blbuoth"), "no neutronics model included"
 
 
 class StelleratorBlanketModel(PROCESSModel):
