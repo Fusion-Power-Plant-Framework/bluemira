@@ -1352,14 +1352,11 @@ class BBCoolantSwitch(PROCESSModel):
     )
     SINGLE_FOR_LB = (
         1,
-        ("n_liq_recirc", "htpmw_blkt_liq"),
+        ("n_liq_recirc",),
         "Single coolant, Liquid metal breeder",
     )
-    DUAL = (
-        2,
-        ("htpmw_blkt_liq"),
-        "Dual coolant",
-    )
+    DUAL = 2, (), "Dual coolant"
+
 
 
 class FlowChannelInsertSwitch(PROCESSModel):
