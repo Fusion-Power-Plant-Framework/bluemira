@@ -206,7 +206,6 @@ n = 20
 
 # Create the set of collocation points for the harmonics
 collocation = collocation_points(
-    n,
     original_LCFS,
     PointType.ARC_PLUS_EXTREMA,
     seed=15,

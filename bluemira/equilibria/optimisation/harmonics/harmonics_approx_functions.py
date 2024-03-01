@@ -214,7 +214,8 @@ def collocation_points(
     ----------
     n_points:
         Number of points/targets (not including extrema - these are added
-        automatically if relevant).
+        automatically if relevant). For use with point_type 'arc',
+        'arc_plus_extrema', 'random', or 'random_plus_extrema'.
     plasma_boundary:
         XZ coordinates of the plasma boundary
     point_type:
@@ -301,10 +302,10 @@ def collocation_points(
         # Create uniform, rectangular grid using max and min LCFS values
         grid_num_x, grid_num_z = grid_num
         rect_grid = Grid(
-            x_min=np.amin(x_bdry),
-            x_max=np.amax(x_bdry),
-            z_min=np.amin(z_bdry),
-            z_max=np.amax(z_bdry),
+            np.amin(x_bdry),
+            np.amax(x_bdry),
+            np.amin(z_bdry),
+            np.amax(z_bdry),
             nx=grid_num_x,
             nz=grid_num_z,
         )
@@ -494,6 +495,7 @@ def spherical_harmonic_approximation(
     eq: Equilibrium,
     n_points: int = 8,
     point_type: PointType = PointType.ARC_PLUS_EXTREMA,
+    grid_num: Optional[str] = None,
     acceptable_fit_metric: float = 0.01,
     plot: bool = False,
     nlevels: int = 50,
@@ -529,6 +531,10 @@ def spherical_harmonic_approximation(
         in the x- and z-directions (4 points total),
         - 'random',
         - 'random_plus_extrema'.
+        - 'grid_points'
+    grid_num:
+        Number of points in x-direction and z-direction,
+        to use with grid point distribution.
     acceptable_fit_metric:
         Value between 0 and 1 chosen by user (default=0.01).
         If the LCFS found using the SH approximation method perfectly matches the
@@ -589,10 +595,11 @@ def spherical_harmonic_approximation(
 
     # Create the set of collocation points within the LCFS for the SH calculations
     collocation = collocation_points(
-        n_points,
         original_LCFS,
         point_type,
+        n_points,
         seed,
+        grid_num,
     )
 
     # SH amplitudes needed to produce an approximation of vacuum psi contribution
