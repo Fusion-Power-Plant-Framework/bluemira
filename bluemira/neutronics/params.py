@@ -9,9 +9,10 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Literal
 
+import numpy as np
 import openmc
 
-from bluemira.base.constants import raw_uc
+from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import GeometryError
 from bluemira.neutronics.make_materials import BlanketType
@@ -214,6 +215,88 @@ class TokamakGeometry(TokamakGeometryBase):
         for k, v in tgcgs.items():
             tgcgs[k] = raw_uc(v, "m", "cm")
         return cls(**tg, cgs=TokamakGeometryBase(**tgcgs))
+
+
+@dataclass
+class WallThicknessFraction:
+    """List of thickness of various sections of the blanket as fractions"""
+
+    first_wall: float  # [m]
+    breeder_zone: float  # [m]
+    manifold: float  # [m]
+    vacuum_vessel: float  # [m]
+
+    def __post_init__(self):
+        """Check fractions are between 0 and 1 and sums to unity."""
+        for section in ("first_wall", "manifold", "vacuum_vessel"):
+            if getattr(self, section) <= 0:
+                raise GeometryError(f"Thickness fraction of {section} must be non-zero")
+        if self.breeder_zone < 0:  # can be zero, but not negative.
+            raise GeometryError("Thickness fraction of breeder_zone must be nonnegative")
+        if not np.isclose(
+            sum([self.first_wall, self.manifold, self.breeder_zone, self.vacuum_vessel]),
+            1.0,
+            rtol=0,
+            atol=EPS,
+        ):
+            raise GeometryError(
+                "Thickness fractions of all four sections " "must add up to unity!"
+            )
+
+
+class InboardThicknessFraction(WallThicknessFraction):
+    """Thickness fraction list of the inboard wall of the blanket"""
+
+    pass
+
+
+class OutboardThicknessFraction(WallThicknessFraction):
+    """Thickness fraction list of the outboard wall of the blanket"""
+
+    pass
+
+
+@dataclass
+class ThicknessFractions:
+    """
+    A dataclass containing info. on both
+    inboard and outboard blanket thicknesses as fractions.
+    """
+
+    inboard: InboardThicknessFraction
+    outboard: OutboardThicknessFraction
+
+    @classmethod
+    def from_TokamakGeometry(cls, tokamak_geometry: TokamakGeometry):
+        """
+        Create this dataclass by
+        translating from our existing tokamak_geometry dataclass.
+        """
+        inb_sum = sum([
+            tokamak_geometry.inb_fw_thick,
+            tokamak_geometry.inb_bz_thick,
+            tokamak_geometry.inb_mnfld_thick,
+            tokamak_geometry.inb_vv_thick,
+        ])
+        inb = InboardThicknessFraction(
+            tokamak_geometry.inb_fw_thick / inb_sum,
+            tokamak_geometry.inb_bz_thick / inb_sum,
+            tokamak_geometry.inb_mnfld_thick / inb_sum,
+            tokamak_geometry.inb_vv_thick / inb_sum,
+        )
+        outb_sum = sum([
+            tokamak_geometry.outb_fw_thick,
+            tokamak_geometry.outb_bz_thick,
+            tokamak_geometry.outb_mnfld_thick,
+            tokamak_geometry.outb_vv_thick,
+        ])
+        outb = OutboardThicknessFraction(
+            tokamak_geometry.outb_fw_thick / outb_sum,
+            tokamak_geometry.outb_bz_thick / outb_sum,
+            tokamak_geometry.outb_mnfld_thick / outb_sum,
+            tokamak_geometry.outb_vv_thick / outb_sum,
+        )
+        return cls(inb, outb)
 
 
 def get_preset_physical_properties(

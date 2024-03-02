@@ -1337,23 +1337,23 @@ def signed_distance_2D_polygon(
 
 
 def signed_distance(
-    wire_1: BluemiraWire, wire_2: Union[BluemiraWire, Coordinates]
+    origin: Union[BluemiraWire, Coordinates], target: Union[BluemiraWire, Coordinates]
 ) -> float:
     """
     Single-valued signed "distance" function between two wires. Will return negative
-    values if wire_1 does not touch or intersect wire_2, 0 if there is one intersection,
+    values if origin does not touch or intersect target, 0 if there is one intersection,
     and a positive estimate of the intersection length if there are overlaps.
 
     Parameters
     ----------
-    wire_1:
-        Subject wire
-    wire_2:
-        Target wire/ coordinates
+    origin:
+        a 0D/1D set of points
+    target:
+        a 0D/1D set of points
 
     Returns
     -------
-    Signed distance from wire_1 to wire_2
+    Closest distance between origin and target
 
     Notes
     -----
@@ -1364,7 +1364,7 @@ def signed_distance(
     This function has been extended to allow the target wire to be a point
         (:class:`~bluemira.geometry.coordinates.Coordinates`) as well
     """
-    d, vectors = distance_to(wire_1, wire_2)
+    d, vectors = distance_to(origin, target)
     # Intersections are exactly 0.0
     if d == 0.0:
         if len(vectors) <= 1:
@@ -1390,21 +1390,27 @@ def signed_distance(
 
 
 def raise_error_if_overlap(
-    wire_1: BluemiraWire,
-    wire_2: Union[BluemiraWire, Coordinates],
-    name_1: str = "wire_1",
-    name_2: str = "wire_2",
+    origin: Union[BluemiraWire, Coordinates],
+    target: Union[BluemiraWire, Coordinates],
+    origin_name: str = "",
+    target_name: str = "",
 ):
     """
-    Raise an error if two wires overlap.
+    Raise an error if two wires/points intersects overlaps.
     """
-    check_overlaps = signed_distance(wire_1, wire_2)
+    check_overlaps = signed_distance(origin, target)
+    if check_overlaps < -D_TOLERANCE:
+        return
+    if not origin_name:
+        origin_name = "origin " + origin.__class__.__name__
+    if not target_name:
+        target_name = "target " + target.__class__.__name__
     if -D_TOLERANCE <= check_overlaps <= 0:
         # Sometimes intersecting lines can still appears to separate (negative),
         # but only by just a little. So a small negative number is included in the check.
-        raise GeometryError(f"{name_1} and {name_2} likely intersects with each other!")
+        raise GeometryError(f"{origin_name} likely intersects {target_name} !")
     if check_overlaps > 0:
-        raise GeometryError(f"{name_1} and {name_2} partially/fully overlaps!")
+        raise GeometryError(f"{origin_name} and {target_name} partially/fully overlaps!")
 
 
 # ======================================================================================
