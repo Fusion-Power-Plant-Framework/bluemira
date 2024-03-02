@@ -10,17 +10,16 @@ from pathlib import Path
 
 import numpy as np
 from numpy import typing as npt
-import matplotlib.pyplot as plt
 
 import bluemira.neutronics.make_geometry as mg
 from bluemira.base.constants import raw_uc
-from bluemira.display import plot_2d, show_cad, plot_3d # noqa: F401
-from bluemira.geometry.coordinates import Coordinates, vector_intersect
+from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
+from bluemira.geometry.coordinates import vector_intersect
 from bluemira.geometry.tools import deserialize_shape, make_polygon  # make_circle_arc_3P
-from bluemira.geometry.wire import BluemiraWire
-from bluemira.neutronics.make_csg import (ThicknessFractions,
-                                        fill_xz_to_3d,
-                                        split_blanket_into_precells,)
+from bluemira.neutronics.make_csg import (
+    _fill_xz_to_3d,
+    split_blanket_into_pre_cell_array,
+)
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import (
     PlasmaSourceParametersPPS,
@@ -34,6 +33,7 @@ from bluemira.neutronics.neutronics_axisymmetric import (
 from bluemira.neutronics.params import (
     OpenMCSimulationRuntimeParameters,
     PlasmaSourceParameters,
+    ThicknessFractions,
     get_preset_physical_properties,
 )
 from bluemira.neutronics.tallying import create_tallies
@@ -114,9 +114,12 @@ thickness_fractions = ThicknessFractions.from_TokamakGeometry(tokamak_geometry)
 #     save_plots=True,
 # data loading begins here.
 from time import time
+
+
 def elapsed(start_time=time()):
-    return str(time()-start_time)+"s"
-print(elapsed())
+    return f"t={time() - start_time:9.6f}s"
+
+
 with open("data/inner_boundary") as j:
     inner_boundary = deserialize_shape(json.load(j))
 with open("data/outer_boundary") as j:
@@ -130,16 +133,27 @@ fw_panel_bp_list = [
     np.load("data/fw_panels_50_0.3.npy"),
     np.load("data/fw_panels_50_0.5.npy"),
 ]
-panel_breakpoint_T = fw_panel_bp_list[1].T
-# TODO: MANUAL FIX begins here
-panel_breakpoint_T[0] = vector_intersect(panel_breakpoint_T[0], panel_breakpoint_T[1], divertor_bmwire.edges[0].start_point()[::2].flatten(), divertor_bmwire.edges[0].end_point()[::2].flatten())
-panel_breakpoint_T[-1]= vector_intersect(panel_breakpoint_T[-2],panel_breakpoint_T[-1],divertor_bmwire.edges[-1].start_point()[::2].flatten(), divertor_bmwire.edges[-1].end_point()[::2].flatten())
-# TODO: MANUALLY determine where on the outer boundary we want to set the Z points.
+panel_breakpoint_T = fw_panel_bp_list[0].T
+# TODO: MANUAL FIX the coordinates
+panel_breakpoint_T[0] = vector_intersect(
+    panel_breakpoint_T[0],
+    panel_breakpoint_T[1],
+    divertor_bmwire.edges[0].start_point()[::2].flatten(),
+    divertor_bmwire.edges[0].end_point()[::2].flatten(),
+)
+panel_breakpoint_T[-1] = vector_intersect(
+    panel_breakpoint_T[-2],
+    panel_breakpoint_T[-1],
+    divertor_bmwire.edges[-1].start_point()[::2].flatten(),
+    divertor_bmwire.edges[-1].end_point()[::2].flatten(),
+)
 
 last_point = divertor_bmwire.edges[-1].end_point()
 
+
 def polygon_from2D(xarray: npt.NDArray[float], zarray: npt.NDArray[float], **kwargs):
     """Create BluemiraWire from  x coordinates and z coordinates.
+
     Parameters
     ----------
     xarray: np.ndarray of shape (N,)
@@ -150,20 +164,34 @@ def polygon_from2D(xarray: npt.NDArray[float], zarray: npt.NDArray[float], **kwa
     BluemiraWire:
         wire made of straight lines joint by vertices specified by the input parameters.
     """
-    return make_polygon(fill_xz_to_3d([xarray, zarray]), **kwargs)
+    return make_polygon(_fill_xz_to_3d([xarray, zarray]), **kwargs)
+
 
 blanket_panels_bmwire = polygon_from2D(
-                    *panel_breakpoint_T.T,
-                    label="blanket panels",
-                    closed=False,
-                )
+    *panel_breakpoint_T.T,
+    label="blanket panels",
+    closed=False,
+)
 
-print(elapsed())
-precell_list = split_blanket_into_precells(outer_boundary, panel_breakpoint_T,
-                                            ending_cut=last_point.xz.flatten())
-print(elapsed())
-plot_2d([c.outline for c in precell_list])
-import sys; sys.exit()
+print(elapsed(), ": Before creating pre-cells")
+
+pca = split_blanket_into_pre_cell_array(
+    panel_breakpoint_T,
+    outer_boundary,
+    snap_to_horizontal_angle=45,
+    ending_cut=last_point.xz.flatten(),
+)
+print(elapsed(), ": Aftere pre-cell creations, before plotting.")
+print("Volume of pre-cell array =", pca.volumes)
+# pca.show_cad()
+pca2 = pca.to_csg(True)
+print("Volume of approximating pre-cell array =", pca2.volumes)
+print(elapsed(), ": after conversion.")
+plot_2d([c.outline for c in pca.pre_cells] + [c.outline for c in pca2.pre_cells])
+
+import sys
+
+sys.exit()
 
 tbr_heat_sim.cells, tbr_heat_sim.universe = mg.make_neutronics_geometry(
     tokamak_geometry,

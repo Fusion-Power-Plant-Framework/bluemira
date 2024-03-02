@@ -3,7 +3,7 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""Tools to optimally slice up the neutronics model"""
+"""Tools to slice up the neutronics model with the fewest number of planes"""
 
 from typing import Union
 
@@ -164,6 +164,7 @@ class PoloidalCrossSectionLineVariable(PoloidalCrossSectionLineBase):
             )
         ...
         # check that it does, in fact, form a quadrilateral with no self-intersection.
+        # by seeing that non-neighbouring edges do not intersect. using vector_intersect
         self._phase_space_repr = [
             self.AllowedPointSet2D(z_intercept, slope),
             self.AllowedPointSet2D(z_intercept, -slope),
@@ -262,7 +263,9 @@ class AllowedPointSetNull(AllowedPointSet):
 
 
 class AllowedPointSet0D(AllowedPointSet):
-    """A single point"""
+    """A single point.
+    The result of PoloidalCrossSectionLineFixed.phase_space_repr
+    """
 
     def __init__(self, y, x):
         if np.ndim(y) > 1 or np.ndim(x) > 1:
@@ -287,6 +290,7 @@ class AllowedPointSet0D(AllowedPointSet):
 class AllowedPointSet1D(AllowedPointSet):
     """A line of finite length, defined by the y and x coordinates of the start and end
     locations.
+    The result of PoloidalCrossSectionLineSemiVariable.phase_space_repr
     """
 
     def __init__(self, y, x):
@@ -302,7 +306,9 @@ class AllowedPointSet1D(AllowedPointSet):
 
 
 class AllowedPointSet2D(AllowedPointSet):
-    """A 2D polygon, defined by the y and x coordinates of the start and end locations"""
+    """A 2D polygon, defined by the y and x coordinates of the start and end locations.
+    The result of PoloidalCrossSectionLineVariable.phase_space_repr
+    """
 
     def __init__(self, y, x):
         if not all([
