@@ -15,7 +15,7 @@ from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, Union
 import numpy as np
 from numpy import typing as npt
 
-from bluemira.base.look_and_feel import bluemira_print, bluemira_warn
+from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
 from bluemira.display import plot_2d, show_cad  # , plot_3d
 from bluemira.geometry.constants import EPS_FREECAD
 from bluemira.geometry.coordinates import (
@@ -271,6 +271,8 @@ class PreCellArray:
         Parameters
         ----------
         preserve_volume: bool
+            Whether to preserve the volume of each cell during the transformation from
+            pre-cell to openmc cells.
             If True, change the length of the cut-lines to preserve the volume of each
             cell as much as possible.
         """
@@ -326,7 +328,7 @@ class CellWall:
         self.original_lengths = np.linalg.norm(_vector, axis=-1)
         self.directions = (_vector.T / self.original_lengths).T
         self.num_cells = len(self.cell_walls) - 1
-        self.check_volumes()
+        self.check_volumes_and_lengths()
 
     def __getitem__(self, idx) -> npt.NDArray[float]:  # noqa: D105
         return self.cell_walls.__getitem__(idx)
@@ -336,7 +338,8 @@ class CellWall:
 
     @property
     def starts(self):
-        return self._starts  # the start points never change value. shape = (N+1, 2)
+        """The start points of each cell wall. shape = (N+1, 2)"""
+        return self._starts  # the start points never change value.
 
     @property
     def ends(self):
@@ -367,6 +370,7 @@ class CellWall:
 
     @property
     def lengths(self):
+        """Current lengths of the cell walls."""
         return np.linalg.norm(self.ends - self.starts, axis=-1)  # shape = (N+1)
 
     def get_volume(self, i):
@@ -382,12 +386,20 @@ class CellWall:
 
     @property
     def volumes(self):
+        """
+        Current volumes of the (simplified) cells created by joining straight lines
+        between neighbouring cell walls.
+        """
         return np.array([
             self.get_volume(i) for i in range(self.num_cells)
         ])  # shape = (N+1,)
 
-    def check_volumes(self):
-        if not all(self.volumes > 0):
+    def check_volumes_and_lengths(self):
+        """
+        Ensure all cells have positive volumes, to minimize the risk of self-intersecting
+        lines and negative lengths
+        """
+        if not (all(self.volumes > 0) and all(self.lengths > 0)):
             raise GeometryError("At least 1 cell has non-positive volumes!")
 
     def volume_of_cells_neighbouring(self, i, test_length):
@@ -439,16 +451,21 @@ class CellWall:
         target_volumes = np.array(list(volume_list))
         if self.num_cells == 2:
             # only one single step is required for the optimization
-            volume_excess = lambda l: self.volume_of_cells_neighbouring(1, l) - sum(
-                target_volumes
-            )
+            def volume_excess(new_length):
+                return self.volume_of_cells_neighbouring(1, new_length) - sum(
+                    target_volumes
+                )
+
             length_1 = self.get_length(1)
-            derivative = lambda l: self.volume_derivative_of_cells_neighbouring(1, l)
+
+            def derivative(new_length):
+                return self.volume_derivative_of_cells_neighbouring(1, new_length)
+
             self.set_length(1, newtons_method(volume_excess, length_1, derivative))
-            self.check_volumes()
+            self.check_volumes_and_lengths()
             return self.cell_walls
 
-        # if more than 3 walls (2 cells)
+        # if more than 3 walls (more than 2 cells)
         i_range = range(1, self.num_cells)
         num_passes_counter = -1
         step_direction = +1
@@ -456,37 +473,40 @@ class CellWall:
         forward_pass_result = np.zeros(self.num_cells + 1)
 
         while num_passes_counter < 1000:
-            target_vol = target_volumes[i - 1 : i + 1]
 
             def excess_volume(test_length, i=i):
                 return self.volume_of_cells_neighbouring(i, test_length) - sum(
-                    target_vol
+                    target_volumes[i - 1 : i + 1]
                 )
 
-            def dV_dl(test_length, i=i):
+            def dV_dl(test_length, i=i):  # noqa: N802
                 return self.volume_derivative_of_cells_neighbouring(i, test_length)
 
-            optimal_length = newtons_method(excess_volume, self.get_length(i), dV_dl)
-            # does not allow length to decrease beyond their original value.
-            self.set_length(i, max(optimal_length, self.original_lengths[i]))
+            # do not allow length to decrease beyond their original value.
+            if excess_volume(self.original_lengths[i]) < 0:
+                optimal_length = newtons_method(excess_volume, self.get_length(i), dV_dl)
+                self.set_length(i, optimal_length)
+            else:
+                self.set_length(i, self.original_lengths[i])
 
             if i == min(i_range):
-                # hitting the left edge: bounce to the right
+                # hitting the left end: bounce to the right
                 step_direction = +1
                 num_passes_counter += 1
                 backward_pass_result = self.lengths.copy()
+                # termination condition
                 if np.allclose(
                     backward_pass_result, forward_pass_result, rtol=0, atol=EPS_FREECAD
                 ):
-                    bluemira_print(
+                    bluemira_debug(
                         "Cell volume-matching optimization successful."
                         "Terminating iterative cell wall length adjustment after "
                         f"{num_passes_counter} passes."
                     )
-                    self.check_volumes()
+                    self.check_volumes_and_lengths()
                     return self.cell_walls
             elif i == max(i_range):
-                # hitting the right edge: bounce to the left
+                # hitting the right end: bounce to the left
                 step_direction = -1
                 num_passes_counter += 1
                 forward_pass_result = self.lengths.copy()
