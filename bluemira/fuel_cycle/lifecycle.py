@@ -57,7 +57,7 @@ class LifeCycle:
     ----------
     config:
         Parameters for the reactor life cycle. See
-        :class:`bluemira.fuel_cycle.lifecycle.LifeCycleParams` for
+        :class:`~bluemira.fuel_cycle.lifecycle.LifeCycleParams` for
         parameters details.
         Set to an empty ``dict`` to use default values.
     learning_strategy:
@@ -474,7 +474,7 @@ class LifeCycle:
 
 @dataclass
 class LifeCycleParams:
-    """Parameters for running :class:`bluemira.fuel_cycle.lifecycle.LifeCycle`"""
+    """Parameters for running :class:`~bluemira.fuel_cycle.lifecycle.LifeCycle`"""
 
     A_global: float = 0.3
     """Global load factor [dimensionless]. Not always used."""

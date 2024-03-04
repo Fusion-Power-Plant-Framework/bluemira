@@ -69,7 +69,7 @@ def optimise(
         The derivative of the objective function.
     algorithm:
         The optimisation algorithm to use. See enum
-        :class:`.Algorithm` for supported algorithms.
+        :class:`~bluemira.optimisation._algorithm.Algorithm` for supported algorithms.
         (default: ``"SLSQP"``)
     opt_conditions:
         The stopping conditions for the optimiser. Supported conditions
