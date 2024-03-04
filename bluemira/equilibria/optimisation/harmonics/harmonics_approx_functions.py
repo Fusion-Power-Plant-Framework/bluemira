@@ -597,7 +597,7 @@ def spherical_harmonic_approximation(
         sh_eq.get_OX_points(approx_total_psi, force_update=True)
 
         # Get plasma boundary for comparison to starting equilibrium using fit metric
-        approx_LCFS = sh_eq.get_LCFS(psi=approx_total_psi)
+        approx_LCFS = sh_eq.get_LCFS(psi=approx_total_psi, delta_start=0.015)
 
         # Compare staring equilibrium to new approximate equilibrium
         fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
