@@ -8,6 +8,7 @@ Class and Methods for separatrix legs.
 """
 
 import operator
+from enum import Enum, auto
 from typing import Dict, Optional, Union
 
 import numpy as np
@@ -26,6 +27,24 @@ from bluemira.geometry.coordinates import (
     Coordinates,
     join_intersect,
 )
+
+
+class NumNull(Enum):
+    """
+    Class for use with LegFlux.
+    """
+
+    DN = auto()
+    SN = auto()
+
+
+class SortSplit(Enum):
+    """
+    Class for use with LegFlux.
+    """
+
+    X = auto()
+    Z = auto()
 
 
 class LegFlux:
@@ -103,13 +122,13 @@ class LegFlux:
             if legs_upper_lower:
                 # Sort LOWER then UPPER when use get_legs
                 # self.separatrix remains sorted by loop length
-                return "DN", "Z"
+                return NumNull["DN".upper()], SortSplit["Z".upper()]
             # Sort IN then OUT when use get_legs
             # self.separatrix remains sorted by loop length
-            return "DN", "X"
+            return NumNull["DN".upper()], SortSplit["X".upper()]
         # --- Single Null ---
         self.x_points = self.x_points[0]
-        return "SN", "X"
+        return NumNull["SN".upper()], SortSplit["X".upper()]
 
     def get_leg_offsets(self, leg_dict):
         """Expands the leg list if user requires offset flux surfaces."""
@@ -173,6 +192,8 @@ class LegFlux:
         interpolation and local minimum finding tolerances.
 
         """
+        n_null = NumNull[self.n_null.upper()]
+        sort_split = SortSplit[self.sort_split.upper()]
         if delta is not None:
             self.delta = delta
         if delta_offsets is not None:
@@ -181,7 +202,7 @@ class LegFlux:
             self.dx_offsets = np.linspace(0, dx_off, n_layers)[1:]
         "Get the legs of a separatrix."
         # --- Single Null ---
-        if self.n_null == "SN":
+        if n_null == NumNull.SN:
             leg_dict = get_single_null_legs(
                 self.separatrix,
                 self.delta,
@@ -193,7 +214,7 @@ class LegFlux:
             return leg_dict
 
         # --- Double Null ---
-        if self.sort_split == "Z":
+        if sort_split == SortSplit.Z:
             leg_dict = get_legs_double_null_zsplit(
                 self.separatrix,
                 self.delta,
