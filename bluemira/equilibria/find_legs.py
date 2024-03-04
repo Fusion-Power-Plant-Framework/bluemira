@@ -122,7 +122,7 @@ class LegFlux:
             if legs_upper_lower:
                 # Sort LOWER then UPPER when use get_legs
                 # self.separatrix remains sorted by loop length
-                return NumNull["DN".upper()], SortSplit["Z".upper()]
+                return NumNull.DN, SortSplit.Z
             # Sort IN then OUT when use get_legs
             # self.separatrix remains sorted by loop length
             return NumNull["DN".upper()], SortSplit["X".upper()]
