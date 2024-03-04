@@ -192,8 +192,6 @@ class LegFlux:
         interpolation and local minimum finding tolerances.
 
         """
-        n_null = NumNull[self.n_null.upper()]
-        sort_split = SortSplit[self.sort_split.upper()]
         if delta is not None:
             self.delta = delta
         if delta_offsets is not None:
@@ -202,7 +200,7 @@ class LegFlux:
             self.dx_offsets = np.linspace(0, dx_off, n_layers)[1:]
         "Get the legs of a separatrix."
         # --- Single Null ---
-        if n_null == NumNull.SN:
+        if self.n_null == NumNull.SN:
             leg_dict = get_single_null_legs(
                 self.separatrix,
                 self.delta,
@@ -214,7 +212,7 @@ class LegFlux:
             return leg_dict
 
         # --- Double Null ---
-        if sort_split == SortSplit.Z:
+        if self.sort_split == SortSplit.Z:
             leg_dict = get_legs_double_null_zsplit(
                 self.separatrix,
                 self.delta,
