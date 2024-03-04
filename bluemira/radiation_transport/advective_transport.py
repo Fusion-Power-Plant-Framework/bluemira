@@ -23,7 +23,7 @@ from bluemira.display.plotter import plot_coordinates
 from bluemira.equilibria.find import (
     find_flux_surface_through_point,
 )
-from bluemira.equilibria.find_legs import LegFlux
+from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
 from bluemira.equilibria.flux_surfaces import OpenFluxSurface
 from bluemira.geometry.coordinates import Coordinates, coords_plane_intersect
 from bluemira.geometry.plane import BluemiraPlane
@@ -163,11 +163,11 @@ class ChargedParticleSolver:
         yz_plane = self._yz_plane
         sep = LegFlux(self.eq)
 
-        if sep.n_null == "SN":
+        if sep.n_null == NumNull.SN:
             sep_intersections = coords_plane_intersect(sep.separatrix, yz_plane)
             sep_arg = np.argmin(np.abs(sep_intersections.T[0] - sep.o_point.x))
             x_sep_mp = sep_intersections.T[0][sep_arg]
-        elif sep.sort_split == "X":
+        elif sep.sort_split == SortSplit.X:
             sep1_intersections = coords_plane_intersect(sep.separatrix[0], yz_plane)
             sep2_intersections = coords_plane_intersect(sep.separatrix[1], yz_plane)
             sep1_arg = np.argmin(np.abs(sep1_intersections.T[0] - sep.o_point.x))
