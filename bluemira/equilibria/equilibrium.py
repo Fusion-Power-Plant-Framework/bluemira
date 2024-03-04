@@ -1492,7 +1492,7 @@ class Equilibrium(CoilSetMHDState):
         return Coordinates({"x": f[0], "z": f[1]})
 
     def get_LCFS(
-        self, psi: Optional[np.ndarray] = None, psi_n_tol: float = 1e-6
+        self, psi: Optional[np.ndarray] = None, psi_n_tol: float = 1e-6, delta_start=0.01
     ) -> Coordinates:
         """
         Get the Last Closed FLux Surface (LCFS).
@@ -1513,7 +1513,13 @@ class Equilibrium(CoilSetMHDState):
             psi = self.psi()
         o_points, x_points = self.get_OX_points(psi=psi)
         return find_LCFS_separatrix(
-            self.x, self.z, psi, o_points, x_points, psi_n_tol=psi_n_tol
+            self.x,
+            self.z,
+            psi,
+            o_points,
+            x_points,
+            psi_n_tol=psi_n_tol,
+            delta_start=delta_start,
         )[0]
 
     def get_separatrix(
