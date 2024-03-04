@@ -5,6 +5,7 @@
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
 import json
+from copy import deepcopy
 from pathlib import Path
 
 import numpy as np
@@ -16,9 +17,9 @@ from bluemira.equilibria.find import (
     _in_plasma,
     find_LCFS_separatrix,
     find_local_minima,
-    get_legs,
     inv_2x2_matrix,
 )
+from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -127,10 +128,37 @@ class TestGetLegs:
     def setup_class(cls):
         cls.sn_eq = Equilibrium.from_eqdsk(Path(DATA, "eqref_OOB.json"))
         cls.dn_eq = Equilibrium.from_eqdsk(Path(DATA, "DN-DEMO_eqref.json"))
+        cls.falsified_dn_eq = deepcopy(cls.sn_eq)
+
+    def test_legflux(self):
+        test_sn = LegFlux(self.sn_eq)
+        test_dn = LegFlux(self.dn_eq)
+        assert test_sn.n_null == NumNull.SN
+        assert test_sn.sort_split == SortSplit.X
+        assert test_dn.n_null == NumNull.DN
+        assert test_dn.sort_split == SortSplit.X
+        psi = self.falsified_dn_eq.psi()
+        o_points, x_points = self.falsified_dn_eq.get_OX_points(psi=psi)
+        _, separatrix = find_LCFS_separatrix(
+            self.falsified_dn_eq.x,
+            self.falsified_dn_eq.z,
+            psi,
+            o_points,
+            x_points,
+            double_null=True,
+            psi_n_tol=1e-6,
+        )
+        test_falsified_dn_eq = LegFlux(self.falsified_dn_eq)
+        test_falsified_dn_eq.x_points = x_points[:2]
+        test_falsified_dn_eq.separatrix = separatrix
+        n_null, sort_split = test_falsified_dn_eq.which_legs()
+        assert n_null == NumNull.DN
+        assert sort_split == SortSplit.Z
 
     @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_single_null(self, n_layers):
-        legs = get_legs(self.sn_eq, n_layers, 0.2)
+        legflux = LegFlux(self.sn_eq)
+        legs = legflux.get_legs(n_layers, 0.2)
         assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
@@ -142,14 +170,15 @@ class TestGetLegs:
                 self.assert_valid_leg(leg, x_point)
 
     def test_single_one_layer(self):
-        legs = get_legs(self.sn_eq, 1, 0.0)
+        legflux = LegFlux(self.sn_eq)
+        legs = legflux.get_legs(1, 0.0)
         assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
         assert len(legs["lower_inner"]) == 1
         assert len(legs["lower_outer"]) == 1
         x1 = legs["lower_inner"][0].x[0]
-        legs = get_legs(self.sn_eq, 1, 1.0)
+        legs = legflux.get_legs(1, 1.0)
         assert len(legs) == 2
         assert "lower_inner" in legs
         assert "lower_outer" in legs
@@ -160,7 +189,8 @@ class TestGetLegs:
 
     @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_double_null(self, n_layers):
-        legs = get_legs(self.dn_eq, n_layers, 0.2)
+        legflux = LegFlux(self.dn_eq)
+        legs = legflux.get_legs(n_layers, 0.2)
         x_points = self.dn_eq.get_OX_points()[1][:2]
         x_points.sort(key=lambda xp: xp.z)
         assert len(legs) == 4
@@ -175,14 +205,15 @@ class TestGetLegs:
                 self.assert_valid_leg(leg, x_p)
 
     def test_double_one_layer(self):
-        legs = get_legs(self.dn_eq, 1, 0.0)
+        legflux = LegFlux(self.dn_eq)
+        legs = legflux.get_legs(1, 0.0)
         assert len(legs) == 4
         assert "lower_inner" in legs
         assert "lower_outer" in legs
         assert len(legs["lower_inner"]) == 1
         assert len(legs["lower_outer"]) == 1
         x1 = legs["lower_inner"][0].x[0]
-        legs = get_legs(self.dn_eq, 1, 1.0)
+        legs = legflux.get_legs(1, 1.0)
         assert len(legs) == 4
         assert "lower_inner" in legs
         assert "lower_outer" in legs
@@ -191,5 +222,63 @@ class TestGetLegs:
         x2 = legs["lower_inner"][0].x[0]
         assert np.isclose(x1, x2)
 
-    def assert_valid_leg(self, leg, x_point):
-        assert np.isclose(leg.z[0], x_point.z)
+    @pytest.mark.parametrize("n_layers", [2, 3, 5])
+    def test_double_z_split(self, n_layers):
+        psi = self.falsified_dn_eq.psi()
+        o_points, x_points = self.falsified_dn_eq.get_OX_points(psi=psi)
+        _, separatrix = find_LCFS_separatrix(
+            self.falsified_dn_eq.x,
+            self.falsified_dn_eq.z,
+            psi,
+            o_points,
+            x_points,
+            double_null=True,
+            psi_n_tol=1e-6,
+        )
+        legflux = LegFlux(self.falsified_dn_eq)
+        legflux.x_points = x_points[:2]
+        legflux.separatrix = separatrix
+        legflux.n_null, legflux.sort_split = legflux.which_legs()
+        legs = legflux.get_legs(n_layers, 0.2)
+        x_points = self.dn_eq.get_OX_points()[1][:2]
+        x_points.sort(key=lambda xp: xp.z)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert "upper_inner" in legs
+        assert "upper_outer" in legs
+
+    def test_double_z_split_one_layer(self):
+        psi = self.falsified_dn_eq.psi()
+        o_points, x_points = self.falsified_dn_eq.get_OX_points(psi=psi)
+        _, separatrix = find_LCFS_separatrix(
+            self.falsified_dn_eq.x,
+            self.falsified_dn_eq.z,
+            psi,
+            o_points,
+            x_points,
+            double_null=True,
+            psi_n_tol=1e-6,
+        )
+        legflux = LegFlux(self.falsified_dn_eq)
+        legflux.x_points = x_points[:2]
+        legflux.separatrix = separatrix
+        legflux.n_null, legflux.sort_split = legflux.which_legs()
+        legs = legflux.get_legs(1, 0.0)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x1 = legs["lower_inner"][0].x[0]
+        legs = legflux.get_legs(1, 1.0)
+        assert len(legs) == 4
+        assert "lower_inner" in legs
+        assert "lower_outer" in legs
+        assert len(legs["lower_inner"]) == 1
+        assert len(legs["lower_outer"]) == 1
+        x2 = legs["lower_inner"][0].x[0]
+        assert np.isclose(x1, x2)
+
+    def assert_valid_leg(self, leg, x_point, rtol=1e-05):
+        assert np.isclose(leg.z[0], x_point.z, rtol=rtol)

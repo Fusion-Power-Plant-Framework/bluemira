@@ -10,11 +10,9 @@ Methods for finding O- and X-points and flux surfaces on 2-D arrays.
 
 from __future__ import annotations
 
-import operator
-from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Iterable, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
-    from bluemira.equilibria.equilibrium import Equilibrium
     from bluemira.equilibria.limiter import Limiter
 
 import numba as nb
@@ -29,7 +27,6 @@ from bluemira.geometry.coordinates import (
     Coordinates,
     get_area_2d,
     in_polygon,
-    join_intersect,
 )
 
 __all__ = [
@@ -650,6 +647,8 @@ def find_LCFS_separatrix(
     x_points: Optional[List[Xpoint]] = None,
     double_null: bool = False,
     psi_n_tol: float = 1e-6,
+    delta_start: float = 0.01,
+    rtol: float = 1e-3,
 ) -> Tuple[Coordinates, Union[Coordinates, List[Coordinates]]]:
     """
     Find the "true" LCFS and separatrix(-ices) in an Equilibrium.
@@ -670,6 +669,10 @@ def find_LCFS_separatrix(
         Whether or not to search for a double null separatrix.
     psi_n_tol:
         The normalised psi tolerance to use
+    delta_start:
+        Search range value. Will search for the transition from a
+        "closed" to "open" flux surface for normalised flux values
+        between 1 - delta_start and 1 + delta_start.
 
     Returns
     -------
@@ -693,8 +696,8 @@ def find_LCFS_separatrix(
         f_s = find_flux_surf(x, z, psi, psi_norm, o_points=o_points, x_points=x_points)
         return Coordinates({"x": f_s[0], "z": f_s[1]})
 
-    low = 0.99  # Guaranteed (?) to be a closed flux surface
-    high = 1.01  # Guaranteed (?) to be an open flux surface
+    low = 1 - delta_start  # Guaranteed (?) to be a closed flux surface
+    high = 1 + delta_start  # Guaranteed (?) to be an open flux surface
 
     # Speed optimisations (avoid recomputing psi and O, X points)
     if o_points is None or x_points is None:
@@ -734,7 +737,7 @@ def find_LCFS_separatrix(
             middle = low + delta / 2
             flux_surface = get_flux_loop(middle)
             z_new = min(abs(min(flux_surface.z)), abs(max(flux_surface.z)))
-            if np.isclose(z_new, z_ref, rtol=1e-3):
+            if np.isclose(z_new, z_ref, rtol=rtol):
                 # Flux surface only open at one end
                 low = middle
             else:
@@ -748,141 +751,6 @@ def find_LCFS_separatrix(
         loops.sort(key=lambda loop: -loop.length)
         separatrix = loops[:2]
     return lcfs, separatrix
-
-
-def _extract_leg(flux_line, x_cut, z_cut, delta_x, o_point_z):
-    radial_line = Coordinates({
-        "x": [x_cut - delta_x, x_cut + delta_x],
-        "z": [z_cut, z_cut],
-    })
-    arg_inters = join_intersect(flux_line, radial_line, get_arg=True)
-    arg_inters.sort()
-    # Lower null vs upper null
-    func = operator.lt if z_cut < o_point_z else operator.gt
-
-    if len(arg_inters) > 2:  # noqa: PLR2004
-        EquilibriaError(
-            "Unexpected number of intersections with the separatrix around the X-point."
-        )
-
-    flux_legs = []
-    for arg in arg_inters:
-        if func(flux_line.z[arg + 1], flux_line.z[arg]):
-            leg = Coordinates(flux_line[:, arg:])
-        else:
-            leg = Coordinates(flux_line[:, : arg + 1])
-
-        # Make the leg flow away from the plasma core
-        if leg.argmin((x_cut, 0, z_cut)) > 3:  # noqa: PLR2004
-            leg.reverse()
-
-        flux_legs.append(leg)
-    if len(flux_legs) == 1:
-        flux_legs = flux_legs[0]
-    return flux_legs
-
-
-def _extract_offsets(equilibrium, dx_offsets, ref_leg, direction, delta_x, o_point_z):
-    offset_legs = []
-    for dx in dx_offsets:
-        x, z = ref_leg.x[0] + direction * dx, ref_leg.z[0]
-        xl, zl = find_flux_surface_through_point(
-            equilibrium.x,
-            equilibrium.z,
-            equilibrium.psi(),
-            x,
-            z,
-            equilibrium.psi(x, z),
-        )
-        offset_legs.append(
-            _extract_leg(Coordinates({"x": xl, "z": zl}), x, z, delta_x, o_point_z)
-        )
-    return offset_legs
-
-
-def get_legs(
-    equilibrium: Equilibrium, n_layers: int = 1, dx_off: float = 0.0
-) -> Dict[str, List[Coordinates]]:
-    """
-    Get the legs of a separatrix.
-
-    Parameters
-    ----------
-    equilibrium:
-        Equilibrium for which to find the separatrix legs
-    n_layers:
-        Number of flux surfaces to extract for each leg
-    dx_off:
-        Total span in radial space of the flux surfaces to extract
-
-    Returns
-    -------
-    Dictionary of the legs with each key containing a list of geometries
-
-    Raises
-    ------
-    EquilibriaError: if a strange number of legs would be found for an X-point
-
-    Notes
-    -----
-    Will return two legs in the case of a single null
-    Will return four legs in the case of a double null
-
-    We can't rely on the X-point being contained within the two legs, due to
-    interpolation and local minimum finding tolerances.
-    """
-    o_points, x_points = equilibrium.get_OX_points()
-    o_point = o_points[0]
-    x_points = x_points[:2]
-    separatrix = equilibrium.get_separatrix()
-    delta = equilibrium.grid.dx
-    dx_offsets = None if n_layers == 1 else np.linspace(0, dx_off, n_layers)[1:]
-
-    if isinstance(separatrix, list):
-        # Double null (sort in/out bottom/top)
-        separatrix.sort(key=lambda half_sep: np.min(half_sep.x))
-        x_points.sort(key=lambda x_point: x_point.z)
-        legs = []
-        for half_sep, direction in zip(separatrix, [-1, 1]):
-            for x_p in x_points:
-                sep_leg = _extract_leg(half_sep, x_p.x, x_p.z, delta, o_point.z)
-                quadrant_legs = [sep_leg]
-                if dx_offsets is not None:
-                    quadrant_legs.extend(
-                        _extract_offsets(
-                            equilibrium, dx_offsets, sep_leg, direction, delta, o_point.z
-                        )
-                    )
-                legs.append(quadrant_legs)
-        leg_dict = {
-            "lower_inner": legs[0],
-            "lower_outer": legs[2],
-            "upper_inner": legs[1],
-            "upper_outer": legs[3],
-        }
-    else:
-        # Single null
-        x_point = x_points[0]
-        legs = _extract_leg(separatrix, x_point.x, x_point.z, delta, o_point.z)
-        legs.sort(key=lambda leg: leg.x[0])
-        inner_leg, outer_leg = legs
-        inner_legs, outer_legs = [inner_leg], [outer_leg]
-        if dx_offsets is not None:
-            inner_legs.extend(
-                _extract_offsets(
-                    equilibrium, dx_offsets, inner_leg, -1, delta, o_point.z
-                )
-            )
-            outer_legs.extend(
-                _extract_offsets(equilibrium, dx_offsets, outer_leg, 1, delta, o_point.z)
-            )
-        location = "lower" if x_point.z < o_point.z else "upper"
-        leg_dict = {
-            f"{location}_inner": inner_legs,
-            f"{location}_outer": outer_legs,
-        }
-
-    return leg_dict
 
 
 def grid_2d_contour(x: np.ndarray, z: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
