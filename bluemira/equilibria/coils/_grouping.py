@@ -465,8 +465,9 @@ class CoilGroup(CoilGroupFieldsMixin):
         -----
         Padding exists for coils with different discretisations or sizes within a
         coilgroup.
-        There are a few extra calculations of the greens functions where padding
-        exists in the :func:_combined_control method of CoilGroupFieldMixin.
+        There are a few extra calculations of the greens functions where padding exists
+        in
+        :meth:`~bluemira.equilibria.coils._field.CoilGroupFieldsMixin._combined_control`.
 
         """
         all_len = np.array([q.shape[-1] for q in _to_pad])
