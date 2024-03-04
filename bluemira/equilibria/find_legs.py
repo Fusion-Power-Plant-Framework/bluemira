@@ -125,7 +125,7 @@ class LegFlux:
                 return NumNull.DN, SortSplit.Z
             # Sort IN then OUT when use get_legs
             # self.separatrix remains sorted by loop length
-            return NumNull["DN".upper()], SortSplit["X".upper()]
+            return NumNull.DN, SortSplit.X
         # --- Single Null ---
         self.x_points = self.x_points[0]
         return NumNull.SN, SortSplit.X
