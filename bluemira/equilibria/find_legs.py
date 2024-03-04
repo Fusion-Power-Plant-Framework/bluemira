@@ -128,7 +128,7 @@ class LegFlux:
             return NumNull["DN".upper()], SortSplit["X".upper()]
         # --- Single Null ---
         self.x_points = self.x_points[0]
-        return NumNull["SN".upper()], SortSplit["X".upper()]
+        return NumNull.SN, SortSplit.X
 
     def get_leg_offsets(self, leg_dict):
         """Expands the leg list if user requires offset flux surfaces."""
