@@ -224,7 +224,7 @@ class Constraint(ConstraintSelection, Model):
     )
     TF_DUMP_VOLTAGE_UPPER_LIMIT = (
         34,
-        (51, 52, 56, 57, 58, 59, 60),
+        (51, 56, 57, 58, 59, 60),
         ("vdalw",),
         "TF dump voltage upper limit",
     )
@@ -598,7 +598,7 @@ ITERATION_VAR_MAPPING = {
     "fstrcond": 49,
     "fiooic": 50,
     "fvdump": 51,
-    "vdalw": 52,
+    # 52 NOT USED
     "fjprot": 53,
     "ftmargtf": 54,
     # 55 NOT USED
