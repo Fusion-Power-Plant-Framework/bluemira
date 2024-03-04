@@ -1090,6 +1090,7 @@ class CurrentDriveEfficiencyModel(PROCESSModel):
     10 - ECRH user input gamma
     11 - ECRH "HARE" model (E. Poli, Physics of Plasmas 2019)
     12 - EBW user scaling input. Scaling (S. Freethy)
+    13 - ECRH O-mode cutoff with Zeff and Te (Physical review letters. 90. 075003)
     """
 
     @classproperty
@@ -1110,6 +1111,7 @@ class CurrentDriveEfficiencyModel(PROCESSModel):
     ECRH_UI_GAM = 10
     ECRH_HARE = 11
     EBW_UI = 12
+    ECRH_O = 13
 
 
 class PlasmaIgnitionModel(PROCESSModel):
