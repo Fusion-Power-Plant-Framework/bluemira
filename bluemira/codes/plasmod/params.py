@@ -21,7 +21,7 @@ from bluemira.codes.utilities import ParameterMapping
 
 @dataclass
 class PlasmodSolverParams(MappedParameterFrame):
-    """Parameters required in :class:`~bluemira.codes.plasmod.Solver`."""
+    """Parameters required in :class:`~bluemira.codes.plasmod.api._solver.Solver`."""
 
     # Input parameters
     A: Parameter[float]

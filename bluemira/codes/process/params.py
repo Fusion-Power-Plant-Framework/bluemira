@@ -26,7 +26,7 @@ if TYPE_CHECKING:
 
 @dataclass
 class ProcessSolverParams(MappedParameterFrame):
-    """Parameters required in :class:`~bluemira.codes.process.Solver`."""
+    """Parameters required in :class:`~bluemira.codes.process._solver.Solver`."""
 
     # In parameters
     C_Ejima: Parameter[float]
