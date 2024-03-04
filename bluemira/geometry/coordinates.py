@@ -1038,6 +1038,9 @@ class Coordinates:
     -----
     This is a utility class for dealing with sets of coordinates in a number of different
     contexts. It should not be used for the creation of CAD geometries.
+
+    If a 3 x 3 array is provided it is assumed that the first axis is xyz and the second
+    is the coordinate, this will output a warning to notify users.
     """
 
     __slots__ = ("_array", "_is_planar", "_normal_vector")
