@@ -19,7 +19,7 @@ from bluemira.equilibria.find import (
     find_local_minima,
     inv_2x2_matrix,
 )
-from bluemira.equilibria.find_legs import LegFlux
+from bluemira.equilibria.find_legs import LegFlux, NumNull, SortSplit
 
 DATA = get_bluemira_path("equilibria/test_data", subfolder="tests")
 
@@ -133,10 +133,10 @@ class TestGetLegs:
     def test_legflux(self):
         test_sn = LegFlux(self.sn_eq)
         test_dn = LegFlux(self.dn_eq)
-        assert test_sn.n_null == "SN"
-        assert test_sn.sort_split == "X"
-        assert test_dn.n_null == "DN"
-        assert test_dn.sort_split == "X"
+        assert test_sn.n_null == NumNull.SN
+        assert test_sn.sort_split == SortSplit.X
+        assert test_dn.n_null == NumNull.DN
+        assert test_dn.sort_split == SortSplit.X
         psi = self.falsified_dn_eq.psi()
         o_points, x_points = self.falsified_dn_eq.get_OX_points(psi=psi)
         _, separatrix = find_LCFS_separatrix(
@@ -152,8 +152,8 @@ class TestGetLegs:
         test_falsified_dn_eq.x_points = x_points[:2]
         test_falsified_dn_eq.separatrix = separatrix
         n_null, sort_split = test_falsified_dn_eq.which_legs()
-        assert n_null == "DN"
-        assert sort_split == "Z"
+        assert n_null == NumNull.DN
+        assert sort_split == SortSplit.Z
 
     @pytest.mark.parametrize("n_layers", [2, 3, 5])
     def test_single_null(self, n_layers):
