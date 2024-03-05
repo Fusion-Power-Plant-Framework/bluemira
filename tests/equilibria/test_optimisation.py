@@ -15,7 +15,6 @@ from bluemira.equilibria.optimisation.constraints import (
     VerticalFieldConstraint,
 )
 from bluemira.equilibria.optimisation.problem import (
-    MinimalCurrentCOP,
     TikhonovCurrentCOP,
 )
 from bluemira.equilibria.profiles import CustomProfile
@@ -92,7 +91,7 @@ def test_vertical_field_constraint():
 
     bz_constraint = VerticalFieldConstraint(9, 0.0, -0.75, 1.0, tolerance=1e-6)
     targets = MagneticConstraintSet([bz_constraint])
-    opt_problem = MinimalCurrentCOP(eq.coilset, eq, targets)
+    opt_problem = TikhonovCurrentCOP(eq.coilset, eq, targets, gamma=1e-18)
 
     coilset = opt_problem.optimise()
 
