@@ -84,7 +84,7 @@ class HullPlane(Enum):
             return cls[value.upper()]
         except KeyError:
             raise ValueError(
-                f"Invalid hull plane: {value}. Choose from: {*cls._member_names_, }"
+                f"Invalid hull plane: {value}. Choose from: {(*cls._member_names_,)}"
             ) from None
 
 
@@ -1371,8 +1371,8 @@ def boolean_fuse(shapes: Iterable[BluemiraGeo], label: str = "") -> BluemiraGeo:
 
 
 def boolean_cut(
-    shape: BluemiraGeo, tools: Iterable[BluemiraGeo]
-) -> Iterable[BluemiraGeo]:
+    shape: BluemiraGeo, tools: Union[BluemiraGeo, Iterable[BluemiraGeo]]
+) -> Union[BluemiraGeo, List[BluemiraGeo]]:
     """
     Difference of shape and a given (list of) topo shape cut(tools)
 
@@ -1393,7 +1393,7 @@ def boolean_cut(
         In case the boolean operation fails.
     """
     apishape = shape.shape
-    if not isinstance(tools, list):
+    if not isinstance(tools, Iterable):
         tools = [tools]
     apitools = [t.shape for t in tools]
     cut_shape = cadapi.boolean_cut(apishape, apitools)

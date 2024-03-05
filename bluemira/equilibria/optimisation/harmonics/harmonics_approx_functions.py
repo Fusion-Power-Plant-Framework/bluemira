@@ -292,7 +292,7 @@ def collocation_points(
     return Collocation(collocation_r, collocation_theta, collocation_x, collocation_z)
 
 
-def lcfs_fit_metric(coords1: np.ndarray, coords2: np.ndarray) -> float:
+def lcfs_fit_metric(coords1: Coordinates, coords2: Coordinates) -> float:
     """
     Calculate the value of the metric used for evaluating the SH approximation.
     This is equal to 1 for non-intersecting LCFSs, and 0 for identical LCFSs.

@@ -114,10 +114,10 @@ def test_collocation_points():
     z = [-1.8, -1.9, -1.8, 0, 1.8, 1.9, 1.8, 0, -1.8]
     plasma_boundary = Coordinates({"x": x, "z": z})
 
-    point_type_1 = "arc"
-    point_type_2 = "arc_plus_extrema"
-    point_type_3 = "random"
-    point_type_4 = "random_plus_extrema"
+    point_type_1 = PointType.ARC
+    point_type_2 = PointType.ARC_PLUS_EXTREMA
+    point_type_3 = PointType.RANDOM
+    point_type_4 = PointType.RANDOM_PLUS_EXTREMA
 
     colloc1 = collocation_points(n_points, plasma_boundary, point_type_1)
     colloc2 = collocation_points(n_points, plasma_boundary, point_type_2)
@@ -161,7 +161,7 @@ def test_get_psi_harmonic_amplitudes():
     eq = Equilibrium.from_eqdsk(Path(TEST_PATH, "SH_test_file.json").as_posix())
 
     test_colocation = collocation_points(
-        n_points=18, plasma_boundary=eq.get_LCFS(), point_type="arc"
+        n_points=18, plasma_boundary=eq.get_LCFS(), point_type=PointType.ARC
     )
 
     sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
