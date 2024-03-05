@@ -21,6 +21,7 @@ from bluemira.equilibria.optimisation.problem import (
 from bluemira.equilibria.profiles import CustomProfile
 from bluemira.equilibria.solve import PicardIterator
 from tests._helpers import add_plot_title
+from bluemira.optimisation import Algorithm
 
 
 def coilset_setup(*, materials=False):
@@ -96,7 +97,14 @@ def test_vertical_field_constraint():
 
     bz_constraint = VerticalFieldConstraint(9, 0.0, -0.75, 1.0, tolerance=1e-6)
     targets = MagneticConstraintSet([bz_constraint])
-    opt_problem = TikhonovCurrentCOP(eq.coilset, eq, targets, gamma=1e-18)
+    opt_problem = TikhonovCurrentCOP(
+        eq.coilset,
+        eq,
+        targets,
+        gamma=1e-18,
+        opt_algorithm=Algorithm.SLSQP,
+        opt_conditions={"max_eval": 5},
+    )
 
     coilset = opt_problem.optimise()
 
