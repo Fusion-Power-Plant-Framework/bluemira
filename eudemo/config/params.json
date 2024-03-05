@@ -834,7 +834,7 @@
     "long_name": "Vacuum vessel double-walled shell thickness"
   },
   "v_burn": {
-    "value": 2.879e-2,
+    "value": 2.949e-2,
     "unit": "volt",
     "source": "Input",
     "long_name": "Loop voltage during burn"
