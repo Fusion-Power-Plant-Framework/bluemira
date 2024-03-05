@@ -44,6 +44,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.display.auto_config import plot_defaults
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
+    PointType,
     spherical_harmonic_approximation,
 )
 
@@ -93,7 +94,7 @@ plt.show()
 ) = spherical_harmonic_approximation(
     eq,
     n_points=20,
-    point_type="random_plus_extrema",
+    point_type=PointType.ARC_PLUS_EXTREMA,
     acceptable_fit_metric=0.05,
     seed=15,
     plot=True,

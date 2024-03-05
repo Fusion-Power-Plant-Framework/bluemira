@@ -61,6 +61,7 @@ from scipy.special import lpmv
 from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
+    PointType,
     coil_harmonic_amplitude_matrix,
     coils_outside_lcfs_sphere,
     collocation_points,
@@ -207,7 +208,7 @@ n = 20
 collocation = collocation_points(
     n,
     original_LCFS,
-    "random_plus_extrema",
+    PointType.ARC_PLUS_EXTREMA,
     seed=15,
 )
 
