@@ -15,6 +15,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
+    PointType,
     coil_harmonic_amplitude_matrix,
     coils_outside_lcfs_sphere,
     collocation_points,
@@ -113,10 +114,10 @@ def test_collocation_points():
     z = [-1.8, -1.9, -1.8, 0, 1.8, 1.9, 1.8, 0, -1.8]
     plasma_boundary = Coordinates({"x": x, "z": z})
 
-    point_type_1 = "arc"
-    point_type_2 = "arc_plus_extrema"
-    point_type_3 = "random"
-    point_type_4 = "random_plus_extrema"
+    point_type_1 = PointType.ARC
+    point_type_2 = PointType.ARC_PLUS_EXTREMA
+    point_type_3 = PointType.RANDOM
+    point_type_4 = PointType.RANDOM_PLUS_EXTREMA
 
     colloc1 = collocation_points(n_points, plasma_boundary, point_type_1)
     colloc2 = collocation_points(n_points, plasma_boundary, point_type_2)
@@ -160,7 +161,7 @@ def test_get_psi_harmonic_amplitudes():
     eq = Equilibrium.from_eqdsk(Path(TEST_PATH, "SH_test_file.json").as_posix())
 
     test_colocation = collocation_points(
-        n_points=18, plasma_boundary=eq.get_LCFS(), point_type="arc"
+        n_points=18, plasma_boundary=eq.get_LCFS(), point_type=PointType.ARC
     )
 
     sh_coil_names, _ = coils_outside_lcfs_sphere(eq)
@@ -209,7 +210,7 @@ def test_spherical_harmonic_approximation():
     ) = spherical_harmonic_approximation(
         eq,
         n_points=20,
-        point_type="arc_plus_extrema",
+        point_type=PointType.ARC_PLUS_EXTREMA,
         acceptable_fit_metric=0.05,
     )
 
