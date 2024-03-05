@@ -3,14 +3,15 @@ from typing import List
 
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import minimize_scalar
 
-from bluemira.magnets.base import StructuralComponent, parall_k, serie_k
 from bluemira.magnets.conductor import Conductor
 from bluemira.magnets.materials import Material
+from bluemira.magnets.utils import parall_k, serie_k
 from bluemira.magnets.winding_pack import WindingPack
 
 
-class CaseTF(StructuralComponent):
+class CaseTF:
     def __init__(
             self,
             Ri: float,
@@ -142,12 +143,90 @@ class CaseTF(StructuralComponent):
         ]
         return parall_k([self.Ky_ps(**kwargs), self.Ky_vault(**kwargs)] + temp)
 
-    def Xx(self, **kwargs):
-        Kx_wp = parall_k([w.Kx(**kwargs) for w in self.WPs])
-        return Kx_wp / self.Kx(**kwargs)
+    def _tresca_stress(self, pm: float, fz: float, **kwargs):
+        """Procedure that calculate Tresca principal stress on the case
 
-    def Yy(self, **kwargs):
-        return self.Ky_vault(**kwargs) / self.Ky(**kwargs)
+        Parameters
+        ----------
+            pm:
+                radial magnetic pressure
+            fz:
+                vertical tension acting on the case
+            Re:
+                external radius of the TF coil
+            I:
+                total current flowing in the case
+            kwargs:
+                arguments necessary to calculate the structural properties of the case
+
+        """
+        # The maximum principal stress acting on the case nose is the compressive
+        # hoop stress generated in the equivalent shell from the magnetic pressure. From
+        # the Shell theory, for an isotropic continuous shell with a thickness ratio:
+        beta = self.Rk / (self.Rk + self.dy_vault)
+        # the maximum hoop stress, corrected to account for the presence of the WP, is
+        # placed at the innermost radius of the case as:
+        sigma_theta = (
+                2.0 / (1 - beta ** 2) * pm * self.Kx_vault(**kwargs) / self.Kx(**kwargs)
+        )
+
+        # In addition to the radial centripetal force, the second in-plane component
+        # to be accounted is the vertical force acting on the TFC inner-leg.
+        # t_z = 0.5*np.log(self.Ri / Re) * MU_0_4PI * (360. / self.theta_TF) * I ** 2
+
+        # As conservative approximation, the vertical force is considered to act only
+        # on jackets and vault
+        total_case_area = (self.dx_i + self.dx_k) * (self.Ri - self.Rk) / 2
+        total_wp_area = np.sum([w.conductor.area * w.nl * w.nt for w in self.WPs])
+        total_wp_jacket_area = np.sum([
+            w.conductor.area_jacket * w.nl * w.nt for w in self.WPs
+        ])
+        sigma_z = fz / (total_case_area - total_wp_area + total_wp_jacket_area)
+        sigma_tot = sigma_theta + sigma_z
+        return sigma_tot
+
+    def optimize_vault_radial_thickness(
+            self,
+            pm: float,
+            fz: float,
+            T: float,
+            B: float,
+            allowable_sigma: float,
+            bounds: np.array = None,
+    ):
+        def sigma_difference(
+                dy_vault: float,
+                pm: float,
+                fz: float,
+                T: float,
+                B: float,
+                case: CaseTF,
+                allowable_sigma: float,
+        ):
+            case.dy_vault = dy_vault
+            sigma = case._tresca_stress(pm, fz, T=T, B=B)
+            diff = abs(sigma - allowable_sigma)
+            return diff
+
+        method = None
+        if bounds is not None:
+            method = "bounded"
+
+        result = minimize_scalar(
+            fun=sigma_difference,
+            args=(pm, fz, T, B, self, allowable_sigma),
+            bounds=bounds,
+            method=method,
+            options={"xatol": 1e-4},
+        )
+
+        if not result.success:
+            raise ValueError("dx_vault optimization did not converge.")
+        self.dy_vault = result.x
+        print(f"Optimal dy_vault: {self.dy_vault}")
+        print(f"Tresca sigma: {self._tresca_stress(pm, fz, T=T, B=B) / 1e6} MPa")
+
+        return result
 
     def plot(self, ax=None, show: bool = False, homogenized: bool = False):
         if ax is None:
@@ -263,3 +342,45 @@ class CaseTF(StructuralComponent):
             print(f"remaining_conductors: {remaining_conductors}")
 
         self.WPs = WPs
+
+
+def optimize_jacket_conductor(
+        conductor: Conductor,
+        pressure: float,
+        T: float,
+        B: float,
+        allowable_sigma: float,
+        bounds: np.array = None,
+):
+    def sigma_difference(
+            dx_jacket: float,
+            pressure: float,
+            T: float,
+            B: float,
+            conductor: Conductor,
+            allowable_sigma: float,
+    ):
+        conductor.dx_jacket = dx_jacket
+        sigma_r = _sigma_r_jacket(conductor, pressure, T, B)
+        diff = abs(sigma_r - allowable_sigma)
+        return diff
+
+    method = None
+    if bounds is not None:
+        method = "bounded"
+
+    result = minimize_scalar(
+        fun=sigma_difference,
+        args=(pressure, T, B, conductor, allowable_sigma),
+        bounds=bounds,
+        method=method,
+        options={"xatol": 1e-4},
+    )
+
+    if not result.success:
+        raise ValueError("dx_jacket optimization did not converge.")
+    conductor.dx_jacket = result.x
+    print(f"Optimal dx_jacket: {conductor.dx_jacket}")
+    print(f"Averaged sigma_r: {_sigma_r_jacket(conductor, pressure, T, B) / 1e6} MPa")
+
+    return result

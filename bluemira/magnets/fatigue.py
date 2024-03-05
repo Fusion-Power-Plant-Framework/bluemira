@@ -22,6 +22,7 @@
 """
 Paris Law fatigue model with FE-inspired analytical crack propagation
 """
+
 import abc
 from dataclasses import dataclass
 
@@ -29,11 +30,11 @@ import numpy as np
 
 __all__ = [
     "ConductorInfo",
+    "EllipticalEmbeddedCrack",
     "ParisFatigueMaterial",
     "ParisFatigueSafetyFactors",
     "QuarterEllipticalCornerCrack",
     "SemiEllipticalSurfaceCrack",
-    "EllipticalEmbeddedCrack",
     "calculate_n_pulses",
 ]
 
@@ -80,7 +81,7 @@ def _stress_intensity_factor(
     a: float,
     H: float,  # noqa: N803
     Q: float,  # noqa: N803
-    F: float,  # noqa: N803
+        F: float,
 ) -> float:
     """
     Equation 1a of Newman and Raju, 1984
@@ -117,8 +118,7 @@ def _angular_location_correction(a: float, c: float, phi: float) -> float:
     """
     if a <= c:
         return ((a / c) ** 2 * np.cos(phi) ** 2 + np.sin(phi) ** 2) ** 0.25  # (10)
-    else:
-        return ((c / a) ** 2 * np.sin(phi) ** 2 + np.cos(phi) ** 2) ** 0.25  # (13)
+    return ((c / a) ** 2 * np.sin(phi) ** 2 + np.cos(phi) ** 2) ** 0.25  # (13)
 
 
 def _finite_width_correction(a_d_t: float, c: float, w: float) -> float:
@@ -275,9 +275,7 @@ class QuarterEllipticalCornerCrack(Crack):
         p = 0.2 + ratio + 0.6 * a_d_t  # (21 & 30)
         H = _bending_correction_factor(h1, h2, p, phi)  # noqa: N806
         Q = _ellipse_shape_factor(ratio)  # noqa: N806
-        F = _boundary_correction_factor(  # noqa: N806
-            a_d_t, m1, m2, m3, g1 * g2, f_phi, f_w
-        )
+        F = _boundary_correction_factor(a_d_t, m1, m2, m3, g1 * g2, f_phi, f_w)
         return _stress_intensity_factor(hoop_stress, bend_stress, a, H, Q, F)
 
 
@@ -368,7 +366,7 @@ class SemiEllipticalSurfaceCrack(Crack):
         p = 0.2 + ratio + 0.6 * a_d_t  # (21 & 30)
         H = _bending_correction_factor(h1, h2, p, phi)  # noqa: N806
         Q = _ellipse_shape_factor(ratio)  # noqa: N806
-        F = _boundary_correction_factor(a_d_t, m1, m2, m3, g, f_phi, f_w)  # noqa: N806
+        F = _boundary_correction_factor(a_d_t, m1, m2, m3, g, f_phi, f_w)
         return _stress_intensity_factor(hoop_stress, bend_stress, a, H, Q, F)
 
 
@@ -447,7 +445,7 @@ class EllipticalEmbeddedCrack(Crack):
         f_w = _finite_width_correction(a_d_t, c, w)
 
         Q = _ellipse_shape_factor(ratio)  # noqa: N806
-        F = _boundary_correction_factor(a_d_t, m1, m2, m3, g, f_phi, f_w)  # noqa: N806
+        F = _boundary_correction_factor(a_d_t, m1, m2, m3, g, f_phi, f_w)
         return _stress_intensity_factor(hoop_stress, bend_stress, a, 0.0, Q, F)
 
 

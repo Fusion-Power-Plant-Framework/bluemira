@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from bluemira.magnets.base import StructuralComponent, parall_k, serie_k
 from bluemira.magnets.conductor import Conductor
+from bluemira.magnets.utils import parall_k, serie_k
 
 
-class WindingPack(StructuralComponent):
+class WindingPack:
     def __init__(self, conductor: Conductor, nl: np.int32, nt: np.int32, name: str = ""):
         self.name = name
         self.nl = nl
@@ -27,12 +27,6 @@ class WindingPack(StructuralComponent):
     def Ky(self, **kwargs):
         """Total equivalent stiffness along x-axis"""
         return serie_k([parall_k([self.conductor.Kx(**kwargs)] * self.nt)] * self.nl)
-
-    def Xx(self, **kwargs):
-        return 0
-
-    def Yy(self, **kwargs):
-        return 0
 
     def plot(
             self,

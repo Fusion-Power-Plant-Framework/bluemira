@@ -1,18 +1,18 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from scipy.optimize import minimize_scalar
 
-from bluemira.magnets.base import (
-    StructuralComponent,
+from bluemira.magnets.cable import Cable
+from bluemira.magnets.materials import Material
+from bluemira.magnets.utils import (
     parall_k,
     parall_r,
     serie_k,
     serie_r,
 )
-from bluemira.magnets.cable import Cable
-from bluemira.magnets.materials import Material
 
 
-class Conductor(StructuralComponent):
+class Conductor:
     def __init__(
             self,
             cable: Cable,
@@ -115,7 +115,8 @@ class Conductor(StructuralComponent):
 
     def res(self, **kwargs):
         """
-        Cable's equivalent resistivity, computed as the parallel between strands' resistivity
+        Cable's equivalent resistivity, computed as the parallel
+        between strands' resistivity
 
         Parameters
         ----------
@@ -298,3 +299,53 @@ class SquareConductor(Conductor):
     @property
     def dy_ins(self):
         return self.dx_ins
+
+
+def _sigma_r_jacket(conductor: Conductor, pressure: float, T: float, B: float):
+    saf_jacket = (conductor.cable.dx + 2 * conductor.dx_jacket) / (
+            2 * conductor.dx_jacket
+    )
+    X_jacket = conductor.Xx(T=T, B=B)
+    return pressure * X_jacket * saf_jacket
+
+
+def optimize_jacket_conductor(
+        conductor: Conductor,
+        pressure: float,
+        T: float,
+        B: float,
+        allowable_sigma: float,
+        bounds: np.array = None,
+):
+    def sigma_difference(
+            dx_jacket: float,
+            pressure: float,
+            T: float,
+            B: float,
+            conductor: Conductor,
+            allowable_sigma: float,
+    ):
+        conductor.dx_jacket = dx_jacket
+        sigma_r = _sigma_r_jacket(conductor, pressure, T, B)
+        diff = abs(sigma_r - allowable_sigma)
+        return diff
+
+    method = None
+    if bounds is not None:
+        method = "bounded"
+
+    result = minimize_scalar(
+        fun=sigma_difference,
+        args=(pressure, T, B, conductor, allowable_sigma),
+        bounds=bounds,
+        method=method,
+        options={"xatol": 1e-4},
+    )
+
+    if not result.success:
+        raise ValueError("dx_jacket optimization did not converge.")
+    conductor.dx_jacket = result.x
+    print(f"Optimal dx_jacket: {conductor.dx_jacket}")
+    print(f"Averaged sigma_r: {_sigma_r_jacket(conductor, pressure, T, B) / 1e6} MPa")
+
+    return result

@@ -1,12 +1,24 @@
+# SPDX-FileCopyrightText: 2021-present M. Coleman, J. Cook, F. Franza
+# SPDX-FileCopyrightText: 2021-present I.A. Maione, S. McIntosh
+# SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
+#
+# SPDX-License-Identifier: LGPL-2.1-or-later
+
+"""Strand class"""
+
 from typing import List, Union
 
 import numpy as np
 
-from bluemira.magnets.base import parall_r, serie_r
 from bluemira.magnets.materials import Copper100, Material, Nb3Sn, NbTi
+from bluemira.magnets.utils import parall_r, serie_r
 
 
 class Strand:
+    """
+    Strand class
+    """
+
     def __init__(
             self,
             materials: List[Material],
@@ -31,16 +43,18 @@ class Strand:
 
     @property
     def area(self) -> float:
+        """Area of the strand cross section"""
         return np.pi * self.d_strand ** 2 / 4
 
-    def ym(self, T: float) -> float:
+    def ym(self, **kwargs) -> float:
         """
-        Young moduli for the considered strand
+        Young modulus for the considered strand
 
         Parameters
         ----------
         kwargs:
-            Other Parameters that shall be used to calculate the Young moduli (e.g. Temperature)
+            Other Parameters that shall be used to calculate the Young moduli
+            (e.g. Temperature)
 
         Returns
         -------
@@ -48,8 +62,7 @@ class Strand:
 
         Note
         ----
-
-            Dummy value due missing data for the strand
+            Dummy value
         """
         return 0.1e9
 
@@ -112,7 +125,7 @@ class Strand:
 class Wire_Nb3Sn(Strand):
     def __init__(self, d_strand: float = 0.82e-3):
         """
-        Nb3Sn strand
+        Nb3Sn strand. It is made by 50% Copper100 and 50% Nb3Sn
 
         Parameters
         ----------
@@ -129,17 +142,19 @@ class Wire_Nb3Sn(Strand):
             self, B: float, T: float, strain: float = 0.55, T_margin: float = 1.5
     ) -> float:
         """
-        Nb3Sn critical current from Jc(B,T,strain) Parameterization for the ITER Nb3Sn Production
+        Nb3Sn critical current from Jc(B,T,strain).
+        Parameterization for the ITER Nb3Sn Production.
 
         Ref
         ---
-        fit from IEEE TRANSACTIONS ON APPLIED SUPERCONDUCTIVITY, VOL. 19, NO. 3, JUNE 2009
-        Luca Bottura and Bernardo Bordini
+        fit from IEEE TRANSACTIONS ON APPLIED SUPERCONDUCTIVITY, VOL. 19, NO. 3,
+        JUNE 2009 Luca Bottura and Bernardo Bordini
 
         note
         ----
-        fit parameters form WST strand,A. Nijhuis, “TF conductor samples strand thermo mechanical critical
-        performances tests”, https://idm.euro-fusion.org/?uid=2M5SMM v1.0.
+        fit parameters form WST strand,A. Nijhuis, “TF conductor samples strand
+        thermo mechanical critical performances tests”,
+        https://idm.euro-fusion.org/?uid=2M5SMM v1.0.
 
         Parameters
         ----------
