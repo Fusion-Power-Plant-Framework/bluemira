@@ -6,6 +6,7 @@
 """Coilset optimisation problem classes and tools."""
 
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
+    PointType,
     coil_harmonic_amplitude_matrix,
     coils_outside_lcfs_sphere,
     collocation_points,
@@ -23,6 +24,7 @@ from bluemira.equilibria.optimisation.harmonics.harmonics_constraints import (
 )
 
 __all__ = [
+    "PointType",
     "SphericalHarmonicConstraint",
     "SphericalHarmonicConstraintFunction",
     "coil_harmonic_amplitude_matrix",
