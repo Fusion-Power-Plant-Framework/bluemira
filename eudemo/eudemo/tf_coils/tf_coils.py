@@ -636,6 +636,8 @@ class TFCoilBuilder(Builder):
             children=[ib_cas_comp, ob_cas_comp],
         )
 
+    print("change")
+
     def _build_xyz_wp(self) -> Tuple[BluemiraSolid, PhysicalComponent]:
         """
         Winding pack x-y-z
