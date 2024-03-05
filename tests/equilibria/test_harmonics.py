@@ -15,6 +15,7 @@ from bluemira.base.file import get_bluemira_path
 from bluemira.equilibria.coils import Coil, CoilSet, SymmetricCircuit
 from bluemira.equilibria.equilibrium import Equilibrium
 from bluemira.equilibria.optimisation.harmonics.harmonics_approx_functions import (
+    PointType,
     coil_harmonic_amplitude_matrix,
     coils_outside_lcfs_sphere,
     collocation_points,
@@ -209,7 +210,7 @@ def test_spherical_harmonic_approximation():
     ) = spherical_harmonic_approximation(
         eq,
         n_points=20,
-        point_type="arc_plus_extrema",
+        point_type=PointType.ARC_PLUS_EXTREMA,
         acceptable_fit_metric=0.05,
     )
 

@@ -23,6 +23,7 @@ from bluemira.base.error import BluemiraError
 from bluemira.base.look_and_feel import bluemira_debug, bluemira_print
 from bluemira.equilibria.coils import CoilSet
 from bluemira.equilibria.equilibrium import Equilibrium
+from bluemira.equilibria.error import EquilibriaError
 from bluemira.equilibria.grid import Grid
 from bluemira.equilibria.plotting import PLOT_DEFAULTS
 from bluemira.geometry.coordinates import (
@@ -190,9 +191,9 @@ class Collocation:
 
 def collocation_points(
     n_points: int,
-    plasma_boundary: np.ndarray,
-    point_type: str,
-    seed: Optional[int] = RNGSeeds.equilibria_harmonics.value,
+    plasma_boundary: Coordinates,
+    point_type: PointType,
+    seed: Optional[int] = None,
 ) -> Collocation:
     """
     Create a set of collocation points for use wih spherical harmonic
@@ -216,7 +217,8 @@ def collocation_points(
         Method for creating a set of points: 'arc', 'arc_plus_extrema',
         'random', or 'random_plus_extrema'
     seed:
-        Seed value to use with a random point distribution
+        Seed value to use with a random point distribution, defaults
+        to `RNGSeeds.equilibria_harmonics.value`.
 
     Returns
     -------
@@ -225,7 +227,9 @@ def collocation_points(
         - "r" and "theta" values of collocation points.
 
     """
-    point_type = PointType[point_type.upper()]
+    if seed is None:
+        seed = RNGSeeds.equilibria_harmonics.value
+
     x_bdry = plasma_boundary.x
     z_bdry = plasma_boundary.z
 
@@ -449,12 +453,12 @@ def get_psi_harmonic_amplitudes(
 
 def spherical_harmonic_approximation(
     eq: Equilibrium,
-    n_points: Optional[int] = None,
-    point_type: Optional[str] = None,
-    seed: Optional[str] = None,
-    acceptable_fit_metric: Optional[float] = None,
+    n_points: int = 8,
+    point_type: PointType = PointType.ARC_PLUS_EXTREMA,
+    acceptable_fit_metric: float = 0.01,
     plot: bool = False,
     nlevels: int = 50,
+    seed: Optional[int] = None,
 ) -> Tuple[list, np.ndarray, int, float, np.ndarray, float, np.ndarray]:
     """
     Calculate the spherical harmonic (SH) amplitudes/coefficients
@@ -486,8 +490,6 @@ def spherical_harmonic_approximation(
         in the x- and z-directions (4 points total),
         - 'random',
         - 'random_plus_extrema'.
-    seed:
-        Seed value to use with random point distribution
     acceptable_fit_metric:
         Value between 0 and 1 chosen by user (default=0.01).
         If the LCFS found using the SH approximation method perfectly matches the
@@ -499,6 +501,8 @@ def spherical_harmonic_approximation(
         Whether or not to plot the results
     nlevels:
         Plot setting, higher n = greater number of contour lines
+    seed:
+        Seed value to use with random point distribution
 
 
     Returns
@@ -519,14 +523,6 @@ def spherical_harmonic_approximation(
         Coil currents found using the spherical harmonic approximation
 
     """
-    # Default values if not input
-    if acceptable_fit_metric is None:
-        acceptable_fit_metric = 0.01
-    if n_points is None:
-        n_points = 8
-    if point_type is None:
-        point_type = "arc_plus_extrema"
-
     # Get the necessary boundary locations and length scale
     # for use in spherical harmonic approximations.
     # Starting LCFS
@@ -596,8 +592,15 @@ def spherical_harmonic_approximation(
 
         sh_eq.get_OX_points(approx_total_psi, force_update=True)
 
-        # Get plasma boundary for comparison to starting equilibrium using fit metric
-        approx_LCFS = sh_eq.get_LCFS(psi=approx_total_psi, delta_start=0.015)
+        try:
+            # Get plasma boundary for comparison to starting equilibrium using fit metric
+            approx_LCFS = sh_eq.get_LCFS(psi=approx_total_psi, delta_start=0.015)
+        except EquilibriaError:
+            bluemira_print(
+                "Could not find LCFS in the approximate psi field. "
+                "Trying again with more degrees."
+            )
+            continue
 
         # Compare staring equilibrium to new approximate equilibrium
         fit_metric_value = lcfs_fit_metric(original_LCFS, approx_LCFS)
