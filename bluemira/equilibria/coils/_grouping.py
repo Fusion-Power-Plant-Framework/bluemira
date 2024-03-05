@@ -1063,10 +1063,10 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the number of coils that can be optimised.
         """
-        return len(self._current_optimisable_coil_names)
+        return len(self.current_optimisable_coil_names)
 
     @property
-    def _current_optimisable_coil_names(self) -> List[str]:
+    def current_optimisable_coil_names(self) -> List[str]:
         """
         Get the names of the coils that can be optimised.
         """
@@ -1077,14 +1077,14 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         return [*flatten_iterable(optimisable_coil_names)]
 
     @property
-    def _current_optimisable_coil_inds(self) -> List[int]:
+    def _optimisation_currents_inds(self) -> List[int]:
         """
         Get the indices of the coils that can be optimised.
 
         These indices are used to extract the optimisable currents from the CoilSet
         and are based on the index of the coils in the name array.
         """
-        return [self.name.index(cn) for cn in self._current_optimisable_coil_names]
+        return [self.name.index(cn) for cn in self.current_optimisable_coil_names]
 
     @property
     def _optimisation_currents_sym_mat(self) -> np.ndarray:
@@ -1122,7 +1122,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the currents for the optimisable coils
         """
-        return self.current[self._current_optimisable_coil_inds]
+        return self.current[self._optimisation_currents_inds]
 
     @_optimisation_currents.setter
     def _optimisation_currents(self, values: np.ndarray):
@@ -1158,15 +1158,15 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         """
         Get the number of coils that can be position optimised.
         """
-        return len(self._position_optimisable_coil_names)
+        return len(self.position_optimisable_coil_names)
 
     @property
-    def _position_optimisable_coil_names(self) -> List[str]:
+    def position_optimisable_coil_names(self) -> List[str]:
         """
         Get the names of the coils that can be position optimised.
         """
         optimisable_coil_names = [
-            c.primary_coil.name if isinstance(c, Circuit) else c.name
+            c.primary_coil.name if isinstance(c, SymmetricCircuit) else c.name
             for c in self._coils
         ]
         return [*flatten_iterable(optimisable_coil_names)]
@@ -1180,7 +1180,7 @@ class CoilSet(CoilSetFieldsMixin, CoilGroup):
         These indices are used to extract the optimisable positions from the CoilSet
         and are based on the index of the coils in the name array.
         """
-        return [self.name.index(cn) for cn in self._position_optimisable_coil_names]
+        return [self.name.index(cn) for cn in self.position_optimisable_coil_names]
 
     @property
     def _optimisation_positions_sym_mat(self) -> np.ndarray:
