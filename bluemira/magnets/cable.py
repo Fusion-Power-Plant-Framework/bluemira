@@ -294,9 +294,66 @@ class SquareCable(Cable):
         return np.sqrt(self.area)
 
 
-class DummySquareCable(SquareCable):
+class DummySquareCableHTS(SquareCable):
+    """
+    Dummy square cable with young's moduli set to 120 GPa
+
+    Parameters
+    ----------
+    sc_strand:
+        strand of the superconductor
+    stab_strand:
+        strand of the stabilizer
+    d_cooling_channel:
+        diameter of the cooling channel
+    n_sc_strand:
+        number of superconducting strands
+    n_stab_strand:
+        number of stabilizer strands
+    void_fraction:
+        void fraction defined as material_volume/total_volume
+    cos_theta:
+        corrective factor that consider the twist of the cable
+    name:
+        cable string identifier
+
+    #todo decide if it is the case to add also the cooling material
+    """
+
     def ym(self, **kwargs):
-        return 120
+        return 120e9
+
+
+class DummySquareCableLTS(SquareCable):
+    """
+    Dummy square cable with young's moduli set to 120 GPa
+
+    Parameters
+    ----------
+    sc_strand:
+        strand of the superconductor
+    stab_strand:
+        strand of the stabilizer
+    d_cooling_channel:
+        diameter of the cooling channel
+    n_sc_strand:
+        number of superconducting strands
+    n_stab_strand:
+        number of stabilizer strands
+    void_fraction:
+        void fraction defined as material_volume/total_volume
+    cos_theta:
+        corrective factor that consider the twist of the cable
+    name:
+        cable string identifier
+
+    #todo decide if it is the case to add also the cooling material
+    """
+
+    def ym(self, **kwargs):
+        return 0.1e9
+
+
 
 
 def _heat_balance_model_cable(t, T, B: Callable, I: Callable, cable: Cable):
@@ -346,7 +403,7 @@ def _temperature_evolution(
 ):
     solution = solve_ivp(
         _heat_balance_model_cable,
-        np.array([t0, tf]),
+        [t0, tf],
         [initial_temperature],
         args=(B, I, cable),
         dense_output=True,

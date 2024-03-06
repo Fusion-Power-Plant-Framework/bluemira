@@ -59,7 +59,7 @@ class CaseTF:
     @property
     def dx_ps(self):
         """Average toroidal length of the ps plate [m]"""
-        return 2 * (self.Ri + self.Ri - self.dy_ps) / 2 * np.tan(self._rad_theta_TF / 2)
+        return (self.Ri + (self.Ri - self.dy_ps)) * np.tan(self._rad_theta_TF / 2)
 
     @property
     def R_wp_i(self):
@@ -85,15 +85,15 @@ class CaseTF:
     @property
     def dx_vault(self):
         """Average toroidal length of the vault"""
-        return 2 * (self.R_wp_k[-1] + self.Rk) / 2 * np.tan(self._rad_theta_TF / 2)
+        return (self.R_wp_k[-1] + self.Rk) * np.tan(self._rad_theta_TF / 2)
 
     def Kx_ps(self, **kwargs):
         """Equivalent radial mechanical stiffness of ps"""
-        return self.mat_case.ym(**kwargs) * self.dx_ps / self.dy_ps
+        return self.mat_case.ym(**kwargs) * self.dy_ps / self.dx_ps
 
     def Ky_ps(self, **kwargs):
         """Equivalent toroidal stiffness of ps"""
-        return self.mat_case.ym(**kwargs) * self.dy_ps / self.dx_ps
+        return self.mat_case.ym(**kwargs) * self.dx_ps / self.dy_ps
 
     def Kx_lat(self, **kwargs):
         """Equivalent radial stiffness of the lateral case part connected to each winding pack"""
@@ -103,7 +103,7 @@ class CaseTF:
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        return self.mat_case.ym(**kwargs) * dx_lat / dy_lat
+        return self.mat_case.ym(**kwargs) * dy_lat / dx_lat
 
     def Ky_lat(self, **kwargs):
         """Equivalent toroidal stiffness of the lateral case part connected to each winding"""
@@ -113,35 +113,36 @@ class CaseTF:
             for i, w in enumerate(self.WPs)
         ])
         dy_lat = np.array([w.dy for w in self.WPs])
-        return self.mat_case.ym(**kwargs) * dy_lat / dx_lat
+        return self.mat_case.ym(**kwargs) * dx_lat / dy_lat
 
     def Kx_vault(self, **kwargs):
         """Equivalent radial stiffness of the vault"""
-        return self.mat_case.ym(**kwargs) * self.dx_vault / self.dy_vault
+        return self.mat_case.ym(**kwargs) * self.dy_vault / self.dx_vault
 
     def Ky_vault(self, **kwargs):
         """Equivalent toroidal stiffness of the vault"""
-        return self.mat_case.ym(**kwargs) * self.dy_vault / self.dx_vault
+        return self.mat_case.ym(**kwargs) * self.dx_vault / self.dy_vault
 
     def Kx(self, **kwargs):
         """Total equivalent radial stiffness of the case"""
         temp = [
-            parall_k([
+            serie_k([
                 self.Kx_lat(**kwargs)[i],
                 w.Kx(**kwargs),
                 self.Kx_lat(**kwargs)[i],
             ])
             for i, w in enumerate(self.WPs)
         ]
-        return serie_k([self.Kx_ps(**kwargs), self.Kx_vault(**kwargs)] + temp)
+        return parall_k([self.Kx_ps(**kwargs), self.Kx_vault(**kwargs)] + temp)
 
     def Ky(self, **kwargs):
         """Total equivalent toroidal stiffness of the case"""
         temp = [
-            serie_k([self.Ky_lat(**kwargs)[i], w.Ky(**kwargs), self.Ky_lat(**kwargs)[i]])
+            parall_k(
+                [self.Ky_lat(**kwargs)[i], w.Ky(**kwargs), self.Ky_lat(**kwargs)[i]])
             for i, w in enumerate(self.WPs)
         ]
-        return parall_k([self.Ky_ps(**kwargs), self.Ky_vault(**kwargs)] + temp)
+        return serie_k([self.Ky_ps(**kwargs), self.Ky_vault(**kwargs)] + temp)
 
     def _tresca_stress(self, pm: float, fz: float, **kwargs):
         """Procedure that calculate Tresca principal stress on the case
@@ -342,45 +343,3 @@ class CaseTF:
             print(f"remaining_conductors: {remaining_conductors}")
 
         self.WPs = WPs
-
-
-def optimize_jacket_conductor(
-        conductor: Conductor,
-        pressure: float,
-        T: float,
-        B: float,
-        allowable_sigma: float,
-        bounds: np.array = None,
-):
-    def sigma_difference(
-            dx_jacket: float,
-            pressure: float,
-            T: float,
-            B: float,
-            conductor: Conductor,
-            allowable_sigma: float,
-    ):
-        conductor.dx_jacket = dx_jacket
-        sigma_r = _sigma_r_jacket(conductor, pressure, T, B)
-        diff = abs(sigma_r - allowable_sigma)
-        return diff
-
-    method = None
-    if bounds is not None:
-        method = "bounded"
-
-    result = minimize_scalar(
-        fun=sigma_difference,
-        args=(pressure, T, B, conductor, allowable_sigma),
-        bounds=bounds,
-        method=method,
-        options={"xatol": 1e-4},
-    )
-
-    if not result.success:
-        raise ValueError("dx_jacket optimization did not converge.")
-    conductor.dx_jacket = result.x
-    print(f"Optimal dx_jacket: {conductor.dx_jacket}")
-    print(f"Averaged sigma_r: {_sigma_r_jacket(conductor, pressure, T, B) / 1e6} MPa")
-
-    return result

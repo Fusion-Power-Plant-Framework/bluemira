@@ -22,11 +22,11 @@ class WindingPack:
 
     def Kx(self, **kwargs):
         """Total equivalent stiffness along x-axis"""
-        return serie_k([parall_k([self.conductor.Ky(**kwargs)] * self.nl)] * self.nt)
+        return parall_k([serie_k([self.conductor.Kx(**kwargs)] * self.nl)] * self.nt)
 
     def Ky(self, **kwargs):
         """Total equivalent stiffness along x-axis"""
-        return serie_k([parall_k([self.conductor.Kx(**kwargs)] * self.nt)] * self.nl)
+        return serie_k([parall_k([self.conductor.Ky(**kwargs)] * self.nt)] * self.nl)
 
     def plot(
             self,

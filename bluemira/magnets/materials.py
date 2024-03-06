@@ -150,9 +150,9 @@ class Copper100(Material):
         ------
             float  [Ohm m]
         """
-        # print(f"used T: {T}")
+        # print(f"parameters T: {T}, B: {B}")
         rho1 = (1.171 * (10 ** -17) * (T ** 4.49)) / (
-                1 + (4.5 * (10 ** -7) * (T ** 3.35) * (math.exp(-((50 / T) ** 6.428))))
+                1 + (4.5 * (10 ** -7) * (T ** 3.35) * (math.exp(-((50. / T) ** 6.428))))
         )
         rho2 = (
                 (1.69 * (10 ** -8) / self.RRR)
@@ -168,6 +168,7 @@ class Copper100(Material):
                 - (0.1839 * (A ** 3))
                 + (0.01827 * (A ** 4))
         )
+
         return rho2 * (1 + (10 ** a))
 
     def cp_v(self, T: float, **kwargs):

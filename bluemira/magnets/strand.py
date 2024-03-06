@@ -172,6 +172,7 @@ class Wire_Nb3Sn(Strand):
         """
         d_ = self.d_strand * 1e3
         CunonCu = self.percentage[0] / self.percentage[1]
+        # superconducting area
         strand_A = np.pi * d_ ** 2 / (4 * (1 + CunonCu))
         c_ = 1.0
         Ca1 = 50.06
@@ -184,7 +185,8 @@ class Wire_Nb3Sn(Strand):
         q = 2.156
         C = 83075 * strand_A  # [AT]
         T_ = T + T_margin
-        int_eps = -strain / 100 + eps_m
+        # Todo: check the sign of eps_m in this equation
+        int_eps = -strain / 100  # + eps_m
         eps_sh = Ca2 * eps_0a / (np.sqrt(Ca1 ** 2 - Ca2 ** 2))
         s_eps = 1 + (
                 Ca1
