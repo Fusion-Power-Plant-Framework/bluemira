@@ -76,7 +76,7 @@ for constraint in (
     Constraint.PSEPB_QAR_UPPER_LIMIT,
     Constraint.CS_STRESS_UPPER_LIMIT,
     Constraint.DENSITY_PROFILE_CONSISTENCY,
-    Constraint.CS_FATIGUE,
+    # Constraint.CS_FATIGUE,  TODO(je-cook) should be re-enabled
 ):
     template_builder.add_constraint(constraint)
 
