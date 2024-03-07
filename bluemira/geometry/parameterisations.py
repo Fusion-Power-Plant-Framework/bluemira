@@ -20,8 +20,6 @@ from enum import Enum
 from functools import partial
 from pathlib import Path
 from typing import (
-    Any,
-    Dict,
     Generic,
     Iterable,
     List,
@@ -63,6 +61,11 @@ __all__ = [
 ]
 
 OptVariablesFrameT = TypeVar("OptVariablesFrameT", bound=OptVariablesFrame)
+
+
+def _get_rotated_point(origin, radius, degrees):
+    rad = np.deg2rad(degrees)
+    return (origin[0] + radius * np.cos(rad), origin[1] + radius * np.sin(rad))
 
 
 class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
@@ -245,7 +248,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
         return x_actual
 
     @abc.abstractmethod
-    def create_shape(self, label: str = "", **kwargs: Dict[str, Any]) -> BluemiraWire:
+    def create_shape(self, label: str = "") -> BluemiraWire:
         """
         Make a CAD representation of the geometry.
 
@@ -328,7 +331,41 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             textcoords="offset points",
         )
 
-    def _label_function(self, ax, shape: BluemiraWire) -> tuple[int, int]:
+    @staticmethod
+    def _angle_annotator(ax, key: str, radius, centre, angles, centre_angle):
+        """
+        Create annotation arrow with label
+
+        Parameters
+        ----------
+        ax:
+            Matplotlib axis instance
+        key:
+            label of annotation
+        xy1:
+            Tuple for first arrow point
+        xy2:
+            Tuple for second arrow point
+        xy3:
+            Tuple for arrow label location
+
+        """
+        x_1, z_1 = _get_rotated_point(centre, radius + 0.5, angles[1])
+        x_1_, z_1_ = _get_rotated_point(centre, radius - 0.5, angles[1])
+        x_2, z_2 = _get_rotated_point(centre, radius + 0.5, angles[0])
+        x_2_, z_2_ = _get_rotated_point(centre, radius - 0.5, angles[0])
+
+        ax.plot((x_1, x_1_), (z_1, z_1_), color="k", linewidth=1)
+        ax.plot((x_2, x_2_), (z_2, z_2_), color="k", linewidth=1)
+        ax.annotate(
+            r"$\it{" f"{str_to_latex(key).strip('$')}" "}$",
+            xy=_get_rotated_point(centre, radius, centre_angle),
+            xycoords="data",
+            xytext=_get_rotated_point(centre, radius - 0.5, centre_angle),
+            textcoords="offset points",
+        )
+
+    def _label_function(self, ax, shape: BluemiraWire) -> tuple[float, float]:
         """
         Adds labels to parameterisation plots
 
@@ -840,8 +877,6 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
         """
         Adds labels to parameterisation plots
 
-        TODO add labels for sl f1 f2 a1 a2
-
         Parameters
         ----------
         ax:
@@ -850,7 +885,18 @@ class TripleArc(GeometryParameterisation[TripleArcOptVaribles]):
             parameterisation wire
 
         """
+        # TODO Labels for f1, f2 and a1, a2
         _offset_x, _offset_z = super()._label_function(ax, shape)
+        z_val = (self.variables.sl.value / 2) + self.variables.dz.value
+        x_val = 0.5 + self.variables.x1.value
+        self._annotator(
+            ax,
+            "sl",
+            (x_val, z_val),
+            (x_val, -z_val),
+            (x_val + 0.1, self.variables.dz.value),
+        )
+        return _offset_x, _offset_z
 
 
 @dataclass
@@ -1027,6 +1073,44 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         zc = zi - vec[1] * ri
         return xc, zc, vec
 
+    def _get_centres(self, a_values, r_values, x1, z1):
+        a_start = 0
+        xi, zi = x1, z1
+        xc = x1 + r_values[0]
+        zc = z1
+        centres = []
+        angles = []
+        radii = []
+        for i, (ai, ri) in enumerate(zip(a_values, r_values)):
+            if i > 0:
+                xc, zc, _ = self._project_centroid(xc, zc, xi, zi, ri)
+            a = np.pi - a_start - ai
+
+            xi = xc + ri * np.cos(a)
+            zi = zc + ri * np.sin(a)
+
+            start_angle = np.rad2deg(np.pi - a_start)
+            end_angle = np.rad2deg(a)
+
+            a_start += ai
+
+            centres.append((xc, zc))
+            angles.append((start_angle, end_angle))
+            radii.append(ri)
+
+        xc, zc, vec = self._project_centroid(xc, zc, xi, zi, ri)
+
+        # Retrieve last arc (could be bad...)
+        r6 = (xi - x1) / (1 + vec[0])
+        xc6 = xi - r6 * vec[0]
+        zc6 = zi - r6 * vec[1]
+
+        centres.append((xc6, zc6))
+        angles.append((np.rad2deg(np.pi - a_start), 180))
+        radii.append(r6)
+
+        return centres, angles, radii
+
     def create_shape(self, label: str = "") -> BluemiraWire:
         """
         Make a CAD representation of the sextuple arc.
@@ -1046,21 +1130,9 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         a_values = np.deg2rad(variables[7:])
 
         wires = []
-        a_start = 0
-        xi, zi = x1, z1
-        xc = x1 + r_values[0]
-        zc = z1
-        for i, (ai, ri) in enumerate(zip(a_values, r_values)):
-            if i > 0:
-                xc, zc, _ = self._project_centroid(xc, zc, xi, zi, ri)
-
-            a = np.pi - a_start - ai
-            xi = xc + ri * np.cos(a)
-            zi = zc + ri * np.sin(a)
-
-            start_angle = np.rad2deg(np.pi - a_start)
-            end_angle = np.rad2deg(a)
-
+        for i, ((xc, zc), (start_angle, end_angle), ri) in enumerate(
+            zip(*self._get_centres(a_values, r_values, x1, z1))
+        ):
             arc = make_circle(
                 ri,
                 center=[xc, 0, zc],
@@ -1072,27 +1144,7 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
             wires.append(arc)
 
-            a_start += ai
-
-        xc, zc, vec = self._project_centroid(xc, zc, xi, zi, ri)
-
-        # Retrieve last arc (could be bad...)
-        r6 = (xi - x1) / (1 + vec[0])
-        xc6 = xi - r6 * vec[0]
-        z7 = zc6 = zi - r6 * vec[1]
-
-        closing_arc = make_circle(
-            r6,
-            center=[xc6, 0, zc6],
-            start_angle=180,
-            end_angle=np.rad2deg(np.pi - a_start),
-            axis=[0, -1, 0],
-            label="arc_6",
-        )
-
-        wires.append(closing_arc)
-
-        if not np.isclose(z1, z7):
+        if not np.isclose(z1, zc):
             straight_segment = wire_closure(
                 BluemiraWire(wires), label="straight_segment"
             )
@@ -1104,8 +1156,6 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
         """
         Adds labels to parameterisation plots
 
-        TODO add labels for r1-5 a1-5
-
         Parameters
         ----------
         ax:
@@ -1115,6 +1165,30 @@ class SextupleArc(GeometryParameterisation[SextupleArcOptVariables]):
 
         """
         _offset_x, _offset_z = super()._label_function(ax, shape)
+        variables = self.variables.values
+        centres, angles, radii = self._get_centres(
+            np.deg2rad(variables[7:]), variables[2:7], *variables[:2]
+        )
+
+        for r_no, (centre, s_f_angles, radius) in enumerate(
+            zip(centres, angles, radii), start=1
+        ):
+            if r_no == 6:  # noqa: PLR2004
+                centre_angle = min(s_f_angles) + (0.5 * np.ptp(s_f_angles) + 180)
+            else:
+                centre_angle = min(s_f_angles) + 0.5 * np.ptp(s_f_angles)
+
+            self._annotator(
+                ax,
+                f"r{r_no}",
+                centre,
+                _get_rotated_point(centre, radius, centre_angle),
+                _get_rotated_point(centre, 0.5 * radius, centre_angle),
+            )
+
+            self._angle_annotator(
+                ax, f"a{r_no}", radius, centre, s_f_angles, centre_angle
+            )
 
 
 @dataclass
@@ -1404,10 +1478,6 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
         """
         Adds labels to parameterisation plots
 
-        TODO add labels for:
-
-            height top upper dz flat tilt bottom lower l0s - l3s l0e - l3e
-
         Parameters
         ----------
         ax:
@@ -1416,6 +1486,8 @@ class PolySpline(GeometryParameterisation[PolySplineOptVariables]):
             parameterisation wire
 
         """
+        # TODO add labels for:
+        #   height top upper dz flat tilt bottom lower l0s - l3s l0e - l3e
         _offset_x, _offset_z = super()._label_function(ax, shape)
 
 
