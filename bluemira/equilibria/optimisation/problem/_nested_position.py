@@ -107,11 +107,6 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.opt_parameters = opt_parameters
         self._constraints = [] if constraints is None else constraints
 
-        self.initial_state, self.substates = self.read_coilset_state(
-            self.coilset, self.scale
-        )
-        self.I0 = np.array_split(self.initial_state, self.substates)[2]
-
     def optimise(self, **_):
         """
         Run the optimisation.
