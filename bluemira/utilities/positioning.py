@@ -387,7 +387,7 @@ class PositionMapper:
         self._check_length(l_values)
         xz_dict = {}
         for i, (key, tool) in enumerate(self.interpolators.items()):
-            xz_dict[key] = tool.to_xz(l_values[i])
+            xz_dict[key] = np.asarray(tool.to_xz(l_values[i]))
         return xz_dict
 
     def to_L(self, x: np.ndarray, z: np.ndarray) -> np.ndarray:
