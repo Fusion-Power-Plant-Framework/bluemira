@@ -104,8 +104,8 @@ class Conductor:
     @property
     def area_jacket(self):
         """Area of the jacket"""
-        return (self.cable.dx + self.dx_jacket) * (
-                self.cable.dy + self.dy_jacket
+        return (self.dx - 2 * self.dx_ins) * (
+                self.dy - 2 * self.dy_ins
         ) - self.cable.area
 
     @property
@@ -158,7 +158,7 @@ class Conductor:
     def Kx_topbot_jacket(self, **kwargs):
         return (
                 self.mat_jacket.ym(**kwargs) * self.dy_jacket / (
-                    self.dx - 2 * self.dx_ins)
+                self.dx - 2 * self.dx_ins)
         )
 
     def Kx_lat_jacket(self, **kwargs):
@@ -183,11 +183,11 @@ class Conductor:
             ]),
         ])
 
-    def Ky_lat_ins(self, **kwargs):
-        return self.mat_ins.ym(**kwargs) * self.dx_ins / self.dy
-
     def Ky_topbot_ins(self, **kwargs):
-        return self.mat_ins.ym(**kwargs) * (self.dx - 2 * self.dx_ins) / self.dy_ins
+        return self.mat_ins.ym(**kwargs) * self.dx / self.dy_ins
+
+    def Ky_lat_ins(self, **kwargs):
+        return self.mat_ins.ym(**kwargs) * self.dx_ins / (self.dy - 2 * self.dy_ins)
 
     def Ky_lat_jacket(self, **kwargs):
         return (
@@ -196,26 +196,30 @@ class Conductor:
         )
 
     def Ky_topbot_jacket(self, **kwargs):
-        return (
-                self.mat_jacket.ym(**kwargs)
-                * (self.dx - 2 * self.dx_ins - 2 * self.dx_jacket)
-                / self.dy_jacket
-        )
+        return self.mat_jacket.ym(**kwargs) * self.cable.dx / self.dy_jacket
 
     def Ky_cable(self, **kwargs):
         return self.cable.ym(**kwargs) * self.cable.dx / self.cable.dy
 
+    # def Ky(self, **kwargs):
+    #     return parall_k([
+    #         2 * self.Ky_lat_ins(**kwargs),
+    #         serie_k([
+    #             self.Ky_topbot_ins(**kwargs) / 2,
+    #             parall_k([
+    #                 2 * self.Ky_lat_jacket(**kwargs),
+    #                 serie_k([self.Ky_cable(**kwargs), self.Ky_topbot_jacket(**kwargs) /
+    #                          2]),
+    #             ]),
+    #         ]),
+    #     ])
+
     def Ky(self, **kwargs):
+        # Todo: agree on the way in which Ky shall be calculated
         return parall_k([
             2 * self.Ky_lat_ins(**kwargs),
-            serie_k([
-                self.Ky_topbot_ins(**kwargs) / 2,
-                parall_k([
-                    2 * self.Ky_lat_jacket(**kwargs),
-                    serie_k([self.Ky_cable(**kwargs), self.Ky_topbot_jacket(**kwargs) /
-                             2]),
-                ]),
-            ]),
+            2 * self.Ky_lat_jacket(**kwargs),
+            serie_k([self.Ky_cable(**kwargs), self.Ky_topbot_jacket(**kwargs) / 2]),
         ])
 
     def plot(self, xc: float = 0, yc: float = 0, show: bool = False, ax=None):
@@ -285,17 +289,19 @@ class SquareConductor(Conductor):
         return self.dx_ins
 
 
-def _sigma_r_jacket(conductor: Conductor, pressure: float, T: float, B: float):
+def _sigma_r_jacket(conductor: Conductor, pressure: float, f_z: float, T: float,
+                    B: float):
     saf_jacket = (conductor.cable.dx + 2 * conductor.dx_jacket) / (
             2 * conductor.dx_jacket
     )
     X_jacket = 2 * conductor.Ky_lat_jacket(T=T, B=B) / conductor.Ky(T=T, B=B)
-    return pressure * X_jacket * saf_jacket
+    return pressure * X_jacket * saf_jacket + f_z / conductor.area_jacket
 
 
 def optimize_jacket_conductor(
         conductor: Conductor,
         pressure: float,
+        fz: float,
         T: float,
         B: float,
         allowable_sigma: float,
@@ -304,13 +310,14 @@ def optimize_jacket_conductor(
     def sigma_difference(
             dx_jacket: float,
             pressure: float,
+            fz: float,
             T: float,
             B: float,
             conductor: Conductor,
             allowable_sigma: float,
     ):
         conductor.dx_jacket = dx_jacket
-        sigma_r = _sigma_r_jacket(conductor, pressure, T, B)
+        sigma_r = _sigma_r_jacket(conductor, pressure, fz, T, B)
         diff = abs(sigma_r - allowable_sigma)
         return diff
 
@@ -320,7 +327,7 @@ def optimize_jacket_conductor(
 
     result = minimize_scalar(
         fun=sigma_difference,
-        args=(pressure, T, B, conductor, allowable_sigma),
+        args=(pressure, fz, T, B, conductor, allowable_sigma),
         bounds=bounds,
         method=method,
         options={"xatol": 1e-4},
@@ -330,6 +337,7 @@ def optimize_jacket_conductor(
         raise ValueError("dx_jacket optimization did not converge.")
     conductor.dx_jacket = result.x
     print(f"Optimal dx_jacket: {conductor.dx_jacket}")
-    print(f"Averaged sigma_r: {_sigma_r_jacket(conductor, pressure, T, B) / 1e6} MPa")
+    print(f"Averaged sigma_r: {_sigma_r_jacket(conductor, pressure, fz, T, B) / 1e6} "
+          f"MPa")
 
     return result

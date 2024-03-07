@@ -293,6 +293,10 @@ class SquareCable(Cable):
     def dx(self):
         return np.sqrt(self.area)
 
+    @property
+    def dy(self):
+        """y-dimension of the cable [m]"""
+        return self.dx
 
 class DummySquareCableHTS(SquareCable):
     """
@@ -353,6 +357,124 @@ class DummySquareCableLTS(SquareCable):
     def ym(self, **kwargs):
         return 0.1e9
 
+
+class RoundCable(Cable):
+    def __init__(
+            self,
+            sc_strand: Strand,
+            stab_strand: Strand,
+            n_sc_strand: int,
+            n_stab_strand: int,
+            d_cooling_channel: float,
+            void_fraction: float = 0.725,
+            cos_theta: float = 0.97,
+            name: str = "",
+    ):
+        """
+        Representation of a square cable
+
+        Parameters
+        ----------
+        sc_strand:
+            strand of the superconductor
+        stab_strand:
+            strand of the stabilizer
+        d_cooling_channel:
+            diameter of the cooling channel
+        n_sc_strand:
+            number of superconducting strands
+        n_stab_strand:
+            number of stabilizer strands
+        void_fraction:
+            void fraction defined as material_volume/total_volume
+        cos_theta:
+            corrective factor that consider the twist of the cable
+        name:
+            cable string identifier
+
+        #todo decide if it is the case to add also the cooling material
+        """
+        dx = 0.1
+        super().__init__(
+            dx=dx,
+            sc_strand=sc_strand,
+            stab_strand=stab_strand,
+            n_sc_strand=n_sc_strand,
+            n_stab_strand=n_stab_strand,
+            d_cooling_channel=d_cooling_channel,
+            void_fraction=void_fraction,
+            cos_theta=cos_theta,
+            name=name,
+        )
+
+    @property
+    def dx(self):
+        return np.sqrt(self.area * 4 / np.pi)
+
+    @property
+    def dy(self):
+        """y-dimension of the cable [m]"""
+        return self.dx
+
+
+class DummyRoundCableHTS(RoundCable):
+    """
+    Dummy square cable with young's moduli set to 120 GPa
+
+    Parameters
+    ----------
+    sc_strand:
+        strand of the superconductor
+    stab_strand:
+        strand of the stabilizer
+    d_cooling_channel:
+        diameter of the cooling channel
+    n_sc_strand:
+        number of superconducting strands
+    n_stab_strand:
+        number of stabilizer strands
+    void_fraction:
+        void fraction defined as material_volume/total_volume
+    cos_theta:
+        corrective factor that consider the twist of the cable
+    name:
+        cable string identifier
+
+    #todo decide if it is the case to add also the cooling material
+    """
+
+    def ym(self, **kwargs):
+        return 120e9
+
+
+class DummyRoundCableLTS(RoundCable):
+    """
+    Dummy square cable with young's moduli set to 120 GPa
+
+    Parameters
+    ----------
+    sc_strand:
+        strand of the superconductor
+    stab_strand:
+        strand of the stabilizer
+    d_cooling_channel:
+        diameter of the cooling channel
+    n_sc_strand:
+        number of superconducting strands
+    n_stab_strand:
+        number of stabilizer strands
+    void_fraction:
+        void fraction defined as material_volume/total_volume
+    cos_theta:
+        corrective factor that consider the twist of the cable
+    name:
+        cable string identifier
+
+    #todo decide if it is the case to add also the cooling material
+    """
+
+    def ym(self, **kwargs):
+        return 0.1e9
 
 
 

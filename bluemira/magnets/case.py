@@ -256,7 +256,7 @@ class CaseTF:
             n_conductors: int,
             cond: Conductor,
             R_wp_i: float,
-            dx0_wp: float,
+            dx_WP: float,
             min_gap_x: float,
             n_layers_reduction: int,
     ):
@@ -271,8 +271,8 @@ class CaseTF:
             type of conductor
         R_wp_i:
             initial radial distance at which the first winding pack is placed
-        dx0_wp:
-            toroidal distance between inner leg lateral face and most outer layer in the winding pack
+        dx_WP:
+            toroidal length of the first winding pack
         min_gap_x:
             minimum toroidal distance between winding pack and tf coils lateral faces
         n_layers_reduction:
@@ -299,7 +299,7 @@ class CaseTF:
             print(f"remaining_conductors: {remaining_conductors}")
 
             # maximum toroidal dimension of the WP most outer pancake
-            dx_WP = 2 * (R_wp_i * np.tan(self._rad_theta_TF / 2) - dx0_wp)
+            # dx_WP = 2 * (R_wp_i * np.tan(self._rad_theta_TF / 2) - dx0_wp)
 
             # maximum number of turns on the considered pancake
             n_layers_max = int(math.floor(dx_WP / cond.dx))
@@ -335,10 +335,7 @@ class CaseTF:
                 )
 
             R_wp_i = R_wp_i - n_turns_max * cond.dy
-            dx0_wp = (
-                    R_wp_i * np.tan(self._rad_theta_TF / 2)
-                    - (dx_WP - n_layers_reduction * cond.dx) / 2
-            )
+            dx_WP = dx_WP - n_layers_reduction * cond.dx
 
             print(f"remaining_conductors: {remaining_conductors}")
 
