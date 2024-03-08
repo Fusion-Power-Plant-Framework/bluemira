@@ -206,8 +206,8 @@
     },
     "position_settings": {
       "optimisation_settings": {
-        "algorithm_name": "ISRES",
-        "conditions": { "max_eval": 5000, "ftol_rel": 1e-10 }
+        "algorithm_name": "COBYLA",
+        "conditions": { "max_eval": 100, "ftol_rel": 1e-10 }
       }
     }
   },
