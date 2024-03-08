@@ -6,6 +6,7 @@
 """dataclasses containing parameters used to set up the openmc model."""
 
 from dataclasses import asdict, dataclass
+from enum import Enum, auto
 from pathlib import Path
 from typing import Literal
 
@@ -16,6 +17,31 @@ from bluemira.base.constants import EPS, raw_uc
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.error import GeometryError
 from bluemira.neutronics.make_materials import BlanketType
+
+
+class BlanketLayers(Enum):
+    """
+    The five layers of the blanket as used in the neutronics simulation.
+
+    Variables
+    ---------
+    Surface
+        The surface layer of the first wall.
+    First wall
+        Typically made of tungsten or Eurofer
+    BreedingZone
+        Where tritium is bred
+    Manifold
+        The pipe works and supporting structure
+    VacuumVessel
+        The vacuum vessel keeping out the atmospheric air.
+    """
+
+    Surface = auto()
+    FirstWall = auto()
+    BreedingZone = auto()
+    Manifold = auto()
+    VacuumVessel = auto()
 
 
 @dataclass
@@ -221,20 +247,27 @@ class TokamakGeometry(TokamakGeometryBase):
 class WallThicknessFraction:
     """List of thickness of various sections of the blanket as fractions"""
 
-    first_wall: float  # [m]
-    breeder_zone: float  # [m]
-    manifold: float  # [m]
-    vacuum_vessel: float  # [m]
+    first_wall: float  # [dimensionless]
+    breeding_zone: float  # [dimensionless]
+    manifold: float  # [dimensionless]
+    vacuum_vessel: float  # [dimensionless]
 
     def __post_init__(self):
         """Check fractions are between 0 and 1 and sums to unity."""
         for section in ("first_wall", "manifold", "vacuum_vessel"):
             if getattr(self, section) <= 0:
                 raise GeometryError(f"Thickness fraction of {section} must be non-zero")
-        if self.breeder_zone < 0:  # can be zero, but not negative.
-            raise GeometryError("Thickness fraction of breeder_zone must be nonnegative")
+        if self.breeding_zone < 0:  # can be zero, but not negative.
+            raise GeometryError(
+                "Thickness fraction of breeding_zone must be nonnegative"
+            )
         if not np.isclose(
-            sum([self.first_wall, self.manifold, self.breeder_zone, self.vacuum_vessel]),
+            sum([
+                self.first_wall,
+                self.manifold,
+                self.breeding_zone,
+                self.vacuum_vessel,
+            ]),
             1.0,
             rtol=0,
             atol=EPS,
@@ -242,6 +275,12 @@ class WallThicknessFraction:
             raise GeometryError(
                 "Thickness fractions of all four sections " "must add up to unity!"
             )
+
+    def extended_prefix_sums(self):
+        """Return the exclusive and includsive sum"""
+        zone_sequence = ("first_wall", "breeding_zone", "manifold", "vacuum_vessel")
+        _each_thick = [getattr(self, zone) for zone in zone_sequence]
+        return np.insert(np.cumsum(_each_thick).tolist(), 0, 0)
 
 
 class InboardThicknessFraction(WallThicknessFraction):
@@ -265,9 +304,12 @@ class ThicknessFractions:
 
     inboard: InboardThicknessFraction
     outboard: OutboardThicknessFraction
+    inboard_outboard_transition_radius: float
 
     @classmethod
-    def from_TokamakGeometry(cls, tokamak_geometry: TokamakGeometry):
+    def from_TokamakGeometry(
+        cls, tokamak_geometry: TokamakGeometry, transition_radius: float = 8.0
+    ):
         """
         Create this dataclass by
         translating from our existing tokamak_geometry dataclass.
@@ -296,7 +338,13 @@ class ThicknessFractions:
             tokamak_geometry.outb_mnfld_thick / outb_sum,
             tokamak_geometry.outb_vv_thick / outb_sum,
         )
-        return cls(inb, outb)
+        return cls(inb, outb, transition_radius)
+
+
+class TokamakThicknesses(ThicknessFractions):
+    """Placeholder class, to be filled in later."""
+
+    pass
 
 
 def get_preset_physical_properties(
