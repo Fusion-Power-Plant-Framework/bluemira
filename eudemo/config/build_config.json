@@ -5,15 +5,9 @@
     "mixtures": "$path_expand:./materials_data/mixtures.json"
   },
   "Radial build": {
-<<<<<<< HEAD
-    "run_mode": "run",
+    "run_mode": "read",
     "read_dir": "$path_expand:./",
     "run_dir": "$path_expand:./",
-=======
-    "run_mode": "read",
-    "read_dir": "config/",
-    "run_dir": "config/",
->>>>>>> 4ff7fd03 (rebased I think)
     "plot": false
   },
   "Fixed boundary equilibrium": {
@@ -222,9 +216,9 @@
     },
     "position_settings": {
       "optimisation_settings": {
-        "algorithm_name": "ISRES",
+        "algorithm_name": "COBYLA",
         "conditions": {
-          "max_eval": 5000,
+          "max_eval": 100,
           "ftol_rel": 1e-10
         }
       }
