@@ -3,717 +3,602 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""Create csg geometry from bluemira wires."""
-# ruff: noqa: PLR2004
+"""Create csg geometry by converting from bluemira geometry objects made of wires."""
+# ruff: noqa: PLR2004, D105
 
 from __future__ import annotations
 
-from collections import namedtuple
-from math import fsum
-from typing import TYPE_CHECKING, Callable, Iterable, List, Optional, Union
+from typing import TYPE_CHECKING, Dict, Iterable, List, Optional, Union
 
 import numpy as np
+import openmc
 from numpy import typing as npt
 
-from bluemira.base.look_and_feel import bluemira_debug, bluemira_warn
-from bluemira.display import plot_2d, show_cad  # , plot_3d
 from bluemira.geometry.constants import EPS_FREECAD
-from bluemira.geometry.coordinates import (
-    Coordinates,
-    get_bisection_line,
-)
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.error import GeometryError
-from bluemira.geometry.plane import BluemiraPlane
-from bluemira.geometry.solid import BluemiraSolid
-from bluemira.geometry.tools import (
-    get_wire_plane_intersect,
-    make_polygon,
-    raise_error_if_overlap,
-    revolve_shape,
-)
-from bluemira.geometry.wire import BluemiraWire
+from bluemira.geometry.tools import make_circle_arc_3P
+from bluemira.neutronics.params import BlanketLayers
+from bluemira.neutronics.radial_wall import CellWalls
 
 if TYPE_CHECKING:
-    from bluemira.neutronics.params import TokamakGeometry
+    from bluemira.geometry.wire import BluemiraWire
+    from bluemira.neutronics.make_pre_cell import PreCellArray
+    from bluemira.neutronics.params import TokamakThicknesses
 
 
-class PreCell:
+def is_strictly_monotonically_increasing(series):
+    """Check if a series is strictly monotonically increasing"""  # or decreasing
+    diff = np.diff(series)
+    return all(diff > 0)  # or all(diff<0)
+
+
+def surface_from_2points(
+    point1: npt.NDArray,
+    point2: npt.NDArray,
+    surface_id: Optional[int] = None,
+    name: str = "",
+) -> Optional[openmc.Surface]:
     """
-    A pre-cell is the BluemiraWire outlining the reactor cross-section
-    BEFORE they have been simplified into straight-lines.
-    Unlike a Cell, its outline may be constructed from curved lines.
+    Create either a cylinder, a cone, or a surface from 2 points using only the
+    rz coordinates of any two points on it.
+
+    Parameters
+    ----------
+    point1, point2: ndarray of shape (2,)
+        any two non-trivial (i.e. cannot be the same) points on the rz cross-section of
+        the surface, each containing the r and z coordinates
+    surface_id, name:
+        see openmc.Surface
+
+    Returns
+    -------
+    surface: openmc.surface.Surface, None
+        if the two points provided are redundant: don't return anything, as this is a
+        single point pretending to be a surface. This will come in handy for handling the
+        creation of BlanketCells made with 3 surfaces rather than 4.
+    """
+    dr, dz = point2 - point1
+    if np.isclose(dr, 0, rtol=0, atol=EPS_FREECAD):
+        if np.isclose(dz, 0, rtol=0, atol=EPS_FREECAD):
+            # return ValueError("Can't generate surface from two duplicate points")
+            raise GeometryError(
+                "The two points provided aren't distinct enough to "
+                "uniquely identify a surface!"
+            )
+        return openmc.ZCylinder(r=point1[0], surface_id=surface_id, name=name)
+    if np.isclose(dz, 0, rtol=0, atol=EPS_FREECAD):
+        return openmc.ZPlane(z0=point1[-1], surface_id=surface_id, name=name)
+    slope = dz / dr
+    z_intercept = -slope * point1[0] + point1[-1]
+    # direction = point1[-1]>z_intercept
+    # if (point2[-1]>z_intercept)!=direction: # XOR gate
+    #     raise ValueError("Expected coordinates from one side of the poloidal"
+    #                     "cross-section only!")
+    # return openmc.model.ZConeOneSided(z0=z_intercept, r2=slope**-2, up=direction, surface_id=surface_id, name=name)
+    return openmc.ZCone(z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name)
+
+
+def torus_from_3points(
+    point1: npt.NDArray,
+    point2: npt.NDArray,
+    point3: npt.NDArray,
+    surface_id: Optional[int] = None,
+    name: str = "",
+) -> openmc.ZTorus:
+    """
+    Make a circular torus centered on the z-axis using 3 points.
+    All 3 points should lie on the RZ plane AND the surface of the torus simultaneously.
+
+    Parameters
+    ----------
+    point1, point2, point3: ndarray of shape (2,)
+        RZ coordinates of the 3 points on the surface of the torus.
+    surface_id, name:
+        See openmc.Surface
+    """
+    point1 = point1[0], 0, point1[-1]
+    point2 = point2[0], 0, point2[-1]
+    point3 = point3[0], 0, point3[-1]
+    circle = make_circle_arc_3P(point1, point2, point3)
+    return torus_from_BMWire_circle(circle, surface_id=surface_id, name=name)
+
+
+def torus_from_BMWire_circle(
+    bmwire_circle: BluemiraWire, surface_id: Optional[int] = None, name: str = ""
+):
+    """
+    Make a circular torus centered on the z-axis matching the circle provided in a
+    bluemirawire.
+    All 3 points should lie on the RZ plane AND the surface of the torus simultaneously.
+
+    Parameters
+    ----------
+    bmwire_circle
+        A BluemiraWire that is made of only a single circle/ arc of circle.
+    surface_id, name:
+        See openmc.Surface
+    """
+    if len(bmwire_circle.shape.OrderedEdges) != 1:
+        raise ValueError("Expected a BluemiraWire made of only one (1) wire: a circle.")
+    cad_circle = bmwire_circle.shape.OrderedEdges[0].Curve
+    center = cad_circle.Center[0], cad_circle.Center[-1]
+    minor_radius = cad_circle.Radius
+    return z_torus(center, minor_radius, surface_id=surface_id, name=name)
+
+
+def z_torus(
+    center: npt.NDArray,
+    minor_radius: float,
+    surface_id: Optional[int] = None,
+    name: str = "",
+) -> openmc.ZTorus:
+    """
+    A circular torus centered on the z-axis.
+    The center refers to the major radius and it's z coordinate.
+
+    Parameters
+    ----------
+    center: ndarray of shape (2,)
+        The center of the torus' RZ plane cross-section
+    minor_radius: ndarray of shape (2,)
+        minor radius of the torus
+
+    Returns
+    -------
+    openmc.ZTorus
+    """
+    major_radius, height = center[0], center[-1]
+    return openmc.ZTorus(
+        z0=height,
+        a=major_radius,
+        b=minor_radius,
+        c=minor_radius,
+        surface_id=surface_id,
+        name=name,
+    )
+
+
+def torus_from_5points(
+    point1: npt.NDArray,
+    point2: npt.NDArray,
+    point3: npt.NDArray,
+    point4: npt.NDArray,
+    point5: npt.NDArray,
+    surface_id: Optional[int] = None,
+    name: str = "",
+) -> openmc.ZTorus:
+    """
+    Make an elliptical torus centered on the z-axis using 5 points.
+    All 5 points should lie on the RZ plane AND the surface of the torus simultaneously.
+    Semi-major/semi-minor axes of the ellipse must be aligned to the R/Z (or Z/R) axes.
+
+    Parameters
+    ----------
+    point1, point2, point3: ndarray of shape (2,)
+        RZ coordinates of the 3 points on the surface of the torus.
+    surface_id, name:
+        See openmc.Surface
+    """
+    raise NotImplementedError(
+        "The maths of determining where the ellipse center should"
+        "be is yet to be worked out."
+    )
+    center, vertical_radius, horizontal_radius = (point1, point2, point3, point4, point5)
+    major_radius, height = center[0], center[-1]
+    return openmc.ZTorus(
+        z0=height,
+        a=major_radius,
+        b=vertical_radius,
+        c=horizontal_radius,
+        surface_id=surface_id,
+        name=name,
+    )
+
+
+def choose_halfspace(
+    surface: openmc.Surface, choice_point: Iterable[float]
+) -> openmc.Halfspace:
+    """
+    Parameters
+    ----------
+    surface
+        A surface that we want to choose a side of
+    choice_point
+        A point on the region of the side of the surface that we want.
+
+    Returns
+    -------
+    openmc.surface.Halfspace
+    """
+    value = surface.evaluate(choice_point)
+    if np.sign(value) == +1:
+        return +surface
+    if np.sign(value) == -1:
+        return -surface
+    raise ValueError("Choice point is located exactly on the surface!")
+
+
+class BlanketCell(openmc.Cell):
+    """
+    A generic blanket cell that forms the base class for the four specialized types of
+    blanket cells.
     """
 
     def __init__(
         self,
-        interior_wire: Union[BluemiraWire, Coordinates],
-        exterior_wire: BluemiraWire,
+        exterior_surface: openmc.Surface,
+        ccw_surface: openmc.Surface,
+        cw_surface: openmc.Surface,
+        example_point: Iterable[float],
+        interior_surface: Optional[openmc.Surface] = None,
+        cell_id=None,
+        name="",
+        fill=None,
     ):
         """
         Parameters
         ----------
-        interior_wire
-
-            Either: A wire representing the interior-boundary (i.e. plasma-facing side)
-                of a blanket's pre-cell, running in the anti-clockwise direction when
-                viewing the right hand side poloidal cross-section,
-                i.e. downwards if inboard, upwards if outboard.
-            or: a single Coordinates point, representing a point on the interior-boundary
-
-        exterior_wire
-
-            A wire representing the exterior-boundary (i.e. air-facing side) of a
-                blanket's pre-cell, running in the clockwise direction when viewing the
-                right hand side poloidal cross-section,
-                i.e. upwards if inboard, downwards if outboard.
+        exterior_surface
+            Surface on the exterior side of the cell
+        ccw_surface
+            Surface on the ccw wall side of the cell
+        cw_surface
+            Surface on the cw wall side of the cell
+        example_point
+            Any arbitrary point inside the cell
+        interior_surface
+            Surface on the interior side of the cell
+        cell_id
+            see openmc.Cell
+        name
+            see openmc.Cell
+        fill
+            see openmc.Cell
         """
-        self.interior_wire = interior_wire
-        self.exterior_wire = exterior_wire
-        raise_error_if_overlap(
-            self.exterior_wire, self.interior_wire, "interior wire", "exterior wire"
+        self.interior_surface = interior_surface
+        self.exterior_surface = exterior_surface
+        self.ccw_surface = ccw_surface
+        self.cw_surface = cw_surface
+        if not isinstance(example_point, Coordinates):
+            example_point = Coordinates([example_point[0], 0, example_point[-1]])
+        region = (
+            choose_halfspace(self.exterior_surface, example_point)
+            & choose_halfspace(self.ccw_surface, example_point)
+            & choose_halfspace(self.cw_surface, example_point)
         )
-        ext_start, ext_end = exterior_wire.start_point(), exterior_wire.end_point()
-        if isinstance(interior_wire, Coordinates):
-            int_start, int_end = interior_wire, interior_wire
-            self._inner_curve = make_polygon(
-                np.array([ext_end, interior_wire, ext_start]).T, closed=False
+        if self.interior_surface:
+            region = region & choose_halfspace(self.interior_surface, example_point)
+        super().__init__(cell_id=cell_id, name=name, fill=fill, region=region)
+
+
+class BlanketCellStack:
+    """
+    A stack of BlanketCells, stacking from the inboard direction towards the outboard
+    direction. They should all be situated at the same poloidal angle.
+    """
+
+    def __init__(self, cell_stack: List[BlanketCell]):
+        """
+        The shared surface between adjacent cells must be the SAME one, i.e. same id and
+        hash, not just identical.
+        They must share the SAME counter-clockwise surface and the SAME clockwise surface
+        (left and right side surfaces of the stack, for the stack pointing straight up).
+
+        Variables
+        ---------
+        fw_cell: FirstWallCell
+        bz_cell: Optional[BreedingZoneCell]
+        mnfd_cell: ManifoldCell
+        vv_cell: VacuumVesselCell
+        """
+        self.cell_stack = cell_stack
+        # store the specific cells under their respective attribute names.
+        cell_dict = self.ascribe_iterable_quantity_to_layer(self.cell_stack)
+        self.sf_cell = cell_dict[BlanketLayers.Surface.name]
+        self.fw_cell = cell_dict[BlanketLayers.FirstWall.name]
+        self.bz_cell = cell_dict[BlanketLayers.BreedingZone.name]
+        self.mnfd_cell = cell_dict[BlanketLayers.Manifold.name]
+        self.vv_cell = cell_dict[BlanketLayers.VacuumVessel.name]
+
+        minmax_coordinates = [np.concatenate(cell_stack[0].bounding_box)]
+        for inner_cell, outer_cell in zip(cell_stack[:-1], cell_stack[1:]):
+            vertical_alignment = (
+                inner_cell.exterior_surface is outer_cell.interior_surface
             )
+            ccw_lateral_alignment = inner_cell.ccw_surface is outer_cell.ccw_surface
+            cw_lateral_alignment = inner_cell.cw_surface is outer_cell.cw_surface
+            if not all([
+                vertical_alignment,
+                cw_lateral_alignment,
+                ccw_lateral_alignment,
+            ]):
+                raise GeometryError(
+                    "BlanketCellStack is not aligned! This means shared "
+                    "surfaces were found to be duplicate /not shared instead."
+                )
+            minmax_coordinates.append(np.concatenate(outer_cell.bounding_box))
+
+        # check they form a linear stack, i.e. the stack's bounding box are all shifting
+        # towards the same direction (increasing or decreasing).
+        for diff_column in np.diff(minmax_coordinates, axis=0).T:
+            if all(diff_column > 0) or all(diff_column < 0):
+                # strictly monotonic series if they all have finite volumes.
+                break
         else:
-            int_start, int_end = interior_wire.start_point(), interior_wire.end_point()
-            self._out2in = make_polygon(np.array([ext_end, int_start]).T, closed=False)
-            self._in2out = make_polygon(np.array([int_end, ext_start]).T, closed=False)
-            self._inner_curve = BluemiraWire([
-                self._out2in,
-                self.interior_wire,
-                self._in2out,
-            ])
-            raise_error_if_overlap(
-                self._out2in,
-                self._in2out,
-                "cell-start cutting plane",
-                "cell-end cutting plane",
-            )
-        self.vertex = PreCellWireVerticesNames(ext_end, int_start, int_end, ext_start)
-        self.outline = BluemiraWire([self.exterior_wire, self._inner_curve])
-        # Revolve only up to 180° for easier viewing
-        self.half_solid = BluemiraSolid(revolve_shape(self.outline))
+            raise GeometryError("The cell stack must be sequential!")
 
-    def plot_2d(self, *args, **kwargs) -> None:
-        """Plot the outline in 2D"""
-        plot_2d(self.outline, *args, **kwargs)
+    def __len__(self) -> int:
+        return self.cell_stack.__len__()
 
-    def show_cad(self, *args, **kwargs) -> None:
-        """Plot the outline in 3D"""
-        show_cad(self.half_solid, *args, **kwargs)
+    def __getitem__(self, index_or_slice) -> Union[List[BlanketCell], BlanketCell]:
+        return self.cell_stack.__getitem__(index_or_slice)
 
-    def _get_volume_approximation_error(self) -> float:
+    def __repr__(self) -> str:
+        return super().__repr__().replace(" at ", f" of {len(self)} BlanketCells at ")
+
+    @staticmethod
+    def ascribe_iterable_quantity_to_layer(quantity: Iterable) -> Dict:
         """
-        Get the volume lost by by approximating the interior and exterior curve with
-        straight lines.
-
-        Returns
-        -------
-        self.lost_volume: float
-            The volume lost. [m^3]
+        Given an iterable of length 3 or 4, convert it into a dictionary such that
+        each of the 3/4 quantities corresponds to a layer.
         """
-        self._approximator_exterior_straightline = make_polygon(
-            np.array([self._inner_curve.end_point(), self._inner_curve.start_point()]).T,
-            closed=False,
+        if len(quantity) == 4:
+            return {
+                BlanketLayers.Surface.name: quantity[0],
+                BlanketLayers.FirstWall.name: quantity[1],
+                BlanketLayers.BreedingZone.name: None,
+                BlanketLayers.Manifold.name: quantity[2],
+                BlanketLayers.VacuumVessel.name: quantity[3],
+            }
+        if len(quantity) == 5:
+            return {
+                BlanketLayers.Surface.name: quantity[0],
+                BlanketLayers.FirstWall.name: quantity[1],
+                BlanketLayers.BreedingZone.name: quantity[2],
+                BlanketLayers.Manifold.name: quantity[3],
+                BlanketLayers.VacuumVessel.name: quantity[4],
+            }
+        raise NotImplementedError(
+            "Expected 4 or 5 layers to the blanket, where"
+            " the surface, first wall, manifold, and vacuum vessel are mandatory,"
+            " and the breeding zone is optional."
         )
-        self.approximator_outline = BluemiraWire([
-            self._approximator_exterior_straightline,
-            self._inner_curve,
-        ])
-        self.approximator_half_solid = revolve_shape(self.approximator_outline)
-        self.lost_volume = self.half_solid.volume - self.approximator_half_solid.volume
-        return self.lost_volume * 2  # volume lost by half-
 
-    def _get_volume_approximation_error_fraction(self) -> float:
-        lost_volume = self._get_volume_approximation_error()
-        return lost_volume / self.volume
+    @property
+    def interior_surface(self):  # noqa: D102
+        return self.fw_cell.interior_surface
+
+    @property
+    def exterior_surface(self):  # noqa: D102
+        return self.vv_cell.exterior_surface
+
+    @property
+    def ccw_surface(self):  # noqa: D102
+        return self.fw_cell.ccw_surface
+
+    @property
+    def cw_surface(self):  # noqa: D102
+        return self.fw_cell.cw_surface
+
+    @property
+    def interfaces(self):
+        """All of the radial surfaces, arranged from innermost to outermost."""
+        if not hasattr(self, "_interfaces"):
+            self._interfaces = [cell.interior_surface for cell in self.cell_stack]
+            self._interfaces.append(self.exterior_surface)
+        return self._interfaces
+
+    @classmethod
+    def from_surfaces(
+        cls,
+        ccw_surf: openmc.Surface,
+        cw_surf: openmc.Surface,
+        layer_interfaces: List[openmc.Surface],
+        example_points: Iterable[Iterable[float]],
+        fill_dict: dict[str, openmc.Material],
+        cell_ids: Optional[Iterable[int]] = None,
+        cell_names: Optional[Iterable[int]] = None,
+    ):
+        """Create a stack of cells from a collection of openmc.Surfaces."""
+        num_cell_in_stack = len(example_points)
+        if not cell_ids:
+            cell_ids = [None] * num_cell_in_stack
+        if not cell_names:
+            cell_names = [""] * num_cell_in_stack
+
+        cell_type_at_num = {
+            v: k
+            for k, v in cls.ascribe_iterable_quantity_to_layer(
+                range(num_cell_in_stack)
+            ).items()
+        }
+        cell_stack = []
+        for _cell_num, (int_surf, ext_surf, eg_point, _id, _name) in enumerate(
+            zip(
+                layer_interfaces[:-1],
+                layer_interfaces[1:],
+                example_points,
+                cell_ids,
+                cell_names,
+                # strict=True # TODO: uncomment in Python 3.10
+            )
+        ):
+            cell_stack.append(
+                BlanketCell(
+                    ext_surf,
+                    ccw_surf,
+                    cw_surf,
+                    eg_point,
+                    int_surf,
+                    _id,
+                    _name,
+                    fill_dict[cell_type_at_num[_cell_num]],
+                )
+            )
+        return cls(cell_stack)
 
 
-def polygon_revolve_signed_volume(polygon: npt.NDArray[npt.NDArray[float]]) -> float:
+class BlanketCellArray:
     """
-    Revolve a polygon along the z axis, and return the volume.
-
-    A polgyon placed in the RHS of the z-xis in the xz plane would have positive volume
-    if it runs clockwise, and negative volume if it runs anticlockwise.
-
-    Similarly a polygon placed on the LHS of the z-axis in the xz plane would have
-    negative volume if it runs clockwise, positive volume if it runs anti-clockwise.
+    An array of BlanketCellStack
 
     Parameters
     ----------
-    polygon: ndarray of shape (N, 2)
-        Stores the x-z coordinate pairs of the four coordinates.
+    blanket_cell_array
+        a list of BlanketCellStack
 
-    Notes
-    -----
-    TODO: add formula later.
+    Variables
+    ---------
+    poloidal_surfaces: List[openmc.Surface]
+        a list of surfaces radiating from (approximately) the gyrocenter to the entrance.
+    radial_surfaces: List[List[openmc.Surface]]
+        a list of lists of surfaces. Each list is the layer interface of a a stack's
     """
-    polygon = np.array(polygon)
-    if np.ndim(polygon) != 2 or np.shape(polygon)[1] != 2:
-        raise ValueError("This function takes in an np.ndarray of shape (N, 2).")
-    previous_points, current_points = polygon, np.roll(polygon, -1, axis=0)
-    px, pz = previous_points[:, 0], previous_points[:, -1]
-    cx, cz = current_points[:, 0], current_points[:, -1]
-    volume_3_over_pi = (pz - cz) * (px**2 + px * cx + cx**2)
-    return np.pi / 3 * fsum(volume_3_over_pi)
 
+    def __init__(self, blanket_cell_array: List[BlanketCellStack]):
+        """
+        Create array from a list of BlanketCellStack
+        """
+        self.blanket_cell_array = blanket_cell_array
+        self.poloidal_surfaces = [self[0].ccw_surface]
+        self.radial_surfaces = []
+        for i, this_stack in enumerate(self):
+            self.poloidal_surfaces.append(this_stack.cw_surface)
+            self.radial_surfaces.append(this_stack.interfaces)
 
-PreCellWireVerticesNames = namedtuple(
-    "PreCellWireVerticesNames", "exterior_end,interior_start,interior_end,exterior_start"
-)
+            # check neighbouring cells share the same lateral surface
+            if i != len(self) - 1:
+                next_stack = self[i + 1]
+                if this_stack.cw_surface is not next_stack.ccw_surface:
+                    raise GeometryError(
+                        f"Neighbouring BlanketCellStack [{i}] and "
+                        f"[{i + 1}] are not aligned!"
+                    )
 
+    def __len__(self) -> int:
+        return self.blanket_cell_array.__len__()
 
-def partial_diff_of_volume(
-    three_vertices: Iterable[Iterable[float]],
-    normalized_direction_vector: Iterable[float],
-) -> float:
-    """
-    Gives the relationship between how the the solid volume varies with the position of
-    one of its verticies. More precisely, it gives gives the the partial derivative of
-    the volume of the solid revolved out of a polygon when one vertex of that polygon
-    is moved in the direction specified by normalized_direction_vector.
+    def __getitem__(
+        self, index_or_slice
+    ) -> Union[List[BlanketCellStack], BlanketCellStack]:
+        return self.blanket_cell_array.__getitem__(index_or_slice)
 
-    Parameters
-    ----------
-    three_vertices: NDArray with shape (3, 2)
-        Contain (x, z) coordinates of the polygon. It extracts only the vertex being
-        moved, and the two vertices around it. three_vertices[0] and three_vertices[2]
-        are anchor vertices that cannot be adjusted.
-    normalized_direction_vector: NDArray with shape (2,)
-        Direction that the point is allowed to move in.
+    def __setitem__(
+        self,
+        index_or_slice,
+        new_blanket_cell_stack: Union[List[BlanketCellStack], BlanketCellStack],
+    ):
+        raise NotImplementedError(
+            "The content of this class is not intended to be " "changed on-the-fly!"
+        )
 
-    Notes
-    -----
-    TODO: add formula later.
-    """
-    (qx, qz), (rx, rz), (sx, sz) = three_vertices
-    x_component = qz * qx - rz * qx + 2 * qz * rx - 2 * sz * rx + rz * sx - sz * sx
-    z_component = (qx + rx + sx) * (sx - qx)
-    xz_derivatives = np.array([x_component, z_component]).T
-    return np.pi / 3 * np.dot(normalized_direction_vector, xz_derivatives)
+    def __add__(self, other_array) -> BlanketCellArray:
+        return BlanketCellArray(self.blanket_cell_array + other_array.blanket_cell_array)
 
+    def __repr__(self) -> str:
+        return (
+            super().__repr__().replace(" at ", f" of {len(self)} BlanketCellStacks at ")
+        )
 
-def newtons_method(
-    objective: Callable[[float], float],
-    x_guess: float,
-    dobjective_dx: Callable[[float], float],
-    atol: float = EPS_FREECAD,
-) -> float:
-    """
-    Try to find the root of a strictly monotonic 1D function.
+    @classmethod
+    def from_pre_cell_array(
+        cls,
+        pre_cell_array: PreCellArray,
+        material_dict: Dict[str, openmc.Material],
+        thicknesses: TokamakThicknesses,
+    ) -> BlanketCellArray:
+        """
+        Create a BlanketCellArray from a
+        :class:`~bluemira.neutronics.make_pre_cell.PreCellArray` .
+        """
+        cell_walls = CellWalls.from_pre_cell_array(pre_cell_array)
+        # left wall
+        ccw_surf = surface_from_2points(
+            *cell_walls[0], surface_id=0, name="Blanket cell wall 0"
+        )
 
-    Writing our own since we don't want to use scipy.
+        cell_array = []
+        for i, (pre_cell, cw_wall) in enumerate(zip(pre_cell_array, cell_walls[1:])):
+            # right wall
+            cw_surf = surface_from_2points(
+                *cw_wall, surface_id=10 * (i + 1), name=f"Blanket cell wall {i + 1}"
+            )
 
-    Parameters
-    ----------
-    objective:
-        Objective function to be minimized. Takes in float x.
-    x_guess:
-        Starting guess.
-    dobjective_dx:
-        Derivative of objective function w.r.t. x.
-    atol:
-        Absolute value of objective function must be smaller than this to terminate
-        optimization successfully.
-    """
-    deviation, x, dy_dx = objective, x_guess, dobjective_dx
-    for i in range(100):  # noqa: B007
-        x -= deviation(x) / dy_dx(x)
-        if np.isclose(objective(x), 0, rtol=0, atol=atol):
-            return x
-    bluemira_warn(
-        "Optimization failed: Newton's method did not converge after"
-        f"{i + 1} iterations!"
-    )
-    return x
+            # getting the interfaces between layers.
+            interior_wire = pre_cell.cell_walls.starts
+            cw_wall_cuts, ccw_wall_cuts = [interior_wire[0]], [interior_wire[1]]
+            example_points, cell_ids = [], []
+            surf_stack = [
+                surface_from_2points(
+                    *interior_wire,
+                    surface_id=10 * i + 1,
+                    name=f"plasma-facing inner surface {i}",
+                )
+            ]
+            # switching logic to choose inboard vs outboard. TODO: functionalize
+            if cw_wall[0, 0] < thicknesses.inboard_outboard_transition_radius:
+                thickness_here = thicknesses.inboard.extended_prefix_sums()[1:]
+            else:
+                thickness_here = thicknesses.outboard.extended_prefix_sums()[1:]
 
+            for j, (interface_height, _height_type) in enumerate([
+                (0.005, "thick"),
+                *[(value, "frac") for value in thickness_here],
+            ]):
+                # switching logic to choose thickness vs fraction. TODO: functionalize
+                if _height_type == "thick":
+                    points = pre_cell.get_cell_wall_cut_points_by_thickness(
+                        interface_height
+                    )
+                elif _height_type == "frac":
+                    points = pre_cell.get_cell_wall_cut_points_by_fraction(
+                        interface_height
+                    )
+                else:
+                    raise RuntimeError
+                surf_stack.append(
+                    surface_from_2points(*points, surface_id=10 * i + (j + 2))
+                )
+                eg_pt = (
+                    points[0] + points[1] + cw_wall_cuts[-1] + ccw_wall_cuts[-1]
+                ) / 4
+                example_points.append(eg_pt)
+                cell_ids.append(10 * i + j)
+                cw_wall_cuts.append(points[0]), ccw_wall_cuts.append(points[1])
+            surf_stack[-1].name = f"vacuum vessel outer surface {i}"
 
-class PreCellArray:
-    """A list of pre-cells materials"""
-
-    def __init__(self, list_of_pre_cells):
-        """The list of pre-cells must be ajacent to each other."""
-        self.pre_cells = list_of_pre_cells
-        for this_cell, next_cell in zip(self.pre_cells[:-1], self.pre_cells[1:]):
-            # perform check that they are actually adjacent
-            this_wall = (this_cell.vertex.exterior_end, this_cell.vertex.interior_start)
-            next_wall = (next_cell.vertex.exterior_start, next_cell.vertex.interior_end)
+            # check ordering. TODO: make prettier.
             if not (
-                np.allclose(this_wall[0], next_wall[0], atol=0, rtol=EPS_FREECAD)
-                and np.allclose(this_wall[1], next_wall[1], atol=0, rtol=EPS_FREECAD)
+                is_strictly_monotonically_increasing(
+                    cw_wall_cuts @ pre_cell.normal_to_interior
+                )
+                and is_strictly_monotonically_increasing(
+                    ccw_wall_cuts @ pre_cell.normal_to_interior
+                )
             ):
                 raise GeometryError(
-                    "Adjacent pre-cells are expected to have matching"
-                    f"corners; but instead we have {this_wall}!={next_wall}."
+                    "Some surfaces crosses over each other within the cell stack!"
                 )
-        self.volumes = [pre_cell.half_solid.volume * 2 for pre_cell in self.pre_cells]
-        # dividing_walls: shape = (N+1, 2, 2) for N+1 walls of N pre-cells (left and
-        # right walls), 2 points per wall, xz coordinates per point.
-        # dividing_walls is not used outside of here, hence does not warrant to be made
-        # into a class of its own yet.
-        dividing_walls = [
-            (c.vertex.interior_end, c.vertex.exterior_start) for c in self.pre_cells
-        ]
-        dividing_walls.append((
-            self.pre_cells[-1].vertex.interior_start,
-            self.pre_cells[-1].vertex.exterior_end,
-        ))
-        self.dividing_walls = CellWall(np.array(dividing_walls)[:, :, ::2, 0])
 
-    def to_csg(self, preserve_volume: bool = False):
-        """
-        Convert to planes defined in the CSG array
-
-        Parameters
-        ----------
-        preserve_volume: bool
-            Whether to preserve the volume of each cell during the transformation from
-            pre-cell to openmc cells.
-            If True, change the length of the cut-lines to preserve the volume of each
-            cell as much as possible.
-        """
-        if preserve_volume:
-            self.dividing_walls.optimize_to_match_individual_volumes(self.volumes)
-            # temporary
-            tmp_pre_cells = []
-            for this_wall, next_wall in zip(
-                self.dividing_walls[:-1], self.dividing_walls[1:]
-            ):
-                interior = make_polygon(
-                    _fill_xz_to_3d(np.array([next_wall[0], this_wall[0]]).T)
+            # TODO: implement curved exterior in the future.
+            exterior_curve_comp = pre_cell.exterior_wire.shape.OrderedEdges
+            if len(exterior_curve_comp) != 1 or not exterior_curve_comp[
+                0
+            ].Curve.TypeId.startswith("Part::GeomLine"):
+                raise NotImplementedError(
+                    "Not ready to make curved-line cross-sections yet!"
                 )
-                exterior = make_polygon(
-                    _fill_xz_to_3d(np.array([this_wall[1], next_wall[1]]).T)
-                )
-                tmp_pre_cells.append(PreCell(interior, exterior))
-            return PreCellArray(tmp_pre_cells)
 
-    def plot_2d(self) -> None:  # noqa: D102
-        plot_2d([c.outline for c in self.pre_cells])
-
-    def show_cad(self) -> None:  # noqa: D102
-        show_cad([c.half_solid for c in self.pre_cells])
-
-    def __add__(self, other_array: PreCellArray) -> PreCellArray:  # noqa: D105
-        return PreCellArray(self.pre_cells.__add__(other_array.pre_cells))
-
-    def __getitem__(self, idx) -> Union[List[PreCell], PreCell]:  # noqa: D105
-        return self.pre_cells.__getitem__(idx)
-
-    def __len__(self) -> int:  # noqa: D105
-        return self.pre_cells.__len__()
-
-
-class CellWall:
-    """
-    A list of start- and end-location vectors of all of the walls dividing neighbouring
-    pre-cells.
-    """
-
-    def __init__(self, cell_walls: Iterable[Iterable[Iterable[float]]]):
-        self.cell_walls = np.array(cell_walls)  # shape = (N, 2, 2)
-        if np.shape(self.cell_walls)[1:] != (2, 2):
-            raise ValueError(
-                "Expected N values of start and end xz coordinates, i.e. "
-                f"shape = (N+1, 2, 2); got {np.shape(self.cell_walls)}."
+            stack = BlanketCellStack.from_surfaces(
+                ccw_surf=ccw_surf,
+                cw_surf=cw_surf,
+                layer_interfaces=surf_stack,
+                example_points=example_points,
+                cell_ids=cell_ids,
+                fill_dict=material_dict,
             )
-        self._starts = self.cell_walls[:, 0]  # shape = (N+1, 2)
-        self._init_ends = self.cell_walls[:, 1]  # shape = (N+1, 2)
-        _vector = self._init_ends - self._starts
-        # shape = (N+1, 2)
-        self.original_lengths = np.linalg.norm(_vector, axis=-1)
-        self.directions = (_vector.T / self.original_lengths).T
-        self.num_cells = len(self.cell_walls) - 1
-        self.check_volumes_and_lengths()
+            cell_array.append(stack)
+            ccw_surf = cw_surf  # right wall -> left wall, as we shift right.
 
-    def __getitem__(self, idx) -> npt.NDArray[float]:  # noqa: D105
-        return self.cell_walls.__getitem__(idx)
-
-    def __len__(self) -> int:  # noqa: D105
-        return self.cell_walls.__len__()
-
-    @property
-    def starts(self):
-        """The start points of each cell wall. shape = (N+1, 2)"""
-        return self._starts  # the start points never change value.
-
-    @property
-    def ends(self):
-        """The end point changes value depending on the user-set length."""
-        return self.cell_walls[:, 1]  # shape = (N+1, 2)
-
-    def get_length(self, i):
-        """
-        Get the length of the i-th cell-wall
-
-        Returns
-        -------
-        length: float
-        """
-        _end_i, _start_i = self.cell_walls[i]
-        return np.linalg.norm(_end_i - _start_i)
-
-    def set_length(self, i, new_length):
-        """Set the length of the i-th cell-wall"""
-        self.cell_walls[i][1] = self.cell_walls[i][0] + self.directions[i] * new_length
-
-    def get_fraction_of_lengths(self, fraction):
-        """
-        Find the end-points' xz coordinates if cell walls were to be rescaled to
-        have f times the current lengths, where f = fraction.
-        """
-        return self.starts + self.directions * (self.lengths * fraction)
-
-    @property
-    def lengths(self):
-        """Current lengths of the cell walls."""
-        return np.linalg.norm(self.ends - self.starts, axis=-1)  # shape = (N+1)
-
-    def get_volume(self, i):
-        """
-        Get the volume of the i-ith cell
-
-        Returns
-        -------
-        volume: float
-        """
-        outline = np.concatenate([self.cell_walls[i], self.cell_walls[i + 1][::-1]])
-        return polygon_revolve_signed_volume(outline)
-
-    @property
-    def volumes(self):
-        """
-        Current volumes of the (simplified) cells created by joining straight lines
-        between neighbouring cell walls.
-        """
-        return np.array([
-            self.get_volume(i) for i in range(self.num_cells)
-        ])  # shape = (N+1,)
-
-    def check_volumes_and_lengths(self):
-        """
-        Ensure all cells have positive volumes, to minimize the risk of self-intersecting
-        lines and negative lengths
-        """
-        if not (all(self.volumes > 0) and all(self.lengths > 0)):
-            raise GeometryError("At least 1 cell has non-positive volumes!")
-
-    def volume_of_cells_neighbouring(self, i, test_length):
-        """
-        Get the volume of cell[i-1] and cell[i] when cell_wall[i] is set to the
-        test_length.
-
-        Returns
-        -------
-        volume: float
-        """
-        _start_i, _dir_i = self.starts[i], self.directions[i]
-        new_end = _start_i + _dir_i * test_length
-        prev_wall, next_wall = self.cell_walls[i - 1 : i + 2 : 2]
-        prev_outline = [prev_wall[0], prev_wall[1], new_end, _start_i]
-        next_outline = [_start_i, new_end, next_wall[1], next_wall[0]]
-        return polygon_revolve_signed_volume(
-            prev_outline
-        ) + polygon_revolve_signed_volume(next_outline)
-
-    def volume_derivative_of_cells_neighbouring(self, i, test_length):
-        """
-        Measure the derivative on the volume of cell[i-1] and cell[i] w.r.t. to
-        length of cell_wall[i], at cell_wall[i] length = test_length.
-
-        Returns
-        -------
-        dV/dl: float
-        """
-        _start_i, _dir_i = self.starts[i], self.directions[i]
-        new_end = _start_i + _dir_i * test_length
-        prev_end, next_end = self.ends[i - 1 : i + 2 : 2]
-        prev_curve = [prev_end, new_end, _start_i]
-        next_curve = [_start_i, new_end, next_end]
-        return partial_diff_of_volume(prev_curve, _dir_i) + partial_diff_of_volume(
-            next_curve, _dir_i
-        )
-
-    def optimize_to_match_individual_volumes(self, volume_list: Iterable[float]):
-        """
-        Allow the lengths of each wall to increase, so that the overall volumes are
-        preserved as much as possible. Assuming the entire exterior curve is convex,
-        then our linear approximation is only going to under-approximate. Therefore
-        to achieve better approximation, we only need to increase the lengths.
-        """
-        if self.num_cells <= 1:
-            return self.cell_walls
-
-        target_volumes = np.array(list(volume_list))
-        if self.num_cells == 2:
-            # only one single step is required for the optimization
-            def volume_excess(new_length):
-                return self.volume_of_cells_neighbouring(1, new_length) - sum(
-                    target_volumes
-                )
-
-            length_1 = self.get_length(1)
-
-            def derivative(new_length):
-                return self.volume_derivative_of_cells_neighbouring(1, new_length)
-
-            self.set_length(1, newtons_method(volume_excess, length_1, derivative))
-            self.check_volumes_and_lengths()
-            return self.cell_walls
-
-        # if more than 3 walls (more than 2 cells)
-        i_range = range(1, self.num_cells)
-        num_passes_counter = -1
-        step_direction = +1
-        i = 1
-        forward_pass_result = np.zeros(self.num_cells + 1)
-
-        while num_passes_counter < 1000:
-
-            def excess_volume(test_length, i=i):
-                return self.volume_of_cells_neighbouring(i, test_length) - sum(
-                    target_volumes[i - 1 : i + 1]
-                )
-
-            def dV_dl(test_length, i=i):  # noqa: N802
-                return self.volume_derivative_of_cells_neighbouring(i, test_length)
-
-            # do not allow length to decrease beyond their original value.
-            if excess_volume(self.original_lengths[i]) < 0:
-                optimal_length = newtons_method(excess_volume, self.get_length(i), dV_dl)
-                self.set_length(i, optimal_length)
-            else:
-                self.set_length(i, self.original_lengths[i])
-
-            if i == min(i_range):
-                # hitting the left end: bounce to the right
-                step_direction = +1
-                num_passes_counter += 1
-                backward_pass_result = self.lengths.copy()
-                # termination condition
-                if np.allclose(
-                    backward_pass_result, forward_pass_result, rtol=0, atol=EPS_FREECAD
-                ):
-                    bluemira_debug(
-                        "Cell volume-matching optimization successful."
-                        "Terminating iterative cell wall length adjustment after "
-                        f"{num_passes_counter} passes."
-                    )
-                    self.check_volumes_and_lengths()
-                    return self.cell_walls
-            elif i == max(i_range):
-                # hitting the right end: bounce to the left
-                step_direction = -1
-                num_passes_counter += 1
-                forward_pass_result = self.lengths.copy()
-            i += step_direction
-        bluemira_warn(
-            "Optimization failed: Did not converge within"
-            f"{num_passes_counter} iterations!"
-        )
-        return self.cell_walls
-
-
-# create an xy-plane simply by drawing an L.
-x_plane = lambda _x: BluemiraPlane.from_3_points([_x, 0, 0], [_x, 0, 1], [_x, 1, 0])  # noqa: E731
-z_plane = lambda _z: BluemiraPlane.from_3_points([0, 0, _z], [0, 1, _z], [1, 0, _z])  # noqa: E731
-
-
-def _fill_xz_to_3d(xz):
-    """
-    Bloat up a 2D/ a list of 2D coordinates to 3D, by filling out the y-coords with 0's.
-    """
-    return np.array([xz[0], np.zeros_like(xz[0]), xz[1]])
-
-
-def cut_exterior_curve(
-    interior_panels: npt.NDArray[float],
-    exterior_curve: BluemiraWire,
-    snap_to_horizontal_angle: float = 30.0,
-    starting_cut: Optional[npt.NDArray[float]] = None,
-    ending_cut: Optional[npt.NDArray[float]] = None,
-    discretization_level: int = 50,
-):
-    """
-    Cut up an exterior boundary (a BluemiraWire) curve according to interior panels'
-    breakpoints.
-
-    Parameters
-    ----------
-        exterior_curve:
-            The BluemiraWire representing the outside surface of the vacuum vessel.
-        interior_panels:
-            numpy array of shape==(N, 2), showing the XZ coordinates of joining points
-            between adjacent first wall panels.
-        snap_to_horizontal_angle:
-            If the cutting plane is less than x degrees (°) away from horizontal,
-            then snap it to horizontal.
-        starting_cut, ending_cut:
-            The program cannot deduce what angle to cut the exterior curve at without
-            extra user input. Therefore the user is able to use these options to specify
-            the cut line for the first and final point respectively.
-
-            For the first cut line,
-                the cut line would start from interior_panels[0] and reach starting_cut,
-            and for the final cut line,
-                the cut line would start from interior_panels[-1] and reach ending_cut.
-            Both arguments have shape (2,) if given,
-                as they represent the XZ coordinates.
-
-        discretization_level:
-            how many points to use to approximate the curve.
-            TODO: remove this! when issue #3038 is fixed. The raw wire can be used
-                without discretization then.
-
-    Returns
-    -------
-    A list of BluemiraWires.
-    """
-    cut_points = []
-    if abs(interior_panels[0][0]) < abs(interior_panels[-1][0]):
-        _start_x, _end_x = 0, interior_panels[-1] * 2
-    else:
-        _start_x, _end_x = interior_panels[0] * 2, 0
-    if starting_cut is None:
-        starting_cut = np.array([_start_x, interior_panels[0][-1]])
-    if ending_cut is None:
-        ending_cut = np.array([_end_x, interior_panels[-1][-1]])
-
-    # first point
-    p2, p4 = _fill_xz_to_3d(interior_panels[0]), _fill_xz_to_3d(starting_cut)
-    cut_points = [
-        get_wire_plane_intersect(
-            exterior_curve,
-            BluemiraPlane.from_3_points(p2, p4, p2 + np.array([0, 1, 0])),
-            cut_direction=p4 - p2,
-        )
-    ]
-
-    for i in range(1, len(interior_panels) - 1):
-        p1, p2, p3 = interior_panels[i - 1 : i + 2]
-        origin_2d, direction_2d = get_bisection_line(p1, p2, p3, p2)
-        origin, cut_direction = _fill_xz_to_3d(origin_2d), _fill_xz_to_3d(direction_2d)
-        if direction_2d[0] == 0:
-            _plane = x_plane(p2[0])  # vertical cut line, i.e. surface of a cylinder.
-        elif abs(np.arctan(direction_2d[-1] / direction_2d[0])) < np.deg2rad(
-            snap_to_horizontal_angle
-        ):
-            _plane = z_plane(p2[-1])  # flat cut line, i.e. horizontal plane.
-        else:
-            _plane = BluemiraPlane.from_3_points(
-                origin, origin + cut_direction, origin + np.array([0, 1, 0])
-            )  # draw an L
-        cut_points.append(
-            get_wire_plane_intersect(exterior_curve, _plane, cut_direction=cut_direction)
-        )
-
-    # last point
-    p2, p4 = _fill_xz_to_3d(interior_panels[-1]), _fill_xz_to_3d(ending_cut)
-    cut_points.append(
-        get_wire_plane_intersect(
-            exterior_curve,
-            BluemiraPlane.from_3_points(p2, p4, p2 + np.array([0, 1, 0])),
-            cut_direction=p4 - p2,
-        )
-    )
-
-    alpha = exterior_curve.parameter_at(cut_points[0])
-    wire_segments = []
-    for i, cp in enumerate(cut_points[1:]):
-        beta = exterior_curve.parameter_at(cp)
-        if alpha > beta:
-            alpha -= 1.0  # rollover.
-        param_range = np.linspace(alpha, beta, discretization_level) % (1.0)
-        wire_segments.append(
-            make_polygon(
-                np.array([exterior_curve.value_at(i) for i in param_range]).T,
-                label=f"exterior curve {i + 1}",
-                closed=False,
-            )
-        )
-        # `make_polygon` here shall be replaced when issue #3038 gets resolved.
-        alpha = beta
-
-    return wire_segments
-
-
-def grow_blanket_into_cell_array(
-    interior_panels: npt.NDArray[float],
-    thicknesses: TokamakGeometry,
-    in_out_board_breakpoint,
-):
-    """
-    Simply grow 4 shells around the interior panels according to specified thicknesses.
-    The thicknesses of these shells in the inboard side are constant, and the thicknesses
-    of these shells in the outboard side are also constant, unlike the ones produced by
-    exterior_curve
-    """
-    return
-
-
-def split_blanket_into_pre_cell_array(
-    interior_panels: npt.NDArray[float],
-    exterior_curve: BluemiraWire,
-    snap_to_horizontal_angle: float = 30.0,
-    starting_cut: Optional[npt.NDArray[float]] = None,
-    ending_cut: Optional[npt.NDArray[float]] = None,
-    discretization_level: int = 50,
-):
-    """
-    Cut up an exterior boundary (a BluemiraWire) curve according to interior panels'
-    breakpoints.
-
-    Parameters
-    ----------
-        exterior_curve:
-            The BluemiraWire representing the outside surface of the vacuum vessel.
-        interior_panels:
-            numpy array of shape==(N, 2), showing the XZ coordinates of joining points
-            between adjacent first wall panels.
-        snap_to_horizontal_angle:
-            If the cutting plane is less than x degrees (°) away from horizontal,
-            then snap it to horizontal.
-        starting_cut, ending_cut:
-            The program cannot deduce what angle to cut the exterior curve at without
-            extra user input. Therefore the user is able to use these options to specify
-            the cut line for the first and final point respectively.
-
-            For the first cut line,
-                the cut line would start from interior_panels[0] and reach starting_cut,
-            and for the final cut line,
-                the cut line would start from interior_panels[-1] and reach ending_cut.
-            Both arguments have shape (2,) if given,
-                as they represent the XZ coordinates.
-
-        discretization_level:
-            how many points to use to approximate the curve.
-            TODO: remove this! See cut_exterior_curve.__doc__
-
-    Returns
-    -------
-    PreCellArray
-    """
-    pre_cell_list = []
-    for i, exterior_curve_segment in enumerate(
-        cut_exterior_curve(
-            interior_panels,
-            exterior_curve,
-            snap_to_horizontal_angle=snap_to_horizontal_angle,
-            starting_cut=starting_cut,
-            ending_cut=ending_cut,
-            discretization_level=discretization_level,
-        )
-    ):
-        pre_cell_list.append(
-            PreCell(
-                make_polygon(
-                    _fill_xz_to_3d(interior_panels[i : i + 2][::-1].T), closed=False
-                ),
-                exterior_curve_segment,
-            )
-        )
-    return PreCellArray(pre_cell_list)
+        return cls(cell_array)

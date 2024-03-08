@@ -3,328 +3,276 @@
 # SPDX-FileCopyrightText: 2021-present J. Morris, D. Short
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
-"""Tools to slice up the neutronics model with the fewest number of planes"""
+"""Oversees the conversion from bluemira wires into pre-cells, then into csg."""
 
-from typing import Union
+# ruff: noqa: PLR2004
+from __future__ import annotations
+
+from typing import TYPE_CHECKING, Optional, Tuple
 
 import numpy as np
-from numpy.typing import NDArray
+from numpy import typing as npt
 
-from bluemira.base.constants import EPS
+from bluemira.geometry.coordinates import get_bisection_line
+from bluemira.geometry.plane import BluemiraPlane
+from bluemira.geometry.tools import get_wire_plane_intersect, make_polygon
+from bluemira.neutronics.make_pre_cell import PreCell, PreCellArray
+
+if TYPE_CHECKING:
+    from bluemira.geometry.wire import BluemiraWire
 
 
-class PoloidalCrossSectionLineBase:
-    """An abstract base class for all of the splitting lines used to cut open the
-    poloidal cross-section. Includes both variables ones and fixed ones.
+def make_plane_from_2_points(
+    point1: npt.NDArray[float], point2: npt.NDArray[float]
+) -> BluemiraPlane:
+    """Make a plane that is perpendicular to the RZ plane using only 2 points."""
+    # Draw an extra leg in the Y-axis direction to make an L shape.
+    point3 = point1 + np.array([0, 1, 0])
+    return BluemiraPlane.from_3_points(point1, point2, point3)
+
+
+def x_plane(x: float):
+    """Make a vertical plane (perpendicular to Y)."""
+    # Simply draw an L shape in the YZ plane
+    return BluemiraPlane.from_3_points([x, 0, 0], [x, 0, 1], [x, 1, 0])
+
+
+def z_plane(z: float):
+    """Make a horizontal plane."""
+    # Simply draw an L shape in the XY plane
+    return BluemiraPlane.from_3_points([0, 0, z], [0, 1, z], [1, 0, z])
+
+
+def grow_blanket_into_pre_cell_array(
+    interior_panels: npt.NDArray[float],  # noqa: ARG001
+    inboard_thickness: float,  # noqa: ARG001
+    outboard_thickness: float,  # noqa: ARG001
+    in_out_board_transition_radius: float,  # noqa: ARG001
+):
+    """
+    Simply grow a shell around the interior panels according to specified thicknesses.
+    The thicknesses of these shells in the inboard side are constant, and the thicknesses
+    of these shells in the outboard side are also constant. This would be the equivalent
+    of making curves that are constant in the inboard and outboard side.
+    """
+    return
+
+
+class PanelsAndExteriorCurve:
+    """
+    A collection of two objects, the first wall panels and the exterior curve.
+
+    Parameters
+    ----------
+    panel_break_points:
+        numpy array of shape==(N, 2), showing the RZ coordinates of joining points
+        between adjacent first wall panels, running in the clockwise direction,
+        from the inboard divertor to the top, then down to the outboard divertor.
+    exterior_curve:
+        The BluemiraWire representing the outside surface of the vacuum vessel.
     """
 
     def __init__(
-        self,
-        z_intercept: Union[float, NDArray[float]],
-        slope: Union[float, NDArray[float]],
+        self, panel_break_points: npt.NDArray[float], exterior_curve: BluemiraWire
     ):
-        """
-        Parameters
-        ----------
-        z_intercept:
-            z_intercept of the line.
-        slope:
-            Slope of the line.
-        """
-        self.z_intercept = (
-            z_intercept if np.ndim(z_intercept) == 0 else np.array(z_intercept)
-        )
-        self.slope = slope if np.ndim(slope) == 0 else np.array(slope)
-
-    def shared_viable_config(self, other_line) -> PoloidalCrossSectionLineBase:  # noqa F821
-        """Common values that exists within the allowed parameters"""
-        if not isinstance(other_line, PoloidalCrossSectionLineBase):
-            raise NotImplementedError(
-                "Can only find the intersection between neighbouring"
+        """Instantiate from a break curve and a thing."""
+        self.exterior_curve = exterior_curve
+        self.interior_panels = np.insert(
+            panel_break_points, 1, 0, axis=-1
+        )  # shape = (N+1, 3)
+        if len(self.interior_panels[0]) != 3 or np.ndim(self.interior_panels) != 2:
+            raise ValueError(
+                "Expected an input np.ndarray of breakpoints of shape = "
+                f"(N+1, 2). Instead received shape = {np.shape(panel_break_points)}."
             )
-        ...  # write code to account for the slope +/- symmetry
-        return PoloidalCrossSectionLineBase()
+        self.cut_points = []
+        self.exterior_curve_segments = []
 
-    def __mul__(self, other_line):
-        return self.common(other_line)
-
-    @property
-    def phase_space_repr(self) -> AllowedPointSet:  # noqa: F821
-        """A property for all PoloidalCrossSectionLineBase class."""
-        return self._phase_space_repr
-
-
-class PoloidalCrossSectionLineFixed(PoloidalCrossSectionLineBase):
-    """A slicing line with fixed angle and position."""
-
-    def __init__(self, z_intercept: float, slope: float):
-        if np.ndim(z_intercept) != 0 or np.ndim(slope) != 0:
-            raise ValueError("Only accepts scalar inputs!")
-        super().__init__(z_intercept, slope)
-        self._phase_space_repr = [
-            AllowedPointSet0D(z_intercept, slope),
-            AllowedPointSet0D(z_intercept, -slope),
-        ]
-
-    @classmethod
-    def from_2points(cls, p1: NDArray[float], p2: NDArray[float]):
+    @staticmethod
+    def calculate_plane_dir(
+        start_point, end_point
+    ) -> Tuple[BluemiraPlane, npt.NDArray[float]]:
         """
-        Represent a line fixed by two points.
+        Calcullate the cutting plane and the direction of the cut from 2 points.
+        Both points must lie on the RZ plane.
+        """
+        plane = make_plane_from_2_points(start_point, end_point)
+        cut_direction = end_point - start_point
+        return plane, cut_direction
+
+    def get_bisection_line(self, index):
+        """Calculate the bisection line that separates two panels at breakpoint[i]."""
+        p1, p2, p3 = self.interior_panels[index - 1 : index + 2, ::2]
+        origin_2d, direction_2d = get_bisection_line(p1, p2, p3, p2)
+        line_origin = np.insert(origin_2d, 1, 0, axis=-1)
+        line_direction = np.insert(direction_2d, 1, 0, axis=-1)
+        return line_origin, line_direction
+
+    def add_cut_point(self, cutting_plane: BluemiraPlane, cut_direction: npt.NDArray):
+        """
+        Find a point that lies on the exterior curve, which would be used to cut up the
+        exterior_curve eventually.
+
+        N.B. These cut points must be sequentially added, i.e. they should
+        follow the exterior curve in the clockwise direction.
+        """
+        self.cut_points.append(
+            get_wire_plane_intersect(self.exterior_curve, cutting_plane, cut_direction)
+        )
+
+    def calculate_exterior_cut_points(
+        self,
+        snap_to_horizontal_angle: float,
+        starting_cut: Optional[npt.NDArray[float]],
+        ending_cut: Optional[npt.NDArray[float]],
+    ) -> PreCellArray:
+        """
+        Cut the exterior curve according to some specified criteria:
+        In general, a line would be drawn from each panel break point outwards towards
+        the exterior curve. This would form the cut line.
+
+        The space between two neighbouring cut line makes a PreCell.
+
+        Usually these cut's angle is the bisection of the normal angles of its
+        neighbouring panels, but in special rules applies when snap_to_horizontal_angle
+        is set to >0.
+
+        Since there is only one neighbouring panel at the start break point and end break
+        point, starting_cut and end_cut must be specified. If not, they are chosen to be
+        horizontal cuts.
 
         Parameters
         ----------
-        p1: NDArray of shape (2,) or (3,)
-            Contains the x and z coordinates of point 1
-        p2: NDArray of shape (2,) or (3,)
-            Contains the x and z coordinates of point 2
-        """
-        slope = (p2[-1] - p1[-1]) / (p2[0] - p1[0]) if p2[0] != p1[0] else np.inf
-        return cls.from_point_slope(p1, slope)
+        snap_to_horizontal_angle:
+            If the cutting plane is less than x degrees (°) away from horizontal,
+            then snap it to horizontal.
+            allowed range: [0, 90]
+        starting_cut, ending_cut:
+            Each is an ndarray with shape (2,), denoting the destination of the cut
+            lines.
 
-    @classmethod
-    def from_point_slope(cls, p1: NDArray[float], slope: NDArray[float]):
-        """
-        Represent a line fixed by one point and an angle.
+            The program cannot deduce what angle to cut the exterior curve at these
+            locations without extra user input. Therefore the user is able to use these
+            options to specify the cut line's destination point for the first and final
+            points respectively.
 
-        Parameters
-        ----------
-        p1: NDArray of shape (2,) or (3,)
-            Contains the x and z coordinates of point 1, which the line must pass through
-        slope: float
-            slope of the line
-        """
-        z_intercept = p1[-1] - slope * p1[0]
-        return cls(z_intercept, slope)
+            For the first cut line,
+                the cut line would start from interior_panels[0] and reach starting_cut;
+            and for the final cut line,
+                the cut line would start from interior_panels[-1] and reach ending_cut.
+            Both arguments have shape (2,) if given, representing the RZ coordinates.
 
-
-class PoloidalCrossSectionLineSemiVariable(PoloidalCrossSectionLineBase):
-    """A line with variable angle but fixed to one position."""
-
-    def __init__(self, z_intercept: NDArray[float], slope: NDArray[float]):
-        """
-        A straight line with variable angle, but still passes through a fixed point.
-
-        Parameters
-        ----------
-        z_intercept: shape (2,)
-        slope: shape (2,)
-        """
-        if not (np.shape(z_intercept) == (2,) and np.shape(slope) == (2,)):
-            raise ValueError("Slope, intercept must be provided in a (2,) array each.")
-        super().__init__(np.array(z_intercept), np.array(slope))
-        self._phase_space_repr = [
-            self.AllowedPointSet1D(z_intercept, slope),
-            self.AllowedPointSet1D(z_intercept, -slope),
-        ]
-
-    @classmethod
-    def from_point_variable_slopes(cls, p1: NDArray[float], slope_range: NDArray[float]):
-        """
-        Parameters
-        ----------
-        p1: NDArray of shape (2,) or (3,)
-            Contains the x and z coordinates of point 1, which the line must pass through
-        slope_range: NDArray of shape (2,)
-            lower limit, upper limit
 
         Returns
         -------
-        An instance of PoloidalCrossSectionLineSemiVariable
+        None
+            (results are stored in self.cut_points)
         """
-        slope_range = min(slope_range), max(slope_range)
-        z_at_min_slope = PoloidalCrossSectionLineFixed.from_point_slope(
-            p1, slope_range[0]
-        ).z_intercept
-        z_at_max_slope = PoloidalCrossSectionLineFixed.from_point_slope(
-            p1, slope_range[1]
-        ).z_intercept
-        return cls((z_at_min_slope, z_at_max_slope), slope_range)
+        threshold_angle = np.deg2rad(snap_to_horizontal_angle)
+        if len(self.cut_points) > 0:
+            raise RuntimeError("self.cut_points be cleared first!")
 
+        # initial cut point
 
-class PoloidalCrossSectionLineVariable(PoloidalCrossSectionLineBase):
-    """A line with variable angle and variable position."""
+        _plane, _dir = self.calculate_plane_dir(
+            self.interior_panels[0], [starting_cut[0], 0, starting_cut[-1]]
+        )
+        self.add_cut_point(_plane, _dir)
 
-    def __init__(self, z_intercept: NDArray[float], slope: NDArray[float]):
+        for i in range(1, len(self.interior_panels) - 1):
+            _origin, _dir = self.get_bisection_line(i)
+
+            if _dir[0] == 0:
+                _plane = x_plane(self.interior_panels[i][0])  # vertical cut plane
+            elif abs(np.arctan(_dir[-1] / _dir[0])) < threshold_angle:
+                _plane = z_plane(self.interior_panels[i][-1])  # horizontal cut plane
+            else:
+                _plane = make_plane_from_2_points(_origin, _origin + _dir)
+            self.add_cut_point(_plane, _dir)
+
+        # final cut point
+        _plane, _dir = self.calculate_plane_dir(
+            self.interior_panels[-1], [ending_cut[0], 0, ending_cut[-1]]
+        )
+        self.add_cut_point(_plane, _dir)
+
+        return self.cut_points
+
+    def execute_exterior_curve_cut(self, discretization_level: int):
         """
-        A straight line that has a variable angle and straight line
+        Cut the exterior curve into a series and store them in
+        self.exterior_curve_segments.
+        This is the slowest part of the entire csg-creation process, because of the
+        discretization.
 
         Parameters
         ----------
-        z_intercept: shape (4,)
-        slope: shape (4,)
+        discretization_level:
+            how many points to use to approximate the curve.
+            TODO: remove this when issue #3038 is fixed. The raw wire can be used
+                without discretization then.
+
+        Returns
+        -------
+        None
+            results are stored in self.exterior_curve_segments
         """
-        super().__init__(np.array(z_intercept), np.array(slope))
-        # post_init check
-        if not (
-            (np.ndim(self.z_intercept) == (1,) and np.ndim(self.slope) == (1,))
-            and (np.shape(self.z_intercept)[0] == np.shape(self.slope)[0] >= 2)
-        ):
-            raise ValueError(
-                "Slope and intercept must be provided in (N,) array each" "where N>=3."
+        if len(self.exterior_curve_segments) != 0:
+            raise RuntimeError("self.exterior_curve_segments must be cleared first!")
+
+        alpha = self.exterior_curve.parameter_at(self.cut_points[0])  # t-start
+        for i, cp in enumerate(self.cut_points[1:]):
+            beta = self.exterior_curve.parameter_at(cp)  # t-end
+            if alpha > beta:
+                alpha -= 1.0
+            param_range = np.linspace(alpha, beta, discretization_level) % 1.0
+            self.exterior_curve_segments.append(
+                make_polygon(
+                    np.array([self.exterior_curve.value_at(i) for i in param_range]).T,
+                    label=f"exterior curve {i + 1}",
+                    closed=False,
+                )
             )
-        ...
-        # check that it does, in fact, form a quadrilateral with no self-intersection.
-        # by seeing that non-neighbouring edges do not intersect. using vector_intersect
-        self._phase_space_repr = [
-            self.AllowedPointSet2D(z_intercept, slope),
-            self.AllowedPointSet2D(z_intercept, -slope),
-        ]
+            # `make_polygon` here shall be replaced when issue #3038 gets resolved.
+            alpha = beta  # t-end becomes t-start in the next iteration
+        return self.exterior_curve_segments
 
-    @classmethod
-    def from_variable_intercepts_variable_slopes(
-        cls, z_intercept_range: NDArray[float], slope_range: NDArray[float]
+    def make_quadrilateral_pre_cell_array(
+        self,
+        snap_to_horizontal_angle: float = 30.0,
+        starting_cut: Optional[npt.NDArray[float]] = None,
+        ending_cut: Optional[npt.NDArray[float]] = None,
+        discretization_level: int = 10,
     ):
         """
-        Make a rectangular box in phase space.
+        Cut the exterior curve up, so that would act as the exterior side of the
+        quadrilateral pre-cell. Then, the panel would act as the interior side of the
+        pre-cell. The two remaining sides are the counter-clockwise and clockwise walls.
+        """
+        _start_r = 0  # starting cut's final destination's r value
+        _end_r = (
+            self.interior_panels[-1, 0] * 2
+        )  # ending cut's final destination's r value
 
-        Parameters
-        ----------
-        z_intercept_range: NDArray (2,)
-            minimum z_intercept, maximum z_intercept
-        slope_range: NDArray (2,)
-            minimum slope, maximum slope
-        """
-        z_min, z_max = min(z_intercept_range), max(z_intercept_range)
-        s_min, s_max = min(slope_range), max(slope_range)
-        return cls([z_min, z_min, z_max, z_max], [s_max, s_min, s_min, s_max])
+        # make horizontal cuts if the starting and ending cuts aren't provided.
+        if starting_cut is None:
+            starting_cut = np.array([_start_r, self.interior_panels[0][-1]])
+        if ending_cut is None:
+            ending_cut = np.array([_end_r, self.interior_panels[-1][-1]])
 
-    @classmethod
-    def from_variable_points_variable_slopes(
-        cls,
-        extremum_p1: NDArray[float],
-        extremum_p2: NDArray[float],
-        slope_range: NDArray[float],
-    ):
-        """
-        Parameters
-        ----------
-        extremum_p1, extremum_p2: NDArray of shape (2,) or (3,)
-            Each contains the x or z coordinates of a point on the edge of the region
-            we're allowed into.
-        slope_range:
-            Both lines shares this same range of slopes.
-        """
-        line_1 = PoloidalCrossSectionLineSemiVariable.from_point_variable_slopes(
-            extremum_p1, slope_range
+        self.cut_points = []
+        self.calculate_exterior_cut_points(
+            snap_to_horizontal_angle, starting_cut, ending_cut
         )
-        line_2 = PoloidalCrossSectionLineSemiVariable.from_point_variable_slopes(
-            extremum_p2, slope_range
-        )
-        z_ = np.flatten([line_1.z_intercept[::-1], line_2.z_intercept])
-        s_ = np.flatten([line_1.slope[::-1], line2_.slope])
-        return cls(z_, s_)
 
-    @classmethod
-    def from_2variable_slope_lines(
-        cls,
-        line_1: PoloidalCrossSectionLineSemiVariable,
-        line_2: PoloidalCrossSectionLineSemiVariable,
-    ):
-        """
-        Make a general quadrilateral in phase space using two
-        PoloidalCrossSectionLineSemiVariable
-        """
-        z_ = np.flatten([line_1.z_intercept[::-1], line_2.z_intercept])
-        s_ = np.flatten([line_1.slope[::-1], line_2.slope])
-        ...  # Convex hull here
-        return cls(z_, s_)
+        self.exterior_curve_segments = []
+        self.execute_exterior_curve_cut(discretization_level)
 
+        pre_cell_list = []
+        for i, exterior_curve_wire_segment in enumerate(self.exterior_curve_segments):
+            _inner_wire = make_polygon(
+                self.interior_panels[i : i + 2][::-1].T, closed=False
+            )
+            pre_cell_list.append(PreCell(_inner_wire, exterior_curve_wire_segment))
 
-class AllowedPointSet:
-    """Base class, representing nothing."""
-
-    def __init__(self, y: NDArray, x: NDArray):
-        """Something"""
-        self.y = np.array(y)
-        self.x = np.array(x)
-
-    def intersection(self, other_set):
-        """Strategy used in the code below:
-        We will only populate the lower triangle of the interaction matrix between
-        various classes of AllowedPointSet. The upper half triangle (minus the main
-        diagonal) will simply be a reflection of the lower half.
-        """
-        pass
-
-    def __bool__(self):
-        return True
-
-
-class AllowedPointSetNull(AllowedPointSet):
-    def __init__(self):
-        self.y = np.array([])
-        self.x = np.array([])
-
-    def intersection(self, other_set):  # noqa: ARG002
-        return self
-
-    def __bool__(self):
-        return False
-
-
-class AllowedPointSet0D(AllowedPointSet):
-    """A single point.
-    The result of PoloidalCrossSectionLineFixed.phase_space_repr
-    """
-
-    def __init__(self, y, x):
-        if np.ndim(y) > 1 or np.ndim(x) > 1:
-            raise ValueError("A 0D point requires at least 1 point to specify.")
-        super().__init__(np.atleast_1d(y), np.atleast_1d(x))
-
-    def intersection(self, other_set):
-        if int(other_set.__class__.__name__[-2]) > 0:
-            return other_set.intersection(self)
-        # only accept if there is a perfect overlap.
-        if np.allclose(
-            np.array([self.z_intercept, self.slope]),
-            np.array([other_set.z_intercept, other_set.slope]),
-            rtol=0,
-            atol=EPS,
-        ):
-            return self
-
-        return AllowedPointSetNull()
-
-
-class AllowedPointSet1D(AllowedPointSet):
-    """A line of finite length, defined by the y and x coordinates of the start and end
-    locations.
-    The result of PoloidalCrossSectionLineSemiVariable.phase_space_repr
-    """
-
-    def __init__(self, y, x):
-        if not (np.shape(y) == (2,) and np.shape(x) == (2,)):
-            raise ValueError("A 1D line requires at least 2 points to specify.")
-        super().__init__(y, x)
-
-    def intersection(self, other_set):
-        if int(other_set.__class__.__name__[-2]) == 2:
-            return other_set.intersection(self)
-        ...
-        return AllowedPointSetNull()
-
-
-class AllowedPointSet2D(AllowedPointSet):
-    """A 2D polygon, defined by the y and x coordinates of the start and end locations.
-    The result of PoloidalCrossSectionLineVariable.phase_space_repr
-    """
-
-    def __init__(self, y, x):
-        if not all([
-            np.ndim(y) == 1,
-            np.ndim(x) == 1,
-            np.shape(y)[0] >= 3,
-            np.shape(x)[0] >= 3,
-        ]):
-            raise ValueError("A 2D polgyon requires at least 3 points to specify.")
-        super().__init__(y, x)
-        coords = np.array([self.y, self.x]).T
-        self.edges = [
-            AllowedPointSet1D(np.array([yx, next_yx]).T)
-            for yx, next_yx in zip(coords, np.roll(coords, -1))
-        ]
-
-    def intersection(self, other_set):
-        ...
-        return AllowedPointSetNull()
+        return PreCellArray(pre_cell_list)
