@@ -30,7 +30,6 @@ from bluemira.optimisation import optimise
 from bluemira.utilities.tools import is_num
 
 
-
 def plot_scalar_field(
     x: np.ndarray,
     y: np.ndarray,
@@ -154,7 +153,6 @@ def get_tricontours(
 # the boundary). Not sure how to solve this problem.
 # Moreover, this procedure seems to be very slow now.
 # TODO(je-cook) follow https://github.com/FEniCS/dolfinx/issues/2847
-
 
 
 def find_flux_surface(
