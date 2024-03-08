@@ -160,10 +160,7 @@ class FemMagnetostatic2d:
         if g is not None:
             self.g = g
 
-        # # define the right hand side
-        # self.L = self.g * self.v * dx # - neumann_bc_function * self.v * ds
-
-        # # define the Dirichlet boundary conditions
+        # define the Dirichlet boundary conditions
         if dirichlet_bc_function is None:
             tdim = self.mesh.topology.dim
             facets = locate_entities_boundary(
@@ -191,6 +188,7 @@ class FemMagnetostatic2d:
             raise NotImplementedError
 
         # solve the system taking into account the boundary conditions
+        # define the right hand side
         self.L = self.g * self.v * dx - neumann_bc  # - neumann_bc_function * self.v * ds
 
         self.problem = LinearProblem(

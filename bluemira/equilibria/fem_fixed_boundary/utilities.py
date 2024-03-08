@@ -149,7 +149,6 @@ def get_tricontours(
     return results
 
 
-# modified
 # Note: since it is not possible anymore to extrapolate dolfinx function data outside the
 # mesh domain, this procedure fails when psi_norm is almost 1 (i.e. points are near to
 # the boundary). Not sure how to solve this problem.
@@ -250,7 +249,6 @@ def find_flux_surface(
     return points
 
 
-# ## checked - working
 def get_mesh_boundary(mesh: dolfinx.mesh.Mesh) -> Tuple[np.ndarray, np.ndarray]:
     """
     Retrieve the boundary of the mesh, as an ordered set of coordinates.
@@ -306,7 +304,6 @@ def get_mesh_boundary(mesh: dolfinx.mesh.Mesh) -> Tuple[np.ndarray, np.ndarray]:
     return points_sorted[:, 0], points_sorted[:, 1]
 
 
-# modified
 def get_flux_surfaces_from_mesh(
     mesh: dolfinx.mesh.Mesh,
     psi_norm_func: Callable[[float, float], float],

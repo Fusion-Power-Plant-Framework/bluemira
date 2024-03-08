@@ -128,14 +128,12 @@ class BluemiraFemFunction(Function):
 
     def interpolate(self, u, *args, **kwargs):
         """Interpolate function and cache bb_tree"""
-        # TODO (ivan): create_nonmatching_meshes_interpolation_data doesn't take
-        #  padding as input in dolfinx 0.7.1
         nmm = (
             create_nonmatching_meshes_interpolation_data(
                 self.function_space.mesh._cpp_object,
                 self.function_space.element,
                 u.function_space.mesh._cpp_object,
-                # padding=1e-8,
+                padding=1e-8,
             )
             if hasattr(u, "function_space")
             else ((), (), (), ())
@@ -379,8 +377,6 @@ def eval_f(function: Function, points: np.ndarray) -> Tuple[np.ndarray, ...]:
         reference function
     points:
         points on which the function shall be calculated
-    check:
-        ["off", "warn", "error"]
 
 
     Returns
@@ -435,6 +431,7 @@ def plot_scalar_field(
     data: np.ndarray,
     levels: Union[int, np.ndarray] = 20,
     ax: Optional[plt.Axes] = None,
+    *,
     contour: bool = True,
     tofill: bool = True,
     **kwargs,
@@ -509,11 +506,10 @@ def read_from_msh(
 
     Parameters
     ----------
-        filename: Name of ``.msh`` file.
-        comm: MPI communicator to create the mesh on.
-        rank: Rank of ``comm`` responsible for reading the ``.msh``
-            file.
-        gdim: Geometric dimension of the mesh
+    filename: Name of ``.msh`` file.
+    comm: MPI communicator to create the mesh on.
+    rank: Rank of ``comm`` responsible for reading the ``.msh`` file.
+    gdim: Geometric dimension of the mesh
 
     Returns
     -------
