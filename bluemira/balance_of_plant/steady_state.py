@@ -429,7 +429,10 @@ class ParasiticLoadStrategy(abc.ABC):
 
 @dataclass
 class BoPModelParams(ParameterFrame):
-    """Parameters required to run :class:`BalanceOfPlantModel`."""
+    """
+    Parameters required to run
+    :class:`~bluemira.balance_of_plant.steady_state.BalanceOfPlantModel`.
+    """
 
     P_fus_DT: Parameter[float]
     P_fus_DD: Parameter[float]
@@ -454,7 +457,8 @@ class BalanceOfPlantModel:
             * P_hcd_ss: float
             * P_hcd_ss_el: float
 
-        See :class:`BoPModelParams` for parameter details.
+        See :class:`~bluemira.balance_of_plant.steady_state.BoPModelParams`
+        for parameter details.
     rad_sep_strat:
         Strategy to calculate the where the radiation and charged particle power
         in the scrape-off-layer is carried to

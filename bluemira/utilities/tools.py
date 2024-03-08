@@ -358,7 +358,7 @@ def is_num(thing: Any) -> bool:
 
 def is_num_array(thing: Any) -> bool:
     """
-    :func:is_num but also includes arrays
+    :func:`~bluemira.utilities.tools.is_num` but also includes arrays
     """
     if isinstance(thing, np.ndarray) and thing.dtype in {float, int, complex}:
         return ~np.isnan(thing)

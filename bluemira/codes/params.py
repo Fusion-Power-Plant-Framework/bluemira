@@ -22,7 +22,7 @@ class MappedParameterFrame(ParameterFrame):
     The mappings are intended to be used to map bluemira parameters to
     parameters in an external code.
 
-    See :class:`bluemira.base.parameter_frame.ParameterFrame` for details
+    See :class:`~bluemira.base.parameter_frame.ParameterFrame` for details
     on how to declare parameters.
     """
 

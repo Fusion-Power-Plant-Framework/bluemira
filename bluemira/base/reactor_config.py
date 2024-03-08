@@ -156,7 +156,7 @@ class ReactorConfig:
         and the extracted local_params.
 
         Use the
-        :func:`~bluemira.base.parameter_frame._frame.make_parameter_frame`
+        :func:`bluemira.base.parameter_frame._frame.make_parameter_frame`
         helper function to convert it into a typed ParameterFrame.
         """
         args = (component_name, *args)

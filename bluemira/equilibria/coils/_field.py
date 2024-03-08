@@ -325,13 +325,13 @@ class CoilGroupFieldsMixin:
         z:
             The z values at which to calculate the response at
         split:
-            Flag for if :func:_combined_control is used
+            Flag for if :meth:_combined_control is used
         _quad_x:
-            :func:_combined_control x positions
+            :meth:_combined_control x positions
         _quad_z:
-            :func:_combined_control z positions
+            :meth:_combined_control z positions
         _quad_weight:
-            :func:_combined_control weighting
+            :meth:_combined_control weighting
 
         Returns
         -------
@@ -382,13 +382,13 @@ class CoilGroupFieldsMixin:
         z:
             The z values at which to calculate the response at
         split:
-            Flag for if :func:_combined_control is used
+            Flag for if :meth:_combined_control is used
         _quad_x:
-            :func:_combined_control x positions
+            :meth:_combined_control x positions
         _quad_z:
-            :func:_combined_control z positions
+            :meth:_combined_control z positions
         _quad_weight:
-            :func:_combined_control weighting
+            :meth:_combined_control weighting
 
         Returns
         -------
@@ -419,13 +419,13 @@ class CoilGroupFieldsMixin:
         z:
             The z values at which to calculate the response at
         split:
-            Flag for if :func:_combined_control is used
+            Flag for if :meth:_combined_control is used
         _quad_x:
-            :func:_combined_control x positions
+            :meth:_combined_control x positions
         _quad_z:
-            :func:_combined_control z positions
+            :meth:_combined_control z positions
         _quad_weight:
-            :func:_combined_control weighting
+            :meth:_combined_control weighting
 
         Returns
         -------
@@ -459,15 +459,15 @@ class CoilGroupFieldsMixin:
         z:
             The z values at which to calculate the response at
         split:
-            Flag for if :func:_combined_control is used
+            Flag for if :meth:_combined_control is used
         coil_x:
-            :func:_combined_control x positions
+            :meth:_combined_control x positions
         coil_z:
-            :func:_combined_control z positions
+            :meth:_combined_control z positions
         coil_dx:
-            :func:_combined_control x positions
+            :meth:_combined_control x positions
         coil_dz:
-            :func:_combined_control z positions
+            :meth:_combined_control z positions
 
         Returns
         -------
@@ -511,15 +511,15 @@ class CoilGroupFieldsMixin:
         z:
             The z values at which to calculate the response at
         split:
-            Flag for if :func:_combined_control is used
+            Flag for if :meth:_combined_control is used
         coil_x:
-            :func:_combined_control x positions
+            :meth:_combined_control x positions
         coil_z:
-            :func:_combined_control z positions
+            :meth:_combined_control z positions
         coil_dx:
-            :func:_combined_control x positions
+            :meth:_combined_control x positions
         coil_dz:
-            :func:_combined_control z positions
+            :meth:_combined_control z positions
 
         Returns
         -------
@@ -550,15 +550,15 @@ class CoilGroupFieldsMixin:
         z:
             The z values at which to calculate the response at
         split:
-            Flag for if :func:_combined_control is used
+            Flag for if :meth:_combined_control is used
         coil_x:
-            :func:_combined_control x positions
+            :meth:_combined_control x positions
         coil_z:
-            :func:_combined_control z positions
+            :meth:_combined_control z positions
         coil_dx:
-            :func:_combined_control x positions
+            :meth:_combined_control x positions
         coil_dz:
-            :func:_combined_control z positions
+            :meth:_combined_control z positions
 
         Returns
         -------

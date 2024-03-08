@@ -459,7 +459,8 @@ def flux_surface_kuiroukidis_quadrants(
     """
     Kuiroukidis flux surface individual quadrants
 
-    please see :func:flux_surface_kuiroukidis for more information
+    please see :func:`~bluemira.equilibria.shapes.flux_surface_kuiroukidis`
+    for more information
     """
     if delta_u < 0:
         delta_u *= -1

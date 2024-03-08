@@ -52,7 +52,7 @@ class Solver(CodesSolver):
     ----------
     params:
         ParameterFrame or dict containing parameters for running PROCESS.
-        See :class:`bluemira.codes.plasmod.params.ProcessSolverParams` for
+        See :class:`~bluemira.codes.process.params.ProcessSolverParams` for
         parameter details.
     build_config:
         Dictionary containing the configuration for this solver.
@@ -69,10 +69,10 @@ class Solver(CodesSolver):
             The directory from which data is read when running in read mode.
         * template_in_dat_path:
             The path to a template PROCESS IN.DAT file or and instances of
-            :class:`bluemira.codes.process._inputs.ProcessInputs`.
+            :class:`~bluemira.codes.process._inputs.ProcessInputs`.
             By default this is an empty instance of the class. To create a new
             instance
-            :class:`bluemira.codes.process.template_builder.PROCESSTemplateBuilder`
+            :class:`~bluemira.codes.process.template_builder.PROCESSTemplateBuilder`
             should be used.
         * problem_settings:
             Any PROCESS parameters that do not correspond to a bluemira

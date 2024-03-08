@@ -121,9 +121,10 @@ def optimise_geometry(
     keep_out_zones:
         An iterable of keep-out zones: closed wires that the geometry
         must not intersect.
-        Each item can be given as a :class:`.KeepOutZone`, or a
-        dictionary with keys the same as the properties of the
-        `:class:`.KeepOutZone` class, or just a :class:`.BluemiraWire`.
+        Each item can be given as a :class:`.KeepOutZone`,
+        or a dictionary with keys the same as the properties of the class
+        :class:`.KeepOutZone`, or just a
+        :class:`~bluemira.geometry.wire.BluemiraWire`.
     algorithm:
         The optimisation algorithm to use, by default :obj:`.Algorithm.SLSQP`.
     opt_conditions:
