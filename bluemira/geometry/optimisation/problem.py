@@ -42,7 +42,8 @@ class GeomOptimisationProblem(abc.ABC, OptimisationProblemBase):
         If not overridden, an approximation of the derivative is made
         using the 'central differences' method.
         This method is ignored if a non-gradient based algorithm is
-        used when calling :meth:`.GeomOptimisationProblem.optimise`.
+        used when calling
+        :meth:`.GeomOptimisationProblem.optimise`.
         """
         raise NotImplementedError
 

@@ -43,7 +43,7 @@ class EUDEMOFuelCycleModel:
     ----------
     params:
         The parameters for the model. See
-        :class:`bluemira.fuel_cycle.cycle.EDFCMParams` for list of
+        :class:`~bluemira.fuel_cycle.cycle.EDFCMParams` for list of
         available parameters.
     build_config:
         Configuration options for the model. Options are:
@@ -653,7 +653,7 @@ class EUDEMOFuelCycleModel:
 @dataclass
 class EDFCMParams:
     """
-    Parameters required to run :class:`bluemira.fuel_cycle.cycle.EUDEMOFuelCycleModel`.
+    Parameters required to run :class:`~bluemira.fuel_cycle.cycle.EUDEMOFuelCycleModel`.
     """
 
     TBR: float = 1.05

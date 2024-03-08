@@ -40,8 +40,8 @@ class ChargedParticleSolver:
     ----------
     config: Dict[str, float]
         The parameters for running the transport model. See
-        :class:`ChargedParticleSolverParams` for available parameters
-        and their defaults.
+        :py:class:`~bluemira.radiation_transport.advective_transport.ChargedParticleSolverParams`
+        for available parameters and their defaults.
     equilibrium: Equilibrium
         The equilibrium defining flux surfaces.
     dx_mp: float (optional)
