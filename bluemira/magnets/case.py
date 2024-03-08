@@ -315,7 +315,10 @@ class CaseTF:
             # dx_WP = 2 * (R_wp_i * np.tan(self._rad_theta_TF / 2) - dx0_wp)
 
             # maximum number of turns on the considered pancake
-            n_layers_max = int(math.floor(dx_WP / cond.dx))
+            if i == 1:
+                n_layers_max = int(math.floor(dx_WP / cond.dx))
+            else:
+                n_layers_max = n_layers_max - n_layers_reduction
 
             if n_layers_max < 1:
                 raise ValueError(
@@ -348,8 +351,7 @@ class CaseTF:
                 )
 
             R_wp_i = R_wp_i - n_turns_max * cond.dy
-            dx_WP = dx_WP - n_layers_reduction * cond.dx
-
+            # dx_WP = dx_WP - n_layers_reduction * cond.dx
             print(f"remaining_conductors: {remaining_conductors}")
 
         self.WPs = WPs

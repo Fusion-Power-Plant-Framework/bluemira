@@ -33,11 +33,11 @@ show = True
 homogenized = False  # if True plot the WP as a homogenized block
 
 # input values
-A = 2.8
-R0 = 8.6  # [m] major machine radius
-B0 = 4.39  # [T] magnetic field @R0
-n_TF = 16  # number of TF coils
-d = 1.74
+A = 4.6
+R0 = 2.53  # [m] major machine radius
+B0 = 5.0  # [T] magnetic field @R0
+n_TF = 12  # number of TF coils
+d = 0.8
 a = R0 / A
 ripple = 6e-3
 Ri = R0 - a - d  # [m] max external radius of the internal TF leg
@@ -55,7 +55,7 @@ pm = B_TF_i ** 2 / (2 * MU_0)  # magnetic pressure on the inner TF leg
 # i.e. half of the whole F_Z
 t_z = (0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * I_TF ** 2)
 
-Iop = 70.0e3  # operational current in each conductor
+Iop = 40.0e3  # operational current in each conductor
 n_cond = int(np.ceil(I_TF / Iop))  # number of necessary conductors
 
 n_spire = np.floor(I_TF / Iop)
@@ -75,10 +75,8 @@ tf = Tau_discharge
 hotspot_target_temperature = 250.0
 
 # allowable stress values
-safety_factor = 1.5
+safety_factor = 1.5 * 1.3
 S_Y = 1e9 / safety_factor  # [Pa] steel allowable limit
-allowable_sigma_jacket = 667e6  # [Pa] for the conductor jacket
-allowable_sigma_case = 667e6  # [Pa] for the case
 
 # Current and magnetic field behaviour
 I = delayed_exp_func(Iop, Tau_discharge, t_delay)
@@ -115,7 +113,7 @@ result = cable.optimize_n_stab_ths(
 print(f"after optimization: conductor dx_cable = {cable.dx}")
 
 show = False
-for i in range(10):
+for i in range(5):
     print(f"Internal optimazion - iteration {i}")
     # optimize the cable jacket thickness considering 0D stress model for the single cable
     print(f"before optimization: conductor dx_jacket = {conductor.dx_jacket}")
@@ -128,7 +126,7 @@ for i in range(10):
                                np.sum([w.nx * w.ny for w in case.WPs]))
     result_opt_jacket = optimize_jacket_conductor(
         conductor, pm, t_z_cable_jacket, T0, B_TF_i,
-        allowable_sigma_jacket, bounds=[1e-5, 0.2]
+        S_Y, bounds=[1e-5, 0.2]
     )
     print(f"after optimization: conductor dx_jacket = {conductor.dx_jacket}")
 
@@ -139,7 +137,7 @@ for i in range(10):
     # creation of case
     wp1 = WindingPack(conductor, 1, 1)  # just a dummy WP to create the case
     case = CaseTF(
-        Ri=Ri, dy_ps=dr_plasma_side, dy_vault=0.3, theta_TF=360 / n_TF, mat_case=ss316,
+        Ri=Ri, dy_ps=dr_plasma_side, dy_vault=0.6, theta_TF=360 / n_TF, mat_case=ss316,
         WPs=[wp1]
     )
 
@@ -149,7 +147,8 @@ for i in range(10):
         plt.show()
 
     case.rearrange_conductors_in_wp_type1(n_cond, conductor, case.R_wp_i[0],
-                                          case.dx_i * 0.7, 0.075, 2)
+                                          case.dx_i * 0.7, 0.05, 4)
+
     if show:
         ax = case.plot(homogenized=homogenized)
         ax.set_aspect("equal")
@@ -157,7 +156,7 @@ for i in range(10):
         plt.show()
 
     case.optimize_vault_radial_thickness(
-        pm, t_z, T=T0, B=B_TF_i, allowable_sigma=allowable_sigma_case, bounds=[1e-2, 1]
+        pm, t_z, T=T0, B=B_TF_i, allowable_sigma=S_Y, bounds=[1e-2, 1]
     )
     if show:
         ax = case.plot(homogenized=homogenized)
@@ -166,12 +165,6 @@ for i in range(10):
         plt.show()
 
 show = True
-if show:
-    ax = case.plot(homogenized=homogenized)
-    ax.set_aspect("equal")
-    plt.title("Before vault optimization")
-    plt.show()
-
 if show:
     ax = case.plot(homogenized=homogenized)
     ax.set_aspect("equal")
