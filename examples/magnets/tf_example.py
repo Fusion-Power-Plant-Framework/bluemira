@@ -114,41 +114,64 @@ result = cable.optimize_n_stab_ths(
 )
 print(f"after optimization: conductor dx_cable = {cable.dx}")
 
-# optimize the cable jacket thickness considering 0D stress model for the single cable
-print(f"before optimization: conductor dx_jacket = {conductor.dx_jacket}")
-result_opt_jacket = optimize_jacket_conductor(
-    conductor, pm, t_z / 2 / n_spire, T0, B_TF_i,
-    allowable_sigma_jacket, bounds=[1e-5, 0.2]
-)
-print(f"after optimization: conductor dx_jacket = {conductor.dx_jacket}")
+show = False
+for i in range(10):
+    print(f"Internal optimazion - iteration {i}")
+    # optimize the cable jacket thickness considering 0D stress model for the single cable
+    print(f"before optimization: conductor dx_jacket = {conductor.dx_jacket}")
+    t_z_cable_jacket = 0
+    if i == 0:
+        t_z_cable_jacket = t_z / 2 / n_spire
+    else:
+        t_z_cable_jacket = t_z * case.area_wps_jacket / (
+                case.area_jacket + case.area_wps_jacket) / (
+                               np.sum([w.nx * w.ny for w in case.WPs]))
+    result_opt_jacket = optimize_jacket_conductor(
+        conductor, pm, t_z_cable_jacket, T0, B_TF_i,
+        allowable_sigma_jacket, bounds=[1e-5, 0.2]
+    )
+    print(f"after optimization: conductor dx_jacket = {conductor.dx_jacket}")
 
-from bluemira.magnets.materials import OperationalPoint
+    from bluemira.magnets.materials import OperationalPoint
 
-op = OperationalPoint(B=B_TF_i, T=T0)
+    op = OperationalPoint(B=B_TF_i, T=T0)
 
-# creation of case
-wp1 = WindingPack(conductor, 1, 1)  # just a dummy WP to create the case
-case = CaseTF(
-    Ri=Ri, dy_ps=dr_plasma_side, dy_vault=0.3, theta_TF=360 / n_TF, mat_case=ss316,
-    WPs=[wp1]
-)
+    # creation of case
+    wp1 = WindingPack(conductor, 1, 1)  # just a dummy WP to create the case
+    case = CaseTF(
+        Ri=Ri, dy_ps=dr_plasma_side, dy_vault=0.3, theta_TF=360 / n_TF, mat_case=ss316,
+        WPs=[wp1]
+    )
 
-if show:
-    ax = case.plot(homogenized=False)
-    ax.set_aspect("equal")
-    plt.show()
+    if show:
+        ax = case.plot(homogenized=False)
+        ax.set_aspect("equal")
+        plt.show()
 
-case.rearrange_conductors_in_wp_type1(n_cond, conductor, case.R_wp_i[0],
-                                      case.dx_i * 0.7, 0.075, 2)
+    case.rearrange_conductors_in_wp_type1(n_cond, conductor, case.R_wp_i[0],
+                                          case.dx_i * 0.7, 0.075, 2)
+    if show:
+        ax = case.plot(homogenized=homogenized)
+        ax.set_aspect("equal")
+        plt.title("Before vault optimization")
+        plt.show()
+
+    case.optimize_vault_radial_thickness(
+        pm, t_z, T=T0, B=B_TF_i, allowable_sigma=allowable_sigma_case, bounds=[1e-2, 1]
+    )
+    if show:
+        ax = case.plot(homogenized=homogenized)
+        ax.set_aspect("equal")
+        plt.title("After vault optimization")
+        plt.show()
+
+show = True
 if show:
     ax = case.plot(homogenized=homogenized)
     ax.set_aspect("equal")
     plt.title("Before vault optimization")
     plt.show()
 
-case.optimize_vault_radial_thickness(
-    pm, t_z, T=T0, B=B_TF_i, allowable_sigma=allowable_sigma_case, bounds=[1e-2, 1]
-)
 if show:
     ax = case.plot(homogenized=homogenized)
     ax.set_aspect("equal")

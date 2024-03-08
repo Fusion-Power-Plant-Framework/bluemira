@@ -87,6 +87,19 @@ class CaseTF:
         """Average toroidal length of the vault"""
         return (self.R_wp_k[-1] + self.Rk) * np.tan(self._rad_theta_TF / 2)
 
+    @property
+    def area(self):
+        return (self.dx_i + self.dx_k) * (self.Ri - self.Rk) / 2
+
+    @property
+    def area_jacket(self):
+        total_wp_area = np.sum([w.conductor.area * w.nx * w.ny for w in self.WPs])
+        return self.area - total_wp_area
+
+    @property
+    def area_wps_jacket(self):
+        return np.sum([w.conductor.area_jacket * w.nx * w.ny for w in self.WPs])
+
     def Kx_ps(self, **kwargs):
         """Equivalent radial mechanical stiffness of ps"""
         return self.mat_case.ym(**kwargs) * self.dy_ps / self.dx_ps
