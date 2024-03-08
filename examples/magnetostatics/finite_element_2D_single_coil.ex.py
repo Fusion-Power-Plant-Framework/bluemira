@@ -37,18 +37,20 @@ Application of the dolfin fem 2D magnetostatic to a single coil problem
 # Import necessary module definitions.
 
 # %%
-import time
 from pathlib import Path
 
 import gmsh
 import matplotlib.pyplot as plt
 import numpy as np
+import pyvista
 from dolfinx.io import XDMFFile
+from dolfinx.plot import vtk_mesh
 from matplotlib.axes import Axes
 from mpi4py import MPI
 
 from bluemira.base.components import Component, PhysicalComponent
 from bluemira.base.file import get_bluemira_path
+from bluemira.geometry.coordinates import Coordinates
 from bluemira.geometry.face import BluemiraFace
 from bluemira.geometry.tools import make_polygon
 from bluemira.geometry.wire import BluemiraWire
@@ -58,95 +60,90 @@ from bluemira.magnetostatics.fem_utils import (
     Association,
     create_j_function,
     model_to_mesh,
+    pyvista_plot_show_save,
 )
 from bluemira.magnetostatics.finite_element_2d import FemMagnetostatic2d
 from bluemira.mesh import meshing
 
-start = time.time()
-
+# %% [markdown]
+# Creating coil
+#
+# Inner rectangular surface of singular wire and extent of coil
 # %%
 
-ri = 0.01  # Inner radius of copper wire
-rc = 5  # Outer radius of copper wire
-R = 25  # Radius of domain
-R_ext = 250
 I_wire = 1e6  # wire's current
-gdim = 2  # Geometric dimension of the mesh
 
-# Define geometry for wire cylinder
-nwire = 20  # number of wire divisions
-lwire = 0.1  # mesh characteristic length for each segment
+r_enclo = 30  # radius of enclosure
+lcar_enclo = 2  # Characteristic length of enclosure
+lcar_axis = lcar_enclo / 20  # axis characteristic length
 
-nenclo = 20  # number of external enclosure divisions
-lenclo = 0.5  # mesh characteristic length for each segment
+rc = 5  # Outer radius wire
+drc = 0.01  # Inner radius of wire
+lcar_coil = 0.01  # Characteristic length of coil
 
-lcar_axis = 0.1  # axis characteristic length
 
-# enclosure
-theta_encl = np.linspace(np.pi / 2, -np.pi / 2, nenclo)
-r_encl = R * np.cos(theta_encl)
-z_encl = R * np.sin(theta_encl)
-
-# adding (0,0) to improve mesh quality
-enclosure_points = np.array([
-    [0, 0, 0],
-    *[[r_encl[ii], z_encl[ii], 0] for ii in range(r_encl.size)],
-])
-
-nenclo_ext = 40
-lenclo_ext = 20
-# external enclosure
-theta_encl_ext = np.linspace(np.pi / 2, -np.pi / 2, nenclo_ext)
-r_encl_ext = R_ext * np.cos(theta_encl_ext)
-z_encl_ext = R_ext * np.sin(theta_encl_ext)
-
-enclosure_points_ext1 = np.array([
-    *[[r_encl_ext[ii], z_encl_ext[ii], 0] for ii in range(r_encl_ext.size)]
-])
-enclosure_points_ext2 = enclosure_points[1:][::-1]
-poly_enclo_ext = make_polygon(
-    np.concatenate((enclosure_points_ext1, enclosure_points_ext2)), closed=True
+poly_coil = make_polygon(
+    [
+        [rc - drc, rc + drc, rc + drc, rc - drc],
+        [-drc, -drc, +drc, +drc],
+        np.zeros(4),
+    ],
+    closed=True,
+    label="poly_enclo",
 )
-poly_enclo_ext.mesh_options = {"lcar": lenclo_ext, "physical_group": "poly_enclo_ext"}
 
-enclosure_ext = BluemiraFace([poly_enclo_ext])
-enclosure_ext.mesh_options.physical_group = "enclo_ext"
+poly_coil.mesh_options = {"lcar": lcar_coil, "physical_group": "poly_coil"}
+coil = BluemiraFace(poly_coil)
+coil.mesh_options = {"lcar": lcar_coil, "physical_group": "coil"}
 
-poly_enclo1 = make_polygon(enclosure_points[0:2])
-poly_enclo1.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_enclo1"}
+poly_axis = make_polygon([np.zeros(3), [-r_enclo, 0, r_enclo], np.zeros(3)])
+poly_axis.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_axis"}
 
-poly_enclo2 = make_polygon(enclosure_points[1:])
-poly_enclo2.mesh_options = {"lcar": lenclo, "physical_group": "poly_enclo2"}
-
-poly_enclo3 = make_polygon(np.array([enclosure_points[-1], enclosure_points[0]]))
-poly_enclo3.mesh_options = {"lcar": lcar_axis, "physical_group": "poly_enclo3"}
-
-poly_enclo = BluemiraWire([poly_enclo1, poly_enclo2, poly_enclo3])
-poly_enclo.close("poly_enclo")
-poly_enclo.mesh_options = {"lcar": lenclo, "physical_group": "poly_enclo"}
-
-# coil
-theta_coil = np.linspace(0, 2 * np.pi, nwire)
-r_coil = rc + ri * np.cos(theta_coil[:-1])
-z_coil = ri * np.sin(theta_coil)
-
-coil_points = [[r_coil[ii], z_coil[ii], 0] for ii in range(r_coil.size)]
-
-poly_coil = make_polygon(coil_points, closed=True)
-lcar_coil = np.ones([poly_coil.vertexes.shape[1], 1]) * lwire
-poly_coil.mesh_options = {"lcar": lwire, "physical_group": "poly_coil"}
-
-coil = BluemiraFace([poly_coil])
-coil.mesh_options.physical_group = "coil"
-
+poly_ext = make_polygon(
+    [
+        [0, r_enclo, r_enclo, 0],
+        [r_enclo, r_enclo, -r_enclo, -r_enclo],
+        np.zeros(4),
+    ],
+    label="poly_ext",
+)
+poly_ext.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_ext"}
+poly_enclo = BluemiraWire([poly_axis, poly_ext], "poly_enclo")
+poly_enclo.mesh_options = {"lcar": lcar_enclo, "physical_group": "poly_enclo"}
 enclosure = BluemiraFace([poly_enclo, poly_coil])
-enclosure.mesh_options.physical_group = "enclo"
+enclosure.mesh_options = {"lcar": lcar_enclo, "physical_group": "enclo"}
+
+# %% [markdown]
+# Creating external enclosure shape
+#  ___
+# |_  |
+#  _| |
+# |___|
+#
+# %%
+r_enclo1 = 150
+lcar_enclo1 = 10
+
+poly_ext1 = make_polygon(
+    [
+        [0, r_enclo, r_enclo, 0, 0, r_enclo1, r_enclo1, 0],
+        [r_enclo, r_enclo, -r_enclo, -r_enclo, -r_enclo1, -r_enclo1, r_enclo1, r_enclo1],
+        np.zeros(8),
+    ],
+    label="poly_ext1",
+    closed=True,
+)
+poly_ext1.mesh_options = {"lcar": lcar_enclo1, "physical_group": "poly_ext1"}
+poly_enclo1 = BluemiraWire([poly_ext1], "poly_enclo1")
+poly_enclo1.mesh_options = {"lcar": lcar_enclo1, "physical_group": "poly_enclo1"}
+enclosure_ext = BluemiraFace([poly_enclo1])
+enclosure_ext.mesh_options = {"lcar": lcar_enclo1, "physical_group": "enclo1"}
 
 c_universe = Component(name="universe")
+c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
 c_enclo_ext = PhysicalComponent(
     name="enclosure_Ext", shape=enclosure_ext, parent=c_universe
 )
-c_enclo = PhysicalComponent(name="enclosure", shape=enclosure, parent=c_universe)
 c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 
 # %% [markdown]
@@ -156,12 +153,14 @@ c_coil = PhysicalComponent(name="coil", shape=coil, parent=c_universe)
 # Create the mesh (by default, mesh is stored in the file Mesh.msh")
 
 # %%
+gdim = 2  # Geometric dimension of the mesh
+
 directory = get_bluemira_path("", subfolder="generated_data")
 meshfiles = [Path(directory, p).as_posix() for p in ["Mesh.geo_unrolled", "Mesh.msh"]]
 
-meshing.Mesh(meshfile=meshfiles)(c_universe, dim=2)
+meshing.Mesh(meshfile=meshfiles)(c_universe, dim=gdim)
 
-(mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=2)
+(mesh, ct, ft), labels = model_to_mesh(gmsh.model, gdim=gdim)
 gmsh.write("Mesh.msh")
 gmsh.finalize()
 
@@ -170,13 +169,13 @@ with XDMFFile(MPI.COMM_WORLD, "mt.xdmf", "w") as xdmf:
     xdmf.write_meshtags(ft, mesh.geometry)
     xdmf.write_meshtags(ct, mesh.geometry)
 
-# with pyvista_plot_show_save("cell_tags.png") as plotter:
-#     grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
-#     num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
-#     grid.cell_data["Marker"] = ct.values[ct.indices < num_local_cells]
-#     grid.set_active_scalars("Marker")
-#     actor = plotter.add_mesh(grid, show_edges=True)
-#     plotter.view_xy()
+with pyvista_plot_show_save("cell_tags.png") as plotter:
+    grid = pyvista.UnstructuredGrid(*vtk_mesh(mesh, mesh.topology.dim))
+    num_local_cells = mesh.topology.index_map(mesh.topology.dim).size_local
+    grid.cell_data["Marker"] = ct.values[ct.indices < num_local_cells]
+    grid.set_active_scalars("Marker")
+    actor = plotter.add_mesh(grid, show_edges=True)
+    plotter.view_xy()
 
 # %%
 em_solver = FemMagnetostatic2d(2)
@@ -188,7 +187,6 @@ em_solver.set_mesh(mesh, ct)
 
 # %%
 coil_tag = labels["coil"][1]
-functions = [(1, coil_tag, I_wire)]
 jtot = create_j_function(mesh, ct, [Association(1, coil_tag, I_wire)])
 
 # %% [markdown]
@@ -198,7 +196,6 @@ jtot = create_j_function(mesh, ct, [Association(1, coil_tag, I_wire)])
 # %%
 em_solver.define_g(jtot)
 em_solver.solve()
-# em_solver.calculate_b()
 
 # %% [markdown]
 #
@@ -207,16 +204,21 @@ em_solver.solve()
 # 1) Along the z axis (analytical solution)
 
 # %%
-r_offset = 2 * lcar_axis
+# Comparison of the theoretical and calculated magnetic field (B).
+# Note: The comparison is conducted along the z-axis, where an
+# analytical expression is available. However, due to challenges
+# in calculating the gradient of dPsi/dx along the axis for CG
+# element, the points are translated by a value of r_offset.
+r_offset = 0.25
 
-z_points_axis = np.linspace(0, R, 200)
-r_points_axis = np.zeros(z_points_axis.shape) + r_offset
-b_points = np.array([r_points_axis, z_points_axis, 0 * z_points_axis]).T
+z_points_axis = np.linspace(0, r_enclo / 2, 200)
+r_points_axis = np.full(z_points_axis.shape, r_offset)
+b_points = Coordinates({"x": r_points_axis, "y": z_points_axis}).xyz.T
 
 Bz_axis = em_solver.calculate_b()(b_points)
 Bz_axis = Bz_axis[:, 1]
 bz_points = b_points[:, 1]
-B_z_teo = np.array([Bz_coil_axis(rc, 0, z, I_wire) for z in bz_points])
+B_z_teo = Bz_coil_axis(rc, 0, bz_points, I_wire)
 
 ax: Axes
 _, ax = plt.subplots()
@@ -234,29 +236,35 @@ ax.set_ylabel("error (T)")
 ax.legend()
 plt.show()
 
+# I just set an absolute tolerance for the comparison (since the magnetic field
+# goes to zero, the comparison cannot be made on the basis of a relative
+# tolerance). An allclose comparison was out of discussion considering the
+# necessary accuracy.
+np.testing.assert_allclose(Bz_axis, B_z_teo, atol=2.5e-4)
 
 # %% [markdown]
 #
 # 2) Along a radial path at z_offset (solution from green function)
 
 # %%
-z_offset = 100 * ri
+z_offset = 100 * drc
 
-points_x = np.linspace(r_offset, R, 200)
-points_z = np.zeros(z_points_axis.shape) + z_offset
+points_x = np.linspace(0, r_enclo, 200)
+points_z = np.full(z_points_axis.shape, z_offset)
 
-new_points = np.array([points_x, points_z, 0 * points_z]).T
-new_points = new_points[1:]
-
-B_fem = em_solver.calculate_b()(new_points)
-Bx_fem = B_fem.T[0]
-Bz_fem = B_fem.T[1]
+new_points = Coordinates({"x": points_x, "y": points_z}).xyz.T[1:]
+Bx_fem, Bz_fem = em_solver.calculate_b()(new_points).T
 
 g_psi, g_bx, g_bz = greens.greens_all(rc, 0, new_points[:, 0], new_points[:, 1])
 g_psi *= I_wire
 g_bx *= I_wire
 g_bz *= I_wire
 
+# %% [markdown]
+#
+# Finally plot the result comparison @ z = z_offset
+
+# %%
 _, ax = plt.subplots()
 ax.plot(new_points[:, 0], Bx_fem, label="Bx_fem")
 ax.plot(new_points[:, 0], g_bx, label="Green Bx")
@@ -281,4 +289,5 @@ ax.set_xlabel("r (m)")
 ax.set_ylabel("error (T)")
 plt.show()
 
-print(f"computational time: {time.time() - start}")
+np.testing.assert_allclose(Bx_fem, g_bx, atol=3e-4)
+np.testing.assert_allclose(Bz_fem, g_bz, atol=6e-4)

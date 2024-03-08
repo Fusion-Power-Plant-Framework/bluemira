@@ -14,11 +14,6 @@ from typing import TYPE_CHECKING, List, Optional, Union
 
 import numpy as np
 
-if TYPE_CHECKING:
-    from matplotlib.pyplot import Axes
-
-    from bluemira.geometry.coordinates import Coordinates
-
 from bluemira.base.constants import EPS, MU_0, MU_0_4PI, ONE_4PI
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.geometry.bound_box import BoundingBox
@@ -27,6 +22,12 @@ from bluemira.magnetostatics.baseclass import CurrentSource
 from bluemira.magnetostatics.tools import process_coords_array, process_xyz_array
 from bluemira.utilities import tools
 from bluemira.utilities.plot_tools import Plot3D
+
+if TYPE_CHECKING:
+    import numpy.typing as npt
+    from matplotlib.pyplot import Axes
+
+    from bluemira.geometry.coordinates import Coordinates
 
 __all__ = ["BiotSavartFilament"]
 
@@ -273,7 +274,9 @@ class BiotSavartFilament(CurrentSource):
 
 # TODO (ivan): I placed this function here since it is the result of the
 #  application of Biot-Savart to a filament coil
-def Bz_coil_axis(r: float, z: float = 0, pz: float = 0, current: float = 1) -> float:
+def Bz_coil_axis(
+    r: float, z: float = 0, pz: npt.ArrayLike = 0, current: float = 1
+) -> float:
     """
     Calculate the theoretical vertical magnetic field of a filament coil
     (of radius r and centred in (0, z)) on a point on the coil axis at
