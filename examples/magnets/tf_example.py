@@ -43,6 +43,7 @@ ripple = 6e-3
 Ri = R0 - a - d  # [m] max external radius of the internal TF leg
 Re = (R0 + a) * (1 / ripple) ** (
         1 / n_TF)  # [m] max internal radius of the external TF part
+dr_plasma_side = R0 * 2 / 3 * 1e-2
 
 R_VV = Ri * 1.05  # Vacuum vessel radius
 S_VV = 90e6  # Vacuum vessel steel limit
@@ -52,7 +53,7 @@ B_TF_i = 1.08 * (MU_0_2PI * n_TF * I_TF / Ri)  # max magnetic field on the inner
 pm = B_TF_i ** 2 / (2 * MU_0)  # magnetic pressure on the inner TF leg
 # vertical tension acting on the equatorial section of inner TF leg
 # i.e. half of the whole F_Z
-t_z = (0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * I_TF ** 2) / 2
+t_z = (0.5 * np.log(Re / Ri) * MU_0_4PI * n_TF * I_TF ** 2)
 
 Iop = 70.0e3  # operational current in each conductor
 n_cond = int(np.ceil(I_TF / Iop))  # number of necessary conductors
@@ -77,7 +78,7 @@ hotspot_target_temperature = 250.0
 safety_factor = 1.5
 S_Y = 1e9 / safety_factor  # [Pa] steel allowable limit
 allowable_sigma_jacket = 667e6  # [Pa] for the conductor jacket
-allowable_sigma_case = 867e6  # [Pa] for the case
+allowable_sigma_case = 667e6  # [Pa] for the case
 
 # Current and magnetic field behaviour
 I = delayed_exp_func(Iop, Tau_discharge, t_delay)
@@ -116,7 +117,8 @@ print(f"after optimization: conductor dx_cable = {cable.dx}")
 # optimize the cable jacket thickness considering 0D stress model for the single cable
 print(f"before optimization: conductor dx_jacket = {conductor.dx_jacket}")
 result_opt_jacket = optimize_jacket_conductor(
-    conductor, pm, t_z / n_spire, T0, B_TF_i, allowable_sigma_jacket, bounds=[1e-5, 0.2]
+    conductor, pm, t_z / 2 / n_spire, T0, B_TF_i,
+    allowable_sigma_jacket, bounds=[1e-5, 0.2]
 )
 print(f"after optimization: conductor dx_jacket = {conductor.dx_jacket}")
 
@@ -127,7 +129,8 @@ op = OperationalPoint(B=B_TF_i, T=T0)
 # creation of case
 wp1 = WindingPack(conductor, 1, 1)  # just a dummy WP to create the case
 case = CaseTF(
-    Ri=Ri, dy_ps=0.06, dy_vault=0.3, theta_TF=360 / n_TF, mat_case=ss316, WPs=[wp1]
+    Ri=Ri, dy_ps=dr_plasma_side, dy_vault=0.3, theta_TF=360 / n_TF, mat_case=ss316,
+    WPs=[wp1]
 )
 
 if show:

@@ -6,27 +6,27 @@ from bluemira.magnets.utils import parall_k, serie_k
 
 
 class WindingPack:
-    def __init__(self, conductor: Conductor, nl: np.int32, nt: np.int32, name: str = ""):
+    def __init__(self, conductor: Conductor, nx: np.int32, ny: np.int32, name: str = ""):
         self.name = name
-        self.nl = nl
-        self.nt = nt
+        self.nx = nx
+        self.ny = ny
         self.conductor = conductor
 
     @property
     def dx(self):
-        return self.conductor.dx * self.nl
+        return self.conductor.dx * self.nx
 
     @property
     def dy(self):
-        return self.conductor.dy * self.nt
+        return self.conductor.dy * self.ny
 
     def Kx(self, **kwargs):
         """Total equivalent stiffness along x-axis"""
-        return parall_k([serie_k([self.conductor.Kx(**kwargs)] * self.nl)] * self.nt)
+        return parall_k([serie_k([self.conductor.Kx(**kwargs)] * self.nx)] * self.ny)
 
     def Ky(self, **kwargs):
         """Total equivalent stiffness along x-axis"""
-        return serie_k([parall_k([self.conductor.Ky(**kwargs)] * self.nt)] * self.nl)
+        return serie_k([parall_k([self.conductor.Ky(**kwargs)] * self.ny)] * self.nx)
 
     def plot(
             self,
@@ -56,8 +56,8 @@ class WindingPack:
         ax.plot(points_ext[:, 0], points_ext[:, 1], "k")
 
         if not homogenized:
-            for i in range(self.nl):
-                for j in range(self.nt):
+            for i in range(self.nx):
+                for j in range(self.ny):
                     xc_c = xc - self.dx / 2 + (i + 0.5) * self.conductor.dx
                     yc_c = yc - self.dy / 2 + (j + 0.5) * self.conductor.dy
                     self.conductor.plot(xc=xc_c, yc=yc_c, ax=ax)

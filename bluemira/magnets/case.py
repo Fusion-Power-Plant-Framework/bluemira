@@ -91,10 +91,6 @@ class CaseTF:
         """Equivalent radial mechanical stiffness of ps"""
         return self.mat_case.ym(**kwargs) * self.dy_ps / self.dx_ps
 
-    def Ky_ps(self, **kwargs):
-        """Equivalent toroidal stiffness of ps"""
-        return self.mat_case.ym(**kwargs) * self.dx_ps / self.dy_ps
-
     def Kx_lat(self, **kwargs):
         """Equivalent radial stiffness of the lateral case part connected to each winding pack"""
         dx_lat = np.array([
@@ -105,23 +101,9 @@ class CaseTF:
         dy_lat = np.array([w.dy for w in self.WPs])
         return self.mat_case.ym(**kwargs) * dy_lat / dx_lat
 
-    def Ky_lat(self, **kwargs):
-        """Equivalent toroidal stiffness of the lateral case part connected to each winding"""
-        dx_lat = np.array([
-            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self._rad_theta_TF / 2)
-            - w.dx / 2
-            for i, w in enumerate(self.WPs)
-        ])
-        dy_lat = np.array([w.dy for w in self.WPs])
-        return self.mat_case.ym(**kwargs) * dx_lat / dy_lat
-
     def Kx_vault(self, **kwargs):
         """Equivalent radial stiffness of the vault"""
         return self.mat_case.ym(**kwargs) * self.dy_vault / self.dx_vault
-
-    def Ky_vault(self, **kwargs):
-        """Equivalent toroidal stiffness of the vault"""
-        return self.mat_case.ym(**kwargs) * self.dx_vault / self.dy_vault
 
     def Kx(self, **kwargs):
         """Total equivalent radial stiffness of the case"""
@@ -134,6 +116,24 @@ class CaseTF:
             for i, w in enumerate(self.WPs)
         ]
         return parall_k([self.Kx_ps(**kwargs), self.Kx_vault(**kwargs)] + temp)
+
+    def Ky_ps(self, **kwargs):
+        """Equivalent toroidal stiffness of ps"""
+        return self.mat_case.ym(**kwargs) * self.dx_ps / self.dy_ps
+
+    def Ky_lat(self, **kwargs):
+        """Equivalent toroidal stiffness of the lateral case part connected to each winding"""
+        dx_lat = np.array([
+            (self.R_wp_i[i] + self.R_wp_k[i]) / 2 * np.tan(self._rad_theta_TF / 2)
+            - w.dx / 2
+            for i, w in enumerate(self.WPs)
+        ])
+        dy_lat = np.array([w.dy for w in self.WPs])
+        return self.mat_case.ym(**kwargs) * dx_lat / dy_lat
+
+    def Ky_vault(self, **kwargs):
+        """Equivalent toroidal stiffness of the vault"""
+        return self.mat_case.ym(**kwargs) * self.dx_vault / self.dy_vault
 
     def Ky(self, **kwargs):
         """Total equivalent toroidal stiffness of the case"""
@@ -178,9 +178,9 @@ class CaseTF:
         # As conservative approximation, the vertical force is considered to act only
         # on jackets and vault
         total_case_area = (self.dx_i + self.dx_k) * (self.Ri - self.Rk) / 2
-        total_wp_area = np.sum([w.conductor.area * w.nl * w.nt for w in self.WPs])
+        total_wp_area = np.sum([w.conductor.area * w.nx * w.ny for w in self.WPs])
         total_wp_jacket_area = np.sum([
-            w.conductor.area_jacket * w.nl * w.nt for w in self.WPs
+            w.conductor.area_jacket * w.nx * w.ny for w in self.WPs
         ])
         sigma_z = fz / (total_case_area - total_wp_area + total_wp_jacket_area)
         sigma_tot = sigma_theta + sigma_z
@@ -325,7 +325,7 @@ class CaseTF:
                     f"n_turns_max: {n_turns_max} < 1. There is not enough space to allocate all the conductors"
                 )
 
-            WPs.append(WindingPack(conductor=cond, nl=n_layers_max, nt=n_turns_max))
+            WPs.append(WindingPack(conductor=cond, nx=n_layers_max, ny=n_turns_max))
 
             remaining_conductors = remaining_conductors - (n_layers_max * n_turns_max)
 

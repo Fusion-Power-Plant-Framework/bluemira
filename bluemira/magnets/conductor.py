@@ -149,39 +149,35 @@ class Conductor:
         ])
         return serie_r(weighted_specific_heat) / self.area
 
+
     def Kx_topbot_ins(self, **kwargs):
-        return self.mat_ins.ym(**kwargs) * self.dy_ins / self.dx
+        return self.mat_ins.ym(**kwargs) * self.dy / self.dx_ins
 
     def Kx_lat_ins(self, **kwargs):
-        return self.mat_ins.ym(**kwargs) * (self.dy - 2 * self.dy_ins) / self.dx
+        return self.mat_ins.ym(**kwargs) * self.dy_ins / (self.dx - 2 * self.dx_ins)
 
-    def Kx_topbot_jacket(self, **kwargs):
+    def Kx_lat_jacket(self, **kwargs):
         return (
                 self.mat_jacket.ym(**kwargs) * self.dy_jacket / (
                 self.dx - 2 * self.dx_ins)
         )
 
-    def Kx_lat_jacket(self, **kwargs):
-        return (
-                self.mat_jacket.ym(**kwargs)
-                * (self.dy - 2 * self.dy_ins - 2 * self.dy_jacket)
-                / self.dx_jacket
-        )
+    def Kx_topbot_jacket(self, **kwargs):
+        return self.mat_jacket.ym(**kwargs) * self.cable.dy / self.dx_jacket
 
     def Kx_cable(self, **kwargs):
         return self.cable.ym(**kwargs) * self.cable.dy / self.cable.dx
 
     def Kx(self, **kwargs):
-        return parall_k([
-            2 * self.Kx_topbot_ins(**kwargs),
-            serie_k([
-                self.Kx_lat_ins(**kwargs) / 2,
-                parall_k([
-                    2 * self.Kx_topbot_jacket(**kwargs),
-                    serie_k([self.Kx_cable(**kwargs), self.Kx_lat_jacket(**kwargs) / 2]),
-                ]),
-            ]),
-        ])
+        return (serie_k([self.Kx_topbot_ins(**kwargs) / 2,
+                         parall_k([
+                             2 * self.Kx_lat_ins(**kwargs),
+                             2 * self.Kx_lat_jacket(**kwargs),
+                             serie_k([self.Kx_cable(**kwargs),
+                                      self.Kx_topbot_jacket(**kwargs) / 2]),
+                         ]),
+                         ])
+                )
 
     def Ky_topbot_ins(self, **kwargs):
         return self.mat_ins.ym(**kwargs) * self.dx / self.dy_ins
@@ -201,26 +197,16 @@ class Conductor:
     def Ky_cable(self, **kwargs):
         return self.cable.ym(**kwargs) * self.cable.dx / self.cable.dy
 
-    # def Ky(self, **kwargs):
-    #     return parall_k([
-    #         2 * self.Ky_lat_ins(**kwargs),
-    #         serie_k([
-    #             self.Ky_topbot_ins(**kwargs) / 2,
-    #             parall_k([
-    #                 2 * self.Ky_lat_jacket(**kwargs),
-    #                 serie_k([self.Ky_cable(**kwargs), self.Ky_topbot_jacket(**kwargs) /
-    #                          2]),
-    #             ]),
-    #         ]),
-    #     ])
-
     def Ky(self, **kwargs):
-        # Todo: agree on the way in which Ky shall be calculated
-        return parall_k([
-            2 * self.Ky_lat_ins(**kwargs),
-            2 * self.Ky_lat_jacket(**kwargs),
-            serie_k([self.Ky_cable(**kwargs), self.Ky_topbot_jacket(**kwargs) / 2]),
-        ])
+        return (serie_k([self.Ky_topbot_ins(**kwargs) / 2,
+                         parall_k([
+                             2 * self.Ky_lat_ins(**kwargs),
+                             2 * self.Ky_lat_jacket(**kwargs),
+                             serie_k([self.Ky_cable(**kwargs),
+                                      self.Ky_topbot_jacket(**kwargs) / 2]),
+                         ]),
+                         ])
+                )
 
     def plot(self, xc: float = 0, yc: float = 0, show: bool = False, ax=None):
         if ax is None:
@@ -294,7 +280,13 @@ def _sigma_r_jacket(conductor: Conductor, pressure: float, f_z: float, T: float,
     saf_jacket = (conductor.cable.dx + 2 * conductor.dx_jacket) / (
             2 * conductor.dx_jacket
     )
-    X_jacket = 2 * conductor.Ky_lat_jacket(T=T, B=B) / conductor.Ky(T=T, B=B)
+    K = parall_k([
+        2 * conductor.Ky_lat_ins(T=T, B=B),
+        2 * conductor.Ky_lat_jacket(T=T, B=B),
+        serie_k([conductor.Ky_cable(T=T, B=B),
+                 conductor.Ky_topbot_jacket(T=T, B=B) / 2]),
+    ])
+    X_jacket = 2 * conductor.Ky_lat_jacket(T=T, B=B) / K
     return pressure * X_jacket * saf_jacket + f_z / conductor.area_jacket
 
 
