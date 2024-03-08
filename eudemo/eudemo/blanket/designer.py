@@ -106,6 +106,7 @@ class BlanketDesigner(Designer[Tuple[BluemiraFace, BluemiraFace]]):
     def run(self) -> Tuple[BluemiraFace, BluemiraFace]:
         """Run the blanket design problem."""
         segments = self.segment_blanket()
+        return segments.inboard, segments.outboard
         # Inboard
         ib_panels = self.panel_boundary(segments.inboard_boundary)
         ib_panels_face = BluemiraFace(ib_panels)

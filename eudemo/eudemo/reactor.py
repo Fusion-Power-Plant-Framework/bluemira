@@ -492,6 +492,8 @@ if __name__ == "__main__":
         reactor.plasma.lcfs(),
         vv_thermal_shield.xz_boundary(),
     )
+    reactor.plot()
+    plt.show()
 
     eq_port_designer = EquatorialPortKOZDesigner(
         reactor_config.params_for("Equatorial Port"),
