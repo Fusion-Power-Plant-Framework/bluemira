@@ -6,20 +6,17 @@
 """Test script to make the CSG branch work."""
 
 import json
+import sys
 from pathlib import Path
 
 import numpy as np
-from numpy import typing as npt
 
 import bluemira.neutronics.make_geometry as mg
 from bluemira.base.constants import raw_uc
 from bluemira.display import plot_2d, plot_3d, show_cad  # noqa: F401
 from bluemira.geometry.coordinates import vector_intersect
 from bluemira.geometry.tools import deserialize_shape, make_polygon  # make_circle_arc_3P
-from bluemira.neutronics.make_csg import (
-    _fill_xz_to_3d,
-    split_blanket_into_pre_cell_array,
-)
+from bluemira.neutronics.make_csg import BlanketCellArray
 from bluemira.neutronics.make_materials import BlanketType
 from bluemira.neutronics.neutronics_axisymmetric import (
     PlasmaSourceParametersPPS,
@@ -31,11 +28,13 @@ from bluemira.neutronics.neutronics_axisymmetric import (
     setup_openmc,
 )
 from bluemira.neutronics.params import (
+    BlanketLayers,
     OpenMCSimulationRuntimeParameters,
     PlasmaSourceParameters,
     ThicknessFractions,
     get_preset_physical_properties,
 )
+from bluemira.neutronics.slicing import PanelsAndExteriorCurve
 from bluemira.neutronics.tallying import create_tallies
 from bluemira.plasma_physics.reactions import n_DT_reactions
 
@@ -115,8 +114,10 @@ thickness_fractions = ThicknessFractions.from_TokamakGeometry(tokamak_geometry)
 # data loading begins here.
 from time import time
 
+START_TIME = time()
 
-def elapsed(start_time=time()):
+
+def elapsed(start_time=START_TIME):
     return f"t={time() - start_time:9.6f}s"
 
 
@@ -151,45 +152,38 @@ panel_breakpoint_T[-1] = vector_intersect(
 last_point = divertor_bmwire.edges[-1].end_point()
 
 
-def polygon_from2D(xarray: npt.NDArray[float], zarray: npt.NDArray[float], **kwargs):
-    """Create BluemiraWire from  x coordinates and z coordinates.
-
-    Parameters
-    ----------
-    xarray: np.ndarray of shape (N,)
-    zarray: np.ndarray of shape (N,)
-
-    Returns
-    -------
-    BluemiraWire:
-        wire made of straight lines joint by vertices specified by the input parameters.
-    """
-    return make_polygon(_fill_xz_to_3d([xarray, zarray]), **kwargs)
-
-
-blanket_panels_bmwire = polygon_from2D(
-    *panel_breakpoint_T.T,
+blanket_panels_bmwire = make_polygon(
+    np.insert(panel_breakpoint_T, 1, 0, axis=1).T,
     label="blanket panels",
     closed=False,
 )
 
 print(elapsed(), ": Before creating pre-cells")
 
-pca = split_blanket_into_pre_cell_array(
-    panel_breakpoint_T,
-    outer_boundary,
-    snap_to_horizontal_angle=45,
-    ending_cut=last_point.xz.flatten(),
+panel_and_exterior = PanelsAndExteriorCurve(panel_breakpoint_T, outer_boundary)
+pca = panel_and_exterior.make_quadrilateral_pre_cell_array(
+    snap_to_horizontal_angle=45, ending_cut=last_point.xz.flatten()
 )
-print(elapsed(), ": Aftere pre-cell creations, before plotting.")
-print("Volume of pre-cell array =", pca.volumes)
-# pca.show_cad()
-pca2 = pca.to_csg(True)
-print("Volume of approximating pre-cell array =", pca2.volumes)
-print(elapsed(), ": after conversion.")
-plot_2d([c.outline for c in pca.pre_cells] + [c.outline for c in pca2.pre_cells])
-
-import sys
+print(elapsed(), ": Aftere pre-cell creations, before straightening.")
+mat_lib = tbr_heat_sim.material_lib
+mat_dict = {
+    BlanketLayers.Surface.name: mat_lib.outb_sf_mat,
+    BlanketLayers.FirstWall.name: mat_lib.outb_fw_mat,
+    BlanketLayers.BreedingZone.name: mat_lib.outb_bz_mat,
+    BlanketLayers.Manifold.name: mat_lib.outb_mani_mat,
+    BlanketLayers.VacuumVessel.name: mat_lib.outb_vv_mat,
+}
+pca2 = pca.straighten_exterior(preserve_volume=False)
+for i, (v1, v2) in enumerate(zip(pca.volumes, pca2.volumes)):
+    print(
+        f"Cell {i:<2}: Volume change = {(v2 / v1 - 1) * 100:6.3f}% , with initial volume = {v1:8.3f} m³"
+    )
+print(f"Before = {sum(pca.volumes):8.3f} m³; Total: After = {sum(pca2.volumes):8.3f} m³")
+# plot_2d([c.outline for c in pca] + [c.outline for c in pca2])
+# to_csg(thickness_fractions, 8.0, material_dict=mat_dict)
+blanket_cell_array = BlanketCellArray.from_pre_cell_array(
+    pca2, mat_dict, thickness_fractions
+)
 
 sys.exit()
 
