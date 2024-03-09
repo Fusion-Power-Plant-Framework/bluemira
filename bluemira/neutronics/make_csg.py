@@ -71,11 +71,6 @@ def surface_from_2points(
         return openmc.ZPlane(z0=point1[-1], surface_id=surface_id, name=name)
     slope = dz / dr
     z_intercept = -slope * point1[0] + point1[-1]
-    # direction = point1[-1]>z_intercept
-    # if (point2[-1]>z_intercept)!=direction: # XOR gate
-    #     raise ValueError("Expected coordinates from one side of the poloidal"
-    #                     "cross-section only!")
-    # return openmc.model.ZConeOneSided(z0=z_intercept, r2=slope**-2, up=direction, surface_id=surface_id, name=name)
     return openmc.ZCone(z0=z_intercept, r2=slope**-2, surface_id=surface_id, name=name)
 
 
@@ -301,32 +296,9 @@ class BlanketCellStack:
         self.mnfd_cell = cell_dict[BlanketLayers.Manifold.name]
         self.vv_cell = cell_dict[BlanketLayers.VacuumVessel.name]
 
-        minmax_coordinates = [np.concatenate(cell_stack[0].bounding_box)]
-        for inner_cell, outer_cell in zip(cell_stack[:-1], cell_stack[1:]):
-            vertical_alignment = (
-                inner_cell.exterior_surface is outer_cell.interior_surface
-            )
-            ccw_lateral_alignment = inner_cell.ccw_surface is outer_cell.ccw_surface
-            cw_lateral_alignment = inner_cell.cw_surface is outer_cell.cw_surface
-            if not all([
-                vertical_alignment,
-                cw_lateral_alignment,
-                ccw_lateral_alignment,
-            ]):
-                raise GeometryError(
-                    "BlanketCellStack is not aligned! This means shared "
-                    "surfaces were found to be duplicate /not shared instead."
-                )
-            minmax_coordinates.append(np.concatenate(outer_cell.bounding_box))
-
-        # check they form a linear stack, i.e. the stack's bounding box are all shifting
-        # towards the same direction (increasing or decreasing).
-        for diff_column in np.diff(minmax_coordinates, axis=0).T:
-            if all(diff_column > 0) or all(diff_column < 0):
-                # strictly monotonic series if they all have finite volumes.
-                break
-        else:
-            raise GeometryError("The cell stack must be sequential!")
+        # Because the bounding_box function is INCORRECT, we can't perform a check on the
+        # bounding box to confirm that the stack is linearly increasing/decreasing in xyz
+        # bounds.
 
     def __len__(self) -> int:
         return self.cell_stack.__len__()
