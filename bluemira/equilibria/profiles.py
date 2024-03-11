@@ -380,7 +380,7 @@ class Profile:
         """
         Return p as a function of normalised psi by integrating pprime
         """
-        if not isinstance(psinorm, npt.NDArray[np.float64]):
+        if not isinstance(psinorm, np.ndarray):
             return self._scalar_denorm(self.pprime, psinorm)
 
         p_vals, o_vals = self._reshape(psinorm)
@@ -400,7 +400,7 @@ class Profile:
             \t:math:`FF^{'}|_{\\substack{\\psi_{N}=1}} = (R_{0}B_{T,0})^{2}`
         """
         fvacuum = self.fvac()
-        if not isinstance(psinorm, npt.NDArray[np.float64]):
+        if not isinstance(psinorm, np.ndarray):
             val = self._scalar_denorm(self.ffprime, psinorm)
             return np.sqrt(2 * val + fvacuum**2)
 
@@ -744,7 +744,7 @@ class CustomProfile(Profile):
         """
         if callable(unknown):
             return unknown
-        if isinstance(unknown, npt.NDArray[np.float64]):
+        if isinstance(unknown, np.ndarray):
             return interp1d(np.linspace(0, 1, len(unknown)), unknown)
         if unknown is None:
             return None
