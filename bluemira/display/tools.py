@@ -48,7 +48,7 @@ class Options:
                     raise ae from None
             raise
 
-    def modify(self, **kwargs: Any) -> None:
+    def modify(self, **kwargs: Any):
         """Modify options"""
         for k, v in kwargs.items():
             setattr(self, k, v)
