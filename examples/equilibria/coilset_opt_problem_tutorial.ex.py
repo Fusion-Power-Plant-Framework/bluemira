@@ -40,10 +40,6 @@ Coilset Optimisation Problem Tutorial
 # that specifies how an 'optimised' coilset state is found during the Free Boundary
 # Equilibrium solve step.
 
-# # Imports
-
-# Import necessary equilbria module definitions.
-
 # %%
 
 import matplotlib.pyplot as plt
