@@ -39,7 +39,7 @@ class PlotType(Enum):
     BAR = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, PlotType]) -> PlotType:
         try:
             return cls[value.upper()]
         except KeyError:
@@ -192,7 +192,7 @@ class LifeCycle:
             # TODO: treat output parameter
         self.n_cycles = self.fpy * YR_TO_S / self.t_flattop
 
-    def set_availabilities(self, load_factor: float):
+    def set_availabilities(self, load_factor: float):  # type: ignore[no-untyped-def]
         """
         Sets availability and distributes it between the two phases of planned operation.
         The planned maintenance windows are subtracted from the availability which
@@ -225,7 +225,7 @@ class LifeCycle:
             self.params.A_global, op_durations
         )
 
-    def calc_n_pulses(self, phases: List[List[float]]):
+    def calc_n_pulses(self, phases: List[List[float]]):  # type: ignore[no-untyped-def]
         """
         Calculate the number of pulses per phase.
         """
@@ -404,7 +404,7 @@ class LifeCycle:
         ax.set_xlim([0, self.fpy / self.params.A_global])
         ax.set_ylim(bottom=0)
 
-    def plot_load_factor(self, typ: str = "pie", ax: Optional[plt.Axes] = None):
+    def plot_load_factor(self, typ: str = "pie", ax: Optional[plt.Axes] = None):  # type: ignore[no-untyped-def]
         """
         Plots a pie or bar chart of the breakdown of the reactor lifetime
 

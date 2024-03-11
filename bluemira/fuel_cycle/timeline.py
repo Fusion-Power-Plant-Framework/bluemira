@@ -360,7 +360,7 @@ class Timeline:
         self.build_arrays(phases)
         self.component_damage()
 
-    def build_arrays(self, phases: List[Phase]):
+    def build_arrays(self, phases: List[Phase]):  # type: ignore[no-untyped-def]
         """
         Build the time arrays based on phases.
 

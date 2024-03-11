@@ -35,7 +35,7 @@ class QueryType(Enum):
     P95TH = auto()  # identifier should start with a letter
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, QueryType]) -> QueryType:
         try:
             if value.upper() == "95TH":
                 return cls.P95TH
@@ -76,7 +76,7 @@ class FuelCycleAnalysis:
         self.t_d = []
         self.m_dot_release = []
 
-    def run_model(self, timelines: Iterable[Dict[str, Union[np.ndarray, int]]]):
+    def run_model(self, timelines: Iterable[Dict[str, Union[np.ndarray, int]]]):  # type: ignore[no-untyped-def]
         """
         Run the tritium fuel cycle model for each timeline.
 
