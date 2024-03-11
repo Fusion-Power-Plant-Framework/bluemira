@@ -10,6 +10,7 @@ tools for display module
 
 import pprint
 from dataclasses import asdict
+from typing import Any, Dict
 
 
 class Options:
@@ -19,10 +20,10 @@ class Options:
 
     __slots__ = ("_options",)
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any):
         self.modify(**kwargs)
 
-    def __setattr__(self, attr, val):
+    def __setattr__(self, attr: str, val: Any):
         """
         Set attributes in options dictionary
         """
@@ -33,7 +34,7 @@ class Options:
         else:
             super().__setattr__(attr, val)
 
-    def __getattribute__(self, attr):
+    def __getattribute__(self, attr: str):
         """
         Get attributes or from "_options" dict
         """
@@ -47,18 +48,18 @@ class Options:
                     raise ae from None
             raise
 
-    def modify(self, **kwargs):
+    def modify(self, **kwargs: Any) -> None:
         """Modify options"""
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-    def as_dict(self):
+    def as_dict(self) -> Dict[str, Any]:
         """
         Returns the instance as a dictionary.
         """
         return asdict(self._options)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         Representation string of the DisplayOptions.
         """
