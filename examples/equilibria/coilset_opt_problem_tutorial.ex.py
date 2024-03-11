@@ -34,9 +34,7 @@ Coilset Optimisation Problem Tutorial
 # the maximum coil currents and some additional constraints.
 #
 
-# %%[markdown]
-
-# # Introduction
+# ## Introduction
 
 # In this example, we will outline how to specify a `CoilsetOptimisationProblem`
 # that specifies how an 'optimised' coilset state is found during the Free Boundary
