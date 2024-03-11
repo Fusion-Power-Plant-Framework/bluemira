@@ -154,7 +154,7 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 coil_x = [1.35, 6.85, 6.85, 1.5, 3.2, 5.7, 5.3]
 coil_z = [7.85, 4.75, 3.35, 6.0, 8.0, 7.8, 5.50]
 coil_dx = [0.45, 0.5, 0.5, 0.3, 0.6, 0.5, 0.25]
-coil_dz = [0.5, 0.8, 0.8, 0.5, 0.5, 0.5, 0.5]
+coil_dz = [0.5, 0.5, 0.5, 0.5, 0.5, 0.5, 0.5]
 
 coils = []
 
