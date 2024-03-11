@@ -74,7 +74,7 @@ class MaterialCache:
 
     def load_from_dict(
         self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
-    ):
+    ):  # type: ignore[no-untyped-def]
         """
         Load a material or mixture from a dictionary.
 
@@ -98,7 +98,7 @@ class MaterialCache:
 
     def mixture_from_dict(
         self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
-    ):
+    ):  # type: ignore[no-untyped-def]
         """
         Load a mixture from a dictionary.
 
@@ -116,7 +116,7 @@ class MaterialCache:
 
     def material_from_dict(
         self, mat_name: str, mats_dict: Dict[str, Any], overwrite: bool = True
-    ):
+    ):  # type: ignore[no-untyped-def]
         """
         Load a material from a dictionary.
 
@@ -154,7 +154,7 @@ class MaterialCache:
 
     def _update_cache(
         self, mat_name: str, mat: SerialisedMaterial, overwrite: bool = True
-    ):
+    ):  # type: ignore[no-untyped-def]
         if not overwrite and mat_name in self._material_dict:
             raise MaterialsError(
                 f"Attempt to load material {mat_name}, which already "
