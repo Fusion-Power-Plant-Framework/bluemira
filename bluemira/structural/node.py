@@ -71,7 +71,7 @@ class Node:
         return np.array([self.x, self.y, self.z])
 
     @xyz.setter
-    def xyz(self, xyz: np.ndarray):
+    def xyz(self, xyz: np.ndarray):  # type: ignore[no-untyped-def]
         """
         Sets the Node coordinates
 
@@ -99,7 +99,7 @@ class Node:
             (node.x - self.x) ** 2 + (node.y - self.y) ** 2 + (node.z - self.z) ** 2
         )
 
-    def add_load(self, load: Dict[str, float]):
+    def add_load(self, load: Dict[str, float]):  # type: ignore[no-untyped-def]
         """
         Applies a load to the Node object.
 
@@ -123,7 +123,7 @@ class Node:
         """
         self.supports = np.zeros(6, dtype=bool)  # Defaults to False
 
-    def add_support(self, supports: np.ndarray):
+    def add_support(self, supports: np.ndarray):  # type: ignore[no-untyped-def]
         """
         Define a support condition at the Node
 
@@ -136,7 +136,7 @@ class Node:
         """
         self.supports = supports
 
-    def add_connection(self, elem_id: int):
+    def add_connection(self, elem_id: int):  # type: ignore[no-untyped-def]
         """
         Add a connection to the Node.
 
@@ -147,7 +147,7 @@ class Node:
         """
         self.connections.add(elem_id)
 
-    def remove_connection(self, elem_id: int):
+    def remove_connection(self, elem_id: int):  # type: ignore[no-untyped-def]
         """
         Remove a connection to the Node.
 

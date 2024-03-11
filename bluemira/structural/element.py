@@ -11,7 +11,7 @@ Finite element class
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.structural.crosssection import CrossSection
@@ -42,7 +42,7 @@ class LoadType(Enum):
     NODE_LOAD = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, LoadType]) -> LoadType:
         try:
             return cls[value.replace(" ", "_").upper()]
         except KeyError:
@@ -426,7 +426,7 @@ class Element:
 
         return self._lambda_matrix
 
-    def add_load(self, load: Dict[str, float]):
+    def add_load(self, load: Dict[str, float]):  # type: ignore[no-untyped-def]
         """
         Applies a load to the Element object.
 
@@ -509,7 +509,7 @@ class Element:
 
         return self._s_functs
 
-    def interpolate(self, scale: float):
+    def interpolate(self, scale: float):  # type: ignore[no-untyped-def]
         """
         Interpolates the displacement of the beam with Hermite polynomial
         shape functions to obtain inter-node displacement and stress

@@ -54,7 +54,7 @@ DEFAULT_STRUCT_PLOT_OPTIONS = {
 }
 
 
-def annotate_node(ax: Axes, node: Node, text_size: int, color: str):
+def annotate_node(ax: Axes, node: Node, text_size: int, color: str):  # type: ignore[no-untyped-def]
     """
     Annotate a node.
     """
@@ -69,7 +69,7 @@ def annotate_node(ax: Axes, node: Node, text_size: int, color: str):
     )
 
 
-def annotate_element(ax: Axes, element: Element, text_size: int, color: str):
+def annotate_element(ax: Axes, element: Element, text_size: int, color: str):  # type: ignore[no-untyped-def]
     """
     Annotate an element.
     """
@@ -109,7 +109,7 @@ def arrow_scale(vector: np.ndarray, max_length: float, max_force: float) -> np.n
     return scale * vector / v_norm
 
 
-def _plot_force(ax: Axes, node: Node, vector: np.ndarray, color: str = "r"):
+def _plot_force(ax: Axes, node: Node, vector: np.ndarray, color: str = "r"):  # type: ignore[no-untyped-def]
     """
     Plots a single force arrow in 3-D to indicate a linear load
 
@@ -131,7 +131,7 @@ def _plot_force(ax: Axes, node: Node, vector: np.ndarray, color: str = "r"):
 
 def _plot_moment(
     ax: Axes, node: Node, vector: np.ndarray, color: str = "r", support: bool = False
-):
+):  # type: ignore[no-untyped-def]
     """
     Plots a double "moment" arrow in 3-D to indicate a moment load. Offset the
     moment arrows off from the nodes a little, to enable overlaps with forces.

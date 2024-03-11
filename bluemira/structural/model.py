@@ -11,7 +11,7 @@ Finite element model
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.coordinates import Coordinates
@@ -41,7 +41,9 @@ class BoundaryConditionMethod(Enum):
     DELETION = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(
+        cls, value: Union[str, BoundaryConditionMethod]
+    ) -> BoundaryConditionMethod:
         try:
             return cls[value.upper()]
         except KeyError:
@@ -51,7 +53,7 @@ class BoundaryConditionMethod(Enum):
             ) from None
 
 
-def check_matrix_condition(matrix: np.ndarray, digits: int):
+def check_matrix_condition(matrix: np.ndarray, digits: int):  # type: ignore[no-untyped-def]
     """
     Checks the condition number of a matrix and warns if it is unsuitable for
     working with.
@@ -128,7 +130,7 @@ class FiniteElementModel:
     # Geometry definition methods
     # =========================================================================
 
-    def set_geometry(self, geometry: Geometry):
+    def set_geometry(self, geometry: Geometry):  # type: ignore[no-untyped-def]
         """
         Set a Geometry in the FiniteElementModel
 
@@ -190,7 +192,7 @@ class FiniteElementModel:
         coords: Coordinates,
         cross_section: CrossSection,
         material: Optional[StructuralMaterial] = None,
-    ):
+    ):  # type: ignore[no-untyped-def]
         """
         Adds a Coordinates object to the FiniteElementModel
 
@@ -214,7 +216,7 @@ class FiniteElementModel:
         rx: bool = False,
         ry: bool = False,
         rz: bool = False,
-    ):
+    ):  # type: ignore[no-untyped-def]
         """
         Applies a support condition at a Node in the FiniteElementModel
 
@@ -257,7 +259,7 @@ class FiniteElementModel:
         right_node_ids: List[int],
         p1: Optional[np.ndarray] = None,
         p2: Optional[np.ndarray] = None,
-    ):
+    ):  # type: ignore[no-untyped-def]
         """
         Applies a cyclic symmetry condition to the FiniteElementModel
 
@@ -287,7 +289,7 @@ class FiniteElementModel:
     # Load definition methods
     # =========================================================================
 
-    def apply_load_case(self, load_case: LoadCase):
+    def apply_load_case(self, load_case: LoadCase):  # type: ignore[no-untyped-def]
         """
         Apply a load case to the FiniteElementModel.
 
@@ -298,7 +300,7 @@ class FiniteElementModel:
         """
         self.load_case = load_case
 
-    def add_node_load(self, node_id: int, load: float, load_type: str):
+    def add_node_load(self, node_id: int, load: float, load_type: str):  # type: ignore[no-untyped-def]
         """
         Adds a node load to the FiniteElementModel
 
@@ -313,7 +315,7 @@ class FiniteElementModel:
         """
         self.load_case.add_node_load(node_id, load, load_type)
 
-    def add_element_load(self, element_id: int, load: float, x: float, load_type: str):
+    def add_element_load(self, element_id: int, load: float, x: float, load_type: str):  # type: ignore[no-untyped-def]
         """
         Adds an element point load to the FiniteElementModel
 
@@ -330,7 +332,7 @@ class FiniteElementModel:
         """
         self.load_case.add_element_load(element_id, load, x, load_type)
 
-    def add_distributed_load(self, element_id: int, w: float, load_type: str):
+    def add_distributed_load(self, element_id: int, w: float, load_type: str):  # type: ignore[no-untyped-def]
         """
         Adds a distributed load to the FiniteElementModel
 
@@ -377,7 +379,7 @@ class FiniteElementModel:
     # Private solution methods
     # =========================================================================
 
-    def _apply_load_case(self, load_case: LoadCase):
+    def _apply_load_case(self, load_case: LoadCase):  # type: ignore[no-untyped-def]
         """
         Applies a LoadCase to the FiniteElementModel. Maps individual loads to
         their respective Nodes and Elements.
@@ -449,7 +451,7 @@ class FiniteElementModel:
             reactions[idn : idn + 6] = node.reactions
         return reactions
 
-    def _math_checks(self, k_matrix: np.ndarray):
+    def _math_checks(self, k_matrix: np.ndarray):  # type: ignore[no-untyped-def]
         """
         Performs a series of checks on the model boundary conditions and the
         global stiffness matrix K, prior to the solution of the system of
@@ -475,7 +477,7 @@ class FiniteElementModel:
             )
         check_matrix_condition(k_matrix, 15)
 
-    def _displacement_check(self, deflections: np.ndarray):
+    def _displacement_check(self, deflections: np.ndarray):  # type: ignore[no-untyped-def]
         """
         Checks to see if the displacements are not too big relative to the
         size of the model.

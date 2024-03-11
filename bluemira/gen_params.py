@@ -46,7 +46,7 @@ def def_param() -> Dict:
 DEFAULT_PARAM = def_param()
 
 
-def add_to_dict(pf: ParameterFrame, json_dict: Dict, params: Dict):
+def add_to_dict(pf: ParameterFrame, json_dict: Dict, params: Dict):  # type: ignore[no-untyped-def]
     """
     Add each parameter to the json dict and params dict
     """

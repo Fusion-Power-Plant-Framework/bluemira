@@ -10,7 +10,7 @@ Finite element geometry
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -133,7 +133,7 @@ class Geometry:
 
         return self.nodes[arg].id_number
 
-    def move_node(self, node_id: int, dx: float = 0.0, dy: float = 0.0, dz: float = 0.0):
+    def move_node(self, node_id: int, dx: float = 0.0, dy: float = 0.0, dz: float = 0.0):  # type: ignore[no-untyped-def]
         """
         Move a Node in the Geometry. If the Node is moved to the position
         of another Node, its connections are transferred, and the Node is
@@ -197,7 +197,7 @@ class Geometry:
                     element.node_2 = moved_node
                 element.clear_cache()
 
-    def remove_node(self, node_id: int):
+    def remove_node(self, node_id: int):  # type: ignore[no-untyped-def]
         """
         Remove a Node from the Geometry.
 
@@ -277,7 +277,7 @@ class Geometry:
         self.nodes[node_id2].add_connection(element.id_number)
         return element.id_number
 
-    def remove_element(self, elem_id: int):
+    def remove_element(self, elem_id: int):  # type: ignore[no-untyped-def]
         """
         Remove an Element from the Geometry.
 
@@ -313,7 +313,7 @@ class Geometry:
         coordinates: Coordinates,
         cross_section: CrossSection,
         material: Optional[StructuralMaterial] = None,
-    ):
+    ):  # type: ignore[no-untyped-def]
         """
         Adds a Coordinates object to the Geometry
 
@@ -400,14 +400,14 @@ class Geometry:
         z = np.array([node.z for node in self.nodes])
         return BoundingBox.from_xyz(x, y, z).get_box_arrays()
 
-    def interpolate(self, scale: float = 100.0):
+    def interpolate(self, scale: float = 100.0):  # type: ignore[no-untyped-def]
         """
         Interpolates the geometry model between Nodes
         """
         for element in self.elements:
             element.interpolate(scale=scale)
 
-    def rotate(self, t_matrix: np.ndarray):
+    def rotate(self, t_matrix: np.ndarray):  # type: ignore[no-untyped-def]
         """
         Rotates a geometry by updating the positions of all nodes and their
         global displacements
@@ -430,7 +430,7 @@ class Geometry:
         for element in self.elements:
             element._lambda_matrix = None
 
-    def transfer_node(self, node: Node):
+    def transfer_node(self, node: Node) -> int:
         """
         Transfer a Node into the Geometry, copying all its state.
 
@@ -450,7 +450,7 @@ class Geometry:
         added_node.displacements = node.displacements
         return id_number
 
-    def merge(self, other: Geometry):
+    def merge(self, other: Geometry):  # type: ignore[no-untyped-def]
         """
         Combine geometry object with another
 
@@ -531,7 +531,7 @@ class DeformedGeometry(Geometry):
 
     def plot(
         self, ax: Optional[Axes] = None, stress: Optional[np.ndarray] = None, **kwargs
-    ):
+    ) -> Union[DeformedGeometryPlotter, StressDeformedGeometryPlotter]:
         """
         Plot the DeformedGeometry.
 
