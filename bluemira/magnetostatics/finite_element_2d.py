@@ -102,7 +102,7 @@ class ScalarSubFunc(dolfin.UserExpression):
             "Accepted functions are instance of (int, float, Callable)or a list of them."
         )
 
-    def eval_cell(self, values: List, x: float, cell):
+    def eval_cell(self, values: List, x: float, cell):  # type: ignore[no-untyped-def]
         """Evaluate the value on each cell"""
         if self.markers is None or self.subdomains is None:
             func = self.functions[0]
@@ -179,7 +179,7 @@ class FemMagnetostatic2d:
         self,
         mesh: Union[dolfin.Mesh, str],
         boundaries: Optional[Union[dolfin.Mesh, str]] = None,
-    ):
+    ):  # type: ignore[no-untyped-def]
         """
         Set the mesh for the solver
 
@@ -235,7 +235,7 @@ class FemMagnetostatic2d:
         # initialize g to zero
         self.g = dolfin.Function(self.V)
 
-    def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):
+    def define_g(self, g: Union[dolfin.Expression, dolfin.Function]):  # type: ignore[no-untyped-def]
         """
         Define g, the right hand side function of the Poisson problem
 

@@ -445,7 +445,7 @@ class PolyhedralPrismCurrentSource(
     def _kernel(self, value: PolyhedralKernel):
         self.__kernel = value
 
-    def _check_angle_values(self, alpha, beta):
+    def _check_angle_values(self, alpha, beta):  # type: ignore[no-untyped-def]
         """
         Check that end-cap angles are acceptable.
         """
@@ -460,7 +460,7 @@ class PolyhedralPrismCurrentSource(
                 " bounds of [0, 180°)."
             )
 
-    def _set_cross_section(self, xs_coordinates: Coordinates):
+    def _set_cross_section(self, xs_coordinates: Coordinates):  # type: ignore[no-untyped-def]
         xs_coordinates = deepcopy(xs_coordinates)
         xs_coordinates.close()
         self._area = get_area_2d(*xs_coordinates.xz)
