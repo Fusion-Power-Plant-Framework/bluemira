@@ -29,7 +29,7 @@ class CoilType(Enum):
     NONE = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: object) -> "CoilType":
         if not isinstance(value, str):
             raise TypeError("Input must be a string.")
         try:
@@ -81,7 +81,7 @@ class BMUnitRegistry(UnitRegistry):
         self._gas_flow_temperature = None
         self._contexts_added = False
 
-    def _add_contexts(self, contexts: Optional[List[Context]] = None):
+    def _add_contexts(self, contexts: Optional[List[Context]] = None) -> None:
         """
         Add new contexts to registry
         """
@@ -97,7 +97,7 @@ class BMUnitRegistry(UnitRegistry):
             for c in contexts:
                 self.add_context(c)
 
-    def enable_contexts(self, *contexts: List[Context], **kwargs):
+    def enable_contexts(self, *contexts: List[Context], **kwargs) -> None:
         """
         Enable contexts
         """
@@ -148,7 +148,7 @@ class BMUnitRegistry(UnitRegistry):
         return self._gas_flow_temperature
 
     @gas_flow_temperature.setter
-    def gas_flow_temperature(self, value: Union[float, None, Quantity]):
+    def gas_flow_temperature(self, value: Union[float, None, Quantity]) -> None:
         self._gas_flow_temperature = (
             value.to("kelvin")
             if isinstance(value, Quantity)
@@ -194,7 +194,7 @@ class BMUnitRegistry(UnitRegistry):
         reverse_transform: Callable[
             [UnitRegistry, Union[float, complex, Quantity]], float
         ],
-    ):
+    ) -> Context:
         formatters = ["{}", "{} / [time]"]
 
         for form in formatters:
@@ -507,7 +507,7 @@ def to_kelvin(
     return converted_val
 
 
-def _temp_check(unit: Unit, val: Union[complex, Quantity]):
+def _temp_check(unit: Unit, val: Union[complex, Quantity]) -> None:
     """
     Check temperature is above absolute zero
 
