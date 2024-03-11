@@ -81,7 +81,7 @@ class BMUnitRegistry(UnitRegistry):
         self._gas_flow_temperature = None
         self._contexts_added = False
 
-    def _add_contexts(self, contexts: Optional[List[Context]] = None) -> None:
+    def _add_contexts(self, contexts: Optional[List[Context]] = None):
         """
         Add new contexts to registry
         """
