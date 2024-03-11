@@ -83,7 +83,7 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 # function for that subclass.
 #
 # ### Ingredients for a Coilset optimisation problem
-# - **Coilset**: the set of PF coils we want to optimize
+# - **Coilset**: the set of coils we want to optimise
 #   - the coilset 'state' will be representated by an array
 #   - **coilset_state**: state vector representing degrees of
 #       freedom of the coilset
