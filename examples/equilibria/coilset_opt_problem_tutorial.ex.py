@@ -287,7 +287,7 @@ magnetic_targets = MagneticConstraintSet([lcfs_isoflux, legs_isoflux])
 
 # %%[markdown]
 
-# ## Optimisation algorithm, conditions and parameters
+# ## Optimisation Algorithm, Conditions and Parameters
 #
 # We next define the Optimiser: the optimiser algorithm, conditions and
 # parameters to be used. There is no one-size-fits-all approach here,
