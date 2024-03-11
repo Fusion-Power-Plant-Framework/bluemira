@@ -68,9 +68,6 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 # The `CoilsetOptimisationProblem` class is intended to be the abstract
 # base class for coilset optimisation problems across Bluemira.
 #
-# *Remember: There are currently two optimization modules in Bluemira
-# Develop, and this example intends to illustrate the use of the newest
-# one in `bluemira.equilibria.optimisation`*
 #
 # The goal of the `CoilsetOptimisationProblem` is to be able to return
 # an optimised coilset, judged according to the provided objective,
