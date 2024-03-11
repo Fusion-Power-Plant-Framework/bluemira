@@ -78,9 +78,9 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 # subject to optimiser conditions and optimiser parameters.
 #
 # Subclasses of `CoilsetOptimisationProblem` thus should provide an
-# `optimise()` method that returns an optimised coilset object,
-#  optimised according to a specific objective function
-# for that subclass.
+# `optimise()` method that returns the `CoilsetOptimiserResult`,
+# containing the coilset optimised according to a specific objective
+# function for that subclass.
 #
 # ## Ingredients for a coilset optimization problem
 # - **Coilset**: the set of PF coils we want to optimize
