@@ -328,7 +328,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             textcoords="offset points",
         )
 
-    def _label_function(self, ax, shape: BluemiraWire):
+    def _label_function(self, ax, shape: BluemiraWire) -> tuple[int, int]:
         """
         Adds labels to parameterisation plots
 

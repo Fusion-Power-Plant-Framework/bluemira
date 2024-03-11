@@ -95,7 +95,7 @@ def de_broglie_length(velocity: float, mu_12: float) -> float:
     return H_PLANCK / (2 * mu_12 * velocity)
 
 
-def impact_parameter_perp(velocity: float, mu_12: float):
+def impact_parameter_perp(velocity: float, mu_12: float) -> float:
     """
     Calculate the perpendicular impact parameter, a.k.a. b90
 

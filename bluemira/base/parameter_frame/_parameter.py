@@ -135,7 +135,7 @@ class Parameter(Generic[ParameterValueType]):
             return False
         return (self.name == __o.name) and (self.value == o_value_with_correct_unit)
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self._name, self._description, self._long_name))
 
     def history(self) -> List[ParameterValue[ParameterValueType]]:

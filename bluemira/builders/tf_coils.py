@@ -518,13 +518,13 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
         """
         return parameterisation.create_shape().length
 
-    def keep_out_zones(self):
+    def keep_out_zones(self) -> list[KeepOutZone]:
         """
         Keep out zone
         """
         return self._keep_out_zone
 
-    def ineq_constraints(self):
+    def ineq_constraints(self) -> GeomConstraintT:
         """
         Inequality constraints
         """
