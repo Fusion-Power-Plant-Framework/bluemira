@@ -237,7 +237,7 @@ class CoilsetOptimisationProblem(abc.ABC):
         )
         return (-control_current_limits, control_current_limits)
 
-    def set_current_bounds(self, max_currents: npt.NDArray[np.float64]) -> None:
+    def set_current_bounds(self, max_currents: npt.NDArray[np.float64]):
         """
         Set the current bounds on this instance.
 

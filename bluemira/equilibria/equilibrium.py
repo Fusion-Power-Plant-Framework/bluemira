@@ -981,8 +981,8 @@ class Equilibrium(CoilSetMHDState):
 
         if self.limiter is None:  # Needed for eqdsk file format
             result["nlim"] = 0
-            result["xlim"] = npt.NDArray[np.float64]([])
-            result["zlim"] = npt.NDArray[np.float64]([])
+            result["xlim"] = np.array([])
+            result["zlim"] = np.array([])
         else:
             result["nlim"] = len(self.limiter)
             result["xlim"] = self.limiter.x
@@ -1411,7 +1411,7 @@ class Equilibrium(CoilSetMHDState):
 
     def q(
         self,
-        psinorm: Union[float, Iterable[float]],
+        psinorm: Union[float, Iterable[np.float64]],
         o_points: Optional[Iterable] = None,
         x_points: Optional[Iterable] = None,
     ) -> Union[float, npt.NDArray[np.float64]]:

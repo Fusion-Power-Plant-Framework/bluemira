@@ -831,7 +831,7 @@ class MagneticConstraintSet(ABC):
         """
         return self.target - self.background
 
-    def update_psi_boundary(self, psi_bndry: float) -> None:
+    def update_psi_boundary(self, psi_bndry: float):
         """
         Update the target value for all PsiBoundaryConstraints.
 

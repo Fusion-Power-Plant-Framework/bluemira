@@ -32,9 +32,7 @@ class SphericalHarmonicConstraintFunction(ConstraintFunction):
         Current scale with which to calculate the constraints
     """
 
-    def __init__(
-        self, a_mat: np.ndarray, b_vec: np.ndarray, value: float, scale: float
-    ) -> None:
+    def __init__(self, a_mat: np.ndarray, b_vec: np.ndarray, value: float, scale: float):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value

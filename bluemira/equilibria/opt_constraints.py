@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from bluemira.equilibria.plasma import PlasmaCoil
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.equilibria.opt_constraint_funcs import (
     Ax_b_constraint,
@@ -147,7 +148,7 @@ class FieldConstraints(UpdateableConstraint, OptimisationConstraint):
 
     def prepare(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
-    )  -> None:
+    ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -237,12 +238,12 @@ class CoilFieldConstraints(FieldConstraints):
         super().__init__(x, z, B_max, tolerance=tolerance, constraint_type="inequality")
 
     @staticmethod
-    def _get_constraint_points(coilset) -> Tuple:
+    def _get_constraint_points(coilset) -> Tuple[npt.NDArray[np.float], ...]:
         return coilset.x - coilset.dx, coilset.z
 
     def prepare(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
-    ) -> None:
+    ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -319,7 +320,7 @@ class CoilForceConstraints(UpdateableConstraint, OptimisationConstraint):
 
     def prepare(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
-    ) -> None:
+    ):
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -387,7 +388,7 @@ class MagneticConstraint(UpdateableConstraint, OptimisationConstraint):
 
     def prepare(
         self, equilibrium: Equilibrium, I_not_dI: bool = False, fixed_coils: bool = False
-    ) -> None:  # noqa: N803
+    ):  # noqa: N803
         """
         Prepare the constraint for use in an equilibrium optimisation problem.
         """
@@ -528,7 +529,7 @@ class FieldNullConstraint(AbsoluteMagneticConstraint):
         """
         return np.array([eq.Bx(self.x, self.z), eq.Bz(self.x, self.z)])
 
-    def plot(self, ax) -> None:
+    def plot(self, ax):
         """
         Plot the constraint onto an Axes.
         """
@@ -583,7 +584,7 @@ class PsiConstraint(AbsoluteMagneticConstraint):
         """
         return eq.psi(self.x, self.z)
 
-    def plot(self, ax) -> None:
+    def plot(self, ax):
         """
         Plot the constraint onto an Axes.
         """
@@ -632,13 +633,13 @@ class IsofluxConstraint(RelativeMagneticConstraint):
         """
         return eq.psi(self.x, self.z)
 
-    def update_target(self, eq: Equilibrium) -> None:
+    def update_target(self, eq: Equilibrium):
         """
         We need to update the target value, as it is a relative constraint.
         """
         self.target_value = float(eq.psi(self.ref_x, self.ref_z))
 
-    def plot(self, ax) -> None:
+    def plot(self, ax):
         """
         Plot the constraint onto an Axes.
         """
@@ -692,7 +693,7 @@ class PsiBoundaryConstraint(AbsoluteMagneticConstraint):
         """
         return eq.psi(self.x, self.z)
 
-    def plot(self, ax) -> None:
+    def plot(self, ax):
         """
         Plot the constraint onto an Axes.
         """
@@ -773,7 +774,7 @@ class MagneticConstraintSet(ABC):
         weighted_b = weights * self.b
         return weights, weighted_a, weighted_b
 
-    def build_weight_matrix(self) -> None:
+    def build_weight_matrix(self):
         """
         Build the weight matrix used in optimisation.
         Assumed to be diagonal.
@@ -786,7 +787,7 @@ class MagneticConstraintSet(ABC):
             self.w[i : i + n] = constraint.weights
             i += n
 
-    def build_control_matrix(self) -> None:
+    def build_control_matrix(self):
         """
         Build the control response matrix used in optimisation.
         """
@@ -798,7 +799,7 @@ class MagneticConstraintSet(ABC):
             self.A[i : i + n, :] = constraint.control_response(self.coilset)
             i += n
 
-    def build_target(self)  -> None:
+    def build_target(self):
         """
         Build the target value vector.
         """
@@ -810,7 +811,7 @@ class MagneticConstraintSet(ABC):
             self.target[i : i + n] = constraint.target_value * np.ones(n)
             i += n
 
-    def build_background(self) -> None:
+    def build_background(self):
         """
         Build the background value vector.
         """
@@ -829,7 +830,7 @@ class MagneticConstraintSet(ABC):
         """
         return self.target - self.background
 
-    def update_psi_boundary(self, psi_bndry: float) -> None:
+    def update_psi_boundary(self, psi_bndry: float):
         """
         Update the target value for all PsiBoundaryConstraints.
 

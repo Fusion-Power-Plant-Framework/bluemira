@@ -14,10 +14,10 @@ Constraint functions must be of the form:
 
     class Constraint(ConstraintFunction):
 
-        def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        def f_constraint(self, vector: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
             return constraint_calc(vector)
 
-        def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
+        def df_constraint(self, vector: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
             return gradient_calc(vector)
 
 
@@ -70,7 +70,7 @@ class ConstraintFunction(abc.ABC):
             return "inequality"
 
     @constraint_type.setter
-    def constraint_type(self, constraint_t: Literal["inequality", "equality"]) -> None:
+    def constraint_type(self, constraint_t: Literal["inequality", "equality"]):
         if constraint_t not in {"inequality", "equality"}:
             bluemira_warn(
                 f"Unknown nonlinear constraint type '{constraint_t}', "
@@ -102,7 +102,7 @@ class AxBConstraint(ConstraintFunction):
         b_vec: npt.NDArray[np.float64],
         value: float,
         scale: float,
-    ) -> None:
+    ):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
@@ -139,7 +139,7 @@ class L2NormConstraint(ConstraintFunction):
         b_vec: npt.NDArray[np.float64],
         value: float,
         scale: float,
-    ) -> None:
+    ):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.value = value
@@ -239,7 +239,7 @@ class CurrentMidplanceConstraint(ConstraintFunction):
         radius: float,
         scale: float,
         inboard: bool,
-    ) -> None:
+    ):
         self.eq = eq
         self.radius = radius
         self.scale = scale
@@ -288,7 +288,7 @@ class CoilForceConstraint(ConstraintFunction):
         CS_Fz_sum_max: float,
         CS_Fz_sep_max: float,
         scale: float,
-    ) -> None:
+    ):
         self.a_mat = a_mat
         self.b_vec = b_vec
         self.n_PF = n_PF

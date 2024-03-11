@@ -362,8 +362,8 @@ class XZLMapper:
         ).x
 
     def L_to_xz(
-        self, l_values: Union[float, npt.NDArray[np.float64]]
-    ) -> Tuple[Union[float, npt.NDArray[np.float64]], Union[float, npt.NDArray[np.float64]]]:  # noqa: N802
+        self, l_values: Union[float, npt.NDArray[np.float_]]
+    ) -> Tuple[Union[float, npt.NDArray[np.float_]], Union[float, npt.NDArray[np.float_]]]:  # noqa: N802
         """
         Translation of linear normalised coordinates (L) to (x-z) coordinates for the PF
         coils.
@@ -403,7 +403,7 @@ class XZLMapper:
 
     def get_Lmap(
         self, coilset: CoilSet, mapping: List[str]
-    ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:  # noqa: N802
+    ) -> Tuple[npt.NDArray[np.float_], npt.NDArray[np.float_], npt.NDArray[np.float_]]:  # noqa: N802
         """
         Calculates initial L vector and lb and ub constraints on L vector.
 
@@ -679,8 +679,8 @@ class RegionMapper:
         return xv, zv
 
     def xz_to_L(
-        self, region, x: Union[float, npt.NDArray[np.float64]], z: Union[float, npt.NDArray[np.float64]]
-    ) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+        self, region, x: Union[float, npt.NDArray[np.float_]], z: Union[float, npt.NDArray[np.float_]]
+    ) -> Tuple[npt.NDArray[np.float_], npt.NDArray[np.float_]]:
         """
         Convert x,z values to L values for a given region.
         """
@@ -688,7 +688,7 @@ class RegionMapper:
         l_0, l_1 = reg.to_L(x, z)
         return l_0, l_1
 
-    def get_Lmap(self, coilset: CoilSet) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    def get_Lmap(self, coilset: CoilSet) -> Tuple[npt.NDArray[np.float_], npt.NDArray[np.float_], npt.NDArray[np.float_]]:
         """
         Get 1D array of mapped position coordinates from coil positions
         in a provided coilset, along with mapped position bounds.
@@ -730,7 +730,7 @@ class RegionMapper:
                 "coordinates for each region in RegionMapper"
             )
 
-    def get_xz_arrays(self) -> Tuple[npt.NDArray[np.float64], npt.NDArray[np.float64]]:
+    def get_xz_arrays(self) -> Tuple[npt.NDArray[np.float_], npt.NDArray[np.float_]]:
         """
         Get arrays containing x and z coordinates for all coils from the position
         map.
@@ -750,7 +750,7 @@ class RegionMapper:
             x[i], z[i] = self.L_to_xz(region, self.l_values[i])
         return x, z
 
-    def get_size_current_limit(self) -> npt.NDArray[np.float64]:
+    def get_size_current_limit(self) -> npt.NDArray[np.float_]:
         """
         Get maximum coil current while staying within region boundaries.
 
