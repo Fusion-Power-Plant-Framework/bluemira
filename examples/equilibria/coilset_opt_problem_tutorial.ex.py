@@ -63,7 +63,7 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 
 # %%[markdown]
 
-# # CoilsetOptimisationProblem
+# ## The `CoilsetOptimisationProblem` class
 
 # The `CoilsetOptimisationProblem` class is intended to be the abstract
 # base class for coilset optimisation problems across Bluemira.
