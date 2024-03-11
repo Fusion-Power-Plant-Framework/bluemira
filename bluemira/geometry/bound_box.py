@@ -56,7 +56,7 @@ class BoundingBox:
             self.z_min, self.z_max = self.z_max, self.z_min
 
     @classmethod
-    def from_xyz(cls, x: np.ndarray, y: np.ndarray, z: np.ndarray):
+    def from_xyz(cls, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> "BoundingBox":
         """
         Create a BoundingBox from a set of coordinates
 
