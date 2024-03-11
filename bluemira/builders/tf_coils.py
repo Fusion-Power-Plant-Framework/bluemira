@@ -78,7 +78,7 @@ class ParameterisedRippleSolver:
         self.B_0 = B_0
         self.cage = None
 
-    def update_cage(self, wire: BluemiraWire):
+    def update_cage(self, wire: BluemiraWire):  # type: ignore[no-untyped-def]
         """
         Update the HelmHoltzCage, setting the current to produce a field of B_0 at
         (R_0, z_0).
@@ -168,7 +168,7 @@ class RipplePointSelector:
         self._wire: BluemiraWire = None
         self.points: Coordinates = None
 
-    def set_wire(self, wire: BluemiraWire):
+    def set_wire(self, wire: BluemiraWire):  # type: ignore[no-untyped-def]
         """
         Set the wire along which the points will be selected
 
@@ -231,7 +231,7 @@ class EquispacedSelector(RipplePointSelector):
         self.n_rip_points = n_rip_points
         self.x_frac = x_frac
 
-    def set_wire(self, wire: BluemiraWire):
+    def set_wire(self, wire: BluemiraWire):  # type: ignore[no-untyped-def]
         """
         Set the wire along which the points will be selected
 
@@ -267,7 +267,7 @@ class ExtremaSelector(RipplePointSelector):
     Select the extrema of the wire and constrain ripple there.
     """
 
-    def set_wire(self, wire: BluemiraWire):
+    def set_wire(self, wire: BluemiraWire):  # type: ignore[no-untyped-def]
         """
         Set the wire along which the points will be selected
 
@@ -310,7 +310,7 @@ class MaximiseSelector(RipplePointSelector):
     def __init__(self):
         self.points = None
 
-    def set_wire(self, wire: BluemiraWire):
+    def set_wire(self, wire: BluemiraWire):  # type: ignore[no-untyped-def]
         """
         Set the wire along which the points will be selected
 
@@ -551,7 +551,7 @@ class RippleConstrainedLengthGOP(GeomOptimisationProblem):
             self.ripple_values = np.array([self.ripple_values])
         return self.parameterisation
 
-    def plot(self, ax: Optional[plt.Axes] = None):
+    def plot(self, ax: Optional[plt.Axes] = None):  # type: ignore[no-untyped-def]
         """
         Plot the optimisation problem.
 

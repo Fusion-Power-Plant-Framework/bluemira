@@ -62,7 +62,7 @@ def apply_component_display_options(
     phys_component: PhysicalComponent,
     color: Union[Iterable, ColorPalette],
     transparency: Optional[float] = None,
-):
+):  # type: ignore[no-untyped-def]
     """
     Apply color and transparency to a PhysicalComponent for both plotting and CAD.
     """
@@ -106,7 +106,7 @@ def circular_pattern_component(
     origin: Tuple[float, float, float] = (0.0, 0.0, 0.0),
     direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 360.0,
-):
+) -> list[bm_comp.Component]:
     """
     Pattern the provided Component equally spaced around a circle n_children times.
 
