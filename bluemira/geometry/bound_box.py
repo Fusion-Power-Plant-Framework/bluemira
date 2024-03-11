@@ -8,6 +8,8 @@
 Bounding box object
 """
 
+from __future__ import annotations
+
 from dataclasses import dataclass
 from typing import Tuple
 
@@ -56,7 +58,7 @@ class BoundingBox:
             self.z_min, self.z_max = self.z_max, self.z_min
 
     @classmethod
-    def from_xyz(cls, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> "BoundingBox":
+    def from_xyz(cls, x: np.ndarray, y: np.ndarray, z: np.ndarray) -> BoundingBox:
         """
         Create a BoundingBox from a set of coordinates
 
