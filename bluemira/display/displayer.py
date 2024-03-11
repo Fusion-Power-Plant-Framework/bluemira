@@ -112,7 +112,7 @@ def show_cad(
     labels: Optional[Union[str, List[str]]] = None,
     backend: Union[str, ViewerBackend] = ViewerBackend.FREECAD,
     **kwargs,
-):
+):  # type: ignore[no-untyped-def]
     """
     The CAD display API.
 
@@ -209,7 +209,7 @@ class DisplayableCAD:
         return self._display_cad_options
 
     @display_cad_options.setter
-    def display_cad_options(self, value: DisplayCADOptions):
+    def display_cad_options(self, value: DisplayCADOptions):  # type: ignore[no-untyped-def]
         if not isinstance(value, DisplayCADOptions):
             raise DisplayError(
                 "Display options must be set to a DisplayCADOptions instance."

@@ -23,7 +23,7 @@ class Options:
     def __init__(self, **kwargs: Any):
         self.modify(**kwargs)
 
-    def __setattr__(self, attr: str, val: Any):
+    def __setattr__(self, attr: str, val: Any):  # type: ignore[no-untyped-def]
         """
         Set attributes in options dictionary
         """
@@ -48,7 +48,7 @@ class Options:
                     raise ae from None
             raise
 
-    def modify(self, **kwargs: Any):
+    def modify(self, **kwargs: Any):  # type: ignore[no-untyped-def]
         """Modify options"""
         for k, v in kwargs.items():
             setattr(self, k, v)

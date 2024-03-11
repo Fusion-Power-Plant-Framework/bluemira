@@ -60,7 +60,7 @@ class ViewDescriptor:
             getattr(_placement.XZY, attr) for attr in ("base", "axis", "angle", "label")
         )
 
-    def __set_name__(self, _, name: str):
+    def __set_name__(self, _, name: str):  # type: ignore[no-untyped-def]
         """Set the attribute name from a dataclass"""
         self._name = "_" + name
 
@@ -71,7 +71,7 @@ class ViewDescriptor:
 
         return getattr(obj, self._name, self._default)
 
-    def __set__(self, obj: Any, value: Union[str, tuple, _placement.BluemiraPlacement]):
+    def __set__(self, obj: Any, value: Union[str, tuple, _placement.BluemiraPlacement]):  # type: ignore[no-untyped-def]
         """Set the view"""
         if isinstance(value, str):
             if value.startswith("xy"):
@@ -117,7 +117,7 @@ class DictOptionsDescriptor:
     def __init__(self, default_factory: Optional[Callable[[], Dict[str, Any]]] = None):
         self.default = {} if default_factory is None else default_factory()
 
-    def __set_name__(self, _, name: str):
+    def __set_name__(self, _, name: str):  # type: ignore[no-untyped-def]
         """Set the attribute name from a dataclass"""
         self._name = "_" + name
 
@@ -132,7 +132,7 @@ class DictOptionsDescriptor:
 
     def __set__(
         self, obj: Any, value: Union[Callable[[], Dict[str, Any]], Dict[str, Any]]
-    ):
+    ):  # type: ignore[no-untyped-def]
         """Set the options dictionary"""
         if callable(value):
             value = value()
@@ -726,7 +726,7 @@ class Plottable:
         return self._plot_options
 
     @plot_options.setter
-    def plot_options(self, value: PlotOptions):
+    def plot_options(self, value: PlotOptions):  # type: ignore[no-untyped-def]
         if not isinstance(value, PlotOptions):
             raise DisplayError("Display options must be set to a PlotOptions instance.")
         self._plot_options = value
