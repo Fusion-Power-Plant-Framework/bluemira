@@ -7,6 +7,8 @@
 Module containing functions to generate variable offset curves
 """
 
+from typing import Tuple
+
 import numpy as np
 
 from bluemira.geometry.error import GeometryError
@@ -99,7 +101,9 @@ def _throw_if_inputs_invalid(wire, inboard_offset_degree, outboard_offset_degree
         )
 
 
-def _sort_coords_by_angle(angles: np.ndarray, coords: np.ndarray):
+def _sort_coords_by_angle(
+    angles: np.ndarray, coords: np.ndarray
+) -> Tuple[np.ndarray, np.ndarray]:
     """Sort the given angles and use that to re-order the coords."""
     angle_sort_idx = np.argsort(angles)
     return angles[angle_sort_idx], coords[:, angle_sort_idx]

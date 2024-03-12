@@ -189,7 +189,7 @@ class OptimisationProblem(ABC):
 
     def apply_constraints(
         self, opt: Optimiser, opt_constraints: List[OptimisationConstraint]
-    ):
+    ) -> Optimiser:
         """
         Updates the optimiser in-place to apply problem constraints.
         To be overridden by child classes to apply specific constraints.
@@ -214,7 +214,7 @@ class OptimisationProblem(ABC):
         """
         return parameterisation
 
-    def update_parametrisation(self, state: np.ndarray):
+    def update_parametrisation(self, state: np.ndarray) -> np.ndarray:
         """
         Update parameterisation object using the state vector.
         To be overridden as needed.

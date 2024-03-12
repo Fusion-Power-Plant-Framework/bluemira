@@ -10,7 +10,7 @@ FE result object
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, List, Optional
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -105,7 +105,9 @@ class Result:
         """
         return DeformedGeometry(self.geometry, scale=scale)
 
-    def _make_cyclic_geometry(self, geometry: Optional[Geometry] = None):
+    def _make_cyclic_geometry(
+        self, geometry: Optional[Geometry] = None
+    ) -> List[Geometry | DeformedGeometry]:
         if geometry is None:
             geometry = self.geometry
 

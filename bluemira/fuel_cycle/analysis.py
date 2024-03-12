@@ -35,7 +35,7 @@ class QueryType(Enum):
     P95TH = auto()  # identifier should start with a letter
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, QueryType]) -> QueryType:
         try:
             if value.upper() == "95TH":
                 return cls.P95TH

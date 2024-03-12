@@ -222,7 +222,7 @@ class CodesTeardown(CodesTask):
             if not (mapping.recv or recv_all):
                 continue
             # out name is set name if it's not provided
-            output_value = self._get_output_or_raise(external_outputs, mapping.out_name)  # type: ignore type
+            output_value = self._get_output_or_raise(external_outputs, mapping.out_name)  # type: ignore[type]
             if mapping.unit is None:
                 bluemira_warn(
                     f"{mapping.out_name} from code {self._name} has no known unit"

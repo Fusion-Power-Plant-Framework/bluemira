@@ -54,7 +54,7 @@ class BluemiraPlacement:
         point_2: Iterable[float],
         point_3: Iterable[float],
         label: str = "",
-    ):
+    ) -> BluemiraPlacement:
         """
         Instantiate a BluemiraPlacement from three points.
 
@@ -81,7 +81,7 @@ class BluemiraPlacement:
         return cls(point_1, normal, 0.0, label=label)
 
     @classmethod
-    def from_matrix(cls, matrix: np.ndarray, label: str = ""):
+    def from_matrix(cls, matrix: np.ndarray, label: str = "") -> BluemiraPlacement:
         """
         Instantiate a BluemiraPlacement from a 4 x 4 matrix
 
@@ -170,7 +170,7 @@ class BluemiraPlacement:
             f"angle: {self.angle})"
         )
 
-    def copy(self, label: Optional[str] = None):
+    def copy(self, label: Optional[str] = None) -> BluemiraPlacement:
         """Make a copy of the BluemiraPlacement"""
         placement_copy = BluemiraPlacement(self.base, self.axis, self.angle)
         if label is not None:
@@ -179,7 +179,7 @@ class BluemiraPlacement:
             placement_copy.label = self.label
         return placement_copy
 
-    def deepcopy(self, label: Optional[str] = None):  # noqa: ARG002
+    def deepcopy(self, label: Optional[str] = None) -> BluemiraPlacement:  # noqa: ARG002
         """Make a deepcopy of the BluemiraPlacement"""
         return self.copy()
 

@@ -10,7 +10,7 @@ Finite element geometry
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Optional, Tuple
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from matplotlib.pyplot import Axes
@@ -430,7 +430,7 @@ class Geometry:
         for element in self.elements:
             element._lambda_matrix = None
 
-    def transfer_node(self, node: Node):
+    def transfer_node(self, node: Node) -> int:
         """
         Transfer a Node into the Geometry, copying all its state.
 
@@ -531,7 +531,7 @@ class DeformedGeometry(Geometry):
 
     def plot(
         self, ax: Optional[Axes] = None, stress: Optional[np.ndarray] = None, **kwargs
-    ):
+    ) -> Union[DeformedGeometryPlotter, StressDeformedGeometryPlotter]:
         """
         Plot the DeformedGeometry.
 

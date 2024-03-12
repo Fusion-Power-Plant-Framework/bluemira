@@ -106,7 +106,7 @@ def circular_pattern_component(
     origin: Tuple[float, float, float] = (0.0, 0.0, 0.0),
     direction: Tuple[float, float, float] = (0.0, 0.0, 1.0),
     degree: float = 360.0,
-):
+) -> list[bm_comp.Component]:
     """
     Pattern the provided Component equally spaced around a circle n_children times.
 

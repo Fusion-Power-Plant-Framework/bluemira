@@ -7,7 +7,7 @@
 """
 Coil positioning routines (automatic and adjustable)
 """
-
+from __future__ import annotations
 import re
 from copy import deepcopy
 from typing import Dict, List, Tuple, Union
@@ -48,7 +48,7 @@ class ReactorType(Enum):
     SPHERICAL_TOKAMAK = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, ReactorType]) -> ReactorType:
         try:
             return cls[value.upper()]
         except KeyError:
@@ -64,7 +64,7 @@ class CoilsetLayoutType(Enum):
     DEMO = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, CoilsetLayoutType]) -> CoilsetLayoutType:
         try:
             return cls[value.upper()]
         except KeyError:

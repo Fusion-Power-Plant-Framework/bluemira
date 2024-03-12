@@ -79,7 +79,7 @@ class HomogenisedMixture(SerialisedMaterial, nmm.MultiMaterial):
         """
         return self.name
 
-    def _calc_homogenised_property(self, prop: str, temperature: float):
+    def _calc_homogenised_property(self, prop: str, temperature: float) -> float:
         """
         Calculate an mass-fraction-averaged property for the homogenised mixture.
         """

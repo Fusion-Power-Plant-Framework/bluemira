@@ -11,7 +11,7 @@ Finite element model
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, List, Optional, Tuple
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 if TYPE_CHECKING:
     from bluemira.geometry.coordinates import Coordinates
@@ -41,7 +41,9 @@ class BoundaryConditionMethod(Enum):
     DELETION = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(
+        cls, value: Union[str, BoundaryConditionMethod]
+    ) -> BoundaryConditionMethod:
         try:
             return cls[value.upper()]
         except KeyError:

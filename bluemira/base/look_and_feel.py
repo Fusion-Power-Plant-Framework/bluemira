@@ -16,7 +16,7 @@ import subprocess  # noqa: S404
 from getpass import getuser
 from pathlib import Path
 from textwrap import dedent, wrap
-from typing import Callable, Dict, List, Optional
+from typing import Callable, Dict, List, Optional, Union
 
 from bluemira import __version__
 from bluemira.base.constants import ANSI_COLOR, EXIT_COLOR
@@ -124,7 +124,7 @@ def count_slocs(
     branch: str,
     exts: Optional[List[str]] = None,
     ignore: Optional[List[str]] = None,
-) -> Dict:
+) -> Dict[str, Union[int, List[int]]]:
     """
     Counts lines of code within a given directory for a given git branch
 

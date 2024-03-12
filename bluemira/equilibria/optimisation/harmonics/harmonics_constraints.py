@@ -111,7 +111,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
         self._args["a_mat"] = self.control_response(equilibrium.coilset)
         self._args["b_vec"] = self.target_harmonics - self.evaluate(equilibrium)
 
-    def control_response(self, coilset: CoilSet):
+    def control_response(self, coilset: CoilSet) -> np.ndarray:
         """
         Calculate control response of a CoilSet to the constraint.
         """

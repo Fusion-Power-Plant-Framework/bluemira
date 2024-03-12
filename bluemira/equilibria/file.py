@@ -7,6 +7,8 @@
 Input and output file interface. EQDSK and json. NOTE: jsons are better :)
 """
 
+from __future__ import annotations
+
 import json
 import time
 from dataclasses import asdict, dataclass
@@ -128,7 +130,7 @@ class EQDSKInterface:
             self.psinorm = _derive_psinorm(self.fpol)
 
     @classmethod
-    def from_file(cls, file_path: str):
+    def from_file(cls, file_path: str) -> EQDSKInterface:
         """
         Create an EQDSKInterface object from a file.
 

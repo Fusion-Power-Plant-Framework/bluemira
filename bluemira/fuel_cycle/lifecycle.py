@@ -39,7 +39,7 @@ class PlotType(Enum):
     BAR = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, PlotType]) -> PlotType:
         try:
             return cls[value.upper()]
         except KeyError:

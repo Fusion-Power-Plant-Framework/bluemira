@@ -63,7 +63,7 @@ def make_mutual_inductance_matrix(coilset: CoilSet) -> np.ndarray:
     return M
 
 
-def _get_symmetric_coils(coilset: CoilSet):
+def _get_symmetric_coils(coilset: CoilSet) -> list[list]:
     """
     Coilset symmetry utility
     """

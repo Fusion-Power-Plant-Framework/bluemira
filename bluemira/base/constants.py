@@ -8,6 +8,8 @@
 A collection of generic physical constants, conversions, and miscellaneous constants.
 """
 
+from __future__ import annotations
+
 from enum import Enum, auto
 from typing import Callable, List, Optional, Union
 
@@ -29,7 +31,7 @@ class CoilType(Enum):
     NONE = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, CoilType]) -> CoilType:
         if not isinstance(value, str):
             raise TypeError("Input must be a string.")
         try:
@@ -194,7 +196,7 @@ class BMUnitRegistry(UnitRegistry):
         reverse_transform: Callable[
             [UnitRegistry, Union[float, complex, Quantity]], float
         ],
-    ):
+    ) -> Context:
         formatters = ["{}", "{} / [time]"]
 
         for form in formatters:

@@ -14,7 +14,7 @@ import warnings
 from abc import ABC, abstractmethod
 from copy import deepcopy
 from dataclasses import dataclass, field, fields
-from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Dict, Iterable, List, Optional, Tuple, Type, Union
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -488,7 +488,9 @@ class PulsedCoilsetDesign(ABC):
 
         self.take_snapshot(self.EQ_REF, eq, coilset, opt_problem, self.profiles)
 
-    def calculate_sof_eof_fluxes(self, psi_premag: Optional[float] = None):
+    def calculate_sof_eof_fluxes(
+        self, psi_premag: Optional[float] = None
+    ) -> Tuple[float, float]:
         """Calculate the SOF and EOF plasma boundary fluxes."""
         if psi_premag is None:
             if self.BREAKDOWN not in self.snapshots:
