@@ -14,10 +14,10 @@ Constraint functions must be of the form:
 
     class Constraint(ConstraintFunction):
 
-        def f_constraint(self, vector: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
+        def f_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return constraint_calc(vector)
 
-        def df_constraint(self, vector: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
+        def df_constraint(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return gradient_calc(vector)
 
 

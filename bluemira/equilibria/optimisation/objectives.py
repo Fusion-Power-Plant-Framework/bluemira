@@ -13,10 +13,10 @@ Objective functions must be of the form:
 
     class Objective(ObjectiveFunction):
 
-        def f_objective(self, vector: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
+        def f_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return objective_calc(vector)
 
-        def df_objective(self, vector: npt.NDArray[np.float_]) -> npt.NDArray[np.float_]:
+        def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return gradient_calc(vector)
 
 The objective function is minimised, so lower values are "better".
