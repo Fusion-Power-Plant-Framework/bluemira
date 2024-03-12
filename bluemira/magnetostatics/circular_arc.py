@@ -651,7 +651,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         return self._radius
 
     @radius.setter
-    def radius(self, radius: float):  # type: ignore[no-untyped-def]
+    def radius(self, radius: float):
         """
         Set the radius.
 
@@ -671,7 +671,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
         return self._breadth
 
     @breadth.setter
-    def breadth(self, breadth: float):  # type: ignore[no-untyped-def]
+    def breadth(self, breadth: float):
         """
         Set the breadth of the CircularArcCurrentSource.
 
@@ -781,7 +781,7 @@ class CircularArcCurrentSource(CrossSectionCurrentSource):
 
         return np.array([self._local_to_global(p) for p in points], dtype=object)
 
-    def plot(self, ax: Optional[plt.Axes] = None, show_coord_sys: bool = False):  # type: ignore[no-untyped-def]
+    def plot(self, ax: Optional[plt.Axes] = None, show_coord_sys: bool = False):
         """
         Plot the CircularArcCurrentSource.
 

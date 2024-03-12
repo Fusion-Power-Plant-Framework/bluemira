@@ -34,7 +34,7 @@ class CurrentSource(ABC):
 
     current: float
 
-    def set_current(self, current: float):  # type: ignore[no-untyped-def]
+    def set_current(self, current: float):
         """
         Set the current inside each of the circuits.
 
@@ -70,7 +70,7 @@ class CurrentSource(ABC):
         """
 
     @abstractmethod
-    def plot(self, ax: Optional[Axes], **kwargs):  # type: ignore[no-untyped-def]
+    def plot(self, ax: Optional[Axes], **kwargs):
         """
         Plot the CurrentSource.
 
@@ -81,7 +81,7 @@ class CurrentSource(ABC):
         """
 
     @abstractmethod
-    def rotate(self, angle: float, axis: Union[np.ndarray, str]):  # type: ignore[no-untyped-def]
+    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
         Rotate the CurrentSource about an axis.
 
@@ -111,7 +111,7 @@ class CrossSectionCurrentSource(CurrentSource):
     _rho: float
     _area: float
 
-    def set_current(self, current: float):  # type: ignore[no-untyped-def]
+    def set_current(self, current: float):
         """
         Set the current inside the source, adjusting current density.
 
@@ -123,7 +123,7 @@ class CrossSectionCurrentSource(CurrentSource):
         super().set_current(current)
         self._rho = current / self._area
 
-    def rotate(self, angle: float, axis: Union[np.ndarray, str]):  # type: ignore[no-untyped-def]
+    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
         Rotate the CurrentSource about an axis.
 
@@ -151,7 +151,7 @@ class CrossSectionCurrentSource(CurrentSource):
         """
         return np.array([(self._dcm @ (p - self._origin)) for p in points])
 
-    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):  # type: ignore[no-untyped-def]
+    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
         """
         Plot the CurrentSource.
 
@@ -192,7 +192,7 @@ class PolyhedralCrossSectionCurrentSource(CrossSectionCurrentSource):
     _face_normals: np.ndarray
     _mid_points: np.ndarray
 
-    def rotate(self, angle: float, axis: Union[np.ndarray, str]):  # type: ignore[no-untyped-def]
+    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
         Rotate the CurrentSource about an axis.
 
@@ -236,7 +236,7 @@ class PrismEndCapMixin:
 
     def _check_raise_self_intersection(
         self, length: float, breadth: float, alpha: float, beta: float
-    ):  # type: ignore[no-untyped-def]
+    ):
         """
         Check for bad combinations of source length and end-cap angles.
         """
@@ -261,7 +261,7 @@ class SourceGroup(ABC):
         self.sources = sources
         self._points = np.vstack([np.vstack(s._points) for s in self.sources])
 
-    def set_current(self, current: float):  # type: ignore[no-untyped-def]
+    def set_current(self, current: float):
         """
         Set the current inside each of the circuits.
 
@@ -297,7 +297,7 @@ class SourceGroup(ABC):
         """
         return np.sum([source.field(x, y, z) for source in self.sources], axis=0)
 
-    def rotate(self, angle: float, axis: Union[np.ndarray, str]):  # type: ignore[no-untyped-def]
+    def rotate(self, angle: float, axis: Union[np.ndarray, str]):
         """
         Rotate the CurrentSource about an axis.
 
@@ -312,7 +312,7 @@ class SourceGroup(ABC):
             source.rotate(angle, axis)
         self._points = self._points @ rotation_matrix(angle, axis)
 
-    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):  # type: ignore[no-untyped-def]
+    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
         """
         Plot the MultiCurrentSource.
 

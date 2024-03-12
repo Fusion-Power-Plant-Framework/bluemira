@@ -88,7 +88,7 @@ class BiotSavartFilament(CurrentSource):
         self.current = current
 
     @staticmethod
-    def _check_discretisation(d_l: np.ndarray):  # type: ignore[no-untyped-def]
+    def _check_discretisation(d_l: np.ndarray):
         """
         Check the discretisation of the array.
         """
@@ -220,7 +220,7 @@ class BiotSavartFilament(CurrentSource):
 
         return MU_0_4PI * (inductance + l_hat_0)
 
-    def rotate(self, angle: float, axis: Union[str, np.ndarray]):  # type: ignore[no-untyped-def]
+    def rotate(self, angle: float, axis: Union[str, np.ndarray]):
         """
         Rotate the CurrentSource about an axis.
 
@@ -239,7 +239,7 @@ class BiotSavartFilament(CurrentSource):
         self.ref_mid_points = self.ref_mid_points @ r
         self._arrays = [array @ r for array in self._arrays]
 
-    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):  # type: ignore[no-untyped-def]
+    def plot(self, ax: Optional[Axes] = None, show_coord_sys: bool = False):
         """
         Plot the CurrentSource.
 
