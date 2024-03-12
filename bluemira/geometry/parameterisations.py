@@ -184,7 +184,7 @@ class GeometryParameterisation(abc.ABC, Generic[OptVariablesFrameT]):
             )
 
     @property
-    def tolerance(self) -> npt.NDArray:
+    def tolerance(self) -> npt.NDArray[np.float64]:
         """
         Optimisation tolerance for the geometry parameterisation.
         """

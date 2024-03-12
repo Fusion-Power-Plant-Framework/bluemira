@@ -145,7 +145,7 @@ class NestedCoilsetPositionCOP(CoilsetOptimisationProblem):
         self.set_coilset_state(self.coilset, opt_result.x, self.scale)
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
-    def objective(self, vector: npt.NDArray) -> float:
+    def objective(self, vector: npt.NDArray[np.float64]) -> float:
         """Objective function to minimise."""
         coilset_state = np.concatenate((self.position_mapper.to_xz(vector), self.I0))
         self.set_coilset_state(self.coilset, coilset_state, self.scale)
@@ -251,7 +251,9 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
             lcfs = sub_opt_prob.eq.get_LCFS()
             debug[entry].append([lcfs, value])
 
-    def sub_opt_objective(self, vector: npt.NDArray, verbose: bool = False) -> float:
+    def sub_opt_objective(
+        self, vector: npt.NDArray[np.float64], verbose: bool = False
+    ) -> float:
         """Run the sub-optimisations and return the largest figure of merit."""
         positions = self.position_mapper.to_xz_dict(vector)
 
@@ -272,11 +274,11 @@ class PulsedNestedPositionCOP(CoilsetOptimisationProblem):
         self._run_reporting(self.iter, max_fom, verbose)
         return max_fom
 
-    def objective(self, vector: npt.NDArray, verbose: bool = False) -> float:
+    def objective(self, vector: npt.NDArray[np.float64], verbose: bool = False) -> float:
         """The objective function of the parent optimisation."""
         return self.sub_opt_objective(vector, verbose=verbose)
 
-    def _get_initial_vector(self) -> npt.NDArray:
+    def _get_initial_vector(self) -> npt.NDArray[np.float64]:
         """
         Get a vector representation of the initial coilset state from the PositionMapper.
         """

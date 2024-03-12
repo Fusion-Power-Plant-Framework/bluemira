@@ -15,6 +15,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import fortranformat as ff
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.base.look_and_feel import bluemira_warn
 from bluemira.utilities.tools import is_num, json_writer
@@ -48,15 +49,15 @@ class EQDSKInterface:
     """Magnetic field at the reference radius [T]."""
     cplasma: float
     """Plasma current [A]."""
-    dxc: np.ndarray
+    dxc: npt.NDArray[np.float64]
     """X half-thicknesses of the coils [m]."""
-    dzc: np.ndarray
+    dzc: npt.NDArray[np.float64]
     """Z half-thicknesses of the coils [m]."""
-    ffprime: np.ndarray
+    ffprime: npt.NDArray[np.float64]
     """FF' function on 1-D flux grid [m.T^2/V.s/rad]."""
-    fpol: np.ndarray
+    fpol: npt.NDArray[np.float64]
     """Poloidal current function f = R*B on 1-D flux [T.m]."""
-    Ic: np.ndarray
+    Ic: npt.NDArray[np.float64]
     """Coil currents [A]."""
     name: str
     """Name of the equilibrium EQDSK [dimensionless]."""
@@ -70,19 +71,19 @@ class EQDSKInterface:
     """Number of grid points in the radial direction [dimensionless]."""
     nz: int
     """Number of grid points in the vertical direction [dimensionless]."""
-    pprime: np.ndarray
+    pprime: npt.NDArray[np.float64]
     """P' function on 1-D flux grid [N/m^2/V.s/rad]."""
-    pressure: np.ndarray
+    pressure: npt.NDArray[np.float64]
     """Plasma pressure function on 1-D flux grid [N/m^2]."""
-    psi: np.ndarray
+    psi: npt.NDArray[np.float64]
     """Poloidal magnetic flux on the 2-D grid [V.s/rad]."""
     psibdry: float
     """Poloidal flux at the magnetic axis [V.s/rad]."""
     psimag: float
     """Poloidal flux at the magnetic axis [V.s/rad]."""
-    xbdry: np.ndarray
+    xbdry: npt.NDArray[np.float64]
     """X coordinates of the plasma boundary [m]."""
-    xc: np.ndarray
+    xc: npt.NDArray[np.float64]
     """X coordinates of the coils [m]."""
     xcentre: float
     """Radius of the reference toroidal magnetic  [m]."""
@@ -90,29 +91,29 @@ class EQDSKInterface:
     """Horizontal dimension of the spatial grid [m]."""
     xgrid1: float
     """Minimum radius of the spatial grid [m]."""
-    xlim: np.ndarray
+    xlim: npt.NDArray[np.float64]
     """X coordinates of the limiters [m]."""
     xmag: float
     """Radius of the magnetic axis [m]."""
-    zbdry: np.ndarray
+    zbdry: npt.NDArray[np.float64]
     """Z coordinates of the plasma boundary [m]."""
-    zc: np.ndarray
+    zc: npt.NDArray[np.float64]
     """Z coordinates of the coils [m]."""
     zdim: float
     """Vertical dimension of the spatial grid [m]."""
-    zlim: np.ndarray
+    zlim: npt.NDArray[np.float64]
     """Z coordinates of the limiters [m]."""
     zmag: float
     """Z coordinate of the magnetic axis [m]."""
     zmid: float
     """Z coordinate of the middle of the spatial grid [m]."""
-    x: Optional[np.ndarray] = None
+    x: Optional[npt.NDArray[np.float64]] = None
     """X 1-D vector [m] (calculated if not given)."""
-    z: Optional[np.ndarray] = None
+    z: Optional[npt.NDArray[np.float64]] = None
     """Z 1-D vector [m] (calculated if not given)."""
-    psinorm: Optional[np.ndarray] = None
+    psinorm: Optional[npt.NDArray[np.float64]] = None
     """Normalised psi vector [A] (calculated if not given)."""
-    qpsi: Optional[np.ndarray] = None
+    qpsi: Optional[npt.NDArray[np.float64]] = None
     """Safety factor values on the 1-D flux grid [dimensionless]."""
     file_name: Optional[str] = None
     """The EQDSK file the data originates from."""
@@ -470,7 +471,9 @@ def _write_eqdsk(file: Union[Path, str], data: Dict):
         file.write(fortran_format.write(line))
         file.write("\n")
 
-    def write_array(fortran_format: ff.FortranRecordWriter, array: np.ndarray):
+    def write_array(
+        fortran_format: ff.FortranRecordWriter, array: npt.NDArray[np.float64]
+    ):
         """
         Writes a numpy array out to a G-EQDSK file.
 

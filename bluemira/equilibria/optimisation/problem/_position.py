@@ -122,7 +122,7 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
         self.set_coilset_state(self.coilset, opt_result.x, self.scale)
         return CoilsetOptimiserResult.from_opt_result(self.coilset, opt_result)
 
-    def objective(self, vector: npt.NDArray) -> float:
+    def objective(self, vector: npt.NDArray[np.float64]) -> float:
         """
         Least-squares objective with Tikhonov regularisation term.
 
