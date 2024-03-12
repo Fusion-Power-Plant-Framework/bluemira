@@ -89,7 +89,7 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 #   - in bluemira, `ObjectiveFunction` is the base class for objective
 #   functions.
 #
-# - **Constraints**: optimization constraints that need to be satisfied.
+# - **Constraints**: optimisation constraints that need to be satisfied.
 #
 #   - in bluemira, `UpdateableConstraint` is the abstract base mixin class
 #   that is updateable.
@@ -107,8 +107,8 @@ from bluemira.equilibria.solve import DudsonConvergence, PicardIterator
 #     See the :py:class:`~bluemira.optimisation._algorithm.Algorithm`
 #     enum for a reliably up-to-date list.
 #   - Apart from the algorithm itself, you may also specify
-#       - **optimization conditions**: The stopping conditions for the optimiser.
-#       - **optimization parameters**: The algorithm-specific optimisation
+#       - **optimisation conditions**: The stopping conditions for the optimiser.
+#       - **optimisation parameters**: The algorithm-specific optimisation
 #       parameters.
 #
 # # Example: Tikhonov Current COP
