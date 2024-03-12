@@ -62,7 +62,7 @@ def apply_component_display_options(
     phys_component: PhysicalComponent,
     color: Union[Iterable, ColorPalette],
     transparency: Optional[float] = None,
-):  # type: ignore[no-untyped-def]
+):
     """
     Apply color and transparency to a PhysicalComponent for both plotting and CAD.
     """

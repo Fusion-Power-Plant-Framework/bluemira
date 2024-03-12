@@ -47,7 +47,7 @@ class ColorPalette:
         """
         return next(self._cycle)
 
-    def __setitem__(self, idx_or_key: Union[int, str], value):  # type: ignore[no-untyped-def]
+    def __setitem__(self, idx_or_key: Union[int, str], value):
         """
         Set an item in the ColorPalette by index or key
 
