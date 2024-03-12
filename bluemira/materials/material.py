@@ -239,7 +239,7 @@ class MaterialProperty:
             prop_dict["reference"] = self.reference
         return prop_dict
 
-    def _validate_temperature(self, temperature: Union[float, List[float], np.ndarray]):  # type: ignore[no-untyped-def]
+    def _validate_temperature(self, temperature: Union[float, List[float], np.ndarray]):
         """
         Check that the property is valid for the requested temperature range.
 
@@ -740,7 +740,7 @@ class MassFractionMaterial(SerialisedMaterial, nmm.Material):
         return self.temperature_in_K
 
     @temperature.setter
-    def temperature(self, value: float):  # type: ignore[no-untyped-def]
+    def temperature(self, value: float):
         """
         Sets the temperature of the material
 
@@ -771,7 +771,7 @@ class Superconductor:
         eps: Optional[float] = None,
         n: int = 101,
         m: int = 100,
-    ):  # type: ignore[no-untyped-def]
+    ):
         """
         Plots superconducting surface parameterisation
         strain `eps` only used for Nb3Sn
@@ -1201,7 +1201,7 @@ class Liquid(SerialisedMaterial, nmm.Material):
         return self.pressure_in_Pa
 
     @pressure.setter
-    def pressure(self, value: float):  # type: ignore[no-untyped-def]
+    def pressure(self, value: float):
         """
         Sets the pressure of the material
 
@@ -1228,7 +1228,7 @@ class Liquid(SerialisedMaterial, nmm.Material):
         return self.temperature_in_K
 
     @temperature.setter
-    def temperature(self, value: float):  # type: ignore[no-untyped-def]
+    def temperature(self, value: float):
         """
         Sets the temperature of the material
 
