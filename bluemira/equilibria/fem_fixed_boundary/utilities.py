@@ -445,7 +445,7 @@ def find_magnetic_axis(
         lower_bounds = np.array([0, -2.0])
         upper_bounds = np.array([20.0, 2.0])
 
-    def maximise_psi(x: npt.NDArray) -> float:
+    def maximise_psi(x: npt.NDArray[np.float64]) -> float:
         return -psi_func(x)
 
     x_star = optimise(

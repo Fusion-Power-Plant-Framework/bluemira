@@ -11,6 +11,7 @@ Boundary conditions for equilibria.
 from typing import Union
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.equilibria.grid import Grid, integrate_dx_dz
 from bluemira.magnetostatics.greens import greens_psi
@@ -44,7 +45,7 @@ class FreeBoundary:
             values[i] = g
         self.f_greens = values
 
-    def __call__(self, psi: np.ndarray, jtor: np.ndarray):
+    def __call__(self, psi: npt.NDArray[np.float64], jtor: npt.NDArray[np.float64]):
         """
         Applies a free boundary (Dirichlet) condition using Green's functions
 
@@ -63,7 +64,9 @@ class FreeBoundary:
             psi[j, k] = integrate_dx_dz(self.f_greens[i] * jtor, self.dx, self.dz)
 
 
-def apply_boundary(rhs: np.ndarray, lhs: Union[float, np.ndarray]):
+def apply_boundary(
+    rhs: npt.NDArray[np.float64], lhs: Union[float, npt.NDArray[np.float64]]
+):
     """
     Applies a boundary constraint to the boundaries of an array for use on finite
     difference grids.

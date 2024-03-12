@@ -13,10 +13,10 @@ Objective functions must be of the form:
 
     class Objective(ObjectiveFunction):
 
-        def f_objective(self, vector: npt.NDArray) -> npt.NDArray:
+        def f_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return objective_calc(vector)
 
-        def df_objective(self, vector: npt.NDArray) -> npt.NDArray:
+        def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
             return gradient_calc(vector)
 
 The objective function is minimised, so lower values are "better".
@@ -51,7 +51,7 @@ class ObjectiveFunction(abc.ABC):
     """
 
     @abc.abstractmethod
-    def f_objective(self, vector: npt.NDArray) -> float:
+    def f_objective(self, vector: npt.NDArray[np.float64]) -> float:
         """Objective function for an optimisation."""
 
 
@@ -74,8 +74,8 @@ class RegularisedLsqObjective(ObjectiveFunction):
     def __init__(
         self,
         scale: float,
-        a_mat: npt.NDArray,
-        b_vec: npt.NDArray,
+        a_mat: npt.NDArray[np.float64],
+        b_vec: npt.NDArray[np.float64],
         gamma: float,
     ) -> None:
         self.scale = scale
@@ -83,7 +83,7 @@ class RegularisedLsqObjective(ObjectiveFunction):
         self.b_vec = b_vec
         self.gamma = gamma
 
-    def f_objective(self, x: npt.NDArray) -> float:
+    def f_objective(self, x: npt.NDArray[np.float64]) -> float:
         """Objective function for an optimisation."""
         x = x * self.scale
         fom, _ = regularised_lsq_fom(x, self.a_mat, self.b_vec, self.gamma)
@@ -93,7 +93,7 @@ class RegularisedLsqObjective(ObjectiveFunction):
             )
         return fom
 
-    def df_objective(self, x: npt.NDArray) -> npt.NDArray:
+    def df_objective(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Gradient of the objective function for an optimisation."""
         x = x * self.scale
         jac = 2 * self.a_mat.T @ self.a_mat @ x / float(len(self.b_vec))
@@ -106,12 +106,12 @@ class CoilCurrentsObjective(ObjectiveFunction):
     """Objective function for the minimisation of the sum of coil currents squared."""
 
     @staticmethod
-    def f_objective(vector: npt.NDArray) -> float:
+    def f_objective(vector: npt.NDArray[np.float64]) -> float:
         """Objective function for an optimisation."""
         return np.sum(vector**2)
 
     @staticmethod
-    def df_objective(vector: npt.NDArray) -> npt.NDArray:
+    def df_objective(vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:
         """Gradient of the objective function for an optimisation."""
         return 2 * vector
 
@@ -129,15 +129,15 @@ class MaximiseFluxObjective(ObjectiveFunction):
         Scaling factor for the vector
     """
 
-    def __init__(self, c_psi_mat: npt.NDArray, scale: float):
+    def __init__(self, c_psi_mat: npt.NDArray[np.float64], scale: float):
         self.c_psi_mat = c_psi_mat
         self.scale = scale
 
-    def f_objective(self, vector: npt.NDArray) -> float:
+    def f_objective(self, vector: npt.NDArray[np.float64]) -> float:
         """Objective function for an optimisation."""
         return -self.scale * self.c_psi_mat @ vector
 
-    def df_objective(self, vector: npt.NDArray) -> npt.NDArray:  # noqa: ARG002
+    def df_objective(self, vector: npt.NDArray[np.float64]) -> npt.NDArray[np.float64]:  # noqa: ARG002
         """Gradient of the objective function for an optimisation."""
         return -self.scale * self.c_psi_mat
 

@@ -17,8 +17,10 @@ from typing import TYPE_CHECKING, Callable, List, Optional, Tuple, Union
 if TYPE_CHECKING:
     from bluemira.equilibria.coils import CoilSet
     from bluemira.equilibria.equilibrium import Equilibrium
+    from bluemira.equilibria.plasma import PlasmaCoil
 
 import numpy as np
+import numpy.typing as npt
 
 from bluemira.equilibria.opt_constraint_funcs import (
     Ax_b_constraint,
@@ -41,7 +43,7 @@ warnings.warn(
 )
 
 
-def _get_dummy_equilibrium(equilibrium: Equilibrium):
+def _get_dummy_equilibrium(equilibrium: Equilibrium) -> PlasmaCoil:
     """
     Get a dummy equilibrium for current optimisation where the background response is
     solely due to the plasma and passive coils.
@@ -236,7 +238,7 @@ class CoilFieldConstraints(FieldConstraints):
         super().__init__(x, z, B_max, tolerance=tolerance, constraint_type="inequality")
 
     @staticmethod
-    def _get_constraint_points(coilset):
+    def _get_constraint_points(coilset) -> Tuple[npt.NDArray[np.float], ...]:
         return coilset.x - coilset.dx, coilset.z
 
     def prepare(

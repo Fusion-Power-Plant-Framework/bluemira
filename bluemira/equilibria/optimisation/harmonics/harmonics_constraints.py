@@ -53,7 +53,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
 
     def __init__(
         self,
-        ref_harmonics: npt.NDArray,
+        ref_harmonics: npt.NDArray[np.float64],
         r_t: float,
         sh_coil_names: list,
         tolerance: Union[float, npt.NDArray] = None,
@@ -125,7 +125,7 @@ class SphericalHarmonicConstraint(UpdateableConstraint):
             self.sh_coil_names,
         )
 
-    def evaluate(self, _eq: Equilibrium) -> npt.NDArray:
+    def evaluate(self, _eq: Equilibrium) -> npt.NDArray[np.float64]:
         """
         Calculate the value of the constraint in an Equilibrium.
         """
