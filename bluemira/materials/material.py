@@ -8,6 +8,8 @@
 The home of base material objects. Use classes in here to make new materials.
 """
 
+from __future__ import annotations
+
 import json
 import warnings
 from typing import Any, Dict, List, Optional, Union, get_type_hints
@@ -194,7 +196,9 @@ class MaterialProperty:
         return self.value
 
     @classmethod
-    def deserialise(cls, prop_rep: Union[Dict[str, Any], float, str]):
+    def deserialise(
+        cls, prop_rep: Union[Dict[str, Any], float, str]
+    ) -> MaterialProperty:
         """
         Deserialise the provided property representation.
 
@@ -288,7 +292,7 @@ class SerialisedMaterial:
         return {self.name: attr_dict}
 
     @classmethod
-    def from_dict(cls, name: str, materials_dict: Dict[str, Any]):
+    def from_dict(cls, name: str, materials_dict: Dict[str, Any]) -> SerialisedMaterial:
         """
         Generate an instance of the material from a dictionary of materials.
 

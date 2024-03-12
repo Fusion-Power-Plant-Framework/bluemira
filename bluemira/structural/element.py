@@ -11,7 +11,7 @@ Finite element class
 from __future__ import annotations
 
 from enum import Enum, auto
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional, Union
 
 if TYPE_CHECKING:
     from bluemira.structural.crosssection import CrossSection
@@ -42,7 +42,7 @@ class LoadType(Enum):
     NODE_LOAD = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, LoadType]) -> LoadType:
         try:
             return cls[value.replace(" ", "_").upper()]
         except KeyError:

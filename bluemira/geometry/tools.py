@@ -223,15 +223,15 @@ def _make_vertex(point: Iterable[float]) -> cadapi.apiVertex:
     return cadapi.apiVertex(*point)
 
 
-def closed_wire_wrapper(drop_closure_point: bool):
+def closed_wire_wrapper(drop_closure_point: bool) -> BluemiraWire:
     """
     Decorator for checking / enforcing closures on wire creation functions.
     """
 
-    def decorator(func: Callable):
+    def decorator(func: Callable) -> BluemiraWire:
         def wrapper(
             points: Union[list, np.ndarray, Dict], label: str = "", closed: bool = False
-        ):
+        ) -> BluemiraWire:
             points = Coordinates(points)
             if points.closed:
                 if closed is False:
@@ -508,7 +508,7 @@ def make_circle(
 
 def make_circle_arc_3P(  # noqa: N802
     p1: Iterable[float], p2: Iterable[float], p3: Iterable[float], label: str = ""
-):
+) -> BluemiraWire:
     """
     Create an arc of circle object given three points.
 
@@ -914,7 +914,7 @@ def fillet_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
 
 
 @fillet_chamfer_decorator(True)
-def chamfer_wire_2D(wire: BluemiraWire, radius: float):
+def chamfer_wire_2D(wire: BluemiraWire, radius: float) -> BluemiraWire:
     """
     Chamfer all edges of a wire
 
@@ -1510,7 +1510,7 @@ def serialize_shape(shape: BluemiraGeo):
     raise NotImplementedError(f"Serialization non implemented for {type_}")
 
 
-def deserialize_shape(buffer: dict):
+def deserialize_shape(buffer: dict) -> Optional[Union[BluemiraGeo, BluemiraWire]]:
     """
     Deserialize a BluemiraGeo object obtained from serialize_shape.
 
@@ -1525,7 +1525,7 @@ def deserialize_shape(buffer: dict):
     """
     supported_types = [BluemiraWire, BluemiraFace, BluemiraShell]
 
-    def _extract_mesh_options(shape_dict: dict):
+    def _extract_mesh_options(shape_dict: dict) -> Optional[meshing.MeshOptions]:
         mesh_options = None
         if "lcar" in shape_dict:
             mesh_options = meshing.MeshOptions()
@@ -1535,7 +1535,9 @@ def deserialize_shape(buffer: dict):
             mesh_options.physical_group = shape_dict["physical_group"]
         return mesh_options
 
-    def _extract_shape(shape_dict: dict, shape_type: Type[BluemiraGeo]):
+    def _extract_shape(
+        shape_dict: dict, shape_type: Type[BluemiraGeo]
+    ) -> Union[BluemiraGeo, BluemiraWire]:
         label = shape_dict["label"]
         boundary = shape_dict["boundary"]
 

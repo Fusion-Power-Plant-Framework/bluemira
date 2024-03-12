@@ -9,7 +9,7 @@ Three-dimensional current source terms.
 """
 
 from copy import deepcopy
-from typing import List, Union
+from typing import List, Tuple, Union
 
 import numpy as np
 
@@ -82,7 +82,9 @@ class PlanarCircuit(SourceGroup):
             )
         return shape
 
-    def _get_betas_alphas(self, shape: Union[np.ndarray, Coordinates]):
+    def _get_betas_alphas(
+        self, shape: Union[np.ndarray, Coordinates]
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Get the first and second half-angles (transformed to the x-z plane)
         """

@@ -108,7 +108,7 @@ class Optimiser(NLOPTOptimiser):
     The grad and constraint matrices must be assigned in place.
     """  # noqa: W505
 
-    def optimise(self, x0=None, check_constraints: bool = True):
+    def optimise(self, x0=None, check_constraints: bool = True) -> np.ndarray:
         """
         Run the optimisation problem.
 
@@ -204,7 +204,7 @@ class Optimiser(NLOPTOptimiser):
             tolerance = np.array([tolerance])
         super().add_ineq_constraints(f_constraint, tolerance)
 
-    def check_constraints(self, x: np.ndarray, warn: bool = True):
+    def check_constraints(self, x: np.ndarray, warn: bool = True) -> bool:
         """
         Check that the constraints have been met.
 

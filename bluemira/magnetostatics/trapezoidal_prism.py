@@ -413,7 +413,7 @@ class TrapezoidalPrismCurrentSource(PrismEndCapMixin, CrossSectionCurrentSource)
         # Convert vector back to global coordinates
         return self._dcm.T @ b_local
 
-    def _calculate_points(self):
+    def _calculate_points(self) -> np.ndarray:
         """
         Calculate extrema points of the current source for plotting and debugging.
         """

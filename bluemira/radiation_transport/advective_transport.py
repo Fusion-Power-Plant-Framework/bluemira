@@ -470,7 +470,7 @@ class ChargedParticleSolver:
             / (Bp * 2 * np.pi * x)
         )
 
-    def plot(self, ax: Axes = None, show=False):
+    def plot(self, ax: Axes = None, show=False) -> Axes:
         """
         Plot the ChargedParticleSolver results.
         """

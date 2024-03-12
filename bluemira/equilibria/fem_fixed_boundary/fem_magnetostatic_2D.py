@@ -10,11 +10,12 @@ and toroidal current source using fenics FEM solver
 """
 
 from dataclasses import dataclass
-from typing import Callable, Iterable, Optional, Union
+from typing import Callable, Iterable, Optional, Tuple, Union
 
 import dolfin
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.figure import Figure
 from mpl_toolkits.axes_grid1 import make_axes_locatable
 
 from bluemira.base.constants import MU_0
@@ -412,7 +413,7 @@ class FemGradShafranovFixedBoundary(FemMagnetostatic2d):
         )
 
     @staticmethod
-    def _setup_plot(debug: bool):
+    def _setup_plot(debug: bool) -> Tuple[Figure, np.ndarray, list]:
         n_col = 3 if debug else 2
         fig, ax = plt.subplots(1, n_col, figsize=(18, 10))
         plt.subplots_adjust(wspace=0.5)

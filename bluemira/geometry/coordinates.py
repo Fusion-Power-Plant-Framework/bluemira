@@ -47,7 +47,7 @@ class RotationAxis(Enum):
     Z = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, RotationAxis]) -> RotationAxis:
         try:
             return cls[value.upper()]
         except KeyError:
@@ -1054,7 +1054,7 @@ class Coordinates:
         self._normal_vector = None
 
     @classmethod
-    def from_json(cls, filename: str):
+    def from_json(cls, filename: str) -> Coordinates:
         """
         Load a Coordinates object from a JSON file.
 

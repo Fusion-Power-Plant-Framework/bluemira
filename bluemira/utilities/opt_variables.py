@@ -203,7 +203,7 @@ class OptVariable:
         }
 
     @classmethod
-    def from_serialized(cls, name: str, data: OptVarSerializedT):
+    def from_serialized(cls, name: str, data: OptVarSerializedT) -> OptVariable:
         """Create an OptVariable from a dictionary"""
         return cls(
             name=name,
@@ -307,7 +307,7 @@ def ov(
     upper_bound: float,
     fixed: bool = False,
     description: Optional[str] = None,
-):
+) -> field:
     """Field factory for OptVariable"""
     return field(
         default_factory=lambda: OptVariable(
@@ -569,7 +569,7 @@ class OptVariablesFrame:
         json_writer(self.as_serializable(), file, **kwargs)
 
     @classmethod
-    def from_json(cls, file: Union[Path, str, TextIO]):
+    def from_json(cls, file: Union[Path, str, TextIO]) -> OptVariablesFrame:
         """
         Create an OptVariablesFrame instance from a json file.
 

@@ -254,14 +254,14 @@ class ShapeFunction:
         ax.legend()
         f.show()
 
-    def __mul__(self, a: float):
+    def __mul__(self, a: float) -> ShapeFunction:
         """
         Multiply the ShapeFunction (adjust factor)
         """
         self._fact = a
         return self
 
-    def __rmul__(self, a: float):
+    def __rmul__(self, a: float) -> ShapeFunction:
         """
         Multiply the ShapeFunction (adjust factor)
         """
@@ -818,7 +818,7 @@ class CustomProfile(Profile):
         return super().fRBpol(psinorm)
 
     @classmethod
-    def from_eqdsk(cls, filename: str):
+    def from_eqdsk(cls, filename: str) -> CustomProfile:
         """
         Initialises a CustomProfile object from an eqdsk file
         """

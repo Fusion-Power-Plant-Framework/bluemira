@@ -179,7 +179,7 @@ class EUDEMOFuelCycleModel:
         self.m_T_start = 5.0
         self.m_T = [self.m_T_start]
 
-    def tbreed(self, TBR: float, m_T_0: float):
+    def tbreed(self, TBR: float, m_T_0: float) -> np.ndarray:
         """
         Ideal system without T sequestration. Used for plotting and sanity.
         """

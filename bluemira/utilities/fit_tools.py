@@ -87,7 +87,7 @@ def surface_fit(
     return x2d, y2d, zz, coeffs, r2_score(z, z_predicted)
 
 
-def powers_arange(powers: np.ndarray) -> List:
+def powers_arange(powers: np.ndarray) -> List[int]:
     """
     Reorder powers index to order by power from 1st to nth index.
 

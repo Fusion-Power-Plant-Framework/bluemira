@@ -609,7 +609,7 @@ class StraightOISOptimisationProblem(OptimisationProblem):
     @staticmethod
     def f_L_to_wire(  # noqa: N802
         wire: BluemiraWire, x_norm: Union[List[float], npt.NDArray]
-    ):
+    ) -> BluemiraWire:
         """
         Convert a pair of normalised L values to a wire
         """

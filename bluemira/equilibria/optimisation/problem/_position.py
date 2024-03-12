@@ -4,7 +4,7 @@
 #
 # SPDX-License-Identifier: LGPL-2.1-or-later
 
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 import numpy.typing as npt
@@ -151,7 +151,9 @@ class CoilsetPositionCOP(CoilsetOptimisationProblem):
 
         return regularised_lsq_fom(currents * self.scale, a_mat, b_vec, self.gamma)[0]
 
-    def get_mapped_state_bounds(self, max_currents: Optional[npt.ArrayLike] = None):
+    def get_mapped_state_bounds(
+        self, max_currents: Optional[npt.ArrayLike] = None
+    ) -> Tuple[np.ndarray, np.ndarray]:
         """
         Get mapped bounds on the coilset state vector from the coil regions and
         maximum coil currents.

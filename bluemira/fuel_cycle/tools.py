@@ -8,8 +8,10 @@
 Fuel cycle utility objects, including sink algorithms
 """
 
+from __future__ import annotations
+
 from enum import Enum, auto
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Union
 
 import matplotlib.pyplot as plt
 import numba as nb
@@ -33,7 +35,7 @@ class NoiseModeType(Enum):
     MAX = auto()
 
     @classmethod
-    def _missing_(cls, value: str):
+    def _missing_(cls, value: Union[str, NoiseModeType]) -> NoiseModeType:
         try:
             return cls[value.upper()]
         except KeyError:
@@ -420,10 +422,6 @@ def legal_limit(
     p_fus: Optional[float] = None,
 ) -> float:
     r"""
-    Parameters
-    ----------
-    mb: tritium inventory gross burn rate [g/s]
-
     Calculates the release rate of T from the model TFV cycle in g/yr.
 
     .. math::
